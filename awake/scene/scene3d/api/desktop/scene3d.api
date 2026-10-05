@@ -1385,7 +1385,7 @@ public final class com/awakekt/awake/scene/rendering/particles/ParticleEmitterKt
 
 public final class com/awakekt/awake/scene/rendering/particles/ParticleEmitterSource {
 	public fun <init> (Lcom/awakekt/awake/scene/rendering/particles/SceneParticleEmitter;)V
-	public final fun getAuthored ()Lcom/awakekt/awake/scene/rendering/particles/SceneParticleEmitter;
+	public final fun getSettings ()Lcom/awakekt/awake/scene/rendering/particles/SceneParticleEmitter;
 }
 
 public final class com/awakekt/awake/scene/rendering/particles/ParticleFacing : java/lang/Enum {
@@ -1465,6 +1465,10 @@ public final class com/awakekt/awake/scene/rendering/particles/ParticleMotion {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/scene/rendering/particles/ParticleSpritesKt {
+	public static final fun loadParticleSprites (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
 public final class com/awakekt/awake/scene/rendering/particles/ParticleSystem : com/awakekt/awake/ecs/System {
 	public fun <init> ()V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
@@ -1501,10 +1505,103 @@ public final class com/awakekt/awake/scene/rendering/particles/ParticleVisual {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/scene/rendering/particles/SceneParticleAlphaCurve {
+	public static final field Companion Lcom/awakekt/awake/scene/rendering/particles/SceneParticleAlphaCurve$Companion;
+	public fun <init> ()V
+	public fun <init> (FF)V
+	public synthetic fun <init> (FFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun copy (FF)Lcom/awakekt/awake/scene/rendering/particles/SceneParticleAlphaCurve;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/particles/SceneParticleAlphaCurve;FFILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/particles/SceneParticleAlphaCurve;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFadeInEnd ()F
+	public final fun getFadeOutStart ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/scene/rendering/particles/SceneParticleAlphaCurve$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/rendering/particles/SceneParticleAlphaCurve$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/rendering/particles/SceneParticleAlphaCurve;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/rendering/particles/SceneParticleAlphaCurve;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/rendering/particles/SceneParticleAlphaCurve$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/rendering/particles/SceneParticleBox {
+	public static final field Companion Lcom/awakekt/awake/scene/rendering/particles/SceneParticleBox$Companion;
+	public fun <init> (Lcom/awakekt/awake/scene/document/SceneVec3;Lcom/awakekt/awake/scene/document/SceneVec3;)V
+	public final fun component1 ()Lcom/awakekt/awake/scene/document/SceneVec3;
+	public final fun component2 ()Lcom/awakekt/awake/scene/document/SceneVec3;
+	public final fun copy (Lcom/awakekt/awake/scene/document/SceneVec3;Lcom/awakekt/awake/scene/document/SceneVec3;)Lcom/awakekt/awake/scene/rendering/particles/SceneParticleBox;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/particles/SceneParticleBox;Lcom/awakekt/awake/scene/document/SceneVec3;Lcom/awakekt/awake/scene/document/SceneVec3;ILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/particles/SceneParticleBox;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMax ()Lcom/awakekt/awake/scene/document/SceneVec3;
+	public final fun getMin ()Lcom/awakekt/awake/scene/document/SceneVec3;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/scene/rendering/particles/SceneParticleBox$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/rendering/particles/SceneParticleBox$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/rendering/particles/SceneParticleBox;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/rendering/particles/SceneParticleBox;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/rendering/particles/SceneParticleBox$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/rendering/particles/SceneParticleBurstCycle {
+	public static final field Companion Lcom/awakekt/awake/scene/rendering/particles/SceneParticleBurstCycle$Companion;
+	public fun <init> (FFFI)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()I
+	public final fun copy (FFFI)Lcom/awakekt/awake/scene/rendering/particles/SceneParticleBurstCycle;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/particles/SceneParticleBurstCycle;FFFIILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/particles/SceneParticleBurstCycle;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getActiveSeconds ()F
+	public final fun getBurstInterval ()F
+	public final fun getBurstSize ()I
+	public final fun getCycleSeconds ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/scene/rendering/particles/SceneParticleBurstCycle$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/rendering/particles/SceneParticleBurstCycle$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/rendering/particles/SceneParticleBurstCycle;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/rendering/particles/SceneParticleBurstCycle;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/rendering/particles/SceneParticleBurstCycle$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
 public final class com/awakekt/awake/scene/rendering/particles/SceneParticleEmitter : com/awakekt/awake/scene/document/SceneComponent {
 	public static final field Companion Lcom/awakekt/awake/scene/rendering/particles/SceneParticleEmitter$Companion;
-	public fun <init> (Ljava/lang/String;IFFFFLjava/lang/Float;Lcom/awakekt/awake/scene/document/SceneVec3;FLjava/lang/Float;FFLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;IFZLcom/awakekt/awake/scene/rendering/particles/ParticleFacing;)V
-	public synthetic fun <init> (Ljava/lang/String;IFFFFLjava/lang/Float;Lcom/awakekt/awake/scene/document/SceneVec3;FLjava/lang/Float;FFLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;IFZLcom/awakekt/awake/scene/rendering/particles/ParticleFacing;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;IFFFFLjava/lang/Float;Lcom/awakekt/awake/scene/document/SceneVec3;FLjava/lang/Float;FFLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;IFZLcom/awakekt/awake/scene/rendering/particles/ParticleFacing;Lcom/awakekt/awake/scene/document/SceneVec3;ZLcom/awakekt/awake/scene/rendering/particles/SceneParticleAlphaCurve;Lcom/awakekt/awake/scene/rendering/particles/SceneParticleBurstCycle;FFZZFLjava/lang/Integer;Lcom/awakekt/awake/scene/rendering/particles/SceneParticleGround;)V
+	public synthetic fun <init> (Ljava/lang/String;IFFFFLjava/lang/Float;Lcom/awakekt/awake/scene/document/SceneVec3;FLjava/lang/Float;FFLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;IFZLcom/awakekt/awake/scene/rendering/particles/ParticleFacing;Lcom/awakekt/awake/scene/document/SceneVec3;ZLcom/awakekt/awake/scene/rendering/particles/SceneParticleAlphaCurve;Lcom/awakekt/awake/scene/rendering/particles/SceneParticleBurstCycle;FFZZFLjava/lang/Integer;Lcom/awakekt/awake/scene/rendering/particles/SceneParticleGround;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component10 ()Ljava/lang/Float;
 	public final fun component11 ()F
@@ -1515,7 +1612,18 @@ public final class com/awakekt/awake/scene/rendering/particles/SceneParticleEmit
 	public final fun component16 ()F
 	public final fun component17 ()Z
 	public final fun component18 ()Lcom/awakekt/awake/scene/rendering/particles/ParticleFacing;
+	public final fun component19 ()Lcom/awakekt/awake/scene/document/SceneVec3;
 	public final fun component2 ()I
+	public final fun component20 ()Z
+	public final fun component21 ()Lcom/awakekt/awake/scene/rendering/particles/SceneParticleAlphaCurve;
+	public final fun component22 ()Lcom/awakekt/awake/scene/rendering/particles/SceneParticleBurstCycle;
+	public final fun component23 ()F
+	public final fun component24 ()F
+	public final fun component25 ()Z
+	public final fun component26 ()Z
+	public final fun component27 ()F
+	public final fun component28 ()Ljava/lang/Integer;
+	public final fun component29 ()Lcom/awakekt/awake/scene/rendering/particles/SceneParticleGround;
 	public final fun component3 ()F
 	public final fun component4 ()F
 	public final fun component5 ()F
@@ -1523,18 +1631,25 @@ public final class com/awakekt/awake/scene/rendering/particles/SceneParticleEmit
 	public final fun component7 ()Ljava/lang/Float;
 	public final fun component8 ()Lcom/awakekt/awake/scene/document/SceneVec3;
 	public final fun component9 ()F
-	public final fun copy (Ljava/lang/String;IFFFFLjava/lang/Float;Lcom/awakekt/awake/scene/document/SceneVec3;FLjava/lang/Float;FFLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;IFZLcom/awakekt/awake/scene/rendering/particles/ParticleFacing;)Lcom/awakekt/awake/scene/rendering/particles/SceneParticleEmitter;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/particles/SceneParticleEmitter;Ljava/lang/String;IFFFFLjava/lang/Float;Lcom/awakekt/awake/scene/document/SceneVec3;FLjava/lang/Float;FFLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;IFZLcom/awakekt/awake/scene/rendering/particles/ParticleFacing;ILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/particles/SceneParticleEmitter;
+	public final fun copy (Ljava/lang/String;IFFFFLjava/lang/Float;Lcom/awakekt/awake/scene/document/SceneVec3;FLjava/lang/Float;FFLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;IFZLcom/awakekt/awake/scene/rendering/particles/ParticleFacing;Lcom/awakekt/awake/scene/document/SceneVec3;ZLcom/awakekt/awake/scene/rendering/particles/SceneParticleAlphaCurve;Lcom/awakekt/awake/scene/rendering/particles/SceneParticleBurstCycle;FFZZFLjava/lang/Integer;Lcom/awakekt/awake/scene/rendering/particles/SceneParticleGround;)Lcom/awakekt/awake/scene/rendering/particles/SceneParticleEmitter;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/particles/SceneParticleEmitter;Ljava/lang/String;IFFFFLjava/lang/Float;Lcom/awakekt/awake/scene/document/SceneVec3;FLjava/lang/Float;FFLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;IFZLcom/awakekt/awake/scene/rendering/particles/ParticleFacing;Lcom/awakekt/awake/scene/document/SceneVec3;ZLcom/awakekt/awake/scene/rendering/particles/SceneParticleAlphaCurve;Lcom/awakekt/awake/scene/rendering/particles/SceneParticleBurstCycle;FFZZFLjava/lang/Integer;Lcom/awakekt/awake/scene/rendering/particles/SceneParticleGround;ILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/particles/SceneParticleEmitter;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAcceleration ()Lcom/awakekt/awake/scene/document/SceneVec3;
 	public final fun getAdditive ()Z
 	public fun getAllowsMultiplePerNode ()Z
+	public final fun getAlphaCurve ()Lcom/awakekt/awake/scene/rendering/particles/SceneParticleAlphaCurve;
+	public final fun getBurstCount ()Ljava/lang/Integer;
+	public final fun getBurstCycle ()Lcom/awakekt/awake/scene/rendering/particles/SceneParticleBurstCycle;
 	public final fun getColor ()Lcom/awakekt/awake/scene/document/SceneColor;
 	public final fun getConeHalfAngleDegrees ()Ljava/lang/Float;
+	public final fun getConvergeToOrigin ()Z
 	public final fun getEndColor ()Lcom/awakekt/awake/scene/document/SceneColor;
 	public final fun getEndScale ()Ljava/lang/Float;
 	public final fun getFacing ()Lcom/awakekt/awake/scene/rendering/particles/ParticleFacing;
 	public final fun getFrameCount ()I
 	public final fun getFrameRate ()F
+	public final fun getGround ()Lcom/awakekt/awake/scene/rendering/particles/SceneParticleGround;
+	public final fun getInheritOrientation ()Z
 	public final fun getLifetime ()F
 	public final fun getMaxParticles ()I
 	public final fun getRadialSpeed ()F
@@ -1542,7 +1657,11 @@ public final class com/awakekt/awake/scene/rendering/particles/SceneParticleEmit
 	public final fun getSpawnRadius ()F
 	public final fun getSpawnRate ()F
 	public final fun getStartAlpha ()F
+	public final fun getStretchFactor ()F
+	public final fun getStretchWithVelocity ()Z
 	public final fun getTexture ()Ljava/lang/String;
+	public final fun getTurbulence ()F
+	public final fun getTurbulenceFrequency ()F
 	public final fun getVelocity ()Lcom/awakekt/awake/scene/document/SceneVec3;
 	public final fun getVelocityJitter ()F
 	public fun hashCode ()I
@@ -1565,8 +1684,39 @@ public final class com/awakekt/awake/scene/rendering/particles/SceneParticleEmit
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class com/awakekt/awake/scene/rendering/particles/SceneParticleEmitterKt {
-	public static final fun loadParticleSprites (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+public final class com/awakekt/awake/scene/rendering/particles/SceneParticleGround {
+	public static final field Companion Lcom/awakekt/awake/scene/rendering/particles/SceneParticleGround$Companion;
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/Float;FFLjava/util/List;)V
+	public synthetic fun <init> (Ljava/lang/Float;FFLjava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/Float;
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/Float;FFLjava/util/List;)Lcom/awakekt/awake/scene/rendering/particles/SceneParticleGround;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/particles/SceneParticleGround;Ljava/lang/Float;FFLjava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/particles/SceneParticleGround;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getColliders ()Ljava/util/List;
+	public final fun getFriction ()F
+	public final fun getGroundY ()Ljava/lang/Float;
+	public final fun getRestitution ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/scene/rendering/particles/SceneParticleGround$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/rendering/particles/SceneParticleGround$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/rendering/particles/SceneParticleGround;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/rendering/particles/SceneParticleGround;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/rendering/particles/SceneParticleGround$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
 public final class com/awakekt/awake/scene/rendering/sky/CubemapStripKt {

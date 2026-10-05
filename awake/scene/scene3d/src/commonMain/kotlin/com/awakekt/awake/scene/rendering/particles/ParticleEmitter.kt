@@ -43,8 +43,8 @@ internal class Particle : Poolable {
     /** A random `0 until frameCount` offset chosen at spawn -- added to this particle's own
      * age-derived frame index so particles sharing one emitter show DIFFERENT sprite-strip
      * frames at the same instant (desynced), instead of every particle in the emitter switching
-     * frames in lockstep. See [com.awakekt.awake.scene.rendering.systems
-     * .RenderSystem3D]'s own particle-instancing block for where this is read. */
+     * frames in lockstep. See [SceneParticleCompiler], which packs it into each instance, for where
+     * this is read. */
     var frameOffset: Int = 0
 
     override fun reset() {
@@ -87,8 +87,7 @@ internal class Particle : Poolable {
  * dust blown outward. It is ignored with [convergeToOrigin].
  *
  * [turbulence] adds a smooth flow-field offset to velocity every frame, scaled by this strength
- * and sampled at [turbulenceFrequency] -- see [com.awakekt.awake.scene.rendering
- * .systems.turbulenceOffset]. `0f` (default) is a no-op. Known limit: a cheap sine-based flow
+ * and sampled at [turbulenceFrequency] -- see [turbulenceOffset]. `0f` (default) is a no-op. Known limit: a cheap sine-based flow
  * field, not true Perlin/simplex/curl noise.
  *
  * [acceleration] is a constant world-space acceleration, in units per second squared, added to
@@ -295,8 +294,7 @@ private const val BURST_BOUNDARY_TOLERANCE = 1e-4f
  * of the last transform pass -- a lightweight "sub-emitter" for a trailing
  * effect (smoke behind a moving fireball) without a real parent/child emitter tree. `var`
  * because gameplay code re-targets it (e.g. handing an emitter off between two casters).
- * [dynamicSpawnRate], when set, is called once per [com.awakekt.awake.scene
- * .rendering.systems.ParticleSystem.update] and OVERRIDES [ParticleEmitter.spawnRate] for that
+ * [dynamicSpawnRate], when set, is called once per [ParticleSystem.update] and OVERRIDES [ParticleEmitter.spawnRate] for that
  * frame -- the context-driven emission hook: gameplay code can read live state (player speed,
  * distance to a target) and return a rate that reacts to it. `null` (default) always uses the
  * static `spawnRate`. */
@@ -413,8 +411,8 @@ class ParticleEmitter(
      * not something [reconfigure] needs to touch. */
     internal var pooledForBurst: Boolean = false
 
-    /** Reused every frame by [com.awakekt.awake.scene.rendering.systems
-     * .RenderSystem3D] to build this emitter's `RenderDrawCommand.instanceModels`/`.instanceColors`/
+    /** Reused every frame by [SceneParticleCompiler] to build this emitter's
+     * `RenderDrawCommand.instanceModels`/`.instanceColors`/
      * `.instanceFrames` -- `clear()`+refill instead of a fresh `list.filter{}.map{}` per frame,
      * the same "resize only when the count actually changes" no-per-frame-allocation rule every
      * other instanced buffer in this codebase already follows (see
@@ -433,10 +431,9 @@ class ParticleEmitter(
     internal val modelPool: MutableList<Mat4> = ArrayList(maxParticles)
     internal val colorPool: MutableList<Vec4> = ArrayList(maxParticles)
 
-    /** Reused every frame by [com.awakekt.awake.scene.rendering.systems
-     * .RenderSystem3D] to hold this frame's frustum-visible [Particle]s (a subset of [particles]),
-     * sorted back-to-front before [instanceModelsBuffer]/etc are built from it -- see that
-     * system's own `addParticleDrawCalls` doc comment. Holds `Particle` references, not floats,
+    /** Reused every frame by [SceneParticleCompiler] to hold this frame's frustum-visible [Particle]s
+     * (a subset of [particles]), sorted back-to-front before [instanceModelsBuffer]/etc are built
+     * from it -- see that class's own `appendDrawCalls` doc comment. Holds `Particle` references, not floats,
      * unlike the buffers above -- it's an intermediate filter/sort step, not GPU-bound data. */
     internal val visibleParticlesBuffer: MutableList<Particle> = ArrayList(maxParticles)
 
