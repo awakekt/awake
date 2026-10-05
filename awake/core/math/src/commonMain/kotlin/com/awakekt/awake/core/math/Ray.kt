@@ -17,6 +17,9 @@ import kotlin.math.sqrt
  * caller building one from two points ([through]) or from an unprojected screen pixel
  * ([Mat4.inverse]) has an unnormalized direction, and a "distance" measured in unnormalized
  * direction-lengths is the kind of unit that quietly disagrees with everything else.
+ *
+ * @property origin The world-space starting point of the ray.
+ * @property direction The unit vector specifying the ray's heading in world space.
  */
 data class Ray(
     val origin: com.awakekt.awake.core.math.Vec3f,
@@ -32,6 +35,12 @@ data class Ray(
         direction.z /= length
     }
 
+    /**
+     * Calculates the world-space point at [distance] along this ray from [origin].
+     *
+     * @param distance Distance along the ray in world units.
+     * @return The computed world-space position.
+     */
     fun pointAt(distance: Float): com.awakekt.awake.core.math.Vec3f = Vec3f(
         origin.x + direction.x * distance,
         origin.y + direction.y * distance,
@@ -125,6 +134,7 @@ data class Ray(
         return pointAt(fallbackDistance)
     }
 
+    /** Factory methods for constructing [Ray] instances. */
     companion object {
         private const val EPSILON = 1e-6f
 

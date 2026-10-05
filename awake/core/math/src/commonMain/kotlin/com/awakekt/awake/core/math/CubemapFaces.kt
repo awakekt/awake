@@ -30,8 +30,10 @@ data class CubemapFaceOrientation(
  * - 5: -Z (Front)
  */
 object CubemapFaces {
+    /** Number of faces in a cubemap (6). */
     const val COUNT: Int = 6
 
+    /** Canonical orientation vector pairs for each cubemap face indexed 0..5. */
     val Faces: Array<CubemapFaceOrientation> = arrayOf(
         CubemapFaceOrientation(Vec3f.RIGHT, Vec3f.DOWN),
         CubemapFaceOrientation(Vec3f.LEFT, Vec3f.DOWN),
@@ -41,12 +43,23 @@ object CubemapFaces {
         CubemapFaceOrientation(Vec3f.FORWARD, Vec3f.DOWN),
     )
 
-    /** Returns the canonical orientation for [faceIndex] in `0..5`. */
+    /**
+     * Returns the canonical orientation for [faceIndex] in `0..5`.
+     *
+     * @param faceIndex Face index from 0 to 5.
+     * @return The corresponding [CubemapFaceOrientation].
+     */
     fun orientation(faceIndex: Int): CubemapFaceOrientation =
         Faces[faceIndex.coerceIn(0, COUNT - 1)]
 
     /**
      * Builds a square-aspect 90° FOV [Lens] centered at [eye] pointing along [faceIndex].
+     *
+     * @param eye Camera viewpoint position.
+     * @param faceIndex Cubemap face index in 0..5.
+     * @param near Distance to near clipping plane.
+     * @param far Distance to far clipping plane.
+     * @return A configured [Lens] for rendering the requested cubemap face.
      */
     fun lens(
         eye: Vec3f,

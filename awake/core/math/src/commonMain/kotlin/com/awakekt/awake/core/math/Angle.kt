@@ -8,21 +8,49 @@ package com.awakekt.awake.core.math
 import kotlin.jvm.JvmInline
 import kotlin.math.PI
 
+/**
+ * Type-safe representation of a planar angle with conversions between degrees and radians.
+ *
+ * @param value The internal angle magnitude in degrees.
+ */
 @JvmInline
 value class Angle(private val value: Float) {
-    // Factory methods to create an Angle instance
+    /**
+     * Factory methods for creating [Angle] instances.
+     */
     companion object {
         private const val DEGREES_TO_RADIANS = PI.toFloat() / 180.0f
         private const val RADIANS_TO_DEGREES = 180.0f / PI.toFloat()
+
+        /**
+         * Creates an [Angle] from a measurement in degrees.
+         *
+         * @param degrees The angle magnitude in degrees.
+         * @return The [Angle] instance.
+         */
         fun fromDegrees(degrees: Float): Angle = Angle(degrees)
 
+        /**
+         * Creates an [Angle] from a measurement in radians.
+         *
+         * @param radians The angle magnitude in radians.
+         * @return The [Angle] instance.
+         */
         fun fromRadians(radians: Float): Angle = Angle(radians * RADIANS_TO_DEGREES)
     }
 
-    // Get the angle value in degrees
+    /**
+     * Converts this angle to degrees.
+     *
+     * @return The angle magnitude in degrees.
+     */
     fun toDegrees(): Float = value
 
-    // Get the angle value in radians
+    /**
+     * Converts this angle to radians.
+     *
+     * @return The angle magnitude in radians.
+     */
     fun toRadians(): Float = value * DEGREES_TO_RADIANS
 }
 

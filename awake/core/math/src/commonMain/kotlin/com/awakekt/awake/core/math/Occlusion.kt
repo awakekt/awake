@@ -14,10 +14,18 @@ import kotlin.math.min
 // per-frame clear, and cell rasterization. Upgrade path if a real scene needs multi-occluder
 // union: replace this file's flat occluder list with that grid.
 
-/** A world-space [Aabb]'s screen-space footprint, from [screenBounds] -- the rectangle its 8
+/**
+ * A world-space [Aabb]'s screen-space footprint, from [screenBounds] -- the rectangle its 8
  * corners project to, plus how close the box's nearest SURFACE POINT (not corner) is to the
  * eye. [nearestDistance] is Euclidean distance to [Lens.eye], not true view-space depth --
- * proportionate for a containment test, not a z-buffer. */
+ * proportionate for a containment test, not a z-buffer.
+ *
+ * @property minX Minimum screen-space X coordinate in pixels.
+ * @property minY Minimum screen-space Y coordinate in pixels.
+ * @property maxX Maximum screen-space X coordinate in pixels.
+ * @property maxY Maximum screen-space Y coordinate in pixels.
+ * @property nearestDistance Euclidean distance from the camera eye to the closest point on the bounding box surface.
+ */
 data class ScreenBounds(
     val minX: Float,
     val minY: Float,

@@ -12,6 +12,9 @@ import com.awakekt.awake.core.math2d.Vec2
 import kotlin.math.atan2
 import kotlin.math.sqrt
 
+/** Typealias for single-precision 3-component vector [Vec3f]. */
+typealias Vec3 = Vec3f
+
 /**
  * A mutable 3-component vector.
  *
@@ -27,11 +30,20 @@ import kotlin.math.sqrt
  * pure forms exist so expression-style code reads naturally. Picking the wrong one is a
  * silent bug in one direction (`v.normalized()` whose result is dropped does nothing), so
  * prefer the mutating form inside `System.update` and the pure form everywhere else.
+ *
+ * @property x The X component of this vector.
+ * @property y The Y component of this vector.
+ * @property z The Z component of this vector.
  */
-
-typealias Vec3 = Vec3f
-
 data class Vec3f(var x: Float = 1f, var y: Float = 1f, var z: Float = 1f) {
+    /**
+     * Sets this vector's coordinates in place.
+     *
+     * @param x The new X component.
+     * @param y The new Y component.
+     * @param z The new Z component.
+     * @return This vector for chaining without allocation.
+     */
     fun set(x: Float, y: Float, z: Float): Vec3f {
         this.x = x
         this.y = y
@@ -39,6 +51,12 @@ data class Vec3f(var x: Float = 1f, var y: Float = 1f, var z: Float = 1f) {
         return this
     }
 
+    /**
+     * Copies coordinates from [other] into this vector in place.
+     *
+     * @param other Source vector to copy from.
+     * @return This vector for chaining without allocation.
+     */
     fun set(other: Vec3f): Vec3f {
         this.x = other.x
         this.y = other.y
@@ -46,6 +64,12 @@ data class Vec3f(var x: Float = 1f, var y: Float = 1f, var z: Float = 1f) {
         return this
     }
 
+    /**
+     * Adds [other] into this vector in place.
+     *
+     * @param other The vector to add.
+     * @return This vector for chaining without allocation.
+     */
     fun add(other: Vec3f): Vec3f {
         this.x += other.x
         this.y += other.y
@@ -53,6 +77,12 @@ data class Vec3f(var x: Float = 1f, var y: Float = 1f, var z: Float = 1f) {
         return this
     }
 
+    /**
+     * Subtracts [other] from this vector in place.
+     *
+     * @param other The vector to subtract.
+     * @return This vector for chaining without allocation.
+     */
     fun sub(other: Vec3f): Vec3f {
         this.x -= other.x
         this.y -= other.y
@@ -60,6 +90,12 @@ data class Vec3f(var x: Float = 1f, var y: Float = 1f, var z: Float = 1f) {
         return this
     }
 
+    /**
+     * Multiplies all components of this vector by [scalar] in place.
+     *
+     * @param scalar Multiplier factor.
+     * @return This vector for chaining without allocation.
+     */
     fun scale(scalar: Float): Vec3f {
         this.x *= scalar
         this.y *= scalar
@@ -67,6 +103,13 @@ data class Vec3f(var x: Float = 1f, var y: Float = 1f, var z: Float = 1f) {
         return this
     }
 
+    /**
+     * Linearly interpolates this vector toward [target] by [factor] in place.
+     *
+     * @param target The target vector to interpolate toward.
+     * @param factor Interpolation progress between 0.0 (this) and 1.0 (target).
+     * @return This vector for chaining without allocation.
+     */
     fun lerp(
         target: Vec3f,
         factor: Float,
@@ -151,9 +194,21 @@ data class Vec3f(var x: Float = 1f, var y: Float = 1f, var z: Float = 1f) {
      * unchanged. Dropping the result of this call is always a no-op bug. */
     fun normalized(): Vec3f = Vec3f(x, y, z).normalize()
 
+    /**
+     * Computes the scalar dot product of this vector and [other].
+     *
+     * @param other The vector to compute dot product with.
+     * @return The scalar dot product.
+     */
     fun dot(other: Vec3f): Float =
         x * other.x + y * other.y + z * other.z
 
+    /**
+     * Computes the vector cross product of this vector and [other], returning a new vector.
+     *
+     * @param other The right vector operand.
+     * @return A new [Vec3f] orthogonal to both vectors.
+     */
     fun cross(other: Vec3f): Vec3f =
         Vec3f(
             x = y * other.z - z * other.y,
@@ -161,6 +216,12 @@ data class Vec3f(var x: Float = 1f, var y: Float = 1f, var z: Float = 1f) {
             z = x * other.y - y * other.x,
         )
 
+    /**
+     * Subtracts [other] from this vector and returns the result as a new vector.
+     *
+     * @param other Vector to subtract.
+     * @return A new [Vec3f] with the difference.
+     */
     operator fun minus(other: Vec3f): Vec3f =
         Vec3f(
             x - other.x,
@@ -168,6 +229,12 @@ data class Vec3f(var x: Float = 1f, var y: Float = 1f, var z: Float = 1f) {
             z - other.z,
         )
 
+    /**
+     * Adds [other] to this vector and returns the result as a new vector.
+     *
+     * @param other Vector to add.
+     * @return A new [Vec3f] with the sum.
+     */
     operator fun plus(other: Vec3f): Vec3f =
         Vec3f(
             x + other.x,
@@ -175,6 +242,12 @@ data class Vec3f(var x: Float = 1f, var y: Float = 1f, var z: Float = 1f) {
             z + other.z,
         )
 
+    /**
+     * Multiplies this vector by [scalar] and returns the result as a new vector.
+     *
+     * @param scalar Multiplier factor.
+     * @return A new [Vec3f] scaled by [scalar].
+     */
     operator fun times(scalar: Float): Vec3f =
         Vec3f(x * scalar, y * scalar, z * scalar)
 
@@ -188,19 +261,49 @@ data class Vec3f(var x: Float = 1f, var y: Float = 1f, var z: Float = 1f) {
      * (yaw 0 looks along [FORWARD], +yaw turns toward [RIGHT], +pitch tilts toward [UP]).
      */
     companion object {
+        /** Returns a fresh zero vector `(0, 0, 0)`. */
         val ZERO: Vec3f get() = Vec3f(0f, 0f, 0f)
+
+        /** Returns a fresh unit vector `(1, 1, 1)`. */
         val ONE: Vec3f get() = Vec3f(1f, 1f, 1f)
 
+        /** Returns a fresh unit vector pointing upward `(0, 1, 0)`. */
         val UP: Vec3f get() = Vec3f(0f, 1f, 0f)
+
+        /** Returns a fresh unit vector pointing downward `(0, -1, 0)`. */
         val DOWN: Vec3f get() = Vec3f(0f, -1f, 0f)
+
+        /** Returns a fresh unit vector pointing right `(1, 0, 0)`. */
         val RIGHT: Vec3f get() = Vec3f(1f, 0f, 0f)
+
+        /** Returns a fresh unit vector pointing left `(-1, 0, 0)`. */
         val LEFT: Vec3f get() = Vec3f(-1f, 0f, 0f)
+
+        /** Returns a fresh unit vector pointing forward `(0, 0, -1)`. */
         val FORWARD: Vec3f get() = Vec3f(0f, 0f, -1f)
+
+        /** Returns a fresh unit vector pointing backward `(0, 0, 1)`. */
         val BACK: Vec3f get() = Vec3f(0f, 0f, 1f)
     }
 }
 
+/**
+ * A mutable 4-component single-precision floating-point vector or homogeneous coordinate.
+ *
+ * @property x The X component of this vector.
+ * @property y The Y component of this vector.
+ * @property z The Z component of this vector.
+ * @property w The W component of this vector.
+ */
 data class Vec4(var x: Float = 1f, var y: Float = 1f, var z: Float = 1f, var w: Float = 1f) {
+    /**
+     * Sets all four components of this vector in place.
+     *
+     * @param x The new X component.
+     * @param y The new Y component.
+     * @param z The new Z component.
+     * @param w The new W component.
+     */
     operator fun set(x: Float, y: Float, z: Float, w: Float) {
         this.x = x
         this.y = y
@@ -208,8 +311,20 @@ data class Vec4(var x: Float = 1f, var y: Float = 1f, var z: Float = 1f, var w: 
         this.w = w
     }
 
+    /**
+     * Computes the 4D scalar dot product of this vector and [other].
+     *
+     * @param other The vector to compute dot product with.
+     * @return The scalar dot product.
+     */
     fun dot(other: Vec4): Float = x * other.x + y * other.y + z * other.z + w * other.w
 
+    /**
+     * Subtracts [other] from this vector and returns the result as a new vector.
+     *
+     * @param other Vector to subtract.
+     * @return A new [Vec4] with the difference.
+     */
     operator fun minus(other: Vec4): Vec4 = Vec4(x - other.x, y - other.y, z - other.z, w - other.w)
 
     /**
@@ -229,12 +344,36 @@ data class Vec4(var x: Float = 1f, var y: Float = 1f, var z: Float = 1f, var w: 
         other.m30 * x + other.m31 * y + other.m32 * z + other.m33 * w,
     )
 
+    /**
+     * Multiplies all four components of this vector by [scalar] and returns the result as a new vector.
+     *
+     * @param scalar Multiplier factor.
+     * @return A new [Vec4] scaled by [scalar].
+     */
     operator fun times(scalar: Float): Vec4 = Vec4(x * scalar, y * scalar, z * scalar, w * scalar)
 
+    /**
+     * Adds [other] to this vector and returns the result as a new vector.
+     *
+     * @param other Vector to add.
+     * @return A new [Vec4] with the sum.
+     */
     operator fun plus(other: Vec4): Vec4 = Vec4(x + other.x, y + other.y, z + other.z, w + other.w)
 
+    /**
+     * Computes the 3D length `sqrt(x*x + y*y + z*z)` ignoring the W component.
+     *
+     * @return The 3D Euclidean magnitude.
+     */
     fun length3(): Float = sqrt(x * x + y * y + z * z)
 
+    /**
+     * Projects this homogeneous clip coordinate into screen pixel coordinates.
+     *
+     * @param screenWidth Viewport width in pixels.
+     * @param screenHeight Viewport height in pixels.
+     * @return Screen pixel coordinates as a 2D vector.
+     */
     fun pixelCoords(screenWidth: Int, screenHeight: Int): Vec2 {
         // Convert clip coordinates to normalized device coordinates (NDC)
         val ndcX = x / w
@@ -246,6 +385,12 @@ data class Vec4(var x: Float = 1f, var y: Float = 1f, var z: Float = 1f, var w: 
         return Vec2(pixelX, pixelY)
     }
 
+    /**
+     * Normalizes clip coordinates by performing perspective divide and transforms them in place into viewport pixels.
+     *
+     * @param viewportWidth Viewport width in pixels.
+     * @param viewportHeight Viewport height in pixels.
+     */
     fun makePixelCoords(viewportWidth: Int, viewportHeight: Int) {
         // Make coordinates as homogeneous
         x /= w

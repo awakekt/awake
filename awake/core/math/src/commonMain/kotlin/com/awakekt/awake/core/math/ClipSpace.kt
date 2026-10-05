@@ -27,27 +27,20 @@ package com.awakekt.awake.core.math
  * convention-free. The active [com.awakekt.awake.render.renderer.Renderer] owns
  * the convention and supplies it when it builds a matrix, so a scene, a demo or a test cannot
  * bake in the wrong one.
+ *
+ * @property flipY Whether the projection's Y scale must be negated because the API's NDC has +Y down.
+ * @property depthZeroToOne Whether NDC depth spans `0 .. 1` rather than OpenGL's `-1 .. 1`.
  */
 enum class ClipSpace(
-    /**
-     * Whether the projection's Y scale must be negated because the API's NDC has +Y down.
-     *
-     * Negating Y also **reverses triangle winding**. Both backends currently set
-     * `cullMode = NONE`, so this is inert -- but the moment face culling is enabled as a
-     * perf win, a [flipY] backend needs its pipeline's front-face winding inverted to match,
-     * or it will cull exactly the faces it should keep.
-     */
     val flipY: Boolean,
-    /**
-     * Whether NDC depth spans `0 .. 1` rather than OpenGL's `-1 .. 1`.
-     *
-     * The depth *buffer* is `0 .. 1` on every backend regardless; this is about what the
-     * projection must produce so nothing is clipped. Keep the depth clear value (1.0) and
-     * compare op (`Less`) in step with it -- a reverse-Z setup would flip both.
-     */
     val depthZeroToOne: Boolean,
 ) {
+    /** OpenGL normalized device coordinate convention (+Y up, Z in `[-1..1]`). */
     OpenGl(flipY = false, depthZeroToOne = false),
+
+    /** Vulkan normalized device coordinate convention (+Y down, Z in `[0..1]`). */
     Vulkan(flipY = true, depthZeroToOne = true),
+
+    /** WebGPU/DirectX normalized device coordinate convention (+Y up, Z in `[0..1]`). */
     WebGpu(flipY = false, depthZeroToOne = true),
 }

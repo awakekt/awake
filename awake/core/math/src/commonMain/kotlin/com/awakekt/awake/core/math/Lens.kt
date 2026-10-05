@@ -21,6 +21,13 @@ import kotlin.math.tan
  * [com.awakekt.awake.render.renderer.Renderer] owns that (it owns the API), and
  * passes its [ClipSpace] to [viewProjectionMatrix] at the moment the matrix is built. That is
  * why a scene, a demo or a test cannot bake in the wrong convention -- it never supplies one.
+ *
+ * @property eye Position of the camera in world space.
+ * @property center Look-at target point in world space.
+ * @property up Normalized up direction vector.
+ * @property fovYRadians Vertical field of view in radians.
+ * @property near Distance to the near clipping plane.
+ * @property far Distance to the far clipping plane.
  */
 class Lens(
     var eye: com.awakekt.awake.core.math.Vec3f,
@@ -45,7 +52,13 @@ class Lens(
     /** An enum plus a separate [orthoHalfHeight] rather than a sealed type carrying the
      * half-height: camera-driver systems reassign this every frame, and a variant with a
      * payload would allocate there (core-math skill Rule 2). */
-    enum class Projection { Perspective, Orthographic }
+    enum class Projection {
+        /** Perspective projection exhibiting depth convergence and distance foreshortening. */
+        Perspective,
+
+        /** Orthographic parallel projection preserving parallel lines and scale across depth. */
+        Orthographic,
+    }
 
     /** Returns `view * projection` in Mat4's own (Kotlin-operator) multiplication order,
      * which -- per [Mat4.times]'s convention (`A * B` computes the conventional `B * A`) --
@@ -89,6 +102,7 @@ class Lens(
         return view * projectionMatrix
     }
 
+    /** Factory and configuration defaults for [Lens]. */
     companion object {
         /**
          * The standard perspective lens, in the units people actually think in: field of view
@@ -117,8 +131,13 @@ class Lens(
             far = far,
         )
 
+        /** Default vertical field of view in degrees. */
         const val DEFAULT_FOV_DEGREES = 45f
+
+        /** Default distance to the near clipping plane in world units. */
         const val DEFAULT_NEAR = 0.1f
+
+        /** Default distance to the far clipping plane in world units. */
         const val DEFAULT_FAR = 100f
 
         /** What the default perspective lens frames at [DEFAULT_EYE_DISTANCE], so an untouched

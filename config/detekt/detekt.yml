@@ -138,6 +138,8 @@ comments:
       - '**/awake/core/geometry/**'
       - '**/awake/core/io/**'
       - '**/awake/core/text/**'
+      - '**/awake/core/pool/**'
+      - '**/awake/core/math/**'
     excludes: *testSourceSetExcludes
     searchInNestedClass: true
     searchInInnerClass: true

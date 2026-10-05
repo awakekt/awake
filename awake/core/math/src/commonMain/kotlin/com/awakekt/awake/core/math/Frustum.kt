@@ -14,6 +14,13 @@ import kotlin.math.tan
  * [Lens.eye]: `[nearBL, nearBR, nearTR, nearTL, farBL, farBR, farTR, farTL]`.
  */
 object Frustum {
+    /**
+     * Computes the 8 world-space corner points of the view frustum for [camera] at [aspect].
+     *
+     * @param camera The lens providing eye, target, up orientation, and projection parameters.
+     * @param aspect The aspect ratio (width / height) of the viewport.
+     * @return The 8 corner points ordered near-then-far, each quad counter-clockwise starting bottom-left.
+     */
     fun corners(camera: Lens, aspect: Float): List<com.awakekt.awake.core.math.Vec3f> {
         val forward = (camera.center - camera.eye).normalized()
         val right = forward.cross(camera.up).normalized()
