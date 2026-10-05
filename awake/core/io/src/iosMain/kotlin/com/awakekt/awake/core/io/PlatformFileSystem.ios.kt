@@ -23,6 +23,12 @@ import platform.Foundation.NSUserDomainMask
 import platform.Foundation.create
 import platform.posix.memcpy
 
+/**
+ * Creates the default platform filesystem rooted at [root] using iOS Foundation.
+ *
+ * @param root The optional root path string for the filesystem, or null to default to the app documents directory.
+ * @return The iOS-backed [FileSystem] instance.
+ */
 actual fun createPlatformFileSystem(root: String?): FileSystem =
     IosFileSystem(root ?: defaultIosRoot())
 

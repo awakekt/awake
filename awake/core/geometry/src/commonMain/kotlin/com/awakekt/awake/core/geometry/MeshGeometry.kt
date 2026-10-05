@@ -13,6 +13,10 @@ import com.awakekt.awake.core.math.Aabb
  * abstraction itself. [format] declares [vertices]' actual interleaved layout (attribute
  * order/offsets, stride) -- defaults to [VertexFormat.PositionColorUv], the layout every
  * pre-existing mesh already used before this field existed, so no caller needs to change.
+ *
+ * @property vertices Interleaved vertex attribute float values.
+ * @property indices Index buffer defining triangle vertex connectivity.
+ * @property format Vertex format declaration describing attribute offsets and stride.
  */
 data class MeshGeometry(
     val vertices: FloatArray,

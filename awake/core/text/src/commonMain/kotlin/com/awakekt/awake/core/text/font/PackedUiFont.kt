@@ -53,6 +53,12 @@ internal interface PackedUiFontData {
     val advancesEm: FloatArray
 }
 
+/**
+ * A UI font implementation backed by pre-baked packed glyph atlas data.
+ *
+ * @param data The underlying packed font data.
+ * @property cellSize The base cell size in pixels for this font instance.
+ */
 class PackedUiFont internal constructor(
     private val data: PackedUiFontData,
     override val cellSize: Int = data.baseCellSize,

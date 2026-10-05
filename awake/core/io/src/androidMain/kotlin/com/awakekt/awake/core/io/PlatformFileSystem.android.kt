@@ -10,6 +10,12 @@ package com.awakekt.awake.core.io
 import java.io.File
 import kotlin.concurrent.thread
 
+/**
+ * Creates the default platform filesystem rooted at [root] using Java/Android File APIs.
+ *
+ * @param root The optional root path string for the filesystem, or null to default to the working directory.
+ * @return The Android-backed [FileSystem] instance.
+ */
 actual fun createPlatformFileSystem(root: String?): FileSystem =
     AndroidFileSystem(File(root ?: ".").absoluteFile.normalize())
 

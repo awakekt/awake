@@ -20,6 +20,12 @@ import java.nio.file.WatchEvent
 import java.nio.file.WatchKey
 import kotlin.concurrent.thread
 
+/**
+ * Creates the default platform filesystem rooted at [root] using Java NIO.
+ *
+ * @param root The optional root path string for the filesystem, or null to default to the working directory.
+ * @return The NIO-backed [FileSystem] instance.
+ */
 actual fun createPlatformFileSystem(root: String?): FileSystem =
     NioFileSystem(Path.of(root ?: ".").toAbsolutePath().normalize())
 

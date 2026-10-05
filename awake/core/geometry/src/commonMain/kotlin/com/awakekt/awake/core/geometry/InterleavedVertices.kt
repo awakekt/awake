@@ -29,6 +29,9 @@ import com.awakekt.awake.core.math.Vec3f
  * vertices.fill(VertexSemantic.Color, 1f, 1f, 1f)
  * return vertices.build(indices)
  * ```
+ *
+ * @property format Vertex format declaring semantic attributes and byte layout.
+ * @property vertexCount Total number of vertices reserved in the buffer.
  */
 class InterleavedVertices(val format: VertexFormat, val vertexCount: Int) {
     private val stride = format.strideFloats
@@ -50,11 +53,35 @@ class InterleavedVertices(val format: VertexFormat, val vertexCount: Int) {
     /** Whether this format carries [semantic] at all, for a producer with more data than slots. */
     fun has(semantic: VertexSemantic): Boolean = offsets[semantic.ordinal] >= 0
 
+    /**
+     * Writes a single-component scalar value for [semantic] at the given [vertex] index.
+     *
+     * @param vertex Zero-based vertex index.
+     * @param semantic Semantic vertex attribute to write.
+     * @param x Scalar component value.
+     */
     fun put(vertex: Int, semantic: VertexSemantic, x: Float) = write(vertex, semantic, x, 0f, 0f, 0f, 1)
 
+    /**
+     * Writes a two-component vector value for [semantic] at the given [vertex] index.
+     *
+     * @param vertex Zero-based vertex index.
+     * @param semantic Semantic vertex attribute to write.
+     * @param x First vector component.
+     * @param y Second vector component.
+     */
     fun put(vertex: Int, semantic: VertexSemantic, x: Float, y: Float) =
         write(vertex, semantic, x, y, 0f, 0f, 2)
 
+    /**
+     * Writes a three-component vector value for [semantic] at the given [vertex] index.
+     *
+     * @param vertex Zero-based vertex index.
+     * @param semantic Semantic vertex attribute to write.
+     * @param x First vector component.
+     * @param y Second vector component.
+     * @param z Third vector component.
+     */
     fun put(vertex: Int, semantic: VertexSemantic, x: Float, y: Float, z: Float) =
         write(vertex, semantic, x, y, z, 0f, 3)
 
@@ -72,6 +99,16 @@ class InterleavedVertices(val format: VertexFormat, val vertexCount: Int) {
         if (color != null && has(VertexSemantic.Color)) put(vertex, VertexSemantic.Color, color)
     }
 
+    /**
+     * Writes a four-component vector value for [semantic] at the given [vertex] index.
+     *
+     * @param vertex Zero-based vertex index.
+     * @param semantic Semantic vertex attribute to write.
+     * @param x First vector component.
+     * @param y Second vector component.
+     * @param z Third vector component.
+     * @param w Fourth vector component.
+     */
     @Suppress("LongParameterList") // A vec4 is four components; naming them is the point.
     fun put(vertex: Int, semantic: VertexSemantic, x: Float, y: Float, z: Float, w: Float) =
         write(vertex, semantic, x, y, z, w, 4)
@@ -119,6 +156,12 @@ class InterleavedVertices(val format: VertexFormat, val vertexCount: Int) {
     /** The packed buffer itself, for a caller that wants the floats rather than a [MeshGeometry]. */
     fun toFloatArray(): FloatArray = floats
 
+    /**
+     * Constructs an immutable [MeshGeometry] combining the written interleaved vertex buffer with [indices].
+     *
+     * @param indices Index array defining mesh topology triangles.
+     * @return Newly created mesh geometry instance.
+     */
     fun build(indices: IntArray): MeshGeometry = MeshGeometry(floats, indices, format)
 
     @Suppress("LongParameterList") // Four components and an arity; the overloads above are the API.
