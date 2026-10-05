@@ -364,23 +364,30 @@ object DrawRunCoalescer {
         return runs
     }
 
+    /** Returns whether a rectangle at ([x], [y], [w], [h]) is fully within [safeInteriorRect], avoiding clipping. */
     fun canSkipExactClip(safeInteriorRect: Rectangle?, x: Float, y: Float, w: Float, h: Float): Boolean =
         canSkipExactClip(safeInteriorRect, Rectangle(x, y, w, h))
 
+    /** Returns whether [bounds] is fully contained within [safeInteriorRect], avoiding exact path clipping. */
     fun canSkipExactClip(safeInteriorRect: Rectangle?, bounds: Rectangle): Boolean =
         safeInteriorRect != null && safeInteriorRect.contains(bounds)
 
+    /** Returns whether all [paths] can be converted into convex clip contours. */
     fun canExactClip(paths: List<DrawPath>): Boolean = paths.isNotEmpty() && paths.all { it.convexClipContour() != null }
 
+    /** Clips [mesh] against convex contours extracted from [activePathClips]. */
     fun exactClip(mesh: TriangleMesh, activePathClips: List<DrawPath>): TriangleMesh =
         if (canExactClip(activePathClips)) mesh.clipToConvexPaths(activePathClips) else mesh
 
+    /** Clips textured [mesh] against convex contours extracted from [activePathClips]. */
     fun exactClip(mesh: TexturedTriangleMesh, activePathClips: List<DrawPath>): TexturedTriangleMesh =
         if (canExactClip(activePathClips)) mesh.clipToConvexPaths(activePathClips) else mesh
 
+    /** Clips vertex-colored [mesh] against convex contours extracted from [activePathClips]. */
     fun exactClipColored(mesh: ColoredTriangleMesh, activePathClips: List<DrawPath>): ColoredTriangleMesh =
         if (canExactClip(activePathClips)) mesh.clipToConvexPaths(activePathClips) else mesh
 
+    /** Builds staged quad vertex and index buffers from a list of solid color [quads]. */
     fun buildQuadRun(quads: List<DrawCommand.Quad>): StagedDrawRun.QuadRun {
         val vertices = FloatArray(quads.size * VertexFormats2D.VERTICES_PER_QUAD * VertexFormats2D.FLOATS_PER_VERTEX)
         val indices = IntArray(quads.size * VertexFormats2D.INDICES_PER_QUAD)
@@ -406,6 +413,7 @@ object DrawRunCoalescer {
         return StagedDrawRun.QuadRun(vertices, indices)
     }
 
+    /** Builds staged quad vertex and index buffers from a list of gradient-filled [quads]. */
     fun buildGradientQuadRun(quads: List<DrawCommand.GradientQuad>): StagedDrawRun.QuadRun {
         val vertices = FloatArray(quads.size * VertexFormats2D.VERTICES_PER_QUAD * VertexFormats2D.FLOATS_PER_VERTEX)
         val indices = IntArray(quads.size * VertexFormats2D.INDICES_PER_QUAD)
@@ -431,6 +439,7 @@ object DrawRunCoalescer {
         return StagedDrawRun.QuadRun(vertices, indices)
     }
 
+    /** Builds staged rounded quad vertex and index buffers from a list of [quads]. */
     fun buildRoundedQuadRun(quads: List<DrawCommand.RoundedQuad>): StagedDrawRun.RoundedQuadRun {
         val floatsPerVertex = VertexFormats2D.ROUNDED_QUAD_FLOATS_PER_VERTEX
         val vertices = FloatArray(quads.size * VertexFormats2D.VERTICES_PER_QUAD * floatsPerVertex)
@@ -460,6 +469,7 @@ object DrawRunCoalescer {
         return StagedDrawRun.RoundedQuadRun(vertices, indices)
     }
 
+    /** Builds staged rounded quad vertex and index buffers for blurred box [shadows]. */
     fun buildShadowQuadRun(shadows: List<DrawCommand.ShadowQuad>): StagedDrawRun.RoundedQuadRun {
         val floatsPerVertex = VertexFormats2D.ROUNDED_QUAD_FLOATS_PER_VERTEX
         val vertices = FloatArray(shadows.size * VertexFormats2D.VERTICES_PER_QUAD * floatsPerVertex)
@@ -509,6 +519,7 @@ object DrawRunCoalescer {
         return StagedDrawRun.RoundedQuadRun(vertices, indices)
     }
 
+    /** Builds staged glyph vertex and index buffers from a list of text font [glyphs]. */
     fun buildGlyphRun(glyphs: List<DrawCommand.Glyph>): StagedDrawRun.GlyphRun {
         val glyphVertices = FloatArray(glyphs.size * VertexFormats2D.VERTICES_PER_QUAD * VertexFormats2D.GLYPH_FLOATS_PER_VERTEX)
         val glyphIndices = IntArray(glyphs.size * VertexFormats2D.INDICES_PER_QUAD)
@@ -534,6 +545,7 @@ object DrawRunCoalescer {
         return StagedDrawRun.GlyphRun(glyphVertices, glyphIndices)
     }
 
+    /** Builds a staged texture run from [textures] clipped against [activePathClips]. */
     fun buildTextureRun(
         textures: List<DrawCommand.Texture>,
         activePathClips: List<DrawPath>,
@@ -562,6 +574,7 @@ object DrawRunCoalescer {
         return StagedDrawRun.TextureRun(primitives)
     }
 
+    /** Generates a textured quad mesh for a rectangle at ([x], [y], [w], [h]) with UV bounds. */
     fun texturedQuadMesh(
         x: Float,
         y: Float,
@@ -602,6 +615,7 @@ object DrawRunCoalescer {
         )
     }
 
+    /** Lowers a textured triangle [mesh] into vertex and index buffers. */
     fun texturedGeometryBuffers(
         mesh: TexturedTriangleMesh,
         color: Color,
