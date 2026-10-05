@@ -15,11 +15,24 @@ import com.awakekt.awake.core.geometry.GpuDataShape
  * not load-bearing; the layout's is.
  */
 object SkyboxFields {
+    /** Inverse view-projection matrix used to reconstruct world-space ray directions for skybox dome rendering. */
     val InverseViewProjection = UniformField("inverseViewProjection", GpuDataShape.Mat4)
+
+    /** Camera eye position in world space. */
     val CameraEye = UniformField("cameraEye", GpuDataShape.Vec4)
+
+    /** World-space direction towards the primary sun light source. */
     val SunDirection = UniformField("sunDirection", GpuDataShape.Vec4)
+
+    /** Clear sky color at the horizon. */
     val HorizonColor = UniformField("horizonColor", GpuDataShape.Vec4)
+
+    /** Clear sky color at the zenith. */
     val ZenithColor = UniformField("zenithColor", GpuDataShape.Vec4)
+
+    /** Sunlight disc and halo tint color. */
     val SunColor = UniformField("sunColor", GpuDataShape.Vec4)
+
+    /** Moon disc and nighttime ambient tint color. */
     val MoonColor = UniformField("moonColor", GpuDataShape.Vec4)
 }

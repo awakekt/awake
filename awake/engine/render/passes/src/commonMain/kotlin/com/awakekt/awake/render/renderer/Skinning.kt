@@ -24,6 +24,7 @@ const val MAX_JOINTS = 64
  * drawn per call on this path; the instanced variant moves it to a per-instance storage buffer
  * instead. */
 object SkinnedFields {
+    /** Uniform array of transformation matrices for up to [MAX_JOINTS] skeleton joints. */
     val JointPalette = UniformField(
         "jointPalette",
         com.awakekt.awake.core.geometry.GpuDataShape.Mat4,
@@ -31,6 +32,7 @@ object SkinnedFields {
     )
 }
 
+/** Uniform layout for single-draw skinned meshes containing MVP, joint matrices, model matrix, material factors, and exposure. */
 val SkinnedUniformLayout = UniformLayout(
     UniformFields.Mvp,
     SkinnedFields.JointPalette,

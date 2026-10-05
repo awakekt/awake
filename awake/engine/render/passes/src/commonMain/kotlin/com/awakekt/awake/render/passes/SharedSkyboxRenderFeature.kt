@@ -35,7 +35,9 @@ class SharedSkyboxRenderFeature {
         recorder.draw(FULLSCREEN_TRIANGLE_VERTICES, 1)
     }
 
+    /** Companion object containing skybox rendering geometry constants. */
     companion object {
+        /** Vertex count for rendering a procedurally generated fullscreen triangle. */
         const val FULLSCREEN_TRIANGLE_VERTICES = 3
     }
 }

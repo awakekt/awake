@@ -31,6 +31,19 @@ import com.awakekt.awake.render.renderer.RenderViewport
  * [GpuPassInput] and must not repeat camera, light, sorting, or pass-planning policy.
  */
 object ScenePassCompiler {
+    /**
+     * Compiles scene render requests and camera parameters into an immutable backend-neutral [GpuPassInput].
+     *
+     * @param lens Camera lens specifying projection and view parameters.
+     * @param drawCalls List of draw commands to prepare and sort.
+     * @param light Optional primary directional/scene light source.
+     * @param environment Environment and atmospheric parameters.
+     * @param clipSpace Target graphics API clip space coordinates.
+     * @param aspect Viewport aspect ratio (width / height).
+     * @param viewport Optional viewport bounding configuration.
+     * @param drawPreparer Optional backend-provided GPU draw preparer.
+     * @return Prepared [GpuPassInput] containing subpasses and uniform blocks ready for recording.
+     */
     fun compile(
         lens: Lens,
         drawCalls: List<RenderDrawCommand>,

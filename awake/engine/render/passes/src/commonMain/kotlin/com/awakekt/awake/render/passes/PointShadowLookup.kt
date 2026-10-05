@@ -8,7 +8,12 @@ package com.awakekt.awake.render.passes
 import com.awakekt.awake.core.math.Vec3f
 import kotlin.math.abs
 
-/** Cubemap face and UV lookup derived from a light-to-fragment direction. */
+/**
+ * Cubemap face and UV lookup derived from a light-to-fragment direction.
+ *
+ * @property face Zero-based index of the cubemap face (0..5: +X, -X, +Y, -Y, +Z, -Z).
+ * @property uv Projected UV coordinates in 0..1 alongside radial depth.
+ */
 data class PointShadowLookup(val face: Int, val uv: Vec3f)
 
 /**

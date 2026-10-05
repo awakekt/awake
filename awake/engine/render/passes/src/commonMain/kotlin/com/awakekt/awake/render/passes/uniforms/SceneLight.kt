@@ -16,16 +16,25 @@ import com.awakekt.awake.render.renderer.MAX_SHADOW_CASCADES
  * windowed to that radius, so a light contributes nothing past it -- a hard cutoff rather than
  * an asymptote, because the shader iterates a fixed slot count and a light that never quite
  * ends can never be culled out of one.
+ *
+ * @property position World-space position of the point light.
+ * @property color Intensity-multiplied light color.
+ * @property range Attenuation radius in world units.
+ * @property shadowBaseLayer Base layer in the shared six-face point-shadow target, or -1 when unshadowed.
  */
 data class PointLight(
     val position: Vec3f,
     val color: Vec3f,
     val range: Float,
-    /** Base layer in the shared six-face point-shadow target, or -1 when unshadowed. */
     val shadowBaseLayer: Int = -1,
 )
 
-/** One point light's six depth projections in the shared layered shadow target. */
+/**
+ * One point light's six depth projections in the shared layered shadow target.
+ *
+ * @property baseLayer Base layer index in the shadow cubemap array.
+ * @property viewProjections The six view-projection matrices for the cubemap faces.
+ */
 data class PointShadowLight(
     val baseLayer: Int,
     val viewProjections: List<Mat4>,

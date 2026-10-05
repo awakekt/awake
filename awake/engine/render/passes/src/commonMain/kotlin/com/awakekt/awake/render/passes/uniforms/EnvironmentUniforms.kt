@@ -16,11 +16,17 @@ import com.awakekt.awake.render.command.GpuEnvironmentState
  * strictly decoupled from any ECS scene-graph or authoring components.
  */
 data class EnvironmentUniforms(
+    /** Whether the procedural sky should be drawn. */
     val showSky: Boolean = false,
+    /** Clear sky color at the horizon. */
     val horizonColor: Color = DEFAULT_HORIZON_COLOR,
+    /** Clear sky color at the zenith (top of the sky hemisphere). */
     val zenithColor: Color = DEFAULT_ZENITH_COLOR,
+    /** Atmospheric exponential fog density factor (0 = no fog). */
     val fogDensity: Float = 0f,
+    /** Atmospheric fog color. */
     val fogColor: Color = DEFAULT_FOG_COLOR,
+    /** Whether directional shadow cascades are rendered. */
     val shadowsEnabled: Boolean = true,
     /** What the scene shaders draw instead of their lit colour. */
     val debugView: RenderDebugView = RenderDebugView.Off,
@@ -43,7 +49,9 @@ data class EnvironmentUniforms(
         require(exposure > 0f && exposure.isFinite()) { "exposure must be finite and above 0; was $exposure." }
     }
 
+    /** Companion object containing default environment uniform instances. */
     companion object {
+        /** Default environment uniform configuration. */
         val Default = EnvironmentUniforms()
     }
 

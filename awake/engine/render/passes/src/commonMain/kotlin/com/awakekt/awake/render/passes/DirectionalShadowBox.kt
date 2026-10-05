@@ -17,13 +17,25 @@ import kotlin.math.abs
  * path is a per-frame bounding-box (or camera-frustum) fit once a demo's content moves far
  * from origin. */
 const val SHADOW_LIGHT_DISTANCE = 15f
+
+/** Default half-extent for the orthographic shadow projection volume. */
 const val SHADOW_ORTHO_HALF_SIZE = 12f
+
+/** Default near clipping plane distance for the directional shadow projection. */
 const val SHADOW_NEAR = 0.1f
+
+/** Default far clipping plane distance for the directional shadow projection. */
 const val SHADOW_FAR = 40f
 
-/** [view]/[projection] kept separate (not just their product) so a caller that needs the
+/**
+ * [view]/[projection] kept separate (not just their product) so a caller that needs the
  * combined matrix ([viewProjection], the real shadow pass) and a caller that needs the raw
- * [view] to invert (the debug visualizer's box wireframe) both work from one function. */
+ * [view] to invert (the debug visualizer's box wireframe) both work from one function.
+ *
+ * @property eye Light source eye position in world space.
+ * @property view View matrix looking from the light source towards the origin.
+ * @property projection Orthographic projection matrix for the shadow volume.
+ */
 data class DirectionalShadowBox(val eye: Vec3f, val view: Mat4, val projection: Mat4) {
     val viewProjection: Mat4 get() = view * projection
 }

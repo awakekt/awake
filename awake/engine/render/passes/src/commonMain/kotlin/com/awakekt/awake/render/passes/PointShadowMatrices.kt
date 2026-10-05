@@ -12,7 +12,14 @@ import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math.times
 import kotlin.math.PI
 
-/** The six light-space views needed to render one point light into a cubemap. */
+/**
+ * The six light-space views needed to render one point light into a cubemap.
+ *
+ * @property position Light position in world space.
+ * @property nearPlane Distance to the near clipping plane.
+ * @property farPlane Distance to the far clipping plane (point light range).
+ * @property viewProjections The six light-space view-projection matrices for the cubemap faces.
+ */
 data class PointShadowMatrices(
     val position: Vec3f,
     val nearPlane: Float,

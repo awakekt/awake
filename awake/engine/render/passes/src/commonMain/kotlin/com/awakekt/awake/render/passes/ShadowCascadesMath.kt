@@ -258,6 +258,8 @@ const val DEFAULT_SHADOW_MAP_SIZE = 2048
  * must apply the same bias or the same scene renders differently lit per backend.
  */
 const val SHADOW_DEPTH_BIAS_CONSTANT = 4f
+
+/** Slope-scaled rasterizer depth bias applied when rendering shadow cascades. */
 const val SHADOW_DEPTH_BIAS_SLOPE = 2f
 
 /** Extra depth in front of and behind a slice, as a fraction of its radius, so a caster outside
