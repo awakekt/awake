@@ -35,6 +35,17 @@ Awake-owned UI/runtime framework. They take precedence over generic `kmp-*` skil
 When a task spans both systems, route the Awake-owned boundary first and explicitly
 identify any generic KMP/Compose follow-up.
 
+## Scene is the wrapper, not the home for capabilities
+
+Awake is a library first. `awake:scene:*` binds capabilities into the ECS scene graph and the scene
+document: a scene schema, its binding, the mapping to the capability's types, and the system that runs
+the capability over a `World`. The capability itself, an algorithm or behaviour with an API of its own
+(a simulation, sampling, culling, a clock), lives in a module outside `awake/scene/` and depends on no
+`awake:scene` module; `./gradlew verifyCapabilityLayering` enforces it. Before you add to or change
+anything under `awake/scene/`, read "What belongs in a scene module" in `awake/scene/README.md` and
+activate `awake-framework-boundary`. A capability that still lives in a scene module is separated
+first, not extended in place.
+
 ## Agent skill bundles
 
 Awake architecture lives in `docs/*`; agent execution guidance is installed from immutable sources,
