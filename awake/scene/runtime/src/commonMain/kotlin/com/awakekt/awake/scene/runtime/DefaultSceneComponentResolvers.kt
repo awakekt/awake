@@ -5,23 +5,22 @@
  */
 package com.awakekt.awake.scene.runtime
 
-import com.awakekt.awake.scene.canvas.CanvasElementBinding
 import com.awakekt.awake.scene.binding.PrefabLinkBinding
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.binding.SceneComponentResolver
+import com.awakekt.awake.scene.canvas.CanvasElementBinding
 import com.awakekt.awake.scene.core.transform.SceneSpinControl
 import com.awakekt.awake.scene.core.transform.SpinControl
 import com.awakekt.awake.scene.core.transform.SpinControlBinding
 import com.awakekt.awake.scene.core.transform.StaticTransformBinding
+import com.awakekt.awake.scene.particles.ParticleEmitterBinding
 import com.awakekt.awake.scene.rendering.AmbientLight
-import com.awakekt.awake.scene.rendering.Camera as SceneCameraComponent
 import com.awakekt.awake.scene.rendering.Fog
 import com.awakekt.awake.scene.rendering.Light
 import com.awakekt.awake.scene.rendering.Skybox
 import com.awakekt.awake.scene.rendering.animation.KeyframeAnimationBinding
 import com.awakekt.awake.scene.rendering.animation.LocomotionAnimationBinding
-import com.awakekt.awake.scene.rendering.particles.ParticleEmitterBinding
 import com.awakekt.awake.scene.rendering.camera.CameraBinding
 import com.awakekt.awake.scene.rendering.camera.SceneCamera
 import com.awakekt.awake.scene.rendering.fog.FogBinding
@@ -46,6 +45,7 @@ import com.awakekt.awake.scene.rendering.tonemapping.SceneToneMapping
 import com.awakekt.awake.scene.rendering.tonemapping.ToneMapping
 import com.awakekt.awake.scene.rendering.tonemapping.ToneMappingBinding
 import com.awakekt.awake.scene.runtime.DefaultSceneComponentResolvers.install
+import com.awakekt.awake.scene.rendering.Camera as SceneCameraComponent
 
 /**
  * Built-in resolvers and bindings for standard core scene components.

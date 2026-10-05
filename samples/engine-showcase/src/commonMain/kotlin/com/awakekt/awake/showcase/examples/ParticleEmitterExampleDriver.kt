@@ -14,16 +14,16 @@ import com.awakekt.awake.core.image.createBitmap
 import com.awakekt.awake.core.image.toRgba8Bytes
 import com.awakekt.awake.core.math.Aabb
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.particles.ParticleDynamics
+import com.awakekt.awake.particles.ParticleEmitter
+import com.awakekt.awake.particles.ParticleGround
+import com.awakekt.awake.particles.ParticleLifecycle
+import com.awakekt.awake.particles.ParticleMotion
+import com.awakekt.awake.particles.ParticleVisual
+import com.awakekt.awake.particles.spawnParticleBurst
 import com.awakekt.awake.render.passes.uniforms.ParticleUniformLayout
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.scene.binding.Scene
-import com.awakekt.awake.scene.rendering.particles.ParticleDynamics
-import com.awakekt.awake.scene.rendering.particles.ParticleEmitter
-import com.awakekt.awake.scene.rendering.particles.ParticleGround
-import com.awakekt.awake.scene.rendering.particles.ParticleLifecycle
-import com.awakekt.awake.scene.rendering.particles.ParticleMotion
-import com.awakekt.awake.scene.rendering.particles.ParticleVisual
-import com.awakekt.awake.scene.rendering.particles.spawnParticleBurst
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import kotlin.math.sin
 

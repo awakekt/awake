@@ -10,6 +10,9 @@ import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.engine.platform.dsl.AppServiceLookup
+import com.awakekt.awake.particles.ParticleEmitter
+import com.awakekt.awake.particles.ParticleSystem
+import com.awakekt.awake.particles.ParticleVisual
 import com.awakekt.awake.render.command.GpuDrawPreparationSource
 import com.awakekt.awake.render.command.GpuDrawPreparer
 import com.awakekt.awake.render.command.GpuDrawRequest
@@ -19,13 +22,11 @@ import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.render.testing.NoopRenderer
 import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.scene.core.transform.Transform
+import com.awakekt.awake.scene.particles.TransformPlacement
 import com.awakekt.awake.scene.rendering.Camera
 import com.awakekt.awake.scene.rendering.light.Light
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.PbrMaterial
-import com.awakekt.awake.scene.rendering.particles.ParticleEmitter
-import com.awakekt.awake.scene.rendering.particles.ParticleSystem
-import com.awakekt.awake.scene.rendering.particles.ParticleVisual
 import kotlinx.coroutines.test.runTest
 import kotlin.reflect.KClass
 import kotlin.test.Test
@@ -162,7 +163,7 @@ class SceneReadbackTest {
             visual = ParticleVisual(additive = true),
         )
         world.add(world.create(), sparks)
-        ParticleSystem().update(world, PARTICLE_SPAWN_SECONDS)
+        ParticleSystem(TransformPlacement).update(world, PARTICLE_SPAWN_SECONDS)
     }
 
     private object NoServices : AppServiceLookup {

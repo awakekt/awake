@@ -14,6 +14,7 @@ import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.engine.bootstrap.dsl.app
 import com.awakekt.awake.engine.platform.dsl.requireService
+import com.awakekt.awake.particles.ParticleSystem
 import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.physics.jolt.createJoltPhysicsWorld
 import com.awakekt.awake.render.command.GpuDrawPreparationSource
@@ -31,13 +32,12 @@ import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.core.transform.SpinSystem
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.document.SceneLoader
+import com.awakekt.awake.scene.particles.ParticleContentSystem
 import com.awakekt.awake.scene.physics.PhysicsSystem
 import com.awakekt.awake.scene.rendering.animation.AnimationSystem
 import com.awakekt.awake.scene.rendering.animation.KeyframeAnimationSystem
 import com.awakekt.awake.scene.rendering.mesh.TextureClipSystem
 import com.awakekt.awake.scene.rendering.mesh.TextureClips
-import com.awakekt.awake.scene.rendering.particles.ParticleContentSystem
-import com.awakekt.awake.scene.rendering.particles.ParticleSystem
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import kotlinx.coroutines.test.runTest
 import kotlin.reflect.KClass

@@ -7,19 +7,20 @@ package com.awakekt.awake.project.runtime
 
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.particles.ParticleSystem
 import com.awakekt.awake.scene.core.transform.SceneSpinControl
 import com.awakekt.awake.scene.core.transform.SpinControl
 import com.awakekt.awake.scene.core.transform.SpinSystem
 import com.awakekt.awake.scene.document.SceneDocument
+import com.awakekt.awake.scene.particles.ParticleContentSystem
+import com.awakekt.awake.scene.particles.SceneParticleEmitter
+import com.awakekt.awake.scene.particles.TransformPlacement
 import com.awakekt.awake.scene.rendering.animation.KeyframeAnimationSystem
 import com.awakekt.awake.scene.rendering.animation.LocomotionAnimationSystem
 import com.awakekt.awake.scene.rendering.animation.SceneKeyframeAnimation
 import com.awakekt.awake.scene.rendering.animation.SceneLocomotionAnimation
-import com.awakekt.awake.scene.rendering.particles.ParticleContentSystem
-import com.awakekt.awake.scene.rendering.particles.ParticleSystem
 import com.awakekt.awake.scene.rendering.mesh.SceneTextureClips
 import com.awakekt.awake.scene.rendering.mesh.TextureClipSystem
-import com.awakekt.awake.scene.rendering.particles.SceneParticleEmitter
 import com.awakekt.awake.scene.runtime.SceneSystemPhase
 
 /** Spin, locomotion, keyframes, sprite-sheet clips and particles, for the scenes that have them. */
@@ -38,8 +39,8 @@ internal fun MutableList<PlaySpec>.addMotionSpecs(scene: SceneDocument) {
         add(PlaySpec("texture-clips", SceneSystemPhase.Frame) { TextureClipSystem() })
     }
     if (scene.has(SceneParticleEmitter::class)) {
-        add(PlaySpec("particle-content",SceneSystemPhase.Frame) { ParticleContentSystem(it.renderer, it.particleSprites) })
-        add(PlaySpec("particles", SceneSystemPhase.Frame) { ParticleSystem() })
+        add(PlaySpec("particle-content", SceneSystemPhase.Frame) { ParticleContentSystem(it.renderer, it.particleSprites) })
+        add(PlaySpec("particles", SceneSystemPhase.Frame) { ParticleSystem(TransformPlacement) })
     }
 }
 

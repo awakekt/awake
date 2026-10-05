@@ -147,6 +147,8 @@ comments:
       - '**/awake/scene/authoring/**'
       - '**/awake/scene/runtime/**'
       - '**/awake/scene/scene3d/src/**'
+      - '**/awake/particles/**'
+      - '**/awake/scene/particles/**'
     excludes: *testSourceSetExcludes
     searchInNestedClass: true
     searchInInnerClass: true

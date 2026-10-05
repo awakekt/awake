@@ -23,9 +23,9 @@ import com.awakekt.awake.scene.controls.movement.SceneMovementControl
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneNode
+import com.awakekt.awake.scene.particles.ParticleContentSystem
 import com.awakekt.awake.scene.physics.PhysicsSystem
 import com.awakekt.awake.scene.rendering.animation.AnimationSystem
-import com.awakekt.awake.scene.rendering.particles.ParticleContentSystem
 import com.awakekt.awake.scene.rendering.terrain.SceneTerrain
 import com.awakekt.awake.scene.runtime.SceneSystemPhase
 import kotlin.reflect.KClass

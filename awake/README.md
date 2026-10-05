@@ -82,6 +82,7 @@ Paths below are Gradle coordinates minus the `:awake:` prefix.
 | `scene:controls` | Camera rigs, input processing, gameplay key bindings |
 | `scene:physics` | Physics bodies, character controller, and the physics system |
 | `scene:audio` | Audio sources and the audio system |
+| `scene:particles` | The `particle_emitter` scene component, over `particles` |
 | `scene:canvas` | Game UI in scenes: anchored text, panels, bars and buttons drawn over the game |
 | `scene:character` | A walking, jumping character moved by the physics character controller, saved in scenes |
 | `scene:gltf` | glTF and GLB models in scenes: meshes, textured materials and skins |
@@ -94,6 +95,7 @@ Paths below are Gradle coordinates minus the `:awake:` prefix.
 | `ai` | Behavior trees and finite state machines |
 | `ai:behavior` | Navmesh-backed patrol, chase, and flee behaviors |
 | `navigation` | A* grid pathfinding, field search, path smoothing |
+| `particles` | Particle emitters, simulation and draw packets; no scene dependency |
 | `net:api` | Transport and packet-buffer contracts |
 
 ## project and tooling data

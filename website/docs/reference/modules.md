@@ -9,7 +9,7 @@
 | Group | `com.awakekt.awake`, plus the module's parent path: `:awake:scene:runtime` publishes `com.awakekt.awake.scene:runtime`. The Vulkan bindings are the exception: `com.awakekt.awake:vulkan-kmp`. |
 | Version | Core modules share one version; the newest is `{{ awake_version }}`. Vulkan family: `{{ awake_vulkan_version }}`, built against Core `{{ awake_vulkan_core_version }}`. See [Releases and compatibility](releases.md). |
 | Catalog alias | `awake-` plus the group after `com.awakekt.awake`, then the name, joined with `-`. The accessor replaces `-` with `.`: `awake-scene-runtime` is `libs.awake.scene.runtime`. The alias is your choice; this is the convention these docs use. |
-| Published modules | 72: 69 in Core, 3 in the Vulkan family. |
+| Published modules | 74: 71 in Core, 3 in the Vulkan family. |
 | Transitive modules | Declare only the modules your code uses. Each module's published metadata brings the modules it depends on. |
 
 A catalog entry looks like this:
@@ -53,6 +53,7 @@ awake-backend-vulkan = { module = "com.awakekt.awake.backend:vulkan", version.re
 | Maven coordinate | Catalog alias | What it is |
 | --- | --- | --- |
 | `com.awakekt.awake:ecs` | `awake-ecs` | The ECS: sparse-set `World`, entities, components, systems, queries. |
+| `com.awakekt.awake:particles` | `awake-particles` | Particle emitters: simulation, ground bounce, burst scheduling and instanced draw packets, with no scene needed. |
 | `com.awakekt.awake.engine:bootstrap` | `awake-engine-bootstrap` | Application and window bootstrap: `app { }`, the entry point a game calls. |
 | `com.awakekt.awake.engine:platform` | `awake-engine-platform` | Per-platform app lifecycle, windowing and surfaces behind one contract. |
 | `com.awakekt.awake.engine:compose` | `awake-engine-compose` | Hosts AwakeKt Compose inside an engine frame and paints it through the renderer. |
@@ -83,13 +84,14 @@ awake-backend-vulkan = { module = "com.awakekt.awake.backend:vulkan", version.re
 | Maven coordinate | Catalog alias | What it is |
 | --- | --- | --- |
 | `com.awakekt.awake.scene:scene-core` | `awake-scene-scene-core` | Transforms, names and the systems every scene runs. |
-| `com.awakekt.awake.scene:scene3d` | `awake-scene-scene3d` | Cameras, lights, mesh renderers, particles and the systems that draw a scene. |
+| `com.awakekt.awake.scene:scene3d` | `awake-scene-scene3d` | Cameras, lights, mesh renderers and the systems that draw a scene. |
 | `com.awakekt.awake.scene:document` | `awake-scene-document` | Scene documents: `SceneDocument`, `SceneLoader`, validation, prefabs, extensions. |
 | `com.awakekt.awake.scene:binding` | `awake-scene-binding` | Bindings between scene document components and ECS components. |
 | `com.awakekt.awake.scene:runtime` | `awake-scene-runtime` | The scene runtime: `SceneManager`, sessions, asset library, scheduling, app lifecycle. |
 | `com.awakekt.awake.scene:authoring` | `awake-scene-authoring` | The scene DSL and application DSL: entities, systems, assets and UI in Kotlin. |
 | `com.awakekt.awake.scene:controls` | `awake-scene-controls` | Camera rigs and input-driven movement. |
 | `com.awakekt.awake.scene:audio` | `awake-scene-audio` | Audio source and listener components and the spatial audio system. |
+| `com.awakekt.awake.scene:particles` | `awake-scene-particles` | The `particle_emitter` scene component and the systems that run its emitters in a scene. |
 | `com.awakekt.awake.scene:physics` | `awake-scene-physics` | Physics components and systems that bind bodies to scene transforms. |
 | `com.awakekt.awake.scene:character` | `awake-scene-character` | A walking, jumping character moved by the physics character controller. |
 | `com.awakekt.awake.scene:canvas` | `awake-scene-canvas` | Screen-anchored game UI (text, panels, bars, buttons) stored in scenes. |

@@ -11,14 +11,15 @@ import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.engine.bootstrap.dsl.appModule
 import com.awakekt.awake.engine.platform.core.AppModule
+import com.awakekt.awake.particles.ParticleSystem
 import com.awakekt.awake.physics.jolt.createJoltPhysicsWorld
 import com.awakekt.awake.scene.authoring.infrastructure.cameraInputSystem
 import com.awakekt.awake.scene.authoring.infrastructure.cameraSystem
 import com.awakekt.awake.scene.authoring.infrastructure.gameplayInput
 import com.awakekt.awake.scene.authoring.infrastructure.playerInputSystem
 import com.awakekt.awake.scene.authoring.scene
+import com.awakekt.awake.scene.particles.TransformPlacement
 import com.awakekt.awake.scene.rendering.animation.AnimationSystem
-import com.awakekt.awake.scene.rendering.particles.ParticleSystem
 import com.awakekt.awake.scene.runtime.defaultInfrastructureSystems
 import com.awakekt.awake.showcase.examples.CharacterExampleDriver
 import com.awakekt.awake.showcase.examples.EcsStressExampleDriver
@@ -81,7 +82,7 @@ internal fun engineShowcaseModule(
             frameSystem("animation") { AnimationSystem() }
             // Iterates an empty family unless the ECS stress showcase has spawned its entities.
             frameSystem("swarm") { SwarmMotionSystem() }
-            frameSystem("particles") { ParticleSystem() }
+            frameSystem("particles") { ParticleSystem(TransformPlacement) }
             // Fixed, not frame: physics is the one system here that integrates, so it is the one
             // that must not see a variable delta.
             fixedSystem("physics") { ShowcasePhysics.system() }

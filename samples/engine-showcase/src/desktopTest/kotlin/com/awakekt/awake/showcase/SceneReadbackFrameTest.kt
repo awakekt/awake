@@ -15,6 +15,10 @@ import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.engine.bootstrap.dsl.app
 import com.awakekt.awake.engine.platform.HeadlessSurface
 import com.awakekt.awake.engine.platform.dsl.requireService
+import com.awakekt.awake.particles.ParticleEmitter
+import com.awakekt.awake.particles.ParticleMotion
+import com.awakekt.awake.particles.ParticleSystem
+import com.awakekt.awake.particles.ParticleVisual
 import com.awakekt.awake.render.capture.PixelMap
 import com.awakekt.awake.render.passes.uniforms.ParticleUniformLayout
 import com.awakekt.awake.render.renderer.createMaterial
@@ -22,14 +26,11 @@ import com.awakekt.awake.render.testing.writePng
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.scene.authoring.scene
 import com.awakekt.awake.scene.core.transform.Transform
+import com.awakekt.awake.scene.particles.TransformPlacement
 import com.awakekt.awake.scene.rendering.Camera
 import com.awakekt.awake.scene.rendering.light.Light
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.PbrMaterial
-import com.awakekt.awake.scene.rendering.particles.ParticleEmitter
-import com.awakekt.awake.scene.rendering.particles.ParticleMotion
-import com.awakekt.awake.scene.rendering.particles.ParticleSystem
-import com.awakekt.awake.scene.rendering.particles.ParticleVisual
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import com.awakekt.awake.showcase.app.EngineShowcaseRenderPlan
 import kotlinx.coroutines.runBlocking
@@ -104,7 +105,7 @@ class SceneReadbackFrameTest {
             visual = ParticleVisual(additive = true),
         )
         world.add(world.create(), sparks)
-        ParticleSystem().update(world, PARTICLE_SPAWN_SECONDS)
+        ParticleSystem(TransformPlacement).update(world, PARTICLE_SPAWN_SECONDS)
     }
 
     private companion object {
