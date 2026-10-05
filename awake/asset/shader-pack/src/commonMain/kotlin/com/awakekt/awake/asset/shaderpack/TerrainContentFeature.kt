@@ -95,7 +95,7 @@ fun terrainContentFeature(
                 geometry = requireNotNull(geometry) {
                     "The terrain feature declares geometry, so the engine must have uploaded it."
                 },
-                tracker = TerrainClipmapTracker(config),
+                tracker = TerrainClipmapTracker(config, heightmap),
                 heightScale = encoded.scale,
                 heightBias = encoded.bias,
                 sampling = encoded.sampling,

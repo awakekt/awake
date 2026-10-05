@@ -157,8 +157,8 @@ public final class com/awakekt/awake/asset/terrain/clipmap/TerrainClipmapGeometr
 
 public final class com/awakekt/awake/asset/terrain/clipmap/TerrainClipmapTracker {
 	public fun <init> ()V
-	public fun <init> (Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapConfig;)V
-	public synthetic fun <init> (Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapConfig;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapConfig;Lcom/awakekt/awake/asset/terrain/Heightmap;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapConfig;Lcom/awakekt/awake/asset/terrain/Heightmap;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getConfig ()Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapConfig;
 	public final fun getRingStates ()Ljava/util/List;
 	public final fun update (Lcom/awakekt/awake/core/math/Vec3f;)Ljava/util/List;
