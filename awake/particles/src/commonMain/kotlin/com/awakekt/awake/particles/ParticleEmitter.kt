@@ -47,6 +47,14 @@ internal class Particle : Poolable {
      * this is read. */
     var frameOffset: Int = 0
 
+    /** This particle's turn about the axis the quad faces along, in radians, counter-clockwise as the
+     * viewer sees it. Set at spawn from [ParticleVisual.spin] and advanced by [spinRate]; always 0 for
+     * an emitter without a spin. */
+    var rotation: Float = 0f
+
+    /** Radians per second [rotation] advances at, drawn at spawn from [ParticleSpin]; 0 without one. */
+    var spinRate: Float = 0f
+
     override fun reset() {
         alive = false
         position.set(0f, 0f, 0f)
@@ -57,6 +65,8 @@ internal class Particle : Poolable {
         scale = 1f
         settled = false
         frameOffset = 0
+        rotation = 0f
+        spinRate = 0f
     }
 }
 
@@ -138,7 +148,8 @@ data class ParticleMotion(
  * pipeline built with `buildAdditive`, and draws blended without it. [facing] turns each quad to the
  * camera (the default) or lays it flat; see [ParticleFacing]. [alphaCurve] shapes a particle's
  * opacity over its life; `null` (default) is the plain linear fade from `startAlpha` to 0, see
- * [ParticleAlphaCurve]. */
+ * [ParticleAlphaCurve]. [spin] turns each particle's quad as it lives; `null` (default) never turns
+ * one, see [ParticleSpin]. */
 data class ParticleVisual(
     val startColor: Vec3f = Vec3f(1f, 1f, 1f),
     val endColor: Vec3f = startColor,
@@ -150,7 +161,38 @@ data class ParticleVisual(
     val additive: Boolean = false,
     val facing: ParticleFacing = ParticleFacing.Camera,
     val alphaCurve: ParticleAlphaCurve? = null,
+    val spin: ParticleSpin? = null,
 )
+
+/**
+ * A random spin for every particle: each draws its own angular velocity, uniformly between
+ * [minDegreesPerSecond] and [maxDegreesPerSecond], when it spawns, and turns at that rate for the rest
+ * of its life. Positive is counter-clockwise as the viewer sees it and negative clockwise, so a range
+ * that spans 0, such as `-90..90`, sends particles both ways. With [randomStartAngle] each starts at a
+ * random angle too, so the particles of one emitter do not all begin alike; without it they start
+ * upright.
+ *
+ * The turn is in the quad's own plane, for a camera-facing and a flat ([ParticleFacing.Flat]) emitter
+ * alike. A particle that [ParticleVisual.stretchWithVelocity] stretches keeps pointing along its
+ * motion, so spin does nothing to it, and one that has landed ([ParticleGround]) stops turning.
+ *
+ * `ParticleSpin(90f, 90f)` turns every particle a quarter turn a second. Both rates must be finite and
+ * [minDegreesPerSecond] must not be above [maxDegreesPerSecond].
+ */
+data class ParticleSpin(
+    val minDegreesPerSecond: Float,
+    val maxDegreesPerSecond: Float,
+    val randomStartAngle: Boolean = false,
+) {
+    init {
+        require(minDegreesPerSecond.isFinite() && maxDegreesPerSecond.isFinite()) {
+            "spin rates must be finite, got min=$minDegreesPerSecond max=$maxDegreesPerSecond"
+        }
+        require(minDegreesPerSecond <= maxDegreesPerSecond) {
+            "spin min must not be above max, got min=$minDegreesPerSecond max=$maxDegreesPerSecond"
+        }
+    }
+}
 
 /**
  * A particle's opacity over its life as fractions of its [ParticleEmitter.lifetime]: it fades in
@@ -413,6 +455,15 @@ class ParticleEmitter(
         slot.scale = scale
         slot.settled = false
         slot.frameOffset = Random.nextInt(visual.frameCount.coerceAtLeast(1))
+        val spin = visual.spin
+        if (spin == null) {
+            slot.rotation = 0f
+            slot.spinRate = 0f
+        } else {
+            val degrees = spin.minDegreesPerSecond + Random.nextFloat() * (spin.maxDegreesPerSecond - spin.minDegreesPerSecond)
+            slot.spinRate = degrees * DEGREES_TO_RADIANS
+            slot.rotation = if (spin.randomStartAngle) Random.nextFloat() * FULL_TURN_RADIANS else 0f
+        }
     }
 
     /** [origin]'s value at construction time -- for a [children] entry, this is the fixed LOCAL

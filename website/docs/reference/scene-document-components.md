@@ -333,6 +333,7 @@ it; see [Particles](../guides/particles.md).
 | `stretchFactor` | number | `0.05` | World units of stretch per unit of speed. Finite, not negative. |
 | `burstCount` | number | none | Particles to spawn in the emitter's whole life. When they have all died **the node carrying the emitter is removed from the world**, so put a one-shot emitter on a node of its own. Above 0. |
 | `ground` | ground | none | Where falling particles land. None lets them fall and fade. Described below. |
+| `spin` | spin | none | A random spin for each particle, turning its sprite in its own plane. None leaves particles upright. A stretched particle (`stretchWithVelocity`) points along its motion and ignores it. Described below. |
 
 `alphaCurve` is an object with the fractions of a particle's life at which it reaches full opacity and
 starts to fade out, both within 0 to 1 with `fadeInEnd` not after `fadeOutStart`:
@@ -341,6 +342,16 @@ starts to fade out, both within 0 to 1 with `fadeInEnd` not after `fadeOutStart`
 | --- | --- | --- | --- |
 | `fadeInEnd` | number | `0` | Fraction of life at which opacity reaches `startAlpha`. |
 | `fadeOutStart` | number | `0` | Fraction of life at which opacity starts to fall to 0. |
+
+`spin` gives each particle its own angular velocity, drawn uniformly between two rates when it spawns.
+Positive turns counter-clockwise as the viewer sees it, negative clockwise, so `-90` to `90` sends
+particles both ways. Both rates are finite and `minDegreesPerSecond` is not above `maxDegreesPerSecond`:
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `minDegreesPerSecond` | number | required | The slowest, or most clockwise, spin. |
+| `maxDegreesPerSecond` | number | required | The fastest, or most counter-clockwise, spin. |
+| `randomStartAngle` | boolean | `false` | Also starts each particle at a random angle. Without it they all start upright. |
 
 `burstCycle` loops: for the first `activeSeconds` of every `cycleSeconds`, `burstSize` particles spawn
 every `burstInterval` seconds, then nothing spawns until the cycle repeats:

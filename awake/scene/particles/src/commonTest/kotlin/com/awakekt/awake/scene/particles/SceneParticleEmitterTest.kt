@@ -17,6 +17,7 @@ import com.awakekt.awake.particles.ParticleFacing
 import com.awakekt.awake.particles.ParticleGround
 import com.awakekt.awake.particles.ParticleLifecycle
 import com.awakekt.awake.particles.ParticleMotion
+import com.awakekt.awake.particles.ParticleSpin
 import com.awakekt.awake.particles.ParticleSystem
 import com.awakekt.awake.particles.ParticleVisual
 import com.awakekt.awake.render.material.Material
@@ -165,6 +166,7 @@ class SceneParticleEmitterTest {
             friction = 0.8f,
             colliders = listOf(SceneParticleBox(SceneVec3(-1f, 0f, -1f), SceneVec3(1f, 2f, 1f))),
         ),
+        spin = SceneParticleSpin(minDegreesPerSecond = -45f, maxDegreesPerSecond = 90f, randomStartAngle = true),
     )
 
     private fun liveFrom(settings: SceneParticleEmitter): Pair<World, ParticleEmitter> {
@@ -208,6 +210,7 @@ class SceneParticleEmitterTest {
                 additive = true,
                 facing = ParticleFacing.Flat,
                 alphaCurve = ParticleAlphaCurve(fadeInEnd = 0.2f, fadeOutStart = 0.7f),
+                spin = ParticleSpin(minDegreesPerSecond = -45f, maxDegreesPerSecond = 90f, randomStartAngle = true),
             ),
             live.visual,
         )
@@ -267,6 +270,19 @@ class SceneParticleEmitterTest {
     }
 
     @Test
+    fun aBadSpinIsRefused() {
+        assertEquals(
+            listOf("particle_emitter.spin.minDegreesPerSecond must not be above maxDegreesPerSecond"),
+            problems(dust.copy(spin = SceneParticleSpin(minDegreesPerSecond = 10f, maxDegreesPerSecond = -10f))),
+        )
+        assertEquals(
+            listOf("particle_emitter.spin rates must be finite"),
+            problems(dust.copy(spin = SceneParticleSpin(minDegreesPerSecond = Float.NaN, maxDegreesPerSecond = 10f))),
+        )
+        assertEquals(emptyList(), problems(dust.copy(spin = SceneParticleSpin(minDegreesPerSecond = 30f, maxDegreesPerSecond = 30f))))
+    }
+
+    @Test
     fun aBadBurstCycleIsRefusedByEachPartThatIsWrong() {
         fun cycle(seconds: Float = 2f, active: Float = 1f, interval: Float = 0.25f, size: Int = 5) =
             dust.copy(burstCycle = SceneParticleBurstCycle(seconds, active, interval, size))
@@ -315,6 +331,7 @@ class SceneParticleEmitterTest {
               "component": "particle_emitter", "texture": "dust.png",
               "acceleration": {"x": 0, "y": -9.8, "z": 0}, "inheritOrientation": true,
               "alphaCurve": {"fadeInEnd": 0.2, "fadeOutStart": 0.7},
+              "spin": {"minDegreesPerSecond": -45, "maxDegreesPerSecond": 90, "randomStartAngle": true},
               "burstCycle": {"cycleSeconds": 2, "activeSeconds": 1, "burstInterval": 0.25, "burstSize": 5},
               "turbulence": 1.5, "turbulenceFrequency": 2.5, "convergeToOrigin": true,
               "stretchWithVelocity": true, "stretchFactor": 0.2, "burstCount": 40,
@@ -326,6 +343,7 @@ class SceneParticleEmitterTest {
 
         assertEquals(SceneVec3(0f, -9.8f, 0f), decoded.acceleration)
         assertEquals(SceneParticleAlphaCurve(0.2f, 0.7f), decoded.alphaCurve)
+        assertEquals(SceneParticleSpin(-45f, 90f, randomStartAngle = true), decoded.spin)
         assertEquals(SceneParticleBurstCycle(2f, 1f, 0.25f, 5), decoded.burstCycle)
         assertEquals(40, decoded.burstCount)
         assertEquals(listOf(true, true, true), listOf(decoded.inheritOrientation, decoded.convergeToOrigin, decoded.stretchWithVelocity))

@@ -132,6 +132,34 @@ class ParticleDrawBuilderTest {
         )
     }
 
+    /** A particle's turn rides in column 2's x of its instance matrix, where the particle shader reads it. */
+    @Test
+    fun aParticlesRotationReachesItsInstanceMatrix() {
+        val world = World()
+        val turned = liveEmitter(ParticleFacing.Camera)
+        turned.particles[0].rotation = 1.25f
+        world.add(world.create(), turned)
+
+        val draws = ArrayList<RenderDrawCommand>()
+        ParticleDrawBuilder().appendWorldDrawCalls(draws, world, EmitterPlacement.None, lens, 1f)
+
+        assertEquals(1.25f, requireNotNull(draws.single().instanceModels)[0].m02)
+    }
+
+    /** A stretched particle points along its motion, so the builder writes no turn for it. */
+    @Test
+    fun aStretchedParticleCarriesNoRotation() {
+        val world = World()
+        val streak = liveEmitter(ParticleFacing.Camera, visual = ParticleVisual(stretchWithVelocity = true))
+        streak.particles[0].rotation = 1.25f
+        world.add(world.create(), streak)
+
+        val draws = ArrayList<RenderDrawCommand>()
+        ParticleDrawBuilder().appendWorldDrawCalls(draws, world, EmitterPlacement.None, lens, 1f)
+
+        assertEquals(0f, requireNotNull(draws.single().instanceModels)[0].m02)
+    }
+
     @Test
     fun farParticlesAreDrawnBeforeNearOnes() {
         val world = World()
@@ -155,6 +183,7 @@ class ParticleDrawBuilderTest {
         scale: Float = 1f,
         children: List<ParticleEmitter> = emptyList(),
         spawned: Boolean = true,
+        visual: ParticleVisual = ParticleVisual(facing = facing),
     ) = ParticleEmitter(
         mesh = fakeMesh(),
         material = fakeMaterial(),
@@ -164,7 +193,7 @@ class ParticleDrawBuilderTest {
         lifetime = 1f,
         startAlpha = 1f,
         scale = scale,
-        visual = ParticleVisual(facing = facing),
+        visual = visual,
         children = children,
     ).apply { if (spawned) spawn(at) }
 

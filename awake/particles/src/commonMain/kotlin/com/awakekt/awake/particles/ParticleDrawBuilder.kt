@@ -125,6 +125,8 @@ class ParticleDrawBuilder {
                 particle.velocity.x * stretch,
                 particle.velocity.y * stretch,
                 particle.velocity.z * stretch,
+                // A stretched particle points along its motion, so the stretch overrides any spin.
+                rotation = if (emitter.visual.stretchWithVelocity) 0f else particle.rotation,
             )
             instanceModels += model
             // Per-PARTICLE color+alpha (each ages independently, so a burst's

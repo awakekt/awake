@@ -56,6 +56,7 @@ class ParticleExposureTest {
             "additive" to "additive",
             "facing" to "facing",
             "alphaCurve" to "alphaCurve",
+            "spin" to "spin",
         ),
         ParticleGround::class to mapOf(
             "groundY" to "ground",

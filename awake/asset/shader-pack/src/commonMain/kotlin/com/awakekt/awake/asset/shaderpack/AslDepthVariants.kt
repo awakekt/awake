@@ -12,6 +12,7 @@ import com.awakekt.awake.asset.shaderdsl.AslVertexBuilder
 import com.awakekt.awake.asset.shaderdsl.AslVertexInputHandles
 import com.awakekt.awake.asset.shaderdsl.a
 import com.awakekt.awake.asset.shaderdsl.column
+import com.awakekt.awake.asset.shaderdsl.cos
 import com.awakekt.awake.asset.shaderdsl.fieldsFrom
 import com.awakekt.awake.asset.shaderdsl.inputsFrom
 import com.awakekt.awake.asset.shaderdsl.instanceModelMatrix
@@ -22,10 +23,12 @@ import com.awakekt.awake.asset.shaderdsl.minus
 import com.awakekt.awake.asset.shaderdsl.plus
 import com.awakekt.awake.asset.shaderdsl.sampler
 import com.awakekt.awake.asset.shaderdsl.shader
+import com.awakekt.awake.asset.shaderdsl.sin
 import com.awakekt.awake.asset.shaderdsl.storageArrayOfArrays
 import com.awakekt.awake.asset.shaderdsl.texture2d
 import com.awakekt.awake.asset.shaderdsl.textureSample
 import com.awakekt.awake.asset.shaderdsl.times
+import com.awakekt.awake.asset.shaderdsl.unaryMinus
 import com.awakekt.awake.asset.shaderdsl.vec2
 import com.awakekt.awake.asset.shaderdsl.vec4
 import com.awakekt.awake.asset.shaderdsl.w
@@ -191,7 +194,10 @@ private fun skinnedPosition(ins: AslVertexInputHandles, palette: AslArrayHandle)
     return skin * vec4(ins.input(VertexSemantic.Position), 1f.lit)
 }
 
-/** Billboard-particle depth caster. Color and atlas-frame streams are intentionally unused. */
+/**
+ * Billboard-particle depth caster. Color and atlas-frame streams are intentionally unused. The quad
+ * turns by the particle's spin, as in the visible draw, so a spinning sprite casts a turning shadow.
+ */
 val ParticleShadowDepthShader: AslShaderDefinition = shader("particle_shadow_depth") {
     val u = uniformBlock(
         "Uniforms",
@@ -213,7 +219,12 @@ val ParticleShadowDepthShader: AslShaderDefinition = shader("particle_shadow_dep
         val model = let("model", instanceModelMatrix(startLocation = 2))
         val center = column(model, 3).xyz
         val width = length(column(model, 0).xyz)
-        val world = center + position.x * width * cameraRight.xyz + position.y * width * cameraUp.xyz
+        val spin = column(model, 2).x
+        val spinCos = let("spinCos", cos(spin))
+        val spinSin = let("spinSin", sin(spin))
+        val right = cameraRight.xyz * spinCos + cameraUp.xyz * spinSin
+        val up = cameraRight.xyz * -spinSin + cameraUp.xyz * spinCos
+        val world = center + position.x * width * right + position.y * width * up
         returnPosition(cascade * vec4(world, 1f.lit))
     }
     fragment { }

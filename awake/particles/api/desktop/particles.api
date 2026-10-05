@@ -177,6 +177,22 @@ public final class com/awakekt/awake/particles/ParticleMotion {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/particles/ParticleSpin {
+	public fun <init> (FFZ)V
+	public synthetic fun <init> (FFZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()Z
+	public final fun copy (FFZ)Lcom/awakekt/awake/particles/ParticleSpin;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/particles/ParticleSpin;FFZILjava/lang/Object;)Lcom/awakekt/awake/particles/ParticleSpin;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMaxDegreesPerSecond ()F
+	public final fun getMinDegreesPerSecond ()F
+	public final fun getRandomStartAngle ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class com/awakekt/awake/particles/ParticleSystem : com/awakekt/awake/ecs/System {
 	public fun <init> ()V
 	public fun <init> (Lcom/awakekt/awake/particles/EmitterPlacement;)V
@@ -186,10 +202,11 @@ public final class com/awakekt/awake/particles/ParticleSystem : com/awakekt/awak
 
 public final class com/awakekt/awake/particles/ParticleVisual {
 	public fun <init> ()V
-	public fun <init> (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;IFZFLjava/lang/Float;ZLcom/awakekt/awake/particles/ParticleFacing;Lcom/awakekt/awake/particles/ParticleAlphaCurve;)V
-	public synthetic fun <init> (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;IFZFLjava/lang/Float;ZLcom/awakekt/awake/particles/ParticleFacing;Lcom/awakekt/awake/particles/ParticleAlphaCurve;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;IFZFLjava/lang/Float;ZLcom/awakekt/awake/particles/ParticleFacing;Lcom/awakekt/awake/particles/ParticleAlphaCurve;Lcom/awakekt/awake/particles/ParticleSpin;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;IFZFLjava/lang/Float;ZLcom/awakekt/awake/particles/ParticleFacing;Lcom/awakekt/awake/particles/ParticleAlphaCurve;Lcom/awakekt/awake/particles/ParticleSpin;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun component10 ()Lcom/awakekt/awake/particles/ParticleAlphaCurve;
+	public final fun component11 ()Lcom/awakekt/awake/particles/ParticleSpin;
 	public final fun component2 ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun component3 ()I
 	public final fun component4 ()F
@@ -198,8 +215,8 @@ public final class com/awakekt/awake/particles/ParticleVisual {
 	public final fun component7 ()Ljava/lang/Float;
 	public final fun component8 ()Z
 	public final fun component9 ()Lcom/awakekt/awake/particles/ParticleFacing;
-	public final fun copy (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;IFZFLjava/lang/Float;ZLcom/awakekt/awake/particles/ParticleFacing;Lcom/awakekt/awake/particles/ParticleAlphaCurve;)Lcom/awakekt/awake/particles/ParticleVisual;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/particles/ParticleVisual;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;IFZFLjava/lang/Float;ZLcom/awakekt/awake/particles/ParticleFacing;Lcom/awakekt/awake/particles/ParticleAlphaCurve;ILjava/lang/Object;)Lcom/awakekt/awake/particles/ParticleVisual;
+	public final fun copy (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;IFZFLjava/lang/Float;ZLcom/awakekt/awake/particles/ParticleFacing;Lcom/awakekt/awake/particles/ParticleAlphaCurve;Lcom/awakekt/awake/particles/ParticleSpin;)Lcom/awakekt/awake/particles/ParticleVisual;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/particles/ParticleVisual;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;IFZFLjava/lang/Float;ZLcom/awakekt/awake/particles/ParticleFacing;Lcom/awakekt/awake/particles/ParticleAlphaCurve;Lcom/awakekt/awake/particles/ParticleSpin;ILjava/lang/Object;)Lcom/awakekt/awake/particles/ParticleVisual;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAdditive ()Z
 	public final fun getAlphaCurve ()Lcom/awakekt/awake/particles/ParticleAlphaCurve;
@@ -208,6 +225,7 @@ public final class com/awakekt/awake/particles/ParticleVisual {
 	public final fun getFacing ()Lcom/awakekt/awake/particles/ParticleFacing;
 	public final fun getFrameCount ()I
 	public final fun getFrameRate ()F
+	public final fun getSpin ()Lcom/awakekt/awake/particles/ParticleSpin;
 	public final fun getStartColor ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun getStretchFactor ()F
 	public final fun getStretchWithVelocity ()Z

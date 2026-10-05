@@ -75,6 +75,9 @@ import kotlinx.serialization.Serializable
  * for as long as the scene runs.
  * @property ground Where falling particles land, and what they do there. Left out, they never land
  * and just fade out.
+ * @property spin A random spin for each particle, turning its sprite in its own plane as it lives. Left
+ * out, particles do not turn. A stretched particle ([stretchWithVelocity]) points along its motion and
+ * ignores it.
  */
 @Serializable
 @SerialName("particle_emitter")
@@ -108,6 +111,7 @@ data class SceneParticleEmitter(
     val stretchFactor: Float = 0.05f,
     val burstCount: Int? = null,
     val ground: SceneParticleGround? = null,
+    val spin: SceneParticleSpin? = null,
 ) : SceneComponent {
     override fun validate(path: String): List<SceneValidationIssue> =
         (basicProblems() + motionProblems() + shapeProblems()).map { SceneValidationIssue(path, "particle_emitter.$it") }
@@ -134,7 +138,8 @@ data class SceneParticleEmitter(
     }
 
     private fun shapeProblems(): List<String> =
-        alphaCurve?.problems().orEmpty() + burstCycle?.problems().orEmpty() + ground?.problems().orEmpty()
+        alphaCurve?.problems().orEmpty() + burstCycle?.problems().orEmpty() + ground?.problems().orEmpty() +
+            spin?.problems().orEmpty()
 }
 
 /**
@@ -154,6 +159,33 @@ data class SceneParticleAlphaCurve(
     internal fun problems(): List<String> = buildList {
         if (fadeInEnd !in 0f..1f || fadeOutStart !in 0f..1f) add("alphaCurve fractions must be within 0..1")
         if (fadeInEnd > fadeOutStart) add("alphaCurve.fadeInEnd must not come after fadeOutStart")
+    }
+}
+
+/**
+ * A random spin for every particle: each draws its own angular velocity, uniformly between
+ * [minDegreesPerSecond] and [maxDegreesPerSecond], when it spawns. Positive is counter-clockwise as the
+ * viewer sees it and negative clockwise, so `-90` to `90` sends particles both ways; `90` to `90`
+ * turns every particle a quarter turn a second. Both are finite and [minDegreesPerSecond] is not above
+ * [maxDegreesPerSecond].
+ *
+ * @property minDegreesPerSecond The slowest (or most clockwise) spin, in degrees per second.
+ * @property maxDegreesPerSecond The fastest (or most counter-clockwise) spin, in degrees per second.
+ * @property randomStartAngle Whether each particle also starts at a random angle. Without it they all
+ * start upright.
+ */
+@Serializable
+data class SceneParticleSpin(
+    val minDegreesPerSecond: Float,
+    val maxDegreesPerSecond: Float,
+    val randomStartAngle: Boolean = false,
+) {
+    internal fun problems(): List<String> = buildList {
+        if (!(minDegreesPerSecond.isFinite() && maxDegreesPerSecond.isFinite())) {
+            add("spin rates must be finite")
+        } else if (minDegreesPerSecond > maxDegreesPerSecond) {
+            add("spin.minDegreesPerSecond must not be above maxDegreesPerSecond")
+        }
     }
 }
 

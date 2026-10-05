@@ -12,6 +12,7 @@ import com.awakekt.awake.particles.ParticleBurstCycle
 import com.awakekt.awake.particles.ParticleGround
 import com.awakekt.awake.particles.ParticleLifecycle
 import com.awakekt.awake.particles.ParticleMotion
+import com.awakekt.awake.particles.ParticleSpin
 import com.awakekt.awake.particles.ParticleVisual
 import com.awakekt.awake.scene.document.SceneColor
 import com.awakekt.awake.scene.document.SceneVec3
@@ -46,6 +47,7 @@ internal fun SceneParticleEmitter.toVisual(): ParticleVisual = ParticleVisual(
     additive = additive,
     facing = facing,
     alphaCurve = alphaCurve?.let { ParticleAlphaCurve(it.fadeInEnd, it.fadeOutStart) },
+    spin = spin?.let { ParticleSpin(it.minDegreesPerSecond, it.maxDegreesPerSecond, it.randomStartAngle) },
 )
 
 /** The ground options of [this] scene file as a live [ParticleGround]; no ground when it has none. */

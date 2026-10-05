@@ -10,6 +10,7 @@ import com.awakekt.awake.render.passes.uniforms.RenderDebugView
 import java.awt.image.BufferedImage
 import java.io.File
 import javax.imageio.ImageIO
+import kotlin.math.PI
 
 /**
  * Renders the parity scenes, every debug view and the UI scenarios on headless Vulkan, one PNG
@@ -43,6 +44,7 @@ fun main(args: Array<String>) {
             EVIDENCE_SIZE,
             renderer.renderFacingSpriteFromTheSide(size = EVIDENCE_SIZE),
         )
+        write("scene-facing-sprite-spin-45", "The same sprite spun 45 degrees: the quad turns in its own plane", EVIDENCE_SIZE, renderer.renderFacingSpriteFromTheSide(size = EVIDENCE_SIZE, rotation = (PI / 4).toFloat()))
         write(
             "scene-skinned-textured",
             "Textured plane skinned to one joint at the identity pose",
