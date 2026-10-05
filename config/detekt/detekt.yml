@@ -140,6 +140,7 @@ comments:
       - '**/awake/core/text/**'
       - '**/awake/core/pool/**'
       - '**/awake/core/math/**'
+      - '**/awake/core/graphics2d/**'
     excludes: *testSourceSetExcludes
     searchInNestedClass: true
     searchInInnerClass: true

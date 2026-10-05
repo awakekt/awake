@@ -16,6 +16,13 @@ import kotlin.math.hypot
  * Used by both fill tessellation and mesh clipping, which is why they live apart from either.
  */
 
+/**
+ * Tests whether the given 2D coordinates lie inside the filled area of this path according to its [fillRule].
+ *
+ * @param x Horizontal coordinate in screen-space.
+ * @param y Vertical coordinate in screen-space.
+ * @return `true` if the point is within the filled area, `false` otherwise.
+ */
 fun DrawPath.containsPoint(x: Float, y: Float): Boolean {
     val contours = flattenContours()
     if (contours.isEmpty()) return false
@@ -25,12 +32,33 @@ fun DrawPath.containsPoint(x: Float, y: Float): Boolean {
     }
 }
 
+/**
+ * Tests whether the specified [point] lies inside the filled area of this path according to its [fillRule].
+ *
+ * @param point The point to test.
+ * @return `true` if the point is within the filled area, `false` otherwise.
+ */
 fun DrawPath.containsPoint(point: DrawPoint): Boolean = containsPoint(point.x, point.y)
 
+/**
+ * Tests whether the given coordinates lie inside this closed contour using non-zero winding rule.
+ *
+ * @param x Horizontal coordinate.
+ * @param y Vertical coordinate.
+ * @return `true` if the point has a non-zero winding number relative to this contour.
+ */
 fun PathContour.containsPoint(x: Float, y: Float): Boolean = windingContribution(x, y) != 0
 
 private val NORMAL_SIDES = floatArrayOf(-1f, 1f)
 
+/**
+ * Tests whether this outer contour encloses the specified [inner] contour.
+ *
+ * Samples edge normal rays across the inner polygon to determine geometric containment.
+ *
+ * @param inner The contour tested for containment.
+ * @return `true` if the inner contour lies within this contour.
+ */
 fun PathContour.containsContour(inner: PathContour): Boolean {
     val nudge = 0.01f
     var tried = 0
@@ -57,6 +85,13 @@ fun PathContour.containsContour(inner: PathContour): Boolean {
     return false
 }
 
+/**
+ * Computes the winding contribution of this polygon contour around the point `(x, y)`.
+ *
+ * @param x Horizontal coordinate of the test point.
+ * @param y Vertical coordinate of the test point.
+ * @return The integer winding number (positive for counter-clockwise, negative for clockwise, 0 for outside).
+ */
 fun PathContour.windingContribution(x: Float, y: Float): Int {
     val polygon = points
     if (polygon.size < 3) return 0
@@ -74,6 +109,15 @@ fun PathContour.windingContribution(x: Float, y: Float): Int {
     return windingNumber
 }
 
+/**
+ * Tests if point `(x, y)` is to the left, on, or to the right of the directed line from [a] to [b].
+ *
+ * @param a Start point of the directed segment.
+ * @param b End point of the directed segment.
+ * @param x Horizontal coordinate of the test point.
+ * @param y Vertical coordinate of the test point.
+ * @return A positive value if `(x, y)` is to the left, negative if to the right, and zero if collinear.
+ */
 fun isLeft(a: DrawPoint, b: DrawPoint, x: Float, y: Float): Float =
     (b.x - a.x) * (y - a.y) - (x - a.x) * (b.y - a.y)
 
@@ -85,6 +129,9 @@ fun isLeft(a: DrawPoint, b: DrawPoint, x: Float, y: Float): Float =
  * a cap, runs the inner side back and caps again, so it accumulates roughly twice the turning of
  * the arc itself. Heroicons' `user-circle` and `light-bulb` cleared the sign test and were fanned
  * from their centroid, which filled the hole the outline was supposed to leave.
+ *
+ * @param points The polygon vertices in sequence along its boundary.
+ * @return `true` if the polygon forms a strictly convex boundary.
  */
 fun isConvex(points: List<DrawPoint>): Boolean {
     if (points.size < 3) return false
@@ -123,6 +170,15 @@ private const val TWO_PI = 2f * PI.toFloat()
  * turning total is 4*PI away, so this can be loose. */
 private const val TURNING_EPSILON = 0.1f
 
+/**
+ * Computes the signed area of a 2D polygon using the shoelace formula.
+ *
+ * A positive result indicates counter-clockwise vertex winding in screen coordinates (Y-down),
+ * while negative indicates clockwise winding.
+ *
+ * @param points The ordered vertices of the polygon.
+ * @return The signed planar area of the polygon.
+ */
 fun polygonSignedArea(points: List<DrawPoint>): Float {
     var area = 0f
     for (i in points.indices) {

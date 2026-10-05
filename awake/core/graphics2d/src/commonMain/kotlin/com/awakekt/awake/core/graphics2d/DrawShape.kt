@@ -9,16 +9,47 @@ import com.awakekt.awake.core.math2d.Dp
 import com.awakekt.awake.core.math2d.Rectangle
 import kotlin.math.min
 
+/**
+ * Specification for geometric shapes used in drawing operations, clipping, and hit testing.
+ */
 sealed interface DrawShape {
+    /**
+     * A sharp-cornered rectangular shape.
+     */
     data object Rectangle : DrawShape
+
+    /**
+     * A rectangle whose four corners share a uniform corner radius.
+     *
+     * @property radius The uniform corner radius in [Dp].
+     */
     data class RoundedRectangle(val radius: Dp) : DrawShape
+
+    /**
+     * A circular shape inscribed within the bounding box.
+     */
     data object Circle : DrawShape
+
+    /**
+     * A stadium or capsule shape with fully rounded end caps.
+     */
     data object Pill : DrawShape
+
+    /**
+     * A rectangle with uniform chamfered or beveled cut corners.
+     *
+     * @property size The cut corner inset distance in [Dp].
+     */
     data class CutCorner(val size: Dp) : DrawShape
 
     /**
      * A rectangle whose corners round independently -- Compose's `RoundedCornerShape(topStart,
      * topEnd, bottomEnd, bottomStart)`.
+     *
+     * @property topLeft The corner radius for the top-left corner in [Dp].
+     * @property topRight The corner radius for the top-right corner in [Dp].
+     * @property bottomRight The corner radius for the bottom-right corner in [Dp].
+     * @property bottomLeft The corner radius for the bottom-left corner in [Dp].
      */
     data class RoundedCorners(
         val topLeft: Dp,
@@ -27,12 +58,50 @@ sealed interface DrawShape {
         val bottomLeft: Dp,
     ) : DrawShape
 
+    /**
+     * Factory methods and standard singleton shapes for [DrawShape].
+     */
     companion object {
+        /**
+         * Singleton accessor for [DrawShape.Rectangle].
+         */
         val Rectangle: DrawShape.Rectangle get() = DrawShape.Rectangle
+
+        /**
+         * Factory function creating a [DrawShape.RoundedRectangle] with the specified uniform [radius].
+         *
+         * @param radius The uniform corner radius in [Dp].
+         * @return A [DrawShape.RoundedRectangle] with the given radius.
+         */
         fun RoundedRectangle(radius: Dp): DrawShape.RoundedRectangle = DrawShape.RoundedRectangle(radius)
+
+        /**
+         * Singleton accessor for [DrawShape.Circle].
+         */
         val Circle: DrawShape.Circle get() = DrawShape.Circle
+
+        /**
+         * Singleton accessor for [DrawShape.Pill].
+         */
         val Pill: DrawShape.Pill get() = DrawShape.Pill
+
+        /**
+         * Factory function creating a [DrawShape.CutCorner] with the specified chamfer [size].
+         *
+         * @param size The cut corner size in [Dp].
+         * @return A [DrawShape.CutCorner] with the given chamfer size.
+         */
         fun CutCorner(size: Dp): DrawShape.CutCorner = DrawShape.CutCorner(size)
+
+        /**
+         * Factory function creating a [DrawShape.RoundedCorners] shape with independent corner radii.
+         *
+         * @param topLeft The radius of the top-left corner in [Dp].
+         * @param topRight The radius of the top-right corner in [Dp].
+         * @param bottomRight The radius of the bottom-right corner in [Dp].
+         * @param bottomLeft The radius of the bottom-left corner in [Dp].
+         * @return A [DrawShape.RoundedCorners] with the specified corner radii.
+         */
         fun RoundedCorners(
             topLeft: Dp,
             topRight: Dp,
@@ -44,6 +113,14 @@ sealed interface DrawShape {
 
 typealias UiShapeSpec = DrawShape
 
+/**
+ * Converts this geometric [DrawShape] into an executable [DrawPath] evaluated within the given [bounds].
+ *
+ * @param bounds The bounding rectangle enclosing the generated path.
+ * @param fillRule The winding fill rule assigned to the path.
+ * @param density Screen density factor scaling [Dp] dimensions to physical pixels.
+ * @return A [DrawPath] describing the shape geometry.
+ */
 fun DrawShape.toPath(
     bounds: Rectangle,
     fillRule: FillRule = FillRule.NonZero,
@@ -62,6 +139,10 @@ fun DrawShape.toPath(
  * (axis-aligned) bounds fit entirely inside the shrunk rect provably cannot touch this shape's
  * rounded/cut corner region -- backs the "skip exact convex-path clipping" fast path in each
  * backend's `RendererDrawUi.kt`.
+ *
+ * @param bounds The bounding rectangle of the shape.
+ * @param density Screen density factor scaling [Dp] dimensions to physical pixels.
+ * @return The margin in pixels safe from corner clipping artifacts.
  */
 fun DrawShape.safeInteriorMargin(bounds: Rectangle, density: Float = 1f): Float = when (this) {
     DrawShape.Rectangle -> 0f

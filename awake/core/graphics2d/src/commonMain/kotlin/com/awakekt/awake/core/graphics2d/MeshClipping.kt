@@ -14,21 +14,44 @@ import kotlin.math.abs
  * tessellation beyond the geometry predicates both use.
  */
 
+/**
+ * Extracts the first closed, convex contour points from this path if it forms a valid convex clipping boundary.
+ *
+ * @return A list of points defining the convex polygon contour, or `null` if the path has no valid closed convex contour.
+ */
 fun DrawPath.convexClipContour(): List<DrawPoint>? {
     val contour = flattenContours().firstOrNull { it.closed && it.points.size >= 3 }?.points ?: return null
     return if (isConvex(contour)) contour else null
 }
 
+/**
+ * Clips this untextured triangle mesh against a single convex clipping path using Sutherland-Hodgman polygon clipping.
+ *
+ * @param path The clipping path whose first convex contour acts as the boundary.
+ * @return A new [TriangleMesh] containing the clipped triangles, or this mesh unchanged if the path is not convex.
+ */
 fun TriangleMesh.clipToConvexPath(path: DrawPath): TriangleMesh {
     val clipContour = path.convexClipContour() ?: return this
     return clipToConvexContour(clipContour)
 }
 
+/**
+ * Clips this textured triangle mesh against a single convex clipping path, interpolating UV coordinates along cut edges.
+ *
+ * @param path The clipping path whose first convex contour acts as the boundary.
+ * @return A new [TexturedTriangleMesh] containing the clipped triangles with interpolated UVs, or this mesh unchanged if the path is not convex.
+ */
 fun TexturedTriangleMesh.clipToConvexPath(path: DrawPath): TexturedTriangleMesh {
     val clipContour = path.convexClipContour() ?: return this
     return clipToConvexContour(clipContour)
 }
 
+/**
+ * Sequentially clips this untextured triangle mesh against multiple convex clipping paths.
+ *
+ * @param paths The list of clipping paths to apply in order.
+ * @return A new [TriangleMesh] clipped against all valid convex paths.
+ */
 fun TriangleMesh.clipToConvexPaths(paths: List<DrawPath>): TriangleMesh {
     var current = this
     paths.forEach { path ->
@@ -38,6 +61,12 @@ fun TriangleMesh.clipToConvexPaths(paths: List<DrawPath>): TriangleMesh {
     return current
 }
 
+/**
+ * Sequentially clips this textured triangle mesh against multiple convex clipping paths.
+ *
+ * @param paths The list of clipping paths to apply in order.
+ * @return A new [TexturedTriangleMesh] clipped against all valid convex paths.
+ */
 fun TexturedTriangleMesh.clipToConvexPaths(paths: List<DrawPath>): TexturedTriangleMesh {
     var current = this
     paths.forEach { path ->
@@ -47,6 +76,12 @@ fun TexturedTriangleMesh.clipToConvexPaths(paths: List<DrawPath>): TexturedTrian
     return current
 }
 
+/**
+ * Sequentially clips this per-vertex-colored triangle mesh against multiple convex clipping paths, interpolating colors across split edges.
+ *
+ * @param paths The list of clipping paths to apply in order.
+ * @return A new [ColoredTriangleMesh] clipped against all valid convex paths.
+ */
 fun ColoredTriangleMesh.clipToConvexPaths(paths: List<DrawPath>): ColoredTriangleMesh {
     var current = this
     paths.forEach { path ->
