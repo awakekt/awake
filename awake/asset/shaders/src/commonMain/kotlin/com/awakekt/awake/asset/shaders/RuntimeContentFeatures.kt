@@ -41,21 +41,45 @@ fun interface AttachedContentFeature {
     fun detach()
 }
 
-/** GPU resources uploaded for one content feature, and how to free them. */
-class ContentUpload(val geometry: ContentGeometry?, private val release: () -> Unit) {
+/**
+ * GPU resources uploaded for one content feature, and how to free them.
+ *
+ * @property geometry Vertex and index geometry uploaded to GPU buffers, or `null` if none.
+ * @param release Teardown callback invoked when releasing uploaded GPU resources.
+ */
+class ContentUpload(
+    /** Vertex and index geometry uploaded to GPU buffers, or `null` if none. */
+    val geometry: ContentGeometry?,
+    private val release: () -> Unit,
+) {
+    /** Releases uploaded GPU resources associated with this content feature. */
     fun release() = release.invoke()
 }
 
 /** The backend half of building a content feature: uploads and pipeline teardown. */
 interface ContentFeatureGpu<P : UniformBlockOwner> {
+    /** The target render backend providing hardware pipeline resources. */
     val backend: RenderBackend
+
+    /** Registry mapping pipeline specifications to instantiated pipeline objects. */
     val registry: PipelineRegistry<P>
 
+    /**
+     * Resolves the low-level pipeline handle for the specified pipeline object.
+     *
+     * @param pipeline The typed pipeline owner.
+     * @return Hardware handle wrapping the backend pipeline reference.
+     */
     fun handle(pipeline: P): PipelineHandle
 
     /** Writes [feature]'s textures into [pipeline]'s group and uploads its geometry. */
     fun upload(pipeline: P, feature: ContentFeature): ContentUpload
 
+    /**
+     * Frees all GPU state and resources associated with the specified pipeline.
+     *
+     * @param pipeline The pipeline owner to destroy.
+     */
     fun destroyPipeline(pipeline: P)
 
     /** Returns once no submitted frame can still read a resource about to be freed. */

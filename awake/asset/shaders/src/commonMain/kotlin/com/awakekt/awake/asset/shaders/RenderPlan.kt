@@ -16,7 +16,10 @@ import com.awakekt.awake.render.pipeline.PipelineVariant
 
 /** Which backend is resolving a [RenderPlan]. The only thing a backend adds to one. */
 enum class RenderBackend {
+    /** Target Vulkan graphics API and SPIR-V shader bytecode. */
     Vulkan,
+
+    /** Target WebGPU graphics API and WGSL shader source. */
     WebGpu,
 }
 
