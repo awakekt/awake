@@ -162,6 +162,8 @@ comments:
       - '**/awake/engine/window/**'
       - '**/awake/kit/terrain-layers/**'
       - '**/awake/backend/jolt/**'
+      - '**/awake/engine/render/parity/**'
+      - '**/awake/engine/render/testing/**'
     excludes: *testSourceSetExcludes
     searchInNestedClass: true
     searchInInnerClass: true

@@ -5,9 +5,15 @@
  */
 package com.awakekt.awake.render.testing
 
-/** Result of comparing a rendered frame's RGBA8 bytes against a golden baseline -- see
+/**
+ * Result of comparing a rendered frame's RGBA8 bytes against a golden baseline -- see
  * [comparePixels]. [matches] is what a test asserts on; the rest is diagnostic detail for a
- * failure message. */
+ * failure message.
+ *
+ * @property matches Whether all pixels matched within the channel tolerance threshold.
+ * @property diffPixelCount Total number of pixels whose channel differences exceeded tolerance.
+ * @property maxChannelDiff Maximum difference found across all color channels.
+ */
 data class PixelDiffResult(
     val matches: Boolean,
     val diffPixelCount: Int,
