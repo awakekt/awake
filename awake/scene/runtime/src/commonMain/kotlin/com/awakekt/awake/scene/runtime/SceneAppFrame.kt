@@ -8,60 +8,65 @@ package com.awakekt.awake.scene.runtime
 import com.awakekt.awake.render.renderer.RenderFrameStats
 import kotlin.math.roundToInt
 
-/** Same shape as [com.awakekt.awake.engine.application.GameFrameStats] -- see that
- * type's doc comment. */
+/**
+ * Performance metrics snapshot for a single scene execution frame.
+ *
+ * Same shape as [com.awakekt.awake.engine.application.GameFrameStats].
+ *
+ * @property frameTimeMs Average total frame execution duration in milliseconds.
+ * @property fps Estimated current frames per second.
+ * @property trialPasses Total number of speculative UI trial-measure passes performed.
+ * @property textCacheHits Number of text layout cache hits during the frame.
+ * @property textCacheMisses Number of text layout cache misses during the frame.
+ * @property phases Phase attribution breakdown; zeroed unless performance metrics are enabled.
+ * @property p99FrameTimeMs The 99th-percentile frame time over the recent sampling window in milliseconds.
+ * @property maxFrameTimeMs The maximum single frame duration observed over the recent sampling window in milliseconds.
+ * @property render Detailed GPU draw and geometry statistics from the active renderer, or `null` if uncounted.
+ */
 data class SceneFrameStats(
     val frameTimeMs: Float,
     val fps: Float,
     val trialPasses: Int,
     val textCacheHits: Int,
     val textCacheMisses: Int,
-    /** Phase attribution, zero unless [SceneAppLifecycleRuntime.perfStatsEnabled]. */
     val phases: ScenePhaseStats = ScenePhaseStats(),
-    /**
-     * The 99th-percentile frame time over the last few seconds. An average hides a stall that
-     * a player feels; this and [maxFrameTimeMs] show it.
-     */
     val p99FrameTimeMs: Float = 0f,
-    /** The slowest frame over the same window. */
     val maxFrameTimeMs: Float = 0f,
-    /** Draws, triangles and GPU time of the renderer's last frame; null when it does not count. */
     val render: RenderFrameStats? = null,
 ) {
+    /**
+     * Total number of text layout cache queries.
+     */
     val textCacheTotal: Int get() = textCacheHits + textCacheMisses
+
+    /**
+     * Cache hit percentage for text layout lookups.
+     */
     val textCacheHitRatePercent: Int get() = if (textCacheTotal > 0) (textCacheHits * 100 / textCacheTotal) else 0
 }
 
 /**
- * Where a frame's milliseconds went, split at the three boundaries the runtime already has:
- * building the UI (layout, including every trial pass), staging its primitives for the GPU, and
- * the simulation + render pump that presents.
+ * Breakdown of frame duration by architectural phase.
  *
- * Exists because "the frame is slow" is not actionable and the guesses are expensive: a UI
- * layout rewrite and a GPU submission fix are months apart in cost. All values are from the
- * previous frame -- an overlay reading them draws inside the UI phase, so a live read would
- * report a partial frame.
+ * All values reflect durations from the previous frame in milliseconds.
+ *
+ * @property uiBuildMs Time spent executing Compose UI composition and layout in milliseconds.
+ * @property uiWaitMs Time spent blocked waiting for GPU resource allocation in milliseconds.
+ * @property uiStageMs Time spent tessellating and staging UI render commands in milliseconds.
+ * @property simRenderMs Time spent running simulation systems, scene extraction, and command submission in milliseconds.
+ * @property trialMs Share of [uiBuildMs] spent inside speculative trial-measurement passes in milliseconds.
+ * @property trialPasses Number of speculative trial measurement passes executed.
+ * @property gameMs Share of [simRenderMs] spent executing ECS fixed and frame gameplay systems in milliseconds.
+ * @property renderMs Share of [simRenderMs] spent executing infrastructure transform and render systems in milliseconds.
  */
 data class ScenePhaseStats(
     val uiBuildMs: Float = 0f,
-    /**
-     * Time blocked waiting for the GPU to release this frame's resource slot.
-     *
-     * Split out of [uiStageMs] because it is not UI work: it measures how far behind the GPU is,
-     * and folding it into the staging phase made a GPU-bound frame read as an expensive UI.
-     */
     val uiWaitMs: Float = 0f,
     val uiStageMs: Float = 0f,
     val simRenderMs: Float = 0f,
-    /** Share of [uiBuildMs] spent inside trial-measure passes specifically. */
     val trialMs: Float = 0f,
     val trialPasses: Int = 0,
-    /** The [simRenderMs] share spent in fixed and frame systems: gameplay, physics, animation. */
     val gameMs: Float = 0f,
-    /**
-     * The [simRenderMs] share spent in infrastructure systems: transform propagation, scene
-     * extraction, command recording and present. A present that waits for vsync counts here.
-     */
     val renderMs: Float = 0f,
 ) {
     /**
@@ -76,6 +81,11 @@ data class ScenePhaseStats(
         get() = uiBuildMs > 0f || uiWaitMs > 0f || uiStageMs > 0f || simRenderMs > 0f
 }
 
+/**
+ * Captures and formats the current frame statistics from the active scene lifecycle runtime.
+ *
+ * @return A populated [SceneFrameStats] snapshot of the current frame execution.
+ */
 fun SceneAppLifecycleRuntime.frameStats(): SceneFrameStats {
     val phases = phaseStats()
     return SceneFrameStats(

@@ -53,20 +53,27 @@ import kotlin.time.TimeSource
 
 /**
  * Orchestrates a single 3D scene session.
+ *
+ * @property spec The specification defining the lifecycle, systems, and content for this scene.
  */
 class SceneAppLifecycleRuntime internal constructor(
     val spec: SceneAppSpec,
 ) : AppLifecycle {
+    /** The active [SceneSession] orchestrating ECS state and scheduling for this runtime. */
     val session = SceneSession(spec)
 
+    /** The active ECS [World] instance. */
     val world: World
         get() = session.world
+
+    /** The active [Renderer] instance initialized at backend readiness. */
     lateinit var renderer: Renderer
         private set
 
     /** Resolver captured once at backend readiness and injected into the scene render system. */
     internal var gpuDrawPreparer: GpuDrawPreparer? = null
 
+    /** The [SceneManager] coordinating scene hierarchy and document transitions. */
     val sceneManager: SceneManager
         get() = session.sceneManager
 
@@ -75,6 +82,7 @@ class SceneAppLifecycleRuntime internal constructor(
     val uiHost: ComposeHost by lazy(::ComposeHost)
     private val graphicsLayers = GraphicsLayerCompositor()
 
+    /** Default font used for UI and debug text rendering. */
     val font: UiFont = UiFonts.default()
 
     /** The UI's cursor request for the current frame -- a desktop host applies it by
@@ -180,12 +188,15 @@ class SceneAppLifecycleRuntime internal constructor(
         }
     }
 
+    /** The running average frame time in milliseconds over the recent sampling window. */
     val averageFrameTimeMs: Float
         get() = recentFrames.averageFrameTimeMs
 
+    /** The estimated current frames per second based on [averageFrameTimeMs]. */
     val fps: Float
         get() = averageFrameTimeMs.takeIf { it > 0f }?.let { 1000f / it } ?: 0f
 
+    /** The descriptive name of the scene, or `"scene"` if unnamed. */
     val sceneName: String
         get() = spec.sceneName ?: "scene"
 
@@ -340,10 +351,27 @@ class SceneAppLifecycleRuntime internal constructor(
         session.dispose(this)
     }
 
+    /**
+     * Obtains the active [SceneAssetLibrary], throwing [IllegalStateException] if none was configured.
+     *
+     * @return The active [SceneAssetLibrary] instance.
+     */
     fun requireAssetLibrary(): SceneAssetLibrary = session.requireAssetLibrary()
 
+    /**
+     * Resolves and returns a named [Mesh] from the scene asset library.
+     *
+     * @param name The asset key or identifier of the mesh.
+     * @return The loaded [Mesh] instance.
+     */
     fun requireMesh(name: String): Mesh = session.requireMesh(this, name)
 
+    /**
+     * Resolves and returns a named [Material] from the scene asset library.
+     *
+     * @param name The asset key or identifier of the material.
+     * @return The loaded [Material] instance.
+     */
     fun requireMaterial(name: String): Material = session.requireMaterial(this, name)
 
     /** The scene as [camera] sees it, drawn offscreen at [width] by [height] the way the frame draws it. */
@@ -402,20 +430,60 @@ class SceneAppLifecycleRuntime internal constructor(
     /** Plans captures for a scene whose infrastructure has no [RenderSystem3D] of its own. */
     private val captureRenderSystem by lazy { RenderSystem3D(renderer, gpuDrawPreparer) }
 
+    /**
+     * Retrieves an optional registered application service of the specified [type].
+     *
+     * @param T The service type.
+     * @param type The [kotlin.reflect.KClass] reflection handle of the service.
+     * @return The service instance, or `null` if not registered.
+     */
     fun <T : Any> service(type: kotlin.reflect.KClass<T>): T? = services.service(type)
 
+    /**
+     * Retrieves a mandatory registered application service, throwing an exception if not found.
+     *
+     * @param T The service type.
+     * @param type The [kotlin.reflect.KClass] reflection handle of the service.
+     * @return The registered service instance.
+     */
     fun <T : Any> requireService(type: kotlin.reflect.KClass<T>): T = services.requireService(type)
 
+    /**
+     * Resolves a registered system by its typed [SceneSystemHandle].
+     *
+     * @param T The system type.
+     * @param handle The typed handle of the system.
+     * @return The active [System] instance.
+     */
     fun <T : System> system(handle: SceneSystemHandle<T>): T =
         session.system(handle)
 
+    /**
+     * Resolves a registered system by its descriptive [name].
+     *
+     * @param name The name identifier of the system.
+     * @return The active [System] instance.
+     */
     fun system(name: String): System = session.system(name)
 
+    /**
+     * Advances a specific system by invoking its update method with [delta] seconds.
+     *
+     * @param T The system type.
+     * @param handle The typed handle of the system to update.
+     * @param delta The frame delta time in seconds.
+     */
     fun <T : System> update(handle: SceneSystemHandle<T>, delta: Float) {
         val system = system(handle)
         system.update(world, delta)
     }
 
+    /**
+     * Searches for an entity whose [Name] component matches [name].
+     *
+     * @param name The entity name to look up.
+     * @return The matching [Entity] handle, or `null` if none found.
+     */
     fun findEntity(name: String): Entity? {
         var result: Entity? = null
         world.queryEach(Name::class) { entity, n ->
@@ -428,17 +496,47 @@ class SceneAppLifecycleRuntime internal constructor(
     fun findOrCreateEntity(name: String): Entity =
         findEntity(name) ?: world.create().also { world.add(it, Name(name)) }
 
+    /**
+     * Looks up an entity by [name], throwing an [IllegalStateException] if not found.
+     *
+     * @param name The entity name to resolve.
+     * @return The resolved [Entity] handle.
+     */
     fun requireEntity(name: String): Entity =
         findEntity(name) ?: error("Entity with name '$name' not found")
 
+    /**
+     * Finds the [Transform] component of an entity with the specified [name].
+     *
+     * @param name The entity name to look up.
+     * @return The attached [Transform] component, or `null` if the entity or component is missing.
+     */
     fun findTransform(name: String): Transform? =
         findEntity(name)?.let { world.get(it, Transform::class) }
 
+    /**
+     * Retrieves the [Transform] component of an entity with the specified [name], throwing if missing.
+     *
+     * @param name The entity name to look up.
+     * @return The attached [Transform] component.
+     */
     fun requireTransform(name: String): Transform = world.get(requireEntity(name), Transform::class)
         ?: error("Entity '$name' has no Transform component")
 
+    /**
+     * Finds the [Camera] component of an entity with the specified [name].
+     *
+     * @param name The entity name to look up.
+     * @return The attached [Camera] component, or `null` if the entity or component is missing.
+     */
     fun findCamera(name: String): Camera? = findEntity(name)?.let { world.get(it, Camera::class) }
 
+    /**
+     * Retrieves the [Camera] component of an entity with the specified [name], throwing if missing.
+     *
+     * @param name The entity name to look up.
+     * @return The attached [Camera] component.
+     */
     fun requireCamera(name: String): Camera = world.get(requireEntity(name), Camera::class)
         ?: error("Entity '$name' has no Camera component")
 

@@ -140,6 +140,13 @@ comments:
       - '**/awake/core/text/**'
       - '**/awake/core/pool/**'
       - '**/awake/core/math/**'
+      - '**/awake/core/graphics2d/**'
+      - '**/awake/ecs/src/**'
+      - '**/awake/scene/document/**'
+      - '**/awake/scene/gltf/**'
+      - '**/awake/scene/authoring/**'
+      - '**/awake/scene/runtime/**'
+      - '**/awake/scene/scene3d/src/**'
       - '**/awake/particles/**'
       - '**/awake/scene/particles/**'
     excludes: *testSourceSetExcludes

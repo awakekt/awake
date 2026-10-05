@@ -29,14 +29,30 @@ import com.awakekt.awake.scene.runtime.attachRenderableComponents
 import com.awakekt.awake.scene.runtime.defaultInfrastructureSystems
 import kotlin.reflect.KClass
 
+/**
+ * Installs an ECS scene specification built via [SceneAppDsl] into this [AppSpecDsl].
+ *
+ * @param block The configuration block defining systems, entities, assets, and scene lifecycle.
+ */
 fun AppSpecDsl.ecs(block: SceneAppDsl.() -> Unit) {
     install(sceneApp(block))
 }
 
+/**
+ * Installs a pre-configured [SceneAppSpec] into this [AppSpecDsl].
+ *
+ * @param spec The scene application specification to install.
+ */
 fun AppSpecDsl.ecs(spec: SceneAppSpec) {
     install(spec)
 }
 
+/**
+ * Installs an ECS scene into this [AppSpecDsl] with an optional scene name.
+ *
+ * @param name The optional descriptive identifier for the scene.
+ * @param block The configuration block defining systems, entities, assets, and scene lifecycle.
+ */
 fun AppSpecDsl.scene(
     name: String? = null,
     block: SceneAppDsl.() -> Unit,
@@ -51,15 +67,37 @@ fun AppSpecDsl.scene(
     )
 }
 
+/**
+ * Installs a pre-configured [SceneAppSpec] into this [AppSpecDsl].
+ *
+ * @param spec The scene application specification to install.
+ */
 fun AppSpecDsl.scene(spec: SceneAppSpec) {
     install(spec)
 }
 
+/**
+ * Builds a [SceneAppSpec] by applying the provided declarative builder block.
+ *
+ * @param block The configuration block defining systems, entities, assets, and scene lifecycle.
+ * @return The constructed [SceneAppSpec] ready for installation or execution.
+ */
 fun sceneApp(block: SceneAppDsl.() -> Unit): SceneAppSpec = SceneAppDsl().apply(block).build()
 
+/**
+ * Builds a [SceneAppSpec] by applying the provided declarative builder block.
+ *
+ * @param block The configuration block defining systems, entities, assets, and scene lifecycle.
+ * @return The constructed [SceneAppSpec].
+ */
 @Deprecated("Use ecs { ... } or scene { ... } instead.", ReplaceWith("ecs(block)"))
 fun sceneSession(block: SceneAppDsl.() -> Unit): SceneAppSpec = SceneAppDsl().apply(block).build()
 
+/**
+ * Installs an ECS scene specification into this [AppSpecDsl].
+ *
+ * @param block The configuration block defining systems, entities, assets, and scene lifecycle.
+ */
 @Deprecated("Use ecs { ... } or scene { ... } instead.", ReplaceWith("ecs(block)"))
 fun AppSpecDsl.sceneSession(block: SceneAppDsl.() -> Unit) {
     install(SceneAppDsl().apply(block).build())
@@ -88,13 +126,22 @@ class SceneAppDsl internal constructor() {
     private var infrastructureSystemsFactory: SceneAppLifecycleRuntime.() -> List<System> =
         SceneAppLifecycleRuntime::defaultInfrastructureSystems
 
+    /**
+     * Sets the descriptive name of the scene.
+     *
+     * @param value The name string, or `null` to leave unnamed.
+     */
     fun name(value: String?) {
         this.sceneName = value
     }
 
     /**
      * Captures the declarative entity layout block without running it yet.
-     * It delays execution until the actual runtime engine assigns a World.
+     *
+     * Delays execution until the actual runtime engine assigns a World.
+     *
+     * @param name The optional descriptive name for the scene.
+     * @param block The declarative scene builder block executed within [SceneBuilder].
      */
     fun scene(name: String? = null, block: SceneBuilder.() -> Unit) {
         if (name != null) {
@@ -107,6 +154,8 @@ class SceneAppDsl internal constructor() {
 
     /**
      * Integrates an existing [SceneDocument] into the population block.
+     *
+     * @param document The scene document to instantiate into the world.
      */
     fun scene(document: SceneDocument) {
         this.sceneName = document.name
@@ -134,6 +183,11 @@ class SceneAppDsl internal constructor() {
         }
     }
 
+    /**
+     * Configures the asset library and renderable resolution mappings for this scene.
+     *
+     * @param block The configuration block executed within a [SceneAssetsDsl] scope.
+     */
     fun assets(block: SceneAssetsDsl.() -> Unit) {
         val dsl = SceneAssetsDsl().apply(block)
         assetLibraryFactory = dsl::buildLibrary
@@ -142,52 +196,119 @@ class SceneAppDsl internal constructor() {
         }
     }
 
+    /**
+     * Registers a lifecycle-managed system in the specified execution phase.
+     *
+     * @param T The type of [System] to instantiate.
+     * @param name The descriptive name of the system.
+     * @param phase The [SceneSystemPhase] in which this system executes.
+     * @param factory The factory lambda creating the system using the runtime context.
+     * @return A typed [SceneSystemHandle] for runtime lookup.
+     */
     fun <T : System> system(
         name: String,
         phase: SceneSystemPhase,
         factory: SceneAppLifecycleRuntime.() -> T,
     ): SceneSystemHandle<T> = systemsDsl.system(name, phase, factory)
 
+    /**
+     * Registers a lifecycle-managed system in the fixed update phase.
+     *
+     * @param T The type of [System] to instantiate.
+     * @param name The descriptive name of the system.
+     * @param factory The factory lambda creating the system using the runtime context.
+     * @return A typed [SceneSystemHandle] for runtime lookup.
+     */
     fun <T : System> fixedSystem(
         name: String,
         factory: SceneAppLifecycleRuntime.() -> T,
     ): SceneSystemHandle<T> = systemsDsl.fixedSystem(name, factory)
 
+    /**
+     * Registers a lifecycle-managed system in the per-frame update phase.
+     *
+     * @param T The type of [System] to instantiate.
+     * @param name The descriptive name of the system.
+     * @param factory The factory lambda creating the system using the runtime context.
+     * @return A typed [SceneSystemHandle] for runtime lookup.
+     */
     fun <T : System> frameSystem(
         name: String,
         factory: SceneAppLifecycleRuntime.() -> T,
     ): SceneSystemHandle<T> = systemsDsl.frameSystem(name, factory)
 
+    /**
+     * Configures multiple lifecycle-managed systems within a [SceneSystemsDsl] block.
+     *
+     * @param block The configuration block declaring systems and phases.
+     */
     fun systems(block: SceneSystemsDsl.() -> Unit) {
         systemsDsl.apply(block)
     }
 
+    /**
+     * Registers a custom scene update callback executed on each frame tick.
+     *
+     * @param block The callback receiving delta time in seconds and elapsed total time.
+     */
     fun update(block: SceneUpdateBlock) {
         updateBlock = block
     }
 
-    /** Declares scene-level Compose UI overlay content. */
+    /**
+     * Declares scene-level Compose UI overlay content.
+     *
+     * @param block The composable content lambda rendered over the 3D scene.
+     */
     fun ui(block: SceneContent) {
         ui = block
     }
 
+    /**
+     * Declares scene-level Compose UI overlay content.
+     *
+     * @param block The composable content lambda rendered over the 3D scene.
+     */
     @Deprecated("Use ui { ... } instead.", ReplaceWith("ui(block)"))
     fun content(block: SceneContent) {
         ui(block)
     }
 
+    /**
+     * Registers a callback executed once when the scene and its runtime have been fully initialized.
+     *
+     * @param block The lifecycle hook executed with the [SceneAppLifecycleRuntime] receiver.
+     */
     fun onReady(block: SceneReadyBlock) {
         onReadyBlocks += block
     }
 
+    /**
+     * Registers a callback executed when the scene is being disposed and torn down.
+     *
+     * @param block The lifecycle hook executed with the [SceneAppLifecycleRuntime] receiver.
+     */
     fun onDispose(block: SceneDisposeBlock) {
         onDisposeBlocks += block
     }
 
+    /**
+     * Registers a custom service dependency accessible via the scene lifecycle runtime.
+     *
+     * @param T The service interface or class type.
+     * @param type The [KClass] of the service to register.
+     * @param factory The factory lambda creating the service instance.
+     */
     fun <T : Any> service(type: KClass<T>, factory: SceneAppLifecycleRuntime.() -> T) {
         serviceRegistrations += SceneServiceRegistration(type, factory)
     }
 
+    /**
+     * Registers a custom service dependency accessible via the scene lifecycle runtime.
+     *
+     * @param T The reified service interface or class type.
+     * @param factory The factory lambda creating the service instance.
+     */
     inline fun <reified T : Any> service(noinline factory: SceneAppLifecycleRuntime.() -> T) {
         service(T::class, factory)
     }
@@ -197,6 +318,8 @@ class SceneAppDsl internal constructor() {
      * [defaultInfrastructureSystems]) -- e.g. to swap in a custom render backend. This DSL
      * never imports a concrete render system itself; the override lambda is free to import
      * whatever it needs from the caller's own module.
+     *
+     * @param factory Factory producing the list of infrastructure [System] instances.
      */
     fun infrastructureSystems(factory: SceneAppLifecycleRuntime.() -> List<System>) {
         infrastructureSystemsFactory = factory
@@ -217,9 +340,21 @@ class SceneAppDsl internal constructor() {
     )
 }
 
+/**
+ * Builder scope for declaring lifecycle-managed systems within a scene.
+ */
 class SceneSystemsDsl internal constructor() {
     private val registrations = mutableListOf<SceneSystemRegistration>()
 
+    /**
+     * Registers a system in the specified execution phase.
+     *
+     * @param T The type of [System] to instantiate.
+     * @param name The descriptive name of the system.
+     * @param phase The [SceneSystemPhase] in which this system executes.
+     * @param factory The factory lambda creating the system using the runtime context.
+     * @return A typed [SceneSystemHandle] for runtime lookup.
+     */
     fun <T : System> system(
         name: String,
         phase: SceneSystemPhase,
@@ -234,11 +369,27 @@ class SceneSystemsDsl internal constructor() {
         return handle
     }
 
+    /**
+     * Registers a system in the fixed update phase.
+     *
+     * @param T The type of [System] to instantiate.
+     * @param name The descriptive name of the system.
+     * @param factory The factory lambda creating the system using the runtime context.
+     * @return A typed [SceneSystemHandle] for runtime lookup.
+     */
     fun <T : System> fixedSystem(
         name: String,
         factory: SceneAppLifecycleRuntime.() -> T,
     ): SceneSystemHandle<T> = system(name, SceneSystemPhase.Fixed, factory)
 
+    /**
+     * Registers a system in the per-frame update phase.
+     *
+     * @param T The type of [System] to instantiate.
+     * @param name The descriptive name of the system.
+     * @param factory The factory lambda creating the system using the runtime context.
+     * @return A typed [SceneSystemHandle] for runtime lookup.
+     */
     fun <T : System> frameSystem(
         name: String,
         factory: SceneAppLifecycleRuntime.() -> T,

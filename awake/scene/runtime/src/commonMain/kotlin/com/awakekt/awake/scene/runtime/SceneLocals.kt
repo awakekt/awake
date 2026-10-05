@@ -24,8 +24,18 @@ import com.awakekt.awake.render.renderer.Renderer
  * with no entities or a null `Renderer` would draw an empty screen and look like a content bug
  * rather than a missing provider.
  */
+/**
+ * Composition local providing the active ECS [World] instance.
+ *
+ * Throws an [IllegalStateException] if read outside an active scene lifecycle overlay.
+ */
 val LocalWorld = compositionLocalOf<World> { error("No World provided -- overlays run inside SceneAppLifecycleRuntime.render") }
 
+/**
+ * Composition local providing the active [Renderer] instance.
+ *
+ * Throws an [IllegalStateException] if read outside an active scene lifecycle overlay.
+ */
 val LocalRenderer = compositionLocalOf<Renderer> { error("No Renderer provided -- overlays run inside SceneAppLifecycleRuntime.render") }
 
 /**

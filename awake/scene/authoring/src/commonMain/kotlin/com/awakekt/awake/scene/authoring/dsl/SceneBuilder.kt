@@ -15,6 +15,9 @@ import com.awakekt.awake.scene.core.transform.Transform
  *
  * Provides the root entry point for declaring entities. To configure components on an entity
  * or add child entities, use the [EntityScope] trailing lambda passed to [entity].
+ *
+ * @param world The target ECS world where entities are allocated.
+ * @property parentEntity The optional parent [Entity] handle if this builder scopes child entities.
  */
 @AwakeSceneDsl
 class SceneBuilder internal constructor(
@@ -53,6 +56,8 @@ class SceneBuilder internal constructor(
 
 /**
  * Entry point for building a scene against a [World].
+ *
+ * @param block The declarative scene builder block executed within [SceneBuilder].
  */
 fun World.scene(block: SceneBuilder.() -> Unit) {
     SceneBuilder(this).block()

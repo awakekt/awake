@@ -10,6 +10,12 @@ import kotlin.math.abs
 import kotlin.math.hypot
 import kotlin.math.min
 
+/**
+ * Represents a polygon fill group consisting of an outer contour boundary and zero or more interior hole contours.
+ *
+ * @property outer The outer boundary points defining the exterior perimeter of the polygon.
+ * @property holes The list of inner hole contours subtracted from the outer boundary.
+ */
 class FillGroup(
     val outer: List<DrawPoint>,
     val holes: List<List<DrawPoint>>,
@@ -17,6 +23,13 @@ class FillGroup(
 
 typealias UiFillGroup = FillGroup
 
+/**
+ * Resolves a collection of path contours into structured [FillGroup] instances according to the given [fillRule].
+ *
+ * @param contours The raw path contours to classify and group.
+ * @param fillRule The winding rule used to determine fill inclusion and hole subtraction.
+ * @return A list of [FillGroup]s representing the decomposed solid regions and holes.
+ */
 fun resolveFillGroups(contours: List<PathContour>, fillRule: FillRule): List<FillGroup> {
     val closed = ArrayList<PathContour>()
     val simple = ArrayList<FillGroup>()
@@ -62,6 +75,13 @@ fun resolveFillGroups(contours: List<PathContour>, fillRule: FillRule): List<Fil
     return groups
 }
 
+/**
+ * Performs scanline trapezoidal decomposition and triangulation for a set of polygon contours.
+ *
+ * @param contours The list of closed polygon point lists to triangulate.
+ * @param fillRule The fill rule determining which regions are inside the geometry.
+ * @return A pair containing the generated vertex points and the triangle index array.
+ */
 fun scanlineFillTriangulation(
     contours: List<List<DrawPoint>>,
     fillRule: FillRule,
@@ -132,6 +152,11 @@ fun scanlineFillTriangulation(
     return points to indices.toIntArray()
 }
 
+/**
+ * Tessellates this path into a triangulated 2D mesh according to its [DrawPath.fillRule].
+ *
+ * @return A [TriangleMesh] containing vertices and triangle indices for the filled path.
+ */
 fun DrawPath.tessellateFill(): TriangleMesh {
     val contours = flattenContours()
     if (contours.isEmpty()) return TriangleMesh(emptyList(), IntArray(0))
@@ -191,8 +216,19 @@ internal fun appendCentroidFan(polygon: List<DrawPoint>, points: ArrayList<DrawP
     }
 }
 
+/**
+ * Default pixel width for anti-aliasing feathering fringes around path fills and strokes.
+ */
 const val AA_FRINGE_PX = 1f
 
+/**
+ * Tessellates this path into an anti-aliased colored triangle mesh with translucent boundary fringes.
+ *
+ * @param color The primary fill color of the mesh.
+ * @param fringePx Total width in pixels of the anti-aliasing boundary fringe.
+ * @param insetPx Distance in pixels by which the solid inner core is inset from the nominal boundary.
+ * @return A [ColoredTriangleMesh] containing the solid core and feathered outer fringe.
+ */
 fun DrawPath.tessellateFillAa(
     color: Color,
     fringePx: Float = AA_FRINGE_PX,
@@ -255,9 +291,19 @@ fun DrawPath.tessellateFillAa(
     return ColoredTriangleMesh(vertices, indices.toIntArray())
 }
 
+/**
+ * Maximum miter scale factor permitted when expanding or insetting sharp corners during polygon offsetting.
+ */
 const val MAX_MITER_SCALE = 4f
 internal const val MITER_EPSILON = 1e-4f
 
+/**
+ * Offsets a 2D polygon outward (positive [distance]) or inward (negative [distance]) along corner bisectors.
+ *
+ * @param polygon The vertices defining the closed polygon.
+ * @param distance The signed distance by which to offset each edge.
+ * @return A new list of [DrawPoint]s representing the offset polygon boundary.
+ */
 fun offsetPolygon(polygon: List<DrawPoint>, distance: Float): List<DrawPoint> {
     val n = polygon.size
     if (n < 3) return polygon
@@ -308,6 +354,16 @@ fun offsetPolygon(polygon: List<DrawPoint>, distance: Float): List<DrawPoint> {
 /** Points closer than this are one point to [offsetPolygon]: far below a pixel, far above float noise. */
 private const val DEGENERATE_EDGE_PX = 1e-3f
 
+/**
+ * Appends a triangular fringe mesh connecting an inner ring to an outer ring, fading from [color] to [transparent].
+ *
+ * @param innerRing The vertices of the inner polygon ring.
+ * @param outerRing The corresponding vertices of the outer polygon ring.
+ * @param color The color assigned to the inner ring vertices.
+ * @param transparent The color assigned to the outer ring vertices.
+ * @param vertices The output vertex list to which generated fringe vertices are appended.
+ * @param indices The output index list to which generated triangle indices are appended.
+ */
 fun appendBoundaryFringe(
     innerRing: List<DrawPoint>,
     outerRing: List<DrawPoint>,

@@ -60,20 +60,52 @@ The shared Core train is derived dynamically from Git tags using `git describe` 
 > **SNAPSHOT Behavior:** Any local or CI commit after a tag automatically appends `-SNAPSHOT` (e.g.,
 `0.1.0-alpha.2-SNAPSHOT`), ensuring unreleased local builds never collide with published releases.
 
-### After `0.1.0`: minor and patch releases
+### Cutting a Core release
 
-The pre-release ladder above is for the first version only. From `0.1.0` on, Core follows plain
-semantic versioning:
+A release is cut when its milestone is empty, not whenever a fix is waiting. The milestone names
+the version (`v0.1.0`, `v0.2.0`), and the release that closes it **is** that version: a stable cut,
+never another `rc`.
 
-| Change since the last release | Cut | Example |
-|:------------------------------|:----|:--------|
-| Fixes only, no API change | `./gradlew releaseCut -Prelease.channel=stable -Prelease.bump=patch` | `0.1.0` → `0.1.1` |
-| New features, or an API change | `./gradlew releaseCut -Prelease.channel=stable -Prelease.bump=minor` | `0.1.1` → `0.2.0` |
+| Situation | Command | Example |
+|:----------|:--------|:--------|
+| First stable release: the `v0.1.0` milestone is empty | `./gradlew releaseCut -Prelease.channel=stable` | `0.1.0-rc.13` → `0.1.0` |
+| Fixes only since the last stable, no public API change | `./gradlew releaseCut -Prelease.channel=stable -Prelease.bump=patch` | `0.1.0` → `0.1.1` |
+| New features, or any public API change, since the last stable | `./gradlew releaseCut -Prelease.channel=stable -Prelease.bump=minor` | `0.1.1` → `0.2.0` |
+| The public API is declared stable | `./gradlew releaseCut -Prelease.channel=stable -Prelease.bump=major` | `0.9.0` → `1.0.0` |
+| A preview someone asked for, before the milestone is done | `./gradlew releaseCut -Prelease.channel=rc -Prelease.bump=minor`, then `-Prelease.channel=rc` for each further preview | `0.1.0` → `0.2.0-rc.1` → `0.2.0-rc.2` |
 
-Before `1.0`, a minor release may break the public API, but only after the old form has shipped
-deprecated in an earlier minor. `alpha`, `beta` and `rc` tags are then optional previews of the
-next minor (`0.2.0-beta.1`), not a release counter. A milestone names the version it ships in
-(`v0.2.0`), and the release that closes it is the minor.
+- **Patch or minor:** the changelog fragments decide. Anything under `added`, `changed`,
+  `deprecated` or `removed`, or a changed `api/` dump, is a minor; only `fixed` or `security` is a
+  patch. Before `1.0`, a minor may break the public API, but only after the old form shipped
+  deprecated in an earlier minor.
+- **Previews are optional and on request.** `alpha`, `beta` and `rc` are previews of the next
+  version, not a release counter. Cutting `rc` after `rc` instead of the stable release is how Core
+  sat at `0.1.0-rc.13` with an empty `v0.1.0` milestone.
+- **Dry-run first:** `-Prelease.dryRun=true` prints the version and changelog without tagging. Run
+  the real cut with `--no-daemon`; a shared daemon can see no tags and propose the wrong version.
+
+### Who cuts, and the steps after the tag
+
+One person or agent owns a release from cut to downstream bump. Before cutting, check that no other
+`release-cut/*` branch or open `chore(release)` PR exists; if one does, that cut owns the release.
+
+1. Branch `release-cut/vX.Y.Z` from `main`, run the cut, push the branch, open
+   `chore(release): cut vX.Y.Z` with the milestone, and squash-merge it.
+2. Tag the squash commit (`git tag -a vX.Y.Z -m vX.Y.Z <sha>`) and push the tag. The tag's
+   **Publish** run uploads the Core family. Wait for it to succeed and for
+   `repo1.maven.org/.../core/host/maven-metadata.xml` to list the version.
+3. **Vulkan:** if anything under `awake/backend/vulkan` changed since the last `vulkan-v*` tag
+   (`scripts/vulkan-publication-impact.sh <last-vulkan-tag> vX.Y.Z` prints `true`), tag
+   `vulkan-vA.B.C` on the **same commit** and push it once Core is on Central. A Vulkan release
+   pins the Core release it was built with; pairing it with a newer Core can fail at runtime.
+4. **Downstream:** bump awake-studio, awake-template, awake-project-template and
+   awake-plugin-template to the new Core and Vulkan versions, and WebGPU to `<core>-SNAPSHOT`.
+   Re-record moved baselines only after stating which ones should move and why.
+5. Close the milestone.
+
+**A failed publish is not re-run.** A tag whose Publish run failed may have uploaded part of the
+family, and Maven Central never accepts the same version twice. Fix the cause on `main` and cut the
+next version; the failed number stays a gap (as `rc.4`, `rc.5`, `rc.7` and `rc.10` did).
 
 ### Independent Vulkan family
 
@@ -101,8 +133,9 @@ Consumers normally declare the modules they directly use and let Maven/Gradle re
 published dependency metadata; they do not need to list the full internal closure themselves.
 
 Release verification rejects SNAPSHOT dependencies instead of stripping the suffix and guessing a
-stable version. The current WebGPU backend still uses upstream SNAPSHOT dependencies, so a Core
-release will remain blocked until those dependencies have verified stable coordinates.
+stable version. The WebGPU backend builds on upstream wgpu4k snapshots, so it is held out of
+releases and publishes snapshots only (its last Central release is `0.1.0-alpha.4`); consumers pin
+it to `<core>-SNAPSHOT` from Central's snapshot repository. Core releases are not blocked by it.
 
 ---
 

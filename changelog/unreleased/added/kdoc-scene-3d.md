@@ -1,0 +1,1 @@
+- 100% KDoc coverage and Detekt enforcement for `:awake:scene:scene3d`.

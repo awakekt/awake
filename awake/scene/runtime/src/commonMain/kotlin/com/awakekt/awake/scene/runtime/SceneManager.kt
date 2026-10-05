@@ -22,28 +22,32 @@ import kotlin.jvm.JvmOverloads
  * Tied to one [World] for its whole lifetime by design: a [SceneAppLifecycleRuntime] never reassigns
  * its own `world` after setup, so there is no real case where a single [SceneManager] needs to
  * switch which [World] it targets.
+ *
+ * @param world The ECS [World] instance this manager operates against.
+ * @param componentRegistry Scene components to load with on top of globally registered ones.
+ * @param onUnload Callback invoked when a scene is about to be unloaded before entity destruction.
  */
 class SceneManager @JvmOverloads constructor(
     private val world: World,
-    /**
-     * Scene components to load with on top of the globally registered ones, such as a kit's
-     * (`registerAiBehaviors()`) or a game's own. Its resolvers are added to a registry built on
-     * every load, so built-in bindings are present however early this one was created.
-     */
     private val componentRegistry: SceneComponentRegistry? = null,
-    /** Runs for a scene just before its entities are destroyed, e.g. to free the assets it drew. */
     private val onUnload: (Scene) -> Unit = {},
 ) {
     init {
         DefaultSceneComponentResolvers.install()
     }
 
+    /**
+     * The currently active instantiated [Scene], or `null` if no scene is loaded.
+     */
     var current: Scene? = null
         private set
 
-    /** Tears down whatever's currently loaded (if anything), then instantiates [document].
-     * One call, not a manual teardown-then-load pair -- there is no window where a caller can
-     * forget the teardown half. */
+    /**
+     * Tears down whatever is currently loaded (if anything), then instantiates [document].
+     *
+     * @param document The scene document to instantiate and activate.
+     * @return The newly instantiated [Scene] instance.
+     */
     fun switchTo(document: SceneDocument): Scene {
         unloadCurrent()
         val scene = SceneLoader.instantiate(document, world, loadRegistry())
@@ -56,7 +60,9 @@ class SceneManager @JvmOverloads constructor(
         componentRegistry?.resolvers?.forEach(registry::register)
     }
 
-    /** Tears down the current scene without loading a replacement -- e.g. app shutdown. */
+    /**
+     * Tears down the current scene without loading a replacement, typically during app shutdown.
+     */
     fun close() {
         unloadCurrent()
         current = null

@@ -31,6 +31,11 @@ import kotlinx.serialization.json.put
  * - Hex string: `"#RGB"`, `"#RGBA"`, `"#RRGGBB"`, or `"#RRGGBBAA"`.
  * - Object: `{"r": 1.0, "g": 0.5, "b": 0.2, "a": 1.0}` (`a` defaults to `1.0`).
  * - Array: `[1.0, 0.5, 0.2]` or `[1.0, 0.5, 0.2, 1.0]`.
+ *
+ * @property r The red component normalized in `[0f, 1f]`.
+ * @property g The green component normalized in `[0f, 1f]`.
+ * @property b The blue component normalized in `[0f, 1f]`.
+ * @property a The alpha (opacity) component normalized in `[0f, 1f]`.
  */
 @Serializable(with = SceneColorSerializer::class)
 data class SceneColor(
@@ -39,7 +44,12 @@ data class SceneColor(
     val b: Float = 1f,
     val a: Float = 1f,
 ) {
-    /** Converts this color to an 8-character hex string `"#RRGGBBAA"`. */
+    /**
+     * Converts this color to an 8-character hex string `"#RRGGBBAA"`.
+     *
+     * @param includeAlpha Whether to include the alpha channel in the resulting hex string.
+     * @return Uppercase hex formatted string representing this color.
+     */
     fun toHex(includeAlpha: Boolean = a < 1f): String {
         val ri = (r.coerceIn(0f, 1f) * 255f).toInt().toString(16).padStart(2, '0')
         val gi = (g.coerceIn(0f, 1f) * 255f).toInt().toString(16).padStart(2, '0')
@@ -49,12 +59,23 @@ data class SceneColor(
         return "#$ri$gi$bi$ai".uppercase()
     }
 
+    /** Predefined constant colors and parsing helpers for [SceneColor]. */
     companion object {
+        /** Opaque white color (`#FFFFFFFF`). */
         val White = SceneColor(1f, 1f, 1f, 1f)
+
+        /** Opaque black color (`#000000FF`). */
         val Black = SceneColor(0f, 0f, 0f, 1f)
+
+        /** Completely transparent color (`#00000000`). */
         val Transparent = SceneColor(0f, 0f, 0f, 0f)
 
-        /** Parses a hex string into a [SceneColor]. */
+        /**
+         * Parses a hex string into a [SceneColor].
+         *
+         * @param hex Hex color string in `#RGB`, `#RGBA`, `#RRGGBB`, or `#RRGGBBAA` format.
+         * @return Parsed [SceneColor], or [White] if format is unrecognized.
+         */
         fun fromHex(hex: String): SceneColor {
             val clean = hex.removePrefix("#").trim()
             return when (clean.length) {
@@ -90,12 +111,23 @@ data class SceneColor(
     }
 }
 
-/** Converts a core [Color] to a document [SceneColor]. */
+/**
+ * Converts a core [Color] to a document [SceneColor].
+ *
+ * @return The converted [SceneColor] preserving color channel values.
+ */
 fun Color.toSceneColor(): SceneColor = SceneColor(r, g, b, a)
 
-/** Converts a document [SceneColor] to a core [Color]. */
+/**
+ * Converts a document [SceneColor] to a core [Color].
+ *
+ * @return The converted [Color] preserving color channel values.
+ */
 fun SceneColor.toColor(): Color = Color(r, g, b, a)
 
+/**
+ * Polymorphic serializer for [SceneColor] supporting hex string, object, and array JSON formats.
+ */
 object SceneColorSerializer : KSerializer<SceneColor> {
     override val descriptor: SerialDescriptor = buildClassSerialDescriptor("SceneColor") {
         element<Float>("r", isOptional = true)

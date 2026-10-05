@@ -17,6 +17,20 @@ import com.awakekt.awake.scene.rendering.camera.Camera
 import com.awakekt.awake.scene.rendering.debug.RenderDiagnostics
 import com.awakekt.awake.scene.rendering.terrain.TerrainShadowCasters
 
+/**
+ * Core ECS system responsible for extracting, planning, and submitting 3D scene rendering passes.
+ *
+ * Coordinates cameras, lighting, shadows, spatial culling, terrain, particles, and custom features
+ * to generate low-level GPU draw commands submitted to the active [Renderer].
+ *
+ * @param renderer The target GPU [Renderer] used for drawing.
+ * @param drawPreparer Optional low-level GPU draw preparer resolving pipeline bindings.
+ * @param features Optional list of modular [RenderFeature3D] extensions.
+ * @param viewportProvider Provider supplying the optional active sub-viewport bounds.
+ * @param renderWorldProvider Provider selecting the target ECS world to extract rendering components from.
+ * @param isRealtimeProvider Provider indicating whether continuous real-time rendering is active.
+ * @param isDirtyProvider Provider indicating whether scene contents or viewports require re-planning.
+ */
 class RenderSystem3D(
     private val renderer: Renderer,
     /**

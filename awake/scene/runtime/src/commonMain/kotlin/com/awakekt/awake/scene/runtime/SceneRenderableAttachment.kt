@@ -10,6 +10,12 @@ import com.awakekt.awake.scene.rendering.mesh.MeshBounds
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.SceneRenderableRequest
 
+/**
+ * Resolves pending [SceneRenderableRequest] instances in the scene by attaching instantiated [MeshRenderer]
+ * components and optional bounding volumes to their respective entities.
+ *
+ * @param factory Factory closure mapping a [SceneRenderableRequest] to an active [MeshRenderer].
+ */
 fun Scene.attachRenderableComponents(
     factory: (SceneRenderableRequest) -> MeshRenderer,
 ) {
