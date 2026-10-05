@@ -19,6 +19,12 @@ import com.awakekt.awake.core.math.Vec3f
  * tolerate that.
  */
 interface NavMesh {
-    /** Returns waypoints from [start] to [end], or an empty list if no path exists. */
+    /**
+     * Returns waypoints from [start] to [end], or an empty list if no path exists.
+     *
+     * @param start The starting world position.
+     * @param end The destination world position.
+     * @return An ordered list of waypoint positions from start to end, or an empty list if no path exists.
+     */
     fun findPath(start: Vec3f, end: Vec3f): List<Vec3f>
 }

@@ -51,15 +51,23 @@ enum class CellSide {
  *
  * [borderRegions] holds, per [CellSide] and per sample along that side, the region touching that
  * border sample, or [NO_REGION] where the edge is blocked.
+ *
+ * @property samplesPerSide Samples along one edge; matches the tile this was summarised from.
+ * @property regionCount Connected walkable areas in this cell. Zero means nothing here is walkable.
+ * @param borderRegions 2D array mapping each cell side and sample index to its region identifier.
  */
 class NavCellSummary internal constructor(
-    /** Samples along one edge; matches the tile this was summarised from. */
     val samplesPerSide: Int,
-    /** Connected walkable areas in this cell. Zero means nothing here is walkable. */
     val regionCount: Int,
     private val borderRegions: Array<IntArray>,
 ) {
-    /** The region touching [side] at [index] along it, or [NO_REGION] when that sample is blocked. */
+    /**
+     * Returns the region touching [side] at [index] along it, or [NO_REGION] when that sample is blocked.
+     *
+     * @param side The cell boundary side to inspect.
+     * @param index The sample index along the side, in `0 until [samplesPerSide]`.
+     * @return The integer region ID, or [NO_REGION] if blocked.
+     */
     fun regionAt(side: CellSide, index: Int): Int {
         require(index in 0 until samplesPerSide) {
             "Border index must be in 0 until $samplesPerSide; was $index."
@@ -67,9 +75,17 @@ class NavCellSummary internal constructor(
         return borderRegions[side.ordinal][index]
     }
 
-    /** Whether anything can enter or leave through [side] at all. */
+    /**
+     * Returns whether anything can enter or leave through [side] at all.
+     *
+     * @param side The cell boundary side to inspect.
+     * @return `true` if at least one sample along [side] is walkable, `false` otherwise.
+     */
     fun isOpen(side: CellSide): Boolean = borderRegions[side.ordinal].any { it != NO_REGION }
 
+    /**
+     * Boundary region constants for [NavCellSummary].
+     */
     companion object {
         /** No walkable sample here, so nothing crosses at this border position. */
         const val NO_REGION = -1
@@ -80,6 +96,8 @@ class NavCellSummary internal constructor(
  * Reduces a baked tile to what long-range routing needs.
  *
  * Regions are flood-filled with the *same* connectivity rule the fine search uses — see [canStep].
+ *
+ * @return A [NavCellSummary] encoding region connectivity along each cell boundary.
  */
 fun NavGridTile.summarize(): NavCellSummary {
     require(width == depth) { "A summarised tile must be square; was ${width}x$depth." }

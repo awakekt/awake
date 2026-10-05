@@ -24,15 +24,20 @@ import kotlin.math.tan
  * two apart -- assuming either one makes the other's paths land half a map away from the ground
  * they were baked from. Immutable once baked, which is what lets a search running off the frame
  * thread read a tile the streaming system may be unloading.
+ *
+ * @property width Number of navigation samples along the X axis.
+ * @property depth Number of navigation samples along the Z axis.
+ * @property cellSize Distance in metres between adjacent samples.
+ * @param walkable Packed bitset where each bit represents walkability of a sample.
+ * @property originX World X coordinate of sample column 0.
+ * @property originZ World Z coordinate of sample row 0.
  */
 class NavGridTile(
     val width: Int,
     val depth: Int,
     val cellSize: Float,
     private val walkable: LongArray,
-    /** World X of sample column 0. */
     val originX: Float = 0f,
-    /** World Z of sample row 0. */
     val originZ: Float = 0f,
 ) {
     /** Number of samples an agent can stand on. Useful mostly for asserting a bake did something. */
@@ -43,7 +48,14 @@ class NavGridTile(
             return total
         }
 
-    /** Returns whether an agent can stand at sample [x], [z], rejecting out-of-range coordinates. */
+    /**
+     * Returns whether an agent can stand at sample ([x], [z]), rejecting out-of-range coordinates.
+     *
+     * @param x Sample column index.
+     * @param z Sample row index.
+     * @return `true` if walkable, `false` otherwise.
+     * @throws IllegalArgumentException If [x] or [z] is out of bounds.
+     */
     fun isWalkable(x: Int, z: Int): Boolean {
         require(x in 0 until width) { "NavGridTile x must be in 0 until $width; was $x." }
         require(z in 0 until depth) { "NavGridTile z must be in 0 until $depth; was $z." }
@@ -51,21 +63,39 @@ class NavGridTile(
         return walkable[bit ushr LONG_SHIFT] and (1L shl (bit and LONG_MASK)) != 0L
     }
 
-    /** World X of sample column [x]. */
+    /**
+     * Returns the world X coordinate of sample column [x].
+     *
+     * @param x Sample column index.
+     * @return World X coordinate in metres.
+     */
     fun worldX(x: Int): Float = originX + x * cellSize
 
-    /** World Z of sample row [z]. */
+    /**
+     * Returns the world Z coordinate of sample row [z].
+     *
+     * @param z Sample row index.
+     * @return World Z coordinate in metres.
+     */
     fun worldZ(z: Int): Float = originZ + z * cellSize
 
+    /**
+     * Bitmask and shift constants for the packed 64-bit walkability array.
+     */
     companion object {
+        /** Number of bits to shift when dividing a bit index into `Long` word indices (6 bits for 64-bit words). */
         const val LONG_SHIFT = 6
+
+        /** Bitmask to obtain the bit offset within a 64-bit `Long` word. */
         const val LONG_MASK = 63
     }
 }
 
 /**
- * Bakes walkability from terrain slope: a sample is walkable when the ground rises no more than
- * [maxSlopeDegrees] between it and each of its four neighbours, [cellSize] metres away.
+ * Bakes walkability from terrain slope across an entire [Heightmap].
+ *
+ * A sample is walkable when the ground rises no more than [maxSlopeDegrees] between it and each
+ * of its four neighbours, [cellSize] metres away.
  *
  * [cellSize] is independent of the heightmap's own sample spacing -- navigation usually wants a
  * coarser grid than the terrain mesh -- which is why this samples through
@@ -73,6 +103,10 @@ class NavGridTile(
  *
  * Only terrain shape is considered. Static obstacles rasterize in afterwards, and moving ones are
  * local avoidance's problem rather than a reason to re-bake.
+ *
+ * @param cellSize The distance in metres between adjacent navigation samples.
+ * @param maxSlopeDegrees The maximum slope in degrees an agent can climb without being blocked.
+ * @return A baked [NavGridTile] covering the heightmap.
  */
 fun Heightmap.bakeNavGrid(
     cellSize: Float = 1f,
@@ -102,6 +136,11 @@ fun Heightmap.bakeNavGrid(
  *
  * Sampling still runs through the heightmap's own coordinates, so the caller passes the heightmap
  * for the cell being baked, not the world's.
+ *
+ * @param samples The number of samples along each axis of the cell.
+ * @param sampleSize The distance in metres between adjacent navigation samples.
+ * @param maxSlopeDegrees The maximum slope in degrees an agent can climb without being blocked.
+ * @return A baked [NavGridTile] positioned at local origin.
  */
 fun Heightmap.bakeNavGridCell(
     samples: Int,
@@ -206,7 +245,7 @@ private class NavGridProbe(
     }
 }
 
-/** The slope a bake accepts when nobody says otherwise. Shared so no caller restates it. */
+/** Default slope limit in degrees (45°) above which terrain is considered non-walkable. */
 const val DEFAULT_MAX_SLOPE_DEGREES = 45f
 private const val STRAIGHT_UP_DEGREES = 90f
 private const val STRAIGHT_ANGLE_DEGREES = 180f

@@ -41,19 +41,18 @@ import com.awakekt.awake.scene.world.WorldPartitionConfig
  * `(0, 0)` is the cell's corner, not the world's. Null means nothing has been authored there,
  * which loads no tile: navigation then refuses to route into the cell, which is the honest answer
  * for ground that does not exist.
+ *
+ * @param grid Target streamed navigation grid being populated.
+ * @param config World partition configuration defining cell dimensions.
+ * @param heightmapAt Provider returning heightmap for a world cell coordinate.
+ * @param maxSlopeDegrees Maximum walkable ground slope in degrees.
+ * @param coarse Optional coarse navigation graph receiving cell summaries for long-range routing.
  */
 class NavGridCellStreamer(
     private val grid: StreamedNavGrid,
     config: WorldPartitionConfig,
     private val heightmapAt: suspend (WorldCellCoord) -> Heightmap?,
     private val maxSlopeDegrees: Float = DEFAULT_MAX_SLOPE_DEGREES,
-    /**
-     * Told what each cell contributes to long-range routing, if anything is routing long-range.
-     *
-     * Filled from the bake that was happening anyway and kept after the cell unloads, which is
-     * what lets a route be planned across ground that is no longer loaded. Null when a world only
-     * ever paths within the streaming radius, and then nothing is summarised or kept.
-     */
     private val coarse: CoarseNavGraph? = null,
 ) : AsyncWorldCellStreamListener {
 
@@ -67,6 +66,12 @@ class NavGridCellStreamer(
         }
     }
 
+    /**
+     * Bakes and returns navigation [CellContent] for the specified [coord].
+     *
+     * @param coord The world cell coordinate to bake navigation for.
+     * @return A [CellContent] instance whose apply step loads the tile into [grid].
+     */
     override suspend fun loadCell(coord: WorldCellCoord): CellContent {
         val heightmap = heightmapAt(coord) ?: return CellContent { }
         val tile = heightmap.bakeNavGridCell(grid.samplesPerCell, grid.sampleSize, maxSlopeDegrees)
@@ -80,11 +85,16 @@ class NavGridCellStreamer(
     }
 
     /**
+     * Unloads navigation for [coord] when its world cell is streamed out.
+     *
      * Runs on the frame thread, like every unload. Any search still reading this tile keeps its
      * own reference to it — see [StreamedNavGrid].
      *
      * The coarse summary deliberately stays: routing across cells that are *not* loaded is the
      * only reason it exists.
+     *
+     * @param world The ECS world instance.
+     * @param coord The world cell coordinate being unloaded.
      */
     override fun onCellUnload(world: World, coord: WorldCellCoord) {
         grid.unload(coord)

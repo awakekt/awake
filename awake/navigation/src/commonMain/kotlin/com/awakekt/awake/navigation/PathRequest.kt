@@ -62,7 +62,12 @@ class PathRequest : Poolable {
     var queryGeneration: Int = 0
         private set
 
-    /** Asks for a route from [from] to [to], discarding any previous answer. */
+    /**
+     * Asks for a route from [from] to [to], discarding any previous answer.
+     *
+     * @param from Starting position in world space.
+     * @param to Target destination in world space.
+     */
     fun requestPath(from: Vec3f, to: Vec3f) {
         start.set(from)
         goal.set(to)
@@ -78,6 +83,9 @@ class PathRequest : Poolable {
         queryGeneration++
     }
 
+    /**
+     * Resets component fields to default idle state and increments [queryGeneration].
+     */
     override fun reset() {
         start.set(0f, 0f, 0f)
         goal.set(0f, 0f, 0f)

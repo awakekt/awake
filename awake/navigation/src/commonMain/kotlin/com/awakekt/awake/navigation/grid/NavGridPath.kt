@@ -24,6 +24,12 @@ import kotlin.math.roundToInt
  *
  * The path is not smoothed — it steps between sample centres and looks like a staircase. Pass it
  * through [smoothPath] for a walkable route with the redundant waypoints removed.
+ *
+ * @param startX Starting sample X coordinate on the grid.
+ * @param startZ Starting sample Z coordinate on the grid.
+ * @param goalX Target sample X coordinate on the grid.
+ * @param goalZ Target sample Z coordinate on the grid.
+ * @return An ordered list of waypoint positions from start to goal, or an empty list if no path exists.
  */
 fun NavGridTile.findPath(startX: Int, startZ: Int, goalX: Int, goalZ: Int): List<Vec3f> =
     TileField(this).findPath(startX, startZ, goalX, goalZ)
@@ -34,6 +40,10 @@ fun NavGridTile.findPath(startX: Int, startZ: Int, goalX: Int, goalZ: Int): List
  * Positions off the tile round to a sample outside it, which yields an empty path rather than
  * being clamped onto the edge — a caller asking to path from somewhere the grid does not cover
  * should hear "no", not get a route from the nearest corner.
+ *
+ * @param start Starting position in world space.
+ * @param goal Target position in world space.
+ * @return An ordered list of waypoint positions from start to goal, or an empty list if no path exists.
  */
 fun NavGridTile.findPath(start: Vec3f, goal: Vec3f): List<Vec3f> = TileField(this).findPath(start, goal)
 
@@ -46,16 +56,35 @@ fun NavGridTile.findPath(start: Vec3f, goal: Vec3f): List<Vec3f> = TileField(thi
  * heights is as valid as smoothing before.
  *
  * Waypoints are assumed to sit on tile samples, which is what [findPath] emits.
+ *
+ * @param path The list of waypoints to smooth.
+ * @return A smoothed list of waypoints with intermediate collinear points removed.
  */
 fun NavGridTile.smoothPath(path: List<Vec3f>): List<Vec3f> = TileField(this).smoothPath(path)
 
-/** [findPath] in sample coordinates, over any field. Endpoints off the field yield no path. */
+/**
+ * Finds the cheapest walkable route between two sample coordinates on this [NavField].
+ *
+ * Endpoints off the field yield an empty path.
+ *
+ * @param startX Starting sample X coordinate on the field.
+ * @param startZ Starting sample Z coordinate on the field.
+ * @param goalX Target sample X coordinate on the field.
+ * @param goalZ Target sample Z coordinate on the field.
+ * @return An ordered list of waypoint positions from start to goal, or an empty list if no path exists.
+ */
 fun NavField.findPath(startX: Int, startZ: Int, goalX: Int, goalZ: Int): List<Vec3f> {
     if (!isWalkable(startX, startZ) || !isWalkable(goalX, goalZ)) return emptyList()
     return NavFieldSearch(this).run(startX, startZ, goalX, goalZ)
 }
 
-/** [findPath] in world coordinates, over any field. */
+/**
+ * Finds a walkable route between world-space positions across this [NavField].
+ *
+ * @param start Starting position in world space.
+ * @param goal Target position in world space.
+ * @return An ordered list of waypoint positions from start to goal, or an empty list if no path exists.
+ */
 fun NavField.findPath(start: Vec3f, goal: Vec3f): List<Vec3f> = findPath(
     startX = sampleAt(start.x, originX),
     startZ = sampleAt(start.z, originZ),
@@ -66,7 +95,12 @@ fun NavField.findPath(start: Vec3f, goal: Vec3f): List<Vec3f> = findPath(
 private fun NavField.sampleAt(world: Float, origin: Float): Int =
     ((world - origin) / sampleSize).roundToInt()
 
-/** [smoothPath] over any field. */
+/**
+ * Removes redundant waypoints from [path] using supercover line-of-sight checks across this [NavField].
+ *
+ * @param path The list of waypoints to smooth.
+ * @return A smoothed list of waypoints with intermediate collinear points removed.
+ */
 fun NavField.smoothPath(path: List<Vec3f>): List<Vec3f> {
     if (path.size <= 2) return path
     val smoothed = ArrayList<Vec3f>(path.size)

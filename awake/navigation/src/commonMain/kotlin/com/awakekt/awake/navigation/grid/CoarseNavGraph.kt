@@ -27,9 +27,10 @@ import kotlin.math.sqrt
  * Summaries accumulate and are not dropped on unload — that is the point of having them. A world
  * that describes cells procedurally can also [put] summaries for cells that have never been
  * resident, which is what makes a route to somewhere the player has never been possible at all.
+ *
+ * @param worldCellSize Metres along one edge of a cell, used to weight coarse search distances.
  */
 class CoarseNavGraph(
-    /** Metres along one edge of a cell. Only used to weight the search, never to place anything. */
     private val worldCellSize: Float,
 ) {
     init {
@@ -44,29 +45,51 @@ class CoarseNavGraph(
     /** Every cell this graph can route through. */
     val knownCells: Set<WorldCellCoord> get() = summaries.keys
 
+    /**
+     * Returns the [NavCellSummary] for [coord], or `null` when that cell has not been registered.
+     *
+     * @param coord The world cell coordinate to query.
+     * @return The [NavCellSummary] for [coord], or `null` if unknown.
+     */
     fun summaryAt(coord: WorldCellCoord): NavCellSummary? = summaries[coord]
 
-    /** Records what [coord] contributes to routing, replacing any summary already held. */
+    /**
+     * Records what [coord] contributes to routing, replacing any summary already held.
+     *
+     * @param coord The world cell coordinate to register.
+     * @param summary The navigation summary describing border connectivity for [coord].
+     */
     fun put(coord: WorldCellCoord, summary: NavCellSummary) {
         summaries = summaries + (coord to summary)
     }
 
-    /** Forgets [coord]. For a world whose terrain actually changed, not for unloading one. */
+    /**
+     * Forgets [coord]. For a world whose terrain actually changed, not for unloading one.
+     *
+     * @param coord The world cell coordinate to remove.
+     */
     fun remove(coord: WorldCellCoord) {
         if (coord in summaries) summaries = summaries - coord
     }
 
+    /**
+     * Drops all registered cell summaries from this graph.
+     */
     fun clear() {
         summaries = emptyMap()
     }
 
     /**
-     * The cells a route from [from] to [to] passes through, or null when none connects them.
+     * Returns the cells a route from [from] to [to] passes through, or `null` when none connects them.
      *
      * Both endpoints are cells rather than positions: this layer does not know where in a cell an
      * agent stands, and does not need to. Every region of [from] is a starting point, which is a
      * deliberate over-claim in exactly one place — the start cell is where the agent is, so the
      * fine search validates that first leg for real before anything walks anywhere.
+     *
+     * @param from The starting world cell coordinate.
+     * @param to The destination world cell coordinate.
+     * @return Ordered list of cell coordinates forming the corridor, or `null` if unreachable.
      */
     fun corridor(from: WorldCellCoord, to: WorldCellCoord): List<WorldCellCoord>? {
         val cells = summaries

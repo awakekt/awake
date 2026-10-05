@@ -28,12 +28,22 @@ import kotlin.math.floor
  *
  * A route entirely inside the resident set never reaches the coarse layer at all — the fine search
  * answers first and this returns exactly what [StreamedNavGrid] would.
+ *
+ * @param grid The fine-grained streamed navigation grid representing resident cells.
+ * @param coarse The coarse navigation graph representing cell-to-cell connectivity.
  */
 class HierarchicalNavGrid(
     private val grid: StreamedNavGrid,
     private val coarse: CoarseNavGraph,
 ) : NavMesh {
 
+    /**
+     * Returns a walkable path between [start] and [end] world positions, or the furthest verified leg.
+     *
+     * @param start The starting world position.
+     * @param end The destination world position.
+     * @return An ordered list of waypoint positions from start towards end, or an empty list if unreachable.
+     */
     override fun findPath(start: Vec3f, end: Vec3f): List<Vec3f> {
         val direct = grid.findPath(start, end)
         return if (direct.isNotEmpty()) direct else legTowards(start, end)
