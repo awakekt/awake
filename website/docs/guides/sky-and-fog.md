@@ -1,10 +1,11 @@
 # Sky and fog
 
-<p class="awake-lede">Put a sky behind the scene, either a two-colour gradient or a cubemap image, and fade distant surfaces into fog.</p>
+<p class="awake-lede">Put a sky behind the scene, either a two-colour gradient or a cubemap image, fade distant surfaces into fog, and turn day into night.</p>
 
 <div class="awake-badges" markdown>
 <span class="awake-badge">component: <code>skybox</code></span>
 <span class="awake-badge">component: <code>fog</code></span>
+<span class="awake-badge">component: <code>day_cycle</code></span>
 <span class="awake-badge awake-badge--ok">Vulkan</span>
 <span class="awake-badge awake-badge--ok">WebGPU</span>
 <span class="awake-badge">Desktop · Android · iOS · Web</span>
@@ -81,6 +82,30 @@ files with:
 The system reads the strip off the frame thread and attaches it on a later frame. Changing the path
 or exposure loads the new image; leaving `Cubemap` mode, disabling the sky, or removing the component
 takes it away.
+
+## Day and night
+
+Put a `day_cycle` on the node of the scene's directional light. During play the sun crosses the sky
+once every `dayLengthSeconds`, and each stop sets how the sky, the light, its ambient share and the
+fog look at that time of day. Between stops they blend.
+
+```json title="day-cycle.scene.json"
+--8<-- "website/docs/snippets/rendering/day-cycle.scene.json"
+```
+
+`time` is a fraction of the day: `0` midnight, `0.25` sunrise, `0.5` noon, `0.75` sunset. The sun
+rises at `sunriseAzimuthDegrees` and is highest at noon, at `noonElevationDegrees`. Below the horizon
+the light still points at the sun, so the ground gets no direct light and the sky's moon stays
+opposite the sun. The night stop's low `lightIntensity`, low `ambient` and dark sky make it night.
+A field no stop sets keeps the value its own component authors, and blending wraps across midnight.
+
+The day advances in play: `playProject`, or the systems `playSystemsFor` returns. Outside play the
+scene shows its light, sky and fog as authored; `DayCycleSystem().update(world, 0f)` applies the
+current time without advancing it. Saving writes the authored `time` back, never the time play
+reached. See [`day_cycle`](../reference/scene-document-components.md#day_cycle) for every field.
+
+!!! warning "Keep the sun's node unrotated"
+    A rotated light node shines along its rotation and ignores the direction the day cycle writes.
 
 ## Properties
 

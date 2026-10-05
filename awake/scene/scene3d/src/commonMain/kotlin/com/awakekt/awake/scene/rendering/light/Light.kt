@@ -40,13 +40,13 @@ private const val DEFAULT_POINT_RANGE = 10f
  */
 data class Light(
     val color: Vec3f = Vec3f(1f, 1f, 1f),
-    val intensity: Float = 1f,
+    var intensity: Float = 1f,
     val type: Type = Type.Directional,
     val direction: Vec3f = Vec3f(DEFAULT_DIRECTION_X, DEFAULT_DIRECTION_Y, DEFAULT_DIRECTION_Z),
     val range: Float = DEFAULT_POINT_RANGE,
     val shadowsEnabled: Boolean = true,
     val shadowDistance: Float = DEFAULT_SHADOW_DISTANCE,
-    val ambient: Float? = null,
+    var ambient: Float? = null,
 ) {
     /** Light emission type classification. */
     enum class Type {

@@ -68,6 +68,7 @@ class PlaySystems internal constructor(
  * - `locomotion_animation` and `keyframe_animation`: their clips and looping tracks
  * - `texture_clips`: the sprite sheet's clips, stepped on the scene's clock
  * - `particle_emitter`: its emitters, with [PlayServices.particleSprites]
+ * - `day_cycle`: the sun's path and the blended sky, light and fog
  * - `canvas_element`s with an action: [CanvasActionSystem]
  * - `patrol`, `chase` and `flee`, with a `navigation` component to route them over: the behaviours and
  *   the system that answers their route requests

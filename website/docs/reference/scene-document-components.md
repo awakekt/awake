@@ -21,6 +21,7 @@ registers it.
 | [`character_controller`](#character_controller) | `CharacterController` | `com.awakekt.awake.scene:character` | `registerCharacter()` | [Character controller](../guides/character-controller.md) |
 | [`chase`](#chase) | `ChaseBehavior` | `com.awakekt.awake.ai:behavior` | `registerAiBehaviors()` | [AI](../guides/ai.md) |
 | [`custom`](#custom) | — | `com.awakekt.awake.scene:document` | Built in | [Scene documents](../guides/scene-documents.md) |
+| [`day_cycle`](#day_cycle) | `DayCycle` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Sky and fog](../guides/sky-and-fog.md#day-and-night) |
 | [`flee`](#flee) | `FleeBehavior` | `com.awakekt.awake.ai:behavior` | `registerAiBehaviors()` | [AI](../guides/ai.md) |
 | [`fog`](#fog) | `Fog` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Sky and fog](../guides/sky-and-fog.md) |
 | [`keyframe_animation`](#keyframe_animation) | `KeyframeAnimation` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Animation](../guides/animation.md) |
@@ -47,7 +48,7 @@ registers it.
 | Call | Module | Registers |
 | --- | --- | --- |
 | Built in | `com.awakekt.awake.scene:document` | `custom`, `prefab_link` |
-| `DefaultSceneComponentResolvers.install()` | `com.awakekt.awake.scene:runtime` | `ambient_light`, `camera`, `canvas_element`, `fog`, `keyframe_animation`, `light`, `locomotion_animation`, `mesh_renderer`, `particle_emitter`, `pbr_material`, `skybox`, `spin_control`, `static_transform`, `terrain`, `tone_mapping`. `SceneManager` and `SceneAppLifecycleRuntime` call it for you. |
+| `DefaultSceneComponentResolvers.install()` | `com.awakekt.awake.scene:runtime` | `ambient_light`, `camera`, `canvas_element`, `day_cycle`, `fog`, `keyframe_animation`, `light`, `locomotion_animation`, `mesh_renderer`, `particle_emitter`, `pbr_material`, `skybox`, `spin_control`, `static_transform`, `terrain`, `tone_mapping`. `SceneManager` and `SceneAppLifecycleRuntime` call it for you. |
 | `SceneComponentRegistry.registerControls()` | `com.awakekt.awake.scene:controls` | `movement_control`, `camera_rig` |
 | `SceneComponentRegistry.registerPhysics()` | `com.awakekt.awake.scene:physics` | `physics_body` |
 | `SceneComponentRegistry.registerCharacter()` | `com.awakekt.awake.scene:character` | `character_controller` |
@@ -163,6 +164,44 @@ to the entity. `SceneCustomComponent`.
 | --- | --- | --- | --- |
 | `type` | string | required | Your component's type name. Must not be blank. |
 | `payload` | any JSON | required | Your component's data. |
+
+## `day_cycle`
+
+Moves the sun over a day and blends the light, sky and fog between stops. Put it on the node of
+the directional `light`. `SceneDayCycle`.
+
+The sun rises at `sunriseAzimuthDegrees` at time `0.25`, is highest at noon (`0.5`), a quarter turn
+clockwise from where it rose, at `noonElevationDegrees`, sets opposite its rise at `0.75`, and is as
+far below the horizon at midnight. The light keeps pointing at the sun below the horizon, so ground
+gets no direct light at night and the sky's moon stays opposite the sun; give night stops a low
+`lightIntensity`, a low `ambient` and a dark sky. Play runs it; a scene that is not playing shows
+its light, sky and fog as authored. Saving writes the authored `time`, not the time play reached.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `dayLengthSeconds` | number | `600` | Seconds in one day. `0` holds the time still. |
+| `time` | number | `0.5` | Time of day the scene starts at: `0` midnight, `0.25` sunrise, `0.5` noon, `0.75` sunset. From `0` up to `1`. |
+| `sunriseAzimuthDegrees` | number | `90` | Where the sun rises, clockwise from −Z seen from above: `90` is +X. |
+| `noonElevationDegrees` | number | `60` | The sun's height above the horizon at noon. Above `0`, at most `90`. |
+| `stops` | list of stops | `[]` | How the scene looks at times of day, in time order. |
+
+### Stop
+
+Each stop is `{"time": 0.25, ...}` with `time` from `0` up to `1`, plus any of the fields below.
+Between the stops that set a field, it blends linearly, wrapping from the day's last stop to its
+first across midnight. A field no stop sets keeps its authored value.
+
+| Field | Type | What it sets |
+| --- | --- | --- |
+| `horizonColor` | color | The `skybox` horizon colour; a `SolidColor` sky's colour. |
+| `zenithColor` | color | The `skybox` zenith colour. |
+| `lightColor` | color | The light's `color`. |
+| `lightIntensity` | number | The light's `intensity`. At least `0`. |
+| `ambient` | number | The light's `ambient` share. Above `0`, at most `1`. |
+| `fogColor` | color | The `fog` colour. |
+
+The stops write the first `skybox` and `fog` in the scene. A `Cubemap` sky keeps its image. A
+rotated light node shines along its rotation and ignores the sun's direction.
 
 ## `flee`
 
