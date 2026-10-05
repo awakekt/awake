@@ -29,20 +29,33 @@ import com.awakekt.awake.render.pipeline.CullMode
  * so do not use a request as a map key or set element.
  */
 data class GpuDrawRequest(
+    /** The GPU mesh geometry to draw. */
     var mesh: GpuMesh,
+    /** The GPU material to bind for shading. */
     var material: GpuMaterial,
+    /** The world transform model matrix for this draw. */
     var model: Mat4 = Mat4(),
     /** Format-specific extra lanes; the selected pipeline's declared layout owns them. */
     var extraUniformFloats: FloatArray = EMPTY_UNIFORM_FLOATS,
+    /** Parameter vector passed to vertex animation shaders (e.g. wind/sway offset). */
     var vertexAnimation: Vec3f = Vec3f.ZERO,
+    /** Current elapsed simulation time in seconds for shader animations. */
     var timeSeconds: Float = 0f,
+    /** List of per-instance model transform matrices for instanced rendering, or `null`. */
     var instanceModels: List<Mat4>? = null,
+    /** List of per-instance skeletal joint matrix palettes, or `null`. */
     var instanceJointPalettes: List<FloatArray>? = null,
+    /** List of per-instance tint colors, or `null`. */
     var instanceColors: List<Vec4>? = null,
+    /** List of per-instance animation playback frames, or `null`. */
     var instanceFrames: List<Float>? = null,
+    /** Face culling mode to apply when rasterizing this draw. */
     var cullMode: CullMode = CullMode.None,
+    /** Alpha blending and transparency discard mode. */
     var alphaMode: AlphaMode = AlphaMode.Opaque,
+    /** Alpha threshold for mask discard testing when [alphaMode] is [AlphaMode.Mask]. */
     var alphaCutoff: Float = DEFAULT_ALPHA_CUTOFF,
+    /** Whether this draw uses alpha blending and should be ordered during the transparent pass. */
     var transparent: Boolean = false,
     /** Drawn into shadow maps only, never into the scene: a stand-in caster for something the
      * scene draws another way, such as GPU-displaced terrain. */

@@ -47,6 +47,7 @@ interface ShaderReplacement : GpuCapability {
      */
     suspend fun replace(old: ShaderProgram, new: ShaderProgram): Int = swapIn(old, prepare(new))
 
+    /** Capability identifier key for querying [ShaderReplacement] support from a [GpuDevice]. */
     companion object : GpuCapabilityKind<ShaderReplacement>
 }
 
@@ -56,9 +57,18 @@ interface PreparedShaderProgram {
     val program: ShaderProgram
 }
 
-/** A pipeline's two shader stages, and what each of its groups binds. */
+/**
+ * A pipeline's two shader stages, and what each of its groups binds.
+ *
+ * @property vertex Vertex shader stage source reference.
+ * @property fragment Fragment shader stage source reference.
+ * @property bindingsByGroup The resources each group declares, or null when unknown. A replacement must bind exactly what
+ * the pipeline it replaces binds, since the pipeline keeps its layout; an unknown one is refused.
+ */
 data class ShaderProgram(
+    /** Vertex shader stage source reference. */
     val vertex: ShaderSource,
+    /** Fragment shader stage source reference. */
     val fragment: ShaderSource,
     /**
      * The resources each group declares, or null when unknown. A replacement must bind exactly what

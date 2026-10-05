@@ -28,6 +28,13 @@ internal object AslContinueSignal : RuntimeException()
 class AslEvaluator private constructor(
     private val definition: AslShaderDefinition,
 ) {
+    /**
+     * Evaluates an ASL expression on the CPU against the provided variable environment.
+     *
+     * @param expr The expression AST node to evaluate.
+     * @param env Variable bindings mapping variable names to float array buffers.
+     * @return Float array representing scalar or vector evaluation results.
+     */
     fun eval(expr: AslExpr, env: Map<String, FloatArray>): FloatArray = when (expr) {
         is AslLiteral -> floatArrayOf(expr.value)
         is AslRef -> lookup(env, expr.wgslName)
@@ -136,6 +143,7 @@ class AslEvaluator private constructor(
         }
     }
 
+    /** Factory and evaluation entry points for executing ASL fragment shaders on the CPU. */
     companion object {
         /** Run [definition]'s fragment stage for one pixel. [inputs] carries varyings and
          * uniform fields; module consts come from the definition itself. Returns RGBA. */

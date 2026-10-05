@@ -33,18 +33,33 @@ import com.awakekt.awake.render.renderer.UniformField
 import com.awakekt.awake.render.renderer.UniformLayout
 import com.awakekt.awake.render.renderer.UniformWriter
 
+/** Uniform field declarations for sampled cubemap skybox rendering. */
 object SkyboxCubemapFields {
+    /** Inverse view-projection matrix used to reconstruct view rays from screen quad UVs. */
     val InverseViewProjection = UniformField("inverseViewProjection", GpuDataShape.Mat4)
+
+    /** World-space camera eye position. */
     val CameraEye = UniformField("cameraEye", GpuDataShape.Vec4)
+
+    /** Tone mapping exposure scale factor. */
     val Exposure = UniformField("exposure", GpuDataShape.Vec4)
 }
 
+/** Uniform buffer layout specification for cubemap skybox rendering. */
 val SkyboxCubemapUniformLayout = UniformLayout(
     SkyboxCubemapFields.InverseViewProjection,
     SkyboxCubemapFields.CameraEye,
     SkyboxCubemapFields.Exposure,
 )
 
+/**
+ * Packs cubemap skybox uniforms into a float array conforming to [SkyboxCubemapUniformLayout].
+ *
+ * @param inverseViewProjection Inverse view-projection matrix reconstructing world view rays.
+ * @param cameraEye World-space camera eye position.
+ * @param exposure Tone mapping exposure factor.
+ * @return Formatted uniform buffer float array.
+ */
 fun skyboxCubemapUniformFloats(
     inverseViewProjection: Mat4,
     cameraEye: Vec3f,

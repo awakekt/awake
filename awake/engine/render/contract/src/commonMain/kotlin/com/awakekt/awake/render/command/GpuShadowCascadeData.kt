@@ -12,10 +12,15 @@ import kotlin.math.sqrt
 
 /** Hardware-ready shadow cascade data. Scene fitting produces this payload; backends consume it. */
 class GpuShadowCascadeData(
+    /** View-projection matrices for each active shadow cascade. */
     val viewProjections: List<Mat4>,
+    /** Far split distances in view space for each cascade. */
     val splitDistances: FloatArray,
+    /** Normalization scale along the depth axis for each cascade. */
     val depthScales: FloatArray = FloatArray(viewProjections.size) { scaleAlong(viewProjections[it], DEPTH_AXIS) },
+    /** World-space width extents for texel size calculations across cascades. */
     val worldExtents: FloatArray = FloatArray(viewProjections.size) { 2f / scaleAlong(viewProjections[it], WIDTH_AXIS) },
+    /** Distance at which transition blending begins between adjacent cascades. */
     val blendStartDistances: FloatArray,
 ) {
     /** Retains the original constructor and defaults for source and binary compatibility. */
@@ -72,6 +77,7 @@ class GpuShadowCascadeData(
         return floats
     }
 
+    /** Predefined shadow cascade payloads. */
     companion object {
         /** A valid payload for a shader whose shadow feature is disabled. */
         val UNSHADOWED: GpuShadowCascadeData = GpuShadowCascadeData(

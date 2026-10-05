@@ -125,4 +125,5 @@ private fun particle(): AslShaderDefinition = shader("particle") {
     }
 }
 
+/** Shader definition for 3D textured billboard particle rendering with per-particle color tinting. */
 val ParticleShader: AslShaderDefinition = particle()
