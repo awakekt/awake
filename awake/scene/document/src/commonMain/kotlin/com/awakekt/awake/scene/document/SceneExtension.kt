@@ -9,7 +9,11 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import kotlin.jvm.JvmInline
 
-/** Unique identifier for a scene extension record. */
+/**
+ * Unique identifier for a scene extension record.
+ *
+ * @property value Underlying string representation of the extension ID.
+ */
 @JvmInline
 @Serializable
 value class SceneExtensionId(val value: String) {
