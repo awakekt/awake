@@ -324,7 +324,9 @@ private fun java.io.InputStream.bufferedText(): String = reader().use { it.readT
 private fun measureGlyph(measureFont: Font, frc: FontRenderContext, ascentEm: Float, char: Char): GlyphMetrics {
     val gv = measureFont.createGlyphVector(frc, char.toString())
     val advanceEm = gv.getGlyphMetrics(0).advanceX / LOGICAL_CELL
-    val bounds = gv.getGlyphOutline(0).bounds2D
+    // Not `getBounds2D`: on JDK 17 that is the box of the curves' control points, on JDK 21 their true
+    // extent, so the same font measured differently. See [tightBounds].
+    val bounds = tightBounds(gv.getGlyphOutline(0))
     if (bounds.isEmpty) {
         return GlyphMetrics(0f, 0f, 0f, 0f, advanceEm)
     }
