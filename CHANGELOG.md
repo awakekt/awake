@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-rc.14] - 2026-10-05
+
+### Added
+
+- **A frame-scoped `ScratchPool`, and the ECS and bounds APIs that let a hot loop avoid allocating.** `ScratchPool<T>` in the new `awake:core:pool` module hands out reusable instances in order and rewinds them in one `reset()`. `World.componentStore(typeId)` hoists a store lookup out of a per-entity loop, and `World.generation` changes on every `clear()` so anything that caches type ids, families or stores can tell they are stale. `MeshBounds.writeWorldBounds` writes world-space bounds into a caller-provided `Aabb`. (#318)
+- **Layered terrain blends up to eight layers where more than four meet.** `TerrainControlMap.reduce` keeps eight layers per texel when a texel, or the 2 x 2 texels one pixel blends, holds more than four, and the surface then uses an eight-slot shader. Where five or more ground textures met, the weakest used to vanish at a pixel boundary and leave a hard seam. Terrains with four or fewer keep the four-slot shader and its cost. `.terrainctl` files are now version 2 with a slots byte; version 1 files still load. (#273)
+
+### Changed
+
+- **Scene extraction stops allocating per visible mesh.** For entities with a `MeshRenderer` (with or without `MeshBounds`, billboarded, with a `PbrMaterial` and a `TextureAnimation`), `LodGroup` entities, modular characters and skinned entities (with or without a material), `SceneDrawCollector` allocates no draw command, bounding box, matrix or vector in steady state; a probe over 1,000 entities of each kind measures zero bytes per frame. Draw requests are now pooled and rewritten by the next collection, so a `GpuDrawRequest` (and its `model` and `worldBounds`) is valid only until then. `GpuDrawRequest`'s properties become mutable. Modular characters walk their slots by index, and `UniformLayout.offsetOf` no longer builds a list per call, which a tinted skinned draw paid for every frame. An `InstancedSkinnedMeshRenderer` splits its transforms and joint palettes out once at construction, so mutating its `instances` list in place is no longer picked up. (#318)
+
 ## [0.1.0-rc.13] - 2026-10-04
 
 ### Added
