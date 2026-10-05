@@ -13,6 +13,8 @@ const val MAX_TERRAIN_LAYERS: Int = 256
 
 /** Shortest and longest texture repeat, in world units, the layer table can encode. */
 const val MIN_LAYER_TILING: Float = 0.25f
+
+/** Maximum allowed tiling factor for a terrain layer. */
 const val MAX_LAYER_TILING: Float = 64f
 
 /**
@@ -39,7 +41,9 @@ data class TerrainLayer(
 /** The ordered layers of one terrain. A layer's position is the index the control map stores. */
 @Serializable
 data class TerrainLayerPalette(
+    /** Serialized schema format version. */
     val formatVersion: Int = FORMAT_VERSION,
+    /** List of terrain surface layers in palette index order. */
     val layers: List<TerrainLayer>,
 ) {
     /** Everything wrong with this palette; empty when it can be drawn. */
@@ -59,7 +63,9 @@ data class TerrainLayerPalette(
         }
     }
 
+    /** Companion object containing format constants. */
     companion object {
+        /** Current format version integer for terrain layer palettes. */
         const val FORMAT_VERSION = 1
     }
 }
@@ -72,6 +78,7 @@ object TerrainLayerPaletteCodec {
         prettyPrint = true
     }
 
+    /** Deserializes a UTF-8 JSON byte array into a validated [TerrainLayerPalette]. */
     fun decode(bytes: ByteArray): TerrainLayerPalette {
         val palette = json.decodeFromString(TerrainLayerPalette.serializer(), bytes.decodeToString())
         val issues = palette.validate()
@@ -79,6 +86,7 @@ object TerrainLayerPaletteCodec {
         return palette
     }
 
+    /** Serializes [palette] into a pretty-printed UTF-8 JSON byte array. */
     fun encode(palette: TerrainLayerPalette): ByteArray =
         json.encodeToString(TerrainLayerPalette.serializer(), palette).encodeToByteArray()
 }

@@ -60,7 +60,10 @@ const val LAYER_ALBEDO_BINDING: Int = TERRAIN_SURFACE_FIRST_BINDING
 /** Per-layer tiling and sharpness. See [layerTable]. */
 const val LAYER_TABLE_BINDING: Int = TERRAIN_SURFACE_FIRST_BINDING + 1
 
+/** Shader texture binding slot for terrain control layer indices. */
 const val CONTROL_INDICES_BINDING: Int = TERRAIN_SURFACE_FIRST_BINDING + 2
+
+/** Shader texture binding slot for terrain control layer blend weights. */
 const val CONTROL_WEIGHTS_BINDING: Int = TERRAIN_SURFACE_FIRST_BINDING + 3
 private const val LAYER_SAMPLER_BINDING = TERRAIN_SURFACE_FIRST_BINDING + 4
 

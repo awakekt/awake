@@ -26,7 +26,9 @@ private const val BYTE_MAX = 255
  * [slots] is [CONTROL_SLOTS] or [MAX_CONTROL_SLOTS]. The shader's per-pixel cost follows it.
  */
 class TerrainControlMap(
+    /** Number of control texels along the X axis. */
     val width: Int,
+    /** Number of control texels along the Z axis. */
     val depth: Int,
     indices: ByteArray,
     weights: ByteArray,
@@ -47,8 +49,10 @@ class TerrainControlMap(
         }
     }
 
+    /** Returns the palette layer index assigned to [slot] at texel ([x], [z]). */
     fun layerAt(x: Int, z: Int, slot: Int): Int = indexBytes[offset(x, z, slot)].toInt() and BYTE_MAX
 
+    /** Returns the blend weight (0..255) for [slot] at texel ([x], [z]). */
     fun weightAt(x: Int, z: Int, slot: Int): Int = weightBytes[offset(x, z, slot)].toInt() and BYTE_MAX
 
     /** The highest palette index any slot with weight uses, or -1 for an empty map. */
@@ -58,8 +62,10 @@ class TerrainControlMap(
         return highest
     }
 
+    /** Returns a defensive copy of all raw index bytes in row-major slot order. */
     fun copyIndices(): ByteArray = indexBytes.copyOf()
 
+    /** Returns a defensive copy of all raw weight bytes in row-major slot order. */
     fun copyWeights(): ByteArray = weightBytes.copyOf()
 
     /**
@@ -68,6 +74,7 @@ class TerrainControlMap(
      */
     fun indicesTexture(): TextureAsset = TextureAsset(indexBytes.copyOf(), width * slots / CONTROL_SLOTS, depth)
 
+    /** Weights in RGBA order packed into a [TextureAsset] matching the GPU control texture layout. */
     fun weightsTexture(): TextureAsset = TextureAsset(weightBytes.copyOf(), width * slots / CONTROL_SLOTS, depth)
 
     private fun offset(x: Int, z: Int, slot: Int): Int {
@@ -77,6 +84,7 @@ class TerrainControlMap(
         return (z * width + x) * slots + slot
     }
 
+    /** Companion object providing control map construction and reduction utilities. */
     companion object {
         /**
          * Keeps each texel's strongest layers and rescales them to sum to 255, reporting how much
@@ -215,8 +223,11 @@ private class TexelReduction(private val layerCount: Int, private val weight: (l
  * fraction of each texel's total weight.
  */
 class TerrainControlReduction(
+    /** The reduced [TerrainControlMap]. */
     val controlMap: TerrainControlMap,
+    /** Maximum fraction of weight dropped across any single texel during reduction. */
     val maxDroppedWeight: Float,
+    /** Average fraction of weight dropped across all reduced texels. */
     val meanDroppedWeight: Float,
     /** Texels covered by more layers than a control texel holds. */
     val texelsOverSlots: Int,
@@ -237,6 +248,7 @@ object TerrainControlMapCodec {
     private const val VERSION: Byte = 2
     private const val HEADER = 16
 
+    /** Encodes [map] into binary `*.terrainctl` byte array format. */
     fun encode(map: TerrainControlMap): ByteArray {
         val planeSize = map.width * map.depth * map.slots
         val out = ByteArray(HEADER + planeSize * 2)
@@ -250,6 +262,7 @@ object TerrainControlMapCodec {
         return out
     }
 
+    /** Decodes binary `*.terrainctl` [bytes] into a [TerrainControlMap]. */
     fun decode(bytes: ByteArray): TerrainControlMap {
         require(bytes.size >= HEADER && bytes.copyOfRange(0, 4).contentEquals(MAGIC)) { "Not a terrain control map: missing ATCM header." }
         require(bytes[4] in 1..VERSION) { "Terrain control map version ${bytes[4]} is not supported; expected 1 to $VERSION." }
