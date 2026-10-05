@@ -44,6 +44,25 @@ import kotlin.reflect.KClass
  * [additive] glows add to what is behind them, which needs the plan's particle pipeline built with
  * `buildAdditive`. [facing] turns each sprite to the camera, or with [ParticleFacing.Flat] lays it in
  * the plane perpendicular to the node's up axis, the only use of the node's rotation.
+ *
+ * @property texture Path to the texture image asset used for particle sprites.
+ * @property maxParticles Maximum number of concurrently active particles.
+ * @property spawnRate Number of particles spawned per second.
+ * @property lifetime Lifetime of each particle in seconds.
+ * @property startAlpha Initial opacity alpha when spawned.
+ * @property scale Initial uniform scale of particles.
+ * @property endScale Optional final uniform scale at particle expiration.
+ * @property velocity Base emission velocity vector.
+ * @property velocityJitter Random velocity jitter magnitude added to emission.
+ * @property coneHalfAngleDegrees Half-angle of conical emission dispersion in degrees.
+ * @property spawnRadius Radius of the spherical or disc spawn area.
+ * @property radialSpeed Speed at which particles radiate outward from origin.
+ * @property color Initial tint color of particles.
+ * @property endColor Optional final tint color at particle expiration.
+ * @property frameCount Number of frames in flipbook animated sprite sheet.
+ * @property frameRate Playback frame rate for flipbook animation.
+ * @property additive Whether to render particles with additive blending.
+ * @property facing Sprite billboard orientation mode.
  */
 @Serializable
 @SerialName("particle_emitter")
@@ -84,9 +103,16 @@ data class SceneParticleEmitter(
     }
 }
 
-/** A [SceneParticleEmitter] on a live entity; [ParticleContentSystem] gives it its [ParticleEmitter]. */
+/**
+ * A [SceneParticleEmitter] on a live entity; [ParticleContentSystem] gives it its [ParticleEmitter].
+ *
+ * @property authored The authored scene particle emitter descriptor.
+ */
 class ParticleEmitterSource(val authored: SceneParticleEmitter)
 
+/**
+ * Binding definition connecting [SceneParticleEmitter] descriptors to ECS [ParticleEmitterSource] components.
+ */
 object ParticleEmitterBinding : SceneComponentBinding<ParticleEmitterSource, SceneParticleEmitter> {
     override val componentClass: KClass<ParticleEmitterSource> = ParticleEmitterSource::class
     override val schemaClass: KClass<SceneParticleEmitter> = SceneParticleEmitter::class

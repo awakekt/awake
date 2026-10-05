@@ -14,6 +14,9 @@ import com.awakekt.awake.scene.document.SceneColor
 import com.awakekt.awake.scene.document.toColor
 import kotlin.reflect.KClass
 
+/**
+ * Binding definition connecting [SceneFog] descriptors to ECS [Fog] components.
+ */
 object FogBinding : SceneComponentBinding<Fog, SceneFog> {
     override val componentClass: KClass<Fog> = Fog::class
     override val schemaClass: KClass<SceneFog> = SceneFog::class
@@ -31,6 +34,11 @@ object FogBinding : SceneComponentBinding<Fog, SceneFog> {
     override fun export(world: World, entity: Entity, component: Fog): SceneFog =
         component.toSceneComponent()
 
+    /**
+     * Converts this [SceneFog] descriptor into a runtime [Fog] component.
+     *
+     * @return The instantiated [Fog] component.
+     */
     fun SceneFog.toComponent(): Fog {
         val fogColor = if (colorR != null && colorG != null && colorB != null) {
             Color(colorR, colorG, colorB, 1f)
@@ -44,6 +52,11 @@ object FogBinding : SceneComponentBinding<Fog, SceneFog> {
         )
     }
 
+    /**
+     * Serializes this runtime [Fog] component into a [SceneFog] descriptor.
+     *
+     * @return The serialized [SceneFog] descriptor.
+     */
     fun Fog.toSceneComponent(): SceneFog = SceneFog(
         enabled = enabled,
         density = density,

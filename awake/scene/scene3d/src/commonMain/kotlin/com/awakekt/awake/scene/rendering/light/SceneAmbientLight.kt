@@ -12,6 +12,12 @@ import kotlinx.serialization.Serializable
 
 /**
  * Serializable ambient light component for scene documents.
+ *
+ * @property intensity Ambient light intensity factor.
+ * @property color Base ambient light color.
+ * @property colorR Optional explicit red color channel override.
+ * @property colorG Optional explicit green color channel override.
+ * @property colorB Optional explicit blue color channel override.
  */
 @Serializable
 @SerialName("ambient_light")

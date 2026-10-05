@@ -146,6 +146,7 @@ comments:
       - '**/awake/scene/gltf/**'
       - '**/awake/scene/authoring/**'
       - '**/awake/scene/runtime/**'
+      - '**/awake/scene/scene3d/**'
     excludes: *testSourceSetExcludes
     searchInNestedClass: true
     searchInInnerClass: true

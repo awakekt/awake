@@ -28,6 +28,15 @@ private const val DEFAULT_POINT_RANGE = 10f
  *
  * `RenderSystem3D` collects the first directional light plus up to `MAX_POINT_LIGHTS` point lights;
  * past that cap the nearest to the camera win.
+ *
+ * @property color The RGB color tint of the light.
+ * @property intensity Intensity multiplier applied to the emitted light.
+ * @property type The type of light emission (directional or point).
+ * @property direction World-space direction the light shines from (for directional lights).
+ * @property range Attenuation radius in world units where point light falloff reaches zero.
+ * @property shadowsEnabled Whether this light casts shadows.
+ * @property shadowDistance How far from the camera directional shadow cascades reach.
+ * @property ambient Ambient lighting factor applied to unlit surfaces.
  */
 data class Light(
     val color: Vec3f = Vec3f(1f, 1f, 1f),
@@ -35,17 +44,16 @@ data class Light(
     val type: Type = Type.Directional,
     val direction: Vec3f = Vec3f(DEFAULT_DIRECTION_X, DEFAULT_DIRECTION_Y, DEFAULT_DIRECTION_Z),
     val range: Float = DEFAULT_POINT_RANGE,
-    /** Whether this light casts shadows. Point lights use six cube-face depth projections. */
     val shadowsEnabled: Boolean = true,
-    /** How far from the camera a [Type.Directional] light's shadow cascades reach, in world
-     * units; the camera's far plane still caps it. Ignored for a point light. */
     val shadowDistance: Float = DEFAULT_SHADOW_DISTANCE,
-    /** A [Type.Directional] light's ambient: how much of a surface's colour shows with no direct
-     * light, above 0 and up to 1. Null keeps each shader's own default. Ignored for a point light. */
     val ambient: Float? = null,
 ) {
+    /** Light emission type classification. */
     enum class Type {
+        /** Directional light simulating infinite distance (e.g. sun or moon). */
         Directional,
+
+        /** Omnidirectional point light radiating from entity position with radial falloff. */
         Point,
     }
 }

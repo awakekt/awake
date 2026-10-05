@@ -14,6 +14,9 @@ import com.awakekt.awake.scene.document.SceneColor
 import com.awakekt.awake.scene.document.toColor
 import kotlin.reflect.KClass
 
+/**
+ * Binding definition connecting [SceneSkybox] descriptors to ECS [Skybox] components.
+ */
 object SkyboxBinding : SceneComponentBinding<Skybox, SceneSkybox> {
     override val componentClass: KClass<Skybox> = Skybox::class
     override val schemaClass: KClass<SceneSkybox> = SceneSkybox::class
@@ -31,6 +34,11 @@ object SkyboxBinding : SceneComponentBinding<Skybox, SceneSkybox> {
     override fun export(world: World, entity: Entity, component: Skybox): SceneSkybox =
         component.toSceneComponent()
 
+    /**
+     * Converts this [SceneSkybox] descriptor into a runtime [Skybox] component.
+     *
+     * @return The instantiated [Skybox] component.
+     */
     fun SceneSkybox.toComponent(): Skybox {
         val horizon = if (horizonColorR != null && horizonColorG != null && horizonColorB != null) {
             Color(horizonColorR, horizonColorG, horizonColorB, 1f)
@@ -53,6 +61,11 @@ object SkyboxBinding : SceneComponentBinding<Skybox, SceneSkybox> {
         )
     }
 
+    /**
+     * Serializes this runtime [Skybox] component into a [SceneSkybox] descriptor.
+     *
+     * @return The serialized [SceneSkybox] descriptor.
+     */
     fun Skybox.toSceneComponent(): SceneSkybox = when (val m = mode) {
         is Skybox.Mode.Procedural -> SceneSkybox(
             enabled = enabled,

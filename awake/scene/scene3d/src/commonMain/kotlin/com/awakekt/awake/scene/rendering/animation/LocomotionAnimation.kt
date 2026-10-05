@@ -64,7 +64,11 @@ data class SceneLocomotionAnimation(
     }
 }
 
-/** [SceneLocomotionAnimation] on a live entity, with the last position it was seen at. */
+/**
+ * Live locomotion animation component tracking position delta and driving appropriate movement clips.
+ *
+ * @property clips The locomotion animation clip configuration descriptor.
+ */
 class LocomotionAnimation(val clips: SceneLocomotionAnimation) {
     private var lastX = 0f
     private var lastY = 0f
@@ -162,6 +166,9 @@ class LocomotionAnimation(val clips: SceneLocomotionAnimation) {
     }
 }
 
+/**
+ * Binding definition connecting [SceneLocomotionAnimation] descriptors to ECS [LocomotionAnimation] components.
+ */
 object LocomotionAnimationBinding : SceneComponentBinding<LocomotionAnimation, SceneLocomotionAnimation> {
     override val componentClass: KClass<LocomotionAnimation> = LocomotionAnimation::class
     override val schemaClass: KClass<SceneLocomotionAnimation> = SceneLocomotionAnimation::class

@@ -7,12 +7,13 @@ package com.awakekt.awake.scene.rendering.fog
 
 import com.awakekt.awake.core.color.Color
 
+/**
+ * Default color applied for distance fog in 3D scenes.
+ */
 val DefaultFogColor = Color(r = 0.55f, g = 0.62f, b = 0.70f, a = 1f)
 
 /**
  * Fog component — defines distance-based exponential fog in the scene.
- *
- * Matches Godot's `Environment.fog_enabled` / Unreal's `ExponentialHeightFog`.
  *
  * @property enabled Whether distance fog is applied during scene shading.
  * @property density Distance-based exponential fog density factor.

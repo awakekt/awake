@@ -15,6 +15,9 @@ import com.awakekt.awake.scene.rendering.toVec3
 import kotlin.math.PI
 import kotlin.reflect.KClass
 
+/**
+ * Binding definition connecting [SceneCamera] descriptors to ECS [Camera] components.
+ */
 object CameraBinding : SceneComponentBinding<Camera, SceneCamera> {
     override val componentClass: KClass<Camera> = Camera::class
     override val schemaClass: KClass<SceneCamera> = SceneCamera::class
@@ -32,6 +35,11 @@ object CameraBinding : SceneComponentBinding<Camera, SceneCamera> {
     override fun export(world: World, entity: Entity, component: Camera): SceneCamera =
         component.toSceneComponent()
 
+    /**
+     * Converts this [SceneCamera] descriptor into a runtime [Camera] component.
+     *
+     * @return The instantiated [Camera] component.
+     */
     fun SceneCamera.toComponent(): Camera = Camera(
         lens = Lens(
             eye = eye.toVec3(),
@@ -47,6 +55,11 @@ object CameraBinding : SceneComponentBinding<Camera, SceneCamera> {
         isPrimary = primary,
     )
 
+    /**
+     * Serializes this runtime [Camera] component into a [SceneCamera] descriptor.
+     *
+     * @return The serialized [SceneCamera] descriptor.
+     */
     fun Camera.toSceneComponent(): SceneCamera = SceneCamera(
         eye = lens.eye.toSceneVec3(),
         center = lens.center.toSceneVec3(),

@@ -22,6 +22,9 @@ data class SceneRenderableRequest(
     val meshRenderer: SceneMeshRenderer,
 )
 
+/**
+ * Binding definition connecting [SceneMeshRenderer] descriptors to ECS [MeshRenderer] components.
+ */
 object MeshRendererBinding : SceneComponentBinding<MeshRenderer, SceneMeshRenderer> {
     override val componentClass: KClass<MeshRenderer> = MeshRenderer::class
     override val schemaClass: KClass<SceneMeshRenderer> = SceneMeshRenderer::class

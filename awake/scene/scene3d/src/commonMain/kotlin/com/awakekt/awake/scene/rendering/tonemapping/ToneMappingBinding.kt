@@ -11,6 +11,9 @@ import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneResolutionContext
 import kotlin.reflect.KClass
 
+/**
+ * Binding definition connecting [SceneToneMapping] schema descriptors with ECS [ToneMapping] components.
+ */
 object ToneMappingBinding : SceneComponentBinding<ToneMapping, SceneToneMapping> {
     override val componentClass: KClass<ToneMapping> = ToneMapping::class
     override val schemaClass: KClass<SceneToneMapping> = SceneToneMapping::class
