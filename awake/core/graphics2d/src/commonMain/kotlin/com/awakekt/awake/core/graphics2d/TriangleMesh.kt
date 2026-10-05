@@ -8,6 +8,12 @@ package com.awakekt.awake.core.graphics2d
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.math2d.Rectangle
 
+/**
+ * A basic 2D indexed triangle mesh defined by a list of points and triangle index tuples.
+ *
+ * @property points The list of 2D vertex positions in the mesh.
+ * @property indices The triangle indices referencing elements in [points]. Every three consecutive entries form a triangle.
+ */
 data class TriangleMesh(
     val points: List<DrawPoint>,
     val indices: IntArray,
@@ -23,6 +29,13 @@ data class TriangleMesh(
 
 typealias UiTriangleMesh = TriangleMesh
 
+/**
+ * A vertex with a 2D position and normalized texture coordinates.
+ *
+ * @property position The 2D screen or canvas coordinate of the vertex.
+ * @property u The horizontal texture coordinate (U), typically normalized between 0 and 1.
+ * @property v The vertical texture coordinate (V), typically normalized between 0 and 1.
+ */
 data class TexturedVertex(
     val position: DrawPoint,
     val u: Float,
@@ -31,6 +44,12 @@ data class TexturedVertex(
 
 typealias UiTexturedVertex = TexturedVertex
 
+/**
+ * An indexed 2D triangle mesh composed of textured vertices.
+ *
+ * @property vertices The list of [TexturedVertex] instances defining geometry and UV mappings.
+ * @property indices The index array specifying triangle vertex connectivity.
+ */
 data class TexturedTriangleMesh(
     val vertices: List<TexturedVertex>,
     val indices: IntArray,
@@ -46,7 +65,12 @@ data class TexturedTriangleMesh(
 
 typealias UiTexturedTriangleMesh = TexturedTriangleMesh
 
-/** Per-vertex-colored analog of [TexturedVertex]/[TexturedTriangleMesh]. */
+/**
+ * Per-vertex-colored analog of [TexturedVertex]/[TexturedTriangleMesh].
+ *
+ * @property position The 2D coordinate of the vertex.
+ * @property color The color value assigned to the vertex.
+ */
 data class ColoredVertex(
     val position: DrawPoint,
     val color: Color,
@@ -54,11 +78,21 @@ data class ColoredVertex(
 
 typealias UiColoredVertex = ColoredVertex
 
+/**
+ * An indexed 2D triangle mesh where each vertex carries an explicit [Color].
+ *
+ * @property vertices The list of colored vertices defining geometry and vertex tints.
+ * @property indices The index array specifying triangle vertex connectivity.
+ */
 data class ColoredTriangleMesh(
     val vertices: List<ColoredVertex>,
     val indices: IntArray,
 ) {
-    /** The box these triangles cover, including any anti-aliased fringe. Empty for no vertices. */
+    /**
+     * The box these triangles cover, including any anti-aliased fringe. Empty for no vertices.
+     *
+     * @return The bounding [Rectangle] enclosing all mesh vertices.
+     */
     fun bounds(): Rectangle {
         if (vertices.isEmpty()) return Rectangle(0f, 0f, 0f, 0f)
         var minX = Float.POSITIVE_INFINITY
@@ -91,6 +125,8 @@ typealias UiColoredTriangleMesh = ColoredTriangleMesh
  * The inverse of [splitToCapacity]. A caller that tessellates several paths into one drawable --
  * an icon's fill and its outline -- keeps them as one mesh so the whole thing is cached, placed and
  * staged as a unit.
+ *
+ * @return The merged [ColoredTriangleMesh] containing all combined vertices and remapped indices.
  */
 fun List<ColoredTriangleMesh>.merge(): ColoredTriangleMesh {
     if (size == 1) return this[0]
@@ -111,6 +147,10 @@ fun List<ColoredTriangleMesh>.merge(): ColoredTriangleMesh {
 /**
  * Splits a mesh into pieces that each fit a backend's fixed per-draw buffer, cutting on triangle
  * boundaries and re-indexing each piece against its own vertex list.
+ *
+ * @param maxVertices The maximum number of vertices permitted in a single output mesh chunk.
+ * @param maxIndices The maximum number of indices permitted in a single output mesh chunk.
+ * @return A list of partitioned [ColoredTriangleMesh] chunks adhering to the given capacity limits.
  */
 fun ColoredTriangleMesh.splitToCapacity(maxVertices: Int, maxIndices: Int): List<ColoredTriangleMesh> {
     if (vertices.size <= maxVertices && indices.size <= maxIndices) return listOf(this)

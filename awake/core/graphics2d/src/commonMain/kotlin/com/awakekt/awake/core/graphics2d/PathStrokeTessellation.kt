@@ -14,6 +14,13 @@ import kotlin.math.cos
 import kotlin.math.hypot
 import kotlin.math.sin
 
+/**
+ * Tessellates this path's stroke outline into a solid triangle mesh without anti-aliasing fringe.
+ *
+ * @param stroke Stroke configuration defining line width, cap style, and join geometry.
+ * @param density Display scaling factor applied to the stroke width.
+ * @return A [TriangleMesh] containing the triangulated stroke geometry.
+ */
 fun DrawPath.tessellateStroke(stroke: DrawStroke, density: Float = 1f): TriangleMesh {
     if (stroke.width.value <= 0f || density <= 0f) return TriangleMesh(emptyList(), IntArray(0))
     // Construct one continuous outline before triangulation. Segment-by-segment quads lose the
@@ -22,7 +29,15 @@ fun DrawPath.tessellateStroke(stroke: DrawStroke, density: Float = 1f): Triangle
     return strokeToFillPath(scaledStroke).tessellateFill()
 }
 
-/** Tessellates a stroke with an anti-aliased fringe that fits within thin strokes. */
+/**
+ * Tessellates a stroke with an anti-aliased fringe that fits within thin strokes.
+ *
+ * @param stroke Stroke configuration defining line width, cap style, and join geometry.
+ * @param color Tint color applied to the solid interior vertices.
+ * @param density Display scaling factor applied to the stroke width.
+ * @param fringePx Anti-aliasing fringe width in pixels.
+ * @return A [ColoredTriangleMesh] containing the triangulated stroke and boundary fringe.
+ */
 fun DrawPath.tessellateStrokeAa(
     stroke: DrawStroke,
     color: Color,
@@ -48,6 +63,9 @@ fun DrawPath.tessellateStrokeAa(
  * edges meet, whatever the join, and only the outside gets the join's shape. A bevel or arc on the
  * inside folds back into a small loop -- one per vertex of a flattened curve -- and the
  * anti-aliased fringe built on such a ring smears across the stroke.
+ *
+ * @param stroke Stroke configuration defining line width, cap style, and join geometry.
+ * @return A [DrawPath] representing the closed boundary outline of the stroke.
  */
 fun DrawPath.strokeToFillPath(stroke: DrawStroke): DrawPath {
     val contours = flattenContours(curveSteps = 16, arcStepDegrees = STROKE_ARC_STEP_DEGREES)
@@ -88,7 +106,12 @@ fun DrawPath.strokeToFillPath(stroke: DrawStroke): DrawPath {
     return DrawPath(fillRule = FillRule.NonZero, commands = commands)
 }
 
-/** The SVG stroke outline -- the same one [strokeToFillPath] produces for every stroke. */
+/**
+ * The SVG stroke outline -- the same one [strokeToFillPath] produces for every stroke.
+ *
+ * @param stroke Stroke configuration defining line width, cap style, and join geometry.
+ * @return A [DrawPath] representing the closed boundary outline of the stroke.
+ */
 fun DrawPath.strokeToSvgFillPath(stroke: DrawStroke): DrawPath = strokeToFillPath(stroke)
 
 internal fun unitDir(a: DrawPoint, b: DrawPoint): DrawPoint? {
