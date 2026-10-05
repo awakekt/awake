@@ -144,6 +144,7 @@ comments:
       - '**/awake/ecs/src/**'
       - '**/awake/scene/document/**'
       - '**/awake/scene/gltf/**'
+      - '**/awake/scene/authoring/**'
     excludes: *testSourceSetExcludes
     searchInNestedClass: true
     searchInInnerClass: true

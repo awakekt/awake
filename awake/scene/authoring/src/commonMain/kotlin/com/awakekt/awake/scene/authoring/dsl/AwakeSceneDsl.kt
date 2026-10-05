@@ -5,5 +5,8 @@
  */
 package com.awakekt.awake.scene.authoring.dsl
 
+/**
+ * Marker annotation for DSL builders within Awake's scene authoring API.
+ */
 @DslMarker
 annotation class AwakeSceneDsl
