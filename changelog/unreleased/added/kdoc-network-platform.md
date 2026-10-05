@@ -1,0 +1,1 @@
+- Completed 100% public declaration KDoc coverage and enabled strict Detekt enforcement for network and platform cluster (`:awake:net:api`, `:awake:engine:platform`, `:awake:project:runtime`).

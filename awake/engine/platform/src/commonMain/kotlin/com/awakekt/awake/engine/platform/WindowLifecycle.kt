@@ -22,13 +22,43 @@ import com.awakekt.awake.engine.platform.config.WindowConfig
  * is left for such a property to hold.
  */
 interface WindowLifecycle {
+    /** Input event accumulator driving this window session. */
     val input: Input
+
+    /** Configuration describing window dimensions and presentation options, or `null`. */
     val windowConfig: WindowConfig? get() = null
+
+    /**
+     * Initializes the platform window and rendering surface.
+     *
+     * @param surface Platform-specific window or surface handle, or `null` for offscreen or default creation.
+     */
     fun create(surface: Any? = null)
+
+    /**
+     * Advances the window simulation and renders one frame.
+     *
+     * @param delta Elapsed time in seconds since the previous frame.
+     */
     fun update(delta: Float)
+
+    /** Pauses window rendering and notifies underlying subsystems. */
     fun pause()
+
+    /** Resumes window rendering and notifies underlying subsystems. */
     fun resume()
+
+    /**
+     * Resizes the window viewport and adjusts swapchain bounds.
+     *
+     * @param x Window horizontal position in pixels.
+     * @param y Window vertical position in pixels.
+     * @param width New window width in pixels.
+     * @param height New window height in pixels.
+     */
     fun resize(x: Int, y: Int, width: Int, height: Int)
+
+    /** Destroys the window and releases platform handles. */
     fun dispose()
 
     /** The window lost its surface (Android: the app went to the background). The renderer and
@@ -38,6 +68,10 @@ interface WindowLifecycle {
     /** A new [surface] replaces the one given up in [releaseSurface]. */
     fun restoreSurface(surface: Any) = Unit
 
-    /** The display's physical pixels per dp, from a platform whose surface can't report it (Android). */
+    /**
+     * Sets the display's physical pixels per dp, from a platform whose surface can't report it (Android).
+     *
+     * @param density Physical pixels per dp display density.
+     */
     fun setDensity(density: Float) = Unit
 }

@@ -132,6 +132,9 @@ comments:
       - '**/awake/scene/controls/**'
       - '**/awake/scene/world/**'
       - '**/awake/scene/worldstream/**'
+      - '**/awake/net/api/**'
+      - '**/awake/engine/platform/**'
+      - '**/awake/project/runtime/**'
     excludes: *testSourceSetExcludes
     searchInNestedClass: true
     searchInInnerClass: true

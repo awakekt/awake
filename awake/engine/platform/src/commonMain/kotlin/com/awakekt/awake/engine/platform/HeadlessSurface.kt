@@ -16,5 +16,8 @@ package com.awakekt.awake.engine.platform
  * The point is to be able to render an APP's own `RenderPlan` -- its content features, its depth
  * passes, its pipelines -- without a display. A test that hand-builds a renderer instead tests the
  * fixture it wrote, which is how a scene can look wrong on screen while every probe passes.
+ *
+ * @property width Width of the offscreen headless surface in pixels.
+ * @property height Height of the offscreen headless surface in pixels.
  */
 data class HeadlessSurface(val width: Int, val height: Int)

@@ -87,8 +87,13 @@ class FrameStats(
         return sorted[index]
     }
 
+    /** Median (50th percentile) frame time in milliseconds over the sliding window. */
     val p50FrameTimeMs: Float get() = percentileFrameTimeMs(50f)
+
+    /** 95th percentile frame time in milliseconds over the sliding window. */
     val p95FrameTimeMs: Float get() = percentileFrameTimeMs(95f)
+
+    /** 99th percentile frame time in milliseconds over the sliding window. */
     val p99FrameTimeMs: Float get() = percentileFrameTimeMs(99f)
 
     private companion object {
