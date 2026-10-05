@@ -10,24 +10,55 @@ import com.awakekt.awake.scene.runtime.SceneAppSpec
 import com.awakekt.awake.scene.runtime.SceneRoute
 import com.awakekt.awake.scene.runtime.SceneRouterSpec
 
+/**
+ * Installs a multi-scene router specification into an application specification.
+ *
+ * @param block Builder lambda configuring scenes and navigation flow.
+ */
 fun AppSpecDsl.scenes(block: SceneFlowDsl.() -> Unit) {
     install(sceneFlow(block))
 }
 
+/**
+ * Constructs a [SceneRouterSpec] by evaluating the given scene flow configuration DSL.
+ *
+ * @param block Builder lambda configuring routes and navigation graph.
+ * @return The built [SceneRouterSpec].
+ */
 fun sceneFlow(block: SceneFlowDsl.() -> Unit): SceneRouterSpec = SceneFlowDsl().apply(block).build()
 
+/**
+ * DSL scope for registering scene routes and specifying navigation flow.
+ */
 class SceneFlowDsl internal constructor() {
     private val routes = mutableListOf<SceneRoute>()
     private var initialRouteId: String? = null
 
+    /**
+     * Explicitly sets the initial route ID to display when the router boots.
+     *
+     * @param id The route identifier of the initial scene.
+     */
     fun initial(id: String) {
         initialRouteId = id
     }
 
+    /**
+     * Alias for [initial], setting the starting scene route ID.
+     *
+     * @param id The route identifier of the initial scene.
+     */
     fun start(id: String) {
         initial(id)
     }
 
+    /**
+     * Registers a scene route backed by a pre-built [SceneAppSpec].
+     *
+     * @param id Unique route identifier.
+     * @param label Human-readable label for navigation UI. Defaults to [id].
+     * @param spec Pre-built scene application specification.
+     */
     fun route(
         id: String,
         label: String = id,
@@ -40,6 +71,13 @@ class SceneFlowDsl internal constructor() {
         }
     }
 
+    /**
+     * Registers a scene route backed by a pre-built [SceneAppSpec]. Alias for [route].
+     *
+     * @param id Unique route identifier.
+     * @param label Human-readable label for navigation UI. Defaults to [id].
+     * @param spec Pre-built scene application specification.
+     */
     fun scene(
         id: String,
         label: String = id,
@@ -48,6 +86,13 @@ class SceneFlowDsl internal constructor() {
         route(id = id, label = label, spec = spec)
     }
 
+    /**
+     * Registers a scene route configured via inline [SceneAppDsl].
+     *
+     * @param id Unique route identifier.
+     * @param label Human-readable label for navigation UI. Defaults to [id].
+     * @param block Builder lambda configuring the scene application.
+     */
     fun route(
         id: String,
         label: String = id,
@@ -63,6 +108,13 @@ class SceneFlowDsl internal constructor() {
         )
     }
 
+    /**
+     * Registers a scene route configured via inline [SceneAppDsl]. Alias for [route].
+     *
+     * @param id Unique route identifier.
+     * @param label Human-readable label for navigation UI. Defaults to [id].
+     * @param block Builder lambda configuring the scene application.
+     */
     fun scene(
         id: String,
         label: String = id,
