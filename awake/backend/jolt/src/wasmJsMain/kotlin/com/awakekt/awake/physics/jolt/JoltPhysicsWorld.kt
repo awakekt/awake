@@ -1608,7 +1608,17 @@ class JoltPhysicsWorld private constructor(
         joltDestroyWorld(world)
     }
 
+    /**
+     * Factory for creating WebAssembly-backed [JoltPhysicsWorld] instances.
+     */
     companion object {
+        /**
+         * Asynchronously initializes the Jolt WebAssembly module and creates a new [JoltPhysicsWorld].
+         *
+         * @param gravity Initial gravitational acceleration vector.
+         * @param layers Collision filtering and matrix configuration.
+         * @return An initialized [JoltPhysicsWorld] ready for physics simulation.
+         */
         suspend fun create(
             gravity: Vec3f = Vec3f(0f, -9.81f, 0f),
             layers: CollisionLayers = CollisionLayers.Default,

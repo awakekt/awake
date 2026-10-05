@@ -88,6 +88,8 @@ comments:
       - 'jsTest/**'
       - '**/iosTest/**'
       - 'iosTest/**'
+      - '**/joltJniTest/**'
+      - 'joltJniTest/**'
   OutdatedDocumentation:
     active: true
     matchTypeParameters: true
@@ -159,6 +161,7 @@ comments:
       - '**/awake/engine/render/passes/**'
       - '**/awake/engine/window/**'
       - '**/awake/kit/terrain-layers/**'
+      - '**/awake/backend/jolt/**'
     excludes: *testSourceSetExcludes
     searchInNestedClass: true
     searchInInnerClass: true

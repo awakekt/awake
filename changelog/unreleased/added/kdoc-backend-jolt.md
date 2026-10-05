@@ -1,0 +1,1 @@
+- Document all public declarations and enforce strict Detekt KDoc rules for `:awake:backend:jolt`.
