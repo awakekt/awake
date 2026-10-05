@@ -36,6 +36,7 @@ import com.awakekt.awake.nodegraph.NodeGraph
 import com.awakekt.awake.nodegraph.NodeRegistry
 import com.awakekt.awake.nodegraph.NodeSpec
 
+context(_: Composer)
 /**
  * An editable view of [graph]: nodes at their positions, wires between their ports, pan and zoom.
  *
@@ -58,9 +59,16 @@ import com.awakekt.awake.nodegraph.NodeSpec
  * | Wheel | zooms around the pointer |
  * | Secondary click | [NodeGraphIntent.ContextMenu] |
  *
+ * @param graph Node graph data structure to render.
+ * @param registry Registry providing node type definitions and port schemas.
+ * @param viewport Current pan and zoom state of the canvas.
+ * @param selection Set of currently selected node IDs.
+ * @param onIntent Callback invoked when user interactions produce an intent.
+ * @param modifier Modifier applied to the canvas root layout.
  * @param highlighted Nodes to mark, for example the ones a debugger shows as running.
+ * @param style Visual styling and sizing parameters for canvas elements.
+ * @param nodeContent Optional custom content slot rendered inside each node body.
  */
-context(_: Composer)
 fun NodeGraphCanvas(
     graph: NodeGraph,
     registry: NodeRegistry,
@@ -111,8 +119,15 @@ fun NodeGraphCanvas(
     }
 }
 
-/** Creates and remembers a [NodeGraphViewport]. */
 context(_: Composer)
+/**
+ * Creates and remembers a [NodeGraphViewport].
+ *
+ * @param zoom Initial zoom factor.
+ * @param panX Initial horizontal pan offset.
+ * @param panY Initial vertical pan offset.
+ * @return A remembered [NodeGraphViewport].
+ */
 fun rememberNodeGraphViewport(zoom: Float = 1f, panX: Float = 0f, panY: Float = 0f): NodeGraphViewport =
     remember { NodeGraphViewport(zoom, panX, panY) }
 
