@@ -15,8 +15,8 @@ import kotlin.math.sin
 import kotlin.math.sqrt
 import kotlin.random.Random
 
-private const val DEGREES_TO_RADIANS = kotlin.math.PI.toFloat() / 180f
-private const val FULL_TURN_RADIANS = 2f * kotlin.math.PI.toFloat()
+internal const val DEGREES_TO_RADIANS = kotlin.math.PI.toFloat() / 180f
+internal const val FULL_TURN_RADIANS = 2f * kotlin.math.PI.toFloat()
 
 /** Three axes of three floats. See [ParticleSystem]'s `orientation`. */
 private const val ORIENTATION_FLOATS = 9
@@ -268,6 +268,7 @@ class ParticleSystem(private val placement: EmitterPlacement = EmitterPlacement.
                 return@forEach
             }
             if (particle.settled) return@forEach
+            particle.rotation += particle.spinRate * delta
             val acceleration = emitter.motion.acceleration
             particle.velocity.x += acceleration.x * delta
             particle.velocity.y += acceleration.y * delta

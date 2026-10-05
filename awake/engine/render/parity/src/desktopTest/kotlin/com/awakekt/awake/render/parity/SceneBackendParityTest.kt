@@ -5,19 +5,20 @@
  */
 package com.awakekt.awake.render.parity
 
-import com.awakekt.awake.render.passes.uniforms.skinnedMaterialFloats
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.passes.uniforms.EnvironmentUniforms
 import com.awakekt.awake.render.passes.uniforms.TextureAnimation
+import com.awakekt.awake.render.passes.uniforms.skinnedMaterialFloats
 import com.awakekt.awake.render.testing.HeadlessRenderSession
 import com.awakekt.awake.render.texture.TextureAsset
 import org.junit.AfterClass
 import java.awt.image.BufferedImage
 import java.io.File
 import javax.imageio.ImageIO
-import kotlin.math.pow
+import kotlin.math.PI
 import kotlin.math.abs
+import kotlin.math.pow
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -479,6 +480,36 @@ class SceneBackendParityTest {
         }
     }
 
+    /**
+     * A particle's spin turns its quad in its own plane, counter-clockwise as seen: at a quarter turn the
+     * texture's right half (blue) sits above its left half (red), where unturned they sit side by side.
+     * Both backends read the spin from the same instance matrix, so both must agree on which way it turns.
+     */
+    @Test
+    fun aSpinTurnsAParticleSpriteInItsPlaneOnBothBackends() {
+        BACKEND_ORDER.forEach { backend ->
+            val renderer = session(backend).renderer
+            val upright = renderer.renderFacingSpriteFromTheSide().also { write(backend, it, "facing-sprite-spin-0") }
+            val turned = renderer.renderFacingSpriteFromTheSide(rotation = (PI / 2).toFloat()).also { write(backend, it, "facing-sprite-spin-90") }
+            fun ByteArray.centroid(red: Boolean): Pair<Double, Double> {
+                val hits = (0 until SCENE_SIZE * SCENE_SIZE).filter { pixel ->
+                    val r = channel(pixel, RED)
+                    val b = channel(pixel, BLUE)
+                    if (red) r > TEXTURED_RED_THRESHOLD + 2 * b else b > TEXTURED_RED_THRESHOLD + 2 * r
+                }
+                assertTrue(hits.isNotEmpty(), "$backend drew no ${if (red) "red" else "blue"} -- see $REPORT_DIR")
+                return hits.map { it % SCENE_SIZE }.average() to hits.map { it / SCENE_SIZE }.average()
+            }
+            val (redX, redY) = upright.centroid(red = true)
+            val (blueX, blueY) = upright.centroid(red = false)
+            val (turnedRedX, turnedRedY) = turned.centroid(red = true)
+            val (turnedBlueX, turnedBlueY) = turned.centroid(red = false)
+
+            assertTrue(redX < blueX - 4 && abs(redY - blueY) < 2, "$backend: unturned, red ($redX, $redY) sits left of blue ($blueX, $blueY)")
+            assertTrue(turnedBlueY < turnedRedY - 4 && abs(turnedRedX - turnedBlueX) < 2, "$backend: a quarter turn puts blue ($turnedBlueX, $turnedBlueY) above red ($turnedRedX, $turnedRedY)")
+        }
+    }
+
     /** A particle sprite between the sun and the ground darkens the ground on both backends. */
     @Test
     fun aParticleCastsAShadowOnBothBackends() {
@@ -630,6 +661,7 @@ class SceneBackendParityTest {
         /** A card's black clear half: it reads up to 22 through WebGPU's sRGB target, the shadowed ground 59 and up. */
         const val BLACK_LEVEL = 30
         const val MIN_CLEAR_HALF_PIXELS = 20
+
         /** A metal loses its diffuse light; anything under a tenth is the factor being ignored. */
         const val MIN_METALLIC_CHANGE = 0.1
         const val RED = 0

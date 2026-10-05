@@ -8,6 +8,7 @@ package com.awakekt.awake.asset.shaderpack
 import com.awakekt.awake.asset.shaderdsl.AslShaderDefinition
 import com.awakekt.awake.asset.shaderdsl.a
 import com.awakekt.awake.asset.shaderdsl.column
+import com.awakekt.awake.asset.shaderdsl.cos
 import com.awakekt.awake.asset.shaderdsl.div
 import com.awakekt.awake.asset.shaderdsl.dot
 import com.awakekt.awake.asset.shaderdsl.fieldsFrom
@@ -20,6 +21,7 @@ import com.awakekt.awake.asset.shaderdsl.plus
 import com.awakekt.awake.asset.shaderdsl.rgb
 import com.awakekt.awake.asset.shaderdsl.sampler
 import com.awakekt.awake.asset.shaderdsl.shader
+import com.awakekt.awake.asset.shaderdsl.sin
 import com.awakekt.awake.asset.shaderdsl.texture2d
 import com.awakekt.awake.asset.shaderdsl.textureSample
 import com.awakekt.awake.asset.shaderdsl.times
@@ -47,7 +49,10 @@ import com.awakekt.awake.render.pipeline.BindingSemantic
  * The instance matrix is read sparsely: column 3 is the particle's world center, column 0's
  * length its uniform scale, and column 1 is reused by `ParticleVisual.stretchWithVelocity` to
  * carry an optional world-space stretch vector (zero = plain symmetric billboard) rather than
- * adding a whole per-instance buffer for one optional capability.
+ * adding a whole per-instance buffer for one optional capability. Column 2's x carries the particle's
+ * spin in radians the same way: the quad's two axes turn by it in their own plane, so a camera-facing
+ * and a flat quad both spin about the direction they face. A stretched particle takes its axes from
+ * its motion instead, so the spin does not apply to it.
  */
 @Suppress("LongMethod")
 private fun particle(): AslShaderDefinition = shader("particle") {
@@ -99,8 +104,12 @@ private fun particle(): AslShaderDefinition = shader("particle") {
             vec2(dot(stretch, cameraRight.xyz), dot(stretch, cameraUp.xyz)),
         )
         val stretchLength = let("stretchLength", length(stretchScreen))
-        val longAxis = variable("longAxis", cameraUp.xyz)
-        val crossAxis = variable("crossAxis", cameraRight.xyz)
+        // Spin rides in column 2's x: turn the quad's axes by it, counter-clockwise as seen.
+        val spin = let("spin", column(model, 2).x)
+        val spinCos = let("spinCos", cos(spin))
+        val spinSin = let("spinSin", sin(spin))
+        val longAxis = variable("longAxis", cameraRight.xyz * -spinSin + cameraUp.xyz * spinCos)
+        val crossAxis = variable("crossAxis", cameraRight.xyz * spinCos + cameraUp.xyz * spinSin)
         val lengthScale = variable("lengthScale", width)
         iff(stretchLength gt stretchEpsilon) {
             val dir = let("dir", stretchScreen / stretchLength)

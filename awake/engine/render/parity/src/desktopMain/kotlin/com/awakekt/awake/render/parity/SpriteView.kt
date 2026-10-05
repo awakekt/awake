@@ -5,7 +5,6 @@
  */
 package com.awakekt.awake.render.parity
 
-import com.awakekt.awake.render.passes.uniforms.setParticleInstance
 import com.awakekt.awake.asset.shaderpack.LitShadowUniformLayout
 import com.awakekt.awake.core.geometry.MeshGeometry
 import com.awakekt.awake.core.geometry.VertexFormat
@@ -19,6 +18,7 @@ import com.awakekt.awake.render.passes.ScenePassCompiler
 import com.awakekt.awake.render.passes.uniforms.EnvironmentUniforms
 import com.awakekt.awake.render.passes.uniforms.ParticleUniformLayout
 import com.awakekt.awake.render.passes.uniforms.SceneLight
+import com.awakekt.awake.render.passes.uniforms.setParticleInstance
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.renderer.createMaterial
 import com.awakekt.awake.render.texture.TextureAsset
@@ -87,9 +87,10 @@ fun Renderer.renderSpriteScene(view: SpriteView): ByteArray {
 /**
  * One camera-facing particle sprite at the origin, seen from the side ([SpriteView.EdgeOn]), so world
  * up lies on screen. Its texture is red on the left half and blue on the right, so the picture shows
- * both the quad's proportions and which way round it is.
+ * both the quad's proportions and which way round it is. [rotation] is the particle's spin in radians,
+ * counter-clockwise as seen: a quarter turn puts the blue half above the red.
  */
-fun Renderer.renderFacingSpriteFromTheSide(size: Int = SCENE_SIZE): ByteArray {
+fun Renderer.renderFacingSpriteFromTheSide(size: Int = SCENE_SIZE, rotation: Float = 0f): ByteArray {
     val target = createRenderTarget(size, size)
     val quad = createMesh(SpriteQuad)
     val material = createMaterial(ParticleUniformLayout, texture = RedLeftBlueRight)
@@ -102,7 +103,7 @@ fun Renderer.renderFacingSpriteFromTheSide(size: Int = SCENE_SIZE): ByteArray {
         val sprite = RenderDrawCommand(
             mesh = quad,
             material = material,
-            instanceModels = listOf(Mat4().setParticleInstance(0f, 0f, 0f, SPRITE_SIZE)),
+            instanceModels = listOf(Mat4().setParticleInstance(0f, 0f, 0f, SPRITE_SIZE, rotation = rotation)),
             instanceColors = listOf(Vec4(1f, 1f, 1f, 1f)),
             instanceFrames = listOf(0f),
             extraUniformFloats = floatArrayOf(right.x, right.y, right.z, 0f, up.x, up.y, up.z, 0f, 1f, 0f, 0f, 0f),

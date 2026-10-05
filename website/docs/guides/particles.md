@@ -89,6 +89,7 @@ bounce on the floor:
   "stretchWithVelocity": true,
   "stretchFactor": 0.08,
   "ground": {"groundY": 0, "restitution": 0.4, "friction": 0.7},
+  "spin": {"minDegreesPerSecond": -120, "maxDegreesPerSecond": 120, "randomStartAngle": true},
   "additive": true
 }
 ```
@@ -202,6 +203,7 @@ The plan on [Render plans and shaders](shaders.md) has one.
 | `additive` | `false` | Adds each particle's colour to what is behind it, for glows and sparks. Needs the particle pipeline built with `buildAdditive = true`; without it the particles blend. |
 | `facing` | `Camera` | `ParticleFacing.Flat` lays each quad in the emitter entity's horizontal plane instead of turning it to the camera. |
 | `alphaCurve` | none | A `ParticleAlphaCurve(fadeInEnd, fadeOutStart)`: opacity fades in until `fadeInEnd`, holds `startAlpha` until `fadeOutStart`, then fades out, both as fractions of the lifetime. None is the plain linear fade from `startAlpha` to 0. |
+| `spin` | none | A `ParticleSpin(minDegreesPerSecond, maxDegreesPerSecond, randomStartAngle)`: each particle draws its own turn rate between the two when it spawns and turns its quad in its own plane at it, counter-clockwise as seen for a positive rate. `randomStartAngle` also starts each at a random angle. A stretched particle points along its motion and ignores it, and a particle that has landed stops turning. None never turns a particle. |
 
 `ParticleGround`: `groundY` (a flat floor), `groundHeightProvider` (a `(x, z) -> height` function,
 used first when set), `colliders` (world-space `Aabb` boxes), `restitution` (0 stops a particle on
