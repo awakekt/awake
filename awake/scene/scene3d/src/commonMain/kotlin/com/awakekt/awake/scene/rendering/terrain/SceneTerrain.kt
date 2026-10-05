@@ -24,6 +24,17 @@ import kotlin.reflect.KClass
  * shades it.
  *
  * Heights are embedded row-major, `z * width + x`, the same layout as [Heightmap].
+ *
+ * @property width Number of heightmap samples along the X axis.
+ * @property depth Number of heightmap samples along the Z axis.
+ * @property scaleX Horizontal grid spacing scale along the X axis.
+ * @property scaleY Height elevation scaling factor along the Y axis.
+ * @property scaleZ Horizontal grid spacing scale along the Z axis.
+ * @property samples Row-major height elevation sample values.
+ * @property tilingScale Texture UV coordinate tiling frequency.
+ * @property isVisible Whether this terrain is submitted for rendering.
+ * @property surface Optional custom surface shading model descriptor.
+ * @property collider Whether the terrain generates a static physics heightfield collider.
  */
 @Serializable
 @SerialName("terrain")
@@ -37,7 +48,6 @@ data class SceneTerrain(
     val tilingScale: Float = 16f,
     val isVisible: Boolean = true,
     val surface: SceneTerrainSurface? = null,
-    /** Whether the terrain is solid ground when physics runs: a static heightfield under it. */
     val collider: Boolean = false,
 ) : SceneComponent {
     override val allowsMultiplePerNode: Boolean get() = false
@@ -61,6 +71,10 @@ data class SceneTerrain(
 /**
  * Names the surface model a [TerrainSurfaceProvider] resolves. Core reads only [provider]; the
  * [payload] belongs to that provider and is preserved unchanged when no provider is installed.
+ *
+ * @property provider Unique provider key identifying the surface model.
+ * @property version Payload schema version number.
+ * @property payload Custom configuration payload for the surface provider.
  */
 @Serializable
 data class SceneTerrainSurface(
@@ -69,6 +83,9 @@ data class SceneTerrainSurface(
     val payload: JsonElement = JsonObject(emptyMap()),
 )
 
+/**
+ * Binding definition connecting [SceneTerrain] descriptors to ECS [TerrainComponent] components.
+ */
 object TerrainBinding : SceneComponentBinding<TerrainComponent, SceneTerrain> {
     override val componentClass: KClass<TerrainComponent> = TerrainComponent::class
     override val schemaClass: KClass<SceneTerrain> = SceneTerrain::class

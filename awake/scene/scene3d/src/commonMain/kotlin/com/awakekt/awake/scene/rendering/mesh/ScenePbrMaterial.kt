@@ -17,6 +17,10 @@ import kotlinx.serialization.Serializable
  *
  * @property metallic Metallic factor between 0.0 (dielectric) and 1.0 (metallic).
  * @property roughness Roughness factor between 0.0 (smooth) and 1.0 (rough).
+ * @property baseColorFactor Surface base color tint factor.
+ * @property emissiveFactor Surface emissive color tint factor.
+ * @property alphaMode Alpha blending or masking mode for surface transparency.
+ * @property alphaCutoff Alpha cutoff threshold when [alphaMode] is [AlphaMode.Mask].
  */
 @Serializable
 @SerialName("pbr_material")

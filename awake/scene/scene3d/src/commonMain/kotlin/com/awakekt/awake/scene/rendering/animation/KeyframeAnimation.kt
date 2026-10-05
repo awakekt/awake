@@ -65,13 +65,20 @@ data class SceneVec3Key(val time: Float, val value: SceneVec3)
 @Serializable
 data class SceneFloatKey(val time: Float, val value: Float)
 
-/** [SceneKeyframeAnimation] on a live entity, with how far into its loop it is. */
+/**
+ * Live keyframe animation component tracking playback time and evaluating property tracks.
+ *
+ * @property tracks The keyframe animation curve and track definitions.
+ */
 class KeyframeAnimation(val tracks: SceneKeyframeAnimation) {
     /** Seconds into the loop. */
     var time: Float = 0f
         internal set
 }
 
+/**
+ * Binding definition connecting [SceneKeyframeAnimation] descriptors to ECS [KeyframeAnimation] components.
+ */
 object KeyframeAnimationBinding : SceneComponentBinding<KeyframeAnimation, SceneKeyframeAnimation> {
     override val componentClass: KClass<KeyframeAnimation> = KeyframeAnimation::class
     override val schemaClass: KClass<SceneKeyframeAnimation> = SceneKeyframeAnimation::class

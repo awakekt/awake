@@ -12,6 +12,13 @@ import kotlinx.serialization.Serializable
 
 /**
  * Serializable distance fog component for scene documents.
+ *
+ * @property enabled Whether distance fog shading is active.
+ * @property density Distance fog density factor.
+ * @property color Base distance fog color.
+ * @property colorR Optional explicit red channel color override.
+ * @property colorG Optional explicit green channel color override.
+ * @property colorB Optional explicit blue channel color override.
  */
 @Serializable
 @SerialName("fog")

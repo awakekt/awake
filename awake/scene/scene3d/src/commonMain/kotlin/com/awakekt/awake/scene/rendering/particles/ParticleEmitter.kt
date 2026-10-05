@@ -343,6 +343,21 @@ data class ParticleDynamics(
  * of two separately-wired entities. Children have no `Entity`/`World` presence of their own --
  * they live and die with this emitter's own entity, simplest possible teardown. Empty (default)
  * is a leaf emitter, unchanged from before this field existed.
+ *
+ * @property mesh The mesh geometry instanced for each active particle.
+ * @property material The material used to shade the particle mesh instances.
+ * @property origin The world-space origin position where particles spawn.
+ * @property maxParticles Maximum capacity of the particle pool.
+ * @property spawnRate Number of particles spawned per second.
+ * @property lifetime Lifetime of each spawned particle in seconds.
+ * @property startAlpha Initial alpha opacity of particles upon spawning.
+ * @property scale Uniform scale multiplier applied to each particle instance.
+ * @property motion Motion parameters controlling particle velocities, gravity, and drag.
+ * @property visual Visual configuration including color gradients, facing mode, and sizing.
+ * @property ground Ground collision and bounce parameters.
+ * @property lifecycle Lifecycle events such as death bursts or sub-emitter spawns.
+ * @property dynamics Dynamic behaviors including followed entities and variable spawn rates.
+ * @property children Child sub-emitters simulated relative to this emitter's origin.
  */
 class ParticleEmitter(
     val mesh: Mesh,

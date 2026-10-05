@@ -15,16 +15,25 @@ import com.awakekt.awake.scene.rendering.mesh.PbrMaterial
  * UI panel (a checkbox per field) can drive these live. All `false` by default: adding this
  * component with no changes draws nothing extra. */
 data class WorldDebugSettings(
+    /** Whether to draw the camera frustum lines for [frustumTargetEntityId]. */
     var showFrustum: Boolean = false,
+    /** Whether to draw bounding boxes for scene entities. */
     var showBounds: Boolean = false,
     /** Draws one bounds box per submitted static instance, using its actual instance transform. */
     var showInstanceBounds: Boolean = false,
+    /** Whether to draw occlusion culling debug volumes. */
     var showOcclusion: Boolean = false,
+    /** Whether to draw visual wireframe indicators for scene light sources. */
     var showLights: Boolean = false,
+    /** Whether to draw shadow projection frustum volumes. */
     var showShadowFrustum: Boolean = false,
+    /** Whether to draw the ground plane reference grid. */
     var showGrid: Boolean = false,
+    /** Whether to draw orientation axis indicator lines (X, Y, Z). */
     var showAxisLines: Boolean = false,
+    /** Scale multiplier applied to the ground debug grid cell spacing. */
     var gridScale: Float = 1.0f,
+    /** Distance at which ground debug grid lines smoothly fade out. */
     var gridFadeDistance: Float = 100.0f,
     /**
      * Whether the sun's shadow is fitted in cascades, or as the one fixed box that predates them.

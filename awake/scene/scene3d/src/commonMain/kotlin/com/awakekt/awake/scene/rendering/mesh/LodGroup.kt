@@ -9,10 +9,16 @@ import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.scene.rendering.RenderSystem3D
 
-/** One distance band's worth of an [LodGroup] -- [mesh] draws while the entity is at most
+/**
+ * One distance band's worth of an [LodGroup] -- [mesh] draws while the entity is at most
  * [maxDistance] from the camera eye. Typically a decimated mesh per level (see
  * `awake:core:geometry`'s `MeshSimplifier`/`awake:asset:mesh-optimizer`'s CLI for baking
- * these offline), highest detail first. */
+ * these offline), highest detail first.
+ *
+ * @property mesh The mesh rendered at this level of detail.
+ * @property material The material used to render the mesh at this level of detail.
+ * @property maxDistance The maximum camera distance at which this LOD level is active.
+ */
 data class LodLevel(
     val mesh: Mesh,
     val material: Material,

@@ -14,6 +14,9 @@ import com.awakekt.awake.scene.document.SceneColor
 import com.awakekt.awake.scene.document.toColor
 import kotlin.reflect.KClass
 
+/**
+ * Binding definition connecting [SceneAmbientLight] descriptors to ECS [AmbientLight] components.
+ */
 object AmbientLightBinding : SceneComponentBinding<AmbientLight, SceneAmbientLight> {
     override val componentClass: KClass<AmbientLight> = AmbientLight::class
     override val schemaClass: KClass<SceneAmbientLight> = SceneAmbientLight::class
@@ -31,6 +34,11 @@ object AmbientLightBinding : SceneComponentBinding<AmbientLight, SceneAmbientLig
     override fun export(world: World, entity: Entity, component: AmbientLight): SceneAmbientLight =
         component.toSceneComponent()
 
+    /**
+     * Converts this [SceneAmbientLight] descriptor into a runtime [AmbientLight] component.
+     *
+     * @return The instantiated [AmbientLight] component.
+     */
     fun SceneAmbientLight.toComponent(): AmbientLight {
         val lightColor = if (colorR != null && colorG != null && colorB != null) {
             Color(colorR, colorG, colorB, 1f)
@@ -43,6 +51,11 @@ object AmbientLightBinding : SceneComponentBinding<AmbientLight, SceneAmbientLig
         )
     }
 
+    /**
+     * Serializes this runtime [AmbientLight] component into a [SceneAmbientLight] descriptor.
+     *
+     * @return The serialized [SceneAmbientLight] descriptor.
+     */
     fun AmbientLight.toSceneComponent(): SceneAmbientLight = SceneAmbientLight(
         intensity = intensity,
         color = SceneColor(color.r, color.g, color.b, color.a),

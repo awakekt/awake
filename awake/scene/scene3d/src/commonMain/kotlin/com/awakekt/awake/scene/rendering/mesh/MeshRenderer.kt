@@ -15,8 +15,11 @@ import com.awakekt.awake.render.pipeline.CullMode
  * opts in. See [CullMode]'s own doc comment for when [CullMode.Back] is the right choice (a
  * solid, correctly-wound opaque mesh). */
 data class MeshRenderer(
+    /** The 3D mesh geometry to draw. */
     val mesh: Mesh,
+    /** The material applied when rendering [mesh]. */
     val material: Material,
+    /** Face culling mode applied to this mesh during rendering. */
     val cullMode: CullMode = CullMode.None,
     /** xyz is a shader-defined vertex-effect parameter triplet; zero disables the effect. */
     val vertexAnimation: Vec3f = Vec3f.ZERO,

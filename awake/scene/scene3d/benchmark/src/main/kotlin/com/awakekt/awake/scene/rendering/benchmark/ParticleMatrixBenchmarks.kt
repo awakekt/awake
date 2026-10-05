@@ -40,6 +40,7 @@ open class ParticleMatrixBenchmarks {
     private lateinit var pool: List<Mat4>
     private val eye = Vec3f(0f, 4f, 12f)
 
+    /** Initializes benchmark test data and matrix pools. */
     @Setup
     fun setup() {
         // A single emitter's default ceiling; a scene runs several of these per frame.

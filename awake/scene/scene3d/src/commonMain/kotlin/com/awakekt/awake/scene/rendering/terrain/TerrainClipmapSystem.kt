@@ -21,6 +21,7 @@ import com.awakekt.awake.scene.rendering.camera.Camera
  */
 class TerrainClipmapSystem : System {
 
+    /** Active map of clipmap ring trackers keyed by terrain component. */
     val trackersByTerrain = HashMap<TerrainComponent, TerrainClipmapTracker>()
 
     override fun update(world: World, delta: Float) {
@@ -44,8 +45,15 @@ class TerrainClipmapSystem : System {
         }
     }
 
+    /**
+     * Retrieves the clipmap ring tracker associated with the given [terrain] component.
+     *
+     * @param terrain The target terrain component.
+     * @return The active [TerrainClipmapTracker], or `null` if none has been registered yet.
+     */
     fun trackerFor(terrain: TerrainComponent): TerrainClipmapTracker? = trackersByTerrain[terrain]
 
+    /** Clears all cached clipmap ring trackers from this system. */
     fun clear() {
         trackersByTerrain.clear()
     }
