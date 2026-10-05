@@ -25,8 +25,9 @@ data class GpuPassInput(
     val cameraEye: Vec3f,
     /** Optional scene sub-rect. This is packet state, so backends do not retain editor/game state. */
     val viewport: RenderViewport? = null,
-    /** Fully resolved commands produced by the render-pipeline compiler. */
+    /** Fully resolved commands produced by the render-pipeline compiler for opaque draws. */
     val resolvedOpaqueDraws: List<GpuResolvedDraw> = emptyList(),
+    /** Fully resolved commands produced by the render-pipeline compiler for transparent draws. */
     val resolvedTransparentDraws: List<GpuResolvedDraw> = emptyList(),
     /** Any sub-passes executing after the primary scene pass (e.g. bloom, tone-mapping, color grading). */
     val postPasses: List<GpuSubPass> = emptyList(),
@@ -45,7 +46,9 @@ data class GpuPassInput(
     val resolvedDraws: List<GpuResolvedDraw>
         get() = resolvedOpaqueDraws + resolvedTransparentDraws
 
+    /** Factory and sentinel values for [GpuPassInput]. */
     companion object {
+        /** An empty pass input with zero draws, identity view projection, and default environment. */
         val EMPTY = GpuPassInput(
             prePasses = emptyList(),
             viewProjection = Mat4(),

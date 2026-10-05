@@ -91,6 +91,7 @@ interface GpuDevice {
     /** Releases every GPU resource this device owns. */
     fun destroy()
 
+    /** Constants and defaults for [GpuDevice] buffer allocations. */
     companion object {
         /** Default size in floats for standard lit material uniform buffer (MVP 16 + Light 8 = 24). */
         val DEFAULT_UNIFORM_FLOAT_COUNT: Int = UniformFields.DefaultMaterial.total

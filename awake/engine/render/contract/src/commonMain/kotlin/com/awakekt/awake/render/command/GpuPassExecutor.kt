@@ -14,7 +14,19 @@ import com.awakekt.awake.render.texture.RenderTarget
  * generic packet and owns its native recording details.
  */
 interface GpuPassExecutor {
+    /**
+     * Executes the submitted GPU draw pass into the active swapchain backbuffer.
+     *
+     * @param input Recorded packet of draw batches, uniforms, and subpass descriptors.
+     */
     fun draw(input: GpuPassInput)
+
+    /**
+     * Executes the submitted GPU draw pass synchronously into an offscreen render target.
+     *
+     * @param target Target texture framebuffer receiving render outputs.
+     * @param input Recorded packet of draw batches, uniforms, and subpass descriptors.
+     */
     fun renderToTexture(target: RenderTarget, input: GpuPassInput)
 
     /** [renderToTexture] without waiting for the GPU; see `Renderer.submitToTexture`. */

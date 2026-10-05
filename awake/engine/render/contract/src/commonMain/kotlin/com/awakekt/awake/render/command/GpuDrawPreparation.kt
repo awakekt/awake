@@ -13,14 +13,23 @@ import com.awakekt.awake.render.renderer.RenderViewport
 
 /** Per-frame, scene-free inputs used to lower [GpuDrawRequest] into a resolved draw. */
 data class GpuDrawPreparationContext(
+    /** Current monotonically increasing frame index. */
     val frameIndex: Int = 0,
+    /** View-projection matrix of the active camera. */
     val viewProjection: Mat4,
+    /** World-space position of the camera eye. */
     val cameraEye: Vec3f,
+    /** Shared pass-level uniform float values uploaded for this pass. */
     val passUniforms: FloatArray = FloatArray(0),
+    /** Environment lighting, sky, and fog configuration. */
     val environment: GpuEnvironmentState = GpuEnvironmentState.Default,
+    /** Viewport rectangle bounds, or `null` to use the target dimensions. */
     val viewport: RenderViewport? = null,
+    /** View-projection matrices for directional shadow cascades. */
     val shadowViewProjections: List<Mat4> = emptyList(),
+    /** World-space forward viewing direction vector of the camera. */
     val cameraForward: Vec3f,
+    /** Shadow cascade parameters and matrix data, or `null` if shadows are disabled. */
     val shadowCascadeData: GpuShadowCascadeData?,
 ) {
     /** Retains the original constructor for callers that do not supply shadow-camera metadata. */
@@ -68,6 +77,11 @@ data class GpuDrawPreparationContext(
 
 /** Generic backend capability that prepares opaque draw requests into resolved GPU packets. */
 fun interface GpuDrawPreparer {
+    /**
+     * Prepares and lowers an individual [request] into a resolved backend draw packet.
+     *
+     * @return The resolved draw packet, or `null` if the request was culled or dropped.
+     */
     fun prepare(
         request: GpuDrawRequest,
         sourceIndex: Int,
@@ -83,6 +97,7 @@ fun interface GpuDrawPreparer {
 
 /** Composition capability exposed by a backend bootstrap to scene/render-pipeline code. */
 interface GpuDrawPreparationSource {
+    /** The backend draw preparer instance, or `null` if preparation is not supported. */
     val gpuDrawPreparer: GpuDrawPreparer?
 }
 

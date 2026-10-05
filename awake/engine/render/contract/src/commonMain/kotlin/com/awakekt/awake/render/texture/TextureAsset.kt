@@ -13,7 +13,9 @@ package com.awakekt.awake.render.texture
  */
 data class TextureAsset(
     val data: ByteArray,
+    /** Width of the texture image in pixels. */
     val width: Int,
+    /** Height of the texture image in pixels. */
     val height: Int,
     /**
      * How many equally-sized images [data] holds, back to back.
@@ -105,8 +107,12 @@ private const val RGBA_BYTES = 4
  * parameter today). A backend without full PBR support is free to ignore whichever fields it
  * doesn't sample. */
 data class PbrTextureSet(
+    /** Metallic-roughness map texture asset, or null if omitted. */
     val metallicRoughness: TextureAsset? = null,
+    /** Normal map texture asset, or null if omitted. */
     val normal: TextureAsset? = null,
+    /** Ambient occlusion map texture asset, or null if omitted. */
     val occlusion: TextureAsset? = null,
+    /** Emissive map texture asset, or null if omitted. */
     val emissive: TextureAsset? = null,
 )
