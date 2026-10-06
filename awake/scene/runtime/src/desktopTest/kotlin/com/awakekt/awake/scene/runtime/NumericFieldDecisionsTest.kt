@@ -5,7 +5,6 @@
  */
 package com.awakekt.awake.scene.runtime
 
-import com.awakekt.awake.core.schema.PropertyKind
 import com.awakekt.awake.core.schema.PropertySchema
 import com.awakekt.awake.scene.document.SceneComponentCatalog
 import kotlin.test.Test
@@ -26,21 +25,16 @@ class NumericFieldDecisionsTest {
         val constrained: Boolean get() = schema.constraints.range != null
     }
 
+    /**
+     * Every number anywhere in a component: its own properties, the components of a vector or a colour,
+     * and the element of any list or map, scalar or object (see [descendantsOf]).
+     */
     private fun numericFields(): List<Field> {
         installEveryComponentKit()
-        return SceneComponentCatalog.schemas().flatMap { (id, schema) -> numericIn(id, schema) }
-    }
-
-    /** The numbers in [schema]: its own, a nested object's, and a list element's when that is an object. */
-    private fun numericIn(path: String, schema: PropertySchema): List<Field> = schema.children.flatMap { child ->
-        val childPath = "$path.${child.name}"
-        when (child.kind) {
-            PropertyKind.Float, PropertyKind.Int -> listOf(Field(childPath, child))
-            PropertyKind.Object -> numericIn(childPath, child)
-            PropertyKind.List, PropertyKind.Map -> child.element?.takeIf { it.kind == PropertyKind.Object }
-                ?.let { numericIn("$childPath[]", it) }.orEmpty()
-            else -> emptyList()
-        }
+        return SceneComponentCatalog.schemas()
+            .flatMap { (id, schema) -> descendantsOf(id, schema) }
+            .filter { it.isNumeric }
+            .map { Field(it.path, it.schema) }
     }
 
     private val undecided: Set<String>
