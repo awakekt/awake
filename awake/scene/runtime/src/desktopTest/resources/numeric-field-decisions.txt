@@ -1,0 +1,135 @@
+# Decisions about the numeric properties of registered scene components, read by NumericFieldDecisionsTest.
+#
+# A numeric property needs one of:
+#   - a @PropertyRange on it, because the component's validate() already limits it (no line needed);
+#   - `free <component>.<property> | <reason>`: it deliberately has no per-property limit;
+#   - `undecided <component>.<property>`: its module's batch has not been done yet. This only shrinks.
+#
+# Nested properties are written with dots (`particle_emitter.spin.maxDegreesPerSecond`); a list of
+# objects with `[]` (`particle_emitter.ground.colliders[].x`).
+
+free camera.far | Relational: it must exceed camera.near, which validate() enforces; no fixed limit says that.
+free spin_control.radians | The initial angle: every angle is valid, and the editor hides it because a system writes it at run time.
+
+undecided ambient_light.colorB
+undecided ambient_light.colorG
+undecided ambient_light.colorR
+undecided ambient_light.intensity
+undecided camera_rig.distance
+undecided camera_rig.flySpeed
+undecided camera_rig.maxDistance
+undecided camera_rig.minDistance
+undecided camera_rig.pitch
+undecided camera_rig.yaw
+undecided canvas_element.fontSize
+undecided canvas_element.height
+undecided canvas_element.offsetX
+undecided canvas_element.offsetY
+undecided canvas_element.order
+undecided canvas_element.value
+undecided canvas_element.width
+undecided character_controller.gravity
+undecided character_controller.halfHeight
+undecided character_controller.jumpSpeed
+undecided character_controller.radius
+undecided character_controller.slopeLimit
+undecided character_controller.stepHeight
+undecided chase.repathInterval
+undecided chase.speed
+undecided chase.waypointRadius
+undecided day_cycle.dayLengthSeconds
+undecided day_cycle.noonElevationDegrees
+undecided day_cycle.stops[].ambient
+undecided day_cycle.stops[].lightIntensity
+undecided day_cycle.stops[].time
+undecided day_cycle.sunriseAzimuthDegrees
+undecided day_cycle.time
+undecided flee.fleeDistance
+undecided flee.panicRadius
+undecided flee.repathInterval
+undecided flee.safeRadius
+undecided flee.speed
+undecided flee.waypointRadius
+undecided fog.colorB
+undecided fog.colorG
+undecided fog.colorR
+undecided fog.density
+undecided keyframe_animation.alpha[].time
+undecided keyframe_animation.alpha[].value
+undecided keyframe_animation.duration
+undecided keyframe_animation.position[].time
+undecided keyframe_animation.rotation[].time
+undecided keyframe_animation.scale[].time
+undecided light.intensity
+undecided light.range
+undecided locomotion_animation.airborneAbove
+undecided locomotion_animation.crossFade
+undecided locomotion_animation.runAbove
+undecided locomotion_animation.walkAbove
+undecided movement_control.runSpeed
+undecided movement_control.speed
+undecided movement_control.turnSpeed
+undecided navigation.cellSize
+undecided navigation.originX
+undecided navigation.originZ
+undecided particle_emitter.alphaCurve.fadeInEnd
+undecided particle_emitter.alphaCurve.fadeOutStart
+undecided particle_emitter.burstCount
+undecided particle_emitter.burstCycle.activeSeconds
+undecided particle_emitter.burstCycle.burstInterval
+undecided particle_emitter.burstCycle.burstSize
+undecided particle_emitter.burstCycle.cycleSeconds
+undecided particle_emitter.coneHalfAngleDegrees
+undecided particle_emitter.endScale
+undecided particle_emitter.frameCount
+undecided particle_emitter.frameRate
+undecided particle_emitter.ground.friction
+undecided particle_emitter.ground.groundY
+undecided particle_emitter.ground.restitution
+undecided particle_emitter.lifetime
+undecided particle_emitter.maxParticles
+undecided particle_emitter.radialSpeed
+undecided particle_emitter.scale
+undecided particle_emitter.spawnRadius
+undecided particle_emitter.spawnRate
+undecided particle_emitter.spin.maxDegreesPerSecond
+undecided particle_emitter.spin.minDegreesPerSecond
+undecided particle_emitter.startAlpha
+undecided particle_emitter.stretchFactor
+undecided particle_emitter.turbulence
+undecided particle_emitter.turbulenceFrequency
+undecided particle_emitter.velocityJitter
+undecided patrol.dwellSeconds
+undecided patrol.repathInterval
+undecided patrol.speed
+undecided patrol.waypointRadius
+undecided pbr_material.alphaCutoff
+undecided pbr_material.metallic
+undecided pbr_material.roughness
+undecided physics_body.layer
+undecided skybox.exposure
+undecided skybox.horizonColorB
+undecided skybox.horizonColorG
+undecided skybox.horizonColorR
+undecided skybox.zenithColorB
+undecided skybox.zenithColorG
+undecided skybox.zenithColorR
+undecided terrain.depth
+undecided terrain.scaleX
+undecided terrain.scaleY
+undecided terrain.scaleZ
+undecided terrain.surface.version
+undecided terrain.tilingScale
+undecided terrain.width
+undecided texture_animation.columns
+undecided texture_animation.firstFrame
+undecided texture_animation.frameCount
+undecided texture_animation.framesPerSecond
+undecided texture_animation.rows
+undecided texture_animation.scrollU
+undecided texture_animation.scrollV
+undecided texture_clips.clips[].firstFrame
+undecided texture_clips.clips[].frameCount
+undecided texture_clips.clips[].framesPerSecond
+undecided texture_clips.columns
+undecided texture_clips.rows

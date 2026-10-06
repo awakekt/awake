@@ -5,6 +5,8 @@
  */
 package com.awakekt.awake.scene.core.transform
 
+import com.awakekt.awake.core.schema.PropertyHidden
+import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneValidationIssue
 import kotlinx.serialization.SerialName
@@ -19,8 +21,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 @SerialName("spin_control")
 data class SceneSpinControl(
-    val radians: Float = 0f,
-    val speed: Float = 1f,
+    @PropertyHidden val radians: Float = 0f,
+    @PropertyRange(min = 0.0) val speed: Float = 1f,
 ) : SceneComponent {
     override fun validate(path: String): List<SceneValidationIssue> = buildList {
         if (speed < 0f) {
