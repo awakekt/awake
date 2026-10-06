@@ -8,6 +8,7 @@ package com.awakekt.awake.webgpu.debug
 import com.awakekt.awake.render.passes.debug.DebugLineLayout
 import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.fastArrayBufferOf
+import com.awakekt.awake.webgpu.writeBufferData
 import com.awakekt.awake.webgpu.pipeline.WebGpuBufferHandle
 import io.ygdrasil.webgpu.BufferDescriptor
 import io.ygdrasil.webgpu.GPUBuffer
@@ -68,7 +69,7 @@ class LineMesh(
         val neededVertices = vertices.size / FLOATS_PER_VERTEX
         if (neededVertices > capacityVertices) growTo(neededVertices)
         val device = graphicsDevice.wgpuContext.device
-        device.queue.writeBuffer(vertexBuffer, 0uL, fastArrayBufferOf(vertices))
+        device.queue.writeBufferData(vertexBuffer, 0uL, fastArrayBufferOf(vertices))
         drawVertexCount = vertices.size / FLOATS_PER_VERTEX
     }
 

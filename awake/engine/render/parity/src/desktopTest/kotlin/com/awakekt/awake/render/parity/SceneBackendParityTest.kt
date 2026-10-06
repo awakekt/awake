@@ -197,8 +197,10 @@ class SceneBackendParityTest {
             val renderer = session(backend).renderer
             val played = FRAME_TIMES.take(3).map { time ->
                 renderer.renderTexturedPbrScene(texture = FRAME_SHEET, textureAnimation = run, timeSeconds = time)
+                    .also { write(backend, it, "frame-sheet-run-$time") }
                     .brightChannelsAt(SCENE_SIZE / 2, SCENE_SIZE / 2)
             }
+            println("$backend frame-sheet run: $played")
             assertEquals(
                 listOf(FRAME_COLOURS[2], FRAME_COLOURS[3], FRAME_COLOURS[2]).map { it.brightChannels() },
                 played,
@@ -377,9 +379,10 @@ class SceneBackendParityTest {
 
                 val card = opaque.shadowedGroundPixels()
                 val cutOut = masked.shadowedGroundPixels()
-                // Where the opaque card drew its clear half black, masked shows the lit ground. Black
-                // only: a caster that lost its whole shadow also brightens the ground it shadowed.
-                val clearHalf = opaque.blackPixelsLitIn(masked)
+                // The clear half writes zero alpha when opaque, while masking reveals opaque
+                // ground. Alpha identifies these texels independently of sRGB/specular lighting;
+                // merely losing the shadow cannot change the ground's alpha.
+                val clearHalf = opaque.clearTexelsShowingGroundIn(masked)
                 listOfNotNull(
                     "$backend $caster: masked shadow $cutOut px, the whole card's $card px".takeIf { card == 0 || cutOut !in card / 4..card * 3 / 4 },
                     "$backend $caster: masking showed the ground through $clearHalf card pixels".takeIf { clearHalf <= MIN_CLEAR_HALF_PIXELS },
@@ -574,8 +577,10 @@ class SceneBackendParityTest {
     }
 
     /** Pixels black here, a card's clear half drawn whole, that [other] shows as lit ground. */
-    private fun ByteArray.blackPixelsLitIn(other: ByteArray): Int = (0 until SCENE_SIZE).sumOf { y ->
-        (0 until SCENE_SIZE).count { x -> luminanceAt(x, y) <= BLACK_LEVEL && other.luminanceAt(x, y) - luminanceAt(x, y) > CARD_TO_GROUND }
+    private fun ByteArray.clearTexelsShowingGroundIn(other: ByteArray): Int = (0 until SCENE_SIZE * SCENE_SIZE).count { pixel ->
+        channel(pixel, 3) == 0 && other.channel(pixel, 3) == 255 &&
+            other.luminanceAt(pixel % SCENE_SIZE, pixel / SCENE_SIZE) -
+            luminanceAt(pixel % SCENE_SIZE, pixel / SCENE_SIZE) > CARD_TO_GROUND
     }
 
     private fun ByteArray.channel(pixel: Int, channel: Int): Int = this[pixel * 4 + channel].toInt() and 0xFF
@@ -658,8 +663,6 @@ class SceneBackendParityTest {
         const val SHADOW_MARGIN = 10
         const val CARD_TO_GROUND = 60
 
-        /** A card's black clear half: it reads up to 22 through WebGPU's sRGB target, the shadowed ground 59 and up. */
-        const val BLACK_LEVEL = 30
         const val MIN_CLEAR_HALF_PIXELS = 20
 
         /** A metal loses its diffuse light; anything under a tenth is the factor being ignored. */

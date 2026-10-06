@@ -10,6 +10,7 @@ import com.awakekt.awake.core.math.Aabb
 import com.awakekt.awake.webgpu.WebGpuHandles
 import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.fastArrayBufferOf
+import com.awakekt.awake.webgpu.writeBufferData
 import com.awakekt.awake.webgpu.handles.BufferHandle
 import com.awakekt.awake.webgpu.handles.DeviceMemoryHandle
 import com.awakekt.awake.webgpu.pipeline.WebGpuBufferHandle
@@ -21,7 +22,7 @@ import com.awakekt.awake.render.mesh.Mesh as RenderMesh
 
 /**
  * Phase 2.5 milestone 2 slice 1 (see docs/mvp-plan.md): real wgpu4k implementation.
- * `device.queue.writeBuffer()` uploads directly -- no HOST_VISIBLE staging buffer + one-time
+ * `device.queue.writeBufferData()` uploads directly -- no HOST_VISIBLE staging buffer + one-time
  * command buffer + `vkCmdCopyBuffer` dance the way Vulkan's `Mesh.kt` needs, a real
  * simplification, not an oversight. [vertexBufferMemory]/[indexBufferMemory] have no WebGPU
  * equivalent (buffer memory is managed internally, no separate allocation object to hold a
@@ -75,7 +76,7 @@ class Mesh(
                 usage = GPUBufferUsage.Vertex or GPUBufferUsage.CopyDst,
             ),
         )
-        device.queue.writeBuffer(rawVertexBuffer, 0uL, fastArrayBufferOf(vertices))
+        device.queue.writeBufferData(rawVertexBuffer, 0uL, fastArrayBufferOf(vertices))
         val vertexHandle = WebGpuHandles.register(rawVertexBuffer)
         vertexBuffer = BufferHandle(vertexHandle)
         vertexBufferMemory = DeviceMemoryHandle(vertexHandle)
@@ -86,7 +87,7 @@ class Mesh(
                 usage = GPUBufferUsage.Index or GPUBufferUsage.CopyDst,
             ),
         )
-        device.queue.writeBuffer(rawIndexBuffer, 0uL, fastArrayBufferOf(indices))
+        device.queue.writeBufferData(rawIndexBuffer, 0uL, fastArrayBufferOf(indices))
         val indexHandle = WebGpuHandles.register(rawIndexBuffer)
         indexBuffer = BufferHandle(indexHandle)
         indexBufferMemory = DeviceMemoryHandle(indexHandle)
@@ -99,7 +100,7 @@ class Mesh(
                 usage = GPUBufferUsage.Index or GPUBufferUsage.CopyDst,
             ),
         )
-        device.queue.writeBuffer(rawLineIndexBuffer, 0uL, fastArrayBufferOf(lineIndices))
+        device.queue.writeBufferData(rawLineIndexBuffer, 0uL, fastArrayBufferOf(lineIndices))
         lineIndexBuffer = BufferHandle(WebGpuHandles.register(rawLineIndexBuffer))
 
         vertexBinding = WebGpuBufferHandle(rawVertexBuffer)

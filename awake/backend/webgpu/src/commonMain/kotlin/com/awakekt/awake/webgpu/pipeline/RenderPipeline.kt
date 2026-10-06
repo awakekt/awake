@@ -20,6 +20,7 @@ import com.awakekt.awake.render.renderer.UniformWriter
 import com.awakekt.awake.webgpu.WebGpuHandles
 import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.fastArrayBufferOf
+import com.awakekt.awake.webgpu.writeBufferData
 import com.awakekt.awake.webgpu.handles.DescriptorSetLayoutHandle
 import com.awakekt.awake.webgpu.swapchain.SwapchainManager
 import com.awakekt.awake.webgpu.texture.Texture
@@ -230,7 +231,7 @@ class RenderPipeline(
 
             override fun write(frameIndex: Int, fill: UniformWriter.() -> Unit) {
                 val floats = UniformWriter(layout).apply(fill).build()
-                device.queue.writeBuffer(buffer, 0uL, fastArrayBufferOf(floats))
+                device.queue.writeBufferData(buffer, 0uL, fastArrayBufferOf(floats))
             }
         }
     }

@@ -10,6 +10,7 @@ import com.awakekt.awake.core.math.Vec4
 import com.awakekt.awake.render.passes.InstancePacker
 import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.fastArrayBufferOf
+import com.awakekt.awake.webgpu.writeBufferData
 import com.awakekt.awake.webgpu.pipeline.WebGpuBufferHandle
 import io.ygdrasil.webgpu.BufferDescriptor
 import io.ygdrasil.webgpu.GPUBuffer
@@ -43,7 +44,7 @@ class AlphaInstanceBuffer(
 
     fun update(colors: List<Vec4>) {
         val floats = packer.pack(colors, maxInstances) ?: return
-        graphicsDevice.wgpuContext.device.queue.writeBuffer(buffer, 0uL, fastArrayBufferOf(floats))
+        graphicsDevice.wgpuContext.device.queue.writeBufferData(buffer, 0uL, fastArrayBufferOf(floats))
     }
 
     fun bufferRef(): GPUBuffer = buffer

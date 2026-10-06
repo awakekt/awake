@@ -10,6 +10,7 @@ import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.renderer.UiTargetCompositeMode
 import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.fastArrayBufferOf
+import com.awakekt.awake.webgpu.writeBufferData
 import com.awakekt.awake.webgpu.pipeline.createAwakePipelineLayout
 import com.awakekt.awake.webgpu.swapchain.SwapchainManager
 import com.awakekt.awake.webgpu.texture.OffscreenRenderTarget
@@ -54,7 +55,7 @@ internal class UiTargetCompositePipeline(
                 code = shaderCode.decodeToString(),
             ),
         )
-        device.queue.writeBuffer(modeBuffer, 0uL, fastArrayBufferOf(intArrayOf(mode.ordinal)))
+        device.queue.writeBufferData(modeBuffer, 0uL, fastArrayBufferOf(intArrayOf(mode.ordinal)))
         pipeline = device.createRenderPipeline(
             RenderPipelineDescriptor(
                 layout = device.createAwakePipelineLayout(mapOf(0 to GroupBindings.UiTargetComposite)),

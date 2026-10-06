@@ -28,6 +28,7 @@ import com.awakekt.awake.render.pipeline.instancedDrawKind
 import com.awakekt.awake.render.pipeline.resolve
 import com.awakekt.awake.render.pipeline.resolveInstanced
 import com.awakekt.awake.webgpu.fastArrayBufferOf
+import com.awakekt.awake.webgpu.writeBufferData
 import com.awakekt.awake.webgpu.material.Material
 import com.awakekt.awake.webgpu.mesh.Mesh
 import com.awakekt.awake.webgpu.pipeline.WebGpuBindGroupHandle
@@ -139,7 +140,7 @@ internal fun Renderer.prepareGpuDraw(
         exposure = exposure,
     )
     slot?.let {
-        graphicsDevice.wgpuContext.device.queue.writeBuffer(
+        graphicsDevice.wgpuContext.device.queue.writeBufferData(
             it.buffer,
             0uL,
             fastArrayBufferOf(uniformFloats),
@@ -239,7 +240,7 @@ private fun Renderer.prepareInstancedGpuDraw(
     when (kind) {
         InstancedDrawKind.Particle -> {
             val slot = drawSlot?.takeIf { material.hasTexture } ?: return null
-            graphicsDevice.wgpuContext.device.queue.writeBuffer(slot.buffer, 0uL, fastArrayBufferOf(uniformFloats))
+            graphicsDevice.wgpuContext.device.queue.writeBufferData(slot.buffer, 0uL, fastArrayBufferOf(uniformFloats))
             materialBinding = WebGpuBindGroupHandle(
                 material.bindGroupFor(pipeline.pipeline, slot.buffer, pipeline.texturedMaterialBindings),
             )
@@ -249,7 +250,7 @@ private fun Renderer.prepareInstancedGpuDraw(
 
         InstancedDrawKind.Skinned -> {
             val resources = skinnedUniformResources ?: return null
-            graphicsDevice.wgpuContext.device.queue.writeBuffer(
+            graphicsDevice.wgpuContext.device.queue.writeBufferData(
                 resources.buffer,
                 0uL,
                 fastArrayBufferOf(uniformFloats),
@@ -266,7 +267,7 @@ private fun Renderer.prepareInstancedGpuDraw(
 
         InstancedDrawKind.Plain -> {
             val slot = drawSlot ?: return null
-            graphicsDevice.wgpuContext.device.queue.writeBuffer(slot.buffer, 0uL, fastArrayBufferOf(uniformFloats))
+            graphicsDevice.wgpuContext.device.queue.writeBufferData(slot.buffer, 0uL, fastArrayBufferOf(uniformFloats))
             materialBinding = if (material.hasTexture) {
                 WebGpuBindGroupHandle(
                     material.bindGroupFor(

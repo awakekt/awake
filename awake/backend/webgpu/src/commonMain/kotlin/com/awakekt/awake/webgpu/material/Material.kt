@@ -10,6 +10,7 @@ import com.awakekt.awake.render.pipeline.ResourceKind
 import com.awakekt.awake.render.renderer.UniformFields
 import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.fastArrayBufferOf
+import com.awakekt.awake.webgpu.writeBufferData
 import com.awakekt.awake.webgpu.pipeline.WebGpuBindGroupHandle
 import com.awakekt.awake.webgpu.pipeline.WebGpuPipelineHandle
 import com.awakekt.awake.webgpu.texture.Texture
@@ -180,7 +181,7 @@ class Material(
                 "$uniformFloatCount-float buffer -- createMaterial(uniformFloatCount = ...) " +
                 "was sized for a smaller layout than what's actually being written."
         }
-        device.queue.writeBuffer(requireUniformBuffer(), 0uL, fastArrayBufferOf(uniformFloats))
+        device.queue.writeBufferData(requireUniformBuffer(), 0uL, fastArrayBufferOf(uniformFloats))
     }
 
     /** Must be safe to call unconditionally (every `AppLifecycle.dispose` calls it regardless of which

@@ -57,7 +57,16 @@ kotlin {
     // other module that opens one. Every such module already took the shared token except this
     // one -- which is how `awake:backend:vulkan`'s tests could still meet a device that refuses
     // to open while running beside these.
-    tasks.withType<Test>().configureEach { requireExclusiveGpu(this) }
+    tasks.withType<Test>().configureEach {
+        requireExclusiveGpu(this)
+        // Fixtures retain native contexts for the life of their class. As in render:parity,
+        // isolate classes so a later fixture cannot inherit wgpu-native/GLFW driver state.
+        setForkEvery(1)
+        testLogging {
+            events("started", "failed")
+            exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        }
+    }
 
     // detekt's compiler frontend tops out at JVM target 22, and this module's toolchain is 25
     // (see jvmToolchain above). The target only affects detekt's own analysis, not the bytecode

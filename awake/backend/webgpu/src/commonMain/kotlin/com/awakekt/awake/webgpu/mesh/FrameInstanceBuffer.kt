@@ -9,6 +9,7 @@ import com.awakekt.awake.core.geometry.GpuDataShape
 import com.awakekt.awake.render.passes.InstancePacker
 import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.fastArrayBufferOf
+import com.awakekt.awake.webgpu.writeBufferData
 import com.awakekt.awake.webgpu.pipeline.WebGpuBufferHandle
 import io.ygdrasil.webgpu.BufferDescriptor
 import io.ygdrasil.webgpu.GPUBuffer
@@ -38,7 +39,7 @@ class FrameInstanceBuffer(
 
     fun update(frames: List<Float>) {
         val floats = packer.pack(frames, maxInstances) ?: return
-        graphicsDevice.wgpuContext.device.queue.writeBuffer(buffer, 0uL, fastArrayBufferOf(floats))
+        graphicsDevice.wgpuContext.device.queue.writeBufferData(buffer, 0uL, fastArrayBufferOf(floats))
     }
 
     fun bufferRef(): GPUBuffer = buffer

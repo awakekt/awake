@@ -107,6 +107,7 @@ class WebGpuSceneDepthTest {
             val drawn = row.withIndex().filter { it.value > BACKGROUND }
             val leftBand = drawn.filter { it.index < SIZE / 2 }.map { it.value }
             val rightBand = drawn.filter { it.index >= SIZE / 2 }.map { it.value }
+            println("Scene-depth probe row: $row")
 
             assertTrue(
                 leftBand.isNotEmpty() && rightBand.isNotEmpty(),
@@ -119,7 +120,7 @@ class WebGpuSceneDepthTest {
                 leftBand.max() < rightBand.max(),
                 "The near quad (left, ${leftBand.max()}) must sample a smaller depth than the " +
                     "far quad (right, ${rightBand.max()}). Equal means the shader is reading a " +
-                    "constant rather than per-pixel depth.",
+                    "constant rather than per-pixel depth. Row: $row",
             )
         } finally {
             target.destroy()
