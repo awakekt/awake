@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.rendering.tonemapping
 
+import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneValidationIssue
 import kotlinx.serialization.SerialName
@@ -18,7 +19,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 @SerialName("tone_mapping")
 data class SceneToneMapping(
-    val exposure: Float = 1f,
+    @PropertyRange(min = 0.0, exclusiveMin = true) val exposure: Float = 1f,
 ) : SceneComponent {
     override val allowsMultiplePerNode: Boolean get() = false
 

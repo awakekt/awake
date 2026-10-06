@@ -1,1 +1,0 @@
-- Replace deprecated `content { ... }` and `appDefinition` bootstrap DSL calls with `ui { ... }` and `app { ... }` in `samples/engine-showcase`. (#450)

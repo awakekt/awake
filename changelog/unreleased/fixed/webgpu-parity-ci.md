@@ -1,1 +1,0 @@
-- Run WebGPU and Vulkan/WebGPU pixel parity suites in CI, retain their diagnostics, bound WebGPU buffer uploads to the source length, release cached neutral textures once to prevent native heap corruption, and support the Vulkan SDK in desktop accessor builds.

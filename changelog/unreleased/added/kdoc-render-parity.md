@@ -1,1 +1,0 @@
-- Document all public declarations and enforce strict Detekt KDoc rules for `:awake:engine:render:parity` and `:awake:engine:render:testing`.

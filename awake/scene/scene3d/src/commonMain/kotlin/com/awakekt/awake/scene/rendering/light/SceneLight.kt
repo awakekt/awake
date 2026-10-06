@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.rendering.light
 
+import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.render.passes.DEFAULT_SHADOW_DISTANCE
 import com.awakekt.awake.scene.document.SceneColor
 import com.awakekt.awake.scene.document.SceneComponent
@@ -35,8 +36,8 @@ data class SceneLight(
     /** Whether this directional light casts shadows. Defaults true so existing scenes
      * (which didn't have this field) keep their shadows after loading. */
     val shadowsEnabled: Boolean = true,
-    val shadowDistance: Float = DEFAULT_SHADOW_DISTANCE,
-    val ambient: Float? = null,
+    @PropertyRange(min = 0.0, exclusiveMin = true) val shadowDistance: Float = DEFAULT_SHADOW_DISTANCE,
+    @PropertyRange(min = 0.0, max = 1.0, exclusiveMin = true) val ambient: Float? = null,
 ) : SceneComponent {
     override fun validate(path: String): List<SceneValidationIssue> = buildList {
         if (!shadowDistance.isFinite() || shadowDistance <= 0f) {

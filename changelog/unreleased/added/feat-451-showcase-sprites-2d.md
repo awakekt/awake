@@ -1,1 +1,0 @@
-- Added `sprites-2d` showcase demonstrating orthographic camera projection, layer depth sorting, and animated sprite quads.

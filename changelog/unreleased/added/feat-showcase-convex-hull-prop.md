@@ -1,1 +1,0 @@
-- Add falling wedge convex hull prop (`falling-wedge`) to heightfield terrain showcase with dynamic convex hull physics body.
