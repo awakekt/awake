@@ -25,28 +25,23 @@ import kotlin.test.assertTrue
  * enforces it.
  */
 class RangeAnnotationsAreEnforcedTest {
-    private val json = SceneSerializers.createJson()
-
-    /** A constrained property, found by [steps] from the component's document root. */
-    private class Constrained(val component: String, val steps: List<String>, val schema: PropertySchema)
-
-    private fun constrainedProperties(): List<Constrained> {
+    /**
+     * Made on first use, after the component kits are installed: the serializers module is a snapshot, so a
+     * `Json` built earlier cannot decode a component registered later, and this test would depend on running
+     * after another that installs them.
+     */
+    private val json by lazy {
         installEveryComponentKit()
-        return SceneComponentCatalog.schemas().flatMap { (id, schema) -> constrainedIn(id, emptyList(), schema) }
+        SceneSerializers.createJson()
     }
 
-    private fun constrainedIn(component: String, steps: List<String>, schema: PropertySchema): List<Constrained> =
-        schema.children.flatMap { child ->
-            val here = steps + child.name
-            when {
-                child.constraints.range != null -> listOf(Constrained(component, here, child))
-                child.kind == PropertyKind.Object -> constrainedIn(component, here, child)
-                // Found so a range on a list element is reported by withValue, not silently left unchecked.
-                child.kind == PropertyKind.List || child.kind == PropertyKind.Map ->
-                    child.element?.takeIf { it.kind == PropertyKind.Object }?.let { constrainedIn(component, here + "[]", it) }.orEmpty()
-                else -> emptyList()
-            }
-        }
+    /** Every property with a range, wherever it is (a list element is found so [withValue] reports it, not skips it). */
+    private fun constrainedProperties(): List<SchemaNode> {
+        installEveryComponentKit()
+        return SceneComponentCatalog.schemas()
+            .flatMap { (id, schema) -> descendantsOf(id, schema) }
+            .filter { it.schema.constraints.range != null }
+    }
 
     /** Values just outside [range]: on its excluded edge, or one past an included one. */
     private fun outside(range: NumberRange): List<Double> = buildList {
