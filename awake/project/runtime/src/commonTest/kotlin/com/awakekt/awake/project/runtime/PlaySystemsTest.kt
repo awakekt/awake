@@ -36,6 +36,8 @@ import com.awakekt.awake.scene.particles.ParticleContentSystem
 import com.awakekt.awake.scene.physics.PhysicsSystem
 import com.awakekt.awake.scene.rendering.animation.AnimationSystem
 import com.awakekt.awake.scene.rendering.animation.KeyframeAnimationSystem
+import com.awakekt.awake.scene.rendering.light.DayCycleSystem
+import com.awakekt.awake.scene.rendering.light.Light
 import com.awakekt.awake.scene.rendering.mesh.TextureClipSystem
 import com.awakekt.awake.scene.rendering.mesh.TextureClips
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
@@ -88,6 +90,22 @@ class PlaySystemsTest {
     fun aSpriteSheetWithClipsGetsTheClipSystemAndAPlainSceneDoesNot() {
         assertTrue(systemsFor(CLIPS_SCENE).frame.has(TextureClipSystem::class))
         assertTrue(!systemsFor(PLAIN_SCENE).frame.has(TextureClipSystem::class))
+    }
+
+    @Test
+    fun aDayCycleGetsItsSystemAndAHostRunningItMovesTheSun() {
+        assertTrue(!systemsFor(PLAIN_SCENE).frame.has(DayCycleSystem::class))
+        installPlayableComponents()
+        val world = World()
+        SceneLoader.decode(DAY_SCENE).instantiate(world = world)
+        val systems = systemsFor(DAY_SCENE)
+        val sun = world.get<Light>(world.named("Sun"))!!
+
+        assertTrue(systems.frame.has(DayCycleSystem::class))
+        repeat(FRAMES) { systems.frame.forEach { it.update(world, DELTA) } }
+
+        // A four-second day from sunrise: one second later it is noon, at 60 degrees.
+        assertEquals(0.866f, sun.direction.y, 1e-3f, "the sun must have climbed to its noon height")
     }
 
     @Test
@@ -303,6 +321,14 @@ class PlaySystemsTest {
         "attack": { "firstFrame": 12, "frameCount": 3, "framesPerSecond": 10.0, "loop": false }
       } }
   ] }
+] }
+"""
+
+        const val DAY_SCENE = """
+{ "version": 1, "name": "day", "nodes": [
+  { "name": "Sun", "components": [
+    { "component": "light", "type": "Directional" },
+    { "component": "day_cycle", "dayLengthSeconds": 4.0, "time": 0.25 } ] }
 ] }
 """
 

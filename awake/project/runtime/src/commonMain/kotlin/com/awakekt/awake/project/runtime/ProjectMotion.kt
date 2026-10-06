@@ -19,11 +19,13 @@ import com.awakekt.awake.scene.rendering.animation.KeyframeAnimationSystem
 import com.awakekt.awake.scene.rendering.animation.LocomotionAnimationSystem
 import com.awakekt.awake.scene.rendering.animation.SceneKeyframeAnimation
 import com.awakekt.awake.scene.rendering.animation.SceneLocomotionAnimation
+import com.awakekt.awake.scene.rendering.light.DayCycleSystem
+import com.awakekt.awake.scene.rendering.light.SceneDayCycle
 import com.awakekt.awake.scene.rendering.mesh.SceneTextureClips
 import com.awakekt.awake.scene.rendering.mesh.TextureClipSystem
 import com.awakekt.awake.scene.runtime.SceneSystemPhase
 
-/** Spin, locomotion, keyframes, sprite-sheet clips and particles, for the scenes that have them. */
+/** Spin, locomotion, keyframes, sprite-sheet clips, particles and the day cycle, for the scenes that have them. */
 internal fun MutableList<PlaySpec>.addMotionSpecs(scene: SceneDocument) {
     if (scene.has(SceneSpinControl::class)) {
         add(PlaySpec("spin-clock", SceneSystemPhase.Frame) { SpinClockSystem() })
@@ -41,6 +43,9 @@ internal fun MutableList<PlaySpec>.addMotionSpecs(scene: SceneDocument) {
     if (scene.has(SceneParticleEmitter::class)) {
         add(PlaySpec("particle-content", SceneSystemPhase.Frame) { ParticleContentSystem(it.renderer, it.particleSprites) })
         add(PlaySpec("particles", SceneSystemPhase.Frame) { ParticleSystem(TransformPlacement) })
+    }
+    if (scene.has(SceneDayCycle::class)) {
+        add(PlaySpec("day-cycle", SceneSystemPhase.Frame) { DayCycleSystem() })
     }
 }
 
