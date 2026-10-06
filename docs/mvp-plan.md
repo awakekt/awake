@@ -39,25 +39,14 @@ below is what remains beyond it.
 
 ## What's actually left
 
-**Phase 6 — iOS via MoltenVK.** The only MVP-scope phase not done. Needs an iOS app target
-driving a real frame loop, then hardware verification on a physical device rather than the
-simulator. `IOSFrameLoop` is implemented but has never run.
+Active development and task tracking are managed in **GitHub Issues & Milestones** (`v0.2.0`, etc.).
 
-**Phase 8 — finish physics.** The pieces exist but nothing demonstrates them end to end. Needs a
-demo scene (falling boxes onto a ground plane) on Android and desktop. Batched transform sync
-through a shared direct `ByteBuffer` / pinned memory is a later optimisation, not a blocker.
+Core architectural priorities beyond the completed MVP:
+- **Phase 6 — iOS via MoltenVK:** Requires an iOS app target driving a real frame loop and physical device verification.
+- **Phase 8 — Physics verification & demo:** End-to-end demo scene across Android and desktop.
+- **Phase 9 — Audio:** Audio subsystem architecture and bindings.
 
-**Phase 9 — audio.** Not started, no module. `WindowLifecycle`'s doc comment sketches where an
-`audio` accessor would attach when it begins.
-
-**Smaller open items**
-
-- Ktlint is still deferred — legacy code predates the formatting rules, so enabling it means a
-  standalone `ktlintFormat` sweep.
-- Adaptive bulk structural mutation in the ECS.
-- Extract `awake:core:math` — see
-  [reference/module-architecture.md](reference/module-architecture.md).
-- WebGPU wireframe support is stored but never read, so the flag is inert on that backend.
+All granular work, bug fixes, and feature burndowns are tracked in GitHub rather than scratch checklists.
 
 ## Risks
 

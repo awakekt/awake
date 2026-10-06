@@ -4,7 +4,6 @@ Graph documents, node registry and validation shared by every node-graph editor 
 Awake: blueprint logic, AI state trees and shader graphs. No UI and no runtime semantics. What a
 node does belongs to whoever owns its graph kind.
 
-Design and sequencing: [node-graph plan](../../docs/tasks/2026-09-27-node-graph-plan.md).
 
 ## What is here
 

@@ -12,7 +12,7 @@ done while the import is still there.
 
 It is deliberately not a gate. Mid-port the number is supposed to be red, and a gate that is red on
 purpose for weeks is one people learn to ignore -- then it is still ignored on the day it means
-something. `docs/tasks/README.md` says what is open; this says how far along one item is.
+something. This tool measures how far along the migration is.
 
     python3 tools/shadcn/port_progress.py
     python3 tools/shadcn/port_progress.py --json
