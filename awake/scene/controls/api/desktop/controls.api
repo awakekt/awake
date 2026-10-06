@@ -257,6 +257,7 @@ public final class com/awakekt/awake/scene/controls/camera/SceneCameraRig : com/
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 	public fun validate (Ljava/lang/String;)Ljava/util/List;
+	public fun validate (Ljava/lang/String;Ljava/util/List;)Ljava/util/List;
 }
 
 public final synthetic class com/awakekt/awake/scene/controls/camera/SceneCameraRig$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
@@ -395,6 +396,7 @@ public final class com/awakekt/awake/scene/controls/movement/SceneMovementContro
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 	public fun validate (Ljava/lang/String;)Ljava/util/List;
+	public fun validate (Ljava/lang/String;Ljava/util/List;)Ljava/util/List;
 }
 
 public final synthetic class com/awakekt/awake/scene/controls/movement/SceneMovementControl$$serializer : kotlinx/serialization/internal/GeneratedSerializer {

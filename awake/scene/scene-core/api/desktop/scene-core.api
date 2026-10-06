@@ -42,6 +42,7 @@ public final class com/awakekt/awake/scene/core/transform/SceneSpinControl : com
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 	public fun validate (Ljava/lang/String;)Ljava/util/List;
+	public fun validate (Ljava/lang/String;Ljava/util/List;)Ljava/util/List;
 }
 
 public final synthetic class com/awakekt/awake/scene/core/transform/SceneSpinControl$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
@@ -67,6 +68,7 @@ public final class com/awakekt/awake/scene/core/transform/SceneStaticTransform :
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 	public fun toString ()Ljava/lang/String;
 	public fun validate (Ljava/lang/String;)Ljava/util/List;
+	public fun validate (Ljava/lang/String;Ljava/util/List;)Ljava/util/List;
 }
 
 public final class com/awakekt/awake/scene/core/transform/SpinControl : com/awakekt/awake/ecs/Poolable {

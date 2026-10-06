@@ -73,11 +73,13 @@ public final class com/awakekt/awake/scene/document/SceneColorSerializer : kotli
 public abstract interface class com/awakekt/awake/scene/document/SceneComponent {
 	public fun getAllowsMultiplePerNode ()Z
 	public fun validate (Ljava/lang/String;)Ljava/util/List;
+	public fun validate (Ljava/lang/String;Ljava/util/List;)Ljava/util/List;
 }
 
 public final class com/awakekt/awake/scene/document/SceneComponent$DefaultImpls {
 	public static fun getAllowsMultiplePerNode (Lcom/awakekt/awake/scene/document/SceneComponent;)Z
 	public static fun validate (Lcom/awakekt/awake/scene/document/SceneComponent;Ljava/lang/String;)Ljava/util/List;
+	public static fun validate (Lcom/awakekt/awake/scene/document/SceneComponent;Ljava/lang/String;Ljava/util/List;)Ljava/util/List;
 }
 
 public final class com/awakekt/awake/scene/document/SceneCustomComponent : com/awakekt/awake/scene/document/SceneComponent {
@@ -94,6 +96,7 @@ public final class com/awakekt/awake/scene/document/SceneCustomComponent : com/a
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 	public fun validate (Ljava/lang/String;)Ljava/util/List;
+	public fun validate (Ljava/lang/String;Ljava/util/List;)Ljava/util/List;
 }
 
 public final synthetic class com/awakekt/awake/scene/document/SceneCustomComponent$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
@@ -378,6 +381,7 @@ public final class com/awakekt/awake/scene/document/ScenePrefabLink : com/awakek
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 	public fun validate (Ljava/lang/String;)Ljava/util/List;
+	public fun validate (Ljava/lang/String;Ljava/util/List;)Ljava/util/List;
 }
 
 public final synthetic class com/awakekt/awake/scene/document/ScenePrefabLink$$serializer : kotlinx/serialization/internal/GeneratedSerializer {

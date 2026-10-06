@@ -91,7 +91,7 @@ object SceneValidator {
         }
 
         node.components.forEach { component ->
-            issues += component.validate(path)
+            issues += component.validate(path, node.components)
         }
 
         val childNames = if (node.components.any { it is ScenePrefabLink }) LinkedHashMap<String, String>() else namedPaths

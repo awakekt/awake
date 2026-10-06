@@ -230,6 +230,7 @@ public final class com/awakekt/awake/scene/rendering/animation/SceneKeyframeAnim
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 	public fun validate (Ljava/lang/String;)Ljava/util/List;
+	public fun validate (Ljava/lang/String;Ljava/util/List;)Ljava/util/List;
 }
 
 public final synthetic class com/awakekt/awake/scene/rendering/animation/SceneKeyframeAnimation$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
@@ -281,6 +282,7 @@ public final class com/awakekt/awake/scene/rendering/animation/SceneLocomotionAn
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 	public fun validate (Ljava/lang/String;)Ljava/util/List;
+	public fun validate (Ljava/lang/String;Ljava/util/List;)Ljava/util/List;
 }
 
 public final synthetic class com/awakekt/awake/scene/rendering/animation/SceneLocomotionAnimation$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
@@ -437,6 +439,7 @@ public final class com/awakekt/awake/scene/rendering/camera/SceneCamera : com/aw
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 	public fun validate (Ljava/lang/String;)Ljava/util/List;
+	public fun validate (Ljava/lang/String;Ljava/util/List;)Ljava/util/List;
 }
 
 public final synthetic class com/awakekt/awake/scene/rendering/camera/SceneCamera$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
@@ -621,6 +624,7 @@ public final class com/awakekt/awake/scene/rendering/fog/SceneFog : com/awakekt/
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 	public fun validate (Ljava/lang/String;)Ljava/util/List;
+	public fun validate (Ljava/lang/String;Ljava/util/List;)Ljava/util/List;
 }
 
 public final synthetic class com/awakekt/awake/scene/rendering/fog/SceneFog$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
@@ -775,6 +779,7 @@ public final class com/awakekt/awake/scene/rendering/light/SceneAmbientLight : c
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 	public fun validate (Ljava/lang/String;)Ljava/util/List;
+	public fun validate (Ljava/lang/String;Ljava/util/List;)Ljava/util/List;
 }
 
 public final synthetic class com/awakekt/awake/scene/rendering/light/SceneAmbientLight$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
@@ -814,6 +819,7 @@ public final class com/awakekt/awake/scene/rendering/light/SceneDayCycle : com/a
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 	public fun validate (Ljava/lang/String;)Ljava/util/List;
+	public fun validate (Ljava/lang/String;Ljava/util/List;)Ljava/util/List;
 }
 
 public final synthetic class com/awakekt/awake/scene/rendering/light/SceneDayCycle$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
@@ -899,6 +905,7 @@ public final class com/awakekt/awake/scene/rendering/light/SceneLight : com/awak
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 	public fun validate (Ljava/lang/String;)Ljava/util/List;
+	public fun validate (Ljava/lang/String;Ljava/util/List;)Ljava/util/List;
 }
 
 public final synthetic class com/awakekt/awake/scene/rendering/light/SceneLight$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
@@ -1131,6 +1138,7 @@ public final class com/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer : co
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 	public fun validate (Ljava/lang/String;)Ljava/util/List;
+	public fun validate (Ljava/lang/String;Ljava/util/List;)Ljava/util/List;
 }
 
 public final synthetic class com/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
@@ -1181,6 +1189,7 @@ public final class com/awakekt/awake/scene/rendering/mesh/ScenePbrMaterial : com
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 	public fun validate (Ljava/lang/String;)Ljava/util/List;
+	public fun validate (Ljava/lang/String;Ljava/util/List;)Ljava/util/List;
 }
 
 public final synthetic class com/awakekt/awake/scene/rendering/mesh/ScenePbrMaterial$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
@@ -1238,6 +1247,7 @@ public final class com/awakekt/awake/scene/rendering/mesh/SceneTextureAnimation 
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 	public fun validate (Ljava/lang/String;)Ljava/util/List;
+	public fun validate (Ljava/lang/String;Ljava/util/List;)Ljava/util/List;
 }
 
 public final synthetic class com/awakekt/awake/scene/rendering/mesh/SceneTextureAnimation$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
@@ -1311,6 +1321,7 @@ public final class com/awakekt/awake/scene/rendering/mesh/SceneTextureClips : co
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 	public fun validate (Ljava/lang/String;)Ljava/util/List;
+	public fun validate (Ljava/lang/String;Ljava/util/List;)Ljava/util/List;
 }
 
 public final synthetic class com/awakekt/awake/scene/rendering/mesh/SceneTextureClips$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
@@ -1429,6 +1440,7 @@ public final class com/awakekt/awake/scene/rendering/sky/SceneSkybox : com/awake
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 	public fun validate (Ljava/lang/String;)Ljava/util/List;
+	public fun validate (Ljava/lang/String;Ljava/util/List;)Ljava/util/List;
 }
 
 public final synthetic class com/awakekt/awake/scene/rendering/sky/SceneSkybox$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
@@ -1647,6 +1659,7 @@ public final class com/awakekt/awake/scene/rendering/terrain/SceneTerrain : com/
 	public final fun isVisible ()Z
 	public fun toString ()Ljava/lang/String;
 	public fun validate (Ljava/lang/String;)Ljava/util/List;
+	public fun validate (Ljava/lang/String;Ljava/util/List;)Ljava/util/List;
 }
 
 public final synthetic class com/awakekt/awake/scene/rendering/terrain/SceneTerrain$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
@@ -1800,6 +1813,7 @@ public final class com/awakekt/awake/scene/rendering/tonemapping/SceneToneMappin
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 	public fun validate (Ljava/lang/String;)Ljava/util/List;
+	public fun validate (Ljava/lang/String;Ljava/util/List;)Ljava/util/List;
 }
 
 public final synthetic class com/awakekt/awake/scene/rendering/tonemapping/SceneToneMapping$$serializer : kotlinx/serialization/internal/GeneratedSerializer {

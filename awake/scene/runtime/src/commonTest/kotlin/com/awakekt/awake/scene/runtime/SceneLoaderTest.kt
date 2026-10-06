@@ -382,6 +382,27 @@ class SceneLoaderTest {
     }
 
     @Test
+    fun aNodeWithBothTextureClipsAndAnimationFailsValidation() {
+        val document = SceneDocument(
+            nodes = listOf(
+                SceneNode(
+                    name = "sprite",
+                    components = listOf(
+                        SceneTextureClips(columns = 4, rows = 2, clips = mapOf("idle" to SceneTextureClip())),
+                        SceneTextureAnimation(columns = 4, rows = 2),
+                    ),
+                ),
+            ),
+        )
+
+        val exception = assertFailsWith<com.awakekt.awake.scene.document.SceneValidationException> {
+            document.instantiate(world = World())
+        }
+        assertTrue(exception.message.orEmpty().contains("sprite"))
+        assertTrue(exception.message.orEmpty().contains("node cannot have both texture_clips and texture_animation"))
+    }
+
+    @Test
     fun decodeRejectsADocumentFromANewerSchema() {
         val future = SceneLoader.encode(SceneDocument(version = SCENE_SCHEMA_VERSION + 1))
 
