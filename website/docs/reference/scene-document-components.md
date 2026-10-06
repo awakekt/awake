@@ -458,6 +458,12 @@ The value of `shape`, named by its `type` key.
 | `box` | `halfExtents` (vector) | `{x: 0.5, y: 0.5, z: 0.5}` |
 | `sphere` | `radius` (number) | `0.5` |
 | `capsule` | `halfHeight` (number), `radius` (number) | `0.5`, `0.5` |
+| `mesh` | `mesh` (string), `primitive` (integer) | required, none |
+
+`mesh` collides with the triangles of the `.glb` or `.gltf` model at the project path `mesh`:
+`primitive` picks one primitive, counted in node order, and none merges them all. The node's scale is
+baked into the triangles. Only `STATIC` bodies that are not sensors can use it, and it needs
+`MeshColliderSystem` to build the body; see [Collide with a model](../guides/physics.md#collide-with-a-model).
 
 ## `prefab_link`
 

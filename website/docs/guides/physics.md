@@ -60,16 +60,39 @@ In an app, register it as a fixed-step system so it steps at the same rate on ev
 
 | Property | Type | Default | What it does |
 | --- | --- | --- | --- |
-| `shape` | `box` · `sphere` · `capsule` | `box` | The collider, centred on the entity. |
+| `shape` | `box` · `sphere` · `capsule` · `mesh` | `box` | The collider, centred on the entity. |
 | `shape.halfExtents` | vector | `(0.5, 0.5, 0.5)` | Half the box size on each axis (`box`). |
 | `shape.radius` | number | `0.5` | Sphere or capsule radius. |
 | `shape.halfHeight` | number | `0.5` | Half the capsule's cylinder, so the capsule is `2 * (halfHeight + radius)` tall. |
+| `shape.mesh` | string | required | Project path of the `.glb` or `.gltf` model whose triangles collide (`mesh`). |
+| `shape.primitive` | integer or none | none | Which primitive of the model, counted in node order. None merges them all (`mesh`). |
 | `motion` | `STATIC` · `KINEMATIC` · `DYNAMIC` | `STATIC` | Level geometry, driven by code, or simulated. |
 | `layer` | integer or none | `0` for `STATIC`, `1` otherwise | Collision layer index. See [collision layers](#collision-layers). |
 | `sensor` | boolean | `false` | Detects what passes through it instead of blocking it. |
 
 In Kotlin, `PhysicsBody(shape, motionType, layer, sensor)` takes any [shape](#shapes), not only the
-three a scene document can describe.
+four a scene document can describe.
+
+## Collide with a model
+
+A `mesh` shape makes a static body of a model's own triangles, so a character walks over a bridge
+and under an arch rather than into their bounding boxes:
+
+```json
+{ "component": "physics_body", "shape": { "type": "mesh", "mesh": "models/bridge.glb" } }
+```
+
+The body is `STATIC` and not a sensor; a scene that asks for anything else fails validation. The
+node's scale is baked into the triangles, any per-axis or mirrored scale included, and the body is
+placed by the node's position and rotation like every other body. Saving writes the model path back,
+not the triangles.
+
+The shape loads as a `MeshCollider` and `MeshColliderSystem` builds the body from it, so register
+that system before `PhysicsSystem`. It reads the triangles from a `CollisionMeshSource`;
+`loadCollisionMeshes(scene, files)` in `awake:project:runtime` is the glTF one, reading each model
+once and failing with the model path and node when one cannot be read. `loadPlayableProject` does
+all of this for you. A host that calls `playSystemsFor` itself passes
+`collisionMeshes = loadCollisionMeshes(scene, files)` in its `PlayServices`.
 
 ## Shapes
 

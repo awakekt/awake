@@ -24,7 +24,11 @@ import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.particles.ParticleContentSystem
+import com.awakekt.awake.scene.physics.CollisionMeshSource
+import com.awakekt.awake.scene.physics.MeshColliderSystem
 import com.awakekt.awake.scene.physics.PhysicsSystem
+import com.awakekt.awake.scene.physics.SceneMeshShape
+import com.awakekt.awake.scene.physics.ScenePhysicsBody
 import com.awakekt.awake.scene.rendering.animation.AnimationSystem
 import com.awakekt.awake.scene.rendering.terrain.SceneTerrain
 import com.awakekt.awake.scene.runtime.SceneSystemPhase
@@ -40,6 +44,8 @@ class PlayServices(
     val physics: PhysicsWorld? = null,
     /** The sprite images of the scene's `particle_emitter`s, as [loadParticleSprites] reads them. */
     val particleSprites: Map<String, TextureAsset> = emptyMap(),
+    /** The triangles of the scene's `mesh` collision shapes, as [loadCollisionMeshes] reads them. */
+    val collisionMeshes: CollisionMeshSource? = null,
 )
 
 /**
@@ -62,7 +68,8 @@ class PlaySystems internal constructor(
  * - `movement_control`: keyboard intent, moved by physics when the entity has a
  *   `character_controller` and straight through the world when it doesn't
  * - `physics_body`, `character_controller` and a `terrain` collider: the physics step, the
- *   character controller and the terrain collider, when [PlayServices.physics] is given
+ *   character controller and the terrain collider, when [PlayServices.physics] is given; a `mesh`
+ *   collision shape adds [MeshColliderSystem], which needs [PlayServices.collisionMeshes]
  * - `camera_rig`: the camera system
  * - `spinControl`: spinning
  * - `locomotion_animation` and `keyframe_animation`: their clips and looping tracks
@@ -114,6 +121,17 @@ internal fun playSpecsFor(scene: SceneDocument, hasPhysics: Boolean): List<PlayS
         if (scene.nodes.any { it.hasTerrainCollider() }) {
             add(PlaySpec("terrain-collider", SceneSystemPhase.Fixed) { TerrainColliderSystem() })
         }
+        if (scene.nodes.any { it.hasMeshCollider() }) {
+            add(
+                PlaySpec("mesh-collider", SceneSystemPhase.Fixed) {
+                    MeshColliderSystem(
+                        requireNotNull(it.collisionMeshes) {
+                            "The scene has mesh collision shapes; pass PlayServices.collisionMeshes from loadCollisionMeshes"
+                        },
+                    )
+                },
+            )
+        }
         add(PlaySpec("physics", SceneSystemPhase.Fixed) { PhysicsSystem(requireNotNull(it.physics)) })
         if (characters) add(PlaySpec("character", SceneSystemPhase.Fixed) { CharacterControllerSystem(requireNotNull(it.physics)) })
     }
@@ -128,7 +146,12 @@ internal fun playSpecsFor(scene: SceneDocument, hasPhysics: Boolean): List<PlayS
  * Registers [playSpecsFor] on this app's schedule, building each system once the runtime exists so
  * it can read the runtime's input, renderer and UI ownership.
  */
-internal fun SceneAppDsl.registerPlaySpecs(scene: SceneDocument, physics: PhysicsWorld?, particleSprites: Map<String, TextureAsset>) {
+internal fun SceneAppDsl.registerPlaySpecs(
+    scene: SceneDocument,
+    physics: PhysicsWorld?,
+    particleSprites: Map<String, TextureAsset>,
+    collisionMeshes: CollisionMeshSource?,
+) {
     var content: ParticleContentSystem? = null
     playSpecsFor(scene, hasPhysics = physics != null).forEach { spec ->
         system(spec.name, spec.phase) {
@@ -137,6 +160,7 @@ internal fun SceneAppDsl.registerPlaySpecs(scene: SceneDocument, physics: Physic
                 renderer = renderer,
                 physics = physics,
                 particleSprites = particleSprites,
+                collisionMeshes = collisionMeshes,
             )
             spec.create(services).also { if (it is ParticleContentSystem) content = it }
         }
@@ -146,6 +170,9 @@ internal fun SceneAppDsl.registerPlaySpecs(scene: SceneDocument, physics: Physic
 
 internal fun SceneNode.hasTerrainCollider(): Boolean =
     components.any { it is SceneTerrain && it.collider } || children.any { it.hasTerrainCollider() }
+
+internal fun SceneNode.hasMeshCollider(): Boolean =
+    components.any { it is ScenePhysicsBody && it.shape is SceneMeshShape } || children.any { it.hasMeshCollider() }
 
 internal fun SceneNode.has(type: KClass<out SceneComponent>): Boolean =
     components.any { type.isInstance(it) } || children.any { it.has(type) }

@@ -33,6 +33,7 @@ import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.document.withPrefabs
 import com.awakekt.awake.scene.gltf.GltfAssetResolver
 import com.awakekt.awake.scene.particles.loadParticleSprites
+import com.awakekt.awake.scene.physics.CollisionMeshSource
 import com.awakekt.awake.scene.physics.PhysicsBodyBinding
 import com.awakekt.awake.scene.physics.ScenePhysicsBody
 import com.awakekt.awake.scene.rendering.Camera
@@ -56,6 +57,7 @@ const val PROJECT_MANIFEST = "awake.project.json"
  * @property models Asset resolver providing access to loaded glTF meshes and models.
  * @property physics Physics simulation world instance if required by the scene, or `null`.
  * @property particleSprites Particle texture assets keyed by asset identifier.
+ * @property collisionMeshes Triangles of the models the scene's `mesh` collision shapes name.
  */
 class PlayableProject internal constructor(
     val manifest: AwakeProjectManifest,
@@ -63,13 +65,16 @@ class PlayableProject internal constructor(
     internal val models: GltfAssetResolver,
     internal val physics: PhysicsWorld?,
     internal val particleSprites: Map<String, TextureAsset> = emptyMap(),
+    internal val collisionMeshes: CollisionMeshSource? = null,
 )
 
 /**
  * Reads [PROJECT_MANIFEST] and its entry scene from [files], a project root, loads the glTF models
- * the scene names, and calls [physicsWorld] when the scene has bodies or characters. The host picks
- * the backend, for example `::createJoltPhysicsWorld`. Throws [IllegalArgumentException] naming
- * every problem in the manifest, or when the scene needs physics and [physicsWorld] is null.
+ * the scene names (drawn, and collided with through [loadCollisionMeshes]), and calls [physicsWorld]
+ * when the scene has bodies or characters. The host picks the backend, for example
+ * `::createJoltPhysicsWorld`. Throws [IllegalArgumentException] naming every problem in the
+ * manifest, a collision model that can't be read, or a scene that needs physics when
+ * [physicsWorld] is null.
  *
  * Decoding installs Core's default scene components and the controls, physics and character ones
  * into the process-wide registry, as `SceneAppLifecycleRuntime` does for the defaults when it starts.
@@ -98,12 +103,14 @@ suspend fun loadPlayableProject(
     val needsPhysics = scene.nodes.any {
         it.has(ScenePhysicsBody::class) || it.has(SceneCharacterController::class) || it.hasTerrainCollider()
     }
+    // Read before the physics world exists, so a missing model leaves nothing to tear down.
+    val collisionMeshes = if (needsPhysics) loadCollisionMeshes(scene, files) else null
     val physics = if (needsPhysics) {
         requireNotNull(physicsWorld) { "${manifest.entryScene} has physics bodies or characters; pass a physicsWorld factory" }()
     } else {
         null
     }
-    return PlayableProject(manifest, scene, models, physics, loadParticleSprites(scene, files))
+    return PlayableProject(manifest, scene, models, physics, loadParticleSprites(scene, files), collisionMeshes)
 }
 
 /** Installs Core's default scene components and the controls, physics and character ones. Harmless twice. */
@@ -124,7 +131,7 @@ fun SceneAppDsl.playProject(project: PlayableProject, touchControls: Boolean = f
         builtInSceneAssets()
         resolver(project.models)
     }
-    registerPlaySpecs(project.scene, project.physics, project.particleSprites)
+    registerPlaySpecs(project.scene, project.physics, project.particleSprites, project.collisionMeshes)
     onReady {
         showTouchControls = touchControls
         activatePrimaryCamera(world)
