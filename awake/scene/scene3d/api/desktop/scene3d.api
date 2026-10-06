@@ -479,6 +479,7 @@ public final class com/awakekt/awake/scene/rendering/debug/DebugVisualizationSys
 }
 
 public final class com/awakekt/awake/scene/rendering/debug/DebugVisualizationSystemKt {
+	public static final field DEBUG_VISUALIZATION_MAX_LINES I
 	public static final fun debugVisualizationLines (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/scene/rendering/debug/WorldDebugSettings;)Ljava/util/List;
 	public static final fun debugVisualizationLines (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/scene/rendering/debug/WorldDebugSettings;F)Ljava/util/List;
 }
