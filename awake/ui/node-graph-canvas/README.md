@@ -5,8 +5,6 @@ Compose: nodes at their positions, curved wires between ports, pan, zoom and sel
 shared by every graph editor (blueprints, state trees, shader graphs). What a node means belongs
 to the caller.
 
-Design and sequencing: [node-graph plan](../../../docs/tasks/2026-09-27-node-graph-plan.md).
-
 ## Usage
 
 ```kotlin

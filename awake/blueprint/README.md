@@ -4,8 +4,7 @@ The runtime for blueprints: event-driven game logic stored as [`awake:node-graph
 documents, edited in Awake Studio and reloaded into a running game. Coders write node types in
 Kotlin; non-coders wire them.
 
-Design and decisions: [blueprint runtime plan](../../docs/tasks/2026-09-27-blueprint-runtime-plan.md).
-The ECS binding and the nodes that reach into scene components are `:awake:scene:blueprint`.
+Design and decisions: the ECS binding and the nodes that reach into scene components are `:awake:scene:blueprint`.
 
 ## Writing a node
 

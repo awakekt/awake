@@ -6,7 +6,7 @@
 > 2. Read this sitemap table to find the exact document you need.
 > 3. Only open the specific single file relevant to your current task.
 
-**Last Self-Healed**: `2026-10-01` | **Total Tracked Docs**: `93`
+**Last Self-Healed**: `2026-10-06` | **Total Tracked Docs**: `80`
 
 | Category | Document | Status | 1-Line Summary |
 | :--- | :--- | :--- | :--- |
@@ -23,18 +23,6 @@
 | **Architecture** | [`D34: game UI is scene data; the design system is a style layer`](architecture/decisions/D34-game-ui-is-scene-data.md) | `Stable` | Status: accepted (2026-09-30) |
 | **Architecture** | [`D35: the editor boundary between Core and Studio`](architecture/decisions/D35-editor-boundary.md) | `Stable` | Status: accepted (2026-10-03) |
 | **Architecture** | [`D36: scene-bound editor hooks`](architecture/decisions/D36-scene-bound-editor-hooks.md) | `Stable` | Status: accepted (2026-10-04) |
-| **Audits** | [`Parity shadow baselines: re-record audit (2026-09-27)`](audits/2026-09-27-parity-shadow-baselines.md) | `Active` | `SceneShadowBaselineTest` (`:awake:engine:render:parity`) failed on `main`. The failures were Vulkan yaw 0 and 1, and We... |
-| **Active Task** | [`Implementation Plan: HAL vs Render Graph — Decoupling `render:contract``](tasks/2026-09-09-hal-vs-render-graph-phase-1-plan.md) | `Active` | `render:contract` is Awake Engine's **Hardware Abstraction Layer (HAL)**. Over time, it accumulated |
-| **Active Task** | [`Render architecture finalization`](tasks/2026-09-09-render-architecture-finalization-plan.md) | `Active` | Status: **Active — implementation roadmap with A0/A1 complete and A2–A6 in progress.** |
-| **Active Task** | [`2D demo scope and dependency boundary`](tasks/2026-09-10-2d-demo-scope.md) | `Active` | Status: active architecture decision |
-| **Active Task** | [`Render architecture continuation handoff`](tasks/2026-09-10-render-architecture-handoff.md) | `Active` | **Verification note (2026-09-11):** this assignment document is complete, but the architecture |
-| **Active Task** | [`Render packet field inventory`](tasks/2026-09-10-render-packet-field-inventory.md) | `Active` | This is the F1 read-only inventory requested by the rendering-finalization roadmap. It records |
-| **Active Task** | [`Blueprint runtime plan`](tasks/2026-09-27-blueprint-runtime-plan.md) | `Active` | Date: 2026-09-27 |
-| **Active Task** | [`Node graph plan`](tasks/2026-09-27-node-graph-plan.md) | `Active` | Date: 2026-09-27 |
-| **Active Task** | [`Shader graph plan`](tasks/2026-09-27-shader-graph-plan.md) | `Active` | Date: 2026-09-27 |
-| **Active Task** | [`Terrain surface layers plan`](tasks/2026-09-27-terrain-surface-layers-plan.md) | `Active` | Date: 2026-09-27 |
-| **Active Task** | [`Awake Editor Plan — rebuild, do not port`](tasks/editor/01-compose-editor-plan-todo.md) | `Active` | Drafted 2026-08-22. Revised 2026-08-25. Status: Stages 0 and 1 foundations complete; |
-| **Active Task** | [``Vec3f` / `Vec3d` / `Vec3i` — precision variants`](tasks/math/01-vector-precision-variants-todo.md) | `Active` | Drafted 2026-08-22. Status: todo. Gated on a real consumer per variant; see Triggers. |
 | **Reference** | [`Agent Catalog Boundary`](reference/agent-catalog.md) | `Active` | Awake does not keep an agent roster or personas as tracked repository content. The public |
 | **Reference** | [`Agent Routing`](reference/agent-routing.md) | `Active` | This public repository routes only technical Awake engine work. The authoritative role details |
 | **Reference** | [`Agent Starter Pack`](reference/agent-starter-pack.md) | `Active` | Use a source/deployment split when adding agent guidance to another repository. |

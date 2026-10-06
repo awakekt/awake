@@ -30,8 +30,7 @@ import com.awakekt.awake.tailwind.Tw
  * **A Tailwind text step is a pair.** `text-sm` is `font-size: 14px; line-height: 20px`, and the
  * generated `Tw.Text` carries only the first half, so every variant states the second here. Leaving
  * it to the font's own metrics made a dropdown item 29px tall against shadcn's 32 -- the parity
- * harness found it the first time a fixture ran against this engine. `Tw` is generated, so the pair
- * belongs in the generator eventually; see docs/tasks/README.md.
+ * harness found it the first time a fixture ran against this engine.
  */
 enum class ShadcnTextVariant(
     internal val size: Sp,

@@ -3,8 +3,6 @@
 Runs [blueprints](../../blueprint/README.md) on scene entities: the `blueprint` scene component,
 `BlueprintSystem`, and the engine nodes that act on the scene.
 
-Design and decisions: [blueprint runtime plan](../../../docs/tasks/2026-09-27-blueprint-runtime-plan.md).
-
 ## Setup
 
 ```kotlin
