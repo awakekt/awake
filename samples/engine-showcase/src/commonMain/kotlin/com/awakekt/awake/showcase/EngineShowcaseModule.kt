@@ -21,9 +21,11 @@ import com.awakekt.awake.scene.authoring.scene
 import com.awakekt.awake.scene.particles.TransformPlacement
 import com.awakekt.awake.scene.rendering.animation.AnimationSystem
 import com.awakekt.awake.scene.runtime.defaultInfrastructureSystems
+import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.showcase.examples.CharacterExampleDriver
 import com.awakekt.awake.showcase.examples.EcsStressExampleDriver
 import com.awakekt.awake.showcase.examples.ShowcasePhysics
+import com.awakekt.awake.showcase.examples.SpatialAudioExampleDriver
 import com.awakekt.awake.showcase.examples.SwarmMotionSystem
 import com.awakekt.awake.showcase.examples.TerrainPhysicsExampleDriver
 import com.awakekt.awake.showcase.render.RenderSystem2D
@@ -114,13 +116,21 @@ internal fun engineShowcaseModule(
             // A Jolt world owns native allocations that outlive the JVM's idea of garbage, and
             // this one is reachable from an object that outlives the app module.
             onDispose {
-                framebufferDebugger.dispose(renderer)
-                ShowcasePhysics.world?.destroy()
-                ShowcasePhysics.world = null
+                disposeShowcaseResources(framebufferDebugger, renderer)
             }
             ui { ShowcaseOverlay(selection, EngineShowcases, framebufferDebugger) }
         }
     }
+}
+
+private fun disposeShowcaseResources(
+    framebufferDebugger: ShowcaseFramebufferDebugger,
+    renderer: Renderer,
+) {
+    framebufferDebugger.dispose(renderer)
+    ShowcasePhysics.world?.destroy()
+    ShowcasePhysics.world = null
+    SpatialAudioExampleDriver.dispose()
 }
 
 internal const val DEFAULT_SHOWCASE_ID = "point-lights"

@@ -76,6 +76,8 @@ internal object ShowcaseDebugTags {
     const val FOG_RESET = "showcase-debug-fog-reset"
     const val STRESS_COUNT = "showcase-debug-stress-count"
     const val STRESS_MOVING = "showcase-debug-stress-moving"
+    const val AUDIO_VOLUME = "showcase-debug-audio-volume"
+    const val AUDIO_MUTE = "showcase-debug-audio-mute"
 }
 
 /**
