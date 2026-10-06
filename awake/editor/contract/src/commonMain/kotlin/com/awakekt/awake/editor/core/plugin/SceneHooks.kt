@@ -141,6 +141,7 @@ interface SceneSystemsProvider : EditorProvider {
  * Fields an inspector section can contain. Each field writes its value and records the undo step
  * itself; the host decides how the fields look.
  */
+@Suppress("TooManyFunctions")
 interface InspectorFieldScope {
     /** A short text or asset reference. Hosts without text editing may leave it out. */
     fun text(label: String, value: String, write: (String) -> Unit) {}
@@ -173,6 +174,59 @@ interface InspectorFieldScope {
 
     /** Three numbers, written back through [write] for a component that holds an immutable value. */
     fun vector(label: String, value: Vec3f, write: (Vec3f) -> Unit) = vector(label, value)
+
+    /** A whole number. Consecutive edits to the same field make one undo step. */
+    fun integer(label: String, value: Int, write: (Int) -> Unit) =
+        scalar(label, value.toFloat()) { write(it.toInt()) }
+
+    /** A whole number between [min] and [max], stepped by [step]. */
+    fun integer(
+        label: String,
+        value: Int,
+        min: Int,
+        max: Int,
+        step: Int = 1,
+        write: (Int) -> Unit,
+    ) = slider(label, value.toFloat(), min.toFloat(), max.toFloat(), step.toFloat()) { write(it.toInt()) }
+
+    /** A color with normalized RGB channels and an optional alpha component. */
+    fun color(label: String, value: Color, write: (Color) -> Unit) =
+        vector(label, Vec3f(value.r, value.g, value.b)) { write(Color(it.x, it.y, it.z, value.a)) }
+
+    /** A read-only informational field that cannot be edited. */
+    fun readOnly(label: String, value: String) =
+        text(label, value) {}
+
+    /** A grouped sub-section with a header. */
+    fun section(title: String, block: InspectorFieldScope.() -> Unit) {
+        block()
+    }
+
+    /** An optional/nullable field that can be set or cleared. */
+    fun <T : Any> nullable(
+        label: String,
+        value: T?,
+        set: () -> T,
+        clear: () -> Unit,
+        block: InspectorFieldScope.(T) -> Unit,
+    ) {
+        if (value != null) {
+            block(value)
+        }
+    }
+
+    /** An ordered list of items. */
+    fun <T> list(
+        label: String,
+        items: List<T>,
+        onAdd: (() -> Unit)? = null,
+        onRemove: ((Int) -> Unit)? = null,
+        item: InspectorFieldScope.(index: Int, value: T) -> Unit,
+    ) {
+        items.forEachIndexed { index, element ->
+            item(index, element)
+        }
+    }
 }
 
 /**

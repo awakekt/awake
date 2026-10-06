@@ -26,6 +26,7 @@ kotlin {
             api(project(":awake:core:di"))
             api(project(":awake:compose:runtime"))
             api(project(":awake:compose:ui"))
+            api(project(":awake:core:schema"))
             api(project(":awake:ecs"))
             implementation(libs.kotlinx.serialization.json)
         }

@@ -19,9 +19,7 @@ class AssetConverterRegistryTest {
         val dummyConverter = object : AssetConverter {
             override val supportedExtensions = setOf("o3d", ".custom")
 
-            override fun convertToGltf(fileName: String, sourceBytes: ByteArray): GltfConversionResult {
-                return GltfConversionResult(glbBytes = byteArrayOf(1, 2, 3), name = fileName)
-            }
+            override fun convertToGltf(fileName: String, sourceBytes: ByteArray): GltfConversionResult = GltfConversionResult(glbBytes = byteArrayOf(1, 2, 3), name = fileName)
         }
 
         registry.register(dummyConverter)
