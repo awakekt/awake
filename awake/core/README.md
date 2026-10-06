@@ -29,6 +29,8 @@ Split out of `awake:core` as they grew independent test surfaces and target-spec
   quantized vertex decoding), no file I/O.
 - [`awake:core:animation`](animation/README.md) — skeletal animation runtime (`Skeleton`/`Skin`/`AnimationClip`/
   `AnimationPose`, crossfade blending).
+- [`awake:core:schema`](schema/README.md) — property schemas and authoring annotations read from
+  `kotlinx.serialization` descriptors, for editors, reference docs and JSON Schema export.
 
 ## Proposed future modules
 

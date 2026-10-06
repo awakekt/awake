@@ -67,6 +67,8 @@ kotlin {
             implementation(project(":awake:scene:character"))
             implementation(project(":awake:scene:blueprint"))
             implementation(project(":awake:ai:behavior"))
+            // ComponentSchemaTest reads real components' descriptors into property schemas.
+            implementation(project(":awake:core:schema"))
         }
     }
 }
