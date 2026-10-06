@@ -20,9 +20,11 @@ import com.awakekt.awake.showcase.examples.SkinnedExampleDriver
 import com.awakekt.awake.showcase.examples.SpatialAudioExampleDriver
 import com.awakekt.awake.showcase.examples.Sprites2dExampleDriver
 import com.awakekt.awake.showcase.examples.TerrainPhysicsExampleDriver
+import com.awakekt.awake.core.geometry.generate.generate
 import com.awakekt.awake.showcase.terrain.TerrainExampleAsset
 import com.awakekt.awake.showcase.ui.EcsStressControls
 import com.awakekt.awake.showcase.ui.SpatialAudioControls
+import com.awakekt.awake.showcase.ui.TerrainPhysicsControls
 
 /**
  * One focused engine demonstration: a scene document plus whatever that document cannot express.
@@ -78,12 +80,13 @@ val EngineShowcases = listOf(
         },
         onDeactivated = { runtime ->
             CharacterExampleDriver.detach(runtime.world)
-            TerrainPhysicsExampleDriver.detach(runtime)
+            TerrainPhysicsExampleDriver.detach(runtime.world)
         },
         debugOptions = setOf(
             ShowcaseDebugOption.Colliders,
             ShowcaseDebugOption.TerrainProbes,
         ),
+        controls = { TerrainPhysicsControls() },
     ),
     // Casters at 6, -6, -26 and -60 along the view: one per cascade, so the near shadow is sharp
     // and the far one still exists. A single fixed shadow box covers only the first of them,
@@ -200,6 +203,8 @@ fun SceneAssetsDsl.registerEngineShowcaseAssets() {
     material("particle-flicker") { ParticleEmitterExampleDriver.createFlickerMaterial(this) }
     material("particle-levelup") { ParticleEmitterExampleDriver.createLevelupMaterial(this) }
     mesh("sprite-quad") { Sprites2dExampleDriver.createMesh(this) }
+    mesh("sphere") { renderer.createMesh(generate { sphere(radius = 0.5f, colored = true) }) }
+    mesh("wedge") { renderer.createMesh(TerrainPhysicsExampleDriver.wedgeGeometry) }
     mesh("heightfield-terrain") { renderer.createMesh(TerrainExampleAsset.geometry) }
     mesh("nav-terrain") { renderer.createMesh(NavChaseExampleDriver.geometry) }
     repeat(EcsStressExampleDriver.paletteSize) { index ->

@@ -78,6 +78,12 @@ internal object ShowcaseDebugTags {
     const val STRESS_MOVING = "showcase-debug-stress-moving"
     const val AUDIO_VOLUME = "showcase-debug-audio-volume"
     const val AUDIO_MUTE = "showcase-debug-audio-mute"
+    const val PROP_SPAWN_BOX = "showcase-debug-prop-spawn-box"
+    const val PROP_SPAWN_SPHERE = "showcase-debug-prop-spawn-sphere"
+    const val PROP_SPAWN_WEDGE = "showcase-debug-prop-spawn-wedge"
+    const val PROP_IMPULSE = "showcase-debug-prop-impulse"
+    const val PROP_RESET = "showcase-debug-prop-reset"
+    const val CAMERA_MODE = "showcase-debug-camera-mode"
 }
 
 /**
