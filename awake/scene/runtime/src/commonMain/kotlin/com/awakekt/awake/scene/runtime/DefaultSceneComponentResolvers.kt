@@ -26,6 +26,7 @@ import com.awakekt.awake.scene.rendering.camera.SceneCamera
 import com.awakekt.awake.scene.rendering.fog.FogBinding
 import com.awakekt.awake.scene.rendering.fog.SceneFog
 import com.awakekt.awake.scene.rendering.light.AmbientLightBinding
+import com.awakekt.awake.scene.rendering.light.DayCycleBinding
 import com.awakekt.awake.scene.rendering.light.LightBinding
 import com.awakekt.awake.scene.rendering.light.SceneAmbientLight
 import com.awakekt.awake.scene.rendering.light.SceneLight
@@ -104,6 +105,7 @@ object DefaultSceneComponentResolvers {
         CanvasElementBinding,
         LocomotionAnimationBinding,
         KeyframeAnimationBinding,
+        DayCycleBinding,
         ParticleEmitterBinding,
         TextureAnimationBinding,
         TextureClipsBinding,
@@ -125,6 +127,7 @@ object DefaultSceneComponentResolvers {
         CanvasElementBinding,
         LocomotionAnimationBinding,
         KeyframeAnimationBinding,
+        DayCycleBinding,
         ParticleEmitterBinding,
         TextureAnimationBinding,
         TextureClipsBinding,

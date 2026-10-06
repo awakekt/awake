@@ -8,6 +8,7 @@ package com.awakekt.awake.scene.rendering
 import com.awakekt.awake.asset.terrain.Heightmap
 import com.awakekt.awake.asset.terrain.clipmap.TerrainClipmapConfig
 import com.awakekt.awake.asset.terrain.splat.TerrainSplatWeightMap
+import com.awakekt.awake.core.math.GridOrigin
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.World
@@ -53,10 +54,11 @@ class TerrainComponentTest {
         val lens = Lens.perspective(eye = Vec3f(128.5f, 50.0f, 256.2f))
         world.add(camEntity, Camera(lens = lens, isPrimary = true))
 
-        // 2. Add terrain component with 4-ring clipmap config
+        // 2. Add terrain component with 4-ring clipmap config, the camera over it: rings stay on
+        // the map, so a camera off it would see them clamped to its edge instead.
         val terrainEntity = world.create()
         val terrain = TerrainComponent(
-            heightmap = Heightmap(FloatArray(128 * 128), 128, 128, Vec3f.ONE),
+            heightmap = Heightmap(FloatArray(300 * 300), 300, 300, Vec3f.ONE, GridOrigin.Corner),
             clipmapConfig = TerrainClipmapConfig(ringCount = 4, ringResolution = 32, baseSpacing = 1.0f),
         )
         world.add(terrainEntity, terrain)

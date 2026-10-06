@@ -17,7 +17,10 @@ import com.awakekt.awake.scene.authoring.dsl.skybox
 import com.awakekt.awake.scene.authoring.scene
 import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.scene.document.SceneLoader
+import com.awakekt.awake.scene.document.SceneValidator
 import com.awakekt.awake.scene.rendering.fog.Fog
+import com.awakekt.awake.scene.rendering.light.DayCycleSystem
+import com.awakekt.awake.scene.rendering.light.Light
 import com.awakekt.awake.scene.rendering.sky.Skybox
 import com.awakekt.awake.scene.rendering.sky.SkyboxCubemapSystem
 import kotlinx.coroutines.CoroutineScope
@@ -28,10 +31,13 @@ import java.io.ByteArrayOutputStream
 import javax.imageio.ImageIO
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
+import kotlin.test.assertTrue
 
 /**
  * The "Sky and fog" guide shows a gradient sky with fog and a cubemap sky, each as a scene document
- * and in the scene DSL, plus the system a cubemap sky needs. This keeps them compiling and equal.
+ * and in the scene DSL, plus the system a cubemap sky needs, and a day cycle. This keeps them
+ * compiling, equal and valid.
  */
 class SkyAndFogDocsSampleTest {
 
@@ -93,6 +99,21 @@ class SkyAndFogDocsSampleTest {
 
         assertEquals(1, renderer.attachedFeatures, "the strip becomes one cubemap sky feature")
         game.dispose()
+    }
+
+    @Test
+    fun theDayCycleSampleIsValidAndLightsTheSceneAtItsStartTime() {
+        val document = rendering("day-cycle.scene.json")
+        assertEquals(emptyList(), SceneValidator.validate(document))
+        val world = SceneLoader.instantiate(document).world
+        val authoredHorizon = world.only<Skybox>().horizonColor
+
+        DayCycleSystem().update(world, 0f)
+
+        val sun = world.only<Light>()
+        assertTrue(sun.direction.y > 0f, "0.3 is after sunrise")
+        assertEquals(0.68f, sun.intensity, 1e-4f, "a fifth of the way from the sunrise stop to noon")
+        assertNotEquals(authoredHorizon, world.only<Skybox>().horizonColor)
     }
 
     private inline fun <reified T : Any> World.only(): T = query(T::class).single().let { get<T>(it)!! }

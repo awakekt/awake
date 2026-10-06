@@ -145,6 +145,11 @@ class RenderPipeline(
         )
     }
 
+    /** The set-0 layout of this pipeline's own uniform group, or null when it reads a per-draw
+     * material's. A pipeline built over it binds this pipeline's descriptor sets unchanged. */
+    internal val uniformSetLayout: DescriptorSetLayoutHandle?
+        get() = uniformSlots?.let { DescriptorSetLayoutHandle(it.descriptorSetLayout) }
+
     /**
      * Writes a content feature's textures into this pipeline's own descriptor sets.
      *

@@ -7,7 +7,9 @@ package com.awakekt.awake.render.passes
 
 import com.awakekt.awake.core.geometry.MeshGeometry
 import com.awakekt.awake.render.command.BufferHandle
+import com.awakekt.awake.render.command.GpuEnvironmentState
 import com.awakekt.awake.render.command.PipelineHandle
+import com.awakekt.awake.render.command.PreparedDraw
 import com.awakekt.awake.render.command.UniformBlock
 import com.awakekt.awake.render.pipeline.PipelineSpec
 import com.awakekt.awake.render.pipeline.ResourceKind
@@ -52,6 +54,10 @@ import com.awakekt.awake.render.texture.TextureAsset
  * and a feature that sets this without the plan supplying that pass gets an empty layout at the
  * slot and samples nothing. Needed because a Vulkan pipeline's set layouts are positional and
  * fixed at creation, so the engine has to know before it compiles the pipeline.
+ * @property depth The pipeline this feature's geometry casts into the engine's depth pass with,
+ * or null when it casts nothing. Built over [spec]'s own group, so it reads the same uniform block
+ * and textures and must share [spec]'s vertex format and uniform layout; its shader declares only
+ * the group-0 bindings it reads. The feature [build] returns must then be a [ContentDepthSource].
  * @property build Turns the registry's output into the feature that records with it.
  *
  * ### Textures are uploaded once
@@ -69,6 +75,7 @@ class ContentFeature(
     val geometry: MeshGeometry? = null,
     val paint: ContentPaint = ContentPaint.BeforeGeometry,
     val samplesSceneDepth: Boolean = false,
+    val depth: PipelineSpec? = null,
     val build: (PipelineHandle, UniformBlock, ContentGeometry?) -> RenderFeature<RenderFrameContext>,
 ) {
     init {
@@ -105,6 +112,11 @@ class ContentFeature(
                 val supplied = if (texture.isCubemap) "a cubemap" else "${texture.layerCount} layer(s)"
                 "Content feature '$name' declares binding ${entry.binding} as $declaredAs but supplies $supplied there."
             }
+        }
+        require(depth == null || (depth.vertexFormat == spec.vertexFormat && depth.uniforms === spec.uniforms)) {
+            "Content feature '$name' casts through a depth pipeline whose vertex format or uniform " +
+                "layout differs from its own. The depth pass draws the same geometry with the same " +
+                "uniform block, so the two have to read them alike."
         }
         require(geometry == null || spec.vertexFormat == geometry.format) {
             "Content feature '$name' draws ${geometry?.format} geometry through a " +
@@ -147,3 +159,19 @@ class ContentGeometry(
     val indexBuffer: BufferHandle?,
     val elementCount: Int,
 )
+
+/**
+ * What a [ContentFeature] with a [ContentFeature.depth] pipeline hands the engine's depth pass:
+ * its draw for one frame, recorded in every depth sub-pass that frame renders.
+ *
+ * The depth pass is recorded before the scene pass, so the draw's uniform block holds whatever
+ * the feature writes when it records the scene pass; both backends submit the frame only after
+ * that, so the depth pass reads this frame's values.
+ */
+fun interface ContentDepthSource {
+    /**
+     * The draw in [frameIndex]'s uniform slot, or null when the feature draws nothing this frame.
+     * Read once per depth sub-pass and not kept past it, so a feature may reuse one object.
+     */
+    fun depthDraw(frameIndex: Int, environment: GpuEnvironmentState): PreparedDraw?
+}

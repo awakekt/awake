@@ -437,7 +437,7 @@ open class VulkanEngine(
      * capability features (opaque geometry + debug lines, UI) are always present -- see
      * docs/reference/render-extensibility.md.
      */
-    private suspend fun buildRenderFeatures(): List<RenderFeature<VulkanRenderFrameContext>> {
+    private suspend fun buildRenderFeatures(depthPrePass: DepthPrePassFeature?): List<RenderFeature<VulkanRenderFrameContext>> {
         val lineRenderPipeline = LineRenderPipeline(
             graphicsDevice,
             swapchainManager,
@@ -446,7 +446,14 @@ open class VulkanEngine(
             MAX_FRAMES_IN_FLIGHT,
         )
         val content = plan.contentFeaturesFor(RenderBackend.Vulkan).groupBy { it.paint }
-        val gpu = VulkanContentFeatureGpu(graphicsDevice, transferContext, pipelineRegistry)
+        val gpu = VulkanContentFeatureGpu(
+            graphicsDevice,
+            transferContext,
+            pipelineRegistry,
+            depthPrePass,
+            MAX_FRAMES_IN_FLIGHT,
+            ::loadShaderPair,
+        )
         contentAttacher = ContentFeatureAttacher(gpu)
         return buildList {
             content[ContentPaint.BeforeGeometry].orEmpty().forEach { add(gpu.buildContentFeature(it, contentUploads)) }
@@ -660,7 +667,7 @@ open class VulkanEngine(
             requestedPipelines = pipelineRegistry.register(plan.toPipelineRequests(RenderBackend.Vulkan))
             depthPrePass = buildDepthPrePassFeature(depthTarget)
             sceneDepthPass = buildSceneDepthFeature()
-            renderFeatures = buildRenderFeatures()
+            renderFeatures = buildRenderFeatures(depthPrePass)
             val renderer = Renderer(
                 graphicsDevice = graphicsDevice,
                 swapchainManager = swapchainManager,

@@ -36,6 +36,7 @@ public final class com/awakekt/awake/asset/shaders/ContentFeatureAttacher : com/
 }
 
 public abstract interface class com/awakekt/awake/asset/shaders/ContentFeatureGpu {
+	public abstract fun addDepthCaster (Lcom/awakekt/awake/render/command/UniformBlockOwner;Lcom/awakekt/awake/render/pipeline/PipelineSpec;Lcom/awakekt/awake/render/passes/ContentDepthSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun awaitIdle ()V
 	public abstract fun destroyPipeline (Lcom/awakekt/awake/render/command/UniformBlockOwner;)V
 	public abstract fun getBackend ()Lcom/awakekt/awake/asset/shaders/RenderBackend;
@@ -154,7 +155,7 @@ public final class com/awakekt/awake/asset/shaders/ResolvedShader$Wgsl : com/awa
 }
 
 public final class com/awakekt/awake/asset/shaders/RuntimeContentFeaturesKt {
-	public static final fun buildContentFeature (Lcom/awakekt/awake/asset/shaders/ContentFeatureGpu;Lcom/awakekt/awake/render/passes/ContentFeature;Ljava/util/List;)Lcom/awakekt/awake/render/passes/RenderFeature;
+	public static final fun buildContentFeature (Lcom/awakekt/awake/asset/shaders/ContentFeatureGpu;Lcom/awakekt/awake/render/passes/ContentFeature;Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public abstract interface class com/awakekt/awake/asset/shaders/RuntimeShaderResolver {

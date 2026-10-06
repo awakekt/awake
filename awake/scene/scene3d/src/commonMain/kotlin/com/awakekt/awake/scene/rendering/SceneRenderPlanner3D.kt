@@ -15,7 +15,6 @@ import com.awakekt.awake.render.command.GpuResolvedDraw
 import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes.ScenePassCompiler
 import com.awakekt.awake.render.renderer.RenderViewport
-import com.awakekt.awake.scene.rendering.terrain.TerrainShadowCasters
 
 /**
  * Renderer-free 3D scene extraction and pass planning.
@@ -30,7 +29,6 @@ internal class SceneRenderPlanner3D(
     private val rendererViewport: () -> RenderViewport?,
     drawPreparer: GpuDrawPreparer?,
     features: List<RenderFeature3D> = emptyList(),
-    private val terrainCasters: TerrainShadowCasters? = null,
 ) {
     private val drawPreparer = RejectionCountingPreparer(
         requireNotNull(drawPreparer) {
@@ -63,7 +61,6 @@ internal class SceneRenderPlanner3D(
         val contributions = featureCollector.collect(world, camera, elapsedTimeSeconds, aspect)
         drawCalls += contributions.particleDraws
         drawCalls += geometryFeature.finish(world, geometryFrame, camera)
-        terrainCasters?.collect(world, drawCalls)
         drawCalls += contributions.authoredDraws
 
         drawPreparer.rejected = 0

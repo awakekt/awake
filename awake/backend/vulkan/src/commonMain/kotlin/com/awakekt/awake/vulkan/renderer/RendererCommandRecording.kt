@@ -139,7 +139,7 @@ internal fun Renderer.recordResolvedCommandBuffer(
         ),
     )
     gpuFrameTimer?.begin(commandBuffer, frameIndex)
-    recordDepthPrePass(commandBuffer, frameIndex, depthDraws, prePasses, environment.shadowsEnabled)
+    recordDepthPrePass(commandBuffer, frameIndex, depthDraws, prePasses, environment)
     recordSceneDepthPass(commandBuffer, frameIndex, depthDraws, cameraDepthPass(viewProjection))
     Vulkan.vkCmdBeginRenderPass(
         commandBuffer,
