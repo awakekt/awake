@@ -460,12 +460,12 @@ Matched runs in the maintained `TypedQueryBenchmarks` harness compared Core comm
 with this change, using the same benchmark source, Kotlin 2.4.10, Microsoft OpenJDK 17.0.17,
 Windows x64 on an AMD Ryzen 7 9800X3D, 32 populated entities, 3 forks, 5 one-second warmups,
 and 5 one-second measurements per fork. Both used `-prof gc`; no Gradle build ran during these
-focused reified measurements. Throughput is ops/s ± 99.9% JMH error.
+focused reified measurements. Throughput is ops/s Â± 99.9% JMH error.
 
 | Query | Before ops/s | After ops/s | Before B/op | After B/op |
 |---|---:|---:|---:|---:|
-| `reifiedPair` | 26,305,947 ± 600,817 | 31,554,384 ± 611,534 | 48.000 | <0.001 |
-| `reifiedSingle` | 36,316,633 ± 758,767 | 48,712,880 ± 720,323 | 16.000 | <0.001 |
+| `reifiedPair` | 26,305,947 Â± 600,817 | 31,554,384 Â± 611,534 | 48.000 | <0.001 |
+| `reifiedSingle` | 36,316,633 Â± 758,767 | 48,712,880 Â± 720,323 | 16.000 | <0.001 |
 
 The GC profiler recorded 40 collections for the old pair query and 20 for the old single query,
 and none for either new query. The tiny nonzero normalized allocation reported by JMH is harness
