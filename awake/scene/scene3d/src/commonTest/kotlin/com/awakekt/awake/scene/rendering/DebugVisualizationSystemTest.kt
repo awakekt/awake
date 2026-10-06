@@ -25,6 +25,9 @@ import com.awakekt.awake.render.texture.PbrTextureSet
 import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.scene.core.transform.Transform
+import kotlin.test.assertNotNull
+import com.awakekt.awake.scene.core.transform.TransformSystem
+import com.awakekt.awake.scene.rendering.debug.DEBUG_VISUALIZATION_MAX_LINES
 import com.awakekt.awake.scene.rendering.CONSERVATIVE_ASPECT
 import com.awakekt.awake.scene.rendering.debug.DebugVisualizationSystem
 import com.awakekt.awake.scene.rendering.debug.cascadeBoxLines
@@ -167,6 +170,28 @@ class DebugVisualizationSystemTest {
         assertEquals(Aabb.EDGES.size, renderer.lastDebugLines?.size)
     }
 
+    /** More boxes than the renderer takes lines: as many as fit, nearest the camera first, not an overflow. */
+    @Test
+    fun showBoundsInABigSceneDrawsTheNearestBoxesThatFit() {
+        val world = worldWithPrimaryCamera()
+        world.add(world.create(), WorldDebugSettings(showBounds = true))
+        val boxes = DEBUG_VISUALIZATION_MAX_LINES / Aabb.EDGES.size + BOXES_OVER_BUDGET
+        repeat(boxes) { index ->
+            val entity = world.create()
+            world.add(entity, Transform(position = Vec3f(0f, 0f, -index.toFloat())))
+            world.add(entity, MeshBounds(Aabb(Vec3f(-0.5f, -0.5f, -0.5f), Vec3f(0.5f, 0.5f, 0.5f))))
+        }
+        TransformSystem(skipsStatic = false).update(world, 0f)
+        val renderer = RecordingRenderer()
+
+        DebugVisualizationSystem(renderer).update(world, 1f / 60f)
+
+        val lines = assertNotNull(renderer.lastDebugLines)
+        assertTrue(lines.size <= DEBUG_VISUALIZATION_MAX_LINES, "${lines.size} lines overflow the budget of $DEBUG_VISUALIZATION_MAX_LINES.")
+        assertTrue(lines.any { it.start.z > -1f }, "The box nearest the camera is missing.")
+        assertTrue(lines.none { it.start.z < -(boxes - BOXES_OVER_BUDGET).toFloat() }, "A box past the budget was drawn before nearer ones.")
+    }
+
     @Test
     fun showInstanceBoundsDrawsOneBoxForEachSubmittedInstance() {
         val world = worldWithPrimaryCamera()
@@ -255,3 +280,6 @@ class DebugVisualizationSystemTest {
         assertTrue(lines != null && lines.size == 3, "Should draw X, Z, and Y axis lines")
     }
 }
+
+/** Boxes beyond what the line budget holds. */
+private const val BOXES_OVER_BUDGET = 1_000

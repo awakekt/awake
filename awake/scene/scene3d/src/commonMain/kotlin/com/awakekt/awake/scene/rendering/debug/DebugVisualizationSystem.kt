@@ -11,11 +11,13 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.math.Aabb
 import com.awakekt.awake.core.math.Grid
 import com.awakekt.awake.core.math.Lens
+import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math.inverse
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.passes.cascadeShadowBoxes
+import com.awakekt.awake.render.passes.debug.DebugLineLayout
 import com.awakekt.awake.render.passes.debug.boundsDebugLines
 import com.awakekt.awake.render.passes.debug.frustumDebugLines
 import com.awakekt.awake.render.passes.debug.lightGizmoLines
@@ -92,16 +94,24 @@ fun debugVisualizationLines(
         return emptyList()
     }
     val lines = ArrayList<LineSegment>()
+    val cameraEye = primaryCamera(world)?.lens?.eye ?: Vec3f.ZERO
     appendFrustumLines(world, settings, viewportAspect, lines)
-    appendBoundsLines(world, settings, lines)
     appendLightLines(world, renderer, settings, viewportAspect, lines)
-    if (settings.showGrid) {
-        val cameraEye = primaryCamera(world)?.lens?.eye ?: Vec3f.ZERO
-        emitGridLines(lines, settings, cameraEye)
-    }
+    if (settings.showGrid) emitGridLines(lines, settings, cameraEye)
     if (settings.showAxisLines) emitAxisLines(lines, settings)
+    // Last, and only as many as fit: a big scene has more boxes than the renderer takes lines.
+    appendBoundsLines(world, settings, cameraEye, lines)
     return lines
 }
+
+/** Room left under the renderer's ceiling for an editor's own lines. */
+private const val EDITOR_LINE_HEADROOM = 8_192
+
+/**
+ * Most lines [debugVisualizationLines] returns: the renderer's ceiling less room for an editor's
+ * own lines (gizmo handles) merged into the same buffer.
+ */
+const val DEBUG_VISUALIZATION_MAX_LINES: Int = DebugLineLayout.MAX_LINES_CEILING - EDITOR_LINE_HEADROOM
 
 private fun appendFrustumLines(
     world: World,
@@ -125,21 +135,27 @@ private fun appendFrustumLines(
         }
 }
 
+/**
+ * The boxes [settings] asks for, nearest [cameraEye] first when they would not all fit in
+ * [DEBUG_VISUALIZATION_MAX_LINES]; the rest are left out rather than overflowing the renderer.
+ */
 private fun appendBoundsLines(
     world: World,
     settings: WorldDebugSettings,
+    cameraEye: Vec3f,
     lines: MutableList<LineSegment>,
 ) {
+    val boxes = ArrayList<DebugBox>()
     if (settings.showBounds) {
         world.family<Transform, MeshBounds>().forEach { _, transform, bounds ->
-            lines += boundsDebugLines(bounds.localBounds, transform.worldMatrix, BOUNDS_COLOR)
+            boxes += DebugBox(bounds.localBounds, transform.worldMatrix, BOUNDS_COLOR, cameraEye)
         }
     }
     if (settings.showInstanceBounds) {
         world.family<InstancedMeshRenderer>().forEach { _, instanced ->
             val bounds = instanced.mesh.localBounds ?: return@forEach
             instanced.transforms.forEach { transform ->
-                lines += boundsDebugLines(bounds, transform, INSTANCE_BOUNDS_COLOR)
+                boxes += DebugBox(bounds, transform, INSTANCE_BOUNDS_COLOR, cameraEye)
             }
         }
     }
@@ -148,8 +164,25 @@ private fun appendBoundsLines(
     // signal, so this stays geometry-only, same scope showBounds already has.
     if (settings.showOcclusion) {
         world.family<Transform, Occluder>().forEach { _, transform, occluder ->
-            lines += boundsDebugLines(occluder.localBounds, transform.worldMatrix, OCCLUDER_COLOR)
+            boxes += DebugBox(occluder.localBounds, transform.worldMatrix, OCCLUDER_COLOR, cameraEye)
         }
+    }
+    val room = (DEBUG_VISUALIZATION_MAX_LINES - lines.size) / BOX_LINES
+    if (boxes.size > room) boxes.sortBy { it.distanceSquared }
+    for (index in 0 until minOf(boxes.size, room)) {
+        val box = boxes[index]
+        lines += boundsDebugLines(box.bounds, box.matrix, box.color)
+    }
+}
+
+/** A box to outline, with its centre's squared distance from the camera. */
+private class DebugBox(val bounds: Aabb, val matrix: Mat4, val color: Color, cameraEye: Vec3f) {
+    val distanceSquared: Float = run {
+        val centre = bounds.center
+        val dx = matrix.m00 * centre.x + matrix.m01 * centre.y + matrix.m02 * centre.z + matrix.m03 - cameraEye.x
+        val dy = matrix.m10 * centre.x + matrix.m11 * centre.y + matrix.m12 * centre.z + matrix.m13 - cameraEye.y
+        val dz = matrix.m20 * centre.x + matrix.m21 * centre.y + matrix.m22 * centre.z + matrix.m23 - cameraEye.z
+        dx * dx + dy * dy + dz * dz
     }
 }
 
@@ -224,6 +257,9 @@ private fun World.cameraOf(entityId: Int): Camera? {
  * infinity" rather than a legible box. Visualization-only cap; the real far still governs actual
  * rendering (this only affects the debug wireframe's own far edge). */
 private const val MAX_VISUALIZED_FRUSTUM_DISTANCE = 30f
+
+/** Lines in one box outline. */
+private const val BOX_LINES = 12
 
 private fun Lens.visualizedFarClamped(): Lens =
     Lens(
