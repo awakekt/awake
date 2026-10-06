@@ -1,1 +1,0 @@
-- Reuse typed ECS family views within each world generation so warmed `queryEach` and `firstOrNull` calls allocate no family wrappers or lookup keys.
