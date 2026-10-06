@@ -72,6 +72,10 @@ class ShowcaseSwitcherTest {
         assertNotNull(heightfield.find(ShowcaseDebugTags.LIGHTS))
         assertNotNull(heightfield.find(ShowcaseDebugTags.WIREFRAME))
         assertNotNull(heightfield.find(ShowcaseDebugTags.OCCLUSION))
+        assertNotNull(heightfield.find(ShowcaseDebugTags.PROP_SPAWN_BOX))
+        assertNotNull(heightfield.find(ShowcaseDebugTags.PROP_SPAWN_SPHERE))
+        assertNotNull(heightfield.find(ShowcaseDebugTags.PROP_SPAWN_WEDGE))
+        assertNotNull(heightfield.find(ShowcaseDebugTags.PROP_RESET))
 
         selection.request("skinned-mesh")
         assertEquals("skinned-mesh", selection.consumeRequest())
@@ -79,6 +83,7 @@ class ShowcaseSwitcherTest {
         assertNotNull(skinned.find(ShowcaseDebugTags.WIREFRAME))
         assertNull(skinned.find(ShowcaseDebugTags.TERRAIN_DIAGNOSTICS))
         assertNull(skinned.find(ShowcaseDebugTags.COLLIDERS))
+        assertNull(skinned.find(ShowcaseDebugTags.PROP_SPAWN_BOX))
 
         selection.request("instanced-cubes")
         assertEquals("instanced-cubes", selection.consumeRequest())

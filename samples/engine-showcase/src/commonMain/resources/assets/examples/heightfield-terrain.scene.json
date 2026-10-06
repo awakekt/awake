@@ -128,7 +128,7 @@
       "components": [
         {
           "component": "meshRenderer",
-          "mesh": "cube",
+          "mesh": "wedge",
           "material": "lit-shadow",
           "cullMode": "Back"
         }
