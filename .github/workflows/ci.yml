@@ -128,7 +128,7 @@ jobs:
       - name: Install desktop Vulkan/GLFW build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libvulkan-dev libglfw3-dev mesa-vulkan-drivers
+          sudo apt-get install -y libvulkan-dev libglfw3-dev mesa-vulkan-drivers vulkan-validationlayers
 
       - name: No ponytail comment tags
         run: "! git grep -nIE 'ponytai[l]:' -- ':!CLAUDE.md' ':!AGENTS.md' ':!GEMINI.md'"
@@ -263,7 +263,7 @@ jobs:
       - name: Install desktop Vulkan/GLFW build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libvulkan-dev libglfw3-dev mesa-vulkan-drivers
+          sudo apt-get install -y libvulkan-dev libglfw3-dev mesa-vulkan-drivers vulkan-validationlayers
 
       - name: Build desktop native Vulkan library
         run: ./gradlew :awake:backend:vulkan:bindings:buildDesktopNative

@@ -1,0 +1,1 @@
+- Wait for submitted Vulkan work before destroying mesh buffers, material uniform buffers and descriptor pools, and renderer-owned resources during scene replacement and shutdown.

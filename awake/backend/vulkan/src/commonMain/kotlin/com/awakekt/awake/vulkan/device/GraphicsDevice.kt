@@ -62,6 +62,10 @@ class GraphicsDevice {
     private var failOnValidationError = false
     private val validationErrors = mutableListOf<String>()
 
+    /** True only when the created instance actually enabled the Khronos validation layer. */
+    internal var validationLayerEnabled = false
+        private set
+
     /** [window] is an `android.view.Surface` on Android, or a GLFW window handle (`Long`)
      * on desktop -- see [com.awakekt.awake.vulkan.createSurface]. */
     fun create(window: Any) {
@@ -115,12 +119,15 @@ class GraphicsDevice {
     private fun createInstance(includeGlfwExtensions: Boolean = true) {
         val layers = selectInstanceLayers(getAppLayerProps(), validationRequested())
         instance = try {
-            createInstance(layers, includeGlfwExtensions)
+            createInstance(layers, includeGlfwExtensions).also {
+                validationLayerEnabled = VALIDATION_LAYER in layers
+            }
         } catch (e: VkResultException) {
             // A layer the loader lists can still fail to load, e.g. a Homebrew layer seen by an
             // app's bundled loader. Validation is a debugging aid, so start without it.
             if (layers.isEmpty() || e.result != VkResult.VK_ERROR_LAYER_NOT_PRESENT) throw e
             println("Awake/Vulkan: validation was requested but $layers failed to load; continuing without it")
+            validationLayerEnabled = false
             createInstance(emptyList(), includeGlfwExtensions)
         }
     }

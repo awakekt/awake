@@ -24,8 +24,6 @@ import com.awakekt.awake.render.command.GpuPassExecutor
 import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.command.GpuShadowCascadeData
 import com.awakekt.awake.render.command.PreparedDraw
-import com.awakekt.awake.render.material.Material as RenderMaterial
-import com.awakekt.awake.render.mesh.Mesh as RenderMesh
 import com.awakekt.awake.render.passes.RenderFeature
 import com.awakekt.awake.render.passes.RenderPassSlot
 import com.awakekt.awake.render.passes.SharedOpaqueRenderFeature
@@ -43,7 +41,6 @@ import com.awakekt.awake.render.pipeline.resolve
 import com.awakekt.awake.render.renderer.LineSegment
 import com.awakekt.awake.render.renderer.RenderFrameStats
 import com.awakekt.awake.render.renderer.RenderStatsCounter
-import com.awakekt.awake.render.renderer.Renderer as RenderRenderer
 import com.awakekt.awake.render.renderer.UiTargetCompositeMode
 import com.awakekt.awake.render.texture.PbrTextureSet
 import com.awakekt.awake.render.texture.RenderTarget
@@ -73,6 +70,9 @@ import com.awakekt.awake.vulkan.texture.OffscreenRenderTarget
 import com.awakekt.awake.vulkan.texture.Texture
 import com.awakekt.awake.vulkan.ui.DynamicMesh
 import com.awakekt.awake.vulkan.ui.UiRenderPipeline
+import com.awakekt.awake.render.material.Material as RenderMaterial
+import com.awakekt.awake.render.mesh.Mesh as RenderMesh
+import com.awakekt.awake.render.renderer.Renderer as RenderRenderer
 
 /**
  * Generic packet renderer: the `Renderer.draw(GpuPassInput)` entry point --
@@ -501,6 +501,9 @@ class Renderer internal constructor(
     }
 
     override fun destroy() {
+        // Presentation frames also own references to the resources freed below. Waiting only for
+        // submitted offscreen work leaves those frame slots in flight during direct teardown.
+        waitIdle()
         awaitSubmittedOffscreenCommands()
         uiRunCache.clear()
         // "Whoever holds the list destroys it": these were constructor-injected, but this class

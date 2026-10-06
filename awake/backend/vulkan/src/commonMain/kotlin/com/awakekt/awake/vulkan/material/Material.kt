@@ -223,6 +223,8 @@ class Material(
     }
 
     override fun destroy() {
+        // Every frame/draw slot can still be referenced by submitted commands during scene reload.
+        VulkanBuffers.vkDeviceWaitIdle(device)
         uniformSlotsByFrame.forEach { frameSlots ->
             frameSlots.forEach { slot -> VulkanBuffers.vkDestroyBuffer(device, slot.uniformBuffer.handle) }
         }
@@ -243,7 +245,6 @@ class Material(
     ) : VulkanMaterialBinding {
         override val descriptorSetHandle: Long get() = descriptorSet.handle
     }
-
 
     companion object {
         /** A bare MVP matrix -- every material before skinning existed. A skinned material
