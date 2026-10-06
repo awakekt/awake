@@ -1,1 +1,0 @@
-- Stabilize node-graph allocation checks with a fixed warm-up and multiple measurement windows, and expose the measured values and ceilings in CI logs and test reports.

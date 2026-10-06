@@ -7,6 +7,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-06
+
+### Added
+
+- **Convex hull colliders in scene documents.** Scene documents support a `convex_hull` collision shape on dynamic, kinematic or static `physics_body` components (`SceneConvexHullShape`), shrink-wrapping model vertices loaded through `loadCollisionMeshes` and `MeshColliderSystem`. Round-trip export preserves the model and primitive reference, and sensors are supported. (#428)
+- Added `sprites-2d` showcase demonstrating orthographic camera projection, layer depth sorting, and animated sprite quads.
+- Added `spatial-audio` showcase demonstrating 3D positional audio emitters with distance attenuation, stereo panning, and volume controls.
+- Added interactive prop spawner (boxes, spheres, wedges) and orbit/free-fly camera mode controls to heightfield terrain showcase.
+- **The first components describe their limits to editors, and every numeric property needs a decision.** `spin_control`, `camera`, `light` and `tone_mapping` now carry `@PropertyRange` on each limit their `validate()` already enforces (`camera.near` above 0, `camera.fovYDegrees` between 0 and 180, `light.shadowDistance` above 0, `light.ambient` above 0 and at most 1, `tone_mapping.exposure` above 0, and so on), and `spin_control.radians` is hidden from editors. A test now finds every numeric property of every registered component and fails for one with no `@PropertyRange`, no `free` line with a reason, and no `undecided` line; the `undecided` ledger only shrinks as each module is done. A second test loads a value just outside every annotated range and requires `validate()` to report it, so an annotation cannot claim more than the component enforces. No document that loaded before is rejected now (#446).
+- **A property schema read from serialization descriptors.** New module `awake:core:schema`: `propertySchemaOf` turns a `@Serializable` type into a `PropertySchema` with each property's kind, nullability, required flag, default, numeric constraint and editor hints, and `deriveDefaults` learns the defaults a descriptor does not carry. Eight `@SerialInfo` annotations (`@PropertyRange`, `@PropertySlider`, `@PropertyStep`, `@PropertyUnit`, `@PropertyHint`, `@PropertyHidden`, `@PropertyReadOnly`, `@AssetReference`) say what an editor shows and what a validator enforces. It depends on no scene module, so inspectors, reference docs and a JSON Schema exporter can read any component the same way. No component is annotated yet (#443).
+- **Day and night from scene data.** `day_cycle` (`SceneDayCycle`, `DayCycleSystem`) on the directional light's node moves the sun along a tilted path over `dayLengthSeconds`, rising at `sunriseAzimuthDegrees` and peaking at `noonElevationDegrees`, and blends the sky's horizon and zenith colours, the light's colour, intensity and ambient share, and the fog colour between authored stops, wrapping across midnight. Below the horizon the light keeps pointing at the sun, so the sky's moon stays opposite it and night comes from the stops. The shared play systems run it, saving writes the authored start time back, and `Light.intensity` and `Light.ambient` are now mutable. (#410)
+- **A catalog of the scene components the engine can load.** `SceneComponentCatalog` lists every registered component id with its descriptor and property schema (defaults learned, required properties flagged, vectors and colours recognised), and describes a `SceneNode`, including its transform, which no component owns. An editor, a reference page or a schema exporter reads it instead of hard-coding components. `SceneSerializers.registeredSerializers()` exposes the registry as a snapshot (#444).
+- **Static mesh colliders in scene documents.** A static `physics_body` can take a `mesh` shape (`SceneMeshShape`) naming a `.glb` or `.gltf` model, so props collide with their real triangles. `MeshColliderSystem` builds the body with the node's scale baked in, `loadCollisionMeshes` reads each model once and names the model and node when one is missing, `loadPlayableProject` and `playSystemsFor` wire both, and saving writes the model path back. (#422)
+- Add falling wedge convex hull prop (`falling-wedge`) to heightfield terrain showcase with dynamic convex hull physics body.
+- Document all public declarations and enforce strict Detekt KDoc rules for `:awake:backend:jolt`.
+- Document all public declarations and enforce strict Detekt KDoc rules for `:awake:engine:window`.
+- Document all public declarations and enforce strict Detekt KDoc rules for `:awake:kit:terrain-layers`.
+- Document all public declarations and enforce strict Detekt KDoc rules for `:awake:ui:node-graph-canvas`.
+- Document all public declarations and enforce strict Detekt KDoc rules for `:awake:engine:render:parity` and `:awake:engine:render:testing`.
+- Document all public declarations and enforce strict Detekt KDoc rules for `:awake:engine:render:passes`.
+
+### Deprecated
+
+- **Deprecated no-argument `ParticleSystem()`.** `ParticleSystem()` silently disabled entity following and rotation orientation by defaulting to an unplaced configuration. Pass a concrete placement (such as `TransformPlacement` in a scene) or explicitly pass `EmitterPlacement.None` when disabling following and rotation on purpose (#423).
+
+### Fixed
+
+- Reuse typed ECS family views within each world generation so warmed `queryEach` and `firstOrNull` calls allocate no family wrappers or lookup keys.
+- **Scene validation rejects nodes with both `texture_clips` and `texture_animation`.** Nodes declaring both components are now flagged with an explicit validation error naming the node, preventing silent conflicting animation states.
+- **Remediated Kotlin 2.5 copy visibility, compiler warnings, and test deprecations.** Added `@ConsistentCopyVisibility` to `BindingLayout` to prevent KT-11914 error in future Kotlin compilers, removed redundant non-null assertions on `u.cameraPosition` in `AslShadowShaders`, cleaned up channel draining in `TerrainContentSystem`, and migrated test suites away from deprecated authoring DSL methods. (#427)
+- Replace deprecated `content { ... }` and `appDefinition` bootstrap DSL calls with `ui { ... }` and `app { ... }` in `samples/engine-showcase`. (#450)
+- **Terrain no longer disappears when the camera is off the map.** Clipmap rings centred on the camera with no bound, so zooming far out or moving past the map's edge left the far side undrawn while props stayed in the air. `TerrainClipmapTracker` now takes the heightmap it covers and clamps its centre into the map's rectangle; `terrainContentFeature` and `TerrainClipmapSystem` pass theirs. (#404)
+- **The bounds debug overlay no longer crashes a big scene.** It outlined every mesh, instance and occluder box, so about 5,500 boxes or more passed the renderer's 65,536-line ceiling and threw. `debugVisualizationLines` now stays under `DEBUG_VISUALIZATION_MAX_LINES`, leaving room for an editor's own lines, and fills the budget with the boxes nearest the camera after the frustum, light, grid and axis overlays. (#418)
+- **A `ParticleSystem` built with no placement says so.** `ParticleSystem()` places nothing, so an emitter that follows an entity or inherits its orientation does neither, which used to be silent. It now logs one warning per system when such an emitter appears, naming what to pass (`TransformPlacement` in a scene, or `EmitterPlacement.None` to say it is intended, which stays quiet). `awake:particles` takes a small `core:logging` dependency for it. Behaviour is otherwise unchanged; the no-argument form is deprecated in a later minor (#423).
+- **Terrain no longer shadows its own cliffs in patches.** Terrain cast its shadows from a stand-in heightmap mesh, which at a sharp height change stood above the clipmap rings actually drawn and shaded the lit rim and face in polygon patches. The rings now cast themselves: a content feature can declare a `depth` pipeline built over its own bind group, and the terrain's depth shader places and discards its rings exactly as the drawn surface does, on Vulkan and WebGPU. (#402)
+- Stabilize node-graph allocation checks with a fixed warm-up and multiple measurement windows, and expose the measured values and ceilings in CI logs and test reports.
+- Prevent excluded release families from registering empty Maven Central bundles during snapshot publishing, and wait for tagged Vulkan artifacts before building consumers against Central.
+- Wait for submitted Vulkan work before destroying mesh buffers, material uniform buffers and descriptor pools, and renderer-owned resources during scene replacement and shutdown.
+- Run WebGPU and Vulkan/WebGPU pixel parity suites in CI, retain their diagnostics, bound WebGPU buffer uploads to the source length, release cached neutral textures once to prevent native heap corruption, and support the Vulkan SDK in desktop accessor builds.
+
 ## [0.1.0] - 2026-10-05
 
 ### Added
