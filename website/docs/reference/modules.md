@@ -94,6 +94,7 @@ awake-backend-vulkan = { module = "com.awakekt.awake.backend:vulkan", version.re
 | `com.awakekt.awake.scene:controls` | `awake-scene-controls` | Camera rigs and input-driven movement. |
 | `com.awakekt.awake.scene:audio` | `awake-scene-audio` | Audio source and listener components and the spatial audio system. |
 | `com.awakekt.awake.scene:particles` | `awake-scene-particles` | The `particle_emitter` scene component and the systems that run its emitters in a scene. |
+| `com.awakekt.awake.scene:scene2d` | `awake-scene-scene2d` | The 2D scene components, starting with `sprite`: schema, binding and the systems that run them. |
 | `com.awakekt.awake.scene:physics` | `awake-scene-physics` | Physics components and systems that bind bodies to scene transforms. |
 | `com.awakekt.awake.scene:character` | `awake-scene-character` | A walking, jumping character moved by the physics character controller. |
 | `com.awakekt.awake.scene:canvas` | `awake-scene-canvas` | Screen-anchored game UI (text, panels, bars, buttons) stored in scenes. |

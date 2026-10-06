@@ -37,6 +37,7 @@ registers it.
 | [`prefab_link`](#prefab_link) | `PrefabLink` | `com.awakekt.awake.scene:document` | Built in | [Scene documents](../guides/scene-documents.md) |
 | [`skybox`](#skybox) | `Skybox` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Sky and fog](../guides/sky-and-fog.md) |
 | [`spin_control`](#spin_control) | `SpinControl` | `com.awakekt.awake.scene:scene-core` | `DefaultSceneComponentResolvers.install()` | [Scene documents](../guides/scene-documents.md) |
+| [`sprite`](#sprite) | `Sprite` | `com.awakekt.awake.scene:scene2d` | `DefaultSceneComponentResolvers.install()` | [Component map](component-map.md) |
 | [`static_transform`](#static_transform) | `StaticTransform` | `com.awakekt.awake.scene:scene-core` | `DefaultSceneComponentResolvers.install()` | [Scene documents](../guides/scene-documents.md) |
 | [`terrain`](#terrain) | `TerrainComponent` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Terrain](../guides/terrain.md) |
 | [`texture_animation`](#texture_animation) | `TextureAnimation` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Meshes and materials](../guides/meshes-and-materials.md) |
@@ -509,6 +510,23 @@ Rotates the entity around Y. `SceneSpinControl`.
 | `radians` | number | `0` | Starting angle in radians. |
 | `speed` | number | `1` | Rotation speed multiplier. Not negative. |
 
+## `sprite`
+
+A flat image drawn at the node's `Transform`, with no lighting: one cell of a frame sheet. Its size is
+the cell's pixel size divided by `pixelsPerUnit`, so under an orthographic camera it keeps its size
+however the image is scaled. `SceneSprite`.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `texture` | string | required | A project image file the sprite shows. Not blank. |
+| `columns` | integer | `1` | Frame-sheet columns. At least 1. |
+| `rows` | integer | `1` | Frame-sheet rows. At least 1. |
+| `frame` | integer | `0` | The cell shown, counted from 0 in reading order from the top left. Within the sheet. |
+| `pixelsPerUnit` | number | `100` | Image pixels that make one scene unit. Finite and above 0. |
+| `flipX` | boolean | `false` | Mirrors the sprite left to right. |
+| `flipY` | boolean | `false` | Mirrors the sprite top to bottom. |
+| `tint` | color | white | Multiplied into the image's colour and alpha. |
+| `sortOrder` | integer | `0` | A higher order draws over a lower one; a tie draws by depth from the camera. |
 ## `static_transform`
 
 Marks a node that never moves, such as a placed prop. `SceneStaticTransform`, no fields.

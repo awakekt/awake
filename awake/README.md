@@ -84,6 +84,7 @@ Paths below are Gradle coordinates minus the `:awake:` prefix.
 | `scene:physics` | Physics bodies, character controller, and the physics system |
 | `scene:audio` | Audio sources and the audio system |
 | `scene:particles` | The `particle_emitter` scene component, over `particles` |
+| `scene:scene2d` | The 2D scene components, starting with `sprite`: schema, binding and the systems that run them |
 | `scene:canvas` | Game UI in scenes: anchored text, panels, bars and buttons drawn over the game |
 | `scene:character` | A walking, jumping character moved by the physics character controller, saved in scenes |
 | `scene:gltf` | glTF and GLB models in scenes: meshes, textured materials and skins |
