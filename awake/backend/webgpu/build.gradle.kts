@@ -59,7 +59,13 @@ kotlin {
     // to open while running beside these.
     tasks.withType<Test>().configureEach {
         requireExclusiveGpu(this)
-        testLogging { exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL }
+        // Fixtures retain native contexts for the life of their class. As in render:parity,
+        // isolate classes so a later fixture cannot inherit wgpu-native/GLFW driver state.
+        setForkEvery(1)
+        testLogging {
+            events("started", "failed")
+            exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        }
     }
 
     // detekt's compiler frontend tops out at JVM target 22, and this module's toolchain is 25
