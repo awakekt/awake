@@ -24,6 +24,11 @@ internal class FamilyRegistry(
     private val families = mutableMapOf<FamilyKey, FamilyCache>()
     private val familySpecCaches = mutableMapOf<FamilySpec, FamilySpecCache>()
 
+    // Index wrappers by type ID so a warmed lookup allocates neither a wrapper nor a boxed
+    // FamilyKey. Pair rows are ordered: (A, B) and (B, A) expose different typed columns.
+    private var singleFamilies = arrayOfNulls<Family1<*>>(16)
+    private var pairFamilies = arrayOfNulls<Array<Family2<*, *>?>>(16)
+
     /** Index of families that care about a specific component type, indexed by
      * [ComponentTypeId.value]. Using an array of lists avoids [KClass] map lookups
      * on the structural-change hot path. */
@@ -33,31 +38,62 @@ internal class FamilyRegistry(
         families.clear()
         familySpecCaches.clear()
         familiesByComponentId.fill(null)
+        singleFamilies.fill(null)
+        pairFamilies.fill(null)
     }
 
-    // families is keyed by FamilyKey.single(typeId), and getOrPut's builder above always
-    // constructs the Family1Cache<A> for this exact `type`/typeId pair, so a cache stored
-    // under this key can only ever be a Family1Cache<A>.
+    @Suppress("UNCHECKED_CAST") // The ID was resolved from A in this world generation.
+    fun <A : Any> cachedFamily(typeId: ComponentTypeId): Family1<A>? =
+        singleFamilies.getOrNull(typeId.value) as Family1<A>?
+
+    @Suppress("UNCHECKED_CAST") // The ordered IDs were resolved from A and B in this generation.
+    fun <A : Any, B : Any> cachedFamily(typeIdA: ComponentTypeId, typeIdB: ComponentTypeId): Family2<A, B>? =
+        pairFamilies.getOrNull(typeIdA.value)?.getOrNull(typeIdB.value) as Family2<A, B>?
+
+    // A type ID identifies exactly A until clear(), which also discards these wrappers.
     @Suppress("UNCHECKED_CAST")
-    fun <A : Any> familyCache(type: KClass<A>): Family1Cache<A> {
+    fun <A : Any> family(type: KClass<A>): Family1<A> {
         val typeId = world.typeId(type)
+        val id = typeId.value
+        if (id >= singleFamilies.size) {
+            singleFamilies = singleFamilies.copyOf(maxOf(id + 1, singleFamilies.size * 2))
+        }
+        val existing = singleFamilies[id]
+        if (existing != null) return existing as Family1<A>
         val key = FamilyKey.single(typeId)
-        return families.getOrPut(key) {
-            buildFamily(type, typeId).also(::indexFamily)
-        } as Family1Cache<A>
+        val cache = buildFamily(type, typeId).also(::indexFamily)
+        families[key] = cache
+        return Family1(cache).also { singleFamilies[id] = it }
     }
 
-    // families is keyed by FamilyKey.pair(typeIdA, typeIdB), and getOrPut's builder above
-    // always constructs the Family2Cache<A, B> for this exact type pair, so a cache stored
-    // under this key can only ever be a Family2Cache<A, B>.
+    // Ordered IDs identify exactly A and B until clear(), which discards every pair row.
     @Suppress("UNCHECKED_CAST")
-    fun <A : Any, B : Any> familyCache(typeA: KClass<A>, typeB: KClass<B>): Family2Cache<A, B> {
+    fun <A : Any, B : Any> family(typeA: KClass<A>, typeB: KClass<B>): Family2<A, B> {
         val typeIdA = world.typeId(typeA)
         val typeIdB = world.typeId(typeB)
+        val idA = typeIdA.value
+        val idB = typeIdB.value
+        val row = pairRow(idA, idB)
+        val existing = row[idB]
+        if (existing != null) return existing as Family2<A, B>
         val key = FamilyKey.pair(typeIdA, typeIdB)
-        return families.getOrPut(key) {
-            buildFamily(typeA, typeIdA, typeB, typeIdB).also(::indexFamily)
-        } as Family2Cache<A, B>
+        val cache = buildFamily(typeA, typeIdA, typeB, typeIdB).also(::indexFamily)
+        families[key] = cache
+        return Family2(cache).also { row[idB] = it }
+    }
+
+    private fun pairRow(idA: Int, idB: Int): Array<Family2<*, *>?> {
+        if (idA >= pairFamilies.size) {
+            pairFamilies = pairFamilies.copyOf(maxOf(idA + 1, pairFamilies.size * 2))
+        }
+        val existing = pairFamilies[idA]
+        val row = when {
+            existing == null -> arrayOfNulls(maxOf(16, idB + 1))
+            idB >= existing.size -> existing.copyOf(maxOf(idB + 1, existing.size * 2))
+            else -> return existing
+        }
+        pairFamilies[idA] = row
+        return row
     }
 
     fun familySpecCache(spec: FamilySpec): FamilySpecCache = familySpecCaches.getOrPut(spec) {

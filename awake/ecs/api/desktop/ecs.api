@@ -302,6 +302,8 @@ public final class com/awakekt/awake/ecs/World {
 	public final fun add-smMvhPQ (JLkotlin/reflect/KClass;)Ljava/lang/Object;
 	public final fun add-t50VA2I (JLkotlin/reflect/KClass;Ljava/lang/Object;)Ljava/lang/Object;
 	public final fun addInternal-Nxd7DYM (JILcom/awakekt/awake/ecs/ComponentStore;Ljava/lang/Object;)Ljava/lang/Object;
+	public final fun cachedFamily-1VG1NCY (I)Lcom/awakekt/awake/ecs/Family1;
+	public final fun cachedFamily-O297E-o (II)Lcom/awakekt/awake/ecs/Family2;
 	public final fun clear ()V
 	public final fun componentCount (Lkotlin/reflect/KClass;)I
 	public final fun componentStore-1VG1NCY (I)Lcom/awakekt/awake/ecs/ComponentStore;
