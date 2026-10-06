@@ -157,9 +157,20 @@ jobs:
           --tests com.awakekt.awake.ui.shadcn.UiFrameCostRatchetTest
           --no-daemon --stacktrace
 
-      # Pixel-exact baselines on the CPU rasterizer, so they cannot flake; nothing else runs them.
-      - name: Node graph canvas visual baselines
+      # Includes the pixel-exact CPU baselines and the JVM allocation ratchets.
+      - name: Node graph canvas visual and allocation checks
         run: ./gradlew :awake:ui:node-graph-canvas:desktopTest --no-daemon --stacktrace
+
+      - name: Upload node graph test measurements and failures
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: node-graph-test-results
+          path: |
+            awake/ui/node-graph-canvas/build/test-results/desktopTest/
+            awake/ui/node-graph-canvas/build/reports/tests/desktopTest/
+          if-no-files-found: warn
+          retention-days: 14
 
       - name: Upload Core UI frame-cost report
         if: always()
