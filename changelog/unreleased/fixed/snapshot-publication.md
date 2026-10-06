@@ -1,0 +1,1 @@
+- Prevent excluded release families from registering empty Maven Central bundles during snapshot publishing, and wait for tagged Vulkan artifacts before building consumers against Central.

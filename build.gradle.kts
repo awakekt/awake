@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import com.awakekt.awake.build.extension.configurePublicationFamily
+
 plugins {
     // this is necessary to avoid the plugins to be loaded multiple times
     // in each subproject's classloader
@@ -491,15 +493,11 @@ allprojects {
 // version was a snapshot, and failed Central's validation the first time it was an
 // already-published release (v0.1.0-rc.4 against vulkan 0.1.11).
 allprojects {
-    tasks.withType<org.gradle.api.publish.maven.tasks.AbstractPublishToMaven>().configureEach {
-        onlyIf("publishes the requested Awake release family") {
-            when (publishFamily) {
-                "core" -> project.path !in vulkanFamilyProjects
-                "vulkan" -> project.path in vulkanFamilyProjects
-                else -> true
-            }
-        }
-    }
+    configurePublicationFamily(when (publishFamily) {
+        "core" -> path !in vulkanFamilyProjects
+        "vulkan" -> path in vulkanFamilyProjects
+        else -> true
+    })
 }
 
 // Maven Central rejects release POMs with SNAPSHOT dependencies. The WebGPU backend builds on a
@@ -507,6 +505,13 @@ allprojects {
 // until wgpu4k publishes a matching stable version.
 val releaseHeldProjects = if (libs.versions.wgpu4k.get().endsWith("-SNAPSHOT")) setOf(":awake:backend:webgpu") else emptySet()
 allprojects {
+    tasks.matching {
+        it.name == "prepareMavenCentralPublishing" || it.name == "enableAutomaticMavenCentralPublishing"
+    }.configureEach {
+        onlyIf("does not prepare a held Maven Central release") {
+            project.path !in releaseHeldProjects || project.version.toString().endsWith("-SNAPSHOT")
+        }
+    }
     tasks.withType<org.gradle.api.publish.maven.tasks.PublishToMavenRepository>().configureEach {
         onlyIf("is not held back from Maven Central releases") {
             project.path !in releaseHeldProjects ||

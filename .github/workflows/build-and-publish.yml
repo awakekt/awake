@@ -240,7 +240,7 @@ jobs:
         (needs.natives.result == 'success' || needs.natives.result == 'skipped')
       }}
     needs: [platform-impact, natives, naga-android]
-    timeout-minutes: 60
+    timeout-minutes: 120
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
@@ -292,6 +292,10 @@ jobs:
           echo "CORE_VERSION=$core_version" >> "$GITHUB_ENV"
           echo "VULKAN_VERSION=$vulkan_version" >> "$GITHUB_ENV"
           echo "vulkan_publish=${{ needs.platform-impact.outputs.vulkan_publish }}" >> "$GITHUB_OUTPUT"
+          if [[ "${{ needs.platform-impact.outputs.vulkan_publish }}" != 'true' ]]; then
+            template_vulkan_version=$(git describe --tags --match 'vulkan-v*' --abbrev=0)
+            echo "TEMPLATE_VULKAN_VERSION=${template_vulkan_version#vulkan-v}" >> "$GITHUB_ENV"
+          fi
 
       - name: Collect desktop natives for local publication
         if: steps.versions.outputs.vulkan_publish == 'true'
@@ -334,15 +338,16 @@ jobs:
             ./gradlew verifyPublishedArtifacts -Pawake.verifyPublishedVersion="$VULKAN_VERSION" -Pawake.verifyPublishedFamily=vulkan --no-configuration-cache
           fi
 
+      - name: Wait for the tagged Vulkan release on Maven Central
+        if: steps.versions.outputs.vulkan_publish != 'true'
+        run: ./gradlew waitForVulkanCentral -Pawake.waitForVulkanVersion="$TEMPLATE_VULKAN_VERSION" --no-configuration-cache
+
       - name: Build both templates against it
         run: |
           # A Core-only build put no Vulkan in Maven Local, and the derived Vulkan version is a
           # snapshot once Vulkan has changed since its last tag. Test against the last Vulkan
           # release instead: it's what a consumer gets until the next vulkan-v* tag.
-          if [[ "${{ steps.versions.outputs.vulkan_publish }}" != 'true' ]]; then
-            TEMPLATE_VULKAN_VERSION="$(git describe --tags --match 'vulkan-v*' --abbrev=0)"
-            export TEMPLATE_VULKAN_VERSION="${TEMPLATE_VULKAN_VERSION#vulkan-v}"
-          fi
+          # The version was resolved above and its metadata and binaries checked on Central.
           tools/check_template_consumer.sh consumer/awake-template "$RUNNER_TEMP/consumer"
           tools/check_template_consumer.sh consumer/awake-project-template "$RUNNER_TEMP/consumer-project"
 

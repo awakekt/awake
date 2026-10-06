@@ -6,6 +6,7 @@
 import com.awakekt.awake.build.tasks.AwakeRepositoryVerificationTask
 import com.awakekt.awake.build.tasks.VerifyCapabilityLayeringTask
 import com.awakekt.awake.build.tasks.VerifyPublishedArtifactsTask
+import com.awakekt.awake.build.tasks.WaitForVulkanCentralTask
 
 plugins {
     id("com.awakekt.awake.plugin.release-cut")
@@ -52,4 +53,9 @@ tasks.register<AwakeRepositoryVerificationTask>("awakeVerify") {
 tasks.register<VerifyPublishedArtifactsTask>("verifyPublishedArtifacts") {
     group = "awake release"
     description = "Verify Maven-local POM metadata and published native JAR contents."
+}
+
+tasks.register<WaitForVulkanCentralTask>("waitForVulkanCentral") {
+    group = "awake release"
+    description = "Wait for a Vulkan release's metadata and platform files to be served by Maven Central."
 }
