@@ -118,7 +118,7 @@ internal fun engineShowcaseModule(
                 ShowcasePhysics.world?.destroy()
                 ShowcasePhysics.world = null
             }
-            content { ShowcaseOverlay(selection, EngineShowcases, framebufferDebugger) }
+            ui { ShowcaseOverlay(selection, EngineShowcases, framebufferDebugger) }
         }
     }
 }
