@@ -129,6 +129,24 @@ class TerrainClipmapGeometryTest {
 
     private fun onGrid(value: Float, step: Float): Boolean = kotlin.math.abs(value / step - kotlin.math.round(value / step)) < 1e-4f
 
+    /**
+     * A camera zoomed far out past the map's edge: unclamped, the outermost ring leaves the far
+     * corners uncovered; clamped to the heightmap, it covers all four.
+     */
+    @Test
+    fun ringsClampedToTheMapKeepItInRangeFromACameraOffTheMap() {
+        val map = Heightmap(FloatArray(513 * 513), 513, 513, Vec3f(4f, 1f, 4f))
+        val camera = Vec3f(0f, 3000f, 4000f)
+        fun coversMap(tracker: TerrainClipmapTracker): Boolean {
+            val outer = tracker.update(camera).last()
+            val corners = listOf(map.minX to map.minZ, -map.minX to map.minZ, map.minX to -map.minZ, -map.minX to -map.minZ)
+            return corners.all { (x, z) -> x in outer.minX..outer.maxX && z in outer.minZ..outer.maxZ }
+        }
+
+        assertTrue(!coversMap(TerrainClipmapTracker()), "Unclamped rings should leave the far side of the map uncovered.")
+        assertTrue(coversMap(TerrainClipmapTracker(terrain = map)), "Rings clamped to the map should cover all of it.")
+    }
+
     @Test
     fun clipmapTrackerComputesMorphFactorCorrectly() {
         val ring = ClipmapRingState(

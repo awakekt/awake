@@ -38,7 +38,7 @@ class TerrainClipmapSystem : System {
             if (!terrain.isVisible) return@queryEach
 
             val tracker = trackersByTerrain.getOrPut(terrain) {
-                TerrainClipmapTracker(terrain.clipmapConfig)
+                TerrainClipmapTracker(terrain.clipmapConfig, terrain.heightmap)
             }
 
             tracker.update(activeCamPos)

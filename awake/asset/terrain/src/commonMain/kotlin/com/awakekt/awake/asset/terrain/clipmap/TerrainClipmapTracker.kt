@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.asset.terrain.clipmap
 
+import com.awakekt.awake.asset.terrain.Heightmap
 import com.awakekt.awake.core.math.Vec3f
 import kotlin.math.abs
 import kotlin.math.floor
@@ -61,10 +62,13 @@ data class ClipmapRingState(
  * Tracks viewer / camera movement and computes discrete grid-snapped origins for all clipmap rings.
  *
  * @property config Configuration parameters for clipmap rings and extents.
+ * @param terrain The heightmap the rings cover. When set, they centre on the camera clamped into
+ *   its rectangle, so a camera off the map, zoomed out or outside it, still has the map in range.
  */
 class TerrainClipmapTracker(
     /** Configuration parameters for clipmap rings and extents. */
     val config: TerrainClipmapConfig = TerrainClipmapConfig(),
+    private val terrain: Heightmap? = null,
 ) {
     private val _ringStates = ArrayList<ClipmapRingState>(config.ringCount)
 
@@ -90,13 +94,15 @@ class TerrainClipmapTracker(
      */
     fun update(cameraPosition: Vec3f): List<ClipmapRingState> {
         _ringStates.clear()
+        val focusX = terrain?.let { cameraPosition.x.coerceIn(it.minX, it.minX + it.halfExtentX * 2f) } ?: cameraPosition.x
+        val focusZ = terrain?.let { cameraPosition.z.coerceIn(it.minZ, it.minZ + it.halfExtentZ * 2f) } ?: cameraPosition.z
         for (level in 0 until config.ringCount) {
             val spacing = config.spacingForLevel(level)
             val halfExtent = config.extentForLevel(level) * 0.5f
 
             val coarse = spacing * 2f
-            val snappedX = floor((cameraPosition.x - halfExtent) / coarse + 0.5f) * coarse + halfExtent
-            val snappedZ = floor((cameraPosition.z - halfExtent) / coarse + 0.5f) * coarse + halfExtent
+            val snappedX = floor((focusX - halfExtent) / coarse + 0.5f) * coarse + halfExtent
+            val snappedZ = floor((focusZ - halfExtent) / coarse + 0.5f) * coarse + halfExtent
 
             _ringStates.add(
                 ClipmapRingState(
