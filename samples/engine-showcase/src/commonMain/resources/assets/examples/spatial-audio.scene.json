@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "name": "spatial-audio",
+  "nodes": [
+    {
+      "name": "camera",
+      "components": [
+        {
+          "component": "camera",
+          "eye": { "x": 0.0, "y": 4.0, "z": 9.0 },
+          "center": { "x": 0.0, "y": 0.5, "z": 0.0 },
+          "fovYDegrees": 45.0,
+          "near": 0.1,
+          "far": 100.0,
+          "primary": true
+        }
+      ]
+    },
+    {
+      "name": "sun",
+      "components": [
+        { "component": "light", "type": "Directional" }
+      ]
+    },
+    {
+      "name": "ground",
+      "components": [
+        { "component": "meshRenderer", "mesh": "ground", "material": "lit-shadow", "cullMode": "Back" },
+        { "component": "pbrMaterial", "metallic": 0.0, "roughness": 0.85 }
+      ]
+    },
+    {
+      "name": "listener-beacon",
+      "transform": { "position": { "x": 0.0, "y": 0.5, "z": 0.0 } },
+      "components": [
+        { "component": "meshRenderer", "mesh": "cube", "material": "lit-shadow" },
+        { "component": "pbrMaterial", "metallic": 0.2, "roughness": 0.3 }
+      ]
+    },
+    {
+      "name": "left-beacon",
+      "transform": { "position": { "x": -5.0, "y": 0.5, "z": 0.0 } },
+      "components": [
+        { "component": "meshRenderer", "mesh": "cube", "material": "lit-shadow" },
+        { "component": "pbrMaterial", "metallic": 0.0, "roughness": 0.6 }
+      ]
+    },
+    {
+      "name": "right-beacon",
+      "transform": { "position": { "x": 5.0, "y": 0.5, "z": 0.0 } },
+      "components": [
+        { "component": "meshRenderer", "mesh": "cube", "material": "lit-shadow" },
+        { "component": "pbrMaterial", "metallic": 0.0, "roughness": 0.6 }
+      ]
+    },
+    {
+      "name": "left-light",
+      "transform": { "position": { "x": -5.0, "y": 1.5, "z": 0.0 } },
+      "components": [
+        {
+          "component": "light",
+          "type": "Point",
+          "color": { "x": 0.2, "y": 0.6, "z": 1.0 },
+          "intensity": 2.5,
+          "range": 8.0
+        }
+      ]
+    },
+    {
+      "name": "right-light",
+      "transform": { "position": { "x": 5.0, "y": 1.5, "z": 0.0 } },
+      "components": [
+        {
+          "component": "light",
+          "type": "Point",
+          "color": { "x": 1.0, "y": 0.4, "z": 0.2 },
+          "intensity": 2.5,
+          "range": 8.0
+        }
+      ]
+    }
+  ]
+}

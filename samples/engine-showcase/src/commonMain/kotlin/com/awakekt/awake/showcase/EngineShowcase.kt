@@ -17,10 +17,12 @@ import com.awakekt.awake.showcase.examples.InstancedSkinnedExampleDriver
 import com.awakekt.awake.showcase.examples.NavChaseExampleDriver
 import com.awakekt.awake.showcase.examples.ParticleEmitterExampleDriver
 import com.awakekt.awake.showcase.examples.SkinnedExampleDriver
+import com.awakekt.awake.showcase.examples.SpatialAudioExampleDriver
 import com.awakekt.awake.showcase.examples.Sprites2dExampleDriver
 import com.awakekt.awake.showcase.examples.TerrainPhysicsExampleDriver
 import com.awakekt.awake.showcase.terrain.TerrainExampleAsset
 import com.awakekt.awake.showcase.ui.EcsStressControls
+import com.awakekt.awake.showcase.ui.SpatialAudioControls
 
 /**
  * One focused engine demonstration: a scene document plus whatever that document cannot express.
@@ -150,6 +152,16 @@ val EngineShowcases = listOf(
         driver = { delta -> Sprites2dExampleDriver.advance(this, delta) },
         onActivated = { instance, runtime -> Sprites2dExampleDriver.attach(instance, runtime) },
         onDeactivated = { _ -> Sprites2dExampleDriver.detach() },
+    ),
+    EngineShowcase(
+        id = "spatial-audio",
+        title = "Spatial audio",
+        scenePath = "assets/examples/spatial-audio.scene.json",
+        summary = "3D positional audio emitters with distance attenuation and panning relative to the camera listener.",
+        driver = { delta -> SpatialAudioExampleDriver.advance(this, delta) },
+        onActivated = { instance, runtime -> SpatialAudioExampleDriver.attach(instance, runtime) },
+        onDeactivated = { runtime -> SpatialAudioExampleDriver.detach(runtime.world) },
+        controls = { SpatialAudioControls() },
     ),
     // Ten thousand ordinary entities by default, up to a hundred thousand from the panel. Each is
     // moved by an ECS system every frame; the renderer instances them, so the frame rate shows
