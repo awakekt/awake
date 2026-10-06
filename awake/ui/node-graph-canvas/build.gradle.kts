@@ -42,4 +42,9 @@ mavenPublishing {
 // Forward -DAWAKE_RECORD_SNAPSHOTS=true to the test JVM, which records visual baselines.
 tasks.named<Test>("desktopTest") {
     System.getProperty("AWAKE_RECORD_SNAPSHOTS")?.let { systemProperty("AWAKE_RECORD_SNAPSHOTS", it) }
+    testLogging {
+        // Preserve the measured windows and ceiling in CI logs, including the assertion message.
+        showStandardStreams = true
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+    }
 }
