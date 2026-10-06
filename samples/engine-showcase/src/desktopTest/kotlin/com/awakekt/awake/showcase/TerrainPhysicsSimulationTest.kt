@@ -8,6 +8,7 @@ package com.awakekt.awake.showcase
 import com.awakekt.awake.core.math.Quat
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.physics.BoxShape
+import com.awakekt.awake.physics.ConvexHullShape
 import com.awakekt.awake.physics.MotionType
 import com.awakekt.awake.physics.jolt.JoltPhysicsWorld
 import com.awakekt.awake.showcase.terrain.TerrainExampleAsset
@@ -69,6 +70,44 @@ class TerrainPhysicsSimulationTest {
         }
     }
 
+    @Test
+    fun aConvexHullPropFallsAndComesToRestOnTheHeightfield() {
+        val world = JoltPhysicsWorld()
+        try {
+            world.createBody(
+                TerrainExampleAsset.collisionShape,
+                Vec3f(0f, 0f, 0f),
+                Quat.IDENTITY,
+                MotionType.STATIC,
+            )
+            val hull = world.createBody(
+                ConvexHullShape(WEDGE_HULL_POINTS),
+                Vec3f(0f, DROP_HEIGHT, 0f),
+                Quat.IDENTITY,
+                MotionType.DYNAMIC,
+            )
+
+            var resting = Float.NaN
+            repeat(STEPS) {
+                world.step(FIXED_DELTA)
+                world.forEachBodyTransform { handle, position, _ ->
+                    if (handle == hull) resting = position.y
+                }
+            }
+
+            assertTrue(
+                resting < DROP_HEIGHT - 1f,
+                "the convex hull prop never fell: it is still at $resting, dropped from $DROP_HEIGHT",
+            )
+            assertTrue(
+                resting in EXPECTED_REST_LOW..EXPECTED_REST_HIGH,
+                "expected the convex hull to rest on the terrain near $EXPECTED_REST_LOW..$EXPECTED_REST_HIGH, got $resting",
+            )
+        } finally {
+            world.destroy()
+        }
+    }
+
     private companion object {
         const val BOX_HALF_EXTENT = 0.5f
         const val DROP_HEIGHT = 6f
@@ -76,5 +115,13 @@ class TerrainPhysicsSimulationTest {
         const val STEPS = 240
         const val EXPECTED_REST_LOW = 1.2f
         const val EXPECTED_REST_HIGH = 2.2f
+        val WEDGE_HULL_POINTS = floatArrayOf(
+            -0.5f, -0.5f, -0.5f,
+            0.5f, -0.5f, -0.5f,
+            -0.5f, -0.5f, 0.5f,
+            0.5f, -0.5f, 0.5f,
+            -0.5f, 0.5f, -0.5f,
+            0.5f, 0.5f, -0.5f,
+        )
     }
 }

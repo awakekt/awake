@@ -117,6 +117,24 @@
       ]
     },
     {
+      "name": "falling-wedge",
+      "transform": {
+        "position": {
+          "x": 0.0,
+          "y": 8.0,
+          "z": -1.5
+        }
+      },
+      "components": [
+        {
+          "component": "meshRenderer",
+          "mesh": "cube",
+          "material": "lit-shadow",
+          "cullMode": "Back"
+        }
+      ]
+    },
+    {
       "name": "player",
       "transform": {
         "position": {
