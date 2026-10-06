@@ -35,7 +35,8 @@ An emitter can follow an entity (`ParticleDynamics.followEntity`) and can turn i
 entity's rotation (`ParticleMotion.inheritOrientation`). This module does not know what places an
 entity, so `ParticleSystem` and `ParticleDrawBuilder` ask an `EmitterPlacement`. An app supplies the
 one it has; `awake:scene:particles` supplies one for the scene's `Transform`. With none, no emitter
-follows anything and none is turned.
+follows anything and none is turned. A `ParticleSystem` built with no argument says so once in the log
+when an emitter needs a placement; `EmitterPlacement.None` says it is intended.
 
 ## What it does not do
 
