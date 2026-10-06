@@ -25,6 +25,7 @@ Paths below are Gradle coordinates minus the `:awake:` prefix.
 | `core:io` | Asynchronous, root-relative file and byte-source contracts |
 | `core:config` | Typed configuration from environment and platform sources |
 | `core:logging` | `Log`, sinks, and an in-memory ring buffer |
+| `core:schema` | Property schemas and authoring annotations read from `kotlinx.serialization` descriptors |
 | `core:di` | A small dependency-injection container: modules, keys, bindings |
 | `core:state` | Reactive stores and unidirectional state contracts |
 

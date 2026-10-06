@@ -1,0 +1,233 @@
+public abstract interface annotation class com/awakekt/awake/core/schema/AssetReference : java/lang/annotation/Annotation {
+	public abstract fun kind ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/core/schema/AssetReference$Impl : com/awakekt/awake/core/schema/AssetReference {
+	public fun <init> (Ljava/lang/String;)V
+	public final synthetic fun kind ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/schema/NumberRange {
+	public fun <init> (Ljava/lang/Double;Ljava/lang/Double;ZZ)V
+	public synthetic fun <init> (Ljava/lang/Double;Ljava/lang/Double;ZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/Double;
+	public final fun component2 ()Ljava/lang/Double;
+	public final fun component3 ()Z
+	public final fun component4 ()Z
+	public final fun copy (Ljava/lang/Double;Ljava/lang/Double;ZZ)Lcom/awakekt/awake/core/schema/NumberRange;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/schema/NumberRange;Ljava/lang/Double;Ljava/lang/Double;ZZILjava/lang/Object;)Lcom/awakekt/awake/core/schema/NumberRange;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getExclusiveMax ()Z
+	public final fun getExclusiveMin ()Z
+	public final fun getMax ()Ljava/lang/Double;
+	public final fun getMin ()Ljava/lang/Double;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/schema/PropertyConstraints {
+	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/core/schema/NumberRange;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/schema/NumberRange;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/core/schema/NumberRange;
+	public final fun copy (Lcom/awakekt/awake/core/schema/NumberRange;)Lcom/awakekt/awake/core/schema/PropertyConstraints;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/schema/PropertyConstraints;Lcom/awakekt/awake/core/schema/NumberRange;ILjava/lang/Object;)Lcom/awakekt/awake/core/schema/PropertyConstraints;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getRange ()Lcom/awakekt/awake/core/schema/NumberRange;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface annotation class com/awakekt/awake/core/schema/PropertyHidden : java/lang/annotation/Annotation {
+}
+
+public final synthetic class com/awakekt/awake/core/schema/PropertyHidden$Impl : com/awakekt/awake/core/schema/PropertyHidden {
+	public fun <init> ()V
+}
+
+public abstract interface annotation class com/awakekt/awake/core/schema/PropertyHint : java/lang/annotation/Annotation {
+	public abstract fun text ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/core/schema/PropertyHint$Impl : com/awakekt/awake/core/schema/PropertyHint {
+	public fun <init> (Ljava/lang/String;)V
+	public final synthetic fun text ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/schema/PropertyHints {
+	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/core/schema/SliderHint;Ljava/lang/Double;Ljava/lang/String;Ljava/lang/String;ZZLjava/lang/String;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/schema/SliderHint;Ljava/lang/Double;Ljava/lang/String;Ljava/lang/String;ZZLjava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/core/schema/SliderHint;
+	public final fun component2 ()Ljava/lang/Double;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Z
+	public final fun component6 ()Z
+	public final fun component7 ()Ljava/lang/String;
+	public final fun copy (Lcom/awakekt/awake/core/schema/SliderHint;Ljava/lang/Double;Ljava/lang/String;Ljava/lang/String;ZZLjava/lang/String;)Lcom/awakekt/awake/core/schema/PropertyHints;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/schema/PropertyHints;Lcom/awakekt/awake/core/schema/SliderHint;Ljava/lang/Double;Ljava/lang/String;Ljava/lang/String;ZZLjava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/core/schema/PropertyHints;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAssetKind ()Ljava/lang/String;
+	public final fun getHidden ()Z
+	public final fun getReadOnly ()Z
+	public final fun getSlider ()Lcom/awakekt/awake/core/schema/SliderHint;
+	public final fun getStep ()Ljava/lang/Double;
+	public final fun getTooltip ()Ljava/lang/String;
+	public final fun getUnit ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/schema/PropertyKind : java/lang/Enum {
+	public static final field Boolean Lcom/awakekt/awake/core/schema/PropertyKind;
+	public static final field Color Lcom/awakekt/awake/core/schema/PropertyKind;
+	public static final field Enum Lcom/awakekt/awake/core/schema/PropertyKind;
+	public static final field Float Lcom/awakekt/awake/core/schema/PropertyKind;
+	public static final field Int Lcom/awakekt/awake/core/schema/PropertyKind;
+	public static final field List Lcom/awakekt/awake/core/schema/PropertyKind;
+	public static final field Map Lcom/awakekt/awake/core/schema/PropertyKind;
+	public static final field Object Lcom/awakekt/awake/core/schema/PropertyKind;
+	public static final field Polymorphic Lcom/awakekt/awake/core/schema/PropertyKind;
+	public static final field Text Lcom/awakekt/awake/core/schema/PropertyKind;
+	public static final field Unknown Lcom/awakekt/awake/core/schema/PropertyKind;
+	public static final field Vector3 Lcom/awakekt/awake/core/schema/PropertyKind;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/core/schema/PropertyKind;
+	public static fun values ()[Lcom/awakekt/awake/core/schema/PropertyKind;
+}
+
+public abstract interface annotation class com/awakekt/awake/core/schema/PropertyRange : java/lang/annotation/Annotation {
+	public abstract fun exclusiveMax ()Z
+	public abstract fun exclusiveMin ()Z
+	public abstract fun max ()D
+	public abstract fun min ()D
+}
+
+public final synthetic class com/awakekt/awake/core/schema/PropertyRange$Impl : com/awakekt/awake/core/schema/PropertyRange {
+	public fun <init> (DDZZ)V
+	public synthetic fun <init> (DDZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final synthetic fun exclusiveMax ()Z
+	public final synthetic fun exclusiveMin ()Z
+	public final synthetic fun max ()D
+	public final synthetic fun min ()D
+}
+
+public abstract interface annotation class com/awakekt/awake/core/schema/PropertyReadOnly : java/lang/annotation/Annotation {
+}
+
+public final synthetic class com/awakekt/awake/core/schema/PropertyReadOnly$Impl : com/awakekt/awake/core/schema/PropertyReadOnly {
+	public fun <init> ()V
+}
+
+public final class com/awakekt/awake/core/schema/PropertySchema {
+	public fun <init> (Ljava/lang/String;Lcom/awakekt/awake/core/schema/PropertyKind;Ljava/lang/String;ZZLkotlinx/serialization/json/JsonElement;Lcom/awakekt/awake/core/schema/PropertyConstraints;Lcom/awakekt/awake/core/schema/PropertyHints;Ljava/util/List;Lcom/awakekt/awake/core/schema/PropertySchema;Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/lang/String;Lcom/awakekt/awake/core/schema/PropertyKind;Ljava/lang/String;ZZLkotlinx/serialization/json/JsonElement;Lcom/awakekt/awake/core/schema/PropertyConstraints;Lcom/awakekt/awake/core/schema/PropertyHints;Ljava/util/List;Lcom/awakekt/awake/core/schema/PropertySchema;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component10 ()Lcom/awakekt/awake/core/schema/PropertySchema;
+	public final fun component11 ()Ljava/util/List;
+	public final fun component2 ()Lcom/awakekt/awake/core/schema/PropertyKind;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Z
+	public final fun component5 ()Z
+	public final fun component6 ()Lkotlinx/serialization/json/JsonElement;
+	public final fun component7 ()Lcom/awakekt/awake/core/schema/PropertyConstraints;
+	public final fun component8 ()Lcom/awakekt/awake/core/schema/PropertyHints;
+	public final fun component9 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Lcom/awakekt/awake/core/schema/PropertyKind;Ljava/lang/String;ZZLkotlinx/serialization/json/JsonElement;Lcom/awakekt/awake/core/schema/PropertyConstraints;Lcom/awakekt/awake/core/schema/PropertyHints;Ljava/util/List;Lcom/awakekt/awake/core/schema/PropertySchema;Ljava/util/List;)Lcom/awakekt/awake/core/schema/PropertySchema;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/schema/PropertySchema;Ljava/lang/String;Lcom/awakekt/awake/core/schema/PropertyKind;Ljava/lang/String;ZZLkotlinx/serialization/json/JsonElement;Lcom/awakekt/awake/core/schema/PropertyConstraints;Lcom/awakekt/awake/core/schema/PropertyHints;Ljava/util/List;Lcom/awakekt/awake/core/schema/PropertySchema;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/core/schema/PropertySchema;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getChildren ()Ljava/util/List;
+	public final fun getConstraints ()Lcom/awakekt/awake/core/schema/PropertyConstraints;
+	public final fun getDefault ()Lkotlinx/serialization/json/JsonElement;
+	public final fun getElement ()Lcom/awakekt/awake/core/schema/PropertySchema;
+	public final fun getEnumValues ()Ljava/util/List;
+	public final fun getHints ()Lcom/awakekt/awake/core/schema/PropertyHints;
+	public final fun getKind ()Lcom/awakekt/awake/core/schema/PropertyKind;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getNullable ()Z
+	public final fun getRequired ()Z
+	public final fun getTypeName ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/schema/PropertySchemasKt {
+	public static final fun deriveDefaults (Lkotlinx/serialization/KSerializer;Lkotlinx/serialization/json/Json;Lkotlinx/serialization/json/JsonObject;)Lkotlinx/serialization/json/JsonObject;
+	public static synthetic fun deriveDefaults$default (Lkotlinx/serialization/KSerializer;Lkotlinx/serialization/json/Json;Lkotlinx/serialization/json/JsonObject;ILjava/lang/Object;)Lkotlinx/serialization/json/JsonObject;
+	public static final fun propertySchemaOf (Lkotlinx/serialization/KSerializer;Lkotlinx/serialization/json/Json;Ljava/util/Map;)Lcom/awakekt/awake/core/schema/PropertySchema;
+	public static synthetic fun propertySchemaOf$default (Lkotlinx/serialization/KSerializer;Lkotlinx/serialization/json/Json;Ljava/util/Map;ILjava/lang/Object;)Lcom/awakekt/awake/core/schema/PropertySchema;
+	public static final fun toPropertySchema (Lkotlinx/serialization/descriptors/SerialDescriptor;Lcom/awakekt/awake/core/schema/SchemaOptions;)Lcom/awakekt/awake/core/schema/PropertySchema;
+	public static synthetic fun toPropertySchema$default (Lkotlinx/serialization/descriptors/SerialDescriptor;Lcom/awakekt/awake/core/schema/SchemaOptions;ILjava/lang/Object;)Lcom/awakekt/awake/core/schema/PropertySchema;
+}
+
+public abstract interface annotation class com/awakekt/awake/core/schema/PropertySlider : java/lang/annotation/Annotation {
+	public abstract fun softMax ()D
+	public abstract fun softMin ()D
+	public abstract fun step ()D
+}
+
+public final synthetic class com/awakekt/awake/core/schema/PropertySlider$Impl : com/awakekt/awake/core/schema/PropertySlider {
+	public fun <init> (DDD)V
+	public synthetic fun <init> (DDDILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final synthetic fun softMax ()D
+	public final synthetic fun softMin ()D
+	public final synthetic fun step ()D
+}
+
+public abstract interface annotation class com/awakekt/awake/core/schema/PropertyStep : java/lang/annotation/Annotation {
+	public abstract fun step ()D
+}
+
+public final synthetic class com/awakekt/awake/core/schema/PropertyStep$Impl : com/awakekt/awake/core/schema/PropertyStep {
+	public fun <init> (D)V
+	public final synthetic fun step ()D
+}
+
+public abstract interface annotation class com/awakekt/awake/core/schema/PropertyUnit : java/lang/annotation/Annotation {
+	public abstract fun unit ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/core/schema/PropertyUnit$Impl : com/awakekt/awake/core/schema/PropertyUnit {
+	public fun <init> (Ljava/lang/String;)V
+	public final synthetic fun unit ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/schema/SchemaOptions {
+	public static final field Companion Lcom/awakekt/awake/core/schema/SchemaOptions$Companion;
+	public static final field DEFAULT_MAX_DEPTH I
+	public fun <init> ()V
+	public fun <init> (Ljava/util/Map;Lkotlinx/serialization/json/JsonObject;I)V
+	public synthetic fun <init> (Ljava/util/Map;Lkotlinx/serialization/json/JsonObject;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/Map;
+	public final fun component2 ()Lkotlinx/serialization/json/JsonObject;
+	public final fun component3 ()I
+	public final fun copy (Ljava/util/Map;Lkotlinx/serialization/json/JsonObject;I)Lcom/awakekt/awake/core/schema/SchemaOptions;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/schema/SchemaOptions;Ljava/util/Map;Lkotlinx/serialization/json/JsonObject;IILjava/lang/Object;)Lcom/awakekt/awake/core/schema/SchemaOptions;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDefaults ()Lkotlinx/serialization/json/JsonObject;
+	public final fun getMaxDepth ()I
+	public final fun getSemanticTypes ()Ljava/util/Map;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/schema/SchemaOptions$Companion {
+}
+
+public final class com/awakekt/awake/core/schema/SliderHint {
+	public fun <init> (DDD)V
+	public synthetic fun <init> (DDDILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()D
+	public final fun component2 ()D
+	public final fun component3 ()D
+	public final fun copy (DDD)Lcom/awakekt/awake/core/schema/SliderHint;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/schema/SliderHint;DDDILjava/lang/Object;)Lcom/awakekt/awake/core/schema/SliderHint;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getSoftMax ()D
+	public final fun getSoftMin ()D
+	public final fun getStep ()D
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+

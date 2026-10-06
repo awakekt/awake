@@ -32,7 +32,7 @@ no published artifact. Test-source dependencies are intentionally excluded.
 
 | Family | Published modules | Version source |
 |---|---:|---|
-| Core | 71 | Existing root `v*` tags and the shared Core release train |
+| Core | 72 | Existing root `v*` tags and the shared Core release train |
 | Vulkan | 3 | `vulkan-v*` tags; renderer, raw bindings, and Android JNI bridge move together |
 
 Vulkan snapshots pin the exact Core snapshot used for integration. Vulkan releases depend on an
@@ -84,6 +84,7 @@ Vulkan modules. Core `v*` releases and main snapshots do not publish or change t
 | `com.awakekt.awake.core:math` | `:awake:core:math` | `core` | `api` → `:awake:core:math2d` |
 | `com.awakekt.awake.core:math2d` | `:awake:core:math2d` | `core` | — |
 | `com.awakekt.awake.core:pool` | `:awake:core:pool` | `core` | — |
+| `com.awakekt.awake.core:schema` | `:awake:core:schema` | `core` | — |
 | `com.awakekt.awake.core:state` | `:awake:core:state` | `core` | — |
 | `com.awakekt.awake.core:text` | `:awake:core:text` | `core` | `implementation` → `:awake:core:math2d`; `implementation` → `:awake:core:color` |
 | `com.awakekt.awake:ecs` | `:awake:ecs` | `core` | — |
