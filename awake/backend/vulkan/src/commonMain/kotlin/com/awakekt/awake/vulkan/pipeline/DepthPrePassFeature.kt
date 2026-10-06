@@ -7,9 +7,11 @@ package com.awakekt.awake.vulkan.pipeline
 
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.math.Mat4
+import com.awakekt.awake.render.command.GpuEnvironmentState
 import com.awakekt.awake.render.command.GpuShadowCascadeData
 import com.awakekt.awake.render.command.GpuSubPass
 import com.awakekt.awake.render.command.PreparedDraw
+import com.awakekt.awake.render.passes.ContentDepthSource
 import com.awakekt.awake.render.passes.uniforms.SHADOW_CASCADE_PASS_GROUP
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.DepthCasterKind
@@ -48,6 +50,10 @@ import com.awakekt.awake.vulkan.texture.DepthTarget
  * included. Skinned-instanced and particle draws are not: [depthOnlyPipeline] is built with ONE
  * fixed vertex layout and cannot correctly bind theirs. Widening that needs a pipeline per
  * format, not a looser check.
+ *
+ * Content features add draws of their own through [contentCasters]: each brings a pipeline
+ * built over its own group 0, written the same cascade matrices and drawn in every rendered
+ * sub-pass after the frame's draws.
  */
 internal class DepthPrePassFeature(
     /** Also read by `Renderer`, which binds this target's own descriptor set once per scene
@@ -61,6 +67,24 @@ internal class DepthPrePassFeature(
 ) {
     /** The owning `Renderer`'s counter, set when it takes this feature: a pass is built first. */
     internal var stats: RenderStatsCounter? = null
+
+    /** A content feature's depth pipeline and what hands it a draw each frame. Its pipeline is
+     * the caller's to destroy, once removed from [contentCasters]. */
+    internal class ContentCaster(val pipeline: DepthOnlyPipeline, val source: ContentDepthSource)
+
+    /** Drawn in every rendered sub-pass, after the frame's draws. */
+    val contentCasters = ArrayList<ContentCaster>()
+
+    /** Every pipeline the cascade matrices are written to, content casters' included. */
+    private val cascadePipelines: List<DepthOnlyPipeline>
+        get() = buildList {
+            add(depthOnlyPipeline)
+            addAll(variantPipelines.values)
+            addAll(keyedVariantPipelines.values)
+            addAll(formatPipelines.values)
+            addAll(instancedFormatPipelines.values)
+            contentCasters.forEach { add(it.pipeline) }
+        }.distinct()
 
     internal fun pipelineFor(kind: DepthCasterKind, format: VertexFormat): DepthOnlyPipeline? {
         val pipeline = when (kind) {
@@ -116,13 +140,7 @@ internal class DepthPrePassFeature(
         // Each rendered cascade writes and transitions its layer to SHADER_READ_ONLY_OPTIMAL.
         // Unrendered layers are transitioned once with an empty pass to satisfy Vulkan layout
         // invariants without incurring per-frame render pass overhead.
-        val allPipelines = buildList {
-            add(depthOnlyPipeline)
-            addAll(variantPipelines.values)
-            addAll(keyedVariantPipelines.values)
-            addAll(formatPipelines.values)
-            addAll(instancedFormatPipelines.values)
-        }.distinct()
+        val allPipelines = cascadePipelines
         val activeCount = minOf(viewProjections.size, depthTarget.layers)
         for (cascade in 0 until activeCount) {
             val source = viewProjections[cascade]
@@ -133,26 +151,24 @@ internal class DepthPrePassFeature(
         initializeLayers(commandBuffer, castFormat)
     }
 
-    /** Records only the requested subpasses, avoiding redundant passes over unused layers. */
+    /**
+     * Records only the requested subpasses, avoiding redundant passes over unused layers. Each one
+     * also draws the content casters that [environment] lets draw.
+     */
     fun recordCommands(
         commandBuffer: Long,
         frameIndex: Int,
         subPasses: List<GpuSubPass>,
         castFormat: VertexFormat,
+        environment: GpuEnvironmentState,
     ) {
         if (subPasses.isEmpty()) return
-        val allPipelines = buildList {
-            add(depthOnlyPipeline)
-            addAll(variantPipelines.values)
-            addAll(keyedVariantPipelines.values)
-            addAll(formatPipelines.values)
-            addAll(instancedFormatPipelines.values)
-        }.distinct()
+        val allPipelines = cascadePipelines
         for (subPass in subPasses) {
             val layer = subPass.targetLayer
             if (layer in 0 until depthTarget.layers) {
                 allPipelines.forEach { it.writeCascade(frameIndex, layer, subPass.viewProjection) }
-                recordCascade(commandBuffer, frameIndex, subPass.resolvedDraws, castFormat, layer)
+                recordCascade(commandBuffer, frameIndex, subPass.resolvedDraws, castFormat, layer, environment)
                 initializedLayers[layer] = true
             }
         }
@@ -189,6 +205,7 @@ internal class DepthPrePassFeature(
         drawCalls: List<PreparedDraw>,
         castFormat: VertexFormat,
         cascade: Int,
+        content: GpuEnvironmentState? = null,
     ) {
         val renderPassInfo = VkRenderPassBeginInfo(
             renderPass = depthTarget.renderPass,
@@ -278,16 +295,11 @@ internal class DepthPrePassFeature(
                         (paletteBinding as VulkanMaterialBinding).descriptorSetHandle,
                     )
                 }
-                if (indexBuffer != null) {
-                    VulkanBuffers.vkCmdBindIndexBuffer(commandBuffer, indexBuffer.handle, 0, com.awakekt.awake.vulkan.models.info.VkIndexType.VK_INDEX_TYPE_UINT32)
-                    VulkanBuffers.vkCmdDrawIndexed(commandBuffer, prepared.elementCount, prepared.instances, 0, 0, 0)
-                } else {
-                    Vulkan.vkCmdDraw(commandBuffer, prepared.elementCount, prepared.instances, 0, 0)
-                }
-                stats?.recordDraw(prepared.elementCount, prepared.instances)
+                issueDraw(commandBuffer, prepared, indexBuffer)
             }
             drawIndex += 1
         }
+        if (content != null) recordContentCasters(commandBuffer, frameIndex, cascade, content)
         Vulkan.vkCmdEndRenderPass(commandBuffer)
         // The render pass's outgoing dependency already states this ordering, but MoltenVK up to
         // 1.4.1 never encodes subpass dependencies: without an explicit barrier the scene pass can
@@ -300,6 +312,42 @@ internal class DepthPrePassFeature(
             dstStageMask = VkPipelineStageFlagBits.VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT.value,
             dstAccessMask = VkAccessFlagBits.VK_ACCESS_SHADER_READ_BIT.value,
         )
+    }
+
+    /** Each content caster's draw for this frame, through its own pipeline and its own group 0. */
+    private fun recordContentCasters(commandBuffer: Long, frameIndex: Int, cascade: Int, environment: GpuEnvironmentState) {
+        for (index in contentCasters.indices) {
+            val caster = contentCasters[index]
+            val draw = caster.source.depthDraw(frameIndex, environment)
+            val vertexBuffer = draw?.vertexBuffer as? VulkanBufferBinding
+            if (draw == null || vertexBuffer == null) continue
+            val pipeline = caster.pipeline
+            pipeline.bind(commandBuffer)
+            VulkanDescriptors.vkCmdBindDescriptorSet(
+                commandBuffer,
+                pipeline.pipelineLayout,
+                SHADOW_CASCADE_PASS_GROUP,
+                pipeline.cascadeBinding(frameIndex, cascade),
+            )
+            VulkanDescriptors.vkCmdBindDescriptorSet(
+                commandBuffer,
+                pipeline.pipelineLayout,
+                BindingLayout.Standard.slot(com.awakekt.awake.render.pipeline.BindingSemantic.Material),
+                (draw.materialBinding as VulkanMaterialBinding).descriptorSetHandle,
+            )
+            VulkanBuffers.vkCmdBindVertexBuffers(commandBuffer, 0, vertexBuffer.asArray, longArrayOf(0L))
+            issueDraw(commandBuffer, draw, draw.indexBuffer as? VulkanBufferBinding)
+        }
+    }
+
+    private fun issueDraw(commandBuffer: Long, prepared: PreparedDraw, indexBuffer: VulkanBufferBinding?) {
+        if (indexBuffer != null) {
+            VulkanBuffers.vkCmdBindIndexBuffer(commandBuffer, indexBuffer.handle, 0, com.awakekt.awake.vulkan.models.info.VkIndexType.VK_INDEX_TYPE_UINT32)
+            VulkanBuffers.vkCmdDrawIndexed(commandBuffer, prepared.elementCount, prepared.instances, 0, 0, 0)
+        } else {
+            Vulkan.vkCmdDraw(commandBuffer, prepared.elementCount, prepared.instances, 0, 0)
+        }
+        stats?.recordDraw(prepared.elementCount, prepared.instances)
     }
 
     fun destroy() {

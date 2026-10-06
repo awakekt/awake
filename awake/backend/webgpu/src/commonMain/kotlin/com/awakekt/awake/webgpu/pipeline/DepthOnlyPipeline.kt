@@ -25,6 +25,7 @@ import io.ygdrasil.webgpu.BufferBinding
 import io.ygdrasil.webgpu.BufferDescriptor
 import io.ygdrasil.webgpu.DepthStencilState
 import io.ygdrasil.webgpu.FragmentState
+import io.ygdrasil.webgpu.GPUBindGroupLayout
 import io.ygdrasil.webgpu.GPUBuffer
 import io.ygdrasil.webgpu.GPUBufferUsage
 import io.ygdrasil.webgpu.GPUCompareFunction
@@ -62,6 +63,9 @@ class DepthOnlyPipeline(
     private val bindingsByGroup: Map<Int, GroupBindings> = emptyMap(),
     /** Whether [bindingsByGroup] is authoritative, including an explicitly empty layout. */
     bindingsMetadataAvailable: Boolean = false,
+    /** Another pipeline's group-0 layout to use as this one's, so that pipeline's bind group
+     * binds here unchanged; null builds group 0 from [bindingsByGroup]. */
+    groupZeroLayout: GPUBindGroupLayout? = null,
 ) {
     val pipeline: GPURenderPipeline
     val handle: WebGpuPipelineHandle
@@ -221,7 +225,7 @@ class DepthOnlyPipeline(
 
         pipeline = device.createRenderPipeline(
             RenderPipelineDescriptor(
-                layout = device.createAwakePipelineLayout(bindingsByGroup),
+                layout = device.createAwakePipelineLayout(bindingsByGroup, groupZeroLayout),
                 vertex = VertexState(
                     module = shaderModule,
                     entryPoint = vertexEntryPoint,

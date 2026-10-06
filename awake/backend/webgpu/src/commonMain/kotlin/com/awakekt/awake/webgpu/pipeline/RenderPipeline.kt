@@ -32,6 +32,7 @@ import io.ygdrasil.webgpu.BufferDescriptor
 import io.ygdrasil.webgpu.ColorTargetState
 import io.ygdrasil.webgpu.DepthStencilState
 import io.ygdrasil.webgpu.FragmentState
+import io.ygdrasil.webgpu.GPUBindGroupLayout
 import io.ygdrasil.webgpu.GPUBlendFactor
 import io.ygdrasil.webgpu.GPUBuffer
 import io.ygdrasil.webgpu.GPUBufferUsage
@@ -176,6 +177,10 @@ class RenderPipeline(
             BindGroupEntry(binding = entry.binding.toUInt(), resource = resource)
         }
     }
+
+    /** This pipeline's group-0 layout. A pipeline built over it binds this one's bind group unchanged. */
+    internal val groupZeroLayout: GPUBindGroupLayout
+        get() = WebGpuHandles.resolve<GPURenderPipeline>(graphicsPipeline[0]).getBindGroupLayout(0u)
 
     /** A content feature's textures, supplied by the engine after the registry compiled this
      * pipeline -- see [writeContentTextures]. Read when the bind group is first built. */

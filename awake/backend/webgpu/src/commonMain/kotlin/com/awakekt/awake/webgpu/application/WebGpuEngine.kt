@@ -6,7 +6,6 @@
 package com.awakekt.awake.webgpu.application
 
 import com.awakekt.awake.asset.shaders.ContentFeatureAttacher
-import com.awakekt.awake.asset.shaders.ContentFeatureGpu
 import com.awakekt.awake.asset.shaders.ContentFeatureHost
 import com.awakekt.awake.asset.shaders.ContentUpload
 import com.awakekt.awake.asset.shaders.EngineShaderSets
@@ -27,9 +26,6 @@ import com.awakekt.awake.asset.shaders.uiShaderSet
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.engine.platform.GraphicsEngine
 import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
-import com.awakekt.awake.render.command.PipelineHandle
-import com.awakekt.awake.render.passes.ContentFeature
-import com.awakekt.awake.render.passes.ContentGeometry
 import com.awakekt.awake.render.passes.ContentPaint
 import com.awakekt.awake.render.passes.OpaqueRenderFeature
 import com.awakekt.awake.render.passes.RenderFeature
@@ -43,7 +39,6 @@ import com.awakekt.awake.render.pipeline.PipelineVariant
 import com.awakekt.awake.render.pipeline.entryPoint
 import com.awakekt.awake.webgpu.debug.LineRenderPipeline
 import com.awakekt.awake.webgpu.device.GraphicsDevice
-import com.awakekt.awake.webgpu.mesh.Mesh
 import com.awakekt.awake.webgpu.pipeline.RenderPipeline
 import com.awakekt.awake.webgpu.pipeline.WebGpuLinePass
 import com.awakekt.awake.webgpu.pipeline.WebGpuPipelineFactory
@@ -52,7 +47,6 @@ import com.awakekt.awake.webgpu.pipeline.WebGpuShaderResolver
 import com.awakekt.awake.webgpu.pipeline.WebGpuUiPass
 import com.awakekt.awake.webgpu.renderer.Renderer
 import com.awakekt.awake.webgpu.swapchain.SwapchainManager
-import com.awakekt.awake.webgpu.texture.Texture
 
 /**
  * Reusable WebGPU app bootstrap -- wasmJs counterpart to `VulkanEngine`
@@ -352,7 +346,7 @@ open class WebGpuEngine(
         // Paint order within a slot: a backdrop feature, then geometry, then a feature that
         // covers it, then the always-present UI capability -- see
         // docs/reference/render-extensibility.md. Mirrors VulkanEngine's identical list.
-        val gpu = WebGpuContentGpu(registry)
+        val gpu = WebGpuContentFeatureGpu(graphicsDevice, registry, depthPrePass)
         val attacher = ContentFeatureAttacher(gpu).also { contentAttacher = it }
         val content = plan.contentFeaturesFor(RenderBackend.WebGpu).groupBy { it.paint }
         val renderFeatures: List<RenderFeature<WebGpuRenderFrameContext>> = buildList {
@@ -410,38 +404,6 @@ open class WebGpuEngine(
         contentAttacher?.releaseAll()
         lineRenderPipeline.destroy()
         graphicsDevice.destroy()
-    }
-
-    /** This engine's half of building a content feature, at start or attached later. */
-    private inner class WebGpuContentGpu(
-        override val registry: PipelineRegistry<RenderPipeline>,
-    ) : ContentFeatureGpu<RenderPipeline> {
-        override val backend = RenderBackend.WebGpu
-
-        override fun handle(pipeline: RenderPipeline): PipelineHandle = pipeline.handle
-
-        override fun upload(pipeline: RenderPipeline, feature: ContentFeature): ContentUpload {
-            val textures = feature.textures.mapValues { (_, asset) ->
-                Texture(graphicsDevice, {}, asset.data, asset.width, asset.height, asset.layerCount, asset.isCubemap)
-            }
-            // Before anything binds the group: a GPUBindGroup is immutable once built, so unlike
-            // Vulkan these have to arrive ahead of the first bind, not after.
-            pipeline.writeContentTextures(textures)
-            val mesh = feature.geometry?.let { source ->
-                Mesh(graphicsDevice, {}, source.vertices, source.indices, source.format)
-            }
-            // Owned here: a bind group or a recorded bind references these without owning them.
-            return ContentUpload(mesh?.let { ContentGeometry(it.vertexBinding, it.indexBinding, it.indexCount) }) {
-                textures.values.forEach(Texture::destroy)
-                mesh?.destroy()
-            }
-        }
-
-        override fun destroyPipeline(pipeline: RenderPipeline) = pipeline.destroy()
-
-        /** Nothing to wait for: WebGPU frees a destroyed resource only after the work already
-         * submitted against it completes. */
-        override fun awaitIdle() = Unit
     }
 
     private companion object {

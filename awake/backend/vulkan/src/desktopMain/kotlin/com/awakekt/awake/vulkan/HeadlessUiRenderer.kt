@@ -14,6 +14,8 @@ import com.awakekt.awake.asset.shaders.resolveBytes
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.render.passes.OpaqueRenderFeature
 import com.awakekt.awake.render.passes2d.UiRenderFeature
+import com.awakekt.awake.render.pipeline.PipelineSpec
+import com.awakekt.awake.render.pipeline.ShaderSource
 import com.awakekt.awake.render.testing.HeadlessRenderSession
 import com.awakekt.awake.vulkan.commands.TransferContext
 import com.awakekt.awake.vulkan.debug.LineRenderPipeline
@@ -105,8 +107,13 @@ fun vulkanHeadlessUi(width: Int, height: Int): HeadlessRenderSession {
  * the stage. Internal rather than private: [vulkanHeadlessScene] builds its own pipelines from the
  * same sets.
  */
-internal suspend fun spirvPair(set: ShaderSet): ShaderPair {
-    val source = checkNotNull(set.vulkan[ShaderStage.VERTEX]) { "Shader set declares no Vulkan vertex stage." }
+internal suspend fun spirvPair(set: ShaderSet): ShaderPair =
+    spirvPair(checkNotNull(set.vulkan[ShaderStage.VERTEX]) { "Shader set declares no Vulkan vertex stage." })
+
+/** [spec]'s one WGSL module as SPIR-V, as [spirvPair] compiles a shader set's. */
+internal suspend fun spirvPair(spec: PipelineSpec): ShaderPair = spirvPair(spec.vertexShader)
+
+private suspend fun spirvPair(source: ShaderSource): ShaderPair {
     val spirv = NagaShaderCompiler.wgslToSpirv(source.resolveBytes().decodeToString())
     return ShaderPair(spirv, spirv)
 }

@@ -467,14 +467,14 @@ class Renderer internal constructor(
         frameIndex: Int,
         drawCalls: List<PreparedDraw>,
         subPasses: List<com.awakekt.awake.render.command.GpuSubPass>,
-        shadowsEnabled: Boolean,
+        environment: GpuEnvironmentState,
     ) {
         val feature = depthPrePass ?: return
-        if (!shadowsEnabled || subPasses.isEmpty()) {
+        if (!environment.shadowsEnabled || subPasses.isEmpty()) {
             feature.initializeLayers(commandBuffer, renderPipeline.vertexFormat)
             return
         }
-        feature.recordCommands(commandBuffer, frameIndex, subPasses, renderPipeline.vertexFormat)
+        feature.recordCommands(commandBuffer, frameIndex, subPasses, renderPipeline.vertexFormat, environment)
     }
 
     /**

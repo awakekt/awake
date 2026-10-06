@@ -64,7 +64,7 @@ private fun Renderer.recordToTexture(target: RenderTarget, input: GpuPassInput):
     val depthDraws = prepareDepthDraws(input)
     return { commandBuffer ->
         // The offscreen frame's own slots, past the last frame in flight, as its materials use.
-        recordDepthPrePass(commandBuffer, commandBuffers.size, depthDraws, input.prePasses, input.environment.shadowsEnabled)
+        recordDepthPrePass(commandBuffer, commandBuffers.size, depthDraws, input.prePasses, input.environment)
         recordSceneDepthPass(commandBuffer, commandBuffers.size, depthDraws, cameraDepthPass(input.viewProjection))
         offscreen.prepareForColorAttachment(commandBuffer)
         Vulkan.vkCmdBeginRenderPass(

@@ -61,6 +61,7 @@ public final class com/awakekt/awake/asset/shaderpack/AslSkyboxShaderKt {
 public final class com/awakekt/awake/asset/shaderpack/AslTerrainShaderKt {
 	public static final field MAX_CLIPMAP_RINGS I
 	public static final field TERRAIN_SURFACE_FIRST_BINDING I
+	public static final fun getTerrainShadowDepthShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 	public static final fun terrainClipmapDiscardUnderFinerRing (Lcom/awakekt/awake/asset/shaderdsl/AslFragmentBuilder;Lcom/awakekt/awake/asset/shaderpack/TerrainClipmapOutputs;)V
 	public static final fun terrainClipmapVertexStage (Lcom/awakekt/awake/asset/shaderdsl/AslShaderBuilder;Z)Lcom/awakekt/awake/asset/shaderpack/TerrainClipmapOutputs;
 	public static synthetic fun terrainClipmapVertexStage$default (Lcom/awakekt/awake/asset/shaderdsl/AslShaderBuilder;ZILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderpack/TerrainClipmapOutputs;
@@ -168,6 +169,7 @@ public final class com/awakekt/awake/asset/shaderpack/PackShaderSets {
 	public final fun getSkybox ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getSkyboxCubemap ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getTerrain ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getTerrainShadowDepth ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getTextured ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getTriangle ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 }
@@ -269,10 +271,11 @@ public final class com/awakekt/awake/asset/shaderpack/TerrainContentFeatureKt {
 	public static synthetic fun terrainContentFeature$default (Lcom/awakekt/awake/asset/shaders/ShaderSet;Lcom/awakekt/awake/asset/terrain/Heightmap;Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapConfig;Ljava/util/Map;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
 }
 
-public final class com/awakekt/awake/asset/shaderpack/TerrainRenderFeature : com/awakekt/awake/render/passes/RenderFeature {
+public final class com/awakekt/awake/asset/shaderpack/TerrainRenderFeature : com/awakekt/awake/render/passes/ContentDepthSource, com/awakekt/awake/render/passes/RenderFeature {
 	public static final field AMBIENT F
 	public fun <init> (Lcom/awakekt/awake/render/command/PipelineHandle;Lcom/awakekt/awake/render/command/UniformBlock;Lcom/awakekt/awake/render/passes/ContentGeometry;Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapTracker;FF[FLkotlin/jvm/functions/Function0;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/render/command/PipelineHandle;Lcom/awakekt/awake/render/command/UniformBlock;Lcom/awakekt/awake/render/passes/ContentGeometry;Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapTracker;FF[FLkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun depthDraw (ILcom/awakekt/awake/render/command/GpuEnvironmentState;)Lcom/awakekt/awake/render/command/PreparedDraw;
 	public fun destroy ()V
 	public fun getPass ()Lcom/awakekt/awake/render/passes/RenderPassSlot;
 	public fun recordCommands (Lcom/awakekt/awake/render/passes/RenderFrameContext;)V

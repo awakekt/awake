@@ -51,6 +51,8 @@ import com.awakekt.awake.core.geometry.GpuDataShape
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.geometry.VertexSemantic
 import com.awakekt.awake.core.math.ClipSpace
+import com.awakekt.awake.render.passes.uniforms.CascadePassUniformLayout
+import com.awakekt.awake.render.passes.uniforms.SHADOW_CASCADE_PASS_GROUP
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.renderer.UniformField
@@ -125,7 +127,6 @@ const val TERRAIN_SURFACE_FIRST_BINDING: Int = 3
 /**
  * What [terrainClipmapVertexStage] hands a fragment stage.
  *
- * @property worldNormal Heightmap normal, interpolated; normalise before use.
  * @property sunDirection `xyz` toward the light, `w` the ambient term.
  * @property terrainParams [TerrainUniformLayout.TerrainParams]; `z` is the base grey.
  * @property terrainSampling [TerrainUniformLayout.TerrainSampling]; `xy` is the heightmap's world
@@ -138,7 +139,7 @@ const val TERRAIN_SURFACE_FIRST_BINDING: Int = 3
  */
 @Suppress("LongParameterList") // Pure aggregation of the stage's derived handles.
 class TerrainClipmapOutputs internal constructor(
-    val worldNormal: AslExpr,
+    private val exportedWorldNormal: AslExpr?,
     private val exportedWorldPosition: AslExpr?,
     val sunDirection: AslExpr,
     val terrainParams: AslExpr,
@@ -149,6 +150,12 @@ class TerrainClipmapOutputs internal constructor(
     internal val ringCell: AslExpr,
     internal val ringParams: AslArrayHandle,
 ) {
+    /** Heightmap normal, interpolated; normalise before use. */
+    val worldNormal: AslExpr
+        get() = exportedWorldNormal ?: throw AslDefinitionException(
+            "worldNormal is not exported by the cascade-depth stage, which shades nothing.",
+        )
+
     /**
      * Displaced world position. A surface derives its texture coordinates from it, since the
      * stage owns the varyings struct and a surface cannot add one.
@@ -183,11 +190,24 @@ class TerrainClipmapOutputs internal constructor(
  * @param exportWorldPosition Whether to pass [TerrainClipmapOutputs.worldPosition] to the fragment
  * stage. Off only for a fragment stage that never reads it, which ASL rejects as dead.
  */
-fun AslShaderBuilder.terrainClipmapVertexStage(exportWorldPosition: Boolean = true): TerrainClipmapOutputs {
+fun AslShaderBuilder.terrainClipmapVertexStage(exportWorldPosition: Boolean = true): TerrainClipmapOutputs =
+    terrainClipmapVertexStage(exportWorldPosition, cascadeDepth = false)
+
+/**
+ * The stage, or with [cascadeDepth] its depth-pass form: the same displaced point placed by the
+ * cascade being rendered (the pass's `Cascade` block at [SHADOW_CASCADE_PASS_GROUP]) instead of
+ * the camera, passing on only what [terrainClipmapDiscardUnderFinerRing] reads.
+ */
+internal fun AslShaderBuilder.terrainClipmapVertexStage(exportWorldPosition: Boolean, cascadeDepth: Boolean): TerrainClipmapOutputs {
     val group = BindingLayout.Standard.slot(BindingSemantic.Material)
     val u = uniformBlock("Uniforms", group = group, binding = 0)
     val handles = u.fieldsFrom(TerrainUniformLayout.Layout)
-    val viewProjection = handles.value("viewProjection")
+    // The depth form reads the cascade it renders from the pass's own block, not the draw's.
+    val placement = if (cascadeDepth) {
+        uniformBlock("Cascade", group = SHADOW_CASCADE_PASS_GROUP, binding = 0).fieldsFrom(CascadePassUniformLayout).value("cascadeViewProjection")
+    } else {
+        handles.value("viewProjection")
+    }
     val sunDirection = handles.value("sunDirection")
     val terrainParams = handles.value("terrainParams")
     val terrainSampling = handles.value("terrainSampling")
@@ -196,9 +216,15 @@ fun AslShaderBuilder.terrainClipmapVertexStage(exportWorldPosition: Boolean = tr
     val heightmap by texture2d(group = group, binding = 1)
     val heightmapSampler by sampler(group = group, binding = 2)
 
+    // The depth form passes on only what its discard reads: ASL rejects a varying nothing reads.
     val out = varyings("VertexOutput")
-    val worldNormal by out.varying(GpuDataShape.Vec3, location = 0)
-    val worldPosition = if (exportWorldPosition) {
+    val worldNormal = if (cascadeDepth) {
+        null
+    } else {
+        val worldNormal by out.varying(GpuDataShape.Vec3, location = 0)
+        worldNormal
+    }
+    val worldPosition = if (exportWorldPosition && !cascadeDepth) {
         val worldPosition by out.varying(GpuDataShape.Vec3, location = 1)
         worldPosition
     } else {
@@ -213,29 +239,17 @@ fun AslShaderBuilder.terrainClipmapVertexStage(exportWorldPosition: Boolean = tr
 
         val ring = let("ring", ringParams[toU32(ringTag.x)])
         val (morphedX, morphedZ) = morphTowardCoarserGrid(localPosition, ring, terrainParams)
-
         val ground = groundPoint(morphedX, morphedZ, terrainSampling)
-        val worldX = ground.x
-        val worldZ = ground.z
-        val uv = ground.uv
 
-        val height = let(
-            "height",
-            decodeHeight(textureSampleLevel(heightmap, heightmapSampler, uv, 0f.lit)),
-        )
-        val displaced = let(
-            "displaced",
-            vec3(worldX, height * terrainParams.x + terrainParams.w, worldZ),
-        )
+        val height = let("height", decodeHeight(textureSampleLevel(heightmap, heightmapSampler, ground.uv, 0f.lit)))
+        val displaced = let("displaced", vec3(ground.x, height * terrainParams.x + terrainParams.w, ground.z))
 
-        out.position set viewProjection * vec4(displaced, 1f.lit)
-        worldNormal set heightmapNormal(heightmap, heightmapSampler, uv, terrainSampling, terrainParams)
+        out.position set placement * vec4(displaced, 1f.lit)
+        worldNormal?.let { it set heightmapNormal(heightmap, heightmapSampler, ground.uv, terrainSampling, terrainParams) }
         worldPosition?.let { it set displaced }
-        ringCell set vec3(worldX, worldZ, ringTag.x)
+        ringCell set vec3(ground.x, ground.z, ringTag.x)
     }
 
-    val debugView = handles.value("debugView")
-    val exposure = handles.value("exposure")
     return TerrainClipmapOutputs(
         worldNormal,
         worldPosition,
@@ -243,8 +257,8 @@ fun AslShaderBuilder.terrainClipmapVertexStage(exportWorldPosition: Boolean = tr
         terrainParams,
         terrainSampling,
         handles.cascadeInputs(),
-        debugView,
-        exposure,
+        handles.value("debugView"),
+        handles.value("exposure"),
         ringCell,
         ringParams,
     )
@@ -429,4 +443,18 @@ fun terrainShader(clipSpace: ClipSpace): AslShaderDefinition = shader("terrain")
         val shaded = vec4(displayTransform.displayReferred(vec3(base, base, base) * lighting, terrain.exposure.x), 1f.lit)
         colorOutput(debugViewColor(terrain.debugView, terrain.cascades.cameraPosition, surface, shaded))
     }
+}
+
+/**
+ * The clipmap rings' cascade depth: [terrainClipmapVertexStage]'s displaced surface, placed by the
+ * cascade being rendered, with coarse rings discarded under finer ones exactly as the drawn surface
+ * discards them. Without that discard a coarse ring stands above a finer one at a cliff and
+ * shadows it.
+ *
+ * Its group 0 declares only the stage's three bindings, so the depth pass binds any terrain
+ * surface's own group unchanged: a surface's bindings start at [TERRAIN_SURFACE_FIRST_BINDING].
+ */
+val TerrainShadowDepthShader: AslShaderDefinition = shader("terrain_shadow_depth") {
+    val terrain = terrainClipmapVertexStage(exportWorldPosition = false, cascadeDepth = true)
+    fragment { terrainClipmapDiscardUnderFinerRing(terrain) }
 }

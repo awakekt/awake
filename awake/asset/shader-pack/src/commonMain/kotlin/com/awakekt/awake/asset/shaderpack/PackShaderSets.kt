@@ -89,6 +89,9 @@ object PackShaderSets {
     /** Clipmap terrain shader set with height sampling and texture splatting. */
     val Terrain = aslShaderSet(::terrainShader)
 
+    /** The clipmap rings' cascade depth, for any surface shader on the clipmap stage. */
+    val TerrainShadowDepth = aslShaderSet(TerrainShadowDepthShader)
+
     /** Procedural anti-aliased infinite ground grid shader set. */
     val InfiniteGrid = aslShaderSet(InfiniteGridShader)
 }

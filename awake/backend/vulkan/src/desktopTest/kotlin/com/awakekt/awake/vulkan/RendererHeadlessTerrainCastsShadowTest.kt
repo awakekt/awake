@@ -5,19 +5,15 @@
  */
 package com.awakekt.awake.vulkan
 
-import com.awakekt.awake.asset.shaderpack.LitShadowUniformLayout
 import com.awakekt.awake.asset.shaderpack.PackShaderSets
 import com.awakekt.awake.asset.shaderpack.terrainContentFeature
 import com.awakekt.awake.asset.shaders.ContentFeatureHost
 import com.awakekt.awake.asset.terrain.Heightmap
 import com.awakekt.awake.asset.terrain.clipmap.TerrainClipmapConfig
-import com.awakekt.awake.asset.terrain.toPositionNormalColorMesh
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
-import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes.shadowCascadeUniforms
 import com.awakekt.awake.render.passes.uniforms.SceneLight
-import com.awakekt.awake.render.renderer.createMaterial
 import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.vulkan.renderer.Renderer
 import kotlin.math.abs
@@ -27,28 +23,27 @@ import kotlinx.coroutines.runBlocking
 import org.junit.AfterClass
 
 /**
- * Terrain casts shadows through its heightmap mesh, drawn into the shadow maps only.
+ * Terrain casts shadows from the clipmap rings it draws, with nothing else in the frame.
  *
  * A ridge four units high runs along z through flat clipmap terrain, with the sun 45 degrees up
- * along +x: with the ridge's shadow-only caster the ground 3.5 units to its -x is in shadow, and
- * without it both sides match. The lit side matches in both renders, so the caster, lying on the
- * same surface it shadows, puts no acne on flat ground. That it never draws into the scene is
- * ScenePassCompilerTest's to show: the terrain covers a coplanar caster either way.
+ * along +x: with cascades on the ground 3.5 units to its -x is in shadow, and with them off both
+ * sides match. The lit side matches in both renders, so the terrain, casting onto itself, puts
+ * no acne on flat ground.
  */
 class RendererHeadlessTerrainCastsShadowTest {
 
     @Test
-    fun aRidgeShadowsTheGroundBehindItOnlyThroughItsCaster() {
+    fun aRidgeShadowsTheGroundBehindIt() {
         val (renderer, _) = shared()
         val target = renderer.createRenderTarget(SIZE, SIZE)
         try {
-            val cast = renderer.patches(target, caster = true)
-            val control = renderer.patches(target, caster = false)
+            val cast = renderer.patches(target, cascades = true)
+            val control = renderer.patches(target, cascades = false)
 
             assertTrue(control.lit > LIT_FLOOR, "The lit ground is only ${control.lit}: the terrain did not render lit.")
             assertTrue(
                 abs(control.shadowSide - control.lit) < MATCH_TOLERANCE,
-                "Without a caster the terrain casts nothing, so both sides match: ${control.shadowSide} vs ${control.lit}.",
+                "Without cascades nothing is shadowed, so both sides match: ${control.shadowSide} vs ${control.lit}.",
             )
             assertTrue(
                 cast.shadowSide < cast.lit * SHADOW_RATIO,
@@ -56,7 +51,7 @@ class RendererHeadlessTerrainCastsShadowTest {
             )
             assertTrue(
                 abs(cast.lit - control.lit) < MATCH_TOLERANCE,
-                "The lit ground moved from ${control.lit} to ${cast.lit}: the caster shadows the flat ground it lies on.",
+                "The lit ground moved from ${control.lit} to ${cast.lit}: the terrain shadows the flat ground it draws.",
             )
         } finally {
             target.destroy()
@@ -65,23 +60,16 @@ class RendererHeadlessTerrainCastsShadowTest {
 
     private class Patches(val shadowSide: Float, val lit: Float)
 
-    private fun Renderer.patches(target: RenderTarget, caster: Boolean): Patches {
-        val mesh = createMesh(RIDGE.toPositionNormalColorMesh())
-        val material = createMaterial(LitShadowUniformLayout)
-        try {
-            val light = SceneLight(direction = LIGHT, color = Vec3f(1f, 1f, 1f))
-            renderSceneToTexture(
-                target,
-                CAMERA,
-                if (caster) listOf(RenderDrawCommand(mesh, material, shadowsOnly = true)) else emptyList(),
-                light.copy(cascades = shadowCascadeUniforms(light, CAMERA, 1f, clipSpace)),
-            )
-            val pixels = runBlocking { readPixels(target) }.data
-            return Patches(shadowSide = meanAt(pixels, -PATCH_X), lit = meanAt(pixels, PATCH_X))
-        } finally {
-            mesh.destroy()
-            material.destroy()
-        }
+    private fun Renderer.patches(target: RenderTarget, cascades: Boolean): Patches {
+        val light = SceneLight(direction = LIGHT, color = Vec3f(1f, 1f, 1f))
+        renderSceneToTexture(
+            target,
+            CAMERA,
+            emptyList(),
+            if (cascades) light.copy(cascades = shadowCascadeUniforms(light, CAMERA, 1f, clipSpace)) else light,
+        )
+        val pixels = runBlocking { readPixels(target) }.data
+        return Patches(shadowSide = meanAt(pixels, -PATCH_X), lit = meanAt(pixels, PATCH_X))
     }
 
     /** Mean red over a small square around the ground point at x = [worldX], z = 0. */

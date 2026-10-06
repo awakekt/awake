@@ -58,7 +58,7 @@ data class GpuDrawRequest(
     /** Whether this draw uses alpha blending and should be ordered during the transparent pass. */
     var transparent: Boolean = false,
     /** Drawn into shadow maps only, never into the scene: a stand-in caster for something the
-     * scene draws another way, such as GPU-displaced terrain. */
+     * scene draws another way. */
     var shadowsOnly: Boolean = false,
     /** World-space bounds, when known, so a shadow pass can skip a caster it cannot see. Null
      * casts into every shadow pass. */
