@@ -26,6 +26,12 @@ interface SceneComponent {
     fun validate(path: String): List<SceneValidationIssue> = emptyList()
 
     /**
+     * Validates component properties in context of other [peers] on the same scene node.
+     * Defaults to calling [validate(path)].
+     */
+    fun validate(path: String, peers: List<SceneComponent>): List<SceneValidationIssue> = validate(path)
+
+    /**
      * Whether multiple instances of this component type are allowed on a single scene node.
      */
     val allowsMultiplePerNode: Boolean get() = true

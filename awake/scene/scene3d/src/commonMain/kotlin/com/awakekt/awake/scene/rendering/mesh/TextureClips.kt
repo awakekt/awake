@@ -45,7 +45,7 @@ data class SceneTextureClip(
  * (`TextureClips.play`), see when a one-shot clip has finished, and have a paused game hold still.
  *
  * The system gives the entity a `TextureAnimation` that holds the cell now showing, so an entity
- * should not also carry an authored `texture_animation`: whichever was written last wins.
+ * must not also carry an authored `texture_animation` (scene validation rejects nodes that declare both).
  *
  * @property columns Frame-sheet columns.
  * @property rows Frame-sheet rows.
@@ -71,6 +71,13 @@ data class SceneTextureClips(
             run.problems(name, if (fits) columns * rows else 0).forEach { add(SceneValidationIssue(path, it)) }
         }
         if (clip != null && clip !in clips) add(SceneValidationIssue(path, "texture_clips.clip \"$clip\" is not one of its clips"))
+    }
+
+    override fun validate(path: String, peers: List<SceneComponent>): List<SceneValidationIssue> = buildList {
+        addAll(validate(path))
+        if (peers.any { it is SceneTextureAnimation }) {
+            add(SceneValidationIssue(path, "node cannot have both texture_clips and texture_animation"))
+        }
     }
 }
 

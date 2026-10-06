@@ -103,4 +103,32 @@ class SceneValidationTest {
         assertEquals(1, exception.issues.size)
         assertTrue(exception.message.orEmpty().contains("bad-node"))
     }
+
+    @Test
+    fun validatorPassesPeersToComponentValidation() {
+        data class IncompatibleComponent(val tag: String) : SceneComponent {
+            override fun validate(path: String, peers: List<SceneComponent>): List<SceneValidationIssue> = buildList {
+                if (peers.any { it is TestUniqueComponent }) {
+                    add(SceneValidationIssue(path, "cannot have IncompatibleComponent with TestUniqueComponent"))
+                }
+            }
+        }
+
+        val conflictDoc = SceneDocument(
+            nodes = listOf(
+                SceneNode(
+                    name = "nodeWithConflict",
+                    components = listOf(
+                        IncompatibleComponent("a"),
+                        TestUniqueComponent("b"),
+                    ),
+                ),
+            ),
+        )
+
+        val issues = SceneValidator.validate(conflictDoc)
+        assertEquals(1, issues.size)
+        assertEquals("nodeWithConflict", issues.single().path)
+        assertEquals("cannot have IncompatibleComponent with TestUniqueComponent", issues.single().message)
+    }
 }

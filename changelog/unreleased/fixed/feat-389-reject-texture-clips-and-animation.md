@@ -1,0 +1,1 @@
+- **Scene validation rejects nodes with both `texture_clips` and `texture_animation`.** Nodes declaring both components are now flagged with an explicit validation error naming the node, preventing silent conflicting animation states.

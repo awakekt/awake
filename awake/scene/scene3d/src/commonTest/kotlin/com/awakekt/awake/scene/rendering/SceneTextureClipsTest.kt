@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.rendering
 
+import com.awakekt.awake.scene.rendering.mesh.SceneTextureAnimation
 import com.awakekt.awake.scene.rendering.mesh.SceneTextureClip
 import com.awakekt.awake.scene.rendering.mesh.SceneTextureClips
 import kotlin.test.Test
@@ -87,5 +88,19 @@ class SceneTextureClipsTest {
         assertEquals("idle", clips.initialClip)
         assertEquals("walk", clips.copy(clip = "walk").initialClip)
         assertNull(SceneTextureClips().initialClip)
+    }
+
+    @Test
+    fun aNodeCannotHaveBothTextureClipsAndTextureAnimation() {
+        val clips = sheet("idle" to SceneTextureClip())
+        val animation = SceneTextureAnimation(columns = 4, rows = 2)
+
+        val isolatedIssues = clips.validate("hero", listOf(clips))
+        assertEquals(emptyList(), isolatedIssues, "texture_clips alone on a node is valid")
+
+        val conflictIssues = clips.validate("hero", listOf(clips, animation))
+        assertEquals(1, conflictIssues.size)
+        assertEquals("hero", conflictIssues.single().path)
+        assertEquals("node cannot have both texture_clips and texture_animation", conflictIssues.single().message)
     }
 }

@@ -200,6 +200,7 @@ public final class com/awakekt/awake/ai/behavior/chase/SceneChase : com/awakekt/
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 	public fun validate (Ljava/lang/String;)Ljava/util/List;
+	public fun validate (Ljava/lang/String;Ljava/util/List;)Ljava/util/List;
 }
 
 public final synthetic class com/awakekt/awake/ai/behavior/chase/SceneChase$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
@@ -260,6 +261,7 @@ public final class com/awakekt/awake/ai/behavior/flee/SceneFlee : com/awakekt/aw
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 	public fun validate (Ljava/lang/String;)Ljava/util/List;
+	public fun validate (Ljava/lang/String;Ljava/util/List;)Ljava/util/List;
 }
 
 public final synthetic class com/awakekt/awake/ai/behavior/flee/SceneFlee$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
@@ -322,6 +324,7 @@ public final class com/awakekt/awake/ai/behavior/navigation/SceneNavigation : co
 	public final fun toGrid ()Lcom/awakekt/awake/navigation/grid/NavGrid;
 	public fun toString ()Ljava/lang/String;
 	public fun validate (Ljava/lang/String;)Ljava/util/List;
+	public fun validate (Ljava/lang/String;Ljava/util/List;)Ljava/util/List;
 }
 
 public final synthetic class com/awakekt/awake/ai/behavior/navigation/SceneNavigation$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
@@ -380,6 +383,7 @@ public final class com/awakekt/awake/ai/behavior/patrol/ScenePatrol : com/awakek
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 	public fun validate (Ljava/lang/String;)Ljava/util/List;
+	public fun validate (Ljava/lang/String;Ljava/util/List;)Ljava/util/List;
 }
 
 public final synthetic class com/awakekt/awake/ai/behavior/patrol/ScenePatrol$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
