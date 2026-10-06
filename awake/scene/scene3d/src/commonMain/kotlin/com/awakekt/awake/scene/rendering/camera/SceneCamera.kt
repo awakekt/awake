@@ -6,6 +6,7 @@
 package com.awakekt.awake.scene.rendering.camera
 
 import com.awakekt.awake.core.math.Lens
+import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneValidationIssue
 import com.awakekt.awake.scene.document.SceneVec3
@@ -35,12 +36,12 @@ data class SceneCamera(
     val eye: SceneVec3 = SceneVec3(0f, 0f, 5f),
     val center: SceneVec3 = SceneVec3(0f, 0f, 0f),
     val up: SceneVec3 = SceneVec3(0f, 1f, 0f),
-    val fovYDegrees: Float = 60f,
-    val near: Float = 0.1f,
+    @PropertyRange(min = 0.0, max = 180.0, exclusiveMin = true, exclusiveMax = true) val fovYDegrees: Float = 60f,
+    @PropertyRange(min = 0.0, exclusiveMin = true) val near: Float = 0.1f,
     val far: Float = 100f,
     val primary: Boolean = true,
     val projection: Projection = Projection.Perspective,
-    val orthoHalfHeight: Float = Lens.DEFAULT_ORTHO_HALF_HEIGHT,
+    @PropertyRange(min = 0.0, exclusiveMin = true) val orthoHalfHeight: Float = Lens.DEFAULT_ORTHO_HALF_HEIGHT,
 ) : SceneComponent {
     /** How a [SceneCamera] projects the scene. */
     @Serializable
