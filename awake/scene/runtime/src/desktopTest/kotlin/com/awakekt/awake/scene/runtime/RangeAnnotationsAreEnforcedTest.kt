@@ -25,6 +25,10 @@ import kotlin.test.assertTrue
  * enforces it.
  */
 class RangeAnnotationsAreEnforcedTest {
+    init {
+        installEveryComponentKit()
+    }
+
     private val json = SceneSerializers.createJson()
 
     /** A constrained property, found by [steps] from the component's document root. */

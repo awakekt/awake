@@ -5,6 +5,8 @@
  */
 package com.awakekt.awake.core.schema
 
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -92,6 +94,35 @@ class PropertySchemasTest {
         assertTrue(!count.required)
         assertEquals(JsonNull, count.default)
         assertTrue(!schema.child("lifetime").nullable)
+    }
+
+    @Test
+    fun nullablePropertyRequirednessDependsOnExplicitNullsConfiguration() {
+        val withExplicitNulls = Json { explicitNulls = true }
+        val withoutExplicitNulls = Json { explicitNulls = false }
+
+        val schemaExplicit = propertySchemaOf(NullableRequired.serializer(), withExplicitNulls)
+        val schemaImplicit = propertySchemaOf(NullableRequired.serializer(), withoutExplicitNulls)
+
+        val fieldExplicit = schemaExplicit.children.single()
+        val fieldImplicit = schemaImplicit.children.single()
+
+        assertTrue(fieldExplicit.nullable)
+        assertTrue(fieldExplicit.required, "With explicitNulls = true, a nullable property without default is required")
+
+        assertTrue(fieldImplicit.nullable)
+        assertTrue(!fieldImplicit.required, "With explicitNulls = false, a nullable property without default is optional")
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    @Test
+    fun anOmittedNonNullDefaultIsUnknownRatherThanFabricatedAsJsonNull() {
+        val schema = propertySchemaOf(OmittedDefault.serializer(), json)
+        val field = schema.children.single()
+
+        assertTrue(field.nullable)
+        assertTrue(!field.required)
+        assertNull(field.default, "An omitted non-null default with EncodeDefault(NEVER) must remain unknown (null), not JsonNull")
     }
 
     @Test
@@ -227,6 +258,15 @@ class PropertySchemasTest {
             require(width > 0) { "width must be positive" }
         }
     }
+
+    @Serializable
+    private data class NullableRequired(val label: String?)
+
+    @OptIn(ExperimentalSerializationApi::class)
+    @Serializable
+    private data class OmittedDefault(
+        @EncodeDefault(EncodeDefault.Mode.NEVER) val label: String? = "known",
+    )
 
     @Serializable
     private data class Tree(val name: String = "node", val child: Tree? = null)

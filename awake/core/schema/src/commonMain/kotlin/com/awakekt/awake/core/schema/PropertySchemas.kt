@@ -88,7 +88,13 @@ fun <T> propertySchemaOf(
 ): PropertySchema {
     val defaults = deriveDefaults(serializer, json)
         ?: deriveDefaults(serializer, json, placeholderSeed(serializer.descriptor, depth = 0))
-    return serializer.descriptor.toPropertySchema(SchemaOptions(semanticTypes, defaults))
+    return serializer.descriptor.toPropertySchema(
+        SchemaOptions(
+            semanticTypes = semanticTypes,
+            defaults = defaults,
+            explicitNulls = json.configuration.explicitNulls,
+        ),
+    )
 }
 
 /** A neutral value for every required property of [descriptor], enough to build the type if it has no other checks. */
@@ -189,15 +195,16 @@ private class SchemaWalker(private val options: SchemaOptions) {
             val name = descriptor.getElementName(index)
             val child = descriptor.getElementDescriptor(index)
             val optional = descriptor.isElementOptional(index)
-            val member = Member(name, child, required = !optional, annotations = descriptor.getElementAnnotations(index))
+            val required = if (child.isNullable && !options.explicitNulls) false else !optional
+            val member = Member(name, child, required = required, annotations = descriptor.getElementAnnotations(index))
             // A required property has no default; whatever the defaults hold for it is a placeholder.
-            val default = if (optional) defaultOf(defaults, name, child.isNullable) else null
+            val default = if (optional) defaultOf(defaults, name) else null
             build(member, default, at.into(name))
         }
 
-    /** The JSON default of one property, or `JsonNull` for a nullable one the defaults left out. */
-    private fun defaultOf(defaults: JsonElement?, name: String, nullableWithDefault: Boolean): JsonElement? =
-        (defaults as? JsonObject)?.let { it[name] ?: JsonNull.takeIf { nullableWithDefault } }
+    /** The JSON default of one property from the derived defaults object. */
+    private fun defaultOf(defaults: JsonElement?, name: String): JsonElement? =
+        (defaults as? JsonObject)?.get(name)
 
     private fun readAnnotations(annotations: List<Annotation>, kind: PropertyKind, path: String): Pair<PropertyConstraints, PropertyHints> {
         val numeric = kind == PropertyKind.Float || kind == PropertyKind.Int

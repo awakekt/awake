@@ -31,14 +31,21 @@ class NumericFieldDecisionsTest {
         return SceneComponentCatalog.schemas().flatMap { (id, schema) -> numericIn(id, schema) }
     }
 
-    /** The numbers in [schema]: its own, a nested object's, and a list element's when that is an object. */
+    /** The numbers in [schema]: its own, a nested object's, semantic types, and collection elements. */
     private fun numericIn(path: String, schema: PropertySchema): List<Field> = schema.children.flatMap { child ->
         val childPath = "$path.${child.name}"
         when (child.kind) {
             PropertyKind.Float, PropertyKind.Int -> listOf(Field(childPath, child))
-            PropertyKind.Object -> numericIn(childPath, child)
-            PropertyKind.List, PropertyKind.Map -> child.element?.takeIf { it.kind == PropertyKind.Object }
-                ?.let { numericIn("$childPath[]", it) }.orEmpty()
+            PropertyKind.Object, PropertyKind.Vector3, PropertyKind.Color -> numericIn(childPath, child)
+            PropertyKind.List, PropertyKind.Map -> {
+                child.element?.let { elem ->
+                    when (elem.kind) {
+                        PropertyKind.Float, PropertyKind.Int -> listOf(Field("$childPath[]", elem))
+                        PropertyKind.Object, PropertyKind.Vector3, PropertyKind.Color -> numericIn("$childPath[]", elem)
+                        else -> emptyList()
+                    }
+                }.orEmpty()
+            }
             else -> emptyList()
         }
     }
@@ -93,5 +100,48 @@ class NumericFieldDecisionsTest {
         }
 
         assertTrue(problems.isEmpty(), problems.joinToString("\n"))
+    }
+
+    @Test
+    fun numericCoverageTraversesSemanticTypesAndCollectionElements() {
+        // Regression: ensure vector/color fields and scalar list elements cannot bypass coverage.
+        val fakeSchema = PropertySchema(
+            name = "fake",
+            kind = PropertyKind.Object,
+            typeName = "Fake",
+            nullable = false,
+            required = true,
+            default = null,
+            children = listOf(
+                PropertySchema(
+                    name = "pos",
+                    kind = PropertyKind.Vector3,
+                    typeName = "Vec3",
+                    nullable = false,
+                    required = true,
+                    default = null,
+                    children = listOf(
+                        PropertySchema(name = "x", kind = PropertyKind.Float, typeName = "Float", nullable = false, required = true, default = null),
+                        PropertySchema(name = "y", kind = PropertyKind.Float, typeName = "Float", nullable = false, required = true, default = null),
+                        PropertySchema(name = "z", kind = PropertyKind.Float, typeName = "Float", nullable = false, required = true, default = null),
+                    ),
+                ),
+                PropertySchema(
+                    name = "values",
+                    kind = PropertyKind.List,
+                    typeName = "List",
+                    nullable = false,
+                    required = true,
+                    default = null,
+                    element = PropertySchema(name = "element", kind = PropertyKind.Int, typeName = "Int", nullable = false, required = true, default = null),
+                ),
+            ),
+        )
+
+        val traversed = numericIn("fake", fakeSchema).map { it.path }
+        assertTrue("fake.pos.x" in traversed)
+        assertTrue("fake.pos.y" in traversed)
+        assertTrue("fake.pos.z" in traversed)
+        assertTrue("fake.values[]" in traversed)
     }
 }
