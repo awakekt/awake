@@ -57,8 +57,10 @@ The shared Core train is derived dynamically from Git tags using `git describe` 
 | **Release Candidate** | `v0.1.0-rc.1`    | `0.1.0-rc.1`    | Final sanity checks before production release.            |
 | **Stable Release**    | `v0.1.0`         | `0.1.0`         | Production general availability release on Maven Central. |
 
-> **SNAPSHOT Behavior:** Any local or CI commit after a tag automatically appends `-SNAPSHOT` (e.g.,
-`0.1.0-alpha.2-SNAPSHOT`), ensuring unreleased local builds never collide with published releases.
+> **SNAPSHOT Behavior:** A commit after a Core tag increments its trailing number and appends
+`-SNAPSHOT`: after stable `v0.1.0`, main publishes `0.1.1-SNAPSHOT`; after `v0.1.0-alpha.2`, it
+publishes `0.1.0-alpha.3-SNAPSHOT`. The exact tagged commit retains the release version and is
+published by the tag workflow. A main run on that commit skips snapshot upload.
 
 ### Cutting a Core release
 
@@ -99,7 +101,9 @@ One person or agent owns a release from cut to downstream bump. Before cutting, 
    `vulkan-vA.B.C` on the **same commit** and push it once Core is on Central. A Vulkan release
    pins the Core release it was built with; pairing it with a newer Core can fail at runtime.
 4. **Downstream:** bump awake-studio, awake-template, awake-project-template and
-   awake-plugin-template to the new Core and Vulkan versions, and WebGPU to `<core>-SNAPSHOT`.
+   awake-plugin-template to the new Core and Vulkan releases. WebGPU stays on the Core train's
+   `<next patch>-SNAPSHOT` after a stable cut (for `0.1.0`, pin `0.1.1-SNAPSHOT` once its main
+   Snapshot run succeeds). Do not append `-SNAPSHOT` to the stable version.
    Re-record moved baselines only after stating which ones should move and why.
 5. Close the milestone.
 
@@ -132,10 +136,24 @@ Vulkan-family source/build change occurs; `vulkan-v*` tags publish only the thre
 Consumers normally declare the modules they directly use and let Maven/Gradle resolve their
 published dependency metadata; they do not need to list the full internal closure themselves.
 
+The Consumer gate publishes Core locally for a Core-only change and uses the latest reachable
+Vulkan release tag. Before building either template it waits up to one hour for that release's
+POMs, Gradle module metadata, and all declared platform files to be served by Maven Central.
+A tag alone does not prove availability. Missing files and transient repository failures are
+retried within that deadline; authentication and other permanent HTTP errors fail immediately.
+When the job publishes Vulkan locally, this remote availability check is unnecessary.
+
+Publication-family selection skips Central preparation and automatic-release registration as
+well as uploads. An excluded stable module must not register an empty release bundle during a
+Core snapshot run. A run with no selected publications succeeds without contacting Central;
+errors from selected uploads still fail the run.
+
 Release verification rejects SNAPSHOT dependencies instead of stripping the suffix and guessing a
 stable version. The WebGPU backend builds on upstream wgpu4k snapshots, so it is held out of
 releases and publishes snapshots only (its last Central release is `0.1.0-alpha.4`); consumers pin
-it to `<core>-SNAPSHOT` from Central's snapshot repository. Core releases are not blocked by it.
+it to `<next patch>-SNAPSHOT` after a stable Core release, from Central's snapshot repository.
+Verify that snapshot's successful upload before updating downstream pins. Core releases are not
+blocked by it.
 
 ---
 
