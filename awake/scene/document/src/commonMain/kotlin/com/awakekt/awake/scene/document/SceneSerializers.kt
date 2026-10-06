@@ -31,6 +31,14 @@ object SceneSerializers {
     }
 
     /**
+     * The serializers registered so far, in registration order.
+     *
+     * A snapshot: a component registered afterwards is not in a list already returned, so ask again after
+     * the plugins and kits that register components have been installed.
+     */
+    fun registeredSerializers(): List<KSerializer<out SceneComponent>> = registered.values.toList()
+
+    /**
      * Constructs a [SerializersModule] containing all registered polymorphic [SceneComponent] serializers.
      */
     fun buildSerializersModule(): SerializersModule = SerializersModule {

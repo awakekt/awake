@@ -5,23 +5,8 @@
  */
 package com.awakekt.awake.scene.runtime
 
-import com.awakekt.awake.ai.behavior.registerAiBehaviors
-import com.awakekt.awake.scene.binding.SceneComponentRegistry
-import com.awakekt.awake.scene.blueprint.registerBlueprints
-import com.awakekt.awake.scene.character.registerCharacter
-import com.awakekt.awake.scene.controls.movement.registerControls
-import com.awakekt.awake.scene.document.SceneComponent
-import com.awakekt.awake.scene.document.SceneSerializers
-import com.awakekt.awake.scene.physics.registerPhysics
-import kotlinx.serialization.DeserializationStrategy
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.SerializationStrategy
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.descriptors.elementNames
-import kotlinx.serialization.modules.SerializersModuleCollector
+import com.awakekt.awake.scene.document.SceneComponentCatalog
 import java.io.File
-import kotlin.reflect.KClass
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -36,63 +21,21 @@ class SceneComponentReferenceDocsTest {
 
     @Test
     fun everyRegisteredComponentHasARowAndEveryFieldIsListed() {
-        val registered = registeredComponents()
+        installEveryComponentKit()
+        val registered = SceneComponentCatalog.schemas()
         val rows = Regex("""^\| \[`([a-z_]+)`]\(#""", RegexOption.MULTILINE)
             .findAll(page).map { it.groupValues[1] }.toSet()
 
         assertEquals(registered.keys.sorted(), rows.sorted(), "component ids on the reference page")
-        val missing = registered.flatMap { (id, descriptor) ->
+        val missing = registered.flatMap { (id, schema) ->
             val section = page.substringAfter("## `$id`\n", missingDelimiterValue = "")
                 .substringBefore("\n## ")
             if (section.isEmpty()) {
                 listOf("no `## \\`$id\\`` section")
             } else {
-                descriptor.elementNames.filter { "| `$it` |" !in section }.map { "`$id` field `$it` has no row" }
+                schema.children.map { it.name }.filter { "| `$it` |" !in section }.map { "`$id` field `$it` has no row" }
             }
         }
         assertTrue(missing.isEmpty(), missing.joinToString("\n"))
-    }
-
-    /** Every component id the engine's registries install, with its serialized shape. */
-    @OptIn(ExperimentalSerializationApi::class)
-    private fun registeredComponents(): Map<String, SerialDescriptor> {
-        DefaultSceneComponentResolvers.install()
-        SceneComponentRegistry()
-            .registerControls()
-            .registerPhysics()
-            .registerCharacter()
-            .registerAiBehaviors()
-            .registerBlueprints()
-
-        val found = sortedMapOf<String, SerialDescriptor>()
-        SceneSerializers.buildSerializersModule().dumpTo(
-            object : SerializersModuleCollector {
-                override fun <Base : Any, Sub : Base> polymorphic(
-                    baseClass: KClass<Base>,
-                    actualClass: KClass<Sub>,
-                    actualSerializer: KSerializer<Sub>,
-                ) {
-                    if (baseClass == SceneComponent::class) {
-                        found[actualSerializer.descriptor.serialName] = actualSerializer.descriptor
-                    }
-                }
-
-                override fun <T : Any> contextual(
-                    kClass: KClass<T>,
-                    provider: (typeArgumentsSerializers: List<KSerializer<*>>) -> KSerializer<*>,
-                ) = Unit
-
-                override fun <Base : Any> polymorphicDefaultSerializer(
-                    baseClass: KClass<Base>,
-                    defaultSerializerProvider: (value: Base) -> SerializationStrategy<Base>?,
-                ) = Unit
-
-                override fun <Base : Any> polymorphicDefaultDeserializer(
-                    baseClass: KClass<Base>,
-                    defaultDeserializerProvider: (className: String?) -> DeserializationStrategy<Base>?,
-                ) = Unit
-            },
-        )
-        return found
     }
 }

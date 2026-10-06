@@ -82,6 +82,17 @@ public final class com/awakekt/awake/scene/document/SceneComponent$DefaultImpls 
 	public static fun validate (Lcom/awakekt/awake/scene/document/SceneComponent;Ljava/lang/String;Ljava/util/List;)Ljava/util/List;
 }
 
+public final class com/awakekt/awake/scene/document/SceneComponentCatalog {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/document/SceneComponentCatalog;
+	public static final field NODE_SCHEMA_DEPTH I
+	public final fun descriptor (Ljava/lang/String;)Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun getSemanticTypes ()Ljava/util/Map;
+	public final fun ids ()Ljava/util/List;
+	public final fun nodeSchema ()Lcom/awakekt/awake/core/schema/PropertySchema;
+	public final fun schema (Ljava/lang/String;)Lcom/awakekt/awake/core/schema/PropertySchema;
+	public final fun schemas ()Ljava/util/Map;
+}
+
 public final class com/awakekt/awake/scene/document/SceneCustomComponent : com/awakekt/awake/scene/document/SceneComponent {
 	public static final field Companion Lcom/awakekt/awake/scene/document/SceneCustomComponent$Companion;
 	public fun <init> (Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;)V
@@ -444,6 +455,7 @@ public final class com/awakekt/awake/scene/document/SceneSerializers {
 	public final fun buildSerializersModule ()Lkotlinx/serialization/modules/SerializersModule;
 	public final fun createJson ()Lkotlinx/serialization/json/Json;
 	public final fun register (Lkotlin/reflect/KClass;Lkotlinx/serialization/KSerializer;)V
+	public final fun registeredSerializers ()Ljava/util/List;
 }
 
 public final class com/awakekt/awake/scene/document/SceneTransform {

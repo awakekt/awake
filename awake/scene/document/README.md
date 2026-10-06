@@ -21,6 +21,7 @@ awake/scene/document/src/commonMain/kotlin/com/awakekt/awake/scene/document/
 ├── ScenePrefabLink.kt             # ScenePrefabLink AST node
 ├── ScenePrefab.kt                 # ScenePrefab asset template
 ├── SceneSerializers.kt            # Dynamic polymorphic serializer registry
+├── SceneComponentCatalog.kt       # Read-only list of registered components: ids, descriptors, property schemas
 ├── SceneLoader.kt                 # JSON encode, decode, resource loader & AST normalizer
 ├── SceneWriter.kt                 # Multiplatform file export contract (writeSceneDocument)
 ├── SceneCatalog.kt                # Scene catalog indexer (SceneCatalog & SceneCatalogEntry)
@@ -57,6 +58,17 @@ SceneSerializers.register(MyComponent::class, MyComponent.serializer())
 ```
 
 When using `SceneComponentRegistry.registerGlobal(binding)` in `:awake:scene:binding`, the binding's serializer is automatically registered with `SceneSerializers`.
+
+### 4. Reading what is registered
+`SceneSerializers` answers one question: how to read and write the component with a given id. A tool that needs to know *which* components exist and what fields each has asks `SceneComponentCatalog` instead:
+
+```kotlin
+SceneComponentCatalog.ids()                 // every registered component id, sorted
+SceneComponentCatalog.schema("spin_control") // its fields, kinds, defaults and required flags
+SceneComponentCatalog.nodeSchema()           // a SceneNode, including its transform
+```
+
+It reflects what is registered when it is asked, so ask after the kits and plugins have installed their components. A node is not a component, so its `transform` is in `nodeSchema()`, not under a component id. The property schemas come from `:awake:core:schema`.
 
 ---
 
