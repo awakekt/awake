@@ -28,7 +28,7 @@
       "name": "heightfield-terrain",
       "components": [
         {
-          "component": "meshRenderer",
+          "component": "mesh_renderer",
           "mesh": "heightfield-terrain",
           "material": "lit-shadow",
           "cullMode": "Back"
@@ -55,7 +55,7 @@
       },
       "components": [
         {
-          "component": "meshRenderer",
+          "component": "mesh_renderer",
           "mesh": "cube",
           "material": "lit-shadow",
           "cullMode": "Back"
@@ -73,7 +73,7 @@
       },
       "components": [
         {
-          "component": "meshRenderer",
+          "component": "mesh_renderer",
           "mesh": "cube",
           "material": "lit-shadow",
           "cullMode": "Back"
@@ -91,7 +91,7 @@
       },
       "components": [
         {
-          "component": "meshRenderer",
+          "component": "mesh_renderer",
           "mesh": "cube",
           "material": "lit-shadow",
           "cullMode": "Back"
@@ -109,7 +109,7 @@
       },
       "components": [
         {
-          "component": "meshRenderer",
+          "component": "mesh_renderer",
           "mesh": "cube",
           "material": "lit-shadow",
           "cullMode": "Back"
@@ -127,7 +127,7 @@
       },
       "components": [
         {
-          "component": "meshRenderer",
+          "component": "mesh_renderer",
           "mesh": "wedge",
           "material": "lit-shadow",
           "cullMode": "Back"
@@ -150,7 +150,7 @@
       },
       "components": [
         {
-          "component": "meshRenderer",
+          "component": "mesh_renderer",
           "mesh": "cube",
           "material": "lit-shadow",
           "cullMode": "Back"
@@ -173,7 +173,7 @@
       },
       "components": [
         {
-          "component": "meshRenderer",
+          "component": "mesh_renderer",
           "mesh": "cube",
           "material": "lit-shadow",
           "cullMode": "Back"
@@ -196,7 +196,7 @@
       },
       "components": [
         {
-          "component": "meshRenderer",
+          "component": "mesh_renderer",
           "mesh": "cube",
           "material": "lit-shadow",
           "cullMode": "Back"
@@ -219,7 +219,7 @@
       },
       "components": [
         {
-          "component": "meshRenderer",
+          "component": "mesh_renderer",
           "mesh": "cube",
           "material": "lit-shadow",
           "cullMode": "Back"
@@ -242,7 +242,7 @@
       },
       "components": [
         {
-          "component": "meshRenderer",
+          "component": "mesh_renderer",
           "mesh": "cube",
           "material": "lit-shadow",
           "cullMode": "Back"

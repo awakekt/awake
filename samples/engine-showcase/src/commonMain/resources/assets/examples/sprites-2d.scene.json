@@ -30,8 +30,8 @@
         "scale": { "x": 16.0, "y": 10.0, "z": 1.0 }
       },
       "components": [
-        { "component": "meshRenderer", "mesh": "sprite-quad", "material": "lit-shadow", "cullMode": "None" },
-        { "component": "pbrMaterial", "metallic": 0.0, "roughness": 0.95 }
+        { "component": "mesh_renderer", "mesh": "sprite-quad", "material": "lit-shadow", "cullMode": "None" },
+        { "component": "pbr_material", "metallic": 0.0, "roughness": 0.95 }
       ]
     },
     {
@@ -41,8 +41,8 @@
         "scale": { "x": 2.2, "y": 3.0, "z": 1.0 }
       },
       "components": [
-        { "component": "meshRenderer", "mesh": "sprite-quad", "material": "lit-shadow", "cullMode": "None" },
-        { "component": "pbrMaterial", "metallic": 0.0, "roughness": 0.4 }
+        { "component": "mesh_renderer", "mesh": "sprite-quad", "material": "lit-shadow", "cullMode": "None" },
+        { "component": "pbr_material", "metallic": 0.0, "roughness": 0.4 }
       ]
     },
     {
@@ -52,8 +52,8 @@
         "scale": { "x": 2.5, "y": 3.5, "z": 1.0 }
       },
       "components": [
-        { "component": "meshRenderer", "mesh": "sprite-quad", "material": "lit-shadow", "cullMode": "None" },
-        { "component": "pbrMaterial", "metallic": 0.0, "roughness": 0.3 }
+        { "component": "mesh_renderer", "mesh": "sprite-quad", "material": "lit-shadow", "cullMode": "None" },
+        { "component": "pbr_material", "metallic": 0.0, "roughness": 0.3 }
       ]
     },
     {
@@ -63,8 +63,8 @@
         "scale": { "x": 2.2, "y": 3.0, "z": 1.0 }
       },
       "components": [
-        { "component": "meshRenderer", "mesh": "sprite-quad", "material": "lit-shadow", "cullMode": "None" },
-        { "component": "pbrMaterial", "metallic": 0.0, "roughness": 0.4 }
+        { "component": "mesh_renderer", "mesh": "sprite-quad", "material": "lit-shadow", "cullMode": "None" },
+        { "component": "pbr_material", "metallic": 0.0, "roughness": 0.4 }
       ]
     }
   ]

@@ -134,6 +134,57 @@ Some fields also accept a second spelling:
 
 Issue paths use node names, or `#<index>` for an unnamed node, joined with `/`.
 
+## JSON Schema (Draft 2020-12)
+
+Awake provides machine-readable validation via standard JSON Schema (Draft 2020-12) generated directly from registered engine components (`SceneComponentCatalog`).
+
+### Schema identifier
+```text
+https://awakekt.com/schemas/v1/scene.schema.json
+```
+
+### Editor & AI Agent Integration
+To enable instant autocompletion, real-time type checking, and schema validation in editors such as VS Code, JetBrains IDEs, or in external AI generation tooling:
+
+1. Reference the schema directly at the top of your scene files:
+```json
+{
+  "$schema": "https://awakekt.com/schemas/v1/scene.schema.json",
+  "version": 1,
+  "name": "my-scene",
+  "nodes": []
+}
+```
+
+2. Or configure VS Code `settings.json`:
+```json
+{
+  "json.schemas": [
+    {
+      "fileMatch": ["*.scene.json"],
+      "url": "https://awakekt.com/schemas/v1/scene.schema.json"
+    }
+  ]
+}
+```
+
+### Exporting & Programmatic Validation
+You can generate the schema or validate scene JSON in Kotlin via:
+```kotlin
+// Export Draft 2020-12 schema object or string
+val schema = SceneDocumentJsonSchema.generate(SceneComponentCatalog)
+val schemaJson = SceneDocumentJsonSchema.generateString()
+
+// Validate a scene JSON document
+val validator = JsonSchemaValidator(schema)
+val issues = validator.validate(jsonElement)
+if (issues.isNotEmpty()) {
+    issues.forEach { println("${it.path}: ${it.message}") }
+}
+```
+
+The schema enforces strict validation (`additionalProperties: false`), correct data types, numeric ranges, required canonical snake_case component discriminators (`mesh_renderer`, `pbr_material`, `spin_control`, etc.), while leaving `custom` extension components open for arbitrary payloads.
+
 ## See also
 
 - [Scene document components](scene-document-components.md)

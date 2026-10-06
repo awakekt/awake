@@ -19,7 +19,7 @@
     {
       "name": "skinned-mesh",
       "components": [
-        { "component": "meshRenderer", "mesh": "skinned-mesh", "material": "skinned-material" }
+        { "component": "mesh_renderer", "mesh": "skinned-mesh", "material": "skinned-material" }
       ]
     }
   ]

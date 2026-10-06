@@ -20,8 +20,8 @@
       "name": "ground",
       "transform": { "scale": { "x": 8.0, "y": 1.0, "z": 8.0 } },
       "components": [
-        { "component": "meshRenderer", "mesh": "ground", "material": "lit-shadow", "cullMode": "None" },
-        { "component": "pbrMaterial", "metallic": 0.0, "roughness": 0.9 }
+        { "component": "mesh_renderer", "mesh": "ground", "material": "lit-shadow", "cullMode": "None" },
+        { "component": "pbr_material", "metallic": 0.0, "roughness": 0.9 }
       ]
     },
     {

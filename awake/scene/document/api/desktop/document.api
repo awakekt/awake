@@ -1,3 +1,21 @@
+public final class com/awakekt/awake/scene/document/JsonSchemaValidationError {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lcom/awakekt/awake/scene/document/JsonSchemaValidationError;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/document/JsonSchemaValidationError;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/scene/document/JsonSchemaValidationError;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMessage ()Ljava/lang/String;
+	public final fun getPath ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/scene/document/JsonSchemaValidator {
+	public fun <init> (Lkotlinx/serialization/json/JsonObject;)V
+	public final fun validate (Lkotlinx/serialization/json/JsonElement;)Ljava/util/List;
+}
+
 public final class com/awakekt/awake/scene/document/SceneCatalog {
 	public fun <init> ()V
 	public final fun clear ()V
@@ -158,6 +176,16 @@ public final synthetic class com/awakekt/awake/scene/document/SceneDocument$$ser
 
 public final class com/awakekt/awake/scene/document/SceneDocument$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/document/SceneDocumentJsonSchema {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/document/SceneDocumentJsonSchema;
+	public static final field SCHEMA_DIALECT Ljava/lang/String;
+	public static final field SCHEMA_ID Ljava/lang/String;
+	public final fun generate (Lcom/awakekt/awake/scene/document/SceneComponentCatalog;)Lkotlinx/serialization/json/JsonObject;
+	public static synthetic fun generate$default (Lcom/awakekt/awake/scene/document/SceneDocumentJsonSchema;Lcom/awakekt/awake/scene/document/SceneComponentCatalog;ILjava/lang/Object;)Lkotlinx/serialization/json/JsonObject;
+	public final fun generateString (Lcom/awakekt/awake/scene/document/SceneComponentCatalog;)Ljava/lang/String;
+	public static synthetic fun generateString$default (Lcom/awakekt/awake/scene/document/SceneDocumentJsonSchema;Lcom/awakekt/awake/scene/document/SceneComponentCatalog;ILjava/lang/Object;)Ljava/lang/String;
 }
 
 public final class com/awakekt/awake/scene/document/SceneDocumentKt {
