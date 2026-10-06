@@ -21,6 +21,10 @@ public final class com/awakekt/awake/scene/gltf/GltfAssetResolver : com/awakekt/
 	public final fun setAssetSource (Lcom/awakekt/awake/core/io/AssetSource;)V
 }
 
+public final class com/awakekt/awake/scene/gltf/GltfAssetResolverKt {
+	public static final fun readGltfScene (Ljava/lang/String;Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
 public final class com/awakekt/awake/scene/gltf/GltfMaterialParameters {
 	public fun <init> (FFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/render/pipeline/AlphaMode;)V
 	public final fun component1 ()F

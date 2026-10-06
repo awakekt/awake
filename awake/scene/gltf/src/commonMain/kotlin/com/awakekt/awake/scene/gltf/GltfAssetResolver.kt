@@ -404,12 +404,21 @@ private suspend fun GltfAssetResolver.parseSkinnedScene(path: String, bytes: Byt
 }
 
 private suspend fun GltfAssetResolver.parseStaticScene(path: String, bytes: ByteArray): LoadedScene =
+    parseGltfScene(path, bytes, AssetSource { assetPath -> readAsset(assetPath) })
+
+/**
+ * Reads the model at [path] from [source] as a [LoadedScene]: a `.glb`, or a `.gltf` with its `.bin`
+ * and image sidecars, which are resolved next to it.
+ */
+suspend fun readGltfScene(path: String, source: AssetSource): LoadedScene =
+    parseGltfScene(path, source.read(AssetPath(path)).getOrThrow(), source)
+
+private suspend fun parseGltfScene(path: String, bytes: ByteArray, source: AssetSource): LoadedScene =
     if (bytes.isGlb()) {
         GltfParser.parseScene(bytes)
     } else {
         val json = bytes.decodeToString()
-        val external = GltfParser.loadExternalResources(json, AssetPath(path), AssetSource { assetPath -> readAsset(assetPath) }).getOrThrow()
-        GltfParser.parseScene(json.toEmbeddedGlb(), external)
+        GltfParser.parseScene(json.toEmbeddedGlb(), GltfParser.loadExternalResources(json, AssetPath(path), source).getOrThrow())
     }
 
 private fun ByteArray.isGlb(): Boolean =

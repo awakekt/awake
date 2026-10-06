@@ -58,6 +58,17 @@ data class SceneSphereShape(val radius: Float = HALF) : SceneCollisionShape
 data class SceneCapsuleShape(val halfHeight: Float = HALF, val radius: Float = HALF) : SceneCollisionShape
 
 /**
+ * The triangles of a model asset, scaled by the node: a static collider that matches the model, so
+ * a bridge can be walked on and an arch walked under. [MeshColliderSystem] builds it.
+ *
+ * @property mesh Project path of the `.glb` or `.gltf` model.
+ * @property primitive Which primitive of the model to collide with, counted in node order; `null` merges them all.
+ */
+@Serializable
+@SerialName("mesh")
+data class SceneMeshShape(val mesh: String, val primitive: Int? = null) : SceneCollisionShape
+
+/**
  * A collider or rigid body, as authored in a scene. [layer] is a collision-layer index; null takes
  * the default for [motion]. A [sensor] detects what passes through it instead of blocking it.
  *
@@ -79,15 +90,30 @@ data class ScenePhysicsBody(
             is SceneBoxShape -> shape.halfExtents.let { it.x > 0f && it.y > 0f && it.z > 0f }
             is SceneSphereShape -> shape.radius > 0f
             is SceneCapsuleShape -> shape.halfHeight > 0f && shape.radius > 0f
+            is SceneMeshShape -> true
         }
         if (!positive) add(SceneValidationIssue(path, "physics_body.shape sizes must be greater than 0"))
+        if (shape is SceneMeshShape) addAll(shape.validate(path))
         if (layer != null && layer < 0) add(SceneValidationIssue(path, "physics_body.layer must not be negative"))
+    }
+
+    // A triangle mesh is a surface with no inside, so it can neither move nor be a sensor.
+    private fun SceneMeshShape.validate(path: String): List<SceneValidationIssue> = buildList {
+        if (mesh.isBlank()) add(SceneValidationIssue(path, "physics_body.shape.mesh must name a model"))
+        if (primitive != null && primitive < 0) add(SceneValidationIssue(path, "physics_body.shape.primitive must not be negative"))
+        if (motion != MotionType.STATIC) {
+            val message = "physics_body with a mesh shape must be STATIC, not $motion; a moving body needs a box, sphere or capsule"
+            add(SceneValidationIssue(path, message))
+        }
+        if (sensor) add(SceneValidationIssue(path, "physics_body with a mesh shape cannot be a sensor"))
     }
 }
 
 /**
- * Loads `physics_body` into a [PhysicsBody]; [PhysicsSystem] builds the live body. A body whose shape
- * a scene can't describe, such as a terrain heightfield, is left out when saving.
+ * Loads `physics_body` into a [PhysicsBody]; [PhysicsSystem] builds the live body. A `mesh` shape
+ * loads as a [MeshCollider] instead, which [MeshColliderSystem] turns into the body, and saves as
+ * its model reference. A body whose shape a scene can't describe, such as a terrain heightfield, is
+ * left out when saving.
  */
 object PhysicsBodyBinding : SceneComponentBinding<PhysicsBody, ScenePhysicsBody> {
     override val componentClass: KClass<PhysicsBody> = PhysicsBody::class
@@ -100,14 +126,27 @@ object PhysicsBodyBinding : SceneComponentBinding<PhysicsBody, ScenePhysicsBody>
         component: ScenePhysicsBody,
         context: SceneResolutionContext,
     ) {
+        val layer = component.layer?.let(::CollisionLayer) ?: defaultLayerFor(component.motion)
+        if (component.shape is SceneMeshShape) {
+            world.add(entity, MeshCollider(component.shape.mesh, component.shape.primitive, layer))
+            return
+        }
         world.add(
             entity,
             PhysicsBody(
                 shape = component.shape.toPhysicsShape(),
                 motionType = component.motion,
-                layer = component.layer?.let(::CollisionLayer) ?: defaultLayerFor(component.motion),
+                layer = layer,
                 sensor = component.sensor,
             ),
+        )
+    }
+
+    override fun exportFrom(world: World, entity: Entity): ScenePhysicsBody? {
+        val collider = world.get<MeshCollider>(entity) ?: return super.exportFrom(world, entity)
+        return ScenePhysicsBody(
+            shape = SceneMeshShape(collider.mesh, collider.primitive),
+            layer = collider.layer.index.takeIf { collider.layer != defaultLayerFor(MotionType.STATIC) },
         )
     }
 
@@ -129,6 +168,7 @@ private fun SceneCollisionShape.toPhysicsShape(): PhysicsShape = when (this) {
     is SceneBoxShape -> BoxShape(Vec3f(halfExtents.x, halfExtents.y, halfExtents.z))
     is SceneSphereShape -> SphereShape(radius)
     is SceneCapsuleShape -> CapsuleShape(halfHeight, radius)
+    is SceneMeshShape -> error("a mesh shape loads as a MeshCollider, not a PhysicsBody")
 }
 
 private fun PhysicsShape.toSceneShape(): SceneCollisionShape? = when (this) {
