@@ -55,7 +55,7 @@ class ParticleSystemTest {
     fun spawnRateConvergesToSpawnRateTimesDelta() {
         val world = World()
         world.add(world.create(), emitter(maxParticles = 100, spawnRate = 10f))
-        val system = ParticleSystem()
+        val system = ParticleSystem(EmitterPlacement.None)
 
         // 10 particles/second * 1 second, in 60 steps of 1/60s -- exact since 10/60 accumulates
         // to whole particles evenly (no fractional remainder lost or double-counted).
@@ -72,7 +72,7 @@ class ParticleSystemTest {
         // lifetime long relative to the 1s step below -- a particle spawned this frame must
         // still be alive when the count is asserted, not die same-frame from age==lifetime.
         world.add(world.create(), emitter(maxParticles = 3, spawnRate = 1000f, lifetime = 10f))
-        val system = ParticleSystem()
+        val system = ParticleSystem(EmitterPlacement.None)
 
         system.update(world, 1f) // would spawn 1000 particles/second if the pool allowed it
 
@@ -84,7 +84,7 @@ class ParticleSystemTest {
     fun aParticleDiesExactlyAtItsLifetimeAndItsSlotIsReusable() {
         val world = World()
         world.add(world.create(), emitter(maxParticles = 1, spawnRate = 1000f, lifetime = 0.5f))
-        val system = ParticleSystem()
+        val system = ParticleSystem(EmitterPlacement.None)
 
         system.update(world, 0.1f) // spawns into the pool's one slot
         val emitter = world.family<ParticleEmitter>().components().first()
@@ -108,7 +108,7 @@ class ParticleSystemTest {
     fun aliveParticlesMoveByVelocityTimesDelta() {
         val world = World()
         world.add(world.create(), emitter(maxParticles = 1, spawnRate = 1000f, lifetime = 10f))
-        val system = ParticleSystem()
+        val system = ParticleSystem(EmitterPlacement.None)
 
         system.update(world, 0.01f) // spawn
         val particle = world.family<ParticleEmitter>().components().first().particles[0]
@@ -125,7 +125,7 @@ class ParticleSystemTest {
             world.create(),
             emitter(maxParticles = 1, spawnRate = 1000f, lifetime = 1f, startAlpha = 0.8f),
         )
-        val system = ParticleSystem()
+        val system = ParticleSystem(EmitterPlacement.None)
 
         system.update(world, 0.001f) // spawn, age ~= 0
         val particle = world.family<ParticleEmitter>().components().first().particles[0]
@@ -158,7 +158,7 @@ class ParticleSystemTest {
                 lifecycle = ParticleLifecycle(burstCount = 5),
             ),
         )
-        val system = ParticleSystem()
+        val system = ParticleSystem(EmitterPlacement.None)
 
         system.update(world, 0.01f) // spawns all 5 (burstCount reached), still alive
         assertEquals(1, world.family<ParticleEmitter>().size, "burst entity still alive mid-life")
@@ -171,7 +171,7 @@ class ParticleSystemTest {
     fun nonBurstEmitterIsNeverDestroyed() {
         val world = World()
         world.add(world.create(), emitter(maxParticles = 1, spawnRate = 1000f, lifetime = 0.1f))
-        val system = ParticleSystem()
+        val system = ParticleSystem(EmitterPlacement.None)
 
         repeat(10) { system.update(world, 0.5f) } // many spawn/die cycles
         assertEquals(
@@ -206,7 +206,7 @@ class ParticleSystemTest {
                 motion = ParticleMotion(baseVelocity = baseVelocity, coneHalfAngleDegrees = 30f),
             ),
         )
-        val system = ParticleSystem()
+        val system = ParticleSystem(EmitterPlacement.None)
         system.update(world, 1f) // spawns into every slot
 
         val emitter = world.family<ParticleEmitter>().components().first()
@@ -241,7 +241,7 @@ class ParticleSystemTest {
                 ),
             ),
         )
-        val system = ParticleSystem()
+        val system = ParticleSystem(EmitterPlacement.None)
         // A small delta -- spawn() and advance() share it within one update() call, so a large
         // delta (e.g. 1f) would both spawn every particle AND move them 2 units/sec * 1s toward
         // origin before this test ever inspects a spawn position. 0.01s of drift at speed 2 is
@@ -284,7 +284,7 @@ class ParticleSystemTest {
                 ground = ParticleGround(groundY = 0f),
             ),
         )
-        val system = ParticleSystem()
+        val system = ParticleSystem(EmitterPlacement.None)
 
         system.update(world, 0.01f) // spawn near y=5
         system.update(world, 1f) // -10 units/sec for 1s would put it well below ground
@@ -316,7 +316,7 @@ class ParticleSystemTest {
             ),
         )
 
-        ParticleSystem().update(world, 1f / 60f)
+        ParticleSystem(EmitterPlacement.None).update(world, 1f / 60f)
 
         val live = requireNotNull(world.get<ParticleEmitter>(entity)).particles.filter { it.alive }
         assertEquals(8, live.size)
@@ -410,7 +410,7 @@ class ParticleSystemTest {
             ),
         )
 
-        ParticleSystem().update(world, 0.016f)
+        ParticleSystem(EmitterPlacement.None).update(world, 0.016f)
 
         assertEquals(Vec3f(0f, 0f, 0f), requireNotNull(world.get<ParticleEmitter>(emitterEntity)).origin)
     }
@@ -430,7 +430,7 @@ class ParticleSystemTest {
                 ),
             ),
         )
-        val system = ParticleSystem()
+        val system = ParticleSystem(EmitterPlacement.None)
 
         system.update(world, 0.001f) // spawn, age ~= 0
         val emitter = world.family<ParticleEmitter>().components().first()
@@ -460,7 +460,7 @@ class ParticleSystemTest {
                 dynamics = ParticleDynamics(dynamicSpawnRate = { liveRate }),
             ),
         )
-        val system = ParticleSystem()
+        val system = ParticleSystem(EmitterPlacement.None)
 
         system.update(world, 1f) // liveRate == 0 -- static spawnRate must be ignored
         val emitter = world.family<ParticleEmitter>().components().first()
@@ -492,7 +492,7 @@ class ParticleSystemTest {
                 ground = ParticleGround(groundY = 0f, groundHeightProvider = { _, _ -> 2f }),
             ),
         )
-        val system = ParticleSystem()
+        val system = ParticleSystem(EmitterPlacement.None)
 
         system.update(world, 0.01f)
         system.update(world, 1f)
@@ -521,7 +521,7 @@ class ParticleSystemTest {
                 ),
             ),
         )
-        val system = ParticleSystem()
+        val system = ParticleSystem(EmitterPlacement.None)
 
         system.update(world, 0.01f) // spawn, velocity == baseVelocity exactly
         val particle = world.family<ParticleEmitter>().components().first().particles[0]
@@ -554,7 +554,7 @@ class ParticleSystemTest {
                 ),
             ),
         )
-        val system = ParticleSystem()
+        val system = ParticleSystem(EmitterPlacement.None)
 
         system.update(world, 0.01f) // spawn at (2, 0, 0)
         system.update(world, 1f) // well past lifetime -- dies this step
@@ -590,7 +590,7 @@ class ParticleSystemTest {
             children = listOf(child),
         )
         world.add(world.create(), parent)
-        val system = ParticleSystem()
+        val system = ParticleSystem(EmitterPlacement.None)
 
         system.update(world, 0.016f)
         assertEquals(
@@ -627,7 +627,7 @@ class ParticleSystemTest {
             children = listOf(child),
         )
         world.add(world.create(), parent)
-        val system = ParticleSystem()
+        val system = ParticleSystem(EmitterPlacement.None)
 
         system.update(world, 1f)
         assertTrue(
@@ -651,7 +651,7 @@ class ParticleSystemTest {
             children = listOf(child),
         )
         world.add(entity, parent)
-        val system = ParticleSystem()
+        val system = ParticleSystem(EmitterPlacement.None)
 
         system.update(world, 0.01f) // child spawns its one burst particle
         system.update(world, 1f) // well past the child's lifetime -- its burst is fully spent
@@ -682,7 +682,7 @@ class ParticleSystemTest {
                 ),
             ),
         )
-        val system = ParticleSystem()
+        val system = ParticleSystem(EmitterPlacement.None)
 
         system.update(world, 0.01f) // spawns at (0, 5, 0), inside the collider's XZ footprint
         system.update(world, 1f) // -10 units/sec for 1s would fall through the collider top
@@ -719,7 +719,7 @@ class ParticleSystemTest {
                 ),
             ),
         )
-        val system = ParticleSystem()
+        val system = ParticleSystem(EmitterPlacement.None)
 
         system.update(world, 0.01f)
         system.update(world, 1f)
@@ -743,7 +743,7 @@ class ParticleSystemTest {
                 visual = ParticleVisual(frameCount = 8, frameRate = 8f),
             ),
         )
-        val system = ParticleSystem()
+        val system = ParticleSystem(EmitterPlacement.None)
 
         system.update(world, 1f) // spawns into every slot in the same frame, age ~= 0 for all
         val emitter = world.family<ParticleEmitter>().components().first()
@@ -770,7 +770,7 @@ class ParticleSystemTest {
                 ground = ParticleGround(groundY = 0f, restitution = 0.5f),
             ),
         )
-        val system = ParticleSystem()
+        val system = ParticleSystem(EmitterPlacement.None)
 
         system.update(world, 0.01f) // spawn near y=5
         system.update(world, 1f) // falls well past groundY -- clamps and bounces this step
@@ -794,7 +794,7 @@ class ParticleSystemTest {
                 ground = ParticleGround(groundY = 0f, restitution = 0.5f),
             ),
         )
-        val system = ParticleSystem()
+        val system = ParticleSystem(EmitterPlacement.None)
 
         system.update(world, 0.01f)
         system.update(world, 1f)
@@ -819,7 +819,7 @@ class ParticleSystemTest {
                 ground = ParticleGround(groundY = 0f), // restitution defaults to 0f
             ),
         )
-        val system = ParticleSystem()
+        val system = ParticleSystem(EmitterPlacement.None)
 
         system.update(world, 0.01f)
         system.update(world, 1f)
@@ -837,7 +837,7 @@ class ParticleSystemTest {
         val world = World()
         val mesh = fakeMesh()
         val material = fakeMaterial()
-        val system = ParticleSystem()
+        val system = ParticleSystem(EmitterPlacement.None)
 
         val firstEntity = spawnParticleBurst(
             world, mesh, material, position = Vec3f(0f, 0f, 0f),
@@ -872,7 +872,7 @@ class ParticleSystemTest {
         val world = World()
         val mesh = fakeMesh()
         val material = fakeMaterial()
-        val system = ParticleSystem()
+        val system = ParticleSystem(EmitterPlacement.None)
 
         val firstEntity = spawnParticleBurst(
             world, mesh, material, position = Vec3f(0f, 0f, 0f),

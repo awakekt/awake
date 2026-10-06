@@ -47,13 +47,20 @@ private object Unplaced : EmitterPlacement {
  * on an entity of its own.
  *
  * It knows nothing of where an entity is. [placement] tells it, for an emitter that follows an entity
- * and for one that turns its spawns by the entity's rotation. The default places nothing, so such an
- * emitter does neither, and the system says so once in the log; pass [EmitterPlacement.None] to say
- * that is intended.
+ * and for one that turns its spawns by the entity's rotation. Pass [EmitterPlacement.None] to opt
+ * out explicitly when an emitter should not follow or turn with its entity.
  *
  * @param placement Where an emitter's entity is. See [EmitterPlacement].
  */
-class ParticleSystem(private val placement: EmitterPlacement = Unplaced) : System {
+class ParticleSystem(private val placement: EmitterPlacement) : System {
+    @Deprecated(
+        message = "ParticleSystem() disables entity following and orientation silently. Pass a placement " +
+            "(such as TransformPlacement) or pass EmitterPlacement.None explicitly.",
+        replaceWith = ReplaceWith("ParticleSystem(EmitterPlacement.None)"),
+        level = DeprecationLevel.WARNING,
+    )
+    constructor() : this(Unplaced)
+
     private val spentEntities = ArrayList<Entity>()
 
     /** Whether the missing [placement] has been reported, so a system reports it once, not every frame. */

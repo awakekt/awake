@@ -196,7 +196,6 @@ public final class com/awakekt/awake/particles/ParticleSpin {
 public final class com/awakekt/awake/particles/ParticleSystem : com/awakekt/awake/ecs/System {
 	public fun <init> ()V
 	public fun <init> (Lcom/awakekt/awake/particles/EmitterPlacement;)V
-	public synthetic fun <init> (Lcom/awakekt/awake/particles/EmitterPlacement;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 
