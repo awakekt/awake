@@ -19,6 +19,7 @@ import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.pipeline.PipelineVariant
 import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.fastArrayBufferOf
+import com.awakekt.awake.webgpu.writeBufferData
 import io.ygdrasil.webgpu.BindGroupDescriptor
 import io.ygdrasil.webgpu.BindGroupEntry
 import io.ygdrasil.webgpu.BufferBinding
@@ -157,7 +158,7 @@ class DepthOnlyPipeline(
     /** Writes [viewProjection] as the matrix [cascade] renders with; a no-op without a block. */
     fun writeCascade(cascade: Int, viewProjection: Mat4) {
         val buffer = cascadeBuffers.getOrNull(cascade) ?: return
-        device.queue.writeBuffer(buffer, 0uL, fastArrayBufferOf(viewProjection.data))
+        device.queue.writeBufferData(buffer, 0uL, fastArrayBufferOf(viewProjection.data))
     }
 
     init {

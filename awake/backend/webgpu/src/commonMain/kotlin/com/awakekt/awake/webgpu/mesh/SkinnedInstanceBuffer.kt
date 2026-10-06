@@ -11,6 +11,7 @@ import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.fastArrayBufferOf
+import com.awakekt.awake.webgpu.writeBufferData
 import com.awakekt.awake.webgpu.pipeline.WebGpuBindGroupHandle
 import com.awakekt.awake.webgpu.pipeline.WebGpuPipelineHandle
 import com.awakekt.awake.webgpu.pipeline.hasBindingGroup
@@ -69,7 +70,7 @@ class SkinnedInstanceBuffer(
 
     fun update(palettes: List<FloatArray>) {
         val floats = packer.pack(palettes, maxInstances) ?: return
-        graphicsDevice.wgpuContext.device.queue.writeBuffer(buffer, 0uL, fastArrayBufferOf(floats))
+        graphicsDevice.wgpuContext.device.queue.writeBufferData(buffer, 0uL, fastArrayBufferOf(floats))
     }
 
     fun bufferRef(): GPUBuffer = buffer

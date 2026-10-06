@@ -6,6 +6,8 @@
 package com.awakekt.awake.webgpu
 
 import io.ygdrasil.webgpu.ArrayBuffer
+import io.ygdrasil.webgpu.GPUBuffer
+import io.ygdrasil.webgpu.GPUQueue
 
 /**
  * Faster replacement for wgpu4k's [ArrayBuffer.of] on every hot per-frame `writeBuffer` call
@@ -33,3 +35,11 @@ internal fun fastArrayBufferOf(data: IntArray): ArrayBuffer =
 
 internal fun fastArrayBufferOf(data: ByteArray): ArrayBuffer =
     ArrayBuffer.allocate(data.size.toULong()).apply { setBytes(0uL, data) }
+
+/**
+ * Upload exactly the source bytes. The JVM binding's default `size` uses the destination's
+ * capacity, which can exceed a small instance or debug-line upload and read past native memory.
+ */
+internal fun GPUQueue.writeBufferData(buffer: GPUBuffer, bufferOffset: ULong, data: ArrayBuffer) {
+    writeBuffer(buffer, bufferOffset, data, dataOffset = 0uL, size = data.size)
+}

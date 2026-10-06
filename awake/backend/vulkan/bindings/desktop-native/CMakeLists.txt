@@ -26,7 +26,8 @@
 cmake_minimum_required(VERSION 3.22.1)
 project(awake-vulkan-desktop)
 
-set(CMAKE_CXX_STANDARD 17)
+# The generated accessors use designated initializers, which MSVC requires C++20 for.
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
@@ -69,6 +70,9 @@ endif()
 include_directories(${GLFW_INCLUDE_DIR})
 
 add_subdirectory(../src/main/cpp/vulkan-kotlin vulkan-kotlin-desktop-build)
+# Propagate the SDK headers to the accessor target too; linking only awake-vulkan leaves
+# vulkan_kotlin unable to find vulkan/vulkan.h when it is outside the system include path.
+target_link_libraries(vulkan_kotlin PRIVATE ${VULKAN_LINK_TARGET})
 
 # io_github_..._VulkanBuffers/Descriptors/Images -- fully-qualified filenames because
 # jni-binding-generator qualifies output whenever more than one Kotlin source file shares

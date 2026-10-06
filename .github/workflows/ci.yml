@@ -246,9 +246,9 @@ jobs:
   desktop-vulkan-smoke:
     name: Vulkan (Linux)
     needs: platform-impact
-    if: needs.platform-impact.outputs.vulkan == 'true'
+    if: needs.platform-impact.outputs.vulkan == 'true' || needs.platform-impact.outputs.web == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 45
 
     steps:
       - name: Checkout
@@ -279,7 +279,7 @@ jobs:
       - name: Install desktop Vulkan/GLFW build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libvulkan-dev libglfw3-dev mesa-vulkan-drivers vulkan-validationlayers
+          sudo apt-get install -y libvulkan-dev libglfw3-dev mesa-vulkan-drivers vulkan-validationlayers xvfb
 
       - name: Build desktop native Vulkan library
         run: ./gradlew :awake:backend:vulkan:bindings:buildDesktopNative
@@ -292,6 +292,30 @@ jobs:
 
       - name: Desktop Vulkan smoke test (real vkCreateInstance via lavapipe)
         run: ./gradlew :awake:backend:vulkan:desktopTest
+
+      # wgpu-native needs a GLFW surface to select its adapter, even when rendering offscreen.
+      # Xvfb supplies the display; Mesa's lavapipe executes both backends on the hosted runner.
+      - name: WebGPU backend pixel tests (wgpu-native)
+        if: ${{ !cancelled() }}
+        run: xvfb-run -a ./gradlew :awake:backend:webgpu:desktopTest --stacktrace
+
+      - name: Vulkan and WebGPU render parity tests
+        if: ${{ !cancelled() }}
+        run: xvfb-run -a ./gradlew :awake:engine:render:parity:desktopTest --stacktrace
+
+      - name: Upload graphics test reports and parity images
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: graphics-test-results
+          path: |
+            awake/backend/vulkan/build/test-results/desktopTest/
+            awake/backend/vulkan/build/reports/tests/desktopTest/
+            awake/backend/webgpu/build/test-results/desktopTest/
+            awake/backend/webgpu/build/reports/tests/desktopTest/
+            awake/engine/render/parity/build/test-results/desktopTest/
+            awake/engine/render/parity/build/reports/
+          if-no-files-found: warn
 
   # The only job on a macOS runner, and the only one that can build or run anything for iOS.
   # It exists because of measured history, not symmetry: the JoltC backend reached four features

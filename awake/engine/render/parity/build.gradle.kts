@@ -64,6 +64,7 @@ val desktopNativeLibDir =
     project(":awake:backend:vulkan:bindings").layout.buildDirectory.dir("desktop-native-libs")
 
 tasks.named<Test>("desktopTest") {
+    testLogging { exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL }
     if (HostOs.isMac) {
         // GLFW, which wgpu4k's desktop bootstrap uses to get an adapter, refuses to initialise off
         // the process's first thread. Vulkan runs windowless here and does not care, so one process
