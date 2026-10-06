@@ -459,11 +459,16 @@ The value of `shape`, named by its `type` key.
 | `sphere` | `radius` (number) | `0.5` |
 | `capsule` | `halfHeight` (number), `radius` (number) | `0.5`, `0.5` |
 | `mesh` | `mesh` (string), `primitive` (integer) | required, none |
+| `convex_hull` | `mesh` (string), `primitive` (integer) | required, none |
 
 `mesh` collides with the triangles of the `.glb` or `.gltf` model at the project path `mesh`:
 `primitive` picks one primitive, counted in node order, and none merges them all. The node's scale is
 baked into the triangles. Only `STATIC` bodies that are not sensors can use it, and it needs
 `MeshColliderSystem` to build the body; see [Collide with a model](../guides/physics.md#collide-with-a-model).
+
+`convex_hull` shrink-wraps the model's vertices into a convex volume with node scale baked in.
+Because it encloses volume, it supports any `motion` (`STATIC`, `KINEMATIC`, or `DYNAMIC`) and can be a `sensor`.
+Like `mesh`, it uses `MeshColliderSystem` to build the body from models loaded through `loadCollisionMeshes`.
 
 ## `prefab_link`
 

@@ -94,6 +94,16 @@ once and failing with the model path and node when one cannot be read. `loadPlay
 all of this for you. A host that calls `playSystemsFor` itself passes
 `collisionMeshes = loadCollisionMeshes(scene, files)` in its `PlayServices`.
 
+For moving props or sensors, use a `convex_hull` shape instead:
+
+```json
+{ "component": "physics_body", "shape": { "type": "convex_hull", "mesh": "models/crate.glb" }, "motion": "DYNAMIC" }
+```
+
+A `convex_hull` shrink-wraps the model's vertices into a convex shape with scale baked in. Because it
+encloses volume, it can be `DYNAMIC`, `KINEMATIC`, or `STATIC`, and can act as a trigger sensor. It loads
+through the same `loadCollisionMeshes` cache and `MeshColliderSystem`.
+
 ## Shapes
 
 | Shape | Motion | Use it for |

@@ -29,6 +29,27 @@ data class MeshCollider(
     val layer: CollisionLayer = defaultLayerFor(MotionType.STATIC),
 )
 
+/**
+ * A body that collides with a convex hull of a model's vertices, waiting for [MeshColliderSystem] to
+ * build it. A scene's `convex_hull` collision shape loads as this.
+ *
+ * Unlike [MeshCollider], a convex hull encloses a volume so it supports any [MotionType] (including
+ * dynamic props) and can act as a trigger [sensor].
+ *
+ * @property mesh Project path of the model.
+ * @property primitive Which primitive of the model to collide with; `null` merges them all.
+ * @property motion Motion type controlling whether the body is static, kinematic, or dynamic.
+ * @property layer Collision layer of the body it becomes.
+ * @property sensor Whether this body functions as a trigger sensor rather than a solid collider.
+ */
+data class ConvexHullCollider(
+    val mesh: String,
+    val primitive: Int? = null,
+    val motion: MotionType = MotionType.DYNAMIC,
+    val layer: CollisionLayer = defaultLayerFor(motion),
+    val sensor: Boolean = false,
+)
+
 /** The triangles of a model, for [MeshColliderSystem]. */
 fun interface CollisionMeshSource {
     /**
@@ -42,9 +63,10 @@ fun interface CollisionMeshSource {
 }
 
 /**
- * Gives each [MeshCollider] a static [PhysicsBody] of its model's triangles, scaled by the node's
- * `Transform.scale`. Register it before [PhysicsSystem], which places the body by the same
- * `Transform`'s position and rotation. Built once per entity: a later scale change does not reach it.
+ * Gives each [MeshCollider] and [ConvexHullCollider] a live [PhysicsBody] built from its model's
+ * vertices, scaled by the node's `Transform.scale`. Register it before [PhysicsSystem], which places
+ * the body by the same `Transform`'s position and rotation. Built once per entity: a later scale change
+ * does not reach it.
  *
  * Throws when [meshes] has no triangles for a collider, naming the model and the node.
  */
@@ -61,6 +83,34 @@ class MeshColliderSystem(private val meshes: CollisionMeshSource) : System {
                 "Node $node has a zero scale, which flattens its collision mesh ${collider.mesh}"
             }
             world.add(entity, PhysicsBody(shape.scaledBy(scale), MotionType.STATIC, collider.layer))
+        }
+
+        world.queryEach(Transform::class, ConvexHullCollider::class) { entity, transform, collider ->
+            if (world.has(entity, PhysicsBody::class)) return@queryEach
+            val node = world.get<Name>(entity)?.value ?: "entity ${entity.id}"
+            val mesh = checkNotNull(meshes.meshShape(collider.mesh, collider.primitive)) {
+                "No collision mesh loaded for ${collider.mesh} on node $node"
+            }
+            val scale = transform.scale
+            require(scale.x != 0f && scale.y != 0f && scale.z != 0f) {
+                "Node $node has a zero scale, which flattens its collision hull ${collider.mesh}"
+            }
+            val scaledPoints = FloatArray(mesh.vertices.size) { index ->
+                mesh.vertices[index] * when (index % 3) {
+                    0 -> scale.x
+                    1 -> scale.y
+                    else -> scale.z
+                }
+            }
+            world.add(
+                entity,
+                PhysicsBody(
+                    shape = com.awakekt.awake.physics.ConvexHullShape(scaledPoints),
+                    motionType = collider.motion,
+                    layer = collider.layer,
+                    sensor = collider.sensor,
+                ),
+            )
         }
     }
 }

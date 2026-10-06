@@ -71,9 +71,10 @@ class MeshColliderSceneTest {
 
         var shape: MeshShape? = null
         world.queryEach(PhysicsBody::class) { _, body -> shape = body.shape as MeshShape }
+        val checkedShape = checkNotNull(shape)
 
-        assertContentEquals(floatArrayOf(-2f, 0f, 0f, -4f, 3f, 0f, -2f, 3f, 4f), shape!!.vertices)
-        assertContentEquals(intArrayOf(0, 2, 1), shape!!.indices, "a mirror must swap two corners")
+        assertContentEquals(floatArrayOf(-2f, 0f, 0f, -4f, 3f, 0f, -2f, 3f, 4f), checkedShape.vertices)
+        assertContentEquals(intArrayOf(0, 2, 1), checkedShape.indices, "a mirror must swap two corners")
     }
 
     @Test
@@ -85,14 +86,77 @@ class MeshColliderSceneTest {
         world.queryEach(PhysicsBody::class) { _, body -> assertSame(RAMP, body.shape) }
     }
 
+    @Test
+    fun aConvexHullShapeCanBeAnyMotionTypeAndASensor() {
+        val blank = ScenePhysicsBody(SceneConvexHullShape(" ")).validate("Crate")
+        val negativePrimitive = ScenePhysicsBody(SceneConvexHullShape("props/crate.glb", primitive = -1)).validate("Crate")
+
+        assertTrue(blank.any { "mesh" in it.message }, "$blank")
+        assertTrue(negativePrimitive.any { "primitive" in it.message }, "$negativePrimitive")
+
+        assertEquals(emptyList(), ScenePhysicsBody(SceneConvexHullShape("props/crate.glb"), motion = MotionType.DYNAMIC).validate("Crate"))
+        assertEquals(emptyList(), ScenePhysicsBody(SceneConvexHullShape("props/crate.glb"), motion = MotionType.STATIC).validate("Crate"))
+        assertEquals(emptyList(), ScenePhysicsBody(SceneConvexHullShape("props/crate.glb"), motion = MotionType.KINEMATIC).validate("Crate"))
+        assertEquals(emptyList(), ScenePhysicsBody(SceneConvexHullShape("props/crate.glb"), sensor = true).validate("Crate"))
+    }
+
+    @Test
+    fun aConvexHullBodyIsBuiltWithBakedScaleAndExportedAsReference() {
+        val world = World()
+        SceneLoader.decode(HULL_SCENE).instantiate(world = world, componentRegistry = registry)
+        val expected = ScenePhysicsBody(
+            shape = SceneConvexHullShape("props/crate.glb", primitive = 0),
+            motion = MotionType.DYNAMIC,
+            layer = 2,
+            sensor = true,
+        )
+
+        val loaded = SceneLoader.fromWorld(world, componentRegistry = registry)
+        assertEquals(listOf(expected), loaded.nodes.single().components.filterIsInstance<ScenePhysicsBody>())
+
+        MeshColliderSystem { _, _ -> CRATE }.update(world, STEP)
+
+        val built = SceneLoader.fromWorld(world, componentRegistry = registry)
+        assertEquals(
+            listOf(expected),
+            built.nodes.single().components.filterIsInstance<ScenePhysicsBody>(),
+            "built convex hull body must export its reference back, not its raw points",
+        )
+
+        var hullShape: com.awakekt.awake.physics.ConvexHullShape? = null
+        var bodyComponent: PhysicsBody? = null
+        world.queryEach(PhysicsBody::class) { _, body ->
+            bodyComponent = body
+            hullShape = body.shape as com.awakekt.awake.physics.ConvexHullShape
+        }
+
+        val checkedBody = checkNotNull(bodyComponent)
+        val checkedShape = checkNotNull(hullShape)
+        assertEquals(MotionType.DYNAMIC, checkedBody.motionType)
+        assertEquals(2, checkedBody.layer.index)
+        assertTrue(checkedBody.sensor)
+        assertContentEquals(floatArrayOf(2f, 0f, 0f, 4f, 3f, 0f, 2f, 3f, 4f, 0f, 3f, 4f), checkedShape.points)
+    }
+
     private companion object {
         const val STEP = 1f / 60f
         val RAMP = MeshShape(floatArrayOf(1f, 0f, 0f, 2f, 1f, 0f, 1f, 1f, 1f), intArrayOf(0, 1, 2))
+        val CRATE = MeshShape(
+            floatArrayOf(1f, 0f, 0f, 2f, 1f, 0f, 1f, 1f, 1f, 0f, 1f, 1f),
+            intArrayOf(0, 1, 2, 0, 2, 3),
+        )
         const val SCALE = """, "scale": { "x": 2.0, "y": 3.0, "z": 4.0 }"""
         const val SCENE = """
 { "version": 1, "name": "x", "nodes": [
   { "name": "Ramp", "transform": { "position": { "x": 1.0, "y": 0.0, "z": 0.0 }$SCALE }, "components": [
     { "component": "physics_body", "shape": { "type": "mesh", "mesh": "props/ramp.glb", "primitive": 1 }, "layer": 3 }
+  ] }
+] }
+"""
+        const val HULL_SCENE = """
+{ "version": 1, "name": "x", "nodes": [
+  { "name": "Crate", "transform": { "position": { "x": 1.0, "y": 0.0, "z": 0.0 }$SCALE }, "components": [
+    { "component": "physics_body", "shape": { "type": "convex_hull", "mesh": "props/crate.glb", "primitive": 0 }, "motion": "DYNAMIC", "layer": 2, "sensor": true }
   ] }
 ] }
 """
