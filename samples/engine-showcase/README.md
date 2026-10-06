@@ -51,6 +51,7 @@ compile; it is refused, a warning is printed, and the current shader keeps drawi
 | `instanced-skinned` | Instanced skinned | Instancing and skinning together, animated per frame. |
 | `nav-chase` | Navigation chase | A cube paths around a terrain ridge it cannot climb; bakeNavGrid reads the slope, no collider says a wall exists. |
 | `particles` | Particles | A CPU emitter driving a quad batch, advanced every frame. |
+| `sprites-2d` | 2D sprites | Orthographic parallel projection, 2D layer sorting, and animated sprite quads. |
 | `ecs-stress` | ECS stress | Up to 100,000 moving entities, each with Transform and MeshRenderer components, drawn in a few instanced calls. |
 
 `EngineShowcaseReadmeTest` fails when this table and `EngineShowcases` disagree.

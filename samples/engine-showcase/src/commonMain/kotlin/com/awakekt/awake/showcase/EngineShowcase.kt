@@ -17,6 +17,7 @@ import com.awakekt.awake.showcase.examples.InstancedSkinnedExampleDriver
 import com.awakekt.awake.showcase.examples.NavChaseExampleDriver
 import com.awakekt.awake.showcase.examples.ParticleEmitterExampleDriver
 import com.awakekt.awake.showcase.examples.SkinnedExampleDriver
+import com.awakekt.awake.showcase.examples.Sprites2dExampleDriver
 import com.awakekt.awake.showcase.examples.TerrainPhysicsExampleDriver
 import com.awakekt.awake.showcase.terrain.TerrainExampleAsset
 import com.awakekt.awake.showcase.ui.EcsStressControls
@@ -141,6 +142,15 @@ val EngineShowcases = listOf(
         driver = { delta -> ParticleEmitterExampleDriver.advance(delta) },
         onActivated = { instance, runtime -> ParticleEmitterExampleDriver.attach(instance, runtime) },
     ),
+    EngineShowcase(
+        id = "sprites-2d",
+        title = "2D sprites",
+        scenePath = "assets/examples/sprites-2d.scene.json",
+        summary = "Orthographic parallel projection, 2D layer sorting, and animated sprite quads.",
+        driver = { delta -> Sprites2dExampleDriver.advance(this, delta) },
+        onActivated = { instance, runtime -> Sprites2dExampleDriver.attach(instance, runtime) },
+        onDeactivated = { _ -> Sprites2dExampleDriver.detach() },
+    ),
     // Ten thousand ordinary entities by default, up to a hundred thousand from the panel. Each is
     // moved by an ECS system every frame; the renderer instances them, so the frame rate shows
     // what the per-entity work costs rather than what a draw call costs.
@@ -177,6 +187,7 @@ fun SceneAssetsDsl.registerEngineShowcaseAssets() {
     material("particle") { ParticleEmitterExampleDriver.createMaterial(this) }
     material("particle-flicker") { ParticleEmitterExampleDriver.createFlickerMaterial(this) }
     material("particle-levelup") { ParticleEmitterExampleDriver.createLevelupMaterial(this) }
+    mesh("sprite-quad") { Sprites2dExampleDriver.createMesh(this) }
     mesh("heightfield-terrain") { renderer.createMesh(TerrainExampleAsset.geometry) }
     mesh("nav-terrain") { renderer.createMesh(NavChaseExampleDriver.geometry) }
     repeat(EcsStressExampleDriver.paletteSize) { index ->

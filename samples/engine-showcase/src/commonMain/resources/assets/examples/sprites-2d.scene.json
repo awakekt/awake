@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "name": "sprites-2d",
+  "nodes": [
+    {
+      "name": "camera",
+      "components": [
+        {
+          "component": "camera",
+          "eye": { "x": 0.0, "y": 0.0, "z": 10.0 },
+          "center": { "x": 0.0, "y": 0.0, "z": 0.0 },
+          "near": 0.1,
+          "far": 100.0,
+          "primary": true,
+          "projection": "orthographic",
+          "orthoHalfHeight": 5.0
+        }
+      ]
+    },
+    {
+      "name": "light",
+      "components": [
+        { "component": "light", "type": "Directional" }
+      ]
+    },
+    {
+      "name": "background-plane",
+      "transform": {
+        "position": { "x": 0.0, "y": 0.0, "z": -4.0 },
+        "scale": { "x": 16.0, "y": 10.0, "z": 1.0 }
+      },
+      "components": [
+        { "component": "meshRenderer", "mesh": "sprite-quad", "material": "lit-shadow", "cullMode": "None" },
+        { "component": "pbrMaterial", "metallic": 0.0, "roughness": 0.95 }
+      ]
+    },
+    {
+      "name": "sprite-card-back",
+      "transform": {
+        "position": { "x": -2.5, "y": 0.0, "z": -2.0 },
+        "scale": { "x": 2.2, "y": 3.0, "z": 1.0 }
+      },
+      "components": [
+        { "component": "meshRenderer", "mesh": "sprite-quad", "material": "lit-shadow", "cullMode": "None" },
+        { "component": "pbrMaterial", "metallic": 0.0, "roughness": 0.4 }
+      ]
+    },
+    {
+      "name": "sprite-card-mid",
+      "transform": {
+        "position": { "x": 0.0, "y": 0.0, "z": 0.0 },
+        "scale": { "x": 2.5, "y": 3.5, "z": 1.0 }
+      },
+      "components": [
+        { "component": "meshRenderer", "mesh": "sprite-quad", "material": "lit-shadow", "cullMode": "None" },
+        { "component": "pbrMaterial", "metallic": 0.0, "roughness": 0.3 }
+      ]
+    },
+    {
+      "name": "sprite-card-front",
+      "transform": {
+        "position": { "x": 2.5, "y": 0.0, "z": 2.0 },
+        "scale": { "x": 2.2, "y": 3.0, "z": 1.0 }
+      },
+      "components": [
+        { "component": "meshRenderer", "mesh": "sprite-quad", "material": "lit-shadow", "cullMode": "None" },
+        { "component": "pbrMaterial", "metallic": 0.0, "roughness": 0.4 }
+      ]
+    }
+  ]
+}
