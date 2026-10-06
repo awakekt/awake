@@ -507,7 +507,7 @@ Rotates the entity around Y. `SceneSpinControl`.
 | Field | Type | Default | What it does |
 | --- | --- | --- | --- |
 | `radians` | number | `0` | Starting angle in radians. |
-| `speed` | number | `1` | Rotation speed multiplier. |
+| `speed` | number | `1` | Rotation speed multiplier. Not negative. |
 
 ## `static_transform`
 

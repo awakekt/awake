@@ -1,0 +1,1 @@
+- **Verification of scene components reference documentation.** `SceneComponentReferenceDocsTest` now validates field types, defaults, and numeric range constraints against `SceneComponentCatalog.schemas()`, ensuring reference documentation does not drift from component schemas (#447).
