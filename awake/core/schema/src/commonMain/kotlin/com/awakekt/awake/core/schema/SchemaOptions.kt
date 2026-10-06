@@ -17,11 +17,15 @@ import kotlinx.serialization.json.JsonObject
  * when they are not known.
  * @property maxDepth How many levels of nested properties to read. Properties below it have no
  * children, which also stops a type that contains itself from being read forever.
+ * @property nullablesAreOptional True when the decoder reads a missing nullable property as null, which
+ * is a `Json` with `explicitNulls = false`. A nullable property with no default is then not required.
+ * [propertySchemaOf] sets it from the `Json` it is given.
  */
 data class SchemaOptions(
     val semanticTypes: Map<String, PropertyKind> = emptyMap(),
     val defaults: JsonObject? = null,
     val maxDepth: Int = DEFAULT_MAX_DEPTH,
+    val nullablesAreOptional: Boolean = false,
 ) {
     init {
         require(maxDepth >= 1) { "maxDepth must be at least 1, was $maxDepth" }

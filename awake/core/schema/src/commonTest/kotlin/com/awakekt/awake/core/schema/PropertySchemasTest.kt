@@ -5,8 +5,11 @@
  */
 package com.awakekt.awake.core.schema
 
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.descriptors.element
@@ -63,6 +66,39 @@ class PropertySchemasTest {
         assertTrue(!schema.child("lifetime").required)
         assertEquals(JsonPrimitive(1.0f), schema.child("lifetime").default)
         assertEquals(JsonPrimitive("A"), schema.child("mode").default)
+    }
+
+    @Test
+    fun aNullablePropertyWithNoDefaultIsRequiredOnlyWhenNullsMustBeExplicit() {
+        val explicit = Json { explicitNulls = true }
+        val lenient = Json { explicitNulls = false }
+        val empty = JsonObject(emptyMap())
+
+        val whenExplicit = propertySchemaOf(NullableRequired.serializer(), explicit).child("label")
+        val whenLenient = propertySchemaOf(NullableRequired.serializer(), lenient).child("label")
+
+        assertTrue(whenExplicit.required, "with explicit nulls the decoder rejects a document that leaves it out")
+        assertFailsWith<SerializationException> { explicit.decodeFromJsonElement(NullableRequired.serializer(), empty) }
+        assertTrue(!whenLenient.required, "with explicit nulls off the decoder reads a missing one as null")
+        assertNull(lenient.decodeFromJsonElement(NullableRequired.serializer(), empty).label)
+        assertEquals(JsonNull, whenLenient.default, "and so its default is null")
+    }
+
+    @Test
+    fun aNullableOptionOnTheSchemaOptionsAgreesWithTheJsonConfiguration() {
+        val descriptor = NullableRequired.serializer().descriptor
+
+        assertTrue(descriptor.toPropertySchema(SchemaOptions()).child("label").required)
+        assertTrue(!descriptor.toPropertySchema(SchemaOptions(nullablesAreOptional = true)).child("label").required)
+    }
+
+    @Test
+    fun aDefaultThatIsNeverEncodedIsUnknownNotNull() {
+        val label = propertySchemaOf(OmittedDefault.serializer(), json).child("label")
+
+        assertEquals("known", json.decodeFromJsonElement(OmittedDefault.serializer(), JsonObject(emptyMap())).label)
+        assertTrue(!label.required)
+        assertNull(label.default, "the real default is \"known\", which the encoder never writes, so it is unknown")
     }
 
     @Test
@@ -220,6 +256,13 @@ class PropertySchemasTest {
         val offset: Vec = Vec(),
         @PropertyStep(0.5) val spacing: Float = 1f,
     )
+
+    @Serializable
+    private data class NullableRequired(val label: String?)
+
+    @OptIn(ExperimentalSerializationApi::class)
+    @Serializable
+    private data class OmittedDefault(@EncodeDefault(EncodeDefault.Mode.NEVER) val label: String? = "known")
 
     @Serializable
     private data class Strict(val width: Int, val depth: Int = 4) {
