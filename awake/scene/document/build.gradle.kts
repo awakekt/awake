@@ -25,6 +25,7 @@ kotlin {
             api(project(":awake:core:logging"))
             api(project(":awake:core:host"))
             api(project(":awake:core:io"))
+            api(project(":awake:core:schema"))
             implementation(libs.kotlinx.serialization.json)
         }
 
