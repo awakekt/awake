@@ -42,25 +42,30 @@ fun SerialDescriptor.toPropertySchema(options: SchemaOptions = SchemaOptions()):
 
 /**
  * The default value of each property of [serializer]'s type, as JSON, found by decoding [seed]
- * (an empty object unless given one) and encoding the result with every default written.
+ * (an empty object unless given one) and encoding the result with every default and every null written.
  *
  * A descriptor says whether a property has a default but not what it is, so this is how a default
  * is learned. It returns null when [seed] is not enough to build the type, which is the case
  * when a property has no default: that property is then [PropertySchema.required].
  *
+ * The type is decoded with [json] exactly as given, so a nullable property with no default is
+ * buildable from nothing only when [json] has `explicitNulls = false`, the same as when a document
+ * is read. A property the type refuses to encode by default (`@EncodeDefault(NEVER)`) is absent from
+ * the result, so its default is unknown, not null.
+ *
  * @param T The type to build.
  * @param serializer The type's own serializer, not a polymorphic one, so no class discriminator is needed.
- * @param json The configuration to decode and encode with, including any serializers module.
+ * @param json The configuration to decode with, including any serializers module.
  * @param seed Values for the properties that have no default, to build a type that needs some.
  * @return The type with its defaults as a JSON object, or null when it cannot be built from [seed].
  */
 fun <T> deriveDefaults(serializer: KSerializer<T>, json: Json, seed: JsonObject = JsonObject(emptyMap())): JsonObject? {
-    val full = Json(from = json) {
+    val written = Json(from = json) {
         encodeDefaults = true
         explicitNulls = true
     }
     return try {
-        full.encodeToJsonElement(serializer, full.decodeFromJsonElement(serializer, seed)) as? JsonObject
+        written.encodeToJsonElement(serializer, json.decodeFromJsonElement(serializer, seed)) as? JsonObject
     } catch (@Suppress("SwallowedException") unbuildable: IllegalArgumentException) {
         // A missing required property, or a type whose own checks reject the seed: no defaults to learn.
         null
@@ -77,7 +82,9 @@ fun <T> deriveDefaults(serializer: KSerializer<T>, json: Json, seed: JsonObject 
  *
  * @param T The type to describe.
  * @param serializer The type's own serializer.
- * @param json The configuration [deriveDefaults] decodes and encodes with.
+ * @param json The configuration [deriveDefaults] decodes with. Its `explicitNulls` setting also decides
+ * whether a nullable property with no default is [PropertySchema.required]: it is not when `explicitNulls`
+ * is false, because the decoder then reads a missing one as null.
  * @param semanticTypes Types to read as a richer kind; see [SchemaOptions.semanticTypes].
  * @return The schema, with [PropertySchema.default] set wherever a default could be learned.
  */
@@ -88,7 +95,8 @@ fun <T> propertySchemaOf(
 ): PropertySchema {
     val defaults = deriveDefaults(serializer, json)
         ?: deriveDefaults(serializer, json, placeholderSeed(serializer.descriptor, depth = 0))
-    return serializer.descriptor.toPropertySchema(SchemaOptions(semanticTypes, defaults))
+    val options = SchemaOptions(semanticTypes, defaults, nullablesAreOptional = !json.configuration.explicitNulls)
+    return serializer.descriptor.toPropertySchema(options)
 }
 
 /** A neutral value for every required property of [descriptor], enough to build the type if it has no other checks. */
@@ -188,16 +196,16 @@ private class SchemaWalker(private val options: SchemaOptions) {
         (0 until descriptor.elementsCount).map { index ->
             val name = descriptor.getElementName(index)
             val child = descriptor.getElementDescriptor(index)
-            val optional = descriptor.isElementOptional(index)
-            val member = Member(name, child, required = !optional, annotations = descriptor.getElementAnnotations(index))
+            // A document may leave a property out when it has a default, or, with explicit nulls off, when it is nullable.
+            val omittable = descriptor.isElementOptional(index) || (child.isNullable && options.nullablesAreOptional)
+            val member = Member(name, child, required = !omittable, annotations = descriptor.getElementAnnotations(index))
             // A required property has no default; whatever the defaults hold for it is a placeholder.
-            val default = if (optional) defaultOf(defaults, name, child.isNullable) else null
+            val default = if (omittable) defaultOf(defaults, name) else null
             build(member, default, at.into(name))
         }
 
-    /** The JSON default of one property, or `JsonNull` for a nullable one the defaults left out. */
-    private fun defaultOf(defaults: JsonElement?, name: String, nullableWithDefault: Boolean): JsonElement? =
-        (defaults as? JsonObject)?.let { it[name] ?: JsonNull.takeIf { nullableWithDefault } }
+    /** The JSON default of one property, or null when the defaults do not hold it, so it is unknown. */
+    private fun defaultOf(defaults: JsonElement?, name: String): JsonElement? = (defaults as? JsonObject)?.get(name)
 
     private fun readAnnotations(annotations: List<Annotation>, kind: PropertyKind, path: String): Pair<PropertyConstraints, PropertyHints> {
         val numeric = kind == PropertyKind.Float || kind == PropertyKind.Int
