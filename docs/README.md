@@ -23,6 +23,7 @@
 | **Architecture** | [`D34: game UI is scene data; the design system is a style layer`](architecture/decisions/D34-game-ui-is-scene-data.md) | `Stable` | Status: accepted (2026-09-30) |
 | **Architecture** | [`D35: the editor boundary between Core and Studio`](architecture/decisions/D35-editor-boundary.md) | `Stable` | Status: accepted (2026-10-03) |
 | **Architecture** | [`D36: scene-bound editor hooks`](architecture/decisions/D36-scene-bound-editor-hooks.md) | `Stable` | Status: accepted (2026-10-04) |
+| **Architecture** | [`D37: component property schema`](architecture/decisions/D37-component-property-schema.md) | `Active` | Status: proposed (2026-10-06) |
 | **Reference** | [`Agent Catalog Boundary`](reference/agent-catalog.md) | `Active` | Awake does not keep an agent roster or personas as tracked repository content. The public |
 | **Reference** | [`Agent Routing`](reference/agent-routing.md) | `Active` | This public repository routes only technical Awake engine work. The authoritative role details |
 | **Reference** | [`Agent Starter Pack`](reference/agent-starter-pack.md) | `Active` | Use a source/deployment split when adding agent guidance to another repository. |
