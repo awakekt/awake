@@ -246,6 +246,8 @@ class World {
      * Uses a maintained family cache for zero-allocation iteration. Inline so [block] is too:
      * called through a function object, every [Entity] value would be boxed to pass it, one
      * allocation per entity per frame.
+     * Resolve [type] once on the JVM, or use the reified overload: constructing a fresh
+     * `KClass` at the call site can itself allocate even though family lookup does not.
      */
     inline fun <A : Any> queryEach(type: KClass<A>, block: (Entity, A) -> Unit) {
         family(type).forEach(block)
@@ -257,22 +259,30 @@ class World {
      * Uses a maintained family cache for zero-allocation iteration.
      */
     inline fun <reified A : Any> queryEach(block: (Entity, A) -> Unit) {
-        queryEach(A::class, block)
+        family<A>().forEach(block)
     }
 
     /**
-     * Returns a maintained [Family1] for the specified [type].
+     * Returns a maintained [Family1] for the specified [type]. Reuses the same view until [clear].
      */
     @OptIn(ExperimentalObjCName::class)
     @ObjCName("family1")
-    fun <A : Any> family(type: KClass<A>): Family1<A> = Family1(familyRegistry.familyCache(type))
+    fun <A : Any> family(type: KClass<A>): Family1<A> = familyRegistry.family(type)
 
     /**
      * Returns a maintained [Family1] for the specified type [A].
      */
     @OptIn(ExperimentalObjCName::class)
     @ObjCName("familyOf1")
-    inline fun <reified A : Any> family(): Family1<A> = family(A::class)
+    inline fun <reified A : Any> family(): Family1<A> {
+        val typeId = components.typeIdForKeyOrNull(componentTypeKey<A>())
+        if (typeId != null) cachedFamily<A>(typeId)?.let { return it }
+        return family(A::class)
+    }
+
+    /** Returns an already resolved family for an ID belonging to this generation. */
+    @PublishedApi
+    internal fun <A : Any> cachedFamily(typeId: ComponentTypeId): Family1<A>? = familyRegistry.cachedFamily(typeId)
 
     /**
      * Iterates every entity carrying both [typeA] and [typeB].
@@ -294,22 +304,33 @@ class World {
      * Uses a maintained family cache for zero-allocation iteration.
      */
     inline fun <reified A : Any, reified B : Any> queryEach(block: (Entity, A, B) -> Unit) {
-        queryEach(A::class, B::class, block)
+        family<A, B>().forEach(block)
     }
 
     /**
-     * Returns a maintained [Family2] for the specified [typeA] and [typeB].
+     * Returns a maintained [Family2] for the ordered pair [typeA] and [typeB].
+     * Reuses the same view until [clear].
      */
     @OptIn(ExperimentalObjCName::class)
     @ObjCName("family2")
-    fun <A : Any, B : Any> family(typeA: KClass<A>, typeB: KClass<B>): Family2<A, B> = Family2(familyRegistry.familyCache(typeA, typeB))
+    fun <A : Any, B : Any> family(typeA: KClass<A>, typeB: KClass<B>): Family2<A, B> = familyRegistry.family(typeA, typeB)
 
     /**
      * Returns a maintained [Family2] for the specified types [A] and [B].
      */
     @OptIn(ExperimentalObjCName::class)
     @ObjCName("familyOf2")
-    inline fun <reified A : Any, reified B : Any> family(): Family2<A, B> = family(A::class, B::class)
+    inline fun <reified A : Any, reified B : Any> family(): Family2<A, B> {
+        val typeIdA = components.typeIdForKeyOrNull(componentTypeKey<A>())
+        val typeIdB = components.typeIdForKeyOrNull(componentTypeKey<B>())
+        if (typeIdA != null && typeIdB != null) cachedFamily<A, B>(typeIdA, typeIdB)?.let { return it }
+        return family(A::class, B::class)
+    }
+
+    /** Returns an already resolved family for ordered IDs belonging to this generation. */
+    @PublishedApi
+    internal fun <A : Any, B : Any> cachedFamily(typeIdA: ComponentTypeId, typeIdB: ComponentTypeId): Family2<A, B>? =
+        familyRegistry.cachedFamily(typeIdA, typeIdB)
 
     /**
      * Returns a maintained [Family] matching the specified configuration.

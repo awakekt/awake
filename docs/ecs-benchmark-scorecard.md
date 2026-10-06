@@ -447,3 +447,47 @@ Primary references: [Flecs queries](https://www.flecs.dev/flecs/md_docs_2Queries
 3. **UI Scroll Fix**: Resolved a critical UI bug where `beginFrame` clobbered global input state during measurement passes. The fix gates the `pointerOverScrollable` reset on non-measuring contexts.
 4. **Verified KMP Hygiene**: All optimizations and the new decoupled architecture are verified across Desktop JVM and tested for multiplatform readiness.
 5. **Maintained Performance**: The 2026-08-21 JMH refresh confirms Awake leads 6 of 10 major benchmark categories; component and family churn remain the explicit gaps.
+
+
+## Typed family lookup allocations (2026-10-06)
+
+Typed `World.family` now reuses its view within a world generation. Array lookup by ordered
+component IDs avoids boxed map keys, and reified queries use the existing platform type tokens
+instead of constructing JVM `KClass` wrappers. `World.clear()` discards the views alongside the
+membership caches. The cache representation and structural-change notifications are unchanged.
+
+Matched runs in the maintained `TypedQueryBenchmarks` harness compared Core commit `28010d5ac`
+with this change, using the same benchmark source, Kotlin 2.4.10, Microsoft OpenJDK 17.0.17,
+Windows x64 on an AMD Ryzen 7 9800X3D, 32 populated entities, 3 forks, 5 one-second warmups,
+and 5 one-second measurements per fork. Both used `-prof gc`; no Gradle build ran during these
+focused reified measurements. Throughput is ops/s ± 99.9% JMH error.
+
+| Query | Before ops/s | After ops/s | Before B/op | After B/op |
+|---|---:|---:|---:|---:|
+| `reifiedPair` | 26,305,947 ± 600,817 | 31,554,384 ± 611,534 | 48.000 | <0.001 |
+| `reifiedSingle` | 36,316,633 ± 758,767 | 48,712,880 ± 720,323 | 16.000 | <0.001 |
+
+The GC profiler recorded 40 collections for the old pair query and 20 for the old single query,
+and none for either new query. The tiny nonzero normalized allocation reported by JMH is harness
+measurement overhead; the dedicated thread-allocation probes measure exactly zero bytes in the
+median of five 10,000-call windows. This is a focused lookup workload, not a rerun or re-ranking
+of the full ECS comparison matrix.
+
+The single-window positive control against the original implementation failed all five probes:
+resolved-class single/pair queries allocated 16 B/call, reified single queries and `firstOrNull`
+56 B/call, and reified pairs 72 B/call. JVM escape analysis and warmup explain why those exact
+counts differ from JMH; both controls expose allocations that disappear with the fix.
+
+Fresh JVM class literals passed to the explicit-class overload can still allocate at the caller
+(approximately 16 B per class in the separate literal-query run). Resolve the `KClass` once or use
+the reified overload to obtain zero allocation across the complete warmed query path. The first
+lookup in a generation still allocates to build its maintained family.
+
+Raw matched results: [before](benchmarks/2026-10-06-ecs-typed-query-before.json) and
+[after](benchmarks/2026-10-06-ecs-typed-query-after.json).
+
+```bash
+./gradlew :awake:ecs:benchmark:mainBenchmarkJar
+java -jar awake/ecs/benchmark/build/benchmarks/main/jars/benchmark-main-jmh-*-JMH.jar \
+  '.*TypedQueryBenchmarks.reified.*' -p entityCount=32 -prof gc -rf json -rff typed-query.json
+```

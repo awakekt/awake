@@ -178,6 +178,11 @@ jobs:
       - name: Scene runtime tests
         run: ./gradlew :awake:scene:runtime:desktopTest
 
+      # Includes typed-query allocation probes and family lifecycle tests; compiling them alone
+      # cannot catch per-frame allocations or stale wrappers after World.clear().
+      - name: ECS runtime and allocation tests
+        run: ./gradlew :awake:ecs:desktopTest
+
       # The particle library and its scene wrapper, the scene's rendering, the render pass logic, and
       # the shaders they draw with: pure JVM suites with no GPU. `ParticleExposureTest` keeps the scene
       # file in step with the library, and until this step it ran only on a contributor's machine
@@ -332,6 +337,9 @@ jobs:
       - name: Jolt iOS simulator physics tests
         run: ./gradlew :awake:backend:jolt:iosSimulatorArm64Test :awake:scene:physics:iosSimulatorArm64Test :samples:engine-showcase:iosSimulatorArm64Test
 
+      - name: ECS iOS simulator tests
+        run: ./gradlew :awake:ecs:iosSimulatorArm64Test
+
       - name: Upload iOS physics test reports
         if: always()
         uses: actions/upload-artifact@v7
@@ -340,6 +348,7 @@ jobs:
           path: |
             awake/backend/jolt/build/reports/tests/
             awake/scene/physics/build/reports/tests/
+            awake/ecs/build/reports/tests/
             samples/engine-showcase/build/reports/tests/
           if-no-files-found: warn
 
@@ -367,6 +376,9 @@ jobs:
 
       - name: Wasm/WebGPU browser verification (headless Chrome)
         run: ./gradlew :samples:ui-showcase:wasmJsBrowserTest :samples:engine-showcase:wasmJsBrowserTest
+
+      - name: ECS browser tests
+        run: ./gradlew :awake:ecs:wasmJsBrowserTest
 
       # The physics backend has four bindings and CI only ran one of them. This is the wasmJs
       # binding executing the same commonTest suite as desktop, on the runner already here --
