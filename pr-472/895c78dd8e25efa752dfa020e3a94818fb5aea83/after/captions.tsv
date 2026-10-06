@@ -1,0 +1,25 @@
+scene-shadow	Lit ground and a hovering quad: where the shadow lands
+scene-shadow-textured-ground	The same, on a textured ground: shadows on textured materials
+scene-textured-pbr	Textured PBR plane: material sampling and lighting
+scene-back-culled	Plane seen from above with back-face culling
+scene-facing-sprite-side	Camera-facing sprite seen from the side: its proportions and which way round it is
+scene-facing-sprite-spin-45	The same sprite spun 45 degrees: the quad turns in its own plane
+scene-skinned-textured	Textured plane skinned to one joint at the identity pose
+scene-skinned-textured-exposure-2	The same skinned plane at exposure 2: exposure before the tone curve
+scene-terrain-cliff-self-shadow	Clipmap plateau coarser than its heightmap, sun on its cliff: top, rim and face stay lit
+scene-studio-cube-yaw0	Studio's default cube under cascaded shadows, sun yaw 0 of 12
+scene-studio-cube-yaw3	Studio's default cube under cascaded shadows, sun yaw 3 of 12
+scene-studio-cube-yaw6	Studio's default cube under cascaded shadows, sun yaw 6 of 12
+scene-studio-cube-yaw9	Studio's default cube under cascaded shadows, sun yaw 9 of 12
+debug-off	Debug view Off: red cube on a ground past the shadow distance
+debug-worldnormals	Debug view WorldNormals: red cube on a ground past the shadow distance
+debug-lineardepth	Debug view LinearDepth: red cube on a ground past the shadow distance
+debug-shadowvisibility	Debug view ShadowVisibility: red cube on a ground past the shadow distance
+debug-albedo	Debug view Albedo: red cube on a ground past the shadow distance
+debug-layerweights	Debug view LayerWeights: red cube on a ground past the shadow distance
+debug-dominantlayer	Debug view DominantLayer: red cube on a ground past the shadow distance
+debug-lightmap	Debug view Lightmap: red cube on a ground past the shadow distance
+debug-shadowmap	Debug view ShadowMap: red cube on a ground past the shadow distance
+ui-quad	UI pipeline: quad
+ui-glyph-O-400	UI pipeline: glyph-O-400
+ui-glyph-O-700	UI pipeline: glyph-O-700
