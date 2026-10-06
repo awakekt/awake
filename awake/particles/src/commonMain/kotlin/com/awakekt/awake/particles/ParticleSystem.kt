@@ -5,7 +5,9 @@
  */
 package com.awakekt.awake.particles
 
+import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.core.math.Aabb
+import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.System
@@ -21,6 +23,18 @@ internal const val FULL_TURN_RADIANS = 2f * kotlin.math.PI.toFloat()
 /** Three axes of three floats. See [ParticleSystem]'s `orientation`. */
 private const val ORIENTATION_FLOATS = 9
 
+private val log = Logger("particles")
+
+/**
+ * The placement of a [ParticleSystem] built without one. It places nothing, like [EmitterPlacement.None],
+ * but is a different object, so the system can tell an omission from a choice and warn only for the first.
+ */
+private object Unplaced : EmitterPlacement {
+    override fun position(world: World, entity: Entity, into: Vec3f): Boolean = false
+
+    override fun orientation(world: World, entity: Entity): Mat4? = null
+}
+
 /**
  * Spawns/advances every [ParticleEmitter]'s particle pool -- kept separate from the draw side
  * ([ParticleDrawBuilder], which culls, sorts and packs the live particles into draw packets) so this
@@ -33,12 +47,17 @@ private const val ORIENTATION_FLOATS = 9
  * on an entity of its own.
  *
  * It knows nothing of where an entity is. [placement] tells it, for an emitter that follows an entity
- * and for one that turns its spawns by the entity's rotation; the default places nothing.
+ * and for one that turns its spawns by the entity's rotation. The default places nothing, so such an
+ * emitter does neither, and the system says so once in the log; pass [EmitterPlacement.None] to say
+ * that is intended.
  *
  * @param placement Where an emitter's entity is. See [EmitterPlacement].
  */
-class ParticleSystem(private val placement: EmitterPlacement = EmitterPlacement.None) : System {
+class ParticleSystem(private val placement: EmitterPlacement = Unplaced) : System {
     private val spentEntities = ArrayList<Entity>()
+
+    /** Whether the missing [placement] has been reported, so a system reports it once, not every frame. */
+    private var warnedUnplaced = false
 
     /** The emitter entity's rotation as three unit columns (x, y, z axes), row-major by axis:
      * `[x.x, x.y, x.z, y.x, y.y, y.z, z.x, z.y, z.z]`. Loaded once per top-level emitter by
@@ -48,6 +67,7 @@ class ParticleSystem(private val placement: EmitterPlacement = EmitterPlacement.
     override fun update(world: World, delta: Float) {
         spentEntities.clear()
         world.queryEach(ParticleEmitter::class) { entity, emitter ->
+            warnIfUnplaced(emitter)
             followOrigin(world, emitter)
             simulate(world, entity, emitter, delta)
         }
@@ -60,6 +80,20 @@ class ParticleSystem(private val placement: EmitterPlacement = EmitterPlacement.
             world.destroy(entity)
         }
     }
+
+    /** Reports, once, an [emitter] that needs a placement this system was built without. */
+    private fun warnIfUnplaced(emitter: ParticleEmitter) {
+        if (placement !== Unplaced || warnedUnplaced || !needsPlacement(emitter)) return
+        warnedUnplaced = true
+        log.warn {
+            "A ParticleSystem built without an EmitterPlacement has an emitter that follows an entity or " +
+                "inherits its orientation, so it will do neither. Pass one, such as TransformPlacement in a " +
+                "scene, or EmitterPlacement.None to say this is intended."
+        }
+    }
+
+    private fun needsPlacement(emitter: ParticleEmitter): Boolean =
+        emitter.dynamics.followEntity != null || emitter.motion.inheritOrientation || emitter.children.any(::needsPlacement)
 
     /** Advances [emitter] itself, then every entry in [ParticleEmitter.children] -- each child's
      * `origin` is recomposed as `emitter.origin + child.localOffset` first (see [ParticleEmitter

@@ -142,7 +142,8 @@ fading to dark red.
 It asks an `EmitterPlacement` where an entity is, to make an emitter follow it or turn spawns by its
 rotation: in a scene pass `TransformPlacement` from `awake:scene:particles`, which reads the
 entity's `Transform`. An app with no scene passes a placement of its own, or none, and then no
-emitter follows anything.
+emitter follows anything. A `ParticleSystem` built with no argument logs a warning, once, if an emitter
+needs a placement; pass `EmitterPlacement.None` to say that is intended.
 
 ```kotlin title="Kotlin"
 --8<-- "awake/project/runtime/src/desktopTest/kotlin/com/awakekt/awake/project/runtime/ParticlesDocsSampleTest.kt:system"
