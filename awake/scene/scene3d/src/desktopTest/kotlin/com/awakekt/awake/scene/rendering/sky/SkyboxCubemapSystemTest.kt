@@ -10,6 +10,7 @@ import com.awakekt.awake.asset.shaders.ContentFeatureHost
 import com.awakekt.awake.asset.shaders.ContentFeatureSource
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.ecs.World
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -19,6 +20,7 @@ import javax.imageio.ImageIO
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class SkyboxCubemapSystemTest {
 
     private class RecordingHost : ContentFeatureHost {

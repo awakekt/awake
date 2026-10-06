@@ -519,6 +519,7 @@ class ShadcnComposeRenderPreview {
      * a real rounded corner leaves the outline's own bounding-box corner unpainted (the arc sets
      * back from it by the radius), while the old four-strip bug painted exactly that pixel.
      */
+    @Suppress("DEPRECATION")
     @Test
     fun surfaceRendersBorderedRoundedCorner() {
         val width = 200

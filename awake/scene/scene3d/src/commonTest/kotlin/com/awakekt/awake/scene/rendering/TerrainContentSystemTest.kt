@@ -21,6 +21,7 @@ import com.awakekt.awake.scene.rendering.terrain.TerrainContentSystem
 import com.awakekt.awake.scene.rendering.terrain.TerrainSurface
 import com.awakekt.awake.scene.rendering.terrain.TerrainSurfaceProvider
 import com.awakekt.awake.scene.rendering.terrain.TerrainSurfaceReference
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -29,6 +30,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class TerrainContentSystemTest {
 
     private val world = World()

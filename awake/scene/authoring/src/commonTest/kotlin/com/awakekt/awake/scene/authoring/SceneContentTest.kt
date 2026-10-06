@@ -29,6 +29,7 @@ import kotlin.test.assertTrue
  * runtime with nothing pointing at why. That is the same silent-when-unarmed shape this repo keeps
  * finding, so the path gets its own test rather than being exercised incidentally.
  */
+@Suppress("DEPRECATION")
 class SceneContentTest {
 
     @Test
