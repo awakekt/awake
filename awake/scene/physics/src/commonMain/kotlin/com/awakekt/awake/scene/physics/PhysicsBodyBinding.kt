@@ -69,6 +69,18 @@ data class SceneCapsuleShape(val halfHeight: Float = HALF, val radius: Float = H
 data class SceneMeshShape(val mesh: String, val primitive: Int? = null) : SceneCollisionShape
 
 /**
+ * The convex hull of a model asset's vertices, scaled by the node: a collider for a prop that moves
+ * and is not a box. Concave detail is lost (shrink-wrapped). Supports any [MotionType] (including
+ * dynamic) and trigger sensors. [MeshColliderSystem] builds it.
+ *
+ * @property mesh Project path of the `.glb` or `.gltf` model.
+ * @property primitive Which primitive of the model to collide with, counted in node order; `null` merges them all.
+ */
+@Serializable
+@SerialName("convex_hull")
+data class SceneConvexHullShape(val mesh: String, val primitive: Int? = null) : SceneCollisionShape
+
+/**
  * A collider or rigid body, as authored in a scene. [layer] is a collision-layer index; null takes
  * the default for [motion]. A [sensor] detects what passes through it instead of blocking it.
  *
@@ -90,10 +102,11 @@ data class ScenePhysicsBody(
             is SceneBoxShape -> shape.halfExtents.let { it.x > 0f && it.y > 0f && it.z > 0f }
             is SceneSphereShape -> shape.radius > 0f
             is SceneCapsuleShape -> shape.halfHeight > 0f && shape.radius > 0f
-            is SceneMeshShape -> true
+            is SceneMeshShape, is SceneConvexHullShape -> true
         }
         if (!positive) add(SceneValidationIssue(path, "physics_body.shape sizes must be greater than 0"))
         if (shape is SceneMeshShape) addAll(shape.validate(path))
+        if (shape is SceneConvexHullShape) addAll(shape.validate(path))
         if (layer != null && layer < 0) add(SceneValidationIssue(path, "physics_body.layer must not be negative"))
     }
 
@@ -102,18 +115,23 @@ data class ScenePhysicsBody(
         if (mesh.isBlank()) add(SceneValidationIssue(path, "physics_body.shape.mesh must name a model"))
         if (primitive != null && primitive < 0) add(SceneValidationIssue(path, "physics_body.shape.primitive must not be negative"))
         if (motion != MotionType.STATIC) {
-            val message = "physics_body with a mesh shape must be STATIC, not $motion; a moving body needs a box, sphere or capsule"
+            val message = "physics_body with a mesh shape must be STATIC, not $motion; a moving body needs a box, sphere, capsule or convex_hull"
             add(SceneValidationIssue(path, message))
         }
         if (sensor) add(SceneValidationIssue(path, "physics_body with a mesh shape cannot be a sensor"))
+    }
+
+    private fun SceneConvexHullShape.validate(path: String): List<SceneValidationIssue> = buildList {
+        if (mesh.isBlank()) add(SceneValidationIssue(path, "physics_body.shape.mesh must name a model"))
+        if (primitive != null && primitive < 0) add(SceneValidationIssue(path, "physics_body.shape.primitive must not be negative"))
     }
 }
 
 /**
  * Loads `physics_body` into a [PhysicsBody]; [PhysicsSystem] builds the live body. A `mesh` shape
- * loads as a [MeshCollider] instead, which [MeshColliderSystem] turns into the body, and saves as
- * its model reference. A body whose shape a scene can't describe, such as a terrain heightfield, is
- * left out when saving.
+ * loads as a [MeshCollider] and a `convex_hull` shape loads as a [ConvexHullCollider], which
+ * [MeshColliderSystem] turns into the body and saves as its model reference. A body whose shape a
+ * scene can't describe, such as a terrain heightfield, is left out when saving.
  */
 object PhysicsBodyBinding : SceneComponentBinding<PhysicsBody, ScenePhysicsBody> {
     override val componentClass: KClass<PhysicsBody> = PhysicsBody::class
@@ -131,6 +149,19 @@ object PhysicsBodyBinding : SceneComponentBinding<PhysicsBody, ScenePhysicsBody>
             world.add(entity, MeshCollider(component.shape.mesh, component.shape.primitive, layer))
             return
         }
+        if (component.shape is SceneConvexHullShape) {
+            world.add(
+                entity,
+                ConvexHullCollider(
+                    mesh = component.shape.mesh,
+                    primitive = component.shape.primitive,
+                    motion = component.motion,
+                    layer = layer,
+                    sensor = component.sensor,
+                ),
+            )
+            return
+        }
         world.add(
             entity,
             PhysicsBody(
@@ -143,11 +174,21 @@ object PhysicsBodyBinding : SceneComponentBinding<PhysicsBody, ScenePhysicsBody>
     }
 
     override fun exportFrom(world: World, entity: Entity): ScenePhysicsBody? {
-        val collider = world.get<MeshCollider>(entity) ?: return super.exportFrom(world, entity)
-        return ScenePhysicsBody(
-            shape = SceneMeshShape(collider.mesh, collider.primitive),
-            layer = collider.layer.index.takeIf { collider.layer != defaultLayerFor(MotionType.STATIC) },
-        )
+        val meshCollider = world.get<MeshCollider>(entity)
+        val hullCollider = world.get<ConvexHullCollider>(entity)
+        return when {
+            meshCollider != null -> ScenePhysicsBody(
+                shape = SceneMeshShape(meshCollider.mesh, meshCollider.primitive),
+                layer = meshCollider.layer.index.takeIf { meshCollider.layer != defaultLayerFor(MotionType.STATIC) },
+            )
+            hullCollider != null -> ScenePhysicsBody(
+                shape = SceneConvexHullShape(hullCollider.mesh, hullCollider.primitive),
+                motion = hullCollider.motion,
+                layer = hullCollider.layer.index.takeIf { hullCollider.layer != defaultLayerFor(hullCollider.motion) },
+                sensor = hullCollider.sensor,
+            )
+            else -> super.exportFrom(world, entity)
+        }
     }
 
     override fun export(world: World, entity: Entity, component: PhysicsBody): ScenePhysicsBody? {
@@ -169,6 +210,7 @@ private fun SceneCollisionShape.toPhysicsShape(): PhysicsShape = when (this) {
     is SceneSphereShape -> SphereShape(radius)
     is SceneCapsuleShape -> CapsuleShape(halfHeight, radius)
     is SceneMeshShape -> error("a mesh shape loads as a MeshCollider, not a PhysicsBody")
+    is SceneConvexHullShape -> error("a convex_hull shape loads as a ConvexHullCollider, not a PhysicsBody")
 }
 
 private fun PhysicsShape.toSceneShape(): SceneCollisionShape? = when (this) {

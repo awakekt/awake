@@ -27,6 +27,7 @@ import com.awakekt.awake.scene.particles.ParticleContentSystem
 import com.awakekt.awake.scene.physics.CollisionMeshSource
 import com.awakekt.awake.scene.physics.MeshColliderSystem
 import com.awakekt.awake.scene.physics.PhysicsSystem
+import com.awakekt.awake.scene.physics.SceneConvexHullShape
 import com.awakekt.awake.scene.physics.SceneMeshShape
 import com.awakekt.awake.scene.physics.ScenePhysicsBody
 import com.awakekt.awake.scene.rendering.animation.AnimationSystem
@@ -172,7 +173,8 @@ internal fun SceneNode.hasTerrainCollider(): Boolean =
     components.any { it is SceneTerrain && it.collider } || children.any { it.hasTerrainCollider() }
 
 internal fun SceneNode.hasMeshCollider(): Boolean =
-    components.any { it is ScenePhysicsBody && it.shape is SceneMeshShape } || children.any { it.hasMeshCollider() }
+    components.any { it is ScenePhysicsBody && (it.shape is SceneMeshShape || it.shape is SceneConvexHullShape) } ||
+        children.any { it.hasMeshCollider() }
 
 internal fun SceneNode.has(type: KClass<out SceneComponent>): Boolean =
     components.any { type.isInstance(it) } || children.any { it.has(type) }

@@ -1,0 +1,1 @@
+- **Convex hull colliders in scene documents.** Scene documents support a `convex_hull` collision shape on dynamic, kinematic or static `physics_body` components (`SceneConvexHullShape`), shrink-wrapping model vertices loaded through `loadCollisionMeshes` and `MeshColliderSystem`. Round-trip export preserves the model and primitive reference, and sensors are supported. (#428)

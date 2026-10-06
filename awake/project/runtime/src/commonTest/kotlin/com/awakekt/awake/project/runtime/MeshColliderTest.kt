@@ -57,6 +57,44 @@ class MeshColliderTest {
         }
     }
 
+    @Test
+    fun aConvexHullBodyFallsAndSettlesOnTheGround() = runTest {
+        installPlayableComponents()
+        val scene = SceneLoader.decode(HULL_FALL_SCENE)
+        val world = World()
+        scene.instantiate(world = world)
+        val physics = createJoltPhysicsWorld()
+        try {
+            val services = PlayServices(
+                input = { GameplayInput(Input().currentSnapshot, InputOwnership()) },
+                renderer = NoopRenderer(),
+                physics = physics,
+                collisionMeshes = loadCollisionMeshes(scene, files()),
+            )
+            val systems = playSystemsFor(scene, services).fixed
+            repeat(180) { systems.forEach { it.update(world, STEP) } }
+
+            var hullY: Float? = null
+            world.queryEach(com.awakekt.awake.scene.core.transform.Transform::class) { entity, transform ->
+                if (world.get<com.awakekt.awake.scene.core.Name>(entity)?.value == "FallingWedge") {
+                    hullY = transform.position.y
+                }
+            }
+            val settledY = assertNotNull(hullY)
+            // Floor top is at y = 0.
+            // Lowest local vertex of the ramp is y = -0.5.
+            // So when resting flat on the floor, the body origin settles near y = 0.5.
+            assertTrue(settledY in 0.45f..0.55f, "convex hull must settle at its lowest point on the floor: y=$settledY")
+
+            // Positive control: a bounding box enclosing the model's bounds (-1..1 in y, i.e. halfHeight 0.75 centred at 0.25)
+            // would settle with its bottom at y = 0, placing its origin at y = 0.75, which is distinct from 0.5.
+            val boxRestingY = 0.75f
+            assertTrue(kotlin.math.abs(settledY - boxRestingY) > 0.15f, "hull resting height ($settledY) must differ from box bounds ($boxRestingY)")
+        } finally {
+            physics.destroy()
+        }
+    }
+
     /** The positive control: the same checks fail against a box the size of the ramp's bounds. */
     @Test
     fun theChecksTellTheRampFromItsBoundingBox() = runTest {
@@ -114,8 +152,26 @@ class MeshColliderTest {
      * float positions then uint indices, in one GLB.
      */
     private fun rampGlb(): ByteArray {
-        val positions = floatArrayOf(-1f, 0f, -1f, 1f, 1f, -1f, 1f, 1f, 1f, -1f, 0f, 1f)
-        val indices = intArrayOf(3, 2, 1, 3, 1, 0)
+        // A 3D triangular prism (ramp) over x, z in -1..1, rising from y = 0 at x = -1 to y = 1 at x = 1,
+        // with bottom face at y = -0.5 so it encloses volume and can form a valid 3D convex hull.
+        val positions = floatArrayOf(
+            -1f, 0f, -1f,
+            1f, 1f, -1f,
+            1f, 1f, 1f,
+            -1f, 0f, 1f,
+            -1f, -0.5f, -1f,
+            1f, -0.5f, -1f,
+            1f, -0.5f, 1f,
+            -1f, -0.5f, 1f,
+        )
+        val indices = intArrayOf(
+            3, 2, 1, 3, 1, 0, // top ramp
+            4, 5, 6, 4, 6, 7, // bottom
+            0, 1, 5, 0, 5, 4, // back
+            1, 2, 6, 1, 6, 5, // high side
+            2, 3, 7, 2, 7, 6, // front
+            3, 0, 4, 3, 4, 7, // low side
+        )
         val bin = ByteArray(positions.size * 4 + indices.size * 4)
         positions.forEachIndexed { i, value -> bin.putInt(i * 4, value.toRawBits()) }
         indices.forEachIndexed { i, value -> bin.putInt(positions.size * 4 + i * 4, value) }
@@ -125,8 +181,8 @@ class MeshColliderTest {
              "buffers":[{"byteLength":${bin.size}}],
              "bufferViews":[{"buffer":0,"byteOffset":0,"byteLength":${positions.size * 4}},
                             {"buffer":0,"byteOffset":${positions.size * 4},"byteLength":${indices.size * 4}}],
-             "accessors":[{"bufferView":0,"componentType":5126,"count":4,"type":"VEC3"},
-                          {"bufferView":1,"componentType":5125,"count":6,"type":"SCALAR"}]}
+             "accessors":[{"bufferView":0,"componentType":5126,"count":${positions.size / 3},"type":"VEC3"},
+                          {"bufferView":1,"componentType":5125,"count":${indices.size},"type":"SCALAR"}]}
         """.trimIndent().encodeToByteArray()
         val paddedJson = json + ByteArray((4 - json.size % 4) % 4) { ' '.code.toByte() }
         val glb = ByteArray(GLB_HEADER + CHUNK_HEADER + paddedJson.size + CHUNK_HEADER + bin.size)
@@ -167,6 +223,17 @@ class MeshColliderTest {
       "rotation": { "x": 0.0, "y": 1.5707964, "z": 0.0 },
       "scale": { "x": 2.0, "y": 3.0, "z": 1.0 } },
     "components": [ { "component": "physics_body", "shape": { "type": "mesh", "mesh": "props/ramp.glb" } } ] }
+] }
+"""
+
+        const val HULL_FALL_SCENE = """
+{ "version": 1, "name": "harbor", "nodes": [
+  { "name": "Floor", "transform": {
+      "position": { "x": 0.0, "y": -0.5, "z": 0.0 } },
+    "components": [ { "component": "physics_body", "shape": { "type": "box", "halfExtents": { "x": 10.0, "y": 0.5, "z": 10.0 } }, "motion": "STATIC" } ] },
+  { "name": "FallingWedge", "transform": {
+      "position": { "x": 0.0, "y": 3.0, "z": 0.0 } },
+    "components": [ { "component": "physics_body", "shape": { "type": "convex_hull", "mesh": "props/ramp.glb" }, "motion": "DYNAMIC" } ] }
 ] }
 """
     }
