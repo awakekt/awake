@@ -65,6 +65,7 @@ val ShadowCascadePassBinding = BindingSemantic.Custom("shadowCascadePass")
  * resource instead of repeating a Vulkan descriptor-set/WebGPU bind-group index. Shadow depth
  * and joint palettes have distinct slots so a skinned pipeline can sample shadows safely.
  */
+@ConsistentCopyVisibility
 data class BindingLayout private constructor(
     private val slots: Map<BindingSemantic, Int>,
 ) {

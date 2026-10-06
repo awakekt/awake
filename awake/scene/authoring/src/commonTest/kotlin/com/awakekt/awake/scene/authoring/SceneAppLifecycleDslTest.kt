@@ -237,7 +237,7 @@ class SceneAppLifecycleDslTest {
                     mesh("cube") { renderer.createMesh(EmptyGeometry) }
                     material("default") { renderer.createMaterial() }
                 }
-                content {
+                ui {
                     Text("module-scene")
                 }
             }
@@ -260,7 +260,7 @@ class SceneAppLifecycleDslTest {
         val game = app {
             scene("ordered-scene") {
                 cameraEntity("camera")
-                content {
+                ui {
                     Text("ordered")
                 }
             }
@@ -280,7 +280,7 @@ class SceneAppLifecycleDslTest {
             module(
                 sceneComposeAppModule(content = { Text("app-level") }),
             )
-            sceneSession {
+            ecs {
                 cameraEntity("camera")
             }
         }
@@ -405,7 +405,9 @@ class SceneAppLifecycleDslTest {
     private class BusySystem : System {
         override fun update(world: World, delta: Float) {
             val start = TimeSource.Monotonic.markNow()
-            while (start.elapsedNow().inWholeMicroseconds < BUSY_MICROS) Unit
+            while (start.elapsedNow().inWholeMicroseconds < BUSY_MICROS) {
+                // Spin until target elapsed time.
+            }
         }
     }
 
@@ -423,7 +425,7 @@ class SceneAppLifecycleDslTest {
                     },
                 ),
             )
-            sceneSession {
+            ecs {
                 cameraEntity("camera")
                 cameraSystem()
             }
@@ -470,7 +472,7 @@ class SceneAppLifecycleDslTest {
                     },
                 ),
             )
-            sceneSession {
+            ecs {
                 cameraEntity("camera")
             }
         }
@@ -486,6 +488,7 @@ class SceneAppLifecycleDslTest {
         assertNotNull(seenFps)
     }
 
+    @Suppress("DEPRECATION")
     @Test
     fun declaringBothAppLevelComposeAndLegacySceneContentFails() = runTest {
         assertFailsWith<IllegalStateException> {
@@ -498,6 +501,7 @@ class SceneAppLifecycleDslTest {
         }
     }
 
+    @Suppress("DEPRECATION")
     @Test
     fun declaringAppLevelComposeAfterLegacySceneContentFails() = runTest {
         assertFailsWith<IllegalStateException> {

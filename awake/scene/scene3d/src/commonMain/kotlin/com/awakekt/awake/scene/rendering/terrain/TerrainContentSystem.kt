@@ -79,7 +79,9 @@ class TerrainContentSystem(
             val pending = attached.tryReceive().getOrNull() ?: break
             pending.feature.detach()
         }
-        while (resolved.tryReceive().getOrNull() != null) Unit
+        while (resolved.tryReceive().isSuccess) {
+            // Drain remaining resolved completions.
+        }
     }
 
     private fun releaseRemoved(world: World) {

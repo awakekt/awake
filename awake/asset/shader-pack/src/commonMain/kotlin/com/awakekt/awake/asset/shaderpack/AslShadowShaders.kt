@@ -420,7 +420,7 @@ private fun litShadow(
     val applyFog = fn("applyFog", returns = AslType.Data(GpuDataShape.Vec3)) {
         val baseColor by param(GpuDataShape.Vec3)
         val pos by param(GpuDataShape.Vec3)
-        val dist = let("dist", length(u.cameraPosition!!.xyz - pos))
+        val dist = let("dist", length(u.cameraPosition.xyz - pos))
         val fogAmount = let("fogAmount", 1f.lit - exp(-u.fogColor!!.a * dist))
         returnValue(mix(baseColor, u.fogColor.rgb, saturate(fogAmount)))
     }
@@ -433,7 +433,7 @@ private fun litShadow(
             "l",
             normalize(select(vec3(0f.lit, 1f.lit, 0f.lit), u.lightDirection.xyz, directionalEnabled)),
         )
-        val v = let("v", normalize(u.cameraPosition!!.xyz - worldPos))
+        val v = let("v", normalize(u.cameraPosition.xyz - worldPos))
         val h = let("h", normalize(v + l))
         val nDotL = let("nDotL", select(0f.lit, max(dot(n, l), 0f.lit), directionalEnabled))
         val nDotV = let("nDotV", max(dot(n, v), epsilon))

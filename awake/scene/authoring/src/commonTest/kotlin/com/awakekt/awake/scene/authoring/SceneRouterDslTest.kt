@@ -77,7 +77,7 @@ class SceneRouterDslTest {
             scenes {
                 route("overview") {
                     cameraEntity("camera")
-                    content {
+                    ui {
                         Text("overview ui")
                     }
                 }
