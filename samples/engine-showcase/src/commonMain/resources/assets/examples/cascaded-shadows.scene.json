@@ -32,8 +32,8 @@
       "name": "ground",
       "transform": { "scale": { "x": 12.0, "y": 1.0, "z": 12.0 } },
       "components": [
-        { "component": "meshRenderer", "mesh": "ground", "material": "lit-shadow", "cullMode": "Back" },
-        { "component": "pbrMaterial", "metallic": 0.0, "roughness": 0.9 }
+        { "component": "mesh_renderer", "mesh": "ground", "material": "lit-shadow", "cullMode": "Back" },
+        { "component": "pbr_material", "metallic": 0.0, "roughness": 0.9 }
       ]
     },
 
@@ -41,33 +41,33 @@
       "name": "near-caster",
       "transform": { "position": { "x": -1.5, "y": 0.5, "z": 6.0 } },
       "components": [
-        { "component": "meshRenderer", "mesh": "cube", "material": "lit-shadow" },
-        { "component": "spinControl" },
-        { "component": "pbrMaterial", "metallic": 0.0, "roughness": 0.4 }
+        { "component": "mesh_renderer", "mesh": "cube", "material": "lit-shadow" },
+        { "component": "spin_control" },
+        { "component": "pbr_material", "metallic": 0.0, "roughness": 0.4 }
       ]
     },
     {
       "name": "mid-caster",
       "transform": { "position": { "x": 1.5, "y": 1.0, "z": -6.0 }, "scale": { "x": 2.0, "y": 2.0, "z": 2.0 } },
       "components": [
-        { "component": "meshRenderer", "mesh": "cube", "material": "lit-shadow" },
-        { "component": "pbrMaterial", "metallic": 0.0, "roughness": 0.6 }
+        { "component": "mesh_renderer", "mesh": "cube", "material": "lit-shadow" },
+        { "component": "pbr_material", "metallic": 0.0, "roughness": 0.6 }
       ]
     },
     {
       "name": "far-caster",
       "transform": { "position": { "x": -2.5, "y": 2.0, "z": -26.0 }, "scale": { "x": 4.0, "y": 4.0, "z": 4.0 } },
       "components": [
-        { "component": "meshRenderer", "mesh": "cube", "material": "lit-shadow" },
-        { "component": "pbrMaterial", "metallic": 0.0, "roughness": 0.7 }
+        { "component": "mesh_renderer", "mesh": "cube", "material": "lit-shadow" },
+        { "component": "pbr_material", "metallic": 0.0, "roughness": 0.7 }
       ]
     },
     {
       "name": "distant-caster",
       "transform": { "position": { "x": 3.0, "y": 3.0, "z": -60.0 }, "scale": { "x": 6.0, "y": 6.0, "z": 6.0 } },
       "components": [
-        { "component": "meshRenderer", "mesh": "cube", "material": "lit-shadow" },
-        { "component": "pbrMaterial", "metallic": 0.0, "roughness": 0.8 }
+        { "component": "mesh_renderer", "mesh": "cube", "material": "lit-shadow" },
+        { "component": "pbr_material", "metallic": 0.0, "roughness": 0.8 }
       ]
     }
   ]

@@ -69,7 +69,7 @@
         "scale": { "x": 2.0, "y": 0.3, "z": 2.0 }
       },
       "components": [
-        { "component": "meshRenderer", "mesh": "cube", "material": "lit-shadow" }
+        { "component": "mesh_renderer", "mesh": "cube", "material": "lit-shadow" }
       ]
     },
     {

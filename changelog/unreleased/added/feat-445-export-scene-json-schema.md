@@ -1,0 +1,1 @@
+- **Export a standard JSON Schema (Draft 2020-12) for scene documents and validate example scenes against it.** Generates a deterministic JSON Schema from `SceneComponentCatalog` with sorted keys and definitions, canonical snake_case component discriminators, and validation for data types, numeric ranges, and open `custom` extensions (#445).

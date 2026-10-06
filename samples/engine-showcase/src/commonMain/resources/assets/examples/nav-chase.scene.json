@@ -19,24 +19,24 @@
     {
       "name": "nav-terrain",
       "components": [
-        { "component": "meshRenderer", "mesh": "nav-terrain", "material": "lit-shadow", "cullMode": "Back" },
-        { "component": "pbrMaterial", "metallic": 0.0, "roughness": 0.9 }
+        { "component": "mesh_renderer", "mesh": "nav-terrain", "material": "lit-shadow", "cullMode": "Back" },
+        { "component": "pbr_material", "metallic": 0.0, "roughness": 0.9 }
       ]
     },
     {
       "name": "nav-target",
       "transform": { "position": { "x": 3.0, "y": 0.5, "z": 3.0 } },
       "components": [
-        { "component": "meshRenderer", "mesh": "cube", "material": "lit-shadow" },
-        { "component": "pbrMaterial", "metallic": 0.0, "roughness": 0.4 }
+        { "component": "mesh_renderer", "mesh": "cube", "material": "lit-shadow" },
+        { "component": "pbr_material", "metallic": 0.0, "roughness": 0.4 }
       ]
     },
     {
       "name": "nav-chaser",
       "transform": { "position": { "x": 3.0, "y": 0.5, "z": 14.0 } },
       "components": [
-        { "component": "meshRenderer", "mesh": "cube", "material": "lit-shadow" },
-        { "component": "pbrMaterial", "metallic": 0.0, "roughness": 0.4 }
+        { "component": "mesh_renderer", "mesh": "cube", "material": "lit-shadow" },
+        { "component": "pbr_material", "metallic": 0.0, "roughness": 0.4 }
       ]
     },
     {

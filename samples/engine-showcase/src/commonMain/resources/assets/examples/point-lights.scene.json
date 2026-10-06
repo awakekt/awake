@@ -19,33 +19,33 @@
     {
       "name": "ground",
       "components": [
-        { "component": "meshRenderer", "mesh": "ground", "material": "lit-shadow", "cullMode": "Back" },
-        { "component": "pbrMaterial", "metallic": 0.0, "roughness": 0.85 }
+        { "component": "mesh_renderer", "mesh": "ground", "material": "lit-shadow", "cullMode": "Back" },
+        { "component": "pbr_material", "metallic": 0.0, "roughness": 0.85 }
       ]
     },
     {
       "name": "centre-cube",
       "transform": { "position": { "x": 0.0, "y": 0.5, "z": 0.0 } },
       "components": [
-        { "component": "meshRenderer", "mesh": "cube", "material": "lit-shadow" },
-        { "component": "spinControl" },
-        { "component": "pbrMaterial", "metallic": 0.0, "roughness": 0.35 }
+        { "component": "mesh_renderer", "mesh": "cube", "material": "lit-shadow" },
+        { "component": "spin_control" },
+        { "component": "pbr_material", "metallic": 0.0, "roughness": 0.35 }
       ]
     },
     {
       "name": "left-cube",
       "transform": { "position": { "x": -3.0, "y": 0.5, "z": 0.0 } },
       "components": [
-        { "component": "meshRenderer", "mesh": "cube", "material": "lit-shadow" },
-        { "component": "pbrMaterial", "metallic": 0.0, "roughness": 0.6 }
+        { "component": "mesh_renderer", "mesh": "cube", "material": "lit-shadow" },
+        { "component": "pbr_material", "metallic": 0.0, "roughness": 0.6 }
       ]
     },
     {
       "name": "right-cube",
       "transform": { "position": { "x": 3.0, "y": 0.5, "z": 0.0 } },
       "components": [
-        { "component": "meshRenderer", "mesh": "cube", "material": "lit-shadow" },
-        { "component": "pbrMaterial", "metallic": 0.0, "roughness": 0.6 }
+        { "component": "mesh_renderer", "mesh": "cube", "material": "lit-shadow" },
+        { "component": "pbr_material", "metallic": 0.0, "roughness": 0.6 }
       ]
     },
 

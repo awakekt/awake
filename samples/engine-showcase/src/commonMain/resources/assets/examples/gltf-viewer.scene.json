@@ -19,7 +19,7 @@
     {
       "name": "duck",
       "components": [
-        { "component": "meshRenderer", "mesh": "duck", "material": "duck-material" }
+        { "component": "mesh_renderer", "mesh": "duck", "material": "duck-material" }
       ]
     },
     {
