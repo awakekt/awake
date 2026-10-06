@@ -5,8 +5,8 @@
  */
 package com.awakekt.awake.scene.controls
 
-import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.compose.ui.platform.InputOwnership
+import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.binding.SceneComponentRegistry

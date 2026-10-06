@@ -9,18 +9,35 @@
 # objects with `[]` (`particle_emitter.ground.colliders[].x`).
 
 free camera.far | Relational: it must exceed camera.near, which validate() enforces; no fixed limit says that.
+free camera_rig.distance | Relational: must be between minDistance and maxDistance, enforced by validate().
+free camera_rig.maxDistance | Relational: must be at least minDistance, enforced by validate().
+free camera_rig.minDistance | Relational: must be at least 0 and at most maxDistance, enforced by validate().
+free camera_rig.offset.x | Any coordinate offset is valid.
+free camera_rig.offset.y | Any coordinate offset is valid.
+free camera_rig.offset.z | Any coordinate offset is valid.
+free camera_rig.pitch | Any pitch angle in radians is valid.
+free camera_rig.yaw | Any yaw angle in radians is valid.
+free character_controller.gravity | Any gravity acceleration is valid, including zero or negative (inversion).
+free character_controller.slopeLimit | Any slope limit angle in radians is valid.
+free chase.repathInterval | Any repath interval in seconds is valid; defaults to 0.5s.
+free chase.waypointRadius | Any distance threshold is valid; defaults to 0.5 units.
+free flee.fleeDistance | Any flee distance is valid; defaults to 12 units.
+free flee.repathInterval | Any repath interval in seconds is valid; defaults to 0.5s.
+free flee.safeRadius | Relational: must be greater than panicRadius, enforced by validate().
+free flee.waypointRadius | Any distance threshold is valid; defaults to 0.5 units.
+free navigation.originX | Any origin coordinate in world units is valid.
+free navigation.originZ | Any origin coordinate in world units is valid.
+free patrol.repathInterval | Any repath interval in seconds is valid; defaults to 0.5s.
+free patrol.stops[].x | Any stop coordinate is valid.
+free patrol.stops[].y | Any stop coordinate is valid.
+free patrol.stops[].z | Any stop coordinate is valid.
+free patrol.waypointRadius | Any distance threshold is valid; defaults to 0.5 units.
 free spin_control.radians | The initial angle: every angle is valid, and the editor hides it because a system writes it at run time.
 
 undecided ambient_light.colorB
 undecided ambient_light.colorG
 undecided ambient_light.colorR
 undecided ambient_light.intensity
-undecided camera_rig.distance
-undecided camera_rig.flySpeed
-undecided camera_rig.maxDistance
-undecided camera_rig.minDistance
-undecided camera_rig.pitch
-undecided camera_rig.yaw
 undecided canvas_element.fontSize
 undecided canvas_element.height
 undecided canvas_element.offsetX
@@ -28,15 +45,6 @@ undecided canvas_element.offsetY
 undecided canvas_element.order
 undecided canvas_element.value
 undecided canvas_element.width
-undecided character_controller.gravity
-undecided character_controller.halfHeight
-undecided character_controller.jumpSpeed
-undecided character_controller.radius
-undecided character_controller.slopeLimit
-undecided character_controller.stepHeight
-undecided chase.repathInterval
-undecided chase.speed
-undecided chase.waypointRadius
 undecided day_cycle.dayLengthSeconds
 undecided day_cycle.noonElevationDegrees
 undecided day_cycle.stops[].ambient
@@ -44,12 +52,6 @@ undecided day_cycle.stops[].lightIntensity
 undecided day_cycle.stops[].time
 undecided day_cycle.sunriseAzimuthDegrees
 undecided day_cycle.time
-undecided flee.fleeDistance
-undecided flee.panicRadius
-undecided flee.repathInterval
-undecided flee.safeRadius
-undecided flee.speed
-undecided flee.waypointRadius
 undecided fog.colorB
 undecided fog.colorG
 undecided fog.colorR
@@ -66,12 +68,6 @@ undecided locomotion_animation.airborneAbove
 undecided locomotion_animation.crossFade
 undecided locomotion_animation.runAbove
 undecided locomotion_animation.walkAbove
-undecided movement_control.runSpeed
-undecided movement_control.speed
-undecided movement_control.turnSpeed
-undecided navigation.cellSize
-undecided navigation.originX
-undecided navigation.originZ
 undecided particle_emitter.alphaCurve.fadeInEnd
 undecided particle_emitter.alphaCurve.fadeOutStart
 undecided particle_emitter.burstCount
@@ -99,10 +95,6 @@ undecided particle_emitter.stretchFactor
 undecided particle_emitter.turbulence
 undecided particle_emitter.turbulenceFrequency
 undecided particle_emitter.velocityJitter
-undecided patrol.dwellSeconds
-undecided patrol.repathInterval
-undecided patrol.speed
-undecided patrol.waypointRadius
 undecided pbr_material.alphaCutoff
 undecided pbr_material.metallic
 undecided pbr_material.roughness
@@ -146,9 +138,6 @@ undecided camera.eye.z
 undecided camera.up.x
 undecided camera.up.y
 undecided camera.up.z
-undecided camera_rig.offset.x
-undecided camera_rig.offset.y
-undecided camera_rig.offset.z
 undecided day_cycle.stops[].fogColor.a
 undecided day_cycle.stops[].fogColor.b
 undecided day_cycle.stops[].fogColor.g
@@ -205,9 +194,6 @@ undecided particle_emitter.ground.colliders[].min.z
 undecided particle_emitter.velocity.x
 undecided particle_emitter.velocity.y
 undecided particle_emitter.velocity.z
-undecided patrol.stops[].x
-undecided patrol.stops[].y
-undecided patrol.stops[].z
 undecided pbr_material.baseColorFactor.a
 undecided pbr_material.baseColorFactor.b
 undecided pbr_material.baseColorFactor.g

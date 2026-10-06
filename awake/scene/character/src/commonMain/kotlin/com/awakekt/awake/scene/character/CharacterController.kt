@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.character
 
+import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.CapsuleShape
@@ -37,11 +38,11 @@ import kotlin.reflect.KClass
 @Serializable
 @SerialName("character_controller")
 data class SceneCharacterController(
-    val radius: Float = DEFAULT_RADIUS,
-    val halfHeight: Float = DEFAULT_HALF_HEIGHT,
-    val stepHeight: Float = DEFAULTS.stepHeight,
+    @PropertyRange(min = 0.0, exclusiveMin = true) val radius: Float = DEFAULT_RADIUS,
+    @PropertyRange(min = 0.0, exclusiveMin = true) val halfHeight: Float = DEFAULT_HALF_HEIGHT,
+    @PropertyRange(min = 0.0) val stepHeight: Float = DEFAULTS.stepHeight,
     val slopeLimit: Float = DEFAULTS.slopeLimitRadians,
-    val jumpSpeed: Float = 0f,
+    @PropertyRange(min = 0.0) val jumpSpeed: Float = 0f,
     val gravity: Float = DEFAULT_GRAVITY,
 ) : SceneComponent {
     override fun validate(path: String): List<SceneValidationIssue> = buildList {
