@@ -9,7 +9,9 @@ import com.awakekt.awake.render.texture.TextureAsset
 
 /** Owns renderer-created sampled textures and the small set of cached asset textures. */
 internal class TextureResourceManager<T>(private val destroyResource: (T) -> Unit) {
-    private val textures = mutableListOf<T>()
+    // A neutral creator can delegate to the renderer's upload path, which registers the
+    // texture before returning it. Both paths share one owner and must release it only once.
+    private val textures = mutableSetOf<T>()
     private val neutralTextures = mutableMapOf<TextureAsset, T>()
 
     fun register(texture: T): T = texture.also { textures += it }

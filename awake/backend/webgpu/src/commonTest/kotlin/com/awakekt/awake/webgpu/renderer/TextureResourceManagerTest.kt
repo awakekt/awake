@@ -34,4 +34,31 @@ class TextureResourceManagerTest {
 
         assertEquals(listOf(3), destroyed)
     }
+
+    @Test
+    fun neutralUploadsAlreadyRegisteredByTheRendererAreDestroyedOnce() {
+        val destroyed = mutableListOf<Int>()
+        val manager = TextureResourceManager<Int> { destroyed += it }
+        val asset = TextureAsset(ByteArray(4), 1, 1)
+
+        assertEquals(7, manager.neutral(asset) { manager.register(7) })
+        assertEquals(7, manager.neutral(asset) { error("The neutral texture must be reused") })
+        manager.destroy()
+        manager.destroy()
+
+        assertEquals(listOf(7), destroyed)
+    }
+
+    @Test
+    fun releasingADoublyRegisteredUploadDoesNotLeaveAnotherShutdownOwner() {
+        val destroyed = mutableListOf<Int>()
+        val manager = TextureResourceManager<Int> { destroyed += it }
+        val texture = manager.register(3)
+        manager.register(texture)
+
+        manager.release(texture)
+        manager.destroy()
+
+        assertEquals(listOf(3), destroyed)
+    }
 }
