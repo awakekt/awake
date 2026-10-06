@@ -290,7 +290,8 @@ val verifyCapabilityBoundaries = tasks.register("verifyCapabilityBoundaries") {
                     if (forbiddenImports.any(line::contains)) {
                         add("${file.relativeTo(rootDir)}:${index + 1}: platform or Pro import in commonMain")
                     }
-                    if (line.contains("import com.awakekt.awake.editor.") && !file.path.contains("awake/editor/")) {
+                    val normalizedPath = file.invariantSeparatorsPath
+                    if (line.contains("import com.awakekt.awake.editor.") && !normalizedPath.contains("awake/editor/")) {
                         add("${file.relativeTo(rootDir)}:${index + 1}: editor import in core module")
                     }
                     duplicatedReaderPatterns.forEach { pattern ->

@@ -229,8 +229,17 @@ public final class com/awakekt/awake/editor/core/plugin/FloatingCardProvider$Def
 
 public abstract interface class com/awakekt/awake/editor/core/plugin/InspectorFieldScope {
 	public fun choices (Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Lkotlin/jvm/functions/Function1;)V
+	public fun color (Ljava/lang/String;Lcom/awakekt/awake/core/color/Color;Lkotlin/jvm/functions/Function1;)V
+	public fun integer (Ljava/lang/String;IIIILkotlin/jvm/functions/Function1;)V
+	public fun integer (Ljava/lang/String;ILkotlin/jvm/functions/Function1;)V
+	public static synthetic fun integer$default (Lcom/awakekt/awake/editor/core/plugin/InspectorFieldScope;Ljava/lang/String;IIIILkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public fun list (Ljava/lang/String;Ljava/util/List;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function3;)V
+	public static synthetic fun list$default (Lcom/awakekt/awake/editor/core/plugin/InspectorFieldScope;Ljava/lang/String;Ljava/util/List;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function3;ILjava/lang/Object;)V
+	public fun nullable (Ljava/lang/String;Ljava/lang/Object;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;)V
 	public abstract fun options (Ljava/lang/String;Ljava/lang/Enum;Ljava/util/List;Lkotlin/jvm/functions/Function1;)V
+	public fun readOnly (Ljava/lang/String;Ljava/lang/String;)V
 	public abstract fun scalar (Ljava/lang/String;FLkotlin/jvm/functions/Function1;)V
+	public fun section (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
 	public fun slider (Ljava/lang/String;FFFFLkotlin/jvm/functions/Function1;)V
 	public static synthetic fun slider$default (Lcom/awakekt/awake/editor/core/plugin/InspectorFieldScope;Ljava/lang/String;FFFFLkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 	public fun text (Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
@@ -241,6 +250,15 @@ public abstract interface class com/awakekt/awake/editor/core/plugin/InspectorFi
 
 public final class com/awakekt/awake/editor/core/plugin/InspectorFieldScope$DefaultImpls {
 	public static fun choices (Lcom/awakekt/awake/editor/core/plugin/InspectorFieldScope;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Lkotlin/jvm/functions/Function1;)V
+	public static fun color (Lcom/awakekt/awake/editor/core/plugin/InspectorFieldScope;Ljava/lang/String;Lcom/awakekt/awake/core/color/Color;Lkotlin/jvm/functions/Function1;)V
+	public static fun integer (Lcom/awakekt/awake/editor/core/plugin/InspectorFieldScope;Ljava/lang/String;IIIILkotlin/jvm/functions/Function1;)V
+	public static fun integer (Lcom/awakekt/awake/editor/core/plugin/InspectorFieldScope;Ljava/lang/String;ILkotlin/jvm/functions/Function1;)V
+	public static synthetic fun integer$default (Lcom/awakekt/awake/editor/core/plugin/InspectorFieldScope;Ljava/lang/String;IIIILkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static fun list (Lcom/awakekt/awake/editor/core/plugin/InspectorFieldScope;Ljava/lang/String;Ljava/util/List;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function3;)V
+	public static synthetic fun list$default (Lcom/awakekt/awake/editor/core/plugin/InspectorFieldScope;Ljava/lang/String;Ljava/util/List;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function3;ILjava/lang/Object;)V
+	public static fun nullable (Lcom/awakekt/awake/editor/core/plugin/InspectorFieldScope;Ljava/lang/String;Ljava/lang/Object;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;)V
+	public static fun readOnly (Lcom/awakekt/awake/editor/core/plugin/InspectorFieldScope;Ljava/lang/String;Ljava/lang/String;)V
+	public static fun section (Lcom/awakekt/awake/editor/core/plugin/InspectorFieldScope;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
 	public static fun slider (Lcom/awakekt/awake/editor/core/plugin/InspectorFieldScope;Ljava/lang/String;FFFFLkotlin/jvm/functions/Function1;)V
 	public static synthetic fun slider$default (Lcom/awakekt/awake/editor/core/plugin/InspectorFieldScope;Ljava/lang/String;FFFFLkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 	public static fun text (Lcom/awakekt/awake/editor/core/plugin/InspectorFieldScope;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
@@ -566,6 +584,12 @@ public final class com/awakekt/awake/editor/core/plugin/SceneSystemsProvider$Def
 	public static fun dispose (Lcom/awakekt/awake/editor/core/plugin/SceneSystemsProvider;)V
 	public static fun getCodec (Lcom/awakekt/awake/editor/core/plugin/SceneSystemsProvider;)Lcom/awakekt/awake/editor/core/plugin/ProviderCodec;
 	public static fun getKind (Lcom/awakekt/awake/editor/core/plugin/SceneSystemsProvider;)Lcom/awakekt/awake/editor/core/plugin/EditorProviderKind;
+}
+
+public final class com/awakekt/awake/editor/core/plugin/SchemaInspectorRenderer {
+	public static final field INSTANCE Lcom/awakekt/awake/editor/core/plugin/SchemaInspectorRenderer;
+	public final fun render (Lcom/awakekt/awake/core/schema/PropertySchema;Lcom/awakekt/awake/editor/core/plugin/InspectorFieldScope;Ljava/util/Map;Lkotlin/jvm/functions/Function2;)V
+	public static synthetic fun render$default (Lcom/awakekt/awake/editor/core/plugin/SchemaInspectorRenderer;Lcom/awakekt/awake/core/schema/PropertySchema;Lcom/awakekt/awake/editor/core/plugin/InspectorFieldScope;Ljava/util/Map;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
 }
 
 public abstract interface class com/awakekt/awake/editor/core/plugin/ToolbarProvider : com/awakekt/awake/editor/core/plugin/EditorProvider {

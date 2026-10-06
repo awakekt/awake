@@ -1,0 +1,1 @@
+- Map `PropertySchema` onto `InspectorFieldScope` via `SchemaInspectorRenderer` and extend `InspectorFieldScope` with integer, color, readOnly, section, nullable, and list field kinds (#448).
