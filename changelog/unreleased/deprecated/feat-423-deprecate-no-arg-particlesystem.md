@@ -1,0 +1,1 @@
+- **Deprecated no-argument `ParticleSystem()`.** `ParticleSystem()` silently disabled entity following and rotation orientation by defaulting to an unplaced configuration. Pass a concrete placement (such as `TransformPlacement` in a scene) or explicitly pass `EmitterPlacement.None` when disabling following and rotation on purpose (#423).

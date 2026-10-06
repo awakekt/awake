@@ -35,7 +35,7 @@ class ParticleSpinTest {
     private fun step(emitter: ParticleEmitter, vararg seconds: Float) {
         val world = World()
         world.add(world.create(), emitter)
-        val system = ParticleSystem()
+        val system = ParticleSystem(EmitterPlacement.None)
         seconds.forEach { system.update(world, it) }
     }
 

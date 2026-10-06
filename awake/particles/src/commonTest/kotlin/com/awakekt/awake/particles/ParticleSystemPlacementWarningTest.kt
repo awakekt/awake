@@ -22,6 +22,7 @@ import kotlin.test.assertTrue
  * A [ParticleSystem] built without a placement turns following and orientation off without a word, so
  * it says so once. It must stay quiet when the omission is a choice or changes nothing.
  */
+@Suppress("DEPRECATION")
 class ParticleSystemPlacementWarningTest {
     private fun emitter(
         follows: Entity? = null,
