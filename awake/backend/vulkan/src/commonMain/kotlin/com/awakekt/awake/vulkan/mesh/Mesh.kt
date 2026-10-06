@@ -193,6 +193,9 @@ class Mesh(
     }
 
     override fun destroy() {
+        // Scene replacement can release this mesh while another frame slot still references it.
+        // Device idle covers every submitted queue without waiting on a reset, unsubmitted fence.
+        VulkanBuffers.vkDeviceWaitIdle(device)
         VulkanBuffers.vkDestroyBuffer(device, vertexBuffer.handle)
         VulkanBuffers.vkFreeMemory(device, vertexBufferMemory.handle)
         VulkanBuffers.vkDestroyBuffer(device, indexBuffer.handle)

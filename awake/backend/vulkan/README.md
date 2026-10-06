@@ -42,6 +42,20 @@ include(":awake:backend:vulkan:generator")           // the codegen tool that pr
 `vulkan` depends on `vulkan:bindings` via `api(...)` — orchestration sits above the raw API
 surface, not mixed into it.
 
+## Resource lifetime
+
+Destroy meshes and materials on the render thread, after removing them from future draw lists.
+Their `destroy()` methods wait for submitted device work before freeing buffers and descriptors.
+`Renderer.destroy()` also drains submitted presentation and offscreen work before releasing its
+owned resources. These waits can briefly stall scene replacement; they do not run in normal draws.
+Caller-created meshes, materials, pipelines and transfer contexts still need explicit teardown
+before the device is destroyed.
+
+The desktop `RendererResourceDestructionTest` requires a working `VK_LAYER_KHRONOS_validation`.
+Install `vulkan-validationlayers` on Linux, or the Vulkan SDK validation layer on Windows.
+The test fails if the layer is missing or fails to load, and device teardown reports validation
+errors including leaked child objects.
+
 ## What's hand-authored here (30 files, 11 packages)
 
 `application/`, `commands/`, `debug/`, `device/`, `material/`, `mesh/`, `pipeline/`,
