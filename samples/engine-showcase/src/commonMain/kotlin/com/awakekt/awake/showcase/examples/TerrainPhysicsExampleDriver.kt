@@ -13,6 +13,7 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.BodyHandle
 import com.awakekt.awake.physics.BoxShape
 import com.awakekt.awake.physics.Buoyancy
+import com.awakekt.awake.physics.ConvexHullShape
 import com.awakekt.awake.physics.ContactPhase
 import com.awakekt.awake.physics.MotionType
 import com.awakekt.awake.physics.PhysicsWorld
@@ -22,9 +23,19 @@ import com.awakekt.awake.scene.physics.PhysicsSystem
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import com.awakekt.awake.showcase.terrain.TerrainExampleAsset
 
-/** Half a unit each way, matching the `cube` mesh the boxes are drawn with -- a collider that
- * disagrees with its mesh makes physics look broken when it is working perfectly. */
 private const val BOX_HALF_EXTENT = 0.5f
+
+/**
+ * A wedge shape defined by 6 vertices (a triangular prism) to demonstrate dynamic convex hull physics.
+ */
+private val WEDGE_HULL_POINTS = floatArrayOf(
+    -0.5f, -0.5f, -0.5f,
+    0.5f, -0.5f, -0.5f,
+    -0.5f, -0.5f, 0.5f,
+    0.5f, -0.5f, 0.5f,
+    -0.5f, 0.5f, -0.5f,
+    0.5f, 0.5f, -0.5f,
+)
 
 /**
  * The volume a box has to reach to be collected, and the one collider here that deliberately does
@@ -172,6 +183,15 @@ internal object TerrainPhysicsExampleDriver {
             world.add(
                 terrain.entity,
                 PhysicsBody(TerrainExampleAsset.collisionShape, MotionType.STATIC),
+            )
+        }
+        instance.roots.find { it.name == "falling-wedge" }?.let { wedge ->
+            world.add(
+                wedge.entity,
+                PhysicsBody(
+                    ConvexHullShape(WEDGE_HULL_POINTS),
+                    MotionType.DYNAMIC,
+                ),
             )
         }
         instance.roots.filter { it.name?.startsWith("falling-box-") == true }.forEach { box ->

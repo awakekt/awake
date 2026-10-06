@@ -42,6 +42,10 @@ class TerrainShowcaseWiringTest {
             names.count { it.startsWith("falling-box-") } == 4,
             "the physics demonstration drops four boxes, found ${names.count { it.startsWith("falling-box-") }}",
         )
+        assertTrue(
+            "falling-wedge" in names,
+            "the physics demonstration drops a convex hull prop named 'falling-wedge'",
+        )
     }
 
     @Test
