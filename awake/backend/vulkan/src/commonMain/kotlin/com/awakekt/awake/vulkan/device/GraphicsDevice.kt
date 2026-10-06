@@ -62,6 +62,14 @@ class GraphicsDevice {
     private var failOnValidationError = false
     private val validationErrors = mutableListOf<String>()
 
+    /**
+     * Blocks until the GPU has finished every frame already submitted, set by the renderer that submits
+     * them and a no-op without one. A mesh or material calls it before freeing its buffers, because
+     * freeing a buffer a submitted frame still reads is undefined behaviour, and a scene swap does
+     * exactly that: it destroys the old scene's resources right after the last frames were submitted.
+     */
+    internal var awaitSubmittedFrames: () -> Unit = {}
+
     /** [window] is an `android.view.Surface` on Android, or a GLFW window handle (`Long`)
      * on desktop -- see [com.awakekt.awake.vulkan.createSurface]. */
     fun create(window: Any) {

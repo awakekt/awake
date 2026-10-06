@@ -223,6 +223,7 @@ class Material(
     }
 
     override fun destroy() {
+        graphicsDevice.awaitSubmittedFrames()
         uniformSlotsByFrame.forEach { frameSlots ->
             frameSlots.forEach { slot -> VulkanBuffers.vkDestroyBuffer(device, slot.uniformBuffer.handle) }
         }

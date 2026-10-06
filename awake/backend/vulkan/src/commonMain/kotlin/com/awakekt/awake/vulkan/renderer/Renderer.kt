@@ -342,6 +342,7 @@ class Renderer internal constructor(
     internal val lineMesh = LineMesh(graphicsDevice, MAX_DEBUG_LINES, maxFramesInFlight)
 
     init {
+        graphicsDevice.awaitSubmittedFrames = { awaitSubmittedFrames() }
         depthPrePass?.stats = statsCounter
         sceneDepthPass?.stats = statsCounter
         commandRecorder.engineDescriptorSets = buildMap {
@@ -501,6 +502,8 @@ class Renderer internal constructor(
     }
 
     override fun destroy() {
+        // This renderer is going away: a mesh destroyed after it must not wait on its fences.
+        graphicsDevice.awaitSubmittedFrames = {}
         awaitSubmittedOffscreenCommands()
         uiRunCache.clear()
         // "Whoever holds the list destroys it": these were constructor-injected, but this class

@@ -193,6 +193,7 @@ class Mesh(
     }
 
     override fun destroy() {
+        graphicsDevice.awaitSubmittedFrames()
         VulkanBuffers.vkDestroyBuffer(device, vertexBuffer.handle)
         VulkanBuffers.vkFreeMemory(device, vertexBufferMemory.handle)
         VulkanBuffers.vkDestroyBuffer(device, indexBuffer.handle)
