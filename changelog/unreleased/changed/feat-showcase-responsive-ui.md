@@ -1,0 +1,1 @@
+- Make engine-showcase navigation responsive with a scrollable sidebar and mobile hamburger sheet, and move debug controls and detailed stats into a dismissible panel with touch-accessible phase timings.

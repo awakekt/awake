@@ -9,9 +9,19 @@ SPDX-License-Identifier: Apache-2.0
 A catalogue of focused engine demonstrations — one scene per capability, each proving a single
 thing works end to end.
 
-**This is not an editor.** It is Core only: one switcher, one debug card, one stats card. Editor
-behaviour — selection, gizmos, play mode — belongs to Awake Studio. Anything an engine change can
-break, including frame rate, should be reproducible here first, without Studio.
+The sample uses Core runtime components. Editor behaviour — selection, gizmos, play mode — belongs
+to Awake Studio. Anything an engine change can break, including frame rate, should be reproducible
+here first, without Studio.
+
+Navigation uses the shadcn sidebar with a pinned header/footer and a scrollable scene list.
+Below 768dp, the hamburger opens it in a dismissible mobile sheet; choosing a scene closes the
+sheet. On wider windows the sidebar can be hidden and restored from the toolbar.
+
+The toolbar shows the active scene, FPS, and **Debug**. Debug opens a right sheet on wide windows
+or a bottom sheet on compact windows. **Render** contains global toggles and the active scene's
+controls, **Scene** contains fog settings, **Buffers** captures framebuffer attachments, and
+**Stats** contains detailed performance measurements. The close button, backdrop, and Escape
+dismiss the panel. Its content scrolls independently of its close button.
 
 ## Running
 
@@ -71,7 +81,7 @@ pass, with a low alpha cutoff that discards empty texels. It can be migrated to 
 
 ## Measuring frame time
 
-The stats card in the bottom-right corner reads:
+Click the toolbar's FPS readout, or open **Debug → Stats**, to read:
 
 | Line | Meaning |
 |---|---|
@@ -84,8 +94,8 @@ The stats card in the bottom-right corner reads:
 | Recorded | Every draw the backend issued, shadow cascades and UI included, and its triangles |
 | GPU | GPU time of the frame, where the backend can time it |
 
-The Game/Render/UI/Wait split and GPU time are off until F2 turns them on; the stress showcase and
-the perf log turn them on themselves.
+Enable **Phase timings** in Stats, or press F2, to measure the Game/Render/UI/Wait split and GPU
+time. The stress showcase and perf log turn them on themselves.
 
 To reproduce a frame-rate drop without Studio, open the stress showcase with vsync off, so the frame
 rate shows headroom past the display, and log a summary line every 240 frames:

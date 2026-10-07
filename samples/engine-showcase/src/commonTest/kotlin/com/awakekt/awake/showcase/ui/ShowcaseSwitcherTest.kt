@@ -8,14 +8,17 @@ package com.awakekt.awake.showcase.ui
 import com.awakekt.awake.compose.ui.platform.ComposeHost
 import com.awakekt.awake.compose.ui.platform.FrameInput
 import com.awakekt.awake.compose.ui.platform.FrameOutput
+import com.awakekt.awake.compose.ui.platform.PointerFrame
 import com.awakekt.awake.compose.ui.semantics.SemanticsNode
 import com.awakekt.awake.showcase.EngineShowcases
 import com.awakekt.awake.showcase.ShowcaseDebugToggles
 import com.awakekt.awake.showcase.ShowcaseSelection
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 /**
  * Clicks the panel the way the runtime does, because the failure worth catching is a button that
@@ -25,12 +28,20 @@ class ShowcaseSwitcherTest {
 
     private val host = ComposeHost()
     private val selection = ShowcaseSelection("point-lights")
+    private var viewportWidth = 1280
+    private var viewportHeight = 720
+    private var phaseTimings = false
 
-    private fun frame(x: Int = FrameInput.UNKNOWN_POINTER, y: Int = FrameInput.UNKNOWN_POINTER, down: Boolean = false): FrameOutput =
+    private fun frame(
+        x: Int = FrameInput.UNKNOWN_POINTER,
+        y: Int = FrameInput.UNKNOWN_POINTER,
+        down: Boolean = false,
+        pointers: List<PointerFrame> = emptyList(),
+    ): FrameOutput =
         host.frame(
-            FrameInput(viewportWidth = 1280, viewportHeight = 720, pointerX = x, pointerY = y, pointerDown = down),
+            FrameInput(viewportWidth = viewportWidth, viewportHeight = viewportHeight, pointerX = x, pointerY = y, pointerDown = down, pointers = pointers),
         ) {
-            ShowcaseOverlay(selection, EngineShowcases)
+            ShowcaseOverlay(selection, EngineShowcases, phaseTimingsEnabled = phaseTimings, onPhaseTimingsChange = { phaseTimings = it })
         }
 
     /** Input is dispatched against the previous frame's placed tree, so the layout frame comes first. */
@@ -64,6 +75,7 @@ class ShowcaseSwitcherTest {
 
     @Test
     fun debugCardOnlyShowsTheActiveShowcasesDiagnostics() {
+        click(ShowcaseChromeTags.DEBUG)
         selection.request("heightfield-terrain")
         assertEquals("heightfield-terrain", selection.consumeRequest())
         val heightfield = frame()
@@ -96,6 +108,7 @@ class ShowcaseSwitcherTest {
     @Test
     fun everyGlobalDebugControlIsVisibleOnceAndChangesItsSetting() {
         try {
+            click(ShowcaseChromeTags.DEBUG)
             val output = frame()
             val globalTags = listOf(
                 ShowcaseDebugTags.BOUNDS,
@@ -139,6 +152,102 @@ class ShowcaseSwitcherTest {
             ShowcaseDebugToggles.showLights = false
             ShowcaseDebugToggles.wireframe = false
         }
+    }
+
+    @Test
+    fun compactNavigationOpensAndClosesAfterSelection() {
+        viewportWidth = 390
+        viewportHeight = 844
+        assertNull(frame().find(ShowcaseSwitcherTags.PANEL))
+        assertNull(frame().find(ShowcaseDebugTags.CARD))
+        click(ShowcaseChromeTags.MENU)
+        assertNotNull(frame().find(ShowcaseChromeTags.NAV_SHEET))
+        click(ShowcaseSwitcherTags.entry("heightfield-terrain"))
+        assertEquals("heightfield-terrain", selection.consumeRequest())
+        repeat(30) { frame() }
+        assertNull(frame().find(ShowcaseSwitcherTags.PANEL))
+    }
+
+    @Test
+    fun retinaPhoneUsesCompactNavigationAndFitsItsToolbar() {
+        host.density = 2f
+        viewportWidth = 780
+        viewportHeight = 1688
+        assertNull(frame().find(ShowcaseSwitcherTags.PANEL))
+        listOf(ShowcaseChromeTags.MENU, ShowcaseChromeTags.DEBUG, ShowcaseChromeTags.STATS).forEach { tag ->
+            val node = assertNotNull(frame().find(tag))
+            assertTrue(node.x >= 0 && node.x + node.width <= viewportWidth, "$tag extends outside the phone")
+        }
+        click(ShowcaseChromeTags.MENU)
+        val panel = assertNotNull(frame().find(ShowcaseSwitcherTags.PANEL))
+        assertTrue(panel.width < viewportWidth)
+    }
+
+    @Test
+    fun desktopSidebarCanBeHiddenAndRestored() {
+        click(ShowcaseChromeTags.CLOSE_NAV)
+        assertNull(frame().find(ShowcaseSwitcherTags.PANEL))
+        click(ShowcaseChromeTags.MENU)
+        assertNotNull(frame().find(ShowcaseSwitcherTags.PANEL))
+    }
+
+    @Test
+    fun statsOpensOnDemandAndPhaseTimingsCanBeToggledWithoutAKeyboard() {
+        viewportWidth = 320
+        viewportHeight = 568
+        click(ShowcaseChromeTags.STATS)
+        val statsToggle = assertNotNull(frame().find(ShowcaseDebugTags.PHASE_TIMINGS))
+        assertTrue(statsToggle.x >= 0 && statsToggle.x + statsToggle.width <= viewportWidth)
+        click(ShowcaseDebugTags.PHASE_TIMINGS)
+        assertTrue(phaseTimings)
+        click(ShowcaseChromeTags.CLOSE_DEBUG)
+        repeat(30) { frame() }
+        assertNull(frame().find(ShowcaseDebugTags.CARD))
+    }
+
+    @Test
+    fun touchCanOpenAndScrollTheCompactSceneMenu() {
+        viewportWidth = 390
+        viewportHeight = 568
+        val menu = assertNotNull(frame().find(ShowcaseChromeTags.MENU))
+        val x = menu.x + menu.width / 2
+        val y = menu.y + menu.height / 2
+        frame(pointers = listOf(PointerFrame(1, x, y, down = true, pressed = true)))
+        frame(pointers = listOf(PointerFrame(1, x, y, down = false, released = true)))
+        repeat(30) { frame() }
+        assertNotNull(frame().find(ShowcaseSwitcherTags.PANEL))
+
+        frame(pointers = listOf(PointerFrame(2, 120, 420, down = true, pressed = true)))
+        repeat(10) { step -> frame(pointers = listOf(PointerFrame(2, 120, 420 - (step + 1) * 28, down = true))) }
+        frame(pointers = listOf(PointerFrame(2, 120, 140, down = false, released = true)))
+        val last = assertNotNull(frame().find(ShowcaseSwitcherTags.entry(EngineShowcases.last().id)))
+        assertTrue(last.y >= 0 && last.y + last.height < viewportHeight, "last menu item was not scrolled into view")
+        assertNull(selection.consumeRequest(), "swiping must not activate a scene")
+    }
+
+    @Test
+    fun debugToggleLabelAndCheckboxEachToggleExactlyOnce() {
+        try {
+            ShowcaseDebugToggles.showBounds = false
+            viewportWidth = 390
+            viewportHeight = 844
+            click(ShowcaseChromeTags.DEBUG)
+            click("${ShowcaseDebugTags.BOUNDS}-row")
+            assertTrue(ShowcaseDebugToggles.showBounds)
+            click(ShowcaseDebugTags.BOUNDS)
+            assertEquals(false, ShowcaseDebugToggles.showBounds)
+        } finally {
+            ShowcaseDebugToggles.showBounds = false
+        }
+    }
+
+    @Test
+    fun sceneInputIsAvailableUntilAModalPanelOpens() {
+        frame()
+        assertFalse(frame(800, 400, down = true).ownership.isCaptured)
+        frame(800, 400)
+        click(ShowcaseChromeTags.DEBUG)
+        assertTrue(frame(800, 400).ownership.isModalOpen)
     }
 }
 

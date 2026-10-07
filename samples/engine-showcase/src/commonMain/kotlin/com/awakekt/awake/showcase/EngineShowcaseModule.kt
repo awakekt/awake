@@ -13,6 +13,7 @@ import com.awakekt.awake.engine.bootstrap.dsl.appModule
 import com.awakekt.awake.engine.platform.core.AppModule
 import com.awakekt.awake.particles.ParticleSystem
 import com.awakekt.awake.physics.jolt.createJoltPhysicsWorld
+import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.scene.authoring.infrastructure.cameraInputSystem
 import com.awakekt.awake.scene.authoring.infrastructure.cameraSystem
 import com.awakekt.awake.scene.authoring.infrastructure.gameplayInput
@@ -20,8 +21,9 @@ import com.awakekt.awake.scene.authoring.infrastructure.playerInputSystem
 import com.awakekt.awake.scene.authoring.scene
 import com.awakekt.awake.scene.particles.TransformPlacement
 import com.awakekt.awake.scene.rendering.animation.AnimationSystem
+import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
+import com.awakekt.awake.scene.runtime.SceneContent
 import com.awakekt.awake.scene.runtime.defaultInfrastructureSystems
-import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.showcase.examples.CharacterExampleDriver
 import com.awakekt.awake.showcase.examples.EcsStressExampleDriver
 import com.awakekt.awake.showcase.examples.ShowcasePhysics
@@ -42,6 +44,7 @@ internal fun engineShowcaseModule(
     val selection = ShowcaseSelection(initialShowcaseId)
     val renderSystem2D = RenderSystem2D()
     val framebufferDebugger = ShowcaseFramebufferDebugger()
+    var activeRuntime: SceneAppLifecycleRuntime? = null
 
     return appModule {
         scene("engine-showcase") {
@@ -104,23 +107,44 @@ internal fun engineShowcaseModule(
                 defaultInfrastructureSystems() + ShowcaseFramebufferCaptureSystem(this, framebufferDebugger)
             }
             onReady {
-                // A perf log reads the phase split, so it times it from the first frame. Without
-                // one, F2 turns it on, or the ECS stress showcase does when it opens.
-                if (options.perfLog) perfStatsEnabled = true
-                // Before the first activate: the terrain showcase attaches its bodies on
-                // activation and needs a world to attach them to.
-                ShowcasePhysics.world = createJoltPhysicsWorld()
-                loader.preload()
-                loader.activate(selection.current, this)
+                activeRuntime = this
+                prepareShowcase(loader, selection, options)
             }
             // A Jolt world owns native allocations that outlive the JVM's idea of garbage, and
             // this one is reachable from an object that outlives the app module.
             onDispose {
+                activeRuntime = null
                 disposeShowcaseResources(framebufferDebugger, renderer)
             }
-            ui { ShowcaseOverlay(selection, EngineShowcases, framebufferDebugger) }
+            ui(showcaseUi(selection, framebufferDebugger) { activeRuntime })
         }
     }
+}
+
+private suspend fun SceneAppLifecycleRuntime.prepareShowcase(
+    loader: EngineShowcaseLoader,
+    selection: ShowcaseSelection,
+    options: ShowcaseLaunchOptions,
+) {
+    if (options.perfLog) perfStatsEnabled = true
+    // Terrain activation needs a live physics world before attaching its bodies.
+    ShowcasePhysics.world = createJoltPhysicsWorld()
+    loader.preload()
+    loader.activate(selection.current, this)
+}
+
+private fun showcaseUi(
+    selection: ShowcaseSelection,
+    debugger: ShowcaseFramebufferDebugger,
+    runtime: () -> SceneAppLifecycleRuntime?,
+): SceneContent = {
+    ShowcaseOverlay(
+        selection,
+        EngineShowcases,
+        debugger,
+        phaseTimingsEnabled = runtime()?.perfStatsEnabled == true,
+        onPhaseTimingsChange = { runtime()?.perfStatsEnabled = it },
+    )
 }
 
 private fun disposeShowcaseResources(

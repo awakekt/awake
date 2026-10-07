@@ -1,0 +1,1 @@
+- Support finger drags in Compose vertical and horizontal scroll containers; swiping a child button cancels its click and pressed state while small finger movement still permits taps.
