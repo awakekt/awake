@@ -114,6 +114,7 @@ comments:
       - '**/awake/core/math2d/**'
       - '**/awake/compose/di/**'
       - '**/awake/compose/state/**'
+      - '**/awake/compose/runtime/**'
       - '**/awake/scene/audio/**'
       - '**/awake/scene/canvas/**'
       - '**/awake/scene/blueprint/**'

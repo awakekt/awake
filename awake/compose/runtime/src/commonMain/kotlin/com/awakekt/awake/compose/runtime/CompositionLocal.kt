@@ -35,6 +35,10 @@ class CompositionLocal<T> internal constructor(private val defaultFactory: () ->
     private object Unset
 }
 
+/**
+ * Creates a [CompositionLocal] whose value, where no ancestor provides one, is [default]: computed
+ * on the first such read and reused after.
+ */
 fun <T> compositionLocalOf(default: () -> T): CompositionLocal<T> = CompositionLocal(default)
 
 /**
@@ -46,8 +50,10 @@ fun <T> compositionLocalOf(default: () -> T): CompositionLocal<T> = CompositionL
 class ProvidedLocals internal constructor(initialEntries: List<Any?> = emptyList()) {
     private val entries = ArrayList<Any?>(initialEntries)
 
+    /** A copy of the providers open now, for a composition that starts here, such as a subcomposition. */
     fun snapshot(): ProvidedLocals = ProvidedLocals(entries)
 
+    /** Opens [local] = [value] for [content], and closes it when [content] returns or throws. */
     fun <T> provide(local: CompositionLocal<T>, value: T, content: () -> Unit) {
         entries.add(local)
         entries.add(value)
@@ -81,6 +87,7 @@ class ProvidedLocals internal constructor(initialEntries: List<Any?> = emptyList
         }
     }
 
+    /** The innermost value provided for [local], or its default when nothing provides one. */
     fun <T> read(local: CompositionLocal<T>): T {
         var i = entries.size - 2
         while (i >= 0) {
@@ -94,6 +101,7 @@ class ProvidedLocals internal constructor(initialEntries: List<Any?> = emptyList
     }
 }
 
+context(composer: Composer)
 /**
  * Reads the nearest provided value, or the local's default if nothing provided one.
  *
@@ -101,16 +109,15 @@ class ProvidedLocals internal constructor(initialEntries: List<Any?> = emptyList
  * probably the most-typed line in the whole API, and a pair of parens on it is exactly the
  * gratuitous difference `11-refinements.md` rule 1 exists to prevent.
  */
-context(composer: Composer)
 val <T> CompositionLocal<T>.current: T get() = composer.locals.read(this)
 
+context(composer: Composer)
 /**
  * Provides [value] for [local] to everything [content] declares.
  *
  * The window closes when [content] returns, including on a throw -- which is the failure mode a
  * hand-written push/pop pair has and this does not.
  */
-context(composer: Composer)
 fun <T> CompositionLocalProvider(
     local: CompositionLocal<T>,
     value: T,
@@ -128,6 +135,7 @@ class ProvidedValue<T> internal constructor(
 /** `LocalDensity provides 2f` -- Compose's own spelling. */
 infix fun <T> CompositionLocal<T>.provides(value: T): ProvidedValue<T> = ProvidedValue(this, value)
 
+context(composer: Composer)
 /**
  * Provides several locals to the same [content].
  *
@@ -135,7 +143,6 @@ infix fun <T> CompositionLocal<T>.provides(value: T): ProvidedValue<T> = Provide
  * per local puts the reader's eye three indents deep to learn that three unrelated values were set
  * together, and it grows a level every time a new local appears.
  */
-context(composer: Composer)
 fun CompositionLocalProvider(
     vararg values: ProvidedValue<*>,
     content: context(Composer) () -> Unit,

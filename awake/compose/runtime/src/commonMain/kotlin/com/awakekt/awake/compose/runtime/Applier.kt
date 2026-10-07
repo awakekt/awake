@@ -16,7 +16,13 @@ package com.awakekt.awake.compose.runtime
  * A layer still belongs to the node that declared it -- that is what an anchored popup anchors to --
  * so it is a slot on the parent, not a flat list on the root.
  */
-enum class Slot { Children, Layers }
+enum class Slot {
+    /** The children the parent's measure policy lays out. */
+    Children,
+
+    /** Popups and dialogs the node declares, laid out against the viewport rather than the parent. */
+    Layers,
+}
 
 /**
  * How [Composer] manipulates whatever tree it is building.
@@ -33,6 +39,7 @@ enum class Slot { Children, Layers }
  * Every method addresses the node most recently entered by [down], or the root before any.
  */
 interface Applier {
+    /** How many children the current node has in [slot]. */
     fun childCount(slot: Slot): Int
 
     /** What the child declared itself as, used to decide reuse. */
@@ -41,8 +48,13 @@ interface Applier {
     /** The explicit `key(...)` the child was created under, or null if it was positional. */
     fun keyAt(slot: Slot, index: Int): Any?
 
+    /** The child at [index] in [slot]. */
     fun nodeAt(slot: Slot, index: Int): Any
 
+    /**
+     * Creates a node declared as [type] and inserts it at [index] in [slot], shifting later children.
+     * [key] is the explicit `key(...)` it was declared under, or null if it is positional.
+     */
     fun createAt(slot: Slot, index: Int, type: Any, key: Any?): Any
 
     /** Moves an existing child into position -- how a keyed list survives reordering. */
@@ -54,5 +66,6 @@ interface Applier {
     /** Descends into a child so subsequent calls address it. Paired with [up]. */
     fun down(slot: Slot, index: Int)
 
+    /** Returns to the node that was current before the matching [down]. */
     fun up()
 }

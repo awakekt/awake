@@ -32,6 +32,10 @@ class Composer internal constructor(
 
     internal val locals = parentLocals?.snapshot() ?: ProvidedLocals()
 
+    /**
+     * A copy of the composition locals open at this point in the pass, for a composition that starts
+     * here -- a subcomposition measured later still reads the theme its parent provided.
+     */
     val localsSnapshot: ProvidedLocals get() = locals.snapshot()
 
     // The node whose content is executing, innermost last. `remember` needs it, and the applier's
@@ -200,10 +204,11 @@ class Composer internal constructor(
     }
 }
 
-/** Declares [block]'s nodes under [value]'s identity rather than their position. */
 context(composer: Composer)
+/** Declares [block]'s nodes under [value]'s identity rather than their position. */
 fun <T> key(value: Any, block: () -> T): T = composer.key(value, block)
 
+context(composer: Composer)
 /**
  * Declares a node, reusing the one at this position if it matches.
  *
@@ -211,7 +216,6 @@ fun <T> key(value: Any, block: () -> T): T = composer.key(value, block)
  * members are not in scope inside a composable -- everything callable from one is declared like
  * this.
  */
-context(composer: Composer)
 fun node(
     type: Any,
     slot: Slot = Slot.Children,
@@ -259,6 +263,10 @@ class Composition(
 ) {
     private val composer = Composer(applier, root, parentLocals)
 
+    /**
+     * Runs one root pass of [content] against the retained tree: reuses what matches, creates what is
+     * new, drops what this pass no longer declares, and returns the composer it ran with.
+     */
     fun reconcile(content: context(Composer) () -> Unit): Composer {
         composer.beginRoot()
         content(composer)
