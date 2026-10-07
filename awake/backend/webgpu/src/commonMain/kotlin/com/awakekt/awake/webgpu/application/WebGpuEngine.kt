@@ -45,6 +45,7 @@ import com.awakekt.awake.webgpu.pipeline.WebGpuShaderReplacement
 import com.awakekt.awake.webgpu.pipeline.WebGpuShaderResolver
 import com.awakekt.awake.webgpu.pipeline.WebGpuUiPass
 import com.awakekt.awake.webgpu.renderer.Renderer
+import com.awakekt.awake.webgpu.renderer.activeUiPipelineTargets
 import com.awakekt.awake.webgpu.swapchain.SwapchainManager
 import com.awakekt.awake.asset.shaders.ShaderStage as ShaderProgramStage
 
@@ -372,6 +373,7 @@ open class WebGpuEngine(
             renderer.shaderReplacement = WebGpuShaderReplacement(
                 registry = registry,
                 device = graphicsDevice.wgpuContext.device,
+                uiTargets = { renderer.activeUiPipelineTargets() },
                 onSwap = { oldPipeline -> renderer.bufferPools.invalidatePipeline(oldPipeline) },
             )
             // A content shader may declare the shadow-map group without any shadow pass to fill it.

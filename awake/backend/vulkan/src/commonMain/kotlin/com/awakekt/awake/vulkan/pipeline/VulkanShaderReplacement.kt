@@ -7,6 +7,7 @@ package com.awakekt.awake.vulkan.pipeline
 
 import com.awakekt.awake.asset.shadercompiler.NagaException
 import com.awakekt.awake.asset.shaders.BackgroundShaderCompile
+import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.pipeline.PipelineRegistry
 import com.awakekt.awake.render.pipeline.PipelineSpec
 import com.awakekt.awake.render.pipeline.PreparedShaderProgram
@@ -22,9 +23,21 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 
 /**
- * [ShaderReplacement] over the pipelines in [registry]. Each one is rebuilt inside its own
- * [RenderPipeline], so the registry, the renderer's pipeline table and content features all draw
- * with the new shaders without being told.
+ * An instantiated UI graphics pipeline target that can compile and swap in new SPIR-V shader pairs.
+ */
+internal interface VulkanUiPipelineTarget {
+    val identity: Any
+    val program: ShaderProgram
+    val bindingsByGroup: Map<Int, GroupBindings>
+    fun buildPipeline(shaders: ShaderPair, vertexEntryPoint: String, fragmentEntryPoint: String): Long
+    fun swapIn(newPipeline: Long)
+    fun destroyPipeline(handle: Long)
+}
+
+/**
+ * [ShaderReplacement] over the pipelines in [registry] and any active UI pipeline targets. Each one is rebuilt inside its own
+ * [RenderPipeline] or [VulkanUiPipelineTarget], so the registry, the renderer's pipeline table, content features, and UI
+ * drawing all draw with the new shaders without being told.
  *
  * The registry keeps each pipeline under the spec it was built from, so a content feature still
  * detaches by that spec; what a pipeline runs after a replacement is tracked here instead.
@@ -38,11 +51,13 @@ import kotlinx.coroutines.Dispatchers
 internal class VulkanShaderReplacement(
     private val graphicsDevice: GraphicsDevice,
     private val registry: PipelineRegistry<RenderPipeline>,
+    private val uiTargets: () -> List<VulkanUiPipelineTarget> = { emptyList() },
     compileDispatcher: CoroutineDispatcher = Dispatchers.Default,
     private val compile: suspend (vertex: ShaderSource, fragment: ShaderSource) -> ShaderPair,
 ) : ShaderReplacement {
     /** What a pipeline runs since its last replacement; absent means its spec's own shaders. */
     private val running = HashMap<RenderPipeline, ShaderProgram>()
+    private val uiRunning = HashMap<Any, ShaderProgram>()
 
     private val background = BackgroundShaderCompile(compileDispatcher, ::compileProgram)
 
@@ -70,24 +85,38 @@ internal class VulkanShaderReplacement(
         val targets = registry.specs.mapNotNull { spec -> registry[spec]?.takeIf { runs(it, spec, old) }?.let { spec to it } }
         targets.forEach { (spec, _) -> requireSameBindings(spec, new) }
 
+        val activeUi = uiTargets().filter { runsUi(it, old) }
+        activeUi.forEach { requireSameBindings(it, new) }
+
         val built = ArrayList<Long>(targets.size)
+        val builtUi = ArrayList<Long>(activeUi.size)
         try {
             targets.forEach { (_, pipeline) ->
                 built += pipeline.buildPipeline(shaders, new.vertex.entryPoint, new.fragment.entryPoint)
             }
+            activeUi.forEach { target ->
+                builtUi += target.buildPipeline(shaders, new.vertex.entryPoint, new.fragment.entryPoint)
+            }
         } catch (e: VkResultException) {
             built.forEachIndexed { i, handle -> targets[i].second.destroyPipeline(handle) }
+            builtUi.forEachIndexed { i, handle -> activeUi[i].destroyPipeline(handle) }
             throw ShaderReplacementException("A replacement pipeline failed to build: ${e.message}", e)
         }
 
-        if (targets.isNotEmpty()) VulkanBuffers.vkDeviceWaitIdle(graphicsDevice.device)
+        if (targets.isNotEmpty() || activeUi.isNotEmpty()) VulkanBuffers.vkDeviceWaitIdle(graphicsDevice.device)
         targets.forEachIndexed { i, (_, pipeline) ->
             pipeline.swapIn(built[i])
             running[pipeline] = new
         }
+        activeUi.forEachIndexed { i, target ->
+            target.swapIn(builtUi[i])
+            uiRunning[target.identity] = new
+        }
         val live = registry.specs.mapNotNullTo(HashSet()) { registry[it] }
         running.keys.retainAll(live)
-        return targets.size
+        val liveUi = uiTargets().mapTo(HashSet()) { it.identity }
+        uiRunning.keys.retainAll(liveUi)
+        return targets.size + activeUi.size
     }
 
     private fun runs(pipeline: RenderPipeline, spec: PipelineSpec, program: ShaderProgram): Boolean {
@@ -96,6 +125,15 @@ internal class VulkanShaderReplacement(
             current.vertex == program.vertex && current.fragment == program.fragment
         } else {
             spec.vertexShader == program.vertex && spec.fragmentShader == program.fragment
+        }
+    }
+
+    private fun runsUi(target: VulkanUiPipelineTarget, program: ShaderProgram): Boolean {
+        val current = uiRunning[target.identity]
+        return if (current != null) {
+            current.vertex == program.vertex && current.fragment == program.fragment
+        } else {
+            target.program.vertex == program.vertex && target.program.fragment == program.fragment
         }
     }
 
@@ -108,6 +146,20 @@ internal class VulkanShaderReplacement(
         if (new.bindingsByGroup != spec.bindingsByGroup) {
             throw ShaderReplacementException(
                 "The replacement binds ${new.bindingsByGroup} but the pipeline binds ${spec.bindingsByGroup}. " +
+                    "A pipeline keeps its layout when its shaders are replaced; changing bindings needs a new pipeline.",
+            )
+        }
+    }
+
+    private fun requireSameBindings(target: VulkanUiPipelineTarget, new: ShaderProgram) {
+        if (new.bindingsByGroup == null) {
+            throw ShaderReplacementException(
+                "A pipeline's bindings are not known, so the replacement cannot be checked against its layout.",
+            )
+        }
+        if (new.bindingsByGroup != target.bindingsByGroup) {
+            throw ShaderReplacementException(
+                "The replacement binds ${new.bindingsByGroup} but the pipeline binds ${target.bindingsByGroup}. " +
                     "A pipeline keeps its layout when its shaders are replaced; changing bindings needs a new pipeline.",
             )
         }

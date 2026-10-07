@@ -116,6 +116,7 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
         fragmentEntryPoint = "fragmentMain",
         extraDescriptorSetLayouts = listOf(DescriptorSetLayoutHandle(depthTarget.descriptorSetLayout)),
     )
+
     // The textured format's blended companions, as RenderPlan builds them.
     fun texturedCompanion(variant: PipelineVariant) = RenderPipeline(
         graphicsDevice,

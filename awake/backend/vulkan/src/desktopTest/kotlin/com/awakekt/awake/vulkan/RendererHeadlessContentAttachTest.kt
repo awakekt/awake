@@ -34,13 +34,13 @@ import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.vulkan.application.VulkanContentFeatureGpu
 import com.awakekt.awake.vulkan.material.Material
+import kotlinx.coroutines.runBlocking
+import org.junit.AfterClass
 import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
-import kotlinx.coroutines.runBlocking
-import org.junit.AfterClass
 
 /**
  * Content features attached to a running renderer, through the engine's own [VulkanContentFeatureGpu]

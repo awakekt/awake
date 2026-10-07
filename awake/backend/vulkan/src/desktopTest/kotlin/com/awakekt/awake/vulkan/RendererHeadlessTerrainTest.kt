@@ -39,10 +39,10 @@ import com.awakekt.awake.vulkan.renderer.Renderer
 import com.awakekt.awake.vulkan.swapchain.SwapchainManager
 import com.awakekt.awake.vulkan.texture.DepthTarget
 import com.awakekt.awake.vulkan.texture.Texture
-import kotlin.test.Test
-import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.junit.AfterClass
+import kotlin.test.Test
+import kotlin.test.assertTrue
 
 /**
  * D28's first pixels: a clipmap heightfield, drawn.

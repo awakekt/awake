@@ -31,7 +31,7 @@ class PresentModeSelectionTest {
     @Test
     fun eachRequestTakesItsOwnModeWhenTheSurfaceOffersIt() {
         val all = listOf(fifo, mailbox, immediate)
-        assertEquals(fifo,    chooseSwapPresentMode(all, PresentMode.Auto))
+        assertEquals(fifo, chooseSwapPresentMode(all, PresentMode.Auto))
         assertEquals(mailbox, chooseSwapPresentMode(all, PresentMode.LowLatency))
         assertEquals(immediate, chooseSwapPresentMode(all, PresentMode.NoVsync))
         assertEquals(fifo, chooseSwapPresentMode(all, PresentMode.Vsync))

@@ -67,6 +67,7 @@ import com.awakekt.awake.vulkan.models.info.pipeline.VkPipelineVertexInputStateC
 import com.awakekt.awake.vulkan.models.info.pipeline.VkPipelineViewportStateCreateInfo
 import com.awakekt.awake.vulkan.models.info.pipeline.VkVertexInputAttributeDescription
 import com.awakekt.awake.vulkan.models.info.pipeline.VkVertexInputBindingDescription
+import com.awakekt.awake.vulkan.pipeline.ShaderPair
 import com.awakekt.awake.vulkan.pipeline.createShaderModule
 import com.awakekt.awake.vulkan.pipeline.toShaderIntArray
 import com.awakekt.awake.vulkan.pipeline.toVkFormat
@@ -702,6 +703,173 @@ class UiRenderPipeline(
         graphicsPipeline = Vulkan.vkCreateGraphicsPipelines(device, pipelineCache, pipelineInfo)
         Vulkan.vkDestroyShaderModule(device, fragShaderModule)
         Vulkan.vkDestroyShaderModule(device, vertShaderModule)
+    }
+
+    @Suppress("LongMethod")
+    internal fun buildPipeline(
+        shaders: ShaderPair,
+        vertexEntryPoint: String = this.vertexEntryPoint,
+        fragmentEntryPoint: String = this.fragmentEntryPoint,
+    ): Long {
+        val fragShaderModule = createShaderModule(device, shaders.fragment.toShaderIntArray())
+        val vertShaderModule = createShaderModule(device, shaders.vertex.toShaderIntArray())
+        try {
+            val shaderStages = arrayOf(
+                VkPipelineShaderStageCreateInfo(stage = VkShaderStageFlagBits.FRAGMENT, module = fragShaderModule, pName = fragmentEntryPoint),
+                VkPipelineShaderStageCreateInfo(stage = VkShaderStageFlagBits.VERTEX, module = vertShaderModule, pName = vertexEntryPoint),
+            )
+
+            val vertexAttributes = if (targetComposite) {
+                emptyArray()
+            } else {
+                kind.vertexFormat.entries.map { entry ->
+                    VkVertexInputAttributeDescription(
+                        location = entry.attribute.location,
+                        binding = 0,
+                        format = entry.attribute.format.toVkFormat(),
+                        offset = entry.offsetBytes,
+                    )
+                }.toTypedArray()
+            }
+
+            val vertexInputInfo = arrayOf(
+                VkPipelineVertexInputStateCreateInfo(
+                    pVertexBindingDescriptions = if (targetComposite) {
+                        emptyArray()
+                    } else {
+                        arrayOf(
+                            VkVertexInputBindingDescription(
+                                binding = 0,
+                                stride = kind.vertexFormat.strideBytes,
+                                inputRate = VkVertexInputRate.VK_VERTEX_INPUT_RATE_VERTEX,
+                            ),
+                        )
+                    },
+                    pVertexAttributeDescriptions = vertexAttributes,
+                ),
+            )
+
+            val inputAssembly = arrayOf(
+                VkPipelineInputAssemblyStateCreateInfo(
+                    topology = VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+                    primitiveRestartEnable = false,
+                ),
+            )
+
+            val viewportState = arrayOf(
+                VkPipelineViewportStateCreateInfo(
+                    pViewports = arrayOf(
+                        VkViewport(
+                            width = swapchainManager.extent.width.toFloat(),
+                            height = swapchainManager.extent.height.toFloat(),
+                        ),
+                    ),
+                    pScissors = arrayOf(VkRect2D(extent = swapchainManager.extent)),
+                ),
+            )
+
+            val rasterizer = arrayOf(
+                VkPipelineRasterizationStateCreateInfo(
+                    depthClampEnable = false,
+                    rasterizerDiscardEnable = false,
+                    polygonMode = VkPolygonMode.VK_POLYGON_MODE_FILL,
+                    lineWidth = 1.0f,
+                    cullMode = VkCullModeFlagBits.VK_CULL_MODE_NONE.value,
+                    frontFace = VkFrontFace.VK_FRONT_FACE_CLOCKWISE,
+                    depthBiasEnable = false,
+                ),
+            )
+
+            val multisampling = arrayOf(
+                VkPipelineMultisampleStateCreateInfo(
+                    sampleShadingEnable = false,
+                    rasterizationSamples = VkSampleCountFlagBits.VK_SAMPLE_COUNT_1_BIT,
+                ),
+            )
+
+            val colorBlendAttachment = arrayOf(
+                VkPipelineColorBlendAttachmentState(
+                    colorWriteMask = VkColorComponentFlagBits.VK_COLOR_COMPONENT_R_BIT.value or
+                        VkColorComponentFlagBits.VK_COLOR_COMPONENT_G_BIT.value or
+                        VkColorComponentFlagBits.VK_COLOR_COMPONENT_B_BIT.value or
+                        VkColorComponentFlagBits.VK_COLOR_COMPONENT_A_BIT.value,
+                    blendEnable = !targetComposite,
+                    srcColorBlendFactor = when (blendMode) {
+                        BlendMode.SourceOver, BlendMode.Plus -> if (premultiplied) VkBlendFactor.VK_BLEND_FACTOR_ONE else VkBlendFactor.VK_BLEND_FACTOR_SRC_ALPHA
+                        BlendMode.Screen, BlendMode.Overlay -> error("$blendMode requires a sampled target composite pass.")
+                    },
+                    dstColorBlendFactor = when (blendMode) {
+                        BlendMode.SourceOver -> VkBlendFactor.VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA
+                        BlendMode.Plus -> VkBlendFactor.VK_BLEND_FACTOR_ONE
+                        BlendMode.Screen, BlendMode.Overlay -> error("$blendMode requires a sampled target composite pass.")
+                    },
+                    colorBlendOp = com.awakekt.awake.vulkan.enums.VkBlendOp.VK_BLEND_OP_ADD,
+                    srcAlphaBlendFactor = VkBlendFactor.VK_BLEND_FACTOR_ONE,
+                    dstAlphaBlendFactor = when (blendMode) {
+                        BlendMode.SourceOver -> VkBlendFactor.VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA
+                        BlendMode.Plus -> VkBlendFactor.VK_BLEND_FACTOR_ONE
+                        BlendMode.Screen, BlendMode.Overlay -> error("$blendMode requires a sampled target composite pass.")
+                    },
+                    alphaBlendOp = com.awakekt.awake.vulkan.enums.VkBlendOp.VK_BLEND_OP_ADD,
+                ),
+            )
+
+            val colorBlending = arrayOf(
+                VkPipelineColorBlendStateCreateInfo(
+                    logicOpEnable = false,
+                    pAttachments = colorBlendAttachment,
+                ),
+            )
+
+            val dynamicStates = arrayOf(
+                VkDynamicState.VK_DYNAMIC_STATE_VIEWPORT,
+                VkDynamicState.VK_DYNAMIC_STATE_SCISSOR,
+            )
+            val dynamicStateInfo = arrayOf(VkPipelineDynamicStateCreateInfo(pDynamicStates = dynamicStates))
+
+            val depthStencil = arrayOf(
+                VkPipelineDepthStencilStateCreateInfo(
+                    depthTestEnable = false,
+                    depthWriteEnable = false,
+                    depthCompareOp = VkCompareOp.VK_COMPARE_OP_NEVER,
+                    depthBoundsTestEnable = false,
+                    stencilTestEnable = false,
+                ),
+            )
+
+            val pipelineInfo = arrayOf(
+                VkGraphicsPipelineCreateInfo(
+                    pStages = shaderStages,
+                    pVertexInputState = vertexInputInfo,
+                    pInputAssemblyState = inputAssembly,
+                    pViewportState = viewportState,
+                    pRasterizationState = rasterizer,
+                    pMultisampleState = multisampling,
+                    pColorBlendState = colorBlending,
+                    pDynamicState = dynamicStateInfo,
+                    pDepthStencilState = depthStencil,
+                    layout = pipelineLayout,
+                    renderPass = renderPass,
+                    subpass = 0,
+                ),
+            )
+
+            return Vulkan.vkCreateGraphicsPipelines(device, pipelineCache, pipelineInfo)[0]
+        } finally {
+            Vulkan.vkDestroyShaderModule(device, fragShaderModule)
+            Vulkan.vkDestroyShaderModule(device, vertShaderModule)
+        }
+    }
+
+    internal fun swapIn(newPipeline: Long) {
+        if (graphicsPipeline.isNotEmpty() && graphicsPipeline[0] != 0L) {
+            Vulkan.vkDestroyPipeline(device, graphicsPipeline[0])
+        }
+        graphicsPipeline = longArrayOf(newPipeline)
+    }
+
+    internal fun destroyPipeline(handle: Long) {
+        Vulkan.vkDestroyPipeline(device, handle)
     }
 
     fun bind(commandBuffer: Long, customDescriptorSet: Long? = null) {

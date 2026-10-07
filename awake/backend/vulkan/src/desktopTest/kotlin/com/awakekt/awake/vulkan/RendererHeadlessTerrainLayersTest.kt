@@ -149,10 +149,20 @@ class RendererHeadlessTerrainLayersTest {
         assertTrue(normals.mean(left = true).near(floatArrayOf(128f, 255f, 128f)), "Normals ${normals.mean(left = true).toList()}")
     }
 
-    private fun halvedLeft() = TerrainLightmap(SAMPLES, SAMPLES, ByteArray(SAMPLES * SAMPLES * 4) { index ->
-        val x = (index / 4) % SAMPLES
-        if (index % 4 == 3) -1 else if (x < SAMPLES / 2) HALF_LIGHT else NEUTRAL_LIGHT
-    })
+    private fun halvedLeft() = TerrainLightmap(
+        SAMPLES,
+        SAMPLES,
+        ByteArray(SAMPLES * SAMPLES * 4) { index ->
+            val x = (index / 4) % SAMPLES
+            if (index % 4 == 3) {
+                -1
+            } else if (x < SAMPLES / 2) {
+                HALF_LIGHT
+            } else {
+                NEUTRAL_LIGHT
+            }
+        },
+    )
 
     private fun allRed() = TerrainControlMap.reduce(SAMPLES, SAMPLES, layerCount = 2) { layer, _, _ -> if (layer == RED) 1f else 0f }.controlMap
 

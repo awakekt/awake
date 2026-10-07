@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.webgpu.renderer
 
+import com.awakekt.awake.asset.shaders.program
 import com.awakekt.awake.core.graphics2d.BlendMode
 import com.awakekt.awake.core.graphics2d.TextureCompositeMode
 import com.awakekt.awake.core.text.font.UiFont
@@ -95,3 +96,51 @@ private fun uiPipelineDescriptor(
     blendMode = blendMode,
     isPremultiplied = isPremultiplied,
 )
+
+internal fun Renderer.activeUiPipelineTargets(): List<com.awakekt.awake.webgpu.pipeline.WebGpuUiPipelineTarget> = buildList {
+    uiRenderPipeline?.let { add(webGpuUiTarget(it, com.awakekt.awake.asset.shaders.EngineShaderSets.UiQuad.webGpu.program())) }
+    uiGlyphRenderPipeline?.let { add(webGpuUiTarget(it, com.awakekt.awake.asset.shaders.EngineShaderSets.UiGlyph.webGpu.program())) }
+    uiRoundedQuadRenderPipeline?.let { add(webGpuUiTarget(it, com.awakekt.awake.asset.shaders.EngineShaderSets.UiRoundedQuad.webGpu.program())) }
+    uiTextureRenderPipelines.values.forEach { add(webGpuUiTarget(it, com.awakekt.awake.asset.shaders.EngineShaderSets.UiTexture.webGpu.program())) }
+    uiTargetCompositePipelines.values.forEach { add(webGpuUiTargetComposite(it, com.awakekt.awake.asset.shaders.EngineShaderSets.UiTargetComposite.webGpu.program())) }
+}
+
+private fun webGpuUiTarget(
+    pipeline: UiRenderPipeline,
+    program: com.awakekt.awake.render.pipeline.ShaderProgram,
+): com.awakekt.awake.webgpu.pipeline.WebGpuUiPipelineTarget = object : com.awakekt.awake.webgpu.pipeline.WebGpuUiPipelineTarget {
+    override val identity: Any = pipeline
+    override val program: com.awakekt.awake.render.pipeline.ShaderProgram = program
+    override val bindingsByGroup: Map<Int, com.awakekt.awake.render.pipeline.GroupBindings> =
+        checkNotNull(program.bindingsByGroup) { "UI shader program must declare bindingsByGroup" }
+
+    override fun buildPipeline(
+        wgslSource: String,
+        vertexEntryPoint: String,
+        fragmentEntryPoint: String,
+    ): io.ygdrasil.webgpu.GPURenderPipeline = pipeline.buildPipeline(wgslSource, vertexEntryPoint, fragmentEntryPoint)
+
+    override fun swapIn(
+        newPipeline: io.ygdrasil.webgpu.GPURenderPipeline,
+    ): io.ygdrasil.webgpu.GPURenderPipeline = pipeline.swapIn(newPipeline)
+}
+
+private fun webGpuUiTargetComposite(
+    pipeline: com.awakekt.awake.webgpu.ui.UiTargetCompositePipeline,
+    program: com.awakekt.awake.render.pipeline.ShaderProgram,
+): com.awakekt.awake.webgpu.pipeline.WebGpuUiPipelineTarget = object : com.awakekt.awake.webgpu.pipeline.WebGpuUiPipelineTarget {
+    override val identity: Any = pipeline
+    override val program: com.awakekt.awake.render.pipeline.ShaderProgram = program
+    override val bindingsByGroup: Map<Int, com.awakekt.awake.render.pipeline.GroupBindings> =
+        checkNotNull(program.bindingsByGroup) { "UI shader program must declare bindingsByGroup" }
+
+    override fun buildPipeline(
+        wgslSource: String,
+        vertexEntryPoint: String,
+        fragmentEntryPoint: String,
+    ): io.ygdrasil.webgpu.GPURenderPipeline = pipeline.buildPipeline(wgslSource, vertexEntryPoint, fragmentEntryPoint)
+
+    override fun swapIn(
+        newPipeline: io.ygdrasil.webgpu.GPURenderPipeline,
+    ): io.ygdrasil.webgpu.GPURenderPipeline = pipeline.swapIn(newPipeline)
+}

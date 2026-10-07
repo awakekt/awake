@@ -11,9 +11,9 @@ import com.awakekt.awake.vulkan.gen.VulkanDescriptors
 import com.awakekt.awake.vulkan.material.Material
 import com.awakekt.awake.vulkan.pipeline.DepthOnlyPipeline
 import com.awakekt.awake.vulkan.texture.DepthTarget
+import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlinx.coroutines.runBlocking
 
 /**
  * No two frames in flight share a cascade's matrix slot.

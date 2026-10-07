@@ -21,10 +21,10 @@ import com.awakekt.awake.render.passes.uniforms.SceneLight
 import com.awakekt.awake.render.renderer.createMaterial
 import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.vulkan.renderer.Renderer
-import kotlin.test.Test
-import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.junit.AfterClass
+import kotlin.test.Test
+import kotlin.test.assertTrue
 
 /**
  * Terrain receives the engine's cascaded shadows.

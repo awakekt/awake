@@ -23,6 +23,7 @@ import com.awakekt.awake.vulkan.handles.SamplerHandle
 import com.awakekt.awake.vulkan.models.info.VkBufferCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkBufferImageCopy
 import com.awakekt.awake.vulkan.models.info.VkBufferUsageFlagBits
+import com.awakekt.awake.vulkan.models.info.VkFilter
 import com.awakekt.awake.vulkan.models.info.VkImageCreateFlagBits
 import com.awakekt.awake.vulkan.models.info.VkImageCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkImageLayout2
@@ -32,9 +33,8 @@ import com.awakekt.awake.vulkan.models.info.VkImageType
 import com.awakekt.awake.vulkan.models.info.VkImageUsageFlagBits2
 import com.awakekt.awake.vulkan.models.info.VkImageViewCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkMemoryAllocateInfo
-import com.awakekt.awake.vulkan.models.info.VkFilter
-import com.awakekt.awake.vulkan.models.info.VkSamplerMipmapMode
 import com.awakekt.awake.vulkan.models.info.VkSamplerCreateInfo
+import com.awakekt.awake.vulkan.models.info.VkSamplerMipmapMode
 import com.awakekt.awake.vulkan.models.info.VkSharingMode2
 
 /**

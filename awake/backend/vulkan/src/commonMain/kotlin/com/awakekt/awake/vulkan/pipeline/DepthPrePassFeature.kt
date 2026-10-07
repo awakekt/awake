@@ -13,9 +13,9 @@ import com.awakekt.awake.render.command.GpuSubPass
 import com.awakekt.awake.render.command.PreparedDraw
 import com.awakekt.awake.render.passes.ContentDepthSource
 import com.awakekt.awake.render.passes.uniforms.SHADOW_CASCADE_PASS_GROUP
+import com.awakekt.awake.render.pipeline.AlphaMode
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.DepthCasterKind
-import com.awakekt.awake.render.pipeline.AlphaMode
 import com.awakekt.awake.render.pipeline.DepthRenderKey
 import com.awakekt.awake.render.renderer.RenderStatsCounter
 import com.awakekt.awake.vulkan.Vulkan

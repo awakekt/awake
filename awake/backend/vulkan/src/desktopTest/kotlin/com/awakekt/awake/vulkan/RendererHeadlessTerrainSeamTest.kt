@@ -14,12 +14,12 @@ import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.passes.uniforms.SceneLight
 import com.awakekt.awake.vulkan.renderer.Renderer
+import kotlinx.coroutines.runBlocking
+import org.junit.AfterClass
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlinx.coroutines.runBlocking
-import org.junit.AfterClass
 
 /**
  * A clipmap terrain is watertight across its ring borders.
@@ -34,7 +34,6 @@ class RendererHeadlessTerrainSeamTest {
     fun ringBordersLeaveNoGapFromAbove() {
         assertEquals(0, shared().holes(TOP_DOWN), "background shows through the terrain from above")
     }
-
 
     private fun Renderer.holes(camera: Lens): Int {
         val target = createRenderTarget(SIZE, SIZE)
@@ -87,14 +86,16 @@ class RendererHeadlessTerrainSeamTest {
 
         private var cached: Pair<Renderer, () -> Unit>? = null
 
-        private fun shared(): Renderer = (cached ?: newHeadlessShadowRenderer(SIZE).also { created ->
-            cached = created
-            runBlocking {
-                (created.first as ContentFeatureHost).attachContentFeature(
-                    terrainContentFeature(PackShaderSets.Terrain, hills(), CONFIG),
-                )
+        private fun shared(): Renderer = (
+            cached ?: newHeadlessShadowRenderer(SIZE).also { created ->
+                cached = created
+                runBlocking {
+                    (created.first as ContentFeatureHost).attachContentFeature(
+                        terrainContentFeature(PackShaderSets.Terrain, hills(), CONFIG),
+                    )
+                }
             }
-        }).first
+            ).first
 
         @AfterClass
         @JvmStatic

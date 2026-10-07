@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.vulkan.renderer
 
+import com.awakekt.awake.asset.shaders.program
 import com.awakekt.awake.core.geometry.VertexFormats2D
 import com.awakekt.awake.core.graphics2d.BlendMode
 import com.awakekt.awake.core.graphics2d.TextureCompositeMode
@@ -217,3 +218,39 @@ private fun uiPipelineDescriptor(
     blendMode = blendMode,
     isPremultiplied = isPremultiplied,
 )
+
+internal fun Renderer.activeUiPipelineTargets(): List<com.awakekt.awake.vulkan.pipeline.VulkanUiPipelineTarget> = buildList {
+    uiRenderPipeline?.let { add(vulkanUiTarget(it, com.awakekt.awake.asset.shaders.EngineShaderSets.UiQuad.vulkan.program())) }
+    offscreenQuadRenderPipeline?.let { add(vulkanUiTarget(it, com.awakekt.awake.asset.shaders.EngineShaderSets.UiQuad.vulkan.program())) }
+
+    uiGlyphRenderPipeline?.let { add(vulkanUiTarget(it, com.awakekt.awake.asset.shaders.EngineShaderSets.UiGlyph.vulkan.program())) }
+    offscreenGlyphRenderPipeline?.let { add(vulkanUiTarget(it, com.awakekt.awake.asset.shaders.EngineShaderSets.UiGlyph.vulkan.program())) }
+
+    uiRoundedQuadRenderPipeline?.let { add(vulkanUiTarget(it, com.awakekt.awake.asset.shaders.EngineShaderSets.UiRoundedQuad.vulkan.program())) }
+    offscreenRoundedQuadRenderPipeline?.let { add(vulkanUiTarget(it, com.awakekt.awake.asset.shaders.EngineShaderSets.UiRoundedQuad.vulkan.program())) }
+
+    uiTextureRenderPipelines.values.forEach { add(vulkanUiTarget(it, com.awakekt.awake.asset.shaders.EngineShaderSets.UiTexture.vulkan.program())) }
+    offscreenTextureRenderPipelines.values.forEach { add(vulkanUiTarget(it, com.awakekt.awake.asset.shaders.EngineShaderSets.UiTexture.vulkan.program())) }
+
+    uiTargetCompositePipeline?.let { add(vulkanUiTarget(it, com.awakekt.awake.asset.shaders.EngineShaderSets.UiTargetComposite.vulkan.program())) }
+}
+
+private fun vulkanUiTarget(
+    pipeline: UiRenderPipeline,
+    program: com.awakekt.awake.render.pipeline.ShaderProgram,
+): com.awakekt.awake.vulkan.pipeline.VulkanUiPipelineTarget = object : com.awakekt.awake.vulkan.pipeline.VulkanUiPipelineTarget {
+    override val identity: Any = pipeline
+    override val program: com.awakekt.awake.render.pipeline.ShaderProgram = program
+    override val bindingsByGroup: Map<Int, com.awakekt.awake.render.pipeline.GroupBindings> =
+        checkNotNull(program.bindingsByGroup) { "UI shader program must declare bindingsByGroup" }
+
+    override fun buildPipeline(
+        shaders: com.awakekt.awake.vulkan.pipeline.ShaderPair,
+        vertexEntryPoint: String,
+        fragmentEntryPoint: String,
+    ): Long = pipeline.buildPipeline(shaders, vertexEntryPoint, fragmentEntryPoint)
+
+    override fun swapIn(newPipeline: Long) = pipeline.swapIn(newPipeline)
+
+    override fun destroyPipeline(handle: Long) = pipeline.destroyPipeline(handle)
+}
