@@ -26,6 +26,9 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
         }
+        wasmJsTest.dependencies {
+            implementation(libs.kotlinx.coroutines.test)
+        }
     }
 }
 
