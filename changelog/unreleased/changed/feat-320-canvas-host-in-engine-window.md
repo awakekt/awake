@@ -1,0 +1,1 @@
+- **Browser canvas host moved to `awake:engine:window`.** The Wasm/JS browser canvas host, window lifecycle, pointer/touch/wheel bindings, and `DomTextInputBridge` now live in `awake:engine:window`'s `wasmJsMain` target. `awake:backend:webgpu` delegates its canvas hosting to `runBrowserCanvas` while keeping `launchWebGpuGame` for WebGPU surface and adapter initialization.

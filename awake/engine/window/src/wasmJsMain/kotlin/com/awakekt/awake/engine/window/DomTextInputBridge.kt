@@ -5,7 +5,7 @@
  */
 @file:OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
 
-package com.awakekt.awake.webgpu.application
+package com.awakekt.awake.engine.window
 
 import com.awakekt.awake.core.input.ClipboardCommand
 import com.awakekt.awake.core.input.ImeComposition
@@ -18,7 +18,7 @@ import org.w3c.dom.events.KeyboardEvent
 
 /** `KeyboardEvent.key` -> [TextEditAction] for the same discrete edit set
  * [GlfwTextInputBridge]/[AwakeUIKitTextInputBridge] push on desktop/iOS. */
-internal val DomEditKeys: Map<String, TextEditAction> =
+val DomEditKeys: Map<String, TextEditAction> =
     mapOf(
         "Backspace" to TextEditAction.Backspace,
         "Delete" to TextEditAction.Delete,
