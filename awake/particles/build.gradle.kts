@@ -21,7 +21,6 @@ kotlin {
             api(project(":awake:ecs"))
             api(project(":awake:engine:render:contract"))
             api(project(":awake:engine:render:passes"))
-            implementation(project(":awake:core:logging"))
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
