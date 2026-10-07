@@ -12,12 +12,14 @@ import com.awakekt.awake.render.capture.PixelMap
 import com.awakekt.awake.render.testing.writePng
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import com.awakekt.awake.scene.scene2d.Sprite
+import com.awakekt.awake.scene.scene2d.SpriteClips
 import com.awakekt.awake.showcase.app.EngineShowcaseRenderPlan
 import com.awakekt.awake.showcase.app.engineShowcaseApp
 import kotlinx.coroutines.runBlocking
 import java.io.File
 import kotlin.math.abs
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /** Real sprite art and different atlas cells must reach the presented frame, with no transform motion. */
@@ -55,6 +57,11 @@ class Sprites2dSceneFrameTest {
             }
             assertTrue(changed > MIN_SPRITE_PIXELS, "Switching to the blink cell changed only $changed pixels.")
 
+            runtime.holdFrame(0)
+            runtime.world.queryEach<SpriteClips> { _, clips -> clips.speed = 1f }
+            app.update(0.25f, WIDTH.toFloat(), HEIGHT.toFloat())
+            runtime.world.queryEach<Sprite> { _, sprite -> assertEquals(1, sprite.frame, "scene-authored idle must advance before drawing") }
+
             val sprites = buildList<Entity> { runtime.world.queryEach<Sprite> { entity, _ -> add(entity) } }
             sprites.forEach { runtime.world.remove<Sprite>(it) }
             app.update(0f, WIDTH.toFloat(), HEIGHT.toFloat())
@@ -72,7 +79,10 @@ class Sprites2dSceneFrameTest {
     }
 
     private fun SceneAppLifecycleRuntime.holdFrame(frame: Int) {
-        world.queryEach<Sprite> { _, sprite -> sprite.frame = frame }
+        world.queryEach<SpriteClips> { _, clips ->
+            clips.play(if (frame == 2) "blink" else "idle", restart = true)
+            clips.speed = 0f
+        }
     }
 
     /** The source artwork's bright lantern belly belongs below its dark face. */

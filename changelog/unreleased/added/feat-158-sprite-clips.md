@@ -1,0 +1,1 @@
+- Add scene-authored `sprite_clips` with named runs, simulation-time playback, switching, pause and one-shot completion; share the extracted `core:animation` frame clock with existing textured-mesh clips and animate the firefly showcase through scene data.

@@ -45,6 +45,7 @@ import com.awakekt.awake.scene.canvas.SceneCanvas
 import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.core.transform.TransformSystem
+import com.awakekt.awake.scene.scene2d.SpriteClipSystem
 import com.awakekt.awake.scene.rendering.Camera
 import com.awakekt.awake.scene.rendering.RenderSystem3D
 import com.awakekt.awake.scene.rendering.debug.DebugVisualizationSystem
@@ -567,6 +568,7 @@ fun SceneAppLifecycleRuntime.defaultInfrastructureSystems(
     isDirtyProvider: () -> Boolean = { false },
 ): List<System> =
     listOf(
+        SpriteClipSystem(isRealtimeProvider),
         TransformSystem(),
         RenderSystem3D(
             renderer,

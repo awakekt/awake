@@ -47,6 +47,13 @@ class SceneTextureClipsTest {
     }
 
     @Test
+    fun overflowingSheetDimensionsAndFrameRangesAreRejected() {
+        assertTrue(SceneTextureClips(columns = 65536, rows = 65536).validate("node").any { "fit in an Int" in it.message })
+        val overflowing = sheet("bad" to SceneTextureClip(firstFrame = Int.MAX_VALUE, frameCount = 2))
+        assertTrue(messages(overflowing).any { "stay within" in it })
+    }
+
+    @Test
     fun aClipMustHaveCellsAndStartInsideTheSheet() {
         assertEquals(1, messages(sheet("none" to SceneTextureClip(frameCount = 0))).size)
         assertEquals(1, messages(sheet("before" to SceneTextureClip(firstFrame = -1, frameCount = 2))).size)
