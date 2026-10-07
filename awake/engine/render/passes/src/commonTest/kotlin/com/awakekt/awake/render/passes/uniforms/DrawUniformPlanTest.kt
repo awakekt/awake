@@ -12,6 +12,12 @@ import kotlin.test.assertTrue
 
 class DrawUniformPlanTest {
     @Test
+    fun spriteAbiLeavesTheExistingTexturedVertexFormatAlone() {
+        assertEquals(DrawUniformPlan.Sprite, drawUniformPlan(VertexFormat.PositionUv, SpriteUniformLayout.total, hasShadowCascades = true))
+        assertEquals(DrawUniformPlan.Lit, drawUniformPlan(VertexFormat.PositionColorUv, MaterialUniformLayouts.Primary.total, hasShadowCascades = false))
+    }
+
+    @Test
     fun selectsTheSharedAbiInPriorityOrder() {
         assertEquals(
             DrawUniformPlan.LitShadow,

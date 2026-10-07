@@ -6,6 +6,7 @@
 package com.awakekt.awake.webgpu.texture
 
 import com.awakekt.awake.render.texture.TextureAsset
+import com.awakekt.awake.render.texture.TextureFiltering
 import com.awakekt.awake.render.texture.mipChain
 import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.fastArrayBufferOf
@@ -46,6 +47,7 @@ class Texture(
     height: Int,
     layerCount: Int = 1,
     isCubemap: Boolean = false,
+    filtering: TextureFiltering = TextureFiltering.Linear,
 ) {
     val texture: GPUTexture
     val view: GPUTextureView
@@ -56,7 +58,7 @@ class Texture(
         val asset = TextureAsset(data, width, height, layerCount, isCubemap)
         // Arrays get a full chain: tiled terrain layers are sampled with implicit LOD and shimmer
         // without one. Cubemaps stay single-level; the sky samples its base level only.
-        val mipLevels = if (isCubemap) listOf(asset) else asset.mipChain()
+        val mipLevels = if (isCubemap || filtering == TextureFiltering.Nearest) listOf(asset) else asset.mipChain()
         texture = device.createTexture(
             TextureDescriptor(
                 size = Extent3D(
@@ -103,9 +105,9 @@ class Texture(
                 addressModeU = GPUAddressMode.Repeat,
                 addressModeV = GPUAddressMode.Repeat,
                 addressModeW = GPUAddressMode.Repeat,
-                magFilter = GPUFilterMode.Linear,
-                minFilter = GPUFilterMode.Linear,
-                mipmapFilter = GPUMipmapFilterMode.Linear,
+                magFilter = if (filtering == TextureFiltering.Nearest) GPUFilterMode.Nearest else GPUFilterMode.Linear,
+                minFilter = if (filtering == TextureFiltering.Nearest) GPUFilterMode.Nearest else GPUFilterMode.Linear,
+                mipmapFilter = if (filtering == TextureFiltering.Nearest) GPUMipmapFilterMode.Nearest else GPUMipmapFilterMode.Linear,
             ),
         )
     }

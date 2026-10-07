@@ -23,6 +23,9 @@ object PackShaderSets {
     /** Minimal unlit colored triangle shader set. */
     val Triangle = aslShaderSet(TriangleShader)
 
+    /** Unlit atlas quad with straight alpha and an explicit frame and tint. */
+    val Sprite = aslShaderSet(SpriteShader)
+
     /** Standard lit mesh shader set with directional light and cascaded shadow maps. */
     val LitShadow = aslShaderSet(::litShadowShader)
 

@@ -7,12 +7,11 @@ package com.awakekt.awake.showcase
 
 import com.awakekt.awake.core.host.readResourceBytes
 import com.awakekt.awake.core.image.createBitmap
+import com.awakekt.awake.render.passes.sprites.SpriteQuadGeometry
 import com.awakekt.awake.scene.document.SceneLoader
 import com.awakekt.awake.scene.rendering.camera.SceneCamera
-import com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer
-import com.awakekt.awake.scene.rendering.mesh.SceneTextureAnimation
 import com.awakekt.awake.scene.runtime.DefaultSceneComponentResolvers
-import com.awakekt.awake.showcase.examples.Sprites2dExampleDriver
+import com.awakekt.awake.scene.scene2d.SceneSprite
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.float
@@ -52,22 +51,12 @@ class Sprites2dShowcaseWiringTest {
         assertEquals(SceneCamera.Projection.Orthographic, camera.projection, "camera must use orthographic projection")
         assertTrue(camera.orthoHalfHeight > 0f, "orthographic half height must be positive")
 
-        val renderers = document.nodes
+        val sprites = document.nodes
             .filter { it.name?.startsWith("sprite-card-") == true }
             .flatMap { it.components }
-            .filterIsInstance<SceneMeshRenderer>()
-        assertEquals(3, renderers.size, "all 3 sprite card nodes must have mesh renderers")
-        renderers.forEach { renderer ->
-            assertEquals("sprite-quad", renderer.mesh)
-            assertEquals("sprite-sheet", renderer.material)
-            assertTrue(renderer.transparent, "sprite alpha is drawn in the transparent pass")
-        }
-
-        val animations = document.nodes
-            .filter { it.name?.startsWith("sprite-card-") == true }
-            .flatMap { it.components }
-            .filterIsInstance<SceneTextureAnimation>()
-        assertEquals(3, animations.size, "every sprite uses the animated atlas")
+            .filterIsInstance<SceneSprite>()
+        assertEquals(3, sprites.size, "all 3 cards must use the sprite component")
+        sprites.forEach { assertEquals("lantern-firefly", it.texture) }
         val assetPath = "assets/sprites/lantern-firefly/"
         val manifest = Json.parseToJsonElement(readResourceBytes(assetPath + "manifest.json").decodeToString()).jsonObject
         val layout = manifest.getValue("frame_layout").jsonObject
@@ -78,11 +67,11 @@ class Sprites2dShowcaseWiringTest {
         val frames = layout.getValue("rows").jsonObject.getValue("idle").jsonArray
         val fps = manifest.getValue("animation").jsonObject.getValue("rows").jsonObject
             .getValue("idle").jsonObject.getValue("fps").jsonPrimitive.float
-        animations.forEach { animation ->
-            assertEquals(sheetWidth / cellWidth, animation.columns)
-            assertEquals(sheetHeight / cellHeight, animation.rows)
-            assertEquals(frames.size, animation.frameCount)
-            assertEquals(fps, animation.framesPerSecond)
+        sprites.forEach { sprite ->
+            assertEquals(sheetWidth / cellWidth, sprite.columns)
+            assertEquals(sheetHeight / cellHeight, sprite.rows)
+            assertEquals(frames.size, sprite.cellCount)
+            assertEquals(4f, fps)
         }
         frames.forEachIndexed { index, frame ->
             val rect = frame.jsonObject
@@ -105,7 +94,7 @@ class Sprites2dShowcaseWiringTest {
 
     @Test
     fun spriteQuadGeometryHasCorrectFormatAndTopology() {
-        val geometry = Sprites2dExampleDriver.spriteQuadGeometry
+        val geometry = SpriteQuadGeometry
         assertTrue(geometry.vertices.isNotEmpty(), "quad vertices must not be empty")
         assertEquals(6, geometry.indices.size, "quad indices define 2 triangles (6 indices)")
     }

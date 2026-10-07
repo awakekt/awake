@@ -5,13 +5,13 @@
  */
 package com.awakekt.awake.showcase
 
+import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.engine.platform.HeadlessSurface
 import com.awakekt.awake.engine.platform.dsl.requireService
 import com.awakekt.awake.render.capture.PixelMap
-import com.awakekt.awake.render.passes.uniforms.TextureAnimation
 import com.awakekt.awake.render.testing.writePng
-import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
+import com.awakekt.awake.scene.scene2d.Sprite
 import com.awakekt.awake.showcase.app.EngineShowcaseRenderPlan
 import com.awakekt.awake.showcase.app.engineShowcaseApp
 import kotlinx.coroutines.runBlocking
@@ -34,6 +34,7 @@ class Sprites2dSceneFrameTest {
             app.update(0f, WIDTH.toFloat(), HEIGHT.toFloat())
             val idle = renderer.readPresentedPixels().data.copyOf()
             PixelMap(WIDTH, HEIGHT, idle.copyOf()).writePng(File("build/reports/render-captures/sprites-2d-idle.png"))
+            assertSpriteUpright(idle)
 
             val goldPixels = spriteRegion.count { pixel ->
                 val offset = pixel * CHANNELS
@@ -54,10 +55,8 @@ class Sprites2dSceneFrameTest {
             }
             assertTrue(changed > MIN_SPRITE_PIXELS, "Switching to the blink cell changed only $changed pixels.")
 
-            runtime.world.queryEach(TextureAnimation::class, MeshRenderer::class) { entity, _, mesh ->
-                assertTrue(mesh.transparent, "sprite renderers must retain their authored transparency")
-                runtime.world.add(entity, mesh.copy(visible = false))
-            }
+            val sprites = buildList<Entity> { runtime.world.queryEach<Sprite> { entity, _ -> add(entity) } }
+            sprites.forEach { runtime.world.remove<Sprite>(it) }
             app.update(0f, WIDTH.toFloat(), HEIGHT.toFloat())
             val background = renderer.readPresentedPixels().data.copyOf()
             PixelMap(WIDTH, HEIGHT, background.copyOf()).writePng(File("build/reports/render-captures/sprites-2d-background.png"))
@@ -73,9 +72,22 @@ class Sprites2dSceneFrameTest {
     }
 
     private fun SceneAppLifecycleRuntime.holdFrame(frame: Int) {
-        world.queryEach<TextureAnimation> { entity, animation ->
-            world.add(entity, animation.copy(firstFrame = frame, frameCount = 1, framesPerSecond = 0f))
+        world.queryEach<Sprite> { _, sprite -> sprite.frame = frame }
+    }
+
+    /** The source artwork's bright lantern belly belongs below its dark face. */
+    private fun assertSpriteUpright(pixels: ByteArray) {
+        fun lanternPixels(rows: IntRange): Int = rows.sumOf { y ->
+            (WIDTH / 2 - WIDTH / 40 until WIDTH / 2 + WIDTH / 40).count { x ->
+                val offset = (y * WIDTH + x) * CHANNELS
+                (pixels[offset].toInt() and 0xff) > LANTERN_RED &&
+                    (pixels[offset + 1].toInt() and 0xff) > LANTERN_GREEN &&
+                    (pixels[offset + 2].toInt() and 0xff) < LANTERN_BLUE
+            }
         }
+        val above = lanternPixels(HEIGHT / 3 until HEIGHT * 4 / 9)
+        val below = lanternPixels(HEIGHT / 2 until HEIGHT * 11 / 18)
+        assertTrue(below > above * 3, "The decoded sprite is upside down: lantern pixels above=$above, below=$below.")
     }
 
     private companion object {
@@ -84,6 +96,9 @@ class Sprites2dSceneFrameTest {
         const val CHANNELS = 4
         const val COLOR_MARGIN = 20
         const val MIN_SPRITE_PIXELS = 100
+        const val LANTERN_RED = 200
+        const val LANTERN_GREEN = 170
+        const val LANTERN_BLUE = 130
 
         // Isolate the middle sprite from the switcher and stats UI.
         val spriteRegion = (HEIGHT / 3 until HEIGHT * 2 / 3).flatMap { y ->

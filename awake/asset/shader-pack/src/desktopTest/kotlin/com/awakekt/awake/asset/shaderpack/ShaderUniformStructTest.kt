@@ -8,6 +8,7 @@ package com.awakekt.awake.asset.shaderpack
 import com.awakekt.awake.asset.shaderdsl.AslShaderDefinition
 import com.awakekt.awake.core.geometry.GpuDataShape
 import com.awakekt.awake.core.math.ClipSpace
+import com.awakekt.awake.render.passes.uniforms.SpriteUniformLayout
 import com.awakekt.awake.render.renderer.UniformField
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -44,6 +45,12 @@ import kotlin.test.fail
  * Desktop-only: it reads the shaders off the test runtime classpath.
  */
 class ShaderUniformStructTest {
+    @Test
+    fun spriteUniformsMatchTheUnlitShader() {
+        val fields = SpriteUniformLayout.fields.map { "${it.name} : ${it.wgslType()}" }
+        assertEquals(fields, uniformStructFields(SpriteShader))
+    }
+
 
     @Test
     fun litShadowsStructIsExactlyWhatTheKotlinLayoutDeclares() {

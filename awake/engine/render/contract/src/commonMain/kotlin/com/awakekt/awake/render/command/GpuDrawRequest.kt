@@ -66,6 +66,8 @@ data class GpuDrawRequest(
     /** With [transparent], adds its colour to what is behind it rather than covering it: glows,
      * fire, light shafts. */
     var additive: Boolean = false,
+    /** Transparent draws with higher orders blend after lower orders; ties use camera depth. */
+    var sortOrder: Int = 0,
 ) {
     /**
      * Mutates this request in place so a pool can reuse the instance without allocating.
@@ -91,6 +93,7 @@ data class GpuDrawRequest(
         shadowsOnly: Boolean = false,
         worldBounds: Aabb? = null,
         additive: Boolean = false,
+        sortOrder: Int = 0,
     ): GpuDrawRequest {
         this.mesh = mesh
         this.material = material
@@ -109,6 +112,7 @@ data class GpuDrawRequest(
         this.shadowsOnly = shadowsOnly
         this.worldBounds = worldBounds
         this.additive = additive
+        this.sortOrder = sortOrder
         return this
     }
 }

@@ -19,6 +19,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(project(":awake:ecs"))
+            api(project(":awake:engine:render:passes"))
             api(project(":awake:scene:scene-core"))
             api(project(":awake:scene:document"))
             api(project(":awake:scene:binding"))

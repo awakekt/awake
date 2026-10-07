@@ -11,9 +11,13 @@ import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math.times
 import com.awakekt.awake.render.command.GpuDebugView
 import com.awakekt.awake.render.command.GpuShadowCascadeData
+import com.awakekt.awake.render.passes.uniforms.DEFAULT_BASE_COLOR_FACTOR
+import com.awakekt.awake.render.passes.uniforms.DEFAULT_EMISSIVE_FACTOR
 import com.awakekt.awake.render.passes.uniforms.DrawUniformPlan
 import com.awakekt.awake.render.passes.uniforms.InstancedUniformLayout
 import com.awakekt.awake.render.passes.uniforms.MaterialUniformLayouts
+import com.awakekt.awake.render.passes.uniforms.SpriteUniformLayout
+import com.awakekt.awake.render.passes.uniforms.SpriteFields
 import com.awakekt.awake.render.passes.uniforms.ParticleExtraUniformLayout
 import com.awakekt.awake.render.passes.uniforms.ParticleUniformLayout
 import com.awakekt.awake.render.passes.uniforms.blendsAdditively
@@ -24,8 +28,6 @@ import com.awakekt.awake.render.passes.uniforms.gpuLitShadowUniforms
 import com.awakekt.awake.render.passes.uniforms.litUniforms
 import com.awakekt.awake.render.passes.uniforms.texturedUniforms
 import com.awakekt.awake.render.pipeline.InstancedDrawKind
-import com.awakekt.awake.render.passes.uniforms.DEFAULT_BASE_COLOR_FACTOR
-import com.awakekt.awake.render.passes.uniforms.DEFAULT_EMISSIVE_FACTOR
 import com.awakekt.awake.render.renderer.SkinnedFields
 import com.awakekt.awake.render.renderer.SkinnedMaterialLayout
 import com.awakekt.awake.render.renderer.SkinnedUniformLayout
@@ -94,6 +96,11 @@ fun RenderDrawCommand.uniformFloats(
             debugView = debugView,
             exposure = exposure,
         )
+
+        DrawUniformPlan.Sprite -> UniformWriter(SpriteUniformLayout)
+            .put(mvp.data, UniformFields.Mvp)
+            .put(extraUniformFloats, SpriteFields.UvTransform, SpriteFields.Tint)
+            .build()
 
         DrawUniformPlan.Skinned -> skinnedUniforms(mvp, model, extraUniformFloats, coverageCutoff, exposure)
 

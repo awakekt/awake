@@ -160,6 +160,7 @@ internal fun VulkanRenderer.prepareGpuDraw(
             alphaInstanceBuffer = colors,
             frameInstanceBuffer = frames,
             depthSortKey = cmd.depthSortKey(cameraPosition),
+            sortOrder = cmd.sortOrder,
         )
     }
     val pipeline = pipelineFor(mesh.format, cmd.cullMode, isTransparent, cmd.additive) ?: return null
@@ -186,6 +187,7 @@ internal fun VulkanRenderer.prepareGpuDraw(
         uniformSlotIndex = uniformSlotIndex,
         materialBinding = binding,
         depthSortKey = cmd.depthSortKey(cameraPosition),
+        sortOrder = cmd.sortOrder,
     )
 }
 
@@ -249,6 +251,7 @@ internal data class PreparedDrawCall(
     /** Squared distance to the camera eye, computed once at preparation rather than inside the
      * sort comparator. Last in the list on purpose: one construction site below is positional. */
     override val depthSortKey: Float = 0f,
+    override val sortOrder: Int = 0,
 ) : PreparedDraw {
     override val transparent: Boolean get() = isTransparent
     override val vertexFormat: VertexFormat get() = mesh.format

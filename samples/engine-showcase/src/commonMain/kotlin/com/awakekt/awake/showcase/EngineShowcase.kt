@@ -203,9 +203,8 @@ fun SceneAssetsDsl.registerEngineShowcaseAssets() {
     material("particle") { ParticleEmitterExampleDriver.createMaterial(this) }
     material("particle-flicker") { ParticleEmitterExampleDriver.createFlickerMaterial(this) }
     material("particle-levelup") { ParticleEmitterExampleDriver.createLevelupMaterial(this) }
-    mesh("sprite-quad") { Sprites2dExampleDriver.createMesh(this) }
     mesh("sprite-background") { Sprites2dExampleDriver.createBackgroundMesh(this) }
-    material("sprite-sheet") { Sprites2dExampleDriver.createMaterial(this) }
+    texture("lantern-firefly") { Sprites2dExampleDriver.texture() }
     mesh("sphere") { renderer.createMesh(generate { sphere(radius = 0.5f, colored = true) }) }
     mesh("wedge") { renderer.createMesh(TerrainPhysicsExampleDriver.wedgeGeometry) }
     mesh("heightfield-terrain") { renderer.createMesh(TerrainExampleAsset.geometry) }

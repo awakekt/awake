@@ -1,0 +1,1 @@
+- Render scene sprites as unlit transparent atlas quads on Vulkan and WebGPU, with nearest filtering, cell sizing, flips, tint and paint order; migrate the generated sprite showcase to the sprite component.

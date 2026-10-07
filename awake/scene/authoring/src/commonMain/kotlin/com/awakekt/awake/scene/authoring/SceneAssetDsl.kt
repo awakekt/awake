@@ -15,6 +15,7 @@ import com.awakekt.awake.scene.runtime.SceneMaterialFactory
 import com.awakekt.awake.scene.runtime.SceneMeshFactory
 import com.awakekt.awake.scene.runtime.SceneMeshRendererFactory
 import com.awakekt.awake.scene.runtime.SceneRenderableKey
+import com.awakekt.awake.scene.runtime.SceneTextureFactory
 
 /**
  * DSL scope for configuring scene assets, mesh generators, materials, and asset resolvers.
@@ -22,6 +23,7 @@ import com.awakekt.awake.scene.runtime.SceneRenderableKey
 @AwakeSceneDsl
 class SceneAssetsDsl internal constructor() {
     private val meshFactories = linkedMapOf<String, SceneMeshFactory>()
+    private val textureFactories = linkedMapOf<String, SceneTextureFactory>()
     private val materialFactories = linkedMapOf<String, SceneMaterialFactory>()
     private val rendererFactories = linkedMapOf<SceneRenderableKey, SceneMeshRendererFactory>()
     private val resolvers = mutableListOf<SceneAssetResolver>()
@@ -92,10 +94,17 @@ class SceneAssetsDsl internal constructor() {
         rendererFactories[SceneRenderableKey(mesh, material)] = factory
     }
 
+    /** Registers decoded pixels under the name a scene sprite uses. Called on first GPU use. */
+    fun texture(name: String, factory: SceneTextureFactory) {
+        require(name.isNotBlank()) { "Scene texture names must not be blank." }
+        textureFactories[name] = factory
+    }
+
     internal fun buildLibrary(): SceneAssetLibrary = SceneAssetLibrary(
         meshFactories = meshFactories.toMap(),
         materialFactories = materialFactories.toMap(),
         rendererFactories = rendererFactories.toMap(),
         dynamicResolvers = resolvers.toList(),
+        textureFactories = textureFactories.toMap(),
     )
 }

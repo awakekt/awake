@@ -15,6 +15,6 @@ with zero edge or chroma-adjacent pixels. Visual review confirms a blink, small 
 and a stable return to the open-eyed pose. The motion is a short idle pose loop.
 
 `manifest.json.frame_layout.rows.idle` gives the atlas rectangles; the scene maps its four
-regular 256×256 cells to `texture_animation` at 4 fps. The PNG retains true transparency.
+regular 256×256 cells to `sprite`; the showcase driver steps `Sprite.frame` at 4 fps. The PNG retains true transparency.
 `idle.gif` is a preview; the engine reads the PNG. The generated request and composition report
 are retained alongside the atlas, along with the accepted `base-source.png` identity reference.

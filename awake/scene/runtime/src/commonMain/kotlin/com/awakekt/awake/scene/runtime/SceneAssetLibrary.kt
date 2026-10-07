@@ -8,11 +8,16 @@ package com.awakekt.awake.scene.runtime
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.render.pipeline.CullMode
+import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.SceneRenderableRequest
 
 typealias SceneMeshFactory = SceneAppLifecycleRuntime.() -> Mesh
+
+/** Supplies decoded pixels for a named sprite image. */
+typealias SceneTextureFactory = () -> TextureAsset
+
 typealias SceneMaterialFactory = SceneAppLifecycleRuntime.() -> Material
 typealias SceneMeshRendererFactory = SceneAppLifecycleRuntime.() -> MeshRenderer
 
@@ -68,6 +73,7 @@ class SceneAssetLibrary(
     private val dynamicResolvers: List<SceneAssetResolver> = emptyList(),
     /** Bytes of released-but-kept mesh to hold before evicting. Zero destroys on last release. */
     private val retainedMeshBudgetBytes: Long = 0,
+    private val textureFactories: Map<String, SceneTextureFactory> = emptyMap(),
 ) {
     private val meshes = linkedMapOf<String, Mesh>()
     private val materials = linkedMapOf<String, Material>()
@@ -81,6 +87,10 @@ class SceneAssetLibrary(
     // How many times [resolve] took holds for each request, so [releaseRenderable] gives back exactly those.
     private val resolvedRequests = mutableMapOf<SceneRenderableRequest, Int>()
     private var retainedBytes = 0L
+
+    /** Supplies decoded image data; the sprite render batch caches and owns its GPU material. */
+    fun requireTexture(name: String): TextureAsset = textureFactories[name]?.invoke()
+        ?: error("No scene texture named '$name' is registered.")
 
     /** Builds [name] on first use and takes a reference to it; see [releaseMesh]. */
     fun requireMesh(runtime: SceneAppLifecycleRuntime, name: String): Mesh {

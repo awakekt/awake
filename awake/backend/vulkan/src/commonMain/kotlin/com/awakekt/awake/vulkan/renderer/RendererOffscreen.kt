@@ -77,6 +77,7 @@ internal fun Renderer.uploadTexture(asset: TextureAsset): Texture = Texture(
     asset.height,
     layerCount = asset.layerCount,
     isCubemap = asset.isCubemap,
+    filtering = asset.filtering,
 ).let(textureResources::register)
 
 internal fun Renderer.pbrImageView(asset: TextureAsset?, neutral: TextureAsset): Long =

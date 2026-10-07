@@ -41,9 +41,7 @@
         "scale": { "x": 2.5, "y": 2.5, "z": 1.0 }
       },
       "components": [
-        { "component": "mesh_renderer", "mesh": "sprite-quad", "material": "sprite-sheet", "cullMode": "None", "transparent": true },
-        { "component": "pbr_material", "metallic": 0.0, "roughness": 0.9, "alphaMode": "Masked", "alphaCutoff": 0.01 },
-        { "component": "texture_animation", "columns": 4, "rows": 1, "frameCount": 4, "framesPerSecond": 4.0 }
+        { "component": "sprite", "texture": "lantern-firefly", "columns": 4, "rows": 1, "pixelsPerUnit": 256.0 }
       ]
     },
     {
@@ -53,9 +51,7 @@
         "scale": { "x": 3.0, "y": 3.0, "z": 1.0 }
       },
       "components": [
-        { "component": "mesh_renderer", "mesh": "sprite-quad", "material": "sprite-sheet", "cullMode": "None", "transparent": true },
-        { "component": "pbr_material", "metallic": 0.0, "roughness": 0.9, "alphaMode": "Masked", "alphaCutoff": 0.01 },
-        { "component": "texture_animation", "columns": 4, "rows": 1, "frameCount": 4, "framesPerSecond": 4.0 }
+        { "component": "sprite", "texture": "lantern-firefly", "columns": 4, "rows": 1, "pixelsPerUnit": 256.0 }
       ]
     },
     {
@@ -65,9 +61,7 @@
         "scale": { "x": 2.5, "y": 2.5, "z": 1.0 }
       },
       "components": [
-        { "component": "mesh_renderer", "mesh": "sprite-quad", "material": "sprite-sheet", "cullMode": "None", "transparent": true },
-        { "component": "pbr_material", "metallic": 0.0, "roughness": 0.9, "alphaMode": "Masked", "alphaCutoff": 0.01 },
-        { "component": "texture_animation", "columns": 4, "rows": 1, "frameCount": 4, "framesPerSecond": 4.0 }
+        { "component": "sprite", "texture": "lantern-firefly", "columns": 4, "rows": 1, "pixelsPerUnit": 256.0 }
       ]
     }
   ]

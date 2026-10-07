@@ -67,6 +67,9 @@ interface PreparedDraw {
      * [transparent] draw. */
     val depthSortKey: Float get() = 0f
 
+    /** Transparent paint order before depth sorting; higher orders draw last. */
+    val sortOrder: Int get() = 0
+
     /** Clusters draws WITHIN one pipeline group so consecutive calls reuse vertex and index
      * buffer bindings -- mesh identity, in practice. Zero (the default) leaves a backend's draws
      * in submission order. */

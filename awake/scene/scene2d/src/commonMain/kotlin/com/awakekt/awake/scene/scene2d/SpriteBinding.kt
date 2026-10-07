@@ -44,7 +44,7 @@ class Sprite(settings: SceneSprite) {
     var sortOrder: Int = settings.sortOrder
 
     /** Cells in the sheet. */
-    val cellCount: Int = columns * rows
+    val cellCount: Int = settings.cellCount
 
     /** The cell showing, counted in reading order from 0 at the top left. */
     var frame: Int = settings.frame

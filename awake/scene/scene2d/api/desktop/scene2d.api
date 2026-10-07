@@ -80,3 +80,7 @@ public final class com/awakekt/awake/scene/scene2d/SpriteBinding : com/awakekt/a
 	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
 }
 
+public final class com/awakekt/awake/scene/scene2d/SpriteDrawCollectorKt {
+	public static final fun collectSpriteDraws (Lcom/awakekt/awake/ecs/World;)Ljava/util/List;
+}
+

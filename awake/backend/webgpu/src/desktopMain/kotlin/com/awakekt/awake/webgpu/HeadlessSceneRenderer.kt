@@ -85,6 +85,19 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
         bindingsMetadataAvailable = PackShaderSets.LitShadow.webGpu.bindingsMetadataAvailable,
         cullMode = io.ygdrasil.webgpu.GPUCullMode.Back,
     )
+    val atlasPipeline = RenderPipeline(
+        graphicsDevice,
+        swapchainManager,
+        DescriptorSetLayoutHandle(0),
+        wgsl(PackShaderSets.Sprite),
+        ByteArray(0),
+        VertexFormat.PositionUv,
+        "vertexMain",
+        "fragmentMain",
+        variant = PipelineVariant.AlphaBlended,
+        bindingsByGroup = PackShaderSets.Sprite.webGpu.bindingsByGroup,
+        bindingsMetadataAvailable = PackShaderSets.Sprite.webGpu.bindingsMetadataAvailable,
+    )
     val texturedPipeline = RenderPipeline(
         graphicsDevice,
         swapchainManager,
@@ -109,6 +122,7 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
         bindingsByGroup = PackShaderSets.SkinnedTextured.webGpu.bindingsByGroup,
         bindingsMetadataAvailable = PackShaderSets.SkinnedTextured.webGpu.bindingsMetadataAvailable,
     )
+
     // The textured format's blended companions, as RenderPlan builds them.
     suspend fun texturedCompanion(variant: PipelineVariant) = RenderPipeline(
         graphicsDevice,
@@ -237,10 +251,11 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
             primaryFormat = VertexFormat.PositionNormalColor,
             byFormat = mapOf(
                 VertexFormat.PositionNormalColorUv to texturedPipeline,
+                VertexFormat.PositionUv to atlasPipeline,
                 VertexFormat.PositionNormalColorUvSkin to skinnedTexturedPipeline,
             ),
             instancedByFormat = mapOf(VertexFormat.PositionNormalColorUv to instancedTexturedPipeline),
-            transparentByFormat = mapOf(VertexFormat.PositionNormalColorUv to transparentTexturedPipeline),
+            transparentByFormat = mapOf(VertexFormat.PositionNormalColorUv to transparentTexturedPipeline, VertexFormat.PositionUv to atlasPipeline),
             additiveByFormat = mapOf(VertexFormat.PositionNormalColorUv to additiveTexturedPipeline),
             backCulledByFormat = mapOf(VertexFormat.PositionNormalColor to backCulledScenePipeline),
             particlePipelines = mapOf(VertexFormat.PositionUv to spritePipeline),
@@ -271,6 +286,7 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
             scenePipeline.destroy()
             backCulledScenePipeline.destroy()
             texturedPipeline.destroy()
+            atlasPipeline.destroy()
             skinnedTexturedPipeline.destroy()
             instancedTexturedPipeline.destroy()
             transparentTexturedPipeline.destroy()

@@ -30,7 +30,7 @@ private fun TextureAsset.downsampleLayers(newWidth: Int, newHeight: Int): Textur
     val layerBytes = newWidth * newHeight * 4
     val out = ByteArray(layerBytes * layerCount)
     for (layer in 0 until layerCount) boxDownsample(layerOffset(layer), newWidth, newHeight, out, layer * layerBytes)
-    return TextureAsset(out, newWidth, newHeight, layerCount, isCubemap)
+    return TextureAsset(out, newWidth, newHeight, layerCount, isCubemap, filtering)
 }
 
 private fun TextureAsset.boxDownsample(source: Int, newWidth: Int, newHeight: Int, out: ByteArray, target: Int) {
