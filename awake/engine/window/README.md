@@ -11,6 +11,8 @@ creates its own surface from the window handle it is given.
 - iOS: `AwakeMetalView`, a `UIView` on a `CAMetalLayer` with a `CADisplayLink` loop, touch and
   text input.
 - Android: `AwakeSurfaceView`, a `SurfaceView` with its render thread, touch, key and IME input.
+- Browser (Web / Wasm): `runBrowserCanvas`, HTML canvas resizing, touch, pointer, wheel, keyboard, and
+  hidden `<input>` IME / clipboard text bridge (`DomTextInputBridge`).
 
 ## Does not own
 

@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package com.awakekt.awake.webgpu.application
+package com.awakekt.awake.engine.window
 
 /**
  * A DOM `WheelEvent` delta as [com.awakekt.awake.core.input.Input]'s scroll units: roughly one per

@@ -26,6 +26,14 @@ kotlin {
         iosMain.dependencies {
             implementation(project(":awake:core:logging"))
         }
+        named("wasmJsMain") {
+            dependencies {
+                implementation(libs.kotlinx.browser)
+                implementation(libs.kotlinx.coroutines.core)
+                implementation(project(":awake:core:host"))
+                implementation(project(":awake:core:logging"))
+            }
+        }
         commonTest.dependencies {
             implementation(kotlin("test"))
         }

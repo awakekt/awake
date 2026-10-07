@@ -3,7 +3,9 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package com.awakekt.awake.webgpu.application
+@file:OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
+
+package com.awakekt.awake.engine.window
 
 import com.awakekt.awake.core.input.Input
 import org.w3c.dom.Element

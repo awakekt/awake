@@ -119,6 +119,7 @@ kotlin {
             // not `implementation`: same reasoning as awake-backend-vulkan's identical
             // dependency -- it's a supertype, so consumers need it on their classpath too.
             api(project(":awake:engine:platform"))
+            api(project(":awake:engine:window"))
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

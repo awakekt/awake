@@ -5,7 +5,7 @@
  */
 @file:OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
 
-package com.awakekt.awake.webgpu.application
+package com.awakekt.awake.engine.window
 
 import com.awakekt.awake.core.input.ClipboardCommand
 import com.awakekt.awake.core.input.ImeComposition

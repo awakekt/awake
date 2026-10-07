@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package com.awakekt.awake.webgpu.application
+package com.awakekt.awake.engine.window
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
