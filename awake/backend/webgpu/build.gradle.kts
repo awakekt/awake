@@ -113,6 +113,7 @@ kotlin {
             // dependency on the production classpath makes ASL-generated WGSL available to the
             // same runtime resource lookup used by Vulkan.
             implementation(project(":awake:asset:shader-pack"))
+            implementation(project(":awake:asset:shader-compiler"))
             // HeadlessRenderSession, the shape both backends hand a windowless renderer back in.
             api(project(":awake:engine:render:testing"))
             implementation(libs.kotlinx.coroutines.core)
@@ -141,6 +142,10 @@ kotlin {
         // copy rather than duplicated, so a shader edit cannot drift between the two.
         named("desktopTest") {
             kotlin.srcDir(showcasePlanFixture)
+            dependencies {
+                implementation(project(":awake:asset:shader-dsl"))
+                implementation(libs.kotlinx.coroutines.test)
+            }
             resources.srcDir("src/wasmJsMain/resources")
             // lit_shadow.wgsl, for the shadow bind-group test. The shader pack's own synced
             // WebGPU copy, not a duplicate here: a copy would drift the moment the ASL

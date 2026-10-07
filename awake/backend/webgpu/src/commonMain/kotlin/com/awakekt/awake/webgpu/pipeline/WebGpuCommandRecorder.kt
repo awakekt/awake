@@ -77,7 +77,7 @@ internal class WebGpuCommandRecorder(
 /** Each wraps the WebGPU object the shared layer passes through without inspecting. Built once
  * with the resource it points at (a pipeline, a bind group, a buffer), not per draw. */
 class WebGpuPipelineHandle(
-    val pipeline: GPURenderPipeline,
+    var pipeline: GPURenderPipeline,
     override val bindingLayout: BindingLayout = BindingLayout.Standard,
     val materialBindings: GroupBindings? = null,
     val hasGroupZeroBindings: Boolean = true,

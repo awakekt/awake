@@ -13,8 +13,6 @@ import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
-import com.awakekt.awake.render.material.Material as RenderMaterial
-import com.awakekt.awake.render.mesh.Mesh as RenderMesh
 import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes.pointShadowMatrices
 import com.awakekt.awake.render.passes.uniforms.PointLight
@@ -27,6 +25,8 @@ import com.awakekt.awake.render.texture.RenderTarget
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertTrue
+import com.awakekt.awake.render.material.Material as RenderMaterial
+import com.awakekt.awake.render.mesh.Mesh as RenderMesh
 
 /**
  * WebGPU's point-light shadow contact probe on a real device.

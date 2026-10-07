@@ -72,8 +72,9 @@ internal class WebGpuFrameContext(
         return when (semantic) {
             BindingSemantic.ShadowDepth -> (renderer.depthPrePass?.depthTarget ?: renderer.depthPrePassPlaceholder)
                 ?.let { renderer.bufferPools.shadowBindingFor(handle, it) }
-            BindingSemantic.SceneDepth -> renderer.sceneDepthPass?.depthTarget
-                ?.let { renderer.bufferPools.sceneDepthBindingFor(handle, it) }
+            BindingSemantic.SceneDepth ->
+                renderer.sceneDepthPass?.depthTarget
+                    ?.let { renderer.bufferPools.sceneDepthBindingFor(handle, it) }
             else -> null
         }
     }

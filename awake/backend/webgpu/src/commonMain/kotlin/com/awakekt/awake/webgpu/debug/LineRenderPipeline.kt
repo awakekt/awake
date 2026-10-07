@@ -5,20 +5,20 @@
  */
 package com.awakekt.awake.webgpu.debug
 
-import com.awakekt.awake.render.passes.debug.DebugLineLayout
-import com.awakekt.awake.render.passes.debug.DebugLineUniformLayout
 import com.awakekt.awake.render.passes.debug.DebugLineDepthMode
+import com.awakekt.awake.render.passes.debug.DebugLineLayout
 import com.awakekt.awake.render.passes.debug.DebugLinePipelinePolicy
+import com.awakekt.awake.render.passes.debug.DebugLineUniformLayout
 import com.awakekt.awake.render.pipeline.CullMode
 import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.fastArrayBufferOf
-import com.awakekt.awake.webgpu.writeBufferData
 import com.awakekt.awake.webgpu.pipeline.WebGpuBindGroupHandle
 import com.awakekt.awake.webgpu.pipeline.WebGpuPipelineHandle
 import com.awakekt.awake.webgpu.pipeline.createAwakePipelineLayout
 import com.awakekt.awake.webgpu.pipeline.toGpuVertexFormat
 import com.awakekt.awake.webgpu.swapchain.SwapchainManager
+import com.awakekt.awake.webgpu.writeBufferData
 import io.ygdrasil.webgpu.BindGroupDescriptor
 import io.ygdrasil.webgpu.BindGroupEntry
 import io.ygdrasil.webgpu.BufferBinding

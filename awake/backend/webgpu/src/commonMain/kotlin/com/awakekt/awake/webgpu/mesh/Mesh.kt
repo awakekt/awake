@@ -10,10 +10,10 @@ import com.awakekt.awake.core.math.Aabb
 import com.awakekt.awake.webgpu.WebGpuHandles
 import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.fastArrayBufferOf
-import com.awakekt.awake.webgpu.writeBufferData
 import com.awakekt.awake.webgpu.handles.BufferHandle
 import com.awakekt.awake.webgpu.handles.DeviceMemoryHandle
 import com.awakekt.awake.webgpu.pipeline.WebGpuBufferHandle
+import com.awakekt.awake.webgpu.writeBufferData
 import io.ygdrasil.webgpu.BufferDescriptor
 import io.ygdrasil.webgpu.GPUBuffer
 import io.ygdrasil.webgpu.GPUBufferUsage

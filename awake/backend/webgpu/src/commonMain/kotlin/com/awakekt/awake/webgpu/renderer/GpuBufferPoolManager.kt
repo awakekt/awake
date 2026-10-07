@@ -154,6 +154,13 @@ internal class GpuBufferPoolManager(
         return slots[index]
     }
 
+    /** Releases and evicts all buffers and bind groups cached against [pipeline]. */
+    fun invalidatePipeline(pipeline: GPURenderPipeline) {
+        uniformSlotPools.remove(pipeline)?.forEach { it.buffer.close() }
+        skinnedInstancedUniformResources.remove(pipeline)?.buffer?.close()
+        shadowBindGroups.keys.filter { it.first == pipeline }.forEach { shadowBindGroups.remove(it) }
+    }
+
     fun destroy() {
         uiQuadMeshPool.forEach { it.destroy() }
         uiGlyphMeshPool.forEach { it.destroy() }

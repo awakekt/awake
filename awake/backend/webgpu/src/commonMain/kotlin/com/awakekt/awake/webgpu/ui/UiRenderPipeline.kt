@@ -15,11 +15,11 @@ import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.pipeline.UiPipelineDescriptor
 import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.fastArrayBufferOf
-import com.awakekt.awake.webgpu.writeBufferData
 import com.awakekt.awake.webgpu.material.Material
 import com.awakekt.awake.webgpu.pipeline.createAwakePipelineLayout
 import com.awakekt.awake.webgpu.pipeline.toGpuVertexFormat
 import com.awakekt.awake.webgpu.swapchain.SwapchainManager
+import com.awakekt.awake.webgpu.writeBufferData
 import io.ygdrasil.webgpu.BindGroupDescriptor
 import io.ygdrasil.webgpu.BindGroupEntry
 import io.ygdrasil.webgpu.BlendComponent

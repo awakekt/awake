@@ -141,6 +141,17 @@ class Renderer internal constructor(
             "This renderer was built without an engine, so it cannot attach content features."
         }.attachContentFeature(source)
 
+    /** Set by the engine that built this renderer, over its pipeline registry. */
+    internal var shaderReplacement: com.awakekt.awake.render.pipeline.ShaderReplacement? = null
+
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : com.awakekt.awake.render.pipeline.GpuCapability> capability(
+        kind: com.awakekt.awake.render.pipeline.GpuCapabilityKind<T>,
+    ): T? = when (kind) {
+        com.awakekt.awake.render.pipeline.ShaderReplacement -> shaderReplacement as T?
+        else -> null
+    }
+
     /** Counts every draw this renderer records; published once per submitted frame. */
     internal val statsCounter = RenderStatsCounter()
 
