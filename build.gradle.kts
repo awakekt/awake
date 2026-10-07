@@ -223,6 +223,7 @@ val clipSpaceSources = files(
     "awake/scene",
     "awake/engine/render",
     "awake/asset/shader-dsl/src/commonMain",
+    "awake/asset/shader-document/src/commonMain",
     "awake/asset/shader-pack/src/commonMain",
 ).asFileTree.matching {
     include("**/*.kt")

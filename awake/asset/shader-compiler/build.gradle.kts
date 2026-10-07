@@ -142,6 +142,10 @@ kotlin {
             // terrain shader here is what proves vertex-stage texture sampling validates at all.
             // Acyclic: shader-pack does not depend on this module.
             implementation(project(":awake:asset:shader-pack"))
+            // Shader documents are untrusted project data, and WebGPU does not report a shader it
+            // rejects until it draws: every document that passes its checks must emit WGSL naga
+            // accepts. Acyclic: shader-document does not depend on this module.
+            implementation(project(":awake:asset:shader-document"))
             implementation(kotlin("test"))
         }
     }

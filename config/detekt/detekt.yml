@@ -155,6 +155,7 @@ comments:
       - '**/awake/asset/gltf/**'
       - '**/awake/asset/terrain/**'
       - '**/awake/asset/shaders/**'
+      - '**/awake/asset/shader-document/**'
       - '**/awake/asset/shader-dsl/**'
       - '**/awake/asset/shader-pack/**'
       - '**/awake/engine/render/contract/**'
