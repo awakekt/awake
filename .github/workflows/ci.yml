@@ -181,8 +181,11 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
-      - name: Jolt desktop physics tests
-        run: ./gradlew :awake:backend:jolt:desktopTest :awake:scene:physics:desktopTest
+      # `project:runtime` plays whole projects (loading, physics bodies, colliders, AI, particles,
+      # shader effects), and its physics tests need the same Jolt natives as the two suites above.
+      # The compile step only built it, so a broken play path stayed green.
+      - name: Jolt desktop physics and project runtime tests
+        run: ./gradlew :awake:backend:jolt:desktopTest :awake:scene:physics:desktopTest :awake:project:runtime:desktopTest
 
       # Scene document loading, export and the component reference page. The reference test fails
       # when a registered component or field has no row; it drifted while nothing ran it.
