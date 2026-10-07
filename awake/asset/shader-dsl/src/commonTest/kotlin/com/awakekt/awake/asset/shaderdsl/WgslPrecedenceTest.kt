@@ -73,12 +73,26 @@ class WgslPrecedenceTest {
     }
 
     @Test
-    fun aRightOperandKeepsItsParenthesesWhereRegroupingChangesTheValue() {
+    fun aRightOperandAtTheSamePrecedenceKeepsItsParentheses() {
         assertEquals("a - (b - c)", wgsl(a - (b - c)))
         assertEquals("a - (b + c)", wgsl(a - (b + c)))
         assertEquals("a / (b * c)", wgsl(a / (b * c)))
         // Integer division truncates: i * (j / k) and i * j / k differ for i = 3, j = 5, k = 2.
         assertEquals("i * (j / k)", wgsl(i * (j / k)))
+        // Float addition does not reassociate, so the tree's grouping is the one emitted.
+        assertEquals("a + (b + c)", wgsl(a + (b + c)))
+        assertEquals("p && (q && r)", wgsl(p and (q and r)))
+    }
+
+    /** Two matrix-vector products, as written, rather than a matrix-matrix product first. */
+    @Test
+    fun aRightNestedTransformStaysTwoMatrixVectorProducts() {
+        val viewProjection = AslRef("viewProjection", GpuDataShape.Mat4)
+        val model = AslRef("model", GpuDataShape.Mat4)
+        val position = AslRef("position", GpuDataShape.Vec4)
+
+        assertEquals("viewProjection * (model * position)", wgsl(viewProjection * (model * position)))
+        assertEquals("viewProjection * model * position", wgsl(viewProjection * model * position))
     }
 
     @Test

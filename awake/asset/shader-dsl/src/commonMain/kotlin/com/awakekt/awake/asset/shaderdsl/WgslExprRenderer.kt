@@ -96,10 +96,12 @@ private fun renderBinary(expr: AslBinary, stage: AslStage): String {
 
 /**
  * Whether [child], an operand of [parent], must be parenthesized for the text to evaluate the
- * tree. A looser child always is. At the same precedence, WGSL refuses `&&` mixed with `||` and
- * one comparison read by another, so those are wrapped on either side. Arithmetic is
- * left-associative, so only a right child can regroup, and it is wrapped where that changes the
- * value: `a - (b + c)`, `a / (b * c)`, and `i * (j / k)` on integers, whose division truncates.
+ * tree as it is grouped. A looser child always is. At the same precedence a right child always
+ * is, because every WGSL operator here is left-associative: `i * (j / k)` truncates differently
+ * from `i * j / k` on integers, `a + (b + c)` rounds differently from `a + b + c`, and
+ * `m1 * (m2 * v)` is two matrix-vector products where `m1 * m2 * v` multiplies two matrices
+ * first. A left child is wrapped only where WGSL refuses the chain: `&&` mixed with `||`, or one
+ * comparison read by another.
  */
 private fun needsParentheses(parent: AslBinary, child: AslExpr, isRight: Boolean): Boolean {
     if (child !is AslBinary) return false
@@ -107,10 +109,8 @@ private fun needsParentheses(parent: AslBinary, child: AslExpr, isRight: Boolean
     val childPrecedence = precedenceOf(child.op)
     return when {
         childPrecedence != parentPrecedence -> childPrecedence < parentPrecedence
+        isRight -> true
         parentPrecedence == LOGICAL -> child.op != parent.op
-        parentPrecedence == COMPARISON -> true
-        !isRight -> false
-        parent.op == "-" || parent.op == "/" -> true
-        else -> parent.op == "*" && child.op == "/" && (parent.type == AslType.I32 || parent.type == AslType.U32)
+        else -> parentPrecedence == COMPARISON
     }
 }
