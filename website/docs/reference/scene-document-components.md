@@ -95,6 +95,7 @@ A camera lens. At most one per node. `SceneCamera`.
 | `primary` | boolean | `true` | Whether this camera renders the main view. |
 | `projection` | `perspective` · `orthographic` | `perspective` | `orthographic` keeps things the same size at any distance, as a 2D game wants, and ignores `fovYDegrees`. |
 | `orthoHalfHeight` | number | about `2.07` | Half the vertical world extent an orthographic view covers; the width follows from the aspect ratio. Above 0. Used only when `projection` is `orthographic`. |
+| `viewport` | object | none | Optional orthographic virtual viewport: positive finite `width` and `height` in world units, and `scaling` (`fit`, `extend`, `fill`, `stretch`, `screen`; default `fit`). Replaces `orthoHalfHeight` for rendering. Fit centers bars; Extend reveals more world; Fill crops; Stretch scales each axis; Screen uses one world unit per physical framebuffer pixel. Omit for the existing camera framing. |
 
 ## `camera_rig`
 

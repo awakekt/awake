@@ -9,10 +9,18 @@ import com.awakekt.awake.core.geometry.MeshGeometry
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.core.math.ViewportScaling
+import com.awakekt.awake.core.math.VirtualViewport
+import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.passes.OpaqueRenderFeature
 import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes2d.UiRenderFeature
 import com.awakekt.awake.render.renderer.RenderViewport
+import com.awakekt.awake.scene.core.transform.Transform
+import com.awakekt.awake.scene.core.transform.TransformSystem
+import com.awakekt.awake.scene.rendering.RenderSystem3D
+import com.awakekt.awake.scene.rendering.camera.Camera
+import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 import com.awakekt.awake.vulkan.commands.TransferContext
 import com.awakekt.awake.vulkan.debug.LineRenderPipeline
 import com.awakekt.awake.vulkan.device.GraphicsDevice
@@ -110,6 +118,7 @@ class RendererSceneViewportTest {
                     paintedPixels(clamped, 0 until TARGET_SIZE) > MIN_PAINTED,
                     "a clamped rect must still render the scene",
                 )
+                virtualViewportFrames(renderer, target, createdMesh, createdMaterial)
             } finally {
                 mesh?.destroy()
                 material?.destroy()
@@ -117,11 +126,75 @@ class RendererSceneViewportTest {
         }
     }
 
+    /**
+     * A one-unit cube under a 4-by-2 virtual camera in a 128-square target must occupy 32-by-32
+     * pixels for Fit and Extend, 64-by-64 for Fill, and 32-by-64 for Stretch. The negative control
+     * removes the policy and uses the authored one-unit half-height, yielding 64-by-64 instead.
+     * Pixel spans exercise the scene planner, projection, viewport and GPU recording together.
+     */
+    private fun virtualViewportFrames(renderer: Renderer, target: com.awakekt.awake.render.texture.RenderTarget, mesh: RenderMesh, material: RenderMaterial) {
+        val world = World()
+        val camera = Camera(
+            Lens.perspective().also {
+                it.projection = Lens.Projection.Orthographic
+                it.orthoHalfHeight = 1f
+            },
+        )
+        world.add(world.create(), camera)
+        val entity = world.create()
+        world.add(entity, Transform())
+        world.add(entity, MeshRenderer(mesh, material))
+        TransformSystem().update(world, 0f)
+        val system = RenderSystem3D(renderer)
+        val expected = mapOf(
+            ViewportScaling.Fit to (32 to 32),
+            ViewportScaling.Extend to (32 to 32),
+            ViewportScaling.Fill to (64 to 64),
+            ViewportScaling.Stretch to (32 to 64),
+            ViewportScaling.Screen to (1 to 1),
+        )
+        for ((strategy, span) in expected) {
+            camera.viewport = VirtualViewport(4f, 2f, strategy)
+            renderer.renderToTexture(target, system.planCapture(world, camera, TARGET_SIZE, TARGET_SIZE))
+            val pixels = runBlocking { renderer.readPixels(target) }.data
+            val measured = pixelSpan(pixels)
+            println("Virtual viewport $strategy: pixel span $measured (expected $span)")
+            assertEquals(span, measured, strategy.name)
+        }
+        camera.viewport = null
+        renderer.renderToTexture(target, system.planCapture(world, camera, TARGET_SIZE, TARGET_SIZE))
+        val control = pixelSpan(runBlocking { renderer.readPixels(target) }.data)
+        println("Virtual viewport negative control (policy omitted): $control")
+        assertEquals(64 to 64, control)
+        camera.viewport = VirtualViewport(4f, 2f)
+        system.update(world, 0f)
+        assertEquals(32 to 32, pixelSpan(runBlocking { renderer.readPresentedPixels() }.data))
+    }
+
+    private fun pixelSpan(pixels: ByteArray): Pair<Int, Int> {
+        var minX = TARGET_SIZE
+        var minY = TARGET_SIZE
+        var maxX = -1
+        var maxY = -1
+        for (y in 0 until TARGET_SIZE) {
+            for (x in 0 until TARGET_SIZE) {
+                val offset = (y * TARGET_SIZE + x) * 4
+                if (pixels[offset] != 0.toByte() || pixels[offset + 1] != 0.toByte() || pixels[offset + 2] != 0.toByte()) {
+                    minX = minOf(minX, x)
+                    minY = minOf(minY, y)
+                    maxX = maxOf(maxX, x)
+                    maxY = maxOf(maxY, y)
+                }
+            }
+        }
+        return (maxX - minX + 1).coerceAtLeast(0) to (maxY - minY + 1).coerceAtLeast(0)
+    }
+
     private fun withHeadlessRenderer(block: (Renderer) -> Unit) {
         val graphicsDevice = GraphicsDevice()
         graphicsDevice.createHeadless()
         val swapchainManager = SwapchainManager(graphicsDevice, MAX_FRAMES_IN_FLIGHT)
-        swapchainManager.createHeadless(TARGET_SIZE, TARGET_SIZE)
+        swapchainManager.createHeadlessPresentable(TARGET_SIZE, TARGET_SIZE)
         val pipelineLayoutMaterial = Material(graphicsDevice)
         val sceneRenderPass = createSceneRenderPass(graphicsDevice, swapchainManager)
         val renderPipeline = RenderPipeline(
@@ -174,6 +247,7 @@ class RendererSceneViewportTest {
             ),
             maxFramesInFlight = MAX_FRAMES_IN_FLIGHT,
         )
+        swapchainManager.createSyncObjects()
         try {
             block(renderer)
         } finally {
@@ -187,6 +261,8 @@ class RendererSceneViewportTest {
             )
             transferContext.destroy()
             Vulkan.vkDestroyRenderPass(graphicsDevice.device, sceneRenderPass)
+            swapchainManager.destroy()
+            swapchainManager.destroySyncObjects()
             graphicsDevice.destroy()
         }
     }

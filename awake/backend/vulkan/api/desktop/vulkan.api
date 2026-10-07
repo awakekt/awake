@@ -338,6 +338,8 @@ public final class com/awakekt/awake/vulkan/renderer/Renderer : com/awakekt/awak
 	public fun getFrameStats ()Lcom/awakekt/awake/render/renderer/RenderFrameStats;
 	public fun getGpuDrawPreparer ()Lcom/awakekt/awake/render/command/GpuDrawPreparer;
 	public fun getSurfaceAspect ()F
+	public fun getSurfaceHeight ()I
+	public fun getSurfaceWidth ()I
 	public fun getWireframe ()Z
 	public fun presentWithoutScene ()V
 	public fun readFramebufferAttachment (Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/capture/FramebufferAttachment;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;

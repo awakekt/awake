@@ -1343,6 +1343,8 @@ public abstract interface class com/awakekt/awake/render/renderer/Renderer : com
 	public abstract fun getClearColor ()Lcom/awakekt/awake/core/color/Color;
 	public fun getFrameStats ()Lcom/awakekt/awake/render/renderer/RenderFrameStats;
 	public fun getSurfaceAspect ()F
+	public fun getSurfaceHeight ()I
+	public fun getSurfaceWidth ()I
 	public abstract fun getWireframe ()Z
 	public fun presentWithoutScene ()V
 	public fun readFramebufferAttachment (Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/capture/FramebufferAttachment;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
@@ -1364,6 +1366,8 @@ public final class com/awakekt/awake/render/renderer/Renderer$DefaultImpls {
 	public static synthetic fun drawUiToTexture$default (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;ILjava/lang/Object;)V
 	public static fun getFrameStats (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/render/renderer/RenderFrameStats;
 	public static fun getSurfaceAspect (Lcom/awakekt/awake/render/renderer/Renderer;)F
+	public static fun getSurfaceHeight (Lcom/awakekt/awake/render/renderer/Renderer;)I
+	public static fun getSurfaceWidth (Lcom/awakekt/awake/render/renderer/Renderer;)I
 	public static fun presentWithoutScene (Lcom/awakekt/awake/render/renderer/Renderer;)V
 	public static fun readFramebufferAttachment (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/capture/FramebufferAttachment;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static fun readPresentedPixels (Lcom/awakekt/awake/render/renderer/Renderer;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;

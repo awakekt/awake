@@ -8,7 +8,6 @@ package com.awakekt.awake.webgpu.renderer
 import com.awakekt.awake.asset.shaders.AttachedContentFeature
 import com.awakekt.awake.asset.shaders.ContentFeatureHost
 import com.awakekt.awake.asset.shaders.ContentFeatureSource
-import com.awakekt.awake.core.color.Color as AwakeColor
 import com.awakekt.awake.core.geometry.MeshGeometry
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.graphics2d.TextureCompositeMode
@@ -23,8 +22,6 @@ import com.awakekt.awake.render.command.GpuDrawPreparer
 import com.awakekt.awake.render.command.GpuEnvironmentState
 import com.awakekt.awake.render.command.GpuPassExecutor
 import com.awakekt.awake.render.command.GpuPassInput
-import com.awakekt.awake.render.material.Material as RenderMaterial
-import com.awakekt.awake.render.mesh.Mesh as RenderMesh
 import com.awakekt.awake.render.passes.RenderFeature
 import com.awakekt.awake.render.passes.debug.DebugLineLayout
 import com.awakekt.awake.render.passes2d.RetainedDrawRunCache
@@ -32,7 +29,6 @@ import com.awakekt.awake.render.passes2d.UiRun
 import com.awakekt.awake.render.renderer.LineSegment
 import com.awakekt.awake.render.renderer.RenderFrameStats
 import com.awakekt.awake.render.renderer.RenderStatsCounter
-import com.awakekt.awake.render.renderer.Renderer as RenderRenderer
 import com.awakekt.awake.render.renderer.UiTargetCompositeMode
 import com.awakekt.awake.render.texture.PbrTextureSet
 import com.awakekt.awake.render.texture.RenderTarget
@@ -55,6 +51,10 @@ import com.awakekt.awake.webgpu.texture.Texture
 import com.awakekt.awake.webgpu.ui.DynamicMesh
 import com.awakekt.awake.webgpu.ui.UiRenderPipeline
 import com.awakekt.awake.webgpu.ui.UiTargetCompositePipeline
+import com.awakekt.awake.core.color.Color as AwakeColor
+import com.awakekt.awake.render.material.Material as RenderMaterial
+import com.awakekt.awake.render.mesh.Mesh as RenderMesh
+import com.awakekt.awake.render.renderer.Renderer as RenderRenderer
 import io.ygdrasil.webgpu.Color as GpuColor
 
 /**
@@ -156,6 +156,10 @@ class Renderer internal constructor(
         get() = graphicsDevice.wgpuContext.renderingContext.let { context ->
             if (context.height > 0u) context.width.toFloat() / context.height.toFloat() else 16f / 9f
         }
+
+    override val surfaceWidth: Int get() = graphicsDevice.wgpuContext.renderingContext.width.toInt()
+
+    override val surfaceHeight: Int get() = graphicsDevice.wgpuContext.renderingContext.height.toInt()
 
     override var clearColor: AwakeColor = AwakeColor.Black
 

@@ -718,3 +718,49 @@ public final class com/awakekt/awake/core/math/VectorPackingKt {
 	public static final fun squaredDistanceFrom (Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Vec3f;)F
 }
 
+public final class com/awakekt/awake/core/math/ViewportLayout {
+	public fun <init> ()V
+	public final fun contains (FF)Z
+	public final fun getAspect ()F
+	public final fun getHeight ()F
+	public final fun getWidth ()F
+	public final fun getWorldHeight ()F
+	public final fun getWorldWidth ()F
+	public final fun getX ()F
+	public final fun getY ()F
+	public final fun isValid ()Z
+	public final fun screenToWorld (FFLcom/awakekt/awake/core/math2d/Vec2;)Z
+	public final fun set (FFFFFF)V
+	public static synthetic fun set$default (Lcom/awakekt/awake/core/math/ViewportLayout;FFFFFFILjava/lang/Object;)V
+	public final fun worldToScreen (FFLcom/awakekt/awake/core/math2d/Vec2;)Z
+}
+
+public final class com/awakekt/awake/core/math/ViewportScaling : java/lang/Enum {
+	public static final field Extend Lcom/awakekt/awake/core/math/ViewportScaling;
+	public static final field Fill Lcom/awakekt/awake/core/math/ViewportScaling;
+	public static final field Fit Lcom/awakekt/awake/core/math/ViewportScaling;
+	public static final field Screen Lcom/awakekt/awake/core/math/ViewportScaling;
+	public static final field Stretch Lcom/awakekt/awake/core/math/ViewportScaling;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/core/math/ViewportScaling;
+	public static fun values ()[Lcom/awakekt/awake/core/math/ViewportScaling;
+}
+
+public final class com/awakekt/awake/core/math/VirtualViewport {
+	public fun <init> (FFLcom/awakekt/awake/core/math/ViewportScaling;)V
+	public synthetic fun <init> (FFLcom/awakekt/awake/core/math/ViewportScaling;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()Lcom/awakekt/awake/core/math/ViewportScaling;
+	public final fun copy (FFLcom/awakekt/awake/core/math/ViewportScaling;)Lcom/awakekt/awake/core/math/VirtualViewport;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/math/VirtualViewport;FFLcom/awakekt/awake/core/math/ViewportScaling;ILjava/lang/Object;)Lcom/awakekt/awake/core/math/VirtualViewport;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getHeight ()F
+	public final fun getScaling ()Lcom/awakekt/awake/core/math/ViewportScaling;
+	public final fun getWidth ()F
+	public fun hashCode ()I
+	public final fun resolve (FFLcom/awakekt/awake/core/math/ViewportLayout;FF)V
+	public static synthetic fun resolve$default (Lcom/awakekt/awake/core/math/VirtualViewport;FFLcom/awakekt/awake/core/math/ViewportLayout;FFILjava/lang/Object;)V
+	public fun toString ()Ljava/lang/String;
+}
+

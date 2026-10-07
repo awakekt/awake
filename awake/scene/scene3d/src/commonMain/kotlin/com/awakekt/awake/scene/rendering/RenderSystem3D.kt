@@ -6,6 +6,7 @@
 package com.awakekt.awake.scene.rendering
 
 import com.awakekt.awake.core.math.Lens
+import com.awakekt.awake.core.math.VirtualViewport
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.command.GpuDrawPreparationSource
@@ -14,6 +15,7 @@ import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.renderer.RenderViewport
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.scene.rendering.camera.Camera
+import com.awakekt.awake.scene.rendering.camera.CameraViewport
 import com.awakekt.awake.scene.rendering.debug.RenderDiagnostics
 
 /**
@@ -59,8 +61,6 @@ class RenderSystem3D(
 ) : System {
     private val planner = SceneRenderPlanner3D(
         rendererClipSpace = renderer.clipSpace,
-        rendererAspect = { renderer.surfaceAspect },
-        rendererViewport = viewportProvider,
         drawPreparer = drawPreparer,
         features = features,
     )
@@ -87,6 +87,13 @@ class RenderSystem3D(
     private var lastViewportWidth: Float? = null
     private var lastViewportHeight: Float? = null
     private var lastSurfaceAspect: Float = Float.NaN
+    private var lastSurfaceWidth: Int = -1
+    private var lastSurfaceHeight: Int = -1
+    private var lastViewportPolicy: VirtualViewport? = null
+    private val captureViewport = CameraViewport()
+
+    /** Current physical-pixel camera view for picking. Valid after a frame with known target dimensions. */
+    val cameraViewport: CameraViewport = CameraViewport()
 
     /** Number of entities rejected by occlusion during the previous extraction. */
     val lastOccludedCount: Int get() = planner.lastOccludedCount
@@ -102,14 +109,23 @@ class RenderSystem3D(
      * [world] as [camera] sees it at [aspect], extracted exactly as [update] extracts the frame it
      * draws, for an offscreen capture such as `Renderer.renderToTexture`. Nothing is submitted.
      */
-    fun planCapture(world: World, camera: Camera, aspect: Float): GpuPassInput =
-        planner.plan(world, camera, elapsedTimeSeconds, aspect, viewport = null).passInput
+    fun planCapture(world: World, camera: Camera, aspect: Float): GpuPassInput {
+        require(camera.viewport == null) { "A virtual viewport capture requires pixel width and height." }
+        return planner.plan(world, camera, elapsedTimeSeconds, aspect, viewport = null).passInput
+    }
+
+    /** Plans an offscreen view with physical-pixel dimensions, including virtual viewport scaling. */
+    fun planCapture(world: World, camera: Camera, width: Int, height: Int): GpuPassInput {
+        require(captureViewport.update(camera, width.toFloat(), height.toFloat())) { "Capture dimensions must be positive." }
+        return planner.plan(world, captureViewport.camera, elapsedTimeSeconds, captureViewport.aspect, captureViewport.viewport).passInput
+    }
 
     override fun update(world: World, delta: Float) {
         elapsedTimeSeconds += delta.coerceAtLeast(0f)
         RenderDiagnostics.surfaceAspect = renderer.surfaceAspect
         val renderWorld = renderWorldProvider(world)
         val camera = primaryCamera(renderWorld) ?: run {
+            cameraViewport.clear()
             // No scene camera -- e.g. a UI-only sample with an empty World (see ui-showcase's
             // GameModule). There is nothing 3D to draw, but the swapchain must still be
             // presented: `drawUi()` already staged this frame's UI overlay, and `renderer.draw()`
@@ -123,6 +139,13 @@ class RenderSystem3D(
 
         val currentViewport = viewportProvider()
         val currentAspect = renderer.surfaceAspect
+        val viewValid = resolveView(camera, currentViewport)
+        if (camera.viewport != null && !viewValid) {
+            renderer.presentWithoutScene()
+            lastPlannedFrame = null
+            lastFramePlanned = false
+            return
+        }
         val viewDirty = isViewDirty(camera, currentViewport, currentAspect)
         val isRealtime = isRealtimeProvider()
         val isDirty = isRealtime || isDirtyProvider() || viewDirty || lastPlannedFrame == null
@@ -130,7 +153,7 @@ class RenderSystem3D(
         val plannedFrame = if (isDirty) {
             recordCameraState(camera, currentViewport, currentAspect)
             lastFramePlanned = true
-            planner.plan(renderWorld, camera, elapsedTimeSeconds).also {
+            planFrame(renderWorld, camera, currentViewport, currentAspect).also {
                 lastPlannedFrame = it
             }
         } else {
@@ -146,24 +169,62 @@ class RenderSystem3D(
         renderer.draw(plannedFrame.passInput)
     }
 
+    private fun resolveView(camera: Camera, viewport: RenderViewport?): Boolean {
+        val width = renderer.surfaceWidth.toFloat()
+        val height = renderer.surfaceHeight.toFloat()
+        if (viewport == null) return cameraViewport.update(camera, width, height)
+        return if (camera.viewport != null && width > 0f && height > 0f) {
+            // Match the backend's framebuffer clamp before resolving projection and picking.
+            val left = viewport.x.coerceIn(0f, width)
+            val top = viewport.y.coerceIn(0f, height)
+            val right = (viewport.x + viewport.width).coerceIn(0f, width)
+            val bottom = (viewport.y + viewport.height).coerceIn(0f, height)
+            cameraViewport.update(camera, right - left, bottom - top, left, top)
+        } else {
+            cameraViewport.update(camera, viewport.width, viewport.height, viewport.x, viewport.y)
+        }
+    }
+
+    private fun planFrame(world: World, camera: Camera, viewport: RenderViewport?, aspect: Float): SceneRenderPlanner3D.PlannedFrame =
+        if (camera.viewport == null) {
+            planner.plan(world, camera, elapsedTimeSeconds, viewport?.aspect ?: aspect, viewport)
+        } else {
+            planner.plan(world, cameraViewport.camera, elapsedTimeSeconds, cameraViewport.aspect, cameraViewport.viewport)
+        }
+
     private fun isViewDirty(camera: Camera, viewport: RenderViewport?, surfaceAspect: Float): Boolean =
-        isCameraDirty(camera) || isViewportDirty(viewport, surfaceAspect)
+        isCameraDirty(camera) ||
+            camera.viewport != lastViewportPolicy ||
+            isViewportDirty(viewport, surfaceAspect) ||
+            renderer.surfaceWidth != lastSurfaceWidth ||
+            renderer.surfaceHeight != lastSurfaceHeight
 
     private fun isCameraDirty(camera: Camera): Boolean {
         val lens = camera.lens
         val eye = lens.eye
         val center = lens.center
         val up = lens.up
-        return eye.x != lastCameraEyeX || eye.y != lastCameraEyeY || eye.z != lastCameraEyeZ ||
-            center.x != lastCameraCenterX || center.y != lastCameraCenterY || center.z != lastCameraCenterZ ||
-            up.x != lastCameraUpX || up.y != lastCameraUpY || up.z != lastCameraUpZ ||
-            lens.fovYRadians != lastCameraFov || lens.near != lastCameraNear || lens.far != lastCameraFar ||
-            lens.projection != lastCameraProjection || lens.orthoHalfHeight != lastCameraOrthoHeight
+        return eye.x != lastCameraEyeX ||
+            eye.y != lastCameraEyeY ||
+            eye.z != lastCameraEyeZ ||
+            center.x != lastCameraCenterX ||
+            center.y != lastCameraCenterY ||
+            center.z != lastCameraCenterZ ||
+            up.x != lastCameraUpX ||
+            up.y != lastCameraUpY ||
+            up.z != lastCameraUpZ ||
+            lens.fovYRadians != lastCameraFov ||
+            lens.near != lastCameraNear ||
+            lens.far != lastCameraFar ||
+            lens.projection != lastCameraProjection ||
+            lens.orthoHalfHeight != lastCameraOrthoHeight
     }
 
     private fun isViewportDirty(viewport: RenderViewport?, surfaceAspect: Float): Boolean =
-        viewport?.x != lastViewportX || viewport?.y != lastViewportY ||
-            viewport?.width != lastViewportWidth || viewport?.height != lastViewportHeight ||
+        viewport?.x != lastViewportX ||
+            viewport?.y != lastViewportY ||
+            viewport?.width != lastViewportWidth ||
+            viewport?.height != lastViewportHeight ||
             surfaceAspect != lastSurfaceAspect
 
     private fun recordCameraState(camera: Camera, viewport: RenderViewport?, surfaceAspect: Float) {
@@ -187,5 +248,8 @@ class RenderSystem3D(
         lastViewportWidth = viewport?.width
         lastViewportHeight = viewport?.height
         lastSurfaceAspect = surfaceAspect
+        lastSurfaceWidth = renderer.surfaceWidth
+        lastSurfaceHeight = renderer.surfaceHeight
+        lastViewportPolicy = camera.viewport
     }
 }

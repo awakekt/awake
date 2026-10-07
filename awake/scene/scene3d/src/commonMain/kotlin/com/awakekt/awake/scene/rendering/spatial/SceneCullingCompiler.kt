@@ -8,6 +8,7 @@ package com.awakekt.awake.scene.rendering.spatial
 import com.awakekt.awake.core.math.Aabb
 import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.core.math.Frustum
+import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Plane
 import com.awakekt.awake.core.math.ScreenBounds
@@ -20,6 +21,7 @@ import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.CONSERVATIVE_ASPECT
 import com.awakekt.awake.scene.rendering.camera.Camera
 import com.awakekt.awake.scene.rendering.mesh.MeshBounds
+import kotlin.math.max
 
 /** Per-frame culling inputs shared by every 3D draw family. */
 internal class FrameCulling(
@@ -46,14 +48,15 @@ internal class SceneCullingCompiler(
     var lastFrustumCulledCount: Int = 0
         private set
 
-    fun prepare(world: World, camera: Camera): FrameCulling {
+    fun prepare(world: World, camera: Camera, aspect: Float = CONSERVATIVE_ASPECT): FrameCulling {
         occluderBounds.clear()
         lastOccludedCount = 0
         lastFrustumCulledCount = 0
+        val cullingAspect = if (camera.lens.projection == Lens.Projection.Orthographic) aspect else max(aspect, CONSERVATIVE_ASPECT)
 
         val occluderFamily = world.family<Transform, Occluder>()
         val occlusionViewProjection: Mat4? = if (occluderFamily.size > 0) {
-            val viewProjection = camera.lens.viewProjectionMatrix(CONSERVATIVE_ASPECT, clipSpace)
+            val viewProjection = camera.lens.viewProjectionMatrix(cullingAspect, clipSpace)
             occluderFamily.forEach { _, transform, occluder ->
                 val worldBounds = occluder.localBounds.transformed(transform.worldMatrix)
                 camera.lens.screenBounds(worldBounds, viewProjection, 1f, 1f, clipSpace)
@@ -64,12 +67,12 @@ internal class SceneCullingCompiler(
             null
         }
 
-        val visible = visibleByIndex(world, camera)
+        val visible = visibleByIndex(world, camera, cullingAspect)
         return FrameCulling(
             camera = camera,
             visible = visible,
             planes = if (visible == null) {
-                Frustum.planes(camera.lens, CONSERVATIVE_ASPECT)
+                Frustum.planes(camera.lens, cullingAspect)
             } else {
                 null
             },
@@ -103,10 +106,10 @@ internal class SceneCullingCompiler(
         return !occluded
     }
 
-    private fun visibleByIndex(world: World, camera: Camera): MutableSet<Int>? {
+    private fun visibleByIndex(world: World, camera: Camera, aspect: Float): MutableSet<Int>? {
         val grid = world.findSpatialIndex()?.grid ?: return null
         visibleIds.clear()
-        grid.queryFrustum(camera.lens, CONSERVATIVE_ASPECT, visibleIds)
+        grid.queryFrustum(camera.lens, aspect, visibleIds)
         return visibleIds
     }
 

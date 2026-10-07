@@ -35,6 +35,12 @@ interface Renderer : GpuDevice {
     val surfaceAspect: Float
         get() = 16f / 9f
 
+    /** Current drawable width in framebuffer pixels; zero when no extent is available. */
+    val surfaceWidth: Int get() = 0
+
+    /** Current drawable height in framebuffer pixels; zero when no extent is available. */
+    val surfaceHeight: Int get() = 0
+
     /**
      * Draws, instances and triangles of the last submitted frame, plus GPU time where the device
      * can measure it. Null for a renderer that does not count, so "not counted" never reads as

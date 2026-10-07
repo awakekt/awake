@@ -53,6 +53,7 @@ object CameraBinding : SceneComponentBinding<Camera, SceneCamera> {
             it.orthoHalfHeight = orthoHalfHeight
         },
         isPrimary = primary,
+        viewport = viewport?.toViewport(),
     )
 
     /**
@@ -70,6 +71,7 @@ object CameraBinding : SceneComponentBinding<Camera, SceneCamera> {
         primary = isPrimary,
         projection = lens.projection.toSceneProjection(),
         orthoHalfHeight = lens.orthoHalfHeight,
+        viewport = viewport?.toSceneViewport(),
     )
 
     private fun SceneCamera.Projection.toLensProjection(): Lens.Projection = when (this) {
