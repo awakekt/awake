@@ -39,9 +39,17 @@ Before you add to or change anything under `awake/scene/`, sort each piece:
 The rules:
 
 1. **A capability module depends on no `awake:scene` module** in its main source sets. The
-   `verifyCapabilityLayering` task, part of `awakeVerify`, fails on a new dependency. Modules that
-   broke the rule before it existed are listed as debt in `build-logic`'s `repository-tooling`
-   plugin. That list only shrinks: the task also fails when an entry no longer applies.
+   `verifyCapabilityLayering` task, part of `awakeVerify`, fails on a new dependency, however it
+   arrives:
+   - a project dependency in a main configuration, read from the Gradle model, so one a convention
+     plugin adds counts as much as one in the build file;
+   - a dependency on another module that reaches a scene module, which it reports with the chain;
+   - a main source file that imports or fully qualifies a type in an `awake.scene` package (comments
+     and strings aside).
+
+   Modules that broke the rule before it existed are listed as debt in `build-logic`'s
+   `repository-tooling` plugin. That list only shrinks: the task also fails when an entry no longer
+   applies.
 2. **A capability's types never hold a `Scene*` schema type.** The scene module maps schema to
    capability types in one file, and a test fails when a capability option is neither mapped from a
    scene field nor listed as code-only, so leaving an option out of the scene file is a decision

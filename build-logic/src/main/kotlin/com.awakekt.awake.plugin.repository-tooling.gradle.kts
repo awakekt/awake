@@ -7,6 +7,7 @@ import com.awakekt.awake.build.tasks.AwakeRepositoryVerificationTask
 import com.awakekt.awake.build.tasks.VerifyCapabilityLayeringTask
 import com.awakekt.awake.build.tasks.VerifyPublishedArtifactsTask
 import com.awakekt.awake.build.tasks.WaitForVulkanCentralTask
+import org.gradle.api.artifacts.ProjectDependency
 
 plugins {
     id("com.awakekt.awake.plugin.release-cut")
@@ -30,11 +31,11 @@ val capabilityLayeringDebt = setOf(
 
 val verifyCapabilityLayering = tasks.register<VerifyCapabilityLayeringTask>("verifyCapabilityLayering") {
     group = "awake verification"
-    description = "Reject a capability module that depends on an awake:scene module in main code."
+    description = "Reject a capability module whose main code depends on an awake:scene module."
     rootPath.set(layout.projectDirectory.asFile.absolutePath)
-    buildFiles.from(
+    mainSources.from(
         fileTree(layout.projectDirectory.dir("awake")) {
-            include("**/build.gradle.kts")
+            include("**/src/*Main/**/*.kt", "**/src/main/**/*.kt")
             exclude("**/build/**")
         },
     )
@@ -42,6 +43,22 @@ val verifyCapabilityLayering = tasks.register<VerifyCapabilityLayeringTask>("ver
     // measures the scene by design.
     exemptModulePrefixes.set(listOf(":awake:scene", ":awake:project", ":awake:ecs:benchmark"))
     debt.set(capabilityLayeringDebt)
+}
+
+// Read once every module has been configured, so a dependency a convention plugin or an afterEvaluate block
+// adds is seen as well as one in the build file. Plain values rather than a provider over the projects, so
+// the task keeps working with the configuration cache.
+gradle.projectsEvaluated {
+    val declared = rootProject.allprojects
+        .filter { it.path.startsWith(":awake:") }
+        .associate { module ->
+            module.path to module.configurations
+                .associate { configuration ->
+                    configuration.name to configuration.dependencies.withType(ProjectDependency::class.java).map { it.path }
+                }
+                .filterValues { it.isNotEmpty() }
+        }
+    verifyCapabilityLayering.configure { projectDependencies.set(declared) }
 }
 
 tasks.register<AwakeRepositoryVerificationTask>("awakeVerify") {
