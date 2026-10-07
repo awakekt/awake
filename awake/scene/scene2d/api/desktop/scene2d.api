@@ -116,6 +116,55 @@ public final class com/awakekt/awake/scene/scene2d/SceneSpriteClips$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
+public final class com/awakekt/awake/scene/scene2d/SceneTilemap : com/awakekt/awake/scene/document/SceneComponent {
+	public static final field Companion Lcom/awakekt/awake/scene/scene2d/SceneTilemap$Companion;
+	public fun <init> (Ljava/lang/String;IILjava/util/List;IIFILcom/awakekt/awake/scene/document/SceneColor;I)V
+	public synthetic fun <init> (Ljava/lang/String;IILjava/util/List;IIFILcom/awakekt/awake/scene/document/SceneColor;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component10 ()I
+	public final fun component2 ()I
+	public final fun component3 ()I
+	public final fun component4 ()Ljava/util/List;
+	public final fun component5 ()I
+	public final fun component6 ()I
+	public final fun component7 ()F
+	public final fun component8 ()I
+	public final fun component9 ()Lcom/awakekt/awake/scene/document/SceneColor;
+	public final fun copy (Ljava/lang/String;IILjava/util/List;IIFILcom/awakekt/awake/scene/document/SceneColor;I)Lcom/awakekt/awake/scene/scene2d/SceneTilemap;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/scene2d/SceneTilemap;Ljava/lang/String;IILjava/util/List;IIFILcom/awakekt/awake/scene/document/SceneColor;IILjava/lang/Object;)Lcom/awakekt/awake/scene/scene2d/SceneTilemap;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAllowsMultiplePerNode ()Z
+	public final fun getChunkSize ()I
+	public final fun getColumns ()I
+	public final fun getHeight ()I
+	public final fun getPixelsPerUnit ()F
+	public final fun getRows ()I
+	public final fun getSortOrder ()I
+	public final fun getTexture ()Ljava/lang/String;
+	public final fun getTiles ()Ljava/util/List;
+	public final fun getTint ()Lcom/awakekt/awake/scene/document/SceneColor;
+	public final fun getWidth ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+	public fun validate (Ljava/lang/String;)Ljava/util/List;
+	public fun validate (Ljava/lang/String;Ljava/util/List;)Ljava/util/List;
+}
+
+public final synthetic class com/awakekt/awake/scene/scene2d/SceneTilemap$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/scene2d/SceneTilemap$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/scene2d/SceneTilemap;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/scene2d/SceneTilemap;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/scene2d/SceneTilemap$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
 public final class com/awakekt/awake/scene/scene2d/Sprite {
 	public fun <init> (Lcom/awakekt/awake/scene/scene2d/SceneSprite;)V
 	public final fun getCellCount ()I
@@ -195,5 +244,34 @@ public final class com/awakekt/awake/scene/scene2d/SpriteSheetSceneKt {
 	public static final fun toSceneSpriteClips (Lcom/awakekt/awake/asset/sprite/SpriteSheet;Ljava/lang/String;)Lcom/awakekt/awake/scene/scene2d/SceneSpriteClips;
 	public static synthetic fun toSceneSpriteClips$default (Lcom/awakekt/awake/asset/sprite/SpriteSheet;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/scene/scene2d/SceneSpriteClips;
 	public static final fun withSpriteSheets (Lcom/awakekt/awake/scene/document/SceneDocument;Ljava/util/Map;)Lcom/awakekt/awake/scene/document/SceneDocument;
+}
+
+public final class com/awakekt/awake/scene/scene2d/Tilemap {
+	public fun <init> (Lcom/awakekt/awake/scene/scene2d/SceneTilemap;)V
+	public final fun getColumns ()I
+	public final fun getGrid ()Lcom/awakekt/awake/tilemap/TilemapGrid;
+	public final fun getPixelsPerUnit ()F
+	public final fun getRows ()I
+	public final fun getSortOrder ()I
+	public final fun getTexture ()Ljava/lang/String;
+	public final fun getTint ()Lcom/awakekt/awake/scene/document/SceneColor;
+	public final fun setSortOrder (I)V
+	public final fun setTile (III)V
+	public final fun setTint (Lcom/awakekt/awake/scene/document/SceneColor;)V
+}
+
+public final class com/awakekt/awake/scene/scene2d/TilemapBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/scene2d/TilemapBinding;
+	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public synthetic fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/scene2d/SceneTilemap;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun canResolve (Lcom/awakekt/awake/scene/document/SceneComponent;)Z
+	public fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/scene2d/Tilemap;)Lcom/awakekt/awake/scene/scene2d/SceneTilemap;
+	public synthetic fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public synthetic fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/scene2d/SceneTilemap;
+	public fun getComponentClass ()Lkotlin/reflect/KClass;
+	public fun getSchemaClass ()Lkotlin/reflect/KClass;
+	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
 }
 

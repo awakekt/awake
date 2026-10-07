@@ -40,6 +40,7 @@ kotlin {
     // README.md). Same no-platform-code shape as :awake:engine:render:contract next door.
     sourceSets {
         commonMain.dependencies {
+            api(project(":awake:tilemap"))
             implementation(libs.kotlinx.coroutines.core)
             implementation(project(":awake:core:graphics2d"))
             implementation(project(":awake:core:math2d"))

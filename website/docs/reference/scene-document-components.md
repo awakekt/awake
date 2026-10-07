@@ -44,6 +44,7 @@ registers it.
 | [`terrain`](#terrain) | `TerrainComponent` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Terrain](../guides/terrain.md) |
 | [`texture_animation`](#texture_animation) | `TextureAnimation` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Meshes and materials](../guides/meshes-and-materials.md) |
 | [`texture_clips`](#texture_clips) | `TextureClips` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Meshes and materials](../guides/meshes-and-materials.md) |
+| [`tilemap`](#tilemap) | `Tilemap` | `com.awakekt.awake.scene:scene2d` | `DefaultSceneComponentResolvers.install()` | [Component map](component-map.md) |
 | [`tone_mapping`](#tone_mapping) | `ToneMapping` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Lights and shadows](../guides/lights-and-shadows.md) |
 
 ## Registration
@@ -550,6 +551,25 @@ however the image is scaled. `SceneSprite`.
 | `flipY` | boolean | `false` | Mirrors the sprite top to bottom. |
 | `tint` | color | white | Multiplied into the image's colour and alpha. |
 | `sortOrder` | integer | `0` | A higher order draws over a lower one; a tie draws by depth from the camera. |
+## `tilemap`
+
+A finite orthogonal atlas layer. The node's origin is its top left, with +X right and -Y down.
+The runtime uploads one mesh per non-empty chunk, draws visible chunks through the sprite
+pipeline, and rebuilds only edited chunks. `SceneTilemap`.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `texture` | string | required | Named atlas image; must not be blank. |
+| `width` | integer | required | Map columns. At least 1. |
+| `height` | integer | required | Map rows. At least 1. |
+| `tiles` | list of integers | required | Exactly width times height frames in row order; -1 is empty. |
+| `columns` | integer | `1` | Atlas columns. At least 1. |
+| `rows` | integer | `1` | Atlas rows. At least 1. |
+| `pixelsPerUnit` | number | `100` | Pixels per local world unit. Finite and above 0. |
+| `chunkSize` | integer | `16` | Cells per chunk edge. At least 1; edge chunks may be smaller. |
+| `tint` | color | white | Whole-layer straight-alpha multiplier. |
+| `sortOrder` | integer | `0` | Higher order draws after lower-order tilemaps and sprites. |
+
 ## `sprite_clips`
 
 Named animation runs for the `sprite` on the same node. Sheet dimensions come from that sprite;

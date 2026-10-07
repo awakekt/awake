@@ -1,6 +1,7 @@
 # `awake:scene:scene2d`
 
-The 2D scene components. Today that is `sprite`: its schema, binding, validation and render extraction. It is the
+The 2D scene components: sprites, named sprite clips and finite tilemaps, with schema, binding,
+validation and render extraction. It is the
 scene-binding layer for 2D, the way [`awake:scene:particles`](../particles/README.md) is for particles.
 
 ```kotlin
@@ -17,6 +18,8 @@ implementation(project(":awake:scene:scene2d"))
   `render:passes`. The standard scene runtime includes these draws in its combined scene pass.
 - `SceneSpriteClips`, `SpriteClips` and `SpriteClipSystem` -- bind named animation runs to `Sprite.frame`,
   using the reusable `FrameClipPlayer` in `core:animation`.
+- `SceneTilemap`, `Tilemap` and `TilemapBinding` -- bind editable tile layers to the chunk grid
+  and atlas geometry in `awake:tilemap`; the runtime owns their cached GPU batches.
 
 ## Drawing sprites
 
@@ -88,9 +91,36 @@ directly. The caller owns texture registration and path resolution.
 The importer supports contiguous, untrimmed grid rows with uniform timing. See the
 [asset module](../../asset/sprite/README.md) for format validation and limitations.
 
-## What is not in it yet
+## Tilemaps
 
-- Tilemaps. The `tilemap` component lands with its own chunked-batching capability, outside `scene/`.
+Add `tilemap` to a node and register its named texture using the same asset API as sprites.
+Include `spriteScenePipeline()` in the render plan. The standard runtime renders tile layers
+alongside sprites, with the same `sortOrder`, nearest filtering and alpha behavior.
+
+```json
+{
+  "component": "tilemap",
+  "texture": "terrain-tiles",
+  "width": 3,
+  "height": 2,
+  "columns": 2,
+  "rows": 2,
+  "pixelsPerUnit": 16,
+  "chunkSize": 16,
+  "tiles": [0, 1, -1, 2, 3, 0]
+}
+```
+
+Tile indices run from the atlas's top left across rows, and -1 is empty. Map rows run down from
+the node's top left: +X right, -Y down. A tile's pixel size divided by `pixelsPerUnit` determines
+its local size; parent and node transforms apply to the entire layer. A game edits a cell with
+`world.get<Tilemap>(entity)?.setTile(x, y, frame)`. Export saves those edits and current tint/order.
+
+Each visible non-empty chunk contributes one mesh draw. Unchanged chunks reuse requests and GPU
+buffers; editing a cell rebuilds only its chunk. Frustum culling uses the resolved camera viewport,
+including virtual viewport scaling. Removing the component or disposing the runtime releases
+owned chunk meshes and material buffers. The grid and atlas geometry live in
+[`awake:tilemap`](../../tilemap/README.md), outside the scene wrapper.
 
 ## What stays out of it
 

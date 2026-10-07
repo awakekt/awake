@@ -74,6 +74,9 @@ class RangeAnnotationsAreEnforcedTest {
     }
 
     private val componentSeeds: Map<String, (JsonObject) -> JsonObject> = mapOf(
+        "tilemap" to { base ->
+            JsonObject(base + mapOf("width" to JsonPrimitive(1), "height" to JsonPrimitive(1), "tiles" to JsonArray(listOf(JsonPrimitive(0)))))
+        },
         "camera" to { base ->
             JsonObject(
                 base + mapOf(

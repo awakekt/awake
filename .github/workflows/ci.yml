@@ -190,7 +190,7 @@ jobs:
       # Scene document loading, export and the component reference page. The reference test fails
       # when a registered component or field has no row; it drifted while nothing ran it.
       - name: Sprite metadata, animation and scene runtime tests
-        run: ./gradlew :awake:asset:sprite:desktopTest :awake:core:animation:desktopTest :awake:scene:scene2d:desktopTest :awake:scene:runtime:desktopTest
+        run: ./gradlew :awake:asset:sprite:desktopTest :awake:core:animation:desktopTest :awake:tilemap:desktopTest :awake:scene:scene2d:desktopTest :awake:scene:runtime:desktopTest
 
       # Includes typed-query allocation probes and family lifecycle tests; compiling them alone
       # cannot catch per-frame allocations or stale wrappers after World.clear().
