@@ -16,6 +16,7 @@ plugins {
 val ktlintVersion = if (project.path.startsWith(":awake:compose") ||
     project.path.startsWith(":awake:ui") ||
     project.path.startsWith(":awake:editor") ||
+    project.path == ":awake:scene:canvas" ||
     project.path.startsWith(":app") ||
     project.path.startsWith(":plugins") ||
     project.path == ":samples:ui-showcase" ||

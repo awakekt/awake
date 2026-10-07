@@ -6,6 +6,7 @@
 package com.awakekt.awake.scene.physics
 
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.BoxShape
@@ -94,7 +95,7 @@ data class SceneConvexHullShape(val mesh: String, val primitive: Int? = null) : 
 data class ScenePhysicsBody(
     val shape: SceneCollisionShape = SceneBoxShape(),
     val motion: MotionType = MotionType.STATIC,
-    val layer: Int? = null,
+    @PropertyRange(min = 0.0) val layer: Int? = null,
     val sensor: Boolean = false,
 ) : SceneComponent {
     override fun validate(path: String): List<SceneValidationIssue> = buildList {
