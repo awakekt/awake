@@ -1,0 +1,1 @@
+- Shader DSL (ASL) WGSL output keeps the parentheses an expression needs: a negated sum or a double negation, `&&` mixed with `||`, a comparison of comparisons, and an integer quotient on the right of `*` no longer emit WGSL that computes something else or that naga or Tint refuses.

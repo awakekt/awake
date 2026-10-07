@@ -8,9 +8,9 @@ package com.awakekt.awake.asset.shaderdsl
 internal enum class AslStage { Vertex, Fragment }
 
 /** Deterministic WGSL text from a validated definition: consts, uniform blocks, texture
- * bindings, varyings struct, functions, vertex, fragment -- 2-space indent, minimal
- * parentheses, stable ordering, so the committed output diffs cleanly and naga sees the same
- * bytes on every platform. */
+ * bindings, varyings struct, functions, vertex, fragment -- 2-space indent, only the
+ * parentheses the tree and WGSL's grammar need, stable ordering, so the committed output diffs
+ * cleanly and naga sees the same bytes on every platform. */
 internal class WgslEmitter(private val definition: AslShaderDefinition) {
 
     fun emit(): String = buildString {
