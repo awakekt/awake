@@ -1,0 +1,1 @@
+- Sprite manifest clips can wrap across atlas rows in reading order, starting partway along their declared first row. Long animations no longer require a single wide texture; grid alignment, uniform cell size, bounds, contiguous playback order and fixed timing remain validated.
