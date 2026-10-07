@@ -451,6 +451,10 @@ A collider or rigid body. `ScenePhysicsBody`.
 | `motion` | `STATIC` · `KINEMATIC` · `DYNAMIC` | `STATIC` | How the body moves. |
 | `layer` | integer | none | Collision layer index. None uses the default for `motion`. Not negative. |
 | `sensor` | boolean | `false` | Detects what passes through instead of blocking it. |
+| `degreesOfFreedom` | `ALL` · `PLANE_2D` | `ALL` | Allowed motion in world axes. `PLANE_2D` locks Z translation and X/Y rotation. |
+
+`degreesOfFreedom` applies to primitive and model colliders and survives saving and body rebuilds.
+Shapes retain their Z thickness; see [Physics in 2D](../guides/physics.md#physics-in-2d).
 
 ### Collision shape
 

@@ -68,6 +68,33 @@ interface PhysicsWorld {
     ): BodyHandle
 
     /**
+     * Adds a body with restricted motion; all other options behave as in the original overload.
+     *
+     * [DegreesOfFreedom.PLANE_2D] locks translation on Z and rotation about X/Y in world axes.
+     * The initial pose is preserved. Velocities, impulses, gravity and contact solving respect
+     * the restriction, as does [moveKinematic]. Shapes retain their thickness, so colliders that
+     * should meet must overlap on Z. This does not change render ordering.
+     *
+     * Kept as an overload so existing callers and backend implementations keep working. A backend
+     * that has not implemented restricted motion rejects it before allocating a body, rather than
+     * silently simulating in 3D.
+     */
+    fun createBody(
+        shape: PhysicsShape,
+        position: Vec3f,
+        rotation: Quat,
+        motionType: MotionType,
+        layer: CollisionLayer = defaultLayerFor(motionType),
+        sensor: Boolean = false,
+        degreesOfFreedom: DegreesOfFreedom,
+    ): BodyHandle {
+        if (degreesOfFreedom != DegreesOfFreedom.ALL) {
+            throw PhysicsCapabilityException("This physics backend does not support $degreesOfFreedom")
+        }
+        return createBody(shape, position, rotation, motionType, layer, sensor)
+    }
+
+    /**
      * Removes a body from the simulation and frees it.
      *
      * The handle is dead afterwards and must not be used again. Nothing else destroys a body --
