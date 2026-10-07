@@ -77,6 +77,7 @@ class SceneSystemPlan internal constructor(val hasPhysics: Boolean) {
  * The name of one piece of [SceneContent], typed by what it holds. Keys compare by identity, so a
  * capability declares each of its keys once and reads with the same instance.
  *
+ * @param T The type of the content the key names.
  * @property name What the content is, for messages.
  */
 class SceneContentKey<T : Any>(val name: String) {
@@ -115,4 +116,35 @@ class SceneContent private constructor(private val values: Map<SceneContentKey<*
         /** Content built by [block], for a host or a test that has its own. */
         fun build(block: Builder.() -> Unit): SceneContent = Builder().apply(block).build()
     }
+}
+
+/**
+ * Reads what [scene]'s capabilities need from the project's [files]: the sprites of its particle
+ * emitters, the triangles of its collision meshes, its shader documents, and what [capabilities] load.
+ * A host that builds a scene's systems with [sceneSystemsFor] passes the result as
+ * [SceneHostServices.content]; [loadProject] reads it for a project. Throws [IllegalArgumentException]
+ * for content a capability cannot load.
+ */
+suspend fun loadSceneContent(
+    scene: SceneDocument,
+    files: AssetSource,
+    capabilities: List<SceneCapability> = emptyList(),
+): SceneContent = loadContent(scene, files, installedCapabilities(capabilities), label = "The scene")
+
+/** Runs each of [installed]'s [SceneCapability.load] in order, prefixing a refusal with [label]. */
+internal suspend fun loadContent(
+    scene: SceneDocument,
+    files: AssetSource,
+    installed: List<SceneCapability>,
+    label: String,
+): SceneContent {
+    val content = SceneContent.Builder()
+    for (capability in installed) {
+        try {
+            capability.load(scene, files, content)
+        } catch (problem: IllegalArgumentException) {
+            throw IllegalArgumentException("$label: ${problem.message}", problem)
+        }
+    }
+    return content.build()
 }

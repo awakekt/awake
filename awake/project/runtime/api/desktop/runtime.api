@@ -29,8 +29,6 @@ public final class com/awakekt/awake/project/runtime/ProjectRuntimeKt {
 	public static final fun activatePrimaryCamera (Lcom/awakekt/awake/ecs/World;)V
 	public static final fun loadProject (Lcom/awakekt/awake/core/io/AssetSource;Ljava/util/List;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static synthetic fun loadProject$default (Lcom/awakekt/awake/core/io/AssetSource;Ljava/util/List;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
-	public static final fun loadSceneContent (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/core/io/AssetSource;Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static synthetic fun loadSceneContent$default (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/core/io/AssetSource;Ljava/util/List;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public static final fun runProject (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/project/runtime/LoadedProject;Z)V
 	public static synthetic fun runProject$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/project/runtime/LoadedProject;ZILjava/lang/Object;)V
 }
@@ -48,6 +46,8 @@ public final class com/awakekt/awake/project/runtime/SceneCapability$DefaultImpl
 }
 
 public final class com/awakekt/awake/project/runtime/SceneCapabilityKt {
+	public static final fun loadSceneContent (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/core/io/AssetSource;Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun loadSceneContent$default (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/core/io/AssetSource;Ljava/util/List;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public static final fun uses (Lcom/awakekt/awake/scene/document/SceneDocument;Lkotlin/reflect/KClass;)Z
 }
 

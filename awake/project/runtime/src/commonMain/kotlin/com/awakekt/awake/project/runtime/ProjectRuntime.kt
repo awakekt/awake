@@ -22,9 +22,7 @@ import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.controls.camera.ActiveCamera
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.document.SceneDocument
-import com.awakekt.awake.scene.document.SceneLoader
 import com.awakekt.awake.scene.document.SceneNode
-import com.awakekt.awake.scene.document.withPrefabs
 import com.awakekt.awake.scene.gltf.GltfAssetResolver
 import com.awakekt.awake.scene.rendering.Camera
 import com.awakekt.awake.scene.rendering.animation.Animator
@@ -33,7 +31,6 @@ import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer
 import com.awakekt.awake.scene.runtime.DefaultSceneComponentResolvers
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
-import kotlinx.serialization.SerializationException
 import kotlin.math.PI
 
 /** Where a project keeps its manifest, relative to the project root. */
@@ -119,67 +116,10 @@ suspend fun loadProject(
     return LoadedProject(manifest, scene, models, physics, content, capabilities)
 }
 
-/**
- * Reads what [scene]'s capabilities need from the project's [files]: the sprites of its particle
- * emitters, the triangles of its collision meshes, its shader documents, and what [capabilities] load.
- * A host that builds a scene's systems with [sceneSystemsFor] passes the result as
- * [SceneHostServices.content]; [loadProject] reads it for a project. Throws [IllegalArgumentException]
- * for content a capability cannot load.
- */
-suspend fun loadSceneContent(
-    scene: SceneDocument,
-    files: AssetSource,
-    capabilities: List<SceneCapability> = emptyList(),
-): SceneContent = loadContent(scene, files, installedCapabilities(capabilities), label = "The scene")
-
-private suspend fun loadContent(
-    scene: SceneDocument,
-    files: AssetSource,
-    installed: List<SceneCapability>,
-    label: String,
-): SceneContent {
-    val content = SceneContent.Builder()
-    for (capability in installed) {
-        try {
-            capability.load(scene, files, content)
-        } catch (problem: IllegalArgumentException) {
-            throw IllegalArgumentException("$label: ${problem.message}", problem)
-        }
-    }
-    return content.build()
-}
-
 /** Installs Core's default scene components and every capability's. Harmless twice. */
 internal fun installProjectComponents(capabilities: List<SceneCapability> = emptyList()) {
     DefaultSceneComponentResolvers.install()
     installedCapabilities(capabilities).flatMap { it.components }.forEach(SceneComponentRegistry::registerGlobal)
-}
-
-private fun requireRequiredPlugins(manifest: AwakeProjectManifest, installed: List<SceneCapability>) {
-    val ids = installed.mapTo(HashSet()) { it.id }
-    val missing = manifest.plugins.filter { it.required && it.id !in ids }.map { it.id }
-    require(missing.isEmpty()) {
-        "$PROJECT_MANIFEST requires ${missing.joinToString()}, which no capability provides; pass its capability to loadProject"
-    }
-}
-
-/**
- * Decodes the scene at [path] with its prefabs. A component id that nothing registered is named, with
- * the fix, instead of the decoder's own message.
- */
-private suspend fun decodeScene(path: String, files: AssetSource): SceneDocument {
-    val text = files.readText(path)
-    return try {
-        SceneLoader.decode(text).withPrefabs { files.readText(it) }
-    } catch (failure: SerializationException) {
-        val unknown = unregisteredComponents(text)
-        if (unknown.isEmpty()) throw failure
-        throw IllegalArgumentException(
-            "$path uses ${unknown.joinToString { "'$it'" }}, which no capability registers; " +
-                "pass the capability that adds it to loadProject",
-            failure,
-        )
-    }
 }
 
 /**
@@ -240,7 +180,7 @@ private fun SceneAppLifecycleRuntime.startSkinnedAnimations(models: GltfAssetRes
     }
 }
 
-private suspend fun AssetSource.readText(path: String): String =
+internal suspend fun AssetSource.readText(path: String): String =
     read(AssetPath(path)).getOrElse { throw IllegalArgumentException("Can't read $path from the project", it) }
         .decodeToString()
 
