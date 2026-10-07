@@ -446,7 +446,8 @@ internal fun planSwapchainOrientation(
     val quarterTurn = capabilities.currentTransform == VkSurfaceTransformFlagBitsKHR.VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR ||
         capabilities.currentTransform == VkSurfaceTransformFlagBitsKHR.VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR
     val fixedExtent = capabilities.currentExtent.width != Int.MAX_VALUE
-    return identity to if (quarterTurn && fixedExtent) VkExtent2D(extent.height, extent.width) else extent
+    val needsSwap = quarterTurn && fixedExtent && extent.width < extent.height
+    return identity to if (needsSwap) VkExtent2D(extent.height, extent.width) else extent
 }
 
 /**

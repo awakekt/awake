@@ -38,6 +38,20 @@ class SwapchainOrientationTest {
     }
 
     @Test
+    fun aQuarterTurnWithAlreadyLandscapeExtentDoesNotInvertDimensions() {
+        val landscape = VkExtent2D(2400, 1080)
+        val landscapeSurface = VkSurfaceCapabilitiesKHR(
+            currentExtent = landscape,
+            supportedTransforms = allTransforms,
+            currentTransform = VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR,
+        )
+        val (transform, extent) = planSwapchainOrientation(landscapeSurface, landscape)
+
+        assertEquals(VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR, transform)
+        assertEquals(landscape, extent, "Landscape extent must not be inverted back to portrait")
+    }
+
+    @Test
     fun theNaturalOrientationAndAHalfTurnKeepTheExtent() {
         for (turn in listOf(VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR, VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR)) {
             assertEquals(VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR to portrait, planSwapchainOrientation(surface(turn), portrait))
