@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "kind": "sprite-gen-request",
+  "engine": "component-row",
+  "character": {
+    "id": ".run.sg-staging",
+    "description": "unpacked from atlas (manifest)"
+  },
+  "cell": {
+    "shape": "square",
+    "width": 256,
+    "height": 256,
+    "size": 256,
+    "safe_margin": 0
+  },
+  "chroma_key": {
+    "name": "green",
+    "hex": "#00FF00",
+    "rgb": [
+      0,
+      255,
+      0
+    ]
+  },
+  "states": {
+    "hero-idle": {
+      "frames": 4,
+      "fps": 8,
+      "loop": true,
+      "action": ""
+    },
+    "enemy-idle": {
+      "frames": 4,
+      "fps": 8,
+      "loop": true,
+      "action": ""
+    }
+  }
+}

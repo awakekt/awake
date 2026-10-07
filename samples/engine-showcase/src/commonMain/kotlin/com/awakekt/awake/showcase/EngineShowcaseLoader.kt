@@ -16,6 +16,7 @@ import com.awakekt.awake.scene.document.SceneLoader
 import com.awakekt.awake.scene.rendering.Camera
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import com.awakekt.awake.scene.runtime.attachRenderableComponents
+import com.awakekt.awake.showcase.examples.RpgSprites2dExampleAssets
 import com.awakekt.awake.showcase.examples.Sprites2dExampleDriver
 
 /** Owns the loaded showcase documents and activates them through the shared scene lifecycle. */
@@ -82,6 +83,10 @@ internal suspend fun loadEngineShowcaseDocument(showcase: EngineShowcase): Scene
     val document = SceneLoader.loadFromResource(showcase.scenePath)
     return when (showcase.id) {
         "sprites-2d" -> Sprites2dExampleDriver.run {
+            preload()
+            importScene(document)
+        }
+        "rpg-sprites-2d" -> RpgSprites2dExampleAssets.run {
             preload()
             importScene(document)
         }

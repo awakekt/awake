@@ -1,0 +1,43 @@
+{
+  "tool": "sprite-gen",
+  "version": "2.35.0",
+  "source": "source-sheet.png",
+  "grid": [
+    4,
+    2
+  ],
+  "cell": [
+    256,
+    256
+  ],
+  "baseline_y": 232,
+  "target_height": 160,
+  "key_threshold": 0,
+  "fringe_key_threshold": 0,
+  "fringe_delta": 255,
+  "fringe_unmix_reach": 0,
+  "spill_max_fraction": 0,
+  "noise_min": 60,
+  "debris_fraction": 0.3,
+  "commands": [
+    "slice-sheet",
+    "unpack-atlas --pngs-dir",
+    "compose-atlas",
+    "compose-gif",
+    "inspect",
+    "unpack-atlas --atlas (four-pose atlas)",
+    "alpha snap at 128 (outside sprite-gen)",
+    "curation: first pose linked to 12 frames + breathe",
+    "compose-atlas",
+    "inspect"
+  ],
+  "breathe": {
+    "depth": 0.02,
+    "depth_x": 0,
+    "breaths": 1,
+    "lag": 0
+  },
+  "idle_frames": 12,
+  "fps": 8,
+  "alpha_threshold": 128
+}

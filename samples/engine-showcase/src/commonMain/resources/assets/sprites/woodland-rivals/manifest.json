@@ -1,0 +1,282 @@
+{
+  "characterId": "woodland-rivals",
+  "engine": "component-row",
+  "game_input": "sprite-sheet-alpha.png",
+  "degraded_static_fallback": false,
+  "curation_applied": true,
+  "frame_variant": "pixel",
+  "sprite_sheet_alpha": "sprite-sheet-alpha.png",
+  "sprite_sheet_alpha_report": "sprite-sheet-alpha.report.json",
+  "base_image": "source-sheet.png",
+  "cell": {
+    "shape": "square",
+    "width": 256,
+    "height": 256,
+    "size": 256,
+    "safe_margin": 0
+  },
+  "chroma_key": {
+    "name": "green",
+    "hex": "#00FF00",
+    "rgb": [
+      0,
+      255,
+      0
+    ]
+  },
+  "animation": {
+    "cellWidth": 256,
+    "cellHeight": 256,
+    "columns": 12,
+    "rows": {
+      "hero-idle": {
+        "row": 0,
+        "frames": 12,
+        "fps": 8,
+        "durations_ms": [
+          125,
+          125,
+          125,
+          125,
+          125,
+          125,
+          125,
+          125,
+          125,
+          125,
+          125,
+          125
+        ],
+        "loop": true,
+        "frame_variant": "pixel",
+        "breathe": {
+          "anatomy": {
+            "width": 146,
+            "height": 151,
+            "axis_x": 63,
+            "neck_row": 86,
+            "neck_source": "bottleneck",
+            "rigid_row": 86,
+            "rigid_source": "neck",
+            "basis_row": 86,
+            "torso_half": 27,
+            "max_half": 82,
+            "torso_source": "auto",
+            "face": null,
+            "warnings": [
+              "face-absent: \ub300\uce6d \ub208\uc30d\uc744 \ubabb \ucc3e\uc544 \ubaa9\ub9cc\uc73c\ub85c \uacbd\uacc4\ub97c \uc815\ud588\ub2e4"
+            ]
+          },
+          "matches_sidecar": true,
+          "sidecar_drift": null,
+          "warnings": [
+            "face-absent: \ub300\uce6d \ub208\uc30d\uc744 \ubabb \ucc3e\uc544 \ubaa9\ub9cc\uc73c\ub85c \uacbd\uacc4\ub97c \uc815\ud588\ub2e4"
+          ]
+        }
+      },
+      "enemy-idle": {
+        "row": 1,
+        "frames": 12,
+        "fps": 8,
+        "durations_ms": [
+          125,
+          125,
+          125,
+          125,
+          125,
+          125,
+          125,
+          125,
+          125,
+          125,
+          125,
+          125
+        ],
+        "loop": true,
+        "frame_variant": "pixel",
+        "breathe": {
+          "anatomy": {
+            "width": 178,
+            "height": 151,
+            "axis_x": 94,
+            "neck_row": 26,
+            "neck_source": "shoulder-gradient",
+            "rigid_row": 26,
+            "rigid_source": "neck",
+            "basis_row": 26,
+            "torso_half": 62,
+            "max_half": 94,
+            "torso_source": "auto",
+            "face": null,
+            "warnings": [
+              "neck-absent: \ud3ed \ud504\ub85c\ud30c\uc77c\uc5d0 \ubcd1\ubaa9\uc774 \uc5c6\uc5b4 \uc5b4\uae68-\uae30\uc6b8\uae30\ub85c \ub300\uccb4\ud588\ub2e4 (\uc815\uaddc\ud654 \uae30\uc900\uc740 \uac15\uccb4 \uacbd\uacc4 26 \uc0ac\uc6a9)",
+              "face-absent: \ub300\uce6d \ub208\uc30d\uc744 \ubabb \ucc3e\uc544 \ubaa9\ub9cc\uc73c\ub85c \uacbd\uacc4\ub97c \uc815\ud588\ub2e4"
+            ]
+          },
+          "matches_sidecar": true,
+          "sidecar_drift": null,
+          "warnings": [
+            "face-absent: \ub300\uce6d \ub208\uc30d\uc744 \ubabb \ucc3e\uc544 \ubaa9\ub9cc\uc73c\ub85c \uacbd\uacc4\ub97c \uc815\ud588\ub2e4",
+            "neck-absent: \ud3ed \ud504\ub85c\ud30c\uc77c\uc5d0 \ubcd1\ubaa9\uc774 \uc5c6\uc5b4 \uc5b4\uae68-\uae30\uc6b8\uae30\ub85c \ub300\uccb4\ud588\ub2e4 (\uc815\uaddc\ud654 \uae30\uc900\uc740 \uac15\uccb4 \uacbd\uacc4 26 \uc0ac\uc6a9)"
+          ]
+        }
+      }
+    }
+  },
+  "frame_layout": {
+    "sheetWidth": 3072,
+    "sheetHeight": 512,
+    "cellWidth": 256,
+    "cellHeight": 256,
+    "rows": {
+      "hero-idle": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 256,
+          "h": 256
+        },
+        {
+          "x": 256,
+          "y": 0,
+          "w": 256,
+          "h": 256
+        },
+        {
+          "x": 512,
+          "y": 0,
+          "w": 256,
+          "h": 256
+        },
+        {
+          "x": 768,
+          "y": 0,
+          "w": 256,
+          "h": 256
+        },
+        {
+          "x": 1024,
+          "y": 0,
+          "w": 256,
+          "h": 256
+        },
+        {
+          "x": 1280,
+          "y": 0,
+          "w": 256,
+          "h": 256
+        },
+        {
+          "x": 1536,
+          "y": 0,
+          "w": 256,
+          "h": 256
+        },
+        {
+          "x": 1792,
+          "y": 0,
+          "w": 256,
+          "h": 256
+        },
+        {
+          "x": 2048,
+          "y": 0,
+          "w": 256,
+          "h": 256
+        },
+        {
+          "x": 2304,
+          "y": 0,
+          "w": 256,
+          "h": 256
+        },
+        {
+          "x": 2560,
+          "y": 0,
+          "w": 256,
+          "h": 256
+        },
+        {
+          "x": 2816,
+          "y": 0,
+          "w": 256,
+          "h": 256
+        }
+      ],
+      "enemy-idle": [
+        {
+          "x": 0,
+          "y": 256,
+          "w": 256,
+          "h": 256
+        },
+        {
+          "x": 256,
+          "y": 256,
+          "w": 256,
+          "h": 256
+        },
+        {
+          "x": 512,
+          "y": 256,
+          "w": 256,
+          "h": 256
+        },
+        {
+          "x": 768,
+          "y": 256,
+          "w": 256,
+          "h": 256
+        },
+        {
+          "x": 1024,
+          "y": 256,
+          "w": 256,
+          "h": 256
+        },
+        {
+          "x": 1280,
+          "y": 256,
+          "w": 256,
+          "h": 256
+        },
+        {
+          "x": 1536,
+          "y": 256,
+          "w": 256,
+          "h": 256
+        },
+        {
+          "x": 1792,
+          "y": 256,
+          "w": 256,
+          "h": 256
+        },
+        {
+          "x": 2048,
+          "y": 256,
+          "w": 256,
+          "h": 256
+        },
+        {
+          "x": 2304,
+          "y": 256,
+          "w": 256,
+          "h": 256
+        },
+        {
+          "x": 2560,
+          "y": 256,
+          "w": 256,
+          "h": 256
+        },
+        {
+          "x": 2816,
+          "y": 256,
+          "w": 256,
+          "h": 256
+        }
+      ]
+    }
+  }
+}
