@@ -80,6 +80,7 @@ kotlin {
             implementation(project(":awake:backend:jolt"))
             implementation(project(":awake:scene:scene-core"))
             implementation(project(":awake:scene:physics"))
+            implementation(project(":awake:scene:scene2d"))
             implementation(project(":awake:scene:world"))
             implementation(project(":awake:ai:behavior"))
             implementation(project(":awake:scene:ai"))

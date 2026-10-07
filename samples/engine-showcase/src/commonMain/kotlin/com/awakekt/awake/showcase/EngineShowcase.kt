@@ -18,6 +18,7 @@ import com.awakekt.awake.showcase.examples.InstancedSkinnedExampleDriver
 import com.awakekt.awake.showcase.examples.NavChaseExampleDriver
 import com.awakekt.awake.showcase.examples.ParticleEmitterExampleDriver
 import com.awakekt.awake.showcase.examples.RpgSprites2dExampleAssets
+import com.awakekt.awake.showcase.examples.Runtime2dExampleDriver
 import com.awakekt.awake.showcase.examples.SkinnedExampleDriver
 import com.awakekt.awake.showcase.examples.SpatialAudioExampleDriver
 import com.awakekt.awake.showcase.examples.Sprites2dExampleDriver
@@ -68,7 +69,7 @@ val EngineShowcases = listOf(
         scenePath = "assets/examples/point-lights.scene.json",
         summary = "Several coloured point lights over a ground plane and lit cubes.",
     ),
-    // The one showcase that runs a real Jolt world: four boxes fall onto the same heightfield
+    // Four boxes fall onto the same heightfield
     // samples the terrain mesh is built from, on a fixed timestep.
     EngineShowcase(
         id = "heightfield-terrain",
@@ -164,6 +165,16 @@ val EngineShowcases = listOf(
         summary = "An original ranger and thorn beast playing separate manifest-imported idle loops.",
     ),
     EngineShowcase(
+        id = "runtime-2d",
+        title = "2D runtime",
+        scenePath = "assets/examples/runtime-2d.scene.json",
+        summary = "An animated sprite falls onto a chunked tile floor in an orthographic viewport. Press T to edit a tile and V to cycle scaling.",
+        driver = { _ -> Runtime2dExampleDriver.advance(this) },
+        onActivated = { instance, runtime -> Runtime2dExampleDriver.attach(instance, runtime) },
+        onDeactivated = { runtime -> Runtime2dExampleDriver.detach(runtime) },
+        debugOptions = setOf(ShowcaseDebugOption.Colliders),
+    ),
+    EngineShowcase(
         id = "spatial-audio",
         title = "Spatial audio",
         scenePath = "assets/examples/spatial-audio.scene.json",
@@ -214,6 +225,7 @@ fun SceneAssetsDsl.registerEngineShowcaseAssets() {
     mesh("sprite-background") { Sprites2dExampleDriver.createBackgroundMesh(this) }
     texture("lantern-firefly") { Sprites2dExampleDriver.texture() }
     texture("woodland-rivals") { RpgSprites2dExampleAssets.texture() }
+    texture("runtime-2d-cells") { Runtime2dExampleDriver.texture() }
     mesh("sphere") { renderer.createMesh(generate { sphere(radius = 0.5f, colored = true) }) }
     mesh("wedge") { renderer.createMesh(TerrainPhysicsExampleDriver.wedgeGeometry) }
     mesh("heightfield-terrain") { renderer.createMesh(TerrainExampleAsset.geometry) }

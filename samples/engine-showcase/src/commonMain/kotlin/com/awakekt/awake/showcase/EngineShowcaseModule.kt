@@ -26,6 +26,7 @@ import com.awakekt.awake.scene.runtime.SceneContent
 import com.awakekt.awake.scene.runtime.defaultInfrastructureSystems
 import com.awakekt.awake.showcase.examples.CharacterExampleDriver
 import com.awakekt.awake.showcase.examples.EcsStressExampleDriver
+import com.awakekt.awake.showcase.examples.Runtime2dExampleDriver
 import com.awakekt.awake.showcase.examples.ShowcasePhysics
 import com.awakekt.awake.showcase.examples.SpatialAudioExampleDriver
 import com.awakekt.awake.showcase.examples.SwarmMotionSystem
@@ -113,6 +114,7 @@ internal fun engineShowcaseModule(
             // A Jolt world owns native allocations that outlive the JVM's idea of garbage, and
             // this one is reachable from an object that outlives the app module.
             onDispose {
+                Runtime2dExampleDriver.detach(this)
                 activeRuntime = null
                 disposeShowcaseResources(framebufferDebugger, renderer)
             }

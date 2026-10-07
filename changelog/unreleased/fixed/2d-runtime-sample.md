@@ -1,0 +1,1 @@
+- Preserve virtual viewport scaling in scene framebuffer captures by passing the capture's pixel dimensions to the scene planner.

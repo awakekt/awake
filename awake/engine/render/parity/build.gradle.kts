@@ -51,6 +51,11 @@ kotlin {
         val desktopTest by getting {
             dependencies {
                 implementation(kotlin("test"))
+                // Run the actual sample app and its plan. Scene/sample dependencies stay in tests.
+                implementation(project(":samples:engine-showcase"))
+                implementation(project(":awake:scene:authoring"))
+                implementation(project(":awake:scene:physics"))
+                implementation(project(":awake:scene:scene2d"))
             }
         }
     }

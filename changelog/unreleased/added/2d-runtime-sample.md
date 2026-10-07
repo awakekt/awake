@@ -1,0 +1,1 @@
+- Add an integrated 2D runtime showcase with editable chunked tiles, animated sprites, orthographic viewport scaling and planar Jolt physics, verified through the sample app on Vulkan and WebGPU.
