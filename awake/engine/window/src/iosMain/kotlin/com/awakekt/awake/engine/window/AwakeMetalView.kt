@@ -7,6 +7,7 @@ package com.awakekt.awake.engine.window
 
 import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.logging.Logger
+import kotlinx.cinterop.COpaquePointer
 import kotlinx.cinterop.CValue
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.ObjCAction
@@ -18,19 +19,21 @@ import platform.CoreGraphics.CGSizeMake
 import platform.Foundation.NSRunLoop
 import platform.Foundation.NSRunLoopCommonModes
 import platform.Foundation.NSSelectorFromString
+import platform.Foundation.NSStringFromSelector
 import platform.Metal.MTLCreateSystemDefaultDevice
 import platform.QuartzCore.CADisplayLink
 import platform.QuartzCore.CAMetalLayer
 import platform.UIKit.UIEvent
 import platform.UIKit.UIKeyInputProtocol
+import platform.UIKit.UIPasteboard
 import platform.UIKit.UIScreen
 import platform.UIKit.UIView
 import platform.UIKit.UIWindow
 
 /**
  * The iOS window: a `UIView` backed by a [CAMetalLayer], driven by `CADisplayLink`, that feeds
- * touches and typed text into [input]. A backend creates its surface from the layer [onCreate]
- * receives; nothing here knows about a GPU API.
+ * touches, typed text and the standard edit actions into [input]. A backend creates its surface
+ * from the layer [onCreate] receives; nothing here knows about a GPU API.
  */
 @OptIn(ExperimentalForeignApi::class)
 // UIKit overrides and one callback per lifecycle event; neither splits usefully.
@@ -118,6 +121,8 @@ class AwakeMetalView(
             textInputWasFocused = syncAwakeTextInputFocus(textInputWasFocused, input)
             textInputWasSecure = syncAwakeSecureTextEntry(textInputWasSecure, input)
             onUpdate(deltaTime)
+            // The frame just run is where a field answers a copy or cut, so write the answer now.
+            input.syncClipboardWrite { UIPasteboard.generalPasteboard.string = it }
         } catch (t: Throwable) {
             logger.error(t) { "Error in AwakeMetalView tick render step: ${t.message}" }
         }
@@ -133,6 +138,36 @@ class AwakeMetalView(
     override fun insertText(text: String) = syncAwakeTextInsert(text, input)
 
     override fun deleteBackward() = syncAwakeTextDeleteBackward(input)
+
+    // UIResponderStandardEditActions: the edit menu and a hardware keyboard's Cmd+C, Cmd+X, Cmd+V
+    // and Cmd+A reach the first responder here. They are claimed only while an Awake text field
+    // has focus; anywhere else UIKit decides as it would without them.
+    override fun canPerformAction(action: COpaquePointer?, withSender: Any?): Boolean =
+        if (standardEditAction(NSStringFromSelector(action)) != null && input.textInputFocused) {
+            true
+        } else {
+            super.canPerformAction(action, withSender)
+        }
+
+    override fun copy(sender: Any?) {
+        performStandardEditAction(StandardEditAction.Copy)
+    }
+
+    override fun cut(sender: Any?) {
+        performStandardEditAction(StandardEditAction.Cut)
+    }
+
+    override fun paste(sender: Any?) {
+        performStandardEditAction(StandardEditAction.Paste)
+    }
+
+    override fun selectAll(sender: Any?) {
+        performStandardEditAction(StandardEditAction.SelectAll)
+    }
+
+    private fun performStandardEditAction(action: StandardEditAction) {
+        input.applyStandardEditAction(action) { UIPasteboard.generalPasteboard.string }
+    }
 
     override fun willMoveToWindow(newWindow: UIWindow?) {
         super.willMoveToWindow(newWindow)
