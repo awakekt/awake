@@ -412,7 +412,7 @@ jobs:
           cache-provider: basic
 
       - name: Wasm/WebGPU browser verification (headless Chrome)
-        run: ./gradlew :samples:ui-showcase:wasmJsBrowserTest :samples:engine-showcase:wasmJsBrowserTest
+        run: ./gradlew :awake:core:audio:wasmJsBrowserTest :samples:ui-showcase:wasmJsBrowserTest :samples:engine-showcase:wasmJsBrowserTest
 
       - name: ECS browser tests
         run: ./gradlew :awake:ecs:wasmJsBrowserTest

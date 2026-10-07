@@ -347,20 +347,20 @@ it; see [Particles](../guides/particles.md).
 | --- | --- | --- | --- |
 | `texture` | string | required | Project image the particles show. |
 | `maxParticles` | number | `64` | Pool size; spawning pauses while every slot is live. Above 0. |
-| `spawnRate` | number | `10` | Particles per second. |
+| `spawnRate` | number | `10` | Particles per second. Not negative. |
 | `lifetime` | number | `1` | Seconds each particle lives. Above 0. |
 | `startAlpha` | number | `1` | Opacity at birth, 0 to 1. |
 | `scale` | number | `0.2` | Size at birth. Above 0. |
-| `endScale` | number | none | Size at death. None keeps `scale`. |
+| `endScale` | number | none | Size at death. None keeps `scale`. Not negative. |
 | `velocity` | vector | `{x: 0, y: 1, z: 0}` | Starting velocity. |
 | `velocityJitter` | number | `0` | Random per-axis variation added to `velocity`. |
 | `coneHalfAngleDegrees` | number | none | Spreads the direction within this angle of `velocity`, keeping its speed. |
-| `spawnRadius` | number | `0` | Spawns on a horizontal ring of this radius. |
+| `spawnRadius` | number | `0` | Spawns on a horizontal ring of this radius. Not negative. |
 | `radialSpeed` | number | `0` | Adds this speed horizontally away from the node, through the spawn point. |
 | `color` | color | white | Tint at birth. |
 | `endColor` | color | `color` | Tint at death. |
-| `frameCount` | number | `1` | Treats the texture as a horizontal strip of this many frames. |
-| `frameRate` | number | `8` | Frames per second of that strip. |
+| `frameCount` | number | `1` | Treats the texture as a horizontal strip of this many frames. At least 1. |
+| `frameRate` | number | `8` | Frames per second of that strip. Not negative. |
 | `additive` | boolean | `false` | Adds to what is behind, for glows. Needs the particle pipeline built with `buildAdditive`. |
 | `facing` | `Camera` · `Flat` | `Camera` | `Camera` turns each sprite to the camera. `Flat` lays it in the plane perpendicular to the node's up axis, on the ground for an upright node, its texture's top toward the node's -Z: ground glows, ripples, magic circles. |
 | `acceleration` | vector | `{x: 0, y: 0, z: 0}` | A constant world-space acceleration in units per second squared, added to every live particle's velocity: `{y: -9.8}` is gravity. Finite. |
