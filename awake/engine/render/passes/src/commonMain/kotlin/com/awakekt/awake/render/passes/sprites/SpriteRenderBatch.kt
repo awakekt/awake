@@ -87,13 +87,13 @@ class SpriteRenderBatch(
     private data class Sheet(val width: Int, val height: Int, val material: Material)
 }
 
-/** Unit XY quad, top-left UV origin; tint and frame changes require no mesh uploads. */
+/** Unit XY quad matching Awake's bottom-up decoded pixels; frame changes require no mesh uploads. */
 val SpriteQuadGeometry = MeshGeometry(
     vertices = floatArrayOf(
-        -0.5f, -0.5f, 0f, 0f, 1f,
-        0.5f, -0.5f, 0f, 1f, 1f,
-        0.5f, 0.5f, 0f, 1f, 0f,
-        -0.5f, 0.5f, 0f, 0f, 0f,
+        -0.5f, -0.5f, 0f, 0f, 0f,
+        0.5f, -0.5f, 0f, 1f, 0f,
+        0.5f, 0.5f, 0f, 1f, 1f,
+        -0.5f, 0.5f, 0f, 0f, 1f,
     ),
     indices = intArrayOf(0, 1, 2, 2, 3, 0),
     format = VertexFormat.PositionUv,
@@ -110,13 +110,15 @@ fun spriteUniforms(input: SpriteDrawInput, width: Int, height: Int): FloatArray 
     validateSheet(input, width, height)
     val u = 1f / input.columns
     val v = 1f / input.rows
+    // Document frames count from the top; decoded texture rows count from the bottom.
+    val textureRow = input.rows - 1 - input.frame / input.columns
     return UniformWriter(SpriteExtraUniformLayout)
         .put(
             SpriteFields.UvTransform,
             if (input.flipX) -u else u,
             if (input.flipY) -v else v,
             (input.frame % input.columns + if (input.flipX) 1 else 0) * u,
-            (input.frame / input.columns + if (input.flipY) 1 else 0) * v,
+            (textureRow + if (input.flipY) 1 else 0) * v,
         )
         .put(SpriteFields.Tint, input.tint.r, input.tint.g, input.tint.b, input.tint.a)
         .build()

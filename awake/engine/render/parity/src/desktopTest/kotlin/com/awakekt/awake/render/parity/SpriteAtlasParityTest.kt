@@ -31,11 +31,14 @@ class SpriteAtlasParityTest {
                 val renderer = session.renderer
                 val atlas = TextureAsset(
                     byteArrayOf(
-                        -1, 0, 0, -1, 0, -1, 0, -1, -1, -1, 0, -1, -1, 0, -1, -1,
+                        // Bottom-up RGBA, matching createBitmap(). Frame numbering stays top-first.
+                        0, -1, -1, -1, 0, -1, 0, -1, 0, 0, 0, -1, 0, 0, 0, -1,
+                        -1, 0, -1, -1, 0, 0, -1, -1, 0, 0, 0, -1, 0, 0, 0, -1,
                         0, 0, -1, -1, -1, -1, -1, -1, 0, -1, -1, -1, 0, 0, 0, 0,
+                        -1, 0, 0, -1, 0, -1, 0, -1, -1, -1, 0, -1, -1, 0, -1, -1,
                     ),
                     4,
-                    2,
+                    4,
                 )
                 val batch = SpriteRenderBatch(renderer) { atlas }
                 val target = renderer.createRenderTarget(SIZE, SIZE)
@@ -55,7 +58,7 @@ class SpriteAtlasParityTest {
                     return image.data.copyOf()
                 }
                 try {
-                    val input = SpriteDrawInput("atlas", Mat4(), columns = 2, pixelsPerUnit = 2f)
+                    val input = SpriteDrawInput("atlas", Mat4(), columns = 2, rows = 2, pixelsPerUnit = 2f)
                     val idle = render(listOf(input), "idle")
                     assertRgb(backend, idle, 20, 20, listOf(255, 0, 0))
                     assertRgb(backend, idle, 44, 20, listOf(0, 255, 0))
@@ -66,8 +69,15 @@ class SpriteAtlasParityTest {
                     val flipped = render(listOf(input.copy(flipX = true, flipY = true)), "flipped")
                     assertRgb(backend, flipped, 20, 20, listOf(255, 255, 255))
                     assertRgb(backend, flipped, 44, 44, listOf(255, 0, 0))
+                    val vertical = render(listOf(input.copy(flipY = true)), "vertical")
+                    assertRgb(backend, vertical, 20, 20, listOf(0, 0, 255))
+                    val horizontal = render(listOf(input.copy(flipX = true)), "horizontal")
+                    assertRgb(backend, horizontal, 20, 20, listOf(0, 255, 0))
                     val next = render(listOf(input.copy(frame = 1)), "frame1")
                     assertRgb(backend, next, 20, 20, listOf(255, 255, 0))
+                    val lowerRow = render(listOf(input.copy(frame = 2)), "frame2")
+                    assertRgb(backend, lowerRow, 20, 20, listOf(255, 0, 255))
+                    assertRgb(backend, lowerRow, 20, 44, listOf(0, 255, 255))
                     val empty = render(emptyList(), "empty")
                     assertEquals(rgb(empty, 44, 44), rgb(next, 44, 44), "$backend: transparent cell must preserve the backdrop")
                 } finally {

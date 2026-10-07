@@ -30,7 +30,8 @@ Add `spriteScenePipeline()` from the shader pack to the app's `RenderPlan.sceneP
 selects `PositionUv`, the material bindings, alpha blending and depth-test-only behavior. The runtime renders unlit, straight-alpha quads, using nearest
 base-level texels. Sheets must divide into whole pixel cells. A cell's dimensions divided by
 `pixelsPerUnit` determine local size before the node's world transform is applied. Atlas rows run
-from the top; flips stay inside the chosen cell. Higher `sortOrder` draws last, with ties sorted
+from the top; texture pixels use Awake's bottom-up `createBitmap(...).toRgba8Bytes()` layout.
+Flips stay inside the chosen cell. Higher `sortOrder` draws last, with ties sorted
 back to front by camera distance. Sprites do not write scene/shadow depth, so empty margins preserve
 what is behind them. Opaque scene geometry still depth-tests against sprites.
 

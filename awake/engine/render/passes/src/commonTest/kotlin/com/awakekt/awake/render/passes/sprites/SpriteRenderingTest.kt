@@ -32,8 +32,8 @@ class SpriteRenderingTest {
     fun frameAndFlipsStayWithinTheSameCellAndCarryAlphaTint() {
         val normal = spriteUniforms(input, 32, 16)
         val flipped = spriteUniforms(input.copy(flipX = true, flipY = true, tint = Color(0.2f, 0.4f, 0.6f, 0.5f)), 32, 16)
-        assertContentEquals(floatArrayOf(0.5f, 0.5f, 0.5f, 0.5f), normal.copyOfRange(0, 4))
-        assertContentEquals(floatArrayOf(-0.5f, -0.5f, 1f, 1f), flipped.copyOfRange(0, 4))
+        assertContentEquals(floatArrayOf(0.5f, 0.5f, 0.5f, 0f), normal.copyOfRange(0, 4))
+        assertContentEquals(floatArrayOf(-0.5f, -0.5f, 1f, 0.5f), flipped.copyOfRange(0, 4))
         val tint = SpriteExtraUniformLayout.offsetOf(SpriteFields.Tint)
         assertContentEquals(floatArrayOf(0.2f, 0.4f, 0.6f, 0.5f), flipped.copyOfRange(tint, tint + 4))
     }
