@@ -33,13 +33,15 @@ public final class com/awakekt/awake/project/runtime/PlaySystems : java/lang/Aut
 	public fun close ()V
 	public final fun getFixed ()Ljava/util/List;
 	public final fun getFrame ()Ljava/util/List;
+	public final fun interpolate (Lcom/awakekt/awake/ecs/World;F)V
 }
 
 public final class com/awakekt/awake/project/runtime/PlaySystemsKt {
 	public static final fun playSystemsFor (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/project/runtime/PlayServices;)Lcom/awakekt/awake/project/runtime/PlaySystems;
 }
 
-public final class com/awakekt/awake/project/runtime/PlayableProject {
+public final class com/awakekt/awake/project/runtime/PlayableProject : java/lang/AutoCloseable {
+	public fun close ()V
 	public final fun getManifest ()Lcom/awakekt/awake/project/AwakeProjectManifest;
 	public final fun getScene ()Lcom/awakekt/awake/scene/document/SceneDocument;
 }
