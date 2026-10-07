@@ -20,8 +20,10 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            // TerrainSurface and TerrainSurfaceProvider, and through them the shared clipmap stage.
-            api(project(":awake:scene:scene3d"))
+            // TerrainSurface and TerrainSurfaceProvider: this kit is one surface provider.
+            api(project(":awake:terrain"))
+            // The shared clipmap vertex stage and the surface bindings its shader builds on.
+            api(project(":awake:asset:shader-pack"))
             api(project(":awake:core:io"))
             // createBitmap: layer albedo and height images are ordinary PNGs.
             implementation(project(":awake:core:image"))
@@ -30,6 +32,8 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)
+            // The provider is exercised through a scene terrain and TerrainContentSystem.
+            implementation(project(":awake:scene:scene3d"))
         }
     }
 }

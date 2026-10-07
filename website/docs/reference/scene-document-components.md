@@ -180,7 +180,7 @@ its light, sky and fog as authored. Saving writes the authored `time`, not the t
 
 | Field | Type | Default | What it does |
 | --- | --- | --- | --- |
-| `dayLengthSeconds` | number | `600` | Seconds in one day. `0` holds the time still. |
+| `dayLengthSeconds` | number | `600` | Seconds in one day. `0` holds the time still. Not negative. |
 | `time` | number | `0.5` | Time of day the scene starts at: `0` midnight, `0.25` sunrise, `0.5` noon, `0.75` sunset. From `0` up to `1`. |
 | `sunriseAzimuthDegrees` | number | `90` | Where the sun rises, clockwise from −Z seen from above: `90` is +X. |
 | `noonElevationDegrees` | number | `60` | The sun's height above the horizon at noon. Above `0`, at most `90`. |

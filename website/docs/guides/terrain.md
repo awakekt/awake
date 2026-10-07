@@ -95,10 +95,11 @@ The same heights feed the other systems:
 `TerrainContentSystem` draws every `TerrainComponent` with the built-in terrain shaders. A `surface`
 names a `TerrainSurfaceProvider` that supplies different shaders and textures; if that provider is
 not installed, the terrain draws with the built-in shaders and the scene keeps the `surface` data
-unchanged. `awake:kit:terrain-layers` ships one provider, `awake.terrain.layers`, which blends
-textured layers from a palette and a control map. Each control texel keeps its four strongest
-layers, or eight where more than four meet; an eight-layer map costs about twice as much per pixel,
-so only terrains that need it pay for it.
+unchanged. `TerrainSurfaceProvider` is in `awake:terrain`, which has no scene dependency, so a
+provider is written against that module alone. `awake:kit:terrain-layers` ships one provider,
+`awake.terrain.layers`, which blends textured layers from a palette and a control map. Each control
+texel keeps its four strongest layers, or eight where more than four meet; an eight-layer map costs
+about twice as much per pixel, so only terrains that need it pay for it.
 
 For large terrains, `TerrainClipmapSystem` keeps concentric rings of geometry centred on the primary
 camera, so memory stays constant however far the camera travels. `TerrainClipmapConfig` sets how many

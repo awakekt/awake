@@ -18,9 +18,9 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.passes.ContentFeature
 import com.awakekt.awake.scene.rendering.terrain.TerrainComponent
 import com.awakekt.awake.scene.rendering.terrain.TerrainContentSystem
-import com.awakekt.awake.scene.rendering.terrain.TerrainSurface
-import com.awakekt.awake.scene.rendering.terrain.TerrainSurfaceProvider
-import com.awakekt.awake.scene.rendering.terrain.TerrainSurfaceReference
+import com.awakekt.awake.terrain.TerrainSurface
+import com.awakekt.awake.terrain.TerrainSurfaceProvider
+import com.awakekt.awake.terrain.TerrainSurfaceReference
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.TestScope

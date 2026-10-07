@@ -13,6 +13,9 @@ import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.terrain.TerrainSurface
+import com.awakekt.awake.terrain.TerrainSurfaceProvider
+import com.awakekt.awake.terrain.TerrainSurfaceReference
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
