@@ -1,1 +1,0 @@
-- Added property range annotations for particle emitter scene component, completing property range coverage across all registered scene components (#446).

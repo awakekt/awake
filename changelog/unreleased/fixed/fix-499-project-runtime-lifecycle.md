@@ -1,1 +1,0 @@
-- A played project no longer leaks its physics world: `LoadedProject` is `AutoCloseable` and `close()` destroys the world `loadProject` made, which now reads every file before making it, so a cancelled load leaves none behind. `SceneSystemSet.interpolate(world, alpha)` lets a host that plays a scene in its own world smooth physics bodies between fixed steps, as `runProject` does.

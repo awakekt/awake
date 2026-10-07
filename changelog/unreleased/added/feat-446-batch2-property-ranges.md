@@ -1,1 +1,0 @@
-- Annotate controls, character, and AI behavior components (`camera_rig`, `movement_control`, `character_controller`, `navigation`, `patrol`, `chase`, `flee`) with `@PropertyRange` and record numeric property decisions (#446).

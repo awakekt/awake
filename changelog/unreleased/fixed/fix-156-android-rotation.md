@@ -1,1 +1,0 @@
-- Preserve landscape swapchain dimensions during Android quarter-turn orientation changes instead of inverting already-rotated surface extents, preventing horizontally stretched rendering.

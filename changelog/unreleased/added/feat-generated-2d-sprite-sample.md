@@ -1,1 +1,0 @@
-- Add an animated transparent sprite atlas, generated with sprite-gen, to the orthographic 2D engine showcase.
