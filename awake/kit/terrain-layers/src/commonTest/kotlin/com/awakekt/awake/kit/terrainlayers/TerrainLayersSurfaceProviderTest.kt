@@ -20,7 +20,7 @@ import com.awakekt.awake.scene.document.SceneLoader
 import com.awakekt.awake.scene.rendering.terrain.SceneTerrain
 import com.awakekt.awake.scene.rendering.terrain.TerrainBinding
 import com.awakekt.awake.scene.rendering.terrain.TerrainContentSystem
-import com.awakekt.awake.scene.rendering.terrain.TerrainSurfaceReference
+import com.awakekt.awake.terrain.TerrainSurfaceReference
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest

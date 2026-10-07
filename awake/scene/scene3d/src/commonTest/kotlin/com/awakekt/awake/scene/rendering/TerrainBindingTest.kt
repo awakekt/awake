@@ -13,7 +13,7 @@ import com.awakekt.awake.scene.document.SceneLoader
 import com.awakekt.awake.scene.rendering.terrain.SceneTerrain
 import com.awakekt.awake.scene.rendering.terrain.TerrainBinding
 import com.awakekt.awake.scene.rendering.terrain.TerrainComponent
-import com.awakekt.awake.scene.rendering.terrain.TerrainSurfaceReference
+import com.awakekt.awake.terrain.TerrainSurfaceReference
 import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put

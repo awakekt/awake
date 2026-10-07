@@ -11,9 +11,9 @@ import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.core.io.resolve
 import com.awakekt.awake.render.texture.TextureAsset
-import com.awakekt.awake.scene.rendering.terrain.TerrainSurface
-import com.awakekt.awake.scene.rendering.terrain.TerrainSurfaceProvider
-import com.awakekt.awake.scene.rendering.terrain.TerrainSurfaceReference
+import com.awakekt.awake.terrain.TerrainSurface
+import com.awakekt.awake.terrain.TerrainSurfaceProvider
+import com.awakekt.awake.terrain.TerrainSurfaceReference
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
