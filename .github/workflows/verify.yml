@@ -43,5 +43,10 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # The gates' own unit tests (layering checks, changelog fragments, release cut), so a pull request
+      # that changes a gate runs them rather than waiting for the push to main.
+      - name: Test build logic
+        run: ./gradlew -p build-logic test --no-configuration-cache
+
       - name: Verify API surface
         run: ./gradlew apiCheck
