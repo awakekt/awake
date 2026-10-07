@@ -10,6 +10,7 @@ import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.ecs.Entity
+import com.awakekt.awake.ecs.InterpolatedSystem
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.engine.bootstrap.dsl.app
@@ -121,6 +122,42 @@ class PlaySystemsTest {
     fun aCameraRigGetsTheCameraSystem() {
         assertTrue(systemsFor(CAMERA_SCENE).frame.has(CameraSystem::class))
     }
+
+    // --- interpolation
+
+    @Test
+    fun interpolateBlendsOnlyTheFixedSystemsThatKeepTwoStates() {
+        val fixedBlend = BlendRecorder()
+        val frameBlend = BlendRecorder()
+        val play = PlaySystems(fixed = listOf(fixedBlend), frame = listOf(frameBlend), release = {})
+
+        play.interpolate(World(), ALPHA)
+
+        assertEquals(listOf(ALPHA), fixedBlend.alphas)
+        assertEquals(emptyList(), frameBlend.alphas, "a frame system runs after the blend and reads it")
+    }
+
+    /** As `playProject` does, a host that interpolates draws a falling body between its last two steps. */
+    @Test
+    fun interpolatePlacesAFallingBodyBetweenItsLastTwoSteps() = runTest {
+        val physics = createJoltPhysicsWorld()
+        val systems = systemsFor(FALLING_SCENE, physics)
+        val world = World()
+        SceneLoader.decode(FALLING_SCENE).instantiate(world = world)
+        val crate = world.get<Transform>(world.named("Crate"))!!
+        repeat(FRAMES) { systems.fixed.forEach { it.update(world, DELTA) } }
+        val newest = crate.position.y
+
+        systems.interpolate(world, 0f)
+        val previous = crate.position.y
+        systems.interpolate(world, ALPHA)
+
+        assertTrue(previous > newest, "alpha 0 is the step before the newest, higher up: $previous, $newest")
+        assertEquals(previous + (newest - previous) * ALPHA, crate.position.y, 1e-4f)
+        physics.destroy()
+    }
+
+    // --- which systems a physics scene gets
 
     @Test
     fun aPhysicsSceneWithAWorldGetsPhysicsAndCharactersOnTheFixedStep() = runTest {
@@ -286,12 +323,34 @@ class PlaySystemsTest {
         return found!!
     }
 
+    /** A fixed-step system that records each blend it is asked for. */
+    private class BlendRecorder : InterpolatedSystem {
+        val alphas = mutableListOf<Float>()
+
+        override fun update(world: World, delta: Float) = Unit
+
+        override fun interpolate(world: World, alpha: Float) {
+            alphas += alpha
+        }
+    }
+
     private companion object {
         const val DELTA = 1f / 60f
         const val WIDTH = 800f
         const val HEIGHT = 600f
         const val FRAMES = 60
         const val GROUND_TOLERANCE = 0.05f
+
+        /** Part way between two fixed steps, as a host's loop reports when a frame falls between them. */
+        const val ALPHA = 0.25f
+
+        const val FALLING_SCENE = """
+{ "version": 1, "name": "drop", "nodes": [
+  { "name": "Crate", "transform": { "position": { "x": 0.0, "y": 5.0, "z": 0.0 } }, "components": [
+    { "component": "physics_body", "shape": { "type": "box", "halfExtents": { "x": 0.5, "y": 0.5, "z": 0.5 } }, "motion": "DYNAMIC" }
+  ] }
+] }
+"""
 
         /** The keyframe scene loops every second; half a loop leaves the crate mid-slide, not back at the start. */
         const val HALF_A_LOOP = 30

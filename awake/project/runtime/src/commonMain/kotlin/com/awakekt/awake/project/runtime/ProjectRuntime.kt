@@ -54,6 +54,10 @@ const val PROJECT_MANIFEST = "awake.project.json"
  * A project read from its files, ready to [playProject]: its manifest, entry scene, loaded models,
  * and a physics world when the scene has bodies or characters.
  *
+ * It owns that physics world, whose native memory nothing else frees: [close] it once the scene
+ * that plays it has stopped. A project is played once, because the bodies it creates stay in its
+ * world; to play the scene again, load the project again.
+ *
  * @property manifest Validated project manifest describing entry points and asset directories.
  * @property scene Loaded initial scene document ready for simulation instantiation.
  * @property models Asset resolver providing access to loaded glTF meshes and models.
@@ -70,13 +74,21 @@ class PlayableProject internal constructor(
     internal val particleSprites: Map<String, TextureAsset> = emptyMap(),
     internal val collisionMeshes: CollisionMeshSource? = null,
     internal val shaderEffects: ShaderEffectAssets = ShaderEffectAssets.Empty,
-)
+) : AutoCloseable {
+    private var closed = false
+
+    /** Destroys the physics world, if the scene had one. Closing twice is harmless. */
+    override fun close() {
+        if (!closed) physics?.destroy()
+        closed = true
+    }
+}
 
 /**
  * Reads [PROJECT_MANIFEST] and its entry scene from [files], a project root, loads the glTF models
  * the scene names (drawn, and collided with through [loadCollisionMeshes]), and calls [physicsWorld]
  * when the scene has bodies or characters. The host picks the backend, for example
- * `::createJoltPhysicsWorld`. Throws [IllegalArgumentException] naming every problem in the
+ * `::createJoltPhysicsWorld`, and the returned project owns the world it makes. Throws [IllegalArgumentException] naming every problem in the
  * manifest, a collision model that can't be read, or a scene that needs physics when
  * [physicsWorld] is null.
  *
@@ -107,16 +119,18 @@ suspend fun loadPlayableProject(
     val needsPhysics = scene.nodes.any {
         it.has(ScenePhysicsBody::class) || it.has(SceneCharacterController::class) || it.hasTerrainCollider()
     }
-    // Read before the physics world exists, so a missing model leaves nothing to tear down.
+    // Every file is read before the physics world exists, so a missing model, or a load cancelled
+    // part way, leaves no world behind that nothing would destroy.
     val collisionMeshes = if (needsPhysics) loadCollisionMeshes(scene, files) else null
     // A document or image that fails is logged and loses only its own effects; this never throws.
     val shaderEffects = loadShaderEffects(scene, files)
+    val particleSprites = loadParticleSprites(scene, files)
     val physics = if (needsPhysics) {
         requireNotNull(physicsWorld) { "${manifest.entryScene} has physics bodies or characters; pass a physicsWorld factory" }()
     } else {
         null
     }
-    return PlayableProject(manifest, scene, models, physics, loadParticleSprites(scene, files), collisionMeshes, shaderEffects)
+    return PlayableProject(manifest, scene, models, physics, particleSprites, collisionMeshes, shaderEffects)
 }
 
 /** Installs Core's default scene components and the controls, physics and character ones. Harmless twice. */
@@ -129,7 +143,8 @@ internal fun installPlayableComponents() {
  * Plays [project] in this scene: its [PlayableProject.scene], the built-in meshes and the models it
  * loaded, the systems its components call for (the ones [playSystemsFor] builds), and a primary
  * camera. With [touchControls], the scene's touch-only canvas controls are shown. Every speed,
- * distance and size comes from the scene; this adds no tuning of its own.
+ * distance and size comes from the scene; this adds no tuning of its own. [PlayableProject.close]
+ * the project once the scene has stopped.
  */
 fun SceneAppDsl.playProject(project: PlayableProject, touchControls: Boolean = false) {
     scene(project.scene)
