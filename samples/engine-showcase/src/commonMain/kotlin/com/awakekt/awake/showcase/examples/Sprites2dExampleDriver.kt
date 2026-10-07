@@ -5,6 +5,8 @@
  */
 package com.awakekt.awake.showcase.examples
 
+import com.awakekt.awake.asset.sprite.SpriteGenManifest
+import com.awakekt.awake.asset.sprite.SpriteSheet
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.geometry.MeshGeometry
 import com.awakekt.awake.core.geometry.VertexFormat
@@ -17,7 +19,9 @@ import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.scene.binding.Scene
 import com.awakekt.awake.scene.core.transform.Transform
+import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
+import com.awakekt.awake.scene.scene2d.withSpriteSheets
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -32,6 +36,7 @@ import kotlin.math.sin
  */
 internal object Sprites2dExampleDriver {
     private var spriteSheet: TextureAsset? = null
+    private var metadata: SpriteSheet? = null
     private var backCardTransform: Transform? = null
     private var midCardTransform: Transform? = null
     private var frontCardTransform: Transform? = null
@@ -40,9 +45,18 @@ internal object Sprites2dExampleDriver {
     /** Decode the sprite-gen atlas once, before the scene requests its textured material. */
     suspend fun preload() {
         if (spriteSheet != null) return
-        val bitmap = createBitmap(readResourceBytes("assets/sprites/lantern-firefly/sprite-sheet-alpha.png"))
+        val directory = "assets/sprites/lantern-firefly/"
+        val sheet = SpriteGenManifest.decode(readResourceBytes(directory + "manifest.json").decodeToString())
+        val bitmap = createBitmap(readResourceBytes(directory + sheet.image))
+        sheet.requireImageSize(bitmap.width, bitmap.height)
         spriteSheet = TextureAsset(bitmap.toRgba8Bytes(), bitmap.width, bitmap.height)
+        metadata = sheet
     }
+
+    /** Imports layout and named runs before validation and binding, retaining sample-authored styling. */
+    fun importScene(document: SceneDocument): SceneDocument = document.withSpriteSheets(
+        mapOf("lantern-firefly" to requireNotNull(metadata) { "2D sprite metadata must be preloaded" }),
+    )
 
     /** The backdrop stays on the untextured lit pipeline; sprite UVs select the textured one. */
     fun createBackgroundMesh(runtime: SceneAppLifecycleRuntime): Mesh = runtime.renderer.createMesh(

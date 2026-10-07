@@ -576,6 +576,22 @@ Each entry in `clips` is a `SceneSpriteClip`:
 | `framesPerSecond` | number | `0` | Authored playback rate. Finite and not negative; zero holds the first cell. |
 | `loop` | boolean | `true` | Repeat the run. False plays once and holds its last cell. |
 
+### Importing sprite-sheet metadata
+
+`SpriteGenManifest.decode(manifestText)` from `com.awakekt.awake.asset:sprite` imports a
+[sprite-gen](https://github.com/aldegad/sprite-gen) component-row manifest. It returns the image
+reference, regular grid and named clips. Resolve the image through your asset loader and verify its
+decoded size with `sheet.requireImageSize(width, height)`.
+
+Before instantiation, call `authored.withSpriteSheets(mapOf("hero" to sheet))`, importing the extension
+from `com.awakekt.awake.scene.scene2d`. Keys match each sprite's authored `texture`. This fills in
+atlas dimensions and runs on nested matching nodes, retains clip selection and styling, and lets
+local runs override imported names. The result saves as ordinary scene components.
+
+Runs must contain contiguous, untrimmed cells on one row. Uniform `durations_ms` overrides `fps`;
+without durations, `fps` is required. Packed atlases, reordered cells and variable frame durations
+are unsupported and rejected with `IllegalArgumentException`.
+
 ## `static_transform`
 
 Marks a node that never moves, such as a placed prop. `SceneStaticTransform`, no fields.

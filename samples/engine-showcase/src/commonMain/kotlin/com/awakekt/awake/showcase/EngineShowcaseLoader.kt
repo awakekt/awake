@@ -16,6 +16,7 @@ import com.awakekt.awake.scene.document.SceneLoader
 import com.awakekt.awake.scene.rendering.Camera
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import com.awakekt.awake.scene.runtime.attachRenderableComponents
+import com.awakekt.awake.showcase.examples.Sprites2dExampleDriver
 
 /** Owns the loaded showcase documents and activates them through the shared scene lifecycle. */
 internal class EngineShowcaseLoader {
@@ -26,9 +27,7 @@ internal class EngineShowcaseLoader {
 
     suspend fun preload() {
         preloadEngineShowcases()
-        EngineShowcases.forEach { showcase ->
-            documents[showcase.id] = SceneLoader.loadFromResource(showcase.scenePath)
-        }
+        EngineShowcases.forEach { showcase -> documents[showcase.id] = loadEngineShowcaseDocument(showcase) }
     }
 
     fun activate(id: String, runtime: SceneAppLifecycleRuntime) {
@@ -75,6 +74,21 @@ internal class EngineShowcaseLoader {
  * Attached per activation because switching showcase builds a new world; the rig on the old one
  * goes with it.
  */
+/**
+ * Reads [showcase]'s scene document as the showcase runs it. A 2D showcase leaves its sprite grid and
+ * named clips to the sheet's manifest, so they are imported before the document validates.
+ */
+internal suspend fun loadEngineShowcaseDocument(showcase: EngineShowcase): SceneDocument {
+    val document = SceneLoader.loadFromResource(showcase.scenePath)
+    return when (showcase.id) {
+        "sprites-2d" -> Sprites2dExampleDriver.run {
+            preload()
+            importScene(document)
+        }
+        else -> document
+    }
+}
+
 private fun Scene.attachOrbitCamera() {
     world.queryEach<Camera> { entity, camera ->
         if (!camera.isPrimary) return@queryEach

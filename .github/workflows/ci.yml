@@ -189,8 +189,8 @@ jobs:
 
       # Scene document loading, export and the component reference page. The reference test fails
       # when a registered component or field has no row; it drifted while nothing ran it.
-      - name: Scene runtime tests
-        run: ./gradlew :awake:scene:runtime:desktopTest
+      - name: Sprite metadata, animation and scene runtime tests
+        run: ./gradlew :awake:asset:sprite:desktopTest :awake:core:animation:desktopTest :awake:scene:scene2d:desktopTest :awake:scene:runtime:desktopTest
 
       # Includes typed-query allocation probes and family lifecycle tests; compiling them alone
       # cannot catch per-frame allocations or stale wrappers after World.clear().
@@ -377,8 +377,8 @@ jobs:
       - name: Jolt iOS simulator physics tests
         run: ./gradlew :awake:backend:jolt:iosSimulatorArm64Test :awake:scene:physics:iosSimulatorArm64Test :samples:engine-showcase:iosSimulatorArm64Test
 
-      - name: ECS iOS simulator tests
-        run: ./gradlew :awake:ecs:iosSimulatorArm64Test
+      - name: ECS and sprite iOS simulator tests
+        run: ./gradlew :awake:ecs:iosSimulatorArm64Test :awake:asset:sprite:iosSimulatorArm64Test :awake:scene:scene2d:iosSimulatorArm64Test
 
       - name: Upload iOS physics test reports
         if: always()
@@ -389,6 +389,8 @@ jobs:
             awake/backend/jolt/build/reports/tests/
             awake/scene/physics/build/reports/tests/
             awake/ecs/build/reports/tests/
+            awake/asset/sprite/build/reports/tests/
+            awake/scene/scene2d/build/reports/tests/
             samples/engine-showcase/build/reports/tests/
           if-no-files-found: warn
 
@@ -417,8 +419,8 @@ jobs:
       - name: Wasm/WebGPU browser verification (headless Chrome)
         run: ./gradlew :awake:core:audio:wasmJsBrowserTest :samples:ui-showcase:wasmJsBrowserTest :samples:engine-showcase:wasmJsBrowserTest
 
-      - name: ECS browser tests
-        run: ./gradlew :awake:ecs:wasmJsBrowserTest
+      - name: ECS and sprite browser tests
+        run: ./gradlew :awake:ecs:wasmJsBrowserTest :awake:asset:sprite:wasmJsBrowserTest :awake:scene:scene2d:wasmJsBrowserTest
 
       # The physics backend has four bindings and CI only ran one of them. This is the wasmJs
       # binding executing the same commonTest suite as desktop, on the runner already here --

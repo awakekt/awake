@@ -13,6 +13,7 @@ import com.awakekt.awake.scene.rendering.camera.SceneCamera
 import com.awakekt.awake.scene.runtime.DefaultSceneComponentResolvers
 import com.awakekt.awake.scene.scene2d.SceneSprite
 import com.awakekt.awake.scene.scene2d.SceneSpriteClips
+import com.awakekt.awake.showcase.examples.Sprites2dExampleDriver
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.float
@@ -38,7 +39,10 @@ class Sprites2dShowcaseWiringTest {
 
     @Test
     fun theSceneDocumentContainsOrthographicCameraAndSpriteNodes() = runTest {
-        val document = SceneLoader.loadFromResource(showcase.scenePath)
+        Sprites2dExampleDriver.preload()
+        val authored = SceneLoader.loadFromResource(showcase.scenePath)
+        assertTrue(authored.nodes.flatMap { it.components }.filterIsInstance<SceneSpriteClips>().none { "idle" in it.clips })
+        val document = Sprites2dExampleDriver.importScene(authored)
         val names = document.nodes.mapNotNull { it.name }
 
         assertTrue("camera" in names, "scene contains camera node")
