@@ -435,7 +435,7 @@ class SceneAppLifecycleRuntime internal constructor(
     /** Extracted by the scene's own [RenderSystem3D], so a capture draws what the frame draws. */
     private fun planCapture(camera: Camera, width: Int, height: Int): GpuPassInput =
         (session.schedule.renderSystem ?: captureRenderSystem)
-            .planCapture(world, camera, width.toFloat() / height.toFloat())
+            .planCapture(world, camera, width, height)
 
     /** Plans captures for a scene whose infrastructure has no [RenderSystem3D] of its own. */
     private val captureRenderSystem by lazy { RenderSystem3D(renderer, gpuDrawPreparer, features = listOf(spriteFeature, tilemapFeature)) }

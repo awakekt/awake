@@ -1,0 +1,212 @@
+{
+  "version": 1,
+  "name": "runtime-2d",
+  "nodes": [
+    {
+      "name": "camera",
+      "components": [
+        {
+          "component": "camera",
+          "eye": {
+            "x": 0,
+            "y": 0,
+            "z": 10
+          },
+          "center": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "projection": "orthographic",
+          "near": 0.1,
+          "far": 100,
+          "primary": true,
+          "orthoHalfHeight": 3.5,
+          "viewport": {
+            "width": 12,
+            "height": 7,
+            "scaling": "fit"
+          }
+        }
+      ]
+    },
+    {
+      "name": "tiles",
+      "transform": {
+        "position": {
+          "x": -6,
+          "y": 3.5,
+          "z": 0
+        }
+      },
+      "components": [
+        {
+          "component": "tilemap",
+          "texture": "runtime-2d-cells",
+          "width": 12,
+          "height": 7,
+          "columns": 4,
+          "rows": 1,
+          "pixelsPerUnit": 8,
+          "chunkSize": 4,
+          "tiles": [
+            -1,
+            1,
+            1,
+            1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "floor",
+      "transform": {
+        "position": {
+          "x": 0,
+          "y": -3,
+          "z": 0.25
+        }
+      },
+      "components": [
+        {
+          "component": "physics_body",
+          "shape": {
+            "type": "box",
+            "halfExtents": {
+              "x": 6,
+              "y": 0.5,
+              "z": 0.5
+            }
+          },
+          "motion": "STATIC"
+        }
+      ]
+    },
+    {
+      "name": "falling-sprite",
+      "transform": {
+        "position": {
+          "x": 0,
+          "y": 1,
+          "z": 0.25
+        }
+      },
+      "components": [
+        {
+          "component": "sprite",
+          "texture": "runtime-2d-cells",
+          "columns": 4,
+          "rows": 1,
+          "frame": 2,
+          "pixelsPerUnit": 8,
+          "sortOrder": 10
+        },
+        {
+          "component": "sprite_clips",
+          "clip": "pulse",
+          "clips": {
+            "pulse": {
+              "firstFrame": 2,
+              "frameCount": 2,
+              "framesPerSecond": 2,
+              "loop": true
+            }
+          }
+        },
+        {
+          "component": "physics_body",
+          "shape": {
+            "type": "box",
+            "halfExtents": {
+              "x": 0.5,
+              "y": 0.5,
+              "z": 0.5
+            }
+          },
+          "motion": "DYNAMIC",
+          "degreesOfFreedom": "PLANE_2D"
+        }
+      ]
+    }
+  ]
+}

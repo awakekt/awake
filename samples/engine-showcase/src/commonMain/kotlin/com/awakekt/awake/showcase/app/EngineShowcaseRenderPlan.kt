@@ -36,7 +36,7 @@ private val particle = PackShaderSets.Particle
 private val fogColor = Color(r = 0.62f, g = 0.68f, b = 0.76f, a = 0.02f)
 
 /** Complete capability plan for the independently runnable engine demonstrations. */
-internal val EngineShowcaseRenderPlan = RenderPlan(
+val EngineShowcaseRenderPlan = RenderPlan(
     primary = ScenePipeline(
         PipelineKey.Primary,
         lit,

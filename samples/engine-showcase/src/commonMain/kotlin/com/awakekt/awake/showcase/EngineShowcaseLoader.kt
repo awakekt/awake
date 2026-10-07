@@ -7,12 +7,14 @@ package com.awakekt.awake.showcase
 
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.scene.binding.Scene
+import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.controls.camera.ActiveCamera
 import com.awakekt.awake.scene.controls.camera.CameraMode
 import com.awakekt.awake.scene.controls.camera.CameraRig
 import com.awakekt.awake.scene.controls.camera.aimAt
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneLoader
+import com.awakekt.awake.scene.physics.PhysicsBodyBinding
 import com.awakekt.awake.scene.rendering.Camera
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import com.awakekt.awake.scene.runtime.attachRenderableComponents
@@ -75,11 +77,14 @@ internal class EngineShowcaseLoader {
  * Attached per activation because switching showcase builds a new world; the rig on the old one
  * goes with it.
  */
+
 /**
  * Reads [showcase]'s scene document as the showcase runs it. A 2D showcase leaves its sprite grid and
  * named clips to the sheet's manifest, so they are imported before the document validates.
  */
 internal suspend fun loadEngineShowcaseDocument(showcase: EngineShowcase): SceneDocument {
+    // Physics is optional in Core; this sample opts into its document binding before decoding.
+    SceneComponentRegistry.registerGlobal(PhysicsBodyBinding)
     val document = SceneLoader.loadFromResource(showcase.scenePath)
     return when (showcase.id) {
         "sprites-2d" -> Sprites2dExampleDriver.run {
