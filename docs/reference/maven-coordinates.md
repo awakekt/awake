@@ -99,7 +99,7 @@ Vulkan modules. Core `v*` releases and main snapshots do not publish or change t
 | `com.awakekt.awake.kit:terrain-layers` | `:awake:kit:terrain-layers` | `core` | `api` → `:awake:scene:scene3d`; `api` → `:awake:core:io` |
 | `com.awakekt.awake:navigation` | `:awake:navigation` | `core` | `implementation` → `:awake:core:math`; `implementation` → `:awake:core:color`; `api` → `:awake:scene:scene-core`; `api` → `:awake:scene:world`; `api` → `:awake:asset:terrain`; `api` → `:awake:engine:render:contract` |
 | `com.awakekt.awake:node-graph` | `:awake:node-graph` | `core` | — |
-| `com.awakekt.awake:particles` | `:awake:particles` | `core` | `api` → `:awake:core:math`; `api` → `:awake:ecs`; `api` → `:awake:engine:render:contract`; `api` → `:awake:engine:render:passes`; `implementation` → `:awake:core:logging` |
+| `com.awakekt.awake:particles` | `:awake:particles` | `core` | `api` → `:awake:core:math`; `api` → `:awake:ecs`; `api` → `:awake:engine:render:contract`; `api` → `:awake:engine:render:passes` |
 | `com.awakekt.awake.net:api` | `:awake:net:api` | `core` | — |
 | `com.awakekt.awake.physics:api` | `:awake:physics:api` | `core` | `implementation` → `:awake:core:math`; `implementation` → `:awake:core:geometry` |
 | `com.awakekt.awake.physics:ragdoll` | `:awake:physics:ragdoll` | `core` | `api` → `:awake:physics:api`; `api` → `:awake:core:animation`; `api` → `:awake:core:math` |

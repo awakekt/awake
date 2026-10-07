@@ -34,9 +34,9 @@ this is the capability it wraps.
 An emitter can follow an entity (`ParticleDynamics.followEntity`) and can turn its spawns by the
 entity's rotation (`ParticleMotion.inheritOrientation`). This module does not know what places an
 entity, so `ParticleSystem` and `ParticleDrawBuilder` ask an `EmitterPlacement`. An app supplies the
-one it has; `awake:scene:particles` supplies one for the scene's `Transform`. With none, no emitter
-follows anything and none is turned. Pass `EmitterPlacement.None` when disabling entity following/orientation
-on purpose; the no-argument `ParticleSystem()` constructor is deprecated.
+one it has; `awake:scene:particles` supplies one for the scene's `Transform`. Pass
+`EmitterPlacement.None` when disabling entity following/orientation on purpose: with it, no emitter
+follows anything and none is turned.
 
 ## What it does not do
 
