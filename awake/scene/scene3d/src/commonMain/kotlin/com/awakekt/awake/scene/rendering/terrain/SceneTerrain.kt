@@ -7,6 +7,7 @@ package com.awakekt.awake.scene.rendering.terrain
 
 import com.awakekt.awake.asset.terrain.Heightmap
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.binding.SceneComponentBinding
@@ -40,11 +41,11 @@ import kotlin.reflect.KClass
 @Serializable
 @SerialName("terrain")
 data class SceneTerrain(
-    val width: Int,
-    val depth: Int,
-    val scaleX: Float = 1f,
-    val scaleY: Float = 1f,
-    val scaleZ: Float = 1f,
+    @PropertyRange(min = 2.0) val width: Int,
+    @PropertyRange(min = 2.0) val depth: Int,
+    @PropertyRange(min = 0.0, exclusiveMin = true) val scaleX: Float = 1f,
+    @PropertyRange(min = 0.0, exclusiveMin = true) val scaleY: Float = 1f,
+    @PropertyRange(min = 0.0, exclusiveMin = true) val scaleZ: Float = 1f,
     val samples: List<Float>,
     val tilingScale: Float = 16f,
     val isVisible: Boolean = true,

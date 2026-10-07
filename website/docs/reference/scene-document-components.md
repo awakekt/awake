@@ -293,7 +293,7 @@ stops, so `airborneAbove` must exceed the vertical speed of running up the steep
 | `walkAbove` | number | `0.1` | Ground speed that starts the walk. |
 | `runAbove` | number | `4` | Ground speed that starts the run; at least `walkAbove`. |
 | `airborneAbove` | number | `2` | Vertical speed that counts as a jump without a `character_controller`; greater than 0. |
-| `crossFade` | number | `0.15` | Seconds each clip change blends over. |
+| `crossFade` | number | `0.15` | Seconds each clip change blends over. Not negative. |
 
 ## `mesh_renderer`
 
@@ -577,7 +577,7 @@ texture of the entity's material; with no `pbr_material` it plays with glTF's de
 | `columns` | integer | `1` | Frame-sheet columns. At least 1. |
 | `rows` | integer | `1` | Frame-sheet rows. At least 1. |
 | `frameCount` | integer | `0` | Frames played from `firstFrame`. `0` plays every cell from `firstFrame` on. |
-| `framesPerSecond` | number | `0` | Playback rate. `0` holds the first frame of the run. |
+| `framesPerSecond` | number | `0` | Playback rate. `0` holds the first frame of the run. Not negative. |
 | `scrollU` | number | `0` | UV units per second along U. |
 | `scrollV` | number | `0` | UV units per second along V, toward the bottom of the image. |
 | `firstFrame` | integer | `0` | The cell the run starts at, counted from 0 in reading order. Within the sheet, and `firstFrame + frameCount` at most `columns * rows`. |
