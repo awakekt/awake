@@ -21,6 +21,26 @@ free character_controller.gravity | Any gravity acceleration is valid, including
 free character_controller.slopeLimit | Any slope limit angle in radians is valid.
 free chase.repathInterval | Any repath interval in seconds is valid; defaults to 0.5s.
 free chase.waypointRadius | Any distance threshold is valid; defaults to 0.5 units.
+free day_cycle.stops[].ambient | Relational element in list: above 0 and at most 1, enforced by validate().
+free day_cycle.stops[].fogColor.a | Alpha channel is valid between 0 and 1.
+free day_cycle.stops[].fogColor.b | Blue channel is valid between 0 and 1.
+free day_cycle.stops[].fogColor.g | Green channel is valid between 0 and 1.
+free day_cycle.stops[].fogColor.r | Red channel is valid between 0 and 1.
+free day_cycle.stops[].horizonColor.a | Alpha channel is valid between 0 and 1.
+free day_cycle.stops[].horizonColor.b | Blue channel is valid between 0 and 1.
+free day_cycle.stops[].horizonColor.g | Green channel is valid between 0 and 1.
+free day_cycle.stops[].horizonColor.r | Red channel is valid between 0 and 1.
+free day_cycle.stops[].lightColor.a | Alpha channel is valid between 0 and 1.
+free day_cycle.stops[].lightColor.b | Blue channel is valid between 0 and 1.
+free day_cycle.stops[].lightColor.g | Green channel is valid between 0 and 1.
+free day_cycle.stops[].lightColor.r | Red channel is valid between 0 and 1.
+free day_cycle.stops[].lightIntensity | Element in list: finite and at least 0, enforced by validate().
+free day_cycle.stops[].time | Relational element in list: time from 0 up to 1 in ascending order, enforced by validate().
+free day_cycle.stops[].zenithColor.a | Alpha channel is valid between 0 and 1.
+free day_cycle.stops[].zenithColor.b | Blue channel is valid between 0 and 1.
+free day_cycle.stops[].zenithColor.g | Green channel is valid between 0 and 1.
+free day_cycle.stops[].zenithColor.r | Red channel is valid between 0 and 1.
+free day_cycle.sunriseAzimuthDegrees | Any compass azimuth angle in degrees is valid.
 free flee.fleeDistance | Any flee distance is valid; defaults to 12 units.
 free flee.repathInterval | Any repath interval in seconds is valid; defaults to 0.5s.
 free flee.safeRadius | Relational: must be greater than panicRadius, enforced by validate().
@@ -34,10 +54,10 @@ free patrol.stops[].z | Any stop coordinate is valid.
 free patrol.waypointRadius | Any distance threshold is valid; defaults to 0.5 units.
 free spin_control.radians | The initial angle: every angle is valid, and the editor hides it because a system writes it at run time.
 
-undecided ambient_light.colorB
-undecided ambient_light.colorG
-undecided ambient_light.colorR
-undecided ambient_light.intensity
+free ambient_light.colorB | A colour channel: every value is accepted; nothing validates it.
+free ambient_light.colorG | A colour channel: every value is accepted; nothing validates it.
+free ambient_light.colorR | A colour channel: every value is accepted; nothing validates it.
+free ambient_light.intensity | No validate() limits it; every value is accepted today.
 undecided canvas_element.fontSize
 undecided canvas_element.height
 undecided canvas_element.offsetX
@@ -45,25 +65,18 @@ undecided canvas_element.offsetY
 undecided canvas_element.order
 undecided canvas_element.value
 undecided canvas_element.width
-undecided day_cycle.dayLengthSeconds
-undecided day_cycle.noonElevationDegrees
-undecided day_cycle.stops[].ambient
-undecided day_cycle.stops[].lightIntensity
-undecided day_cycle.stops[].time
-undecided day_cycle.sunriseAzimuthDegrees
-undecided day_cycle.time
-undecided fog.colorB
-undecided fog.colorG
-undecided fog.colorR
-undecided fog.density
+free fog.colorB | A colour channel: every value is accepted; nothing validates it.
+free fog.colorG | A colour channel: every value is accepted; nothing validates it.
+free fog.colorR | A colour channel: every value is accepted; nothing validates it.
+free fog.density | No validate() limits it; every value is accepted today.
 undecided keyframe_animation.alpha[].time
 undecided keyframe_animation.alpha[].value
 undecided keyframe_animation.duration
 undecided keyframe_animation.position[].time
 undecided keyframe_animation.rotation[].time
 undecided keyframe_animation.scale[].time
-undecided light.intensity
-undecided light.range
+free light.intensity | No validate() limits it; every value is accepted today.
+free light.range | No validate() limits it; every value is accepted today.
 undecided locomotion_animation.airborneAbove
 undecided locomotion_animation.crossFade
 undecided locomotion_animation.runAbove
@@ -99,13 +112,13 @@ undecided pbr_material.alphaCutoff
 undecided pbr_material.metallic
 undecided pbr_material.roughness
 undecided physics_body.layer
-undecided skybox.exposure
-undecided skybox.horizonColorB
-undecided skybox.horizonColorG
-undecided skybox.horizonColorR
-undecided skybox.zenithColorB
-undecided skybox.zenithColorG
-undecided skybox.zenithColorR
+free skybox.exposure | No validate() limits it; every value is accepted today.
+free skybox.horizonColorB | A colour channel: every value is accepted; nothing validates it.
+free skybox.horizonColorG | A colour channel: every value is accepted; nothing validates it.
+free skybox.horizonColorR | A colour channel: every value is accepted; nothing validates it.
+free skybox.zenithColorB | A colour channel: every value is accepted; nothing validates it.
+free skybox.zenithColorG | A colour channel: every value is accepted; nothing validates it.
+free skybox.zenithColorR | A colour channel: every value is accepted; nothing validates it.
 undecided terrain.depth
 undecided terrain.scaleX
 undecided terrain.scaleY
@@ -125,10 +138,10 @@ undecided texture_clips.clips[].frameCount
 undecided texture_clips.clips[].framesPerSecond
 undecided texture_clips.columns
 undecided texture_clips.rows
-undecided ambient_light.color.a
-undecided ambient_light.color.b
-undecided ambient_light.color.g
-undecided ambient_light.color.r
+free ambient_light.color.a | A colour channel: every value is accepted; nothing validates it.
+free ambient_light.color.b | A colour channel: every value is accepted; nothing validates it.
+free ambient_light.color.g | A colour channel: every value is accepted; nothing validates it.
+free ambient_light.color.r | A colour channel: every value is accepted; nothing validates it.
 undecided camera.center.x
 undecided camera.center.y
 undecided camera.center.z
@@ -138,26 +151,10 @@ undecided camera.eye.z
 undecided camera.up.x
 undecided camera.up.y
 undecided camera.up.z
-undecided day_cycle.stops[].fogColor.a
-undecided day_cycle.stops[].fogColor.b
-undecided day_cycle.stops[].fogColor.g
-undecided day_cycle.stops[].fogColor.r
-undecided day_cycle.stops[].horizonColor.a
-undecided day_cycle.stops[].horizonColor.b
-undecided day_cycle.stops[].horizonColor.g
-undecided day_cycle.stops[].horizonColor.r
-undecided day_cycle.stops[].lightColor.a
-undecided day_cycle.stops[].lightColor.b
-undecided day_cycle.stops[].lightColor.g
-undecided day_cycle.stops[].lightColor.r
-undecided day_cycle.stops[].zenithColor.a
-undecided day_cycle.stops[].zenithColor.b
-undecided day_cycle.stops[].zenithColor.g
-undecided day_cycle.stops[].zenithColor.r
-undecided fog.color.a
-undecided fog.color.b
-undecided fog.color.g
-undecided fog.color.r
+free fog.color.a | A colour channel: every value is accepted; nothing validates it.
+free fog.color.b | A colour channel: every value is accepted; nothing validates it.
+free fog.color.g | A colour channel: every value is accepted; nothing validates it.
+free fog.color.r | A colour channel: every value is accepted; nothing validates it.
 undecided keyframe_animation.position[].value.x
 undecided keyframe_animation.position[].value.y
 undecided keyframe_animation.position[].value.z
@@ -167,13 +164,13 @@ undecided keyframe_animation.rotation[].value.z
 undecided keyframe_animation.scale[].value.x
 undecided keyframe_animation.scale[].value.y
 undecided keyframe_animation.scale[].value.z
-undecided light.color.a
-undecided light.color.b
-undecided light.color.g
-undecided light.color.r
-undecided light.direction.x
-undecided light.direction.y
-undecided light.direction.z
+free light.color.a | A colour channel: every value is accepted; nothing validates it.
+free light.color.b | A colour channel: every value is accepted; nothing validates it.
+free light.color.g | A colour channel: every value is accepted; nothing validates it.
+free light.color.r | A colour channel: every value is accepted; nothing validates it.
+free light.direction.x | A direction component: any value is accepted; the light normalizes it.
+free light.direction.y | A direction component: any value is accepted; the light normalizes it.
+free light.direction.z | A direction component: any value is accepted; the light normalizes it.
 undecided particle_emitter.acceleration.x
 undecided particle_emitter.acceleration.y
 undecided particle_emitter.acceleration.z
@@ -202,12 +199,12 @@ undecided pbr_material.emissiveFactor.a
 undecided pbr_material.emissiveFactor.b
 undecided pbr_material.emissiveFactor.g
 undecided pbr_material.emissiveFactor.r
-undecided skybox.horizonColor.a
-undecided skybox.horizonColor.b
-undecided skybox.horizonColor.g
-undecided skybox.horizonColor.r
-undecided skybox.zenithColor.a
-undecided skybox.zenithColor.b
-undecided skybox.zenithColor.g
-undecided skybox.zenithColor.r
+free skybox.horizonColor.a | A colour channel: every value is accepted; nothing validates it.
+free skybox.horizonColor.b | A colour channel: every value is accepted; nothing validates it.
+free skybox.horizonColor.g | A colour channel: every value is accepted; nothing validates it.
+free skybox.horizonColor.r | A colour channel: every value is accepted; nothing validates it.
+free skybox.zenithColor.a | A colour channel: every value is accepted; nothing validates it.
+free skybox.zenithColor.b | A colour channel: every value is accepted; nothing validates it.
+free skybox.zenithColor.g | A colour channel: every value is accepted; nothing validates it.
+free skybox.zenithColor.r | A colour channel: every value is accepted; nothing validates it.
 undecided terrain.samples[]

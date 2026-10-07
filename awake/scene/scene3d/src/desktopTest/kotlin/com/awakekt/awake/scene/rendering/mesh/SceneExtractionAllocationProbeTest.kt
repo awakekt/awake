@@ -92,8 +92,6 @@ class SceneExtractionAllocationProbeTest {
         }
     }
 
-
-
     @Test
     fun extractingSkinnedEntitiesAllocatesZeroBytesInSteadyState() {
         assertZeroAllocation("Skinned extraction") { world, entity, mesh, material ->
@@ -110,6 +108,7 @@ class SceneExtractionAllocationProbeTest {
             world.add(entity, PbrMaterial(baseColorFactor = Color(0.9f, 0.1f, 0.1f)))
         }
     }
+
     @Test
     fun extractingModularCharactersAllocatesZeroBytesInSteadyState() {
         val skin = Skin(joints = listOf(0), inverseBindMatrices = listOf(Mat4()))
@@ -121,6 +120,7 @@ class SceneExtractionAllocationProbeTest {
             world.add(entity, MeshBounds(UNIT_BOX))
         }
     }
+
     /** Spawns [ENTITY_COUNT] entities through [spawn], warms up, then measures bytes per frame. */
     private fun assertZeroAllocation(
         label: String,
