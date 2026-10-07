@@ -84,6 +84,8 @@ Paths below are Gradle coordinates minus the `:awake:` prefix.
 | `scene:physics` | Physics bodies, character controller, and the physics system |
 | `scene:audio` | Audio sources and the audio system |
 | `scene:particles` | The `particle_emitter` scene component, over `particles` |
+| `scene:ai` | The `patrol`, `chase` and `flee` scene components and `TransformAgentPlacement`, over `ai:behavior` |
+| `scene:navigation` | The `navigation` scene component: the walkable grid a scene carries, over `navigation` |
 | `scene:canvas` | Game UI in scenes: anchored text, panels, bars and buttons drawn over the game |
 | `scene:character` | A walking, jumping character moved by the physics character controller, saved in scenes |
 | `scene:gltf` | glTF and GLB models in scenes: meshes, textured materials and skins |
@@ -94,7 +96,7 @@ Paths below are Gradle coordinates minus the `:awake:` prefix.
 | Module | What it is |
 |---|---|
 | `ai` | Behavior trees and finite state machines |
-| `ai:behavior` | Navmesh-backed patrol, chase, and flee behaviors |
+| `ai:behavior` | Navmesh-backed patrol, chase, and flee behaviors; no scene dependency |
 | `navigation` | A* grid pathfinding, field search, path smoothing |
 | `world` | World cells: coordinates, partition radii, the cell streaming contract; no scene dependency |
 | `particles` | Particle emitters, simulation and draw packets; no scene dependency |

@@ -11,7 +11,6 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.navigation.NavMesh
 import com.awakekt.awake.navigation.PathRequest
 import com.awakekt.awake.navigation.PathRequestSystem
-import com.awakekt.awake.scene.core.transform.Transform
 import kotlin.math.sqrt
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -34,7 +33,7 @@ class FleeAiSystemTest {
     }
 
     private val navMesh = DirectNavMesh()
-    private val fleeSystem = FleeAiSystem()
+    private val fleeSystem = FleeAiSystem(PlacedAgents)
     private val pathSystem = PathRequestSystem(navMesh)
 
     private fun World.frame(delta: Float = 0.1f) {
@@ -42,14 +41,14 @@ class FleeAiSystemTest {
         pathSystem.update(this, delta)
     }
 
-    private fun World.spawn(position: Vec3f): Pair<Entity, Transform> {
+    private fun World.spawn(position: Vec3f): Pair<Entity, Placed> {
         val entity = create()
-        val transform = Transform(position = position)
+        val transform = Placed(position)
         add(entity, transform)
         return entity to transform
     }
 
-    private fun World.spawnFleer(position: Vec3f, threat: Entity): Pair<Transform, FleeBehavior> {
+    private fun World.spawnFleer(position: Vec3f, threat: Entity): Pair<Placed, FleeBehavior> {
         val (entity, transform) = spawn(position)
         val flee = FleeBehavior(threat = threat, panicRadius = 5f, safeRadius = 10f, speed = 2f)
         add(entity, flee)
@@ -66,7 +65,7 @@ class FleeAiSystemTest {
     @Test
     fun runsAwayOnceTheThreatIsInsideThePanicRadius() {
         val world = World()
-        val (threat, threatTransform) = world.spawn(Vec3f(0f, 0f, 0f))
+        val (threat, threatPlaced) = world.spawn(Vec3f(0f, 0f, 0f))
         val (fleer, flee) = world.spawnFleer(Vec3f(3f, 0f, 0f), threat)
 
         world.frame()
@@ -74,7 +73,7 @@ class FleeAiSystemTest {
 
         assertTrue(flee.fleeing, "A threat 3 units away is inside the 5-unit panic radius.")
         assertTrue(
-            distance(fleer.position, threatTransform.position) > 3f,
+            distance(fleer.position, threatPlaced.position) > 3f,
             "Expected the fleer to increase its distance, was ${fleer.position}.",
         )
     }
@@ -101,22 +100,22 @@ class FleeAiSystemTest {
     @Test
     fun keepsRunningInsideTheHysteresisBandAndStopsBeyondIt() {
         val world = World()
-        val (threat, threatTransform) = world.spawn(Vec3f(0f, 0f, 0f))
-        val (fleerTransform, flee) = world.spawnFleer(Vec3f(3f, 0f, 0f), threat)
+        val (threat, threatPlaced) = world.spawn(Vec3f(0f, 0f, 0f))
+        val (fleerPlaced, flee) = world.spawnFleer(Vec3f(3f, 0f, 0f), threat)
         world.frame()
         assertTrue(flee.fleeing)
 
         // Between the two radii: already running, so it keeps running.
-        fleerTransform.position.x = 7f
+        fleerPlaced.position.x = 7f
         world.frame()
         assertTrue(flee.fleeing, "7 is inside the 5..10 band, so panic persists.")
 
         // Past the safe radius: calm again.
-        fleerTransform.position.x = 12f
+        fleerPlaced.position.x = 12f
         world.frame()
         assertFalse(flee.fleeing, "12 is beyond the 10-unit safe radius.")
         assertTrue(flee.path.isEmpty(), "Calming down drops the escape route.")
-        assertEquals(12f, distance(fleerTransform.position, threatTransform.position))
+        assertEquals(12f, distance(fleerPlaced.position, threatPlaced.position))
     }
 
     @Test

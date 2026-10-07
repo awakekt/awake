@@ -9,9 +9,11 @@
 <span class="awake-badge">Desktop · Android · iOS · Web</span>
 </div>
 
-Two modules. `awake:ai:behavior` has the ready-made `patrol`, `chase` and `flee` behaviours, which
-walk routes from [navigation](navigation.md). `awake:ai` has behaviour trees and finite-state
-machines for logic you write yourself.
+`awake:ai:behavior` has the ready-made `patrol`, `chase` and `flee` behaviours, which walk routes from
+[navigation](navigation.md) and need no scene. `awake:scene:ai` puts them in scenes: the `patrol`,
+`chase` and `flee` scene components, and `TransformAgentPlacement`, which places the behaviours'
+entities by their `Transform`. `awake:scene:navigation` has the `navigation` component they route
+over. `awake:ai` has behaviour trees and finite-state machines for logic you write yourself.
 
 ## Add patrol, chase and flee
 
@@ -38,13 +40,13 @@ the same components.
     refused at load.
 
     ```kotlin title="Kotlin"
-    --8<-- "awake/ai/behavior/src/desktopTest/kotlin/com/awakekt/awake/ai/behavior/AiDocsSampleTest.kt:load"
+    --8<-- "awake/scene/ai/src/desktopTest/kotlin/com/awakekt/awake/scene/ai/AiDocsSampleTest.kt:load"
     ```
 
 === "Scene DSL"
 
     ```kotlin title="Kotlin"
-    --8<-- "awake/ai/behavior/src/desktopTest/kotlin/com/awakekt/awake/ai/behavior/AiDocsSampleTest.kt:behaviours-dsl"
+    --8<-- "awake/scene/ai/src/desktopTest/kotlin/com/awakekt/awake/scene/ai/AiDocsSampleTest.kt:behaviours-dsl"
     ```
 
     There are no dedicated DSL functions for behaviours yet, so attach them with `with(...)`.
@@ -59,11 +61,12 @@ the same components.
 ## Run the behaviours
 
 Each behaviour has a system that decides where to go and writes a `PathRequest`;
-`PathRequestSystem` answers it from a navigation grid. Run the behaviour systems, then the path
-system:
+`PathRequestSystem` answers it from a navigation grid. A behaviour system is given an
+`AgentPlacement`, which says where an entity is and moves it; in a scene that is
+`TransformAgentPlacement`. Run the behaviour systems, then the path system:
 
 ```kotlin title="Kotlin"
---8<-- "awake/ai/behavior/src/desktopTest/kotlin/com/awakekt/awake/ai/behavior/AiDocsSampleTest.kt:systems"
+--8<-- "awake/scene/ai/src/desktopTest/kotlin/com/awakekt/awake/scene/ai/AiDocsSampleTest.kt:systems"
 ```
 
 ## Properties
@@ -121,7 +124,7 @@ Build a tree with `behaviorTree { }`, attach it with `BehaviorTreeComponent`, an
 `BehaviorTreeSystem`. Each tick runs the tree once for every enabled component.
 
 ```kotlin title="Kotlin"
---8<-- "awake/ai/behavior/src/desktopTest/kotlin/com/awakekt/awake/ai/behavior/AiDocsSampleTest.kt:behavior-tree"
+--8<-- "awake/scene/ai/src/desktopTest/kotlin/com/awakekt/awake/scene/ai/AiDocsSampleTest.kt:behavior-tree"
 ```
 
 | Node | What it does |
@@ -150,7 +153,7 @@ For logic with a few clear modes, use an `AiStateMachine`: named `AiState`s with
 `onUpdate` and `onExit`, and `StateTransition`s checked every update.
 
 ```kotlin title="Kotlin"
---8<-- "awake/ai/behavior/src/desktopTest/kotlin/com/awakekt/awake/ai/behavior/AiDocsSampleTest.kt:state-machine"
+--8<-- "awake/scene/ai/src/desktopTest/kotlin/com/awakekt/awake/scene/ai/AiDocsSampleTest.kt:state-machine"
 ```
 
 ## How it works

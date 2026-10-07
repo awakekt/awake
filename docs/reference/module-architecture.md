@@ -708,6 +708,23 @@ on `awake:world` and `ecs`, and on no `scene:*` module.
 
 The old names were removed, not kept as deprecated aliases, on the owner's decision.
 
+## 12. AI behaviours are a capability and `scene:ai` is their wrapper — **Done**
+
+`ai:behavior` held both the patrol, chase and flee behaviours and their scene bindings, and the
+behaviour systems read and wrote the scene's `Transform`, so the behaviours could not run without the
+scene layer (#386). The split follows particles (§9):
+
+- `ai:behavior` keeps the behaviours, `RouteFollower` and the three systems, which now take an
+  `AgentPlacement` that reads an entity's position and moves it. It depends on `ai`, `core:math`,
+  `ecs` and `navigation`, and on no `scene:*` module.
+- `scene:ai` holds the `patrol`, `chase` and `flee` schemas and bindings, `registerAiBehaviors()`, and
+  `TransformAgentPlacement`, the scene's answer.
+- `scene:navigation` holds the `navigation` component, the grid a scene carries.
+
+With this, no capability module depends on the scene layer, so `verifyCapabilityLayering` has no
+list of tolerated modules any more: a coupling fails, with no way to record it as debt. The old
+names were removed, not kept as deprecated aliases, on the owner's decision.
+
 ## Adding a new module
 
 1. **Name it for the subsystem**, never the layer. If the name is `engine`, `backend`, `common`,
