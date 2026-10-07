@@ -697,6 +697,17 @@ case below: a scene module and a capability both name these types, and the capab
 depend on the scene module. The old names were removed, not kept as deprecated aliases, on the
 owner's decision: the only consumer outside Core is Studio, which moves with the release.
 
+## 11. World cells are a seam of their own — **Done**
+
+`navigation` streams its grid by cell, so it depended on `scene:world`, and through it on
+`scene-core`, for `WorldCellCoord`, `WorldPartitionConfig` and the cell streaming contract (#386).
+Those types, with `CellContent` and `CompositeCellStreamListener`, are now `awake:world`, which
+depends on `ecs` alone. `scene:world` keeps what needs a scene: `WorldPartitionSystem`, which reads
+`Transform`s to decide what to stream, `StreamObserver` and the floating origin. `navigation` depends
+on `awake:world` and `ecs`, and on no `scene:*` module.
+
+The old names were removed, not kept as deprecated aliases, on the owner's decision.
+
 ## Adding a new module
 
 1. **Name it for the subsystem**, never the layer. If the name is `engine`, `backend`, `common`,
@@ -731,7 +742,7 @@ describes anything.
 
 | Package | Convention |
 |---|---|
-| `scene/world/` — `WorldPartitionSystem`, `StreamObserver`, `WorldCellCoord`, `WorldPartitionConfig` | subsystem ✅ |
+| `scene/world/` — `WorldPartitionSystem`, `StreamObserver`, `FloatingOriginSystem` | subsystem ✅ |
 | `scene/navigation/`, `scene/ai/` | subsystem ✅ |
 | `scene/core/components/` + `scene/core/systems/` | layer ❌ |
 | `scene/controls/`, `scene/physics/`, `scene/rendering/` — each split `components/` / `systems/` | layer ❌ |

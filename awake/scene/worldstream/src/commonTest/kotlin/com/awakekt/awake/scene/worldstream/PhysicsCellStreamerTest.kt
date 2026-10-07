@@ -14,7 +14,7 @@ import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.physics.PhysicsBody
 import com.awakekt.awake.scene.physics.PhysicsSystem
-import com.awakekt.awake.scene.world.WorldCellCoord
+import com.awakekt.awake.world.WorldCellCoord
 import kotlinx.coroutines.test.runTest
 import kotlin.math.abs
 import kotlin.test.Test

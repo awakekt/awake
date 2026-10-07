@@ -15,9 +15,9 @@ import com.awakekt.awake.physics.PhysicsShape
 import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.physics.PhysicsBody
-import com.awakekt.awake.scene.world.AsyncWorldCellStreamListener
-import com.awakekt.awake.scene.world.CellContent
-import com.awakekt.awake.scene.world.WorldCellCoord
+import com.awakekt.awake.world.AsyncWorldCellStreamListener
+import com.awakekt.awake.world.CellContent
+import com.awakekt.awake.world.WorldCellCoord
 
 /** A cell's collider sits at the cell's centre, matching `MeshCellStreamer`. */
 private const val HALF = 0.5f

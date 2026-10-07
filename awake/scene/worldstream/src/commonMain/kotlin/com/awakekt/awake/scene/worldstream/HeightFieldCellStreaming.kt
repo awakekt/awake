@@ -10,7 +10,7 @@ import com.awakekt.awake.physics.CollisionLayer
 import com.awakekt.awake.physics.CollisionLayers
 import com.awakekt.awake.physics.forEachHeightFieldTileTouching
 import com.awakekt.awake.physics.heightFieldTile
-import com.awakekt.awake.scene.world.WorldCellCoord
+import com.awakekt.awake.world.WorldCellCoord
 
 /**
  * Streams one heightfield tile per cell out of a single large sample grid.

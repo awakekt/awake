@@ -9,6 +9,10 @@ import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.core.transform.Transform
+import com.awakekt.awake.world.AsyncWorldCellStreamListener
+import com.awakekt.awake.world.CellContent
+import com.awakekt.awake.world.WorldCellCoord
+import com.awakekt.awake.world.WorldPartitionConfig
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
