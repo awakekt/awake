@@ -3,15 +3,16 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package com.awakekt.awake.scene.rendering.terrain
+package com.awakekt.awake.terrain
 
 import com.awakekt.awake.asset.shaders.ShaderSet
 import com.awakekt.awake.render.texture.TextureAsset
 import kotlinx.serialization.json.JsonElement
 
 /**
- * Which surface model shades a terrain entity, as a scene named it. Sits beside the entity's
- * [TerrainComponent]; [TerrainContentSystem] resolves it through the matching provider.
+ * Which surface model shades a terrain, as a scene or project named it. The scene binding keeps it
+ * beside the terrain entity's component and resolves it through the provider registered for
+ * [provider].
  *
  * @property provider Unique provider key identifying the terrain surface generator.
  * @property version Payload schema version number.
@@ -37,7 +38,7 @@ class TerrainSurface(
 
 /**
  * Turns a [TerrainSurfaceReference]'s payload into a [TerrainSurface], loading whatever assets
- * it names. Runs in [TerrainContentSystem]'s scope, off the frame thread.
+ * it names. The caller runs it off the frame thread.
  */
 fun interface TerrainSurfaceProvider {
     /**

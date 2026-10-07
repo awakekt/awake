@@ -145,6 +145,7 @@ See [docs/reference/compose-engine/](../docs/reference/compose-engine/).
 | `asset:shader-document` | Shaders as project data: checked JSON documents compiled to WGSL and drawn as content features |
 | `asset:shader-compiler` | Runtime WGSL→SPIR-V through naga |
 | `asset:terrain` | Terrain data, geometry generation, heightfield sculpting, splatting |
+| `terrain` | The terrain surface seam: a surface reference, its provider and the resolved surface; no scene dependency |
 | `asset:mesh-optimizer` | Mesh decimation CLI over `core:geometry` (not published) |
 
 ## kit — optional feature kits

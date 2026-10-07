@@ -98,7 +98,7 @@ setup. The [engine showcase](samples/engine-showcase/README.md) is the complete 
 | ECS | `ecs` | Entity storage, components, and systems |
 | Scenes | `scene:scene-core`, `scene:scene3d`, `scene:authoring`, `scene:document`, `scene:runtime` | Transforms, cameras, lights, scene DSL and documents |
 | Rendering | `engine:render:*`, `backend:vulkan`, `backend:webgpu` | Backend-neutral passes and platform backends |
-| Content | `asset:gltf`, `asset:shaders`, `asset:shader-pack`, `asset:shader-document`, `asset:terrain`, `kit:terrain-layers` | Models, textures, shaders, and terrain |
+| Content | `asset:gltf`, `asset:shaders`, `asset:shader-pack`, `asset:shader-document`, `asset:terrain`, `terrain`, `kit:terrain-layers` | Models, textures, shaders, and terrain |
 | Physics | `physics:api`, `backend:jolt` | Physics contracts and Jolt integration |
 | UI | `compose:runtime`, `compose:ui`, `compose:foundation`, `ui:shadcn` | Retained Compose-shaped UI and shadcn components |
 | Projects | `project`, `node-graph`, `editor:contract` | Project manifests, node graphs, editor plugin contracts |

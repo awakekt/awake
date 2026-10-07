@@ -684,6 +684,19 @@ The render planner still orders particle draws by name (`SceneParticleFeature3D`
 `collectBeforeParticles`); generalising `RenderFeature3D`'s ordering slots belongs to
 [D33](../architecture/decisions/D33-render-feature-plugin-boundary.md).
 
+## 10. The terrain surface seam is its own module — **Done**
+
+`TerrainSurfaceReference`, `TerrainSurfaceProvider` and `TerrainSurface` were in `scene:scene3d`, so
+`kit:terrain-layers`, a surface provider, depended on the whole scene layer to implement a
+three-type interface (#386). They are now `awake:terrain`, which depends on `asset:shaders`,
+`render:contract` and JSON, and on no `scene:*` module. `scene:scene3d` stores the reference and
+resolves it; `kit:terrain-layers` implements a provider.
+
+The module is about 50 lines. That is the "joins two modules that must not depend on each other"
+case below: a scene module and a capability both name these types, and the capability may not
+depend on the scene module. The old names were removed, not kept as deprecated aliases, on the
+owner's decision: the only consumer outside Core is Studio, which moves with the release.
+
 ## 11. World cells are a seam of their own — **Done**
 
 `navigation` streams its grid by cell, so it depended on `scene:world`, and through it on

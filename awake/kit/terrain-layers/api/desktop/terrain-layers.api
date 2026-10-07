@@ -168,14 +168,14 @@ public final class com/awakekt/awake/kit/terrainlayers/TerrainLayersShaderKt {
 }
 
 public final class com/awakekt/awake/kit/terrainlayers/TerrainLayersSurfaceKt {
-	public static final fun terrainLayersSurface (Lcom/awakekt/awake/kit/terrainlayers/TerrainLayerPalette;Lcom/awakekt/awake/render/texture/TextureAsset;Lcom/awakekt/awake/kit/terrainlayers/TerrainControlMap;Lcom/awakekt/awake/kit/terrainlayers/TerrainLightmap;)Lcom/awakekt/awake/scene/rendering/terrain/TerrainSurface;
-	public static synthetic fun terrainLayersSurface$default (Lcom/awakekt/awake/kit/terrainlayers/TerrainLayerPalette;Lcom/awakekt/awake/render/texture/TextureAsset;Lcom/awakekt/awake/kit/terrainlayers/TerrainControlMap;Lcom/awakekt/awake/kit/terrainlayers/TerrainLightmap;ILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/terrain/TerrainSurface;
+	public static final fun terrainLayersSurface (Lcom/awakekt/awake/kit/terrainlayers/TerrainLayerPalette;Lcom/awakekt/awake/render/texture/TextureAsset;Lcom/awakekt/awake/kit/terrainlayers/TerrainControlMap;Lcom/awakekt/awake/kit/terrainlayers/TerrainLightmap;)Lcom/awakekt/awake/terrain/TerrainSurface;
+	public static synthetic fun terrainLayersSurface$default (Lcom/awakekt/awake/kit/terrainlayers/TerrainLayerPalette;Lcom/awakekt/awake/render/texture/TextureAsset;Lcom/awakekt/awake/kit/terrainlayers/TerrainControlMap;Lcom/awakekt/awake/kit/terrainlayers/TerrainLightmap;ILjava/lang/Object;)Lcom/awakekt/awake/terrain/TerrainSurface;
 }
 
-public final class com/awakekt/awake/kit/terrainlayers/TerrainLayersSurfaceProvider : com/awakekt/awake/scene/rendering/terrain/TerrainSurfaceProvider {
+public final class com/awakekt/awake/kit/terrainlayers/TerrainLayersSurfaceProvider : com/awakekt/awake/terrain/TerrainSurfaceProvider {
 	public fun <init> (Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/jvm/functions/Function2;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/jvm/functions/Function2;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun resolve (Lcom/awakekt/awake/scene/rendering/terrain/TerrainSurfaceReference;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun resolve (Lcom/awakekt/awake/terrain/TerrainSurfaceReference;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class com/awakekt/awake/kit/terrainlayers/TerrainLayersSurfaceProviderKt {

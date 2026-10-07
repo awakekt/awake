@@ -8,6 +8,7 @@ package com.awakekt.awake.scene.rendering.light
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math.lerp
+import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
@@ -48,10 +49,10 @@ import kotlin.reflect.KClass
 @Serializable
 @SerialName("day_cycle")
 data class SceneDayCycle(
-    val dayLengthSeconds: Float = 600f,
-    val time: Float = 0.5f,
+    @PropertyRange(min = 0.0) val dayLengthSeconds: Float = 600f,
+    @PropertyRange(min = 0.0, max = 1.0, exclusiveMax = true) val time: Float = 0.5f,
     val sunriseAzimuthDegrees: Float = 90f,
-    val noonElevationDegrees: Float = 60f,
+    @PropertyRange(min = 0.0, max = 90.0, exclusiveMin = true) val noonElevationDegrees: Float = 60f,
     val stops: List<SceneDayStop> = emptyList(),
 ) : SceneComponent {
     override fun validate(path: String): List<SceneValidationIssue> = buildList {
@@ -246,7 +247,11 @@ private class StopSpan<T : Any>(private val field: (SceneDayStop) -> T?) {
             if (field(stops[index]) == null) continue
             if (first < 0) first = index
             last = index
-            if (stops[index].time <= time) before = index else if (after < 0) after = index
+            if (stops[index].time <= time) {
+                before = index
+            } else if (after < 0) {
+                after = index
+            }
         }
         // Before the day's first stop, yesterday's last one leads in; after its last, tomorrow's first follows.
         if (first >= 0) between(stops[if (before >= 0) before else last], stops[if (after >= 0) after else first], time)
