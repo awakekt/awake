@@ -39,6 +39,14 @@ kotlin {
     }
 }
 
+// ShaderDocumentReferenceDocsTest reads these files, so an edit to either must rerun the test.
+tasks.named<Test>("desktopTest") {
+    val pages = listOf("docs/reference/shader-document.md", "mkdocs.yml").map { rootProject.file("website/$it") }
+    inputs.files(pages)
+        .withPropertyName("shaderDocumentReference")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+}
+
 mavenPublishing {
     pom {
         name.set("Awake Shader Document")

@@ -43,6 +43,15 @@ kotlin {
     }
 }
 
+// ShaderEffectDocsSampleTest reads the guide's snippets, so an edit to one must rerun the test.
+tasks.named<Test>("desktopTest") {
+    val snippets = listOf("gradient-sky.shader.json", "shader-effect.scene.json")
+        .map { rootProject.file("website/docs/snippets/rendering/$it") }
+    inputs.files(snippets)
+        .withPropertyName("shaderEffectSnippets")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+}
+
 mavenPublishing {
     pom {
         name.set("Awake Scene Shader")

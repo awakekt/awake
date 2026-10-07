@@ -99,6 +99,7 @@ nav:
   - Reference:
       - Scene document schema: reference/scene-document-schema.md
       - Scene document components: reference/scene-document-components.md
+      - Shader document: reference/shader-document.md
       - Component map: reference/component-map.md
       - Modules: reference/modules.md
       - Render hardware interface: reference/rhi.md
