@@ -53,7 +53,13 @@ free patrol.stops[].y | Any stop coordinate is valid.
 free patrol.stops[].z | Any stop coordinate is valid.
 free patrol.waypointRadius | Any distance threshold is valid; defaults to 0.5 units.
 free spin_control.radians | The initial angle: every angle is valid, and the editor hides it because a system writes it at run time.
+free sprite.frame | Relational: must stay within columns * rows, which validate() enforces; no fixed limit says that.
+free sprite.sortOrder | Signed 2D layer index: negative and positive values are valid draw orders.
 
+undecided sprite.tint.r
+undecided sprite.tint.g
+undecided sprite.tint.b
+undecided sprite.tint.a
 free ambient_light.colorB | A colour channel: every value is accepted; nothing validates it.
 free ambient_light.colorG | A colour channel: every value is accepted; nothing validates it.
 free ambient_light.colorR | A colour channel: every value is accepted; nothing validates it.

@@ -46,6 +46,7 @@ import com.awakekt.awake.scene.rendering.tonemapping.SceneToneMapping
 import com.awakekt.awake.scene.rendering.tonemapping.ToneMapping
 import com.awakekt.awake.scene.rendering.tonemapping.ToneMappingBinding
 import com.awakekt.awake.scene.runtime.DefaultSceneComponentResolvers.install
+import com.awakekt.awake.scene.scene2d.SpriteBinding
 import com.awakekt.awake.scene.rendering.Camera as SceneCameraComponent
 
 /**
@@ -109,6 +110,7 @@ object DefaultSceneComponentResolvers {
         ParticleEmitterBinding,
         TextureAnimationBinding,
         TextureClipsBinding,
+        SpriteBinding,
     )
 
     /** Complete list of all registered built-in [SceneComponentResolver] instances. */
@@ -131,6 +133,7 @@ object DefaultSceneComponentResolvers {
         ParticleEmitterBinding,
         TextureAnimationBinding,
         TextureClipsBinding,
+        SpriteBinding,
         PrefabLinkBinding,
     )
 
