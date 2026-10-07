@@ -52,6 +52,7 @@ free patrol.stops[].x | Any stop coordinate is valid.
 free patrol.stops[].y | Any stop coordinate is valid.
 free patrol.stops[].z | Any stop coordinate is valid.
 free patrol.waypointRadius | Any distance threshold is valid; defaults to 0.5 units.
+free shader_effect.parameters[][] | A parameter's numbers are the shader document's to limit: when the project loads each is checked against the document's type for its count, and validate() rejects one that is not finite.
 free spin_control.radians | The initial angle: every angle is valid, and the editor hides it because a system writes it at run time.
 free sprite.frame | Relational: must stay within columns * rows, which validate() enforces; no fixed limit says that.
 free sprite.sortOrder | Signed 2D layer index: negative and positive values are valid draw orders.

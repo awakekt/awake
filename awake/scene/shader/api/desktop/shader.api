@@ -1,0 +1,84 @@
+public final class com/awakekt/awake/scene/shader/SceneShaderEffect : com/awakekt/awake/scene/document/SceneComponent {
+	public static final field Companion Lcom/awakekt/awake/scene/shader/SceneShaderEffect$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/util/Map;Ljava/util/Map;Z)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/util/Map;Ljava/util/Map;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/Map;
+	public final fun component3 ()Ljava/util/Map;
+	public final fun component4 ()Z
+	public final fun copy (Ljava/lang/String;Ljava/util/Map;Ljava/util/Map;Z)Lcom/awakekt/awake/scene/shader/SceneShaderEffect;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/shader/SceneShaderEffect;Ljava/lang/String;Ljava/util/Map;Ljava/util/Map;ZILjava/lang/Object;)Lcom/awakekt/awake/scene/shader/SceneShaderEffect;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAllowsMultiplePerNode ()Z
+	public final fun getEnabled ()Z
+	public final fun getParameters ()Ljava/util/Map;
+	public final fun getShader ()Ljava/lang/String;
+	public final fun getTextures ()Ljava/util/Map;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+	public fun validate (Ljava/lang/String;)Ljava/util/List;
+	public fun validate (Ljava/lang/String;Ljava/util/List;)Ljava/util/List;
+}
+
+public final synthetic class com/awakekt/awake/scene/shader/SceneShaderEffect$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/shader/SceneShaderEffect$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/shader/SceneShaderEffect;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/shader/SceneShaderEffect;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/shader/SceneShaderEffect$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/shader/ShaderEffectAssets {
+	public static final field Companion Lcom/awakekt/awake/scene/shader/ShaderEffectAssets$Companion;
+	public fun <init> ()V
+	public fun <init> (Ljava/util/Map;Ljava/util/Map;)V
+	public synthetic fun <init> (Ljava/util/Map;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getDocuments ()Ljava/util/Map;
+	public final fun getTextures ()Ljava/util/Map;
+	public final fun texturesOf (Lcom/awakekt/awake/scene/shader/SceneShaderEffect;)Ljava/util/Map;
+}
+
+public final class com/awakekt/awake/scene/shader/ShaderEffectAssets$Companion {
+	public final fun getEmpty ()Lcom/awakekt/awake/scene/shader/ShaderEffectAssets;
+}
+
+public final class com/awakekt/awake/scene/shader/ShaderEffectAssetsKt {
+	public static final fun loadShaderEffects (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun shaderEffectProblems (Lcom/awakekt/awake/scene/shader/SceneShaderEffect;Lcom/awakekt/awake/asset/shaderdocument/CompiledShaderDocument;Lcom/awakekt/awake/scene/shader/ShaderEffectAssets;)Ljava/util/List;
+}
+
+public final class com/awakekt/awake/scene/shader/ShaderEffectBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/shader/ShaderEffectBinding;
+	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public synthetic fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/shader/SceneShaderEffect;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun canResolve (Lcom/awakekt/awake/scene/document/SceneComponent;)Z
+	public fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/shader/ShaderEffectSource;)Lcom/awakekt/awake/scene/shader/SceneShaderEffect;
+	public synthetic fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public synthetic fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/shader/SceneShaderEffect;
+	public fun getComponentClass ()Lkotlin/reflect/KClass;
+	public fun getSchemaClass ()Lkotlin/reflect/KClass;
+	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/shader/ShaderEffectSource {
+	public fun <init> (Lcom/awakekt/awake/scene/shader/SceneShaderEffect;)V
+	public final fun getSettings ()Lcom/awakekt/awake/scene/shader/SceneShaderEffect;
+}
+
+public final class com/awakekt/awake/scene/shader/ShaderEffectSystem : com/awakekt/awake/ecs/System {
+	public fun <init> (Lcom/awakekt/awake/asset/shaders/ContentFeatureHost;Lcom/awakekt/awake/scene/shader/ShaderEffectAssets;)V
+	public final fun getAssets ()Lcom/awakekt/awake/scene/shader/ShaderEffectAssets;
+	public final fun release ()V
+	public final fun setAssets (Lcom/awakekt/awake/scene/shader/ShaderEffectAssets;)V
+	public fun update (Lcom/awakekt/awake/ecs/World;F)V
+}
+

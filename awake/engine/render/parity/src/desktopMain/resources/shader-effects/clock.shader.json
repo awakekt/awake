@@ -1,0 +1,14 @@
+{
+  "formatVersion": 1,
+  "name": "Parity clock",
+  "surface": "background",
+  "fragment": {
+    "color": { "op": "call", "fn": "select", "args": [
+      { "op": "const", "value": [0, 0, 0, 1] },
+      { "op": "const", "value": [1, 1, 1, 1] },
+      { "op": "gt",
+        "a": { "op": "call", "fn": "fract", "args": [ { "op": "input", "input": "time" } ] },
+        "b": { "op": "const", "value": [0.5] } }
+    ] }
+  }
+}

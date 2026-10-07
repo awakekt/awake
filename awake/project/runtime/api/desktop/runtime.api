@@ -19,13 +19,14 @@ public final class com/awakekt/awake/project/runtime/CollisionMeshesKt {
 }
 
 public final class com/awakekt/awake/project/runtime/PlayServices {
-	public fun <init> (Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/physics/PhysicsWorld;Ljava/util/Map;Lcom/awakekt/awake/scene/physics/CollisionMeshSource;)V
-	public synthetic fun <init> (Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/physics/PhysicsWorld;Ljava/util/Map;Lcom/awakekt/awake/scene/physics/CollisionMeshSource;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/physics/PhysicsWorld;Ljava/util/Map;Lcom/awakekt/awake/scene/physics/CollisionMeshSource;Lcom/awakekt/awake/scene/shader/ShaderEffectAssets;)V
+	public synthetic fun <init> (Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/physics/PhysicsWorld;Ljava/util/Map;Lcom/awakekt/awake/scene/physics/CollisionMeshSource;Lcom/awakekt/awake/scene/shader/ShaderEffectAssets;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getCollisionMeshes ()Lcom/awakekt/awake/scene/physics/CollisionMeshSource;
 	public final fun getInput ()Lkotlin/jvm/functions/Function0;
 	public final fun getParticleSprites ()Ljava/util/Map;
 	public final fun getPhysics ()Lcom/awakekt/awake/physics/PhysicsWorld;
 	public final fun getRenderer ()Lcom/awakekt/awake/render/renderer/Renderer;
+	public final fun getShaderEffects ()Lcom/awakekt/awake/scene/shader/ShaderEffectAssets;
 }
 
 public final class com/awakekt/awake/project/runtime/PlaySystems : java/lang/AutoCloseable {

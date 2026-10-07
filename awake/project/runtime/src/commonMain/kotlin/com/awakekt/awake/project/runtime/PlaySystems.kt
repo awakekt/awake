@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.project.runtime
 
+import com.awakekt.awake.asset.shaders.ContentFeatureHost
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.render.renderer.Renderer
@@ -33,6 +34,9 @@ import com.awakekt.awake.scene.physics.ScenePhysicsBody
 import com.awakekt.awake.scene.rendering.animation.AnimationSystem
 import com.awakekt.awake.scene.rendering.terrain.SceneTerrain
 import com.awakekt.awake.scene.runtime.SceneSystemPhase
+import com.awakekt.awake.scene.shader.SceneShaderEffect
+import com.awakekt.awake.scene.shader.ShaderEffectAssets
+import com.awakekt.awake.scene.shader.ShaderEffectSystem
 import kotlin.reflect.KClass
 
 /** What a played scene's systems need from the host and cannot read from the scene itself. */
@@ -47,6 +51,8 @@ class PlayServices(
     val particleSprites: Map<String, TextureAsset> = emptyMap(),
     /** The triangles of the scene's `mesh` collision shapes, as [loadCollisionMeshes] reads them. */
     val collisionMeshes: CollisionMeshSource? = null,
+    /** The documents and images of the scene's `shader_effect`s, as [loadShaderEffects] reads them. */
+    val shaderEffects: ShaderEffectAssets = ShaderEffectAssets.Empty,
 )
 
 /**
@@ -76,6 +82,8 @@ class PlaySystems internal constructor(
  * - `locomotion_animation` and `keyframe_animation`: their clips and looping tracks
  * - `texture_clips`: the sprite sheet's clips, stepped on the scene's clock
  * - `particle_emitter`: its emitters, with [PlayServices.particleSprites]
+ * - `shader_effect`: its documents, drawn through [PlayServices.renderer] when it takes content
+ *   features, with [PlayServices.shaderEffects]
  * - `day_cycle`: the sun's path and the blended sky, light and fog
  * - `canvas_element`s with an action: [CanvasActionSystem]
  * - `patrol`, `chase` and `flee`, with a `navigation` component to route them over: the behaviours and
@@ -90,16 +98,15 @@ class PlaySystems internal constructor(
 fun playSystemsFor(scene: SceneDocument, services: PlayServices): PlaySystems {
     val fixed = mutableListOf<System>()
     val frame = mutableListOf<System>()
-    var content: ParticleContentSystem? = null
+    val releasing = PlayReleases()
     playSpecsFor(scene, hasPhysics = services.physics != null).forEach { spec ->
-        val system = spec.create(services)
-        if (system is ParticleContentSystem) content = system
+        val system = releasing.keep(spec.create(services))
         when (spec.phase) {
             SceneSystemPhase.Fixed -> fixed += system
             SceneSystemPhase.Frame -> frame += system
         }
     }
-    return PlaySystems(fixed, frame) { content?.release() }
+    return PlaySystems(fixed, frame, releasing::release)
 }
 
 /** One system a scene plays with: its name, the phase it runs in, and how to build it. */
@@ -140,6 +147,9 @@ internal fun playSpecsFor(scene: SceneDocument, hasPhysics: Boolean): List<PlayS
     if (scene.has(SceneCameraRig::class)) add(PlaySpec("camera", SceneSystemPhase.Frame) { CameraSystem(inputProvider = it.input) })
     addAiSpecs(scene)
     addMotionSpecs(scene)
+    if (scene.has(SceneShaderEffect::class)) {
+        add(PlaySpec("shader-effects", SceneSystemPhase.Frame) { ShaderEffectSystem(it.renderer as? ContentFeatureHost, it.shaderEffects) })
+    }
     add(PlaySpec("animation", SceneSystemPhase.Frame) { AnimationSystem() })
 }
 
@@ -152,8 +162,9 @@ internal fun SceneAppDsl.registerPlaySpecs(
     physics: PhysicsWorld?,
     particleSprites: Map<String, TextureAsset>,
     collisionMeshes: CollisionMeshSource?,
+    shaderEffects: ShaderEffectAssets,
 ) {
-    var content: ParticleContentSystem? = null
+    val releasing = PlayReleases()
     playSpecsFor(scene, hasPhysics = physics != null).forEach { spec ->
         system(spec.name, spec.phase) {
             val services = PlayServices(
@@ -162,11 +173,30 @@ internal fun SceneAppDsl.registerPlaySpecs(
                 physics = physics,
                 particleSprites = particleSprites,
                 collisionMeshes = collisionMeshes,
+                shaderEffects = shaderEffects,
             )
-            spec.create(services).also { if (it is ParticleContentSystem) content = it }
+            releasing.keep(spec.create(services))
         }
     }
-    onDispose { content?.release() }
+    onDispose { releasing.release() }
+}
+
+/** The systems that hold GPU content and must give it back when the scene stops. */
+private class PlayReleases {
+    private var particles: ParticleContentSystem? = null
+    private var shaderEffects: ShaderEffectSystem? = null
+
+    fun keep(system: System): System = system.also {
+        when (it) {
+            is ParticleContentSystem -> particles = it
+            is ShaderEffectSystem -> shaderEffects = it
+        }
+    }
+
+    fun release() {
+        particles?.release()
+        shaderEffects?.release()
+    }
 }
 
 internal fun SceneNode.hasTerrainCollider(): Boolean =

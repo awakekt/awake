@@ -1,0 +1,19 @@
+{
+  "formatVersion": 1,
+  "name": "Parity sky",
+  "surface": "background",
+  "parameters": [
+    { "name": "top", "type": "color", "default": [0, 0, 1, 1] },
+    { "name": "bottom", "type": "color", "default": [1, 0, 0, 1] }
+  ],
+  "fragment": {
+    "color": { "op": "call", "fn": "mix", "args": [
+      { "op": "param", "name": "bottom" },
+      { "op": "param", "name": "top" },
+      { "op": "call", "fn": "step", "args": [
+        { "op": "const", "value": [0] },
+        { "op": "swizzle", "value": { "op": "input", "input": "viewDirection" }, "components": "y" }
+      ] }
+    ] }
+  }
+}

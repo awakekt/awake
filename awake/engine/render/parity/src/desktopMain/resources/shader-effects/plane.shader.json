@@ -1,0 +1,7 @@
+{
+  "formatVersion": 1,
+  "name": "Parity plane",
+  "surface": "plane",
+  "plane": { "size": [4, 4], "segments": 1 },
+  "fragment": { "color": { "op": "const", "value": [0, 1, 0, 1] } }
+}

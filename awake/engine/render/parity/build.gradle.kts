@@ -38,6 +38,8 @@ kotlin {
                 implementation(project(":awake:asset:shaders"))
                 implementation(project(":awake:asset:shader-pack"))
                 implementation(project(":awake:asset:shader-compiler"))
+                // Shader documents a project ships, drawn as a played scene draws its shader_effects.
+                implementation(project(":awake:asset:shader-document"))
                 implementation(project(":awake:core:color"))
                 implementation(project(":awake:core:geometry"))
                 implementation(project(":awake:core:graphics2d"))

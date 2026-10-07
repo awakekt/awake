@@ -7,6 +7,7 @@ package com.awakekt.awake.render.parity
 
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.render.passes.uniforms.RenderDebugView
+import com.awakekt.awake.render.renderer.Renderer
 import java.awt.image.BufferedImage
 import java.io.File
 import javax.imageio.ImageIO
@@ -57,6 +58,7 @@ fun main(args: Array<String>) {
             EVIDENCE_SIZE,
             renderer.renderTexturedSkinnedScene(Mat4().data, exposure = 2f, size = EVIDENCE_SIZE),
         )
+        writeShaderEffectEvidence(renderer, ::write)
         write("scene-terrain-cliff-self-shadow", "Clipmap plateau coarser than its heightmap, sun on its cliff: top, rim and face stay lit", EVIDENCE_SIZE, renderer.renderTerrainCliffScene(size = EVIDENCE_SIZE))
         STUDIO_YAWS.withIndex().filter { it.index % EVIDENCE_YAW_STEP == 0 }.forEach { (index, yaw) ->
             write(
@@ -108,3 +110,20 @@ private fun writePng(dir: File, name: String, size: Int, pixels: ByteArray) {
 }
 
 private const val MAX_CHANNEL = 255
+
+/** A project's shader documents, as `shader_effect` draws them: its sky alone, and a plane over it. */
+private fun writeShaderEffectEvidence(renderer: Renderer, write: (String, String, Int, ByteArray) -> Unit) {
+    val sky = shaderEffectDocument("sky")
+    write(
+        "scene-shader-effect-sky",
+        "A project's shader document drawn as a background: blue above the horizon, red below",
+        EVIDENCE_SIZE,
+        renderer.renderShaderEffectScene(listOf(sky), size = EVIDENCE_SIZE),
+    )
+    write(
+        "scene-shader-effect-plane",
+        "A project's plane document seen from above, over its sky document",
+        EVIDENCE_SIZE,
+        renderer.renderShaderEffectScene(listOf(sky, shaderEffectDocument("plane")), view = ShaderEffectView.Above, size = EVIDENCE_SIZE),
+    )
+}

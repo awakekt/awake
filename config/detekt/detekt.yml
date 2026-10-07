@@ -152,6 +152,7 @@ comments:
       - '**/awake/scene/scene3d/src/**'
       - '**/awake/particles/**'
       - '**/awake/scene/particles/**'
+      - '**/awake/scene/shader/**'
       - '**/awake/asset/gltf/**'
       - '**/awake/asset/terrain/**'
       - '**/awake/terrain/**'

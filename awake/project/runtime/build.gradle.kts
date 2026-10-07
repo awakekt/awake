@@ -31,6 +31,8 @@ kotlin {
             implementation(project(":awake:core:math"))
             implementation(project(":awake:particles"))
             implementation(project(":awake:scene:particles"))
+            // PlayServices carries the loaded shader_effect documents, so their type is in this API.
+            api(project(":awake:scene:shader"))
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
