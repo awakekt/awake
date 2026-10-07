@@ -80,33 +80,21 @@ free light.intensity | No validate() limits it; every value is accepted today.
 free light.range | No validate() limits it; every value is accepted today.
 free locomotion_animation.runAbove | Relational: 0 <= walkAbove <= runAbove, enforced by validate().
 free locomotion_animation.walkAbove | Relational: 0 <= walkAbove <= runAbove, enforced by validate().
-undecided particle_emitter.alphaCurve.fadeInEnd
-undecided particle_emitter.alphaCurve.fadeOutStart
-undecided particle_emitter.burstCount
-undecided particle_emitter.burstCycle.activeSeconds
-undecided particle_emitter.burstCycle.burstInterval
-undecided particle_emitter.burstCycle.burstSize
-undecided particle_emitter.burstCycle.cycleSeconds
-undecided particle_emitter.coneHalfAngleDegrees
-undecided particle_emitter.endScale
-undecided particle_emitter.frameCount
-undecided particle_emitter.frameRate
-undecided particle_emitter.ground.friction
-undecided particle_emitter.ground.groundY
-undecided particle_emitter.ground.restitution
-undecided particle_emitter.lifetime
-undecided particle_emitter.maxParticles
-undecided particle_emitter.radialSpeed
-undecided particle_emitter.scale
-undecided particle_emitter.spawnRadius
-undecided particle_emitter.spawnRate
-undecided particle_emitter.spin.maxDegreesPerSecond
-undecided particle_emitter.spin.minDegreesPerSecond
-undecided particle_emitter.startAlpha
-undecided particle_emitter.stretchFactor
-undecided particle_emitter.turbulence
-undecided particle_emitter.turbulenceFrequency
-undecided particle_emitter.velocityJitter
+free particle_emitter.alphaCurve.fadeInEnd | Relational: 0 <= fadeInEnd <= fadeOutStart <= 1, enforced by validate().
+free particle_emitter.alphaCurve.fadeOutStart | Relational: 0 <= fadeInEnd <= fadeOutStart <= 1, enforced by validate().
+free particle_emitter.burstCycle.activeSeconds | Relational: 0 < activeSeconds <= cycleSeconds, enforced by validate().
+free particle_emitter.burstCycle.burstInterval | Nested object: cycle repeats every cycleSeconds, interval validated by burstCycle.problems().
+free particle_emitter.burstCycle.burstSize | Nested object: burst count validated by burstCycle.problems().
+free particle_emitter.burstCycle.cycleSeconds | Nested object: cycle period validated by burstCycle.problems().
+free particle_emitter.coneHalfAngleDegrees | Spread angle: any half-angle is valid, null moves along velocity.
+free particle_emitter.ground.friction | Nested object: friction coefficient validated by ground.problems().
+free particle_emitter.ground.groundY | Flat ground height: any finite elevation is valid.
+free particle_emitter.ground.restitution | Nested object: bounce restitution validated by ground.problems().
+free particle_emitter.radialSpeed | Any radial expansion speed is valid.
+free particle_emitter.spin.maxDegreesPerSecond | Relational: minDegreesPerSecond <= maxDegreesPerSecond, enforced by validate().
+free particle_emitter.spin.minDegreesPerSecond | Relational: minDegreesPerSecond <= maxDegreesPerSecond, enforced by validate().
+free particle_emitter.turbulence | Flow-field strength: any finite strength is valid.
+free particle_emitter.velocityJitter | Any variation magnitude is valid.
 free skybox.exposure | No validate() limits it; every value is accepted today.
 free skybox.horizonColorB | A colour channel: every value is accepted; nothing validates it.
 free skybox.horizonColorG | A colour channel: every value is accepted; nothing validates it.
@@ -156,26 +144,26 @@ free light.color.r | A colour channel: every value is accepted; nothing validate
 free light.direction.x | A direction component: any value is accepted; the light normalizes it.
 free light.direction.y | A direction component: any value is accepted; the light normalizes it.
 free light.direction.z | A direction component: any value is accepted; the light normalizes it.
-undecided particle_emitter.acceleration.x
-undecided particle_emitter.acceleration.y
-undecided particle_emitter.acceleration.z
-undecided particle_emitter.color.a
-undecided particle_emitter.color.b
-undecided particle_emitter.color.g
-undecided particle_emitter.color.r
-undecided particle_emitter.endColor.a
-undecided particle_emitter.endColor.b
-undecided particle_emitter.endColor.g
-undecided particle_emitter.endColor.r
-undecided particle_emitter.ground.colliders[].max.x
-undecided particle_emitter.ground.colliders[].max.y
-undecided particle_emitter.ground.colliders[].max.z
-undecided particle_emitter.ground.colliders[].min.x
-undecided particle_emitter.ground.colliders[].min.y
-undecided particle_emitter.ground.colliders[].min.z
-undecided particle_emitter.velocity.x
-undecided particle_emitter.velocity.y
-undecided particle_emitter.velocity.z
+free particle_emitter.acceleration.x | World-space acceleration component: any finite float is valid.
+free particle_emitter.acceleration.y | World-space acceleration component: any finite float is valid.
+free particle_emitter.acceleration.z | World-space acceleration component: any finite float is valid.
+free particle_emitter.color.a | A colour channel: every value is accepted; nothing validates it.
+free particle_emitter.color.b | A colour channel: every value is accepted; nothing validates it.
+free particle_emitter.color.g | A colour channel: every value is accepted; nothing validates it.
+free particle_emitter.color.r | A colour channel: every value is accepted; nothing validates it.
+free particle_emitter.endColor.a | A colour channel: every value is accepted; nothing validates it.
+free particle_emitter.endColor.b | A colour channel: every value is accepted; nothing validates it.
+free particle_emitter.endColor.g | A colour channel: every value is accepted; nothing validates it.
+free particle_emitter.endColor.r | A colour channel: every value is accepted; nothing validates it.
+free particle_emitter.ground.colliders[].max.x | Box corner: finite, min <= max on every axis enforced by validate().
+free particle_emitter.ground.colliders[].max.y | Box corner: finite, min <= max on every axis enforced by validate().
+free particle_emitter.ground.colliders[].max.z | Box corner: finite, min <= max on every axis enforced by validate().
+free particle_emitter.ground.colliders[].min.x | Box corner: finite, min <= max on every axis enforced by validate().
+free particle_emitter.ground.colliders[].min.y | Box corner: finite, min <= max on every axis enforced by validate().
+free particle_emitter.ground.colliders[].min.z | Box corner: finite, min <= max on every axis enforced by validate().
+free particle_emitter.velocity.x | Initial velocity component: any float is valid.
+free particle_emitter.velocity.y | Initial velocity component: any float is valid.
+free particle_emitter.velocity.z | Initial velocity component: any float is valid.
 free pbr_material.baseColorFactor.a | A colour channel: every value is accepted; nothing validates it.
 free pbr_material.baseColorFactor.b | A colour channel: every value is accepted; nothing validates it.
 free pbr_material.baseColorFactor.g | A colour channel: every value is accepted; nothing validates it.

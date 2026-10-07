@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.particles
 
+import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.particles.ParticleEmitter
 import com.awakekt.awake.particles.ParticleFacing
 import com.awakekt.awake.scene.document.SceneColor
@@ -83,21 +84,21 @@ import kotlinx.serialization.Serializable
 @SerialName("particle_emitter")
 data class SceneParticleEmitter(
     val texture: String,
-    val maxParticles: Int = 64,
-    val spawnRate: Float = 10f,
-    val lifetime: Float = 1f,
-    val startAlpha: Float = 1f,
-    val scale: Float = 0.2f,
-    val endScale: Float? = null,
+    @PropertyRange(min = 0.0, exclusiveMin = true) val maxParticles: Int = 64,
+    @PropertyRange(min = 0.0) val spawnRate: Float = 10f,
+    @PropertyRange(min = 0.0, exclusiveMin = true) val lifetime: Float = 1f,
+    @PropertyRange(min = 0.0, max = 1.0) val startAlpha: Float = 1f,
+    @PropertyRange(min = 0.0, exclusiveMin = true) val scale: Float = 0.2f,
+    @PropertyRange(min = 0.0) val endScale: Float? = null,
     val velocity: SceneVec3 = SceneVec3(0f, 1f, 0f),
     val velocityJitter: Float = 0f,
     val coneHalfAngleDegrees: Float? = null,
-    val spawnRadius: Float = 0f,
+    @PropertyRange(min = 0.0) val spawnRadius: Float = 0f,
     val radialSpeed: Float = 0f,
     val color: SceneColor = SceneColor(),
     val endColor: SceneColor? = null,
-    val frameCount: Int = 1,
-    val frameRate: Float = 8f,
+    @PropertyRange(min = 1.0) val frameCount: Int = 1,
+    @PropertyRange(min = 0.0) val frameRate: Float = 8f,
     val additive: Boolean = false,
     val facing: ParticleFacing = ParticleFacing.Camera,
     val acceleration: SceneVec3 = SceneVec3(0f, 0f, 0f),
@@ -105,11 +106,11 @@ data class SceneParticleEmitter(
     val alphaCurve: SceneParticleAlphaCurve? = null,
     val burstCycle: SceneParticleBurstCycle? = null,
     val turbulence: Float = 0f,
-    val turbulenceFrequency: Float = 1f,
+    @PropertyRange(min = 0.0) val turbulenceFrequency: Float = 1f,
     val convergeToOrigin: Boolean = false,
     val stretchWithVelocity: Boolean = false,
-    val stretchFactor: Float = 0.05f,
-    val burstCount: Int? = null,
+    @PropertyRange(min = 0.0) val stretchFactor: Float = 0.05f,
+    @PropertyRange(min = 0.0, exclusiveMin = true) val burstCount: Int? = null,
     val ground: SceneParticleGround? = null,
     val spin: SceneParticleSpin? = null,
 ) : SceneComponent {
