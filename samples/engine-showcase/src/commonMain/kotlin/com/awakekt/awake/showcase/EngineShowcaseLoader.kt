@@ -16,6 +16,7 @@ import com.awakekt.awake.scene.document.SceneLoader
 import com.awakekt.awake.scene.rendering.Camera
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import com.awakekt.awake.scene.runtime.attachRenderableComponents
+import com.awakekt.awake.showcase.examples.Sprites2dExampleDriver
 
 /** Owns the loaded showcase documents and activates them through the shared scene lifecycle. */
 internal class EngineShowcaseLoader {
@@ -27,7 +28,8 @@ internal class EngineShowcaseLoader {
     suspend fun preload() {
         preloadEngineShowcases()
         EngineShowcases.forEach { showcase ->
-            documents[showcase.id] = SceneLoader.loadFromResource(showcase.scenePath)
+            val document = SceneLoader.loadFromResource(showcase.scenePath)
+            documents[showcase.id] = if (showcase.id == "sprites-2d") Sprites2dExampleDriver.importScene(document) else document
         }
     }
 

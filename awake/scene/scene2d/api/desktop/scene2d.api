@@ -189,3 +189,11 @@ public final class com/awakekt/awake/scene/scene2d/SpriteDrawCollectorKt {
 	public static final fun collectSpriteDraws (Lcom/awakekt/awake/ecs/World;)Ljava/util/List;
 }
 
+public final class com/awakekt/awake/scene/scene2d/SpriteSheetSceneKt {
+	public static final fun toSceneSprite (Lcom/awakekt/awake/asset/sprite/SpriteSheet;Ljava/lang/String;)Lcom/awakekt/awake/scene/scene2d/SceneSprite;
+	public static synthetic fun toSceneSprite$default (Lcom/awakekt/awake/asset/sprite/SpriteSheet;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/scene/scene2d/SceneSprite;
+	public static final fun toSceneSpriteClips (Lcom/awakekt/awake/asset/sprite/SpriteSheet;Ljava/lang/String;)Lcom/awakekt/awake/scene/scene2d/SceneSpriteClips;
+	public static synthetic fun toSceneSpriteClips$default (Lcom/awakekt/awake/asset/sprite/SpriteSheet;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/scene/scene2d/SceneSpriteClips;
+	public static final fun withSpriteSheets (Lcom/awakekt/awake/scene/document/SceneDocument;Ljava/util/Map;)Lcom/awakekt/awake/scene/document/SceneDocument;
+}
+

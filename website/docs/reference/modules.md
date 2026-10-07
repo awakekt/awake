@@ -78,6 +78,7 @@ awake-backend-vulkan = { module = "com.awakekt.awake.backend:vulkan", version.re
 | Maven coordinate | Catalog alias | What it is |
 | --- | --- | --- |
 | `com.awakekt.awake.asset:gltf` | `awake-asset-gltf` | glTF 2.0 mesh, scene and skinning importer. |
+| `com.awakekt.awake.asset:sprite` | `awake-asset-sprite` | Regular-grid sprite metadata import and named frame clips. |
 | `com.awakekt.awake.asset:terrain` | `awake-asset-terrain` | Heightmap terrain assets and grid mesh generation. |
 | `com.awakekt.awake:terrain` | `awake-terrain` | The terrain surface seam: `TerrainSurfaceReference`, `TerrainSurfaceProvider` and `TerrainSurface`, with no scene dependency. |
 | `com.awakekt.awake.kit:terrain-layers` | `awake-kit-terrain-layers` | Layered terrain surface: layer palette, control map and its shader. |

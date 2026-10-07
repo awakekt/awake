@@ -65,9 +65,31 @@ clip library leaves manual `Sprite.frame` control intact. Scenes export the sele
 elapsed time and speed are transient runtime state. Existing `texture_clips` continues to control
 textured mesh materials, with the same underlying clock.
 
+## Importing sheet metadata
+
+Read a sprite-gen component-row manifest with `SpriteGenManifest` from `asset:sprite`. Resolve its
+`image` reference with your asset loader and call `requireImageSize` after decoding the image.
+Bake the sheet into the document before instantiation:
+
+```kotlin
+val sheet = SpriteGenManifest.decode(manifestText)
+sheet.requireImageSize(bitmap.width, bitmap.height)
+val baked = authored.withSpriteSheets(mapOf("hero" to sheet))
+baked.instantiate(world = world)
+```
+
+The map key is the sprite's authored `texture` name. Nested matching nodes get the imported grid
+and named clips. Local runs override same-named imported runs; the selected clip, sprite styling
+and transforms are preserved. If selection is omitted, the first exported run plays. The baked
+document saves as standard `sprite` and `sprite_clips` data, so playback does not need the manifest.
+For a new node, `sheet.toSceneSprite("hero")` and `sheet.toSceneSpriteClips("idle")` map the metadata
+directly. The caller owns texture registration and path resolution.
+
+The importer supports contiguous, untrimmed grid rows with uniform timing. See the
+[asset module](../../asset/sprite/README.md) for format validation and limitations.
+
 ## What is not in it yet
 
-- Importing named clips from an authoring tool's metadata.
 - Tilemaps. The `tilemap` component lands with its own chunked-batching capability, outside `scene/`.
 
 ## What stays out of it

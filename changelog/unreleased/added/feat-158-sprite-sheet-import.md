@@ -1,0 +1,1 @@
+- Import sprite-gen regular-grid manifests as named sprite clips, bake metadata into scene documents, and drive the 2D showcase idle animation from its real manifest.

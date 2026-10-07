@@ -1,0 +1,18 @@
+public final class com/awakekt/awake/asset/sprite/SpriteGenManifest {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/sprite/SpriteGenManifest;
+	public final fun decode (Ljava/lang/String;)Lcom/awakekt/awake/asset/sprite/SpriteSheet;
+}
+
+public final class com/awakekt/awake/asset/sprite/SpriteSheet {
+	public fun <init> (Ljava/lang/String;IIIILjava/util/Map;)V
+	public final fun getCellHeight ()I
+	public final fun getCellWidth ()I
+	public final fun getClips ()Ljava/util/Map;
+	public final fun getColumns ()I
+	public final fun getHeight ()I
+	public final fun getImage ()Ljava/lang/String;
+	public final fun getRows ()I
+	public final fun getWidth ()I
+	public final fun requireImageSize (II)V
+}
+
