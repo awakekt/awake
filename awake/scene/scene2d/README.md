@@ -15,6 +15,8 @@ implementation(project(":awake:scene:scene2d"))
   schema and exports it back as it is then. A game sets `sprite.frame`, `flipX` and the rest.
 - `World.collectSpriteDraws()` -- maps `Transform` and `Sprite` into the portable atlas renderer in
   `render:passes`. The standard scene runtime includes these draws in its combined scene pass.
+- `SceneSpriteClips`, `SpriteClips` and `SpriteClipSystem` -- bind named animation runs to `Sprite.frame`,
+  using the reusable `FrameClipPlayer` in `core:animation`.
 
 ## Drawing sprites
 
@@ -39,9 +41,33 @@ The runtime reuses one quad and a material per named sheet until runtime disposa
 follow the renderer's existing texture lifetime. Custom hosts can use `SpriteRenderBatch` directly
 without a scene and must destroy it before destroying their renderer.
 
+## Named sprite animations
+
+Add `sprite_clips` beside `sprite` on the same node. Dimensions come from the sprite; frame indices
+count from the top left across rows.
+
+```json
+{
+  "component": "sprite_clips",
+  "clip": "idle",
+  "clips": {
+    "idle": { "firstFrame": 0, "frameCount": 4, "framesPerSecond": 4, "loop": true },
+    "hit": { "firstFrame": 4, "frameCount": 2, "framesPerSecond": 8, "loop": false }
+  }
+}
+```
+
+The standard runtime advances clips before rendering while its realtime provider is active. Custom ECS hosts run `SpriteClipSystem` once
+per simulation frame before extracting sprite draws. A game selects a run with
+`world.get<SpriteClips>(entity)?.play("hit")`; asking for the active run preserves time unless
+`restart = true`. Set `speed = 0f` to pause, and read `isFinished` for one-shot completion. An empty
+clip library leaves manual `Sprite.frame` control intact. Scenes export the selected clip name;
+elapsed time and speed are transient runtime state. Existing `texture_clips` continues to control
+textured mesh materials, with the same underlying clock.
+
 ## What is not in it yet
 
-- Animation. A game steps `Sprite.frame` itself for now.
+- Importing named clips from an authoring tool's metadata.
 - Tilemaps. The `tilemap` component lands with its own chunked-batching capability, outside `scene/`.
 
 ## What stays out of it

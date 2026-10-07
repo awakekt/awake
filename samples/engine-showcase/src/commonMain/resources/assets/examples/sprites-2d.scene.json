@@ -41,7 +41,15 @@
         "scale": { "x": 2.5, "y": 2.5, "z": 1.0 }
       },
       "components": [
-        { "component": "sprite", "texture": "lantern-firefly", "columns": 4, "rows": 1, "pixelsPerUnit": 256.0 }
+        { "component": "sprite", "texture": "lantern-firefly", "columns": 4, "rows": 1, "pixelsPerUnit": 256.0 },
+        {
+          "component": "sprite_clips",
+          "clip": "idle",
+          "clips": {
+            "idle": { "firstFrame": 0, "frameCount": 4, "framesPerSecond": 4.0, "loop": true },
+            "blink": { "firstFrame": 2, "frameCount": 1, "framesPerSecond": 0.0, "loop": false }
+          }
+        }
       ]
     },
     {
@@ -51,7 +59,15 @@
         "scale": { "x": 3.0, "y": 3.0, "z": 1.0 }
       },
       "components": [
-        { "component": "sprite", "texture": "lantern-firefly", "columns": 4, "rows": 1, "pixelsPerUnit": 256.0 }
+        { "component": "sprite", "texture": "lantern-firefly", "columns": 4, "rows": 1, "pixelsPerUnit": 256.0 },
+        {
+          "component": "sprite_clips",
+          "clip": "idle",
+          "clips": {
+            "idle": { "firstFrame": 0, "frameCount": 4, "framesPerSecond": 4.0, "loop": true },
+            "blink": { "firstFrame": 2, "frameCount": 1, "framesPerSecond": 0.0, "loop": false }
+          }
+        }
       ]
     },
     {
@@ -61,7 +77,15 @@
         "scale": { "x": 2.5, "y": 2.5, "z": 1.0 }
       },
       "components": [
-        { "component": "sprite", "texture": "lantern-firefly", "columns": 4, "rows": 1, "pixelsPerUnit": 256.0 }
+        { "component": "sprite", "texture": "lantern-firefly", "columns": 4, "rows": 1, "pixelsPerUnit": 256.0 },
+        {
+          "component": "sprite_clips",
+          "clip": "idle",
+          "clips": {
+            "idle": { "firstFrame": 0, "frameCount": 4, "framesPerSecond": 4.0, "loop": true },
+            "blink": { "firstFrame": 2, "frameCount": 1, "framesPerSecond": 0.0, "loop": false }
+          }
+        }
       ]
     }
   ]

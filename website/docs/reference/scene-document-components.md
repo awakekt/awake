@@ -39,6 +39,7 @@ registers it.
 | [`skybox`](#skybox) | `Skybox` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Sky and fog](../guides/sky-and-fog.md) |
 | [`spin_control`](#spin_control) | `SpinControl` | `com.awakekt.awake.scene:scene-core` | `DefaultSceneComponentResolvers.install()` | [Scene documents](../guides/scene-documents.md) |
 | [`sprite`](#sprite) | `Sprite` | `com.awakekt.awake.scene:scene2d` | `DefaultSceneComponentResolvers.install()` | [Component map](component-map.md) |
+| [`sprite_clips`](#sprite_clips) | `SpriteClips` | `com.awakekt.awake.scene:scene2d` | `DefaultSceneComponentResolvers.install()` | [Component map](component-map.md) |
 | [`static_transform`](#static_transform) | `StaticTransform` | `com.awakekt.awake.scene:scene-core` | `DefaultSceneComponentResolvers.install()` | [Scene documents](../guides/scene-documents.md) |
 | [`terrain`](#terrain) | `TerrainComponent` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Terrain](../guides/terrain.md) |
 | [`texture_animation`](#texture_animation) | `TextureAnimation` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Meshes and materials](../guides/meshes-and-materials.md) |
@@ -544,6 +545,33 @@ however the image is scaled. `SceneSprite`.
 | `flipY` | boolean | `false` | Mirrors the sprite top to bottom. |
 | `tint` | color | white | Multiplied into the image's colour and alpha. |
 | `sortOrder` | integer | `0` | A higher order draws over a lower one; a tie draws by depth from the camera. |
+## `sprite_clips`
+
+Named animation runs for the `sprite` on the same node. Sheet dimensions come from that sprite;
+every run must fit its atlas. `SceneSpriteClips`.
+
+The standard scene runtime advances `SpriteClipSystem` before rendering. A custom host runs it once
+per simulation frame. `SpriteClips.play("hit")` changes the run; repeated requests preserve time
+unless `restart = true`. `speed = 0` pauses this entity, and `isFinished` reports one-shot completion.
+An empty library leaves the sprite's manually selected frame alone. Export saves the selected clip
+name, while playback time and speed remain transient runtime state.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `clips` | object of runs | `{}` | Runs by name. Names must not be empty. |
+| `clip` | string | the first listed | Initial run; must name a run in `clips`. |
+
+### Sprite run
+
+Each entry in `clips` is a `SceneSpriteClip`:
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `firstFrame` | integer | `0` | First cell, counted from the top left across rows. Not negative. |
+| `frameCount` | integer | `1` | Cells in the run; at least one and the whole run must fit the sprite. |
+| `framesPerSecond` | number | `0` | Authored playback rate. Finite and not negative; zero holds the first cell. |
+| `loop` | boolean | `true` | Repeat the run. False plays once and holds its last cell. |
+
 ## `static_transform`
 
 Marks a node that never moves, such as a placed prop. `SceneStaticTransform`, no fields.

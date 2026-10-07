@@ -83,7 +83,9 @@ object SpriteBinding : SceneComponentBinding<Sprite, SceneSprite> {
         component: SceneSprite,
         context: SceneResolutionContext,
     ) {
-        world.add(entity, Sprite(component))
+        val sprite = Sprite(component)
+        world.add(entity, sprite)
+        world.get<SpriteClips>(entity)?.applyTo(sprite)
     }
 
     override fun export(world: World, entity: Entity, component: Sprite): SceneSprite = component.toScene()

@@ -5,6 +5,8 @@
  */
 package com.awakekt.awake.scene.rendering.mesh
 
+import com.awakekt.awake.core.animation.FrameClip
+import com.awakekt.awake.core.animation.FrameClipPlayer
 import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
@@ -15,7 +17,6 @@ import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneValidationIssue
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlin.math.floor
 import kotlin.reflect.KClass
 
 /** The rate a clip plays at when it does not say: a common rate for hand-drawn sprites. */
@@ -66,8 +67,9 @@ data class SceneTextureClips(
     val initialClip: String? get() = clip ?: clips.keys.firstOrNull()
 
     override fun validate(path: String): List<SceneValidationIssue> = buildList {
-        val fits = columns >= 1 && rows >= 1
-        if (!fits) add(SceneValidationIssue(path, "texture_clips needs at least one column and row"))
+        val fits = columns >= 1 && rows >= 1 && columns.toLong() * rows <= Int.MAX_VALUE
+        if (columns < 1 || rows < 1) add(SceneValidationIssue(path, "texture_clips needs at least one column and row"))
+        if (columns.toLong() * rows > Int.MAX_VALUE) add(SceneValidationIssue(path, "texture_clips sheet cell count must fit in an Int"))
         for ((name, run) in clips) {
             run.problems(name, if (fits) columns * rows else 0).forEach { add(SceneValidationIssue(path, it)) }
         }
@@ -89,17 +91,11 @@ private fun SceneTextureClip.problems(name: String, cells: Int): List<String> = 
     if (frameCount < 1) add("$where.frameCount must be at least 1")
     if (firstFrame < 0) {
         add("$where.firstFrame must not be negative")
-    } else if (cells > 0 && frameCount >= 1 && firstFrame + frameCount > cells) {
-        add("$where must stay within the sheet's $cells cells: firstFrame + frameCount is ${firstFrame + frameCount}")
+    } else if (cells > 0 && frameCount >= 1 && firstFrame.toLong() + frameCount > cells) {
+        add("$where must stay within the sheet's $cells cells: firstFrame + frameCount is ${firstFrame.toLong() + frameCount}")
     }
     if (framesPerSecond < 0f || !framesPerSecond.isFinite()) add("$where.framesPerSecond must be finite and >= 0")
 }
-
-/**
- * A hair of a frame the clock is credited with, so a time that should land exactly on the next cell
- * is not left a rounding error short of it. It is far below anything a frame time can mean.
- */
-private const val FRAME_EPSILON = 1e-4f
 
 /**
  * A [SceneTextureClips] on a live entity: which of its clips is playing and how far into it.
@@ -119,20 +115,23 @@ class TextureClips(val sheet: SceneTextureClips) {
         require(problems.isEmpty()) { problems.joinToString("; ") { it.message } }
     }
 
+    private val player = FrameClipPlayer(
+        sheet.clips.mapValues { (_, run) -> FrameClip(run.firstFrame, run.frameCount, run.framesPerSecond, run.loop) },
+        sheet.initialClip,
+    )
+
     /** The clip that is playing, or null when the sheet has none. */
-    var activeClipId: String? = sheet.initialClip
-        private set
+    val activeClipId: String? get() = player.activeClipId
 
     /** Playback rate multiplier: 1 is real time, 0 holds the cell, and a game can slow or speed one entity. */
-    var speed: Float = 1f
+    var speed: Float
+        get() = player.speed
         set(value) {
-            require(value >= 0f && value.isFinite()) { "Clip speed must be finite and non-negative." }
-            field = value
+            player.speed = value
         }
 
     /** Seconds into the active clip. A looping clip's stays inside one loop. */
-    var elapsedSeconds: Float = 0f
-        private set
+    val elapsedSeconds: Float get() = player.elapsedSeconds
 
     /** The cell the last system step showed, or -1 before it has shown any. */
     internal var shownFrame: Int = -1
@@ -140,18 +139,14 @@ class TextureClips(val sheet: SceneTextureClips) {
     /** Whether the system has yet to show any cell of this entity. */
     internal val neverShown: Boolean get() = shownFrame < 0
 
-    private val active: SceneTextureClip? get() = activeClipId?.let { sheet.clips[it] }
-
     /**
      * Whether a clip that does not loop has played to its end and is holding its last cell.
      * A looping clip, and one at 0 frames a second, never finishes.
      */
-    val isFinished: Boolean
-        get() = active?.let { !it.loop && it.framesPerSecond > 0f && framesPlayed(it) >= it.frameCount } ?: false
+    val isFinished: Boolean get() = player.isFinished
 
     /** The cell showing now, counted in reading order from 0 at the top left of the sheet. */
-    val frame: Int
-        get() = active?.let { it.firstFrame + offsetInRun(it) } ?: 0
+    val frame: Int get() = player.frame
 
     /**
      * Plays [clipId] from its first cell. The clip that is already playing is left alone unless
@@ -160,32 +155,18 @@ class TextureClips(val sheet: SceneTextureClips) {
      * @throws IllegalArgumentException when the sheet has no clip called [clipId].
      */
     fun play(clipId: String, restart: Boolean = false) {
-        require(clipId in sheet.clips) { "No clip \"$clipId\"; the sheet has ${sheet.clips.keys}." }
-        if (clipId == activeClipId && !restart) return
-        activeClipId = clipId
-        elapsedSeconds = 0f
+        player.play(clipId, restart)
     }
 
     /** Moves the active clip on by [delta] seconds, scaled by [speed]. A looping clip's clock wraps, so it keeps its precision however long it runs. */
     internal fun advance(delta: Float) {
-        val run = active ?: return
-        if (run.framesPerSecond <= 0f) return
-        val duration = run.frameCount / run.framesPerSecond
-        val next = elapsedSeconds + maxOf(delta, 0f) * speed
-        elapsedSeconds = if (run.loop) next.mod(duration) else minOf(next, duration)
+        player.advance(delta)
     }
 
     /** What the entity's `TextureAnimation` is while [frame] shows: that cell, held. */
     internal fun held(): TextureAnimation =
         TextureAnimation(sheet.columns, sheet.rows, frameCount = 1, framesPerSecond = 0f, firstFrame = frame)
 
-    private fun framesPlayed(run: SceneTextureClip): Int = floor(elapsedSeconds * run.framesPerSecond + FRAME_EPSILON).toInt()
-
-    private fun offsetInRun(run: SceneTextureClip): Int {
-        if (run.framesPerSecond <= 0f) return 0
-        val played = framesPlayed(run)
-        return if (run.loop) played % run.frameCount else minOf(played, run.frameCount - 1)
-    }
 }
 
 /** Loads [SceneTextureClips] as the entity's [TextureClips], showing the first cell of its first clip until the system steps it. */

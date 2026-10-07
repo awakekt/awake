@@ -18,6 +18,7 @@ kotlin {
     }
     sourceSets {
         commonMain.dependencies {
+            implementation(project(":awake:core:animation"))
             api(project(":awake:ecs"))
             api(project(":awake:engine:render:passes"))
             api(project(":awake:scene:scene-core"))

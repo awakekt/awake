@@ -53,8 +53,12 @@ class RangeAnnotationsAreEnforcedTest {
 
     /** [root] with the property at [steps] set to [value], leaving every other property as it was. */
     private fun withValue(root: JsonObject, steps: List<String>, value: JsonElement): JsonObject {
-        val head = steps.first()
-        check("[]" !in steps) { "A range on a list element (${steps.joinToString(".")}) is not checked by this test yet; extend it before annotating one" }
+        // Map element paths use [] in the schema walk. A seed supplies a concrete named entry.
+        val head = if (steps.first() == "[]") {
+            root.keys.firstOrNull() ?: error("A range inside an empty map needs a seeded entry: ${steps.joinToString(".")}")
+        } else {
+            steps.first()
+        }
         if (steps.size == 1) return JsonObject(root + (head to value))
         val inner = root[head] as? JsonObject
             ?: error("`$head` has no default object to set `${steps.drop(1).joinToString(".")}` inside; give this test a seed")
@@ -72,6 +76,7 @@ class RangeAnnotationsAreEnforcedTest {
     private val componentSeeds: Map<String, (JsonObject) -> JsonObject> = mapOf(
         "keyframe_animation" to { base -> JsonObject(base + ("duration" to JsonPrimitive(1.0f))) },
         "particle_emitter" to { base -> JsonObject(base + ("texture" to JsonPrimitive("particle.png"))) },
+        "sprite_clips" to { base -> JsonObject(base + ("clips" to JsonObject(mapOf("idle" to JsonObject(emptyMap()))))) },
     )
 
     @Test

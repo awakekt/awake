@@ -1,6 +1,6 @@
 # Awake Core Animation
 
-Portable skeletal animation runtime for [Awake](../../../README.md) — skeleton hierarchies, skin bindings, animation clips, and crossfade pose blending. No rendering or platform dependencies, compiling cleanly across all targets (Desktop, Android, iOS, WasmJs).
+Portable animation runtime for [Awake](../../../README.md) — skeleton hierarchies, skin bindings, animation clips, crossfade pose blending, and named frame playback. No rendering or platform dependencies, compiling cleanly across all targets (Desktop, Android, iOS, WasmJs).
 
 ## Installation
 
@@ -15,6 +15,8 @@ implementation(project(":awake:core:animation"))
 - `AnimationClip` — time-sampled translation, rotation (quaternion), and scale keyframe tracks.
 - `AnimationPose` — sampled joint transforms at a specific playback time.
 - `AnimationCrossfade` — linear and spherical (SLERP) interpolation blending two poses over a transition duration.
+- `FrameClip` and `FrameClipPlayer` — named frame runs on simulation time, with loops, one-shots,
+  switching, restart, and speed/pause. Shared by sprite and textured-mesh scene bindings.
 
 ## Usage
 
@@ -37,4 +39,5 @@ val blendedPose = AnimationCrossfade.blend(
 
 ## Scope
 
-Dependency-free skeletal pose evaluation and blending. GPU joint matrix palette generation and skinning shaders are handled downstream by rendering backends (`awake:engine:render:contract` / `awake:backend:*`).
+Skeletal pose evaluation, blending, and frame-index playback. GPU joint matrix palette generation,
+skinning shaders, and applying frames to image atlases belong downstream.

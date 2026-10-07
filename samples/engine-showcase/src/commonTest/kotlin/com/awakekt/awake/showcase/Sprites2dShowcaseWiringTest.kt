@@ -12,6 +12,7 @@ import com.awakekt.awake.scene.document.SceneLoader
 import com.awakekt.awake.scene.rendering.camera.SceneCamera
 import com.awakekt.awake.scene.runtime.DefaultSceneComponentResolvers
 import com.awakekt.awake.scene.scene2d.SceneSprite
+import com.awakekt.awake.scene.scene2d.SceneSpriteClips
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.float
@@ -72,6 +73,14 @@ class Sprites2dShowcaseWiringTest {
             assertEquals(sheetHeight / cellHeight, sprite.rows)
             assertEquals(frames.size, sprite.cellCount)
             assertEquals(4f, fps)
+        }
+        val namedRuns = document.nodes.flatMap { it.components }.filterIsInstance<SceneSpriteClips>()
+        assertEquals(sprites.size, namedRuns.size)
+        namedRuns.forEach { animations ->
+            assertEquals("idle", animations.clip)
+            assertEquals(frames.size, animations.clips.getValue("idle").frameCount)
+            assertEquals(fps, animations.clips.getValue("idle").framesPerSecond)
+            assertEquals(2, animations.clips.getValue("blink").firstFrame)
         }
         frames.forEachIndexed { index, frame ->
             val rect = frame.jsonObject

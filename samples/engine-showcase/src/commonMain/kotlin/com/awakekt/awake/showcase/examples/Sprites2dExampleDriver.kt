@@ -18,7 +18,6 @@ import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.scene.binding.Scene
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
-import com.awakekt.awake.scene.scene2d.Sprite
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -92,9 +91,6 @@ internal object Sprites2dExampleDriver {
             transform.rotation.z = cos(elapsed * 1.4f) * 0.025f
         }
 
-        if (delta > 0f) {
-            runtime.world.queryEach<Sprite> { _, sprite -> sprite.frame = (elapsed * 4f).toInt() % sprite.cellCount }
-        }
         runtime.stageUi(overlayCommands(bob1))
     }
 
