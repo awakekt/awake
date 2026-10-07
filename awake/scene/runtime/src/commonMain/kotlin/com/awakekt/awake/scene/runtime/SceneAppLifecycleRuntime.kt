@@ -45,11 +45,11 @@ import com.awakekt.awake.scene.canvas.SceneCanvas
 import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.core.transform.TransformSystem
-import com.awakekt.awake.scene.scene2d.SpriteClipSystem
 import com.awakekt.awake.scene.rendering.Camera
 import com.awakekt.awake.scene.rendering.RenderSystem3D
 import com.awakekt.awake.scene.rendering.debug.DebugVisualizationSystem
 import com.awakekt.awake.scene.runtime.session.SceneSession
+import com.awakekt.awake.scene.scene2d.SpriteClipSystem
 import kotlin.math.roundToInt
 import kotlin.time.TimeSource
 
@@ -350,9 +350,13 @@ class SceneAppLifecycleRuntime internal constructor(
 
     internal val spriteBatch by lazy { SpriteRenderBatch(renderer) { requireAssetLibrary().requireTexture(it) } }
     internal val spriteFeature by lazy { SceneSpriteRenderFeature(spriteBatch) }
+    internal val tilemapFeature by lazy { SceneTilemapRenderFeature(renderer) { requireAssetLibrary().requireTexture(it) } }
 
     override fun dispose() {
-        if (::renderer.isInitialized) spriteBatch.destroy()
+        if (::renderer.isInitialized) {
+            spriteBatch.destroy()
+            tilemapFeature.destroy()
+        }
         graphicsLayers.dispose()
         session.dispose(this)
     }
@@ -434,7 +438,7 @@ class SceneAppLifecycleRuntime internal constructor(
             .planCapture(world, camera, width.toFloat() / height.toFloat())
 
     /** Plans captures for a scene whose infrastructure has no [RenderSystem3D] of its own. */
-    private val captureRenderSystem by lazy { RenderSystem3D(renderer, gpuDrawPreparer, features = listOf(spriteFeature)) }
+    private val captureRenderSystem by lazy { RenderSystem3D(renderer, gpuDrawPreparer, features = listOf(spriteFeature, tilemapFeature)) }
 
     /**
      * Retrieves an optional registered application service of the specified [type].
@@ -573,7 +577,7 @@ fun SceneAppLifecycleRuntime.defaultInfrastructureSystems(
         RenderSystem3D(
             renderer,
             gpuDrawPreparer,
-            features = listOf(spriteFeature),
+            features = listOf(spriteFeature, tilemapFeature),
             viewportProvider = viewportProvider,
             renderWorldProvider = renderWorldProvider,
             isRealtimeProvider = isRealtimeProvider,

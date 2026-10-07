@@ -182,3 +182,9 @@ free skybox.zenithColor.b | A colour channel: every value is accepted; nothing v
 free skybox.zenithColor.g | A colour channel: every value is accepted; nothing validates it.
 free skybox.zenithColor.r | A colour channel: every value is accepted; nothing validates it.
 free terrain.samples[] | Element in list: any finite elevation value is valid.
+free tilemap.tiles[] | Atlas-dependent index: -1 is empty; other values must be inside this layer's atlas, enforced by validate().
+free tilemap.tint.r | A colour multiplier: follows the sprite tint contract without a fixed channel range.
+free tilemap.tint.g | A colour multiplier: follows the sprite tint contract without a fixed channel range.
+free tilemap.tint.b | A colour multiplier: follows the sprite tint contract without a fixed channel range.
+free tilemap.tint.a | A colour multiplier: follows the sprite tint contract without a fixed channel range.
+free tilemap.sortOrder | Relative paint order: any signed integer is valid.

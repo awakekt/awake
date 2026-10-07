@@ -1,0 +1,1 @@
+- Add finite orthogonal tilemap layers with atlas mapping, editable cells, cached chunk meshes, camera-frustum culling, and scene document binding on Vulkan and WebGPU.

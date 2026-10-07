@@ -1,0 +1,39 @@
+public final class com/awakekt/awake/tilemap/TilemapAtlas {
+	public fun <init> (IIIIF)V
+	public synthetic fun <init> (IIIIFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun geometry (Lcom/awakekt/awake/tilemap/TilemapGrid;Lcom/awakekt/awake/tilemap/TilemapChunk;)Lcom/awakekt/awake/core/geometry/MeshGeometry;
+	public final fun getColumns ()I
+	public final fun getImageHeight ()I
+	public final fun getImageWidth ()I
+	public final fun getPixelsPerUnit ()F
+	public final fun getRows ()I
+	public final fun getTileHeight ()F
+	public final fun getTileWidth ()F
+	public final fun isVisible (Lcom/awakekt/awake/tilemap/TilemapChunk;Lcom/awakekt/awake/core/math/Mat4;Ljava/util/List;)Z
+}
+
+public final class com/awakekt/awake/tilemap/TilemapChunk {
+	public final fun getHeight ()I
+	public final fun getRevision ()J
+	public final fun getWidth ()I
+	public final fun getX ()I
+	public final fun getY ()I
+}
+
+public final class com/awakekt/awake/tilemap/TilemapGrid {
+	public static final field Companion Lcom/awakekt/awake/tilemap/TilemapGrid$Companion;
+	public static final field EMPTY I
+	public fun <init> (II[II)V
+	public synthetic fun <init> (II[IIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun copyTiles ()[I
+	public final fun get (II)I
+	public final fun getChunkSize ()I
+	public final fun getChunks ()Ljava/util/List;
+	public final fun getHeight ()I
+	public final fun getWidth ()I
+	public final fun set (III)V
+}
+
+public final class com/awakekt/awake/tilemap/TilemapGrid$Companion {
+}
+

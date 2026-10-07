@@ -361,6 +361,12 @@ public final class com/awakekt/awake/render/passes/sprites/SpriteRenderBatchKt {
 	public static final fun spriteUniforms (Lcom/awakekt/awake/render/passes/sprites/SpriteDrawInput;II)[F
 }
 
+public final class com/awakekt/awake/render/passes/sprites/TilemapRenderBatch {
+	public fun <init> (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/tilemap/TilemapGrid;IIFLkotlin/jvm/functions/Function0;)V
+	public final fun collect (Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/color/Color;ILjava/util/List;Ljava/util/List;)V
+	public final fun destroy ()V
+}
+
 public final class com/awakekt/awake/render/passes/uniforms/DrawUniformPlan : java/lang/Enum {
 	public static final field Lit Lcom/awakekt/awake/render/passes/uniforms/DrawUniformPlan;
 	public static final field LitShadow Lcom/awakekt/awake/render/passes/uniforms/DrawUniformPlan;
