@@ -6,7 +6,7 @@
 package com.awakekt.awake.kit.terrainlayers
 
 import com.awakekt.awake.render.texture.TextureAsset
-import com.awakekt.awake.scene.rendering.terrain.TerrainSurface
+import com.awakekt.awake.terrain.TerrainSurface
 
 /**
  * A terrain surface drawn from [palette]: [TerrainLayersShaders] with its layer array, layer table

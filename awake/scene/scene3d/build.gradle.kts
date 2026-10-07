@@ -33,10 +33,13 @@ kotlin {
             api(project(":awake:engine:render:contract"))
             api(project(":awake:engine:render:passes"))
             api(project(":awake:asset:terrain"))
+            // The terrain surface seam: SceneTerrain stores a TerrainSurfaceReference and
+            // TerrainContentSystem resolves it through TerrainSurfaceProviders.
+            api(project(":awake:terrain"))
             // terrainContentFeature(TerrainComponent) adapts the pack's feature to the ECS
             // component. Acyclic: shader-pack knows nothing of the scene layer.
             api(project(":awake:asset:shader-pack"))
-            // TerrainSurfaceReference carries a JsonElement payload, and TerrainContentSystem
+            // A scene terrain's surface carries a JsonElement payload, and TerrainContentSystem
             // takes the CoroutineScope its surface providers resolve in.
             api(libs.kotlinx.serialization.json)
             api(libs.kotlinx.coroutines.core)
