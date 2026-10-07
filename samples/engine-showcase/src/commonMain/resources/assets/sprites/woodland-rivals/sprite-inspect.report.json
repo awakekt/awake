@@ -1,0 +1,81 @@
+{
+  "ok": true,
+  "engine": "component-row",
+  "kind": "sprite-gen-inspect-report",
+  "run_dir": ".",
+  "states": [
+    "hero-idle",
+    "enemy-idle"
+  ],
+  "thresholds": {
+    "histogram_min": 0.0,
+    "dhash_min": 0.55,
+    "motion_min": 0.01
+  },
+  "rows": [
+    {
+      "state": "hero-idle",
+      "source": "frames",
+      "expected_frames": 4,
+      "found_frames": 4,
+      "natural_pose_count": 4,
+      "frame_files": [
+        "frames/hero-idle/frame-0.png",
+        "frames/hero-idle/frame-1.png",
+        "frames/hero-idle/frame-2.png",
+        "frames/hero-idle/frame-3.png"
+      ],
+      "metrics": {
+        "histogram_intersection": {
+          "min": 0.9732896341105975,
+          "mean": 0.9787696655055975
+        },
+        "dhash_similarity": {
+          "min": 0.921875,
+          "mean": 0.9505208333333334
+        },
+        "motion_presence": 0.01780279820261438,
+        "centroid_sigma": {
+          "x": 1.3053011873343647,
+          "y": 0.7884517163970598
+        }
+      },
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "state": "enemy-idle",
+      "source": "frames",
+      "expected_frames": 4,
+      "found_frames": 4,
+      "natural_pose_count": 4,
+      "frame_files": [
+        "frames/enemy-idle/frame-0.png",
+        "frames/enemy-idle/frame-1.png",
+        "frames/enemy-idle/frame-2.png",
+        "frames/enemy-idle/frame-3.png"
+      ],
+      "metrics": {
+        "histogram_intersection": {
+          "min": 0.9689019873393997,
+          "mean": 0.9779250763948292
+        },
+        "dhash_similarity": {
+          "min": 0.96875,
+          "mean": 0.984375
+        },
+        "motion_presence": 0.025736251531862746,
+        "centroid_sigma": {
+          "x": 1.0249046580575678,
+          "y": 0.23990375509417142
+        }
+      },
+      "ok": true,
+      "errors": [],
+      "warnings": []
+    }
+  ],
+  "errors": [],
+  "warnings": []
+}

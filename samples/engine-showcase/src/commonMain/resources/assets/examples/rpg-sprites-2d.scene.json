@@ -1,0 +1,120 @@
+{
+  "version": 1,
+  "name": "rpg-sprites-2d",
+  "nodes": [
+    {
+      "name": "camera",
+      "components": [
+        {
+          "component": "camera",
+          "eye": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 10.0
+          },
+          "center": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "near": 0.1,
+          "far": 100.0,
+          "primary": true,
+          "projection": "orthographic",
+          "orthoHalfHeight": 3.5
+        }
+      ]
+    },
+    {
+      "name": "light",
+      "components": [
+        {
+          "component": "light",
+          "type": "Directional"
+        }
+      ]
+    },
+    {
+      "name": "background-plane",
+      "transform": {
+        "position": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": -4.0
+        },
+        "scale": {
+          "x": 16.0,
+          "y": 10.0,
+          "z": 1.0
+        }
+      },
+      "components": [
+        {
+          "component": "mesh_renderer",
+          "mesh": "sprite-background",
+          "material": "lit-shadow",
+          "cullMode": "None"
+        },
+        {
+          "component": "pbr_material",
+          "metallic": 0.0,
+          "roughness": 0.95
+        }
+      ]
+    },
+    {
+      "name": "ranger",
+      "transform": {
+        "position": {
+          "x": -1.7,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "scale": {
+          "x": 3.5,
+          "y": 3.5,
+          "z": 1.0
+        }
+      },
+      "components": [
+        {
+          "component": "sprite",
+          "texture": "woodland-rivals",
+          "pixelsPerUnit": 256.0,
+          "flipX": false
+        },
+        {
+          "component": "sprite_clips",
+          "clip": "hero-idle"
+        }
+      ]
+    },
+    {
+      "name": "thorn-beast",
+      "transform": {
+        "position": {
+          "x": 1.7,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "scale": {
+          "x": 3.5,
+          "y": 3.5,
+          "z": 1.0
+        }
+      },
+      "components": [
+        {
+          "component": "sprite",
+          "texture": "woodland-rivals",
+          "pixelsPerUnit": 256.0,
+          "flipX": true
+        },
+        {
+          "component": "sprite_clips",
+          "clip": "enemy-idle"
+        }
+      ]
+    }
+  ]
+}

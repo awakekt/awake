@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "kind": "sprite-gen-request",
+  "engine": "component-row",
+  "character": {
+    "id": "woodland-rivals",
+    "description": "An original teal-cloaked ranger and purple crystal thorn beast.",
+    "base_image": "source-sheet.png"
+  },
+  "cell": {
+    "shape": "square",
+    "width": 256,
+    "height": 256,
+    "size": 256,
+    "safe_margin": 24
+  },
+  "chroma_key": {
+    "name": "green",
+    "hex": "#00FF00",
+    "rgb": [
+      0,
+      255,
+      0
+    ]
+  },
+  "states": {
+    "hero-idle": {
+      "frames": 4,
+      "fps": 4,
+      "loop": true,
+      "action": "Generated subtle idle poses with planted feet."
+    },
+    "enemy-idle": {
+      "frames": 4,
+      "fps": 4,
+      "loop": true,
+      "action": "Generated subtle idle poses with planted feet."
+    }
+  }
+}

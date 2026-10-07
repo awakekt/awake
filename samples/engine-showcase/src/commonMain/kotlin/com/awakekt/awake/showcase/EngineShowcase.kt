@@ -17,6 +17,7 @@ import com.awakekt.awake.showcase.examples.InstancedCubesExampleDriver
 import com.awakekt.awake.showcase.examples.InstancedSkinnedExampleDriver
 import com.awakekt.awake.showcase.examples.NavChaseExampleDriver
 import com.awakekt.awake.showcase.examples.ParticleEmitterExampleDriver
+import com.awakekt.awake.showcase.examples.RpgSprites2dExampleAssets
 import com.awakekt.awake.showcase.examples.SkinnedExampleDriver
 import com.awakekt.awake.showcase.examples.SpatialAudioExampleDriver
 import com.awakekt.awake.showcase.examples.Sprites2dExampleDriver
@@ -157,6 +158,12 @@ val EngineShowcases = listOf(
         onDeactivated = { _ -> Sprites2dExampleDriver.detach() },
     ),
     EngineShowcase(
+        id = "rpg-sprites-2d",
+        title = "RPG characters",
+        scenePath = "assets/examples/rpg-sprites-2d.scene.json",
+        summary = "An original ranger and thorn beast playing separate manifest-imported idle loops.",
+    ),
+    EngineShowcase(
         id = "spatial-audio",
         title = "Spatial audio",
         scenePath = "assets/examples/spatial-audio.scene.json",
@@ -189,6 +196,7 @@ suspend fun preloadEngineShowcases() {
     InstancedSkinnedExampleDriver.preload()
     ParticleEmitterExampleDriver.preload()
     Sprites2dExampleDriver.preload()
+    RpgSprites2dExampleAssets.preload()
 }
 
 /** Registers the meshes and materials the showcase scene documents and drivers request. */
@@ -205,6 +213,7 @@ fun SceneAssetsDsl.registerEngineShowcaseAssets() {
     material("particle-levelup") { ParticleEmitterExampleDriver.createLevelupMaterial(this) }
     mesh("sprite-background") { Sprites2dExampleDriver.createBackgroundMesh(this) }
     texture("lantern-firefly") { Sprites2dExampleDriver.texture() }
+    texture("woodland-rivals") { RpgSprites2dExampleAssets.texture() }
     mesh("sphere") { renderer.createMesh(generate { sphere(radius = 0.5f, colored = true) }) }
     mesh("wedge") { renderer.createMesh(TerrainPhysicsExampleDriver.wedgeGeometry) }
     mesh("heightfield-terrain") { renderer.createMesh(TerrainExampleAsset.geometry) }
