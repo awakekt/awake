@@ -6,6 +6,7 @@
 package com.awakekt.awake.ai.behavior.patrol
 
 import com.awakekt.awake.ai.behavior.PatrolBehavior
+import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneValidationIssue
 import com.awakekt.awake.scene.document.SceneVec3
@@ -27,8 +28,8 @@ import kotlinx.serialization.Serializable
 data class ScenePatrol(
     val stops: List<SceneVec3> = emptyList(),
     val style: Style = Style.Loop,
-    val dwellSeconds: Float = PatrolBehavior.DEFAULT_DWELL_SECONDS,
-    val speed: Float = PatrolBehavior.DEFAULT_SPEED,
+    @PropertyRange(min = 0.0) val dwellSeconds: Float = PatrolBehavior.DEFAULT_DWELL_SECONDS,
+    @PropertyRange(min = 0.0, exclusiveMin = true) val speed: Float = PatrolBehavior.DEFAULT_SPEED,
     val repathInterval: Float = PatrolBehavior.DEFAULT_REPATH_INTERVAL,
     val waypointRadius: Float = PatrolBehavior.DEFAULT_WAYPOINT_RADIUS,
 ) : SceneComponent {

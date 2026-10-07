@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.controls.camera
 
+import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.binding.SceneComponentBinding
@@ -43,7 +44,7 @@ data class SceneCameraRig(
     val pitch: Float = 0f,
     val yaw: Float = 0f,
     val offset: SceneVec3 = SceneVec3(0f, CameraRig.DEFAULT_EYE_HEIGHT, 0f),
-    val flySpeed: Float = CameraRig.DEFAULT_FLY_SPEED,
+    @PropertyRange(min = 0.0, exclusiveMin = true) val flySpeed: Float = CameraRig.DEFAULT_FLY_SPEED,
 ) : SceneComponent {
     override fun validate(path: String): List<SceneValidationIssue> = buildList {
         if (minDistance < 0f || minDistance > maxDistance) {

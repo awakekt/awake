@@ -6,6 +6,7 @@
 package com.awakekt.awake.ai.behavior.flee
 
 import com.awakekt.awake.ai.behavior.FleeBehavior
+import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneValidationIssue
 import kotlinx.serialization.SerialName
@@ -26,10 +27,10 @@ import kotlinx.serialization.Serializable
 @SerialName("flee")
 data class SceneFlee(
     val threat: String? = null,
-    val panicRadius: Float = FleeBehavior.DEFAULT_PANIC_RADIUS,
+    @PropertyRange(min = 0.0, exclusiveMin = true) val panicRadius: Float = FleeBehavior.DEFAULT_PANIC_RADIUS,
     val safeRadius: Float = FleeBehavior.DEFAULT_SAFE_RADIUS,
     val fleeDistance: Float = FleeBehavior.DEFAULT_FLEE_DISTANCE,
-    val speed: Float = FleeBehavior.DEFAULT_SPEED,
+    @PropertyRange(min = 0.0, exclusiveMin = true) val speed: Float = FleeBehavior.DEFAULT_SPEED,
     val repathInterval: Float = FleeBehavior.DEFAULT_REPATH_INTERVAL,
     val waypointRadius: Float = FleeBehavior.DEFAULT_WAYPOINT_RADIUS,
 ) : SceneComponent {

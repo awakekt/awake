@@ -6,6 +6,7 @@
 package com.awakekt.awake.ai.behavior.chase
 
 import com.awakekt.awake.ai.behavior.ChaseBehavior
+import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneValidationIssue
 import kotlinx.serialization.SerialName
@@ -23,7 +24,7 @@ import kotlinx.serialization.Serializable
 @SerialName("chase")
 data class SceneChase(
     val target: String? = null,
-    val speed: Float = ChaseBehavior.DEFAULT_SPEED,
+    @PropertyRange(min = 0.0, exclusiveMin = true) val speed: Float = ChaseBehavior.DEFAULT_SPEED,
     val repathInterval: Float = ChaseBehavior.DEFAULT_REPATH_INTERVAL,
     val waypointRadius: Float = ChaseBehavior.DEFAULT_WAYPOINT_RADIUS,
 ) : SceneComponent {

@@ -92,7 +92,29 @@ class RangeAnnotationsAreEnforcedTest {
         val paths = constrainedProperties().map { "${it.component}.${it.steps.joinToString(".")}" }
 
         assertTrue(
-            paths.containsAll(listOf("camera.near", "camera.fovYDegrees", "light.shadowDistance", "tone_mapping.exposure", "spin_control.speed")),
+            paths.containsAll(
+                listOf(
+                    "camera.near",
+                    "camera.fovYDegrees",
+                    "light.shadowDistance",
+                    "tone_mapping.exposure",
+                    "spin_control.speed",
+                    "camera_rig.flySpeed",
+                    "movement_control.speed",
+                    "movement_control.runSpeed",
+                    "movement_control.turnSpeed",
+                    "character_controller.radius",
+                    "character_controller.halfHeight",
+                    "character_controller.stepHeight",
+                    "character_controller.jumpSpeed",
+                    "navigation.cellSize",
+                    "patrol.dwellSeconds",
+                    "patrol.speed",
+                    "chase.speed",
+                    "flee.panicRadius",
+                    "flee.speed",
+                ),
+            ),
             "the annotations this test exists to check were not found: $paths",
         )
     }

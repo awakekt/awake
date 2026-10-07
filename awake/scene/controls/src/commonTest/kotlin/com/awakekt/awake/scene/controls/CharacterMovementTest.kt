@@ -43,7 +43,13 @@ class CharacterMovementTest {
         val player = world.create()
         val transform = Transform()
         world.add(player, transform)
-        world.add(player, MovementControl().apply { moveZ = 1f; speed = 6f })
+        world.add(
+            player,
+            MovementControl().apply {
+                moveZ = 1f
+                speed = 6f
+            },
+        )
 
         MatrixRelativeMovementSystem(speed = 2f).update(world, 1f)
 

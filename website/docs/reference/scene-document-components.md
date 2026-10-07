@@ -107,7 +107,7 @@ How a camera follows or orbits. `SceneCameraRig`.
 | `pitch` | number | `0` | Pitch in radians. Negative looks down. |
 | `yaw` | number | `0` | Yaw in radians. |
 | `offset` | vector | `{x: 0, y: 1.8, z: 0}` | Aim point relative to the target, or the pivot when there is none. |
-| `flySpeed` | number | `10` | Speed in `FreeFly` mode. |
+| `flySpeed` | number | `10` | Speed in `FreeFly` mode. Above 0. |
 
 ## `canvas_element`
 

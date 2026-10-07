@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.ai.behavior.navigation
 
+import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.navigation.grid.NavGrid
 import com.awakekt.awake.navigation.grid.NavGridTile
 import com.awakekt.awake.scene.document.SceneComponent
@@ -33,7 +34,7 @@ import kotlinx.serialization.Serializable
 @SerialName("navigation")
 data class SceneNavigation(
     val rows: List<String> = emptyList(),
-    val cellSize: Float = DEFAULT_CELL_SIZE,
+    @PropertyRange(min = 0.0, exclusiveMin = true) val cellSize: Float = DEFAULT_CELL_SIZE,
     val originX: Float = 0f,
     val originZ: Float = 0f,
 ) : SceneComponent {

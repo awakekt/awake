@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.controls.movement
 
+import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.binding.SceneComponentBinding
@@ -29,9 +30,9 @@ import kotlin.reflect.KClass
 @Serializable
 @SerialName("movement_control")
 data class SceneMovementControl(
-    val speed: Float? = null,
-    val runSpeed: Float? = null,
-    val turnSpeed: Float = 0f,
+    @PropertyRange(min = 0.0, exclusiveMin = true) val speed: Float? = null,
+    @PropertyRange(min = 0.0, exclusiveMin = true) val runSpeed: Float? = null,
+    @PropertyRange(min = 0.0) val turnSpeed: Float = 0f,
 ) : SceneComponent {
     override fun validate(path: String): List<SceneValidationIssue> = buildList {
         if (speed != null && speed <= 0f) {
