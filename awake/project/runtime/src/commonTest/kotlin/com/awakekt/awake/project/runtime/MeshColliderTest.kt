@@ -37,19 +37,19 @@ class MeshColliderTest {
 
     @Test
     fun raysHitTheRampWhereItsTrianglesAreUnderTheNodesTransform() = runTest {
-        installPlayableComponents()
+        installProjectComponents()
         val scene = SceneLoader.decode(SCENE)
         val world = World()
         scene.instantiate(world = world)
         val physics = createJoltPhysicsWorld()
         try {
-            val services = PlayServices(
+            val services = SceneHostServices(
                 input = { GameplayInput(Input().currentSnapshot, InputOwnership()) },
                 renderer = NoopRenderer(),
                 physics = physics,
-                collisionMeshes = loadCollisionMeshes(scene, files()),
+                content = loadSceneContent(scene, files()),
             )
-            playSystemsFor(scene, services).fixed.forEach { it.update(world, STEP) }
+            sceneSystemsFor(scene, services).fixed.forEach { it.update(world, STEP) }
 
             assertRampUnder(physics)
         } finally {
@@ -59,19 +59,19 @@ class MeshColliderTest {
 
     @Test
     fun aConvexHullBodyFallsAndSettlesOnTheGround() = runTest {
-        installPlayableComponents()
+        installProjectComponents()
         val scene = SceneLoader.decode(HULL_FALL_SCENE)
         val world = World()
         scene.instantiate(world = world)
         val physics = createJoltPhysicsWorld()
         try {
-            val services = PlayServices(
+            val services = SceneHostServices(
                 input = { GameplayInput(Input().currentSnapshot, InputOwnership()) },
                 renderer = NoopRenderer(),
                 physics = physics,
-                collisionMeshes = loadCollisionMeshes(scene, files()),
+                content = loadSceneContent(scene, files()),
             )
-            val systems = playSystemsFor(scene, services).fixed
+            val systems = sceneSystemsFor(scene, services).fixed
             repeat(180) { systems.forEach { it.update(world, STEP) } }
 
             var hullY: Float? = null
@@ -122,7 +122,7 @@ class MeshColliderTest {
         val sources = mapOf(MANIFEST_PATH to MANIFEST, "scenes/main.scene.json" to SCENE.replace("props/ramp.glb", "props/missing.glb"))
         val files = AssetSource { path -> runCatching { sources.getValue(path.value).encodeToByteArray() } }
 
-        val error = assertFailsWith<IllegalArgumentException> { loadPlayableProject(files, ::createJoltPhysicsWorld) }
+        val error = assertFailsWith<IllegalArgumentException> { loadProject(files, physicsWorld = ::createJoltPhysicsWorld) }
 
         assertTrue("props/missing.glb" in error.message.orEmpty() && "Bridge" in error.message.orEmpty(), error.message)
     }

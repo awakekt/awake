@@ -7,6 +7,7 @@ package com.awakekt.awake.scene.physics
 
 import com.awakekt.awake.physics.BodyHandle
 import com.awakekt.awake.physics.CollisionLayer
+import com.awakekt.awake.physics.DegreesOfFreedom
 import com.awakekt.awake.physics.MotionType
 import com.awakekt.awake.physics.PhysicsShape
 import com.awakekt.awake.physics.defaultLayerFor
@@ -54,4 +55,6 @@ data class PhysicsBody(
      */
     val sensor: Boolean = false,
     var handle: BodyHandle? = null,
+    /** Allowed motion in world axes, fixed at creation like [layer] and [sensor]. */
+    val degreesOfFreedom: DegreesOfFreedom = DegreesOfFreedom.ALL,
 )

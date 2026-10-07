@@ -190,6 +190,14 @@ public final class com/awakekt/awake/physics/ConvexHullShape : com/awakekt/awake
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/physics/DegreesOfFreedom : java/lang/Enum {
+	public static final field ALL Lcom/awakekt/awake/physics/DegreesOfFreedom;
+	public static final field PLANE_2D Lcom/awakekt/awake/physics/DegreesOfFreedom;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/physics/DegreesOfFreedom;
+	public static fun values ()[Lcom/awakekt/awake/physics/DegreesOfFreedom;
+}
+
 public final class com/awakekt/awake/physics/DistanceConstraint : com/awakekt/awake/physics/Constraint {
 	public synthetic fun <init> (JJLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FFILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (JJLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FFLkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -306,6 +314,8 @@ public abstract interface class com/awakekt/awake/physics/PhysicsWorld {
 	public abstract fun applyBuoyancy-QB6aDRY (JFLcom/awakekt/awake/physics/Buoyancy;F)V
 	public abstract fun createBody-KN-qpMI (Lcom/awakekt/awake/physics/PhysicsShape;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Quat;Lcom/awakekt/awake/physics/MotionType;IZ)J
 	public static synthetic fun createBody-KN-qpMI$default (Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/physics/PhysicsShape;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Quat;Lcom/awakekt/awake/physics/MotionType;IZILjava/lang/Object;)J
+	public fun createBody-WMOo7Bc (Lcom/awakekt/awake/physics/PhysicsShape;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Quat;Lcom/awakekt/awake/physics/MotionType;IZLcom/awakekt/awake/physics/DegreesOfFreedom;)J
+	public static synthetic fun createBody-WMOo7Bc$default (Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/physics/PhysicsShape;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Quat;Lcom/awakekt/awake/physics/MotionType;IZLcom/awakekt/awake/physics/DegreesOfFreedom;ILjava/lang/Object;)J
 	public abstract fun createConstraint-TjAUSrg (Lcom/awakekt/awake/physics/Constraint;)J
 	public abstract fun destroy ()V
 	public abstract fun destroyBody-EMivcsM (J)V
@@ -333,6 +343,8 @@ public abstract interface class com/awakekt/awake/physics/PhysicsWorld {
 
 public final class com/awakekt/awake/physics/PhysicsWorld$DefaultImpls {
 	public static synthetic fun createBody-KN-qpMI$default (Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/physics/PhysicsShape;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Quat;Lcom/awakekt/awake/physics/MotionType;IZILjava/lang/Object;)J
+	public static fun createBody-WMOo7Bc (Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/physics/PhysicsShape;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Quat;Lcom/awakekt/awake/physics/MotionType;IZLcom/awakekt/awake/physics/DegreesOfFreedom;)J
+	public static synthetic fun createBody-WMOo7Bc$default (Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/physics/PhysicsShape;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Quat;Lcom/awakekt/awake/physics/MotionType;IZLcom/awakekt/awake/physics/DegreesOfFreedom;ILjava/lang/Object;)J
 	public static synthetic fun overlapShape-Wy0u3Nk$default (Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/physics/PhysicsShape;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/physics/CollisionLayer;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 	public static synthetic fun raycast-DMjTmNA$default (Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FLcom/awakekt/awake/physics/CollisionLayer;ILjava/lang/Object;)Lcom/awakekt/awake/physics/RaycastHit;
 	public static synthetic fun shapeCast-KJBOitM$default (Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/physics/PhysicsShape;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/physics/CollisionLayer;Lcom/awakekt/awake/physics/BodyHandle;ILjava/lang/Object;)Lcom/awakekt/awake/physics/ShapeCastHit;

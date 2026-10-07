@@ -17,25 +17,13 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.project.AwakeProjectManifest
 import com.awakekt.awake.project.AwakeProjectValidator
-import com.awakekt.awake.render.texture.TextureAsset
-import com.awakekt.awake.scene.ai.AiBehaviorBindings
 import com.awakekt.awake.scene.authoring.SceneAppDsl
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
-import com.awakekt.awake.scene.character.CharacterControllerBinding
-import com.awakekt.awake.scene.character.SceneCharacterController
 import com.awakekt.awake.scene.controls.camera.ActiveCamera
-import com.awakekt.awake.scene.controls.camera.CameraRigBinding
-import com.awakekt.awake.scene.controls.movement.MovementControlBinding
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.document.SceneDocument
-import com.awakekt.awake.scene.document.SceneLoader
 import com.awakekt.awake.scene.document.SceneNode
-import com.awakekt.awake.scene.document.withPrefabs
 import com.awakekt.awake.scene.gltf.GltfAssetResolver
-import com.awakekt.awake.scene.particles.loadParticleSprites
-import com.awakekt.awake.scene.physics.CollisionMeshSource
-import com.awakekt.awake.scene.physics.PhysicsBodyBinding
-import com.awakekt.awake.scene.physics.ScenePhysicsBody
 import com.awakekt.awake.scene.rendering.Camera
 import com.awakekt.awake.scene.rendering.animation.Animator
 import com.awakekt.awake.scene.rendering.animation.SkinnedPose
@@ -43,16 +31,14 @@ import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer
 import com.awakekt.awake.scene.runtime.DefaultSceneComponentResolvers
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
-import com.awakekt.awake.scene.shader.ShaderEffectAssets
-import com.awakekt.awake.scene.shader.loadShaderEffects
 import kotlin.math.PI
 
 /** Where a project keeps its manifest, relative to the project root. */
 const val PROJECT_MANIFEST = "awake.project.json"
 
 /**
- * A project read from its files, ready to [playProject]: its manifest, entry scene, loaded models,
- * and a physics world when the scene has bodies or characters.
+ * A project read from its files, ready to [runProject]: its manifest, entry scene, loaded models,
+ * what its capabilities loaded, and a physics world when the scene has bodies or characters.
  *
  * It owns that physics world, whose native memory nothing else frees: [close] it once the scene
  * that plays it has stopped. A project is played once, because the bodies it creates stay in its
@@ -62,18 +48,16 @@ const val PROJECT_MANIFEST = "awake.project.json"
  * @property scene Loaded initial scene document ready for simulation instantiation.
  * @property models Asset resolver providing access to loaded glTF meshes and models.
  * @property physics Physics simulation world instance if required by the scene, or `null`.
- * @property particleSprites Particle texture assets keyed by asset identifier.
- * @property collisionMeshes Triangles of the models the scene's `mesh` collision shapes name.
- * @property shaderEffects The shader documents and images the scene's `shader_effect`s use.
+ * @property content What Core's and [capabilities]' loads read from the project's files.
+ * @property capabilities The capabilities the project was loaded with besides Core's.
  */
-class PlayableProject internal constructor(
+class LoadedProject internal constructor(
     val manifest: AwakeProjectManifest,
     val scene: SceneDocument,
     internal val models: GltfAssetResolver,
     internal val physics: PhysicsWorld?,
-    internal val particleSprites: Map<String, TextureAsset> = emptyMap(),
-    internal val collisionMeshes: CollisionMeshSource? = null,
-    internal val shaderEffects: ShaderEffectAssets = ShaderEffectAssets.Empty,
+    internal val content: SceneContent = SceneContent.Empty,
+    internal val capabilities: List<SceneCapability> = emptyList(),
 ) : AutoCloseable {
     private var closed = false
 
@@ -86,73 +70,72 @@ class PlayableProject internal constructor(
 
 /**
  * Reads [PROJECT_MANIFEST] and its entry scene from [files], a project root, loads the glTF models
- * the scene names (drawn, and collided with through [loadCollisionMeshes]), and calls [physicsWorld]
- * when the scene has bodies or characters. The host picks the backend, for example
- * `::createJoltPhysicsWorld`, and the returned project owns the world it makes. Throws [IllegalArgumentException] naming every problem in the
- * manifest, a collision model that can't be read, or a scene that needs physics when
- * [physicsWorld] is null.
+ * the scene names and what each capability reads, and calls [physicsWorld] when the scene has bodies
+ * or characters. The host picks the backend, for example `::createJoltPhysicsWorld`, and the returned
+ * project owns the world it makes.
  *
- * Decoding installs Core's default scene components and the controls, physics and character ones
- * into the process-wide registry, as `SceneAppLifecycleRuntime` does for the defaults when it starts.
- * Installing twice is harmless.
+ * The scene runs with Core's capabilities and then [capabilities], in order: a game passes its own,
+ * and those of the packages it depends on, so their components decode and their systems run. A
+ * plugin the manifest marks `required` must be one of them, by id.
+ *
+ * Throws [IllegalArgumentException] naming every problem in the manifest, a required plugin with no
+ * capability, a component no capability registers, content a capability cannot load (a collision
+ * model that can't be read, for one), or a scene that needs physics when [physicsWorld] is null.
+ *
+ * Decoding installs Core's default scene components and every capability's into the process-wide
+ * registry, as `SceneAppLifecycleRuntime` does for the defaults when it starts. Installing twice is
+ * harmless.
  */
-suspend fun loadPlayableProject(
+suspend fun loadProject(
     files: AssetSource,
+    capabilities: List<SceneCapability> = emptyList(),
     physicsWorld: (suspend () -> PhysicsWorld)? = null,
-): PlayableProject {
+): LoadedProject {
     val manifest = AwakeProjectValidator.decodeManifest(files.readText(PROJECT_MANIFEST))
     val issues = AwakeProjectValidator.manifestIssues(manifest)
     require(issues.isEmpty()) { "$PROJECT_MANIFEST is invalid: ${issues.joinToString("; ")}" }
+    val installed = installedCapabilities(capabilities)
+    requireRequiredPlugins(manifest, installed)
 
-    installPlayableComponents()
-    val scene = SceneLoader.decode(files.readText(manifest.entryScene)).withPrefabs { files.readText(it) }
-    require(!scene.hasRouteBehaviours() || scene.navigation() != null) {
-        "${manifest.entryScene} has patrol, chase or flee behaviours but no navigation component to route them over"
-    }
-
+    installProjectComponents(capabilities)
+    val scene = decodeScene(manifest.entryScene, files)
     val models = GltfAssetResolver().apply { setAssetSource(files) }
     scene.nodes.flatMap { it.meshNames() }
         .filter(models::canResolveMesh)
         .map(models::modelPath)
         .distinct()
         .forEach { models.preload(it) }
-    val needsPhysics = scene.nodes.any {
-        it.has(ScenePhysicsBody::class) || it.has(SceneCharacterController::class) || it.hasTerrainCollider()
-    }
     // Every file is read before the physics world exists, so a missing model, or a load cancelled
     // part way, leaves no world behind that nothing would destroy.
-    val collisionMeshes = if (needsPhysics) loadCollisionMeshes(scene, files) else null
-    // A document or image that fails is logged and loses only its own effects; this never throws.
-    val shaderEffects = loadShaderEffects(scene, files)
-    val particleSprites = loadParticleSprites(scene, files)
-    val physics = if (needsPhysics) {
+    val content = loadContent(scene, files, installed, label = manifest.entryScene)
+    val physics = if (PhysicsCapability.needsPhysics(scene)) {
         requireNotNull(physicsWorld) { "${manifest.entryScene} has physics bodies or characters; pass a physicsWorld factory" }()
     } else {
         null
     }
-    return PlayableProject(manifest, scene, models, physics, particleSprites, collisionMeshes, shaderEffects)
+    return LoadedProject(manifest, scene, models, physics, content, capabilities)
 }
 
-/** Installs Core's default scene components and the controls, physics and character ones. Harmless twice. */
-internal fun installPlayableComponents() {
+/** Installs Core's default scene components and every capability's. Harmless twice. */
+internal fun installProjectComponents(capabilities: List<SceneCapability> = emptyList()) {
     DefaultSceneComponentResolvers.install()
-    PROJECT_COMPONENTS.forEach(SceneComponentRegistry::registerGlobal)
+    installedCapabilities(capabilities).flatMap { it.components }.forEach(SceneComponentRegistry::registerGlobal)
 }
 
 /**
- * Plays [project] in this scene: its [PlayableProject.scene], the built-in meshes and the models it
- * loaded, the systems its components call for (the ones [playSystemsFor] builds), and a primary
+ * Plays [project] in this scene: its [LoadedProject.scene], the built-in meshes and the models it
+ * loaded, the systems its components call for (the ones [sceneSystemsFor] builds), and a primary
  * camera. With [touchControls], the scene's touch-only canvas controls are shown. Every speed,
- * distance and size comes from the scene; this adds no tuning of its own. [PlayableProject.close]
+ * distance and size comes from the scene; this adds no tuning of its own. [LoadedProject.close]
  * the project once the scene has stopped.
  */
-fun SceneAppDsl.playProject(project: PlayableProject, touchControls: Boolean = false) {
+fun SceneAppDsl.runProject(project: LoadedProject, touchControls: Boolean = false) {
     scene(project.scene)
     assets {
         builtInSceneAssets()
         resolver(project.models)
     }
-    registerPlaySpecs(project.scene, project.physics, project.particleSprites, project.collisionMeshes, project.shaderEffects)
+    registerSystemSpecs(project)
     onReady {
         showTouchControls = touchControls
         activatePrimaryCamera(world)
@@ -197,14 +180,7 @@ private fun SceneAppLifecycleRuntime.startSkinnedAnimations(models: GltfAssetRes
     }
 }
 
-private val PROJECT_COMPONENTS = listOf(
-    MovementControlBinding,
-    CameraRigBinding,
-    PhysicsBodyBinding,
-    CharacterControllerBinding,
-) + AiBehaviorBindings.bindings
-
-private suspend fun AssetSource.readText(path: String): String =
+internal suspend fun AssetSource.readText(path: String): String =
     read(AssetPath(path)).getOrElse { throw IllegalArgumentException("Can't read $path from the project", it) }
         .decodeToString()
 

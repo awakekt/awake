@@ -149,7 +149,7 @@ A node names the document and sets its parameters:
 --8<-- "website/docs/snippets/rendering/shader-effect.scene.json"
 ```
 
-`loadPlayableProject` reads every document a scene names, once each, and `playProject` draws them. In
+`loadProject` reads every document a scene names, once each, and `runProject` draws them. In
 your own app, call `loadShaderEffects` with the decoded scene document and the project's
 `AssetSource`, and give the result to a `ShaderEffectSystem`. The system attaches each document's
 pipeline after the engine starts, through `host`, which is `renderer as? ContentFeatureHost`. Both
@@ -159,7 +159,7 @@ backends implement it:
 --8<-- "awake/scene/shader/src/desktopTest/kotlin/com/awakekt/awake/scene/shader/ShaderEffectDocsSampleTest.kt:attach"
 ```
 
-Add the system to the scene's frame systems, and call `system.release()` when the scene closes.
+Add the system to the scene's frame systems, and `close()` it when the scene closes.
 
 ### What a document says
 

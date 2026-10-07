@@ -49,23 +49,23 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * [playSystemsFor] is the decision of which systems a scene needs, taken out of `playProject` so a
+ * [sceneSystemsFor] is the decision of which systems a scene needs, taken out of `runProject` so a
  * host that plays a scene in a world of its own, as an editor's Play does, runs the same set. These
  * use it as such a host does: no app builder, only the systems, driven by hand.
  */
-class PlaySystemsTest {
+class SceneSystemSetTest {
 
     private val input = Input()
 
-    private fun services(physics: PhysicsWorld? = null) = PlayServices(
+    private fun services(physics: PhysicsWorld? = null) = SceneHostServices(
         input = { GameplayInput(input.currentSnapshot, InputOwnership()) },
         renderer = NoopRenderer(),
         physics = physics,
     )
 
-    private fun systemsFor(scene: String, physics: PhysicsWorld? = null): PlaySystems {
-        installPlayableComponents()
-        return playSystemsFor(SceneLoader.decode(scene), services(physics))
+    private fun systemsFor(scene: String, physics: PhysicsWorld? = null): SceneSystemSet {
+        installProjectComponents()
+        return sceneSystemsFor(SceneLoader.decode(scene), services(physics))
     }
 
     private fun List<System>.has(type: KClass<out System>) = any { type.isInstance(it) }
@@ -96,7 +96,7 @@ class PlaySystemsTest {
     @Test
     fun aDayCycleGetsItsSystemAndAHostRunningItMovesTheSun() {
         assertTrue(!systemsFor(PLAIN_SCENE).frame.has(DayCycleSystem::class))
-        installPlayableComponents()
+        installProjectComponents()
         val world = World()
         SceneLoader.decode(DAY_SCENE).instantiate(world = world)
         val systems = systemsFor(DAY_SCENE)
@@ -129,7 +129,7 @@ class PlaySystemsTest {
     fun interpolateBlendsOnlyTheFixedSystemsThatKeepTwoStates() {
         val fixedBlend = BlendRecorder()
         val frameBlend = BlendRecorder()
-        val play = PlaySystems(fixed = listOf(fixedBlend), frame = listOf(frameBlend), release = {})
+        val play = SceneSystemSet(fixed = listOf(fixedBlend), frame = listOf(frameBlend), release = {})
 
         play.interpolate(World(), ALPHA)
 
@@ -137,7 +137,7 @@ class PlaySystemsTest {
         assertEquals(emptyList(), frameBlend.alphas, "a frame system runs after the blend and reads it")
     }
 
-    /** As `playProject` does, a host that interpolates draws a falling body between its last two steps. */
+    /** As `runProject` does, a host that interpolates draws a falling body between its last two steps. */
     @Test
     fun interpolatePlacesAFallingBodyBetweenItsLastTwoSteps() = runTest {
         val physics = createJoltPhysicsWorld()
@@ -205,7 +205,7 @@ class PlaySystemsTest {
 
     @Test
     fun aHostCanRunKeyframesWithoutAnAppBuilder() {
-        installPlayableComponents()
+        installProjectComponents()
         val world = World()
         SceneLoader.decode(KEYFRAME_SCENE).instantiate(world = world)
         val systems = systemsFor(KEYFRAME_SCENE)
@@ -218,7 +218,7 @@ class PlaySystemsTest {
 
     @Test
     fun aHostCanPlayASpritesClipsWithoutAnAppBuilder() {
-        installPlayableComponents()
+        installProjectComponents()
         val world = World()
         SceneLoader.decode(CLIPS_SCENE).instantiate(world = world)
         val systems = systemsFor(CLIPS_SCENE)
@@ -240,7 +240,7 @@ class PlaySystemsTest {
     }
 
     @Test
-    fun playProjectStepsSpriteClipsToo() = runTest {
+    fun runProjectStepsSpriteClipsToo() = runTest {
         val game = launchProject(CLIPS_SCENE)
         val hero = game.world.named("Hero")
 
@@ -252,7 +252,7 @@ class PlaySystemsTest {
 
     @Test
     fun aHostCanRunAPhysicsCharacterOnTheFixedStep() = runTest {
-        installPlayableComponents()
+        installProjectComponents()
         val physics = createJoltPhysicsWorld()
         val world = World()
         SceneLoader.decode(PHYSICS_SCENE).instantiate(world = world)
@@ -277,11 +277,11 @@ class PlaySystemsTest {
     }
 
     @Test
-    fun playProjectAndAHostRunningPlaySystemsMoveTheSameScene() = runTest {
+    fun runProjectAndAHostRunningTheSceneSystemSetMoveTheSameScene() = runTest {
         val viaProject = launchProject(KEYFRAME_SCENE)
         repeat(HALF_A_LOOP) { viaProject.frame() }
 
-        installPlayableComponents()
+        installProjectComponents()
         val world = World()
         SceneLoader.decode(KEYFRAME_SCENE).instantiate(world = world)
         val systems = systemsFor(KEYFRAME_SCENE)
@@ -300,8 +300,8 @@ class PlaySystemsTest {
     }
 
     private suspend fun launchProject(scene: String): Game {
-        val project = loadPlayableProject(files(scene))
-        val game = app { scene("play") { playProject(project) } }
+        val project = loadProject(files(scene))
+        val game = app { scene("play") { runProject(project) } }
         game.ready(TestRenderer())
         val runtime = game.requireService<SceneAppLifecycleRuntime>()
         return Game(runtime) { game.update(DELTA, WIDTH, HEIGHT) }.also { it.frame() }

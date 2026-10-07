@@ -50,9 +50,7 @@ kotlin {
     // submodule (ios-native/JoltC/JoltPhysics) and its own CMakeLists.txt builds both
     // `joltc` (the C wrapper) and `Jolt` (the physics engine itself, via
     // `add_subdirectory(JoltPhysics/Build)`) as separate static libraries in one configure.
-    // wasmJs (JoltPhysics.js) is still deferred -- that target keeps its explicit
-    // TODO()-throwing stub `JoltPhysicsWorld` just so the module compiles there, no JS
-    // interop of any kind lives here yet.
+    // wasmJs uses JoltPhysics.js through the npm dependency below, with its own JS interop.
     //
     // One-time setup, from awake/backend/jolt/ios-native/JoltC:
     //   git submodule update --init --recursive

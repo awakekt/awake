@@ -95,7 +95,9 @@ sound has finished drops its handle, and `isPlaying` turns false.
 | Platform | `AudioPlayer` |
 | --- | --- |
 | Desktop | `JvmAudioPlayer`, through Java Sound. |
-| Android, iOS, Web | None in AwakeKt Engine yet: supply your own `AudioPlayer`, or use `NoOpAudioPlayer`. |
+| Android | `AndroidAudioPlayer`, through `AudioTrack`. |
+| Web | `WebAudioPlayer`, through Web Audio API. |
+| iOS | Supply your own `AudioPlayer`, or use `NoOpAudioPlayer`. |
 
 !!! warning "A spatial source out of range never auto-plays"
     `autoPlay` gets one attempt, on the first update. If the listener is beyond `maxDistance`

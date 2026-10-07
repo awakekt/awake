@@ -139,6 +139,7 @@ class PhysicsSystem(
                     physicsBody.motionType,
                     physicsBody.layer,
                     physicsBody.sensor,
+                    physicsBody.degreesOfFreedom,
                 )
                 physicsBody.handle = handle
                 handleToEntity[handle] = entity

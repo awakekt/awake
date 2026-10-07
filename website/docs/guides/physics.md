@@ -69,9 +69,34 @@ In an app, register it as a fixed-step system so it steps at the same rate on ev
 | `motion` | `STATIC` · `KINEMATIC` · `DYNAMIC` | `STATIC` | Level geometry, driven by code, or simulated. |
 | `layer` | integer or none | `0` for `STATIC`, `1` otherwise | Collision layer index. See [collision layers](#collision-layers). |
 | `sensor` | boolean | `false` | Detects what passes through it instead of blocking it. |
+| `degreesOfFreedom` | `ALL` · `PLANE_2D` | `ALL` | Allowed motion in world axes. `PLANE_2D` permits X/Y translation and Z rotation. |
 
 In Kotlin, `PhysicsBody(shape, motionType, layer, sensor)` takes any [shape](#shapes), not only the
 four a scene document can describe.
+
+## Physics in 2D
+
+Set `degreesOfFreedom` to `PLANE_2D` on a body to simulate in the XY plane:
+
+```json
+{
+  "component": "physics_body",
+  "shape": { "type": "box", "halfExtents": { "x": 0.5, "y": 0.5, "z": 0.25 } },
+  "motion": "DYNAMIC",
+  "degreesOfFreedom": "PLANE_2D"
+}
+```
+
+The Kotlin API takes `degreesOfFreedom = DegreesOfFreedom.PLANE_2D` in `createBody(...)` or
+`PhysicsBody(...)`. The restriction is fixed at creation and applies to velocity writes, impulses,
+gravity, contacts and kinematic movement. It uses Jolt's allowed degrees of freedom on Desktop,
+Android, iOS and Web; the solver enforces the restriction during simulation.
+
+The node's initial position and rotation are preserved. Translation on Z and rotation about X/Y
+are locked in world axes. Use a Z rotation for an upright 2D body. An origin shift can move the
+whole plane. Collision geometry remains three-dimensional: give boxes positive Z thickness and
+place bodies whose colliders should meet at overlapping Z positions. Sprite render ordering is
+independent of this setting.
 
 ## Collide with a model
 
@@ -90,9 +115,10 @@ not the triangles.
 The shape loads as a `MeshCollider` and `MeshColliderSystem` builds the body from it, so register
 that system before `PhysicsSystem`. It reads the triangles from a `CollisionMeshSource`;
 `loadCollisionMeshes(scene, files)` in `awake:project:runtime` is the glTF one, reading each model
-once and failing with the model path and node when one cannot be read. `loadPlayableProject` does
-all of this for you. A host that calls `playSystemsFor` itself passes
-`collisionMeshes = loadCollisionMeshes(scene, files)` in its `PlayServices`.
+once and failing with the model path and node when one cannot be read. `loadProject` does
+all of this for you. A host that calls `sceneSystemsFor` itself passes
+`content = loadSceneContent(scene, files)` in its `SceneHostServices`, which reads the collision
+meshes with everything else the scene's systems need.
 
 For moving props or sensors, use a `convex_hull` shape instead:
 

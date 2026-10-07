@@ -12,6 +12,7 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.BoxShape
 import com.awakekt.awake.physics.CapsuleShape
 import com.awakekt.awake.physics.CollisionLayer
+import com.awakekt.awake.physics.DegreesOfFreedom
 import com.awakekt.awake.physics.MotionType
 import com.awakekt.awake.physics.PhysicsShape
 import com.awakekt.awake.physics.SphereShape
@@ -89,6 +90,7 @@ data class SceneConvexHullShape(val mesh: String, val primitive: Int? = null) : 
  * @property motion Motion type controlling whether the body is static, kinematic, or dynamic.
  * @property layer Collision layer index, or `null` for the layer default matching [motion].
  * @property sensor Whether this body functions as a trigger sensor rather than a solid collider.
+ * @property degreesOfFreedom Allowed motion in world axes; `PLANE_2D` locks Z translation and X/Y rotation.
  */
 @Serializable
 @SerialName("physics_body")
@@ -97,6 +99,7 @@ data class ScenePhysicsBody(
     val motion: MotionType = MotionType.STATIC,
     @PropertyRange(min = 0.0) val layer: Int? = null,
     val sensor: Boolean = false,
+    val degreesOfFreedom: DegreesOfFreedom = DegreesOfFreedom.ALL,
 ) : SceneComponent {
     override fun validate(path: String): List<SceneValidationIssue> = buildList {
         val positive = when (shape) {
@@ -147,7 +150,7 @@ object PhysicsBodyBinding : SceneComponentBinding<PhysicsBody, ScenePhysicsBody>
     ) {
         val layer = component.layer?.let(::CollisionLayer) ?: defaultLayerFor(component.motion)
         if (component.shape is SceneMeshShape) {
-            world.add(entity, MeshCollider(component.shape.mesh, component.shape.primitive, layer))
+            world.add(entity, MeshCollider(component.shape.mesh, component.shape.primitive, layer, component.degreesOfFreedom))
             return
         }
         if (component.shape is SceneConvexHullShape) {
@@ -159,6 +162,7 @@ object PhysicsBodyBinding : SceneComponentBinding<PhysicsBody, ScenePhysicsBody>
                     motion = component.motion,
                     layer = layer,
                     sensor = component.sensor,
+                    degreesOfFreedom = component.degreesOfFreedom,
                 ),
             )
             return
@@ -170,6 +174,7 @@ object PhysicsBodyBinding : SceneComponentBinding<PhysicsBody, ScenePhysicsBody>
                 motionType = component.motion,
                 layer = layer,
                 sensor = component.sensor,
+                degreesOfFreedom = component.degreesOfFreedom,
             ),
         )
     }
@@ -180,6 +185,7 @@ object PhysicsBodyBinding : SceneComponentBinding<PhysicsBody, ScenePhysicsBody>
         return when {
             meshCollider != null -> ScenePhysicsBody(
                 shape = SceneMeshShape(meshCollider.mesh, meshCollider.primitive),
+                degreesOfFreedom = meshCollider.degreesOfFreedom,
                 layer = meshCollider.layer.index.takeIf { meshCollider.layer != defaultLayerFor(MotionType.STATIC) },
             )
             hullCollider != null -> ScenePhysicsBody(
@@ -187,6 +193,7 @@ object PhysicsBodyBinding : SceneComponentBinding<PhysicsBody, ScenePhysicsBody>
                 motion = hullCollider.motion,
                 layer = hullCollider.layer.index.takeIf { hullCollider.layer != defaultLayerFor(hullCollider.motion) },
                 sensor = hullCollider.sensor,
+                degreesOfFreedom = hullCollider.degreesOfFreedom,
             )
             else -> super.exportFrom(world, entity)
         }
@@ -199,6 +206,7 @@ object PhysicsBodyBinding : SceneComponentBinding<PhysicsBody, ScenePhysicsBody>
             motion = component.motionType,
             layer = component.layer.index.takeIf { component.layer != defaultLayerFor(component.motionType) },
             sensor = component.sensor,
+            degreesOfFreedom = component.degreesOfFreedom,
         )
     }
 }

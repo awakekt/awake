@@ -16,7 +16,9 @@ import com.awakekt.awake.physics.CollisionLayers
 import com.awakekt.awake.physics.Constraint
 import com.awakekt.awake.physics.ConstraintHandle
 import com.awakekt.awake.physics.ContactEvent
+import com.awakekt.awake.physics.DegreesOfFreedom
 import com.awakekt.awake.physics.MotionType
+import com.awakekt.awake.physics.PhysicsCapabilityException
 import com.awakekt.awake.physics.PhysicsShape
 import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.physics.RaycastHit
@@ -27,10 +29,24 @@ import com.awakekt.awake.scene.physics.PhysicsBody
 import com.awakekt.awake.scene.physics.PhysicsSystem
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class PhysicsSystemTest {
+    @Test
+    fun aLegacyBackendDelegatesAllButRejectsRestrictedMotionBeforeCreatingABody() {
+        val backend = FakePhysicsWorld()
+        backend.createBody(SphereShape(0.5f), Vec3f(), Quat.IDENTITY, MotionType.DYNAMIC,
+            degreesOfFreedom = DegreesOfFreedom.ALL)
+        assertEquals(1, backend.createBodyCallCount)
+        assertFailsWith<PhysicsCapabilityException> {
+            backend.createBody(SphereShape(0.5f), Vec3f(), Quat.IDENTITY, MotionType.DYNAMIC,
+                degreesOfFreedom = DegreesOfFreedom.PLANE_2D)
+        }
+        assertEquals(1, backend.createBodyCallCount)
+    }
+
     /** Pure ECS-wiring fake -- no real simulation, just records calls and hands back a
      * scripted [syncTransforms] result so this test doesn't need jolt-jni. */
     private class FakePhysicsWorld : PhysicsWorld {

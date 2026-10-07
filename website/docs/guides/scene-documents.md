@@ -113,6 +113,7 @@ owns the component, and must be registered before a document that uses them is d
 | --- | --- | --- |
 | `SceneComponentRegistry().registerControls()` | `scene:controls` | `movement_control`, `camera_rig` |
 | `SceneComponentRegistry.registerGlobal(binding)` | any | that binding's id, for every load |
+| `loadProject(files, capabilities = …)` | `project:runtime` | each [scene capability](scene-capabilities.md)'s ids, for that project |
 
 A registry you build is passed to `instantiate`. Inside an app, where `scene(document)` uses the
 global registry, register with `registerGlobal`; [Cameras and controls](cameras-and-controls.md)
@@ -167,7 +168,7 @@ request, and the app's `assets { }` turns each request into a `MeshRenderer`.
 
 !!! tip "Prefabs"
     A node with `prefab_link { path }` places a prefab file there. Run `withPrefabs` on the decoded
-    document before `instantiate`; `loadPlayableProject` does. Each file is read once, however many
+    document before `instantiate`; `loadProject` does. Each file is read once, however many
     nodes link it, and a saved world keeps the link instead of a copy.
 
 ## Debugging

@@ -94,7 +94,7 @@ class ShaderEffectDocsSampleTest {
         assertFalse(second.detached, "and the effect that was drawing keeps drawing")
         assertTrue(second.drawFrame().drew)
 
-        system.release()
+        system.close()
         assertEquals(emptyList(), recording.live)
     }
 

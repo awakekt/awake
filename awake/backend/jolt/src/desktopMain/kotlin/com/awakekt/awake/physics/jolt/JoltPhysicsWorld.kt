@@ -19,6 +19,7 @@ import com.awakekt.awake.physics.Constraint
 import com.awakekt.awake.physics.ConstraintHandle
 import com.awakekt.awake.physics.ContactEvent
 import com.awakekt.awake.physics.ConvexHullShape
+import com.awakekt.awake.physics.DegreesOfFreedom
 import com.awakekt.awake.physics.DistanceConstraint
 import com.awakekt.awake.physics.HeightFieldShape
 import com.awakekt.awake.physics.HingeConstraint
@@ -72,6 +73,7 @@ import com.github.stephengold.joltjni.TempAllocatorMalloc
 import com.github.stephengold.joltjni.TwoBodyConstraint
 import com.github.stephengold.joltjni.Vec3
 import com.github.stephengold.joltjni.enumerate.EActivation
+import com.github.stephengold.joltjni.enumerate.EAllowedDofs
 import com.github.stephengold.joltjni.enumerate.EAxis
 import com.github.stephengold.joltjni.enumerate.EBodyType
 import com.github.stephengold.joltjni.enumerate.EConstraintSpace
@@ -315,6 +317,16 @@ class JoltPhysicsWorld(
         motionType: MotionType,
         layer: CollisionLayer,
         sensor: Boolean,
+    ): BodyHandle = createBody(shape, position, rotation, motionType, layer, sensor, DegreesOfFreedom.ALL)
+
+    override fun createBody(
+        shape: PhysicsShape,
+        position: Vec3f,
+        rotation: Quat,
+        motionType: MotionType,
+        layer: CollisionLayer,
+        sensor: Boolean,
+        degreesOfFreedom: DegreesOfFreedom,
     ): BodyHandle {
         (shape as? HeightFieldShape)?.requireSupportedMotionType(motionType)
         if (sensor) shape.requireCanBeSensor()
@@ -349,6 +361,12 @@ class JoltPhysicsWorld(
             setMotionType(joltMotionType)
             setObjectLayer(layer.index)
             setIsSensor(sensor)
+            setAllowedDofs(
+                when (degreesOfFreedom) {
+                    DegreesOfFreedom.ALL -> EAllowedDofs.All
+                    DegreesOfFreedom.PLANE_2D -> EAllowedDofs.Plane2D
+                },
+            )
         }
         try {
             val body = bodyInterface.createBody(bcs)

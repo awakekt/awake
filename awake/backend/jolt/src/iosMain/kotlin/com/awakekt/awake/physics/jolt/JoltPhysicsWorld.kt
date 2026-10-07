@@ -27,6 +27,7 @@ import com.awakekt.awake.physics.Constraint
 import com.awakekt.awake.physics.ConstraintHandle
 import com.awakekt.awake.physics.ContactEvent
 import com.awakekt.awake.physics.ConvexHullShape
+import com.awakekt.awake.physics.DegreesOfFreedom
 import com.awakekt.awake.physics.DistanceConstraint
 import com.awakekt.awake.physics.HeightFieldShape
 import com.awakekt.awake.physics.HingeConstraint
@@ -66,6 +67,7 @@ import kotlinx.cinterop.value
 import platform.joltc.JPC_ACTIVATION_ACTIVATE
 import platform.joltc.JPC_ACTIVATION_DONT_ACTIVATE
 import platform.joltc.JPC_Activation
+import platform.joltc.JPC_AllowedDOFs
 import platform.joltc.JPC_BodyCreationSettings
 import platform.joltc.JPC_BodyCreationSettings_default
 import platform.joltc.JPC_BodyFilterFns
@@ -704,6 +706,16 @@ class JoltPhysicsWorld(
         motionType: MotionType,
         layer: CollisionLayer,
         sensor: Boolean,
+    ): BodyHandle = createBody(shape, position, rotation, motionType, layer, sensor, DegreesOfFreedom.ALL)
+
+    override fun createBody(
+        shape: PhysicsShape,
+        position: Vec3f,
+        rotation: Quat,
+        motionType: MotionType,
+        layer: CollisionLayer,
+        sensor: Boolean,
+        degreesOfFreedom: DegreesOfFreedom,
     ): BodyHandle = memScoped {
         // A triangle mesh is a surface with no inside, so Jolt cannot simulate one. Checked here
         // rather than in the shape builder, which has no motion type to judge against.
@@ -733,6 +745,10 @@ class JoltPhysicsWorld(
             MotionType = joltMotionType
             ObjectLayer = objectLayer
             IsSensor = sensor
+            AllowedDOFs = when (degreesOfFreedom) {
+                DegreesOfFreedom.ALL -> JPC_AllowedDOFs.JPC_ALLOWED_DOFS_ALL
+                DegreesOfFreedom.PLANE_2D -> JPC_AllowedDOFs.JPC_ALLOWED_DOFS_PLANE2D
+            }
             Shape = joltShape
         }
 

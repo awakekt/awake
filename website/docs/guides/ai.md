@@ -34,8 +34,8 @@ the same components.
       "rows": [ "......", ".####.", "......" ] }
     ```
 
-    `.` is a cell an agent can stand on and `#` one it cannot. Played through `loadPlayableProject`
-    and `playProject`, a scene with a behaviour and a `navigation` component runs the behaviours and
+    `.` is a cell an agent can stand on and `#` one it cannot. Played through `loadProject`
+    and `runProject`, a scene with a behaviour and a `navigation` component runs the behaviours and
     answers their routes, with no AI code in the host; a project with a behaviour and no grid is
     refused at load.
 

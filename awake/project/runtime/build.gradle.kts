@@ -5,6 +5,7 @@
  */
 plugins {
     id("com.awakekt.awake.plugin.library")
+    alias(libs.plugins.kotlin.serialization)
     id("com.awakekt.awake.plugin.publish")
     id("com.awakekt.awake.plugin.dokka")
     id("com.awakekt.awake.plugin.detekt")
@@ -32,8 +33,11 @@ kotlin {
             implementation(project(":awake:core:math"))
             implementation(project(":awake:particles"))
             implementation(project(":awake:scene:particles"))
-            // PlayServices carries the loaded shader_effect documents, so their type is in this API.
-            api(project(":awake:scene:shader"))
+            implementation(project(":awake:scene:shader"))
+            // A SceneCapability lists the bindings of the components it adds, so their type is in this API.
+            api(project(":awake:scene:binding"))
+            // Names the components a scene uses that no capability registers.
+            implementation(libs.kotlinx.serialization.json)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

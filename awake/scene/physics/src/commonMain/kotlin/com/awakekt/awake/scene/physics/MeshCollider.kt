@@ -9,6 +9,7 @@ import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.CollisionLayer
+import com.awakekt.awake.physics.DegreesOfFreedom
 import com.awakekt.awake.physics.MeshShape
 import com.awakekt.awake.physics.MotionType
 import com.awakekt.awake.physics.defaultLayerFor
@@ -22,11 +23,13 @@ import com.awakekt.awake.scene.core.transform.Transform
  * @property mesh Project path of the model.
  * @property primitive Which primitive of the model to collide with; `null` merges them all.
  * @property layer Collision layer of the body it becomes.
+ * @property degreesOfFreedom Allowed motion in world axes, retained when the body is built.
  */
 data class MeshCollider(
     val mesh: String,
     val primitive: Int? = null,
     val layer: CollisionLayer = defaultLayerFor(MotionType.STATIC),
+    val degreesOfFreedom: DegreesOfFreedom = DegreesOfFreedom.ALL,
 )
 
 /**
@@ -41,6 +44,7 @@ data class MeshCollider(
  * @property motion Motion type controlling whether the body is static, kinematic, or dynamic.
  * @property layer Collision layer of the body it becomes.
  * @property sensor Whether this body functions as a trigger sensor rather than a solid collider.
+ * @property degreesOfFreedom Allowed motion in world axes, retained when the body is built.
  */
 data class ConvexHullCollider(
     val mesh: String,
@@ -48,6 +52,7 @@ data class ConvexHullCollider(
     val motion: MotionType = MotionType.DYNAMIC,
     val layer: CollisionLayer = defaultLayerFor(motion),
     val sensor: Boolean = false,
+    val degreesOfFreedom: DegreesOfFreedom = DegreesOfFreedom.ALL,
 )
 
 /** The triangles of a model, for [MeshColliderSystem]. */
@@ -82,7 +87,10 @@ class MeshColliderSystem(private val meshes: CollisionMeshSource) : System {
             require(scale.x != 0f && scale.y != 0f && scale.z != 0f) {
                 "Node $node has a zero scale, which flattens its collision mesh ${collider.mesh}"
             }
-            world.add(entity, PhysicsBody(shape.scaledBy(scale), MotionType.STATIC, collider.layer))
+            world.add(
+                entity,
+                PhysicsBody(shape.scaledBy(scale), MotionType.STATIC, collider.layer, degreesOfFreedom = collider.degreesOfFreedom),
+            )
         }
 
         world.queryEach(Transform::class, ConvexHullCollider::class) { entity, transform, collider ->
@@ -109,6 +117,7 @@ class MeshColliderSystem(private val meshes: CollisionMeshSource) : System {
                     motionType = collider.motion,
                     layer = collider.layer,
                     sensor = collider.sensor,
+                    degreesOfFreedom = collider.degreesOfFreedom,
                 ),
             )
         }

@@ -125,7 +125,7 @@ class ProjectRuntimeTest {
 
     @Test
     fun aSceneWithoutPhysicsMovesWithoutAPhysicsWorld() = runTest {
-        val project = loadPlayableProject(files(MOVEMENT_ONLY_SCENE))
+        val project = loadProject(files(MOVEMENT_ONLY_SCENE))
         assertNull(project.physics, "no bodies or characters, so no physics world")
         val game = play(MOVEMENT_ONLY_SCENE)
         val position = game.world.get<Transform>(game.world.named("Player"))!!.position
@@ -144,21 +144,21 @@ class ProjectRuntimeTest {
         val prefab = """{ "guid": "fire", "root": { "name": "Fire" } }"""
         val sources = mapOf(MANIFEST_PATH to MANIFEST, "scenes/main.scene.json" to scene, "prefabs/fire.prefab.json" to prefab)
 
-        val project = loadPlayableProject(AssetSource { path -> runCatching { sources.getValue(path.value).encodeToByteArray() } })
+        val project = loadProject(AssetSource { path -> runCatching { sources.getValue(path.value).encodeToByteArray() } })
 
         assertEquals(listOf("Fire"), project.scene.nodes.single().children.map { it.name })
     }
 
     @Test
     fun aPhysicsSceneWithoutABackendIsRefused() = runTest {
-        val error = assertFailsWith<IllegalArgumentException> { loadPlayableProject(files(PHYSICS_SCENE)) }
+        val error = assertFailsWith<IllegalArgumentException> { loadProject(files(PHYSICS_SCENE)) }
         assertTrue("physicsWorld" in error.message.orEmpty(), error.message)
     }
 
     @Test
     fun aManifestWithoutItsEntrySceneIsRefused() = runTest {
         val error = assertFailsWith<IllegalArgumentException> {
-            loadPlayableProject(AssetSource { path -> runCatching { mapOf(MANIFEST_PATH to MANIFEST).getValue(path.value).encodeToByteArray() } })
+            loadProject(AssetSource { path -> runCatching { mapOf(MANIFEST_PATH to MANIFEST).getValue(path.value).encodeToByteArray() } })
         }
         assertTrue("scenes/main.scene.json" in error.message.orEmpty(), error.message)
     }
@@ -167,13 +167,13 @@ class ProjectRuntimeTest {
     @Test
     fun closingAProjectDestroysItsPhysicsWorldOnce() = runTest {
         var made: DestroyCounting? = null
-        val project = loadPlayableProject(files(PHYSICS_SCENE)) { DestroyCounting(createJoltPhysicsWorld()).also { made = it } }
+        val project = loadProject(files(PHYSICS_SCENE)) { DestroyCounting(createJoltPhysicsWorld()).also { made = it } }
 
         project.close()
         project.close()
 
         assertEquals(1, made?.destroyed)
-        loadPlayableProject(files(MOVEMENT_ONLY_SCENE)).close()
+        loadProject(files(MOVEMENT_ONLY_SCENE)).close()
     }
 
     /** Every file is read before the physics world exists, so a load cancelled while reading makes none. */
@@ -190,7 +190,7 @@ class ProjectRuntimeTest {
             runCatching { sources.getValue(path.value).encodeToByteArray() }
         }
 
-        val load = launch { loadPlayableProject(files) { made++; createJoltPhysicsWorld() } }
+        val load = launch { loadProject(files) { made++; createJoltPhysicsWorld() } }
         reading.await()
         load.cancelAndJoin()
 
@@ -203,8 +203,8 @@ class ProjectRuntimeTest {
     }
 
     private suspend fun play(scene: String, touch: Boolean = false): Game {
-        val project = loadPlayableProject(files(scene), ::createJoltPhysicsWorld)
-        val game = app { scene("play") { playProject(project, touchControls = touch) } }
+        val project = loadProject(files(scene), physicsWorld = ::createJoltPhysicsWorld)
+        val game = app { scene("play") { runProject(project, touchControls = touch) } }
         game.ready(TestRenderer())
         val runtime = game.requireService<SceneAppLifecycleRuntime>()
         return Game(runtime, game.requireService()) { game.update(DELTA, WIDTH, HEIGHT) }.also { it.frames(1) }
