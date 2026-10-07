@@ -113,7 +113,6 @@ kotlin {
             // dependency on the production classpath makes ASL-generated WGSL available to the
             // same runtime resource lookup used by Vulkan.
             implementation(project(":awake:asset:shader-pack"))
-            implementation(project(":awake:asset:shader-compiler"))
             // HeadlessRenderSession, the shape both backends hand a windowless renderer back in.
             api(project(":awake:engine:render:testing"))
             implementation(libs.kotlinx.coroutines.core)
@@ -160,6 +159,9 @@ kotlin {
                 implementation(libs.kotlinx.browser)
                 implementation(project(":awake:core:logging"))
             }
+        }
+        named("wasmJsTest").dependencies {
+            implementation(libs.kotlinx.coroutines.test)
         }
     }
 }

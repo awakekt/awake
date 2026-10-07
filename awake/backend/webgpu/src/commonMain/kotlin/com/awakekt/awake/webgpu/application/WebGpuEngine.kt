@@ -371,6 +371,7 @@ open class WebGpuEngine(
             renderer.contentFeatureHost = attacher
             renderer.shaderReplacement = WebGpuShaderReplacement(
                 registry = registry,
+                device = graphicsDevice.wgpuContext.device,
                 onSwap = { oldPipeline -> renderer.bufferPools.invalidatePipeline(oldPipeline) },
             )
             // A content shader may declare the shadow-map group without any shadow pass to fill it.

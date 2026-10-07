@@ -71,6 +71,8 @@ import kotlin.test.assertFailsWith
 /**
  * Shaders built at runtime replace a running WebGPU pipeline's, in place: a red square becomes green,
  * then yellow, while a blue one beside it stays blue. Refused replacements change nothing.
+ * Negative controls on the original implementation: a missing vertex entry point returned 1
+ * instead of throwing.
  */
 class WebGpuHeadlessShaderReplacementTest {
 
@@ -109,6 +111,56 @@ class WebGpuHeadlessShaderReplacementTest {
             runBlocking { replacement(fixture).replace(RED_SHADER.program(), EXTRA_BINDING_SHADER.program()) }
         }
         assertEquals(RED to BLUE, fixture.squares())
+    }
+
+    @Test
+    fun aMissingVertexEntryPointIsRefusedWithoutChangingThePipeline() = withRedAndBlue { fixture ->
+        val green = GREEN_SHADER.program()
+        val missingEntry = green.copy(
+            vertex = (green.vertex as ShaderSource.InlineText).copy(entryPoint = "missingVertex"),
+        )
+        assertFailsWith<ShaderReplacementException> {
+            runBlocking { replacement(fixture).replace(RED_SHADER.program(), missingEntry) }
+        }
+        assertEquals(RED to BLUE, fixture.squares(), "driver validation must preserve the working shaders")
+    }
+
+    @Test
+    fun incorrectBindingMetadataCannotHideAnIncompatibleShader() = withRedAndBlue { fixture ->
+        val incompatible = EXTRA_BINDING_SHADER.program().copy(bindingsByGroup = RED_SHADER.program().bindingsByGroup)
+        assertFailsWith<ShaderReplacementException> {
+            runBlocking { replacement(fixture).replace(RED_SHADER.program(), incompatible) }
+        }
+        assertEquals(RED to BLUE, fixture.squares())
+    }
+
+    @Test
+    fun closingAnAbandonedPreparationLeavesTheOldShadersRunning() = withRedAndBlue { fixture ->
+        val replacement = replacement(fixture)
+        val prepared = runBlocking { replacement.prepare(GREEN_SHADER.program()) }
+        prepared.close()
+        prepared.close()
+        assertFailsWith<ShaderReplacementException> { replacement.swapIn(RED_SHADER.program(), prepared) }
+        assertEquals(RED to BLUE, fixture.squares())
+    }
+
+    @Test
+    fun aPipelineAttachedAfterPreparationRefusesTheWholeSwapUntilPreparedAgain() = withRedAndBlue { fixture ->
+        val replacement = replacement(fixture)
+        val prepared = runBlocking { replacement.prepare(GREEN_SHADER.program()) }
+        val late = runBlocking {
+            fixture.attacher.attachContentFeature(square("late-red", RED_SHADER, PipelineVariant.Opaque))
+        }
+        try {
+            prepared.use {
+                assertFailsWith<ShaderReplacementException> { replacement.swapIn(RED_SHADER.program(), it) }
+            }
+            assertEquals(RED to BLUE, fixture.squares(), "a stale preparation must not partially swap earlier pipelines")
+            assertEquals(2, runBlocking { replacement.replace(RED_SHADER.program(), GREEN_SHADER.program()) })
+            assertEquals(GREEN to BLUE, fixture.squares())
+        } finally {
+            late.detach()
+        }
     }
 
     @Test
@@ -153,7 +205,9 @@ class WebGpuHeadlessShaderReplacementTest {
         val replacement = replacement(fixture)
         val prepared = runBlocking { replacement.prepare(EXTRA_BINDING_SHADER.program()) }
 
-        assertFailsWith<ShaderReplacementException> { replacement.swapIn(RED_SHADER.program(), prepared) }
+        prepared.use {
+            assertFailsWith<ShaderReplacementException> { replacement.swapIn(RED_SHADER.program(), it) }
+        }
         assertEquals(RED to BLUE, fixture.squares(), "a refused swap-in changes nothing")
     }
 
@@ -296,6 +350,7 @@ class WebGpuHeadlessShaderReplacementTest {
                 renderer.contentFeatureHost = attacher
                 renderer.shaderReplacement = WebGpuShaderReplacement(
                     registry = registry,
+                    device = device.wgpuContext.device,
                     onSwap = { oldPipeline -> renderer.bufferPools.invalidatePipeline(oldPipeline) },
                 )
             }
@@ -346,10 +401,10 @@ class WebGpuHeadlessShaderReplacementTest {
         val YELLOW_SHADER = solidShader("yellow", YELLOW, x = -0.5f)
         val EXTRA_BINDING_SHADER = solidShader("extra", GREEN, x = -0.5f, extraBinding = true)
 
-        private fun square(name: String, stages: ShaderStages) = ContentFeatureSource {
+        private fun square(name: String, stages: ShaderStages, variant: PipelineVariant = PipelineVariant.Overlay) = ContentFeatureSource {
             ContentFeature(
                 name = name,
-                spec = stages.spec(vertexFormat = VertexFormat.None, variant = PipelineVariant.Overlay, uniforms = Layout),
+                spec = stages.spec(vertexFormat = VertexFormat.None, variant = variant, uniforms = Layout),
             ) { pipeline, uniforms, _ -> SquareFeature(pipeline, uniforms) }
         }
 

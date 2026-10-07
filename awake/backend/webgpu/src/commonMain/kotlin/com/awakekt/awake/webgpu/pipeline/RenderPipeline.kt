@@ -336,65 +336,69 @@ class RenderPipeline(
         fragmentEntryPoint: String,
     ): GPURenderPipeline {
         val shaderModule = device.createShaderModule(ShaderModuleDescriptor(code = wgslSource))
-        return device.createRenderPipeline(
-            RenderPipelineDescriptor(
-                layout = explicitLayout,
-                vertex = VertexState(
-                    module = shaderModule,
-                    entryPoint = vertexEntryPoint,
-                    buffers = vertexBuffers,
-                ),
-                fragment = FragmentState(
-                    module = shaderModule,
-                    entryPoint = fragmentEntryPoint,
-                    targets = listOf(
-                        ColorTargetState(
-                            format = swapchainManager.imageFormatWebGpu,
-                            blend = if (variant.blendEnabled) {
-                                BlendState(
-                                    color = BlendComponent(
-                                        srcFactor = GPUBlendFactor.SrcAlpha,
-                                        // Additive colour adds to what is there; alpha blends as usual.
-                                        dstFactor = if (variant.additive) GPUBlendFactor.One else GPUBlendFactor.OneMinusSrcAlpha,
-                                    ),
-                                    alpha = BlendComponent(
-                                        srcFactor = GPUBlendFactor.SrcAlpha,
-                                        dstFactor = GPUBlendFactor.OneMinusSrcAlpha,
-                                    ),
-                                )
-                            } else {
-                                null
-                            },
+        try {
+            return device.createRenderPipeline(
+                RenderPipelineDescriptor(
+                    layout = explicitLayout,
+                    vertex = VertexState(
+                        module = shaderModule,
+                        entryPoint = vertexEntryPoint,
+                        buffers = vertexBuffers,
+                    ),
+                    fragment = FragmentState(
+                        module = shaderModule,
+                        entryPoint = fragmentEntryPoint,
+                        targets = listOf(
+                            ColorTargetState(
+                                format = swapchainManager.imageFormatWebGpu,
+                                blend = if (variant.blendEnabled) {
+                                    BlendState(
+                                        color = BlendComponent(
+                                            srcFactor = GPUBlendFactor.SrcAlpha,
+                                            // Additive colour adds to what is there; alpha blends as usual.
+                                            dstFactor = if (variant.additive) GPUBlendFactor.One else GPUBlendFactor.OneMinusSrcAlpha,
+                                        ),
+                                        alpha = BlendComponent(
+                                            srcFactor = GPUBlendFactor.SrcAlpha,
+                                            dstFactor = GPUBlendFactor.OneMinusSrcAlpha,
+                                        ),
+                                    )
+                                } else {
+                                    null
+                                },
+                            ),
                         ),
                     ),
+                    primitive = PrimitiveState(
+                        topology = topology,
+                        cullMode = cullMode,
+                        // Mesh geometry in Awake is authored counter-clockwise when viewed from its
+                        // outward-facing side. WebGPU's +Y-up NDC preserves that convention at
+                        // rasterization; treating CW as front-facing culls camera-facing surfaces.
+                        frontFace = when (frontFace) {
+                            FrontFace.CounterClockwise -> GPUFrontFace.CCW
+                            FrontFace.Clockwise -> GPUFrontFace.CW
+                        },
+                    ),
+                    depthStencil = DepthStencilState(
+                        format = GPUTextureFormat.Depth32Float,
+                        depthWriteEnabled = variant.depthWriteEnabled,
+                        // Always is this backend's "test off": WebGPU has no depthTestEnable flag, and
+                        // the depthStencil block itself stays mandatory because the pass has a real
+                        // Depth32Float attachment. Vulkan spells the same thing depthTestEnable=false.
+                        depthCompare = if (variant.depthTestEnabled) {
+                            GPUCompareFunction.Less
+                        } else {
+                            GPUCompareFunction.Always
+                        },
+                        stencilFront = StencilFaceState(),
+                        stencilBack = StencilFaceState(),
+                    ),
                 ),
-                primitive = PrimitiveState(
-                    topology = topology,
-                    cullMode = cullMode,
-                    // Mesh geometry in Awake is authored counter-clockwise when viewed from its
-                    // outward-facing side. WebGPU's +Y-up NDC preserves that convention at
-                    // rasterization; treating CW as front-facing culls camera-facing surfaces.
-                    frontFace = when (frontFace) {
-                        FrontFace.CounterClockwise -> GPUFrontFace.CCW
-                        FrontFace.Clockwise -> GPUFrontFace.CW
-                    },
-                ),
-                depthStencil = DepthStencilState(
-                    format = GPUTextureFormat.Depth32Float,
-                    depthWriteEnabled = variant.depthWriteEnabled,
-                    // Always is this backend's "test off": WebGPU has no depthTestEnable flag, and
-                    // the depthStencil block itself stays mandatory because the pass has a real
-                    // Depth32Float attachment. Vulkan spells the same thing depthTestEnable=false.
-                    depthCompare = if (variant.depthTestEnabled) {
-                        GPUCompareFunction.Less
-                    } else {
-                        GPUCompareFunction.Always
-                    },
-                    stencilFront = StencilFaceState(),
-                    stencilBack = StencilFaceState(),
-                ),
-            ),
-        )
+            )
+        } finally {
+            shaderModule.close()
+        }
     }
 
     /**
