@@ -18,7 +18,7 @@ public final class com/awakekt/awake/project/runtime/CollisionMeshesKt {
 	public static final fun loadCollisionMeshes (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
-public final class com/awakekt/awake/project/runtime/PlayServices {
+public final class com/awakekt/awake/project/runtime/SceneHostServices {
 	public fun <init> (Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/physics/PhysicsWorld;Ljava/util/Map;Lcom/awakekt/awake/scene/physics/CollisionMeshSource;Lcom/awakekt/awake/scene/shader/ShaderEffectAssets;)V
 	public synthetic fun <init> (Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/physics/PhysicsWorld;Ljava/util/Map;Lcom/awakekt/awake/scene/physics/CollisionMeshSource;Lcom/awakekt/awake/scene/shader/ShaderEffectAssets;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getCollisionMeshes ()Lcom/awakekt/awake/scene/physics/CollisionMeshSource;
@@ -29,7 +29,7 @@ public final class com/awakekt/awake/project/runtime/PlayServices {
 	public final fun getShaderEffects ()Lcom/awakekt/awake/scene/shader/ShaderEffectAssets;
 }
 
-public final class com/awakekt/awake/project/runtime/PlaySystems : java/lang/AutoCloseable {
+public final class com/awakekt/awake/project/runtime/SceneSystemSet : java/lang/AutoCloseable {
 	public fun close ()V
 	public final fun getFixed ()Ljava/util/List;
 	public final fun getFrame ()Ljava/util/List;
@@ -37,10 +37,10 @@ public final class com/awakekt/awake/project/runtime/PlaySystems : java/lang/Aut
 }
 
 public final class com/awakekt/awake/project/runtime/PlaySystemsKt {
-	public static final fun playSystemsFor (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/project/runtime/PlayServices;)Lcom/awakekt/awake/project/runtime/PlaySystems;
+	public static final fun sceneSystemsFor (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/project/runtime/SceneHostServices;)Lcom/awakekt/awake/project/runtime/SceneSystemSet;
 }
 
-public final class com/awakekt/awake/project/runtime/PlayableProject : java/lang/AutoCloseable {
+public final class com/awakekt/awake/project/runtime/LoadedProject : java/lang/AutoCloseable {
 	public fun close ()V
 	public final fun getManifest ()Lcom/awakekt/awake/project/AwakeProjectManifest;
 	public final fun getScene ()Lcom/awakekt/awake/scene/document/SceneDocument;
@@ -49,10 +49,10 @@ public final class com/awakekt/awake/project/runtime/PlayableProject : java/lang
 public final class com/awakekt/awake/project/runtime/ProjectRuntimeKt {
 	public static final field PROJECT_MANIFEST Ljava/lang/String;
 	public static final fun activatePrimaryCamera (Lcom/awakekt/awake/ecs/World;)V
-	public static final fun loadPlayableProject (Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static synthetic fun loadPlayableProject$default (Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
-	public static final fun playProject (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/project/runtime/PlayableProject;Z)V
-	public static synthetic fun playProject$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/project/runtime/PlayableProject;ZILjava/lang/Object;)V
+	public static final fun loadProject (Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun loadProject$default (Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static final fun runProject (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/project/runtime/LoadedProject;Z)V
+	public static synthetic fun runProject$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/project/runtime/LoadedProject;ZILjava/lang/Object;)V
 }
 
 public final class com/awakekt/awake/project/runtime/TerrainColliderSystem : com/awakekt/awake/ecs/System {

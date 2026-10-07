@@ -26,26 +26,26 @@ import com.awakekt.awake.scene.rendering.mesh.TextureClipSystem
 import com.awakekt.awake.scene.runtime.SceneSystemPhase
 
 /** Spin, locomotion, keyframes, sprite-sheet clips, particles and the day cycle, for the scenes that have them. */
-internal fun MutableList<PlaySpec>.addMotionSpecs(scene: SceneDocument) {
+internal fun MutableList<SceneSystemSpec>.addMotionSpecs(scene: SceneDocument) {
     if (scene.has(SceneSpinControl::class)) {
-        add(PlaySpec("spin-clock", SceneSystemPhase.Frame) { SpinClockSystem() })
-        add(PlaySpec("spin", SceneSystemPhase.Frame) { SpinSystem() })
+        add(SceneSystemSpec("spin-clock", SceneSystemPhase.Frame) { SpinClockSystem() })
+        add(SceneSystemSpec("spin", SceneSystemPhase.Frame) { SpinSystem() })
     }
     if (scene.has(SceneLocomotionAnimation::class)) {
-        add(PlaySpec("locomotion", SceneSystemPhase.Frame) { LocomotionAnimationSystem() })
+        add(SceneSystemSpec("locomotion", SceneSystemPhase.Frame) { LocomotionAnimationSystem() })
     }
     if (scene.has(SceneKeyframeAnimation::class)) {
-        add(PlaySpec("keyframes", SceneSystemPhase.Frame) { KeyframeAnimationSystem() })
+        add(SceneSystemSpec("keyframes", SceneSystemPhase.Frame) { KeyframeAnimationSystem() })
     }
     if (scene.has(SceneTextureClips::class)) {
-        add(PlaySpec("texture-clips", SceneSystemPhase.Frame) { TextureClipSystem() })
+        add(SceneSystemSpec("texture-clips", SceneSystemPhase.Frame) { TextureClipSystem() })
     }
     if (scene.has(SceneParticleEmitter::class)) {
-        add(PlaySpec("particle-content", SceneSystemPhase.Frame) { ParticleContentSystem(it.renderer, it.particleSprites) })
-        add(PlaySpec("particles", SceneSystemPhase.Frame) { ParticleSystem(TransformPlacement) })
+        add(SceneSystemSpec("particle-content", SceneSystemPhase.Frame) { ParticleContentSystem(it.renderer, it.particleSprites) })
+        add(SceneSystemSpec("particles", SceneSystemPhase.Frame) { ParticleSystem(TransformPlacement) })
     }
     if (scene.has(SceneDayCycle::class)) {
-        add(PlaySpec("day-cycle", SceneSystemPhase.Frame) { DayCycleSystem() })
+        add(SceneSystemSpec("day-cycle", SceneSystemPhase.Frame) { DayCycleSystem() })
     }
 }
 

@@ -25,19 +25,19 @@ import com.awakekt.awake.scene.runtime.SceneSystemPhase
  * The behaviours run first and the path system after them, the order the AI guide runs them in: a
  * behaviour asks for a route, and the answer is there for the next frame's step. A scene with the
  * behaviours and no navigation gets none of this, because nothing could answer them;
- * [loadPlayableProject] refuses such a project.
+ * [loadProject] refuses such a project.
  */
-internal fun MutableList<PlaySpec>.addAiSpecs(scene: SceneDocument) {
+internal fun MutableList<SceneSystemSpec>.addAiSpecs(scene: SceneDocument) {
     val navigation = scene.navigation() ?: return
     val behaviours = listOf(
-        ScenePatrol::class to PlaySpec("ai-patrol", SceneSystemPhase.Frame) { PatrolAiSystem(TransformAgentPlacement) },
-        SceneChase::class to PlaySpec("ai-chase", SceneSystemPhase.Frame) { ChaseAiSystem(TransformAgentPlacement) },
-        SceneFlee::class to PlaySpec("ai-flee", SceneSystemPhase.Frame) { FleeAiSystem(TransformAgentPlacement) },
+        ScenePatrol::class to SceneSystemSpec("ai-patrol", SceneSystemPhase.Frame) { PatrolAiSystem(TransformAgentPlacement) },
+        SceneChase::class to SceneSystemSpec("ai-chase", SceneSystemPhase.Frame) { ChaseAiSystem(TransformAgentPlacement) },
+        SceneFlee::class to SceneSystemSpec("ai-flee", SceneSystemPhase.Frame) { FleeAiSystem(TransformAgentPlacement) },
     ).filter { (type, _) -> scene.has(type) }
     if (behaviours.isEmpty()) return
     val grid = navigation.toGrid()
     behaviours.forEach { (_, spec) -> add(spec) }
-    add(PlaySpec("path-requests", SceneSystemPhase.Frame) { PathRequestSystem(grid) })
+    add(SceneSystemSpec("path-requests", SceneSystemPhase.Frame) { PathRequestSystem(grid) })
 }
 
 /** The first `navigation` component in the scene, or null when it has none. */

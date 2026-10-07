@@ -90,9 +90,9 @@ not the triangles.
 The shape loads as a `MeshCollider` and `MeshColliderSystem` builds the body from it, so register
 that system before `PhysicsSystem`. It reads the triangles from a `CollisionMeshSource`;
 `loadCollisionMeshes(scene, files)` in `awake:project:runtime` is the glTF one, reading each model
-once and failing with the model path and node when one cannot be read. `loadPlayableProject` does
-all of this for you. A host that calls `playSystemsFor` itself passes
-`collisionMeshes = loadCollisionMeshes(scene, files)` in its `PlayServices`.
+once and failing with the model path and node when one cannot be read. `loadProject` does
+all of this for you. A host that calls `sceneSystemsFor` itself passes
+`collisionMeshes = loadCollisionMeshes(scene, files)` in its `SceneHostServices`.
 
 For moving props or sensors, use a `convex_hull` shape instead:
 

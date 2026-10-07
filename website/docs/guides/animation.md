@@ -21,7 +21,7 @@ A scene document places a skinned model like any other mesh, with the material `
 --8<-- "website/docs/snippets/rendering/skinned.scene.json"
 ```
 
-When a project is played with `playProject` (as AwakeKt Studio's player does), every skinned glTF
+When a project is played with `runProject` (as AwakeKt Studio's player does), every skinned glTF
 model gets an animator that loops its first clip. Nothing else is needed. In your own app, add the
 animator yourself, as below.
 
@@ -45,7 +45,7 @@ no skeleton. This one rises 2 units over a second while fading out, then starts 
 }
 ```
 
-`playProject` runs `KeyframeAnimationSystem` when the scene has one. In your own app, add
+`runProject` runs `KeyframeAnimationSystem` when the scene has one. In your own app, add
 `frameSystem("keyframes") { KeyframeAnimationSystem() }`. The fields are in the
 [component reference](../reference/scene-document-components.md#keyframe_animation).
 

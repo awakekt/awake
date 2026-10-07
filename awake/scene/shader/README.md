@@ -21,5 +21,5 @@ implementation(project(":awake:scene:shader"))
   and attaches again when the document, its textures or the loaded assets change. A failed attach
   keeps what was drawing.
 
-`loadPlayableProject` and `playProject` do all of this for a project, so a project that ships a shader
+`loadProject` and `runProject` do all of this for a project, so a project that ships a shader
 document needs no Kotlin of its own to draw it.
