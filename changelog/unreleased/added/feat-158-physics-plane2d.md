@@ -1,1 +1,0 @@
-- Add backend-neutral `DegreesOfFreedom.PLANE_2D` body creation and scene `physics_body.degreesOfFreedom`, enforced by Jolt on Desktop, Android, iOS and Web, with X/Y translation and Z rotation for 2D simulations.

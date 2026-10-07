@@ -1,1 +1,0 @@
-- Scene document `day_cycle` now declares property ranges for `dayLengthSeconds`, `time` and `noonElevationDegrees`, and the remaining environment and lighting components (`ambient_light`, `fog`, `skybox`, `light`) record which numeric fields are deliberately unconstrained (#446).

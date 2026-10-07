@@ -1,1 +1,0 @@
-- Scene document components `canvas_element` (`width`, `height`, `fontSize`, `value`), `pbr_material` (`metallic`, `roughness`, `alphaCutoff`), and `physics_body` (`layer`) declare property ranges matching their validation rules, and unconstrained coordinates and factors in `camera`, `canvas_element`, and `pbr_material` are recorded in the numeric decisions ledger (#446).

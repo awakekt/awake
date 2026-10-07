@@ -1,1 +1,0 @@
-- `awake:project:runtime` uses the engine's own vocabulary instead of "play" names: `PlayableProject` is `LoadedProject`, `loadPlayableProject` is `loadProject`, `playProject` is `runProject`, `PlaySystems` is `SceneSystemSet`, `playSystemsFor` is `sceneSystemsFor` and `PlayServices` is `SceneHostServices`. There are no deprecated aliases; callers rename.

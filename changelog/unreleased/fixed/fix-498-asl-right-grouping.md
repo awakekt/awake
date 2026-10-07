@@ -1,1 +1,0 @@
-- Shader DSL (ASL) WGSL output keeps the grouping of a right-nested operand: `viewProjection * (model * position)` is two matrix-vector products instead of a matrix-matrix product first, which the skinned, instanced, shadow and terrain vertex transforms now save per vertex, and `a + (b + c)` no longer rounds as `a + b + c`.

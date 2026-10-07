@@ -1,1 +1,0 @@
-- Add an original RPG ranger and thorn beast sprite sample with transparent twelve-frame breathing idle loops, manifest import, and a dedicated engine showcase entry.
