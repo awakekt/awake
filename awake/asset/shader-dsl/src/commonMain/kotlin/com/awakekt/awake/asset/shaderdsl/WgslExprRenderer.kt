@@ -46,11 +46,13 @@ internal fun literalWgsl(literal: AslLiteral): String = when (literal.type) {
     else -> floatWgsl(literal.value)
 }
 
-/** Operator precedence for minimal parentheses: logical, comparison, additive,
- * multiplicative, unary/atom. */
+private const val LOGICAL = 1
+private const val COMPARISON = 2
+
+/** Operator precedence, loosest first: logical, comparison, additive, multiplicative. */
 private fun precedenceOf(op: String): Int = when (op) {
-    "||", "&&" -> 1
-    "<", "<=", ">", ">=", "==", "!=" -> 2
+    "||", "&&" -> LOGICAL
+    "<", "<=", ">", ">=", "==", "!=" -> COMPARISON
     "+", "-" -> 3
     else -> 4
 }
@@ -60,7 +62,7 @@ internal fun render(expr: AslExpr, stage: AslStage): String = when (expr) {
     is AslRef -> expr.wgslName
     is AslVaryingRef -> if (stage == AslStage.Vertex) "output.${expr.name}" else expr.name
     is AslSwizzle -> renderSwizzle(expr, stage)
-    is AslUnary -> "${expr.op}${render(expr.operand, stage)}"
+    is AslUnary -> renderUnary(expr, stage)
     is AslIndex -> "${expr.arrayName}[${render(expr.index, stage)}]"
     is AslChainIndex ->
         "${expr.varName}[${render(expr.outer, stage)}].${expr.fieldName}[${render(expr.inner, stage)}]"
@@ -77,18 +79,38 @@ private fun renderSwizzle(expr: AslSwizzle, stage: AslStage): String {
     return "$wrapped.${expr.components}"
 }
 
+/** `-(a + b)`, and `-(-a)` because WGSL reads `--` as a decrement; `-a` stays bare. */
+private fun renderUnary(expr: AslUnary, stage: AslStage): String {
+    val operand = render(expr.operand, stage)
+    val wrap = expr.operand is AslBinary || operand.startsWith("-")
+    return if (wrap) "${expr.op}($operand)" else "${expr.op}$operand"
+}
+
 private fun renderBinary(expr: AslBinary, stage: AslStage): String {
-    val precedence = precedenceOf(expr.op)
     fun side(child: AslExpr, isRight: Boolean): String {
         val rendered = render(child, stage)
-        val childPrecedence = when (child) {
-            is AslBinary -> precedenceOf(child.op)
-            else -> Int.MAX_VALUE
-        }
-        val nonAssociative = isRight && (expr.op == "-" || expr.op == "/")
-        val wrap = childPrecedence < precedence ||
-            (childPrecedence == precedence && nonAssociative)
-        return if (wrap) "($rendered)" else rendered
+        return if (needsParentheses(expr, child, isRight)) "($rendered)" else rendered
     }
     return "${side(expr.left, false)} ${expr.op} ${side(expr.right, true)}"
+}
+
+/**
+ * Whether [child], an operand of [parent], must be parenthesized for the text to evaluate the
+ * tree. A looser child always is. At the same precedence, WGSL refuses `&&` mixed with `||` and
+ * one comparison read by another, so those are wrapped on either side. Arithmetic is
+ * left-associative, so only a right child can regroup, and it is wrapped where that changes the
+ * value: `a - (b + c)`, `a / (b * c)`, and `i * (j / k)` on integers, whose division truncates.
+ */
+private fun needsParentheses(parent: AslBinary, child: AslExpr, isRight: Boolean): Boolean {
+    if (child !is AslBinary) return false
+    val parentPrecedence = precedenceOf(parent.op)
+    val childPrecedence = precedenceOf(child.op)
+    return when {
+        childPrecedence != parentPrecedence -> childPrecedence < parentPrecedence
+        parentPrecedence == LOGICAL -> child.op != parent.op
+        parentPrecedence == COMPARISON -> true
+        !isRight -> false
+        parent.op == "-" || parent.op == "/" -> true
+        else -> parent.op == "*" && child.op == "/" && (parent.type == AslType.I32 || parent.type == AslType.U32)
+    }
 }
