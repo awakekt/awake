@@ -62,6 +62,8 @@ kotlin {
         // Fixtures retain native contexts for the life of their class. As in render:parity,
         // isolate classes so a later fixture cannot inherit wgpu-native/GLFW driver state.
         setForkEvery(1)
+        System.getProperty("AWAKE_RECORD_SNAPSHOTS")
+            ?.let { systemProperty("AWAKE_RECORD_SNAPSHOTS", it) }
         testLogging {
             events("started", "failed")
             exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL

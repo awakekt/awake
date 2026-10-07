@@ -1,0 +1,1 @@
+- Headless WebGPU test harness `HeadlessWebGpuEngine` and `webGpuHeadlessPlan` in `:awake:backend:webgpu` to boot a production `RenderPlan` dynamically over wgpu-native GLFW surfaces, verified with a lit shadowed cube frame test against committed pixel baselines and negative control.
