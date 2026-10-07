@@ -11,6 +11,7 @@ import kotlin.reflect.KProperty
  * A value holder that can be read.
  */
 interface State<out T> {
+    /** The current value. */
     val value: T
 }
 
@@ -25,7 +26,10 @@ interface State<out T> {
 interface MutableState<T> : State<T> {
     override var value: T
 
+    /** The current value, for `val (value, setValue) = state`. */
     operator fun component1(): T = value
+
+    /** A function that sets [value], for `val (value, setValue) = state`. */
     operator fun component2(): (T) -> Unit = { value = it }
 }
 

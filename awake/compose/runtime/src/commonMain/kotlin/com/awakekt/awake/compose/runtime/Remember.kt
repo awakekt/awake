@@ -13,6 +13,11 @@ package com.awakekt.awake.compose.runtime
  * widget that wrote them: when this node goes, everything it remembered goes with it.
  */
 interface RememberHolder {
+    /**
+     * This node's remembered values, in the order its content called `remember`. Back it with a
+     * `MutableList`: the composer appends a slot the first time a call reaches it and trims the ones
+     * a pass no longer declares.
+     */
     val rememberSlots: List<Any?>
 }
 
@@ -21,6 +26,7 @@ internal fun RememberHolder.mutableSlots(): MutableList<Any?> =
     (rememberSlots as? MutableList<Any?>)
         ?: error("RememberHolder implementation must back rememberSlots with a MutableList")
 
+context(composer: Composer)
 /**
  * Computes [calculate] on the first pass and returns that same value on every pass after.
  *
@@ -38,9 +44,9 @@ internal fun RememberHolder.mutableSlots(): MutableList<Any?> =
  * the control always and disable it, or hoist the state above the branch. A conditional subtree
  * that remembers nothing is fine -- it is the slot that moves, not the node.
  */
-context(composer: Composer)
 fun <T> remember(calculate: () -> T): T = composer.remember(Unkeyed, calculate)
 
+context(composer: Composer)
 /**
  * Recomputes [calculate] whenever [key] changes, by `==`.
  *
@@ -48,9 +54,9 @@ fun <T> remember(calculate: () -> T): T = composer.remember(Unkeyed, calculate)
  * allocation is the cost this engine exists to remove. Add a two-key overload when something needs
  * one.
  */
-context(composer: Composer)
 fun <T> remember(key: Any?, calculate: () -> T): T = composer.remember(key, calculate)
 
+context(composer: Composer)
 /**
  * Recomputes [calculate] whenever either key changes, by `==`.
  *
@@ -61,7 +67,6 @@ fun <T> remember(key: Any?, calculate: () -> T): T = composer.remember(key, calc
  * Still not a vararg, for the reason stated above: the two keys are stored side by side in the slot,
  * so this allocates nothing. A vararg array -- or a `Pair` to combine them -- would, per call per pass.
  */
-context(composer: Composer)
 fun <T> remember(key1: Any?, key2: Any?, calculate: () -> T): T =
     composer.remember(key1, key2, calculate)
 
