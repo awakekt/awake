@@ -34,6 +34,7 @@ kotlin {
             api(project(":awake:core:audio"))
             api(project(":awake:scene:audio"))
             api(project(":awake:scene:particles"))
+            api(project(":awake:scene:scene2d"))
             api(project(":awake:scene:canvas"))
             api(project(":awake:ecs"))
             api(project(":awake:engine:platform"))

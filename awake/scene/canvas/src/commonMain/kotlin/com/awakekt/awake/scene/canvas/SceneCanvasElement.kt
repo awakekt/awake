@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.canvas
 
+import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneValidationIssue
 import kotlinx.serialization.SerialName
@@ -36,13 +37,13 @@ data class SceneCanvasElement(
     val anchor: CanvasAnchor = CanvasAnchor.TopLeft,
     val offsetX: Float = CanvasElement.DEFAULT_INSET,
     val offsetY: Float = CanvasElement.DEFAULT_INSET,
-    val width: Float = CanvasElement.DEFAULT_WIDTH,
-    val height: Float = CanvasElement.DEFAULT_HEIGHT,
+    @PropertyRange(min = 0.0) val width: Float = CanvasElement.DEFAULT_WIDTH,
+    @PropertyRange(min = 0.0) val height: Float = CanvasElement.DEFAULT_HEIGHT,
     val text: String = "",
-    val fontSize: Float = CanvasElement.DEFAULT_FONT_SIZE,
+    @PropertyRange(min = 0.0, exclusiveMin = true) val fontSize: Float = CanvasElement.DEFAULT_FONT_SIZE,
     val color: String = "#FFFFFF",
     val background: String = "#00000000",
-    val value: Float = 1f,
+    @PropertyRange(min = 0.0, max = 1.0) val value: Float = 1f,
     val order: Int = 0,
     val visible: Boolean = true,
     val action: String = "",

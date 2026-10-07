@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.rendering.mesh
 
+import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.render.pipeline.AlphaMode
 import com.awakekt.awake.scene.document.SceneColor
 import com.awakekt.awake.scene.document.SceneComponent
@@ -25,12 +26,12 @@ import kotlinx.serialization.Serializable
 @Serializable
 @SerialName("pbr_material")
 data class ScenePbrMaterial(
-    val metallic: Float = 0f,
-    val roughness: Float = 0.5f,
+    @PropertyRange(min = 0.0, max = 1.0) val metallic: Float = 0f,
+    @PropertyRange(min = 0.0, max = 1.0) val roughness: Float = 0.5f,
     val baseColorFactor: SceneColor = SceneColor.White,
     val emissiveFactor: SceneColor = SceneColor.Transparent,
     val alphaMode: AlphaMode = AlphaMode.Opaque,
-    val alphaCutoff: Float = 0.5f,
+    @PropertyRange(min = 0.0, max = 1.0) val alphaCutoff: Float = 0.5f,
 ) : SceneComponent {
     override fun validate(path: String): List<SceneValidationIssue> = buildList {
         if (metallic !in 0f..1f) {
