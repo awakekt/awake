@@ -109,7 +109,8 @@ runs:
             ios=true
           fi
 
-          if [[ "$path" =~ ^(awake/backend/vulkan/|awake/engine/render/|awake/asset/shader-compiler/|awake/asset/shader-pack/|awake/asset/shaders/) ]]; then
+          # The graphics job also runs wgpu-native pixel tests over Mesa's Vulkan adapter.
+          if [[ "$path" =~ ^(awake/backend/vulkan/|awake/backend/webgpu/|awake/engine/render/|awake/asset/shader-compiler/|awake/asset/shader-pack/|awake/asset/shaders/) ]]; then
             vulkan=true
           fi
 

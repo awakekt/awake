@@ -15,6 +15,15 @@ plugins {
     id("com.awakekt.awake.plugin.spotless")
 }
 
+// Compile the application's exact plan as a test fixture, rather than maintaining a copy.
+// Only this declaration is imported: the backend must not depend on the sample application.
+val showcasePlanFixture = tasks.register<Sync>("showcasePlanFixture") {
+    from(rootProject.file("samples/engine-showcase/src/commonMain/kotlin")) {
+        include("com/awakekt/awake/showcase/app/EngineShowcaseRenderPlan.kt")
+    }
+    into(layout.buildDirectory.dir("generated/showcase-plan"))
+}
+
 kotlin {
     // 25, not the repo-wide 17: wgpu4k-jvm ships bytecode built for JVM target 25, and Kotlin
     // refuses to inline a 25-target inline function into a 17-target caller. Contained to this
@@ -131,6 +140,7 @@ kotlin {
         // debug-line shaders the Renderer's constructor requires. Pointed at the one existing
         // copy rather than duplicated, so a shader edit cannot drift between the two.
         named("desktopTest") {
+            kotlin.srcDir(showcasePlanFixture)
             resources.srcDir("src/wasmJsMain/resources")
             // lit_shadow.wgsl, for the shadow bind-group test. The shader pack's own synced
             // WebGPU copy, not a duplicate here: a copy would drift the moment the ASL

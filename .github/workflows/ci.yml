@@ -300,7 +300,9 @@ jobs:
 
       # wgpu-native needs a GLFW surface to select its adapter, even when rendering offscreen.
       # Xvfb supplies the display; Mesa's lavapipe executes both backends on the hosted runner.
-      - name: WebGPU backend pixel tests (wgpu-native)
+      # Includes WebGpuProductionPlanTest: boots the showcase's real plan via WebGpuEngine,
+      # compares its offscreen pixels with geometry alone, and checks that depth fog ran.
+      - name: WebGPU production-plan and backend pixel tests (wgpu-native)
         if: ${{ !cancelled() }}
         run: xvfb-run -a ./gradlew :awake:backend:webgpu:desktopTest --stacktrace
 
