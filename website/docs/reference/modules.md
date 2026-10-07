@@ -9,7 +9,7 @@
 | Group | `com.awakekt.awake`, plus the module's parent path: `:awake:scene:runtime` publishes `com.awakekt.awake.scene:runtime`. The Vulkan bindings are the exception: `com.awakekt.awake:vulkan-kmp`. |
 | Version | Core modules share one version; the newest is `{{ awake_version }}`. Vulkan family: `{{ awake_vulkan_version }}`, built against Core `{{ awake_vulkan_core_version }}`. See [Releases and compatibility](releases.md). |
 | Catalog alias | `awake-` plus the group after `com.awakekt.awake`, then the name, joined with `-`. The accessor replaces `-` with `.`: `awake-scene-runtime` is `libs.awake.scene.runtime`. The alias is your choice; this is the convention these docs use. |
-| Published modules | 80: 77 in Core, 3 in the Vulkan family. |
+| Published modules | 81: 78 in Core, 3 in the Vulkan family. |
 | Transitive modules | Declare only the modules your code uses. Each module's published metadata brings the modules it depends on. |
 
 A catalog entry looks like this:
@@ -97,6 +97,7 @@ awake-backend-vulkan = { module = "com.awakekt.awake.backend:vulkan", version.re
 | `com.awakekt.awake.scene:particles` | `awake-scene-particles` | The `particle_emitter` scene component and the systems that run its emitters in a scene. |
 | `com.awakekt.awake.scene:ai` | `awake-scene-ai` | The `patrol`, `chase` and `flee` scene components, and `TransformAgentPlacement` for the behaviour systems. |
 | `com.awakekt.awake.scene:navigation` | `awake-scene-navigation` | The `navigation` scene component: the walkable grid a scene document carries. |
+| `com.awakekt.awake.scene:shader` | `awake-scene-shader` | The `shader_effect` scene component: a project's shader documents loaded, attached and run over a scene. |
 | `com.awakekt.awake.scene:scene2d` | `awake-scene-scene2d` | The 2D scene components, starting with `sprite`: schema, binding and the systems that run them. |
 | `com.awakekt.awake.scene:physics` | `awake-scene-physics` | Physics components and systems that bind bodies to scene transforms. |
 | `com.awakekt.awake.scene:character` | `awake-scene-character` | A walking, jumping character moved by the physics character controller. |

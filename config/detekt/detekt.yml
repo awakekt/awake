@@ -155,6 +155,7 @@ comments:
       - '**/awake/scene/particles/**'
       - '**/awake/scene/ai/**'
       - '**/awake/scene/navigation/**'
+      - '**/awake/scene/shader/**'
       - '**/awake/asset/gltf/**'
       - '**/awake/asset/terrain/**'
       - '**/awake/terrain/**'

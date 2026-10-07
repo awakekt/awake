@@ -208,6 +208,7 @@ jobs:
           :awake:engine:render:passes:desktopTest
           :awake:asset:shader-pack:desktopTest
           :awake:asset:shader-document:desktopTest
+          :awake:scene:shader:desktopTest
           :awake:asset:shader-compiler:desktopTest
 
       - name: Every wasmJs source set compiles

@@ -43,6 +43,8 @@ import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer
 import com.awakekt.awake.scene.runtime.DefaultSceneComponentResolvers
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
+import com.awakekt.awake.scene.shader.ShaderEffectAssets
+import com.awakekt.awake.scene.shader.loadShaderEffects
 import kotlin.math.PI
 
 /** Where a project keeps its manifest, relative to the project root. */
@@ -58,6 +60,7 @@ const val PROJECT_MANIFEST = "awake.project.json"
  * @property physics Physics simulation world instance if required by the scene, or `null`.
  * @property particleSprites Particle texture assets keyed by asset identifier.
  * @property collisionMeshes Triangles of the models the scene's `mesh` collision shapes name.
+ * @property shaderEffects The shader documents and images the scene's `shader_effect`s use.
  */
 class PlayableProject internal constructor(
     val manifest: AwakeProjectManifest,
@@ -66,6 +69,7 @@ class PlayableProject internal constructor(
     internal val physics: PhysicsWorld?,
     internal val particleSprites: Map<String, TextureAsset> = emptyMap(),
     internal val collisionMeshes: CollisionMeshSource? = null,
+    internal val shaderEffects: ShaderEffectAssets = ShaderEffectAssets.Empty,
 )
 
 /**
@@ -105,12 +109,14 @@ suspend fun loadPlayableProject(
     }
     // Read before the physics world exists, so a missing model leaves nothing to tear down.
     val collisionMeshes = if (needsPhysics) loadCollisionMeshes(scene, files) else null
+    // A document or image that fails is logged and loses only its own effects; this never throws.
+    val shaderEffects = loadShaderEffects(scene, files)
     val physics = if (needsPhysics) {
         requireNotNull(physicsWorld) { "${manifest.entryScene} has physics bodies or characters; pass a physicsWorld factory" }()
     } else {
         null
     }
-    return PlayableProject(manifest, scene, models, physics, loadParticleSprites(scene, files), collisionMeshes)
+    return PlayableProject(manifest, scene, models, physics, loadParticleSprites(scene, files), collisionMeshes, shaderEffects)
 }
 
 /** Installs Core's default scene components and the controls, physics and character ones. Harmless twice. */
@@ -131,7 +137,7 @@ fun SceneAppDsl.playProject(project: PlayableProject, touchControls: Boolean = f
         builtInSceneAssets()
         resolver(project.models)
     }
-    registerPlaySpecs(project.scene, project.physics, project.particleSprites, project.collisionMeshes)
+    registerPlaySpecs(project.scene, project.physics, project.particleSprites, project.collisionMeshes, project.shaderEffects)
     onReady {
         showTouchControls = touchControls
         activatePrimaryCamera(world)

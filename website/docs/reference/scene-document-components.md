@@ -35,6 +35,7 @@ registers it.
 | [`pbr_material`](#pbr_material) | `PbrMaterial` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Meshes and materials](../guides/meshes-and-materials.md) |
 | [`physics_body`](#physics_body) | `PhysicsBody` | `com.awakekt.awake.scene:physics` | `registerPhysics()` | [Physics](../guides/physics.md) |
 | [`prefab_link`](#prefab_link) | `PrefabLink` | `com.awakekt.awake.scene:document` | Built in | [Scene documents](../guides/scene-documents.md) |
+| [`shader_effect`](#shader_effect) | `ShaderEffectSource` | `com.awakekt.awake.scene:shader` | `DefaultSceneComponentResolvers.install()` | [Scene documents](../guides/scene-documents.md) |
 | [`skybox`](#skybox) | `Skybox` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Sky and fog](../guides/sky-and-fog.md) |
 | [`spin_control`](#spin_control) | `SpinControl` | `com.awakekt.awake.scene:scene-core` | `DefaultSceneComponentResolvers.install()` | [Scene documents](../guides/scene-documents.md) |
 | [`sprite`](#sprite) | `Sprite` | `com.awakekt.awake.scene:scene2d` | `DefaultSceneComponentResolvers.install()` | [Component map](component-map.md) |
@@ -49,7 +50,7 @@ registers it.
 | Call | Module | Registers |
 | --- | --- | --- |
 | Built in | `com.awakekt.awake.scene:document` | `custom`, `prefab_link` |
-| `DefaultSceneComponentResolvers.install()` | `com.awakekt.awake.scene:runtime` | `ambient_light`, `camera`, `canvas_element`, `day_cycle`, `fog`, `keyframe_animation`, `light`, `locomotion_animation`, `mesh_renderer`, `particle_emitter`, `pbr_material`, `skybox`, `spin_control`, `static_transform`, `terrain`, `tone_mapping`. `SceneManager` and `SceneAppLifecycleRuntime` call it for you. |
+| `DefaultSceneComponentResolvers.install()` | `com.awakekt.awake.scene:runtime` | `ambient_light`, `camera`, `canvas_element`, `day_cycle`, `fog`, `keyframe_animation`, `light`, `locomotion_animation`, `mesh_renderer`, `particle_emitter`, `pbr_material`, `shader_effect`, `skybox`, `spin_control`, `static_transform`, `terrain`, `tone_mapping`. `SceneManager` and `SceneAppLifecycleRuntime` call it for you. |
 | `SceneComponentRegistry.registerControls()` | `com.awakekt.awake.scene:controls` | `movement_control`, `camera_rig` |
 | `SceneComponentRegistry.registerPhysics()` | `com.awakekt.awake.scene:physics` | `physics_body` |
 | `SceneComponentRegistry.registerCharacter()` | `com.awakekt.awake.scene:character` | `character_controller` |
@@ -481,6 +482,22 @@ nodes. A prefab file is a `ScenePrefab` as JSON: `guid`, optional `name`, and a 
 | Field | Type | Default | What it does |
 | --- | --- | --- | --- |
 | `path` | string | required | The prefab file, relative to the project root. Must not be blank. |
+
+## `shader_effect`
+
+A shader the project ships as data, drawn at this node: a sky behind the scene, an overlay in front of
+it, or a plane placed by the node's transform, as the document's `surface` says. The document is a
+`*.shader.json` file in the project; `loadPlayableProject` reads, checks and compiles it once, and
+`ShaderEffectSystem` draws it, advancing its clock each frame. An effect whose parameters or textures do
+not match its document is logged with the node and not drawn, and the scene plays on without it.
+`SceneShaderEffect`.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `shader` | string | required | Project path of the shader document. |
+| `parameters` | object of number lists | `{}` | Parameter name to its numbers: 1 for a `float`, 2 to 4 for a vector, 4 for a `color`. A parameter left out takes the document's default. |
+| `textures` | object of strings | `{}` | Texture name, as the document declares it, to the project path of its image. Every declared texture needs one. |
+| `enabled` | boolean | `true` | Whether the effect draws. Its clock runs either way. |
 
 ## `skybox`
 

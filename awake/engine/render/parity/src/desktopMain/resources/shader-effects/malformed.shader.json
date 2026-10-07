@@ -1,0 +1,6 @@
+{
+  "formatVersion": 1,
+  "name": "Parity malformed",
+  "surface": "overlay",
+  "fragment": { "color": { "op": "param", "name": "undeclared" } }
+}
