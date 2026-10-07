@@ -1,0 +1,1 @@
+- **Copy, cut, paste and select-all in iOS text fields.** The iOS view answers UIKit's standard edit actions, so the edit menu and a hardware keyboard's Cmd+C/X/V/A work in a focused Awake text field: copy and cut put the field's answer on `UIPasteboard`, paste types the pasteboard's text, and a password field still gives nothing (#252).
