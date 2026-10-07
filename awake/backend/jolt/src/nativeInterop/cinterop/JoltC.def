@@ -2,6 +2,9 @@ package = platform.joltc
 headers = JoltC/JoltC.h
 headerFilter = JoltC/**
 
+# This bitmask enum is only used through named presets; do not rely on enum heuristics.
+strictEnums = JPC_AllowedDOFs
+
 # JoltC (SecondHalfGames/JoltC, vendored as a git submodule at ios-native/JoltC) is a plain C
 # wrapper around Jolt Physics (JoltC/JoltCImpl, itself linking JoltC/JoltPhysics -- the same
 # C++ physics engine jolt-jni wraps for the JVM desktop/Android backend in this module). Only

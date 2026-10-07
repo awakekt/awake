@@ -5,6 +5,7 @@ public final class com/awakekt/awake/physics/jolt/JoltPhysicsWorld : com/awakekt
 	public fun addImpulse-5Z1epPo (JLcom/awakekt/awake/core/math/Vec3f;)V
 	public fun applyBuoyancy-QB6aDRY (JFLcom/awakekt/awake/physics/Buoyancy;F)V
 	public fun createBody-KN-qpMI (Lcom/awakekt/awake/physics/PhysicsShape;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Quat;Lcom/awakekt/awake/physics/MotionType;IZ)J
+	public fun createBody-WMOo7Bc (Lcom/awakekt/awake/physics/PhysicsShape;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Quat;Lcom/awakekt/awake/physics/MotionType;IZLcom/awakekt/awake/physics/DegreesOfFreedom;)J
 	public fun createConstraint-TjAUSrg (Lcom/awakekt/awake/physics/Constraint;)J
 	public fun destroy ()V
 	public fun destroyBody-EMivcsM (J)V

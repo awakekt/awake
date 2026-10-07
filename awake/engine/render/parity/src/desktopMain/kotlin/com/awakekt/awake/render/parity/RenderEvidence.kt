@@ -47,18 +47,7 @@ fun main(args: Array<String>) {
             renderer.renderFacingSpriteFromTheSide(size = EVIDENCE_SIZE),
         )
         write("scene-facing-sprite-spin-45", "The same sprite spun 45 degrees: the quad turns in its own plane", EVIDENCE_SIZE, renderer.renderFacingSpriteFromTheSide(size = EVIDENCE_SIZE, rotation = (PI / 4).toFloat()))
-        write(
-            "scene-skinned-textured",
-            "Textured plane skinned to one joint at the identity pose",
-            EVIDENCE_SIZE,
-            renderer.renderTexturedSkinnedScene(Mat4().data, size = EVIDENCE_SIZE),
-        )
-        write(
-            "scene-skinned-textured-exposure-2",
-            "The same skinned plane at exposure 2: exposure before the tone curve",
-            EVIDENCE_SIZE,
-            renderer.renderTexturedSkinnedScene(Mat4().data, exposure = 2f, size = EVIDENCE_SIZE),
-        )
+        writeSkinnedEvidence(renderer, ::write)
         writeShaderEffectEvidence(renderer, ::write)
         write("scene-terrain-cliff-self-shadow", "Clipmap plateau coarser than its heightmap, sun on its cliff: top, rim and face stay lit", EVIDENCE_SIZE, renderer.renderTerrainCliffScene(size = EVIDENCE_SIZE))
         STUDIO_YAWS.withIndex().filter { it.index % EVIDENCE_YAW_STEP == 0 }.forEach { (index, yaw) ->
@@ -111,6 +100,22 @@ private fun writePng(dir: File, name: String, size: Int, pixels: ByteArray) {
 }
 
 private const val MAX_CHANNEL = 255
+
+/** A textured plane skinned to one joint at the identity pose, and the same at exposure 2. */
+private fun writeSkinnedEvidence(renderer: Renderer, write: (String, String, Int, ByteArray) -> Unit) {
+    write(
+        "scene-skinned-textured",
+        "Textured plane skinned to one joint at the identity pose",
+        EVIDENCE_SIZE,
+        renderer.renderTexturedSkinnedScene(Mat4().data, size = EVIDENCE_SIZE),
+    )
+    write(
+        "scene-skinned-textured-exposure-2",
+        "The same skinned plane at exposure 2: exposure before the tone curve",
+        EVIDENCE_SIZE,
+        renderer.renderTexturedSkinnedScene(Mat4().data, exposure = 2f, size = EVIDENCE_SIZE),
+    )
+}
 
 /** A project's shader documents, as `shader_effect` draws them: its sky alone, and a plane over it. */
 private fun writeShaderEffectEvidence(renderer: Renderer, write: (String, String, Int, ByteArray) -> Unit) {
