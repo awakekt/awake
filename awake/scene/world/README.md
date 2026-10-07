@@ -1,6 +1,9 @@
 # `awake:scene:world`
 
-Open-world plumbing: cell coordinates, partitioning, streaming, and the floating origin.
+Open-world plumbing: partitioning, streaming, and the floating origin. The cell types it streams
+(`WorldCellCoord`, `WorldPartitionConfig`, `AsyncWorldCellStreamListener`, `CellContent`,
+`CompositeCellStreamListener`) are in [`awake:world`](../../world/README.md), which has no scene
+dependency; this module depends on it with `api`.
 
 ## Why it is its own module
 

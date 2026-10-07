@@ -12,7 +12,7 @@ import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.render.testing.NoopRenderer
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
-import com.awakekt.awake.scene.world.WorldCellCoord
+import com.awakekt.awake.world.WorldCellCoord
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals

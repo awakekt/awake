@@ -23,8 +23,6 @@ val capabilityLayeringDebt = setOf(
     // Patrol, chase and flee bind into the scene document and the scene's Transform: a scene binding that
     // lives outside awake/scene/. The behaviour logic belongs in awake:ai, its binding in awake:scene:ai.
     ":awake:ai:behavior",
-    // Grid navigation that depends on scene-core and scene:world.
-    ":awake:navigation",
 )
 
 val verifyCapabilityLayering = tasks.register<VerifyCapabilityLayeringTask>("verifyCapabilityLayering") {

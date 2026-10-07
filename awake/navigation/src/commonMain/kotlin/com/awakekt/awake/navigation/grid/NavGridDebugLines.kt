@@ -9,7 +9,7 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.render.renderer.LineSegment
-import com.awakekt.awake.scene.world.WorldCellCoord
+import com.awakekt.awake.world.WorldCellCoord
 
 /**
  * World-space wireframes for what navigation is actually reasoning about: every sample the bake

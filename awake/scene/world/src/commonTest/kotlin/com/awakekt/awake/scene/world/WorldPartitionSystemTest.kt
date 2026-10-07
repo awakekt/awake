@@ -7,6 +7,8 @@ package com.awakekt.awake.scene.world
 
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.world.WorldCellCoord
+import com.awakekt.awake.world.WorldPartitionConfig
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue

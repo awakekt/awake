@@ -28,7 +28,7 @@ import kotlinx.coroutines.launch
  * is identical either way, which is the whole reason it was request-and-poll from the start.
  *
  * The off-thread half never touches the `World`: it is handed copies of the endpoints and returns
- * waypoints, exactly as [CellContent][com.awakekt.awake.scene.world.CellContent] does
+ * waypoints, exactly as [CellContent][com.awakekt.awake.world.CellContent] does
  * for cell loads. `World` is not thread-safe and this is not the place that finds out.
  *
  * [navMesh] is read from whichever thread the scope dispatches to, so an implementation used this

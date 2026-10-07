@@ -7,10 +7,10 @@ package com.awakekt.awake.navigation.grid
 
 import com.awakekt.awake.asset.terrain.Heightmap
 import com.awakekt.awake.ecs.World
-import com.awakekt.awake.scene.world.AsyncWorldCellStreamListener
-import com.awakekt.awake.scene.world.CellContent
-import com.awakekt.awake.scene.world.WorldCellCoord
-import com.awakekt.awake.scene.world.WorldPartitionConfig
+import com.awakekt.awake.world.AsyncWorldCellStreamListener
+import com.awakekt.awake.world.CellContent
+import com.awakekt.awake.world.WorldCellCoord
+import com.awakekt.awake.world.WorldPartitionConfig
 
 /**
  * Keeps a [StreamedNavGrid] populated with the cells `WorldPartitionSystem` has streamed in.

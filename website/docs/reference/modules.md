@@ -9,7 +9,7 @@
 | Group | `com.awakekt.awake`, plus the module's parent path: `:awake:scene:runtime` publishes `com.awakekt.awake.scene:runtime`. The Vulkan bindings are the exception: `com.awakekt.awake:vulkan-kmp`. |
 | Version | Core modules share one version; the newest is `{{ awake_version }}`. Vulkan family: `{{ awake_vulkan_version }}`, built against Core `{{ awake_vulkan_core_version }}`. See [Releases and compatibility](releases.md). |
 | Catalog alias | `awake-` plus the group after `com.awakekt.awake`, then the name, joined with `-`. The accessor replaces `-` with `.`: `awake-scene-runtime` is `libs.awake.scene.runtime`. The alias is your choice; this is the convention these docs use. |
-| Published modules | 77: 74 in Core, 3 in the Vulkan family. |
+| Published modules | 79: 76 in Core, 3 in the Vulkan family. |
 | Transitive modules | Declare only the modules your code uses. Each module's published metadata brings the modules it depends on. |
 
 A catalog entry looks like this:
@@ -102,7 +102,7 @@ awake-backend-vulkan = { module = "com.awakekt.awake.backend:vulkan", version.re
 | `com.awakekt.awake.scene:canvas` | `awake-scene-canvas` | Screen-anchored game UI (text, panels, bars, buttons) stored in scenes. |
 | `com.awakekt.awake.scene:gltf` | `awake-scene-gltf` | Resolves `.gltf` and `.glb` model paths in scenes to meshes and materials. |
 | `com.awakekt.awake.scene:blueprint` | `awake-scene-blueprint` | Runs blueprints on scene entities: the `blueprint` component and `BlueprintSystem`. |
-| `com.awakekt.awake.scene:world` | `awake-scene-world` | Open-world plumbing: cell coordinates, partitioning, streaming, floating origin. |
+| `com.awakekt.awake.scene:world` | `awake-scene-world` | Open-world plumbing: partitioning, streaming and the floating origin, over `awake:world`. |
 | `com.awakekt.awake.scene:worldstream` | `awake-scene-worldstream` | Cell streamers for meshes, physics, heightfield tiles and terrain texture tiles. |
 
 ### Physics
@@ -118,6 +118,7 @@ awake-backend-vulkan = { module = "com.awakekt.awake.backend:vulkan", version.re
 | Maven coordinate | Catalog alias | What it is |
 | --- | --- | --- |
 | `com.awakekt.awake:navigation` | `awake-navigation` | Heightmap-derived navigation grids, streamed navigation and path requests. |
+| `com.awakekt.awake:world` | `awake-world` | World cells: coordinates, partition radii and the cell streaming contract, with no scene dependency. |
 | `com.awakekt.awake:ai` | `awake-ai` | Behavior tree and finite state machine primitives. |
 | `com.awakekt.awake.ai:behavior` | `awake-ai-behavior` | Starter behaviors that follow navigation paths: `patrol`, `chase`, `flee`. |
 | `com.awakekt.awake:blueprint` | `awake-blueprint` | Runtime for event-driven game logic authored as node graphs. |

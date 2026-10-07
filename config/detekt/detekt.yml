@@ -129,6 +129,7 @@ comments:
       - '**/awake/core/audio/**'
       - '**/awake/ai/**'
       - '**/awake/navigation/**'
+      - '**/awake/world/**'
       - '**/awake/editor/contract/**'
       - '**/awake/node-graph/**'
       - '**/awake/blueprint/**'

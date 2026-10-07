@@ -6,7 +6,7 @@
 package com.awakekt.awake.navigation.grid
 
 import com.awakekt.awake.core.math.Vec3f
-import com.awakekt.awake.scene.world.WorldCellCoord
+import com.awakekt.awake.world.WorldCellCoord
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith

@@ -21,6 +21,8 @@ kotlin {
             // Partitioning reads positions and the floating origin rewrites them, so this needs the
             // transform vocabulary. The arrow runs one way: scene-core knows nothing about cells.
             api(project(":awake:scene:scene-core"))
+            // Cell coordinates, the partition radii and the streaming contract this module drives.
+            api(project(":awake:world"))
             // AsyncWorldCellStream and CompositeCellStreamListener load cells off the
             // frame thread; the dependency travelled with them out of scene-core.
             implementation(libs.kotlinx.coroutines.core)

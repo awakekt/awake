@@ -89,7 +89,7 @@ Paths below are Gradle coordinates minus the `:awake:` prefix.
 | `scene:canvas` | Game UI in scenes: anchored text, panels, bars and buttons drawn over the game |
 | `scene:character` | A walking, jumping character moved by the physics character controller, saved in scenes |
 | `scene:gltf` | glTF and GLB models in scenes: meshes, textured materials and skins |
-| `scene:world` | Open-world cells, partitioning, streaming, floating origin |
+| `scene:world` | Open-world partitioning, streaming and the floating origin, over `world` |
 
 ## gameplay
 
@@ -98,6 +98,7 @@ Paths below are Gradle coordinates minus the `:awake:` prefix.
 | `ai` | Behavior trees and finite state machines |
 | `ai:behavior` | Navmesh-backed patrol, chase, and flee behaviors |
 | `navigation` | A* grid pathfinding, field search, path smoothing |
+| `world` | World cells: coordinates, partition radii, the cell streaming contract; no scene dependency |
 | `particles` | Particle emitters, simulation and draw packets; no scene dependency |
 | `net:api` | Transport and packet-buffer contracts |
 

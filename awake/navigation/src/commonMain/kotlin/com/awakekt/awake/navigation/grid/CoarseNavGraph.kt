@@ -5,7 +5,7 @@
  */
 package com.awakekt.awake.navigation.grid
 
-import com.awakekt.awake.scene.world.WorldCellCoord
+import com.awakekt.awake.world.WorldCellCoord
 import kotlin.concurrent.Volatile
 import kotlin.math.abs
 import kotlin.math.sqrt
