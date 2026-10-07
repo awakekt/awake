@@ -7,6 +7,9 @@
 
 package com.awakekt.awake.webgpu.application
 
+import com.awakekt.awake.core.logging.Log
+import com.awakekt.awake.core.logging.LogLevel
+import com.awakekt.awake.core.logging.PrintLogSink
 import com.awakekt.awake.engine.window.findCanvas
 import com.awakekt.awake.engine.window.runBrowserCanvas
 import io.ygdrasil.webgpu.CompositeAlphaMode
@@ -15,7 +18,7 @@ import io.ygdrasil.webgpu.GPUUncapturedErrorCallback
 import io.ygdrasil.webgpu.SurfaceConfiguration
 import io.ygdrasil.webgpu.WGPUContext
 import io.ygdrasil.webgpu.canvasContextRenderer
-import org.w3c.dom.HTMLCanvasElement
+import web.html.HTMLCanvasElement
 
 /**
  * Reusable WebGPU canvas host for authored games.
@@ -24,8 +27,7 @@ fun launchWebGpuGame(
     canvasId: String = "awake-canvas",
     applicationFactory: () -> WebGpuEngine,
 ) {
-    val canvas = findCanvas(canvasId)
-    launchWebGpuGame(canvas, applicationFactory)
+    launchWebGpuGame(findCanvas(canvasId).unsafeCast<HTMLCanvasElement>(), applicationFactory)
 }
 
 fun launchWebGpuGame(
@@ -37,21 +39,26 @@ fun launchWebGpuGame(
             "Use a current Chrome/Edge build with WebGPU enabled and a compatible adapter."
     }
 
+    // GraphicsEngine reports startup failures through Log; with no sink they vanish and the
+    // canvas stays black with an empty console. Installed before the factory runs, so the
+    // engine's own construction is covered too.
+    if (!Log.hasSinks) Log.install(PrintLogSink(minimumLevel = LogLevel.Warn))
     val application = applicationFactory()
     var wgpuContext: WGPUContext? = null
     var runtimeFailure: String? = null
 
     runBrowserCanvas(
-        canvas = canvas,
+        canvas = canvas.unsafeCast<org.w3c.dom.HTMLCanvasElement>(),
         lifecycle = application,
         onResize = { _, _ ->
             wgpuContext?.let(::configureSurface)
         },
-        initBackend = { targetCanvas, width, height ->
-            @Suppress("UNCHECKED_CAST_TO_EXTERNAL_INTERFACE")
-            val webCanvas = targetCanvas.unsafeCast<web.html.HTMLCanvasElement>()
+        // A device that failed asynchronously stays failed: stop drawing instead of repeating
+        // the failure every frame.
+        isStopped = { runtimeFailure != null },
+        initBackend = { _, width, height ->
             val canvasContext = canvasContextRenderer(
-                htmlCanvas = webCanvas,
+                htmlCanvas = canvas,
                 width = width,
                 height = height,
                 onUncapturedError = GPUUncapturedErrorCallback { error ->

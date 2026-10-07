@@ -18,7 +18,7 @@ import org.w3c.dom.events.KeyboardEvent
 
 /** `KeyboardEvent.key` -> [TextEditAction] for the same discrete edit set
  * [GlfwTextInputBridge]/[AwakeUIKitTextInputBridge] push on desktop/iOS. */
-val DomEditKeys: Map<String, TextEditAction> =
+internal val DomEditKeys: Map<String, TextEditAction> =
     mapOf(
         "Backspace" to TextEditAction.Backspace,
         "Delete" to TextEditAction.Delete,

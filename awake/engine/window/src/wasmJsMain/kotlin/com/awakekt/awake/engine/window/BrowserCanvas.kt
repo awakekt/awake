@@ -194,9 +194,14 @@ fun findCanvas(canvasId: String = "awake-canvas"): HTMLCanvasElement =
  * Automatically sizes the canvas, binds pointer, keyboard, and [DomTextInputBridge] input,
  * listens to window resize, executes [initBackend] asynchronously, and runs the animation frame loop.
  *
+ * [lifecycle] is resized to the canvas before [initBackend] runs, so an app that is created there
+ * already knows its viewport, as on the other platforms.
+ *
  * @param canvas The target [HTMLCanvasElement] to render into.
  * @param lifecycle The [WindowLifecycle] driving this game/app session.
  * @param onResize Hook invoked when window resize occurs, before [lifecycle.resize].
+ * @param isStopped Checked before every frame; once it answers true the loop stops scheduling
+ *                  frames, as a backend whose device failed asynchronously needs.
  * @param initBackend Hook invoked asynchronously on [MainScope] after input binding and initial canvas sync,
  *                    allowing the rendering backend (e.g. WebGPU) to initialize its device, context, or surface.
  */
@@ -205,6 +210,7 @@ fun runBrowserCanvas(
     canvas: HTMLCanvasElement,
     lifecycle: WindowLifecycle,
     onResize: (width: Int, height: Int) -> Unit = { _, _ -> },
+    isStopped: () -> Boolean = { false },
     initBackend: suspend (canvas: HTMLCanvasElement, width: Int, height: Int) -> Unit = { _, _, _ -> },
 ) {
     if (!Log.hasSinks) Log.install(PrintLogSink(minimumLevel = LogLevel.Warn))
@@ -228,19 +234,21 @@ fun runBrowserCanvas(
 
     MainScope().launch {
         try {
-            initBackend(canvas, initialSize.first, initialSize.second)
-
             lifecycle.resize(
                 x = 0,
                 y = 0,
                 width = initialSize.first,
                 height = initialSize.second,
             )
+            initBackend(canvas, initialSize.first, initialSize.second)
 
             var lastFrameTime = window.performance.now()
             var frameLoopStopped = false
             fun frame(time: Double) {
-                if (frameLoopStopped) return
+                if (frameLoopStopped || isStopped()) {
+                    frameLoopStopped = true
+                    return
+                }
                 val rawDeltaSeconds = ((time - lastFrameTime) / 1000.0).toFloat()
                 val deltaSeconds = rawDeltaSeconds.coerceAtMost(MAX_FRAME_DELTA_SECONDS.toFloat())
                 lastFrameTime = time

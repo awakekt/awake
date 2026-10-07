@@ -68,9 +68,3 @@ public final class com/awakekt/awake/engine/window/GlfwWindowInputKt {
 	public static final fun glfwWindowInput (J)Lcom/awakekt/awake/engine/window/GlfwWindowInput;
 }
 
-public final class com/awakekt/awake/engine/window/WheelDeltaKt {
-	public static final field DOM_DELTA_LINE I
-	public static final field DOM_DELTA_PAGE I
-	public static final fun domWheelToScrollDelta (DI)F
-}
-

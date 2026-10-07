@@ -19,7 +19,7 @@ package com.awakekt.awake.engine.window
  * and trackpads), lines (Firefox with some mice), or pages. Desktop's GLFW callback reports about
  * 1.0 per notch (line-like), so pixel and page deltas are scaled to that.
  */
-fun domWheelToScrollDelta(delta: Double, deltaMode: Int): Float {
+internal fun domWheelToScrollDelta(delta: Double, deltaMode: Int): Float {
     val units = when (deltaMode) {
         DOM_DELTA_LINE -> delta
         DOM_DELTA_PAGE -> delta * LINES_PER_PAGE
@@ -28,10 +28,8 @@ fun domWheelToScrollDelta(delta: Double, deltaMode: Int): Float {
     return (-units).toFloat()
 }
 
-/** DOM `WheelEvent.DOM_DELTA_LINE` delta mode indicator. */
-const val DOM_DELTA_LINE: Int = 1
-
-/** DOM `WheelEvent.DOM_DELTA_PAGE` delta mode indicator. */
-const val DOM_DELTA_PAGE: Int = 2
+// WheelEvent.deltaMode values, restated so this stays testable off the browser.
+internal const val DOM_DELTA_LINE = 1
+internal const val DOM_DELTA_PAGE = 2
 private const val LINES_PER_PAGE = 32.0
 private const val PIXELS_PER_LINE = 100.0

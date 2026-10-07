@@ -22,7 +22,6 @@ kotlin {
         commonMain.dependencies {
             api(project(":awake:engine:platform"))
             api(project(":awake:core:input"))
-            implementation(project(":awake:core:host"))
         }
         iosMain.dependencies {
             implementation(project(":awake:core:logging"))
@@ -31,6 +30,7 @@ kotlin {
             dependencies {
                 implementation(libs.kotlinx.browser)
                 implementation(libs.kotlinx.coroutines.core)
+                implementation(project(":awake:core:host"))
                 implementation(project(":awake:core:logging"))
             }
         }
