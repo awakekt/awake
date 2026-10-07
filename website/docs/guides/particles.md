@@ -35,8 +35,8 @@ list, except the ones that are code: the `onParticleDeath` callback, `groundHeig
 ```
 
 The emitter spawns at its node's world position and follows the node; the node's scale does not
-apply. `playProject` reads every emitter's `texture` while it loads the project and runs the
-particle systems when the scene has an emitter. In your own app, read the sprites with
+apply. `loadProject` reads every emitter's `texture` while it loads the project, and `runProject`
+runs the particle systems when the scene has an emitter. In your own app, read the sprites with
 `loadParticleSprites(document, assets)` and add
 `frameSystem("particle-content") { ParticleContentSystem(renderer, sprites) }` next to
 `ParticleSystem`; call its `release()` when the scene goes. The fields are in the

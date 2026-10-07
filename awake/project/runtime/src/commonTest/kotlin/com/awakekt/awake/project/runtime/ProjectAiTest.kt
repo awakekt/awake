@@ -41,7 +41,7 @@ import kotlin.test.assertTrue
  */
 class ProjectAiTest {
 
-    // --- played through playProject, as a project is
+    // --- played through runProject, as a project is
 
     @Test
     fun aPatrollingAgentVisitsItsStopsRoutingAroundTheWall() = runTest {
@@ -93,7 +93,7 @@ class ProjectAiTest {
 
     @Test
     fun aSceneWithBehavioursAndNoNavigationIsRefusedAtLoad() = runTest {
-        val error = assertFailsWith<IllegalArgumentException> { loadPlayableProject(files(NO_NAVIGATION_SCENE)) }
+        val error = assertFailsWith<IllegalArgumentException> { loadProject(files(NO_NAVIGATION_SCENE)) }
 
         assertTrue("navigation" in error.message.orEmpty(), error.message)
         assertTrue("scenes/main.scene.json" in error.message.orEmpty(), error.message)
@@ -157,20 +157,20 @@ class ProjectAiTest {
     }
 
     private suspend fun play(scene: String): Game {
-        val project = loadPlayableProject(files(scene))
-        val game = app { scene("play") { playProject(project) } }
+        val project = loadProject(files(scene))
+        val game = app { scene("play") { runProject(project) } }
         game.ready(TestRenderer())
         val runtime = game.requireService<SceneAppLifecycleRuntime>()
         return Game(runtime) { game.update(DELTA, WIDTH, HEIGHT) }.also { it.frame() }
     }
 
-    private fun systemsFor(scene: String): PlaySystems {
-        installPlayableComponents()
-        val services = PlayServices(
+    private fun systemsFor(scene: String): SceneSystemSet {
+        installProjectComponents()
+        val services = SceneHostServices(
             input = { GameplayInput(Input().currentSnapshot, InputOwnership()) },
             renderer = NoopRenderer(),
         )
-        return playSystemsFor(SceneLoader.decode(scene), services)
+        return sceneSystemsFor(SceneLoader.decode(scene), services)
     }
 
     private fun List<System>.has(type: KClass<out System>) = any { type.isInstance(it) }

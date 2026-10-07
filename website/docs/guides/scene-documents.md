@@ -167,7 +167,7 @@ request, and the app's `assets { }` turns each request into a `MeshRenderer`.
 
 !!! tip "Prefabs"
     A node with `prefab_link { path }` places a prefab file there. Run `withPrefabs` on the decoded
-    document before `instantiate`; `loadPlayableProject` does. Each file is read once, however many
+    document before `instantiate`; `loadProject` does. Each file is read once, however many
     nodes link it, and a saved world keeps the link instead of a copy.
 
 ## Debugging

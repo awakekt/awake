@@ -77,8 +77,8 @@ class GltfDocsSampleTest {
             "assets/models/statue.gltf" to triangleGltf(),
         )
         // --8<-- [start:project]
-        val project = loadPlayableProject(files)
-        val game = app { scene("play") { playProject(project) } }
+        val project = loadProject(files)
+        val game = app { scene("play") { runProject(project) } }
         // --8<-- [end:project]
         game.ready(DocsRenderer())
 

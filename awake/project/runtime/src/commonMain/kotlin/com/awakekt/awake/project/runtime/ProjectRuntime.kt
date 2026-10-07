@@ -51,7 +51,7 @@ import kotlin.math.PI
 const val PROJECT_MANIFEST = "awake.project.json"
 
 /**
- * A project read from its files, ready to [playProject]: its manifest, entry scene, loaded models,
+ * A project read from its files, ready to [runProject]: its manifest, entry scene, loaded models,
  * and a physics world when the scene has bodies or characters.
  *
  * It owns that physics world, whose native memory nothing else frees: [close] it once the scene
@@ -66,7 +66,7 @@ const val PROJECT_MANIFEST = "awake.project.json"
  * @property collisionMeshes Triangles of the models the scene's `mesh` collision shapes name.
  * @property shaderEffects The shader documents and images the scene's `shader_effect`s use.
  */
-class PlayableProject internal constructor(
+class LoadedProject internal constructor(
     val manifest: AwakeProjectManifest,
     val scene: SceneDocument,
     internal val models: GltfAssetResolver,
@@ -96,15 +96,15 @@ class PlayableProject internal constructor(
  * into the process-wide registry, as `SceneAppLifecycleRuntime` does for the defaults when it starts.
  * Installing twice is harmless.
  */
-suspend fun loadPlayableProject(
+suspend fun loadProject(
     files: AssetSource,
     physicsWorld: (suspend () -> PhysicsWorld)? = null,
-): PlayableProject {
+): LoadedProject {
     val manifest = AwakeProjectValidator.decodeManifest(files.readText(PROJECT_MANIFEST))
     val issues = AwakeProjectValidator.manifestIssues(manifest)
     require(issues.isEmpty()) { "$PROJECT_MANIFEST is invalid: ${issues.joinToString("; ")}" }
 
-    installPlayableComponents()
+    installProjectComponents()
     val scene = SceneLoader.decode(files.readText(manifest.entryScene)).withPrefabs { files.readText(it) }
     require(!scene.hasRouteBehaviours() || scene.navigation() != null) {
         "${manifest.entryScene} has patrol, chase or flee behaviours but no navigation component to route them over"
@@ -130,29 +130,29 @@ suspend fun loadPlayableProject(
     } else {
         null
     }
-    return PlayableProject(manifest, scene, models, physics, particleSprites, collisionMeshes, shaderEffects)
+    return LoadedProject(manifest, scene, models, physics, particleSprites, collisionMeshes, shaderEffects)
 }
 
 /** Installs Core's default scene components and the controls, physics and character ones. Harmless twice. */
-internal fun installPlayableComponents() {
+internal fun installProjectComponents() {
     DefaultSceneComponentResolvers.install()
     PROJECT_COMPONENTS.forEach(SceneComponentRegistry::registerGlobal)
 }
 
 /**
- * Plays [project] in this scene: its [PlayableProject.scene], the built-in meshes and the models it
- * loaded, the systems its components call for (the ones [playSystemsFor] builds), and a primary
+ * Plays [project] in this scene: its [LoadedProject.scene], the built-in meshes and the models it
+ * loaded, the systems its components call for (the ones [sceneSystemsFor] builds), and a primary
  * camera. With [touchControls], the scene's touch-only canvas controls are shown. Every speed,
- * distance and size comes from the scene; this adds no tuning of its own. [PlayableProject.close]
+ * distance and size comes from the scene; this adds no tuning of its own. [LoadedProject.close]
  * the project once the scene has stopped.
  */
-fun SceneAppDsl.playProject(project: PlayableProject, touchControls: Boolean = false) {
+fun SceneAppDsl.runProject(project: LoadedProject, touchControls: Boolean = false) {
     scene(project.scene)
     assets {
         builtInSceneAssets()
         resolver(project.models)
     }
-    registerPlaySpecs(project.scene, project.physics, project.particleSprites, project.collisionMeshes, project.shaderEffects)
+    registerSystemSpecs(project.scene, project.physics, project.particleSprites, project.collisionMeshes, project.shaderEffects)
     onReady {
         showTouchControls = touchControls
         activatePrimaryCamera(world)

@@ -99,7 +99,7 @@ the light still points at the sun, so the ground gets no direct light and the sk
 opposite the sun. The night stop's low `lightIntensity`, low `ambient` and dark sky make it night.
 A field no stop sets keeps the value its own component authors, and blending wraps across midnight.
 
-The day advances in play: `playProject`, or the systems `playSystemsFor` returns. Outside play the
+The day advances in play: `runProject`, or the systems `sceneSystemsFor` returns. Outside play the
 scene shows its light, sky and fog as authored; `DayCycleSystem().update(world, 0f)` applies the
 current time without advancing it. Saving writes the authored `time` back, never the time play
 reached. See [`day_cycle`](../reference/scene-document-components.md#day_cycle) for every field.
