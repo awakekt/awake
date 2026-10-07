@@ -5,7 +5,6 @@
  */
 package com.awakekt.awake.project.runtime
 
-import com.awakekt.awake.ai.behavior.AiBehaviorBindings
 import com.awakekt.awake.asset.gltf.firstSkinnedAsset
 import com.awakekt.awake.asset.gltf.toAnimationLibrary
 import com.awakekt.awake.core.animation.AnimationPlayer
@@ -19,6 +18,7 @@ import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.project.AwakeProjectManifest
 import com.awakekt.awake.project.AwakeProjectValidator
 import com.awakekt.awake.render.texture.TextureAsset
+import com.awakekt.awake.scene.ai.AiBehaviorBindings
 import com.awakekt.awake.scene.authoring.SceneAppDsl
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.character.CharacterControllerBinding

@@ -13,7 +13,6 @@ import com.awakekt.awake.navigation.PathRequest
 import com.awakekt.awake.navigation.PathRequestSystem
 import com.awakekt.awake.navigation.grid.NavGrid
 import com.awakekt.awake.navigation.grid.bakeNavGrid
-import com.awakekt.awake.scene.core.transform.Transform
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
 import kotlin.test.Test
@@ -44,9 +43,9 @@ class NavGridChaseIntegrationTest {
         return Heightmap(samples, EXTENT, EXTENT, Vec3f(1f, 1f, 1f))
     }
 
-    private fun World.spawn(position: Vec3f): Pair<Entity, Transform> {
+    private fun World.spawn(position: Vec3f): Pair<Entity, Placed> {
         val entity = create()
-        val transform = Transform(position = position)
+        val transform = Placed(position)
         add(entity, transform)
         return entity to transform
     }
@@ -57,26 +56,26 @@ class NavGridChaseIntegrationTest {
         val world = World()
         // Through the tile's own mapping rather than as bare numbers: the tile is placed where
         // its heightmap is, which is centred, so sample 11 is not at world 11.
-        val (target, targetTransform) = world.spawn(Vec3f(tile.worldX(11), 0f, tile.worldZ(1)))
-        val (npc, npcTransform) = world.spawn(Vec3f(tile.worldX(1), 0f, tile.worldZ(1)))
+        val (target, targetPlaced) = world.spawn(Vec3f(tile.worldX(11), 0f, tile.worldZ(1)))
+        val (npc, npcPlaced) = world.spawn(Vec3f(tile.worldX(1), 0f, tile.worldZ(1)))
         world.add(npc, ChaseBehavior(target = target, speed = 4f, repathInterval = 0.5f))
         world.add(npc, PathRequest())
 
-        val chaseSystem = ChaseAiSystem()
+        val chaseSystem = ChaseAiSystem(PlacedAgents)
         val pathSystem = PathRequestSystem(NavGrid(tile))
         var crossedTheGap = false
         var arrived = false
         repeat(1200) {
             chaseSystem.update(world, STEP)
             pathSystem.update(world, STEP)
-            val sampleX = ((npcTransform.position.x - tile.originX) / tile.cellSize).roundToInt()
-            val sampleZ = ((npcTransform.position.z - tile.originZ) / tile.cellSize).roundToInt()
+            val sampleX = ((npcPlaced.position.x - tile.originX) / tile.cellSize).roundToInt()
+            val sampleZ = ((npcPlaced.position.z - tile.originZ) / tile.cellSize).roundToInt()
             assertTrue(
                 tile.isWalkable(sampleX, sampleZ),
                 "Step $it stood on a blocked sample ($sampleX, $sampleZ).",
             )
             if (sampleZ > RIDGE_LAST_Z) crossedTheGap = true
-            if (distanceBetween(npcTransform, targetTransform) < 1f) arrived = true
+            if (distanceBetween(npcPlaced, targetPlaced) < 1f) arrived = true
         }
 
         assertTrue(crossedTheGap, "The only route is around the ridge's far end.")
@@ -89,22 +88,22 @@ class NavGridChaseIntegrationTest {
         val tile = ridgedTerrain().bakeNavGrid(cellSize = 1f, maxSlopeDegrees = 45f)
         val world = World()
         val (target, _) = world.spawn(Vec3f(RIDGE_X.toFloat(), 0f, 1f))
-        val (npc, npcTransform) = world.spawn(Vec3f(1f, 0f, 1f))
+        val (npc, npcPlaced) = world.spawn(Vec3f(1f, 0f, 1f))
         world.add(npc, ChaseBehavior(target = target, speed = 4f, repathInterval = 0.5f))
         world.add(npc, PathRequest())
 
-        val chaseSystem = ChaseAiSystem()
+        val chaseSystem = ChaseAiSystem(PlacedAgents)
         val pathSystem = PathRequestSystem(NavGrid(tile))
         repeat(120) {
             chaseSystem.update(world, STEP)
             pathSystem.update(world, STEP)
         }
 
-        assertTrue(npcTransform.position.x == 1f, "Nowhere to go, so nowhere moved.")
-        assertTrue(npcTransform.position.z == 1f, "Nowhere to go, so nowhere moved.")
+        assertTrue(npcPlaced.position.x == 1f, "Nowhere to go, so nowhere moved.")
+        assertTrue(npcPlaced.position.z == 1f, "Nowhere to go, so nowhere moved.")
     }
 
-    private fun distanceBetween(a: Transform, b: Transform): Float {
+    private fun distanceBetween(a: Placed, b: Placed): Float {
         val dx = a.position.x - b.position.x
         val dz = a.position.z - b.position.z
         return sqrt(dx * dx + dz * dz)

@@ -10,7 +10,6 @@ import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.navigation.PathRequest
 import com.awakekt.awake.navigation.PathStatus
-import com.awakekt.awake.scene.core.transform.Transform
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
@@ -25,20 +24,32 @@ import kotlin.math.sqrt
  * not which reachable spot is furthest from a threat, and answering that properly means a
  * Dijkstra flood outward, which is a much larger feature than this behaviour needs.
  */
-class FleeAiSystem : System {
+class FleeAiSystem(
+    /** Where fleers and their threats are, and how a fleer moves. */
+    private val placement: AgentPlacement,
+) : System {
+    private val position = Vec3f(0f, 0f, 0f)
+    private val threatScratch = Vec3f(0f, 0f, 0f)
 
     override fun update(world: World, delta: Float) {
-        world.family<Transform, FleeBehavior>().forEach { entity, transform, flee ->
+        world.family<FleeBehavior>().forEach { entity, flee ->
             val request = world.get<PathRequest>(entity) ?: return@forEach
-            val threatPosition = flee.threat?.let { world.get<Transform>(it) }?.position
-            updatePanic(flee, transform, threatPosition)
+            if (!placement.position(world, entity, position)) return@forEach
+            val threatPosition = threatPositionOf(world, flee)
+            updatePanic(flee, position, threatPosition)
             noteEscapeOutcome(flee, request)
             flee.adoptArrivedRoute(request)
             if (flee.fleeing) {
-                flee.requestRouteWhenDue(transform, escapeGoal(flee, transform, threatPosition), request, delta)
-                flee.steer(transform, delta)
+                flee.requestRouteWhenDue(position, escapeGoal(flee, position, threatPosition), request, delta)
+                flee.steer(placement, world, entity, position, delta)
             }
         }
+    }
+
+    /** The threat's position read through the world, so a destroyed threat counts as gone. */
+    private fun threatPositionOf(world: World, flee: FleeBehavior): Vec3f? {
+        val threat = flee.threat ?: return null
+        return if (placement.position(world, threat, threatScratch)) threatScratch else null
     }
 
     /**
@@ -46,12 +57,12 @@ class FleeAiSystem : System {
      * between them to whichever state is already active. A lost threat calms the entity rather
      * than leaving it running forever at whatever it last saw.
      */
-    private fun updatePanic(flee: FleeBehavior, transform: Transform, threat: Vec3f?) {
+    private fun updatePanic(flee: FleeBehavior, position: Vec3f, threat: Vec3f?) {
         if (threat == null) {
             stopFleeing(flee)
             return
         }
-        val distance = planarDistance(transform.position, threat)
+        val distance = planarDistance(position, threat)
         when {
             distance <= flee.panicRadius -> flee.fleeing = true
             distance >= flee.safeRadius -> stopFleeing(flee)
@@ -88,10 +99,10 @@ class FleeAiSystem : System {
      * start pointing back toward the threat, so it gives up for this interval and tries again from
      * straight-away on the next one — by which time the threat has moved and the geometry differs.
      */
-    private fun escapeGoal(flee: FleeBehavior, transform: Transform, threat: Vec3f?): Vec3f? {
+    private fun escapeGoal(flee: FleeBehavior, position: Vec3f, threat: Vec3f?): Vec3f? {
         if (threat == null || flee.escapeAttempt >= FleeBehavior.MAX_ESCAPE_ATTEMPTS) return null
-        var dx = transform.position.x - threat.x
-        var dz = transform.position.z - threat.z
+        var dx = position.x - threat.x
+        var dz = position.z - threat.z
         val distance = sqrt(dx * dx + dz * dz)
         if (distance < MIN_SEPARATION) {
             // Standing on the threat: any direction is equally away, so pick a fixed one rather
@@ -110,9 +121,9 @@ class FleeAiSystem : System {
         val cosA = cos(angle)
         val sinA = sin(angle)
         return Vec3f(
-            transform.position.x + (dx * cosA - dz * sinA) * flee.fleeDistance,
+            position.x + (dx * cosA - dz * sinA) * flee.fleeDistance,
             0f,
-            transform.position.z + (dx * sinA + dz * cosA) * flee.fleeDistance,
+            position.z + (dx * sinA + dz * cosA) * flee.fleeDistance,
         )
     }
 

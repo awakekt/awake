@@ -12,7 +12,6 @@ import com.awakekt.awake.navigation.NavMesh
 import com.awakekt.awake.navigation.PathRequest
 import com.awakekt.awake.navigation.PathRequestSystem
 import com.awakekt.awake.navigation.PathStatus
-import com.awakekt.awake.scene.core.transform.Transform
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -29,7 +28,7 @@ class ChaseAiSystemTest {
     }
 
     private val navMesh = FakeNavMesh(listOf(Vec3f(5f, 0f, 0f)))
-    private val chaseSystem = ChaseAiSystem()
+    private val chaseSystem = ChaseAiSystem(PlacedAgents)
     private val pathSystem = PathRequestSystem(navMesh)
 
     /** One scheduled frame: the AI decides what to ask, then navigation answers it. */
@@ -38,9 +37,9 @@ class ChaseAiSystemTest {
         pathSystem.update(this, delta)
     }
 
-    private fun World.spawn(position: Vec3f): Pair<Entity, Transform> {
+    private fun World.spawn(position: Vec3f): Pair<Entity, Placed> {
         val entity = create()
-        val transform = Transform(position = position)
+        val transform = Placed(position)
         add(entity, transform)
         return entity to transform
     }
@@ -50,7 +49,7 @@ class ChaseAiSystemTest {
         target: Entity,
         withRequest: Boolean = true,
         repathInterval: Float = ChaseBehavior.DEFAULT_REPATH_INTERVAL,
-    ): Transform {
+    ): Placed {
         val (entity, transform) = spawn(position)
         add(entity, ChaseBehavior(target = target, speed = 1f, repathInterval = repathInterval))
         if (withRequest) add(entity, PathRequest())

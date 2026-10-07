@@ -140,31 +140,19 @@ private fun quotedEnd(source: String, start: Int, quote: Char): Int {
 }
 
 /**
- * What is wrong with how [sceneCouplings], module path to the reasons it depends on the scene layer,
- * sits against the recorded [debt].
+ * One failure per module in [sceneCouplings], module path to the reasons it depends on the scene layer,
+ * that has any reason at all.
  *
- * A module with a reason that is not in [debt] is new debt and fails. A module in [debt] with no reason
- * left fails too, so the ledger only shrinks: paying a debt means deleting its line.
+ * There is no list of tolerated modules. The last ones were separated in #386, so a coupling is always
+ * new and always fails: the fix is to move the capability, not to record it.
  */
-internal fun capabilityLayeringFailures(
-    sceneCouplings: Map<String, List<String>>,
-    debt: Set<String>,
-): List<String> = buildList {
+internal fun capabilityLayeringFailures(sceneCouplings: Map<String, List<String>>): List<String> = buildList {
     sceneCouplings.toSortedMap().forEach { (module, reasons) ->
-        if (reasons.isNotEmpty() && module !in debt) {
+        if (reasons.isNotEmpty()) {
             add(
                 "$module depends on the scene layer in main code: ${summarize(reasons)}. A capability must not " +
                     "depend on a scene module: put the capability in a module of its own and bind it from " +
-                    "awake:scene:<name> (see awake/scene/README.md). If this is debt that already existed, it " +
-                    "belongs in capabilityLayeringDebt with the reason.",
-            )
-        }
-    }
-    debt.sorted().forEach { module ->
-        if (sceneCouplings[module].isNullOrEmpty()) {
-            add(
-                "$module is listed in capabilityLayeringDebt but its main code no longer depends on the scene " +
-                    "layer. Remove it from the list.",
+                    "awake:scene:<name> (see awake/scene/README.md).",
             )
         }
     }

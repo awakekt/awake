@@ -8,13 +8,14 @@ package com.awakekt.awake.project.runtime
 import com.awakekt.awake.ai.behavior.ChaseAiSystem
 import com.awakekt.awake.ai.behavior.FleeAiSystem
 import com.awakekt.awake.ai.behavior.PatrolAiSystem
-import com.awakekt.awake.ai.behavior.chase.SceneChase
-import com.awakekt.awake.ai.behavior.flee.SceneFlee
-import com.awakekt.awake.ai.behavior.navigation.SceneNavigation
-import com.awakekt.awake.ai.behavior.patrol.ScenePatrol
 import com.awakekt.awake.navigation.PathRequestSystem
+import com.awakekt.awake.scene.ai.TransformAgentPlacement
+import com.awakekt.awake.scene.ai.chase.SceneChase
+import com.awakekt.awake.scene.ai.flee.SceneFlee
+import com.awakekt.awake.scene.ai.patrol.ScenePatrol
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneNode
+import com.awakekt.awake.scene.navigation.SceneNavigation
 import com.awakekt.awake.scene.runtime.SceneSystemPhase
 
 /**
@@ -29,9 +30,9 @@ import com.awakekt.awake.scene.runtime.SceneSystemPhase
 internal fun MutableList<PlaySpec>.addAiSpecs(scene: SceneDocument) {
     val navigation = scene.navigation() ?: return
     val behaviours = listOf(
-        ScenePatrol::class to PlaySpec("ai-patrol", SceneSystemPhase.Frame) { PatrolAiSystem() },
-        SceneChase::class to PlaySpec("ai-chase", SceneSystemPhase.Frame) { ChaseAiSystem() },
-        SceneFlee::class to PlaySpec("ai-flee", SceneSystemPhase.Frame) { FleeAiSystem() },
+        ScenePatrol::class to PlaySpec("ai-patrol", SceneSystemPhase.Frame) { PatrolAiSystem(TransformAgentPlacement) },
+        SceneChase::class to PlaySpec("ai-chase", SceneSystemPhase.Frame) { ChaseAiSystem(TransformAgentPlacement) },
+        SceneFlee::class to PlaySpec("ai-flee", SceneSystemPhase.Frame) { FleeAiSystem(TransformAgentPlacement) },
     ).filter { (type, _) -> scene.has(type) }
     if (behaviours.isEmpty()) return
     val grid = navigation.toGrid()
