@@ -24,6 +24,7 @@ attaches any ECS component, so "—" in the scene DSL column means there is no d
 | `LocomotionAnimation` | `scene:scene3d` | `locomotion_animation` | — | [Animation](../guides/animation.md) |
 | `KeyframeAnimation` | `scene:scene3d` | `keyframe_animation` | — | [Animation](../guides/animation.md) |
 | `ParticleEmitterSource` | `scene:particles` | `particle_emitter` | — | [Particles](../guides/particles.md) |
+| `Sprite` | `scene:scene2d` | `sprite` | — | [Scene document components](scene-document-components.md#sprite) |
 | `TerrainComponent` | `scene:scene3d` | `terrain` | — | [Terrain](../guides/terrain.md) |
 | `SpinControl` | `scene:scene-core` | `spin_control` | — | [Scene documents](../guides/scene-documents.md) |
 | `StaticTransform` | `scene:scene-core` | `static_transform` | — | [Scene documents](../guides/scene-documents.md) |

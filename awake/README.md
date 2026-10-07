@@ -86,6 +86,7 @@ Paths below are Gradle coordinates minus the `:awake:` prefix.
 | `scene:particles` | The `particle_emitter` scene component, over `particles` |
 | `scene:ai` | The `patrol`, `chase` and `flee` scene components and `TransformAgentPlacement`, over `ai:behavior` |
 | `scene:navigation` | The `navigation` scene component: the walkable grid a scene carries, over `navigation` |
+| `scene:scene2d` | The 2D scene components, starting with `sprite`: schema, binding and the systems that run them |
 | `scene:canvas` | Game UI in scenes: anchored text, panels, bars and buttons drawn over the game |
 | `scene:character` | A walking, jumping character moved by the physics character controller, saved in scenes |
 | `scene:gltf` | glTF and GLB models in scenes: meshes, textured materials and skins |
