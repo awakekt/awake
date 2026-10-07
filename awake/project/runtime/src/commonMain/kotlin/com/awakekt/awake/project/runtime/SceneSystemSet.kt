@@ -5,56 +5,27 @@
  */
 package com.awakekt.awake.project.runtime
 
-import com.awakekt.awake.asset.shaders.ContentFeatureHost
 import com.awakekt.awake.ecs.InterpolatedSystem
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.render.renderer.Renderer
-import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.scene.authoring.SceneAppDsl
 import com.awakekt.awake.scene.authoring.infrastructure.gameplayInput
-import com.awakekt.awake.scene.canvas.SceneCanvasElement
-import com.awakekt.awake.scene.character.CharacterControllerSystem
-import com.awakekt.awake.scene.character.SceneCharacterController
 import com.awakekt.awake.scene.controls.GameplayInput
-import com.awakekt.awake.scene.controls.camera.CameraSystem
-import com.awakekt.awake.scene.controls.camera.SceneCameraRig
-import com.awakekt.awake.scene.controls.movement.MatrixRelativeMovementSystem
-import com.awakekt.awake.scene.controls.movement.PlayerInputSystem
-import com.awakekt.awake.scene.controls.movement.SceneMovementControl
-import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneDocument
-import com.awakekt.awake.scene.document.SceneNode
-import com.awakekt.awake.scene.particles.ParticleContentSystem
-import com.awakekt.awake.scene.physics.CollisionMeshSource
-import com.awakekt.awake.scene.physics.MeshColliderSystem
-import com.awakekt.awake.scene.physics.PhysicsSystem
-import com.awakekt.awake.scene.physics.SceneConvexHullShape
-import com.awakekt.awake.scene.physics.SceneMeshShape
-import com.awakekt.awake.scene.physics.ScenePhysicsBody
-import com.awakekt.awake.scene.rendering.animation.AnimationSystem
-import com.awakekt.awake.scene.rendering.terrain.SceneTerrain
 import com.awakekt.awake.scene.runtime.SceneSystemPhase
-import com.awakekt.awake.scene.shader.SceneShaderEffect
-import com.awakekt.awake.scene.shader.ShaderEffectAssets
-import com.awakekt.awake.scene.shader.ShaderEffectSystem
-import kotlin.reflect.KClass
 
-/** What a played scene's systems need from the host and cannot read from the scene itself. */
+/** What a scene's systems need from the host and cannot read from the scene itself. */
 class SceneHostServices(
     /** The keyboard, pointer and touch state, with what the UI owns of it. Read every frame. */
     val input: () -> GameplayInput,
-    /** What particle sprites are created through. */
+    /** What systems create GPU content through, such as particle sprites and shader effects. */
     val renderer: Renderer,
     /** The physics world the scene's bodies and characters live in; null runs the scene without physics. */
     val physics: PhysicsWorld? = null,
-    /** The sprite images of the scene's `particle_emitter`s, as [loadParticleSprites] reads them. */
-    val particleSprites: Map<String, TextureAsset> = emptyMap(),
-    /** The triangles of the scene's `mesh` collision shapes, as [loadCollisionMeshes] reads them. */
-    val collisionMeshes: CollisionMeshSource? = null,
-    /** The documents and images of the scene's `shader_effect`s, as [loadShaderEffects] reads them. */
-    val shaderEffects: ShaderEffectAssets = ShaderEffectAssets.Empty,
+    /** What the scene's capabilities read from the project's files, as [loadSceneContent] reads it. */
+    val content: SceneContent = SceneContent.Empty,
 )
 
 /**
@@ -81,37 +52,43 @@ class SceneSystemSet internal constructor(
 }
 
 /**
- * The systems [scene]'s components call for, and none it doesn't, built from [services]. A host
- * that plays a scene in a world of its own, as an editor's Play does, runs these instead of keeping
- * a list of its own, so it gains a system when Core does:
+ * The systems [scene] runs, and none it doesn't, built from [services]: Core's capabilities first, then
+ * [capabilities] in order, each adding what [scene] uses of it. A host that runs a scene in a world of
+ * its own, as an editor's Play does, runs these instead of keeping a list of its own, so it gains a
+ * system when Core does:
  * - `movement_control`: keyboard intent, moved by physics when the entity has a
  *   `character_controller` and straight through the world when it doesn't
  * - `physics_body`, `character_controller` and a `terrain` collider: the physics step, the
  *   character controller and the terrain collider, when [SceneHostServices.physics] is given; a `mesh`
- *   collision shape adds [MeshColliderSystem], which needs [SceneHostServices.collisionMeshes]
+ *   collision shape adds [com.awakekt.awake.scene.physics.MeshColliderSystem], which reads the
+ *   triangles from [SceneHostServices.content]
  * - `camera_rig`: the camera system
  * - `spinControl`: spinning
  * - `locomotion_animation` and `keyframe_animation`: their clips and looping tracks
  * - `texture_clips`: the sprite sheet's clips, stepped on the scene's clock
- * - `particle_emitter`: its emitters, with [SceneHostServices.particleSprites]
+ * - `particle_emitter`: its emitters, with the sprites in [SceneHostServices.content]
  * - `shader_effect`: its documents, drawn through [SceneHostServices.renderer] when it takes content
- *   features, with [SceneHostServices.shaderEffects]
+ *   features
  * - `day_cycle`: the sun's path and the blended sky, light and fog
  * - `canvas_element`s with an action: [CanvasActionSystem]
  * - `patrol`, `chase` and `flee`, with a `navigation` component to route them over: the behaviours and
  *   the system that answers their route requests
  * - skinned glTF animation, always
  *
- * `runProject` is built on the same decision, so the two cannot drift apart. These are only the
- * scene's own systems: the host still places the scene, resolves its assets, picks the camera,
- * resolves transforms and draws. A scene that needs physics with no [SceneHostServices.physics] runs
- * without those systems.
+ * Pass the same [capabilities] to [loadSceneContent] for the content. `runProject` is built on the same
+ * decision, so the two cannot drift apart. These are only the scene's own systems: the host still
+ * places the scene, resolves its assets, picks the camera, resolves transforms and draws. A scene that
+ * needs physics with no [SceneHostServices.physics] runs without those systems.
  */
-fun sceneSystemsFor(scene: SceneDocument, services: SceneHostServices): SceneSystemSet {
+fun sceneSystemsFor(
+    scene: SceneDocument,
+    services: SceneHostServices,
+    capabilities: List<SceneCapability> = emptyList(),
+): SceneSystemSet {
     val fixed = mutableListOf<System>()
     val frame = mutableListOf<System>()
     val releasing = SystemReleases()
-    sceneSystemSpecsFor(scene, hasPhysics = services.physics != null).forEach { spec ->
+    sceneSystemSpecsFor(scene, hasPhysics = services.physics != null, capabilities).forEach { spec ->
         val system = releasing.keep(spec.create(services))
         when (spec.phase) {
             SceneSystemPhase.Fixed -> fixed += system
@@ -121,7 +98,7 @@ fun sceneSystemsFor(scene: SceneDocument, services: SceneHostServices): SceneSys
     return SceneSystemSet(fixed, frame, releasing::release)
 }
 
-/** One system a scene plays with: its name, the phase it runs in, and how to build it. */
+/** One system a scene runs: its name, the phase it runs in, and how to build it. */
 internal class SceneSystemSpec(
     val name: String,
     val phase: SceneSystemPhase,
@@ -129,63 +106,41 @@ internal class SceneSystemSpec(
 )
 
 /**
- * The decision, as data: which systems [scene] needs, in the order they run. Both [sceneSystemsFor]
- * and `runProject` build from this list, so there is one place that says what a component needs.
+ * The decision, as data: which systems [scene] needs, in the order they run, from Core's capabilities
+ * and then [capabilities]. Both [sceneSystemsFor] and `runProject` build from this list, so there is
+ * one place that says what a component needs.
  */
-internal fun sceneSystemSpecsFor(scene: SceneDocument, hasPhysics: Boolean): List<SceneSystemSpec> = buildList {
-    val moves = scene.has(SceneMovementControl::class)
-    val characters = scene.has(SceneCharacterController::class)
-    if (moves) add(SceneSystemSpec("playerInput", SceneSystemPhase.Frame) { PlayerInputSystem(it.input) })
-    if (moves && scene.hasCanvasActions()) add(SceneSystemSpec("canvas-actions", SceneSystemPhase.Frame) { CanvasActionSystem() })
-    if (hasPhysics) {
-        if (scene.nodes.any { it.hasTerrainCollider() }) {
-            add(SceneSystemSpec("terrain-collider", SceneSystemPhase.Fixed) { TerrainColliderSystem() })
-        }
-        if (scene.nodes.any { it.hasMeshCollider() }) {
-            add(
-                SceneSystemSpec("mesh-collider", SceneSystemPhase.Fixed) {
-                    MeshColliderSystem(
-                        requireNotNull(it.collisionMeshes) {
-                            "The scene has mesh collision shapes; pass SceneHostServices.collisionMeshes from loadCollisionMeshes"
-                        },
-                    )
-                },
-            )
-        }
-        add(SceneSystemSpec("physics", SceneSystemPhase.Fixed) { PhysicsSystem(requireNotNull(it.physics)) })
-        if (characters) add(SceneSystemSpec("character", SceneSystemPhase.Fixed) { CharacterControllerSystem(requireNotNull(it.physics)) })
-    }
-    if (moves && !characters) add(SceneSystemSpec("movement", SceneSystemPhase.Frame) { MatrixRelativeMovementSystem() })
-    if (scene.has(SceneCameraRig::class)) add(SceneSystemSpec("camera", SceneSystemPhase.Frame) { CameraSystem(inputProvider = it.input) })
-    addAiSpecs(scene)
-    addMotionSpecs(scene)
-    if (scene.has(SceneShaderEffect::class)) {
-        add(SceneSystemSpec("shader-effects", SceneSystemPhase.Frame) { ShaderEffectSystem(it.renderer as? ContentFeatureHost, it.shaderEffects) })
-    }
-    add(SceneSystemSpec("animation", SceneSystemPhase.Frame) { AnimationSystem() })
+internal fun sceneSystemSpecsFor(
+    scene: SceneDocument,
+    hasPhysics: Boolean,
+    capabilities: List<SceneCapability> = emptyList(),
+): List<SceneSystemSpec> {
+    val plan = SceneSystemPlan(hasPhysics)
+    installedCapabilities(capabilities).forEach { it.plan(scene, plan) }
+    return plan.specs
+}
+
+/** Core's capabilities followed by [extra], refusing two with one id. */
+internal fun installedCapabilities(extra: List<SceneCapability>): List<SceneCapability> {
+    val installed = CORE_CAPABILITIES + extra
+    val repeated = installed.groupBy { it.id }.filterValues { it.size > 1 }.keys
+    require(repeated.isEmpty()) { "More than one capability has the id ${repeated.joinToString()}" }
+    return installed
 }
 
 /**
- * Registers [sceneSystemSpecsFor] on this app's schedule, building each system once the runtime exists so
- * it can read the runtime's input, renderer and UI ownership.
+ * Registers [sceneSystemSpecsFor] on this app's schedule for [project], building each system once the
+ * runtime exists so it can read the runtime's input and renderer, and closing them when it stops.
  */
-internal fun SceneAppDsl.registerSystemSpecs(
-    scene: SceneDocument,
-    physics: PhysicsWorld?,
-    particleSprites: Map<String, TextureAsset>,
-    collisionMeshes: CollisionMeshSource?,
-    shaderEffects: ShaderEffectAssets,
-) {
+internal fun SceneAppDsl.registerSystemSpecs(project: LoadedProject) {
     val releasing = SystemReleases()
-    sceneSystemSpecsFor(scene, hasPhysics = physics != null).forEach { spec ->
+    sceneSystemSpecsFor(project.scene, hasPhysics = project.physics != null, project.capabilities).forEach { spec ->
         system(spec.name, spec.phase) {
             val services = SceneHostServices(
                 input = { gameplayInput() },
                 renderer = renderer,
-                physics = physics,
-                particleSprites = particleSprites,
-                collisionMeshes = collisionMeshes,
-                shaderEffects = shaderEffects,
+                physics = project.physics,
+                content = project.content,
             )
             releasing.keep(spec.create(services))
         }
@@ -193,37 +148,14 @@ internal fun SceneAppDsl.registerSystemSpecs(
     onDispose { releasing.release() }
 }
 
-/** The systems that hold GPU content and must give it back when the scene stops. */
+/** The systems that hold something to give back, closed newest first when the scene stops. */
 private class SystemReleases {
-    private var particles: ParticleContentSystem? = null
-    private var shaderEffects: ShaderEffectSystem? = null
+    private val closing = mutableListOf<AutoCloseable>()
 
-    fun keep(system: System): System = system.also {
-        when (it) {
-            is ParticleContentSystem -> particles = it
-            is ShaderEffectSystem -> shaderEffects = it
-        }
-    }
+    fun keep(system: System): System = system.also { if (it is AutoCloseable) closing += it }
 
     fun release() {
-        particles?.release()
-        shaderEffects?.release()
+        closing.asReversed().forEach(AutoCloseable::close)
+        closing.clear()
     }
 }
-
-internal fun SceneNode.hasTerrainCollider(): Boolean =
-    components.any { it is SceneTerrain && it.collider } || children.any { it.hasTerrainCollider() }
-
-internal fun SceneNode.hasMeshCollider(): Boolean =
-    components.any { it is ScenePhysicsBody && (it.shape is SceneMeshShape || it.shape is SceneConvexHullShape) } ||
-        children.any { it.hasMeshCollider() }
-
-internal fun SceneNode.has(type: KClass<out SceneComponent>): Boolean =
-    components.any { type.isInstance(it) } || children.any { it.has(type) }
-
-internal fun SceneDocument.has(type: KClass<out SceneComponent>): Boolean = nodes.any { it.has(type) }
-
-internal fun SceneDocument.hasCanvasActions(): Boolean = nodes.any { it.hasCanvasAction() }
-
-private fun SceneNode.hasCanvasAction(): Boolean =
-    components.any { it is SceneCanvasElement && it.action.isNotEmpty() } || children.any { it.hasCanvasAction() }

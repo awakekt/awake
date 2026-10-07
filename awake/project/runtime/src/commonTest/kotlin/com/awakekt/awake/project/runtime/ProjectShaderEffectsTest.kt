@@ -17,7 +17,6 @@ import com.awakekt.awake.render.testing.NoopRenderer
 import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.scene.controls.GameplayInput
 import com.awakekt.awake.scene.document.SceneLoader
-import com.awakekt.awake.scene.shader.ShaderEffectAssets
 import com.awakekt.awake.scene.shader.ShaderEffectSystem
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -28,10 +27,10 @@ import kotlin.test.assertTrue
 class ProjectShaderEffectsTest {
     private val input = Input()
 
-    private fun services(renderer: Renderer, shaderEffects: ShaderEffectAssets = ShaderEffectAssets.Empty) = SceneHostServices(
+    private fun services(renderer: Renderer, content: SceneContent = SceneContent.Empty) = SceneHostServices(
         input = { GameplayInput(input.currentSnapshot, InputOwnership()) },
         renderer = renderer,
-        shaderEffects = shaderEffects,
+        content = content,
     )
 
     @Test
@@ -50,14 +49,14 @@ class ProjectShaderEffectsTest {
     fun aProjectLoadsItsDocumentsAndABrokenOneDoesNotStopTheLoad() = runTest {
         val project = loadProject(files(TWO_EFFECTS_SCENE))
 
-        assertEquals(setOf("shaders/sky.shader.json"), project.shaderEffects.documents.keys)
+        assertEquals(setOf("shaders/sky.shader.json"), project.content[ShaderEffectsCapability.Effects]?.documents?.keys)
     }
 
     @Test
     fun anEffectAttachesThroughAHostRendererAndIsDetachedWhenTheSceneCloses() = runTest {
         val project = loadProject(files(SKY_SCENE))
         val renderer = HostRenderer()
-        val systems = sceneSystemsFor(project.scene, services(renderer, project.shaderEffects))
+        val systems = sceneSystemsFor(project.scene, services(renderer, project.content))
         val world = World().also { SceneLoader.instantiate(project.scene, it) }
 
         repeat(2) { systems.frame.forEach { system -> system.update(world, 1f / 60f) } }

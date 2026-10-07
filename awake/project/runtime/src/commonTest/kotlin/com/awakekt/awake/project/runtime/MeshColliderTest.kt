@@ -47,7 +47,7 @@ class MeshColliderTest {
                 input = { GameplayInput(Input().currentSnapshot, InputOwnership()) },
                 renderer = NoopRenderer(),
                 physics = physics,
-                collisionMeshes = loadCollisionMeshes(scene, files()),
+                content = loadSceneContent(scene, files()),
             )
             sceneSystemsFor(scene, services).fixed.forEach { it.update(world, STEP) }
 
@@ -69,7 +69,7 @@ class MeshColliderTest {
                 input = { GameplayInput(Input().currentSnapshot, InputOwnership()) },
                 renderer = NoopRenderer(),
                 physics = physics,
-                collisionMeshes = loadCollisionMeshes(scene, files()),
+                content = loadSceneContent(scene, files()),
             )
             val systems = sceneSystemsFor(scene, services).fixed
             repeat(180) { systems.forEach { it.update(world, STEP) } }
@@ -122,7 +122,7 @@ class MeshColliderTest {
         val sources = mapOf(MANIFEST_PATH to MANIFEST, "scenes/main.scene.json" to SCENE.replace("props/ramp.glb", "props/missing.glb"))
         val files = AssetSource { path -> runCatching { sources.getValue(path.value).encodeToByteArray() } }
 
-        val error = assertFailsWith<IllegalArgumentException> { loadProject(files, ::createJoltPhysicsWorld) }
+        val error = assertFailsWith<IllegalArgumentException> { loadProject(files, physicsWorld = ::createJoltPhysicsWorld) }
 
         assertTrue("props/missing.glb" in error.message.orEmpty() && "Bridge" in error.message.orEmpty(), error.message)
     }

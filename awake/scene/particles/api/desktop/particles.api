@@ -1,6 +1,6 @@
-public final class com/awakekt/awake/scene/particles/ParticleContentSystem : com/awakekt/awake/ecs/System {
+public final class com/awakekt/awake/scene/particles/ParticleContentSystem : com/awakekt/awake/ecs/System, java/lang/AutoCloseable {
 	public fun <init> (Lcom/awakekt/awake/render/renderer/Renderer;Ljava/util/Map;)V
-	public final fun release ()V
+	public fun close ()V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 

@@ -25,12 +25,12 @@ import com.awakekt.awake.scene.core.transform.Transform
 /**
  * Gives each [ParticleEmitterSource] entity its [ParticleEmitter], following the entity, once its
  * sprite is in [sprites] (see [loadParticleSprites]). Emitters share one quad and one material per
- * sprite, created through [renderer] and destroyed by [release]. Run it alongside [ParticleSystem].
+ * sprite, created through [renderer] and destroyed by [close]. Run it alongside [ParticleSystem].
  */
 class ParticleContentSystem(
     private val renderer: Renderer,
     private val sprites: Map<String, TextureAsset>,
-) : System {
+) : System, AutoCloseable {
     private var quad: Mesh? = null
     private val materials = HashMap<String, Material>()
     private val waiting = ArrayList<Entity>()
@@ -46,8 +46,8 @@ class ParticleContentSystem(
         }
     }
 
-    /** Destroys the quad and materials this system created. */
-    fun release() {
+    /** Destroys the quad and materials this system created. Closing twice is harmless. */
+    override fun close() {
         quad?.destroy()
         quad = null
         materials.values.forEach(Material::destroy)
