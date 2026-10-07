@@ -8,6 +8,7 @@ package com.awakekt.awake.showcase.app
 import com.awakekt.awake.asset.shaderpack.PackShaderSets
 import com.awakekt.awake.asset.shaderpack.depthFogContentFeature
 import com.awakekt.awake.asset.shaderpack.skyboxContentFeature
+import com.awakekt.awake.asset.shaderpack.spriteScenePipeline
 import com.awakekt.awake.asset.shaders.RenderPlan
 import com.awakekt.awake.asset.shaders.ScenePipeline
 import com.awakekt.awake.core.color.Color
@@ -56,6 +57,7 @@ internal val EngineShowcaseRenderPlan = RenderPlan(
     ),
     sceneDepthShaderSet = PackShaderSets.SceneDepth,
     scenePipelines = listOf(
+        spriteScenePipeline(),
         ScenePipeline(
             PipelineKey.Format(VertexFormat.PositionNormalColorSkin),
             skinned,

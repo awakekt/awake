@@ -25,6 +25,7 @@ fun PreparedDraw.toGpuResolvedDraw(): GpuResolvedDraw = GpuResolvedDraw(
     elementCount = elementCount,
     transparent = transparent,
     depthSortKey = depthSortKey,
+    sortOrder = sortOrder,
     batchKey = batchKey,
     instances = instances,
     instanceVertexBuffer = instanceVertexBuffer,

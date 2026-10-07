@@ -83,6 +83,17 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
         extraDescriptorSetLayouts = listOf(DescriptorSetLayoutHandle(depthTarget.descriptorSetLayout)),
         cullMode = com.awakekt.awake.vulkan.enums.VkCullModeFlagBits.VK_CULL_MODE_BACK_BIT,
     )
+    val atlasPipeline = RenderPipeline(
+        graphicsDevice,
+        swapchainManager,
+        sceneRenderPass,
+        descriptorSetLayout,
+        runBlocking { spirvPair(PackShaderSets.Sprite) },
+        VertexFormat.PositionUv,
+        vertexEntryPoint = "vertexMain",
+        fragmentEntryPoint = "fragmentMain",
+        variant = PipelineVariant.AlphaBlended,
+    )
     val texturedPipeline = RenderPipeline(
         graphicsDevice,
         swapchainManager,
@@ -276,10 +287,11 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
             primaryFormat = scenePipeline.vertexFormat,
             byFormat = mapOf(
                 VertexFormat.PositionNormalColorUv to texturedPipeline,
+                VertexFormat.PositionUv to atlasPipeline,
                 VertexFormat.PositionNormalColorUvSkin to skinnedTexturedPipeline,
             ),
             instancedByFormat = mapOf(VertexFormat.PositionNormalColorUv to instancedTexturedPipeline),
-            transparentByFormat = mapOf(VertexFormat.PositionNormalColorUv to transparentTexturedPipeline),
+            transparentByFormat = mapOf(VertexFormat.PositionNormalColorUv to transparentTexturedPipeline, VertexFormat.PositionUv to atlasPipeline),
             additiveByFormat = mapOf(VertexFormat.PositionNormalColorUv to additiveTexturedPipeline),
             backCulledByFormat = mapOf(VertexFormat.PositionNormalColor to backCulledScenePipeline),
             particlePipelines = mapOf(VertexFormat.PositionUv to spritePipeline),
@@ -304,6 +316,7 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
             scenePipeline.destroy()
             backCulledScenePipeline.destroy()
             texturedPipeline.destroy()
+            atlasPipeline.destroy()
             skinnedTexturedPipeline.destroy()
             instancedTexturedPipeline.destroy()
             transparentTexturedPipeline.destroy()

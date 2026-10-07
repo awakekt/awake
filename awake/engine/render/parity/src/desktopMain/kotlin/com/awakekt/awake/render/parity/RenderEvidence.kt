@@ -29,6 +29,7 @@ fun main(args: Array<String>) {
     }
     openHeadlessScene(HeadlessUiBackend.Vulkan).use { session ->
         val renderer = session.renderer
+        write("scene-unlit-atlas", "Unlit pixel atlas: frames, mirroring, tint and transparent margins", EVIDENCE_SIZE, renderer.renderUnlitAtlasScene(EVIDENCE_SIZE))
         write("scene-shadow", "Lit ground and a hovering quad: where the shadow lands", EVIDENCE_SIZE, renderer.renderShadowScene(size = EVIDENCE_SIZE))
         write(
             "scene-shadow-textured-ground",

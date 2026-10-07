@@ -28,12 +28,14 @@ data class TextureAsset(
     val layerCount: Int = 1,
     /** Whether this texture represents a 6-face cubemap (+X, -X, +Y, -Y, +Z, -Z). */
     val isCubemap: Boolean = false,
+    /** Nearest keeps individual texels and uploads only the base level (no atlas mip bleeding). */
+    val filtering: TextureFiltering = TextureFiltering.Linear,
 ) {
     init {
         require(layerCount >= 1) { "A texture holds at least one layer; was $layerCount." }
         if (isCubemap) {
             require(layerCount == 6) { "A cubemap texture must have exactly 6 layers; was $layerCount." }
-            require(width == height) { "Cubemap faces must be square; was ${width}x${height}." }
+            require(width == height) { "Cubemap faces must be square; was ${width}x$height." }
         }
         require(data.size == width * height * RGBA_BYTES * layerCount) {
             "A ${width}x$height RGBA8 texture of $layerCount layer(s) needs " +
@@ -55,7 +57,8 @@ data class TextureAsset(
             width == other.width &&
             height == other.height &&
             layerCount == other.layerCount &&
-            isCubemap == other.isCubemap
+            isCubemap == other.isCubemap &&
+            filtering == other.filtering
     }
 
     override fun hashCode(): Int {
@@ -64,6 +67,7 @@ data class TextureAsset(
         result = 31 * result + height
         result = 31 * result + layerCount
         result = 31 * result + isCubemap.hashCode()
+        result = 31 * result + filtering.hashCode()
         return result
     }
 }
@@ -81,7 +85,7 @@ fun createCubemapAsset(
     val combined = ByteArray(faceBytes * 6)
     faces.forEachIndexed { i, faceData ->
         require(faceData.size == faceBytes) {
-            "Face $i size mismatch: expected $faceBytes bytes (${faceSize}x${faceSize} RGBA8), got ${faceData.size}."
+            "Face $i size mismatch: expected $faceBytes bytes (${faceSize}x$faceSize RGBA8), got ${faceData.size}."
         }
         faceData.copyInto(combined, destinationOffset = i * faceBytes)
     }
@@ -116,3 +120,12 @@ data class PbrTextureSet(
     /** Emissive map texture asset, or null if omitted. */
     val emissive: TextureAsset? = null,
 )
+
+/** Sampling and mip generation policy for a supplied texture. */
+enum class TextureFiltering {
+    /** Smooth sampling with a generated mip chain. */
+    Linear,
+
+    /** Exact base-level texels for pixel artwork and atlases. */
+    Nearest,
+}

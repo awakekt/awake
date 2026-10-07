@@ -44,6 +44,7 @@ class SortedDrawsTest {
         override val pipeline: PipelineHandle,
         override val transparent: Boolean = false,
         override val depthSortKey: Float = 0f,
+        override val sortOrder: Int = 0,
         override val batchKey: Int = 0,
         val label: String = "",
     ) : PreparedDraw {
@@ -51,6 +52,17 @@ class SortedDrawsTest {
         override val vertexBuffer: BufferHandle? = null
         override val indexBuffer: BufferHandle? = null
         override val elementCount: Int = 3
+    }
+
+    @Test
+    fun transparentPaintOrderWinsOverDepthAndSurvivesPacketConversion() {
+        val draws = listOf(
+            Draw(PipelineA, transparent = true, sortOrder = 1, depthSortKey = 100f, label = "high"),
+            Draw(PipelineB, transparent = true, sortOrder = -1, depthSortKey = 1f, label = "low near"),
+            Draw(PipelineA, transparent = true, sortOrder = -1, depthSortKey = 10f, label = "low far"),
+        )
+        assertEquals(listOf("low far", "low near", "high"), sortForRecording(draws).transparent.map { it.label })
+        assertEquals(1, draws.first().toGpuResolvedDraw().sortOrder)
     }
 
     @Test

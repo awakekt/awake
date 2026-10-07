@@ -48,7 +48,7 @@ data class SceneSprite(
     val sortOrder: Int = 0,
 ) : SceneComponent {
     /** Cells in the sheet; 0 when [columns] or [rows] is not valid. */
-    val cellCount: Int get() = if (columns >= 1 && rows >= 1) columns * rows else 0
+    val cellCount: Int get() = if (columns >= 1 && rows >= 1 && columns.toLong() * rows <= Int.MAX_VALUE) columns * rows else 0
 
     override fun validate(path: String): List<SceneValidationIssue> =
         problems().map { SceneValidationIssue(path, "sprite.$it") }
@@ -57,6 +57,7 @@ data class SceneSprite(
         if (texture.isBlank()) add("texture must name an image")
         if (columns < 1) add("columns must be at least 1")
         if (rows < 1) add("rows must be at least 1")
+        if (columns.toLong() * rows > Int.MAX_VALUE) add("sheet cell count must fit in an Int")
         if (frame < 0) {
             add("frame must not be negative")
         } else if (cellCount > 0 && frame >= cellCount) {

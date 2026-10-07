@@ -5,7 +5,6 @@
  */
 package com.awakekt.awake.showcase.examples
 
-import com.awakekt.awake.asset.shaderpack.TexturedUniformLayout
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.geometry.MeshGeometry
 import com.awakekt.awake.core.geometry.VertexFormat
@@ -14,14 +13,12 @@ import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.host.readResourceBytes
 import com.awakekt.awake.core.image.createBitmap
 import com.awakekt.awake.core.image.toRgba8Bytes
-import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
-import com.awakekt.awake.render.renderer.createMaterial
-import com.awakekt.awake.render.texture.PbrTextureSet
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.scene.binding.Scene
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
+import com.awakekt.awake.scene.scene2d.Sprite
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -48,21 +45,6 @@ internal object Sprites2dExampleDriver {
         spriteSheet = TextureAsset(bitmap.toRgba8Bytes(), bitmap.width, bitmap.height)
     }
 
-    /** Quad geometry in the XY plane facing +Z with unit extents (-0.5..0.5). */
-    val spriteQuadGeometry: MeshGeometry = MeshGeometry(
-        vertices = floatArrayOf(
-            -0.5f, -0.5f, 0f, 0f, 0f, 1f, 1f, 1f, 1f, 0f, 1f,
-            0.5f, -0.5f, 0f, 0f, 0f, 1f, 1f, 1f, 1f, 1f, 1f,
-            0.5f, 0.5f, 0f, 0f, 0f, 1f, 1f, 1f, 1f, 1f, 0f,
-            -0.5f, 0.5f, 0f, 0f, 0f, 1f, 1f, 1f, 1f, 0f, 0f,
-        ),
-        indices = intArrayOf(0, 1, 2, 2, 3, 0),
-        format = VertexFormat.PositionNormalColorUv,
-    )
-
-    fun createMesh(runtime: SceneAppLifecycleRuntime): Mesh =
-        runtime.renderer.createMesh(spriteQuadGeometry)
-
     /** The backdrop stays on the untextured lit pipeline; sprite UVs select the textured one. */
     fun createBackgroundMesh(runtime: SceneAppLifecycleRuntime): Mesh = runtime.renderer.createMesh(
         MeshGeometry(
@@ -77,12 +59,7 @@ internal object Sprites2dExampleDriver {
         ),
     )
 
-    fun createMaterial(runtime: SceneAppLifecycleRuntime): Material =
-        runtime.renderer.createMaterial(
-            TexturedUniformLayout,
-            texture = requireNotNull(spriteSheet) { "2D sprite sheet must be preloaded" },
-            pbrTextures = PbrTextureSet(),
-        )
+    fun texture(): TextureAsset = requireNotNull(spriteSheet) { "2D sprite sheet must be preloaded" }
 
     fun attach(instance: Scene, runtime: SceneAppLifecycleRuntime) {
         val back = instance.roots.find { it.name == "sprite-card-back" }
@@ -115,6 +92,9 @@ internal object Sprites2dExampleDriver {
             transform.rotation.z = cos(elapsed * 1.4f) * 0.025f
         }
 
+        if (delta > 0f) {
+            runtime.world.queryEach<Sprite> { _, sprite -> sprite.frame = (elapsed * 4f).toInt() % sprite.cellCount }
+        }
         runtime.stageUi(overlayCommands(bob1))
     }
 

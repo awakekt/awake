@@ -5,13 +5,13 @@
  */
 package com.awakekt.awake.showcase
 
+import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.engine.platform.HeadlessSurface
 import com.awakekt.awake.engine.platform.dsl.requireService
 import com.awakekt.awake.render.capture.PixelMap
-import com.awakekt.awake.render.passes.uniforms.TextureAnimation
 import com.awakekt.awake.render.testing.writePng
-import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
+import com.awakekt.awake.scene.scene2d.Sprite
 import com.awakekt.awake.showcase.app.EngineShowcaseRenderPlan
 import com.awakekt.awake.showcase.app.engineShowcaseApp
 import kotlinx.coroutines.runBlocking
@@ -54,10 +54,8 @@ class Sprites2dSceneFrameTest {
             }
             assertTrue(changed > MIN_SPRITE_PIXELS, "Switching to the blink cell changed only $changed pixels.")
 
-            runtime.world.queryEach(TextureAnimation::class, MeshRenderer::class) { entity, _, mesh ->
-                assertTrue(mesh.transparent, "sprite renderers must retain their authored transparency")
-                runtime.world.add(entity, mesh.copy(visible = false))
-            }
+            val sprites = buildList<Entity> { runtime.world.queryEach<Sprite> { entity, _ -> add(entity) } }
+            sprites.forEach { runtime.world.remove<Sprite>(it) }
             app.update(0f, WIDTH.toFloat(), HEIGHT.toFloat())
             val background = renderer.readPresentedPixels().data.copyOf()
             PixelMap(WIDTH, HEIGHT, background.copyOf()).writePng(File("build/reports/render-captures/sprites-2d-background.png"))
@@ -73,9 +71,7 @@ class Sprites2dSceneFrameTest {
     }
 
     private fun SceneAppLifecycleRuntime.holdFrame(frame: Int) {
-        world.queryEach<TextureAnimation> { entity, animation ->
-            world.add(entity, animation.copy(firstFrame = frame, frameCount = 1, framesPerSecond = 0f))
-        }
+        world.queryEach<Sprite> { _, sprite -> sprite.frame = frame }
     }
 
     private companion object {

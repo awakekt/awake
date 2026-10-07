@@ -19,6 +19,9 @@ enum class DrawUniformPlan {
     /** Lit shading receiving directional shadow cascades. */
     LitShadow,
 
+    /** Unlit atlas quad with tint and UV transform. */
+    Sprite,
+
     /** Skeletally animated / vertex-blended joint uniform plan. */
     Skinned,
 
@@ -38,6 +41,8 @@ fun drawUniformPlan(
     materialUniformFloatCount: Int,
     hasShadowCascades: Boolean,
 ): DrawUniformPlan = when {
+    format == VertexFormat.PositionUv && materialUniformFloatCount == SpriteUniformLayout.total -> DrawUniformPlan.Sprite
+
     // Exact, and first: the textured block is larger than lit_shadow's, so "at least" cannot tell them apart.
     format == VertexFormat.PositionNormalColorUv &&
         materialUniformFloatCount == MaterialUniformLayouts.PbrTextured.total ->

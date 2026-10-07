@@ -37,6 +37,7 @@ public final class com/awakekt/awake/scene/authoring/SceneAssetsDsl {
 	public final fun proceduralMesh (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
 	public final fun renderer (Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
 	public final fun resolver (Lcom/awakekt/awake/scene/runtime/SceneAssetResolver;)V
+	public final fun texture (Ljava/lang/String;Lkotlin/jvm/functions/Function0;)V
 }
 
 public final class com/awakekt/awake/scene/authoring/SceneFlowDsl {

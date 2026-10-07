@@ -28,6 +28,7 @@ data class GpuResolvedDraw(
     override val elementCount: Int,
     override val transparent: Boolean = false,
     override val depthSortKey: Float = 0f,
+    override val sortOrder: Int = 0,
     override val batchKey: Int = 0,
     override val instances: Int = 1,
     override val instanceVertexBuffer: BufferHandle? = null,

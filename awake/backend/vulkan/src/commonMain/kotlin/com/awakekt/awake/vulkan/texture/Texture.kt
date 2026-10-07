@@ -6,6 +6,7 @@
 package com.awakekt.awake.vulkan.texture
 
 import com.awakekt.awake.render.texture.TextureAsset
+import com.awakekt.awake.render.texture.TextureFiltering
 import com.awakekt.awake.render.texture.mipChain
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.device.GraphicsDevice
@@ -31,6 +32,8 @@ import com.awakekt.awake.vulkan.models.info.VkImageType
 import com.awakekt.awake.vulkan.models.info.VkImageUsageFlagBits2
 import com.awakekt.awake.vulkan.models.info.VkImageViewCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkMemoryAllocateInfo
+import com.awakekt.awake.vulkan.models.info.VkFilter
+import com.awakekt.awake.vulkan.models.info.VkSamplerMipmapMode
 import com.awakekt.awake.vulkan.models.info.VkSamplerCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkSharingMode2
 
@@ -58,6 +61,7 @@ class Texture(
     /** More than one uploads a `VK_IMAGE_VIEW_TYPE_2D_ARRAY`; see [TextureAsset.layerCount]. */
     private val layerCount: Int = 1,
     private val isCubemap: Boolean = false,
+    filtering: TextureFiltering = TextureFiltering.Linear,
 ) {
     private val graphicsDevice = graphicsDevice
     private val device get() = graphicsDevice.device
@@ -75,7 +79,7 @@ class Texture(
         val asset = TextureAsset(data, width, height, layerCount, isCubemap)
         // Arrays get a full chain: tiled terrain layers are sampled with implicit LOD and shimmer
         // without one. Cubemaps stay single-level; the sky samples its base level only.
-        val mipLevels = if (isCubemap) listOf(asset) else asset.mipChain()
+        val mipLevels = if (isCubemap || filtering == TextureFiltering.Nearest) listOf(asset) else asset.mipChain()
         val combined = ByteArray(mipLevels.sumOf { it.data.size })
         var writeOffset = 0
         val levelOffsets = IntArray(mipLevels.size)
@@ -237,8 +241,8 @@ class Texture(
             VulkanImages.vkCreateSampler(
                 device,
                 VkSamplerCreateInfo(
-                    magFilter = samplerCreateInfo.magFilter,
-                    minFilter = samplerCreateInfo.minFilter,
+                    magFilter = if (filtering == TextureFiltering.Nearest) VkFilter.VK_FILTER_NEAREST else samplerCreateInfo.magFilter,
+                    minFilter = if (filtering == TextureFiltering.Nearest) VkFilter.VK_FILTER_NEAREST else samplerCreateInfo.minFilter,
                     addressModeU = samplerCreateInfo.addressModeU,
                     addressModeV = samplerCreateInfo.addressModeV,
                     addressModeW = samplerCreateInfo.addressModeW,
@@ -246,7 +250,7 @@ class Texture(
                     maxAnisotropy = samplerCreateInfo.maxAnisotropy,
                     borderColor = samplerCreateInfo.borderColor,
                     unnormalizedCoordinates = samplerCreateInfo.unnormalizedCoordinates,
-                    mipmapMode = samplerCreateInfo.mipmapMode,
+                    mipmapMode = if (filtering == TextureFiltering.Nearest) VkSamplerMipmapMode.VK_SAMPLER_MIPMAP_MODE_NEAREST else samplerCreateInfo.mipmapMode,
                     minLod = 0f,
                     maxLod = (mipLevels.size - 1).toFloat(),
                 ),

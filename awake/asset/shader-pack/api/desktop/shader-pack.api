@@ -58,6 +58,10 @@ public final class com/awakekt/awake/asset/shaderpack/AslSkyboxShaderKt {
 	public static final fun getSkyboxShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 }
 
+public final class com/awakekt/awake/asset/shaderpack/AslSpriteShaderKt {
+	public static final fun getSpriteShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+}
+
 public final class com/awakekt/awake/asset/shaderpack/AslTerrainShaderKt {
 	public static final field MAX_CLIPMAP_RINGS I
 	public static final field TERRAIN_SURFACE_FIRST_BINDING I
@@ -168,6 +172,7 @@ public final class com/awakekt/awake/asset/shaderpack/PackShaderSets {
 	public final fun getSkinnedTexturedShadowDepth ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getSkybox ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getSkyboxCubemap ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getSprite ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getTerrain ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getTerrainShadowDepth ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getTextured ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
@@ -253,6 +258,10 @@ public final class com/awakekt/awake/asset/shaderpack/SkyboxUniformsKt {
 	public static final fun getSUN_DISC_COLOR ()Lcom/awakekt/awake/core/color/Color;
 	public static final fun getSkyboxUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 	public static final fun skyboxUniformFloats (Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;)[F
+}
+
+public final class com/awakekt/awake/asset/shaderpack/SpriteScenePipelineKt {
+	public static final fun spriteScenePipeline ()Lcom/awakekt/awake/asset/shaders/ScenePipeline;
 }
 
 public final class com/awakekt/awake/asset/shaderpack/TerrainClipmapOutputs {

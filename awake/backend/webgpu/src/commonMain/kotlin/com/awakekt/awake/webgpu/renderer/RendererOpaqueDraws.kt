@@ -28,7 +28,6 @@ import com.awakekt.awake.render.pipeline.instancedDrawKind
 import com.awakekt.awake.render.pipeline.resolve
 import com.awakekt.awake.render.pipeline.resolveInstanced
 import com.awakekt.awake.webgpu.fastArrayBufferOf
-import com.awakekt.awake.webgpu.writeBufferData
 import com.awakekt.awake.webgpu.material.Material
 import com.awakekt.awake.webgpu.mesh.Mesh
 import com.awakekt.awake.webgpu.pipeline.WebGpuBindGroupHandle
@@ -36,6 +35,7 @@ import com.awakekt.awake.webgpu.pipeline.WebGpuPipelineHandle
 import com.awakekt.awake.webgpu.pipeline.hasBindingGroup
 import com.awakekt.awake.webgpu.pipeline.texturedMaterialBindings
 import com.awakekt.awake.webgpu.pipeline.uniformByteSize
+import com.awakekt.awake.webgpu.writeBufferData
 import io.ygdrasil.webgpu.GPUBuffer
 
 internal fun Renderer.prepareGpuDraws(
@@ -174,6 +174,7 @@ internal fun Renderer.prepareGpuDraw(
                 bufferPools.sceneDepthBindingFor(pipeline, it)
             },
         depthSortKey = cmd.depthSortKey(cameraEye),
+        sortOrder = cmd.sortOrder,
         batchKey = cmd.batchKey(),
     )
 }
@@ -319,6 +320,7 @@ private fun Renderer.prepareInstancedGpuDraw(
         instanceFrameBuffer = particleFrames,
         transparent = isTransparent,
         depthSortKey = cmd.depthSortKey(cameraEye),
+        sortOrder = cmd.sortOrder,
         batchKey = cmd.batchKey(),
         vertexFormat = mesh.format,
     )
@@ -350,5 +352,6 @@ internal class WebGpuPreparedDraw(
     override val instanceFrameBuffer: BufferHandle? = null,
     override val transparent: Boolean = false,
     override val depthSortKey: Float = 0f,
+    override val sortOrder: Int = 0,
     override val batchKey: Int = 0,
 ) : PreparedDraw

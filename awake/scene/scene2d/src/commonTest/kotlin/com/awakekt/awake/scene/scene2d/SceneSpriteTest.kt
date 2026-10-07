@@ -39,6 +39,13 @@ class SceneSpriteTest {
     private fun problems(sprite: SceneSprite): List<String> = sprite.validate("node").map { it.message }
 
     @Test
+    fun anOverflowingSheetIsRejectedBySchemaAndRuntime() {
+        val overflowing = SceneSprite(texture = "sheet", columns = 65536, rows = 65536)
+        assertTrue(problems(overflowing).any { "cell count" in it })
+        assertFailsWith<IllegalArgumentException> { Sprite(overflowing) }
+    }
+
+    @Test
     fun aPlainSpriteNeedsOnlyItsImage() {
         val sprite = SceneSprite(texture = "tree.png")
 

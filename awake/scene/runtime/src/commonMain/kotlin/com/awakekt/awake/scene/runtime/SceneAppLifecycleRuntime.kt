@@ -5,10 +5,6 @@
  */
 package com.awakekt.awake.scene.runtime
 
-import com.awakekt.awake.engine.platform.core.FrameStats
-import com.awakekt.awake.render.renderer.RenderFrameStats
-import com.awakekt.awake.scene.canvas.CanvasElement
-import com.awakekt.awake.scene.canvas.SceneCanvas
 import com.awakekt.awake.compose.runtime.CompositionLocalProvider
 import com.awakekt.awake.compose.runtime.provides
 import com.awakekt.awake.compose.ui.platform.ComposeHost
@@ -28,6 +24,7 @@ import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.engine.compose.ComposeAppRuntime
 import com.awakekt.awake.engine.compose.GraphicsLayerCompositor
+import com.awakekt.awake.engine.platform.core.FrameStats
 import com.awakekt.awake.engine.platform.dsl.AppServiceLookup
 import com.awakekt.awake.engine.platform.lifecycle.AppFrame
 import com.awakekt.awake.engine.platform.lifecycle.AppLifecycle
@@ -38,9 +35,13 @@ import com.awakekt.awake.render.command.GpuDrawPreparer
 import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
+import com.awakekt.awake.render.passes.sprites.SpriteRenderBatch
+import com.awakekt.awake.render.renderer.RenderFrameStats
 import com.awakekt.awake.render.renderer.RenderViewport
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.texture.TextureAsset
+import com.awakekt.awake.scene.canvas.CanvasElement
+import com.awakekt.awake.scene.canvas.SceneCanvas
 import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.core.transform.TransformSystem
@@ -346,7 +347,11 @@ class SceneAppLifecycleRuntime internal constructor(
 
     override fun resize(width: Float, height: Float) = Unit
 
+    internal val spriteBatch by lazy { SpriteRenderBatch(renderer) { requireAssetLibrary().requireTexture(it) } }
+    internal val spriteFeature by lazy { SceneSpriteRenderFeature(spriteBatch) }
+
     override fun dispose() {
+        if (::renderer.isInitialized) spriteBatch.destroy()
         graphicsLayers.dispose()
         session.dispose(this)
     }
@@ -428,7 +433,7 @@ class SceneAppLifecycleRuntime internal constructor(
             .planCapture(world, camera, width.toFloat() / height.toFloat())
 
     /** Plans captures for a scene whose infrastructure has no [RenderSystem3D] of its own. */
-    private val captureRenderSystem by lazy { RenderSystem3D(renderer, gpuDrawPreparer) }
+    private val captureRenderSystem by lazy { RenderSystem3D(renderer, gpuDrawPreparer, features = listOf(spriteFeature)) }
 
     /**
      * Retrieves an optional registered application service of the specified [type].
@@ -566,6 +571,7 @@ fun SceneAppLifecycleRuntime.defaultInfrastructureSystems(
         RenderSystem3D(
             renderer,
             gpuDrawPreparer,
+            features = listOf(spriteFeature),
             viewportProvider = viewportProvider,
             renderWorldProvider = renderWorldProvider,
             isRealtimeProvider = isRealtimeProvider,
