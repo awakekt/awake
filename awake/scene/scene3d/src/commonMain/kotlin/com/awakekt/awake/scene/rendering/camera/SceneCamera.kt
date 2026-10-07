@@ -29,6 +29,8 @@ import kotlinx.serialization.Serializable
  * @property orthoHalfHeight Half the vertical world extent an orthographic view covers; the width
  * follows from it and the viewport's aspect ratio. Used only while [projection] is
  * [Projection.Orthographic], when [fovYDegrees] is ignored.
+ * @property viewport Optional orthographic virtual viewport. When present, its dimensions replace
+ * [orthoHalfHeight] for rendering; omitting it preserves the original camera behavior.
  */
 @Serializable
 @SerialName("camera")
@@ -42,6 +44,7 @@ data class SceneCamera(
     val primary: Boolean = true,
     val projection: Projection = Projection.Perspective,
     @PropertyRange(min = 0.0, exclusiveMin = true) val orthoHalfHeight: Float = Lens.DEFAULT_ORTHO_HALF_HEIGHT,
+    val viewport: SceneViewport? = null,
 ) : SceneComponent {
     /** How a [SceneCamera] projects the scene. */
     @Serializable
@@ -58,6 +61,17 @@ data class SceneCamera(
     override val allowsMultiplePerNode: Boolean get() = false
 
     override fun validate(path: String): List<SceneValidationIssue> = buildList {
+        viewport?.let { view ->
+            if (projection != Projection.Orthographic) {
+                add(SceneValidationIssue(path, "camera.viewport requires orthographic projection"))
+            }
+            if (!view.width.isFinite() || view.width <= 0f) {
+                add(SceneValidationIssue(path, "camera.viewport.width must be positive and finite"))
+            }
+            if (!view.height.isFinite() || view.height <= 0f) {
+                add(SceneValidationIssue(path, "camera.viewport.height must be positive and finite"))
+            }
+        }
         if (near <= 0f) {
             add(SceneValidationIssue(path, "camera.near must be > 0"))
         }

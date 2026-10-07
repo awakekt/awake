@@ -13,7 +13,8 @@
           "far": 100.0,
           "primary": true,
           "projection": "orthographic",
-          "orthoHalfHeight": 3.5
+          "orthoHalfHeight": 3.5,
+          "viewport": { "width": 12.444445, "height": 7.0, "scaling": "fit" }
         }
       ]
     },

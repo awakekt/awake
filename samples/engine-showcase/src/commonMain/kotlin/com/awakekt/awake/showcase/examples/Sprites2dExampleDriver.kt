@@ -15,11 +15,15 @@ import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.host.readResourceBytes
 import com.awakekt.awake.core.image.createBitmap
 import com.awakekt.awake.core.image.toRgba8Bytes
+import com.awakekt.awake.core.input.Key
+import com.awakekt.awake.core.math.ViewportScaling
 import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.render.texture.TextureAsset
+import com.awakekt.awake.scene.authoring.infrastructure.gameplayInput
 import com.awakekt.awake.scene.binding.Scene
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.document.SceneDocument
+import com.awakekt.awake.scene.rendering.camera.Camera
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import com.awakekt.awake.scene.scene2d.withSpriteSheets
 import kotlin.math.cos
@@ -41,6 +45,8 @@ internal object Sprites2dExampleDriver {
     private var midCardTransform: Transform? = null
     private var frontCardTransform: Transform? = null
     private var elapsed = 0f
+    private var camera: Camera? = null
+    private var viewportKeyDown = false
 
     /** Decode the sprite-gen atlas once, before the scene requests its textured material. */
     suspend fun preload() {
@@ -75,6 +81,8 @@ internal object Sprites2dExampleDriver {
     fun texture(): TextureAsset = requireNotNull(spriteSheet) { "2D sprite sheet must be preloaded" }
 
     fun attach(instance: Scene, runtime: SceneAppLifecycleRuntime) {
+        camera = instance.roots.find { it.name == "camera" }?.let { runtime.world.get<Camera>(it.entity) }
+        viewportKeyDown = false
         val back = instance.roots.find { it.name == "sprite-card-back" }
         val mid = instance.roots.find { it.name == "sprite-card-mid" }
         val front = instance.roots.find { it.name == "sprite-card-front" }
@@ -86,6 +94,15 @@ internal object Sprites2dExampleDriver {
     }
 
     fun advance(runtime: SceneAppLifecycleRuntime, delta: Float) {
+        val down = runtime.gameplayInput().isDown(Key.V)
+        if (down && !viewportKeyDown) {
+            camera?.let { camera ->
+                camera.viewport?.let { policy ->
+                    camera.viewport = policy.copy(scaling = ViewportScaling.entries[(policy.scaling.ordinal + 1) % ViewportScaling.entries.size])
+                }
+            }
+        }
+        viewportKeyDown = down
         elapsed += delta
 
         val bob0 = sin(elapsed * 2.0f) * 0.16f
@@ -109,6 +126,8 @@ internal object Sprites2dExampleDriver {
     }
 
     fun detach() {
+        camera = null
+        viewportKeyDown = false
         backCardTransform = null
         midCardTransform = null
         frontCardTransform = null

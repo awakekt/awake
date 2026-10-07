@@ -183,6 +183,10 @@ class Renderer internal constructor(
             if (extent.height > 0) extent.width.toFloat() / extent.height.toFloat() else 16f / 9f
         }
 
+    override val surfaceWidth: Int get() = swapchainManager.extent.width
+
+    override val surfaceHeight: Int get() = swapchainManager.extent.height
+
     /** This backend's half of the shared draw-recording port -- retargeted at whichever command
      * buffer is being recorded (see [VulkanCommandRecorder.commandBuffer]) rather than rebuilt,
      * so a frame allocates no recorder at all. */

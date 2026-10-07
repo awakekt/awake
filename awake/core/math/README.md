@@ -69,6 +69,7 @@ Designed around strict **zero per-frame allocation** rules for ECS simulation lo
 |---|---|
 | `Lens` | Camera optical model holding `eye`, `center`, `up`, `fovYRadians`, and `projection`. |
 | `CameraMathUtils` | Viewport unprojection and screen mapping: `projectToViewport(...)`, `rayThroughViewport(...)`. |
+| `VirtualViewport`, `ViewportLayout` | Allocation-free Fit, Extend, Fill, Stretch and Screen scaling into caller-owned layouts, with camera-relative world/pixel mapping and bar hit rejection. |
 
 ---
 

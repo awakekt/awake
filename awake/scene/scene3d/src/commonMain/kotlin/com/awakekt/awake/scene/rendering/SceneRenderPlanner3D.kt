@@ -5,9 +5,9 @@
  */
 package com.awakekt.awake.scene.rendering
 
+import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.ecs.World
-import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.render.command.GpuDrawPreparationContext
 import com.awakekt.awake.render.command.GpuDrawPreparer
 import com.awakekt.awake.render.command.GpuDrawRequest
@@ -25,8 +25,6 @@ import com.awakekt.awake.render.renderer.RenderViewport
  */
 internal class SceneRenderPlanner3D(
     private val rendererClipSpace: ClipSpace,
-    private val rendererAspect: () -> Float,
-    private val rendererViewport: () -> RenderViewport?,
     drawPreparer: GpuDrawPreparer?,
     features: List<RenderFeature3D> = emptyList(),
 ) {
@@ -42,11 +40,6 @@ internal class SceneRenderPlanner3D(
     val lastFrustumCulledCount: Int get() = geometryFeature.lastFrustumCulledCount
     val lastOccludedCount: Int get() = geometryFeature.lastOccludedCount
 
-    fun plan(world: World, camera: Camera, elapsedTimeSeconds: Float): PlannedFrame {
-        val viewport = rendererViewport()
-        return plan(world, camera, elapsedTimeSeconds, viewport?.aspect ?: rendererAspect(), viewport)
-    }
-
     /** Plans [camera]'s view at [aspect], into [viewport] when it fills only part of the target. */
     fun plan(
         world: World,
@@ -56,7 +49,7 @@ internal class SceneRenderPlanner3D(
         viewport: RenderViewport?,
     ): PlannedFrame {
         drawCalls.clear()
-        val geometryFrame = geometryFeature.begin(world, camera, elapsedTimeSeconds)
+        val geometryFrame = geometryFeature.begin(world, camera, elapsedTimeSeconds, aspect)
         drawCalls += geometryFrame.beforeParticles
         val contributions = featureCollector.collect(world, camera, elapsedTimeSeconds, aspect)
         drawCalls += contributions.particleDraws

@@ -24,8 +24,8 @@ internal class SceneGeometryFeature3D(clipSpace: ClipSpace) {
     val lastOccludedCount: Int get() = cullingCompiler.lastOccludedCount
     val lastFrustumCulledCount: Int get() = cullingCompiler.lastFrustumCulledCount
 
-    fun begin(world: World, camera: Camera, elapsedTimeSeconds: Float): Frame {
-        val culling = cullingCompiler.prepare(world, camera)
+    fun begin(world: World, camera: Camera, elapsedTimeSeconds: Float, aspect: Float): Frame {
+        val culling = cullingCompiler.prepare(world, camera, aspect)
         return Frame(
             culling = culling,
             beforeParticles = drawCollector.collectBeforeParticles(world, culling, elapsedTimeSeconds),

@@ -74,6 +74,14 @@ class RangeAnnotationsAreEnforcedTest {
     }
 
     private val componentSeeds: Map<String, (JsonObject) -> JsonObject> = mapOf(
+        "camera" to { base ->
+            JsonObject(
+                base + mapOf(
+                    "projection" to JsonPrimitive("orthographic"),
+                    "viewport" to JsonObject(mapOf("width" to JsonPrimitive(16f), "height" to JsonPrimitive(9f))),
+                ),
+            )
+        },
         "keyframe_animation" to { base -> JsonObject(base + ("duration" to JsonPrimitive(1.0f))) },
         "particle_emitter" to { base -> JsonObject(base + ("texture" to JsonPrimitive("particle.png"))) },
         "sprite_clips" to { base -> JsonObject(base + ("clips" to JsonObject(mapOf("idle" to JsonObject(emptyMap()))))) },

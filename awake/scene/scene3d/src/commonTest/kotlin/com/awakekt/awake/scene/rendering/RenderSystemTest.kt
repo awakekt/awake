@@ -63,7 +63,7 @@ import kotlin.test.assertTrue
  * `RecordingScene3DRenderer` shape) captures what actually reached [com.awakekt.awake.render.renderer.Renderer.draw] without
  * needing a real GPU backend. */
 class RenderSystemTest {
-    private class RecordingRenderer :
+    internal class RecordingRenderer :
         Renderer,
         GpuDrawPreparationSource {
         var lastLight: SceneLight? = null
@@ -72,6 +72,7 @@ class RenderSystemTest {
         var lastDrawCalls: List<RenderDrawCommand> = emptyList()
         var sceneSubmissionCount: Int = 0
         var gpuPassSubmissionCount: Int = 0
+        var lastViewport: RenderViewport? = null
 
         override val gpuDrawPreparer = GpuDrawPreparer { command, sourceIndex, _ ->
             if (sourceIndex == 0) lastDrawCalls = emptyList()
@@ -84,6 +85,8 @@ class RenderSystemTest {
 
         override val clipSpace: ClipSpace = ClipSpace.WebGpu
         override val surfaceAspect: Float = 2f
+        override var surfaceWidth: Int = 1600
+        override var surfaceHeight: Int = 800
         override var clearColor: Color = Color.Black
         override var wireframe: Boolean = false
         override fun createMesh(geometry: MeshGeometry): Mesh = error("not needed for this test")
@@ -104,6 +107,7 @@ class RenderSystemTest {
                 return
             }
             sceneSubmissionCount++
+            lastViewport = input.viewport
             lastViewProjection = input.viewProjection
             val directional = input.passUniforms
             val cascades = input.prePasses
