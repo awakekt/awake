@@ -28,7 +28,7 @@ class EngineShowcaseTest {
     @Test
     fun everyShowcaseSceneLoadsAndInstantiates() = runTest {
         EngineShowcases.forEach { showcase ->
-            val document = SceneLoader.loadFromResource(showcase.scenePath)
+            val document = loadEngineShowcaseDocument(showcase)
             val scene = SceneLoader.instantiate(document)
 
             assertEquals(showcase.id, document.name)
