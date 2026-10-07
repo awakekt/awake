@@ -10,16 +10,15 @@ package com.awakekt.awake.showcase.ui
 import com.awakekt.awake.compose.foundation.TextureQuad
 import com.awakekt.awake.compose.foundation.background
 import com.awakekt.awake.compose.foundation.border
+import com.awakekt.awake.compose.foundation.horizontalScroll
 import com.awakekt.awake.compose.foundation.layout.Box
 import com.awakekt.awake.compose.foundation.layout.Column
 import com.awakekt.awake.compose.foundation.layout.Row
-import com.awakekt.awake.compose.foundation.layout.Spacer
+import com.awakekt.awake.compose.foundation.layout.fillMaxWidth
 import com.awakekt.awake.compose.foundation.layout.padding
 import com.awakekt.awake.compose.foundation.layout.size
-import com.awakekt.awake.compose.foundation.layout.width
+import com.awakekt.awake.compose.foundation.rememberScrollState
 import com.awakekt.awake.compose.runtime.Composer
-import com.awakekt.awake.compose.runtime.current
-import com.awakekt.awake.compose.runtime.remember
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.graphics.RoundedCornerShape
@@ -35,17 +34,13 @@ import com.awakekt.awake.showcase.ShowcaseFramebufferDebugger
 import com.awakekt.awake.ui.shadcn.components.ShadcnButton
 import com.awakekt.awake.ui.shadcn.components.ShadcnButtonSizeVariant
 import com.awakekt.awake.ui.shadcn.components.ShadcnButtonVariant
-import com.awakekt.awake.ui.shadcn.components.ShadcnCheckbox
-import com.awakekt.awake.ui.shadcn.components.ShadcnSlider
 import com.awakekt.awake.ui.shadcn.components.ShadcnTabs
 import com.awakekt.awake.ui.shadcn.components.ShadcnText
 import com.awakekt.awake.ui.shadcn.components.ShadcnTextVariant
 import kotlin.math.roundToInt
 
-internal val CARD_WIDTH: Dp = 244.dp
 internal val CARD_INSET: Dp = 12.dp
 private val ROW_GAP: Dp = 6.dp
-private val FIELD_WIDTH: Dp = 220.dp
 private val PREVIEW_WIDTH: Dp = 220.dp
 private val PREVIEW_HEIGHT: Dp = 124.dp
 
@@ -55,6 +50,8 @@ internal object ShowcaseDebugTags {
     const val TAB_DIAGNOSTICS = "showcase-debug-tab-diagnostics"
     const val TAB_ENVIRONMENT = "showcase-debug-tab-environment"
     const val TAB_FRAMEBUFFER = "showcase-debug-tab-framebuffer"
+    const val TAB_STATS = "showcase-debug-tab-stats"
+    const val PHASE_TIMINGS = "showcase-debug-phase-timings"
     const val FRAMEBUFFER_ATTACHMENT = "showcase-debug-framebuffer-attachment"
     const val FRAMEBUFFER_CAPTURE = "showcase-debug-framebuffer-capture"
     const val FRAMEBUFFER_PREVIEW = "showcase-debug-framebuffer-preview"
@@ -164,106 +161,41 @@ private val DEBUG_TOGGLES = listOf(
     },
 )
 
-private class DebugCardState {
-    var selectedTab: String = "diagnostics"
-}
-
 context(_: Composer)
-@Suppress("LongMethod")
 internal fun ShowcaseDebugCard(
     showcase: EngineShowcase,
     framebufferDebugger: ShowcaseFramebufferDebugger,
     modifier: Modifier = Modifier,
+    selectedTab: String = "diagnostics",
+    onSelectedChange: (String) -> Unit = {},
+    phaseTimingsEnabled: Boolean = false,
+    onPhaseTimingsChange: (Boolean) -> Unit = {},
 ) {
-    val state = remember { DebugCardState() }
     Column(
         modifier = modifier
             .testTag(ShowcaseDebugTags.CARD)
-            .width(CARD_WIDTH)
+            .fillMaxWidth()
             .background(ShowcaseTheme.palette.card)
             .padding(CARD_INSET),
     ) {
         ShadcnTabs(
-            selectedValue = state.selectedTab,
-            onSelectedChange = { state.selectedTab = it },
-            modifier = Modifier.width(FIELD_WIDTH).padding(bottom = 4.dp),
+            selectedValue = selectedTab,
+            onSelectedChange = onSelectedChange,
+            modifier = Modifier.horizontalScroll(rememberScrollState()).padding(bottom = 12.dp),
         ) {
-            tab("diagnostics", "Diagnostics", tag = ShowcaseDebugTags.TAB_DIAGNOSTICS)
-            tab("environment", "Environment", tag = ShowcaseDebugTags.TAB_ENVIRONMENT)
-            tab("framebuffer", "Framebuffer", tag = ShowcaseDebugTags.TAB_FRAMEBUFFER)
+            tab("diagnostics", "Render", tag = ShowcaseDebugTags.TAB_DIAGNOSTICS)
+            tab("environment", "Scene", tag = ShowcaseDebugTags.TAB_ENVIRONMENT)
+            tab("framebuffer", "Buffers", tag = ShowcaseDebugTags.TAB_FRAMEBUFFER)
+            tab("stats", "Stats", tag = ShowcaseDebugTags.TAB_STATS)
         }
 
-        if (state.selectedTab == "diagnostics") {
-            DEBUG_TOGGLES.filter { it.option.isGlobal }.forEach { toggle ->
-                Toggle(
-                    label = toggle.label,
-                    tag = toggle.tag,
-                    checked = toggle.checked(),
-                    onChange = toggle.onChange,
-                )
-            }
-            DEBUG_TOGGLES.filter { !it.option.isGlobal && it.option in showcase.debugOptions }.forEach { toggle ->
-                Toggle(
-                    label = toggle.label,
-                    tag = toggle.tag,
-                    checked = toggle.checked(),
-                    onChange = toggle.onChange,
-                )
-            }
-            showcase.controls?.let { controls -> controls() }
-        } else if (state.selectedTab == "environment") {
-            Toggle(
-                label = "Enable Fog",
-                tag = ShowcaseDebugTags.FOG_ENABLED,
-                checked = ShowcaseDebugToggles.fogEnabled,
-                onChange = {
-                    ShowcaseDebugToggles.fogEnabled = it
-                    ShowcaseDebugToggles.overrideFog = true
-                },
-            )
-            FloatSliderField(
-                label = "Fog Density",
-                value = ShowcaseDebugToggles.fogDensity,
-                min = 0f,
-                max = 0.05f,
-                steps = 100,
-                tag = ShowcaseDebugTags.FOG_DENSITY,
-                enabled = ShowcaseDebugToggles.fogEnabled,
-                format = { ((it * 10000f).roundToInt() / 10000f).toString() },
-                onValueChange = {
-                    ShowcaseDebugToggles.fogDensity = it
-                    ShowcaseDebugToggles.overrideFog = true
-                },
-            )
-            ColorRgbField(
-                label = "Fog Color",
-                color = ShowcaseDebugToggles.fogColor,
-                tagPrefix = "showcase-debug-fog-color",
-                enabled = ShowcaseDebugToggles.fogEnabled,
-                onColorChange = {
-                    ShowcaseDebugToggles.fogColor = it
-                    ShowcaseDebugToggles.overrideFog = true
-                },
-            )
-            if (ShowcaseDebugToggles.overrideFog) {
-                Row(
-                    modifier = Modifier.padding(top = 10.dp).width(FIELD_WIDTH),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    ShadcnButton(
-                        label = "Reset Defaults",
-                        variant = ShadcnButtonVariant.Outline,
-                        size = ShadcnButtonSizeVariant.Sm,
-                        modifier = Modifier.testTag(ShowcaseDebugTags.FOG_RESET),
-                        onClick = {
-                            ShowcaseDebugToggles.overrideFog = false
-                            ShowcaseDebugToggles.fogEnabled = true
-                            ShowcaseDebugToggles.fogDensity = 0.005f
-                            ShowcaseDebugToggles.fogColor = Color(0.7f, 0.75f, 0.8f, 1f)
-                        },
-                    )
-                }
-            }
+        if (selectedTab == "stats") {
+            Toggle("Phase timings", ShowcaseDebugTags.PHASE_TIMINGS, phaseTimingsEnabled, onPhaseTimingsChange)
+            ShowcaseStatsCard()
+        } else if (selectedTab == "diagnostics") {
+            RenderControls(showcase)
+        } else if (selectedTab == "environment") {
+            EnvironmentControls()
         } else {
             FramebufferDebuggerPanel(framebufferDebugger)
         }
@@ -271,7 +203,6 @@ internal fun ShowcaseDebugCard(
 }
 
 context(_: Composer)
-@Suppress("LongMethod")
 private fun FramebufferDebuggerPanel(debugger: ShowcaseFramebufferDebugger) {
     ShadcnText("Attachment", variant = ShadcnTextVariant.Small)
     ShadcnTabs(
@@ -279,7 +210,7 @@ private fun FramebufferDebuggerPanel(debugger: ShowcaseFramebufferDebugger) {
         onSelectedChange = { value ->
             FramebufferAttachment.entries.firstOrNull { it.name == value }?.let(debugger::select)
         },
-        modifier = Modifier.width(FIELD_WIDTH).padding(top = ROW_GAP),
+        modifier = Modifier.fillMaxWidth().padding(top = ROW_GAP),
     ) {
         FramebufferAttachment.entries.forEach { attachment ->
             tab(
@@ -300,6 +231,107 @@ private fun FramebufferDebuggerPanel(debugger: ShowcaseFramebufferDebugger) {
         onClick = debugger::requestCapture,
     )
 
+    val capture = debugger.lastCapture
+    FramebufferPreview(debugger)
+    ShadcnText(
+        text = when {
+            debugger.error != null -> debugger.error!!
+            capture?.available == true -> "${capture.width}×${capture.height} · ${capture.attachment.shortLabel()}"
+            else -> "Color0 is available; other attachments need retained targets"
+        },
+        modifier = Modifier
+            .padding(top = ROW_GAP)
+            .testTag(ShowcaseDebugTags.FRAMEBUFFER_STATUS),
+        variant = ShadcnTextVariant.Muted,
+    )
+}
+
+private fun FramebufferAttachment.shortLabel(): String = when (this) {
+    FramebufferAttachment.Color0 -> "Color"
+    FramebufferAttachment.Depth -> "Depth"
+    FramebufferAttachment.Stencil -> "Stencil"
+    FramebufferAttachment.Normal -> "Normal"
+}
+
+context(_: Composer)
+private fun RenderControls(showcase: EngineShowcase) {
+    DEBUG_TOGGLES.filter { it.option.isGlobal }.forEach { toggle ->
+        Toggle(
+            label = toggle.label,
+            tag = toggle.tag,
+            checked = toggle.checked(),
+            onChange = toggle.onChange,
+        )
+    }
+    DEBUG_TOGGLES.filter { !it.option.isGlobal && it.option in showcase.debugOptions }.forEach { toggle ->
+        Toggle(
+            label = toggle.label,
+            tag = toggle.tag,
+            checked = toggle.checked(),
+            onChange = toggle.onChange,
+        )
+    }
+    showcase.controls?.let { controls -> controls() }
+}
+
+context(_: Composer)
+private fun EnvironmentControls() {
+    Toggle(
+        label = "Enable Fog",
+        tag = ShowcaseDebugTags.FOG_ENABLED,
+        checked = ShowcaseDebugToggles.fogEnabled,
+        onChange = {
+            ShowcaseDebugToggles.fogEnabled = it
+            ShowcaseDebugToggles.overrideFog = true
+        },
+    )
+    FloatSliderField(
+        label = "Fog Density",
+        value = ShowcaseDebugToggles.fogDensity,
+        min = 0f,
+        max = 0.05f,
+        steps = 100,
+        tag = ShowcaseDebugTags.FOG_DENSITY,
+        enabled = ShowcaseDebugToggles.fogEnabled,
+        format = { ((it * 10000f).roundToInt() / 10000f).toString() },
+        onValueChange = {
+            ShowcaseDebugToggles.fogDensity = it
+            ShowcaseDebugToggles.overrideFog = true
+        },
+    )
+    ColorRgbField(
+        label = "Fog Color",
+        color = ShowcaseDebugToggles.fogColor,
+        tagPrefix = "showcase-debug-fog-color",
+        enabled = ShowcaseDebugToggles.fogEnabled,
+        onColorChange = {
+            ShowcaseDebugToggles.fogColor = it
+            ShowcaseDebugToggles.overrideFog = true
+        },
+    )
+    if (ShowcaseDebugToggles.overrideFog) {
+        Row(
+            modifier = Modifier.padding(top = 10.dp).fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            ShadcnButton(
+                label = "Reset Defaults",
+                variant = ShadcnButtonVariant.Outline,
+                size = ShadcnButtonSizeVariant.Sm,
+                modifier = Modifier.testTag(ShowcaseDebugTags.FOG_RESET),
+                onClick = {
+                    ShowcaseDebugToggles.overrideFog = false
+                    ShowcaseDebugToggles.fogEnabled = true
+                    ShowcaseDebugToggles.fogDensity = 0.005f
+                    ShowcaseDebugToggles.fogColor = Color(0.7f, 0.75f, 0.8f, 1f)
+                },
+            )
+        }
+    }
+}
+
+context(_: Composer)
+private fun FramebufferPreview(debugger: ShowcaseFramebufferDebugger) {
     val capture = debugger.lastCapture
     val preview = debugger.previewMaterial.takeIf {
         capture?.available == true && capture.attachment == debugger.selectedAttachment
@@ -328,230 +360,5 @@ private fun FramebufferDebuggerPanel(debugger: ShowcaseFramebufferDebugger) {
                 variant = ShadcnTextVariant.Muted,
             )
         }
-    }
-    ShadcnText(
-        text = when {
-            debugger.error != null -> debugger.error!!
-            capture?.available == true -> "${capture.width}×${capture.height} · ${capture.attachment.shortLabel()}"
-            else -> "Color0 is available; other attachments need retained targets"
-        },
-        modifier = Modifier
-            .padding(top = ROW_GAP)
-            .testTag(ShowcaseDebugTags.FRAMEBUFFER_STATUS),
-        variant = ShadcnTextVariant.Muted,
-    )
-}
-
-private fun FramebufferAttachment.shortLabel(): String = when (this) {
-    FramebufferAttachment.Color0 -> "Color"
-    FramebufferAttachment.Depth -> "Depth"
-    FramebufferAttachment.Stencil -> "Stencil"
-    FramebufferAttachment.Normal -> "Normal"
-}
-
-internal fun Float.oneDecimal(): String = ((this * 10f).roundToInt() / 10f).toString()
-
-context(_: Composer)
-internal fun Toggle(label: String, tag: String, checked: Boolean, onChange: (Boolean) -> Unit) {
-    Row(
-        modifier = Modifier.padding(top = ROW_GAP),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        ShadcnCheckbox(
-            checked = checked,
-            modifier = Modifier.testTag(tag),
-            onCheckedChange = onChange,
-        )
-        ShadcnText(
-            label,
-            modifier = Modifier.padding(start = ROW_GAP),
-            variant = ShadcnTextVariant.Small,
-        )
-    }
-}
-
-/** Reusable float slider field with label, readout, and slider track. */
-context(_: Composer)
-internal fun FloatSliderField(
-    label: String,
-    value: Float,
-    min: Float,
-    max: Float,
-    modifier: Modifier = Modifier,
-    steps: Int = 0,
-    tag: String? = null,
-    enabled: Boolean = true,
-    format: (Float) -> String = { it.oneDecimal() },
-    onValueChange: (Float) -> Unit,
-) {
-    Column(modifier.padding(top = ROW_GAP)) {
-        Row(
-            modifier = Modifier.width(FIELD_WIDTH),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            ShadcnText(label, variant = ShadcnTextVariant.Small)
-            Spacer(Modifier.weight(1f))
-            ShadcnText(format(value), variant = ShadcnTextVariant.Muted)
-        }
-        val sliderMod = Modifier.padding(top = 4.dp).width(FIELD_WIDTH)
-        ShadcnSlider(
-            value = value,
-            min = min,
-            max = max,
-            steps = steps,
-            enabled = enabled,
-            modifier = if (tag != null) sliderMod.testTag(tag) else sliderMod,
-            onValueChange = onValueChange,
-        )
-    }
-}
-
-/** Reusable 2D vector field with X and Y sliders. */
-context(_: Composer)
-internal fun Vec2SliderField(
-    label: String,
-    x: Float,
-    y: Float,
-    modifier: Modifier = Modifier,
-    min: Float = 0f,
-    max: Float = 1f,
-    steps: Int = 0,
-    tagPrefix: String? = null,
-    enabled: Boolean = true,
-    onValueChange: (Float, Float) -> Unit,
-) {
-    Column(modifier.padding(top = ROW_GAP)) {
-        ShadcnText(label, variant = ShadcnTextVariant.Small)
-        FloatSliderField(
-            label = "X",
-            value = x,
-            min = min,
-            max = max,
-            steps = steps,
-            tag = tagPrefix?.let { "$it-x" },
-            enabled = enabled,
-            onValueChange = { onValueChange(it, y) },
-        )
-        FloatSliderField(
-            label = "Y",
-            value = y,
-            min = min,
-            max = max,
-            steps = steps,
-            tag = tagPrefix?.let { "$it-y" },
-            enabled = enabled,
-            onValueChange = { onValueChange(x, it) },
-        )
-    }
-}
-
-/** Reusable 3D vector field with X, Y, and Z sliders. */
-context(_: Composer)
-internal fun Vec3SliderField(
-    label: String,
-    x: Float,
-    y: Float,
-    z: Float,
-    modifier: Modifier = Modifier,
-    min: Float = 0f,
-    max: Float = 1f,
-    steps: Int = 0,
-    labels: Triple<String, String, String> = Triple("X", "Y", "Z"),
-    tagPrefix: String? = null,
-    enabled: Boolean = true,
-    onValueChange: (Float, Float, Float) -> Unit,
-) {
-    Column(modifier.padding(top = ROW_GAP)) {
-        ShadcnText(label, variant = ShadcnTextVariant.Small)
-        FloatSliderField(
-            label = labels.first,
-            value = x,
-            min = min,
-            max = max,
-            steps = steps,
-            tag = tagPrefix?.let { "$it-x" },
-            enabled = enabled,
-            onValueChange = { onValueChange(it, y, z) },
-        )
-        FloatSliderField(
-            label = labels.second,
-            value = y,
-            min = min,
-            max = max,
-            steps = steps,
-            tag = tagPrefix?.let { "$it-y" },
-            enabled = enabled,
-            onValueChange = { onValueChange(x, it, z) },
-        )
-        FloatSliderField(
-            label = labels.third,
-            value = z,
-            min = min,
-            max = max,
-            steps = steps,
-            tag = tagPrefix?.let { "$it-z" },
-            enabled = enabled,
-            onValueChange = { onValueChange(x, y, it) },
-        )
-    }
-}
-
-/** Reusable RGB Color field with live color preview swatch and component sliders. */
-context(_: Composer)
-internal fun ColorRgbField(
-    label: String,
-    color: Color,
-    modifier: Modifier = Modifier,
-    tagPrefix: String? = null,
-    enabled: Boolean = true,
-    onColorChange: (Color) -> Unit,
-) {
-    Column(modifier.padding(top = ROW_GAP)) {
-        Row(
-            modifier = Modifier.width(FIELD_WIDTH),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            ShadcnText(label, variant = ShadcnTextVariant.Small)
-            Spacer(Modifier.weight(1f))
-            Box(
-                Modifier
-                    .size(16.dp)
-                    .background(color, RoundedCornerShape(3.dp))
-                    .border(1.dp, ShowcaseTheme.palette.border, RoundedCornerShape(3.dp)),
-            )
-        }
-        FloatSliderField(
-            label = "R",
-            value = color.r,
-            min = 0f,
-            max = 1f,
-            steps = 100,
-            tag = tagPrefix?.let { "$it-r" },
-            enabled = enabled,
-            format = { (it * 100f).roundToInt().toString() + "%" },
-            onValueChange = { onColorChange(Color(it, color.g, color.b, color.a)) },
-        )
-        FloatSliderField(
-            label = "G",
-            value = color.g,
-            min = 0f,
-            max = 1f,
-            steps = 100,
-            tag = tagPrefix?.let { "$it-g" },
-            enabled = enabled,
-            format = { (it * 100f).roundToInt().toString() + "%" },
-            onValueChange = { onColorChange(Color(color.r, it, color.b, color.a)) },
-        )
-        FloatSliderField(
-            label = "B",
-            value = color.b,
-            min = 0f,
-            max = 1f,
-            steps = 100,
-            tag = tagPrefix?.let { "$it-b" },
-            enabled = enabled,
-            format = { (it * 100f).roundToInt().toString() + "%" },
-            onValueChange = { onColorChange(Color(color.r, color.g, it, color.a)) },
-        )
     }
 }

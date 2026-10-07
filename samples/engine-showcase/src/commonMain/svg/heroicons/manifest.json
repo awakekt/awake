@@ -1,0 +1,24 @@
+{
+  "package": "com.awakekt.awake.showcase.icon",
+  "interface": "HeroIcons",
+  "visibility": "internal",
+  "source": {
+    "name": "Heroicons",
+    "url": "https://heroicons.com",
+    "repository": "https://github.com/tailwindlabs/heroicons",
+    "version": "v2.2.0",
+    "license": "MIT",
+    "tarballSha256": "42bd31001127631a20270e7bd87ac13647bfcd628dd533e2ff31497068b4f7af"
+  },
+  "fileKdoc": [
+    "The official Heroicons used by the engine showcase toolbar."
+  ],
+  "tiers": [
+    {
+      "object": "Outline24",
+      "directory": "24-outline",
+      "dp": 24,
+      "label": "24/outline"
+    }
+  ]
+}

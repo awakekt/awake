@@ -21,6 +21,9 @@ import com.awakekt.awake.compose.ui.node.PointerInputNode
 import com.awakekt.awake.compose.ui.node.ScrollableNode
 import com.awakekt.awake.compose.ui.unit.Constraints
 import com.awakekt.awake.compose.ui.unit.Density
+import com.awakekt.awake.compose.ui.unit.dp
+import kotlin.math.abs
+import kotlin.math.sign
 
 /**
  * Lets content taller than its box scroll vertically.
@@ -54,6 +57,7 @@ fun Modifier.horizontalScroll(
 enum class Orientation { Vertical, Horizontal }
 
 private const val WHEEL_STEP_PX = 40f
+private val TOUCH_SCROLL_SLOP = 8.dp
 
 private class ScrollElement(
     private val state: ScrollState,
@@ -76,6 +80,7 @@ private class ScrollNode :
 
     lateinit var state: ScrollState
     lateinit var orientation: Orientation
+    private var touchSlopPx = 0
 
     override val canScroll: Boolean
         get() = state.canScrollForward || state.canScrollBackward
@@ -86,6 +91,7 @@ private class ScrollNode :
     ): MeasureResult {
         // Unbounded on the scroll axis: the child says how big it truly is, and the difference
         // between that and the viewport is exactly how far there is to scroll.
+        touchSlopPx = TOUCH_SCROLL_SLOP.roundToPx()
         val vertical = orientation == Orientation.Vertical
         val content = measurable.measure(
             if (vertical) {
@@ -129,6 +135,7 @@ private class ScrollNode :
     }
 
     override fun onPointerEvent(event: PointerEvent, pass: PointerEventPass) {
+        if (event.pointerId != 0L) handleTouch(event, pass)
         if (pass != PointerEventPass.Main || event.type != PointerEventType.Wheel) return
         val remaining = event.remainingScrollDelta
         if (remaining == 0f) return
@@ -136,6 +143,43 @@ private class ScrollNode :
         // exact wheel remainder to the parent; at an edge the full delta naturally bubbles out.
         val consumed = state.scrollBy((-remaining * WHEEL_STEP_PX).toInt())
         if (consumed != 0) event.consumeScrollDelta(-consumed / WHEEL_STEP_PX)
+    }
+
+    private fun handleTouch(event: PointerEvent, pass: PointerEventPass) {
+        if (pass == PointerEventPass.Initial) {
+            when (event.type) {
+                PointerEventType.Press -> if (canScroll) state.touchGestures[event.pointerId] = ScrollTouchGesture()
+                // Before a child sees Release: a swipe that began on a button must never click it.
+                PointerEventType.Release -> if (state.touchGestures.remove(event.pointerId)?.dragging == true) event.consume()
+                else -> Unit
+            }
+        }
+        if (pass != PointerEventPass.Main || event.isConsumed) return
+        when (event.type) {
+            // Child controls get first refusal; otherwise capture a press in empty list space.
+            PointerEventType.Press -> if (canScroll) event.consume()
+            PointerEventType.Move -> scrollTouchMove(event)
+            else -> Unit
+        }
+    }
+
+    private fun scrollTouchMove(event: PointerEvent) {
+        val gesture = state.touchGestures[event.pointerId] ?: return
+        gesture.distanceX += event.dx
+        gesture.distanceY += event.dy
+        val vertical = orientation == Orientation.Vertical
+        val distance = if (vertical) gesture.distanceY else gesture.distanceX
+        val crossDistance = if (vertical) gesture.distanceX else gesture.distanceY
+        if (!gesture.dragging && (abs(distance) <= touchSlopPx || abs(distance) < abs(crossDistance))) return
+        val movement = if (gesture.dragging) {
+            if (vertical) event.dy else event.dx
+        } else {
+            distance - distance.sign * touchSlopPx
+        }
+        if (state.scrollBy(-movement) != 0) {
+            gesture.dragging = true
+            event.consume()
+        }
     }
 
     override fun toString(): String = "scroll($orientation, ${state.value}/${state.maxValue})"
