@@ -51,11 +51,23 @@ compile; it is refused, a warning is printed, and the current shader keeps drawi
 | `instanced-skinned` | Instanced skinned | Instancing and skinning together, animated per frame. |
 | `nav-chase` | Navigation chase | A cube paths around a terrain ridge it cannot climb; bakeNavGrid reads the slope, no collider says a wall exists. |
 | `particles` | Particles | A CPU emitter driving a quad batch, advanced every frame. |
-| `sprites-2d` | 2D sprites | Orthographic parallel projection, 2D layer sorting, and animated sprite quads. |
+| `sprites-2d` | 2D sprites | A transparent four-frame sprite atlas animated on orthographic 2D layers. |
 | `spatial-audio` | Spatial audio | 3D positional audio emitters with distance attenuation and panning relative to the camera listener. |
 | `ecs-stress` | ECS stress | Up to 100,000 moving entities, each with Transform and MeshRenderer components, drawn in a few instanced calls. |
 
 `EngineShowcaseReadmeTest` fails when this table and `EngineShowcases` disagree.
+
+The `sprites-2d` showcase uses an original lantern-firefly idle atlas generated with
+[sprite-gen](https://github.com/aldegad/sprite-gen): four transparent 256×256 frames at 4 fps.
+Run it with `./gradlew :samples:engine-showcase:run -Pawake.showcase=sprites-2d`.
+The [atlas](src/commonMain/resources/assets/sprites/lantern-firefly/sprite-sheet-alpha.png),
+[animation preview](src/commonMain/resources/assets/sprites/lantern-firefly/idle.gif), and generated
+manifest and request are packaged together. The scene's `texture_animation` describes the manifest's
+four regular frame rectangles. It draws through the existing textured mesh pipeline and transparent
+pass, with a low alpha cutoff that discards empty texels. It can be migrated to the dedicated
+`sprite` component when that component has a draw feature.
+
+![Lantern firefly idle preview](src/commonMain/resources/assets/sprites/lantern-firefly/idle.gif)
 
 ## Measuring frame time
 

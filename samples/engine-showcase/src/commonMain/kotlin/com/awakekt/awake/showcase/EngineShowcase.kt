@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.showcase
 
+import com.awakekt.awake.core.geometry.generate.generate
 import com.awakekt.awake.scene.authoring.SceneAssetsDsl
 import com.awakekt.awake.scene.binding.Scene
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
@@ -20,7 +21,6 @@ import com.awakekt.awake.showcase.examples.SkinnedExampleDriver
 import com.awakekt.awake.showcase.examples.SpatialAudioExampleDriver
 import com.awakekt.awake.showcase.examples.Sprites2dExampleDriver
 import com.awakekt.awake.showcase.examples.TerrainPhysicsExampleDriver
-import com.awakekt.awake.core.geometry.generate.generate
 import com.awakekt.awake.showcase.terrain.TerrainExampleAsset
 import com.awakekt.awake.showcase.ui.EcsStressControls
 import com.awakekt.awake.showcase.ui.SpatialAudioControls
@@ -151,7 +151,7 @@ val EngineShowcases = listOf(
         id = "sprites-2d",
         title = "2D sprites",
         scenePath = "assets/examples/sprites-2d.scene.json",
-        summary = "Orthographic parallel projection, 2D layer sorting, and animated sprite quads.",
+        summary = "A transparent four-frame sprite atlas animated on orthographic 2D layers.",
         driver = { delta -> Sprites2dExampleDriver.advance(this, delta) },
         onActivated = { instance, runtime -> Sprites2dExampleDriver.attach(instance, runtime) },
         onDeactivated = { _ -> Sprites2dExampleDriver.detach() },
@@ -188,6 +188,7 @@ suspend fun preloadEngineShowcases() {
     SkinnedExampleDriver.preload()
     InstancedSkinnedExampleDriver.preload()
     ParticleEmitterExampleDriver.preload()
+    Sprites2dExampleDriver.preload()
 }
 
 /** Registers the meshes and materials the showcase scene documents and drivers request. */
@@ -203,6 +204,8 @@ fun SceneAssetsDsl.registerEngineShowcaseAssets() {
     material("particle-flicker") { ParticleEmitterExampleDriver.createFlickerMaterial(this) }
     material("particle-levelup") { ParticleEmitterExampleDriver.createLevelupMaterial(this) }
     mesh("sprite-quad") { Sprites2dExampleDriver.createMesh(this) }
+    mesh("sprite-background") { Sprites2dExampleDriver.createBackgroundMesh(this) }
+    material("sprite-sheet") { Sprites2dExampleDriver.createMaterial(this) }
     mesh("sphere") { renderer.createMesh(generate { sphere(radius = 0.5f, colored = true) }) }
     mesh("wedge") { renderer.createMesh(TerrainPhysicsExampleDriver.wedgeGeometry) }
     mesh("heightfield-terrain") { renderer.createMesh(TerrainExampleAsset.geometry) }
