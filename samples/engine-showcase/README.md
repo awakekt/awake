@@ -32,6 +32,10 @@ Web:
 ./gradlew :samples:engine-showcase:wasmJsBrowserDevelopmentRun
 ```
 
+**Web audio:** select **Spatial audio** to hear the two looping emitters. A click/tap or key press
+unlocks browser playback; volume and mute controls affect the active sources. The browser player
+supports mono/stereo signed 16-bit PCM, including the sample's synthesized tones.
+
 **Replacing the lit shader while it runs (desktop):** press L to toggle between the shipped
 `lit_shadow` and a brighter-ambient variant built at runtime. Press K to try a variant that does not
 compile; it is refused, a warning is printed, and the current shader keeps drawing. See
