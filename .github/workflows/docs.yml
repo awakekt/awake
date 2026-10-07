@@ -97,6 +97,12 @@ jobs:
           rm -rf "$RUNNER_TEMP/awake-docs-site"
           mkdir -p "$RUNNER_TEMP/awake-docs-site"
           git archive origin/gh-pages | tar -x -C "$RUNNER_TEMP/awake-docs-site"
+          # mike writes only version directories and a redirect at the root. Without a root 404.html,
+          # Pages treats the site as a single-page app and answers every unknown path with that
+          # redirect and a 200, so add the current version's 404 page (its links are absolute),
+          # robots.txt, and redirects for unversioned links.
+          cp website/docs-root/robots.txt website/docs-root/_redirects "$RUNNER_TEMP/awake-docs-site/"
+          cp "$RUNNER_TEMP/awake-docs-site/latest/404.html" "$RUNNER_TEMP/awake-docs-site/404.html"
 
       - name: Deploy to Cloudflare Pages
         env:

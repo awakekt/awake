@@ -1,0 +1,42 @@
+<!--
+  SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+
+  SPDX-License-Identifier: Apache-2.0
+-->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Page not found · AwakeKt</title>
+  <link rel="icon" href="/awake-mark.svg" type="image/svg+xml">
+  <script>
+    // Same theme key as the home page: light unless dark was chosen there.
+    document.documentElement.dataset.theme = localStorage.getItem("awake-theme") === "dark" ? "dark" : "light";
+  </script>
+  <style>
+    :root { --bg: #F6F6F7; --text: #16161C; --accent-text: #9A6500; color-scheme: light; }
+    :root[data-theme="dark"] { --bg: #10131A; --text: #ECEAE6; --accent-text: #FFD166; color-scheme: dark; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 16px;
+      box-sizing: border-box;
+      background: var(--bg);
+      color: var(--text);
+      font: 400 17px/1.6 "IBM Plex Sans", system-ui, sans-serif;
+    }
+    main { max-width: 32rem; text-align: center; }
+    a { color: var(--accent-text); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Page not found</h1>
+    <p>Nothing lives at this address. Try the <a href="/">AwakeKt home page</a> or the
+      <a href="https://docs.awakekt.com/">documentation</a>.</p>
+  </main>
+</body>
+</html>

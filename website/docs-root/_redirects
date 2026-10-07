@@ -1,0 +1,11 @@
+# SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+#
+# SPDX-License-Identifier: Apache-2.0
+
+# Every page lives under a version directory. These send unversioned links, including the landing
+# page's old "Get started" link, to the current docs instead of the root's version redirect.
+/getting-started     /latest/get-started/installation/  301
+/getting-started/*   /latest/get-started/installation/  301
+/get-started/*       /latest/get-started/:splat         301
+/guides/*            /latest/guides/:splat              301
+/reference/*         /latest/reference/:splat           301
