@@ -203,7 +203,7 @@ class ProjectRuntimeTest {
     }
 
     private suspend fun play(scene: String, touch: Boolean = false): Game {
-        val project = loadProject(files(scene), ::createJoltPhysicsWorld)
+        val project = loadProject(files(scene), physicsWorld = ::createJoltPhysicsWorld)
         val game = app { scene("play") { runProject(project, touchControls = touch) } }
         game.ready(TestRenderer())
         val runtime = game.requireService<SceneAppLifecycleRuntime>()

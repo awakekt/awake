@@ -39,7 +39,7 @@ apply. `loadProject` reads every emitter's `texture` while it loads the project,
 runs the particle systems when the scene has an emitter. In your own app, read the sprites with
 `loadParticleSprites(document, assets)` and add
 `frameSystem("particle-content") { ParticleContentSystem(renderer, sprites) }` next to
-`ParticleSystem`; call its `release()` when the scene goes. The fields are in the
+`ParticleSystem`; `close()` it when the scene goes. The fields are in the
 [component reference](../reference/scene-document-components.md#particle_emitter).
 
 ## Lay particles flat

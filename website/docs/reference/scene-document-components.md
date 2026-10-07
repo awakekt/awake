@@ -57,7 +57,7 @@ registers it.
 | `SceneComponentRegistry.registerCharacter()` | `com.awakekt.awake.scene:character` | `character_controller` |
 | `SceneComponentRegistry.registerAiBehaviors()` | `com.awakekt.awake.scene:ai` | `patrol`, `chase`, `flee`, `navigation` |
 | `SceneComponentRegistry.registerBlueprints()` | `com.awakekt.awake.scene:blueprint` | `blueprint` |
-| `loadProject(...)` | `com.awakekt.awake.project:runtime` | The defaults, plus `movement_control`, `camera_rig`, `physics_body`, `character_controller`, `patrol`, `chase`, `flee`, `navigation` |
+| `loadProject(...)` | `com.awakekt.awake.project:runtime` | The defaults, plus `movement_control`, `camera_rig`, `physics_body`, `character_controller`, `patrol`, `chase`, `flee`, `navigation`, and the components of the [capabilities](../guides/scene-capabilities.md) passed to it |
 
 ## `ambient_light`
 

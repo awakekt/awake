@@ -117,7 +117,8 @@ that system before `PhysicsSystem`. It reads the triangles from a `CollisionMesh
 `loadCollisionMeshes(scene, files)` in `awake:project:runtime` is the glTF one, reading each model
 once and failing with the model path and node when one cannot be read. `loadProject` does
 all of this for you. A host that calls `sceneSystemsFor` itself passes
-`collisionMeshes = loadCollisionMeshes(scene, files)` in its `SceneHostServices`.
+`content = loadSceneContent(scene, files)` in its `SceneHostServices`, which reads the collision
+meshes with everything else the scene's systems need.
 
 For moving props or sensors, use a `convex_hull` shape instead:
 

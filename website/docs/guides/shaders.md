@@ -159,7 +159,7 @@ backends implement it:
 --8<-- "awake/scene/shader/src/desktopTest/kotlin/com/awakekt/awake/scene/shader/ShaderEffectDocsSampleTest.kt:attach"
 ```
 
-Add the system to the scene's frame systems, and call `system.release()` when the scene closes.
+Add the system to the scene's frame systems, and `close()` it when the scene closes.
 
 ### What a document says
 

@@ -67,6 +67,7 @@ nav:
       - Scene and ECS:
           - Scene documents: guides/scene-documents.md
           - Scene DSL: guides/scene-dsl.md
+          - Scene capabilities: guides/scene-capabilities.md
           - ECS: guides/ecs.md
           - App lifecycle: guides/app-lifecycle.md
           - Cameras and controls: guides/cameras-and-controls.md

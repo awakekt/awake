@@ -113,6 +113,7 @@ owns the component, and must be registered before a document that uses them is d
 | --- | --- | --- |
 | `SceneComponentRegistry().registerControls()` | `scene:controls` | `movement_control`, `camera_rig` |
 | `SceneComponentRegistry.registerGlobal(binding)` | any | that binding's id, for every load |
+| `loadProject(files, capabilities = …)` | `project:runtime` | each [scene capability](scene-capabilities.md)'s ids, for that project |
 
 A registry you build is passed to `instantiate`. Inside an app, where `scene(document)` uses the
 global registry, register with `registerGlobal`; [Cameras and controls](cameras-and-controls.md)

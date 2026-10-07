@@ -104,7 +104,7 @@ class SceneParticleEmitterTest {
         assertEquals(1, renderer.meshes, "one quad for every emitter")
         assertEquals(2, renderer.materials, "one material per sprite")
         assertSame(world.get<ParticleEmitter>(first)!!.material, world.get<ParticleEmitter>(second)!!.material)
-        content.release()
+        content.close()
         assertEquals(3, renderer.destroyed)
     }
 

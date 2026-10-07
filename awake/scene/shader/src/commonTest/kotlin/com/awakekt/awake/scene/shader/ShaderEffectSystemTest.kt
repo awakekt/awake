@@ -188,7 +188,7 @@ class ShaderEffectSystemTest {
         frames(1)
         assertEquals(1, host.live.size)
 
-        system.release()
+        system.close()
         assertEquals(emptyList(), host.live)
     }
 
@@ -198,6 +198,6 @@ class ShaderEffectSystemTest {
         spawn(SceneShaderEffect("sky.shader.json"))
 
         repeat(3) { headless.update(world, 0.1f) }
-        headless.release()
+        headless.close()
     }
 }
