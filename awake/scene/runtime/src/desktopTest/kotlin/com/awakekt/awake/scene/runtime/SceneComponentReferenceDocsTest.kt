@@ -43,7 +43,7 @@ class SceneComponentReferenceDocsTest {
         }
         assertTrue(missing.isEmpty(), missing.joinToString("\n"))
     }
- 
+
     data class DocFieldRow(val field: String, val type: String, val default: String, val description: String)
 
     private fun parseDocTable(section: String): Map<String, DocFieldRow> {
@@ -58,7 +58,9 @@ class SceneComponentReferenceDocsTest {
             if (cols.size >= 4) {
                 val fieldName = cols[0].removeSurrounding("`")
                 DocFieldRow(fieldName, cols[1], cols[2], cols[3])
-            } else null
+            } else {
+                null
+            }
         }.associateBy { it.field }
     }
 
@@ -125,21 +127,38 @@ class SceneComponentReferenceDocsTest {
     }
 
     private fun unboundedRangePhrases(range: com.awakekt.awake.core.schema.NumberRange): List<String> =
-        if (range.min == 0.0 && range.max == null) {
-            if (range.exclusiveMin) listOf("Above 0", "greater than 0") else listOf("Not negative", "at least 0")
-        } else emptyList()
+        if (range.max == null) {
+            when {
+                range.min == 0.0 && range.exclusiveMin -> listOf("Above 0", "greater than 0")
+                range.min == 0.0 && !range.exclusiveMin -> listOf("Not negative", "at least 0")
+                range.min == 1.0 && !range.exclusiveMin -> listOf("At least 1")
+                range.min == 2.0 && !range.exclusiveMin -> listOf("At least 2")
+                else -> emptyList()
+            }
+        } else {
+            emptyList()
+        }
 
     private fun boundedRangePhrases(range: com.awakekt.awake.core.schema.NumberRange): List<String> =
         if (range.min == 0.0) {
             if (range.exclusiveMin) {
-                if (range.max == 180.0 && range.exclusiveMax) listOf("Between 0 and 180")
-                else if (range.max == 1.0 && !range.exclusiveMax) listOf("Above 0 and at most 1")
-                else emptyList()
+                if (range.max == 180.0 && range.exclusiveMax) {
+                    listOf("Between 0 and 180")
+                } else if (range.max == 1.0 && !range.exclusiveMax) {
+                    listOf("Above 0 and at most 1")
+                } else {
+                    emptyList()
+                }
             } else {
-                if (range.max == 1.0 && !range.exclusiveMax) listOf("From 0 to 1", "0 to 1", "between 0 and 1")
-                else emptyList()
+                if (range.max == 1.0 && !range.exclusiveMax) {
+                    listOf("From 0 to 1", "0 to 1", "between 0 and 1")
+                } else {
+                    emptyList()
+                }
             }
-        } else emptyList()
+        } else {
+            emptyList()
+        }
 
     private fun expectedRangePhrases(range: com.awakekt.awake.core.schema.NumberRange): List<String> =
         unboundedRangePhrases(range) + boundedRangePhrases(range)

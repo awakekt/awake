@@ -7,6 +7,7 @@ package com.awakekt.awake.scene.rendering.animation
 
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math.lerp
+import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
@@ -35,7 +36,7 @@ import kotlin.reflect.KClass
 @Serializable
 @SerialName("keyframe_animation")
 data class SceneKeyframeAnimation(
-    val duration: Float,
+    @PropertyRange(min = 0.0, exclusiveMin = true) val duration: Float,
     val position: List<SceneVec3Key> = emptyList(),
     val rotation: List<SceneVec3Key> = emptyList(),
     val scale: List<SceneVec3Key> = emptyList(),

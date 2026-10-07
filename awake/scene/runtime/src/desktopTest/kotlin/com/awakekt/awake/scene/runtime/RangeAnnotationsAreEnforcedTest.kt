@@ -7,7 +7,6 @@ package com.awakekt.awake.scene.runtime
 
 import com.awakekt.awake.core.schema.NumberRange
 import com.awakekt.awake.core.schema.PropertyKind
-import com.awakekt.awake.core.schema.PropertySchema
 import com.awakekt.awake.scene.document.SceneComponentCatalog
 import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.document.SceneSerializers
@@ -70,12 +69,17 @@ class RangeAnnotationsAreEnforcedTest {
         return node.components.single().validate("test").map { it.message }.toSet()
     }
 
+    private val componentSeeds: Map<String, (JsonObject) -> JsonObject> = mapOf(
+        "keyframe_animation" to { base -> JsonObject(base + ("duration" to JsonPrimitive(1.0f))) },
+    )
+
     @Test
     fun everyRangeRejectsAValueJustOutsideIt() {
         val failures = constrainedProperties().flatMap { property ->
             val range = checkNotNull(property.schema.constraints.range)
-            val base = property.component.let { id -> SceneComponentCatalog.schema(id)?.default as? JsonObject }
+            val defaultDoc = property.component.let { id -> SceneComponentCatalog.schema(id)?.default as? JsonObject }
                 ?: error("${property.component} has no default document to start from; give this test a seed")
+            val base = componentSeeds[property.component]?.invoke(defaultDoc) ?: defaultDoc
             val before = issuesFor(property.component, base)
             outside(range).mapNotNull { value ->
                 val patched = withValue(base, property.steps, number(value, property.schema.kind))
@@ -124,6 +128,19 @@ class RangeAnnotationsAreEnforcedTest {
                     "pbr_material.roughness",
                     "pbr_material.alphaCutoff",
                     "physics_body.layer",
+                    "locomotion_animation.airborneAbove",
+                    "locomotion_animation.crossFade",
+                    "keyframe_animation.duration",
+                    "texture_animation.columns",
+                    "texture_animation.rows",
+                    "texture_animation.framesPerSecond",
+                    "texture_clips.columns",
+                    "texture_clips.rows",
+                    "terrain.width",
+                    "terrain.depth",
+                    "terrain.scaleX",
+                    "terrain.scaleY",
+                    "terrain.scaleZ",
                 ),
             ),
             "the annotations this test exists to check were not found: $paths",

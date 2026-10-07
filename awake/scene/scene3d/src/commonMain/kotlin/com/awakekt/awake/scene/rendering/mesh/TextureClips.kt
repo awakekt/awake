@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.rendering.mesh
 
+import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.passes.uniforms.TextureAnimation
@@ -56,8 +57,8 @@ data class SceneTextureClip(
 @Serializable
 @SerialName("texture_clips")
 data class SceneTextureClips(
-    val columns: Int = 1,
-    val rows: Int = 1,
+    @PropertyRange(min = 1.0) val columns: Int = 1,
+    @PropertyRange(min = 1.0) val rows: Int = 1,
     val clips: Map<String, SceneTextureClip> = emptyMap(),
     val clip: String? = null,
 ) : SceneComponent {

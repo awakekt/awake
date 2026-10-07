@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.rendering.mesh
 
+import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.passes.uniforms.TextureAnimation
@@ -33,10 +34,10 @@ import kotlin.reflect.KClass
 @Serializable
 @SerialName("texture_animation")
 data class SceneTextureAnimation(
-    val columns: Int = 1,
-    val rows: Int = 1,
+    @PropertyRange(min = 1.0) val columns: Int = 1,
+    @PropertyRange(min = 1.0) val rows: Int = 1,
     val frameCount: Int = 0,
-    val framesPerSecond: Float = 0f,
+    @PropertyRange(min = 0.0) val framesPerSecond: Float = 0f,
     val scrollU: Float = 0f,
     val scrollV: Float = 0f,
     val firstFrame: Int = 0,
