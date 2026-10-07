@@ -20,9 +20,11 @@ kotlin {
         commonMain.dependencies {
             implementation(project(":awake:core:math"))
             implementation(project(":awake:core:color"))
-            // NavMesh, the seam this module implements, and the ECS types PathRequest uses.
-            api(project(":awake:scene:scene-core"))
-            api(project(":awake:scene:world"))
+            // The ECS types PathRequest and PathRequestSystem use.
+            api(project(":awake:ecs"))
+            // WorldCellCoord and AsyncWorldCellStreamListener: a streamed grid is keyed by cell,
+            // and NavGridCellStreamer is a cell stream listener.
+            api(project(":awake:world"))
             // Heightmap: a nav grid is baked from terrain, so the dependency runs this way and
             // :awake:asset:terrain stays unaware of navigation.
             api(project(":awake:asset:terrain"))
@@ -37,6 +39,7 @@ kotlin {
             // NavGridCellStreamer is driven through the real WorldPartitionSystem, which needs a
             // scope; TestScope is what makes an off-thread bake assertable without a frame loop.
             implementation(libs.kotlinx.coroutines.test)
+            implementation(project(":awake:scene:world"))
         }
     }
 }

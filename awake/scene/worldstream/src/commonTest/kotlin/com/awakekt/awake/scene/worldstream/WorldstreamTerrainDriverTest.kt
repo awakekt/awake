@@ -6,7 +6,7 @@
 package com.awakekt.awake.scene.worldstream
 
 import com.awakekt.awake.scene.runtime.TerrainDriver
-import com.awakekt.awake.scene.world.WorldPartitionConfig
+import com.awakekt.awake.world.WorldPartitionConfig
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse

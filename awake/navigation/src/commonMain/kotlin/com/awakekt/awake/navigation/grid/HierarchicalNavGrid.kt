@@ -7,7 +7,7 @@ package com.awakekt.awake.navigation.grid
 
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.navigation.NavMesh
-import com.awakekt.awake.scene.world.WorldCellCoord
+import com.awakekt.awake.world.WorldCellCoord
 import kotlin.math.abs
 import kotlin.math.floor
 

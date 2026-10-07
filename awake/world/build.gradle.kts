@@ -13,23 +13,26 @@ plugins {
 
 kotlin {
     android {
-        namespace = "com.awakekt.awake.scene.world"
+        namespace = "com.awakekt.awake.world"
     }
 
     sourceSets {
         commonMain.dependencies {
-            // Partitioning reads positions and the floating origin rewrites them, so this needs the
-            // transform vocabulary. The arrow runs one way: scene-core knows nothing about cells.
-            api(project(":awake:scene:scene-core"))
-            // Cell coordinates, the partition radii and the streaming contract this module drives.
-            api(project(":awake:world"))
-            // AsyncWorldCellStream and CompositeCellStreamListener load cells off the
-            // frame thread; the dependency travelled with them out of scene-core.
+            // A cell's content is applied to an ECS World on the frame thread.
+            api(project(":awake:ecs"))
+            // CompositeCellStreamListener loads its listeners' cells concurrently.
             implementation(libs.kotlinx.coroutines.core)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)
         }
+    }
+}
+
+mavenPublishing {
+    pom {
+        name.set("Awake World")
+        description.set("World cells: coordinates, partition radii and the cell streaming contract, with no scene dependency")
     }
 }

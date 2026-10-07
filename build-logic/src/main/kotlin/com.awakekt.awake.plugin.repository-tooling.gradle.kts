@@ -25,8 +25,6 @@ val capabilityLayeringDebt = setOf(
     ":awake:ai:behavior",
     // Terrain layer kit built on scene3d's terrain components.
     ":awake:kit:terrain-layers",
-    // Grid navigation that depends on scene-core and scene:world.
-    ":awake:navigation",
 )
 
 val verifyCapabilityLayering = tasks.register<VerifyCapabilityLayeringTask>("verifyCapabilityLayering") {

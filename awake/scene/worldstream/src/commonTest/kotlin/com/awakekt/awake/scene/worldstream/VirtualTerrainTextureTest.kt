@@ -7,7 +7,7 @@ package com.awakekt.awake.scene.worldstream
 
 import com.awakekt.awake.asset.terrain.splat.TerrainSplatWeightMap
 import com.awakekt.awake.ecs.World
-import com.awakekt.awake.scene.world.WorldCellCoord
+import com.awakekt.awake.world.WorldCellCoord
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals

@@ -16,9 +16,9 @@ import com.awakekt.awake.render.pipeline.CullMode
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
-import com.awakekt.awake.scene.world.AsyncWorldCellStreamListener
-import com.awakekt.awake.scene.world.CellContent
-import com.awakekt.awake.scene.world.WorldCellCoord
+import com.awakekt.awake.world.AsyncWorldCellStreamListener
+import com.awakekt.awake.world.CellContent
+import com.awakekt.awake.world.WorldCellCoord
 
 /**
  * Gives every streamed cell a mesh: built off the frame thread, uploaded and spawned on it.

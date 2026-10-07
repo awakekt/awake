@@ -13,11 +13,11 @@ import com.awakekt.awake.render.pipeline.CullMode
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import com.awakekt.awake.scene.runtime.TerrainDriver
-import com.awakekt.awake.scene.world.AsyncWorldCellStreamListener
-import com.awakekt.awake.scene.world.CompositeCellStreamListener
+import com.awakekt.awake.world.AsyncWorldCellStreamListener
+import com.awakekt.awake.world.CompositeCellStreamListener
 import com.awakekt.awake.scene.world.StreamObserver
-import com.awakekt.awake.scene.world.WorldCellCoord
-import com.awakekt.awake.scene.world.WorldPartitionConfig
+import com.awakekt.awake.world.WorldCellCoord
+import com.awakekt.awake.world.WorldPartitionConfig
 import com.awakekt.awake.scene.world.WorldPartitionSystem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

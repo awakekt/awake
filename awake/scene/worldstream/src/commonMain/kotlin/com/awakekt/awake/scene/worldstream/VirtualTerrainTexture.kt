@@ -8,9 +8,9 @@ package com.awakekt.awake.scene.worldstream
 import com.awakekt.awake.asset.terrain.splat.TerrainSplatWeightMap
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
-import com.awakekt.awake.scene.world.AsyncWorldCellStreamListener
-import com.awakekt.awake.scene.world.CellContent
-import com.awakekt.awake.scene.world.WorldCellCoord
+import com.awakekt.awake.world.AsyncWorldCellStreamListener
+import com.awakekt.awake.world.CellContent
+import com.awakekt.awake.world.WorldCellCoord
 
 /**
  * Configuration parameters for cell-streamed virtual terrain texturing.

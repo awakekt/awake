@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package com.awakekt.awake.scene.world
+package com.awakekt.awake.world
 
 import com.awakekt.awake.ecs.World
 
@@ -27,9 +27,9 @@ fun interface CellContent {
 /**
  * The streaming callbacks for a consumer whose cells cost real IO.
  *
- * [WorldCellStreamListener]'s synchronous `onCellLoad` runs inline on the frame thread, which is
- * fine for cells built from memory and a frame hitch for anything else. This splits that into a
- * suspending half and a frame-thread half; see [CellContent].
+ * `scene:world`'s `WorldCellStreamListener` has a synchronous `onCellLoad` that runs inline on the
+ * frame thread, which is fine for cells built from memory and a frame hitch for anything else. This
+ * splits that into a suspending half and a frame-thread half; see [CellContent].
  *
  * [onCellUnload] stays synchronous and frame-thread on both interfaces, because removing entities
  * is ECS mutation either way.

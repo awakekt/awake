@@ -4,13 +4,17 @@
 
 <div class="awake-badges" markdown>
 <span class="awake-badge">module: <code>awake:scene:world</code></span>
+<span class="awake-badge">module: <code>awake:world</code></span>
 <span class="awake-badge">module: <code>awake:scene:worldstream</code></span>
 <span class="awake-badge">Desktop · Android · iOS · Web</span>
 </div>
 
 `awake:scene:world` streams cell coordinates and shifts the origin; it does not know what a cell
-contains. `awake:scene:worldstream` supplies ready-made cell contents: meshes, colliders and terrain
-textures. Both are code-only; there is no scene document component for streaming.
+contains. The cell types it streams, `WorldCellCoord`, `WorldPartitionConfig`,
+`AsyncWorldCellStreamListener` and `CellContent`, are in `awake:world`, which has no scene
+dependency, so a listener can be written without the scene layer; `awake:scene:world` brings it in.
+`awake:scene:worldstream` supplies ready-made cell contents: meshes, colliders and terrain textures.
+All three are code-only; there is no scene document component for streaming.
 
 ## Stream cells around the player
 

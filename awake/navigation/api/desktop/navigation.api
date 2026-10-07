@@ -78,11 +78,11 @@ public final class com/awakekt/awake/navigation/grid/CellSide : java/lang/Enum {
 public final class com/awakekt/awake/navigation/grid/CoarseNavGraph {
 	public fun <init> (F)V
 	public final fun clear ()V
-	public final fun corridor (Lcom/awakekt/awake/scene/world/WorldCellCoord;Lcom/awakekt/awake/scene/world/WorldCellCoord;)Ljava/util/List;
+	public final fun corridor (Lcom/awakekt/awake/world/WorldCellCoord;Lcom/awakekt/awake/world/WorldCellCoord;)Ljava/util/List;
 	public final fun getKnownCells ()Ljava/util/Set;
-	public final fun put (Lcom/awakekt/awake/scene/world/WorldCellCoord;Lcom/awakekt/awake/navigation/grid/NavCellSummary;)V
-	public final fun remove (Lcom/awakekt/awake/scene/world/WorldCellCoord;)V
-	public final fun summaryAt (Lcom/awakekt/awake/scene/world/WorldCellCoord;)Lcom/awakekt/awake/navigation/grid/NavCellSummary;
+	public final fun put (Lcom/awakekt/awake/world/WorldCellCoord;Lcom/awakekt/awake/navigation/grid/NavCellSummary;)V
+	public final fun remove (Lcom/awakekt/awake/world/WorldCellCoord;)V
+	public final fun summaryAt (Lcom/awakekt/awake/world/WorldCellCoord;)Lcom/awakekt/awake/navigation/grid/NavCellSummary;
 }
 
 public final class com/awakekt/awake/navigation/grid/HierarchicalNavGrid : com/awakekt/awake/navigation/NavMesh {
@@ -129,15 +129,15 @@ public final class com/awakekt/awake/navigation/grid/NavGrid : com/awakekt/awake
 	public final fun getTile ()Lcom/awakekt/awake/navigation/grid/NavGridTile;
 }
 
-public final class com/awakekt/awake/navigation/grid/NavGridCellStreamer : com/awakekt/awake/scene/world/AsyncWorldCellStreamListener {
-	public fun <init> (Lcom/awakekt/awake/navigation/grid/StreamedNavGrid;Lcom/awakekt/awake/scene/world/WorldPartitionConfig;Lkotlin/jvm/functions/Function2;FLcom/awakekt/awake/navigation/grid/CoarseNavGraph;)V
-	public synthetic fun <init> (Lcom/awakekt/awake/navigation/grid/StreamedNavGrid;Lcom/awakekt/awake/scene/world/WorldPartitionConfig;Lkotlin/jvm/functions/Function2;FLcom/awakekt/awake/navigation/grid/CoarseNavGraph;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun loadCell (Lcom/awakekt/awake/scene/world/WorldCellCoord;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public fun onCellUnload (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/scene/world/WorldCellCoord;)V
+public final class com/awakekt/awake/navigation/grid/NavGridCellStreamer : com/awakekt/awake/world/AsyncWorldCellStreamListener {
+	public fun <init> (Lcom/awakekt/awake/navigation/grid/StreamedNavGrid;Lcom/awakekt/awake/world/WorldPartitionConfig;Lkotlin/jvm/functions/Function2;FLcom/awakekt/awake/navigation/grid/CoarseNavGraph;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/navigation/grid/StreamedNavGrid;Lcom/awakekt/awake/world/WorldPartitionConfig;Lkotlin/jvm/functions/Function2;FLcom/awakekt/awake/navigation/grid/CoarseNavGraph;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun loadCell (Lcom/awakekt/awake/world/WorldCellCoord;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun onCellUnload (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/world/WorldCellCoord;)V
 }
 
 public final class com/awakekt/awake/navigation/grid/NavGridDebugLinesKt {
-	public static final fun blockedColorFor (Lcom/awakekt/awake/scene/world/WorldCellCoord;)Lcom/awakekt/awake/core/color/Color;
+	public static final fun blockedColorFor (Lcom/awakekt/awake/world/WorldCellCoord;)Lcom/awakekt/awake/core/color/Color;
 	public static final fun getBLOCKED_COLOR ()Lcom/awakekt/awake/core/color/Color;
 	public static final fun getBLOCKED_COLOR_ALTERNATE ()Lcom/awakekt/awake/core/color/Color;
 	public static final fun getROUTE_COLORS ()Ljava/util/List;
@@ -151,7 +151,7 @@ public final class com/awakekt/awake/navigation/grid/NavGridDebugLinesKt {
 public class com/awakekt/awake/navigation/grid/NavGridDebugSink {
 	public fun <init> (Lkotlin/jvm/functions/Function2;)V
 	public final fun blockedMarkers (Lcom/awakekt/awake/navigation/grid/NavGridTile;FFLcom/awakekt/awake/core/color/Color;)V
-	public final fun cellOutline (Lcom/awakekt/awake/scene/world/WorldCellCoord;F)V
+	public final fun cellOutline (Lcom/awakekt/awake/world/WorldCellCoord;F)V
 	public final fun cross (FFFFLcom/awakekt/awake/core/color/Color;)V
 	public final fun getLines ()Ljava/util/List;
 	public final fun getSurfaceAt ()Lkotlin/jvm/functions/Function2;
@@ -204,9 +204,9 @@ public final class com/awakekt/awake/navigation/grid/StreamedNavGrid : com/awake
 	public final fun getSampleSize ()F
 	public final fun getSamplesPerCell ()I
 	public final fun getWorldCellSize ()F
-	public final fun load (Lcom/awakekt/awake/scene/world/WorldCellCoord;Lcom/awakekt/awake/navigation/grid/NavGridTile;)V
-	public final fun tileAt (Lcom/awakekt/awake/scene/world/WorldCellCoord;)Lcom/awakekt/awake/navigation/grid/NavGridTile;
-	public final fun unload (Lcom/awakekt/awake/scene/world/WorldCellCoord;)V
+	public final fun load (Lcom/awakekt/awake/world/WorldCellCoord;Lcom/awakekt/awake/navigation/grid/NavGridTile;)V
+	public final fun tileAt (Lcom/awakekt/awake/world/WorldCellCoord;)Lcom/awakekt/awake/navigation/grid/NavGridTile;
+	public final fun unload (Lcom/awakekt/awake/world/WorldCellCoord;)V
 }
 
 public final class com/awakekt/awake/navigation/grid/TileField : com/awakekt/awake/navigation/grid/NavField {

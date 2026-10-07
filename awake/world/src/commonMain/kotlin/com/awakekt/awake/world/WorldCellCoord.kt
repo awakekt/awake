@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package com.awakekt.awake.scene.world
+package com.awakekt.awake.world
 
 import kotlin.math.floor
 
