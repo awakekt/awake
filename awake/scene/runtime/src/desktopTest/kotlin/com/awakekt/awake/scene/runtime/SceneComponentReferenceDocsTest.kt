@@ -130,10 +130,15 @@ class SceneComponentReferenceDocsTest {
         } else emptyList()
 
     private fun boundedRangePhrases(range: com.awakekt.awake.core.schema.NumberRange): List<String> =
-        if (range.min == 0.0 && range.exclusiveMin) {
-            if (range.max == 180.0 && range.exclusiveMax) listOf("Between 0 and 180")
-            else if (range.max == 1.0 && !range.exclusiveMax) listOf("Above 0 and at most 1")
-            else emptyList()
+        if (range.min == 0.0) {
+            if (range.exclusiveMin) {
+                if (range.max == 180.0 && range.exclusiveMax) listOf("Between 0 and 180")
+                else if (range.max == 1.0 && !range.exclusiveMax) listOf("Above 0 and at most 1")
+                else emptyList()
+            } else {
+                if (range.max == 1.0 && !range.exclusiveMax) listOf("From 0 to 1", "0 to 1", "between 0 and 1")
+                else emptyList()
+            }
         } else emptyList()
 
     private fun expectedRangePhrases(range: com.awakekt.awake.core.schema.NumberRange): List<String> =

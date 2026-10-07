@@ -58,13 +58,9 @@ free ambient_light.colorB | A colour channel: every value is accepted; nothing v
 free ambient_light.colorG | A colour channel: every value is accepted; nothing validates it.
 free ambient_light.colorR | A colour channel: every value is accepted; nothing validates it.
 free ambient_light.intensity | No validate() limits it; every value is accepted today.
-undecided canvas_element.fontSize
-undecided canvas_element.height
-undecided canvas_element.offsetX
-undecided canvas_element.offsetY
-undecided canvas_element.order
-undecided canvas_element.value
-undecided canvas_element.width
+free canvas_element.offsetX | Any screen offset or z-order integer is valid.
+free canvas_element.offsetY | Any screen offset or z-order integer is valid.
+free canvas_element.order | Any screen offset or z-order integer is valid.
 free fog.colorB | A colour channel: every value is accepted; nothing validates it.
 free fog.colorG | A colour channel: every value is accepted; nothing validates it.
 free fog.colorR | A colour channel: every value is accepted; nothing validates it.
@@ -108,10 +104,6 @@ undecided particle_emitter.stretchFactor
 undecided particle_emitter.turbulence
 undecided particle_emitter.turbulenceFrequency
 undecided particle_emitter.velocityJitter
-undecided pbr_material.alphaCutoff
-undecided pbr_material.metallic
-undecided pbr_material.roughness
-undecided physics_body.layer
 free skybox.exposure | No validate() limits it; every value is accepted today.
 free skybox.horizonColorB | A colour channel: every value is accepted; nothing validates it.
 free skybox.horizonColorG | A colour channel: every value is accepted; nothing validates it.
@@ -142,15 +134,15 @@ free ambient_light.color.a | A colour channel: every value is accepted; nothing 
 free ambient_light.color.b | A colour channel: every value is accepted; nothing validates it.
 free ambient_light.color.g | A colour channel: every value is accepted; nothing validates it.
 free ambient_light.color.r | A colour channel: every value is accepted; nothing validates it.
-undecided camera.center.x
-undecided camera.center.y
-undecided camera.center.z
-undecided camera.eye.x
-undecided camera.eye.y
-undecided camera.eye.z
-undecided camera.up.x
-undecided camera.up.y
-undecided camera.up.z
+free camera.center.x | Any world coordinate or direction vector component is valid.
+free camera.center.y | Any world coordinate or direction vector component is valid.
+free camera.center.z | Any world coordinate or direction vector component is valid.
+free camera.eye.x | Any world coordinate or direction vector component is valid.
+free camera.eye.y | Any world coordinate or direction vector component is valid.
+free camera.eye.z | Any world coordinate or direction vector component is valid.
+free camera.up.x | Any world coordinate or direction vector component is valid.
+free camera.up.y | Any world coordinate or direction vector component is valid.
+free camera.up.z | Any world coordinate or direction vector component is valid.
 free fog.color.a | A colour channel: every value is accepted; nothing validates it.
 free fog.color.b | A colour channel: every value is accepted; nothing validates it.
 free fog.color.g | A colour channel: every value is accepted; nothing validates it.
@@ -191,14 +183,14 @@ undecided particle_emitter.ground.colliders[].min.z
 undecided particle_emitter.velocity.x
 undecided particle_emitter.velocity.y
 undecided particle_emitter.velocity.z
-undecided pbr_material.baseColorFactor.a
-undecided pbr_material.baseColorFactor.b
-undecided pbr_material.baseColorFactor.g
-undecided pbr_material.baseColorFactor.r
-undecided pbr_material.emissiveFactor.a
-undecided pbr_material.emissiveFactor.b
-undecided pbr_material.emissiveFactor.g
-undecided pbr_material.emissiveFactor.r
+free pbr_material.baseColorFactor.a | A colour channel: every value is accepted; nothing validates it.
+free pbr_material.baseColorFactor.b | A colour channel: every value is accepted; nothing validates it.
+free pbr_material.baseColorFactor.g | A colour channel: every value is accepted; nothing validates it.
+free pbr_material.baseColorFactor.r | A colour channel: every value is accepted; nothing validates it.
+free pbr_material.emissiveFactor.a | A colour channel: every value is accepted; nothing validates it.
+free pbr_material.emissiveFactor.b | A colour channel: every value is accepted; nothing validates it.
+free pbr_material.emissiveFactor.g | A colour channel: every value is accepted; nothing validates it.
+free pbr_material.emissiveFactor.r | A colour channel: every value is accepted; nothing validates it.
 free skybox.horizonColor.a | A colour channel: every value is accepted; nothing validates it.
 free skybox.horizonColor.b | A colour channel: every value is accepted; nothing validates it.
 free skybox.horizonColor.g | A colour channel: every value is accepted; nothing validates it.
