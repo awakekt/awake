@@ -11,7 +11,6 @@ import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.MapProperty
 import org.gradle.api.provider.Property
-import org.gradle.api.provider.SetProperty
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.PathSensitive
@@ -37,9 +36,8 @@ import java.io.File
  *   package, which catches a scene type arriving some other way, such as a published coordinate.
  *
  * The scene modules themselves, the composition modules that load and run whole projects, and
- * benchmark harnesses are [exemptModulePrefixes]. Modules that broke the rule before it existed are the
- * [debt] ledger: it may only shrink, and this task fails on a debt entry that has been paid off so it
- * gets deleted. See `awake/scene/README.md` for the rule and why.
+ * benchmark harnesses are [exemptModulePrefixes]. Nothing else is tolerated: there is no list of
+ * modules allowed to break the rule. See `awake/scene/README.md` for the rule and why.
  */
 @DisableCachingByDefault(because = "Verification task with no outputs")
 abstract class VerifyCapabilityLayeringTask : DefaultTask() {
@@ -50,10 +48,6 @@ abstract class VerifyCapabilityLayeringTask : DefaultTask() {
     /** Module paths (`:awake:scene`) and the module paths under them that may depend on scene modules. */
     @get:Input
     abstract val exemptModulePrefixes: ListProperty<String>
-
-    /** Modules that depend on a scene module in main code and have not been fixed yet. Shrink, never grow. */
-    @get:Input
-    abstract val debt: SetProperty<String>
 
     /**
      * Every `:awake:` module's project dependencies as Gradle resolved its build: module path to
@@ -94,12 +88,12 @@ abstract class VerifyCapabilityLayeringTask : DefaultTask() {
                 }
             }
 
-        val failures = capabilityLayeringFailures(couplings, debt.get())
+        val failures = capabilityLayeringFailures(couplings)
         if (failures.isNotEmpty()) {
             throw GradleException(
                 "Capability layering failed (${failures.size} problem(s)):\n" + failures.joinToString("\n") { "  $it" },
             )
         }
-        logger.lifecycle("Capability layering passed: ${couplings.size} modules checked, ${debt.get().size} on the debt ledger")
+        logger.lifecycle("Capability layering passed: ${couplings.size} modules checked")
     }
 }

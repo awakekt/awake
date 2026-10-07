@@ -5,8 +5,10 @@
  */
 package com.awakekt.awake.compose.foundation
 
+import com.awakekt.awake.compose.foundation.interaction.InteractionSource
 import com.awakekt.awake.compose.foundation.layout.Column
 import com.awakekt.awake.compose.foundation.layout.ColumnMeasurePolicy
+import com.awakekt.awake.compose.foundation.layout.Row
 import com.awakekt.awake.compose.foundation.layout.Spacer
 import com.awakekt.awake.compose.foundation.layout.size
 import com.awakekt.awake.compose.runtime.Composer
@@ -17,6 +19,7 @@ import com.awakekt.awake.compose.ui.layout.layoutTree
 import com.awakekt.awake.compose.ui.node.LayoutNode
 import com.awakekt.awake.compose.ui.platform.ComposeHost
 import com.awakekt.awake.compose.ui.platform.FrameInput
+import com.awakekt.awake.compose.ui.platform.PointerFrame
 import com.awakekt.awake.compose.ui.unit.Constraints
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.color.Color
@@ -151,6 +154,76 @@ class ScrollLayoutTest {
 
 /** Scroll through the real frame loop, which is where wheel events actually arrive. */
 class ScrollThroughFrameTest {
+
+    @Test
+    fun aTouchSwipeScrollsAcrossFramesAndCancelsThePressedChild() {
+        listOf(1f, 2f).forEach { density ->
+            val state = ScrollState()
+            val interaction = InteractionSource()
+            var clicks = 0
+            val host = ComposeHost(density)
+            val content: context(Composer)
+            () -> Unit = {
+                Column(Modifier.size(100.dp).verticalScroll(state)) {
+                    Spacer(Modifier.size(100.dp, 300.dp).clickable(interaction) { clicks++ })
+                }
+            }
+            fun frame(y: Int, down: Boolean = true) = host.frame(
+                FrameInput(200, 200, pointers = listOf(PointerFrame(1, 25, y, down))),
+                content,
+            )
+            host.frame(FrameInput(200, 200), content)
+            frame(80)
+            assertTrue(interaction.isPressed)
+            frame(60)
+            frame(40)
+            frame(20, down = false)
+            assertTrue(state.value > 0, "finger drag did not scroll at density $density")
+            assertEquals(0, clicks, "swipe activated the row under the finger")
+            assertFalse(interaction.isPressed, "swipe left the child stuck in its pressed state")
+        }
+    }
+
+    @Test
+    fun aTapWithSmallFingerJitterStillClicksWithoutScrolling() {
+        val state = ScrollState()
+        var clicks = 0
+        val host = ComposeHost()
+        val content: context(Composer)
+        () -> Unit = {
+            Column(Modifier.size(100.dp).verticalScroll(state)) {
+                Spacer(Modifier.size(100.dp, 300.dp).clickable { clicks++ })
+            }
+        }
+        host.frame(FrameInput(200, 200), content)
+        listOf(PointerFrame(1, 20, 40, true), PointerFrame(1, 20, 37, true), PointerFrame(1, 20, 37, false)).forEach {
+            host.frame(FrameInput(200, 200, pointers = listOf(it)), content)
+        }
+        assertEquals(1, clicks)
+        assertEquals(0, state.value)
+    }
+
+    @Test
+    fun horizontalTouchScrollAndVerticalScrollRespectTheirAxes() {
+        val horizontal = ScrollState()
+        val vertical = ScrollState()
+        val host = ComposeHost()
+        val content: context(Composer)
+        () -> Unit = {
+            Column(Modifier.size(100.dp).verticalScroll(vertical)) {
+                Row(Modifier.size(100.dp, 60.dp).horizontalScroll(horizontal)) {
+                    Spacer(Modifier.size(300.dp, 60.dp))
+                }
+                Spacer(Modifier.size(100.dp, 240.dp))
+            }
+        }
+        host.frame(FrameInput(200, 200), content)
+        listOf(PointerFrame(1, 80, 30, true), PointerFrame(1, 40, 30, true), PointerFrame(1, 20, 30, false)).forEach {
+            host.frame(FrameInput(200, 200, pointers = listOf(it)), content)
+        }
+        assertTrue(horizontal.value > 0)
+        assertEquals(0, vertical.value, "horizontal gesture moved the vertical ancestor")
+    }
 
     private fun hostWith(state: ScrollState): Pair<
         ComposeHost,

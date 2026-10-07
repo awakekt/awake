@@ -1,0 +1,1 @@
+- Added `@PropertyRange` bounds and decisions for Batch 5 scene components (`locomotion_animation`, `keyframe_animation`, `texture_animation`, `texture_clips`, and `terrain`).

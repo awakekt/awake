@@ -11,7 +11,6 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.navigation.NavMesh
 import com.awakekt.awake.navigation.PathRequest
 import com.awakekt.awake.navigation.PathRequestSystem
-import com.awakekt.awake.scene.core.transform.Transform
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -33,7 +32,7 @@ class PatrolAiSystemTest {
     }
 
     private val navMesh = DirectNavMesh()
-    private val patrolSystem = PatrolAiSystem()
+    private val patrolSystem = PatrolAiSystem(PlacedAgents)
     private val pathSystem = PathRequestSystem(navMesh)
 
     private fun World.frame(delta: Float = 0.1f) {
@@ -47,7 +46,7 @@ class PatrolAiSystemTest {
         dwellSeconds: Float = 0f,
     ): Pair<Entity, PatrolBehavior> {
         val entity = create()
-        add(entity, Transform(position = Vec3f(0f, 0f, 0f)))
+        add(entity, Placed(Vec3f(0f, 0f, 0f)))
         val patrol = PatrolBehavior(
             stops = stops,
             style = style,
@@ -130,7 +129,7 @@ class PatrolAiSystemTest {
     fun holdsAtEachStopForTheDwellTime() {
         val world = World()
         val (entity, patrol) = world.spawnPatrol(square, dwellSeconds = 1f)
-        val transform = requireNotNull(world.get<Transform>(entity))
+        val transform = requireNotNull(world.get<Placed>(entity))
 
         // The entity spawns on the first stop, so one frame reaches it and starts the dwell.
         world.frame(0.1f)

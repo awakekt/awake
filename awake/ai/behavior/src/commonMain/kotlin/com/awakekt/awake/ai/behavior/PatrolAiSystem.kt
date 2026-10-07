@@ -5,11 +5,11 @@
  */
 package com.awakekt.awake.ai.behavior
 
+import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.navigation.PathRequest
 import com.awakekt.awake.navigation.PathStatus
-import com.awakekt.awake.scene.core.transform.Transform
 import kotlin.math.sqrt
 
 /**
@@ -18,18 +18,23 @@ import kotlin.math.sqrt
  * Like the other behaviours it does no pathfinding — it decides which stop is next and writes a
  * `PathRequest`; `PathRequestSystem` answers it, and [RouteFollower] owns the route mechanics.
  */
-class PatrolAiSystem : System {
+class PatrolAiSystem(
+    /** Where patrollers are, and how they move. */
+    private val placement: AgentPlacement,
+) : System {
+    private val position = Vec3f(0f, 0f, 0f)
 
     override fun update(world: World, delta: Float) {
-        world.family<Transform, PatrolBehavior>().forEach { entity, transform, patrol ->
+        world.family<PatrolBehavior>().forEach { entity, patrol ->
             val request = world.get<PathRequest>(entity) ?: return@forEach
             if (patrol.stops.isEmpty() || patrol.finished) return@forEach
+            if (!placement.position(world, entity, position)) return@forEach
             skipUnreachableStop(patrol, request)
             patrol.adoptArrivedRoute(request)
             if (dwelling(patrol, delta)) return@forEach
-            patrol.requestRouteWhenDue(transform, patrol.currentStop, request, delta)
-            patrol.steer(transform, delta)
-            if (reachedCurrentStop(patrol, transform)) arriveAtStop(patrol)
+            patrol.requestRouteWhenDue(position, patrol.currentStop, request, delta)
+            patrol.steer(placement, world, entity, position, delta)
+            if (reachedCurrentStop(patrol, position)) arriveAtStop(patrol)
         }
     }
 
@@ -53,10 +58,10 @@ class PatrolAiSystem : System {
      * the index a second time and silently skip the stop after it. Distance to the current stop
      * has no such coupling.
      */
-    private fun reachedCurrentStop(patrol: PatrolBehavior, transform: Transform): Boolean {
+    private fun reachedCurrentStop(patrol: PatrolBehavior, position: Vec3f): Boolean {
         val stop = patrol.currentStop ?: return false
-        val dx = stop.x - transform.position.x
-        val dz = stop.z - transform.position.z
+        val dx = stop.x - position.x
+        val dz = stop.z - position.z
         return sqrt(dx * dx + dz * dz) <= patrol.waypointRadius
     }
 

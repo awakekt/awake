@@ -6,9 +6,10 @@
 package com.awakekt.awake.ai.behavior
 
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.ecs.Entity
+import com.awakekt.awake.ecs.World
 import com.awakekt.awake.navigation.PathRequest
 import com.awakekt.awake.navigation.PathStatus
-import com.awakekt.awake.scene.core.transform.Transform
 import kotlin.math.sqrt
 
 /**
@@ -82,7 +83,7 @@ internal fun RouteFollower.adoptArrivedRoute(request: PathRequest) {
  * @return true when a request was issued.
  */
 internal fun RouteFollower.requestRouteWhenDue(
-    from: Transform,
+    from: Vec3f,
     goal: Vec3f?,
     request: PathRequest,
     delta: Float,
@@ -91,26 +92,34 @@ internal fun RouteFollower.requestRouteWhenDue(
     val due = timeSinceRepath >= repathInterval
     if (!due || request.status == PathStatus.Pending || goal == null) return false
     timeSinceRepath = 0f
-    request.requestPath(from.position, goal)
+    request.requestPath(from, goal)
     return true
 }
 
 /**
- * Steps [transform] toward the current waypoint, advancing when it is reached.
+ * Steps [entity], which stands at [position], toward the current waypoint through [placement],
+ * advancing when it is reached. [position] is read back afterwards, so a caller that measures after
+ * steering sees where the entity went.
  *
  * Movement is kinematic and XZ-only: navigation waypoints carry no height, so whatever owns the
  * entity puts it back on the ground.
  */
-internal fun RouteFollower.steer(transform: Transform, delta: Float) {
+internal fun RouteFollower.steer(
+    placement: AgentPlacement,
+    world: World,
+    entity: Entity,
+    position: Vec3f,
+    delta: Float,
+) {
     val waypoint = path.getOrNull(waypointIndex) ?: return
-    val dx = waypoint.x - transform.position.x
-    val dz = waypoint.z - transform.position.z
+    val dx = waypoint.x - position.x
+    val dz = waypoint.z - position.z
     val distance = sqrt(dx * dx + dz * dz)
     if (distance <= waypointRadius) {
         waypointIndex++
     } else {
         val invDistance = 1f / distance
-        transform.position.x += dx * invDistance * speed * delta
-        transform.position.z += dz * invDistance * speed * delta
+        placement.moveBy(world, entity, dx * invDistance * speed * delta, dz * invDistance * speed * delta)
+        placement.position(world, entity, position)
     }
 }

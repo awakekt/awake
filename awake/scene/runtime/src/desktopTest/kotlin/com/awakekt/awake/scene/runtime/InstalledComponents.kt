@@ -5,7 +5,7 @@
  */
 package com.awakekt.awake.scene.runtime
 
-import com.awakekt.awake.ai.behavior.registerAiBehaviors
+import com.awakekt.awake.scene.ai.registerAiBehaviors
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.blueprint.registerBlueprints
 import com.awakekt.awake.scene.character.registerCharacter

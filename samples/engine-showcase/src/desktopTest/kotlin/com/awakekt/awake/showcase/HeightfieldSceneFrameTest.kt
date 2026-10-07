@@ -251,10 +251,10 @@ class HeightfieldSceneFrameTest {
 
     private fun countChangedPixels(before: ByteArray, after: ByteArray): Int {
         var changedPixels = 0
-        // The showcase now renders live FPS/draw counters over the left and right edges. Those
-        // labels intentionally change when a zero-delta frame is submitted or culling is toggled;
-        // these assertions measure the 3D scene, so exclude the two UI columns.
-        for (y in 0 until HEIGHT) {
+        // Measure the 3D scene below the 52px toolbar and beside the 232px desktop sidebar.
+        // The retained UI first paints on the second frame, and its FPS label changes on
+        // zero-delta frames. Neither is terrain motion or a change in culling.
+        for (y in SCENE_Y_START until HEIGHT) {
             for (x in SCENE_X_START until SCENE_X_END) {
                 val offset = (y * WIDTH + x) * 4
                 if (before[offset] != after[offset] || before[offset + 1] != after[offset + 1] || before[offset + 2] != after[offset + 2]) {
@@ -266,7 +266,7 @@ class HeightfieldSceneFrameTest {
     }
 
     private fun firstChangedPixel(before: ByteArray, after: ByteArray): Pair<Int, Int>? {
-        for (y in 0 until HEIGHT) {
+        for (y in SCENE_Y_START until HEIGHT) {
             for (x in SCENE_X_START until SCENE_X_END) {
                 val offset = (y * WIDTH + x) * 4
                 if (before[offset] != after[offset] || before[offset + 1] != after[offset + 1] || before[offset + 2] != after[offset + 2]) {
@@ -287,8 +287,9 @@ class HeightfieldSceneFrameTest {
     private companion object {
         const val WIDTH = 960
         const val HEIGHT = 540
-        const val SCENE_X_START = 220
+        const val SCENE_X_START = 232
         const val SCENE_X_END = 700
+        const val SCENE_Y_START = 52
         const val FRAME = 1f / 60f
         const val PHYSICS_STEPS = 240
         const val MINIMUM_RESTING_Y = 1.1f

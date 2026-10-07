@@ -18,6 +18,8 @@ import com.awakekt.awake.compose.runtime.remember
  * not know its own extent until its content has been measured.
  */
 class ScrollState(initial: Int = 0) {
+    // Kept with the caller-owned state: modifier nodes are rebuilt during every frame.
+    internal val touchGestures = mutableMapOf<Long, ScrollTouchGesture>()
 
     var value: Int = initial
         private set
@@ -57,6 +59,12 @@ class ScrollState(initial: Int = 0) {
     }
 
     override fun toString(): String = "ScrollState(value=$value, maxValue=$maxValue)"
+}
+
+internal class ScrollTouchGesture {
+    var distanceX = 0
+    var distanceY = 0
+    var dragging = false
 }
 
 /** A [ScrollState] that survives the next pass. */

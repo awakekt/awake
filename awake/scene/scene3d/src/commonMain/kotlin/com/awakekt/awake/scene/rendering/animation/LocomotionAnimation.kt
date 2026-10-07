@@ -6,6 +6,7 @@
 package com.awakekt.awake.scene.rendering.animation
 
 import com.awakekt.awake.core.animation.AnimationPlayback
+import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
@@ -52,8 +53,8 @@ data class SceneLocomotionAnimation(
     val land: String? = null,
     val walkAbove: Float = DEFAULT_WALK_ABOVE,
     val runAbove: Float = DEFAULT_RUN_ABOVE,
-    val airborneAbove: Float = DEFAULT_AIRBORNE_ABOVE,
-    val crossFade: Float = DEFAULT_CROSS_FADE,
+    @PropertyRange(min = 0.0, exclusiveMin = true) val airborneAbove: Float = DEFAULT_AIRBORNE_ABOVE,
+    @PropertyRange(min = 0.0) val crossFade: Float = DEFAULT_CROSS_FADE,
 ) : SceneComponent {
     override fun validate(path: String): List<SceneValidationIssue> = buildList {
         if (walkAbove < 0f || runAbove < walkAbove) {

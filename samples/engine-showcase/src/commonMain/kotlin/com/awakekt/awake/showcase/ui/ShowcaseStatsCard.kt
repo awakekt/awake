@@ -9,8 +9,8 @@ package com.awakekt.awake.showcase.ui
 
 import com.awakekt.awake.compose.foundation.background
 import com.awakekt.awake.compose.foundation.layout.Column
+import com.awakekt.awake.compose.foundation.layout.fillMaxWidth
 import com.awakekt.awake.compose.foundation.layout.padding
-import com.awakekt.awake.compose.foundation.layout.width
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.ui.Modifier
@@ -32,7 +32,7 @@ internal fun ShowcaseStatsCard(modifier: Modifier = Modifier) {
     val phases = frameStats.phases
     val render = frameStats.render
     Column(
-        modifier = modifier.width(CARD_WIDTH).background(ShowcaseTheme.palette.card).padding(CARD_INSET),
+        modifier = modifier.fillMaxWidth().background(ShowcaseTheme.palette.card).padding(top = CARD_INSET),
     ) {
         ShadcnText("FPS: ${frameStats.fps.oneDecimal()}  Frame: ${frameStats.frameTimeMs.oneDecimal()}ms", variant = ShadcnTextVariant.Small)
         ShadcnText("p99: ${frameStats.p99FrameTimeMs.oneDecimal()}ms  Worst: ${frameStats.maxFrameTimeMs.oneDecimal()}ms", variant = ShadcnTextVariant.Small)
@@ -42,7 +42,7 @@ internal fun ShowcaseStatsCard(modifier: Modifier = Modifier) {
             // With the other timings: a reading that changes every frame stays off until asked for.
             ShadcnText("GPU: ${render?.gpuTimeMs?.let { "${it.oneDecimal()}ms" } ?: "not timed"}", variant = ShadcnTextVariant.Small)
         } else {
-            ShadcnText("Press F2 for phase timings", variant = ShadcnTextVariant.Small)
+            ShadcnText("Phase timings are off", variant = ShadcnTextVariant.Small)
         }
         // Visible: renderables that survived culling, one draw each before instancing folds them.
         // Recorded: every draw the backend issued, shadow cascades and UI included.

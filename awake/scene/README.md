@@ -47,9 +47,8 @@ The rules:
    - a main source file that imports or fully qualifies a type in an `awake.scene` package (comments
      and strings aside).
 
-   Modules that broke the rule before it existed are listed as debt in `build-logic`'s
-   `repository-tooling` plugin. That list only shrinks: the task also fails when an entry no longer
-   applies.
+   There is no list of modules allowed to break it. The last ones were separated in #386, into
+   `awake:terrain`, `awake:world`, `awake:scene:navigation` and `awake:scene:ai`.
 2. **A capability's types never hold a `Scene*` schema type.** The scene module maps schema to
    capability types in one file, and a test fails when a capability option is neither mapped from a
    scene field nor listed as code-only, so leaving an option out of the scene file is a decision

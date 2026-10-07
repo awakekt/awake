@@ -57,10 +57,10 @@ free spin_control.radians | The initial angle: every angle is valid, and the edi
 free sprite.frame | Relational: must stay within columns * rows, which validate() enforces; no fixed limit says that.
 free sprite.sortOrder | Signed 2D layer index: negative and positive values are valid draw orders.
 
-undecided sprite.tint.r
-undecided sprite.tint.g
-undecided sprite.tint.b
-undecided sprite.tint.a
+free sprite.tint.r | A colour channel: every value is accepted; nothing validates it.
+free sprite.tint.g | A colour channel: every value is accepted; nothing validates it.
+free sprite.tint.b | A colour channel: every value is accepted; nothing validates it.
+free sprite.tint.a | A colour channel: every value is accepted; nothing validates it.
 free ambient_light.colorB | A colour channel: every value is accepted; nothing validates it.
 free ambient_light.colorG | A colour channel: every value is accepted; nothing validates it.
 free ambient_light.colorR | A colour channel: every value is accepted; nothing validates it.
@@ -72,18 +72,15 @@ free fog.colorB | A colour channel: every value is accepted; nothing validates i
 free fog.colorG | A colour channel: every value is accepted; nothing validates it.
 free fog.colorR | A colour channel: every value is accepted; nothing validates it.
 free fog.density | No validate() limits it; every value is accepted today.
-undecided keyframe_animation.alpha[].time
-undecided keyframe_animation.alpha[].value
-undecided keyframe_animation.duration
-undecided keyframe_animation.position[].time
-undecided keyframe_animation.rotation[].time
-undecided keyframe_animation.scale[].time
+free keyframe_animation.alpha[].time | Relational element in list: time within 0..duration in ascending order, enforced by validate().
+free keyframe_animation.alpha[].value | Element in list: any alpha value is valid.
+free keyframe_animation.position[].time | Relational element in list: time within 0..duration in ascending order, enforced by validate().
+free keyframe_animation.rotation[].time | Relational element in list: time within 0..duration in ascending order, enforced by validate().
+free keyframe_animation.scale[].time | Relational element in list: time within 0..duration in ascending order, enforced by validate().
 free light.intensity | No validate() limits it; every value is accepted today.
 free light.range | No validate() limits it; every value is accepted today.
-undecided locomotion_animation.airborneAbove
-undecided locomotion_animation.crossFade
-undecided locomotion_animation.runAbove
-undecided locomotion_animation.walkAbove
+free locomotion_animation.runAbove | Relational: 0 <= walkAbove <= runAbove, enforced by validate().
+free locomotion_animation.walkAbove | Relational: 0 <= walkAbove <= runAbove, enforced by validate().
 undecided particle_emitter.alphaCurve.fadeInEnd
 undecided particle_emitter.alphaCurve.fadeOutStart
 undecided particle_emitter.burstCount
@@ -118,25 +115,15 @@ free skybox.horizonColorR | A colour channel: every value is accepted; nothing v
 free skybox.zenithColorB | A colour channel: every value is accepted; nothing validates it.
 free skybox.zenithColorG | A colour channel: every value is accepted; nothing validates it.
 free skybox.zenithColorR | A colour channel: every value is accepted; nothing validates it.
-undecided terrain.depth
-undecided terrain.scaleX
-undecided terrain.scaleY
-undecided terrain.scaleZ
-undecided terrain.surface.version
-undecided terrain.tilingScale
-undecided terrain.width
-undecided texture_animation.columns
-undecided texture_animation.firstFrame
-undecided texture_animation.frameCount
-undecided texture_animation.framesPerSecond
-undecided texture_animation.rows
-undecided texture_animation.scrollU
-undecided texture_animation.scrollV
-undecided texture_clips.clips[].firstFrame
-undecided texture_clips.clips[].frameCount
-undecided texture_clips.clips[].framesPerSecond
-undecided texture_clips.columns
-undecided texture_clips.rows
+free terrain.surface.version | Schema version number for the surface provider payload.
+free terrain.tilingScale | Any texture tiling frequency is valid; defaults to 16.
+free texture_animation.firstFrame | Relational: must stay within columns * rows, which validate() enforces.
+free texture_animation.frameCount | Relational: must stay within columns * rows, which validate() enforces.
+free texture_animation.scrollU | Any UV scroll rate is valid.
+free texture_animation.scrollV | Any UV scroll rate is valid.
+free texture_clips.clips[].firstFrame | Map entry field: validated per clip against columns * rows.
+free texture_clips.clips[].frameCount | Map entry field: validated per clip against columns * rows.
+free texture_clips.clips[].framesPerSecond | Map entry field: validated per clip against columns * rows.
 free ambient_light.color.a | A colour channel: every value is accepted; nothing validates it.
 free ambient_light.color.b | A colour channel: every value is accepted; nothing validates it.
 free ambient_light.color.g | A colour channel: every value is accepted; nothing validates it.
@@ -154,15 +141,15 @@ free fog.color.a | A colour channel: every value is accepted; nothing validates 
 free fog.color.b | A colour channel: every value is accepted; nothing validates it.
 free fog.color.g | A colour channel: every value is accepted; nothing validates it.
 free fog.color.r | A colour channel: every value is accepted; nothing validates it.
-undecided keyframe_animation.position[].value.x
-undecided keyframe_animation.position[].value.y
-undecided keyframe_animation.position[].value.z
-undecided keyframe_animation.rotation[].value.x
-undecided keyframe_animation.rotation[].value.y
-undecided keyframe_animation.rotation[].value.z
-undecided keyframe_animation.scale[].value.x
-undecided keyframe_animation.scale[].value.y
-undecided keyframe_animation.scale[].value.z
+free keyframe_animation.position[].value.x | Element in list: any vector component is valid.
+free keyframe_animation.position[].value.y | Element in list: any vector component is valid.
+free keyframe_animation.position[].value.z | Element in list: any vector component is valid.
+free keyframe_animation.rotation[].value.x | Element in list: any vector component is valid.
+free keyframe_animation.rotation[].value.y | Element in list: any vector component is valid.
+free keyframe_animation.rotation[].value.z | Element in list: any vector component is valid.
+free keyframe_animation.scale[].value.x | Element in list: any vector component is valid.
+free keyframe_animation.scale[].value.y | Element in list: any vector component is valid.
+free keyframe_animation.scale[].value.z | Element in list: any vector component is valid.
 free light.color.a | A colour channel: every value is accepted; nothing validates it.
 free light.color.b | A colour channel: every value is accepted; nothing validates it.
 free light.color.g | A colour channel: every value is accepted; nothing validates it.
@@ -206,4 +193,4 @@ free skybox.zenithColor.a | A colour channel: every value is accepted; nothing v
 free skybox.zenithColor.b | A colour channel: every value is accepted; nothing validates it.
 free skybox.zenithColor.g | A colour channel: every value is accepted; nothing validates it.
 free skybox.zenithColor.r | A colour channel: every value is accepted; nothing validates it.
-undecided terrain.samples[]
+free terrain.samples[] | Element in list: any finite elevation value is valid.

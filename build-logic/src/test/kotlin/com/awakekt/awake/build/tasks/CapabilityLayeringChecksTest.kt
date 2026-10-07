@@ -186,16 +186,15 @@ class CapabilityLayeringChecksTest {
         assertEquals(emptyList(), sceneReferenceLines("import com.awakekt.awake.scenery.Thing\nimport com.awakekt.awake.render.passes.ScenePassCompiler"))
     }
 
-    // --- the ledger
+    // --- failures
 
     @Test
-    fun aModuleCoupledToTheSceneLayerThatIsNotOnTheLedgerFailsAndSaysWhyAndWhatToDo() {
+    fun aModuleCoupledToTheSceneLayerFailsAndSaysWhyAndWhatToDo() {
         val failures = capabilityLayeringFailures(
-            sceneCouplings = mapOf(
+            mapOf(
                 ":awake:particles" to listOf("reaches :awake:scene:document through :awake:particles -> :awake:x -> :awake:scene:document"),
                 ":awake:core:math" to emptyList(),
             ),
-            debt = emptySet(),
         )
 
         assertEquals(1, failures.size)
@@ -208,40 +207,28 @@ class CapabilityLayeringChecksTest {
     fun aLongListOfReasonsIsCutShort() {
         val reasons = (1..10).map { "awake/x/src/commonMain/kotlin/X.kt:$it names a scene type" }
 
-        val failure = capabilityLayeringFailures(mapOf(":awake:x" to reasons), emptySet()).single()
+        val failure = capabilityLayeringFailures(mapOf(":awake:x" to reasons)).single()
 
         assertTrue("and 7 more" in failure, failure)
         assertFalse("X.kt:4 " in failure, failure)
     }
 
+    /** There is no list of tolerated modules, so a failure must not point at one as a way out. */
     @Test
-    fun aModuleOnTheLedgerIsToleratedWhileItIsStillCoupled() {
-        assertEquals(
-            emptyList(),
-            capabilityLayeringFailures(
-                sceneCouplings = mapOf(":awake:navigation" to listOf("depends on :awake:scene:world")),
-                debt = setOf(":awake:navigation"),
-            ),
-        )
-    }
-
-    /** The ledger only shrinks: a debt that has been paid fails until its line is deleted. */
-    @Test
-    fun aModuleOnTheLedgerThatIsNoLongerCoupledFails() {
+    fun everyCoupledModuleFailsAndNoneIsToldItMayBeListed() {
         val failures = capabilityLayeringFailures(
-            sceneCouplings = mapOf(":awake:navigation" to emptyList()),
-            debt = setOf(":awake:navigation", ":awake:gone"),
+            mapOf(
+                ":awake:ai:behavior" to listOf("depends on :awake:scene:document"),
+                ":awake:navigation" to listOf("depends on :awake:scene:world"),
+            ),
         )
 
         assertEquals(2, failures.size)
-        assertTrue(failures.all { "Remove it from the list" in it }, failures.toString())
+        assertTrue(failures.none { "capabilityLayeringDebt" in it || "debt" in it }, failures.toString())
     }
 
     @Test
-    fun cleanModulesAndAnEmptyLedgerPass() {
-        assertEquals(
-            emptyList(),
-            capabilityLayeringFailures(mapOf(":awake:core:math" to emptyList(), ":awake:ecs" to emptyList()), emptySet()),
-        )
+    fun cleanModulesPass() {
+        assertEquals(emptyList(), capabilityLayeringFailures(mapOf(":awake:core:math" to emptyList(), ":awake:ecs" to emptyList())))
     }
 }

@@ -91,7 +91,11 @@ private class ClickableNode :
     lateinit var onClick: () -> Unit
 
     override fun onPointerEvent(event: PointerEvent, pass: PointerEventPass) {
-        if (pass != PointerEventPass.Main || event.isConsumed) return
+        if (pass != PointerEventPass.Main) return
+        if (event.isConsumed) {
+            cancelConsumedRelease(event)
+            return
+        }
         when (event.type) {
             PointerEventType.Press -> {
                 source?.tryEmit(Interaction.Press.Press)
@@ -120,6 +124,12 @@ private class ClickableNode :
                 source?.tryEmit(Interaction.Press.Press)
             }
             else -> Unit
+        }
+    }
+
+    private fun cancelConsumedRelease(event: PointerEvent) {
+        if (event.type == PointerEventType.Release && event.isCaptureHolder) {
+            source?.tryEmit(Interaction.Press.Cancel(Interaction.Press.Press))
         }
     }
 

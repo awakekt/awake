@@ -9,7 +9,7 @@
 | Group | `com.awakekt.awake`, plus the module's parent path: `:awake:scene:runtime` publishes `com.awakekt.awake.scene:runtime`. The Vulkan bindings are the exception: `com.awakekt.awake:vulkan-kmp`. |
 | Version | Core modules share one version; the newest is `{{ awake_version }}`. Vulkan family: `{{ awake_vulkan_version }}`, built against Core `{{ awake_vulkan_core_version }}`. See [Releases and compatibility](releases.md). |
 | Catalog alias | `awake-` plus the group after `com.awakekt.awake`, then the name, joined with `-`. The accessor replaces `-` with `.`: `awake-scene-runtime` is `libs.awake.scene.runtime`. The alias is your choice; this is the convention these docs use. |
-| Published modules | 79: 76 in Core, 3 in the Vulkan family. |
+| Published modules | 81: 78 in Core, 3 in the Vulkan family. |
 | Transitive modules | Declare only the modules your code uses. Each module's published metadata brings the modules it depends on. |
 
 A catalog entry looks like this:
@@ -95,6 +95,8 @@ awake-backend-vulkan = { module = "com.awakekt.awake.backend:vulkan", version.re
 | `com.awakekt.awake.scene:controls` | `awake-scene-controls` | Camera rigs and input-driven movement. |
 | `com.awakekt.awake.scene:audio` | `awake-scene-audio` | Audio source and listener components and the spatial audio system. |
 | `com.awakekt.awake.scene:particles` | `awake-scene-particles` | The `particle_emitter` scene component and the systems that run its emitters in a scene. |
+| `com.awakekt.awake.scene:ai` | `awake-scene-ai` | The `patrol`, `chase` and `flee` scene components, and `TransformAgentPlacement` for the behaviour systems. |
+| `com.awakekt.awake.scene:navigation` | `awake-scene-navigation` | The `navigation` scene component: the walkable grid a scene document carries. |
 | `com.awakekt.awake.scene:shader` | `awake-scene-shader` | The `shader_effect` scene component: a project's shader documents loaded, attached and run over a scene. |
 | `com.awakekt.awake.scene:scene2d` | `awake-scene-scene2d` | The 2D scene components, starting with `sprite`: schema, binding and the systems that run them. |
 | `com.awakekt.awake.scene:physics` | `awake-scene-physics` | Physics components and systems that bind bodies to scene transforms. |
@@ -120,7 +122,7 @@ awake-backend-vulkan = { module = "com.awakekt.awake.backend:vulkan", version.re
 | `com.awakekt.awake:navigation` | `awake-navigation` | Heightmap-derived navigation grids, streamed navigation and path requests. |
 | `com.awakekt.awake:world` | `awake-world` | World cells: coordinates, partition radii and the cell streaming contract, with no scene dependency. |
 | `com.awakekt.awake:ai` | `awake-ai` | Behavior tree and finite state machine primitives. |
-| `com.awakekt.awake.ai:behavior` | `awake-ai-behavior` | Starter behaviors that follow navigation paths: `patrol`, `chase`, `flee`. |
+| `com.awakekt.awake.ai:behavior` | `awake-ai-behavior` | Starter behaviors that follow navigation paths: `patrol`, `chase`, `flee`, with no scene dependency. |
 | `com.awakekt.awake:blueprint` | `awake-blueprint` | Runtime for event-driven game logic authored as node graphs. |
 | `com.awakekt.awake:node-graph` | `awake-node-graph` | Node graph documents, node registry and validation. |
 | `com.awakekt.awake.net:api` | `awake-net-api` | The transport facade: connections, delivery channels and packet buffers, with no transport. |

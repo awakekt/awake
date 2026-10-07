@@ -19,19 +19,19 @@ registers it.
 | [`camera_rig`](#camera_rig) | `CameraRig` | `com.awakekt.awake.scene:controls` | `registerControls()` | [Cameras](../guides/cameras-and-controls.md) |
 | [`canvas_element`](#canvas_element) | `CanvasElement` | `com.awakekt.awake.scene:canvas` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md) |
 | [`character_controller`](#character_controller) | `CharacterController` | `com.awakekt.awake.scene:character` | `registerCharacter()` | [Character controller](../guides/character-controller.md) |
-| [`chase`](#chase) | `ChaseBehavior` | `com.awakekt.awake.ai:behavior` | `registerAiBehaviors()` | [AI](../guides/ai.md) |
+| [`chase`](#chase) | `ChaseBehavior` | `com.awakekt.awake.scene:ai` | `registerAiBehaviors()` | [AI](../guides/ai.md) |
 | [`custom`](#custom) | — | `com.awakekt.awake.scene:document` | Built in | [Scene documents](../guides/scene-documents.md) |
 | [`day_cycle`](#day_cycle) | `DayCycle` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Sky and fog](../guides/sky-and-fog.md#day-and-night) |
-| [`flee`](#flee) | `FleeBehavior` | `com.awakekt.awake.ai:behavior` | `registerAiBehaviors()` | [AI](../guides/ai.md) |
+| [`flee`](#flee) | `FleeBehavior` | `com.awakekt.awake.scene:ai` | `registerAiBehaviors()` | [AI](../guides/ai.md) |
 | [`fog`](#fog) | `Fog` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Sky and fog](../guides/sky-and-fog.md) |
 | [`keyframe_animation`](#keyframe_animation) | `KeyframeAnimation` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Animation](../guides/animation.md) |
 | [`light`](#light) | `Light` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Lights and shadows](../guides/lights-and-shadows.md) |
 | [`locomotion_animation`](#locomotion_animation) | `LocomotionAnimation` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Animation](../guides/animation.md) |
 | [`mesh_renderer`](#mesh_renderer) | `MeshRenderer` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Meshes and materials](../guides/meshes-and-materials.md) |
 | [`movement_control`](#movement_control) | `MovementControl` | `com.awakekt.awake.scene:controls` | `registerControls()` | [Character controller](../guides/character-controller.md) |
-| [`navigation`](#navigation) | `NavigationGrid` | `com.awakekt.awake.ai:behavior` | `registerAiBehaviors()` | [AI](../guides/ai.md) |
+| [`navigation`](#navigation) | `NavigationGrid` | `com.awakekt.awake.scene:navigation` | `registerAiBehaviors()` | [AI](../guides/ai.md) |
 | [`particle_emitter`](#particle_emitter) | `ParticleEmitterSource` | `com.awakekt.awake.scene:particles` | `DefaultSceneComponentResolvers.install()` | [Particles](../guides/particles.md) |
-| [`patrol`](#patrol) | `PatrolBehavior` | `com.awakekt.awake.ai:behavior` | `registerAiBehaviors()` | [AI](../guides/ai.md) |
+| [`patrol`](#patrol) | `PatrolBehavior` | `com.awakekt.awake.scene:ai` | `registerAiBehaviors()` | [AI](../guides/ai.md) |
 | [`pbr_material`](#pbr_material) | `PbrMaterial` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Meshes and materials](../guides/meshes-and-materials.md) |
 | [`physics_body`](#physics_body) | `PhysicsBody` | `com.awakekt.awake.scene:physics` | `registerPhysics()` | [Physics](../guides/physics.md) |
 | [`prefab_link`](#prefab_link) | `PrefabLink` | `com.awakekt.awake.scene:document` | Built in | [Scene documents](../guides/scene-documents.md) |
@@ -54,7 +54,7 @@ registers it.
 | `SceneComponentRegistry.registerControls()` | `com.awakekt.awake.scene:controls` | `movement_control`, `camera_rig` |
 | `SceneComponentRegistry.registerPhysics()` | `com.awakekt.awake.scene:physics` | `physics_body` |
 | `SceneComponentRegistry.registerCharacter()` | `com.awakekt.awake.scene:character` | `character_controller` |
-| `SceneComponentRegistry.registerAiBehaviors()` | `com.awakekt.awake.ai:behavior` | `patrol`, `chase`, `flee`, `navigation` |
+| `SceneComponentRegistry.registerAiBehaviors()` | `com.awakekt.awake.scene:ai` | `patrol`, `chase`, `flee`, `navigation` |
 | `SceneComponentRegistry.registerBlueprints()` | `com.awakekt.awake.scene:blueprint` | `blueprint` |
 | `loadPlayableProject(...)` | `com.awakekt.awake.project:runtime` | The defaults, plus `movement_control`, `camera_rig`, `physics_body`, `character_controller`, `patrol`, `chase`, `flee`, `navigation` |
 
@@ -294,7 +294,7 @@ stops, so `airborneAbove` must exceed the vertical speed of running up the steep
 | `walkAbove` | number | `0.1` | Ground speed that starts the walk. |
 | `runAbove` | number | `4` | Ground speed that starts the run; at least `walkAbove`. |
 | `airborneAbove` | number | `2` | Vertical speed that counts as a jump without a `character_controller`; greater than 0. |
-| `crossFade` | number | `0.15` | Seconds each clip change blends over. |
+| `crossFade` | number | `0.15` | Seconds each clip change blends over. Not negative. |
 
 ## `mesh_renderer`
 
@@ -594,7 +594,7 @@ texture of the entity's material; with no `pbr_material` it plays with glTF's de
 | `columns` | integer | `1` | Frame-sheet columns. At least 1. |
 | `rows` | integer | `1` | Frame-sheet rows. At least 1. |
 | `frameCount` | integer | `0` | Frames played from `firstFrame`. `0` plays every cell from `firstFrame` on. |
-| `framesPerSecond` | number | `0` | Playback rate. `0` holds the first frame of the run. |
+| `framesPerSecond` | number | `0` | Playback rate. `0` holds the first frame of the run. Not negative. |
 | `scrollU` | number | `0` | UV units per second along U. |
 | `scrollV` | number | `0` | UV units per second along V, toward the bottom of the image. |
 | `firstFrame` | integer | `0` | The cell the run starts at, counted from 0 in reading order. Within the sheet, and `firstFrame + frameCount` at most `columns * rows`. |

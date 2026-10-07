@@ -16,8 +16,8 @@ import kotlin.test.assertTrue
  * waits for its batch. A new numeric property fails here until one of the three exists, so adding a
  * field can no longer skip the question.
  *
- * `undecided` is a ledger that only shrinks, the way `capabilityLayeringDebt` does: a line that no
- * longer applies fails too, so deciding a field means deleting its line. The decisions live in
+ * `undecided` is a ledger that only shrinks: a line that no longer applies fails too, so deciding a
+ * field means deleting its line. The decisions live in
  * `numeric-field-decisions.txt`.
  */
 class NumericFieldDecisionsTest {

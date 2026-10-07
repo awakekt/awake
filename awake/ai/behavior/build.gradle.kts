@@ -5,7 +5,6 @@
  */
 plugins {
     id("com.awakekt.awake.plugin.library")
-    alias(libs.plugins.kotlin.serialization)
     id("com.awakekt.awake.plugin.publish")
     id("com.awakekt.awake.plugin.dokka")
     id("com.awakekt.awake.plugin.detekt")
@@ -21,22 +20,15 @@ kotlin {
         commonMain.dependencies {
             api(project(":awake:ai"))
             api(project(":awake:core:math"))
-            api(project(":awake:scene:scene-core"))
-            api(project(":awake:scene:document"))
-            api(project(":awake:scene:binding"))
+            // The behaviours are components and their systems run over a World.
+            api(project(":awake:ecs"))
+            // A behaviour asks for its routes through a PathRequest.
             api(project(":awake:navigation"))
-            implementation(libs.kotlinx.serialization.json)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
-            implementation(project(":awake:scene:runtime"))
+            // NavGridChaseIntegrationTest bakes its grid from a heightmap.
             implementation(project(":awake:asset:terrain"))
-        }
-        named("desktopTest") {
-            dependencies {
-                // The docs samples show the scene DSL beside the scene document.
-                implementation(project(":awake:scene:authoring"))
-            }
         }
     }
 }

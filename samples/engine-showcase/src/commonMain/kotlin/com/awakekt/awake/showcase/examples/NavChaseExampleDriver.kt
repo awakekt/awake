@@ -22,6 +22,7 @@ import com.awakekt.awake.navigation.grid.AgentRoute
 import com.awakekt.awake.navigation.grid.NavGrid
 import com.awakekt.awake.navigation.grid.bakeNavGrid
 import com.awakekt.awake.navigation.grid.navGridDebugLines
+import com.awakekt.awake.scene.ai.TransformAgentPlacement
 import com.awakekt.awake.scene.binding.Scene
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
@@ -82,7 +83,7 @@ internal object NavChaseExampleDriver {
     val navGridTile = heightmap.bakeNavGrid(cellSize = 1f, maxSlopeDegrees = 45f)
 
     private val pathSystem = PathRequestSystem(NavGrid(navGridTile))
-    private val chaseSystem = ChaseAiSystem()
+    private val chaseSystem = ChaseAiSystem(TransformAgentPlacement)
 
     private var targetTransform: Transform? = null
     private var chaserTransform: Transform? = null

@@ -6,10 +6,10 @@
 package com.awakekt.awake.scene.runtime
 
 import com.awakekt.awake.ai.behavior.ChaseBehavior
-import com.awakekt.awake.ai.behavior.chase.SceneChase
-import com.awakekt.awake.ai.behavior.registerAiBehaviors
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.scene.ai.chase.SceneChase
+import com.awakekt.awake.scene.ai.registerAiBehaviors
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.scene.core.Name

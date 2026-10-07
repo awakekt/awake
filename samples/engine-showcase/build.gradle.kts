@@ -12,6 +12,7 @@ plugins {
     id("com.awakekt.awake.plugin.dokka")
     id("com.awakekt.awake.plugin.detekt")
     id("com.awakekt.awake.plugin.spotless")
+    id("com.awakekt.awake.plugin.icon-codegen")
 }
 
 kotlin {
@@ -81,6 +82,7 @@ kotlin {
             implementation(project(":awake:scene:physics"))
             implementation(project(":awake:scene:world"))
             implementation(project(":awake:ai:behavior"))
+            implementation(project(":awake:scene:ai"))
             implementation(project(":awake:core:audio"))
             implementation(project(":awake:scene:audio"))
             implementation(project(":awake:scene:authoring"))
@@ -90,10 +92,11 @@ kotlin {
             implementation(project(":awake:scene:particles"))
             // The streamed-nav showcase owns the scope its cell bakes and path searches run on.
             implementation(libs.kotlinx.coroutines.core)
-            // The showcase switcher, and nothing else: this sample has one panel, not a shell.
+            // Responsive navigation and the optional runtime debug panel.
             implementation(project(":awake:ui:shadcn"))
         }
         commonTest.dependencies {
+            implementation(project(":awake:compose:ui-testing"))
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)
             implementation(project(":awake:engine:render:testing"))

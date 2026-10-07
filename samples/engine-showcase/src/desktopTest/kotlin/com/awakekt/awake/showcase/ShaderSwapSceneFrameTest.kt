@@ -15,7 +15,9 @@ import com.awakekt.awake.render.capture.PixelMap
 import com.awakekt.awake.render.testing.writePng
 import com.awakekt.awake.showcase.app.EngineShowcaseRenderPlan
 import com.awakekt.awake.showcase.app.engineShowcaseApp
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import java.io.File
 import kotlin.test.AfterTest
 import kotlin.test.Test
@@ -50,11 +52,13 @@ class ShaderSwapSceneFrameTest {
             val shipped = frame()
 
             app.press(ShowcaseShaderSwap.TOGGLE_KEY)
+            awaitShaderEvent(app, LogLevel.Info, count = 1)
             val brighter = frame()
             PixelMap(WIDTH, HEIGHT, brighter.copyOf()).writePng(File(CAPTURE_PATH))
             assertTrue(changedPixels(shipped, brighter) > MINIMUM_CHANGED_PIXELS, "L did not change the frame")
 
             app.press(ShowcaseShaderSwap.BROKEN_KEY)
+            awaitShaderEvent(app, LogLevel.Warn, count = 1)
             assertEquals(0, changedPixels(brighter, frame()), "a refused variant changed the frame")
             assertTrue(
                 log.snapshot().any { it.level == LogLevel.Warn && it.tag == "showcase-shaders" },
@@ -62,10 +66,21 @@ class ShaderSwapSceneFrameTest {
             )
 
             app.press(ShowcaseShaderSwap.TOGGLE_KEY)
+            awaitShaderEvent(app, LogLevel.Info, count = 2)
             assertEquals(0, changedPixels(shipped, frame()), "L again did not restore the shipped shader")
         } finally {
             app.dispose()
             renderer.destroy()
+        }
+    }
+
+    /** Compilation runs asynchronously; a fixed number of fast GPU frames can finish before it. */
+    private suspend fun awaitShaderEvent(app: AwakeAppLifecycle, level: LogLevel, count: Int) {
+        withTimeout(SHADER_TIMEOUT_MS) {
+            while (log.snapshot().count { it.tag == "showcase-shaders" && it.level == level } < count) {
+                app.update(0f, WIDTH.toFloat(), HEIGHT.toFloat())
+                delay(10)
+            }
         }
     }
 
@@ -87,6 +102,7 @@ class ShaderSwapSceneFrameTest {
         const val WIDTH = 960
         const val HEIGHT = 540
         const val FRAMES = 4
+        const val SHADER_TIMEOUT_MS = 30_000L
         const val MINIMUM_CHANGED_PIXELS = 1_000
         const val CAPTURE_PATH = "build/reports/render-captures/point-lights-brighter-ambient.png"
     }
