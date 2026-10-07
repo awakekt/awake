@@ -33,25 +33,25 @@ class RpgSprites2dShowcaseTest {
         val document = RpgSprites2dExampleAssets.importScene(SceneLoader.loadFromResource(entry.scenePath))
         val schemas = document.nodes.flatMap { it.components }.filterIsInstance<SceneSprite>()
         assertEquals(2, schemas.size)
-        assertTrue(schemas.all { it.columns == 4 && it.rows == 2 })
+        assertTrue(schemas.all { it.columns == 12 && it.rows == 2 })
         assertEquals(listOf(false, true), schemas.map { it.flipX }, "the enemy faces the ranger through authored flipping")
         val world = World()
         SceneLoader.decode(SceneLoader.encode(document)).instantiate(world = world)
-        assertEquals(listOf(0, 4), world.frames())
-        SpriteClipSystem().update(world, 0.25f)
-        assertEquals(listOf(1, 5), world.frames())
-        SpriteClipSystem().update(world, 0.75f)
-        assertEquals(listOf(0, 4), world.frames(), "each character loops inside its own atlas row")
+        assertEquals(listOf(0, 12), world.frames())
+        SpriteClipSystem().update(world, 0.125f)
+        assertEquals(listOf(1, 13), world.frames())
+        SpriteClipSystem().update(world, 1.375f)
+        assertEquals(listOf(0, 12), world.frames(), "each character loops inside its own atlas row")
     }
 
     @Test
-    fun realAtlasHasEightPopulatedTransparentCellsWithClearBorders() = runTest {
+    fun realAtlasHasEveryCellPopulatedWithClearBorders() = runTest {
         val bitmap = createBitmap(readResourceBytes("assets/sprites/woodland-rivals/sprite-sheet-alpha.png"))
-        assertEquals(1024, bitmap.width)
+        assertEquals(3072, bitmap.width)
         assertEquals(512, bitmap.height)
         val bytes = bitmap.toRgba8Bytes()
         for (row in 0 until 2) {
-            for (column in 0 until 4) {
+            for (column in 0 until 12) {
                 var occupied = 0
                 for (y in 0 until 256) {
                     for (x in 0 until 256) {

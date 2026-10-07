@@ -24,6 +24,20 @@
     "unpack-atlas --pngs-dir",
     "compose-atlas",
     "compose-gif",
+    "inspect",
+    "unpack-atlas --atlas (four-pose atlas)",
+    "alpha snap at 128 (outside sprite-gen)",
+    "curation: first pose linked to 12 frames + breathe",
+    "compose-atlas",
     "inspect"
-  ]
+  ],
+  "breathe": {
+    "depth": 0.02,
+    "depth_x": 0,
+    "breaths": 1,
+    "lag": 0
+  },
+  "idle_frames": 12,
+  "fps": 8,
+  "alpha_threshold": 128
 }

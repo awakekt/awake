@@ -83,7 +83,8 @@ clips to the dedicated `sprite` and `sprite_clips` components before the scene i
 ![Lantern firefly idle preview](src/commonMain/resources/assets/sprites/lantern-firefly/idle.gif)
 
 The `rpg-sprites-2d` showcase adds an original teal-cloaked ranger and purple crystal thorn beast,
-each with four idle frames at 4 fps. Both use one transparent two-row atlas, imported from its
+each breathing through a twelve-frame idle at 8 fps baked by sprite-gen's Breathe. Both use one
+transparent two-row atlas, imported from its
 manifest; the enemy is flipped in scene data to face the hero. Run it with
 `./gradlew :samples:engine-showcase:run -Pawake.showcase=rpg-sprites-2d`.
 The [atlas and provenance](src/commonMain/resources/assets/sprites/woodland-rivals/PROVENANCE.md)

@@ -31,12 +31,12 @@ class RpgSprites2dSceneFrameTest {
             val idle = renderer.readPresentedPixels().data.copyOf()
             PixelMap(WIDTH, HEIGHT, idle.copyOf()).writePng(File("build/reports/render-captures/rpg-sprites-2d-idle.png"))
             assertCharacterColors(idle)
-            app.update(0.25f, WIDTH.toFloat(), HEIGHT.toFloat())
+            app.update(0.125f, WIDTH.toFloat(), HEIGHT.toFloat())
             val next = renderer.readPresentedPixels().data.copyOf()
             PixelMap(WIDTH, HEIGHT, next.copyOf()).writePng(File("build/reports/render-captures/rpg-sprites-2d-next.png"))
             val runtime = app.requireService<SceneAppLifecycleRuntime>()
             val frames = buildList { runtime.world.queryEach<Sprite> { _, sprite -> add(sprite.frame) } }.sorted()
-            assertEquals(listOf(1, 5), frames)
+            assertEquals(listOf(1, 13), frames)
             for (region in listOf(heroRegion, enemyRegion)) {
                 val changed = region.count { pixel -> (0 until 3).any { channel -> idle[pixel * 4 + channel] != next[pixel * 4 + channel] } }
                 assertTrue(changed > MIN_PIXELS, "An idle row changed only $changed pixels")
