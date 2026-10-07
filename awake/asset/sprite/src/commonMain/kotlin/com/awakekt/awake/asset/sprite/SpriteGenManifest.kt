@@ -10,13 +10,14 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
-/** Imports sprite-gen's component-row `manifest.json` into regular-grid sprite data. */
+/** Imports sprite-gen's `manifest.json` into regular-grid sprite data, including multi-row clips. */
 object SpriteGenManifest {
     private val json = Json { ignoreUnknownKeys = true }
 
     /**
      * Reads the chosen `game_input`, `frame_layout` and named `animation.rows` from [text].
-     * Each run must contain contiguous, untrimmed grid cells on its declared row. Uniform
+     * Each run starts on its declared row and contains contiguous, untrimmed grid cells in reading
+     * order, wrapping to the next row when it reaches the sheet's right edge. Uniform
      * `durations_ms` take precedence over `fps`; variable frame durations are rejected because
      * [FrameClip] plays at a fixed rate. Throws [IllegalArgumentException] for unsupported data.
      */
@@ -38,28 +39,35 @@ object SpriteGenManifest {
             require(run.row in 0 until grid.rows && run.frames > 0 && run.frames == frames.size) {
                 "sprite-gen clip $name has an invalid row or frame count."
             }
-            val first = frameIndices(name, frames, run.row, grid).first()
+            val first = firstFrameIndex(name, frames, run.row, grid)
             FrameClip(first, frames.size, run.rate(name), run.loop)
         }
         return SpriteSheet(source.image, grid.width, grid.height, grid.cellWidth, grid.cellHeight, clips)
     }
 }
 
-private fun frameIndices(name: String, frames: List<Frame>, row: Int, grid: SpriteSheet): List<Int> {
-    val indices = frames.map { frame ->
+private fun firstFrameIndex(name: String, frames: List<Frame>, row: Int, grid: SpriteSheet): Int {
+    var first = 0
+    for (offset in frames.indices) {
+        val frame = frames[offset]
         require(frame.w == grid.cellWidth && frame.h == grid.cellHeight) { "sprite-gen clip $name contains a trimmed or resized cell." }
         require(frame.x >= 0 && frame.y >= 0 && frame.x.toLong() + frame.w <= grid.width && frame.y.toLong() + frame.h <= grid.height) {
             "sprite-gen clip $name has a cell outside the sheet."
         }
-        require(frame.x % grid.cellWidth == 0 && frame.y % grid.cellHeight == 0 && frame.y / grid.cellHeight == row) {
-            "sprite-gen clip $name has a cell off its declared grid row."
+        require(frame.x % grid.cellWidth == 0 && frame.y % grid.cellHeight == 0) {
+            "sprite-gen clip $name has a cell off its declared grid."
         }
-        row * grid.columns + frame.x / grid.cellWidth
+        val frameRow = frame.y / grid.cellHeight
+        val index = frameRow * grid.columns + frame.x / grid.cellWidth
+        if (offset == 0) {
+            require(frameRow == row) { "sprite-gen clip $name must start on its declared row." }
+            first = index
+        }
+        require(index.toLong() == first.toLong() + offset) {
+            "sprite-gen clip $name must contain contiguous cells in playback order."
+        }
     }
-    require(indices.withIndex().all { (offset, index) -> index.toLong() == indices.first().toLong() + offset }) {
-        "sprite-gen clip $name must contain contiguous cells in playback order."
-    }
-    return indices
+    return first
 }
 
 @Serializable

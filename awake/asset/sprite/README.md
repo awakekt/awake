@@ -27,7 +27,11 @@ loop flags and top-left grid indices. Uniform `durations_ms` determines the play
 durations, `fps` is required and zero holds the initial frame. Extra manifest fields are ignored.
 
 Dimensions must agree, divide into whole cells and match the decoded image. Each named run must
-list contiguous, untrimmed cells on its declared row. Invalid bounds, counts, names and timing throw
+start on its declared `animation.rows.<name>.row` and list contiguous, untrimmed cells in reading
+order. A clip may start partway along that row and wrap across any number of following rows:
+on a four-column sheet, cells `(2,0), (3,0), (0,1), (1,1)` become frames `2,3,4,5`.
+This lets long animations use a narrower texture without shrinking their cells. Invalid bounds,
+counts, names and timing throw
 `IllegalArgumentException`. Packed or trimmed atlases, reordered frames and variable durations are
 unsupported by the current fixed-rate clip player. Other exporters can construct `SpriteSheet`
 directly after converting their metadata.
