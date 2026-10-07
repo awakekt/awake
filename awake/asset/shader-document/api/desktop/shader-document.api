@@ -1,0 +1,1282 @@
+public final class com/awakekt/awake/asset/shaderdocument/CompiledShaderDocument {
+	public final fun contentFeature (Lcom/awakekt/awake/asset/shaderdocument/ShaderEffectInputs;Ljava/util/Map;Ljava/lang/String;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
+	public static synthetic fun contentFeature$default (Lcom/awakekt/awake/asset/shaderdocument/CompiledShaderDocument;Lcom/awakekt/awake/asset/shaderdocument/ShaderEffectInputs;Ljava/util/Map;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
+	public final fun emitWgsl (Lcom/awakekt/awake/core/math/ClipSpace;)Ljava/lang/String;
+	public final fun getBlend ()Lcom/awakekt/awake/asset/shaderdocument/ShaderBlend;
+	public final fun getDocument ()Lcom/awakekt/awake/asset/shaderdocument/ShaderDocument;
+	public final fun getShaders ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun newInputs ()Lcom/awakekt/awake/asset/shaderdocument/ShaderEffectInputs;
+	public final fun packParameters (Ljava/util/Map;Lcom/awakekt/awake/asset/shaderdocument/ShaderEffectInputs;)Ljava/util/List;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderBlend : java/lang/Enum {
+	public static final field Additive Lcom/awakekt/awake/asset/shaderdocument/ShaderBlend;
+	public static final field Alpha Lcom/awakekt/awake/asset/shaderdocument/ShaderBlend;
+	public static final field Companion Lcom/awakekt/awake/asset/shaderdocument/ShaderBlend$Companion;
+	public static final field Opaque Lcom/awakekt/awake/asset/shaderdocument/ShaderBlend;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/asset/shaderdocument/ShaderBlend;
+	public static fun values ()[Lcom/awakekt/awake/asset/shaderdocument/ShaderBlend;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderBlend$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderDocument {
+	public static final field CURRENT_FORMAT_VERSION I
+	public static final field Companion Lcom/awakekt/awake/asset/shaderdocument/ShaderDocument$Companion;
+	public fun <init> (Ljava/lang/String;ILjava/lang/String;Lcom/awakekt/awake/asset/shaderdocument/ShaderSurface;Lcom/awakekt/awake/asset/shaderdocument/ShaderBlend;Lcom/awakekt/awake/asset/shaderdocument/ShaderPlane;Ljava/util/List;Ljava/util/List;Lcom/awakekt/awake/asset/shaderdocument/ShaderVertexStage;Lcom/awakekt/awake/asset/shaderdocument/ShaderFragmentStage;)V
+	public synthetic fun <init> (Ljava/lang/String;ILjava/lang/String;Lcom/awakekt/awake/asset/shaderdocument/ShaderSurface;Lcom/awakekt/awake/asset/shaderdocument/ShaderBlend;Lcom/awakekt/awake/asset/shaderdocument/ShaderPlane;Ljava/util/List;Ljava/util/List;Lcom/awakekt/awake/asset/shaderdocument/ShaderVertexStage;Lcom/awakekt/awake/asset/shaderdocument/ShaderFragmentStage;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component10 ()Lcom/awakekt/awake/asset/shaderdocument/ShaderFragmentStage;
+	public final fun component2 ()I
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Lcom/awakekt/awake/asset/shaderdocument/ShaderSurface;
+	public final fun component5 ()Lcom/awakekt/awake/asset/shaderdocument/ShaderBlend;
+	public final fun component6 ()Lcom/awakekt/awake/asset/shaderdocument/ShaderPlane;
+	public final fun component7 ()Ljava/util/List;
+	public final fun component8 ()Ljava/util/List;
+	public final fun component9 ()Lcom/awakekt/awake/asset/shaderdocument/ShaderVertexStage;
+	public final fun copy (Ljava/lang/String;ILjava/lang/String;Lcom/awakekt/awake/asset/shaderdocument/ShaderSurface;Lcom/awakekt/awake/asset/shaderdocument/ShaderBlend;Lcom/awakekt/awake/asset/shaderdocument/ShaderPlane;Ljava/util/List;Ljava/util/List;Lcom/awakekt/awake/asset/shaderdocument/ShaderVertexStage;Lcom/awakekt/awake/asset/shaderdocument/ShaderFragmentStage;)Lcom/awakekt/awake/asset/shaderdocument/ShaderDocument;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/shaderdocument/ShaderDocument;Ljava/lang/String;ILjava/lang/String;Lcom/awakekt/awake/asset/shaderdocument/ShaderSurface;Lcom/awakekt/awake/asset/shaderdocument/ShaderBlend;Lcom/awakekt/awake/asset/shaderdocument/ShaderPlane;Ljava/util/List;Ljava/util/List;Lcom/awakekt/awake/asset/shaderdocument/ShaderVertexStage;Lcom/awakekt/awake/asset/shaderdocument/ShaderFragmentStage;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdocument/ShaderDocument;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBlend ()Lcom/awakekt/awake/asset/shaderdocument/ShaderBlend;
+	public final fun getFormatVersion ()I
+	public final fun getFragment ()Lcom/awakekt/awake/asset/shaderdocument/ShaderFragmentStage;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getParameters ()Ljava/util/List;
+	public final fun getPlane ()Lcom/awakekt/awake/asset/shaderdocument/ShaderPlane;
+	public final fun getSchema ()Ljava/lang/String;
+	public final fun getSurface ()Lcom/awakekt/awake/asset/shaderdocument/ShaderSurface;
+	public final fun getTextures ()Ljava/util/List;
+	public final fun getVertex ()Lcom/awakekt/awake/asset/shaderdocument/ShaderVertexStage;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/shaderdocument/ShaderDocument$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderdocument/ShaderDocument$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/shaderdocument/ShaderDocument;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/shaderdocument/ShaderDocument;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderDocument$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderDocumentException : java/lang/IllegalArgumentException {
+	public fun <init> (Ljava/util/List;Ljava/lang/Throwable;)V
+	public synthetic fun <init> (Ljava/util/List;Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getIssues ()Ljava/util/List;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderDocumentIssue {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lcom/awakekt/awake/asset/shaderdocument/ShaderDocumentIssue;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/shaderdocument/ShaderDocumentIssue;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdocument/ShaderDocumentIssue;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMessage ()Ljava/lang/String;
+	public final fun getPath ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderDocumentLimits {
+	public static final field Companion Lcom/awakekt/awake/asset/shaderdocument/ShaderDocumentLimits$Companion;
+	public fun <init> ()V
+	public fun <init> (IIIIIIIIIIII)V
+	public synthetic fun <init> (IIIIIIIIIIIIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component10 ()I
+	public final fun component11 ()I
+	public final fun component12 ()I
+	public final fun component2 ()I
+	public final fun component3 ()I
+	public final fun component4 ()I
+	public final fun component5 ()I
+	public final fun component6 ()I
+	public final fun component7 ()I
+	public final fun component8 ()I
+	public final fun component9 ()I
+	public final fun copy (IIIIIIIIIIII)Lcom/awakekt/awake/asset/shaderdocument/ShaderDocumentLimits;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/shaderdocument/ShaderDocumentLimits;IIIIIIIIIIIIILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdocument/ShaderDocumentLimits;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMaxBytes ()I
+	public final fun getMaxExpressionDepth ()I
+	public final fun getMaxJsonNesting ()I
+	public final fun getMaxLocals ()I
+	public final fun getMaxLoopIterations ()I
+	public final fun getMaxLoopNesting ()I
+	public final fun getMaxNodes ()I
+	public final fun getMaxParameters ()I
+	public final fun getMaxPlaneSegments ()I
+	public final fun getMaxTextures ()I
+	public final fun getMaxWeightedCost ()I
+	public final fun getMaxWeightedSamples ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderDocumentLimits$Companion {
+	public final fun getDefault ()Lcom/awakekt/awake/asset/shaderdocument/ShaderDocumentLimits;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderDocuments {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderdocument/ShaderDocuments;
+	public final fun check (Lcom/awakekt/awake/asset/shaderdocument/ShaderDocument;Lcom/awakekt/awake/asset/shaderdocument/ShaderDocumentLimits;)Ljava/util/List;
+	public static synthetic fun check$default (Lcom/awakekt/awake/asset/shaderdocument/ShaderDocuments;Lcom/awakekt/awake/asset/shaderdocument/ShaderDocument;Lcom/awakekt/awake/asset/shaderdocument/ShaderDocumentLimits;ILjava/lang/Object;)Ljava/util/List;
+	public final fun compile (Lcom/awakekt/awake/asset/shaderdocument/ShaderDocument;Lcom/awakekt/awake/asset/shaderdocument/ShaderDocumentLimits;)Lcom/awakekt/awake/asset/shaderdocument/CompiledShaderDocument;
+	public final fun compile (Ljava/lang/String;Lcom/awakekt/awake/asset/shaderdocument/ShaderDocumentLimits;)Lcom/awakekt/awake/asset/shaderdocument/CompiledShaderDocument;
+	public static synthetic fun compile$default (Lcom/awakekt/awake/asset/shaderdocument/ShaderDocuments;Lcom/awakekt/awake/asset/shaderdocument/ShaderDocument;Lcom/awakekt/awake/asset/shaderdocument/ShaderDocumentLimits;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdocument/CompiledShaderDocument;
+	public static synthetic fun compile$default (Lcom/awakekt/awake/asset/shaderdocument/ShaderDocuments;Ljava/lang/String;Lcom/awakekt/awake/asset/shaderdocument/ShaderDocumentLimits;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdocument/CompiledShaderDocument;
+	public final fun decode (Ljava/lang/String;Lcom/awakekt/awake/asset/shaderdocument/ShaderDocumentLimits;)Lcom/awakekt/awake/asset/shaderdocument/ShaderDocument;
+	public static synthetic fun decode$default (Lcom/awakekt/awake/asset/shaderdocument/ShaderDocuments;Ljava/lang/String;Lcom/awakekt/awake/asset/shaderdocument/ShaderDocumentLimits;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdocument/ShaderDocument;
+	public final fun encode (Lcom/awakekt/awake/asset/shaderdocument/ShaderDocument;)Ljava/lang/String;
+	public final fun getJson ()Lkotlinx/serialization/json/Json;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderEffectInputs {
+	public final fun getDeltaSeconds ()F
+	public final fun getModel ()[F
+	public final fun getParameters ()[F
+	public final fun getTimeSeconds ()F
+	public final fun getVisible ()Z
+	public final fun setDeltaSeconds (F)V
+	public final fun setModel (Lcom/awakekt/awake/core/math/Mat4;)V
+	public final fun setTimeSeconds (F)V
+	public final fun setVisible (Z)V
+}
+
+public abstract interface class com/awakekt/awake/asset/shaderdocument/ShaderExpr {
+	public static final field Companion Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Companion;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Add : com/awakekt/awake/asset/shaderdocument/ShaderExpr$Arithmetic {
+	public static final field Companion Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Add$Companion;
+	public fun <init> (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;)V
+	public final fun component1 ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public final fun component2 ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public final fun copy (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Add;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Add;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Add;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getA ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public fun getB ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Add$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Add$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Add;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Add;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Add$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$And : com/awakekt/awake/asset/shaderdocument/ShaderExpr$Logical {
+	public static final field Companion Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$And$Companion;
+	public fun <init> (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;)V
+	public final fun component1 ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public final fun component2 ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public final fun copy (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$And;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$And;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$And;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getA ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public fun getB ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/shaderdocument/ShaderExpr$And$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$And$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$And;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$And;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$And$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract interface class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Arithmetic : com/awakekt/awake/asset/shaderdocument/ShaderExpr {
+	public abstract fun getA ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public abstract fun getB ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Call : com/awakekt/awake/asset/shaderdocument/ShaderExpr {
+	public static final field Companion Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Call$Companion;
+	public fun <init> (Lcom/awakekt/awake/asset/shaderdocument/ShaderFunction;Ljava/util/List;)V
+	public final fun component1 ()Lcom/awakekt/awake/asset/shaderdocument/ShaderFunction;
+	public final fun component2 ()Ljava/util/List;
+	public final fun copy (Lcom/awakekt/awake/asset/shaderdocument/ShaderFunction;Ljava/util/List;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Call;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Call;Lcom/awakekt/awake/asset/shaderdocument/ShaderFunction;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Call;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getArgs ()Ljava/util/List;
+	public final fun getFn ()Lcom/awakekt/awake/asset/shaderdocument/ShaderFunction;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Call$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Call$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Call;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Call;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Call$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract interface class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Comparison : com/awakekt/awake/asset/shaderdocument/ShaderExpr {
+	public abstract fun getA ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public abstract fun getB ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Constant : com/awakekt/awake/asset/shaderdocument/ShaderExpr {
+	public static final field Companion Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Constant$Companion;
+	public fun <init> (Ljava/util/List;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Constant;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Constant;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Constant;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getValue ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Constant$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Constant$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Constant;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Constant;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Constant$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract interface class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Construct : com/awakekt/awake/asset/shaderdocument/ShaderExpr {
+	public abstract fun getArgs ()Ljava/util/List;
+	public abstract fun getSize ()I
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Div : com/awakekt/awake/asset/shaderdocument/ShaderExpr$Arithmetic {
+	public static final field Companion Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Div$Companion;
+	public fun <init> (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;)V
+	public final fun component1 ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public final fun component2 ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public final fun copy (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Div;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Div;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Div;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getA ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public fun getB ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Div$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Div$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Div;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Div;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Div$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Eq : com/awakekt/awake/asset/shaderdocument/ShaderExpr$Comparison {
+	public static final field Companion Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Eq$Companion;
+	public fun <init> (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;)V
+	public final fun component1 ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public final fun component2 ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public final fun copy (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Eq;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Eq;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Eq;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getA ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public fun getB ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Eq$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Eq$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Eq;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Eq;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Eq$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Ge : com/awakekt/awake/asset/shaderdocument/ShaderExpr$Comparison {
+	public static final field Companion Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Ge$Companion;
+	public fun <init> (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;)V
+	public final fun component1 ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public final fun component2 ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public final fun copy (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Ge;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Ge;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Ge;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getA ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public fun getB ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Ge$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Ge$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Ge;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Ge;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Ge$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Gt : com/awakekt/awake/asset/shaderdocument/ShaderExpr$Comparison {
+	public static final field Companion Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Gt$Companion;
+	public fun <init> (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;)V
+	public final fun component1 ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public final fun component2 ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public final fun copy (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Gt;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Gt;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Gt;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getA ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public fun getB ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Gt$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Gt$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Gt;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Gt;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Gt$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Input : com/awakekt/awake/asset/shaderdocument/ShaderExpr {
+	public static final field Companion Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Input$Companion;
+	public fun <init> (Lcom/awakekt/awake/asset/shaderdocument/ShaderInput;)V
+	public final fun component1 ()Lcom/awakekt/awake/asset/shaderdocument/ShaderInput;
+	public final fun copy (Lcom/awakekt/awake/asset/shaderdocument/ShaderInput;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Input;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Input;Lcom/awakekt/awake/asset/shaderdocument/ShaderInput;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Input;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getInput ()Lcom/awakekt/awake/asset/shaderdocument/ShaderInput;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Input$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Input$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Input;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Input;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Input$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Le : com/awakekt/awake/asset/shaderdocument/ShaderExpr$Comparison {
+	public static final field Companion Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Le$Companion;
+	public fun <init> (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;)V
+	public final fun component1 ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public final fun component2 ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public final fun copy (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Le;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Le;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Le;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getA ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public fun getB ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Le$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Le$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Le;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Le;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Le$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Local : com/awakekt/awake/asset/shaderdocument/ShaderExpr {
+	public static final field Companion Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Local$Companion;
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Local;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Local;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Local;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getName ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Local$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Local$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Local;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Local;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Local$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract interface class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Logical : com/awakekt/awake/asset/shaderdocument/ShaderExpr {
+	public abstract fun getA ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public abstract fun getB ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Lt : com/awakekt/awake/asset/shaderdocument/ShaderExpr$Comparison {
+	public static final field Companion Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Lt$Companion;
+	public fun <init> (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;)V
+	public final fun component1 ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public final fun component2 ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public final fun copy (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Lt;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Lt;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Lt;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getA ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public fun getB ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Lt$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Lt$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Lt;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Lt;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Lt$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Mul : com/awakekt/awake/asset/shaderdocument/ShaderExpr$Arithmetic {
+	public static final field Companion Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Mul$Companion;
+	public fun <init> (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;)V
+	public final fun component1 ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public final fun component2 ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public final fun copy (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Mul;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Mul;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Mul;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getA ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public fun getB ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Mul$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Mul$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Mul;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Mul;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Mul$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Ne : com/awakekt/awake/asset/shaderdocument/ShaderExpr$Comparison {
+	public static final field Companion Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Ne$Companion;
+	public fun <init> (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;)V
+	public final fun component1 ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public final fun component2 ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public final fun copy (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Ne;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Ne;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Ne;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getA ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public fun getB ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Ne$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Ne$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Ne;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Ne;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Ne$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Negate : com/awakekt/awake/asset/shaderdocument/ShaderExpr {
+	public static final field Companion Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Negate$Companion;
+	public fun <init> (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;)V
+	public final fun component1 ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public final fun copy (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Negate;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Negate;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Negate;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getValue ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Negate$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Negate$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Negate;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Negate;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Negate$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Not : com/awakekt/awake/asset/shaderdocument/ShaderExpr {
+	public static final field Companion Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Not$Companion;
+	public fun <init> (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;)V
+	public final fun component1 ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public final fun copy (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Not;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Not;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Not;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getValue ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Not$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Not$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Not;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Not;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Not$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Or : com/awakekt/awake/asset/shaderdocument/ShaderExpr$Logical {
+	public static final field Companion Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Or$Companion;
+	public fun <init> (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;)V
+	public final fun component1 ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public final fun component2 ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public final fun copy (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Or;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Or;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Or;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getA ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public fun getB ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Or$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Or$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Or;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Or;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Or$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Param : com/awakekt/awake/asset/shaderdocument/ShaderExpr {
+	public static final field Companion Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Param$Companion;
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Param;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Param;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Param;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getName ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Param$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Param$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Param;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Param;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Param$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Sample : com/awakekt/awake/asset/shaderdocument/ShaderExpr {
+	public static final field Companion Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Sample$Companion;
+	public fun <init> (Ljava/lang/String;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public final fun copy (Ljava/lang/String;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Sample;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Sample;Ljava/lang/String;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Sample;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getTexture ()Ljava/lang/String;
+	public final fun getUv ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Sample$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Sample$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Sample;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Sample;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Sample$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Sub : com/awakekt/awake/asset/shaderdocument/ShaderExpr$Arithmetic {
+	public static final field Companion Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Sub$Companion;
+	public fun <init> (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;)V
+	public final fun component1 ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public final fun component2 ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public final fun copy (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Sub;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Sub;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Sub;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getA ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public fun getB ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Sub$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Sub$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Sub;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Sub;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Sub$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Swizzle : com/awakekt/awake/asset/shaderdocument/ShaderExpr {
+	public static final field Companion Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Swizzle$Companion;
+	public fun <init> (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;Ljava/lang/String;)V
+	public final fun component1 ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;Ljava/lang/String;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Swizzle;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Swizzle;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Swizzle;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getComponents ()Ljava/lang/String;
+	public final fun getValue ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Swizzle$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Swizzle$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Swizzle;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Swizzle;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Swizzle$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Vec2 : com/awakekt/awake/asset/shaderdocument/ShaderExpr$Construct {
+	public static final field Companion Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Vec2$Companion;
+	public fun <init> (Ljava/util/List;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Vec2;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Vec2;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Vec2;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getArgs ()Ljava/util/List;
+	public fun getSize ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Vec2$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Vec2$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Vec2;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Vec2;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Vec2$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Vec3 : com/awakekt/awake/asset/shaderdocument/ShaderExpr$Construct {
+	public static final field Companion Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Vec3$Companion;
+	public fun <init> (Ljava/util/List;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Vec3;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Vec3;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Vec3;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getArgs ()Ljava/util/List;
+	public fun getSize ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Vec3$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Vec3$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Vec3;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Vec3;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Vec3$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Vec4 : com/awakekt/awake/asset/shaderdocument/ShaderExpr$Construct {
+	public static final field Companion Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Vec4$Companion;
+	public fun <init> (Ljava/util/List;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Vec4;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Vec4;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Vec4;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getArgs ()Ljava/util/List;
+	public fun getSize ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Vec4$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Vec4$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Vec4;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr$Vec4;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderExpr$Vec4$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderFragmentStage {
+	public static final field Companion Lcom/awakekt/awake/asset/shaderdocument/ShaderFragmentStage$Companion;
+	public fun <init> (Ljava/util/List;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;)V
+	public synthetic fun <init> (Ljava/util/List;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public final fun copy (Ljava/util/List;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;)Lcom/awakekt/awake/asset/shaderdocument/ShaderFragmentStage;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/shaderdocument/ShaderFragmentStage;Ljava/util/List;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdocument/ShaderFragmentStage;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getColor ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public final fun getStatements ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/shaderdocument/ShaderFragmentStage$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderdocument/ShaderFragmentStage$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/shaderdocument/ShaderFragmentStage;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/shaderdocument/ShaderFragmentStage;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderFragmentStage$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderFunction : java/lang/Enum {
+	public static final field Abs Lcom/awakekt/awake/asset/shaderdocument/ShaderFunction;
+	public static final field Clamp Lcom/awakekt/awake/asset/shaderdocument/ShaderFunction;
+	public static final field Companion Lcom/awakekt/awake/asset/shaderdocument/ShaderFunction$Companion;
+	public static final field Cos Lcom/awakekt/awake/asset/shaderdocument/ShaderFunction;
+	public static final field Cross Lcom/awakekt/awake/asset/shaderdocument/ShaderFunction;
+	public static final field Dot Lcom/awakekt/awake/asset/shaderdocument/ShaderFunction;
+	public static final field Exp Lcom/awakekt/awake/asset/shaderdocument/ShaderFunction;
+	public static final field Floor Lcom/awakekt/awake/asset/shaderdocument/ShaderFunction;
+	public static final field Fract Lcom/awakekt/awake/asset/shaderdocument/ShaderFunction;
+	public static final field Length Lcom/awakekt/awake/asset/shaderdocument/ShaderFunction;
+	public static final field Max Lcom/awakekt/awake/asset/shaderdocument/ShaderFunction;
+	public static final field Min Lcom/awakekt/awake/asset/shaderdocument/ShaderFunction;
+	public static final field Mix Lcom/awakekt/awake/asset/shaderdocument/ShaderFunction;
+	public static final field Normalize Lcom/awakekt/awake/asset/shaderdocument/ShaderFunction;
+	public static final field Pow Lcom/awakekt/awake/asset/shaderdocument/ShaderFunction;
+	public static final field Saturate Lcom/awakekt/awake/asset/shaderdocument/ShaderFunction;
+	public static final field Select Lcom/awakekt/awake/asset/shaderdocument/ShaderFunction;
+	public static final field Sin Lcom/awakekt/awake/asset/shaderdocument/ShaderFunction;
+	public static final field Smoothstep Lcom/awakekt/awake/asset/shaderdocument/ShaderFunction;
+	public static final field Sqrt Lcom/awakekt/awake/asset/shaderdocument/ShaderFunction;
+	public static final field Step Lcom/awakekt/awake/asset/shaderdocument/ShaderFunction;
+	public final fun getArity ()I
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/asset/shaderdocument/ShaderFunction;
+	public static fun values ()[Lcom/awakekt/awake/asset/shaderdocument/ShaderFunction;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderFunction$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderInput : java/lang/Enum {
+	public static final field CameraPosition Lcom/awakekt/awake/asset/shaderdocument/ShaderInput;
+	public static final field Companion Lcom/awakekt/awake/asset/shaderdocument/ShaderInput$Companion;
+	public static final field DeltaTime Lcom/awakekt/awake/asset/shaderdocument/ShaderInput;
+	public static final field Normal Lcom/awakekt/awake/asset/shaderdocument/ShaderInput;
+	public static final field Resolution Lcom/awakekt/awake/asset/shaderdocument/ShaderInput;
+	public static final field ScreenUv Lcom/awakekt/awake/asset/shaderdocument/ShaderInput;
+	public static final field SunDirection Lcom/awakekt/awake/asset/shaderdocument/ShaderInput;
+	public static final field Time Lcom/awakekt/awake/asset/shaderdocument/ShaderInput;
+	public static final field Uv Lcom/awakekt/awake/asset/shaderdocument/ShaderInput;
+	public static final field ViewDirection Lcom/awakekt/awake/asset/shaderdocument/ShaderInput;
+	public static final field WorldPosition Lcom/awakekt/awake/asset/shaderdocument/ShaderInput;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/asset/shaderdocument/ShaderInput;
+	public static fun values ()[Lcom/awakekt/awake/asset/shaderdocument/ShaderInput;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderInput$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderParameter {
+	public static final field Companion Lcom/awakekt/awake/asset/shaderdocument/ShaderParameter$Companion;
+	public fun <init> (Ljava/lang/String;Lcom/awakekt/awake/asset/shaderdocument/ShaderValueType;Ljava/util/List;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lcom/awakekt/awake/asset/shaderdocument/ShaderValueType;
+	public final fun component3 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Lcom/awakekt/awake/asset/shaderdocument/ShaderValueType;Ljava/util/List;)Lcom/awakekt/awake/asset/shaderdocument/ShaderParameter;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/shaderdocument/ShaderParameter;Ljava/lang/String;Lcom/awakekt/awake/asset/shaderdocument/ShaderValueType;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdocument/ShaderParameter;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDefault ()Ljava/util/List;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getType ()Lcom/awakekt/awake/asset/shaderdocument/ShaderValueType;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/shaderdocument/ShaderParameter$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderdocument/ShaderParameter$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/shaderdocument/ShaderParameter;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/shaderdocument/ShaderParameter;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderParameter$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderPlane {
+	public static final field Companion Lcom/awakekt/awake/asset/shaderdocument/ShaderPlane$Companion;
+	public fun <init> (Ljava/util/List;I)V
+	public synthetic fun <init> (Ljava/util/List;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()I
+	public final fun copy (Ljava/util/List;I)Lcom/awakekt/awake/asset/shaderdocument/ShaderPlane;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/shaderdocument/ShaderPlane;Ljava/util/List;IILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdocument/ShaderPlane;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getSegments ()I
+	public final fun getSize ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/shaderdocument/ShaderPlane$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderdocument/ShaderPlane$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/shaderdocument/ShaderPlane;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/shaderdocument/ShaderPlane;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderPlane$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract interface class com/awakekt/awake/asset/shaderdocument/ShaderStatement {
+	public static final field Companion Lcom/awakekt/awake/asset/shaderdocument/ShaderStatement$Companion;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderStatement$Assign : com/awakekt/awake/asset/shaderdocument/ShaderStatement {
+	public static final field Companion Lcom/awakekt/awake/asset/shaderdocument/ShaderStatement$Assign$Companion;
+	public fun <init> (Ljava/lang/String;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public final fun copy (Ljava/lang/String;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;)Lcom/awakekt/awake/asset/shaderdocument/ShaderStatement$Assign;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/shaderdocument/ShaderStatement$Assign;Ljava/lang/String;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdocument/ShaderStatement$Assign;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getName ()Ljava/lang/String;
+	public final fun getValue ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/shaderdocument/ShaderStatement$Assign$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderdocument/ShaderStatement$Assign$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/shaderdocument/ShaderStatement$Assign;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/shaderdocument/ShaderStatement$Assign;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderStatement$Assign$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderStatement$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderStatement$DiscardIf : com/awakekt/awake/asset/shaderdocument/ShaderStatement {
+	public static final field Companion Lcom/awakekt/awake/asset/shaderdocument/ShaderStatement$DiscardIf$Companion;
+	public fun <init> (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;)V
+	public final fun component1 ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public final fun copy (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;)Lcom/awakekt/awake/asset/shaderdocument/ShaderStatement$DiscardIf;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/shaderdocument/ShaderStatement$DiscardIf;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdocument/ShaderStatement$DiscardIf;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCondition ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/shaderdocument/ShaderStatement$DiscardIf$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderdocument/ShaderStatement$DiscardIf$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/shaderdocument/ShaderStatement$DiscardIf;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/shaderdocument/ShaderStatement$DiscardIf;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderStatement$DiscardIf$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderStatement$For : com/awakekt/awake/asset/shaderdocument/ShaderStatement {
+	public static final field Companion Lcom/awakekt/awake/asset/shaderdocument/ShaderStatement$For$Companion;
+	public fun <init> (Ljava/lang/String;IILjava/util/List;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()I
+	public final fun component3 ()I
+	public final fun component4 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;IILjava/util/List;)Lcom/awakekt/awake/asset/shaderdocument/ShaderStatement$For;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/shaderdocument/ShaderStatement$For;Ljava/lang/String;IILjava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdocument/ShaderStatement$For;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBody ()Ljava/util/List;
+	public final fun getCounter ()Ljava/lang/String;
+	public final fun getFrom ()I
+	public final fun getUntil ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/shaderdocument/ShaderStatement$For$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderdocument/ShaderStatement$For$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/shaderdocument/ShaderStatement$For;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/shaderdocument/ShaderStatement$For;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderStatement$For$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderStatement$If : com/awakekt/awake/asset/shaderdocument/ShaderStatement {
+	public static final field Companion Lcom/awakekt/awake/asset/shaderdocument/ShaderStatement$If$Companion;
+	public fun <init> (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;Ljava/util/List;)V
+	public final fun component1 ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public final fun component2 ()Ljava/util/List;
+	public final fun copy (Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;Ljava/util/List;)Lcom/awakekt/awake/asset/shaderdocument/ShaderStatement$If;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/shaderdocument/ShaderStatement$If;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdocument/ShaderStatement$If;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCondition ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public final fun getThen ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/shaderdocument/ShaderStatement$If$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderdocument/ShaderStatement$If$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/shaderdocument/ShaderStatement$If;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/shaderdocument/ShaderStatement$If;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderStatement$If$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderStatement$Let : com/awakekt/awake/asset/shaderdocument/ShaderStatement {
+	public static final field Companion Lcom/awakekt/awake/asset/shaderdocument/ShaderStatement$Let$Companion;
+	public fun <init> (Ljava/lang/String;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public final fun copy (Ljava/lang/String;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;)Lcom/awakekt/awake/asset/shaderdocument/ShaderStatement$Let;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/shaderdocument/ShaderStatement$Let;Ljava/lang/String;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdocument/ShaderStatement$Let;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getName ()Ljava/lang/String;
+	public final fun getValue ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/shaderdocument/ShaderStatement$Let$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderdocument/ShaderStatement$Let$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/shaderdocument/ShaderStatement$Let;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/shaderdocument/ShaderStatement$Let;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderStatement$Let$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderStatement$Var : com/awakekt/awake/asset/shaderdocument/ShaderStatement {
+	public static final field Companion Lcom/awakekt/awake/asset/shaderdocument/ShaderStatement$Var$Companion;
+	public fun <init> (Ljava/lang/String;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public final fun copy (Ljava/lang/String;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;)Lcom/awakekt/awake/asset/shaderdocument/ShaderStatement$Var;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/shaderdocument/ShaderStatement$Var;Ljava/lang/String;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdocument/ShaderStatement$Var;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getName ()Ljava/lang/String;
+	public final fun getValue ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/shaderdocument/ShaderStatement$Var$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderdocument/ShaderStatement$Var$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/shaderdocument/ShaderStatement$Var;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/shaderdocument/ShaderStatement$Var;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderStatement$Var$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderSurface : java/lang/Enum {
+	public static final field Background Lcom/awakekt/awake/asset/shaderdocument/ShaderSurface;
+	public static final field Companion Lcom/awakekt/awake/asset/shaderdocument/ShaderSurface$Companion;
+	public static final field Overlay Lcom/awakekt/awake/asset/shaderdocument/ShaderSurface;
+	public static final field Plane Lcom/awakekt/awake/asset/shaderdocument/ShaderSurface;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/asset/shaderdocument/ShaderSurface;
+	public static fun values ()[Lcom/awakekt/awake/asset/shaderdocument/ShaderSurface;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderSurface$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderTexture {
+	public static final field Companion Lcom/awakekt/awake/asset/shaderdocument/ShaderTexture$Companion;
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lcom/awakekt/awake/asset/shaderdocument/ShaderTexture;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/shaderdocument/ShaderTexture;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdocument/ShaderTexture;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getName ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/shaderdocument/ShaderTexture$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderdocument/ShaderTexture$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/shaderdocument/ShaderTexture;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/shaderdocument/ShaderTexture;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderTexture$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderValueType : java/lang/Enum {
+	public static final field Color Lcom/awakekt/awake/asset/shaderdocument/ShaderValueType;
+	public static final field Companion Lcom/awakekt/awake/asset/shaderdocument/ShaderValueType$Companion;
+	public static final field Float Lcom/awakekt/awake/asset/shaderdocument/ShaderValueType;
+	public static final field Vec2 Lcom/awakekt/awake/asset/shaderdocument/ShaderValueType;
+	public static final field Vec3 Lcom/awakekt/awake/asset/shaderdocument/ShaderValueType;
+	public static final field Vec4 Lcom/awakekt/awake/asset/shaderdocument/ShaderValueType;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/asset/shaderdocument/ShaderValueType;
+	public static fun values ()[Lcom/awakekt/awake/asset/shaderdocument/ShaderValueType;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderValueType$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderVertexStage {
+	public static final field Companion Lcom/awakekt/awake/asset/shaderdocument/ShaderVertexStage$Companion;
+	public fun <init> ()V
+	public fun <init> (Ljava/util/List;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;)V
+	public synthetic fun <init> (Ljava/util/List;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public final fun copy (Ljava/util/List;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;)Lcom/awakekt/awake/asset/shaderdocument/ShaderVertexStage;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/shaderdocument/ShaderVertexStage;Ljava/util/List;Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdocument/ShaderVertexStage;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDisplacement ()Lcom/awakekt/awake/asset/shaderdocument/ShaderExpr;
+	public final fun getStatements ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/shaderdocument/ShaderVertexStage$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderdocument/ShaderVertexStage$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/shaderdocument/ShaderVertexStage;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/shaderdocument/ShaderVertexStage;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/shaderdocument/ShaderVertexStage$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+

@@ -32,7 +32,7 @@ no published artifact. Test-source dependencies are intentionally excluded.
 
 | Family | Published modules | Version source |
 |---|---:|---|
-| Core | 72 | Existing root `v*` tags and the shared Core release train |
+| Core | 73 | Existing root `v*` tags and the shared Core release train |
 | Vulkan | 3 | `vulkan-v*` tags; renderer, raw bindings, and Android JNI bridge move together |
 
 Vulkan snapshots pin the exact Core snapshot used for integration. Vulkan releases depend on an
@@ -54,6 +54,7 @@ Vulkan modules. Core `v*` releases and main snapshots do not publish or change t
 | `com.awakekt.awake:blueprint` | `:awake:blueprint` | `core` | `api` → `:awake:node-graph`; `api` → `:awake:ecs` |
 | `com.awakekt.awake.asset:gltf` | `:awake:asset:gltf` | `core` | `implementation` → `:awake:core:image`; `implementation` → `:awake:core:io`; `implementation` → `:awake:core:math`; `implementation` → `:awake:core:geometry`; `implementation` → `:awake:core:animation` |
 | `com.awakekt.awake.asset:shader-compiler` | `:awake:asset:shader-compiler` | `core` | — |
+| `com.awakekt.awake.asset:shader-document` | `:awake:asset:shader-document` | `core` | `api` → `:awake:asset:shader-dsl`; `api` → `:awake:asset:shaders`; `api` → `:awake:engine:render:contract`; `api` → `:awake:engine:render:passes`; `api` → `:awake:core:geometry`; `api` → `:awake:core:math` |
 | `com.awakekt.awake.asset:shader-dsl` | `:awake:asset:shader-dsl` | `core` | `api` → `:awake:core:geometry`; `api` → `:awake:engine:render:contract` |
 | `com.awakekt.awake.asset:shader-pack` | `:awake:asset:shader-pack` | `core` | `api` → `:awake:engine:render:contract`; `api` → `:awake:asset:shaders`; `api` → `:awake:engine:render:passes`; `api` → `:awake:asset:shader-dsl`; `api` → `:awake:asset:terrain` |
 | `com.awakekt.awake.asset:shaders` | `:awake:asset:shaders` | `core` | `implementation` → `:awake:core:host`; `api` → `:awake:engine:render:contract`; `api` → `:awake:engine:render:passes`; `api` → `:awake:asset:shader-dsl` |

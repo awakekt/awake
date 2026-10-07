@@ -141,6 +141,7 @@ See [docs/reference/compose-engine/](../docs/reference/compose-engine/).
 | `asset:shaders` | `ShaderSet`/`ShaderSource` contract, uniform and descriptor layouts |
 | `asset:shader-pack` | The shipped WGSL shader set and its uniform layouts — opt-in content |
 | `asset:shader-dsl` | Author shaders in Kotlin |
+| `asset:shader-document` | Shaders as project data: checked JSON documents compiled to WGSL and drawn as content features |
 | `asset:shader-compiler` | Runtime WGSL→SPIR-V through naga |
 | `asset:terrain` | Terrain data, geometry generation, heightfield sculpting, splatting |
 | `asset:mesh-optimizer` | Mesh decimation CLI over `core:geometry` (not published) |
