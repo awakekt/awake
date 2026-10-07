@@ -5,12 +5,21 @@
  */
 package com.awakekt.awake.showcase
 
+import com.awakekt.awake.core.host.readResourceBytes
+import com.awakekt.awake.core.image.createBitmap
 import com.awakekt.awake.scene.document.SceneLoader
 import com.awakekt.awake.scene.rendering.camera.SceneCamera
 import com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer
+import com.awakekt.awake.scene.rendering.mesh.SceneTextureAnimation
 import com.awakekt.awake.scene.runtime.DefaultSceneComponentResolvers
 import com.awakekt.awake.showcase.examples.Sprites2dExampleDriver
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.float
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -50,8 +59,41 @@ class Sprites2dShowcaseWiringTest {
         assertEquals(3, renderers.size, "all 3 sprite card nodes must have mesh renderers")
         renderers.forEach { renderer ->
             assertEquals("sprite-quad", renderer.mesh)
-            assertEquals("lit-shadow", renderer.material)
+            assertEquals("sprite-sheet", renderer.material)
+            assertTrue(renderer.transparent, "sprite alpha is drawn in the transparent pass")
         }
+
+        val animations = document.nodes
+            .filter { it.name?.startsWith("sprite-card-") == true }
+            .flatMap { it.components }
+            .filterIsInstance<SceneTextureAnimation>()
+        assertEquals(3, animations.size, "every sprite uses the animated atlas")
+        val assetPath = "assets/sprites/lantern-firefly/"
+        val manifest = Json.parseToJsonElement(readResourceBytes(assetPath + "manifest.json").decodeToString()).jsonObject
+        val layout = manifest.getValue("frame_layout").jsonObject
+        val sheetWidth = layout.getValue("sheetWidth").jsonPrimitive.int
+        val sheetHeight = layout.getValue("sheetHeight").jsonPrimitive.int
+        val cellWidth = layout.getValue("cellWidth").jsonPrimitive.int
+        val cellHeight = layout.getValue("cellHeight").jsonPrimitive.int
+        val frames = layout.getValue("rows").jsonObject.getValue("idle").jsonArray
+        val fps = manifest.getValue("animation").jsonObject.getValue("rows").jsonObject
+            .getValue("idle").jsonObject.getValue("fps").jsonPrimitive.float
+        animations.forEach { animation ->
+            assertEquals(sheetWidth / cellWidth, animation.columns)
+            assertEquals(sheetHeight / cellHeight, animation.rows)
+            assertEquals(frames.size, animation.frameCount)
+            assertEquals(fps, animation.framesPerSecond)
+        }
+        frames.forEachIndexed { index, frame ->
+            val rect = frame.jsonObject
+            assertEquals(index * cellWidth, rect.getValue("x").jsonPrimitive.int)
+            assertEquals(0, rect.getValue("y").jsonPrimitive.int)
+            assertEquals(cellWidth, rect.getValue("w").jsonPrimitive.int)
+            assertEquals(cellHeight, rect.getValue("h").jsonPrimitive.int)
+        }
+        val bitmap = createBitmap(readResourceBytes(assetPath + "sprite-sheet-alpha.png"))
+        assertEquals(sheetWidth, bitmap.width)
+        assertEquals(sheetHeight, bitmap.height)
     }
 
     @Test
