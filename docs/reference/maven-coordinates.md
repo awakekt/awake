@@ -32,7 +32,7 @@ no published artifact. Test-source dependencies are intentionally excluded.
 
 | Family | Published modules | Version source |
 |---|---:|---|
-| Core | 75 | Existing root `v*` tags and the shared Core release train |
+| Core | 76 | Existing root `v*` tags and the shared Core release train |
 | Vulkan | 3 | `vulkan-v*` tags; renderer, raw bindings, and Android JNI bridge move together |
 
 Vulkan snapshots pin the exact Core snapshot used for integration. Vulkan releases depend on an
@@ -119,6 +119,7 @@ Vulkan modules. Core `v*` releases and main snapshots do not publish or change t
 | `com.awakekt.awake.scene:physics` | `:awake:scene:physics` | `core` | `implementation` → `:awake:core:math`; `api` → `:awake:scene:scene-core`; `api` → `:awake:scene:document`; `api` → `:awake:scene:binding`; `api` → `:awake:scene:world`; `api` → `:awake:physics:api`; `api` → `:awake:core:animation`; `api` → `:awake:engine:render:contract` |
 | `com.awakekt.awake.scene:runtime` | `:awake:scene:runtime` | `core` | `implementation` → `:awake:core:graphics2d`; `implementation` → `:awake:core:math2d`; `implementation` → `:awake:core:host`; `implementation` → `:awake:core:input`; `api` → `:awake:core:logging`; `api` → `:awake:scene:document`; `api` → `:awake:scene:binding`; `api` → `:awake:scene:scene-core`; `api` → `:awake:scene:world`; `api` → `:awake:scene:scene3d`; `api` → `:awake:core:math`; `api` → `:awake:core:audio`; `api` → `:awake:scene:audio`; `api` → `:awake:scene:particles`; `api` → `:awake:scene:canvas`; `api` → `:awake:ecs`; `api` → `:awake:engine:platform`; `api` → `:awake:engine:compose`; `api` → `:awake:core:text`; `api` → `:awake:compose:ui`; `api` → `:awake:engine:render:contract`; `api` → `:awake:compose:runtime` |
 | `com.awakekt.awake.scene:scene-core` | `:awake:scene:scene-core` | `core` | `api` → `:awake:core:math`; `api` → `:awake:ecs`; `api` → `:awake:scene:document`; `api` → `:awake:scene:binding` |
+| `com.awakekt.awake.scene:scene2d` | `:awake:scene:scene2d` | `core` | `api` → `:awake:ecs`; `api` → `:awake:scene:scene-core`; `api` → `:awake:scene:document`; `api` → `:awake:scene:binding` |
 | `com.awakekt.awake.scene:scene3d` | `:awake:scene:scene3d` | `core` | `implementation` → `:awake:core:graphics2d`; `implementation` → `:awake:core:math`; `implementation` → `:awake:core:pool`; `implementation` → `:awake:particles`; `api` → `:awake:core:color`; `implementation` → `:awake:core:animation`; `api` → `:awake:scene:scene-core`; `api` → `:awake:scene:world`; `api` → `:awake:scene:document`; `api` → `:awake:scene:binding`; `api` → `:awake:engine:render:contract`; `api` → `:awake:engine:render:passes`; `api` → `:awake:asset:terrain`; `api` → `:awake:terrain`; `api` → `:awake:asset:shader-pack` |
 | `com.awakekt.awake.scene:world` | `:awake:scene:world` | `core` | `api` → `:awake:scene:scene-core`; `api` → `:awake:world` |
 | `com.awakekt.awake.scene:worldstream` | `:awake:scene:worldstream` | `core` | `api` → `:awake:scene:world`; `api` → `:awake:scene:physics`; `api` → `:awake:scene:scene3d`; `api` → `:awake:scene:runtime`; `api` → `:awake:physics:api`; `api` → `:awake:asset:terrain`; `api` → `:awake:engine:render:contract`; `api` → `:awake:core:geometry`; `api` → `:awake:core:math`; `api` → `:awake:ecs` |
