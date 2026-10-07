@@ -35,7 +35,7 @@ registers it.
 | [`pbr_material`](#pbr_material) | `PbrMaterial` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Meshes and materials](../guides/meshes-and-materials.md) |
 | [`physics_body`](#physics_body) | `PhysicsBody` | `com.awakekt.awake.scene:physics` | `registerPhysics()` | [Physics](../guides/physics.md) |
 | [`prefab_link`](#prefab_link) | `PrefabLink` | `com.awakekt.awake.scene:document` | Built in | [Scene documents](../guides/scene-documents.md) |
-| [`shader_effect`](#shader_effect) | `ShaderEffectSource` | `com.awakekt.awake.scene:shader` | `DefaultSceneComponentResolvers.install()` | [Scene documents](../guides/scene-documents.md) |
+| [`shader_effect`](#shader_effect) | `ShaderEffectSource` | `com.awakekt.awake.scene:shader` | `DefaultSceneComponentResolvers.install()` | [Render plans and shaders](../guides/shaders.md#ship-a-shader-with-a-project) |
 | [`skybox`](#skybox) | `Skybox` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Sky and fog](../guides/sky-and-fog.md) |
 | [`spin_control`](#spin_control) | `SpinControl` | `com.awakekt.awake.scene:scene-core` | `DefaultSceneComponentResolvers.install()` | [Scene documents](../guides/scene-documents.md) |
 | [`sprite`](#sprite) | `Sprite` | `com.awakekt.awake.scene:scene2d` | `DefaultSceneComponentResolvers.install()` | [Component map](component-map.md) |
@@ -489,8 +489,8 @@ A shader the project ships as data, drawn at this node: a sky behind the scene, 
 it, or a plane placed by the node's transform, as the document's `surface` says. The document is a
 `*.shader.json` file in the project; `loadPlayableProject` reads, checks and compiles it once, and
 `ShaderEffectSystem` draws it, advancing its clock each frame. An effect whose parameters or textures do
-not match its document is logged with the node and not drawn, and the scene plays on without it.
-`SceneShaderEffect`.
+not match its document is logged with the node and not drawn, and the scene plays on without it. The
+document's format is in the [shader document reference](shader-document.md). `SceneShaderEffect`.
 
 | Field | Type | Default | What it does |
 | --- | --- | --- | --- |

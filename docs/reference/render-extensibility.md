@@ -52,8 +52,16 @@ is not the same as absent.
 | Hardware | `awake:backend:vulkan`, `awake:backend:webgpu` |
 | Engine-provided optional content (skybox, shadow) | `awake:asset:shaders` for the declaration, `awake:engine:render:passes` for shared recording |
 | Game-authored content | `samples/<game>/` -- see the public [`awake-framework-boundary`](https://github.com/awakekt/awake-agent-skills/tree/main/skills/awake-framework-boundary) skill |
+| Data-authored content (a project's shader documents) | `awake:asset:shader-document` for the document, its checks and its compiler to WGSL; `awake:scene:shader` for the `shader_effect` component that loads and draws it |
 
-No new module is needed; all three already exist with the right dependency edges.
+The first three tiers needed no new module; all three already existed with the right dependency edges.
+
+The fourth tier is content that ships in a project's files instead of in code. A shader document
+reaches a backend as an ordinary content feature, attached through `ContentFeatureHost` the way
+terrain and the cubemap sky are, so a backend still never knows what it draws and needs no change.
+`awake:asset:shader-document` depends on no `awake:scene` module; `awake:scene:shader` is its scene
+wrapper. The guide is `website/docs/guides/shaders.md`, and the format is
+`website/docs/reference/shader-document.md`.
 
 ## Where this applies
 
