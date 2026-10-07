@@ -6,7 +6,9 @@
 package com.awakekt.awake.project.runtime
 
 import com.awakekt.awake.asset.shaders.ContentFeatureHost
+import com.awakekt.awake.ecs.InterpolatedSystem
 import com.awakekt.awake.ecs.System
+import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.texture.TextureAsset
@@ -57,14 +59,24 @@ class PlayServices(
 
 /**
  * The systems a scene plays with, in the order they run: every [fixed] system on each fixed step,
- * then every [frame] system once per rendered frame, which is the order `playProject` runs them in.
- * [close] when the scene stops, to release what the systems created.
+ * then [interpolate], then every [frame] system once per rendered frame, which is the order
+ * `playProject` runs them in. [close] when the scene stops, to release what the systems created.
  */
 class PlaySystems internal constructor(
     val fixed: List<System>,
     val frame: List<System>,
     private val release: () -> Unit,
 ) : AutoCloseable {
+    private val interpolated = fixed.filterIsInstance<InterpolatedSystem>()
+
+    /**
+     * Blends the last two states of every [fixed] system that keeps them, as
+     * [InterpolatedSystem.interpolate] describes, by the [alpha] the host's fixed-step loop reports.
+     * Call it after the fixed steps and before the [frame] systems, which read what it places, as
+     * `playProject` does; without it, bodies move in fixed-step jumps.
+     */
+    fun interpolate(world: World, alpha: Float) = interpolated.forEach { it.interpolate(world, alpha) }
+
     override fun close() = release()
 }
 

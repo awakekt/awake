@@ -6,12 +6,15 @@ scene's components call for. Every speed, distance and size comes from the scene
 ```kotlin
 val project = loadPlayableProject(files, physicsWorld = ::createJoltPhysicsWorld)
 app { scene("game") { playProject(project) } }
+// when the game stops: project.close()
 ```
 
 `files` is an `AssetSource` rooted at the project folder. `loadPlayableProject` reads and checks
 `awake.project.json`, reads the entry scene, loads the glTF models it names, and creates a physics
 world only when the scene has `physics_body` or `character_controller` components. The host picks the
-physics backend.
+physics backend, and the project owns the world: `close()` it once the scene has stopped, since a
+physics world's native memory outlives garbage collection. A project is played once; its bodies stay
+in its world, so load it again to play the scene again.
 
 | Scene component | What runs |
 |---|---|
@@ -46,9 +49,14 @@ val play = playSystemsFor(
     PlayServices(input = { gameplayInput }, renderer = renderer, physics = physicsWorld, particleSprites = sprites),
 )
 // each fixed step:        play.fixed.forEach { it.update(world, step) }
-// each rendered frame:    play.frame.forEach { it.update(world, delta) }
+// each rendered frame:    play.interpolate(world, alpha); play.frame.forEach { it.update(world, delta) }
 // when the scene stops:   play.close()
 ```
+
+`alpha` is how far the frame lies between the last fixed step and the next, as the host's fixed-step
+loop reports it. `interpolate` places the physics bodies there before the frame systems read them, as
+`playProject` does; a host that skips it sees bodies move in fixed-step jumps. The host owns the
+physics world it passes in and destroys it after `close()`.
 
 It builds only the scene's own systems. The host still places the scene, resolves its assets, picks
 the camera, resolves transforms and draws. Pass the physics world the scene needs (`physics_body`,

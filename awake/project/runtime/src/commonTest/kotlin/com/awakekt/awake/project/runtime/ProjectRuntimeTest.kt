@@ -13,6 +13,7 @@ import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.engine.bootstrap.dsl.app
 import com.awakekt.awake.engine.platform.dsl.requireService
+import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.physics.jolt.createJoltPhysicsWorld
 import com.awakekt.awake.render.command.GpuDrawPreparationSource
 import com.awakekt.awake.render.command.GpuDrawPreparer
@@ -25,6 +26,10 @@ import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.Camera
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -158,6 +163,40 @@ class ProjectRuntimeTest {
         assertTrue("scenes/main.scene.json" in error.message.orEmpty(), error.message)
     }
 
+    /** The project owns the physics world it made, so closing it destroys that world, once. */
+    @Test
+    fun closingAProjectDestroysItsPhysicsWorldOnce() = runTest {
+        var made: DestroyCounting? = null
+        val project = loadPlayableProject(files(PHYSICS_SCENE)) { DestroyCounting(createJoltPhysicsWorld()).also { made = it } }
+
+        project.close()
+        project.close()
+
+        assertEquals(1, made?.destroyed)
+        loadPlayableProject(files(MOVEMENT_ONLY_SCENE)).close()
+    }
+
+    /** Every file is read before the physics world exists, so a load cancelled while reading makes none. */
+    @Test
+    fun aLoadCancelledWhileReadingSpritesMakesNoPhysicsWorld() = runTest {
+        var made = 0
+        val reading = CompletableDeferred<Unit>()
+        val sources = mapOf(MANIFEST_PATH to MANIFEST, "scenes/main.scene.json" to SPARKS_SCENE)
+        val files = AssetSource { path ->
+            if (path.value == "spark.png") {
+                reading.complete(Unit)
+                awaitCancellation()
+            }
+            runCatching { sources.getValue(path.value).encodeToByteArray() }
+        }
+
+        val load = launch { loadPlayableProject(files) { made++; createJoltPhysicsWorld() } }
+        reading.await()
+        load.cancelAndJoin()
+
+        assertEquals(0, made, "the world would have leaked: nothing holds the project it was made for")
+    }
+
     private class Game(val runtime: SceneAppLifecycleRuntime, val input: Input, private val update: () -> Unit) {
         val world: World get() = runtime.world
         fun frames(count: Int) = repeat(count) { update() }
@@ -169,6 +208,16 @@ class ProjectRuntimeTest {
         game.ready(TestRenderer())
         val runtime = game.requireService<SceneAppLifecycleRuntime>()
         return Game(runtime, game.requireService()) { game.update(DELTA, WIDTH, HEIGHT) }.also { it.frames(1) }
+    }
+
+    /** A physics world that counts how often it is destroyed. */
+    private class DestroyCounting(private val inner: PhysicsWorld) : PhysicsWorld by inner {
+        var destroyed = 0
+
+        override fun destroy() {
+            destroyed++
+            inner.destroy()
+        }
     }
 
     private class TestRenderer : NoopRenderer(), GpuDrawPreparationSource {
@@ -225,6 +274,15 @@ class ProjectRuntimeTest {
   { "name": "Jump", "components": [ { "component": "canvas_element", "kind": "Button", "anchor": "BottomRight",
     "offsetX": 32.0, "offsetY": 32.0, "width": 80.0, "height": 80.0, "action": "jump", "touchOnly": true,
     "text": "Jump" } ] }
+] }
+"""
+
+        const val SPARKS_SCENE = """
+{ "version": 1, "name": "sparks", "nodes": [
+  { "name": "Floor", "components": [
+    { "component": "physics_body", "shape": { "type": "box", "halfExtents": { "x": 1.0, "y": 0.1, "z": 1.0 } } }
+  ] },
+  { "name": "Sparks", "components": [ { "component": "particle_emitter", "texture": "spark.png" } ] }
 ] }
 """
 
