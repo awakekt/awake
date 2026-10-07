@@ -160,17 +160,8 @@ class SceneSpriteTest {
         assertFailsWith<IllegalArgumentException> { sprite(columns = 1, rows = 1, frame = 1) }
     }
 
-    private fun sprite(columns: Int, rows: Int, frame: Int) = Sprite(
-        texture = "a.png",
-        columns = columns,
-        rows = rows,
-        pixelsPerUnit = 16f,
-        frame = frame,
-        flipX = false,
-        flipY = false,
-        tint = SceneColor(),
-        sortOrder = 0,
-    )
+    private fun sprite(columns: Int, rows: Int, frame: Int) =
+        Sprite(SceneSprite(texture = "a.png", columns = columns, rows = rows, frame = frame))
 
     private class Context(override val world: World) : SceneResolutionContext {
         override fun deferNodeLink(targetNodeName: String, onResolved: (target: Entity) -> Unit) = Unit

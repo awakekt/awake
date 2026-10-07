@@ -16,34 +16,45 @@ import kotlin.reflect.KClass
  * A [SceneSprite] on a live entity. A game changes what shows by setting these, for example
  * `sprite.frame = 3` or `sprite.flipX = facingLeft`; the scene exports what they are then.
  *
- * @property texture The image file the sprite shows. It is fixed for the life of the entity.
- * @property columns Frame-sheet columns.
- * @property rows Frame-sheet rows.
- * @property pixelsPerUnit Image pixels that make one scene unit.
+ * @param settings The sprite as the scene file describes it. Its frame must be inside its sheet.
  */
-class Sprite(
-    val texture: String,
-    val columns: Int,
-    val rows: Int,
-    val pixelsPerUnit: Float,
-    frame: Int,
-    var flipX: Boolean,
-    var flipY: Boolean,
-    var tint: SceneColor,
-    var sortOrder: Int,
-) {
+class Sprite(settings: SceneSprite) {
+    /** The image file the sprite shows. It is fixed for the life of the entity. */
+    val texture: String = settings.texture
+
+    /** Frame-sheet columns. */
+    val columns: Int = settings.columns
+
+    /** Frame-sheet rows. */
+    val rows: Int = settings.rows
+
+    /** Image pixels that make one scene unit. */
+    val pixelsPerUnit: Float = settings.pixelsPerUnit
+
+    /** Whether the sprite is mirrored left to right. */
+    var flipX: Boolean = settings.flipX
+
+    /** Whether the sprite is mirrored top to bottom. */
+    var flipY: Boolean = settings.flipY
+
+    /** Multiplied into the image's colour and alpha. */
+    var tint: SceneColor = settings.tint
+
+    /** A higher order draws over a lower one. */
+    var sortOrder: Int = settings.sortOrder
+
     /** Cells in the sheet. */
-    val cellCount: Int get() = columns * rows
+    val cellCount: Int = columns * rows
 
     /** The cell showing, counted in reading order from 0 at the top left. */
-    var frame: Int = frame
+    var frame: Int = settings.frame
         set(value) {
             require(value in 0 until cellCount) { "Sprite frame $value is outside the sheet's $cellCount cells." }
             field = value
         }
 
     init {
-        require(this.frame in 0 until cellCount) { "Sprite frame $frame is outside the sheet's $cellCount cells." }
+        require(frame in 0 until cellCount) { "Sprite frame $frame is outside the sheet's $cellCount cells." }
     }
 
     /** This sprite as a scene file describes it. */
@@ -72,20 +83,7 @@ object SpriteBinding : SceneComponentBinding<Sprite, SceneSprite> {
         component: SceneSprite,
         context: SceneResolutionContext,
     ) {
-        world.add(
-            entity,
-            Sprite(
-                texture = component.texture,
-                columns = component.columns,
-                rows = component.rows,
-                pixelsPerUnit = component.pixelsPerUnit,
-                frame = component.frame,
-                flipX = component.flipX,
-                flipY = component.flipY,
-                tint = component.tint,
-                sortOrder = component.sortOrder,
-            ),
-        )
+        world.add(entity, Sprite(component))
     }
 
     override fun export(world: World, entity: Entity, component: Sprite): SceneSprite = component.toScene()

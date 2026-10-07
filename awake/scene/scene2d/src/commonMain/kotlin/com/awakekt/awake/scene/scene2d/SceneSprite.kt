@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.scene2d
 
+import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.scene.document.SceneColor
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneValidationIssue
@@ -37,10 +38,10 @@ private const val DEFAULT_PIXELS_PER_UNIT = 100f
 @SerialName("sprite")
 data class SceneSprite(
     val texture: String,
-    val columns: Int = 1,
-    val rows: Int = 1,
+    @PropertyRange(min = 1.0) val columns: Int = 1,
+    @PropertyRange(min = 1.0) val rows: Int = 1,
     val frame: Int = 0,
-    val pixelsPerUnit: Float = DEFAULT_PIXELS_PER_UNIT,
+    @PropertyRange(min = 0.0, exclusiveMin = true) val pixelsPerUnit: Float = DEFAULT_PIXELS_PER_UNIT,
     val flipX: Boolean = false,
     val flipY: Boolean = false,
     val tint: SceneColor = SceneColor(),
