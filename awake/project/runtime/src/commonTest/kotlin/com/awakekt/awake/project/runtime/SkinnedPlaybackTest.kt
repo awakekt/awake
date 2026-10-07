@@ -31,8 +31,8 @@ class SkinnedPlaybackTest {
             "scenes/main.scene.json" to SCENE,
             MODEL to skinnedTriangleGltf(),
         )
-        val project = loadPlayableProject(AssetSource { path -> runCatching { files.getValue(path.value).encodeToByteArray() } })
-        val game = app { scene("play") { playProject(project) } }
+        val project = loadProject(AssetSource { path -> runCatching { files.getValue(path.value).encodeToByteArray() } })
+        val game = app { scene("play") { runProject(project) } }
         game.ready(TestRenderer())
         val runtime = game.requireService<SceneAppLifecycleRuntime>()
         game.update(DELTA, WIDTH, HEIGHT)
@@ -54,8 +54,8 @@ class SkinnedPlaybackTest {
             "scenes/main.scene.json" to PARTS_SCENE,
             MODEL to skinnedTriangleGltf(parts = 2),
         )
-        val project = loadPlayableProject(AssetSource { path -> runCatching { files.getValue(path.value).encodeToByteArray() } })
-        val game = app { scene("play") { playProject(project) } }
+        val project = loadProject(AssetSource { path -> runCatching { files.getValue(path.value).encodeToByteArray() } })
+        val game = app { scene("play") { runProject(project) } }
         game.ready(TestRenderer())
         val runtime = game.requireService<SceneAppLifecycleRuntime>()
         game.update(DELTA, WIDTH, HEIGHT)

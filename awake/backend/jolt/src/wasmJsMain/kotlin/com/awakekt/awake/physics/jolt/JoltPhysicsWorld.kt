@@ -23,6 +23,7 @@ import com.awakekt.awake.physics.ConstraintHandle
 import com.awakekt.awake.physics.ContactEvent
 import com.awakekt.awake.physics.ContactPhase
 import com.awakekt.awake.physics.ConvexHullShape
+import com.awakekt.awake.physics.DegreesOfFreedom
 import com.awakekt.awake.physics.DistanceConstraint
 import com.awakekt.awake.physics.HeightFieldShape
 import com.awakekt.awake.physics.HingeConstraint
@@ -195,7 +196,7 @@ private external fun joltCreateWorld(
 @Suppress("unused", "LongParameterList") // @JsFun carries primitives, not a shape type.
 @JsFun(
     """
-    (world, shapeKind, hx, hy, hz, radius, halfHeight, px, py, pz, qw, qx, qy, qz, motionTypeCode, isStatic, layerIndex, isSensor) => {
+    (world, shapeKind, hx, hy, hz, radius, halfHeight, px, py, pz, qw, qx, qy, qz, motionTypeCode, isStatic, layerIndex, isSensor, plane2d) => {
         const jolt = world.jolt;
         const shape = shapeKind === 0
             ? new jolt.BoxShape(new jolt.Vec3(hx, hy, hz), 0.05, null)
@@ -210,6 +211,7 @@ private external fun joltCreateWorld(
             shape, new jolt.RVec3(px, py, pz), new jolt.Quat(qx, qy, qz, qw), motionType, layerIndex
         );
         bodyCreationSettings.mIsSensor = isSensor;
+        bodyCreationSettings.mAllowedDOFs = plane2d ? jolt.EAllowedDOFs_Plane2D : jolt.EAllowedDOFs_All;
         const body = world.bodyInterface.CreateBody(bodyCreationSettings);
         jolt.destroy(bodyCreationSettings);
         const activation = isStatic ? jolt.EActivation_DontActivate : jolt.EActivation_Activate;
@@ -237,6 +239,7 @@ private external fun joltCreateBody(
     isStatic: Boolean,
     layerIndex: Int,
     isSensor: Boolean,
+    plane2d: Boolean,
 ): Int
 
 /**
@@ -289,7 +292,7 @@ private fun flatten(shape: PhysicsShape, unsupported: String): FlatShape = when 
 @Suppress("unused", "LongParameterList") // @JsFun carries primitives, not a shape type.
 @JsFun(
     """
-    (world, pts, px, py, pz, qw, qx, qy, qz, motionTypeCode, isStatic, layerIndex, isSensor) => {
+    (world, pts, px, py, pz, qw, qx, qy, qz, motionTypeCode, isStatic, layerIndex, isSensor, plane2d) => {
         const jolt = world.jolt;
         const points = new jolt.ArrayVec3();
         for (let i = 0; i < pts.length; i += 3) {
@@ -305,6 +308,7 @@ private fun flatten(shape: PhysicsShape, unsupported: String): FlatShape = when 
             shape, new jolt.RVec3(px, py, pz), new jolt.Quat(qx, qy, qz, qw), motionType, layerIndex
         );
         bodyCreationSettings.mIsSensor = isSensor;
+        bodyCreationSettings.mAllowedDOFs = plane2d ? jolt.EAllowedDOFs_Plane2D : jolt.EAllowedDOFs_All;
         const body = world.bodyInterface.CreateBody(bodyCreationSettings);
         jolt.destroy(bodyCreationSettings);
         jolt.destroy(settings);
@@ -329,6 +333,7 @@ private external fun joltCreateHullBody(
     isStatic: Boolean,
     layerIndex: Int,
     isSensor: Boolean,
+    plane2d: Boolean,
 ): Int
 
 /**
@@ -1106,6 +1111,16 @@ class JoltPhysicsWorld private constructor(
         motionType: MotionType,
         layer: CollisionLayer,
         sensor: Boolean,
+    ): BodyHandle = createBody(shape, position, rotation, motionType, layer, sensor, DegreesOfFreedom.ALL)
+
+    override fun createBody(
+        shape: PhysicsShape,
+        position: Vec3f,
+        rotation: Quat,
+        motionType: MotionType,
+        layer: CollisionLayer,
+        sensor: Boolean,
+        degreesOfFreedom: DegreesOfFreedom,
     ): BodyHandle {
         if (sensor) shape.requireCanBeSensor()
         val motionTypeCode = when (motionType) {
@@ -1121,7 +1136,7 @@ class JoltPhysicsWorld private constructor(
             is HeightFieldShape -> createHeightFieldBody(shape, position, motionType)
             is MeshShape -> createMeshBody(shape, position, rotation, motionType, layer)
             is ConvexHullShape ->
-                createHullBody(shape, position, rotation, motionType, layer, sensor)
+                createHullBody(shape, position, rotation, motionType, layer, sensor, degreesOfFreedom)
             else -> null
         }
         if (ownEntryPoint != null) return ownEntryPoint
@@ -1148,6 +1163,7 @@ class JoltPhysicsWorld private constructor(
             isStatic,
             layer.index,
             sensor,
+            degreesOfFreedom == DegreesOfFreedom.PLANE_2D,
         )
         trackedBodyIds.add(idNum)
         if (sensor) joltSetReporting(world, idNum, true)
@@ -1175,6 +1191,7 @@ class JoltPhysicsWorld private constructor(
         motionType: MotionType,
         layer: CollisionLayer,
         sensor: Boolean,
+        degreesOfFreedom: DegreesOfFreedom,
     ): BodyHandle {
         val points = jsNewArray()
         shape.points.forEach { jsArrayPush(points, it.toDouble()) }
@@ -1196,6 +1213,7 @@ class JoltPhysicsWorld private constructor(
             motionType == MotionType.STATIC,
             layer.index,
             sensor,
+            degreesOfFreedom == DegreesOfFreedom.PLANE_2D,
         )
         trackedBodyIds.add(idNum)
         if (sensor) joltSetReporting(world, idNum, true)

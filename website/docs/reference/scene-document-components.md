@@ -57,7 +57,7 @@ registers it.
 | `SceneComponentRegistry.registerCharacter()` | `com.awakekt.awake.scene:character` | `character_controller` |
 | `SceneComponentRegistry.registerAiBehaviors()` | `com.awakekt.awake.scene:ai` | `patrol`, `chase`, `flee`, `navigation` |
 | `SceneComponentRegistry.registerBlueprints()` | `com.awakekt.awake.scene:blueprint` | `blueprint` |
-| `loadPlayableProject(...)` | `com.awakekt.awake.project:runtime` | The defaults, plus `movement_control`, `camera_rig`, `physics_body`, `character_controller`, `patrol`, `chase`, `flee`, `navigation` |
+| `loadProject(...)` | `com.awakekt.awake.project:runtime` | The defaults, plus `movement_control`, `camera_rig`, `physics_body`, `character_controller`, `patrol`, `chase`, `flee`, `navigation`, and the components of the [capabilities](../guides/scene-capabilities.md) passed to it |
 
 ## `ambient_light`
 
@@ -341,7 +341,7 @@ node. `SceneParticleEmitter`.
 Sizes, speeds and `spawnRadius` are world units; the node's scale does not apply, and its rotation
 only tilts a `Flat` emitter's plane and, with `inheritOrientation`, turns the spawn ring and
 `velocity`. Each particle fades from `startAlpha` to 0 over its `lifetime` (or by `alphaCurve`), while
-its tint moves from `color` to `endColor` and its size from `scale` to `endScale`. `playProject` runs
+its tint moves from `color` to `endColor` and its size from `scale` to `endScale`. `runProject` runs
 it; see [Particles](../guides/particles.md).
 
 | Field | Type | Default | What it does |
@@ -451,6 +451,10 @@ A collider or rigid body. `ScenePhysicsBody`.
 | `motion` | `STATIC` · `KINEMATIC` · `DYNAMIC` | `STATIC` | How the body moves. |
 | `layer` | integer | none | Collision layer index. None uses the default for `motion`. Not negative. |
 | `sensor` | boolean | `false` | Detects what passes through instead of blocking it. |
+| `degreesOfFreedom` | `ALL` · `PLANE_2D` | `ALL` | Allowed motion in world axes. `PLANE_2D` locks Z translation and X/Y rotation. |
+
+`degreesOfFreedom` applies to primitive and model colliders and survives saving and body rebuilds.
+Shapes retain their Z thickness; see [Physics in 2D](../guides/physics.md#physics-in-2d).
 
 ### Collision shape
 
@@ -475,7 +479,7 @@ Like `mesh`, it uses `MeshColliderSystem` to build the body from models loaded t
 
 ## `prefab_link`
 
-Places a prefab file at this node. `SceneDocument.withPrefabs` (which `loadPlayableProject` runs)
+Places a prefab file at this node. `SceneDocument.withPrefabs` (which `loadProject` runs)
 puts the prefab's root under the node, so the node's transform places it and its own components add
 to it. The node holds no children of its own. Exporting the world writes the link, not the prefab's
 nodes. A prefab file is a `ScenePrefab` as JSON: `guid`, optional `name`, and a `root` node. `ScenePrefabLink`.
@@ -488,7 +492,7 @@ nodes. A prefab file is a `ScenePrefab` as JSON: `guid`, optional `name`, and a 
 
 A shader the project ships as data, drawn at this node: a sky behind the scene, an overlay in front of
 it, or a plane placed by the node's transform, as the document's `surface` says. The document is a
-`*.shader.json` file in the project; `loadPlayableProject` reads, checks and compiles it once, and
+`*.shader.json` file in the project; `loadProject` reads, checks and compiles it once, and
 `ShaderEffectSystem` draws it, advancing its clock each frame. An effect whose parameters or textures do
 not match its document is logged with the node and not drawn, and the scene plays on without it. The
 document's format is in the [shader document reference](shader-document.md). `SceneShaderEffect`.

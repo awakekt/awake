@@ -133,7 +133,7 @@ awake-backend-vulkan = { module = "com.awakekt.awake.backend:vulkan", version.re
 | Maven coordinate | Catalog alias | What it is |
 | --- | --- | --- |
 | `com.awakekt.awake:project` | `awake-project` | The AwakeKt project manifest format and its validation. |
-| `com.awakekt.awake.project:runtime` | `awake-project-runtime` | Plays a project without the editor: `loadPlayableProject`, `playProject`. |
+| `com.awakekt.awake.project:runtime` | `awake-project-runtime` | Plays a project without the editor: `loadProject`, `runProject`. |
 | `com.awakekt.awake.editor:contract` | `awake-editor-contract` | Public extension points and plugin contracts for AwakeKt Studio. |
 
 ### UI

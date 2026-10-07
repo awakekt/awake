@@ -17,7 +17,6 @@ import com.awakekt.awake.render.testing.NoopRenderer
 import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.scene.controls.GameplayInput
 import com.awakekt.awake.scene.document.SceneLoader
-import com.awakekt.awake.scene.shader.ShaderEffectAssets
 import com.awakekt.awake.scene.shader.ShaderEffectSystem
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -28,18 +27,18 @@ import kotlin.test.assertTrue
 class ProjectShaderEffectsTest {
     private val input = Input()
 
-    private fun services(renderer: Renderer, shaderEffects: ShaderEffectAssets = ShaderEffectAssets.Empty) = PlayServices(
+    private fun services(renderer: Renderer, content: SceneContent = SceneContent.Empty) = SceneHostServices(
         input = { GameplayInput(input.currentSnapshot, InputOwnership()) },
         renderer = renderer,
-        shaderEffects = shaderEffects,
+        content = content,
     )
 
     @Test
     fun aSceneWithAShaderEffectGetsItsSystemAndOneWithoutDoesNot() {
-        installPlayableComponents()
+        installProjectComponents()
 
-        val with = playSystemsFor(SceneLoader.decode(SKY_SCENE), services(NoopRenderer()))
-        val without = playSystemsFor(SceneLoader.decode(PLAIN_SCENE), services(NoopRenderer()))
+        val with = sceneSystemsFor(SceneLoader.decode(SKY_SCENE), services(NoopRenderer()))
+        val without = sceneSystemsFor(SceneLoader.decode(PLAIN_SCENE), services(NoopRenderer()))
 
         assertTrue(with.frame.any { it is ShaderEffectSystem })
         assertFalse(without.frame.any { it is ShaderEffectSystem })
@@ -48,16 +47,16 @@ class ProjectShaderEffectsTest {
     /** One broken document loses its own effect; the project still loads, and the good one is ready. */
     @Test
     fun aProjectLoadsItsDocumentsAndABrokenOneDoesNotStopTheLoad() = runTest {
-        val project = loadPlayableProject(files(TWO_EFFECTS_SCENE))
+        val project = loadProject(files(TWO_EFFECTS_SCENE))
 
-        assertEquals(setOf("shaders/sky.shader.json"), project.shaderEffects.documents.keys)
+        assertEquals(setOf("shaders/sky.shader.json"), project.content[ShaderEffectsCapability.Effects]?.documents?.keys)
     }
 
     @Test
     fun anEffectAttachesThroughAHostRendererAndIsDetachedWhenTheSceneCloses() = runTest {
-        val project = loadPlayableProject(files(SKY_SCENE))
+        val project = loadProject(files(SKY_SCENE))
         val renderer = HostRenderer()
-        val systems = playSystemsFor(project.scene, services(renderer, project.shaderEffects))
+        val systems = sceneSystemsFor(project.scene, services(renderer, project.content))
         val world = World().also { SceneLoader.instantiate(project.scene, it) }
 
         repeat(2) { systems.frame.forEach { system -> system.update(world, 1f / 60f) } }

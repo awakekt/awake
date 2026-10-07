@@ -15,12 +15,16 @@ import kotlin.random.Random
 enum class Waveform {
     /** Pure sinusoidal oscillation. */
     SINE,
+
     /** Square wave alternating between positive and negative extrema. */
     SQUARE,
+
     /** Linear rising and falling triangular wave. */
     TRIANGLE,
+
     /** Linear ramp waveform with rich harmonics. */
     SAWTOOTH,
+
     /** Uniform pseudo-random noise. */
     NOISE,
 }
@@ -78,18 +82,25 @@ data class AdsrEnvelope(
 class SoundSpecBuilder(val id: String, val name: String) {
     /** Duration of the generated sound in seconds. */
     var duration: Float = 0.2f
+
     /** Sampling rate in samples per second (Hz). */
     var sampleRate: Int = 44100
+
     /** Base waveform type to synthesize. */
     var waveform: Waveform = Waveform.SINE
+
     /** Starting oscillation frequency in Hz. */
     var startFrequencyHz: Float = 440f
+
     /** Target ending frequency in Hz for pitch sweeps, or null for constant frequency. */
     var endFrequencyHz: Float? = null
+
     /** ADSR amplitude envelope to apply. */
     var envelope: AdsrEnvelope = AdsrEnvelope()
+
     /** Low-pass filtering factor between 0.0 (unfiltered) and 1.0 (heavily filtered). */
     var lowPassFilter: Float = 0f
+
     /** Output volume multiplier between 0.0 and 1.0. */
     var volume: Float = 0.85f
 }

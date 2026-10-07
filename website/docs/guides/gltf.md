@@ -56,14 +56,14 @@ The resolver must load a model before a scene names it. Register it next to the 
 `setAssetSource` tells the resolver where to read files, including a `.gltf`'s separate buffers and
 images. `builtInSceneAssets()` registers `lit-shadow`, which the resolver does not provide.
 
-To play a whole AwakeKt Studio project, `loadPlayableProject` reads the project, loads every model its
-entry scene names, and `playProject` wires the resolver and the systems for you:
+To play a whole AwakeKt Studio project, `loadProject` reads the project, loads every model its
+entry scene names, and `runProject` wires the resolver and the systems for you:
 
 ```kotlin title="Kotlin"
 --8<-- "awake/project/runtime/src/desktopTest/kotlin/com/awakekt/awake/project/runtime/GltfDocsSampleTest.kt:project"
 ```
 
-`playProject` also starts every skinned model's first clip on a loop; see [Animation](animation.md).
+`runProject` also starts every skinned model's first clip on a loop; see [Animation](animation.md).
 
 ## What is supported
 

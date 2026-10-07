@@ -28,14 +28,7 @@ internal class EngineShowcaseLoader {
 
     suspend fun preload() {
         preloadEngineShowcases()
-        EngineShowcases.forEach { showcase ->
-            val document = SceneLoader.loadFromResource(showcase.scenePath)
-            documents[showcase.id] = when (showcase.id) {
-                "sprites-2d" -> Sprites2dExampleDriver.importScene(document)
-                "rpg-sprites-2d" -> RpgSprites2dExampleAssets.importScene(document)
-                else -> document
-            }
-        }
+        EngineShowcases.forEach { showcase -> documents[showcase.id] = loadEngineShowcaseDocument(showcase) }
     }
 
     fun activate(id: String, runtime: SceneAppLifecycleRuntime) {
@@ -82,6 +75,25 @@ internal class EngineShowcaseLoader {
  * Attached per activation because switching showcase builds a new world; the rig on the old one
  * goes with it.
  */
+/**
+ * Reads [showcase]'s scene document as the showcase runs it. A 2D showcase leaves its sprite grid and
+ * named clips to the sheet's manifest, so they are imported before the document validates.
+ */
+internal suspend fun loadEngineShowcaseDocument(showcase: EngineShowcase): SceneDocument {
+    val document = SceneLoader.loadFromResource(showcase.scenePath)
+    return when (showcase.id) {
+        "sprites-2d" -> Sprites2dExampleDriver.run {
+            preload()
+            importScene(document)
+        }
+        "rpg-sprites-2d" -> RpgSprites2dExampleAssets.run {
+            preload()
+            importScene(document)
+        }
+        else -> document
+    }
+}
+
 private fun Scene.attachOrbitCamera() {
     world.queryEach<Camera> { entity, camera ->
         if (!camera.isPrimary) return@queryEach

@@ -3,16 +3,18 @@ public abstract interface class com/awakekt/awake/scene/physics/CollisionMeshSou
 }
 
 public final class com/awakekt/awake/scene/physics/ConvexHullCollider {
-	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Integer;Lcom/awakekt/awake/physics/MotionType;IZILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Integer;Lcom/awakekt/awake/physics/MotionType;IZLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Integer;Lcom/awakekt/awake/physics/MotionType;IZLcom/awakekt/awake/physics/DegreesOfFreedom;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Integer;Lcom/awakekt/awake/physics/MotionType;IZLcom/awakekt/awake/physics/DegreesOfFreedom;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()Ljava/lang/Integer;
 	public final fun component3 ()Lcom/awakekt/awake/physics/MotionType;
 	public final fun component4-K5w6Uvk ()I
 	public final fun component5 ()Z
-	public final fun copy-Es-yZLk (Ljava/lang/String;Ljava/lang/Integer;Lcom/awakekt/awake/physics/MotionType;IZ)Lcom/awakekt/awake/scene/physics/ConvexHullCollider;
-	public static synthetic fun copy-Es-yZLk$default (Lcom/awakekt/awake/scene/physics/ConvexHullCollider;Ljava/lang/String;Ljava/lang/Integer;Lcom/awakekt/awake/physics/MotionType;IZILjava/lang/Object;)Lcom/awakekt/awake/scene/physics/ConvexHullCollider;
+	public final fun component6 ()Lcom/awakekt/awake/physics/DegreesOfFreedom;
+	public final fun copy-3p-DiaE (Ljava/lang/String;Ljava/lang/Integer;Lcom/awakekt/awake/physics/MotionType;IZLcom/awakekt/awake/physics/DegreesOfFreedom;)Lcom/awakekt/awake/scene/physics/ConvexHullCollider;
+	public static synthetic fun copy-3p-DiaE$default (Lcom/awakekt/awake/scene/physics/ConvexHullCollider;Ljava/lang/String;Ljava/lang/Integer;Lcom/awakekt/awake/physics/MotionType;IZLcom/awakekt/awake/physics/DegreesOfFreedom;ILjava/lang/Object;)Lcom/awakekt/awake/scene/physics/ConvexHullCollider;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDegreesOfFreedom ()Lcom/awakekt/awake/physics/DegreesOfFreedom;
 	public final fun getLayer-K5w6Uvk ()I
 	public final fun getMesh ()Ljava/lang/String;
 	public final fun getMotion ()Lcom/awakekt/awake/physics/MotionType;
@@ -23,14 +25,16 @@ public final class com/awakekt/awake/scene/physics/ConvexHullCollider {
 }
 
 public final class com/awakekt/awake/scene/physics/MeshCollider {
-	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Integer;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Integer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Integer;ILcom/awakekt/awake/physics/DegreesOfFreedom;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Integer;ILcom/awakekt/awake/physics/DegreesOfFreedom;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()Ljava/lang/Integer;
 	public final fun component3-K5w6Uvk ()I
-	public final fun copy-96gzcAE (Ljava/lang/String;Ljava/lang/Integer;I)Lcom/awakekt/awake/scene/physics/MeshCollider;
-	public static synthetic fun copy-96gzcAE$default (Lcom/awakekt/awake/scene/physics/MeshCollider;Ljava/lang/String;Ljava/lang/Integer;IILjava/lang/Object;)Lcom/awakekt/awake/scene/physics/MeshCollider;
+	public final fun component4 ()Lcom/awakekt/awake/physics/DegreesOfFreedom;
+	public final fun copy-Jjiw2vg (Ljava/lang/String;Ljava/lang/Integer;ILcom/awakekt/awake/physics/DegreesOfFreedom;)Lcom/awakekt/awake/scene/physics/MeshCollider;
+	public static synthetic fun copy-Jjiw2vg$default (Lcom/awakekt/awake/scene/physics/MeshCollider;Ljava/lang/String;Ljava/lang/Integer;ILcom/awakekt/awake/physics/DegreesOfFreedom;ILjava/lang/Object;)Lcom/awakekt/awake/scene/physics/MeshCollider;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDegreesOfFreedom ()Lcom/awakekt/awake/physics/DegreesOfFreedom;
 	public final fun getLayer-K5w6Uvk ()I
 	public final fun getMesh ()Ljava/lang/String;
 	public final fun getPrimitive ()Ljava/lang/Integer;
@@ -44,16 +48,18 @@ public final class com/awakekt/awake/scene/physics/MeshColliderSystem : com/awak
 }
 
 public final class com/awakekt/awake/scene/physics/PhysicsBody {
-	public synthetic fun <init> (Lcom/awakekt/awake/physics/PhysicsShape;Lcom/awakekt/awake/physics/MotionType;IZLcom/awakekt/awake/physics/BodyHandle;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public synthetic fun <init> (Lcom/awakekt/awake/physics/PhysicsShape;Lcom/awakekt/awake/physics/MotionType;IZLcom/awakekt/awake/physics/BodyHandle;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/physics/PhysicsShape;Lcom/awakekt/awake/physics/MotionType;IZLcom/awakekt/awake/physics/BodyHandle;Lcom/awakekt/awake/physics/DegreesOfFreedom;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/physics/PhysicsShape;Lcom/awakekt/awake/physics/MotionType;IZLcom/awakekt/awake/physics/BodyHandle;Lcom/awakekt/awake/physics/DegreesOfFreedom;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lcom/awakekt/awake/physics/PhysicsShape;
 	public final fun component2 ()Lcom/awakekt/awake/physics/MotionType;
 	public final fun component3-K5w6Uvk ()I
 	public final fun component4 ()Z
 	public final fun component5-V_ezQ8E ()Lcom/awakekt/awake/physics/BodyHandle;
-	public final fun copy-WPkvr74 (Lcom/awakekt/awake/physics/PhysicsShape;Lcom/awakekt/awake/physics/MotionType;IZLcom/awakekt/awake/physics/BodyHandle;)Lcom/awakekt/awake/scene/physics/PhysicsBody;
-	public static synthetic fun copy-WPkvr74$default (Lcom/awakekt/awake/scene/physics/PhysicsBody;Lcom/awakekt/awake/physics/PhysicsShape;Lcom/awakekt/awake/physics/MotionType;IZLcom/awakekt/awake/physics/BodyHandle;ILjava/lang/Object;)Lcom/awakekt/awake/scene/physics/PhysicsBody;
+	public final fun component6 ()Lcom/awakekt/awake/physics/DegreesOfFreedom;
+	public final fun copy-1p8WJ88 (Lcom/awakekt/awake/physics/PhysicsShape;Lcom/awakekt/awake/physics/MotionType;IZLcom/awakekt/awake/physics/BodyHandle;Lcom/awakekt/awake/physics/DegreesOfFreedom;)Lcom/awakekt/awake/scene/physics/PhysicsBody;
+	public static synthetic fun copy-1p8WJ88$default (Lcom/awakekt/awake/scene/physics/PhysicsBody;Lcom/awakekt/awake/physics/PhysicsShape;Lcom/awakekt/awake/physics/MotionType;IZLcom/awakekt/awake/physics/BodyHandle;Lcom/awakekt/awake/physics/DegreesOfFreedom;ILjava/lang/Object;)Lcom/awakekt/awake/scene/physics/PhysicsBody;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDegreesOfFreedom ()Lcom/awakekt/awake/physics/DegreesOfFreedom;
 	public final fun getHandle-V_ezQ8E ()Lcom/awakekt/awake/physics/BodyHandle;
 	public final fun getLayer-K5w6Uvk ()I
 	public final fun getMotionType ()Lcom/awakekt/awake/physics/MotionType;
@@ -252,16 +258,18 @@ public final class com/awakekt/awake/scene/physics/SceneMeshShape$Companion {
 public final class com/awakekt/awake/scene/physics/ScenePhysicsBody : com/awakekt/awake/scene/document/SceneComponent {
 	public static final field Companion Lcom/awakekt/awake/scene/physics/ScenePhysicsBody$Companion;
 	public fun <init> ()V
-	public fun <init> (Lcom/awakekt/awake/scene/physics/SceneCollisionShape;Lcom/awakekt/awake/physics/MotionType;Ljava/lang/Integer;Z)V
-	public synthetic fun <init> (Lcom/awakekt/awake/scene/physics/SceneCollisionShape;Lcom/awakekt/awake/physics/MotionType;Ljava/lang/Integer;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/scene/physics/SceneCollisionShape;Lcom/awakekt/awake/physics/MotionType;Ljava/lang/Integer;ZLcom/awakekt/awake/physics/DegreesOfFreedom;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/scene/physics/SceneCollisionShape;Lcom/awakekt/awake/physics/MotionType;Ljava/lang/Integer;ZLcom/awakekt/awake/physics/DegreesOfFreedom;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lcom/awakekt/awake/scene/physics/SceneCollisionShape;
 	public final fun component2 ()Lcom/awakekt/awake/physics/MotionType;
 	public final fun component3 ()Ljava/lang/Integer;
 	public final fun component4 ()Z
-	public final fun copy (Lcom/awakekt/awake/scene/physics/SceneCollisionShape;Lcom/awakekt/awake/physics/MotionType;Ljava/lang/Integer;Z)Lcom/awakekt/awake/scene/physics/ScenePhysicsBody;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/physics/ScenePhysicsBody;Lcom/awakekt/awake/scene/physics/SceneCollisionShape;Lcom/awakekt/awake/physics/MotionType;Ljava/lang/Integer;ZILjava/lang/Object;)Lcom/awakekt/awake/scene/physics/ScenePhysicsBody;
+	public final fun component5 ()Lcom/awakekt/awake/physics/DegreesOfFreedom;
+	public final fun copy (Lcom/awakekt/awake/scene/physics/SceneCollisionShape;Lcom/awakekt/awake/physics/MotionType;Ljava/lang/Integer;ZLcom/awakekt/awake/physics/DegreesOfFreedom;)Lcom/awakekt/awake/scene/physics/ScenePhysicsBody;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/physics/ScenePhysicsBody;Lcom/awakekt/awake/scene/physics/SceneCollisionShape;Lcom/awakekt/awake/physics/MotionType;Ljava/lang/Integer;ZLcom/awakekt/awake/physics/DegreesOfFreedom;ILjava/lang/Object;)Lcom/awakekt/awake/scene/physics/ScenePhysicsBody;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getAllowsMultiplePerNode ()Z
+	public final fun getDegreesOfFreedom ()Lcom/awakekt/awake/physics/DegreesOfFreedom;
 	public final fun getLayer ()Ljava/lang/Integer;
 	public final fun getMotion ()Lcom/awakekt/awake/physics/MotionType;
 	public final fun getSensor ()Z

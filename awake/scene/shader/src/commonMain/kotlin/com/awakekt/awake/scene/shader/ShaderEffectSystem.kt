@@ -41,7 +41,7 @@ import kotlinx.coroutines.launch
  *   since this system first saw it, carried across a re-attach.
  *
  * Attaches start from [update] on the frame thread and may resume anywhere; results are applied on the
- * next [update]. Call [release] when the scene is disposed: systems have no dispose hook of their own.
+ * next [update]. [close] it when the scene is disposed: systems have no dispose hook of their own.
  *
  * @param host What content features attach to. Null, as with a renderer that draws nothing, runs the
  * system without drawing.
@@ -50,7 +50,7 @@ import kotlinx.coroutines.launch
 class ShaderEffectSystem(
     private val host: ContentFeatureHost?,
     assets: ShaderEffectAssets,
-) : System {
+) : System, AutoCloseable {
     /** The documents and images effects draw from. Setting a new one re-attaches what changed in it. */
     var assets: ShaderEffectAssets = assets
         set(value) {
@@ -95,7 +95,7 @@ class ShaderEffectSystem(
     }
 
     /** Detaches every effect this system attached and cancels what is still attaching. */
-    fun release() {
+    override fun close() {
         tracked.forEach(Tracked::release)
         tracked.clear()
         while (true) {
