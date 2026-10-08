@@ -74,8 +74,9 @@ private fun meshVariant(name: String, instanced: Boolean, skinned: Boolean): Asl
             null
         }
 
+        val instanceTints = if (skinned && instanced) skinnedInstanceTints() else null
         val out = varyings("VertexOutput")
-        val color by out.varying(GpuDataShape.Vec3, location = 0)
+        val color by out.varying(if (instanceTints != null) GpuDataShape.Vec4 else GpuDataShape.Vec3, location = 0)
         val normal by out.varying(GpuDataShape.Vec3, location = 1)
 
         vertex {
@@ -111,7 +112,7 @@ private fun meshVariant(name: String, instanced: Boolean, skinned: Boolean): Asl
                 out.position set (camera * position)
                 normal set if (skinned) outNormal.xyz else outNormal
             }
-            color set ins.input(VertexSemantic.Color)
+            color set instanceTintedColor(ins.input(VertexSemantic.Color), instanceTints, instance)
         }
 
         val lightVector = lightDirection?.xyz
@@ -123,12 +124,13 @@ private fun meshVariant(name: String, instanced: Boolean, skinned: Boolean): Asl
             val l = let("l", normalize(lightVector))
             val diffuse = let("diffuse", max(dot(n, l), 0f.lit))
             val shade = let("shade", ambient + (1f.lit - ambient) * diffuse)
-            val lit = if (lightColor != null) color * shade * lightColor.xyz else color * shade
+            val rgb = if (instanceTints != null) color.xyz else color
+            val lit = if (lightColor != null) rgb * shade * lightColor.xyz else rgb * shade
             // Colours here are display-referred, lit as stored; the transform decodes them first.
             if (tint != null && glow != null) {
                 colorOutput(vec4(displayTransform.displayReferred(lit * tint.xyz + glow.xyz, exposure.x), tint.w))
             } else {
-                colorOutput(vec4(displayTransform.displayReferred(lit, exposure.x), 1f.lit))
+                colorOutput(vec4(displayTransform.displayReferred(lit, exposure.x), if (instanceTints != null) color.w else 1f.lit))
             }
         }
     }

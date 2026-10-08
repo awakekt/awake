@@ -120,11 +120,17 @@ class InstanceBatchingTest {
             material,
             instanceModels = List(count) { at(it.toFloat()) },
             instanceJointPalettes = List(count) { floatArrayOf(it.toFloat()) },
+            instanceColors = List(count) { Vec4(it.toFloat(), 0f, 0f, 1f) },
         )
 
-        val sizes = batchInstances(listOf(draw)) { _, _ -> true }.map { it.instanceJointPalettes!!.size }
+        val batches = batchInstances(listOf(draw)) { _, _ -> true }
+        val sizes = batches.map { it.instanceJointPalettes!!.size }
 
         assertEquals(listOf(MAX_SKINNED_BATCHED_INSTANCES, MAX_SKINNED_BATCHED_INSTANCES, 1), sizes)
+        for (batch in batches) {
+            assertEquals(batch.instanceJointPalettes!!.map { it[0] }, batch.instanceColors!!.map { it.x })
+            assertEquals(batch.instanceModels!!.size, batch.instanceColors!!.size)
+        }
     }
 
     @Test

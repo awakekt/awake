@@ -1,0 +1,1 @@
+- Release Vulkan camera-depth resources and placeholder descriptor layouts during engine teardown.

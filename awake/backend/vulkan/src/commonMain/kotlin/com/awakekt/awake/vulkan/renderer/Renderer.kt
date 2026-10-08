@@ -515,6 +515,7 @@ class Renderer internal constructor(
         // is the only thing that knows the list's full membership.
         renderFeatures.forEach { it.destroy() }
         depthPrePass?.destroy()
+        sceneDepthPass?.destroy()
         var index = 0
         val count = framebuffers.size
         while (index < count) {

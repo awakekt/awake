@@ -259,7 +259,7 @@ private fun Renderer.prepareInstancedGpuDraw(
             materialBinding = resources.binding
             jointPaletteBinding = cmd.instanceJointPalettes?.let { palettes ->
                 skinnedInstanceBufferForRun(instanceIndex).run {
-                    update(palettes)
+                    update(palettes, cmd.instanceColors)
                     bindingFor(pipeline)
                 }
             }

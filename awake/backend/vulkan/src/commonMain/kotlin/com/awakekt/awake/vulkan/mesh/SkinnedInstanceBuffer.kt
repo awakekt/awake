@@ -6,7 +6,10 @@
 package com.awakekt.awake.vulkan.mesh
 
 import com.awakekt.awake.core.geometry.GpuDataShape
+import com.awakekt.awake.core.math.Vec4
 import com.awakekt.awake.render.passes.InstancePacker
+import com.awakekt.awake.render.passes.InstanceTintPacker
+import com.awakekt.awake.render.renderer.SkinnedInstanceLayout
 import com.awakekt.awake.vulkan.device.GraphicsDevice
 import com.awakekt.awake.vulkan.enums.VkShaderStageFlagBits
 import com.awakekt.awake.vulkan.enums.flags.VkMemoryPropertyFlagBits
@@ -29,7 +32,7 @@ import com.awakekt.awake.vulkan.models.info.VkMemoryAllocateInfo
 import com.awakekt.awake.vulkan.pipeline.VulkanMaterialBinding
 
 /**
- * The per-instance JOINT PALETTES behind one animated instanced draw call -- [InstanceBuffer]'s
+ * The per-instance joint palettes and tints behind one animated instanced draw call -- [InstanceBuffer]'s
  * animated companion, with the same HOST_VISIBLE|HOST_COHERENT, fixed-capacity,
  * rewritten-wholesale-per-frame-slot lifecycle. Two things differ:
  *
@@ -42,13 +45,14 @@ import com.awakekt.awake.vulkan.pipeline.VulkanMaterialBinding
  *   [com.awakekt.awake.vulkan.material.Material]'s set. That set (set 0) is shared
  *   by every pipeline in the renderer; adding a palette binding to it would force every
  *   material -- textured, lit, UI -- to carry a storage descriptor it never writes. So this
- *   binds as set 1 ([PALETTE_SET]), the conventional per-draw-frequency split.
+ *   is bound by the shared renderer at its joint-palette semantic slot. Binding 0 holds
+ *   the unchanged palette records; binding 1 holds one RGBA tint per instance.
  */
 class SkinnedInstanceBuffer(
     private val graphicsDevice: GraphicsDevice,
     /** Hard ceiling on animated instances per draw call. Each one costs
-     * [FLOATS_PER_INSTANCE] floats = 4 KB of host-visible memory PER FRAME SLOT (64 `mat4`
-     * joints), 16x what a static instance costs in [InstanceBuffer] -- so raising this is a
+     * [FLOATS_PER_INSTANCE] palette floats plus four tint floats per frame slot (64 `mat4`
+     * joints and one RGBA tint), approximately 16x what a static instance costs in [InstanceBuffer] -- so raising this is a
      * real memory decision, not a free knob. [update] fails loudly naming it rather than
      * silently truncating. */
     private val maxInstances: Int = DEFAULT_MAX_INSTANCES,
@@ -72,17 +76,26 @@ class SkinnedInstanceBuffer(
     }
 
     private val byteSize = (maxInstances.toLong() * FLOATS_PER_INSTANCE * Float.SIZE_BYTES)
+    private val tintByteSize = maxInstances.toLong() * SkinnedInstanceLayout.TINT_FLOATS * Float.SIZE_BYTES
+    private val tintPacker = InstanceTintPacker()
 
     private val frameResources: Array<FrameResources> = Array(framesInFlight) {
-        val (buffer, memory) = allocateHostVisibleBuffer(byteSize)
+        val (buffer, memory) = allocateHostVisibleBuffer(byteSize + tintByteSize)
         val pool = createDescriptorPool()
         val set = VulkanDescriptors.vkAllocateDescriptorSet(device, pool, descriptorSetLayout.handle)
         VulkanDescriptors.vkUpdateDescriptorSetBuffer(
             device,
             set,
-            0,
+            SkinnedInstanceLayout.PALETTE_BINDING,
             VkDescriptorType.VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
             VkDescriptorBufferInfo(buffer = buffer, range = byteSize),
+        )
+        VulkanDescriptors.vkUpdateDescriptorSetBuffer(
+            device,
+            set,
+            SkinnedInstanceLayout.TINT_BINDING,
+            VkDescriptorType.VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+            VkDescriptorBufferInfo(buffer = buffer, offset = byteSize, range = tintByteSize),
         )
         FrameResources(
             BufferHandle(buffer),
@@ -96,7 +109,7 @@ class SkinnedInstanceBuffer(
 
     /** Packs [palettes] into this frame slot's buffer at a fixed [FLOATS_PER_INSTANCE] stride --
      * the shader indexes `palettes[instance_index]` as an array of fixed-size structs, so a
-     * shorter palette (a skin with fewer than [MAX_JOINTS] joints, e.g. CesiumMan's 19) is
+     * shorter palette (a skin with fewer than [MAX_JOINTS] joints) is
      * written at the start of its slot and the rest of the slot is simply never indexed. */
     private val packer = InstancePacker<FloatArray>(
         GpuDataShape.Mat4,
@@ -109,15 +122,17 @@ class SkinnedInstanceBuffer(
         palette.copyInto(out, offset)
     }
 
-    fun update(frameIndex: Int, palettes: List<FloatArray>) {
+    fun update(frameIndex: Int, palettes: List<FloatArray>) = update(frameIndex, palettes, null)
+
+    /** Uploads index-aligned tints, defaulting to white when omitted. */
+    fun update(frameIndex: Int, palettes: List<FloatArray>, colors: List<Vec4>?) {
+        val tints = tintPacker.pack(colors, palettes.size, maxInstances) ?: return
         val floats = packer.pack(palettes, maxInstances) ?: return
         VulkanBuffers.writeBufferMemoryFloats(device, resourcesFor(frameIndex).memory.handle, 0, floats)
+        VulkanBuffers.writeBufferMemoryFloats(device, resourcesFor(frameIndex).memory.handle, byteSize, tints)
     }
 
-    /** Binds this frame slot's palette descriptor set as [PALETTE_SET]. The material's own set 0
-     * is bound separately (see `RendererDraw3D.recordDrawCalls`). */
-    /** This frame slot's palette descriptor set, for the shared opaque feature to bind at
-     * [PALETTE_SET]. */
+    /** This frame slot's descriptor set, bound at the shared joint-palette semantic slot. */
     fun binding(frameIndex: Int): VulkanMaterialBinding = resourcesFor(frameIndex)
 
     fun bind(frameIndex: Int, commandBuffer: Long, pipelineLayout: Long) {
@@ -152,7 +167,7 @@ class SkinnedInstanceBuffer(
             pPoolSizes = arrayOf(
                 VkDescriptorPoolSize(
                     type = VkDescriptorType.VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-                    descriptorCount = 1,
+                    descriptorCount = 2,
                 ),
             ),
         ),
@@ -186,7 +201,7 @@ class SkinnedInstanceBuffer(
         const val MAX_JOINTS = com.awakekt.awake.render.renderer.MAX_JOINTS
 
         /** One fixed-size `JointPalette` struct: 64 `mat4` = 1024 floats = 4 KB per instance. */
-        val FLOATS_PER_INSTANCE = MAX_JOINTS * GpuDataShape.Mat4.componentCount
+        val FLOATS_PER_INSTANCE = SkinnedInstanceLayout.PALETTE_FLOATS
 
         /** 256 * 4 KB = 1 MB per frame slot. Far lower than [InstanceBuffer]'s 4096 because an
          * animated instance costs 16x a static one -- 4096 here would be 16 MB per slot. */
@@ -195,8 +210,8 @@ class SkinnedInstanceBuffer(
         /** Descriptor set 1 -- set 0 is the material's. See this class's own doc comment. */
         const val PALETTE_SET = 1
 
-        /** The one-binding storage layout `skinned_instanced.wgsl` declares at
-         * `@group(1) @binding(0)`. Both this class (for its own descriptor sets) and whoever
+        /** The storage layout declares palettes at binding 0 and tints at binding 1.
+         * Both this class (for its own descriptor sets) and whoever
          * builds the skinned-instanced pipeline layout call this and get their OWN handle:
          * Vulkan set layouts are compatible by identical declaration, not by object identity,
          * so nothing has to be threaded from the bootstrap into every pooled buffer. */
@@ -207,7 +222,12 @@ class SkinnedInstanceBuffer(
                     VkDescriptorSetLayoutCreateInfo(
                         pBindings = arrayOf(
                             VkDescriptorSetLayoutBinding(
-                                binding = 0,
+                                binding = SkinnedInstanceLayout.PALETTE_BINDING,
+                                descriptorType = VkDescriptorType.VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+                                stageFlags = VkShaderStageFlagBits.VERTEX.value,
+                            ),
+                            VkDescriptorSetLayoutBinding(
+                                binding = SkinnedInstanceLayout.TINT_BINDING,
                                 descriptorType = VkDescriptorType.VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
                                 stageFlags = VkShaderStageFlagBits.VERTEX.value,
                             ),

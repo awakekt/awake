@@ -1,0 +1,1 @@
+- Support per-instance RGBA tinting of instanced skinned draws on Vulkan and WebGPU, defaulting omitted tints to white while preserving the joint-palette layout used by depth and shadow passes.
