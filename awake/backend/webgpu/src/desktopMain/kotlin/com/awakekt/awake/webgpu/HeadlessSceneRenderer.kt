@@ -23,6 +23,7 @@ import com.awakekt.awake.render.testing.HeadlessRenderSession
 import com.awakekt.awake.webgpu.application.WebGpuContentFeatureGpu
 import com.awakekt.awake.webgpu.debug.LineRenderPipeline
 import com.awakekt.awake.webgpu.device.GraphicsDevice
+import com.awakekt.awake.webgpu.device.withGpuTiming
 import com.awakekt.awake.webgpu.handles.DescriptorSetLayoutHandle
 import com.awakekt.awake.webgpu.pipeline.DepthOnlyPipeline
 import com.awakekt.awake.webgpu.pipeline.DepthPrePassFeature
@@ -56,7 +57,7 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
         onUncapturedError = { error -> println("WGPU UNCAPTURED: $error") },
     )
     val graphicsDevice = GraphicsDevice()
-    graphicsDevice.create(context.wgpuContext)
+    graphicsDevice.create(context.wgpuContext.withGpuTiming { error -> println("WGPU UNCAPTURED: $error") })
     val swapchainManager = SwapchainManager(graphicsDevice, FRAMES_IN_FLIGHT)
     swapchainManager.create()
     val scenePipeline = RenderPipeline(

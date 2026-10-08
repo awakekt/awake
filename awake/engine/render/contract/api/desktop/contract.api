@@ -1274,6 +1274,14 @@ public final class com/awakekt/awake/render/pipeline/UiShaderSet {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/render/renderer/GpuFrameTimeCounter {
+	public fun <init> ()V
+	public final fun beginSubmission ()J
+	public final fun completeSubmission (JLjava/lang/Double;)V
+	public final fun getLatestMs ()Ljava/lang/Float;
+	public final fun publish ()V
+}
+
 public final class com/awakekt/awake/render/renderer/LineSegment {
 	public fun <init> (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/color/Color;)V
 	public final fun component1 ()Lcom/awakekt/awake/core/math/Vec3f;

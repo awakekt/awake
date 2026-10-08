@@ -290,6 +290,7 @@ class Renderer internal constructor(
     internal var submittedOffscreenCommandBuffer: Long = 0
     internal var submittedOffscreenFence: Long = 0
     internal var submittedOffscreenFrame: Int = NO_SUBMITTED_OFFSCREEN_FRAME
+    internal var submittedOffscreenTiming: Long? = null
     internal var framebuffers: List<Long> = emptyList()
     internal var commandBuffers: LongArray = LongArray(maxFramesInFlight)
 

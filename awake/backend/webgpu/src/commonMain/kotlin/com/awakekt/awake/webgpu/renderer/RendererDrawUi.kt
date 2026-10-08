@@ -50,8 +50,7 @@ internal fun Renderer.performDrawUiToTexture(target: RenderTarget, primitives: L
         it.writeScreenSize(offscreen.width.toFloat(), offscreen.height.toFloat())
     }
     uiRoundedQuadRenderPipeline?.writeScreenSize(offscreen.width.toFloat(), offscreen.height.toFloat())
-    val device = graphicsDevice.wgpuContext.device
-    val encoder = device.createCommandEncoder()
+    val encoder = createRenderEncoder()
     encoder.beginRenderPass(
         RenderPassDescriptor(
             colorAttachments = listOf(
@@ -82,7 +81,7 @@ internal fun Renderer.performDrawUiToTexture(target: RenderTarget, primitives: L
         )
         end()
     }
-    device.queue.submit(listOf(encoder.finish()))
+    submitRenderCommands(encoder)
 }
 
 /** Runs one sampled full-target composite; source and destination are never attached here. */
@@ -114,8 +113,7 @@ internal fun Renderer.performCompositeUiTargets(
             mode,
         )
     }
-    val device = graphicsDevice.wgpuContext.device
-    val encoder = device.createCommandEncoder()
+    val encoder = createRenderEncoder()
     encoder.beginRenderPass(
         RenderPassDescriptor(
             colorAttachments = listOf(
@@ -134,7 +132,7 @@ internal fun Renderer.performCompositeUiTargets(
         statsCounter.recordDraw(3)
         end()
     }
-    device.queue.submit(listOf(encoder.finish()))
+    submitRenderCommands(encoder)
 }
 
 /** WebGPU's mesh allocation for [uploadUiRuns]. Single-buffered, so no frame index. */

@@ -1,0 +1,1 @@
+- Report GPU frame time on WebGPU adapters supporting timestamp queries and include offscreen scene and UI rendering in frame timing on Vulkan and WebGPU without blocking for readback.

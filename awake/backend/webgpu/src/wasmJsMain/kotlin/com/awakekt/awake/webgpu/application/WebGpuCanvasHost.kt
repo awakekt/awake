@@ -12,12 +12,12 @@ import com.awakekt.awake.core.logging.LogLevel
 import com.awakekt.awake.core.logging.PrintLogSink
 import com.awakekt.awake.engine.window.findCanvas
 import com.awakekt.awake.engine.window.runBrowserCanvas
+import com.awakekt.awake.webgpu.device.createCanvasGpuContext
 import io.ygdrasil.webgpu.CompositeAlphaMode
 import io.ygdrasil.webgpu.GPUTextureUsage
 import io.ygdrasil.webgpu.GPUUncapturedErrorCallback
 import io.ygdrasil.webgpu.SurfaceConfiguration
 import io.ygdrasil.webgpu.WGPUContext
-import io.ygdrasil.webgpu.canvasContextRenderer
 import web.html.HTMLCanvasElement
 
 /**
@@ -57,11 +57,11 @@ fun launchWebGpuGame(
         // the failure every frame.
         isStopped = { runtimeFailure != null },
         initBackend = { _, width, height ->
-            val canvasContext = canvasContextRenderer(
-                htmlCanvas = canvas,
-                width = width,
-                height = height,
-                onUncapturedError = GPUUncapturedErrorCallback { error ->
+            val resolvedContext = createCanvasGpuContext(
+                canvas,
+                width,
+                height,
+                GPUUncapturedErrorCallback { error ->
                     if (runtimeFailure == null) {
                         val message = "WebGPU uncaptured error: ${error.message}"
                         runtimeFailure = message
@@ -69,7 +69,6 @@ fun launchWebGpuGame(
                     }
                 },
             )
-            val resolvedContext = canvasContext.wgpuContext
             wgpuContext = resolvedContext
             configureSurface(resolvedContext)
             application.create(resolvedContext)
@@ -87,8 +86,8 @@ private external fun reportWebGpuRuntimeFailure(message: String)
 
 /**
  * Configures the canvas surface using the browser's own preferred format
- * ([WGPUContext.renderingContext]'s `textureFormat`, resolved once by wgpu4k's
- * `canvasContextRenderer()` from `navigator.gpu.getPreferredCanvasFormat()`) rather than a
+ * ([WGPUContext.renderingContext]'s `textureFormat`, resolved once from
+ * `navigator.gpu.getPreferredCanvasFormat()`) rather than a
  * hardcoded guess -- configuring with any other format forces WebGPU to insert an extra copy
  * on every present (Chrome's console warns about exactly this). Every render pipeline in this
  * module reads the same resolved format back via `SwapchainManager.imageFormatWebGpu`, so

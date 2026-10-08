@@ -12,6 +12,7 @@ import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.testing.HeadlessRenderSession
 import com.awakekt.awake.webgpu.application.WebGpuEngine
+import com.awakekt.awake.webgpu.device.withGpuTiming
 import io.ygdrasil.webgpu.glfwContextRenderer
 import kotlinx.coroutines.runBlocking
 
@@ -39,7 +40,7 @@ class HeadlessWebGpuEngine(
             title = "awake-headless-webgpu",
             onUncapturedError = { error -> println("WGPU UNCAPTURED: $error") },
         )
-        create(context.wgpuContext)
+        create(context.wgpuContext.withGpuTiming { error -> println("WGPU UNCAPTURED: $error") })
         return renderer
     }
 
