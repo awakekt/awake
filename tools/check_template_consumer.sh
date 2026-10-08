@@ -78,7 +78,7 @@ CORE_VERSION="$CORE_VERSION" VULKAN_VERSION="$VULKAN_VERSION" perl -0pi -e \
 
 # Snapshot family artifacts are served from Central's dedicated snapshot repository.
 SETTINGS="$CHECKOUT/settings.gradle.kts"
-if ! rg -q 'central\.sonatype\.com/repository/maven-snapshots' "$SETTINGS"; then
+if ! grep -q 'central\.sonatype\.com/repository/maven-snapshots' "$SETTINGS"; then
   perl -0pi -e 's#(dependencyResolutionManagement\s*\{\s*repositories\s*\{\n)#$1        maven("https://central.sonatype.com/repository/maven-snapshots/")\n#' "$SETTINGS"
 fi
 grep -E '^awake(-vulkan)? = ' "$CATALOG"
