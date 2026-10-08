@@ -64,6 +64,7 @@ import com.awakekt.awake.vulkan.pipeline.VulkanUiPass
 import com.awakekt.awake.vulkan.pipeline.createSceneRenderPass
 import com.awakekt.awake.vulkan.pipeline.requireSpirV
 import com.awakekt.awake.vulkan.renderer.Renderer
+import com.awakekt.awake.vulkan.renderer.activeUiPipelineTargets
 import com.awakekt.awake.vulkan.renderer.rebuildSwapchainResources
 import com.awakekt.awake.vulkan.renderer.releaseSwapchainResources
 import com.awakekt.awake.vulkan.surfaceFramebufferExtent
@@ -680,7 +681,11 @@ open class VulkanEngine(
                 sceneDepthPass = sceneDepthPass,
             ).also { renderer ->
                 renderer.contentFeatureHost = contentAttacher
-                renderer.shaderReplacement = VulkanShaderReplacement(graphicsDevice, pipelineRegistry) { vertex, fragment ->
+                renderer.shaderReplacement = VulkanShaderReplacement(
+                    graphicsDevice,
+                    pipelineRegistry,
+                    uiTargets = { renderer.activeUiPipelineTargets() },
+                ) { vertex, fragment ->
                     loadShaderPair(replacementResolver, vertex, fragment)
                 }
                 bindDepthPlaceholder(renderer)

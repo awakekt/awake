@@ -34,7 +34,7 @@ import io.ygdrasil.webgpu.VertexState
 /** A full-target sampled composite. Its shader owns the alpha-correct blend equations once. */
 internal class UiTargetCompositePipeline(
     graphicsDevice: GraphicsDevice,
-    swapchainManager: SwapchainManager,
+    private val swapchainManager: SwapchainManager,
     shaderCode: ByteArray,
     mode: UiTargetCompositeMode,
 ) {
@@ -47,27 +47,47 @@ internal class UiTargetCompositePipeline(
         ),
     )
     private val bindGroups = HashMap<Pair<OffscreenRenderTarget, OffscreenRenderTarget>, GPUBindGroup>()
-    val pipeline: GPURenderPipeline
+    var pipeline: GPURenderPipeline
+        private set
 
     init {
+        device.queue.writeBufferData(modeBuffer, 0uL, fastArrayBufferOf(intArrayOf(mode.ordinal)))
+        pipeline = buildPipeline(shaderCode.decodeToString(), vertexEntryPoint = "vertexMain", fragmentEntryPoint = "fragmentMain")
+    }
+
+    internal fun buildPipeline(
+        wgslSource: String,
+        vertexEntryPoint: String = "vertexMain",
+        fragmentEntryPoint: String = "fragmentMain",
+    ): GPURenderPipeline {
         val module = device.createShaderModule(
             ShaderModuleDescriptor(
-                code = shaderCode.decodeToString(),
+                code = wgslSource,
             ),
         )
-        device.queue.writeBufferData(modeBuffer, 0uL, fastArrayBufferOf(intArrayOf(mode.ordinal)))
-        pipeline = device.createRenderPipeline(
-            RenderPipelineDescriptor(
-                layout = device.createAwakePipelineLayout(mapOf(0 to GroupBindings.UiTargetComposite)),
-                vertex = VertexState(module = module, entryPoint = "vertexMain"),
-                fragment = FragmentState(
-                    module = module,
-                    entryPoint = "fragmentMain",
-                    targets = listOf(ColorTargetState(format = swapchainManager.imageFormatWebGpu)),
+        try {
+            return device.createRenderPipeline(
+                RenderPipelineDescriptor(
+                    layout = device.createAwakePipelineLayout(mapOf(0 to GroupBindings.UiTargetComposite)),
+                    vertex = VertexState(module = module, entryPoint = vertexEntryPoint),
+                    fragment = FragmentState(
+                        module = module,
+                        entryPoint = fragmentEntryPoint,
+                        targets = listOf(ColorTargetState(format = swapchainManager.imageFormatWebGpu)),
+                    ),
+                    primitive = PrimitiveState(topology = GPUPrimitiveTopology.TriangleList),
                 ),
-                primitive = PrimitiveState(topology = GPUPrimitiveTopology.TriangleList),
-            ),
-        )
+            )
+        } finally {
+            module.close()
+        }
+    }
+
+    internal fun swapIn(newPipeline: GPURenderPipeline): GPURenderPipeline {
+        val old = pipeline
+        pipeline = newPipeline
+        bindGroups.clear()
+        return old
     }
 
     fun bindGroupFor(source: OffscreenRenderTarget, destination: OffscreenRenderTarget): GPUBindGroup {

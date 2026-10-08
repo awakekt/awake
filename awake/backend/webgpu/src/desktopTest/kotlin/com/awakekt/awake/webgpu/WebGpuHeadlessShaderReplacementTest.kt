@@ -5,14 +5,18 @@
  */
 package com.awakekt.awake.webgpu
 
+import com.awakekt.awake.asset.shaderdsl.a
 import com.awakekt.awake.asset.shaderdsl.fieldsFrom
 import com.awakekt.awake.asset.shaderdsl.fullScreenTriangleCorner
 import com.awakekt.awake.asset.shaderdsl.lit
+import com.awakekt.awake.asset.shaderdsl.minus
 import com.awakekt.awake.asset.shaderdsl.plus
 import com.awakekt.awake.asset.shaderdsl.shader
 import com.awakekt.awake.asset.shaderdsl.times
 import com.awakekt.awake.asset.shaderdsl.vec2
 import com.awakekt.awake.asset.shaderdsl.vec4
+import com.awakekt.awake.asset.shaderdsl.xy
+import com.awakekt.awake.asset.shaderdsl.zw
 import com.awakekt.awake.asset.shaders.ContentFeatureAttacher
 import com.awakekt.awake.asset.shaders.ContentFeatureSource
 import com.awakekt.awake.asset.shaders.EngineShaderSets
@@ -23,8 +27,10 @@ import com.awakekt.awake.asset.shaders.aslShaderSet
 import com.awakekt.awake.asset.shaders.program
 import com.awakekt.awake.asset.shaders.resolveBytes
 import com.awakekt.awake.asset.shaders.spec
+import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.geometry.GpuDataShape
 import com.awakekt.awake.core.geometry.VertexFormat
+import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.command.PipelineHandle
@@ -60,6 +66,7 @@ import com.awakekt.awake.webgpu.pipeline.WebGpuShaderReplacement
 import com.awakekt.awake.webgpu.pipeline.WebGpuShaderResolver
 import com.awakekt.awake.webgpu.pipeline.WebGpuUiPass
 import com.awakekt.awake.webgpu.renderer.Renderer
+import com.awakekt.awake.webgpu.renderer.activeUiPipelineTargets
 import com.awakekt.awake.webgpu.swapchain.SwapchainManager
 import io.ygdrasil.webgpu.glfwContextRenderer
 import kotlinx.coroutines.runBlocking
@@ -72,7 +79,7 @@ import kotlin.test.assertFailsWith
  * Shaders built at runtime replace a running WebGPU pipeline's, in place: a red square becomes green,
  * then yellow, while a blue one beside it stays blue. Refused replacements change nothing.
  * Negative controls on the original implementation: a missing vertex entry point returned 1
- * instead of throwing.
+ * instead of throwing, and a second UI swap returned 0 instead of 1 after drawing green pixels.
  */
 class WebGpuHeadlessShaderReplacementTest {
 
@@ -221,6 +228,62 @@ class WebGpuHeadlessShaderReplacementTest {
         assertEquals(RED to BLUE, fixture.squares())
     }
 
+    @Test
+    fun uiQuadShaderCanBeReplacedInPlace() {
+        val fixture = shared()
+        val renderer = fixture.renderer
+        val replacement = replacement(fixture)
+        val quadTarget = renderer.createRenderTarget(SIZE, SIZE)
+        val redQuad = listOf(
+            UiDrawPrimitive.Quad(
+                x = 0f,
+                y = 0f,
+                w = SIZE.toFloat(),
+                h = SIZE.toFloat(),
+                color = Color(1f, 0f, 0f, 1f),
+            ),
+        )
+
+        try {
+            renderer.drawUiToTexture(quadTarget, redQuad, font = null)
+            var pixels = runBlocking { renderer.readPixels(quadTarget) }.data
+            var centerColor = (pixels[0].toInt() and 0xFF shl 16) or
+                (pixels[1].toInt() and 0xFF shl 8) or
+                (pixels[2].toInt() and 0xFF)
+            assertEquals(RED, centerColor, "initial UI quad renders red")
+
+            val greenQuadShader = greenUiQuadShader().webGpu
+
+            val swapped = runBlocking {
+                replacement.replace(
+                    EngineShaderSets.UiQuad.webGpu.program(),
+                    greenQuadShader.program(),
+                )
+            }
+            assertEquals(1, swapped, "replaced UI quad pipeline")
+
+            renderer.drawUiToTexture(quadTarget, redQuad, font = null)
+            pixels = runBlocking { renderer.readPixels(quadTarget) }.data
+            centerColor = (pixels[0].toInt() and 0xFF shl 16) or
+                (pixels[1].toInt() and 0xFF shl 8) or
+                (pixels[2].toInt() and 0xFF)
+            assertEquals(GREEN, centerColor, "swapped UI quad pipeline renders green")
+            assertEquals(
+                1,
+                runBlocking { replacement.replace(greenQuadShader.program(), EngineShaderSets.UiQuad.webGpu.program()) },
+                "the running green program is found by a second UI replacement",
+            )
+            renderer.drawUiToTexture(quadTarget, redQuad, font = null)
+            pixels = runBlocking { renderer.readPixels(quadTarget) }.data
+            centerColor = (pixels[0].toInt() and 0xFF shl 16) or
+                (pixels[1].toInt() and 0xFF shl 8) or
+                (pixels[2].toInt() and 0xFF)
+            assertEquals(RED, centerColor, "a second UI replacement restores red pixels")
+        } finally {
+            quadTarget.destroy()
+        }
+    }
+
     private fun replacement(fixture: WebGpuContentAttachFixture): ShaderReplacement =
         checkNotNull(fixture.renderer.capability(ShaderReplacement))
 
@@ -351,6 +414,7 @@ class WebGpuHeadlessShaderReplacementTest {
                 renderer.shaderReplacement = WebGpuShaderReplacement(
                     registry = registry,
                     device = device.wgpuContext.device,
+                    uiTargets = { renderer.activeUiPipelineTargets() },
                     onSwap = { oldPipeline -> renderer.bufferPools.invalidatePipeline(oldPipeline) },
                 )
             }
@@ -400,6 +464,33 @@ class WebGpuHeadlessShaderReplacementTest {
         val GREEN_SHADER = solidShader("green", GREEN, x = -0.5f)
         val YELLOW_SHADER = solidShader("yellow", YELLOW, x = -0.5f)
         val EXTRA_BINDING_SHADER = solidShader("extra", GREEN, x = -0.5f, extraBinding = true)
+
+        private fun greenUiQuadShader(): ShaderSet = aslShaderSet(
+            shader("green_ui_quad") {
+                val uniforms = uniformBlock("Uniforms", group = 0, binding = 0)
+                val screenToNdc by uniforms.field(GpuDataShape.Vec4)
+                val out = varyings("VertexOutput")
+                val color by out.varying(GpuDataShape.Vec4, location = 0)
+
+                vertex {
+                    val inPos by input(GpuDataShape.Vec2, location = 0)
+                    val inColor by input(GpuDataShape.Vec4, location = 1)
+                    val inTransform by input(GpuDataShape.Vec4, location = 2)
+
+                    val scale = inTransform.xy
+                    val pivot = inTransform.zw
+                    val scaledPos = pivot + (inPos - pivot) * scale
+                    val ndc = scaledPos * screenToNdc.xy + screenToNdc.zw
+                    out.position set vec4(ndc, 0f.lit, 1f.lit)
+                    color set inColor
+                }
+
+                fragment {
+                    val a = let("a", color.a)
+                    colorOutput(vec4(0f.lit, 1f.lit, 0f.lit, 1f.lit) * a)
+                }
+            },
+        )
 
         private fun square(name: String, stages: ShaderStages, variant: PipelineVariant = PipelineVariant.Overlay) = ContentFeatureSource {
             ContentFeature(

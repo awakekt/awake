@@ -5,21 +5,28 @@
  */
 package com.awakekt.awake.vulkan
 
+import com.awakekt.awake.asset.shaderdsl.a
 import com.awakekt.awake.asset.shaderdsl.fieldsFrom
 import com.awakekt.awake.asset.shaderdsl.fullScreenTriangleCorner
 import com.awakekt.awake.asset.shaderdsl.lit
+import com.awakekt.awake.asset.shaderdsl.minus
 import com.awakekt.awake.asset.shaderdsl.plus
 import com.awakekt.awake.asset.shaderdsl.shader
 import com.awakekt.awake.asset.shaderdsl.times
 import com.awakekt.awake.asset.shaderdsl.vec2
 import com.awakekt.awake.asset.shaderdsl.vec4
+import com.awakekt.awake.asset.shaderdsl.xy
+import com.awakekt.awake.asset.shaderdsl.zw
 import com.awakekt.awake.asset.shaders.ContentFeatureSource
+import com.awakekt.awake.asset.shaders.EngineShaderSets
 import com.awakekt.awake.asset.shaders.ShaderStages
 import com.awakekt.awake.asset.shaders.aslShaderSet
 import com.awakekt.awake.asset.shaders.program
 import com.awakekt.awake.asset.shaders.spec
+import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.geometry.GpuDataShape
 import com.awakekt.awake.core.geometry.VertexFormat
+import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.command.PipelineHandle
@@ -49,6 +56,8 @@ import kotlin.test.assertFailsWith
  * change nothing.
  *
  * The device is destroyed in [release], where any validation error fails the class.
+ * The presentable fixture instantiates both onscreen and offscreen quad pipelines. The original
+ * UI test expected 1 swap but measured 2 in CI; the second reload previously found no targets.
  */
 class RendererHeadlessShaderReplacementTest {
     @Test
@@ -142,6 +151,62 @@ class RendererHeadlessShaderReplacementTest {
         assertEquals(RED to BLUE, fixture.squares())
     }
 
+    @Test
+    fun uiQuadShaderCanBeReplacedInPlace() {
+        val fixture = shared()
+        val renderer = fixture.renderer
+        val replacement = replacement(fixture)
+        val quadTarget = renderer.createRenderTarget(fixture.size, fixture.size)
+        try {
+            val redQuad = listOf(
+                UiDrawPrimitive.Quad(
+                    x = 0f,
+                    y = 0f,
+                    w = fixture.size.toFloat(),
+                    h = fixture.size.toFloat(),
+                    color = Color(1f, 0f, 0f, 1f),
+                ),
+            )
+
+            renderer.drawUiToTexture(quadTarget, redQuad, font = null)
+            var pixels = runBlocking { renderer.readPixels(quadTarget) }.data
+            var centerColor = (pixels[0].toInt() and 0xFF shl 16) or
+                (pixels[1].toInt() and 0xFF shl 8) or
+                (pixels[2].toInt() and 0xFF)
+            assertEquals(RED, centerColor, "initial UI quad renders red")
+
+            val greenQuadShader = greenUiQuadShader().vulkan
+
+            val swapped = runBlocking {
+                replacement.replace(
+                    EngineShaderSets.UiQuad.vulkan.program(),
+                    greenQuadShader.program(),
+                )
+            }
+            assertEquals(2, swapped, "replaced both onscreen and offscreen UI quad pipelines")
+
+            renderer.drawUiToTexture(quadTarget, redQuad, font = null)
+            pixels = runBlocking { renderer.readPixels(quadTarget) }.data
+            centerColor = (pixels[0].toInt() and 0xFF shl 16) or
+                (pixels[1].toInt() and 0xFF shl 8) or
+                (pixels[2].toInt() and 0xFF)
+            assertEquals(GREEN, centerColor, "swapped UI quad pipeline renders green")
+            assertEquals(
+                2,
+                runBlocking { replacement.replace(greenQuadShader.program(), EngineShaderSets.UiQuad.vulkan.program()) },
+                "the running green program is found in both UI pipelines by a second replacement",
+            )
+            renderer.drawUiToTexture(quadTarget, redQuad, font = null)
+            pixels = runBlocking { renderer.readPixels(quadTarget) }.data
+            centerColor = (pixels[0].toInt() and 0xFF shl 16) or
+                (pixels[1].toInt() and 0xFF shl 8) or
+                (pixels[2].toInt() and 0xFF)
+            assertEquals(RED, centerColor, "a second UI replacement restores red pixels")
+        } finally {
+            quadTarget.destroy()
+        }
+    }
+
     private fun replacement(fixture: HeadlessContentAttachFixture): ShaderReplacement =
         checkNotNull(fixture.renderer.capability(ShaderReplacement))
 
@@ -214,6 +279,33 @@ class RendererHeadlessShaderReplacementTest {
         val GREEN_SHADER = solidShader("green", GREEN, x = -0.5f)
         val YELLOW_SHADER = solidShader("yellow", YELLOW, x = -0.5f)
         val EXTRA_BINDING_SHADER = solidShader("extra", GREEN, x = -0.5f, extraBinding = true)
+
+        private fun greenUiQuadShader(): com.awakekt.awake.asset.shaders.ShaderSet = aslShaderSet(
+            shader("green_ui_quad") {
+                val uniforms = uniformBlock("Uniforms", group = 0, binding = 0)
+                val screenToNdc by uniforms.field(GpuDataShape.Vec4)
+                val out = varyings("VertexOutput")
+                val color by out.varying(GpuDataShape.Vec4, location = 0)
+
+                vertex {
+                    val inPos by input(GpuDataShape.Vec2, location = 0)
+                    val inColor by input(GpuDataShape.Vec4, location = 1)
+                    val inTransform by input(GpuDataShape.Vec4, location = 2)
+
+                    val scale = inTransform.xy
+                    val pivot = inTransform.zw
+                    val scaledPos = pivot + (inPos - pivot) * scale
+                    val ndc = scaledPos * screenToNdc.xy + screenToNdc.zw
+                    out.position set vec4(ndc, 0f.lit, 1f.lit)
+                    color set inColor
+                }
+
+                fragment {
+                    val a = let("a", color.a)
+                    colorOutput(vec4(0f.lit, 1f.lit, 0f.lit, 1f.lit) * a)
+                }
+            },
+        )
 
         private fun square(name: String, stages: ShaderStages) = ContentFeatureSource {
             ContentFeature(

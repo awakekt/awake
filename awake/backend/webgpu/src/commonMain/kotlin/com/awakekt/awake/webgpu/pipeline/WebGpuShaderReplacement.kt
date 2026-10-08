@@ -7,6 +7,7 @@ package com.awakekt.awake.webgpu.pipeline
 
 import com.awakekt.awake.asset.shaders.BackgroundShaderCompile
 import com.awakekt.awake.asset.shaders.resolveBytes
+import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.pipeline.PipelineRegistry
 import com.awakekt.awake.render.pipeline.PipelineSpec
 import com.awakekt.awake.render.pipeline.PreparedShaderProgram
@@ -23,8 +24,19 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 
 /**
- * [ShaderReplacement] over the WebGPU pipelines in [registry].
- * Each pipeline is rebuilt inside its own [RenderPipeline] and swapped in place,
+ * An instantiated UI graphics pipeline target that can compile and swap in new WGSL shaders.
+ */
+internal interface WebGpuUiPipelineTarget {
+    val identity: Any
+    val program: ShaderProgram
+    val bindingsByGroup: Map<Int, GroupBindings>
+    fun buildPipeline(wgslSource: String, vertexEntryPoint: String, fragmentEntryPoint: String): GPURenderPipeline
+    fun swapIn(newPipeline: GPURenderPipeline): GPURenderPipeline
+}
+
+/**
+ * [ShaderReplacement] over the WebGPU pipelines in [registry] and any active UI pipeline targets.
+ * Each pipeline is rebuilt inside its own [RenderPipeline] or [WebGpuUiPipelineTarget] and swapped in place,
  * preserving its handle reference while updating the underlying `GPURenderPipeline`.
  *
  * Dependent bind groups and uniform slot buffers are invalidated via [onSwap].
@@ -32,12 +44,14 @@ import kotlinx.coroutines.Dispatchers
 internal class WebGpuShaderReplacement(
     private val registry: PipelineRegistry<RenderPipeline>,
     private val device: GPUDevice,
+    private val uiTargets: () -> List<WebGpuUiPipelineTarget> = { emptyList() },
     private val onSwap: ((oldPipeline: GPURenderPipeline) -> Unit)? = null,
     compileDispatcher: CoroutineDispatcher = Dispatchers.Default,
     private val resolveSource: suspend (ShaderSource) -> String = ::resolveWgslSource,
 ) : ShaderReplacement {
     /** What a pipeline runs since its last replacement; absent means its spec's own shaders. */
     private val running = HashMap<RenderPipeline, ShaderProgram>()
+    private val uiRunning = HashMap<Any, ShaderProgram>()
 
     private val background = BackgroundShaderCompile(compileDispatcher, ::compileProgram)
 
@@ -57,6 +71,9 @@ internal class WebGpuShaderReplacement(
                         put(pipeline) { pipeline.buildPipeline(wgsl, new.vertex.entryPoint, new.fragment.entryPoint) }
                     }
                 }
+            uiTargets().filter { it.bindingsByGroup == new.bindingsByGroup }.forEach { target ->
+                put(target.identity) { target.buildPipeline(wgsl, new.vertex.entryPoint, new.fragment.entryPoint) }
+            }
         }
         val candidates = LinkedHashMap<Any, Result<GPURenderPipeline>>()
         try {
@@ -99,7 +116,11 @@ internal class WebGpuShaderReplacement(
         }
         targets.forEach { (spec, _) -> requireSameBindings(spec, new) }
 
+        val activeUi = uiTargets().filter { runsUi(it, old) }
+        activeUi.forEach { requireSameBindings(it, new) }
+
         val identities = targets.mapTo(HashSet<Any>()) { it.second }
+        activeUi.mapTo(identities) { it.identity }
         val built = ready.take(identities)
 
         targets.forEach { (_, pipeline) ->
@@ -108,9 +129,17 @@ internal class WebGpuShaderReplacement(
             oldGpuPipeline.close()
             running[pipeline] = new
         }
+        activeUi.forEach { target ->
+            val oldGpuPipeline = target.swapIn(built.getValue(target.identity))
+            onSwap?.invoke(oldGpuPipeline)
+            oldGpuPipeline.close()
+            uiRunning[target.identity] = new
+        }
         val live = registry.specs.mapNotNullTo(HashSet()) { registry[it] }
         running.keys.retainAll(live)
-        return targets.size
+        val liveUi = uiTargets().mapTo(HashSet()) { it.identity }
+        uiRunning.keys.retainAll(liveUi)
+        return targets.size + activeUi.size
     }
 
     private fun runs(pipeline: RenderPipeline, spec: PipelineSpec, program: ShaderProgram): Boolean {
@@ -119,6 +148,15 @@ internal class WebGpuShaderReplacement(
             current.vertex == program.vertex && current.fragment == program.fragment
         } else {
             spec.vertexShader == program.vertex && spec.fragmentShader == program.fragment
+        }
+    }
+
+    private fun runsUi(target: WebGpuUiPipelineTarget, program: ShaderProgram): Boolean {
+        val current = uiRunning[target.identity]
+        return if (current != null) {
+            current.vertex == program.vertex && current.fragment == program.fragment
+        } else {
+            target.program.vertex == program.vertex && target.program.fragment == program.fragment
         }
     }
 
@@ -131,6 +169,20 @@ internal class WebGpuShaderReplacement(
         if (new.bindingsByGroup != spec.bindingsByGroup) {
             throw ShaderReplacementException(
                 "The replacement binds ${new.bindingsByGroup} but the pipeline binds ${spec.bindingsByGroup}. " +
+                    "A pipeline keeps its layout when its shaders are replaced; changing bindings needs a new pipeline.",
+            )
+        }
+    }
+
+    private fun requireSameBindings(target: WebGpuUiPipelineTarget, new: ShaderProgram) {
+        if (new.bindingsByGroup == null) {
+            throw ShaderReplacementException(
+                "A pipeline's bindings are not known, so the replacement cannot be checked against its layout.",
+            )
+        }
+        if (new.bindingsByGroup != target.bindingsByGroup) {
+            throw ShaderReplacementException(
+                "The replacement binds ${new.bindingsByGroup} but the pipeline binds ${target.bindingsByGroup}. " +
                     "A pipeline keeps its layout when its shaders are replaced; changing bindings needs a new pipeline.",
             )
         }

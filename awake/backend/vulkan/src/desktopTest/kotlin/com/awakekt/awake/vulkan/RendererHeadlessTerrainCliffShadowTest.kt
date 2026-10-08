@@ -16,12 +16,12 @@ import com.awakekt.awake.render.passes.shadowCascadeUniforms
 import com.awakekt.awake.render.passes.uniforms.SceneLight
 import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.vulkan.renderer.Renderer
+import kotlinx.coroutines.runBlocking
+import org.junit.AfterClass
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.test.Test
 import kotlin.test.assertTrue
-import kotlinx.coroutines.runBlocking
-import org.junit.AfterClass
 
 /**
  * Terrain shadows itself only where the surface it draws is in shadow.

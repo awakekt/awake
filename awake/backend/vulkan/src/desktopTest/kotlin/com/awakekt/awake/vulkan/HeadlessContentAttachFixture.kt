@@ -28,6 +28,7 @@ import com.awakekt.awake.vulkan.pipeline.VulkanPipelineFactory
 import com.awakekt.awake.vulkan.pipeline.VulkanShaderReplacement
 import com.awakekt.awake.vulkan.pipeline.createSceneRenderPass
 import com.awakekt.awake.vulkan.renderer.Renderer
+import com.awakekt.awake.vulkan.renderer.activeUiPipelineTargets
 import com.awakekt.awake.vulkan.swapchain.SwapchainManager
 import com.awakekt.awake.vulkan.texture.DepthTarget
 import kotlinx.coroutines.runBlocking
@@ -104,19 +105,7 @@ internal class HeadlessContentAttachFixture private constructor(
             // No shadow pass here, so a content shader declaring the shadow map reads a placeholder,
             // exactly as VulkanEngine arranges it.
             val shadowPlaceholder = DepthTarget.placeholder(graphicsDevice, transferContext::runOneTimeCommands)
-            val registry = PipelineRegistry(
-                VulkanPipelineFactory(
-                    graphicsDevice = graphicsDevice,
-                    swapchainManager = swapchainManager,
-                    renderPass = sceneRenderPass,
-                    descriptorSetLayout = material.descriptorSetLayout,
-                    framesInFlight = framesInFlight,
-                    declaredEngineSetLayouts = mapOf(
-                        BindingSemantic.ShadowDepth to DescriptorSetLayoutHandle(shadowPlaceholder.descriptorSetLayout),
-                    ),
-                    loadShaders = { spec -> compileWgsl(spec.vertexShader) },
-                ),
-            )
+            val registry = createPipelineRegistry(graphicsDevice, swapchainManager, sceneRenderPass, material, shadowPlaceholder, framesInFlight)
             val attacher = ContentFeatureAttacher(VulkanContentFeatureGpu(graphicsDevice, transferContext, registry))
             // Required by Renderer; nothing draws through it, since the tests issue no draw calls.
             val primary = RenderPipeline(
@@ -139,7 +128,11 @@ internal class HeadlessContentAttachFixture private constructor(
                 maxFramesInFlight = framesInFlight,
             )
             renderer.bindShadowDepth(shadowPlaceholder)
-            renderer.shaderReplacement = VulkanShaderReplacement(graphicsDevice, registry) { vertex, _ -> compileWgsl(vertex) }
+            renderer.shaderReplacement = VulkanShaderReplacement(
+                graphicsDevice,
+                registry,
+                uiTargets = { renderer.activeUiPipelineTargets() },
+            ) { vertex, _ -> compileWgsl(vertex) }
             if (presentable) swapchainManager.createSyncObjects()
             val headless = headlessCleanup(graphicsDevice, transferContext, sceneRenderPass, material.descriptorSetLayout, primary)
             return HeadlessContentAttachFixture(renderer, attacher, graphicsDevice) {
@@ -153,6 +146,28 @@ internal class HeadlessContentAttachFixture private constructor(
                 headless()
             }
         }
+
+        @Suppress("LongParameterList")
+        private fun createPipelineRegistry(
+            graphicsDevice: GraphicsDevice,
+            swapchainManager: SwapchainManager,
+            sceneRenderPass: Long,
+            material: Material,
+            shadowPlaceholder: DepthTarget,
+            framesInFlight: Int,
+        ): PipelineRegistry<RenderPipeline> = PipelineRegistry(
+            VulkanPipelineFactory(
+                graphicsDevice = graphicsDevice,
+                swapchainManager = swapchainManager,
+                renderPass = sceneRenderPass,
+                descriptorSetLayout = material.descriptorSetLayout,
+                framesInFlight = framesInFlight,
+                declaredEngineSetLayouts = mapOf(
+                    BindingSemantic.ShadowDepth to DescriptorSetLayoutHandle(shadowPlaceholder.descriptorSetLayout),
+                ),
+                loadShaders = { spec -> compileWgsl(spec.vertexShader) },
+            ),
+        )
     }
 }
 
