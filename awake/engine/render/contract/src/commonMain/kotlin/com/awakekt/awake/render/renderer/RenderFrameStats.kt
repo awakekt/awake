@@ -21,7 +21,9 @@ data class RenderFrameStats(
     val triangles: Long,
     /**
      * Milliseconds the GPU spent on the frame, from timestamps the device wrote around it, or
-     * null when this backend or device cannot time the GPU. Lags the CPU by the frames in flight.
+     * null when this backend or device cannot time the GPU or a complete measurement is unavailable.
+     * Includes offscreen render submissions before that frame. Results lag until GPU readback completes.
+     * WebGPU sums pass durations; browser timestamp precision may be reduced by the implementation.
      */
     val gpuTimeMs: Float? = null,
 )

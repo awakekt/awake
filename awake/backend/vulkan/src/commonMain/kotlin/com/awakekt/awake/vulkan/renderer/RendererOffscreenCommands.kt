@@ -14,15 +14,16 @@ import com.awakekt.awake.vulkan.models.info.VkFenceCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkSubmitInfo
 
 /** Reuses one transfer-pool command buffer and fence for synchronous offscreen work. */
-internal fun Renderer.runOffscreenCommands(block: (Long) -> Unit) {
+internal fun Renderer.runOffscreenCommands(measureGpuTime: Boolean = true, block: (Long) -> Unit) {
     // The submitted work shares the offscreen frame's slots with this.
     awaitSubmittedOffscreenCommands()
     if (offscreenCommandBuffer == 0L) {
         offscreenCommandBuffer = allocateOffscreenCommandBuffer()
         offscreenFence = Vulkan.vkCreateFence(device, VkFenceCreateInfo())
     }
-    recordAndSubmit(offscreenCommandBuffer, offscreenFence, block)
+    val timing = recordAndSubmit(offscreenCommandBuffer, offscreenFence, measureGpuTime, block)
     Vulkan.vkWaitForFences(device, longArrayOf(offscreenFence), true, Long.MAX_VALUE)
+    timing?.let { gpuFrameTimer?.completeOffscreen(it) }
 }
 
 /**
@@ -38,7 +39,7 @@ internal fun Renderer.submitOffscreenCommands(block: (Long) -> Unit) {
         submittedOffscreenCommandBuffer = allocateOffscreenCommandBuffer()
         submittedOffscreenFence = Vulkan.vkCreateFence(device, VkFenceCreateInfo())
     }
-    recordAndSubmit(submittedOffscreenCommandBuffer, submittedOffscreenFence, block)
+    submittedOffscreenTiming = recordAndSubmit(submittedOffscreenCommandBuffer, submittedOffscreenFence, true, block)
     submittedOffscreenFrame = swapchainManager.currentFrame
 }
 
@@ -46,6 +47,8 @@ internal fun Renderer.submitOffscreenCommands(block: (Long) -> Unit) {
 internal fun Renderer.awaitSubmittedOffscreenCommands() {
     if (submittedOffscreenFrame < 0) return
     Vulkan.vkWaitForFences(device, longArrayOf(submittedOffscreenFence), true, Long.MAX_VALUE)
+    submittedOffscreenTiming?.let { gpuFrameTimer?.completeOffscreen(it) }
+    submittedOffscreenTiming = null
     submittedOffscreenFrame = NO_SUBMITTED_OFFSCREEN_FRAME
 }
 
@@ -68,7 +71,7 @@ private fun Renderer.allocateOffscreenCommandBuffer(): Long = Vulkan.vkAllocateC
     ),
 )
 
-private fun Renderer.recordAndSubmit(commandBuffer: Long, fence: Long, block: (Long) -> Unit) {
+private fun Renderer.recordAndSubmit(commandBuffer: Long, fence: Long, measureGpuTime: Boolean, block: (Long) -> Unit): Long? {
     Vulkan.vkResetCommandBuffer(commandBuffer, 0)
     Vulkan.vkBeginCommandBuffer(
         commandBuffer,
@@ -76,7 +79,9 @@ private fun Renderer.recordAndSubmit(commandBuffer: Long, fence: Long, block: (L
             flags = VkCommandBufferUsageFlagBits.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT.value,
         ),
     )
+    val timing = if (measureGpuTime) gpuFrameTimer?.beginOffscreen(commandBuffer) else null
     block(commandBuffer)
+    timing?.let { gpuFrameTimer?.endOffscreen(commandBuffer, it) }
     Vulkan.vkEndCommandBuffer(commandBuffer)
 
     Vulkan.vkResetFences(device, longArrayOf(fence))
@@ -85,4 +90,5 @@ private fun Renderer.recordAndSubmit(commandBuffer: Long, fence: Long, block: (L
         arrayOf(VkSubmitInfo(pCommandBuffers = arrayOf(commandBuffer))),
         fence,
     )
+    return timing
 }

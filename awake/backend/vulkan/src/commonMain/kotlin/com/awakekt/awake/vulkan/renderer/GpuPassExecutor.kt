@@ -47,7 +47,7 @@ internal class RendererGpuPassExecutor(
     }
 
     override fun renderToTexture(target: RenderTarget, input: GpuPassInput) {
-        renderer.runOffscreenCommands(renderer.recordToTexture(target, input))
+        renderer.runOffscreenCommands(block = renderer.recordToTexture(target, input))
     }
 
     override fun submitToTexture(target: RenderTarget, input: GpuPassInput) {

@@ -29,7 +29,6 @@ internal class RendererGpuPassExecutor(
     override fun draw(input: GpuPassInput) {
         with(renderer) {
             swapchainManager.syncSurface()
-            val device = graphicsDevice.wgpuContext.device
             val renderingContext = graphicsDevice.wgpuContext.renderingContext
             val useWireframe = wireframe && wireframeRenderPipeline != null
             val activeRenderPipeline = if (useWireframe) wireframeRenderPipeline!! else renderPipeline
@@ -41,7 +40,7 @@ internal class RendererGpuPassExecutor(
             check(input.resolvedPath) { "WebGPU requires a resolved GpuPassInput." }
             val resolved = input.resolvedDraws
             val sorted = sortForRecording(resolved)
-            val encoder = device.createCommandEncoder()
+            val encoder = createRenderEncoder()
             val colorView = renderingContext.getCurrentTexture().createView()
             depthPrePass?.recordCommands(encoder, input.prePasses, input.environment)
             sceneDepthPass?.recordCommands(
@@ -99,15 +98,15 @@ internal class RendererGpuPassExecutor(
                 input.viewProjection,
                 input.cameraEye,
             )
-            device.queue.submit(listOf(encoder.finish()))
-            statsCounter.publish()
+            submitRenderCommands(encoder)
+            gpuFrameTimer?.publish()
+            statsCounter.publish(gpuFrameTimer?.lastMs)
         }
     }
 
     override fun renderToTexture(target: RenderTarget, input: GpuPassInput) {
         val renderer = this.renderer
         val offscreen = target as OffscreenRenderTarget
-        val device = renderer.graphicsDevice.wgpuContext.device
         val primary = PrimaryPipelineBinding(pipeline = renderer.renderPipeline.handle, wireframe = false)
         check(input.resolvedPath) { "WebGPU requires a resolved GpuPassInput." }
         val sceneRect = input.viewport?.clampedTo(
@@ -115,7 +114,7 @@ internal class RendererGpuPassExecutor(
             offscreen.height.toFloat(),
         )
         val sorted = sortForRecording(input.resolvedDraws)
-        val encoder = device.createCommandEncoder()
+        val encoder = renderer.createRenderEncoder()
         renderer.depthPrePass?.recordCommands(encoder, input.prePasses, input.environment)
         renderer.sceneDepthPass?.recordCommands(
             encoder,
@@ -167,7 +166,7 @@ internal class RendererGpuPassExecutor(
             end()
         }
         recordPostPasses(encoder, input.postPasses)
-        device.queue.submit(listOf(encoder.finish()))
+        renderer.submitRenderCommands(encoder)
     }
 
     /** Records the UI overlay owned by this executor after the scene pass. */

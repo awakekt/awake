@@ -198,7 +198,7 @@ internal suspend fun Renderer.readImageBytes(
 
     val pixels: ByteArray
     try {
-        runOffscreenCommands { commandBuffer ->
+        runOffscreenCommands(measureGpuTime = false) { commandBuffer ->
             VulkanImages.vkTransitionImageLayout(
                 commandBuffer,
                 image,

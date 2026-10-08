@@ -154,6 +154,7 @@ class Renderer internal constructor(
 
     /** Counts every draw this renderer records; published once per submitted frame. */
     internal val statsCounter = RenderStatsCounter()
+    internal val gpuFrameTimer = GpuFrameTimer.createOrNull(graphicsDevice.wgpuContext.device)
 
     init {
         depthPrePass?.stats = statsCounter
@@ -293,6 +294,7 @@ class Renderer internal constructor(
         gpuPassExecutor.renderToTexture(target, input)
 
     override fun destroy() {
+        gpuFrameTimer?.destroy()
         uiRunCache.clear()
         bufferPools.destroy()
         uiRenderPipeline?.destroy()
