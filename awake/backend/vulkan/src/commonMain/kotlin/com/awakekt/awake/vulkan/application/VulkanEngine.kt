@@ -768,6 +768,10 @@ open class VulkanEngine(
         skinnedInstanceDescriptorSetLayout?.let {
             VulkanDescriptors.vkDestroyDescriptorSetLayout(graphicsDevice.device, it.handle)
         }
+        emptyDescriptorSetLayout?.let {
+            VulkanDescriptors.vkDestroyDescriptorSetLayout(graphicsDevice.device, it.handle)
+        }
+        emptyDescriptorSetLayout = null
         // The depth target, the debug-line pipeline and every content feature's own pipelines are
         // NOT destroyed here: renderer.destroy() above tears down every RenderFeature (and the
         // DepthPrePassFeature) it was handed, which owns them. Destroying them again is a double-free
@@ -814,6 +818,10 @@ open class VulkanEngine(
         skinnedInstanceDescriptorSetLayout?.let {
             VulkanDescriptors.vkDestroyDescriptorSetLayout(graphicsDevice.device, it.handle)
         }
+        emptyDescriptorSetLayout?.let {
+            VulkanDescriptors.vkDestroyDescriptorSetLayout(graphicsDevice.device, it.handle)
+        }
+        emptyDescriptorSetLayout = null
         if (sceneRenderPass != 0L) Vulkan.vkDestroyRenderPass(graphicsDevice.device, sceneRenderPass)
         graphicsDevice.destroy()
     }

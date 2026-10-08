@@ -32,7 +32,6 @@ import com.awakekt.awake.asset.shaderdsl.minus
 import com.awakekt.awake.asset.shaderdsl.mix
 import com.awakekt.awake.asset.shaderdsl.ndcToUv
 import com.awakekt.awake.asset.shaderdsl.normalize
-import com.awakekt.awake.asset.shaderdsl.or
 import com.awakekt.awake.asset.shaderdsl.plus
 import com.awakekt.awake.asset.shaderdsl.pow
 import com.awakekt.awake.asset.shaderdsl.rgb
@@ -42,7 +41,6 @@ import com.awakekt.awake.asset.shaderdsl.saturate
 import com.awakekt.awake.asset.shaderdsl.select
 import com.awakekt.awake.asset.shaderdsl.shader
 import com.awakekt.awake.asset.shaderdsl.sin
-import com.awakekt.awake.asset.shaderdsl.smoothstep
 import com.awakekt.awake.asset.shaderdsl.sqrt
 import com.awakekt.awake.asset.shaderdsl.storageArrayOfArrays
 import com.awakekt.awake.asset.shaderdsl.texture2d
@@ -51,7 +49,6 @@ import com.awakekt.awake.asset.shaderdsl.textureDimensions
 import com.awakekt.awake.asset.shaderdsl.textureSample
 import com.awakekt.awake.asset.shaderdsl.textureSampleCompareLevel
 import com.awakekt.awake.asset.shaderdsl.times
-import com.awakekt.awake.asset.shaderdsl.toF32
 import com.awakekt.awake.asset.shaderdsl.toU32
 import com.awakekt.awake.asset.shaderdsl.unaryMinus
 import com.awakekt.awake.asset.shaderdsl.vec2
@@ -59,7 +56,6 @@ import com.awakekt.awake.asset.shaderdsl.vec3
 import com.awakekt.awake.asset.shaderdsl.vec4
 import com.awakekt.awake.asset.shaderdsl.w
 import com.awakekt.awake.asset.shaderdsl.x
-import com.awakekt.awake.asset.shaderdsl.xy
 import com.awakekt.awake.asset.shaderdsl.xyz
 import com.awakekt.awake.asset.shaderdsl.y
 import com.awakekt.awake.asset.shaderdsl.z
@@ -73,7 +69,6 @@ import com.awakekt.awake.render.passes.uniforms.SHADOW_CASCADE_PASS_GROUP
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.renderer.MAX_JOINTS
-import com.awakekt.awake.render.renderer.MAX_SHADOW_CASCADES
 
 /** Depth-only shadow-map pre-pass: binds lit_shadow's buffer (hence the full prefix struct),
  * reads only lightMvp, writes no color -- depth comes from the fixed-function pipeline. The
@@ -224,8 +219,9 @@ private fun litShadow(
         null
     }
 
+    val instanceTints = if (skinned) skinnedInstanceTints() else null
     val out = varyings("VertexOutput")
-    val color by out.varying(GpuDataShape.Vec3, location = 0)
+    val color by out.varying(if (skinned) GpuDataShape.Vec4 else GpuDataShape.Vec3, location = 0)
     val normal by out.varying(GpuDataShape.Vec3, location = 1)
     val worldPos by out.varying(GpuDataShape.Vec3, location = 2)
 
@@ -264,7 +260,7 @@ private fun litShadow(
         val finalNormal = select(localNormal, animatedNormal, u.vertexAnimation.x gt 0f.lit)
         val model = if (instanced) instanceModelMatrix(startLocation = if (skinned) 5 else 3) else u.model
         out.position set (u.mvp * if (instanced) model * vec4(animatedPosition, 1f.lit) else vec4(animatedPosition, 1f.lit))
-        color set ins.input(VertexSemantic.Color)
+        color set instanceTintedColor(ins.input(VertexSemantic.Color), instanceTints, instance)
         normal set (model * vec4(finalNormal, 0f.lit)).xyz
         worldPos set (model * vec4(animatedPosition, 1f.lit)).xyz
     }
@@ -426,6 +422,7 @@ private fun litShadow(
     }
 
     fragment {
+        val rgb = if (skinned) color.xyz else color
         val n = let("n", normalize(normal))
         val directionalLength = let("directionalLength", length(u.lightDirection.xyz))
         val directionalEnabled = let("directionalEnabled", directionalLength gt epsilon)
@@ -441,14 +438,14 @@ private fun litShadow(
         val metallic = let("metallic", clamp(u.material!!.x, 0f.lit, 1f.lit))
         // Floored roughness: perfectly smooth GGX aliases into a single-pixel highlight.
         val roughness = let("roughness", clamp(u.material.y, minRoughness, 1f.lit))
-        val f0 = let("f0", mix(vec3(dielectricF0), color, metallic))
+        val f0 = let("f0", mix(vec3(dielectricF0), rgb, metallic))
         val fresnel = let("fresnel", fresnelSchlick(max(dot(h, v), 0f.lit), f0))
         val specular = let(
             "specular",
             (distributionGgx(nDotH, roughness) * geometrySmith(nDotV, nDotL, roughness) * fresnel) /
                 max(4f.lit * nDotV * nDotL, epsilon),
         )
-        val diffuse = let("diffuse", (vec3(1f.lit) - fresnel) * (1f.lit - metallic) * color / pi)
+        val diffuse = let("diffuse", (vec3(1f.lit) - fresnel) * (1f.lit - metallic) * rgb / pi)
         val shadowFactor = let("shadowFactor", cascades.sampleShadow(worldPos, n, nDotL))
         // Light colour is authored as reflectance, as in `textured`: pay back the BRDF's 1/PI so
         // a light of intensity 1 lights a white face to white.
@@ -486,7 +483,7 @@ private fun litShadow(
                     max(4f.lit * nDotV * pNdotL, epsilon),
             )
             val pDiffuse =
-                let("pDiffuse", (vec3(1f.lit) - pFresnel) * (1f.lit - metallic) * color / pi)
+                let("pDiffuse", (vec3(1f.lit) - pFresnel) * (1f.lit - metallic) * rgb / pi)
             val pointShadow = variable("pointShadow", 1f.lit)
             // The colour slot's fourth component is zero for an unshadowed light and one plus
             // its zero-based six-face target layer for a shadowed light.
@@ -508,17 +505,18 @@ private fun litShadow(
             )
         }
         // The scene's ambient when it sets one (lightColor.w above 0), this shader's otherwise.
-        val ambientColor = let("ambient", color * select(ambient, u.lightColor.w, u.lightColor.w gt 0f.lit))
+        val ambientColor = let("ambient", rgb * select(ambient, u.lightColor.w, u.lightColor.w gt 0f.lit))
         val surface = DebugSurface(
             normal = n,
             worldPosition = worldPos,
-            albedo = displayTransform.encoded(color),
+            albedo = displayTransform.encoded(rgb),
             shadow = shadowFactor,
             shadowCascade = cascades.shadowCascade(worldPos),
         )
         // Encode before writing -- the swapchain is _UNORM and nothing downstream encodes.
         val shaded = vec4(applyFog(displayTransform.display(ambientColor + direct, u.exposure!!.x), worldPos), 1f.lit)
-        colorOutput(debugViewColor(u.debugView!!, u.cameraPosition, surface, shaded))
+        val debugColor = debugViewColor(u.debugView!!, u.cameraPosition, surface, shaded)
+        colorOutput(if (skinned) vec4(debugColor.xyz, color.w) else debugColor)
     }
 }
 

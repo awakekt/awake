@@ -6,9 +6,12 @@
 package com.awakekt.awake.webgpu.mesh
 
 import com.awakekt.awake.core.geometry.GpuDataShape
+import com.awakekt.awake.core.math.Vec4
 import com.awakekt.awake.render.passes.InstancePacker
+import com.awakekt.awake.render.passes.InstanceTintPacker
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
+import com.awakekt.awake.render.renderer.SkinnedInstanceLayout
 import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.fastArrayBufferOf
 import com.awakekt.awake.webgpu.pipeline.WebGpuBindGroupHandle
@@ -25,10 +28,10 @@ import io.ygdrasil.webgpu.GPUBufferUsage
 import io.ygdrasil.webgpu.GPURenderPipeline
 
 /**
- * The per-instance JOINT PALETTES behind one animated instanced draw call -- [InstanceBuffer]'s
+ * The per-instance joint palettes and tints behind one animated instanced draw call -- [InstanceBuffer]'s
  * animated companion, mirroring Vulkan's `SkinnedInstanceBuffer` (see its doc comment for why
- * this is a storage buffer rather than a vertex attribute or a uniform array). Read by
- * `skinned_instanced.wgsl` as `array<JointPalette>` indexed by `@builtin(instance_index)`.
+ * this is a storage buffer rather than a vertex attribute or a uniform array). The shader reads
+ * palettes at binding 0 and RGBA tints at binding 1, both indexed by `instance_index`.
  *
  * Bound as bind group 3 (`@group(3)`), not group 0: group 0 holds the shared
  * `viewProjection` + light uniform, which every animated instanced draw call can share, while
@@ -37,13 +40,17 @@ import io.ygdrasil.webgpu.GPURenderPipeline
 class SkinnedInstanceBuffer(
     private val graphicsDevice: GraphicsDevice,
     /** Hard ceiling on animated instances per draw call. Each one costs [FLOATS_PER_INSTANCE]
-     * floats = 4 KB, 16x what a static instance costs in [InstanceBuffer] -- raising this is a
+     * palette floats plus four tint floats, approximately 16x what a static instance costs in [InstanceBuffer] -- raising this is a
      * real memory decision. [update] fails loudly naming it rather than silently truncating. */
     private val maxInstances: Int = DEFAULT_MAX_INSTANCES,
 ) {
+    private val paletteByteSize = (maxInstances.toLong() * FLOATS_PER_INSTANCE * Float.SIZE_BYTES).toULong()
+    private val tintByteSize = (maxInstances.toLong() * SkinnedInstanceLayout.TINT_FLOATS * Float.SIZE_BYTES).toULong()
+    private val tintPacker = InstanceTintPacker()
+
     private val buffer: GPUBuffer = graphicsDevice.wgpuContext.device.createBuffer(
         BufferDescriptor(
-            size = (maxInstances.toLong() * FLOATS_PER_INSTANCE * Float.SIZE_BYTES).toULong(),
+            size = paletteByteSize + tintByteSize,
             usage = GPUBufferUsage.Storage or GPUBufferUsage.CopyDst,
         ),
     )
@@ -68,14 +75,19 @@ class SkinnedInstanceBuffer(
         palette.copyInto(out, offset)
     }
 
-    fun update(palettes: List<FloatArray>) {
+    fun update(palettes: List<FloatArray>) = update(palettes, null)
+
+    /** Uploads index-aligned tints, defaulting to white when omitted. */
+    fun update(palettes: List<FloatArray>, colors: List<Vec4>?) {
+        val tints = tintPacker.pack(colors, palettes.size, maxInstances) ?: return
         val floats = packer.pack(palettes, maxInstances) ?: return
         graphicsDevice.wgpuContext.device.queue.writeBufferData(buffer, 0uL, fastArrayBufferOf(floats))
+        graphicsDevice.wgpuContext.device.queue.writeBufferData(buffer, paletteByteSize, fastArrayBufferOf(tints))
     }
 
     fun bufferRef(): GPUBuffer = buffer
 
-    /** This buffer as [pipeline]'s group-1 bind group, built once per pipeline object. */
+    /** This buffer as [pipeline]'s joint-palette bind group, built once per pipeline object. */
     fun bindGroupFor(pipeline: GPURenderPipeline): GPUBindGroup {
         val cached = bindGroup
         if (cached != null && bindGroupPipeline === pipeline) return cached
@@ -83,7 +95,8 @@ class SkinnedInstanceBuffer(
             BindGroupDescriptor(
                 layout = pipeline.getBindGroupLayout(PALETTE_GROUP),
                 entries = listOf(
-                    BindGroupEntry(binding = 0u, resource = BufferBinding(buffer = buffer)),
+                    BindGroupEntry(binding = SkinnedInstanceLayout.PALETTE_BINDING.toUInt(), resource = BufferBinding(buffer = buffer, size = paletteByteSize)),
+                    BindGroupEntry(binding = SkinnedInstanceLayout.TINT_BINDING.toUInt(), resource = BufferBinding(buffer = buffer, offset = paletteByteSize, size = tintByteSize)),
                 ),
             ),
         )
@@ -117,7 +130,7 @@ class SkinnedInstanceBuffer(
         const val MAX_JOINTS = com.awakekt.awake.render.renderer.MAX_JOINTS
 
         /** One fixed-size `JointPalette` struct: 64 `mat4` = 1024 floats = 4 KB per instance. */
-        val FLOATS_PER_INSTANCE = MAX_JOINTS * GpuDataShape.Mat4.componentCount
+        val FLOATS_PER_INSTANCE = SkinnedInstanceLayout.PALETTE_FLOATS
 
         /** Same 256 (1 MB) default as Vulkan's `SkinnedInstanceBuffer` -- see its doc comment. */
         const val DEFAULT_MAX_INSTANCES = 256

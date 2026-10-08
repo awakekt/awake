@@ -133,7 +133,7 @@ internal fun VulkanRenderer.prepareGpuDraw(
         val binding = material.updateUniformBuffer(frameIndex, uniformSlotIndex, uniformFloats)
         val palettes = cmd.instanceJointPalettes?.let {
             skinnedInstanceBufferForRun(instancedIndex).also { buffer ->
-                buffer.update(frameIndex, it)
+                buffer.update(frameIndex, it, cmd.instanceColors)
             }
         }
         val colors = if (kind == InstancedDrawKind.Particle) {

@@ -48,17 +48,20 @@ class InstancePacker<T>(
      * @param maxInstances Capacity the caller's GPU buffer was allocated for.
      * @return The packed floats, or `null` when [items] is empty and there is nothing to upload.
      */
-    fun pack(items: List<T>, maxInstances: Int): FloatArray? {
-        require(items.size <= maxInstances) {
-            "Instance count (${items.size}) exceeds $label capacity ($maxInstances) -- " +
+    fun pack(items: List<T>, maxInstances: Int): FloatArray? = pack(items.size, maxInstances, items::get)
+
+    /** Indexed form, allowing a default value without allocating a list for every draw. */
+    fun pack(instanceCount: Int, maxInstances: Int, itemAt: (Int) -> T): FloatArray? {
+        require(instanceCount in 0..maxInstances) {
+            "Instance count ($instanceCount) exceeds $label capacity ($maxInstances) -- " +
                 "raise maxInstances or draw fewer instances."
         }
-        if (items.isEmpty()) return null
-        val needed = items.size * floatsPerInstance
+        if (instanceCount == 0) return null
+        val needed = instanceCount * floatsPerInstance
         if (packed.size != needed) packed = FloatArray(needed)
         var index = 0
-        while (index < items.size) {
-            write(packed, index * floatsPerInstance, items[index])
+        while (index < instanceCount) {
+            write(packed, index * floatsPerInstance, itemAt(index))
             index += 1
         }
         return packed
