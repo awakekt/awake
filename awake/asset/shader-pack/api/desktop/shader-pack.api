@@ -65,7 +65,10 @@ public final class com/awakekt/awake/asset/shaderpack/AslSpriteShaderKt {
 public final class com/awakekt/awake/asset/shaderpack/AslTerrainShaderKt {
 	public static final field MAX_CLIPMAP_RINGS I
 	public static final field TERRAIN_SURFACE_FIRST_BINDING I
+	public static final fun getPagedTerrainShadowDepthShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 	public static final fun getTerrainShadowDepthShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun pagedTerrainClipmapVertexStage (Lcom/awakekt/awake/asset/shaderdsl/AslShaderBuilder;)Lcom/awakekt/awake/asset/shaderpack/TerrainClipmapOutputs;
+	public static final fun pagedTerrainShader (Lcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 	public static final fun terrainClipmapDiscardUnderFinerRing (Lcom/awakekt/awake/asset/shaderdsl/AslFragmentBuilder;Lcom/awakekt/awake/asset/shaderpack/TerrainClipmapOutputs;)V
 	public static final fun terrainClipmapVertexStage (Lcom/awakekt/awake/asset/shaderdsl/AslShaderBuilder;Z)Lcom/awakekt/awake/asset/shaderpack/TerrainClipmapOutputs;
 	public static synthetic fun terrainClipmapVertexStage$default (Lcom/awakekt/awake/asset/shaderdsl/AslShaderBuilder;ZILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderpack/TerrainClipmapOutputs;
@@ -129,6 +132,7 @@ public final class com/awakekt/awake/asset/shaderpack/DepthFogRenderFeature : co
 	public synthetic fun <init> (Lcom/awakekt/awake/render/command/PipelineHandle;Lcom/awakekt/awake/render/command/UniformBlock;Lcom/awakekt/awake/core/color/Color;Lkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun destroy ()V
 	public fun getPass ()Lcom/awakekt/awake/render/passes/RenderPassSlot;
+	public fun prepareFrame (ILcom/awakekt/awake/render/texture/TextureUploadRecorder;)V
 	public fun recordCommands (Lcom/awakekt/awake/render/passes/RenderFrameContext;)V
 }
 
@@ -179,6 +183,18 @@ public final class com/awakekt/awake/asset/shaderpack/PackShaderSets {
 	public final fun getTriangle ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 }
 
+public final class com/awakekt/awake/asset/shaderpack/PagedTerrainContentFeatureKt {
+	public static final fun pagedTerrainContentFeature (Lcom/awakekt/awake/terrain/PagedTerrain;Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapConfig;Lcom/awakekt/awake/asset/shaders/ShaderSet;Ljava/util/Map;Ljava/util/Map;Lkotlin/jvm/functions/Function0;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
+	public static synthetic fun pagedTerrainContentFeature$default (Lcom/awakekt/awake/terrain/PagedTerrain;Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapConfig;Lcom/awakekt/awake/asset/shaders/ShaderSet;Ljava/util/Map;Ljava/util/Map;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
+}
+
+public final class com/awakekt/awake/asset/shaderpack/PagedTerrainUniformLayout {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderpack/PagedTerrainUniformLayout;
+	public final fun getLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
+	public final fun getPageDimensions ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun getPageGrid ()Lcom/awakekt/awake/render/renderer/UniformField;
+}
+
 public final class com/awakekt/awake/asset/shaderpack/SceneDisplayTransform {
 	public final fun display (Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;)Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun displayReferred (Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;)Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
@@ -201,6 +217,7 @@ public final class com/awakekt/awake/asset/shaderpack/ShadowMapViewRenderFeature
 	public fun <init> (Lcom/awakekt/awake/render/command/PipelineHandle;Lcom/awakekt/awake/render/command/UniformBlock;)V
 	public fun destroy ()V
 	public fun getPass ()Lcom/awakekt/awake/render/passes/RenderPassSlot;
+	public fun prepareFrame (ILcom/awakekt/awake/render/texture/TextureUploadRecorder;)V
 	public fun recordCommands (Lcom/awakekt/awake/render/passes/RenderFrameContext;)V
 }
 
@@ -268,6 +285,7 @@ public final class com/awakekt/awake/asset/shaderpack/TerrainClipmapOutputs {
 	public final fun getCascades ()Lcom/awakekt/awake/asset/shaderpack/CascadeShadowInputs;
 	public final fun getDebugView ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun getExposure ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public final fun getPages ()Lcom/awakekt/awake/asset/shaderpack/TerrainPageSampling;
 	public final fun getSunDirection ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun getTerrainParams ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun getTerrainSampling ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
@@ -280,13 +298,23 @@ public final class com/awakekt/awake/asset/shaderpack/TerrainContentFeatureKt {
 	public static synthetic fun terrainContentFeature$default (Lcom/awakekt/awake/asset/shaders/ShaderSet;Lcom/awakekt/awake/asset/terrain/Heightmap;Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapConfig;Ljava/util/Map;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
 }
 
+public final class com/awakekt/awake/asset/shaderpack/TerrainPageSampling {
+	public final fun getDimensions ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public final fun getGrid ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public final fun getSampler ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public final fun getTable ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public final fun sample (Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;ZIIZ)Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public static synthetic fun sample$default (Lcom/awakekt/awake/asset/shaderpack/TerrainPageSampling;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;ZIIZILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+}
+
 public final class com/awakekt/awake/asset/shaderpack/TerrainRenderFeature : com/awakekt/awake/render/passes/ContentDepthSource, com/awakekt/awake/render/passes/RenderFeature {
 	public static final field AMBIENT F
-	public fun <init> (Lcom/awakekt/awake/render/command/PipelineHandle;Lcom/awakekt/awake/render/command/UniformBlock;Lcom/awakekt/awake/render/passes/ContentGeometry;Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapTracker;FF[FLkotlin/jvm/functions/Function0;)V
-	public synthetic fun <init> (Lcom/awakekt/awake/render/command/PipelineHandle;Lcom/awakekt/awake/render/command/UniformBlock;Lcom/awakekt/awake/render/passes/ContentGeometry;Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapTracker;FF[FLkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/render/command/PipelineHandle;Lcom/awakekt/awake/render/command/UniformBlock;Lcom/awakekt/awake/render/passes/ContentGeometry;Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapTracker;FF[FLkotlin/jvm/functions/Function0;Lcom/awakekt/awake/terrain/PagedTerrain;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/render/command/PipelineHandle;Lcom/awakekt/awake/render/command/UniformBlock;Lcom/awakekt/awake/render/passes/ContentGeometry;Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapTracker;FF[FLkotlin/jvm/functions/Function0;Lcom/awakekt/awake/terrain/PagedTerrain;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun depthDraw (ILcom/awakekt/awake/render/command/GpuEnvironmentState;)Lcom/awakekt/awake/render/command/PreparedDraw;
 	public fun destroy ()V
 	public fun getPass ()Lcom/awakekt/awake/render/passes/RenderPassSlot;
+	public fun prepareFrame (ILcom/awakekt/awake/render/texture/TextureUploadRecorder;)V
 	public fun recordCommands (Lcom/awakekt/awake/render/passes/RenderFrameContext;)V
 }
 

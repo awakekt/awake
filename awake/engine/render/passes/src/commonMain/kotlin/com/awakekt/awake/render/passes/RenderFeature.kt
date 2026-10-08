@@ -17,6 +17,7 @@ import com.awakekt.awake.render.command.PreparedDraw
 import com.awakekt.awake.render.passes.uniforms.DEFAULT_SCENE_LIGHT
 import com.awakekt.awake.render.passes.uniforms.SceneLight
 import com.awakekt.awake.render.pipeline.BindingSemantic
+import com.awakekt.awake.render.texture.TextureUploadRecorder
 
 /**
  * Which of the two render passes a feature's commands are valid inside. Not a feature
@@ -135,11 +136,19 @@ interface RenderFeature<in C : RenderFrameContext> {
     /** Which render pass slot this feature belongs to. */
     val pass: RenderPassSlot
 
+    /** Prepares writable frame resources before any depth, scene or UI pass records. */
+    fun prepareFrame(frameIndex: Int, uploads: TextureUploadRecorder) = Unit
+
     /** Records drawing commands for this feature into the command buffer using [context]. */
     fun recordCommands(context: C)
 
     /** Destroys any backend resources owned by this feature. */
     fun destroy()
+}
+
+/** Ordered preparation, called after the frame-slot fence and before opening render passes. */
+fun prepareFrameResources(features: List<RenderFeature<*>>, frameIndex: Int, uploads: TextureUploadRecorder) {
+    for (index in features.indices) features[index].prepareFrame(frameIndex, uploads)
 }
 
 /**

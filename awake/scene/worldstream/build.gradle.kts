@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 plugins {
+    alias(libs.plugins.kotlin.serialization)
     id("com.awakekt.awake.plugin.library")
     id("com.awakekt.awake.plugin.publish")
     id("com.awakekt.awake.plugin.dokka")
@@ -26,6 +27,7 @@ kotlin {
             api(project(":awake:scene:runtime"))
             api(project(":awake:physics:api"))
             api(project(":awake:asset:terrain"))
+            api(project(":awake:terrain"))
             api(project(":awake:engine:render:contract"))
             api(project(":awake:core:geometry"))
             api(project(":awake:core:math"))

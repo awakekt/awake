@@ -128,4 +128,7 @@ enum class TextureFiltering {
 
     /** Exact base-level texels for pixel artwork and atlases. */
     Nearest,
+
+    /** Linear sampling of the base level only; suitable for mutable data textures. */
+    BaseLevelLinear,
 }

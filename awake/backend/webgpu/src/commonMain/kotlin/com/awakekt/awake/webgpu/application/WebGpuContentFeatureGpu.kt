@@ -38,16 +38,21 @@ internal class WebGpuContentFeatureGpu(
 
     override fun upload(pipeline: RenderPipeline, feature: ContentFeature): ContentUpload {
         val textures = feature.textures.mapValues { (_, asset) ->
-            Texture(graphicsDevice, {}, asset.data, asset.width, asset.height, asset.layerCount, asset.isCubemap)
+            Texture(graphicsDevice, {}, asset.data, asset.width, asset.height, asset.layerCount, asset.isCubemap, asset.filtering)
         }
         // Before anything binds the group: a GPUBindGroup is immutable once built, so unlike
         // Vulkan these have to arrive ahead of the first bind, not after.
-        pipeline.writeContentTextures(textures)
+        pipeline.writeContentTextures(textures, feature.samplerTextures)
         val mesh = feature.geometry?.let { source ->
             Mesh(graphicsDevice, {}, source.vertices, source.indices, source.format)
         }
         // Owned here: a bind group or a recorded bind references these without owning them.
-        return ContentUpload(mesh?.let { ContentGeometry(it.vertexBinding, it.indexBinding, it.indexCount) }) {
+        return ContentUpload(mesh?.let { ContentGeometry(it.vertexBinding, it.indexBinding, it.indexCount) }, prepare = { frameIndex, uploads ->
+            feature.textureUpdates?.updates(frameIndex)?.forEach { update ->
+                require(update.binding in requireNotNull(feature.textureUpdates).bindings)
+                uploads.write(textures.getValue(update.binding), update.region)
+            }
+        }) {
             textures.values.forEach(Texture::destroy)
             mesh?.destroy()
         }

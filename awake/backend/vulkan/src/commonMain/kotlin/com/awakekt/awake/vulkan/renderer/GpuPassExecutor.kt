@@ -63,6 +63,7 @@ private fun Renderer.recordToTexture(target: RenderTarget, input: GpuPassInput):
     val sorted = sortForRecording(input.resolvedDraws)
     val depthDraws = prepareDepthDraws(input)
     return { commandBuffer ->
+        prepareResources(commandBuffers.size, commandBuffer)
         // The offscreen frame's own slots, past the last frame in flight, as its materials use.
         recordDepthPrePass(commandBuffer, commandBuffers.size, depthDraws, input.prePasses, input.environment)
         recordSceneDepthPass(commandBuffer, commandBuffers.size, depthDraws, cameraDepthPass(input.viewProjection))

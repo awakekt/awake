@@ -29,6 +29,7 @@ import platform.MoltenVK.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
 import platform.MoltenVK.VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
 import platform.MoltenVK.VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT
 import platform.MoltenVK.VK_PIPELINE_STAGE_TRANSFER_BIT
+import platform.MoltenVK.VK_PIPELINE_STAGE_VERTEX_SHADER_BIT
 import platform.MoltenVK.VK_QUEUE_FAMILY_IGNORED
 import platform.MoltenVK.VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO
 import platform.MoltenVK.VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER
@@ -185,7 +186,12 @@ actual object VulkanImages {
             barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT.toUInt()
             barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT.toUInt()
             srcStage = VK_PIPELINE_STAGE_TRANSFER_BIT.toUInt()
-            dstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT.toUInt()
+            dstStage = (VK_PIPELINE_STAGE_VERTEX_SHADER_BIT or VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT).toUInt()
+        } else if (oldLayout == VkImageLayout2.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL && newLayout == VkImageLayout2.VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
+            barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT.toUInt()
+            barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT.toUInt()
+            srcStage = (VK_PIPELINE_STAGE_VERTEX_SHADER_BIT or VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT).toUInt()
+            dstStage = VK_PIPELINE_STAGE_TRANSFER_BIT.toUInt()
         } else if (oldLayout == VkImageLayout2.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL &&
             newLayout == VkImageLayout2.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
         ) {

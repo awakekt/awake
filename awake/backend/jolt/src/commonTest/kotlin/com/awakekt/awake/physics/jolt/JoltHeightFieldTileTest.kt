@@ -31,6 +31,24 @@ import kotlin.test.assertTrue
  */
 class JoltHeightFieldTileTest {
 
+    @Test
+    fun streamed129SamplePagesMeetAndUnloadWithoutLeavingCollision() = runTest {
+        val world = JoltPhysicsWorld()
+        try {
+            val shape = com.awakekt.awake.physics.HeightFieldShape(FloatArray(129 * 129) { 2f }, 129, Vec3f(4f, 1f, 4f))
+            world.createBody(shape, Vec3f(256f, 0f, 256f), Quat.IDENTITY, MotionType.STATIC)
+            val right = world.createBody(shape, Vec3f(768f, 0f, 256f), Quat.IDENTITY, MotionType.STATIC)
+            for (x in listOf(511.9f, 512f, 512.1f)) {
+                val hit = assertNotNull(world.raycast(Vec3f(x, 20f, 256f), Vec3f(0f, -1f, 0f), 40f))
+                assertTrue(abs(hit.point.y - 2f) < 0.05f)
+            }
+            world.destroyBody(right)
+            assertNull(world.raycast(Vec3f(768f, 20f, 256f), Vec3f(0f, -1f, 0f), 40f))
+        } finally {
+            world.destroy()
+        }
+    }
+
     /** 7x7 samples cut into 2x2 tiles of 4, which is Jolt's minimum and shares one row per seam. */
     private val sourceWidth = 7
     private val tileSamples = 4

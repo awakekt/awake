@@ -84,6 +84,7 @@ add_library(awake-vulkan SHARED
         ../src/main/cpp/generated/com_awakekt_awake_vulkan_gen_VulkanBuffers_jni.gen.cpp
         ../src/main/cpp/generated/com_awakekt_awake_vulkan_gen_VulkanDescriptors_jni.gen.cpp
         ../src/main/cpp/generated/com_awakekt_awake_vulkan_gen_VulkanImages_jni.gen.cpp
+        ../src/main/cpp/generated/com_awakekt_awake_vulkan_gen_VulkanTextureRegions_jni.gen.cpp
         ../src/main/cpp/VulkanImages_native.cpp
         ../src/main/cpp/generated/com_awakekt_awake_vulkan_gen_VulkanQueries_jni.gen.cpp
         ../src/main/cpp/VulkanQueries_native.cpp

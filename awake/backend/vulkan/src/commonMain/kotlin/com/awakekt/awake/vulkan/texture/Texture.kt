@@ -55,14 +55,14 @@ class Texture(
     graphicsDevice: GraphicsDevice,
     runOneTimeCommands: ((commandBuffer: Long) -> Unit) -> Unit,
     data: ByteArray,
-    width: Int,
-    height: Int,
+    override val width: Int,
+    override val height: Int,
     samplerCreateInfo: VkSamplerCreateInfo = VkSamplerCreateInfo(),
     /** More than one uploads a `VK_IMAGE_VIEW_TYPE_2D_ARRAY`; see [TextureAsset.layerCount]. */
-    private val layerCount: Int = 1,
+    override val layerCount: Int = 1,
     private val isCubemap: Boolean = false,
     filtering: TextureFiltering = TextureFiltering.Linear,
-) {
+) : com.awakekt.awake.render.texture.WritableTexture {
     private val graphicsDevice = graphicsDevice
     private val device get() = graphicsDevice.device
     private val physicalDevice get() = graphicsDevice.physicalDevice
@@ -79,7 +79,7 @@ class Texture(
         val asset = TextureAsset(data, width, height, layerCount, isCubemap)
         // Arrays get a full chain: tiled terrain layers are sampled with implicit LOD and shimmer
         // without one. Cubemaps stay single-level; the sky samples its base level only.
-        val mipLevels = if (isCubemap || filtering == TextureFiltering.Nearest) listOf(asset) else asset.mipChain()
+        val mipLevels = if (isCubemap || filtering != TextureFiltering.Linear) listOf(asset) else asset.mipChain()
         val combined = ByteArray(mipLevels.sumOf { it.data.size })
         var writeOffset = 0
         val levelOffsets = IntArray(mipLevels.size)

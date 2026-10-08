@@ -3,6 +3,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+@file:Suppress("TooManyFunctions") // Lit and depth entry points share one terrain displacement implementation.
+
 package com.awakekt.awake.asset.shaderpack
 
 import com.awakekt.awake.asset.shaderdsl.AslArrayHandle
@@ -136,6 +138,7 @@ const val TERRAIN_SURFACE_FIRST_BINDING: Int = 3
  * @property exposure The block's `UniformFields.Exposure`, for [SceneDisplayTransform].
  * @property ringCell World `x`, `z` and ring level, for [terrainClipmapDiscardUnderFinerRing].
  * @property ringParams The block's [TerrainUniformLayout.RingParams].
+ * @property pages Optional page-table helpers for streamed surfaces.
  */
 @Suppress("LongParameterList") // Pure aggregation of the stage's derived handles.
 class TerrainClipmapOutputs internal constructor(
@@ -149,6 +152,7 @@ class TerrainClipmapOutputs internal constructor(
     val exposure: AslExpr,
     internal val ringCell: AslExpr,
     internal val ringParams: AslArrayHandle,
+    val pages: TerrainPageSampling? = null,
 ) {
     /** Heightmap normal, interpolated; normalise before use. */
     val worldNormal: AslExpr
@@ -198,10 +202,11 @@ fun AslShaderBuilder.terrainClipmapVertexStage(exportWorldPosition: Boolean = tr
  * cascade being rendered (the pass's `Cascade` block at [SHADOW_CASCADE_PASS_GROUP]) instead of
  * the camera, passing on only what [terrainClipmapDiscardUnderFinerRing] reads.
  */
-internal fun AslShaderBuilder.terrainClipmapVertexStage(exportWorldPosition: Boolean, cascadeDepth: Boolean): TerrainClipmapOutputs {
+@Suppress("LongMethod", "CyclomaticComplexMethod") // Keep ordered vertex-stage construction in one shader scope.
+internal fun AslShaderBuilder.terrainClipmapVertexStage(exportWorldPosition: Boolean, cascadeDepth: Boolean, paged: Boolean = false): TerrainClipmapOutputs {
     val group = BindingLayout.Standard.slot(BindingSemantic.Material)
     val u = uniformBlock("Uniforms", group = group, binding = 0)
-    val handles = u.fieldsFrom(TerrainUniformLayout.Layout)
+    val handles = u.fieldsFrom(if (paged) PagedTerrainUniformLayout.Layout else TerrainUniformLayout.Layout)
     // The depth form reads the cascade it renders from the pass's own block, not the draw's.
     val placement = if (cascadeDepth) {
         uniformBlock("Cascade", group = SHADOW_CASCADE_PASS_GROUP, binding = 0).fieldsFrom(CascadePassUniformLayout).value("cascadeViewProjection")
@@ -215,6 +220,8 @@ internal fun AslShaderBuilder.terrainClipmapVertexStage(exportWorldPosition: Boo
 
     val heightmap by texture2d(group = group, binding = 1)
     val heightmapSampler by sampler(group = group, binding = 2)
+    val pages = if (paged) pageSampling(handles, heightmapSampler) else null
+    val pageHeight = pages?.let { pagedHeightSampler(it, heightmap) }
 
     // The depth form passes on only what its discard reads: ASL rejects a varying nothing reads.
     val out = varyings("VertexOutput")
@@ -238,14 +245,42 @@ internal fun AslShaderBuilder.terrainClipmapVertexStage(exportWorldPosition: Boo
         val ringTag = ins.input(VertexSemantic.Color)
 
         val ring = let("ring", ringParams[toU32(ringTag.x)])
-        val (morphedX, morphedZ) = morphTowardCoarserGrid(localPosition, ring, terrainParams)
-        val ground = groundPoint(morphedX, morphedZ, terrainSampling)
+        val phaseX = pages?.dimensions?.z ?: 0f.lit
+        val phaseZ = pages?.dimensions?.w ?: 0f.lit
+        val phaseRing = vec4(ring.x + phaseX, ring.y + phaseZ, ring.z, ring.w)
+        val (morphedX, morphedZ) = morphTowardCoarserGrid(localPosition, phaseRing, terrainParams)
+        val ground = if (pages == null) {
+            groundPoint(morphedX, morphedZ, terrainSampling)
+        } else {
+            GroundPoint(
+                let("worldX", clamp(morphedX - phaseX, pages.grid.x, pages.grid.x + pages.dimensions.x * pages.grid.z)),
+                let("worldZ", clamp(morphedZ - phaseZ, pages.grid.y, pages.grid.y + pages.dimensions.y * pages.grid.z)),
+                vec2(0f.lit, 0f.lit),
+            )
+        }
 
-        val height = let("height", decodeHeight(textureSampleLevel(heightmap, heightmapSampler, ground.uv, 0f.lit)))
+        val height = let("height", pageHeight?.invoke(vec2(ground.x, ground.z)) ?: decodeHeight(textureSampleLevel(heightmap, heightmapSampler, ground.uv, 0f.lit)))
         val displaced = let("displaced", vec3(ground.x, height * terrainParams.x + terrainParams.w, ground.z))
 
         out.position set placement * vec4(displaced, 1f.lit)
-        worldNormal?.let { it set heightmapNormal(heightmap, heightmapSampler, ground.uv, terrainSampling, terrainParams) }
+        worldNormal?.let {
+            if (pages == null || pageHeight == null) {
+                it set heightmapNormal(heightmap, heightmapSampler, ground.uv, terrainSampling, terrainParams)
+            } else {
+                val step = pages.grid.z / pages.grid.w
+                val left = max(ground.x - step, pages.grid.x)
+                val right = min(ground.x + step, pages.grid.x + pages.dimensions.x * pages.grid.z)
+                val down = max(ground.z - step, pages.grid.y)
+                val up = min(ground.z + step, pages.grid.y + pages.dimensions.y * pages.grid.z)
+                it set normalize(
+                    vec3(
+                        -(pageHeight(vec2(right, ground.z)) - pageHeight(vec2(left, ground.z))) * terrainParams.x / max(right - left, 0.0001f.lit),
+                        1f.lit,
+                        -(pageHeight(vec2(ground.x, up)) - pageHeight(vec2(ground.x, down))) * terrainParams.x / max(up - down, 0.0001f.lit),
+                    ),
+                )
+            }
+        }
         worldPosition?.let { it set displaced }
         ringCell set vec3(ground.x, ground.z, ringTag.x)
     }
@@ -261,6 +296,7 @@ internal fun AslShaderBuilder.terrainClipmapVertexStage(exportWorldPosition: Boo
         handles.value("exposure"),
         ringCell,
         ringParams,
+        pages,
     )
 }
 
@@ -417,8 +453,13 @@ internal fun decodeHeight(sample: AslExpr): AslExpr = (sample.x * 256f.lit + sam
  * `docs/architecture/decisions/D28-open-world-framework-boundary.md`); a pack supplies its own
  * fragment stage over [terrainClipmapVertexStage].
  */
-fun terrainShader(clipSpace: ClipSpace): AslShaderDefinition = shader("terrain") {
-    val terrain = terrainClipmapVertexStage()
+fun terrainShader(clipSpace: ClipSpace): AslShaderDefinition = terrainShader(clipSpace, false)
+
+/** The neutral clipmap surface reading resident pages and the mandatory fallback. */
+fun pagedTerrainShader(clipSpace: ClipSpace): AslShaderDefinition = terrainShader(clipSpace, true)
+
+private fun terrainShader(clipSpace: ClipSpace, paged: Boolean): AslShaderDefinition = shader(if (paged) "paged_terrain" else "terrain") {
+    val terrain = terrainClipmapVertexStage(true, false, paged)
     val shadows = terrainShadowSampling(terrain, clipSpace)
     val displayTransform = sceneDisplayTransform(decodesDisplayReferred = true)
 
@@ -458,3 +499,12 @@ val TerrainShadowDepthShader: AslShaderDefinition = shader("terrain_shadow_depth
     val terrain = terrainClipmapVertexStage(exportWorldPosition = false, cascadeDepth = true)
     fragment { terrainClipmapDiscardUnderFinerRing(terrain) }
 }
+
+/** Exactly the paged lit geometry and ring discard, rendered from the cascade. */
+val PagedTerrainShadowDepthShader: AslShaderDefinition = shader("paged_terrain_shadow_depth") {
+    val terrain = terrainClipmapVertexStage(false, true, true)
+    fragment { terrainClipmapDiscardUnderFinerRing(terrain) }
+}
+
+/** Shared paged vertex stage for provider-authored surfaces. */
+fun AslShaderBuilder.pagedTerrainClipmapVertexStage(): TerrainClipmapOutputs = terrainClipmapVertexStage(true, false, true)

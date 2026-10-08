@@ -167,6 +167,12 @@ class RenderPipeline(
         slots.writeTextures(textures)
     }
 
+    internal fun writeContentTextureSlot(frameIndex: Int, textures: Map<Int, Texture>, samplers: Map<Int, Int>) {
+        checkNotNull(uniformSlots).writeTextures(textures, frameIndex, samplers)
+    }
+
+    internal val contentFrameSlotCount: Int get() = checkNotNull(uniformSlots).size
+
     override val uniformBlock: UniformBlock? = uniformSlots?.let { slots ->
         val layout = requireNotNull(uniforms)
         object : UniformBlock {

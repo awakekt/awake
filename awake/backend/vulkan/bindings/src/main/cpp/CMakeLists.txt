@@ -36,6 +36,7 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         generated/com_awakekt_awake_vulkan_gen_VulkanBuffers_jni.gen.cpp
         generated/com_awakekt_awake_vulkan_gen_VulkanDescriptors_jni.gen.cpp
         generated/com_awakekt_awake_vulkan_gen_VulkanImages_jni.gen.cpp
+        generated/com_awakekt_awake_vulkan_gen_VulkanTextureRegions_jni.gen.cpp
         VulkanImages_native.cpp
         generated/com_awakekt_awake_vulkan_gen_VulkanQueries_jni.gen.cpp
         VulkanQueries_native.cpp)

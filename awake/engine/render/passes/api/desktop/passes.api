@@ -37,15 +37,17 @@ public abstract interface class com/awakekt/awake/render/passes/ContentDepthSour
 }
 
 public final class com/awakekt/awake/render/passes/ContentFeature {
-	public fun <init> (Ljava/lang/String;Lcom/awakekt/awake/render/pipeline/PipelineSpec;Ljava/util/Map;Lcom/awakekt/awake/core/geometry/MeshGeometry;Lcom/awakekt/awake/render/passes/ContentPaint;ZLcom/awakekt/awake/render/pipeline/PipelineSpec;Lkotlin/jvm/functions/Function3;)V
-	public synthetic fun <init> (Ljava/lang/String;Lcom/awakekt/awake/render/pipeline/PipelineSpec;Ljava/util/Map;Lcom/awakekt/awake/core/geometry/MeshGeometry;Lcom/awakekt/awake/render/passes/ContentPaint;ZLcom/awakekt/awake/render/pipeline/PipelineSpec;Lkotlin/jvm/functions/Function3;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;Lcom/awakekt/awake/render/pipeline/PipelineSpec;Ljava/util/Map;Lcom/awakekt/awake/core/geometry/MeshGeometry;Lcom/awakekt/awake/render/passes/ContentPaint;ZLcom/awakekt/awake/render/pipeline/PipelineSpec;Lcom/awakekt/awake/render/passes/ContentTextureUpdates;Ljava/util/Map;Lkotlin/jvm/functions/Function3;)V
+	public synthetic fun <init> (Ljava/lang/String;Lcom/awakekt/awake/render/pipeline/PipelineSpec;Ljava/util/Map;Lcom/awakekt/awake/core/geometry/MeshGeometry;Lcom/awakekt/awake/render/passes/ContentPaint;ZLcom/awakekt/awake/render/pipeline/PipelineSpec;Lcom/awakekt/awake/render/passes/ContentTextureUpdates;Ljava/util/Map;Lkotlin/jvm/functions/Function3;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getBuild ()Lkotlin/jvm/functions/Function3;
 	public final fun getDepth ()Lcom/awakekt/awake/render/pipeline/PipelineSpec;
 	public final fun getGeometry ()Lcom/awakekt/awake/core/geometry/MeshGeometry;
 	public final fun getName ()Ljava/lang/String;
 	public final fun getPaint ()Lcom/awakekt/awake/render/passes/ContentPaint;
+	public final fun getSamplerTextures ()Ljava/util/Map;
 	public final fun getSamplesSceneDepth ()Z
 	public final fun getSpec ()Lcom/awakekt/awake/render/pipeline/PipelineSpec;
+	public final fun getTextureUpdates ()Lcom/awakekt/awake/render/passes/ContentTextureUpdates;
 	public final fun getTextures ()Ljava/util/Map;
 }
 
@@ -62,6 +64,24 @@ public final class com/awakekt/awake/render/passes/ContentPaint : java/lang/Enum
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/render/passes/ContentPaint;
 	public static fun values ()[Lcom/awakekt/awake/render/passes/ContentPaint;
+}
+
+public final class com/awakekt/awake/render/passes/ContentTextureUpdate {
+	public fun <init> (ILcom/awakekt/awake/render/texture/TextureRegion;)V
+	public final fun component1 ()I
+	public final fun component2 ()Lcom/awakekt/awake/render/texture/TextureRegion;
+	public final fun copy (ILcom/awakekt/awake/render/texture/TextureRegion;)Lcom/awakekt/awake/render/passes/ContentTextureUpdate;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/render/passes/ContentTextureUpdate;ILcom/awakekt/awake/render/texture/TextureRegion;ILjava/lang/Object;)Lcom/awakekt/awake/render/passes/ContentTextureUpdate;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBinding ()I
+	public final fun getRegion ()Lcom/awakekt/awake/render/texture/TextureRegion;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class com/awakekt/awake/render/passes/ContentTextureUpdates {
+	public abstract fun getBindings ()Ljava/util/Set;
+	public abstract fun updates (I)Ljava/util/List;
 }
 
 public final class com/awakekt/awake/render/passes/DirectionalShadowBox {
@@ -131,6 +151,7 @@ public final class com/awakekt/awake/render/passes/OpaqueRenderFeature : com/awa
 	public fun <init> (Lcom/awakekt/awake/render/passes/LinePass;)V
 	public fun destroy ()V
 	public fun getPass ()Lcom/awakekt/awake/render/passes/RenderPassSlot;
+	public fun prepareFrame (ILcom/awakekt/awake/render/texture/TextureUploadRecorder;)V
 	public fun recordCommands (Lcom/awakekt/awake/render/passes/RenderFrameContext;)V
 }
 
@@ -180,10 +201,16 @@ public final class com/awakekt/awake/render/passes/PointShadowPassesKt {
 public abstract interface class com/awakekt/awake/render/passes/RenderFeature {
 	public abstract fun destroy ()V
 	public abstract fun getPass ()Lcom/awakekt/awake/render/passes/RenderPassSlot;
+	public fun prepareFrame (ILcom/awakekt/awake/render/texture/TextureUploadRecorder;)V
 	public abstract fun recordCommands (Lcom/awakekt/awake/render/passes/RenderFrameContext;)V
 }
 
+public final class com/awakekt/awake/render/passes/RenderFeature$DefaultImpls {
+	public static fun prepareFrame (Lcom/awakekt/awake/render/passes/RenderFeature;ILcom/awakekt/awake/render/texture/TextureUploadRecorder;)V
+}
+
 public final class com/awakekt/awake/render/passes/RenderFeatureKt {
+	public static final fun prepareFrameResources (Ljava/util/List;ILcom/awakekt/awake/render/texture/TextureUploadRecorder;)V
 	public static final fun recordPassFeatures (Ljava/util/List;Lcom/awakekt/awake/render/passes/RenderPassSlot;Lcom/awakekt/awake/render/passes/RenderFrameContext;)V
 }
 
@@ -282,6 +309,7 @@ public final class com/awakekt/awake/render/passes/SkyboxRenderFeature : com/awa
 	public fun <init> (Lcom/awakekt/awake/render/command/PipelineHandle;Lcom/awakekt/awake/render/command/UniformBlock;)V
 	public fun destroy ()V
 	public fun getPass ()Lcom/awakekt/awake/render/passes/RenderPassSlot;
+	public fun prepareFrame (ILcom/awakekt/awake/render/texture/TextureUploadRecorder;)V
 	public fun recordCommands (Lcom/awakekt/awake/render/passes/RenderFrameContext;)V
 }
 

@@ -43,8 +43,10 @@ import com.awakekt.awake.asset.shaderdsl.y
 import com.awakekt.awake.asset.shaderdsl.z
 import com.awakekt.awake.asset.shaderpack.DebugSurface
 import com.awakekt.awake.asset.shaderpack.TERRAIN_SURFACE_FIRST_BINDING
+import com.awakekt.awake.asset.shaderpack.TerrainPageSampling
 import com.awakekt.awake.asset.shaderpack.debugLayerColor
 import com.awakekt.awake.asset.shaderpack.debugViewColor
+import com.awakekt.awake.asset.shaderpack.pagedTerrainClipmapVertexStage
 import com.awakekt.awake.asset.shaderpack.sceneDisplayTransform
 import com.awakekt.awake.asset.shaderpack.terrainClipmapDiscardUnderFinerRing
 import com.awakekt.awake.asset.shaderpack.terrainClipmapVertexStage
@@ -94,24 +96,45 @@ private const val CONTROL_TAPS = 4
 fun terrainLayersShader(clipSpace: ClipSpace): AslShaderDefinition = terrainLayersShader(clipSpace, CONTROL_SLOTS)
 
 /** [terrainLayersShader] merging into [slots] layers, about twice the per-pixel cost at [MAX_CONTROL_SLOTS]. */
-internal fun terrainLayersShader(clipSpace: ClipSpace, slots: Int): AslShaderDefinition = shader(
-    if (slots == CONTROL_SLOTS) "terrain_layers" else "terrain_layers_$slots",
+@Suppress("LongMethod") // Ordered resource and fragment construction share the terrain stage.
+internal fun terrainLayersShader(clipSpace: ClipSpace, slots: Int, paged: Boolean = false): AslShaderDefinition = shader(
+    (if (paged) "paged_" else "") + if (slots == CONTROL_SLOTS) "terrain_layers" else "terrain_layers_$slots",
 ) {
-    val terrain = terrainClipmapVertexStage()
+    val terrain = if (paged) pagedTerrainClipmapVertexStage() else terrainClipmapVertexStage()
     val shadows = terrainShadowSampling(terrain, clipSpace)
     val displayTransform = sceneDisplayTransform(decodesDisplayReferred = true)
     val group = BindingLayout.Standard.slot(BindingSemantic.Material)
     val albedoLayers by texture2dArray(group = group, binding = LAYER_ALBEDO_BINDING)
     val layerParams by texture2d(group = group, binding = LAYER_TABLE_BINDING)
-    val controlIndices by texture2d(group = group, binding = CONTROL_INDICES_BINDING)
-    val controlWeights by texture2d(group = group, binding = CONTROL_WEIGHTS_BINDING)
+    val controlIndices by if (paged) texture2dArray(group = group, binding = CONTROL_INDICES_BINDING) else texture2d(group = group, binding = CONTROL_INDICES_BINDING)
+    val controlWeights by if (paged) texture2dArray(group = group, binding = CONTROL_WEIGHTS_BINDING) else texture2d(group = group, binding = CONTROL_WEIGHTS_BINDING)
     val layerSampler by sampler(group = group, binding = LAYER_SAMPLER_BINDING)
-    val lightmap by texture2d(group = group, binding = LIGHTMAP_BINDING)
+    val lightmap by if (paged) texture2dArray(group = group, binding = LIGHTMAP_BINDING) else texture2d(group = group, binding = LIGHTMAP_BINDING)
+    val fallbackIndices = if (paged) {
+        val fallbackIndices by texture2d(group = group, binding = 34)
+        fallbackIndices
+    } else {
+        null
+    }
+    val fallbackWeights = if (paged) {
+        val fallbackWeights by texture2d(group = group, binding = 35)
+        fallbackWeights
+    } else {
+        null
+    }
+    val fallbackLightmap = if (paged) {
+        val fallbackLightmap by texture2d(group = group, binding = 36)
+        fallbackLightmap
+    } else {
+        null
+    }
 
     fragment {
         terrainClipmapDiscardUnderFinerRing(terrain)
-        val merged = mergeControlTaps(slots, terrain.worldPosition, terrain.terrainSampling, controlIndices, controlWeights, layerSampler)
-        val albedo = blendLayers(merged, terrain.worldPosition, albedoLayers, layerParams, layerSampler)
+        val merged = mergeControlTaps(slots, terrain.worldPosition, terrain.terrainSampling, controlIndices, controlWeights, layerSampler, terrain.pages, fallbackIndices, fallbackWeights)
+        // Anchor palette repeats to the fixed index footprint, so floating-origin shifts preserve UVs.
+        val surfacePosition = terrain.pages?.let { pages -> vec4(terrain.worldPosition.x - pages.grid.x, terrain.worldPosition.y, terrain.worldPosition.z - pages.grid.y, 1f.lit).xyz } ?: terrain.worldPosition
+        val albedo = blendLayers(merged, surfacePosition, albedoLayers, layerParams, layerSampler)
         val normal = let("normal", normalize(terrain.worldNormal))
         val toLight = let("toLight", normalize(terrain.sunDirection.xyz))
         val ambient = let("ambient", terrain.sunDirection.w)
@@ -120,9 +143,14 @@ internal fun terrainLayersShader(clipSpace: ClipSpace, slots: Int): AslShaderDef
         val lighting = let("lighting", ambient + (1f.lit - ambient) * nDotL * shadow)
         val position = terrain.worldPosition
         val sampling = terrain.terrainSampling
+        val pages = terrain.pages
         val baked = let(
             "baked",
-            textureSampleLevel(lightmap, layerSampler, vec2(position.x / sampling.x + 0.5f.lit, position.z / sampling.y + 0.5f.lit), 0f.lit),
+            if (pages != null && fallbackLightmap != null) {
+                samplePagedLight(pages, lightmap, fallbackLightmap, vec2(position.x - pages.grid.x, position.z - pages.grid.y))
+            } else {
+                textureSampleLevel(lightmap, layerSampler, vec2(position.x / sampling.x + 0.5f.lit, position.z / sampling.y + 0.5f.lit), 0f.lit)
+            },
         )
         // 128 in the lightmap is x1; its alpha hands lighting over from the sun to the bake.
         val light = let("light", mix(lighting, mix(ambient, 1f.lit, shadow), baked.w))
@@ -140,6 +168,21 @@ internal fun terrainLayersShader(clipSpace: ClipSpace, slots: Int): AslShaderDef
         val shaded = vec4(displayTransform.displayReferred(lit, terrain.exposure.x), 1f.lit)
         colorOutput(debugViewColor(terrain.debugView, terrain.cascades.cameraPosition, surface, shaded))
     }
+}
+
+/** Four global cell-centred taps preserve baked-light interpolation across resident boundaries. */
+private fun AslBlockBuilder.samplePagedLight(pages: TerrainPageSampling, image: AslExpr, fallback: AslExpr, relative: AslExpr): AslExpr {
+    val size = let("lightPageSize", textureDimensions(image))
+    val pageSize = vec2(toF32(size.x), toF32(size.y))
+    val limit = pageSize * vec2(pages.dimensions.x, pages.dimensions.y)
+    val texel = let("lightTexel", relative / pages.grid.z * pageSize - vec2(0.5f.lit, 0.5f.lit))
+    val base = let("lightBase", floor(texel))
+    val fraction = let("lightFraction", texel - base)
+    val taps = List(4) { tap ->
+        val knot = clamp(base + vec2((tap % 2).toFloat().lit, (tap / 2).toFloat().lit), vec2(0f.lit, 0f.lit), limit - vec2(1f.lit, 1f.lit))
+        let("lightTap$tap", pages.sample(image, fallback, (knot + vec2(0.5f.lit, 0.5f.lit)) / pageSize * pages.grid.z, endpoints = false, coarseLinear = true))
+    }
+    return mix(mix(taps[0], taps[1], fraction.x), mix(taps[2], taps[3], fraction.x), fraction.y)
 }
 
 /** Each slot's layer colour, mixed by its share. Expressions only, so only a debug view pays for them. */
@@ -180,15 +223,20 @@ private fun AslBlockBuilder.mergeControlTaps(
     indices: AslExpr,
     weights: AslExpr,
     sampler: AslExpr,
+    pages: TerrainPageSampling? = null,
+    fallbackIndices: AslExpr? = null,
+    fallbackWeights: AslExpr? = null,
 ): List<Slot> {
     val texelsPerControl = slots / CONTROL_SLOTS
     val size = let("controlSize", textureDimensions(indices))
     val textureWidth = let("controlTextureWidth", toF32(size.x))
-    val sizeX = let("controlWidth", textureWidth / texelsPerControl.toFloat().lit)
-    val sizeZ = let("controlDepth", toF32(size.y))
+    val pageWidth = let("pageControlWidth", textureWidth / texelsPerControl.toFloat().lit)
+    val pageDepth = let("pageControlDepth", toF32(size.y))
+    val sizeX = let("controlWidth", if (pages == null) pageWidth else pageWidth * pages.dimensions.x)
+    val sizeZ = let("controlDepth", if (pages == null) pageDepth else pageDepth * pages.dimensions.y)
     // Control texels align with heightmap samples, whose UV the vertex stage centres the same way.
-    val texelX = let("texelX", (position.x / sampling.x + 0.5f.lit) * sizeX - 0.5f.lit)
-    val texelZ = let("texelZ", (position.z / sampling.y + 0.5f.lit) * sizeZ - 0.5f.lit)
+    val texelX = let("texelX", (if (pages == null) position.x / sampling.x + 0.5f.lit else (position.x - pages.grid.x) / (pages.grid.z * pages.dimensions.x)) * sizeX - 0.5f.lit)
+    val texelZ = let("texelZ", (if (pages == null) position.z / sampling.y + 0.5f.lit else (position.z - pages.grid.y) / (pages.grid.z * pages.dimensions.y)) * sizeZ - 0.5f.lit)
     val baseX = let("baseX", floor(texelX))
     val baseZ = let("baseZ", floor(texelZ))
     val fractionX = let("fractionX", texelX - baseX)
@@ -205,8 +253,9 @@ private fun AslBlockBuilder.mergeControlTaps(
         val v = let("tap${tap}V", (clamp(baseZ + offsetZ.toFloat().lit, 0f.lit, sizeZ - 1f.lit) + 0.5f.lit) / sizeZ)
         for (part in 0 until texelsPerControl) {
             val u = let("tap${tap}U$part", (column + (part + 0.5f).lit) / textureWidth)
-            val layers = let("tap${tap}Layers$part", textureSampleLevel(indices, sampler, vec2(u, v), 0f.lit))
-            val shares = let("tap${tap}Shares$part", textureSampleLevel(weights, sampler, vec2(u, v), 0f.lit))
+            val relative = if (pages == null) null else vec2((column / texelsPerControl.toFloat().lit + 0.5f.lit) / pageWidth * pages.grid.z, v * sizeZ / pageDepth * pages.grid.z)
+            val layers = let("tap${tap}Layers$part", if (pages != null && relative != null) pages.sample(indices, requireNotNull(fallbackIndices), relative, false, texelsPerControl, part) else textureSampleLevel(indices, sampler, vec2(u, v), 0f.lit))
+            val shares = let("tap${tap}Shares$part", if (pages != null && relative != null) pages.sample(weights, requireNotNull(fallbackWeights), relative, false, texelsPerControl, part) else textureSampleLevel(weights, sampler, vec2(u, v), 0f.lit))
             listOf(layers.x to shares.x, layers.y to shares.y, layers.z to shares.z, layers.w to shares.w)
                 .forEachIndexed { channel, (layerChannel, shareChannel) ->
                     val slot = part * CONTROL_SLOTS + channel

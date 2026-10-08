@@ -81,6 +81,35 @@ public final class com/awakekt/awake/asset/terrain/MutableHeightmap {
 	public final fun snapshot ()Lcom/awakekt/awake/asset/terrain/Heightmap;
 }
 
+public final class com/awakekt/awake/asset/terrain/PagedHeightmap {
+	public fun <init> (Lcom/awakekt/awake/asset/terrain/TerrainPageLayout;Lcom/awakekt/awake/asset/terrain/Heightmap;)V
+	public final fun apply (Ljava/util/List;)Lcom/awakekt/awake/asset/terrain/PagedHeightmapChange;
+	public final fun getFallback ()Lcom/awakekt/awake/asset/terrain/Heightmap;
+	public final fun getLayout ()Lcom/awakekt/awake/asset/terrain/TerrainPageLayout;
+	public final fun getResidentCoords ()Ljava/util/Set;
+	public final fun getRevision ()J
+	public final fun heightAtWorld (DD)F
+	public final fun page (Lcom/awakekt/awake/asset/terrain/TerrainPageCoord;)Lcom/awakekt/awake/asset/terrain/Heightmap;
+	public final fun put (Lcom/awakekt/awake/asset/terrain/TerrainPageCoord;Lcom/awakekt/awake/asset/terrain/Heightmap;)V
+	public final fun remove (Lcom/awakekt/awake/asset/terrain/TerrainPageCoord;)Lcom/awakekt/awake/asset/terrain/Heightmap;
+	public final fun sample (II)F
+}
+
+public final class com/awakekt/awake/asset/terrain/PagedHeightmapChange {
+	public fun <init> (JLjava/util/Map;Z)V
+	public final fun component1 ()J
+	public final fun component2 ()Ljava/util/Map;
+	public final fun component3 ()Z
+	public final fun copy (JLjava/util/Map;Z)Lcom/awakekt/awake/asset/terrain/PagedHeightmapChange;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/terrain/PagedHeightmapChange;JLjava/util/Map;ZILjava/lang/Object;)Lcom/awakekt/awake/asset/terrain/PagedHeightmapChange;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFallbackChanged ()Z
+	public final fun getPages ()Ljava/util/Map;
+	public final fun getRevision ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class com/awakekt/awake/asset/terrain/RawHeightmapCodec {
 	public static final field INSTANCE Lcom/awakekt/awake/asset/terrain/RawHeightmapCodec;
 	public final fun decode ([BIILcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/asset/terrain/RawHeightmapFormat;FFLcom/awakekt/awake/core/math/GridOrigin;)Lcom/awakekt/awake/asset/terrain/Heightmap;
@@ -99,6 +128,57 @@ public final class com/awakekt/awake/asset/terrain/RawHeightmapFormat : java/lan
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/asset/terrain/RawHeightmapFormat;
 	public static fun values ()[Lcom/awakekt/awake/asset/terrain/RawHeightmapFormat;
+}
+
+public final class com/awakekt/awake/asset/terrain/TerrainPageCoord {
+	public fun <init> (II)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun copy (II)Lcom/awakekt/awake/asset/terrain/TerrainPageCoord;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/terrain/TerrainPageCoord;IIILjava/lang/Object;)Lcom/awakekt/awake/asset/terrain/TerrainPageCoord;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getX ()I
+	public final fun getZ ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/asset/terrain/TerrainPageLayout {
+	public fun <init> (IIIIFIFFF)V
+	public synthetic fun <init> (IIIIFIFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()I
+	public final fun component4 ()I
+	public final fun component5 ()F
+	public final fun component6 ()I
+	public final fun component7 ()F
+	public final fun component8 ()F
+	public final fun component9 ()F
+	public final fun contains (Lcom/awakekt/awake/asset/terrain/TerrainPageCoord;)Z
+	public final fun copies (II)Ljava/util/Set;
+	public final fun copy (IIIIFIFFF)Lcom/awakekt/awake/asset/terrain/TerrainPageLayout;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/terrain/TerrainPageLayout;IIIIFIFFFILjava/lang/Object;)Lcom/awakekt/awake/asset/terrain/TerrainPageLayout;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCellCountX ()I
+	public final fun getCellCountZ ()I
+	public final fun getCellSize ()F
+	public final fun getHeightScale ()F
+	public final fun getIntervals ()I
+	public final fun getMaxElevation ()F
+	public final fun getMinCellX ()I
+	public final fun getMinCellZ ()I
+	public final fun getMinElevation ()F
+	public final fun getMinX ()D
+	public final fun getMinZ ()D
+	public final fun getSampleSpacing ()F
+	public final fun getSamplesPerPage ()I
+	public final fun getWorldIntervalsX ()I
+	public final fun getWorldIntervalsZ ()I
+	public fun hashCode ()I
+	public final fun owner (II)Lcom/awakekt/awake/asset/terrain/TerrainPageCoord;
+	public fun toString ()Ljava/lang/String;
+	public final fun validate (Lcom/awakekt/awake/asset/terrain/Heightmap;)V
 }
 
 public final class com/awakekt/awake/asset/terrain/clipmap/ClipmapRingState {

@@ -6,7 +6,7 @@
 > 2. Read this sitemap table to find the exact document you need.
 > 3. Only open the specific single file relevant to your current task.
 
-**Last Self-Healed**: `2026-10-06` | **Total Tracked Docs**: `80`
+**Last Self-Healed**: `2026-10-06` | **Total Tracked Docs**: `81`
 
 | Category | Document | Status | 1-Line Summary |
 | :--- | :--- | :--- | :--- |
@@ -91,6 +91,7 @@
 | **General** | [`Awake Engine — MVP Plan`](mvp-plan.md) | `Active` | The live roadmap. Completed work is summarised here in one line per phase; decisions and their |
 | **General** | [`Network Plan — Transport, Replication, Smoothing`](plans/network.md) | `Active` | Where networking lives in Awake, which transport and wire format to pick, and the order to |
 | **General** | [`Physics Plan — Open World & Character`](plans/physics-open-world.md) | `Active` | What the physics subsystem is missing before Awake can carry an open world with a |
+| **General** | [`Streamed terrain — one clipmap over resident pages`](plans/streamed-terrain.md) | `Implemented` | Page assets, bounded residency and uploads, shared lit/depth sampling, collision and edit/save APIs for #409. |
 | **General** | [`Awake Engine Release Process & Branching Guidelines`](release-process.md) | `Active` | This document serves as the canonical source of truth for repository branching, versioning, |
 
 ---

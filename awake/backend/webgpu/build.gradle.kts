@@ -143,6 +143,7 @@ kotlin {
             kotlin.srcDir(showcasePlanFixture)
             dependencies {
                 implementation(project(":awake:asset:shader-dsl"))
+                implementation(project(":awake:kit:terrain-layers"))
                 implementation(libs.kotlinx.coroutines.test)
             }
             resources.srcDir("src/wasmJsMain/resources")
