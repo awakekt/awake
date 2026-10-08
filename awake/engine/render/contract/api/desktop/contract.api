@@ -1077,8 +1077,13 @@ public final class com/awakekt/awake/render/pipeline/PipelineVariant$Overlay : c
 	public fun toString ()Ljava/lang/String;
 }
 
-public abstract interface class com/awakekt/awake/render/pipeline/PreparedShaderProgram {
+public abstract interface class com/awakekt/awake/render/pipeline/PreparedShaderProgram : java/lang/AutoCloseable {
+	public fun close ()V
 	public abstract fun getProgram ()Lcom/awakekt/awake/render/pipeline/ShaderProgram;
+}
+
+public final class com/awakekt/awake/render/pipeline/PreparedShaderProgram$DefaultImpls {
+	public static fun close (Lcom/awakekt/awake/render/pipeline/PreparedShaderProgram;)V
 }
 
 public final class com/awakekt/awake/render/pipeline/ResourceBinding {

@@ -20,10 +20,10 @@ import com.awakekt.awake.render.renderer.UniformWriter
 import com.awakekt.awake.webgpu.WebGpuHandles
 import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.fastArrayBufferOf
-import com.awakekt.awake.webgpu.writeBufferData
 import com.awakekt.awake.webgpu.handles.DescriptorSetLayoutHandle
 import com.awakekt.awake.webgpu.swapchain.SwapchainManager
 import com.awakekt.awake.webgpu.texture.Texture
+import com.awakekt.awake.webgpu.writeBufferData
 import io.ygdrasil.webgpu.BindGroupDescriptor
 import io.ygdrasil.webgpu.BindGroupEntry
 import io.ygdrasil.webgpu.BlendComponent
@@ -75,23 +75,23 @@ import io.ygdrasil.webgpu.VertexState
  */
 class RenderPipeline(
     graphicsDevice: GraphicsDevice,
-    swapchainManager: SwapchainManager,
+    private val swapchainManager: SwapchainManager,
     descriptorSetLayout: DescriptorSetLayoutHandle,
     vertShaderCode: ByteArray,
     fragShaderCode: ByteArray,
     val vertexFormat: VertexFormat,
     private val vertexEntryPoint: String = DEFAULT_VERTEX_ENTRY_POINT,
     private val fragmentEntryPoint: String = DEFAULT_FRAGMENT_ENTRY_POINT,
-    topology: GPUPrimitiveTopology = GPUPrimitiveTopology.TriangleList,
+    private val topology: GPUPrimitiveTopology = GPUPrimitiveTopology.TriangleList,
     /** See [PipelineVariant]'s own doc comment. Defaults to [PipelineVariant.Opaque] -- the
      * pipeline this class always built before any variant existed. Shared with Vulkan so a
      * pipeline shape is described once and each backend only translates it. */
-    variant: PipelineVariant = PipelineVariant.Opaque,
+    private val variant: PipelineVariant = PipelineVariant.Opaque,
     /** `GPUCullMode.None` (default) draws both triangle faces always -- byte-for-byte what this
      * class always built. `GPUCullMode.Back` builds a back-culled companion pipeline for a
      * correctly-wound solid mesh -- see `render.renderer.CullMode`'s own doc comment. Mirrors
      * Vulkan's `RenderPipeline.cullMode`. */
-    cullMode: GPUCullMode = GPUCullMode.None,
+    private val cullMode: GPUCullMode = GPUCullMode.None,
     val frontFace: FrontFace = FrontFace.CounterClockwise,
     /** Non-null builds this pipeline its OWN uniform buffer plus bind group -- see
      * `PipelineSpec.uniforms`. Mirrors Vulkan's identical parameter; this backend needs no
@@ -114,15 +114,8 @@ class RenderPipeline(
 
     /** This pipeline as the shared render layer's opaque handle. One per pipeline object and
      * stable across frames, which is what lets the shared feature group draws by identity. */
-    val handle: WebGpuPipelineHandle by lazy {
-        WebGpuPipelineHandle(
-            WebGpuHandles.resolve(graphicsPipeline[0]),
-            bindingLayout,
-            materialBindings,
-            hasGroupZeroBindings = hasDeclaredGroupZeroBindings,
-            bindingsByGroup = bindingsByGroup,
-        )
-    }
+    var handle: WebGpuPipelineHandle
+        private set
 
     /** Group 0 is present only when the authoritative shader ABI declares it. */
     private val hasDeclaredGroupZeroBindings: Boolean
@@ -209,14 +202,91 @@ class RenderPipeline(
         contentTextures = textures
     }
 
+    // No layout at all for VertexFormat.None -- a stride-0 buffer no attribute reads is not the
+    // same thing as declaring the pipeline takes no vertex buffer. Mirrors Vulkan's
+    // vertexInputState.
+    private val vertexBuffers: List<VertexBufferLayout> = buildList {
+        if (vertexFormat.attributes.isNotEmpty()) {
+            add(
+                VertexBufferLayout(
+                    arrayStride = vertexFormat.strideBytes.toULong(),
+                    attributes = vertexFormat.entries.map { (attribute, offsetBytes) ->
+                        VertexAttribute(
+                            shaderLocation = attribute.location.toUInt(),
+                            offset = offsetBytes.toULong(),
+                            format = attribute.format.toGpuVertexFormat(),
+                        )
+                    },
+                ),
+            )
+        }
+        if (variant.instanced) {
+            // maxOfOrNull, not maxOf: see Vulkan's vertexInputState for why.
+            val firstLocation = (vertexFormat.attributes.maxOfOrNull { it.location } ?: -1) + 1
+            add(
+                VertexBufferLayout(
+                    arrayStride = INSTANCE_MATRIX_BYTES.toULong(),
+                    stepMode = GPUVertexStepMode.Instance,
+                    attributes = (0 until MATRIX_ROWS).map { row ->
+                        VertexAttribute(
+                            shaderLocation = (firstLocation + row).toUInt(),
+                            offset = (row * VEC4_BYTES).toULong(),
+                            format = GPUVertexFormat.Float32x4,
+                        )
+                    },
+                ),
+            )
+            if (variant.instanceAlpha) {
+                add(
+                    VertexBufferLayout(
+                        arrayStride = VEC4_BYTES.toULong(),
+                        stepMode = GPUVertexStepMode.Instance,
+                        attributes = listOf(
+                            VertexAttribute(
+                                shaderLocation = (firstLocation + MATRIX_ROWS).toUInt(),
+                                offset = 0uL,
+                                format = GPUVertexFormat.Float32x4,
+                            ),
+                        ),
+                    ),
+                )
+            }
+            if (variant.instanceFrame) {
+                add(
+                    VertexBufferLayout(
+                        arrayStride = Float.SIZE_BYTES.toULong(),
+                        stepMode = GPUVertexStepMode.Instance,
+                        attributes = listOf(
+                            VertexAttribute(
+                                shaderLocation = (firstLocation + MATRIX_ROWS + 1).toUInt(),
+                                offset = 0uL,
+                                format = GPUVertexFormat.Float32,
+                            ),
+                        ),
+                    ),
+                )
+            }
+        }
+    }
+
+    private val explicitLayout = device.createAwakePipelineLayout(bindingsByGroup)
+
+    private var contentBindGroup: WebGpuBindGroupHandle? = null
+
+    /** Invalidate cached bind groups built against this pipeline's group 0 layout. */
+    internal fun invalidateUniformBlock() {
+        contentBindGroup = null
+        bindGroupBuilt = false
+    }
+
     override val uniformBlock: UniformBlock? = uniformBuffer?.takeIf { usesMaterialGroup }?.let { buffer ->
         val layout = requireNotNull(uniforms)
         object : UniformBlock {
-            // One bind group, not one per frame: this backend runs a single frame in flight, so
-            // Vulkan's per-frame slot array has no counterpart to mirror here.
-            private val group by lazy {
+            // Recreated when invalidated, caching until the next pipeline swap.
+            override fun binding(frameIndex: Int): MaterialBinding {
+                contentBindGroup?.let { return it }
                 bindGroupBuilt = true
-                WebGpuBindGroupHandle(
+                val group = WebGpuBindGroupHandle(
                     device.createBindGroup(
                         BindGroupDescriptor(
                             layout = WebGpuHandles.resolve<GPURenderPipeline>(graphicsPipeline[0])
@@ -225,9 +295,9 @@ class RenderPipeline(
                         ),
                     ),
                 )
+                contentBindGroup = group
+                return group
             }
-
-            override fun binding(frameIndex: Int): MaterialBinding = group
 
             override fun write(frameIndex: Int, fill: UniformWriter.() -> Unit) {
                 val floats = UniformWriter(layout).apply(fill).build()
@@ -241,128 +311,107 @@ class RenderPipeline(
             "WebGPU RenderPipeline requires explicit shader binding metadata; " +
                 "declare bindingsByGroup on the shared PipelineSpec."
         }
-        val device = graphicsDevice.wgpuContext.device
-        val shaderModule = device.createShaderModule(ShaderModuleDescriptor(code = vertShaderCode.decodeToString()))
-        val explicitLayout = device.createAwakePipelineLayout(bindingsByGroup)
-
-        // No layout at all for VertexFormat.None -- a stride-0 buffer no attribute reads is not the
-        // same thing as declaring the pipeline takes no vertex buffer. Mirrors Vulkan's
-        // vertexInputState.
-        val vertexBuffers = mutableListOf<VertexBufferLayout>()
-        if (vertexFormat.attributes.isNotEmpty()) {
-            vertexBuffers += VertexBufferLayout(
-                arrayStride = vertexFormat.strideBytes.toULong(),
-                attributes = vertexFormat.entries.map { (attribute, offsetBytes) ->
-                    VertexAttribute(
-                        shaderLocation = attribute.location.toUInt(),
-                        offset = offsetBytes.toULong(),
-                        format = attribute.format.toGpuVertexFormat(),
-                    )
-                },
-            )
-        }
-        if (variant.instanced) {
-            // maxOfOrNull, not maxOf: see Vulkan's vertexInputState for why.
-            val firstLocation = (vertexFormat.attributes.maxOfOrNull { it.location } ?: -1) + 1
-            vertexBuffers += VertexBufferLayout(
-                arrayStride = INSTANCE_MATRIX_BYTES.toULong(),
-                stepMode = GPUVertexStepMode.Instance,
-                attributes = (0 until MATRIX_ROWS).map { row ->
-                    VertexAttribute(
-                        shaderLocation = (firstLocation + row).toUInt(),
-                        offset = (row * VEC4_BYTES).toULong(),
-                        format = GPUVertexFormat.Float32x4,
-                    )
-                },
-            )
-            if (variant.instanceAlpha) {
-                vertexBuffers += VertexBufferLayout(
-                    arrayStride = VEC4_BYTES.toULong(),
-                    stepMode = GPUVertexStepMode.Instance,
-                    attributes = listOf(
-                        VertexAttribute(
-                            shaderLocation = (firstLocation + MATRIX_ROWS).toUInt(),
-                            offset = 0uL,
-                            format = GPUVertexFormat.Float32x4,
-                        ),
-                    ),
-                )
-            }
-            if (variant.instanceFrame) {
-                vertexBuffers += VertexBufferLayout(
-                    arrayStride = Float.SIZE_BYTES.toULong(),
-                    stepMode = GPUVertexStepMode.Instance,
-                    attributes = listOf(
-                        VertexAttribute(
-                            shaderLocation = (firstLocation + MATRIX_ROWS + 1).toUInt(),
-                            offset = 0uL,
-                            format = GPUVertexFormat.Float32,
-                        ),
-                    ),
-                )
-            }
-        }
-
-        val pipeline = device.createRenderPipeline(
-            RenderPipelineDescriptor(
-                layout = explicitLayout,
-                vertex = VertexState(
-                    module = shaderModule,
-                    entryPoint = vertexEntryPoint,
-                    buffers = vertexBuffers,
-                ),
-                fragment = FragmentState(
-                    module = shaderModule,
-                    entryPoint = fragmentEntryPoint,
-                    targets = listOf(
-                        ColorTargetState(
-                            format = swapchainManager.imageFormatWebGpu,
-                            blend = if (variant.blendEnabled) {
-                                BlendState(
-                                    color = BlendComponent(
-                                        srcFactor = GPUBlendFactor.SrcAlpha,
-                                        // Additive colour adds to what is there; alpha blends as usual.
-                                        dstFactor = if (variant.additive) GPUBlendFactor.One else GPUBlendFactor.OneMinusSrcAlpha,
-                                    ),
-                                    alpha = BlendComponent(
-                                        srcFactor = GPUBlendFactor.SrcAlpha,
-                                        dstFactor = GPUBlendFactor.OneMinusSrcAlpha,
-                                    ),
-                                )
-                            } else {
-                                null
-                            },
-                        ),
-                    ),
-                ),
-                primitive = PrimitiveState(
-                    topology = topology,
-                    cullMode = cullMode,
-                    // Mesh geometry in Awake is authored counter-clockwise when viewed from its
-                    // outward-facing side. WebGPU's +Y-up NDC preserves that convention at
-                    // rasterization; treating CW as front-facing culls camera-facing surfaces.
-                    frontFace = when (frontFace) {
-                        FrontFace.CounterClockwise -> GPUFrontFace.CCW
-                        FrontFace.Clockwise -> GPUFrontFace.CW
-                    },
-                ),
-                depthStencil = DepthStencilState(
-                    format = GPUTextureFormat.Depth32Float,
-                    depthWriteEnabled = variant.depthWriteEnabled,
-                    // Always is this backend's "test off": WebGPU has no depthTestEnable flag, and
-                    // the depthStencil block itself stays mandatory because the pass has a real
-                    // Depth32Float attachment. Vulkan spells the same thing depthTestEnable=false.
-                    depthCompare = if (variant.depthTestEnabled) {
-                        GPUCompareFunction.Less
-                    } else {
-                        GPUCompareFunction.Always
-                    },
-                    stencilFront = StencilFaceState(),
-                    stencilBack = StencilFaceState(),
-                ),
-            ),
+        val pipeline = buildPipeline(
+            vertShaderCode.decodeToString(),
+            vertexEntryPoint,
+            fragmentEntryPoint,
         )
         graphicsPipeline = longArrayOf(WebGpuHandles.register(pipeline))
+        handle = WebGpuPipelineHandle(
+            pipeline,
+            bindingLayout,
+            materialBindings,
+            hasGroupZeroBindings = hasDeclaredGroupZeroBindings,
+            bindingsByGroup = bindingsByGroup,
+        )
+    }
+
+    /**
+     * Builds a new `GPURenderPipeline` running [wgslSource] with this pipeline's state and explicit layout.
+     * It is not bound until [swapIn].
+     */
+    internal fun buildPipeline(
+        wgslSource: String,
+        vertexEntryPoint: String,
+        fragmentEntryPoint: String,
+    ): GPURenderPipeline {
+        val shaderModule = device.createShaderModule(ShaderModuleDescriptor(code = wgslSource))
+        try {
+            return device.createRenderPipeline(
+                RenderPipelineDescriptor(
+                    layout = explicitLayout,
+                    vertex = VertexState(
+                        module = shaderModule,
+                        entryPoint = vertexEntryPoint,
+                        buffers = vertexBuffers,
+                    ),
+                    fragment = FragmentState(
+                        module = shaderModule,
+                        entryPoint = fragmentEntryPoint,
+                        targets = listOf(
+                            ColorTargetState(
+                                format = swapchainManager.imageFormatWebGpu,
+                                blend = if (variant.blendEnabled) {
+                                    BlendState(
+                                        color = BlendComponent(
+                                            srcFactor = GPUBlendFactor.SrcAlpha,
+                                            // Additive colour adds to what is there; alpha blends as usual.
+                                            dstFactor = if (variant.additive) GPUBlendFactor.One else GPUBlendFactor.OneMinusSrcAlpha,
+                                        ),
+                                        alpha = BlendComponent(
+                                            srcFactor = GPUBlendFactor.SrcAlpha,
+                                            dstFactor = GPUBlendFactor.OneMinusSrcAlpha,
+                                        ),
+                                    )
+                                } else {
+                                    null
+                                },
+                            ),
+                        ),
+                    ),
+                    primitive = PrimitiveState(
+                        topology = topology,
+                        cullMode = cullMode,
+                        // Mesh geometry in Awake is authored counter-clockwise when viewed from its
+                        // outward-facing side. WebGPU's +Y-up NDC preserves that convention at
+                        // rasterization; treating CW as front-facing culls camera-facing surfaces.
+                        frontFace = when (frontFace) {
+                            FrontFace.CounterClockwise -> GPUFrontFace.CCW
+                            FrontFace.Clockwise -> GPUFrontFace.CW
+                        },
+                    ),
+                    depthStencil = DepthStencilState(
+                        format = GPUTextureFormat.Depth32Float,
+                        depthWriteEnabled = variant.depthWriteEnabled,
+                        // Always is this backend's "test off": WebGPU has no depthTestEnable flag, and
+                        // the depthStencil block itself stays mandatory because the pass has a real
+                        // Depth32Float attachment. Vulkan spells the same thing depthTestEnable=false.
+                        depthCompare = if (variant.depthTestEnabled) {
+                            GPUCompareFunction.Less
+                        } else {
+                            GPUCompareFunction.Always
+                        },
+                        stencilFront = StencilFaceState(),
+                        stencilBack = StencilFaceState(),
+                    ),
+                ),
+            )
+        } finally {
+            shaderModule.close()
+        }
+    }
+
+    /**
+     * Swaps in [newPipeline] in place, updating the handle and releasing the previous pipeline from [WebGpuHandles].
+     * Returns the previous [GPURenderPipeline].
+     */
+    internal fun swapIn(newPipeline: GPURenderPipeline): GPURenderPipeline {
+        val old = WebGpuHandles.resolve<GPURenderPipeline>(graphicsPipeline[0])
+        WebGpuHandles.release(graphicsPipeline[0])
+        graphicsPipeline[0] = WebGpuHandles.register(newPipeline)
+        handle.pipeline = newPipeline
+        invalidateUniformBlock()
+        return old
     }
 
     fun destroy() {

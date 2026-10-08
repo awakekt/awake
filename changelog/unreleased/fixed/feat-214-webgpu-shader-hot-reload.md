@@ -1,0 +1,1 @@
+- Validate WebGPU shader reloads through the GPU driver on browsers and desktop, preserve running pipelines after rejected replacements, and release abandoned prepared candidates.

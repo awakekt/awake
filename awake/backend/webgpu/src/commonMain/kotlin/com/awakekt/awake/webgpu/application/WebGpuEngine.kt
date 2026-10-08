@@ -13,15 +13,13 @@ import com.awakekt.awake.asset.shaders.RenderBackend
 import com.awakekt.awake.asset.shaders.RenderCapabilities
 import com.awakekt.awake.asset.shaders.RenderPlan
 import com.awakekt.awake.asset.shaders.ShaderSet
-import com.awakekt.awake.asset.shaders.ShaderStage as ShaderProgramStage
 import com.awakekt.awake.asset.shaders.ShaderStages
 import com.awakekt.awake.asset.shaders.buildContentFeature
 import com.awakekt.awake.asset.shaders.castsWithPrimaryDepthShader
 import com.awakekt.awake.asset.shaders.keyedCasterLayout
-import com.awakekt.awake.asset.shaders.skinnedDepthShaders
 import com.awakekt.awake.asset.shaders.narrowedTo
 import com.awakekt.awake.asset.shaders.resolveBytes
-import com.awakekt.awake.asset.shaders.spec
+import com.awakekt.awake.asset.shaders.skinnedDepthShaders
 import com.awakekt.awake.asset.shaders.uiShaderSet
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.engine.platform.GraphicsEngine
@@ -43,10 +41,12 @@ import com.awakekt.awake.webgpu.pipeline.RenderPipeline
 import com.awakekt.awake.webgpu.pipeline.WebGpuLinePass
 import com.awakekt.awake.webgpu.pipeline.WebGpuPipelineFactory
 import com.awakekt.awake.webgpu.pipeline.WebGpuRenderFrameContext
+import com.awakekt.awake.webgpu.pipeline.WebGpuShaderReplacement
 import com.awakekt.awake.webgpu.pipeline.WebGpuShaderResolver
 import com.awakekt.awake.webgpu.pipeline.WebGpuUiPass
 import com.awakekt.awake.webgpu.renderer.Renderer
 import com.awakekt.awake.webgpu.swapchain.SwapchainManager
+import com.awakekt.awake.asset.shaders.ShaderStage as ShaderProgramStage
 
 /**
  * Reusable WebGPU app bootstrap -- wasmJs counterpart to `VulkanEngine`
@@ -369,6 +369,11 @@ open class WebGpuEngine(
             renderFeatures = renderFeatures,
         ).also { renderer ->
             renderer.contentFeatureHost = attacher
+            renderer.shaderReplacement = WebGpuShaderReplacement(
+                registry = registry,
+                device = graphicsDevice.wgpuContext.device,
+                onSwap = { oldPipeline -> renderer.bufferPools.invalidatePipeline(oldPipeline) },
+            )
             // A content shader may declare the shadow-map group without any shadow pass to fill it.
             if (depthPrePass == null) {
                 renderer.depthPrePassPlaceholder = com.awakekt.awake.webgpu.texture.DepthTarget(

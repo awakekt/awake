@@ -141,6 +141,10 @@ kotlin {
         // copy rather than duplicated, so a shader edit cannot drift between the two.
         named("desktopTest") {
             kotlin.srcDir(showcasePlanFixture)
+            dependencies {
+                implementation(project(":awake:asset:shader-dsl"))
+                implementation(libs.kotlinx.coroutines.test)
+            }
             resources.srcDir("src/wasmJsMain/resources")
             // lit_shadow.wgsl, for the shadow bind-group test. The shader pack's own synced
             // WebGPU copy, not a duplicate here: a copy would drift the moment the ASL
@@ -155,6 +159,9 @@ kotlin {
                 implementation(libs.kotlinx.browser)
                 implementation(project(":awake:core:logging"))
             }
+        }
+        named("wasmJsTest").dependencies {
+            implementation(libs.kotlinx.coroutines.test)
         }
     }
 }
