@@ -194,7 +194,7 @@ private const val INDICES_PER_TRIANGLE = 3
 private const val NUM_BROADPHASE_LAYERS = 2
 private const val BROADPHASE_LAYER_STATIC = 0
 private const val BROADPHASE_LAYER_MOVING = 1
-private const val MAX_BODIES = 5_000
+private const val MAX_BODIES = 65_536
 private const val MAX_BODY_PAIRS = 65_536
 private const val MAX_CONTACTS = 20_480
 

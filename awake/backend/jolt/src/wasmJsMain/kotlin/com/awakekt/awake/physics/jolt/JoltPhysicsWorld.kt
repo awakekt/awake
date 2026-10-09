@@ -108,6 +108,8 @@ private object JoltModule {
         const BP_MOVING = 1;
 
         const settings = new jolt.JoltSettings();
+        // The same body limit as the other backends; Jolt.js would otherwise allow 10,240.
+        settings.mMaxBodies = 65536;
         const objectFilter = new jolt.ObjectLayerPairFilterTable(layerCount);
         for (let a = 0; a < layerCount; a++) {
             for (let b = a; b < layerCount; b++) {
