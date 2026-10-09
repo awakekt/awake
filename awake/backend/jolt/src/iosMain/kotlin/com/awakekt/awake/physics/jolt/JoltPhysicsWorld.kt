@@ -195,7 +195,7 @@ import kotlin.math.sqrt
 private const val NUM_BROADPHASE_LAYERS: UInt = 2u
 private const val BROADPHASE_LAYER_STATIC: JPC_BroadPhaseLayer = 0u
 private const val BROADPHASE_LAYER_MOVING: JPC_BroadPhaseLayer = 1u
-private const val MAX_BODIES = 5_000u
+private const val MAX_BODIES = 65_536u
 private const val NUM_BODY_MUTEXES = 0u
 private const val MAX_BODY_PAIRS = 65_536u
 private const val MAX_CONTACTS = 20_480u

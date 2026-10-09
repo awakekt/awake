@@ -1,0 +1,1 @@
+- **A physics world holds an open-world region.** `JoltPhysicsWorld` allowed 5,000 bodies on desktop, Android and iOS, and Jolt.js's default of 10,240 on wasm; one more threw "ran out of bodies", so a region with thousands of prop colliders and characters could not load. Every backend now allows 65,536, Jolt's own suggestion for a real project.
