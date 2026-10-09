@@ -7,10 +7,17 @@ package com.awakekt.awake.ui.shadcn.components
 
 import com.awakekt.awake.compose.foundation.background
 import com.awakekt.awake.compose.foundation.clickable
+import com.awakekt.awake.compose.foundation.hoverable
+import com.awakekt.awake.compose.foundation.interaction.InteractionSource
 import com.awakekt.awake.compose.foundation.layout.Box
 import com.awakekt.awake.compose.foundation.layout.BoxMeasurePolicy
 import com.awakekt.awake.compose.foundation.layout.fillMaxSize
+import com.awakekt.awake.compose.foundation.style.Style
+import com.awakekt.awake.compose.foundation.style.hovered
+import com.awakekt.awake.compose.foundation.style.rememberStyleState
+import com.awakekt.awake.compose.foundation.style.styleable
 import com.awakekt.awake.compose.runtime.Composer
+import com.awakekt.awake.compose.runtime.remember
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.draw.alpha
@@ -19,7 +26,11 @@ import com.awakekt.awake.compose.ui.layout.LayerKind
 import com.awakekt.awake.compose.ui.layout.LayerPosition
 import com.awakekt.awake.compose.ui.layout.LayerPositionProvider
 import com.awakekt.awake.compose.ui.semantics.SemanticsProperties
+import com.awakekt.awake.compose.ui.semantics.SemanticsRole
 import com.awakekt.awake.compose.ui.semantics.semantics
+import com.awakekt.awake.compose.ui.unit.Dp
+import com.awakekt.awake.tailwind.Tw
+import com.awakekt.awake.ui.shadcn.ShadcnThemeValues
 import com.awakekt.awake.ui.shadcn.theme.shadcnTheme
 
 /**
@@ -90,3 +101,47 @@ private val GlobalModalPositionProvider = LayerPositionProvider { parentX, paren
 internal fun scrimModifier(id: String?, onScrimClick: (() -> Unit)?): Modifier = Modifier
     .let { if (onScrimClick == null) it else it.clickable { onScrimClick() } }
     .semantics { if (id != null) this[SemanticsProperties.TestTag] = "$id.scrim" }
+
+/**
+ * The close control upstream's `DialogContent` and `SheetContent` draw unless `showCloseButton` is
+ * off: `absolute top-4 right-4 rounded-xs opacity-70 hover:opacity-100` around a `size-4` X, read
+ * out as `sr-only` "Close". Addressable as `<id>.close`, like the scrim.
+ *
+ * [placement] puts it in the corner, since the dialog pads its panel and the sheet its content. It
+ * goes on a box around the control rather than on the control: an offset or padding there moves
+ * what the control draws but not the bounds a press and a test find it by.
+ */
+context(_: Composer)
+internal fun shadcnOverlayClose(placement: Modifier, id: String?, onClick: () -> Unit) {
+    val theme = shadcnTheme
+    val interaction = remember { InteractionSource() }
+    val state = rememberStyleState(interaction)
+    val style = remember(theme) { theme.overlayCloseStyle() }
+    Box(placement) {
+        Box(
+            Modifier
+                .hoverable(interaction)
+                .clickable(interaction) { onClick() }
+                .styleable(state, style)
+                .semantics {
+                    this[SemanticsProperties.Role] = SemanticsRole.Button
+                    this[SemanticsProperties.Label] = "Close"
+                    if (id != null) this[SemanticsProperties.TestTag] = "$id.close"
+                },
+        ) {
+            ShadcnIcon(ShadcnIcons.x, tint = theme.palette.foreground)
+        }
+    }
+}
+
+internal fun ShadcnThemeValues.overlayCloseStyle(): Style = Style {
+    cornerRadius(radii.xs)
+    alpha(OVERLAY_CLOSE_ALPHA)
+    hovered(Style { alpha(1f) })
+}
+
+/** `opacity-70` until hovered. */
+private const val OVERLAY_CLOSE_ALPHA = 0.7f
+
+/** `top-4 right-4`: the close control's inset from the panel's edges. */
+internal val OverlayCloseInset: Dp = Tw.Spacing.s4

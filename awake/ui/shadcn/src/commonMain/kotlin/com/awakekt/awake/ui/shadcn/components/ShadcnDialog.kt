@@ -14,6 +14,7 @@ import com.awakekt.awake.compose.foundation.layout.ColumnScope
 import com.awakekt.awake.compose.foundation.layout.Row
 import com.awakekt.awake.compose.foundation.layout.RowScope
 import com.awakekt.awake.compose.foundation.layout.fillMaxWidth
+import com.awakekt.awake.compose.foundation.layout.offset
 import com.awakekt.awake.compose.foundation.layout.padding
 import com.awakekt.awake.compose.foundation.layout.widthIn
 import com.awakekt.awake.compose.foundation.style.Style
@@ -181,7 +182,9 @@ class ShadcnDialogScope internal constructor(
  * @param onDismissRequest Callback invoked when clicking the scrim backdrop or pressing Escape.
  * @param modifier Custom layout modifier for the panel container.
  * @param width Width of the dialog container (defaults to `sm:max-w-lg` 512.dp).
- * @param id Optional test tag or identifier.
+ * @param id Optional test tag or identifier; the close control is `<id>.close`.
+ * @param showCloseButton Draws upstream's close X in the top-right corner, which calls
+ *   [onDismissRequest]. On by default, as upstream's `DialogContent` has it.
  * @param content The composable dialog body slot with [ShadcnDialogScope] receiver.
  *
  * Keywords: dialog, modal, popup, scrim, overlay, window.
@@ -193,6 +196,7 @@ fun ShadcnDialog(
     modifier: Modifier = Modifier,
     width: Dp = DialogWidth,
     id: String? = null,
+    showCloseButton: Boolean = true,
     content: (
         context(Composer)
         ShadcnDialogScope.() -> Unit
@@ -233,6 +237,15 @@ fun ShadcnDialog(
                         }
                     }
                 }
+                if (showCloseButton) {
+                    shadcnOverlayClose(
+                        // `absolute top-4 right-4` counts from inside the border, and the panel's
+                        // children start inside its `p-6`, so it moves back out by the difference.
+                        Modifier.align(Alignment.TopEnd).offset(x = DialogCloseShift, y = 0.dp - DialogCloseShift),
+                        id,
+                        onDismissRequest,
+                    )
+                }
             }
         }
     }
@@ -264,3 +277,6 @@ private val DialogActionGap: Dp = Tw.Spacing.s2
 
 /** Tailwind's bare `border` is 1px; the width scale is not generated -- see `ShadcnCard`. */
 private val DialogBorderWidth: Dp = 1.dp
+
+/** From `p-6` back out to `top-4 right-4`. */
+private val DialogCloseShift: Dp = Tw.Spacing.s6 - OverlayCloseInset

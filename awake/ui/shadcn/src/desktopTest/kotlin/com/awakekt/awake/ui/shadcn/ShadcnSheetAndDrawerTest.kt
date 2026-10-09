@@ -100,6 +100,22 @@ class ShadcnSheetAndDrawerTest {
     }
 
     @Test
+    fun aSheetsCloseXSitsInItsTopRightCornerAndClosesIt() {
+        var dismissed = 0
+        val session = sheetSession(ShadcnSheetSide.Right) { dismissed++ }
+        val frame = session.frame()
+        val sheet = frame.onNodeWithTag(SHEET).getBoundsInRoot()
+        val close = frame.onNodeWithTag("$SHEET.close").getBoundsInRoot()
+        // `top-4 right-4` around a `size-4` icon.
+        assertEquals(16, close.width)
+        assertEquals(sheet.right - CLOSE_INSET, close.right, "the close X is 16dp in from the right")
+        assertEquals(sheet.top + CLOSE_INSET, close.top, "the close X is 16dp down from the top")
+
+        session.clickAt(close.left + close.width / 2, close.top + close.height / 2)
+        assertEquals(1, dismissed, "the close X did not close the sheet")
+    }
+
+    @Test
     fun draggingTheDrawerHandleFarEnoughDismissesIt() {
         var dismissed = 0
         val session = drawerSession { dismissed++ }
@@ -225,6 +241,7 @@ class ShadcnSheetAndDrawerTest {
         const val WIDE = 800
         const val SHEET_MAX_WIDTH = 384
         const val EDGE = 4
+        const val CLOSE_INSET = 16
         const val SHEET = "sheet"
         const val DRAWER = "drawer"
         const val DRAG_STEPS = 6

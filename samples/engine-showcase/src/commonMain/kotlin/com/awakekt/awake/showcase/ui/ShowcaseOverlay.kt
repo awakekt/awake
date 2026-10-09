@@ -192,6 +192,8 @@ private fun ShowcaseDebugSheet(
         side = if (compact) ShadcnSheetSide.Bottom else ShadcnSheetSide.Right,
         modifier = if (compact) Modifier.fillMaxHeight(0.85f) else Modifier,
         id = ShowcaseChromeTags.DEBUG_SHEET,
+        // Its header row has its own close, beside the title.
+        showCloseButton = false,
     ) {
         Column(Modifier.fillMaxSize()) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -217,6 +219,8 @@ private fun ShowcaseNavigationSheet(
         onDismissRequest = { state.mobileNavigation = false },
         side = ShadcnSheetSide.Left,
         id = ShowcaseChromeTags.NAV_SHEET,
+        // The switcher has its own close, beside its title.
+        showCloseButton = false,
     ) {
         ShowcaseSwitcher(
             selection,

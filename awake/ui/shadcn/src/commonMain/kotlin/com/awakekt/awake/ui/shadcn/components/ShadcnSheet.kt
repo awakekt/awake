@@ -3,6 +3,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+@file:Suppress("FunctionNaming", "ktlint:standard:function-naming")
+
 package com.awakekt.awake.ui.shadcn.components
 
 import com.awakekt.awake.compose.foundation.BorderSides
@@ -41,6 +43,9 @@ import com.awakekt.awake.ui.shadcn.theme.shadcnTheme
  * are full-height and `w-3/4 sm:max-w-sm`, top and bottom are full-width and as tall as their
  * content. That asymmetry is upstream's, and it is why the side picks both an alignment and which
  * axis fills.
+ *
+ * [showCloseButton] draws upstream's close X in the top-right corner, addressable as `<id>.close`,
+ * which calls [onDismissRequest]. On by default, as upstream's `SheetContent` has it.
  */
 context(_: Composer)
 fun ShadcnSheet(
@@ -51,18 +56,20 @@ fun ShadcnSheet(
     title: String? = null,
     description: String? = null,
     id: String? = null,
+    showCloseButton: Boolean = true,
     content: (
         context(Composer)
         () -> Unit
     )? = null,
 ) {
+    val close = if (showCloseButton) onDismissRequest else null
     shadcnModalLayer(
         visible = visible,
         alignment = side.alignment(),
         onDismissRequest = onDismissRequest,
         scrimModifier = scrimModifier(id, onScrimClick = onDismissRequest),
     ) {
-        sheetPanel(modifier.sheetSemantics(title, id), side, title, description, content)
+        sheetPanel(modifier.sheetSemantics(title, id), side, id, close) { sheetBody(title, description, content) }
     }
 }
 
@@ -70,12 +77,10 @@ context(_: Composer)
 private fun sheetPanel(
     modifier: Modifier,
     side: ShadcnSheetSide,
-    title: String?,
-    description: String?,
-    content: (
-        context(Composer)
-        () -> Unit
-    )?,
+    id: String?,
+    /** The close control's action; null draws none. */
+    onClose: (() -> Unit)?,
+    body: context(Composer) () -> Unit,
 ) {
     val theme = shadcnTheme
     // Two boxes because `w-3/4 sm:max-w-sm` is a minimum of two rules, and no single chain says it:
@@ -96,22 +101,42 @@ private fun sheetPanel(
                     Modifier.padding(SheetPadding),
                     verticalArrangement = Arrangement.spacedBy(SheetSectionGap),
                 ) {
-                    if (title != null || description != null) {
-                        Column(verticalArrangement = Arrangement.spacedBy(SheetHeaderGap)) {
-                            if (title != null) ShadcnText(title, weight = SheetTitleWeight)
-                            if (description != null) {
-                                ShadcnText(
-                                    description,
-                                    variant = ShadcnTextVariant.Muted,
-                                )
-                            }
-                        }
-                    }
-                    content?.let { it() }
+                    body()
                 }
+            }
+            if (onClose != null) {
+                shadcnOverlayClose(
+                    Modifier.align(Alignment.TopEnd).padding(top = OverlayCloseInset, end = OverlayCloseInset),
+                    id,
+                    onClose,
+                )
             }
         }
     }
+}
+
+/** The header upstream's `SheetHeader` holds, then the caller's content. */
+context(_: Composer)
+private fun sheetBody(
+    title: String?,
+    description: String?,
+    content: (
+        context(Composer)
+        () -> Unit
+    )?,
+) {
+    if (title != null || description != null) {
+        Column(verticalArrangement = Arrangement.spacedBy(SheetHeaderGap)) {
+            if (title != null) ShadcnText(title, weight = SheetTitleWeight)
+            if (description != null) {
+                ShadcnText(
+                    description,
+                    variant = ShadcnTextVariant.Muted,
+                )
+            }
+        }
+    }
+    content?.let { it() }
 }
 
 private fun Modifier.sheetSemantics(title: String?, id: String?): Modifier = semantics {

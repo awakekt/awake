@@ -17,4 +17,5 @@ object ShadcnIcons {
     var chevronRight: ImageVector = LucideIcons.chevronRight
     var galleryVerticalEnd: ImageVector = LucideIcons.galleryVerticalEnd
     var save: ImageVector = LucideIcons.save
+    var x: ImageVector = LucideIcons.x
 }
