@@ -18,6 +18,14 @@ import kotlin.math.sqrt
  * State receiving multi-touch transformation gestures (pan, zoom, rotation).
  */
 fun interface TransformableState {
+    /**
+     * Receives one pointer move's change: [panX] and [panY] in pixels, [zoom] as a factor where
+     * `1f` means no change, and [rotationDegrees] as the angle change.
+     *
+     * A single pointer reports only a pan, with `1f` zoom and no rotation. Two pointers report the
+     * movement of their midpoint, the change in their distance and the change in the angle between
+     * them.
+     */
     fun transform(panX: Float, panY: Float, zoom: Float, rotationDegrees: Float)
 }
 

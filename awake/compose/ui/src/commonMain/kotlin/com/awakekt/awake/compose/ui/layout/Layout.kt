@@ -22,6 +22,7 @@ import com.awakekt.awake.compose.ui.platform.LocalFontScale
 // PascalCase composables: Compose's own convention, and this is public API surface -- the same
 // reason Constraints.Infinity keeps its casing. See 11-refinements.md rule 1.
 
+context(composer: Composer)
 /**
  * Declares a layout node: the primitive every container is built from.
  *
@@ -29,7 +30,6 @@ import com.awakekt.awake.compose.ui.platform.LocalFontScale
  * composables declaring at the same index are not the same node. Pass a stable value, usually the
  * composable's own policy class or a marker object.
  */
-context(composer: Composer)
 fun Layout(
     nodeType: Any,
     modifier: Modifier = Modifier,
@@ -58,6 +58,7 @@ fun Layout(
     )
 }
 
+context(composer: Composer)
 /**
  * Declares an overlay: measured against the viewport rather than the enclosing constraints.
  *
@@ -72,7 +73,6 @@ fun Layout(
  * default together because most overlays want both; an alert dialog is the case that does not, and
  * upstream makes exactly that distinction between it and an ordinary dialog.
  */
-context(composer: Composer)
 fun Layer(
     kind: LayerKind,
     modifier: Modifier = Modifier,
@@ -105,9 +105,26 @@ fun Layer(
 }
 
 /** Paint and hit-test order. Within a kind, ordering is the order layers were declared. */
-enum class LayerKind { Popup, Dialog, Tooltip, Toast }
+enum class LayerKind {
+    /** Anchored overlays such as menus and popovers; painted first, so below the other kinds. */
+    Popup,
 
-/** A viewport-aware position for a [Layer], expressed relative to its declaring node. */
+    /** Dialogs and similar overlays; painted above popups. */
+    Dialog,
+
+    /** Hover hints; painted above dialogs. */
+    Tooltip,
+
+    /** Transient notifications; painted last, above every other kind. */
+    Toast,
+}
+
+/**
+ * A viewport-aware position for a [Layer], expressed relative to its declaring node.
+ *
+ * @property x Horizontal offset from the declaring node's left edge, in pixels.
+ * @property y Vertical offset from the declaring node's top edge, in pixels.
+ */
 data class LayerPosition(val x: Int, val y: Int)
 
 /**
@@ -118,6 +135,17 @@ data class LayerPosition(val x: Int, val y: Int)
  * layout.
  */
 fun interface LayerPositionProvider {
+    /**
+     * Returns where to place a measured layer, relative to its declaring node.
+     *
+     * @param parentX Tree-space x of the declaring node, in pixels.
+     * @param parentY Tree-space y of the declaring node, in pixels.
+     * @param layerWidth Measured width of the layer, in pixels.
+     * @param layerHeight Measured height of the layer, in pixels.
+     * @param viewportWidth Width of the viewport the layer was measured against, in pixels.
+     * @param viewportHeight Height of the viewport the layer was measured against, in pixels.
+     * @return The offset of the layer's top-left corner from the declaring node's top-left corner.
+     */
     fun position(
         parentX: Int,
         parentY: Int,
@@ -142,5 +170,9 @@ fun composeInto(root: LayoutNode, content: context(Composer) () -> Unit) {
 class LayoutComposition(root: LayoutNode) {
     private val composition = Composition(LayoutNodeApplier(root), root)
 
+    /**
+     * Runs one pass of [content] against the retained tree, reusing nodes that still match, and
+     * returns the [Composer] it ran with.
+     */
     fun compose(content: context(Composer) () -> Unit): Composer = composition.reconcile(content)
 }

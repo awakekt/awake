@@ -10,6 +10,7 @@ import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.remember
 import com.awakekt.awake.compose.ui.platform.LocalFrameClock
 
+context(_: Composer)
 /**
  * A value in `0f..1f` that loops every [durationSeconds], starting at 0 when the caller appears.
  *
@@ -24,7 +25,6 @@ import com.awakekt.awake.compose.ui.platform.LocalFrameClock
  * There is no id. Identity is the node's position in the tree, so two spinners cannot collide the
  * way `animateFloat(id, ...)` lets two callers pick the same string and share one phase.
  */
-context(_: Composer)
 fun rememberLoopingPhase(durationSeconds: Float): Float {
     require(durationSeconds > 0f) { "durationSeconds must be positive, was $durationSeconds" }
     val clock = LocalFrameClock.current
@@ -32,6 +32,7 @@ fun rememberLoopingPhase(durationSeconds: Float): Float {
     return phase.advance(clock.deltaSeconds / durationSeconds)
 }
 
+context(_: Composer)
 /**
  * Eases toward [target], reaching it [durationSeconds] after it last changed.
  *
@@ -42,7 +43,6 @@ fun rememberLoopingPhase(durationSeconds: Float): Float {
  * Linear. Easing curves are a `05-animation` follow-up -- shipping the interpolation without the
  * clock behind it would have been the harder half done first.
  */
-context(_: Composer)
 fun animateFloat(target: Float, durationSeconds: Float = DEFAULT_DURATION_SECONDS): Float {
     val clock = LocalFrameClock.current
     val animation = remember { AnimatedFloat(target) }

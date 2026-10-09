@@ -146,6 +146,7 @@ private fun weightedShares(items: List<FlowItem>, space: Int, totalWeight: Float
     return shares
 }
 
+context(composer: Composer)
 /**
  * Places children left-to-right and wraps to a new line when a bounded width is exhausted.
  *
@@ -157,7 +158,6 @@ private fun weightedShares(items: List<FlowItem>, space: Int, totalWeight: Float
  * We intentionally do not expose Compose's deprecated overflow-indicator API. A caller that needs
  * an expand control owns that state and renders it alongside this layout.
  */
-context(composer: Composer)
 fun FlowRow(
     modifier: Modifier = Modifier,
     horizontalArrangement: Arrangement.Horizontal = Arrangement.Start,
@@ -183,6 +183,7 @@ fun FlowRow(
     )
 }
 
+context(composer: Composer)
 /**
  * Places children top-to-bottom and wraps to a new column when a bounded height is exhausted.
  *
@@ -194,7 +195,6 @@ fun FlowRow(
  * We intentionally do not expose Compose's deprecated overflow-indicator API. A caller that needs
  * an expand control owns that state and renders it alongside this layout.
  */
-context(composer: Composer)
 fun FlowColumn(
     modifier: Modifier = Modifier,
     verticalArrangement: Arrangement.Vertical = Arrangement.Top,

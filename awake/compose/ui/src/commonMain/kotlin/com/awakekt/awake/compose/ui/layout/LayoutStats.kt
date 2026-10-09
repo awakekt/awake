@@ -14,15 +14,18 @@ package com.awakekt.awake.compose.ui.layout
  * zero-cost-when-disabled contract `UiMeasureTrialStats` already has.
  */
 object LayoutStats {
+    /** Whether counting is on. While it is `false`, [recordIntrinsicQuery] does nothing. */
     var enabled: Boolean = false
 
     var intrinsicQueries: Int = 0
         private set
 
+    /** Counts one intrinsic query toward [intrinsicQueries], if [enabled]. */
     fun recordIntrinsicQuery() {
         if (enabled) intrinsicQueries++
     }
 
+    /** Sets [intrinsicQueries] back to zero. */
     fun reset() {
         intrinsicQueries = 0
     }

@@ -42,10 +42,13 @@ interface StyleScope {
     /** What the component currently is. Read it to branch, or use the rules below. */
     val state: StyleState
 
+    /** Sets the background fill to [color]. */
     fun background(color: Color)
 
+    /** Sets the border to [width] and [color]. */
     fun border(width: Dp, color: Color)
 
+    /** Rounds all four corners by [radius], and uses a rounded shape for the background and border. */
     fun cornerRadius(radius: Dp)
 
     /** Uses one resolved [Shape] for the background and border of this styled node. */
@@ -67,31 +70,64 @@ interface StyleScope {
     /** Outside the background: the gap between this component and its neighbours. */
     fun externalPadding(horizontal: Dp, vertical: Dp = horizontal)
 
+    /** Sets a fixed [width]. */
     fun width(width: Dp)
 
+    /** Sets a fixed [height]. */
     fun height(height: Dp)
 
+    /** Sets a fixed width and height of [size] each. */
     fun size(size: Dp)
 
+    /** Sets the colour of text drawn in this node to [color]. */
     fun textColor(color: Color)
 
+    /** Sets the node's opacity to [alpha], where `1f` is fully opaque. */
     fun alpha(alpha: Float)
 }
 
 /** Everything a chain of styles resolved to. Written by [StyleScope], read by `styleable`. */
 class ResolvedStyle {
+    /** The background fill, or `null` for none. */
     var background: Color? = null
+
+    /** The border thickness. `0.dp` means no border. */
     var borderWidth: Dp = 0.dp
+
+    /** The border colour, or `null` if none was set. */
     var borderColor: Color? = null
+
+    /**
+     * The corner radius. When set through a [shape], it is the top-start corner's size, or `0.dp` if
+     * that corner is not sized in dp.
+     */
     var cornerRadius: Dp = 0.dp
+
+    /** The shape of the background and border, or `null` if none was set. */
     var shape: Shape? = null
+
+    /** The gap between the background's edge and the content, on the start and end sides. */
     var contentPaddingHorizontal: Dp = 0.dp
+
+    /** The gap between the background's edge and the content, on the top and bottom. */
     var contentPaddingVertical: Dp = 0.dp
+
+    /** The gap between the background's edge and neighbouring nodes, on the start and end sides. */
     var externalPaddingHorizontal: Dp = 0.dp
+
+    /** The gap between the background's edge and neighbouring nodes, on the top and bottom. */
     var externalPaddingVertical: Dp = 0.dp
+
+    /** The fixed width, or `null` if none was set. */
     var width: Dp? = null
+
+    /** The fixed height, or `null` if none was set. */
     var height: Dp? = null
+
+    /** The text colour, or `null` if none was set. */
     var textColor: Color? = null
+
+    /** The opacity, where `1f` is fully opaque. */
     var alpha: Float = 1f
 }
 
@@ -171,13 +207,17 @@ private fun StyleScope.applyWhen(condition: Boolean, style: Style) {
  */
 fun StyleScope.hovered(style: Style) = applyWhen(state.isHovered, style)
 
+/** Applies [style] only when the component is pressed. */
 fun StyleScope.pressed(style: Style) = applyWhen(state.isPressed, style)
 
+/** Applies [style] only when the component is focused. */
 fun StyleScope.focused(style: Style) = applyWhen(state.isFocused, style)
 
 /** Applies [style] when the component is **not** enabled -- the one rule that reads inverted. */
 fun StyleScope.disabled(style: Style) = applyWhen(!state.isEnabled, style)
 
+/** Applies [style] only when the component is selected. */
 fun StyleScope.selected(style: Style) = applyWhen(state.isSelected, style)
 
+/** Applies [style] only when the component is checked. */
 fun StyleScope.checked(style: Style) = applyWhen(state.isChecked, style)

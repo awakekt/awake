@@ -16,7 +16,13 @@ import com.awakekt.awake.compose.ui.unit.Constraints
 import com.awakekt.awake.compose.ui.unit.Density
 
 /** Which intrinsic answer a size request should take. */
-enum class IntrinsicSize { Min, Max }
+enum class IntrinsicSize {
+    /** Use the content's minimum intrinsic size. */
+    Min,
+
+    /** Use the content's maximum intrinsic size. */
+    Max,
+}
 
 /**
  * Sizes this node to what its content asks for, rather than to a number.
@@ -31,6 +37,7 @@ enum class IntrinsicSize { Min, Max }
 fun Modifier.width(intrinsicSize: IntrinsicSize): Modifier =
     this then IntrinsicSizeElement(intrinsicSize, horizontal = true)
 
+/** Sizes this node's height to what its content asks for, the vertical counterpart of [width]. */
 fun Modifier.height(intrinsicSize: IntrinsicSize): Modifier =
     this then IntrinsicSizeElement(intrinsicSize, horizontal = false)
 

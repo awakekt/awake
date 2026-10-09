@@ -65,12 +65,19 @@ class ComposeHost(
             root.density = value
         }
 
+    /**
+     * The direction start and end resolve against.
+     *
+     * Setting it updates [root] at once, and composition sees it through
+     * [com.awakekt.awake.compose.ui.unit.LocalLayoutDirection] on the next frame.
+     */
     var layoutDirection: com.awakekt.awake.compose.ui.unit.LayoutDirection = layoutDirection
         set(value) {
             field = value
             root.layoutDirection = value
         }
 
+    /** The root layout node. It fills the viewport, and the composed content becomes its children. */
     val root: LayoutNode = LayoutNode(RootMeasurePolicy, density, fontScale, layoutDirection)
     private val composition = LayoutComposition(root)
 
@@ -102,6 +109,14 @@ class ComposeHost(
     // Reset per frame: "did the UI take this frame's wheel" is a per-frame answer.
     private var scrollConsumed = false
 
+    /**
+     * Runs one frame for [input], composing [content], and returns what to draw and what the platform
+     * should do.
+     *
+     * Pointer input is resolved against the previous frame's placed tree, so the first frame
+     * dispatches none. Typed text and key events are dispatched after layout, so a field that only
+     * just appeared can still take them.
+     */
     fun frame(input: FrameInput, content: context(Composer) () -> Unit): FrameOutput {
         scrollConsumed = false
         if (placedOnce) dispatchInput(input)

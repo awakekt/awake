@@ -22,6 +22,7 @@ import com.awakekt.awake.core.text.theme.TextStyle
  */
 val LocalDensity = compositionLocalOf { 1f }
 
+/** Multiplier applied to text sizes for the user's text-size preference. [ComposeHost] provides its own value. */
 val LocalFontScale = compositionLocalOf { 1f }
 
 /**
@@ -61,7 +62,12 @@ val LocalFont = compositionLocalOf<UiFont> { UiFonts.default() }
  */
 val LocalViewportSize = compositionLocalOf { ViewportSize(0, 0) }
 
-/** The host's viewport, in pixels. */
+/**
+ * The host's viewport, in pixels.
+ *
+ * @property width The viewport width in pixels.
+ * @property height The viewport height in pixels.
+ */
 data class ViewportSize(val width: Int, val height: Int)
 
 /**

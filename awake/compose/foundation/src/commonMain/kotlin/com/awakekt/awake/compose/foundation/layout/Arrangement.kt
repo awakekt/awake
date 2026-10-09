@@ -20,7 +20,9 @@ import com.awakekt.awake.compose.ui.unit.dp
  */
 object Arrangement {
 
+    /** An arrangement along the vertical axis, for a Column. */
     interface Vertical {
+        /** The fixed gap between neighbouring children. */
         val spacing: Dp
 
         /** Space before the first child. */
@@ -30,15 +32,22 @@ object Arrangement {
         fun between(free: Int, count: Int): Int = 0
     }
 
+    /** An arrangement along the horizontal axis, for a Row. */
     interface Horizontal {
+        /** The fixed gap between neighbouring children. */
         val spacing: Dp
 
+        /** Space before the first child. */
         fun leading(free: Int, count: Int): Int = 0
 
+        /** Extra space added between each pair, on top of [spacing]. */
         fun between(free: Int, count: Int): Int = 0
     }
 
+    /** Packs at the top with no gap: the leftover all goes behind. */
     val Top: Vertical = Packed(0.dp)
+
+    /** Packs at the start with no gap: the leftover all goes behind. */
     val Start: Horizontal = PackedHorizontal(0.dp)
 
     /** Packs at the far end: the leftover all goes in front. */
@@ -47,6 +56,7 @@ object Arrangement {
         override fun leading(free: Int, count: Int) = free
     }
 
+    /** Packs at the far end: the leftover all goes in front. */
     val End: Horizontal = object : Horizontal {
         override val spacing = 0.dp
         override fun leading(free: Int, count: Int) = free
@@ -58,6 +68,7 @@ object Arrangement {
         override fun leading(free: Int, count: Int) = free / 2
     }
 
+    /** Centres the group: half the leftover in front, half behind. */
     val CenterHorizontally: Horizontal = object : Horizontal {
         override val spacing = 0.dp
         override fun leading(free: Int, count: Int) = free / 2
@@ -69,13 +80,16 @@ object Arrangement {
         override fun between(free: Int, count: Int) = if (count > 1) free / (count - 1) else 0
     }
 
+    /** First child at the start, last at the end, the leftover split between the gaps. */
     val SpaceBetweenHorizontal: Horizontal = object : Horizontal {
         override val spacing = 0.dp
         override fun between(free: Int, count: Int) = if (count > 1) free / (count - 1) else 0
     }
 
+    /** Packs at the top with a fixed gap of [space] between neighbouring children. */
     fun spacedBy(space: Dp): Vertical = Packed(space)
 
+    /** Packs at the start with a fixed gap of [space] between neighbouring children. */
     fun spacedByHorizontal(space: Dp): Horizontal = PackedHorizontal(space)
 
     private class Packed(override val spacing: Dp) : Vertical

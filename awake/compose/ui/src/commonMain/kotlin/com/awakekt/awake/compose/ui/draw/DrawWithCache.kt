@@ -20,7 +20,12 @@ import com.awakekt.awake.core.math2d.Size2D
 fun Modifier.drawWithCache(onBuildDrawCache: CacheDrawScope.() -> DrawResult): Modifier =
     this then DrawWithCacheElement(onBuildDrawCache)
 
+/**
+ * The recorded drawing a [Modifier.drawWithCache] block returns, replayed each frame until the cache
+ * is rebuilt.
+ */
 fun interface DrawResult {
+    /** Paints into this scope, calling [drawContent] where the node's own content belongs. */
     fun DrawScope.draw(drawContent: () -> Unit)
 }
 
@@ -35,9 +40,11 @@ class CacheDrawScope internal constructor() : Density {
     override val fontScale: Float
         get() = 1f
 
+    /** The node's measured size in pixels, as of the build that is running. */
     var size: Size2D = Size2D(0f, 0f)
         internal set
 
+    /** The node's layout direction, as of the build that is running. */
     var layoutDirection: LayoutDirection = LayoutDirection.Ltr
         internal set
 

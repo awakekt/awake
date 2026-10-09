@@ -26,6 +26,7 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 
+context(_: Composer)
 /**
  * Draws [bitmap] into this node, scaled by [contentScale] and centred.
  *
@@ -33,7 +34,6 @@ import kotlin.math.roundToInt
  * aspect ratio kept. [contentDescription] is what assistive technology reads; pass `null` for a
  * purely decorative image.
  */
-context(_: Composer)
 fun Image(
     bitmap: ImageBitmap,
     contentDescription: String?,

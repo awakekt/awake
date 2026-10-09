@@ -23,10 +23,19 @@ import com.awakekt.awake.compose.ui.unit.IntSize
  */
 @LayoutScopeMarker
 interface BoxWithConstraintsScope : BoxScope {
+    /** The incoming constraints, in device pixels. */
     val constraints: Constraints
+
+    /** The incoming minimum width. */
     val minWidth: Dp
+
+    /** The incoming maximum width. */
     val maxWidth: Dp
+
+    /** The incoming minimum height. */
     val minHeight: Dp
+
+    /** The incoming maximum height. */
     val maxHeight: Dp
 }
 
@@ -41,13 +50,13 @@ internal class BoxWithConstraintsScopeImpl(
     override val maxHeight: Dp get() = with(density) { constraints.maxHeight.toDp() }
 }
 
+context(composer: Composer)
 /**
  * A composable that provides its measured constraints to its [content] lambda.
  *
  * Built on [SubcomposeLayout], subcomposing during the measure pass so that responsive branching
  * has zero frame delay.
  */
-context(composer: Composer)
 fun BoxWithConstraints(
     modifier: Modifier = Modifier,
     contentAlignment: Alignment = Alignment.TopStart,

@@ -13,14 +13,21 @@ import kotlin.math.roundToInt
  * not be able to call `layout()` -- asking how wide something wants to be is not measuring it.
  */
 interface Density {
+    /** Pixels per dp. */
     val density: Float
+
+    /** Extra multiplier on sp text sizes, applied on top of [density]. */
     val fontScale: Float
 
+    /** Converts this [Dp] to whole pixels, rounding to the nearest. */
     fun Dp.roundToPx(): Int = (value * density).roundToInt()
 
+    /** Converts this [Dp] to fractional pixels. */
     fun Dp.toPx(): Float = value * density
 
+    /** Converts this pixel count to [Dp]. */
     fun Int.toDp(): Dp = (this.toFloat() / density).dp
 
+    /** Converts this fractional pixel count to [Dp]. */
     fun Float.toDp(): Dp = (this / density).dp
 }

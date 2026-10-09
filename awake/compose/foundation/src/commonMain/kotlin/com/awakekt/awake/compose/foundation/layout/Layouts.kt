@@ -31,13 +31,13 @@ private val defaultRowPolicy = RowMeasurePolicy()
 
 private val defaultBoxPolicy = BoxMeasurePolicy()
 
+context(composer: Composer)
 /**
  * Stacks children vertically.
  *
  * [content] runs with [ColumnScope] as its receiver, which is what makes `weight()` available here
  * and a compile error anywhere else.
  */
-context(composer: Composer)
 fun Column(
     modifier: Modifier = Modifier,
     verticalArrangement: Arrangement.Vertical = Arrangement.Top,
@@ -56,8 +56,8 @@ fun Column(
     )
 }
 
-/** Stacks children horizontally. See [Column] for why the scope is a receiver. */
 context(composer: Composer)
+/** Stacks children horizontally. See [Column] for why the scope is a receiver. */
 fun Row(
     modifier: Modifier = Modifier,
     horizontalArrangement: Arrangement.Horizontal = Arrangement.Start,
@@ -76,13 +76,13 @@ fun Row(
     )
 }
 
+context(composer: Composer)
 /**
  * Stacks children on top of each other, sized to the largest.
  *
  * Shrink-wraps to content, matching Compose. `ui-core`'s `box()` fills instead, which
  * `mirror-map.md` records as a divergence and this engine does not carry forward.
  */
-context(composer: Composer)
 fun Box(
     modifier: Modifier = Modifier,
     contentAlignment: Alignment = Alignment.TopStart,
@@ -106,6 +106,12 @@ fun Box(
 }
 
 context(_: Composer)
+/**
+ * Stacks children on top of each other, aligned by a separate [horizontalAlignment] and
+ * [verticalAlignment] instead of one [Alignment].
+ *
+ * Otherwise the same as the overload that takes a single content alignment.
+ */
 fun Box(
     modifier: Modifier = Modifier,
     horizontalAlignment: Alignment.Horizontal = Alignment.Start,

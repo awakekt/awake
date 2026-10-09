@@ -19,6 +19,7 @@ class LazyListState(
     firstVisibleItemIndex: Int = 0,
     firstVisibleItemScrollOffset: Int = 0,
 ) {
+    /** The index of the first item that is at least partly visible. */
     var firstVisibleItemIndex: Int = firstVisibleItemIndex
         internal set
 
@@ -52,9 +53,11 @@ class LazyListState(
     val estimatedContentHeight: Int
         get() = (0 until itemCount).sumOf { heightOf(it) }
 
+    /** Whether the list is scrolled past its first item's top edge, so it can scroll back. */
     val canScrollBackward: Boolean
         get() = firstVisibleItemIndex > 0 || firstVisibleItemScrollOffset > 0
 
+    /** Whether more content lies below the viewport, going by [estimatedContentHeight]. */
     val canScrollForward: Boolean
         get() = estimatedContentHeight - consumedBefore(firstVisibleItemIndex) -
             firstVisibleItemScrollOffset > viewportSize
@@ -104,8 +107,13 @@ class LazyListState(
     }
 }
 
-/** A [LazyListState] that survives the next pass. */
 context(_: Composer)
+/**
+ * A [LazyListState] that survives the next pass.
+ *
+ * [firstVisibleItemIndex] and [firstVisibleItemScrollOffset] seed the state only on the pass that
+ * creates it.
+ */
 fun rememberLazyListState(
     firstVisibleItemIndex: Int = 0,
     firstVisibleItemScrollOffset: Int = 0,

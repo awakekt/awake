@@ -38,13 +38,18 @@ internal interface RetainedMeshDrawScope {
 interface DrawScope {
     /** The node's own size, already measured. */
     val width: Int
+
+    /** The node's own height in pixels, already measured. */
     val height: Int
 
+    /** Pixels per dp: multiply a dp value by this to get the pixel size to draw. */
     val density: Float
 
+    /** The node's layout direction. Defaults to left to right for scopes that do not track one. */
     val layoutDirection: com.awakekt.awake.compose.ui.unit.LayoutDirection
         get() = com.awakekt.awake.compose.ui.unit.LayoutDirection.Ltr
 
+    /** Fills a rectangle with [color]. Position and size are node-local pixels; the default is the whole node. */
     fun drawRect(
         x: Float = 0f,
         y: Float = 0f,
@@ -53,6 +58,12 @@ interface DrawScope {
         color: Color,
     )
 
+    /**
+     * Fills a rectangle with [color], rounding every corner by [radius].
+     *
+     * Position, size and [radius] are node-local pixels. A [radius] of zero or less draws a plain
+     * rectangle.
+     */
     fun drawRoundedRect(
         x: Float = 0f,
         y: Float = 0f,
@@ -181,14 +192,6 @@ interface DrawScope {
     fun clippedPath(path: DrawPath, safeInteriorRect: Rectangle? = null, block: () -> Unit)
 
     /**
-     * Emits an already-built primitive, **in tree space**.
-     *
-     * The escape hatch for anything the helpers do not cover, and the one call here that does *not*
-     * map node-local coordinates -- a primitive arrives already positioned. Prefer a helper; reach
-     * for this only when no helper covers the primitive, and position it yourself.
-     */
-
-    /**
      * Draws a backend texture into this node's bounds.
      *
      * A helper rather than an [emit] at the call site, because a caller cannot position one: the
@@ -203,6 +206,13 @@ interface DrawScope {
         height: Float = this.height.toFloat(),
     )
 
+    /**
+     * Emits an already-built primitive, **in tree space**.
+     *
+     * The escape hatch for anything the helpers do not cover, and the one call here that does *not*
+     * map node-local coordinates -- a primitive arrives already positioned. Prefer a helper; reach
+     * for this only when no helper covers the primitive, and position it yourself.
+     */
     fun emit(primitive: UiDrawPrimitive)
 }
 
@@ -220,7 +230,22 @@ fun DrawScope.drawRetainedMesh(mesh: ColoredTriangleMesh, retentionKey: Any) {
     }
 }
 
-/** A renderer-neutral offscreen paint pass requested by [Modifier.graphicsLayer]. */
+/**
+ * A renderer-neutral offscreen paint pass requested by [Modifier.graphicsLayer].
+ *
+ * @property id Identifies the layer's texture slot, matching a [GraphicsLayerPlaceholder] in the parent.
+ * @property x Tree-space x of the layer's top-left corner, in pixels.
+ * @property y Tree-space y of the layer's top-left corner, in pixels.
+ * @property width Width of the layer content in pixels, not counting the effect inset.
+ * @property height Height of the layer content in pixels, not counting the effect inset.
+ * @property alpha Opacity applied when the layer is composited, from 0 to 1.
+ * @property blurRadiusX Horizontal blur radius in pixels, or 0 for none.
+ * @property blurRadiusY Vertical blur radius in pixels, or 0 for none.
+ * @property effectInsetX Transparent pixels reserved left and right of the content for expanding effects.
+ * @property effectInsetY Transparent pixels reserved above and below the content for expanding effects.
+ * @property shadowElevation Elevation shadow size in pixels, or 0 for none.
+ * @property primitives What the layer paints, positioned relative to its top-left corner.
+ */
 data class GraphicsLayerFrame(
     val id: Int,
     val x: Float,
@@ -230,14 +255,17 @@ data class GraphicsLayerFrame(
     val alpha: Float,
     val blurRadiusX: Float = 0f,
     val blurRadiusY: Float = 0f,
-    /** Extra transparent pixels around the layer content reserved for an expanding effect. */
     val effectInsetX: Int = 0,
     val effectInsetY: Int = 0,
     val shadowElevation: Float = 0f,
     val primitives: List<UiDrawPrimitive>,
 )
 
-/** The texture slot Painter emits until the renderer-aware host resolves it. */
+/**
+ * The texture slot Painter emits until the renderer-aware host resolves it.
+ *
+ * @property id The [GraphicsLayerFrame.id] of the layer this placeholder stands in for.
+ */
 data class GraphicsLayerPlaceholder(val id: Int)
 
 /** Internal bridge used by the graphics-layer draw modifier. */

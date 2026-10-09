@@ -34,6 +34,7 @@ import com.awakekt.awake.core.input.TextEditAction
  * exactly once -- the same contract [Measurable] carries.
  */
 interface LayoutModifierNode {
+    /** Measures [measurable] within [constraints] as adjusted by this link, and returns the size it reports. */
     fun MeasureScope.measure(measurable: Measurable, constraints: Constraints): MeasureResult
 
     /**
@@ -46,12 +47,15 @@ interface LayoutModifierNode {
     fun Density.minIntrinsicWidth(measurable: IntrinsicMeasurable, height: Int): Int =
         measurable.minIntrinsicWidth(height)
 
+    /** The widest the chain would like to be at the given [height], as seen through this link. */
     fun Density.maxIntrinsicWidth(measurable: IntrinsicMeasurable, height: Int): Int =
         measurable.maxIntrinsicWidth(height)
 
+    /** The shortest the chain can be at the given [width], as seen through this link. */
     fun Density.minIntrinsicHeight(measurable: IntrinsicMeasurable, width: Int): Int =
         measurable.minIntrinsicHeight(width)
 
+    /** The tallest the chain would like to be at the given [width], as seen through this link. */
     fun Density.maxIntrinsicHeight(measurable: IntrinsicMeasurable, width: Int): Int =
         measurable.maxIntrinsicHeight(width)
 }
@@ -60,6 +64,7 @@ interface LayoutModifierNode {
  * A link that specifies the visual drawing order of this node relative to its siblings.
  */
 interface ZIndexModifierNode {
+    /** Returns the z-index after this link, given the one [current] accumulated from earlier links. */
     fun modifyZIndex(current: Float): Float
 }
 
@@ -70,6 +75,7 @@ interface ZIndexModifierNode {
  * content should appear. A background calls it last; an overlay calls it first.
  */
 interface DrawModifierNode {
+    /** Paints into this scope, calling [drawContent] where the wrapped content should appear. */
     fun DrawScope.draw(drawContent: () -> Unit)
 }
 
@@ -91,11 +97,13 @@ interface OnPlacedModifierNode {
  * reach a Row or Column without the parent reaching into its children.
  */
 interface ParentDataModifierNode {
+    /** Returns the parent data after this link, given the value [current] from earlier links, or `null`. */
     fun modifyParentData(current: Any?): Any?
 }
 
 /** A modifier link that reacts to pointer input. */
 interface PointerInputNode {
+    /** Handles [event] as it is delivered during one dispatch [pass]. */
     fun onPointerEvent(event: PointerEvent, pass: PointerEventPass)
 
     /**
@@ -112,6 +120,7 @@ interface PointerInputNode {
 
 /** A modifier link that contributes semantics. */
 interface SemanticsModifierNode {
+    /** The semantics this link contributes to its node. */
     val semanticsConfiguration: SemanticsConfiguration
 }
 
@@ -126,17 +135,36 @@ interface FocusTargetNode {
     /** False for a disabled control, which stays in the tree but out of the traversal ring. */
     val canFocus: Boolean
 
+    /** Called when this target gains or loses focus; [focused] is the new state. */
     fun onFocusChanged(focused: Boolean)
 }
 
-/** A focus-traversal policy attached to the same node as a focus target. */
+/**
+ * A focus-traversal policy attached to the same node as a focus target.
+ *
+ * The requester properties name where traversal goes next. Only a
+ * [com.awakekt.awake.compose.ui.focus.FocusRequester] is followed; any other value is ignored.
+ */
 interface FocusPropertiesNode {
+    /** Whether the node can take focus in traversal, overriding [FocusTargetNode.canFocus]; `null` defers to it. */
     val canFocusOverride: Boolean?
+
+    /** Where forward traversal goes from this node, or `null` for the default order. */
     val nextRequester: Any?
+
+    /** Where backward traversal goes from this node, or `null` for the default order. */
     val previousRequester: Any?
+
+    /** Where upward traversal goes from this node, or `null` for the default order. */
     val upRequester: Any? get() = null
+
+    /** Where downward traversal goes from this node, or `null` for the default order. */
     val downRequester: Any? get() = null
+
+    /** Where leftward traversal goes from this node, or `null` for the default order. */
     val leftRequester: Any? get() = null
+
+    /** Where rightward traversal goes from this node, or `null` for the default order. */
     val rightRequester: Any? get() = null
 }
 
@@ -147,6 +175,7 @@ interface FocusPropertiesNode {
  * requester is the exception: it exists to point at a node the caller has no other reference to.
  */
 interface NodeAttachedModifierNode {
+    /** Called with the [node] this link decorates, each time that node's modifier chain is rebuilt. */
     fun onAttachedTo(node: LayoutNode)
 }
 
@@ -163,15 +192,6 @@ interface ScrollableNode {
 }
 
 /**
- * A link that accepts keyboard text.
- *
- * The seam that lets `:ui` route typing without knowing what a text field is -- `BasicTextField`
- * lives in `:foundation`, as in Compose. Its presence on the focused node is also what makes
- * `FrameOutput.ownership.isTextInputFocused` true, which is how gameplay knows W/A/S/D is being
- * typed rather than walking the player.
- */
-
-/**
  * Declares the pointer shape to request while this node is hovered.
  *
  * A request the frame reports, not a call: the host collects it into `PlatformEffects` and the
@@ -179,9 +199,18 @@ interface ScrollableNode {
  * inside a panel shows the resize arrow, not the panel's.
  */
 interface PointerCursorNode {
+    /** The pointer shape to request while this node is hovered. */
     val cursor: PointerCursor
 }
 
+/**
+ * A link that accepts keyboard text.
+ *
+ * The seam that lets `:ui` route typing without knowing what a text field is -- `BasicTextField`
+ * lives in `:foundation`, as in Compose. Its presence on the focused node is also what makes
+ * `FrameOutput.ownership.isTextInputFocused` true, which is how gameplay knows W/A/S/D is being
+ * typed rather than walking the player.
+ */
 interface TextInputNode {
     /**
      * Whether this node edits a password: it masks what it draws, and the platform should tell the
@@ -190,12 +219,16 @@ interface TextInputNode {
      */
     val isPassword: Boolean get() = false
 
+    /** Receives [text] typed on the keyboard. */
     fun onTextTyped(text: String)
 
+    /** Receives a discrete editing command such as backspace or a cursor move. */
     fun onEditAction(action: TextEditAction)
 
+    /** Receives the IME's uncommitted [composition]; ignored unless overridden. */
     fun onImeComposition(composition: ImeComposition) = Unit
 
+    /** Receives [text] the IME has finished composing; by default it is treated as typed text. */
     fun onImeCommit(text: String) = onTextTyped(text)
 
     /**
@@ -218,5 +251,6 @@ interface TextInputNode {
  * sees it: a dialog swallowing Escape before the field inside it reads it as "clear selection".
  */
 interface KeyInputNode {
+    /** Handles [event] as it travels the focus path during one [pass]. */
     fun onKeyEvent(event: KeyEvent, pass: KeyEventPass)
 }

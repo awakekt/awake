@@ -24,6 +24,7 @@ import com.awakekt.awake.core.text.theme.TextStyle
 
 private object TextNodeType
 
+context(_: Composer)
 /**
  * A run of text, sized from the font's own metrics.
  *
@@ -38,7 +39,6 @@ private object TextNodeType
  * glyph run and hands them to each frame's new policy, which reuses them while the text, style,
  * font and density are the same.
  */
-context(_: Composer)
 fun Text(
     text: String,
     modifier: Modifier = Modifier,

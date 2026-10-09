@@ -12,23 +12,49 @@ package com.awakekt.awake.compose.foundation.interaction
  * pair, which lands with the rest of `12-gestures.md`.
  */
 sealed interface Interaction {
+    /** The pointer entering or leaving the component. */
     sealed interface Hover : Interaction {
+        /** The pointer moved over the component. */
         object Enter : Hover
 
+        /**
+         * The pointer left the component.
+         *
+         * @property enter The [Enter] that this exit ends.
+         */
         class Exit(val enter: Enter) : Hover
     }
 
+    /** The component being pressed and then released or cancelled. */
     sealed interface Press : Interaction {
+        /** A press started on the component. */
         object Press : Interaction.Press
 
+        /**
+         * The press ended normally.
+         *
+         * @property press The [Press] that this release ends.
+         */
         class Release(val press: Press) : Interaction.Press
 
+        /**
+         * The press ended without completing.
+         *
+         * @property press The [Press] that this cancellation ends.
+         */
         class Cancel(val press: Press) : Interaction.Press
     }
 
+    /** The component gaining or losing keyboard focus. */
     sealed interface Focus : Interaction {
+        /** The component gained focus. */
         object Focus : Interaction.Focus
 
+        /**
+         * The component lost focus.
+         *
+         * @property focus The [Focus] that this loss ends.
+         */
         class Unfocus(val focus: Focus) : Interaction.Focus
     }
 }
@@ -51,12 +77,21 @@ class InteractionSource {
     private var presses = 0
     private var focuses = 0
 
+    /** Whether at least one hover is live. */
     val isHovered: Boolean get() = hovers > 0
 
+    /** Whether at least one press is live. */
     val isPressed: Boolean get() = presses > 0
 
+    /** Whether at least one focus is live. */
     val isFocused: Boolean get() = focuses > 0
 
+    /**
+     * Applies [interaction] to the live counts.
+     *
+     * A start raises its count and an end lowers it, never below zero, so an unmatched end is
+     * ignored.
+     */
     fun tryEmit(interaction: Interaction) {
         when (interaction) {
             is Interaction.Hover.Enter -> hovers++

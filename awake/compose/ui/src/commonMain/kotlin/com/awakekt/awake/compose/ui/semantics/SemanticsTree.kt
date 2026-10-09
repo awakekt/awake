@@ -12,6 +12,15 @@ import com.awakekt.awake.compose.ui.node.LayoutNode
  *
  * Bounds are four Ints rather than a rect type: nothing here needs rect arithmetic, and the repo's
  * 2D rect is mid-move between modules. Convert at the boundary that needs one.
+ *
+ * @property config The properties the node declared. A merging node also absorbs those of its
+ * descendants, unless it clears them instead.
+ * @property x Left edge in pixels, relative to the root.
+ * @property y Top edge in pixels, relative to the root.
+ * @property width Width in pixels.
+ * @property height Height in pixels.
+ * @property children The semantics nodes beneath this one. Empty for a merging node, whose descendants
+ * are folded into [config].
  */
 class SemanticsNode(
     val config: SemanticsConfiguration,
@@ -21,8 +30,11 @@ class SemanticsNode(
     val height: Int,
     val children: List<SemanticsNode>,
 ) {
+    /** The [SemanticsProperties.TestTag] value, or `null` when none is set. */
     val testTag: String? get() = config[SemanticsProperties.TestTag]
+    /** The [SemanticsProperties.Role] value, or `null` when none is set. */
     val role: SemanticsRole? get() = config[SemanticsProperties.Role]
+    /** The [SemanticsProperties.Label] value, or `null` when none is set. */
     val label: String? get() = config[SemanticsProperties.Label]
 
     override fun toString(): String =
@@ -40,6 +52,12 @@ class SemanticsNode(
  */
 class SemanticsTreeBuilder {
 
+    /**
+     * Builds the semantics nodes for the placed tree under [root], including its layers.
+     *
+     * A layout node that declares no semantics adds no entry: its semantics descendants appear under
+     * the nearest ancestor that declares some, or at the top level of the result.
+     */
     fun build(root: LayoutNode): List<SemanticsNode> {
         val out = mutableListOf<SemanticsNode>()
         collect(root, out)

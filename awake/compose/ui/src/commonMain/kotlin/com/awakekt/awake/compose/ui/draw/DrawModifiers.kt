@@ -80,6 +80,7 @@ fun Modifier.clip(shape: Shape): Modifier =
 fun Modifier.scale(scaleX: Float, scaleY: Float): Modifier =
     if (scaleX == 1f && scaleY == 1f) this else this then ScaleElement(scaleX, scaleY)
 
+/** Scales this node's drawing by [scale] on both axes; see the two-axis overload for how it composes. */
 fun Modifier.scale(scale: Float): Modifier = scale(scale, scale)
 
 /**

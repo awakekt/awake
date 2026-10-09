@@ -11,7 +11,10 @@ import com.awakekt.awake.compose.runtime.compositionLocalOf
  * Layout direction for horizontal placement and alignment resolution.
  */
 enum class LayoutDirection {
+    /** Content flows from left to right; the start edge is the left. */
     Ltr,
+
+    /** Content flows from right to left; the start edge is the right. */
     Rtl,
 }
 

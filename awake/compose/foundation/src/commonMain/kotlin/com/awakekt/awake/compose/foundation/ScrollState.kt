@@ -21,9 +21,11 @@ class ScrollState(initial: Int = 0) {
     // Kept with the caller-owned state: modifier nodes are rebuilt during every frame.
     internal val touchGestures = mutableMapOf<Long, ScrollTouchGesture>()
 
+    /** The current scroll offset in pixels, from `0` to [maxValue]. */
     var value: Int = initial
         private set
 
+    /** The furthest [value] can go: the content's extent minus the [viewportSize], never below `0`. */
     var maxValue: Int = 0
         internal set(newMax) {
             field = newMax
@@ -36,8 +38,10 @@ class ScrollState(initial: Int = 0) {
     var viewportSize: Int = 0
         internal set
 
+    /** Whether there is content past the viewport's far edge, so [value] can still grow. */
     val canScrollForward: Boolean get() = value < maxValue
 
+    /** Whether the content is scrolled away from its origin, so [value] can still shrink. */
     val canScrollBackward: Boolean get() = value > 0
 
     /**
@@ -67,6 +71,6 @@ internal class ScrollTouchGesture {
     var dragging = false
 }
 
-/** A [ScrollState] that survives the next pass. */
 context(_: Composer)
+/** A [ScrollState] that survives the next pass. [initial] seeds the offset only on the pass that creates it. */
 fun rememberScrollState(initial: Int = 0): ScrollState = remember { ScrollState(initial) }

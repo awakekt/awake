@@ -27,19 +27,26 @@ interface IntrinsicMeasurable {
     /** The widest it would like to be if nothing constrained it -- the line, unwrapped. */
     fun maxIntrinsicWidth(height: Int): Int
 
+    /** The shortest this can be, at the given [width], without its content failing to fit. */
     fun minIntrinsicHeight(width: Int): Int
 
+    /** The tallest it would like to be, at the given [width], if nothing constrained it. */
     fun maxIntrinsicHeight(width: Int): Int
 }
 
+/** An [IntrinsicMeasurable] that can also be measured, at most once per layout pass. */
 interface Measurable : IntrinsicMeasurable {
+    /** Measures within [constraints] and returns the sized [Placeable]. */
     fun measure(constraints: Constraints): Placeable
 }
 
 /** A measured thing, awaiting a position. */
 abstract class Placeable {
+    /** The measured width in pixels. */
     var width: Int = 0
         protected set
+
+    /** The measured height in pixels. */
     var height: Int = 0
         protected set
 
@@ -47,6 +54,8 @@ abstract class Placeable {
      * walk, so a policy never needs to know where it sits in the tree. */
     var x: Int = 0
         private set
+
+    /** Vertical counterpart of [x]. */
     var y: Int = 0
         private set
 
@@ -55,6 +64,7 @@ abstract class Placeable {
         this.height = height
     }
 
+    /** Positions this at [x], [y] relative to its parent, then places whatever it deferred. */
     fun placeAt(x: Int, y: Int) {
         this.x = x
         this.y = y
@@ -69,19 +79,30 @@ abstract class Placeable {
 
 /** The size a policy chose, plus the placement it deferred. */
 interface MeasureResult {
+    /** The width the policy chose, in pixels. */
     val width: Int
+
+    /** The height the policy chose, in pixels. */
     val height: Int
+
+    /** Positions of this layout's alignment lines, in pixels; empty unless the policy reports any. */
     val alignmentLines: Map<AlignmentLine, Int>
         get() = emptyMap()
+
+    /** Runs the placement block the policy deferred, positioning its children. */
     fun placeChildren()
 }
 
 /** Receiver for the `layout(w, h) { … }` block. Exists so placement can only happen there. */
 interface PlacementScope {
+    /** Width in pixels of the layout being placed into, which right-to-left placement mirrors against. */
     val parentWidth: Int get() = 0
+
+    /** Layout direction that decides whether [placeRelativeAt] mirrors. */
     val parentLayoutDirection: com.awakekt.awake.compose.ui.unit.LayoutDirection
         get() = com.awakekt.awake.compose.ui.unit.LayoutDirection.Ltr
 
+    /** Places this at [x] pixels from the start edge, mirroring in right-to-left layouts, and at [y] from the top. */
     fun Placeable.placeRelativeAt(x: Int, y: Int) {
         val targetX = if (parentLayoutDirection == com.awakekt.awake.compose.ui.unit.LayoutDirection.Ltr) {
             x
@@ -91,15 +112,24 @@ interface PlacementScope {
         placeAt(targetX, y)
     }
 
+    /** Places this at [x], [y] pixels from the left and top edges, whatever the layout direction. */
     fun Placeable.placeAbsoluteAt(x: Int, y: Int) {
         placeAt(x, y)
     }
 }
 
+/** Receiver of a [MeasurePolicy]: dp conversion from [Density], plus the layout direction and [layout]. */
 interface MeasureScope : Density {
+    /** The layout direction of the node being measured. */
     val layoutDirection: com.awakekt.awake.compose.ui.unit.LayoutDirection
         get() = com.awakekt.awake.compose.ui.unit.LayoutDirection.Ltr
 
+    /**
+     * Reports the size the policy chose and defers positioning to [place].
+     *
+     * [place] runs later, during placement, with a [PlacementScope]. The returned result may be
+     * reused by the next call on the same scope, so do not keep it past the pass.
+     */
     fun layout(
         width: Int,
         height: Int,
@@ -114,6 +144,7 @@ interface MeasureScope : Density {
  * Receives every child as a [Measurable] and must call [Measurable.measure] on each at most once.
  */
 fun interface MeasurePolicy {
+    /** Measures [measurables] within [constraints] and returns the layout's size and deferred placement. */
     fun MeasureScope.measure(measurables: List<Measurable>, constraints: Constraints): MeasureResult
 
     /**
@@ -128,12 +159,15 @@ fun interface MeasurePolicy {
     fun Density.minIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int): Int =
         measurables.maxOfOrNull { it.minIntrinsicWidth(height) } ?: 0
 
+    /** The widest this layout would like to be at the given [height]; see [minIntrinsicWidth]. */
     fun Density.maxIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int): Int =
         measurables.maxOfOrNull { it.maxIntrinsicWidth(height) } ?: 0
 
+    /** The shortest this layout can be at the given [width]; see [minIntrinsicWidth]. */
     fun Density.minIntrinsicHeight(measurables: List<IntrinsicMeasurable>, width: Int): Int =
         measurables.maxOfOrNull { it.minIntrinsicHeight(width) } ?: 0
 
+    /** The tallest this layout would like to be at the given [width]; see [minIntrinsicWidth]. */
     fun Density.maxIntrinsicHeight(measurables: List<IntrinsicMeasurable>, width: Int): Int =
         measurables.maxOfOrNull { it.maxIntrinsicHeight(width) } ?: 0
 }

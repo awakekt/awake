@@ -21,13 +21,13 @@ import com.awakekt.awake.compose.ui.unit.Constraints
 
 private const val WHEEL_STEP_PX = 40f
 
+context(composer: Composer)
 /**
  * A vertical list that only builds and measures the items visible in the viewport.
  *
  * Built on [SubcomposeLayout], subcomposing items during the measure pass so that the visible
  * window is exact on every frame with zero lag.
  */
-context(composer: Composer)
 fun LazyColumn(
     itemCount: Int,
     modifier: Modifier = Modifier,

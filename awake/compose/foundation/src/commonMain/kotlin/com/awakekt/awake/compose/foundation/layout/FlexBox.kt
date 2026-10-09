@@ -26,38 +26,137 @@ import com.awakekt.awake.compose.ui.unit.dp
 import kotlin.math.roundToInt
 
 /** Which axis [FlexBox] lays children out along, and whether that axis runs forward or reversed. */
-enum class FlexDirection { Row, RowReverse, Column, ColumnReverse }
+enum class FlexDirection {
+    /** Children run horizontally, with the first child at the start. */
+    Row,
+
+    /** Children run horizontally, with the first child at the end. */
+    RowReverse,
+
+    /** Children run vertically, with the first child at the top. */
+    Column,
+
+    /** Children run vertically, with the first child at the bottom. */
+    ColumnReverse,
+}
 
 /** Whether children that overflow the main axis start a new line, and which edge new lines are added at. */
-enum class FlexWrap { NoWrap, Wrap, WrapReverse }
+enum class FlexWrap {
+    /** Every child stays on a single line. */
+    NoWrap,
+
+    /** Children that overflow start a new line after the previous one. */
+    Wrap,
+
+    /** Like [Wrap], but the lines are stacked in reverse order. */
+    WrapReverse,
+}
 
 /** How a line distributes leftover main-axis space between and around its children. */
-enum class FlexJustifyContent { Start, Center, End, SpaceBetween, SpaceAround, SpaceEvenly }
+enum class FlexJustifyContent {
+    /** Children are packed at the start of the line. */
+    Start,
+
+    /** Children are packed in the middle of the line. */
+    Center,
+
+    /** Children are packed at the end of the line. */
+    End,
+
+    /** The first child sits at the start, the last at the end, and the leftover is split between the gaps. */
+    SpaceBetween,
+
+    /** Each child gets equal space on both sides, so the edges get half of the space between children. */
+    SpaceAround,
+
+    /** The leftover is split into equal gaps between children and at both edges. */
+    SpaceEvenly,
+}
 
 /** How children are positioned on the cross axis within their line. Overridden per item by [FlexItemConfig.alignSelf]. */
-enum class FlexAlignItems { Start, End, Center, Stretch, Baseline }
+enum class FlexAlignItems {
+    /** Children sit at the start of the line's cross axis. */
+    Start,
+
+    /** Children sit at the end of the line's cross axis. */
+    End,
+
+    /** Children are centred on the line's cross axis. */
+    Center,
+
+    /** Children are stretched to fill the line's cross size. */
+    Stretch,
+
+    /** Children line up on their first baseline. Only applies when the main axis is horizontal. */
+    Baseline,
+}
 
 /** How lines are distributed on the cross axis when their combined size is less than the container's. */
-enum class FlexAlignContent { Start, End, Center, Stretch, SpaceBetween, SpaceAround }
+enum class FlexAlignContent {
+    /** Lines are packed at the start of the cross axis. */
+    Start,
+
+    /** Lines are packed at the end of the cross axis. */
+    End,
+
+    /** Lines are packed in the middle of the cross axis. */
+    Center,
+
+    /** Lines grow equally to fill the cross axis. */
+    Stretch,
+
+    /** The first line sits at the start, the last at the end, and the leftover is split between the gaps. */
+    SpaceBetween,
+
+    /** Each line gets equal space on both sides, so the edges get half of the space between lines. */
+    SpaceAround,
+}
 
 /** Per-item override of [FlexBoxConfigScope.alignItems]. [Auto] defers to the container's value. */
-enum class FlexAlignSelf { Auto, Start, End, Center, Stretch, Baseline }
+enum class FlexAlignSelf {
+    /** Use the container's [FlexBoxConfigScope.alignItems]. */
+    Auto,
+
+    /** Sit at the start of the line's cross axis. */
+    Start,
+
+    /** Sit at the end of the line's cross axis. */
+    End,
+
+    /** Be centred on the line's cross axis. */
+    Center,
+
+    /** Be stretched to fill the line's cross size. */
+    Stretch,
+
+    /** Line up on the first baseline. Only applies when the main axis is horizontal. */
+    Baseline,
+}
 
 /** The initial main-axis size used before FlexBox distributes free space. */
 sealed interface FlexBasis {
     /** Use the child's intrinsic main-axis size as its starting basis. */
     data object Auto : FlexBasis
 
-    /** Use a fixed main-axis size as the starting basis, before [FlexItemConfig.grow]/[FlexItemConfig.shrink] apply. */
+    /**
+     * Use a fixed main-axis size as the starting basis, before [FlexItemConfig.grow]/[FlexItemConfig.shrink] apply.
+     *
+     * @property value The main-axis size.
+     */
     data class Fixed(val value: Dp) : FlexBasis
 
-    /** Use a fraction (`0f..1f`) of the container's main-axis size as the starting basis. Requires a bounded main axis. */
+    /**
+     * Use a fraction (`0f..1f`) of the container's main-axis size as the starting basis. Requires a bounded main axis.
+     *
+     * @property value The fraction of the container's main-axis size, which must be in `0f..1f`.
+     */
     data class Percent(val value: Float) : FlexBasis {
         init {
             require(value in 0f..1f) { "Flex basis percent must be in 0f..1f, was $value" }
         }
     }
 
+    /** Factory functions that spell the basis variants like the CSS values. */
     companion object {
         /** Shorthand for [Fixed]. */
         fun Dp(value: Dp): FlexBasis = Fixed(value)
@@ -69,13 +168,21 @@ sealed interface FlexBasis {
 
 /** Layout-time configuration for [FlexBox]. Reuse an instance when its policy is static. */
 fun interface FlexBoxConfig {
+    /** Writes this configuration's settings into the receiver scope, on every measure pass. */
     fun FlexBoxConfigScope.configure()
 
+    /** The default configuration, which changes nothing and so leaves every setting at its default. */
     companion object : FlexBoxConfig {
         override fun FlexBoxConfigScope.configure() = Unit
     }
 }
 
+/**
+ * The settings a [FlexBoxConfig] writes for one measure pass.
+ *
+ * Every setting is reset to its default before [FlexBoxConfig.configure] runs. The scope is also a
+ * [Density], for converting between pixels and dp while computing a setting.
+ */
 interface FlexBoxConfigScope : Density {
     /** The incoming constraints [FlexBox] is measuring under. */
     val constraints: Constraints
@@ -144,18 +251,19 @@ fun Modifier.flex(configure: FlexItemConfig.() -> Unit): Modifier {
     return this then FlexItemElement(config)
 }
 
+/** Receiver scope for [FlexBox] content. Children are configured through [Modifier.flex]. */
 @LayoutScopeMarker
 interface FlexBoxScope
 
 private object FlexBoxScopeInstance : FlexBoxScope
 private object FlexBoxNodeType
 
+context(composer: Composer)
 /**
  * CSS-shaped multi-line layout. The public API follows Compose's experimental FlexBox surface;
  * this implementation uses Awake intrinsics to plan every final child constraint before the one
  * permitted measure call.
  */
-context(composer: Composer)
 fun FlexBox(
     modifier: Modifier = Modifier,
     config: FlexBoxConfig = FlexBoxConfig,

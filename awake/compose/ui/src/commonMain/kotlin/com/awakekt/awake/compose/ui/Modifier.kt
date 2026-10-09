@@ -30,6 +30,11 @@ interface Modifier {
     /** Whether every link in this chain satisfies [predicate]. */
     fun all(predicate: (Element) -> Boolean): Boolean
 
+    /**
+     * Returns a chain with this modifier as the outer part and [other] as the inner part.
+     *
+     * Returns this chain unchanged when [other] is the empty `Modifier` chain.
+     */
     infix fun then(other: Modifier): Modifier =
         if (other === Modifier) this else CombinedModifier(this, other)
 
@@ -90,8 +95,19 @@ interface Modifier {
  * freshly [create]d replacement.
  */
 abstract class ModifierNodeElement<N : Modifier.Node> : Modifier.Element {
+    /**
+     * Creates the node for a chain position that has none, or whose element class changed.
+     *
+     * Runs before [update] and before the node attaches to its layout node.
+     */
     abstract fun create(): N
 
+    /**
+     * Copies this element's parameters onto [node], whether it was just created or retained from an
+     * earlier pass.
+     *
+     * Runs on every reconciliation pass, so it should only assign state.
+     */
     abstract fun update(node: N)
 
     @Suppress("UNCHECKED_CAST")

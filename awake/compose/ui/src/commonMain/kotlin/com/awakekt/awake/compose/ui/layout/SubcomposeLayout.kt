@@ -39,15 +39,25 @@ interface SubcomposeMeasureScope : MeasureScope {
 
 /** Policy governing which unused subcomposition slots are retained across frames. */
 fun interface SubcomposeSlotReusePolicy {
+    /**
+     * Returns the slot ids whose subcompositions stay alive after a measure pass.
+     *
+     * [slotIds] holds the ids subcomposed during that pass. A slot that was neither subcomposed in it
+     * nor returned here is discarded.
+     */
     fun getSlotsToRetain(slotIds: Set<Any?>): Set<Any?>
 
+    /** Built-in policies. */
     companion object {
+        /** Keeps only the slots subcomposed in the latest pass, discarding the rest. */
         val Default = SubcomposeSlotReusePolicy { it }
     }
 }
 
 /**
  * Retains subcompositions across frames for [SubcomposeLayout].
+ *
+ * @property slotReusePolicy Decides which subcompositions survive a measure pass.
  */
 class SubcomposeLayoutState(
     val slotReusePolicy: SubcomposeSlotReusePolicy = SubcomposeSlotReusePolicy.Default,
@@ -110,6 +120,7 @@ class SubcomposeLayoutState(
         activeSlots.clear()
     }
 
+    /** Discards every retained subcomposition, active or not. */
     fun dispose() {
         slotMap.clear()
         activeSlots.clear()
@@ -118,11 +129,11 @@ class SubcomposeLayoutState(
 
 private object SubcomposeLayoutNodeType
 
+context(composer: Composer)
 /**
  * Declares a layout whose children are composed during measurement rather than during the root
  * composition pass.
  */
-context(composer: Composer)
 fun SubcomposeLayout(
     modifier: Modifier = Modifier,
     state: SubcomposeLayoutState = remember { SubcomposeLayoutState() },
@@ -151,8 +162,8 @@ fun SubcomposeLayout(
     )
 }
 
-/** Overload with default remembered state. */
 context(composer: Composer)
+/** Overload with default remembered state. */
 fun SubcomposeLayout(
     modifier: Modifier = Modifier,
     measurePolicy: SubcomposeMeasureScope.(Constraints) -> MeasureResult,

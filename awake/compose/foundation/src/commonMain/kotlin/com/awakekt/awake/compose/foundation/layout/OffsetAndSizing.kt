@@ -47,9 +47,11 @@ fun Modifier.aspectRatio(ratio: Float): Modifier {
 fun Modifier.widthIn(min: Dp = Dp.Unspecified, max: Dp = Dp.Unspecified): Modifier =
     this then SizeInElement(min, max, Dp.Unspecified, Dp.Unspecified)
 
+/** Bounds the content's height without fixing it. `Dp.Unspecified` leaves that end open. */
 fun Modifier.heightIn(min: Dp = Dp.Unspecified, max: Dp = Dp.Unspecified): Modifier =
     this then SizeInElement(Dp.Unspecified, Dp.Unspecified, min, max)
 
+/** Bounds the content's width and height without fixing either. `Dp.Unspecified` leaves that end open. */
 fun Modifier.sizeIn(
     minWidth: Dp = Dp.Unspecified,
     minHeight: Dp = Dp.Unspecified,
@@ -66,10 +68,13 @@ fun Modifier.sizeIn(
  */
 fun Modifier.requiredWidth(width: Dp): Modifier = this then RequiredSizeElement(width, null)
 
+/** Like [requiredWidth], for the height. */
 fun Modifier.requiredHeight(height: Dp): Modifier = this then RequiredSizeElement(null, height)
 
+/** Like [requiredWidth], for a square of [size] on each side. */
 fun Modifier.requiredSize(size: Dp): Modifier = this then RequiredSizeElement(size, size)
 
+/** Like [requiredWidth], for both [width] and [height]. */
 fun Modifier.requiredSize(width: Dp, height: Dp): Modifier = this then RequiredSizeElement(width, height)
 
 /**

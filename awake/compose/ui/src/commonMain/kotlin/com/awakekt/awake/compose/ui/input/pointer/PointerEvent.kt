@@ -12,7 +12,31 @@ package com.awakekt.awake.compose.ui.input.pointer
  * slider and menu item into something a right-click also actuates. A new type is invisible to them
  * until they ask for it.
  */
-enum class PointerEventType { Press, SecondaryPress, Release, Move, LongPress, Enter, Exit, Wheel }
+enum class PointerEventType {
+    /** The primary button went down, or a finger touched down. */
+    Press,
+
+    /** The secondary (right) button went down. */
+    SecondaryPress,
+
+    /** The button or finger came up. */
+    Release,
+
+    /** The pointer moved; [PointerEvent.dx] and [PointerEvent.dy] carry how far. */
+    Move,
+
+    /** A press was held, without moving away, long enough to count as a long press. */
+    LongPress,
+
+    /** The mouse pointer came over a node. Fingers do not hover. */
+    Enter,
+
+    /** The mouse pointer left a node. */
+    Exit,
+
+    /** The wheel scrolled; [PointerEvent.scrollDelta] carries the amount. */
+    Wheel,
+}
 
 /**
  * Which direction the tree is being walked.
@@ -34,16 +58,6 @@ enum class PointerEventPass {
 }
 
 /**
- * One pointer interaction, delivered to every node under it.
- *
- * [x] and [y] are **node-local**, like `DrawScope`'s coordinates: a handler that had to subtract
- * its own origin would break the moment it moved.
- *
- * Consumption is a flag rather than a return value so a later pass can see what an earlier one
- * took, which is the whole point of having passes.
- */
-
-/**
  * Modifier keys held at the moment of a pointer event.
  *
  * On the event rather than looked up separately, because "was Shift down when this click happened"
@@ -51,6 +65,11 @@ enum class PointerEventPass {
  * around to asking, which for a click dispatched during input processing is a different instant.
  *
  * [KeyEvent] already carries the same four for the keyboard path. This is the pointer's half.
+ *
+ * @property isCtrlPressed Whether Ctrl was held.
+ * @property isShiftPressed Whether Shift was held.
+ * @property isAltPressed Whether Alt was held.
+ * @property isMetaPressed Whether Meta was held.
  */
 data class PointerModifiers(
     val isCtrlPressed: Boolean = false,
@@ -61,27 +80,47 @@ data class PointerModifiers(
     /** Ctrl on a PC, Command on a Mac -- the "add to selection" chord on both. */
     val isAccelPressed: Boolean get() = isCtrlPressed || isMetaPressed
 
+    /** Shared instances. */
     companion object {
+        /** No modifier held. Shared, so a frame with nothing held allocates nothing. */
         val None = PointerModifiers()
     }
 }
 
+/**
+ * One pointer interaction, delivered to every node under it.
+ *
+ * [x] and [y] are **node-local**, like `DrawScope`'s coordinates: a handler that had to subtract
+ * its own origin would break the moment it moved.
+ *
+ * Consumption is a flag rather than a return value so a later pass can see what an earlier one
+ * took, which is the whole point of having passes.
+ *
+ * @property type What happened.
+ * @property scrollDelta Signed wheel amount for [PointerEventType.Wheel]; zero for other types.
+ * @property pointerId Stable platform pointer identity. Mouse input uses zero; each concurrent touch uses
+ * its own id.
+ * @property modifiers The modifier keys held when the event happened.
+ */
 class PointerEvent(
     val type: PointerEventType,
     val scrollDelta: Float = 0f,
-    /** Stable platform pointer identity. Mouse input uses zero; each concurrent touch uses its own id. */
     val pointerId: Long = 0L,
     val modifiers: PointerModifiers = PointerModifiers.None,
 ) {
     /** Wheel delta still available to ancestor scroll containers during this dispatch. */
     var remainingScrollDelta: Float = scrollDelta
         private set
+
+    /** Horizontal position in pixels, relative to the receiving modifier's own box. */
     var x: Int = 0
         internal set
 
+    /** Vertical position in pixels, relative to the receiving modifier's own box. */
     var y: Int = 0
         internal set
 
+    /** Whether a handler has taken this event. The dispatcher clears it at the start of each dispatch. */
     var isConsumed: Boolean = false
         private set
 
@@ -130,9 +169,17 @@ class PointerEvent(
     var dx: Int = 0
         internal set
 
+    /** Vertical counterpart of [dx]. */
     var dy: Int = 0
         internal set
 
+    /**
+     * Marks this event as taken.
+     *
+     * Delivery carries on through the remaining passes, so later handlers see [isConsumed] and stand
+     * down. Consuming a [PointerEventType.Press] makes the consuming node capture the pointer until
+     * release.
+     */
     fun consume() {
         isConsumed = true
     }

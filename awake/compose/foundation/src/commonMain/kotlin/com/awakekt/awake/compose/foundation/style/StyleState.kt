@@ -18,13 +18,25 @@ import com.awakekt.awake.compose.runtime.remember
  * geometry. On a retained tree the answer comes from last frame's placed bounds and is simply known.
  */
 abstract class StyleState {
+    /** Whether the component accepts interaction. */
     abstract val isEnabled: Boolean
+
+    /** Whether the component has keyboard focus. */
     abstract val isFocused: Boolean
+
+    /** Whether the pointer is over the component. */
     abstract val isHovered: Boolean
+
+    /** Whether the component is being pressed. */
     abstract val isPressed: Boolean
+
+    /** Whether the component is the selected item of its group. */
     abstract val isSelected: Boolean
+
+    /** Whether the component is checked, as a checkbox or switch is. */
     abstract val isChecked: Boolean
 
+    /** Shared instances. */
     companion object {
         /** Every flag off but enabled. For a component with no interaction of its own. */
         val Default: StyleState = MutableStyleState()
@@ -58,13 +70,13 @@ class MutableStyleState(
             "focused=$isFocused, selected=$isSelected, checked=$isChecked)"
 }
 
+context(_: Composer)
 /**
  * A [StyleState] that tracks [interactionSource] and survives the next pass.
  *
  * Refreshed on every call, because the composable runs every frame: there is no skipping in this
  * engine, so reading the source at build time is exact and costs nothing.
  */
-context(_: Composer)
 fun rememberStyleState(
     interactionSource: InteractionSource,
     enabled: Boolean = true,
