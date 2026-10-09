@@ -17,25 +17,25 @@ class AssetConverterRegistryTest {
     fun registersAndFindsConverterByExtension() {
         val registry = AssetConverterRegistry()
         val dummyConverter = object : AssetConverter {
-            override val supportedExtensions = setOf("o3d", ".custom")
+            override val supportedExtensions = setOf("ply", ".custom")
 
             override fun convertToGltf(fileName: String, sourceBytes: ByteArray): GltfConversionResult = GltfConversionResult(glbBytes = byteArrayOf(1, 2, 3), name = fileName)
         }
 
         registry.register(dummyConverter)
 
-        assertTrue(registry.canConvert("o3d"))
-        assertTrue(registry.canConvert("O3D"))
+        assertTrue(registry.canConvert("ply"))
+        assertTrue(registry.canConvert("PLY"))
         assertTrue(registry.canConvert(".custom"))
         assertTrue(registry.canConvert("custom"))
         assertFalse(registry.canConvert("png"))
 
-        assertNotNull(registry.findConverter("o3d"))
+        assertNotNull(registry.findConverter("ply"))
         assertNull(registry.findConverter("png"))
 
-        val result = registry.convert("test.o3d", byteArrayOf(9, 9))
+        val result = registry.convert("test.ply", byteArrayOf(9, 9))
         assertNotNull(result)
-        assertEquals("test.o3d", result.name)
+        assertEquals("test.ply", result.name)
         assertTrue(byteArrayOf(1, 2, 3).contentEquals(result.glbBytes))
     }
 
@@ -43,7 +43,7 @@ class AssetConverterRegistryTest {
     fun unregisteringAConverterRestoresTheOneItReplaced() {
         val registry = AssetConverterRegistry()
         val builtIn = converter("fbx")
-        val plugin = converter("fbx", "o3d")
+        val plugin = converter("fbx", "ply")
         registry.register(builtIn)
         registry.register(plugin)
         assertEquals(plugin, registry.findConverter("fbx"), "the newest converter wins")
@@ -51,7 +51,7 @@ class AssetConverterRegistryTest {
         registry.unregister(plugin)
 
         assertEquals(builtIn, registry.findConverter("fbx"), "the overridden converter comes back")
-        assertFalse(registry.canConvert("o3d"), "an extension only the plugin handled is gone")
+        assertFalse(registry.canConvert("ply"), "an extension only the plugin handled is gone")
         assertEquals(listOf(builtIn), registry.converters)
     }
 
