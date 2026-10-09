@@ -60,6 +60,12 @@ if grep -q 'maven("https://awakekt.github.io/awake/")' site/index.html &&
   pass "index says how to use it and lists each family's releases newest first"; else fail "index: $(cat site/index.html)"; fi
 if grep -q '<version>0.1.20</version>' "site/$vulkan/maven-metadata.xml"; then pass "serves Vulkan beside Core"; else fail "serves Vulkan beside Core"; fi
 
+# Vulkan releases from before the fallback have no bundle, so a site can hold Core alone.
+if "$script" core-only new.zip old.zip > core-only.txt 2>&1; then pass "builds from Core bundles alone"; else
+  fail "builds from Core bundles alone: $(cat core-only.txt)"; fi
+if [[ "$(grep -o '<li>[A-Za-z]* <code>[^<]*' core-only/index.html | sed 's|<li>||; s|<code>||' | tr '\n' ',')" == "Core 0.10.0,Core 0.9.0," ]]; then
+  pass "lists only the families it holds"; else fail "lists only the families it holds: $(cat core-only/index.html)"; fi
+
 if "$script" site 2> /dev/null; then fail "refuses no bundles"; else pass "refuses no bundles"; fi
 
 exit "$failures"
