@@ -9,6 +9,13 @@ import com.awakekt.awake.build.project.ProjectContentExtension
 import com.awakekt.awake.build.project.ValidateProjectTask
 import com.awakekt.awake.build.project.VerifyAssetsLockTask
 
+// base brings the lifecycle tasks, check among them. Registering a bare check instead broke any
+// project whose own modules later applied the lifecycle plugin to it, as Kotlin's wasm setup does
+// to the root: "Cannot add task 'check' as a task with that name already exists".
+plugins {
+    base
+}
+
 val projectContent = extensions.create<ProjectContentExtension>("projectContent")
 projectContent.manifestFile.convention(layout.projectDirectory.file("awake.project.json"))
 projectContent.assetsLockFile.convention(layout.projectDirectory.file("assets.lock.json"))
@@ -55,11 +62,6 @@ val checkProjectContent = tasks.register("checkProjectContent") {
     dependsOn(validateProject, verifyAssetsLock, generateProjectIndex)
 }
 
-val check = tasks.findByName("check")?.let { tasks.named("check") }
-    ?: tasks.register("check") {
-        group = "verification"
-        description = "Run project-content verification."
-    }
-check.configure {
+tasks.named("check") {
     dependsOn(checkProjectContent)
 }
