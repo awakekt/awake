@@ -29,7 +29,7 @@ from fontTools.varLib.instancer import instantiateVariableFont
 
 REPO = Path(__file__).resolve().parent.parent.parent
 SOURCE = REPO / "tools/fonts-tooling/samples/Roboto[wdth,wght].ttf"
-OUT_DIR = REPO / "awake/core/text/src/commonMain/resources/fonts"
+OUT_DIR = REPO / "awake/ui/font-atlas-generator/fonts"
 
 # These stable faces back the Compose-shaped typography API. Requests between faces resolve to the
 # closest face, matching Compose's FontFamily resolver instead of silently painting every weight

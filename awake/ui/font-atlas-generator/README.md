@@ -4,6 +4,11 @@ Packs the UI font's glyphs into a multi-channel signed distance field atlas and 
 source, one object per weight, into `awake:core:text` (`Roboto*UiFontData.kt`). The output is
 committed: nothing runs this at build time, so a change to the atlas is a change to those files.
 
+It reads the Roboto faces in `fonts/`, which `tools/fonts-tooling/instantiate_roboto.py` instantiates
+from the variable source. They are this generator's input only: nothing loads them at run time, so
+they live here rather than in `awake:core:text`, and games and releases do not carry them.
+`awake:core:text` keeps `fonts/Roboto-LICENSE.txt`, since the atlases it ships are drawn from Roboto.
+
 ## Regenerating
 
 Run it only to add or change a glyph or a weight, then commit the regenerated files with the change

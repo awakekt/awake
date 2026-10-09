@@ -132,7 +132,7 @@ class FontVerticalMetricsTest {
 
     private companion object {
         // Gradle runs a module's tests from the module directory, as the generator itself is run.
-        const val FONT_DIR = "../../core/text/src/commonMain/resources/fonts"
+        const val FONT_DIR = "fonts"
         const val GENERATED_DIR = "../../core/text/src/commonMain/kotlin/com/awakekt/awake/core/text/font"
 
         // The generator's own constants: an em of 16 logical pixels, rasterised at twice that.

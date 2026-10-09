@@ -23,7 +23,7 @@ from fontTools.ttLib import TTFont
 
 ROOT = Path(__file__).resolve().parents[2]
 MARK = ROOT / "samples/engine-showcase/src/commonMain/resources/brand/awake-mark.svg"
-FONTS = ROOT / "awake/core/text/src/commonMain/resources/fonts"
+FONTS = ROOT / "awake/ui/font-atlas-generator/fonts"
 OUT = ROOT / "website/landing/brand/lockups"
 
 MARK_SIZE = 256
