@@ -28,7 +28,8 @@ import kotlin.reflect.KClass
  * [walkAbove] units per second across the ground, [run] above [runAbove], and [jump] from when it
  * rises or falls faster than [airborneAbove] until it lands. A jump can be split into phases:
  * [takeOff] plays once as it leaves the ground, [jump] while it rises, [fall] while it comes down,
- * and [land] once as it touches down unless it is already walking away. Clip names are the model's
+ * and [land] once as it touches down unless it is already walking away. The clips for the air play
+ * once and hold their last frame, since a rise or a fall is a pose to hold. Clip names are the model's
  * own animations; a clip left null, or one the model lacks, keeps whatever plays. Changes blend over
  * [crossFade] seconds.
  *
@@ -98,8 +99,12 @@ class LocomotionAnimation(val clips: SceneLocomotionAnimation) {
     var playing: String? = null
         internal set
 
-    /** Whether [playing] is a take-off or landing clip, played once rather than looped. */
-    internal val playingOnce: Boolean get() = once != null && once == playing
+    /**
+     * Whether [playing] plays once and holds its last frame rather than looping: a take-off or
+     * landing, or a clip for the air, whose last pose holds until it lands.
+     */
+    internal val playingOnce: Boolean
+        get() = (once != null && once == playing) || (airborne && playing != null && (playing == clips.jump || playing == clips.fall))
 
     /**
      * The clip for how it moved to world ([x], [y], [z]) over the last [delta] seconds, or null when

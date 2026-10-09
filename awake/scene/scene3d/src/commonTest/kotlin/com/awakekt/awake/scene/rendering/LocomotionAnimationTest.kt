@@ -26,6 +26,7 @@ import com.awakekt.awake.scene.rendering.animation.LocomotionAnimationSystem
 import com.awakekt.awake.scene.rendering.animation.SceneLocomotionAnimation
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class LocomotionAnimationTest {
@@ -83,6 +84,26 @@ class LocomotionAnimationTest {
         val clips = List(STILL_FRAMES) { walker.after(dx = 0f, dy = 0f) }
 
         assertEquals(listOf("run", "stand"), clips.distinctConsecutive(), "clips: $clips")
+    }
+
+    /** A rise or a fall is a pose to hold until it lands: those clips play once instead of looping. */
+    @Test
+    fun theClipsInTheAirHoldTheirLastFrame() {
+        val walker = Walker(PHASES, ground = GroundContact(grounded = true))
+        walker.standStill()
+
+        walker.ground!!.grounded = false
+        walker.after(dx = 0f, dy = 5f * STEP)
+        repeat(TAKE_OFF_FRAMES) { walker.after(dx = 0f, dy = 5f * STEP) }
+        assertEquals("rise", walker.after(dx = 0f, dy = 5f * STEP))
+        assertTrue(walker.playsOnce, "the rise holds its last frame")
+        assertEquals("fall", walker.after(dx = 0f, dy = -5f * STEP))
+        assertTrue(walker.playsOnce, "the fall holds its last frame")
+
+        walker.ground.grounded = true
+        assertEquals("land", walker.after(dx = 0f, dy = -0.001f))
+        assertEquals("stand", walker.standStill())
+        assertFalse(walker.playsOnce, "standing loops")
     }
 
     /** Near the top of a jump it barely moves up or down, and that is still a jump. */
