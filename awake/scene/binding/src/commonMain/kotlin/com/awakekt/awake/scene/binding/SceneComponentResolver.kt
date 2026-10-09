@@ -12,6 +12,7 @@ import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneCustomComponent
 import com.awakekt.awake.scene.document.ScenePrefabLink
 import com.awakekt.awake.scene.document.SceneSerializers
+import com.awakekt.awake.scene.document.SceneUnknownComponent
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import kotlin.jvm.JvmOverloads
@@ -177,6 +178,18 @@ class SceneComponentRegistry private constructor(
     fun sceneJson(): Json = if (isScoped) SceneSerializers.createJson(scopedSerializers) else SceneSerializers.createJson()
 
     /**
+     * [sceneJson] that, with [keepUnknownComponents], decodes a component this registry has no
+     * serializer for as a [SceneUnknownComponent] instead of refusing the scene. An editor or tool
+     * that may lack a game's code decodes with it; the scene still instantiates, keeping such
+     * components as data on their entities, and saves with them unchanged.
+     */
+    fun sceneJson(keepUnknownComponents: Boolean): Json = if (isScoped) {
+        SceneSerializers.createJson(scopedSerializers, keepUnknownComponents)
+    } else {
+        SceneSerializers.createJson(keepUnknownComponents)
+    }
+
+    /**
      * Registers a component [resolver].
      *
      * @param resolver The resolver to register with this registry instance.
@@ -230,6 +243,7 @@ class SceneComponentRegistry private constructor(
                 binding.exportFrom(world, entity)?.let { add(it) }
             }
         }
+        world.get<SceneUnknownComponents>(entity)?.let { addAll(it.components) }
     }
 
     /**
@@ -259,6 +273,11 @@ class SceneComponentRegistry private constructor(
                 "SceneLoader: No SceneComponentResolver registered for custom component '${component.type}'. " +
                     "Component data is preserved in document but skipped during instantiation."
             }
+        }
+        if (component is SceneUnknownComponent) {
+            log.warn { "SceneLoader: ${component.type} is a component nothing installed provides; it is kept as data and does not run." }
+            val kept = world.get<SceneUnknownComponents>(entity) ?: SceneUnknownComponents().also { world.add(entity, it) }
+            kept.add(component)
         }
         return false
     }

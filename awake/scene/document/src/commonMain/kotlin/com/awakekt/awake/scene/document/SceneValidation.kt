@@ -68,6 +68,21 @@ object SceneValidator {
         }
     }
 
+    /**
+     * One issue for each [SceneUnknownComponent] in [document]: a component nothing installed
+     * provides, kept as data and not run. Not part of [validate], so the rest of such a scene still
+     * instantiates; an editor or a check shows these beside it.
+     */
+    fun unknownComponentIssues(document: SceneDocument): List<SceneValidationIssue> = buildList {
+        fun visit(node: SceneNode, path: String) {
+            node.components.filterIsInstance<SceneUnknownComponent>().forEach { unknown ->
+                add(SceneValidationIssue(path, "${unknown.type} is a component nothing installed provides; it is kept as data and does not run"))
+            }
+            node.children.forEachIndexed { index, child -> visit(child, nodePath(child.name, index, path)) }
+        }
+        document.nodes.forEachIndexed { index, node -> visit(node, nodePath(node.name, index, null)) }
+    }
+
     private fun validateNode(
         node: SceneNode,
         path: String,

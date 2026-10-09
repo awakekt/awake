@@ -110,7 +110,9 @@ A scoped registry holds only what is registered on it and keeps its serializers 
 set; its `sceneJson()` decodes only those components. Drop it with the project. A host that decodes
 the project's scenes itself prepares the scope with `registry.registerProjectComponents(capabilities)`,
 decodes with `SceneLoader.decode(text, registry.sceneJson())`, and instantiates with
-`SceneLoader.instantiate(scene, world, registry)`. `loadSceneContent` and `sceneSystemsFor` work on
+`SceneLoader.instantiate(scene, world, registry)`. An editor that may lack the game's code decodes
+with `registry.sceneJson(keepUnknownComponents = true)`, which keeps a component no capability
+registers as a `SceneUnknownComponent` instead of refusing the scene; `loadProject` never does. `loadSceneContent` and `sceneSystemsFor` work on
 an already-decoded scene and take no registry.
 
 ## Adding components and systems: scene capabilities
