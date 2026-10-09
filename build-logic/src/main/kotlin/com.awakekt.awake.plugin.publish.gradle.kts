@@ -36,6 +36,14 @@ extensions.configure<PublishingExtension>("publishing") {
                 }
         }
     }
+    // A release publishes every module, and build-logic's plugins, into this one folder, which goes
+    // to Central as a single deployment (scripts/central-bundle.sh, scripts/central-upload.sh).
+    providers.gradleProperty("awake.stagingRepository").orNull?.let { staging ->
+        repositories.maven {
+            name = "centralStaging"
+            url = uri(staging)
+        }
+    }
 }
 
 tasks.matching { it.name.startsWith("generateMetadataFileFor") }.configureEach {

@@ -84,6 +84,11 @@ jobs:
       - name: Vulkan publication detector
         run: scripts/vulkan-publication-impact.test.sh
 
+      - name: Central bundle and upload
+        run: |
+          scripts/central-bundle.test.sh
+          scripts/central-upload.test.sh
+
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
