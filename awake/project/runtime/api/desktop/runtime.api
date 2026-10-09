@@ -66,6 +66,8 @@ public final class com/awakekt/awake/project/runtime/SceneCapability$DefaultImpl
 }
 
 public final class com/awakekt/awake/project/runtime/SceneCapabilityKt {
+	public static final fun loadCapabilityContent (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/core/io/AssetSource;Ljava/util/List;Lcom/awakekt/awake/project/runtime/SceneContent;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun loadCapabilityContent$default (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/core/io/AssetSource;Ljava/util/List;Lcom/awakekt/awake/project/runtime/SceneContent;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public static final fun loadSceneContent (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/core/io/AssetSource;Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static synthetic fun loadSceneContent$default (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/core/io/AssetSource;Ljava/util/List;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public static final fun uses (Lcom/awakekt/awake/scene/document/SceneDocument;Lkotlin/reflect/KClass;)Z

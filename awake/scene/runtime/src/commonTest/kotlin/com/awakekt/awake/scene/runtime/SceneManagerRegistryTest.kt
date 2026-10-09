@@ -73,4 +73,13 @@ class SceneManagerRegistryTest {
         assertEquals(1, world.count(SpinControl::class), "spin_control is a built-in binding")
         assertEquals(1, world.count(Marker::class))
     }
+
+    /** An editor loads each project into a scope of its own and switches scenes with it. */
+    @Test
+    fun aScopedRegistryGivenToSwitchToIsUsedAsItIs() {
+        val world = World()
+        SceneManager(world).switchTo(document, SceneComponentRegistry.scoped(resolvers = listOf(MarkerResolver)))
+        assertEquals(1, world.count(Marker::class))
+        assertEquals(0, world.count(SpinControl::class), "only what the scope holds attaches")
+    }
 }

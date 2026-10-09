@@ -75,6 +75,33 @@ class SceneCapabilityTest {
         assertTrue(beacons.closed, "a system that holds something is closed when the scene stops")
     }
 
+    /**
+     * An editor keeps Core's content loaded while a scene is edited, so Play starts at once. When Play
+     * starts it loads only the game's own capabilities, on top of what it holds.
+     */
+    @Test
+    fun anEditorLoadsOnlyTheGamesCapabilitiesOnTopOfTheContentItHolds() = runTest {
+        val scene = decode(SPARKING_BEACON_SCENE)
+        val read = mutableListOf<String>()
+        val files = files(SPARKING_BEACON_SCENE).let { all ->
+            AssetSource { path ->
+                read += path.value
+                all.read(path)
+            }
+        }
+        val held = SceneContent.build { this[CoreSceneContent.ParticleSprites] = emptyMap() }
+
+        val content = loadCapabilityContent(scene, files, listOf(BeaconCapability), loaded = held)
+
+        assertEquals(PULSE, content[BeaconCapability.Pulse])
+        assertEquals(emptyMap(), content[CoreSceneContent.ParticleSprites], "what the editor held is kept")
+        assertEquals(listOf(PULSE_PATH), read, "Core's loaders, which would read the emitter's sprite, do not run")
+        assertFailsWith<IllegalArgumentException>("a key the editor already holds is not loaded again") {
+            loadCapabilityContent(scene, files, listOf(BeaconCapability), loaded = content)
+        }
+        assertFailsWith<IllegalArgumentException> { loadCapabilityContent(scene, files, listOf(BeaconCapability, BeaconCapability)) }
+    }
+
     @Test
     fun aSceneNamingAComponentNoCapabilityRegistersSaysWhichAndHowToFixIt() = runTest {
         val error = assertFailsWith<IllegalArgumentException> { loadProject(files(HOOK_SCENE)) }
@@ -167,6 +194,9 @@ class SceneCapabilityTest {
         const val BEACON_SCENE_NAME = "harbor"
         const val BEACON_SCENE = """{ "version": 1, "name": "harbor", "nodes": [
   { "name": "Lighthouse", "components": [ { "component": "lighthouse_beacon", "label": "north" } ] }
+] }"""
+        const val SPARKING_BEACON_SCENE = """{ "version": 1, "name": "harbor", "nodes": [
+  { "name": "Lighthouse", "components": [ { "component": "lighthouse_beacon", "label": "north" }, { "component": "particle_emitter", "texture": "spark.png" } ] }
 ] }"""
         const val HOOK_SCENE = """{ "version": 1, "name": "cliff", "nodes": [
   { "name": "Player", "components": [ { "component": "grappling_hook", "range": 12.0 } ] }

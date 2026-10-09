@@ -228,4 +228,22 @@ class AwakeProjectTest {
         assertFalse(issues.any { it.contains("artifact.group") }, issues.toString())
         assertTrue(issues.any { it.contains("plugins[0].capabilityClass must be a fully qualified class name") }, issues.toString())
     }
+
+    /** A game's own capability is compiled into its app project, so its entry names a class and no file. */
+    @Test
+    fun aCapabilityCompiledIntoTheGameNamesNoFile() {
+        val json = """{"formatVersion":1,"id":"com.example.harbor-town","name":"Harbor Town","version":"1.0.0",
+            "entryScene":"scenes/main.scene.json",
+            "plugins":[{"id":"com.example.harbor-town.beacon","capabilityClass":"com.example.harbor.BeaconCapability","required":true}]}"""
+
+        val manifest = AwakeProjectValidator.decodeManifest(json)
+
+        assertEquals("", manifest.plugins.single().path)
+        assertTrue(AwakeProjectValidator.manifestIssues(manifest).isEmpty(), AwakeProjectValidator.manifestIssues(manifest).toString())
+        val nothingToLoad = manifest.copy(plugins = listOf(AwakeProjectPluginReference(id = "com.example.harbor-town.beacon")))
+        assertTrue(
+            AwakeProjectValidator.manifestIssues(nothingToLoad).any { it.contains("plugins[0].path must be a safe project-relative path") },
+            "an entry with neither a file nor a capability class names nothing",
+        )
+    }
 }

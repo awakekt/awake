@@ -14,21 +14,22 @@ import kotlinx.serialization.json.Json
  * A plugin declared by an Awake project manifest.
  *
  * @property id Unique reverse-domain identifier of the plugin.
- * @property path Relative file path to the plugin bundle or archive.
+ * @property path Relative file path to the plugin bundle or archive. Empty for a capability compiled
+ * into the game's own app project, which has a [capabilityClass] and no file in the project.
  * @property version Semantic version string of the plugin.
  * @property sha256 Expected SHA-256 checksum of the plugin archive.
  * @property entrypointClass Fully qualified class name of the plugin entrypoint.
  * @property required Whether engine initialization requires this plugin to be present.
  * @property artifact The published artifact that holds the plugin's runtime code, for an export or an
- * editor to resolve; null for a plugin that is not published, such as a project's own `capabilities/`
- * module.
+ * editor to resolve; null for a plugin that is not published, such as a capability in the game's own
+ * app project.
  * @property capabilityClass Fully qualified name of the `SceneCapability` object [artifact] provides
  * under this plugin's [id], named like [entrypointClass]; null when nothing needs to look it up.
  */
 @Serializable
 data class AwakeProjectPluginReference(
     val id: String,
-    val path: String,
+    val path: String = "",
     val version: String = "",
     val sha256: String? = null,
     val entrypointClass: String? = null,
@@ -316,7 +317,8 @@ private fun pluginIssues(plugins: List<AwakeProjectPluginReference>): List<Proje
         if (!plugin.id.matches(projectIdPattern)) {
             add(ProjectContentIssue(ProjectIssueCode.INVALID_MANIFEST, "plugins[$index].id must be a reverse-domain identifier"))
         }
-        if (!AwakeProjectValidator.isSafeProjectPath(plugin.path)) {
+        val compiledIntoTheGame = plugin.path.isEmpty() && plugin.capabilityClass != null
+        if (!compiledIntoTheGame && !AwakeProjectValidator.isSafeProjectPath(plugin.path)) {
             add(
                 ProjectContentIssue(
                     code = ProjectIssueCode.UNSAFE_PATH,
