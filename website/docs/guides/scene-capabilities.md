@@ -47,7 +47,9 @@ world of its own, as an editor's Play does, passes the same list to `loadSceneCo
 `sceneSystemsFor` instead.
 
 A scene that names a component no capability registers is refused when it loads, naming the
-component, so a missing capability is found before anything plays.
+component, so a missing capability is found before anything plays. An editor that opens the scene
+without the game's code keeps such a component as data instead; see
+[Scene documents](scene-documents.md#components-from-other-modules).
 
 ## What a capability is not
 

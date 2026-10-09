@@ -56,6 +56,7 @@ public final class com/awakekt/awake/scene/binding/SceneComponentRegistry {
 	public final fun register (Lcom/awakekt/awake/scene/binding/SceneComponentResolver;)Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;
 	public final fun resolve-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)Z
 	public final fun sceneJson ()Lkotlinx/serialization/json/Json;
+	public final fun sceneJson (Z)Lkotlinx/serialization/json/Json;
 }
 
 public final class com/awakekt/awake/scene/binding/SceneComponentRegistry$Companion {
@@ -74,5 +75,11 @@ public abstract interface class com/awakekt/awake/scene/binding/SceneResolutionC
 	public abstract fun deferNodeLink (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
 	public abstract fun getWorld ()Lcom/awakekt/awake/ecs/World;
 	public abstract fun recordRequest (Ljava/lang/Object;)V
+}
+
+public final class com/awakekt/awake/scene/binding/SceneUnknownComponents : com/awakekt/awake/ecs/Poolable {
+	public fun <init> ()V
+	public final fun getComponents ()Ljava/util/List;
+	public fun reset ()V
 }
 

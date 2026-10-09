@@ -111,13 +111,21 @@ owns the component, and must be registered before a document that uses them is d
 
 | Register with | Module | Ids |
 | --- | --- | --- |
-| `SceneComponentRegistry().registerControls()` | `scene:controls` | `movement_control`, `camera_rig` |
+| `SceneComponentRegistry().registerControls()` | `scene:controls` | `movement_control`, `camera_rig`, `input_actions` |
 | `SceneComponentRegistry.registerGlobal(binding)` | any | that binding's id, for every load |
 | `loadProject(files, capabilities = …)` | `project:runtime` | each [scene capability](scene-capabilities.md)'s ids, for that project |
 
 A registry you build is passed to `instantiate`. Inside an app, where `scene(document)` uses the
 global registry, register with `registerGlobal`; [Cameras and controls](cameras-and-controls.md)
 shows both.
+
+Decoding refuses an id nothing registered. An editor or a tool that may not have a game's code, such
+as a validator or an asset pipeline, decodes with `registry.sceneJson(keepUnknownComponents = true)`
+instead, or `SceneSerializers.createJson(keepUnknownComponents = true)` without a registry. Each
+component it can't decode becomes a `SceneUnknownComponent` holding its JSON. The rest of the scene
+validates and instantiates; the unknown component runs nothing and waits on its entity as data, and
+`fromWorld` writes it back, so saving keeps it as it was. `SceneValidator.unknownComponentIssues`
+names each one. A game keeps the default, so a component it doesn't link still fails its load.
 
 ## Validate a document
 

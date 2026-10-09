@@ -484,6 +484,8 @@ public final class com/awakekt/awake/scene/document/SceneSerializers {
 	public final fun buildSerializersModule ()Lkotlinx/serialization/modules/SerializersModule;
 	public final fun createJson ()Lkotlinx/serialization/json/Json;
 	public final fun createJson (Ljava/util/Map;)Lkotlinx/serialization/json/Json;
+	public final fun createJson (Ljava/util/Map;Z)Lkotlinx/serialization/json/Json;
+	public final fun createJson (Z)Lkotlinx/serialization/json/Json;
 	public final fun register (Lkotlin/reflect/KClass;Lkotlinx/serialization/KSerializer;)V
 	public final fun registeredSerializers ()Ljava/util/List;
 }
@@ -521,6 +523,22 @@ public final class com/awakekt/awake/scene/document/SceneTransform$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
+public final class com/awakekt/awake/scene/document/SceneUnknownComponent : com/awakekt/awake/scene/document/SceneComponent {
+	public fun <init> (Ljava/lang/String;Lkotlinx/serialization/json/JsonObject;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lkotlinx/serialization/json/JsonObject;
+	public final fun copy (Ljava/lang/String;Lkotlinx/serialization/json/JsonObject;)Lcom/awakekt/awake/scene/document/SceneUnknownComponent;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/document/SceneUnknownComponent;Ljava/lang/String;Lkotlinx/serialization/json/JsonObject;ILjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneUnknownComponent;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAllowsMultiplePerNode ()Z
+	public final fun getFields ()Lkotlinx/serialization/json/JsonObject;
+	public final fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+	public fun validate (Ljava/lang/String;)Ljava/util/List;
+	public fun validate (Ljava/lang/String;Ljava/util/List;)Ljava/util/List;
+}
+
 public final class com/awakekt/awake/scene/document/SceneValidationException : java/lang/IllegalArgumentException {
 	public fun <init> (Ljava/util/List;)V
 	public final fun getIssues ()Ljava/util/List;
@@ -543,6 +561,7 @@ public final class com/awakekt/awake/scene/document/SceneValidator {
 	public static final field INSTANCE Lcom/awakekt/awake/scene/document/SceneValidator;
 	public final fun requireValid (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/scene/document/SceneExtensionRegistry;)V
 	public static synthetic fun requireValid$default (Lcom/awakekt/awake/scene/document/SceneValidator;Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/scene/document/SceneExtensionRegistry;ILjava/lang/Object;)V
+	public final fun unknownComponentIssues (Lcom/awakekt/awake/scene/document/SceneDocument;)Ljava/util/List;
 	public final fun validate (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/scene/document/SceneExtensionRegistry;)Ljava/util/List;
 	public static synthetic fun validate$default (Lcom/awakekt/awake/scene/document/SceneValidator;Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/scene/document/SceneExtensionRegistry;ILjava/lang/Object;)Ljava/util/List;
 }
