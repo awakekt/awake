@@ -19,14 +19,17 @@ import com.awakekt.awake.render.renderer.UniformFields
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.SceneDrawCollector
+import com.awakekt.awake.scene.rendering.mesh.SceneTextureAnimation
 import com.awakekt.awake.scene.rendering.mesh.SceneTextureClip
 import com.awakekt.awake.scene.rendering.mesh.SceneTextureClips
 import com.awakekt.awake.scene.rendering.mesh.TextureClipSystem
+import com.awakekt.awake.scene.rendering.mesh.TextureAnimationBinding
 import com.awakekt.awake.scene.rendering.mesh.TextureClips
 import com.awakekt.awake.scene.rendering.spatial.SceneCullingCompiler
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertSame
 
 class TextureClipSystemTest {
@@ -43,6 +46,21 @@ class TextureClipSystemTest {
     private fun held(cell: Int) = TextureAnimation(columns = 4, rows = 4, frameCount = 1, framesPerSecond = 0f, firstFrame = cell)
 
     private fun World.spriteWith(clips: TextureClips): Entity = create().also { add(it, clips) }
+
+    @Test
+    fun theCellTheClipsHoldIsNotExportedAsATextureAnimation() {
+        val world = World()
+        val sprite = world.spriteWith(TextureClips(sheet))
+        TextureClipSystem().update(world, 0f)
+        val plain = world.create().also { world.add(it, held(3)) }
+
+        assertNull(TextureAnimationBinding.export(world, sprite, assertNotNull(world.get<TextureAnimation>(sprite))))
+        assertEquals(
+            SceneTextureAnimation(columns = 4, rows = 4, frameCount = 1, framesPerSecond = 0f, firstFrame = 3),
+            TextureAnimationBinding.export(world, plain, assertNotNull(world.get<TextureAnimation>(plain))),
+            "a texture_animation of its own still exports",
+        )
+    }
 
     @Test
     fun anEntityWithNoAnimationIsGivenOneHoldingItsFirstCell() {

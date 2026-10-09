@@ -90,14 +90,23 @@ object TextureAnimationBinding : SceneComponentBinding<TextureAnimation, SceneTe
         )
     }
 
-    override fun export(world: World, entity: Entity, component: TextureAnimation): SceneTextureAnimation =
-        SceneTextureAnimation(
-            component.columns,
-            component.rows,
-            component.frameCount,
-            component.framesPerSecond,
-            component.scrollU,
-            component.scrollV,
-            component.firstFrame,
-        )
+    /**
+     * The scene component for [component], or null when the entity has [TextureClips]: their animation
+     * only holds the cell the clips show, and the clips are what the scene saves. Exported too, it would
+     * give the node a `texture_animation` beside its `texture_clips`, which no scene may have.
+     */
+    override fun export(world: World, entity: Entity, component: TextureAnimation): SceneTextureAnimation? =
+        if (world.has(entity, TextureClips::class)) {
+            null
+        } else {
+            SceneTextureAnimation(
+                component.columns,
+                component.rows,
+                component.frameCount,
+                component.framesPerSecond,
+                component.scrollU,
+                component.scrollV,
+                component.firstFrame,
+            )
+        }
 }
