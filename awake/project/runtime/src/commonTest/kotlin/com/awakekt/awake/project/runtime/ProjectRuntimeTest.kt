@@ -21,6 +21,7 @@ import com.awakekt.awake.render.testing.NoopRenderer
 import com.awakekt.awake.scene.authoring.scene
 import com.awakekt.awake.scene.controls.camera.ActiveCamera
 import com.awakekt.awake.scene.controls.camera.CameraRig
+import com.awakekt.awake.scene.controls.input.inputActions
 import com.awakekt.awake.scene.controls.movement.MovementControl
 import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.core.transform.Transform
@@ -118,13 +119,13 @@ class ProjectRuntimeTest {
         assertTrue(peak > walked.y + 0.5f, "holding jump must jump; peak $peak from ${walked.y}")
     }
 
-    /** On a touch screen, with no run key to press, a run Button switches a toggled player as its key would. */
+    /** On a touch screen, with no run key to press, a run Button switches a toggled run as its key would. */
     @Test
     fun aRunButtonSwitchesAToggledPlayerBetweenRunningAndWalking() = runTest {
-        val game = play(RUN_BUTTON_SCENE.replace(PLAYER_CONTROL, "$PLAYER_CONTROL, \"runMode\": \"Toggle\""), touch = true)
+        val game = play(RUN_BUTTON_SCENE.withNode(TOGGLED_RUN), touch = true)
         game.frames(FRAMES)
         val control = game.world.get<MovementControl>(game.world.named("Player"))!!
-        assertTrue(control.run, "a toggled player starts running")
+        assertTrue(control.run, "a run that starts on runs before any tap")
 
         game.tap(game.centreOf("Run"))
         assertFalse(control.run, "a tap walks")
@@ -145,6 +146,22 @@ class ProjectRuntimeTest {
         game.touch(down = false, run)
         game.frames(1)
         assertFalse(control.run, "letting go walks")
+    }
+
+    /** A Button naming an action of the game's own holds that action, which the game's systems read. */
+    @Test
+    fun aButtonForAnActionOfTheGamesOwnHoldsIt() = runTest {
+        val game = play(RUN_BUTTON_SCENE.replace("\"action\": \"run\"", "\"action\": \"fire\"").withNode(FIRE_ACTION), touch = true)
+        game.frames(FRAMES)
+        val actions = assertNotNull(game.world.inputActions())
+        val fire = game.centreOf("Run")
+
+        game.touch(down = true, fire)
+        game.touch(down = true, fire)
+        assertTrue(actions.isActive("fire"), "holding the button holds fire")
+        game.touch(down = false, fire)
+        game.frames(1)
+        assertFalse(actions.isActive("fire"), "letting go lets go of fire")
     }
 
     private fun Game.centreOf(name: String): Pair<Float, Float> {
@@ -325,7 +342,14 @@ class ProjectRuntimeTest {
 ] }
 """
 
-        const val PLAYER_CONTROL = """"component": "movement_control", "speed": 6.0"""
+        const val TOGGLED_RUN = """{ "name": "Controls", "components": [ { "component": "input_actions", "actions": [
+    { "type": "button", "name": "run", "keys": ["Shift"], "trigger": "Toggle", "startsOn": true } ] } ] }"""
+
+        const val FIRE_ACTION = """{ "name": "Controls", "components": [ { "component": "input_actions", "actions": [
+    { "type": "button", "name": "fire", "keys": ["F"] } ] } ] }"""
+
+        /** This scene with [node] added after its last node. */
+        fun String.withNode(node: String): String = trimEnd().removeSuffix("] }").trimEnd() + ",\n  $node\n] }\n"
 
         val RUN_BUTTON_SCENE = PHYSICS_SCENE.trimEnd().removeSuffix("] }").trimEnd() + """,
   { "name": "Run", "components": [ { "component": "canvas_element", "kind": "Button", "anchor": "BottomRight",

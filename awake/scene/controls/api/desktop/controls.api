@@ -49,7 +49,7 @@ public final class com/awakekt/awake/scene/controls/CameraInputProcessor {
 	public final fun reset ()V
 }
 
-public final class com/awakekt/awake/scene/controls/GameplayInput {
+public final class com/awakekt/awake/scene/controls/GameplayInput : com/awakekt/awake/core/input/ActionInputSource {
 	public fun <init> (Lcom/awakekt/awake/core/input/InputSnapshot;Lcom/awakekt/awake/compose/ui/platform/InputOwnership;)V
 	public final fun getKeysOwnedByUi ()Z
 	public final fun getPointerDown ()Z
@@ -58,10 +58,11 @@ public final class com/awakekt/awake/scene/controls/GameplayInput {
 	public final fun getScrollDeltaX ()F
 	public final fun getScrollDeltaY ()F
 	public final fun getScrollSource ()Lcom/awakekt/awake/core/input/ScrollSource;
-	public final fun isDown (Lcom/awakekt/awake/core/input/Key;)Z
-	public final fun isDown (Lcom/awakekt/awake/core/input/PointerButton;)Z
+	public fun isDown (Lcom/awakekt/awake/core/input/Key;)Z
+	public fun isDown (Lcom/awakekt/awake/core/input/PointerButton;)Z
 	public final fun isModalOpen ()Z
-	public final fun wasPressed (Lcom/awakekt/awake/core/input/Key;)Z
+	public fun wasPressed (Lcom/awakekt/awake/core/input/Key;)Z
+	public fun wasPressed (Lcom/awakekt/awake/core/input/PointerButton;)Z
 }
 
 public final class com/awakekt/awake/scene/controls/camera/ActiveCamera : com/awakekt/awake/ecs/Poolable {
@@ -275,6 +276,25 @@ public final class com/awakekt/awake/scene/controls/camera/SceneCameraRig$Compan
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
+public final class com/awakekt/awake/scene/controls/input/InputActionsBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/controls/input/InputActionsBinding;
+	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/controls/input/SceneInputActions;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public synthetic fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun canResolve (Lcom/awakekt/awake/scene/document/SceneComponent;)Z
+	public fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/core/input/InputActions;)Lcom/awakekt/awake/scene/controls/input/SceneInputActions;
+	public synthetic fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/controls/input/SceneInputActions;
+	public synthetic fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun getComponentClass ()Lkotlin/reflect/KClass;
+	public fun getSchemaClass ()Lkotlin/reflect/KClass;
+	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/controls/input/InputActionsBindingKt {
+	public static final fun inputActions (Lcom/awakekt/awake/ecs/World;)Lcom/awakekt/awake/core/input/InputActions;
+}
+
 public final class com/awakekt/awake/scene/controls/input/KeyBinding {
 	public fun <init> (Lcom/awakekt/awake/core/input/Key;Lcom/awakekt/awake/core/input/Key;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/core/input/Key;Lcom/awakekt/awake/core/input/Key;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -316,6 +336,120 @@ public final class com/awakekt/awake/scene/controls/input/KeybindingProfileKt {
 	public static final fun keybindingProfile (Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/scene/controls/input/KeybindingProfile;
 }
 
+public final class com/awakekt/awake/scene/controls/input/SceneAxisAction : com/awakekt/awake/scene/controls/input/SceneInputAction {
+	public static final field Companion Lcom/awakekt/awake/scene/controls/input/SceneAxisAction$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/Set;
+	public final fun component3 ()Ljava/util/Set;
+	public final fun component4 ()Ljava/util/Set;
+	public final fun component5 ()Ljava/util/Set;
+	public final fun copy (Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;)Lcom/awakekt/awake/scene/controls/input/SceneAxisAction;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/controls/input/SceneAxisAction;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;ILjava/lang/Object;)Lcom/awakekt/awake/scene/controls/input/SceneAxisAction;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDown ()Ljava/util/Set;
+	public final fun getLeft ()Ljava/util/Set;
+	public fun getName ()Ljava/lang/String;
+	public final fun getRight ()Ljava/util/Set;
+	public final fun getUp ()Ljava/util/Set;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/scene/controls/input/SceneAxisAction$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/controls/input/SceneAxisAction$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/controls/input/SceneAxisAction;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/controls/input/SceneAxisAction;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/controls/input/SceneAxisAction$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/controls/input/SceneButtonAction : com/awakekt/awake/scene/controls/input/SceneInputAction {
+	public static final field Companion Lcom/awakekt/awake/scene/controls/input/SceneButtonAction$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Lcom/awakekt/awake/core/input/ActionTrigger;Z)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Lcom/awakekt/awake/core/input/ActionTrigger;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/Set;
+	public final fun component3 ()Ljava/util/Set;
+	public final fun component4 ()Lcom/awakekt/awake/core/input/ActionTrigger;
+	public final fun component5 ()Z
+	public final fun copy (Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Lcom/awakekt/awake/core/input/ActionTrigger;Z)Lcom/awakekt/awake/scene/controls/input/SceneButtonAction;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/controls/input/SceneButtonAction;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Lcom/awakekt/awake/core/input/ActionTrigger;ZILjava/lang/Object;)Lcom/awakekt/awake/scene/controls/input/SceneButtonAction;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getButtons ()Ljava/util/Set;
+	public final fun getKeys ()Ljava/util/Set;
+	public fun getName ()Ljava/lang/String;
+	public final fun getStartsOn ()Z
+	public final fun getTrigger ()Lcom/awakekt/awake/core/input/ActionTrigger;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/scene/controls/input/SceneButtonAction$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/controls/input/SceneButtonAction$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/controls/input/SceneButtonAction;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/controls/input/SceneButtonAction;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/controls/input/SceneButtonAction$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract interface class com/awakekt/awake/scene/controls/input/SceneInputAction {
+	public static final field Companion Lcom/awakekt/awake/scene/controls/input/SceneInputAction$Companion;
+	public abstract fun getName ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/scene/controls/input/SceneInputAction$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/controls/input/SceneInputActions : com/awakekt/awake/scene/document/SceneComponent {
+	public static final field Companion Lcom/awakekt/awake/scene/controls/input/SceneInputActions$Companion;
+	public fun <init> ()V
+	public fun <init> (Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;)Lcom/awakekt/awake/scene/controls/input/SceneInputActions;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/controls/input/SceneInputActions;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/scene/controls/input/SceneInputActions;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getActions ()Ljava/util/List;
+	public fun getAllowsMultiplePerNode ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+	public fun validate (Ljava/lang/String;)Ljava/util/List;
+	public fun validate (Ljava/lang/String;Ljava/util/List;)Ljava/util/List;
+	public final fun withDefaults ()Ljava/util/List;
+}
+
+public final synthetic class com/awakekt/awake/scene/controls/input/SceneInputActions$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/controls/input/SceneInputActions$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/controls/input/SceneInputActions;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/controls/input/SceneInputActions;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/controls/input/SceneInputActions$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
 public final class com/awakekt/awake/scene/controls/movement/CameraRelativeBasis {
 	public static final field MIN_DIRECTION_LENGTH F
 	public fun <init> ()V
@@ -331,6 +465,18 @@ public final class com/awakekt/awake/scene/controls/movement/MatrixRelativeMovem
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 
+public final class com/awakekt/awake/scene/controls/movement/MovementActions {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/controls/movement/MovementActions;
+	public static final field JUMP Ljava/lang/String;
+	public static final field MOVE Ljava/lang/String;
+	public static final field RUN Ljava/lang/String;
+	public final fun getDefaults ()Ljava/util/List;
+}
+
+public final class com/awakekt/awake/scene/controls/movement/MovementActionsKt {
+	public static final fun steerPlayers (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/core/input/InputActions;)V
+}
+
 public final class com/awakekt/awake/scene/controls/movement/MovementControl : com/awakekt/awake/ecs/Poolable {
 	public fun <init> ()V
 	public final fun currentSpeed (F)F
@@ -341,8 +487,6 @@ public final class com/awakekt/awake/scene/controls/movement/MovementControl : c
 	public final fun getMoveY ()F
 	public final fun getMoveZ ()F
 	public final fun getRun ()Z
-	public final fun getRunKey ()Lcom/awakekt/awake/core/input/Key;
-	public final fun getRunMode ()Lcom/awakekt/awake/scene/controls/movement/RunMode;
 	public final fun getRunSpeed ()Ljava/lang/Float;
 	public final fun getSpeed ()Ljava/lang/Float;
 	public final fun getTurnSpeed ()F
@@ -354,8 +498,6 @@ public final class com/awakekt/awake/scene/controls/movement/MovementControl : c
 	public final fun setMoveY (F)V
 	public final fun setMoveZ (F)V
 	public final fun setRun (Z)V
-	public final fun setRunKey (Lcom/awakekt/awake/core/input/Key;)V
-	public final fun setRunMode (Lcom/awakekt/awake/scene/controls/movement/RunMode;)V
 	public final fun setRunSpeed (Ljava/lang/Float;)V
 	public final fun setSpeed (Ljava/lang/Float;)V
 	public final fun setTurnSpeed (F)V
@@ -401,37 +543,20 @@ public final class com/awakekt/awake/scene/controls/movement/PlayerInputSystem :
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 
-public final class com/awakekt/awake/scene/controls/movement/RunMode : java/lang/Enum {
-	public static final field Companion Lcom/awakekt/awake/scene/controls/movement/RunMode$Companion;
-	public static final field Hold Lcom/awakekt/awake/scene/controls/movement/RunMode;
-	public static final field Toggle Lcom/awakekt/awake/scene/controls/movement/RunMode;
-	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/scene/controls/movement/RunMode;
-	public static fun values ()[Lcom/awakekt/awake/scene/controls/movement/RunMode;
-}
-
-public final class com/awakekt/awake/scene/controls/movement/RunMode$Companion {
-	public final fun serializer ()Lkotlinx/serialization/KSerializer;
-}
-
 public final class com/awakekt/awake/scene/controls/movement/SceneMovementControl : com/awakekt/awake/scene/document/SceneComponent {
 	public static final field Companion Lcom/awakekt/awake/scene/controls/movement/SceneMovementControl$Companion;
 	public fun <init> ()V
-	public fun <init> (Ljava/lang/Float;Ljava/lang/Float;FLcom/awakekt/awake/scene/controls/movement/MovementDriver;Lcom/awakekt/awake/scene/controls/movement/RunMode;Lcom/awakekt/awake/core/input/Key;)V
-	public synthetic fun <init> (Ljava/lang/Float;Ljava/lang/Float;FLcom/awakekt/awake/scene/controls/movement/MovementDriver;Lcom/awakekt/awake/scene/controls/movement/RunMode;Lcom/awakekt/awake/core/input/Key;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/Float;Ljava/lang/Float;FLcom/awakekt/awake/scene/controls/movement/MovementDriver;)V
+	public synthetic fun <init> (Ljava/lang/Float;Ljava/lang/Float;FLcom/awakekt/awake/scene/controls/movement/MovementDriver;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/Float;
 	public final fun component2 ()Ljava/lang/Float;
 	public final fun component3 ()F
 	public final fun component4 ()Lcom/awakekt/awake/scene/controls/movement/MovementDriver;
-	public final fun component5 ()Lcom/awakekt/awake/scene/controls/movement/RunMode;
-	public final fun component6 ()Lcom/awakekt/awake/core/input/Key;
-	public final fun copy (Ljava/lang/Float;Ljava/lang/Float;FLcom/awakekt/awake/scene/controls/movement/MovementDriver;Lcom/awakekt/awake/scene/controls/movement/RunMode;Lcom/awakekt/awake/core/input/Key;)Lcom/awakekt/awake/scene/controls/movement/SceneMovementControl;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/controls/movement/SceneMovementControl;Ljava/lang/Float;Ljava/lang/Float;FLcom/awakekt/awake/scene/controls/movement/MovementDriver;Lcom/awakekt/awake/scene/controls/movement/RunMode;Lcom/awakekt/awake/core/input/Key;ILjava/lang/Object;)Lcom/awakekt/awake/scene/controls/movement/SceneMovementControl;
+	public final fun copy (Ljava/lang/Float;Ljava/lang/Float;FLcom/awakekt/awake/scene/controls/movement/MovementDriver;)Lcom/awakekt/awake/scene/controls/movement/SceneMovementControl;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/controls/movement/SceneMovementControl;Ljava/lang/Float;Ljava/lang/Float;FLcom/awakekt/awake/scene/controls/movement/MovementDriver;ILjava/lang/Object;)Lcom/awakekt/awake/scene/controls/movement/SceneMovementControl;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getAllowsMultiplePerNode ()Z
 	public final fun getDriver ()Lcom/awakekt/awake/scene/controls/movement/MovementDriver;
-	public final fun getRunKey ()Lcom/awakekt/awake/core/input/Key;
-	public final fun getRunMode ()Lcom/awakekt/awake/scene/controls/movement/RunMode;
 	public final fun getRunSpeed ()Ljava/lang/Float;
 	public final fun getSpeed ()Ljava/lang/Float;
 	public final fun getTurnSpeed ()F

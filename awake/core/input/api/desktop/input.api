@@ -1,3 +1,59 @@
+public abstract interface class com/awakekt/awake/core/input/ActionInputSource {
+	public abstract fun isDown (Lcom/awakekt/awake/core/input/Key;)Z
+	public abstract fun isDown (Lcom/awakekt/awake/core/input/PointerButton;)Z
+	public abstract fun wasPressed (Lcom/awakekt/awake/core/input/Key;)Z
+	public abstract fun wasPressed (Lcom/awakekt/awake/core/input/PointerButton;)Z
+}
+
+public final class com/awakekt/awake/core/input/ActionTrigger : java/lang/Enum {
+	public static final field Hold Lcom/awakekt/awake/core/input/ActionTrigger;
+	public static final field Press Lcom/awakekt/awake/core/input/ActionTrigger;
+	public static final field Toggle Lcom/awakekt/awake/core/input/ActionTrigger;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/core/input/ActionTrigger;
+	public static fun values ()[Lcom/awakekt/awake/core/input/ActionTrigger;
+}
+
+public final class com/awakekt/awake/core/input/AxisAction : com/awakekt/awake/core/input/InputActionDefinition {
+	public fun <init> (Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/Set;
+	public final fun component3 ()Ljava/util/Set;
+	public final fun component4 ()Ljava/util/Set;
+	public final fun component5 ()Ljava/util/Set;
+	public final fun copy (Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;)Lcom/awakekt/awake/core/input/AxisAction;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/input/AxisAction;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;ILjava/lang/Object;)Lcom/awakekt/awake/core/input/AxisAction;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDown ()Ljava/util/Set;
+	public final fun getLeft ()Ljava/util/Set;
+	public fun getName ()Ljava/lang/String;
+	public final fun getRight ()Ljava/util/Set;
+	public final fun getUp ()Ljava/util/Set;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/input/ButtonAction : com/awakekt/awake/core/input/InputActionDefinition {
+	public fun <init> (Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Lcom/awakekt/awake/core/input/ActionTrigger;Z)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Lcom/awakekt/awake/core/input/ActionTrigger;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/Set;
+	public final fun component3 ()Ljava/util/Set;
+	public final fun component4 ()Lcom/awakekt/awake/core/input/ActionTrigger;
+	public final fun component5 ()Z
+	public final fun copy (Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Lcom/awakekt/awake/core/input/ActionTrigger;Z)Lcom/awakekt/awake/core/input/ButtonAction;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/input/ButtonAction;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Lcom/awakekt/awake/core/input/ActionTrigger;ZILjava/lang/Object;)Lcom/awakekt/awake/core/input/ButtonAction;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getButtons ()Ljava/util/Set;
+	public final fun getKeys ()Ljava/util/Set;
+	public fun getName ()Ljava/lang/String;
+	public final fun getStartsOn ()Z
+	public final fun getTrigger ()Lcom/awakekt/awake/core/input/ActionTrigger;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class com/awakekt/awake/core/input/ClipboardCommand : java/lang/Enum {
 	public static final field Copy Lcom/awakekt/awake/core/input/ClipboardCommand;
 	public static final field Cut Lcom/awakekt/awake/core/input/ClipboardCommand;
@@ -56,6 +112,31 @@ public final class com/awakekt/awake/core/input/Input {
 	public final fun snapshot ()Lcom/awakekt/awake/core/input/InputSnapshot;
 	public final fun takeClipboardWrite ()Ljava/lang/String;
 	public final fun updateSnapshot ()Lcom/awakekt/awake/core/input/InputSnapshot;
+}
+
+public abstract interface class com/awakekt/awake/core/input/InputActionDefinition {
+	public abstract fun getName ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/input/InputActions {
+	public static final field Companion Lcom/awakekt/awake/core/input/InputActions$Companion;
+	public static final field NAME_RULE Ljava/lang/String;
+	public fun <init> (Ljava/util/List;)V
+	public final fun axisX (Ljava/lang/String;)F
+	public final fun axisY (Ljava/lang/String;)F
+	public final fun beginFrame ()V
+	public final fun contains (Ljava/lang/String;)Z
+	public final fun getDefinitions ()Ljava/util/List;
+	public final fun hold (Ljava/lang/String;)V
+	public final fun isActive (Ljava/lang/String;)Z
+	public final fun press (Ljava/lang/String;)V
+	public final fun push (Ljava/lang/String;FF)V
+	public final fun read (Lcom/awakekt/awake/core/input/ActionInputSource;)V
+	public final fun wasPressed (Ljava/lang/String;)Z
+}
+
+public final class com/awakekt/awake/core/input/InputActions$Companion {
+	public final fun isValidName (Ljava/lang/String;)Z
 }
 
 public final class com/awakekt/awake/core/input/InputSnapshot {

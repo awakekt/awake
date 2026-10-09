@@ -13,6 +13,8 @@ import com.awakekt.awake.scene.character.SceneCharacterController
 import com.awakekt.awake.scene.controls.camera.CameraRigBinding
 import com.awakekt.awake.scene.controls.camera.CameraSystem
 import com.awakekt.awake.scene.controls.camera.SceneCameraRig
+import com.awakekt.awake.scene.controls.input.InputActionsBinding
+import com.awakekt.awake.scene.controls.input.SceneInputActions
 import com.awakekt.awake.scene.controls.movement.MatrixRelativeMovementSystem
 import com.awakekt.awake.scene.controls.movement.MovementControlBinding
 import com.awakekt.awake.scene.controls.movement.PlayerInputSystem
@@ -48,17 +50,19 @@ internal val CORE_CAPABILITIES: List<SceneCapability> = listOf(
 )
 
 /**
- * Keyboard and touch intent and the camera rig. A `movement_control` moves its entity straight
- * through the world, unless the scene has a `character_controller`, which physics moves instead.
+ * The scene's input actions, from the keys and its touch controls, and the camera rig. A
+ * `movement_control` follows the actions and moves its entity straight through the world, unless the
+ * scene has a `character_controller`, which physics moves instead.
  */
 internal object ControlsCapability : SceneCapability {
     override val id = "com.awakekt.awake.controls"
-    override val components = listOf(MovementControlBinding, CameraRigBinding)
+    override val components = listOf(MovementControlBinding, CameraRigBinding, InputActionsBinding)
 
     override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {
         val moves = scene.uses(SceneMovementControl::class)
-        if (moves) plan.frame("playerInput") { PlayerInputSystem(it.input) }
-        if (moves && scene.hasCanvasActions()) plan.frame("canvas-actions") { CanvasActionSystem() }
+        val touches = scene.hasCanvasActions()
+        if (moves || touches || scene.uses(SceneInputActions::class)) plan.frame("playerInput") { PlayerInputSystem(it.input) }
+        if (touches) plan.frame("canvas-actions") { CanvasActionSystem() }
         if (moves && !scene.uses(SceneCharacterController::class)) plan.frame("movement") { MatrixRelativeMovementSystem() }
         if (scene.uses(SceneCameraRig::class)) plan.frame("camera") { CameraSystem(inputProvider = it.input) }
     }
