@@ -33,7 +33,8 @@ kotlin {
             implementation(project(":awake:core:math"))
             implementation(project(":awake:particles"))
             implementation(project(":awake:scene:particles"))
-            implementation(project(":awake:scene:shader"))
+            // CoreSceneContent.ShaderEffects names its ShaderEffectAssets.
+            api(project(":awake:scene:shader"))
             // paged_terrain: the scene binding, the residency it streams, and the layered surface an index can name.
             implementation(project(":awake:scene:worldstream"))
             implementation(project(":awake:terrain"))

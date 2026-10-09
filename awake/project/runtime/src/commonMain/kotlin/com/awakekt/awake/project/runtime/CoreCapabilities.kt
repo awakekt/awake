@@ -20,7 +20,6 @@ import com.awakekt.awake.scene.controls.movement.SceneMovementControl
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneNode
-import com.awakekt.awake.scene.physics.CollisionMeshSource
 import com.awakekt.awake.scene.physics.MeshColliderSystem
 import com.awakekt.awake.scene.physics.PhysicsBodyBinding
 import com.awakekt.awake.scene.physics.SceneConvexHullShape
@@ -74,15 +73,12 @@ internal object PhysicsCapability : SceneCapability {
     override val id = "com.awakekt.awake.physics"
     override val components = listOf(PhysicsBodyBinding, CharacterControllerBinding)
 
-    /** The triangles of the scene's `mesh` and `convex_hull` shapes, as [loadCollisionMeshes] reads them. */
-    val CollisionMeshes = SceneContentKey<CollisionMeshSource>("collision meshes")
-
     /** Whether [scene] has bodies, characters or a terrain collider, so a project makes a physics world for it. */
     fun needsPhysics(scene: SceneDocument): Boolean =
         scene.uses(ScenePhysicsBody::class) || scene.uses(SceneCharacterController::class) || scene.hasTerrainColliders()
 
     override suspend fun load(scene: SceneDocument, files: AssetSource, content: SceneContent.Builder) {
-        if (scene.nodes.any { it.hasMeshCollider() }) content[CollisionMeshes] = loadCollisionMeshes(scene, files)
+        if (scene.nodes.any { it.hasMeshCollider() }) content[CoreSceneContent.CollisionMeshes] = loadCollisionMeshes(scene, files)
     }
 
     override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {
@@ -91,7 +87,7 @@ internal object PhysicsCapability : SceneCapability {
         if (scene.nodes.any { it.hasMeshCollider() }) {
             plan.fixed("mesh-collider") {
                 MeshColliderSystem(
-                    requireNotNull(it.content[CollisionMeshes]) {
+                    requireNotNull(it.content[CoreSceneContent.CollisionMeshes]) {
                         "The scene has mesh collision shapes; pass the content loadSceneContent reads in SceneHostServices"
                     },
                 )
