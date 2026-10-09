@@ -33,13 +33,14 @@ import kotlin.reflect.KClass
 
 /**
  * Core's capabilities, in the order their systems run. A game's own capabilities run after these, so
- * a scene's frame runs input, movement and the camera, then AI, motion, particles, the day, shader
- * effects and skinned animation, then the game's systems. Streamed terrain comes before physics, so
- * its collision cells exist before the physics step builds their bodies.
+ * a scene's frame runs input, movement and the camera, then terrain, AI, motion, particles, the day,
+ * shader effects and skinned animation, then the game's systems. Streamed terrain comes before
+ * physics, so its collision cells exist before the physics step builds their bodies.
  */
 internal val CORE_CAPABILITIES: List<SceneCapability> = listOf(
     ControlsCapability,
     StreamedTerrainCapability,
+    TerrainCapability,
     PhysicsCapability,
     AiCapability,
     MotionCapability,

@@ -8,6 +8,7 @@ package com.awakekt.awake.project.runtime
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.scene.physics.CollisionMeshSource
 import com.awakekt.awake.scene.shader.ShaderEffectAssets
+import com.awakekt.awake.terrain.TerrainSurfaceProvider
 
 /**
  * The content Core's capabilities read from [SceneHostServices.content]. [loadSceneContent] fills it
@@ -30,4 +31,11 @@ object CoreSceneContent {
 
     /** The scene's shader documents and their images, as `loadShaderEffects` reads them. */
     val ShaderEffects: SceneContentKey<ShaderEffectAssets> = SceneContentKey("shader effects")
+
+    /**
+     * The providers a `terrain`'s `surface` can name, by provider id. A project's content holds the
+     * layered-terrain kit's, under `awake.terrain.layers`, reading the project's files. A terrain whose
+     * provider is missing draws with the built-in terrain shading, and its scene keeps the `surface`.
+     */
+    val TerrainSurfaces: SceneContentKey<Map<String, TerrainSurfaceProvider>> = SceneContentKey("terrain surfaces")
 }

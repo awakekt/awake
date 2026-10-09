@@ -116,6 +116,8 @@ class SceneSystemSet internal constructor(
  *   collision shape adds [com.awakekt.awake.scene.physics.MeshColliderSystem], which reads the
  *   triangles from [SceneHostServices.content]
  * - `camera_rig`: the camera system
+ * - `terrain`: drawn through [SceneHostServices.renderer] when it takes content features, with the
+ *   surface providers in [SceneHostServices.content]
  * - `spinControl`: spinning
  * - `locomotion_animation` and `keyframe_animation`: their clips and looping tracks
  * - `texture_clips`: the sprite sheet's clips, stepped on the scene's clock
