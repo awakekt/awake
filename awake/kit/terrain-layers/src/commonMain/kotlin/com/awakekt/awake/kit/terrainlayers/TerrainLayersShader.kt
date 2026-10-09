@@ -24,6 +24,7 @@ import com.awakekt.awake.asset.shaderdsl.normalize
 import com.awakekt.awake.asset.shaderdsl.plus
 import com.awakekt.awake.asset.shaderdsl.pow
 import com.awakekt.awake.asset.shaderdsl.sampler
+import com.awakekt.awake.asset.shaderdsl.saturate
 import com.awakekt.awake.asset.shaderdsl.select
 import com.awakekt.awake.asset.shaderdsl.shader
 import com.awakekt.awake.asset.shaderdsl.texture2d
@@ -83,6 +84,9 @@ internal const val FALLBACK_LIGHTMAP_BINDING = 36
 
 /** How far below the highest surface another still shows through, in weight-plus-height units. */
 private const val BLEND_DEPTH = 0.25f
+
+/** The sun's height, as the sine of its elevation, over which the bake's sunlit share fades in. */
+private const val SUNRISE_FADE = 0.1f
 private const val NO_LAYER = -1f
 private const val EPSILON = 1e-5f
 private const val CONTROL_TAPS = 4
@@ -100,7 +104,9 @@ private const val CONTROL_TAPS = 4
  * derivatives are defined.
  *
  * The engine's shadows darken both lighting paths: the sun's direct share, and the bake down to
- * the ambient floor, since a bake cannot know what stands on the terrain now.
+ * the ambient floor, since a bake cannot know what stands on the terrain now. The bake's sunlit
+ * share fades out as the sun sets, as the direct share does through N·L, so a sun below the horizon
+ * leaves the bake at ambient rather than lit only beyond the shadow range.
  */
 fun terrainLayersShader(clipSpace: ClipSpace): AslShaderDefinition = terrainLayersShader(clipSpace, CONTROL_SLOTS)
 
@@ -162,7 +168,8 @@ internal fun terrainLayersShader(clipSpace: ClipSpace, slots: Int, paged: Boolea
             },
         )
         // 128 in the lightmap is x1; its alpha hands lighting over from the sun to the bake.
-        val light = let("light", mix(lighting, mix(ambient, 1f.lit, shadow), baked.w))
+        val daylight = let("daylight", saturate(toLight.y / SUNRISE_FADE.lit))
+        val light = let("light", mix(lighting, mix(ambient, 1f.lit, shadow * daylight), baked.w))
         val surface = DebugSurface(
             normal = normal,
             worldPosition = position,

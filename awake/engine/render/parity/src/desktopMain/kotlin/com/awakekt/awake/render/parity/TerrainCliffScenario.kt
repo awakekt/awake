@@ -28,13 +28,15 @@ import kotlinx.coroutines.runBlocking
  *
  * Needs a renderer that attaches content features; the terrain is detached again before returning.
  * [cascades] off renders the same sun with no shadow pass, the control for what the terrain casts.
- * [shaders] and [surfaceTextures] are the surface, as `terrainContentFeature` takes them.
+ * [shaders] and [surfaceTextures] are the surface, as `terrainContentFeature` takes them. [sun]
+ * points toward the sun.
  */
 fun Renderer.renderTerrainCliffScene(
     size: Int = SCENE_SIZE,
     cascades: Boolean = true,
     shaders: ShaderSet = PackShaderSets.Terrain,
     surfaceTextures: Map<Int, TextureAsset> = emptyMap(),
+    sun: Vec3f = Vec3f(1f, 1f, 0f),
 ): ByteArray {
     val host = checkNotNull(this as? ContentFeatureHost) { "This renderer cannot attach content features." }
     val feature = terrainContentFeature(shaders, PLATEAU, CLIPMAP, surfaceTextures)
@@ -42,7 +44,7 @@ fun Renderer.renderTerrainCliffScene(
     val target = createRenderTarget(size, size)
     return try {
         val lens = Lens(eye = Vec3f(CLIFF_EYE_X, CLIFF_EYE_Y, CLIFF_EYE_Z), center = Vec3f(CLIFF_CENTER_X, CLIFF_CENTER_Y, 0f), fovYRadians = 1f, near = 0.1f, far = 100f)
-        val light = SceneLight(direction = Vec3f(1f, 1f, 0f), color = Vec3f(1f, 1f, 1f))
+        val light = SceneLight(direction = sun, color = Vec3f(1f, 1f, 1f))
         renderToTexture(
             target,
             ScenePassCompiler.compile(
