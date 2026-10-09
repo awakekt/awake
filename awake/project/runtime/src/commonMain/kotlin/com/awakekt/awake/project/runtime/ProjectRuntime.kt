@@ -17,8 +17,10 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.project.AwakeProjectManifest
 import com.awakekt.awake.project.AwakeProjectValidator
+import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.scene.authoring.SceneAppDsl
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
+import com.awakekt.awake.scene.controls.GameplayInput
 import com.awakekt.awake.scene.controls.camera.ActiveCamera
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.document.SceneDocument
@@ -114,6 +116,21 @@ suspend fun loadProject(
         null
     }
     return LoadedProject(manifest, scene, models, physics, content, capabilities)
+}
+
+/**
+ * The systems this project's scene runs, as [sceneSystemsFor] builds them with the project's own
+ * physics world, content and capabilities, for a host that runs the scene in a world of its own.
+ * With no [renderer], as on a game server or in a test, the systems that draw are left out and the
+ * rest simulate as they do in a drawn game. [SceneSystemSet.close] them when the scene stops.
+ */
+fun LoadedProject.sceneSystems(input: () -> GameplayInput, renderer: Renderer? = null): SceneSystemSet {
+    val services = if (renderer == null) {
+        SceneHostServices.headless(input, physics, content)
+    } else {
+        SceneHostServices(input, renderer, physics, content)
+    }
+    return sceneSystemsFor(scene, services, capabilities)
 }
 
 /** Installs Core's default scene components and every capability's. Harmless twice. */

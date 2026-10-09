@@ -57,8 +57,10 @@ fun SceneDocument.uses(type: KClass<out SceneComponent>): Boolean = nodes.any { 
  * [AutoCloseable] and is closed when the scene stops.
  *
  * @property hasPhysics Whether the host gave a physics world; a system that steps bodies needs one.
+ * @property hasRenderer Whether the host draws; a system that makes GPU content needs one. A
+ *   [SceneHostServices.headless] host, such as a game server, has none.
  */
-class SceneSystemPlan internal constructor(val hasPhysics: Boolean) {
+class SceneSystemPlan internal constructor(val hasPhysics: Boolean, val hasRenderer: Boolean = true) {
     internal val specs = mutableListOf<SceneSystemSpec>()
 
     /** Adds a system run on every fixed step, named [name] in the scene's schedule. */
