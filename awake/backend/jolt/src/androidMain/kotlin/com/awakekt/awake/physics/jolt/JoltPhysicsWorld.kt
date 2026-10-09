@@ -36,6 +36,7 @@ import com.github.stephengold.joltjni.AllHitCastRayCollector
 import com.github.stephengold.joltjni.AllHitCastShapeCollector
 import com.github.stephengold.joltjni.AllHitCollideShapeCollector
 import com.github.stephengold.joltjni.BodyCreationSettings
+import com.github.stephengold.joltjni.BodyFilter
 import com.github.stephengold.joltjni.BodyIdVector
 import com.github.stephengold.joltjni.BodyInterface
 import com.github.stephengold.joltjni.BodyLockWrite
@@ -55,6 +56,7 @@ import com.github.stephengold.joltjni.JobSystem
 import com.github.stephengold.joltjni.JobSystemThreadPool
 import com.github.stephengold.joltjni.Jolt
 import com.github.stephengold.joltjni.MeshShapeSettings
+import com.github.stephengold.joltjni.ObjectLayerFilter
 import com.github.stephengold.joltjni.ObjectLayerPairFilterTable
 import com.github.stephengold.joltjni.ObjectVsBroadPhaseLayerFilterTable
 import com.github.stephengold.joltjni.PhysicsSystem
@@ -66,6 +68,7 @@ import com.github.stephengold.joltjni.RayCastResult
 import com.github.stephengold.joltjni.RayCastSettings
 import com.github.stephengold.joltjni.ShapeCastResult
 import com.github.stephengold.joltjni.ShapeCastSettings
+import com.github.stephengold.joltjni.ShapeFilter
 import com.github.stephengold.joltjni.SixDofConstraintSettings
 import com.github.stephengold.joltjni.SpecifiedObjectLayerFilter
 import com.github.stephengold.joltjni.TempAllocator
@@ -192,6 +195,7 @@ private const val BROADPHASE_LAYER_MOVING = 1
 private const val MAX_BODIES = 5_000
 private const val MAX_BODY_PAIRS = 65_536
 private const val MAX_CONTACTS = 20_480
+private const val MAX_CAST_SHAPES = 64
 
 /**
  * jolt-jni-backed [PhysicsWorld] -- Android only (see `desktopMain`'s near-identical
@@ -253,6 +257,35 @@ class JoltPhysicsWorld(
     private val scratchRotation = com.github.stephengold.joltjni.Quat()
     private val scratchOutPosition = Vec3f()
     private val scratchOutRotation = Quat()
+
+    // Shape-cast scratch. A character controller sweeps its capsule a few times a tick, and each of
+    // these is a JNI object registered with a Cleaner; built per cast they were most of what a crowd
+    // of characters allocated. Queries run one at a time on the caller's thread, so one set serves.
+    private val castStartPosition = RVec3()
+    private val castStart = RMat44.sTranslation(castStartPosition)
+    private val castDirection = Vec3()
+    private val castScale = Vec3(1f, 1f, 1f)
+    private val castBase = RVec3(0.0, 0.0, 0.0)
+    private val castSettings = ShapeCastSettings()
+    private val closestCastHit = ClosestHitCastShapeCollector()
+    private val allCastHits = AllHitCastShapeCollector()
+
+    // jolt-jni's shorter castShape overloads build each filter they leave out on every call.
+    private val anyBroadPhaseLayer = BroadPhaseLayerFilter()
+    private val anyObjectLayer = ObjectLayerFilter()
+    private val anyBody = BodyFilter()
+    private val anyShape = ShapeFilter()
+    private val layerFilters = arrayOfNulls<SpecifiedObjectLayerFilter>(layers.count)
+
+    /**
+     * Jolt shapes for the capsules and spheres this world sweeps, by value: a controller sweeps the
+     * same capsule every tick. Only those two, whose fields cannot change under the key; capped, so
+     * a caller sweeping ever-different sizes keeps at most [MAX_CAST_SHAPES].
+     */
+    private val castShapes = object : LinkedHashMap<PhysicsShape, ConstShape>(16, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<PhysicsShape, ConstShape>): Boolean =
+            size > MAX_CAST_SHAPES
+    }
 
     init {
         objectLayerPairFilter = ObjectLayerPairFilterTable(layers.count).apply {
@@ -566,10 +599,12 @@ class JoltPhysicsWorld(
         onlyLayer: CollisionLayer?,
         ignore: BodyHandle?,
     ): ShapeCastHit? {
-        val joltShape = convexShapeOf(shape)
-        val start = RMat44.sTranslation(RVec3(from.x.toDouble(), from.y.toDouble(), from.z.toDouble()))
-        val direction =
-            com.github.stephengold.joltjni.Vec3(to.x - from.x, to.y - from.y, to.z - from.z)
+        val joltShape = castShapeOf(shape)
+        castStartPosition.set(from.x.toDouble(), from.y.toDouble(), from.z.toDouble())
+        castStart.setTranslation(castStartPosition)
+        castDirection.set(to.x - from.x, to.y - from.y, to.z - from.z)
+        val start = castStart
+        val direction = castDirection
         // Jolt's own BodyFilter cannot carry the exclusion here. jolt-jni exposes the base class
         // with no callback subclass, and an override is simply never called -- measured, not
         // assumed: a filter rejecting everything left the ray hitting the body anyway. So an
@@ -606,7 +641,8 @@ class JoltPhysicsWorld(
         direction: com.github.stephengold.joltjni.Vec3,
         onlyLayer: CollisionLayer?,
     ): ShapeCastResult? {
-        val collector = ClosestHitCastShapeCollector()
+        val collector = closestCastHit
+        collector.reset()
         castShapeInto(joltShape, start, direction, onlyLayer, collector)
         return if (collector.hadHit()) collector.hit else null
     }
@@ -625,8 +661,8 @@ class JoltPhysicsWorld(
      * The nearest reportable hit, found by collecting all of them.
      *
      * Only reached when the closest hit was not reportable. jolt-jni's `BodyFilter` would have done
-     * this inside the query, but it cannot be overridden -- see [shapeCast] -- so this allocates,
-     * which is why the closest-hit path above stays the common one.
+     * this inside the query, but it cannot be overridden -- see [shapeCast] -- so this collects every
+     * hit, which is why the closest-hit path above stays the common one.
      */
     private fun nearestShapeCastHitExcluding(
         joltShape: ConstShape,
@@ -635,7 +671,8 @@ class JoltPhysicsWorld(
         onlyLayer: CollisionLayer?,
         ignore: BodyHandle?,
     ): ShapeCastResult? {
-        val collector = AllHitCastShapeCollector()
+        val collector = allCastHits
+        collector.reset()
         castShapeInto(joltShape, start, direction, onlyLayer, collector)
         var nearest: ShapeCastResult? = null
         for (index in 0 until collector.countHits()) {
@@ -653,23 +690,29 @@ class JoltPhysicsWorld(
         onlyLayer: CollisionLayer?,
         collector: CastShapeCollector,
     ) {
-        RShapeCast(joltShape, com.github.stephengold.joltjni.Vec3(1f, 1f, 1f), start, direction).use { cast ->
-            ShapeCastSettings().use { settings ->
-                if (onlyLayer == null) {
-                    physicsSystem.narrowPhaseQuery.castShape(cast, settings, RVec3(0.0, 0.0, 0.0), collector)
-                } else {
-                    physicsSystem.narrowPhaseQuery.castShape(
-                        cast,
-                        settings,
-                        RVec3(0.0, 0.0, 0.0),
-                        collector,
-                        BroadPhaseLayerFilter(),
-                        SpecifiedObjectLayerFilter(onlyLayer.index),
-                    )
-                }
-            }
+        RShapeCast(joltShape, castScale, start, direction).use { cast ->
+            physicsSystem.narrowPhaseQuery.castShape(
+                cast,
+                castSettings,
+                castBase,
+                collector,
+                anyBroadPhaseLayer,
+                objectLayerFilter(onlyLayer),
+                anyBody,
+                anyShape,
+            )
         }
     }
+
+    private fun objectLayerFilter(onlyLayer: CollisionLayer?): ObjectLayerFilter =
+        if (onlyLayer == null) {
+            anyObjectLayer
+        } else {
+            layerFilters[onlyLayer.index] ?: SpecifiedObjectLayerFilter(onlyLayer.index).also { layerFilters[onlyLayer.index] = it }
+        }
+
+    private fun castShapeOf(shape: PhysicsShape): ConstShape =
+        if (shape is CapsuleShape || shape is SphereShape) castShapes.getOrPut(shape) { convexShapeOf(shape) } else convexShapeOf(shape)
 
     override fun overlapShape(
         shape: PhysicsShape,
@@ -677,7 +720,7 @@ class JoltPhysicsWorld(
         onlyLayer: CollisionLayer?,
         onOverlap: (BodyHandle) -> Unit,
     ) {
-        val joltShape = convexShapeOf(shape)
+        val joltShape = castShapeOf(shape)
         val transform =
             RMat44.sTranslation(RVec3(position.x.toDouble(), position.y.toDouble(), position.z.toDouble()))
         val collector = AllHitCollideShapeCollector()

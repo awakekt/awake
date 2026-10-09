@@ -78,7 +78,7 @@ fun interface CollisionMeshSource {
 class MeshColliderSystem(private val meshes: CollisionMeshSource) : System {
     override fun update(world: World, delta: Float) {
         world.queryEach(Transform::class, MeshCollider::class) { entity, transform, collider ->
-            if (world.has(entity, PhysicsBody::class)) return@queryEach
+            if (world.has<PhysicsBody>(entity)) return@queryEach
             val node = world.get<Name>(entity)?.value ?: "entity ${entity.id}"
             val shape = checkNotNull(meshes.meshShape(collider.mesh, collider.primitive)) {
                 "No collision mesh loaded for ${collider.mesh} on node $node"
@@ -94,7 +94,7 @@ class MeshColliderSystem(private val meshes: CollisionMeshSource) : System {
         }
 
         world.queryEach(Transform::class, ConvexHullCollider::class) { entity, transform, collider ->
-            if (world.has(entity, PhysicsBody::class)) return@queryEach
+            if (world.has<PhysicsBody>(entity)) return@queryEach
             val node = world.get<Name>(entity)?.value ?: "entity ${entity.id}"
             val mesh = checkNotNull(meshes.meshShape(collider.mesh, collider.primitive)) {
                 "No collision mesh loaded for ${collider.mesh} on node $node"
