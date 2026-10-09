@@ -7,6 +7,7 @@ package com.awakekt.awake.project.runtime
 
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.ecs.Entity
+import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.engine.bootstrap.dsl.app
 import com.awakekt.awake.engine.platform.dsl.requireService
@@ -15,6 +16,7 @@ import com.awakekt.awake.render.command.GpuDrawPreparer
 import com.awakekt.awake.render.testing.NoopRenderer
 import com.awakekt.awake.scene.authoring.scene
 import com.awakekt.awake.scene.core.Name
+import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneLoader
 import com.awakekt.awake.scene.rendering.animation.Animator
 import com.awakekt.awake.scene.rendering.animation.SkinnedPose
@@ -24,6 +26,7 @@ import com.awakekt.awake.scene.runtime.spawn
 import kotlin.io.encoding.Base64
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -122,6 +125,48 @@ class SkinnedPlaybackTest {
 
         assertNotNull(runtime.world.get<MeshRenderer>(spawned.root))
         assertNull(runtime.world.get<Animator>(spawned.root))
+    }
+
+    /** A capability's system spawns through its services in a played project, as a network client would. */
+    @Test
+    fun aCapabilitySystemSpawnsThroughItsServices() = runTest {
+        val files = mapOf("awake.project.json" to MANIFEST, "scenes/main.scene.json" to SCENE, MODEL to skinnedTriangleGltf())
+        val project = loadProject(AssetSource { path -> runCatching { files.getValue(path.value).encodeToByteArray() } }, listOf(SpawnOnce))
+        val game = app { scene("play") { runProject(project) } }
+        game.ready(TestRenderer())
+        val runtime = game.requireService<SceneAppLifecycleRuntime>()
+        game.update(DELTA, WIDTH, HEIGHT)
+
+        val remote = runtime.world.entityNamed("Remote")
+        assertNotNull(runtime.world.get<MeshRenderer>(remote), "the spawned node draws")
+        assertEquals(2, runtime.world.animators(), "and animates, as runProject's spawn does")
+    }
+
+    /** A host that built its own services without a spawner says so instead of failing somewhere later. */
+    @Test
+    fun servicesWithoutASpawnerRefuseToSpawn() {
+        val services = SceneHostServices.headless({ error("no input") })
+
+        assertFalse(services.canSpawn)
+        assertFailsWith<IllegalStateException> { services.spawn(SceneLoader.decode(REMOTE).nodes.single()) }
+    }
+
+    private object SpawnOnce : SceneCapability {
+        override val id = "com.example.harbor-town.spawn-once"
+
+        override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {
+            plan.frame("spawn-once") { services ->
+                object : System {
+                    private var spawned = false
+
+                    override fun update(world: World, delta: Float) {
+                        if (spawned) return
+                        spawned = true
+                        services.spawn(SceneLoader.decode(REMOTE).nodes.single())
+                    }
+                }
+            }
+        }
     }
 
     private suspend fun playing(): Triple<LoadedProject, com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle, SceneAppLifecycleRuntime> {
