@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-09
+
+### Added
+
+- Add an integrated 2D runtime showcase with editable chunked tiles, animated sprites, orthographic viewport scaling and planar Jolt physics, verified through the sample app on Vulkan and WebGPU.
+- Orthographic cameras support virtual viewport scaling (`fit`, `extend`, `fill`, `stretch`, `screen`). Shared allocation-free viewport math resolves world extents and pixel bounds, scene rendering and picking use the same view, and captures accept their own pixel dimensions. Camera export preserves authored dimensions across resizing; the 2D sprite showcase cycles strategies with V.
+- Added streamed terrain with one clipmap over bounded height, control and lighting pages, a shared palette and coarse fallback, frame-safe Vulkan/WebGPU region uploads, per-cell scene collision, and revision-aware page editing and saving.
+- Add finite orthogonal tilemap layers with atlas mapping, editable cells, cached chunk meshes, camera-frustum culling, and scene document binding on Vulkan and WebGPU.
+- WebGPU shader hot reload support via `ShaderReplacement` capability, allowing runtime WGSL pipeline swapping and dependent bind group cache invalidation.
+- Runtime shader hot reload for UI pipelines (`UiQuad`, `UiGlyph`, `UiTexture`, `UiRoundedQuad`, `UiTargetComposite`) via `ShaderReplacement` across Vulkan and WebGPU backends.
+- Support per-instance RGBA tinting of instanced skinned draws on Vulkan and WebGPU, defaulting omitted tints to white while preserving the joint-palette layout used by depth and shadow passes.
+- Report GPU frame time on WebGPU adapters supporting timestamp queries and include offscreen scene and UI rendering in frame timing on Vulkan and WebGPU without blocking for readback.
+- Headless WebGPU test harness `HeadlessWebGpuEngine` and `webGpuHeadlessPlan` in `:awake:backend:webgpu` to boot a production `RenderPlan` dynamically over wgpu-native GLFW surfaces, verified with a lit shadowed cube frame test against committed pixel baselines and negative control.
+- Sprite manifest clips can wrap across atlas rows in reading order, starting partway along their declared first row. Long animations no longer require a single wide texture; grid alignment, uniform cell size, bounds, contiguous playback order and fixed timing remain validated.
+- Verify the showcase's production WebGPU render plan with an offscreen pixel comparison covering lit geometry, scene depth, and depth fog in CI.
+
+### Fixed
+
+- Preserve virtual viewport scaling in scene framebuffer captures by passing the capture's pixel dimensions to the scene planner.
+- Validate WebGPU shader reloads through the GPU driver on browsers and desktop, preserve running pipelines after rejected replacements, and release abandoned prepared candidates.
+- Preserve running shader identity across consecutive UI reloads on Vulkan and WebGPU and validate WebGPU UI pipeline candidates before swapping them in.
+- Release Vulkan camera-depth resources and placeholder descriptor layouts during engine teardown.
+- Make the template consumer check work on runners without ripgrep and preserve an existing snapshot repository declaration.
+
 ## [0.3.0] - 2026-10-07
 
 ### Added
