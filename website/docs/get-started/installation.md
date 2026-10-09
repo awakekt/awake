@@ -77,6 +77,12 @@ The newest Core release is `{{ awake_version }}`. When it is newer than the pair
 only in the browser can use it; a desktop app waits for a Vulkan release built on it. See
 [Releases and compatibility](../reference/releases.md).
 
+## Android release builds
+
+An Android release shrunk by R8 (`isMinifyEnabled = true`) needs no keep rules of its own for Awake.
+The Jolt and Vulkan backends and the shader compiler ship consumer rules in their Android artifacts,
+which keep the classes, fields and methods their native code finds by name.
+
 ## Next
 
 [Your first window](first-window.md) opens a window with the app DSL and the Vulkan backend.

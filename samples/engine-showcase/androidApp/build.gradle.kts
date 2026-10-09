@@ -27,7 +27,13 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            // Shrunk as a game's release is, with no keep rules of its own: what Core's native code
+            // reaches by name comes from the consumer rules Core's artifacts ship. The nightly device
+            // tests launch it, so a lookup those rules miss crashes there and not in a game.
+            isMinifyEnabled = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
+            // The debug key, so CI can install the release it built.
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
 }
