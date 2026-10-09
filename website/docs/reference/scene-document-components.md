@@ -134,7 +134,7 @@ Screen-space UI drawn over the game. Sizes and offsets are in dp. `SceneCanvasEl
 | `value` | number | `1` | A `Bar`'s fill, from 0 to 1. |
 | `order` | integer | `0` | Draw order. Lowest draws first. |
 | `visible` | boolean | `true` | Whether the element is drawn. |
-| `action` | string | `""` | Name of what the element does for the game, such as `jump`. The game decides what each name means. |
+| `action` | string | `""` | Name of what the element does for the game, such as `jump`. The game decides what each name means. A played project gives three their meaning: a `move` Joystick steers the player, a held `jump` Button jumps, and a `run` Button runs, held or pressed to switch as `movement_control.runMode` says. |
 | `touchOnly` | boolean | `false` | Draw only where touch controls are shown. |
 
 ## `character_controller`
@@ -320,7 +320,9 @@ Moves the entity from player input, or from code such as AI or a network. `Scene
 | Field | Type | Default | What it does |
 | --- | --- | --- | --- |
 | `speed` | number | none | Units per second. None uses the movement system's speed. Above 0 when set. |
-| `runSpeed` | number | none | Units per second while Shift is held. None keeps `speed`. Above 0 when set. |
+| `runSpeed` | number | none | Units per second while running. None keeps `speed`. Above 0 when set. |
+| `runMode` | `Hold` or `Toggle` | `Hold` | `Hold`: runs while `runKey` is held. `Toggle`: starts running, and each press of `runKey` switches between walking and running. |
+| `runKey` | `Unknown` · `W` · `A` · `S` · `D` · `Space` · `Escape` · `F1` · `F2` · `F3` · `F4` · `F5` · `Ctrl` · `Shift` · `Alt` · `Meta` · `Tab` · `Enter` · `Backspace` · `Delete` · `ArrowUp` · `ArrowDown` · `ArrowLeft` · `ArrowRight` · `Home` · `End` · `PageUp` · `PageDown` · `B` · `C` · `E` · `F` · `G` · `H` · `I` · `J` · `K` · `L` · `M` · `N` · `O` · `P` · `Q` · `R` · `T` · `U` · `V` · `X` · `Y` · `Z` · `Digit0` · `Digit1` · `Digit2` · `Digit3` · `Digit4` · `Digit5` · `Digit6` · `Digit7` · `Digit8` · `Digit9` | `Shift` | The key the player runs with, spelled exactly as listed. Not one the player moves or jumps with (`W`, `A`, `S`, `D`, the arrows, `Space`), nor `Unknown`, which no key press produces. |
 | `turnSpeed` | number | `0` | Radians per second it turns to face where it moves; 0 leaves its facing alone. Not negative. |
 | `driver` | `Player` or `Agent` | `Player` | What sets the intent. `Player`: the keys and touch controls, relative to the camera. `Agent`: code writes a world-space direction, and player input leaves it alone. |
 
