@@ -1,4 +1,4 @@
-public final class com/awakekt/awake/terrain/PagedTerrain : com/awakekt/awake/render/passes/ContentTextureUpdates {
+public final class com/awakekt/awake/terrain/PagedTerrain {
 	public fun <init> (Lcom/awakekt/awake/asset/terrain/PagedHeightmap;ILjava/util/Map;Ljava/util/Map;I)V
 	public synthetic fun <init> (Lcom/awakekt/awake/asset/terrain/PagedHeightmap;ILjava/util/Map;Ljava/util/Map;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun acknowledgeFallbackSave (J)V
@@ -9,7 +9,6 @@ public final class com/awakekt/awake/terrain/PagedTerrain : com/awakekt/awake/re
 	public final fun editTexture (Lcom/awakekt/awake/asset/terrain/TerrainPageCoord;ILcom/awakekt/awake/render/texture/TextureAsset;)V
 	public final fun evict (Lcom/awakekt/awake/asset/terrain/TerrainPageCoord;)Z
 	public final fun fallbackSaveSnapshot ()Lkotlin/Pair;
-	public fun getBindings ()Ljava/util/Set;
 	public final fun getCapacity ()I
 	public final fun getDirtyCoords ()Ljava/util/Set;
 	public final fun getFallbackDirty ()Z
@@ -29,8 +28,6 @@ public final class com/awakekt/awake/terrain/PagedTerrain : com/awakekt/awake/re
 	public final fun getSurfaceFallbackRevision ()J
 	public final fun getSurfaceFallbacks ()Ljava/util/Map;
 	public final fun getTextureBytesPerSlot ()J
-	public final fun initialTextures ()Ljava/util/Map;
-	public final fun isUploaded (Lcom/awakekt/awake/asset/terrain/TerrainPageCoord;I)Z
 	public final fun page (Lcom/awakekt/awake/asset/terrain/TerrainPageCoord;)Lcom/awakekt/awake/terrain/TerrainPage;
 	public final fun put (Lcom/awakekt/awake/asset/terrain/TerrainPageCoord;Lcom/awakekt/awake/terrain/TerrainPage;)Z
 	public final fun resident (Lcom/awakekt/awake/asset/terrain/TerrainPageCoord;)Lcom/awakekt/awake/terrain/ResidentTerrainPage;
@@ -39,13 +36,6 @@ public final class com/awakekt/awake/terrain/PagedTerrain : com/awakekt/awake/re
 	public final fun setOriginY (D)V
 	public final fun setOriginZ (D)V
 	public final fun surfaceFallbackSaveSnapshot ()Lkotlin/Pair;
-	public fun updates (I)Ljava/util/List;
-	public final fun uploadJournal ()Lcom/awakekt/awake/render/passes/ContentTextureUpdates;
-}
-
-public final class com/awakekt/awake/terrain/PagedTerrainKt {
-	public static final field TERRAIN_HEIGHT_PAGES_BINDING I
-	public static final field TERRAIN_PAGE_TABLE_BINDING I
 }
 
 public final class com/awakekt/awake/terrain/ResidentTerrainPage {

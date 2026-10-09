@@ -98,6 +98,18 @@ class PagedTerrainUploadsTest {
         assertFailsWith<IllegalArgumentException> { pagedTerrainContentFeature(terrain, sharedTextures = mapOf(SURFACE to clash)) }
     }
 
+    /** The binding layout is the uploads', so they, not the terrain, refuse a surface that takes one of its bindings. */
+    @Test fun aSurfaceOnAReservedBindingIsRefusedByTheUploads() {
+        val layout = TerrainPageLayout(0, 0, 1, 1, 4f, 4)
+        val image = TextureAsset(ByteArray(16), 2, 2)
+        fun heights() = PagedHeightmap(layout, Heightmap(FloatArray(4), 2, 2, Vec3f(4f, 1f, 4f)))
+        val onTheTable = PagedTerrain(heights(), 2, mapOf(TERRAIN_PAGE_TABLE_BINDING to image), mapOf(TERRAIN_PAGE_TABLE_BINDING to (COARSE_SURFACE to image)))
+        val fallbackOnTheHeights = PagedTerrain(heights(), 2, mapOf(SURFACE to image), mapOf(SURFACE to (TERRAIN_HEIGHT_PAGES_BINDING to image)))
+
+        assertFailsWith<IllegalArgumentException> { PagedTerrainUploads(onTheTable) }
+        assertFailsWith<IllegalArgumentException> { PagedTerrainUploads(fallbackOnTheHeights) }
+    }
+
     private companion object {
         const val SURFACE = 5
         const val COARSE_SURFACE = 34
