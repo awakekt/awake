@@ -55,9 +55,12 @@ done < <(find "$site" -mindepth 3 -name '*.pom' -exec dirname {} \; | xargs -n 1
 
 [[ "$artifacts" -gt 0 ]] || { echo "The bundles hold no POM; there is nothing to serve." >&2; exit 1; }
 
-# The versions held, newest first, read from a module every release of the family publishes.
+# The versions held, newest first, read from a module every release of the family publishes. A
+# family none of whose releases has a bundle yet lists nothing: under pipefail a find of its missing
+# directory would fail the whole site.
 versions_of() { # artifact directory under the site, list label
-  find "$site/$1" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; 2> /dev/null | sort -rV | sed "s|.*|<li>$2 <code>&</code></li>|"
+  [[ -d "$site/$1" ]] || return 0
+  find "$site/$1" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; | sort -rV | sed "s|.*|<li>$2 <code>&</code></li>|"
 }
 held="$(versions_of com/awakekt/awake/core/math Core; versions_of com/awakekt/awake/backend/vulkan Vulkan)"
 cat > "$site/index.html" <<EOF
