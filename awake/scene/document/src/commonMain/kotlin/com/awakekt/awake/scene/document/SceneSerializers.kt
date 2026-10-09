@@ -41,24 +41,44 @@ object SceneSerializers {
     /**
      * Constructs a [SerializersModule] containing all registered polymorphic [SceneComponent] serializers.
      */
-    fun buildSerializersModule(): SerializersModule = SerializersModule {
-        polymorphic(SceneComponent::class) {
-            registered.forEach { (kClass, serializer) ->
-                // Safe: `register()` only admits (KClass<S>, KSerializer<S>) pairs, so the stored
-                // kClass and serializer are always consistent with each other at KClass<SceneComponent>.
-                @Suppress("UNCHECKED_CAST")
-                subclass(kClass as KClass<SceneComponent>, serializer as KSerializer<SceneComponent>)
-            }
-        }
-    }
+    fun buildSerializersModule(): SerializersModule = moduleOf(registered)
 
     /**
      * Creates a new [Json] configuration wired with all registered polymorphic serializers.
      */
-    fun createJson(): Json = Json {
+    fun createJson(): Json = jsonWith(buildSerializersModule())
+
+    /**
+     * Creates a [Json] that decodes only [components], besides custom components and prefab links, and
+     * leaves the registered serializers alone. A scoped component registry decodes with it, so one
+     * project's component names never meet another's in the same process.
+     *
+     * Each serializer must be [KSerializer] of its own class, as [register] requires.
+     */
+    fun createJson(components: Map<KClass<out SceneComponent>, KSerializer<out SceneComponent>>): Json =
+        jsonWith(moduleOf(BUILT_IN + components))
+
+    private val BUILT_IN: Map<KClass<out SceneComponent>, KSerializer<out SceneComponent>> = mapOf(
+        SceneCustomComponent::class to SceneCustomComponent.serializer(),
+        ScenePrefabLink::class to ScenePrefabLink.serializer(),
+    )
+
+    private fun moduleOf(serializers: Map<KClass<out SceneComponent>, KSerializer<out SceneComponent>>): SerializersModule =
+        SerializersModule {
+            polymorphic(SceneComponent::class) {
+                serializers.forEach { (kClass, serializer) ->
+                    // Safe: `register()` only admits (KClass<S>, KSerializer<S>) pairs, and `createJson(components)`
+                    // requires the same, so each kClass and serializer agree at KClass<SceneComponent>.
+                    @Suppress("UNCHECKED_CAST")
+                    subclass(kClass as KClass<SceneComponent>, serializer as KSerializer<SceneComponent>)
+                }
+            }
+        }
+
+    private fun jsonWith(module: SerializersModule): Json = Json {
         ignoreUnknownKeys = true
         encodeDefaults = true
         explicitNulls = false
-        serializersModule = buildSerializersModule()
+        serializersModule = module
     }
 }

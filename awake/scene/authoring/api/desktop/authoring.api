@@ -10,6 +10,7 @@ public final class com/awakekt/awake/scene/authoring/SceneAppDsl {
 	public final fun onDispose (Lkotlin/jvm/functions/Function1;)V
 	public final fun onReady (Lkotlin/jvm/functions/Function2;)V
 	public final fun scene (Lcom/awakekt/awake/scene/document/SceneDocument;)V
+	public final fun scene (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;)V
 	public final fun scene (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
 	public static synthetic fun scene$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 	public final fun service (Lkotlin/reflect/KClass;Lkotlin/jvm/functions/Function1;)V

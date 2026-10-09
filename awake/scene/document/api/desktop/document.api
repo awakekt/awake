@@ -406,6 +406,7 @@ public final class com/awakekt/awake/scene/document/ScenePrefab$Companion {
 
 public final class com/awakekt/awake/scene/document/ScenePrefabExpansionKt {
 	public static final fun withPrefabs (Lcom/awakekt/awake/scene/document/SceneDocument;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun withPrefabs (Lcom/awakekt/awake/scene/document/SceneDocument;Lkotlinx/serialization/json/Json;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class com/awakekt/awake/scene/document/ScenePrefabLink : com/awakekt/awake/scene/document/SceneComponent {
@@ -482,6 +483,7 @@ public final class com/awakekt/awake/scene/document/SceneSerializers {
 	public static final field INSTANCE Lcom/awakekt/awake/scene/document/SceneSerializers;
 	public final fun buildSerializersModule ()Lkotlinx/serialization/modules/SerializersModule;
 	public final fun createJson ()Lkotlinx/serialization/json/Json;
+	public final fun createJson (Ljava/util/Map;)Lkotlinx/serialization/json/Json;
 	public final fun register (Lkotlin/reflect/KClass;Lkotlinx/serialization/KSerializer;)V
 	public final fun registeredSerializers ()Ljava/util/List;
 }

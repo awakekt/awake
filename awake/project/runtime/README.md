@@ -69,6 +69,26 @@ the camera, resolves transforms and draws. Pass the physics world the scene need
 `character_controller`, a terrain collider or a colliding `paged_terrain`), or those systems are left
 out.
 
+## Loading more than one project
+
+`loadProject(files, capabilities)` registers the project's components in the process-wide registry,
+which is right for a game that plays one project. A host that opens one project after another, such
+as an editor, gives each its own scope, so two projects whose capabilities use one component name for
+different components never meet:
+
+```kotlin
+val registry = SceneComponentRegistry.scoped()
+val project = loadProject(files, registry, capabilities)
+// runProject(project) attaches the scene's components with the same registry.
+```
+
+A scoped registry holds only what is registered on it and keeps its serializers out of the global
+set; its `sceneJson()` decodes only those components. Drop it with the project. A host that decodes
+the project's scenes itself prepares the scope with `registry.registerProjectComponents(capabilities)`,
+decodes with `SceneLoader.decode(text, registry.sceneJson())`, and instantiates with
+`SceneLoader.instantiate(scene, world, registry)`. `loadSceneContent` and `sceneSystemsFor` work on
+an already-decoded scene and take no registry.
+
 ## Adding components and systems: scene capabilities
 
 A game, or a package it depends on, adds its own components and the systems that run them as a

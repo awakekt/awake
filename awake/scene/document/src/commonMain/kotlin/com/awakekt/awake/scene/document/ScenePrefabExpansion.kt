@@ -5,6 +5,8 @@
  */
 package com.awakekt.awake.scene.document
 
+import kotlinx.serialization.json.Json
+
 /**
  * This document with each [ScenePrefabLink] node's prefab under it: the prefab's root becomes the
  * link node's only child. [read] returns a prefab file's JSON by its project-relative path; each file
@@ -15,7 +17,14 @@ package com.awakekt.awake.scene.document
  * @throws IllegalArgumentException when a link node has children of its own, or a prefab links
  * itself, directly or through others.
  */
-suspend fun SceneDocument.withPrefabs(read: suspend (path: String) -> String): SceneDocument {
+suspend fun SceneDocument.withPrefabs(read: suspend (path: String) -> String): SceneDocument =
+    withPrefabs(ScenePrefab.PrefabJson, read)
+
+/**
+ * [withPrefabs], decoding each prefab with [json]: a scoped component registry's `sceneJson()`, so a
+ * prefab decodes only the components its project registers.
+ */
+suspend fun SceneDocument.withPrefabs(json: Json, read: suspend (path: String) -> String): SceneDocument {
     if (nodes.none(SceneNode::linksAPrefab)) return this
     val expanded = HashMap<String, SceneNode>()
 
@@ -26,7 +35,7 @@ suspend fun SceneDocument.withPrefabs(read: suspend (path: String) -> String): S
             "${node.name ?: link.path} links a prefab and has children of its own; put them in the prefab or beside it"
         }
         require(link.path !in opening) { "Prefab ${link.path} links itself: ${(opening + link.path).joinToString(" > ")}" }
-        val root = expanded.getOrPut(link.path) { expand(ScenePrefab.fromJson(read(link.path)).root, opening + link.path) }
+        val root = expanded.getOrPut(link.path) { expand(ScenePrefab.fromJson(read(link.path), json).root, opening + link.path) }
         return node.copy(children = listOf(root))
     }
 

@@ -7,6 +7,7 @@ package com.awakekt.awake.project.runtime
 
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.project.AwakeProjectManifest
+import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneLoader
 import com.awakekt.awake.scene.document.SceneSerializers
@@ -29,15 +30,22 @@ internal fun requireRequiredPlugins(manifest: AwakeProjectManifest, installed: L
 }
 
 /**
- * Decodes the scene at [path] with its prefabs. A component id that nothing registered is named, with
- * the fix, instead of the decoder's own message.
+ * Decodes the scene at [path] with its prefabs, with [registry]'s scene `Json`, or the global one when
+ * it is null. A component id that nothing registered is named, with the fix, instead of the decoder's
+ * own message.
  */
-internal suspend fun decodeScene(path: String, files: AssetSource): SceneDocument {
+internal suspend fun decodeScene(path: String, files: AssetSource, registry: SceneComponentRegistry? = null): SceneDocument {
     val text = files.readText(path)
     return try {
-        SceneLoader.decode(text).withPrefabs { files.readText(it) }
+        if (registry == null) {
+            SceneLoader.decode(text).withPrefabs { files.readText(it) }
+        } else {
+            val json = registry.sceneJson()
+            SceneLoader.decode(text, json).withPrefabs(json) { files.readText(it) }
+        }
     } catch (failure: SerializationException) {
-        val unknown = unregisteredComponents(text)
+        val known = registry?.bindings?.mapNotNullTo(HashSet()) { it.serializer?.descriptor?.serialName }
+        val unknown = unregisteredComponents(text, known)
         if (unknown.isEmpty()) throw failure
         throw IllegalArgumentException(
             "$path uses ${unknown.joinToString { "'$it'" }}, which no capability registers; " +
@@ -49,12 +57,13 @@ internal suspend fun decodeScene(path: String, files: AssetSource): SceneDocumen
 
 /**
  * The component ids in [sceneJson] that no registered binding decodes, in the order they first
- * appear: what a project needs a capability for. A legacy camelCase id counts as its snake_case form,
- * as the scene loader reads it. Empty when the text is not JSON.
+ * appear: what a project needs a capability for. [decodable] names what decodes, the global
+ * serializers when null. A legacy camelCase id counts as its snake_case form, as the scene loader
+ * reads it. Empty when the text is not JSON.
  */
-internal fun unregisteredComponents(sceneJson: String): List<String> {
+internal fun unregisteredComponents(sceneJson: String, decodable: Set<String>? = null): List<String> {
     val document = runCatching { Json.parseToJsonElement(sceneJson) }.getOrNull() ?: return emptyList()
-    val known = SceneSerializers.registeredSerializers().mapTo(HashSet()) { it.descriptor.serialName }
+    val known = decodable ?: SceneSerializers.registeredSerializers().mapTo(HashSet()) { it.descriptor.serialName }
     val found = LinkedHashSet<String>()
     collectComponentIds(document, found)
     return found.filter { it !in known && it.snakeCase() !in known }

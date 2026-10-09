@@ -31,7 +31,6 @@ import com.awakekt.awake.scene.rendering.animation.Animator
 import com.awakekt.awake.scene.rendering.animation.SkinnedPose
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer
-import com.awakekt.awake.scene.runtime.DefaultSceneComponentResolvers
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import kotlin.math.PI
 
@@ -52,6 +51,8 @@ const val PROJECT_MANIFEST = "awake.project.json"
  * @property physics Physics simulation world instance if required by the scene, or `null`.
  * @property content What Core's and [capabilities]' loads read from the project's files.
  * @property capabilities The capabilities the project was loaded with besides Core's.
+ * @property componentRegistry The registry the project was loaded into, which [runProject] attaches
+ * its components with, or null when its components were registered globally.
  */
 class LoadedProject internal constructor(
     val manifest: AwakeProjectManifest,
@@ -60,6 +61,7 @@ class LoadedProject internal constructor(
     internal val physics: PhysicsWorld?,
     internal val content: SceneContent = SceneContent.Empty,
     internal val capabilities: List<SceneCapability> = emptyList(),
+    internal val componentRegistry: SceneComponentRegistry? = null,
 ) : AutoCloseable {
     private var closed = false
 
@@ -86,12 +88,36 @@ class LoadedProject internal constructor(
  *
  * Decoding installs Core's default scene components and every capability's into the process-wide
  * registry, as `SceneAppLifecycleRuntime` does for the defaults when it starts. Installing twice is
- * harmless.
+ * harmless. A host that loads more than one project, such as an editor, loads each into a registry of
+ * its own with the other `loadProject`.
  */
 suspend fun loadProject(
     files: AssetSource,
     capabilities: List<SceneCapability> = emptyList(),
     physicsWorld: (suspend () -> PhysicsWorld)? = null,
+): LoadedProject = loadProjectInto(null, files, capabilities, physicsWorld)
+
+/**
+ * [loadProject] into [componentRegistry] instead of the process-wide registry: Core's scene components
+ * and [capabilities]' are registered into it, the scene and its prefabs decode with its
+ * [SceneComponentRegistry.sceneJson], and [runProject] attaches the scene's components with it.
+ *
+ * Pass a [SceneComponentRegistry.scoped] registry per project, and drop it when the project closes: two
+ * projects whose capabilities use the same component name for different components then load one after
+ * the other, and each decodes only its own. A project's scene uses only components its registry holds.
+ */
+suspend fun loadProject(
+    files: AssetSource,
+    componentRegistry: SceneComponentRegistry,
+    capabilities: List<SceneCapability> = emptyList(),
+    physicsWorld: (suspend () -> PhysicsWorld)? = null,
+): LoadedProject = loadProjectInto(componentRegistry, files, capabilities, physicsWorld)
+
+private suspend fun loadProjectInto(
+    registry: SceneComponentRegistry?,
+    files: AssetSource,
+    capabilities: List<SceneCapability>,
+    physicsWorld: (suspend () -> PhysicsWorld)?,
 ): LoadedProject {
     val manifest = AwakeProjectValidator.decodeManifest(files.readText(PROJECT_MANIFEST))
     val issues = AwakeProjectValidator.manifestIssues(manifest)
@@ -99,8 +125,8 @@ suspend fun loadProject(
     val installed = installedCapabilities(capabilities)
     requireRequiredPlugins(manifest, installed)
 
-    installProjectComponents(capabilities)
-    val scene = decodeScene(manifest.entryScene, files)
+    if (registry == null) installProjectComponents(capabilities) else registry.registerProjectComponents(capabilities)
+    val scene = decodeScene(manifest.entryScene, files, registry)
     val models = GltfAssetResolver().apply { setAssetSource(files) }
     scene.nodes.flatMap { it.meshNames() }
         .filter(models::canResolveMesh)
@@ -115,7 +141,7 @@ suspend fun loadProject(
     } else {
         null
     }
-    return LoadedProject(manifest, scene, models, physics, content, capabilities)
+    return LoadedProject(manifest, scene, models, physics, content, capabilities, registry)
 }
 
 /**
@@ -133,12 +159,6 @@ fun LoadedProject.sceneSystems(input: () -> GameplayInput, renderer: Renderer? =
     return sceneSystemsFor(scene, services, capabilities)
 }
 
-/** Installs Core's default scene components and every capability's. Harmless twice. */
-internal fun installProjectComponents(capabilities: List<SceneCapability> = emptyList()) {
-    DefaultSceneComponentResolvers.install()
-    installedCapabilities(capabilities).flatMap { it.components }.forEach(SceneComponentRegistry::registerGlobal)
-}
-
 /**
  * Plays [project] in this scene: its [LoadedProject.scene], the built-in meshes and the models it
  * loaded, the systems its components call for (the ones [sceneSystemsFor] builds), and a primary
@@ -147,7 +167,8 @@ internal fun installProjectComponents(capabilities: List<SceneCapability> = empt
  * the project once the scene has stopped.
  */
 fun SceneAppDsl.runProject(project: LoadedProject, touchControls: Boolean = false) {
-    scene(project.scene)
+    val registry = project.componentRegistry
+    if (registry == null) scene(project.scene) else scene(project.scene, registry)
     assets {
         builtInSceneAssets()
         resolver(project.models)
