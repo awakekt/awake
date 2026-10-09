@@ -27,6 +27,7 @@ class LucideSourceFidelityTest {
             LucideIcons.chevronsUpDown,
             LucideIcons.galleryVerticalEnd,
             LucideIcons.save,
+            LucideIcons.x,
         )
         icons.forEach { icon ->
             assertEquals(24f, icon.viewportWidth)

@@ -33,6 +33,7 @@ import com.awakekt.awake.ui.shadcn.components.ShadcnText
 import com.awakekt.awake.ui.shadcn.theme.provideShadcnTheme
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class ShadcnOverlaysTest {
@@ -552,5 +553,48 @@ class ShadcnOverlaysTest {
         session.frame()
 
         assertTrue(dismissed, "Escape key did not dismiss dialog")
+    }
+
+    @Test
+    fun dialogCloseButtonSitsInTheTopRightCornerAndDismisses() {
+        var visible = true
+        val session = composeTestSession(width = 600, height = 400) {
+            provideShadcnTheme(theme) {
+                ShadcnDialog(visible = visible, onDismissRequest = { visible = false }, id = "close-dialog") {
+                    header {
+                        title("Edit profile")
+                        description("Make changes to your profile here.")
+                    }
+                }
+            }
+        }
+
+        val frame = session.frame()
+        val panel = frame.onNodeWithTag("close-dialog").getBoundsInRoot()
+        val close = frame.onNodeWithTag("close-dialog.close").getBoundsInRoot()
+        // `top-4 right-4` inside the 1px border, around a `size-4` icon.
+        assertEquals(16, close.width)
+        assertEquals(16, close.height)
+        assertEquals(17, panel.left + panel.width - (close.left + close.width), "the close X is 16dp in from the right")
+        assertEquals(17, close.top - panel.top, "the close X is 16dp down from the top")
+
+        val x = close.left + close.width / 2
+        val y = close.top + close.height / 2
+        session.frame(FrameInput(600, 400, pointerX = x, pointerY = y, pointerDown = true))
+        session.frame(FrameInput(600, 400, pointerX = x, pointerY = y))
+        assertFalse(visible, "pressing the close X did not dismiss the dialog")
+    }
+
+    @Test
+    fun dialogWithoutTheCloseButtonDrawsNone() {
+        val session = composeTestSession(width = 600, height = 400) {
+            provideShadcnTheme(theme) {
+                ShadcnDialog(visible = true, onDismissRequest = {}, id = "bare-dialog", showCloseButton = false) {
+                    header { title("No close") }
+                }
+            }
+        }
+
+        assertTrue(session.frame().flatSemantics().none { it.testTag == "bare-dialog.close" })
     }
 }

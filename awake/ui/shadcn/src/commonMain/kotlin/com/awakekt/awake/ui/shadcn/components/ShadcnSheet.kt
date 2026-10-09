@@ -41,6 +41,9 @@ import com.awakekt.awake.ui.shadcn.theme.shadcnTheme
  * are full-height and `w-3/4 sm:max-w-sm`, top and bottom are full-width and as tall as their
  * content. That asymmetry is upstream's, and it is why the side picks both an alignment and which
  * axis fills.
+ *
+ * [showCloseButton] draws upstream's close X in the top-right corner, addressable as `<id>.close`,
+ * which calls [onDismissRequest]. On by default, as upstream's `SheetContent` has it.
  */
 context(_: Composer)
 fun ShadcnSheet(
@@ -51,18 +54,20 @@ fun ShadcnSheet(
     title: String? = null,
     description: String? = null,
     id: String? = null,
+    showCloseButton: Boolean = true,
     content: (
         context(Composer)
         () -> Unit
     )? = null,
 ) {
+    val close = if (showCloseButton) onDismissRequest else null
     shadcnModalLayer(
         visible = visible,
         alignment = side.alignment(),
         onDismissRequest = onDismissRequest,
         scrimModifier = scrimModifier(id, onScrimClick = onDismissRequest),
     ) {
-        sheetPanel(modifier.sheetSemantics(title, id), side, title, description, content)
+        sheetPanel(modifier.sheetSemantics(title, id), side, title, description, id, close, content)
     }
 }
 
@@ -72,6 +77,9 @@ private fun sheetPanel(
     side: ShadcnSheetSide,
     title: String?,
     description: String?,
+    id: String?,
+    /** The close control's action; null draws none. */
+    onClose: (() -> Unit)?,
     content: (
         context(Composer)
         () -> Unit
@@ -109,6 +117,13 @@ private fun sheetPanel(
                     }
                     content?.let { it() }
                 }
+            }
+            if (onClose != null) {
+                shadcnOverlayClose(
+                    Modifier.align(Alignment.TopEnd).padding(top = OverlayCloseInset, end = OverlayCloseInset),
+                    id,
+                    onClose,
+                )
             }
         }
     }

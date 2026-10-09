@@ -16,7 +16,6 @@ checkbox
 collapsible
 combobox
 command
-dialog
 empty
 field
 field-text

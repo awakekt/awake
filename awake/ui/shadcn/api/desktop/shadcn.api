@@ -565,8 +565,8 @@ public final class com/awakekt/awake/ui/shadcn/components/ShadcnDialogHeaderScop
 }
 
 public final class com/awakekt/awake/ui/shadcn/components/ShadcnDialogKt {
-	public static final fun ShadcnDialog-VWNT_Rc (Lcom/awakekt/awake/compose/runtime/Composer;ZLkotlin/jvm/functions/Function0;Lcom/awakekt/awake/compose/ui/Modifier;FLjava/lang/String;Lkotlin/jvm/functions/Function2;)V
-	public static synthetic fun ShadcnDialog-VWNT_Rc$default (Lcom/awakekt/awake/compose/runtime/Composer;ZLkotlin/jvm/functions/Function0;Lcom/awakekt/awake/compose/ui/Modifier;FLjava/lang/String;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+	public static final fun ShadcnDialog-o7XxUt4 (Lcom/awakekt/awake/compose/runtime/Composer;ZLkotlin/jvm/functions/Function0;Lcom/awakekt/awake/compose/ui/Modifier;FLjava/lang/String;ZLkotlin/jvm/functions/Function2;)V
+	public static synthetic fun ShadcnDialog-o7XxUt4$default (Lcom/awakekt/awake/compose/runtime/Composer;ZLkotlin/jvm/functions/Function0;Lcom/awakekt/awake/compose/ui/Modifier;FLjava/lang/String;ZLkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
 }
 
 public final class com/awakekt/awake/ui/shadcn/components/ShadcnDialogScope : com/awakekt/awake/compose/foundation/layout/ColumnScope {
@@ -690,6 +690,7 @@ public final class com/awakekt/awake/ui/shadcn/components/ShadcnIcons {
 	public final fun getChevronsUpDown ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
 	public final fun getGalleryVerticalEnd ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
 	public final fun getSave ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getX ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
 	public final fun setCamera (Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;)V
 	public final fun setCheck (Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;)V
 	public final fun setChevronDown (Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;)V
@@ -698,6 +699,7 @@ public final class com/awakekt/awake/ui/shadcn/components/ShadcnIcons {
 	public final fun setChevronsUpDown (Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;)V
 	public final fun setGalleryVerticalEnd (Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;)V
 	public final fun setSave (Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;)V
+	public final fun setX (Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;)V
 }
 
 public final class com/awakekt/awake/ui/shadcn/components/ShadcnInputGroupKt {
@@ -932,8 +934,8 @@ public final class com/awakekt/awake/ui/shadcn/components/ShadcnSeparatorOrienta
 }
 
 public final class com/awakekt/awake/ui/shadcn/components/ShadcnSheetKt {
-	public static final fun ShadcnSheet (Lcom/awakekt/awake/compose/runtime/Composer;ZLkotlin/jvm/functions/Function0;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/ui/shadcn/components/ShadcnSheetSide;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun ShadcnSheet$default (Lcom/awakekt/awake/compose/runtime/Composer;ZLkotlin/jvm/functions/Function0;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/ui/shadcn/components/ShadcnSheetSide;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static final fun ShadcnSheet (Lcom/awakekt/awake/compose/runtime/Composer;ZLkotlin/jvm/functions/Function0;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/ui/shadcn/components/ShadcnSheetSide;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;)V
+	public static synthetic fun ShadcnSheet$default (Lcom/awakekt/awake/compose/runtime/Composer;ZLkotlin/jvm/functions/Function0;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/ui/shadcn/components/ShadcnSheetSide;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 }
 
 public final class com/awakekt/awake/ui/shadcn/components/ShadcnSheetSide : java/lang/Enum {

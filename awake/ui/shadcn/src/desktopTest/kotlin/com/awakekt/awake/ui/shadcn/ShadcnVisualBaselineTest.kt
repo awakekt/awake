@@ -21,6 +21,7 @@ import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.text.font.UiFonts
 import com.awakekt.awake.ui.shadcn.components.ShadcnAlertDialog
 import com.awakekt.awake.ui.shadcn.components.ShadcnButton
+import com.awakekt.awake.ui.shadcn.components.ShadcnDialog
 import com.awakekt.awake.ui.shadcn.components.ShadcnDropdownMenu
 import com.awakekt.awake.ui.shadcn.components.ShadcnInput
 import com.awakekt.awake.ui.shadcn.components.ShadcnInputOtp
@@ -137,6 +138,20 @@ class ShadcnVisualBaselineTest {
             background = Theme.palette.background,
             font = UiFonts.default(),
         )
+    }
+
+    /** With upstream's close X in the top-right corner, which `DialogContent` draws by default. */
+    @Test
+    fun dialog() = overlayBaseline("dialog") {
+        ShadcnDialog(visible = true, onDismissRequest = {}) {
+            header {
+                title("Edit profile")
+                description("Make changes to your profile here.")
+            }
+            footer {
+                ShadcnButton("Save changes")
+            }
+        }
     }
 
     @Test
