@@ -1,0 +1,1 @@
+- **Snapshots keep arriving on a busy day.** A push to `main` no longer cancels the Publish run already in progress, which threw away the snapshot it was about to publish; on a day of steady merges none was published. A run in progress now finishes, at most one more waits, and each newer push replaces the waiting one, so a snapshot lags `main` by at most one run.
