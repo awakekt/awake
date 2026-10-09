@@ -42,7 +42,9 @@ import com.github.stephengold.joltjni.BodyInterface
 import com.github.stephengold.joltjni.BodyLockWrite
 import com.github.stephengold.joltjni.BroadPhaseLayerFilter
 import com.github.stephengold.joltjni.BroadPhaseLayerInterfaceTable
+import com.github.stephengold.joltjni.CastRayCollector
 import com.github.stephengold.joltjni.CastShapeCollector
+import com.github.stephengold.joltjni.ClosestHitCastRayCollector
 import com.github.stephengold.joltjni.ClosestHitCastShapeCollector
 import com.github.stephengold.joltjni.CollideShapeSettings
 import com.github.stephengold.joltjni.ConvexHullShapeSettings
@@ -263,8 +265,9 @@ class JoltPhysicsWorld(
 
     // Query scratch (#570). A character controller sweeps about twice per fixed step, and every
     // jolt-jni object registers with a Cleaner, so building these per query made garbage that grew
-    // with how many characters a scene moves. Only RShapeCast, which has no setters, is still built
-    // per sweep. The explicit filters also stop jolt-jni building four defaults inside every call.
+    // with how many characters a scene moves. Only RShapeCast and RRayCast, which have no setters, are
+    // still built per query. The explicit filters also stop jolt-jni building defaults inside every
+    // call. Rays reuse the same set.
     private val queryShapes = JoltQueryShapes()
     private val queryOrigin = RVec3()
     private val queryTransform = RMat44().apply { loadIdentity() }
@@ -272,6 +275,9 @@ class JoltPhysicsWorld(
     private val unitScale = com.github.stephengold.joltjni.Vec3(1f, 1f, 1f)
     private val noBaseOffset = RVec3(0.0, 0.0, 0.0)
     private val shapeCastSettings = ShapeCastSettings()
+    private val rayCastSettings = RayCastSettings()
+    private val closestRayHit = ClosestHitCastRayCollector()
+    private val allRayHits = AllHitCastRayCollector()
     private val closestCastHit = ClosestHitCastShapeCollector()
     private val allCastHits = AllHitCastShapeCollector()
     private val collideSettings = CollideShapeSettings()
@@ -525,69 +531,63 @@ class JoltPhysicsWorld(
         maxDistance: Float,
         onlyLayer: CollisionLayer?,
     ): RaycastHit? {
-        val normalizedDirection = direction.normalized()
-        val castVector = com.github.stephengold.joltjni.Vec3(
-            normalizedDirection.x * maxDistance,
-            normalizedDirection.y * maxDistance,
-            normalizedDirection.z * maxDistance,
-        )
-        val rRayCast = RRayCast(
-            RVec3(origin.x.toDouble(), origin.y.toDouble(), origin.z.toDouble()),
-            castVector,
-        )
-        val result = RayCastResult()
-        // SpecifiedObjectLayerFilter is the only public layer filter jolt-jni offers, and it
-        // matches one layer rather than a mask -- see PhysicsWorld.shapeCast's own note.
-        val hit = if (onlyLayer == null) {
-            physicsSystem.narrowPhaseQuery.castRay(rRayCast, result)
-        } else {
-            physicsSystem.narrowPhaseQuery.castRay(
-                rRayCast,
-                result,
-                BroadPhaseLayerFilter(),
-                SpecifiedObjectLayerFilter(onlyLayer.index),
+        // Normalized here rather than through Vec3f.normalized(), so a ray allocates only its answer.
+        // A zero direction stays zero, as normalized() leaves it.
+        val length = sqrt(direction.x * direction.x + direction.y * direction.y + direction.z * direction.z)
+        val inverseLength = if (length != 0f) 1f / length else 1f
+        val directionX = direction.x * inverseLength
+        val directionY = direction.y * inverseLength
+        val directionZ = direction.z * inverseLength
+        queryOrigin.set(origin.x.toDouble(), origin.y.toDouble(), origin.z.toDouble())
+        queryDirection.set(directionX * maxDistance, directionY * maxDistance, directionZ * maxDistance)
+        // The collector form of castRay, not the one that fills a RayCastResult: Jolt reads that
+        // result's fraction as the distance to beat, and jolt-jni gives no way to reset it for reuse.
+        // The default RayCastSettings answer as that form does: convex shapes are solid, back faces
+        // ignored.
+        return RRayCast(queryOrigin, queryDirection).use { ray ->
+            closestRayHit.reset()
+            castRayInto(ray, onlyLayer, closestRayHit)
+            // Same rule as shapeCast: a sensor is not solid, so it is never the answer to what a ray
+            // is stopped by. Only when the closest hit is one does the whole set have to be collected.
+            val closest = if (closestRayHit.hadHit()) closestRayHit.hit else null
+            val solid = when {
+                closest == null -> null
+                bodyInterface.isSensor(closest.bodyId) -> nearestSolidRayHit(ray, onlyLayer)
+                else -> closest
+            } ?: return@use null
+
+            val distance = maxDistance * solid.fraction
+            RaycastHit(
+                BodyHandle(solid.bodyId.toLong()),
+                Vec3f(origin.x + directionX * distance, origin.y + directionY * distance, origin.z + directionZ * distance),
+                distance,
             )
         }
-        // Same rule as shapeCast: a sensor is not solid, so it is never the answer to what a ray
-        // is stopped by. Only when the closest hit is one does the whole set have to be collected.
-        val solid = when {
-            !hit -> null
-            bodyInterface.isSensor(result.bodyId) -> nearestSolidRayHit(rRayCast, onlyLayer)
-            else -> result
-        } ?: return null
-
-        val distance = maxDistance * solid.fraction
-        val point = Vec3f(
-            origin.x + normalizedDirection.x * distance,
-            origin.y + normalizedDirection.y * distance,
-            origin.z + normalizedDirection.z * distance,
-        )
-        return RaycastHit(BodyHandle(solid.bodyId.toLong()), point, distance)
     }
 
     /** The nearest ray hit that is not a sensor; see [raycast] for when this is reached. */
-    private fun nearestSolidRayHit(rRayCast: RRayCast, onlyLayer: CollisionLayer?): RayCastResult? {
-        val collector = AllHitCastRayCollector()
-        RayCastSettings().use { settings ->
-            if (onlyLayer == null) {
-                physicsSystem.narrowPhaseQuery.castRay(rRayCast, settings, collector)
-            } else {
-                physicsSystem.narrowPhaseQuery.castRay(
-                    rRayCast,
-                    settings,
-                    collector,
-                    BroadPhaseLayerFilter(),
-                    SpecifiedObjectLayerFilter(onlyLayer.index),
-                )
-            }
-        }
+    private fun nearestSolidRayHit(ray: RRayCast, onlyLayer: CollisionLayer?): RayCastResult? {
+        allRayHits.reset()
+        castRayInto(ray, onlyLayer, allRayHits)
         var nearest: RayCastResult? = null
-        for (index in 0 until collector.countHits()) {
-            val candidate = collector.get(index)
+        for (index in 0 until allRayHits.countHits()) {
+            val candidate = allRayHits.get(index)
             if (bodyInterface.isSensor(candidate.bodyId)) continue
             if (nearest == null || candidate.fraction < nearest.fraction) nearest = candidate
         }
         return nearest
+    }
+
+    private fun castRayInto(ray: RRayCast, onlyLayer: CollisionLayer?, collector: CastRayCollector) {
+        physicsSystem.narrowPhaseQuery.castRay(
+            ray,
+            rayCastSettings,
+            collector,
+            anyBroadPhaseLayer,
+            objectLayerFilter(onlyLayer),
+            anyBody,
+            anyShape,
+        )
     }
 
     override fun shapeCast(
@@ -916,6 +916,7 @@ class JoltPhysicsWorld(
         queryShapes.clear()
         listOf(
             queryTransform, shapeCastSettings, closestCastHit, allCastHits, collideSettings, overlapHits,
+            rayCastSettings, closestRayHit, allRayHits,
             anyBroadPhaseLayer, anyObjectLayer, anyBody, anyShape,
         ).forEach { it.close() }
         layerFilters.forEach { it?.close() }
