@@ -111,7 +111,9 @@ One person or agent owns a release from cut to downstream bump. Before cutting, 
 
 **A failed publish is not re-run.** A tag whose Publish run failed may still have reached Central,
 and Maven Central never accepts the same version twice. Fix the cause on `main` and cut the
-next version; the failed number stays a gap (as `rc.4`, `rc.5`, `rc.7` and `rc.10` did).
+next version; the failed number stays a gap on Central (as `rc.4`, `rc.5`, `rc.7` and `rc.10` did). A release
+Central refused is still served by the fallback repository when its bundle was built
+([releasing](reference/releasing.md#fallback-repository)).
 
 ### Independent Vulkan family
 

@@ -84,10 +84,11 @@ jobs:
       - name: Vulkan publication detector
         run: scripts/vulkan-publication-impact.test.sh
 
-      - name: Central bundle and upload
+      - name: Central bundle, upload and fallback repository
         run: |
           scripts/central-bundle.test.sh
           scripts/central-upload.test.sh
+          scripts/maven-fallback-site.test.sh
 
       - uses: actions/setup-python@v6
         with:

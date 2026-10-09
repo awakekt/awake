@@ -1,0 +1,67 @@
+name: Maven fallback
+
+# Serves the newest two Core releases as a static Maven repository on GitHub Pages,
+# https://awakekt.github.io/awake/, for a release Maven Central refuses under its publishing limits.
+# The files are the ones the release job signed and staged for Central and attached to each GitHub
+# Release, so they keep Central's coordinates and a build adds this repository after mavenCentral().
+#
+# It runs once a Publish run finishes, from the default branch: workflow_run always does, and the
+# github-pages environment deploys only from there, whatever tag the release ran on. A Publish run
+# Central refused still counts; its bundle is attached whenever it was built.
+on:
+  workflow_run:
+    workflows: [Publish]
+    types: [completed]
+  workflow_dispatch:
+
+concurrency:
+  group: maven-fallback
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    name: Deploy
+    if: >-
+      ${{
+        github.event_name == 'workflow_dispatch' ||
+        (startsWith(github.event.workflow_run.head_branch, 'v') &&
+         !startsWith(github.event.workflow_run.head_branch, 'vulkan-v'))
+      }}
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download the newest two release bundles
+        id: bundles
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p build/bundles
+          for tag in $(gh release list --limit 50 --json tagName,isDraft \
+                         --jq '.[] | select(.isDraft | not) | .tagName' | grep -E '^v[0-9]'); do
+            gh release download "$tag" --pattern 'awake-*-maven.zip' --dir build/bundles 2> /dev/null || continue
+            echo "Serving $tag"
+            if [ "$(ls build/bundles | wc -l)" -ge 2 ]; then break; fi
+          done
+          echo "count=$(ls build/bundles | wc -l)" >> "$GITHUB_OUTPUT"
+
+      - name: Build the repository
+        if: steps.bundles.outputs.count != '0'
+        run: scripts/maven-fallback-site.sh build/maven-fallback build/bundles/*.zip
+
+      - uses: actions/upload-pages-artifact@v5
+        if: steps.bundles.outputs.count != '0'
+        with:
+          path: build/maven-fallback
+
+      - id: deploy
+        if: steps.bundles.outputs.count != '0'
+        uses: actions/deploy-pages@v5
