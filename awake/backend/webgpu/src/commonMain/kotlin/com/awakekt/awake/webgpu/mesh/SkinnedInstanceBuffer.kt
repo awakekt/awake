@@ -75,6 +75,14 @@ class SkinnedInstanceBuffer(
         palette.copyInto(out, offset)
     }
 
+    /**
+     * Uploads this frame's joint palettes with every tint set to opaque white.
+     *
+     * @param palettes One palette per instance, up to [MAX_JOINTS] column-major matrices as flat
+     * floats.
+     * @throws IllegalArgumentException If there are more palettes than the instance ceiling, or a
+     * palette exceeds [MAX_JOINTS] matrices.
+     */
     fun update(palettes: List<FloatArray>) = update(palettes, null)
 
     /** Uploads index-aligned tints, defaulting to white when omitted. */
@@ -85,6 +93,10 @@ class SkinnedInstanceBuffer(
         graphicsDevice.wgpuContext.device.queue.writeBufferData(buffer, paletteByteSize, fastArrayBufferOf(tints))
     }
 
+    /**
+     * Returns the single GPU storage buffer holding the palettes followed by the tints. It is
+     * allocated once at construction and never replaced.
+     */
     fun bufferRef(): GPUBuffer = buffer
 
     /** This buffer as [pipeline]'s joint-palette bind group, built once per pipeline object. */
@@ -121,10 +133,15 @@ class SkinnedInstanceBuffer(
 
     private var bindGroupHandle: WebGpuBindGroupHandle? = null
 
+    /**
+     * Closes the GPU storage buffer. Call once, after the last frame that draws with it; bind
+     * groups built from it become invalid.
+     */
     fun destroy() {
         buffer.close()
     }
 
+    /** Layout and capacity constants for the joint-palette storage buffer. */
     companion object {
         /** Alias of the engine-wide constant that also sizes the WGSL palette arrays. */
         const val MAX_JOINTS = com.awakekt.awake.render.renderer.MAX_JOINTS

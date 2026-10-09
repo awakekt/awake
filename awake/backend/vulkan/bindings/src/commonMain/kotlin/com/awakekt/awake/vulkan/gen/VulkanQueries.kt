@@ -17,6 +17,12 @@ expect object VulkanQueries {
     @JniNative("awake_vulkan_queries_create_timestamp_pool")
     fun vkCreateTimestampQueryPool(device: Long, queryCount: Int): Long
 
+    /**
+     * Destroys a query pool. No pending command buffer may still use it.
+     *
+     * @param device The logical device that created the pool.
+     * @param queryPool The pool to destroy.
+     */
     @JniNative("awake_vulkan_queries_destroy_pool")
     fun vkDestroyQueryPool(device: Long, queryPool: Long)
 
@@ -24,6 +30,16 @@ expect object VulkanQueries {
     @JniNative("awake_vulkan_queries_cmd_reset")
     fun vkCmdResetQueryPool(commandBuffer: Long, queryPool: Long, firstQuery: Int, queryCount: Int)
 
+    /**
+     * Records a write of the GPU clock into one query slot once earlier work has passed the given
+     * pipeline stage.
+     *
+     * @param commandBuffer The command buffer being recorded.
+     * @param pipelineStage The `VkPipelineStageFlagBits` value after which the timestamp is taken,
+     * such as the top or bottom of the pipe.
+     * @param queryPool The timestamp pool to write into.
+     * @param query The slot within the pool; it must have been reset since it was last written.
+     */
     @JniNative("awake_vulkan_queries_cmd_write_timestamp")
     fun vkCmdWriteTimestamp(commandBuffer: Long, pipelineStage: Int, queryPool: Long, query: Int)
 

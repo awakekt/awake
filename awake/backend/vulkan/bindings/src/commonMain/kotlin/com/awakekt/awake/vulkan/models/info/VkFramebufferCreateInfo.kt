@@ -11,6 +11,19 @@ import com.awakekt.awake.vulkan.VkHandle
 import com.awakekt.awake.vulkan.VkHandleRef
 import com.awakekt.awake.vulkan.enums.VkStructureType
 
+/**
+ * Parameters for creating a framebuffer (`VkFramebufferCreateInfo`).
+ *
+ * @property sType Identifies the structure to the driver; leave it at its default.
+ * @property pNext Reserved for extension chaining. The binding forwards this field as a raw pointer
+ * rather than marshalling a structure, so leave it `null`.
+ * @property flags Framebuffer creation flags; 0 for none.
+ * @property renderPass The raw handle of the render pass the framebuffer is compatible with.
+ * @property pAttachments The image views bound to the render pass's attachments, in the same order.
+ * @property width The framebuffer width, in pixels.
+ * @property height The framebuffer height, in pixels.
+ * @property layers The number of layers of the framebuffer.
+ */
 class VkFramebufferCreateInfo(
     val sType: VkStructureType = VkStructureType.VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
     val pNext: Any? = null,

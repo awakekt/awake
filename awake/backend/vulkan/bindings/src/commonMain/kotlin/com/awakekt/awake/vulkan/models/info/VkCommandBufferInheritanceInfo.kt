@@ -12,6 +12,25 @@ import com.awakekt.awake.vulkan.enums.VkStructureType
 import com.awakekt.awake.vulkan.enums.flags.VkQueryControlFlags
 import com.awakekt.awake.vulkan.enums.flags.VkQueryPipelineStatisticFlags
 
+/**
+ * The state a secondary command buffer inherits from the primary buffer that executes it
+ * (`VkCommandBufferInheritanceInfo`).
+ *
+ * @property sType Identifies the structure to the driver; leave it at its default.
+ * @property pNext Reserved for extension chaining. The binding forwards this field as a raw pointer
+ * rather than marshalling a structure, so leave it `null`.
+ * @property renderPass The raw handle of the render pass the buffer will be executed inside, if
+ * any.
+ * @property subpass The index of the subpass the buffer will be executed in.
+ * @property framebuffer The raw handle of the framebuffer the buffer will render to, or 0 if
+ * unknown.
+ * @property occlusionQueryEnable Whether the primary command buffer may have an occlusion query
+ * active.
+ * @property queryFlags A mask of the query control flags that may be used by an active occlusion
+ * query.
+ * @property pipelineStatistics A mask of the pipeline statistics that may be counted by active
+ * queries.
+ */
 data class VkCommandBufferInheritanceInfo(
     val sType: VkStructureType = VkStructureType.VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO,
     val pNext: Any? = null,

@@ -38,6 +38,14 @@ class VulkanUiPreviewCapture(
     private val fixture = createFixture(width, height)
     private val capture = FrameCapture(fixture.renderer, width, height)
 
+    /**
+     * Renders [primitives] into the offscreen target through the real headless Vulkan UI pipelines
+     * and reads the result back.
+     *
+     * @param primitives The UI primitives to draw, in paint order.
+     * @param font The font glyph primitives are drawn with, or `null` when there are none.
+     * @return The rendered image as a tightly packed RGBA8 [PixelMap].
+     */
     suspend fun capture(primitives: List<UiDrawPrimitive>, font: UiFont?): PixelMap {
         val pixels = capture.capture { target ->
             fixture.renderer.renderUiToTexture(target, primitives, font)

@@ -37,21 +37,38 @@ class FrameInstanceBuffer(
         out[offset] = frame
     }
 
+    /**
+     * Uploads one sprite-strip frame index per instance for this frame, in the same order as the
+     * instance matrices.
+     *
+     * An empty list uploads nothing and leaves the previous contents in place.
+     *
+     * @param frames Per-instance frame indices into the sprite strip, one entry per drawn instance.
+     * @throws IllegalArgumentException If [frames] holds more entries than the buffer's instance
+     * capacity.
+     */
     fun update(frames: List<Float>) {
         val floats = packer.pack(frames, maxInstances) ?: return
         graphicsDevice.wgpuContext.device.queue.writeBufferData(buffer, 0uL, fastArrayBufferOf(floats))
     }
 
+    /**
+     * Returns the GPU vertex buffer bound at slot 3 for instanced billboard draws. The buffer is
+     * allocated once at construction and never replaced.
+     */
     fun bufferRef(): GPUBuffer = buffer
 
     /** This buffer as the shared render layer's opaque handle -- built once, not per draw. */
     val binding: WebGpuBufferHandle by lazy { WebGpuBufferHandle(buffer) }
 
+    /** Closes the GPU buffer. Call once, after the last frame that draws with it. */
     fun destroy() {
         buffer.close()
     }
 
+    /** Stride constant for the per-instance frame-index stream. */
     companion object {
+        /** Floats per instance: 1, a lone `f32` frame index. */
         val FLOATS_PER_INSTANCE = GpuDataShape.Float.componentCount
     }
 }

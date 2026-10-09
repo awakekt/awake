@@ -28,7 +28,17 @@ class LineMesh(
     private var capacityVertices = initialLines * VERTICES_PER_LINE
     private var vertexBuffer: GPUBuffer
 
+    /**
+     * This mesh's vertex buffer as the shared render layer's opaque buffer handle. A new wrapper is
+     * created on every read, and the buffer behind it is replaced when [update] grows the mesh, so
+     * read it after [update] instead of caching it across frames.
+     */
     val vertexBinding: WebGpuBufferHandle get() = WebGpuBufferHandle(vertexBuffer)
+
+    /**
+     * Number of vertices the last [update] wrote, which is how many the line pass draws; the same
+     * value as [drawVertexCount].
+     */
     val vertexCount: Int get() = drawVertexCount
 
     /** How many vertices this frame's [update] actually wrote -- [draw] only draws this many. */
@@ -65,6 +75,19 @@ class LineMesh(
         previous.close()
     }
 
+    /**
+     * Replaces this frame's line list with [vertices], growing the buffer first when it is too
+     * small.
+     *
+     * Growth follows [DebugLineLayout.grownVertexCapacity], never shrinks, and swaps in a new
+     * buffer, so a [vertexBinding] or [vertexBufferRef] read before the call must not be reused
+     * afterwards. Passing an empty array draws nothing this frame.
+     *
+     * @param vertices Interleaved line vertices, [FLOATS_PER_VERTEX] floats each (position, then
+     * colour); every two consecutive vertices form one segment.
+     * @throws IllegalArgumentException If the required line count exceeds
+     * [DebugLineLayout.MAX_LINES_CEILING].
+     */
     fun update(vertices: FloatArray) {
         val neededVertices = vertices.size / FLOATS_PER_VERTEX
         if (neededVertices > capacityVertices) growTo(neededVertices)
@@ -73,14 +96,32 @@ class LineMesh(
         drawVertexCount = vertices.size / FLOATS_PER_VERTEX
     }
 
+    /**
+     * Returns the GPU vertex buffer the line pass binds. It is replaced when [update] grows the
+     * mesh, so fetch it per draw rather than caching it.
+     */
     fun vertexBufferRef(): GPUBuffer = vertexBuffer
 
+    /**
+     * Closes the GPU vertex buffer. Call once, after the last frame that draws this mesh; the mesh
+     * must not be updated or drawn afterwards.
+     */
     fun destroy() {
         vertexBuffer.close()
     }
 
+    /**
+     * Vertex-stream constants for the debug line list, re-exported from [DebugLineLayout] so
+     * callers size arrays without importing the render-passes module.
+     */
     companion object {
+        /** Floats in one line vertex: a `vec3` position followed by a `vec4` colour, 7 in total. */
         val FLOATS_PER_VERTEX = DebugLineLayout.FLOATS_PER_VERTEX
+
+        /**
+         * Vertices per line segment: 2, since the topology is a plain line list with no index
+         * buffer.
+         */
         val VERTICES_PER_LINE = DebugLineLayout.VERTICES_PER_LINE
     }
 }

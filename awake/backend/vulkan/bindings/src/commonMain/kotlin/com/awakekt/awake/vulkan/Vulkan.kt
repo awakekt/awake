@@ -38,6 +38,21 @@ import com.awakekt.awake.vulkan.models.info.pipeline.VkPipelineLayoutCreateInfo
 import com.awakekt.awake.vulkan.models.physicaldevice.VkPhysicalDeviceFeatures
 import com.awakekt.awake.vulkan.models.physicaldevice.VkPhysicalDeviceProperties
 
+/**
+ * Hand-written facade over the Vulkan entry points the Awake renderer uses, exposed as plain Kotlin
+ * calls on `Long` handles.
+ *
+ * Handles (`VkInstance`, `VkDevice`, `VkBuffer` and so on) are 64-bit `Long` values; the
+ * `VkHandleRef` and `VkReturnType` annotations record which native handle type each one stands for,
+ * since Kotlin erases it. Creation functions return the new handle and destroy functions release
+ * it. Every call goes straight to the driver and nothing is reference counted, so callers destroy
+ * objects in reverse creation order, and only once the GPU has finished with them.
+ *
+ * A failed call surfaces as a [com.awakekt.awake.vulkan.utils.VkResultException] carrying the
+ * `VkResult`; a few iOS creation calls throw an [IllegalStateException] instead. Desktop and
+ * Android implement this object through JNI into the bundled `awake-vulkan` native library, and iOS
+ * through MoltenVK cinterop.
+ */
 expect object Vulkan {
     // Instance management
     /**
@@ -264,50 +279,114 @@ expect object Vulkan {
         @VkHandleRef("VkSwapchainKHR") swapchainKHR: Long,
     )
 
+    /**
+     * Creates a view of an image, which fixes how a shader or framebuffer reads its format,
+     * dimensionality and subresource range.
+     *
+     * @param device The logical device that owns the image.
+     * @param createInfo The image, view type, format and subresource range.
+     * @return The new `VkImageView` handle.
+     */
     @VkReturnType("VkImageView")
     fun vkCreateImageView(
         @VkHandleRef("VkDevice") device: Long,
         createInfo: VkImageViewCreateInfo,
     ): Long
 
+    /**
+     * Destroys an image view. The view must no longer be used by pending GPU work.
+     *
+     * @param device The logical device that created the view.
+     * @param imageView The view to destroy.
+     */
     fun vkDestroyImageView(
         @VkHandleRef("VkDevice") device: Long,
         @VkHandleRef("VkImageView") imageView: Long,
     )
 
+    /**
+     * Wraps SPIR-V code in a shader module that pipelines can name as a stage.
+     *
+     * @param device The logical device to create the module on.
+     * @param createInfo The SPIR-V words.
+     * @return The new `VkShaderModule` handle.
+     */
     @VkReturnType("VkShaderModule")
     fun vkCreateShaderModule(
         @VkHandleRef("VkDevice") device: Long,
         createInfo: VkShaderModuleCreateInfo,
     ): Long
 
+    /**
+     * Destroys a shader module. It may be destroyed as soon as the pipelines that use it have been
+     * created.
+     *
+     * @param device The logical device that created the module.
+     * @param shaderModule The module to destroy.
+     */
     fun vkDestroyShaderModule(
         @VkHandleRef("VkDevice") device: Long,
         @VkHandleRef("VkShaderModule") shaderModule: Long,
     )
 
+    /**
+     * Creates a pipeline cache that speeds up building pipelines with similar state.
+     *
+     * @param device The logical device to create the cache on.
+     * @param createInfo The cache configuration; initial data is not supported on iOS.
+     * @return The new `VkPipelineCache` handle.
+     */
     @VkReturnType("VkPipelineCache")
     fun vkCreatePipelineCache(
         @VkHandleRef("VkDevice") device: Long,
         createInfo: VkPipelineCacheCreateInfo,
     ): Long
 
+    /**
+     * Destroys a pipeline cache. Pipelines created through it stay valid.
+     *
+     * @param device The logical device that created the cache.
+     * @param pipelineCache The cache to destroy.
+     */
     fun vkDestroyPipelineCache(
         @VkHandleRef("VkDevice") device: Long,
         @VkHandleRef("VkPipelineCache") pipelineCache: Long,
     )
 
+    /**
+     * Creates a pipeline layout, which lists the descriptor set layouts and push-constant ranges a
+     * pipeline's shaders may access.
+     *
+     * @param device The logical device to create the layout on.
+     * @param createInfo The set layouts and push-constant ranges.
+     * @return The new `VkPipelineLayout` handle.
+     */
     @VkReturnType("VkPipelineLayout")
     fun vkCreatePipelineLayout(
         @VkHandleRef("VkDevice") device: Long,
         createInfo: VkPipelineLayoutCreateInfo,
     ): Long
 
+    /**
+     * Destroys a pipeline layout. Submitted commands that use it must have completed.
+     *
+     * @param device The logical device that created the layout.
+     * @param pipelineLayout The layout to destroy.
+     */
     fun vkDestroyPipelineLayout(
         @VkHandleRef("VkDevice") device: Long,
         @VkHandleRef("VkPipelineLayout") pipelineLayout: Long,
     )
 
+    /**
+     * Builds one graphics pipeline for each entry of [createInfos].
+     *
+     * @param device The logical device to create the pipelines on.
+     * @param pipelineCache A cache to build through, or 0 for none.
+     * @param createInfos The fixed-function state, shader stages, layout and render pass of each
+     * pipeline.
+     * @return The new `VkPipeline` handles, in the same order as [createInfos].
+     */
     @VkReturnType("VkPipeline")
     fun vkCreateGraphicsPipelines(
         @VkHandleRef("VkDevice") device: Long,
@@ -315,73 +394,166 @@ expect object Vulkan {
         createInfos: Array<VkGraphicsPipelineCreateInfo>,
     ): LongArray
 
+    /**
+     * Destroys a pipeline. Command buffers that recorded a bind of it must have finished executing.
+     *
+     * @param device The logical device that created the pipeline.
+     * @param pipeline The pipeline to destroy.
+     */
     fun vkDestroyPipeline(
         @VkHandleRef("VkDevice") device: Long,
         @VkHandleRef("VkPipeline") pipeline: Long,
     )
 
+    /**
+     * Creates a render pass describing the attachments, subpasses and dependencies of a rendering
+     * sequence.
+     *
+     * @param device The logical device to create the render pass on.
+     * @param createInfo The attachments, subpasses and subpass dependencies.
+     * @return The new `VkRenderPass` handle.
+     */
     @VkReturnType("VkRenderPass")
     fun vkCreateRenderPass(
         @VkHandleRef("VkDevice") device: Long,
         createInfo: VkRenderPassCreateInfo,
     ): Long
 
+    /**
+     * Destroys a render pass. Submitted commands that use it must have completed.
+     *
+     * @param device The logical device that created the render pass.
+     * @param renderPass The render pass to destroy.
+     */
     fun vkDestroyRenderPass(
         @VkHandleRef("VkDevice") device: Long,
         @VkHandleRef("VkRenderPass") renderPass: Long,
     )
 
+    /**
+     * Creates a framebuffer that binds image views to a render pass's attachments.
+     *
+     * @param device The logical device to create the framebuffer on.
+     * @param framebufferInfo The render pass, attachment views and size.
+     * @return The new `VkFramebuffer` handle.
+     */
     @VkReturnType("VkFramebuffer")
     fun vkCreateFramebuffer(
         @VkHandleRef("VkDevice") device: Long,
         framebufferInfo: VkFramebufferCreateInfo,
     ): Long
 
+    /**
+     * Destroys a framebuffer. It must no longer be used by pending GPU work.
+     *
+     * @param device The logical device that created the framebuffer.
+     * @param framebuffer The framebuffer to destroy.
+     */
     fun vkDestroyFramebuffer(
         @VkHandleRef("VkDevice") device: Long,
         @VkHandleRef("VkFramebuffer") framebuffer: Long,
     )
 
+    /**
+     * Allocates one command buffer from the pool named in [createInfo].
+     *
+     * Despite the plural name this binding returns a single handle, so `commandBufferCount` must be
+     * 1. The buffer is freed together with its pool by [vkDestroyCommandPool].
+     *
+     * @param device The logical device that owns the pool.
+     * @param createInfo The pool, buffer level and count.
+     * @return The new `VkCommandBuffer` handle.
+     */
     @VkReturnType("VkCommandBuffer")
     fun vkAllocateCommandBuffers(
         @VkHandleRef("VkDevice") device: Long,
         createInfo: VkCommandBufferAllocateInfo,
     ): Long
 
+    /**
+     * Starts recording into a command buffer, which must be in the initial state or have been
+     * reset.
+     *
+     * @param commandBuffer The command buffer to record into.
+     * @param beginInfo The usage flags and optional inheritance info.
+     */
     fun vkBeginCommandBuffer(
         @VkHandleRef("VkCommandBuffer") commandBuffer: Long,
         beginInfo: VkCommandBufferBeginInfo,
     )
 
+    /**
+     * Creates a command pool from which command buffers for one queue family are allocated.
+     *
+     * @param device The logical device to create the pool on.
+     * @param createInfo The queue family index and creation flags.
+     * @return The new `VkCommandPool` handle.
+     */
     @VkReturnType("VkCommandPool")
     fun vkCreateCommandPool(
         @VkHandleRef("VkDevice") device: Long,
         createInfo: VkCommandPoolCreateInfo,
     ): Long
 
+    /**
+     * Destroys a command pool together with every command buffer allocated from it.
+     *
+     * @param device The logical device that created the pool.
+     * @param commandPool The pool to destroy.
+     */
     fun vkDestroyCommandPool(
         @VkHandleRef("VkDevice") device: Long,
         @VkHandleRef("VkCommandPool") commandPool: Long,
     )
 
+    /**
+     * Records binding of a pipeline for subsequent draw calls.
+     *
+     * @param commandBuffer The command buffer being recorded.
+     * @param pipelineBindPoint Whether the pipeline is a graphics or compute pipeline.
+     * @param graphicsPipeline The pipeline to bind.
+     */
     fun vkCmdBindPipeline(
         @VkHandleRef("VkCommandBuffer") commandBuffer: Long,
         pipelineBindPoint: VkPipelineBindPoint,
         @VkHandleRef("VkPipeline") graphicsPipeline: Long,
     )
 
+    /**
+     * Records new viewport rectangles for a pipeline that declares the viewport dynamic.
+     *
+     * @param commandBuffer The command buffer being recorded.
+     * @param firstViewport The index of the first viewport to set.
+     * @param viewports The viewports to set, starting at [firstViewport].
+     */
     fun vkCmdSetViewport(
         @VkHandleRef("VkCommandBuffer") commandBuffer: Long,
         firstViewport: Int,
         viewports: Array<VkViewport>,
     )
 
+    /**
+     * Records new scissor rectangles for a pipeline that declares the scissor dynamic.
+     *
+     * @param commandBuffer The command buffer being recorded.
+     * @param firstScissor The index of the first scissor to set.
+     * @param scissors The scissor rectangles, in framebuffer pixels, starting at [firstScissor].
+     */
     fun vkCmdSetScissor(
         @VkHandleRef("VkCommandBuffer") commandBuffer: Long,
         firstScissor: Int,
         scissors: Array<VkRect2D>,
     )
 
+    /**
+     * Records a non-indexed draw.
+     *
+     * @param commandBuffer The command buffer being recorded.
+     * @param vertexCount Number of vertices to draw.
+     * @param instanceCount Number of instances to draw.
+     * @param firstVertex Index of the first vertex.
+     * @param firstInstance Instance ID of the first instance.
+     */
     fun vkCmdDraw(
         @VkHandleRef("VkCommandBuffer") commandBuffer: Long,
         vertexCount: Int,
@@ -390,33 +562,90 @@ expect object Vulkan {
         firstInstance: Int,
     )
 
+    /**
+     * Records the start of a render pass on a framebuffer.
+     *
+     * @param commandBuffer The command buffer being recorded.
+     * @param renderPassBeginInfo The render pass, framebuffer, render area and clear values.
+     * @param contents Whether the pass is recorded inline or in secondary command buffers.
+     */
     fun vkCmdBeginRenderPass(
         @VkHandleRef("VkCommandBuffer") commandBuffer: Long,
         renderPassBeginInfo: VkRenderPassBeginInfo,
         contents: VkSubpassContents,
     )
 
+    /**
+     * Records the end of the current render pass.
+     *
+     * @param commandBuffer The command buffer being recorded.
+     */
     fun vkCmdEndRenderPass(@VkHandleRef("VkCommandBuffer") commandBuffer: Long)
+
+    /**
+     * Finishes recording, making the command buffer executable.
+     *
+     * @param commandBuffer The command buffer being recorded.
+     */
     fun vkEndCommandBuffer(@VkHandleRef("VkCommandBuffer") commandBuffer: Long)
 
+    /**
+     * Creates a binary semaphore, used to order work between queues or between the GPU and
+     * presentation.
+     *
+     * @param device The logical device to create the semaphore on.
+     * @param createInfo The creation flags.
+     * @return The new `VkSemaphore` handle.
+     */
     @VkReturnType("VkSemaphore")
     fun vkCreateSemaphore(
         @VkHandleRef("VkDevice") device: Long,
         createInfo: VkSemaphoreCreateInfo,
     ): Long
 
+    /**
+     * Destroys a semaphore. No pending work may still wait on or signal it.
+     *
+     * @param device The logical device that created the semaphore.
+     * @param semaphore The semaphore to destroy.
+     */
     fun vkDestroySemaphore(
         @VkHandleRef("VkDevice") device: Long,
         @VkHandleRef("VkSemaphore") semaphore: Long,
     )
 
+    /**
+     * Creates a fence, which the GPU signals when submitted work completes and the CPU can wait on.
+     *
+     * @param device The logical device to create the fence on.
+     * @param createInfo The creation flags; the signalled flag creates it already signalled.
+     * @return The new `VkFence` handle.
+     */
     @VkReturnType("VkFence")
     fun vkCreateFence(@VkHandleRef("VkDevice") device: Long, createInfo: VkFenceCreateInfo): Long
+
+    /**
+     * Destroys a fence. It must not be part of a pending submission.
+     *
+     * @param device The logical device that created the fence.
+     * @param fence The fence to destroy.
+     */
     fun vkDestroyFence(
         @VkHandleRef("VkDevice") device: Long,
         @VkHandleRef("VkFence") fence: Long,
     )
 
+    /**
+     * Blocks the calling thread until the fences are signalled or the timeout elapses.
+     *
+     * Nothing is returned or thrown for a timeout or a lost device, so a finite timeout cannot be
+     * told apart from a signalled fence. Pass [Long.MAX_VALUE] to wait effectively forever.
+     *
+     * @param device The logical device that owns the fences.
+     * @param fences The fences to wait on.
+     * @param waitAll `true` to wait for every fence, `false` to return as soon as any is signalled.
+     * @param timeout The longest wait, in nanoseconds.
+     */
     fun vkWaitForFences(
         @VkHandleRef("VkDevice") device: Long,
         @VkHandleRef("VkFence") fences: LongArray,
@@ -424,6 +653,12 @@ expect object Vulkan {
         timeout: Long,
     )
 
+    /**
+     * Resets fences to the unsignalled state. None may be part of a pending submission.
+     *
+     * @param device The logical device that owns the fences.
+     * @param fences The fences to reset.
+     */
     fun vkResetFences(
         @VkHandleRef("VkDevice") device: Long,
         @VkHandleRef("VkFence") fences: LongArray,
@@ -439,23 +674,55 @@ expect object Vulkan {
 //        pImageIndex : Int
     ): Int
 
+    /**
+     * Returns a command buffer to the initial state so it can be recorded again.
+     *
+     * @param commandBuffer The command buffer to reset; its pool must allow individual resets.
+     * @param flags Reset flags; 0 keeps the buffer's resources.
+     */
     fun vkResetCommandBuffer(
         @VkHandleRef("VkCommandBuffer") commandBuffer: Long,
         flags: Int,
     )
 
+    /**
+     * Submits recorded command buffers to a queue for execution.
+     *
+     * @param queue The queue to submit to.
+     * @param pSubmits The batches to submit, each with its wait semaphores, command buffers and
+     * signal semaphores.
+     * @param fence A fence to signal when every batch has completed, or 0 for none.
+     */
     fun vkQueueSubmit(
         @VkHandleRef("VkQueue") queue: Long,
         pSubmits: Array<VkSubmitInfo>,
         @VkHandleRef("VkFence") fence: Long,
     )
 
+    /**
+     * Queues swapchain images for presentation after their wait semaphores signal.
+     *
+     * Anything other than `VK_SUCCESS` throws, including `VK_SUBOPTIMAL_KHR` and
+     * `VK_ERROR_OUT_OF_DATE_KHR`, so a caller that wants to rebuild its swapchain on those catches
+     * the exception and reads its `result`.
+     *
+     * @param queue The queue to present on.
+     * @param pPresentInfoKHR The swapchains, image indices and wait semaphores.
+     */
     fun vkQueuePresentKHR(
         @VkHandleRef("VkQueue") queue: Long,
         pPresentInfoKHR: VkPresentInfoKHR,
     )
 
     // Debug messenger
+    /**
+     * Creates a debug messenger that forwards validation and driver messages to the callback in
+     * [createInfo]. It needs `VK_EXT_debug_utils` enabled on the instance.
+     *
+     * @param instance The instance to attach the messenger to.
+     * @param createInfo The severity and type filters and the callback.
+     * @return The new `VkDebugUtilsMessengerEXT` handle.
+     */
     @VkSingleton
     @VkReturnType("VkDebugUtilsMessengerEXT")
     fun vkCreateDebugUtilsMessengerEXT(
@@ -463,6 +730,12 @@ expect object Vulkan {
         createInfo: VkDebugUtilsMessengerCreateInfoEXT,
     ): Long
 
+    /**
+     * Destroys a debug messenger. The callback is not invoked afterwards.
+     *
+     * @param instance The instance the messenger was created on.
+     * @param debugUtilsMessenger The messenger to destroy.
+     */
     @VkSingleton
     fun vkDestroyDebugUtilsMessengerEXT(
         @VkHandleRef("VkInstance") instance: Long,

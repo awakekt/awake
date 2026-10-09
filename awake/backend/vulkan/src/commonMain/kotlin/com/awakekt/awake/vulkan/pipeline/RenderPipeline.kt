@@ -92,6 +92,10 @@ class RenderPipeline(
      * for a correctly-wound solid mesh -- see `render.renderer.CullMode`'s own doc comment for
      * why NONE isn't just a historical default, it's also a real z-fighting/perf trade-off. */
     cullMode: VkCullModeFlagBits = VkCullModeFlagBits.VK_CULL_MODE_NONE,
+    /**
+     * Which triangle winding this pipeline treats as front-facing; it must agree with the winding
+     * of the geometry it renders.
+     */
     val frontFace: FrontFace = FrontFace.CounterClockwise,
     /** See [PipelineVariant]'s own doc comment. Defaults to [PipelineVariant.Opaque] -- the
      * pipeline this class always built before any variant existed. */
@@ -130,8 +134,19 @@ class RenderPipeline(
     private val swapchainManager = swapchainManager
     private val device get() = graphicsDevice.device
 
+    /**
+     * The `VkPipelineLayout` the pipeline was built with: the material set layout (or this
+     * pipeline's own uniform layout) at set 0, followed by any extra layouts.
+     */
     var pipelineLayout: Long = 0
+
+    /** The `VkPipelineCache` the pipeline was created through, destroyed together with it. */
     var pipelineCache: Long = 0
+
+    /**
+     * Holds the live `VkPipeline` in element 0, its only element. A pipeline swap replaces that
+     * handle in place.
+     */
     var graphicsPipeline: LongArray = longArrayOf()
 
     // Built before the pipeline, because its descriptor set layout IS this pipeline's set 0.
@@ -272,6 +287,10 @@ class RenderPipeline(
         )
     }
 
+    /**
+     * Destroys the pipeline, its layout and cache, and the pipeline's own uniform slots if it has
+     * any. The render pass is shared and left alone.
+     */
     fun destroy() {
         graphicsPipeline.forEach { pipeline ->
             Vulkan.vkDestroyPipeline(device, pipeline)

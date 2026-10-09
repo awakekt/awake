@@ -24,14 +24,27 @@ import io.ygdrasil.webgpu.TextureViewDescriptor
  */
 class SwapchainManager(
     graphicsDevice: GraphicsDevice,
+    /**
+     * Frames in flight the shared renderer contract asks for. WebGPU needs no per-frame
+     * synchronisation, so it only sizes the placeholder sync arrays.
+     */
     val maxFramesInFlight: Int,
 ) {
     private val graphicsDevice = graphicsDevice
+
+    /** Vulkan-parity placeholder, always 0: presentation goes through the canvas context. */
     var swapChain: Long = 0
+
+    /**
+     * Vulkan-parity placeholder, always empty: the canvas texture is acquired per frame, not held
+     * as a list.
+     */
     var imageViews: List<Long> = emptyList()
     val imageAvailableSemaphores = LongArray(maxFramesInFlight)
     val renderFinishedSemaphores = LongArray(maxFramesInFlight)
     val inFlightFences = LongArray(maxFramesInFlight)
+
+    /** Vulkan-parity frame-slot index. Nothing in this backend advances it, so it stays 0. */
     var currentFrame = 0
 
     // Mirrors the browser's real preferred canvas format so every pipeline agrees with what
@@ -48,25 +61,39 @@ class SwapchainManager(
 
     private val renderingContext get() = graphicsDevice.wgpuContext.renderingContext
 
+    /**
+     * Reads the canvas's preferred texture format and builds the canvas-sized depth attachment.
+     * Call once, after the context has been configured.
+     */
     fun create() {
         imageFormatWebGpu = renderingContext.textureFormat
         syncSurface()
     }
 
+    /** Closes the depth texture and drops its view. Safe to call when nothing was created. */
     fun destroy() {
         depthTextureHandle?.close()
         depthTextureHandle = null
         depthTextureView = null
     }
 
+    /** Does nothing: the browser's frame pacing replaces explicit semaphores and fences. */
     fun createSyncObjects() {
         // Browser frame pacing replaces explicit swapchain semaphores/fences.
     }
 
+    /** Does nothing: see [createSyncObjects]. */
     fun destroySyncObjects() {
         // Browser frame pacing replaces explicit swapchain semaphores/fences.
     }
 
+    /**
+     * Re-reads the canvas texture format and size and rebuilds the depth attachment when the size
+     * changed or none exists yet.
+     *
+     * A no-op while the canvas keeps its size. The renderer calls it at the start of every 3D draw,
+     * so a canvas resize takes effect on the next frame.
+     */
     fun syncSurface() {
         imageFormatWebGpu = renderingContext.textureFormat
         val width = renderingContext.width

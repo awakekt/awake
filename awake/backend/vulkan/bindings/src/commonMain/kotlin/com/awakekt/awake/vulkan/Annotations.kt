@@ -12,12 +12,21 @@ import kotlin.reflect.KClass
 @Retention(AnnotationRetention.RUNTIME)
 annotation class VkPointer
 
-/** Describes a fixed-size C array represented by a Kotlin scalar/string field. */
+/**
+ * Describes a fixed-size C array represented by a Kotlin scalar/string field.
+ *
+ * @property arraySize The C array length, as the name of a size constant such as
+ * `VK_MAX_PHYSICAL_DEVICE_NAME_SIZE`, or a literal count; empty when the generator infers it.
+ */
 @Target(AnnotationTarget.FIELD)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class VkConstArray(val arraySize: String = "")
 
-/** Supplies the native Vulkan handle type erased by Kotlin's `Long` representation. */
+/**
+ * Supplies the native Vulkan handle type erased by Kotlin's `Long` representation.
+ *
+ * @property name The native handle type, for example `VkDevice`.
+ */
 @Target(
     AnnotationTarget.FIELD,
     AnnotationTarget.PROPERTY,
@@ -27,7 +36,11 @@ annotation class VkConstArray(val arraySize: String = "")
 @Retention(AnnotationRetention.RUNTIME)
 annotation class VkHandleRef(val name: String)
 
-/** Supplies the native Vulkan handle type erased by a Kotlin `Long` return value. */
+/**
+ * Supplies the native Vulkan handle type erased by a Kotlin `Long` return value.
+ *
+ * @property name The native handle type, for example `VkImageView`.
+ */
 @Retention(AnnotationRetention.RUNTIME)
 annotation class VkReturnType(val name: String)
 
@@ -39,6 +52,9 @@ annotation class NativeSurfaceWindow
  *
  * The implementation belongs in a platform native `*_native.cpp` source file; this
  * annotation carries generator metadata and does not create a Kotlin runtime dependency.
+ *
+ * @property symbol The C symbol the generated JNI wrapper calls, for example
+ * `awake_vulkan_images_cmd_memory_barrier`.
  */
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.SOURCE)
@@ -58,7 +74,13 @@ annotation class JniNative(val symbol: String)
  */
 annotation class VkSingleton
 
-/** Maps a Kotlin union member to its native parent field. */
+/**
+ * Maps a Kotlin union member to its native parent field.
+ *
+ * @property alias The name of the native union field this member stands for.
+ * @property saveToParent Whether the member's value is also written back to the parent field
+ * when the struct is converted to its native form.
+ */
 annotation class VkUnionMember(val alias: String, val saveToParent: Boolean = false)
 
 /**

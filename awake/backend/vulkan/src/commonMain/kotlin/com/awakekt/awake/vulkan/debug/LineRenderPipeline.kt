@@ -105,6 +105,12 @@ class LineRenderPipeline(
      * model is implicitly identity -- mvp == viewProjection). */
     fun writeMvp(mvp: FloatArray) = writeMvp(frameIndex = 0, mvp = mvp)
 
+    /**
+     * Writes the world-space view-projection matrix into [frameIndex]'s uniform slot.
+     *
+     * @param frameIndex The frame slot to write.
+     * @param mvp The matrix as 16 column-major floats.
+     */
     fun writeMvp(frameIndex: Int, mvp: FloatArray) = uniformSlots.write(frameIndex, mvp)
 
     private fun createGraphicsPipeline(vertShaderCode: ByteArray, fragShaderCode: ByteArray) {
@@ -239,8 +245,19 @@ class LineRenderPipeline(
         Vulkan.vkDestroyShaderModule(device, vertShaderModule)
     }
 
+    /**
+     * Binds the line pipeline and frame slot 0's uniform descriptor set at set 0.
+     *
+     * @param commandBuffer The command buffer being recorded.
+     */
     fun bind(commandBuffer: Long) = bind(commandBuffer, frameIndex = 0)
 
+    /**
+     * Binds the line pipeline and [frameIndex]'s uniform descriptor set at set 0.
+     *
+     * @param commandBuffer The command buffer being recorded.
+     * @param frameIndex The frame slot whose uniform set to bind.
+     */
     fun bind(commandBuffer: Long, frameIndex: Int) {
         val slot = uniformSlots[frameIndex]
         Vulkan.vkCmdBindPipeline(
@@ -251,6 +268,10 @@ class LineRenderPipeline(
         VulkanDescriptors.vkCmdBindDescriptorSet(commandBuffer, pipelineLayout, 0, slot.descriptorSet)
     }
 
+    /**
+     * Destroys the pipeline, its layout and cache, and the per-frame uniform slots. Also what the
+     * constructor calls to release a partly built pipeline before rethrowing.
+     */
     fun destroy() {
         graphicsPipeline.forEach { Vulkan.vkDestroyPipeline(device, it) }
         Vulkan.vkDestroyPipelineLayout(device, pipelineLayout)

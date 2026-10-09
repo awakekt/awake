@@ -52,10 +52,24 @@ class Mesh(
     private val device get() = graphicsDevice.device
     private val physicalDevice get() = graphicsDevice.physicalDevice
 
+    /**
+     * The device-local vertex buffer holding the interleaved vertices that were uploaded at
+     * construction. Destroyed by [destroy].
+     */
     var vertexBuffer: BufferHandle = BufferHandle(0)
+
+    /** The device memory backing [vertexBuffer]. */
     var vertexBufferMemory: DeviceMemoryHandle = DeviceMemoryHandle(0)
+
+    /**
+     * The device-local buffer of 32-bit indices uploaded at construction. Destroyed by [destroy].
+     */
     var indexBuffer: BufferHandle = BufferHandle(0)
+
+    /** The device memory backing [indexBuffer]. */
     var indexBufferMemory: DeviceMemoryHandle = DeviceMemoryHandle(0)
+
+    /** Number of indices in [indexBuffer], which is how many indices [draw] submits. */
     val indexCount: Int = indices.size
 
     override val sizeBytes: Long =
@@ -64,6 +78,10 @@ class Mesh(
     /** The same two buffers above, as the port's opaque handle type -- built once here so the
      * shared per-draw recording path allocates nothing per frame. */
     val vertexBinding: VulkanBufferBinding
+
+    /**
+     * [indexBuffer] as the shared render layer's opaque buffer handle, built once at construction.
+     */
     val indexBinding: VulkanBufferBinding
 
     init {
@@ -182,6 +200,12 @@ class Mesh(
         )
     }
 
+    /**
+     * Records an indexed draw of the whole mesh as one instance. Call after [bind] and after the
+     * material's descriptor set has been bound.
+     *
+     * @param commandBuffer The command buffer being recorded.
+     */
     fun draw(commandBuffer: Long) {
         VulkanBuffers.vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0)
     }

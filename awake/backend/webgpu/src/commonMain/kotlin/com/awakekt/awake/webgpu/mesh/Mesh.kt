@@ -50,10 +50,19 @@ class Mesh(
     /** The box these vertices occupy -- Vulkan's twin, same reason. */
     override val localBounds: Aabb? = null,
 ) : RenderMesh {
+    /**
+     * Handle of the GPU vertex buffer, as a [WebGpuHandles] table id. Fixed at construction: a mesh
+     * never re-uploads its geometry.
+     */
     var vertexBuffer: BufferHandle
     var vertexBufferMemory: DeviceMemoryHandle
     var indexBuffer: BufferHandle
     var indexBufferMemory: DeviceMemoryHandle
+
+    /**
+     * Number of indices in the triangle-list index buffer, which is how many indices a solid draw
+     * submits.
+     */
     val indexCount: Int = indices.size
 
     override val sizeBytes: Long =
@@ -64,7 +73,14 @@ class Mesh(
     /** The same three buffers above, as the shared render layer's opaque handle type -- built
      * once here so the per-draw recording path allocates nothing per frame. */
     val vertexBinding: WebGpuBufferHandle
+
+    /** The triangle-list index buffer as the shared render layer's opaque buffer handle. */
     val indexBinding: WebGpuBufferHandle
+
+    /**
+     * The derived wireframe index buffer as the shared render layer's opaque buffer handle, bound
+     * against a `LineList` pipeline when the mesh is drawn as wireframe.
+     */
     val lineIndexBinding: WebGpuBufferHandle
 
     init {

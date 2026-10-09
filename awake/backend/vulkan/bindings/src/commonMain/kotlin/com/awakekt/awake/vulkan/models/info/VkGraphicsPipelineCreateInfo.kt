@@ -22,6 +22,34 @@ import com.awakekt.awake.vulkan.models.info.pipeline.VkPipelineTessellationState
 import com.awakekt.awake.vulkan.models.info.pipeline.VkPipelineVertexInputStateCreateInfo
 import com.awakekt.awake.vulkan.models.info.pipeline.VkPipelineViewportStateCreateInfo
 
+/**
+ * Parameters for creating a graphics pipeline: its shader stages, fixed-function state, layout and
+ * render pass (`VkGraphicsPipelineCreateInfo`).
+ *
+ * @property sType Identifies the structure to the driver; leave it at its default.
+ * @property pNext Reserved for extension chaining. The binding forwards this field as a raw pointer
+ * rather than marshalling a structure, so leave it `null`.
+ * @property flags A mask of pipeline creation flags.
+ * @property pStages The shader stages of the pipeline.
+ * @property pVertexInputState How vertex data is fed to the vertex shader.
+ * @property pInputAssemblyState How vertices are assembled into primitives.
+ * @property pTessellationState The tessellation state; used only when tessellation shaders are
+ * present.
+ * @property pViewportState The viewports and scissors.
+ * @property pRasterizationState How primitives are rasterized.
+ * @property pMultisampleState The multisampling state.
+ * @property pDepthStencilState The depth and stencil state; `null` when the subpass has no
+ * depth/stencil attachment.
+ * @property pColorBlendState How fragment colours are blended into the colour attachments.
+ * @property pDynamicState The pipeline state that is set while recording instead of being fixed
+ * here.
+ * @property layout The raw handle of the pipeline layout.
+ * @property renderPass The raw handle of the render pass the pipeline is used with.
+ * @property subpass The index of the subpass in which the pipeline is used.
+ * @property basePipelineHandle The raw handle of a pipeline to derive from, or 0 for none.
+ * @property basePipelineIndex The index into the batch of a pipeline to derive from, or -1 for
+ * none.
+ */
 class VkGraphicsPipelineCreateInfo(
     val sType: VkStructureType = VkStructureType.VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
     val pNext: Any? = null,

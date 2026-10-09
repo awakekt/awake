@@ -77,10 +77,26 @@ internal class WebGpuCommandRecorder(
 /** Each wraps the WebGPU object the shared layer passes through without inspecting. Built once
  * with the resource it points at (a pipeline, a bind group, a buffer), not per draw. */
 class WebGpuPipelineHandle(
+    /**
+     * The wrapped render pipeline. A `var` because a shader replacement swaps the pipeline in
+     * place, keeping every holder of this handle valid.
+     */
     var pipeline: GPURenderPipeline,
     override val bindingLayout: BindingLayout = BindingLayout.Standard,
+    /**
+     * What a textured material must bind in group 0 for this pipeline, when the pipeline declares
+     * it; `null` otherwise.
+     */
     val materialBindings: GroupBindings? = null,
+    /**
+     * Whether the pipeline's shader declares a group 0 at all. Consulted only when
+     * [bindingsByGroup] is empty (a legacy pipeline).
+     */
     val hasGroupZeroBindings: Boolean = true,
+    /**
+     * Exact shader resource layout keyed by bind-group index, when the pipeline carries it; empty
+     * for legacy pipelines without metadata.
+     */
     val bindingsByGroup: Map<Int, GroupBindings> = emptyMap(),
     override val drawsTriangles: Boolean = true,
 ) : PipelineHandle
@@ -107,6 +123,19 @@ fun WebGpuPipelineHandle.uniformByteSize(group: Int = 0, binding: Int = 0): Long
     return 0L
 }
 
+/**
+ * A `GPUBindGroup` as the shared render layer's opaque [MaterialBinding].
+ *
+ * @property bindGroup The wrapped bind group, set on the render pass encoder when this binding is
+ * recorded. Bind groups are immutable and tied to the pipeline layout they were built against.
+ */
 class WebGpuBindGroupHandle(val bindGroup: GPUBindGroup) : MaterialBinding
 
+/**
+ * A `GPUBuffer` as the shared render layer's opaque [RenderBufferHandle], used for both vertex and
+ * index buffers.
+ *
+ * @property buffer The wrapped buffer, bound on the render pass encoder when this handle is
+ * recorded. The handle does not own it: whoever created the buffer closes it.
+ */
 class WebGpuBufferHandle(val buffer: GPUBuffer) : RenderBufferHandle

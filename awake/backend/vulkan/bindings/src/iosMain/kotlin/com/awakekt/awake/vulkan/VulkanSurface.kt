@@ -26,6 +26,15 @@ import platform.QuartzCore.CAMetalLayer
 // iOS surface creation is CAMetalLayer-backed via MoltenVK's VK_EXT_metal_surface. `window` must
 // be a real CAMetalLayer; pLayer is an opaque `const void*` in the cinterop-parsed C header, so
 // the ObjC layer is passed via .objcPtr() rather than a generated wrapper type.
+/**
+ * Creates the `VkSurfaceKHR` for a `CAMetalLayer` through MoltenVK's `VK_EXT_metal_surface`.
+ *
+ * @param instance The Vulkan instance to create the surface on.
+ * @param window The `CAMetalLayer` to present to.
+ * @return The new `VkSurfaceKHR` handle.
+ * @throws ClassCastException If [window] is not a `CAMetalLayer`.
+ * @throws IllegalStateException If surface creation fails.
+ */
 @OptIn(ExperimentalForeignApi::class)
 actual fun createSurface(instance: Long, window: Any): Long = memScoped {
     val metalLayer = window as CAMetalLayer
@@ -41,6 +50,13 @@ actual fun createSurface(instance: Long, window: Any): Long = memScoped {
     surfaceVar.value!!.rawValue.toLong()
 }
 
+/**
+ * Returns the layer's drawable size in device pixels, which is what a variable-extent swapchain is
+ * built from.
+ *
+ * @param window The `CAMetalLayer`.
+ * @throws ClassCastException If [window] is not a `CAMetalLayer`.
+ */
 @OptIn(ExperimentalForeignApi::class)
 actual fun surfaceFramebufferExtent(window: Any): VkExtent2D? {
     val metalLayer = window as CAMetalLayer
@@ -49,6 +65,12 @@ actual fun surfaceFramebufferExtent(window: Any): VkExtent2D? {
     }
 }
 
+/**
+ * Returns the layer's bounds in logical points, or `null` when [window] is not a `CAMetalLayer`.
+ * Dividing the drawable size by it gives the display's pixel scale.
+ *
+ * @param window The `CAMetalLayer`.
+ */
 @OptIn(ExperimentalForeignApi::class)
 actual fun windowLogicalExtent(window: Any): VkExtent2D? {
     val metalLayer = window as? CAMetalLayer ?: return null

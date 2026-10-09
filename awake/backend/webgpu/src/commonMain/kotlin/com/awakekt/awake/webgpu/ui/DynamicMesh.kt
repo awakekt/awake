@@ -72,6 +72,20 @@ class DynamicMesh(
         )
     }
 
+    /**
+     * Uploads one frame's UI geometry, growing the buffers first when the run does not fit.
+     *
+     * Growth doubles capacity, never shrinks, and discards the previous buffers, so a
+     * [vertexBufferRef] or [indexBufferRef] read before the call is stale afterwards. The GPU write
+     * is skipped when [vertices] and [indices] are the very same array instances as the last call
+     * and no growth happened; retained UI runs rely on this, so the arrays must not be mutated
+     * after being passed in.
+     *
+     * @param vertices Interleaved vertex floats in the layout this mesh was built for, for example
+     * [FLOATS_PER_VERTEX] per coloured-quad vertex.
+     * @param indices Triangle-list indices into [vertices], 32-bit ([indexFormat]). An empty array
+     * draws nothing and leaves the buffers untouched.
+     */
     fun update(vertices: FloatArray, indices: IntArray) {
         val buffersGrew = growTo(vertexFloats = vertices.size, indexCount = indices.size)
         drawIndexCount = indices.size
@@ -144,9 +158,19 @@ class DynamicMesh(
         return true
     }
 
+    /**
+     * Returns the current GPU vertex buffer. It is replaced when [update] grows capacity, so fetch
+     * it per draw rather than caching it.
+     */
     fun vertexBufferRef(): GPUBuffer = vertexBuffer
+
+    /**
+     * Returns the current GPU index buffer. It is replaced when [update] grows capacity, so fetch
+     * it per draw rather than caching it.
+     */
     fun indexBufferRef(): GPUBuffer = indexBuffer
 
+    /** Closes both GPU buffers. Call once, after the last frame that draws this mesh. */
     fun destroy() {
         vertexBuffer.close()
         indexBuffer.close()
@@ -155,6 +179,7 @@ class DynamicMesh(
     private fun vertexBufferByteSize(vertices: Int): ULong =
         (vertices.toLong() * floatsPerVertex.toLong() * Float.SIZE_BYTES.toLong()).toULong()
 
+    /** Vertex layout sizes and quad geometry constants shared with the UI render pipelines. */
     companion object {
         private fun indexBufferByteSize(maxIndices: Int): ULong =
             (maxIndices.toLong() * Int.SIZE_BYTES.toLong()).toULong()
@@ -170,8 +195,17 @@ class DynamicMesh(
         /** pos (vec2) + localPos (vec2) + halfSize (vec2) + radius (float) + smoothing (float) +
          * color (vec4) + transform (vec4) -- see `ui_rounded_quad.wgsl`'s input layout. */
         const val ROUNDED_QUAD_FLOATS_PER_VERTEX = VertexFormats2D.ROUNDED_QUAD_FLOATS_PER_VERTEX
+
+        /** Vertices emitted for one quad: 4, one per corner. */
         const val VERTICES_PER_QUAD = VertexFormats2D.VERTICES_PER_QUAD
+
+        /** Indices emitted for one quad: 6, two triangles. */
         const val INDICES_PER_QUAD = VertexFormats2D.INDICES_PER_QUAD
+
+        /**
+         * Index type of the index buffer: always `Uint32`, matching the `IntArray` that [update]
+         * takes.
+         */
         val indexFormat = GPUIndexFormat.Uint32
     }
 }

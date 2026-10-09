@@ -52,6 +52,10 @@ import io.ygdrasil.webgpu.VertexState
 class DepthOnlyPipeline(
     graphicsDevice: GraphicsDevice,
     shaderCode: ByteArray,
+    /**
+     * The vertex layout this pipeline reads. A caster is drawn through it only when its mesh format
+     * matches.
+     */
     val vertexFormat: VertexFormat,
     vertexEntryPoint: String = "vertexMain",
     fragmentEntryPoint: String = "fragmentMain",
@@ -59,6 +63,10 @@ class DepthOnlyPipeline(
      * cascade matrix cannot live in the per-draw uniform. */
     cascadeCount: Int = 0,
     private val variant: PipelineVariant = PipelineVariant.Opaque,
+    /**
+     * Which triangle winding this pipeline treats as front-facing; it must agree with the winding
+     * of the geometry it renders.
+     */
     val frontFace: FrontFace = FrontFace.CounterClockwise,
     /** ABI declared by the selected depth shader, carried from the shared shader set. */
     private val bindingsByGroup: Map<Int, GroupBindings> = emptyMap(),
@@ -68,7 +76,14 @@ class DepthOnlyPipeline(
      * binds here unchanged; null builds group 0 from [bindingsByGroup]. */
     groupZeroLayout: GPUBindGroupLayout? = null,
 ) {
+    /** The colorless `Depth32Float` render pipeline built from the caller's shader. */
     val pipeline: GPURenderPipeline
+
+    /**
+     * [pipeline] with its bind-group metadata, as the shared render layer's opaque handle. Group 0
+     * is assumed present when no shader metadata was supplied, and otherwise only when the depth
+     * shader declares it.
+     */
     val handle: WebGpuPipelineHandle
 
     private val device = graphicsDevice.wgpuContext.device
@@ -137,6 +152,13 @@ class DepthOnlyPipeline(
         return WebGpuBindGroupHandle(material.bindGroupFor(pipeline, uniformBuffer, declared))
     }
 
+    /**
+     * Builds, once per [buffer], the joint-palette bind group for skinned casters.
+     *
+     * @param buffer The per-instance joint-palette storage buffer, bound at binding 0.
+     * @return The cached bind group, or `null` when this depth shader declares no joint-palette
+     * group.
+     */
     fun paletteBinding(buffer: GPUBuffer): MaterialBinding? {
         val group = BindingLayout.Standard.slot(BindingSemantic.JointPalette)
         if (!handle.hasBindingGroup(group)) return null
@@ -265,6 +287,10 @@ class DepthOnlyPipeline(
         )
     }
 
+    /**
+     * Closes the per-cascade uniform buffers and drops the cached bind groups. The pipeline object
+     * itself has no explicit release.
+     */
     fun destroy() {
         cascadeBuffers.forEach { it.close() }
         materialBindGroups.clear()

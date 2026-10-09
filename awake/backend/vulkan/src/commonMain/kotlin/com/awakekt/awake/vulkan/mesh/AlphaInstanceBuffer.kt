@@ -62,6 +62,15 @@ class AlphaInstanceBuffer(
         out[offset + 3] = color.w
     }
 
+    /**
+     * Writes one RGBA tint per instance into [frameIndex]'s buffer, in the same order as the
+     * instance matrices. An empty list writes nothing and leaves the previous contents in place.
+     *
+     * @param frameIndex The frame slot to write.
+     * @param colors Per-instance colour and alpha, one entry per drawn instance.
+     * @throws IllegalArgumentException If [colors] holds more entries than the instance ceiling, or
+     * [frameIndex] is not a valid slot.
+     */
     fun update(frameIndex: Int, colors: List<Vec4>) {
         val floats = packer.pack(colors, maxInstances) ?: return
         VulkanBuffers.writeBufferMemoryFloats(device, resourcesFor(frameIndex).memory.handle, 0, floats)
@@ -70,6 +79,13 @@ class AlphaInstanceBuffer(
     /** This frame slot's buffer, for the shared opaque feature to bind at binding 2. */
     fun binding(frameIndex: Int): VulkanBufferBinding = resourcesFor(frameIndex).binding
 
+    /**
+     * Binds [frameIndex]'s buffer as the instance-rate vertex buffer at binding 2.
+     *
+     * @param frameIndex The frame slot whose buffer to bind.
+     * @param commandBuffer The command buffer being recorded.
+     * @throws IllegalArgumentException If [frameIndex] is not a valid slot.
+     */
     fun bind(frameIndex: Int, commandBuffer: Long) {
         VulkanBuffers.vkCmdBindVertexBuffers(
             commandBuffer,
@@ -79,6 +95,10 @@ class AlphaInstanceBuffer(
         )
     }
 
+    /**
+     * Destroys and frees every frame slot's buffer and memory. Call once, after the GPU has
+     * finished with them.
+     */
     fun destroy() {
         frameResources.forEach { frame ->
             VulkanBuffers.vkDestroyBuffer(device, frame.buffer.handle)
@@ -116,8 +136,15 @@ class AlphaInstanceBuffer(
         return buffer to memory
     }
 
+    /** Binding index and stride constants for the per-instance colour stream. */
     companion object {
+        /**
+         * Vertex-buffer binding index of the per-instance colour stream: 2, after the mesh's own
+         * buffer at 0 and the model matrices at 1.
+         */
         const val INSTANCE_ALPHA_BINDING = 2
+
+        /** Floats per instance: 4, one `vec4` colour. */
         val FLOATS_PER_INSTANCE = GpuDataShape.Vec4.componentCount
     }
 }

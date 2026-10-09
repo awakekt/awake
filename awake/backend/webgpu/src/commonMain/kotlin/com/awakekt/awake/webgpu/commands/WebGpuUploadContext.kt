@@ -18,6 +18,21 @@ import com.awakekt.awake.webgpu.device.GraphicsDevice
 class WebGpuUploadContext(
     private val graphicsDevice: GraphicsDevice,
 ) {
+    /**
+     * Runs one queue-write upload and completes [lease] only after the queue has drained it.
+     *
+     * Calls [GpuUploadLease.submit], hands the lease's payload to [submit], then suspends on the
+     * queue's submitted-work-done signal before calling [GpuUploadLease.complete]. If [submit] or
+     * the completion signal throws, the lease is marked failed, which releases its payload exactly
+     * once, and the original exception is rethrown.
+     *
+     * @param T The payload type the lease carries.
+     * @param lease The lease owning the upload payload; it must still be in the prepared state.
+     * @param submit Issues the queue writes for the payload (`writeBuffer`, `writeTexture`). It
+     * runs synchronously on the calling coroutine, before the suspension.
+     * @throws IllegalStateException If [lease] is not in the prepared state; the lease is left
+     * untouched.
+     */
     suspend fun <T> runUpload(
         lease: GpuUploadLease<T>,
         submit: (T) -> Unit,

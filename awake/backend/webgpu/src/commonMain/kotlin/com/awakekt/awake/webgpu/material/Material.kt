@@ -52,8 +52,15 @@ class Material(
      * positionally, the same rule Vulkan's `PBR_TEXTURE_BINDINGS` applies to its own writes. */
     private val pbrBindings = materialPbrBindings(bindings)
 
+    /**
+     * The view a UI pass samples when it draws this material as an image: the render target's
+     * colour view, or the uploaded texture's view. `null` until [createResources] or
+     * [createResourcesFromRenderTarget] runs.
+     */
     var previewTextureView: GPUTextureView? = null
         private set
+
+    /** The sampler paired with [previewTextureView], with the same lifetime and `null` rules. */
     var previewSampler: GPUSampler? = null
         private set
 

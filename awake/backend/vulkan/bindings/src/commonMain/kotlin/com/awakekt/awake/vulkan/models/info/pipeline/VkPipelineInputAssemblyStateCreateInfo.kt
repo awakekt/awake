@@ -10,6 +10,16 @@ import com.awakekt.awake.vulkan.VkFlags
 import com.awakekt.awake.vulkan.enums.VkPrimitiveTopology
 import com.awakekt.awake.vulkan.enums.VkStructureType
 
+/**
+ * How vertices are assembled into primitives (`VkPipelineInputAssemblyStateCreateInfo`).
+ *
+ * @property sType Identifies the structure to the driver; leave it at its default.
+ * @property pNext Reserved for extension chaining. The binding forwards this field as a raw pointer
+ * rather than marshalling a structure, so leave it `null`.
+ * @property flags Reserved for future use; 0.
+ * @property topology The primitive topology.
+ * @property primitiveRestartEnable Whether a special index value restarts a strip.
+ */
 data class VkPipelineInputAssemblyStateCreateInfo(
     val sType: VkStructureType = VkStructureType.VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
     val pNext: Any? = null,

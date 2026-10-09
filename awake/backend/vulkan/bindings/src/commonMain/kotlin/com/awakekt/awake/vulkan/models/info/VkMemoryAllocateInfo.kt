@@ -10,6 +10,9 @@ import com.awakekt.awake.vulkan.VkDeviceSize
 /**
  * Marshalled by jni-binding-generator (see docs/decisions/D10-codegen-derisk-findings.md).
  * Deliberately omits sType/pNext — same reasoning as VkBufferCreateInfo.
+ *
+ * @property allocationSize The size of the allocation in bytes.
+ * @property memoryTypeIndex The index of the memory type to allocate from.
  */
 class VkMemoryAllocateInfo(
     val allocationSize: VkDeviceSize,

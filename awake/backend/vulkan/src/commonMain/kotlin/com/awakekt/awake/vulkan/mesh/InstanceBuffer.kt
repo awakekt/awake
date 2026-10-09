@@ -67,6 +67,19 @@ class InstanceBuffer(
         model.data.copyInto(out, offset)
     }
 
+    /**
+     * Writes one model matrix per instance into [frameIndex]'s buffer, growing that slot's buffer
+     * first when the instances do not fit.
+     *
+     * Capacity grows in powers of two up to the construction-time ceiling. A buffer that is
+     * outgrown is kept until [destroy] rather than freed, because a frame still in flight may be
+     * reading it. An empty list writes nothing.
+     *
+     * @param frameIndex The frame slot to write.
+     * @param models One column-major model matrix per instance.
+     * @throws IllegalArgumentException If [models] holds more entries than the ceiling, or
+     * [frameIndex] is not a valid slot.
+     */
     fun update(frameIndex: Int, models: List<Mat4>) {
         val floats = packer.pack(models, maxInstances) ?: return
         VulkanBuffers.writeBufferMemoryFloats(device, resourcesFor(frameIndex, models.size).memory.handle, 0, floats)
@@ -75,6 +88,13 @@ class InstanceBuffer(
     /** This frame slot's buffer, for the shared opaque feature to bind at binding 1. */
     fun binding(frameIndex: Int): VulkanBufferBinding = resourcesFor(frameIndex).binding
 
+    /**
+     * Binds [frameIndex]'s buffer as the instance-rate vertex buffer at binding 1.
+     *
+     * @param frameIndex The frame slot whose buffer to bind.
+     * @param commandBuffer The command buffer being recorded.
+     * @throws IllegalArgumentException If [frameIndex] is not a valid slot.
+     */
     fun bind(frameIndex: Int, commandBuffer: Long) {
         VulkanBuffers.vkCmdBindVertexBuffers(
             commandBuffer,
@@ -84,6 +104,10 @@ class InstanceBuffer(
         )
     }
 
+    /**
+     * Destroys and frees every frame slot's buffer, including the outgrown ones kept alive for
+     * frames in flight. Call once, after the GPU has finished with them.
+     */
     fun destroy() {
         (frameResources.filterNotNull() + retired).forEach { frame ->
             VulkanBuffers.vkDestroyBuffer(device, frame.buffer.handle)
@@ -129,6 +153,7 @@ class InstanceBuffer(
         return buffer to memory
     }
 
+    /** Stride and capacity constants for the per-instance model-matrix stream. */
     companion object {
         /** One `mat4` per instance. */
         val FLOATS_PER_INSTANCE = GpuDataShape.Mat4.componentCount

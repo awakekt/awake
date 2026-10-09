@@ -82,7 +82,16 @@ class UiRenderPipeline(
     private val swapchainManager: SwapchainManager,
     vertShaderCode: ByteArray,
     fragShaderCode: ByteArray,
+    /**
+     * Which UI primitive this pipeline draws, which fixes its vertex layout and descriptor-set
+     * shape.
+     */
     val kind: UiPipelineKind = UiPipelineKind.Quad,
+    /**
+     * Whether the pipeline samples a texture, which is true for the texture and glyph variants.
+     * Such a pipeline normally binds its image per draw through [bindMaterial]; a fixed texture
+     * supplied at construction is bound once instead.
+     */
     val hasTexture: Boolean = false,
     externalRenderPass: Long? = null,
     private val framesInFlight: Int = 1,
@@ -128,6 +137,10 @@ class UiRenderPipeline(
     private val device get() = graphicsDevice.device
     private val physicalDevice get() = graphicsDevice.physicalDevice
 
+    /**
+     * The render pass the pipeline was built against: the caller's, or one this pipeline created
+     * and destroys itself.
+     */
     var renderPass: Long = 0
         private set
     private var descriptorSetLayout: Long = 0
@@ -391,6 +404,17 @@ class UiRenderPipeline(
         return TextureDescriptorSlot(pool, set)
     }
 
+    /**
+     * Points one draw slot's descriptor set at the given image and sampler, then binds this
+     * pipeline and that set.
+     *
+     * @param commandBuffer The command buffer being recorded.
+     * @param frameIndex The frame slot, so frames in flight never share a descriptor set.
+     * @param drawSlotIndex The per-frame draw slot, so several textured draws in one frame keep
+     * separate descriptors. Slots are created on first use.
+     * @param sampler The sampler to read the image with.
+     * @param imageView The image view to draw.
+     */
     fun bindMaterial(commandBuffer: Long, frameIndex: Int, drawSlotIndex: Int, sampler: Long, imageView: Long) {
         val slot = descriptorSlot(frameIndex, drawSlotIndex)
         VulkanDescriptors.vkUpdateDescriptorSetImage(
@@ -421,6 +445,13 @@ class UiRenderPipeline(
         VulkanDescriptors.vkCmdBindDescriptorSet(commandBuffer, pipelineLayout, 0, slot.descriptorSet)
     }
 
+    /**
+     * Same as the indexed overload, using frame slot 0 and draw slot 0.
+     *
+     * @param commandBuffer The command buffer being recorded.
+     * @param sampler The sampler to read the image with.
+     * @param imageView The image view to draw.
+     */
     fun bindMaterial(commandBuffer: Long, sampler: Long, imageView: Long) =
         bindMaterial(commandBuffer, frameIndex = 0, drawSlotIndex = 0, sampler = sampler, imageView = imageView)
 
@@ -483,6 +514,14 @@ class UiRenderPipeline(
         bind(commandBuffer, slot.descriptorSet)
     }
 
+    /**
+     * Points frame slot [frameIndex]'s first descriptor set at [texture]'s image and sampler
+     * without binding anything.
+     *
+     * @param texture The texture to draw.
+     * @param frameIndex The frame slot whose descriptor set to update.
+     * @return The updated descriptor set, to pass to [bind].
+     */
     fun prepareDescriptorSet(texture: Texture, frameIndex: Int = 0): Long {
         val slot = descriptorSlot(frameIndex, 0)
         VulkanDescriptors.vkUpdateDescriptorSetImage(
@@ -508,6 +547,13 @@ class UiRenderPipeline(
         return slot.descriptorSet
     }
 
+    /**
+     * Updates the screen-to-NDC scale in the UI uniform buffer. Call whenever the target the UI
+     * draws into changes size.
+     *
+     * @param width Target width in pixels.
+     * @param height Target height in pixels.
+     */
     fun writeScreenSize(width: Float, height: Float) {
         screenWidth = width
         screenHeight = height
@@ -872,6 +918,13 @@ class UiRenderPipeline(
         Vulkan.vkDestroyPipeline(device, handle)
     }
 
+    /**
+     * Binds the pipeline and a descriptor set at set 0, when there is one to bind.
+     *
+     * @param commandBuffer The command buffer being recorded.
+     * @param customDescriptorSet The set to bind, such as one from [prepareDescriptorSet], or
+     * `null` for this pipeline's fixed set.
+     */
     fun bind(commandBuffer: Long, customDescriptorSet: Long? = null) {
         Vulkan.vkCmdBindPipeline(
             commandBuffer,
@@ -889,6 +942,11 @@ class UiRenderPipeline(
         }
     }
 
+    /**
+     * Destroys the descriptor pools and layout, the uniform buffer, the pipeline, its layout and
+     * cache, and the render pass if this pipeline created it. Safe to call on a partly built
+     * pipeline.
+     */
     fun destroy() {
         descriptorSlotsByFrame.forEach { slots ->
             slots.forEach { slot ->
@@ -928,6 +986,6 @@ class UiRenderPipeline(
         }
     }
 
-    companion object {
-    }
+    /** Declares nothing; kept only so the class has a companion. */
+    companion object
 }

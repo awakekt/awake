@@ -87,6 +87,10 @@ class DepthOnlyPipeline(
      */
     framesInFlight: Int = 1,
     variant: PipelineVariant = PipelineVariant.Opaque,
+    /**
+     * Which triangle winding this pipeline treats as front-facing; it must agree with the winding
+     * of the geometry it renders.
+     */
     val frontFace: FrontFace = FrontFace.CounterClockwise,
     extraDescriptorSetLayouts: List<DescriptorSetLayoutHandle> = emptyList(),
 ) : VulkanPipelineHandle {
@@ -128,6 +132,10 @@ class DepthOnlyPipeline(
         )
     }
 
+    /**
+     * The `VkPipelineLayout` the pipeline was built with. Descriptor sets for it bind against this
+     * layout; it is destroyed with the pipeline.
+     */
     var pipelineLayout: Long = 0
         private set
     private var pipelineCache: Long = 0
@@ -300,10 +308,19 @@ class DepthOnlyPipeline(
         }
     }
 
+    /**
+     * Binds the depth-only pipeline. Descriptor sets and vertex buffers are bound separately.
+     *
+     * @param commandBuffer The command buffer being recorded, inside a depth render pass.
+     */
     fun bind(commandBuffer: Long) {
         Vulkan.vkCmdBindPipeline(commandBuffer, VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline[0])
     }
 
+    /**
+     * Destroys the cascade uniform slots, the pipeline, its layout and its cache. Also what the
+     * constructor calls to release a partly built pipeline before rethrowing.
+     */
     fun destroy() {
         cascadeSlots?.destroy()
         graphicsPipeline.forEach { Vulkan.vkDestroyPipeline(device, it) }

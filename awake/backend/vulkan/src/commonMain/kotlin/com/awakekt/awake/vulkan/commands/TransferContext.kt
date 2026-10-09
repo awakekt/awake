@@ -95,6 +95,11 @@ class TransferContext(graphicsDevice: GraphicsDevice) {
         }
     }
 
+    /**
+     * Destroys the upload fence, if one was ever created, and the command pool. Destroying the pool
+     * also frees every command buffer allocated from [commandPool], including the renderer's
+     * per-frame ones. Call once, with the device idle and before the owning device is destroyed.
+     */
     fun destroy() {
         if (uploadFence != 0L) Vulkan.vkDestroyFence(device, uploadFence)
         Vulkan.vkDestroyCommandPool(device, commandPool.handle)

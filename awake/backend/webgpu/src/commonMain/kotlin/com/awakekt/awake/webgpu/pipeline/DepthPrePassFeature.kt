@@ -248,6 +248,10 @@ class DepthPrePassFeature(
         }
     }
 
+    /**
+     * Destroys every depth-only pipeline this feature built, each exactly once, and then its depth
+     * target. Call once, after the last frame that renders or samples the depth.
+     */
     fun destroy() {
         buildList {
             add(depthOnlyPipeline)

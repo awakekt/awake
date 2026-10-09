@@ -12,6 +12,19 @@ import com.awakekt.awake.vulkan.VkMutator
 import com.awakekt.awake.vulkan.enums.VkPhysicalDeviceType
 import kotlin.jvm.JvmOverloads
 
+/**
+ * General properties of a physical device (`VkPhysicalDeviceProperties`).
+ *
+ * @property apiVersion The highest Vulkan version the device supports, packed as Vulkan expects.
+ * @property driverVersion The driver's version, in a vendor-specific encoding.
+ * @property vendorID The vendor's PCI identifier.
+ * @property deviceID The device's identifier within the vendor.
+ * @property deviceType The kind of device: discrete, integrated, virtual, software or other.
+ * @property deviceName The device name, as UTF-16 code units of a null-terminated string.
+ * @property pipelineCacheUUID A UUID that identifies the device for pipeline cache compatibility.
+ * @property limits The device's limits.
+ * @property sparseProperties The device's sparse-resource properties.
+ */
 @VkMutator
 class VkPhysicalDeviceProperties @JvmOverloads constructor(
     val apiVersion: Int = 0,

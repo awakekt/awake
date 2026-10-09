@@ -25,30 +25,83 @@ import kotlin.jvm.JvmInline
  * `models/` -- iosArm64 doesn't compile for this module yet regardless of this file; iOS
  * Vulkan support is still "planned," not implemented, per AGENTS.md). Not worked around here
  * since fixing the iOS toolchain/commonizer setup is a separate, much larger task.
+ *
+ * [BufferHandle] wraps a `VkBuffer`.
+ *
+ * @property handle The raw 64-bit native handle; 0 stands for no object. The wrapper does not own
+ * it, so whoever created the object destroys it.
  */
 @JvmInline
 value class BufferHandle(val handle: Long)
 
+/**
+ * Typed wrapper for a `VkDeviceMemory` handle, a block of device memory from `vkAllocateMemory`.
+ *
+ * @property handle The raw 64-bit native handle; 0 stands for no object. The wrapper does not own
+ * it, so whoever created the object destroys it.
+ */
 @JvmInline
 value class DeviceMemoryHandle(val handle: Long)
 
+/**
+ * Typed wrapper for a `VkImage` handle.
+ *
+ * @property handle The raw 64-bit native handle; 0 stands for no object. The wrapper does not own
+ * it, so whoever created the object destroys it.
+ */
 @JvmInline
 value class ImageHandle(val handle: Long)
 
+/**
+ * Typed wrapper for a `VkImageView` handle.
+ *
+ * @property handle The raw 64-bit native handle; 0 stands for no object. The wrapper does not own
+ * it, so whoever created the object destroys it.
+ */
 @JvmInline
 value class ImageViewHandle(val handle: Long)
 
+/**
+ * Typed wrapper for a `VkSampler` handle.
+ *
+ * @property handle The raw 64-bit native handle; 0 stands for no object. The wrapper does not own
+ * it, so whoever created the object destroys it.
+ */
 @JvmInline
 value class SamplerHandle(val handle: Long)
 
+/**
+ * Typed wrapper for a `VkDescriptorSetLayout` handle.
+ *
+ * @property handle The raw 64-bit native handle; 0 stands for no object. The wrapper does not own
+ * it, so whoever created the object destroys it.
+ */
 @JvmInline
 value class DescriptorSetLayoutHandle(val handle: Long)
 
+/**
+ * Typed wrapper for a `VkDescriptorPool` handle.
+ *
+ * @property handle The raw 64-bit native handle; 0 stands for no object. The wrapper does not own
+ * it, so whoever created the object destroys it.
+ */
 @JvmInline
 value class DescriptorPoolHandle(val handle: Long)
 
+/**
+ * Typed wrapper for a `VkDescriptorSet` handle.
+ *
+ * @property handle The raw 64-bit native handle; 0 stands for no object. The wrapper does not own
+ * it, so whoever created the object destroys it.
+ */
 @JvmInline
 value class DescriptorSetHandle(val handle: Long)
 
+/**
+ * Typed wrapper for a `VkCommandPool` handle.
+ *
+ * @property handle The raw 64-bit native handle; 0 stands for no object. The wrapper does not own
+ * it, so whoever created the object destroys it.
+ */
 @JvmInline
 value class CommandPoolHandle(val handle: Long)

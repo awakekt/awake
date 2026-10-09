@@ -556,6 +556,10 @@ class Renderer internal constructor(
         destroyDepthResources()
     }
 
+    /**
+     * Internal sizing and format constants for the renderer, plus the neutral textures it
+     * substitutes when a material has no map; nothing here is public API.
+     */
     companion object {
         internal const val DEPTH_FORMAT = 126 // VkFormat.VK_FORMAT_D32_SFLOAT.value
 

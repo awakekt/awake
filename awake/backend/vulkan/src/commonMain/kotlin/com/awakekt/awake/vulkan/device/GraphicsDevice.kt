@@ -38,12 +38,36 @@ import com.awakekt.awake.vulkan.utils.getAppLayerProps
  * not a behavior change.
  */
 class GraphicsDevice {
+    /** The `VkInstance` handle, or 0 until [create] or [createHeadless] has run. */
     var instance: Long = 0
+
+    /**
+     * The `VkDebugUtilsMessengerEXT` handle that routes validation output to the log and records
+     * errors, or 0 until an instance exists.
+     */
     var debugUtilsMessenger: Long = 0
+
+    /**
+     * The `VkSurfaceKHR` presented to. It stays 0 for a headless device, and after [replaceSurface]
+     * released it.
+     */
     var surface: Long = 0
+
+    /** The `VkPhysicalDevice` handle of the GPU picked by [create], or 0 before that. */
     var physicalDevice: Long = 0
+
+    /** The logical `VkDevice` handle, or 0 before [create] or [createHeadless] has run. */
     var device: Long = 0
+
+    /**
+     * The queue, at index 0 of the graphics family, that graphics and upload work is submitted to.
+     */
     var graphicsQueue: Long = 0
+
+    /**
+     * The queue, at index 0 of the present family, that frames are presented on. For a headless
+     * device it is the graphics family's queue and is never used.
+     */
     var presentQueue: Long = 0
 
     /**
@@ -278,6 +302,13 @@ class GraphicsDevice {
         presentQueue = Vulkan.vkGetDeviceQueue(device, indices.presentFamily!!, 0)
     }
 
+    /**
+     * Destroys the surface, device, debug messenger and instance, in that order, skipping any that
+     * were never created.
+     *
+     * @throws IllegalStateException After teardown, if this device was created headless and the
+     * validation layer reported errors; the message lists them.
+     */
     fun destroy() {
         if (surface != 0L) Vulkan.vkDestroySurfaceKHR(instance, surface)
         if (device != 0L) Vulkan.vkDestroyDevice(device)

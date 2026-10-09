@@ -15,9 +15,14 @@ import platform.MoltenVK.VK_IMAGE_ASPECT_COLOR_BIT
 import platform.MoltenVK.VkBufferImageCopy
 import platform.MoltenVK.vkCmdCopyBufferToImage
 
+/** iOS actual of [VulkanTextureRegions], implemented through MoltenVK cinterop. */
 @OptIn(ExperimentalForeignApi::class)
 @Suppress("LongParameterList") // Primitive arguments mirror the native region-copy boundary.
 actual object VulkanTextureRegions {
+    /**
+     * Records a copy of tightly packed RGBA texels from a buffer into a rectangle of one array
+     * layer's base mip level. The image must be in `TRANSFER_DST_OPTIMAL` layout.
+     */
     actual fun copy(commandBuffer: Long, buffer: Long, image: Long, layer: Int, x: Int, y: Int, width: Int, height: Int) = memScoped {
         val region = alloc<VkBufferImageCopy>().apply {
             bufferOffset = 0uL

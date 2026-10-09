@@ -10,6 +10,12 @@ import com.awakekt.awake.vulkan.enums.VkColorSpaceKHR
 import com.awakekt.awake.vulkan.enums.VkFormat
 import kotlin.jvm.JvmOverloads
 
+/**
+ * A format and colour space pair a surface can present (`VkSurfaceFormatKHR`).
+ *
+ * @property format The pixel format of the swapchain images.
+ * @property colorSpace The colour space the presentation engine interprets the images in.
+ */
 @VkMutator
 data class VkSurfaceFormatKHR @JvmOverloads constructor(
     val format: VkFormat = VkFormat.VK_FORMAT_UNDEFINED,
