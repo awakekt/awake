@@ -1,7 +1,8 @@
 name: Maven fallback
 
-# Serves the newest two Core releases as a static Maven repository on GitHub Pages,
-# https://awakekt.github.io/awake/, for a release Maven Central refuses under its publishing limits.
+# Serves the newest two Core releases and the newest two Vulkan releases as a static Maven
+# repository on GitHub Pages, https://awakekt.github.io/awake/, for a release Maven Central refuses
+# under its publishing limits.
 # The files are the ones the release job signed and staged for Central and attached to each GitHub
 # Release, so they keep Central's coordinates and a build adds this repository after mavenCentral().
 #
@@ -29,8 +30,7 @@ jobs:
     if: >-
       ${{
         github.event_name == 'workflow_dispatch' ||
-        (startsWith(github.event.workflow_run.head_branch, 'v') &&
-         !startsWith(github.event.workflow_run.head_branch, 'vulkan-v'))
+        startsWith(github.event.workflow_run.head_branch, 'v')
       }}
     runs-on: ubuntu-latest
     environment:
@@ -39,23 +39,29 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Download the newest two release bundles
+      - name: Download the newest two bundles of each family
         id: bundles
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          mkdir -p build/bundles
-          for tag in $(gh release list --limit 50 --json tagName,isDraft \
-                         --jq '.[] | select(.isDraft | not) | .tagName' | grep -E '^v[0-9]'); do
-            gh release download "$tag" --pattern 'awake-*-maven.zip' --dir build/bundles 2> /dev/null || continue
-            echo "Serving $tag"
-            if [ "$(ls build/bundles | wc -l)" -ge 2 ]; then break; fi
-          done
-          echo "count=$(ls build/bundles | wc -l)" >> "$GITHUB_OUTPUT"
+          # Core releases (v*) and Vulkan releases (vulkan-v*) version independently, so each keeps
+          # its own newest two. A release from before the fallback existed has no bundle and is skipped.
+          tags="$(gh release list --limit 100 --json tagName,isDraft --jq '.[] | select(.isDraft | not) | .tagName')"
+          fetch() { # family tag-regex asset-glob
+            mkdir -p "build/bundles/$1"
+            for tag in $(grep -E "$2" <<< "$tags"); do
+              gh release download "$tag" --pattern "$3" --dir "build/bundles/$1" 2> /dev/null || continue
+              echo "Serving $tag"
+              if [ "$(ls "build/bundles/$1" | wc -l)" -ge 2 ]; then break; fi
+            done
+          }
+          fetch core '^v[0-9]' 'awake-[0-9]*-maven.zip'
+          fetch vulkan '^vulkan-v[0-9]' 'awake-vulkan-*-maven.zip'
+          echo "count=$(find build/bundles -name '*.zip' | wc -l)" >> "$GITHUB_OUTPUT"
 
       - name: Build the repository
         if: steps.bundles.outputs.count != '0'
-        run: scripts/maven-fallback-site.sh build/maven-fallback build/bundles/*.zip
+        run: scripts/maven-fallback-site.sh build/maven-fallback $(find build/bundles -name '*.zip' | sort)
 
       - uses: actions/upload-pages-artifact@v5
         if: steps.bundles.outputs.count != '0'

@@ -627,7 +627,8 @@ jobs:
 
   vulkan-release:
     name: Vulkan Release
-    timeout-minutes: 60
+    # Room for Central to validate the deployment: the upload waits for its verdict.
+    timeout-minutes: 90
     if: startsWith(github.ref, 'refs/tags/vulkan-v')
     needs: [natives, verify]
     runs-on: macos-14
@@ -675,7 +676,10 @@ jobs:
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ env.SIGNING_KEY }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ env.SIGNING_PASSWORD }}
 
+      # As for a Core release: the release and its bundle go on GitHub whenever the bundle was
+      # built, whatever Central said, so the Maven fallback can serve a release Central refused.
       - name: Ensure GitHub Release exists
+        if: ${{ !cancelled() && hashFiles('build/awake-vulkan-*-maven.zip') != '' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -686,3 +690,9 @@ jobs:
               --title "${{ github.ref_name }}" \
               --generate-notes
           fi
+
+      - name: Attach the Maven repository to the GitHub Release
+        if: ${{ !cancelled() && hashFiles('build/awake-vulkan-*-maven.zip') != '' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "$GITHUB_REF_NAME" build/awake-vulkan-*-maven.zip --clobber

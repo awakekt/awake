@@ -55,8 +55,11 @@ done < <(find "$site" -mindepth 3 -name '*.pom' -exec dirname {} \; | xargs -n 1
 
 [[ "$artifacts" -gt 0 ]] || { echo "The bundles hold no POM; there is nothing to serve." >&2; exit 1; }
 
-# The Core versions held, newest first, read from the module every release publishes.
-held="$(find "$site/com/awakekt/awake/core/math" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; 2> /dev/null | sort -rV | sed 's|.*|<li><code>&</code></li>|')"
+# The versions held, newest first, read from a module every release of the family publishes.
+versions_of() { # artifact directory under the site, list label
+  find "$site/$1" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; 2> /dev/null | sort -rV | sed "s|.*|<li>$2 <code>&</code></li>|"
+}
+held="$(versions_of com/awakekt/awake/core/math Core; versions_of com/awakekt/awake/backend/vulkan Vulkan)"
 cat > "$site/index.html" <<EOF
 <!doctype html>
 <html lang="en">
@@ -69,7 +72,7 @@ cat > "$site/index.html" <<EOF
   @media (prefers-color-scheme: dark) { body { color: #e6edf3; background: #0d1117; } pre { background: #161b22; } }
 </style>
 <h1>Awake Maven fallback</h1>
-<p>Awake releases are published to Maven Central. This repository holds the newest Core releases,
+<p>Awake releases are published to Maven Central. This repository holds the newest Core and Vulkan releases,
 the same signed files under the same coordinates, for a release Central did not accept.</p>
 <pre>repositories {
     mavenCentral()

@@ -49,8 +49,9 @@ for private Pro packages and credentials.
 
 ## Fallback repository
 
-Each Core release also attaches its bundle, the signed files staged for Central, to its GitHub
-Release, and the **Maven fallback** workflow serves the newest two from GitHub Pages. A build that
+Each Core release and each Vulkan release also attaches its bundle, the signed files staged for
+Central, to its GitHub Release, and the **Maven fallback** workflow serves the newest two of each
+family from GitHub Pages. A build that
 needs a release Central refused under its publishing limits adds the repository after Maven Central;
 the coordinates are the same, so nothing else changes:
 
@@ -62,4 +63,4 @@ repositories {
 ```
 
 For Gradle plugins, add the same line to `pluginManagement.repositories`. The fallback holds the Core
-family and build-logic's plugins; the Vulkan family is published to Central only.
+family, build-logic's plugins and the Vulkan family.
