@@ -101,7 +101,9 @@ One person or agent owns a release from cut to downstream bump. Before cutting, 
 3. **Vulkan:** if anything under `awake/backend/vulkan` changed since the last `vulkan-v*` tag
    (`scripts/vulkan-publication-impact.sh <last-vulkan-tag> vX.Y.Z` prints `true`), tag
    `vulkan-vA.B.C` on the **same commit** and push it once Core is on Central. A Vulkan release
-   pins the Core release it was built with; pairing it with a newer Core can fail at runtime.
+   pins the Core release it was built with; pairing it with a newer Core can fail at runtime. Its
+   Publish run uploads the three Vulkan modules as one Central deployment and attaches the bundle to
+   the GitHub Release, as a Core release does.
 4. **Downstream:** bump awake-studio, awake-template, awake-project-template and
    awake-plugin-template to the new Core and Vulkan releases. WebGPU stays on the Core train's
    `<next patch>-SNAPSHOT` after a stable cut (for `0.1.0`, pin `0.1.1-SNAPSHOT` once its main

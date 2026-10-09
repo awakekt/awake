@@ -30,12 +30,14 @@ math=com/awakekt/awake/core/math
 marker=com/awakekt/awake/plugin/library/com.awakekt.awake.plugin.library.gradle.plugin
 bundle old.zip 0.9.0 "$math"
 bundle new.zip 0.10.0 "$math" "$marker"
+vulkan=com/awakekt/awake/backend/vulkan
+bundle vulkan.zip 0.1.20 "$vulkan"
 
 failures=0
 pass() { echo "ok   $1"; }
 fail() { echo "FAIL $1"; failures=$((failures + 1)); }
 
-if "$script" site new.zip old.zip > out.txt; then pass "builds from two bundles"; else fail "builds from two bundles"; fi
+if "$script" site new.zip old.zip vulkan.zip > out.txt; then pass "builds from Core and Vulkan bundles"; else fail "builds from Core and Vulkan bundles"; fi
 if [[ -f "site/$math/0.9.0/math-0.9.0.jar.asc" && -f "site/$math/0.10.0/math-0.10.0.pom" ]]; then
   pass "keeps both releases' files, signatures included"; else fail "keeps both releases' files"; fi
 
@@ -54,8 +56,9 @@ if grep -q '<groupId>com.awakekt.awake.plugin.library</groupId>' "$marker_metada
   pass "serves plugin markers too"; else fail "serves plugin markers: $(cat "$marker_metadata")"; fi
 
 if grep -q 'maven("https://awakekt.github.io/awake/")' site/index.html &&
-  [[ "$(grep -o '<li><code>[^<]*' site/index.html | sed 's|<li><code>||' | tr '\n' ' ')" == "0.10.0 0.9.0 " ]]; then
-  pass "index says how to use it and lists releases newest first"; else fail "index: $(cat site/index.html)"; fi
+  [[ "$(grep -o '<li>[A-Za-z]* <code>[^<]*' site/index.html | sed 's|<li>||; s|<code>||' | tr '\n' ',')" == "Core 0.10.0,Core 0.9.0,Vulkan 0.1.20," ]]; then
+  pass "index says how to use it and lists each family's releases newest first"; else fail "index: $(cat site/index.html)"; fi
+if grep -q '<version>0.1.20</version>' "site/$vulkan/maven-metadata.xml"; then pass "serves Vulkan beside Core"; else fail "serves Vulkan beside Core"; fi
 
 if "$script" site 2> /dev/null; then fail "refuses no bundles"; else pass "refuses no bundles"; fi
 

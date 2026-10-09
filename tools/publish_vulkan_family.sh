@@ -53,6 +53,13 @@ vulkan_central_tasks=(
   :awake:backend:vulkan:bindings:publishAllPublicationsToMavenCentralRepository
   :awake:backend:vulkan:bindings:android-native:publishAllPublicationsToMavenCentralRepository
 )
+# A release goes to Central as one deployment, as a Core release does: staged signed into one
+# folder, then bundled and uploaded once (scripts/central-bundle.sh, scripts/central-upload.sh).
+vulkan_staging_tasks=(
+  :awake:backend:vulkan:publishAllPublicationsToCentralStagingRepository
+  :awake:backend:vulkan:bindings:publishAllPublicationsToCentralStagingRepository
+  :awake:backend:vulkan:bindings:android-native:publishAllPublicationsToCentralStagingRepository
+)
 
 version="$(./gradlew -q :awake:backend:vulkan:properties "${gradle_args[@]}" | awk '/^version:/ { print $2 }')"
 if [[ -z "$version" ]]; then
@@ -79,4 +86,14 @@ echo "Verifying Vulkan $version against Core $core_version"
 ./gradlew "${vulkan_local_tasks[@]}" "${gradle_args[@]}"
 ./gradlew verifyPublishedArtifacts "-Pawake.verifyPublishedVersion=$version" -Pawake.verifyPublishedFamily=vulkan --no-configuration-cache
 
-./gradlew "${vulkan_central_tasks[@]}" "${gradle_args[@]}"
+if [[ "$channel" == "release" ]]; then
+  staging="$PWD/build/central-staging"
+  # The release job attaches this bundle to the GitHub Release, which the Maven fallback serves.
+  bundle="build/awake-vulkan-$version-maven.zip"
+  rm -rf "$staging"
+  ./gradlew "${vulkan_staging_tasks[@]}" "${gradle_args[@]}" "-Pawake.stagingRepository=$staging"
+  scripts/central-bundle.sh "$staging" "$bundle"
+  scripts/central-upload.sh "$bundle" "awake vulkan-v$version"
+else
+  ./gradlew "${vulkan_central_tasks[@]}" "${gradle_args[@]}"
+fi
