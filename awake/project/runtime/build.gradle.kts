@@ -35,9 +35,11 @@ kotlin {
             implementation(project(":awake:scene:particles"))
             // CoreSceneContent.ShaderEffects names its ShaderEffectAssets.
             api(project(":awake:scene:shader"))
-            // paged_terrain: the scene binding, the residency it streams, and the layered surface an index can name.
+            // paged_terrain: the scene binding, the residency it streams, and the layered surface an index
+            // or a terrain's surface can name.
             implementation(project(":awake:scene:worldstream"))
-            implementation(project(":awake:terrain"))
+            // CoreSceneContent.TerrainSurfaces names TerrainSurfaceProvider.
+            api(project(":awake:terrain"))
             implementation(project(":awake:kit:terrain-layers"))
             implementation(project(":awake:core:logging"))
             // A SceneCapability lists the bindings of the components it adds, so their type is in this API.
