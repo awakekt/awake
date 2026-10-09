@@ -94,6 +94,12 @@ getPhysicalDeviceQueueFamilyProperties(JNIEnv *env, jlong arg0) {
         VkDebugUtilsMessengerEXT handle;
         auto pfnvkCreateDebugUtilsMessengerEXT = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(
                 instance, "vkCreateDebugUtilsMessengerEXT");
+        // Null when the instance does not enable VK_EXT_debug_utils: report it instead of calling it.
+        if (pfnvkCreateDebugUtilsMessengerEXT == nullptr) {
+            exception_utils::resultException(env, VK_ERROR_EXTENSION_NOT_PRESENT,
+                                             "vkCreateDebugUtilsMessengerEXT needs an instance with VK_EXT_debug_utils");
+            return 0;
+        }
         VkResult result = pfnvkCreateDebugUtilsMessengerEXT(instance, &info, nullptr, &handle);
         if (result != VK_SUCCESS) {
             exception_utils::resultException(env, result,
@@ -479,7 +485,9 @@ getPhysicalDeviceQueueFamilyProperties(JNIEnv *env, jlong arg0) {
         // process destroy??
         auto pfnvkDestroyDebugUtilsMessengerEXT = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(
                 instance, "vkDestroyDebugUtilsMessengerEXT");
-        pfnvkDestroyDebugUtilsMessengerEXT(instance, debugUtilsMessengerEXT, nullptr);
+        if (pfnvkDestroyDebugUtilsMessengerEXT != nullptr) {
+            pfnvkDestroyDebugUtilsMessengerEXT(instance, debugUtilsMessengerEXT, nullptr);
+        }
         // unable to process void
     }
 

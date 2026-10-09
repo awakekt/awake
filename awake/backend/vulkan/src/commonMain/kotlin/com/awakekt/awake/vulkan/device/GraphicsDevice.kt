@@ -43,9 +43,12 @@ class GraphicsDevice {
 
     /**
      * The `VkDebugUtilsMessengerEXT` handle that routes validation output to the log and records
-     * errors, or 0 until an instance exists.
+     * errors, or 0 until an instance exists and when the instance has no `VK_EXT_debug_utils`.
      */
     var debugUtilsMessenger: Long = 0
+
+    /** The instance extensions [createInstance] enabled. */
+    private var instanceExtensions: Set<String> = emptySet()
 
     /**
      * The `VkSurfaceKHR` presented to. It stays 0 for a headless device, and after [replaceSurface]
@@ -181,6 +184,7 @@ class GraphicsDevice {
 
         val extProperties = (baseExtProperties + glfwExtensions + portabilityExtension).distinct()
 
+        instanceExtensions = extProperties.toSet()
         val createInfo = VkInstanceCreateInfo(
             flags = instanceFlags,
             pApplicationInfo = arrayOf(appInfo),
@@ -191,6 +195,9 @@ class GraphicsDevice {
     }
 
     private fun setupDebugMessenger() {
+        // A driver with no validation layer may not offer VK_EXT_debug_utils, as an emulator's
+        // software Vulkan doesn't; there is then no messenger to create, and nothing to route.
+        if (DEBUG_UTILS_EXTENSION !in instanceExtensions) return
         val androidLogCallback: (String, String) -> Unit = { severity, message ->
             println("AWAKE_VERIFY_VALIDATION [$severity] $message")
         }
@@ -327,6 +334,8 @@ class GraphicsDevice {
 }
 
 private const val SWAPCHAIN_EXTENSION = "VK_KHR_swapchain"
+
+private const val DEBUG_UTILS_EXTENSION = "VK_EXT_debug_utils"
 
 /** The Khronos validation layer, the only instance layer this engine asks for. */
 internal const val VALIDATION_LAYER = "VK_LAYER_KHRONOS_validation"

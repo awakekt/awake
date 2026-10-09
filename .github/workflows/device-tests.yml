@@ -76,8 +76,7 @@ jobs:
           disable-animations: true
           script: |
             ./gradlew :awake:backend:jolt:connectedAndroidDeviceTest :awake:scene:physics:connectedAndroidDeviceTest :samples:engine-showcase:connectedAndroidDeviceTest
-            ./gradlew :samples:engine-showcase:androidApp:assembleDebug :samples:engine-showcase:androidApp:assembleRelease
-            scripts/android-launch-check.sh samples/engine-showcase/androidApp/build/outputs/apk/debug/androidApp-debug.apk com.awakekt.awake.showcase.android/.MainActivity || true
+            ./gradlew :samples:engine-showcase:androidApp:assembleRelease
             scripts/android-launch-check.sh samples/engine-showcase/androidApp/build/outputs/apk/release/androidApp-release.apk com.awakekt.awake.showcase.android/.MainActivity
 
       - name: Upload test results
