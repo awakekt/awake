@@ -195,6 +195,19 @@ public final class com/awakekt/awake/asset/shaderpack/PagedTerrainUniformLayout 
 	public final fun getPageGrid ()Lcom/awakekt/awake/render/renderer/UniformField;
 }
 
+public final class com/awakekt/awake/asset/shaderpack/PagedTerrainUploads : com/awakekt/awake/render/passes/ContentTextureUpdates {
+	public fun <init> (Lcom/awakekt/awake/terrain/PagedTerrain;)V
+	public fun getBindings ()Ljava/util/Set;
+	public final fun initialImages ()Ljava/util/Map;
+	public final fun isUploaded (Lcom/awakekt/awake/asset/terrain/TerrainPageCoord;I)Z
+	public fun updates (I)Ljava/util/List;
+}
+
+public final class com/awakekt/awake/asset/shaderpack/PagedTerrainUploadsKt {
+	public static final field TERRAIN_HEIGHT_PAGES_BINDING I
+	public static final field TERRAIN_PAGE_TABLE_BINDING I
+}
+
 public final class com/awakekt/awake/asset/shaderpack/SceneDisplayTransform {
 	public final fun display (Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;)Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun displayReferred (Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;)Lcom/awakekt/awake/asset/shaderdsl/AslExpr;

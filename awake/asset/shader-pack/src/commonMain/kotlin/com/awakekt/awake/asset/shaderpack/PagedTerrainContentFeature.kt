@@ -28,19 +28,20 @@ fun pagedTerrainContentFeature(
     isVisible: () -> Boolean = { true },
 ): ContentFeatureSource {
     require(config.ringCount <= MAX_CLIPMAP_RINGS)
-    require(sharedTextures.keys.intersect(terrain.bindings).isEmpty())
+    require(sharedTextures.keys.intersect(PagedTerrainUploads(terrain).bindings).isEmpty())
     val layout = terrain.layout
     val sampling = floatArrayOf(layout.cellCountX * layout.cellSize, layout.cellCountZ * layout.cellSize, 1f / terrain.heights.fallback.width, 1f / terrain.heights.fallback.depth)
     val depth = aslShaderSet(PagedTerrainShadowDepthShader)
     return ContentFeatureSource { backend ->
+        // Every resolve uploads new images, so each starts from the initial contents with its own uploads.
+        val uploads = PagedTerrainUploads(terrain)
         ContentFeature(
             name = "paged-terrain",
             spec = shaders.stagesFor(backend).spec(vertexFormat = VertexFormat.PositionNormalColorUv, uniforms = PagedTerrainUniformLayout.Layout),
             depth = depth.stagesFor(backend).spec(vertexFormat = VertexFormat.PositionNormalColorUv, uniforms = PagedTerrainUniformLayout.Layout),
-            // Every resolve uploads new images, so each starts from the initial contents with its own journal.
-            textures = terrain.initialTextures() + sharedTextures,
+            textures = uploads.initialImages() + sharedTextures,
             geometry = TerrainClipmapGeometry.buildMergedClipmapMesh(config),
-            textureUpdates = terrain.uploadJournal(),
+            textureUpdates = uploads,
             samplerTextures = mapOf(2 to 1) + samplerTextures,
         ) { pipeline, uniforms, geometry ->
             TerrainRenderFeature(

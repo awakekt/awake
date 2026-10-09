@@ -6,8 +6,10 @@ The existing whole-heightmap terrain API remains available.
 ## Ownership and rendering
 
 `asset:terrain` owns the page lattice and canonical height samples. `terrain` owns the index,
-residency, bounded reads, edits and upload journals. Neither depends on a scene. `asset:shader-pack`
-provides the paged clipmap and shared lit/cascade vertex stage. `kit:terrain-layers` adapts the
+residency, bounded reads, edits and the revisions an uploader reads (`residentPages`,
+`residencyRevision`, the fallback revisions). Neither depends on a scene. `asset:shader-pack`
+provides the paged clipmap, the shared lit/cascade vertex stage and `PagedTerrainUploads`, which
+owns the paged bindings, the initial images, the table encoding and the per-frame-slot uploads. `kit:terrain-layers` adapts the
 existing control/lightmap codecs and loads a palette once. `scene:worldstream` contains the scene
 schema, binding and system applying residency to observers and colliders.
 
@@ -48,9 +50,10 @@ can prevent further admission.
 arrive in that submission. Pending cells use fallback. Layer reuse replaces its data and table
 atomically for the writable slot. Eviction removes the table entry even while a replacement waits.
 An edit re-sends only the images it changed, and the slot keeps drawing the cell's older images
-until they arrive. Each attach starts its own upload journal (`uploadJournal`) against fresh
-initial images, so re-attaching republishes every resident cell.
-`isUploaded(coord, frameIndex)` distinguishes CPU residency from GPU publication.
+until they arrive. Each attach creates its own `PagedTerrainUploads` against fresh initial images,
+so re-attaching republishes every resident cell, and two hosts can share one terrain. Its
+`isUploaded(coord, frameIndex)` distinguishes CPU residency from GPU publication. `PagedTerrain`'s
+own journal members from 0.4.0 are deprecated in favour of it.
 
 Generic `TextureRegion` uploads run before shadow, camera-depth and scene passes. Mutable images
 have one mip; palette images keep mip filtering through an independent sampler. WebGPU queue

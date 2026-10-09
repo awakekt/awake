@@ -15,16 +15,22 @@ import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.render.texture.TextureFiltering
 import com.awakekt.awake.render.texture.TextureRegion
 
+private const val UPLOADS_MOVED = "Upload journals and binding numbers moved to PagedTerrainUploads in " +
+    "awake:asset:shader-pack, which pagedTerrainContentFeature uses. Removed in a later minor."
+
 /** Shader binding for the resident height texture array. */
+@Deprecated(UPLOADS_MOVED, ReplaceWith("TERRAIN_HEIGHT_PAGES_BINDING", "com.awakekt.awake.asset.shaderpack.TERRAIN_HEIGHT_PAGES_BINDING"))
 const val TERRAIN_HEIGHT_PAGES_BINDING: Int = 32
 
 /** Shader binding for the whole-footprint cell-to-layer table. */
+@Deprecated(UPLOADS_MOVED, ReplaceWith("TERRAIN_PAGE_TABLE_BINDING", "com.awakekt.awake.asset.shaderpack.TERRAIN_PAGE_TABLE_BINDING"))
 const val TERRAIN_PAGE_TABLE_BINDING: Int = 33
 
-/** The clipmap stage's whole-world height binding, which paging keeps as its coarse fallback. */
-private const val COARSE_HEIGHT_BINDING = 1
-
-private val RESERVED_BINDINGS = setOf(COARSE_HEIGHT_BINDING, TERRAIN_HEIGHT_PAGES_BINDING, TERRAIN_PAGE_TABLE_BINDING)
+// The deprecated journal's layout, kept private so it does not reference its own deprecated constants.
+private const val LEGACY_COARSE_HEIGHT_BINDING = 1
+private const val LEGACY_HEIGHT_PAGES_BINDING = 32
+private const val LEGACY_PAGE_TABLE_BINDING = 33
+private val LEGACY_RESERVED_BINDINGS = setOf(LEGACY_COARSE_HEIGHT_BINDING, LEGACY_HEIGHT_PAGES_BINDING, LEGACY_PAGE_TABLE_BINDING)
 
 /** Immutable loaded cell. Surface textures are base-level cell images, indexed by array binding. */
 data class TerrainPage(
@@ -45,11 +51,48 @@ data class TerrainPageSave(
 )
 
 /**
- * Bounded page storage and per-frame-slot upload journals. Single frame-thread owner. Mutable
- * pages stay pinned until saved; replacing a layer also replaces its table in the same submission.
- * [fallbackTextures] maps each paged surface binding to its whole-world fallback binding and image.
+ * A resident cell as an uploader reads it: the layer it holds, the revision that placed it there,
+ * and the latest revision of its heights and of each surface image. Live state, read on the
+ * terrain's owner thread.
  */
-@Suppress("TooManyFunctions") // One lifecycle owns residency, edit/save revisions and frame publication.
+class ResidentTerrainPage internal constructor(
+    /** Absolute cell coordinate. */
+    val coord: TerrainPageCoord,
+    /** Array layer this cell holds until it is evicted. */
+    val layer: Int,
+    /** Revision that put this cell in [layer]. Replacing a resident cell keeps it. */
+    val placedRevision: Long,
+    page: TerrainPage,
+    revision: Long,
+) {
+    private val textures = page.textures.keys.associateWithTo(LinkedHashMap()) { revision }
+
+    /** Current cell contents. */
+    var page: TerrainPage = page
+        internal set
+
+    /** Revision of the latest change to [page]'s heights. */
+    var heightRevision: Long = revision
+        internal set
+
+    /** Revision of the latest change to each surface image, keyed by paged surface binding. */
+    val textureRevisions: Map<Int, Long> get() = textures
+
+    internal var revision: Long = revision
+    internal var saved: Long = revision
+
+    internal fun editTexture(binding: Int, revision: Long) {
+        textures[binding] = revision
+    }
+}
+
+/**
+ * Bounded page storage with edit and save revisions. Single frame-thread owner. Mutable pages stay
+ * pinned until saved. An uploader such as `PagedTerrainUploads` publishes it from [residentPages]
+ * and the revision counters. [fallbackTextures] maps each paged surface binding to its whole-world
+ * fallback binding and image.
+ */
+@Suppress("TooManyFunctions") // One lifecycle owns residency, edit/save revisions and, until removal, the deprecated journal.
 class PagedTerrain(
     /** Sparse height state owned by this residency controller. */
     val heights: PagedHeightmap,
@@ -61,15 +104,10 @@ class PagedTerrain(
     /** Maximum combined region-upload bytes emitted per frame slot update. */
     val maxUploadBytes: Int = 8 * 1024 * 1024,
 ) : ContentTextureUpdates {
-    /** [placed] is the revision that put this cell in [layer]; [images] holds each image's latest revision. */
-    private class Resident(var page: TerrainPage, val layer: Int, var revision: Long, var saved: Long, val placed: Long, val images: MutableMap<Int, Long>)
-    private val residents = LinkedHashMap<TerrainPageCoord, Resident>()
+    private val residents = LinkedHashMap<TerrainPageCoord, ResidentTerrainPage>()
     private var revision = 1L
-    private var residency = 1L
-    private var fallbackRevision = 1L
     private var savedFallbackRevision = 1L
     private val fallbackImages = fallbackTextures.values.associate { it.first to it.second }.toMutableMap()
-    private var surfaceFallbackRevision = 1L
     private var savedSurfaceFallbackRevision = 1L
     private var journal = UploadJournal()
 
@@ -85,15 +123,33 @@ class PagedTerrain(
     /** Absolute Z origin subtracted from render and collision positions. */
     var originZ: Double = 0.0
 
+    /** Advances whenever a cell enters or leaves a layer; edits leave it alone. */
+    var residencyRevision: Long = 1L
+        private set
+
+    /** Revision of the latest change to the coarse height image, [PagedHeightmap.fallback]. */
+    var fallbackRevision: Long = 1L
+        private set
+
+    /** Revision of the latest change to [surfaceFallbacks]. */
+    var surfaceFallbackRevision: Long = 1L
+        private set
+
+    /** Current whole-world coarse surface images keyed by fallback binding. Live, owner thread only. */
+    val surfaceFallbacks: Map<Int, TextureAsset> get() = fallbackImages
+
+    /** Resident cells in residency order. Live, owner thread only; do not mutate the terrain while iterating. */
+    val residentPages: Collection<ResidentTerrainPage> get() = residents.values
+
     init {
         require(capacity in 2..65534)
         require(heights.residentCoords.isEmpty()) { "Residency must be owned by PagedTerrain." }
         require(layout.cellCountX <= 8192 && layout.cellCountZ <= 8192 && layout.samplesPerPage <= 8192)
         require(heights.fallback.width <= 8192 && heights.fallback.depth <= 8192)
-        require(pageTextureTemplates.keys.intersect(RESERVED_BINDINGS).isEmpty())
+        require(pageTextureTemplates.keys.intersect(LEGACY_RESERVED_BINDINGS).isEmpty())
         require(pageTextureTemplates.keys == fallbackTextures.keys)
         require(fallbackTextures.values.map { it.first }.toSet().size == fallbackTextures.size)
-        require(fallbackTextures.values.none { it.first in pageTextureTemplates.keys || it.first in RESERVED_BINDINGS })
+        require(fallbackTextures.values.none { it.first in pageTextureTemplates.keys || it.first in LEGACY_RESERVED_BINDINGS })
         require((pageTextureTemplates.values + fallbackImages.values).all { it.layerCount == 1 && !it.isCubemap && it.width in 1..8192 && it.height in 1..8192 })
         require(maxUploadBytes >= pageBytes + tableBytes + heights.fallback.width.toLong() * heights.fallback.depth * 4 + fallbackImages.values.sumOf { it.data.size.toLong() })
     }
@@ -120,6 +176,9 @@ class PagedTerrain(
     /** Returns the immutable resident cell, or null when it uses fallback. */
     fun page(coord: TerrainPageCoord): TerrainPage? = residents[coord]?.page
 
+    /** Returns the resident cell's layer and revisions, or null when it uses fallback. */
+    fun resident(coord: TerrainPageCoord): ResidentTerrainPage? = residents[coord]
+
     /** Returns false when every layer is occupied; caller must evict a clean page first. */
     fun put(coord: TerrainPageCoord, page: TerrainPage): Boolean {
         require(page.textures.keys == pageTextureTemplates.keys)
@@ -132,10 +191,9 @@ class PagedTerrain(
         val layer = existing?.layer ?: (0 until capacity).firstOrNull { candidate -> residents.values.none { it.layer == candidate } } ?: return false
         heights.put(coord, page.height)
         revision++
-        residency++
-        val images = (page.textures.keys + TERRAIN_HEIGHT_PAGES_BINDING).associateWithTo(mutableMapOf()) { revision }
+        residencyRevision++
         // A replacement keeps its placement, so slots draw the previous images until the new ones arrive.
-        residents[coord] = Resident(page, layer, revision, revision, existing?.placed ?: revision, images)
+        residents[coord] = ResidentTerrainPage(coord, layer, existing?.placedRevision ?: revision, page, revision)
         return true
     }
 
@@ -147,7 +205,7 @@ class PagedTerrain(
             residents.remove(coord)
             heights.remove(coord)
             revision++
-            residency++
+            residencyRevision++
         }
         return clean
     }
@@ -160,7 +218,7 @@ class PagedTerrain(
             residents.getValue(coord).apply {
                 page = page.copy(height = requireNotNull(heights.page(coord)))
                 this.revision = this@PagedTerrain.revision
-                images[TERRAIN_HEIGHT_PAGES_BINDING] = this@PagedTerrain.revision
+                heightRevision = this@PagedTerrain.revision
             }
         }
         if (change.fallbackChanged) fallbackRevision = revision
@@ -175,7 +233,7 @@ class PagedTerrain(
         revision++
         resident.page = resident.page.copy(textures = resident.page.textures + (binding to texture))
         resident.revision = revision
-        resident.images[binding] = revision
+        resident.editTexture(binding, revision)
     }
 
     /** Copies the current cell and its revision for a consumer-owned asset writer. */
@@ -215,15 +273,20 @@ class PagedTerrain(
     }
 
     /** Whether this cell revision is visible in the specified GPU frame slot of the latest journal. */
+    @Deprecated(UPLOADS_MOVED)
     fun isUploaded(coord: TerrainPageCoord, frameIndex: Int): Boolean = journal.isUploaded(coord, frameIndex)
 
-    override val bindings: Set<Int> get() = pageTextureTemplates.keys + fallbackImages.keys + RESERVED_BINDINGS
+    @Deprecated(UPLOADS_MOVED)
+    override val bindings: Set<Int> get() = legacyBindings
+
+    private val legacyBindings: Set<Int> get() = pageTextureTemplates.keys + fallbackImages.keys + LEGACY_RESERVED_BINDINGS
 
     /** Allocates fixed-shape arrays, an empty page table and mandatory coarse images. */
+    @Deprecated(UPLOADS_MOVED, ReplaceWith("PagedTerrainUploads(this).initialImages()", "com.awakekt.awake.asset.shaderpack.PagedTerrainUploads"))
     fun initialTextures(): Map<Int, TextureAsset> = buildMap {
-        put(COARSE_HEIGHT_BINDING, encode(heights.fallback))
-        put(TERRAIN_HEIGHT_PAGES_BINDING, TextureAsset(ByteArray((heightPageBytes * capacity).also { require(it <= Int.MAX_VALUE) }.toInt()), layout.samplesPerPage, layout.samplesPerPage, capacity, filtering = TextureFiltering.BaseLevelLinear))
-        put(TERRAIN_PAGE_TABLE_BINDING, TextureAsset(ByteArray(tableBytes.toInt()), layout.cellCountX, layout.cellCountZ, filtering = TextureFiltering.Nearest))
+        put(LEGACY_COARSE_HEIGHT_BINDING, encode(heights.fallback))
+        put(LEGACY_HEIGHT_PAGES_BINDING, TextureAsset(ByteArray((heightPageBytes * capacity).also { require(it <= Int.MAX_VALUE) }.toInt()), layout.samplesPerPage, layout.samplesPerPage, capacity, filtering = TextureFiltering.BaseLevelLinear))
+        put(LEGACY_PAGE_TABLE_BINDING, TextureAsset(ByteArray(tableBytes.toInt()), layout.cellCountX, layout.cellCountZ, filtering = TextureFiltering.Nearest))
         for ((binding, template) in pageTextureTemplates) put(binding, TextureAsset(ByteArray((template.data.size.toLong() * capacity).also { require(it <= Int.MAX_VALUE) }.toInt()), template.width, template.height, capacity, filtering = TextureFiltering.BaseLevelLinear))
         for ((binding, fallback) in fallbackImages) put(binding, fallback.copy(filtering = TextureFiltering.BaseLevelLinear))
     }
@@ -234,11 +297,13 @@ class PagedTerrain(
      * images sharing an old journal would never receive the pages it already published.
      * [updates] and [isUploaded] follow the most recently started journal.
      */
+    @Deprecated(UPLOADS_MOVED, ReplaceWith("PagedTerrainUploads(this)", "com.awakekt.awake.asset.shaderpack.PagedTerrainUploads"))
     fun uploadJournal(): ContentTextureUpdates = UploadJournal().also { journal = it }
 
+    @Deprecated(UPLOADS_MOVED)
     override fun updates(frameIndex: Int): List<ContentTextureUpdate> = journal.updates(frameIndex)
 
-    private fun imageBytes(binding: Int): Long = if (binding == TERRAIN_HEIGHT_PAGES_BINDING) heightPageBytes else pageTextureTemplates.getValue(binding).data.size.toLong()
+    private fun imageBytes(binding: Int): Long = if (binding == LEGACY_HEIGHT_PAGES_BINDING) heightPageBytes else pageTextureTemplates.getValue(binding).data.size.toLong()
 
     private fun encode(map: Heightmap): TextureAsset {
         val pixels = ByteArray(map.width * map.depth * 4)
@@ -251,19 +316,27 @@ class PagedTerrain(
         return TextureAsset(pixels, map.width, map.depth, filtering = TextureFiltering.BaseLevelLinear)
     }
 
-    /** What one set of GPU images holds, per frame slot: each layer's image revisions and the last table. */
+    /** The cell's heights under the legacy height binding, then each surface image, with their revisions. */
+    private inline fun ResidentTerrainPage.forEachImage(action: (binding: Int, revision: Long) -> Unit) {
+        action(LEGACY_HEIGHT_PAGES_BINDING, heightRevision)
+        for ((binding, revision) in textureRevisions) action(binding, revision)
+    }
+
+    /** The deprecated journal: what one set of GPU images holds, per frame slot. */
     private inner class UploadJournal : ContentTextureUpdates {
         private val slotImages = mutableMapOf<Int, MutableMap<Int, MutableMap<Int, Long>>>()
         private val tableResidency = mutableMapOf<Int, Long>()
         private val fallbackRevisions = mutableMapOf<Int, Long>()
         private val surfaceFallbackRevisions = mutableMapOf<Int, Long>()
 
-        override val bindings: Set<Int> get() = this@PagedTerrain.bindings
+        override val bindings: Set<Int> get() = legacyBindings
 
         fun isUploaded(coord: TerrainPageCoord, frameIndex: Int): Boolean {
             val resident = residents[coord]
             val uploaded = resident?.let { slotImages[frameIndex]?.get(it.layer) }
-            return resident != null && uploaded != null && resident.images.all { (binding, revision) -> uploaded[binding] == revision }
+            var current = resident != null && uploaded != null
+            resident?.forEachImage { binding, revision -> if (uploaded?.get(binding) != revision) current = false }
+            return current
         }
 
         override fun updates(frameIndex: Int): List<ContentTextureUpdate> {
@@ -271,9 +344,9 @@ class PagedTerrain(
             val result = mutableListOf<ContentTextureUpdate>()
             val published = uploadPages(slot, tableBytes + uploadFallbacks(frameIndex, result), result)
             // Edits never move a table entry; only residency changes and newly complete cells do.
-            if (published || tableResidency[frameIndex] != residency) {
+            if (published || tableResidency[frameIndex] != residencyRevision) {
                 result += table(slot)
-                tableResidency[frameIndex] = residency
+                tableResidency[frameIndex] = residencyRevision
             }
             return result
         }
@@ -283,7 +356,7 @@ class PagedTerrain(
             var bytes = 0L
             if (fallbackRevisions[frameIndex] != fallbackRevision) {
                 val image = encode(heights.fallback)
-                result += ContentTextureUpdate(COARSE_HEIGHT_BINDING, TextureRegion(image.data, image.width, image.height))
+                result += ContentTextureUpdate(LEGACY_COARSE_HEIGHT_BINDING, TextureRegion(image.data, image.width, image.height))
                 bytes += image.data.size
                 fallbackRevisions[frameIndex] = fallbackRevision
             }
@@ -303,16 +376,16 @@ class PagedTerrain(
             var published = false
             for (resident in residents.values) {
                 val uploaded = slot.getOrPut(resident.layer) { mutableMapOf() }
-                // Only the images edited since this slot last received them; a height edit leaves surfaces alone.
                 var stale = 0L
-                for ((binding, revision) in resident.images) if (uploaded[binding] != revision) stale += imageBytes(binding)
+                resident.forEachImage { binding, revision -> if (uploaded[binding] != revision) stale += imageBytes(binding) }
                 if (stale == 0L || bytes + stale > maxUploadBytes) continue
                 if (!visible(resident, uploaded)) published = true
-                for ((binding, revision) in resident.images) {
-                    if (uploaded[binding] == revision) continue
-                    val image = if (binding == TERRAIN_HEIGHT_PAGES_BINDING) encode(resident.page.height) else resident.page.textures.getValue(binding)
-                    result += ContentTextureUpdate(binding, TextureRegion(image.data, image.width, image.height, layer = resident.layer))
-                    uploaded[binding] = revision
+                resident.forEachImage { binding, revision ->
+                    if (uploaded[binding] != revision) {
+                        val image = if (binding == LEGACY_HEIGHT_PAGES_BINDING) encode(resident.page.height) else resident.page.textures.getValue(binding)
+                        result += ContentTextureUpdate(binding, TextureRegion(image.data, image.width, image.height, layer = resident.layer))
+                        uploaded[binding] = revision
+                    }
                 }
                 bytes += stale
             }
@@ -330,11 +403,14 @@ class PagedTerrain(
                     table[offset + 1] = (value ushr 8).toByte()
                 }
             }
-            return ContentTextureUpdate(TERRAIN_PAGE_TABLE_BINDING, TextureRegion(table, layout.cellCountX, layout.cellCountZ))
+            return ContentTextureUpdate(LEGACY_PAGE_TABLE_BINDING, TextureRegion(table, layout.cellCountX, layout.cellCountZ))
         }
 
         /** Every image of the cell's placement has arrived, so its layer holds a complete, if older, cell. */
-        private fun visible(resident: Resident, uploaded: Map<Int, Long>): Boolean =
-            resident.images.keys.all { binding -> (uploaded[binding] ?: 0L) >= resident.placed }
+        private fun visible(resident: ResidentTerrainPage, uploaded: Map<Int, Long>): Boolean {
+            var complete = true
+            resident.forEachImage { binding, _ -> if ((uploaded[binding] ?: 0L) < resident.placedRevision) complete = false }
+            return complete
+        }
     }
 }
