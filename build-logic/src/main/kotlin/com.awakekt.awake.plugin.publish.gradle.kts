@@ -57,10 +57,6 @@ extensions.configure<MavenPublishBaseExtension>("mavenPublishing") {
     // Snapshots remain directly available from Central's snapshot repository. Releases are
     // validated and published automatically, so CI does not require a Central Portal click.
     publishToMavenCentral(automaticRelease = true)
-    // Central snapshots are disposable integration artifacts. Keeping their sources jar is useful
-    // to consumers, but generating Dokka for every KMP publication adds a large amount of work.
-    // Releases retain the full documentation jar below.
-    val isSnapshot = project.version.toString().endsWith("-SNAPSHOT")
     val hasSigningKey = hasProperty("signing.keyId") ||
         hasProperty("signing.secretKey") ||
         hasProperty("signingInMemoryKey") ||
@@ -72,9 +68,14 @@ extensions.configure<MavenPublishBaseExtension>("mavenPublishing") {
         signAllPublications()
     }
 
+    // Central requires a javadoc jar next to every main jar but accepts a placeholder. A Dokka jar
+    // is the same ~1.1 MB whatever the module holds (20 KB of code in `math`), and a KMP module
+    // uploads it once per target, six times. Release size is what Central's monthly publishing
+    // limits meter. IDEs read KDoc from the sources jar; `./gradlew developerDocs` still builds
+    // the Dokka API reference.
     configure(
         KotlinMultiplatform(
-            javadocJar = if (isSnapshot) JavadocJar.Empty() else JavadocJar.Dokka("dokkaGeneratePublicationHtml"),
+            javadocJar = JavadocJar.Empty(),
             sourcesJar = SourcesJar.Sources(),
             androidVariantsToPublish = listOf("release"),
         )
