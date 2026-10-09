@@ -581,6 +581,7 @@ jobs:
       # replaced. Where Central counts releases by deployment, it also spends one of the monthly
       # releases its publishing limits allow rather than two.
       - name: Stage the release
+        id: stage
         run: |
           STAGING="$PWD/build/central-staging"
           rm -rf "$STAGING"
@@ -598,7 +599,11 @@ jobs:
       - name: Publish to Maven Central
         run: scripts/central-upload.sh build/central-bundle.zip "awake ${{ github.ref_name }}"
 
+      # The release and its bundle go on GitHub whenever the bundle was built, whatever Central
+      # said: the Maven fallback workflow serves the newest two from GitHub Pages, and a release
+      # Central refused is the one it exists for.
       - name: Ensure GitHub Release exists
+        if: ${{ !cancelled() && steps.stage.outcome == 'success' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -610,6 +615,15 @@ jobs:
               --title "${{ github.ref_name }}" \
               --generate-notes
           fi
+
+      - name: Attach the Maven repository to the GitHub Release
+        if: ${{ !cancelled() && steps.stage.outcome == 'success' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ASSET="build/awake-${GITHUB_REF_NAME#v}-maven.zip"
+          cp build/central-bundle.zip "$ASSET"
+          gh release upload "$GITHUB_REF_NAME" "$ASSET" --clobber
 
   vulkan-release:
     name: Vulkan Release
