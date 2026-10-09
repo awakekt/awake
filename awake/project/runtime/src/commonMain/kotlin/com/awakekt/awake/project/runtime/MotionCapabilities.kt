@@ -54,7 +54,7 @@ internal object ParticlesCapability : SceneCapability {
     }
 
     override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {
-        if (!scene.uses(SceneParticleEmitter::class)) return
+        if (!scene.uses(SceneParticleEmitter::class) || !plan.hasRenderer) return
         plan.frame("particle-content") { ParticleContentSystem(it.renderer, it.content[Sprites].orEmpty()) }
         plan.frame("particles") { ParticleSystem(TransformPlacement) }
     }

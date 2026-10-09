@@ -31,6 +31,8 @@ public final class com/awakekt/awake/project/runtime/ProjectRuntimeKt {
 	public static synthetic fun loadProject$default (Lcom/awakekt/awake/core/io/AssetSource;Ljava/util/List;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public static final fun runProject (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/project/runtime/LoadedProject;Z)V
 	public static synthetic fun runProject$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/project/runtime/LoadedProject;ZILjava/lang/Object;)V
+	public static final fun sceneSystems (Lcom/awakekt/awake/project/runtime/LoadedProject;Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/project/runtime/SceneSystemSet;
+	public static synthetic fun sceneSystems$default (Lcom/awakekt/awake/project/runtime/LoadedProject;Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/render/renderer/Renderer;ILjava/lang/Object;)Lcom/awakekt/awake/project/runtime/SceneSystemSet;
 }
 
 public abstract interface class com/awakekt/awake/project/runtime/SceneCapability {
@@ -73,18 +75,27 @@ public final class com/awakekt/awake/project/runtime/SceneContentKey {
 }
 
 public final class com/awakekt/awake/project/runtime/SceneHostServices {
+	public static final field Companion Lcom/awakekt/awake/project/runtime/SceneHostServices$Companion;
+	public synthetic fun <init> (Lcom/awakekt/awake/render/renderer/Renderer;Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/project/runtime/SceneContent;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun <init> (Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/project/runtime/SceneContent;)V
 	public synthetic fun <init> (Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/project/runtime/SceneContent;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getContent ()Lcom/awakekt/awake/project/runtime/SceneContent;
+	public final fun getHasRenderer ()Z
 	public final fun getInput ()Lkotlin/jvm/functions/Function0;
 	public final fun getPhysics ()Lcom/awakekt/awake/physics/PhysicsWorld;
 	public final fun getRenderer ()Lcom/awakekt/awake/render/renderer/Renderer;
+}
+
+public final class com/awakekt/awake/project/runtime/SceneHostServices$Companion {
+	public final fun headless (Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/project/runtime/SceneContent;)Lcom/awakekt/awake/project/runtime/SceneHostServices;
+	public static synthetic fun headless$default (Lcom/awakekt/awake/project/runtime/SceneHostServices$Companion;Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/project/runtime/SceneContent;ILjava/lang/Object;)Lcom/awakekt/awake/project/runtime/SceneHostServices;
 }
 
 public final class com/awakekt/awake/project/runtime/SceneSystemPlan {
 	public final fun fixed (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
 	public final fun frame (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
 	public final fun getHasPhysics ()Z
+	public final fun getHasRenderer ()Z
 }
 
 public final class com/awakekt/awake/project/runtime/SceneSystemSet : java/lang/AutoCloseable {

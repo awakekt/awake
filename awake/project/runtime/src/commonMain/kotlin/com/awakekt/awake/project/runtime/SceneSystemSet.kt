@@ -16,17 +16,51 @@ import com.awakekt.awake.scene.controls.GameplayInput
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.runtime.SceneSystemPhase
 
-/** What a scene's systems need from the host and cannot read from the scene itself. */
-class SceneHostServices(
+/**
+ * What a scene's systems need from the host and cannot read from the scene itself. A host that draws
+ * passes its renderer; a game server or a test makes one with [headless], and the systems that draw
+ * are left out.
+ */
+class SceneHostServices private constructor(
+    private val gpu: Renderer?,
     /** The keyboard, pointer and touch state, with what the UI owns of it. Read every frame. */
     val input: () -> GameplayInput,
-    /** What systems create GPU content through, such as particle sprites and shader effects. */
-    val renderer: Renderer,
     /** The physics world the scene's bodies and characters live in; null runs the scene without physics. */
-    val physics: PhysicsWorld? = null,
+    val physics: PhysicsWorld?,
     /** What the scene's capabilities read from the project's files, as [loadSceneContent] reads it. */
-    val content: SceneContent = SceneContent.Empty,
-)
+    val content: SceneContent,
+) {
+    /** Services for a host that draws through [renderer]. */
+    constructor(
+        input: () -> GameplayInput,
+        renderer: Renderer,
+        physics: PhysicsWorld? = null,
+        content: SceneContent = SceneContent.Empty,
+    ) : this(renderer, input, physics, content)
+
+    /**
+     * What systems create GPU content through, such as particle sprites and shader effects. Throws on a
+     * [headless] host, whose plan leaves out every system that would ask; see [hasRenderer].
+     */
+    val renderer: Renderer
+        get() = checkNotNull(gpu) { "This scene host is headless: it has no renderer" }
+
+    /** Whether there is a [renderer]: false on a host made by [headless]. */
+    val hasRenderer: Boolean get() = gpu != null
+
+    /** Makes services for a host with no renderer. */
+    companion object {
+        /**
+         * Services for a host that doesn't draw, such as a game server or a test: the scene's systems
+         * that simulate run, and the ones that draw (particle sprites, shader effects) are left out.
+         */
+        fun headless(
+            input: () -> GameplayInput,
+            physics: PhysicsWorld? = null,
+            content: SceneContent = SceneContent.Empty,
+        ): SceneHostServices = SceneHostServices(null, input, physics, content)
+    }
+}
 
 /**
  * The systems a scene plays with, in the order they run: every [fixed] system on each fixed step,
@@ -88,7 +122,7 @@ fun sceneSystemsFor(
     val fixed = mutableListOf<System>()
     val frame = mutableListOf<System>()
     val releasing = SystemReleases()
-    sceneSystemSpecsFor(scene, hasPhysics = services.physics != null, capabilities).forEach { spec ->
+    sceneSystemSpecsFor(scene, hasPhysics = services.physics != null, capabilities, hasRenderer = services.hasRenderer).forEach { spec ->
         val system = releasing.keep(spec.create(services))
         when (spec.phase) {
             SceneSystemPhase.Fixed -> fixed += system
@@ -114,8 +148,9 @@ internal fun sceneSystemSpecsFor(
     scene: SceneDocument,
     hasPhysics: Boolean,
     capabilities: List<SceneCapability> = emptyList(),
+    hasRenderer: Boolean = true,
 ): List<SceneSystemSpec> {
-    val plan = SceneSystemPlan(hasPhysics)
+    val plan = SceneSystemPlan(hasPhysics, hasRenderer)
     installedCapabilities(capabilities).forEach { it.plan(scene, plan) }
     return plan.specs
 }
