@@ -63,6 +63,10 @@ data class WorldDebugSettings(
     var frustumTargetEntityId: Int? = null,
     /** What the scene shaders draw instead of their lit colour. */
     var renderDebugView: RenderDebugView = RenderDebugView.Off,
-    /** The shadow-map layer [RenderDebugView.ShadowMap] shows: a cascade, or a point light's face. */
+    /**
+     * What a view that shows one of many picks: the shadow-map layer [RenderDebugView.ShadowMap]
+     * shows (a cascade, or a point light's face), or the joint [RenderDebugView.SelectedJointWeight]
+     * shows (an index into the skin's joints).
+     */
     var renderDebugLayer: Int = 0,
 )

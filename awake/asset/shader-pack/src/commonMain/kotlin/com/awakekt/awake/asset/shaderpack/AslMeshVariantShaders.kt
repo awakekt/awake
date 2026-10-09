@@ -10,9 +10,13 @@ import com.awakekt.awake.asset.shaderdsl.AslShaderDefinition
 import com.awakekt.awake.asset.shaderdsl.a
 import com.awakekt.awake.asset.shaderdsl.div
 import com.awakekt.awake.asset.shaderdsl.dot
+import com.awakekt.awake.asset.shaderdsl.AslBlockBuilder
+import com.awakekt.awake.asset.shaderdsl.AslVaryings
+import com.awakekt.awake.asset.shaderdsl.AslVertexBuilder
 import com.awakekt.awake.asset.shaderdsl.fieldsFrom
 import com.awakekt.awake.asset.shaderdsl.inputsFrom
 import com.awakekt.awake.asset.shaderdsl.instanceModelMatrix
+import com.awakekt.awake.asset.shaderdsl.length
 import com.awakekt.awake.asset.shaderdsl.lit
 import com.awakekt.awake.asset.shaderdsl.lt
 import com.awakekt.awake.asset.shaderdsl.max
@@ -60,6 +64,8 @@ private fun meshVariant(name: String, instanced: Boolean, skinned: Boolean): Asl
         val tint = if (skinned && !instanced) handles.value("baseColorFactor") else null
         val glow = if (skinned && !instanced) handles.value("emissiveFactor") else null
         val exposure = handles.value("exposure")
+        // The single-draw skinned block carries what the debug views read; the instanced block doesn't.
+        val debug = if (skinned && !instanced) SkinnedDebugInputs(handles::value) else null
         val displayTransform = sceneDisplayTransform(decodesDisplayReferred = true)
         val storagePalettes = if (skinned && instanced) {
             storageArrayOfArrays(
@@ -79,6 +85,7 @@ private fun meshVariant(name: String, instanced: Boolean, skinned: Boolean): Asl
         val out = varyings("VertexOutput")
         val color by out.varying(if (instanceTints != null) GpuDataShape.Vec4 else GpuDataShape.Vec3, location = 0)
         val normal by out.varying(GpuDataShape.Vec3, location = 1)
+        val debugVaryings = debug?.let { SkinnedDebugVaryings(out, firstLocation = 2) }
 
         vertex {
             val instance = if (storagePalettes != null) instanceIndex() else null
@@ -100,6 +107,7 @@ private fun meshVariant(name: String, instanced: Boolean, skinned: Boolean): Asl
                 )
                 position = let("skinnedPosition", skinMatrix * vec4(inPosition, 1f.lit))
                 outNormal = let("skinnedNormal", skinMatrix * vec4(inNormal, 0f.lit))
+                if (debugVaryings != null) debugVaryings.write(this, entityModel!! * position, joints, weights, debug!!.joint)
             } else {
                 position = vec4(inPosition, 1f.lit)
                 outNormal = inNormal
@@ -131,13 +139,15 @@ private fun meshVariant(name: String, instanced: Boolean, skinned: Boolean): Asl
             val lit = if (lightColor != null) rgb * shade * lightColor.xyz else rgb * shade
             // Colours here are display-referred, lit as stored; the transform decodes them first.
             if (tint != null && glow != null) {
-                colorOutput(vec4(displayTransform.displayReferred(lit * tint.xyz + glow.xyz, exposure.x), tint.w))
+                val shaded = vec4(displayTransform.displayReferred(lit * tint.xyz + glow.xyz, exposure.x), tint.w)
+                colorOutput(skinnedDebugColor(debug!!, debugVaryings!!, n, rgb * tint.xyz, displayTransform, exposure, shaded))
             } else {
                 colorOutput(vec4(displayTransform.displayReferred(lit, exposure.x), if (instanceTints != null) color.w else 1f.lit))
             }
         }
     }
 
+@Suppress("LongMethod")
 private fun skinnedTextured(): AslShaderDefinition = shader("skinned_textured") {
     val u = uniformBlock(
         "Uniforms",
@@ -151,6 +161,7 @@ private fun skinnedTextured(): AslShaderDefinition = shader("skinned_textured") 
     val glow = handles.value("emissiveFactor")
     val pbrFactors = handles.value("pbrFactors")
     val exposure = handles.value("exposure")
+    val debug = SkinnedDebugInputs(handles::value)
     val displayTransform = sceneDisplayTransform(decodesDisplayReferred = true)
 
     val baseColorTexture by texture2d(
@@ -166,6 +177,7 @@ private fun skinnedTextured(): AslShaderDefinition = shader("skinned_textured") 
     val color by out.varying(GpuDataShape.Vec3, location = 0)
     val normal by out.varying(GpuDataShape.Vec3, location = 1)
     val uv by out.varying(GpuDataShape.Vec2, location = 2)
+    val debugVaryings = SkinnedDebugVaryings(out, firstLocation = 3)
 
     vertex {
         val ins = inputsFrom(VertexFormat.PositionNormalColorUvSkin)
@@ -184,6 +196,7 @@ private fun skinnedTextured(): AslShaderDefinition = shader("skinned_textured") 
 
         out.position set (camera * position)
         normal set (handles.value("model") * outNormal).xyz
+        debugVaryings.write(this, handles.value("model") * position, joints, weights, debug.joint)
         color set ins.input(VertexSemantic.Color)
         // Undo createBitmap's OpenGL bottom-up Y flip, as the textured shader does.
         val inUv = ins.input(VertexSemantic.Uv)
@@ -204,9 +217,65 @@ private fun skinnedTextured(): AslShaderDefinition = shader("skinned_textured") 
         val alpha = let("alpha", texColor.a * tint.w)
         // A masked material's cut-out, as the textured shader's; an opaque one's cutoff is 0.
         discardIf(alpha lt pbrFactors.z)
-        colorOutput(vec4(displayTransform.displayReferred(lit, exposure.x), alpha))
+        val shaded = vec4(displayTransform.displayReferred(lit, exposure.x), alpha)
+        colorOutput(skinnedDebugColor(debug, debugVaryings, n, texColor.rgb * color * tint.xyz, displayTransform, exposure, shaded))
     }
 }
+
+/** What the single-draw skinned block holds for the debug views: the scene's sun, the eye, the view and the joint. */
+private class SkinnedDebugInputs(value: (String) -> AslExpr) {
+    val lightDirection = value("lightDirection")
+    val lightColor = value("lightColor")
+    val cameraPosition = value("cameraPosition")
+    val view = value("debugView")
+    val joint = value("debugJoint")
+}
+
+/** The varyings the debug views read, from [firstLocation] on: world position, joint colour and the selected joint's weight. */
+private class SkinnedDebugVaryings(out: AslVaryings, firstLocation: Int) {
+    val worldPosition by out.varying(GpuDataShape.Vec3, location = firstLocation)
+    val jointColor by out.varying(GpuDataShape.Vec3, location = firstLocation + 1)
+    val jointWeight by out.varying(GpuDataShape.Float, location = firstLocation + 2)
+
+    /** Sets them from the posed vertex, [world] being it in the world as a `vec4`. */
+    fun write(stage: AslVertexBuilder, world: AslExpr, joints: AslExpr, weights: AslExpr, joint: AslExpr) = with(stage) {
+        worldPosition set world.xyz
+        jointColor set jointWeightsColor(joints, weights)
+        jointWeight set selectedJointWeight(joints, weights, joint.x)
+    }
+}
+
+/**
+ * [shaded], or the debug view of this skinned fragment: [albedo] is its colour unlit, as stored, and
+ * clay is lit by the scene's sun. These shaders sample no shadow, so clay's sun is unshadowed.
+ */
+@Suppress("LongParameterList") // The fragment's own values; the inputs and varyings are grouped already.
+private fun AslBlockBuilder.skinnedDebugColor(
+    inputs: SkinnedDebugInputs,
+    varyings: SkinnedDebugVaryings,
+    normal: AslExpr,
+    albedo: AslExpr,
+    displayTransform: SceneDisplayTransform,
+    exposure: AslExpr,
+    shaded: AslExpr,
+): AslExpr {
+    val sun = inputs.lightDirection.xyz
+    // A zero direction is no sun: its cosine is 0 rather than a normalized zero.
+    val clayNDotL = let("clayNDotL", max(dot(normal, sun), 0f.lit) / max(length(sun), CLAY_SUN_EPSILON.lit))
+    val surface = DebugSurface(
+        normal = normal,
+        worldPosition = varyings.worldPosition,
+        albedo = albedo,
+        clay = displayTransform.display(clayRadiance(clayNDotL, 1f.lit, inputs.lightColor.xyz, clayAmbient(inputs.lightColor)), exposure.x),
+        jointWeights = varyings.jointColor,
+        selectedJointWeight = varyings.jointWeight,
+    )
+    val out = debugViewColor(inputs.view, inputs.cameraPosition, surface, shaded)
+    // Keep the material's alpha: a masked or blended skin stays so under every view.
+    return vec4(out.xyz, shaded.w)
+}
+
+private const val CLAY_SUN_EPSILON = 0.0001f
 
 /** Shader definition for instanced static mesh rendering with lighting and shadows. */
 val InstancedShader: AslShaderDefinition = meshVariant("instanced", instanced = true, skinned = false)

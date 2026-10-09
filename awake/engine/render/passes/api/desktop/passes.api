@@ -552,11 +552,14 @@ public final class com/awakekt/awake/render/passes/uniforms/PointShadowLight {
 
 public final class com/awakekt/awake/render/passes/uniforms/RenderDebugView : java/lang/Enum {
 	public static final field Albedo Lcom/awakekt/awake/render/passes/uniforms/RenderDebugView;
+	public static final field Clay Lcom/awakekt/awake/render/passes/uniforms/RenderDebugView;
 	public static final field DominantLayer Lcom/awakekt/awake/render/passes/uniforms/RenderDebugView;
+	public static final field JointWeights Lcom/awakekt/awake/render/passes/uniforms/RenderDebugView;
 	public static final field LayerWeights Lcom/awakekt/awake/render/passes/uniforms/RenderDebugView;
 	public static final field Lightmap Lcom/awakekt/awake/render/passes/uniforms/RenderDebugView;
 	public static final field LinearDepth Lcom/awakekt/awake/render/passes/uniforms/RenderDebugView;
 	public static final field Off Lcom/awakekt/awake/render/passes/uniforms/RenderDebugView;
+	public static final field SelectedJointWeight Lcom/awakekt/awake/render/passes/uniforms/RenderDebugView;
 	public static final field ShadowMap Lcom/awakekt/awake/render/passes/uniforms/RenderDebugView;
 	public static final field ShadowVisibility Lcom/awakekt/awake/render/passes/uniforms/RenderDebugView;
 	public static final field WorldNormals Lcom/awakekt/awake/render/passes/uniforms/RenderDebugView;
@@ -747,6 +750,7 @@ public final class com/awakekt/awake/render/renderer/InfiniteGridFieldsKt {
 
 public final class com/awakekt/awake/render/renderer/SkinnedFields {
 	public static final field INSTANCE Lcom/awakekt/awake/render/renderer/SkinnedFields;
+	public final fun getDebugJoint ()Lcom/awakekt/awake/render/renderer/UniformField;
 	public final fun getJointPalette ()Lcom/awakekt/awake/render/renderer/UniformField;
 }
 

@@ -14,7 +14,8 @@ package com.awakekt.awake.render.command
  * @property code The view the scene shaders write; 0 is the lit image.
  * @property depthRange The world distance along the camera's forward axis a linear-depth view
  *   shows as white.
- * @property layer The texture-array layer a layer viewer shows.
+ * @property layer What a view that shows one of many picks: the texture-array layer a layer viewer
+ *   shows, or the joint a joint-weight view shows.
  */
 data class GpuDebugView(
     val code: Int = 0,

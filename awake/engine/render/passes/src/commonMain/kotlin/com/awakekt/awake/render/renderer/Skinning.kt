@@ -30,9 +30,17 @@ object SkinnedFields {
         com.awakekt.awake.core.geometry.GpuDataShape.Mat4,
         MAX_JOINTS,
     )
+
+    /** The joint a joint-weight debug view shows, as `x`: an index into the skin's joints. */
+    val DebugJoint = UniformField("debugJoint", com.awakekt.awake.core.geometry.GpuDataShape.Vec4)
 }
 
-/** Uniform layout for single-draw skinned meshes containing MVP, joint matrices, model matrix, material factors, and exposure. */
+/**
+ * Uniform layout for single-draw skinned meshes: MVP, joint matrices, model matrix, material
+ * factors and exposure, then what the debug views read: the scene's sun, the eye, the view and the
+ * joint a joint view shows. The debug fields come last, so the depth shaders that read this block
+ * keep the offsets they had.
+ */
 val SkinnedUniformLayout = UniformLayout(
     UniformFields.Mvp,
     SkinnedFields.JointPalette,
@@ -41,6 +49,11 @@ val SkinnedUniformLayout = UniformLayout(
     UniformFields.EmissiveFactor,
     UniformFields.PbrFactors,
     UniformFields.Exposure,
+    UniformFields.LightDirection,
+    UniformFields.LightColor,
+    UniformFields.CameraPosition,
+    UniformFields.DebugView,
+    SkinnedFields.DebugJoint,
 )
 
 /**

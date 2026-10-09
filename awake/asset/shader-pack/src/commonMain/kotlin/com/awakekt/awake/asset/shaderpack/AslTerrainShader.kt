@@ -480,6 +480,8 @@ private fun terrainShader(clipSpace: ClipSpace, paged: Boolean): AslShaderDefini
             albedo = vec3(base, base, base),
             shadow = shadow,
             shadowCascade = shadows.shadowCascade(terrain.worldPosition),
+            // Terrain's sun has no colour of its own: what the ambient leaves, as it lights.
+            clay = displayTransform.display(clayRadiance(nDotL, shadow, vec3(1f.lit - ambient), ambient), terrain.exposure.x),
         )
         val shaded = vec4(displayTransform.displayReferred(vec3(base, base, base) * lighting, terrain.exposure.x), 1f.lit)
         colorOutput(debugViewColor(terrain.debugView, terrain.cascades.cameraPosition, surface, shaded))

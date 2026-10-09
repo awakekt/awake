@@ -305,7 +305,16 @@ private fun textured(clipSpace: ClipSpace, instanced: Boolean = false): AslShade
             applyFog(displayTransform.display(emitted, exposure.x), worldPos, fogTarget),
             baseColorSample.a * baseColorFactor.a,
         )
-        val surface = DebugSurface(n, worldPos, displayTransform.encoded(albedo), shadow = shadowFactor, shadowCascade = cascades.shadowCascade(worldPos))
+        // Clay lights the geometric normal: the normal map is a texture too.
+        val clayNDotL = let("clayNDotL", max(dot(normalize(normal), l), 0f.lit))
+        val surface = DebugSurface(
+            n,
+            worldPos,
+            displayTransform.encoded(albedo),
+            shadow = shadowFactor,
+            shadowCascade = cascades.shadowCascade(worldPos),
+            clay = displayTransform.display(clayRadiance(clayNDotL, shadowFactor, lightColor.xyz, clayAmbient(lightColor)), exposure.x),
+        )
         // A masked material's cut-out, last: after it no derivative may follow. An opaque material's
         // cutoff is 0, so its texture alpha is ignored.
         discardIf(baseColorSample.a * baseColorFactor.a lt pbrFactors.z)

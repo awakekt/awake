@@ -50,6 +50,27 @@ enum class RenderDebugView(val code: Int) {
 
     /** One layer of the shadow map's depth array; needs `shadowMapViewContentFeature`. */
     ShadowMap(8),
+
+    /**
+     * Every lit surface in one neutral grey, lit by the scene's sun, its shadow and the ambient,
+     * with no texture, colour or material and the geometric normal, so shape reads on its own. A
+     * textured surface and an untextured one draw the same clay.
+     */
+    Clay(9),
+
+    /**
+     * A skinned mesh's joints, each in its own colour, summed by each vertex's weights. Smooth
+     * skinning blends between colours; a vertex bound rigidly to one joint shows a hard seam, and
+     * weights that don't sum to one draw darker or brighter. Other surfaces draw [NO_DATA_GREY].
+     */
+    JointWeights(10),
+
+    /**
+     * How much the joint `WorldDebugSettings.renderDebugLayer` names moves each vertex of a skinned
+     * mesh, from blue (not at all) through green to red (fully): a weight paint view. Drawn by the
+     * single-draw skinned shaders; other surfaces draw [NO_DATA_GREY].
+     */
+    SelectedJointWeight(11),
 }
 
 /** What a surface draws for a [RenderDebugView] it has no data for. */

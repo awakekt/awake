@@ -26,6 +26,7 @@ import com.awakekt.awake.render.passes.uniforms.directionalLightFloats
 import com.awakekt.awake.render.passes.uniforms.drawUniformPlan
 import com.awakekt.awake.render.passes.uniforms.gpuLitShadowUniforms
 import com.awakekt.awake.render.passes.uniforms.litUniforms
+import com.awakekt.awake.render.passes.uniforms.putDebugView
 import com.awakekt.awake.render.passes.uniforms.texturedUniforms
 import com.awakekt.awake.render.pipeline.InstancedDrawKind
 import com.awakekt.awake.render.renderer.SkinnedFields
@@ -102,7 +103,8 @@ fun RenderDrawCommand.uniformFloats(
             .put(extraUniformFloats, SpriteFields.UvTransform, SpriteFields.Tint)
             .build()
 
-        DrawUniformPlan.Skinned -> skinnedUniforms(mvp, model, extraUniformFloats, coverageCutoff, exposure)
+        DrawUniformPlan.Skinned ->
+            skinnedUniforms(mvp, model, extraUniformFloats, coverageCutoff, exposure, lightPayload, cameraEye, debugView, cameraForward)
 
         DrawUniformPlan.TexturedPbr -> texturedUniforms(
             mvp = mvp,
@@ -223,12 +225,34 @@ fun RenderDrawCommand.instancedUniformFloats(
     }
 }
 
+/** The sun's direction and colour from the frame's [lightPayload], or none when a draw was packed without one. */
+private fun UniformWriter.putSun(lightPayload: FloatArray): UniformWriter =
+    if (lightPayload.size >= SUN_FLOATS) {
+        put(lightPayload, UniformFields.LightDirection, UniformFields.LightColor)
+    } else {
+        put(UniformFields.LightDirection, 0f, 0f, 0f, 0f).put(UniformFields.LightColor, 0f, 0f, 0f, 0f)
+    }
+
+private val SUN_FLOATS = UniformFields.LightDirection.floats + UniformFields.LightColor.floats
+
 /**
  * A skinned draw's block: its palette, tinted by its material's factors when [extras] carries them
  * as [SkinnedMaterialLayout], untinted (glTF's default factors) when it is a palette alone, and the
- * [alphaCutoff] a masked one is cut out below.
+ * [alphaCutoff] a masked one is cut out below; then the sun from [lightPayload], the eye and the
+ * [debugView] the debug views read.
  */
-private fun skinnedUniforms(mvp: Mat4, model: Mat4, extras: FloatArray, alphaCutoff: Float, exposure: Float): FloatArray {
+@Suppress("LongParameterList") // One argument per draw input the block holds.
+private fun skinnedUniforms(
+    mvp: Mat4,
+    model: Mat4,
+    extras: FloatArray,
+    alphaCutoff: Float,
+    exposure: Float,
+    lightPayload: FloatArray,
+    cameraEye: Vec3f,
+    debugView: GpuDebugView,
+    cameraForward: Vec3f,
+): FloatArray {
     val writer = UniformWriter(SkinnedUniformLayout).put(mvp.data, UniformFields.Mvp)
     return if (extras.size == SkinnedMaterialLayout.total) {
         writer
@@ -244,5 +268,9 @@ private fun skinnedUniforms(mvp: Mat4, model: Mat4, extras: FloatArray, alphaCut
             .put(UniformFields.EmissiveFactor, DEFAULT_EMISSIVE_FACTOR)
     }.put(UniformFields.PbrFactors, 0f, 0f, alphaCutoff, 0f)
         .put(UniformFields.Exposure, exposure, 0f, 0f, 0f)
+        .putSun(lightPayload)
+        .put(UniformFields.CameraPosition, cameraEye)
+        .putDebugView(debugView, cameraForward)
+        .put(SkinnedFields.DebugJoint, debugView.layer.toFloat(), 0f, 0f, 0f)
         .build()
 }
