@@ -55,9 +55,15 @@ Before promoting game or sample code into Awake, answer all questions:
 
 Awake ships mechanisms; games and templates decide how they feel.
 
-- Gameplay tuning (move and jump speed, gravity, camera follow distance and pitch, input bindings,
-  on-screen control layout) is never a constant in Awake code. It is a field on a scene component
-  with a neutral default, and the template or game authors the value in scene data.
+- Gameplay tuning (move and jump speed, gravity, camera follow distance and pitch, on-screen
+  control layout) is never a constant in Awake code. It is a field on a scene component with a
+  neutral default, and the template or game authors the value in scene data.
+- Input is actions, not keys. A system reads named actions; which keys, buttons or touch controls
+  trigger each, and whether it fires on press, while held or as a toggle, is one binding table in
+  scene data. A new verb is a new action in that table, never a key constant or a per-verb key or
+  mode field on a gameplay component. The player's fixed move and jump keys and
+  `movement_control`'s `runKey` and `runMode` predate this and become actions in
+  [#587](https://github.com/awakekt/awake/issues/587).
 - Movement that needs ground, slopes or collisions goes through the physics character controller
   binding. A hand-rolled gravity or ground-snap system is game code.
 - Template and sample art (an arena floor, demo materials, placeholder characters) is a project
@@ -83,6 +89,7 @@ Awake ships mechanisms; games and templates decide how they feel.
 | A water look (ripples, shoreline, foam) | Consuming pack | Authored world policy; Awake supplies the surface-shader seam, scene depth and time. |
 | River, lake and flow-painting tools | Studio Pro | Commercial authoring workflow over pack or Awake data. |
 | Third-person camera distance and pitch as constants in a player module | Scene data | Feel is authored; Awake binds a camera-rig component. |
+| Toggled running as `runKey` and `runMode` fields on the movement component | An input action bound in scene data | A field per verb grows Awake into one game's control scheme; a binding table lets each game add its own. |
 | Jump by gravity and a fixed floor height | Game or template code | Real movement goes through the physics character controller. |
 | A template's checkered arena mesh as an engine built-in | Template asset | Template art, not a neutral primitive. |
 
