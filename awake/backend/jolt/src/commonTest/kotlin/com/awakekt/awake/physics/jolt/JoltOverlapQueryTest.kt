@@ -71,6 +71,32 @@ class JoltOverlapQueryTest {
         }
     }
 
+    /**
+     * A callback may query the world again, as game code reacting to an overlap does. The inner
+     * queries must not disturb the results the outer one is still reporting. The inner overlap finds
+     * two other bodies, so an outer query reading a collector the inner one refilled reports them.
+     */
+    @Test
+    fun aCallbackThatQueriesAgainLeavesTheOuterResultsIntact() = runTest {
+        world { world ->
+            val near = world.box(at = Vec3f(1f, 0f, 0f))
+            val far = world.box(at = Vec3f(-1f, 0f, 0f))
+            val elsewhere = setOf(world.box(at = Vec3f(20f, 0f, 0f)), world.box(at = Vec3f(22f, 0f, 0f)))
+            val outer = mutableListOf<BodyHandle>()
+            val inner = mutableListOf<Set<BodyHandle>>()
+
+            world.overlapShape(SphereShape(2f), Vec3f(0f, 0f, 0f)) { body ->
+                outer += body
+                inner += world.overlapping(Vec3f(21f, 0f, 0f), radius = 1f).toSet()
+                world.shapeCast(SphereShape(0.25f), Vec3f(20f, 5f, 0f), Vec3f(20f, -5f, 0f))
+            }
+
+            assertEquals(2, outer.size, "outer reported $outer")
+            assertEquals(setOf(near, far), outer.toSet(), "outer found $outer")
+            assertEquals(listOf(elsewhere, elsewhere), inner, "each inner query found $inner")
+        }
+    }
+
     @Test
     fun anOverlapWithNothingInItReportsNothing() = runTest {
         world { world ->
