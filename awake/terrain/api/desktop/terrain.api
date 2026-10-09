@@ -13,6 +13,7 @@ public final class com/awakekt/awake/terrain/PagedTerrain : com/awakekt/awake/re
 	public final fun getCapacity ()I
 	public final fun getDirtyCoords ()Ljava/util/Set;
 	public final fun getFallbackDirty ()Z
+	public final fun getFallbackRevision ()J
 	public final fun getFallbackTextures ()Ljava/util/Map;
 	public final fun getHeights ()Lcom/awakekt/awake/asset/terrain/PagedHeightmap;
 	public final fun getLayout ()Lcom/awakekt/awake/asset/terrain/TerrainPageLayout;
@@ -21,13 +22,18 @@ public final class com/awakekt/awake/terrain/PagedTerrain : com/awakekt/awake/re
 	public final fun getOriginY ()D
 	public final fun getOriginZ ()D
 	public final fun getPageTextureTemplates ()Ljava/util/Map;
+	public final fun getResidencyRevision ()J
 	public final fun getResidentCoords ()Ljava/util/Set;
+	public final fun getResidentPages ()Ljava/util/Collection;
 	public final fun getSurfaceFallbackDirty ()Z
+	public final fun getSurfaceFallbackRevision ()J
+	public final fun getSurfaceFallbacks ()Ljava/util/Map;
 	public final fun getTextureBytesPerSlot ()J
 	public final fun initialTextures ()Ljava/util/Map;
 	public final fun isUploaded (Lcom/awakekt/awake/asset/terrain/TerrainPageCoord;I)Z
 	public final fun page (Lcom/awakekt/awake/asset/terrain/TerrainPageCoord;)Lcom/awakekt/awake/terrain/TerrainPage;
 	public final fun put (Lcom/awakekt/awake/asset/terrain/TerrainPageCoord;Lcom/awakekt/awake/terrain/TerrainPage;)Z
+	public final fun resident (Lcom/awakekt/awake/asset/terrain/TerrainPageCoord;)Lcom/awakekt/awake/terrain/ResidentTerrainPage;
 	public final fun saveSnapshot (Lcom/awakekt/awake/asset/terrain/TerrainPageCoord;)Lcom/awakekt/awake/terrain/TerrainPageSave;
 	public final fun setOriginX (D)V
 	public final fun setOriginY (D)V
@@ -40,6 +46,15 @@ public final class com/awakekt/awake/terrain/PagedTerrain : com/awakekt/awake/re
 public final class com/awakekt/awake/terrain/PagedTerrainKt {
 	public static final field TERRAIN_HEIGHT_PAGES_BINDING I
 	public static final field TERRAIN_PAGE_TABLE_BINDING I
+}
+
+public final class com/awakekt/awake/terrain/ResidentTerrainPage {
+	public final fun getCoord ()Lcom/awakekt/awake/asset/terrain/TerrainPageCoord;
+	public final fun getHeightRevision ()J
+	public final fun getLayer ()I
+	public final fun getPage ()Lcom/awakekt/awake/terrain/TerrainPage;
+	public final fun getPlacedRevision ()J
+	public final fun getTextureRevisions ()Ljava/util/Map;
 }
 
 public final class com/awakekt/awake/terrain/TerrainPage {

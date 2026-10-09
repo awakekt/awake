@@ -18,7 +18,9 @@ implementation(project(":awake:terrain"))
   stage, and the textures for its bindings.
 - `TerrainPageIndex` -- a versioned sparse index with per-cell raw heights, control/lightmap paths,
   a shared palette and mandatory coarse fallback.
-- `PagedTerrain` -- bounded mutable pages, edit/save revisions and frame-slot upload journals.
+- `PagedTerrain` -- bounded mutable pages and edit/save revisions, exposed to an uploader through
+  `residentPages` and its revision counters. `PagedTerrainUploads` in `asset:shader-pack` publishes
+  them to the GPU.
 - `TerrainPageStreamer` -- bounded asynchronous reads with cancellation generations and observable
   missing/failed cells. All residency mutations happen on the owner thread.
 

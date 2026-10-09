@@ -91,6 +91,8 @@ class PagedTerrainTest {
         assertTrue(terrain.put(left, TerrainPage(RawHeightmapCodec.decode(written, 5, 5, Vec3f(1f, 1f, 1f), minElevation = 0f, maxElevation = 10f))))
     }
 
+    // Pins the deprecated journal until its removal; PagedTerrainUploadsTest covers the replacement.
+    @Suppress("DEPRECATION")
     @Test fun partialUploadsPublishOnlyCompleteCellsAndEveryFrameSlotCatchesUp() {
         val terrain = terrain(uploadBytes = 156) // 100-byte page + 16-byte table + 40-byte fallback.
         terrain.put(TerrainPageCoord(-1, 0), page())

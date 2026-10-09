@@ -36,8 +36,6 @@ import com.awakekt.awake.asset.shaderdsl.z
 import com.awakekt.awake.core.geometry.GpuDataShape
 import com.awakekt.awake.render.renderer.UniformField
 import com.awakekt.awake.render.renderer.UniformLayout
-import com.awakekt.awake.terrain.TERRAIN_HEIGHT_PAGES_BINDING
-import com.awakekt.awake.terrain.TERRAIN_PAGE_TABLE_BINDING
 
 /** Appends page geometry to the existing lit/cascade uniform ABI. */
 object PagedTerrainUniformLayout {
