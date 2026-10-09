@@ -15,8 +15,15 @@ import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.engine.bootstrap.dsl.app
 import com.awakekt.awake.engine.platform.dsl.requireService
+import com.awakekt.awake.scene.binding.SceneComponentRegistry
+import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.scene.controls.GameplayInput
+import com.awakekt.awake.scene.controls.input.inputActions
 import com.awakekt.awake.scene.controls.input.keybindingProfile
+import com.awakekt.awake.scene.controls.movement.PlayerInputSystem
+import com.awakekt.awake.scene.controls.movement.registerControls
+import com.awakekt.awake.scene.document.SceneLoader
+import com.awakekt.awake.scene.runtime.DefaultSceneComponentResolvers
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -48,6 +55,20 @@ class WalkSystem(private val input: () -> GameplayInput) : System {
     }
 }
 // --8<-- [end:walk-system]
+
+// --8<-- [start:interact-system]
+class Interactions {
+    var count = 0
+}
+
+class InteractSystem : System {
+    override fun update(world: World, delta: Float) {
+        val actions = world.inputActions() ?: return
+        if (!actions.wasPressed("interact")) return
+        world.queryEach<Interactions> { _, interactions -> interactions.count += 1 }
+    }
+}
+// --8<-- [end:interact-system]
 
 // --8<-- [start:actions]
 enum class Action { Forward, Back, Left, Right, Jump }
@@ -139,6 +160,31 @@ class InputDocsSampleTest {
         assertTrue(GameplayInput(snapshot, InputOwnership()).isDown(Key.W))
         assertFalse(GameplayInput(snapshot, InputOwnership(isTextInputFocused = true)).isDown(Key.W))
         assertTrue(GameplayInput(snapshot, InputOwnership(isTextInputFocused = true)).keysOwnedByUi)
+    }
+
+    @Test
+    fun aSystemReadsAnActionTheSceneBinds() {
+        DefaultSceneComponentResolvers.install()
+        val registry = SceneComponentRegistry().registerControls()
+        val scene = SceneLoader.decode(
+            """{ "version": 1, "name": "harbor-town", "nodes": [ { "name": "Controls", "components": [
+                { "component": "input_actions", "actions": [ { "type": "button", "name": "interact", "keys": ["E"], "trigger": "Press" } ] }
+            ] } ] }""",
+        )
+        val world = World()
+        scene.instantiate(world = world, componentRegistry = registry)
+        val interactions = Interactions().also { world.add(world.create(), it) }
+        val input = Input().apply { setKeyDown(Key.E, true) }
+        val players = PlayerInputSystem { GameplayInput(input.currentSnapshot, InputOwnership()) }
+
+        input.updateSnapshot()
+        players.update(world, 1f / 60f)
+        InteractSystem().update(world, 1f / 60f)
+        input.updateSnapshot()
+        players.update(world, 1f / 60f)
+        InteractSystem().update(world, 1f / 60f)
+
+        assertEquals(1, interactions.count, "a press interacts once however long E is held")
     }
 
     @Test

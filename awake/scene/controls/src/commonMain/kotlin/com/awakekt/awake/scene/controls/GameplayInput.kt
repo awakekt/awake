@@ -7,6 +7,7 @@ package com.awakekt.awake.scene.controls
 
 import com.awakekt.awake.compose.ui.platform.InputOwnership
 import com.awakekt.awake.compose.ui.platform.blocksGameplayKeys
+import com.awakekt.awake.core.input.ActionInputSource
 import com.awakekt.awake.core.input.InputSnapshot
 import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.input.PointerButton
@@ -29,13 +30,15 @@ import com.awakekt.awake.core.input.ScrollSource
  * has focus stays legitimate. That asymmetry is deliberate -- `CameraSystem` carried the comment
  * saying so -- and it survives here rather than being tidied into one flag.
  *
+ * It is also what a scene's input actions read keys and pointer buttons from, with the same rules.
+ *
  * @param snapshot Raw input state snapshot captured this frame.
  * @param claimed UI input ownership state for the current frame.
  */
 class GameplayInput(
     private val snapshot: InputSnapshot,
     private val claimed: InputOwnership,
-) {
+) : ActionInputSource {
     /** False while the UI holds the pointer or a modal is open, so a click on a dialog or backdrop is not a world drag. */
     val pointerDown: Boolean get() = snapshot.pointerDown && !claimed.isCaptured && !claimed.isModalOpen
 
@@ -61,10 +64,14 @@ class GameplayInput(
      * Reading `snapshot.buttonsDown` directly would skip that and pan the camera from under a UI
      * the user was interacting with.
      */
-    fun isDown(button: PointerButton): Boolean = !claimed.isCaptured && !claimed.isModalOpen && snapshot.isDown(button)
+    override fun isDown(button: PointerButton): Boolean = !claimed.isCaptured && !claimed.isModalOpen && snapshot.isDown(button)
+
+    /** Whether [button] was pressed this frame for the world, gated like [isDown]. */
+    override fun wasPressed(button: PointerButton): Boolean =
+        !claimed.isCaptured && !claimed.isModalOpen && snapshot.wasPressed(button)
 
     /** False while the UI owns the keyboard, whatever the key. */
-    fun isDown(key: Key): Boolean = !claimed.blocksGameplayKeys && snapshot.keysDown.contains(key)
+    override fun isDown(key: Key): Boolean = !claimed.blocksGameplayKeys && snapshot.keysDown.contains(key)
 
     /**
      * Returns whether [key] was newly pressed this frame, false while the UI owns the keyboard.
@@ -72,7 +79,7 @@ class GameplayInput(
      * @param key The key code to check.
      * @return `true` if the key transitioned from released to pressed this frame and UI does not own the keyboard.
      */
-    fun wasPressed(key: Key): Boolean = !claimed.blocksGameplayKeys && snapshot.wasPressed(key)
+    override fun wasPressed(key: Key): Boolean = !claimed.blocksGameplayKeys && snapshot.wasPressed(key)
 
     /**
      * Whether the UI has the keyboard.

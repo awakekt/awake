@@ -9,8 +9,9 @@
 
 Every app has one `Input`. The platform host writes key and pointer events into it as they arrive,
 and once per frame takes an `InputSnapshot`: a fixed picture of that frame that every system reads.
-Input is code-only; there is no input component in a scene document. For keys that move a player,
-see [Cameras and controls](cameras-and-controls.md).
+A scene names its actions, and the keys behind them, in its `input_actions` component; see
+[Bind actions in the scene](#bind-actions-in-the-scene). For the player's movement, see
+[Cameras and controls](cameras-and-controls.md).
 
 ## Read a snapshot
 
@@ -55,10 +56,39 @@ answers `false` for anything the UI owns:
 `GameplayInput` is in `com.awakekt.awake.scene:controls`. The built-in camera and player systems
 already read input through it.
 
+## Bind actions in the scene
+
+A scene's `input_actions` component names its actions and what triggers each: keys, pointer buttons
+and on-screen controls. Systems then ask for an action and never for a key, so a game rebinds its
+controls in data:
+
+```json title="controls.scene.json"
+{ "name": "Controls", "components": [
+  { "component": "input_actions", "actions": [
+    { "type": "button", "name": "interact", "keys": ["E"], "trigger": "Press" },
+    { "type": "button", "name": "run", "keys": ["X"], "trigger": "Toggle", "startsOn": true }
+  ] }
+] }
+```
+
+`PlayerInputSystem` reads the keys into the actions every frame, and a played project's
+`canvas_element` controls add to them. A system of your own reads them from the world with
+`world.inputActions()`:
+
+```kotlin title="Kotlin"
+--8<-- "awake/scene/authoring/src/desktopTest/kotlin/com/awakekt/awake/scene/authoring/InputDocsSampleTest.kt:interact-system"
+```
+
+`isActive` says whether a button is active as its `trigger` says, `wasPressed` whether one was
+pressed this frame, and `axisX` and `axisY` where an axis points. The player's `move`, `jump` and
+`run` are there whether or not the scene binds them: a scene that does not gets W A S D or the
+arrows, Space and Shift held. Every field is in the
+[reference](../reference/scene-document-components.md#input_actions).
+
 ## Bind actions to keys
 
-A `KeybindingProfile` maps your own actions to a primary and an optional secondary key, and can be
-rebound at runtime:
+Without a scene, a `KeybindingProfile` maps your own actions to a primary and an optional secondary
+key, and can be rebound at runtime:
 
 ```kotlin title="Kotlin"
 --8<-- "awake/scene/authoring/src/desktopTest/kotlin/com/awakekt/awake/scene/authoring/InputDocsSampleTest.kt:actions"

@@ -89,8 +89,10 @@ hit area is exactly its `width` by `height`.
 A `Joystick` knob follows a drag up to the pad's edge and springs back on release. A `touchOnly`
 element is drawn only when `SceneCanvas(world, showTouchControls = true)` is called, or when
 `SceneAppLifecycleRuntime.showTouchControls` is `true`. When a project is played with
-`awake:project:runtime`, `CanvasActionSystem` steers the player with a `move` joystick and jumps
-while a `jump` button is held.
+`awake:project:runtime`, an element whose `action` names one of the scene's
+[input actions](input.md#bind-actions-in-the-scene) adds to it: a `move` joystick steers the player,
+a `jump` button jumps while held and a `run` button runs, as the keys do, and a button for an action of
+your own holds and presses that action.
 
 If your app runs its own Compose host, draw the canvas yourself:
 

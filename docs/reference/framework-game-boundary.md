@@ -61,9 +61,7 @@ Awake ships mechanisms; games and templates decide how they feel.
 - Input is actions, not keys. A system reads named actions; which keys, buttons or touch controls
   trigger each, and whether it fires on press, while held or as a toggle, is one binding table in
   scene data. A new verb is a new action in that table, never a key constant or a per-verb key or
-  mode field on a gameplay component. The player's fixed move and jump keys and
-  `movement_control`'s `runKey` and `runMode` predate this and become actions in
-  [#587](https://github.com/awakekt/awake/issues/587).
+  mode field on a gameplay component. A scene binds them in `input_actions`.
 - Movement that needs ground, slopes or collisions goes through the physics character controller
   binding. A hand-rolled gravity or ground-snap system is game code.
 - Template and sample art (an arena floor, demo materials, placeholder characters) is a project

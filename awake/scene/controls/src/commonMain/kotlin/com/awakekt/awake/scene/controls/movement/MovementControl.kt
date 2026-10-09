@@ -5,7 +5,6 @@
  */
 package com.awakekt.awake.scene.controls.movement
 
-import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.ecs.Poolable
 import com.awakekt.awake.scene.core.transform.Transform
 import kotlin.math.PI
@@ -27,16 +26,6 @@ enum class MovementDriver {
      * leaves it alone.
      */
     Agent,
-}
-
-/** How the player's run key runs. */
-@Serializable
-enum class RunMode {
-    /** Runs while the key is held, and walks otherwise. */
-    Hold,
-
-    /** Starts running; each press of the key switches between walking and running. */
-    Toggle,
 }
 
 /**
@@ -68,17 +57,11 @@ class MovementControl : Poolable {
     /** Whether a jump is wanted this frame. A character controller decides whether it can jump. */
     var jump: Boolean = false
 
-    /** Whether the player asks to run this frame; [runSpeed] then replaces [speed]. */
+    /** Whether the player asks to run this frame, as the `run` input action says; [runSpeed] then replaces [speed]. */
     var run: Boolean = false
 
     /** Units per second while [run] is held. Null keeps [speed]. */
     var runSpeed: Float? = null
-
-    /** Whether the player holds [runKey] to run, or presses it to switch between walking and running. */
-    var runMode: RunMode = RunMode.Hold
-
-    /** The key the player runs with, as [runMode] says. */
-    var runKey: Key = Key.Shift
 
     /** Radians per second the entity turns to face where it moves. 0 leaves its facing alone. */
     var turnSpeed: Float = 0f
@@ -93,8 +76,6 @@ class MovementControl : Poolable {
         jump = false
         run = false
         runSpeed = null
-        runMode = RunMode.Hold
-        runKey = Key.Shift
         turnSpeed = 0f
     }
 

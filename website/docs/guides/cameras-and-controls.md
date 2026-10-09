@@ -65,7 +65,7 @@ the camera that takes input with `ActiveCamera`:
 
 | Helper in `scene { }` | System | Reads | Writes |
 | --- | --- | --- | --- |
-| `playerInputSystem()` | `PlayerInputSystem` | W A S D or the arrow keys, Space | `MovementControl.moveX`, `moveZ`, `jump` on every entity that has one |
+| `playerInputSystem()` | `PlayerInputSystem` | The scene's `move`, `jump` and `run` [input actions](input.md#bind-actions-in-the-scene): by default W A S D or the arrow keys, Space, and Shift held | `MovementControl.moveX`, `moveZ`, `jump`, `run` on every entity whose `driver` is `Player` |
 | `matrixRelativeMovementSystem(speed = 5f)` | `MatrixRelativeMovementSystem` | `MovementControl`, the active camera's view | `Transform.position`, relative to where the camera looks |
 | `cameraSystem()` | `CameraSystem` | mouse drag and scroll, the rig's target | the `Camera` lens of the entity tagged `ActiveCamera` |
 | `cameraInputSystem()` | `CameraInputSystem` | F1, F2, F4, F5 | the active rig's `mode` |

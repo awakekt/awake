@@ -108,8 +108,9 @@ class SceneSystemSet internal constructor(
  * [capabilities] in order, each adding what [scene] uses of it. A host that runs a scene in a world of
  * its own, as an editor's Play does, runs these instead of keeping a list of its own, so it gains a
  * system when Core does:
- * - `movement_control`: keyboard intent, moved by physics when the entity has a
- *   `character_controller` and straight through the world when it doesn't
+ * - `movement_control`, `input_actions` or a `canvas_element` with an action: the input actions, read
+ *   from the keys and pointer buttons; a `movement_control` follows them, moved by physics when the
+ *   entity has a `character_controller` and straight through the world when it doesn't
  * - `physics_body`, `character_controller` and a `terrain` collider: the physics step, the
  *   character controller and the terrain collider, when [SceneHostServices.physics] is given; a `mesh`
  *   collision shape adds [com.awakekt.awake.scene.physics.MeshColliderSystem], which reads the
@@ -125,7 +126,7 @@ class SceneSystemSet internal constructor(
  * - `paged_terrain`: its cells streamed around the primary camera from the index and shared images in
  *   [SceneHostServices.content], drawn through [SceneHostServices.renderer] when it takes content
  *   features, with collision cells when it is a `collider` and [SceneHostServices.physics] is given
- * - `canvas_element`s with an action: [CanvasActionSystem]
+ * - `canvas_element`s with an action: [CanvasActionSystem], which adds them to the input actions
  * - `patrol`, `chase` and `flee`, with a `navigation` component to route them over: the behaviours and
  *   the system that answers their route requests
  * - skinned glTF animation, always

@@ -12,7 +12,6 @@ public final class com/awakekt/awake/project/runtime/CanvasActionSystem : com/aw
 public final class com/awakekt/awake/project/runtime/CanvasActionSystemKt {
 	public static final field JUMP_ACTION Ljava/lang/String;
 	public static final field MOVE_ACTION Ljava/lang/String;
-	public static final field RUN_ACTION Ljava/lang/String;
 }
 
 public final class com/awakekt/awake/project/runtime/CollisionMeshesKt {

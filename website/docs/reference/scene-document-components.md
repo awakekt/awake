@@ -24,6 +24,7 @@ registers it.
 | [`day_cycle`](#day_cycle) | `DayCycle` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Sky and fog](../guides/sky-and-fog.md#day-and-night) |
 | [`flee`](#flee) | `FleeBehavior` | `com.awakekt.awake.scene:ai` | `registerAiBehaviors()` | [AI](../guides/ai.md) |
 | [`fog`](#fog) | `Fog` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Sky and fog](../guides/sky-and-fog.md) |
+| [`input_actions`](#input_actions) | `InputActions` | `com.awakekt.awake.scene:controls` | `registerControls()` | [Cameras and controls](../guides/cameras-and-controls.md#input-actions) |
 | [`keyframe_animation`](#keyframe_animation) | `KeyframeAnimation` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Animation](../guides/animation.md) |
 | [`light`](#light) | `Light` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Lights and shadows](../guides/lights-and-shadows.md) |
 | [`locomotion_animation`](#locomotion_animation) | `LocomotionAnimation` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Animation](../guides/animation.md) |
@@ -54,12 +55,12 @@ registers it.
 | --- | --- | --- |
 | Built in | `com.awakekt.awake.scene:document` | `custom`, `prefab_link` |
 | `DefaultSceneComponentResolvers.install()` | `com.awakekt.awake.scene:runtime` | `ambient_light`, `camera`, `canvas_element`, `day_cycle`, `fog`, `keyframe_animation`, `light`, `locomotion_animation`, `mesh_renderer`, `particle_emitter`, `pbr_material`, `shader_effect`, `skybox`, `spin_control`, `static_transform`, `tag`, `terrain`, `tone_mapping`. `SceneManager` and `SceneAppLifecycleRuntime` call it for you. |
-| `SceneComponentRegistry.registerControls()` | `com.awakekt.awake.scene:controls` | `movement_control`, `camera_rig` |
+| `SceneComponentRegistry.registerControls()` | `com.awakekt.awake.scene:controls` | `movement_control`, `camera_rig`, `input_actions` |
 | `SceneComponentRegistry.registerPhysics()` | `com.awakekt.awake.scene:physics` | `physics_body` |
 | `SceneComponentRegistry.registerCharacter()` | `com.awakekt.awake.scene:character` | `character_controller` |
 | `SceneComponentRegistry.registerAiBehaviors()` | `com.awakekt.awake.scene:ai` | `patrol`, `chase`, `flee`, `navigation` |
 | `SceneComponentRegistry.registerBlueprints()` | `com.awakekt.awake.scene:blueprint` | `blueprint` |
-| `loadProject(...)` | `com.awakekt.awake.project:runtime` | The defaults, plus `movement_control`, `camera_rig`, `physics_body`, `character_controller`, `patrol`, `chase`, `flee`, `navigation`, and the components of the [capabilities](../guides/scene-capabilities.md) passed to it |
+| `loadProject(...)` | `com.awakekt.awake.project:runtime` | The defaults, plus `movement_control`, `camera_rig`, `input_actions`, `physics_body`, `character_controller`, `patrol`, `chase`, `flee`, `navigation`, and the components of the [capabilities](../guides/scene-capabilities.md) passed to it |
 
 ## `ambient_light`
 
@@ -134,7 +135,7 @@ Screen-space UI drawn over the game. Sizes and offsets are in dp. `SceneCanvasEl
 | `value` | number | `1` | A `Bar`'s fill, from 0 to 1. |
 | `order` | integer | `0` | Draw order. Lowest draws first. |
 | `visible` | boolean | `true` | Whether the element is drawn. |
-| `action` | string | `""` | Name of what the element does for the game, such as `jump`. The game decides what each name means. A played project gives three their meaning: a `move` Joystick steers the player, a held `jump` Button jumps, and a `run` Button runs, held or pressed to switch as `movement_control.runMode` says. |
+| `action` | string | `""` | Name of what the element does for the game, such as `jump`. The game decides what each name means. In a played project, an element naming one of the scene's [input actions](#input_actions) adds to it, and its presses are used up: a Joystick steers an axis such as `move`, and a Button holds and presses a button such as `jump` or `run`. Any other name is left for the game to read. |
 | `touchOnly` | boolean | `false` | Draw only where touch controls are shown. |
 
 ## `character_controller`
@@ -236,6 +237,42 @@ Distance fog. `SceneFog`.
 | `colorG` | number | none | Legacy green channel. |
 | `colorB` | number | none | Legacy blue channel. |
 
+## `input_actions`
+
+The scene's input actions and what triggers each, so a system reads an action such as `jump` and never
+a key. It becomes an `InputActions` (`awake:core:input`) on its entity, which code reads with
+`world.inputActions()`. A player's `movement_control` follows three: `move` steers, `jump` jumps and
+`run` runs. A scene that binds nothing gets the defaults: W A S D or the arrows move, Space jumps, and
+Shift runs while held. An action named like a default replaces it, and the other defaults stay. Put it
+on any node; only the first in a scene is used. `SceneInputActions`.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `actions` | array of [input actions](#input-action) | `[]` | The scene's own actions and the defaults it rebinds. Each name is letters, digits, `_`, `.` and `-`, starting with a letter, digit or `_`, and is used once. A key triggers one action, counting the defaults the scene keeps. |
+
+### Input action
+
+An entry of `actions`, named by its `type` key.
+
+| `type` | Fields | Defaults |
+| --- | --- | --- |
+| `button` | `name` (string), `keys` (array of key names), `buttons` (array of `Primary` · `Secondary` · `Middle` · `Back` · `Forward`), `trigger` (`Hold` · `Press` · `Toggle`), `startsOn` (boolean) | required, `[]`, `[]`, `Hold`, `false` |
+| `axis` | `name` (string), `up`, `down`, `left`, `right` (arrays of key names) | required, `[]` each |
+
+A button's `trigger` says when it is active: `Hold` while one of its keys or pointer buttons is held,
+`Press` for the frame one is pressed, and `Toggle` switched by each press, starting on when `startsOn`
+is `true`. An axis gives a direction from its keys, up and right being positive, a diagonal being of
+length 1. Key names are those of `Key` in `awake:core:input`, such as `W`, `Space`, `Shift` or
+`ArrowUp`. While a text field has the keys, held actions let go and toggles stay as they were. `move`
+is an axis, and `jump` and `run` are buttons.
+
+```json title="Run unless X is pressed to walk, and press E to interact"
+{ "component": "input_actions", "actions": [
+  { "type": "button", "name": "run", "keys": ["X"], "trigger": "Toggle", "startsOn": true },
+  { "type": "button", "name": "interact", "keys": ["E"], "trigger": "Press" }
+] }
+```
+
 ## `keyframe_animation`
 
 Loops keyframe tracks on its node: position, rotation, scale and material alpha. `SceneKeyframeAnimation`.
@@ -315,14 +352,13 @@ Draws a mesh with a material. Names are looked up in the scene's asset library. 
 
 ## `movement_control`
 
-Moves the entity from player input, or from code such as AI or a network. `SceneMovementControl`.
+Moves the entity from player input, or from code such as AI or a network. A player follows the
+scene's `move`, `jump` and `run` [input actions](#input_actions). `SceneMovementControl`.
 
 | Field | Type | Default | What it does |
 | --- | --- | --- | --- |
 | `speed` | number | none | Units per second. None uses the movement system's speed. Above 0 when set. |
 | `runSpeed` | number | none | Units per second while running. None keeps `speed`. Above 0 when set. |
-| `runMode` | `Hold` or `Toggle` | `Hold` | `Hold`: runs while `runKey` is held. `Toggle`: starts running, and each press of `runKey` switches between walking and running. |
-| `runKey` | `Unknown` · `W` · `A` · `S` · `D` · `Space` · `Escape` · `F1` · `F2` · `F3` · `F4` · `F5` · `Ctrl` · `Shift` · `Alt` · `Meta` · `Tab` · `Enter` · `Backspace` · `Delete` · `ArrowUp` · `ArrowDown` · `ArrowLeft` · `ArrowRight` · `Home` · `End` · `PageUp` · `PageDown` · `B` · `C` · `E` · `F` · `G` · `H` · `I` · `J` · `K` · `L` · `M` · `N` · `O` · `P` · `Q` · `R` · `T` · `U` · `V` · `X` · `Y` · `Z` · `Digit0` · `Digit1` · `Digit2` · `Digit3` · `Digit4` · `Digit5` · `Digit6` · `Digit7` · `Digit8` · `Digit9` | `Shift` | The key the player runs with, spelled exactly as listed. Not one the player moves or jumps with (`W`, `A`, `S`, `D`, the arrows, `Space`), nor `Unknown`, which no key press produces. |
 | `turnSpeed` | number | `0` | Radians per second it turns to face where it moves; 0 leaves its facing alone. Not negative. |
 | `driver` | `Player` or `Agent` | `Player` | What sets the intent. `Player`: the keys and touch controls, relative to the camera. `Agent`: code writes a world-space direction, and player input leaves it alone. |
 
