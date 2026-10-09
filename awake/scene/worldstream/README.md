@@ -19,7 +19,8 @@ whether a real body exists; visual fallback does not imply collision readiness.
 
 Register `PagedTerrainBinding` to serialize `ScenePagedTerrain` (`paged_terrain`). It references the
 page index and preserves capacity, radius, read/upload budgets and collision options. Scope, reader,
-observer, render host and physics system are code-only dependencies. See the
+observer, render host and physics system are code-only dependencies, which `awake:project:runtime`'s
+streamed-terrain capability supplies for a project scene played through `loadProject`. See the
 [integration example](../../../docs/plans/streamed-terrain.md).
 
 `scene:world` stays content-agnostic: it streams coordinates, and this module is one answer to what

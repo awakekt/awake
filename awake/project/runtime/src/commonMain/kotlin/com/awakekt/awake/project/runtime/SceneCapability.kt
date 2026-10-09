@@ -10,6 +10,7 @@ import com.awakekt.awake.ecs.System
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneDocument
+import com.awakekt.awake.scene.physics.PhysicsSystem
 import com.awakekt.awake.scene.runtime.SceneSystemPhase
 import kotlin.reflect.KClass
 
@@ -62,6 +63,14 @@ fun SceneDocument.uses(type: KClass<out SceneComponent>): Boolean = nodes.any { 
  */
 class SceneSystemPlan internal constructor(val hasPhysics: Boolean, val hasRenderer: Boolean = true) {
     internal val specs = mutableListOf<SceneSystemSpec>()
+    private var physicsSystem: PhysicsSystem? = null
+
+    /**
+     * The one physics step this plan's systems share. A body is destroyed only through the system that
+     * built it, so a system that removes bodies, such as streamed terrain's collision cells, needs it.
+     */
+    internal fun physicsSystem(services: SceneHostServices): PhysicsSystem =
+        physicsSystem ?: PhysicsSystem(requireNotNull(services.physics)).also { physicsSystem = it }
 
     /** Adds a system run on every fixed step, named [name] in the scene's schedule. */
     fun fixed(name: String, create: (SceneHostServices) -> System) = add(name, SceneSystemPhase.Fixed, create)
