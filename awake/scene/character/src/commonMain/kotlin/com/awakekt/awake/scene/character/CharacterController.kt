@@ -19,6 +19,7 @@ import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneValidationIssue
 import com.awakekt.awake.scene.physics.character.CharacterConfig
 import com.awakekt.awake.scene.physics.character.KinematicCharacterController
+import kotlin.math.PI
 import kotlin.reflect.KClass
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -72,6 +73,14 @@ class CharacterController(
     internal var controller: KinematicCharacterController? = null
     internal var verticalVelocity: Float = 0f
 
+    // The last two stepped poses, which CharacterControllerSystem blends between rendered frames.
+    private val previousPosition = Vec3f()
+    private val currentPosition = Vec3f()
+    private var previousYaw = 0f
+    private var currentYaw = 0f
+    private var blendedYaw = Float.NaN
+    private var stepped = false
+
     /** Whether it stood on walkable ground after its last move. */
     val isGrounded: Boolean get() = controller?.isGrounded ?: false
 
@@ -84,6 +93,44 @@ class CharacterController(
         controller?.teleport(position)
         transform.position.set(position)
         verticalVelocity = 0f
+        // No blend from where it was: a respawn shows at once.
+        previousPosition.set(position)
+        currentPosition.set(position)
+        previousYaw = currentYaw
+    }
+
+    /** Puts back the yaw a frame's blend left in [transform], unless something else has turned it since. */
+    internal fun restoreSteppedYaw(transform: Transform) {
+        if (stepped && transform.rotation.y == blendedYaw) transform.rotation.y = currentYaw
+    }
+
+    /** Keeps the pose a step left in [transform] as the newest of the two the frames blend between. */
+    internal fun record(transform: Transform) {
+        if (stepped) {
+            previousPosition.set(currentPosition)
+            previousYaw = currentYaw
+        } else {
+            previousPosition.set(transform.position)
+            previousYaw = transform.rotation.y
+        }
+        currentPosition.set(transform.position)
+        currentYaw = transform.rotation.y
+        stepped = true
+    }
+
+    /** Shows the pose [alpha] of the way from the previous step to the newest, the yaw turning the short way. */
+    internal fun blendInto(transform: Transform, alpha: Float) {
+        if (!stepped) return
+        transform.position.set(
+            previousPosition.x + (currentPosition.x - previousPosition.x) * alpha,
+            previousPosition.y + (currentPosition.y - previousPosition.y) * alpha,
+            previousPosition.z + (currentPosition.z - previousPosition.z) * alpha,
+        )
+        var turn = currentYaw - previousYaw
+        while (turn > PI) turn -= TWO_PI
+        while (turn < -PI) turn += TWO_PI
+        blendedYaw = previousYaw + turn * alpha
+        transform.rotation.y = blendedYaw
     }
 }
 
@@ -130,3 +177,5 @@ private const val DEFAULT_RADIUS = 0.5f
 private const val DEFAULT_HALF_HEIGHT = 0.5f
 private const val DEFAULT_GRAVITY = -9.81f
 private val DEFAULTS = CharacterConfig(CapsuleShape(DEFAULT_HALF_HEIGHT, DEFAULT_RADIUS))
+
+private const val TWO_PI = (2 * PI).toFloat()

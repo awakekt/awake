@@ -7,6 +7,7 @@ package com.awakekt.awake.scene.character
 
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.Entity
+import com.awakekt.awake.ecs.InterpolatedSystem
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.jolt.createJoltPhysicsWorld
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
@@ -22,11 +23,11 @@ import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.document.SceneLoader
 import com.awakekt.awake.scene.physics.PhysicsSystem
 import com.awakekt.awake.scene.physics.registerPhysics
-import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlinx.coroutines.test.runTest
 
 class CharacterControllerTest {
     private val registry = SceneComponentRegistry().registerControls().registerPhysics().registerCharacter()
@@ -147,6 +148,38 @@ class CharacterControllerTest {
         assertEquals(SceneCharacterController(jumpSpeed = 5f), saved)
     }
 
+    /** At more frames than steps, a walking character still moves on every frame, and evenly. */
+    @Test
+    fun aWalkingCharacterMovesOnEveryFrameWhenFramesOutrunSteps() = runTest {
+        val arena = arena(jumpSpeed = 5f)
+        arena.run(STEPS)
+        arena.intent.driver = MovementDriver.Agent
+        arena.intent.moveX = 1f
+
+        val shown = arena.frames(FRAMES, frameSeconds = 1f / 120f).map { it.x }
+
+        val moves = shown.zipWithNext { a, b -> b - a }.drop(FRAMES / 4)
+        assertTrue(moves.all { it > 0f }, "a frame without a step must still move the character: ${moves.take(8)}")
+        assertTrue(moves.max() / moves.min() < EVEN_FRAMES, "each frame must move it about as far: ${moves.take(8)}")
+    }
+
+    /** A respawn puts the character there at once; it never slides across from where it was. */
+    @Test
+    fun aTeleportShowsAtOnceInsteadOfBlending() = runTest {
+        val arena = arena(jumpSpeed = 5f)
+        arena.run(STEPS)
+        arena.intent.driver = MovementDriver.Agent
+        arena.intent.moveX = 1f
+        arena.frames(FRAMES / 2, frameSeconds = 1f / 120f)
+
+        val target = Vec3f(4f, 1f, 4f)
+        arena.character.teleport(arena.world.get<Transform>(arena.player)!!, target)
+        (arena.characters as? InterpolatedSystem)?.interpolate(arena.world, 0.5f)
+
+        assertEquals(target.x, arena.position.x, GROUND_TOLERANCE)
+        assertEquals(target.z, arena.position.z, GROUND_TOLERANCE)
+    }
+
     private suspend fun arena(jumpSpeed: Float): Arena {
         val world = World()
         SceneLoader.decode(scene(jumpSpeed)).instantiate(world = world, componentRegistry = registry)
@@ -168,6 +201,22 @@ class CharacterControllerTest {
         fun run(steps: Int) = repeat(steps) {
             physics.update(world, DELTA)
             characters.update(world, DELTA)
+        }
+
+        private var unsimulated = 0f
+
+        /**
+         * [count] rendered frames of [frameSeconds], stepping at [DELTA] as a host's fixed-step loop
+         * does and blending between steps where the systems can; the position each frame shows.
+         */
+        fun frames(count: Int, frameSeconds: Float): List<Vec3f> = List(count) {
+            unsimulated += frameSeconds
+            while (unsimulated >= DELTA) {
+                run(1)
+                unsimulated -= DELTA
+            }
+            (characters as? InterpolatedSystem)?.interpolate(world, unsimulated / DELTA)
+            position.copy()
         }
     }
 
@@ -196,5 +245,9 @@ class CharacterControllerTest {
         const val DELTA = 1f / 60f
         const val STEPS = 120
         const val GROUND_TOLERANCE = 0.05f
+        const val FRAMES = 120
+
+        /** How much farther the longest frame's move may be than the shortest's. */
+        const val EVEN_FRAMES = 1.5f
     }
 }
