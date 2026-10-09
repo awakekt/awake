@@ -6,6 +6,7 @@ public final class com/awakekt/awake/scene/character/CharacterController {
 	public final fun isGrounded ()Z
 	public final fun setGravity (F)V
 	public final fun setJumpSpeed (F)V
+	public final fun teleport (Lcom/awakekt/awake/scene/core/transform/Transform;Lcom/awakekt/awake/core/math/Vec3f;)V
 }
 
 public final class com/awakekt/awake/scene/character/CharacterControllerBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {

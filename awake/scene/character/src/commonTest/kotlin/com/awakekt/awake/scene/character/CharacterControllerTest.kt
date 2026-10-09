@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.character
 
+import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.jolt.createJoltPhysicsWorld
@@ -81,6 +82,20 @@ class CharacterControllerTest {
         repeat(STEPS * 3) { MatrixRelativeMovementSystem().update(arena.world, DELTA) }
 
         assertTrue(arena.position.z < -3.5f, "without the controller nothing stops it; z = ${arena.position.z}")
+    }
+
+    @Test
+    fun teleportingPutsTheCharacterBehindTheWallThatWalkingStopsAt() = runTest {
+        val arena = arena(jumpSpeed = 5f)
+        arena.run(STEPS)
+
+        // The wall's far face is at z = -3.5; walking there stops at its near face (see above).
+        arena.character.teleport(arena.world.get<Transform>(arena.player)!!, Vec3f(0f, 1f, -5f))
+        assertEquals(-5f, arena.position.z, "the scene shows the character there at once")
+        arena.run(STEPS)
+
+        assertEquals(-5f, arena.position.z, GROUND_TOLERANCE, "it stays behind the wall, not swept back")
+        assertEquals(1f, arena.position.y, GROUND_TOLERANCE, "and stands on the floor there")
     }
 
     @Test
