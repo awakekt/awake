@@ -19,6 +19,12 @@ import com.awakekt.awake.vulkan.enums.VkSharingMode
  * Phase 1d note in docs/mvp-plan.md. `sharingMode` is safe here because `VkSharingMode` has
  * exactly two entries whose ordinal matches its value (0/1) and the Vulkan spec has never
  * extended it.
+ *
+ * @property size The size of the buffer in bytes.
+ * @property usage A mask of the buffer usage constants the buffer is created for.
+ * @property flags Buffer creation flags; 0 for none.
+ * @property sharingMode Whether the buffer belongs to one queue family at a time or is shared
+ * between several.
  */
 class VkBufferCreateInfo(
     val size: VkDeviceSize,
@@ -30,11 +36,26 @@ class VkBufferCreateInfo(
 typealias VkBufferCreateFlags = VkFlags
 typealias VkBufferUsageFlags = VkFlags
 
+/**
+ * Buffer usage flags as plain `Int` constants that combine with `or` into a mask
+ * (`VkBufferUsageFlagBits`).
+ */
 object VkBufferUsageFlagBits {
+    /** The buffer can be the source of a transfer command. */
     const val VK_BUFFER_USAGE_TRANSFER_SRC_BIT = 0x00000001
+
+    /** The buffer can be the destination of a transfer command. */
     const val VK_BUFFER_USAGE_TRANSFER_DST_BIT = 0x00000002
+
+    /** The buffer can hold vertex data. */
     const val VK_BUFFER_USAGE_VERTEX_BUFFER_BIT = 0x00000080
+
+    /** The buffer can hold index data. */
     const val VK_BUFFER_USAGE_INDEX_BUFFER_BIT = 0x00000040
+
+    /** The buffer can back a uniform buffer descriptor. */
     const val VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT = 0x00000010
+
+    /** The buffer can back a storage buffer descriptor. */
     const val VK_BUFFER_USAGE_STORAGE_BUFFER_BIT = 0x00000020
 }

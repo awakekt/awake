@@ -128,6 +128,22 @@ class LineMesh(
      * already guards against, this mesh just never got the same fix. */
     fun update(vertices: FloatArray) = update(frameIndex = 0, vertices = vertices)
 
+    /**
+     * Overwrites [frameIndex]'s vertex buffer with [vertices] and makes that slot the active one
+     * for the [bind] and [draw] overloads that take no frame index.
+     *
+     * The slot's buffer grows first when [vertices] do not fit, following
+     * [DebugLineLayout.grownVertexCapacity] and freeing the old buffer immediately, so the caller
+     * must already have waited on that slot's fence. An empty array records zero vertices and skips
+     * the GPU write, because mapping a zero-byte range is invalid.
+     *
+     * @param frameIndex The frame slot to write, from 0 to the frames-in-flight count inclusive;
+     * the last slot belongs to the offscreen path.
+     * @param vertices Interleaved line vertices, [FLOATS_PER_VERTEX] floats each (position, then
+     * colour); every two consecutive vertices form one segment.
+     * @throws IllegalArgumentException If [frameIndex] is not a valid slot, or the required line
+     * count exceeds [DebugLineLayout.MAX_LINES_CEILING].
+     */
     fun update(frameIndex: Int, vertices: FloatArray) {
         val frame = resourcesFor(frameIndex)
         val neededVertices = vertices.size / FLOATS_PER_VERTEX
@@ -145,8 +161,20 @@ class LineMesh(
      * [update] last wrote, which is not necessarily the slot being recorded. */
     fun vertexCount(frameIndex: Int): Int = resourcesFor(frameIndex).vertexCount
 
+    /**
+     * Binds the active slot's vertex buffer at binding 0, the slot the last [update] wrote.
+     *
+     * @param commandBuffer The command buffer being recorded.
+     */
     fun bind(commandBuffer: Long) = bind(activeFrameIndex, commandBuffer)
 
+    /**
+     * Binds [frameIndex]'s vertex buffer at binding 0.
+     *
+     * @param frameIndex The frame slot whose buffer to bind.
+     * @param commandBuffer The command buffer being recorded.
+     * @throws IllegalArgumentException If [frameIndex] is not a valid slot.
+     */
     fun bind(frameIndex: Int, commandBuffer: Long) {
         val frame = resourcesFor(frameIndex)
         VulkanBuffers.vkCmdBindVertexBuffers(
@@ -157,14 +185,32 @@ class LineMesh(
         )
     }
 
+    /**
+     * Draws the active slot's vertices as a line list, recording nothing when the slot holds none.
+     * Call after [bind].
+     *
+     * @param commandBuffer The command buffer being recorded.
+     */
     fun draw(commandBuffer: Long) = draw(activeFrameIndex, commandBuffer)
 
+    /**
+     * Draws [frameIndex]'s vertices as a line list, recording nothing when the slot holds none.
+     * Call after [bind].
+     *
+     * @param frameIndex The frame slot to draw.
+     * @param commandBuffer The command buffer being recorded.
+     * @throws IllegalArgumentException If [frameIndex] is not a valid slot.
+     */
     fun draw(frameIndex: Int, commandBuffer: Long) {
         val frame = resourcesFor(frameIndex)
         if (frame.vertexCount == 0) return
         Vulkan.vkCmdDraw(commandBuffer, frame.vertexCount, 1, 0, 0)
     }
 
+    /**
+     * Destroys and frees every frame slot's vertex buffer and memory. Call once, after the GPU has
+     * finished with all slots.
+     */
     fun destroy() {
         frameResources.forEach { frame ->
             VulkanBuffers.vkDestroyBuffer(device, frame.vertexBuffer.handle)
@@ -179,6 +225,7 @@ class LineMesh(
         return frameResources[frameIndex]
     }
 
+    /** Slot-count and vertex-layout constants for the debug line stream. */
     companion object {
         /** The single extra frame slot the offscreen path uses; see [init]. */
         const val OFFSCREEN_FRAMES = 1
@@ -187,6 +234,11 @@ class LineMesh(
         /** Aliased, not re-declared: a second literal is exactly the stride drift Phase 1 hit
          * on rounded quads (webgpu had 15 where the shared truth was 16). */
         val FLOATS_PER_VERTEX = DebugLineLayout.FLOATS_PER_VERTEX
+
+        /**
+         * Vertices per line segment: 2, since the topology is a plain line list with no index
+         * buffer.
+         */
         const val VERTICES_PER_LINE = DebugLineLayout.VERTICES_PER_LINE
     }
 }

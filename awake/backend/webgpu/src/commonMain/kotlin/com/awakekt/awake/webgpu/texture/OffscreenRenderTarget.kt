@@ -52,7 +52,16 @@ class OffscreenRenderTarget(
         ),
     )
 
+    /**
+     * View of [colorTexture] that a render pass names as its colour attachment and a UI pass
+     * samples to composite the target.
+     */
     val colorView: GPUTextureView = colorTexture.createView(TextureViewDescriptor())
+
+    /**
+     * The `Depth32Float` attachment sized like the colour texture, so offscreen draws occlude as
+     * on-screen ones do. It is a render attachment only and cannot be sampled.
+     */
     val depthTexture: GPUTexture = graphicsDevice.wgpuContext.device.createTexture(
         TextureDescriptor(
             size = Extent3D(width = width.toUInt(), height = height.toUInt()),
@@ -61,6 +70,8 @@ class OffscreenRenderTarget(
             dimension = GPUTextureDimension.TwoD,
         ),
     )
+
+    /** View of [depthTexture] that a render pass names as its depth attachment. */
     val depthView: GPUTextureView = depthTexture.createView(TextureViewDescriptor())
 
     /** Idempotent because `Renderer.destroy` frees every still-live target while a caller holding

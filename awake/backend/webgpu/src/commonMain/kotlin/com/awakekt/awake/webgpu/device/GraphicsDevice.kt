@@ -28,17 +28,57 @@ import io.ygdrasil.webgpu.WGPUContext
  * fields need.
  */
 class GraphicsDevice {
+    /** Vulkan-parity placeholder, always 0: WebGPU has no instance object to hold. */
     var instance: Long = 0
+
+    /**
+     * Vulkan-parity placeholder, always 0: WebGPU reports validation errors through
+     * uncaptured-error callbacks, not a messenger object.
+     */
     var debugUtilsMessenger: Long = 0
+
+    /**
+     * Vulkan-parity placeholder, always 0: the canvas surface lives inside the [WGPUContext] passed
+     * to [create].
+     */
     var surface: Long = 0
+
+    /**
+     * Vulkan-parity placeholder, always 0: adapter selection happened before the context was handed
+     * in.
+     */
     var physicalDevice: Long = 0
+
+    /** Table id, in [WebGpuHandles], of the wgpu device registered by [create]; 0 until then. */
     var device: Long = 0
+
+    /**
+     * Vulkan-parity placeholder, always 0: the device's single queue is reached through the
+     * context.
+     */
     var graphicsQueue: Long = 0
+
+    /**
+     * Vulkan-parity placeholder, always 0: presentation goes through the canvas context, not a
+     * queue.
+     */
     var presentQueue: Long = 0
 
     internal lateinit var wgpuContext: WGPUContext
         private set
 
+    /**
+     * Adopts a pre-resolved WebGPU context as this device and registers its device in
+     * [WebGpuHandles].
+     *
+     * Not `suspend`: the asynchronous adapter, device and surface acquisition must already have
+     * happened in the caller's own coroutine. Call once; this class takes ownership of the context
+     * and closes it in [destroy].
+     *
+     * @param window The [WGPUContext], typed `Any` to match the cross-platform contract where the
+     * window handle differs per platform.
+     * @throws IllegalStateException If [window] is not a [WGPUContext].
+     */
     fun create(window: Any) {
         wgpuContext = window as? WGPUContext
             ?: error(
@@ -49,6 +89,10 @@ class GraphicsDevice {
         device = WebGpuHandles.register(wgpuContext.device)
     }
 
+    /**
+     * Releases [device]'s entry in [WebGpuHandles] and closes the owned [WGPUContext]. The context
+     * must not be used or closed again by the caller afterwards.
+     */
     fun destroy() {
         WebGpuHandles.release(device)
         wgpuContext.close()

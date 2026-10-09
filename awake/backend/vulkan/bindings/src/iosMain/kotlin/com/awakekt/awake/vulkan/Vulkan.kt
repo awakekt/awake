@@ -547,8 +547,15 @@ private fun throwOnVkFailure(result: Int, operation: String) {
 
 // Phase 6 (MoltenVK cinterop) is in progress -- see docs/mvp-plan.md. Non-TODO() functions link
 // against the vendored MoltenVK.xcframework but are compiled-only, not yet hardware-verified.
+/**
+ * iOS actual of [Vulkan], implemented through MoltenVK cinterop and compiled but not yet
+ * hardware-verified. A failed call throws an [IllegalStateException], or in a few cases a
+ * [com.awakekt.awake.vulkan.utils.VkResultException]. [Vulkan.vkCreateAndroidSurfaceKHR] is not
+ * supported and throws [NotImplementedError].
+ */
 @OptIn(ExperimentalForeignApi::class)
 actual object Vulkan {
+    /** Creates a new Vulkan instance with the provided application information. */
     actual fun vkCreateInstance(createInfo: VkInstanceCreateInfo): Long = memScoped {
         val nativeAppInfo = createInfo.pApplicationInfo?.firstOrNull()?.let { appInfo ->
             alloc<NativeVkApplicationInfo>().apply {
@@ -582,11 +589,13 @@ actual object Vulkan {
         instanceVar.value!!.rawValue.toLong()
     }
 
+    /** Destroys the specified Vulkan instance. */
     actual fun vkDestroyInstance(instance: Long) {
         val nativeInstance = instance.toCPointer<VkInstance_T>()
         nativeVkDestroyInstance(nativeInstance, null)
     }
 
+    /** Enumerates the Vulkan extension properties available for the instance. */
     actual fun vkEnumerateInstanceLayerProperties(): Array<VkLayerProperties> = memScoped {
         val countVar = alloc<UIntVar>()
         nativeVkEnumerateInstanceLayerProperties(countVar.ptr, null)
@@ -605,6 +614,7 @@ actual object Vulkan {
         }
     }
 
+    /** Enumerates the Vulkan extension properties available for the instance. */
     actual fun vkEnumerateInstanceExtensionProperties(layerName: String?): Array<VkExtensionProperties> =
         memScoped {
             val countVar = alloc<UIntVar>()
@@ -622,6 +632,7 @@ actual object Vulkan {
             }
         }
 
+    /** Enumerates the Vulkan extension properties available for a specific physical device. */
     actual fun vkEnumerateDeviceExtensionProperties(
         physicalDevice: Long,
         layerName: String?,
@@ -642,6 +653,7 @@ actual object Vulkan {
         }
     }
 
+    /** Enumerates the available Vulkan physical devices for the specified instance. */
     actual fun vkEnumeratePhysicalDevices(instance: Long): LongArray = memScoped {
         val countVar = alloc<UIntVar>()
         nativeVkEnumeratePhysicalDevices(instance.toCPointer(), countVar.ptr, null)
@@ -652,6 +664,7 @@ actual object Vulkan {
         LongArray(count) { i -> nativeArray[i]!!.rawValue.toLong() }
     }
 
+    /** Retrieves properties of the specified physical device. */
     actual fun vkGetPhysicalDeviceProperties(physicalDevice: Long): VkPhysicalDeviceProperties = memScoped {
         val native = alloc<NativeVkPhysicalDeviceProperties>()
         nativeVkGetPhysicalDeviceProperties(physicalDevice.toCPointer(), native.ptr)
@@ -668,12 +681,14 @@ actual object Vulkan {
         )
     }
 
+    /** Retrieves features of the specified physical device. */
     actual fun vkGetPhysicalDeviceFeatures(physicalDevice: Long): VkPhysicalDeviceFeatures = memScoped {
         val nativeFeatures = alloc<NativeVkPhysicalDeviceFeatures>()
         nativeVkGetPhysicalDeviceFeatures(physicalDevice.toCPointer(), nativeFeatures.ptr)
         nativeFeatures.toKotlinModel()
     }
 
+    /** Retrieves properties of the queue families available on the specified physical device. */
     actual fun vkGetPhysicalDeviceQueueFamilyProperties(
         physicalDevice: Long,
     ): Array<VkQueueFamilyProperties> = memScoped {
@@ -697,6 +712,7 @@ actual object Vulkan {
         }
     }
 
+    /** Retrieves the images associated with the specified Vulkan swapchain. */
     actual fun vkGetSwapchainImagesKHR(device: Long, swapchain: Long): LongArray = memScoped {
         val nativeDevice = device.toCPointer<cnames.structs.VkDevice_T>()
         val nativeSwapchain = swapchain.toCPointer<VkSwapchainKHR_T>()
@@ -709,6 +725,10 @@ actual object Vulkan {
         LongArray(count) { i -> nativeArray[i]!!.rawValue.toLong() }
     }
 
+    /**
+     * Creates a new VkDevice object associated with the given physical device and using the
+     * provided device configuration.
+     */
     actual fun vkCreateDevice(physicalDevice: Long, deviceInfo: VkDeviceCreateInfo): Long = memScoped {
         val nativeQueueCreateInfos = allocArray<NativeVkDeviceQueueCreateInfo>(deviceInfo.pQueueCreateInfos.size) { index ->
             val queueInfo = deviceInfo.pQueueCreateInfos[index]
@@ -743,20 +763,29 @@ actual object Vulkan {
         deviceVar.value!!.rawValue.toLong()
     }
 
+    /** Destroys the specified VkDevice object and releases its associated resources. */
     actual fun vkDestroyDevice(device: Long) {
         nativeVkDestroyDevice(device.toCPointer(), null)
     }
 
+    /**
+     * Returns the VkQueue associated with the given device, queue family index, and queue index.
+     */
     actual fun vkGetDeviceQueue(device: Long, queueFamilyIndex: Int, queueIndex: Int): Long = memScoped {
         val queueVar = alloc<VkQueueVar>()
         nativeVkGetDeviceQueue(device.toCPointer(), queueFamilyIndex.toUInt(), queueIndex.toUInt(), queueVar.ptr)
         queueVar.value!!.rawValue.toLong()
     }
 
+    /**
+     * Not supported on iOS: always throws [NotImplementedError]. Surfaces come from a
+     * `CAMetalLayer` through [com.awakekt.awake.vulkan.createSurface].
+     */
     actual fun vkCreateAndroidSurfaceKHR(instance: Long, surfaceInfo: VkAndroidSurfaceCreateInfoKHR): Long {
         TODO("Not yet implemented")
     }
 
+    /** Checks if presentation is supported on the specified physical device and queue family. */
     actual fun vkGetPhysicalDeviceSurfaceSupportKHR(
         physicalDevice: Long,
         queueFamilyIndex: Int,
@@ -772,10 +801,12 @@ actual object Vulkan {
         supportedVar.value != 0u
     }
 
+    /** Destroys the Vulkan surface. */
     actual fun vkDestroySurfaceKHR(instance: Long, surface: Long) {
         nativeVkDestroySurfaceKHR(instance.toCPointer(), surface.toCPointer<VkSurfaceKHR_T>(), null)
     }
 
+    /** Retrieves the capabilities of the surface on the specified physical device. */
     actual fun vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
         physicalDevice: Long,
         surface: Long,
@@ -811,6 +842,7 @@ actual object Vulkan {
         )
     }
 
+    /** Retrieves the available surface formats on the specified physical device. */
     actual fun vkGetPhysicalDeviceSurfaceFormatsKHR(
         physicalDevice: Long,
         surface: Long,
@@ -832,6 +864,9 @@ actual object Vulkan {
         }
     }
 
+    /**
+     * Retrieves the supported presentation modes for the specified surface on the physical device.
+     */
     actual fun vkGetPhysicalDeviceSurfacePresentModesKHR(
         physicalDevice: Long,
         surface: Long,
@@ -847,6 +882,7 @@ actual object Vulkan {
         Array(count) { i -> VkPresentModeKHR.entries.first { it.value.toUInt() == nativeArray[i] } }
     }
 
+    /** Creates a Vulkan swapchain for the specified device. */
     actual fun vkCreateSwapchainKHR(device: Long, createInfoKHR: VkSwapchainCreateInfoKHR): Long = memScoped {
         val nativeCreateInfo = alloc<NativeVkSwapchainCreateInfoKHR>().apply {
             sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR
@@ -880,10 +916,15 @@ actual object Vulkan {
         swapchainVar.value!!.rawValue.toLong()
     }
 
+    /** Destroys the Vulkan swapchain. */
     actual fun vkDestroySwapchainKHR(device: Long, swapchainKHR: Long) {
         nativeVkDestroySwapchainKHR(device.toCPointer(), swapchainKHR.toCPointer<VkSwapchainKHR_T>(), null)
     }
 
+    /**
+     * Creates a view of an image, which fixes how a shader or framebuffer reads its format,
+     * dimensionality and subresource range.
+     */
     actual fun vkCreateImageView(device: Long, createInfo: VkImageViewCreateInfo): Long = memScoped {
         val nativeCreateInfo = alloc<NativeVkImageViewCreateInfo>().apply {
             sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO
@@ -921,10 +962,12 @@ actual object Vulkan {
         imageViewVar.value!!.rawValue.toLong()
     }
 
+    /** Destroys an image view. The view must no longer be used by pending GPU work. */
     actual fun vkDestroyImageView(device: Long, imageView: Long) {
         nativeVkDestroyImageView(device.toCPointer(), imageView.toCPointer<VkImageView_T>(), null)
     }
 
+    /** Wraps SPIR-V code in a shader module that pipelines can name as a stage. */
     actual fun vkCreateShaderModule(device: Long, createInfo: VkShaderModuleCreateInfo): Long = memScoped {
         val nativeCreateInfo = alloc<NativeVkShaderModuleCreateInfo>().apply {
             sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO
@@ -939,10 +982,15 @@ actual object Vulkan {
         shaderModuleVar.value!!.rawValue.toLong()
     }
 
+    /**
+     * Destroys a shader module. It may be destroyed as soon as the pipelines that use it have been
+     * created.
+     */
     actual fun vkDestroyShaderModule(device: Long, shaderModule: Long) {
         nativeVkDestroyShaderModule(device.toCPointer(), shaderModule.toCPointer<VkShaderModule_T>(), null)
     }
 
+    /** Creates a pipeline cache that speeds up building pipelines with similar state. */
     actual fun vkCreatePipelineCache(device: Long, createInfo: VkPipelineCacheCreateInfo): Long = memScoped {
         // pInitialData is unused by every call site in this codebase today (always null) --
         // not marshalled here; revisit if a real pipeline-cache-warm-start use case appears.
@@ -961,10 +1009,15 @@ actual object Vulkan {
         pipelineCacheVar.value!!.rawValue.toLong()
     }
 
+    /** Destroys a pipeline cache. Pipelines created through it stay valid. */
     actual fun vkDestroyPipelineCache(device: Long, pipelineCache: Long) {
         nativeVkDestroyPipelineCache(device.toCPointer(), pipelineCache.toCPointer<VkPipelineCache_T>(), null)
     }
 
+    /**
+     * Creates a pipeline layout, which lists the descriptor set layouts and push-constant ranges a
+     * pipeline's shaders may access.
+     */
     actual fun vkCreatePipelineLayout(device: Long, createInfo: VkPipelineLayoutCreateInfo): Long = memScoped {
         val nativeCreateInfo = alloc<NativeVkPipelineLayoutCreateInfo>().apply {
             sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO
@@ -994,10 +1047,12 @@ actual object Vulkan {
         pipelineLayoutVar.value!!.rawValue.toLong()
     }
 
+    /** Destroys a pipeline layout. Submitted commands that use it must have completed. */
     actual fun vkDestroyPipelineLayout(device: Long, pipelineLayout: Long) {
         nativeVkDestroyPipelineLayout(device.toCPointer(), pipelineLayout.toCPointer<VkPipelineLayout_T>(), null)
     }
 
+    /** Builds one graphics pipeline for each entry of [createInfos]. */
     actual fun vkCreateGraphicsPipelines(
         device: Long,
         pipelineCache: Long,
@@ -1196,10 +1251,17 @@ actual object Vulkan {
         LongArray(createInfos.size) { i -> pipelinesArray[i]!!.rawValue.toLong() }
     }
 
+    /**
+     * Destroys a pipeline. Command buffers that recorded a bind of it must have finished executing.
+     */
     actual fun vkDestroyPipeline(device: Long, pipeline: Long) {
         nativeVkDestroyPipeline(device.toCPointer(), pipeline.toCPointer<VkPipeline_T>(), null)
     }
 
+    /**
+     * Creates a render pass describing the attachments, subpasses and dependencies of a rendering
+     * sequence.
+     */
     actual fun vkCreateRenderPass(device: Long, createInfo: VkRenderPassCreateInfo): Long = memScoped {
         val nativeAttachments = createInfo.pAttachments?.let { attachments ->
             allocArray<NativeVkAttachmentDescription>(attachments.size) { index ->
@@ -1269,10 +1331,12 @@ actual object Vulkan {
         renderPassVar.value!!.rawValue.toLong()
     }
 
+    /** Destroys a render pass. Submitted commands that use it must have completed. */
     actual fun vkDestroyRenderPass(device: Long, renderPass: Long) {
         nativeVkDestroyRenderPass(device.toCPointer(), renderPass.toCPointer<VkRenderPass_T>(), null)
     }
 
+    /** Creates a framebuffer that binds image views to a render pass's attachments. */
     actual fun vkCreateFramebuffer(device: Long, framebufferInfo: VkFramebufferCreateInfo): Long = memScoped {
         val nativeCreateInfo = alloc<NativeVkFramebufferCreateInfo>().apply {
             sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO
@@ -1293,10 +1357,17 @@ actual object Vulkan {
         framebufferVar.value!!.rawValue.toLong()
     }
 
+    /** Destroys a framebuffer. It must no longer be used by pending GPU work. */
     actual fun vkDestroyFramebuffer(device: Long, framebuffer: Long) {
         nativeVkDestroyFramebuffer(device.toCPointer(), framebuffer.toCPointer<VkFramebuffer_T>(), null)
     }
 
+    /**
+     * Allocates one command buffer from the pool named in [createInfo].
+     *
+     * Despite the plural name this binding returns a single handle, so `commandBufferCount` must be
+     * 1. The buffer is freed together with its pool by [vkDestroyCommandPool].
+     */
     actual fun vkAllocateCommandBuffers(device: Long, createInfo: VkCommandBufferAllocateInfo): Long = memScoped {
         // Return type is a single Long -- matches this codebase's Android/desktop actuals,
         // which only ever allocate one primary command buffer at a time (commandBufferCount
@@ -1314,6 +1385,10 @@ actual object Vulkan {
         commandBufferVar.value!!.rawValue.toLong()
     }
 
+    /**
+     * Starts recording into a command buffer, which must be in the initial state or have been
+     * reset.
+     */
     actual fun vkBeginCommandBuffer(commandBuffer: Long, beginInfo: VkCommandBufferBeginInfo) = memScoped {
         val nativeBeginInfo = alloc<NativeVkCommandBufferBeginInfo>().apply {
             sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO
@@ -1327,6 +1402,7 @@ actual object Vulkan {
         Unit
     }
 
+    /** Creates a command pool from which command buffers for one queue family are allocated. */
     actual fun vkCreateCommandPool(device: Long, createInfo: VkCommandPoolCreateInfo): Long = memScoped {
         val nativeCreateInfo = alloc<NativeVkCommandPoolCreateInfo>().apply {
             sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO
@@ -1340,10 +1416,12 @@ actual object Vulkan {
         commandPoolVar.value!!.rawValue.toLong()
     }
 
+    /** Destroys a command pool together with every command buffer allocated from it. */
     actual fun vkDestroyCommandPool(device: Long, commandPool: Long) {
         nativeVkDestroyCommandPool(device.toCPointer(), commandPool.toCPointer<VkCommandPool_T>(), null)
     }
 
+    /** Records binding of a pipeline for subsequent draw calls. */
     actual fun vkCmdBindPipeline(
         commandBuffer: Long,
         pipelineBindPoint: VkPipelineBindPoint,
@@ -1356,6 +1434,7 @@ actual object Vulkan {
         )
     }
 
+    /** Records new viewport rectangles for a pipeline that declares the viewport dynamic. */
     actual fun vkCmdSetViewport(commandBuffer: Long, firstViewport: Int, viewports: Array<VkViewport>) = memScoped {
         val nativeViewports = allocArray<NativeVkViewport>(viewports.size) { index ->
             x = viewports[index].x
@@ -1369,6 +1448,7 @@ actual object Vulkan {
         Unit
     }
 
+    /** Records new scissor rectangles for a pipeline that declares the scissor dynamic. */
     actual fun vkCmdSetScissor(commandBuffer: Long, firstScissor: Int, scissors: Array<VkRect2D>) = memScoped {
         val nativeScissors = allocArray<NativeVkRect2D>(scissors.size) { index ->
             offset.apply {
@@ -1384,6 +1464,7 @@ actual object Vulkan {
         Unit
     }
 
+    /** Records a non-indexed draw. */
     actual fun vkCmdDraw(
         commandBuffer: Long,
         vertexCount: Int,
@@ -1400,6 +1481,7 @@ actual object Vulkan {
         )
     }
 
+    /** Records the start of a render pass on a framebuffer. */
     actual fun vkCmdBeginRenderPass(
         commandBuffer: Long,
         renderPassBeginInfo: VkRenderPassBeginInfo,
@@ -1446,14 +1528,20 @@ actual object Vulkan {
         Unit
     }
 
+    /** Records the end of the current render pass. */
     actual fun vkCmdEndRenderPass(commandBuffer: Long) {
         nativeVkCmdEndRenderPass(commandBuffer.toCPointer())
     }
 
+    /** Finishes recording, making the command buffer executable. */
     actual fun vkEndCommandBuffer(commandBuffer: Long) {
         nativeVkEndCommandBuffer(commandBuffer.toCPointer())
     }
 
+    /**
+     * Creates a binary semaphore, used to order work between queues or between the GPU and
+     * presentation.
+     */
     actual fun vkCreateSemaphore(device: Long, createInfo: VkSemaphoreCreateInfo): Long = memScoped {
         val nativeCreateInfo = alloc<NativeVkSemaphoreCreateInfo>().apply {
             sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO
@@ -1466,10 +1554,14 @@ actual object Vulkan {
         semaphoreVar.value!!.rawValue.toLong()
     }
 
+    /** Destroys a semaphore. No pending work may still wait on or signal it. */
     actual fun vkDestroySemaphore(device: Long, semaphore: Long) {
         nativeVkDestroySemaphore(device.toCPointer(), semaphore.toCPointer<VkSemaphore_T>(), null)
     }
 
+    /**
+     * Creates a fence, which the GPU signals when submitted work completes and the CPU can wait on.
+     */
     actual fun vkCreateFence(device: Long, createInfo: VkFenceCreateInfo): Long = memScoped {
         val nativeCreateInfo = alloc<NativeVkFenceCreateInfo>().apply {
             sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO
@@ -1482,10 +1574,17 @@ actual object Vulkan {
         fenceVar.value!!.rawValue.toLong()
     }
 
+    /** Destroys a fence. It must not be part of a pending submission. */
     actual fun vkDestroyFence(device: Long, fence: Long) {
         nativeVkDestroyFence(device.toCPointer(), fence.toCPointer<VkFence_T>(), null)
     }
 
+    /**
+     * Blocks the calling thread until the fences are signalled or the timeout elapses.
+     *
+     * Nothing is returned or thrown for a timeout or a lost device, so a finite timeout cannot be
+     * told apart from a signalled fence. Pass [Long.MAX_VALUE] to wait effectively forever.
+     */
     actual fun vkWaitForFences(device: Long, fences: LongArray, waitAll: Boolean, timeout: Long) = memScoped {
         val nativeFences = allocArray<CPointerVar<VkFence_T>>(fences.size) { index ->
             value = fences[index].toCPointer()
@@ -1500,6 +1599,7 @@ actual object Vulkan {
         Unit
     }
 
+    /** Resets fences to the unsignalled state. None may be part of a pending submission. */
     actual fun vkResetFences(device: Long, fences: LongArray) = memScoped {
         val nativeFences = allocArray<CPointerVar<VkFence_T>>(fences.size) { index ->
             value = fences[index].toCPointer()
@@ -1508,6 +1608,7 @@ actual object Vulkan {
         Unit
     }
 
+    /** The acquired image's index. A suboptimal swapchain still returns one; only errors throw. */
     actual fun vkAcquireNextImageKHR(
         device: Long,
         swapchain: Long,
@@ -1529,10 +1630,12 @@ actual object Vulkan {
         imageIndexVar.value.toInt()
     }
 
+    /** Returns a command buffer to the initial state so it can be recorded again. */
     actual fun vkResetCommandBuffer(commandBuffer: Long, flags: Int) {
         nativeVkResetCommandBuffer(commandBuffer.toCPointer(), flags.toUInt())
     }
 
+    /** Submits recorded command buffers to a queue for execution. */
     actual fun vkQueueSubmit(queue: Long, pSubmits: Array<VkSubmitInfo>, fence: Long) = memScoped {
         val nativeSubmits = allocArray<NativeVkSubmitInfo>(pSubmits.size) { index ->
             val submit = pSubmits[index]
@@ -1567,6 +1670,13 @@ actual object Vulkan {
         Unit
     }
 
+    /**
+     * Queues swapchain images for presentation after their wait semaphores signal.
+     *
+     * Anything other than `VK_SUCCESS` throws, including `VK_SUBOPTIMAL_KHR` and
+     * `VK_ERROR_OUT_OF_DATE_KHR`, so a caller that wants to rebuild its swapchain on those catches
+     * the exception and reads its `result`.
+     */
     actual fun vkQueuePresentKHR(queue: Long, pPresentInfoKHR: VkPresentInfoKHR) = memScoped {
         val nativePresentInfo = alloc<NativeVkPresentInfoKHR>().apply {
             sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR
@@ -1591,6 +1701,10 @@ actual object Vulkan {
         Unit
     }
 
+    /**
+     * Creates a debug messenger that forwards validation and driver messages to the callback in
+     * [createInfo]. It needs `VK_EXT_debug_utils` enabled on the instance.
+     */
     actual fun vkCreateDebugUtilsMessengerEXT(
         instance: Long,
         createInfo: VkDebugUtilsMessengerCreateInfoEXT,
@@ -1621,6 +1735,7 @@ actual object Vulkan {
         handle
     }
 
+    /** Destroys a debug messenger. The callback is not invoked afterwards. */
     actual fun vkDestroyDebugUtilsMessengerEXT(instance: Long, debugUtilsMessenger: Long) {
         nativeVkDestroyDebugUtilsMessengerEXT(
             instance.toCPointer(),

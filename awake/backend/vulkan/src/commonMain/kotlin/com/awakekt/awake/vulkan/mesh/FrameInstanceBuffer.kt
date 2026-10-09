@@ -51,6 +51,16 @@ class FrameInstanceBuffer(
         out[offset] = frame
     }
 
+    /**
+     * Writes one sprite-strip frame index per instance into [frameIndex]'s buffer, in the same
+     * order as the instance matrices. An empty list writes nothing and leaves the previous contents
+     * in place.
+     *
+     * @param frameIndex The frame slot to write.
+     * @param frames Per-instance frame indices into the sprite strip, one entry per drawn instance.
+     * @throws IllegalArgumentException If [frames] holds more entries than the instance ceiling, or
+     * [frameIndex] is not a valid slot.
+     */
     fun update(frameIndex: Int, frames: List<Float>) {
         val floats = packer.pack(frames, maxInstances) ?: return
         VulkanBuffers.writeBufferMemoryFloats(device, resourcesFor(frameIndex).memory.handle, 0, floats)
@@ -59,6 +69,13 @@ class FrameInstanceBuffer(
     /** This frame slot's buffer, for the shared opaque feature to bind at binding 3. */
     fun binding(frameIndex: Int): VulkanBufferBinding = resourcesFor(frameIndex).binding
 
+    /**
+     * Binds [frameIndex]'s buffer as the instance-rate vertex buffer at binding 3.
+     *
+     * @param frameIndex The frame slot whose buffer to bind.
+     * @param commandBuffer The command buffer being recorded.
+     * @throws IllegalArgumentException If [frameIndex] is not a valid slot.
+     */
     fun bind(frameIndex: Int, commandBuffer: Long) {
         VulkanBuffers.vkCmdBindVertexBuffers(
             commandBuffer,
@@ -68,6 +85,10 @@ class FrameInstanceBuffer(
         )
     }
 
+    /**
+     * Destroys and frees every frame slot's buffer and memory. Call once, after the GPU has
+     * finished with them.
+     */
     fun destroy() {
         frameResources.forEach { frame ->
             VulkanBuffers.vkDestroyBuffer(device, frame.buffer.handle)
@@ -105,8 +126,15 @@ class FrameInstanceBuffer(
         return buffer to memory
     }
 
+    /** Binding index and stride constants for the per-instance frame-index stream. */
     companion object {
+        /**
+         * Vertex-buffer binding index of the per-instance frame stream: 3, after the mesh at 0, the
+         * model matrices at 1 and the colours at 2.
+         */
         const val INSTANCE_FRAME_BINDING = 3
+
+        /** Floats per instance: 1, a lone `f32` frame index. */
         val FLOATS_PER_INSTANCE = GpuDataShape.Float.componentCount
     }
 }

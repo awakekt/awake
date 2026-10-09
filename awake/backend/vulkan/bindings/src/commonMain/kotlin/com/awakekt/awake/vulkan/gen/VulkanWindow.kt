@@ -14,11 +14,31 @@ package com.awakekt.awake.vulkan.gen
  * `Surface` or `CAMetalLayer` (see `VulkanSurface.kt`), so the other actuals are stubs.
  */
 expect object VulkanWindow {
+    /**
+     * Returns the window's framebuffer width in device pixels, which is what a swapchain extent is
+     * built from.
+     *
+     * @param window The GLFW window handle.
+     */
     fun glfwGetFramebufferWidth(window: Long): Int
+
+    /**
+     * Returns the window's framebuffer height in device pixels, which is what a swapchain extent is
+     * built from.
+     *
+     * @param window The GLFW window handle.
+     */
     fun glfwGetFramebufferHeight(window: Long): Int
 
     /** Size in logical points; the framebuffer is a device-pixel multiple of it on HiDPI. */
     fun glfwGetWindowWidth(window: Long): Int
+
+    /**
+     * Returns the window's height in logical points; the framebuffer height is a device-pixel
+     * multiple of it on HiDPI displays.
+     *
+     * @param window The GLFW window handle.
+     */
     fun glfwGetWindowHeight(window: Long): Int
 
     /** A `VkSurfaceKHR` for [window] on [instance]; the desktop counterpart of `vkCreateAndroidSurfaceKHR`. */

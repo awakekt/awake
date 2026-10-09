@@ -92,15 +92,28 @@ class RenderPipeline(
      * correctly-wound solid mesh -- see `render.renderer.CullMode`'s own doc comment. Mirrors
      * Vulkan's `RenderPipeline.cullMode`. */
     private val cullMode: GPUCullMode = GPUCullMode.None,
+    /**
+     * Which triangle winding this pipeline treats as front-facing; it must agree with the winding
+     * of the geometry it renders.
+     */
     val frontFace: FrontFace = FrontFace.CounterClockwise,
     /** Non-null builds this pipeline its OWN uniform buffer plus bind group -- see
      * `PipelineSpec.uniforms`. Mirrors Vulkan's identical parameter; this backend needs no
      * frames-in-flight count because it runs one. */
     uniforms: UniformLayout? = null,
+    /**
+     * The mapping from binding semantics (material, joint palette, shadow) to bind-group slots that
+     * draws through this pipeline follow.
+     */
     val bindingLayout: BindingLayout = BindingLayout.Standard,
     /** What this pipeline's own group holds, when it owns one -- see `PipelineSpec
      * .materialBindings`. This decides the entries written against its declared layout. */
     internal val materialBindings: GroupBindings? = null,
+    /**
+     * Whether this pipeline reads a material in group 0. For a legacy pipeline that carries no
+     * shader binding metadata it decides whether group 0 exists, and it also gates whether the
+     * pipeline exposes its own uniform block.
+     */
     val usesMaterialGroup: Boolean = true,
     /** Exact shader resource ABI keyed by bind-group index, carried from ASL when available. */
     private val bindingsByGroup: Map<Int, GroupBindings> = emptyMap(),
@@ -108,8 +121,18 @@ class RenderPipeline(
     private val bindingsMetadataAvailable: Boolean = false,
 ) : UniformBlockOwner {
     var renderPass: Long = 0
+
+    /**
+     * Vulkan-parity placeholder, always 0: the layout is derived from the shader or built from the
+     * declared bindings, not held as a handle.
+     */
     var pipelineLayout: Long = 0
     var pipelineCache: Long = 0
+
+    /**
+     * One-element array holding the [WebGpuHandles] table id of the live `GPURenderPipeline`. A
+     * pipeline swap rewrites slot 0 in place, so the array identity stays stable.
+     */
     var graphicsPipeline: LongArray
 
     /** This pipeline as the shared render layer's opaque handle. One per pipeline object and
@@ -416,6 +439,10 @@ class RenderPipeline(
         return old
     }
 
+    /**
+     * Releases the pipeline's [WebGpuHandles] entry and closes its uniform buffer, if it owns one.
+     * Call once, after the last frame that draws through it.
+     */
     fun destroy() {
         WebGpuHandles.release(graphicsPipeline[0])
         // Inside destroy(), not a separate call a teardown path has to remember: forgetting one

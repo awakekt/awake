@@ -61,6 +61,10 @@ class UiRenderPipeline(
     graphicsDevice: GraphicsDevice,
     private val swapchainManager: SwapchainManager,
     shaderCode: ByteArray,
+    /**
+     * Which UI primitive this pipeline draws, which fixes its vertex layout and the shape of its
+     * group 0.
+     */
     val kind: UiPipelineKind = UiPipelineKind.Quad,
     font: UiFont? = null,
     private val blendMode: BlendMode = BlendMode.SourceOver,
@@ -93,14 +97,27 @@ class UiRenderPipeline(
     )
 
     private val device = graphicsDevice.wgpuContext.device
+
+    /**
+     * The current `GPURenderPipeline`. It is replaced when the shader is rebuilt, so read it per
+     * draw rather than caching it.
+     */
     var pipeline: GPURenderPipeline
         private set
     private val screenSizeBuffer: GPUBuffer
     private var fontTexture: GPUTexture? = null
     private var fontTextureView: io.ygdrasil.webgpu.GPUTextureView? = null
     private var fontSampler: io.ygdrasil.webgpu.GPUSampler? = null
+
+    /**
+     * Group-0 bind group holding the screen-size uniform and, for glyph pipelines, the font atlas
+     * and sampler. It is not built for texture pipelines, whose bind groups come per material, so
+     * reading it there throws.
+     */
     lateinit var bindGroup: GPUBindGroup
         private set
+
+    /** Alias of [bindGroup], named for the uniform it carries. */
     val screenSizeBindGroup: GPUBindGroup get() = bindGroup
     private val materialBindGroups = HashMap<Material, GPUBindGroup>()
 
@@ -333,6 +350,10 @@ class UiRenderPipeline(
         }
     }
 
+    /**
+     * Drops the cached per-material bind groups and closes the font atlas texture and the
+     * screen-size uniform buffer.
+     */
     fun destroy() {
         materialBindGroups.clear()
         fontTexture?.close()

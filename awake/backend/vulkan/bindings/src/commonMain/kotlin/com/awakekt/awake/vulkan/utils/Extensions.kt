@@ -8,11 +8,23 @@ package com.awakekt.awake.vulkan.utils
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.VulkanExtension
 
+/**
+ * Lists the names of the instance extensions the loader offers.
+ *
+ * @param layerName A layer whose extensions to list, or `null` for the implementation's own.
+ * @return The distinct extension names, such as `VK_KHR_surface`.
+ */
 fun getAppExtProps(layerName: String? = null): List<String> {
     val extensionProperties = Vulkan.vkEnumerateInstanceExtensionProperties(layerName)
     return extensionProperties.map { it.extensionName }.toSet().toList()
 }
 
+/**
+ * Lists the names of the instance layers installed on this machine, such as
+ * `VK_LAYER_KHRONOS_validation`.
+ *
+ * @return The distinct layer names.
+ */
 fun getAppLayerProps(): List<String> {
     val layerProperties = Vulkan.vkEnumerateInstanceLayerProperties()
     return layerProperties.map { it.layerName }.toSet().toList()

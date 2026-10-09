@@ -42,20 +42,36 @@ class AlphaInstanceBuffer(
         out[offset + 3] = color.w
     }
 
+    /**
+     * Uploads one RGBA tint per instance for this frame, in the same order as the instance
+     * matrices.
+     *
+     * An empty list uploads nothing and leaves the previous contents in place.
+     *
+     * @param colors Per-instance colour and alpha, one entry per drawn instance.
+     * @throws IllegalArgumentException If [colors] holds more entries than the buffer's instance
+     * capacity.
+     */
     fun update(colors: List<Vec4>) {
         val floats = packer.pack(colors, maxInstances) ?: return
         graphicsDevice.wgpuContext.device.queue.writeBufferData(buffer, 0uL, fastArrayBufferOf(floats))
     }
 
+    /**
+     * Returns the GPU vertex buffer bound at slot 2 for instanced billboard draws. The buffer is
+     * allocated once at construction and never replaced.
+     */
     fun bufferRef(): GPUBuffer = buffer
 
     /** This buffer as the shared render layer's opaque handle -- built once, not per draw. */
     val binding: WebGpuBufferHandle by lazy { WebGpuBufferHandle(buffer) }
 
+    /** Closes the GPU buffer. Call once, after the last frame that draws with it. */
     fun destroy() {
         buffer.close()
     }
 
+    /** Stride constant for the per-instance colour stream. */
     companion object {
         /** Derived from the shape, not hand-counted -- see [InstancePacker]. */
         val FLOATS_PER_INSTANCE = GpuDataShape.Vec4.componentCount

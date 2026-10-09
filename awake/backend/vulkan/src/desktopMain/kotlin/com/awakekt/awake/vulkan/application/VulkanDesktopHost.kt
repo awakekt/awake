@@ -67,6 +67,22 @@ fun runVulkanDesktopGame(
     )
 }
 
+/**
+ * Runs [game] in a desktop window drawn by an existing [application], and returns once the window
+ * has closed.
+ *
+ * Consumers still own input polling, debug channels and the engine instance. The window, and GLFW,
+ * are torn down by this call.
+ *
+ * @param game The app whose window configuration, input and frame loop this serves.
+ * @param application The engine that draws [game]'s frames.
+ * @param pollInput Reads the window's keys and pointer into the game's input each frame.
+ * @param beforeFrame Runs after input is read and before the frame is updated.
+ * @param afterLoop Runs once the loop ends, before the engine is disposed.
+ * @param cursor The pointer shape the UI asks for this frame, or `null` to leave the cursor alone.
+ * @throws IllegalStateException If [game] asks for a window backend other than Vulkan or the
+ * default.
+ */
 fun runVulkanDesktopGame(
     game: AwakeAppLifecycle,
     application: VulkanEngine,

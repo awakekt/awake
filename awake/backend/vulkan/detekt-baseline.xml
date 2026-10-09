@@ -5,7 +5,6 @@
     <ID>CyclomaticComplexMethod:DepthPrePassFeature.kt$DepthPrePassFeature$private fun recordCascade( commandBuffer: Long, frameIndex: Int, drawCalls: List&lt;PreparedDraw>, castFormat: VertexFormat, cascade: Int, content: GpuEnvironmentState? = null, )</ID>
     <ID>CyclomaticComplexMethod:RendererDrawUi.kt$fun Renderer.renderUiToTexture(target: RenderTarget, primitives: List&lt;UiDrawPrimitive>, font: UiFont?)</ID>
     <ID>CyclomaticComplexMethod:VulkanEngine.kt$VulkanEngine$private suspend fun buildDepthPrePassFeature(target: DepthTarget? = depthTarget): DepthPrePassFeature?</ID>
-    <ID>EmptyClassBlock:UiRenderPipeline.kt$UiRenderPipeline.Companion${ }</ID>
     <ID>LargeClass:UiRenderPipeline.kt$UiRenderPipeline</ID>
     <ID>LongMethod:DepthPrePassFeature.kt$DepthPrePassFeature$private fun recordCascade( commandBuffer: Long, frameIndex: Int, drawCalls: List&lt;PreparedDraw>, castFormat: VertexFormat, cascade: Int, content: GpuEnvironmentState? = null, )</ID>
     <ID>LongMethod:HeadlessSceneRenderer.kt$fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession</ID>

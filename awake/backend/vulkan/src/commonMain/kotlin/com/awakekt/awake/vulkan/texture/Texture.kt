@@ -67,7 +67,10 @@ class Texture(
     private val device get() = graphicsDevice.device
     private val physicalDevice get() = graphicsDevice.physicalDevice
 
+    /** The device-local `VkImage` holding every layer and mip level. */
     var image: ImageHandle = ImageHandle(0)
+
+    /** The device memory backing [image]. */
     var imageMemory: DeviceMemoryHandle = DeviceMemoryHandle(0)
     var imageView: ImageViewHandle = ImageViewHandle(0)
     var sampler: SamplerHandle = SamplerHandle(0)
@@ -258,6 +261,10 @@ class Texture(
         )
     }
 
+    /**
+     * Destroys the sampler, image view, image and its memory. Call once, after the GPU has finished
+     * with the texture.
+     */
     fun destroy() {
         VulkanImages.vkDestroySampler(device, sampler.handle)
         Vulkan.vkDestroyImageView(device, imageView.handle)

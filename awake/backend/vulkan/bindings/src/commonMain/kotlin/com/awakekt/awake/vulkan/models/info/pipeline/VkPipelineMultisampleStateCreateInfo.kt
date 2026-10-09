@@ -12,6 +12,21 @@ import com.awakekt.awake.vulkan.VkSampleMask
 import com.awakekt.awake.vulkan.enums.VkSampleCountFlagBits
 import com.awakekt.awake.vulkan.enums.VkStructureType
 
+/**
+ * The multisampling state of a graphics pipeline (`VkPipelineMultisampleStateCreateInfo`).
+ *
+ * @property sType Identifies the structure to the driver; leave it at its default.
+ * @property pNext Reserved for extension chaining. The binding forwards this field as a raw pointer
+ * rather than marshalling a structure, so leave it `null`.
+ * @property flags Reserved for future use; 0.
+ * @property rasterizationSamples The number of samples per pixel used in rasterization.
+ * @property sampleShadingEnable Whether sample shading is on.
+ * @property minSampleShading The minimum fraction of samples that are shaded individually, when
+ * sample shading is on.
+ * @property pSampleMask A mask of the samples that stay enabled.
+ * @property alphaToCoverageEnable Whether the fragment's alpha is converted into a coverage mask.
+ * @property alphaToOneEnable Whether the fragment's alpha is set to one.
+ */
 class VkPipelineMultisampleStateCreateInfo(
     var sType: VkStructureType = VkStructureType.VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
     var pNext: Any? = null,

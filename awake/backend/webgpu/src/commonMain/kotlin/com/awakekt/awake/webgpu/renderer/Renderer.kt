@@ -312,6 +312,10 @@ class Renderer internal constructor(
         depthPrePassPlaceholder?.destroy()
     }
 
+    /**
+     * Holds the renderer's internal sizing and neutral-texture constants; nothing in it is public
+     * API.
+     */
     companion object {
         /** Matches the Vulkan backend's own batching budget; see its MAX_UI_QUADS. */
         internal const val MAX_UI_QUADS = 256

@@ -175,6 +175,9 @@ comments:
       - '**/awake/engine/render/parity/**'
       - '**/awake/engine/render/testing/**'
       - '**/awake/ui/node-graph-canvas/**'
+      - '**/awake/backend/vulkan/src/**'
+      - '**/awake/backend/vulkan/bindings/src/**'
+      - '**/awake/backend/webgpu/**'
     excludes: *testSourceSetExcludes
     searchInNestedClass: true
     searchInInnerClass: true

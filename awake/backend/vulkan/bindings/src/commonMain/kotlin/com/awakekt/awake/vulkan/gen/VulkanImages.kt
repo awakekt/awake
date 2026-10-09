@@ -24,11 +24,63 @@ import com.awakekt.awake.vulkan.models.info.VkSamplerCreateInfo
  * transition outside these five is actually needed.
  */
 expect object VulkanImages {
+    /**
+     * Creates an image, two-dimensional unless [createInfo] says otherwise. It has no memory until
+     * one is bound with [vkBindImageMemory].
+     *
+     * @param device The logical device to create the image on.
+     * @param createInfo The size, format, usage, tiling, mip levels and array layers.
+     * @return The new `VkImage` handle.
+     */
     fun vkCreateImage(device: Long, createInfo: VkImageCreateInfo): Long
+
+    /**
+     * Destroys an image. It must no longer be used by pending GPU work, and its memory is freed
+     * separately.
+     *
+     * @param device The logical device that created the image.
+     * @param image The image to destroy.
+     */
     fun vkDestroyImage(device: Long, image: Long)
+
+    /**
+     * Returns the size, alignment and acceptable memory types an image needs from its backing
+     * memory.
+     *
+     * @param device The logical device that owns the image.
+     * @param image The image to query.
+     * @return The requirements; `memoryTypeBits` has bit `i` set when memory type `i` is usable.
+     */
     fun vkGetImageMemoryRequirements(device: Long, image: Long): VkMemoryRequirements
+
+    /**
+     * Binds a region of device memory to an image. This can be done once per image, before its
+     * first use.
+     *
+     * @param device The logical device that owns both objects.
+     * @param image The image to back.
+     * @param memory The memory to bind, of a type allowed by the image's requirements.
+     * @param memoryOffset Byte offset into [memory], a multiple of the image's alignment.
+     */
     fun vkBindImageMemory(device: Long, image: Long, memory: Long, memoryOffset: Long)
+
+    /**
+     * Creates a sampler, the filtering, addressing and comparison state a shader reads textures
+     * with.
+     *
+     * @param device The logical device to create the sampler on.
+     * @param createInfo The filters, address modes, anisotropy, border colour, LOD range and
+     * compare state.
+     * @return The new `VkSampler` handle.
+     */
     fun vkCreateSampler(device: Long, createInfo: VkSamplerCreateInfo): Long
+
+    /**
+     * Destroys a sampler. It must no longer be used by pending GPU work.
+     *
+     * @param device The logical device that created the sampler.
+     * @param sampler The sampler to destroy.
+     */
     fun vkDestroySampler(device: Long, sampler: Long)
 
     /** Transitions `image`'s layout in `commandBuffer` between the plain-`Int`
@@ -62,6 +114,16 @@ expect object VulkanImages {
         dstAccessMask: Int,
     )
 
+    /**
+     * Records a copy of texel data from a buffer into the image region described by [copy]. The
+     * image must be in `TRANSFER_DST_OPTIMAL` layout.
+     *
+     * @param commandBuffer The command buffer being recorded.
+     * @param srcBuffer The buffer holding the texels.
+     * @param dstImage The image to copy into.
+     * @param copy The buffer offset and row layout, and the mip level, array layers and size of the
+     * image region.
+     */
     fun vkCmdCopyBufferToImage(
         commandBuffer: Long,
         srcBuffer: Long,

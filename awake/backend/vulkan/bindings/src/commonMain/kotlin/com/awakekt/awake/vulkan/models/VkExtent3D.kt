@@ -8,6 +8,13 @@ package com.awakekt.awake.vulkan.models
 import com.awakekt.awake.vulkan.VkMutator
 import kotlin.jvm.JvmOverloads
 
+/**
+ * A three-dimensional size, usually in texels (`VkExtent3D`).
+ *
+ * @property width The horizontal size.
+ * @property height The vertical size.
+ * @property depth The depth.
+ */
 @VkMutator
 data class VkExtent3D @JvmOverloads constructor(
     val width: Int = 0,

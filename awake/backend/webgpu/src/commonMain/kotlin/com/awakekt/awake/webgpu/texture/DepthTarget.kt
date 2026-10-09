@@ -30,6 +30,7 @@ import io.ygdrasil.webgpu.TextureViewDescriptor
  */
 class DepthTarget(
     graphicsDevice: GraphicsDevice,
+    /** Edge length, in texels, of the square depth texture. */
     val size: Int = DEFAULT_SIZE,
     /** One layer per shadow cascade -- Vulkan's `DepthTarget.layers`, same reasoning. */
     val layers: Int = 1,
@@ -44,6 +45,10 @@ class DepthTarget(
      */
     comparison: Boolean = false,
 ) {
+    /**
+     * The `Depth32Float` texture, with [layers] array layers. It is both a render attachment and
+     * bindable for sampling.
+     */
     val depthTexture: GPUTexture = graphicsDevice.wgpuContext.device.createTexture(
         TextureDescriptor(
             size = Extent3D(
@@ -84,6 +89,11 @@ class DepthTarget(
     // LessEqual matches the shader's sense exactly: the manual PCF this replaces counted a tap
     // lit when (ndc.z - bias) was NOT greater than the stored depth. Linear filters so each tap
     // blends four comparison RESULTS -- the free 2x2 PCF comparison sampling exists for.
+    /**
+     * Sampler for reading [depthView], clamped to the edge on every axis. A linear-filtered
+     * `LessEqual` comparison sampler when built with `comparison = true`, otherwise a plain
+     * nearest-filter sampler.
+     */
     val sampler: GPUSampler = graphicsDevice.wgpuContext.device.createSampler(
         if (comparison) {
             SamplerDescriptor(
@@ -105,11 +115,14 @@ class DepthTarget(
         },
     )
 
+    /** Closes [depthTexture]. Views and the sampler derived from it must not be used afterwards. */
     fun destroy() {
         depthTexture.close()
     }
 
+    /** Default size for a depth target. */
     companion object {
+        /** Default edge length of a depth target: 2048 texels, the same as the Vulkan backend's. */
         const val DEFAULT_SIZE = 2048
     }
 }

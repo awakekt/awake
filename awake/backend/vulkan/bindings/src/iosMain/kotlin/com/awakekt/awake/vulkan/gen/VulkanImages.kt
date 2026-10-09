@@ -54,8 +54,17 @@ import platform.MoltenVK.vkDestroySampler as nativeVkDestroySampler
 import platform.MoltenVK.vkGetImageMemoryRequirements as nativeVkGetImageMemoryRequirements
 
 // Phase 6 (MoltenVK cinterop) is in progress -- see docs/mvp-plan.md.
+/**
+ * iOS actual of [VulkanImages], implemented through MoltenVK cinterop. A failed creation or bind
+ * call throws an [IllegalStateException], and so does a layout transition the binding does not
+ * support.
+ */
 @OptIn(ExperimentalForeignApi::class)
 actual object VulkanImages {
+    /**
+     * Creates an image, two-dimensional unless [createInfo] says otherwise. It has no memory until
+     * one is bound with [vkBindImageMemory].
+     */
     actual fun vkCreateImage(device: Long, createInfo: VkImageCreateInfo): Long = memScoped {
         val nativeCreateInfo = alloc<NativeVkImageCreateInfo>().apply {
             sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO
@@ -84,10 +93,18 @@ actual object VulkanImages {
         imageVar.value!!.rawValue.toLong()
     }
 
+    /**
+     * Destroys an image. It must no longer be used by pending GPU work, and its memory is freed
+     * separately.
+     */
     actual fun vkDestroyImage(device: Long, image: Long) {
         nativeVkDestroyImage(device.toCPointer(), image.toCPointer<VkImage_T>(), null)
     }
 
+    /**
+     * Returns the size, alignment and acceptable memory types an image needs from its backing
+     * memory.
+     */
     actual fun vkGetImageMemoryRequirements(device: Long, image: Long): VkMemoryRequirements = memScoped {
         val native = alloc<platform.MoltenVK.VkMemoryRequirements>()
         nativeVkGetImageMemoryRequirements(device.toCPointer(), image.toCPointer<VkImage_T>(), native.ptr)
@@ -98,6 +115,10 @@ actual object VulkanImages {
         )
     }
 
+    /**
+     * Binds a region of device memory to an image. This can be done once per image, before its
+     * first use.
+     */
     actual fun vkBindImageMemory(device: Long, image: Long, memory: Long, memoryOffset: Long) {
         val result = nativeVkBindImageMemory(
             device.toCPointer(),
@@ -108,6 +129,10 @@ actual object VulkanImages {
         check(result == VK_SUCCESS) { "vkBindImageMemory failed: $result" }
     }
 
+    /**
+     * Creates a sampler, the filtering, addressing and comparison state a shader reads textures
+     * with.
+     */
     actual fun vkCreateSampler(device: Long, createInfo: VkSamplerCreateInfo): Long = memScoped {
         val nativeCreateInfo = alloc<NativeVkSamplerCreateInfo>().apply {
             sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO
@@ -135,12 +160,20 @@ actual object VulkanImages {
         samplerVar.value!!.rawValue.toLong()
     }
 
+    /** Destroys a sampler. It must no longer be used by pending GPU work. */
     actual fun vkDestroySampler(device: Long, sampler: Long) {
         nativeVkDestroySampler(device.toCPointer(), sampler.toCPointer<VkSampler_T>(), null)
     }
 
     // Only the two transitions a texture upload needs -- see this actual object's expect
     // declaration doc comment for why this is deliberately not a generic barrier API.
+    /**
+     * Transitions `image`'s layout in `commandBuffer` between the plain-`Int`
+     * [com.awakekt.awake.vulkan.models.info.VkImageLayout2] values `oldLayout`/`newLayout`.
+     * `levelCount` defaults to `1` (every pre-existing caller is single-mip); a multi-mip
+     * [com.awakekt.awake.vulkan.texture.Texture] must pass its real level count --
+     * `VK_REMAINING_MIP_LEVELS` silently transitions only level 0 on MoltenVK.
+     */
     actual fun vkTransitionImageLayout(
         commandBuffer: Long,
         image: Long,
@@ -242,6 +275,13 @@ actual object VulkanImages {
         )
     }
 
+    /**
+     * Records a global memory barrier: [srcAccessMask] writes in [srcStageMask] recorded before it
+     * are made visible to [dstAccessMask] in [dstStageMask] after it.
+     *
+     * For orderings a render pass already declares as a `VkSubpassDependency`: MoltenVK up to 1.4.1
+     * never encodes those as Metal fences, and only an explicit barrier orders its encoders.
+     */
     actual fun vkCmdMemoryBarrier(
         commandBuffer: Long,
         srcStageMask: Int,
@@ -269,6 +309,10 @@ actual object VulkanImages {
         )
     }
 
+    /**
+     * Records a copy of texel data from a buffer into the image region described by [copy]. The
+     * image must be in `TRANSFER_DST_OPTIMAL` layout.
+     */
     actual fun vkCmdCopyBufferToImage(
         commandBuffer: Long,
         srcBuffer: Long,

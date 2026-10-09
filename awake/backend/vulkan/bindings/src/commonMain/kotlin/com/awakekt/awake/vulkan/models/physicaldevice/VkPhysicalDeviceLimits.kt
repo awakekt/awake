@@ -12,6 +12,171 @@ import com.awakekt.awake.vulkan.VkMutator
 import com.awakekt.awake.vulkan.enums.VkSampleCountFlags
 import kotlin.jvm.JvmOverloads
 
+/**
+ * The numeric limits of a physical device (`VkPhysicalDeviceLimits`).
+ *
+ * @property maxImageDimension1D The largest width, height or depth supported for 1D images.
+ * @property maxImageDimension2D The largest width, height or depth supported for 2D images.
+ * @property maxImageDimension3D The largest width, height or depth supported for 3D images.
+ * @property maxImageDimensionCube The largest width and height supported for cube images.
+ * @property maxImageArrayLayers The largest number of layers an image can have.
+ * @property maxTexelBufferElements The largest number of texels a buffer view can address.
+ * @property maxUniformBufferRange The largest range, in bytes, of a uniform buffer descriptor.
+ * @property maxStorageBufferRange The largest range, in bytes, of a storage buffer descriptor.
+ * @property maxPushConstantsSize The largest total size, in bytes, of push constants.
+ * @property maxMemoryAllocationCount The largest number of device memory allocations that can exist
+ * at once.
+ * @property maxSamplerAllocationCount The largest number of sampler objects that can exist at once.
+ * @property bufferImageGranularity The granularity, in bytes, at which linear and optimal resources
+ * must be separated in memory.
+ * @property sparseAddressSpaceSize The total address space, in bytes, available for sparse
+ * allocations.
+ * @property maxBoundDescriptorSets The largest number of descriptor sets bound at once.
+ * @property maxPerStageDescriptorSamplers The largest number of samplers one shader stage can
+ * access.
+ * @property maxPerStageDescriptorUniformBuffers The largest number of uniform buffers one shader
+ * stage can access.
+ * @property maxPerStageDescriptorStorageBuffers The largest number of storage buffers one shader
+ * stage can access.
+ * @property maxPerStageDescriptorSampledImages The largest number of sampled images one shader
+ * stage can access.
+ * @property maxPerStageDescriptorStorageImages The largest number of storage images one shader
+ * stage can access.
+ * @property maxPerStageDescriptorInputAttachments The largest number of input attachments one
+ * shader stage can access.
+ * @property maxPerStageResources The largest total number of resources one shader stage can access.
+ * @property maxDescriptorSetSamplers The largest number of samplers in a descriptor set, across all
+ * stages.
+ * @property maxDescriptorSetUniformBuffers The largest number of uniform buffers in a descriptor
+ * set, across all stages.
+ * @property maxDescriptorSetUniformBuffersDynamic The largest number of dynamic uniform buffers in
+ * a descriptor set, across all stages.
+ * @property maxDescriptorSetStorageBuffers The largest number of storage buffers in a descriptor
+ * set, across all stages.
+ * @property maxDescriptorSetStorageBuffersDynamic The largest number of dynamic storage buffers in
+ * a descriptor set, across all stages.
+ * @property maxDescriptorSetSampledImages The largest number of sampled images in a descriptor set,
+ * across all stages.
+ * @property maxDescriptorSetStorageImages The largest number of storage images in a descriptor set,
+ * across all stages.
+ * @property maxDescriptorSetInputAttachments The largest number of input attachments in a
+ * descriptor set, across all stages.
+ * @property maxVertexInputAttributes The largest number of vertex input attributes.
+ * @property maxVertexInputBindings The largest number of vertex input bindings.
+ * @property maxVertexInputAttributeOffset The largest offset, in bytes, of a vertex attribute
+ * within its binding's element.
+ * @property maxVertexInputBindingStride The largest stride, in bytes, of a vertex input binding.
+ * @property maxVertexOutputComponents The largest number of components of output variables of the
+ * vertex stage.
+ * @property maxTessellationGenerationLevel The largest tessellation level the fixed-function
+ * generator supports.
+ * @property maxTessellationPatchSize The largest number of control points per patch.
+ * @property maxTessellationControlPerVertexInputComponents The largest number of input components
+ * per vertex of the tessellation control stage.
+ * @property maxTessellationControlPerVertexOutputComponents The largest number of output components
+ * per vertex of the tessellation control stage.
+ * @property maxTessellationControlPerPatchOutputComponents The largest number of per-patch output
+ * components of the tessellation control stage.
+ * @property maxTessellationControlTotalOutputComponents The largest total number of output
+ * components of the tessellation control stage, per-vertex and per-patch together.
+ * @property maxTessellationEvaluationInputComponents The largest number of input components of the
+ * tessellation evaluation stage.
+ * @property maxTessellationEvaluationOutputComponents The largest number of output components of
+ * the tessellation evaluation stage.
+ * @property maxGeometryShaderInvocations The largest number of invocations of a geometry shader per
+ * primitive.
+ * @property maxGeometryInputComponents The largest number of input components of the geometry
+ * stage.
+ * @property maxGeometryOutputComponents The largest number of output components of the geometry
+ * stage.
+ * @property maxGeometryOutputVertices The largest number of vertices a geometry shader can emit.
+ * @property maxGeometryTotalOutputComponents The largest total number of components of all vertices
+ * a geometry shader emits.
+ * @property maxFragmentInputComponents The largest number of input components of the fragment
+ * stage.
+ * @property maxFragmentOutputAttachments The largest number of colour attachments a fragment shader
+ * can write.
+ * @property maxFragmentDualSrcAttachments The largest number of colour attachments a fragment
+ * shader can write with dual-source blending.
+ * @property maxFragmentCombinedOutputResources The largest total number of storage buffers, storage
+ * images and output attachments a fragment shader can use.
+ * @property maxComputeSharedMemorySize The largest total size, in bytes, of shared memory in a
+ * compute workgroup.
+ * @property maxComputeWorkGroupCount The largest workgroup count per dimension of a compute
+ * dispatch, as three values.
+ * @property maxComputeWorkGroupInvocations The largest total number of invocations in a compute
+ * workgroup.
+ * @property maxComputeWorkGroupSize The largest workgroup size per dimension, as three values.
+ * @property subPixelPrecisionBits The number of bits of sub-pixel precision in framebuffer
+ * coordinates.
+ * @property subTexelPrecisionBits The number of bits of sub-texel precision in texture lookups.
+ * @property mipmapPrecisionBits The number of bits of precision in the mipmap level of detail.
+ * @property maxDrawIndexedIndexValue The largest index value an indexed draw can use.
+ * @property maxDrawIndirectCount The largest draw count of a multi-draw indirect command.
+ * @property maxSamplerLodBias The largest absolute LOD bias of a sampler.
+ * @property maxSamplerAnisotropy The largest anisotropy a sampler can use.
+ * @property maxViewports The largest number of active viewports.
+ * @property maxViewportDimensions The largest viewport width and height, as two values.
+ * @property viewportBoundsRange The range, as a minimum and a maximum, that viewport bounds must
+ * fit within.
+ * @property viewportSubPixelBits The number of bits of sub-pixel precision for viewport bounds.
+ * @property minMemoryMapAlignment The minimum alignment, in bytes, of mapped memory pointers.
+ * @property minTexelBufferOffsetAlignment The minimum alignment, in bytes, for the offset of a
+ * texel buffer view.
+ * @property minUniformBufferOffsetAlignment The minimum alignment, in bytes, for the offset of a
+ * uniform buffer descriptor.
+ * @property minStorageBufferOffsetAlignment The minimum alignment, in bytes, for the offset of a
+ * storage buffer descriptor.
+ * @property minTexelOffset The smallest texel offset an image sample operation can use.
+ * @property maxTexelOffset The largest texel offset an image sample operation can use.
+ * @property minTexelGatherOffset The smallest texel offset an image gather operation can use.
+ * @property maxTexelGatherOffset The largest texel offset an image gather operation can use.
+ * @property minInterpolationOffset The smallest offset an interpolation instruction can use.
+ * @property maxInterpolationOffset The largest offset an interpolation instruction can use.
+ * @property subPixelInterpolationOffsetBits The number of bits of sub-pixel precision for
+ * interpolation offsets.
+ * @property maxFramebufferWidth The largest framebuffer width.
+ * @property maxFramebufferHeight The largest framebuffer height.
+ * @property maxFramebufferLayers The largest number of framebuffer layers.
+ * @property framebufferColorSampleCounts A mask of the sample counts supported for framebuffers
+ * with colour attachments.
+ * @property framebufferDepthSampleCounts A mask of the sample counts supported for framebuffers
+ * with depth attachments.
+ * @property framebufferStencilSampleCounts A mask of the sample counts supported for framebuffers
+ * with stencil attachments.
+ * @property framebufferNoAttachmentsSampleCounts A mask of the sample counts supported for
+ * framebuffers with no attachments.
+ * @property maxColorAttachments The largest number of colour attachments of a subpass.
+ * @property sampledImageColorSampleCounts A mask of the sample counts supported for sampled
+ * non-integer colour images.
+ * @property sampledImageIntegerSampleCounts A mask of the sample counts supported for sampled
+ * integer colour images.
+ * @property sampledImageDepthSampleCounts A mask of the sample counts supported for sampled depth
+ * images.
+ * @property sampledImageStencilSampleCounts A mask of the sample counts supported for sampled
+ * stencil images.
+ * @property storageImageSampleCounts A mask of the sample counts supported for storage images.
+ * @property maxSampleMaskWords The largest number of words in a sample mask.
+ * @property timestampComputeAndGraphics Whether timestamps are supported on every graphics and
+ * compute queue.
+ * @property timestampPeriod The number of nanoseconds per timestamp tick.
+ * @property maxClipDistances The largest number of clip distances.
+ * @property maxCullDistances The largest number of cull distances.
+ * @property maxCombinedClipAndCullDistances The largest total number of clip and cull distances.
+ * @property discreteQueuePriorities The number of distinct queue priorities that can be told apart.
+ * @property pointSizeRange The range, as a minimum and a maximum, of supported point sizes.
+ * @property lineWidthRange The range, as a minimum and a maximum, of supported line widths.
+ * @property pointSizeGranularity The step between supported point sizes.
+ * @property lineWidthGranularity The step between supported line widths.
+ * @property strictLines Whether lines are rasterized strictly following the specification.
+ * @property standardSampleLocations Whether rasterization uses the standard sample locations.
+ * @property optimalBufferCopyOffsetAlignment The optimal alignment, in bytes, of buffer offsets in
+ * copies to and from images.
+ * @property optimalBufferCopyRowPitchAlignment The optimal alignment, in bytes, of buffer row pitch
+ * in copies to and from images.
+ * @property nonCoherentAtomSize The size and alignment, in bytes, of flushes and invalidations of
+ * non-coherent mapped memory.
+ */
 @VkMutator
 class VkPhysicalDeviceLimits @JvmOverloads constructor(
     val maxImageDimension1D: UInt = 0u,

@@ -27,8 +27,13 @@ import platform.MoltenVK.vkCreateQueryPool as nativeVkCreateQueryPool
 import platform.MoltenVK.vkDestroyQueryPool as nativeVkDestroyQueryPool
 import platform.MoltenVK.vkGetQueryPoolResults as nativeVkGetQueryPoolResults
 
+/**
+ * iOS actual of [VulkanQueries], implemented through MoltenVK cinterop. A failed pool creation
+ * throws an [IllegalStateException].
+ */
 @OptIn(ExperimentalForeignApi::class)
 actual object VulkanQueries {
+    /** A pool of [queryCount] `VK_QUERY_TYPE_TIMESTAMP` queries. */
     actual fun vkCreateTimestampQueryPool(device: Long, queryCount: Int): Long = memScoped {
         val info = alloc<NativeVkQueryPoolCreateInfo>().apply {
             sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO
@@ -44,10 +49,12 @@ actual object VulkanQueries {
         pool.value!!.rawValue.toLong()
     }
 
+    /** Destroys a query pool. No pending command buffer may still use it. */
     actual fun vkDestroyQueryPool(device: Long, queryPool: Long) {
         nativeVkDestroyQueryPool(device.toCPointer(), queryPool.toCPointer<VkQueryPool_T>(), null)
     }
 
+    /** Recorded outside a render pass, before the queries are written again. */
     actual fun vkCmdResetQueryPool(commandBuffer: Long, queryPool: Long, firstQuery: Int, queryCount: Int) {
         nativeVkCmdResetQueryPool(
             commandBuffer.toCPointer(),
@@ -57,6 +64,10 @@ actual object VulkanQueries {
         )
     }
 
+    /**
+     * Records a write of the GPU clock into one query slot once earlier work has passed the given
+     * pipeline stage.
+     */
     actual fun vkCmdWriteTimestamp(commandBuffer: Long, pipelineStage: Int, queryPool: Long, query: Int) {
         nativeVkCmdWriteTimestamp(
             commandBuffer.toCPointer(),
@@ -66,6 +77,10 @@ actual object VulkanQueries {
         )
     }
 
+    /**
+     * GPU ticks from query [firstQuery] to the one after it, each masked to [validBits], or -1
+     * while either has not been written. Never waits for the GPU.
+     */
     actual fun timestampTicksBetween(device: Long, queryPool: Long, firstQuery: Int, validBits: Int): Long = memScoped {
         val stamps = allocArray<ULongVar>(2)
         val result = nativeVkGetQueryPoolResults(

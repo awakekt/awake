@@ -122,6 +122,16 @@ class SkinnedInstanceBuffer(
         palette.copyInto(out, offset)
     }
 
+    /**
+     * Writes each instance's joint palette into [frameIndex]'s buffer and resets every tint to
+     * opaque white.
+     *
+     * @param frameIndex The frame slot to write.
+     * @param palettes One palette per instance: up to [MAX_JOINTS] column-major matrices as flat
+     * floats. A shorter palette is written at the start of its record.
+     * @throws IllegalArgumentException If there are more palettes than the instance ceiling, a
+     * palette exceeds [MAX_JOINTS] matrices, or [frameIndex] is not a valid slot.
+     */
     fun update(frameIndex: Int, palettes: List<FloatArray>) = update(frameIndex, palettes, null)
 
     /** Uploads index-aligned tints, defaulting to white when omitted. */
@@ -135,6 +145,14 @@ class SkinnedInstanceBuffer(
     /** This frame slot's descriptor set, bound at the shared joint-palette semantic slot. */
     fun binding(frameIndex: Int): VulkanMaterialBinding = resourcesFor(frameIndex)
 
+    /**
+     * Binds [frameIndex]'s palette descriptor set at set [PALETTE_SET].
+     *
+     * @param frameIndex The frame slot whose set to bind.
+     * @param commandBuffer The command buffer being recorded.
+     * @param pipelineLayout The layout of the skinned-instanced pipeline the set is used with.
+     * @throws IllegalArgumentException If [frameIndex] is not a valid slot.
+     */
     fun bind(frameIndex: Int, commandBuffer: Long, pipelineLayout: Long) {
         VulkanDescriptors.vkCmdBindDescriptorSet(
             commandBuffer,
@@ -144,6 +162,10 @@ class SkinnedInstanceBuffer(
         )
     }
 
+    /**
+     * Destroys every frame slot's buffer, memory and descriptor pool, and this buffer's descriptor
+     * set layout. Call once, after the GPU has finished with them.
+     */
     fun destroy() {
         frameResources.forEach { frame ->
             VulkanBuffers.vkDestroyBuffer(device, frame.buffer.handle)
@@ -196,6 +218,7 @@ class SkinnedInstanceBuffer(
         return buffer to memory
     }
 
+    /** Capacity, layout and descriptor-set constants for the joint-palette storage buffer. */
     companion object {
         /** Alias of the engine-wide constant that also sizes the WGSL palette arrays. */
         const val MAX_JOINTS = com.awakekt.awake.render.renderer.MAX_JOINTS

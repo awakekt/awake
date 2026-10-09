@@ -12,5 +12,9 @@ package com.awakekt.awake.vulkan.pipeline
  * raw params were the same type, so a caller could silently swap e.g. two pipelines' vertex/
  * fragment code (or a vertex and fragment array with each other) at a call site and still
  * compile, breaking rendering with no error; grouping each pipeline's vertex/fragment code
- * into its own [ShaderPair] makes that swap a compile error instead. */
+ * into its own [ShaderPair] makes that swap a compile error instead.
+ *
+ * @property vertex The compiled SPIR-V code of the vertex stage.
+ * @property fragment The compiled SPIR-V code of the fragment stage.
+ */
 data class ShaderPair(val vertex: ByteArray, val fragment: ByteArray)

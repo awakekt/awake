@@ -55,12 +55,26 @@ class OffscreenRenderTarget(
     private val device get() = graphicsDevice.device
     private val physicalDevice get() = graphicsDevice.physicalDevice
 
+    /**
+     * The colour image the target renders into. It is created with the colour format passed at
+     * construction (the swapchain's, so the shared render pass applies) and usable as colour
+     * attachment, sampled image and transfer source.
+     */
     var colorImage: Long = 0
         private set
+
+    /** The device memory backing [colorImage]. */
     var colorImageMemory: Long = 0
         private set
+
+    /** View of [colorImage] that the framebuffer attaches and a compositing material samples. */
     var colorImageView: Long = 0
         private set
+
+    /**
+     * Sampler created with the default sampler state, paired with [colorImageView] when the target
+     * is composited.
+     */
     var sampler: Long = 0
         private set
 
@@ -68,6 +82,10 @@ class OffscreenRenderTarget(
     private var depthImageMemory: Long = 0
     private var depthImageView: Long = 0
 
+    /**
+     * Framebuffer binding [colorImageView] and the target's own depth attachment, built for the
+     * render pass passed at construction.
+     */
     var framebuffer: Long = 0
         private set
 

@@ -58,8 +58,15 @@ import io.ygdrasil.webgpu.VertexState
  */
 class LineRenderPipeline(graphicsDevice: GraphicsDevice, swapchainManager: SwapchainManager, shaderCode: ByteArray) {
     private val device = graphicsDevice.wgpuContext.device
+
+    /**
+     * The `LineList` render pipeline built from the shader passed at construction. Bind [bindGroup]
+     * at group 0 before drawing with it.
+     */
     val pipeline: GPURenderPipeline
     private val mvpBuffer: GPUBuffer
+
+    /** Group-0 bind group exposing the MVP uniform buffer that [writeMvp] rewrites each frame. */
     val bindGroup: GPUBindGroup
 
     /** [pipeline]/[bindGroup] as the shared render layer's opaque handles -- built once. */
@@ -70,6 +77,8 @@ class LineRenderPipeline(graphicsDevice: GraphicsDevice, swapchainManager: Swapc
             drawsTriangles = false,
         )
     }
+
+    /** [bindGroup] as the shared render layer's opaque handle, built once on first access. */
     val bindGroupHandle: WebGpuBindGroupHandle by lazy { WebGpuBindGroupHandle(bindGroup) }
 
     init {
@@ -147,6 +156,10 @@ class LineRenderPipeline(graphicsDevice: GraphicsDevice, swapchainManager: Swapc
         device.queue.writeBufferData(mvpBuffer, 0uL, fastArrayBufferOf(mvp))
     }
 
+    /**
+     * Closes the MVP uniform buffer, the only resource this class has to release explicitly. Do not
+     * draw with this pipeline or call [writeMvp] afterwards.
+     */
     fun destroy() {
         mvpBuffer.close()
     }

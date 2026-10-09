@@ -46,8 +46,16 @@ import platform.MoltenVK.vkDestroyDescriptorSetLayout as nativeVkDestroyDescript
 import platform.MoltenVK.vkUpdateDescriptorSets as nativeVkUpdateDescriptorSets
 
 // Phase 6 (MoltenVK cinterop) is in progress -- see docs/mvp-plan.md.
+/**
+ * iOS actual of [VulkanDescriptors], implemented through MoltenVK cinterop. A failed creation or
+ * allocation call throws an [IllegalStateException].
+ */
 @OptIn(ExperimentalForeignApi::class)
 actual object VulkanDescriptors {
+    /**
+     * Creates a descriptor set layout, the shape of the resource bindings a shader reads from one
+     * set.
+     */
     actual fun vkCreateDescriptorSetLayout(
         device: Long,
         createInfo: VkDescriptorSetLayoutCreateInfo,
@@ -75,10 +83,12 @@ actual object VulkanDescriptors {
         layoutVar.value!!.rawValue.toLong()
     }
 
+    /** Destroys a descriptor set layout. */
     actual fun vkDestroyDescriptorSetLayout(device: Long, layout: Long) {
         nativeVkDestroyDescriptorSetLayout(device.toCPointer(), layout.toCPointer<VkDescriptorSetLayout_T>(), null)
     }
 
+    /** Creates a pool that descriptor sets are allocated from. */
     actual fun vkCreateDescriptorPool(device: Long, createInfo: VkDescriptorPoolCreateInfo): Long = memScoped {
         val poolSizes = createInfo.pPoolSizes
         val nativeCreateInfo = alloc<NativeVkDescriptorPoolCreateInfo>().apply {
@@ -100,10 +110,12 @@ actual object VulkanDescriptors {
         poolVar.value!!.rawValue.toLong()
     }
 
+    /** Destroys a descriptor pool together with every set allocated from it. */
     actual fun vkDestroyDescriptorPool(device: Long, pool: Long) {
         nativeVkDestroyDescriptorPool(device.toCPointer(), pool.toCPointer<VkDescriptorPool_T>(), null)
     }
 
+    /** Allocates a single descriptor set with the given layout from a pool. */
     actual fun vkAllocateDescriptorSet(device: Long, pool: Long, layout: Long): Long = memScoped {
         val layoutPtr = layout.toCPointer<VkDescriptorSetLayout_T>()
         val setLayouts = allocArray<CPointerVar<VkDescriptorSetLayout_T>>(1) { _: Int -> value = layoutPtr }
@@ -120,6 +132,10 @@ actual object VulkanDescriptors {
         setVar.value!!.rawValue.toLong()
     }
 
+    /**
+     * Writes a buffer into one binding of a descriptor set. The set must not be in use by pending
+     * GPU work.
+     */
     actual fun vkUpdateDescriptorSetBuffer(
         device: Long,
         dstSet: Long,
@@ -147,6 +163,10 @@ actual object VulkanDescriptors {
         nativeVkUpdateDescriptorSets(device.toCPointer(), 1u, write.ptr, 0u, null)
     }
 
+    /**
+     * Writes an image view, a sampler, or both into one binding of a descriptor set. The set must
+     * not be in use by pending GPU work.
+     */
     actual fun vkUpdateDescriptorSetImage(
         device: Long,
         dstSet: Long,
@@ -174,6 +194,7 @@ actual object VulkanDescriptors {
         nativeVkUpdateDescriptorSets(device.toCPointer(), 1u, write.ptr, 0u, null)
     }
 
+    /** Records binding of one descriptor set to a graphics pipeline layout. */
     actual fun vkCmdBindDescriptorSet(
         commandBuffer: Long,
         pipelineLayout: Long,

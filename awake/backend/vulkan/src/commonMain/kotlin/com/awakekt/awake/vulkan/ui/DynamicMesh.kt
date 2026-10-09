@@ -124,6 +124,22 @@ class DynamicMesh(
      * actually establishes a mapping. */
     fun update(vertices: FloatArray, indices: IntArray) = update(frameIndex = 0, vertices = vertices, indices = indices)
 
+    /**
+     * Writes one frame's UI geometry into [frameIndex]'s buffers and makes that slot the active one
+     * for the [bind] and [draw] overloads that take no frame index.
+     *
+     * A slot whose buffers are too small grows first, doubling past what was asked for and freeing
+     * the old buffers immediately, so the caller must already have waited on that slot's fence. The
+     * GPU write is skipped when [vertices] and [indices] are the very same array instances the slot
+     * last received, which retained UI runs rely on, so the arrays must not be mutated after being
+     * passed in. An empty [indices] array draws nothing and skips the write, because mapping a
+     * zero-byte range is invalid.
+     *
+     * @param frameIndex The frame slot to write.
+     * @param vertices Interleaved vertex floats in the layout this mesh was built for.
+     * @param indices Triangle-list indices into [vertices], as 32-bit values.
+     * @throws IllegalArgumentException If [frameIndex] is not a valid slot.
+     */
     fun update(frameIndex: Int, vertices: FloatArray, indices: IntArray) {
         val frame = resourcesFor(frameIndex)
         growTo(frame, vertexFloats = vertices.size, indexCount = indices.size)
@@ -183,8 +199,20 @@ class DynamicMesh(
         frame.writtenIndices = null
     }
 
+    /**
+     * Binds the active slot's vertex and index buffers, the slot the last [update] wrote.
+     *
+     * @param commandBuffer The command buffer being recorded.
+     */
     fun bind(commandBuffer: Long) = bind(activeFrameIndex, commandBuffer)
 
+    /**
+     * Binds [frameIndex]'s vertex buffer at binding 0 and its index buffer as 32-bit indices.
+     *
+     * @param frameIndex The frame slot whose buffers to bind.
+     * @param commandBuffer The command buffer being recorded.
+     * @throws IllegalArgumentException If [frameIndex] is not a valid slot.
+     */
     fun bind(frameIndex: Int, commandBuffer: Long) {
         val frame = resourcesFor(frameIndex)
         VulkanBuffers.vkCmdBindVertexBuffers(commandBuffer, 0, frame.vertexBinding, ZERO_OFFSET)
@@ -196,8 +224,22 @@ class DynamicMesh(
         )
     }
 
+    /**
+     * Draws the active slot's indices, recording nothing when the slot holds none. Call after
+     * [bind].
+     *
+     * @param commandBuffer The command buffer being recorded.
+     */
     fun draw(commandBuffer: Long) = draw(activeFrameIndex, commandBuffer)
 
+    /**
+     * Draws [frameIndex]'s indices, recording nothing when the slot holds none. Call after [bind].
+     *
+     * @param frameIndex The frame slot to draw.
+     * @param commandBuffer The command buffer being recorded.
+     * @param stats Where the draw is counted, or `null` to count nothing.
+     * @throws IllegalArgumentException If [frameIndex] is not a valid slot.
+     */
     fun draw(frameIndex: Int, commandBuffer: Long, stats: RenderStatsCounter? = null) {
         val frame = resourcesFor(frameIndex)
         if (frame.drawIndexCount == 0) return
@@ -205,6 +247,10 @@ class DynamicMesh(
         stats?.recordDraw(frame.drawIndexCount)
     }
 
+    /**
+     * Destroys and frees every frame slot's vertex and index buffers and memory. Call once, after
+     * the GPU has finished with them.
+     */
     fun destroy() {
         frameResources.forEach { frame ->
             VulkanBuffers.vkDestroyBuffer(device, frame.vertexBuffer.handle)
@@ -238,6 +284,7 @@ class DynamicMesh(
         return buffer to memory
     }
 
+    /** Vertex layout sizes and quad geometry constants shared with the UI render pipelines. */
     companion object {
         /** Every vertex buffer here binds at offset 0; shared so binding allocates nothing. */
         private val ZERO_OFFSET = longArrayOf(0L)
@@ -245,12 +292,20 @@ class DynamicMesh(
         /** Default (colored-quad) layout: pos (vec2) + color (vec4) + transform (vec4:
          * scale.xy + pivot.xy, see `UiPrimitiveTransform`) -- see `ui_quad.vert`. */
         const val FLOATS_PER_VERTEX = com.awakekt.awake.core.geometry.VertexFormats2D.FLOATS_PER_VERTEX
+
+        /**
+         * Floats per vertex of a glyph quad: position, texture coordinate, colour and transform.
+         */
         const val GLYPH_FLOATS_PER_VERTEX = com.awakekt.awake.core.geometry.VertexFormats2D.GLYPH_FLOATS_PER_VERTEX
 
         /** pos(vec2) + localPos(vec2) + halfSize(vec2) + radius(float) + smoothing(float) + color(vec4) +
          * transform(vec4) -- see `ui_rounded_quad.vert`. */
         const val ROUNDED_QUAD_FLOATS_PER_VERTEX = com.awakekt.awake.core.geometry.VertexFormats2D.ROUNDED_QUAD_FLOATS_PER_VERTEX
+
+        /** Vertices emitted for one quad: 4, one per corner. */
         const val VERTICES_PER_QUAD = com.awakekt.awake.core.geometry.VertexFormats2D.VERTICES_PER_QUAD
+
+        /** Indices emitted for one quad: 6, two triangles. */
         const val INDICES_PER_QUAD = com.awakekt.awake.core.geometry.VertexFormats2D.INDICES_PER_QUAD
     }
 }

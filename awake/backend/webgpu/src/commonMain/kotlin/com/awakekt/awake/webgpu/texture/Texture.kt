@@ -38,6 +38,10 @@ import io.ygdrasil.webgpu.TextureViewDescriptor
  * backend-neutral CPU box-filter downsampling, the same generator
  * [com.awakekt.awake.vulkan.texture.Texture] uses) rather than just the base level,
  * so [sampler]'s `mipmapFilter` has more than one level to filter between.
+ *
+ * [texture] is the `RGBA8Unorm` GPU texture holding every layer. It carries that full mip chain
+ * unless the texture is a cubemap or uses non-linear filtering, in which case it has a single
+ * level.
  */
 class Texture(
     graphicsDevice: GraphicsDevice,
@@ -50,6 +54,11 @@ class Texture(
     filtering: TextureFiltering = TextureFiltering.Linear,
 ) : com.awakekt.awake.render.texture.WritableTexture {
     val texture: GPUTexture
+
+    /**
+     * The view a shader samples, covering every layer and mip level as a cube, a 2D array or a
+     * plain 2D view depending on how the texture was built.
+     */
     val view: GPUTextureView
     val sampler: GPUSampler
 

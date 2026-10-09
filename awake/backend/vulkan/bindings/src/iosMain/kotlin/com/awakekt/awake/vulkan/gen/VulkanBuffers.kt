@@ -47,8 +47,14 @@ import platform.MoltenVK.vkMapMemory as nativeVkMapMemory
 import platform.MoltenVK.vkUnmapMemory as nativeVkUnmapMemory
 
 // Phase 6 (MoltenVK cinterop) is in progress -- see docs/mvp-plan.md.
+/**
+ * iOS actual of [VulkanBuffers], implemented through MoltenVK cinterop. A failed creation or
+ * allocation call throws an [IllegalStateException], and so does a failed memory-type search,
+ * instead of returning -1.
+ */
 @OptIn(ExperimentalForeignApi::class)
 actual object VulkanBuffers {
+    /** Creates a buffer. It has no memory until one is bound with [vkBindBufferMemory]. */
     actual fun vkCreateBuffer(device: Long, createInfo: VkBufferCreateInfo): Long = memScoped {
         val nativeCreateInfo = alloc<NativeVkBufferCreateInfo>().apply {
             sType = platform.MoltenVK.VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO
@@ -66,10 +72,18 @@ actual object VulkanBuffers {
         bufferVar.value!!.rawValue.toLong()
     }
 
+    /**
+     * Destroys a buffer. It must no longer be used by pending GPU work, and its memory is freed
+     * separately with [vkFreeMemory].
+     */
     actual fun vkDestroyBuffer(device: Long, buffer: Long) {
         nativeVkDestroyBuffer(device.toCPointer(), buffer.toCPointer<VkBuffer_T>(), null)
     }
 
+    /**
+     * Returns the size, alignment and acceptable memory types a buffer needs from its backing
+     * memory.
+     */
     actual fun vkGetBufferMemoryRequirements(device: Long, buffer: Long): VkMemoryRequirements = memScoped {
         val native = alloc<platform.MoltenVK.VkMemoryRequirements>()
         nativeVkGetBufferMemoryRequirements(device.toCPointer(), buffer.toCPointer<VkBuffer_T>(), native.ptr)
@@ -80,6 +94,13 @@ actual object VulkanBuffers {
         )
     }
 
+    /**
+     * Finds a memory type that is both allowed by [typeFilter] and has every property in
+     * [properties].
+     *
+     * On desktop and Android a failed search returns -1, while iOS throws an
+     * [IllegalStateException]; callers that cannot recover treat both as fatal.
+     */
     actual fun findMemoryType(physicalDevice: Long, typeFilter: Int, properties: Int): Int = memScoped {
         val memProps = alloc<platform.MoltenVK.VkPhysicalDeviceMemoryProperties>()
         nativeVkGetPhysicalDeviceMemoryProperties(physicalDevice.toCPointer(), memProps.ptr)
@@ -95,6 +116,10 @@ actual object VulkanBuffers {
         error("findMemoryType: no suitable memory type for filter=$typeFilter properties=$properties")
     }
 
+    /**
+     * Allocates device memory. Drivers cap the number of live allocations, so suballocate where
+     * many buffers are needed.
+     */
     actual fun vkAllocateMemory(device: Long, allocateInfo: VkMemoryAllocateInfo): Long = memScoped {
         val nativeAllocateInfo = alloc<NativeVkMemoryAllocateInfo>().apply {
             sType = platform.MoltenVK.VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO
@@ -108,10 +133,15 @@ actual object VulkanBuffers {
         memoryVar.value!!.rawValue.toLong()
     }
 
+    /** Frees device memory. Buffers and images bound to it must no longer be used. */
     actual fun vkFreeMemory(device: Long, memory: Long) {
         nativeVkFreeMemory(device.toCPointer(), memory.toCPointer<VkDeviceMemory_T>(), null)
     }
 
+    /**
+     * Binds a region of device memory to a buffer. This can be done once per buffer, before its
+     * first use.
+     */
     actual fun vkBindBufferMemory(device: Long, buffer: Long, memory: Long, memoryOffset: Long) {
         val result = nativeVkBindBufferMemory(
             device.toCPointer(),
@@ -122,6 +152,12 @@ actual object VulkanBuffers {
         check(result == VK_SUCCESS) { "vkBindBufferMemory failed: $result" }
     }
 
+    /**
+     * Maps [memory], copies [data] into it at [offset], and unmaps it again.
+     *
+     * The memory must be host-visible, and host-coherent unless the caller flushes it. [data] must
+     * not be empty, because mapping a zero-byte range is invalid.
+     */
     actual fun writeBufferMemoryFloats(device: Long, memory: Long, offset: Long, data: FloatArray) = memScoped {
         val dataVar = alloc<kotlinx.cinterop.COpaquePointerVar>()
         val nativeDevice = device.toCPointer<VkDevice_T>()
@@ -136,6 +172,10 @@ actual object VulkanBuffers {
         nativeVkUnmapMemory(nativeDevice, nativeMemory)
     }
 
+    /**
+     * Same map->memcpy->unmap pattern as [writeBufferMemoryFloats], for raw byte data (e.g. texture
+     * pixels) instead of float uniform/vertex data.
+     */
     actual fun writeBufferMemoryBytes(device: Long, memory: Long, offset: Long, data: ByteArray) = memScoped {
         val dataVar = alloc<kotlinx.cinterop.COpaquePointerVar>()
         val nativeDevice = device.toCPointer<VkDevice_T>()
@@ -149,6 +189,7 @@ actual object VulkanBuffers {
         nativeVkUnmapMemory(nativeDevice, nativeMemory)
     }
 
+    /** `bindingCount` is implicit (`buffers.size`); `offsets` must be the same size. */
     actual fun vkCmdBindVertexBuffers(
         commandBuffer: Long,
         firstBinding: Int,
@@ -170,6 +211,9 @@ actual object VulkanBuffers {
         )
     }
 
+    /**
+     * `indexType` uses the plain-`Int` [com.awakekt.awake.vulkan.models.info.VkIndexType] values.
+     */
     actual fun vkCmdBindIndexBuffer(commandBuffer: Long, buffer: Long, offset: Long, indexType: Int) {
         nativeVkCmdBindIndexBuffer(
             commandBuffer.toCPointer(),
@@ -179,6 +223,12 @@ actual object VulkanBuffers {
         )
     }
 
+    /**
+     * Single-region copy (`srcOffset`/`dstOffset` both 0) -- the staging-buffer upload pattern (a
+     * HOST_VISIBLE staging buffer written via [writeBufferMemoryFloats]/ [writeBufferMemoryBytes],
+     * then copied into a DEVICE_LOCAL destination buffer) never needs more than one region, same
+     * simplification as [VulkanImages.vkTransitionImageLayout].
+     */
     actual fun vkCmdCopyBuffer(commandBuffer: Long, srcBuffer: Long, dstBuffer: Long, size: Long) = memScoped {
         val region = alloc<NativeVkBufferCopy>().apply {
             srcOffset = 0u
@@ -194,6 +244,7 @@ actual object VulkanBuffers {
         )
     }
 
+    /** Records an indexed draw using the bound index and vertex buffers. */
     actual fun vkCmdDrawIndexed(
         commandBuffer: Long,
         indexCount: Int,
@@ -212,6 +263,12 @@ actual object VulkanBuffers {
         )
     }
 
+    /**
+     * Blocks until all queues on [device] are idle. Used to fully serialize frames so a single (not
+     * per-frame-in-flight) uniform buffer can be safely rewritten every frame without racing the
+     * GPU's read of the previous frame -- a deliberate simplification; see the MVP-matrix uniform
+     * buffer usage in the demo for the full rationale.
+     */
     actual fun vkDeviceWaitIdle(device: Long) {
         nativeVkDeviceWaitIdle(device.toCPointer())
     }

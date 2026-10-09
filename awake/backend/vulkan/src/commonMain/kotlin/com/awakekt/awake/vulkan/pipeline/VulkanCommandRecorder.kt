@@ -134,7 +134,10 @@ internal class VulkanCommandRecorder(
 /** A pipeline the shared layer can bind. Implemented by every real pipeline class here, which is
  * why the recorder above can cast unconditionally. */
 interface VulkanPipelineHandle : PipelineHandle {
+    /** The `VkPipeline` that `vkCmdBindPipeline` binds. */
     val pipelineHandle: Long
+
+    /** The `VkPipelineLayout` that descriptor sets are bound against. */
     val pipelineLayoutHandle: Long
 
     /**
@@ -151,6 +154,7 @@ interface VulkanPipelineHandle : PipelineHandle {
  * .Slot`, `SkinnedInstanceBuffer`'s frame resources), so resolving one per draw allocates
  * nothing. */
 interface VulkanMaterialBinding : MaterialBinding {
+    /** The `VkDescriptorSet` bound for this binding. */
     val descriptorSetHandle: Long
 }
 
@@ -159,6 +163,9 @@ interface VulkanMaterialBinding : MaterialBinding {
  * per draw -- [asArray] is the single-element array `vkCmdBindVertexBuffers` takes, kept here so
  * the per-frame bind path allocates nothing (the hand-written `Mesh.bind` it replaces built a
  * fresh one every call).
+ *
+ * @property handle The `VkBuffer` handle. The binding does not own it: whoever created the buffer
+ * destroys it.
  */
 class VulkanBufferBinding(val handle: Long) : RenderBufferHandle {
     val asArray = longArrayOf(handle)

@@ -19,6 +19,30 @@ import com.awakekt.awake.vulkan.enums.VkStructureType
 import com.awakekt.awake.vulkan.enums.VkSurfaceTransformFlagBitsKHR
 import com.awakekt.awake.vulkan.models.VkExtent2D
 
+/**
+ * Parameters for creating a swapchain (`VkSwapchainCreateInfoKHR`).
+ *
+ * @property sType Identifies the structure to the driver; leave it at its default.
+ * @property pNext Reserved for extension chaining. The binding forwards this field as a raw pointer
+ * rather than marshalling a structure, so leave it `null`.
+ * @property flags A mask of swapchain creation flags; 0 for none.
+ * @property surface The raw handle of the surface the swapchain presents to.
+ * @property minImageCount The smallest number of images the application is willing to use.
+ * @property imageFormat The format of the swapchain images.
+ * @property imageColorSpace The colour space the images are interpreted in.
+ * @property imageExtent The size of the swapchain images, in pixels.
+ * @property imageArrayLayers The number of layers per image; 1 unless rendering stereoscopically.
+ * @property imageUsage A mask of the usages the images are created for.
+ * @property imageSharingMode Whether the images belong to one queue family at a time or are shared
+ * between several.
+ * @property pQueueFamilyIndices The queue families that share the images; `null` for exclusive
+ * sharing.
+ * @property preTransform The transform applied to the images before presentation.
+ * @property compositeAlpha How the alpha channel is handled when compositing with other windows.
+ * @property presentMode How finished images are queued and shown.
+ * @property clipped Whether pixels hidden by other windows may be discarded.
+ * @property oldSwapchain The raw handle of the swapchain being replaced, or 0 for none.
+ */
 class VkSwapchainCreateInfoKHR(
     val sType: VkStructureType = VkStructureType.VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
     val pNext: Any? = null, // You can use the appropriate type for pNext based on your requirements

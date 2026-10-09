@@ -30,6 +30,18 @@ fun launchWebGpuGame(
     launchWebGpuGame(findCanvas(canvasId).unsafeCast<HTMLCanvasElement>(), applicationFactory)
 }
 
+/**
+ * Starts a WebGPU game on [canvas], an already-located canvas element.
+ *
+ * Fails fast, before any engine setup, when the browser exposes no WebGPU. Installs a warning-level
+ * log sink if none is present so startup failures are not silent. After an asynchronous device
+ * failure the host stops drawing instead of repeating the error every frame.
+ *
+ * @param canvas The canvas element to render into and to size the surface from.
+ * @param applicationFactory Builds the engine, called once after the capability check and before
+ * the device is created.
+ * @throws IllegalStateException If the browser or device does not expose WebGPU.
+ */
 fun launchWebGpuGame(
     canvas: HTMLCanvasElement,
     applicationFactory: () -> WebGpuEngine,

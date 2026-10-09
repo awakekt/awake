@@ -53,6 +53,10 @@ import kotlin.concurrent.Volatile
  */
 class SwapchainManager(
     graphicsDevice: GraphicsDevice,
+    /**
+     * How many frames the CPU may record ahead of the GPU. It sizes [imageAvailableSemaphores] and
+     * [inFlightFences].
+     */
     val maxFramesInFlight: Int,
     private val surfaceExtentProvider: (() -> VkExtent2D?)? = null,
     /** What the app asked for. What it got is [selectedPresentMode]. */
@@ -63,9 +67,25 @@ class SwapchainManager(
     private val device get() = graphicsDevice.device
     private val surface get() = graphicsDevice.surface
 
+    /**
+     * The `VkSwapchainKHR` handle, or 0 before [create], after [destroy] and for a headless
+     * manager.
+     */
     var swapChain: Long = 0
+
+    /** Size in pixels of the swapchain images, in the window's orientation. */
     var extent: VkExtent2D = VkExtent2D()
+
+    /**
+     * One colour view per swapchain image, or per stand-in image of a headless presentable manager,
+     * indexed by the acquired image index. Empty before [create] and after [destroy].
+     */
     var imageViews: List<Long> = emptyList()
+
+    /**
+     * Format of the swapchain images; `VK_FORMAT_UNDEFINED` until [create] or a headless creation
+     * has run.
+     */
     var imageFormat = VkFormat.VK_FORMAT_UNDEFINED
 
     /**
@@ -77,7 +97,16 @@ class SwapchainManager(
     var selectedPresentMode: VkPresentModeKHR = VkPresentModeKHR.VK_PRESENT_MODE_FIFO_KHR
         private set
 
+    /**
+     * One semaphore per frame in flight, signalled when the presentation engine hands an image to
+     * that frame slot. Zeros until [createSyncObjects] has run.
+     */
     val imageAvailableSemaphores = LongArray(maxFramesInFlight)
+
+    /**
+     * One semaphore per swapchain image, signalled when rendering to that image has finished and
+     * waited on by its present. Empty for a headless manager that creates no images.
+     */
     var renderFinishedSemaphores = LongArray(0)
 
     /** The stand-in images [createHeadlessPresentable] allocated; empty for a real swapchain. */
@@ -88,8 +117,17 @@ class SwapchainManager(
     /** The stand-in image the latest headless frame drew into. */
     internal var lastHeadlessImage = 0
 
+    /**
+     * One fence per frame in flight, created signalled so the first frame does not wait. It is
+     * waited on before that slot's resources are reused. Zeros until [createSyncObjects] has run.
+     */
     val inFlightFences = LongArray(maxFramesInFlight)
     internal var imagesInFlight = LongArray(0)
+
+    /**
+     * Index, from 0 until [maxFramesInFlight], of the frame slot being recorded. The renderer
+     * advances it after each submitted frame.
+     */
     var currentFrame = 0
 
     /** The surface's orientation and size when the swapchain was last built. */
@@ -110,6 +148,18 @@ class SwapchainManager(
     val surfaceChangedSinceBuild: Boolean
         get() = surfaceChanged(querySwapChainSupport(physicalDevice, surface).capabilities, builtTransform, builtSurfaceExtent)
 
+    /**
+     * Builds the swapchain for the current surface, along with its image views and per-image
+     * semaphores.
+     *
+     * Prefers an 8-bit UNORM format in the sRGB-nonlinear colour space, deliberately not an `_SRGB`
+     * format because colours reach the draw call already gamma-encoded. It picks the present mode
+     * for the requested preference and sizes the images from the surface or the extent provider.
+     * The previous swapchain, if any, is passed on as the old one.
+     *
+     * @throws Exception If the surface offers no usable composite alpha mode or colour-attachment
+     * usage.
+     */
     fun create() {
         val (capabilities, formats, presentModes) = querySwapChainSupport(physicalDevice, surface)
         val (format, colorSpace) = chooseSwapSurfaceFormat(formats)
@@ -259,6 +309,15 @@ class SwapchainManager(
     /** Whether this manager stands in for a presentation engine rather than owning one. */
     val isHeadlessPresentable: Boolean get() = swapChain == 0L && imageViews.isNotEmpty()
 
+    /**
+     * Fixes [imageFormat] and [extent] for a surfaceless manager that renders only to offscreen
+     * targets. It creates no images, views or semaphores, so a frame cannot be drawn to the screen
+     * path; use [createHeadlessPresentable] for that.
+     *
+     * @param width Width in pixels to report as the extent.
+     * @param height Height in pixels to report as the extent.
+     * @param format The format to report for the images.
+     */
     fun createHeadless(width: Int, height: Int, format: VkFormat = VkFormat.VK_FORMAT_R8G8B8A8_UNORM) {
         imageFormat = format
         extent = VkExtent2D(width, height)
@@ -358,6 +417,10 @@ class SwapchainManager(
         swapChain = 0
     }
 
+    /**
+     * Creates one image-available semaphore and one in-flight fence per frame in flight. The fences
+     * start signalled.
+     */
     fun createSyncObjects() {
         val semaphoreInfo = VkSemaphoreCreateInfo()
         val fenceInfo = VkFenceCreateInfo(
@@ -370,6 +433,10 @@ class SwapchainManager(
         }
     }
 
+    /**
+     * Destroys the semaphores and fences made by [createSyncObjects]. The GPU must have finished
+     * with them.
+     */
     fun destroySyncObjects() {
         repeat(maxFramesInFlight) { index ->
             Vulkan.vkDestroySemaphore(device, imageAvailableSemaphores[index])

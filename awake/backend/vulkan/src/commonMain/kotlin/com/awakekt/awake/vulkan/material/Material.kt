@@ -57,12 +57,31 @@ class Material(
 
     val descriptorSetLayout: DescriptorSetLayoutHandle
 
+    /**
+     * Descriptor pool of the first uniform slot (frame 0, draw 0), or handle 0 until that slot has
+     * been requested. One pool serves a whole block of slots.
+     */
     var descriptorPool: DescriptorPoolHandle = DescriptorPoolHandle(0)
         private set
+
+    /**
+     * Descriptor set of the first uniform slot (frame 0, draw 0), binding its uniform buffer and
+     * the material's textures, or handle 0 until that slot has been requested.
+     */
     var descriptorSet: DescriptorSetHandle = DescriptorSetHandle(0)
         private set
+
+    /**
+     * Uniform buffer of the first slot (frame 0, draw 0), or handle 0 until that slot has been
+     * requested. It holds [uniformFloatCount] floats.
+     */
     var uniformBuffer: BufferHandle = BufferHandle(0)
         private set
+
+    /**
+     * Device memory backing [uniformBuffer], or handle 0 until the first slot has been requested.
+     * The memory is shared with the other slots of its block.
+     */
     var uniformBufferMemory: DeviceMemoryHandle = DeviceMemoryHandle(0)
         private set
 
@@ -83,9 +102,18 @@ class Material(
      * [Texture]/`OffscreenRenderTarget` this material was created from. */
     var samplerHandle: Long = 0
         private set
+
+    /**
+     * The image view bound together with [samplerHandle]; 0 until [createResources] or
+     * [createResourcesFromRenderTarget] has run.
+     */
     var imageViewHandle: Long = 0
         private set
 
+    /**
+     * Whether a sampler and an image view have both been supplied, which is what allocating any
+     * uniform slot requires.
+     */
     val hasTexture: Boolean get() = samplerHandle != 0L && imageViewHandle != 0L
 
     private var pbrImageViews: PbrImageViews? = null
@@ -209,10 +237,26 @@ class Material(
         return slot
     }
 
+    /**
+     * Binds frame slot 0, draw slot 0's descriptor set at set 0.
+     *
+     * @param commandBuffer The command buffer being recorded.
+     * @param pipelineLayout The layout of the pipeline the set is used with.
+     */
     fun bind(commandBuffer: Long, pipelineLayout: Long) {
         bind(commandBuffer, pipelineLayout, frameIndex = 0, drawSlotIndex = 0)
     }
 
+    /**
+     * Binds the descriptor set of one frame and draw slot at set 0, creating the slot on first use.
+     *
+     * @param commandBuffer The command buffer being recorded.
+     * @param pipelineLayout The layout of the pipeline the set is used with.
+     * @param frameIndex The frame slot, so frames in flight never share a set.
+     * @param drawSlotIndex The per-frame draw slot, so several draws of this material in one frame
+     * keep separate uniforms.
+     * @throws IllegalArgumentException If [frameIndex] or [drawSlotIndex] is negative.
+     */
     fun bind(commandBuffer: Long, pipelineLayout: Long, frameIndex: Int, drawSlotIndex: Int) {
         VulkanDescriptors.vkCmdBindDescriptorSet(
             commandBuffer,
@@ -246,6 +290,10 @@ class Material(
         override val descriptorSetHandle: Long get() = descriptorSet.handle
     }
 
+    /**
+     * Slot sizing, texture-binding numbers and the descriptor-set-layout builder shared by
+     * materials and pipelines.
+     */
     companion object {
         /** A bare MVP matrix -- every material before skinning existed. A skinned material
          * requests `16 + 16 * jointCount` (MVP + joint palette) instead, see
@@ -302,11 +350,21 @@ class Material(
  * substitutes a neutral 1x1 placeholder for a channel the material doesn't have, since a
  * descriptor the layout declares and the shader samples has to be written either way. */
 data class PbrImageViews(
+    /** Image view of the metallic-roughness map, a neutral 1x1 view when the material has none. */
     val metallicRoughness: Long,
+    /**
+     * Image view of the tangent-space normal map, a neutral 1x1 view when the material has none.
+     */
     val normal: Long,
+    /** Image view of the ambient-occlusion map, a neutral 1x1 view when the material has none. */
     val occlusion: Long,
+    /** Image view of the emissive map, a neutral 1x1 view when the material has none. */
     val emissive: Long,
 ) {
+    /**
+     * Returns the four views in descriptor-binding order: metallic-roughness, normal, occlusion,
+     * emissive.
+     */
     fun asList(): List<Long> = listOf(metallicRoughness, normal, occlusion, emissive)
 }
 

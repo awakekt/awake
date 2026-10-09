@@ -46,6 +46,18 @@ class InstanceBuffer(
         model.data.copyInto(out, offset)
     }
 
+    /**
+     * Uploads this frame's per-instance model matrices, growing the buffer first when they do not
+     * fit.
+     *
+     * Capacity grows in powers of two up to the construction-time ceiling and never shrinks. Growth
+     * closes the old buffer and replaces [binding], so anything read from [bufferRef] or [binding]
+     * before the call is stale afterwards. An empty list uploads nothing.
+     *
+     * @param models One model matrix per instance, column-major as [Mat4] stores them.
+     * @throws IllegalArgumentException If [models] holds more entries than the ceiling set at
+     * construction.
+     */
     fun update(models: List<Mat4>) {
         val floats = packer.pack(models, maxInstances) ?: return
         if (models.size > capacity) {
@@ -59,6 +71,10 @@ class InstanceBuffer(
         graphicsDevice.wgpuContext.device.queue.writeBufferData(buffer, 0uL, fastArrayBufferOf(floats))
     }
 
+    /**
+     * Returns the current GPU vertex buffer bound at slot 1 for instanced draws. It is replaced
+     * when [update] grows capacity, so fetch it per draw rather than caching it.
+     */
     fun bufferRef(): GPUBuffer = buffer
 
     /** This buffer as the shared render layer's opaque handle -- built once per size, not per draw. */
@@ -72,10 +88,12 @@ class InstanceBuffer(
         ),
     )
 
+    /** Closes the current GPU buffer. Call once, after the last frame that draws with it. */
     fun destroy() {
         buffer.close()
     }
 
+    /** Stride and capacity constants for the per-instance model-matrix stream. */
     companion object {
         /** One `mat4` per instance. */
         val FLOATS_PER_INSTANCE = GpuDataShape.Mat4.componentCount

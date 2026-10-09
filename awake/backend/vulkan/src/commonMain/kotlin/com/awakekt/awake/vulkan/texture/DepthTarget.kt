@@ -70,6 +70,7 @@ import com.awakekt.awake.vulkan.pipeline.VulkanMaterialBinding
  */
 class DepthTarget(
     graphicsDevice: GraphicsDevice,
+    /** Edge length, in texels, of the square depth image. */
     val size: Int = DEFAULT_SIZE,
     /**
      * How many layers the image holds -- one shadow cascade each.
@@ -99,11 +100,23 @@ class DepthTarget(
     private val graphicsDevice = graphicsDevice
     private val device get() = graphicsDevice.device
 
+    /**
+     * The depth-only render pass that renders into this target. Its final layout is
+     * `SHADER_READ_ONLY_OPTIMAL`, so the image is ready to sample afterwards. Owned and destroyed
+     * by this target.
+     */
     var renderPass: Long = 0
         private set
+
+    /** The `Depth32` image, with [layers] array layers. */
     var image: Long = 0
         private set
     private var imageMemory: Long = 0
+
+    /**
+     * The view shaders sample: a 2D-array view over every layer when [arrayed], a plain 2D view
+     * otherwise.
+     */
     var imageView: Long = 0
         private set
     var sampler: Long = 0
@@ -356,6 +369,10 @@ class DepthTarget(
         }
     }
 
+    /**
+     * Destroys the framebuffers, views, sampler, image, memory, descriptor pool and layout, and the
+     * render pass. Call once, after the GPU has finished with the target.
+     */
     fun destroy() {
         framebuffers.forEach { Vulkan.vkDestroyFramebuffer(device, it) }
         layerViews.forEach { Vulkan.vkDestroyImageView(device, it) }
@@ -368,6 +385,7 @@ class DepthTarget(
         Vulkan.vkDestroyRenderPass(device, renderPass)
     }
 
+    /** Default size, depth format and the placeholder factory for depth targets. */
     companion object {
         /**
          * A 1x1 comparison array cleared to the far plane: what an engine binds where a shader
@@ -383,6 +401,8 @@ class DepthTarget(
         /** 2048x2048 -- enough resolution for this demo's grid-sized scene without being a
          * real memory/bandwidth cost (a single D32 depth image, ~16MB). */
         const val DEFAULT_SIZE = 2048
+
+        /** Format of the depth image: `VK_FORMAT_D32_SFLOAT`. */
         val DEPTH_FORMAT = VkFormat.VK_FORMAT_D32_SFLOAT
     }
 }
