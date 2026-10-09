@@ -46,11 +46,14 @@ class SceneManager @JvmOverloads constructor(
      * Tears down whatever is currently loaded (if anything), then instantiates [document].
      *
      * @param document The scene document to instantiate and activate.
+     * @param componentRegistry The registry to instantiate with, used as it is, in place of the global
+     *   one with this manager's on top. An editor passes the [SceneComponentRegistry.scoped] registry it
+     *   loaded a project into, so the project's own components attach. Null keeps the default.
      * @return The newly instantiated [Scene] instance.
      */
-    fun switchTo(document: SceneDocument): Scene {
+    fun switchTo(document: SceneDocument, componentRegistry: SceneComponentRegistry? = null): Scene {
         unloadCurrent()
-        val scene = SceneLoader.instantiate(document, world, loadRegistry())
+        val scene = SceneLoader.instantiate(document, world, componentRegistry ?: loadRegistry())
         current = scene
         return scene
     }

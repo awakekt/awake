@@ -244,7 +244,8 @@ public final class com/awakekt/awake/scene/runtime/SceneManager {
 	public synthetic fun <init> (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun close ()V
 	public final fun getCurrent ()Lcom/awakekt/awake/scene/binding/Scene;
-	public final fun switchTo (Lcom/awakekt/awake/scene/document/SceneDocument;)Lcom/awakekt/awake/scene/binding/Scene;
+	public final fun switchTo (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;)Lcom/awakekt/awake/scene/binding/Scene;
+	public static synthetic fun switchTo$default (Lcom/awakekt/awake/scene/runtime/SceneManager;Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;ILjava/lang/Object;)Lcom/awakekt/awake/scene/binding/Scene;
 }
 
 public final class com/awakekt/awake/scene/runtime/ScenePhaseStats {
