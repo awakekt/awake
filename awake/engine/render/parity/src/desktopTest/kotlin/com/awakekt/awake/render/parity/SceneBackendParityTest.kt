@@ -6,13 +6,13 @@
 package com.awakekt.awake.render.parity
 
 import com.awakekt.awake.core.color.Color
+import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.passes.uniforms.EnvironmentUniforms
 import com.awakekt.awake.render.passes.uniforms.TextureAnimation
 import com.awakekt.awake.render.passes.uniforms.skinnedMaterialFloats
 import com.awakekt.awake.render.testing.HeadlessRenderSession
 import com.awakekt.awake.render.texture.TextureAsset
-import org.junit.AfterClass
 import java.awt.image.BufferedImage
 import java.io.File
 import javax.imageio.ImageIO
@@ -24,6 +24,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import org.junit.AfterClass
 
 /**
  * A lit, shadowed scene through both backends, compared as a picture.
@@ -100,6 +101,23 @@ class SceneBackendParityTest {
     }
 
     /** A skinned part's material tints its texture on both backends: white turns red, and stays white untinted. */
+    /** The lit side of a turned skinned mesh is the one facing the light, not the one it was modelled facing it. */
+    @Test
+    fun aTurnedSkinnedMeshIsLitInTheWorldOnBothBackends() {
+        val identity = floatArrayOf(1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f)
+        BACKEND_ORDER.forEach { backend ->
+            val renderer = session(backend).renderer
+            fun centre(pixels: ByteArray) = pixels[((SCENE_SIZE / 2) * SCENE_SIZE + SCENE_SIZE / 2) * 4].toInt() and 0xFF
+
+            // The light shines straight down onto the plane's modelled face; upside down, that face points away.
+            val upright = centre(renderer.renderTexturedSkinnedScene(identity, SolidWhite))
+            val turned = centre(renderer.renderTexturedSkinnedScene(identity, SolidWhite, model = Mat4().rotateX(PI.toFloat())))
+
+            assertTrue(upright > 0, "$backend: the upright plane must show")
+            assertTrue(turned < upright * TURNED_AWAY_MAX, "$backend: turned away from the light the plane still shades $turned against $upright upright")
+        }
+    }
+
     @Test
     fun aSkinnedMeshTakesItsMaterialsTintOnBothBackends() {
         val identity = floatArrayOf(1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f)
@@ -640,6 +658,9 @@ class SceneBackendParityTest {
     }
 
     private companion object {
+        /** At most this share of the upright plane's shade once it faces away: ambient light only. */
+        const val TURNED_AWAY_MAX = 0.75
+
         /** Vulkan first, for the loader reason [UiBackendParityTest] documents. */
         val BACKEND_ORDER = listOf(HeadlessUiBackend.Vulkan, HeadlessUiBackend.WebGpu)
         private val sessions = mutableMapOf<HeadlessUiBackend, HeadlessRenderSession>()

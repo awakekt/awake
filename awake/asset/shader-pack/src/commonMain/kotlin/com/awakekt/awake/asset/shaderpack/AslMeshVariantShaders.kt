@@ -56,6 +56,7 @@ private fun meshVariant(name: String, instanced: Boolean, skinned: Boolean): Asl
         val lightDirection = if (instanced) handles.value("lightDirection") else null
         val lightColor = if (instanced) handles.value("lightColor") else null
         val uniformPalette = if (skinned && !instanced) handles.array("jointPalette") else null
+        val entityModel = if (skinned && !instanced) handles.value("model") else null
         val tint = if (skinned && !instanced) handles.value("baseColorFactor") else null
         val glow = if (skinned && !instanced) handles.value("emissiveFactor") else null
         val exposure = handles.value("exposure")
@@ -110,7 +111,9 @@ private fun meshVariant(name: String, instanced: Boolean, skinned: Boolean): Asl
                 normal set if (skinned) (model * outNormal).xyz else outNormal
             } else {
                 out.position set (camera * position)
-                normal set if (skinned) outNormal.xyz else outNormal
+                // The palette poses the mesh in its own space; the entity's model turns its normals
+                // into the world the light is in, or the lit side would turn with the mesh.
+                normal set if (entityModel != null) (entityModel * outNormal).xyz else outNormal
             }
             color set instanceTintedColor(ins.input(VertexSemantic.Color), instanceTints, instance)
         }
@@ -180,7 +183,7 @@ private fun skinnedTextured(): AslShaderDefinition = shader("skinned_textured") 
         val outNormal = let("skinnedNormal", skinMatrix * vec4(inNormal, 0f.lit))
 
         out.position set (camera * position)
-        normal set outNormal.xyz
+        normal set (handles.value("model") * outNormal).xyz
         color set ins.input(VertexSemantic.Color)
         // Undo createBitmap's OpenGL bottom-up Y flip, as the textured shader does.
         val inUv = ins.input(VertexSemantic.Uv)
