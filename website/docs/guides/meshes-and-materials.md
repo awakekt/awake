@@ -105,6 +105,7 @@ Both boxes are in the entity's local space, before its transform.
 | `material` | string | required | The material name, resolved the same way. |
 | `cullMode` | `None` · `Back` · `Front` | `None` | Which triangle faces to skip. `Back` suits a solid, correctly wound mesh. |
 | `transparent` | boolean | `false` | Draws in the transparent pass: blended by the material's alpha, sorted back to front, no depth write. |
+| `additive` | boolean | `false` | With `transparent`, adds its colour to what is behind it instead of covering it: glows, fire, light shafts. A textured mesh then draws unlit, so its black texels add nothing. |
 
 The ECS `MeshRenderer` also has `visible` (default `true`; `false` skips the draw) and
 `vertexAnimation`, a shader-defined vertex effect that is off at zero. Neither is saved in a scene
@@ -120,6 +121,19 @@ document.
 | `emissiveFactor` | color | transparent | Multiplies the emissive texture. Textured pipeline only. |
 | `alphaMode` | `Opaque` · `Masked` | `Opaque` | `Masked` discards pixels whose alpha is below `alphaCutoff`. |
 | `alphaCutoff` | number, 0 to 1 | `0.5` | The `Masked` threshold. |
+| `litWhenAdditive` | boolean | `false` | Keeps an `additive` textured mesh lit. Textured pipeline only. |
+
+An `additive` textured mesh is light added to the scene, so by default it is not shaded: it adds its
+base and emissive colour, the same in sun and shadow, which suits fire, sparks and glows. For the
+rare surface that should still take the scene's light, set `litWhenAdditive`. It then adds the colour
+the sun, its shadows, the ambient and point lights give it, as an opaque surface of that material
+shows. It is still added, never covering what is behind it, and fog fades it out rather than tinting
+it, because the fog is already behind it. A black texel adds nothing unless a light's specular
+highlight lands on it.
+
+```json
+{ "component": "pbr_material", "roughness": 1, "litWhenAdditive": true }
+```
 
 `texture_animation`, a component of its own beside the material, plays the texture as a frame sheet
 and scrolls it. `columns` and `rows` (default 1) describe the sheet, read left to right, then top to

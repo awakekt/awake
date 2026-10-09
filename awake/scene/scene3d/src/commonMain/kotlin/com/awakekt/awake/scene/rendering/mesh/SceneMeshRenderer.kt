@@ -21,7 +21,8 @@ import kotlinx.serialization.json.JsonNames
  * @property transparent Draws in the transparent pass: alpha-blended by the material's alpha,
  *   depth-tested but not depth-written, sorted back to front. See [MeshRenderer.transparent].
  * @property additive With [transparent], adds its colour to what is behind it: glows, fire,
- *   light shafts. See [MeshRenderer.additive].
+ *   light shafts. A textured mesh adds unlit unless its `pbr_material` sets
+ *   [ScenePbrMaterial.litWhenAdditive]. See [MeshRenderer.additive].
  * @property billboard Turns the mesh to face the camera every frame, keeping its position and
  *   scale: a glow or flare authored as a flat quad. See [MeshRenderer.billboard].
  */

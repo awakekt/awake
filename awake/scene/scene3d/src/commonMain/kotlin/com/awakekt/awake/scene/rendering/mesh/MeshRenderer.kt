@@ -37,7 +37,8 @@ data class MeshRenderer(
     val visible: Boolean = true,
     /** With [transparent], adds its colour to what is behind it rather than covering it -- glows,
      * fire and light shafts, which only brighten. A textured mesh then draws unlit, adding its base
-     * and emissive colour only, so its black texels add nothing. See `RenderDrawCommand.additive`. */
+     * and emissive colour only, so its black texels add nothing, unless its [PbrMaterial.litWhenAdditive]
+     * keeps it lit. See `RenderDrawCommand.additive`. */
     val additive: Boolean = false,
     /**
      * Faces the camera: drawn at this entity's position and scale, turned so its local +Z points

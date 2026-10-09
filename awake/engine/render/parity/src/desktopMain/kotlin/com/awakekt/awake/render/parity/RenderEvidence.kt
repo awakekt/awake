@@ -39,6 +39,8 @@ fun main(args: Array<String>) {
             renderer.renderShadowScene(texturedGround = true, size = EVIDENCE_SIZE),
         )
         write("scene-textured-pbr", "Textured PBR plane: material sampling and lighting", EVIDENCE_SIZE, renderer.renderTexturedPbrScene(size = EVIDENCE_SIZE))
+        write("scene-additive-lit-sun", "A white additive quad whose material stays lit, the sun on it: it adds its lit colour", EVIDENCE_SIZE, renderer.renderAdditiveQuadScene(true, SunOverhead, size = EVIDENCE_SIZE))
+        write("scene-additive-lit-shade", "The same with the sun below it: only the ambient reaches it, so it adds little", EVIDENCE_SIZE, renderer.renderAdditiveQuadScene(true, SunBelow, size = EVIDENCE_SIZE))
         write("scene-back-culled", "Plane seen from above with back-face culling", EVIDENCE_SIZE, renderer.renderBackCulledScene(size = EVIDENCE_SIZE))
         write(
             "scene-facing-sprite-side",

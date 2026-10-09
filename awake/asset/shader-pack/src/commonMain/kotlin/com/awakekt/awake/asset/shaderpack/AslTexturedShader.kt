@@ -18,6 +18,7 @@ import com.awakekt.awake.asset.shaderdsl.div
 import com.awakekt.awake.asset.shaderdsl.dot
 import com.awakekt.awake.asset.shaderdsl.dpdx
 import com.awakekt.awake.asset.shaderdsl.dpdy
+import com.awakekt.awake.asset.shaderdsl.eq
 import com.awakekt.awake.asset.shaderdsl.exp
 import com.awakekt.awake.asset.shaderdsl.fieldsFrom
 import com.awakekt.awake.asset.shaderdsl.floor
@@ -49,6 +50,7 @@ import com.awakekt.awake.asset.shaderdsl.textureDepth2dArray
 import com.awakekt.awake.asset.shaderdsl.textureSample
 import com.awakekt.awake.asset.shaderdsl.textureSampleGrad
 import com.awakekt.awake.asset.shaderdsl.times
+import com.awakekt.awake.asset.shaderdsl.toU32
 import com.awakekt.awake.asset.shaderdsl.unaryMinus
 import com.awakekt.awake.asset.shaderdsl.vec2
 import com.awakekt.awake.asset.shaderdsl.vec3
@@ -65,6 +67,7 @@ import com.awakekt.awake.core.geometry.VertexSemantic
 import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.render.passes.uniforms.MAX_POINT_LIGHTS
 import com.awakekt.awake.render.passes.uniforms.MaterialUniformLayouts
+import com.awakekt.awake.render.passes.uniforms.TexturedBlend
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
 
@@ -288,11 +291,15 @@ private fun textured(clipSpace: ClipSpace, instanced: Boolean = false): AslShade
             val pRadiance = let("pRadiance", pointLightColors[i].xyz * pi * pNdotL * attenuation)
             assign(litColor, litColor + (pDiffuse + pSpecular) * pRadiance)
         }
-        // An additive draw is light added to what is behind it, not a lit surface: it adds only its
-        // own colour, and fades out in fog because the fog is already behind it. Lit, a black
-        // texel would still add the sun's specular reflection, and fogged, the fog colour.
-        val additive = pbrFactors.w gt 0.5f.lit
-        val emitted = select(litColor, albedo + emissive, additive)
+        // pbrFactors.w is the draw's TexturedBlend. An additive draw is light added to what is
+        // behind it, so it fades out in fog, the fog being behind it already: fogged toward the fog
+        // colour, it would add that colour over its whole quad. By default it is not shaded either
+        // and adds only its own colour: lit, a black texel would still add the sun's specular
+        // reflection. A material that asks to stay lit adds its lit colour instead.
+        val blendCode = let("blendCode", toU32(pbrFactors.w + 0.5f.lit))
+        val additive = blendCode gt TexturedBlend.Covers.code.toUInt().lit
+        val unlit = blendCode eq TexturedBlend.AddsUnlit.code.toUInt().lit
+        val emitted = select(litColor, albedo + emissive, unlit)
         val fogTarget = select(fogColor.rgb, vec3(0f.lit), additive)
         val shaded = vec4(
             applyFog(displayTransform.display(emitted, exposure.x), worldPos, fogTarget),

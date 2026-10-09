@@ -173,6 +173,50 @@ class MaterialUniformsTest {
         assertEquals(0f, pbrTexturedMaterialFloats(drawCall.copy(additive = false))[3])
     }
 
+    /** The draw's blend and its material's lighting make one code, and only an additive draw's lighting is a choice. */
+    @Test
+    fun aTexturedDrawAddsLitOnlyWhenItsMaterialAsksAndItBlendsAdditively() {
+        val litWhenAdditive = pbrMaterialFloats(0f, 0.5f, Color.White, Color.Transparent, litWhenAdditive = true)
+        val plain = pbrMaterialFloats(0f, 0.5f, Color.White, Color.Transparent)
+        val additive = RenderDrawCommand(mesh = FakeMesh(), material = FakeMaterial(), transparent = true, additive = true)
+        fun blend(draw: RenderDrawCommand): Float = MaterialUniformLayouts.PbrTexturedMaterial.readVec4(pbrTexturedMaterialFloats(draw), UniformFields.PbrFactors).w
+
+        assertEquals(TexturedBlend.AddsLit.code.toFloat(), blend(additive.copy(extraUniformFloats = litWhenAdditive)))
+        // The default: an additive draw adds its own colour, unlit, as it did before it could ask.
+        assertEquals(TexturedBlend.AddsUnlit.code.toFloat(), blend(additive.copy(extraUniformFloats = plain)))
+        assertEquals(TexturedBlend.AddsUnlit.code.toFloat(), blend(additive))
+        // A draw that covers what is behind it is lit whatever its material asks.
+        assertEquals(TexturedBlend.Covers.code.toFloat(), blend(additive.copy(extraUniformFloats = litWhenAdditive, additive = false)))
+        assertEquals(TexturedBlend.Covers.code.toFloat(), blend(additive.copy(extraUniformFloats = litWhenAdditive, transparent = false)))
+    }
+
+    /** Asking to stay lit changes only the blend lane: the factors, the cutoff and the animation pack as they did. */
+    @Test
+    fun stayingLitChangesNothingElseInTheTexturedBlock() {
+        val animation = TextureAnimation(columns = 2, rows = 2, framesPerSecond = 4f)
+        val lit = pbrMaterialFloats(0.3f, 0.7f, Color(0.2f, 0.4f, 0.6f, 0.8f), Color(1f, 0.5f, 0f), animation, litWhenAdditive = true)
+        val unlit = pbrMaterialFloats(0.3f, 0.7f, Color(0.2f, 0.4f, 0.6f, 0.8f), Color(1f, 0.5f, 0f), animation)
+        val factors = UniformFields.PbrFactors.floats
+        assertContentEquals(unlit.copyOfRange(factors, unlit.size), lit.copyOfRange(factors, lit.size))
+
+        fun block(payload: FloatArray, additive: Boolean) = texturedUniforms(
+            mvp = Mat4(),
+            model = Mat4(),
+            lightPayload = FloatArray(MaterialUniformLayouts.SceneLight.total),
+            extraUniformFloats = payload,
+            cameraEye = Vec3f(0f, 0f, 0f),
+            fogColor = Color.Black,
+            fogDensity = 0f,
+            alphaCutoff = 0.25f,
+            additive = additive,
+        )
+        val full = MaterialUniformLayouts.PbrTextured
+        assertVec4(0.3f, 0.7f, 0.25f, TexturedBlend.AddsLit.code.toFloat(), full.readVec4(block(lit, additive = true), UniformFields.PbrFactors))
+        assertVec4(0.3f, 0.7f, 0.25f, TexturedBlend.AddsUnlit.code.toFloat(), full.readVec4(block(unlit, additive = true), UniformFields.PbrFactors))
+        // Not additive, the lit request leaves the whole block exactly as a plain material's.
+        assertContentEquals(block(unlit, additive = false), block(lit, additive = false))
+    }
+
     @Test
     fun testFogUniformFloats() {
         val fog = fogUniformFloats(Color(r = 0.5f, g = 0.6f, b = 0.7f), 0.05f)
