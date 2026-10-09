@@ -36,6 +36,7 @@ import com.awakekt.awake.asset.shaderdsl.times
 import com.awakekt.awake.asset.shaderdsl.toF32
 import com.awakekt.awake.asset.shaderdsl.toU32
 import com.awakekt.awake.asset.shaderdsl.vec2
+import com.awakekt.awake.asset.shaderdsl.vec3
 import com.awakekt.awake.asset.shaderdsl.vec4
 import com.awakekt.awake.asset.shaderdsl.w
 import com.awakekt.awake.asset.shaderdsl.x
@@ -45,6 +46,7 @@ import com.awakekt.awake.asset.shaderdsl.z
 import com.awakekt.awake.asset.shaderpack.DebugSurface
 import com.awakekt.awake.asset.shaderpack.TERRAIN_SURFACE_FIRST_BINDING
 import com.awakekt.awake.asset.shaderpack.TerrainPageSampling
+import com.awakekt.awake.asset.shaderpack.clayRadiance
 import com.awakekt.awake.asset.shaderpack.debugLayerColor
 import com.awakekt.awake.asset.shaderpack.debugViewColor
 import com.awakekt.awake.asset.shaderpack.pagedTerrainClipmapVertexStage
@@ -179,6 +181,8 @@ internal fun terrainLayersShader(clipSpace: ClipSpace, slots: Int, paged: Boolea
             layerWeights = layerWeightColor(merged),
             dominantLayer = dominantLayerColor(merged),
             lightmap = baked.xyz,
+            // The sun as plain terrain lights it, with no colour of its own; the bake is a texture too.
+            clay = displayTransform.display(clayRadiance(nDotL, shadow, vec3(1f.lit - ambient), ambient), terrain.exposure.x),
         )
         val lit = let("lit", albedo * baked.xyz * 2f.lit * light)
         val shaded = vec4(displayTransform.displayReferred(lit, terrain.exposure.x), 1f.lit)

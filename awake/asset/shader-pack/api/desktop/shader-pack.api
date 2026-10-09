@@ -3,8 +3,14 @@ public final class com/awakekt/awake/asset/shaderpack/AslCascadeShadowKt {
 }
 
 public final class com/awakekt/awake/asset/shaderpack/AslDebugViewKt {
+	public static final field CLAY_ALBEDO F
+	public static final field CLAY_DEFAULT_AMBIENT F
+	public static final fun clayAmbient (Lcom/awakekt/awake/asset/shaderdsl/AslExpr;)Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public static final fun clayRadiance (Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;)Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public static final fun debugLayerColor (Lcom/awakekt/awake/asset/shaderdsl/AslExpr;)Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public static final fun debugViewColor (Lcom/awakekt/awake/asset/shaderdsl/AslBlockBuilder;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderpack/DebugSurface;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;)Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public static final fun jointWeightsColor (Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;)Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public static final fun selectedJointWeight (Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;)Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 }
 
 public final class com/awakekt/awake/asset/shaderpack/AslDepthFogShaderKt {
@@ -99,13 +105,16 @@ public final class com/awakekt/awake/asset/shaderpack/CascadeShadowSampling {
 }
 
 public final class com/awakekt/awake/asset/shaderpack/DebugSurface {
-	public fun <init> (Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;)V
-	public synthetic fun <init> (Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getAlbedo ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public final fun getClay ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun getDominantLayer ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public final fun getJointWeights ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun getLayerWeights ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun getLightmap ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun getNormal ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public final fun getSelectedJointWeight ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun getShadow ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun getShadowCascade ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun getWorldPosition ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;

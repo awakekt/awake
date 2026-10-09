@@ -7,6 +7,7 @@ package com.awakekt.awake.asset.shaderpack
 
 import com.awakekt.awake.asset.shaderdsl.AslExpr
 import com.awakekt.awake.asset.shaderdsl.AslShaderDefinition
+import com.awakekt.awake.asset.shaderdsl.AslVaryings
 import com.awakekt.awake.asset.shaderdsl.AslType
 import com.awakekt.awake.asset.shaderdsl.F32
 import com.awakekt.awake.asset.shaderdsl.a
@@ -188,7 +189,7 @@ val InstancedMaskedTexturedDepthShader: AslShaderDefinition = maskedTexturedDept
  * @param shaderName Emitted shader definition name.
  * @param ambientStrength How much of the surface colour shows with no light on it.
  */
-@Suppress("LongMethod")
+@Suppress("LongMethod", "CyclomaticComplexMethod")
 private fun litShadow(
     clipSpace: ClipSpace,
     instanced: Boolean = false,
@@ -224,6 +225,8 @@ private fun litShadow(
     val color by out.varying(if (skinned) GpuDataShape.Vec4 else GpuDataShape.Vec3, location = 0)
     val normal by out.varying(GpuDataShape.Vec3, location = 1)
     val worldPos by out.varying(GpuDataShape.Vec3, location = 2)
+    // What RenderDebugView.JointWeights shows, for a skinned mesh.
+    val joint = if (skinned) JointColorVarying(out, location = 3) else null
 
     vertex {
         val ins = inputsFrom(if (skinned) VertexFormat.PositionNormalColorSkin else VertexFormat.PositionNormalColor)
@@ -243,6 +246,7 @@ private fun litShadow(
             )
             localPosition = let("skinnedPosition", (skinMatrix * vec4(inPosition, 1f.lit)).xyz)
             localNormal = let("skinnedNormal", (skinMatrix * vec4(inNormal, 0f.lit)).xyz)
+            joint!!.jointColor set jointWeightsColor(joints, weights)
         } else {
             localPosition = inPosition
             localNormal = inNormal
@@ -512,6 +516,8 @@ private fun litShadow(
             albedo = displayTransform.encoded(rgb),
             shadow = shadowFactor,
             shadowCascade = cascades.shadowCascade(worldPos),
+            clay = displayTransform.display(clayRadiance(nDotL, shadowFactor, u.lightColor.xyz, clayAmbient(u.lightColor)), u.exposure!!.x),
+            jointWeights = joint?.jointColor,
         )
         // Encode before writing -- the swapchain is _UNORM and nothing downstream encodes.
         val shaded = vec4(applyFog(displayTransform.display(ambientColor + direct, u.exposure!!.x), worldPos), 1f.lit)
@@ -538,3 +544,8 @@ fun instancedLitShadowShader(clipSpace: ClipSpace): AslShaderDefinition =
 /** Shadowed scene variant for skinned instance transforms. */
 fun skinnedInstancedLitShadowShader(clipSpace: ClipSpace): AslShaderDefinition =
     litShadow(clipSpace, instanced = true, skinned = true, shaderName = "skinned_instanced_lit_shadow")
+
+/** The varying [com.awakekt.awake.render.passes.uniforms.RenderDebugView.JointWeights] reads on a skinned mesh. */
+private class JointColorVarying(out: AslVaryings, location: Int) {
+    val jointColor by out.varying(GpuDataShape.Vec3, location = location)
+}
