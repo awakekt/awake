@@ -7,7 +7,6 @@ package com.awakekt.awake.project.runtime
 
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.project.AwakeProjectManifest
-import com.awakekt.awake.project.AwakeProjectPluginReference
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneLoader
 import com.awakekt.awake.scene.document.SceneSerializers
@@ -28,16 +27,15 @@ import kotlinx.serialization.json.contentOrNull
 internal fun requireRequiredPlugins(manifest: AwakeProjectManifest, installed: List<SceneCapability>) {
     val ids = installed.mapTo(HashSet()) { it.id }
     val missing = manifest.plugins.filter { it.required && it.id !in ids }
+    // Each as its id, then `(capabilityClass from group:name:version)` for what the manifest names of it.
+    val named = missing.map { plugin ->
+        val source = listOfNotNull(plugin.capabilityClass, plugin.artifact?.let { "from $it" })
+        if (source.isEmpty()) plugin.id else "${plugin.id} (${source.joinToString(" ")})"
+    }
     require(missing.isEmpty()) {
-        "$PROJECT_MANIFEST requires ${missing.joinToString { it.describe() }}, which no capability provides; " +
+        "$PROJECT_MANIFEST requires ${named.joinToString()}, which no capability provides; " +
             "add its artifact to the game and pass its capability to loadProject"
     }
-}
-
-/** `id`, then `(capabilityClass from group:name:version)` for what the manifest names of it. */
-private fun AwakeProjectPluginReference.describe(): String {
-    val source = listOfNotNull(capabilityClass, artifact?.let { "from $it" })
-    return if (source.isEmpty()) id else "$id (${source.joinToString(" ")})"
 }
 
 /**
