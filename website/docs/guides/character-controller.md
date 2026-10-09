@@ -77,15 +77,30 @@ In an app, register both as fixed-step systems in that order:
 | Property | Type | Default | What it does |
 | --- | --- | --- | --- |
 | `speed` | number or none | none | Walking speed in units per second. None uses the system's speed, `5` for `CharacterControllerSystem`. |
+| `driver` | `Player` or `Agent` | `Player` | What sets the intent: the keys and touch controls, or code. |
 
 At run time, `MovementControl` also carries `moveX`, `moveZ` and `jump`, and
 `CharacterController.isGrounded` says whether the character stood on walkable ground after its last
 move.
 
+## Characters the player doesn't drive
+
+A monster, a pet or another player over the network is a character too. Give its
+`movement_control` the `Agent` driver, and the player's keys and touch controls leave it alone:
+
+```json
+{ "component": "movement_control", "speed": 3.0, "driver": "Agent" }
+```
+
+Its code writes `moveX` and `moveZ` as a world-space direction (+X and +Z of the world, not of the
+camera), and the controller moves it with the same gravity, walls, steps and slopes as the player.
+Set them back to `0` to stop it.
+
 ## How it works
 
 On its first update the system builds a `KinematicCharacterController` at the entity's position. Each
-update it turns `moveX` and `moveZ` into a direction relative to the active camera, adds gravity and
+update it turns `moveX` and `moveZ` into a direction, relative to the active camera for a player and as
+given for an agent, adds gravity and
 any jump, and sweeps the capsule through the world with shape casts. A wall stops it and the rest of
 the move slides along the wall; a step or slope within its limits does not stop it. Standing on a
 moving body carries the character with it. The result is written back to the `Transform`.

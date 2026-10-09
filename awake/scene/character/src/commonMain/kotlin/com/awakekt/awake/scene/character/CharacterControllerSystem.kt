@@ -17,7 +17,7 @@ import com.awakekt.awake.scene.physics.character.KinematicCharacterController
 
 /**
  * Moves every [CharacterController] entity through [physicsWorld]: its [MovementControl] intent,
- * relative to the active camera, at the intent's speed or [defaultSpeed], plus gravity, a jump when
+ * relative to the active camera for a player and in world space for an agent, at the intent's speed or [defaultSpeed], plus gravity, a jump when
  * the intent asks while grounded, and whatever the ground under it is carrying. Walls stop it,
  * steps and slopes within its limits don't.
  *
@@ -42,8 +42,8 @@ class CharacterControllerSystem(
                 ?: KinematicCharacterController(physicsWorld, character.config, transform.position)
                     .also { character.controller = it }
             val intent = world.get<MovementControl>(entity)
-            val moveX = intent?.moveX ?: 0f
-            val moveZ = intent?.moveZ ?: 0f
+            val moveX = intent?.worldX(basis) ?: 0f
+            val moveZ = intent?.worldZ(basis) ?: 0f
             val step = (intent?.currentSpeed(defaultSpeed) ?: defaultSpeed) * delta
 
             // Just after take-off the ground probe still reaches the floor, so a rising character
@@ -55,14 +55,14 @@ class CharacterControllerSystem(
                 else -> character.verticalVelocity + character.gravity * delta
             }
             motion.set(
-                basis.worldX(moveX, moveZ) * step + body.groundVelocity.x * delta,
+                moveX * step + body.groundVelocity.x * delta,
                 character.verticalVelocity * delta + body.groundVelocity.y * delta,
-                basis.worldZ(moveX, moveZ) * step + body.groundVelocity.z * delta,
+                moveZ * step + body.groundVelocity.z * delta,
             )
             body.move(motion, delta)
             transform.position.set(body.position)
             world.get<GroundContact>(entity)?.grounded = body.isGrounded && character.verticalVelocity <= 0f
-            intent?.turnToward(transform, basis.worldX(moveX, moveZ), basis.worldZ(moveX, moveZ), delta)
+            intent?.turnToward(transform, moveX, moveZ, delta)
         }
     }
 
