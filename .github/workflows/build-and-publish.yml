@@ -233,9 +233,12 @@ jobs:
   # untested anywhere in this repository.
   consumer:
     name: Consumer
+    # `!cancelled()`, not `always()`: both let a skipped `natives` through, but a job gated by
+    # `always()` ignores a cancel, so a cancelled run kept building here and held the concurrency slot
+    # the next run waits on (#573).
     if: >-
       ${{
-        always() &&
+        !cancelled() &&
         !startsWith(github.ref, 'refs/tags/vulkan-v') &&
         needs.platform-impact.result == 'success' &&
         needs.naga-android.result == 'success' &&
@@ -358,9 +361,10 @@ jobs:
   snapshot:
     name: Snapshot
     timeout-minutes: 60
+    # `!cancelled()` for the reason given on Consumer.
     if: >-
       ${{
-        always() &&
+        !cancelled() &&
         (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')) &&
         needs.verify.result == 'success' &&
         needs.consumer.result == 'success' &&
