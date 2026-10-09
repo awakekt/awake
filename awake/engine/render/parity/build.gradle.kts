@@ -56,6 +56,8 @@ kotlin {
                 implementation(project(":awake:scene:authoring"))
                 implementation(project(":awake:scene:physics"))
                 implementation(project(":awake:scene:scene2d"))
+                // The layered terrain surface, drawn with a bake.
+                implementation(project(":awake:kit:terrain-layers"))
             }
         }
     }
