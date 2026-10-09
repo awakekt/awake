@@ -319,7 +319,9 @@ Moves the entity from player input, or from code such as AI or a network. `Scene
 | Field | Type | Default | What it does |
 | --- | --- | --- | --- |
 | `speed` | number | none | Units per second. None uses the movement system's speed. Above 0 when set. |
-| `runSpeed` | number | none | Units per second while Shift is held. None keeps `speed`. Above 0 when set. |
+| `runSpeed` | number | none | Units per second while running. None keeps `speed`. Above 0 when set. |
+| `runMode` | `Hold` or `Toggle` | `Hold` | `Hold`: runs while `runKey` is held. `Toggle`: starts running, and each press of `runKey` switches between walking and running. |
+| `runKey` | key name | `Shift` | The key the player runs with, such as `Shift` or `X`. |
 | `turnSpeed` | number | `0` | Radians per second it turns to face where it moves; 0 leaves its facing alone. Not negative. |
 | `driver` | `Player` or `Agent` | `Player` | What sets the intent. `Player`: the keys and touch controls, relative to the camera. `Agent`: code writes a world-space direction, and player input leaves it alone. |
 

@@ -27,13 +27,7 @@ class PlayerInputSystem(
         // Cleared, not just unread: a system that saw no keys would leave the player walking in
         // whatever direction was last held. Typing "wasd" into a focused field must stop it.
         if (input.keysOwnedByUi) {
-            world.queryEach(MovementControl::class) { _, control ->
-                if (control.driver != MovementDriver.Player) return@queryEach
-                control.moveX = 0f
-                control.moveZ = 0f
-                control.jump = false
-                control.run = false
-            }
+            release(world)
             return
         }
 
@@ -52,13 +46,30 @@ class PlayerInputSystem(
         }
 
         val jump = input.isDown(Key.Space)
-        val run = input.isDown(Key.Shift)
         world.queryEach(MovementControl::class) { _, control ->
             if (control.driver != MovementDriver.Player) return@queryEach
             control.moveX = moveX
             control.moveZ = moveZ
             control.jump = jump
-            control.run = run
+            control.run = runs(control, input)
         }
+    }
+
+    /** Stops each player moving and jumping while the UI has the keys. */
+    private fun release(world: World) {
+        world.queryEach(MovementControl::class) { _, control ->
+            if (control.driver != MovementDriver.Player) return@queryEach
+            control.moveX = 0f
+            control.moveZ = 0f
+            control.jump = false
+            // A toggled walk is a setting, not a held key, so typing leaves it as it was.
+            if (control.runMode == RunMode.Hold) control.run = false
+        }
+    }
+
+    /** Whether [control] runs this frame: while its key is held, or switched by each press of it. */
+    private fun runs(control: MovementControl, input: GameplayInput): Boolean = when (control.runMode) {
+        RunMode.Hold -> input.isDown(control.runKey)
+        RunMode.Toggle -> control.run != input.wasPressed(control.runKey)
     }
 }
