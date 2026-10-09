@@ -1,0 +1,1 @@
+- **Streamed terrain on a headless host.** A `paged_terrain` scene run with no renderer, as a game server runs it through `LoadedProject.sceneSystems`, threw `This scene host is headless` when its systems were built. It now streams the cells near the camera and their collision, and draws nothing.

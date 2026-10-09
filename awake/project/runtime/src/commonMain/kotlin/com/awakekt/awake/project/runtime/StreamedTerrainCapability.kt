@@ -64,7 +64,9 @@ internal object StreamedTerrainCapability : SceneCapability {
                 "The scene has a paged_terrain; pass the content loadSceneContent reads in SceneHostServices"
             }
             val physics = if (config.collider && services.physics != null) plan.physicsSystem(services) else null
-            StreamedTerrainSystem(assets, services.renderer as? ContentFeatureHost, physics)
+            // A headless host, such as a game server, streams the collision cells and draws nothing.
+            val draw = if (services.hasRenderer) services.renderer as? ContentFeatureHost else null
+            StreamedTerrainSystem(assets, draw, physics)
         }
     }
 }
