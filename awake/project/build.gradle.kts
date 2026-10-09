@@ -42,6 +42,8 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(project(":awake:core:io"))
+            // The rule a tag follows (Tags.isValid), so the manifest's tags list checks against it.
+            implementation(project(":awake:ecs"))
             implementation(libs.kotlinx.serialization.json)
         }
         commonTest.dependencies {

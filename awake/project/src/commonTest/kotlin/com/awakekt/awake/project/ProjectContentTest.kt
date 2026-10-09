@@ -64,6 +64,56 @@ class ProjectContentTest {
     }
 
     @Test
+    fun theTagsListMustHoldDistinctTags() {
+        assertEquals(emptyList(), ProjectContentValidator.manifestIssueDetails(manifest(tags = listOf("enemy", "pickup"))))
+
+        val issues = ProjectContentValidator.manifestIssueDetails(manifest(tags = listOf("enemy", "enemy", "two words")))
+
+        assertEquals(
+            listOf("tags must not contain duplicates", "tags[2] \"two words\" is not a tag"),
+            issues.map { it.message.substringBefore(":") },
+        )
+        assertTrue(issues.all { it.code == ProjectIssueCode.INVALID_MANIFEST })
+    }
+
+    @Test
+    fun aSceneTagTheListDoesNotNameIsAWarning() {
+        val issues = ProjectContentValidator.unlistedTagIssues(
+            manifest(tags = listOf("enemy", "pickup")),
+            sceneTags = listOf("enemy", "enmey", "enmey"),
+            path = "scenes/main.scene.json",
+        )
+
+        val issue = issues.single()
+        assertEquals(ProjectIssueCode.UNLISTED_TAG, issue.code)
+        assertEquals(ProjectIssueSeverity.WARNING, issue.severity)
+        assertEquals("scenes/main.scene.json", issue.path)
+        assertTrue("\"enmey\"" in issue.message, issue.message)
+    }
+
+    @Test
+    fun aProjectWithNoTagsListGetsNoTagWarnings() {
+        assertEquals(emptyList(), ProjectContentValidator.unlistedTagIssues(manifest(), sceneTags = listOf("enemy")))
+    }
+
+    @Test
+    fun aManifestWithTagsRoundTripsAndOneWithoutStillDecodes() {
+        val tagged = manifest(tags = listOf("enemy", "pickup"))
+
+        assertEquals(tagged, AwakeProjectValidator.decodeManifest(AwakeProjectValidator.encodeManifest(tagged)))
+        val older = """{"formatVersion":1,"id":"com.example.harbor-town","name":"Harbor Town","version":"1.0.0","entryScene":"scenes/main.scene.json"}"""
+        assertEquals(emptyList(), AwakeProjectValidator.decodeManifest(older).tags)
+    }
+
+    private fun manifest(tags: List<String> = emptyList()) = AwakeProjectManifest(
+        id = "com.example.harbor-town",
+        name = "Harbor Town",
+        version = "1.0.0",
+        entryScene = "scenes/main.scene.json",
+        tags = tags,
+    )
+
+    @Test
     fun assetRootMatchingDoesNotAcceptSiblingDirectories() {
         assertTrue(ProjectContentValidator.isUnderAssetRoot("assets/model.glb", listOf("assets")))
         assertFalse(ProjectContentValidator.isUnderAssetRoot("assets-old/model.glb", listOf("assets")))

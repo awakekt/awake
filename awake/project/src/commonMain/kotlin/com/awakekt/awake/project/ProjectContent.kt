@@ -48,6 +48,9 @@ enum class ProjectIssueCode(val value: String) {
 
     /** A required plugin declared by the manifest is missing. */
     REQUIRED_PLUGIN_MISSING("required_plugin_missing"),
+
+    /** A scene uses a tag the manifest's `tags` list does not name, often a typo. A warning. */
+    UNLISTED_TAG("unlisted_tag"),
 }
 
 /**
@@ -150,6 +153,24 @@ object ProjectContentValidator {
     /** Returns detailed diagnostic issues for [lock]. */
     fun assetsLockIssueDetails(lock: AwakeAssetsLock): List<ProjectContentIssue> =
         projectAssetsLockIssueDetails(lock)
+
+    /**
+     * A warning for each of [sceneTags], the tags the scene at [path] uses, that the manifest's `tags`
+     * list does not name: a guard against a typo, never a refusal. A manifest with no list opts out
+     * and gets none.
+     */
+    fun unlistedTagIssues(manifest: AwakeProjectManifest, sceneTags: Collection<String>, path: String? = null): List<ProjectContentIssue> {
+        if (manifest.tags.isEmpty()) return emptyList()
+        val listed = manifest.tags.toSet()
+        return sceneTags.distinct().filterNot { it in listed }.map { tag ->
+            ProjectContentIssue(
+                code = ProjectIssueCode.UNLISTED_TAG,
+                message = "tag \"$tag\" is not in the project's tags list",
+                path = path,
+                severity = ProjectIssueSeverity.WARNING,
+            )
+        }
+    }
 
     /** Returns `true` if [path] is contained within one of the [assetRoots]. */
     fun isUnderAssetRoot(path: String, assetRoots: List<String>): Boolean =

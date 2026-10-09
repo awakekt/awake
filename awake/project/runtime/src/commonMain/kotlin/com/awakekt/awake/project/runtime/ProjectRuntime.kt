@@ -127,6 +127,7 @@ private suspend fun loadProjectInto(
 
     if (registry == null) installProjectComponents(capabilities) else registry.registerProjectComponents(capabilities)
     val scene = decodeScene(manifest.entryScene, files, registry)
+    warnUnlistedTags(manifest, scene)
     val models = GltfAssetResolver().apply { setAssetSource(files) }
     scene.nodes.flatMap { it.meshNames() }
         .filter(models::canResolveMesh)
