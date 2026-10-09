@@ -14,7 +14,9 @@ import com.awakekt.awake.scene.authoring.SceneAppDsl
 import com.awakekt.awake.scene.authoring.infrastructure.gameplayInput
 import com.awakekt.awake.scene.controls.GameplayInput
 import com.awakekt.awake.scene.document.SceneDocument
+import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.runtime.SceneSystemPhase
+import com.awakekt.awake.scene.runtime.SpawnedNode
 
 /**
  * What a scene's systems need from the host and cannot read from the scene itself. A host that draws
@@ -29,6 +31,7 @@ class SceneHostServices private constructor(
     val physics: PhysicsWorld?,
     /** What the scene's capabilities read from the project's files, as [loadSceneContent] reads it. */
     val content: SceneContent,
+    private val spawner: ((SceneNode) -> SpawnedNode)? = null,
 ) {
     /** Services for a host that draws through [renderer]. */
     constructor(
@@ -47,6 +50,21 @@ class SceneHostServices private constructor(
 
     /** Whether there is a [renderer]: false on a host made by [headless]. */
     val hasRenderer: Boolean get() = gpu != null
+
+    /** Whether [spawn] works: true once the host gave a spawner with [withSpawner], as `runProject` does. */
+    val canSpawn: Boolean get() = spawner != null
+
+    /**
+     * Puts [node] into the running scene, as the host's `spawn` does, for whatever joins the scene while
+     * it plays: a player arriving over the network, a monster a server spawns, a drop. Throws when the
+     * host gave no spawner; see [canSpawn].
+     */
+    fun spawn(node: SceneNode): SpawnedNode =
+        checkNotNull(spawner) { "This scene host can't spawn; its host passes a spawner with withSpawner" }(node)
+
+    /** These services, with [spawn] putting nodes into the scene through [spawner]. */
+    fun withSpawner(spawner: (SceneNode) -> SpawnedNode): SceneHostServices =
+        SceneHostServices(gpu, input, physics, content, spawner)
 
     /** Makes services for a host with no renderer. */
     companion object {
@@ -179,7 +197,7 @@ internal fun SceneAppDsl.registerSystemSpecs(project: LoadedProject) {
                 renderer = renderer,
                 physics = project.physics,
                 content = project.content,
-            )
+            ).withSpawner { node -> spawn(project, node) }
             releasing.keep(spec.create(services))
         }
     }
