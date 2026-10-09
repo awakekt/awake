@@ -91,28 +91,6 @@ class PagedTerrainTest {
         assertTrue(terrain.put(left, TerrainPage(RawHeightmapCodec.decode(written, 5, 5, Vec3f(1f, 1f, 1f), minElevation = 0f, maxElevation = 10f))))
     }
 
-    // Pins the deprecated journal until its removal; PagedTerrainUploadsTest covers the replacement.
-    @Suppress("DEPRECATION")
-    @Test fun partialUploadsPublishOnlyCompleteCellsAndEveryFrameSlotCatchesUp() {
-        val terrain = terrain(uploadBytes = 156) // 100-byte page + 16-byte table + 40-byte fallback.
-        terrain.put(TerrainPageCoord(-1, 0), page())
-        terrain.put(TerrainPageCoord(0, 0), page())
-        val first = terrain.updates(0)
-        assertTrue(first.sumOf { it.region.data.size } <= 156)
-        assertEquals(1, first.count { it.binding == TERRAIN_HEIGHT_PAGES_BINDING })
-        assertEquals(1, first.last().region.data[0].toInt())
-        assertEquals(0, first.last().region.data[4].toInt())
-        val second = terrain.updates(0)
-        assertEquals(2, second.last().region.data[4].toInt())
-        assertTrue(terrain.updates(0).isEmpty())
-        assertEquals(1, terrain.updates(1).count { it.binding == TERRAIN_HEIGHT_PAGES_BINDING })
-        terrain.evict(TerrainPageCoord(-1, 0))
-        terrain.put(TerrainPageCoord(1, 0), TerrainPage(Heightmap(FloatArray(25) { if (it % 5 == 0) 1f else 2f }, 5, 5, Vec3f(1f, 1f, 1f))))
-        val replacement = terrain.updates(0)
-        assertEquals(0, replacement.last().region.data[0].toInt())
-        assertEquals(1, replacement.last().region.data[8].toInt())
-    }
-
     @Test fun mismatchedBordersAndRangesNeverBecomeVisible() {
         val terrain = terrain()
         terrain.put(TerrainPageCoord(-1, 0), page())
