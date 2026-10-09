@@ -47,6 +47,13 @@ class MovementControl : Poolable {
     /** Units per second for this entity. Null uses the movement system's speed. */
     var speed: Float? = null
 
+    /**
+     * Units per second this intent asks for, set by code steering an [MovementDriver.Agent], such as
+     * an AI behaviour moving at its own speed. While set it replaces [speed] and [runSpeed], which
+     * stay as authored. Null leaves them in charge.
+     */
+    var moveSpeed: Float? = null
+
     /** Whether a jump is wanted this frame. A character controller decides whether it can jump. */
     var jump: Boolean = false
 
@@ -65,6 +72,7 @@ class MovementControl : Poolable {
         moveY = 0f
         moveZ = 0f
         speed = null
+        moveSpeed = null
         jump = false
         run = false
         runSpeed = null
@@ -74,10 +82,10 @@ class MovementControl : Poolable {
     /**
      * Resolves the effective movement speed in units per second for the current frame.
      *
-     * @param default Fallback speed in units per second if neither [runSpeed] nor [speed] is set.
+     * @param default Fallback speed in units per second if none of [moveSpeed], [runSpeed] and [speed] is set.
      * @return Effective movement speed in units per second.
      */
-    fun currentSpeed(default: Float): Float = (if (run) runSpeed else null) ?: speed ?: default
+    fun currentSpeed(default: Float): Float = moveSpeed ?: (if (run) runSpeed else null) ?: speed ?: default
 
     /** World X of this intent: as given for an [MovementDriver.Agent], along [basis] for a player. */
     fun worldX(basis: CameraRelativeBasis): Float =

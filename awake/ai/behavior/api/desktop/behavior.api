@@ -1,6 +1,11 @@
 public abstract interface class com/awakekt/awake/ai/behavior/AgentPlacement {
 	public abstract fun moveBy-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JFF)V
 	public abstract fun position-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/core/math/Vec3f;)Z
+	public fun steer-raSDhyQ (Lcom/awakekt/awake/ecs/World;JFFF)V
+}
+
+public final class com/awakekt/awake/ai/behavior/AgentPlacement$DefaultImpls {
+	public static fun steer-raSDhyQ (Lcom/awakekt/awake/ai/behavior/AgentPlacement;Lcom/awakekt/awake/ecs/World;JFFF)V
 }
 
 public final class com/awakekt/awake/ai/behavior/ChaseAiSystem : com/awakekt/awake/ecs/System {

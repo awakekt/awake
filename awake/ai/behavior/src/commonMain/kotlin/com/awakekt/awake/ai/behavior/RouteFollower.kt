@@ -119,7 +119,7 @@ internal fun RouteFollower.steer(
         waypointIndex++
     } else {
         val invDistance = 1f / distance
-        placement.moveBy(world, entity, dx * invDistance * speed * delta, dz * invDistance * speed * delta)
+        placement.steer(world, entity, dx * invDistance * speed, dz * invDistance * speed, delta)
         placement.position(world, entity, position)
     }
 }

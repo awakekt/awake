@@ -336,6 +336,7 @@ public final class com/awakekt/awake/scene/controls/movement/MovementControl : c
 	public final fun currentSpeed (F)F
 	public final fun getDriver ()Lcom/awakekt/awake/scene/controls/movement/MovementDriver;
 	public final fun getJump ()Z
+	public final fun getMoveSpeed ()Ljava/lang/Float;
 	public final fun getMoveX ()F
 	public final fun getMoveY ()F
 	public final fun getMoveZ ()F
@@ -346,6 +347,7 @@ public final class com/awakekt/awake/scene/controls/movement/MovementControl : c
 	public fun reset ()V
 	public final fun setDriver (Lcom/awakekt/awake/scene/controls/movement/MovementDriver;)V
 	public final fun setJump (Z)V
+	public final fun setMoveSpeed (Ljava/lang/Float;)V
 	public final fun setMoveX (F)V
 	public final fun setMoveY (F)V
 	public final fun setMoveZ (F)V
