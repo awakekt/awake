@@ -1,1 +1,0 @@
-- **A Core release reaches Maven Central as one deployment.** The modules and the Gradle plugins are staged together and uploaded once, so a release publishes whole or not at all, where two uploads could leave modules on Central without the plugins that build against them.

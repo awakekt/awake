@@ -1,1 +1,0 @@
-- **A fallback Maven repository for releases Maven Central refuses.** Each Core release attaches its signed files to its GitHub Release, and the newest two are served from `https://awakekt.github.io/awake/` under the same coordinates, so a build adds one repository line after `mavenCentral()` to resolve a release Central refused under its publishing limits.

@@ -1,1 +1,0 @@
-- **A game server plays a scene with streamed terrain.** On a headless host, `paged_terrain` streams its cells and keeps their collision without asking for a renderer, which a headless host refuses.
