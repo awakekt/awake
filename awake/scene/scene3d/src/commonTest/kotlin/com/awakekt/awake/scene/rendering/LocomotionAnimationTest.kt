@@ -35,10 +35,54 @@ class LocomotionAnimationTest {
         val walker = Walker(CLIPS)
 
         assertEquals("stand", walker.standStill())
-        assertEquals("walk", walker.after(dx = 2f * STEP, dy = 0f))
-        assertEquals("run", walker.after(dx = 6f * STEP, dy = 0f))
+        assertEquals("walk", walker.moving(dx = 2f * STEP))
+        assertEquals("run", walker.moving(dx = 6f * STEP))
         assertEquals("stand", walker.standStill())
         assertEquals("stand", walker.player.currentClip?.name)
+    }
+
+    /** Running up a step slows it for two frames; the run keeps playing through it, not restarting. */
+    @Test
+    fun aBriefDipKeepsTheRunPlaying() {
+        val walker = Walker(CLIPS)
+        walker.standStill()
+        repeat(SETTLE_FRAMES) { walker.after(dx = 6f * STEP, dy = 0f) }
+
+        val clips = List(2) { walker.after(dx = 3.5f * STEP, dy = 0f) } + List(4) { walker.after(dx = 6f * STEP, dy = 0f) }
+
+        assertEquals(List(6) { "run" }, clips)
+    }
+
+    /** Pushing into a wall moves it in fits, as measured in a game at 120 fps: run, walk, stand once each. */
+    @Test
+    fun aBlockedMoverEasesDownOnce() {
+        val walker = Walker(CLIPS)
+        walker.standStill()
+        repeat(SETTLE_FRAMES) { walker.after(dx = 6f * STEP, dy = 0f) }
+
+        val clips = BLOCKED_SPEEDS.map { walker.after(dx = it * FRAME_120, dy = 0f, step = FRAME_120) }
+
+        assertEquals(listOf("run", "walk", "stand"), clips.distinctConsecutive(), "clips: $clips")
+    }
+
+    /** Placed far from the origin, its first frame is not a move from there: walking off, it walks. */
+    @Test
+    fun anEntityPlacedFarAwayWalksOffAtItsOwnSpeed() {
+        val walker = Walker(CLIPS, at = 700f)
+
+        assertEquals("walk", walker.moving(dx = 2f * STEP))
+    }
+
+    /** Stopping is still a stop: it stands without walking in place on the way. */
+    @Test
+    fun stoppingFromARunStandsWithoutWalkingInPlace() {
+        val walker = Walker(CLIPS)
+        walker.standStill()
+        repeat(SETTLE_FRAMES) { walker.after(dx = 6f * STEP, dy = 0f) }
+
+        val clips = List(STILL_FRAMES) { walker.after(dx = 0f, dy = 0f) }
+
+        assertEquals(listOf("run", "stand"), clips.distinctConsecutive(), "clips: $clips")
     }
 
     /** Near the top of a jump it barely moves up or down, and that is still a jump. */
@@ -85,7 +129,7 @@ class LocomotionAnimationTest {
         val walker = Walker(CLIPS, ground = GroundContact(grounded = true))
         walker.standStill()
 
-        assertEquals("run", walker.after(dx = 6f * STEP, dy = 5f * STEP), "a steep climb on the ground")
+        assertEquals("run", List(SETTLE_FRAMES) { walker.after(dx = 6f * STEP, dy = 5f * STEP) }.last(), "a steep climb on the ground")
         walker.ground!!.grounded = false
         assertEquals("jump", walker.after(dx = 0f, dy = 0.001f), "off the ground, even hanging still")
         walker.ground.grounded = true
@@ -113,7 +157,8 @@ class LocomotionAnimationTest {
         walker.after(dx = 0f, dy = 5f * STEP)
         walker.ground.grounded = true
         assertEquals("land", walker.after(dx = 0f, dy = -0.001f))
-        assertEquals("walk", walker.after(dx = 2f * STEP, dy = 0f), "walking off cuts the landing short")
+        // Four frames into a landing that lasts 24.
+        assertEquals("walk", List(4) { walker.after(dx = 2f * STEP, dy = 0f) }.last(), "walking off cuts the landing short")
     }
 
     @Test
@@ -126,7 +171,7 @@ class LocomotionAnimationTest {
     }
 
     /** One skinned entity with stand, walk, run and jump clips, moved by hand. */
-    private class Walker(clips: SceneLocomotionAnimation, val ground: GroundContact? = null) {
+    private class Walker(clips: SceneLocomotionAnimation, val ground: GroundContact? = null, at: Float = 0f) {
         private val world = World()
         private val transform = Transform()
         private val locomotion = LocomotionAnimation(clips)
@@ -139,6 +184,8 @@ class LocomotionAnimationTest {
         )
 
         init {
+            transform.position.x = at
+            transform.computeLocalMatrix()
             val entity = world.create()
             ground?.let {
                 // Kept by the node that moves, above the model's.
@@ -153,12 +200,18 @@ class LocomotionAnimationTest {
             system.update(world, STEP)
         }
 
-        /** Moves by ([dx], [dy]) in one frame, and returns the clip chosen. */
-        fun after(dx: Float, dy: Float): String? {
+        /** Moves by ([dx], [dy]) in one frame of [step] seconds, and returns the clip chosen. */
+        fun after(dx: Float, dy: Float, step: Float = STEP): String? {
             transform.position.x += dx
             transform.position.y += dy
             transform.computeLocalMatrix()
-            system.update(world, STEP)
+            system.update(world, step)
+            return locomotion.playing
+        }
+
+        /** Moves by [dx] a frame for long enough that its speed has settled, and returns the clip chosen. */
+        fun moving(dx: Float): String? {
+            repeat(SETTLE_FRAMES) { after(dx, dy = 0f) }
             return locomotion.playing
         }
 
@@ -193,6 +246,15 @@ class LocomotionAnimationTest {
         const val STILL_FRAMES = 30
         const val LANDING_FRAMES = 20
         const val STEPPED_FRAMES = 12
+
+        /** A third of a second: a speed held this long has settled. */
+        const val SETTLE_FRAMES = 20
+        const val FRAME_120 = 1f / 120f
+
+        /** Units per second, frame by frame, of a character pushed into a wall, measured at 120 fps. */
+        val BLOCKED_SPEEDS = listOf(6f, 6f, 6f, 2.57f, 2.58f, 0f, 0f, 1.27f, 1.27f, 0.61f, 0.61f) + List(19) { 0f }
+
+        fun List<String?>.distinctConsecutive(): List<String?> = filterIndexed { index, clip -> index == 0 || clip != this[index - 1] }
         val CLIPS = SceneLocomotionAnimation(idle = "stand", walk = "walk", run = "run", jump = "jump", walkAbove = 0.5f, runAbove = 4f, airborneAbove = 2f)
     }
 }

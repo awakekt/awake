@@ -19,6 +19,7 @@ import com.awakekt.awake.scene.document.SceneValidationIssue
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlin.math.abs
+import kotlin.math.exp
 import kotlin.math.sqrt
 import kotlin.reflect.KClass
 
@@ -34,7 +35,9 @@ import kotlin.reflect.KClass
  * The speeds are measured from the entity's world position, so it animates however it is moved:
  * by a character controller, straight through the world, or by a script, and a model on a child
  * node of the moving entity animates with it. A mover stepped at a fixed rate stays put between
- * its steps, so a frame without motion counts as a stop only after a tenth of a second.
+ * its steps, so a frame without motion counts as a stop only after a tenth of a second. The speed
+ * across the ground is smoothed over about as long, so a frame or two slower, up a step or against
+ * a wall, does not switch the clip and restart it; a stop is still a stop at once.
  *
  * When the entity or a node above it has a [GroundContact], as a `character_controller` keeps,
  * [jump] plays exactly while it is off the ground. Otherwise it lands when its fall stops, or when
@@ -79,6 +82,9 @@ class LocomotionAnimation(val clips: SceneLocomotionAnimation) {
     /** Seconds since it was last seen to move. */
     private var sinceMoved = 0f
 
+    /** Speed across the ground, smoothed over about [SPEED_SMOOTHING] seconds. */
+    private var across = 0f
+
     /** Whether it has left the ground and not yet landed. */
     private var airborne = false
     private var falling = false
@@ -122,7 +128,11 @@ class LocomotionAnimation(val clips: SceneLocomotionAnimation) {
         lastZ = z
         sinceMoved = 0f
         seen = true
-        return if (first) null else choose(sqrt(dx * dx + dz * dz) / elapsed, vertical, elapsed, ground, durationOf)
+        if (!first) {
+            // Staying put this long is a stop, which the smoothing would only blur into a walk.
+            across = if (stayedPut) 0f else across + (sqrt(dx * dx + dz * dz) / elapsed - across) * (1f - exp(-elapsed / SPEED_SMOOTHING))
+        }
+        return if (first) null else choose(across, vertical, elapsed, ground, durationOf)
     }
 
     private fun choose(across: Float, vertical: Float, elapsed: Float, ground: GroundContact?, durationOf: (String) -> Float?): String? {
@@ -226,6 +236,9 @@ private const val DEFAULT_CROSS_FADE = 0.15f
 
 /** Seconds without motion before a frame counts as standing still. */
 private const val STILL_AFTER = 0.1f
+
+/** Seconds over which the speed across the ground is smoothed: two frames slower stay a run. */
+private const val SPEED_SMOOTHING = 0.1f
 
 /** Vertical units per second below which it neither rises nor falls. */
 private const val STILL = 0.1f
