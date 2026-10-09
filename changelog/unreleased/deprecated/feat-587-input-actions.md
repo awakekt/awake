@@ -1,1 +1,0 @@
-- `MOVE_ACTION` and `JUMP_ACTION` in `awake:project:runtime`: use `MovementActions.MOVE` and `MovementActions.JUMP` from `awake:scene:controls`, the names of the input actions a player follows.
