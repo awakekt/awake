@@ -21,6 +21,7 @@ import com.awakekt.awake.render.testing.NoopRenderer
 import com.awakekt.awake.scene.authoring.scene
 import com.awakekt.awake.scene.controls.camera.ActiveCamera
 import com.awakekt.awake.scene.controls.camera.CameraRig
+import com.awakekt.awake.scene.controls.movement.MovementControl
 import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.Camera
@@ -34,6 +35,7 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -114,6 +116,52 @@ class ProjectRuntimeTest {
 
         assertTrue(walked.z < start.z - 1f, "pushing the stick up must walk forward; z ${start.z} -> ${walked.z}")
         assertTrue(peak > walked.y + 0.5f, "holding jump must jump; peak $peak from ${walked.y}")
+    }
+
+    /** On a touch screen, with no run key to press, a run Button switches a toggled player as its key would. */
+    @Test
+    fun aRunButtonSwitchesAToggledPlayerBetweenRunningAndWalking() = runTest {
+        val game = play(RUN_BUTTON_SCENE.replace(PLAYER_CONTROL, "$PLAYER_CONTROL, \"runMode\": \"Toggle\""), touch = true)
+        game.frames(FRAMES)
+        val control = game.world.get<MovementControl>(game.world.named("Player"))!!
+        assertTrue(control.run, "a toggled player starts running")
+
+        game.tap(game.centreOf("Run"))
+        assertFalse(control.run, "a tap walks")
+        game.tap(game.centreOf("Run"))
+        assertTrue(control.run, "the next tap runs again")
+    }
+
+    @Test
+    fun aHeldRunButtonRunsAHoldPlayerOnlyWhileHeld() = runTest {
+        val game = play(RUN_BUTTON_SCENE, touch = true)
+        game.frames(FRAMES)
+        val control = game.world.get<MovementControl>(game.world.named("Player"))!!
+        val run = game.centreOf("Run")
+
+        game.touch(down = true, run)
+        game.touch(down = true, run)
+        assertTrue(control.run, "holding the button runs")
+        game.touch(down = false, run)
+        game.frames(1)
+        assertFalse(control.run, "letting go walks")
+    }
+
+    private fun Game.centreOf(name: String): Pair<Float, Float> {
+        val node = assertNotNull(runtime.uiSemantics.findTag("canvas-element-${world.named(name).id}"), "no $name drawn")
+        return node.x + node.width / 2f to node.y + node.height / 2f
+    }
+
+    private fun Game.touch(down: Boolean, at: Pair<Float, Float>) {
+        input.setPointer(down = down, x = at.first, y = at.second)
+        input.updateSnapshot()
+        frames(1)
+    }
+
+    private fun Game.tap(at: Pair<Float, Float>) {
+        touch(down = true, at)
+        touch(down = false, at)
+        frames(1)
     }
 
     @Test
@@ -274,6 +322,15 @@ class ProjectRuntimeTest {
   { "name": "Jump", "components": [ { "component": "canvas_element", "kind": "Button", "anchor": "BottomRight",
     "offsetX": 32.0, "offsetY": 32.0, "width": 80.0, "height": 80.0, "action": "jump", "touchOnly": true,
     "text": "Jump" } ] }
+] }
+"""
+
+        const val PLAYER_CONTROL = """"component": "movement_control", "speed": 6.0"""
+
+        val RUN_BUTTON_SCENE = PHYSICS_SCENE.trimEnd().removeSuffix("] }").trimEnd() + """,
+  { "name": "Run", "components": [ { "component": "canvas_element", "kind": "Button", "anchor": "BottomRight",
+    "offsetX": 32.0, "offsetY": 32.0, "width": 80.0, "height": 80.0, "action": "run", "touchOnly": true,
+    "text": "Run" } ] }
 ] }
 """
 

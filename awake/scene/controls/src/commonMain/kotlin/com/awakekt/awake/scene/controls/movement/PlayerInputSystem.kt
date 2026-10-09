@@ -12,6 +12,11 @@ import com.awakekt.awake.scene.controls.GameplayInput
 import com.awakekt.awake.scene.controls.movement.MovementControl
 import kotlin.math.sqrt
 
+/** The keys [PlayerInputSystem] moves and jumps with, which a `movement_control` can't also run with. */
+internal val PLAYER_MOVE_AND_JUMP_KEYS = setOf(
+    Key.W, Key.A, Key.S, Key.D, Key.ArrowUp, Key.ArrowDown, Key.ArrowLeft, Key.ArrowRight, Key.Space,
+)
+
 /**
  * Dedicated system for handling user input and mapping it to [MovementControl] intent.
  * This is the ONLY system that should read/consume hardware snapshots for movement.

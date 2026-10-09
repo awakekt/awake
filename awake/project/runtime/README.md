@@ -21,7 +21,7 @@ Core's capabilities decide what runs, each for the components it owns:
 | Scene component | What runs |
 |---|---|
 | `movement_control` | Keyboard intent; moved by physics with `character_controller`, straight through the world without |
-| `canvas_element` with an `action` | `CanvasActionSystem`: a `move` Joystick steers, a held `jump` Button jumps |
+| `canvas_element` with an `action` | `CanvasActionSystem`: a `move` Joystick steers, a held `jump` Button jumps, a `run` Button runs (held, or pressed to switch, as `movement_control.runMode` says) |
 | `camera_rig` | `CameraSystem` |
 | `paged_terrain` | On the fixed step, before physics: its cells streamed around the primary camera from the page index `loadProject` read, drawn as one clipmap (with terrain layers when the index names a palette), and static collision cells near the camera when it is a `collider` and the host gives a physics world. A scene streams one |
 | `physics_body`, `character_controller`, a `terrain` collider | On the fixed step, with a physics world: the terrain collider, `MeshColliderSystem` for `mesh` and `convex_hull` shapes, `PhysicsSystem` and `CharacterControllerSystem` |

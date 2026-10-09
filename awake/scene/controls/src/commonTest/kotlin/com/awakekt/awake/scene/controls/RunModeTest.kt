@@ -13,6 +13,7 @@ import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.binding.fromWorld
 import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.scene.controls.movement.MovementControl
+import com.awakekt.awake.scene.controls.movement.MovementDriver
 import com.awakekt.awake.scene.controls.movement.PlayerInputSystem
 import com.awakekt.awake.scene.controls.movement.RunMode
 import com.awakekt.awake.scene.controls.movement.SceneMovementControl
@@ -66,6 +67,36 @@ class RunModeTest {
         frame(world, down = setOf(Key.X), pressed = setOf(Key.X), typing = true)
 
         assertTrue(control.run, "an X typed into a text field neither switches to walking nor stops the run")
+    }
+
+    @Test
+    fun typingStopsAHeldRun() {
+        val (world, control) = player("""{ "component": "movement_control" }""")
+        frame(world, down = setOf(Key.Shift), pressed = setOf(Key.Shift))
+
+        frame(world, down = setOf(Key.Shift), typing = true)
+
+        assertFalse(control.run, "a held run stops while the UI has the keys, as the movement does")
+    }
+
+    /** Only the player's input switches a toggle back, so an agent's control never starts running. */
+    @Test
+    fun anAgentWithAToggleDoesNotStartRunning() {
+        val (world, control) = player("""{ "component": "movement_control", "driver": "Agent", "runMode": "Toggle" }""")
+        assertFalse(control.run)
+
+        frame(world, down = setOf(Key.Shift), pressed = setOf(Key.Shift))
+
+        assertFalse(control.run, "player input leaves an agent alone")
+    }
+
+    @Test
+    fun aRunKeyThePlayerMovesOrJumpsWithIsRefused() {
+        listOf(Key.Space, Key.W, Key.ArrowUp, Key.Unknown).forEach { key ->
+            assertTrue(SceneMovementControl(runKey = key).validate("p").isNotEmpty(), "$key")
+        }
+        assertEquals(emptyList(), SceneMovementControl(runKey = Key.X).validate("p"))
+        assertEquals(emptyList(), SceneMovementControl(runKey = Key.Space, driver = MovementDriver.Agent).validate("p"), "an agent has no run key")
     }
 
     @Test

@@ -52,6 +52,12 @@ data class SceneMovementControl(
             add(SceneValidationIssue(path, "movement_control.runSpeed must be greater than 0"))
         }
         if (turnSpeed < 0f) add(SceneValidationIssue(path, "movement_control.turnSpeed must not be negative"))
+        if (driver == MovementDriver.Player && runKey in PLAYER_MOVE_AND_JUMP_KEYS) {
+            add(SceneValidationIssue(path, "movement_control.runKey must not be a key the player moves or jumps with: $runKey"))
+        }
+        if (driver == MovementDriver.Player && runKey == Key.Unknown) {
+            add(SceneValidationIssue(path, "movement_control.runKey must be a key that can be pressed"))
+        }
     }
 }
 
@@ -78,7 +84,8 @@ object MovementControlBinding : SceneComponentBinding<MovementControl, SceneMove
                 driver = component.driver
                 runMode = component.runMode
                 runKey = component.runKey
-                run = component.runMode == RunMode.Toggle
+                // Only the player's input ever switches it back, so only a player starts running.
+                run = component.runMode == RunMode.Toggle && component.driver == MovementDriver.Player
             },
         )
     }
