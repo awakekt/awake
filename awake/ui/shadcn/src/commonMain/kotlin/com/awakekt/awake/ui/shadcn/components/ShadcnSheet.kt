@@ -3,6 +3,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+@file:Suppress("FunctionNaming", "ktlint:standard:function-naming")
+
 package com.awakekt.awake.ui.shadcn.components
 
 import com.awakekt.awake.compose.foundation.BorderSides
@@ -67,7 +69,7 @@ fun ShadcnSheet(
         onDismissRequest = onDismissRequest,
         scrimModifier = scrimModifier(id, onScrimClick = onDismissRequest),
     ) {
-        sheetPanel(modifier.sheetSemantics(title, id), side, title, description, id, close, content)
+        sheetPanel(modifier.sheetSemantics(title, id), side, id, close) { sheetBody(title, description, content) }
     }
 }
 
@@ -75,15 +77,10 @@ context(_: Composer)
 private fun sheetPanel(
     modifier: Modifier,
     side: ShadcnSheetSide,
-    title: String?,
-    description: String?,
     id: String?,
     /** The close control's action; null draws none. */
     onClose: (() -> Unit)?,
-    content: (
-        context(Composer)
-        () -> Unit
-    )?,
+    body: context(Composer) () -> Unit,
 ) {
     val theme = shadcnTheme
     // Two boxes because `w-3/4 sm:max-w-sm` is a minimum of two rules, and no single chain says it:
@@ -104,18 +101,7 @@ private fun sheetPanel(
                     Modifier.padding(SheetPadding),
                     verticalArrangement = Arrangement.spacedBy(SheetSectionGap),
                 ) {
-                    if (title != null || description != null) {
-                        Column(verticalArrangement = Arrangement.spacedBy(SheetHeaderGap)) {
-                            if (title != null) ShadcnText(title, weight = SheetTitleWeight)
-                            if (description != null) {
-                                ShadcnText(
-                                    description,
-                                    variant = ShadcnTextVariant.Muted,
-                                )
-                            }
-                        }
-                    }
-                    content?.let { it() }
+                    body()
                 }
             }
             if (onClose != null) {
@@ -127,6 +113,30 @@ private fun sheetPanel(
             }
         }
     }
+}
+
+/** The header upstream's `SheetHeader` holds, then the caller's content. */
+context(_: Composer)
+private fun sheetBody(
+    title: String?,
+    description: String?,
+    content: (
+        context(Composer)
+        () -> Unit
+    )?,
+) {
+    if (title != null || description != null) {
+        Column(verticalArrangement = Arrangement.spacedBy(SheetHeaderGap)) {
+            if (title != null) ShadcnText(title, weight = SheetTitleWeight)
+            if (description != null) {
+                ShadcnText(
+                    description,
+                    variant = ShadcnTextVariant.Muted,
+                )
+            }
+        }
+    }
+    content?.let { it() }
 }
 
 private fun Modifier.sheetSemantics(title: String?, id: String?): Modifier = semantics {
