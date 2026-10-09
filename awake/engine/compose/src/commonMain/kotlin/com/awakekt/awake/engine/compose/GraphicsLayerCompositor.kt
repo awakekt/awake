@@ -111,7 +111,7 @@ class GraphicsLayerCompositor {
             if (primitive !is UiDrawPrimitive.Texture) return@map primitive
             when (val slot = primitive.material) {
                 is GraphicsLayerPlaceholder -> primitive.copy(material = materials.getValue(slot.id))
-                is ImageBitmap -> primitive.copy(material = images.materialFor(renderer, slot))
+                is ImageBitmap -> primitive.copy(material = images.materialFor(renderer, slot, primitive.filterQuality))
                 else -> primitive
             }
         }

@@ -62,6 +62,11 @@ reads; pass `null` for a decorative image.
 --8<-- "awake/compose/ui-testing/src/desktopTest/kotlin/com/awakekt/awake/compose/testing/ComposeDocsSampleTest.kt:image"
 ```
 
+`tint` multiplies every pixel's colour; white, the default, leaves it as it is. `filterQuality`
+`FilterQuality.None` samples the nearest pixel, so pixel art stays crisp when it's scaled;
+`FilterQuality.Low`, the default, blends neighbouring pixels. To draw part of a bitmap, such as one
+icon of a sheet, call `drawImage(bitmap, …, srcX, srcY, srcWidth, srcHeight)` from a draw modifier.
+
 To load a PNG or JPEG, call `decodeImageBitmap(bytes)`. It suspends, because the browser decodes
 asynchronously, so decode outside the UI and show the result on a later frame. The engine uploads
 each bitmap to the GPU the first frame it appears and keeps it, so reuse a decoded bitmap instead of

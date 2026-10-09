@@ -11,6 +11,7 @@ import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.graphics2d.containsPoint
 import com.awakekt.awake.core.graphics2d.tessellateFillAa
 import com.awakekt.awake.core.graphics2d.tessellateStrokeAa
+import com.awakekt.awake.core.graphics2d.TextureRegion
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.core.text.font.UiFontSamplingMode
 import com.awakekt.awake.render.capture.PixelMap
@@ -80,23 +81,38 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
     }
 
     /** [image] stretched over [x], [y], [w], [h], sampled at the nearest pixel, scaled by [alpha]. */
-    fun fillImage(x: Float, y: Float, w: Float, h: Float, image: ImageBitmap, alpha: Float) {
+    /**
+     * Fills the rectangle with [region] of [image], times [tint]. It samples the nearest pixel
+     * whatever the draw's filter: a test rasterizer, not the GPU's sampler.
+     */
+    fun fillImage(
+        x: Float,
+        y: Float,
+        w: Float,
+        h: Float,
+        image: ImageBitmap,
+        alpha: Float,
+        region: TextureRegion = TextureRegion.Whole,
+        tint: Color = Color.White,
+    ) {
         if (w <= 0f || h <= 0f) return
         val x0 = max(x, clipX0).toInt().coerceIn(0, width)
         val y0 = max(y, clipY0).toInt().coerceIn(0, height)
         val x1 = min(x + w, clipX1).toInt().coerceIn(0, width)
         val y1 = min(y + h, clipY1).toInt().coerceIn(0, height)
         for (py in y0 until y1) {
-            val sy = (((py + 0.5f - y) / h) * image.height).toInt().coerceIn(0, image.height - 1)
+            val v = region.v0 + (region.v1 - region.v0) * ((py + 0.5f - y) / h)
+            val sy = (v * image.height).toInt().coerceIn(0, image.height - 1)
             for (px in x0 until x1) {
                 if (!passesPathClips(px + 0.5f, py + 0.5f)) continue
-                val sx = (((px + 0.5f - x) / w) * image.width).toInt().coerceIn(0, image.width - 1)
+                val u = region.u0 + (region.u1 - region.u0) * ((px + 0.5f - x) / w)
+                val sx = (u * image.width).toInt().coerceIn(0, image.width - 1)
                 val rgba = image.pixel(sx, sy)
                 val color = Color(
-                    ((rgba ushr 24) and 0xFF) / 255f,
-                    ((rgba ushr 16) and 0xFF) / 255f,
-                    ((rgba ushr 8) and 0xFF) / 255f,
-                    (rgba and 0xFF) / 255f * alpha,
+                    ((rgba ushr 24) and 0xFF) / 255f * tint.r,
+                    ((rgba ushr 16) and 0xFF) / 255f * tint.g,
+                    ((rgba ushr 8) and 0xFF) / 255f * tint.b,
+                    (rgba and 0xFF) / 255f * alpha * tint.a,
                 )
                 pixelMap.blend(px, py, color)
             }
@@ -456,7 +472,11 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
                     primitive.transform,
                 ) { x, y, w, h ->
                     val image = primitive.material as? ImageBitmap
-                    if (image != null) fillImage(x, y, w, h, image, primitive.alpha) else fillRect(x, y, w, h, Color(0.5f, 0.5f, 0.5f, 1f))
+                    if (image != null) {
+                        fillImage(x, y, w, h, image, primitive.alpha, primitive.region, primitive.tint)
+                    } else {
+                        fillRect(x, y, w, h, Color(0.5f, 0.5f, 0.5f, 1f))
+                    }
                 }
             }
 

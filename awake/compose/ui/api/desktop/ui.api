@@ -286,8 +286,8 @@ public final class com/awakekt/awake/compose/ui/graphics/ImageBitmap$Companion {
 
 public final class com/awakekt/awake/compose/ui/graphics/ImageBitmapKt {
 	public static final fun decodeImageBitmap ([BLkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static final fun drawImage (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;Lcom/awakekt/awake/compose/ui/graphics/ImageBitmap;FFFF)V
-	public static synthetic fun drawImage$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;Lcom/awakekt/awake/compose/ui/graphics/ImageBitmap;FFFFILjava/lang/Object;)V
+	public static final fun drawImage (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;Lcom/awakekt/awake/compose/ui/graphics/ImageBitmap;FFFFIIIILcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;)V
+	public static synthetic fun drawImage$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;Lcom/awakekt/awake/compose/ui/graphics/ImageBitmap;FFFFIIIILcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;ILjava/lang/Object;)V
 }
 
 public final class com/awakekt/awake/compose/ui/graphics/PaintOutput {
@@ -454,8 +454,8 @@ public abstract interface class com/awakekt/awake/compose/ui/graphics/drawscope/
 	public abstract fun drawShadow (FFFFLcom/awakekt/awake/core/color/Color;FFFFFLcom/awakekt/awake/core/graphics2d/LinearGradient;)V
 	public static synthetic fun drawShadow$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;FFFFLcom/awakekt/awake/core/color/Color;FFFFFLcom/awakekt/awake/core/graphics2d/LinearGradient;ILjava/lang/Object;)V
 	public abstract fun drawStrokedPath (Lcom/awakekt/awake/core/graphics2d/DrawPath;Lcom/awakekt/awake/core/graphics2d/DrawStroke;Lcom/awakekt/awake/core/color/Color;)V
-	public abstract fun drawTexture (Ljava/lang/Object;FFFF)V
-	public static synthetic fun drawTexture$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;Ljava/lang/Object;FFFFILjava/lang/Object;)V
+	public abstract fun drawTexture (Ljava/lang/Object;FFFFLcom/awakekt/awake/core/graphics2d/TextureRegion;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;)V
+	public static synthetic fun drawTexture$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;Ljava/lang/Object;FFFFLcom/awakekt/awake/core/graphics2d/TextureRegion;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;ILjava/lang/Object;)V
 	public abstract fun emit (Lcom/awakekt/awake/core/graphics2d/UiDrawPrimitive;)V
 	public abstract fun getDensity ()F
 	public abstract fun getHeight ()I
@@ -471,7 +471,7 @@ public final class com/awakekt/awake/compose/ui/graphics/drawscope/DrawScope$Def
 	public static synthetic fun drawRect$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;FFFFLcom/awakekt/awake/core/color/Color;ILjava/lang/Object;)V
 	public static synthetic fun drawRoundedRect$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;FFFFLcom/awakekt/awake/core/color/Color;FILjava/lang/Object;)V
 	public static synthetic fun drawShadow$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;FFFFLcom/awakekt/awake/core/color/Color;FFFFFLcom/awakekt/awake/core/graphics2d/LinearGradient;ILjava/lang/Object;)V
-	public static synthetic fun drawTexture$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;Ljava/lang/Object;FFFFILjava/lang/Object;)V
+	public static synthetic fun drawTexture$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;Ljava/lang/Object;FFFFLcom/awakekt/awake/core/graphics2d/TextureRegion;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;ILjava/lang/Object;)V
 	public static fun getLayoutDirection (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;)Lcom/awakekt/awake/compose/ui/unit/LayoutDirection;
 }
 

@@ -68,8 +68,8 @@ public final class com/awakekt/awake/compose/foundation/HoverableKt {
 }
 
 public final class com/awakekt/awake/compose/foundation/ImageKt {
-	public static final fun Image (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/graphics/ImageBitmap;Ljava/lang/String;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/ContentScale;)V
-	public static synthetic fun Image$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/graphics/ImageBitmap;Ljava/lang/String;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/ContentScale;ILjava/lang/Object;)V
+	public static final fun Image (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/graphics/ImageBitmap;Ljava/lang/String;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/ContentScale;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;)V
+	public static synthetic fun Image$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/graphics/ImageBitmap;Ljava/lang/String;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/ContentScale;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;ILjava/lang/Object;)V
 }
 
 public final class com/awakekt/awake/compose/foundation/Orientation : java/lang/Enum {

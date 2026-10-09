@@ -108,8 +108,9 @@ val UiTextureShader: AslShaderDefinition = shader("ui_texture") {
 
     fragment {
         val sampled = let("sampled", textureSample(previewTexture, previewSampler, uv))
+        // The vertex colour is the draw's tint and alpha: white leaves the texel as it is.
         val alpha = let("alpha", sampled.a * color.a)
-        val rgb = let("rgb", sampled.rgb * color.a)
+        val rgb = let("rgb", sampled.rgb * color.rgb * color.a)
         colorOutput(vec4(rgb, alpha))
     }
 }
