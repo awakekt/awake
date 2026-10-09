@@ -49,6 +49,10 @@ public final class com/awakekt/awake/project/runtime/ProjectRuntimeKt {
 	public static synthetic fun sceneSystems$default (Lcom/awakekt/awake/project/runtime/LoadedProject;Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/render/renderer/Renderer;ILjava/lang/Object;)Lcom/awakekt/awake/project/runtime/SceneSystemSet;
 }
 
+public final class com/awakekt/awake/project/runtime/ProjectSpawnKt {
+	public static final fun spawn (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Lcom/awakekt/awake/project/runtime/LoadedProject;Lcom/awakekt/awake/scene/document/SceneNode;)Lcom/awakekt/awake/scene/runtime/SpawnedNode;
+}
+
 public abstract interface class com/awakekt/awake/project/runtime/SceneCapability {
 	public fun getComponents ()Ljava/util/List;
 	public abstract fun getId ()Ljava/lang/String;
