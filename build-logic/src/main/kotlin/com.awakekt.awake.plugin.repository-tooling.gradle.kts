@@ -5,6 +5,7 @@
  */
 import com.awakekt.awake.build.tasks.AwakeRepositoryVerificationTask
 import com.awakekt.awake.build.tasks.VerifyCapabilityLayeringTask
+import com.awakekt.awake.build.tasks.VerifyHeadlessRuntimeTask
 import com.awakekt.awake.build.tasks.VerifyPublishedArtifactsTask
 import com.awakekt.awake.build.tasks.WaitForVulkanCentralTask
 import org.gradle.api.artifacts.ProjectDependency
@@ -28,6 +29,14 @@ val verifyCapabilityLayering = tasks.register<VerifyCapabilityLayeringTask>("ver
     exemptModulePrefixes.set(listOf(":awake:scene", ":awake:project", ":awake:ecs:benchmark"))
 }
 
+val verifyHeadlessRuntime = tasks.register<VerifyHeadlessRuntimeTask>("verifyHeadlessRuntime") {
+    group = "awake verification"
+    description = "Reject a GPU backend or window module on the path of a project played with no renderer."
+    // What a game server or CI runner loads to play a project; the host passes backends in.
+    modules.set(listOf(":awake:project", ":awake:project:runtime"))
+    forbiddenModulePrefixes.set(listOf(":awake:backend", ":awake:engine:window"))
+}
+
 // Read once every module has been configured, so a dependency a convention plugin or an afterEvaluate block
 // adds is seen as well as one in the build file. Plain values rather than a provider over the projects, so
 // the task keeps working with the configuration cache.
@@ -42,12 +51,13 @@ gradle.projectsEvaluated {
                 .filterValues { it.isNotEmpty() }
         }
     verifyCapabilityLayering.configure { projectDependencies.set(declared) }
+    verifyHeadlessRuntime.configure { projectDependencies.set(declared) }
 }
 
 tasks.register<AwakeRepositoryVerificationTask>("awakeVerify") {
     group = "awake verification"
     description = "Run Awake's repository, documentation, publication, and ownership gates."
-    dependsOn(verifyCapabilityLayering)
+    dependsOn(verifyCapabilityLayering, verifyHeadlessRuntime)
 }
 
 tasks.register<VerifyPublishedArtifactsTask>("verifyPublishedArtifacts") {

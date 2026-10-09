@@ -40,7 +40,15 @@ internal fun mainProjectDependencies(configurations: Map<String, List<String>>):
  * on a scene module is found too: it cannot be used without the scene layer either. The walk stops at a
  * scene module, so a chain names the first scene module on its way and nothing behind it.
  */
-internal fun sceneModulesReached(graph: Map<String, Set<String>>, module: String): Map<String, List<String>> {
+internal fun sceneModulesReached(graph: Map<String, Set<String>>, module: String): Map<String, List<String>> =
+    modulesReached(graph, module) { it.startsWith(SCENE_MODULE_PREFIX) }
+
+/**
+ * The modules [isTarget] picks that [module] reaches through the main dependencies in [graph], each with
+ * the shortest chain that reaches it, [module] first. The walk stops at a target, so a chain names the
+ * first target on its way and nothing behind it.
+ */
+internal fun modulesReached(graph: Map<String, Set<String>>, module: String, isTarget: (String) -> Boolean): Map<String, List<String>> {
     val reached = LinkedHashMap<String, List<String>>()
     val visited = hashSetOf(module)
     val pending = ArrayDeque<List<String>>().apply { addLast(listOf(module)) }
@@ -49,7 +57,7 @@ internal fun sceneModulesReached(graph: Map<String, Set<String>>, module: String
         for (next in graph[chain.last()].orEmpty().sorted()) {
             if (!visited.add(next)) continue
             val extended = chain + next
-            if (next.startsWith(SCENE_MODULE_PREFIX)) reached[next] = extended else pending.addLast(extended)
+            if (isTarget(next)) reached[next] = extended else pending.addLast(extended)
         }
     }
     return reached
