@@ -105,6 +105,10 @@ fun List<ScenePipeline>.toRequests(stages: (ShaderSet) -> ShaderStages): List<Pi
             buildBackCulled = declared.buildBackCulled || declared.key.isPlainInstanced,
             buildTransparent = declared.buildTransparent,
             buildAdditive = declared.buildAdditive,
+            // Unconditional, as the plan's other debug companions are: whether a wireframe overlay
+            // can draw is not a per-app choice. Opaque single draws only, which the overlay covers.
+            buildEdges = declared.variant == PipelineVariant.Opaque &&
+                (declared.key == PipelineKey.Primary || declared.key is PipelineKey.Format),
         )
     }
 

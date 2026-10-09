@@ -217,6 +217,7 @@ public final class com/awakekt/awake/render/passes/RenderFeatureKt {
 public abstract interface class com/awakekt/awake/render/passes/RenderFrameContext {
 	public fun engineBinding (Lcom/awakekt/awake/render/command/PipelineHandle;Lcom/awakekt/awake/render/pipeline/BindingSemantic;)Lcom/awakekt/awake/render/command/MaterialBinding;
 	public abstract fun getCameraEye ()Lcom/awakekt/awake/core/math/Vec3f;
+	public fun getEdgeDrawCalls ()Ljava/util/List;
 	public fun getEnvironment ()Lcom/awakekt/awake/render/command/GpuEnvironmentState;
 	public abstract fun getFrameIndex ()I
 	public abstract fun getGroupedDrawCalls ()Ljava/util/Map;
@@ -235,6 +236,7 @@ public abstract interface class com/awakekt/awake/render/passes/RenderFrameConte
 
 public final class com/awakekt/awake/render/passes/RenderFrameContext$DefaultImpls {
 	public static fun engineBinding (Lcom/awakekt/awake/render/passes/RenderFrameContext;Lcom/awakekt/awake/render/command/PipelineHandle;Lcom/awakekt/awake/render/pipeline/BindingSemantic;)Lcom/awakekt/awake/render/command/MaterialBinding;
+	public static fun getEdgeDrawCalls (Lcom/awakekt/awake/render/passes/RenderFrameContext;)Ljava/util/List;
 	public static fun getEnvironment (Lcom/awakekt/awake/render/passes/RenderFrameContext;)Lcom/awakekt/awake/render/command/GpuEnvironmentState;
 	public static fun getLight (Lcom/awakekt/awake/render/passes/RenderFrameContext;)Lcom/awakekt/awake/render/passes/uniforms/SceneLight;
 	public static fun getPassInput (Lcom/awakekt/awake/render/passes/RenderFrameContext;)Lcom/awakekt/awake/render/command/GpuPassInput;
@@ -286,6 +288,7 @@ public final class com/awakekt/awake/render/passes/SharedOpaqueRenderFeature {
 	public static synthetic fun recordCommands$default (Lcom/awakekt/awake/render/passes/SharedOpaqueRenderFeature;Lcom/awakekt/awake/render/command/CommandRecorder;Lcom/awakekt/awake/render/command/PipelineHandle;Ljava/util/Map;Lcom/awakekt/awake/render/command/PreparedDraw;ILjava/lang/Object;)V
 	public final fun recordDraws (Lcom/awakekt/awake/render/command/CommandRecorder;Lcom/awakekt/awake/render/command/PreparedDraw;)V
 	public final fun recordDraws (Lcom/awakekt/awake/render/command/CommandRecorder;Ljava/util/List;)V
+	public final fun recordEdges (Lcom/awakekt/awake/render/command/CommandRecorder;Ljava/util/List;)V
 }
 
 public final class com/awakekt/awake/render/passes/SharedSkyboxRenderFeature {
@@ -311,6 +314,10 @@ public final class com/awakekt/awake/render/passes/SkyboxRenderFeature : com/awa
 	public fun getPass ()Lcom/awakekt/awake/render/passes/RenderPassSlot;
 	public fun prepareFrame (ILcom/awakekt/awake/render/texture/TextureUploadRecorder;)V
 	public fun recordCommands (Lcom/awakekt/awake/render/passes/RenderFrameContext;)V
+}
+
+public final class com/awakekt/awake/render/passes/WireframeOverlayKt {
+	public static final fun drawsEdges (Lcom/awakekt/awake/render/command/GpuDrawRequest;I)Z
 }
 
 public final class com/awakekt/awake/render/passes/debug/DebugGeometryKt {
@@ -419,11 +426,12 @@ public final class com/awakekt/awake/render/passes/uniforms/DrawUniformPlanKt {
 public final class com/awakekt/awake/render/passes/uniforms/EnvironmentUniforms {
 	public static final field Companion Lcom/awakekt/awake/render/passes/uniforms/EnvironmentUniforms$Companion;
 	public fun <init> ()V
-	public fun <init> (ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/color/Color;ZLcom/awakekt/awake/render/passes/uniforms/RenderDebugView;IFZLcom/awakekt/awake/core/color/Color;)V
-	public synthetic fun <init> (ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/color/Color;ZLcom/awakekt/awake/render/passes/uniforms/RenderDebugView;IFZLcom/awakekt/awake/core/color/Color;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/color/Color;ZLcom/awakekt/awake/render/passes/uniforms/RenderDebugView;IFZLcom/awakekt/awake/core/color/Color;Z)V
+	public synthetic fun <init> (ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/color/Color;ZLcom/awakekt/awake/render/passes/uniforms/RenderDebugView;IFZLcom/awakekt/awake/core/color/Color;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Z
 	public final fun component10 ()Z
 	public final fun component11 ()Lcom/awakekt/awake/core/color/Color;
+	public final fun component12 ()Z
 	public final fun component2 ()Lcom/awakekt/awake/core/color/Color;
 	public final fun component3 ()Lcom/awakekt/awake/core/color/Color;
 	public final fun component4 ()F
@@ -432,8 +440,8 @@ public final class com/awakekt/awake/render/passes/uniforms/EnvironmentUniforms 
 	public final fun component7 ()Lcom/awakekt/awake/render/passes/uniforms/RenderDebugView;
 	public final fun component8 ()I
 	public final fun component9 ()F
-	public final fun copy (ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/color/Color;ZLcom/awakekt/awake/render/passes/uniforms/RenderDebugView;IFZLcom/awakekt/awake/core/color/Color;)Lcom/awakekt/awake/render/passes/uniforms/EnvironmentUniforms;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/render/passes/uniforms/EnvironmentUniforms;ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/color/Color;ZLcom/awakekt/awake/render/passes/uniforms/RenderDebugView;IFZLcom/awakekt/awake/core/color/Color;ILjava/lang/Object;)Lcom/awakekt/awake/render/passes/uniforms/EnvironmentUniforms;
+	public final fun copy (ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/color/Color;ZLcom/awakekt/awake/render/passes/uniforms/RenderDebugView;IFZLcom/awakekt/awake/core/color/Color;Z)Lcom/awakekt/awake/render/passes/uniforms/EnvironmentUniforms;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/render/passes/uniforms/EnvironmentUniforms;ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/color/Color;ZLcom/awakekt/awake/render/passes/uniforms/RenderDebugView;IFZLcom/awakekt/awake/core/color/Color;ZILjava/lang/Object;)Lcom/awakekt/awake/render/passes/uniforms/EnvironmentUniforms;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getClearColor ()Lcom/awakekt/awake/core/color/Color;
 	public final fun getContentFeatures ()Z
@@ -445,6 +453,7 @@ public final class com/awakekt/awake/render/passes/uniforms/EnvironmentUniforms 
 	public final fun getHorizonColor ()Lcom/awakekt/awake/core/color/Color;
 	public final fun getShadowsEnabled ()Z
 	public final fun getShowSky ()Z
+	public final fun getWireframe ()Z
 	public final fun getZenithColor ()Lcom/awakekt/awake/core/color/Color;
 	public fun hashCode ()I
 	public final fun toGpuState (F)Lcom/awakekt/awake/render/command/GpuEnvironmentState;
@@ -571,6 +580,8 @@ public final class com/awakekt/awake/render/passes/uniforms/RenderDebugView : ja
 
 public final class com/awakekt/awake/render/passes/uniforms/RenderDebugViewKt {
 	public static final field NO_DATA_GREY F
+	public static final field WIREFRAME_EDGE_CODE I
+	public static final field WIREFRAME_EDGE_GREY F
 	public static final fun putDebugView (Lcom/awakekt/awake/render/renderer/UniformWriter;Lcom/awakekt/awake/render/command/GpuDebugView;Lcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/render/renderer/UniformWriter;
 }
 

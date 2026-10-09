@@ -60,6 +60,20 @@ sealed interface PipelineVariant {
         override val depthTestEnabled = true
     }
 
+    /**
+     * A mesh's edges drawn over its filled surface: depth-tested against what the scene wrote,
+     * writing no depth of its own, unblended. Not instanced. Built with `PipelineSpec.wireframe`
+     * for each opaque format, so the overlay draws the fill's own triangles as lines.
+     */
+    data object EdgeOverlay : PipelineVariant {
+        override val instanced = false
+        override val instanceAlpha = false
+        override val instanceFrame = false
+        override val blendEnabled = false
+        override val depthWriteEnabled = false
+        override val depthTestEnabled = true
+    }
+
     /** Plain GPU instancing (`InstancedMeshRenderer`/`InstancedSkinnedMeshRenderer`) -- one
      * model matrix per instance, opaque depth behavior unchanged. */
     data object Instanced : PipelineVariant {

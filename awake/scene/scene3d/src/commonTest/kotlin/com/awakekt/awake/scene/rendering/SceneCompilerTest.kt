@@ -29,6 +29,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class SceneCompilerTest {
     @Test
@@ -108,13 +109,17 @@ class SceneCompilerTest {
         world.debugSettings().apply {
             renderDebugView = RenderDebugView.ShadowMap
             renderDebugLayer = 2
+            showWireframe = true
         }
 
         val environment = SceneLightingCompiler(ClipSpace.WebGpu).environmentUniforms(world)
 
         assertEquals(RenderDebugView.ShadowMap, environment.debugView)
         assertEquals(2, environment.debugLayer)
-        assertEquals(RenderDebugView.Off, SceneLightingCompiler(ClipSpace.WebGpu).environmentUniforms(World()).debugView)
+        assertTrue(environment.wireframe)
+        val plain = SceneLightingCompiler(ClipSpace.WebGpu).environmentUniforms(World())
+        assertEquals(RenderDebugView.Off, plain.debugView)
+        assertFalse(plain.wireframe)
     }
 
     @Test

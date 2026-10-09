@@ -41,6 +41,8 @@ data class GpuPassInput(
     val cameraForward: Vec3f? = null,
     /** This frame's shadow cascades, or null when no shadow pass renders. */
     val shadowCascadeData: GpuShadowCascadeData? = null,
+    /** The opaque draws' edges, prepared with an edges context, drawn over the opaque draws. Empty with no wireframe. */
+    val resolvedEdgeDraws: List<GpuResolvedDraw> = emptyList(),
 ) {
     /** Canonical draw sequence for executors; legacy lists are deliberately excluded. */
     val resolvedDraws: List<GpuResolvedDraw>
@@ -78,6 +80,7 @@ data class GpuPassInput(
         if (!passUniforms.contentEquals(other.passUniforms)) return false
         if (environment != other.environment) return false
         if (resolvedPath != other.resolvedPath) return false
+        if (resolvedEdgeDraws != other.resolvedEdgeDraws) return false
 
         return sameShadowInputs(other)
     }
@@ -98,6 +101,7 @@ data class GpuPassInput(
         result = 31 * result + resolvedPath.hashCode()
         result = 31 * result + (cameraForward?.hashCode() ?: 0)
         result = 31 * result + (shadowCascadeData?.hashCode() ?: 0)
+        result = 31 * result + resolvedEdgeDraws.hashCode()
         return result
     }
 }

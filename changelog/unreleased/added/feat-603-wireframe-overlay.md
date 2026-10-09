@@ -1,0 +1,7 @@
+- **A wireframe overlay.** `WorldDebugSettings.showWireframe` draws every opaque mesh's triangle edges in near-black over the frame, over whichever debug view is on, so the mesh's topology reads against the lit frame or clay.
+  - A skinned mesh's edges move with its pose: each edge is the mesh drawn again through its own shader, as lines.
+  - Edges are drawn at the pixel the surface is on, a thousandth of its distance nearer, so they win against their own faces and stay hidden behind nearer ones, at any range and in orthographic views.
+  - It works on Vulkan, through line rasterization, and on WebGPU, which has none, through each mesh's line indices. It is headless-capable on both.
+  - Single draws of the `lit_shadow`, `textured` and skinned shaders draw edges. Instanced draws, transparent draws, and shaders that show no debug views draw none.
+  - `PipelineRequest.buildEdges` asks for the edge pipeline, which `RenderPlan` requests for every opaque scene format. `PipelineVariant.EdgeOverlay` depth-tests without writing depth.
+- **WebGPU's `Renderer.wireframe` draws each mesh's line indices.** It used to pair the triangle indices as lines, which joined the wrong corners.

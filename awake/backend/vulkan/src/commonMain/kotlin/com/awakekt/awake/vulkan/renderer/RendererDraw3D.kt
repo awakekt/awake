@@ -105,6 +105,7 @@ internal fun VulkanRenderer.prepareGpuDraw(
     fogDensity: Float = 0f,
     debugView: GpuDebugView = GpuDebugView.Off,
     exposure: Float = 1f,
+    edgePipeline: RenderPipeline? = null,
 ): PreparedDrawCall? {
     val mesh = cmd.mesh as Mesh
     val material = cmd.material as Material
@@ -163,7 +164,8 @@ internal fun VulkanRenderer.prepareGpuDraw(
             sortOrder = cmd.sortOrder,
         )
     }
-    val pipeline = pipelineFor(mesh.format, cmd.cullMode, isTransparent, cmd.additive) ?: return null
+    // An edge pipeline rasterizes the triangle indices as lines, so the mesh draws as it is.
+    val pipeline = edgePipeline ?: pipelineFor(mesh.format, cmd.cullMode, isTransparent, cmd.additive) ?: return null
     val uniformSlotIndex = materialUsage.nextSlot(material)
     val uniformFloats = cmd.uniformFloats(
         materialUniformFloatCount = material.uniformFloatCount,

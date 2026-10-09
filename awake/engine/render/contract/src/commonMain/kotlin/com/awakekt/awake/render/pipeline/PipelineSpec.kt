@@ -143,6 +143,8 @@ data class PipelineRequest(
     val buildTransparent: Boolean = false,
     /** An additive, non-depth-writing companion for `RenderDrawCommand.additive` draws. */
     val buildAdditive: Boolean = false,
+    /** A [PipelineVariant.EdgeOverlay] line companion, for drawing an opaque draw's edges over it. */
+    val buildEdges: Boolean = false,
 )
 
 /**
@@ -160,6 +162,8 @@ data class PipelineSet<P>(
     val transparent: P? = null,
     /** The additive blended companion pipeline, or `null`. */
     val additive: P? = null,
+    /** The edge overlay companion pipeline, or `null`. */
+    val edges: P? = null,
 ) {
     /**
      * Every pipeline in this set, for teardown.
@@ -169,7 +173,7 @@ data class PipelineSet<P>(
      * pipeline per vertex format on every backend at once. A companion added to this class from
      * now on joins this list automatically.
      */
-    val all: List<P> get() = listOfNotNull(fill, wireframe, backCulled, transparent, additive)
+    val all: List<P> get() = listOfNotNull(fill, wireframe, backCulled, transparent, additive, edges)
 }
 
 /**

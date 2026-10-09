@@ -30,6 +30,7 @@ import com.awakekt.awake.render.pipeline.resolveInstanced
 import com.awakekt.awake.webgpu.fastArrayBufferOf
 import com.awakekt.awake.webgpu.material.Material
 import com.awakekt.awake.webgpu.mesh.Mesh
+import com.awakekt.awake.webgpu.pipeline.RenderPipeline
 import com.awakekt.awake.webgpu.pipeline.WebGpuBindGroupHandle
 import com.awakekt.awake.webgpu.pipeline.WebGpuPipelineHandle
 import com.awakekt.awake.webgpu.pipeline.hasBindingGroup
@@ -37,6 +38,7 @@ import com.awakekt.awake.webgpu.pipeline.texturedMaterialBindings
 import com.awakekt.awake.webgpu.pipeline.uniformByteSize
 import com.awakekt.awake.webgpu.writeBufferData
 import io.ygdrasil.webgpu.GPUBuffer
+import io.ygdrasil.webgpu.GPUPrimitiveTopology
 
 internal fun Renderer.prepareGpuDraws(
     draws: List<GpuDrawRequest>,
@@ -96,6 +98,7 @@ internal fun Renderer.prepareGpuDraw(
     fogDensity: Float = 0f,
     debugView: GpuDebugView = GpuDebugView.Off,
     exposure: Float = 1f,
+    edgePipeline: RenderPipeline? = null,
 ): WebGpuPreparedDraw? {
     val mesh = cmd.mesh as Mesh
     val material = cmd.material as Material
@@ -119,13 +122,17 @@ internal fun Renderer.prepareGpuDraw(
             isTransparent = isTransparent,
         )
     }
-    val pipeline = pipelines.resolve(
+    val resolved = edgePipeline ?: pipelines.resolve(
         format = mesh.format,
         cullMode = cmd.cullMode,
         transparent = isTransparent,
         wireframe = primary.wireframe,
         additive = cmd.additive,
-    )?.handle ?: primary.pipeline
+    )
+    val pipeline = resolved?.handle ?: primary.pipeline
+    // A line-list pipeline, the wireframe view's or an edge overlay's, takes its indices in pairs:
+    // it draws the mesh's line indices, since its triangle indices would join the wrong corners.
+    val lines = resolved?.topology == GPUPrimitiveTopology.LineList
     val slot = bufferPools.uniformSlotForDraw(pipeline, singleIndex)
     val uniformFloats = cmd.uniformFloats(
         materialUniformFloatCount = material.uniformFloatCount,
@@ -160,8 +167,8 @@ internal fun Renderer.prepareGpuDraw(
             else -> slot.binding ?: EmptyWebGpuMaterialBinding
         },
         vertexBuffer = mesh.vertexBinding,
-        indexBuffer = mesh.indexBinding,
-        elementCount = mesh.indexCount,
+        indexBuffer = if (lines) mesh.lineIndexBinding else mesh.indexBinding,
+        elementCount = if (lines) mesh.lineIndexCount else mesh.indexCount,
         uniformBuffer = slot?.buffer,
         vertexFormat = mesh.format,
         transparent = isTransparent,

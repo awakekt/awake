@@ -42,8 +42,20 @@ enum class ClayPlane {
 /**
  * A plane facing up, drawn as [kind] under [view], lit by one slanted white sun with no shadows:
  * under [RenderDebugView.Clay] every kind draws the same grey, and lit they differ.
+ *
+ * @param kind Which shader draws the plane.
+ * @param view What the shaders draw instead of their lit colour.
+ * @param size The frame's width and height, in pixels.
+ * @param wireframe Whether a wireframe overlay draws the plane's triangle edges over it.
+ * @param jointOffset How far along x a [ClayPlane.Skinned] plane's joint moves it from rest.
  */
-fun Renderer.renderClayPlaneScene(kind: ClayPlane, view: RenderDebugView, size: Int = SCENE_SIZE): ByteArray {
+fun Renderer.renderClayPlaneScene(
+    kind: ClayPlane,
+    view: RenderDebugView,
+    size: Int = SCENE_SIZE,
+    wireframe: Boolean = false,
+    jointOffset: Float = 0f,
+): ByteArray {
     val target = createRenderTarget(size, size)
     val geometry = when (kind) {
         ClayPlane.TexturedOrange, ClayPlane.TexturedWhite -> texturedPlane()
@@ -60,10 +72,10 @@ fun Renderer.renderClayPlaneScene(kind: ClayPlane, view: RenderDebugView, size: 
     val extras = when (kind) {
         ClayPlane.TexturedOrange, ClayPlane.TexturedWhite -> WHITE_FACTORS
         ClayPlane.Untextured -> FloatArray(0)
-        ClayPlane.Skinned -> Mat4().data
+        ClayPlane.Skinned -> Mat4().setTranslationScale(jointOffset, 0f, 0f, 1f).data
     }
     return try {
-        renderOnce(target, RenderDrawCommand(mesh, material, extraUniformFloats = extras), view)
+        renderOnce(target, RenderDrawCommand(mesh, material, extraUniformFloats = extras), view, wireframe = wireframe)
     } finally {
         mesh.destroy()
         material.destroy()
@@ -89,15 +101,24 @@ fun Renderer.renderTwoJointPlaneScene(view: RenderDebugView, joint: Int = 0, tex
     }
 }
 
-private fun Renderer.renderOnce(target: RenderTarget, draw: RenderDrawCommand, view: RenderDebugView, joint: Int = 0): ByteArray {
-    val lens = Lens(eye = Vec3f(0f, EYE_Y, EYE_Z), center = Vec3f(0f, 0f, 0f), fovYRadians = 1f, near = 0.1f, far = 50f)
+/** The camera every plane scene here is drawn from: above and in front of the plane, looking at its centre. */
+internal fun clayPlaneLens() = Lens(eye = Vec3f(0f, EYE_Y, EYE_Z), center = Vec3f(0f, 0f, 0f), fovYRadians = 1f, near = 0.1f, far = 50f)
+
+private fun Renderer.renderOnce(
+    target: RenderTarget,
+    draw: RenderDrawCommand,
+    view: RenderDebugView,
+    joint: Int = 0,
+    wireframe: Boolean = false,
+): ByteArray {
+    val lens = clayPlaneLens()
     renderToTexture(
         target,
         ScenePassCompiler.compile(
             lens = lens,
             drawCalls = listOf(draw),
             light = SceneLight(direction = CLAY_SUN, color = Vec3f(1f, 1f, 1f)),
-            environment = EnvironmentUniforms.Default.copy(shadowsEnabled = false, debugView = view, debugLayer = joint),
+            environment = EnvironmentUniforms.Default.copy(shadowsEnabled = false, debugView = view, debugLayer = joint, wireframe = wireframe),
             clipSpace = clipSpace,
             aspect = 1f,
             drawPreparer = (this as? GpuDrawPreparationSource)?.gpuDrawPreparer,

@@ -103,8 +103,8 @@ data class RenderPlan(
      * WebGPU shipped without an alpha-blended pipeline for as long as Vulkan had one.
      *
      * The companion flags are unconditional on purpose. Whether a wireframe pipeline *exists* is
-     * not a per-app choice: `Renderer.wireframe` is the runtime toggle, and back-face culling and
-     * transparency opt in per entity and per draw. All three were once constructor flags that
+     * not a per-app choice: `Renderer.wireframe` and `EnvironmentUniforms.wireframe`'s overlay are
+     * the runtime toggles, and back-face culling and transparency opt in per entity and per draw. All three were once constructor flags that
      * every call site set to true and none set to false.
      */
     fun toPipelineRequests(backend: RenderBackend): List<PipelineRequest> = buildList {
@@ -123,6 +123,7 @@ data class RenderPlan(
                 buildBackCulled = true,
                 buildTransparent = true,
                 buildAdditive = true,
+                buildEdges = primary.variant == PipelineVariant.Opaque,
             ),
         )
         addAll(scenePipelines.toRequests { it.stagesFor(backend) })
