@@ -39,7 +39,7 @@ dependencies {
     implementation(libs.spotless.gradle.plugin)
     implementation(libs.dokka.gradle.plugin)
     implementation(libs.kotlinx.serialization.json)
-    implementation("com.vanniktech:gradle-maven-publish-plugin:0.36.0")
+    implementation("com.vanniktech:gradle-maven-publish-plugin:0.37.0")
     testImplementation(gradleTestKit())
     testImplementation(kotlin("test"))
 }
