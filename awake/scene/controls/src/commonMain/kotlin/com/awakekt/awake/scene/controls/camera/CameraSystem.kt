@@ -44,6 +44,7 @@ class CameraSystem(
     private var lastPointerX = 0f
     private var lastPointerY = 0f
     private var activeDrag: Drag? = null
+    private val flyInput = CameraFlyInput(gesturePolicy.flyActions)
 
     /** The point being orbited, when it is composed rather than taken straight from a rig. */
     private val scratchPivot = Vec3f(0f, 0f, 0f)
@@ -137,24 +138,15 @@ class CameraSystem(
         if (moving !== camera.lens.eye) camera.lens.eye.add(shift)
     }
 
-    /** Moves a free-fly eye along the view with [CameraGesturePolicy.flyKeys]. */
+    /** Moves a free-fly eye along the view with [CameraGesturePolicy.flyActions]. */
     private fun fly(config: CameraRig, camera: Camera, input: GameplayInput, delta: Float) {
-        fun axis(positive: CameraFlyAction, negative: CameraFlyAction) =
-            (if (input.holds(positive)) 1f else 0f) - (if (input.holds(negative)) 1f else 0f)
-        val ahead = axis(CameraFlyAction.Forward, CameraFlyAction.Back)
-        val across = axis(CameraFlyAction.Right, CameraFlyAction.Left)
-        val rise = axis(CameraFlyAction.Up, CameraFlyAction.Down)
-        if (ahead == 0f && across == 0f && rise == 0f) return
+        flyInput.read(input)
+        if (!flyInput.moving) return
         forwardFrom(config.yaw, config.pitch, forward)
         right.set(cos(config.yaw), 0f, sin(config.yaw))
-        desiredEye.set(forward.scale(ahead)).add(right.scale(across)).add(up.set(0f, rise, 0f)).normalize()
-        val speed = config.flySpeed * if (input.holds(CameraFlyAction.Fast)) FAST_FLY else 1f
+        desiredEye.set(forward.scale(flyInput.ahead)).add(right.scale(flyInput.across)).add(up.set(0f, flyInput.rise, 0f)).normalize()
+        val speed = config.flySpeed * if (flyInput.fast) FAST_FLY else 1f
         camera.lens.eye.add(desiredEye.scale(speed * delta))
-    }
-
-    private fun GameplayInput.holds(action: CameraFlyAction): Boolean {
-        val binding = gesturePolicy.flyKeys.getBinding(action) ?: return false
-        return isDown(binding.primary) || binding.secondary?.let(::isDown) == true
     }
 
     /** Fills [right] and [up] from the lens, so every mode pans in the plane it shows. */

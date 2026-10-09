@@ -283,6 +283,8 @@ enum class ScrollSource {
  * @property clipboardCommands Copy and cut requests made during this frame, in order.
  * @property touches Every finger on a touch screen this frame, including one that lifted during it.
  * @property pointerFromTouch True while the primary pointer follows a finger rather than a mouse.
+ *
+ * It is an [ActionInputSource], so [InputActions] can read a frame straight from it.
  */
 data class InputSnapshot(
     val pointerX: Float,
@@ -317,21 +319,21 @@ data class InputSnapshot(
     val clipboardCommands: List<ClipboardCommand> = emptyList(),
     val touches: List<TouchPoint> = emptyList(),
     val pointerFromTouch: Boolean = false,
-) {
+) : ActionInputSource {
     /** True if the specified pointer [button] is currently held down. */
-    fun isDown(button: PointerButton): Boolean = button in buttonsDown
+    override fun isDown(button: PointerButton): Boolean = button in buttonsDown
 
     /** True if the specified pointer [button] was pressed down during this frame. */
-    fun wasPressed(button: PointerButton): Boolean = button in buttonsPressed
+    override fun wasPressed(button: PointerButton): Boolean = button in buttonsPressed
 
     /** True if the specified pointer [button] was released during this frame. */
     fun wasReleased(button: PointerButton): Boolean = button in buttonsReleased
 
-    /** True if the specified [k] key is currently held down. */
-    fun isDown(k: Key): Boolean = k in keysDown
+    /** True if the specified [key] is currently held down. */
+    override fun isDown(key: Key): Boolean = key in keysDown
 
-    /** True if the specified [k] key was pressed down during this frame. */
-    fun wasPressed(k: Key): Boolean = k in keysPressed
+    /** True if the specified [key] was pressed down during this frame. */
+    override fun wasPressed(key: Key): Boolean = key in keysPressed
 }
 
 /**

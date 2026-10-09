@@ -6,11 +6,14 @@
 package com.awakekt.awake.scene.authoring
 
 import com.awakekt.awake.compose.ui.platform.InputOwnership
+import com.awakekt.awake.core.input.ActionTrigger
+import com.awakekt.awake.core.input.AxisAction
+import com.awakekt.awake.core.input.ButtonAction
 import com.awakekt.awake.core.input.Input
+import com.awakekt.awake.core.input.InputActions
 import com.awakekt.awake.core.input.InputSnapshot
 import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.input.PointerButton
-import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.engine.bootstrap.dsl.app
@@ -19,7 +22,6 @@ import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.scene.controls.GameplayInput
 import com.awakekt.awake.scene.controls.input.inputActions
-import com.awakekt.awake.scene.controls.input.keybindingProfile
 import com.awakekt.awake.scene.controls.movement.PlayerInputSystem
 import com.awakekt.awake.scene.controls.movement.registerControls
 import com.awakekt.awake.scene.document.SceneLoader
@@ -69,10 +71,6 @@ class InteractSystem : System {
     }
 }
 // --8<-- [end:interact-system]
-
-// --8<-- [start:actions]
-enum class Action { Forward, Back, Left, Right, Jump }
-// --8<-- [end:actions]
 
 /** The "Input" guide includes its samples from here, so they keep compiling and doing what it says. */
 class InputDocsSampleTest {
@@ -188,29 +186,32 @@ class InputDocsSampleTest {
     }
 
     @Test
-    fun aKeybindingProfileMapsActionsToKeys() {
+    fun inputActionsReadASnapshot() {
         val input = Input()
         input.setKeyDown(Key.ArrowUp, true)
         input.setKeyDown(Key.Space, true)
         val snapshot = input.updateSnapshot()
 
-        // --8<-- [start:keybindings]
-        val keys = keybindingProfile<Action> {
-            bind(Action.Forward, Key.W, secondary = Key.ArrowUp)
-            bind(Action.Back, Key.S)
-            bind(Action.Left, Key.A)
-            bind(Action.Right, Key.D)
-            bind(Action.Jump, Key.Space)
-        }
+        // --8<-- [start:code-actions]
+        val actions = InputActions(
+            listOf(
+                AxisAction("move", up = setOf(Key.W, Key.ArrowUp), down = setOf(Key.S), left = setOf(Key.A), right = setOf(Key.D)),
+                ButtonAction("jump", keys = setOf(Key.Space), trigger = ActionTrigger.Press),
+            ),
+        )
 
-        val jump = keys.isPressed(Action.Jump, snapshot)
-        val move = keys.getAxis2D(Action.Forward, Action.Back, Action.Left, Action.Right, snapshot)
-        keys.rebind(Action.Jump, Key.J)
-        // --8<-- [end:keybindings]
+        // Once a frame:
+        actions.beginFrame()
+        actions.read(snapshot)
+        val jump = actions.isActive("jump")
+        val forward = actions.axisY("move")
+        // --8<-- [end:code-actions]
 
         assertTrue(jump)
-        assertEquals(Vec3f(0f, 0f, -1f), move, "forward is -z")
-        assertFalse(keys.isDown(Action.Jump, snapshot))
+        assertEquals(1f, forward, "up is forward")
+        actions.beginFrame()
+        actions.read(input.updateSnapshot())
+        assertFalse(actions.isActive("jump"), "a Press lasts the frame it was pressed")
     }
 }
 

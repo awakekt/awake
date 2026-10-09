@@ -5,7 +5,11 @@
  */
 package com.awakekt.awake.scene.controls
 
+import com.awakekt.awake.core.input.AxisAction
+import com.awakekt.awake.core.input.InputActionDefinition
+import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.math.CameraMathUtils
+import com.awakekt.awake.scene.controls.camera.CameraFlyActions
 import com.awakekt.awake.scene.controls.camera.CameraMode
 
 /**
@@ -28,6 +32,8 @@ import com.awakekt.awake.scene.controls.camera.CameraMode
  * @property allowZoom Whether zooming towards or away from the target is permitted.
  * @property allowPan Whether panning across the camera plane is permitted.
  * @property allowKeyboardFlight Whether keyboard translation and flight controls are active.
+ * @property flyActions The input actions keyboard flight moves by, named as in [CameraFlyActions]:
+ *   by default its defaults, with Space rising as well as E.
  */
 data class CameraControlConfig(
     // Active Camera Mode
@@ -56,4 +62,10 @@ data class CameraControlConfig(
     val allowZoom: Boolean = true,
     val allowPan: Boolean = true,
     val allowKeyboardFlight: Boolean = true,
+    val flyActions: List<InputActionDefinition> = PROCESSOR_FLY_ACTIONS,
 )
+
+/** [CameraFlyActions.defaults], with Space rising as well as E, as [CameraInputProcessor] always flew. */
+private val PROCESSOR_FLY_ACTIONS: List<InputActionDefinition> = CameraFlyActions.defaults.map { action ->
+    if (action is AxisAction && action.name == CameraFlyActions.RISE) action.copy(up = action.up + Key.Space) else action
+}

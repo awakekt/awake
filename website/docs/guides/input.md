@@ -87,18 +87,16 @@ arrows, Space and Shift held. Every field is in the
 
 ## Bind actions to keys
 
-Without a scene, a `KeybindingProfile` maps your own actions to a primary and an optional secondary
-key, and can be rebound at runtime:
+Without a scene, make the `InputActions` yourself (`com.awakekt.awake.core:input`) and read each
+frame's snapshot into them:
 
 ```kotlin title="Kotlin"
---8<-- "awake/scene/authoring/src/desktopTest/kotlin/com/awakekt/awake/scene/authoring/InputDocsSampleTest.kt:actions"
+--8<-- "awake/scene/authoring/src/desktopTest/kotlin/com/awakekt/awake/scene/authoring/InputDocsSampleTest.kt:code-actions"
 ```
 
-```kotlin title="Kotlin"
---8<-- "awake/scene/authoring/src/desktopTest/kotlin/com/awakekt/awake/scene/authoring/InputDocsSampleTest.kt:keybindings"
-```
-
-`getAxis2D` returns a unit vector with forward as -Z, or zero when no direction key is held.
+An axis is a unit vector, up and right being positive, or zero when no direction key is held. Read a
+`GameplayInput` instead of the snapshot to leave the UI its keys. `KeybindingProfile`, which did this
+before, is deprecated.
 
 ## Properties
 

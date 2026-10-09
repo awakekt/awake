@@ -6,6 +6,8 @@
 package com.awakekt.awake.scene.controls
 
 import com.awakekt.awake.compose.ui.platform.InputOwnership
+import com.awakekt.awake.core.input.AxisAction
+import com.awakekt.awake.core.input.ButtonAction
 import com.awakekt.awake.core.input.InputSnapshot
 import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.input.PointerButton
@@ -14,10 +16,13 @@ import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.controls.camera.ActiveCamera
+import com.awakekt.awake.scene.controls.camera.CameraFlyAction
+import com.awakekt.awake.scene.controls.camera.CameraFlyActions
 import com.awakekt.awake.scene.controls.camera.CameraGesturePolicy
 import com.awakekt.awake.scene.controls.camera.CameraMode
 import com.awakekt.awake.scene.controls.camera.CameraRig
 import com.awakekt.awake.scene.controls.camera.CameraSystem
+import com.awakekt.awake.scene.controls.input.keybindingProfile
 import com.awakekt.awake.scene.rendering.Camera
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -39,6 +44,40 @@ class CameraNavigationTest {
         snapshot = IDLE.copy(keysDown = setOf(Key.W, Key.Shift))
         system.update(world, HALF_SECOND)
         assertEquals(-25f, eye.z, TOLERANCE, "Shift flies four times as fast.")
+    }
+
+    @Test
+    fun aHostRebindsTheFlyActions() {
+        val world = World()
+        val camera = world.spawnCamera(CameraMode.FreeFly)
+        var snapshot = IDLE.copy(keysDown = setOf(Key.W))
+        val policy = CameraGesturePolicy(
+            flyActions = listOf(
+                AxisAction(CameraFlyActions.FLY, up = setOf(Key.I), down = setOf(Key.K)),
+                ButtonAction(CameraFlyActions.FAST, keys = setOf(Key.Ctrl)),
+            ),
+        )
+        val system = CameraSystem({ GameplayInput(snapshot, InputOwnership()) }, { null }, policy)
+        val eye = world.lens(camera).eye
+
+        system.update(world, HALF_SECOND)
+        assertEquals(0f, eye.z, TOLERANCE, "W no longer flies")
+        snapshot = IDLE.copy(keysDown = setOf(Key.I, Key.Ctrl))
+        system.update(world, HALF_SECOND)
+        assertEquals(-20f, eye.z, TOLERANCE, "I flies, four times as fast with Ctrl")
+    }
+
+    @Suppress("DEPRECATION")
+    @Test
+    fun flyKeysGivenTheOldWayStillFly() {
+        val world = World()
+        val camera = world.spawnCamera(CameraMode.FreeFly)
+        val policy = CameraGesturePolicy(flyKeys = keybindingProfile { bind(CameraFlyAction.Forward, Key.I) })
+        val system = CameraSystem({ GameplayInput(IDLE.copy(keysDown = setOf(Key.I)), InputOwnership()) }, { null }, policy)
+
+        system.update(world, HALF_SECOND)
+
+        assertEquals(-5f, world.lens(camera).eye.z, TOLERANCE)
     }
 
     @Test
