@@ -95,5 +95,8 @@ if [[ "$channel" == "release" ]]; then
   scripts/central-bundle.sh "$staging" "$bundle"
   scripts/central-upload.sh "$bundle" "awake vulkan-v$version"
 else
+  # The release's task list, resolved on every snapshot: a family module without the staging
+  # repository fails here, on main, rather than once its version is tagged (vulkan-v0.1.20).
+  ./gradlew "${vulkan_staging_tasks[@]}" "${gradle_args[@]}" "-Pawake.stagingRepository=$PWD/build/central-staging" --dry-run
   ./gradlew "${vulkan_central_tasks[@]}" "${gradle_args[@]}"
 fi
