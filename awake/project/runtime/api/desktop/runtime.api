@@ -24,10 +24,17 @@ public final class com/awakekt/awake/project/runtime/LoadedProject : java/lang/A
 	public final fun getScene ()Lcom/awakekt/awake/scene/document/SceneDocument;
 }
 
+public final class com/awakekt/awake/project/runtime/ProjectComponentsKt {
+	public static final fun registerProjectComponents (Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;Ljava/util/List;)Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;
+	public static synthetic fun registerProjectComponents$default (Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;
+}
+
 public final class com/awakekt/awake/project/runtime/ProjectRuntimeKt {
 	public static final field PROJECT_MANIFEST Ljava/lang/String;
 	public static final fun activatePrimaryCamera (Lcom/awakekt/awake/ecs/World;)V
+	public static final fun loadProject (Lcom/awakekt/awake/core/io/AssetSource;Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;Ljava/util/List;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun loadProject (Lcom/awakekt/awake/core/io/AssetSource;Ljava/util/List;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun loadProject$default (Lcom/awakekt/awake/core/io/AssetSource;Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;Ljava/util/List;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public static synthetic fun loadProject$default (Lcom/awakekt/awake/core/io/AssetSource;Ljava/util/List;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public static final fun runProject (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/project/runtime/LoadedProject;Z)V
 	public static synthetic fun runProject$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/project/runtime/LoadedProject;ZILjava/lang/Object;)V

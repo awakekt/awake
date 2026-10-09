@@ -12,6 +12,9 @@ import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneCustomComponent
 import com.awakekt.awake.scene.document.ScenePrefabLink
 import com.awakekt.awake.scene.document.SceneSerializers
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.json.Json
+import kotlin.jvm.JvmOverloads
 import kotlin.reflect.KClass
 
 /** Context provided during component resolution and instantiation. */
@@ -59,20 +62,39 @@ interface SceneComponentResolver {
 /**
  * Registry holding component resolvers and bi-directional bindings for scene loading and export.
  *
+ * A registry built with the constructor starts from every globally registered resolver and binding,
+ * and registering a binding on it also makes its serializer global, so the default scene `Json`
+ * decodes it. A [scoped] registry holds only what is registered on it and keeps its serializers to
+ * itself: decode with its [sceneJson], so two scopes may use the same component name for different
+ * components.
+ *
  * @param resolvers Custom component resolvers to register.
  * @param bindings Custom component bindings to register.
+ * @param scoped Whether this is a [scoped] registry; the public constructor makes an unscoped one.
  */
-class SceneComponentRegistry(
-    resolvers: List<SceneComponentResolver> = emptyList(),
-    bindings: List<SceneComponentBinding<*, *>> = emptyList(),
+class SceneComponentRegistry private constructor(
+    resolvers: List<SceneComponentResolver>,
+    bindings: List<SceneComponentBinding<*, *>>,
+    scoped: Boolean,
 ) {
+    // JvmOverloads keeps the no-argument constructor the defaulted primary constructor used to generate.
+    @JvmOverloads
+    constructor(
+        resolvers: List<SceneComponentResolver> = emptyList(),
+        bindings: List<SceneComponentBinding<*, *>> = emptyList(),
+    ) : this(resolvers, bindings, scoped = false)
+
+    private val isScoped = scoped
     private val registeredResolvers = ArrayList<SceneComponentResolver>()
     private val registeredBindings = ArrayList<SceneComponentBinding<*, *>>()
+    private val scopedSerializers = LinkedHashMap<KClass<out SceneComponent>, KSerializer<out SceneComponent>>()
     private val log = Logger("scene-binding")
 
     init {
-        globalResolvers.forEach(::register)
-        globalBindings.forEach(::register)
+        if (!isScoped) {
+            globalResolvers.forEach(::register)
+            globalBindings.forEach(::register)
+        }
         resolvers.forEach(::register)
         bindings.forEach(::register)
         register(PrefabLinkBinding)
@@ -80,6 +102,19 @@ class SceneComponentRegistry(
 
     /** Global static registry entrypoints. */
     companion object {
+        /**
+         * A registry that holds only [resolvers], [bindings] and what is registered on it later, never
+         * the global ones, and keeps their serializers out of the global set. Decode with its
+         * [sceneJson]. An editor loads each project into a scope of its own, so opening another project
+         * drops the first one's components.
+         *
+         * Registering its bindings into an unscoped registry makes their serializers global again.
+         */
+        fun scoped(
+            resolvers: List<SceneComponentResolver> = emptyList(),
+            bindings: List<SceneComponentBinding<*, *>> = emptyList(),
+        ): SceneComponentRegistry = SceneComponentRegistry(resolvers, bindings, scoped = true)
+
         private val globalResolvers = ArrayList<SceneComponentResolver>()
         private val globalBindings = ArrayList<SceneComponentBinding<*, *>>()
 
@@ -134,6 +169,14 @@ class SceneComponentRegistry(
     val resolvers: List<SceneComponentResolver> get() = registeredResolvers
 
     /**
+     * The scene `Json` this registry decodes with. A [scoped] registry's decodes only the components
+     * registered on it, besides custom components and prefab links; any other's is the default scene
+     * `Json`, with every globally registered serializer. Build it after registering, and again after
+     * registering more.
+     */
+    fun sceneJson(): Json = if (isScoped) SceneSerializers.createJson(scopedSerializers) else SceneSerializers.createJson()
+
+    /**
      * Registers a component [resolver].
      *
      * @param resolver The resolver to register with this registry instance.
@@ -145,7 +188,7 @@ class SceneComponentRegistry(
         }
         if (resolver is SceneComponentBinding<*, *> && resolver !in registeredBindings) {
             registeredBindings += resolver
-            Companion.registerSerializer(resolver)
+            registerSerializer(resolver)
         }
         return this
     }
@@ -159,12 +202,18 @@ class SceneComponentRegistry(
     fun register(binding: SceneComponentBinding<*, *>): SceneComponentRegistry {
         if (binding !in registeredBindings) {
             registeredBindings += binding
-            Companion.registerSerializer(binding)
+            registerSerializer(binding)
         }
         if (binding !in registeredResolvers) {
             registeredResolvers += binding
         }
         return this
+    }
+
+    /** A scope keeps the serializer for its own `Json`; anything else makes it global, as before scopes. */
+    private fun registerSerializer(binding: SceneComponentBinding<*, *>) {
+        if (!isScoped) return Companion.registerSerializer(binding)
+        binding.serializer?.let { scopedSerializers[binding.schemaClass] = it }
     }
 
     /**

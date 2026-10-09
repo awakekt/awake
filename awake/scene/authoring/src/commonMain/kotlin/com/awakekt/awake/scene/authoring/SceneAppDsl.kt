@@ -11,6 +11,7 @@ import com.awakekt.awake.scene.authoring.dsl.AwakeSceneDsl
 import com.awakekt.awake.scene.authoring.dsl.EntityScope
 import com.awakekt.awake.scene.authoring.dsl.SceneBuilder
 import com.awakekt.awake.scene.authoring.dsl.scene
+import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
@@ -153,14 +154,27 @@ class SceneAppDsl internal constructor() {
     }
 
     /**
-     * Integrates an existing [SceneDocument] into the population block.
+     * Integrates an existing [SceneDocument] into the population block. Its components attach with the
+     * globally registered resolvers as they are when the scene populates, after the runtime installed
+     * the default ones.
      *
      * @param document The scene document to instantiate into the world.
      */
-    fun scene(document: SceneDocument) {
+    fun scene(document: SceneDocument) = populate(document) { SceneComponentRegistry() }
+
+    /**
+     * Integrates an existing [SceneDocument] into the population block, attaching its components with
+     * [componentRegistry]: a scoped registry for a document decoded with that registry's `sceneJson`.
+     *
+     * @param document The scene document to instantiate into the world.
+     * @param componentRegistry The resolvers that attach the document's components.
+     */
+    fun scene(document: SceneDocument, componentRegistry: SceneComponentRegistry) = populate(document) { componentRegistry }
+
+    private fun populate(document: SceneDocument, registry: () -> SceneComponentRegistry) {
         this.sceneName = document.name
         this.scenePopulationBlock = {
-            val scene = document.instantiate(world = world)
+            val scene = document.instantiate(world = world, componentRegistry = registry())
             scene.attachRenderableComponents { request -> spec.renderableFactory(this, request) }
         }
     }

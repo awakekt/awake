@@ -45,19 +45,24 @@ public final class com/awakekt/awake/scene/binding/SceneComponentBinding$Default
 public final class com/awakekt/awake/scene/binding/SceneComponentRegistry {
 	public static final field Companion Lcom/awakekt/awake/scene/binding/SceneComponentRegistry$Companion;
 	public fun <init> ()V
+	public fun <init> (Ljava/util/List;)V
 	public fun <init> (Ljava/util/List;Ljava/util/List;)V
 	public synthetic fun <init> (Ljava/util/List;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/util/List;Ljava/util/List;ZLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun exportComponents-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Ljava/util/List;
 	public final fun getBindings ()Ljava/util/List;
 	public final fun getResolvers ()Ljava/util/List;
 	public final fun register (Lcom/awakekt/awake/scene/binding/SceneComponentBinding;)Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;
 	public final fun register (Lcom/awakekt/awake/scene/binding/SceneComponentResolver;)Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;
 	public final fun resolve-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)Z
+	public final fun sceneJson ()Lkotlinx/serialization/json/Json;
 }
 
 public final class com/awakekt/awake/scene/binding/SceneComponentRegistry$Companion {
 	public final fun registerGlobal (Lcom/awakekt/awake/scene/binding/SceneComponentBinding;)V
 	public final fun registerGlobal (Lcom/awakekt/awake/scene/binding/SceneComponentResolver;)V
+	public final fun scoped (Ljava/util/List;Ljava/util/List;)Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;
+	public static synthetic fun scoped$default (Lcom/awakekt/awake/scene/binding/SceneComponentRegistry$Companion;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;
 }
 
 public abstract interface class com/awakekt/awake/scene/binding/SceneComponentResolver {
