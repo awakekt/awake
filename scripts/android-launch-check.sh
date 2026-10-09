@@ -30,6 +30,8 @@ pid="$("$adb" shell pidof "$package" | tr -d '\r' || true)"
 if [ -z "$pid" ]; then
   echo "✗ $package died within ${seconds}s of launch:" >&2
   "$adb" logcat -d | grep -E "FATAL EXCEPTION|Process: $package|Fatal signal|>>> $package <<<|Abort message|$lookups" >&2 || true
+  # The native crash's backtrace, to tell a missing name from a driver fault.
+  "$adb" logcat -d | grep -E " F DEBUG +: +(#[0-9]+ pc|backtrace|signal|Cause)" | head -n 40 >&2 || true
   exit 1
 fi
 
