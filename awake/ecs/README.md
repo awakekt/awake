@@ -120,6 +120,22 @@ prefer family iteration on hot paths — `components()`/`componentsA()`/`compone
 work for tags, but materialize the repeated array that direct iteration avoids. The tag must
 be a Kotlin `object`; a class producing multiple instances is rejected.
 
+### Gameplay tags
+
+`Tags` says what an entity is to gameplay, by role, and an entity can have several. A scene authors
+them with the `tag` component (`awake:scene:scene-core`); code can add them too:
+
+```kotlin
+world.add(drone, Tags(setOf("enemy", "flying")))
+world.withTag("enemy")         // List<Entity>: every entity tagged "enemy", in a list of its own
+world.hasTag(drone, "flying")  // true; false for an entity with no Tags
+```
+
+A tag is letters, digits, `_`, `.` and `-`, starting with a letter, digit or `_` (`Tags.isValid`).
+`withTag` goes through the entities that have `Tags` each time it is called, so a system that asks
+every frame for a large crowd should keep what it found. `Tags` is unrelated to `EcsTag` above, a
+storage hint for a component with no data.
+
 Each of these has three overloads. Pick by call frequency:
 
 | Overload                         | Use for               | Cost it avoids                          |

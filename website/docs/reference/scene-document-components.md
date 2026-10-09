@@ -41,6 +41,7 @@ registers it.
 | [`sprite`](#sprite) | `Sprite` | `com.awakekt.awake.scene:scene2d` | `DefaultSceneComponentResolvers.install()` | [Component map](component-map.md) |
 | [`sprite_clips`](#sprite_clips) | `SpriteClips` | `com.awakekt.awake.scene:scene2d` | `DefaultSceneComponentResolvers.install()` | [Component map](component-map.md) |
 | [`static_transform`](#static_transform) | `StaticTransform` | `com.awakekt.awake.scene:scene-core` | `DefaultSceneComponentResolvers.install()` | [Scene documents](../guides/scene-documents.md) |
+| [`tag`](#tag) | `Tags` | `com.awakekt.awake.scene:scene-core` | `DefaultSceneComponentResolvers.install()` | [Scene documents](../guides/scene-documents.md) |
 | [`terrain`](#terrain) | `TerrainComponent` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Terrain](../guides/terrain.md) |
 | [`texture_animation`](#texture_animation) | `TextureAnimation` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Meshes and materials](../guides/meshes-and-materials.md) |
 | [`texture_clips`](#texture_clips) | `TextureClips` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Meshes and materials](../guides/meshes-and-materials.md) |
@@ -52,7 +53,7 @@ registers it.
 | Call | Module | Registers |
 | --- | --- | --- |
 | Built in | `com.awakekt.awake.scene:document` | `custom`, `prefab_link` |
-| `DefaultSceneComponentResolvers.install()` | `com.awakekt.awake.scene:runtime` | `ambient_light`, `camera`, `canvas_element`, `day_cycle`, `fog`, `keyframe_animation`, `light`, `locomotion_animation`, `mesh_renderer`, `particle_emitter`, `pbr_material`, `shader_effect`, `skybox`, `spin_control`, `static_transform`, `terrain`, `tone_mapping`. `SceneManager` and `SceneAppLifecycleRuntime` call it for you. |
+| `DefaultSceneComponentResolvers.install()` | `com.awakekt.awake.scene:runtime` | `ambient_light`, `camera`, `canvas_element`, `day_cycle`, `fog`, `keyframe_animation`, `light`, `locomotion_animation`, `mesh_renderer`, `particle_emitter`, `pbr_material`, `shader_effect`, `skybox`, `spin_control`, `static_transform`, `tag`, `terrain`, `tone_mapping`. `SceneManager` and `SceneAppLifecycleRuntime` call it for you. |
 | `SceneComponentRegistry.registerControls()` | `com.awakekt.awake.scene:controls` | `movement_control`, `camera_rig` |
 | `SceneComponentRegistry.registerPhysics()` | `com.awakekt.awake.scene:physics` | `physics_body` |
 | `SceneComponentRegistry.registerCharacter()` | `com.awakekt.awake.scene:character` | `character_controller` |
@@ -625,6 +626,17 @@ follow a parent that moves. An editor that moves static nodes uses `TransformSys
 ```json
 { "component": "static_transform" }
 ```
+
+## `tag`
+
+What the entity is to gameplay, by role, such as `enemy` or `pickup`. It becomes the entity's `Tags`
+(`awake:ecs`), which code finds with `world.withTag("enemy")` and tests with `world.hasTag(entity, "enemy")`.
+A prefab's tags ride on its root entity; tags on the node that links the prefab tag that node.
+`SceneTag`.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `tags` | array of strings | `[]` | The node's tags, any number of them. Each is letters, digits, `_`, `.` and `-`, starting with a letter, digit or `_`. A project can list its tags in the manifest's `tags`; a scene tag the list leaves out is a warning when the project loads. |
 
 ## `terrain`
 

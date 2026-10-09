@@ -16,6 +16,11 @@ physics backend, and the project owns the world: `close()` it once the scene has
 physics world's native memory outlives garbage collection. A project is played once; its bodies stay
 in its world, so load it again to play the scene again.
 
+A node's `tag` component becomes its entity's `Tags`, which gameplay finds with `world.withTag` and
+`world.hasTag` (see `awake:ecs`). A manifest may list the project's tags in `tags`, which editors
+offer as choices; `loadProject` then logs a warning for a scene tag the list leaves out, a guard
+against a typo rather than a refusal.
+
 Core's capabilities decide what runs, each for the components it owns:
 
 | Scene component | What runs |

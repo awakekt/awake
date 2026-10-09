@@ -99,10 +99,11 @@ public final class com/awakekt/awake/project/AwakeProjectArtifact$Companion {
 
 public final class com/awakekt/awake/project/AwakeProjectManifest {
 	public static final field Companion Lcom/awakekt/awake/project/AwakeProjectManifest$Companion;
-	public fun <init> (Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;)V
-	public synthetic fun <init> (Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component10 ()Ljava/util/List;
+	public final fun component11 ()Ljava/util/List;
 	public final fun component2 ()I
 	public final fun component3 ()Ljava/lang/String;
 	public final fun component4 ()Ljava/lang/String;
@@ -111,8 +112,8 @@ public final class com/awakekt/awake/project/AwakeProjectManifest {
 	public final fun component7 ()Ljava/lang/String;
 	public final fun component8 ()Ljava/lang/String;
 	public final fun component9 ()Ljava/util/List;
-	public final fun copy (Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;)Lcom/awakekt/awake/project/AwakeProjectManifest;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/project/AwakeProjectManifest;Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/project/AwakeProjectManifest;
+	public final fun copy (Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/util/List;)Lcom/awakekt/awake/project/AwakeProjectManifest;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/project/AwakeProjectManifest;Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/project/AwakeProjectManifest;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAssetRoots ()Ljava/util/List;
 	public final fun getAuthor ()Ljava/lang/String;
@@ -123,6 +124,7 @@ public final class com/awakekt/awake/project/AwakeProjectManifest {
 	public final fun getName ()Ljava/lang/String;
 	public final fun getPlugins ()Ljava/util/List;
 	public final fun getSchema ()Ljava/lang/String;
+	public final fun getTags ()Ljava/util/List;
 	public final fun getVersion ()Ljava/lang/String;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
@@ -279,6 +281,8 @@ public final class com/awakekt/awake/project/ProjectContentValidator {
 	public final fun isUnderAssetRoot (Ljava/lang/String;Ljava/util/List;)Z
 	public final fun manifestIssueDetails (Lcom/awakekt/awake/project/AwakeProjectManifest;)Ljava/util/List;
 	public final fun manifestIssues (Lcom/awakekt/awake/project/AwakeProjectManifest;)Ljava/util/List;
+	public final fun unlistedTagIssues (Lcom/awakekt/awake/project/AwakeProjectManifest;Ljava/util/Collection;Ljava/lang/String;)Ljava/util/List;
+	public static synthetic fun unlistedTagIssues$default (Lcom/awakekt/awake/project/ProjectContentValidator;Lcom/awakekt/awake/project/AwakeProjectManifest;Ljava/util/Collection;Ljava/lang/String;ILjava/lang/Object;)Ljava/util/List;
 }
 
 public final class com/awakekt/awake/project/ProjectIndex {
@@ -356,6 +360,7 @@ public final class com/awakekt/awake/project/ProjectIssueCode : java/lang/Enum {
 	public static final field INDEX_INVALID Lcom/awakekt/awake/project/ProjectIssueCode;
 	public static final field INVALID_MANIFEST Lcom/awakekt/awake/project/ProjectIssueCode;
 	public static final field REQUIRED_PLUGIN_MISSING Lcom/awakekt/awake/project/ProjectIssueCode;
+	public static final field UNLISTED_TAG Lcom/awakekt/awake/project/ProjectIssueCode;
 	public static final field UNSAFE_PATH Lcom/awakekt/awake/project/ProjectIssueCode;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public final fun getValue ()Ljava/lang/String;

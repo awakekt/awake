@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.project
 
+import com.awakekt.awake.ecs.Tags
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -66,6 +67,8 @@ data class AwakeProjectArtifact(
  * @property author Author or organization name.
  * @property assetRoots Project-relative directory paths scanned for project assets.
  * @property plugins List of declared plugin references.
+ * @property tags The tags the project's scenes use, which editors offer as choices. Optional: when set,
+ *   [ProjectContentValidator.unlistedTagIssues] warns about a scene tag it does not name.
  */
 @Serializable
 data class AwakeProjectManifest(
@@ -80,6 +83,7 @@ data class AwakeProjectManifest(
     val author: String = "",
     val assetRoots: List<String> = listOf("assets"),
     val plugins: List<AwakeProjectPluginReference> = emptyList(),
+    val tags: List<String> = emptyList(),
 )
 
 /**
@@ -247,6 +251,21 @@ internal fun projectManifestIssueDetails(manifest: AwakeProjectManifest): List<P
     }
     addAll(assetRootIssues(manifest.assetRoots))
     addAll(pluginIssues(manifest.plugins))
+    addAll(tagIssues(manifest.tags))
+}
+
+private fun tagIssues(tags: List<String>): List<ProjectContentIssue> = buildList {
+    if (tags.distinct().size != tags.size) add(ProjectContentIssue(ProjectIssueCode.INVALID_MANIFEST, "tags must not contain duplicates"))
+    tags.forEachIndexed { index, tag ->
+        if (!Tags.isValid(tag)) {
+            add(
+                ProjectContentIssue(
+                    ProjectIssueCode.INVALID_MANIFEST,
+                    "tags[$index] \"$tag\" is not a tag: use letters, digits, '_', '.' and '-', starting with a letter, digit or '_'",
+                ),
+            )
+        }
+    }
 }
 
 internal fun projectAssetsLockIssueDetails(lock: AwakeAssetsLock): List<ProjectContentIssue> = buildList {

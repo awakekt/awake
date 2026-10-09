@@ -10,6 +10,7 @@ import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.binding.SceneComponentResolver
 import com.awakekt.awake.scene.canvas.CanvasElementBinding
+import com.awakekt.awake.scene.core.TagBinding
 import com.awakekt.awake.scene.core.transform.SceneSpinControl
 import com.awakekt.awake.scene.core.transform.SpinControl
 import com.awakekt.awake.scene.core.transform.SpinControlBinding
@@ -99,6 +100,7 @@ object DefaultSceneComponentResolvers {
         LightBinding,
         MaterialBinding,
         SpinControlBinding,
+        TagBinding,
         StaticTransformBinding,
         MeshRendererBinding,
         SkyboxBinding,
@@ -125,6 +127,7 @@ object DefaultSceneComponentResolvers {
         LightBinding,
         MaterialBinding,
         SpinControlBinding,
+        TagBinding,
         StaticTransformBinding,
         MeshRendererBinding,
         SkyboxBinding,
