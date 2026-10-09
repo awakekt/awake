@@ -1,1 +1,0 @@
-- **`compose:ui` and `compose:foundation` document their whole public API.** Every public class, function and property has KDoc, and Detekt now enforces it for both modules, as it already did for `compose:runtime`.

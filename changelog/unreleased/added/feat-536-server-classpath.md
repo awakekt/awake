@@ -1,1 +1,0 @@
-- **The project runtime is checked to need no display.** `verifyHeadlessRuntime`, part of `awakeVerify`, fails a change that puts a GPU backend or the window module on the path of `awake:project` or `awake:project:runtime`, naming the chain, so a game server keeps playing projects with no renderer.
