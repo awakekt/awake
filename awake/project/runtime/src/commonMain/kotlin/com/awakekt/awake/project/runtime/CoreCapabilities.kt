@@ -23,7 +23,6 @@ import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.physics.CollisionMeshSource
 import com.awakekt.awake.scene.physics.MeshColliderSystem
 import com.awakekt.awake.scene.physics.PhysicsBodyBinding
-import com.awakekt.awake.scene.physics.PhysicsSystem
 import com.awakekt.awake.scene.physics.SceneConvexHullShape
 import com.awakekt.awake.scene.physics.SceneMeshShape
 import com.awakekt.awake.scene.physics.ScenePhysicsBody
@@ -34,10 +33,12 @@ import kotlin.reflect.KClass
 /**
  * Core's capabilities, in the order their systems run. A game's own capabilities run after these, so
  * a scene's frame runs input, movement and the camera, then AI, motion, particles, the day, shader
- * effects and skinned animation, then the game's systems.
+ * effects and skinned animation, then the game's systems. Streamed terrain comes before physics, so
+ * its collision cells exist before the physics step builds their bodies.
  */
 internal val CORE_CAPABILITIES: List<SceneCapability> = listOf(
     ControlsCapability,
+    StreamedTerrainCapability,
     PhysicsCapability,
     AiCapability,
     MotionCapability,
@@ -78,7 +79,7 @@ internal object PhysicsCapability : SceneCapability {
 
     /** Whether [scene] has bodies, characters or a terrain collider, so a project makes a physics world for it. */
     fun needsPhysics(scene: SceneDocument): Boolean =
-        scene.uses(ScenePhysicsBody::class) || scene.uses(SceneCharacterController::class) || scene.nodes.any { it.hasTerrainCollider() }
+        scene.uses(ScenePhysicsBody::class) || scene.uses(SceneCharacterController::class) || scene.hasTerrainColliders()
 
     override suspend fun load(scene: SceneDocument, files: AssetSource, content: SceneContent.Builder) {
         if (scene.nodes.any { it.hasMeshCollider() }) content[CollisionMeshes] = loadCollisionMeshes(scene, files)
@@ -96,7 +97,8 @@ internal object PhysicsCapability : SceneCapability {
                 )
             }
         }
-        plan.fixed("physics") { PhysicsSystem(requireNotNull(it.physics)) }
+        // Shared with streamed terrain, which must destroy the bodies of the cells it unloads through this step.
+        plan.fixed("physics") { plan.physicsSystem(it) }
         if (scene.uses(SceneCharacterController::class)) plan.fixed("character") { CharacterControllerSystem(requireNotNull(it.physics)) }
     }
 }
@@ -109,6 +111,10 @@ internal object SkinnedAnimationCapability : SceneCapability {
         plan.frame("animation") { AnimationSystem() }
     }
 }
+
+/** A `terrain` collider, or a `paged_terrain` whose nearby cells collide. */
+private fun SceneDocument.hasTerrainColliders(): Boolean =
+    nodes.any { it.hasTerrainCollider() } || pagedTerrain()?.collider == true
 
 internal fun SceneNode.hasTerrainCollider(): Boolean =
     components.any { it is SceneTerrain && it.collider } || children.any { it.hasTerrainCollider() }

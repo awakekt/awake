@@ -70,6 +70,9 @@ class SceneSystemSet internal constructor(
  * - `shader_effect`: its documents, drawn through [SceneHostServices.renderer] when it takes content
  *   features
  * - `day_cycle`: the sun's path and the blended sky, light and fog
+ * - `paged_terrain`: its cells streamed around the primary camera from the index and shared images in
+ *   [SceneHostServices.content], drawn through [SceneHostServices.renderer] when it takes content
+ *   features, with collision cells when it is a `collider` and [SceneHostServices.physics] is given
  * - `canvas_element`s with an action: [CanvasActionSystem]
  * - `patrol`, `chase` and `flee`, with a `navigation` component to route them over: the behaviours and
  *   the system that answers their route requests

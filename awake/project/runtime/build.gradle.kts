@@ -34,6 +34,11 @@ kotlin {
             implementation(project(":awake:particles"))
             implementation(project(":awake:scene:particles"))
             implementation(project(":awake:scene:shader"))
+            // paged_terrain: the scene binding, the residency it streams, and the layered surface an index can name.
+            implementation(project(":awake:scene:worldstream"))
+            implementation(project(":awake:terrain"))
+            implementation(project(":awake:kit:terrain-layers"))
+            implementation(project(":awake:core:logging"))
             // A SceneCapability lists the bindings of the components it adds, so their type is in this API.
             api(project(":awake:scene:binding"))
             // Names the components a scene uses that no capability registers.

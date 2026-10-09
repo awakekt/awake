@@ -69,7 +69,15 @@ scheme to make fence ownership explicit.
 
 ## Integration
 
-Load assets off-thread, then attach through the normal content lifecycle:
+A project scene needs no Kotlin of its own. Core's streamed-terrain capability in
+`awake:project:runtime` registers `paged_terrain`, and `loadProject` reads its index and shared images
+before the scene plays: through `PagedTerrainLayers` when the index names a palette, otherwise as the
+neutral paged surface. One system on the fixed step, before physics, streams cells around the primary
+camera, attaches the draw when the renderer takes content features, and keeps collision cells near
+the camera through the scene's own `PhysicsSystem` when the component is a `collider`. A colliding
+`paged_terrain` needs a physics world, as bodies do. A scene streams one.
+
+Outside a project, load assets off-thread, then attach through the normal content lifecycle:
 
 ```kotlin
 val loaded = PagedTerrainLayers.load(assets, AssetPath("world/index.terrainpages.json"), capacity = 64)
@@ -82,8 +90,8 @@ val attached = host.attachContentFeature(loaded.content)
 // Install system before physicsSystem; close system and attachment at scene teardown.
 ```
 
-Register `PagedTerrainBinding` with the project's scene registry. Asset resolution and provider
-selection are explicit project lifecycle dependencies. Core clients can use `TerrainPageHeightReader`,
+There, register `PagedTerrainBinding` with the scene registry; asset resolution and provider
+selection are the host's lifecycle dependencies. Core clients can use `TerrainPageHeightReader`,
 `TerrainPageStreamer` and `pagedTerrainContentFeature` without a scene. Props/meshes stream separately.
 
 The scene adapter calculates absolute observers/origins in double precision and subtracts the current

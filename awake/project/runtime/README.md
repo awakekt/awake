@@ -23,6 +23,7 @@ Core's capabilities decide what runs, each for the components it owns:
 | `movement_control` | Keyboard intent; moved by physics with `character_controller`, straight through the world without |
 | `canvas_element` with an `action` | `CanvasActionSystem`: a `move` Joystick steers, a held `jump` Button jumps |
 | `camera_rig` | `CameraSystem` |
+| `paged_terrain` | On the fixed step, before physics: its cells streamed around the primary camera from the page index `loadProject` read, drawn as one clipmap (with terrain layers when the index names a palette), and static collision cells near the camera when it is a `collider` and the host gives a physics world. A scene streams one |
 | `physics_body`, `character_controller`, a `terrain` collider | On the fixed step, with a physics world: the terrain collider, `MeshColliderSystem` for `mesh` and `convex_hull` shapes, `PhysicsSystem` and `CharacterControllerSystem` |
 | `patrol`, `chase`, `flee` with a `navigation` component | The behaviours and `PathRequestSystem`, which answers their routes over the scene's grid. Each behaviour arrives with its `PathRequest`; a project with a behaviour and no `navigation` is refused at load |
 | `spinControl`, `locomotion_animation`, `keyframe_animation`, `texture_clips` | Spinning, locomotion clips, looping keyframe tracks and sprite-sheet clips |
@@ -45,7 +46,8 @@ a project on disk and without an app builder. `sceneSystemsFor(scene, services)`
 plain `System`s: `fixed` ones to run on each fixed step, then `frame` ones once per rendered frame,
 in the order `runProject` runs them. `runProject` is built on the same decision, so a component
 that gains a system gains it in both. `loadSceneContent` reads what the systems need from the
-project's files, such as particle sprites, collision meshes and shader documents.
+project's files, such as particle sprites, collision meshes, shader documents and a paged terrain's
+index.
 
 ```kotlin
 val systems = sceneSystemsFor(
@@ -64,7 +66,8 @@ physics world it passes in and destroys it after `close()`.
 
 It builds only the scene's own systems. The host still places the scene, resolves its assets, picks
 the camera, resolves transforms and draws. Pass the physics world the scene needs (`physics_body`,
-`character_controller` or a terrain collider), or those systems are left out.
+`character_controller`, a terrain collider or a colliding `paged_terrain`), or those systems are left
+out.
 
 ## Adding components and systems: scene capabilities
 
