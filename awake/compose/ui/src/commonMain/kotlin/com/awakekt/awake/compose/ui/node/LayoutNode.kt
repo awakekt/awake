@@ -29,6 +29,11 @@ import com.awakekt.awake.core.input.PointerCursor
  * The node is its own [Placeable], so measuring a child hands the parent the child itself rather
  * than a wrapper. The chain's own placeables and scopes are built when [modifier] changes, never
  * per pass, so measuring allocates nothing here.
+ *
+ * @property measurePolicy The policy that measures and places this node's [children].
+ * @property density Pixels per dp for this node's measure scopes and drawing.
+ * @property fontScale Extra multiplier on sp text sizes, applied on top of [density].
+ * @property layoutDirection Direction used to resolve start and end placement inside this node.
  */
 class LayoutNode(
     var measurePolicy: MeasurePolicy,
@@ -40,6 +45,7 @@ class LayoutNode(
     Measurable,
     RememberHolder {
 
+    /** The node whose [children] or [layers] holds this one, or `null` for a root or detached node. */
     var parent: LayoutNode? = null
         internal set
 
@@ -87,6 +93,7 @@ class LayoutNode(
     var nodeType: Any? = null
         internal set
 
+    /** The explicit `key(...)` this node was declared under, or `null` when it has none. */
     var nodeKey: Any? = null
         internal set
 
@@ -104,6 +111,7 @@ class LayoutNode(
     var absoluteX: Int = 0
         private set
 
+    /** Vertical counterpart of [absoluteX]. */
     var absoluteY: Int = 0
         private set
 
@@ -121,6 +129,8 @@ class LayoutNode(
      */
     var contentAbsoluteX: Int = 0
         private set
+
+    /** Vertical counterpart of [contentAbsoluteX]. */
     var contentAbsoluteY: Int = 0
         private set
 

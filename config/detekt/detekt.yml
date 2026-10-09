@@ -115,6 +115,8 @@ comments:
       - '**/awake/compose/di/**'
       - '**/awake/compose/state/**'
       - '**/awake/compose/runtime/**'
+      - '**/awake/compose/foundation/**'
+      - '**/awake/compose/ui/**'
       - '**/awake/scene/audio/**'
       - '**/awake/scene/canvas/**'
       - '**/awake/scene/blueprint/**'

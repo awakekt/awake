@@ -10,11 +10,17 @@ import kotlin.math.min
 
 /**
  * Defines an alignment line along which layouts can align their children.
+ *
+ * [FirstBaseline] merges by taking the smaller coordinate and [LastBaseline] the larger.
+ *
+ * @property merger Combines two coordinates reported for this line into one.
  */
 sealed class AlignmentLine(
     val merger: (Int, Int) -> Int,
 ) {
+    /** Constants shared by every [AlignmentLine]. */
     companion object {
+        /** The coordinate reported when a [Placeable] does not define the line. */
         const val Unspecified: Int = Int.MIN_VALUE
     }
 }

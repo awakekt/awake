@@ -15,20 +15,25 @@ package com.awakekt.awake.compose.ui.node
 class NodeChildren internal constructor(private val owner: LayoutNode? = null) {
     private val items = mutableListOf<LayoutNode>()
 
+    /** The number of nodes in this list. */
     val size: Int get() = items.size
 
+    /** Returns the node at [index]. */
     operator fun get(index: Int): LayoutNode = items[index]
 
+    /** The valid positions in this list. */
     val indices: IntRange get() = items.indices
 
     /** Covariant, so this doubles as the `List<Measurable>` a [MeasurePolicy] receives. */
     fun asList(): List<LayoutNode> = items
 
+    /** Appends [node] and makes this list's owner its parent. */
     fun add(node: LayoutNode) {
         node.parent = owner
         items += node
     }
 
+    /** Inserts [node] at [index], or at the end if [index] is past it, and makes the owner its parent. */
     fun insertAt(index: Int, node: LayoutNode) {
         node.parent = owner
         items.add(index.coerceAtMost(items.size), node)
@@ -49,6 +54,7 @@ class NodeChildren internal constructor(private val owner: LayoutNode? = null) {
         }
     }
 
+    /** Removes every node, detaching each from its parent and disposing it. */
     fun clear() {
         while (items.isNotEmpty()) {
             val removed = items.removeAt(items.lastIndex)
@@ -57,11 +63,13 @@ class NodeChildren internal constructor(private val owner: LayoutNode? = null) {
         }
     }
 
+    /** Removes every node and detaches it from its parent, without disposing it. */
     fun clearWithoutDispose() {
         for (i in items.indices) items[i].parent = null
         items.clear()
     }
 
+    /** Replaces the contents with [nodes], parented to the owner; the previous nodes are detached, not disposed. */
     fun setFrom(nodes: List<LayoutNode>) {
         for (i in items.indices) items[i].parent = null
         items.clear()

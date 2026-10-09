@@ -19,6 +19,7 @@ import com.awakekt.awake.compose.ui.layout.Layout
 
 private object CanvasNodeType
 
+context(_: Composer)
 /**
  * A surface to draw on directly, sized by its modifier.
  *
@@ -26,7 +27,6 @@ private object CanvasNodeType
  * needed: a debug HUD, a gizmo or a chart draws per frame from live state inside one retained node.
  * A full-screen overlay costs exactly one node.
  */
-context(_: Composer)
 fun Canvas(modifier: Modifier = Modifier, onDraw: DrawScope.() -> Unit) {
     Layout(
         CanvasNodeType,

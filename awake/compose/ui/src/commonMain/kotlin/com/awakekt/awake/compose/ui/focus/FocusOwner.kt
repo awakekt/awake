@@ -17,11 +17,22 @@ import kotlin.math.abs
  * Spatial navigation uses [Left], [Right], [Up], and [Down] (gamepad D-pad / arrow keys).
  */
 enum class FocusDirection {
+    /** Forward through the focus ring, as Tab does. */
     Next,
+
+    /** Backward through the focus ring, as Shift+Tab does. */
     Previous,
+
+    /** To the nearest focusable target on the left. */
     Left,
+
+    /** To the nearest focusable target on the right. */
     Right,
+
+    /** To the nearest focusable target above. */
     Up,
+
+    /** To the nearest focusable target below. */
     Down,
 }
 
@@ -46,6 +57,7 @@ class FocusOwner {
     /** The node holding focus, or null. */
     val focused: LayoutNode? get() = focusedNode
 
+    /** Whether [node] is the node holding focus. */
     fun isFocused(node: LayoutNode): Boolean = focusedNode === node
 
     /**
@@ -72,6 +84,7 @@ class FocusOwner {
     // dialog traps Tab while letting a click through to the page behind it.
     private fun activeModal(node: LayoutNode): LayoutNode? = node.activeModalLayer()
 
+    /** Takes focus from the current node and tells its focus links; does nothing when nothing is focused. */
     fun clearFocus() {
         val previous = focusedNode ?: return
         focusedNode = null

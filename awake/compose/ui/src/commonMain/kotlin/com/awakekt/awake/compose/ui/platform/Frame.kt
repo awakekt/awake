@@ -23,10 +23,15 @@ import com.awakekt.awake.core.input.TextEditAction
  * turns it into press/release/move, so a host never has to remember the previous frame itself.
  */
 data class FrameInput(
+    /** Width of the viewport in pixels, which the root is laid out at. */
     val viewportWidth: Int,
+    /** Height of the viewport in pixels, which the root is laid out at. */
     val viewportHeight: Int,
+    /** Pointer x in viewport pixels, or [UNKNOWN_POINTER] when it is not over the window. */
     val pointerX: Int = UNKNOWN_POINTER,
+    /** Pointer y in viewport pixels, or [UNKNOWN_POINTER] when it is not over the window. */
     val pointerY: Int = UNKNOWN_POINTER,
+    /** Whether the primary pointer button is held right now. */
     val pointerDown: Boolean = false,
     /** A press occurred during this frame, including a press/release pair between host frames. */
     val pointerPressed: Boolean = false,
@@ -43,6 +48,7 @@ data class FrameInput(
      * transition at all, since Shift went down on an earlier frame and is merely still held.
      */
     val pointerModifiers: PointerModifiers = PointerModifiers.None,
+    /** Vertical wheel movement this frame. A non-zero value is dispatched as a wheel event at the pointer. */
     val scrollDeltaY: Float = 0f,
     /** Characters produced this frame. Separate from [editActions] because a keyboard reports them
      * separately -- folding the two loses the difference between typing "\b" and pressing the key. */
@@ -51,6 +57,7 @@ data class FrameInput(
     val imeComposition: ImeComposition? = null,
     /** Text the IME finalized this frame; an empty string is a valid commit. */
     val imeCommit: String? = null,
+    /** Editing commands such as backspace or cursor movement for the focused text field, in order. */
     val editActions: List<TextEditAction> = emptyList(),
     /**
      * Key transitions this frame.
@@ -61,17 +68,30 @@ data class FrameInput(
      * loses both.
      */
     val keyEvents: List<KeyEvent> = emptyList(),
+    /** Seconds since the previous frame. It drives [FrameClock] and long-press timing. */
     val deltaSeconds: Float = 1f / 60f,
     /** Copy and cut requests for the focused field, answered in [PlatformEffects.clipboardText]. */
     val clipboardCommands: List<ClipboardCommand> = emptyList(),
 ) {
+    /** Sentinel values for [FrameInput]. */
     companion object {
         /** No pointer on screen -- a touch device between taps, or a window without focus. */
         const val UNKNOWN_POINTER: Int = Int.MIN_VALUE
     }
 }
 
-/** One touch contact reported by a platform adapter. [pointerId] remains stable for its gesture. */
+/**
+ * One touch contact reported by a platform adapter. [pointerId] remains stable for its gesture.
+ *
+ * @property pointerId Identifier of the contact. Zero is reserved for the mouse.
+ * @property x Horizontal position in viewport pixels.
+ * @property y Vertical position in viewport pixels.
+ * @property down Whether the contact is touching the surface right now.
+ * @property pressed Whether the contact went down during this frame, including a down and up pair between
+ * host frames.
+ * @property released Whether the contact came up during this frame, including a down and up pair between
+ * host frames.
+ */
 data class PointerFrame(
     val pointerId: Long,
     val x: Int,
@@ -89,7 +109,9 @@ data class PointerFrame(
  */
 data class InputOwnership(
     val isCaptured: Boolean = false,
+    /** Something under the pointer could still take a wheel scroll. False at a scroller's end. */
     val isOverScrollable: Boolean = false,
+    /** A node consumed this frame's wheel event. */
     val isScrollConsumed: Boolean = false,
     val isTextInputFocused: Boolean = false,
     /** A modal layer is open, so a click anywhere belongs to the UI -- backdrop included. */
@@ -101,6 +123,7 @@ val InputOwnership.blocksGameplayKeys: Boolean get() = isCaptured || isTextInput
 
 /** Things only the platform can do, requested rather than performed. */
 data class PlatformEffects(
+    /** A text field holds focus, so the platform should raise its soft keyboard. */
     val requestKeyboard: Boolean = false,
     /**
      * The pointer shape the hovered content asked for.
@@ -130,6 +153,13 @@ data class PlatformEffects(
  * [primitives] is the same `UiDrawPrimitive` list `ui-core` produces, deliberately: a render backend
  * consumes either engine unchanged, and one scene can be run through both and diffed element by
  * element. That diff is Stage 1's exit gate.
+ *
+ * @property primitives The frame's draw primitives, in paint order.
+ * @property graphicsLayers The offscreen paint passes requested by `Modifier.graphicsLayer`, kept apart
+ * from [primitives].
+ * @property semantics The accessibility tree for the placed layout, as its top-level nodes.
+ * @property ownership What the UI claims of this frame's input.
+ * @property effects Things the platform is asked to do in response to this frame.
  */
 data class FrameOutput(
     val primitives: List<UiDrawPrimitive>,

@@ -11,7 +11,13 @@ import com.awakekt.awake.core.input.Key
 // platform's keycodes once; two enums would mean two mapping tables per host for one keyboard.
 
 /** Down and up, kept apart so a handler can act on release -- or on hold. */
-enum class KeyEventType { Down, Up }
+enum class KeyEventType {
+    /** The key went down. */
+    Down,
+
+    /** The key came up. */
+    Up,
+}
 
 /**
  * One key transition, plus the modifier state at the moment it happened.
@@ -22,6 +28,13 @@ enum class KeyEventType { Down, Up }
  *
  * Modifiers are captured on the event rather than read from a live keyboard state, because a frame
  * is a snapshot -- asking later would answer about a keyboard that has since moved on.
+ *
+ * @property key The key that changed state.
+ * @property type Whether the key went down or came up.
+ * @property isCtrlPressed Whether Ctrl was held when the transition happened.
+ * @property isShiftPressed Whether Shift was held when the transition happened.
+ * @property isAltPressed Whether Alt was held when the transition happened.
+ * @property isMetaPressed Whether Meta was held when the transition happened.
  */
 class KeyEvent(
     val key: Key,
@@ -40,6 +53,12 @@ class KeyEvent(
     var isConsumed: Boolean = false
         private set
 
+    /**
+     * Marks this event as taken.
+     *
+     * Handlers later in the dispatch order see [isConsumed] and stand down, and Tab and arrow key
+     * focus traversal is skipped for it.
+     */
     fun consume() {
         isConsumed = true
     }

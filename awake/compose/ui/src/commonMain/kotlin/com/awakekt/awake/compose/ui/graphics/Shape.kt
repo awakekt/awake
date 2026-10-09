@@ -18,6 +18,12 @@ import com.awakekt.awake.core.math2d.Rectangle as BoundsRectangle
 
 /** A reusable geometry definition for `background`, `border`, and `clip`. */
 interface Shape {
+    /**
+     * Resolves this shape against a node of [size] pixels.
+     *
+     * [density] converts dp-based corner sizes to pixels, and [layoutDirection] decides which physical
+     * corner a start or end corner lands on.
+     */
     fun createOutline(
         size: Size2D,
         density: Float,
@@ -27,18 +33,37 @@ interface Shape {
 
 /** A shape resolved against one node's measured bounds. */
 sealed interface ShapeOutline {
+    /** The rectangle this outline was resolved against, in node-local pixels. */
     val bounds: BoundsRectangle
 
-    /** A rectangle that preserves the inexpensive quad rendering path. */
+    /**
+     * A rectangle that preserves the inexpensive quad rendering path.
+     *
+     * @property bounds The rectangle the outline fills.
+     */
     data class Rectangle(override val bounds: BoundsRectangle) : ShapeOutline
 
-    /** A uniformly rounded rectangle that preserves the rounded-quad rendering path. */
+    /**
+     * A uniformly rounded rectangle that preserves the rounded-quad rendering path.
+     *
+     * @property bounds The rectangle the outline fills.
+     * @property radius The corner radius in pixels, shared by all four corners.
+     */
     data class Rounded(
         override val bounds: BoundsRectangle,
         val radius: Float,
     ) : ShapeOutline
 
-    /** An asymmetric rounded rectangle, with one resolved radius per physical corner. */
+    /**
+     * An asymmetric rounded rectangle, with one resolved radius per physical corner.
+     *
+     * @property bounds The rectangle the outline fills.
+     * @property topLeft The top-left corner radius in pixels.
+     * @property topRight The top-right corner radius in pixels.
+     * @property bottomRight The bottom-right corner radius in pixels.
+     * @property bottomLeft The bottom-left corner radius in pixels.
+     * @property path The same rounded rectangle as a path, for clipping and shadows.
+     */
     data class RoundedCorners(
         override val bounds: BoundsRectangle,
         val topLeft: Float,
@@ -48,7 +73,12 @@ sealed interface ShapeOutline {
         val path: DrawPath,
     ) : ShapeOutline
 
-    /** Any outline that needs the existing path rendering and clipping machinery. */
+    /**
+     * Any outline that needs the existing path rendering and clipping machinery.
+     *
+     * @property path The outline traced as a path, in node-local pixels.
+     * @property bounds The rectangle enclosing the path, which defaults to the path's own bounds.
+     */
     data class Generic(
         val path: DrawPath,
         override val bounds: BoundsRectangle = path.bounds(),
@@ -63,16 +93,32 @@ data object RectangleShape : Shape {
 
 /** A corner size that resolves against the measured shape bounds. */
 sealed interface CornerSize {
+    /** Resolves this corner size to pixels for a shape of [size] pixels at [density]. */
     fun toPx(size: Size2D, density: Float): Float
 
+    /**
+     * A corner size in dp, scaled by the density.
+     *
+     * @property value The radius in dp.
+     */
     data class Dp(val value: com.awakekt.awake.compose.ui.unit.Dp) : CornerSize {
         override fun toPx(size: Size2D, density: Float): Float = value.value * density
     }
 
+    /**
+     * A corner size in raw pixels, unaffected by density.
+     *
+     * @property value The radius in pixels.
+     */
     data class Px(val value: Float) : CornerSize {
         override fun toPx(size: Size2D, density: Float): Float = value
     }
 
+    /**
+     * A corner size as a share of the shape's shorter side.
+     *
+     * @property value The percentage, from 0 to 100.
+     */
     data class Percent(val value: Int) : CornerSize {
         init {
             require(value in 0..100) { "Corner percentage must be between 0 and 100, was $value" }
@@ -86,6 +132,11 @@ sealed interface CornerSize {
 /**
  * Compose-shaped rounded corners. Independent corners are required by joined controls such as a
  * button group; a uniform shape keeps the existing rounded-quad fast path.
+ *
+ * @property topStart The top corner on the start side: top-left in left-to-right layouts, top-right otherwise.
+ * @property topEnd The top corner on the end side: top-right in left-to-right layouts, top-left otherwise.
+ * @property bottomEnd The bottom corner on the end side: bottom-right in left-to-right layouts.
+ * @property bottomStart The bottom corner on the start side: bottom-left in left-to-right layouts.
  */
 class RoundedCornerShape(
     val topStart: CornerSize = CornerSize.Dp(0.dp),
@@ -96,6 +147,13 @@ class RoundedCornerShape(
     override fun createOutline(size: Size2D, density: Float, layoutDirection: LayoutDirection): ShapeOutline =
         createOutline(size.bounds(), density, layoutDirection = layoutDirection)
 
+    /**
+     * Resolves this shape against [bounds], subtracting [radiusInset] pixels from every corner radius.
+     *
+     * A radius floors at zero after the inset, so a negative [radiusInset] grows every corner. The
+     * result is a rectangle when every corner resolves to zero, a uniform rounded outline when they
+     * are all equal, and a per-corner outline otherwise.
+     */
     fun createOutline(
         bounds: BoundsRectangle,
         density: Float,
@@ -169,6 +227,7 @@ fun RoundedCornerShape(all: Dp): RoundedCornerShape = RoundedCornerShape(
     CornerSize.Dp(all),
 )
 
+/** Creates a shape with a separate dp radius per corner, each defaulting to square. */
 fun RoundedCornerShape(
     topStart: Dp = 0.dp,
     topEnd: Dp = 0.dp,
@@ -189,6 +248,7 @@ fun RoundedCornerShape(all: Float): RoundedCornerShape = RoundedCornerShape(
     CornerSize.Px(all),
 )
 
+/** Creates a shape with a separate pixel radius per corner, each defaulting to square. */
 fun RoundedCornerShape(
     topStart: Float = 0f,
     topEnd: Float = 0f,
@@ -209,6 +269,7 @@ fun RoundedCornerShape(allPercent: Int): RoundedCornerShape = RoundedCornerShape
     CornerSize.Percent(allPercent),
 )
 
+/** Creates a shape with a separate percentage radius per corner, each defaulting to square. */
 fun RoundedCornerShape(
     topStartPercent: Int = 0,
     topEndPercent: Int = 0,

@@ -25,10 +25,14 @@ typealias Dp = GraphicsDp
 
 typealias Sp = GraphicsSp
 
+/** This number as a density-independent pixel size. */
 val Float.dp: Dp get() = GraphicsDp(this)
 
+/** This number as a density-independent pixel size. */
 val Int.dp: Dp get() = GraphicsDp(toFloat())
 
+/** This number as a scale-independent text size. */
 val Float.sp: Sp get() = GraphicsSp(this)
 
+/** This number as a scale-independent text size. */
 val Int.sp: Sp get() = GraphicsSp(toFloat())

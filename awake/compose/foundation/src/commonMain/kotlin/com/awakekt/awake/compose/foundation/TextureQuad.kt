@@ -12,6 +12,7 @@ import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.draw.drawBehind
 
+context(_: Composer)
 /**
  * Draws a backend texture into this node's bounds.
  *
@@ -22,7 +23,6 @@ import com.awakekt.awake.compose.ui.draw.drawBehind
  * `drawTexture` rather than `emit`: a caller cannot position an emitted primitive, because the
  * origin and transform the scope maps against are private to it.
  */
-context(_: Composer)
 fun TextureQuad(material: Any, modifier: Modifier = Modifier) {
     Spacer(modifier.drawBehind { drawTexture(material) })
 }

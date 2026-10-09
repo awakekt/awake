@@ -16,6 +16,7 @@ import com.awakekt.awake.compose.ui.input.pointer.PointerEventPass
 import com.awakekt.awake.compose.ui.input.pointer.PointerEventType
 import com.awakekt.awake.compose.ui.node.PointerInputNode
 
+context(_: Composer)
 /**
  * An [InteractionSource] that survives the next pass, for a component to hand to its own modifiers.
  *
@@ -23,7 +24,6 @@ import com.awakekt.awake.compose.ui.node.PointerInputNode
  * *before* the node it decorates exists, so `Modifier.background(if (hovered) a else b)` needs
  * somewhere to read from that outlives the frame. Compose solves it the same way.
  */
-context(_: Composer)
 fun rememberInteractionSource(): InteractionSource = remember { InteractionSource() }
 
 /**

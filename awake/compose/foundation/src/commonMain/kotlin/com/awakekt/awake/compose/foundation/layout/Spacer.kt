@@ -21,13 +21,13 @@ import com.awakekt.awake.compose.ui.unit.Constraints
 
 private object SpacerNodeType
 
+context(_: Composer)
 /**
  * Takes up space and draws nothing.
  *
  * Sizes to the **minimum** its constraints allow, so `Modifier.size`/`weight`/`fillMax` decide what
  * it occupies rather than the widget having an opinion of its own.
  */
-context(_: Composer)
 fun Spacer(modifier: Modifier = Modifier) {
     Layout(SpacerNodeType, modifier = modifier, measurePolicy = EmptyLayoutPolicy)
 }

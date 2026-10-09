@@ -9,20 +9,30 @@ import kotlin.jvm.JvmInline
 
 /**
  * A 2D integer size packed into a single 64-bit value to avoid heap allocation.
+ *
+ * @property packed Both components in one value: [width] in the high 32 bits and [height] in the low 32 bits.
  */
 @JvmInline
 value class IntSize internal constructor(val packed: Long) {
+    /** The horizontal extent. */
     val width: Int get() = (packed shr 32).toInt()
+
+    /** The vertical extent. */
     val height: Int get() = (packed and 0xFFFFFFFFL).toInt()
 
     constructor(width: Int, height: Int) : this((width.toLong() shl 32) or (height.toLong() and 0xFFFFFFFFL))
 
+    /** The [width] component, for destructuring. */
     operator fun component1(): Int = width
+
+    /** The [height] component, for destructuring. */
     operator fun component2(): Int = height
 
     override fun toString(): String = "${width}x$height"
 
+    /** Constants for [IntSize]. */
     companion object {
+        /** A size of zero in both dimensions. */
         val Zero = IntSize(0, 0)
     }
 }

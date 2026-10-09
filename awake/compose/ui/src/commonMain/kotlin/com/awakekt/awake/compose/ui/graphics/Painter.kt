@@ -12,6 +12,12 @@ import com.awakekt.awake.compose.ui.node.DrawModifierNode
 import com.awakekt.awake.compose.ui.node.LayoutNode
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 
+/**
+ * What one [Painter] pass produced for a frame.
+ *
+ * @property primitives The base tree's draw primitives, in paint order.
+ * @property layers The offscreen passes requested by `graphicsLayer`, each referenced by a placeholder in [primitives].
+ */
 data class PaintOutput(
     val primitives: List<UiDrawPrimitive>,
     val layers: List<GraphicsLayerFrame>,
@@ -34,8 +40,18 @@ class Painter {
     // allocated once per node per frame for a value that never changes.
     private val paintOrder = LayerKind.entries.toTypedArray()
 
+    /**
+     * Paints [root] and returns only the base tree's primitives, dropping any offscreen layers.
+     *
+     * The list is reused by the next paint on this painter, so copy it to keep it.
+     */
     fun paint(root: LayoutNode): List<UiDrawPrimitive> = paintOutput(root).primitives
 
+    /**
+     * Paints [root] and returns both the base primitives and the offscreen layers they refer to.
+     *
+     * Both lists are reused by the next paint on this painter, so copy them to keep them.
+     */
     fun paintOutput(root: LayoutNode): PaintOutput {
         scope.reset()
         paintNode(root)

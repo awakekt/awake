@@ -17,6 +17,13 @@ import com.awakekt.awake.core.color.Color
  * [brush], when supplied, takes precedence over [color]. The supported brush subset is defined by
  * [Brush]: solid colour and four-corner linear gradient. Blend modes need layer compositing and
  * deliberately remain outside this primitive.
+ *
+ * @property radius The blur radius in dp.
+ * @property color The shadow colour, used when [brush] is not set.
+ * @property spread Distance in dp by which the shadow's footprint is expanded beyond the caster outline.
+ * @property offset The shadow's displacement from the caster, in dp.
+ * @property alpha Opacity multiplier applied to the shadow's colours, from 0 to 1.
+ * @property brush The shadow's paint, which takes precedence over [color] when set.
  */
 data class Shadow(
     val radius: Dp,

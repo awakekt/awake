@@ -27,6 +27,7 @@ import com.awakekt.awake.core.input.TextEditAction
  * composable. Fixing the phase removed the need for it.
  */
 class TextFieldState(text: String = "", cursor: Int = text.length) {
+    /** The committed text, excluding any in-progress IME composition. */
     var text: String = text
         private set
 
@@ -38,9 +39,16 @@ class TextFieldState(text: String = "", cursor: Int = text.length) {
     var selectionAnchor: Int = cursor
         private set
 
+    /** The lower end of the selection, whichever of [selectionAnchor] and [cursor] comes first. */
     val selectionStart: Int get() = minOf(selectionAnchor, cursor)
+
+    /** The upper end of the selection, whichever of [selectionAnchor] and [cursor] comes last. */
     val selectionEnd: Int get() = maxOf(selectionAnchor, cursor)
+
+    /** Whether the selection covers at least one character. */
     val hasSelection: Boolean get() = selectionStart != selectionEnd
+
+    /** The selected part of [text], empty when nothing is selected. */
     val selectedText: String get() = text.substring(selectionStart, selectionEnd)
 
     private var compositionRangeStart = cursor
@@ -79,6 +87,12 @@ class TextFieldState(text: String = "", cursor: Int = text.length) {
 
     private var preferredColumn: Int? = null
 
+    /**
+     * Replaces the whole [text] with [newText] and puts a collapsed caret at [newCursor], clamped to
+     * the new text.
+     *
+     * Any in-progress IME composition is discarded.
+     */
     fun setText(newText: String, newCursor: Int = newText.length) {
         text = newText
         cursor = newCursor.coerceIn(0, newText.length)
@@ -87,6 +101,11 @@ class TextFieldState(text: String = "", cursor: Int = text.length) {
         clearComposition()
     }
 
+    /**
+     * Collapses the selection to a caret at [index], clamped to the text.
+     *
+     * Any in-progress IME composition is discarded.
+     */
     fun moveCursorTo(index: Int) {
         clearComposition()
         cursor = index.coerceIn(0, text.length)
@@ -104,6 +123,12 @@ class TextFieldState(text: String = "", cursor: Int = text.length) {
         preferredColumn = null
     }
 
+    /**
+     * Applies a key-driven edit or caret move, committing any IME composition first.
+     *
+     * Backspace and Delete remove the selection if there is one, otherwise a single character.
+     * [TextEditAction.Enter] is ignored: a caller that wants to submit reads the key itself.
+     */
     fun apply(action: TextEditAction) {
         commitComposition()
         when (action) {
@@ -157,6 +182,12 @@ class TextFieldState(text: String = "", cursor: Int = text.length) {
         }
     }
 
+    /**
+     * Selects from [anchor] to [focus], both clamped to the text.
+     *
+     * The caret ends at [focus] and [anchor] stays fixed, so the selection can run in either
+     * direction. Any in-progress IME composition is discarded.
+     */
     fun select(anchor: Int, focus: Int) {
         clearComposition()
         selectionAnchor = anchor.coerceIn(0, text.length)
@@ -191,6 +222,7 @@ class TextFieldState(text: String = "", cursor: Int = text.length) {
         clearComposition()
     }
 
+    /** Drops the in-progress IME pre-edit text without committing it into [text]. */
     fun cancelComposition() = clearComposition()
 
     private fun clearComposition() {
@@ -237,7 +269,7 @@ class TextFieldState(text: String = "", cursor: Int = text.length) {
     override fun toString(): String = "TextFieldState(\"$text\", cursor=$cursor)"
 }
 
-/** A [TextFieldState] that survives the next pass. */
 context(_: Composer)
+/** A [TextFieldState] that survives the next pass. [initial] is its text only on the pass that creates it. */
 fun rememberTextFieldState(initial: String = ""): TextFieldState =
     remember { TextFieldState(initial) }

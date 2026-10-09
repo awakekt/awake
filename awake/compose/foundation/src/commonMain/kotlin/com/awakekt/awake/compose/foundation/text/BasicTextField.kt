@@ -64,6 +64,7 @@ private const val LAST_TYPED_REVEAL_SECONDS = 1.5f
 // builder merges into a fresh one), so one instance serves every masked field with no allocation.
 private val PasswordSemantics: Modifier = Modifier.semantics { this[SemanticsProperties.Password] = true }
 
+context(_: Composer)
 /**
  * An editable single line of text, with no decoration of its own.
  *
@@ -94,7 +95,6 @@ private val PasswordSemantics: Modifier = Modifier.semantics { this[SemanticsPro
  * Pass [PasswordMask] unless a design calls for another character. The bundled UI font covers
  * printable ASCII and the bullet; any other mask character draws that font's fallback glyph.
  */
-context(_: Composer)
 fun BasicTextField(
     state: TextFieldState,
     modifier: Modifier = Modifier,

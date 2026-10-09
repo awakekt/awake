@@ -19,11 +19,14 @@ import com.awakekt.awake.compose.ui.unit.Dp
 import com.awakekt.awake.compose.ui.unit.dp
 import kotlin.math.roundToInt
 
+/** Adds [all] of space on every side of this node's content. */
 fun Modifier.padding(all: Dp): Modifier = this then PaddingElement(all, all, all, all)
 
+/** Adds [horizontal] space on the start and end sides and [vertical] space on the top and bottom. */
 fun Modifier.padding(horizontal: Dp = 0.dp, vertical: Dp = 0.dp): Modifier =
     this then PaddingElement(horizontal, vertical, horizontal, vertical)
 
+/** Adds a separate amount of space on each side of this node's content. */
 fun Modifier.padding(
     start: Dp = 0.dp,
     top: Dp = 0.dp,
@@ -31,12 +34,16 @@ fun Modifier.padding(
     bottom: Dp = 0.dp,
 ): Modifier = this then PaddingElement(start, top, end, bottom)
 
+/** Requests a fixed [width], still clamped to what the parent allows. */
 fun Modifier.width(width: Dp): Modifier = this then SizeElement(width, null)
 
+/** Requests a fixed [height], still clamped to what the parent allows. */
 fun Modifier.height(height: Dp): Modifier = this then SizeElement(null, height)
 
+/** Requests a fixed [width] and [height], each still clamped to what the parent allows. */
 fun Modifier.size(width: Dp, height: Dp): Modifier = this then SizeElement(width, height)
 
+/** Requests a fixed square of [all] on each side, still clamped to what the parent allows. */
 fun Modifier.size(all: Dp): Modifier = this then SizeElement(all, all)
 
 /** Occupies [fraction] of a bounded parent width; an unbounded width remains untouched. */

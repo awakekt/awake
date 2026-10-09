@@ -73,17 +73,29 @@ fun Modifier.border(
     sides: BorderSides = BorderSides.All,
 ): Modifier = border(width, color, RoundedCornerShape(cornerRadius), sides)
 
-/** The edges a [border] paints. Kept independent from any component or layout direction. */
+/**
+ * The edges a [border] paints. Kept independent from any component or layout direction.
+ *
+ * @property top Whether the top edge is painted.
+ * @property end Whether the end edge is painted.
+ * @property bottom Whether the bottom edge is painted.
+ * @property start Whether the start edge is painted.
+ */
 data class BorderSides(
     val top: Boolean = true,
     val end: Boolean = true,
     val bottom: Boolean = true,
     val start: Boolean = true,
 ) {
+    /** Whether all four edges are painted, which lets a border trace one closed outline. */
     val isAll: Boolean get() = top && end && bottom && start
 
+    /** Ready-made side sets. */
     companion object {
+        /** Every edge painted, the default for a border. */
         val All = BorderSides()
+
+        /** No edge painted, so the border draws nothing. */
         val None = BorderSides(false, false, false, false)
     }
 }

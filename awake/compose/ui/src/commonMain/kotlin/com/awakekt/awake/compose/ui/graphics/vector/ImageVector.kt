@@ -17,12 +17,32 @@ import com.awakekt.awake.core.math2d.Rectangle
 import com.awakekt.awake.core.math2d.dp
 import com.awakekt.awake.core.math2d.pixelPerfectPixel
 
+/**
+ * One path of an [ImageVector], with how it is filled and stroked.
+ *
+ * With no explicit [fill], a path takes the tint chosen at draw time, unless it has a [stroke], in
+ * which case it is outline only. A stroke is always drawn in the tint, and its width is in viewport
+ * units so that it scales with the image.
+ *
+ * @property path The outline, in the vector's viewport coordinates.
+ * @property fill An explicit fill colour, or `null` to defer to the tint.
+ * @property stroke The stroke style, or `null` for no stroke.
+ */
 data class VectorPath(
     val path: DrawPath,
     val fill: Color? = null,
     val stroke: DrawStroke? = null,
 )
 
+/**
+ * A vector image: paths authored in a viewport coordinate space, scaled to fit whatever slot draws them.
+ *
+ * @property defaultWidth The image's natural width, in dp.
+ * @property defaultHeight The image's natural height, in dp.
+ * @property viewportWidth Width of the coordinate space the [paths] are authored in.
+ * @property viewportHeight Height of the coordinate space the [paths] are authored in.
+ * @property paths The paths to draw, in order.
+ */
 data class ImageVector(
     val defaultWidth: Dp,
     val defaultHeight: Dp,
@@ -31,6 +51,9 @@ data class ImageVector(
     val paths: List<VectorPath>,
 ) : VectorGraphic
 
+/**
+ * Collects the paths of an [ImageVector] under construction; obtained through [imageVector].
+ */
 class ImageVectorBuilder internal constructor(
     private val defaultWidth: Dp,
     private val defaultHeight: Dp,
@@ -39,6 +62,12 @@ class ImageVectorBuilder internal constructor(
 ) {
     private val paths = ArrayList<VectorPath>()
 
+    /**
+     * Appends a path built by [block], in viewport coordinates.
+     *
+     * [fill] and [stroke] behave as on [VectorPath]; [fillRule] decides which regions of a
+     * self-overlapping path count as inside.
+     */
     fun path(
         fill: Color? = null,
         fillRule: FillRule = FillRule.NonZero,
@@ -61,6 +90,12 @@ class ImageVectorBuilder internal constructor(
     )
 }
 
+/**
+ * Builds an [ImageVector] by running [block] against an [ImageVectorBuilder].
+ *
+ * Path coordinates in [block] are in the [viewportWidth] by [viewportHeight] space, and the image
+ * is scaled from there when drawn.
+ */
 fun imageVector(
     defaultWidth: Dp,
     defaultHeight: Dp,
@@ -73,6 +108,13 @@ fun imageVector(
     return builder.build()
 }
 
+/**
+ * Scales and centres this vector's paths into [slot], returning them in the slot's pixel coordinates.
+ *
+ * The scale is uniform, so the viewport's aspect ratio is kept, and strokes widen by the same factor.
+ * The centring offset is snapped to whole pixels. The result is empty when the viewport or [slot]
+ * has no area.
+ */
 fun ImageVector.fitTo(slot: Rectangle): List<VectorPath> {
     // A degenerate viewport or slot has nothing to fit into. Read through named locals rather than
     // one four-clause condition, which trips detekt now that this file lives beside compose's own.

@@ -13,10 +13,13 @@ import com.awakekt.awake.compose.ui.node.DrawModifierNode
 import com.awakekt.awake.core.color.Color
 import kotlin.math.abs
 
-/**
- * `Modifier.shimmer()` on the retained compose engine.
- */
 context(_: Composer)
+/**
+ * Sweeps a [highlight] band across this node's content, looping every [durationSeconds].
+ *
+ * The band is drawn over the content, and its position comes from [rememberLoopingPhase], so it
+ * restarts from the left edge when the node first appears.
+ */
 fun Modifier.shimmer(
     highlight: Color = Color.White.withAlpha(0.6f),
     durationSeconds: Float = 1.2f,

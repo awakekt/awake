@@ -54,7 +54,13 @@ fun Modifier.horizontalScroll(
 ): Modifier = if (!enabled) this else this then ScrollElement(state, Orientation.Horizontal)
 
 /** Which axis a gesture or a scroller works along. */
-enum class Orientation { Vertical, Horizontal }
+enum class Orientation {
+    /** Along the y axis, top to bottom. */
+    Vertical,
+
+    /** Along the x axis, start to end. */
+    Horizontal,
+}
 
 private const val WHEEL_STEP_PX = 40f
 private val TOUCH_SCROLL_SLOP = 8.dp

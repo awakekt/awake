@@ -76,11 +76,11 @@ class VectorPainter internal constructor(private val image: ImageVector) {
     }
 }
 
+context(_: Composer)
 /**
  * A [VectorPainter] for [image] that survives the next pass.
  *
  * Keyed on the image, which a generated icon object holds as a `val` -- so the key check hits the
  * `this === other` arm of the data class's own equals rather than walking every path command.
  */
-context(_: Composer)
 fun rememberVectorPainter(image: ImageVector): VectorPainter = remember(image) { VectorPainter(image) }

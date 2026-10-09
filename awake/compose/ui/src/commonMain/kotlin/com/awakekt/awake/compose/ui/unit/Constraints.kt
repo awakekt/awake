@@ -21,12 +21,22 @@ import kotlin.jvm.JvmInline
 @JvmInline
 value class Constraints private constructor(private val packed: Long) {
 
+    /** The smallest width the node may take, in pixels. */
     val minWidth: Int get() = unpack(SHIFT_MIN_WIDTH)
+
+    /** The largest width the node may take, in pixels, or [Infinity] when unbounded. */
     val maxWidth: Int get() = unpackMax(SHIFT_MAX_WIDTH)
+
+    /** The smallest height the node may take, in pixels. */
     val minHeight: Int get() = unpack(SHIFT_MIN_HEIGHT)
+
+    /** The largest height the node may take, in pixels, or [Infinity] when unbounded. */
     val maxHeight: Int get() = unpackMax(SHIFT_MAX_HEIGHT)
 
+    /** Whether [maxWidth] is a real limit rather than [Infinity]. */
     val hasBoundedWidth: Boolean get() = unpack(SHIFT_MAX_WIDTH) != RESERVED_INFINITY
+
+    /** Whether [maxHeight] is a real limit rather than [Infinity]. */
     val hasBoundedHeight: Boolean get() = unpack(SHIFT_MAX_HEIGHT) != RESERVED_INFINITY
 
     private fun unpack(shift: Int): Int = ((packed ushr shift) and FIELD_MASK).toInt()
@@ -34,6 +44,7 @@ value class Constraints private constructor(private val packed: Long) {
     private fun unpackMax(shift: Int): Int =
         unpack(shift).let { if (it == RESERVED_INFINITY) Infinity else it }
 
+    /** Returns these constraints with the given fields replaced, validated the same way as [of]. */
     fun copy(
         minWidth: Int = this.minWidth,
         maxWidth: Int = this.maxWidth,
@@ -58,6 +69,7 @@ value class Constraints private constructor(private val packed: Long) {
     /** Clamps a desired size into these bounds. */
     fun constrainWidth(width: Int): Int = width.coerceIn(minWidth, maxWidth)
 
+    /** Clamps a desired height into these bounds. */
     fun constrainHeight(height: Int): Int = height.coerceIn(minHeight, maxHeight)
 
     override fun toString(): String {
@@ -68,13 +80,23 @@ value class Constraints private constructor(private val packed: Long) {
 
     // PascalCase, not SCREAMING_SNAKE: `Constraints.Infinity` is the name every line of Compose
     // documentation uses, and a public constant is API surface. See 11-refinements.md rule 1.
+    /** Factories and sentinel values for [Constraints]. */
     @Suppress("ktlint:standard:property-naming")
     companion object {
         /** No upper bound on this axis. Distinct from a large number -- see [hasBoundedWidth]. */
         const val Infinity: Int = Int.MAX_VALUE
 
+        /** The largest finite dimension a constraint can hold, in pixels: 65534. */
         const val MaxDimension: Int = RESERVED_INFINITY - 1
 
+        /**
+         * Creates constraints from the four bounds, in pixels.
+         *
+         * Each max may be [Infinity]; every finite value must lie in 0..[MaxDimension], and a max
+         * may not be below its min.
+         *
+         * @throws IllegalArgumentException If a bound is out of range or a max is below its min.
+         */
         fun of(minWidth: Int, maxWidth: Int, minHeight: Int, maxHeight: Int): Constraints {
             val minW = requireDimension(minWidth, "minWidth")
             val minH = requireDimension(minHeight, "minHeight")
@@ -88,6 +110,7 @@ value class Constraints private constructor(private val packed: Long) {
             )
         }
 
+        /** Creates constraints that force exactly [width] by [height] pixels. */
         fun fixed(width: Int, height: Int): Constraints = of(width, width, height, height)
 
         /** Loose in both axes -- the shape a wrap-content child is measured with. */

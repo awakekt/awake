@@ -39,7 +39,9 @@ class ImageBitmap(
 
     override fun toString(): String = "ImageBitmap(${width}x$height)"
 
+    /** Constants describing the pixel layout. */
     companion object {
+        /** Bytes per pixel: one each for red, green, blue and alpha. */
         const val BYTES_PER_PIXEL: Int = 4
     }
 }

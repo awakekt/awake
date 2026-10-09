@@ -49,6 +49,7 @@ class FrameClock {
         totalSeconds += step
     }
 
+    /** Holds the clamp applied to every frame delta. */
     companion object {
         /** A 10 fps floor. Below it the frame is treated as a stall, not as elapsed time. */
         const val MAX_DELTA_SECONDS: Float = 0.1f

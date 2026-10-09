@@ -10,7 +10,34 @@ import com.awakekt.awake.compose.ui.ModifierNodeElement
 import com.awakekt.awake.compose.ui.node.SemanticsModifierNode
 
 /** What a node is, for a screen reader or a test that asks "find me the button". */
-enum class SemanticsRole { Button, Checkbox, Switch, RadioButton, Tab, Image, Text, Slider, Dialog }
+enum class SemanticsRole {
+    /** A control that performs an action when activated. */
+    Button,
+
+    /** A control that toggles a checked state. */
+    Checkbox,
+
+    /** A control that toggles an on or off state. */
+    Switch,
+
+    /** One option in a mutually exclusive group. */
+    RadioButton,
+
+    /** A tab that selects which panel is shown. */
+    Tab,
+
+    /** A picture. */
+    Image,
+
+    /** Static text. */
+    Text,
+
+    /** A control that picks a value from a range. */
+    Slider,
+
+    /** A dialog or other modal surface. */
+    Dialog,
+}
 
 /**
  * A typed slot in a [SemanticsConfiguration].
@@ -19,19 +46,32 @@ enum class SemanticsRole { Button, Checkbox, Switch, RadioButton, Tab, Image, Te
  * meant another field on one shared type, carried by every widget that has no use for it -- the
  * same shape problem `UiModifier` had before it became a chain. A consumer declares its own key
  * without touching this file.
+ *
+ * @param T The type of value the key holds.
+ * @property name The key's name, used in diagnostics and by [toString].
  */
 class SemanticsPropertyKey<T>(val name: String) {
     override fun toString(): String = name
 }
 
+/** The standard keys a node's [SemanticsConfiguration] can carry, set through [semantics]. */
 object SemanticsProperties {
+    /** The tag a test uses to find the node, set by [testTag]. */
     val TestTag = SemanticsPropertyKey<String>("TestTag")
+
+    /** What kind of control the node is. */
     val Role = SemanticsPropertyKey<SemanticsRole>("Role")
+
+    /** The text a reader announces for the node. */
     val Label = SemanticsPropertyKey<String>("Label")
+
+    /** Whether the node is in its selected or on state. */
     val Selected = SemanticsPropertyKey<Boolean>("Selected")
 
     /** Tri-state: absent means the widget has no indeterminate concept at all. */
     val Indeterminate = SemanticsPropertyKey<Boolean>("Indeterminate")
+
+    /** Set to `true` by a disabled widget; an enabled widget leaves it unset. */
     val Disabled = SemanticsPropertyKey<Boolean>("Disabled")
 
     /**
@@ -96,15 +136,19 @@ class SemanticsConfiguration {
      */
     var isClearingDescendants: Boolean = false
 
+    /** The keys that have a value set. */
     val keys: Set<SemanticsPropertyKey<*>> get() = values.keys
 
+    /** Stores [value] under [key], replacing any earlier value. */
     operator fun <T> set(key: SemanticsPropertyKey<T>, value: T) {
         values[key] = value
     }
 
     @Suppress("UNCHECKED_CAST")
+    /** Returns the value stored under [key], or `null` when none has been set. */
     operator fun <T> get(key: SemanticsPropertyKey<T>): T? = values[key] as T?
 
+    /** Whether a value has been set for [key]. */
     operator fun contains(key: SemanticsPropertyKey<*>): Boolean = values.containsKey(key)
 
     /**

@@ -9,8 +9,12 @@ import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.ModifierNodeElement
 import com.awakekt.awake.compose.ui.node.LayoutNode
 
+/** Where a nested scroll delta came from, passed through to every [NestedScrollConnection]. */
 enum class NestedScrollSource {
+    /** The user's own input, such as a wheel notch or a drag. */
     UserInput,
+
+    /** Something other than direct input, such as an animation or a programmatic scroll. */
     SideEffect,
 }
 
@@ -40,6 +44,7 @@ interface NestedScrollConnection {
         source: NestedScrollSource,
     ): FloatArray = ZERO_DELTA
 
+    /** Holds the zero delta the default callbacks return. */
     companion object {
         private val ZERO_DELTA = floatArrayOf(0f, 0f)
     }
