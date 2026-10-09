@@ -1,1 +1,0 @@
-- **`backend:vulkan`, `backend:vulkan:bindings` and `backend:webgpu` document their whole public API.** Every public class, function and property has KDoc, and Detekt now enforces it for all three modules, as it already did for `backend:jolt`.
