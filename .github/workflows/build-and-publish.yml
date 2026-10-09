@@ -484,7 +484,8 @@ jobs:
   # every check that would be embarrassing to discover afterwards runs before the upload.
   release:
     name: Release
-    timeout-minutes: 60
+    # Room for Central to validate the deployment: the upload waits for its verdict.
+    timeout-minutes: 90
     # Explicit results: without them GitHub skips this job whenever any transitive dependency was
     # skipped, and `natives` is always skipped for a Core-only release (via consumer).
     if: >-
@@ -574,20 +575,28 @@ jobs:
           ./gradlew verifyPublishedArtifacts -Pawake.verifyPublishedVersion="$VERSION" -Pawake.verifyPublishedFamily=core --no-configuration-cache
           ./gradlew :awake:engine:window:verifyDesktopNatives -Pawake.prebuiltNatives="$PWD/build/window-natives" --no-configuration-cache
 
-      - name: Publish to Maven Central
+      # The modules and build-logic's plugins go to Central as one deployment, so a release lands
+      # whole or not at all. Uploaded separately, a refused second upload would leave modules on
+      # Central without the plugins that build against them, and a published release cannot be
+      # replaced. Where Central counts releases by deployment, it also spends one of the monthly
+      # releases its publishing limits allow rather than two.
+      - name: Stage the release
         run: |
-          ./gradlew publishAllPublicationsToMavenCentralRepository \
+          STAGING="$PWD/build/central-staging"
+          rm -rf "$STAGING"
+          ./gradlew publishAllPublicationsToCentralStagingRepository \
                     -PisMainHost=true \
                     -Pawake.publishFamily=core \
                     -Pawake.prebuiltNatives="$PWD/build/window-natives" \
+                    -Pawake.stagingRepository="$STAGING" \
                     --no-configuration-cache
-          ./gradlew -p build-logic publishAllPublicationsToMavenCentralRepository \
+          ./gradlew -p build-logic publishAllPublicationsToCentralStagingRepository \
+                    -Pawake.stagingRepository="$STAGING" \
                     --no-configuration-cache
-        env:
-          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ env.MAVEN_CENTRAL_USERNAME }}
-          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ env.MAVEN_CENTRAL_PASSWORD }}
-          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ env.SIGNING_KEY }}
-          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ env.SIGNING_PASSWORD }}
+          scripts/central-bundle.sh "$STAGING" build/central-bundle.zip
+
+      - name: Publish to Maven Central
+        run: scripts/central-upload.sh build/central-bundle.zip "awake ${{ github.ref_name }}"
 
       - name: Ensure GitHub Release exists
         env:

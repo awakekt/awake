@@ -518,7 +518,7 @@ allprojects {
         onlyIf("is not held back from Maven Central releases") {
             project.path !in releaseHeldProjects ||
                 project.version.toString().endsWith("-SNAPSHOT") ||
-                repository.name != "mavenCentral"
+                repository.name !in setOf("mavenCentral", "centralStaging")
         }
     }
 }

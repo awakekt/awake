@@ -75,6 +75,17 @@ extensions.configure<com.vanniktech.maven.publish.MavenPublishBaseExtension>("ma
     }
 }
 
+// A release stages these plugins next to the engine's modules, so both reach Central in one deployment
+// (com.awakekt.awake.plugin.publish.gradle.kts).
+providers.gradleProperty("awake.stagingRepository").orNull?.let { staging ->
+    extensions.configure<org.gradle.api.publish.PublishingExtension> {
+        repositories.maven {
+            name = "centralStaging"
+            url = uri(staging)
+        }
+    }
+}
+
 // Precompiled script plugins also generate marker publications for internal Awake build
 // conventions. Keep those available to this build's composite consumers, but publish only the
 // stable IDs in publicPluginIds, explicitly supported by the public build-logic artifact.

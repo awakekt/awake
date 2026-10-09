@@ -94,7 +94,9 @@ One person or agent owns a release from cut to downstream bump. Before cutting, 
 1. Branch `release-cut/vX.Y.Z` from `main`, run the cut, push the branch, open
    `chore(release): cut vX.Y.Z` with the milestone, and squash-merge it.
 2. Tag the squash commit (`git tag -a vX.Y.Z -m vX.Y.Z <sha>`) and push the tag. The tag's
-   **Publish** run uploads the Core family. Wait for it to succeed and for
+   **Publish** run stages the Core family and build-logic's plugins in one folder and uploads them
+   as one Central deployment (`scripts/central-bundle.sh`, `scripts/central-upload.sh`), which
+   publishes whole or not at all. Wait for it to succeed and for
    `repo1.maven.org/.../core/host/maven-metadata.xml` to list the version.
 3. **Vulkan:** if anything under `awake/backend/vulkan` changed since the last `vulkan-v*` tag
    (`scripts/vulkan-publication-impact.sh <last-vulkan-tag> vX.Y.Z` prints `true`), tag
@@ -107,8 +109,8 @@ One person or agent owns a release from cut to downstream bump. Before cutting, 
    Re-record moved baselines only after stating which ones should move and why.
 5. Close the milestone.
 
-**A failed publish is not re-run.** A tag whose Publish run failed may have uploaded part of the
-family, and Maven Central never accepts the same version twice. Fix the cause on `main` and cut the
+**A failed publish is not re-run.** A tag whose Publish run failed may still have reached Central,
+and Maven Central never accepts the same version twice. Fix the cause on `main` and cut the
 next version; the failed number stays a gap (as `rc.4`, `rc.5`, `rc.7` and `rc.10` did).
 
 ### Independent Vulkan family
