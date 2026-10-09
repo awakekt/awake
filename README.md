@@ -136,6 +136,8 @@ Issues and pull requests are welcome on [GitHub](https://github.com/awakekt/awak
 [contribution guide](CONTRIBUTING.md) and [release guidance](docs/release-process.md) before making
 a change. Security issues should follow the [security policy](SECURITY.md).
 
-Awake is available under the [Apache License 2.0](LICENSE.md).
+Awake is available under the [Apache License 2.0](LICENSE.md). Third-party components keep their own
+licenses, listed in [NOTICE.md](NOTICE.md): the Roboto font, and the UI font atlases drawn from it,
+are under the [SIL Open Font License 1.1](LICENSES/OFL-1.1.txt).
 The AwakeKt and Awake names, and the Ember Signal mark, are governed separately by the
 [trademark notice](TRADEMARKS.md).
