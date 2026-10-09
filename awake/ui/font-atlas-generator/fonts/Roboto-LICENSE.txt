@@ -1,4 +1,4 @@
-The UI font atlases in awake:core:text (Roboto*UiFontData) are drawn from Roboto, licensed under the Apache License, Version 2.0.
+This directory bundles the static Roboto faces (Roboto-*.ttf), licensed under the Apache License, Version 2.0.
 Source: https://fonts.google.com/specimen/Roboto
 
                                  Apache License

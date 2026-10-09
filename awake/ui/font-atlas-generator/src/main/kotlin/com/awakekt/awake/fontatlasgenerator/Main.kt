@@ -71,7 +71,8 @@ private val FACES = listOf(
     Face("Roboto-Black.ttf", "RobotoBlackUiFontData", "Roboto Black"),
 )
 
-private const val FONT_DIR = "../../core/text/src/commonMain/resources/fonts"
+// The source faces: generator input only. Nothing loads them at run time, so they stay out of core:text.
+private const val FONT_DIR = "fonts"
 private const val LOGICAL_CELL = 16
 
 /** Atlas texels per em, as a multiple of [LOGICAL_CELL].
