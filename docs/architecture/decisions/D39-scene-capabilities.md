@@ -40,7 +40,7 @@ an app installer (`AppModule`), so neither was used.
 |---|---|
 | Ordering a capability's systems between Core's, rather than after them | A capability needs to run before Core's frame systems |
 | Dependencies between capabilities, by id | Two community packages need to state that one builds on the other |
-| Resolving a manifest's plugins to build dependencies | The export pipeline links a project's plugins for it |
+| Resolving a manifest's plugins to build dependencies | The export pipeline links a project's plugins for it. A plugin reference already names its `artifact` (`group`, `name`, `version`) and `capabilityClass` (#537), so the pipeline has what it needs to read |
 | A capability that owns a service the host provides, such as audio | A capability needs more than the renderer, input and physics world |
 
 None of these changes the contract's existing members, so each can be added without breaking

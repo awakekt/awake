@@ -117,6 +117,17 @@ val project = loadProject(files, capabilities = listOf(GrapplingHookCapability),
 - Core's capabilities run first, then the ones passed in, in order. Pass the same list to
   `loadProject`, or to `loadSceneContent` and `sceneSystemsFor`.
 - A plugin the manifest marks `required` must have a capability with its `id`, or the load is refused.
+  A published plugin's reference can also name where its code is and which object it is, so an export
+  or an editor can resolve what to link; a project's own `capabilities/` module needs neither:
+
+  ```json
+  { "id": "com.example.docks", "path": "plugins/docks.awakeplugin", "required": true,
+    "artifact": { "group": "com.example", "name": "docks-capability", "version": "1.2.0" },
+    "capabilityClass": "com.example.docks.DocksCapability" }
+  ```
+
+  Naming them loads nothing: the capability is still linked when the game is built, and a refused
+  load names the plugin's id, its capability class and its artifact.
 
 Capabilities are linked when the game is built, like any dependency: Kotlin/Native and wasmJs cannot
 load code. They are code that ships in the game; an editor plugin only edits the data they read. See

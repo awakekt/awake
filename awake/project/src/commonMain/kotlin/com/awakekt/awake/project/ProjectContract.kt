@@ -18,6 +18,11 @@ import kotlinx.serialization.json.Json
  * @property sha256 Expected SHA-256 checksum of the plugin archive.
  * @property entrypointClass Fully qualified class name of the plugin entrypoint.
  * @property required Whether engine initialization requires this plugin to be present.
+ * @property artifact The published artifact that holds the plugin's runtime code, for an export or an
+ * editor to resolve; null for a plugin that is not published, such as a project's own `capabilities/`
+ * module.
+ * @property capabilityClass Fully qualified name of the `SceneCapability` object [artifact] provides
+ * under this plugin's [id], named like [entrypointClass]; null when nothing needs to look it up.
  */
 @Serializable
 data class AwakeProjectPluginReference(
@@ -27,7 +32,26 @@ data class AwakeProjectPluginReference(
     val sha256: String? = null,
     val entrypointClass: String? = null,
     val required: Boolean = false,
+    val artifact: AwakeProjectArtifact? = null,
+    val capabilityClass: String? = null,
 )
+
+/**
+ * Maven coordinates of a published artifact, as a manifest names a plugin's runtime code.
+ *
+ * @property group The artifact's group, such as `com.example`.
+ * @property name The artifact's name within [group].
+ * @property version The artifact's version.
+ */
+@Serializable
+data class AwakeProjectArtifact(
+    val group: String,
+    val name: String,
+    val version: String,
+) {
+    /** The `group:name:version` notation a Gradle or Maven build declares the artifact with. */
+    override fun toString(): String = "$group:$name:$version"
+}
 
 /**
  * The canonical project manifest shared by tools and runtimes.
@@ -89,6 +113,8 @@ private val projectSemverPattern = Regex("^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][0-9A-
 private val projectSemverParserPattern = Regex("^v?(\\d+)\\.(\\d+)\\.(\\d+)(?:-([0-9A-Za-z.-]+))?(?:\\+[0-9A-Za-z.-]+)?$")
 private val projectSha256Pattern = Regex("^[0-9a-f]{64}$")
 private val projectIdPattern = Regex("^[a-z][a-z0-9]*(\\.[a-z0-9-]+)+$")
+private val artifactPartPattern = Regex("^[A-Za-z0-9_.+-]+$")
+private val qualifiedClassPattern = Regex("^[A-Za-z_][A-Za-z0-9_]*(\\.[A-Za-z_][A-Za-z0-9_]*)+$")
 private val projectDrivePathPattern = Regex("^[A-Za-z]:.*")
 
 /** Pure JSON, SemVer, and structural validation for the project contract. */
@@ -289,5 +315,20 @@ private fun pluginIssues(plugins: List<AwakeProjectPluginReference>): List<Proje
         if (plugin.entrypointClass != null && plugin.entrypointClass.isBlank()) {
             add(ProjectContentIssue(ProjectIssueCode.INVALID_MANIFEST, "plugins[$index].entrypointClass must not be blank"))
         }
+        addAll(runtimeReferenceIssues(index, plugin))
+    }
+}
+
+/** Where a plugin's runtime code is published and which capability object it is. */
+private fun runtimeReferenceIssues(index: Int, plugin: AwakeProjectPluginReference): List<ProjectContentIssue> = buildList {
+    plugin.artifact?.let { artifact ->
+        listOf("group" to artifact.group, "name" to artifact.name, "version" to artifact.version)
+            .filterNot { (_, value) -> value.matches(artifactPartPattern) }
+            .forEach { (part, _) ->
+                add(ProjectContentIssue(ProjectIssueCode.INVALID_MANIFEST, "plugins[$index].artifact.$part must be a non-blank Maven coordinate part"))
+            }
+    }
+    if (plugin.capabilityClass != null && !plugin.capabilityClass.matches(qualifiedClassPattern)) {
+        add(ProjectContentIssue(ProjectIssueCode.INVALID_MANIFEST, "plugins[$index].capabilityClass must be a fully qualified class name"))
     }
 }
