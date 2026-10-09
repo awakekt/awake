@@ -72,6 +72,15 @@ private const val LAYER_SAMPLER_BINDING = TERRAIN_SURFACE_FIRST_BINDING + 4
 /** Baked lighting. See [TerrainLightmap]. */
 const val LIGHTMAP_BINDING: Int = TERRAIN_SURFACE_FIRST_BINDING + 5
 
+/** Whole-world coarse control indices, read where a streamed world has no resident cell. */
+internal const val FALLBACK_CONTROL_INDICES_BINDING = 34
+
+/** Whole-world coarse control weights, beside [FALLBACK_CONTROL_INDICES_BINDING]. */
+internal const val FALLBACK_CONTROL_WEIGHTS_BINDING = 35
+
+/** Whole-world coarse baked lighting for a streamed world. */
+internal const val FALLBACK_LIGHTMAP_BINDING = 36
+
 /** How far below the highest surface another still shows through, in weight-plus-height units. */
 private const val BLEND_DEPTH = 0.25f
 private const val NO_LAYER = -1f
@@ -111,19 +120,19 @@ internal fun terrainLayersShader(clipSpace: ClipSpace, slots: Int, paged: Boolea
     val layerSampler by sampler(group = group, binding = LAYER_SAMPLER_BINDING)
     val lightmap by if (paged) texture2dArray(group = group, binding = LIGHTMAP_BINDING) else texture2d(group = group, binding = LIGHTMAP_BINDING)
     val fallbackIndices = if (paged) {
-        val fallbackIndices by texture2d(group = group, binding = 34)
+        val fallbackIndices by texture2d(group = group, binding = FALLBACK_CONTROL_INDICES_BINDING)
         fallbackIndices
     } else {
         null
     }
     val fallbackWeights = if (paged) {
-        val fallbackWeights by texture2d(group = group, binding = 35)
+        val fallbackWeights by texture2d(group = group, binding = FALLBACK_CONTROL_WEIGHTS_BINDING)
         fallbackWeights
     } else {
         null
     }
     val fallbackLightmap = if (paged) {
-        val fallbackLightmap by texture2d(group = group, binding = 36)
+        val fallbackLightmap by texture2d(group = group, binding = FALLBACK_LIGHTMAP_BINDING)
         fallbackLightmap
     } else {
         null

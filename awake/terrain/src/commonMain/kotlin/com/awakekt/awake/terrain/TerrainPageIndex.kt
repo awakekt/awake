@@ -93,7 +93,11 @@ data class TerrainPageIndex(
 
 /** Pure index codec; paths are resolved by the consuming asset source. */
 object TerrainPageIndexCodec {
-    private val json = Json { prettyPrint = true }
+    // encodeDefaults: a written index states its version rather than relying on a reader's default.
+    private val json = Json {
+        prettyPrint = true
+        encodeDefaults = true
+    }
 
     /** Decodes and validates a version-one UTF-8 JSON terrain index. */
     fun decode(bytes: ByteArray): TerrainPageIndex = json.decodeFromString<TerrainPageIndex>(bytes.decodeToString()).also { it.validate() }

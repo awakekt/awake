@@ -32,7 +32,10 @@ class PagedTerrainSystem(
     /** Cell radius with static collision around the observer. */
     val collisionRadius: Int = 1,
 ) : System {
-    private data class Collider(val entity: Entity, val height: Heightmap)
+    private data class Collider(val entity: Entity, val height: Heightmap, val owners: Int, val fallback: Heightmap) {
+        fun matches(height: Heightmap, owners: Int, fallback: Heightmap): Boolean =
+            this.height === height && this.owners == owners && this.fallback === fallback
+    }
     private val colliders = mutableMapOf<TerrainPageCoord, Collider>()
     init {
         require(collisionRadius in 0..streamer.radius)
@@ -57,7 +60,9 @@ class PagedTerrainSystem(
         for (coord in colliders.keys.toList()) if (coord !in wanted) retire(world, coord)
         for (coord in wanted) {
             val height = requireNotNull(terrain.page(coord)).height
-            if (colliders[coord]?.height === height) continue
+            val owners = edgeOwners(coord)
+            val fallback = terrain.heights.fallback
+            if (colliders[coord]?.matches(height, owners, fallback) == true) continue
             // Replace the entity on a deformation; no background result can resurrect an unloaded body.
             retire(world, coord)
             val entity = world.create()
@@ -71,9 +76,37 @@ class PagedTerrainSystem(
                     ),
                 ),
             )
-            world.add(entity, PhysicsBody(HeightFieldShape(height.copySamples(), height.width, height.scale), motionType = MotionType.STATIC))
-            colliders[coord] = Collider(entity, height)
+            world.add(entity, PhysicsBody(HeightFieldShape(colliderSamples(coord, height), height.width, height.scale), motionType = MotionType.STATIC))
+            colliders[coord] = Collider(entity, height, owners, fallback)
         }
+    }
+
+    /** Which positive-side neighbours are resident; they own this cell's far edge knots. */
+    private fun edgeOwners(coord: TerrainPageCoord): Int {
+        val terrain = streamer.terrain
+        var owners = 0
+        if (terrain.page(TerrainPageCoord(coord.x + 1, coord.z)) != null) owners = owners or 1
+        if (terrain.page(TerrainPageCoord(coord.x, coord.z + 1)) != null) owners = owners or 2
+        if (terrain.page(TerrainPageCoord(coord.x + 1, coord.z + 1)) != null) owners = owners or 4
+        return owners
+    }
+
+    /**
+     * The page's samples with its far column and row read from their owners, as the clipmap and
+     * height queries read them: the coarse fallback while that neighbour is absent or loading.
+     */
+    private fun colliderSamples(coord: TerrainPageCoord, height: Heightmap): FloatArray {
+        val heights = streamer.terrain.heights
+        val layout = heights.layout
+        val n = layout.intervals
+        val firstX = (coord.x - layout.minCellX) * n
+        val firstZ = (coord.z - layout.minCellZ) * n
+        val samples = height.copySamples()
+        for (i in 0..n) {
+            samples[i * (n + 1) + n] = heights.sample(firstX + n, firstZ + i)
+            samples[n * (n + 1) + i] = heights.sample(firstX + i, firstZ + n)
+        }
+        return samples
     }
 
     /** True only after the scene physics system has created this resident cell's real body. */

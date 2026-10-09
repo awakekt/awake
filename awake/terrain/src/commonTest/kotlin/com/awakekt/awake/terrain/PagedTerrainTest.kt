@@ -8,6 +8,7 @@ package com.awakekt.awake.terrain
 import com.awakekt.awake.asset.terrain.Heightmap
 import com.awakekt.awake.asset.terrain.HeightmapSampleEdit
 import com.awakekt.awake.asset.terrain.PagedHeightmap
+import com.awakekt.awake.asset.terrain.RawHeightmapCodec
 import com.awakekt.awake.asset.terrain.TerrainPageCoord
 import com.awakekt.awake.asset.terrain.TerrainPageLayout
 import com.awakekt.awake.core.math.Vec3f
@@ -23,6 +24,9 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+
+/** One step of the 16-bit encoding over the fixtures' 0..10 elevation range, which edits snap to. */
+private const val QUANTUM = 10f / 65535f
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class PagedTerrainTest {
@@ -41,7 +45,7 @@ class PagedTerrainTest {
         val changed = terrain.editHeights(listOf(HeightmapSampleEdit(4, 2, 5f)))
         assertEquals(setOf(TerrainPageCoord(-1, 0), TerrainPageCoord(0, 0)), changed)
         for (coord in changed) assertFalse(terrain.evict(coord))
-        assertEquals(5f, terrain.heights.heightAtWorld(0.0, 2.0))
+        assertEquals(5f, terrain.heights.heightAtWorld(0.0, 2.0), QUANTUM)
         val oldSave = terrain.saveSnapshot(TerrainPageCoord(0, 0))
         terrain.editHeights(listOf(HeightmapSampleEdit(5, 2, 7f)))
         terrain.acknowledgeSave(oldSave)
@@ -60,7 +64,7 @@ class PagedTerrainTest {
         terrain.editHeights(listOf(HeightmapSampleEdit(4, 0, 5f)))
         val old = terrain.fallbackSaveSnapshot()
         assertTrue(terrain.fallbackDirty)
-        assertEquals(5f, old.second.heightAt(1, 0))
+        assertEquals(5f, old.second.heightAt(1, 0), QUANTUM)
         terrain.editHeights(listOf(HeightmapSampleEdit(4, 0, 7f)))
         terrain.acknowledgeFallbackSave(old.first)
         assertTrue(terrain.fallbackDirty)
@@ -70,7 +74,21 @@ class PagedTerrainTest {
             terrain.acknowledgeSave(terrain.saveSnapshot(coord))
             assertTrue(terrain.evict(coord))
         }
-        assertEquals(7f, terrain.heights.heightAtWorld(0.0, 0.0))
+        assertEquals(7f, terrain.heights.heightAtWorld(0.0, 0.0), QUANTUM)
+    }
+
+    @Test fun aSavedSeamEditReloadsBesideItsStillResidentNeighbour() {
+        val terrain = terrain()
+        val left = TerrainPageCoord(-1, 0)
+        terrain.put(left, page(0f))
+        terrain.put(TerrainPageCoord(0, 0), page(0f))
+        terrain.editHeights(listOf(HeightmapSampleEdit(4, 2, 3.14159f)))
+        val save = terrain.saveSnapshot(left)
+        val written = RawHeightmapCodec.encode16LittleEndian(save.page.height, 0f, 10f)
+        terrain.acknowledgeSave(save)
+        assertTrue(terrain.evict(left))
+        // The neighbour still holds the edit in memory; the reloaded file must agree with it exactly.
+        assertTrue(terrain.put(left, TerrainPage(RawHeightmapCodec.decode(written, 5, 5, Vec3f(1f, 1f, 1f), minElevation = 0f, maxElevation = 10f))))
     }
 
     @Test fun partialUploadsPublishOnlyCompleteCellsAndEveryFrameSlotCatchesUp() {

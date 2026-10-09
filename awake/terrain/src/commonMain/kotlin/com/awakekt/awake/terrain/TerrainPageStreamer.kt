@@ -10,6 +10,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlin.math.floor
 
@@ -34,6 +35,9 @@ class TerrainPageStreamer(
     private val failed = mutableSetOf<TerrainPageCoord>()
     private var generation = 0L
     private var closed = false
+    private var demandCellX = Long.MIN_VALUE
+    private var demandCellZ = Long.MIN_VALUE
+    private var demand: List<TerrainPageCoord> = emptyList()
     init {
         require(radius in 0..64 && maxConcurrentReads in 1..terrain.capacity)
     }
@@ -63,7 +67,11 @@ class TerrainPageStreamer(
         val layout = terrain.layout
         val cx = floor(x / layout.cellSize).toLong()
         val cz = floor(z / layout.cellSize).toLong()
-        return buildList {
+        // The sorted neighbourhood only changes when the observer crosses into another cell.
+        if (cx == demandCellX && cz == demandCellZ) return demand
+        demandCellX = cx
+        demandCellZ = cz
+        demand = buildList {
             for (dz in -radius..radius) {
                 for (dx in -radius..radius) {
                     val px = cx + dx
@@ -74,6 +82,7 @@ class TerrainPageStreamer(
                 }
             }
         }.sortedBy { (it.x.toDouble() - cx) * (it.x.toDouble() - cx) + (it.z.toDouble() - cz) * (it.z.toDouble() - cz) }.take(terrain.capacity)
+        return demand
     }
 
     private fun retireUnwanted(wanted: Set<TerrainPageCoord>) {
@@ -119,15 +128,18 @@ class TerrainPageStreamer(
 
     @Suppress("TooGenericExceptionCaught") // Asset providers define their own I/O failures; report them at the worker boundary.
     private fun launchMissing(demand: List<TerrainPageCoord>) {
-        val available = minOf(maxConcurrentReads - pendingReads, terrain.capacity - terrain.residentCoords.size - loading.size)
-        val unavailable = terrain.residentCoords + loading.keys + missing + failed
-        for (coord in demand.filter { it !in unavailable }.take(available.coerceAtLeast(0))) {
+        val resident = terrain.residentCoords
+        val available = minOf(maxConcurrentReads - pendingReads, terrain.capacity - resident.size - loading.size)
+        for (coord in demand.asSequence().filter { it !in resident && it !in loading && !settled(it) }.take(available.coerceAtLeast(0))) {
             val token = ++generation
             val job = scope.launch {
                 val result = try {
                     Result.success(read(coord))
                 } catch (cancelled: CancellationException) {
-                    throw cancelled
+                    // Only this job's own cancellation ends it silently; a reader's timeout is a failure,
+                    // or its loading entry would hold a read slot forever.
+                    ensureActive()
+                    Result.failure(cancelled)
                 } catch (error: Exception) {
                     Result.failure(error)
                 }
@@ -136,6 +148,9 @@ class TerrainPageStreamer(
             loading[coord] = Loading(token, job)
         }
     }
+
+    /** Reported absent or failed, so not read again until it leaves demand or is retried. */
+    private fun settled(coord: TerrainPageCoord): Boolean = coord in missing || coord in failed
 
     /** Explicit retry after a read/validation error, without a hot retry loop every frame. */
     fun retry(coord: TerrainPageCoord) {

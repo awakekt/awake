@@ -7,11 +7,10 @@ package com.awakekt.awake.render.texture
 
 /** Opaque sampled image whose base level can receive checked RGBA8 region updates. */
 interface WritableTexture {
-    /** Rectangle width in texels. */
-    /** Rectangle width in texels. */
+    /** Base-level width in texels. */
     val width: Int
-    /** Rectangle height in texels. */
-    /** Rectangle height in texels. */
+
+    /** Base-level height in texels. */
     val height: Int
 
     /** Number of base-level array layers. */
@@ -23,9 +22,7 @@ class TextureRegion(
     /** Tightly packed row-major RGBA8 source bytes. */
     val data: ByteArray,
     /** Rectangle width in texels. */
-    /** Rectangle width in texels. */
     val width: Int,
-    /** Rectangle height in texels. */
     /** Rectangle height in texels. */
     val height: Int,
     /** Destination texel offset along X. */

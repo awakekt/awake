@@ -47,12 +47,16 @@ can prevent further admission.
 `maxUploadBytes` bounds uploads per frame slot. A table entry appears only after all cell images
 arrive in that submission. Pending cells use fallback. Layer reuse replaces its data and table
 atomically for the writable slot. Eviction removes the table entry even while a replacement waits.
+An edit re-sends only the images it changed, and the slot keeps drawing the cell's older images
+until they arrive. Each attach starts its own upload journal (`uploadJournal`) against fresh
+initial images, so re-attaching republishes every resident cell.
 `isUploaded(coord, frameIndex)` distinguishes CPU residency from GPU publication.
 
 Generic `TextureRegion` uploads run before shadow, camera-depth and scene passes. Mutable images
 have one mip; palette images keep mip filtering through an independent sampler. WebGPU queue
 writes precede submission and follow earlier submitted frames. Vulkan records staging copies and
-vertex/fragment read barriers in the current buffer and retains staging through the slot's fence.
+vertex/fragment read barriers in the current buffer, transitioning each written image once per frame,
+and returns pooled staging buffers for reuse after the slot's fence.
 It keeps mutable texture copies per fenced presentation/offscreen slot. Ordinary updates introduce
 no queue/device idle. Detach retains its existing idle wait.
 
@@ -84,15 +88,17 @@ selection are explicit project lifecycle dependencies. Core clients can use `Ter
 
 The scene adapter calculates absolute observers/origins in double precision and subtracts the current
 origin when spawning centred colliders. Render snapping preserves the absolute grid phase. Nearby
-collision entities use the same resident height pages; deformation replaces only affected entities.
+collision entities use the same resident height pages, with far edges read from their owners exactly
+as the clipmap reads them; deformation, or a positive-side neighbour loading or unloading, replaces
+only affected entities.
 The existing `PhysicsSystem` owns body creation/destruction and origin movement. `collisionReady`
 is true only after the real body exists. Consumer movement policy gates on readiness; visual fallback
 does not imply collision. Scope, reader, observer, render host and physics system are code-only options.
 
 ## Editing and saving
 
-Height edits use global fine sample coordinates. All shared copies must be resident; validation
-precedes mutation. Seam/corner edits update copies atomically and report affected cells. Nested coarse
+Height edits use global fine sample coordinates and snap to the 16-bit page encoding, so a saved cell
+reloads equal to its resident neighbours. All shared copies must be resident; validation precedes mutation. Seam/corner edits update copies atomically and report affected cells. Nested coarse
 knots update alongside detail. Non-knot detail does not alter decimated coarse heights.
 `PagedTerrainLayers.editControl` updates a page and centre-decimated coarse controls owned by its cell.
 Generic providers update coarse surface images through `editFallbackTextures`.

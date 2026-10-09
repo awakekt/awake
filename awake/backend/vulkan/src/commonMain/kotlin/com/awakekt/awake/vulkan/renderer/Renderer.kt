@@ -442,6 +442,7 @@ class Renderer internal constructor(
     internal fun prepareResources(frameIndex: Int, commandBuffer: Long) {
         textureUploads.beginFrame(frameIndex, commandBuffer)
         com.awakekt.awake.render.passes.prepareFrameResources(renderFeatures, frameIndex, textureUploads)
+        textureUploads.endFrame()
     }
 
     /**

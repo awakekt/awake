@@ -44,8 +44,8 @@ class PagedTerrainLayers private constructor(
         require(control.width == index.controlWidth && control.depth == index.controlDepth)
         require(terrain.page(coord) != null)
         val coarseImages = terrain.surfaceFallbackSaveSnapshot().second
-        val coarseIndices = coarseImages.getValue(34)
-        val coarseWeights = coarseImages.getValue(35)
+        val coarseIndices = coarseImages.getValue(FALLBACK_CONTROL_INDICES_BINDING)
+        val coarseWeights = coarseImages.getValue(FALLBACK_CONTROL_WEIGHTS_BINDING)
         val columns = coarseIndices.width * 4 / index.controlSlots
         val indices = coarseIndices.data.copyOf()
         val weights = coarseWeights.data.copyOf()
@@ -65,7 +65,7 @@ class PagedTerrainLayers private constructor(
         }
         terrain.editTexture(coord, CONTROL_INDICES_BINDING, control.indicesTexture())
         terrain.editTexture(coord, CONTROL_WEIGHTS_BINDING, control.weightsTexture())
-        terrain.editFallbackTextures(mapOf(34 to coarseIndices.copy(data = indices), 35 to coarseWeights.copy(data = weights)))
+        terrain.editFallbackTextures(mapOf(FALLBACK_CONTROL_INDICES_BINDING to coarseIndices.copy(data = indices), FALLBACK_CONTROL_WEIGHTS_BINDING to coarseWeights.copy(data = weights)))
     }
 
     /** Loads one indexed cell; returns null when the sparse index omits it. */
@@ -107,14 +107,14 @@ class PagedTerrainLayers private constructor(
 
     /** Writes coarse surface images; acknowledge the snapshot after all writes succeed. */
     suspend fun saveSurfaceFallback(snapshot: Pair<Long, Map<Int, TextureAsset>>, write: suspend (AssetPath, ByteArray) -> Unit) {
-        val coarseLight = snapshot.second.getValue(36)
+        val coarseLight = snapshot.second.getValue(FALLBACK_LIGHTMAP_BINDING)
         if (index.fallbackLightmap == null) require(coarseLight.data.contentEquals(neutral(coarseLight.width, coarseLight.height).copyRgba())) { "Author a fallback lightmap path before saving coarse baked-light edits." }
-        val indices = snapshot.second.getValue(34)
-        val weights = snapshot.second.getValue(35)
+        val indices = snapshot.second.getValue(FALLBACK_CONTROL_INDICES_BINDING)
+        val weights = snapshot.second.getValue(FALLBACK_CONTROL_WEIGHTS_BINDING)
         val control = TerrainControlMap(indices.width * 4 / index.controlSlots, indices.height, indices.data, weights.data, index.controlSlots)
         write(indexPath.resolve(requireNotNull(index.fallbackControl)), TerrainControlMapCodec.encode(control))
         index.fallbackLightmap?.let {
-            val light = snapshot.second.getValue(36)
+            val light = snapshot.second.getValue(FALLBACK_LIGHTMAP_BINDING)
             write(indexPath.resolve(it), TerrainLightmapCodec.encode(TerrainLightmap(light.width, light.height, light.data)))
         }
     }
@@ -144,7 +144,7 @@ class PagedTerrainLayers private constructor(
                 PagedHeightmap(index.layout(), TerrainPageHeightReader(index, indexPath, assets).fallback()),
                 capacity,
                 mapOf(CONTROL_INDICES_BINDING to template.indicesTexture(), CONTROL_WEIGHTS_BINDING to template.weightsTexture(), LIGHTMAP_BINDING to neutral(index.controlWidth, index.controlDepth).texture()),
-                mapOf(CONTROL_INDICES_BINDING to (34 to coarse.indicesTexture()), CONTROL_WEIGHTS_BINDING to (35 to coarse.weightsTexture()), LIGHTMAP_BINDING to (36 to light.texture())),
+                mapOf(CONTROL_INDICES_BINDING to (FALLBACK_CONTROL_INDICES_BINDING to coarse.indicesTexture()), CONTROL_WEIGHTS_BINDING to (FALLBACK_CONTROL_WEIGHTS_BINDING to coarse.weightsTexture()), LIGHTMAP_BINDING to (FALLBACK_LIGHTMAP_BINDING to light.texture())),
                 maxUploadBytes,
             )
             return PagedTerrainLayers(terrain, index, indexPath, assets, palette, mapOf(LAYER_ALBEDO_BINDING to packLayerArray(albedo, heights), LAYER_TABLE_BINDING to layerTable(palette)))

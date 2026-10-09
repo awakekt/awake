@@ -7,6 +7,8 @@ package com.awakekt.awake.asset.terrain
 
 import kotlin.math.floor
 
+private const val UNSIGNED_16_MAX = 65535f
+
 /**
  * Absolute square page identifier, independent of a scene or its floating origin.
  * @property x Absolute cell coordinate along X.
@@ -179,25 +181,32 @@ class PagedHeightmap(val layout: TerrainPageLayout, fallback: Heightmap) {
 
     /** Absolute world-space query; NaN outside the index footprint. */
     fun heightAtWorld(x: Double, z: Double): Float {
-        val gx = ((x - layout.minX) / layout.sampleSpacing).toFloat()
-        val gz = ((z - layout.minZ) / layout.sampleSpacing).toFloat()
-        if (gx !in 0f..layout.worldIntervalsX.toFloat() || gz !in 0f..layout.worldIntervalsZ.toFloat()) return Float.NaN
+        // Grid coordinates stay in double precision: on a large footprint a Float loses the sub-sample fraction.
+        val gx = (x - layout.minX) / layout.sampleSpacing
+        val gz = (z - layout.minZ) / layout.sampleSpacing
+        if (gx !in 0.0..layout.worldIntervalsX.toDouble() || gz !in 0.0..layout.worldIntervalsZ.toDouble()) return Float.NaN
         val ix = floor(gx).toInt()
         val iz = floor(gz).toInt()
         val nx = minOf(ix + 1, layout.worldIntervalsX)
         val nz = minOf(iz + 1, layout.worldIntervalsZ)
+        val fx = (gx - ix).toFloat()
+        val fz = (gz - iz).toFloat()
         val a = sample(ix, iz)
         val b = sample(nx, iz)
         val c = sample(ix, nz)
         val d = sample(nx, nz)
-        return ((a + (b - a) * (gx - ix)) * (1f - (gz - iz)) + (c + (d - c) * (gx - ix)) * (gz - iz)) * layout.heightScale
+        return ((a + (b - a) * fx) * (1f - fz) + (c + (d - c) * fx) * fz) * layout.heightScale
     }
 
     /** Global sample edits. All shared copies must be loaded; validation precedes every write. */
     fun apply(edits: List<HeightmapSampleEdit>): PagedHeightmapChange? {
-        val perPage = LinkedHashMap<TerrainPageCoord, MutableList<HeightmapSampleEdit>>()
-        for (edit in edits) {
+        val snapped = edits.map { edit ->
             require(edit.height.isFinite() && edit.height in layout.minElevation..layout.maxElevation)
+            // The value the 16-bit page codec writes back, so a saved and reloaded copy still equals a resident neighbour.
+            edit.copy(height = quantize(edit.height))
+        }
+        val perPage = LinkedHashMap<TerrainPageCoord, MutableList<HeightmapSampleEdit>>()
+        for (edit in snapped) {
             for (coord in layout.copies(edit.x, edit.z)) {
                 require(coord in pages) { "Load and pin page $coord before editing a shared sample." }
                 perPage.getOrPut(coord) { mutableListOf() } += HeightmapSampleEdit(
@@ -217,7 +226,7 @@ class PagedHeightmap(val layout: TerrainPageLayout, fallback: Heightmap) {
         }
         if (changed.isEmpty()) return null
         val stride = layout.worldIntervalsX / (fallback.width - 1)
-        val coarseEdits = edits.filter { it.x % stride == 0 && it.z % stride == 0 }
+        val coarseEdits = snapped.filter { it.x % stride == 0 && it.z % stride == 0 }
             .map { HeightmapSampleEdit(it.x / stride, it.z / stride, it.height) }
         val coarse = fallback.mutableCopy()
         val coarseChange = coarse.apply(coarseEdits)
@@ -225,6 +234,13 @@ class PagedHeightmap(val layout: TerrainPageLayout, fallback: Heightmap) {
         if (coarseChange != null) fallback = coarse.snapshot()
         revision++
         return PagedHeightmapChange(revision, changed, coarseChange != null)
+    }
+
+    /** Mirrors RawHeightmapCodec's unsigned 16-bit round trip over the lattice's elevation range. */
+    private fun quantize(height: Float): Float {
+        val range = layout.maxElevation - layout.minElevation
+        val value = (((height - layout.minElevation) / range).coerceIn(0f, 1f) * UNSIGNED_16_MAX + 0.5f).toInt().coerceIn(0, 0xFFFF)
+        return layout.minElevation + value / UNSIGNED_16_MAX * range
     }
 
     private fun interpolate(map: Heightmap, x: Float, z: Float): Float {

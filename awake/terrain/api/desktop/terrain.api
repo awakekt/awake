@@ -34,6 +34,7 @@ public final class com/awakekt/awake/terrain/PagedTerrain : com/awakekt/awake/re
 	public final fun setOriginZ (D)V
 	public final fun surfaceFallbackSaveSnapshot ()Lkotlin/Pair;
 	public fun updates (I)Ljava/util/List;
+	public final fun uploadJournal ()Lcom/awakekt/awake/render/passes/ContentTextureUpdates;
 }
 
 public final class com/awakekt/awake/terrain/PagedTerrainKt {

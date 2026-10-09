@@ -64,8 +64,6 @@ class TerrainPageSampling internal constructor(val grid: AslExpr, val dimensions
     @Suppress("LongParameterList") // Sampling options describe endpoint and packed-control layouts.
     fun sample(texture: AslExpr, fallback: AslExpr, relative: AslExpr, endpoints: Boolean = true, parts: Int = 1, part: Int = 0, coarseLinear: Boolean = false): AslExpr {
         val cell = clamp(floor(relative / grid.z), vec2(0f.lit, 0f.lit), vec2(dimensions.x - 1f.lit, dimensions.y - 1f.lit))
-        val lookup = textureSampleLevel(table, sampler, vec2((cell.x + 0.5f.lit) / dimensions.x, (cell.y + 0.5f.lit) / dimensions.y), 0f.lit)
-        val layer = floor(lookup.x * 255f.lit + 0.5f.lit) + floor(lookup.y * 255f.lit + 0.5f.lit) * 256f.lit - 1f.lit
         val size = textureDimensions(texture)
         val local = clamp(relative / grid.z - cell, vec2(0f.lit, 0f.lit), vec2(1f.lit, 1f.lit))
         // Height endpoints include both edges. Surface texels are cell-centred, selected by callers.
@@ -91,6 +89,32 @@ class TerrainPageSampling internal constructor(val grid: AslExpr, val dimensions
                 (clamp(floor(relative.y / (dimensions.y * grid.z) * toF32(coarseSize.y)), 0f.lit, toF32(coarseSize.y) - 1f.lit) + 0.5f.lit) / toF32(coarseSize.y),
             )
         }
+        return resolve(texture, fallback, cell, uv, coarseUV)
+    }
+
+    /**
+     * Endpoint-inclusive lookup of the global fine [knot], whose components are whole numbers.
+     * Integer-valued arithmetic picks the same positive-side owner as `TerrainPageLayout.owner` on the
+     * CPU, where dividing a reconstructed world position could round a boundary knot into the wrong cell.
+     */
+    internal fun sampleKnot(texture: AslExpr, fallback: AslExpr, knot: AslExpr): AslExpr {
+        val intervals = grid.w
+        val cell = clamp(floor(knot / intervals), vec2(0f.lit, 0f.lit), vec2(dimensions.x - 1f.lit, dimensions.y - 1f.lit))
+        val size = textureDimensions(texture)
+        val sample = knot - cell * intervals
+        val uv = vec2((sample.x + 0.5f.lit) / toF32(size.x), (sample.y + 0.5f.lit) / toF32(size.y))
+        val coarseSize = textureDimensions(fallback)
+        val coarseUV = vec2(
+            (knot.x / (dimensions.x * intervals) * (toF32(coarseSize.x) - 1f.lit) + 0.5f.lit) / toF32(coarseSize.x),
+            (knot.y / (dimensions.y * intervals) * (toF32(coarseSize.y) - 1f.lit) + 0.5f.lit) / toF32(coarseSize.y),
+        )
+        return resolve(texture, fallback, cell, uv, coarseUV)
+    }
+
+    /** The resident image at [uv] when the table maps [cell] to a layer, otherwise the coarse image at [coarseUV]. */
+    private fun resolve(texture: AslExpr, fallback: AslExpr, cell: AslExpr, uv: AslExpr, coarseUV: AslExpr): AslExpr {
+        val lookup = textureSampleLevel(table, sampler, vec2((cell.x + 0.5f.lit) / dimensions.x, (cell.y + 0.5f.lit) / dimensions.y), 0f.lit)
+        val layer = floor(lookup.x * 255f.lit + 0.5f.lit) + floor(lookup.y * 255f.lit + 0.5f.lit) * 256f.lit - 1f.lit
         return select(textureSampleLevel(fallback, sampler, coarseUV, 0f.lit), textureSampleArrayLevel(texture, sampler, uv, toU32(max(layer, 0f.lit)), 0f.lit), layer gt (-0.5f).lit)
     }
 }
@@ -103,8 +127,8 @@ internal fun AslShaderBuilder.pageSampling(handles: AslLayoutHandles, sampler: A
 internal fun AslShaderBuilder.pagedHeightSampler(pages: TerrainPageSampling, fallback: AslExpr): AslFunctionHandle {
     val heightPages by texture2dArray(group = 0, binding = TERRAIN_HEIGHT_PAGES_BINDING)
     val knot = fn("pageHeightKnot") {
-        val relative by param(GpuDataShape.Vec2)
-        returnValue(decodeHeight(pages.sample(heightPages, fallback, relative)))
+        val index by param(GpuDataShape.Vec2)
+        returnValue(decodeHeight(pages.sampleKnot(heightPages, fallback, index)))
     }
     return fn("pageHeight") {
         val position by param(GpuDataShape.Vec2)
@@ -114,10 +138,10 @@ internal fun AslShaderBuilder.pagedHeightSampler(pages: TerrainPageSampling, fal
         val base = let("base", floor(sample))
         val fraction = let("fraction", sample - base)
         val limit = vec2(pages.dimensions.x, pages.dimensions.y) * pages.grid.w
-        val a = let("a", knot(base * spacing))
-        val b = let("b", knot(min(base + vec2(1f.lit, 0f.lit), limit) * spacing))
-        val c = let("c", knot(min(base + vec2(0f.lit, 1f.lit), limit) * spacing))
-        val d = let("d", knot(min(base + vec2(1f.lit, 1f.lit), limit) * spacing))
+        val a = let("a", knot(base))
+        val b = let("b", knot(min(base + vec2(1f.lit, 0f.lit), limit)))
+        val c = let("c", knot(min(base + vec2(0f.lit, 1f.lit), limit)))
+        val d = let("d", knot(min(base + vec2(1f.lit, 1f.lit), limit)))
         returnValue(mix(mix(a, b, fraction.x), mix(c, d, fraction.x), fraction.y))
     }
 }

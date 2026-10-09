@@ -33,7 +33,7 @@ class JoltHeightFieldTileTest {
 
     @Test
     fun streamed129SamplePagesMeetAndUnloadWithoutLeavingCollision() = runTest {
-        val world = JoltPhysicsWorld()
+        val world = createJoltPhysicsWorld()
         try {
             val shape = com.awakekt.awake.physics.HeightFieldShape(FloatArray(129 * 129) { 2f }, 129, Vec3f(4f, 1f, 4f))
             world.createBody(shape, Vec3f(256f, 0f, 256f), Quat.IDENTITY, MotionType.STATIC)
