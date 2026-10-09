@@ -18,6 +18,7 @@ public final class com/awakekt/awake/asset/shaders/AttachedContentSlot : com/awa
 	public fun <init> ()V
 	public fun destroy ()V
 	public fun getPass ()Lcom/awakekt/awake/render/passes/RenderPassSlot;
+	public fun prepareFrame (ILcom/awakekt/awake/render/texture/TextureUploadRecorder;)V
 	public fun recordCommands (Lcom/awakekt/awake/render/passes/RenderFrameContext;)V
 }
 
@@ -55,7 +56,10 @@ public abstract interface class com/awakekt/awake/asset/shaders/ContentFeatureSo
 
 public final class com/awakekt/awake/asset/shaders/ContentUpload {
 	public fun <init> (Lcom/awakekt/awake/render/passes/ContentGeometry;Lkotlin/jvm/functions/Function0;)V
+	public fun <init> (Lcom/awakekt/awake/render/passes/ContentGeometry;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/render/passes/ContentGeometry;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getGeometry ()Lcom/awakekt/awake/render/passes/ContentGeometry;
+	public final fun getPrepare ()Lkotlin/jvm/functions/Function2;
 	public final fun release ()V
 }
 

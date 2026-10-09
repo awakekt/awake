@@ -258,6 +258,7 @@ fun textureSampleCompareLevelCube(
 
 private val SupportedTextureDimensionTypes = setOf(
     AslType.Texture2dF32,
+    AslType.Texture2dArrayF32,
     AslType.TextureCubeF32,
     AslType.TextureDepth2d,
     AslType.TextureDepth2dArray,

@@ -43,12 +43,12 @@ class Texture(
     graphicsDevice: GraphicsDevice,
     @Suppress("UNUSED_PARAMETER") runOneTimeCommands: ((commandBuffer: Long) -> Unit) -> Unit,
     data: ByteArray,
-    width: Int,
-    height: Int,
-    layerCount: Int = 1,
+    override val width: Int,
+    override val height: Int,
+    override val layerCount: Int = 1,
     isCubemap: Boolean = false,
     filtering: TextureFiltering = TextureFiltering.Linear,
-) {
+) : com.awakekt.awake.render.texture.WritableTexture {
     val texture: GPUTexture
     val view: GPUTextureView
     val sampler: GPUSampler
@@ -58,7 +58,7 @@ class Texture(
         val asset = TextureAsset(data, width, height, layerCount, isCubemap)
         // Arrays get a full chain: tiled terrain layers are sampled with implicit LOD and shimmer
         // without one. Cubemaps stay single-level; the sky samples its base level only.
-        val mipLevels = if (isCubemap || filtering == TextureFiltering.Nearest) listOf(asset) else asset.mipChain()
+        val mipLevels = if (isCubemap || filtering != TextureFiltering.Linear) listOf(asset) else asset.mipChain()
         texture = device.createTexture(
             TextureDescriptor(
                 size = Extent3D(
@@ -93,6 +93,9 @@ class Texture(
         }
         view = texture.createView(
             TextureViewDescriptor(
+                // Descriptor defaults expose one layer/level; arrays and generated mips need the full view.
+                arrayLayerCount = layerCount.toUInt(),
+                mipLevelCount = mipLevels.size.toUInt(),
                 dimension = when {
                     isCubemap -> GPUTextureViewDimension.Cube
                     layerCount > 1 -> GPUTextureViewDimension.TwoDArray

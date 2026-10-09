@@ -437,6 +437,14 @@ class Renderer internal constructor(
     internal fun recordSharedPassFeatures(slot: RenderPassSlot, context: VulkanRenderFrameContext) =
         recordPassFeatures(renderFeatures, slot, context)
 
+    private val textureUploads = com.awakekt.awake.vulkan.texture.TextureUploads(graphicsDevice)
+
+    internal fun prepareResources(frameIndex: Int, commandBuffer: Long) {
+        textureUploads.beginFrame(frameIndex, commandBuffer)
+        com.awakekt.awake.render.passes.prepareFrameResources(renderFeatures, frameIndex, textureUploads)
+        textureUploads.endFrame()
+    }
+
     /**
      * Records the depth pre-pass into [commandBuffer], on its own render pass, before the caller
      * begins the pass that samples it.
@@ -510,6 +518,7 @@ class Renderer internal constructor(
         // submitted offscreen work leaves those frame slots in flight during direct teardown.
         waitIdle()
         awaitSubmittedOffscreenCommands()
+        textureUploads.destroy()
         uiRunCache.clear()
         // "Whoever holds the list destroys it": these were constructor-injected, but this class
         // is the only thing that knows the list's full membership.

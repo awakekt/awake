@@ -41,8 +41,8 @@ import com.awakekt.awake.render.texture.TextureAsset
  * sharing a name is a collision, not a merge.
  * @property spec The pipeline this feature needs, including the uniform layout it owns.
  * @property textures Pixel data for each sampled-texture binding [spec] declares, keyed by
- * binding index. Uploaded once when the feature is built -- see the class note below on why a
- * per-frame swap has no path here. A binding declared `arrayed` takes a multi-layer
+ * binding index. Shape and bindings are fixed at construction; opted-in base-level images can
+ * receive regions through [textureUpdates]. A binding declared `arrayed` takes a multi-layer
  * [TextureAsset]; a single-layer one there is rejected rather than left to the GPU to catch.
  * @property geometry Mesh uploaded once with the feature, or null when the feature supplies its
  * own. Load-time data, for the same reason the textures above are.
@@ -58,15 +58,13 @@ import com.awakekt.awake.render.texture.TextureAsset
  * or null when it casts nothing. Built over [spec]'s own group, so it reads the same uniform block
  * and textures and must share [spec]'s vertex format and uniform layout; its shader declares only
  * the group-0 bindings it reads. The feature [build] returns must then be a [ContentDepthSource].
+ * @property textureUpdates Optional frame-slot journal for mutable base-level images.
+ * @property samplerTextures Sampler binding to image binding for independent filtering.
  * @property build Turns the registry's output into the feature that records with it.
  *
- * ### Textures are uploaded once
- *
- * A `Material` allocates a descriptor set per frame in flight and per draw slot, so it can be
- * rewritten between frames. A content feature's group is built once, when the feature is. That
- * suits a splat weightmap or a layer texture, which are load-time data; it does not suit
- * anything a feature wants to replace per frame, and there is deliberately no API here that
- * looks like it would work.
+ * Mutable textures opt into [textureUpdates]. Backends prepare regions before any depth or scene
+ * pass, retain staging through submission completion, and isolate resources belonging to frames
+ * still in flight. Texture shape, descriptor layout and the feature's geometry remain fixed.
  */
 class ContentFeature(
     val name: String,
@@ -76,6 +74,9 @@ class ContentFeature(
     val paint: ContentPaint = ContentPaint.BeforeGeometry,
     val samplesSceneDepth: Boolean = false,
     val depth: PipelineSpec? = null,
+    val textureUpdates: ContentTextureUpdates? = null,
+    /** Sampler binding to texture binding, when different samplers are required. */
+    val samplerTextures: Map<Int, Int> = emptyMap(),
     val build: (PipelineHandle, UniformBlock, ContentGeometry?) -> RenderFeature<RenderFrameContext>,
 ) {
     init {
@@ -89,6 +90,14 @@ class ContentFeature(
             .orEmpty()
             .filter { it.kind == ResourceKind.SampledTexture }
         val declared = sampled.map { it.binding }.toSet()
+        require(textureUpdates?.bindings.orEmpty().all { it in declared && textures.getValue(it).filtering != com.awakekt.awake.render.texture.TextureFiltering.Linear }) {
+            "Mutable content textures must be declared base-level textures."
+        }
+        require(
+            samplerTextures.all { (binding, texture) ->
+                spec.materialBindings?.entries?.any { it.binding == binding && it.kind == ResourceKind.Sampler } == true && texture in declared
+            },
+        ) { "Sampler sources must name declared sampler and texture bindings." }
         // Both directions, because both fail late and neither fails clearly. A supplied texture
         // with no declared binding is written nowhere; a declared binding with no texture leaves
         // a descriptor the shader samples unwritten -- undefined reads on Vulkan, and a

@@ -67,6 +67,7 @@ internal class PerFrameUniformSlots(
     var descriptorSetLayout: Long = 0
         private set
     private val slots = mutableListOf<Slot>()
+    val size: Int get() = slots.size
 
     // Same partial-creation-leak guard as RenderPipeline's own init -- if slot N throws, slots
     // 0..N-1 (and the layout, if already built) would otherwise leak with nothing yet holding
@@ -167,11 +168,12 @@ internal class PerFrameUniformSlots(
      * default `VkSamplerCreateInfo`, so which one is picked cannot differ today; a feature
      * needing distinct filtering per texture is what would force a real choice here.
      */
-    fun writeTextures(textures: Map<Int, Texture>) {
+    fun writeTextures(textures: Map<Int, Texture>, frameIndex: Int? = null, samplerTextures: Map<Int, Int> = emptyMap()) {
         val declared = bindings ?: return
         if (textures.isEmpty()) return
         val sharedSampler = textures.entries.minBy { it.key }.value.sampler.handle
-        slots.forEach { slot ->
+        slots.forEachIndexed { index, slot ->
+            if (frameIndex != null && index != frameIndex) return@forEachIndexed
             declared.entries.forEach { entry ->
                 when (entry.kind) {
                     ResourceKind.SampledTexture -> {
@@ -189,7 +191,7 @@ internal class PerFrameUniformSlots(
                         slot.descriptorSet,
                         entry.binding,
                         VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLER,
-                        VkDescriptorImageInfo(sampler = sharedSampler, imageView = 0L),
+                        VkDescriptorImageInfo(sampler = samplerTextures[entry.binding]?.let { textures.getValue(it).sampler.handle } ?: sharedSampler, imageView = 0L),
                     )
                     // The uniform buffer is written at slot creation; a storage buffer has no
                     // source here, and ContentFeature rejects one before it reaches this point.

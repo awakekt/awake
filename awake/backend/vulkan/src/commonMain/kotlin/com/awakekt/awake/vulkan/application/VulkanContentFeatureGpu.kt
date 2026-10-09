@@ -44,7 +44,7 @@ internal class VulkanContentFeatureGpu(
     override fun handle(pipeline: RenderPipeline): PipelineHandle = pipeline
 
     override fun upload(pipeline: RenderPipeline, feature: ContentFeature): ContentUpload {
-        val textures = feature.textures.mapValues { (_, asset) ->
+        fun create(asset: com.awakekt.awake.render.texture.TextureAsset): Texture =
             Texture(
                 graphicsDevice,
                 transferContext::runOneTimeCommands,
@@ -53,11 +53,22 @@ internal class VulkanContentFeatureGpu(
                 asset.height,
                 layerCount = asset.layerCount,
                 isCubemap = asset.isCubemap,
+                filtering = asset.filtering,
             )
-        }
+        val textures = feature.textures.mapValues { (_, asset) -> create(asset) }
         // After the registry compiled the pipeline, because the layout comes from a spec and the
         // pixels come from the feature -- see PerFrameUniformSlots.writeTextures.
-        pipeline.writeContentTextures(textures)
+        val mutable = feature.textureUpdates?.bindings.orEmpty()
+        val frames = List(pipeline.contentFrameSlotCount) { index ->
+            if (index == 0) {
+                textures
+            } else {
+                textures.mapValues { (binding, texture) ->
+                    if (binding in mutable) create(feature.textures.getValue(binding)) else texture
+                }
+            }
+        }
+        frames.forEachIndexed { index, frame -> pipeline.writeContentTextureSlot(index, frame, feature.samplerTextures) }
         val mesh = feature.geometry?.let { source ->
             Mesh(
                 graphicsDevice,
@@ -68,8 +79,14 @@ internal class VulkanContentFeatureGpu(
             )
         }
         // Owned here: a descriptor write or a recorded bind references these without owning them.
-        return ContentUpload(mesh?.let { ContentGeometry(it.vertexBinding, it.indexBinding, it.indexCount) }) {
-            textures.values.forEach(Texture::destroy)
+        return ContentUpload(mesh?.let { ContentGeometry(it.vertexBinding, it.indexBinding, it.indexCount) }, prepare = { frameIndex, uploads ->
+            val frame = frames[frameIndex]
+            feature.textureUpdates?.updates(frameIndex)?.forEach { update ->
+                require(update.binding in mutable) { "Update names an immutable content binding." }
+                uploads.write(frame.getValue(update.binding), update.region)
+            }
+        }) {
+            frames.flatMap { it.values }.distinct().forEach(Texture::destroy)
             mesh?.destroy()
         }
     }

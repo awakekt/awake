@@ -16,6 +16,13 @@ implementation(project(":awake:terrain"))
   payload names. It is a `suspend` function, called off the frame thread.
 - `TerrainSurface` -- a resolved surface: a `ShaderSet` built on the shader pack's clipmap vertex
   stage, and the textures for its bindings.
+- `TerrainPageIndex` -- a versioned sparse index with per-cell raw heights, control/lightmap paths,
+  a shared palette and mandatory coarse fallback.
+- `PagedTerrain` -- bounded mutable pages, edit/save revisions and frame-slot upload journals.
+- `TerrainPageStreamer` -- bounded asynchronous reads with cancellation generations and observable
+  missing/failed cells. All residency mutations happen on the owner thread.
+
+See [streamed terrain](../../docs/plans/streamed-terrain.md) for assets, memory costs and integration.
 
 ## Why it is its own module
 
@@ -25,7 +32,6 @@ way: `scene:scene3d` stores a `TerrainSurfaceReference` beside a terrain entity 
 `TerrainContentSystem` resolves it through the installed providers; `kit:terrain-layers` implements
 a provider; nothing here knows a scene exists.
 
-It is small on purpose. `docs/reference/module-architecture.md` rejects small modules unless one
-joins two modules that must not depend on each other, and that is this one: `scene:scene3d` names
-these types, and `kit:terrain-layers`, a capability, must not depend on a scene module
+The surface seam and page residency both work without an ECS or scene. `scene:worldstream` maps
+authored configuration and observers to these types; the capability depends on no scene module
 (`./gradlew verifyCapabilityLayering`).

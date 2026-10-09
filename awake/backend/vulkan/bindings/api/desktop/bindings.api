@@ -2374,6 +2374,11 @@ public final class com/awakekt/awake/vulkan/gen/VulkanQueries {
 	public final fun vkDestroyQueryPool (JJ)V
 }
 
+public final class com/awakekt/awake/vulkan/gen/VulkanTextureRegions {
+	public static final field INSTANCE Lcom/awakekt/awake/vulkan/gen/VulkanTextureRegions;
+	public final fun copy (JJJIIIII)V
+}
+
 public final class com/awakekt/awake/vulkan/gen/VulkanWindow {
 	public static final field INSTANCE Lcom/awakekt/awake/vulkan/gen/VulkanWindow;
 	public final fun glfwCreateWindowSurface (JJ)J

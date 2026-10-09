@@ -91,6 +91,7 @@ public final class com/awakekt/awake/render/passes2d/RenderFeature2D : com/awake
 	public fun <init> (Lcom/awakekt/awake/render/passes2d/DrawPass;)V
 	public fun destroy ()V
 	public fun getPass ()Lcom/awakekt/awake/render/passes/RenderPassSlot;
+	public fun prepareFrame (ILcom/awakekt/awake/render/texture/TextureUploadRecorder;)V
 	public fun recordCommands (Lcom/awakekt/awake/render/passes/RenderFrameContext;)V
 }
 

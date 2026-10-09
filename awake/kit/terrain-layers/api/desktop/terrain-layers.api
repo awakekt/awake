@@ -1,3 +1,21 @@
+public final class com/awakekt/awake/kit/terrainlayers/PagedTerrainLayers {
+	public static final field Companion Lcom/awakekt/awake/kit/terrainlayers/PagedTerrainLayers$Companion;
+	public synthetic fun <init> (Lcom/awakekt/awake/terrain/PagedTerrain;Lcom/awakekt/awake/terrain/TerrainPageIndex;Lcom/awakekt/awake/core/io/AssetPath;Lcom/awakekt/awake/core/io/AssetSource;Lcom/awakekt/awake/kit/terrainlayers/TerrainLayerPalette;Ljava/util/Map;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun editControl (Lcom/awakekt/awake/asset/terrain/TerrainPageCoord;Lcom/awakekt/awake/kit/terrainlayers/TerrainControlMap;)V
+	public final fun getContent ()Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
+	public final fun getIndex ()Lcom/awakekt/awake/terrain/TerrainPageIndex;
+	public final fun getTerrain ()Lcom/awakekt/awake/terrain/PagedTerrain;
+	public final fun read (Lcom/awakekt/awake/asset/terrain/TerrainPageCoord;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun save (Lcom/awakekt/awake/terrain/TerrainPageSave;Lkotlin/jvm/functions/Function3;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun saveFallback (Lkotlin/Pair;Lkotlin/jvm/functions/Function3;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun saveSurfaceFallback (Lkotlin/Pair;Lkotlin/jvm/functions/Function3;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/kit/terrainlayers/PagedTerrainLayers$Companion {
+	public final fun load (Lcom/awakekt/awake/core/io/AssetSource;Lcom/awakekt/awake/core/io/AssetPath;IILkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun load$default (Lcom/awakekt/awake/kit/terrainlayers/PagedTerrainLayers$Companion;Lcom/awakekt/awake/core/io/AssetSource;Lcom/awakekt/awake/core/io/AssetPath;IILkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
 public final class com/awakekt/awake/kit/terrainlayers/TerrainControlMap {
 	public static final field Companion Lcom/awakekt/awake/kit/terrainlayers/TerrainControlMap$Companion;
 	public fun <init> (II[B[BI)V

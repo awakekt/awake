@@ -58,7 +58,12 @@ extern "C" void awake_vulkan_images_transition_image_layout(
         barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
         barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
         srcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-        dstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+        dstStage = VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    } else if (oldVkLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL && newVkLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
+        barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+        barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        srcStage = VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+        dstStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
     } else if (oldVkLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL && newVkLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
         barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
         barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
@@ -104,6 +109,21 @@ extern "C" void awake_vulkan_images_transition_image_layout(
             0, nullptr,
             0, nullptr,
             1, &barrier);
+}
+
+extern "C" void awake_vulkan_images_copy_region(
+        JNIEnv* env, jlong commandBuffer, jlong buffer, jlong image,
+        jint layer, jint x, jint y, jint width, jint height) {
+    if (!commandBuffer || !buffer || !image || layer < 0 || x < 0 || y < 0 || width <= 0 || height <= 0) {
+        throw_illegal_argument(env, "vkCmdCopyBufferToImageRegion: invalid region or handle");
+        return;
+    }
+    VkBufferImageCopy region{};
+    region.imageSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, static_cast<uint32_t>(layer), 1};
+    region.imageOffset = {x, y, 0};
+    region.imageExtent = {static_cast<uint32_t>(width), static_cast<uint32_t>(height), 1};
+    vkCmdCopyBufferToImage(reinterpret_cast<VkCommandBuffer>(commandBuffer), reinterpret_cast<VkBuffer>(buffer),
+        reinterpret_cast<VkImage>(image), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 }
 
 extern "C" void awake_vulkan_images_cmd_memory_barrier(

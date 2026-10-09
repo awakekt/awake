@@ -20,6 +20,7 @@ import com.awakekt.awake.render.pipeline.PipelineKey
 import com.awakekt.awake.render.pipeline.PipelineRegistry
 import com.awakekt.awake.render.pipeline.PipelineRequest
 import com.awakekt.awake.render.pipeline.PipelineSpec
+import com.awakekt.awake.render.texture.TextureUploadRecorder
 
 /**
  * A running engine that takes content features after start, for content that arrives with a
@@ -49,13 +50,17 @@ fun interface AttachedContentFeature {
  * GPU resources uploaded for one content feature, and how to free them.
  *
  * @property geometry Vertex and index geometry uploaded to GPU buffers, or `null` if none.
+ * @property prepare Publishes mutable images for the writable frame slot before render passes.
  * @param release Teardown callback invoked when releasing uploaded GPU resources.
  */
 class ContentUpload(
     /** Vertex and index geometry uploaded to GPU buffers, or `null` if none. */
     val geometry: ContentGeometry?,
+    val prepare: (Int, TextureUploadRecorder) -> Unit = { _, _ -> },
     private val release: () -> Unit,
 ) {
+    constructor(geometry: ContentGeometry?, release: () -> Unit) : this(geometry, { _, _ -> }, release)
+
     /** Releases uploaded GPU resources associated with this content feature. */
     fun release() = release.invoke()
 }
@@ -115,7 +120,7 @@ suspend fun <P : UniformBlockOwner> ContentFeatureGpu<P>.buildContentFeature(
             "allocated a block for its pipeline."
     }
     val upload = upload(pipeline, feature).also { uploads += it }
-    val gate = ContentFeaturePassGate(feature.build(handle(pipeline), block, upload.geometry))
+    val gate = ContentFeaturePassGate(feature.build(handle(pipeline), block, upload.geometry), upload)
     feature.depth?.let { depth ->
         require(gate.feature is ContentDepthSource) {
             "Content feature '${feature.name}' declares a depth pipeline, but the feature it builds " +
@@ -132,9 +137,15 @@ suspend fun <P : UniformBlockOwner> ContentFeatureGpu<P>.buildContentFeature(
  */
 private class ContentFeaturePassGate(
     val feature: RenderFeature<RenderFrameContext>,
+    private val upload: ContentUpload,
 ) : RenderFeature<RenderFrameContext>,
     ContentDepthSource {
     override val pass: RenderPassSlot get() = feature.pass
+
+    override fun prepareFrame(frameIndex: Int, uploads: TextureUploadRecorder) {
+        upload.prepare(frameIndex, uploads)
+        feature.prepareFrame(frameIndex, uploads)
+    }
 
     override fun recordCommands(context: RenderFrameContext) {
         if (context.environment.contentFeatures) feature.recordCommands(context)
@@ -154,6 +165,10 @@ class AttachedContentSlot : RenderFeature<RenderFrameContext> {
     private val features = ArrayList<RenderFeature<RenderFrameContext>>()
 
     override val pass = RenderPassSlot.Scene
+
+    override fun prepareFrame(frameIndex: Int, uploads: TextureUploadRecorder) {
+        for (index in features.indices) features[index].prepareFrame(frameIndex, uploads)
+    }
 
     internal fun add(feature: RenderFeature<RenderFrameContext>) {
         features += feature

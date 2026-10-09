@@ -41,6 +41,11 @@ internal class RendererGpuPassExecutor(
             val resolved = input.resolvedDraws
             val sorted = sortForRecording(resolved)
             val encoder = createRenderEncoder()
+            com.awakekt.awake.render.passes.prepareFrameResources(
+                renderFeatures,
+                0,
+                com.awakekt.awake.webgpu.texture.TextureUploads(graphicsDevice),
+            )
             val colorView = renderingContext.getCurrentTexture().createView()
             depthPrePass?.recordCommands(encoder, input.prePasses, input.environment)
             sceneDepthPass?.recordCommands(
@@ -115,6 +120,11 @@ internal class RendererGpuPassExecutor(
         )
         val sorted = sortForRecording(input.resolvedDraws)
         val encoder = renderer.createRenderEncoder()
+        com.awakekt.awake.render.passes.prepareFrameResources(
+            renderer.renderFeatures,
+            0,
+            com.awakekt.awake.webgpu.texture.TextureUploads(renderer.graphicsDevice),
+        )
         renderer.depthPrePass?.recordCommands(encoder, input.prePasses, input.environment)
         renderer.sceneDepthPass?.recordCommands(
             encoder,

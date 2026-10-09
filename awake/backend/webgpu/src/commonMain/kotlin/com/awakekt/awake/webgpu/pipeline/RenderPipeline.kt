@@ -158,7 +158,7 @@ class RenderPipeline(
                     "Pipeline '$vertexEntryPoint/$fragmentEntryPoint' declares sampled texture " +
                         "binding ${entry.binding}, but no content texture was supplied."
                 }
-                ResourceKind.Sampler -> requireNotNull(sharedSampler) {
+                ResourceKind.Sampler -> requireNotNull(contentSamplerTextures[entry.binding]?.let { contentTextures.getValue(it).sampler } ?: sharedSampler) {
                     "Pipeline '$vertexEntryPoint/$fragmentEntryPoint' declares sampler binding " +
                         "${entry.binding}, but no content texture supplied a sampler."
                 }
@@ -179,6 +179,7 @@ class RenderPipeline(
     /** A content feature's textures, supplied by the engine after the registry compiled this
      * pipeline -- see [writeContentTextures]. Read when the bind group is first built. */
     private var contentTextures: Map<Int, Texture> = emptyMap()
+    private var contentSamplerTextures: Map<Int, Int> = emptyMap()
 
     /** Set once the bind group exists, after which [contentTextures] can no longer affect it --
      * a `GPUBindGroup` is immutable, unlike a Vulkan descriptor set. */
@@ -193,13 +194,14 @@ class RenderPipeline(
      * feature is built. The check makes that ordering a failure rather than a silently
      * texture-less bind group if it ever stops holding.
      */
-    fun writeContentTextures(textures: Map<Int, Texture>) {
+    fun writeContentTextures(textures: Map<Int, Texture>, samplers: Map<Int, Int> = emptyMap()) {
         if (textures.isEmpty()) return
         check(!bindGroupBuilt) {
             "This pipeline's bind group was already built, and a GPUBindGroup is immutable -- " +
                 "content textures have to be supplied before anything binds it."
         }
         contentTextures = textures
+        contentSamplerTextures = samplers
     }
 
     // No layout at all for VertexFormat.None -- a stride-0 buffer no attribute reads is not the

@@ -185,6 +185,7 @@ private const val SIXTEEN_BIT_MAX = 0xFFFF
  * at runtime, for instance -- can drive the real recording path rather than restating it. Prefer
  * [terrainContentFeature], which assembles all five arguments correctly.
  */
+@Suppress("LongParameterList") // Aggregates the uploaded draw resources and terrain sampling state.
 class TerrainRenderFeature(
     private val pipeline: PipelineHandle,
     private val uniforms: UniformBlock,
@@ -196,6 +197,7 @@ class TerrainRenderFeature(
     private val sampling: FloatArray,
     /** Consulted per frame; see [terrainContentFeature]. */
     private val isVisible: () -> Boolean = { true },
+    private val pagedTerrain: com.awakekt.awake.terrain.PagedTerrain? = null,
 ) : RenderFeature<RenderFrameContext>,
     ContentDepthSource {
     override val pass = RenderPassSlot.Scene
@@ -226,17 +228,22 @@ class TerrainRenderFeature(
     private val noCascadeMatrices = FloatArray(UniformFields.CascadeViewProjections.floats)
     private val noCascadeScales = FloatArray(UniformFields.CascadeDepthScales.floats)
 
+    @Suppress("LongMethod", "CyclomaticComplexMethod") // One layout-ordered write shared by lit and depth.
     override fun recordCommands(context: RenderFrameContext) {
         // Before the tracker updates: a hidden terrain should cost nothing, and its rings have no
         // meaning to keep current while nothing reads them.
         if (!isVisible()) return
-        tracker.update(context.cameraEye)
+        val terrain = pagedTerrain
+        val phasePeriod = tracker.config.baseSpacing * (1 shl tracker.config.ringCount)
+        val phaseX = terrain?.let { (it.originX % phasePeriod).toFloat() } ?: 0f
+        val phaseZ = terrain?.let { (it.originZ % phasePeriod).toFloat() } ?: 0f
+        tracker.update(Vec3f(context.cameraEye.x + phaseX, context.cameraEye.y, context.cameraEye.z + phaseZ))
         tracker.ringStates.forEachIndexed { index, ring ->
             TerrainUniformLayout.RingParams.writeVec4Element(
                 destination = ringParams,
                 index = index,
-                x = ring.snappedCenter.x,
-                y = ring.snappedCenter.z,
+                x = ring.snappedCenter.x - phaseX,
+                y = ring.snappedCenter.z - phaseZ,
                 z = ring.spacing,
                 w = ring.halfExtent,
             )
@@ -246,7 +253,7 @@ class TerrainRenderFeature(
             x = heightScale,
             y = MORPH_WIDTH,
             z = BASE_SHADE,
-            w = heightBias,
+            w = heightBias - (terrain?.originY?.toFloat() ?: 0f),
         )
         val pass = context.passInput
         val cascades = context.shadowCascades
@@ -277,6 +284,11 @@ class TerrainRenderFeature(
             }
             putDebugView(context.environment.debugView, forward ?: NO_FORWARD)
             put(UniformFields.Exposure, context.environment.exposure, 0f, 0f, 0f)
+            if (terrain != null) {
+                val layout = terrain.layout
+                put(PagedTerrainUniformLayout.PageGrid, (layout.minX - terrain.originX).toFloat(), (layout.minZ - terrain.originZ).toFloat(), layout.cellSize, layout.intervals.toFloat())
+                put(PagedTerrainUniformLayout.PageDimensions, layout.cellCountX.toFloat(), layout.cellCountZ.toFloat(), phaseX, phaseZ)
+            }
         }
         val recorder: CommandRecorder = context.recorder
         recorder.bindPipeline(pipeline)

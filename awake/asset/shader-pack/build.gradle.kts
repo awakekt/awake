@@ -45,6 +45,7 @@ kotlin {
             // terrainContentFeature ships the clipmap geometry and heightmap beside its shader.
             // Acyclic: :awake:asset:terrain depends only on core modules.
             api(project(":awake:asset:terrain"))
+            api(project(":awake:terrain"))
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

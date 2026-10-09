@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 plugins {
+    alias(libs.plugins.kotlin.serialization)
     id("com.awakekt.awake.plugin.library")
     id("com.awakekt.awake.plugin.publish")
     id("com.awakekt.awake.plugin.dokka")
@@ -20,9 +21,16 @@ kotlin {
         commonMain.dependencies {
             // A resolved surface is a ShaderSet and the textures for its bindings.
             api(project(":awake:asset:shaders"))
+            api(project(":awake:asset:terrain"))
+            api(project(":awake:core:io"))
+            api(libs.kotlinx.coroutines.core)
             api(project(":awake:engine:render:contract"))
             // A surface reference carries its provider's payload as JSON.
             api(libs.kotlinx.serialization.json)
+        }
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+            implementation(libs.kotlinx.coroutines.test)
         }
     }
 }
