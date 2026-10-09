@@ -10,7 +10,7 @@ import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.scene.rendering.mesh.PbrMaterial
 
 /**
- * Pluggable resolver for dynamic GPU assets. Allows plugins (e.g. glTF, O3D, terrain)
+ * Pluggable resolver for dynamic GPU assets. Allows plugins (e.g. glTF, terrain, a custom model format)
  * to resolve asset names on demand without hardcoding asset names or paths in the scene fixture.
  */
 interface SceneAssetResolver {

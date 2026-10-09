@@ -47,7 +47,7 @@ data class GltfConversionResult(
  * 100% Kotlin Multiplatform (pure bytes in, pure GLB bytes out).
  */
 interface AssetConverter {
-    /** File extensions handled by this converter without leading dot (e.g. setOf("o3d", "lnd")). */
+    /** File extensions handled by this converter without leading dot (e.g. setOf("ply", "stl")). */
     val supportedExtensions: Set<String>
 
     /**
