@@ -9,7 +9,6 @@ import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.particles.ParticleSystem
-import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.scene.core.transform.SceneSpinControl
 import com.awakekt.awake.scene.core.transform.SpinControl
 import com.awakekt.awake.scene.core.transform.SpinSystem
@@ -46,16 +45,13 @@ internal object MotionCapability : SceneCapability {
 internal object ParticlesCapability : SceneCapability {
     override val id = "com.awakekt.awake.particles"
 
-    /** The emitters' sprite images by path, as [loadParticleSprites] reads them. */
-    val Sprites = SceneContentKey<Map<String, TextureAsset>>("particle sprites")
-
     override suspend fun load(scene: SceneDocument, files: AssetSource, content: SceneContent.Builder) {
-        if (scene.uses(SceneParticleEmitter::class)) content[Sprites] = loadParticleSprites(scene, files)
+        if (scene.uses(SceneParticleEmitter::class)) content[CoreSceneContent.ParticleSprites] = loadParticleSprites(scene, files)
     }
 
     override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {
         if (!scene.uses(SceneParticleEmitter::class) || !plan.hasRenderer) return
-        plan.frame("particle-content") { ParticleContentSystem(it.renderer, it.content[Sprites].orEmpty()) }
+        plan.frame("particle-content") { ParticleContentSystem(it.renderer, it.content[CoreSceneContent.ParticleSprites].orEmpty()) }
         plan.frame("particles") { ParticleSystem(TransformPlacement) }
     }
 }

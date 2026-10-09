@@ -18,6 +18,13 @@ public final class com/awakekt/awake/project/runtime/CollisionMeshesKt {
 	public static final fun loadCollisionMeshes (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
+public final class com/awakekt/awake/project/runtime/CoreSceneContent {
+	public static final field INSTANCE Lcom/awakekt/awake/project/runtime/CoreSceneContent;
+	public final fun getCollisionMeshes ()Lcom/awakekt/awake/project/runtime/SceneContentKey;
+	public final fun getParticleSprites ()Lcom/awakekt/awake/project/runtime/SceneContentKey;
+	public final fun getShaderEffects ()Lcom/awakekt/awake/project/runtime/SceneContentKey;
+}
+
 public final class com/awakekt/awake/project/runtime/LoadedProject : java/lang/AutoCloseable {
 	public fun close ()V
 	public final fun getManifest ()Lcom/awakekt/awake/project/AwakeProjectManifest;

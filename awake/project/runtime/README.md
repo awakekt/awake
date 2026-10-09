@@ -49,6 +49,12 @@ that gains a system gains it in both. `loadSceneContent` reads what the systems 
 project's files, such as particle sprites, collision meshes, shader documents and a paged terrain's
 index.
 
+An editor that already holds that content, loaded as the scene was edited, passes its own instead,
+under the keys in `CoreSceneContent`: `SceneContent.build { this[CoreSceneContent.CollisionMeshes] = meshes }`.
+`MeshColliderSystem` needs a mesh for every `mesh` or `convex_hull` collider it meets, so such an
+editor leaves out the colliders it has none for. A paged terrain's content comes only from
+`loadSceneContent`.
+
 ```kotlin
 val systems = sceneSystemsFor(
     scene,

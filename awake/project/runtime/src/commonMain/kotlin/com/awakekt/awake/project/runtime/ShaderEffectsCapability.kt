@@ -20,17 +20,14 @@ import com.awakekt.awake.scene.shader.loadShaderEffects
 internal object ShaderEffectsCapability : SceneCapability {
     override val id = "com.awakekt.awake.shader-effects"
 
-    /** The scene's shader documents and their images, as [loadShaderEffects] reads them. */
-    val Effects = SceneContentKey<ShaderEffectAssets>("shader effects")
-
     override suspend fun load(scene: SceneDocument, files: AssetSource, content: SceneContent.Builder) {
-        if (scene.uses(SceneShaderEffect::class)) content[Effects] = loadShaderEffects(scene, files)
+        if (scene.uses(SceneShaderEffect::class)) content[CoreSceneContent.ShaderEffects] = loadShaderEffects(scene, files)
     }
 
     override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {
         if (!scene.uses(SceneShaderEffect::class) || !plan.hasRenderer) return
         plan.frame("shader-effects") {
-            ShaderEffectSystem(it.renderer as? ContentFeatureHost, it.content[Effects] ?: ShaderEffectAssets.Empty)
+            ShaderEffectSystem(it.renderer as? ContentFeatureHost, it.content[CoreSceneContent.ShaderEffects] ?: ShaderEffectAssets.Empty)
         }
     }
 }

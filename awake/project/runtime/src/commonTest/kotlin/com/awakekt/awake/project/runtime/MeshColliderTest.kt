@@ -57,6 +57,30 @@ class MeshColliderTest {
         }
     }
 
+    /** A host that loaded the meshes itself passes them under [CoreSceneContent]'s key, with no [loadSceneContent]. */
+    @Test
+    fun aHostsOwnCollisionMeshesReachTheMeshCollider() = runTest {
+        installProjectComponents()
+        val scene = SceneLoader.decode(SCENE)
+        val world = World()
+        scene.instantiate(world = world)
+        val physics = createJoltPhysicsWorld()
+        try {
+            val meshes = loadCollisionMeshes(scene, files())
+            val services = SceneHostServices(
+                input = { GameplayInput(Input().currentSnapshot, InputOwnership()) },
+                renderer = NoopRenderer(),
+                physics = physics,
+                content = SceneContent.build { this[CoreSceneContent.CollisionMeshes] = meshes },
+            )
+            sceneSystemsFor(scene, services).fixed.forEach { it.update(world, STEP) }
+
+            assertRampUnder(physics)
+        } finally {
+            physics.destroy()
+        }
+    }
+
     @Test
     fun aConvexHullBodyFallsAndSettlesOnTheGround() = runTest {
         installProjectComponents()

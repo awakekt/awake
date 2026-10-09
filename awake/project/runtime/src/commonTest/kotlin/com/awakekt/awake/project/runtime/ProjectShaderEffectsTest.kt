@@ -49,7 +49,7 @@ class ProjectShaderEffectsTest {
     fun aProjectLoadsItsDocumentsAndABrokenOneDoesNotStopTheLoad() = runTest {
         val project = loadProject(files(TWO_EFFECTS_SCENE))
 
-        assertEquals(setOf("shaders/sky.shader.json"), project.content[ShaderEffectsCapability.Effects]?.documents?.keys)
+        assertEquals(setOf("shaders/sky.shader.json"), project.content[CoreSceneContent.ShaderEffects]?.documents?.keys)
     }
 
     @Test
