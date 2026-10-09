@@ -132,8 +132,10 @@ fun main() {
         val written = outDir.resolve(FONT_PACKAGE.replace('.', '/')).resolve("${face.objectName}.kt")
         val generated = written.readText()
         written.writeText(
-            generated
-                .replaceFirst("// /*\n//  * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz\n//  *\n//  * SPDX-License-Identifier: Apache-2.0\n//  */\n//\n", "/*\n * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz\n *\n * SPDX-License-Identifier: Apache-2.0\n */\n"),
+            markRobotoSnippet(
+                generated
+                    .replaceFirst("// /*\n//  * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz\n//  *\n//  * SPDX-License-Identifier: Apache-2.0\n//  */\n//\n", "/*\n * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz\n *\n * SPDX-License-Identifier: Apache-2.0\n */\n"),
+            ),
         )
         println("Wrote $written")
     }

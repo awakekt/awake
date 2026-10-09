@@ -1,13 +1,3 @@
-The UI font atlases in awake:core:text (Roboto*UiFontData) are drawn from Roboto 3.015 and, like Roboto, are licensed under the SIL Open Font License, Version 1.1.
-Source: https://github.com/google/fonts/tree/6183fc0d26361f6ddfd6f6b7a736e1467c6d8a43/ofl/roboto (Roboto 3.015)
-
-Copyright 2011 The Roboto Project Authors (https://github.com/googlefonts/roboto-classic)
-
-This Font Software is licensed under the SIL Open Font License, Version 1.1.
-This license is copied below, and is also available with a FAQ at:
-https://openfontlicense.org
-
-
 -----------------------------------------------------------
 SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007
 -----------------------------------------------------------

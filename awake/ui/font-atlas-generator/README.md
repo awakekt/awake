@@ -9,6 +9,11 @@ from the variable source. They are this generator's input only: nothing loads th
 they live here rather than in `awake:core:text`, and games and releases do not carry them.
 `awake:core:text` keeps `fonts/Roboto-LICENSE.txt`, since the atlases it ships are drawn from Roboto.
 
+Roboto is licensed under the SIL Open Font License 1.1, not Apache-2.0. An atlas is the font in
+another format, which that license counts as a modified version of the font, so the atlases stay
+under it: the generator wraps each object in an `OFL-1.1` SPDX snippet, and only the package and
+imports above it fall under the file's Apache-2.0 header.
+
 ## Regenerating
 
 Run it only to add or change a glyph or a weight, then commit the regenerated files with the change

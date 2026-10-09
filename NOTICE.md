@@ -50,3 +50,12 @@ This project includes third-party software components and compiled binaries unde
 * **License**: ISC License (https://opensource.org/licenses/ISC)
 * **Version**: 0.469.0
 * **Location**: `awake/ui/shadcn/src/commonMain/svg/lucide/` (license retained verbatim there)
+
+---
+
+### Roboto
+* **Description**: Typeface. The variable font is the source of the static faces `awake/ui/font-atlas-generator` packs into the signed distance field atlases shipped by `awake:core:text` (`Roboto*UiFontData`).
+* **Copyright**: Copyright 2011 The Roboto Project Authors (https://github.com/googlefonts/roboto-classic)
+* **License**: SIL Open Font License, Version 1.1 (https://openfontlicense.org). The atlases are a modified version of the font, so they are under the same license.
+* **Version**: 3.015
+* **Location**: `tools/fonts-tooling/samples/` (the variable font), `awake/ui/font-atlas-generator/fonts/` (the static faces), `tools/shadcn/reference-app/public/fonts/`, and the atlases in `awake/core/text/` with their license in `src/commonMain/resources/fonts/` (license retained verbatim in each)
