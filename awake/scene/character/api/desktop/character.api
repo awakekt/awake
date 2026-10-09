@@ -28,10 +28,11 @@ public final class com/awakekt/awake/scene/character/CharacterControllerKt {
 	public static final fun registerCharacter (Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;)Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;
 }
 
-public final class com/awakekt/awake/scene/character/CharacterControllerSystem : com/awakekt/awake/ecs/System {
+public final class com/awakekt/awake/scene/character/CharacterControllerSystem : com/awakekt/awake/ecs/InterpolatedSystem {
 	public static final field DEFAULT_SPEED F
 	public fun <init> (Lcom/awakekt/awake/physics/PhysicsWorld;F)V
 	public synthetic fun <init> (Lcom/awakekt/awake/physics/PhysicsWorld;FILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun interpolate (Lcom/awakekt/awake/ecs/World;F)V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 

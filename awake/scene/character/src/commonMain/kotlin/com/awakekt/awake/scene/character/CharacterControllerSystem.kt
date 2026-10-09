@@ -6,7 +6,7 @@
 package com.awakekt.awake.scene.character
 
 import com.awakekt.awake.core.math.Vec3f
-import com.awakekt.awake.ecs.System
+import com.awakekt.awake.ecs.InterpolatedSystem
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.scene.controls.movement.CameraRelativeBasis
@@ -22,7 +22,8 @@ import com.awakekt.awake.scene.physics.character.KinematicCharacterController
  * steps and slopes within its limits don't.
  *
  * Register it in the fixed phase, after `PhysicsSystem`, so it collides with bodies that step
- * built, and falls the same on every frame rate. Don't also run `MatrixRelativeMovementSystem`
+ * built, and falls the same on every frame rate. Between steps, [interpolate] shows each character
+ * between its last two stepped poses, so a following camera and its walk move on every frame. Don't also run `MatrixRelativeMovementSystem`
  * on these entities: it moves them straight through walls.
  *
  * @param physicsWorld The physics simulation world in which the character controller operates.
@@ -31,13 +32,14 @@ import com.awakekt.awake.scene.physics.character.KinematicCharacterController
 class CharacterControllerSystem(
     private val physicsWorld: PhysicsWorld,
     private val defaultSpeed: Float = DEFAULT_SPEED,
-) : System {
+) : InterpolatedSystem {
     private val basis = CameraRelativeBasis()
     private val motion = Vec3f()
 
     override fun update(world: World, delta: Float) {
         basis.update(world)
-        world.queryEach(Transform::class, CharacterController::class) { entity, transform, character ->
+        world.queryEach(TRANSFORM, CHARACTER) { entity, transform, character ->
+            character.restoreSteppedYaw(transform)
             val body = character.controller
                 ?: KinematicCharacterController(physicsWorld, character.config, transform.position)
                     .also { character.controller = it }
@@ -63,10 +65,19 @@ class CharacterControllerSystem(
             transform.position.set(body.position)
             world.get<GroundContact>(entity)?.grounded = body.isGrounded && character.verticalVelocity <= 0f
             intent?.turnToward(transform, moveX, moveZ, delta)
+            character.record(transform)
         }
+    }
+
+    override fun interpolate(world: World, alpha: Float) {
+        world.queryEach(TRANSFORM, CHARACTER) { _, transform, character -> character.blendInto(transform, alpha) }
     }
 
     private companion object {
         const val DEFAULT_SPEED = 5f
+
+        // Hoisted: a `Type::class` literal builds a new KClass each time it runs, and interpolate runs every frame.
+        val TRANSFORM = Transform::class
+        val CHARACTER = CharacterController::class
     }
 }
