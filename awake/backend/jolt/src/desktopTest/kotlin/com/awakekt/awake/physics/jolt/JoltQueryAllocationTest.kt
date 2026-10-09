@@ -63,6 +63,20 @@ class JoltQueryAllocationTest {
         }
     }
 
+    @Test
+    fun aRaycastStaysUnderItsCeiling() = runTest {
+        withScene { world, _ ->
+            val origin = Vec3f(-1f, 1f, 0f)
+            val direction = Vec3f(1f, 0f, 0f)
+            assertNotNull(world.raycast(origin, direction, maxDistance = 10f), "the ray must hit the capsule")
+
+            val perRay = bytesPer(CASTS) { world.raycast(origin, direction, maxDistance = 10f) }
+
+            println("JoltQueryAllocationTest: $perRay B per raycast")
+            assertTrue(perRay < RAY_CEILING_BYTES, "a raycast allocated $perRay B")
+        }
+    }
+
     /** A floor, a wall at x = 2, and a kinematic capsule body standing at the origin, as a controller has. */
     private suspend fun withScene(block: suspend (PhysicsWorld, com.awakekt.awake.physics.BodyHandle) -> Unit) {
         val world = createJoltPhysicsWorld(gravity = Vec3f(0f, 0f, 0f))
@@ -102,5 +116,9 @@ class JoltQueryAllocationTest {
 
         // One wrapper per overlapping body, and nothing rebuilt per call.
         const val OVERLAP_CEILING_BYTES = 300L
+
+        // The RRayCast jolt-jni has no setters for, the closest hit's wrapper and the answer. Before
+        // the world reused its ray objects, one ray allocated 944 B.
+        const val RAY_CEILING_BYTES = 500L
     }
 }

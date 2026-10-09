@@ -1,0 +1,1 @@
+- **A raycast makes far less garbage on desktop and Android.** `JoltPhysicsWorld.raycast` reuses its settings, collectors and filters as shape casts do, and normalizes its direction without a temporary vector: a ray now allocates about 280 B instead of 940 B.
