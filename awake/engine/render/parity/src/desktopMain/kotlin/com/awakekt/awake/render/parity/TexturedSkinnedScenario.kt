@@ -9,6 +9,7 @@ import com.awakekt.awake.asset.shaderpack.LitShadowUniformLayout
 import com.awakekt.awake.core.geometry.MeshGeometry
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.math.Lens
+import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.command.GpuDrawPreparationSource
 import com.awakekt.awake.render.passes.RenderDrawCommand
@@ -25,12 +26,14 @@ import kotlinx.coroutines.runBlocking
  * A textured plane skinned to one joint, drawn with [palette] as that joint's matrix: the identity
  * shows the texture where the plane lies, a zero matrix collapses it to nothing. [palette] may also be
  * one tinted by `skinnedMaterialFloats`. [exposure] is the scene's, applied before the tone curve.
+ * [model] places the posed plane in the world, as an entity's transform does.
  */
 fun Renderer.renderTexturedSkinnedScene(
     palette: FloatArray,
     texture: TextureAsset = SolidOrange,
     exposure: Float = 1f,
     size: Int = SCENE_SIZE,
+    model: Mat4 = Mat4(),
 ): ByteArray {
     val target = createRenderTarget(size, size)
     val mesh = createMesh(skinnedTexturedPlane())
@@ -41,7 +44,7 @@ fun Renderer.renderTexturedSkinnedScene(
             target,
             ScenePassCompiler.compile(
                 lens = lens,
-                drawCalls = listOf(RenderDrawCommand(mesh = mesh, material = material, extraUniformFloats = palette)),
+                drawCalls = listOf(RenderDrawCommand(mesh = mesh, material = material, model = model, extraUniformFloats = palette)),
                 light = SceneLight(direction = Vec3f(0f, 1f, 0f), color = Vec3f(1f, 1f, 1f)),
                 environment = EnvironmentUniforms.Default.copy(shadowsEnabled = false, exposure = exposure),
                 clipSpace = clipSpace,
