@@ -7,6 +7,7 @@ package com.awakekt.awake.scene.runtime.session
 
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.binding.Scene
+import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.binding.destroy
 import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.scene.document.SceneDocument
@@ -38,10 +39,14 @@ enum class SceneDocumentSessionMode {
  *
  * @param initialDocument The initial authored [SceneDocument] snapshot.
  * @param extensions Optional registry of scene document schema extensions.
+ * @param componentRegistry The components Play's snapshot is encoded, decoded and instantiated
+ *   with. An editor passes the [SceneComponentRegistry.scoped] registry it loaded a project into, so a
+ *   component only that project registers survives into Play. The default is the global registry.
  */
 class SceneDocumentEditSession(
     initialDocument: SceneDocument,
     private val extensions: SceneExtensionRegistry? = null,
+    private val componentRegistry: SceneComponentRegistry = SceneComponentRegistry(),
 ) {
     /**
      * The current authored document snapshot.
@@ -76,9 +81,10 @@ class SceneDocumentEditSession(
      */
     fun startPlay(): Scene {
         check(mode == SceneDocumentSessionMode.Edit) { "Play is already active." }
-        val snapshot = SceneLoader.decode(SceneLoader.encode(authoredDocument))
+        val json = componentRegistry.sceneJson()
+        val snapshot = SceneLoader.decode(SceneLoader.encode(authoredDocument, json), json)
         SceneValidator.requireValid(snapshot, extensions)
-        return SceneLoader.instantiate(snapshot).also { scene ->
+        return SceneLoader.instantiate(snapshot, componentRegistry = componentRegistry).also { scene ->
             playScene = scene
             mode = SceneDocumentSessionMode.Play
         }

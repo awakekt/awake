@@ -438,8 +438,8 @@ public final class com/awakekt/awake/scene/runtime/schedule/SceneSchedule {
 }
 
 public final class com/awakekt/awake/scene/runtime/session/SceneDocumentEditSession {
-	public fun <init> (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/scene/document/SceneExtensionRegistry;)V
-	public synthetic fun <init> (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/scene/document/SceneExtensionRegistry;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/scene/document/SceneExtensionRegistry;Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/scene/document/SceneExtensionRegistry;Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun applyAuthoredDocument (Lcom/awakekt/awake/scene/document/SceneDocument;)V
 	public final fun clearStepping ()V
 	public final fun close ()V

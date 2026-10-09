@@ -100,15 +100,15 @@ class SceneContentKey<T : Any>(val name: String) {
  * its particle emitters, the documents of its shader effects, the triangles of its collision meshes,
  * and whatever a game's own capabilities load. [loadSceneContent] fills it.
  */
-class SceneContent private constructor(private val values: Map<SceneContentKey<*>, Any>) {
+class SceneContent private constructor(internal val values: Map<SceneContentKey<*>, Any>) {
     /** The content under [key], or null when nothing loaded it. */
     // The builder only pairs a key with a value of the key's own type.
     @Suppress("UNCHECKED_CAST")
     operator fun <T : Any> get(key: SceneContentKey<T>): T? = values[key] as T?
 
     /** Collects content while capabilities load it. */
-    class Builder internal constructor() {
-        private val values = LinkedHashMap<SceneContentKey<*>, Any>()
+    class Builder internal constructor(loaded: Map<SceneContentKey<*>, Any>) {
+        private val values = LinkedHashMap(loaded)
 
         /** Stores [value] under [key]; a key holds one value. */
         operator fun <T : Any> set(key: SceneContentKey<T>, value: T) {
@@ -125,7 +125,7 @@ class SceneContent private constructor(private val values: Map<SceneContentKey<*
         val Empty: SceneContent = SceneContent(emptyMap())
 
         /** Content built by [block], for a host or a test that has its own. */
-        fun build(block: Builder.() -> Unit): SceneContent = Builder().apply(block).build()
+        fun build(block: Builder.() -> Unit): SceneContent = Builder(emptyMap()).apply(block).build()
     }
 }
 
@@ -142,14 +142,40 @@ suspend fun loadSceneContent(
     capabilities: List<SceneCapability> = emptyList(),
 ): SceneContent = loadContent(scene, files, installedCapabilities(capabilities), label = "The scene")
 
-/** Runs each of [installed]'s [SceneCapability.load] in order, prefixing a refusal with [label]. */
+/**
+ * [loaded] with what [capabilities] read for [scene] from the project's [files] added to it. Only their
+ * own [SceneCapability.load] runs, none of Core's capabilities'.
+ *
+ * This is for a host that keeps Core's content loaded while a scene is edited, so that Play starts at
+ * once, and loads a game's own capabilities when Play starts: an editor. It passes the result as
+ * [SceneHostServices.content], and the same [capabilities] to [sceneSystemsFor]. A host that loads
+ * everything when the scene starts uses [loadSceneContent] instead.
+ *
+ * A capability may not load a key [loaded] already holds. Throws [IllegalArgumentException] for that,
+ * for content a capability cannot load, and for two capabilities with one id, Core's included.
+ */
+suspend fun loadCapabilityContent(
+    scene: SceneDocument,
+    files: AssetSource,
+    capabilities: List<SceneCapability>,
+    loaded: SceneContent = SceneContent.Empty,
+): SceneContent {
+    installedCapabilities(capabilities)
+    return loadContent(scene, files, capabilities, label = "The scene", loaded = loaded)
+}
+
+/**
+ * Runs each of [installed]'s [SceneCapability.load] in order on top of [loaded], prefixing a refusal
+ * with [label].
+ */
 internal suspend fun loadContent(
     scene: SceneDocument,
     files: AssetSource,
     installed: List<SceneCapability>,
     label: String,
+    loaded: SceneContent = SceneContent.Empty,
 ): SceneContent {
-    val content = SceneContent.Builder()
+    val content = SceneContent.Builder(loaded.values)
     for (capability in installed) {
         try {
             capability.load(scene, files, content)
