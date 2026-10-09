@@ -1,1 +1,0 @@
-- WebGPU shader hot reload support via `ShaderReplacement` capability, allowing runtime WGSL pipeline swapping and dependent bind group cache invalidation.

@@ -1,1 +1,0 @@
-- Runtime shader hot reload for UI pipelines (`UiQuad`, `UiGlyph`, `UiTexture`, `UiRoundedQuad`, `UiTargetComposite`) via `ShaderReplacement` across Vulkan and WebGPU backends.

@@ -1,1 +1,0 @@
-- Added streamed terrain with one clipmap over bounded height, control and lighting pages, a shared palette and coarse fallback, frame-safe Vulkan/WebGPU region uploads, per-cell scene collision, and revision-aware page editing and saving.

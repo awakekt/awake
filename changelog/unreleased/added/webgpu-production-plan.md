@@ -1,1 +1,0 @@
-- Verify the showcase's production WebGPU render plan with an offscreen pixel comparison covering lit geometry, scene depth, and depth fog in CI.

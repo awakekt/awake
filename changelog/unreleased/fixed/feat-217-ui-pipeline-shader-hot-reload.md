@@ -1,1 +1,0 @@
-- Preserve running shader identity across consecutive UI reloads on Vulkan and WebGPU and validate WebGPU UI pipeline candidates before swapping them in.

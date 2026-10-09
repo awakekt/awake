@@ -1,1 +1,0 @@
-- Make the template consumer check work on runners without ripgrep and preserve an existing snapshot repository declaration.
