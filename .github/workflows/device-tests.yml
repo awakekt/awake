@@ -55,14 +55,20 @@ jobs:
 
       # x86_64 because the runner is: jolt-jni's AAR ships arm64-v8a, armeabi-v7a, riscv64, x86
       # and x86_64, so the emulator's own architecture is the only constraint.
-      - name: Jolt Android physics tests (instrumented)
+      # Then the engine showcase's release, shrunk by R8 with no keep rules of its own, as a game's
+      # is: its startup creates a Jolt physics world and a Vulkan device, so a class or field the
+      # natives find by name that the backends' consumer rules miss aborts it here (#601).
+      - name: Jolt Android physics tests (instrumented) and a shrunk release's launch
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
           arch: x86_64
           target: default
           disable-animations: true
-          script: ./gradlew :awake:backend:jolt:connectedAndroidDeviceTest :awake:scene:physics:connectedAndroidDeviceTest :samples:engine-showcase:connectedAndroidDeviceTest
+          script: |
+            ./gradlew :awake:backend:jolt:connectedAndroidDeviceTest :awake:scene:physics:connectedAndroidDeviceTest :samples:engine-showcase:connectedAndroidDeviceTest
+            ./gradlew :samples:engine-showcase:androidApp:assembleRelease
+            scripts/android-launch-check.sh samples/engine-showcase/androidApp/build/outputs/apk/release/androidApp-release.apk com.awakekt.awake.showcase.android/.MainActivity
 
       - name: Upload test results
         if: always()
