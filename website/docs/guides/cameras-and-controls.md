@@ -109,7 +109,7 @@ In the scene DSL these are `CameraRig` fields; `target` is `targetEntity` and `o
 | --- | --- | --- |
 | `FirstPerson` | yes | Eye at the target plus `offset`; dragging turns yaw and pitch. |
 | `ThirdPerson` | no | Orbits the pivot at `distance`; dragging orbits, scrolling zooms. The eye eases toward its pose. |
-| `FreeFly` | no | W A S D move along the view, Q and E down and up, Shift is faster; dragging looks around. |
+| `FreeFly` | no | W A S D move along the view, Q and E down and up, Shift is faster; dragging looks around. A host rebinds the keys with `CameraGesturePolicy(flyActions = ...)`, named as in `CameraFlyActions`. |
 | `Cinematic` | yes | Looks at the target from a fixed spot; no input. |
 | `TopDown` | no | Looks down at 60 degrees from `distance`; dragging turns yaw, scrolling zooms. |
 

@@ -3,6 +3,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+@file:Suppress("DEPRECATION") // Covers the deprecated profile until it is removed.
+
 package com.awakekt.awake.scene.controls.input
 
 import com.awakekt.awake.core.input.InputSnapshot

@@ -1,0 +1,1 @@
+- `KeybindingProfile`, `KeyBinding`, `KeybindingProfileBuilder` and `keybindingProfile` in `awake:scene:controls`: use `InputActions` from `awake:core:input`, or a scene's `input_actions`. `CameraGesturePolicy.flyKeys`, `defaultFlyKeys()` and `CameraFlyAction`: use `CameraGesturePolicy.flyActions` and `CameraFlyActions`. A policy given `flyKeys` still flies by them.

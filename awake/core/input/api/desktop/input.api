@@ -139,7 +139,7 @@ public final class com/awakekt/awake/core/input/InputActions$Companion {
 	public final fun isValidName (Ljava/lang/String;)Z
 }
 
-public final class com/awakekt/awake/core/input/InputSnapshot {
+public final class com/awakekt/awake/core/input/InputSnapshot : com/awakekt/awake/core/input/ActionInputSource {
 	public fun <init> (FFZFFLjava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/lang/String;Ljava/util/List;ZZZLcom/awakekt/awake/core/input/ImeComposition;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Lcom/awakekt/awake/core/input/ScrollSource;Ljava/util/List;Ljava/util/List;Z)V
 	public synthetic fun <init> (FFZFFLjava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/lang/String;Ljava/util/List;ZZZLcom/awakekt/awake/core/input/ImeComposition;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Lcom/awakekt/awake/core/input/ScrollSource;Ljava/util/List;Ljava/util/List;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()F
@@ -190,11 +190,11 @@ public final class com/awakekt/awake/core/input/InputSnapshot {
 	public final fun getTouches ()Ljava/util/List;
 	public final fun getTypedText ()Ljava/lang/String;
 	public fun hashCode ()I
-	public final fun isDown (Lcom/awakekt/awake/core/input/Key;)Z
-	public final fun isDown (Lcom/awakekt/awake/core/input/PointerButton;)Z
+	public fun isDown (Lcom/awakekt/awake/core/input/Key;)Z
+	public fun isDown (Lcom/awakekt/awake/core/input/PointerButton;)Z
 	public fun toString ()Ljava/lang/String;
-	public final fun wasPressed (Lcom/awakekt/awake/core/input/Key;)Z
-	public final fun wasPressed (Lcom/awakekt/awake/core/input/PointerButton;)Z
+	public fun wasPressed (Lcom/awakekt/awake/core/input/Key;)Z
+	public fun wasPressed (Lcom/awakekt/awake/core/input/PointerButton;)Z
 	public final fun wasReleased (Lcom/awakekt/awake/core/input/PointerButton;)Z
 }
 

@@ -5,22 +5,26 @@
  */
 package com.awakekt.awake.scene.controls
 
+import com.awakekt.awake.core.input.InputActionDefinition
 import com.awakekt.awake.core.input.InputSnapshot
 import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.math.CameraMathUtils
 import com.awakekt.awake.core.math.CameraPoseState
+import com.awakekt.awake.scene.controls.camera.CameraFlyInput
 
 /**
  * Stateful processor bridging [InputSnapshot] events into [CameraPoseState] updates.
  *
- * Supports LMB orbit, RMB drag zoom, MMB / Shift+LMB screen pan, scroll wheel, WASD movement,
- * and PageUp/PageDown keys with zero boilerplate for callers.
+ * Supports LMB orbit, RMB drag zoom, MMB / Shift+LMB screen pan, scroll wheel, keyboard flight by
+ * [CameraControlConfig.flyActions], and PageUp/PageDown keys with zero boilerplate for callers.
  */
 class CameraInputProcessor {
     private var lastPointerX = 0f
     private var lastPointerY = 0f
     private var wasPrimaryDragging = false
     private var wasSecondaryDragging = false
+    private var flyDefinitions: List<InputActionDefinition>? = null
+    private var flyInput: CameraFlyInput? = null
 
     /**
      * Processes [input] and updates [poseState] according to [config].
@@ -94,29 +98,27 @@ class CameraInputProcessor {
             }
         }
 
-        // 4. Keyboard WASD / QE / Space Gliding
+        // 4. Keyboard flight, by the config's fly actions
         if (config.allowKeyboardFlight) {
-            val keys = input.keysDown
-            var moveX = 0f
-            var moveZ = 0f
-            var moveY = 0f
-
-            if (Key.W in keys) moveZ += 1f
-            if (Key.S in keys) moveZ -= 1f
-            if (Key.A in keys) moveX -= 1f
-            if (Key.D in keys) moveX += 1f
-            if (Key.Q in keys) moveY -= 1f
-            if (Key.E in keys || Key.Space in keys) moveY += 1f
-
-            if (moveX != 0f || moveY != 0f || moveZ != 0f) {
-                val speed = if (isShift) config.baseMoveSpeed * config.boostMultiplier else config.baseMoveSpeed
-                if (CameraMathUtils.applyHorizontalPan(poseState, moveX, moveY, moveZ, speed * delta)) {
+            val fly = flyInputFor(config.flyActions)
+            fly.read(input)
+            if (fly.moving) {
+                val speed = if (fly.fast) config.baseMoveSpeed * config.boostMultiplier else config.baseMoveSpeed
+                if (CameraMathUtils.applyHorizontalPan(poseState, fly.across, fly.rise, fly.ahead, speed * delta)) {
                     changed = true
                 }
             }
         }
 
         return changed
+    }
+
+    /** The fly input for [definitions], made again only when a config brings different ones. */
+    private fun flyInputFor(definitions: List<InputActionDefinition>): CameraFlyInput {
+        val current = flyInput
+        if (current != null && definitions === flyDefinitions) return current
+        flyDefinitions = definitions
+        return CameraFlyInput(definitions).also { flyInput = it }
     }
 
     /** Resets transient drag tracking on viewport loss-of-focus or map change. */

@@ -5,9 +5,11 @@
  */
 package com.awakekt.awake.scene.controls
 
+import com.awakekt.awake.core.input.AxisAction
 import com.awakekt.awake.core.input.InputSnapshot
 import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.math.CameraPoseState
+import com.awakekt.awake.scene.controls.camera.CameraFlyActions
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -114,5 +116,27 @@ class CameraInputProcessorTest {
         )
         assertTrue(processor.process(state, config, wasdSnap, delta = 0.1f))
         assertTrue(state.center.z < 0f, "W key must glide target center forward (-Z when facing yaw=0).")
+
+        val spaceSnap = wasdSnap.copy(keysDown = setOf(Key.Space))
+        assertTrue(processor.process(state, config, spaceSnap, delta = 0.1f))
+        assertTrue(state.center.y > 0f, "Space still rises, as E does.")
+    }
+
+    @Test
+    fun keyboardFlightFollowsTheConfiguredFlyActions() {
+        val processor = CameraInputProcessor()
+        val state = CameraPoseState(yaw = 0f, pitch = 0f, distance = 50f)
+        val config = CameraControlConfig(
+            baseMoveSpeed = 100f,
+            flyActions = listOf(AxisAction(CameraFlyActions.FLY, up = setOf(Key.I))),
+        )
+        val snapshot = InputSnapshot(
+            pointerX = 0f, pointerY = 0f, pointerDown = false, scrollDeltaX = 0f, scrollDeltaY = 0f,
+            keysDown = setOf(Key.W), keysPressed = emptySet(), keysReleased = emptySet(), typedText = "", editActions = emptyList(),
+        )
+
+        assertFalse(processor.process(state, config, snapshot, delta = 0.1f), "W is not bound")
+        assertTrue(processor.process(state, config, snapshot.copy(keysDown = setOf(Key.I)), delta = 0.1f))
+        assertTrue(state.center.z < 0f, "I flies forward")
     }
 }

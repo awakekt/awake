@@ -3,6 +3,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+@file:Suppress("DEPRECATION") // The deprecated types refer to one another.
+
 package com.awakekt.awake.scene.controls.input
 
 import com.awakekt.awake.core.input.InputSnapshot
@@ -16,6 +18,7 @@ import kotlin.math.sqrt
  * @property primary The main keyboard key for this action.
  * @property secondary An optional alternative key (e.g. ArrowUp in addition to W).
  */
+@Deprecated("Named input actions: InputActions in awake:core:input, or a scene's input_actions")
 data class KeyBinding(
     var primary: Key,
     var secondary: Key? = null,
@@ -33,6 +36,7 @@ data class KeyBinding(
  * @param A The action type (typically an enum representing game actions).
  * @property bindings Map of action identifiers to configured key bindings.
  */
+@Deprecated("Named input actions: InputActions in awake:core:input, or a scene's input_actions")
 class KeybindingProfile<A : Any>(
     private val bindings: MutableMap<A, KeyBinding> = mutableMapOf(),
 ) {
@@ -94,6 +98,7 @@ class KeybindingProfile<A : Any>(
 }
 
 /** Builder class for the fluent [keybindingProfile] DSL. */
+@Deprecated("Named input actions: InputActions in awake:core:input, or a scene's input_actions")
 class KeybindingProfileBuilder<A : Any> {
     private val map = mutableMapOf<A, KeyBinding>()
 
@@ -109,6 +114,7 @@ class KeybindingProfileBuilder<A : Any> {
 /**
  * Fluent DSL builder to construct a typed [KeybindingProfile].
  */
+@Deprecated("Named input actions: InputActions in awake:core:input, or a scene's input_actions")
 inline fun <A : Any> keybindingProfile(
     builder: KeybindingProfileBuilder<A>.() -> Unit,
 ): KeybindingProfile<A> = KeybindingProfileBuilder<A>().apply(builder).build()
