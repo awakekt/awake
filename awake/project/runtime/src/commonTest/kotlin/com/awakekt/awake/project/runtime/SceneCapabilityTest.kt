@@ -84,6 +84,20 @@ class SceneCapabilityTest {
         assertTrue("capability" in error.message.orEmpty(), error.message)
     }
 
+    /** Naming where the capability is published does not load it: it is linked when the game is built. */
+    @Test
+    fun aRequiredPluginWithAnArtifactButNoLinkedCapabilityRefusesTheLoad() = runTest {
+        val files = files(BEACON_SCENE, manifest = MANIFEST_REQUIRING_PUBLISHED_BEACON)
+
+        val error = assertFailsWith<IllegalArgumentException> { loadProject(files) }
+        val project = loadProject(files, capabilities = listOf(BeaconCapability))
+
+        val message = error.message.orEmpty()
+        assertTrue(BeaconCapability.id in message, message)
+        assertTrue("com.example.beacon.BeaconCapability from com.example:beacon-capability:1.0.0" in message, message)
+        assertEquals(BEACON_SCENE_NAME, project.scene.name)
+    }
+
     @Test
     fun aRequiredPluginLoadsOnlyWithItsCapability() = runTest {
         val files = files(BEACON_SCENE, manifest = MANIFEST_REQUIRING_BEACON)
@@ -145,6 +159,11 @@ class SceneCapabilityTest {
         const val MANIFEST_REQUIRING_BEACON = """{"formatVersion":1,"id":"com.example.harbor-town","name":"Harbor Town","version":"1.0.0",
             "entryScene":"scenes/main.scene.json",
             "plugins":[{"id":"com.example.harbor-town.beacon","path":"plugins/beacon.awakeplugin","version":"1.0.0","required":true}]}"""
+        const val MANIFEST_REQUIRING_PUBLISHED_BEACON = """{"formatVersion":1,"id":"com.example.harbor-town","name":"Harbor Town","version":"1.0.0",
+            "entryScene":"scenes/main.scene.json",
+            "plugins":[{"id":"com.example.harbor-town.beacon","path":"plugins/beacon.awakeplugin","version":"1.0.0","required":true,
+              "artifact":{"group":"com.example","name":"beacon-capability","version":"1.0.0"},
+              "capabilityClass":"com.example.beacon.BeaconCapability"}]}"""
         const val BEACON_SCENE_NAME = "harbor"
         const val BEACON_SCENE = """{ "version": 1, "name": "harbor", "nodes": [
   { "name": "Lighthouse", "components": [ { "component": "lighthouse_beacon", "label": "north" } ] }

@@ -177,4 +177,55 @@ class AwakeProjectTest {
         val issues = AwakeProjectValidator.manifestIssues(invalidManifest)
         assertTrue(issues.any { it.contains("sha256 must be a lowercase SHA-256 digest") })
     }
+
+    @Test
+    fun pluginReferenceNamesItsPublishedArtifactAndCapabilityClass() {
+        val published = AwakeProjectPluginReference(
+            id = "com.example.docks",
+            path = "plugins/docks.awakeplugin",
+            required = true,
+            artifact = AwakeProjectArtifact(group = "com.example", name = "docks-capability", version = "1.2.0"),
+            capabilityClass = "com.example.docks.DocksCapability",
+        )
+        val manifest = AwakeProjectManifest(
+            id = "com.example.game",
+            name = "Example Game",
+            version = "1.0.0",
+            entryScene = "scenes/main.scene.json",
+            plugins = listOf(published, AwakeProjectPluginReference(id = "com.example.local", path = "capabilities")),
+        )
+
+        val json = AwakeProjectValidator.encodeManifest(manifest)
+        val decoded = AwakeProjectValidator.decodeManifest(json)
+
+        assertEquals(manifest, decoded)
+        assertTrue("\"capabilityClass\"" in json && "\"artifact\"" in json, json)
+        assertEquals("com.example:docks-capability:1.2.0", decoded.plugins.first().artifact.toString())
+        assertTrue(AwakeProjectValidator.manifestIssues(decoded).isEmpty(), "a project-local plugin needs neither field")
+    }
+
+    @Test
+    fun pluginReferenceRejectsMalformedArtifactAndCapabilityClass() {
+        val manifest = AwakeProjectManifest(
+            id = "com.example.game",
+            name = "Example Game",
+            version = "1.0.0",
+            entryScene = "scenes/main.scene.json",
+            plugins = listOf(
+                AwakeProjectPluginReference(
+                    id = "com.example.docks",
+                    path = "plugins/docks.awakeplugin",
+                    artifact = AwakeProjectArtifact(group = "com.example", name = "docks capability", version = ""),
+                    capabilityClass = "DocksCapability",
+                ),
+            ),
+        )
+
+        val issues = AwakeProjectValidator.manifestIssues(manifest)
+
+        assertTrue(issues.any { it.contains("plugins[0].artifact.name must be") }, issues.toString())
+        assertTrue(issues.any { it.contains("plugins[0].artifact.version must be") }, issues.toString())
+        assertFalse(issues.any { it.contains("artifact.group") }, issues.toString())
+        assertTrue(issues.any { it.contains("plugins[0].capabilityClass must be a fully qualified class name") }, issues.toString())
+    }
 }
