@@ -46,6 +46,10 @@ anything under `awake/scene/`, read "What belongs in a scene module" in `awake/s
 activate `awake-framework-boundary`. A capability that still lives in a scene module is separated
 first, not extended in place.
 
+A played project needs no display: `awake:project` and `awake:project:runtime` reach no GPU backend
+or window module, because the host passes its backends in, and a system that draws checks
+`hasRenderer`. `./gradlew verifyHeadlessRuntime` enforces the dependency half.
+
 ## Agent skill bundles
 
 Awake architecture lives in `docs/*`; agent execution guidance is installed from immutable sources,

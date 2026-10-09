@@ -69,6 +69,18 @@ the camera, resolves transforms and draws. Pass the physics world the scene need
 `character_controller`, a terrain collider or a colliding `paged_terrain`), or those systems are left
 out.
 
+## Playing a project with no renderer
+
+A game server or a CI runner plays a loaded project with `project.sceneSystems(input)`, passing no
+renderer: the systems that make GPU content, such as particle sprites and shader effects, are left
+out, and everything else simulates as it does in a drawn game, streamed terrain and its collision
+included. `SceneHostServices.headless(...)` builds the same services for a host that builds its own.
+
+The runtime brings no display with it. `awake:project` and `awake:project:runtime` reach no GPU
+backend and no window module (`:awake:backend:*`, `:awake:engine:window`): the host picks the backends
+a project draws and simulates with and passes them in, as it passes the physics world. `awakeVerify`
+runs `verifyHeadlessRuntime`, which fails a change that puts one on that path, naming the chain.
+
 ## Loading more than one project
 
 `loadProject(files, capabilities)` registers the project's components in the process-wide registry,
