@@ -314,13 +314,14 @@ Draws a mesh with a material. Names are looked up in the scene's asset library. 
 
 ## `movement_control`
 
-Moves the entity from player input. `SceneMovementControl`.
+Moves the entity from player input, or from code such as AI or a network. `SceneMovementControl`.
 
 | Field | Type | Default | What it does |
 | --- | --- | --- | --- |
 | `speed` | number | none | Units per second. None uses the movement system's speed. Above 0 when set. |
 | `runSpeed` | number | none | Units per second while Shift is held. None keeps `speed`. Above 0 when set. |
 | `turnSpeed` | number | `0` | Radians per second it turns to face where it moves; 0 leaves its facing alone. Not negative. |
+| `driver` | `Player` or `Agent` | `Player` | What sets the intent. `Player`: the keys and touch controls, relative to the camera. `Agent`: code writes a world-space direction, and player input leaves it alone. |
 
 ## `navigation`
 

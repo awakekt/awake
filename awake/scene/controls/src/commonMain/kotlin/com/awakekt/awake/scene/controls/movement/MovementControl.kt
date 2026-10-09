@@ -11,20 +11,37 @@ import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.sign
+import kotlinx.serialization.Serializable
 
 private const val TWO_PI = (2 * PI).toFloat()
+
+/** What sets a [MovementControl]'s intent, and so which way its axes point. */
+@Serializable
+enum class MovementDriver {
+    /** The local player's keys and touch controls; the intent is relative to the active camera. */
+    Player,
+
+    /**
+     * Code such as AI, a network or a script; the intent is a world-space direction, and player input
+     * leaves it alone.
+     */
+    Agent,
+}
 
 /**
  * Stores intended translation deltas for a character or player.
  */
 class MovementControl : Poolable {
-    /** Lateral movement intent along the X axis. */
+    /** What sets this intent: the local player, relative to the camera, or code, in world space. */
+    var driver: MovementDriver = MovementDriver.Player
+
+    /** Lateral movement intent: the camera's right for a player, world X for an agent. */
     var moveX: Float = 0f
 
     /** Vertical movement intent along the Y axis. */
     var moveY: Float = 0f
 
-    /** Longitudinal movement intent along the Z axis. */
+    /** Longitudinal movement intent: the camera's forward for a player, world Z for an agent. */
     var moveZ: Float = 0f
 
     /** Units per second for this entity. Null uses the movement system's speed. */
@@ -43,6 +60,7 @@ class MovementControl : Poolable {
     var turnSpeed: Float = 0f
 
     override fun reset() {
+        driver = MovementDriver.Player
         moveX = 0f
         moveY = 0f
         moveZ = 0f
@@ -60,6 +78,14 @@ class MovementControl : Poolable {
      * @return Effective movement speed in units per second.
      */
     fun currentSpeed(default: Float): Float = (if (run) runSpeed else null) ?: speed ?: default
+
+    /** World X of this intent: as given for an [MovementDriver.Agent], along [basis] for a player. */
+    fun worldX(basis: CameraRelativeBasis): Float =
+        if (driver == MovementDriver.Agent) moveX else basis.worldX(moveX, moveZ)
+
+    /** World Z of this intent: as given for an [MovementDriver.Agent], along [basis] for a player. */
+    fun worldZ(basis: CameraRelativeBasis): Float =
+        if (driver == MovementDriver.Agent) moveZ else basis.worldZ(moveX, moveZ)
 
     /**
      * Turns [transform] toward world direction ([worldX], [worldZ]) by at most [turnSpeed] times

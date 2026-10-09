@@ -11,7 +11,9 @@ import com.awakekt.awake.physics.jolt.createJoltPhysicsWorld
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.binding.fromWorld
 import com.awakekt.awake.scene.binding.instantiate
+import com.awakekt.awake.scene.controls.movement.MatrixRelativeMovementSystem
 import com.awakekt.awake.scene.controls.movement.MovementControl
+import com.awakekt.awake.scene.controls.movement.MovementDriver
 import com.awakekt.awake.scene.controls.movement.registerControls
 import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.core.motion.GroundContact
@@ -50,6 +52,35 @@ class CharacterControllerTest {
         // Wall face at z = -2.5; the capsule stops a radius short of it.
         assertTrue(arena.position.z < -1f, "forward (-Z) must walk the character; z = ${arena.position.z}")
         assertTrue(arena.position.z > -2.5f + 0.4f, "the wall must stop the character; z = ${arena.position.z}")
+    }
+
+    @Test
+    fun anAgentWalksInWorldSpaceAndTheWallStopsIt() = runTest {
+        val arena = arena(jumpSpeed = 5f)
+        arena.run(STEPS)
+        arena.intent.driver = MovementDriver.Agent
+
+        // With no camera a player's forward is -Z, so an agent's world +Z is the other way.
+        arena.intent.moveZ = 1f
+        arena.run(STEPS / 4)
+        assertTrue(arena.position.z > 0.5f, "an agent's +Z is world +Z; z = ${arena.position.z}")
+
+        arena.intent.moveZ = -1f
+        arena.run(STEPS * 3)
+        assertTrue(arena.position.z > -2.5f + 0.4f, "the wall must stop the agent; z = ${arena.position.z}")
+    }
+
+    /** The positive control: the same agent moved without physics walks through the wall. */
+    @Test
+    fun anAgentMovedWithoutTheControllerPassesThroughTheWall() = runTest {
+        val arena = arena(jumpSpeed = 5f)
+        arena.run(STEPS)
+        arena.intent.driver = MovementDriver.Agent
+        arena.intent.moveZ = -1f
+
+        repeat(STEPS * 3) { MatrixRelativeMovementSystem().update(arena.world, DELTA) }
+
+        assertTrue(arena.position.z < -3.5f, "without the controller nothing stops it; z = ${arena.position.z}")
     }
 
     @Test

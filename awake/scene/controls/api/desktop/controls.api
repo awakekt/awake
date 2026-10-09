@@ -334,6 +334,7 @@ public final class com/awakekt/awake/scene/controls/movement/MatrixRelativeMovem
 public final class com/awakekt/awake/scene/controls/movement/MovementControl : com/awakekt/awake/ecs/Poolable {
 	public fun <init> ()V
 	public final fun currentSpeed (F)F
+	public final fun getDriver ()Lcom/awakekt/awake/scene/controls/movement/MovementDriver;
 	public final fun getJump ()Z
 	public final fun getMoveX ()F
 	public final fun getMoveY ()F
@@ -343,6 +344,7 @@ public final class com/awakekt/awake/scene/controls/movement/MovementControl : c
 	public final fun getSpeed ()Ljava/lang/Float;
 	public final fun getTurnSpeed ()F
 	public fun reset ()V
+	public final fun setDriver (Lcom/awakekt/awake/scene/controls/movement/MovementDriver;)V
 	public final fun setJump (Z)V
 	public final fun setMoveX (F)V
 	public final fun setMoveY (F)V
@@ -352,6 +354,8 @@ public final class com/awakekt/awake/scene/controls/movement/MovementControl : c
 	public final fun setSpeed (Ljava/lang/Float;)V
 	public final fun setTurnSpeed (F)V
 	public final fun turnToward (Lcom/awakekt/awake/scene/core/transform/Transform;FFF)V
+	public final fun worldX (Lcom/awakekt/awake/scene/controls/movement/CameraRelativeBasis;)F
+	public final fun worldZ (Lcom/awakekt/awake/scene/controls/movement/CameraRelativeBasis;)F
 }
 
 public final class com/awakekt/awake/scene/controls/movement/MovementControlBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
@@ -373,6 +377,19 @@ public final class com/awakekt/awake/scene/controls/movement/MovementControlBind
 	public static final fun registerControls (Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;)Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;
 }
 
+public final class com/awakekt/awake/scene/controls/movement/MovementDriver : java/lang/Enum {
+	public static final field Agent Lcom/awakekt/awake/scene/controls/movement/MovementDriver;
+	public static final field Companion Lcom/awakekt/awake/scene/controls/movement/MovementDriver$Companion;
+	public static final field Player Lcom/awakekt/awake/scene/controls/movement/MovementDriver;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/scene/controls/movement/MovementDriver;
+	public static fun values ()[Lcom/awakekt/awake/scene/controls/movement/MovementDriver;
+}
+
+public final class com/awakekt/awake/scene/controls/movement/MovementDriver$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
 public final class com/awakekt/awake/scene/controls/movement/PlayerInputSystem : com/awakekt/awake/ecs/System {
 	public fun <init> (Lkotlin/jvm/functions/Function0;)V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
@@ -381,15 +398,17 @@ public final class com/awakekt/awake/scene/controls/movement/PlayerInputSystem :
 public final class com/awakekt/awake/scene/controls/movement/SceneMovementControl : com/awakekt/awake/scene/document/SceneComponent {
 	public static final field Companion Lcom/awakekt/awake/scene/controls/movement/SceneMovementControl$Companion;
 	public fun <init> ()V
-	public fun <init> (Ljava/lang/Float;Ljava/lang/Float;F)V
-	public synthetic fun <init> (Ljava/lang/Float;Ljava/lang/Float;FILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/Float;Ljava/lang/Float;FLcom/awakekt/awake/scene/controls/movement/MovementDriver;)V
+	public synthetic fun <init> (Ljava/lang/Float;Ljava/lang/Float;FLcom/awakekt/awake/scene/controls/movement/MovementDriver;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/Float;
 	public final fun component2 ()Ljava/lang/Float;
 	public final fun component3 ()F
-	public final fun copy (Ljava/lang/Float;Ljava/lang/Float;F)Lcom/awakekt/awake/scene/controls/movement/SceneMovementControl;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/controls/movement/SceneMovementControl;Ljava/lang/Float;Ljava/lang/Float;FILjava/lang/Object;)Lcom/awakekt/awake/scene/controls/movement/SceneMovementControl;
+	public final fun component4 ()Lcom/awakekt/awake/scene/controls/movement/MovementDriver;
+	public final fun copy (Ljava/lang/Float;Ljava/lang/Float;FLcom/awakekt/awake/scene/controls/movement/MovementDriver;)Lcom/awakekt/awake/scene/controls/movement/SceneMovementControl;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/controls/movement/SceneMovementControl;Ljava/lang/Float;Ljava/lang/Float;FLcom/awakekt/awake/scene/controls/movement/MovementDriver;ILjava/lang/Object;)Lcom/awakekt/awake/scene/controls/movement/SceneMovementControl;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getAllowsMultiplePerNode ()Z
+	public final fun getDriver ()Lcom/awakekt/awake/scene/controls/movement/MovementDriver;
 	public final fun getRunSpeed ()Ljava/lang/Float;
 	public final fun getSpeed ()Ljava/lang/Float;
 	public final fun getTurnSpeed ()F

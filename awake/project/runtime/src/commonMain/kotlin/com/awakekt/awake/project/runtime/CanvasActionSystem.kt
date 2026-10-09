@@ -10,6 +10,7 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.canvas.CanvasElement
 import com.awakekt.awake.scene.canvas.CanvasElementKind
 import com.awakekt.awake.scene.controls.movement.MovementControl
+import com.awakekt.awake.scene.controls.movement.MovementDriver
 
 /** The canvas action a Joystick steers the player with. */
 const val MOVE_ACTION = "move"
@@ -41,6 +42,7 @@ class CanvasActionSystem : System {
         }
         if (!steering && !jumping) return
         world.queryEach(MovementControl::class) { _, control ->
+            if (control.driver != MovementDriver.Player) return@queryEach
             if (steering) {
                 control.moveX = moveX
                 control.moveZ = moveZ

@@ -28,8 +28,8 @@ class MatrixRelativeMovementSystem(
         world.queryEach(Transform::class, MovementControl::class) { _, transform, control ->
             if (control.moveX == 0f && control.moveZ == 0f) return@queryEach
             val step = control.currentSpeed(speed) * delta
-            val worldX = basis.worldX(control.moveX, control.moveZ)
-            val worldZ = basis.worldZ(control.moveX, control.moveZ)
+            val worldX = control.worldX(basis)
+            val worldZ = control.worldZ(basis)
             transform.position.x += worldX * step
             transform.position.z += worldZ * step
             control.turnToward(transform, worldX, worldZ, delta)

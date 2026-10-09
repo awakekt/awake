@@ -28,6 +28,7 @@ class PlayerInputSystem(
         // whatever direction was last held. Typing "wasd" into a focused field must stop it.
         if (input.keysOwnedByUi) {
             world.queryEach(MovementControl::class) { _, control ->
+                if (control.driver != MovementDriver.Player) return@queryEach
                 control.moveX = 0f
                 control.moveZ = 0f
                 control.jump = false
@@ -53,6 +54,7 @@ class PlayerInputSystem(
         val jump = input.isDown(Key.Space)
         val run = input.isDown(Key.Shift)
         world.queryEach(MovementControl::class) { _, control ->
+            if (control.driver != MovementDriver.Player) return@queryEach
             control.moveX = moveX
             control.moveZ = moveZ
             control.jump = jump
