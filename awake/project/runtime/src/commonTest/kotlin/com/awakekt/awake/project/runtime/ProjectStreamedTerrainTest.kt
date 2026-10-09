@@ -86,6 +86,23 @@ class ProjectStreamedTerrainTest {
         }
     }
 
+    /** A game server streams cells and keeps their collision, and draws nothing. */
+    @Test
+    fun aHeadlessHostStreamsAndCollidesWithoutARenderer() = runTest {
+        val project = loadProject(files(scene(collider = true))) { createJoltPhysicsWorld() }
+        try {
+            val physics = assertNotNull(project.physics)
+            val systems = project.sceneSystems(input = { GameplayInput(input.currentSnapshot, InputOwnership()) })
+            val world = World().also { SceneLoader.instantiate(project.scene, it) }
+            camera(world, x = 2f)
+
+            systems.stepUntil(world) { physics.raycast(Vec3f(2f, 20f, 2f), DOWN, 40f) != null }
+            systems.close()
+        } finally {
+            project.close()
+        }
+    }
+
     @Test
     fun aCollidingPagedTerrainNeedsAPhysicsWorld() = runTest {
         assertFailsWith<IllegalArgumentException> { loadProject(files(scene(collider = true))) }
