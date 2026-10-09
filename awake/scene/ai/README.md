@@ -18,6 +18,11 @@ implementation(project(":awake:scene:ai"))
 - `TransformAgentPlacement` -- the `AgentPlacement` for a scene: an agent is where its `Transform`'s
   `position` says, and moves by rewriting it. Pass it to `PatrolAiSystem`, `ChaseAiSystem` and
   `FleeAiSystem`.
+- `MovementAgentPlacement` -- the same, except that an agent whose `MovementControl` has the `Agent`
+  driver is steered through that control: its world-space intent, and `moveSpeed` set to the
+  behaviour's speed, which wins over `movement_control.speed`. With a character controller, walls
+  stop the agent and slopes and steps carry it. Run `AgentIntentResetSystem` before the behaviours
+  each frame, so an agent no behaviour steers any more (it arrived, or lost its target) stops.
 
 ## Why it is its own module
 

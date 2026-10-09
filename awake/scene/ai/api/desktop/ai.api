@@ -1,3 +1,8 @@
+public final class com/awakekt/awake/scene/ai/AgentIntentResetSystem : com/awakekt/awake/ecs/System {
+	public fun <init> ()V
+	public fun update (Lcom/awakekt/awake/ecs/World;F)V
+}
+
 public final class com/awakekt/awake/scene/ai/AiBehaviorBindings {
 	public static final field INSTANCE Lcom/awakekt/awake/scene/ai/AiBehaviorBindings;
 	public final fun getAll ()Ljava/util/List;
@@ -12,10 +17,18 @@ public final class com/awakekt/awake/scene/ai/AiBehaviorBindingsKt {
 	public static final fun registerAiBehaviors (Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;)Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;
 }
 
+public final class com/awakekt/awake/scene/ai/MovementAgentPlacement : com/awakekt/awake/ai/behavior/AgentPlacement {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/ai/MovementAgentPlacement;
+	public fun moveBy-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JFF)V
+	public fun position-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/core/math/Vec3f;)Z
+	public fun steer-raSDhyQ (Lcom/awakekt/awake/ecs/World;JFFF)V
+}
+
 public final class com/awakekt/awake/scene/ai/TransformAgentPlacement : com/awakekt/awake/ai/behavior/AgentPlacement {
 	public static final field INSTANCE Lcom/awakekt/awake/scene/ai/TransformAgentPlacement;
 	public fun moveBy-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JFF)V
 	public fun position-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/core/math/Vec3f;)Z
+	public fun steer-raSDhyQ (Lcom/awakekt/awake/ecs/World;JFFF)V
 }
 
 public final class com/awakekt/awake/scene/ai/chase/ChaseBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {

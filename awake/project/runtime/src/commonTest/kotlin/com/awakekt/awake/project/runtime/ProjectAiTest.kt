@@ -17,9 +17,11 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.engine.bootstrap.dsl.app
 import com.awakekt.awake.engine.platform.dsl.requireService
 import com.awakekt.awake.navigation.PathRequestSystem
+import com.awakekt.awake.physics.jolt.createJoltPhysicsWorld
 import com.awakekt.awake.render.command.GpuDrawPreparationSource
 import com.awakekt.awake.render.command.GpuDrawPreparer
 import com.awakekt.awake.render.testing.NoopRenderer
+import com.awakekt.awake.scene.ai.AgentIntentResetSystem
 import com.awakekt.awake.scene.authoring.scene
 import com.awakekt.awake.scene.controls.GameplayInput
 import com.awakekt.awake.scene.core.Name
@@ -83,6 +85,61 @@ class ProjectAiTest {
         assertTrue(closest < CAUGHT_WITHIN, "the hound must catch it; the closest it got was $closest")
     }
 
+    /**
+     * The grid is open, so both chasers route straight through the wall. The one moved by its transform
+     * walks through it, the positive control; the one with a character controller is stopped by it.
+     */
+    @Test
+    fun aChaserWithACharacterControllerStopsAtAWallATransformPlacedChaserWalksThrough() = runTest {
+        val game = play(WALL_SCENE, physics = true)
+        val hound = game.world.named("Hound")
+        val ghost = game.world.named("Ghost")
+        var houndFurthest = Float.MIN_VALUE
+        var ghostFurthest = Float.MIN_VALUE
+
+        repeat(WALL_FRAMES) {
+            game.frame()
+            houndFurthest = maxOf(houndFurthest, game.world.get<Transform>(hound)!!.position.z)
+            ghostFurthest = maxOf(ghostFurthest, game.world.get<Transform>(ghost)!!.position.z)
+        }
+
+        assertTrue(ghostFurthest > WALL_FAR_SIDE, "the transform-placed chaser walks through the wall; it reached z = $ghostFurthest")
+        assertTrue(houndFurthest > HOUND_START_Z + 2f, "the controlled chaser must really be steered; it reached z = $houndFurthest")
+        assertTrue(houndFurthest < WALL_NEAR_SIDE, "the wall stops the controlled chaser; it reached z = $houndFurthest")
+    }
+
+    /**
+     * Without each frame's reset the last intent would walk the chaser on past the end of its route for
+     * as long as the game runs.
+     */
+    @Test
+    fun aControlledChaserWhoseTargetIsGoneStopsAtTheEndOfItsRoute() = runTest {
+        val game = play(OPEN_FIELD_SCENE, physics = true)
+        val hound = game.world.named("Hound")
+        repeat(TARGET_GONE_AFTER) { game.frame() }
+        val startedFrom = game.world.get<Transform>(hound)!!.position.z
+        game.world.destroy(game.world.named("Bait"))
+
+        repeat(SETTLE_FRAMES) { game.frame() }
+        val settled = game.world.get<Transform>(hound)!!.position.copy()
+        repeat(REST_FRAMES) { game.frame() }
+        val after = game.world.get<Transform>(hound)!!.position
+
+        assertTrue(startedFrom < BAIT_Z - 2f, "the target must go while the chaser is still on its way; it was at z = $startedFrom")
+        assertTrue(planar(settled.x, settled.z, after.x, after.z) < AT_REST, "the chaser must stop; it moved from $settled to $after")
+        assertTrue(after.z < BAIT_Z + 1f, "it stops where its route ended, not past it; it is at z = ${after.z}")
+    }
+
+    @Test
+    fun anAgentWithACharacterControllerAndNoAgentControlIsRefusedAtLoad() = runTest {
+        val error = assertFailsWith<IllegalArgumentException> {
+            loadProject(files(HELD_AGENT_SCENE), physicsWorld = ::createJoltPhysicsWorld)
+        }
+
+        assertTrue("Hound" in error.message.orEmpty(), error.message)
+        assertTrue("\"driver\": \"Agent\"" in error.message.orEmpty(), error.message)
+    }
+
     @Test
     fun noHostSideAiWiringIsNeeded() = runTest {
         val game = play(YARD_SCENE)
@@ -129,6 +186,15 @@ class ProjectAiTest {
     }
 
     @Test
+    fun eachFrameClearsTheAgentsIntentsBeforeTheBehavioursSteer() {
+        val frame = systemsFor(YARD_SCENE).frame
+        val reset = frame.indexOfFirst { it is AgentIntentResetSystem }
+        val firstBehaviour = frame.indexOfFirst { it is PatrolAiSystem || it is ChaseAiSystem }
+
+        assertTrue(reset in 0 until firstBehaviour, "intents cleared at $reset, behaviours from $firstBehaviour")
+    }
+
+    @Test
     fun behavioursWithoutNavigationAreLeftOutRatherThanLeftWaiting() {
         val frame = systemsFor(NO_NAVIGATION_SCENE).frame
 
@@ -156,8 +222,8 @@ class ProjectAiTest {
         fun frame() = update()
     }
 
-    private suspend fun play(scene: String): Game {
-        val project = loadProject(files(scene))
+    private suspend fun play(scene: String, physics: Boolean = false): Game {
+        val project = if (physics) loadProject(files(scene), physicsWorld = ::createJoltPhysicsWorld) else loadProject(files(scene))
         val game = app { scene("play") { runProject(project) } }
         game.ready(TestRenderer())
         val runtime = game.requireService<SceneAppLifecycleRuntime>()
@@ -207,6 +273,15 @@ class ProjectAiTest {
         const val GAP_X = 8.5f
         const val MOVED_AT_LEAST = 2f
         const val CAUGHT_WITHIN = 1.2f
+        const val WALL_FRAMES = 60 * 5
+        const val HOUND_START_Z = 1f
+        const val WALL_NEAR_SIDE = 4.75f
+        const val WALL_FAR_SIDE = 5.25f
+        const val BAIT_Z = 8f
+        const val TARGET_GONE_AFTER = 30
+        const val SETTLE_FRAMES = 60 * 4
+        const val REST_FRAMES = 60
+        const val AT_REST = 0.01f
         const val MANIFEST_PATH = "awake.project.json"
         const val MANIFEST = """{"formatVersion":1,"id":"com.example.harbor-town","name":"Harbor Town","version":"1.0.0","entryScene":"scenes/main.scene.json"}"""
 
@@ -229,6 +304,56 @@ class ProjectAiTest {
                     { "time": 8.0, "value": { "x": 10.0, "y": 0.0, "z": 8.0 } } ] } ] },
   { "name": "Hound", "transform": { "position": { "x": 10.0, "y": 0.0, "z": 10.0 } }, "components": [
     { "component": "chase", "target": "Runner", "speed": 4.0 } ] }
+] }
+"""
+
+        /** A 12 by 12 field with nothing on the grid, so routes run straight to their goal. */
+        const val OPEN_GRID = """
+          "............", "............", "............", "............", "............", "............",
+          "............", "............", "............", "............", "............", "............"
+        """
+
+        const val FLOOR = """
+  { "name": "Floor", "transform": { "position": { "x": 6.0, "y": -0.1, "z": 6.0 } }, "components": [
+    { "component": "physics_body", "shape": { "type": "box", "halfExtents": { "x": 20.0, "y": 0.1, "z": 20.0 } } } ] }"""
+
+        /** A wall across z = 4.75 to 5.25 that the grid does not know about, between both chasers and their bait. */
+        const val WALL_SCENE = """
+{ "version": 1, "name": "walled field", "nodes": [
+  { "name": "Map", "components": [ { "component": "navigation", "cellSize": 1.0, "rows": [$OPEN_GRID] } ] },
+  $FLOOR,
+  { "name": "Wall", "transform": { "position": { "x": 6.0, "y": 1.5, "z": 5.0 } }, "components": [
+    { "component": "physics_body", "shape": { "type": "box", "halfExtents": { "x": 8.0, "y": 1.5, "z": 0.25 } } } ] },
+  { "name": "Bait", "transform": { "position": { "x": 6.0, "y": 0.0, "z": 10.0 } } },
+  { "name": "Hound", "transform": { "position": { "x": 6.0, "y": 1.0, "z": 1.0 } }, "components": [
+    { "component": "chase", "target": "Bait", "speed": 4.0 },
+    { "component": "movement_control", "driver": "Agent" },
+    { "component": "character_controller" } ] },
+  { "name": "Ghost", "transform": { "position": { "x": 4.0, "y": 0.0, "z": 1.0 } }, "components": [
+    { "component": "chase", "target": "Bait", "speed": 4.0 } ] }
+] }
+"""
+
+        const val OPEN_FIELD_SCENE = """
+{ "version": 1, "name": "open field", "nodes": [
+  { "name": "Map", "components": [ { "component": "navigation", "cellSize": 1.0, "rows": [$OPEN_GRID] } ] },
+  $FLOOR,
+  { "name": "Bait", "transform": { "position": { "x": 6.0, "y": 0.0, "z": 8.0 } } },
+  { "name": "Hound", "transform": { "position": { "x": 6.0, "y": 1.0, "z": 1.0 } }, "components": [
+    { "component": "chase", "target": "Bait", "speed": 4.0 },
+    { "component": "movement_control", "driver": "Agent" },
+    { "component": "character_controller" } ] }
+] }
+"""
+
+        const val HELD_AGENT_SCENE = """
+{ "version": 1, "name": "held", "nodes": [
+  { "name": "Map", "components": [ { "component": "navigation", "cellSize": 1.0, "rows": [$OPEN_GRID] } ] },
+  $FLOOR,
+  { "name": "Bait", "transform": { "position": { "x": 6.0, "y": 0.0, "z": 8.0 } } },
+  { "name": "Hound", "transform": { "position": { "x": 6.0, "y": 1.0, "z": 1.0 } }, "components": [
+    { "component": "chase", "target": "Bait", "speed": 4.0 },
+    { "component": "character_controller" } ] }
 ] }
 """
 

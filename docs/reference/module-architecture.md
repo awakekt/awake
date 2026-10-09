@@ -718,7 +718,8 @@ scene layer (#386). The split follows particles (§9):
   `AgentPlacement` that reads an entity's position and moves it. It depends on `ai`, `core:math`,
   `ecs` and `navigation`, and on no `scene:*` module.
 - `scene:ai` holds the `patrol`, `chase` and `flee` schemas and bindings, `registerAiBehaviors()`, and
-  `TransformAgentPlacement`, the scene's answer.
+  the scene's answers: `TransformAgentPlacement`, and `MovementAgentPlacement`, which steers an agent
+  through its `Agent` movement control so a character controller moves it (#543).
 - `scene:navigation` holds the `navigation` component, the grid a scene carries.
 
 With this, no capability module depends on the scene layer, so `verifyCapabilityLayering` has no

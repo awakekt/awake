@@ -23,6 +23,8 @@ kotlin {
             api(project(":awake:ai:behavior"))
             // registerAiBehaviors registers the navigation component with the behaviours.
             api(project(":awake:scene:navigation"))
+            // MovementAgentPlacement steers an agent through its MovementControl.
+            api(project(":awake:scene:controls"))
             // TransformAgentPlacement places agents by Transform; references resolve by Name.
             api(project(":awake:scene:scene-core"))
             api(project(":awake:scene:document"))

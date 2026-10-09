@@ -32,4 +32,16 @@ interface AgentPlacement {
      * entity keeps it on the ground.
      */
     fun moveBy(world: World, entity: Entity, dx: Float, dz: Float)
+
+    /**
+     * Steers [entity] at the ground-plane velocity ([velocityX], [velocityZ]) metres per second for
+     * [delta] seconds. The behaviours move agents through this, at their own speed.
+     *
+     * The default moves the entity that far now, through [moveBy]. A placement whose entities
+     * something else moves, such as a character controller that stops at walls, overrides it to pass
+     * the direction and speed on instead.
+     */
+    fun steer(world: World, entity: Entity, velocityX: Float, velocityZ: Float, delta: Float) {
+        moveBy(world, entity, velocityX * delta, velocityZ * delta)
+    }
 }

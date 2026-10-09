@@ -84,7 +84,7 @@ Paths below are Gradle coordinates minus the `:awake:` prefix.
 | `scene:physics` | Physics bodies, character controller, and the physics system |
 | `scene:audio` | Audio sources and the audio system |
 | `scene:particles` | The `particle_emitter` scene component, over `particles` |
-| `scene:ai` | The `patrol`, `chase` and `flee` scene components and `TransformAgentPlacement`, over `ai:behavior` |
+| `scene:ai` | The `patrol`, `chase` and `flee` scene components, `TransformAgentPlacement` and `MovementAgentPlacement`, over `ai:behavior` |
 | `scene:navigation` | The `navigation` scene component: the walkable grid a scene carries, over `navigation` |
 | `scene:shader` | The `shader_effect` scene component: a project's shader documents drawn in a scene, over `asset:shader-document` |
 | `scene:scene2d` | The 2D scene components, starting with `sprite`: schema, binding and the systems that run them |
