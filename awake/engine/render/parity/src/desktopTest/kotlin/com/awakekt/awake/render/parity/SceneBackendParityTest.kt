@@ -410,23 +410,61 @@ class SceneBackendParityTest {
         assertTrue(failures.isEmpty(), failures.joinToString("\n"))
     }
 
-    /** An additive quad brightens the ground under it; an alpha-blended one covers it. */
+    /** An additive quad brightens the ground under it, lit or not; an alpha-blended one covers it. */
     @Test
     fun anAdditiveQuadAddsToTheGroundInsteadOfCoveringIt() {
         BACKEND_ORDER.forEach { backend ->
             val renderer = session(backend).renderer
             val ground = renderer.renderGlowScene(GlowBlend.None)
             val covered = renderer.renderGlowScene(GlowBlend.Alpha).also { write(backend, it, "glow-alpha") }
-            val added = renderer.renderGlowScene(GlowBlend.Additive).also { write(backend, it, "glow-additive") }
 
             // Under the quad: where the alpha-blended red replaced the ground's green.
             val quad = (0 until SCENE_SIZE * SCENE_SIZE).filter { ground.channel(it, GREEN) - covered.channel(it, GREEN) > COVERED_GREEN }
             assertTrue(quad.size > MIN_QUAD_PIXELS, "$backend: the red quad covered only ${quad.size} px")
-            val keptGreen = quad.count { added.channel(it, GREEN) >= ground.channel(it, GREEN) - CHANNEL_TOLERANCE }
-            val addedRed = quad.count { added.channel(it, RED) > ground.channel(it, RED) }
-            assertTrue(keptGreen == quad.size, "$backend: additive kept the ground's green in $keptGreen of ${quad.size} px")
-            assertTrue(addedRed == quad.size, "$backend: additive raised red in $addedRed of ${quad.size} px")
+            listOf(GlowBlend.Additive to "glow-additive", GlowBlend.LitAdditive to "glow-lit-additive").forEach { (blend, name) ->
+                val added = renderer.renderGlowScene(blend).also { write(backend, it, name) }
+                val keptGreen = quad.count { added.channel(it, GREEN) >= ground.channel(it, GREEN) - CHANNEL_TOLERANCE }
+                val addedRed = quad.count { added.channel(it, RED) > ground.channel(it, RED) }
+                assertTrue(keptGreen == quad.size, "$backend $blend: kept the ground's green in $keptGreen of ${quad.size} px")
+                assertTrue(addedRed == quad.size, "$backend $blend: raised red in $addedRed of ${quad.size} px")
+            }
         }
+    }
+
+    /**
+     * An additive quad whose material stays lit adds its lit colour: far less with the sun below it,
+     * where only the ambient reaches it, than with the sun on it. In fog it fades, as an unlit one
+     * does, rather than adding the fog colour. Without the switch it adds the same whatever the sun.
+     */
+    @Test
+    fun anAdditiveQuadThatStaysLitTakesTheSunOnBothBackends() {
+        val failures = BACKEND_ORDER.flatMap { backend ->
+            val renderer = session(backend).renderer
+            val empty = renderer.renderAdditiveQuadScene(null, SunOverhead)
+            val emptyFog = renderer.renderAdditiveQuadScene(null, SunBelow, FOG_DENSITY)
+            val litSun = renderer.renderAdditiveQuadScene(true, SunOverhead).also { write(backend, it, "additive-lit-sun") }
+            val litShade = renderer.renderAdditiveQuadScene(true, SunBelow).also { write(backend, it, "additive-lit-shade") }
+            val litShadeFog = renderer.renderAdditiveQuadScene(true, SunBelow, FOG_DENSITY).also { write(backend, it, "additive-lit-shade-fog") }
+            val unlitSun = renderer.renderAdditiveQuadScene(false, SunOverhead)
+            val unlitShade = renderer.renderAdditiveQuadScene(false, SunBelow)
+            val pixels = 0 until SCENE_SIZE * SCENE_SIZE
+            fun ByteArray.addedOver(behind: ByteArray, pixel: Int) = (0..2).maxOf { channel(pixel, it) - behind.channel(pixel, it) }
+
+            val quad = pixels.filter { litSun.addedOver(empty, it) > CHANNEL_TOLERANCE }
+            val inSun = quad.sumOf { litSun.addedOver(empty, it) }
+            val inShade = quad.sumOf { litShade.addedOver(empty, it) }
+            val inShadeFogged = quad.sumOf { litShadeFog.addedOver(emptyFog, it) }
+            val fogBrightened = quad.count { litShadeFog.addedOver(emptyFog, it) > litShade.addedOver(empty, it) + CHANNEL_TOLERANCE }
+            val unlitMoved = pixels.count { pixel -> (0..2).any { abs(unlitSun.channel(pixel, it) - unlitShade.channel(pixel, it)) > CHANNEL_TOLERANCE } }
+            listOfNotNull(
+                "$backend: the lit quad added to only ${quad.size} px".takeIf { quad.size <= MIN_QUAD_PIXELS },
+                "$backend: the lit quad added $inShade in shade against $inSun in the sun".takeIf { inShade > inSun * TURNED_AWAY_MAX },
+                "$backend: fog brightened the lit quad in $fogBrightened px".takeIf { fogBrightened > 0 },
+                "$backend: the lit quad added $inShadeFogged in fog against $inShade without".takeIf { inShadeFogged >= inShade },
+                "$backend: the unlit quad changed in $unlitMoved px with the sun".takeIf { unlitMoved > 0 },
+            )
+        }
+        assertTrue(failures.isEmpty(), failures.joinToString("\n"))
     }
 
     /**

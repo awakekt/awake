@@ -22,6 +22,7 @@ import kotlinx.serialization.Serializable
  * @property emissiveFactor Surface emissive color tint factor.
  * @property alphaMode Alpha blending or masking mode for surface transparency.
  * @property alphaCutoff Alpha cutoff threshold when [alphaMode] is [AlphaMode.Mask].
+ * @property litWhenAdditive Keeps a textured mesh drawn additive lit. See [PbrMaterial.litWhenAdditive].
  */
 @Serializable
 @SerialName("pbr_material")
@@ -32,6 +33,7 @@ data class ScenePbrMaterial(
     val emissiveFactor: SceneColor = SceneColor.Transparent,
     val alphaMode: AlphaMode = AlphaMode.Opaque,
     @PropertyRange(min = 0.0, max = 1.0) val alphaCutoff: Float = 0.5f,
+    val litWhenAdditive: Boolean = false,
 ) : SceneComponent {
     override fun validate(path: String): List<SceneValidationIssue> = buildList {
         if (metallic !in 0f..1f) {

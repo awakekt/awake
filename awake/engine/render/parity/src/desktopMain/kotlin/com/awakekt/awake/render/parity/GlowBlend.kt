@@ -32,6 +32,9 @@ enum class GlowBlend {
 
     /** Quad is blended using additive blend mode. */
     Additive,
+
+    /** Quad is blended additively, its material asking to stay lit. */
+    LitAdditive,
 }
 
 /**
@@ -52,9 +55,9 @@ fun Renderer.renderGlowScene(blend: GlowBlend): ByteArray {
                     RenderDrawCommand(
                         glow,
                         glowMaterial,
-                        extraUniformFloats = WHITE_FACTORS,
+                        extraUniformFloats = if (blend == GlowBlend.LitAdditive) WHITE_FACTORS_LIT_WHEN_ADDITIVE else WHITE_FACTORS,
                         transparent = true,
-                        additive = blend == GlowBlend.Additive,
+                        additive = blend == GlowBlend.Additive || blend == GlowBlend.LitAdditive,
                     ),
                 )
             }
@@ -117,9 +120,62 @@ fun Renderer.renderEffectSpriteScene(sprite: TextureAsset?, fogDensity: Float = 
     }
 }
 
+/**
+ * A white quad added over a black background and nothing else, so the frame is exactly what the
+ * quad adds. [litWhenAdditive] is its material's switch, and null leaves the quad out. The sun
+ * shines from [sun]; [fogDensity] fogs the scene.
+ */
+fun Renderer.renderAdditiveQuadScene(
+    litWhenAdditive: Boolean?,
+    sun: Vec3f,
+    fogDensity: Float = 0f,
+    size: Int = SCENE_SIZE,
+): ByteArray {
+    val target = createRenderTarget(size, size)
+    val quad = createMesh(texturedPlane(GLOW_HALF, y = GLOW_Y))
+    val material = texturedMaterial(SolidWhite)
+    return try {
+        val draws = listOfNotNull(
+            litWhenAdditive?.let {
+                RenderDrawCommand(
+                    quad,
+                    material,
+                    extraUniformFloats = pbrMaterialFloats(0f, 1f, Color.White, Color.Transparent, litWhenAdditive = it),
+                    transparent = true,
+                    additive = true,
+                )
+            },
+        )
+        renderToTexture(
+            target,
+            ScenePassCompiler.compile(
+                lens = Lens(eye = Vec3f(0f, EYE_Y, EYE_Z), center = Vec3f(0f, 0f, 0f), fovYRadians = 1f, near = 0.1f, far = 50f),
+                drawCalls = draws,
+                light = SceneLight(direction = sun, color = Vec3f(1f, 1f, 1f)),
+                environment = EnvironmentUniforms.Default.copy(shadowsEnabled = false, fogDensity = fogDensity, clearColor = Color.Black),
+                clipSpace = clipSpace,
+                aspect = 1f,
+                drawPreparer = (this as? GpuDrawPreparationSource)?.gpuDrawPreparer,
+            ),
+        )
+        runBlocking { readPixels(target) }.data
+    } finally {
+        quad.destroy()
+        material.destroy()
+        target.destroy()
+    }
+}
+
+/** The sun straight above a ground-facing quad: it lights it fully. */
+internal val SunOverhead: Vec3f = Vec3f(0f, 1f, 0f)
+
+/** The sun below a ground-facing quad: only the ambient reaches it. */
+internal val SunBelow: Vec3f = Vec3f(0f, -1f, 0f)
+
 /** Black, fully opaque: the background of a glow sprite. */
 internal val SolidBlack = TextureAsset(data = ByteArray(2 * 2 * 4) { if (it % 4 == 3) -1 else 0 }, width = 2, height = 2)
 
 private const val GLOW_HALF = 2f
 private const val GLOW_Y = 0.05f
+private val WHITE_FACTORS_LIT_WHEN_ADDITIVE = pbrMaterialFloats(0f, 1f, Color.White, Color.Transparent, litWhenAdditive = true)
 private val SolidRed = TextureAsset(data = ByteArray(2 * 2 * 4) { if (it % 4 == 0 || it % 4 == 3) -1 else 0 }, width = 2, height = 2)

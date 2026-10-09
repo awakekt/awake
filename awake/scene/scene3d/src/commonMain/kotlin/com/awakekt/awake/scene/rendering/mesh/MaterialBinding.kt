@@ -45,6 +45,7 @@ object MaterialBinding : SceneComponentBinding<PbrMaterial, ScenePbrMaterial> {
         emissiveFactor = emissiveFactor.toColor(),
         alphaMode = alphaMode,
         alphaCutoff = alphaCutoff,
+        litWhenAdditive = litWhenAdditive,
     )
 
     /**
@@ -59,5 +60,6 @@ object MaterialBinding : SceneComponentBinding<PbrMaterial, ScenePbrMaterial> {
         emissiveFactor = emissiveFactor.toSceneColor(),
         alphaMode = alphaMode,
         alphaCutoff = alphaCutoff,
+        litWhenAdditive = litWhenAdditive,
     )
 }

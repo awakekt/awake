@@ -43,6 +43,7 @@ import kotlin.math.PI
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -302,6 +303,32 @@ class SceneLoaderTest {
         val exported = SceneLoader.fromWorld(world, name = "x").nodes.associate { it.name to it.components }
         assertEquals(animation, exported.getValue("water").filterIsInstance<SceneTextureAnimation>().single())
         assertTrue(exported.getValue("still").none { it is SceneTextureAnimation }, "a still material exports no animation")
+    }
+
+    /** A material that stays lit when additive says so in the file, reaches the world that way, and exports back unchanged. */
+    @Test
+    fun litWhenAdditiveRoundTripsThroughTheFileAndTheWorld() {
+        val material = ScenePbrMaterial(roughness = 0.6f, litWhenAdditive = true)
+        val document = SceneDocument(nodes = listOf(SceneNode(name = "haze", components = listOf(material))))
+        val world = World()
+
+        val file = SceneLoader.encode(document)
+        assertTrue(Regex(""""litWhenAdditive"\s*:\s*true""").containsMatchIn(file), file)
+        SceneLoader.decode(file).instantiate(world = world)
+
+        val loaded = mutableListOf<PbrMaterial>().also { list -> world.family<PbrMaterial>().forEach { _, m -> list += m } }
+        assertTrue(loaded.single().litWhenAdditive)
+        assertEquals(material, SceneLoader.fromWorld(world, name = "x").nodes.single().components.filterIsInstance<ScenePbrMaterial>().single())
+    }
+
+    /** A material written before it could stay lit when additive loads as it drew then: unlit when additive. */
+    @Test
+    fun aMaterialWithoutLitWhenAdditiveLoadsUnlitWhenAdditive() {
+        val document = SceneLoader.decode(
+            """{"version": 1, "name": "older", "nodes": [{"name": "glow", "components": [{"component": "pbr_material", "roughness": 0.4}]}]}""",
+        )
+
+        assertFalse(document.nodes.single().components.filterIsInstance<ScenePbrMaterial>().single().litWhenAdditive)
     }
 
     /** A sheet's clips survive the file, load showing the first cell of the clip that plays, and export with the clip playing now. */

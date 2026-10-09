@@ -109,15 +109,23 @@ fun skinnedMaterialFloats(
     return into
 }
 
-/** Packs authored PBR factors without making scene extraction know the GPU lane order. */
+/**
+ * Packs authored PBR factors without making scene extraction know the GPU lane order.
+ *
+ * [litWhenAdditive] keeps a textured draw lit when it blends additively, where it would otherwise
+ * add only its own colour (see [TexturedBlend]). It rides in `pbrFactors.w` for the shared packer,
+ * which replaces it with the draw's [TexturedBlend] code.
+ */
+@Suppress("LongParameterList") // One argument per authored material value.
 fun pbrMaterialFloats(
     metallic: Float,
     roughness: Float,
     baseColorFactor: Color,
     emissiveFactor: Color,
     textureAnimation: TextureAnimation = TextureAnimation.None,
+    litWhenAdditive: Boolean = false,
 ): FloatArray = UniformWriter(MaterialUniformLayouts.PbrTexturedMaterial)
-    .put(UniformFields.PbrFactors, metallic, roughness, 0f, 0f)
+    .put(UniformFields.PbrFactors, metallic, roughness, 0f, if (litWhenAdditive) LIT_WHEN_ADDITIVE else 0f)
     .put(UniformFields.BaseColorFactor, baseColorFactor)
     .put(UniformFields.EmissiveFactor, emissiveFactor.r, emissiveFactor.g, emissiveFactor.b, 0f)
     .putTextureAnimation(textureAnimation)
@@ -137,13 +145,43 @@ private fun UniformWriter.putTextureAnimation(animation: TextureAnimation): Unif
 internal fun pbrMaterialFloats(values: FloatArray): FloatArray = pbrMaterialPayload(values)
 
 /**
- * Packs `[metallic, roughness, alphaCutoff, additive] + baseColorFactor.rgba + emissiveFactor.rgba`
+ * How a textured draw meets what is behind it: the code the shared packer writes in the textured
+ * block's `pbrFactors.w`, decided once from the draw's blend and its material, so both backends'
+ * textured shaders read the same answer.
+ *
+ * Every mode is lit or unlit the same way on both backends; only an additive draw's lighting is a
+ * choice, its material's (`litWhenAdditive` in [pbrMaterialFloats]).
+ *
+ * @property code The value the textured shader branches on. Stable: it is shader ABI.
+ */
+enum class TexturedBlend(val code: Int) {
+    /** Covers what is behind it, opaque or alpha-blended: lit, and fogged toward the fog colour. */
+    Covers(0),
+
+    /**
+     * Adds its own colour to what is behind it, unlit: its base and emissive colour only, so a
+     * black texel adds nothing. Fog fades it out, because the fog is already behind it. What an
+     * additive draw does by default: glows, fire, sparks, light shafts.
+     */
+    AddsUnlit(1),
+
+    /**
+     * Adds its lit colour: shaded by the sun, its shadows, the ambient and the point lights exactly
+     * as a covering surface is, then added. Fog fades it out as it does [AddsUnlit]. An additive
+     * draw whose material asks to stay lit.
+     */
+    AddsLit(2),
+}
+
+/**
+ * Packs `[metallic, roughness, alphaCutoff, blend] + baseColorFactor.rgba + emissiveFactor.rgba`
  * and the texture animation for the textured glTF PBR path.
  *
  * @param drawCall Supplies the factors through `extraUniformFloats`, or nothing for the defaults.
  * The third float in the metallic/roughness vec4 is the draw's alpha cutoff, which masked depth
- * shaders read, and the fourth is 1 for a draw blended additively, which the textured shader then
- * leaves unlit; the draw's time goes in the texture scroll's `z`, which the animation reads.
+ * shaders read, and the fourth is the draw's [TexturedBlend] code: a draw blended additively adds
+ * unlit unless its material asked to stay lit. The draw's time goes in the texture scroll's `z`,
+ * which the animation reads.
  *
  * @return Exactly [PBR_TEXTURED_MATERIAL_FLOATS] floats.
  */
@@ -162,9 +200,10 @@ internal val RenderDrawCommand.blendsAdditively: Boolean
     get() = transparent && additive
 
 /**
- * The textured material block for [values], stamped with the draw's [alphaCutoff], whether it blends
- * [additive]ly, and [timeSeconds]. A payload of only the three factor fields (from before texture
- * animation) keeps its factors and plays no animation.
+ * The textured material block for [values], stamped with the draw's [alphaCutoff], its
+ * [TexturedBlend] (from whether it blends [additive]ly and whether [values] asks to stay lit), and
+ * [timeSeconds]. A payload of only the three factor fields (from before texture animation) keeps
+ * its factors and plays no animation.
  */
 private fun texturedMaterialPayload(values: FloatArray, alphaCutoff: Float, additive: Boolean, timeSeconds: Float): FloatArray {
     val layout = MaterialUniformLayouts.PbrTexturedMaterial
@@ -184,11 +223,22 @@ private fun texturedMaterialPayload(values: FloatArray, alphaCutoff: Float, addi
             .build()
     }
     val factors = layout.readVec4(output, UniformFields.PbrFactors)
-    layout.writeVec4(output, UniformFields.PbrFactors, factors.x, factors.y, alphaCutoff, if (additive) 1f else 0f)
+    val blend = texturedBlend(additive, litWhenAdditive = factors.w > LIT_WHEN_ADDITIVE / 2f)
+    layout.writeVec4(output, UniformFields.PbrFactors, factors.x, factors.y, alphaCutoff, blend.code.toFloat())
     val scroll = layout.readVec4(output, UniformFields.TextureScroll)
     layout.writeVec4(output, UniformFields.TextureScroll, scroll.x, scroll.y, timeSeconds, scroll.w)
     return output
 }
+
+/** A draw blended [additive]ly adds unlit unless its material asked to stay lit; any other covers. */
+private fun texturedBlend(additive: Boolean, litWhenAdditive: Boolean): TexturedBlend = when {
+    !additive -> TexturedBlend.Covers
+    litWhenAdditive -> TexturedBlend.AddsLit
+    else -> TexturedBlend.AddsUnlit
+}
+
+/** An authored payload's `pbrFactors.w` when its material stays lit while blending additively; 0 otherwise. */
+private const val LIT_WHEN_ADDITIVE = 1f
 
 /** The factor fields a textured payload carried before texture animation. */
 private val FACTOR_FLOATS =
@@ -273,7 +323,8 @@ fun texturedUniforms(
  * payload is the frame block produced by [sceneLightUniforms]: directional lanes followed by
  * point-light position and colour slots. Keeping this here prevents Vulkan and WebGPU from
  * independently assembling a shorter, invalid prefix of the textured layout. [additive] marks a
- * draw blended additively, which the shader leaves unlit. */
+ * draw blended additively, which the shader leaves unlit unless [extraUniformFloats] asks to stay
+ * lit (see [TexturedBlend]). */
 @Suppress("LongParameterList") // One argument per draw input the block holds; DrawUniformPacking names each.
 fun texturedUniforms(
     mvp: Mat4,

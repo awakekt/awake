@@ -39,4 +39,18 @@ class PbrMaterialPackingTest {
         assertContentEquals(pbrMaterialFloats(0f, 0.5f, Color.White, Color.Transparent, fire), animated)
         assertContentEquals(pbrMaterialFloats(0f, 0.5f, Color.White, Color.Transparent), material.packedFloats())
     }
+
+    /** Asking to stay lit when additive is part of what the material packs, so turning it on packs again. */
+    @Test
+    fun stayingLitWhenAdditivePacksWithTheMaterial() {
+        val material = PbrMaterial()
+        val unlit = material.packedFloats()
+
+        material.litWhenAdditive = true
+        val lit = material.packedFloats()
+
+        assertNotSame(unlit, lit)
+        assertContentEquals(pbrMaterialFloats(0f, 0.5f, Color.White, Color.Transparent, litWhenAdditive = true), lit)
+        assertSame(lit, material.packedFloats())
+    }
 }

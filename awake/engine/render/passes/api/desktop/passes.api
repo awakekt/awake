@@ -508,9 +508,9 @@ public final class com/awakekt/awake/render/passes/uniforms/PbrUniformsKt {
 	public static final fun getDEFAULT_EMISSIVE_FACTOR ()Lcom/awakekt/awake/core/color/Color;
 	public static final fun litShadowUniforms (Lcom/awakekt/awake/render/command/GpuDrawRequest;Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/render/command/GpuShadowCascadeData;Lcom/awakekt/awake/render/passes/uniforms/SceneFrameUniforms;)[F
 	public static final fun litUniforms (Lcom/awakekt/awake/core/math/Mat4;[F[FZ)[F
-	public static final fun pbrMaterialFloats (FFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/render/passes/uniforms/TextureAnimation;)[F
+	public static final fun pbrMaterialFloats (FFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/render/passes/uniforms/TextureAnimation;Z)[F
 	public static final fun pbrMaterialFloats (Lcom/awakekt/awake/render/command/GpuDrawRequest;)[F
-	public static synthetic fun pbrMaterialFloats$default (FFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/render/passes/uniforms/TextureAnimation;ILjava/lang/Object;)[F
+	public static synthetic fun pbrMaterialFloats$default (FFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/render/passes/uniforms/TextureAnimation;ZILjava/lang/Object;)[F
 	public static final fun pbrTexturedMaterialFloats (Lcom/awakekt/awake/render/command/GpuDrawRequest;)[F
 	public static final fun skinnedMaterialFloats ([FLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;[F)[F
 	public static synthetic fun skinnedMaterialFloats$default ([FLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;[FILjava/lang/Object;)[F
@@ -687,6 +687,16 @@ public final class com/awakekt/awake/render/passes/uniforms/TextureAnimation {
 
 public final class com/awakekt/awake/render/passes/uniforms/TextureAnimation$Companion {
 	public final fun getNone ()Lcom/awakekt/awake/render/passes/uniforms/TextureAnimation;
+}
+
+public final class com/awakekt/awake/render/passes/uniforms/TexturedBlend : java/lang/Enum {
+	public static final field AddsLit Lcom/awakekt/awake/render/passes/uniforms/TexturedBlend;
+	public static final field AddsUnlit Lcom/awakekt/awake/render/passes/uniforms/TexturedBlend;
+	public static final field Covers Lcom/awakekt/awake/render/passes/uniforms/TexturedBlend;
+	public final fun getCode ()I
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/render/passes/uniforms/TexturedBlend;
+	public static fun values ()[Lcom/awakekt/awake/render/passes/uniforms/TexturedBlend;
 }
 
 public final class com/awakekt/awake/render/pipeline/DrawCallPipelineKt {
