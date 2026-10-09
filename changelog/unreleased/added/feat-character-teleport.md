@@ -1,0 +1,1 @@
+- **Teleport a character.** `CharacterController.teleport(transform, position)` puts a character at a position at once, without sweeping through what lies between, and stops its fall. Use it for a respawn or a portal; movement still goes through `movement_control`.

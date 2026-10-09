@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.character
 
+import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
@@ -13,13 +14,14 @@ import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.binding.SceneResolutionContext
 import com.awakekt.awake.scene.core.motion.GroundContact
+import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneValidationIssue
 import com.awakekt.awake.scene.physics.character.CharacterConfig
 import com.awakekt.awake.scene.physics.character.KinematicCharacterController
+import kotlin.reflect.KClass
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlin.reflect.KClass
 
 /**
  * A character that walks and falls through physics instead of through walls, as authored in a scene.
@@ -72,6 +74,17 @@ class CharacterController(
 
     /** Whether it stood on walkable ground after its last move. */
     val isGrounded: Boolean get() = controller?.isGrounded ?: false
+
+    /**
+     * Puts the character at [position] at once, without sweeping through what lies between, and stops
+     * its fall: a respawn or a teleport, not movement. Writes [transform] too, so the scene shows it
+     * there before the next step.
+     */
+    fun teleport(transform: Transform, position: Vec3f) {
+        controller?.teleport(position)
+        transform.position.set(position)
+        verticalVelocity = 0f
+    }
 }
 
 /** Bi-directional binding connecting [CharacterController] with its serializable [SceneCharacterController] schema. */
