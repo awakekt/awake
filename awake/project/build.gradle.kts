@@ -41,10 +41,12 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            api(project(":awake:core:io"))
             implementation(libs.kotlinx.serialization.json)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
+            implementation(libs.kotlinx.coroutines.test)
         }
     }
 }
