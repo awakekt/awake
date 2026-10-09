@@ -77,6 +77,9 @@ class SceneSession internal constructor(
         "No scene asset library is registered for '${spec.sceneName ?: "scene"}'."
     }
 
+    /** The scene's asset library, or null when the app registered none. */
+    internal fun assetLibraryOrNull(): SceneAssetLibrary? = assetLibrary
+
     /**
      * Resolves a named [Mesh] from the registered asset library.
      *

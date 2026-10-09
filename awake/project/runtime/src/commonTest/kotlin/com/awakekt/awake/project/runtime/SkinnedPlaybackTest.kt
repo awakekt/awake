@@ -6,22 +6,29 @@
 package com.awakekt.awake.project.runtime
 
 import com.awakekt.awake.core.io.AssetSource
+import com.awakekt.awake.ecs.Entity
+import com.awakekt.awake.ecs.World
 import com.awakekt.awake.engine.bootstrap.dsl.app
 import com.awakekt.awake.engine.platform.dsl.requireService
 import com.awakekt.awake.render.command.GpuDrawPreparationSource
 import com.awakekt.awake.render.command.GpuDrawPreparer
 import com.awakekt.awake.render.testing.NoopRenderer
 import com.awakekt.awake.scene.authoring.scene
+import com.awakekt.awake.scene.core.Name
+import com.awakekt.awake.scene.document.SceneLoader
 import com.awakekt.awake.scene.rendering.animation.Animator
 import com.awakekt.awake.scene.rendering.animation.SkinnedPose
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
-import kotlinx.coroutines.test.runTest
+import com.awakekt.awake.scene.runtime.spawn
 import kotlin.io.encoding.Base64
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertSame
+import kotlinx.coroutines.test.runTest
 
 class SkinnedPlaybackTest {
     @Test
@@ -67,6 +74,73 @@ class SkinnedPlaybackTest {
         assertEquals(1, animated.size, "the parts must share one animator")
         assertEquals(2, drawn.size)
         drawn.forEach { assertSame(animated.single(), it, "each part must draw the shared pose") }
+    }
+
+    /** A second copy of a loaded model, spawned while the scene runs, animates on its own and leaves cleanly. */
+    @Test
+    fun aSpawnedSkinnedModelAnimatesAndDespawnsCleanly() = runTest {
+        val (project, game, runtime) = playing()
+        val arm = runtime.world.entityNamed("Arm")
+        val shared = assertNotNull(runtime.world.get<MeshRenderer>(arm)).mesh
+
+        val spawned = runtime.spawn(project, SceneLoader.decode(REMOTE).nodes.single())
+        game.update(DELTA, WIDTH, HEIGHT)
+
+        assertNotNull(runtime.world.get<MeshRenderer>(spawned.root), "the spawned node draws its model")
+        assertEquals(2, runtime.world.animators(), "it animates beside the scene's own")
+        val before = assertNotNull(runtime.world.get<SkinnedPose>(spawned.root)).jointPalette.copyOf()
+        repeat(FRAMES) { game.update(DELTA, WIDTH, HEIGHT) }
+        assertFalse(before.contentEquals(runtime.world.get<SkinnedPose>(spawned.root)!!.jointPalette), "its clip plays")
+
+        spawned.despawn()
+        assertFalse(runtime.world.isAlive(spawned.root), "despawning removes it")
+        assertEquals(1, runtime.world.animators())
+        assertEquals("$MODEL", runtime.requireAssetLibrary().meshName(shared), "the scene's model keeps the mesh they shared")
+    }
+
+    /** A mesh only the spawned node drew is destroyed when it despawns; nothing else held it. */
+    @Test
+    fun despawningReleasesAMeshOnlyItDrew() = runTest {
+        val (project, game, runtime) = playing()
+        val spawned = runtime.spawn(project, SceneLoader.decode(REMOTE.replace("\"$MODEL\"", "\"gltf-primitive:$MODEL#0\"")).nodes.single())
+        game.update(DELTA, WIDTH, HEIGHT)
+        val own = assertNotNull(runtime.world.get<MeshRenderer>(spawned.root)).mesh
+        assertEquals("gltf-primitive:$MODEL#0", runtime.requireAssetLibrary().meshName(own))
+
+        spawned.despawn()
+
+        assertNull(runtime.requireAssetLibrary().meshName(own), "its mesh is released and destroyed")
+    }
+
+    /** The positive control: spawning outside the project draws the model but starts no animation. */
+    @Test
+    fun aPlainSpawnDrawsButDoesNotAnimate() = runTest {
+        val (_, game, runtime) = playing()
+
+        val spawned = runtime.spawn(SceneLoader.decode(REMOTE).nodes.single())
+        game.update(DELTA, WIDTH, HEIGHT)
+
+        assertNotNull(runtime.world.get<MeshRenderer>(spawned.root))
+        assertNull(runtime.world.get<Animator>(spawned.root))
+    }
+
+    private suspend fun playing(): Triple<LoadedProject, com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle, SceneAppLifecycleRuntime> {
+        val files = mapOf("awake.project.json" to MANIFEST, "scenes/main.scene.json" to SCENE, MODEL to skinnedTriangleGltf())
+        val project = loadProject(AssetSource { path -> runCatching { files.getValue(path.value).encodeToByteArray() } })
+        val game = app { scene("play") { runProject(project) } }
+        game.ready(TestRenderer())
+        game.update(DELTA, WIDTH, HEIGHT)
+        return Triple(project, game, game.requireService<SceneAppLifecycleRuntime>())
+    }
+
+    private fun World.entityNamed(name: String): Entity = buildList {
+        queryEach(Name::class) { entity, value -> if (value.value == name) add(entity) }
+    }.single()
+
+    private fun World.animators(): Int {
+        var count = 0
+        queryEach(Animator::class) { _, _ -> count++ }
+        return count
     }
 
     private class TestRenderer : NoopRenderer(), GpuDrawPreparationSource {
@@ -138,6 +212,12 @@ class SkinnedPlaybackTest {
         const val SCENE = """
 { "version": 1, "name": "arm", "nodes": [
   { "name": "Arm", "components": [ { "component": "meshRenderer", "mesh": "$MODEL", "material": "skinned-material" } ] }
+] }
+"""
+        const val REMOTE = """
+{ "version": 1, "nodes": [
+  { "name": "Remote", "transform": { "position": { "x": 3.0, "y": 0.0, "z": 0.0 } },
+    "components": [ { "component": "meshRenderer", "mesh": "$MODEL", "material": "skinned-material" } ] }
 ] }
 """
         const val PARTS_SCENE = """

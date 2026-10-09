@@ -198,10 +198,13 @@ fun activatePrimaryCamera(world: World) {
  * parts (`gltf-primitive:<path>#<i>`) animates once: the parts' parent node holds the animator and
  * each part draws its pose, skinned to the model's first skin.
  */
-private fun SceneAppLifecycleRuntime.startSkinnedAnimations(models: GltfAssetResolver) {
+internal fun SceneAppLifecycleRuntime.startSkinnedAnimations(models: GltfAssetResolver, among: Collection<Entity>? = null) {
     val assets = requireAssetLibrary()
     val drawn = mutableListOf<Pair<Entity, String>>()
-    world.queryEach(MeshRenderer::class) { entity, renderer -> assets.meshName(renderer.mesh)?.let { drawn += entity to it } }
+    world.queryEach(MeshRenderer::class) { entity, renderer ->
+        if (among != null && entity !in among) return@queryEach
+        assets.meshName(renderer.mesh)?.let { drawn += entity to it }
+    }
     for ((entity, mesh) in drawn) {
         val path = models.modelPath(mesh)
         val scene = models.getLoadedScene(path)

@@ -367,6 +367,17 @@ public final class com/awakekt/awake/scene/runtime/SceneSystemRegistration {
 	public final fun getPhase ()Lcom/awakekt/awake/scene/runtime/SceneSystemPhase;
 }
 
+public final class com/awakekt/awake/scene/runtime/SpawnedNode {
+	public final fun despawn ()V
+	public final fun getEntities ()Ljava/util/List;
+	public final fun getRoot-LaMO_uA ()J
+}
+
+public final class com/awakekt/awake/scene/runtime/SpawnedNodeKt {
+	public static final fun spawn (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Lcom/awakekt/awake/scene/document/SceneNode;Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;)Lcom/awakekt/awake/scene/runtime/SpawnedNode;
+	public static synthetic fun spawn$default (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Lcom/awakekt/awake/scene/document/SceneNode;Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;ILjava/lang/Object;)Lcom/awakekt/awake/scene/runtime/SpawnedNode;
+}
+
 public abstract interface class com/awakekt/awake/scene/runtime/TerrainDriver {
 	public abstract fun attach (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;)V
 	public abstract fun dispose (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;)V
