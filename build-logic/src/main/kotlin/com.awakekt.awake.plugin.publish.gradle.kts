@@ -3,6 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+import com.awakekt.awake.build.extension.HostOs
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinMultiplatform
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
@@ -37,6 +38,13 @@ extensions.configure<PublishingExtension>("publishing") {
                 }
         }
     }
+}
+
+// Apple targets build only on macOS. Elsewhere a local publish (`-Pawake.version`) leaves their
+// publications out, for a JVM, Android or web consumer, instead of failing on klibs it can't make.
+if (!HostOs.isMac) {
+    val applePublication = Regex("Ios(Arm64|SimulatorArm64|X64)Publication")
+    tasks.matching { applePublication.containsMatchIn(it.name) }.configureEach { enabled = false }
 }
 
 tasks.matching { it.name.startsWith("generateMetadataFileFor") }.configureEach {
