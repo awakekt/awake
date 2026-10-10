@@ -51,6 +51,7 @@ internal val CORE_CAPABILITIES: List<SceneCapability> = listOf(
     ParticlesCapability,
     DayCycleCapability,
     ShaderEffectsCapability,
+    AudioCapability,
     SkinnedAnimationCapability,
 )
 

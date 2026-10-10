@@ -1,0 +1,5 @@
+- **A project's scene plays its sound as data.** `audio_source` is now a Core scene component, `SceneAudioSource` in `awake:scene:audio`: a WAV clip from the project's files, at the node's place for a 3D sound, with volume, distance, auto-play and loop. Its fields are the ones Awake Studio has saved, so existing scenes load unchanged.
+  - **Loading:** `loadProject` registers it and reads each clip once. A clip that can't be read or decoded is logged with its node, and only that source stays silent.
+  - **Playing:** `AudioSystem` plays the clip once it has loaded, and a 3D sound fades and pans from the active camera.
+  - **The player:** `runProject` plays through the platform's audio player, which it opens only for a scene with sound. Another host passes its own to `LoadedProject.sceneSystems(audio = …)` or `SceneHostServices.withAudio`. With none, as on a server or in a test, the sources run silently.
+  - **New API:** `SceneComponentRegistry.registerAudio()` registers the component on its own. `loadAudioClips` and `CoreSceneContent.AudioClips` give a host the decoded clips.

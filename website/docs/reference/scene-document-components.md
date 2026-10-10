@@ -14,6 +14,7 @@ registers it.
 | Component id | ECS component | Module | Registered by | Guide |
 | --- | --- | --- | --- | --- |
 | [`ambient_light`](#ambient_light) | `AmbientLight` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Lights and shadows](../guides/lights-and-shadows.md) |
+| [`audio_source`](#audio_source) | `AudioSource` | `com.awakekt.awake.scene:audio` | `registerAudio()` | — |
 | [`blueprint`](#blueprint) | `BlueprintComponent` | `com.awakekt.awake.scene:blueprint` | `registerBlueprints()` | — |
 | [`camera`](#camera) | `Camera` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Cameras](../guides/cameras-and-controls.md) |
 | [`camera_rig`](#camera_rig) | `CameraRig` | `com.awakekt.awake.scene:controls` | `registerControls()` | [Cameras](../guides/cameras-and-controls.md) |
@@ -60,7 +61,8 @@ registers it.
 | `SceneComponentRegistry.registerCharacter()` | `com.awakekt.awake.scene:character` | `character_controller` |
 | `SceneComponentRegistry.registerAiBehaviors()` | `com.awakekt.awake.scene:ai` | `patrol`, `chase`, `flee`, `navigation` |
 | `SceneComponentRegistry.registerBlueprints()` | `com.awakekt.awake.scene:blueprint` | `blueprint` |
-| `loadProject(...)` | `com.awakekt.awake.project:runtime` | The defaults, plus `movement_control`, `camera_rig`, `input_actions`, `physics_body`, `character_controller`, `patrol`, `chase`, `flee`, `navigation`, and the components of the [capabilities](../guides/scene-capabilities.md) passed to it |
+| `SceneComponentRegistry.registerAudio()` | `com.awakekt.awake.scene:audio` | `audio_source` |
+| `loadProject(...)` | `com.awakekt.awake.project:runtime` | The defaults, plus `movement_control`, `camera_rig`, `input_actions`, `physics_body`, `character_controller`, `patrol`, `chase`, `flee`, `navigation`, `audio_source`, and the components of the [capabilities](../guides/scene-capabilities.md) passed to it |
 
 ## `ambient_light`
 
@@ -73,6 +75,22 @@ Uniform light added to every surface. `SceneAmbientLight`.
 | `colorR` | number | none | Legacy red channel. When `colorR`, `colorG` and `colorB` are all set, they replace `color`. |
 | `colorG` | number | none | Legacy green channel. |
 | `colorB` | number | none | Legacy blue channel. |
+
+## `audio_source`
+
+A sound this node plays: a clip from the project's files, placed at the node for a 3D sound.
+`loadProject` reads each clip once, as a 16-bit PCM WAV file; a clip that can't be read or decoded is
+logged with the node, and that source stays silent while the scene plays on. During play a 3D sound
+fades with distance from the active camera and pans with its direction. `SceneAudioSource`.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `clip` | string | `"unassigned"` | Project path of the clip's WAV file. `"unassigned"` is a source with no clip picked yet; nothing is read for it. |
+| `volume` | number | `1` | Loudness, 0 for silent, 1 as recorded. Not negative. |
+| `isSpatial3D` | boolean | `true` | Whether it fades with distance and pans with direction. |
+| `maxDistance` | number | `50` | The distance a 3D sound fades out at. Above 0. |
+| `autoPlay` | boolean | `false` | Whether it starts as soon as the scene plays. |
+| `loop` | boolean | `false` | Whether it starts again when it ends. |
 
 ## `blueprint`
 

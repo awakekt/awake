@@ -5,11 +5,14 @@
  */
 package com.awakekt.awake.project.runtime
 
+import com.awakekt.awake.core.audio.AudioPlayer
+import com.awakekt.awake.core.audio.AudioPlayerFactory
 import com.awakekt.awake.ecs.InterpolatedSystem
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.render.renderer.Renderer
+import com.awakekt.awake.scene.audio.SceneAudioSource
 import com.awakekt.awake.scene.authoring.SceneAppDsl
 import com.awakekt.awake.scene.authoring.infrastructure.gameplayInput
 import com.awakekt.awake.scene.controls.GameplayInput
@@ -32,6 +35,8 @@ class SceneHostServices private constructor(
     /** What the scene's capabilities read from the project's files, as [loadSceneContent] reads it. */
     val content: SceneContent,
     private val spawner: ((SceneNode) -> SpawnedNode)? = null,
+    /** What the scene's sounds play through; null plays them silently. A host adds one with [withAudio]. */
+    val audio: AudioPlayer? = null,
 ) {
     /** Services for a host that draws through [renderer]. */
     constructor(
@@ -64,7 +69,10 @@ class SceneHostServices private constructor(
 
     /** These services, with [spawn] putting nodes into the scene through [spawner]. */
     fun withSpawner(spawner: (SceneNode) -> SpawnedNode): SceneHostServices =
-        SceneHostServices(gpu, input, physics, content, spawner)
+        SceneHostServices(gpu, input, physics, content, spawner, audio)
+
+    /** These services, with the scene's `audio_source`s playing through [audio], as `runProject` does. */
+    fun withAudio(audio: AudioPlayer): SceneHostServices = SceneHostServices(gpu, input, physics, content, spawner, audio)
 
     /** Makes services for a host with no renderer. */
     companion object {
@@ -193,6 +201,9 @@ internal fun installedCapabilities(extra: List<SceneCapability>): List<SceneCapa
  */
 internal fun SceneAppDsl.registerSystemSpecs(project: LoadedProject) {
     val releasing = SystemReleases()
+    // The platform's player, opened only for a scene with sound, and closed with the scene.
+    val audio = lazy { AudioPlayerFactory.create() }
+    val sounds = project.scene.uses(SceneAudioSource::class)
     sceneSystemSpecsFor(project.scene, hasPhysics = project.physics != null, project.capabilities).forEach { spec ->
         system(spec.name, spec.phase) {
             val services = SceneHostServices(
@@ -201,10 +212,13 @@ internal fun SceneAppDsl.registerSystemSpecs(project: LoadedProject) {
                 physics = project.physics,
                 content = project.content,
             ).withSpawner { node -> spawn(project, node) }
-            releasing.keep(spec.create(services))
+            releasing.keep(spec.create(if (sounds) services.withAudio(audio.value) else services))
         }
     }
-    onDispose { releasing.release() }
+    onDispose {
+        releasing.release()
+        if (audio.isInitialized()) audio.value.dispose()
+    }
 }
 
 /** The systems that hold something to give back, closed newest first when the scene stops. */

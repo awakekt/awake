@@ -35,8 +35,72 @@ public final class com/awakekt/awake/scene/audio/AudioSource {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/scene/audio/AudioSourceBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/audio/AudioSourceBinding;
+	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/audio/SceneAudioSource;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public synthetic fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun canResolve (Lcom/awakekt/awake/scene/document/SceneComponent;)Z
+	public fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/audio/AudioSource;)Lcom/awakekt/awake/scene/audio/SceneAudioSource;
+	public synthetic fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/audio/SceneAudioSource;
+	public synthetic fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun getComponentClass ()Lkotlin/reflect/KClass;
+	public fun getSchemaClass ()Lkotlin/reflect/KClass;
+	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+}
+
 public final class com/awakekt/awake/scene/audio/AudioSystem : com/awakekt/awake/ecs/System {
-	public fun <init> (Lcom/awakekt/awake/core/audio/AudioPlayer;)V
+	public fun <init> (Lcom/awakekt/awake/core/audio/AudioPlayer;Ljava/util/Map;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/audio/AudioPlayer;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
+}
+
+public final class com/awakekt/awake/scene/audio/SceneAudioSource : com/awakekt/awake/scene/document/SceneComponent {
+	public static final field Companion Lcom/awakekt/awake/scene/audio/SceneAudioSource$Companion;
+	public static final field UNASSIGNED Ljava/lang/String;
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;FZFZZ)V
+	public synthetic fun <init> (Ljava/lang/String;FZFZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()F
+	public final fun component3 ()Z
+	public final fun component4 ()F
+	public final fun component5 ()Z
+	public final fun component6 ()Z
+	public final fun copy (Ljava/lang/String;FZFZZ)Lcom/awakekt/awake/scene/audio/SceneAudioSource;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/audio/SceneAudioSource;Ljava/lang/String;FZFZZILjava/lang/Object;)Lcom/awakekt/awake/scene/audio/SceneAudioSource;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAllowsMultiplePerNode ()Z
+	public final fun getAutoPlay ()Z
+	public final fun getClip ()Ljava/lang/String;
+	public final fun getLoop ()Z
+	public final fun getMaxDistance ()F
+	public final fun getVolume ()F
+	public fun hashCode ()I
+	public final fun isSpatial3D ()Z
+	public fun toString ()Ljava/lang/String;
+	public fun validate (Ljava/lang/String;)Ljava/util/List;
+	public fun validate (Ljava/lang/String;Ljava/util/List;)Ljava/util/List;
+}
+
+public final synthetic class com/awakekt/awake/scene/audio/SceneAudioSource$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/audio/SceneAudioSource$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/audio/SceneAudioSource;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/audio/SceneAudioSource;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/audio/SceneAudioSource$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/audio/SceneAudioSourceKt {
+	public static final fun loadAudioClips (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun registerAudio (Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;)Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;
 }
 
