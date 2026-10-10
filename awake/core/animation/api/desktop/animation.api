@@ -186,6 +186,8 @@ public final class com/awakekt/awake/core/animation/Skin {
 	public final fun getInverseBindMatrices ()Ljava/util/List;
 	public final fun getJoints ()Ljava/util/List;
 	public fun hashCode ()I
+	public final fun jointTransform ([FILcom/awakekt/awake/core/math/Mat4;)Lcom/awakekt/awake/core/math/Mat4;
+	public static synthetic fun jointTransform$default (Lcom/awakekt/awake/core/animation/Skin;[FILcom/awakekt/awake/core/math/Mat4;ILjava/lang/Object;)Lcom/awakekt/awake/core/math/Mat4;
 	public fun toString ()Ljava/lang/String;
 }
 

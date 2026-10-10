@@ -14,12 +14,16 @@ import com.awakekt.awake.ecs.Entity
  * Used for weapons, shields, wings, torches, or equipment pieces that follow an animated character's
  * skeleton without being skinned themselves.
  *
- * @property targetEntity The animated character entity owning the skeleton and [SkinnedPose].
- * @property jointIndex The bone index within the target character's joint palette to follow.
+ * @property targetEntity The animated character entity owning the skeleton and [SkinnedPose]: the one
+ *   with the [Animator] or [ModularCharacterComponent] whose skin the pose was written for.
+ * @property jointIndex The joint to follow, as an index into the target's skin joints, the joint
+ *   palette's order, which is not the skeleton's bone order.
  * @property jointName Optional skeleton bone name. When set with a negative [jointIndex], the
- *   system resolves the index from the target's skeleton.
- * @property offsetPosition Relative translation offset applied in the joint's coordinate space.
- * @property offsetRotation Relative Euler rotation offset.
+ *   system finds the bone in the target's skeleton and its joint in the skin, and stores that joint
+ *   in [jointIndex]. A bone that is not one of the skin's joints is not followed.
+ * @property offsetPosition Translation from the joint, in the joint's own space, so it turns with it.
+ * @property offsetRotation Euler rotation in radians from the joint, in the joint's own space, in the
+ *   order `Transform.rotation` uses.
  * @property enabled Whether this socket attachment is active and updated each frame.
  */
 data class SocketAttachmentComponent(
