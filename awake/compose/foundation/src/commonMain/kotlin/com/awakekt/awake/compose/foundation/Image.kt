@@ -22,13 +22,16 @@ import com.awakekt.awake.compose.ui.semantics.SemanticsProperties
 import com.awakekt.awake.compose.ui.semantics.SemanticsRole
 import com.awakekt.awake.compose.ui.semantics.semantics
 import com.awakekt.awake.compose.ui.unit.Constraints
+import com.awakekt.awake.core.color.Color
+import com.awakekt.awake.core.graphics2d.FilterQuality
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 
 context(_: Composer)
 /**
- * Draws [bitmap] into this node, scaled by [contentScale] and centred.
+ * Draws [bitmap] into this node, scaled by [contentScale] and centred, its colour multiplied by
+ * [tint]. [filterQuality] `None` keeps pixel art crisp when it is scaled.
  *
  * Unconstrained, the node takes the bitmap's pixel size; a smaller bound shrinks it with the
  * aspect ratio kept. [contentDescription] is what assistive technology reads; pass `null` for a
@@ -39,6 +42,8 @@ fun Image(
     contentDescription: String?,
     modifier: Modifier = Modifier,
     contentScale: ContentScale = ContentScale.Fit,
+    tint: Color = Color.White,
+    filterQuality: FilterQuality = FilterQuality.Low,
 ) {
     val described = if (contentDescription == null) {
         modifier
@@ -53,7 +58,7 @@ fun Image(
         modifier = described.clipToBounds().drawBehind {
             val w = bitmap.width * imageScaleX(bitmap.width, bitmap.height, width, height, contentScale)
             val h = bitmap.height * imageScaleY(bitmap.width, bitmap.height, width, height, contentScale)
-            drawImage(bitmap, (width - w) / 2f, (height - h) / 2f, w, h)
+            drawImage(bitmap, (width - w) / 2f, (height - h) / 2f, w, h, tint = tint, filterQuality = filterQuality)
         },
         measurePolicy = ImageMeasurePolicy(bitmap.width, bitmap.height),
     )

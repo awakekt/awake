@@ -11,6 +11,7 @@ import com.awakekt.awake.core.graphics2d.ColoredVertex
 import com.awakekt.awake.core.graphics2d.DrawCommand
 import com.awakekt.awake.core.graphics2d.DrawPoint
 import com.awakekt.awake.core.graphics2d.DrawStroke
+import com.awakekt.awake.core.graphics2d.TextureRegion
 import com.awakekt.awake.core.graphics2d.UiLinearGradient
 import com.awakekt.awake.core.graphics2d.drawPath
 import com.awakekt.awake.core.math2d.Rectangle
@@ -20,6 +21,33 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class DrawRunCoalescerTest {
+
+    /** A region and a tint reach the vertices: the region's UVs at its corners, the tint times alpha. */
+    @Test
+    fun aTexturesRegionAndTintReachItsVertices() {
+        val texture = DrawCommand.Texture(
+            0f, 0f, 10f, 10f, material = "sheet", alpha = 0.5f,
+            region = TextureRegion(0.25f, 0f, 0.5f, 0.5f),
+            tint = Color(1f, 0.5f, 0f, 1f),
+        )
+
+        val run = DrawRunCoalescer.coalesce(listOf(texture)).filterIsInstance<StagedDrawRun.TextureRun>().single().primitives.single()
+        val stride = run.vertices.size / 4
+        fun vertex(index: Int) = run.vertices.copyOfRange(index * stride, index * stride + 8).toList()
+
+        assertEquals(listOf(0f, 0f, 0.25f, 0f, 1f, 0.5f, 0f, 0.5f), vertex(0), "top-left: the region's top-left UV")
+        assertEquals(listOf(10f, 10f, 0.5f, 0.5f, 1f, 0.5f, 0f, 0.5f), vertex(2), "bottom-right: the region's bottom-right UV")
+    }
+
+    /** A texture drawn as before, with neither, keeps the whole texture and a white colour. */
+    @Test
+    fun aTextureWithNeitherDrawsTheWholeTextureUntinted() {
+        val run = DrawRunCoalescer.coalesce(listOf(DrawCommand.Texture(0f, 0f, 10f, 10f, material = "image")))
+            .filterIsInstance<StagedDrawRun.TextureRun>().single().primitives.single()
+        val stride = run.vertices.size / 4
+
+        assertEquals(listOf(10f, 10f, 1f, 1f, 1f, 1f, 1f, 1f), run.vertices.copyOfRange(2 * stride, 2 * stride + 8).toList())
+    }
 
     @Test
     fun aMeshInsideASafeInteriorSkipsPathClipping() {

@@ -552,7 +552,8 @@ object DrawRunCoalescer {
         safeInteriorRect: Rectangle? = null,
     ): StagedDrawRun.TextureRun {
         val primitives = textures.map { primitive ->
-            val raw = texturedQuadMesh(primitive.x, primitive.y, primitive.w, primitive.h)
+            val region = primitive.region
+            val raw = texturedQuadMesh(primitive.x, primitive.y, primitive.w, primitive.h, region.u0, region.v0, region.u1, region.v1)
                 .rotatedAboutCenter(primitive.rotationDegrees)
             // The same skip every other primitive type takes. It was passed the rect and ignored
             // it, so a texture wholly inside the clip still paid for an exact clip against it.
@@ -566,7 +567,7 @@ object DrawRunCoalescer {
             }
             val (vertices, indices) = texturedGeometryBuffers(
                 clipped,
-                WHITE_COLOR.withAlpha(primitive.alpha),
+                primitive.tint.withAlpha(primitive.tint.a * primitive.alpha),
                 primitive.transform,
             )
             TexturedDrawRun(primitive.material, vertices, indices, primitive.blendMode, primitive.premultiplied)

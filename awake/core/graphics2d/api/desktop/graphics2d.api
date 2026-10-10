@@ -284,11 +284,14 @@ public final class com/awakekt/awake/core/graphics2d/DrawCommand$StrokedPath : c
 }
 
 public final class com/awakekt/awake/core/graphics2d/DrawCommand$Texture : com/awakekt/awake/core/graphics2d/UiDrawPrimitive {
-	public fun <init> (FFFFLjava/lang/Object;FFLcom/awakekt/awake/core/graphics2d/BlendMode;ZLjava/lang/String;Lcom/awakekt/awake/core/graphics2d/DrawTransform;)V
-	public synthetic fun <init> (FFFFLjava/lang/Object;FFLcom/awakekt/awake/core/graphics2d/BlendMode;ZLjava/lang/String;Lcom/awakekt/awake/core/graphics2d/DrawTransform;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (FFFFLjava/lang/Object;FFLcom/awakekt/awake/core/graphics2d/BlendMode;ZLjava/lang/String;Lcom/awakekt/awake/core/graphics2d/DrawTransform;Lcom/awakekt/awake/core/graphics2d/TextureRegion;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;)V
+	public synthetic fun <init> (FFFFLjava/lang/Object;FFLcom/awakekt/awake/core/graphics2d/BlendMode;ZLjava/lang/String;Lcom/awakekt/awake/core/graphics2d/DrawTransform;Lcom/awakekt/awake/core/graphics2d/TextureRegion;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()F
 	public final fun component10 ()Ljava/lang/String;
 	public final fun component11 ()Lcom/awakekt/awake/core/graphics2d/DrawTransform;
+	public final fun component12 ()Lcom/awakekt/awake/core/graphics2d/TextureRegion;
+	public final fun component13 ()Lcom/awakekt/awake/core/color/Color;
+	public final fun component14 ()Lcom/awakekt/awake/core/graphics2d/FilterQuality;
 	public final fun component2 ()F
 	public final fun component3 ()F
 	public final fun component4 ()F
@@ -297,15 +300,18 @@ public final class com/awakekt/awake/core/graphics2d/DrawCommand$Texture : com/a
 	public final fun component7 ()F
 	public final fun component8 ()Lcom/awakekt/awake/core/graphics2d/BlendMode;
 	public final fun component9 ()Z
-	public final fun copy (FFFFLjava/lang/Object;FFLcom/awakekt/awake/core/graphics2d/BlendMode;ZLjava/lang/String;Lcom/awakekt/awake/core/graphics2d/DrawTransform;)Lcom/awakekt/awake/core/graphics2d/DrawCommand$Texture;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/core/graphics2d/DrawCommand$Texture;FFFFLjava/lang/Object;FFLcom/awakekt/awake/core/graphics2d/BlendMode;ZLjava/lang/String;Lcom/awakekt/awake/core/graphics2d/DrawTransform;ILjava/lang/Object;)Lcom/awakekt/awake/core/graphics2d/DrawCommand$Texture;
+	public final fun copy (FFFFLjava/lang/Object;FFLcom/awakekt/awake/core/graphics2d/BlendMode;ZLjava/lang/String;Lcom/awakekt/awake/core/graphics2d/DrawTransform;Lcom/awakekt/awake/core/graphics2d/TextureRegion;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;)Lcom/awakekt/awake/core/graphics2d/DrawCommand$Texture;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/graphics2d/DrawCommand$Texture;FFFFLjava/lang/Object;FFLcom/awakekt/awake/core/graphics2d/BlendMode;ZLjava/lang/String;Lcom/awakekt/awake/core/graphics2d/DrawTransform;Lcom/awakekt/awake/core/graphics2d/TextureRegion;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;ILjava/lang/Object;)Lcom/awakekt/awake/core/graphics2d/DrawCommand$Texture;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAlpha ()F
 	public final fun getBlendMode ()Lcom/awakekt/awake/core/graphics2d/BlendMode;
+	public final fun getFilterQuality ()Lcom/awakekt/awake/core/graphics2d/FilterQuality;
 	public final fun getH ()F
 	public final fun getMaterial ()Ljava/lang/Object;
 	public final fun getPremultiplied ()Z
+	public final fun getRegion ()Lcom/awakekt/awake/core/graphics2d/TextureRegion;
 	public final fun getRotationDegrees ()F
+	public final fun getTint ()Lcom/awakekt/awake/core/color/Color;
 	public final fun getTokenId ()Ljava/lang/String;
 	public final fun getTransform ()Lcom/awakekt/awake/core/graphics2d/DrawTransform;
 	public final fun getW ()F
@@ -487,6 +493,14 @@ public final class com/awakekt/awake/core/graphics2d/FillRule : java/lang/Enum {
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/core/graphics2d/FillRule;
 	public static fun values ()[Lcom/awakekt/awake/core/graphics2d/FillRule;
+}
+
+public final class com/awakekt/awake/core/graphics2d/FilterQuality : java/lang/Enum {
+	public static final field Low Lcom/awakekt/awake/core/graphics2d/FilterQuality;
+	public static final field None Lcom/awakekt/awake/core/graphics2d/FilterQuality;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/core/graphics2d/FilterQuality;
+	public static fun values ()[Lcom/awakekt/awake/core/graphics2d/FilterQuality;
 }
 
 public final class com/awakekt/awake/core/graphics2d/LinearGradient {
@@ -732,6 +746,31 @@ public final class com/awakekt/awake/core/graphics2d/TextureCompositeMode {
 	public final fun getPremultiplied ()Z
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/graphics2d/TextureRegion {
+	public static final field Companion Lcom/awakekt/awake/core/graphics2d/TextureRegion$Companion;
+	public fun <init> (FFFF)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun copy (FFFF)Lcom/awakekt/awake/core/graphics2d/TextureRegion;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/graphics2d/TextureRegion;FFFFILjava/lang/Object;)Lcom/awakekt/awake/core/graphics2d/TextureRegion;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun flippedHorizontally ()Lcom/awakekt/awake/core/graphics2d/TextureRegion;
+	public final fun flippedVertically ()Lcom/awakekt/awake/core/graphics2d/TextureRegion;
+	public final fun getU0 ()F
+	public final fun getU1 ()F
+	public final fun getV0 ()F
+	public final fun getV1 ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/graphics2d/TextureRegion$Companion {
+	public final fun getWhole ()Lcom/awakekt/awake/core/graphics2d/TextureRegion;
+	public final fun ofTexels (Lcom/awakekt/awake/core/math2d/Rectangle;II)Lcom/awakekt/awake/core/graphics2d/TextureRegion;
 }
 
 public final class com/awakekt/awake/core/graphics2d/TexturedTriangleMesh {

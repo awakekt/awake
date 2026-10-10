@@ -6,7 +6,11 @@
 package com.awakekt.awake.compose.ui.graphics
 
 import com.awakekt.awake.compose.ui.graphics.drawscope.DrawScope
+import com.awakekt.awake.core.color.Color
+import com.awakekt.awake.core.graphics2d.FilterQuality
+import com.awakekt.awake.core.graphics2d.TextureRegion
 import com.awakekt.awake.core.image.createBitmap
+import com.awakekt.awake.core.math2d.Rectangle
 
 /**
  * Decoded pixels a UI can draw: [width]x[height], straight (not premultiplied) RGBA8, top row first.
@@ -76,6 +80,10 @@ suspend fun decodeImageBitmap(bytes: ByteArray): ImageBitmap {
 /**
  * Draws [image] stretched into the rectangle [x], [y], [width], [height] of this node, which
  * defaults to the whole node. Fitting or cropping is the caller's choice; see `Image`.
+ *
+ * Only the pixels from ([srcX], [srcY]), [srcWidth] by [srcHeight], are drawn: one icon of a sheet
+ * or one frame of an animation. Their colour is multiplied by [tint], and [filterQuality]
+ * `None` keeps pixel art crisp when it is scaled.
  */
 fun DrawScope.drawImage(
     image: ImageBitmap,
@@ -83,6 +91,13 @@ fun DrawScope.drawImage(
     y: Float = 0f,
     width: Float = this.width.toFloat(),
     height: Float = this.height.toFloat(),
+    srcX: Int = 0,
+    srcY: Int = 0,
+    srcWidth: Int = image.width,
+    srcHeight: Int = image.height,
+    tint: Color = Color.White,
+    filterQuality: FilterQuality = FilterQuality.Low,
 ) {
-    drawTexture(image, x, y, width, height)
+    val region = TextureRegion.ofTexels(Rectangle(srcX.toFloat(), srcY.toFloat(), srcWidth.toFloat(), srcHeight.toFloat()), image.width, image.height)
+    drawTexture(image, x, y, width, height, region, tint, filterQuality)
 }

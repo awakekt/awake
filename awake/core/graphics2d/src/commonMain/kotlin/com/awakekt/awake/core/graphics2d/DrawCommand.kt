@@ -290,6 +290,9 @@ sealed class DrawCommand {
      * @property premultiplied Render targets are premultiplied; uploaded image assets remain straight-alpha.
      * @property tokenId Optional design system token identifier.
      * @property transform Optional per-primitive GPU scale transform.
+     * @property region The part of the texture drawn, in its UV space; the whole of it by default.
+     * @property tint Multiplies each sampled texel's colour; white leaves it as it is.
+     * @property filterQuality How an image's texels are sampled; a render target keeps its own.
      */
     data class Texture(
         val x: Float,
@@ -307,6 +310,9 @@ sealed class DrawCommand {
         val premultiplied: Boolean = false,
         val tokenId: String? = null,
         val transform: DrawTransform? = null,
+        val region: TextureRegion = TextureRegion.Whole,
+        val tint: Color = Color.White,
+        val filterQuality: FilterQuality = FilterQuality.Low,
     ) : UiDrawPrimitive()
 
     /**

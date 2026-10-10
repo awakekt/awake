@@ -14,6 +14,8 @@ import com.awakekt.awake.core.graphics2d.BlendMode
 import com.awakekt.awake.core.graphics2d.ColoredTriangleMesh
 import com.awakekt.awake.core.graphics2d.DrawPath
 import com.awakekt.awake.core.graphics2d.DrawStroke
+import com.awakekt.awake.core.graphics2d.FilterQuality
+import com.awakekt.awake.core.graphics2d.TextureRegion
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.graphics2d.UiLinearGradient
 import com.awakekt.awake.core.graphics2d.bounds
@@ -192,7 +194,8 @@ interface DrawScope {
     fun clippedPath(path: DrawPath, safeInteriorRect: Rectangle? = null, block: () -> Unit)
 
     /**
-     * Draws a backend texture into this node's bounds.
+     * Draws [region] of a backend texture into this node's bounds, its colour multiplied by
+     * [tint] and its texels sampled as [filterQuality] says.
      *
      * A helper rather than an [emit] at the call site, because a caller cannot position one: the
      * origin and transform this scope maps against are its own, and nothing on this interface
@@ -204,6 +207,9 @@ interface DrawScope {
         y: Float = 0f,
         width: Float = this.width.toFloat(),
         height: Float = this.height.toFloat(),
+        region: TextureRegion = TextureRegion.Whole,
+        tint: Color = Color.White,
+        filterQuality: FilterQuality = FilterQuality.Low,
     )
 
     /**
@@ -569,13 +575,22 @@ internal class PaintScope :
         output += UiDrawPrimitive.Quad(px, py, pw, ph, color.dimmedBy(alpha))
     }
 
-    override fun drawTexture(material: Any, x: Float, y: Float, width: Float, height: Float) {
+    override fun drawTexture(
+        material: Any,
+        x: Float,
+        y: Float,
+        width: Float,
+        height: Float,
+        region: TextureRegion,
+        tint: Color,
+        filterQuality: FilterQuality,
+    ) {
         val px = transform.mapX(originX + x)
         val py = transform.mapY(originY + y)
         val pw = width * transform.scaleX
         val ph = height * transform.scaleY
         if (isFullyOutsideActiveClip(px, py, pw, ph)) return
-        output += UiDrawPrimitive.Texture(px, py, pw, ph, material)
+        output += UiDrawPrimitive.Texture(px, py, pw, ph, material, region = region, tint = tint, filterQuality = filterQuality)
     }
 
     override fun drawRoundedRect(
