@@ -109,7 +109,8 @@ lengths are dp.
 | `background` | colour | The fill, in place of the element's `background`. |
 | `gradient` | `{ start, end, horizontal }` | A gradient fill, top to bottom, or left to right when `horizontal`. It replaces the fill colour. |
 | `image` | [image](#draw-images) | An `Image`'s picture, a frame over the fill, or a `Bar`'s track. |
-| `fillImage` | [image](#draw-images) | A `Bar`'s fill, cut at its `value`. |
+| `fillImage` | [image](#draw-images) | A `Bar`'s fill, cut at its `value` or squeezed into it, as `fillImageMode` says. |
+| `fillImageMode` | `Cut` or `Squeeze` | How `fillImage` meets the `value`. Default `Cut`. |
 | `cornerRadius` | number | Rounds the fill, gradient, border and shadow. A `Bar`'s colour fill is rounded at both ends, a pill whose tip sits at its value. Images stay square. |
 | `borderWidth`, `borderColor` | number, colour | A border inside the element's edge. It needs both. |
 | `shadow` | `{ color, offsetX, offsetY, blur, spread }` | A shadow behind the element, in its shape. Defaults: `#00000080`, 0, 2, 4, 0. |
@@ -154,10 +155,12 @@ their length, and the centre stretches both ways.
 | `tint` | `#RRGGBB` or `#RRGGBBAA` | `#FFFFFF` | Multiplies the image's colour and alpha. |
 | `pixelated` | boolean | `false` | Keep the pixels sharp when the image is scaled, for pixel art. |
 
-A `Bar`'s fill image is laid out at the bar's full width and cut at its `value`, not squeezed into
-it, so the fill's pattern and its end cap stay where they are as the value changes. Corners too
-big for the element shrink together. An element whose image did not load, or whose region does not
-fit in it, draws without it.
+A `Bar`'s fill image is laid out at the bar's full width and cut at its `value`, so the fill's
+pattern stays where it is as the value changes and its right end cap shows only at 100%. Set
+`style.fillImageMode` to `"Squeeze"` to draw the fill at `value` times the bar's width instead: both
+end caps stay and only the middle stretches, as many games' gauges do. Below the two caps' combined
+width they shrink together rather than overlap. Corners too big for the element shrink together. An
+element whose image did not load, or whose region does not fit in it, draws without it.
 
 When a project is played with `awake:project:runtime`, `loadProject` reads every image the scene's
 canvas names, and the runtime draws them. If your app runs its own Compose host, pass the decoded
