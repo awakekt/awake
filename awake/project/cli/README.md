@@ -1,0 +1,42 @@
+# `awake:project:cli`
+
+`awake`, the command line for an Awake project's files. It validates a project and reads and edits its
+scenes with no Studio and no GPU, through the same scene codec and validation a played project uses,
+so a script, a CI job or an agent can change a scene and know it still loads.
+
+```bash
+./gradlew :awake:project:cli:installDist
+awake/project/cli/build/install/awake/bin/awake validate path/to/project
+```
+
+`./gradlew :awake:project:cli:run --args="validate path/to/project"` runs it without installing.
+
+| Command | What it does |
+|---|---|
+| `awake validate [project]` | Checks the manifest, the entry scene, and every scene: decode errors, validation errors, components nothing installed provides (a warning) and tags the manifest's `tags` list leaves out (a warning) |
+| `awake scene list` | The project's scenes, with their names and node counts |
+| `awake scene show <scene>` | A scene's nodes and components |
+| `awake scene set <scene> <node> <c.field=value>` | Sets a component's field, or `transform.…` or `name` on the node |
+| `awake scene add-node <scene> <name> [--parent <node>]` | Adds a node, last under its parent or at the top level |
+| `awake scene remove-node <scene> <node>` | Removes a node and its children |
+| `awake scene add-component <scene> <node> <type> [fields-json]` | Adds a component, with the fields given set on it |
+| `awake scene remove-component <scene> <node> <type>` | Removes the node's component of that type |
+
+`<scene>` is a path from the project root, or a name under `scenes/`. `<node>` is a path of node
+names, such as `Player/Camera`, with `#2` for an unnamed node's index. Without `--project`, the project
+is the nearest folder up holding `awake.project.json`. Every command takes `--json` for output a
+program reads, and an edit takes `--dry-run` to report what it would change without writing it.
+
+An edit is checked before anything is written. The edited scene decodes back through the codec, which
+checks every value's type; a field the component doesn't have is refused rather than dropped; and an
+edit that adds a validation error is refused. The edit is then made to the file as written, so a
+hand-written scene keeps its layout, its old component names and the fields it leaves at their
+defaults, and a one-line scene, as Studio saves it, stays on one line. Where the file spells a field
+another way than the codec does, such as a colour's `x` for `r`, the object holding it is written as
+the codec spells it, so nothing is left that reads differently from what was set.
+
+`awake` exits 0 when a command succeeds, 1 when it finds errors or refuses an edit, and 2 when the
+command line is wrong.
+
+A game's own components are kept as data: `awake` links Core's scene components, not the game's code,
+so it can't check their fields. `validate` names them as warnings.
