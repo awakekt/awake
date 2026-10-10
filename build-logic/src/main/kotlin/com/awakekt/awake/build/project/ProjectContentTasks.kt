@@ -12,6 +12,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.booleanOrNull
@@ -70,7 +71,7 @@ abstract class ValidateProjectTask : DefaultTask() {
 
         val allowed = setOf(
             "\$schema", "formatVersion", "id", "name", "version", "minEngineVersion",
-            "entryScene", "author", "assetRoots", "plugins",
+            "entryScene", "author", "assetRoots", "plugins", "tags",
         )
         (manifest!!.keys - allowed).forEach { errors += "manifest has unsupported property: $it" }
         requireString(manifest, "id", errors)
@@ -94,6 +95,7 @@ abstract class ValidateProjectTask : DefaultTask() {
 
         validateScenes(root, declaredRoots, errors)
         validatePlugins(root, manifest["plugins"], errors, warnings)
+        validateTags(manifest["tags"], errors)
         validateAssetsLock(root, declaredRoots, errors, warnings)
 
         if (errors.isNotEmpty()) fail(errors, warnings)
@@ -154,6 +156,20 @@ abstract class ValidateProjectTask : DefaultTask() {
         }
     }
 
+    /**
+     * The manifest's `tags`, by the rule the engine's `Tags.isValid` (in `awake:ecs`) sets, which this
+     * build can't link: no duplicates, and each a tag the scene component would accept.
+     */
+    private fun validateTags(value: JsonElement?, errors: MutableList<String>) {
+        val tags = stringArray(value, "manifest.tags", errors)
+        if (tags.distinct().size != tags.size) errors += "manifest.tags must not contain duplicates"
+        tags.forEachIndexed { index, tag ->
+            if (!tag.matches(TAG)) {
+                errors += "manifest.tags[$index] \"$tag\" is not a tag: use letters, digits, '_', '.' and '-', starting with a letter, digit or '_'"
+            }
+        }
+    }
+
     private fun validateAssetsLock(root: File, roots: List<String>, errors: MutableList<String>, warnings: MutableList<String>) {
         val lockFile = root.resolve("assets.lock.json")
         if (!lockFile.isFile) return
@@ -178,10 +194,15 @@ abstract class ValidateProjectTask : DefaultTask() {
         if (jsonObject[name]?.jsonPrimitive?.contentOrNull.isNullOrBlank()) errors += "manifest.$name must be a non-empty string"
     }
 
+    /** [value] as strings, or nothing when it's absent; anything but an array of strings is an error, as the engine's decoder refuses it. */
     private fun stringArray(value: JsonElement?, label: String, errors: MutableList<String>): List<String> {
-        val array = value as? JsonArray ?: return emptyList()
+        if (value == null) return emptyList()
+        val array = value as? JsonArray ?: run {
+            errors += "$label must be an array of strings"
+            return emptyList()
+        }
         return array.mapNotNull { element ->
-            element.jsonPrimitive.contentOrNull ?: run {
+            (element as? JsonPrimitive)?.takeIf { it.isString }?.content ?: run {
                 errors += "$label must contain only strings"
                 null
             }
@@ -207,6 +228,7 @@ abstract class ValidateProjectTask : DefaultTask() {
 
     private companion object {
         val SHA256 = Regex("^[0-9a-f]{64}$")
+        val TAG = Regex("[A-Za-z0-9_][A-Za-z0-9_.-]*")
     }
 }
 
