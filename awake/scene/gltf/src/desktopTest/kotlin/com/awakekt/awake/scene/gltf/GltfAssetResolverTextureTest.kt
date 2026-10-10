@@ -70,6 +70,43 @@ class GltfAssetResolverTextureTest {
         assertEquals("gltf-material:$path", resolver.materialName(path))
     }
 
+    /** A model preloaded into a resolver of its own, as a host does off the frame thread, resolves here once adopted. */
+    @Test
+    fun anAdoptedModelResolvesAsThoughItWerePreloadedHere() = runTest {
+        val path = "assets/characters/walker.gltf"
+        val other = "assets/models/painted.gltf"
+        val staged = GltfAssetResolver()
+        staged.preload(path, skinnedPartsWithFactorsJson().encodeToByteArray())
+        staged.preload(other, texturedTriangleJson().encodeToByteArray())
+        val resolver = GltfAssetResolver()
+        assertFalse(resolver.isPreloaded(path))
+
+        resolver.adopt(path, staged)
+
+        assertTrue(resolver.isPreloaded(path))
+        assertSame(staged.getLoadedScene(path), resolver.getLoadedScene(path), "the parsed scene is taken, not parsed again")
+        assertEquals(staged.materialSlots(path), resolver.materialSlots(path))
+        assertEquals(VertexFormat.PositionNormalColorUvSkin, resolver.skinnedPartGeometry("gltf-primitive:$path#0")?.format)
+        assertEquals(0.3f, resolver.materialDefaults("gltf-primitive:$path#0", "gltf-material:$path#0")?.metallic)
+        assertFalse(resolver.isPreloaded(other), "only the model named is adopted")
+
+        resolver.forget(path)
+        assertFalse(resolver.isPreloaded(path), "an adopted model is forgotten like a preloaded one")
+    }
+
+    @Test
+    fun adoptingKeepsWhatAResolverAlreadyHolds() = runTest {
+        val path = "assets/models/house.gltf"
+        val staged = GltfAssetResolver()
+        staged.preload(path, texturedTriangleJson(primitiveCount = 2).encodeToByteArray())
+        val resolver = GltfAssetResolver()
+        resolver.preload(path, texturedTriangleJson().encodeToByteArray())
+
+        resolver.adopt(path, staged)
+
+        assertEquals(1, resolver.materialSlots(path).size)
+    }
+
     @Test
     fun aSavedPrimitiveMeshResolvesToItsModelFile() {
         val resolver = GltfAssetResolver()

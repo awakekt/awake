@@ -2,12 +2,14 @@ public final class com/awakekt/awake/scene/gltf/GltfAssetResolver : com/awakekt/
 	public fun <init> ()V
 	public fun <init> (Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;)V
 	public synthetic fun <init> (Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun adopt (Ljava/lang/String;Lcom/awakekt/awake/scene/gltf/GltfAssetResolver;)V
 	public fun canResolveMaterial (Ljava/lang/String;)Z
 	public fun canResolveMesh (Ljava/lang/String;)Z
 	public fun createMaterial (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Ljava/lang/String;)Lcom/awakekt/awake/render/material/Material;
 	public fun createMesh (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Ljava/lang/String;)Lcom/awakekt/awake/render/mesh/Mesh;
 	public final fun forget (Ljava/lang/String;)V
 	public final fun getLoadedScene (Ljava/lang/String;)Lcom/awakekt/awake/asset/gltf/LoadedSkinnedScene;
+	public final fun isPreloaded (Ljava/lang/String;)Z
 	public fun materialDefaults (Ljava/lang/String;)Lcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;
 	public fun materialDefaults (Ljava/lang/String;Ljava/lang/String;)Lcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;
 	public final fun materialName (Ljava/lang/String;)Ljava/lang/String;

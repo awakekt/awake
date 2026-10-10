@@ -159,6 +159,35 @@ class GltfAssetResolver(
     }
 
     /**
+     * Whether the model file at [path] has been preloaded, or adopted with [adopt], so the meshes and
+     * materials it names resolve.
+     */
+    fun isPreloaded(path: String): Boolean = path in loadedStaticMeshes || path in loadedScenes || path in loadedMaterialSlots
+
+    /**
+     * Takes what [from] parsed from the model file at [path] -- its geometry, skinned scene, materials
+     * and part textures -- as though this resolver had preloaded it. Whatever this resolver already
+     * holds for [path] stays.
+     *
+     * A resolver is not safe to preload into on one thread while another resolves meshes from it. A
+     * host that loads a model while its scene plays preloads it into a resolver of its own off the frame
+     * thread, where nothing else reads it, and adopts it into the scene's resolver on the frame thread.
+     */
+    fun adopt(path: String, from: GltfAssetResolver) {
+        from.loadedScenes[path]?.let { loadedScenes.getOrPut(path) { it } }
+        from.loadedMaterialSlots[path]?.let { loadedMaterialSlots.getOrPut(path) { it } }
+        from.loadedStaticMeshes.forEach { (key, geometry) ->
+            if (key == path || key.startsWith("$PRIMITIVE_MESH_PREFIX$path#")) loadedStaticMeshes.getOrPut(key) { geometry }
+        }
+        from.loadedMaterials.forEach { (key, material) ->
+            if (key == path || key.startsWith("$path#")) loadedMaterials.getOrPut(key) { material }
+        }
+        from.skinnedPartTextures.forEach { (key, texture) ->
+            if (key.startsWith("$path#")) skinnedPartTextures.getOrPut(key) { texture }
+        }
+    }
+
+    /**
      * Synchronous fallback for the existing editor placement seam. New file-backed callers use
      * [preload] so JSON sidecars are resolved first; picker callers that cannot suspend still get
      * the embedded/data-URI behavior rather than an API that returns nullable bytes.
