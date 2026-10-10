@@ -131,6 +131,7 @@ private fun RenderDrawCommand.instancesWith(other: RenderDrawCommand): Boolean =
         alphaMode == other.alphaMode &&
         alphaCutoff == other.alphaCutoff &&
         shadowsOnly == other.shadowsOnly &&
+        maskLayer == other.maskLayer &&
         cullMode == other.cullMode
 
 /** A map key for [instancesWith]: draws with equal keys render identically but for placement. */

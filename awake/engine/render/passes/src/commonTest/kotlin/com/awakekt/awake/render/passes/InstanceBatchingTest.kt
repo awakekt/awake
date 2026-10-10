@@ -45,11 +45,12 @@ class InstanceBatchingTest {
             base.copy(cullMode = CullMode.Back),
             base.copy(transparent = true),
             base.copy(shadowsOnly = true),
+            base.copy(maskLayer = 0),
         )
 
         val batched = batchInstances(draws) { _, _ -> true }
 
-        assertEquals(6, batched.size)
+        assertEquals(7, batched.size)
         assertEquals(2, batched.single { it.instanceModels != null }.instanceModels!!.size)
     }
 

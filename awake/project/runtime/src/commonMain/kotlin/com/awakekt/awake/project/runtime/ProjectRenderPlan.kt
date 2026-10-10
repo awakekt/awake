@@ -6,6 +6,7 @@
 package com.awakekt.awake.project.runtime
 
 import com.awakekt.awake.asset.shaderpack.PackShaderSets
+import com.awakekt.awake.asset.shaderpack.outlineContentFeature
 import com.awakekt.awake.asset.shaderpack.skyboxContentFeature
 import com.awakekt.awake.asset.shaders.RenderPlan
 import com.awakekt.awake.asset.shaders.ScenePipeline
@@ -19,7 +20,8 @@ import com.awakekt.awake.render.pipeline.PipelineVariant
 
 /**
  * Everything a played project can draw, on Vulkan and WebGPU alike: lit and shadowed meshes,
- * skinned and textured ones, instanced props, particles and the skybox. A host that plays a project
+ * skinned and textured ones, instanced props, particles and the skybox, and an outline around any
+ * entity marked `Outlined`, which costs nothing while nothing is. A host that plays a project
  * hands this to its backend, so a scene component that needs a pipeline gains it here, beside the
  * systems [runProject] runs for it.
  *
@@ -31,7 +33,9 @@ val ProjectRenderPlan: RenderPlan = RenderPlan(
         shaders = PackShaderSets.LitShadow,
         vertexFormat = VertexFormat.PositionNormalColor,
     ),
-    contentFeatures = listOf(skyboxContentFeature(PackShaderSets.Skybox)),
+    contentFeatures = listOf(skyboxContentFeature(PackShaderSets.Skybox), outlineContentFeature()),
+    // The outline's mask: the camera's depth of the outlined meshes alone, a layer per outline set.
+    maskShaderSet = PackShaderSets.SceneDepth,
     depthPrePassShaderSet = PackShaderSets.ShadowDepth,
     depthPrePassVariants = mapOf(DepthCasterKind.Instanced to PackShaderSets.InstancedShadowDepth),
     // Cut-out foliage casts through its texture's alpha; a masked caster never falls back to the

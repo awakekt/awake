@@ -203,9 +203,9 @@ class ContentFeatureAttacher<P : UniformBlockOwner>(private val gpu: ContentFeat
     @Suppress("TooGenericExceptionCaught")
     override suspend fun attachContentFeature(source: ContentFeatureSource): AttachedContentFeature {
         val feature = source.resolve(gpu.backend)
-        require(!feature.samplesSceneDepth) {
-            "Content feature '${feature.name}' samples scene depth, whose set layout is fixed when " +
-                "the engine starts. Declare it in the RenderPlan instead."
+        require(!feature.samplesSceneDepth && !feature.samplesMask) {
+            "Content feature '${feature.name}' samples scene depth or the mask, whose set layouts are " +
+                "fixed when the engine starts. Declare it in the RenderPlan instead."
         }
         require(gpu.registry[feature.spec] == null) {
             "Content feature '${feature.name}' has the pipeline spec of one already registered; " +

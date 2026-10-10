@@ -94,6 +94,9 @@ class Renderer internal constructor(
     /** The camera-space depth pass, when the plan opted into one. Same type as [depthPrePass];
      * only the matrix its shader reads differs. */
     internal val sceneDepthPass: DepthPrePassFeature? = null,
+    /** The mask's pass, when the plan opted into one: scene depth's pipelines over the masked
+     * draws, a layer per mask layer, recorded only on frames something is masked. */
+    internal val maskPass: DepthPrePassFeature? = null,
     internal val renderFeatures: List<RenderFeature<WebGpuRenderFrameContext>> = emptyList(),
 ) : RenderRenderer,
     GpuDrawPreparationSource,
@@ -159,6 +162,7 @@ class Renderer internal constructor(
     init {
         depthPrePass?.stats = statsCounter
         sceneDepthPass?.stats = statsCounter
+        maskPass?.stats = statsCounter
     }
 
     override val frameStats: RenderFrameStats?
@@ -309,6 +313,7 @@ class Renderer internal constructor(
         lineMesh.destroy()
         depthPrePass?.destroy()
         sceneDepthPass?.destroy()
+        maskPass?.destroy()
         depthPrePassPlaceholder?.destroy()
     }
 

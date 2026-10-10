@@ -15,6 +15,7 @@ import com.awakekt.awake.render.command.GpuResolvedDraw
 import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes.ScenePassCompiler
 import com.awakekt.awake.render.renderer.RenderViewport
+import com.awakekt.awake.scene.rendering.outline.outlineMaskLayers
 
 /**
  * Renderer-free 3D scene extraction and pass planning.
@@ -66,6 +67,7 @@ internal class SceneRenderPlanner3D(
             aspect = aspect,
             viewport = viewport,
             drawPreparer = drawPreparer,
+            maskLayers = world.outlineMaskLayers(),
         )
         return PlannedFrame(
             passInput = passInput,

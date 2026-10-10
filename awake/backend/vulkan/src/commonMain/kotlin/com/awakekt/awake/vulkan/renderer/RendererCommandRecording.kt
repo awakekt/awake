@@ -143,6 +143,7 @@ internal fun Renderer.recordResolvedCommandBuffer(
     prepareResources(frameIndex, commandBuffer)
     recordDepthPrePass(commandBuffer, frameIndex, depthDraws, prePasses, environment)
     recordSceneDepthPass(commandBuffer, frameIndex, depthDraws, cameraDepthPass(viewProjection))
+    recordMaskPass(commandBuffer, frameIndex, passInput?.maskPasses.orEmpty(), environment)
     Vulkan.vkCmdBeginRenderPass(
         commandBuffer,
         VkRenderPassBeginInfo(

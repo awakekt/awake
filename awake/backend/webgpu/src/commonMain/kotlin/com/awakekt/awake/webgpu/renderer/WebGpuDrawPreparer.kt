@@ -68,9 +68,10 @@ internal class WebGpuDrawPreparer(
         val resolved = draw.toGpuResolvedDraw()
         // An edge draws over the frame and casts nothing, so it has no depth pass to join.
         if (edgePipeline != null) return resolved
-        // A renderer may request camera-space depth without requesting shadow cascades. The
-        // resolved packet still needs the depth pipeline and material binding for that pass.
-        val depthFeature = renderer.depthPrePass ?: renderer.sceneDepthPass
+        // A renderer may request camera-space depth, or a mask, without requesting shadow cascades.
+        // The resolved packet still needs a depth pipeline and material binding for that pass; one
+        // group serves every depth pass, whose group-0 layouts are the same.
+        val depthFeature = renderer.depthPrePass ?: renderer.sceneDepthPass ?: renderer.maskPass
         val format = draw.vertexFormat ?: return resolved
         val depthKey = request.depthRenderKey()
         // Keyed even when it casts nothing, so the depth pass leaves a masked draw out rather than

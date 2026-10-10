@@ -74,6 +74,10 @@ fun ShaderSet.stagesFor(backend: RenderBackend): ShaderStages = when (backend) {
  * family and fragment coverage. A masked entry must never fall back to an opaque shader.
  * @property sceneDepthVariants Optional depth-caster shader sets keyed by structural draw family
  * for camera-space depth pre-passes.
+ * @property maskShaderSet Opts into the mask pass: depth from the camera, one layer per mask layer,
+ * of only the draws a mask layer names, bound at
+ * [com.awakekt.awake.render.pipeline.BindingSemantic.MaskDepth] for an overlay that draws around
+ * them, such as an outline. It draws only on frames something is masked.
  *
  * A full extra geometry pass per frame, which is why it is opt-in rather than always on. The
  * scene pass cannot supply this itself: content features draw inside it, and neither backend
@@ -88,6 +92,7 @@ data class RenderPlan(
     val depthPrePassVariants: Map<DepthCasterKind, ShaderSet> = emptyMap(),
     val depthPrePassKeyedVariants: Map<DepthRenderKey, ShaderSet> = emptyMap(),
     val sceneDepthVariants: Map<DepthCasterKind, ShaderSet> = emptyMap(),
+    val maskShaderSet: ShaderSet? = null,
 ) {
     /** [contentFeatures] resolved against [backend]. */
     fun contentFeaturesFor(backend: RenderBackend): List<ContentFeature> =
@@ -202,6 +207,11 @@ fun RenderPlan.narrowedTo(
     if (sceneDepthShaderSet != null && sceneDepth == null) {
         report("$name: dropped the scene-depth pass -- no shader here can sample it.")
     }
+    // The same DepthTarget/DepthOnlyPipeline again, from the camera, over fewer draws.
+    val mask = maskShaderSet?.takeIf { capabilities.depthPrePass }
+    if (maskShaderSet != null && mask == null) {
+        report("$name: dropped the mask pass -- no shader here can sample it.")
+    }
     return copy(
         scenePipelines = scenePipelines.filter(capabilities.supportsPipeline),
         depthPrePassShaderSet = depthPrePass,
@@ -209,5 +219,6 @@ fun RenderPlan.narrowedTo(
         depthPrePassVariants = depthPrePassVariants.takeIf { depthPrePass != null }.orEmpty(),
         depthPrePassKeyedVariants = depthPrePassKeyedVariants.takeIf { depthPrePass != null }.orEmpty(),
         sceneDepthVariants = sceneDepthVariants.takeIf { sceneDepth != null }.orEmpty(),
+        maskShaderSet = mask,
     )
 }

@@ -38,6 +38,10 @@ public final class com/awakekt/awake/asset/shaderpack/AslMeshVariantShadersKt {
 	public static final fun getSkinnedTexturedShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 }
 
+public final class com/awakekt/awake/asset/shaderpack/AslOutlineShaderKt {
+	public static final fun outlineShader (Lcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+}
+
 public final class com/awakekt/awake/asset/shaderpack/AslParticleShaderKt {
 	public static final fun getParticleShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 }
@@ -160,6 +164,18 @@ public final class com/awakekt/awake/asset/shaderpack/InfiniteGridFieldsKt {
 
 public final class com/awakekt/awake/asset/shaderpack/LitShadowUniformLayoutKt {
 	public static final fun getLitShadowUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
+}
+
+public final class com/awakekt/awake/asset/shaderpack/OutlineContentFeatureKt {
+	public static final fun outlineContentFeature ()Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
+}
+
+public final class com/awakekt/awake/asset/shaderpack/OutlineRenderFeature : com/awakekt/awake/render/passes/RenderFeature {
+	public fun <init> (Lcom/awakekt/awake/render/command/PipelineHandle;Lcom/awakekt/awake/render/command/UniformBlock;)V
+	public fun destroy ()V
+	public fun getPass ()Lcom/awakekt/awake/render/passes/RenderPassSlot;
+	public fun prepareFrame (ILcom/awakekt/awake/render/texture/TextureUploadRecorder;)V
+	public fun recordCommands (Lcom/awakekt/awake/render/passes/RenderFrameContext;)V
 }
 
 public final class com/awakekt/awake/asset/shaderpack/PackShaderSets {

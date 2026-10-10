@@ -42,6 +42,9 @@ object ScenePassCompiler {
      * @param aspect Viewport aspect ratio (width / height).
      * @param viewport Optional viewport bounding configuration.
      * @param drawPreparer Optional backend-provided GPU draw preparer.
+     * @param maskLayers The mask pass's layers, by index: each one's uniforms, which its sub-pass
+     *   carries to whatever samples the layer. A draw whose [RenderDrawCommand.maskLayer] names one
+     *   is also drawn into it; a layer no draw names has no sub-pass.
      * @return Prepared [GpuPassInput] containing subpasses and uniform blocks ready for recording.
      */
     fun compile(
@@ -53,6 +56,7 @@ object ScenePassCompiler {
         aspect: Float,
         viewport: RenderViewport? = null,
         drawPreparer: GpuDrawPreparer? = null,
+        maskLayers: List<FloatArray> = emptyList(),
     ): GpuPassInput {
         val viewProjection = lens.viewProjectionMatrix(aspect, clipSpace)
         val cameraForward = lens.forwardDirection()
@@ -64,6 +68,7 @@ object ScenePassCompiler {
         // One preparation pass in source order, so every draw keeps its own source index; the
         // shadow-only ones are then kept out of the scene and handed to the shadow passes.
         val shadowOnly = ArrayList<Caster>()
+        val masked = MaskedDraws(maskLayers)
         var edges = emptyList<GpuResolvedDraw>()
         val resolved = drawPreparer?.let { preparer ->
             val context = GpuDrawPreparationContext(
@@ -81,7 +86,10 @@ object ScenePassCompiler {
             requests.forEachIndexed { index, request ->
                 val draw = preparer.prepare(request, index, context) ?: return@forEachIndexed
                 val caster = Caster(draw, request.worldBounds)
-                if (!request.shadowsOnly) visible += caster else if (!draw.transparent) shadowOnly += caster
+                when {
+                    !request.shadowsOnly -> visible += caster.also { masked.add(request.maskLayer, draw) }
+                    !draw.transparent -> shadowOnly += caster
+                }
             }
             if (environment.wireframe) edges = preparer.prepareEdges(requests, context)
             sortForRecording(visible)
@@ -89,23 +97,8 @@ object ScenePassCompiler {
         val opaqueCasters = resolved?.opaqueByPipeline?.values?.flatten().orEmpty()
         val casters = if (shadowOnly.isEmpty()) opaqueCasters else opaqueCasters + shadowOnly
 
-        val prePasses = ArrayList<GpuSubPass>()
-        // The scene compiler has already applied the authoritative shadow toggle when it
-        // constructs [light]. Do not gate again on the environment payload: doing so would drop
-        // a valid fallback matrix supplied by the scene path.
-        shadowViewProjections.forEachIndexed { layer, cascadeVp ->
-            prePasses += GpuSubPass(
-                target = null,
-                targetLayer = layer,
-                viewProjection = cascadeVp,
-                resolvedDraws = if (resolved == null) emptyList() else casters.seenBy(cascadeVp),
-            )
-        }
-        if (light != null && environment.shadowsEnabled && resolved != null) {
-            prePasses += light.pointShadowPrePasses(casters)
-        }
         return GpuPassInput(
-            prePasses = prePasses,
+            prePasses = shadowPrePasses(shadowViewProjections, casters.takeIf { resolved != null }, light, environment),
             viewProjection = viewProjection,
             cameraEye = lens.eye,
             viewport = viewport,
@@ -117,8 +110,44 @@ object ScenePassCompiler {
             cameraForward = cameraForward,
             shadowCascadeData = shadowCascadeData,
             resolvedEdgeDraws = edges,
+            maskPasses = masked.subPasses(viewProjection),
         )
     }
+}
+
+/** The draws each mask layer names, gathered as they are prepared, and the layers' sub-passes. */
+private class MaskedDraws(private val layers: List<FloatArray>) {
+    private val draws = arrayOfNulls<ArrayList<GpuResolvedDraw>>(layers.size)
+
+    fun add(layer: Int, draw: GpuResolvedDraw) {
+        if (layer !in layers.indices) return
+        (draws[layer] ?: ArrayList<GpuResolvedDraw>().also { draws[layer] = it }) += draw
+    }
+
+    /** A depth sub-pass from the camera per layer that has draws, carrying that layer's uniforms. */
+    fun subPasses(viewProjection: Mat4): List<GpuSubPass> = draws.withIndex().mapNotNull { (layer, drawn) ->
+        drawn?.let { GpuSubPass(target = null, targetLayer = layer, viewProjection = viewProjection, resolvedDraws = it, passUniforms = layers[layer]) }
+    }
+}
+
+/**
+ * A depth sub-pass per shadow cascade in [cascades], then one per point-shadow face, over
+ * [casters], or with no draws when nothing was resolved ([casters] null).
+ *
+ * The scene compiler has already applied the authoritative shadow toggle when it constructs
+ * [light]. The cascades are not gated again on [environment]: doing so would drop a valid fallback
+ * matrix supplied by the scene path.
+ */
+private fun shadowPrePasses(
+    cascades: List<Mat4>,
+    casters: List<Caster>?,
+    light: SceneLight?,
+    environment: EnvironmentUniforms,
+): List<GpuSubPass> = buildList {
+    cascades.forEachIndexed { layer, cascadeVp ->
+        add(GpuSubPass(target = null, targetLayer = layer, viewProjection = cascadeVp, resolvedDraws = casters?.seenBy(cascadeVp).orEmpty()))
+    }
+    if (light != null && environment.shadowsEnabled && casters != null) addAll(light.pointShadowPrePasses(casters))
 }
 
 /** One depth sub-pass per point-shadow cube face, each into its own layer. */
