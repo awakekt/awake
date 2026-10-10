@@ -5,7 +5,9 @@
  */
 package com.awakekt.awake.compose.testing
 
+import com.awakekt.awake.compose.foundation.text.BasicTextField
 import com.awakekt.awake.compose.foundation.text.Text
+import com.awakekt.awake.compose.foundation.text.TextFieldState
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.text.theme.TextOutline
@@ -29,6 +31,18 @@ class TextDecorationsTest {
         assertEquals(plain, over, "the text itself is drawn last, unchanged")
         assertTrue(under.all { it.color == Color.Black })
         assertEquals(plain.map { it.x + 2f to it.y + 3f }, under.map { it.x to it.y })
+    }
+
+    @Test
+    fun aTextFieldDrawsItsOutlineAndShadowToo() {
+        val state = TextFieldState("Hi")
+        fun fieldGlyphs(style: TextStyle) =
+            composeFrame(200, 60) { BasicTextField(state, style = style) }.primitives.filterIsInstance<UiDrawPrimitive.Glyph>()
+
+        val plain = fieldGlyphs(TextStyle(color = Color.White))
+        val decorated = fieldGlyphs(TextStyle(color = Color.White, shadow = TextShadow(Color.Black), outline = TextOutline(Color.Black)))
+
+        assertEquals(plain.size * 10, decorated.size, "a shadow, eight outline copies, then the text")
     }
 
     @Test

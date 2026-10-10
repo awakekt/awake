@@ -38,6 +38,7 @@ import com.awakekt.awake.compose.ui.graphics.ImageBitmap
 import com.awakekt.awake.compose.ui.graphics.RoundedCornerShape
 import com.awakekt.awake.compose.ui.graphics.drawImageFill
 import com.awakekt.awake.compose.ui.platform.LocalDensity
+import com.awakekt.awake.compose.ui.platform.LocalTextStyle
 import com.awakekt.awake.compose.ui.semantics.testTag
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.color.Color
@@ -77,8 +78,9 @@ fun SceneCanvas(
     val uiScale = if (scale > 0f && scale.isFinite()) scale else 1f
     Box(modifier.fillMaxSize()) {
         val screen = this
-        // A denser dp scales every size, offset, font and image corner beneath it in one place.
-        CompositionLocalProvider(LocalDensity provides LocalDensity.current * uiScale) {
+        // A denser dp scales every size, offset, font and image corner beneath it in one place. The
+        // host's text style is not the scene's: an element's text looks only as its own data says.
+        CompositionLocalProvider(LocalDensity provides LocalDensity.current * uiScale, LocalTextStyle provides TextStyle.Default) {
             screen.Elements(tree.roots, tree)
         }
     }

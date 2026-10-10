@@ -92,8 +92,9 @@ draws an `ImageFill` over it, and `dropShadow(shadow)` casts a shadow in the sty
 `canvas_element` style is the saved form of the same properties.
 
 `TextStyle(shadow = TextShadow(color, offsetX, offsetY), outline = TextOutline(color, width))` draws a
-hard shadow and an outline under a `Text`, in dp; both merge over an inherited style like its colour
-and size do.
+hard shadow and an outline under a `Text` or a `BasicTextField`'s text, in dp; both merge over an
+inherited style like its colour and size do. A scene's `canvas_element` text ignores the host's text
+style and looks only as its own data says.
 
 To load a PNG or JPEG, call `decodeImageBitmap(bytes)`. It suspends, because the browser decodes
 asynchronously, so decode outside the UI and show the result on a later frame. The engine uploads

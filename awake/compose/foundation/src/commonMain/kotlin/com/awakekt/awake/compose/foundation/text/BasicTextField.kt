@@ -160,7 +160,7 @@ fun BasicTextField(
                             color = paintColor.withAlpha(0.35f),
                         )
                     }
-                    run.paint(this, paintColor, offsetX = textOffsetX, offsetY = textOffsetY)
+                    run.paintDecorated(this, paintColor, offsetX = textOffsetX, offsetY = textOffsetY)
                     if (focused && isCaretVisible(clock.totalSeconds)) {
                         drawRect(
                             x = caret.x + textOffsetX,

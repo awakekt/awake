@@ -5,19 +5,24 @@
  */
 package com.awakekt.awake.scene.canvas
 
+import com.awakekt.awake.compose.runtime.CompositionLocalProvider
+import com.awakekt.awake.compose.runtime.provides
 import com.awakekt.awake.compose.testing.rasterize
 import com.awakekt.awake.compose.ui.graphics.ImageBitmap
 import com.awakekt.awake.compose.ui.platform.ComposeHost
 import com.awakekt.awake.compose.ui.platform.FrameInput
 import com.awakekt.awake.compose.ui.platform.FrameOutput
+import com.awakekt.awake.compose.ui.platform.LocalTextStyle
 import com.awakekt.awake.compose.ui.semantics.SemanticsNode
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
+import com.awakekt.awake.core.text.theme.TextOutline
+import com.awakekt.awake.core.text.theme.TextStyle
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
-import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.canvas.CanvasElementBinding.toComponent
 import com.awakekt.awake.scene.canvas.CanvasElementBinding.toSceneComponent
+import com.awakekt.awake.scene.core.transform.Transform
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -446,6 +451,17 @@ class SceneCanvasTest {
         val colours = frame().glyphs().map { it.color }
 
         assertEquals(listOf(Color.fromHex("#FF0000"), Color.fromHex("#000000"), Color.White), colours.distinct(), "shadow, then outline, then the text")
+    }
+
+    @Test
+    fun theHostsTextStyleDoesNotReachTheScenesText() {
+        element { offsetX = 0f; offsetY = 0f; width = 200f; height = 40f; text = "HP"; color = "#FFFFFF" }
+
+        val colours = ComposeHost().frame(FrameInput(800, 600)) {
+            CompositionLocalProvider(LocalTextStyle provides TextStyle(outline = TextOutline(Color.Black, 2f))) { SceneCanvas(world) }
+        }.primitives.filterIsInstance<UiDrawPrimitive.Glyph>().map { it.color }.distinct()
+
+        assertEquals(listOf(Color.White), colours, "no outline the scene did not ask for")
     }
 
     @Test
