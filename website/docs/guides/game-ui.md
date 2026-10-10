@@ -187,7 +187,9 @@ An element with a `follow` stands where that node is drawn and moves with it: a 
 character, a health bar over an enemy. Its `anchor` is the point of the element that sits on the
 node's screen position, and `offsetX` and `offsetY` nudge it inward from there, as they do from a
 screen edge; `followOffset` moves the point in the world first, such as two metres up to clear a
-head. It hides while the node is behind the camera, and when no node has that name.
+head. It hides while the node is behind the camera, and when no node has that name; when several
+share it, the first is followed. Unlike at a screen edge, a negative offset moves the element outward
+from the point.
 
 ```json title="A name plate above a character"
 { "component": "canvas_element", "text": "Harbor Guard", "follow": "Guard",
@@ -198,7 +200,8 @@ head. It hides while the node is behind the camera, and when no node has that na
 
 With `followBounds`, the element instead covers the screen rectangle around the node's meshes and
 everything under it, whatever its own size. Give it children anchored to its corners, and a marker
-frames whatever is selected at any distance. A node with no mesh bounds falls back to its point.
+frames whatever is selected at any distance. The box is the meshes' resting shape, so it does not
+follow an animated character's limbs; a node with no mesh bounds falls back to its point.
 
 A follower is placed against the screen wherever it sits in the scene, so it can live on a child of
 the character it follows. The runtime projects through the camera it draws with; a host that draws

@@ -471,8 +471,21 @@ class SceneCanvasTest {
         world.add(it, Transform(position = Vec3f(x, y, z)).apply { worldMatrix = Mat4().translate(x, y, z) })
     }
 
-    private fun followFrame(projector: CanvasProjector?): FrameOutput =
-        ComposeHost().frame(FrameInput(800, 600)) { SceneCanvas(world, projector = projector) }
+    private fun followFrame(projector: CanvasProjector?, scale: Float = 1f): FrameOutput =
+        ComposeHost().frame(FrameInput(800, 600)) { SceneCanvas(world, projector = projector, scale = scale) }
+
+    @Test
+    fun aFollowerLandsOnItsNodesPixelAtAnyScale() {
+        named("Hero", 20f, 10f)
+        val plate = element { follow = "Hero"; anchor = CanvasAnchor.TopLeft; offsetX = 0f; offsetY = 0f; width = 10f; height = 10f }
+        val marker = element { follow = "Hero"; followBounds = true }
+        val projector = FlatProjector(box = Rectangle(100f, 50f, 80f, 120f))
+
+        val out = followFrame(projector, scale = 2f)
+
+        assertEquals(listOf(200, 100, 20, 20), out.box(plate), "on the projected pixel, twice the size")
+        assertEquals(listOf(100, 50, 80, 120), out.box(marker), "the box in pixels, whatever the scale")
+    }
 
     @Test
     fun anElementStandsOnTheNodeItFollowsWithItsAnchorOnThePoint() {
