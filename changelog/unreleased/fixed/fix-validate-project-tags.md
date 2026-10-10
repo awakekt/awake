@@ -1,0 +1,2 @@
+- **`validateProject` accepts a manifest's `tags` list.** It refused any project that listed its tags with "manifest has unsupported property: tags". It now checks the list as the engine does: no duplicates, and each a tag the `tag` component accepts.
+  - A manifest list (`assetRoots`, `tags`) that isn't an array of strings is now an error the task reports, where an object in it stopped the task with an exception, a number passed, and a value that wasn't an array was ignored.
