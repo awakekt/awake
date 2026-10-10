@@ -32,8 +32,6 @@ concurrency:
 
 env:
   JAVA_VERSION: '21'
-  # A version no release uses: the templates resolve exactly what this run published.
-  LOCAL_VERSION: 0.0.0-obfuscated
 
 jobs:
   templates:
@@ -109,6 +107,14 @@ jobs:
           rustup target add x86_64-linux-android
           cargo install cargo-ndk --locked
           ANDROID_NDK_HOME="$ANDROID_NDK_LATEST_HOME" cargo ndk -t x86_64 -o ../src/androidMain/jniLibs build --release
+
+      # A version no release uses, so the templates resolve exactly what this run publishes, but this
+      # commit's own number: a template that picks its code by Core version, as the project template
+      # does for Core before 0.3, has to see a current one.
+      - name: Name the local version
+        run: |
+          version=$(./gradlew -q :awake:core:math:properties --no-configuration-cache | awk '$1 == "version:" { print $2; exit }')
+          echo "LOCAL_VERSION=${version%-SNAPSHOT}-obfuscated" | tee -a "$GITHUB_ENV"
 
       # The window's and the Vulkan bindings' desktop libraries are built on demand, for this host.
       - name: Publish this commit locally
