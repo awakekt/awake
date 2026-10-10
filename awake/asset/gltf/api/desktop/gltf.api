@@ -672,8 +672,10 @@ public final class com/awakekt/awake/asset/gltf/GltfSkin$Companion {
 }
 
 public final class com/awakekt/awake/asset/gltf/GltfSkinningKt {
+	public static final fun bindRigidNode (Lcom/awakekt/awake/asset/gltf/LoadedSkinnedScene;Lcom/awakekt/awake/asset/gltf/RigidNodeRef;Lcom/awakekt/awake/core/animation/Skin;)Ljava/util/List;
 	public static final fun firstSkinnedAsset (Lcom/awakekt/awake/asset/gltf/LoadedSkinnedScene;)Lcom/awakekt/awake/asset/gltf/LoadedSkinnedAsset;
 	public static final fun resolve (Lcom/awakekt/awake/asset/gltf/LoadedSkinnedScene;Lcom/awakekt/awake/asset/gltf/SkinnedNodeRef;)Lcom/awakekt/awake/asset/gltf/LoadedSkinnedAsset;
+	public static final fun restTransform (Lcom/awakekt/awake/asset/gltf/LoadedSkinnedScene;I)Lcom/awakekt/awake/core/math/Mat4;
 	public static final fun toAnimationLibrary (Lcom/awakekt/awake/asset/gltf/LoadedSkinnedScene;)Lcom/awakekt/awake/core/animation/AnimationLibrary;
 }
 
@@ -816,20 +818,38 @@ public final class com/awakekt/awake/asset/gltf/LoadedSkinnedAsset {
 }
 
 public final class com/awakekt/awake/asset/gltf/LoadedSkinnedScene {
-	public fun <init> (Lcom/awakekt/awake/core/animation/Skeleton;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;)V
+	public fun <init> (Lcom/awakekt/awake/core/animation/Skeleton;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/animation/Skeleton;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lcom/awakekt/awake/core/animation/Skeleton;
 	public final fun component2 ()Ljava/util/List;
 	public final fun component3 ()Ljava/util/List;
 	public final fun component4 ()Ljava/util/List;
 	public final fun component5 ()Ljava/util/List;
-	public final fun copy (Lcom/awakekt/awake/core/animation/Skeleton;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;)Lcom/awakekt/awake/asset/gltf/LoadedSkinnedScene;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/gltf/LoadedSkinnedScene;Lcom/awakekt/awake/core/animation/Skeleton;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/LoadedSkinnedScene;
+	public final fun component6 ()Ljava/util/List;
+	public final fun component7 ()Ljava/util/List;
+	public final fun copy (Lcom/awakekt/awake/core/animation/Skeleton;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;)Lcom/awakekt/awake/asset/gltf/LoadedSkinnedScene;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/gltf/LoadedSkinnedScene;Lcom/awakekt/awake/core/animation/Skeleton;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/LoadedSkinnedScene;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getClips ()Ljava/util/List;
 	public final fun getMeshes ()Ljava/util/List;
+	public final fun getPrimitives ()Ljava/util/List;
+	public final fun getRigidNodes ()Ljava/util/List;
 	public final fun getSkeleton ()Lcom/awakekt/awake/core/animation/Skeleton;
 	public final fun getSkinnedNodes ()Ljava/util/List;
 	public final fun getSkins ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/asset/gltf/RigidNodeRef {
+	public fun <init> (II)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun copy (II)Lcom/awakekt/awake/asset/gltf/RigidNodeRef;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/gltf/RigidNodeRef;IIILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/RigidNodeRef;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBoneIndex ()I
+	public final fun getMeshIndex ()I
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }

@@ -138,9 +138,9 @@ class GltfAssetResolverTextureTest {
             resolver.materialSlots(path).map { it.mesh to it.material },
         )
         assertTrue(resolver.materialSlots(path).all { it.parameters != null }, "every part says what it was authored with")
-        assertEquals(VertexFormat.PositionNormalColorUvSkin, resolver.skinnedPartGeometry("gltf-primitive:$path#0")?.format)
-        assertEquals(VertexFormat.PositionNormalColorSkin, resolver.skinnedPartGeometry("gltf-primitive:$path#1")?.format)
-        assertNull(resolver.skinnedPartGeometry("gltf-primitive:$path#2"))
+        assertEquals(VertexFormat.PositionNormalColorUvSkin, resolver.partGeometry("gltf-primitive:$path#0")?.format)
+        assertEquals(VertexFormat.PositionNormalColorSkin, resolver.partGeometry("gltf-primitive:$path#1")?.format)
+        assertNull(resolver.partGeometry("gltf-primitive:$path#2"))
     }
 
     /** A skinned part draws with the factors its own glTF material was authored with, textured or not. */

@@ -17,9 +17,6 @@ import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 data class SkinnedPose(
     var jointPalette: FloatArray,
 ) {
-    /** The palette with its entity's material factors, kept so a tinted draw allocates once. */
-    internal var tintedPalette: FloatArray? = null
-
     /**
      * Extracts the translation component of the joint at [jointIndex] from the palette.
      * Writes into [out] if provided, or returns a newly allocated [Vec3f].

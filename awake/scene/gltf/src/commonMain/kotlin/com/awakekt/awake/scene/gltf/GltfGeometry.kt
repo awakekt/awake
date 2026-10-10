@@ -10,6 +10,7 @@ import com.awakekt.awake.asset.gltf.LoadedPrimitive
 import com.awakekt.awake.asset.gltf.LoadedScene
 import com.awakekt.awake.core.geometry.MeshGeometry
 import com.awakekt.awake.core.geometry.VertexFormat
+import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec4
 import com.awakekt.awake.core.math.transformPosition
 
@@ -25,6 +26,23 @@ internal fun GltfMesh.toStaticGeometry(): MeshGeometry =
             baseColorFactor = baseColorFactor,
         ),
     ).toStaticGeometry()
+
+/** This primitive as [com.awakekt.awake.asset.gltf.GltfParser.parseScene] gives one, placed by [transform]. */
+internal fun GltfMesh.toLoadedPrimitive(transform: Mat4): LoadedPrimitive = LoadedPrimitive(
+    vertices = toInterleavedPositionColorUv(),
+    indices = indices,
+    localTransform = transform,
+    baseColorImageBytes = baseColorImageBytes,
+    metallicRoughnessImageBytes = metallicRoughnessImageBytes,
+    normalImageBytes = normalImageBytes,
+    occlusionImageBytes = occlusionImageBytes,
+    emissiveImageBytes = emissiveImageBytes,
+    baseColorFactor = baseColorFactor,
+    metallicFactor = metallicFactor,
+    roughnessFactor = roughnessFactor,
+    emissiveFactor = emissiveFactor,
+    alphaMode = alphaMode,
+)
 
 /** Converts parsed scene primitives into the vertex format the `lit-shadow` pipeline draws. */
 internal fun List<LoadedPrimitive>.toStaticGeometry(textured: Boolean = false): MeshGeometry {

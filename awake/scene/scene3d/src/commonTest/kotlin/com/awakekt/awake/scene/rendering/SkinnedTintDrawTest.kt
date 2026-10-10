@@ -13,6 +13,7 @@ import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
+import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes.uniforms.skinnedMaterialFloats
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.animation.SkinnedPose
@@ -44,12 +45,14 @@ class SkinnedTintDrawTest {
         world.add(body, MeshRenderer(bodyMesh, fakeMaterial()))
         world.add(body, bodyPose)
 
-        val first = collect(world)
+        val culling = SceneCullingCompiler(ClipSpace.WebGpu)
+        val collector = SceneDrawCollector(culling)
+        val first = collect(world, culling, collector)
         val hairExtras = first.single { it.mesh === hairMesh }.extraUniformFloats
 
         assertContentEquals(skinnedMaterialFloats(identity, Color(0.4f, 0.5f, 0.45f), Color.Transparent), hairExtras)
         assertSame(bodyPose.jointPalette, first.single { it.mesh === bodyMesh }.extraUniformFloats)
-        assertSame(hairExtras, collect(world).single { it.mesh === hairMesh }.extraUniformFloats, "rewritten in place each frame")
+        assertSame(hairExtras, collect(world, culling, collector).single { it.mesh === hairMesh }.extraUniformFloats, "rewritten in place each frame")
     }
 
     /** The factors a skinned part was authored with (its glTF material's) tint it, with no material component of its own. */
@@ -68,6 +71,28 @@ class SkinnedTintDrawTest {
         assertContentEquals(skinnedMaterialFloats(identity, Color(0.9f, 0.1f, 0.1f), Color(0.1f, 0.2f, 0.3f, 0f)), extras)
     }
 
+    /** A model's parts share one pose; each still draws in its own material's colour, not the last part's. */
+    @Test
+    fun partsSharingAPoseKeepTheirOwnTints() {
+        val red = Color(0.9f, 0.1f, 0.1f)
+        val blue = Color(0.1f, 0.2f, 0.9f)
+        val shared = SkinnedPose(identity)
+        val world = World()
+        val meshes = listOf(red, blue).map { tint ->
+            fakeMesh().also { mesh ->
+                val part = world.create()
+                world.add(part, Transform())
+                world.add(part, MeshRenderer(mesh, fakeMaterial(), defaultMaterial = PbrMaterial(baseColorFactor = tint)))
+                world.add(part, shared)
+            }
+        }
+
+        val draws = collect(world)
+
+        assertContentEquals(skinnedMaterialFloats(identity, red, Color.Transparent), draws.single { it.mesh === meshes[0] }.extraUniformFloats)
+        assertContentEquals(skinnedMaterialFloats(identity, blue, Color.Transparent), draws.single { it.mesh === meshes[1] }.extraUniformFloats)
+    }
+
     @Test
     fun anEntitysOwnMaterialWinsOverItsSkinnedPartsAuthoredFactors() {
         val authored = PbrMaterial(baseColorFactor = Color(0.9f, 0.1f, 0.1f))
@@ -84,9 +109,14 @@ class SkinnedTintDrawTest {
         assertContentEquals(skinnedMaterialFloats(identity, Color(0.2f, 0.3f, 0.9f), Color.Transparent), extras)
     }
 
-    private fun collect(world: World) = SceneCullingCompiler(ClipSpace.WebGpu).let { culling ->
+    /** One frame's draws; pass the same [collector] to collect the frames a running scene does. */
+    private fun collect(
+        world: World,
+        culling: SceneCullingCompiler = SceneCullingCompiler(ClipSpace.WebGpu),
+        collector: SceneDrawCollector = SceneDrawCollector(culling),
+    ): List<RenderDrawCommand> {
         val camera = Camera(Lens(eye = Vec3f(0f, 0f, 5f), center = Vec3f.ZERO, fovYRadians = 1f, near = 0.1f, far = 100f))
-        SceneDrawCollector(culling).collectBeforeParticles(world, culling.prepare(world, camera), elapsedTimeSeconds = 0f).toList()
+        return collector.collectBeforeParticles(world, culling.prepare(world, camera), elapsedTimeSeconds = 0f).toList()
     }
 
     private fun fakeMesh(): Mesh = object : Mesh {
