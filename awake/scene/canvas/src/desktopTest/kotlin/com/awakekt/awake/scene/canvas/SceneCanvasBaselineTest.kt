@@ -136,6 +136,34 @@ class SceneCanvasBaselineTest {
             .primitives.assertMatchesBaseline("scene-canvas-follow", 200, 150, font = UiFonts.default())
     }
 
+    @Test
+    fun anActionBarAndAWrappingStripOfIcons() {
+        val world = World()
+        fun element(parent: com.awakekt.awake.ecs.Entity? = null, configure: CanvasElement.() -> Unit) = world.create().also {
+            if (parent != null) world.add(it, Transform(parent = parent))
+            world.add(it, CanvasElement().apply(configure))
+        }
+        val bar = element {
+            kind = CanvasElementKind.Panel; offsetX = 8f; offsetY = 8f; width = 216f; height = 32f; background = "#202830"
+            layout = CanvasLayout(gap = 4f, padding = 4f, align = CanvasAlign.Center)
+        }
+        repeat(8) { i -> element(bar) { kind = CanvasElementKind.Panel; order = i; width = 22f; height = 22f; background = "#5A7FA0"; style = CanvasStyle(cornerRadius = 3f) } }
+        val strip = element {
+            kind = CanvasElementKind.Panel; offsetX = 8f; offsetY = 48f; width = 100f; height = 56f; background = "#202830"
+            layout = CanvasLayout(gap = 2f, padding = 2f, wrap = true)
+        }
+        repeat(7) { i -> element(strip) { kind = CanvasElementKind.Panel; order = i; width = 22f; height = 22f; background = if (i % 2 == 0) "#30A46C" else "#E5484D" } }
+        val row = element {
+            kind = CanvasElementKind.Panel; offsetX = 116f; offsetY = 48f; width = 108f; height = 24f; background = "#202830"
+            layout = CanvasLayout(gap = 2f, padding = 2f)
+        }
+        element(row) { kind = CanvasElementKind.Panel; order = 0; width = 20f; height = 20f; background = "#F5D76E" }
+        element(row) { kind = CanvasElementKind.Panel; order = 1; width = 0f; height = 20f; grow = 1f; background = "#3E63DD" }
+
+        ComposeHost().frame(FrameInput(232, 112)) { SceneCanvas(world) }
+            .primitives.assertMatchesBaseline("scene-canvas-layout", 232, 112)
+    }
+
     private companion object {
         val TINTS = listOf("#E5484D", "#3E63DD", "#30A46C")
 

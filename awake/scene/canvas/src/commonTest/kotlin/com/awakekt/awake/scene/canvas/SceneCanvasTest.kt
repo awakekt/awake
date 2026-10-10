@@ -545,6 +545,78 @@ class SceneCanvasTest {
         assertEquals(listOf(200, 100, 10, 10), followFrame(FlatProjector()).box(plate))
     }
 
+    private fun slots(parent: Entity, count: Int, size: Float = 32f): List<Entity> =
+        List(count) { i -> child(parent) { kind = CanvasElementKind.Panel; order = i; width = size; height = size } }
+
+    @Test
+    fun aRowPlacesItsChildrenOneGapApart() {
+        val bar = element { kind = CanvasElementKind.Panel; offsetX = 10f; offsetY = 20f; width = 400f; height = 40f; layout = CanvasLayout(gap = 4f) }
+        val slots = slots(bar, 5)
+
+        val out = frame()
+
+        assertEquals(listOf(10, 46, 82, 118, 154), slots.map { out.box(it)[0] }, "36 dp apart, from the bar's left")
+        assertTrue(slots.all { out.box(it)[1] == 20 })
+    }
+
+    @Test
+    fun wrapMovesWhatDoesNotFitToANewLine() {
+        val strip = element { kind = CanvasElementKind.Panel; offsetX = 0f; offsetY = 0f; width = 100f; height = 200f; layout = CanvasLayout(gap = 4f, wrap = true) }
+        val icons = slots(strip, 5)
+
+        val out = frame()
+
+        assertEquals(listOf(0 to 0, 36 to 0, 0 to 36, 36 to 36, 0 to 72), icons.map { out.box(it).let { box -> box[0] to box[1] } })
+    }
+
+    @Test
+    fun aChildAddedAtRunTimeMovesTheOnesAfterIt() {
+        val bar = element { kind = CanvasElementKind.Panel; offsetX = 0f; offsetY = 0f; width = 400f; height = 40f; layout = CanvasLayout() }
+        val first = child(bar) { kind = CanvasElementKind.Panel; order = 0; width = 32f; height = 32f }
+        val last = child(bar) { kind = CanvasElementKind.Panel; order = 2; width = 32f; height = 32f }
+        val host = ComposeHost()
+        val before = frame(host).box(last)[0]
+
+        child(bar) { kind = CanvasElementKind.Panel; order = 1; width = 50f; height = 32f }
+        val after = frame(host)
+
+        assertEquals(32, before)
+        assertEquals(0, after.box(first)[0])
+        assertEquals(82, after.box(last)[0], "pushed along by the new one")
+    }
+
+    @Test
+    fun growSharesTheLeftoverSpaceAndCentreingCentres() {
+        val bar = element { kind = CanvasElementKind.Panel; offsetX = 0f; offsetY = 0f; width = 200f; height = 40f; layout = CanvasLayout(align = CanvasAlign.Center) }
+        child(bar) { kind = CanvasElementKind.Panel; order = 0; width = 32f; height = 20f }
+        val fill = child(bar) { kind = CanvasElementKind.Panel; order = 1; width = 0f; height = 20f; grow = 1f }
+        val centred = element {
+            kind = CanvasElementKind.Panel; offsetX = 0f; offsetY = 100f; width = 200f; height = 40f
+            layout = CanvasLayout(justify = CanvasJustify.Center, padding = 5f)
+        }
+        val middle = child(centred) { kind = CanvasElementKind.Panel; width = 40f; height = 10f }
+
+        val out = frame()
+
+        assertEquals(listOf(32, 10, 168, 20), out.box(fill), "the rest of the row, centred down it")
+        assertEquals(80, out.box(middle)[0], "centred along a row")
+        assertEquals(105, out.box(middle)[1], "inside the padding")
+    }
+
+    @Test
+    fun validationRejectsANegativeGapPaddingOrGrow() {
+        val issues = SceneCanvasElement(layout = CanvasLayout(gap = -1f, padding = -2f), grow = -1f).validate("nodes[0]").map { it.message }
+
+        assertEquals(
+            listOf(
+                "canvas_element.layout.gap must not be negative",
+                "canvas_element.layout.padding must not be negative",
+                "canvas_element.grow must not be negative",
+            ),
+            issues,
+        )
+    }
+
     @Test
     fun theHostsTextStyleDoesNotReachTheScenesText() {
         element { offsetX = 0f; offsetY = 0f; width = 200f; height = 40f; text = "HP"; color = "#FFFFFF" }

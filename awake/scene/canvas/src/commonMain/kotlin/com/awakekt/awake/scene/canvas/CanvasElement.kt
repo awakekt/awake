@@ -121,6 +121,15 @@ class CanvasElement {
     /** Whether the element covers the screen rectangle of the followed node's meshes. */
     var followBounds: Boolean = false
 
+    /** How the element places its children itself; null anchors each child by hand. */
+    var layout: CanvasLayout? = null
+
+    /** In a parent with a layout, this element's share of its line's leftover space. */
+    var grow: Float = 0f
+
+    /** Game state the element shows without code; while it reads, it stands in for [value] and [text]. */
+    var bind: CanvasBinding? = null
+
     private var pressed = false
     internal val interactions = InteractionSource()
 

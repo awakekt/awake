@@ -13,9 +13,11 @@ import com.awakekt.awake.compose.foundation.gestures.draggable
 import com.awakekt.awake.compose.foundation.hoverable
 import com.awakekt.awake.compose.foundation.layout.Box
 import com.awakekt.awake.compose.foundation.layout.BoxScope
+import com.awakekt.awake.compose.foundation.layout.FlexBox
 import com.awakekt.awake.compose.foundation.layout.fillMaxHeight
 import com.awakekt.awake.compose.foundation.layout.fillMaxSize
 import com.awakekt.awake.compose.foundation.layout.fillMaxWidth
+import com.awakekt.awake.compose.foundation.layout.flex
 import com.awakekt.awake.compose.foundation.layout.offset
 import com.awakekt.awake.compose.foundation.layout.padding
 import com.awakekt.awake.compose.foundation.layout.size
@@ -42,12 +44,11 @@ import com.awakekt.awake.compose.ui.platform.LocalTextStyle
 import com.awakekt.awake.compose.ui.semantics.testTag
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.color.Color
-import com.awakekt.awake.core.math2d.Rectangle
 import com.awakekt.awake.core.math2d.sp
 import com.awakekt.awake.core.text.theme.TextStyle
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
-import com.awakekt.awake.scene.core.Name
+import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.core.transform.Transform
 
 context(_: Composer)
@@ -70,6 +71,9 @@ context(_: Composer)
  *   is not above 0 draws at 1.
  * @param projector Where the scene's nodes land on screen, for elements that [CanvasElement.follow]
  *   one. Without it they are not drawn.
+ * @param bindings The scene component bindings an element's [CanvasElement.bind] reads fields
+ *   through: the scene's own registry's. Null reads through every globally registered one, gathered
+ *   only on a frame where an element reads a field.
  */
 @Suppress("LongParameterList")
 fun SceneCanvas(
@@ -79,8 +83,9 @@ fun SceneCanvas(
     images: Map<String, ImageBitmap> = emptyMap(),
     scale: Float = 1f,
     projector: CanvasProjector? = null,
+    bindings: List<SceneComponentBinding<*, *>>? = null,
 ) {
-    val tree = CanvasTree(world, showTouchControls, images, projector)
+    val tree = CanvasTree(world, showTouchControls, images, projector, bindings)
     val uiScale = if (scale > 0f && scale.isFinite()) scale else 1f
     Box(modifier.fillMaxSize()) {
         val screen = this
@@ -92,75 +97,29 @@ fun SceneCanvas(
     }
 }
 
-/**
- * The elements of a world, each under the nearest element above it in the scene hierarchy. One that
- * follows a node is placed against the screen wherever it sits in the scene.
- */
-private class CanvasTree(
-    val world: World,
-    private val showTouchControls: Boolean,
-    val images: Map<String, ImageBitmap>,
-    val projector: CanvasProjector?,
-) {
-    val roots = ArrayList<Pair<Entity, CanvasElement>>()
-    private val children = HashMap<Entity, ArrayList<Pair<Entity, CanvasElement>>>()
-    private val named: Map<String, Entity> by lazy {
-        HashMap<String, Entity>().also { names -> world.family<Name>().forEach { entity, name -> names.getOrPut(name.value) { entity } } }
-    }
 
-    init {
-        world.family<CanvasElement>().forEach { entity, element ->
-            val parent = if (element.follow.isEmpty()) world.canvasParent(entity) else null
-            (if (parent == null) roots else children.getOrPut(parent) { ArrayList() }) += entity to element
+/** [children] inside [element]: each anchored by hand, or laid out in rows or columns by its layout. */
+context(_: Composer)
+private fun BoxScope.Children(element: CanvasElement, children: List<Pair<Entity, CanvasElement>>, tree: CanvasTree) {
+    val layout = element.layout
+    if (layout == null) {
+        Elements(children, tree)
+        return
+    }
+    FlexBox(Modifier.fillMaxSize().padding(layout.padding.coerceAtLeast(0f).dp), config = layout.toConfig()) {
+        for ((entity, child) in children) {
+            if (!tree.shows(child)) continue
+            key(entity) {
+                val share = child.grow.coerceAtLeast(0f)
+                CanvasElementView(
+                    child,
+                    Modifier.flex { grow(share) }.size(child.width.dp, child.height.dp).testTag("canvas-element-${entity.id}"),
+                    tree,
+                    tree.childrenOf(entity),
+                )
+            }
         }
-        roots.sortBy { it.second.order }
-        for (siblings in children.values) siblings.sortBy { it.second.order }
     }
-
-    fun childrenOf(entity: Entity): List<Pair<Entity, CanvasElement>> = children[entity].orEmpty()
-
-    fun shows(element: CanvasElement): Boolean = element.visible && (showTouchControls || !element.touchOnly)
-
-    /** The first node named [name], or null when there is none. */
-    fun node(name: String): Entity? = named[name]
-}
-
-/**
- * Where a following [element] goes, in dp at [density] pixels each: on its node's screen box, or
- * with its anchor point on the node's screen point, nudged inward by its offsets. Null hides it: no
- * projector, no such node, or the node behind the camera.
- */
-private fun CanvasTree.placeFollower(element: CanvasElement, density: Float): Rectangle? {
-    val projector = projector
-    val node = node(element.follow)
-    if (projector == null || node == null) return null
-    val box = if (element.followBounds) projector.bounds(node) else null
-    return if (box != null) {
-        Rectangle(box.x / density, box.y / density, box.width / density, box.height / density)
-    } else {
-        placeOnPoint(element, node, projector, density)
-    }
-}
-
-/** [element] with its anchor point on [node]'s screen point, or null when the node is behind the camera. */
-private fun CanvasTree.placeOnPoint(element: CanvasElement, node: Entity, projector: CanvasProjector, density: Float): Rectangle? {
-    val offset = element.followOffset
-    val point = world.get<Transform>(node)?.worldMatrix?.let { projector.project(it.m03 + offset.x, it.m13 + offset.y, it.m23 + offset.z) }
-        ?: return null
-    val column = element.anchor.column
-    val row = element.anchor.row
-    val x = point.x / density - column / 2f * element.width + if (column == 2) -element.offsetX else element.offsetX
-    val y = point.y / density - row / 2f * element.height + if (row == 2) -element.offsetY else element.offsetY
-    return Rectangle(x, y, element.width, element.height)
-}
-
-private fun World.canvasParent(entity: Entity): Entity? {
-    var node = get<Transform>(entity)?.parent
-    while (node != null) {
-        if (has(node, CanvasElement::class)) return node
-        node = get<Transform>(node)?.parent
-    }
-    return null
 }
 
 /** Places [entries] in this box, each against its anchor, and their children inside them. */
@@ -211,32 +170,32 @@ private fun CanvasElementView(
     val styled = modifier.styleable(state, style)
     when (element.kind) {
         CanvasElementKind.Text -> Box(styled, contentAlignment = (element.textAlign ?: CanvasAnchor.TopLeft).alignment) {
-            Text(element.text, style = textStyle)
-            Elements(children, tree)
+            Text(tree.textOf(element), style = textStyle)
+            Children(element, children, tree)
         }
-        CanvasElementKind.Panel, CanvasElementKind.Image -> Box(styled) { Elements(children, tree) }
+        CanvasElementKind.Panel, CanvasElementKind.Image -> Box(styled) { Children(element, children, tree) }
         CanvasElementKind.Bar -> Box(styled) {
-            BarFill(element, fill, tree.images)
-            Elements(children, tree)
+            BarFill(element, tree.valueOf(element), fill, tree.images)
+            Children(element, children, tree)
         }
         CanvasElementKind.Button -> Box(
             styled.hoverable(element.interactions).clickable(element.interactions) { element.press() },
             contentAlignment = (element.textAlign ?: CanvasAnchor.Center).alignment,
         ) {
-            Text(element.text, style = textStyle)
-            Elements(children, tree)
+            Text(tree.textOf(element), style = textStyle)
+            Children(element, children, tree)
         }
         CanvasElementKind.Joystick -> JoystickView(element, modifier, back, tree, children)
     }
 }
 
 /**
- * A Bar's fill, [CanvasElement.value] of its width: [color], or its fill image laid out at the
+ * A Bar's fill, [value] of its width: [color], or its fill image laid out at the
  * bar's full width and cut at the value, so a gauge's end and pattern stay where they are.
  */
 context(_: Composer)
-private fun BarFill(element: CanvasElement, color: Color, images: Map<String, ImageBitmap>) {
-    val filled = Modifier.fillMaxHeight().fillMaxWidth(element.value.coerceIn(0f, 1f))
+private fun BarFill(element: CanvasElement, value: Float, color: Color, images: Map<String, ImageBitmap>) {
+    val filled = Modifier.fillMaxHeight().fillMaxWidth(value.coerceIn(0f, 1f))
     val picture = element.style.fillImage?.fill(images)
     if (picture == null) {
         Box(filled.background(color, RoundedCornerShape((element.style.cornerRadius ?: 0f).dp)))
@@ -269,7 +228,7 @@ private fun JoystickView(
             Modifier.offset((element.knobX / density).dp, (element.knobY / density).dp)
                 .size(size.dp).clip(CircleShape).background(colorOf(element.color, Color.White)),
         )
-        Elements(children, tree)
+        Children(element, children, tree)
     }
 }
 
@@ -292,10 +251,10 @@ private fun Modifier.anchorInset(element: CanvasElement): Modifier {
 }
 
 /** 0 = left, 1 = centre, 2 = right. */
-private val CanvasAnchor.column: Int get() = ordinal % 3
+internal val CanvasAnchor.column: Int get() = ordinal % 3
 
 /** 0 = top, 1 = centre, 2 = bottom. */
-private val CanvasAnchor.row: Int get() = ordinal / 3
+internal val CanvasAnchor.row: Int get() = ordinal / 3
 
 private val CanvasAnchor.alignment: Alignment
     get() = when (this) {
