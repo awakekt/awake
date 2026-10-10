@@ -66,10 +66,11 @@ class SceneSystemPlan internal constructor(val hasPhysics: Boolean, val hasRende
     private var physicsSystem: PhysicsSystem? = null
 
     /**
-     * The one physics step this plan's systems share. A body is destroyed only through the system that
-     * built it, so a system that removes bodies, such as streamed terrain's collision cells, needs it.
+     * The one physics step this plan's systems share, for a capability whose systems read the step's
+     * contacts or remove bodies: streamed terrain's collision cells do, and so do a blueprint's sensor
+     * events. A body is destroyed only through the system that built it. Needs [hasPhysics].
      */
-    internal fun physicsSystem(services: SceneHostServices): PhysicsSystem =
+    fun physicsSystem(services: SceneHostServices): PhysicsSystem =
         physicsSystem ?: PhysicsSystem(requireNotNull(services.physics)).also { physicsSystem = it }
 
     /** Adds a system run on every fixed step, named [name] in the scene's schedule. */

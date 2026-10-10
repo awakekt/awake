@@ -32,7 +32,7 @@ no published artifact. Test-source dependencies are intentionally excluded.
 
 | Family | Published modules | Version source |
 |---|---:|---|
-| Core | 80 | Existing root `v*` tags and the shared Core release train |
+| Core | 81 | Existing root `v*` tags and the shared Core release train |
 | Vulkan | 3 | `vulkan-v*` tags; renderer, raw bindings, and Android JNI bridge move together |
 
 Vulkan snapshots pin the exact Core snapshot used for integration. Vulkan releases depend on an
@@ -106,6 +106,7 @@ Vulkan modules. Core `v*` releases and main snapshots do not publish or change t
 | `com.awakekt.awake.physics:api` | `:awake:physics:api` | `core` | `implementation` → `:awake:core:math`; `implementation` → `:awake:core:geometry` |
 | `com.awakekt.awake.physics:ragdoll` | `:awake:physics:ragdoll` | `core` | `api` → `:awake:physics:api`; `api` → `:awake:core:animation`; `api` → `:awake:core:math` |
 | `com.awakekt.awake:project` | `:awake:project` | `core` | — |
+| `com.awakekt.awake.project:blueprint` | `:awake:project:blueprint` | `core` | `api` → `:awake:project:runtime`; `api` → `:awake:scene:blueprint` |
 | `com.awakekt.awake.project:runtime` | `:awake:project:runtime` | `core` | `api` → `:awake:project`; `api` → `:awake:scene:authoring`; `api` → `:awake:scene:gltf`; `api` → `:awake:scene:character`; `implementation` → `:awake:ai:behavior`; `implementation` → `:awake:scene:ai`; `api` → `:awake:core:geometry`; `api` → `:awake:core:io`; `implementation` → `:awake:asset:shader-pack`; `implementation` → `:awake:core:animation`; `implementation` → `:awake:core:math`; `implementation` → `:awake:particles`; `implementation` → `:awake:scene:particles`; `implementation` → `:awake:scene:shader`; `api` → `:awake:scene:binding` |
 | `com.awakekt.awake.scene:ai` | `:awake:scene:ai` | `core` | `api` → `:awake:ai:behavior`; `api` → `:awake:scene:navigation`; `api` → `:awake:scene:scene-core`; `api` → `:awake:scene:document`; `api` → `:awake:scene:binding` |
 | `com.awakekt.awake.scene:audio` | `:awake:scene:audio` | `core` | `api` → `:awake:core:audio`; `api` → `:awake:core:math`; `api` → `:awake:ecs`; `api` → `:awake:scene:scene-core` |

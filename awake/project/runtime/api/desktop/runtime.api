@@ -120,6 +120,7 @@ public final class com/awakekt/awake/project/runtime/SceneSystemPlan {
 	public final fun frame (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
 	public final fun getHasPhysics ()Z
 	public final fun getHasRenderer ()Z
+	public final fun physicsSystem (Lcom/awakekt/awake/project/runtime/SceneHostServices;)Lcom/awakekt/awake/scene/physics/PhysicsSystem;
 }
 
 public final class com/awakekt/awake/project/runtime/SceneSystemSet : java/lang/AutoCloseable {
