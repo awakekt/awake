@@ -7,7 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-10-11
+
+The same code as 0.8.0, published: 0.8.0's Publish run failed in its Verify job before uploading, when a runner's Android NDK download came back corrupt.
+
 ## [0.8.0] - 2026-10-11
+
+Never published: its Publish run stopped before uploading, so these changes first ship in 0.8.1.
 
 ### Added
 
