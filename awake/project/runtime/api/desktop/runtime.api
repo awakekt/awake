@@ -1,3 +1,9 @@
+public final class com/awakekt/awake/project/runtime/AssetVerificationKt {
+	public static final field PROJECT_ASSETS_LOCK Ljava/lang/String;
+	public static final fun verifiedByAssetsLock (Lcom/awakekt/awake/core/io/AssetSource;ZLkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun verifiedByAssetsLock$default (Lcom/awakekt/awake/core/io/AssetSource;ZLkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
 public final class com/awakekt/awake/project/runtime/BuiltInSceneAssetsKt {
 	public static final field LIT_SHADOW_MATERIAL Ljava/lang/String;
 	public static final fun builtInSceneAssets (Lcom/awakekt/awake/scene/authoring/SceneAssetsDsl;Lkotlin/jvm/functions/Function2;)V
