@@ -32,7 +32,8 @@ Not to be confused with Compose's `Canvas` (a surface you draw pixels on) or
 `SceneAppLifecycleRuntime` draws every visible element with `SceneCanvas(world)` whenever the scene
 has any, under the app's own `ui { }`, with the images in its `canvasImages`. A host with its own
 Compose tree calls `SceneCanvas(world, images = …)` itself. `loadCanvasImages(scene, files)` reads and
-decodes the images a scene names.
+decodes the images a scene names. A host that draws nothing, such as a game server, calls
+`checkCanvasImages(scene, files)` instead: it reads them, logs those it cannot, and decodes none.
 
 ## Nesting and scale
 

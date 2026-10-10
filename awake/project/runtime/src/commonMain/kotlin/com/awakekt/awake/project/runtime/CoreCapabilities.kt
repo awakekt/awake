@@ -7,6 +7,7 @@ package com.awakekt.awake.project.runtime
 
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.scene.canvas.SceneCanvasElement
+import com.awakekt.awake.scene.canvas.checkCanvasImages
 import com.awakekt.awake.scene.canvas.hasCanvasImages
 import com.awakekt.awake.scene.canvas.loadCanvasImages
 import com.awakekt.awake.scene.character.CharacterControllerBinding
@@ -72,12 +73,16 @@ internal object ControlsCapability : SceneCapability {
     }
 }
 
-/** The images the scene's canvas elements draw, decoded before it runs; the runtime draws the canvas. */
+/**
+ * The images the scene's canvas elements draw, decoded before it runs; the runtime draws the canvas.
+ * A host with no renderer draws none, so it only checks that the images resolve.
+ */
 internal object CanvasCapability : SceneCapability {
     override val id = "com.awakekt.awake.canvas"
 
     override suspend fun load(scene: SceneDocument, files: AssetSource, content: SceneContent.Builder) {
-        if (hasCanvasImages(scene)) content[CoreSceneContent.CanvasImages] = loadCanvasImages(scene, files)
+        if (!hasCanvasImages(scene)) return
+        if (content.hasRenderer) content[CoreSceneContent.CanvasImages] = loadCanvasImages(scene, files) else checkCanvasImages(scene, files)
     }
 
     override fun plan(scene: SceneDocument, plan: SceneSystemPlan) = Unit
