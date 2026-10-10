@@ -86,7 +86,7 @@ class GltfAssetResolverTextureTest {
         assertTrue(resolver.isPreloaded(path))
         assertSame(staged.getLoadedScene(path), resolver.getLoadedScene(path), "the parsed scene is taken, not parsed again")
         assertEquals(staged.materialSlots(path), resolver.materialSlots(path))
-        assertEquals(VertexFormat.PositionNormalColorUvSkin, resolver.skinnedPartGeometry("gltf-primitive:$path#0")?.format)
+        assertEquals(VertexFormat.PositionNormalColorUvSkin, resolver.partGeometry("gltf-primitive:$path#0")?.format)
         assertEquals(0.3f, resolver.materialDefaults("gltf-primitive:$path#0", "gltf-material:$path#0")?.metallic)
         assertFalse(resolver.isPreloaded(other), "only the model named is adopted")
 
