@@ -5,8 +5,11 @@
  */
 package com.awakekt.awake.compose.foundation.style
 
+import com.awakekt.awake.compose.ui.graphics.Brush
+import com.awakekt.awake.compose.ui.graphics.ImageFill
 import com.awakekt.awake.compose.ui.graphics.RoundedCornerShape
 import com.awakekt.awake.compose.ui.graphics.Shape
+import com.awakekt.awake.compose.ui.graphics.shadow.Shadow
 import com.awakekt.awake.compose.ui.unit.Dp
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.color.Color
@@ -44,6 +47,15 @@ interface StyleScope {
 
     /** Sets the background fill to [color]. */
     fun background(color: Color)
+
+    /** Sets the background fill to [brush], a colour or a gradient, in place of a background colour. */
+    fun background(brush: Brush)
+
+    /** Draws [fill] over the background colour or gradient: an image, or a frame cut into nine. */
+    fun backgroundImage(fill: ImageFill)
+
+    /** Casts [shadow] behind the node, in the shape of its background. */
+    fun dropShadow(shadow: Shadow)
 
     /** Sets the border to [width] and [color]. */
     fun border(width: Dp, color: Color)
@@ -91,6 +103,15 @@ class ResolvedStyle {
     /** The background fill, or `null` for none. */
     var background: Color? = null
 
+    /** The background gradient, in place of [background], or `null` for none. */
+    var backgroundBrush: Brush? = null
+
+    /** The image drawn over the background, or `null` for none. */
+    var backgroundImage: ImageFill? = null
+
+    /** The shadow cast behind the node, or `null` for none. */
+    var shadow: Shadow? = null
+
     /** The border thickness. `0.dp` means no border. */
     var borderWidth: Dp = 0.dp
 
@@ -137,6 +158,20 @@ internal class ResolvingStyleScope(
 ) : StyleScope {
     override fun background(color: Color) {
         resolved.background = color
+        resolved.backgroundBrush = null
+    }
+
+    override fun background(brush: Brush) {
+        resolved.backgroundBrush = brush
+        resolved.background = null
+    }
+
+    override fun backgroundImage(fill: ImageFill) {
+        resolved.backgroundImage = fill
+    }
+
+    override fun dropShadow(shadow: Shadow) {
+        resolved.shadow = shadow
     }
 
     override fun border(width: Dp, color: Color) {

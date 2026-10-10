@@ -83,6 +83,14 @@ sheet. A node too small for its corners shrinks them together.
 From a draw modifier, `drawImageFill(fill, x, y, width, height)` draws the same fill into part of the
 node.
 
+### Gradients and styles
+
+`Modifier.background(brush, shape)` fills a node with a `Brush`: `Brush.vertical(top, bottom)`,
+`Brush.horizontal(start, end)`, or one colour per corner with `Brush.linearGradient`. Inside a
+`Style`, `background(brush)` does the same in place of a background colour, `backgroundImage(fill)`
+draws an `ImageFill` over it, and `dropShadow(shadow)` casts a shadow in the style's shape. Scene UI's
+`canvas_element` style is the saved form of the same properties.
+
 To load a PNG or JPEG, call `decodeImageBitmap(bytes)`. It suspends, because the browser decodes
 asynchronously, so decode outside the UI and show the result on a later frame. The engine uploads
 each bitmap to the GPU the first frame it appears and keeps it, so reuse a decoded bitmap instead of

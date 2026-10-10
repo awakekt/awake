@@ -67,7 +67,7 @@ For a button the player holds down, read `isHeld` instead. For a joystick, read 
 | `visible` | boolean | `true` | Hidden elements are not drawn and take no taps. |
 | `action` | string | `""` | Names what the element does for the game, such as `move` or `jump`. The game decides what each name means. |
 | `touchOnly` | boolean | `false` | Draw the element only where touch controls are shown. |
-| `style` | object | `{}` | How the element looks beyond its colours. See [Draw images](#draw-images). |
+| `style` | object | `{}` | How the element looks beyond its colours: shape, border, gradient, shadow, images and button states. See [Style an element](#style-an-element). |
 
 A running `CanvasElement` also has values that are not saved:
 
@@ -76,6 +76,43 @@ A running `CanvasElement` also has values that are not saved:
 | `consumePress()` | `Boolean` | `true` once for each tap on a `Button` since the last call. |
 | `isHeld` | `Boolean` | Whether a `Button` is pressed right now. |
 | `stickX`, `stickY` | `Float`, -1 to 1 | A `Joystick`'s deflection. Up is negative `stickY`, as on screen. Releasing re-centres it. |
+
+## Style an element
+
+An element's `style` is the saved form of an AwakeKt Compose `Style`, and it draws through the same
+`Modifier.styleable`, so scene UI and Kotlin UI look alike. Every property is optional; one left
+out keeps the element's own `color` and `background`. Colours are `#RRGGBB` or `#RRGGBBAA`, and
+lengths are dp.
+
+```json title="A rounded button with a gradient, a border, a shadow and a pressed look"
+{ "component": "canvas_element", "kind": "Button", "text": "Start", "width": 160, "height": 44,
+  "style": {
+    "gradient": { "start": "#4A6FD8", "end": "#2A3F8A" },
+    "cornerRadius": 10, "borderWidth": 1, "borderColor": "#FFFFFF40",
+    "shadow": { "color": "#00000080", "offsetY": 3, "blur": 8 },
+    "hovered": { "gradient": { "start": "#5A80EA", "end": "#34509C" } },
+    "pressed": { "background": "#22346E", "textColor": "#C8D4FF" }
+  } }
+```
+
+![A gradient button with a border and a soft shadow, a framed panel, a rounded gauge and a faded gradient strip](../assets/guides/game-ui/canvas-styles.png)
+
+| Field | Type | What it does |
+| --- | --- | --- |
+| `background` | colour | The fill, in place of the element's `background`. |
+| `gradient` | `{ start, end, horizontal }` | A gradient fill, top to bottom, or left to right when `horizontal`. It replaces the fill colour. |
+| `image` | [image](#draw-images) | An `Image`'s picture, a frame over the fill, or a `Bar`'s track. |
+| `fillImage` | [image](#draw-images) | A `Bar`'s fill, cut at its `value`. |
+| `cornerRadius` | number | Rounds the fill, gradient, border and shadow, and a `Bar`'s colour fill. Images stay square. |
+| `borderWidth`, `borderColor` | number, colour | A border inside the element's edge. It needs both. |
+| `shadow` | `{ color, offsetX, offsetY, blur, spread }` | A shadow behind the element, in its shape. Defaults: `#00000080`, 0, 2, 4, 0. |
+| `textColor` | colour | The text of a `Text` or `Button`, in place of `color`. |
+| `alpha` | number, 0 to 1 | The element's opacity, its children included. |
+| `hovered`, `pressed` | state | What changes while the pointer is over a `Button`, and while it is held. |
+
+A state may set `background`, `gradient`, `image`, `borderColor`, `textColor` and `alpha`; anything it
+leaves out keeps the style's value. `pressed` applies over `hovered`. A button drawn from a sheet of
+art changes its `image` region per state. A `Joystick` draws only its colours.
 
 ## Draw images
 

@@ -68,6 +68,9 @@ free ambient_light.intensity | No validate() limits it; every value is accepted 
 free canvas_element.offsetX | Any screen offset or z-order integer is valid.
 free canvas_element.offsetY | Any screen offset or z-order integer is valid.
 free canvas_element.order | Any screen offset or z-order integer is valid.
+free canvas_element.style.shadow.offsetX | An offset: left of the element is as valid as right of it.
+free canvas_element.style.shadow.offsetY | An offset: above the element is as valid as below it.
+free canvas_element.style.shadow.spread | Negative shrinks the shadow inside the element, as CSS allows.
 free fog.colorB | A colour channel: every value is accepted; nothing validates it.
 free fog.colorG | A colour channel: every value is accepted; nothing validates it.
 free fog.colorR | A colour channel: every value is accepted; nothing validates it.

@@ -212,8 +212,18 @@ class SceneCanvasTest {
             order = 3,
             visible = false,
             style = CanvasStyle(
+                background = "#202020",
+                gradient = CanvasGradient("#303030", "#101010", horizontal = true),
                 image = CanvasImage("ui/frame.png", regionX = 4, regionWidth = 48, sliceLeft = 16, sliceRight = 16, repeatEdges = true, tint = "#FFFFFF80"),
                 fillImage = CanvasImage("ui/gauge.png", sliceLeft = 3, sliceRight = 3, repeatCenter = true, pixelated = true),
+                cornerRadius = 6f,
+                borderWidth = 1f,
+                borderColor = "#FFFFFF40",
+                shadow = CanvasShadow(offsetY = 3f, blur = 8f, spread = 1f),
+                textColor = "#FFD700",
+                alpha = 0.9f,
+                hovered = CanvasStateStyle(image = CanvasImage("ui/frame.png", regionY = 48)),
+                pressed = CanvasStateStyle(background = "#101010", borderColor = "#FFFFFF", alpha = 1f),
             ),
         )
 
@@ -284,6 +294,122 @@ class SceneCanvasTest {
     }
 
     @Test
+    fun aGradientRunsFromItsStartToItsEnd() {
+        element { kind = CanvasElementKind.Panel; offsetX = 0f; offsetY = 0f; width = 40f; height = 40f; style = CanvasStyle(gradient = CanvasGradient("#FF0000", "#0000FF")) }
+        element {
+            kind = CanvasElementKind.Panel; offsetX = 50f; offsetY = 0f; width = 40f; height = 40f
+            style = CanvasStyle(gradient = CanvasGradient("#FF0000", "#0000FF", horizontal = true))
+        }
+
+        val pixels = pixels(100, 40, emptyMap())
+
+        assertTrue(red(pixels[2][20]) > 200 && blue(pixels[37][20]) > 200, "top red, bottom blue")
+        assertTrue(red(pixels[20][52]) > 200 && blue(pixels[20][87]) > 200, "left red, right blue")
+    }
+
+    @Test
+    fun aCornerRadiusRoundsTheFill() {
+        element { kind = CanvasElementKind.Panel; offsetX = 0f; offsetY = 0f; width = 40f; height = 40f; background = "#FF0000"; style = CanvasStyle(cornerRadius = 12f) }
+
+        val pixels = pixels(40, 40, emptyMap())
+
+        assertEquals(BACKGROUND, pixels[0][0], "the corner is cut away")
+        assertEquals(RED, pixels[20][20])
+        assertEquals(RED, pixels[2][20], "the edge between the corners is still filled")
+    }
+
+    @Test
+    fun aBorderDrawsInsideTheEdge() {
+        element {
+            kind = CanvasElementKind.Panel; offsetX = 0f; offsetY = 0f; width = 40f; height = 40f; background = "#FF0000"
+            style = CanvasStyle(borderWidth = 4f, borderColor = "#00FF00")
+        }
+
+        val pixels = pixels(40, 40, emptyMap())
+
+        assertEquals(GREEN, pixels[20][1])
+        assertEquals(RED, pixels[20][20])
+    }
+
+    @Test
+    fun aShadowFallsBelowTheElement() {
+        element {
+            kind = CanvasElementKind.Panel; offsetX = 20f; offsetY = 10f; width = 40f; height = 20f; background = "#FF0000"
+            style = CanvasStyle(shadow = CanvasShadow(color = "#FFFFFF", offsetY = 10f, blur = 0f))
+        }
+
+        val pixels = pixels(80, 60, emptyMap())
+
+        assertEquals(WHITE, pixels[35][40], "under the element, where it was cast")
+        assertEquals(RED, pixels[20][40], "the element stays over its shadow")
+    }
+
+    @Test
+    fun alphaFadesTheElement() {
+        element { kind = CanvasElementKind.Panel; offsetX = 0f; offsetY = 0f; width = 40f; height = 40f; background = "#FF0000"; style = CanvasStyle(alpha = 0.5f) }
+
+        assertEquals(128f, red(pixels(40, 40, emptyMap())[20][20]).toFloat(), 2f)
+    }
+
+    @Test
+    fun aButtonTakesItsHoveredAndPressedLooks() {
+        element {
+            kind = CanvasElementKind.Button; offsetX = 0f; offsetY = 0f; width = 100f; height = 40f; background = "#FF0000"
+            style = CanvasStyle(hovered = CanvasStateStyle(background = "#0000FF"), pressed = CanvasStateStyle(background = "#00FF00"))
+        }
+        val host = ComposeHost()
+        fun look(input: FrameInput): Int {
+            val pixels = host.frame(input) { SceneCanvas(world) }.primitives.rasterize(100, 40, Color.Black)
+            return ((pixels[(20 * 100 + 90) * 4].toInt() and 0xFF) shl 16) or ((pixels[(20 * 100 + 90) * 4 + 1].toInt() and 0xFF) shl 8) or
+                (pixels[(20 * 100 + 90) * 4 + 2].toInt() and 0xFF)
+        }
+
+        val idle = look(FrameInput(100, 40))
+        look(FrameInput(100, 40, pointerX = 50, pointerY = 20))
+        val hovered = look(FrameInput(100, 40, pointerX = 50, pointerY = 20))
+        look(FrameInput(100, 40, pointerX = 50, pointerY = 20, pointerDown = true, pointerPressed = true))
+        val pressed = look(FrameInput(100, 40, pointerX = 50, pointerY = 20, pointerDown = true))
+
+        assertEquals(listOf(RED, BLUE, GREEN), listOf(idle, hovered, pressed))
+    }
+
+    @Test
+    fun anElementSavedBeforeStylesLoadsUnchanged() {
+        val saved = """{"kind":"Bar","width":120.0,"height":12.0,"color":"#E5484D","background":"#00000080","value":0.5}"""
+
+        val loaded = kotlinx.serialization.json.Json.decodeFromString(SceneCanvasElement.serializer(), saved)
+
+        assertEquals(CanvasStyle(), loaded.style)
+        assertEquals(SceneCanvasElement(kind = CanvasElementKind.Bar, width = 120f, height = 12f, color = "#E5484D", background = "#00000080", value = 0.5f), loaded)
+    }
+
+    @Test
+    fun validationRejectsABadStyle() {
+        val issues = SceneCanvasElement(
+            style = CanvasStyle(
+                background = "red",
+                gradient = CanvasGradient("#FF0000", "blue"),
+                cornerRadius = -1f,
+                shadow = CanvasShadow(blur = -2f),
+                alpha = 2f,
+                pressed = CanvasStateStyle(textColor = "white"),
+            ),
+        ).validate("nodes[0]").map { it.message }
+
+        assertEquals(
+            listOf(
+                "canvas_element.style.background \"red\" must be #RRGGBB or #RRGGBBAA",
+                "canvas_element.style.gradient.end \"blue\" must be #RRGGBB or #RRGGBBAA",
+                "canvas_element.style.cornerRadius must not be negative",
+                "canvas_element.style.shadow.blur must not be negative",
+                "canvas_element.style.alpha must be between 0 and 1",
+                "canvas_element.style.pressed.textColor \"white\" must be #RRGGBB or #RRGGBBAA",
+            ),
+            issues,
+        )
+    }
+
+    @Test
     fun validationRejectsBadValuesAndColours() {
         val issues = SceneCanvasElement(value = 2f, color = "red", fontSize = 0f).validate("nodes[0]")
 
@@ -309,6 +435,10 @@ private const val GREEN = 0x00FF00
 private const val BLUE = 0x0000FF
 private const val WHITE = 0xFFFFFF
 private const val BACKGROUND = 0x000000
+
+private fun red(rgb: Int) = rgb shr 16 and 0xFF
+
+private fun blue(rgb: Int) = rgb and 0xFF
 
 /** 2 x 2: red, green over blue, white. */
 private val QUADRANTS = ImageBitmap(2, 2, rgba(RED, GREEN, BLUE, WHITE))
