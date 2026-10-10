@@ -8,6 +8,7 @@ package com.awakekt.awake.project.runtime
 import com.awakekt.awake.asset.gltf.firstSkinnedAsset
 import com.awakekt.awake.asset.gltf.toAnimationLibrary
 import com.awakekt.awake.core.animation.AnimationPlayer
+import com.awakekt.awake.core.audio.AudioPlayer
 import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.core.math.Lens
@@ -169,15 +170,16 @@ private suspend fun loadProjectInto(
  * physics world, content and capabilities, for a host that runs the scene in a world of its own.
  * With no [renderer], as on a game server or in a test, the systems that draw are left out and the
  * rest simulate as they do in a drawn game. A host that never draws loads the project with
- * `hasRenderer = false` too, so it decodes no images. [SceneSystemSet.close] them when the scene stops.
+ * `hasRenderer = false` too, so it decodes no images. With [audio], the scene's `audio_source`s play through it;
+ * without, they run silently. [SceneSystemSet.close] them when the scene stops.
  */
-fun LoadedProject.sceneSystems(input: () -> GameplayInput, renderer: Renderer? = null): SceneSystemSet {
-    val services = if (renderer == null) {
+fun LoadedProject.sceneSystems(input: () -> GameplayInput, renderer: Renderer? = null, audio: AudioPlayer? = null): SceneSystemSet {
+    val drawn = if (renderer == null) {
         SceneHostServices.headless(input, physics, content)
     } else {
         SceneHostServices(input, renderer, physics, content)
     }
-    return sceneSystemsFor(scene, services, capabilities)
+    return sceneSystemsFor(scene, audio?.let(drawn::withAudio) ?: drawn, capabilities)
 }
 
 /**

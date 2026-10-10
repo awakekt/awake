@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.audio
 
+import com.awakekt.awake.core.audio.AudioClip
 import com.awakekt.awake.core.audio.AudioPlayer
 import com.awakekt.awake.core.audio.PositionalAudioMath
 import com.awakekt.awake.core.math.Vec3f
@@ -21,10 +22,15 @@ import kotlin.math.sqrt
  * relative to the active [AudioListener] entity, and updates playback.
  *
  * @param audioPlayer The underlying player used to trigger and manage audio playback.
+ * @param clips Decoded clips by project path, as [loadAudioClips] reads them. A source whose clip holds
+ * no samples, as [AudioSourceBinding] attaches it, plays the clip named here once it's in the map.
  */
 class AudioSystem(
     private val audioPlayer: AudioPlayer,
+    private val clips: Map<String, AudioClip> = emptyMap(),
 ) : System {
+    /** Sources found holding a placeholder this frame; a field, so swapping allocates nothing once they're done. */
+    private val waiting = ArrayList<Pair<Entity, AudioSource>>()
 
     /**
      * Updates spatial audio emitters and listeners across the simulation world.
@@ -41,6 +47,7 @@ class AudioSystem(
         } ?: Vec3f.RIGHT
 
         val listener = AudioListenerContext(pos = listenerPos, right = listenerRight)
+        if (clips.isNotEmpty()) swapInClips(world)
 
         world.family<AudioSource>().forEach { entity, source ->
             updateSource(world, entity, source, listener)
@@ -113,6 +120,19 @@ class AudioSystem(
                 loop = source.loop,
             )
         }
+    }
+
+    /** Gives each source still holding a placeholder clip the decoded one, before any of them plays. */
+    private fun swapInClips(world: World) {
+        world.family<AudioSource>().forEach { entity, source ->
+            if (source.clip.pcmBytes.isEmpty() && source.clip.id in clips) waiting += entity to source
+        }
+        // After the walk: replacing a component while walking its family would move under the walk.
+        for (index in waiting.indices) {
+            val (entity, source) = waiting[index]
+            world.add(entity, source.copy(clip = clips.getValue(source.clip.id)))
+        }
+        waiting.clear()
     }
 
     private fun AudioSource.canAutoPlay(): Boolean =

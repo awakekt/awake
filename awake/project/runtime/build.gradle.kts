@@ -35,6 +35,8 @@ kotlin {
             implementation(project(":awake:core:math"))
             implementation(project(":awake:particles"))
             implementation(project(":awake:scene:particles"))
+            // CoreSceneContent.AudioClips names AudioClip, and SceneHostServices.audio an AudioPlayer.
+            api(project(":awake:scene:audio"))
             // CoreSceneContent.ShaderEffects names its ShaderEffectAssets.
             api(project(":awake:scene:shader"))
             // paged_terrain: the scene binding, the residency it streams, and the layered surface an index

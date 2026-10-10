@@ -82,7 +82,7 @@ Paths below are Gradle coordinates minus the `:awake:` prefix.
 | `scene:runtime` | Scene app lifecycle, asset resolution, and project launching |
 | `scene:controls` | Camera rigs, input processing, gameplay key bindings |
 | `scene:physics` | Physics bodies, character controller, and the physics system |
-| `scene:audio` | Audio sources and the audio system |
+| `scene:audio` | The `audio_source` scene component, audio sources and the audio system |
 | `scene:particles` | The `particle_emitter` scene component, over `particles` |
 | `scene:ai` | The `patrol`, `chase` and `flee` scene components, `TransformAgentPlacement` and `MovementAgentPlacement`, over `ai:behavior` |
 | `scene:navigation` | The `navigation` scene component: the walkable grid a scene carries, over `navigation` |
