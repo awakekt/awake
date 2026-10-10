@@ -399,14 +399,53 @@ class SceneCanvasTest {
         assertEquals(
             listOf(
                 "canvas_element.style.background \"red\" must be #RRGGBB or #RRGGBBAA",
-                "canvas_element.style.gradient.end \"blue\" must be #RRGGBB or #RRGGBBAA",
                 "canvas_element.style.cornerRadius must not be negative",
-                "canvas_element.style.shadow.blur must not be negative",
                 "canvas_element.style.alpha must be between 0 and 1",
+                "canvas_element.style.gradient.end \"blue\" must be #RRGGBB or #RRGGBBAA",
+                "canvas_element.style.shadow.blur must not be negative",
                 "canvas_element.style.pressed.textColor \"white\" must be #RRGGBB or #RRGGBBAA",
             ),
             issues,
         )
+    }
+
+    private fun FrameOutput.glyphs() = primitives.filterIsInstance<UiDrawPrimitive.Glyph>()
+
+    @Test
+    fun textAlignPlacesTheTextInItsElement() {
+        element { offsetX = 0f; offsetY = 0f; width = 200f; height = 40f; text = "HP"; textAlign = CanvasAnchor.Center }
+        element { kind = CanvasElementKind.Button; offsetX = 0f; offsetY = 50f; width = 200f; height = 40f; text = "Go"; textAlign = CanvasAnchor.CenterLeft }
+
+        val glyphs = frame().glyphs()
+        val centred = glyphs.filter { it.y < 45f }
+        val left = glyphs.filter { it.y >= 45f }
+
+        assertEquals(100f, (centred.minOf { it.x } + centred.maxOf { it.x + it.w }) / 2f, 3f, "centred across")
+        assertEquals(20f, (centred.minOf { it.y } + centred.maxOf { it.y + it.h }) / 2f, 4f, "and down")
+        assertTrue(left.minOf { it.x } < 10f, "a Button label set to the left starts at its left edge")
+    }
+
+    @Test
+    fun textKeepsItsOwnPlaceWhenNoAlignIsSet() {
+        element { offsetX = 0f; offsetY = 0f; width = 200f; height = 40f; text = "HP" }
+        element { kind = CanvasElementKind.Button; offsetX = 0f; offsetY = 50f; width = 200f; height = 40f; text = "Go" }
+
+        val glyphs = frame().glyphs()
+
+        assertTrue(glyphs.filter { it.y < 45f }.minOf { it.x } < 10f, "a Text starts at its top-left")
+        assertTrue(glyphs.filter { it.y >= 45f }.minOf { it.x } > 80f, "a Button's label is centred")
+    }
+
+    @Test
+    fun aTextOutlineAndShadowDrawUnderItsText() {
+        element {
+            offsetX = 0f; offsetY = 0f; width = 200f; height = 40f; text = "HP"; color = "#FFFFFF"
+            style = CanvasStyle(textOutline = CanvasTextOutline("#000000", 2f), textShadow = CanvasTextShadow("#FF0000"))
+        }
+
+        val colours = frame().glyphs().map { it.color }
+
+        assertEquals(listOf(Color.fromHex("#FF0000"), Color.fromHex("#000000"), Color.White), colours.distinct(), "shadow, then outline, then the text")
     }
 
     @Test

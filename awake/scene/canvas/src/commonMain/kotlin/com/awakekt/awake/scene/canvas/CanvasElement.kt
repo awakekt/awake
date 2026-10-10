@@ -108,6 +108,9 @@ class CanvasElement {
     /** How the element looks beyond its colours: images, and their frames and fills. */
     var style: CanvasStyle = CanvasStyle()
 
+    /** Where a Text's or Button's text sits; null keeps the kind's own, top-left or centred. */
+    var textAlign: CanvasAnchor? = null
+
     private var pressed = false
     internal val interactions = InteractionSource()
 

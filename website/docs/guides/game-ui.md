@@ -60,6 +60,7 @@ For a button the player holds down, read `isHeld` instead. For a joystick, read 
 | `height` | number (dp) | `40` | Element height. |
 | `text` | string | `""` | A `Text` element's content, or a `Button`'s label. |
 | `fontSize` | number (sp) | `18` | Size of `text`. |
+| `textAlign` | one of the nine anchor points | none | Where the text sits in the element. None keeps a `Text` at its top-left and a `Button`'s label centred. |
 | `color` | `#RRGGBB` or `#RRGGBBAA` | `#FFFFFF` | Text colour, a `Bar`'s fill, or a `Joystick`'s knob. |
 | `background` | `#RRGGBB` or `#RRGGBBAA` | `#00000000` | Fill behind the element. A joystick's pad. |
 | `value` | number, 0 to 1 | `1` | A `Bar`'s fill fraction. |
@@ -107,6 +108,8 @@ lengths are dp.
 | `borderWidth`, `borderColor` | number, colour | A border inside the element's edge. It needs both. |
 | `shadow` | `{ color, offsetX, offsetY, blur, spread }` | A shadow behind the element, in its shape. Defaults: `#00000080`, 0, 2, 4, 0. |
 | `textColor` | colour | The text of a `Text` or `Button`, in place of `color`. |
+| `textShadow` | `{ color, offsetX, offsetY }` | A hard shadow under the text. Defaults: `#000000C0`, 1, 1. |
+| `textOutline` | `{ color, width }` | An outline around every glyph, so text reads over any background. Defaults: `#000000`, 1. |
 | `alpha` | number, 0 to 1 | The element's opacity, its children included. |
 | `hovered`, `pressed` | state | What changes while the pointer is over a `Button`, and while it is held. |
 

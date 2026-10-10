@@ -46,6 +46,7 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         it.action = action
         it.touchOnly = touchOnly
         it.style = style
+        it.textAlign = textAlign
     }
 
     /**
@@ -70,5 +71,6 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         action = action,
         touchOnly = touchOnly,
         style = style,
+        textAlign = textAlign,
     )
 }

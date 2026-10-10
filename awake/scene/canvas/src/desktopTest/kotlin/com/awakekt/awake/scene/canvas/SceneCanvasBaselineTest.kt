@@ -9,6 +9,7 @@ import com.awakekt.awake.compose.testing.assertMatchesBaseline
 import com.awakekt.awake.compose.ui.graphics.ImageBitmap
 import com.awakekt.awake.compose.ui.platform.ComposeHost
 import com.awakekt.awake.compose.ui.platform.FrameInput
+import com.awakekt.awake.core.text.font.UiFonts
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.core.transform.Transform
 import kotlin.test.Test
@@ -75,6 +76,29 @@ class SceneCanvasBaselineTest {
 
         ComposeHost().frame(FrameInput(248, 144)) { SceneCanvas(world) }
             .primitives.assertMatchesBaseline("scene-canvas-styles", 248, 144)
+    }
+
+    @Test
+    fun centredOutlinedAndShadowedText() {
+        val world = World()
+        fun element(configure: CanvasElement.() -> Unit) = world.create().also { world.add(it, CanvasElement().apply(configure)) }
+        element {
+            kind = CanvasElementKind.Bar; offsetX = 16f; offsetY = 16f; width = 200f; height = 20f; value = 0.8f
+            color = "#C0392B"; background = "#2A2A2A"
+            style = CanvasStyle(cornerRadius = 4f)
+        }
+        element {
+            // The label over the gauge: an element of its own, so the bar's fill does not cover it.
+            offsetX = 16f; offsetY = 16f; width = 200f; height = 20f; text = "HP 120/150"; fontSize = 14f; color = "#FFFFFF"
+            textAlign = CanvasAnchor.Center; style = CanvasStyle(textOutline = CanvasTextOutline("#000000", 1f))
+        }
+        element {
+            offsetX = 16f; offsetY = 48f; width = 200f; height = 24f; text = "Harbor Guard"; fontSize = 16f; color = "#F5D76E"
+            textAlign = CanvasAnchor.Center; background = "#5A7FA0"; style = CanvasStyle(textShadow = CanvasTextShadow("#000000C0", 1f, 1f))
+        }
+
+        ComposeHost().frame(FrameInput(232, 88)) { SceneCanvas(world) }
+            .primitives.assertMatchesBaseline("scene-canvas-text", 232, 88, font = UiFonts.default())
     }
 
     private companion object {

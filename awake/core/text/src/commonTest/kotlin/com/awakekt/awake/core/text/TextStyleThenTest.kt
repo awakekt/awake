@@ -8,6 +8,8 @@ package com.awakekt.awake.core.text
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.math2d.sp
 import com.awakekt.awake.core.text.font.FontWeight
+import com.awakekt.awake.core.text.theme.TextOutline
+import com.awakekt.awake.core.text.theme.TextShadow
 import com.awakekt.awake.core.text.theme.TextStyle
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -27,6 +29,9 @@ class TextStyleThenTest {
         TextStyle(scale = 2f),
         TextStyle(letterSpacing = 1.sp),
         TextStyle(color = Color.Black, size = 16.sp, lineHeight = 24.sp, scale = 2f, weight = FontWeight.Bold, letterSpacing = 1.sp),
+        TextStyle(shadow = TextShadow(Color.Black)),
+        TextStyle(outline = TextOutline(Color.Black, 2f)),
+        TextStyle(color = Color.White, shadow = TextShadow(Color.Black, 2f, 2f), outline = TextOutline(Color.Black)),
     )
 
     private fun reference(base: TextStyle, other: TextStyle) = TextStyle(
@@ -36,6 +41,8 @@ class TextStyleThenTest {
         scale = other.scale,
         weight = other.weight,
         letterSpacing = other.letterSpacing,
+        shadow = other.shadow ?: base.shadow,
+        outline = other.outline ?: base.outline,
     )
 
     @Test

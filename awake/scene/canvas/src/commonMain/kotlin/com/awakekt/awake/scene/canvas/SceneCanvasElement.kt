@@ -30,6 +30,8 @@ import kotlinx.serialization.Serializable
  * @property action Action trigger identifier associated with button activation.
  * @property touchOnly If true, element is displayed only when touch controls are active.
  * @property style How the element looks beyond its colours: images, and their frames and fills.
+ * @property textAlign Where a Text's or Button's text sits in the element; null keeps the kind's own,
+ * top-left for a Text and centred for a Button.
  */
 @Serializable
 @SerialName("canvas_element")
@@ -50,6 +52,7 @@ data class SceneCanvasElement(
     val action: String = "",
     val touchOnly: Boolean = false,
     val style: CanvasStyle = CanvasStyle(),
+    val textAlign: CanvasAnchor? = null,
 ) : SceneComponent {
     /**
      * Validates element dimensions, font sizes, values, and hex color syntax.

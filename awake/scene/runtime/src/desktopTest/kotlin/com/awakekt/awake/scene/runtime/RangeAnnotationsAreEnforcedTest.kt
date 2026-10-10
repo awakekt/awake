@@ -94,7 +94,10 @@ class RangeAnnotationsAreEnforcedTest {
             JsonObject(
                 base + (
                     "style" to JsonObject(
-                        mapOf("image" to image, "fillImage" to image, "shadow" to empty, "hovered" to state, "pressed" to state),
+                        mapOf(
+                            "image" to image, "fillImage" to image, "shadow" to empty, "textOutline" to empty,
+                            "hovered" to state, "pressed" to state,
+                        ),
                     )
                     ),
             )
@@ -164,6 +167,7 @@ class RangeAnnotationsAreEnforcedTest {
             "canvas_element.style.alpha",
             "canvas_element.style.shadow.blur",
             "canvas_element.style.pressed.alpha",
+            "canvas_element.style.textOutline.width",
             "pbr_material.metallic",
             "pbr_material.roughness",
             "pbr_material.alphaCutoff",

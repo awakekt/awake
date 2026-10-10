@@ -8,11 +8,14 @@ package com.awakekt.awake.render.parity
 import com.awakekt.awake.compose.ui.platform.ComposeHost
 import com.awakekt.awake.compose.ui.platform.FrameInput
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.core.text.font.UiFonts
+import com.awakekt.awake.scene.canvas.CanvasAnchor
 import com.awakekt.awake.scene.canvas.CanvasElement
 import com.awakekt.awake.scene.canvas.CanvasElementKind
 import com.awakekt.awake.scene.canvas.CanvasGradient
 import com.awakekt.awake.scene.canvas.CanvasShadow
 import com.awakekt.awake.scene.canvas.CanvasStyle
+import com.awakekt.awake.scene.canvas.CanvasTextOutline
 import com.awakekt.awake.scene.canvas.SceneCanvas
 import kotlinx.coroutines.runBlocking
 import java.awt.image.BufferedImage
@@ -130,7 +133,43 @@ class CanvasStyleParityTest {
         }
     }
 
+    /** An outlined, shadowed glyph shows its outline around its fill on both backends. */
+    @Test
+    fun outlinedTextDrawsOnBothBackends() {
+        val world = World()
+        world.create().also {
+            world.add(
+                it,
+                CanvasElement().apply {
+                    offsetX = 0f; offsetY = 0f; width = SIZE.toFloat(); height = SIZE.toFloat()
+                    text = "O"; fontSize = 64f; color = "#FFFFFF"; textAlign = CanvasAnchor.Center
+                    style = CanvasStyle(textOutline = CanvasTextOutline("#00FF00", 3f))
+                },
+            )
+        }
+        val primitives = ComposeHost().frame(FrameInput(SIZE, SIZE)) { SceneCanvas(world) }.primitives
+
+        listOf(HeadlessUiBackend.Vulkan, HeadlessUiBackend.WebGpu).forEach { backend ->
+            val frame = withHeadlessUi(backend, SIZE) { renderer ->
+                val target = renderer.createRenderTarget(SIZE, SIZE)
+                try {
+                    renderer.drawUiToTexture(target, primitives, font = UiFonts.default())
+                    runBlocking { renderer.readPixels(target) }.data
+                } finally {
+                    target.destroy()
+                }
+            }
+            val pixels = (0 until SIZE * SIZE).map { i -> (0 until 3).map { frame[i * 4 + it].toInt() and 0xFF } }
+            val outline = pixels.count { (r, g, b) -> g >= ON && r <= OFF && b <= OFF }
+            val fill = pixels.count { rgb -> rgb.all { it >= ON } }
+
+            assertTrue(outline >= MIN_INK, "$backend: the outline shows, $outline green pixels")
+            assertTrue(fill >= MIN_INK, "$backend: the glyph shows over it, $fill white pixels")
+        }
+    }
+
     private companion object {
+        const val MIN_INK = 40
         const val HUD_WIDTH = 248
         const val HUD_HEIGHT = 144
         const val REPORT_DIR = "build/reports/render-parity"

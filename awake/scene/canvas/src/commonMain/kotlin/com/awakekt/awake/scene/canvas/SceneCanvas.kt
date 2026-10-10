@@ -146,10 +146,15 @@ private fun CanvasElementView(
         background(back)
         element.style.applyTo(this, tree.images)
     }
-    val textStyle = TextStyle(color = resolveTextColor(state, style) ?: fill, size = element.fontSize.sp)
+    val textStyle = TextStyle(
+        color = resolveTextColor(state, style) ?: fill,
+        size = element.fontSize.sp,
+        shadow = element.style.textShadow?.toTextShadow(),
+        outline = element.style.textOutline?.toTextOutline(),
+    )
     val styled = modifier.styleable(state, style)
     when (element.kind) {
-        CanvasElementKind.Text -> Box(styled) {
+        CanvasElementKind.Text -> Box(styled, contentAlignment = (element.textAlign ?: CanvasAnchor.TopLeft).alignment) {
             Text(element.text, style = textStyle)
             Elements(children, tree)
         }
@@ -160,7 +165,7 @@ private fun CanvasElementView(
         }
         CanvasElementKind.Button -> Box(
             styled.hoverable(element.interactions).clickable(element.interactions) { element.press() },
-            contentAlignment = Alignment.Center,
+            contentAlignment = (element.textAlign ?: CanvasAnchor.Center).alignment,
         ) {
             Text(element.text, style = textStyle)
             Elements(children, tree)

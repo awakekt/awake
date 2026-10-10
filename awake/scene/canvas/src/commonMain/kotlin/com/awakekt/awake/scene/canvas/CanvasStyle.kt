@@ -13,6 +13,8 @@ import com.awakekt.awake.compose.ui.unit.DpOffset
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.schema.PropertyRange
+import com.awakekt.awake.core.text.theme.TextOutline
+import com.awakekt.awake.core.text.theme.TextShadow
 import kotlinx.serialization.Serializable
 
 /**
@@ -32,6 +34,8 @@ import kotlinx.serialization.Serializable
  * @property borderColor The border's colour; a border needs both.
  * @property shadow A shadow cast behind the element, in its shape.
  * @property textColor The colour of a Text's or Button's text, in place of [CanvasElement.color].
+ * @property textShadow A hard shadow under a Text's or Button's text.
+ * @property textOutline An outline around a Text's or Button's text.
  * @property alpha The element's opacity, from 0 to 1, its children included.
  * @property hovered What changes while the pointer is over a Button.
  * @property pressed What changes while a Button is held, over [hovered].
@@ -47,6 +51,8 @@ data class CanvasStyle(
     val borderColor: String? = null,
     val shadow: CanvasShadow? = null,
     val textColor: String? = null,
+    val textShadow: CanvasTextShadow? = null,
+    val textOutline: CanvasTextOutline? = null,
     @PropertyRange(min = 0.0, max = 1.0) val alpha: Float? = null,
     val hovered: CanvasStateStyle? = null,
     val pressed: CanvasStateStyle? = null,
@@ -54,16 +60,23 @@ data class CanvasStyle(
     /** What is wrong with this style, as messages naming the field; empty when nothing is. */
     internal fun problems(): List<String> = buildList {
         addAll(colourProblems("background" to background, "borderColor" to borderColor, "textColor" to textColor))
-        gradient?.problems()?.forEach { add("gradient.$it") }
-        image?.problems()?.forEach { add("image.$it") }
-        fillImage?.problems()?.forEach { add("fillImage.$it") }
         if ((cornerRadius ?: 0f) < 0f) add("cornerRadius must not be negative")
         if ((borderWidth ?: 0f) < 0f) add("borderWidth must not be negative")
-        shadow?.problems()?.forEach { add("shadow.$it") }
         if (alpha != null && alpha !in 0f..1f) add("alpha must be between 0 and 1")
-        hovered?.problems()?.forEach { add("hovered.$it") }
-        pressed?.problems()?.forEach { add("pressed.$it") }
+        addAll(partProblems())
     }
+
+    /** The problems of the objects this style holds, each named by its field. */
+    private fun partProblems(): List<String> = listOf(
+        "gradient" to gradient?.problems(),
+        "image" to image?.problems(),
+        "fillImage" to fillImage?.problems(),
+        "shadow" to shadow?.problems(),
+        "textShadow" to textShadow?.problems(),
+        "textOutline" to textOutline?.problems(),
+        "hovered" to hovered?.problems(),
+        "pressed" to pressed?.problems(),
+    ).flatMap { (field, problems) -> problems.orEmpty().map { "$field.$it" } }
 
     /** Writes this style, and the states [scope] is in, into a Compose style, with [images] for its pictures. */
     internal fun applyTo(scope: StyleScope, images: Map<String, ImageBitmap>) {
@@ -156,6 +169,40 @@ data class CanvasShadow(
         const val DEFAULT_OFFSET_Y = 2f
         const val DEFAULT_BLUR = 4f
     }
+}
+
+/**
+ * A hard shadow under an element's text.
+ *
+ * @property color Its colour.
+ * @property offsetX How far right it falls, in dp.
+ * @property offsetY How far down it falls, in dp.
+ */
+@Serializable
+data class CanvasTextShadow(val color: String = "#000000C0", val offsetX: Float = 1f, val offsetY: Float = 1f) {
+    internal fun problems(): List<String> = colourProblems("color" to color)
+
+    internal fun toTextShadow(): TextShadow = TextShadow(colorOf(color, Color.Transparent), offsetX, offsetY)
+}
+
+/**
+ * An outline around an element's text.
+ *
+ * @property color Its colour.
+ * @property width Its width in dp; above 0.
+ */
+@Serializable
+data class CanvasTextOutline(
+    val color: String = "#000000",
+    @PropertyRange(min = 0.0, exclusiveMin = true) val width: Float = 1f,
+) {
+    internal fun problems(): List<String> = buildList {
+        addAll(colourProblems("color" to color))
+        if (width <= 0f) add("width must be above 0")
+    }
+
+    /** The outline, or null for one too thin to draw. */
+    internal fun toTextOutline(): TextOutline? = if (width > 0f) TextOutline(colorOf(color, Color.Transparent), width) else null
 }
 
 /** The paint a style and its states share: a gradient replaces the fill colour, and the image draws over both. */
