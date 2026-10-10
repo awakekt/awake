@@ -133,6 +133,17 @@ jobs:
           tools/check_obfuscated_template.sh consumer/awake-template "$RUNNER_TEMP/awake-template" build/obfuscated
           tools/check_obfuscated_template.sh consumer/awake-project-template "$RUNNER_TEMP/awake-project-template" build/obfuscated
 
+      # Three builds' Gradle and Kotlin daemons, this one and both templates', still hold their memory,
+      # and with them the emulator ran the runner out mid-boot and it was shut down.
+      - name: Stop the build daemons
+        run: |
+          ./gradlew --stop
+          for template in awake-template awake-project-template; do
+            (cd "$RUNNER_TEMP/$template/awake-template" && ./gradlew --stop) || true
+          done
+          pkill -f KotlinCompileDaemon || true
+          free -h
+
       # GitHub's Linux runners expose /dev/kvm but not to the runner user; without it the emulator
       # falls back to software and takes long enough to trip the timeout.
       - name: Enable KVM
