@@ -50,6 +50,8 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         it.follow = follow
         it.followOffset = followOffset
         it.followBounds = followBounds
+        it.layout = layout
+        it.grow = grow
     }
 
     /**
@@ -78,5 +80,7 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         follow = follow,
         followOffset = followOffset,
         followBounds = followBounds,
+        layout = layout,
+        grow = grow,
     )
 }

@@ -64,6 +64,8 @@ For a button the player holds down, read `isHeld` instead. For a joystick, read 
 | `follow` | string | `""` | A node to follow on screen. See [Follow a node](#follow-a-node). |
 | `followOffset` | vector | `{x: 0, y: 0, z: 0}` | A world-space offset from the followed node. |
 | `followBounds` | boolean | `false` | Cover the followed node's screen box instead of standing at its point. |
+| `layout` | object | none | Lay the children out in rows or columns. See [Lay out children](#lay-out-children). |
+| `grow` | number | `0` | In a laid-out parent, this element's share of the leftover space. |
 | `color` | `#RRGGBB` or `#RRGGBBAA` | `#FFFFFF` | Text colour, a `Bar`'s fill, or a `Joystick`'s knob. |
 | `background` | `#RRGGBB` or `#RRGGBBAA` | `#00000000` | Fill behind the element. A joystick's pad. |
 | `value` | number, 0 to 1 | `1` | A `Bar`'s fill fraction. |
@@ -180,6 +182,35 @@ above is the parent.
 
 A child is laid out within its parent, so one that would stick out past the parent's edge is
 narrowed to fit.
+
+## Lay out children
+
+A parent with a `layout` places its children itself, as a CSS flexbox does: an action bar of slots,
+a strip of buff icons that wraps, a party list. Each child keeps its `width` and `height`, ignores
+its `anchor` and offsets, and runs in its `order`. Add or remove children at run time and the rest
+move to make room.
+
+```json title="An action bar of ten slots"
+{ "name": "ActionBar", "components": [ { "component": "canvas_element", "kind": "Panel",
+    "anchor": "BottomCenter", "offsetY": 12, "width": 364, "height": 40,
+    "layout": { "direction": "Row", "gap": 4, "padding": 4, "align": "Center" } } ],
+  "children": [
+    { "name": "Slot1", "components": [ { "component": "canvas_element", "kind": "Image", "order": 0,
+        "width": 32, "height": 32, "style": { "image": { "path": "ui/slot.png", "pixelated": true } } } ] }
+  ] }
+```
+
+| Field | Values | Default | What it does |
+| --- | --- | --- | --- |
+| `direction` | `Row` · `RowReverse` · `Column` · `ColumnReverse` | `Row` | The axis the children run along, and which way. |
+| `wrap` | boolean | `false` | Start a new line for children that do not fit. Wrapped lines stay packed at the start. |
+| `gap` | number (dp) | `0` | The space between children, and between lines. |
+| `padding` | number (dp) | `0` | The space between the parent's edge and its children. |
+| `justify` | `Start` · `Center` · `End` · `SpaceBetween` · `SpaceAround` · `SpaceEvenly` | `Start` | How a line spreads its leftover space. |
+| `align` | `Start` · `Center` · `End` · `Stretch` | `Start` | Where children sit across the line. A single line spans the whole parent. |
+
+A child's `grow` gives it a share of its line's leftover space, so one slot can fill the rest of a
+row. A parent without a `layout` anchors its children as before.
 
 ## Follow a node
 
