@@ -29,6 +29,7 @@ import kotlinx.serialization.Serializable
  * @property visible Whether this element is rendered.
  * @property action Action trigger identifier associated with button activation.
  * @property touchOnly If true, element is displayed only when touch controls are active.
+ * @property style How the element looks beyond its colours: images, and their frames and fills.
  */
 @Serializable
 @SerialName("canvas_element")
@@ -48,6 +49,7 @@ data class SceneCanvasElement(
     val visible: Boolean = true,
     val action: String = "",
     val touchOnly: Boolean = false,
+    val style: CanvasStyle = CanvasStyle(),
 ) : SceneComponent {
     /**
      * Validates element dimensions, font sizes, values, and hex color syntax.
@@ -62,6 +64,7 @@ data class SceneCanvasElement(
         listOf(color, background).filterNot(::isHexColor).forEach {
             add(SceneValidationIssue(path, "canvas_element colour \"$it\" must be #RRGGBB or #RRGGBBAA"))
         }
+        style.problems().forEach { add(SceneValidationIssue(path, "canvas_element.style.$it")) }
     }
 }
 

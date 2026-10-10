@@ -38,6 +38,7 @@ public final class com/awakekt/awake/scene/canvas/CanvasElement {
 	public final fun getOrder ()I
 	public final fun getStickX ()F
 	public final fun getStickY ()F
+	public final fun getStyle ()Lcom/awakekt/awake/scene/canvas/CanvasStyle;
 	public final fun getText ()Ljava/lang/String;
 	public final fun getTouchOnly ()Z
 	public final fun getValue ()F
@@ -54,6 +55,7 @@ public final class com/awakekt/awake/scene/canvas/CanvasElement {
 	public final fun setOffsetX (F)V
 	public final fun setOffsetY (F)V
 	public final fun setOrder (I)V
+	public final fun setStyle (Lcom/awakekt/awake/scene/canvas/CanvasStyle;)V
 	public final fun setText (Ljava/lang/String;)V
 	public final fun setTouchOnly (Z)V
 	public final fun setValue (F)V
@@ -85,6 +87,7 @@ public final class com/awakekt/awake/scene/canvas/CanvasElementKind : java/lang/
 	public static final field Bar Lcom/awakekt/awake/scene/canvas/CanvasElementKind;
 	public static final field Button Lcom/awakekt/awake/scene/canvas/CanvasElementKind;
 	public static final field Companion Lcom/awakekt/awake/scene/canvas/CanvasElementKind$Companion;
+	public static final field Image Lcom/awakekt/awake/scene/canvas/CanvasElementKind;
 	public static final field Joystick Lcom/awakekt/awake/scene/canvas/CanvasElementKind;
 	public static final field Panel Lcom/awakekt/awake/scene/canvas/CanvasElementKind;
 	public static final field Text Lcom/awakekt/awake/scene/canvas/CanvasElementKind;
@@ -97,11 +100,99 @@ public final class com/awakekt/awake/scene/canvas/CanvasElementKind$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
+public final class com/awakekt/awake/scene/canvas/CanvasImage {
+	public static final field Companion Lcom/awakekt/awake/scene/canvas/CanvasImage$Companion;
+	public fun <init> (Ljava/lang/String;IIIIIIIIZZLjava/lang/String;Z)V
+	public synthetic fun <init> (Ljava/lang/String;IIIIIIIIZZLjava/lang/String;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component10 ()Z
+	public final fun component11 ()Z
+	public final fun component12 ()Ljava/lang/String;
+	public final fun component13 ()Z
+	public final fun component2 ()I
+	public final fun component3 ()I
+	public final fun component4 ()I
+	public final fun component5 ()I
+	public final fun component6 ()I
+	public final fun component7 ()I
+	public final fun component8 ()I
+	public final fun component9 ()I
+	public final fun copy (Ljava/lang/String;IIIIIIIIZZLjava/lang/String;Z)Lcom/awakekt/awake/scene/canvas/CanvasImage;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/canvas/CanvasImage;Ljava/lang/String;IIIIIIIIZZLjava/lang/String;ZILjava/lang/Object;)Lcom/awakekt/awake/scene/canvas/CanvasImage;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPath ()Ljava/lang/String;
+	public final fun getPixelated ()Z
+	public final fun getRegionHeight ()I
+	public final fun getRegionWidth ()I
+	public final fun getRegionX ()I
+	public final fun getRegionY ()I
+	public final fun getRepeatCenter ()Z
+	public final fun getRepeatEdges ()Z
+	public final fun getSliceBottom ()I
+	public final fun getSliceLeft ()I
+	public final fun getSliceRight ()I
+	public final fun getSliceTop ()I
+	public final fun getTint ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/scene/canvas/CanvasImage$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/canvas/CanvasImage$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/canvas/CanvasImage;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/canvas/CanvasImage;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/canvas/CanvasImage$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/canvas/CanvasImageKt {
+	public static final fun hasCanvasImages (Lcom/awakekt/awake/scene/document/SceneDocument;)Z
+	public static final fun loadCanvasImages (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/scene/canvas/CanvasStyle {
+	public static final field Companion Lcom/awakekt/awake/scene/canvas/CanvasStyle$Companion;
+	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/scene/canvas/CanvasImage;Lcom/awakekt/awake/scene/canvas/CanvasImage;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/scene/canvas/CanvasImage;Lcom/awakekt/awake/scene/canvas/CanvasImage;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/scene/canvas/CanvasImage;
+	public final fun component2 ()Lcom/awakekt/awake/scene/canvas/CanvasImage;
+	public final fun copy (Lcom/awakekt/awake/scene/canvas/CanvasImage;Lcom/awakekt/awake/scene/canvas/CanvasImage;)Lcom/awakekt/awake/scene/canvas/CanvasStyle;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/canvas/CanvasStyle;Lcom/awakekt/awake/scene/canvas/CanvasImage;Lcom/awakekt/awake/scene/canvas/CanvasImage;ILjava/lang/Object;)Lcom/awakekt/awake/scene/canvas/CanvasStyle;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFillImage ()Lcom/awakekt/awake/scene/canvas/CanvasImage;
+	public final fun getImage ()Lcom/awakekt/awake/scene/canvas/CanvasImage;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/scene/canvas/CanvasStyle$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/canvas/CanvasStyle$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/canvas/CanvasStyle;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/canvas/CanvasStyle;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/canvas/CanvasStyle$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
 public final class com/awakekt/awake/scene/canvas/SceneCanvasElement : com/awakekt/awake/scene/document/SceneComponent {
 	public static final field Companion Lcom/awakekt/awake/scene/canvas/SceneCanvasElement$Companion;
 	public fun <init> ()V
-	public fun <init> (Lcom/awakekt/awake/scene/canvas/CanvasElementKind;Lcom/awakekt/awake/scene/canvas/CanvasAnchor;FFFFLjava/lang/String;FLjava/lang/String;Ljava/lang/String;FIZLjava/lang/String;Z)V
-	public synthetic fun <init> (Lcom/awakekt/awake/scene/canvas/CanvasElementKind;Lcom/awakekt/awake/scene/canvas/CanvasAnchor;FFFFLjava/lang/String;FLjava/lang/String;Ljava/lang/String;FIZLjava/lang/String;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/scene/canvas/CanvasElementKind;Lcom/awakekt/awake/scene/canvas/CanvasAnchor;FFFFLjava/lang/String;FLjava/lang/String;Ljava/lang/String;FIZLjava/lang/String;ZLcom/awakekt/awake/scene/canvas/CanvasStyle;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/scene/canvas/CanvasElementKind;Lcom/awakekt/awake/scene/canvas/CanvasAnchor;FFFFLjava/lang/String;FLjava/lang/String;Ljava/lang/String;FIZLjava/lang/String;ZLcom/awakekt/awake/scene/canvas/CanvasStyle;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lcom/awakekt/awake/scene/canvas/CanvasElementKind;
 	public final fun component10 ()Ljava/lang/String;
 	public final fun component11 ()F
@@ -109,6 +200,7 @@ public final class com/awakekt/awake/scene/canvas/SceneCanvasElement : com/awake
 	public final fun component13 ()Z
 	public final fun component14 ()Ljava/lang/String;
 	public final fun component15 ()Z
+	public final fun component16 ()Lcom/awakekt/awake/scene/canvas/CanvasStyle;
 	public final fun component2 ()Lcom/awakekt/awake/scene/canvas/CanvasAnchor;
 	public final fun component3 ()F
 	public final fun component4 ()F
@@ -117,8 +209,8 @@ public final class com/awakekt/awake/scene/canvas/SceneCanvasElement : com/awake
 	public final fun component7 ()Ljava/lang/String;
 	public final fun component8 ()F
 	public final fun component9 ()Ljava/lang/String;
-	public final fun copy (Lcom/awakekt/awake/scene/canvas/CanvasElementKind;Lcom/awakekt/awake/scene/canvas/CanvasAnchor;FFFFLjava/lang/String;FLjava/lang/String;Ljava/lang/String;FIZLjava/lang/String;Z)Lcom/awakekt/awake/scene/canvas/SceneCanvasElement;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/canvas/SceneCanvasElement;Lcom/awakekt/awake/scene/canvas/CanvasElementKind;Lcom/awakekt/awake/scene/canvas/CanvasAnchor;FFFFLjava/lang/String;FLjava/lang/String;Ljava/lang/String;FIZLjava/lang/String;ZILjava/lang/Object;)Lcom/awakekt/awake/scene/canvas/SceneCanvasElement;
+	public final fun copy (Lcom/awakekt/awake/scene/canvas/CanvasElementKind;Lcom/awakekt/awake/scene/canvas/CanvasAnchor;FFFFLjava/lang/String;FLjava/lang/String;Ljava/lang/String;FIZLjava/lang/String;ZLcom/awakekt/awake/scene/canvas/CanvasStyle;)Lcom/awakekt/awake/scene/canvas/SceneCanvasElement;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/canvas/SceneCanvasElement;Lcom/awakekt/awake/scene/canvas/CanvasElementKind;Lcom/awakekt/awake/scene/canvas/CanvasAnchor;FFFFLjava/lang/String;FLjava/lang/String;Ljava/lang/String;FIZLjava/lang/String;ZLcom/awakekt/awake/scene/canvas/CanvasStyle;ILjava/lang/Object;)Lcom/awakekt/awake/scene/canvas/SceneCanvasElement;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAction ()Ljava/lang/String;
 	public fun getAllowsMultiplePerNode ()Z
@@ -131,6 +223,7 @@ public final class com/awakekt/awake/scene/canvas/SceneCanvasElement : com/awake
 	public final fun getOffsetX ()F
 	public final fun getOffsetY ()F
 	public final fun getOrder ()I
+	public final fun getStyle ()Lcom/awakekt/awake/scene/canvas/CanvasStyle;
 	public final fun getText ()Ljava/lang/String;
 	public final fun getTouchOnly ()Z
 	public final fun getValue ()F
@@ -158,7 +251,7 @@ public final class com/awakekt/awake/scene/canvas/SceneCanvasElement$Companion {
 }
 
 public final class com/awakekt/awake/scene/canvas/SceneCanvasKt {
-	public static final fun SceneCanvas (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/compose/ui/Modifier;Z)V
-	public static synthetic fun SceneCanvas$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/compose/ui/Modifier;ZILjava/lang/Object;)V
+	public static final fun SceneCanvas (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/compose/ui/Modifier;ZLjava/util/Map;)V
+	public static synthetic fun SceneCanvas$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/compose/ui/Modifier;ZLjava/util/Map;ILjava/lang/Object;)V
 }
 

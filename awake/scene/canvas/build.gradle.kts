@@ -24,14 +24,18 @@ kotlin {
             api(project(":awake:scene:binding"))
             api(project(":awake:compose:runtime"))
             api(project(":awake:compose:ui"))
+            api(project(":awake:core:io"))
             implementation(project(":awake:compose:foundation"))
             implementation(project(":awake:core:color"))
+            implementation(project(":awake:core:logging"))
             implementation(project(":awake:core:math2d"))
             implementation(project(":awake:core:text"))
             implementation(libs.kotlinx.serialization.json)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
+            implementation(libs.kotlinx.coroutines.test)
+            implementation(project(":awake:compose:ui-testing"))
         }
     }
 }

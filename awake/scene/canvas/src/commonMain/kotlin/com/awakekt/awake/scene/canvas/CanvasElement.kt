@@ -22,6 +22,8 @@ enum class CanvasElementKind {
     Button,
     /** Virtual touch analog joystick. */
     Joystick,
+    /** A picture: its style's [CanvasStyle.image]. */
+    Image,
 }
 
 /** The screen point a [CanvasElement] is pinned to; its offset moves it inward from there. */
@@ -102,6 +104,9 @@ class CanvasElement {
 
     /** If true, element is displayed only when touch controls are active. */
     var touchOnly: Boolean = false
+
+    /** How the element looks beyond its colours: images, and their frames and fills. */
+    var style: CanvasStyle = CanvasStyle()
 
     private var pressed = false
     internal val interactions = InteractionSource()

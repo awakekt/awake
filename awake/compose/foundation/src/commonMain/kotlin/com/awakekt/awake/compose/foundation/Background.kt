@@ -7,10 +7,13 @@ package com.awakekt.awake.compose.foundation
 
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.ModifierNodeElement
+import com.awakekt.awake.compose.ui.draw.drawBehind
+import com.awakekt.awake.compose.ui.graphics.ImageFill
 import com.awakekt.awake.compose.ui.graphics.RectangleShape
 import com.awakekt.awake.compose.ui.graphics.RoundedCornerShape
 import com.awakekt.awake.compose.ui.graphics.Shape
 import com.awakekt.awake.compose.ui.graphics.ShapeOutline
+import com.awakekt.awake.compose.ui.graphics.drawImageFill
 import com.awakekt.awake.compose.ui.graphics.drawscope.DrawScope
 import com.awakekt.awake.compose.ui.graphics.drawscope.drawRetainedMesh
 import com.awakekt.awake.compose.ui.node.DrawModifierNode
@@ -43,6 +46,9 @@ fun Modifier.background(color: Color, shape: Shape = RectangleShape): Modifier =
 /** Compatibility spelling for the former uniform-radius API. */
 fun Modifier.background(color: Color, cornerRadius: Dp): Modifier =
     background(color, RoundedCornerShape(cornerRadius))
+
+/** Fills the node behind its content with [fill]: an image, or a frame cut into nine. */
+fun Modifier.background(fill: ImageFill): Modifier = drawBehind { drawImageFill(fill) }
 
 /**
  * Draws a border whose solid band sits *inside* the node's bounds.

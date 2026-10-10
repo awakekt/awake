@@ -122,7 +122,7 @@ Screen-space UI drawn over the game. Sizes and offsets are in dp. `SceneCanvasEl
 
 | Field | Type | Default | What it does |
 | --- | --- | --- | --- |
-| `kind` | `Text` · `Panel` · `Bar` · `Button` · `Joystick` | `Text` | What the element is. |
+| `kind` | `Text` · `Panel` · `Bar` · `Button` · `Joystick` · `Image` | `Text` | What the element is. |
 | `anchor` | `TopLeft` · `TopCenter` · `TopRight` · `CenterLeft` · `Center` · `CenterRight` · `BottomLeft` · `BottomCenter` · `BottomRight` | `TopLeft` | Screen point the element is placed from. |
 | `offsetX` | number | `16` | Horizontal offset from the anchor. |
 | `offsetY` | number | `16` | Vertical offset from the anchor. |
@@ -137,6 +137,7 @@ Screen-space UI drawn over the game. Sizes and offsets are in dp. `SceneCanvasEl
 | `visible` | boolean | `true` | Whether the element is drawn. |
 | `action` | string | `""` | Name of what the element does for the game, such as `jump`. The game decides what each name means. In a played project, an element naming one of the scene's [input actions](#input_actions) adds to it, and its presses are used up: a Joystick steers an axis such as `move`, and a Button holds and presses a button such as `jump` or `run`. Any other name is left for the game to read. |
 | `touchOnly` | boolean | `false` | Draw only where touch controls are shown. |
+| `style` | object | `{}` | How the element looks beyond its colours. `image` is an `Image`'s picture, the frame of a `Panel`, `Button` or `Text`, or a `Bar`'s track; `fillImage` is a `Bar`'s fill, cut at `value`. Each is a `CanvasImage`: `path`, a region (`regionX`, `regionY`, `regionWidth`, `regionHeight`), slice insets (`sliceLeft`, `sliceTop`, `sliceRight`, `sliceBottom`), `repeatEdges`, `repeatCenter`, `tint` and `pixelated`. See [Game UI](../guides/game-ui.md#draw-images). |
 
 ## `character_controller`
 

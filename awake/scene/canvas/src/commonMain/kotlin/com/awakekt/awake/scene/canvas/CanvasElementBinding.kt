@@ -45,6 +45,7 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         it.visible = visible
         it.action = action
         it.touchOnly = touchOnly
+        it.style = style
     }
 
     /**
@@ -68,5 +69,6 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         visible = visible,
         action = action,
         touchOnly = touchOnly,
+        style = style,
     )
 }

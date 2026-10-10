@@ -1,4 +1,5 @@
 public final class com/awakekt/awake/compose/foundation/BackgroundKt {
+	public static final fun background (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/ui/graphics/ImageFill;)Lcom/awakekt/awake/compose/ui/Modifier;
 	public static final fun background (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/compose/ui/graphics/Shape;)Lcom/awakekt/awake/compose/ui/Modifier;
 	public static synthetic fun background$default (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/compose/ui/graphics/Shape;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
 	public static final fun background-l9dllRQ (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/core/color/Color;F)Lcom/awakekt/awake/compose/ui/Modifier;
