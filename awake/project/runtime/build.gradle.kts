@@ -28,6 +28,8 @@ kotlin {
             implementation(project(":awake:scene:ai"))
             api(project(":awake:core:geometry"))
             api(project(":awake:core:io"))
+            // ProjectRenderPlan is a RenderPlan built from the pack's shader sets.
+            api(project(":awake:asset:shaders"))
             implementation(project(":awake:asset:shader-pack"))
             implementation(project(":awake:core:animation"))
             implementation(project(":awake:core:math"))

@@ -38,6 +38,10 @@ public final class com/awakekt/awake/project/runtime/ProjectComponentsKt {
 	public static synthetic fun registerProjectComponents$default (Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;
 }
 
+public final class com/awakekt/awake/project/runtime/ProjectRenderPlanKt {
+	public static final fun getProjectRenderPlan ()Lcom/awakekt/awake/asset/shaders/RenderPlan;
+}
+
 public final class com/awakekt/awake/project/runtime/ProjectRuntimeKt {
 	public static final field PROJECT_MANIFEST Ljava/lang/String;
 	public static final fun activatePrimaryCamera (Lcom/awakekt/awake/ecs/World;)V

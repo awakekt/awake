@@ -3,9 +3,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+import com.awakekt.awake.build.extension.HostOs
+import com.awakekt.awake.build.extension.VulkanDesktopEnv
+import com.awakekt.awake.build.extension.requireExclusiveGpu
+import com.awakekt.awake.build.extension.useNagaShaderCompiler
 
-// `awake`, the command line for an Awake project's files: validate it, and read and edit its scenes,
-// with no Studio and no GPU. Run it with `./gradlew :awake:project:cli:run --args="validate path/to/project"`,
+// `awake`, the command line for an Awake project's files: validate it, read and edit its scenes, and
+// render one headless. Run it with `./gradlew :awake:project:cli:run --args="validate path/to/project"`,
 // or `installDist` for an `awake` script in build/install/awake/bin.
 plugins {
     alias(libs.plugins.kotlin.jvm)
@@ -20,6 +24,16 @@ application {
     applicationName = "awake"
 }
 
+// 25, not the repo-wide 17: `awake render` links the WebGPU backend, whose wgpu4k-jvm dependency ships
+// bytecode built for JVM 25.
+kotlin {
+    jvmToolchain(25)
+}
+
+// detekt's compiler frontend tops out at JVM target 22; the target only affects its own analysis.
+tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach { jvmTarget = "22" }
+tasks.withType<io.gitlab.arturbosch.detekt.DetektCreateBaselineTask>().configureEach { jvmTarget = "22" }
+
 dependencies {
     // Core's scene components, registered as a played project registers them, so a scene's components
     // decode as their own types and validate themselves.
@@ -29,7 +43,44 @@ dependencies {
     implementation(project(":awake:scene:binding"))
     implementation(project(":awake:scene:scene-core"))
     implementation(libs.kotlinx.serialization.json)
+    // `awake render`: a played project on either backend, headless, with physics when the scene has bodies.
+    implementation(project(":awake:backend:vulkan"))
+    implementation(project(":awake:backend:webgpu"))
+    implementation(project(":awake:backend:jolt"))
+    implementation(project(":awake:engine:platform"))
+    implementation(libs.kotlinx.coroutines.core)
     testImplementation(kotlin("test"))
+}
+
+// The GPU-free commands' tests run anywhere; `renderTest` needs a GPU (or Mesa's lavapipe) and, for
+// WebGPU, a display, so it runs where the render parity suite does.
+tasks.test {
+    filter { excludeTestsMatching("*RenderTest") }
+}
+
+val desktopNativeLibDir = project(":awake:backend:vulkan:bindings").layout.buildDirectory.dir("desktop-native-libs")
+
+tasks.register<Test>("renderTest") {
+    description = "Render a project headless with awake render, on Vulkan and WebGPU."
+    group = "verification"
+    testClassesDirs = sourceSets.test.get().output.classesDirs
+    classpath = sourceSets.test.get().runtimeClasspath
+    filter { includeTestsMatching("*RenderTest") }
+    testLogging { exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL }
+    if (HostOs.isMac) {
+        // GLFW, which WebGPU's headless bootstrap uses to get an adapter, starts only on the first thread.
+        jvmArgs("-XstartOnFirstThread", "--add-opens", "java.base/java.lang=ALL-UNNAMED")
+    }
+    requireExclusiveGpu(this)
+    // -Pawake.prebuiltNatives where the Vulkan bindings can't be built here, as on Windows.
+    if (!providers.gradleProperty("awake.prebuiltNatives").isPresent) {
+        dependsOn(":awake:backend:vulkan:bindings:buildDesktopNative")
+    }
+    useNagaShaderCompiler(this)
+    jvmArgs("-Djava.library.path=${desktopNativeLibDir.get().asFile.absolutePath}")
+    environment(VulkanDesktopEnv.environment())
+    // -Pawake.render.backends=webgpu runs one backend, as on a machine without the other.
+    providers.gradleProperty("awake.render.backends").orNull?.let { systemProperty("awake.render.backends", it) }
 }
 
 // `run` from the repository root, so a relative project path is from there rather than this module.

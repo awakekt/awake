@@ -316,6 +316,12 @@ jobs:
         if: ${{ !cancelled() }}
         run: xvfb-run -a ./gradlew :awake:engine:render:parity:desktopTest --stacktrace
 
+      # The awake command line: its GPU-free commands, and `awake render` playing a project headless on
+      # both backends. Here because its classpath carries the backends this job builds natives for.
+      - name: awake command line, and awake render on Vulkan and WebGPU
+        if: ${{ !cancelled() }}
+        run: xvfb-run -a ./gradlew :awake:project:cli:test :awake:project:cli:renderTest --stacktrace
+
       - name: Upload graphics test reports and parity images
         if: always()
         uses: actions/upload-artifact@v7
