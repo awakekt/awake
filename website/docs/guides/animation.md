@@ -97,7 +97,11 @@ palette. No system updates those palettes: write them yourself, for example from
   `ModularSkeletalSystem` evaluates the pose once per character.
 - `SocketAttachmentComponent(targetEntity, jointIndex or jointName, offsetPosition, offsetRotation)`
   keeps an entity on a joint of another entity's pose: a sword in a hand. `SocketAttachmentSystem`
-  moves it each frame.
+  moves it each frame, to the joint's world transform with the offset in the joint's own space, so a
+  grip turns with the hand. The target is the entity with the `Animator` (or
+  `ModularCharacterComponent`). `jointIndex` counts the skin's joints, not the skeleton's bones;
+  `jointName` is looked up for you. Add the system after `AnimationSystem`, and the attachment
+  follows the character in the same frame.
 
 Add each system with `frameSystem(...)` when you use its component.
 
