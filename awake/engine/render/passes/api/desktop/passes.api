@@ -289,6 +289,7 @@ public final class com/awakekt/awake/render/passes/SharedOpaqueRenderFeature {
 	public final fun recordDraws (Lcom/awakekt/awake/render/command/CommandRecorder;Lcom/awakekt/awake/render/command/PreparedDraw;)V
 	public final fun recordDraws (Lcom/awakekt/awake/render/command/CommandRecorder;Ljava/util/List;)V
 	public final fun recordEdges (Lcom/awakekt/awake/render/command/CommandRecorder;Ljava/util/List;)V
+	public final fun recordLines (Lcom/awakekt/awake/render/command/CommandRecorder;Lcom/awakekt/awake/render/command/PreparedDraw;)V
 }
 
 public final class com/awakekt/awake/render/passes/SharedSkyboxRenderFeature {
@@ -579,9 +580,11 @@ public final class com/awakekt/awake/render/passes/uniforms/RenderDebugView : ja
 }
 
 public final class com/awakekt/awake/render/passes/uniforms/RenderDebugViewKt {
+	public static final field DEBUG_LAYER_HUE_STEP F
 	public static final field NO_DATA_GREY F
 	public static final field WIREFRAME_EDGE_CODE I
 	public static final field WIREFRAME_EDGE_GREY F
+	public static final fun debugLayerColor (I)Lcom/awakekt/awake/core/color/Color;
 	public static final fun putDebugView (Lcom/awakekt/awake/render/renderer/UniformWriter;Lcom/awakekt/awake/render/command/GpuDebugView;Lcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/render/renderer/UniformWriter;
 }
 

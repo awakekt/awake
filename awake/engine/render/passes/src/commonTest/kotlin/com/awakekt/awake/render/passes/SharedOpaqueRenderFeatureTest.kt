@@ -48,8 +48,9 @@ private class FakeDraw(
 
 class SharedOpaqueRenderFeatureTest {
 
+    /** Lines are an overlay: recorded after every group, so no group paints over them. */
     @Test
-    fun primaryGroupThenLinesThenRemainingGroups() {
+    fun primaryGroupThenRemainingGroupsThenLines() {
         val primary = Named("primary")
         val extra = Named("extra")
         val linePipeline = Named("lines")
@@ -76,13 +77,47 @@ class SharedOpaqueRenderFeatureTest {
             listOf(
                 "pipeline(primary)",
                 "vertex(0,p0v)", "material(Material,p0m)", "index(p0i)", "drawIndexed(3,1)",
-                "pipeline(lines)",
-                "vertex(0,lineVerts)", "material(Material,lineUniform)", "draw(4,1)",
                 "pipeline(extra)",
                 "vertex(0,e0v)", "material(Material,e0m)", "index(e0i)", "drawIndexed(3,1)",
+                "pipeline(lines)",
+                "vertex(0,lineVerts)", "material(Material,lineUniform)", "draw(4,1)",
             ),
             recorder.calls,
         )
+    }
+
+    /**
+     * The scene feature draws debug lines over everything it records: opaque groups, wireframe
+     * edges and transparent surfaces. A skinned mesh in its own pipeline group hid its skeleton.
+     */
+    @Test
+    fun theSceneFeatureRecordsLinesAfterEveryDraw() {
+        val primary = Named("primary")
+        val skinned = Named("skinned")
+        val recorder = FakeRecorder()
+        val lineDraw = FakeDraw(Named("lines"), Named("lineUniform"), Named("lineVerts"), null, 2)
+        val frame = object : RenderFrameContext {
+            override val frameIndex = 0
+            override val groupedDrawCalls = linkedMapOf(primary to listOf(draw(primary, "p0")), skinned to listOf(draw(skinned, "s0")))
+            override val transparentDrawCalls = listOf<PreparedDraw>(draw(Named("glass"), "t0"))
+            override val edgeDrawCalls = listOf<PreparedDraw>(draw(Named("edges"), "x0"))
+            override val primaryPipeline = primary
+            override val viewProjection = com.awakekt.awake.core.math.Mat4()
+            override val cameraEye = com.awakekt.awake.core.math.Vec3f(0f, 0f, 0f)
+            override val surfaceWidth = 1
+            override val surfaceHeight = 1
+            override val recorder = recorder
+        }
+        val lines = object : LinePass<RenderFrameContext> {
+            override fun writeMvp(frameIndex: Int, mvp: FloatArray) = Unit
+            override fun lineDraw(context: RenderFrameContext) = lineDraw
+            override fun destroy() = Unit
+        }
+
+        OpaqueRenderFeature(lines).recordCommands(frame)
+
+        val pipelines = recorder.calls.filter { it.startsWith("pipeline(") }
+        assertEquals(listOf("pipeline(primary)", "pipeline(skinned)", "pipeline(edges)", "pipeline(glass)", "pipeline(lines)"), pipelines)
     }
 
     @Test

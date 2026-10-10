@@ -5,10 +5,12 @@
  */
 package com.awakekt.awake.render.passes.uniforms
 
+import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.command.GpuDebugView
 import com.awakekt.awake.render.renderer.UniformFields
 import com.awakekt.awake.render.renderer.UniformWriter
+import kotlin.math.cos
 
 /**
  * What the scene shaders draw instead of their lit colour, for looking inside a frame.
@@ -85,6 +87,23 @@ const val WIREFRAME_EDGE_CODE: Int = 255
 
 /** The grey a wireframe overlay draws edges in: near black, readable over clay and lit surfaces. */
 const val WIREFRAME_EDGE_GREY: Float = 0.05f
+
+/** How far each palette index turns the hue of [debugLayerColor]: the golden ratio, so neighbours never share a hue. */
+const val DEBUG_LAYER_HUE_STEP: Float = 0.618034f
+
+/**
+ * The colour palette index [layer] draws in under the debug views: what [RenderDebugView.LayerWeights]
+ * gives a terrain layer and [RenderDebugView.JointWeights] a joint. Layer 0 is red, 1 green, 2 violet.
+ * The shaders compute the same formula, so a line drawn on the CPU in this colour matches them.
+ */
+fun debugLayerColor(layer: Int): Color {
+    val hue = (layer * DEBUG_LAYER_HUE_STEP) % 1f
+    fun channel(offset: Float) = HALF + cos((hue + offset) * TAU) * HALF
+    return Color(channel(0f), channel(1f / 3f), channel(2f / 3f), 1f)
+}
+
+private const val HALF = 0.5f
+private const val TAU = 6.2831855f
 
 /**
  * Writes [UniformFields.DebugView]: the forward axis over the depth range, then the view code.

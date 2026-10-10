@@ -11,12 +11,11 @@ import com.awakekt.awake.core.math.Vec4
 import com.awakekt.awake.core.math.transformPosition
 import com.awakekt.awake.render.passes.uniforms.RenderDebugView
 import com.awakekt.awake.render.passes.uniforms.WIREFRAME_EDGE_GREY
+import com.awakekt.awake.render.passes.uniforms.debugLayerColor
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.testing.HeadlessRenderSession
 import org.junit.AfterClass
-import kotlin.math.PI
 import kotlin.math.abs
-import kotlin.math.cos
 import kotlin.math.pow
 import kotlin.test.Test
 import kotlin.test.assertTrue
@@ -180,11 +179,7 @@ class SceneRigDebugViewParityTest {
         val ORANGE = Vec3f(220f, 80f, 40f)
 
         /** `debugLayerColor(joint)`, which `JointWeights` gives each joint, 0-255. */
-        fun jointColour(joint: Int): Vec3f {
-            val hue = (joint * 0.618034f) % 1f
-            fun channel(offset: Float) = (0.5f + cos((hue + offset) * 2f * PI.toFloat()) * 0.5f) * 255f
-            return Vec3f(channel(0f), channel(1f / 3f), channel(2f / 3f))
-        }
+        fun jointColour(joint: Int): Vec3f = debugLayerColor(joint).let { Vec3f(it.r * 255f, it.g * 255f, it.b * 255f) }
 
         val SRGB_TO_LINEAR = FloatArray(256) { srgb ->
             val c = srgb / 255.0

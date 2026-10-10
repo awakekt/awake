@@ -99,6 +99,7 @@ fun debugVisualizationLines(
     appendLightLines(world, renderer, settings, viewportAspect, lines)
     if (settings.showGrid) emitGridLines(lines, settings, cameraEye)
     if (settings.showAxisLines) emitAxisLines(lines, settings)
+    if (settings.showSkeleton) appendSkeletonLines(world, lines)
     // Last, and only as many as fit: a big scene has more boxes than the renderer takes lines.
     appendBoundsLines(world, settings, cameraEye, lines)
     return lines
@@ -217,7 +218,8 @@ private fun appendLightLines(
 }
 
 private fun WorldDebugSettings.hasAnyDebugLines(): Boolean =
-    showFrustum || showBounds || showInstanceBounds || showOcclusion || showLights || showShadowFrustum || showGrid || showAxisLines
+    showFrustum || showBounds || showInstanceBounds || showOcclusion || showLights || showShadowFrustum || showGrid || showAxisLines ||
+        showSkeleton
 
 private fun emitGridLines(
     lines: MutableList<LineSegment>,

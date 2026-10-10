@@ -75,4 +75,10 @@ data class WorldDebugSettings(
      * meshes whose shader shows no debug views, draw no edges.
      */
     var showWireframe: Boolean = false,
+    /**
+     * Whether each animated skin's bones are drawn as lines over the scene, in their current pose: one
+     * from every joint to the joint above it, in the colour [RenderDebugView.JointWeights] gives that
+     * joint. Shows whether a character's rig sits inside its mesh and moves with it.
+     */
+    var showSkeleton: Boolean = false,
 )

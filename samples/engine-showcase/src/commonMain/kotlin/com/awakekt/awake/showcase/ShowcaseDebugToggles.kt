@@ -66,6 +66,9 @@ internal object ShowcaseDebugToggles {
     /** The scene light's direction and position gizmo. */
     var showLights: Boolean = false
 
+    /** Each animated skin's bones, in its pose and its joints' weight colours. */
+    var showSkeleton: Boolean = false
+
     /**
      * Draws every collider as a wireframe, coloured by motion type.
      *
@@ -118,6 +121,7 @@ internal object ShowcaseDebugToggles {
         settings.shadowsEnabledOverride = if (shadows) null else false
         settings.showOcclusion = showOcclusion
         settings.showLights = showLights
+        settings.showSkeleton = showSkeleton
         renderer.wireframe = wireframe
         if (overrideFog) {
             settings.fogDensityOverride = if (fogEnabled) fogDensity else 0f

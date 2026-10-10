@@ -16,6 +16,7 @@ enum class ShowcaseDebugOption(val isGlobal: Boolean = false) {
     Shadows(isGlobal = true),
     Occlusion(isGlobal = true),
     Lights(isGlobal = true),
+    Skeleton(isGlobal = true),
     Colliders,
     TerrainProbes,
     Wireframe(isGlobal = true),
