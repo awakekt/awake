@@ -1,1 +1,0 @@
-- **An Awake add-on in a manifest needs no version.** A `plugins` entry's `artifact` from one of Awake's own groups (`com.awakekt.awake` and below) may leave out `version`; the game takes it at the Core version it builds on, so the two can't drift apart. Any other artifact still names its version.

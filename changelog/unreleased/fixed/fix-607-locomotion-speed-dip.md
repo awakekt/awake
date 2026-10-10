@@ -1,1 +1,0 @@
-- **A running character no longer shakes on a bump.** `locomotion_animation` chose idle, walk or run from a single frame's speed, so two slower frames up a step or against a wall switched the clip and restarted its cycle. It now chooses from the speed across the ground smoothed over a tenth of a second; a confirmed stop still stands at once.

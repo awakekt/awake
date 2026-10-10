@@ -1,1 +1,0 @@
-- **The engine showcase no longer draws a white rectangle under its toolbar.** An early proof that a sample's 2D content needs only `render:passes2d`, a system that staged a hard-coded white quad into the UI every frame, was still installed, on every showcase. It's removed; the 2D showcases demonstrate 2D drawing properly.

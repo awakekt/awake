@@ -1,5 +1,0 @@
-- **UI images can fill any size as frames, strips and gauges (nine-slice).**
-  - `ImageFill` cuts an image, or a region of a sheet, into nine by four slice insets: the corners keep their size, and the edges and centre stretch or repeat.
-  - `Modifier.background(ImageFill)` and `DrawScope.drawImageFill` draw it in Compose.
-  - `canvas_element` gains an `Image` kind and a `style` holding `image` and `fillImage`: an image's picture, a frame for a Panel, Button or Text, and a Bar's track and fill. A Bar's fill image is cut at its value, not squeezed.
-  - A played project decodes the images its canvas names at load, and `SceneCanvas` takes them as `images`.

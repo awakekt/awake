@@ -7,6 +7,83 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-10-10
+
+### Added
+
+- **Clay and rig debug views, and debug views on skinned meshes.**
+  - `RenderDebugView.Clay` draws every lit surface one neutral grey, lit by the scene's sun, its shadow and the ambient, with no texture, colour or material and the geometric normal. It's one shared formula, so a textured surface and an untextured one draw the same clay.
+  - `JointWeights` gives each of a skinned mesh's joints its own colour, summed by each vertex's weights. Smooth skinning blends, rigid weights show hard seams, and weights that don't sum to one draw darker or brighter.
+  - `SelectedJointWeight` paints how much the joint `WorldDebugSettings.renderDebugLayer` names moves each vertex, from blue through green to red.
+  - The `skinned` and `skinned_textured` shaders now honour every debug view instead of drawing lit. `SkinnedUniformLayout` gains the sun, the eye, the view and the selected joint after its existing fields, and their lit output is unchanged.
+  - Clay and the views work headless, through `readbackAttachment`, on Vulkan and WebGPU alike.
+- **A wireframe overlay.** `WorldDebugSettings.showWireframe` draws every opaque mesh's triangle edges in near-black over the frame, over whichever debug view is on, so the mesh's topology reads against the lit frame or clay.
+  - A skinned mesh's edges move with its pose: each edge is the mesh drawn again through its own shader, as lines.
+  - Edges are drawn at the pixel the surface is on, a thousandth of its distance nearer, so they win against their own faces and stay hidden behind nearer ones, at any range and in orthographic views.
+  - It works on Vulkan, through line rasterization, and on WebGPU, which has none, through each mesh's line indices. It is headless-capable on both.
+  - Single draws of the `lit_shadow`, `textured` and skinned shaders draw edges. Instanced draws, transparent draws, and shaders that show no debug views draw none.
+  - `PipelineRequest.buildEdges` asks for the edge pipeline, which `RenderPlan` requests for every opaque scene format. `PipelineVariant.EdgeOverlay` depth-tests without writing depth.
+- **WebGPU's `Renderer.wireframe` draws each mesh's line indices.** It used to pair the triangle indices as lines, which joined the wrong corners.
+- **UI images can draw part of a texture, tinted, and pixel-crisp.**
+  - The UI texture draw takes a `region` (`TextureRegion`), such as one icon of a sheet, and a `tint` that multiplies each texel.
+  - `drawImage` takes a source rectangle, a tint and a `FilterQuality`.
+  - `Image` takes `tint` and `filterQuality`.
+  - `FilterQuality.None` samples the nearest texel, so pixel art stays crisp when scaled.
+  - Existing draws are unchanged: white tint, whole texture, blended sampling.
+- **UI images can fill any size as frames, strips and gauges (nine-slice).**
+  - `ImageFill` cuts an image, or a region of a sheet, into nine by four slice insets: the corners keep their size, and the edges and centre stretch or repeat.
+  - `Modifier.background(ImageFill)` and `DrawScope.drawImageFill` draw it in Compose.
+  - `canvas_element` gains an `Image` kind and a `style` holding `image` and `fillImage`: an image's picture, a frame for a Panel, Button or Text, and a Bar's track and fill. A Bar's fill image is cut at its value, not squeezed.
+  - A played project decodes the images its canvas names at load, and `SceneCanvas` takes them as `images`.
+- **Scene UI elements nest, and the canvas scales with crisp pixels.**
+  - A `canvas_element` below another in the scene hierarchy is drawn inside it, anchored and offset within its parent, and moves and hides with it.
+  - `SceneCanvas(scale = …)` and `SceneAppLifecycleRuntime.canvasScale` multiply every size, offset, text and image pixel.
+  - `drawImageFill` lands every piece on a whole pixel, so frames stay crisp and seamless at fractional scales.
+- **Scene UI elements take a full style: corners, borders, gradients, shadows and button states.**
+  - A `canvas_element`'s `style` gains `background`, `gradient`, `cornerRadius`, `borderWidth`, `borderColor`, `shadow`, `textColor` and `alpha`, with `hovered` and `pressed` states for Buttons. It is drawn as a Compose `Style` through `Modifier.styleable`.
+  - Compose gains `Modifier.background(Brush, Shape)` for gradient fills, and `StyleScope` gains `background(Brush)`, `backgroundImage(ImageFill)` and `dropShadow(Shadow)`.
+  - Elements saved before load unchanged.
+- **Scene UI elements can lay their children out in rows and columns.**
+  - A `canvas_element` with a `layout` places its children with `FlexBox`: `direction`, `wrap`, `gap`, `padding`, `justify` and `align`, and a child's `grow` takes a share of the leftover space.
+- **`awake`, a command line for a project's files** (`awake:project:cli`). It validates a project and reads and edits its scenes with no Studio and no GPU, through the scene codec and validation a played project uses. `installDist` builds an `awake` script.
+  - `awake validate` checks the manifest, the entry scene and every scene, naming each finding's file and node path. Components nothing installed provides, and tags the manifest's `tags` list leaves out, are warnings.
+  - `awake scene list` and `scene show` list the scenes and print one's nodes and components.
+  - `awake scene set`, `add-node`, `remove-node`, `add-component` and `remove-component` edit a scene. An edit is refused, and the file left alone, when a value has the wrong type, the component has no such field, or the edit adds a validation error. `--dry-run` reports the change without writing it.
+  - An edit changes only what it sets: a hand-written scene keeps its layout, its old component names and the fields it leaves at their defaults, and a one-line scene stays on one line.
+  - Every command takes `--json`, and exits 0 on success, 1 on findings or a refused edit, and 2 for a wrong command line.
+- **Text can be placed, outlined and shadowed, in scene UI and Compose.**
+  - `canvas_element` gains `textAlign`, one of the nine anchor points, for where a Text's or Button's text sits; left out, each keeps its own.
+  - A `canvas_element` style gains `textShadow` and `textOutline`.
+  - `TextStyle` gains `shadow` (`TextShadow`) and `outline` (`TextOutline`), drawn under a Compose `Text` and a `BasicTextField`'s text.
+- **Scene UI elements can follow a node on screen.**
+  - A `canvas_element` with `follow` stands where that node is drawn, its `anchor` on the node's projected point, with `followOffset` moving the point in the world. It hides behind the camera.
+  - `followBounds` covers the screen rectangle of the node's meshes instead, for a marker around a target.
+  - `SceneCanvas` takes a `CanvasProjector`; `SceneAppLifecycleRuntime` supplies one from the camera it draws with.
+- **Scene UI shows game state without code.**
+  - A `canvas_element`'s `bind` reads a node's component fields each frame: a Bar's fill as `value` over `max`, and a Text's words from a template such as `HP {health.current}/{health.max}`.
+  - Fields are read through each component's scene binding, so a game's own components bind too, on every target.
+- **An Awake add-on in a manifest needs no version.** A `plugins` entry's `artifact` from one of Awake's own groups (`com.awakekt.awake` and below) may leave out `version`; the game takes it at the Core version it builds on, so the two can't drift apart. Any other artifact still names its version.
+- **Blueprints play in a project, as a capability it opts into.** The new `com.awakekt.awake.project:blueprint` module has `BlueprintCapability`. A project names it in its manifest's `plugins` (id `com.awakekt.awake.blueprint`) and passes it to `loadProject`; its scene's `blueprint` components then run with Core's blueprint runtime, after the physics step, so sensor events fire. Every graph the scene names is read and checked when the project loads, so a broken one refuses the load. A host that edits graphs while the game runs, such as an editor's Play, puts a `BlueprintReloads` in the scene's content and swaps edited graphs in with it. The project runtime itself still knows nothing of blueprints, so a game without them carries none of this. `SceneSystemPlan.physicsSystem` is public, for any capability whose systems read the physics step's contacts or remove bodies.
+- **Dialogs and sheets have upstream's close X.** `ShadcnDialog` and `ShadcnSheet` now draw the close control shadcn's `DialogContent` and `SheetContent` draw by default: Lucide's X, 16dp in from the panel's top-right corner, at 70% opacity until hovered. It calls `onDismissRequest`, is labelled "Close", and is addressable as `<id>.close`. Pass `showCloseButton = false` to leave it out, for example where the content draws its own close. Apps that drew their own X in a dialog's header can now drop it. `ShadcnIcons.x` points at the new glyph.
+- **A skeleton overlay.** `WorldDebugSettings.showSkeleton` draws each animated skin's bones as lines over the scene, in its current pose: one from every joint to the nearest joint above it, passing through bones the skin doesn't bind, such as an armature root. Each bone takes its joint's `JointWeights` colour, so the bones and the weight paint read together. It shows whether a character's rig sits inside its mesh and moves with it. The engine showcase's Debug panel has a **Skeleton** toggle.
+- **`debugLayerColor(layer)`** in `render:passes` gives the colour the layer and joint debug views paint a palette index, on the CPU. The shaders use the same `DEBUG_LAYER_HUE_STEP`, so a line or a UI swatch drawn in it matches them.
+
+### Fixed
+
+- `FlexBox` with `alignContent = Stretch` no longer counts each line's share of the free cross space twice, which pushed centred and later-line children past where they belong.
+- **Debug lines draw over every surface, on both backends.** The scene feature recorded them after the primary pipeline's draws but before every other pipeline group, so geometry in another vertex format (a skinned mesh, a textured surface) painted over the lines where they overlapped. A skinned mesh hid its own skeleton, and a bounds box vanished behind a leg. Vulkan hid it in part by writing depth from its lines; WebGPU didn't. Lines are now recorded last in the scene pass, after the wireframe overlay and transparent surfaces. `SharedOpaqueRenderFeature.recordLines` records them.
+- **A running character no longer shakes on a bump.** `locomotion_animation` chose idle, walk or run from a single frame's speed, so two slower frames up a step or against a wall switched the clip and restarted its cycle. It now chooses from the speed across the ground smoothed over a tenth of a second; a confirmed stop still stands at once.
+- **A jump no longer snaps mid-air.** `locomotion_animation` looped the `jump` and `fall` clips, so a rise or fall longer than its clip wrapped back to the first frame. The clips for the air now play once and hold their last frame.
+- **Depth fog no longer fogs batched, skinned and textured meshes as if they were the background.** The scene-depth pass, the camera's own depth that depth fog, water and soft particles sample, had a pipeline for the primary vertex format alone. Instanced (including automatically batched), skinned and textured meshes were missing from it, so the fog read whatever stood behind them and blended them toward the fog colour: a batched cube in front of the ground looked see-through. The scene-depth pass now draws every kind of caster the shadow pass does, on Vulkan and WebGPU, built by the same code, with no shadow depth bias. `DepthOnlyPipeline` takes `shadowBias` on both backends.
+- **The engine showcase no longer draws a white rectangle under its toolbar.** An early proof that a sample's 2D content needs only `render:passes2d`, a system that staged a hard-coded white quad into the UI every frame, was still installed, on every showcase. It's removed; the 2D showcases demonstrate 2D drawing properly.
+- `ShadcnSlider` and `ShadcnRangeSlider` fill the width they are allowed, as shadcn's `w-full` slider does. One placed without a width used to measure zero wide and could not be dragged; a caller's own `width` or `weight` still wins.
+- **The Maven fallback serves a release again when no Vulkan release has a bundle yet.** Its index page read the versions of each family it holds, and with no Vulkan bundle the lookup of the missing Vulkan folder failed the whole script under `pipefail`, so the v0.6.0 fallback deploy stopped without a word. A family with no bundle is now listed as nothing.
+- **`validateProject` accepts a manifest's `tags` list.** It refused any project that listed its tags with "manifest has unsupported property: tags". It now checks the list as the engine does: no duplicates, and each a tag the `tag` component accepts.
+  - A manifest list (`assetRoots`, `tags`) that isn't an array of strings is now an error the task reports, where an object in it stopped the task with an exception, a number passed, and a value that wasn't an array was ignored.
+- **A Vulkan release reaches Maven Central again.** The Vulkan family's Android native library now stages for the release's single Central deployment, as its other two modules do. Its absence failed the `vulkan-v0.1.20` release before anything was uploaded, so 0.1.20 is a gap and 0.1.21 is the next Vulkan release. Each Vulkan snapshot now resolves the release's task list too, so a module missing from it fails on `main` instead of at the tag.
+- **Web touch and clicks land where you see them.** The browser host sized the canvas buffer from the window and measured pointers against the window at the device pixel ratio. A page that makes the canvas a different size, such as `100vh` on a phone with its toolbar showing, stretched the buffer, so touches landed further off the further down the screen they were. The buffer is now sized from the canvas's own box on the page, and mouse and touch are mapped through that box into buffer pixels. `bindWindowPointerInput` and `currentCanvasSize` take the canvas, defaulting to `awake-canvas`.
+- **The showcases' canvases fill only the visible height** (`100dvh`). At `100vh`, the bottom of the frame hid behind a phone's toolbar.
+
 ## [0.6.0] - 2026-10-10
 
 ### Added

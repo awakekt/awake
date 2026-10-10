@@ -1,4 +1,0 @@
-- **Scene UI elements can follow a node on screen.**
-  - A `canvas_element` with `follow` stands where that node is drawn, its `anchor` on the node's projected point, with `followOffset` moving the point in the world. It hides behind the camera.
-  - `followBounds` covers the screen rectangle of the node's meshes instead, for a marker around a target.
-  - `SceneCanvas` takes a `CanvasProjector`; `SceneAppLifecycleRuntime` supplies one from the camera it draws with.

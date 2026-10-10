@@ -1,1 +1,0 @@
-- `ShadcnSlider` and `ShadcnRangeSlider` fill the width they are allowed, as shadcn's `w-full` slider does. One placed without a width used to measure zero wide and could not be dragged; a caller's own `width` or `weight` still wins.

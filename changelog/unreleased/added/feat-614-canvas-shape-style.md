@@ -1,4 +1,0 @@
-- **Scene UI elements take a full style: corners, borders, gradients, shadows and button states.**
-  - A `canvas_element`'s `style` gains `background`, `gradient`, `cornerRadius`, `borderWidth`, `borderColor`, `shadow`, `textColor` and `alpha`, with `hovered` and `pressed` states for Buttons. It is drawn as a Compose `Style` through `Modifier.styleable`.
-  - Compose gains `Modifier.background(Brush, Shape)` for gradient fills, and `StyleScope` gains `background(Brush)`, `backgroundImage(ImageFill)` and `dropShadow(Shadow)`.
-  - Elements saved before load unchanged.

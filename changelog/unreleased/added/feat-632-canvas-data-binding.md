@@ -1,3 +1,0 @@
-- **Scene UI shows game state without code.**
-  - A `canvas_element`'s `bind` reads a node's component fields each frame: a Bar's fill as `value` over `max`, and a Text's words from a template such as `HP {health.current}/{health.max}`.
-  - Fields are read through each component's scene binding, so a game's own components bind too, on every target.

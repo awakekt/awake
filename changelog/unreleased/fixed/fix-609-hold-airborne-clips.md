@@ -1,1 +1,0 @@
-- **A jump no longer snaps mid-air.** `locomotion_animation` looped the `jump` and `fall` clips, so a rise or fall longer than its clip wrapped back to the first frame. The clips for the air now play once and hold their last frame.
