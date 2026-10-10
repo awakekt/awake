@@ -22,6 +22,7 @@ kotlin {
             api(project(":awake:ecs"))
             api(project(":awake:scene:document"))
             api(project(":awake:scene:binding"))
+            implementation(project(":awake:scene:scene-core"))
             api(project(":awake:compose:runtime"))
             api(project(":awake:compose:ui"))
             api(project(":awake:core:io"))

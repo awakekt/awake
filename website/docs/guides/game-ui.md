@@ -117,6 +117,34 @@ When a project is played with `awake:project:runtime`, `loadProject` reads every
 canvas names, and the runtime draws them. If your app runs its own Compose host, pass the decoded
 images yourself: `SceneCanvas(world, images = loadCanvasImages(scene, files))`.
 
+## Put elements inside others
+
+An element whose node sits below another element's node in the scene is drawn inside that element.
+Its `anchor` and offsets place it against the parent's box instead of the screen, and it draws over
+the parent's own content. Move the parent and its children move with it; hide the parent and they
+are hidden too. Plain nodes in between, such as a group, are passed through: the nearest element
+above is the parent.
+
+```json title="A status window with a bar inside"
+{ "name": "Status", "components": [ { "component": "canvas_element", "kind": "Panel",
+    "offsetX": 8, "offsetY": 8, "width": 220, "height": 112,
+    "style": { "image": { "path": "ui/status.png", "pixelated": true } } } ],
+  "children": [
+    { "name": "HP", "components": [ { "component": "canvas_element", "kind": "Bar",
+        "offsetX": 96, "offsetY": 4, "width": 108, "height": 10, "value": 0.8, "color": "#E5484D" } ] }
+  ] }
+```
+
+A child is laid out within its parent, so one that would stick out past the parent's edge is
+narrowed to fit.
+
+## Scale the UI
+
+`SceneAppLifecycleRuntime.canvasScale`, or `SceneCanvas(world, scale = …)`, multiplies every
+element's size, offset, text and image pixels. A HUD drawn from 1x pixel art reads at 2 on a large
+screen. Every edge lands on a whole pixel at any scale, so the art stays crisp; at a fractional scale
+such as 1.5, some of its pixels are a screen pixel wider than others.
+
 ## How it works
 
 When a scene has any `canvas_element`, the scene runtime draws every visible element with

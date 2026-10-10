@@ -32,6 +32,13 @@ has any, under the app's own `ui { }`, with the images in its `canvasImages`. A 
 Compose tree calls `SceneCanvas(world, images = …)` itself. `loadCanvasImages(scene, files)` reads and
 decodes the images a scene names.
 
+## Nesting and scale
+
+An element below another element in the scene hierarchy is drawn inside it, anchored and offset
+within the parent's box, and moves and hides with it. `SceneCanvas(world, scale = 2f)`, or
+`SceneAppLifecycleRuntime.canvasScale`, draws everything twice the size, with every edge on a whole
+pixel.
+
 ## Reacting to a button
 
 ```kotlin
