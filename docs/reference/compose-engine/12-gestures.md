@@ -65,6 +65,13 @@ first:
 A layer with `modal = true` stops the walk rather than forwarding — that is what makes a dialog
 block the content behind it.
 
+A child whose box holds the point but whose subtree does nothing with a pointer there is passed over,
+and the walk goes on to the sibling beneath it, as in Compose: a padding box a layout wraps around a
+child, or a decorative panel, does not hide a button it happens to cover. A node does something with
+a pointer where one of its pointer links' own boxes holds the point, or if it scrolls, takes focus or
+asks for a cursor. When no child does, the topmost one that held the point is kept, so a point over
+plain boxes finds the same nodes it always did. Layers are not passed over; they block what they cover.
+
 ## Capture
 
 A node that consumes a `Press` holds the pointer until `Release`, so a drag that leaves its bounds

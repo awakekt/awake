@@ -342,9 +342,7 @@ class PointerInputDispatcher(
             }
         }
         if (!hasNonZeroZ) {
-            for (i in node.children.indices.reversed()) {
-                if (hitTest(into, node.children[i], x, y)) return
-            }
+            hitChildren(into, node, x, y, null)
         } else {
             val indices = Array(count) { it }
             indices.sortWith { a, b ->
@@ -352,10 +350,57 @@ class PointerInputDispatcher(
                 val zB = node.children[b].zIndex
                 if (zA != zB) zB.compareTo(zA) else b.compareTo(a)
             }
-            for (i in 0 until count) {
-                if (hitTest(into, node.children[indices[i]], x, y)) return
-            }
+            hitChildren(into, node, x, y, indices)
         }
+    }
+
+    /**
+     * Offers the point to [node]'s children topmost first, stopping at the first that takes it.
+     *
+     * A child whose box holds the point but whose subtree does nothing with a pointer there -- the
+     * padding box a layout wraps around a child, a decorative panel -- is passed over, so a handler
+     * beneath it is still reachable. That is how Compose hit-tests: only a node with pointer input
+     * is hit, and a box without any is transparent to the pointer. When no child takes the point,
+     * the topmost one that held it is kept, as the walk always has, so a point over nothing but
+     * plain boxes still finds the innermost of them.
+     *
+     * [order] is the children's indices in hit order, or null for reverse declaration order.
+     */
+    private fun hitChildren(into: MutableList<LayoutNode>, node: LayoutNode, x: Int, y: Int, order: Array<Int>?) {
+        val count = node.children.size
+        var passedOver: LayoutNode? = null
+        for (n in 0 until count) {
+            val child = node.children[if (order == null) count - 1 - n else order[n]]
+            val mark = into.size
+            if (!hitTest(into, child, x, y)) continue
+            if (takesPoint(into, mark, x, y)) return
+            while (into.size > mark) into.removeAt(into.lastIndex)
+            if (passedOver == null) passedOver = child
+        }
+        if (passedOver != null) hitTest(into, passedOver, x, y)
+    }
+
+    /** Whether any node of [path] from index [from] on does something with a pointer at ([x], [y]). */
+    private fun takesPoint(path: List<LayoutNode>, from: Int, x: Int, y: Int): Boolean {
+        for (i in from until path.size) {
+            if (path[i].takes(x, y)) return true
+        }
+        return false
+    }
+
+    /**
+     * Whether this node does anything with a pointer at ([x], [y]): a pointer link whose own box holds
+     * it, or something that scrolls, takes focus or asks for a cursor.
+     */
+    private fun LayoutNode.takes(x: Int, y: Int): Boolean {
+        var takes = scrollables.isNotEmpty() || focusTargets.isNotEmpty() || pointerCursor != null
+        var h = 0
+        while (!takes && h < pointerInputs.size) {
+            drawBoundsAt(pointerDepths[h], linkBounds)
+            takes = linkBounds.holds(x - absoluteX - linkBounds[0], y - absoluteY - linkBounds[1], pointerInputs[h].hitMarginPx)
+            h++
+        }
+        return takes
     }
 
     /**

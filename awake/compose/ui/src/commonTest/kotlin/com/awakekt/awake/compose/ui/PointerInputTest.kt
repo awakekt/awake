@@ -7,10 +7,15 @@ package com.awakekt.awake.compose.ui
 
 import com.awakekt.awake.compose.foundation.clickable
 import com.awakekt.awake.compose.foundation.combinedClickable
+import com.awakekt.awake.compose.foundation.focusable
 import com.awakekt.awake.compose.foundation.gestures.draggable
 import com.awakekt.awake.compose.foundation.layout.padding
 import com.awakekt.awake.compose.foundation.layout.size
+import com.awakekt.awake.compose.foundation.rememberScrollState
+import com.awakekt.awake.compose.foundation.verticalScroll
 import com.awakekt.awake.compose.runtime.Composer
+import com.awakekt.awake.compose.ui.draw.zIndex
+import com.awakekt.awake.compose.ui.focus.FocusOwner
 import com.awakekt.awake.compose.ui.input.pointer.PointerEvent
 import com.awakekt.awake.compose.ui.input.pointer.PointerEventPass
 import com.awakekt.awake.compose.ui.input.pointer.PointerEventType
@@ -86,6 +91,10 @@ private fun Modifier.record(log: MutableList<String>, name: String): Modifier = 
     // of passes alone cannot tell the gesture apart from the pointer showing up.
     log += "$name:${event.type}:$pass"
 }
+
+/** The names of the nodes a [record]ed press reached, once each. A hover's Enter and Exit are not one. */
+private fun List<String>.pressedNodes(): List<String> =
+    filter { it.contains(":Press:") }.map { it.substringBefore(':') }.distinct()
 
 class PointerInputTest {
 
@@ -224,6 +233,101 @@ class PointerInputTest {
 
         assertTrue(log.none { it.startsWith("under") }, "the covered sibling never saw it")
         assertTrue(log.any { it.startsWith("over") })
+    }
+
+    @Test
+    fun aSiblingBoxThatHandlesNothingDoesNotHideOneBeneathIt() {
+        // A box that only lays something out is transparent to the pointer, as in Compose.
+        val log = mutableListOf<String>()
+        val root = tree {
+            hit(Modifier.size(50.dp).record(log, "under"))
+            hit(Modifier.size(50.dp))
+        }
+        PointerInputDispatcher().dispatch(root, PointerEvent(PointerEventType.Press), 5, 5)
+
+        assertTrue(log.any { it.startsWith("under") }, "the plain box in front took the press: $log")
+    }
+
+    @Test
+    fun aPaddingBoxAroundALaterSiblingDoesNotHideAnEarlierOne() {
+        // The shape a layout makes: a box padded out from the corner, with its content far from it.
+        // The box reaches back over the earlier sibling, but only its content is a target.
+        val log = mutableListOf<String>()
+        val root = tree {
+            hit(Modifier.size(20.dp).record(log, "earlier"))
+            hit(Modifier.padding(start = 100.dp, top = 10.dp)) {
+                hit(Modifier.size(20.dp).record(log, "later"))
+            }
+        }
+        val dispatcher = PointerInputDispatcher()
+
+        dispatcher.dispatch(root, PointerEvent(PointerEventType.Press), 5, 5)
+        assertEquals(listOf("earlier"), log.pressedNodes(), "over the earlier one: $log")
+
+        log.clear()
+        dispatcher.dispatch(root, PointerEvent(PointerEventType.Press), 110, 20)
+        assertEquals(listOf("later"), log.pressedNodes(), "over the later one: $log")
+    }
+
+    @Test
+    fun aHandlerPaddedOutOfItsBoxLeavesThePaddingToWhatIsBeneath() {
+        // `size(50).padding(10).handler`: the handler's own box is the 30px inside the padding.
+        val log = mutableListOf<String>()
+        val root = tree {
+            hit(Modifier.size(50.dp).record(log, "under"))
+            hit(Modifier.size(50.dp).padding(10.dp).record(log, "over"))
+        }
+        val dispatcher = PointerInputDispatcher()
+
+        dispatcher.dispatch(root, PointerEvent(PointerEventType.Press), 5, 5)
+        assertEquals(listOf("under"), log.pressedNodes(), "on the padding: $log")
+
+        log.clear()
+        dispatcher.dispatch(root, PointerEvent(PointerEventType.Press), 20, 20)
+        assertEquals(listOf("over"), log.pressedNodes(), "inside it: $log")
+    }
+
+    @Test
+    fun aBoxThatHandlesNothingIsPassedOverAtAnyDepthAndInZOrder() {
+        val log = mutableListOf<String>()
+        val root = tree {
+            hit(Modifier.size(100.dp)) {
+                hit(Modifier.size(20.dp).record(log, "deep"))
+                hit(Modifier.size(100.dp).zIndex(1f)) { hit(Modifier.size(100.dp)) }
+            }
+        }
+        PointerInputDispatcher().dispatch(root, PointerEvent(PointerEventType.Press), 5, 5)
+
+        assertTrue(log.any { it.startsWith("deep") }, "the raised plain boxes in front took the press: $log")
+    }
+
+    @Test
+    fun aSiblingThatScrollsStillHidesOneBeneathIt() {
+        // Passing over is for boxes that do nothing with a pointer. A scroller owns the wheel over it.
+        val log = mutableListOf<String>()
+        val root = tree {
+            hit(Modifier.size(50.dp).record(log, "under"))
+            hit(Modifier.size(50.dp).verticalScroll(rememberScrollState()))
+        }
+        PointerInputDispatcher().dispatch(root, PointerEvent(PointerEventType.Press), 5, 5)
+
+        assertTrue(log.none { it.startsWith("under") }, "the scroller in front lets the press through: $log")
+    }
+
+    @Test
+    fun aSiblingThatTakesFocusStillHidesOneBeneathIt() {
+        // A press moves focus to the innermost focusable under it, so a focusable in front is
+        // what the press is for, whether or not it has a click handler.
+        val log = mutableListOf<String>()
+        val focusOwner = FocusOwner()
+        val root = tree {
+            hit(Modifier.size(50.dp).record(log, "under"))
+            hit(Modifier.size(50.dp).focusable())
+        }
+        PointerInputDispatcher(focusOwner).dispatch(root, PointerEvent(PointerEventType.Press), 5, 5)
+
+        assertTrue(log.none { it.startsWith("under") }, "the focusable in front lets the press through: $log")
+        assertTrue(focusOwner.focused === root.children[1], "and it is what took focus")
     }
 
     @Test
