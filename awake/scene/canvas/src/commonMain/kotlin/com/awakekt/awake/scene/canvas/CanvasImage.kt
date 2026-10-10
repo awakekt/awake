@@ -94,23 +94,45 @@ data class CanvasImage(
  */
 // A file's reader and each platform's decoder fail with exceptions of their own.
 @Suppress("TooGenericExceptionCaught")
-suspend fun loadCanvasImages(document: SceneDocument, assets: AssetSource): Map<String, ImageBitmap> {
-    val paths = document.nodes.flatMap { it.canvasImagePaths() }.distinct()
-    return buildMap {
-        for (path in paths) {
-            try {
-                put(path, decodeImageBitmap(assets.read(AssetPath(path)).getOrThrow()))
-            } catch (cancelled: CancellationException) {
-                throw cancelled
-            } catch (failure: Exception) {
-                log.warn { "Canvas image '$path' could not load: ${failure.message}" }
-            }
+suspend fun loadCanvasImages(document: SceneDocument, assets: AssetSource): Map<String, ImageBitmap> = buildMap {
+    for (path in document.canvasImagePaths()) {
+        try {
+            put(path, decodeImageBitmap(assets.read(AssetPath(path)).getOrThrow()))
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (failure: Exception) {
+            log.warn { "Canvas image '$path' could not load: ${failure.message}" }
+        }
+    }
+}
+
+/**
+ * Reads every image [document]'s `canvas_element`s name, once each, as [loadCanvasImages] does, but
+ * decodes none: for a host that draws nothing, such as a game server, whose pictures would only fill
+ * memory. A sheet of 2048 by 1856 pixels takes 15 MB decoded. An image that cannot be read is logged
+ * the same way.
+ *
+ * @return The paths that could not be read, in the order [document] names them.
+ */
+// A file's reader fails with an exception of its own.
+@Suppress("TooGenericExceptionCaught")
+suspend fun checkCanvasImages(document: SceneDocument, assets: AssetSource): List<String> = buildList {
+    for (path in document.canvasImagePaths()) {
+        try {
+            assets.read(AssetPath(path)).getOrThrow()
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (failure: Exception) {
+            log.warn { "Canvas image '$path' could not load: ${failure.message}" }
+            add(path)
         }
     }
 }
 
 /** Whether a node of [document], at any depth, has a `canvas_element` that draws an image. */
 fun hasCanvasImages(document: SceneDocument): Boolean = document.nodes.any { it.canvasImagePaths().isNotEmpty() }
+
+private fun SceneDocument.canvasImagePaths(): List<String> = nodes.flatMap { it.canvasImagePaths() }.distinct()
 
 private fun SceneNode.canvasImagePaths(): List<String> =
     components.filterIsInstance<SceneCanvasElement>().flatMap { listOfNotNull(it.style.image?.path, it.style.fillImage?.path) } +

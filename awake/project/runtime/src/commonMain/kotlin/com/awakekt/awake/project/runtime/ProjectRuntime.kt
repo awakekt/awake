@@ -82,6 +82,11 @@ class LoadedProject internal constructor(
  * and those of the packages it depends on, so their components decode and their systems run. A
  * plugin the manifest marks `required` must be one of them, by id.
  *
+ * A host with no renderer, such as a game server that plays the project with [sceneSystems] and no
+ * renderer, passes `hasRenderer = false`: the scene's canvas images are then checked to resolve and not
+ * decoded, which saves the time and memory of pictures nothing draws. Such a project, if it is played by
+ * [runProject] after all, draws its canvas without the images.
+ *
  * Throws [IllegalArgumentException] naming every problem in the manifest, a required plugin with no
  * capability, a component no capability registers, content a capability cannot load (a collision
  * model that can't be read, for one), or a scene that needs physics when [physicsWorld] is null.
@@ -94,8 +99,9 @@ class LoadedProject internal constructor(
 suspend fun loadProject(
     files: AssetSource,
     capabilities: List<SceneCapability> = emptyList(),
+    hasRenderer: Boolean = true,
     physicsWorld: (suspend () -> PhysicsWorld)? = null,
-): LoadedProject = loadProjectInto(null, files, capabilities, physicsWorld)
+): LoadedProject = loadProjectInto(null, files, capabilities, hasRenderer, physicsWorld)
 
 /**
  * [loadProject] into [componentRegistry] instead of the process-wide registry: Core's scene components
@@ -110,13 +116,15 @@ suspend fun loadProject(
     files: AssetSource,
     componentRegistry: SceneComponentRegistry,
     capabilities: List<SceneCapability> = emptyList(),
+    hasRenderer: Boolean = true,
     physicsWorld: (suspend () -> PhysicsWorld)? = null,
-): LoadedProject = loadProjectInto(componentRegistry, files, capabilities, physicsWorld)
+): LoadedProject = loadProjectInto(componentRegistry, files, capabilities, hasRenderer, physicsWorld)
 
 private suspend fun loadProjectInto(
     registry: SceneComponentRegistry?,
     files: AssetSource,
     capabilities: List<SceneCapability>,
+    hasRenderer: Boolean,
     physicsWorld: (suspend () -> PhysicsWorld)?,
 ): LoadedProject {
     val manifest = AwakeProjectValidator.decodeManifest(files.readText(PROJECT_MANIFEST))
@@ -136,7 +144,7 @@ private suspend fun loadProjectInto(
         .forEach { models.preload(it) }
     // Every file is read before the physics world exists, so a missing model, or a load cancelled
     // part way, leaves no world behind that nothing would destroy.
-    val content = loadContent(scene, files, installed, label = manifest.entryScene)
+    val content = loadContent(scene, files, installed, manifest.entryScene, SceneContent.Builder(emptyMap(), hasRenderer))
     val physics = if (PhysicsCapability.needsPhysics(scene)) {
         requireNotNull(physicsWorld) { "${manifest.entryScene} has physics bodies or characters; pass a physicsWorld factory" }()
     } else {
@@ -149,7 +157,8 @@ private suspend fun loadProjectInto(
  * The systems this project's scene runs, as [sceneSystemsFor] builds them with the project's own
  * physics world, content and capabilities, for a host that runs the scene in a world of its own.
  * With no [renderer], as on a game server or in a test, the systems that draw are left out and the
- * rest simulate as they do in a drawn game. [SceneSystemSet.close] them when the scene stops.
+ * rest simulate as they do in a drawn game. A host that never draws loads the project with
+ * `hasRenderer = false` too, so it decodes no images. [SceneSystemSet.close] them when the scene stops.
  */
 fun LoadedProject.sceneSystems(input: () -> GameplayInput, renderer: Renderer? = null): SceneSystemSet {
     val services = if (renderer == null) {

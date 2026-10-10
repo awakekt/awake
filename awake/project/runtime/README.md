@@ -27,7 +27,7 @@ Core's capabilities decide what runs, each for the components it owns:
 |---|---|
 | `movement_control`, `input_actions` | `PlayerInputSystem`: the keys and pointer buttons into the scene's input actions, which a player's `movement_control` follows (`move`, `jump`, `run`); moved by physics with `character_controller`, straight through the world without |
 | `canvas_element` with an `action` | `CanvasActionSystem`: an element naming one of the scene's input actions adds to it, so a `move` Joystick steers, a `jump` Button jumps and a `run` Button runs as the keys do |
-| `canvas_element` with a `style` image | Nothing runs: `loadProject` decodes the images, under `CoreSceneContent.CanvasImages`, and `runProject` gives them to the runtime that draws the canvas |
+| `canvas_element` with a `style` image | Nothing runs: `loadProject` decodes the images, under `CoreSceneContent.CanvasImages`, and `runProject` gives them to the runtime that draws the canvas. With `hasRenderer = false` it only checks that they resolve |
 | `camera_rig` | `CameraSystem` |
 | `paged_terrain` | On the fixed step, before physics: its cells streamed around the primary camera from the page index `loadProject` read, drawn as one clipmap (with terrain layers when the index names a palette), and static collision cells near the camera when it is a `collider` and the host gives a physics world. A scene streams one |
 | `terrain` | With a renderer, `TerrainContentSystem` draws it: with the surface its `surface` names, from the providers under `CoreSceneContent.TerrainSurfaces` (a project's content holds the layered-terrain kit's, `awake.terrain.layers`), or with the built-in terrain shading. Closing the scene's systems detaches it |
@@ -88,6 +88,13 @@ A game server or a CI runner plays a loaded project with `project.sceneSystems(i
 renderer: the systems that make GPU content, such as particle sprites and shader effects, are left
 out, and everything else simulates as it does in a drawn game, streamed terrain and its collision
 included. `SceneHostServices.headless(...)` builds the same services for a host that builds its own.
+
+Load the project with `loadProject(files, hasRenderer = false)` as well (or `loadSceneContent(scene, files,
+hasRenderer = false)`), so it skips what only drawing reads. The scene's canvas images are then read, to
+check that their paths resolve, and a missing one is logged as it is for a drawn host, but none is
+decoded: a sheet of 2048 by 1856 pixels takes 15 MB of memory and a decode, which a server would spend
+on a picture nothing draws. Such a project, if it is played by `runProject` after
+all, draws its canvas without those images.
 
 The runtime brings no display with it. `awake:project` and `awake:project:runtime` reach no GPU
 backend and no window module (`:awake:backend:*`, `:awake:engine:window`): the host picks the backends

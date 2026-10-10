@@ -267,6 +267,7 @@ public final class com/awakekt/awake/scene/canvas/CanvasImage$Companion {
 }
 
 public final class com/awakekt/awake/scene/canvas/CanvasImageKt {
+	public static final fun checkCanvasImages (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun hasCanvasImages (Lcom/awakekt/awake/scene/document/SceneDocument;)Z
 	public static final fun loadCanvasImages (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }

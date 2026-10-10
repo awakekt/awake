@@ -107,8 +107,15 @@ class SceneContent private constructor(internal val values: Map<SceneContentKey<
     @Suppress("UNCHECKED_CAST")
     operator fun <T : Any> get(key: SceneContentKey<T>): T? = values[key] as T?
 
-    /** Collects content while capabilities load it. */
-    class Builder internal constructor(loaded: Map<SceneContentKey<*>, Any>) {
+    /**
+     * Collects content while capabilities load it.
+     *
+     * @property hasRenderer Whether the host draws. A host with no renderer, such as a game server,
+     * leaves out the systems that draw ([SceneSystemPlan.hasRenderer]), so a capability then loads only
+     * what its other systems read: for what only drawing reads, such as images, it checks that the files
+     * resolve and decodes nothing. [loadSceneContent] and [loadProject] take it from the host.
+     */
+    class Builder internal constructor(loaded: Map<SceneContentKey<*>, Any>, val hasRenderer: Boolean) {
         private val values = LinkedHashMap(loaded)
 
         /** Stores [value] under [key]; a key holds one value. */
@@ -126,7 +133,7 @@ class SceneContent private constructor(internal val values: Map<SceneContentKey<
         val Empty: SceneContent = SceneContent(emptyMap())
 
         /** Content built by [block], for a host or a test that has its own. */
-        fun build(block: Builder.() -> Unit): SceneContent = Builder(emptyMap()).apply(block).build()
+        fun build(block: Builder.() -> Unit): SceneContent = Builder(emptyMap(), hasRenderer = true).apply(block).build()
     }
 }
 
@@ -136,12 +143,17 @@ class SceneContent private constructor(internal val values: Map<SceneContentKey<
  * A host that builds a scene's systems with [sceneSystemsFor] passes the result as
  * [SceneHostServices.content]; [loadProject] reads it for a project. Throws [IllegalArgumentException]
  * for content a capability cannot load.
+ *
+ * A host with no renderer, such as a game server, passes `hasRenderer = false` and reads no more than
+ * its systems use: the scene's canvas images are checked to resolve and not decoded, so no
+ * [CoreSceneContent.CanvasImages] are loaded. Pass the same as the [SceneHostServices] the content is for.
  */
 suspend fun loadSceneContent(
     scene: SceneDocument,
     files: AssetSource,
     capabilities: List<SceneCapability> = emptyList(),
-): SceneContent = loadContent(scene, files, installedCapabilities(capabilities), label = "The scene")
+    hasRenderer: Boolean = true,
+): SceneContent = loadContent(scene, files, installedCapabilities(capabilities), "The scene", SceneContent.Builder(emptyMap(), hasRenderer))
 
 /**
  * [loaded] with what [capabilities] read for [scene] from the project's [files] added to it. Only their
@@ -154,29 +166,30 @@ suspend fun loadSceneContent(
  *
  * A capability may not load a key [loaded] already holds. Throws [IllegalArgumentException] for that,
  * for content a capability cannot load, and for two capabilities with one id, Core's included.
+ * [hasRenderer] is as for [loadSceneContent].
  */
 suspend fun loadCapabilityContent(
     scene: SceneDocument,
     files: AssetSource,
     capabilities: List<SceneCapability>,
     loaded: SceneContent = SceneContent.Empty,
+    hasRenderer: Boolean = true,
 ): SceneContent {
     installedCapabilities(capabilities)
-    return loadContent(scene, files, capabilities, label = "The scene", loaded = loaded)
+    return loadContent(scene, files, capabilities, "The scene", SceneContent.Builder(loaded.values, hasRenderer))
 }
 
 /**
- * Runs each of [installed]'s [SceneCapability.load] in order on top of [loaded], prefixing a refusal
- * with [label].
+ * Runs each of [installed]'s [SceneCapability.load] in order into [content], prefixing a refusal with
+ * [label].
  */
 internal suspend fun loadContent(
     scene: SceneDocument,
     files: AssetSource,
     installed: List<SceneCapability>,
     label: String,
-    loaded: SceneContent = SceneContent.Empty,
+    content: SceneContent.Builder,
 ): SceneContent {
-    val content = SceneContent.Builder(loaded.values)
     for (capability in installed) {
         try {
             capability.load(scene, files, content)
