@@ -1,0 +1,157 @@
+# Both starter templates' release builds, shrunk and obfuscated as a game ships them, built against
+# this commit's Core and run: the desktop release in a window and with no window to capture a frame,
+# the Android release on an emulator, and the web build checked. A class that native code finds by
+# name, renamed for want of a keep rule, fails here rather than on a player's device (#648).
+#
+# Nightly rather than per-PR: it publishes all of Core locally and boots an emulator, which is
+# too slow for every change. verifyKeepRules (in awakeVerify) checks Awake's own native code on
+# every PR; this catches what that can't see, such as a third-party library's native callbacks.
+name: Obfuscated templates
+
+on:
+  schedule:
+    # 04:00 UTC, an hour after the device tests.
+    - cron: '0 4 * * *'
+  workflow_dispatch:
+    inputs:
+      template-ref:
+        description: Branch or tag of both templates to build (blank picks as below)
+        required: false
+        default: ''
+  pull_request:
+    paths:
+      - .github/workflows/obfuscated-templates.yml
+      - tools/check_obfuscated_template.sh
+      - tools/check_template_consumer.sh
+      - tools/png_colours.py
+      - scripts/android-launch-check.sh
+
+concurrency:
+  group: obfuscated-templates-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  JAVA_VERSION: '21'
+  # A version no release uses: the templates resolve exactly what this run published.
+  LOCAL_VERSION: 0.0.0-obfuscated
+
+jobs:
+  templates:
+    name: Obfuscated templates
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      # The templates' release builds are shrunk only from awakekt/awake-template#17 and
+      # awakekt/awake-project-template#14. While those are open, use their branch; once merged and
+      # the branch deleted, main.
+      - name: Pick the templates' ref
+        id: ref
+        env:
+          REQUESTED: ${{ inputs.template-ref }}
+        run: |
+          for template in awake-template awake-project-template; do
+            ref="$REQUESTED"
+            if [[ -z "$ref" ]]; then
+              ref=main
+              if git ls-remote --exit-code --heads "https://github.com/awakekt/$template.git" feat/obfuscated-release >/dev/null; then
+                ref=feat/obfuscated-release
+              fi
+            fi
+            echo "$template=$ref" | tee -a "$GITHUB_OUTPUT"
+          done
+
+      # Not beside this checkout as `awaken`: a template substitutes engine projects for the
+      # published artifacts when one is there, and this run would then prove nothing.
+      - name: Check out awake-template
+        uses: actions/checkout@v6
+        with:
+          repository: awakekt/awake-template
+          ref: ${{ steps.ref.outputs.awake-template }}
+          path: consumer/awake-template
+
+      - name: Check out awake-project-template
+        uses: actions/checkout@v6
+        with:
+          repository: awakekt/awake-project-template
+          ref: ${{ steps.ref.outputs.awake-project-template }}
+          path: consumer/awake-project-template
+
+      # Core's full publish, two templates' builds and an emulator image don't fit the runner's
+      # free space otherwise.
+      - name: Free disk space
+        run: sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost /opt/hostedtoolcache/CodeQL
+
+      - name: Setup JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Setup Gradle (with cache)
+        uses: gradle/actions/setup-gradle@v6
+
+      # Vulkan headers and loader, and GLFW, to build the desktop native libraries; lavapipe to run
+      # the desktop release with no GPU; Xvfb for its window.
+      - name: Install desktop Vulkan, GLFW and Xvfb
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libvulkan-dev libglfw3-dev mesa-vulkan-drivers xvfb
+
+      # The templates compile shaders through Naga at runtime, so the APK needs libawake_naga.so for
+      # the emulator's ABI. It's gitignored build output, built as the device tests build it.
+      - name: Build libawake_naga.so for the emulator
+        working-directory: awake/asset/shader-compiler/rust-native
+        run: |
+          rustup target add x86_64-linux-android
+          cargo install cargo-ndk --locked
+          ANDROID_NDK_HOME="$ANDROID_NDK_LATEST_HOME" cargo ndk -t x86_64 -o ../src/androidMain/jniLibs build --release
+
+      # The window's and the Vulkan bindings' desktop libraries are built on demand, for this host.
+      - name: Publish this commit locally
+        run: |
+          ./gradlew :awake:engine:window:buildDesktopNative :awake:backend:vulkan:bindings:buildDesktopNative --no-configuration-cache
+          ./gradlew publishToMavenLocal -Pawake.version="$LOCAL_VERSION" --no-configuration-cache
+
+      - name: Build and run the obfuscated releases
+        env:
+          TEMPLATE_CORE_VERSION: ${{ env.LOCAL_VERSION }}
+          TEMPLATE_VULKAN_VERSION: ${{ env.LOCAL_VERSION }}
+        run: |
+          tools/check_obfuscated_template.sh consumer/awake-template "$RUNNER_TEMP/awake-template" build/obfuscated
+          tools/check_obfuscated_template.sh consumer/awake-project-template "$RUNNER_TEMP/awake-project-template" build/obfuscated
+
+      # GitHub's Linux runners expose /dev/kvm but not to the runner user; without it the emulator
+      # falls back to software and takes long enough to trip the timeout.
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      # Each starts a Vulkan device and plays its scene; a name R8 renamed that native code looks up
+      # aborts it, which the launch check reads from the log.
+      - name: Launch the shrunk Android releases
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: default
+          disable-animations: true
+          script: |
+            scripts/android-launch-check.sh build/obfuscated/awake-template-release.apk com.awakekt.awake.template/.MainActivity
+            scripts/android-launch-check.sh build/obfuscated/awake-project-template-release.apk com.awakekt.awake.template/.MainActivity
+
+      - name: Upload frames and logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: obfuscated-templates
+          path: |
+            build/obfuscated/*.png
+            build/obfuscated/*.log
+          if-no-files-found: warn
