@@ -32,7 +32,11 @@ internal class SceneEdits(private val project: ProjectScenes, private val file: 
     fun set(node: String, assignment: String): SceneEdit {
         val target = assignment.substringBefore('=', missingDelimiterValue = "")
         if (target.isEmpty()) throw UsageException("expected component.field=value, got '$assignment'")
-        val value = parseValue(assignment.substringAfter('='))
+        return set(node, target, parseValue(assignment.substringAfter('=')))
+    }
+
+    /** Sets [target], `component.field` (or `transform.…`, `name`), to [value] on the node at [node]. */
+    fun set(node: String, target: String, value: JsonElement): SceneEdit {
         val field = fieldAt(node, target)
         return commit(
             edit = { scene -> field.set(scene, value) },

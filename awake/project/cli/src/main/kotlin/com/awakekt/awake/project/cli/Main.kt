@@ -10,5 +10,8 @@ import kotlin.system.exitProcess
 
 /** Runs `awake` with [args], in the directory it was started from. */
 fun main(args: Array<String>) {
-    exitProcess(AwakeCli(out = System.out, err = System.err, workingDir = File("").absoluteFile).run(args.toList()))
+    val stdout = System.out
+    // `awake mcp` speaks MCP on stdout, so whatever a library prints goes to stderr instead.
+    if (args.firstOrNull() == "mcp") System.setOut(System.err)
+    exitProcess(AwakeCli(out = stdout, err = System.err, workingDir = File("").absoluteFile).run(args.toList()))
 }

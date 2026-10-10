@@ -38,6 +38,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
 import java.awt.image.BufferedImage
+import java.io.ByteArrayOutputStream
 import java.io.File
 import javax.imageio.ImageIO
 
@@ -98,14 +99,21 @@ internal class RenderRequest(
 internal class RenderedImage(val width: Int, val height: Int, val rgba: ByteArray) {
     /** Writes this image to [file] as a PNG, alpha included. */
     fun writePng(file: File) {
+        file.absoluteFile.parentFile?.mkdirs()
+        file.writeBytes(png())
+    }
+
+    /** This image as a PNG, alpha included. */
+    fun png(): ByteArray {
         val image = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
         for (pixel in 0 until width * height) {
             val at = pixel * CHANNELS
             fun byte(offset: Int) = rgba[at + offset].toInt() and BYTE
             image.setRGB(pixel % width, pixel / width, (byte(ALPHA) shl ALPHA_SHIFT) or (byte(0) shl RED_SHIFT) or (byte(1) shl GREEN_SHIFT) or byte(2))
         }
-        file.absoluteFile.parentFile?.mkdirs()
-        if (!ImageIO.write(image, "png", file)) throw CommandFailure("no PNG writer for ${file.path}")
+        val bytes = ByteArrayOutputStream()
+        if (!ImageIO.write(image, "png", bytes)) throw CommandFailure("no PNG writer")
+        return bytes.toByteArray()
     }
 
     private companion object {

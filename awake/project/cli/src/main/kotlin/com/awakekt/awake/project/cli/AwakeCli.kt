@@ -12,6 +12,7 @@ import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
+import java.io.BufferedReader
 import java.io.File
 
 /**
@@ -22,7 +23,12 @@ import java.io.File
  * Exits 0 when a command succeeds, 1 when it finds errors or refuses an edit, and 2 when the command
  * line itself is wrong.
  */
-class AwakeCli(private val out: Appendable, private val err: Appendable, private val workingDir: File) {
+class AwakeCli(
+    private val out: Appendable,
+    private val err: Appendable,
+    private val workingDir: File,
+    private val input: () -> BufferedReader = { System.`in`.bufferedReader() },
+) {
 
     /** Runs the command [args] and returns its exit code. */
     fun run(args: List<String>): Int = try {
@@ -42,6 +48,7 @@ class AwakeCli(private val out: Appendable, private val err: Appendable, private
         "validate" -> validate(arguments)
         "scene" -> scene(arguments)
         "render" -> render(arguments)
+        "mcp" -> OK.also { AwakeMcp(ProjectScenes(projectRoot(arguments.value("project"))), workingDir).serve(input(), out) }
         else -> throw UsageException("unknown command '$command'")
     }
 
@@ -115,12 +122,7 @@ class AwakeCli(private val out: Appendable, private val err: Appendable, private
         val changes = edit.changes
         val verb = if (arguments.flag("dry-run")) "would change" else "changed"
         if (arguments.flag("json")) {
-            val result = buildJsonObject {
-                put("written", !arguments.flag("dry-run") && changes.isNotEmpty())
-                put("rewritten", edit.rewritten)
-                putJsonArray("changes") { changes.forEach { add(it) } }
-            }
-            out.appendLine(PRETTY_JSON.encodeToString(JsonObject.serializer(), result))
+            out.appendLine(PRETTY_JSON.encodeToString(JsonObject.serializer(), edit.toJson(arguments.flag("dry-run"))))
         } else if (changes.isEmpty()) {
             out.appendLine("no change")
         } else {
@@ -168,6 +170,7 @@ class AwakeCli(private val out: Appendable, private val err: Appendable, private
             |  awake scene add-component <scene> <node> <type> [fields-json]
             |  awake scene remove-component <scene> <node> <type>
             |  awake render <scene> [--output <png>]          Play a scene headless and save what its camera sees.
+            |  awake mcp                                      Serve these commands to an AI agent over MCP (stdio).
             |
             |  <scene> is a path from the project root, or a name under scenes/. <node> is a path of node
             |  names, such as Player/Camera, with #2 for an unnamed node's index.
@@ -187,7 +190,15 @@ class AwakeCli(private val out: Appendable, private val err: Appendable, private
     }
 }
 
-private fun CheckReport.toJson(): JsonObject = buildJsonObject {
+/** What an edit changed, as `--json` and `awake mcp` report it. */
+internal fun SceneEdit.toJson(dryRun: Boolean): JsonObject = buildJsonObject {
+    put("written", !dryRun && changes.isNotEmpty())
+    put("rewritten", rewritten)
+    putJsonArray("changes") { changes.forEach { add(it) } }
+}
+
+/** A validation's findings, as `--json` and `awake mcp` report them. */
+internal fun CheckReport.toJson(): JsonObject = buildJsonObject {
     put("valid", errors.isEmpty())
     put("project", projectId)
     put("scenes", sceneCount)
