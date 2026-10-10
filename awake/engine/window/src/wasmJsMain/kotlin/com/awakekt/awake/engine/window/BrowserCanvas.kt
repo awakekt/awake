@@ -63,15 +63,13 @@ private val DOM_MOUSE_BUTTONS = mapOf(
     4 to PointerButton.Forward,
 )
 
-/** Binds browser window mouse, touch, and wheel events to engine [input]. */
-fun bindWindowPointerInput(input: Input) {
-    fun scaledPointer(event: MouseEvent): Pair<Float, Float> {
-        val density = currentWindowDensity()
-        return Pair(
-            (event.offsetX * density).toFloat(),
-            (event.offsetY * density).toFloat(),
-        )
-    }
+/**
+ * Binds browser window mouse, touch, and wheel events to engine [input], in [canvas]'s buffer
+ * pixels: each point is measured from the canvas's box, whichever element the event reached.
+ */
+fun bindWindowPointerInput(input: Input, canvas: HTMLCanvasElement = findCanvas()) {
+    fun scaledPointer(event: MouseEvent): Pair<Float, Float> =
+        canvas.box().bufferPoint(event.clientX.toDouble(), event.clientY.toDouble(), canvas.width, canvas.height)
 
     window.addEventListener("mousemove") { event ->
         val (x, y) = scaledPointer(event as MouseEvent)
@@ -112,7 +110,7 @@ fun bindWindowPointerInput(input: Input) {
     }
     // Without this the browser's own context menu covers the app's.
     window.addEventListener("contextmenu") { event -> event.preventDefault() }
-    bindWindowTouchInput(input)
+    bindWindowTouchInput(input, canvas)
     window.addEventListener("wheel") { event ->
         val wheel = event as WheelEvent
         // Accumulate the hardware delta until the runtime snapshots it, mirroring
@@ -161,13 +159,12 @@ fun bindWindowTextInput(input: Input) {
     }
 }
 
-/** Computes the current canvas pixel width and height based on window size and device pixel ratio. */
-fun currentCanvasSize(): Pair<Int, Int> {
-    val density = currentWindowDensity()
-    val width = (window.innerWidth * density).toInt().coerceAtLeast(1)
-    val height = (window.innerHeight * density).toInt().coerceAtLeast(1)
-    return width to height
-}
+/**
+ * The pixel width and height [canvas]'s buffer needs: its box on the page at the device pixel ratio.
+ * The box, not the window, since page CSS can make the two differ.
+ */
+fun currentCanvasSize(canvas: HTMLCanvasElement = findCanvas()): Pair<Int, Int> =
+    canvas.box().bufferSize(currentWindowDensity())
 
 /** Returns the current browser window device pixel ratio. */
 fun currentWindowDensity(): Double {
@@ -216,16 +213,16 @@ fun runBrowserCanvas(
     if (!Log.hasSinks) Log.install(PrintLogSink(minimumLevel = LogLevel.Warn))
     val input = lifecycle.input
 
-    bindWindowPointerInput(input)
+    bindWindowPointerInput(input, canvas)
     bindWindowKeyboardInput(input)
     val textInput = DomTextInputBridge(input)
 
-    val initialSize = currentCanvasSize()
+    val initialSize = currentCanvasSize(canvas)
     syncCanvasSize(canvas, initialSize.first, initialSize.second)
     lifecycle.setDensity(currentWindowDensity().toFloat())
 
     window.addEventListener("resize") {
-        val (width, height) = currentCanvasSize()
+        val (width, height) = currentCanvasSize(canvas)
         syncCanvasSize(canvas, width, height)
         lifecycle.setDensity(currentWindowDensity().toFloat())
         onResize(width, height)

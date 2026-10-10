@@ -8,7 +8,7 @@
 package com.awakekt.awake.engine.window
 
 import com.awakekt.awake.core.input.Input
-import org.w3c.dom.Element
+import org.w3c.dom.HTMLCanvasElement
 import org.w3c.dom.TouchEvent
 import org.w3c.dom.TouchList
 import org.w3c.dom.events.Event
@@ -20,23 +20,20 @@ import org.w3c.dom.events.Event
  * Each event is cancelled. Otherwise the browser follows a tap with emulated mouse events, which
  * would press the UI a second time, and pinches zoom the page instead of reaching the app.
  */
-internal fun bindWindowTouchInput(input: Input) {
-    fun pass(list: TouchList, target: Element?, down: Boolean) {
-        val density = currentWindowDensity()
-        val bounds = target?.getBoundingClientRect()
+internal fun bindWindowTouchInput(input: Input, canvas: HTMLCanvasElement) {
+    fun pass(list: TouchList, down: Boolean) {
+        val box = canvas.box()
         for (i in 0 until list.length) {
             val touch = list.item(i) ?: continue
-            val x = (touch.clientX.toDouble() - (bounds?.left ?: 0.0)) * density
-            val y = (touch.clientY.toDouble() - (bounds?.top ?: 0.0)) * density
-            input.setTouch(touch.identifier.toLong(), x.toFloat(), y.toFloat(), down)
+            val (x, y) = box.bufferPoint(touch.clientX.toDouble(), touch.clientY.toDouble(), canvas.width, canvas.height)
+            input.setTouch(touch.identifier.toLong(), x, y, down)
         }
     }
 
     fun listen(type: String, lifts: Boolean) = addNonPassiveListener(type) { event ->
         val touches = event as TouchEvent
-        val target = event.target as? Element
         // A lift reports the fingers that left; the rest stay where they were.
-        if (lifts) pass(touches.changedTouches, target, down = false) else pass(touches.touches, target, down = true)
+        if (lifts) pass(touches.changedTouches, down = false) else pass(touches.touches, down = true)
         event.preventDefault()
     }
     listen("touchstart", lifts = false)
