@@ -178,6 +178,7 @@ fun SceneAppDsl.runProject(project: LoadedProject, touchControls: Boolean = fals
     onReady {
         showTouchControls = touchControls
         canvasImages = project.content[CoreSceneContent.CanvasImages].orEmpty()
+        registry?.let { canvasBindings = it.bindings }
         activatePrimaryCamera(world)
         startSkinnedAnimations(project.models)
     }

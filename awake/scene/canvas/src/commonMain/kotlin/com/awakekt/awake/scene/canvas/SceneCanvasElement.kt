@@ -40,6 +40,7 @@ import kotlinx.serialization.Serializable
  * @property layout How the element places its children itself, in rows or columns; null anchors
  * each child by hand.
  * @property grow In a parent with a [layout], this element's share of its line's leftover space.
+ * @property bind Game state the element shows without code: a Bar's fill, a Text's words.
  */
 @Serializable
 @SerialName("canvas_element")
@@ -66,6 +67,7 @@ data class SceneCanvasElement(
     val followBounds: Boolean = false,
     val layout: CanvasLayout? = null,
     @PropertyRange(min = 0.0) val grow: Float = 0f,
+    val bind: CanvasBinding? = null,
 ) : SceneComponent {
     /**
      * Validates element dimensions, font sizes, values, and hex color syntax.
@@ -83,6 +85,7 @@ data class SceneCanvasElement(
         style.problems().forEach { add(SceneValidationIssue(path, "canvas_element.style.$it")) }
         layout?.problems()?.forEach { add(SceneValidationIssue(path, "canvas_element.layout.$it")) }
         if (grow < 0f) add(SceneValidationIssue(path, "canvas_element.grow must not be negative"))
+        bind?.problems()?.forEach { add(SceneValidationIssue(path, "canvas_element.bind.$it")) }
     }
 }
 

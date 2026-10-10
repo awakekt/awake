@@ -9,6 +9,7 @@ import com.awakekt.awake.compose.ui.graphics.ImageBitmap
 import com.awakekt.awake.core.math2d.Rectangle
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.core.transform.Transform
 
@@ -21,7 +22,10 @@ internal class CanvasTree(
     private val showTouchControls: Boolean,
     val images: Map<String, ImageBitmap>,
     val projector: CanvasProjector?,
+    private val bindings: List<SceneComponentBinding<*, *>>,
 ) {
+    private val data by lazy { CanvasData(world, bindings) }
+
     val roots = ArrayList<Pair<Entity, CanvasElement>>()
     private val children = HashMap<Entity, ArrayList<Pair<Entity, CanvasElement>>>()
     private val named: Map<String, Entity> by lazy {
@@ -43,6 +47,21 @@ internal class CanvasTree(
 
     /** The first node named [name], or null when there is none. */
     fun node(name: String): Entity? = named[name]
+
+    /** A Bar's fill: what its binding reads, or its own value when it has none or it reads nothing. */
+    fun valueOf(element: CanvasElement): Float {
+        val bind = element.bind?.takeIf { it.value.isNotBlank() } ?: return element.value
+        val node = node(bind.node)
+        val value = node?.let { data.number(it, bind.value) }
+        val max = if (bind.max.isBlank()) 1f else node?.let { data.number(it, bind.max) }
+        return if (value == null || max == null || max == 0f) element.value else (value / max).coerceIn(0f, 1f)
+    }
+
+    /** An element's words: its binding's text filled in, or its own text when it has none. */
+    fun textOf(element: CanvasElement): String {
+        val bind = element.bind?.takeIf { it.text.isNotBlank() } ?: return element.text
+        return node(bind.node)?.let { data.text(it, bind.text) } ?: element.text
+    }
 }
 
 /**

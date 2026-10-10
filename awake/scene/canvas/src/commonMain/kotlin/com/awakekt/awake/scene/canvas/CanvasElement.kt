@@ -127,6 +127,9 @@ class CanvasElement {
     /** In a parent with a layout, this element's share of its line's leftover space. */
     var grow: Float = 0f
 
+    /** Game state the element shows without code; while it reads, it stands in for [value] and [text]. */
+    var bind: CanvasBinding? = null
+
     private var pressed = false
     internal val interactions = InteractionSource()
 
