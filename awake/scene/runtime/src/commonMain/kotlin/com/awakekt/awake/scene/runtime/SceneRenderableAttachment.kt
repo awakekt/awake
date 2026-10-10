@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.runtime
 
+import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.binding.Scene
 import com.awakekt.awake.scene.rendering.mesh.MeshBounds
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
@@ -19,9 +20,11 @@ import com.awakekt.awake.scene.rendering.mesh.SceneRenderableRequest
 fun Scene.attachRenderableComponents(
     factory: (SceneRenderableRequest) -> MeshRenderer,
 ) {
-    requests<SceneRenderableRequest>().forEach { request ->
-        val renderer = factory(request)
-        world.add(request.entity, renderer)
-        renderer.mesh.localBounds?.let { world.add(request.entity, MeshBounds(it)) }
-    }
+    requests<SceneRenderableRequest>().forEach { request -> world.attachRenderable(request, factory(request)) }
+}
+
+/** Gives [request]'s entity [renderer], and the bounds of its mesh when it has them. */
+internal fun World.attachRenderable(request: SceneRenderableRequest, renderer: MeshRenderer) {
+    add(request.entity, renderer)
+    renderer.mesh.localBounds?.let { add(request.entity, MeshBounds(it)) }
 }

@@ -53,6 +53,7 @@ const val PROJECT_MANIFEST = "awake.project.json"
  * @property capabilities The capabilities the project was loaded with besides Core's.
  * @property componentRegistry The registry the project was loaded into, which [runProject] attaches
  * its components with, or null when its components were registered globally.
+ * @param files The project's files, which the models of spawned nodes that [models] lacks load from.
  */
 class LoadedProject internal constructor(
     val manifest: AwakeProjectManifest,
@@ -62,12 +63,22 @@ class LoadedProject internal constructor(
     internal val content: SceneContent = SceneContent.Empty,
     internal val capabilities: List<SceneCapability> = emptyList(),
     internal val componentRegistry: SceneComponentRegistry? = null,
+    files: AssetSource,
 ) : AutoCloseable {
     private var closed = false
 
-    /** Destroys the physics world, if the scene had one. Closing twice is harmless. */
+    /** The models spawned nodes draw that the scene didn't load, loaded as they are spawned. */
+    internal val spawnedModels = SpawnedModels(models, files)
+
+    /**
+     * Destroys the physics world, if the scene had one, and stops loading models for spawned nodes.
+     * Closing twice is harmless.
+     */
     override fun close() {
-        if (!closed) physics?.destroy()
+        if (!closed) {
+            physics?.destroy()
+            spawnedModels.close()
+        }
         closed = true
     }
 }
@@ -150,7 +161,7 @@ private suspend fun loadProjectInto(
     } else {
         null
     }
-    return LoadedProject(manifest, scene, models, physics, content, capabilities, registry)
+    return LoadedProject(manifest, scene, models, physics, content, capabilities, registry, files)
 }
 
 /**
@@ -173,7 +184,8 @@ fun LoadedProject.sceneSystems(input: () -> GameplayInput, renderer: Renderer? =
  * Plays [project] in this scene: its [LoadedProject.scene], the built-in meshes and the models it
  * loaded, the systems its components call for (the ones [sceneSystemsFor] builds), and a primary
  * camera. With [touchControls], the scene's touch-only canvas controls are shown. Every speed,
- * distance and size comes from the scene; this adds no tuning of its own. [LoadedProject.close]
+ * distance and size comes from the scene; this adds no tuning of its own. A node spawned into it
+ * with [spawn] draws a model the scene didn't load once that has loaded. [LoadedProject.close]
  * the project once the scene has stopped.
  */
 fun SceneAppDsl.runProject(project: LoadedProject, touchControls: Boolean = false) {
@@ -183,6 +195,7 @@ fun SceneAppDsl.runProject(project: LoadedProject, touchControls: Boolean = fals
         builtInSceneAssets()
         resolver(project.models)
     }
+    attachSpawnedModels(project)
     registerSystemSpecs(project)
     onReady {
         showTouchControls = touchControls

@@ -377,13 +377,16 @@ public final class com/awakekt/awake/scene/runtime/SceneSystemRegistration {
 }
 
 public final class com/awakekt/awake/scene/runtime/SpawnedNode {
+	public final fun attachRenderers (Lkotlin/jvm/functions/Function1;)Ljava/util/List;
 	public final fun despawn ()V
 	public final fun getEntities ()Ljava/util/List;
 	public final fun getRoot-LaMO_uA ()J
+	public final fun getUnattachedRenderables ()Ljava/util/List;
 }
 
 public final class com/awakekt/awake/scene/runtime/SpawnedNodeKt {
 	public static final fun spawn (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Lcom/awakekt/awake/scene/document/SceneNode;Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;)Lcom/awakekt/awake/scene/runtime/SpawnedNode;
+	public static final fun spawn (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Lcom/awakekt/awake/scene/document/SceneNode;Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/scene/runtime/SpawnedNode;
 	public static synthetic fun spawn$default (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Lcom/awakekt/awake/scene/document/SceneNode;Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;ILjava/lang/Object;)Lcom/awakekt/awake/scene/runtime/SpawnedNode;
 }
 

@@ -6,11 +6,15 @@
 package com.awakekt.awake.project.runtime
 
 import com.awakekt.awake.core.io.AssetSource
+import com.awakekt.awake.core.logging.Log
+import com.awakekt.awake.core.logging.LogLevel
+import com.awakekt.awake.core.logging.LogSink
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.engine.bootstrap.dsl.app
 import com.awakekt.awake.engine.platform.dsl.requireService
+import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
 import com.awakekt.awake.render.command.GpuDrawPreparationSource
 import com.awakekt.awake.render.command.GpuDrawPreparer
 import com.awakekt.awake.render.testing.NoopRenderer
@@ -18,11 +22,18 @@ import com.awakekt.awake.scene.authoring.scene
 import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneLoader
+import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.rendering.animation.Animator
 import com.awakekt.awake.scene.rendering.animation.SkinnedPose
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import com.awakekt.awake.scene.runtime.spawn
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
 import kotlin.io.encoding.Base64
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -31,7 +42,8 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertSame
-import kotlinx.coroutines.test.runTest
+import kotlin.test.assertTrue
+import kotlin.test.fail
 
 class SkinnedPlaybackTest {
     @Test
@@ -172,6 +184,93 @@ class SkinnedPlaybackTest {
         assertFailsWith<IllegalStateException> { services.spawn(SceneLoader.decode(REMOTE).nodes.single()) }
     }
 
+    /** A node drawing a model the scene never loaded is in the scene at once, and draws and animates once it loads. */
+    @Test
+    fun aSpawnedNodeLoadsAModelTheSceneDidNotLoad() = runTest {
+        val reads = Reads()
+        val (project, game, runtime) = play(reads, HELD to skinnedTriangleGltf())
+
+        val spawned = runtime.spawn(project, remote(HELD))
+
+        assertTrue(runtime.world.isAlive(spawned.root), "the node is in the scene at once")
+        assertNull(runtime.world.get<MeshRenderer>(spawned.root), "it draws nothing until its model has loaded")
+        game.updateUntil { runtime.world.get<MeshRenderer>(spawned.root) != null }
+        val drawn = assertNotNull(runtime.world.get<MeshRenderer>(spawned.root))
+        assertEquals(HELD, runtime.requireAssetLibrary().meshName(drawn.mesh))
+        assertEquals(2, runtime.world.animators(), "its clip starts, as the scene's own model's does")
+        assertEquals(1, reads.of(HELD))
+    }
+
+    /** Nodes spawned while a model loads share the one load, and a node spawned after it draws at once. */
+    @Test
+    fun aModelLoadsOnceHoweverManyNodesWaitForIt() = runTest {
+        val reads = Reads()
+        val (project, game, runtime) = play(reads, HELD to skinnedTriangleGltf())
+        val first = runtime.spawn(project, remote(HELD))
+        val second = runtime.spawn(project, remote(HELD))
+
+        game.updateUntil { runtime.world.get<MeshRenderer>(second.root) != null }
+        val mesh = assertNotNull(runtime.world.get<MeshRenderer>(first.root)).mesh
+        val third = runtime.spawn(project, remote(HELD))
+
+        assertSame(mesh, runtime.world.get<MeshRenderer>(second.root)?.mesh, "the waiting nodes share one mesh")
+        assertSame(mesh, runtime.world.get<MeshRenderer>(third.root)?.mesh, "a node spawned after the load draws at once")
+        assertEquals(3, runtime.requireAssetLibrary().meshHolderCount(HELD))
+        assertEquals(1, reads.of(HELD), "the model is read once")
+    }
+
+    /** The positive control: a model the scene loaded draws at once, with the scene's mesh, and isn't read again. */
+    @Test
+    fun aModelTheSceneLoadedDrawsAtOnceAndIsNotLoadedAgain() = runTest {
+        val reads = Reads()
+        val (project, _, runtime) = play(reads)
+        val shared = assertNotNull(runtime.world.get<MeshRenderer>(runtime.world.entityNamed("Arm"))).mesh
+
+        val spawned = runtime.spawn(project, remote(MODEL))
+
+        assertSame(shared, runtime.world.get<MeshRenderer>(spawned.root)?.mesh, "it draws at once, before another frame")
+        assertEquals(2, runtime.requireAssetLibrary().meshHolderCount(MODEL), "one mesh, held by both")
+        assertEquals(1, reads.of(MODEL), "read once, when the project loaded")
+    }
+
+    /** A model the project's files don't have is logged by name, and its node stays in the scene without it. */
+    @Test
+    fun aModelThatCantBeLoadedIsLoggedByName() = runTest {
+        val (project, game, runtime) = play(Reads())
+        val errors = mutableListOf<String>()
+        val sink = LogSink { record -> if (record.level == LogLevel.Error && record.tag == "project.spawn") errors += record.message }
+        Log.install(sink)
+        try {
+            val spawned = runtime.spawn(project, remote(MISSING))
+            game.updateUntil { errors.isNotEmpty() }
+            repeat(FRAMES) { game.update(DELTA, WIDTH, HEIGHT) }
+
+            val error = errors.single()
+            assertTrue(MISSING in error && "'Remote'" in error, "the error names the model and the node: $error")
+            assertTrue(runtime.world.isAlive(spawned.root), "the node stays in the scene")
+            assertNull(runtime.world.get<MeshRenderer>(spawned.root), "without the model")
+        } finally {
+            Log.remove(sink)
+        }
+    }
+
+    /** A node despawned while its model loads gets nothing, and the model it waited for stays loaded for the next. */
+    @Test
+    fun aNodeDespawnedWhileItsModelLoadsGetsNothing() = runTest {
+        val reads = Reads()
+        val (project, game, runtime) = play(reads, HELD to skinnedTriangleGltf())
+        val gone = runtime.spawn(project, remote(HELD))
+        gone.despawn()
+
+        game.updateUntil { project.models.isPreloaded(HELD) }
+        val next = runtime.spawn(project, remote(HELD))
+
+        assertFalse(runtime.world.isAlive(gone.root))
+        assertEquals(1, runtime.requireAssetLibrary().meshHolderCount(HELD), "only the next node holds its mesh")
+        assertNotNull(runtime.world.get<MeshRenderer>(next.root), "the next node draws it at once")
+        assertEquals(1, reads.of(HELD))
+    }
+
     private object SpawnOnce : SceneCapability {
         override val id = "com.example.harbor-town.spawn-once"
 
@@ -199,6 +298,46 @@ class SkinnedPlaybackTest {
         return Triple(project, game, game.requireService<SceneAppLifecycleRuntime>())
     }
 
+    /** [playing], with [extra] among the project's files, and every read of them recorded in [reads]. */
+    private suspend fun play(
+        reads: Reads,
+        vararg extra: Pair<String, String>,
+    ): Triple<LoadedProject, AwakeAppLifecycle, SceneAppLifecycleRuntime> {
+        val files = mapOf("awake.project.json" to MANIFEST, "scenes/main.scene.json" to SCENE, MODEL to skinnedTriangleGltf()) + extra
+        val project = loadProject(
+            AssetSource { path ->
+                reads.record(path.value)
+                runCatching { files.getValue(path.value).encodeToByteArray() }
+            },
+        )
+        val game = app { scene("play") { runProject(project) } }
+        game.ready(TestRenderer())
+        game.update(DELTA, WIDTH, HEIGHT)
+        return Triple(project, game, game.requireService<SceneAppLifecycleRuntime>())
+    }
+
+    /** The paths read through a project's files, from whichever thread reads them. */
+    private class Reads {
+        private val lock = Mutex()
+        private val paths = mutableListOf<String>()
+
+        suspend fun record(path: String) = lock.withLock { paths += path }
+
+        suspend fun of(path: String): Int = lock.withLock { paths.count { it == path } }
+    }
+
+    /** Runs frames until [done], waiting between them on the model loads that finish off the test thread. */
+    private suspend fun AwakeAppLifecycle.updateUntil(done: () -> Boolean) {
+        repeat(ATTEMPTS) {
+            update(DELTA, WIDTH, HEIGHT)
+            if (done()) return
+            withContext(Dispatchers.Default) { delay(WAIT_MILLIS) }
+        }
+        fail("The spawned node's model did not finish loading")
+    }
+
+    private fun remote(model: String): SceneNode = SceneLoader.decode(REMOTE.replace("\"$MODEL\"", "\"$model\"")).nodes.single()
+
     private fun World.entityNamed(name: String): Entity = buildList {
         queryEach(Name::class) { entity, value -> if (value.value == name) add(entity) }
     }.single()
@@ -209,7 +348,9 @@ class SkinnedPlaybackTest {
         return count
     }
 
-    private class TestRenderer : NoopRenderer(), GpuDrawPreparationSource {
+    private class TestRenderer :
+        NoopRenderer(),
+        GpuDrawPreparationSource {
         override val gpuDrawPreparer = GpuDrawPreparer { _, _, _ -> null }
     }
 
@@ -278,7 +419,13 @@ class SkinnedPlaybackTest {
         const val WIDTH = 800f
         const val HEIGHT = 600f
         const val FRAMES = 20
+        const val ATTEMPTS = 400
+        const val WAIT_MILLIS = 5L
         const val MODEL = "models/arm.gltf"
+
+        /** A model the scene never places, as an item picked up at runtime is. */
+        const val HELD = "models/lantern.gltf"
+        const val MISSING = "models/missing.gltf"
         const val MANIFEST = """{"formatVersion":1,"id":"com.example.harbor-town","name":"Harbor Town","version":"1.0.0","entryScene":"scenes/main.scene.json"}"""
         const val SCENE = """
 { "version": 1, "name": "arm", "nodes": [
