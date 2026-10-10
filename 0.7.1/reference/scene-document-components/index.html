@@ -1,0 +1,6061 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Guides and reference for AwakeKt Engine, the Kotlin Multiplatform engine for 2D and 3D apps.">
+      
+      
+      
+        <link rel="canonical" href="https://docs.awakekt.com/latest/reference/scene-document-components/">
+      
+      
+        <link rel="prev" href="../scene-document-schema/">
+      
+      
+        <link rel="next" href="../shader-document/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/brand/awake-mark.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Scene document components - AwakeKt Docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=IBM+Plex+Sans:300,300i,400,400i,700,700i%7CIBM+Plex+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"IBM Plex Sans";--md-code-font:"IBM Plex Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/awakekt.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#scene-document-components" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="AwakeKt Docs" class="md-header__button md-logo" aria-label="AwakeKt Docs" data-md-component="logo">
+      <svg class="glyph" viewBox="166 146 680 680" aria-hidden="true"><defs><linearGradient id="awake-glyph-left" x1="145" y1="810" x2="512" y2="150" gradientUnits="userSpaceOnUse"><stop stop-color="#FF4D2E"/><stop offset="1" stop-color="#FF9F1C"/></linearGradient><linearGradient id="awake-glyph-right" x1="512" y1="150" x2="890" y2="810" gradientUnits="userSpaceOnUse"><stop offset="0" style="stop-color: var(--glyph-r0)"/><stop offset="1" style="stop-color: var(--glyph-r1)"/></linearGradient><linearGradient id="awake-glyph-top" x1="418" y1="570" x2="606" y2="570" gradientUnits="userSpaceOnUse"><stop offset="0" style="stop-color: var(--glyph-t0)"/><stop offset="1" style="stop-color: var(--glyph-t1)"/></linearGradient></defs><path d="M505 208 505 339 346 618 266 765 194 690 415 275Z" fill="url(#awake-glyph-left)"/><path d="M266 765 346 618 402 674Z" fill="#8A2E20"/><path d="M505 208 598 275 818 690 747 765 664 618 505 339Z" fill="url(#awake-glyph-right)"/><path d="M609 674 664 618 747 765Z" fill="#D9482B"/><path d="m505 522 89 53-89 55-87-55Z" fill="url(#awake-glyph-top)"/><path d="m418 575 87 55v96l-87-55Z" fill="#8A2E20"/><path d="m594 575-89 55v96l89-55Z" fill="#D9482B"/></svg>
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            AwakeKt Docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Scene document components
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/awakekt/awake" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../get-started/installation/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Get started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../guides/scene-documents/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Guides
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../scene-document-schema/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="AwakeKt Docs" class="md-nav__button md-logo" aria-label="AwakeKt Docs" data-md-component="logo">
+      <svg class="glyph" viewBox="166 146 680 680" aria-hidden="true"><defs><linearGradient id="awake-glyph-left" x1="145" y1="810" x2="512" y2="150" gradientUnits="userSpaceOnUse"><stop stop-color="#FF4D2E"/><stop offset="1" stop-color="#FF9F1C"/></linearGradient><linearGradient id="awake-glyph-right" x1="512" y1="150" x2="890" y2="810" gradientUnits="userSpaceOnUse"><stop offset="0" style="stop-color: var(--glyph-r0)"/><stop offset="1" style="stop-color: var(--glyph-r1)"/></linearGradient><linearGradient id="awake-glyph-top" x1="418" y1="570" x2="606" y2="570" gradientUnits="userSpaceOnUse"><stop offset="0" style="stop-color: var(--glyph-t0)"/><stop offset="1" style="stop-color: var(--glyph-t1)"/></linearGradient></defs><path d="M505 208 505 339 346 618 266 765 194 690 415 275Z" fill="url(#awake-glyph-left)"/><path d="M266 765 346 618 402 674Z" fill="#8A2E20"/><path d="M505 208 598 275 818 690 747 765 664 618 505 339Z" fill="url(#awake-glyph-right)"/><path d="M609 674 664 618 747 765Z" fill="#D9482B"/><path d="m505 522 89 53-89 55-87-55Z" fill="url(#awake-glyph-top)"/><path d="m418 575 87 55v96l-87-55Z" fill="#8A2E20"/><path d="m594 575-89 55v96l89-55Z" fill="#D9482B"/></svg>
+    </a>
+    AwakeKt Docs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/awakekt/awake" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Get started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Get started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/first-window/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your first window
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/first-scene/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your first scene
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/load-a-scene-document/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Load a scene document
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../get-started/run-in-the-browser/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Run in the browser
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_1" id="__nav_3_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scene and ECS
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Scene and ECS
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/scene-documents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scene documents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/scene-dsl/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scene DSL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/scene-capabilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scene capabilities
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/ecs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ECS
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/app-lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    App lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/cameras-and-controls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cameras and controls
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/input/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Input
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/math/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Math
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rendering
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Rendering
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/lights-and-shadows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lights and shadows
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/sky-and-fog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sky and fog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/meshes-and-materials/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Meshes and materials
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/gltf/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    glTF models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/animation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Animation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/particles/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Particles
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/shaders/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Render plans and shaders
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/shader-compilation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Shader compilation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/vulkan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vulkan backend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/webgpu/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    WebGPU backend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    World and gameplay
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    World and gameplay
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/physics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Physics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/physics-jolt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Jolt backend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/character-controller/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Character controller
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/navigation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Navigation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/ai/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/terrain/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Terrain
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/large-worlds/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Large worlds
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/audio/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audio
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    UI
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    UI
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/game-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Game UI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    UI with AwakeKt Compose
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/shadcn/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    shadcn components
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../scene-document-schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scene document schema
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scene document components
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scene document components
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#all-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        All components
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#registration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Registration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ambient_light" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ambient_light
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#blueprint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        blueprint
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#camera" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        camera
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#camera_rig" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        camera_rig
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#canvas_element" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        canvas_element
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#character_controller" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        character_controller
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#chase" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        chase
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#custom" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        custom
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#day_cycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        day_cycle
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="day_cycle">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stop
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flee" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        flee
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        fog
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#input_actions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        input_actions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="input_actions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#input-action" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Input action
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#keyframe_animation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        keyframe_animation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="keyframe_animation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#key" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#light" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        light
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#locomotion_animation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        locomotion_animation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mesh_renderer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        mesh_renderer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#movement_control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        movement_control
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#navigation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        navigation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#particle_emitter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        particle_emitter
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#patrol" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        patrol
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pbr_material" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        pbr_material
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#physics_body" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        physics_body
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="physics_body">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#collision-shape" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Collision shape
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prefab_link" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        prefab_link
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#shader_effect" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        shader_effect
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#skybox" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        skybox
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#spin_control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        spin_control
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sprite" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sprite
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sprite_clips" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sprite_clips
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="sprite_clips">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sprite-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sprite run
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#importing-sprite-sheet-metadata" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Importing sprite-sheet metadata
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#static_transform" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        static_transform
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tag" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        tag
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#terrain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        terrain
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="terrain">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#terrain-surface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Terrain surface
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#texture_animation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        texture_animation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#texture_clips" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        texture_clips
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tone_mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        tone_mapping
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        See also
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../shader-document/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Shader document
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../component-map/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Component map
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Modules
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../rhi/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Render hardware interface
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../releases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Releases and compatibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../glossary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_9" id="__nav_4_9_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Components
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Components
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../components/button/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Button
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#all-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        All components
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#registration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Registration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ambient_light" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ambient_light
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#blueprint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        blueprint
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#camera" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        camera
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#camera_rig" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        camera_rig
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#canvas_element" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        canvas_element
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#character_controller" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        character_controller
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#chase" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        chase
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#custom" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        custom
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#day_cycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        day_cycle
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="day_cycle">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stop
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flee" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        flee
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        fog
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#input_actions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        input_actions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="input_actions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#input-action" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Input action
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#keyframe_animation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        keyframe_animation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="keyframe_animation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#key" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#light" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        light
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#locomotion_animation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        locomotion_animation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mesh_renderer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        mesh_renderer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#movement_control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        movement_control
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#navigation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        navigation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#particle_emitter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        particle_emitter
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#patrol" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        patrol
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pbr_material" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        pbr_material
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#physics_body" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        physics_body
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="physics_body">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#collision-shape" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Collision shape
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prefab_link" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        prefab_link
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#shader_effect" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        shader_effect
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#skybox" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        skybox
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#spin_control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        spin_control
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sprite" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sprite
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sprite_clips" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sprite_clips
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="sprite_clips">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sprite-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sprite run
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#importing-sprite-sheet-metadata" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Importing sprite-sheet metadata
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#static_transform" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        static_transform
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tag" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        tag
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#terrain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        terrain
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="terrain">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#terrain-surface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Terrain surface
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#texture_animation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        texture_animation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#texture_clips" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        texture_clips
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tone_mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        tone_mapping
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        See also
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="scene-document-components">Scene document components</h1>
+<p class="awake-lede">Every component id a scene document can hold, with each field's type and default. A test fails when a registered component or field has no row here.</p>
+
+<p>A component is one entry of a node's <code>components</code> array, named by its <code>component</code> key. For the
+file around it, see <a href="../scene-document-schema/">Scene document schema</a>. Types use the
+<a href="../scene-document-schema/#value-types">value types</a> of the schema page.</p>
+<h2 id="all-components">All components</h2>
+<p>A component loads only once its module is registered. "Registered by" names the call that
+registers it.</p>
+<table>
+<thead>
+<tr>
+<th>Component id</th>
+<th>ECS component</th>
+<th>Module</th>
+<th>Registered by</th>
+<th>Guide</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#ambient_light"><code>ambient_light</code></a></td>
+<td><code>AmbientLight</code></td>
+<td><code>com.awakekt.awake.scene:scene3d</code></td>
+<td><code>DefaultSceneComponentResolvers.install()</code></td>
+<td><a href="../../guides/lights-and-shadows/">Lights and shadows</a></td>
+</tr>
+<tr>
+<td><a href="#blueprint"><code>blueprint</code></a></td>
+<td><code>BlueprintComponent</code></td>
+<td><code>com.awakekt.awake.scene:blueprint</code></td>
+<td><code>registerBlueprints()</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><a href="#camera"><code>camera</code></a></td>
+<td><code>Camera</code></td>
+<td><code>com.awakekt.awake.scene:scene3d</code></td>
+<td><code>DefaultSceneComponentResolvers.install()</code></td>
+<td><a href="../../guides/cameras-and-controls/">Cameras</a></td>
+</tr>
+<tr>
+<td><a href="#camera_rig"><code>camera_rig</code></a></td>
+<td><code>CameraRig</code></td>
+<td><code>com.awakekt.awake.scene:controls</code></td>
+<td><code>registerControls()</code></td>
+<td><a href="../../guides/cameras-and-controls/">Cameras</a></td>
+</tr>
+<tr>
+<td><a href="#canvas_element"><code>canvas_element</code></a></td>
+<td><code>CanvasElement</code></td>
+<td><code>com.awakekt.awake.scene:canvas</code></td>
+<td><code>DefaultSceneComponentResolvers.install()</code></td>
+<td><a href="../../guides/game-ui/">Game UI</a></td>
+</tr>
+<tr>
+<td><a href="#character_controller"><code>character_controller</code></a></td>
+<td><code>CharacterController</code></td>
+<td><code>com.awakekt.awake.scene:character</code></td>
+<td><code>registerCharacter()</code></td>
+<td><a href="../../guides/character-controller/">Character controller</a></td>
+</tr>
+<tr>
+<td><a href="#chase"><code>chase</code></a></td>
+<td><code>ChaseBehavior</code></td>
+<td><code>com.awakekt.awake.scene:ai</code></td>
+<td><code>registerAiBehaviors()</code></td>
+<td><a href="../../guides/ai/">AI</a></td>
+</tr>
+<tr>
+<td><a href="#custom"><code>custom</code></a></td>
+<td>—</td>
+<td><code>com.awakekt.awake.scene:document</code></td>
+<td>Built in</td>
+<td><a href="../../guides/scene-documents/">Scene documents</a></td>
+</tr>
+<tr>
+<td><a href="#day_cycle"><code>day_cycle</code></a></td>
+<td><code>DayCycle</code></td>
+<td><code>com.awakekt.awake.scene:scene3d</code></td>
+<td><code>DefaultSceneComponentResolvers.install()</code></td>
+<td><a href="../../guides/sky-and-fog/#day-and-night">Sky and fog</a></td>
+</tr>
+<tr>
+<td><a href="#flee"><code>flee</code></a></td>
+<td><code>FleeBehavior</code></td>
+<td><code>com.awakekt.awake.scene:ai</code></td>
+<td><code>registerAiBehaviors()</code></td>
+<td><a href="../../guides/ai/">AI</a></td>
+</tr>
+<tr>
+<td><a href="#fog"><code>fog</code></a></td>
+<td><code>Fog</code></td>
+<td><code>com.awakekt.awake.scene:scene3d</code></td>
+<td><code>DefaultSceneComponentResolvers.install()</code></td>
+<td><a href="../../guides/sky-and-fog/">Sky and fog</a></td>
+</tr>
+<tr>
+<td><a href="#input_actions"><code>input_actions</code></a></td>
+<td><code>InputActions</code></td>
+<td><code>com.awakekt.awake.scene:controls</code></td>
+<td><code>registerControls()</code></td>
+<td><a href="../../guides/cameras-and-controls/#input-actions">Cameras and controls</a></td>
+</tr>
+<tr>
+<td><a href="#keyframe_animation"><code>keyframe_animation</code></a></td>
+<td><code>KeyframeAnimation</code></td>
+<td><code>com.awakekt.awake.scene:scene3d</code></td>
+<td><code>DefaultSceneComponentResolvers.install()</code></td>
+<td><a href="../../guides/animation/">Animation</a></td>
+</tr>
+<tr>
+<td><a href="#light"><code>light</code></a></td>
+<td><code>Light</code></td>
+<td><code>com.awakekt.awake.scene:scene3d</code></td>
+<td><code>DefaultSceneComponentResolvers.install()</code></td>
+<td><a href="../../guides/lights-and-shadows/">Lights and shadows</a></td>
+</tr>
+<tr>
+<td><a href="#locomotion_animation"><code>locomotion_animation</code></a></td>
+<td><code>LocomotionAnimation</code></td>
+<td><code>com.awakekt.awake.scene:scene3d</code></td>
+<td><code>DefaultSceneComponentResolvers.install()</code></td>
+<td><a href="../../guides/animation/">Animation</a></td>
+</tr>
+<tr>
+<td><a href="#mesh_renderer"><code>mesh_renderer</code></a></td>
+<td><code>MeshRenderer</code></td>
+<td><code>com.awakekt.awake.scene:scene3d</code></td>
+<td><code>DefaultSceneComponentResolvers.install()</code></td>
+<td><a href="../../guides/meshes-and-materials/">Meshes and materials</a></td>
+</tr>
+<tr>
+<td><a href="#movement_control"><code>movement_control</code></a></td>
+<td><code>MovementControl</code></td>
+<td><code>com.awakekt.awake.scene:controls</code></td>
+<td><code>registerControls()</code></td>
+<td><a href="../../guides/character-controller/">Character controller</a></td>
+</tr>
+<tr>
+<td><a href="#navigation"><code>navigation</code></a></td>
+<td><code>NavigationGrid</code></td>
+<td><code>com.awakekt.awake.scene:navigation</code></td>
+<td><code>registerAiBehaviors()</code></td>
+<td><a href="../../guides/ai/">AI</a></td>
+</tr>
+<tr>
+<td><a href="#particle_emitter"><code>particle_emitter</code></a></td>
+<td><code>ParticleEmitterSource</code></td>
+<td><code>com.awakekt.awake.scene:particles</code></td>
+<td><code>DefaultSceneComponentResolvers.install()</code></td>
+<td><a href="../../guides/particles/">Particles</a></td>
+</tr>
+<tr>
+<td><a href="#patrol"><code>patrol</code></a></td>
+<td><code>PatrolBehavior</code></td>
+<td><code>com.awakekt.awake.scene:ai</code></td>
+<td><code>registerAiBehaviors()</code></td>
+<td><a href="../../guides/ai/">AI</a></td>
+</tr>
+<tr>
+<td><a href="#pbr_material"><code>pbr_material</code></a></td>
+<td><code>PbrMaterial</code></td>
+<td><code>com.awakekt.awake.scene:scene3d</code></td>
+<td><code>DefaultSceneComponentResolvers.install()</code></td>
+<td><a href="../../guides/meshes-and-materials/">Meshes and materials</a></td>
+</tr>
+<tr>
+<td><a href="#physics_body"><code>physics_body</code></a></td>
+<td><code>PhysicsBody</code></td>
+<td><code>com.awakekt.awake.scene:physics</code></td>
+<td><code>registerPhysics()</code></td>
+<td><a href="../../guides/physics/">Physics</a></td>
+</tr>
+<tr>
+<td><a href="#prefab_link"><code>prefab_link</code></a></td>
+<td><code>PrefabLink</code></td>
+<td><code>com.awakekt.awake.scene:document</code></td>
+<td>Built in</td>
+<td><a href="../../guides/scene-documents/">Scene documents</a></td>
+</tr>
+<tr>
+<td><a href="#shader_effect"><code>shader_effect</code></a></td>
+<td><code>ShaderEffectSource</code></td>
+<td><code>com.awakekt.awake.scene:shader</code></td>
+<td><code>DefaultSceneComponentResolvers.install()</code></td>
+<td><a href="../../guides/shaders/#ship-a-shader-with-a-project">Render plans and shaders</a></td>
+</tr>
+<tr>
+<td><a href="#skybox"><code>skybox</code></a></td>
+<td><code>Skybox</code></td>
+<td><code>com.awakekt.awake.scene:scene3d</code></td>
+<td><code>DefaultSceneComponentResolvers.install()</code></td>
+<td><a href="../../guides/sky-and-fog/">Sky and fog</a></td>
+</tr>
+<tr>
+<td><a href="#spin_control"><code>spin_control</code></a></td>
+<td><code>SpinControl</code></td>
+<td><code>com.awakekt.awake.scene:scene-core</code></td>
+<td><code>DefaultSceneComponentResolvers.install()</code></td>
+<td><a href="../../guides/scene-documents/">Scene documents</a></td>
+</tr>
+<tr>
+<td><a href="#sprite"><code>sprite</code></a></td>
+<td><code>Sprite</code></td>
+<td><code>com.awakekt.awake.scene:scene2d</code></td>
+<td><code>DefaultSceneComponentResolvers.install()</code></td>
+<td><a href="../component-map/">Component map</a></td>
+</tr>
+<tr>
+<td><a href="#sprite_clips"><code>sprite_clips</code></a></td>
+<td><code>SpriteClips</code></td>
+<td><code>com.awakekt.awake.scene:scene2d</code></td>
+<td><code>DefaultSceneComponentResolvers.install()</code></td>
+<td><a href="../component-map/">Component map</a></td>
+</tr>
+<tr>
+<td><a href="#static_transform"><code>static_transform</code></a></td>
+<td><code>StaticTransform</code></td>
+<td><code>com.awakekt.awake.scene:scene-core</code></td>
+<td><code>DefaultSceneComponentResolvers.install()</code></td>
+<td><a href="../../guides/scene-documents/">Scene documents</a></td>
+</tr>
+<tr>
+<td><a href="#tag"><code>tag</code></a></td>
+<td><code>Tags</code></td>
+<td><code>com.awakekt.awake.scene:scene-core</code></td>
+<td><code>DefaultSceneComponentResolvers.install()</code></td>
+<td><a href="../../guides/scene-documents/">Scene documents</a></td>
+</tr>
+<tr>
+<td><a href="#terrain"><code>terrain</code></a></td>
+<td><code>TerrainComponent</code></td>
+<td><code>com.awakekt.awake.scene:scene3d</code></td>
+<td><code>DefaultSceneComponentResolvers.install()</code></td>
+<td><a href="../../guides/terrain/">Terrain</a></td>
+</tr>
+<tr>
+<td><a href="#texture_animation"><code>texture_animation</code></a></td>
+<td><code>TextureAnimation</code></td>
+<td><code>com.awakekt.awake.scene:scene3d</code></td>
+<td><code>DefaultSceneComponentResolvers.install()</code></td>
+<td><a href="../../guides/meshes-and-materials/">Meshes and materials</a></td>
+</tr>
+<tr>
+<td><a href="#texture_clips"><code>texture_clips</code></a></td>
+<td><code>TextureClips</code></td>
+<td><code>com.awakekt.awake.scene:scene3d</code></td>
+<td><code>DefaultSceneComponentResolvers.install()</code></td>
+<td><a href="../../guides/meshes-and-materials/">Meshes and materials</a></td>
+</tr>
+<tr>
+<td><a href="#tilemap"><code>tilemap</code></a></td>
+<td><code>Tilemap</code></td>
+<td><code>com.awakekt.awake.scene:scene2d</code></td>
+<td><code>DefaultSceneComponentResolvers.install()</code></td>
+<td><a href="../component-map/">Component map</a></td>
+</tr>
+<tr>
+<td><a href="#tone_mapping"><code>tone_mapping</code></a></td>
+<td><code>ToneMapping</code></td>
+<td><code>com.awakekt.awake.scene:scene3d</code></td>
+<td><code>DefaultSceneComponentResolvers.install()</code></td>
+<td><a href="../../guides/lights-and-shadows/">Lights and shadows</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="registration">Registration</h2>
+<table>
+<thead>
+<tr>
+<th>Call</th>
+<th>Module</th>
+<th>Registers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Built in</td>
+<td><code>com.awakekt.awake.scene:document</code></td>
+<td><code>custom</code>, <code>prefab_link</code></td>
+</tr>
+<tr>
+<td><code>DefaultSceneComponentResolvers.install()</code></td>
+<td><code>com.awakekt.awake.scene:runtime</code></td>
+<td><code>ambient_light</code>, <code>camera</code>, <code>canvas_element</code>, <code>day_cycle</code>, <code>fog</code>, <code>keyframe_animation</code>, <code>light</code>, <code>locomotion_animation</code>, <code>mesh_renderer</code>, <code>particle_emitter</code>, <code>pbr_material</code>, <code>shader_effect</code>, <code>skybox</code>, <code>spin_control</code>, <code>static_transform</code>, <code>tag</code>, <code>terrain</code>, <code>tone_mapping</code>. <code>SceneManager</code> and <code>SceneAppLifecycleRuntime</code> call it for you.</td>
+</tr>
+<tr>
+<td><code>SceneComponentRegistry.registerControls()</code></td>
+<td><code>com.awakekt.awake.scene:controls</code></td>
+<td><code>movement_control</code>, <code>camera_rig</code>, <code>input_actions</code></td>
+</tr>
+<tr>
+<td><code>SceneComponentRegistry.registerPhysics()</code></td>
+<td><code>com.awakekt.awake.scene:physics</code></td>
+<td><code>physics_body</code></td>
+</tr>
+<tr>
+<td><code>SceneComponentRegistry.registerCharacter()</code></td>
+<td><code>com.awakekt.awake.scene:character</code></td>
+<td><code>character_controller</code></td>
+</tr>
+<tr>
+<td><code>SceneComponentRegistry.registerAiBehaviors()</code></td>
+<td><code>com.awakekt.awake.scene:ai</code></td>
+<td><code>patrol</code>, <code>chase</code>, <code>flee</code>, <code>navigation</code></td>
+</tr>
+<tr>
+<td><code>SceneComponentRegistry.registerBlueprints()</code></td>
+<td><code>com.awakekt.awake.scene:blueprint</code></td>
+<td><code>blueprint</code></td>
+</tr>
+<tr>
+<td><code>loadProject(...)</code></td>
+<td><code>com.awakekt.awake.project:runtime</code></td>
+<td>The defaults, plus <code>movement_control</code>, <code>camera_rig</code>, <code>input_actions</code>, <code>physics_body</code>, <code>character_controller</code>, <code>patrol</code>, <code>chase</code>, <code>flee</code>, <code>navigation</code>, and the components of the <a href="../../guides/scene-capabilities/">capabilities</a> passed to it</td>
+</tr>
+</tbody>
+</table>
+<h2 id="ambient_light"><code>ambient_light</code></h2>
+<p>Uniform light added to every surface. <code>SceneAmbientLight</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>intensity</code></td>
+<td>number</td>
+<td><code>0.2</code></td>
+<td>Brightness of the ambient term.</td>
+</tr>
+<tr>
+<td><code>color</code></td>
+<td>color</td>
+<td>white</td>
+<td>Ambient color.</td>
+</tr>
+<tr>
+<td><code>colorR</code></td>
+<td>number</td>
+<td>none</td>
+<td>Legacy red channel. When <code>colorR</code>, <code>colorG</code> and <code>colorB</code> are all set, they replace <code>color</code>.</td>
+</tr>
+<tr>
+<td><code>colorG</code></td>
+<td>number</td>
+<td>none</td>
+<td>Legacy green channel.</td>
+</tr>
+<tr>
+<td><code>colorB</code></td>
+<td>number</td>
+<td>none</td>
+<td>Legacy blue channel.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="blueprint"><code>blueprint</code></h2>
+<p>Runs a blueprint graph on the entity. <code>SceneBlueprint</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>graph</code></td>
+<td>string</td>
+<td>required</td>
+<td>Path of the graph. Must not be blank.</td>
+</tr>
+<tr>
+<td><code>variables</code></td>
+<td>object of string, number or boolean</td>
+<td><code>{}</code></td>
+<td>Starting values for the graph's variables, by name.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="camera"><code>camera</code></h2>
+<p>A camera lens. At most one per node. <code>SceneCamera</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>eye</code></td>
+<td>vector</td>
+<td><code>{x: 0, y: 0, z: 5}</code></td>
+<td>World-space eye position.</td>
+</tr>
+<tr>
+<td><code>center</code></td>
+<td>vector</td>
+<td><code>{x: 0, y: 0, z: 0}</code></td>
+<td>World-space point the camera looks at.</td>
+</tr>
+<tr>
+<td><code>up</code></td>
+<td>vector</td>
+<td><code>{x: 0, y: 1, z: 0}</code></td>
+<td>Up direction.</td>
+</tr>
+<tr>
+<td><code>fovYDegrees</code></td>
+<td>number</td>
+<td><code>60</code></td>
+<td>Vertical field of view in degrees. Between 0 and 180, exclusive.</td>
+</tr>
+<tr>
+<td><code>near</code></td>
+<td>number</td>
+<td><code>0.1</code></td>
+<td>Near clipping distance. Above 0.</td>
+</tr>
+<tr>
+<td><code>far</code></td>
+<td>number</td>
+<td><code>100</code></td>
+<td>Far clipping distance. Above <code>near</code>.</td>
+</tr>
+<tr>
+<td><code>primary</code></td>
+<td>boolean</td>
+<td><code>true</code></td>
+<td>Whether this camera renders the main view.</td>
+</tr>
+<tr>
+<td><code>projection</code></td>
+<td><code>perspective</code> · <code>orthographic</code></td>
+<td><code>perspective</code></td>
+<td><code>orthographic</code> keeps things the same size at any distance, as a 2D game wants, and ignores <code>fovYDegrees</code>.</td>
+</tr>
+<tr>
+<td><code>orthoHalfHeight</code></td>
+<td>number</td>
+<td>about <code>2.07</code></td>
+<td>Half the vertical world extent an orthographic view covers; the width follows from the aspect ratio. Above 0. Used only when <code>projection</code> is <code>orthographic</code>.</td>
+</tr>
+<tr>
+<td><code>viewport</code></td>
+<td>object</td>
+<td>none</td>
+<td>Optional orthographic virtual viewport: positive finite <code>width</code> and <code>height</code> in world units, and <code>scaling</code> (<code>fit</code>, <code>extend</code>, <code>fill</code>, <code>stretch</code>, <code>screen</code>; default <code>fit</code>). Replaces <code>orthoHalfHeight</code> for rendering. Fit centers bars; Extend reveals more world; Fill crops; Stretch scales each axis; Screen uses one world unit per physical framebuffer pixel. Omit for the existing camera framing.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="camera_rig"><code>camera_rig</code></h2>
+<p>How a camera follows or orbits. <code>SceneCameraRig</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mode</code></td>
+<td><code>FirstPerson</code> · <code>ThirdPerson</code> · <code>FreeFly</code> · <code>Cinematic</code> · <code>TopDown</code></td>
+<td><code>ThirdPerson</code></td>
+<td>Camera behavior.</td>
+</tr>
+<tr>
+<td><code>target</code></td>
+<td>string</td>
+<td>none</td>
+<td>Name of the node to follow.</td>
+</tr>
+<tr>
+<td><code>distance</code></td>
+<td>number</td>
+<td><code>5</code></td>
+<td>Distance from the target.</td>
+</tr>
+<tr>
+<td><code>minDistance</code></td>
+<td>number</td>
+<td><code>2</code></td>
+<td>Closest zoom.</td>
+</tr>
+<tr>
+<td><code>maxDistance</code></td>
+<td>number</td>
+<td><code>20</code></td>
+<td>Farthest zoom.</td>
+</tr>
+<tr>
+<td><code>pitch</code></td>
+<td>number</td>
+<td><code>0</code></td>
+<td>Pitch in radians. Negative looks down.</td>
+</tr>
+<tr>
+<td><code>yaw</code></td>
+<td>number</td>
+<td><code>0</code></td>
+<td>Yaw in radians.</td>
+</tr>
+<tr>
+<td><code>offset</code></td>
+<td>vector</td>
+<td><code>{x: 0, y: 1.8, z: 0}</code></td>
+<td>Aim point relative to the target, or the pivot when there is none.</td>
+</tr>
+<tr>
+<td><code>flySpeed</code></td>
+<td>number</td>
+<td><code>10</code></td>
+<td>Speed in <code>FreeFly</code> mode. Above 0.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="canvas_element"><code>canvas_element</code></h2>
+<p>Screen-space UI drawn over the game. Sizes and offsets are in dp. <code>SceneCanvasElement</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>kind</code></td>
+<td><code>Text</code> · <code>Panel</code> · <code>Bar</code> · <code>Button</code> · <code>Joystick</code> · <code>Image</code></td>
+<td><code>Text</code></td>
+<td>What the element is.</td>
+</tr>
+<tr>
+<td><code>anchor</code></td>
+<td><code>TopLeft</code> · <code>TopCenter</code> · <code>TopRight</code> · <code>CenterLeft</code> · <code>Center</code> · <code>CenterRight</code> · <code>BottomLeft</code> · <code>BottomCenter</code> · <code>BottomRight</code></td>
+<td><code>TopLeft</code></td>
+<td>Screen point the element is placed from.</td>
+</tr>
+<tr>
+<td><code>offsetX</code></td>
+<td>number</td>
+<td><code>16</code></td>
+<td>Horizontal offset from the anchor.</td>
+</tr>
+<tr>
+<td><code>offsetY</code></td>
+<td>number</td>
+<td><code>16</code></td>
+<td>Vertical offset from the anchor.</td>
+</tr>
+<tr>
+<td><code>width</code></td>
+<td>number</td>
+<td><code>200</code></td>
+<td>Width. Not negative.</td>
+</tr>
+<tr>
+<td><code>height</code></td>
+<td>number</td>
+<td><code>40</code></td>
+<td>Height. Not negative.</td>
+</tr>
+<tr>
+<td><code>text</code></td>
+<td>string</td>
+<td><code>""</code></td>
+<td>A <code>Text</code> element's content, or a <code>Button</code>'s label.</td>
+</tr>
+<tr>
+<td><code>fontSize</code></td>
+<td>number</td>
+<td><code>18</code></td>
+<td>Text size. Above 0.</td>
+</tr>
+<tr>
+<td><code>color</code></td>
+<td>string</td>
+<td><code>"#FFFFFF"</code></td>
+<td>Foreground color, <code>#RRGGBB</code> or <code>#RRGGBBAA</code>.</td>
+</tr>
+<tr>
+<td><code>background</code></td>
+<td>string</td>
+<td><code>"#00000000"</code></td>
+<td>Background color, <code>#RRGGBB</code> or <code>#RRGGBBAA</code>.</td>
+</tr>
+<tr>
+<td><code>value</code></td>
+<td>number</td>
+<td><code>1</code></td>
+<td>A <code>Bar</code>'s fill, from 0 to 1.</td>
+</tr>
+<tr>
+<td><code>order</code></td>
+<td>integer</td>
+<td><code>0</code></td>
+<td>Draw order. Lowest draws first.</td>
+</tr>
+<tr>
+<td><code>visible</code></td>
+<td>boolean</td>
+<td><code>true</code></td>
+<td>Whether the element is drawn.</td>
+</tr>
+<tr>
+<td><code>action</code></td>
+<td>string</td>
+<td><code>""</code></td>
+<td>Name of what the element does for the game, such as <code>jump</code>. The game decides what each name means. In a played project, an element naming one of the scene's <a href="#input_actions">input actions</a> adds to it, and its presses are used up: a Joystick steers an axis such as <code>move</code>, and a Button holds and presses a button such as <code>jump</code> or <code>run</code>. Any other name is left for the game to read.</td>
+</tr>
+<tr>
+<td><code>touchOnly</code></td>
+<td>boolean</td>
+<td><code>false</code></td>
+<td>Draw only where touch controls are shown.</td>
+</tr>
+<tr>
+<td><code>style</code></td>
+<td>object</td>
+<td><code>{}</code></td>
+<td>How the element looks beyond its colours, as an AwakeKt Compose <code>Style</code>: <code>background</code>, <code>gradient</code> (<code>start</code>, <code>end</code>, <code>horizontal</code>), <code>image</code>, <code>fillImage</code>, <code>cornerRadius</code>, <code>borderWidth</code>, <code>borderColor</code>, <code>shadow</code> (<code>color</code>, <code>offsetX</code>, <code>offsetY</code>, <code>blur</code>, <code>spread</code>), <code>textColor</code>, <code>textShadow</code> (<code>color</code>, <code>offsetX</code>, <code>offsetY</code>), <code>textOutline</code> (<code>color</code>, <code>width</code>), <code>alpha</code>, and <code>hovered</code> and <code>pressed</code> states for a Button. <code>image</code> is an <code>Image</code>'s picture, a frame, or a <code>Bar</code>'s track; <code>fillImage</code> is a <code>Bar</code>'s fill, cut at <code>value</code>. Each image is a <code>CanvasImage</code>: <code>path</code>, a region (<code>regionX</code>, <code>regionY</code>, <code>regionWidth</code>, <code>regionHeight</code>), slice insets (<code>sliceLeft</code>, <code>sliceTop</code>, <code>sliceRight</code>, <code>sliceBottom</code>), <code>repeatEdges</code>, <code>repeatCenter</code>, <code>tint</code> and <code>pixelated</code>. See <a href="../../guides/game-ui/#style-an-element">Game UI</a>.</td>
+</tr>
+<tr>
+<td><code>textAlign</code></td>
+<td><code>TopLeft</code> · <code>TopCenter</code> · <code>TopRight</code> · <code>CenterLeft</code> · <code>Center</code> · <code>CenterRight</code> · <code>BottomLeft</code> · <code>BottomCenter</code> · <code>BottomRight</code></td>
+<td>none</td>
+<td>Where a <code>Text</code>'s or <code>Button</code>'s text sits in the element. None keeps the kind's own: top-left for a <code>Text</code>, centred for a <code>Button</code>.</td>
+</tr>
+<tr>
+<td><code>follow</code></td>
+<td>string</td>
+<td><code>""</code></td>
+<td>The name of a node the element follows on screen. Its <code>anchor</code> point stands on the node's projected position, nudged inward by its offsets, and it hides when the node is behind the camera or missing.</td>
+</tr>
+<tr>
+<td><code>followOffset</code></td>
+<td>vector</td>
+<td><code>{x: 0, y: 0, z: 0}</code></td>
+<td>World-space offset from the followed node, such as above its head.</td>
+</tr>
+<tr>
+<td><code>followBounds</code></td>
+<td>boolean</td>
+<td><code>false</code></td>
+<td>Cover the screen rectangle of the followed node's meshes instead of standing at its point. Its children anchor to that box's edges.</td>
+</tr>
+<tr>
+<td><code>layout</code></td>
+<td>object</td>
+<td>none</td>
+<td>Lay the element's children out in rows or columns instead of anchoring each: <code>direction</code> (<code>Row</code> · <code>RowReverse</code> · <code>Column</code> · <code>ColumnReverse</code>), <code>wrap</code>, <code>gap</code>, <code>padding</code>, <code>justify</code> (<code>Start</code> · <code>Center</code> · <code>End</code> · <code>SpaceBetween</code> · <code>SpaceAround</code> · <code>SpaceEvenly</code>) and <code>align</code> (<code>Start</code> · <code>Center</code> · <code>End</code> · <code>Stretch</code>). A laid-out child keeps its <code>width</code> and <code>height</code> and ignores its anchor and offsets. See <a href="../../guides/game-ui/#lay-out-children">Game UI</a>.</td>
+</tr>
+<tr>
+<td><code>grow</code></td>
+<td>number</td>
+<td><code>0</code></td>
+<td>In a parent with a <code>layout</code>, this element's share of its line's leftover space. Not negative.</td>
+</tr>
+<tr>
+<td><code>bind</code></td>
+<td>object</td>
+<td>none</td>
+<td>Game state the element shows without code. <code>node</code> names a node; <code>value</code> is a <code>component.field</code> for a Bar's fill, divided by <code>max</code> (a field or a number); <code>text</code> fills each <code>{component.field}</code> in a Text's or Button's words. See <a href="../../guides/game-ui/#show-game-state">Game UI</a>.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="character_controller"><code>character_controller</code></h2>
+<p>A walking, jumping capsule moved by the physics character controller. <code>SceneCharacterController</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>radius</code></td>
+<td>number</td>
+<td><code>0.5</code></td>
+<td>Capsule radius. Above 0.</td>
+</tr>
+<tr>
+<td><code>halfHeight</code></td>
+<td>number</td>
+<td><code>0.5</code></td>
+<td>Half the capsule's cylinder height. Above 0.</td>
+</tr>
+<tr>
+<td><code>stepHeight</code></td>
+<td>number</td>
+<td><code>0.3</code></td>
+<td>Tallest step it climbs. Not negative.</td>
+</tr>
+<tr>
+<td><code>slopeLimit</code></td>
+<td>number</td>
+<td><code>0.7853982</code> (45°)</td>
+<td>Steepest walkable slope, in radians.</td>
+</tr>
+<tr>
+<td><code>jumpSpeed</code></td>
+<td>number</td>
+<td><code>0</code></td>
+<td>Upward speed of a jump. <code>0</code> means it cannot jump. Not negative.</td>
+</tr>
+<tr>
+<td><code>gravity</code></td>
+<td>number</td>
+<td><code>-9.81</code></td>
+<td>Vertical acceleration.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="chase"><code>chase</code></h2>
+<p>Pursues another node along navigation paths. <code>SceneChase</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>target</code></td>
+<td>string</td>
+<td>none</td>
+<td>Name of the node to chase.</td>
+</tr>
+<tr>
+<td><code>speed</code></td>
+<td>number</td>
+<td><code>2.5</code></td>
+<td>Units per second. Above 0.</td>
+</tr>
+<tr>
+<td><code>repathInterval</code></td>
+<td>number</td>
+<td><code>0.5</code></td>
+<td>Seconds between path updates.</td>
+</tr>
+<tr>
+<td><code>waypointRadius</code></td>
+<td>number</td>
+<td><code>0.3</code></td>
+<td>Distance at which a waypoint counts as reached.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="custom"><code>custom</code></h2>
+<p>Data for a component with no registered binding. Loads and saves unchanged; nothing is attached
+to the entity. <code>SceneCustomComponent</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>type</code></td>
+<td>string</td>
+<td>required</td>
+<td>Your component's type name. Must not be blank.</td>
+</tr>
+<tr>
+<td><code>payload</code></td>
+<td>any JSON</td>
+<td>required</td>
+<td>Your component's data.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="day_cycle"><code>day_cycle</code></h2>
+<p>Moves the sun over a day and blends the light, sky and fog between stops. Put it on the node of
+the directional <code>light</code>. <code>SceneDayCycle</code>.</p>
+<p>The sun rises at <code>sunriseAzimuthDegrees</code> at time <code>0.25</code>, is highest at noon (<code>0.5</code>), a quarter turn
+clockwise from where it rose, at <code>noonElevationDegrees</code>, sets opposite its rise at <code>0.75</code>, and is as
+far below the horizon at midnight. The light keeps pointing at the sun below the horizon, so ground
+gets no direct light at night and the sky's moon stays opposite the sun; give night stops a low
+<code>lightIntensity</code>, a low <code>ambient</code> and a dark sky. Play runs it; a scene that is not playing shows
+its light, sky and fog as authored. Saving writes the authored <code>time</code>, not the time play reached.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dayLengthSeconds</code></td>
+<td>number</td>
+<td><code>600</code></td>
+<td>Seconds in one day. <code>0</code> holds the time still. Not negative.</td>
+</tr>
+<tr>
+<td><code>time</code></td>
+<td>number</td>
+<td><code>0.5</code></td>
+<td>Time of day the scene starts at: <code>0</code> midnight, <code>0.25</code> sunrise, <code>0.5</code> noon, <code>0.75</code> sunset. From <code>0</code> up to <code>1</code>.</td>
+</tr>
+<tr>
+<td><code>sunriseAzimuthDegrees</code></td>
+<td>number</td>
+<td><code>90</code></td>
+<td>Where the sun rises, clockwise from −Z seen from above: <code>90</code> is +X.</td>
+</tr>
+<tr>
+<td><code>noonElevationDegrees</code></td>
+<td>number</td>
+<td><code>60</code></td>
+<td>The sun's height above the horizon at noon. Above <code>0</code>, at most <code>90</code>.</td>
+</tr>
+<tr>
+<td><code>stops</code></td>
+<td>list of stops</td>
+<td><code>[]</code></td>
+<td>How the scene looks at times of day, in time order.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="stop">Stop</h3>
+<p>Each stop is <code>{"time": 0.25, ...}</code> with <code>time</code> from <code>0</code> up to <code>1</code>, plus any of the fields below.
+Between the stops that set a field, it blends linearly, wrapping from the day's last stop to its
+first across midnight. A field no stop sets keeps its authored value.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>What it sets</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>horizonColor</code></td>
+<td>color</td>
+<td>The <code>skybox</code> horizon colour; a <code>SolidColor</code> sky's colour.</td>
+</tr>
+<tr>
+<td><code>zenithColor</code></td>
+<td>color</td>
+<td>The <code>skybox</code> zenith colour.</td>
+</tr>
+<tr>
+<td><code>lightColor</code></td>
+<td>color</td>
+<td>The light's <code>color</code>.</td>
+</tr>
+<tr>
+<td><code>lightIntensity</code></td>
+<td>number</td>
+<td>The light's <code>intensity</code>. At least <code>0</code>.</td>
+</tr>
+<tr>
+<td><code>ambient</code></td>
+<td>number</td>
+<td>The light's <code>ambient</code> share. Above <code>0</code>, at most <code>1</code>.</td>
+</tr>
+<tr>
+<td><code>fogColor</code></td>
+<td>color</td>
+<td>The <code>fog</code> colour.</td>
+</tr>
+</tbody>
+</table>
+<p>The stops write the first <code>skybox</code> and <code>fog</code> in the scene. A <code>Cubemap</code> sky keeps its image. A
+rotated light node shines along its rotation and ignores the sun's direction.</p>
+<h2 id="flee"><code>flee</code></h2>
+<p>Runs from another node along navigation paths. <code>SceneFlee</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>threat</code></td>
+<td>string</td>
+<td>none</td>
+<td>Name of the node to flee from.</td>
+</tr>
+<tr>
+<td><code>panicRadius</code></td>
+<td>number</td>
+<td><code>6</code></td>
+<td>Distance at which fleeing starts. Above 0.</td>
+</tr>
+<tr>
+<td><code>safeRadius</code></td>
+<td>number</td>
+<td><code>12</code></td>
+<td>Distance at which fleeing stops. Above <code>panicRadius</code>.</td>
+</tr>
+<tr>
+<td><code>fleeDistance</code></td>
+<td>number</td>
+<td><code>10</code></td>
+<td>How far to run.</td>
+</tr>
+<tr>
+<td><code>speed</code></td>
+<td>number</td>
+<td><code>3.5</code></td>
+<td>Units per second. Above 0.</td>
+</tr>
+<tr>
+<td><code>repathInterval</code></td>
+<td>number</td>
+<td><code>0.4</code></td>
+<td>Seconds between path updates.</td>
+</tr>
+<tr>
+<td><code>waypointRadius</code></td>
+<td>number</td>
+<td><code>0.3</code></td>
+<td>Distance at which a waypoint counts as reached.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="fog"><code>fog</code></h2>
+<p>Distance fog. <code>SceneFog</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>enabled</code></td>
+<td>boolean</td>
+<td><code>true</code></td>
+<td>Whether fog is drawn.</td>
+</tr>
+<tr>
+<td><code>density</code></td>
+<td>number</td>
+<td><code>0.001</code></td>
+<td>Fog density.</td>
+</tr>
+<tr>
+<td><code>color</code></td>
+<td>color</td>
+<td><code>{r: 0.55, g: 0.62, b: 0.70}</code></td>
+<td>Fog color.</td>
+</tr>
+<tr>
+<td><code>colorR</code></td>
+<td>number</td>
+<td>none</td>
+<td>Legacy red channel. When <code>colorR</code>, <code>colorG</code> and <code>colorB</code> are all set, they replace <code>color</code>.</td>
+</tr>
+<tr>
+<td><code>colorG</code></td>
+<td>number</td>
+<td>none</td>
+<td>Legacy green channel.</td>
+</tr>
+<tr>
+<td><code>colorB</code></td>
+<td>number</td>
+<td>none</td>
+<td>Legacy blue channel.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="input_actions"><code>input_actions</code></h2>
+<p>The scene's input actions and what triggers each, so a system reads an action such as <code>jump</code> and never
+a key. It becomes an <code>InputActions</code> (<code>awake:core:input</code>) on its entity, which code reads with
+<code>world.inputActions()</code>. A player's <code>movement_control</code> follows three: <code>move</code> steers, <code>jump</code> jumps and
+<code>run</code> runs. A scene that binds nothing gets the defaults: W A S D or the arrows move, Space jumps, and
+Shift runs while held. An action named like a default replaces it, and the other defaults stay. Put it
+on any node; only the first in a scene is used. <code>SceneInputActions</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>actions</code></td>
+<td>array of <a href="#input-action">input actions</a></td>
+<td><code>[]</code></td>
+<td>The scene's own actions and the defaults it rebinds. Each name is letters, digits, <code>_</code>, <code>.</code> and <code>-</code>, starting with a letter, digit or <code>_</code>, and is used once. A key triggers one action, counting the defaults the scene keeps.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="input-action">Input action</h3>
+<p>An entry of <code>actions</code>, named by its <code>type</code> key.</p>
+<table>
+<thead>
+<tr>
+<th><code>type</code></th>
+<th>Fields</th>
+<th>Defaults</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>button</code></td>
+<td><code>name</code> (string), <code>keys</code> (array of key names), <code>buttons</code> (array of <code>Primary</code> · <code>Secondary</code> · <code>Middle</code> · <code>Back</code> · <code>Forward</code>), <code>trigger</code> (<code>Hold</code> · <code>Press</code> · <code>Toggle</code>), <code>startsOn</code> (boolean)</td>
+<td>required, <code>[]</code>, <code>[]</code>, <code>Hold</code>, <code>false</code></td>
+</tr>
+<tr>
+<td><code>axis</code></td>
+<td><code>name</code> (string), <code>up</code>, <code>down</code>, <code>left</code>, <code>right</code> (arrays of key names)</td>
+<td>required, <code>[]</code> each</td>
+</tr>
+</tbody>
+</table>
+<p>A button's <code>trigger</code> says when it is active: <code>Hold</code> while one of its keys or pointer buttons is held,
+<code>Press</code> for the frame one is pressed, and <code>Toggle</code> switched by each press, starting on when <code>startsOn</code>
+is <code>true</code>. An axis gives a direction from its keys, up and right being positive, a diagonal being of
+length 1. Key names are those of <code>Key</code> in <code>awake:core:input</code>, such as <code>W</code>, <code>Space</code>, <code>Shift</code> or
+<code>ArrowUp</code>. While a text field has the keys, held actions let go and toggles stay as they were. <code>move</code>
+is an axis, and <code>jump</code> and <code>run</code> are buttons.</p>
+<div class="language-json highlight"><span class="filename">Run unless X is pressed to walk, and press E to interact</span><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"input_actions"</span><span class="p">,</span><span class="w"> </span><span class="nt">"actions"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"button"</span><span class="p">,</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"run"</span><span class="p">,</span><span class="w"> </span><span class="nt">"keys"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"X"</span><span class="p">],</span><span class="w"> </span><span class="nt">"trigger"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Toggle"</span><span class="p">,</span><span class="w"> </span><span class="nt">"startsOn"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">},</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"button"</span><span class="p">,</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"interact"</span><span class="p">,</span><span class="w"> </span><span class="nt">"keys"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"E"</span><span class="p">],</span><span class="w"> </span><span class="nt">"trigger"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Press"</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+</span></code></pre></div>
+<h2 id="keyframe_animation"><code>keyframe_animation</code></h2>
+<p>Loops keyframe tracks on its node: position, rotation, scale and material alpha. <code>SceneKeyframeAnimation</code>.</p>
+<p>Keys sit at seconds into the loop and are interpolated linearly. Before a track's first key it holds
+that key's value, after its last key it holds that one, and every track starts over when the loop
+does. An empty track leaves its value as authored. Rotation keys are Euler radians, like the node's
+own, interpolated per axis: keys at <code>0</code> and <code>6.2832</code> make a full turn. Alpha replaces the base colour
+alpha of the node's own <code>pbr_material</code>, which shows on a textured <code>mesh_renderer</code> drawn <code>transparent</code>.
+Leave <code>static_transform</code> off an animated node and the nodes under it.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>duration</code></td>
+<td>number</td>
+<td>required</td>
+<td>Seconds in the loop. Greater than 0.</td>
+</tr>
+<tr>
+<td><code>position</code></td>
+<td>list of vector keys</td>
+<td><code>[]</code></td>
+<td>Local position over the loop.</td>
+</tr>
+<tr>
+<td><code>rotation</code></td>
+<td>list of vector keys</td>
+<td><code>[]</code></td>
+<td>Local rotation over the loop, Euler radians.</td>
+</tr>
+<tr>
+<td><code>scale</code></td>
+<td>list of vector keys</td>
+<td><code>[]</code></td>
+<td>Local scale over the loop.</td>
+</tr>
+<tr>
+<td><code>alpha</code></td>
+<td>list of number keys</td>
+<td><code>[]</code></td>
+<td>The material's base colour alpha over the loop.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="key">Key</h3>
+<p>Each key is <code>{"time": 0.5, "value": ...}</code>: <code>time</code> in seconds from the start of the loop, between <code>0</code>
+and <code>duration</code>, and in order within its track; <code>value</code> a vector for position, rotation and scale, a
+number for alpha.</p>
+<h2 id="light"><code>light</code></h2>
+<p>A directional or point light. <code>SceneLight</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>color</code></td>
+<td>color</td>
+<td>white</td>
+<td>Light color.</td>
+</tr>
+<tr>
+<td><code>intensity</code></td>
+<td>number</td>
+<td><code>1</code></td>
+<td>Brightness multiplier.</td>
+</tr>
+<tr>
+<td><code>type</code></td>
+<td><code>Directional</code> · <code>Point</code></td>
+<td><code>Point</code></td>
+<td><code>Directional</code> is a sun; <code>Point</code> is a lamp.</td>
+</tr>
+<tr>
+<td><code>direction</code></td>
+<td>vector</td>
+<td><code>{x: 0.4, y: 0.8, z: 0.4}</code></td>
+<td>Direction the light comes from, for <code>Directional</code>.</td>
+</tr>
+<tr>
+<td><code>range</code></td>
+<td>number</td>
+<td><code>10</code></td>
+<td>Falloff distance, for <code>Point</code>.</td>
+</tr>
+<tr>
+<td><code>shadowsEnabled</code></td>
+<td>boolean</td>
+<td><code>true</code></td>
+<td>Whether a directional light casts shadows.</td>
+</tr>
+<tr>
+<td><code>shadowDistance</code></td>
+<td>number</td>
+<td><code>100</code></td>
+<td>How far from the camera shadows reach. Finite and above 0.</td>
+</tr>
+<tr>
+<td><code>ambient</code></td>
+<td>number</td>
+<td>none</td>
+<td>This light's ambient share. Above 0 and at most 1.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="locomotion_animation"><code>locomotion_animation</code></h2>
+<p>Plays a skinned model's clip for how its entity moves: idle, walking, running and jumping. <code>SceneLocomotionAnimation</code>.</p>
+<p>Speeds are measured from the entity's world position, so it animates however the entity is moved,
+and a model on a child node animates with it. Clip names are the model's own animations; a clip
+left out, or one the model lacks, keeps whatever already plays. With a <code>character_controller</code> on the
+entity or above it, the jump clips follow its ground contact. Otherwise a jump ends when the fall
+stops, so <code>airborneAbove</code> must exceed the vertical speed of running up the steepest walkable slope.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>idle</code></td>
+<td>string</td>
+<td>none</td>
+<td>Clip while standing.</td>
+</tr>
+<tr>
+<td><code>walk</code></td>
+<td>string</td>
+<td>none</td>
+<td>Clip above <code>walkAbove</code> units per second across the ground.</td>
+</tr>
+<tr>
+<td><code>run</code></td>
+<td>string</td>
+<td>none</td>
+<td>Clip above <code>runAbove</code>.</td>
+</tr>
+<tr>
+<td><code>jump</code></td>
+<td>string</td>
+<td>none</td>
+<td>Clip while off the ground, or while rising when the phases below are set.</td>
+</tr>
+<tr>
+<td><code>takeOff</code></td>
+<td>string</td>
+<td>none</td>
+<td>Clip played once as it leaves the ground.</td>
+</tr>
+<tr>
+<td><code>fall</code></td>
+<td>string</td>
+<td>none</td>
+<td>Clip while coming down.</td>
+</tr>
+<tr>
+<td><code>land</code></td>
+<td>string</td>
+<td>none</td>
+<td>Clip played once as it touches down, unless it is already walking away.</td>
+</tr>
+<tr>
+<td><code>walkAbove</code></td>
+<td>number</td>
+<td><code>0.1</code></td>
+<td>Ground speed that starts the walk.</td>
+</tr>
+<tr>
+<td><code>runAbove</code></td>
+<td>number</td>
+<td><code>4</code></td>
+<td>Ground speed that starts the run; at least <code>walkAbove</code>.</td>
+</tr>
+<tr>
+<td><code>airborneAbove</code></td>
+<td>number</td>
+<td><code>2</code></td>
+<td>Vertical speed that counts as a jump without a <code>character_controller</code>; greater than 0.</td>
+</tr>
+<tr>
+<td><code>crossFade</code></td>
+<td>number</td>
+<td><code>0.15</code></td>
+<td>Seconds each clip change blends over. Not negative.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="mesh_renderer"><code>mesh_renderer</code></h2>
+<p>Draws a mesh with a material. Names are looked up in the scene's asset library. <code>SceneMeshRenderer</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mesh</code></td>
+<td>string</td>
+<td>required</td>
+<td>Name of a registered or resolvable mesh. Must not be blank.</td>
+</tr>
+<tr>
+<td><code>material</code></td>
+<td>string</td>
+<td>required</td>
+<td>Name of a registered or resolvable material. Must not be blank.</td>
+</tr>
+<tr>
+<td><code>cullMode</code></td>
+<td><code>None</code> · <code>Back</code> · <code>Front</code></td>
+<td><code>None</code></td>
+<td>Face culling. Also read as <code>cull_mode</code>.</td>
+</tr>
+<tr>
+<td><code>transparent</code></td>
+<td>boolean</td>
+<td><code>false</code></td>
+<td>Draw in the transparent pass, blended and sorted back to front.</td>
+</tr>
+<tr>
+<td><code>additive</code></td>
+<td>boolean</td>
+<td><code>false</code></td>
+<td>With <code>transparent</code>, add its colour to what is behind it: glows and fire. A textured mesh draws unlit then, adding only its base and emissive colour, so black texels add nothing, unless its <code>pbr_material</code> sets <code>litWhenAdditive</code>.</td>
+</tr>
+<tr>
+<td><code>billboard</code></td>
+<td>boolean</td>
+<td><code>false</code></td>
+<td>Face the camera every frame, keeping the entity's position and scale. The mesh's +Z turns toward the eye. A billboard is not culled.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="movement_control"><code>movement_control</code></h2>
+<p>Moves the entity from player input, or from code such as AI or a network. A player follows the
+scene's <code>move</code>, <code>jump</code> and <code>run</code> <a href="#input_actions">input actions</a>. <code>SceneMovementControl</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>speed</code></td>
+<td>number</td>
+<td>none</td>
+<td>Units per second. None uses the movement system's speed. Above 0 when set.</td>
+</tr>
+<tr>
+<td><code>runSpeed</code></td>
+<td>number</td>
+<td>none</td>
+<td>Units per second while running. None keeps <code>speed</code>. Above 0 when set.</td>
+</tr>
+<tr>
+<td><code>turnSpeed</code></td>
+<td>number</td>
+<td><code>0</code></td>
+<td>Radians per second it turns to face where it moves; 0 leaves its facing alone. Not negative.</td>
+</tr>
+<tr>
+<td><code>driver</code></td>
+<td><code>Player</code> or <code>Agent</code></td>
+<td><code>Player</code></td>
+<td>What sets the intent. <code>Player</code>: the keys and touch controls, relative to the camera. <code>Agent</code>: code writes a world-space direction, and player input leaves it alone.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="navigation"><code>navigation</code></h2>
+<p>The grid of cells agents can walk on, which <code>patrol</code>, <code>chase</code> and <code>flee</code> route over. <code>SceneNavigation</code>.
+A played scene with one of those behaviours and a <code>navigation</code> component runs them with nothing wired
+by the host; put it on any node, and only the first in a scene is used.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>rows</code></td>
+<td>array of text</td>
+<td><code>[]</code></td>
+<td>One string per row of cells along z, each character one cell along x: <code>.</code> walkable, <code>#</code> blocked. Every row is the same length, and there is at least one.</td>
+</tr>
+<tr>
+<td><code>cellSize</code></td>
+<td>number</td>
+<td><code>1</code></td>
+<td>World size of one cell. Above 0.</td>
+</tr>
+<tr>
+<td><code>originX</code></td>
+<td>number</td>
+<td><code>0</code></td>
+<td>World x of the centre of cell (0, 0).</td>
+</tr>
+<tr>
+<td><code>originZ</code></td>
+<td>number</td>
+<td><code>0</code></td>
+<td>World z of the centre of cell (0, 0).</td>
+</tr>
+</tbody>
+</table>
+<h2 id="particle_emitter"><code>particle_emitter</code></h2>
+<p>Spawns sprites at its node's world position, turned to the camera or lying flat, and follows the
+node. <code>SceneParticleEmitter</code>.</p>
+<p>Sizes, speeds and <code>spawnRadius</code> are world units; the node's scale does not apply, and its rotation
+only tilts a <code>Flat</code> emitter's plane and, with <code>inheritOrientation</code>, turns the spawn ring and
+<code>velocity</code>. Each particle fades from <code>startAlpha</code> to 0 over its <code>lifetime</code> (or by <code>alphaCurve</code>), while
+its tint moves from <code>color</code> to <code>endColor</code> and its size from <code>scale</code> to <code>endScale</code>. <code>runProject</code> runs
+it; see <a href="../../guides/particles/">Particles</a>.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>texture</code></td>
+<td>string</td>
+<td>required</td>
+<td>Project image the particles show.</td>
+</tr>
+<tr>
+<td><code>maxParticles</code></td>
+<td>number</td>
+<td><code>64</code></td>
+<td>Pool size; spawning pauses while every slot is live. Above 0.</td>
+</tr>
+<tr>
+<td><code>spawnRate</code></td>
+<td>number</td>
+<td><code>10</code></td>
+<td>Particles per second. Not negative.</td>
+</tr>
+<tr>
+<td><code>lifetime</code></td>
+<td>number</td>
+<td><code>1</code></td>
+<td>Seconds each particle lives. Above 0.</td>
+</tr>
+<tr>
+<td><code>startAlpha</code></td>
+<td>number</td>
+<td><code>1</code></td>
+<td>Opacity at birth, 0 to 1.</td>
+</tr>
+<tr>
+<td><code>scale</code></td>
+<td>number</td>
+<td><code>0.2</code></td>
+<td>Size at birth. Above 0.</td>
+</tr>
+<tr>
+<td><code>endScale</code></td>
+<td>number</td>
+<td>none</td>
+<td>Size at death. None keeps <code>scale</code>. Not negative.</td>
+</tr>
+<tr>
+<td><code>velocity</code></td>
+<td>vector</td>
+<td><code>{x: 0, y: 1, z: 0}</code></td>
+<td>Starting velocity.</td>
+</tr>
+<tr>
+<td><code>velocityJitter</code></td>
+<td>number</td>
+<td><code>0</code></td>
+<td>Random per-axis variation added to <code>velocity</code>.</td>
+</tr>
+<tr>
+<td><code>coneHalfAngleDegrees</code></td>
+<td>number</td>
+<td>none</td>
+<td>Spreads the direction within this angle of <code>velocity</code>, keeping its speed.</td>
+</tr>
+<tr>
+<td><code>spawnRadius</code></td>
+<td>number</td>
+<td><code>0</code></td>
+<td>Spawns on a horizontal ring of this radius. Not negative.</td>
+</tr>
+<tr>
+<td><code>radialSpeed</code></td>
+<td>number</td>
+<td><code>0</code></td>
+<td>Adds this speed horizontally away from the node, through the spawn point.</td>
+</tr>
+<tr>
+<td><code>color</code></td>
+<td>color</td>
+<td>white</td>
+<td>Tint at birth.</td>
+</tr>
+<tr>
+<td><code>endColor</code></td>
+<td>color</td>
+<td><code>color</code></td>
+<td>Tint at death.</td>
+</tr>
+<tr>
+<td><code>frameCount</code></td>
+<td>number</td>
+<td><code>1</code></td>
+<td>Treats the texture as a horizontal strip of this many frames. At least 1.</td>
+</tr>
+<tr>
+<td><code>frameRate</code></td>
+<td>number</td>
+<td><code>8</code></td>
+<td>Frames per second of that strip. Not negative.</td>
+</tr>
+<tr>
+<td><code>additive</code></td>
+<td>boolean</td>
+<td><code>false</code></td>
+<td>Adds to what is behind, for glows. Needs the particle pipeline built with <code>buildAdditive</code>.</td>
+</tr>
+<tr>
+<td><code>facing</code></td>
+<td><code>Camera</code> · <code>Flat</code></td>
+<td><code>Camera</code></td>
+<td><code>Camera</code> turns each sprite to the camera. <code>Flat</code> lays it in the plane perpendicular to the node's up axis, on the ground for an upright node, its texture's top toward the node's -Z: ground glows, ripples, magic circles.</td>
+</tr>
+<tr>
+<td><code>acceleration</code></td>
+<td>vector</td>
+<td><code>{x: 0, y: 0, z: 0}</code></td>
+<td>A constant world-space acceleration in units per second squared, added to every live particle's velocity: <code>{y: -9.8}</code> is gravity. Finite.</td>
+</tr>
+<tr>
+<td><code>inheritOrientation</code></td>
+<td>boolean</td>
+<td><code>false</code></td>
+<td>The node's rotation turns the spawn ring and <code>velocity</code> (so also the cone's axis and the jitter axes). <code>acceleration</code> and <code>radialSpeed</code> stay in world space.</td>
+</tr>
+<tr>
+<td><code>alphaCurve</code></td>
+<td>alpha curve</td>
+<td>none</td>
+<td>Fades a particle in and out over its life. None is the linear fade from <code>startAlpha</code> to 0. Described below.</td>
+</tr>
+<tr>
+<td><code>burstCycle</code></td>
+<td>burst cycle</td>
+<td>none</td>
+<td>A pulsing emission that replaces <code>spawnRate</code>. None spawns continuously. Described below.</td>
+</tr>
+<tr>
+<td><code>turbulence</code></td>
+<td>number</td>
+<td><code>0</code></td>
+<td>Strength of a smooth flow-field wobble added to every particle's velocity. Finite.</td>
+</tr>
+<tr>
+<td><code>turbulenceFrequency</code></td>
+<td>number</td>
+<td><code>1</code></td>
+<td>How tight that wobble is. Finite, not negative.</td>
+</tr>
+<tr>
+<td><code>convergeToOrigin</code></td>
+<td>boolean</td>
+<td><code>false</code></td>
+<td>Aims each particle at the node, at the speed of <code>velocity</code>, instead of along it; with a <code>spawnRadius</code> they appear on a ring and close in. Ignores <code>radialSpeed</code>.</td>
+</tr>
+<tr>
+<td><code>stretchWithVelocity</code></td>
+<td>boolean</td>
+<td><code>false</code></td>
+<td>Stretches each sprite along its screen motion, for streaks.</td>
+</tr>
+<tr>
+<td><code>stretchFactor</code></td>
+<td>number</td>
+<td><code>0.05</code></td>
+<td>World units of stretch per unit of speed. Finite, not negative.</td>
+</tr>
+<tr>
+<td><code>burstCount</code></td>
+<td>number</td>
+<td>none</td>
+<td>Particles to spawn in the emitter's whole life. When they have all died <strong>the node carrying the emitter is removed from the world</strong>, so put a one-shot emitter on a node of its own. Above 0.</td>
+</tr>
+<tr>
+<td><code>ground</code></td>
+<td>ground</td>
+<td>none</td>
+<td>Where falling particles land. None lets them fall and fade. Described below.</td>
+</tr>
+<tr>
+<td><code>spin</code></td>
+<td>spin</td>
+<td>none</td>
+<td>A random spin for each particle, turning its sprite in its own plane. None leaves particles upright. A stretched particle (<code>stretchWithVelocity</code>) points along its motion and ignores it. Described below.</td>
+</tr>
+</tbody>
+</table>
+<p><code>alphaCurve</code> is an object with the fractions of a particle's life at which it reaches full opacity and
+starts to fade out, both within 0 to 1 with <code>fadeInEnd</code> not after <code>fadeOutStart</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>fadeInEnd</code></td>
+<td>number</td>
+<td><code>0</code></td>
+<td>Fraction of life at which opacity reaches <code>startAlpha</code>.</td>
+</tr>
+<tr>
+<td><code>fadeOutStart</code></td>
+<td>number</td>
+<td><code>0</code></td>
+<td>Fraction of life at which opacity starts to fall to 0.</td>
+</tr>
+</tbody>
+</table>
+<p><code>spin</code> gives each particle its own angular velocity, drawn uniformly between two rates when it spawns.
+Positive turns counter-clockwise as the viewer sees it, negative clockwise, so <code>-90</code> to <code>90</code> sends
+particles both ways. Both rates are finite and <code>minDegreesPerSecond</code> is not above <code>maxDegreesPerSecond</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>minDegreesPerSecond</code></td>
+<td>number</td>
+<td>required</td>
+<td>The slowest, or most clockwise, spin.</td>
+</tr>
+<tr>
+<td><code>maxDegreesPerSecond</code></td>
+<td>number</td>
+<td>required</td>
+<td>The fastest, or most counter-clockwise, spin.</td>
+</tr>
+<tr>
+<td><code>randomStartAngle</code></td>
+<td>boolean</td>
+<td><code>false</code></td>
+<td>Also starts each particle at a random angle. Without it they all start upright.</td>
+</tr>
+</tbody>
+</table>
+<p><code>burstCycle</code> loops: for the first <code>activeSeconds</code> of every <code>cycleSeconds</code>, <code>burstSize</code> particles spawn
+every <code>burstInterval</code> seconds, then nothing spawns until the cycle repeats:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cycleSeconds</code></td>
+<td>number</td>
+<td>required</td>
+<td>Length of one cycle. Above 0.</td>
+</tr>
+<tr>
+<td><code>activeSeconds</code></td>
+<td>number</td>
+<td>required</td>
+<td>How much of the cycle bursts fire in. Above 0, at most <code>cycleSeconds</code>.</td>
+</tr>
+<tr>
+<td><code>burstInterval</code></td>
+<td>number</td>
+<td>required</td>
+<td>Seconds between bursts while active. Above 0.</td>
+</tr>
+<tr>
+<td><code>burstSize</code></td>
+<td>number</td>
+<td>required</td>
+<td>Particles per burst. Above 0.</td>
+</tr>
+</tbody>
+</table>
+<p><code>ground</code> makes falling particles land. A particle over a collider lands on its top face, otherwise on
+the plane at <code>groundY</code>, otherwise it never lands:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>groundY</code></td>
+<td>number</td>
+<td>none</td>
+<td>Height of a flat ground plane. None has no plane.</td>
+</tr>
+<tr>
+<td><code>restitution</code></td>
+<td>number</td>
+<td><code>0</code></td>
+<td>Fraction of fall speed kept as a bounce: 0 stops the particle, 1 is lossless, above 1 gains energy. Not negative.</td>
+</tr>
+<tr>
+<td><code>friction</code></td>
+<td>number</td>
+<td><code>1</code></td>
+<td>Fraction of sideways speed kept on each bounce. Not negative.</td>
+</tr>
+<tr>
+<td><code>colliders</code></td>
+<td>array of box</td>
+<td><code>[]</code></td>
+<td>World-space boxes, each <code>{min: vector, max: vector}</code>, with <code>min</code> at or below <code>max</code> on every axis.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="patrol"><code>patrol</code></h2>
+<p>Walks a list of stops along navigation paths. <code>ScenePatrol</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>stops</code></td>
+<td>array of vector</td>
+<td><code>[]</code></td>
+<td>Waypoints, in order.</td>
+</tr>
+<tr>
+<td><code>style</code></td>
+<td><code>loop</code> · <code>pingPong</code> · <code>once</code></td>
+<td><code>loop</code></td>
+<td>What happens after the last stop.</td>
+</tr>
+<tr>
+<td><code>dwellSeconds</code></td>
+<td>number</td>
+<td><code>1</code></td>
+<td>Wait at each stop. Not negative.</td>
+</tr>
+<tr>
+<td><code>speed</code></td>
+<td>number</td>
+<td><code>1.8</code></td>
+<td>Units per second. Above 0.</td>
+</tr>
+<tr>
+<td><code>repathInterval</code></td>
+<td>number</td>
+<td><code>1</code></td>
+<td>Seconds between path updates.</td>
+</tr>
+<tr>
+<td><code>waypointRadius</code></td>
+<td>number</td>
+<td><code>0.3</code></td>
+<td>Distance at which a waypoint counts as reached.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="pbr_material"><code>pbr_material</code></h2>
+<p>Physically based material values for the entity's mesh. <code>ScenePbrMaterial</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>metallic</code></td>
+<td>number</td>
+<td><code>0</code></td>
+<td>Metalness, 0 to 1.</td>
+</tr>
+<tr>
+<td><code>roughness</code></td>
+<td>number</td>
+<td><code>0.5</code></td>
+<td>Roughness, 0 to 1.</td>
+</tr>
+<tr>
+<td><code>baseColorFactor</code></td>
+<td>color</td>
+<td>white</td>
+<td>Base color multiplier.</td>
+</tr>
+<tr>
+<td><code>emissiveFactor</code></td>
+<td>color</td>
+<td><code>{r: 0, g: 0, b: 0, a: 0}</code></td>
+<td>Emitted light.</td>
+</tr>
+<tr>
+<td><code>alphaMode</code></td>
+<td><code>Opaque</code> · <code>Masked</code></td>
+<td><code>Opaque</code></td>
+<td><code>Masked</code> discards fragments below <code>alphaCutoff</code>.</td>
+</tr>
+<tr>
+<td><code>alphaCutoff</code></td>
+<td>number</td>
+<td><code>0.5</code></td>
+<td>Alpha threshold for <code>Masked</code>, 0 to 1.</td>
+</tr>
+<tr>
+<td><code>litWhenAdditive</code></td>
+<td>boolean</td>
+<td><code>false</code></td>
+<td>Keeps a textured mesh drawn <code>additive</code> lit: it adds its colour as the sun, shadows, ambient and point lights shade it, not only its base and emissive colour. Fog fades it either way.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="physics_body"><code>physics_body</code></h2>
+<p>A collider or rigid body. <code>ScenePhysicsBody</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>shape</code></td>
+<td><a href="#collision-shape">collision shape</a></td>
+<td>box, half extents <code>0.5</code></td>
+<td>Collision shape. Sizes above 0.</td>
+</tr>
+<tr>
+<td><code>motion</code></td>
+<td><code>STATIC</code> · <code>KINEMATIC</code> · <code>DYNAMIC</code></td>
+<td><code>STATIC</code></td>
+<td>How the body moves.</td>
+</tr>
+<tr>
+<td><code>layer</code></td>
+<td>integer</td>
+<td>none</td>
+<td>Collision layer index. None uses the default for <code>motion</code>. Not negative.</td>
+</tr>
+<tr>
+<td><code>sensor</code></td>
+<td>boolean</td>
+<td><code>false</code></td>
+<td>Detects what passes through instead of blocking it.</td>
+</tr>
+<tr>
+<td><code>degreesOfFreedom</code></td>
+<td><code>ALL</code> · <code>PLANE_2D</code></td>
+<td><code>ALL</code></td>
+<td>Allowed motion in world axes. <code>PLANE_2D</code> locks Z translation and X/Y rotation.</td>
+</tr>
+</tbody>
+</table>
+<p><code>degreesOfFreedom</code> applies to primitive and model colliders and survives saving and body rebuilds.
+Shapes retain their Z thickness; see <a href="../../guides/physics/#physics-in-2d">Physics in 2D</a>.</p>
+<h3 id="collision-shape">Collision shape</h3>
+<p>The value of <code>shape</code>, named by its <code>type</code> key.</p>
+<table>
+<thead>
+<tr>
+<th><code>type</code></th>
+<th>Fields</th>
+<th>Defaults</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>box</code></td>
+<td><code>halfExtents</code> (vector)</td>
+<td><code>{x: 0.5, y: 0.5, z: 0.5}</code></td>
+</tr>
+<tr>
+<td><code>sphere</code></td>
+<td><code>radius</code> (number)</td>
+<td><code>0.5</code></td>
+</tr>
+<tr>
+<td><code>capsule</code></td>
+<td><code>halfHeight</code> (number), <code>radius</code> (number)</td>
+<td><code>0.5</code>, <code>0.5</code></td>
+</tr>
+<tr>
+<td><code>mesh</code></td>
+<td><code>mesh</code> (string), <code>primitive</code> (integer)</td>
+<td>required, none</td>
+</tr>
+<tr>
+<td><code>convex_hull</code></td>
+<td><code>mesh</code> (string), <code>primitive</code> (integer)</td>
+<td>required, none</td>
+</tr>
+</tbody>
+</table>
+<p><code>mesh</code> collides with the triangles of the <code>.glb</code> or <code>.gltf</code> model at the project path <code>mesh</code>:
+<code>primitive</code> picks one primitive, counted in node order, and none merges them all. The node's scale is
+baked into the triangles. Only <code>STATIC</code> bodies that are not sensors can use it, and it needs
+<code>MeshColliderSystem</code> to build the body; see <a href="../../guides/physics/#collide-with-a-model">Collide with a model</a>.</p>
+<p><code>convex_hull</code> shrink-wraps the model's vertices into a convex volume with node scale baked in.
+Because it encloses volume, it supports any <code>motion</code> (<code>STATIC</code>, <code>KINEMATIC</code>, or <code>DYNAMIC</code>) and can be a <code>sensor</code>.
+Like <code>mesh</code>, it uses <code>MeshColliderSystem</code> to build the body from models loaded through <code>loadCollisionMeshes</code>.</p>
+<h2 id="prefab_link"><code>prefab_link</code></h2>
+<p>Places a prefab file at this node. <code>SceneDocument.withPrefabs</code> (which <code>loadProject</code> runs)
+puts the prefab's root under the node, so the node's transform places it and its own components add
+to it. The node holds no children of its own. Exporting the world writes the link, not the prefab's
+nodes. A prefab file is a <code>ScenePrefab</code> as JSON: <code>guid</code>, optional <code>name</code>, and a <code>root</code> node. <code>ScenePrefabLink</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>path</code></td>
+<td>string</td>
+<td>required</td>
+<td>The prefab file, relative to the project root. Must not be blank.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="shader_effect"><code>shader_effect</code></h2>
+<p>A shader the project ships as data, drawn at this node: a sky behind the scene, an overlay in front of
+it, or a plane placed by the node's transform, as the document's <code>surface</code> says. The document is a
+<code>*.shader.json</code> file in the project; <code>loadProject</code> reads, checks and compiles it once, and
+<code>ShaderEffectSystem</code> draws it, advancing its clock each frame. An effect whose parameters or textures do
+not match its document is logged with the node and not drawn, and the scene plays on without it. The
+document's format is in the <a href="../shader-document/">shader document reference</a>. <code>SceneShaderEffect</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>shader</code></td>
+<td>string</td>
+<td>required</td>
+<td>Project path of the shader document.</td>
+</tr>
+<tr>
+<td><code>parameters</code></td>
+<td>object of number lists</td>
+<td><code>{}</code></td>
+<td>Parameter name to its numbers: 1 for a <code>float</code>, 2 to 4 for a vector, 4 for a <code>color</code>. A parameter left out takes the document's default.</td>
+</tr>
+<tr>
+<td><code>textures</code></td>
+<td>object of strings</td>
+<td><code>{}</code></td>
+<td>Texture name, as the document declares it, to the project path of its image. Every declared texture needs one.</td>
+</tr>
+<tr>
+<td><code>enabled</code></td>
+<td>boolean</td>
+<td><code>true</code></td>
+<td>Whether the effect draws. Its clock runs either way.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="skybox"><code>skybox</code></h2>
+<p>The background drawn behind the scene. <code>SceneSkybox</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>enabled</code></td>
+<td>boolean</td>
+<td><code>true</code></td>
+<td>Whether the sky is drawn.</td>
+</tr>
+<tr>
+<td><code>type</code></td>
+<td>string: <code>Procedural</code> · <code>SolidColor</code> · <code>Cubemap</code></td>
+<td><code>"Procedural"</code></td>
+<td>Sky mode, case-insensitive. Any other value is <code>Procedural</code>.</td>
+</tr>
+<tr>
+<td><code>horizonColor</code></td>
+<td>color</td>
+<td><code>{r: 0.72, g: 0.80, b: 0.88}</code></td>
+<td>Horizon color, and the color of <code>SolidColor</code>.</td>
+</tr>
+<tr>
+<td><code>zenithColor</code></td>
+<td>color</td>
+<td><code>{r: 0.20, g: 0.38, b: 0.68}</code></td>
+<td>Color straight up.</td>
+</tr>
+<tr>
+<td><code>horizonColorR</code></td>
+<td>number</td>
+<td>none</td>
+<td>Legacy channel. When all three <code>horizonColor*</code> channels are set, they replace <code>horizonColor</code>.</td>
+</tr>
+<tr>
+<td><code>horizonColorG</code></td>
+<td>number</td>
+<td>none</td>
+<td>Legacy channel.</td>
+</tr>
+<tr>
+<td><code>horizonColorB</code></td>
+<td>number</td>
+<td>none</td>
+<td>Legacy channel.</td>
+</tr>
+<tr>
+<td><code>zenithColorR</code></td>
+<td>number</td>
+<td>none</td>
+<td>Legacy channel. When all three <code>zenithColor*</code> channels are set, they replace <code>zenithColor</code>.</td>
+</tr>
+<tr>
+<td><code>zenithColorG</code></td>
+<td>number</td>
+<td>none</td>
+<td>Legacy channel.</td>
+</tr>
+<tr>
+<td><code>zenithColorB</code></td>
+<td>number</td>
+<td>none</td>
+<td>Legacy channel.</td>
+</tr>
+<tr>
+<td><code>cubemapPath</code></td>
+<td>string</td>
+<td>none</td>
+<td>Cubemap asset path, for <code>Cubemap</code>.</td>
+</tr>
+<tr>
+<td><code>exposure</code></td>
+<td>number</td>
+<td><code>1</code></td>
+<td>Cubemap brightness, for <code>Cubemap</code>.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="spin_control"><code>spin_control</code></h2>
+<p>Rotates the entity around Y. <code>SceneSpinControl</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>radians</code></td>
+<td>number</td>
+<td><code>0</code></td>
+<td>Starting angle in radians.</td>
+</tr>
+<tr>
+<td><code>speed</code></td>
+<td>number</td>
+<td><code>1</code></td>
+<td>Rotation speed multiplier. Not negative.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="sprite"><code>sprite</code></h2>
+<p>A flat image drawn at the node's <code>Transform</code>, with no lighting: one cell of a frame sheet. Its size is
+the cell's pixel size divided by <code>pixelsPerUnit</code>, so under an orthographic camera it keeps its size
+however the image is scaled. <code>SceneSprite</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>texture</code></td>
+<td>string</td>
+<td>required</td>
+<td>A project image file the sprite shows. Not blank.</td>
+</tr>
+<tr>
+<td><code>columns</code></td>
+<td>integer</td>
+<td><code>1</code></td>
+<td>Frame-sheet columns. At least 1.</td>
+</tr>
+<tr>
+<td><code>rows</code></td>
+<td>integer</td>
+<td><code>1</code></td>
+<td>Frame-sheet rows. At least 1.</td>
+</tr>
+<tr>
+<td><code>frame</code></td>
+<td>integer</td>
+<td><code>0</code></td>
+<td>The cell shown, counted from 0 in reading order from the top left. Within the sheet.</td>
+</tr>
+<tr>
+<td><code>pixelsPerUnit</code></td>
+<td>number</td>
+<td><code>100</code></td>
+<td>Image pixels that make one scene unit. Finite and above 0.</td>
+</tr>
+<tr>
+<td><code>flipX</code></td>
+<td>boolean</td>
+<td><code>false</code></td>
+<td>Mirrors the sprite left to right.</td>
+</tr>
+<tr>
+<td><code>flipY</code></td>
+<td>boolean</td>
+<td><code>false</code></td>
+<td>Mirrors the sprite top to bottom.</td>
+</tr>
+<tr>
+<td><code>tint</code></td>
+<td>color</td>
+<td>white</td>
+<td>Multiplied into the image's colour and alpha.</td>
+</tr>
+<tr>
+<td><code>sortOrder</code></td>
+<td>integer</td>
+<td><code>0</code></td>
+<td>A higher order draws over a lower one; a tie draws by depth from the camera.</td>
+</tr>
+<tr>
+<td>## <code>tilemap</code></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>A finite orthogonal atlas layer. The node's origin is its top left, with +X right and -Y down.
+The runtime uploads one mesh per non-empty chunk, draws visible chunks through the sprite
+pipeline, and rebuilds only edited chunks. <code>SceneTilemap</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>texture</code></td>
+<td>string</td>
+<td>required</td>
+<td>Named atlas image; must not be blank.</td>
+</tr>
+<tr>
+<td><code>width</code></td>
+<td>integer</td>
+<td>required</td>
+<td>Map columns. At least 1.</td>
+</tr>
+<tr>
+<td><code>height</code></td>
+<td>integer</td>
+<td>required</td>
+<td>Map rows. At least 1.</td>
+</tr>
+<tr>
+<td><code>tiles</code></td>
+<td>list of integers</td>
+<td>required</td>
+<td>Exactly width times height frames in row order; -1 is empty.</td>
+</tr>
+<tr>
+<td><code>columns</code></td>
+<td>integer</td>
+<td><code>1</code></td>
+<td>Atlas columns. At least 1.</td>
+</tr>
+<tr>
+<td><code>rows</code></td>
+<td>integer</td>
+<td><code>1</code></td>
+<td>Atlas rows. At least 1.</td>
+</tr>
+<tr>
+<td><code>pixelsPerUnit</code></td>
+<td>number</td>
+<td><code>100</code></td>
+<td>Pixels per local world unit. Finite and above 0.</td>
+</tr>
+<tr>
+<td><code>chunkSize</code></td>
+<td>integer</td>
+<td><code>16</code></td>
+<td>Cells per chunk edge. At least 1; edge chunks may be smaller.</td>
+</tr>
+<tr>
+<td><code>tint</code></td>
+<td>color</td>
+<td>white</td>
+<td>Whole-layer straight-alpha multiplier.</td>
+</tr>
+<tr>
+<td><code>sortOrder</code></td>
+<td>integer</td>
+<td><code>0</code></td>
+<td>Higher order draws after lower-order tilemaps and sprites.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="sprite_clips"><code>sprite_clips</code></h2>
+<p>Named animation runs for the <code>sprite</code> on the same node. Sheet dimensions come from that sprite;
+every run must fit its atlas. <code>SceneSpriteClips</code>.</p>
+<p>The standard scene runtime advances <code>SpriteClipSystem</code> before rendering. A custom host runs it once
+per simulation frame. <code>SpriteClips.play("hit")</code> changes the run; repeated requests preserve time
+unless <code>restart = true</code>. <code>speed = 0</code> pauses this entity, and <code>isFinished</code> reports one-shot completion.
+An empty library leaves the sprite's manually selected frame alone. Export saves the selected clip
+name, while playback time and speed remain transient runtime state.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>clips</code></td>
+<td>object of runs</td>
+<td><code>{}</code></td>
+<td>Runs by name. Names must not be empty.</td>
+</tr>
+<tr>
+<td><code>clip</code></td>
+<td>string</td>
+<td>the first listed</td>
+<td>Initial run; must name a run in <code>clips</code>.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="sprite-run">Sprite run</h3>
+<p>Each entry in <code>clips</code> is a <code>SceneSpriteClip</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>firstFrame</code></td>
+<td>integer</td>
+<td><code>0</code></td>
+<td>First cell, counted from the top left across rows. Not negative.</td>
+</tr>
+<tr>
+<td><code>frameCount</code></td>
+<td>integer</td>
+<td><code>1</code></td>
+<td>Cells in the run; at least one and the whole run must fit the sprite.</td>
+</tr>
+<tr>
+<td><code>framesPerSecond</code></td>
+<td>number</td>
+<td><code>0</code></td>
+<td>Authored playback rate. Finite and not negative; zero holds the first cell.</td>
+</tr>
+<tr>
+<td><code>loop</code></td>
+<td>boolean</td>
+<td><code>true</code></td>
+<td>Repeat the run. False plays once and holds its last cell.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="importing-sprite-sheet-metadata">Importing sprite-sheet metadata</h3>
+<p><code>SpriteGenManifest.decode(manifestText)</code> from <code>com.awakekt.awake.asset:sprite</code> imports a
+<a href="https://github.com/aldegad/sprite-gen">sprite-gen</a> component-row manifest. It returns the image
+reference, regular grid and named clips. Resolve the image through your asset loader and verify its
+decoded size with <code>sheet.requireImageSize(width, height)</code>.</p>
+<p>Before instantiation, call <code>authored.withSpriteSheets(mapOf("hero" to sheet))</code>, importing the extension
+from <code>com.awakekt.awake.scene.scene2d</code>. Keys match each sprite's authored <code>texture</code>. This fills in
+atlas dimensions and runs on nested matching nodes, retains clip selection and styling, and lets
+local runs override imported names. The result saves as ordinary scene components.</p>
+<p>Runs must contain contiguous, untrimmed cells on one row. Uniform <code>durations_ms</code> overrides <code>fps</code>;
+without durations, <code>fps</code> is required. Packed atlases, reordered cells and variable frame durations
+are unsupported and rejected with <code>IllegalArgumentException</code>.</p>
+<h2 id="static_transform"><code>static_transform</code></h2>
+<p>Marks a node that never moves, such as a placed prop. <code>SceneStaticTransform</code>, no fields.</p>
+<p><code>TransformSystem</code> builds the node's world matrix once and then skips it, so a level of thousands of
+props costs almost nothing per frame. The node's parent must not move either: a static node does not
+follow a parent that moves. An editor that moves static nodes uses <code>TransformSystem(skipsStatic = false)</code>.</p>
+<div class="language-json highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"static_transform"</span><span class="w"> </span><span class="p">}</span>
+</span></code></pre></div>
+<h2 id="tag"><code>tag</code></h2>
+<p>What the entity is to gameplay, by role, such as <code>enemy</code> or <code>pickup</code>. It becomes the entity's <code>Tags</code>
+(<code>awake:ecs</code>), which code finds with <code>world.withTag("enemy")</code> and tests with <code>world.hasTag(entity, "enemy")</code>.
+A prefab's tags ride on its root entity; tags on the node that links the prefab tag that node.
+<code>SceneTag</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tags</code></td>
+<td>array of strings</td>
+<td><code>[]</code></td>
+<td>The node's tags, any number of them. Each is letters, digits, <code>_</code>, <code>.</code> and <code>-</code>, starting with a letter, digit or <code>_</code>. A project can list its tags in the manifest's <code>tags</code>; a scene tag the list leaves out is a warning when the project loads.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="terrain"><code>terrain</code></h2>
+<p>A heightmap terrain. At most one per node. <code>SceneTerrain</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>width</code></td>
+<td>integer</td>
+<td>required</td>
+<td>Samples along X. At least 2.</td>
+</tr>
+<tr>
+<td><code>depth</code></td>
+<td>integer</td>
+<td>required</td>
+<td>Samples along Z. At least 2.</td>
+</tr>
+<tr>
+<td><code>scaleX</code></td>
+<td>number</td>
+<td><code>1</code></td>
+<td>Spacing between samples along X. Finite and above 0.</td>
+</tr>
+<tr>
+<td><code>scaleY</code></td>
+<td>number</td>
+<td><code>1</code></td>
+<td>Height multiplier. Finite and above 0.</td>
+</tr>
+<tr>
+<td><code>scaleZ</code></td>
+<td>number</td>
+<td><code>1</code></td>
+<td>Spacing between samples along Z. Finite and above 0.</td>
+</tr>
+<tr>
+<td><code>samples</code></td>
+<td>array of number</td>
+<td>required</td>
+<td>Heights, <code>width × depth</code> finite values.</td>
+</tr>
+<tr>
+<td><code>tilingScale</code></td>
+<td>number</td>
+<td><code>16</code></td>
+<td>Texture tiling across the terrain.</td>
+</tr>
+<tr>
+<td><code>isVisible</code></td>
+<td>boolean</td>
+<td><code>true</code></td>
+<td>Whether the terrain is drawn.</td>
+</tr>
+<tr>
+<td><code>surface</code></td>
+<td><a href="#terrain-surface">terrain surface</a></td>
+<td>none</td>
+<td>Surface model, read by a terrain surface provider.</td>
+</tr>
+<tr>
+<td><code>collider</code></td>
+<td>boolean</td>
+<td><code>false</code></td>
+<td>Whether the terrain is solid ground when physics runs, as a static heightfield. Needs a square terrain of at least 4 samples a side.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="terrain-surface">Terrain surface</h3>
+<p><code>SceneTerrainSurface</code>, the value of <code>surface</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>provider</code></td>
+<td>string</td>
+<td>required</td>
+<td>Id of the surface provider.</td>
+</tr>
+<tr>
+<td><code>version</code></td>
+<td>integer</td>
+<td><code>1</code></td>
+<td>Version of the provider's payload.</td>
+</tr>
+<tr>
+<td><code>payload</code></td>
+<td>any JSON</td>
+<td><code>{}</code></td>
+<td>The provider's data. Kept unchanged when no provider is installed.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="texture_animation"><code>texture_animation</code></h2>
+<p>Plays the entity's texture as a frame sheet and scrolls it. The textured shader applies it to every
+texture of the entity's material; with no <code>pbr_material</code> it plays with glTF's default factors.
+<code>SceneTextureAnimation</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>columns</code></td>
+<td>integer</td>
+<td><code>1</code></td>
+<td>Frame-sheet columns. At least 1.</td>
+</tr>
+<tr>
+<td><code>rows</code></td>
+<td>integer</td>
+<td><code>1</code></td>
+<td>Frame-sheet rows. At least 1.</td>
+</tr>
+<tr>
+<td><code>frameCount</code></td>
+<td>integer</td>
+<td><code>0</code></td>
+<td>Frames played from <code>firstFrame</code>. <code>0</code> plays every cell from <code>firstFrame</code> on.</td>
+</tr>
+<tr>
+<td><code>framesPerSecond</code></td>
+<td>number</td>
+<td><code>0</code></td>
+<td>Playback rate. <code>0</code> holds the first frame of the run. Not negative.</td>
+</tr>
+<tr>
+<td><code>scrollU</code></td>
+<td>number</td>
+<td><code>0</code></td>
+<td>UV units per second along U.</td>
+</tr>
+<tr>
+<td><code>scrollV</code></td>
+<td>number</td>
+<td><code>0</code></td>
+<td>UV units per second along V, toward the bottom of the image.</td>
+</tr>
+<tr>
+<td><code>firstFrame</code></td>
+<td>integer</td>
+<td><code>0</code></td>
+<td>The cell the run starts at, counted from 0 in reading order. Within the sheet, and <code>firstFrame + frameCount</code> at most <code>columns * rows</code>.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="texture_clips"><code>texture_clips</code></h2>
+<p>A frame sheet with named clips cut out of it, one of which plays on the entity. <code>texture_animation</code>
+loops one run on the GPU's clock; these are stepped on the CPU by <code>TextureClipSystem</code> from the scene's
+clock, so a game can switch clip by name (<code>TextureClips.play</code>), see when a one-shot clip has finished,
+and a paused game holds still. The system gives the entity a <code>TextureAnimation</code> that holds the cell
+now showing, so an entity should not also carry a <code>texture_animation</code>. <code>SceneTextureClips</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>columns</code></td>
+<td>integer</td>
+<td><code>1</code></td>
+<td>Frame-sheet columns. At least 1.</td>
+</tr>
+<tr>
+<td><code>rows</code></td>
+<td>integer</td>
+<td><code>1</code></td>
+<td>Frame-sheet rows. At least 1.</td>
+</tr>
+<tr>
+<td><code>clips</code></td>
+<td>object of clips</td>
+<td><code>{}</code></td>
+<td>The sheet's runs by name; each is described below.</td>
+</tr>
+<tr>
+<td><code>clip</code></td>
+<td>string</td>
+<td>the first listed</td>
+<td>The clip that plays when the scene loads. One of <code>clips</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>Each clip in <code>clips</code> is a <code>SceneTextureClip</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>firstFrame</code></td>
+<td>integer</td>
+<td><code>0</code></td>
+<td>The clip's first cell, counted from 0 in reading order from the top left.</td>
+</tr>
+<tr>
+<td><code>frameCount</code></td>
+<td>integer</td>
+<td><code>1</code></td>
+<td>Cells in the clip. At least 1, and <code>firstFrame + frameCount</code> at most <code>columns * rows</code>.</td>
+</tr>
+<tr>
+<td><code>framesPerSecond</code></td>
+<td>number</td>
+<td><code>12</code></td>
+<td>Playback rate. <code>0</code> holds the first cell.</td>
+</tr>
+<tr>
+<td><code>loop</code></td>
+<td>boolean</td>
+<td><code>true</code></td>
+<td>Whether the clip starts over when it ends. <code>false</code> holds its last cell.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="tone_mapping"><code>tone_mapping</code></h2>
+<p>How bright the lit scene is shown. At most one per node; the first found applies. <code>SceneToneMapping</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>exposure</code></td>
+<td>number</td>
+<td><code>1</code></td>
+<td>Multiplies the lit scene before tone mapping. 2 is one stop brighter. Finite and above 0.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="see-also">See also</h2>
+<ul>
+<li><a href="../scene-document-schema/">Scene document schema</a></li>
+<li><a href="../component-map/">Component map</a></li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../scene-document-schema/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Scene document schema">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Scene document schema
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../shader-document/" class="md-footer__link md-footer__link--next" aria-label="Next: Shader document">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Shader document
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.indexes", "navigation.top", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.tabs.link"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
