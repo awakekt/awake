@@ -65,6 +65,9 @@ free ambient_light.colorB | A colour channel: every value is accepted; nothing v
 free ambient_light.colorG | A colour channel: every value is accepted; nothing validates it.
 free ambient_light.colorR | A colour channel: every value is accepted; nothing validates it.
 free ambient_light.intensity | No validate() limits it; every value is accepted today.
+free canvas_element.followOffset.x | Any world offset from the followed node is valid.
+free canvas_element.followOffset.y | Any world offset from the followed node is valid.
+free canvas_element.followOffset.z | Any world offset from the followed node is valid.
 free canvas_element.offsetX | Any screen offset or z-order integer is valid.
 free canvas_element.offsetY | Any screen offset or z-order integer is valid.
 free canvas_element.order | Any screen offset or z-order integer is valid.

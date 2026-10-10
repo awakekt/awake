@@ -61,6 +61,12 @@ For a button the player holds down, read `isHeld` instead. For a joystick, read 
 | `text` | string | `""` | A `Text` element's content, or a `Button`'s label. |
 | `fontSize` | number (sp) | `18` | Size of `text`. |
 | `textAlign` | one of the nine anchor points | none | Where the text sits in the element. None keeps a `Text` at its top-left and a `Button`'s label centred. |
+| `follow` | string | `""` | A node to follow on screen. See [Follow a node](#follow-a-node). |
+| `followOffset` | vector | `{x: 0, y: 0, z: 0}` | A world-space offset from the followed node. |
+| `followBounds` | boolean | `false` | Cover the followed node's screen box instead of standing at its point. |
+| `layout` | object | none | Lay the children out in rows or columns. See [Lay out children](#lay-out-children). |
+| `grow` | number | `0` | In a laid-out parent, this element's share of the leftover space. |
+| `bind` | object | none | Game state the element shows without code. See [Show game state](#show-game-state). |
 | `color` | `#RRGGBB` or `#RRGGBBAA` | `#FFFFFF` | Text colour, a `Bar`'s fill, or a `Joystick`'s knob. |
 | `background` | `#RRGGBB` or `#RRGGBBAA` | `#00000000` | Fill behind the element. A joystick's pad. |
 | `value` | number, 0 to 1 | `1` | A `Bar`'s fill fraction. |
@@ -177,6 +183,92 @@ above is the parent.
 
 A child is laid out within its parent, so one that would stick out past the parent's edge is
 narrowed to fit.
+
+## Show game state
+
+An element's `bind` reads the components of a node each frame, so a health bar or a score follows
+the game without code. A field is `component.field`: the component's name in the scene document,
+then its field, with dots for a field inside another. A game's own components bind the same way
+once its capability registers them.
+
+```json title="A health bar and its label"
+[
+  { "component": "canvas_element", "kind": "Bar", "width": 120, "height": 12, "color": "#E5484D",
+    "bind": { "node": "Player", "value": "health.current", "max": "health.max" } },
+  { "component": "canvas_element", "text": "", "textAlign": "Center", "width": 120, "height": 12,
+    "bind": { "node": "Player", "text": "HP {health.current}/{health.max}" } }
+]
+```
+
+| Field | What it does |
+| --- | --- |
+| `node` | The name of the node whose components are read. |
+| `value` | A `Bar`'s fill: this field, divided by `max`. |
+| `max` | A field, or a number such as `"100"`. Left out, `value` is already a share from 0 to 1. |
+| `text` | The words of a `Text` or `Button`, each `{component.field}` replaced by its value. Whole numbers show without a fraction, others to one decimal place. |
+
+While a binding reads nothing, because no node has the name or its component has no such field, the
+element shows its own `value` and `text`, and the log says so once. A Bar does the same for a value
+that is not a finite number and for a `max` that is not above 0; a text shows such a value as it is,
+`NaN` or `Infinity`.
+
+## Lay out children
+
+A parent with a `layout` places its children itself, as a CSS flexbox does: an action bar of slots,
+a strip of buff icons that wraps, a party list. Each child keeps its `width` and `height`, ignores
+its `anchor` and offsets, and runs in its `order`. Add or remove children at run time and the rest
+move to make room.
+
+```json title="An action bar of ten slots"
+{ "name": "ActionBar", "components": [ { "component": "canvas_element", "kind": "Panel",
+    "anchor": "BottomCenter", "offsetY": 12, "width": 364, "height": 40,
+    "layout": { "direction": "Row", "gap": 4, "padding": 4, "align": "Center" } } ],
+  "children": [
+    { "name": "Slot1", "components": [ { "component": "canvas_element", "kind": "Image", "order": 0,
+        "width": 32, "height": 32, "style": { "image": { "path": "ui/slot.png", "pixelated": true } } } ] }
+  ] }
+```
+
+| Field | Values | Default | What it does |
+| --- | --- | --- | --- |
+| `direction` | `Row` · `RowReverse` · `Column` · `ColumnReverse` | `Row` | The axis the children run along, and which way. |
+| `wrap` | boolean | `false` | Start a new line for children that do not fit. Wrapped lines stay packed at the start. |
+| `gap` | number (dp) | `0` | The space between children, and between lines. |
+| `padding` | number (dp) | `0` | The space between the parent's edge and its children. |
+| `justify` | `Start` · `Center` · `End` · `SpaceBetween` · `SpaceAround` · `SpaceEvenly` | `Start` | How a line spreads its leftover space. |
+| `align` | `Start` · `Center` · `End` · `Stretch` | `Start` | Where children sit across the line. A single line spans the whole parent. |
+
+A child's `grow` gives it a share of its line's leftover space, so one slot can fill the rest of a
+row. A child keeps its size even when the line is too short for it, so children that do not fit, or
+padding wider than the parent, spill past its edge; nothing clips them. A child that follows a node
+stands on its node instead of in the line. A parent without a `layout` anchors its children as
+before.
+
+## Follow a node
+
+An element with a `follow` stands where that node is drawn and moves with it: a name over a
+character, a health bar over an enemy. Its `anchor` is the point of the element that sits on the
+node's screen position, and `offsetX` and `offsetY` nudge it inward from there, as they do from a
+screen edge; `followOffset` moves the point in the world first, such as two metres up to clear a
+head. It hides while the node is behind the camera, and when no node has that name; when several
+share it, the first is followed. Unlike at a screen edge, a negative offset moves the element outward
+from the point.
+
+```json title="A name plate above a character"
+{ "component": "canvas_element", "text": "Harbor Guard", "follow": "Guard",
+  "followOffset": { "x": 0, "y": 2.2, "z": 0 }, "anchor": "BottomCenter", "offsetX": 0, "offsetY": 0,
+  "width": 120, "height": 18, "textAlign": "Center",
+  "style": { "textOutline": { "color": "#000000", "width": 1 } } }
+```
+
+With `followBounds`, the element instead covers the screen rectangle around the node's meshes and
+everything under it, whatever its own size. Give it children anchored to its corners, and a marker
+frames whatever is selected at any distance. The box is the meshes' resting shape, so it does not
+follow an animated character's limbs; a node with no mesh bounds falls back to its point.
+
+A follower is placed against the screen wherever it sits in the scene, so it can live on a child of
+the character it follows. The runtime projects through the camera it draws with; a host that draws
+`SceneCanvas` itself passes a `CanvasProjector`.
 
 ## Scale the UI
 

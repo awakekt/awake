@@ -41,8 +41,10 @@ import com.awakekt.awake.render.renderer.RenderFrameStats
 import com.awakekt.awake.render.renderer.RenderViewport
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.texture.TextureAsset
+import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.canvas.CanvasElement
 import com.awakekt.awake.scene.canvas.SceneCanvas
+import com.awakekt.awake.scene.canvas.globalCanvasBindings
 import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.core.transform.TransformSystem
@@ -120,6 +122,12 @@ class SceneAppLifecycleRuntime internal constructor(
 
     /** The scene canvas's UI scale: 2 draws every element, its text and its images at twice the size. */
     var canvasScale: Float = 1f
+
+    /**
+     * The scene component bindings a canvas element's `bind` reads fields through: those of the
+     * registry the scene was loaded with. Null uses every globally registered binding.
+     */
+    var canvasBindings: List<SceneComponentBinding<*, *>>? = null
 
     /**
      * Whether this runtime draws the scene's canvas over its whole UI. A host that shows the game in
@@ -337,7 +345,14 @@ class SceneAppLifecycleRuntime internal constructor(
                 LocalFrameStats provides frameStats(),
             ) {
                 // Under the app's own UI, so a menu or pause screen covers the game's canvas.
-                if (hasCanvas) SceneCanvas(world, showTouchControls = showTouchControls, images = canvasImages, scale = canvasScale)
+                if (hasCanvas) SceneCanvas(
+                        world,
+                        showTouchControls = showTouchControls,
+                        images = canvasImages,
+                        scale = canvasScale,
+                        projector = canvasProjector,
+                        bindings = canvasBindings ?: globalBindings,
+                    )
                 if (content != null) content()
             }
         }
@@ -354,6 +369,11 @@ class SceneAppLifecycleRuntime internal constructor(
     }
 
     override fun resize(width: Float, height: Float) = Unit
+
+    // Read at the first frame that draws a canvas, once a project has registered its components.
+    private val globalBindings by lazy { globalCanvasBindings() }
+
+    private val canvasProjector by lazy { SceneCanvasProjector(world, renderer.clipSpace) { session.schedule.renderSystem?.cameraViewport } }
 
     internal val spriteBatch by lazy { SpriteRenderBatch(renderer) { requireAssetLibrary().requireTexture(it) } }
     internal val spriteFeature by lazy { SceneSpriteRenderFeature(spriteBatch) }
