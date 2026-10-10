@@ -42,6 +42,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          # The tags, from which the build derives this commit's version (see "Name the local version").
+          fetch-depth: 0
 
       # The templates' release builds are shrunk only from awakekt/awake-template#17 and
       # awakekt/awake-project-template#14. While those are open, use their branch; once merged and
