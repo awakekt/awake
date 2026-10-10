@@ -115,7 +115,6 @@ class OpaqueRenderFeature<C : RenderFrameContext>(
             recorder = recorder,
             primaryPipeline = primaryPipeline,
             grouped = groupedDrawCalls,
-            lines = lines.lineDraw(context),
         )
         // Over the opaque draws, against the depth they wrote, and before anything blends over them.
         shared.recordEdges(recorder, edgeDrawCalls)
@@ -123,6 +122,9 @@ class OpaqueRenderFeature<C : RenderFrameContext>(
         // against opaque geometry already written, and blend over the colour it left behind.
         // A separate RenderPassSlot would put it after the UI, which paints over the scene.
         transparent.recordCommands(transparentDrawCalls, recorder)
+        // Last in the scene: debug lines are an overlay over every surface, a skeleton inside its
+        // skinned mesh included. Recorded earlier, a later pipeline group painted over them.
+        shared.recordLines(recorder, lines.lineDraw(context))
     }
 
     override fun destroy() = lines.destroy()

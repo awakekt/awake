@@ -12,7 +12,7 @@ import com.awakekt.awake.render.pipeline.BindingSemantic
 
 /**
  * The scene pass's geometry, written once for every backend: the primary pipeline's draws first,
- * then debug lines, then every other resolved pipeline's group. Body is Vulkan's
+ * then every other resolved pipeline's group, then debug lines over all of it. Body is Vulkan's
  * `OpaqueRenderFeature`/`recordDrawCalls` pair, reached through [CommandRecorder] instead of
  * `VkCommandBuffer` calls -- WebGPU's own equivalent loop collapsed into the same code.
  *
@@ -28,8 +28,9 @@ class SharedOpaqueRenderFeature {
      * Records draw commands for all opaque pipeline groups and optional world-space debug lines.
      *
      * Groups are keyed by resolved pipeline ([grouped]). If the primary pipeline group has non-empty
-     * draws, [primaryPipeline] is bound first, followed by [lines] (if present and non-empty), and
-     * finally all remaining format groups.
+     * draws, [primaryPipeline] is bound first, followed by all remaining format groups, and finally
+     * [lines] (if present and non-empty). Lines are an overlay: drawn before a group, that group
+     * painted over them where the two overlap, so a skinned mesh hid its own skeleton.
      *
      * @param recorder The command recorder to record GPU commands into.
      * @param primaryPipeline The primary pipeline handle for default format geometry.
@@ -53,16 +54,26 @@ class SharedOpaqueRenderFeature {
             }
         }
 
-        if (lines != null && lines.elementCount > 0) {
-            recorder.bindPipeline(lines.pipeline)
-            recordDraws(recorder, lines)
-        }
-
         grouped.forEach { (pipeline, group) ->
             if (pipeline === primaryPipeline || group.isEmpty()) return@forEach
             recorder.bindPipeline(pipeline)
             recordDraws(recorder, group)
         }
+
+        recordLines(recorder, lines)
+    }
+
+    /**
+     * Records world-space debug [lines], when there are any, with their own pipeline. An overlay:
+     * the caller records it after every surface it should show over.
+     *
+     * @param recorder The command recorder to record GPU commands into.
+     * @param lines The debug line draw, or null for none.
+     */
+    fun recordLines(recorder: CommandRecorder, lines: PreparedDraw?) {
+        if (lines == null || lines.elementCount <= 0) return
+        recorder.bindPipeline(lines.pipeline)
+        recordDraws(recorder, lines)
     }
 
     /**

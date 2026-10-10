@@ -289,6 +289,7 @@ public final class com/awakekt/awake/render/passes/SharedOpaqueRenderFeature {
 	public final fun recordDraws (Lcom/awakekt/awake/render/command/CommandRecorder;Lcom/awakekt/awake/render/command/PreparedDraw;)V
 	public final fun recordDraws (Lcom/awakekt/awake/render/command/CommandRecorder;Ljava/util/List;)V
 	public final fun recordEdges (Lcom/awakekt/awake/render/command/CommandRecorder;Ljava/util/List;)V
+	public final fun recordLines (Lcom/awakekt/awake/render/command/CommandRecorder;Lcom/awakekt/awake/render/command/PreparedDraw;)V
 }
 
 public final class com/awakekt/awake/render/passes/SharedSkyboxRenderFeature {
