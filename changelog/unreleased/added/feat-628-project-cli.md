@@ -1,0 +1,6 @@
+- **`awake`, a command line for a project's files** (`awake:project:cli`). It validates a project and reads and edits its scenes with no Studio and no GPU, through the scene codec and validation a played project uses. `installDist` builds an `awake` script.
+  - `awake validate` checks the manifest, the entry scene and every scene, naming each finding's file and node path. Components nothing installed provides, and tags the manifest's `tags` list leaves out, are warnings.
+  - `awake scene list` and `scene show` list the scenes and print one's nodes and components.
+  - `awake scene set`, `add-node`, `remove-node`, `add-component` and `remove-component` edit a scene. An edit is refused, and the file left alone, when a value has the wrong type, the component has no such field, or the edit adds a validation error. `--dry-run` reports the change without writing it.
+  - An edit changes only what it sets: a hand-written scene keeps its layout, its old component names and the fields it leaves at their defaults, and a one-line scene stays on one line.
+  - Every command takes `--json`, and exits 0 on success, 1 on findings or a refused edit, and 2 for a wrong command line.

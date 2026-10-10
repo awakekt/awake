@@ -26,6 +26,8 @@ apiValidation {
         "benchmark", "generator", "android-native", "font-atlas-generator",
         // Every entry here is a sample or a build tool, except the two explained below.
         "tailwind-generator", "testing",
+        // The `awake` command line, an application rather than a library.
+        "cli",
         // Known limit: `webgpu` is published but unvalidated, because its `jvmToolchain(25)` (needed
         // for the FFM API) emits class-file major 69 and binary-compatibility-validator 0.17.0
         // bundles an ASM that cannot read it -- `desktopApiBuild` dies with "Unsupported class
