@@ -6,12 +6,14 @@
 package com.awakekt.awake.ui.shadcn
 
 import com.awakekt.awake.compose.foundation.layout.fillMaxWidth
+import com.awakekt.awake.compose.foundation.layout.width
 import com.awakekt.awake.compose.testing.ComposeComponentFrame
 import com.awakekt.awake.compose.testing.ComposeTestBounds
 import com.awakekt.awake.compose.testing.composeTestSession
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.platform.FrameInput
 import com.awakekt.awake.compose.ui.semantics.testTag
+import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.ui.shadcn.components.ShadcnRangeSlider
 import com.awakekt.awake.ui.shadcn.components.ShadcnResizablePanel
@@ -32,20 +34,40 @@ import kotlin.test.assertTrue
 class ShadcnDragTest {
 
     @Test
-    fun draggingTheSliderChangesItsValue() = dragSliderAt(density = 1f)
+    fun draggingTheSliderChangesItsValue() {
+        dragSliderAt(density = 1f)
+    }
 
     /** The app runs at 2x; a delta scaled once too often or not at all only shows up here. */
     @Test
-    fun draggingTheSliderChangesItsValueAtTwoTimesDensity() = dragSliderAt(density = 2f)
+    fun draggingTheSliderChangesItsValueAtTwoTimesDensity() {
+        dragSliderAt(density = 2f)
+    }
 
-    private fun dragSliderAt(density: Float) {
+    /** A slider given no width fills the one it is allowed, so it can be dragged; a caller's own width still wins. */
+    @Test
+    fun aSliderGivenNoWidthFillsItsParentAndDrags() {
+        val bounds = dragSliderAt(density = 1f, modifier = Modifier.testTag("slider"))
+        assertEquals(WIDTH, bounds.width, "as wide as the session")
+
+        val narrow = composeTestSession(WIDTH, HEIGHT) {
+            provideShadcnTheme(ShadcnThemeValues(ShadcnTheme)) {
+                ShadcnSlider(value = 0.5f, modifier = Modifier.width(120.dp).testTag("narrow"))
+                ShadcnRangeSlider(start = 0.2f, end = 0.8f, modifier = Modifier.testTag("range"))
+            }
+        }.frame()
+        assertEquals(120, narrow.onNodeWithTag("narrow").getBoundsInRoot().width, "the caller's width wins")
+        assertEquals(WIDTH, narrow.onNodeWithTag("range").getBoundsInRoot().width, "a range slider fills too")
+    }
+
+    private fun dragSliderAt(density: Float, modifier: Modifier = Modifier.fillMaxWidth().testTag("slider")): ComposeTestBounds {
         var value = 0.5f
         var finished = 0
         val session = composeTestSession(WIDTH, HEIGHT, density = density) {
             provideShadcnTheme(ShadcnThemeValues(ShadcnTheme)) {
                 ShadcnSlider(
                     value = value,
-                    modifier = Modifier.fillMaxWidth().testTag("slider"),
+                    modifier = modifier,
                     onValueChange = { value = it },
                     onValueChangeFinished = { finished++ },
                 )
@@ -72,6 +94,7 @@ class ShadcnDragTest {
             "at density $density, dragging right by ${STEPS * STEP_PX}px left the value at $value (was $before)",
         )
         assertEquals(1, finished, "at density $density, a drag should commit once on release")
+        return bounds
     }
 
     @Test

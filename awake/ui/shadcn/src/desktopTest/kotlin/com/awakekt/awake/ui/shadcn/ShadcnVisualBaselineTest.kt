@@ -61,6 +61,14 @@ class ShadcnVisualBaselineTest {
         ShadcnSlider(value = 0.4f, modifier = Modifier.fillMaxWidth().padding(all = 12.dp))
     }
 
+    /** Given no width, a slider fills its column, as upstream's `w-full` does. */
+    @Test
+    fun sliderWithNoWidth() = baseline("slider-no-width", 320, 48) {
+        Column(Modifier.padding(all = 12.dp)) {
+            ShadcnSlider(value = 0.4f)
+        }
+    }
+
     @Test
     fun rangeSlider() = baseline("slider-range", 320, 48) {
         ShadcnRangeSlider(
