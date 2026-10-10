@@ -1,5 +1,5 @@
-# R8 rules every app that depends on these bindings gets, so a shrunk release still finds what
-# libawake-vulkan reaches by name. JniKeepRulesTest fails when its C++ names a class no rule here
+# Keep rules every app that depends on these bindings gets, so a shrunk release still finds what
+# libawake-vulkan reaches by name. verifyKeepRules fails when its C++ names a class no rule here
 # keeps.
 
 # The bindings' own types: the native code finds them with FindClass, reads their fields with

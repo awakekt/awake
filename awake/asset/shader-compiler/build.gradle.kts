@@ -110,11 +110,6 @@ kotlin {
 
     android {
         namespace = "com.awakekt.awake.asset.shadercompiler"
-        // Shipped in the AAR, so an app that shrinks its release keeps what the native code reaches by name.
-        optimization {
-            consumerKeepRules.publish = true
-            consumerKeepRules.file("consumer-rules.pro")
-        }
     }
 
     // Same generated-def cinterop shape as jolt: linker flags are build-directory paths known

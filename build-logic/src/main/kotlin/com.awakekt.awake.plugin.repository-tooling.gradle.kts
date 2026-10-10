@@ -6,6 +6,7 @@
 import com.awakekt.awake.build.tasks.AwakeRepositoryVerificationTask
 import com.awakekt.awake.build.tasks.VerifyCapabilityLayeringTask
 import com.awakekt.awake.build.tasks.VerifyHeadlessRuntimeTask
+import com.awakekt.awake.build.tasks.VerifyKeepRulesTask
 import com.awakekt.awake.build.tasks.VerifyPublishedArtifactsTask
 import com.awakekt.awake.build.tasks.WaitForVulkanCentralTask
 import org.gradle.api.artifacts.ProjectDependency
@@ -37,6 +38,14 @@ val verifyHeadlessRuntime = tasks.register<VerifyHeadlessRuntimeTask>("verifyHea
     forbiddenModulePrefixes.set(listOf(":awake:backend", ":awake:engine:window"))
 }
 
+val verifyKeepRules = tasks.register<VerifyKeepRulesTask>("verifyKeepRules") {
+    group = "awake verification"
+    description = "Reject a class Awake's native code finds by name that no consumer keep rule keeps."
+    moduleDirectories.set(
+        rootProject.allprojects.filter { it.path.startsWith(":awake:") }.associate { it.path to it.projectDir.absolutePath },
+    )
+}
+
 // Read once every module has been configured, so a dependency a convention plugin or an afterEvaluate block
 // adds is seen as well as one in the build file. Plain values rather than a provider over the projects, so
 // the task keeps working with the configuration cache.
@@ -57,7 +66,7 @@ gradle.projectsEvaluated {
 tasks.register<AwakeRepositoryVerificationTask>("awakeVerify") {
     group = "awake verification"
     description = "Run Awake's repository, documentation, publication, and ownership gates."
-    dependsOn(verifyCapabilityLayering, verifyHeadlessRuntime)
+    dependsOn(verifyCapabilityLayering, verifyHeadlessRuntime, verifyKeepRules)
 }
 
 tasks.register<VerifyPublishedArtifactsTask>("verifyPublishedArtifacts") {

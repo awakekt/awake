@@ -41,11 +41,6 @@ dokka {
 kotlin {
     android {
         namespace = "com.awakekt.awake.vulkan"
-        // Shipped in the AAR, so an app that shrinks its release keeps what the native code reaches by name.
-        optimization {
-            consumerKeepRules.publish = true
-            consumerKeepRules.file("consumer-rules.pro")
-        }
     }
 
     // See :awake:backend:vulkan's build.gradle.kts history for the full MoltenVK rationale
