@@ -229,204 +229,108 @@ open class VulkanEngine(
      */
     private suspend fun buildDepthPrePassFeature(target: DepthTarget? = depthTarget): DepthPrePassFeature? = target?.let { map ->
         withPipelineLoadContext("depth-pre-pass") {
-            val shaderSet = requireNotNull(plan.depthPrePassShaderSet)
-            val depthPipeline = DepthOnlyPipeline(
-                graphicsDevice,
-                map.renderPass,
-                pipelineDescriptorSetLayout,
-                loadShaderPair(shaderSet),
-                // Same vertex layout as the primary pipeline -- it draws the same meshes.
-                vertexFormat,
-                map.size,
-                shaderSet.vulkan.entryPoint(ShaderStage.VERTEX),
-                shaderSet.vulkan.entryPoint(ShaderStage.FRAGMENT),
-                cascadeCount = map.layers,
-                framesInFlight = MAX_FRAMES_IN_FLIGHT,
-            )
-            val skinned = plan.depthPrePassVariants[DepthCasterKind.Skinned]?.let { variant ->
-                DepthOnlyPipeline(
-                    graphicsDevice,
-                    map.renderPass,
-                    pipelineDescriptorSetLayout,
-                    loadShaderPair(variant),
-                    VertexFormat.PositionNormalColorSkin,
-                    map.size,
-                    variant.vulkan.entryPoint(ShaderStage.VERTEX),
-                    variant.vulkan.entryPoint(ShaderStage.FRAGMENT),
-                    cascadeCount = map.layers,
-                    framesInFlight = MAX_FRAMES_IN_FLIGHT,
-                )
-            }
-            val instanced = plan.depthPrePassVariants[DepthCasterKind.Instanced]?.let { variant ->
-                DepthOnlyPipeline(
-                    graphicsDevice,
-                    map.renderPass,
-                    pipelineDescriptorSetLayout,
-                    loadShaderPair(variant),
-                    VertexFormat.PositionNormalColor,
-                    map.size,
-                    variant.vulkan.entryPoint(ShaderStage.VERTEX),
-                    variant.vulkan.entryPoint(ShaderStage.FRAGMENT),
-                    cascadeCount = map.layers,
-                    framesInFlight = MAX_FRAMES_IN_FLIGHT,
-                    variant = PipelineVariant.Instanced,
-                )
-            }
-            val skinnedInstanced = plan.depthPrePassVariants[DepthCasterKind.SkinnedInstanced]
-                ?.let { variant ->
-                    val palette = requireNotNull(skinnedInstanceDescriptorSetLayout) {
-                        "Skinned-instanced depth requires the joint-palette descriptor layout."
-                    }
-                    DepthOnlyPipeline(
-                        graphicsDevice,
-                        map.renderPass,
-                        pipelineDescriptorSetLayout,
-                        loadShaderPair(variant),
-                        VertexFormat.PositionNormalColorSkin,
-                        map.size,
-                        variant.vulkan.entryPoint(ShaderStage.VERTEX),
-                        variant.vulkan.entryPoint(ShaderStage.FRAGMENT),
-                        cascadeCount = map.layers,
-                        framesInFlight = MAX_FRAMES_IN_FLIGHT,
-                        variant = PipelineVariant.Instanced,
-                        extraDescriptorSetLayouts = listOf(emptySetLayout(), palette),
-                    )
-                }
-            val particle = plan.depthPrePassVariants[DepthCasterKind.Particle]?.let { variant ->
-                DepthOnlyPipeline(
-                    graphicsDevice,
-                    map.renderPass,
-                    pipelineDescriptorSetLayout,
-                    loadShaderPair(variant),
-                    VertexFormat.PositionUv,
-                    map.size,
-                    variant.vulkan.entryPoint(ShaderStage.VERTEX),
-                    variant.vulkan.entryPoint(ShaderStage.FRAGMENT),
-                    cascadeCount = map.layers,
-                    framesInFlight = MAX_FRAMES_IN_FLIGHT,
-                    variant = PipelineVariant.AlphaBlendedParticle,
-                )
-            }
-            val formatPipelines = buildMap {
-                plan.scenePipelines
-                    .filter { it.castsWithPrimaryDepthShader(vertexFormat) }
-                    .forEach { scenePipeline ->
-                        put(
-                            scenePipeline.vertexFormat,
-                            DepthOnlyPipeline(
-                                graphicsDevice,
-                                map.renderPass,
-                                pipelineDescriptorSetLayout,
-                                loadShaderPair(shaderSet),
-                                scenePipeline.vertexFormat,
-                                map.size,
-                                shaderSet.vulkan.entryPoint(ShaderStage.VERTEX),
-                                shaderSet.vulkan.entryPoint(ShaderStage.FRAGMENT),
-                                cascadeCount = map.layers,
-                                framesInFlight = MAX_FRAMES_IN_FLIGHT,
-                            ),
-                        )
-                    }
-                // A skinned pipeline casts through its own depth shader, which reads its joint palette.
-                plan.scenePipelines.forEach { scenePipeline ->
-                    val shaders = scenePipeline.skinnedDepthShaders() ?: return@forEach
-                    put(
-                        scenePipeline.vertexFormat,
-                        DepthOnlyPipeline(
-                            graphicsDevice,
-                            map.renderPass,
-                            pipelineDescriptorSetLayout,
-                            loadShaderPair(shaders),
-                            scenePipeline.vertexFormat,
-                            map.size,
-                            shaders.vulkan.entryPoint(ShaderStage.VERTEX),
-                            shaders.vulkan.entryPoint(ShaderStage.FRAGMENT),
-                            cascadeCount = map.layers,
-                            framesInFlight = MAX_FRAMES_IN_FLIGHT,
-                        ),
-                    )
-                }
-            }
-            val keyedPipelines = buildMap {
-                plan.depthPrePassKeyedVariants.forEach { (key, variant) ->
-                    val (format, pipelineVariant) = key.keyedCasterLayout() ?: return@forEach
-                    put(
-                        key,
-                        DepthOnlyPipeline(
-                            graphicsDevice,
-                            map.renderPass,
-                            pipelineDescriptorSetLayout,
-                            loadShaderPair(variant),
-                            format,
-                            map.size,
-                            variant.vulkan.entryPoint(ShaderStage.VERTEX),
-                            variant.vulkan.entryPoint(ShaderStage.FRAGMENT),
-                            cascadeCount = map.layers,
-                            framesInFlight = MAX_FRAMES_IN_FLIGHT,
-                            variant = pipelineVariant,
-                        ),
-                    )
-                }
-            }
-            // Each instanced scene pipeline past the primary format casts through its own depth shader.
-            val instancedFormatPipelines = plan.scenePipelines
-                .filter { it.key is PipelineKey.InstancedFormat }
-                .mapNotNull { scenePipeline ->
-                    val shaders = scenePipeline.depthShaders ?: return@mapNotNull null
-                    scenePipeline.vertexFormat to DepthOnlyPipeline(
-                        graphicsDevice,
-                        map.renderPass,
-                        pipelineDescriptorSetLayout,
-                        loadShaderPair(shaders),
-                        scenePipeline.vertexFormat,
-                        map.size,
-                        shaders.vulkan.entryPoint(ShaderStage.VERTEX),
-                        shaders.vulkan.entryPoint(ShaderStage.FRAGMENT),
-                        cascadeCount = map.layers,
-                        framesInFlight = MAX_FRAMES_IN_FLIGHT,
-                        variant = PipelineVariant.Instanced,
-                    )
-                }
-                .toMap()
-            DepthPrePassFeature(
-                map,
-                depthPipeline,
-                buildMap {
-                    instanced?.let { put(DepthCasterKind.Instanced, it) }
-                    skinned?.let { put(DepthCasterKind.Skinned, it) }
-                    skinnedInstanced?.let { put(DepthCasterKind.SkinnedInstanced, it) }
-                    particle?.let { put(DepthCasterKind.Particle, it) }
-                },
-                formatPipelines,
-                keyedPipelines,
-                instancedFormatPipelines,
-            )
+            casterDepthPass(map, requireNotNull(plan.depthPrePassShaderSet), shadowBias = true)
         }
     }
 
     /**
-     * The camera-space counterpart of [buildDepthPrePassFeature].
+     * A depth pass into [map] over every kind of caster the plan has a depth shader for:
+     * [primaryShaders] for the primary format, the plan's depth variants for instanced, skinned,
+     * particle, per-format and masked casters. The shadow cascades and the camera's scene depth are
+     * both this pass: a caster missing from the scene depth reads, to every effect that samples it,
+     * as whatever lies behind it, as batched meshes did to depth fog.
      *
-     * Identical apart from which target and shader set it uses -- the pass draws the same meshes
-     * with the same vertex layout into the same kind of target, and only the matrix inside the
-     * shader differs. See `SceneDepthShader`.
+     * @param map The target, one pass matrix per layer.
+     * @param primaryShaders The primary format's depth shader.
+     * @param shadowBias Whether the pipelines bias depth against shadow acne. The scene depth must
+     *   not: biased, it sits behind the surface the scene pass drew.
+     */
+    private suspend fun casterDepthPass(map: DepthTarget, primaryShaders: ShaderSet, shadowBias: Boolean): DepthPrePassFeature {
+        suspend fun pipeline(
+            shaders: ShaderSet,
+            format: VertexFormat,
+            variant: PipelineVariant = PipelineVariant.Opaque,
+            extraLayouts: List<DescriptorSetLayoutHandle> = emptyList(),
+        ) = DepthOnlyPipeline(
+            graphicsDevice,
+            map.renderPass,
+            pipelineDescriptorSetLayout,
+            loadShaderPair(shaders),
+            format,
+            map.size,
+            shaders.vulkan.entryPoint(ShaderStage.VERTEX),
+            shaders.vulkan.entryPoint(ShaderStage.FRAGMENT),
+            cascadeCount = map.layers,
+            framesInFlight = MAX_FRAMES_IN_FLIGHT,
+            variant = variant,
+            extraDescriptorSetLayouts = extraLayouts,
+            shadowBias = shadowBias,
+        )
+
+        val variants = plan.depthPrePassVariants
+        val casterShaders = plan.depthPrePassShaderSet
+        val formatPipelines = buildMap {
+            // Every other opaque scene format casts through the same shader, when the plan has one.
+            if (casterShaders != null) {
+                plan.scenePipelines
+                    .filter { it.castsWithPrimaryDepthShader(vertexFormat) }
+                    .forEach { put(it.vertexFormat, pipeline(casterShaders, it.vertexFormat)) }
+            }
+            // A skinned pipeline casts through its own depth shader, which reads its joint palette.
+            plan.scenePipelines.forEach { scenePipeline ->
+                val shaders = scenePipeline.skinnedDepthShaders() ?: return@forEach
+                put(scenePipeline.vertexFormat, pipeline(shaders, scenePipeline.vertexFormat))
+            }
+        }
+        val keyedPipelines = buildMap {
+            plan.depthPrePassKeyedVariants.forEach { (key, variant) ->
+                val (format, pipelineVariant) = key.keyedCasterLayout() ?: return@forEach
+                put(key, pipeline(variant, format, pipelineVariant))
+            }
+        }
+        // Each instanced scene pipeline past the primary format casts through its own depth shader.
+        val instancedFormatPipelines = buildMap {
+            plan.scenePipelines.filter { it.key is PipelineKey.InstancedFormat }.forEach { scenePipeline ->
+                val shaders = scenePipeline.depthShaders ?: return@forEach
+                put(scenePipeline.vertexFormat, pipeline(shaders, scenePipeline.vertexFormat, PipelineVariant.Instanced))
+            }
+        }
+        val variantPipelines = buildMap {
+            variants[DepthCasterKind.Instanced]?.let {
+                put(DepthCasterKind.Instanced, pipeline(it, VertexFormat.PositionNormalColor, PipelineVariant.Instanced))
+            }
+            variants[DepthCasterKind.Skinned]?.let { put(DepthCasterKind.Skinned, pipeline(it, VertexFormat.PositionNormalColorSkin)) }
+            variants[DepthCasterKind.SkinnedInstanced]?.let {
+                val palette = requireNotNull(skinnedInstanceDescriptorSetLayout) {
+                    "Skinned-instanced depth requires the joint-palette descriptor layout."
+                }
+                put(
+                    DepthCasterKind.SkinnedInstanced,
+                    pipeline(it, VertexFormat.PositionNormalColorSkin, PipelineVariant.Instanced, listOf(emptySetLayout(), palette)),
+                )
+            }
+            variants[DepthCasterKind.Particle]?.let {
+                put(DepthCasterKind.Particle, pipeline(it, VertexFormat.PositionUv, PipelineVariant.AlphaBlendedParticle))
+            }
+        }
+        return DepthPrePassFeature(
+            map,
+            // Same vertex layout as the primary pipeline -- it draws the same meshes.
+            pipeline(primaryShaders, vertexFormat),
+            variantPipelines,
+            formatPipelines,
+            keyedPipelines,
+            instancedFormatPipelines,
+        )
+    }
+
+    /**
+     * The camera-space counterpart of [buildDepthPrePassFeature]: the same caster pipelines into its
+     * own target, with `SceneDepthShader` for the primary format and no shadow bias.
      */
     private suspend fun buildSceneDepthFeature(): DepthPrePassFeature? = sceneDepthTarget?.let { map ->
         withPipelineLoadContext("scene-depth") {
-            val shaderSet = requireNotNull(plan.sceneDepthShaderSet)
-            val depthPipeline = DepthOnlyPipeline(
-                graphicsDevice,
-                map.renderPass,
-                pipelineDescriptorSetLayout,
-                loadShaderPair(shaderSet),
-                vertexFormat,
-                map.size,
-                shaderSet.vulkan.entryPoint(ShaderStage.VERTEX),
-                shaderSet.vulkan.entryPoint(ShaderStage.FRAGMENT),
-                cascadeCount = map.layers,
-                framesInFlight = MAX_FRAMES_IN_FLIGHT,
-            )
-            DepthPrePassFeature(map, depthPipeline)
+            casterDepthPass(map, requireNotNull(plan.sceneDepthShaderSet), shadowBias = false)
         }
     }
 

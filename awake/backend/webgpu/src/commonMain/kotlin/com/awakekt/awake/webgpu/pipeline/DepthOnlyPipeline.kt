@@ -75,6 +75,11 @@ class DepthOnlyPipeline(
     /** Another pipeline's group-0 layout to use as this one's, so that pipeline's bind group
      * binds here unchanged; null builds group 0 from [bindingsByGroup]. */
     groupZeroLayout: GPUBindGroupLayout? = null,
+    /**
+     * Whether a pipeline with a cascade block biases its depth against shadow acne. The scene-depth
+     * pass places its casters by a pass matrix too, but feeds raw depth to depth fog: it passes false.
+     */
+    shadowBias: Boolean = true,
 ) {
     /** The colorless `Depth32Float` render pipeline built from the caller's shader. */
     val pipeline: GPURenderPipeline
@@ -275,8 +280,8 @@ class DepthOnlyPipeline(
                     depthCompare = GPUCompareFunction.LessEqual,
                     stencilFront = StencilFaceState(),
                     stencilBack = StencilFaceState(),
-                    depthBias = if (hasCascadeBlock) SHADOW_DEPTH_BIAS_CONSTANT.toInt() else 0,
-                    depthBiasSlopeScale = if (hasCascadeBlock) SHADOW_DEPTH_BIAS_SLOPE else 0f,
+                    depthBias = if (hasCascadeBlock && shadowBias) SHADOW_DEPTH_BIAS_CONSTANT.toInt() else 0,
+                    depthBiasSlopeScale = if (hasCascadeBlock && shadowBias) SHADOW_DEPTH_BIAS_SLOPE else 0f,
                 ),
             ),
         )

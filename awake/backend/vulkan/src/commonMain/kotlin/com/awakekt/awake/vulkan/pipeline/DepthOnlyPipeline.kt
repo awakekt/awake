@@ -93,6 +93,11 @@ class DepthOnlyPipeline(
      */
     val frontFace: FrontFace = FrontFace.CounterClockwise,
     extraDescriptorSetLayouts: List<DescriptorSetLayoutHandle> = emptyList(),
+    /**
+     * Whether a pipeline with a cascade block biases its depth against shadow acne. The scene-depth
+     * pass places its casters by a pass matrix too, but feeds raw depth to depth fog: it passes false.
+     */
+    shadowBias: Boolean = true,
 ) : VulkanPipelineHandle {
     private val device = graphicsDevice.device
 
@@ -261,9 +266,9 @@ class DepthOnlyPipeline(
                         FrontFace.Clockwise -> VkFrontFace.VK_FRONT_FACE_CLOCKWISE
                     },
                     lineWidth = 1f,
-                    depthBiasEnable = cascadeCount > 0,
-                    depthBiasConstantFactor = if (cascadeCount > 0) SHADOW_DEPTH_BIAS_CONSTANT else 0f,
-                    depthBiasSlopeFactor = if (cascadeCount > 0) SHADOW_DEPTH_BIAS_SLOPE else 0f,
+                    depthBiasEnable = cascadeCount > 0 && shadowBias,
+                    depthBiasConstantFactor = if (cascadeCount > 0 && shadowBias) SHADOW_DEPTH_BIAS_CONSTANT else 0f,
+                    depthBiasSlopeFactor = if (cascadeCount > 0 && shadowBias) SHADOW_DEPTH_BIAS_SLOPE else 0f,
                 ),
             )
             // No color attachments in DepthTarget's render pass, so no blend attachments either.
