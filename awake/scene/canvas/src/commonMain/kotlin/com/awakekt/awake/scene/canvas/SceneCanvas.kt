@@ -11,6 +11,7 @@ import com.awakekt.awake.compose.foundation.background
 import com.awakekt.awake.compose.foundation.clickable
 import com.awakekt.awake.compose.foundation.gestures.draggable
 import com.awakekt.awake.compose.foundation.layout.Box
+import com.awakekt.awake.compose.foundation.layout.BoxScope
 import com.awakekt.awake.compose.foundation.layout.fillMaxHeight
 import com.awakekt.awake.compose.foundation.layout.fillMaxSize
 import com.awakekt.awake.compose.foundation.layout.fillMaxWidth
@@ -18,9 +19,11 @@ import com.awakekt.awake.compose.foundation.layout.offset
 import com.awakekt.awake.compose.foundation.layout.padding
 import com.awakekt.awake.compose.foundation.layout.size
 import com.awakekt.awake.compose.foundation.text.Text
+import com.awakekt.awake.compose.runtime.CompositionLocalProvider
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.key
+import com.awakekt.awake.compose.runtime.provides
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.draw.clip
@@ -34,6 +37,7 @@ import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.math2d.sp
 import com.awakekt.awake.core.text.theme.TextStyle
+import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 
@@ -43,55 +47,114 @@ context(_: Composer)
  * first. Each element is tagged `canvas-element-<entity id>` for tests and editor picking.
  * [CanvasElement.touchOnly] elements are drawn only when [showTouchControls] is true.
  *
+ * An element whose entity has another element above it in the scene hierarchy is drawn inside the
+ * nearest one: anchored and offset within its parent's box, after the parent's own content, and
+ * hidden when it is. A window and its controls move as one.
+ *
  * @param world The ECS world containing canvas entities to render.
  * @param modifier Layout modifier applied to the overlay container.
  * @param showTouchControls Whether touch-only elements should be displayed.
  * @param images The decoded images elements name, by path, as [loadCanvasImages] reads them. An
  *   element whose image is missing draws without it.
+ * @param scale Multiplies every element's size, offset, text and image pixels: 2 draws 1x art at
+ *   twice its size. Edges land on whole pixels at any scale, so pixel art stays crisp. A scale that
+ *   is not above 0 draws at 1.
  */
 fun SceneCanvas(
     world: World,
     modifier: Modifier = Modifier,
     showTouchControls: Boolean = false,
     images: Map<String, ImageBitmap> = emptyMap(),
+    scale: Float = 1f,
 ) {
-    val elements = ArrayList<Pair<Entity, CanvasElement>>()
-    world.family<CanvasElement>().forEach { entity, element ->
-        if (element.visible && (showTouchControls || !element.touchOnly)) elements += entity to element
-    }
-    elements.sortBy { it.second.order }
+    val tree = CanvasTree(world, showTouchControls, images)
+    val uiScale = if (scale > 0f && scale.isFinite()) scale else 1f
     Box(modifier.fillMaxSize()) {
-        for ((entity, element) in elements) {
-            key(entity) {
-                // The inset wraps the element rather than sitting in its modifier chain, so the
-                // element's own bounds (hit area, editor picking) are exactly its size.
-                Box(Modifier.align(element.anchor.alignment).anchorInset(element)) {
-                    CanvasElementView(
-                        element,
-                        Modifier.size(element.width.dp, element.height.dp).testTag("canvas-element-${entity.id}"),
-                        images,
-                    )
-                }
+        val screen = this
+        // A denser dp scales every size, offset, font and image corner beneath it in one place.
+        CompositionLocalProvider(LocalDensity provides LocalDensity.current * uiScale) {
+            screen.Elements(tree.roots, tree)
+        }
+    }
+}
+
+/** The elements of a world, each under the nearest element above it in the scene hierarchy. */
+private class CanvasTree(world: World, private val showTouchControls: Boolean, val images: Map<String, ImageBitmap>) {
+    val roots = ArrayList<Pair<Entity, CanvasElement>>()
+    private val children = HashMap<Entity, ArrayList<Pair<Entity, CanvasElement>>>()
+
+    init {
+        world.family<CanvasElement>().forEach { entity, element ->
+            val parent = world.canvasParent(entity)
+            (if (parent == null) roots else children.getOrPut(parent) { ArrayList() }) += entity to element
+        }
+        roots.sortBy { it.second.order }
+        for (siblings in children.values) siblings.sortBy { it.second.order }
+    }
+
+    fun childrenOf(entity: Entity): List<Pair<Entity, CanvasElement>> = children[entity].orEmpty()
+
+    fun shows(element: CanvasElement): Boolean = element.visible && (showTouchControls || !element.touchOnly)
+}
+
+private fun World.canvasParent(entity: Entity): Entity? {
+    var node = get<Transform>(entity)?.parent
+    while (node != null) {
+        if (has(node, CanvasElement::class)) return node
+        node = get<Transform>(node)?.parent
+    }
+    return null
+}
+
+/** Places [entries] in this box, each against its anchor, and their children inside them. */
+context(_: Composer)
+private fun BoxScope.Elements(entries: List<Pair<Entity, CanvasElement>>, tree: CanvasTree) {
+    for ((entity, element) in entries) {
+        if (!tree.shows(element)) continue
+        key(entity) {
+            // The inset wraps the element rather than sitting in its modifier chain, so the
+            // element's own bounds (hit area, editor picking) are exactly its size.
+            Box(Modifier.align(element.anchor.alignment).anchorInset(element)) {
+                CanvasElementView(
+                    element,
+                    Modifier.size(element.width.dp, element.height.dp).testTag("canvas-element-${entity.id}"),
+                    tree,
+                    tree.childrenOf(entity),
+                )
             }
         }
     }
 }
 
 context(_: Composer)
-private fun CanvasElementView(element: CanvasElement, modifier: Modifier, images: Map<String, ImageBitmap>) {
+private fun CanvasElementView(
+    element: CanvasElement,
+    modifier: Modifier,
+    tree: CanvasTree,
+    children: List<Pair<Entity, CanvasElement>>,
+) {
     val fill = colorOf(element.color, Color.White)
     val back = colorOf(element.background, Color.Transparent)
     val textStyle = TextStyle(color = fill, size = element.fontSize.sp)
-    val backed = modifier.background(back).let { colored -> element.style.image?.fill(images)?.let { colored.background(it) } ?: colored }
+    val backed = modifier.background(back).let { colored -> element.style.image?.fill(tree.images)?.let { colored.background(it) } ?: colored }
     when (element.kind) {
-        CanvasElementKind.Text -> Box(backed) { Text(element.text, style = textStyle) }
-        CanvasElementKind.Panel, CanvasElementKind.Image -> Box(backed)
-        CanvasElementKind.Bar -> Box(backed) { BarFill(element, fill, images) }
+        CanvasElementKind.Text -> Box(backed) {
+            Text(element.text, style = textStyle)
+            Elements(children, tree)
+        }
+        CanvasElementKind.Panel, CanvasElementKind.Image -> Box(backed) { Elements(children, tree) }
+        CanvasElementKind.Bar -> Box(backed) {
+            BarFill(element, fill, tree.images)
+            Elements(children, tree)
+        }
         CanvasElementKind.Button -> Box(
             backed.clickable(element.interactions) { element.press() },
             contentAlignment = Alignment.Center,
-        ) { Text(element.text, style = textStyle) }
-        CanvasElementKind.Joystick -> JoystickView(element, modifier, back, fill)
+        ) {
+            Text(element.text, style = textStyle)
+            Elements(children, tree)
+        }
+        CanvasElementKind.Joystick -> JoystickView(element, modifier, back, tree, children)
     }
 }
 
@@ -112,7 +175,13 @@ private fun BarFill(element: CanvasElement, color: Color, images: Map<String, Im
 
 /** A round pad whose knob follows a drag, up to the pad's edge, and springs back on release. */
 context(_: Composer)
-private fun JoystickView(element: CanvasElement, modifier: Modifier, back: Color, knob: Color) {
+private fun JoystickView(
+    element: CanvasElement,
+    modifier: Modifier,
+    back: Color,
+    tree: CanvasTree,
+    children: List<Pair<Entity, CanvasElement>>,
+) {
     val density = LocalDensity.current
     val radius = minOf(element.width, element.height) / 2f * density
     Box(
@@ -126,8 +195,9 @@ private fun JoystickView(element: CanvasElement, modifier: Modifier, back: Color
         val size = minOf(element.width, element.height) * KNOB_FRACTION
         Box(
             Modifier.offset((element.knobX / density).dp, (element.knobY / density).dp)
-                .size(size.dp).clip(CircleShape).background(knob),
+                .size(size.dp).clip(CircleShape).background(colorOf(element.color, Color.White)),
         )
+        Elements(children, tree)
     }
 }
 

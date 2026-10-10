@@ -12,8 +12,10 @@ import com.awakekt.awake.compose.ui.platform.FrameInput
 import com.awakekt.awake.compose.ui.platform.FrameOutput
 import com.awakekt.awake.compose.ui.semantics.SemanticsNode
 import com.awakekt.awake.core.color.Color
+import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.canvas.CanvasElementBinding.toComponent
 import com.awakekt.awake.scene.canvas.CanvasElementBinding.toSceneComponent
 import kotlin.test.Test
@@ -30,11 +32,83 @@ class SceneCanvasTest {
     private fun element(configure: CanvasElement.() -> Unit): Entity =
         world.create().also { world.add(it, CanvasElement().apply(configure)) }
 
+    /** An element on a new entity below [parent] in the scene hierarchy. */
+    private fun child(parent: Entity, configure: CanvasElement.() -> Unit): Entity =
+        world.create().also {
+            world.add(it, Transform(parent = parent))
+            world.add(it, CanvasElement().apply(configure))
+        }
+
     private fun frame(
         host: ComposeHost = ComposeHost(),
         input: FrameInput = FrameInput(800, 600),
         touch: Boolean = false,
-    ): FrameOutput = host.frame(input) { SceneCanvas(world, showTouchControls = touch) }
+        scale: Float = 1f,
+    ): FrameOutput = host.frame(input) { SceneCanvas(world, showTouchControls = touch, scale = scale) }
+
+    private fun FrameOutput.box(entity: Entity): List<Int> = assertNotNull(node(entity)).let { listOf(it.x, it.y, it.width, it.height) }
+
+    @Test
+    fun childrenAreAnchoredInsideTheirParentAndMoveWithIt() {
+        lateinit var window: CanvasElement
+        val parent = element { kind = CanvasElementKind.Panel; offsetX = 16f; offsetY = 8f; width = 200f; height = 100f; window = this }
+        val topLeft = child(parent) { kind = CanvasElementKind.Bar; offsetX = 4f; offsetY = 6f; width = 50f; height = 20f }
+        val bottomRight = child(parent) { kind = CanvasElementKind.Button; anchor = CanvasAnchor.BottomRight; offsetX = 4f; offsetY = 6f; width = 50f; height = 20f }
+
+        val before = frame()
+        window.offsetX = 100f
+        window.offsetY = 50f
+        val after = frame()
+
+        assertEquals(listOf(20, 14, 50, 20), before.box(topLeft))
+        assertEquals(listOf(16 + 200 - 4 - 50, 8 + 100 - 6 - 20, 50, 20), before.box(bottomRight), "against the parent's corner, not the screen's")
+        assertEquals(listOf(104, 56, 50, 20), after.box(topLeft), "moving the window moves its controls")
+    }
+
+    @Test
+    fun anElementSitsInTheNearestElementAboveItThroughPlainNodes() {
+        val window = element { kind = CanvasElementKind.Panel; offsetX = 30f; offsetY = 20f; width = 200f; height = 100f }
+        val group = world.create().also { world.add(it, Transform(parent = window)) }
+        val label = child(group) { text = "HP"; offsetX = 5f; offsetY = 5f; width = 40f; height = 20f }
+
+        assertEquals(listOf(35, 25, 40, 20), frame().box(label))
+    }
+
+    @Test
+    fun aHiddenParentHidesItsChildren() {
+        val window = element { kind = CanvasElementKind.Panel; visible = false }
+        val label = child(window) { text = "HP" }
+
+        assertNull(frame().node(label))
+    }
+
+    @Test
+    fun scaleMultipliesEverySizeAndOffset() {
+        val window = element { kind = CanvasElementKind.Panel; offsetX = 16f; offsetY = 8f; width = 200f; height = 100f }
+        val bar = child(window) { kind = CanvasElementKind.Bar; offsetX = 4f; offsetY = 6f; width = 50f; height = 20f }
+
+        val out = frame(scale = 2f)
+
+        assertEquals(listOf(32, 16, 400, 200), out.box(window))
+        assertEquals(listOf(40, 28, 100, 40), out.box(bar))
+    }
+
+    @Test
+    fun atAFractionalScaleEveryImageEdgeLandsOnAWholePixel() {
+        val frameImage = ImageBitmap(6, 6, rgba(*IntArray(36) { RED }))
+        val window = element {
+            kind = CanvasElementKind.Panel; offsetX = 7f; offsetY = 7f; width = 41f; height = 21f
+            style = CanvasStyle(image = CanvasImage("frame.png", sliceLeft = 1, sliceTop = 1, sliceRight = 1, sliceBottom = 1, repeatEdges = true))
+        }
+        child(window) { kind = CanvasElementKind.Image; offsetX = 3f; offsetY = 3f; width = 9f; height = 5f; style = CanvasStyle(image = CanvasImage("frame.png")) }
+
+        val pieces = ComposeHost().frame(FrameInput(800, 600)) { SceneCanvas(world, images = mapOf("frame.png" to frameImage), scale = 1.5f) }
+            .primitives.filterIsInstance<UiDrawPrimitive.Texture>()
+
+        assertTrue(pieces.size > 9)
+        val offGrid = pieces.filter { piece -> listOf(piece.x, piece.y, piece.w, piece.h).any { it != kotlin.math.round(it) } }
+        assertEquals(emptyList(), offGrid)
+    }
 
     private fun FrameOutput.node(entity: Entity): SemanticsNode? = semantics.find("canvas-element-${entity.id}")
 

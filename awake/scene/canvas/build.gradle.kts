@@ -22,6 +22,7 @@ kotlin {
             api(project(":awake:ecs"))
             api(project(":awake:scene:document"))
             api(project(":awake:scene:binding"))
+            implementation(project(":awake:scene:scene-core"))
             api(project(":awake:compose:runtime"))
             api(project(":awake:compose:ui"))
             api(project(":awake:core:io"))
@@ -45,4 +46,11 @@ mavenPublishing {
         name.set("Awake Scene Canvas")
         description.set("Screen-anchored game UI (text, panels, bars, buttons) stored in scenes and drawn over the game")
     }
+}
+
+tasks.named<Test>("desktopTest") {
+    // The forked test JVM does not see Gradle's own system properties; forward the switch that
+    // re-records component baselines.
+    System.getProperty("AWAKE_RECORD_SNAPSHOTS")
+        ?.let { systemProperty("AWAKE_RECORD_SNAPSHOTS", it) }
 }

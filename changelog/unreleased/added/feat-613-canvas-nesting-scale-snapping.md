@@ -1,0 +1,4 @@
+- **Scene UI elements nest, and the canvas scales with crisp pixels.**
+  - A `canvas_element` below another in the scene hierarchy is drawn inside it, anchored and offset within its parent, and moves and hides with it.
+  - `SceneCanvas(scale = …)` and `SceneAppLifecycleRuntime.canvasScale` multiply every size, offset, text and image pixel.
+  - `drawImageFill` lands every piece on a whole pixel, so frames stay crisp and seamless at fractional scales.

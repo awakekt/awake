@@ -118,6 +118,9 @@ class SceneAppLifecycleRuntime internal constructor(
     /** The decoded images the scene's canvas elements name, by path; an element whose image is missing draws without it. */
     var canvasImages: Map<String, ImageBitmap> = emptyMap()
 
+    /** The scene canvas's UI scale: 2 draws every element, its text and its images at twice the size. */
+    var canvasScale: Float = 1f
+
     /**
      * Whether this runtime draws the scene's canvas over its whole UI. A host that shows the game in
      * part of its window, such as an editor's game view, turns this off and draws `SceneCanvas`
@@ -334,7 +337,7 @@ class SceneAppLifecycleRuntime internal constructor(
                 LocalFrameStats provides frameStats(),
             ) {
                 // Under the app's own UI, so a menu or pause screen covers the game's canvas.
-                if (hasCanvas) SceneCanvas(world, showTouchControls = showTouchControls, images = canvasImages)
+                if (hasCanvas) SceneCanvas(world, showTouchControls = showTouchControls, images = canvasImages, scale = canvasScale)
                 if (content != null) content()
             }
         }

@@ -9,7 +9,9 @@ import com.awakekt.awake.compose.ui.graphics.drawscope.DrawScope
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.FilterQuality
 import com.awakekt.awake.core.graphics2d.TextureRegion
+import kotlin.math.ceil
 import kotlin.math.min
+import kotlin.math.round
 
 /**
  * How [image] fills a rectangle of any size: a frame, a panel, a gauge.
@@ -51,6 +53,9 @@ data class ImageFill(
 /**
  * Fills [x], [y], [width], [height] of this node, the whole node by default, with [fill]. Corners
  * too big for the rectangle shrink together until they meet.
+ *
+ * Every piece's edges land on whole pixels, so at a scale that is not a whole number, such as 1.5,
+ * pixel art stays crisp and no seam opens between pieces.
  */
 fun DrawScope.drawImageFill(
     fill: ImageFill,
@@ -76,10 +81,10 @@ fun DrawScope.drawImageFill(
             val middleColumn = column == 1
             drawTiles(
                 fill,
-                cut(column, x, width, left, right),
-                cut(row, y, height, top, bottom),
-                cut(column + 1, x, width, left, right),
-                cut(row + 1, y, height, top, bottom),
+                snappedCut(column, x, width, left, right),
+                snappedCut(row, y, height, top, bottom),
+                snappedCut(column + 1, x, width, left, right),
+                snappedCut(row + 1, y, height, top, bottom),
                 cut(column, srcX, srcWidth, fill.sliceLeft.toFloat(), fill.sliceRight.toFloat()),
                 cut(row, srcY, srcHeight, fill.sliceTop.toFloat(), fill.sliceBottom.toFloat()),
                 cut(column + 1, srcX, srcWidth, fill.sliceLeft.toFloat(), fill.sliceRight.toFloat()),
@@ -102,6 +107,9 @@ private fun cut(line: Int, start: Float, size: Float, near: Float, far: Float): 
     2 -> start + size - far
     else -> start + size
 }
+
+/** [cut] on the screen: on the nearest whole pixel. */
+private fun snappedCut(line: Int, start: Float, size: Float, near: Float, far: Float): Float = round(cut(line, start, size, near, far))
 
 /**
  * Draws the source pixels [u0]..[u1], [v0]..[v1] over [x0]..[x1], [y0]..[y1]: stretched, or
@@ -131,25 +139,30 @@ private fun DrawScope.drawTiles(
     if (minOf(width, height, tileWidth, tileHeight) <= 0f) return
     val imageWidth = fill.image.width.toFloat()
     val imageHeight = fill.image.height.toFloat()
-    var ty = 0f
-    while (height - ty > MIN_TILE) {
-        val h = min(tileHeight, height - ty)
-        var tx = 0f
-        while (width - tx > MIN_TILE) {
-            val w = min(tileWidth, width - tx)
+    for (row in 0 until tiles(height, tileHeight)) {
+        val top = y0 + row * tileHeight
+        val bottom = min(top + tileHeight, y1)
+        for (column in 0 until tiles(width, tileWidth)) {
+            val left = x0 + column * tileWidth
+            val right = min(left + tileWidth, x1)
             // A tile cut short by the span's end shows only that much of its source.
             val region = TextureRegion(
                 u0 / imageWidth,
                 v0 / imageHeight,
-                (u0 + srcWidth * w / tileWidth) / imageWidth,
-                (v0 + srcHeight * h / tileHeight) / imageHeight,
+                (u0 + srcWidth * (right - left) / tileWidth) / imageWidth,
+                (v0 + srcHeight * (bottom - top) / tileHeight) / imageHeight,
             )
-            drawTexture(fill.image, x0 + tx, y0 + ty, w, h, region, fill.tint, fill.filterQuality)
-            tx += tileWidth
+            val x = round(left)
+            val y = round(top)
+            val w = round(right) - x
+            val h = round(bottom) - y
+            if (w > 0f && h > 0f) drawTexture(fill.image, x, y, w, h, region, fill.tint, fill.filterQuality)
         }
-        ty += tileHeight
     }
 }
+
+/** How many tiles of [tile] cover [span], the last one cut short; rounding left over is not a tile. */
+private fun tiles(span: Float, tile: Float): Int = ceil((span - MIN_TILE) / tile).toInt()
 
 /** Less than this of a span is rounding left over from adding tiles, not a tile. */
 private const val MIN_TILE = 0.01f
