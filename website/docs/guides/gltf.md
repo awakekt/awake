@@ -86,6 +86,13 @@ geometry. For a `.gltf`, it also keeps the skeleton, skins and clips, and `getLo
 returns them. When a scene asks for the mesh, a skinned `.gltf` becomes a `PositionNormalColorSkin`
 mesh (use the material `skinned-material`); anything else becomes static geometry.
 
+A skinned `.gltf` is also split into parts, `gltf-primitive:<path>#<index>`, and
+`materialSlots(path)` lists each part's mesh and material. Every primitive of a skinned mesh is a
+part with its own material, and so is every primitive of a mesh node with no skin. A rigid node
+parented to a joint is bound to that joint and follows it as the clip plays; one under no joint
+draws in place as static geometry. The skinned nodes' first primitives are numbered first, then
+their other primitives, then the rigid nodes', so the parts a saved scene names keep their meaning.
+
 Static geometry is rebuilt, not copied. Node transforms are baked into the vertices, normals are
 recomputed from the triangles, and `baseColorFactor` is multiplied into the vertex colour. A model
 with several primitives and materials is split into one mesh per primitive, named

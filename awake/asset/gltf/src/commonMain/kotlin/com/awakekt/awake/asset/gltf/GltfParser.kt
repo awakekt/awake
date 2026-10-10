@@ -293,7 +293,10 @@ object GltfParser {
      * container, see [parse]'s own doc comment) into every mesh/node/skin/animation the document
      * has, for skeletal skinning/animation playback. Unlike [parse] (first mesh/primitive only)
      * this reads the whole node hierarchy -- a skin's joints are node indices, so the demo layer
-     * needs the real scene graph, not just one primitive's raw attributes.
+     * needs the real scene graph, not just one primitive's raw attributes -- and every primitive
+     * of every mesh ([LoadedSkinnedScene.primitives]), because an exporter writes one primitive
+     * per material. Mesh nodes with no skin in the default scene are listed too
+     * ([LoadedSkinnedScene.rigidNodes]); see [bindRigidNode] for drawing one with the skin.
      *
      * @param json The glTF JSON content.
      * @param externalResources Map of external URIs to their pre-fetched byte content.
@@ -322,15 +325,19 @@ object GltfParser {
                 name = node.name,
             )
         }
-        val meshes = document.meshes.map { meshDef ->
-            val primitive = meshDef.primitives.firstOrNull()
-                ?: error("glTF mesh '${meshDef.name}' has no primitives.")
-            readPrimitive(document, buffers, primitive, externalResources)
+        val primitives = document.meshes.map { meshDef ->
+            require(meshDef.primitives.isNotEmpty()) { "glTF mesh '${meshDef.name}' has no primitives." }
+            meshDef.primitives.map { readPrimitive(document, buffers, it, externalResources) }
         }
         val skins = document.skins.indices.map { parseSkin(document, buffers, it) }
         val clips = document.animations.indices.map { parseAnimation(document, buffers, it) }
         val sceneIndex = document.scene ?: 0
         val rootNodes = document.scenes.getOrNull(sceneIndex)?.nodes ?: emptyList()
+        val inScene = reachableNodes(document, rootNodes)
+        val rigidNodes = document.nodes.mapIndexedNotNull { index, node ->
+            val meshIndex = node.mesh
+            if (meshIndex != null && node.skin == null && index in inScene) RigidNodeRef(index, meshIndex) else null
+        }
         val skinnedNodes = document.nodes.mapIndexedNotNull { index, node ->
             val meshIndex = node.mesh
             val skinIndex = node.skin
@@ -345,7 +352,27 @@ object GltfParser {
             }
         }
 
-        return LoadedSkinnedScene(Skeleton(bones, rootNodes), meshes, skins, clips, skinnedNodes)
+        return LoadedSkinnedScene(
+            skeleton = Skeleton(bones, rootNodes),
+            meshes = primitives.map { it.first() },
+            skins = skins,
+            clips = clips,
+            skinnedNodes = skinnedNodes,
+            primitives = primitives,
+            rigidNodes = rigidNodes,
+        )
+    }
+
+    /** Every node index reachable from [roots] through `children`, each visited once even in a cyclic file. */
+    private fun reachableNodes(document: GltfDocument, roots: List<Int>): Set<Int> {
+        val reached = mutableSetOf<Int>()
+        val pending = ArrayDeque(roots)
+        while (pending.isNotEmpty()) {
+            val index = pending.removeLast()
+            val node = document.nodes.getOrNull(index) ?: continue
+            if (reached.add(index)) pending.addAll(node.children)
+        }
+        return reached
     }
 
     private fun parseSkin(

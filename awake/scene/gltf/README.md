@@ -9,3 +9,7 @@ it at the project's files with `setAssetSource` so a `.gltf` finds its `.bin` an
 - A model with several primitives draws one `gltf-primitive:<path>#<index>` mesh per primitive; see
   `materialSlots(path)`.
 - A skinned model keeps its skeleton; `getLoadedScene(path)` returns it for animation.
+- A skinned model draws one `gltf-primitive:<path>#<index>` part per primitive of every skinned
+  mesh, and per primitive of every mesh node with no skin; see `materialSlots(path)`. Such a rigid
+  node under a joint follows that joint; one under no joint draws in place. The skinned nodes' first
+  primitives come first, so the numbers a saved scene holds keep their meaning.

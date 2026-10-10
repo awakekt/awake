@@ -79,6 +79,27 @@ class SkinnedPlaybackTest {
         drawn.forEach { assertSame(animated.single(), it, "each part must draw the shared pose") }
     }
 
+    /** A crate no joint carries is a part of the model too: it draws in place, unskinned, and takes no pose. */
+    @Test
+    fun aRigidPartNoJointCarriesDrawsWithoutAPose() = runTest {
+        val files = mapOf(
+            "awake.project.json" to MANIFEST,
+            "scenes/main.scene.json" to CRATE_SCENE,
+            MODEL to skinnedTriangleGltf(crate = true),
+        )
+        val project = loadProject(AssetSource { path -> runCatching { files.getValue(path.value).encodeToByteArray() } })
+        val game = app { scene("play") { runProject(project) } }
+        game.ready(TestRenderer())
+        val runtime = game.requireService<SceneAppLifecycleRuntime>()
+        game.update(DELTA, WIDTH, HEIGHT)
+
+        val crate = runtime.world.entityNamed("Crate")
+        assertFalse(assertNotNull(runtime.world.get<MeshRenderer>(crate)).mesh.format.isSkinned, "the crate draws as static geometry")
+        assertNull(runtime.world.get<SkinnedPose>(crate), "a part with no joints reads no joint palette")
+        assertNotNull(runtime.world.get<SkinnedPose>(runtime.world.entityNamed("Upper")), "the skinned part still draws the pose")
+        assertEquals(1, runtime.world.animators())
+    }
+
     /** A second copy of a loaded model, spawned while the scene runs, animates on its own and leaves cleanly. */
     @Test
     fun aSpawnedSkinnedModelAnimatesAndDespawnsCleanly() = runTest {
@@ -194,9 +215,10 @@ class SkinnedPlaybackTest {
 
     /**
      * One triangle skinned to two joints. The second joint turns 90 degrees about Z over one second,
-     * carrying the triangle's top vertex with it.
+     * carrying the triangle's top vertex with it. With [crate], the triangle again, unskinned, on a
+     * node at the scene root 3 m along x.
      */
-    private fun skinnedTriangleGltf(parts: Int = 1): String {
+    private fun skinnedTriangleGltf(parts: Int = 1, crate: Boolean = false): String {
         val positions = floats(0f, 0f, 0f, 1f, 0f, 0f, 0f, 1f, 0f)
         val joints = byteArrayOf(0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0)
         val weights = floats(1f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 1f, 0f, 0f, 0f)
@@ -223,16 +245,20 @@ class SkinnedPlaybackTest {
             {"bufferView": 5, "componentType": 5126, "count": 2, "type": "SCALAR"},
             {"bufferView": 6, "componentType": 5126, "count": 2, "type": "VEC4"}
           ],
-          "meshes": [{"primitives": [{"attributes": {"POSITION": 0, "JOINTS_0": 1, "WEIGHTS_0": 2}, "indices": 3}]}],
+          "meshes": [
+            {"primitives": [{"attributes": {"POSITION": 0, "JOINTS_0": 1, "WEIGHTS_0": 2}, "indices": 3}]},
+            {"primitives": [{"attributes": {"POSITION": 0}, "indices": 3}]}
+          ],
           "nodes": [
             {"name": "Root", "children": [1]},
             {"name": "Tip", "translation": [0, 1, 0]},
             ${(1..parts).joinToString(",") { """{"name": "Body $it", "mesh": 0, "skin": 0}""" }}
+            ${if (crate) """,{"name": "Crate", "mesh": 1, "translation": [3, 0, 0]}""" else ""}
           ],
           "skins": [{"inverseBindMatrices": 4, "joints": [0, 1]}],
           "animations": [{"channels": [{"sampler": 0, "target": {"node": 1, "path": "rotation"}}],
                           "samplers": [{"input": 5, "output": 6, "interpolation": "LINEAR"}]}],
-          "scenes": [{"nodes": [0, ${(2 until 2 + parts).joinToString(",")}]}],
+          "scenes": [{"nodes": [0, ${(2 until 2 + parts + if (crate) 1 else 0).joinToString(",")}]}],
           "scene": 0
         }
         """.trimIndent()
@@ -263,6 +289,14 @@ class SkinnedPlaybackTest {
 { "version": 1, "nodes": [
   { "name": "Remote", "transform": { "position": { "x": 3.0, "y": 0.0, "z": 0.0 } },
     "components": [ { "component": "meshRenderer", "mesh": "$MODEL", "material": "skinned-material" } ] }
+] }
+"""
+        const val CRATE_SCENE = """
+{ "version": 1, "name": "arm", "nodes": [
+  { "name": "Arm", "children": [
+    { "name": "Upper", "components": [ { "component": "meshRenderer", "mesh": "gltf-primitive:$MODEL#0", "material": "skinned-material" } ] },
+    { "name": "Crate", "components": [ { "component": "meshRenderer", "mesh": "gltf-primitive:$MODEL#1", "material": "lit-shadow" } ] }
+  ] }
 ] }
 """
         const val PARTS_SCENE = """

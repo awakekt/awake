@@ -10,7 +10,9 @@ import com.awakekt.awake.asset.gltf.GltfParser
 import com.awakekt.awake.asset.gltf.LoadedPrimitive
 import com.awakekt.awake.asset.gltf.LoadedScene
 import com.awakekt.awake.asset.gltf.LoadedSkinnedScene
+import com.awakekt.awake.asset.gltf.bindRigidNode
 import com.awakekt.awake.asset.gltf.firstSkinnedAsset
+import com.awakekt.awake.asset.gltf.restTransform
 import com.awakekt.awake.asset.shaderpack.TexturedUniformLayout
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.geometry.MeshGeometry
@@ -39,11 +41,15 @@ import com.awakekt.awake.scene.runtime.SceneAssetResolver
  * identifiers. Caches loaded scenes so that entities referencing them can have their skeletons,
  * poses, and animation players bound automatically.
  *
- * A skinned `.gltf` draws as parts: `gltf-primitive:<path>#<i>` is its i-th node with both a mesh
- * and a skin, in file order, and `gltf-material:<path>#<i>` that part's base colour texture. A
- * textured part is drawn by a `PositionNormalColorUvSkin` pipeline, so the host's render plan must
- * declare one; skinned parts cast no shadow. The model's own path still names its first skinned
- * node, untextured.
+ * A skinned `.gltf` draws as parts, one per primitive: `gltf-primitive:<path>#<i>` is its i-th part
+ * and `gltf-material:<path>#<i>` that part's base colour texture. Parts are numbered so a number a
+ * saved scene holds keeps its meaning: first each node with both a mesh and a skin, by its mesh's
+ * first primitive, in file order; then those meshes' other primitives; then the primitives of every
+ * mesh node with no skin. Such a rigid node under a joint of the model's first skin is bound to that
+ * joint and follows it; one under no joint is drawn in place as static geometry. A textured skinned
+ * part is drawn by a `PositionNormalColorUvSkin` pipeline, so the host's render plan must declare
+ * one; skinned parts cast no shadow. The model's own path still names its first skinned node's first
+ * primitive, untextured.
  */
 @Suppress("TooManyFunctions") // One resolver: preload, query and resolve are one lifecycle.
 class GltfAssetResolver(
@@ -55,6 +61,7 @@ class GltfAssetResolver(
     private val loadedMaterials = mutableMapOf<String, LoadedGltfMaterial>()
     private val skinnedPartTextures = mutableMapOf<String, TextureAsset>()
     private val loadedMaterialSlots = mutableMapOf<String, List<GltfMaterialSlot>>()
+    private val loadedParts = mutableMapOf<String, List<GltfPart>>()
     private var assetSource: AssetSource = AssetSource { path ->
         runCatching { bundledResourceReader(path.value) }
     }
@@ -150,6 +157,7 @@ class GltfAssetResolver(
      */
     fun forget(path: String) {
         loadedScenes.remove(path)
+        loadedParts.remove(path)
         loadedMaterialSlots.remove(path)
         loadedStaticMeshes.keys.removeAll { it == path || it.startsWith("$PRIMITIVE_MESH_PREFIX$path#") }
         loadedMaterials.keys.removeAll { it == path || it.startsWith("$path#") }
@@ -179,7 +187,7 @@ class GltfAssetResolver(
     suspend fun preloadMaterials(path: String, bytes: ByteArray) {
         if (path in loadedMaterialSlots) return
         val skinned = loadedScenes[path] ?: parseSkinnedScene(path, bytes)?.also { loadedScenes[path] = it }
-        if (skinned != null && skinned.skinnedNodes.isNotEmpty()) preloadSkinnedParts(path, skinned) else preloadStaticSlots(path, bytes)
+        if (skinned != null && skinned.skinnedNodes.isNotEmpty()) preloadSkinnedParts(path) else preloadStaticSlots(path, bytes)
     }
 
     private suspend fun preloadStaticSlots(path: String, bytes: ByteArray) {
@@ -203,28 +211,52 @@ class GltfAssetResolver(
         loadedMaterialSlots[path] = slots
     }
 
-    private suspend fun preloadSkinnedParts(path: String, scene: LoadedSkinnedScene) {
-        loadedMaterialSlots[path] = scene.parts().mapIndexed { index, part ->
+    private suspend fun preloadSkinnedParts(path: String) {
+        loadedMaterialSlots[path] = parts(path).orEmpty().mapIndexed { index, part ->
             val key = "$path#$index"
-            part.baseColorImageBytes?.takeIf { part.isTextured }?.let { skinnedPartTextures[key] = decodeTexture(it) }
-            GltfMaterialSlot(
-                mesh = "$PRIMITIVE_MESH_PREFIX$key",
-                material = if (part.isTextured) "gltf-material:$key" else "skinned-material",
-                parameters = part.toMaterialParameters(),
-            )
+            when (part) {
+                is GltfPart.Skinned -> {
+                    val mesh = part.mesh
+                    mesh.baseColorImageBytes?.takeIf { mesh.isTextured }?.let { skinnedPartTextures[key] = decodeTexture(it) }
+                    GltfMaterialSlot(
+                        mesh = "$PRIMITIVE_MESH_PREFIX$key",
+                        material = if (mesh.isTextured) "gltf-material:$key" else "skinned-material",
+                        parameters = mesh.toMaterialParameters(),
+                    )
+                }
+                // Drawn and textured as a static model's primitive is, so it takes the same slot.
+                is GltfPart.Static -> {
+                    val material = part.primitive.toLoadedMaterial()
+                    material?.let { loadedMaterials[key] = it }
+                    GltfMaterialSlot(
+                        mesh = "$PRIMITIVE_MESH_PREFIX$key",
+                        material = material?.let { "gltf-material:$key" } ?: "lit-shadow",
+                        parameters = material?.parameters,
+                    )
+                }
+            }
         }
     }
 
-    /** The geometry [name] draws, or null when it names no skinned part. */
-    internal fun skinnedPartGeometry(name: String): MeshGeometry? = name.takeIf { it.startsWith(PRIMITIVE_MESH_PREFIX) }
-        ?.let { loadedScenes[modelPath(it)]?.parts()?.getOrNull(it.substringAfterLast('#').toIntOrNull() ?: -1) }
-        ?.let { part ->
-            if (part.isTextured) {
-                MeshGeometry(part.toInterleavedPositionNormalColorUvSkin(), part.indices, format = VertexFormat.PositionNormalColorUvSkin)
+    /** The parts of the skinned model at [path], built once from its loaded scene; null when none is loaded. */
+    private fun parts(path: String): List<GltfPart>? =
+        loadedScenes[path]?.let { scene -> loadedParts.getOrPut(path) { scene.parts() } }
+
+    private fun part(name: String): GltfPart? = name.takeIf { it.startsWith(PRIMITIVE_MESH_PREFIX) }
+        ?.let { parts(modelPath(it))?.getOrNull(it.substringAfterLast('#').toIntOrNull() ?: -1) }
+
+    /** The geometry the part [name] draws, or null when it names no part of a skinned model. */
+    internal fun partGeometry(name: String): MeshGeometry? = when (val part = part(name)) {
+        null -> null
+        is GltfPart.Skinned -> part.mesh.let { mesh ->
+            if (mesh.isTextured) {
+                MeshGeometry(mesh.toInterleavedPositionNormalColorUvSkin(), mesh.indices, format = VertexFormat.PositionNormalColorUvSkin)
             } else {
-                MeshGeometry(part.toInterleavedSkinned(), part.indices, format = VertexFormat.PositionNormalColorSkin)
+                MeshGeometry(mesh.toInterleavedSkinned(), mesh.indices, format = VertexFormat.PositionNormalColorSkin)
             }
         }
+        is GltfPart.Static -> listOf(part.primitive).toStaticGeometry(textured = name.removePrefix(PRIMITIVE_MESH_PREFIX) in loadedMaterials)
+    }
 
     /**
      * Returns the material key to persist in a placed scene descriptor.
@@ -271,7 +303,7 @@ class GltfAssetResolver(
     }
 
     override fun createMesh(runtime: SceneAppLifecycleRuntime, name: String): Mesh? {
-        val geometry = skinnedPartGeometry(name) ?: loadedScenes[name]
+        val geometry = partGeometry(name) ?: loadedScenes[name]
             ?.firstSkinnedAsset()
             ?.let { skinnedAsset ->
                 MeshGeometry(
@@ -312,8 +344,8 @@ class GltfAssetResolver(
     /**
      * A skinned part's own factors, one shared instance per part. A part is told apart by its mesh:
      * the untextured ones all draw with the one `skinned-material`, so the material name alone
-     * cannot say whose factors to use. Anything that is not a skinned part falls back to its
-     * material's.
+     * cannot say whose factors to use. Anything that is not a skinned part, a static one included,
+     * falls back to its material's.
      */
     override fun materialDefaults(mesh: String, material: String): PbrMaterial? {
         val parameters = skinnedPartParameters(mesh) ?: return materialDefaults(material)
@@ -321,7 +353,7 @@ class GltfAssetResolver(
     }
 
     private fun skinnedPartParameters(mesh: String): GltfMaterialParameters? {
-        if (!mesh.startsWith(PRIMITIVE_MESH_PREFIX) || skinnedPartGeometry(mesh) == null) return null
+        if (part(mesh) !is GltfPart.Skinned) return null
         return loadedMaterialSlots[modelPath(mesh)]?.firstOrNull { it.mesh == mesh }?.parameters
     }
 }
@@ -390,8 +422,32 @@ private suspend fun decodeTexture(bytes: ByteArray): TextureAsset {
     return TextureAsset(bitmap.toRgba8Bytes(), bitmap.width, bitmap.height)
 }
 
-/** Every node with both a mesh and a skin, in file order: the model's parts. */
-private fun LoadedSkinnedScene.parts(): List<GltfMesh> = skinnedNodes.map { meshes[it.meshIndex] }
+/** One drawable piece of a skinned model: deformed by the model's pose, or fixed in place. */
+private sealed interface GltfPart {
+    /** A primitive drawn with the joint palette: a skinned mesh's, or a rigid node's bound to its joint. */
+    class Skinned(val mesh: GltfMesh) : GltfPart
+
+    /** A rigid node's primitive that no joint carries, at its node's rest transform. */
+    class Static(val primitive: LoadedPrimitive) : GltfPart
+}
+
+/**
+ * The model's parts, in the order [GltfAssetResolver] numbers them: each skinned node's first
+ * primitive, then those nodes' other primitives, then each rigid node's. Every skinned part draws
+ * with the first skin's palette, so a rigid node is bound into that skin; none for a file with no
+ * skinned node, which a static model's slots draw instead.
+ */
+private fun LoadedSkinnedScene.parts(): List<GltfPart> {
+    val first = skinnedNodes.firstOrNull() ?: return emptyList()
+    val skin = skins[first.skinIndex]
+    val firstPrimitives = skinnedNodes.map { GltfPart.Skinned(primitives[it.meshIndex].first()) }
+    val otherPrimitives = skinnedNodes.flatMap { node -> primitives[node.meshIndex].drop(1).map { GltfPart.Skinned(it) } }
+    val rigid = rigidNodes.flatMap { node ->
+        bindRigidNode(node, skin)?.map { GltfPart.Skinned(it) }
+            ?: restTransform(node.boneIndex).let { rest -> primitives[node.meshIndex].map { GltfPart.Static(it.toLoadedPrimitive(rest)) } }
+    }
+    return firstPrimitives + otherPrimitives + rigid
+}
 
 private val GltfMesh.isTextured: Boolean get() = uvs != null && baseColorImageBytes != null
 

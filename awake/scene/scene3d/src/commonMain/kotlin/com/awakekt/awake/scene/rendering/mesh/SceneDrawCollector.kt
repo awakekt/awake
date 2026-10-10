@@ -43,10 +43,10 @@ internal class SceneDrawCollector(
      * Reused every frame, so they keep the capacity the scene grew them to: a fresh list grew
      * by copying, sixteen times over for 50,000 entities.
      *
-     * The commands in them, and the scratch bounds and matrices those reference, are pooled too.
-     * Each of the two collect calls owns its own pools and rewinds them as it starts, so a list
-     * is valid until the next call to the method that produced it, whatever order the two are
-     * called in. The planner copies what it needs out straight away.
+     * The commands in them, and the scratch bounds, matrices and tinted joint palettes those
+     * reference, are pooled too. Each of the two collect calls owns its own pools and rewinds them
+     * as it starts, so a list is valid until the next call to the method that produced it, whatever
+     * order the two are called in. The planner copies what it needs out straight away.
      */
     private val beforeParticles = ArrayList<RenderDrawCommand>()
     private val afterParticles = ArrayList<RenderDrawCommand>()
@@ -54,6 +54,13 @@ internal class SceneDrawCollector(
     private val beforeCommands = ScratchPool(::createEmptyDrawCommand)
     private val beforeAabbs = ScratchPool(::createScratchAabb)
     private val beforeMatrices = ScratchPool(::Mat4)
+
+    /**
+     * One per tinted skinned draw, not one per pose: a model's parts share their pose, each with
+     * its own factors, and a buffer the pose kept was rewritten by every part, so they all drew in
+     * the last one's colour.
+     */
+    private val beforeTints = ScratchPool { FloatArray(SkinnedMaterialLayout.total) }
 
     private val afterCommands = ScratchPool(::createEmptyDrawCommand)
     private val afterAabbs = ScratchPool(::createScratchAabb)
@@ -79,6 +86,7 @@ internal class SceneDrawCollector(
         beforeCommands.reset()
         beforeAabbs.reset()
         beforeMatrices.reset()
+        beforeTints.reset()
 
         val resolution = resolve(world)
         val boundsStore = world.componentStore<MeshBounds>(resolution.boundsType)
@@ -113,7 +121,7 @@ internal class SceneDrawCollector(
             val pbr = pbrStore?.get(entity) ?: meshRenderer.defaultMaterial
             val animation = animationStore?.get(entity)
             val extras = when {
-                pose != null -> if (pbr != null) pose.tintedBy(pbr) else pose.jointPalette
+                pose != null -> if (pbr != null) pose.tintedBy(pbr, beforeTints.obtain()) else pose.jointPalette
                 // One shared layout serves both the primary and textured pipelines. Which
                 // pipeline reads it is a backend concern, not this system's.
                 pbr != null -> pbr.packedFloats(animation ?: TextureAnimation.None)
@@ -202,7 +210,7 @@ internal class SceneDrawCollector(
                 EMPTY_DRAW_EXTRAS
             } else {
                 val pbr = pbrStore?.get(entity)
-                if (pbr != null) pose.tintedBy(pbr) else pose.jointPalette
+                if (pbr != null) pose.tintedBy(pbr, beforeTints.obtain()) else pose.jointPalette
             }
 
             // By index: iterating the slot map would allocate an iterator for every character.
@@ -364,10 +372,10 @@ private val IDENTITY_MATRIX = Mat4()
 
 private val EMPTY_DRAW_EXTRAS = FloatArray(0)
 
-/** The pose's palette tinted by [material]'s factors, in one array the pose keeps and rewrites each frame. */
-private fun SkinnedPose.tintedBy(material: PbrMaterial): FloatArray = skinnedMaterialFloats(
+/** The pose's palette tinted by [material]'s factors, written into [into], a draw's own pooled buffer. */
+private fun SkinnedPose.tintedBy(material: PbrMaterial, into: FloatArray): FloatArray = skinnedMaterialFloats(
     jointPalette,
     material.baseColorFactor,
     material.emissiveFactor,
-    into = tintedPalette ?: FloatArray(SkinnedMaterialLayout.total).also { tintedPalette = it },
+    into = into,
 )
