@@ -16,6 +16,7 @@ plugins {
     // nothing to document.
     id("com.awakekt.awake.plugin.detekt")
     id("com.vanniktech.maven.publish")
+    id("com.awakekt.awake.plugin.central-staging")
     id("com.awakekt.awake.plugin.spotless")
 }
 

@@ -15,6 +15,7 @@ plugins {
     `maven-publish`
     id("com.vanniktech.maven.publish")
     id("org.jetbrains.dokka")
+    id("com.awakekt.awake.plugin.central-staging")
 }
 
 val publicationsFromMainHost =
@@ -34,14 +35,6 @@ extensions.configure<PublishingExtension>("publishing") {
                     // docs/reference/releasing.md) is one host by definition, so it takes them all.
                     onlyIf { findProperty("isMainHost") == "true" || findProperty("awake.version") != null }
                 }
-        }
-    }
-    // A release publishes every module, and build-logic's plugins, into this one folder, which goes
-    // to Central as a single deployment (scripts/central-bundle.sh, scripts/central-upload.sh).
-    providers.gradleProperty("awake.stagingRepository").orNull?.let { staging ->
-        repositories.maven {
-            name = "centralStaging"
-            url = uri(staging)
         }
     }
 }
