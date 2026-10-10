@@ -345,7 +345,8 @@ class SceneAppLifecycleRuntime internal constructor(
                 LocalFrameStats provides frameStats(),
             ) {
                 // Under the app's own UI, so a menu or pause screen covers the game's canvas.
-                if (hasCanvas) SceneCanvas(
+                if (hasCanvas) {
+                    SceneCanvas(
                         world,
                         showTouchControls = showTouchControls,
                         images = canvasImages,
@@ -353,6 +354,7 @@ class SceneAppLifecycleRuntime internal constructor(
                         projector = canvasProjector,
                         bindings = canvasBindings ?: globalBindings,
                     )
+                }
                 if (content != null) content()
             }
         }
@@ -412,10 +414,19 @@ class SceneAppLifecycleRuntime internal constructor(
     fun requireMaterial(name: String): Material = session.requireMaterial(this, name)
 
     /** The scene as [camera] sees it, drawn offscreen at [width] by [height] the way the frame draws it. */
-    suspend fun readback(camera: Lens, width: Int, height: Int): TextureAsset {
+    suspend fun readback(camera: Lens, width: Int, height: Int): TextureAsset = readback(world, Camera(camera), width, height)
+
+    /**
+     * [world] as [camera] sees it, drawn offscreen at [width] by [height] the way the frame draws this
+     * runtime's own world, including [camera]'s virtual viewport. [world] can be another world than
+     * this runtime's, such as the one an editor plays a scene in, so long as its meshes and materials
+     * were created by this runtime's renderer and its own systems have run, so its transforms are
+     * current. Call it on the frame thread.
+     */
+    suspend fun readback(world: World, camera: Camera, width: Int, height: Int): TextureAsset {
         val target = renderer.createRenderTarget(width, height)
         return try {
-            renderer.renderToTexture(target, planCapture(Camera(camera), width, height))
+            renderer.renderToTexture(target, planCapture(world, camera, width, height))
             renderer.readPixels(target)
         } finally {
             target.destroy()
@@ -434,33 +445,44 @@ class SceneAppLifecycleRuntime internal constructor(
         width: Int,
         height: Int,
         attachment: FramebufferAttachment,
+    ): FramebufferAttachmentData = readbackAttachment(world, width, height, attachment)
+
+    /**
+     * Captures one attachment of [world] from its primary camera, as [readback] draws it. [world] can
+     * be another world than this runtime's, on the same terms.
+     */
+    suspend fun readbackAttachment(
+        world: World,
+        width: Int,
+        height: Int,
+        attachment: FramebufferAttachment,
     ): FramebufferAttachmentData {
-        val family = world.family<Camera>()
-        val cameras = family.components()
-        var primary: Camera? = null
-        var index = 0
-        while (index < family.size) {
-            if (cameras[index].isPrimary) {
-                primary = cameras[index]
-                break
-            }
-            index += 1
-        }
-        val camera = primary ?: return FramebufferAttachmentData.unavailable(
+        val camera = primaryCamera(world) ?: return FramebufferAttachmentData.unavailable(
             attachment,
-            "The showcase has no primary camera to capture.",
+            "The world has no primary camera to capture.",
         )
         val target = renderer.createRenderTarget(width, height)
         return try {
-            renderer.renderToTexture(target, planCapture(camera, width, height))
+            renderer.renderToTexture(target, planCapture(world, camera, width, height))
             renderer.readFramebufferAttachment(target, attachment)
         } finally {
             target.destroy()
         }
     }
 
+    private fun primaryCamera(world: World): Camera? {
+        val family = world.family<Camera>()
+        val cameras = family.components()
+        var index = 0
+        while (index < family.size) {
+            if (cameras[index].isPrimary) return cameras[index]
+            index += 1
+        }
+        return null
+    }
+
     /** Extracted by the scene's own [RenderSystem3D], so a capture draws what the frame draws. */
-    private fun planCapture(camera: Camera, width: Int, height: Int): GpuPassInput =
+    private fun planCapture(world: World, camera: Camera, width: Int, height: Int): GpuPassInput =
         (session.schedule.renderSystem ?: captureRenderSystem)
             .planCapture(world, camera, width, height)
 
