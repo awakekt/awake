@@ -43,17 +43,25 @@ data class AwakeProjectPluginReference(
  *
  * @property group The artifact's group, such as `com.example`.
  * @property name The artifact's name within [group].
- * @property version The artifact's version.
+ * @property version The artifact's version. Empty for one of Awake's own add-ons (a group under
+ *   [AWAKE_ARTIFACT_GROUP]), which the game then takes at the Core version it builds on, so the two
+ *   can't drift apart; any other artifact names its version.
  */
 @Serializable
 data class AwakeProjectArtifact(
     val group: String,
     val name: String,
-    val version: String,
+    val version: String = "",
 ) {
-    /** The `group:name:version` notation a Gradle or Maven build declares the artifact with. */
-    override fun toString(): String = "$group:$name:$version"
+    /** The `group:name:version` notation a build declares the artifact with; `group:name` when it takes the Core version. */
+    override fun toString(): String = if (version.isEmpty()) "$group:$name" else "$group:$name:$version"
+
+    /** Whether this is one of Awake's own add-ons, which may take the Core version the game builds on. */
+    val isAwake: Boolean get() = group == AWAKE_ARTIFACT_GROUP || group.startsWith("$AWAKE_ARTIFACT_GROUP.")
 }
+
+/** The Maven group Awake's own artifacts are published under, and the root of their subgroups. */
+const val AWAKE_ARTIFACT_GROUP: String = "com.awakekt.awake"
 
 /**
  * The canonical project manifest shared by tools and runtimes.
@@ -344,6 +352,8 @@ private fun pluginIssues(plugins: List<AwakeProjectPluginReference>): List<Proje
 private fun runtimeReferenceIssues(index: Int, plugin: AwakeProjectPluginReference): List<ProjectContentIssue> = buildList {
     plugin.artifact?.let { artifact ->
         listOf("group" to artifact.group, "name" to artifact.name, "version" to artifact.version)
+            // An Awake add-on may leave its version out and take the game's Core version.
+            .filterNot { (part, value) -> part == "version" && value.isEmpty() && artifact.isAwake }
             .filterNot { (_, value) -> value.matches(artifactPartPattern) }
             .forEach { (part, _) ->
                 add(ProjectContentIssue(ProjectIssueCode.INVALID_MANIFEST, "plugins[$index].artifact.$part must be a non-blank Maven coordinate part"))

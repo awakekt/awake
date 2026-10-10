@@ -8,6 +8,7 @@ package com.awakekt.awake.project
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -227,6 +228,27 @@ class AwakeProjectTest {
         assertTrue(issues.any { it.contains("plugins[0].artifact.version must be") }, issues.toString())
         assertFalse(issues.any { it.contains("artifact.group") }, issues.toString())
         assertTrue(issues.any { it.contains("plugins[0].capabilityClass must be a fully qualified class name") }, issues.toString())
+    }
+
+    @Test
+    fun anAwakeAddOnMayLeaveItsVersionToTheGamesCore() {
+        val json = """
+            {"formatVersion":1,"id":"com.example.game","name":"Example Game","version":"1.0.0","entryScene":"scenes/main.scene.json",
+             "plugins":[{"id":"com.awakekt.awake.blueprint",
+               "artifact":{"group":"com.awakekt.awake.project","name":"blueprint"},
+               "capabilityClass":"com.awakekt.awake.project.blueprint.BlueprintCapability"}]}
+        """.trimIndent()
+
+        val artifact = assertNotNull(AwakeProjectValidator.decodeManifest(json).plugins.single().artifact)
+
+        assertEquals("", artifact.version)
+        assertEquals("com.awakekt.awake.project:blueprint", artifact.toString())
+        assertTrue(AwakeProjectValidator.manifestIssues(AwakeProjectValidator.decodeManifest(json)).isEmpty())
+        val elsewhere = AwakeProjectValidator.decodeManifest(json.replace("com.awakekt.awake.project", "com.example"))
+        assertTrue(
+            AwakeProjectValidator.manifestIssues(elsewhere).any { it.contains("plugins[0].artifact.version must be") },
+            "anyone else's artifact still names its version",
+        )
     }
 
     /** A game's own capability is compiled into its app project, so its entry names a class and no file. */
