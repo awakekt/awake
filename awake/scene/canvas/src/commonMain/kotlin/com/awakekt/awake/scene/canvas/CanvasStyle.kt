@@ -27,7 +27,9 @@ import kotlinx.serialization.Serializable
  * @property gradient A gradient fill, in place of either background colour.
  * @property image An Image's picture, the frame of a Panel, Button or Text over its fill, or a Bar's
  * track.
- * @property fillImage A Bar's fill, cut at its value rather than squeezed into it.
+ * @property fillImage A Bar's fill, cut at its value or squeezed into it as [fillImageMode] says.
+ * @property fillImageMode How [fillImage] meets the Bar's value: [CanvasFillImageMode.Cut], the default,
+ * or [CanvasFillImageMode.Squeeze].
  * @property cornerRadius Rounds the fill, gradient, border and shadow, and a Bar's colour fill.
  * Images stay square.
  * @property borderWidth The border's width, inside the element's edge.
@@ -46,6 +48,7 @@ data class CanvasStyle(
     val gradient: CanvasGradient? = null,
     val image: CanvasImage? = null,
     val fillImage: CanvasImage? = null,
+    val fillImageMode: CanvasFillImageMode = CanvasFillImageMode.Cut,
     @PropertyRange(min = 0.0) val cornerRadius: Float? = null,
     @PropertyRange(min = 0.0) val borderWidth: Float? = null,
     val borderColor: String? = null,
@@ -88,6 +91,23 @@ data class CanvasStyle(
         val border = states.lastOrNull { it.borderColor != null }?.borderColor ?: borderColor
         if (borderWidth != null && borderWidth > 0f && border != null) scope.border(borderWidth.dp, colorOf(border, Color.Transparent))
     }
+}
+
+/** How a Bar's [CanvasStyle.fillImage] meets the Bar's value. */
+@Serializable
+enum class CanvasFillImageMode {
+    /**
+     * The image is laid out at the Bar's full width and cut at the value, so its pattern and its right
+     * end cap stay where they are as the value changes, and the cap shows only at 100%.
+     */
+    Cut,
+
+    /**
+     * The image is drawn at the filled width, a nine-slice at the value times the Bar's width: both end
+     * caps stay and only the middle stretches. Below the caps' combined width they shrink together
+     * rather than overlap.
+     */
+    Squeeze,
 }
 
 /**
