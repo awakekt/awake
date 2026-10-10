@@ -137,8 +137,10 @@ class SceneCanvasTest {
             value = 0.4f,
             order = 3,
             visible = false,
-            image = CanvasImage("ui/frame.png", regionX = 4, regionWidth = 48, sliceLeft = 16, sliceRight = 16, repeatEdges = true, tint = "#FFFFFF80"),
-            fillImage = CanvasImage("ui/gauge.png", sliceLeft = 3, sliceRight = 3, repeatCenter = true, pixelated = true),
+            style = CanvasStyle(
+                image = CanvasImage("ui/frame.png", regionX = 4, regionWidth = 48, sliceLeft = 16, sliceRight = 16, repeatEdges = true, tint = "#FFFFFF80"),
+                fillImage = CanvasImage("ui/gauge.png", sliceLeft = 3, sliceRight = 3, repeatCenter = true, pixelated = true),
+            ),
         )
 
         assertEquals(saved, saved.toComponent().toSceneComponent())
@@ -147,16 +149,18 @@ class SceneCanvasTest {
     @Test
     fun validationRejectsAnImageWithNoPathBadSlicesOrABadTint() {
         val issues = SceneCanvasElement(
-            image = CanvasImage("", sliceLeft = -1),
-            fillImage = CanvasImage("gauge.png", regionWidth = 4, sliceLeft = 3, sliceRight = 3, tint = "blue"),
+            style = CanvasStyle(
+                image = CanvasImage("", sliceLeft = -1),
+                fillImage = CanvasImage("gauge.png", regionWidth = 4, sliceLeft = 3, sliceRight = 3, tint = "blue"),
+            ),
         ).validate("nodes[0]").map { it.message }
 
         assertEquals(
             listOf(
-                "canvas_element.image.path must name an image",
-                "canvas_element.image.slices must not be negative",
-                "canvas_element.fillImage.left and right slices must fit in regionWidth",
-                "canvas_element.fillImage.tint \"blue\" must be #RRGGBB or #RRGGBBAA",
+                "canvas_element.style.image.path must name an image",
+                "canvas_element.style.image.slices must not be negative",
+                "canvas_element.style.fillImage.left and right slices must fit in regionWidth",
+                "canvas_element.style.fillImage.tint \"blue\" must be #RRGGBB or #RRGGBBAA",
             ),
             issues,
         )
@@ -164,7 +168,7 @@ class SceneCanvasTest {
 
     @Test
     fun anImageElementDrawsItsPicture() {
-        element { kind = CanvasElementKind.Image; offsetX = 0f; offsetY = 0f; width = 40f; height = 40f; image = CanvasImage("quadrants.png") }
+        element { kind = CanvasElementKind.Image; offsetX = 0f; offsetY = 0f; width = 40f; height = 40f; style = CanvasStyle(image = CanvasImage("quadrants.png")) }
 
         val pixels = pixels(40, 40, mapOf("quadrants.png" to QUADRANTS))
 
@@ -177,7 +181,7 @@ class SceneCanvasTest {
         val gauge = ImageBitmap(4, 1, rgba(RED, GREEN, GREEN, BLUE))
         element {
             kind = CanvasElementKind.Bar; offsetX = 0f; offsetY = 0f; width = 100f; height = 10f; value = 0.5f
-            fillImage = CanvasImage("gauge.png", sliceLeft = 1, sliceRight = 1)
+            style = CanvasStyle(fillImage = CanvasImage("gauge.png", sliceLeft = 1, sliceRight = 1))
         }
 
         val row = pixels(100, 10, mapOf("gauge.png" to gauge))[5]
@@ -189,8 +193,8 @@ class SceneCanvasTest {
 
     @Test
     fun anImageThatDidNotLoadIsLeftOut() {
-        element { kind = CanvasElementKind.Panel; offsetX = 0f; offsetY = 0f; width = 40f; height = 40f; background = "#FF0000"; image = CanvasImage("gone.png") }
-        element { kind = CanvasElementKind.Bar; offsetX = 0f; offsetY = 0f; width = 40f; height = 40f; order = 1; value = 0.5f; color = "#00FF00"; fillImage = CanvasImage("gone.png") }
+        element { kind = CanvasElementKind.Panel; offsetX = 0f; offsetY = 0f; width = 40f; height = 40f; background = "#FF0000"; style = CanvasStyle(image = CanvasImage("gone.png")) }
+        element { kind = CanvasElementKind.Bar; offsetX = 0f; offsetY = 0f; width = 40f; height = 40f; order = 1; value = 0.5f; color = "#00FF00"; style = CanvasStyle(fillImage = CanvasImage("gone.png")) }
 
         val pixels = pixels(40, 40, emptyMap())
 
@@ -200,7 +204,7 @@ class SceneCanvasTest {
 
     @Test
     fun aRegionTheImageIsTooSmallForIsLeftOut() {
-        element { kind = CanvasElementKind.Image; offsetX = 0f; offsetY = 0f; width = 40f; height = 40f; image = CanvasImage("quadrants.png", regionX = 1, regionWidth = 2) }
+        element { kind = CanvasElementKind.Image; offsetX = 0f; offsetY = 0f; width = 40f; height = 40f; style = CanvasStyle(image = CanvasImage("quadrants.png", regionX = 1, regionWidth = 2)) }
 
         assertEquals(BACKGROUND, pixels(40, 40, mapOf("quadrants.png" to QUADRANTS))[20][20])
     }

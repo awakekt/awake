@@ -27,11 +27,11 @@ class LoadCanvasImagesTest {
         }
         val document = SceneDocument(
             nodes = listOf(
-                SceneNode("panel", components = listOf(SceneCanvasElement(image = CanvasImage("frame.png")))),
+                SceneNode("panel", components = listOf(SceneCanvasElement(style = CanvasStyle(image = CanvasImage("frame.png"))))),
                 SceneNode(
                     "hud",
                     children = listOf(
-                        SceneNode("bar", components = listOf(SceneCanvasElement(image = CanvasImage("frame.png"), fillImage = CanvasImage("gone.png")))),
+                        SceneNode("bar", components = listOf(SceneCanvasElement(style = CanvasStyle(image = CanvasImage("frame.png"), fillImage = CanvasImage("gone.png"))))),
                     ),
                 ),
             ),

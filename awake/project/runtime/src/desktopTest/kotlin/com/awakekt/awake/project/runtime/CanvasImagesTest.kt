@@ -47,7 +47,7 @@ class CanvasImagesTest {
                     "scenes/main.scene.json" -> """
                         { "version": 1, "name": "hud", "nodes": [
                           { "name": "Frame", "components": [ { "component": "canvas_element", "kind": "Panel",
-                            "image": { "path": "ui/frame.png", "sliceLeft": 1, "sliceRight": 1 } } ] }
+                            "style": { "image": { "path": "ui/frame.png", "sliceLeft": 1, "sliceRight": 1 } } } ] }
                         ] }
                     """.trimIndent().encodeToByteArray()
                     "ui/frame.png" -> PNG

@@ -22,7 +22,7 @@ enum class CanvasElementKind {
     Button,
     /** Virtual touch analog joystick. */
     Joystick,
-    /** A picture: the element's [CanvasElement.image]. */
+    /** A picture: its style's [CanvasStyle.image]. */
     Image,
 }
 
@@ -105,11 +105,8 @@ class CanvasElement {
     /** If true, element is displayed only when touch controls are active. */
     var touchOnly: Boolean = false
 
-    /** An Image's picture, the background of a Panel, Button or Text over [background], or a Bar's track. */
-    var image: CanvasImage? = null
-
-    /** A Bar's fill, cut at [value] rather than squeezed into it. */
-    var fillImage: CanvasImage? = null
+    /** How the element looks beyond its colours: images, and their frames and fills. */
+    var style: CanvasStyle = CanvasStyle()
 
     private var pressed = false
     internal val interactions = InteractionSource()

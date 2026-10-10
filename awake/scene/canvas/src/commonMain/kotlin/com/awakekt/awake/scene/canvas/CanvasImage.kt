@@ -113,7 +113,7 @@ suspend fun loadCanvasImages(document: SceneDocument, assets: AssetSource): Map<
 fun hasCanvasImages(document: SceneDocument): Boolean = document.nodes.any { it.canvasImagePaths().isNotEmpty() }
 
 private fun SceneNode.canvasImagePaths(): List<String> =
-    components.filterIsInstance<SceneCanvasElement>().flatMap { listOfNotNull(it.image?.path, it.fillImage?.path) } +
+    components.filterIsInstance<SceneCanvasElement>().flatMap { listOfNotNull(it.style.image?.path, it.style.fillImage?.path) } +
         children.flatMap { it.canvasImagePaths() }
 
 private val log = Logger("scene-canvas")

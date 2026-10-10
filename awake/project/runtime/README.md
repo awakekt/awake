@@ -27,7 +27,7 @@ Core's capabilities decide what runs, each for the components it owns:
 |---|---|
 | `movement_control`, `input_actions` | `PlayerInputSystem`: the keys and pointer buttons into the scene's input actions, which a player's `movement_control` follows (`move`, `jump`, `run`); moved by physics with `character_controller`, straight through the world without |
 | `canvas_element` with an `action` | `CanvasActionSystem`: an element naming one of the scene's input actions adds to it, so a `move` Joystick steers, a `jump` Button jumps and a `run` Button runs as the keys do |
-| `canvas_element` with an `image` or `fillImage` | Nothing runs: `loadProject` decodes the images, under `CoreSceneContent.CanvasImages`, and `runProject` gives them to the runtime that draws the canvas |
+| `canvas_element` with a `style` image | Nothing runs: `loadProject` decodes the images, under `CoreSceneContent.CanvasImages`, and `runProject` gives them to the runtime that draws the canvas |
 | `camera_rig` | `CameraSystem` |
 | `paged_terrain` | On the fixed step, before physics: its cells streamed around the primary camera from the page index `loadProject` read, drawn as one clipmap (with terrain layers when the index names a palette), and static collision cells near the camera when it is a `collider` and the host gives a physics world. A scene streams one |
 | `terrain` | With a renderer, `TerrainContentSystem` draws it: with the surface its `surface` names, from the providers under `CoreSceneContent.TerrainSurfaces` (a project's content holds the layered-terrain kit's, `awake.terrain.layers`), or with the built-in terrain shading. Closing the scene's systems detaches it |

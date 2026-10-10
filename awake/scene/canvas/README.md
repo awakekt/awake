@@ -20,9 +20,10 @@ Not to be confused with Compose's `Canvas` (a surface you draw pixels on) or
   **`background`**, as `#RRGGBB` or `#RRGGBBAA`.
 - **`value`**: a Bar's fill from 0 to 1.
 - **`order`**: lower draws first. **`visible`** hides it.
-- **`image`**: an Image's picture, the frame of a Panel, Button or Text, or a Bar's track; and
-  **`fillImage`**, a Bar's fill, cut at `value`. A `CanvasImage` names a project file, the region of
-  it to use and the slice insets that keep its corners whole.
+- **`style`**: how it looks beyond its colours. `style.image` is an Image's picture, the frame of a
+  Panel, Button or Text, or a Bar's track; `style.fillImage` is a Bar's fill, cut at `value`. A
+  `CanvasImage` names a project file, the region of it to use and the slice insets that keep its
+  corners whole.
 
 ## Drawing
 

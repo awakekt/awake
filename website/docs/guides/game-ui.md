@@ -67,8 +67,7 @@ For a button the player holds down, read `isHeld` instead. For a joystick, read 
 | `visible` | boolean | `true` | Hidden elements are not drawn and take no taps. |
 | `action` | string | `""` | Names what the element does for the game, such as `move` or `jump`. The game decides what each name means. |
 | `touchOnly` | boolean | `false` | Draw the element only where touch controls are shown. |
-| `image` | [image](#draw-images) | none | An `Image`'s picture. The frame of a `Panel`, `Button` or `Text`, over its `background`. A `Bar`'s track. |
-| `fillImage` | [image](#draw-images) | none | A `Bar`'s fill, in place of `color`. |
+| `style` | object | `{}` | How the element looks beyond its colours. See [Draw images](#draw-images). |
 
 A running `CanvasElement` also has values that are not saved:
 
@@ -80,7 +79,9 @@ A running `CanvasElement` also has values that are not saved:
 
 ## Draw images
 
-An element's `image` and `fillImage` name a PNG or JPEG in the project and say how it fills the
+An element's `style` holds its images. `style.image` is an `Image`'s picture, the frame of a
+`Panel`, `Button` or `Text` over its `background`, or a `Bar`'s track. `style.fillImage` is a
+`Bar`'s fill, in place of `color`. Each names a PNG or JPEG in the project and says how it fills the
 element. The image is cut into nine by four slice insets, in the image's pixels. The corners keep
 their size, one dp per pixel, so a window frame stays crisp at any size. The edges stretch along
 their length, and the centre stretches both ways.
@@ -88,10 +89,11 @@ their length, and the centre stretches both ways.
 ```json title="A framed panel and a gauge"
 [
   { "component": "canvas_element", "kind": "Panel", "width": 240, "height": 120,
-    "image": { "path": "ui/window.png", "sliceLeft": 16, "sliceTop": 16, "sliceRight": 16, "sliceBottom": 16,
-               "repeatEdges": true, "pixelated": true } },
+    "style": { "image": { "path": "ui/window.png", "sliceLeft": 16, "sliceTop": 16, "sliceRight": 16,
+                          "sliceBottom": 16, "repeatEdges": true, "pixelated": true } } },
   { "component": "canvas_element", "kind": "Bar", "width": 108, "height": 10, "value": 0.6,
-    "fillImage": { "path": "ui/gauges.png", "regionY": 10, "regionHeight": 10, "sliceLeft": 3, "sliceRight": 3 } }
+    "style": { "fillImage": { "path": "ui/gauges.png", "regionY": 10, "regionHeight": 10,
+                              "sliceLeft": 3, "sliceRight": 3 } } }
 ]
 ```
 

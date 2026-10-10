@@ -82,7 +82,7 @@ private fun CanvasElementView(element: CanvasElement, modifier: Modifier, images
     val fill = colorOf(element.color, Color.White)
     val back = colorOf(element.background, Color.Transparent)
     val textStyle = TextStyle(color = fill, size = element.fontSize.sp)
-    val backed = modifier.background(back).let { colored -> element.image?.fill(images)?.let { colored.background(it) } ?: colored }
+    val backed = modifier.background(back).let { colored -> element.style.image?.fill(images)?.let { colored.background(it) } ?: colored }
     when (element.kind) {
         CanvasElementKind.Text -> Box(backed) { Text(element.text, style = textStyle) }
         CanvasElementKind.Panel, CanvasElementKind.Image -> Box(backed)
@@ -102,7 +102,7 @@ private fun CanvasElementView(element: CanvasElement, modifier: Modifier, images
 context(_: Composer)
 private fun BarFill(element: CanvasElement, color: Color, images: Map<String, ImageBitmap>) {
     val filled = Modifier.fillMaxHeight().fillMaxWidth(element.value.coerceIn(0f, 1f))
-    val picture = element.fillImage?.fill(images)
+    val picture = element.style.fillImage?.fill(images)
     if (picture == null) {
         Box(filled.background(color))
     } else {
