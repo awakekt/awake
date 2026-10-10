@@ -208,7 +208,9 @@ once its capability registers them.
 | `text` | The words of a `Text` or `Button`, each `{component.field}` replaced by its value. Whole numbers show without a fraction, others to one decimal place. |
 
 While a binding reads nothing, because no node has the name or its component has no such field, the
-element shows its own `value` and `text`, and the log says so once.
+element shows its own `value` and `text`, and the log says so once. A Bar does the same for a value
+that is not a finite number and for a `max` that is not above 0; a text shows such a value as it is,
+`NaN` or `Infinity`.
 
 ## Lay out children
 

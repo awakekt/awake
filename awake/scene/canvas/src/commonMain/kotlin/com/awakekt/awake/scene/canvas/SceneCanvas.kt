@@ -72,7 +72,8 @@ context(_: Composer)
  * @param projector Where the scene's nodes land on screen, for elements that [CanvasElement.follow]
  *   one. Without it they are not drawn.
  * @param bindings The scene component bindings an element's [CanvasElement.bind] reads fields
- *   through: the scene's own registry's, or every globally registered one.
+ *   through: the scene's own registry's. Null reads through every globally registered one, gathered
+ *   only on a frame where an element reads a field.
  */
 @Suppress("LongParameterList")
 fun SceneCanvas(
@@ -82,7 +83,7 @@ fun SceneCanvas(
     images: Map<String, ImageBitmap> = emptyMap(),
     scale: Float = 1f,
     projector: CanvasProjector? = null,
-    bindings: List<SceneComponentBinding<*, *>> = globalCanvasBindings(),
+    bindings: List<SceneComponentBinding<*, *>>? = null,
 ) {
     val tree = CanvasTree(world, showTouchControls, images, projector, bindings)
     val uiScale = if (scale > 0f && scale.isFinite()) scale else 1f

@@ -13,6 +13,7 @@ import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.document.SceneComponent
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -48,7 +49,9 @@ data class CanvasBinding(
         if (node.isBlank()) add("node must name a node")
         if (value.isBlank() && text.isBlank()) add("needs a value or a text to show")
         listOf("value" to value, "max" to max).forEach { (name, path) ->
-            if (path.isNotBlank() && path.toFloatOrNull() == null && '.' !in path) add("$name \"$path\" must be component.field or a number")
+            if (path.isNotBlank() && path.toFloatOrNull() == null && !FIELD_PATH.matches(path)) {
+                add("$name \"$path\" must be component.field or a number")
+            }
         }
     }
 }
@@ -58,12 +61,18 @@ data class CanvasBinding(
  * its scene binding in [bindings], so it reads exactly what a saved scene would hold.
  */
 internal class CanvasData(private val world: World, bindings: List<SceneComponentBinding<*, *>>) {
-    private val byName = bindingsByName(bindings)
+    private val byName = bindings.mapNotNull { binding -> binding.serializer?.descriptor?.serialName?.let { it to binding } }.toMap()
     private val exported = HashMap<Pair<Entity, String>, JsonObject?>()
 
-    /** [path]'s number on [entity], or a number [path] spells, or null when there is neither. */
-    fun number(entity: Entity, path: String): Float? = path.toFloatOrNull() ?: read(entity, path)?.let { primitive ->
-        primitive.floatOrNull ?: primitive.booleanOrNull?.let { if (it) 1f else 0f }
+    /**
+     * [path]'s number on [entity], or a number [path] spells, or null when there is neither or it is
+     * not finite: a NaN health shows the element's own value rather than an empty bar.
+     */
+    fun number(entity: Entity, path: String): Float? {
+        val number = path.toFloatOrNull() ?: read(entity, path)?.let { primitive ->
+            primitive.floatOrNull ?: primitive.booleanOrNull?.let { if (it) 1f else 0f }
+        }
+        return number?.takeIf { it.isFinite() }
     }
 
     /** [template] with each `{component.field}` replaced by that field's value on [entity]. */
@@ -87,44 +96,48 @@ internal class CanvasData(private val world: World, bindings: List<SceneComponen
         val binding = byName[component]
         val serializer = binding?.serializer as? KSerializer<SceneComponent>
         val saved = if (serializer != null) binding.exportFrom(world, entity) else null
-        return if (serializer != null && saved != null) json.encodeToJsonElement(serializer, saved) as? JsonObject else null
+        return try {
+            if (serializer != null && saved != null) json.encodeToJsonElement(serializer, saved) as? JsonObject else null
+        } catch (unwritable: SerializationException) {
+            warnOnce(component, "it could not be read: ${unwritable.message}")
+            null
+        }
     }
 
     private companion object {
         val PLACEHOLDER = Regex("""\{([A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)+)}""")
 
-        // Defaults kept: a field at its default is still a value to show.
-        val json = Json { encodeDefaults = true }
+        // Defaults kept: a field at its default is still a value to show. A NaN or an infinity is a
+        // value too, and the scene format's strict default would refuse the whole component.
+        val json = Json {
+            encodeDefaults = true
+            allowSpecialFloatingPointValues = true
+        }
 
         val log = Logger("scene-canvas")
+
+        // Paths a scene's bindings name: as many as the scenes write, so it stays small.
         val warned = HashSet<String>()
 
-        var cachedBindings: List<SceneComponentBinding<*, *>>? = null
-        var cachedByName: Map<String, SceneComponentBinding<*, *>> = emptyMap()
-
-        fun bindingsByName(bindings: List<SceneComponentBinding<*, *>>): Map<String, SceneComponentBinding<*, *>> {
-            if (bindings !== cachedBindings) {
-                cachedByName = bindings.mapNotNull { binding -> binding.serializer?.descriptor?.serialName?.let { it to binding } }.toMap()
-                cachedBindings = bindings
-            }
-            return cachedByName
+        fun warnOnce(path: String, why: String = "no node's component has it") {
+            if (warned.add(path)) log.warn { "A canvas binding reads '$path', but $why; the element shows its own value" }
         }
 
-        fun warnOnce(path: String) {
-            if (warned.add(path)) log.warn { "A canvas binding reads '$path', which no node's component has; the element shows its own value" }
-        }
-
-        /** To one decimal place, without it when it is 0: `120`, `0.5`, `-1.5`. */
+        /** To one decimal place, without it when it is 0: `120`, `0.5`, `-1.5`; past a trillion, or not finite, as it is. */
         fun formatNumber(value: Float): String {
+            // First: roundToLong refuses NaN.
+            if (!value.isFinite() || abs(value) > LARGEST_FORMATTED) return value.toString()
             val tenths = (value * TENTHS).roundToLong()
-            if (tenths % 10 == 0L) return (tenths / 10).toString()
             val sign = if (tenths < 0) "-" else ""
-            return "$sign${abs(tenths) / 10}.${abs(tenths) % 10}"
+            return if (tenths % 10 == 0L) (tenths / 10).toString() else "$sign${abs(tenths) / 10}.${abs(tenths) % 10}"
         }
 
         const val TENTHS = 10f
+        const val LARGEST_FORMATTED = 1e12f
     }
 }
+
+private val FIELD_PATH = Regex("""[A-Za-z0-9_]+(\.[A-Za-z0-9_]+)+""")
 
 /** The bindings of every scene component registered globally now: what a scene loaded without a scope uses. */
 fun globalCanvasBindings(): List<SceneComponentBinding<*, *>> = SceneComponentRegistry().bindings

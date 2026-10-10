@@ -101,6 +101,25 @@ class CanvasBindingTest {
     }
 
     @Test
+    fun aFieldThatIsNotANumberShowsTheElementsOwnValueWithoutFailing() {
+        health.current = Float.NaN
+        val bar = bound(CanvasBinding("Player", value = "health.current", max = "health.max"))
+        val label = bound(CanvasBinding("Player", text = "HP {health.current}"))
+
+        assertEquals(0.5f, tree().valueOf(bar))
+        assertEquals("HP NaN", tree().textOf(label))
+        health.current = Float.NEGATIVE_INFINITY
+        assertEquals("HP -Infinity", tree().textOf(label))
+    }
+
+    @Test
+    fun aMaxThatIsNotAboveZeroShowsTheElementsOwnValue() {
+        health.max = -10f
+        assertEquals(0.5f, tree().valueOf(bound(CanvasBinding("Player", value = "health.current", max = "health.max"))))
+        assertEquals(0.5f, tree().valueOf(bound(CanvasBinding("Player", value = "health.current", max = "0"))))
+    }
+
+    @Test
     fun aBoundBarDrawsItsFieldsShare() {
         world.create().also {
             world.add(
@@ -122,15 +141,17 @@ class CanvasBindingTest {
 
     @Test
     fun validationRejectsABindingThatReadsNothing() {
-        val issues = SceneCanvasElement(bind = CanvasBinding("", value = "health")).validate("nodes[0]").map { it.message }
+        val issues = SceneCanvasElement(bind = CanvasBinding("", value = "health", max = ".max")).validate("nodes[0]").map { it.message }
 
         assertEquals(
             listOf(
                 "canvas_element.bind.node must name a node",
                 "canvas_element.bind.value \"health\" must be component.field or a number",
+                "canvas_element.bind.max \".max\" must be component.field or a number",
             ),
             issues,
         )
+        assertEquals(emptyList(), SceneCanvasElement(bind = CanvasBinding("Player", value = "health.pool.reserve", max = "150")).validate("n").map { it.message })
         assertEquals(
             listOf("canvas_element.bind.needs a value or a text to show"),
             SceneCanvasElement(bind = CanvasBinding("Player")).validate("nodes[0]").map { it.message },
