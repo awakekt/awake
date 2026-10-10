@@ -190,8 +190,9 @@ private fun CanvasElementView(
 }
 
 /**
- * A Bar's fill, [value] of its width: [color], or its fill image laid out at the
- * bar's full width and cut at the value, so a gauge's end and pattern stay where they are.
+ * A Bar's fill, [value] of its width: [color], or its fill image. The image is laid out at the bar's
+ * full width and cut at the value, so a gauge's end and pattern stay where they are, or with
+ * [CanvasFillImageMode.Squeeze] drawn at the filled width, keeping both end caps.
  */
 context(_: Composer)
 private fun BarFill(element: CanvasElement, value: Float, color: Color, images: Map<String, ImageBitmap>) {
@@ -199,6 +200,8 @@ private fun BarFill(element: CanvasElement, value: Float, color: Color, images: 
     val picture = element.style.fillImage?.fill(images)
     if (picture == null) {
         Box(filled.background(color, RoundedCornerShape((element.style.cornerRadius ?: 0f).dp)))
+    } else if (element.style.fillImageMode == CanvasFillImageMode.Squeeze) {
+        Box(filled.drawBehind { drawImageFill(picture) })
     } else {
         Box(filled.drawBehind { clipped { drawImageFill(picture, width = element.width * density) } })
     }
