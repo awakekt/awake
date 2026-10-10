@@ -121,6 +121,9 @@ class CanvasElement {
     /** Whether the element covers the screen rectangle of the followed node's meshes. */
     var followBounds: Boolean = false
 
+    /** How far, in dp, a [followBounds] box reaches past the node's rectangle on each side; negative pulls it in. */
+    var followOutset: Float = 0f
+
     /** How the element places its children itself; null anchors each child by hand. */
     var layout: CanvasLayout? = null
 
