@@ -124,7 +124,9 @@ public final class com/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime : co
 	public fun pause ()V
 	public final fun phaseStats ()Lcom/awakekt/awake/scene/runtime/ScenePhaseStats;
 	public final fun readback (Lcom/awakekt/awake/core/math/Lens;IILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun readback (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/scene/rendering/camera/Camera;IILkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun readbackAttachment (IILcom/awakekt/awake/render/capture/FramebufferAttachment;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun readbackAttachment (Lcom/awakekt/awake/ecs/World;IILcom/awakekt/awake/render/capture/FramebufferAttachment;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun ready (Lcom/awakekt/awake/render/renderer/Renderer;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun requireAssetLibrary ()Lcom/awakekt/awake/scene/runtime/SceneAssetLibrary;
 	public final fun requireCamera (Ljava/lang/String;)Lcom/awakekt/awake/scene/rendering/camera/Camera;

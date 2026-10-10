@@ -9,10 +9,12 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.ecs.World
 import com.awakekt.awake.engine.platform.dsl.AppServiceLookup
 import com.awakekt.awake.particles.ParticleEmitter
 import com.awakekt.awake.particles.ParticleSystem
 import com.awakekt.awake.particles.ParticleVisual
+import com.awakekt.awake.render.capture.FramebufferAttachment
 import com.awakekt.awake.render.command.GpuDrawPreparationSource
 import com.awakekt.awake.render.command.GpuDrawPreparer
 import com.awakekt.awake.render.command.GpuDrawRequest
@@ -22,6 +24,7 @@ import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.render.testing.NoopRenderer
 import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.scene.core.transform.Transform
+import com.awakekt.awake.scene.core.transform.TransformSystem
 import com.awakekt.awake.scene.particles.TransformPlacement
 import com.awakekt.awake.scene.rendering.Camera
 import com.awakekt.awake.scene.rendering.light.Light
@@ -70,7 +73,9 @@ class SceneReadbackTest {
         )
     }
 
-    private class RecordingRenderer : NoopRenderer(), GpuDrawPreparationSource {
+    private class RecordingRenderer :
+        NoopRenderer(),
+        GpuDrawPreparationSource {
         override val surfaceAspect: Float = 2f
         val frames = ArrayList<Pass>()
         val captures = ArrayList<Pass>()
@@ -138,6 +143,63 @@ class SceneReadbackTest {
         assertEquals(frame, renderer.captures.single())
     }
 
+    /**
+     * Another world, such as the one an editor plays a scene in, draws its own entities from its own
+     * camera, and the runtime's own capture afterwards is the one it always was.
+     */
+    @Test
+    fun aReadbackOfAnotherWorldDrawsThatWorldFromItsCamera() = runTest {
+        val renderer = RecordingRenderer()
+        val runtime = runtime()
+        runtime.ready(renderer)
+        val boat = FakeMesh(VertexFormat.PositionNormalColor)
+        val played = World().apply {
+            add(create(), Camera(Lens(eye = Vec3f(0f, 4f, 9f), center = Vec3f.ZERO, fovYRadians = 1f, near = 0.1f, far = 50f)))
+            create().also {
+                add(it, Transform(position = Vec3f(3f, 0f, 0f)))
+                add(it, MeshRenderer(boat, FakeMaterial))
+            }
+        }
+        TransformSystem().update(played, 0f)
+
+        runtime.readbackAttachment(played, width = 200, height = 100, attachment = FramebufferAttachment.Color0)
+        runtime.readback(lens, width = 200, height = 100)
+
+        val (other, own) = renderer.captures
+        assertEquals(listOf(boat), other.draws.map { it.mesh }, "The other world's one entity, and nothing of the runtime's.")
+        assertEquals(3f, other.draws.single().model[TRANSLATION_X], "At its own transform.")
+        assertTrue(other.light != own.light, "From its own camera, which sets the pass's view.")
+        assertTrue(own.draws.none { it.mesh === boat }, "The runtime's own capture after it draws only its own world.")
+        assertEquals(renderer.frames.single(), own)
+    }
+
+    @Test
+    fun aWorldWithNoCameraHasNothingToCapture() = runTest {
+        val renderer = RecordingRenderer()
+        val runtime = runtime()
+        runtime.ready(renderer)
+
+        val data = runtime.readbackAttachment(World(), width = 20, height = 10, attachment = FramebufferAttachment.Color0)
+
+        assertTrue(!data.available, "unavailable, with a reason: ${data.reason}")
+        assertTrue(renderer.captures.isEmpty(), "Nothing was drawn.")
+    }
+
+    private fun runtime() = SceneAppLifecycleRuntime(
+        SceneAppSpec(
+            sceneName = null,
+            systems = emptyList(),
+            scenePopulationBlock = { populate() },
+            renderableFactory = { error("no renderable requested in this test") },
+            assetLibraryFactory = null,
+            updateBlock = { _, _ -> },
+            ui = null,
+            onReadyBlock = {},
+            onDisposeBlock = {},
+            serviceRegistrations = emptyList(),
+        ),
+    ).also { it.initialize(NoServices) }
+
     private fun SceneAppLifecycleRuntime.populate() {
         val cube = FakeMesh(VertexFormat.PositionNormalColor)
         world.add(world.create(), Camera(lens))
@@ -172,5 +234,8 @@ class SceneReadbackTest {
 
     private companion object {
         const val PARTICLE_SPAWN_SECONDS = 0.05f
+
+        /** A column-major model matrix's x translation. */
+        const val TRANSLATION_X = 12
     }
 }
