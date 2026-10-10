@@ -8,10 +8,10 @@ public final class com/awakekt/awake/vulkan/HeadlessUiRendererKt {
 
 public final class com/awakekt/awake/vulkan/application/VulkanDesktopHostKt {
 	public static final fun runVulkanDesktopGame (Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;Lcom/awakekt/awake/asset/shaders/RenderPlan;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;)V
-	public static final fun runVulkanDesktopGame (Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;Lcom/awakekt/awake/vulkan/application/VulkanEngine;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;)V
+	public static final fun runVulkanDesktopGame (Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;Lcom/awakekt/awake/vulkan/application/VulkanEngine;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/engine/window/DesktopRunLimits;)V
 	public static final fun runVulkanDesktopGame (Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;)V
 	public static synthetic fun runVulkanDesktopGame$default (Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;Lcom/awakekt/awake/asset/shaders/RenderPlan;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
-	public static synthetic fun runVulkanDesktopGame$default (Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;Lcom/awakekt/awake/vulkan/application/VulkanEngine;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
+	public static synthetic fun runVulkanDesktopGame$default (Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;Lcom/awakekt/awake/vulkan/application/VulkanEngine;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/engine/window/DesktopRunLimits;ILjava/lang/Object;)V
 	public static synthetic fun runVulkanDesktopGame$default (Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
 }
 
@@ -23,6 +23,11 @@ public class com/awakekt/awake/vulkan/application/VulkanEngine : com/awakekt/awa
 	protected fun releaseBackendSurface ()V
 	protected fun resizeBackend ()V
 	protected fun restoreBackendSurface (Ljava/lang/Object;)V
+}
+
+public final class com/awakekt/awake/vulkan/application/VulkanHeadlessPlayKt {
+	public static final fun playHeadless (Lcom/awakekt/awake/vulkan/application/VulkanEngine;IIIFLkotlin/jvm/functions/Function0;)Lcom/awakekt/awake/render/texture/TextureAsset;
+	public static synthetic fun playHeadless$default (Lcom/awakekt/awake/vulkan/application/VulkanEngine;IIIFLkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lcom/awakekt/awake/render/texture/TextureAsset;
 }
 
 public final class com/awakekt/awake/vulkan/commands/TransferContext {

@@ -12,10 +12,12 @@ import com.awakekt.awake.engine.platform.lifecycle.AppFrame
 import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
 import com.awakekt.awake.render.renderer.LineSegment
 import com.awakekt.awake.render.renderer.Renderer
+import com.awakekt.awake.render.texture.TextureAsset
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlin.concurrent.Volatile
 
 /**
  * Backend-neutral render bootstrap shared by `VulkanEngine` (`awake-backend-vulkan`)
@@ -34,10 +36,20 @@ abstract class GraphicsEngine(
     /** The session's window configuration. */
     override val windowConfig: WindowConfig get() = appLifecycle.windowConfig
 
-    /** Same "create() stays synchronous, launch internally" reasoning the original
-     * `VulkanApplication`/`WebGpuApplication` used -- [update] is a no-op until
-     * [createBackendResources] (and [AppLifecycle.ready]) finish. */
-    private var isReady = false
+    /**
+     * Whether the backend is up and the app ready, so [update] plays frames. [create] starts the
+     * backend without waiting for it, as the original `VulkanApplication`/`WebGpuApplication` did,
+     * and [update] is a no-op until it finishes. It stays false when it fails; see [startupError].
+     */
+    @Volatile
+    var isReady = false
+        private set
+
+    /** Why [create] failed to start the backend or the app, or null while it hasn't. */
+    @Volatile
+    var startupError: Throwable? = null
+        private set
+
     private var surfaceReleased = false
 
     /** Populated by [createBackendResources] -- `protected` (not `private`) so each
@@ -72,6 +84,7 @@ abstract class GraphicsEngine(
                     setupCommon(window)
                     logger.info { "GraphicsEngine created and ready" }
                 } catch (t: Throwable) {
+                    startupError = t
                     logger.error(t) { "Failed to initialize graphics engine" }
                 }
             }
@@ -137,6 +150,16 @@ abstract class GraphicsEngine(
         if (isReady) destroyBackend()
     }
 
+    /**
+     * Reads the frame this engine last drew back to the CPU, as tightly packed RGBA8 pixels. A
+     * backend can read it when it was created on a [HeadlessSurface], with no window to present
+     * to; see [Renderer.readPresentedPixels].
+     */
+    suspend fun readPresentedPixels(): TextureAsset {
+        check(isReady) { "The engine hasn't started, so it has drawn no frame." }
+        return renderer.readPresentedPixels()
+    }
+
     /** Draws world-space debug lines (e.g. a frustum wireframe) this frame -- see
      * [Renderer.drawDebugLines]'s doc comment
      * for the staging/depth-testing details. */
@@ -163,14 +186,10 @@ abstract class GraphicsEngine(
 
     /** Destroys what the backend built on the window surface (swapchain, surface) and nothing
      * else. Only backends whose host can lose its surface (Android) override this pair. */
-    protected open fun releaseBackendSurface() {
-        throw UnsupportedOperationException("${this::class.simpleName} can't release its surface")
-    }
+    protected open fun releaseBackendSurface(): Unit = throw UnsupportedOperationException("${this::class.simpleName} can't release its surface")
 
     /** Rebuilds what [releaseBackendSurface] destroyed, against the new [window]. */
-    protected open fun restoreBackendSurface(window: Any) {
-        throw UnsupportedOperationException("${this::class.simpleName} can't restore its surface")
-    }
+    protected open fun restoreBackendSurface(window: Any): Unit = throw UnsupportedOperationException("${this::class.simpleName} can't restore its surface")
 
     /** The window surface changed size or orientation. Called on the host's UI thread, which can
      * run beside a frame, so a backend should only note the change for its next frame. */

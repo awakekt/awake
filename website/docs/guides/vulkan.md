@@ -106,6 +106,20 @@ On desktop, `vulkanHeadlessScene(width, height)` and `vulkanHeadlessUi(width, he
 `HeadlessRenderSession` that renders offscreen. The engine's own pixel tests use them, and so can
 yours.
 
+## Check a build in CI
+
+A CI job can run your game as it ships, such as its obfuscated release, to check that it starts and
+draws. The game needs no code for it: `runVulkanDesktopGame` reads two system properties.
+
+| Property | What it does |
+| --- | --- |
+| `-Dawake.frames=120` | Plays 120 frames in the window, then returns. |
+| `-Dawake.capture=frame.png` | Plays with no window and writes the last frame as a PNG. It plays `awake.frames` frames, or 60 if that isn't set. It needs a Vulkan driver but no display. |
+
+Either run fails if the engine never starts, with the reason, so a missing driver or native library
+can't pass as a short run. In code, `VulkanEngine.playHeadless(width, height, frames)` plays the
+same way and returns the last frame's pixels.
+
 ## How it works
 
 `VulkanEngine(appLifecycle, plan)` owns the GPU side of an app: it creates the device, swapchain and

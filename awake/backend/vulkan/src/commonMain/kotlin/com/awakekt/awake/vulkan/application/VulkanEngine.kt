@@ -637,9 +637,9 @@ open class VulkanEngine(
                 // Physical framebuffer pixels over logical window points -- the real display
                 // scale (1x/2x/3x) on a platform that draws the distinction (desktop today; see
                 // windowLogicalExtent's per-platform doc comments). Falls back to unscaled
-                // wherever a platform reports no logical size at all.
+                // wherever a platform reports no logical size at all, and with no window.
                 density = {
-                    val logical = windowLogicalExtent(window)
+                    val logical = if (headless == null) windowLogicalExtent(window) else null
                     if (logical != null && logical.width > 0) {
                         swapchainManager.extent.width.toFloat() / logical.width.toFloat()
                     } else {

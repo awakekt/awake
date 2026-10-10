@@ -10,8 +10,10 @@ import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.input.PointerCursor
 import com.awakekt.awake.engine.platform.dsl.AppWindowBackend
 import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
+import com.awakekt.awake.engine.window.DesktopRunLimits
 import com.awakekt.awake.engine.window.pollGlfwInput
 import com.awakekt.awake.engine.window.runDesktopWindow
+import java.io.File
 
 /**
  * Runs a Vulkan desktop app using Awake's standard engine bootstrap.
@@ -74,15 +76,21 @@ fun runVulkanDesktopGame(
  * Consumers still own input polling, debug channels and the engine instance. The window, and GLFW,
  * are torn down by this call.
  *
+ * [limits] end the run early, for a CI job or a smoke check, and are read from `-Dawake.frames` and
+ * `-Dawake.capture` by default. With a capture, [game] plays with no window, which skips
+ * [pollInput], [cursor] and [afterLoop]; its last frame is written as a PNG.
+ *
  * @param game The app whose window configuration, input and frame loop this serves.
  * @param application The engine that draws [game]'s frames.
  * @param pollInput Reads the window's keys and pointer into the game's input each frame.
  * @param beforeFrame Runs after input is read and before the frame is updated.
  * @param afterLoop Runs once the loop ends, before the engine is disposed.
  * @param cursor The pointer shape the UI asks for this frame, or `null` to leave the cursor alone.
+ * @param limits How many frames to play, and whether to capture the last; see [DesktopRunLimits].
  * @throws IllegalStateException If [game] asks for a window backend other than Vulkan or the
- * default.
+ * default, or a limited run's engine never starts.
  */
+@Suppress("LongParameterList")
 fun runVulkanDesktopGame(
     game: AwakeAppLifecycle,
     application: VulkanEngine,
@@ -94,6 +102,7 @@ fun runVulkanDesktopGame(
     // existing caller keeps its current zero-cursor-management behavior; a caller opts in by
     // returning its own UiContext's `finishFrame().effects.cursor` each frame.
     cursor: (() -> PointerCursor)? = null,
+    limits: DesktopRunLimits = DesktopRunLimits.fromSystemProperties(),
 ) {
     check(
         game.windowConfig.backend == AppWindowBackend.VULKAN ||
@@ -101,6 +110,13 @@ fun runVulkanDesktopGame(
     ) {
         "Desktop Vulkan host requires a Vulkan or DEFAULT backend, found ${game.windowConfig.backend}."
     }
+    limits.capture?.let { file ->
+        val frames = limits.frames ?: DesktopRunLimits.DEFAULT_CAPTURE_FRAMES
+        application.playHeadless(game.windowConfig.width, game.windowConfig.height, frames, beforeFrame = beforeFrame)
+            .writePng(File(file))
+        return
+    }
+    var started = false
     runDesktopWindow(
         game = game,
         onCreate = application::create,
@@ -108,7 +124,13 @@ fun runVulkanDesktopGame(
         onDispose = application::dispose,
         pollInput = pollInput,
         beforeFrame = beforeFrame,
-        afterLoop = afterLoop,
+        afterLoop = {
+            started = application.isReady
+            afterLoop()
+        },
         cursor = cursor,
+        frames = limits.frames,
     )
+    // A limited run is a check: frames played by an engine that never started prove nothing.
+    if (limits.frames != null) check(started) { notStarted(application) }
 }
