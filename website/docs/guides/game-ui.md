@@ -205,7 +205,25 @@ once its capability registers them.
 | `node` | The name of the node whose components are read. |
 | `value` | A `Bar`'s fill: this field, divided by `max`. |
 | `max` | A field, or a number such as `"100"`. Left out, `value` is already a share from 0 to 1. |
-| `text` | The words of a `Text` or `Button`, each `{component.field}` replaced by its value. Whole numbers show without a fraction, others to one decimal place. |
+| `text` | The words of a `Text` or `Button`, each `{component.field}` replaced by its value. A whole number shows exactly, however large, and any other number to one decimal place. A [format](#number-formats) after a colon, such as `{purse.gold:n0}`, sets how a number is written. |
+
+### Number formats
+
+A format is a letter and a digit after a colon: the letter picks the style and the digit is the places
+after the decimal point.
+
+| Text | Shows 1234567.891 as |
+| --- | --- |
+| `{purse.gold:n0}` | `1,234,568`, the digits in groups of three |
+| `{purse.gold:n2}` | `1,234,567.89` |
+| `{purse.gold:f1}` | `1234567.9`, the digits alone |
+| `{purse.share:p0}` | a fraction as a percentage: 0.456 shows as `46%` |
+
+A value rounds half away from zero, as it reads in decimal. A whole number keeps every digit, where
+a `Float` would lose its last ones above 16,777,216. Digits group with `,` and the point is
+`.`, whatever the player's language; write the text yourself where that matters. A field that is not
+a number shows as it is. A format that is not one of these, such as `{purse.gold:int}`, leaves its
+placeholder as written, and scene validation reports it.
 
 While a binding reads nothing, because no node has the name or its component has no such field, the
 element shows its own `value` and `text`, and the log says so once. A Bar does the same for a value

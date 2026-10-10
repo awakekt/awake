@@ -6,6 +6,7 @@
 package com.awakekt.awake.scene.canvas
 
 import com.awakekt.awake.core.logging.Logger
+import com.awakekt.awake.core.text.format.NumberFormat
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.binding.SceneComponentBinding
@@ -36,7 +37,11 @@ import kotlin.math.roundToLong
  * @property max The field, or a plain number, [value] is a share of; empty when [value] is already
  * a share from 0 to 1.
  * @property text The words, with `{component.field}` replaced by the field's value, such as
- * `HP {health.current}/{health.max}`.
+ * `HP {health.current}/{health.max}`. A whole number shows exactly, however large, and any other
+ * number to one decimal place. A format after a colon sets how a number is written: `{purse.gold:n0}`
+ * groups its digits, `1,234,567`, `{health.current:f0}` rounds to a whole number, and
+ * `{health.share:p0}` shows a fraction as a percentage; see [NumberFormat] for the full set. A format
+ * leaves a field that is not a number as it is.
  */
 @Serializable
 data class CanvasBinding(
@@ -51,6 +56,12 @@ data class CanvasBinding(
         listOf("value" to value, "max" to max).forEach { (name, path) ->
             if (path.isNotBlank() && path.toFloatOrNull() == null && !FIELD_PATH.matches(path)) {
                 add("$name \"$path\" must be component.field or a number")
+            }
+        }
+        for (placeholder in PLACEHOLDER.findAll(text)) {
+            val spec = placeholder.groupValues[FORMAT_GROUP]
+            if (spec.isNotEmpty() && NumberFormat.parse(spec) == null) {
+                add("text format \"$spec\" in ${placeholder.value} must be n, f or p and a digit, such as n0")
             }
         }
     }
@@ -75,10 +86,33 @@ internal class CanvasData(private val world: World, bindings: List<SceneComponen
         return number?.takeIf { it.isFinite() }
     }
 
-    /** [template] with each `{component.field}` replaced by that field's value on [entity]. */
+    /** [template] with each `{component.field}` or `{component.field:format}` replaced by that field's value on [entity]. */
     fun text(entity: Entity, template: String): String = PLACEHOLDER.replace(template) { match ->
-        val primitive = read(entity, match.groupValues[1]) ?: return@replace match.value
-        primitive.floatOrNull?.let(::formatNumber) ?: primitive.content
+        val path = match.groupValues[1]
+        val primitive = read(entity, path) ?: return@replace match.value
+        val spec = match.groupValues[FORMAT_GROUP]
+        if (spec.isEmpty()) {
+            show(primitive)
+        } else {
+            val format = NumberFormat.parse(spec)
+            if (format == null) {
+                warnOnce("$path:$spec", "'$spec' is not a number format, which is n, f or p and a digit, such as n0", "the text keeps its placeholder")
+                match.value
+            } else {
+                show(primitive, format)
+            }
+        }
+    }
+
+    // A whole number is its own digits, exact at any size: through a Float it would lose its low ones
+    // from 16,777,217 up. Any other number is shown to one decimal place, or in the format it asked for.
+    private fun show(primitive: JsonPrimitive, format: NumberFormat? = null): String {
+        val whole = primitive.content.toLongOrNull()
+        return when {
+            format == null -> whole?.toString() ?: primitive.floatOrNull?.let(::formatNumber) ?: primitive.content
+            whole != null -> format.format(whole)
+            else -> primitive.content.toDoubleOrNull()?.let(format::format) ?: primitive.content
+        }
     }
 
     private fun read(entity: Entity, path: String): JsonPrimitive? {
@@ -105,8 +139,6 @@ internal class CanvasData(private val world: World, bindings: List<SceneComponen
     }
 
     private companion object {
-        val PLACEHOLDER = Regex("""\{([A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)+)}""")
-
         // Defaults kept: a field at its default is still a value to show. A NaN or an infinity is a
         // value too, and the scene format's strict default would refuse the whole component.
         val json = Json {
@@ -119,8 +151,8 @@ internal class CanvasData(private val world: World, bindings: List<SceneComponen
         // Paths a scene's bindings name: as many as the scenes write, so it stays small.
         val warned = HashSet<String>()
 
-        fun warnOnce(path: String, why: String = "no node's component has it") {
-            if (warned.add(path)) log.warn { "A canvas binding reads '$path', but $why; the element shows its own value" }
+        fun warnOnce(path: String, why: String = "no node's component has it", result: String = "the element shows its own value") {
+            if (warned.add(path)) log.warn { "A canvas binding reads '$path', but $why; $result" }
         }
 
         /** To one decimal place, without it when it is 0: `120`, `0.5`, `-1.5`; past a trillion, or not finite, as it is. */
@@ -138,6 +170,11 @@ internal class CanvasData(private val world: World, bindings: List<SceneComponen
 }
 
 private val FIELD_PATH = Regex("""[A-Za-z0-9_]+(\.[A-Za-z0-9_]+)+""")
+
+// `{component.field}`, or `{component.field:format}`; group 1 is the field and group 2 the format.
+private val PLACEHOLDER = Regex("""\{([A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)+)(?::([^{}]+))?}""")
+
+private const val FORMAT_GROUP = 2
 
 /** The bindings of every scene component registered globally now: what a scene loaded without a scope uses. */
 fun globalCanvasBindings(): List<SceneComponentBinding<*, *>> = SceneComponentRegistry().bindings
