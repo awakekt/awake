@@ -20,12 +20,18 @@ internal class CliArguments private constructor(
     /** The value given to `--[name]`, or null. */
     fun value(name: String): String? = values[name]
 
+    /** The whole number given to `--[name]`, or [default] when there's none; a usage error outside [range]. */
+    fun int(name: String, default: Int, range: IntRange): Int {
+        val given = values[name] ?: return default
+        return given.toIntOrNull()?.takeIf { it in range } ?: throw UsageException("--$name takes a whole number from ${range.first} to ${range.last}")
+    }
+
     /** The word at [index] after the command's own words, or a usage error naming [what] is missing. */
     fun required(index: Int, what: String): String = words.getOrNull(index) ?: throw UsageException("missing $what")
 
     companion object {
         private val FLAGS = setOf("json", "dry-run", "help")
-        private val VALUED = setOf("project", "parent")
+        private val VALUED = setOf("project", "parent", "output", "width", "height", "frames", "backend", "view", "camera")
 
         /** Splits [args] into words and options, refusing an option it doesn't know. */
         fun parse(args: List<String>): CliArguments {

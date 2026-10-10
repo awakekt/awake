@@ -41,6 +41,7 @@ class AwakeCli(private val out: Appendable, private val err: Appendable, private
         null, "help" -> help()
         "validate" -> validate(arguments)
         "scene" -> scene(arguments)
+        "render" -> render(arguments)
         else -> throw UsageException("unknown command '$command'")
     }
 
@@ -66,6 +67,40 @@ class AwakeCli(private val out: Appendable, private val err: Appendable, private
             out.appendLine(report.summary())
         }
         return if (report.errors.isEmpty()) OK else FAILED
+    }
+
+    private fun render(arguments: CliArguments): Int {
+        val project = ProjectScenes(projectRoot(arguments.value("project")))
+        val scene = project.resolve(arguments.required(1, "scene"))
+        val request = RenderRequest(
+            scene = scene,
+            width = arguments.int("width", DEFAULT_WIDTH, PIXELS),
+            height = arguments.int("height", DEFAULT_HEIGHT, PIXELS),
+            frames = arguments.int("frames", 1, FRAMES),
+            backend = arguments.value("backend")?.let(RenderBackend::named) ?: RenderBackend.default(),
+            view = arguments.value("view")?.let(RenderView::named) ?: RenderView.Lit,
+            camera = arguments.value("camera"),
+        )
+        val output = workingDir.resolve(arguments.value("output") ?: "${scene.name.substringBefore('.')}.png")
+        ProjectRender(project).render(request).writePng(output)
+        if (arguments.flag("json")) {
+            val result = buildJsonObject {
+                put("written", output.path)
+                put("scene", project.relative(scene))
+                put("width", request.width)
+                put("height", request.height)
+                put("frames", request.frames)
+                put("backend", request.backend.label)
+                put("view", request.view.label)
+            }
+            out.appendLine(PRETTY_JSON.encodeToString(JsonObject.serializer(), result))
+        } else {
+            out.appendLine(
+                "rendered ${project.relative(scene)} to ${output.path}: ${request.width}x${request.height}, " +
+                    "${request.view.label} on ${request.backend.label}, frame ${request.frames}",
+            )
+        }
+        return OK
     }
 
     private fun edit(project: ProjectScenes, command: String, arguments: CliArguments): Int {
@@ -116,6 +151,10 @@ class AwakeCli(private val out: Appendable, private val err: Appendable, private
         const val FAILED = 1
         const val USAGE = 2
         const val INDENT = "  "
+        const val DEFAULT_WIDTH = 1280
+        const val DEFAULT_HEIGHT = 720
+        val PIXELS = 16..8192
+        val FRAMES = 1..36_000
 
         val HELP = """
             |awake: validate an Awake project, and read and edit its scenes.
@@ -128,6 +167,7 @@ class AwakeCli(private val out: Appendable, private val err: Appendable, private
             |  awake scene remove-node <scene> <node>
             |  awake scene add-component <scene> <node> <type> [fields-json]
             |  awake scene remove-component <scene> <node> <type>
+            |  awake render <scene> [--output <png>]          Play a scene headless and save what its camera sees.
             |
             |  <scene> is a path from the project root, or a name under scenes/. <node> is a path of node
             |  names, such as Player/Camera, with #2 for an unnamed node's index.
@@ -135,6 +175,11 @@ class AwakeCli(private val out: Appendable, private val err: Appendable, private
             |  --project <dir>  The project (default: the nearest folder up holding awake.project.json).
             |  --json           Output for a program to read.
             |  --dry-run        Report what an edit would change without writing it.
+            |  --width, --height <pixels>  The render's size (default 1280 by 720).
+            |  --frames <n>     How many frames to play before the picture (default 1).
+            |  --backend vulkan|webgpu     The GPU backend (default Vulkan; WebGPU on Windows).
+            |  --view <view>    lit, clay, normals, depth, albedo, shadows, joint-weights or wireframe.
+            |  --camera <name>  Render from the camera on that node instead of the primary one.
             |
             |Exits 0 on success, 1 when it finds errors or refuses an edit, and 2 for a wrong command line.
             |
