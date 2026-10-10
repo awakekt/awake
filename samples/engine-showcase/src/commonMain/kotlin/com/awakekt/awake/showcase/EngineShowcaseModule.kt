@@ -31,7 +31,6 @@ import com.awakekt.awake.showcase.examples.ShowcasePhysics
 import com.awakekt.awake.showcase.examples.SpatialAudioExampleDriver
 import com.awakekt.awake.showcase.examples.SwarmMotionSystem
 import com.awakekt.awake.showcase.examples.TerrainPhysicsExampleDriver
-import com.awakekt.awake.showcase.render.RenderSystem2D
 import com.awakekt.awake.showcase.ui.ShowcaseOverlay
 
 /** The independent engine-demo host. [initialShowcaseId] is injectable for focused smoke tests. */
@@ -43,7 +42,6 @@ internal fun engineShowcaseModule(
     EcsStressExampleDriver.preset(options.stressEntities)
     val loader = EngineShowcaseLoader()
     val selection = ShowcaseSelection(initialShowcaseId)
-    val renderSystem2D = RenderSystem2D()
     val framebufferDebugger = ShowcaseFramebufferDebugger()
     var activeRuntime: SceneAppLifecycleRuntime? = null
 
@@ -69,14 +67,6 @@ internal fun engineShowcaseModule(
                 }
             }
             shaderSwapSystem()
-            frameSystem("showcase-2d-demo") {
-                val runtime = this
-                object : System {
-                    override fun update(world: World, delta: Float) {
-                        runtime.stageUi(renderSystem2D.demoCommands())
-                    }
-                }
-            }
             // Orbit and zoom, on every showcase. The camera stack already existed
             // (CameraRig/CameraSystem/CameraInputSystem) and nothing here installed it, so every
             // demonstration was a fixed viewpoint -- you could not look at the thing being
