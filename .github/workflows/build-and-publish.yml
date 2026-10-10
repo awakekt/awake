@@ -298,8 +298,12 @@ jobs:
           echo "VULKAN_VERSION=$vulkan_version" >> "$GITHUB_ENV"
           echo "vulkan_publish=${{ needs.platform-impact.outputs.vulkan_publish }}" >> "$GITHUB_OUTPUT"
           if [[ "${{ needs.platform-impact.outputs.vulkan_publish }}" != 'true' ]]; then
-            template_vulkan_version=$(git describe --tags --match 'vulkan-v*' --abbrev=0)
-            echo "TEMPLATE_VULKAN_VERSION=${template_vulkan_version#vulkan-v}" >> "$GITHUB_ENV"
+            # Central's own latest release, not the nearest vulkan-v* tag: a tag can sit off main
+            # (vulkan-v0.1.21) or name a release whose publish failed (vulkan-v0.1.20), and waiting
+            # for one of those times the job out before Core uploads.
+            template_vulkan_version=$(curl -fsS https://repo.maven.apache.org/maven2/com/awakekt/awake/backend/vulkan/maven-metadata.xml \
+              | sed -n 's:.*<release>\(.*\)</release>.*:\1:p')
+            echo "TEMPLATE_VULKAN_VERSION=$template_vulkan_version" >> "$GITHUB_ENV"
           fi
 
       - name: Collect desktop natives for local publication
