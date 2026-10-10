@@ -59,6 +59,40 @@ runs:
           }
         done
 
+    # Configuring the build installs the Android NDK the Vulkan android-native module pins, a ~1 GB
+    # download, on every runner that lacks it. Two release Verify jobs lost it in a row: a corrupt
+    # archive (v0.8.0), then a download that hung until the job timed out (v0.8.1). Cache it, and
+    # when missing install it up front, bounded and retried, so Gradle finds it present.
+    - name: Resolve the pinned Android NDK
+      id: ndk
+      shell: bash
+      run: |
+        version=$(sed -n 's/^ *ndkVersion = "\(.*\)"/\1/p' awake/backend/vulkan/bindings/android-native/build.gradle.kts)
+        test -n "$version" || { echo "::error::No ndkVersion in awake/backend/vulkan/bindings/android-native/build.gradle.kts"; exit 1; }
+        echo "version=$version" >> "$GITHUB_OUTPUT"
+        echo "path=$ANDROID_HOME/ndk/$version" >> "$GITHUB_OUTPUT"
+    - name: Restore the Android NDK
+      id: ndk-cache
+      uses: actions/cache@v4
+      with:
+        path: ${{ steps.ndk.outputs.path }}
+        key: android-ndk-${{ runner.os }}-${{ runner.arch }}-${{ steps.ndk.outputs.version }}
+    - name: Install the Android NDK
+      if: steps.ndk-cache.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        sdkmanager="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+        for attempt in 1 2 3; do
+          # perl's alarm is a timeout macOS has without coreutils. `yes` dies of SIGPIPE once
+          # sdkmanager exits, which pipefail would count as a failed install, hence `|| true`.
+          if (yes || true) | perl -e 'alarm shift; exec @ARGV' 600 "$sdkmanager" --install "ndk;${{ steps.ndk.outputs.version }}" > /dev/null; then
+            test -f "${{ steps.ndk.outputs.path }}/source.properties" && exit 0
+          fi
+          echo "::warning::NDK install attempt $attempt failed; retrying"
+          rm -rf "${{ steps.ndk.outputs.path }}"
+        done
+        echo "::error::Could not install NDK ${{ steps.ndk.outputs.version }}"
+        exit 1
     # Cheap next to MoltenVK, and the module already owns the CMake invocation, so there is no
     # recipe to duplicate here -- just run the tasks.
     - name: Build JoltC for iOS
