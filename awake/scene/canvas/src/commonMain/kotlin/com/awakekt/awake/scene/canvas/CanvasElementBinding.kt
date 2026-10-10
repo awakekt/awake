@@ -44,6 +44,7 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         it.order = order
         it.visible = visible
         it.action = action
+        it.doubleAction = doubleAction
         it.touchOnly = touchOnly
         it.style = style
         it.textAlign = textAlign
@@ -76,6 +77,7 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         order = order,
         visible = visible,
         action = action,
+        doubleAction = doubleAction,
         touchOnly = touchOnly,
         style = style,
         textAlign = textAlign,
