@@ -7,3 +7,7 @@
 
 # This backend's own classes, including the listener libjoltjni.so calls back into.
 -keep class com.awakekt.awake.physics.jolt.** { *; }
+
+# jolt-jni's desktop jar names a test class in its module-info, testjoltjni.app.helloworld.HelloWorld,
+# that the jar doesn't ship. ProGuard fails a build on that unresolved reference.
+-dontwarn testjoltjni.**

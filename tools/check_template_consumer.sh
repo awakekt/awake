@@ -49,9 +49,9 @@ mkdir -p "$CHECKOUT"
 git -C "$TEMPLATE_SOURCE" archive HEAD | tar -x -C "$CHECKOUT"
 
 # Ask Gradle for the versions actually assigned to each publication family. Do not duplicate the
-# root build's git-describe/bump rules here.
-CORE_VERSION=$(cd "$ENGINE_ROOT" && ./gradlew -q :awake:core:math:properties \
-  --no-configuration-cache | awk '$1 == "version:" { print $2; exit }')
+# root build's git-describe/bump rules here. A local publish (`-Pawake.version`) names its own.
+CORE_VERSION=${TEMPLATE_CORE_VERSION:-$(cd "$ENGINE_ROOT" && ./gradlew -q :awake:core:math:properties \
+  --no-configuration-cache | awk '$1 == "version:" { print $2; exit }')}
 # A Core-only release builds no Vulkan, so its caller names the Vulkan release to test against.
 VULKAN_VERSION=${TEMPLATE_VULKAN_VERSION:-$(cd "$ENGINE_ROOT" && ./gradlew -q :awake:backend:vulkan:properties \
   --no-configuration-cache | awk '$1 == "version:" { print $2; exit }')}
@@ -91,6 +91,12 @@ elif [[ -f "$ENGINE_ROOT/local.properties" ]]; then
 fi
 cp "$CHECKOUT/local.properties" "$CHECKOUT/core/local.properties" 2>/dev/null || true
 cp "$CHECKOUT/local.properties" "$CHECKOUT/app/androidApp/local.properties" 2>/dev/null || true
+
+# A caller that builds its own targets, such as tools/check_obfuscated_template.sh, stops here.
+if [[ -n "${TEMPLATE_PREPARE_ONLY:-}" ]]; then
+  echo "Template prepared at $CHECKOUT against Core $CORE_VERSION and Vulkan $VULKAN_VERSION"
+  exit 0
+fi
 
 run_target() {
   local label=$1
