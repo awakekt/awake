@@ -210,7 +210,10 @@ move to make room.
 | `align` | `Start` · `Center` · `End` · `Stretch` | `Start` | Where children sit across the line. A single line spans the whole parent. |
 
 A child's `grow` gives it a share of its line's leftover space, so one slot can fill the rest of a
-row. A parent without a `layout` anchors its children as before.
+row. A child keeps its size even when the line is too short for it, so children that do not fit, or
+padding wider than the parent, spill past its edge; nothing clips them. A child that follows a node
+stands on its node instead of in the line. A parent without a `layout` anchors its children as
+before.
 
 ## Follow a node
 
