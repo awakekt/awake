@@ -205,6 +205,12 @@ internal fun GpuBufferPoolManager.sceneDepthBindingFor(
     depthTarget: com.awakekt.awake.webgpu.texture.DepthTarget,
 ): MaterialBinding = depthBindingFor(pipeline, BindingSemantic.SceneDepth, depthTarget)
 
+/** [shadowBindingFor] for the mask target, read whole as an array. Cached under its own semantic. */
+internal fun GpuBufferPoolManager.maskBindingFor(
+    pipeline: WebGpuPipelineHandle,
+    depthTarget: com.awakekt.awake.webgpu.texture.DepthTarget,
+): MaterialBinding = depthBindingFor(pipeline, BindingSemantic.MaskDepth, depthTarget)
+
 private fun GpuBufferPoolManager.depthBindingFor(
     pipeline: WebGpuPipelineHandle,
     semantic: BindingSemantic,

@@ -24,6 +24,7 @@ import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.engine.platform.GraphicsEngine
 import com.awakekt.awake.engine.platform.HeadlessSurface
 import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
+import com.awakekt.awake.render.command.MASK_LAYER_COUNT
 import com.awakekt.awake.render.passes.ContentPaint
 import com.awakekt.awake.render.passes.OpaqueRenderFeature
 import com.awakekt.awake.render.passes.RenderFeature
@@ -127,6 +128,10 @@ open class VulkanEngine(
     /** The camera-space depth this frame, when the plan asked for it. Same object as
      * [depthTarget]; only the matrix its pass renders from differs. */
     private var sceneDepthTarget: DepthTarget? = null
+
+    /** The mask: one camera-space depth layer per mask layer, when the plan asked for it. Owned by
+     * its pass once built, as [sceneDepthTarget] is. */
+    private var maskTarget: DepthTarget? = null
 
     /**
      * A 1x1 shadow map bound in place of [depthTarget] when the plan renders no shadows, so a
@@ -334,6 +339,13 @@ open class VulkanEngine(
         }
     }
 
+    /** The mask's pass: scene depth's pipelines again, into the mask's layers, over the masked draws. */
+    private suspend fun buildMaskFeature(): DepthPrePassFeature? = maskTarget?.let { map ->
+        withPipelineLoadContext("mask") {
+            casterDepthPass(map, requireNotNull(plan.maskShaderSet), shadowBias = false)
+        }
+    }
+
     /**
      * This frame loop's ordered render features.
      *
@@ -396,6 +408,10 @@ open class VulkanEngine(
             val layout = DescriptorSetLayoutHandle(map.descriptorSetLayout)
             sceneDepthPipelineKeys().forEach { declare(it, BindingSemantic.SceneDepth, layout) }
         }
+        maskTarget?.let { map ->
+            val layout = DescriptorSetLayoutHandle(map.descriptorSetLayout)
+            maskPipelineKeys().forEach { declare(it, BindingSemantic.MaskDepth, layout) }
+        }
         bySlot.forEach { (key, slots) ->
             put(key, (1..slots.keys.max()).map { slots[it] ?: emptySetLayout() })
         }
@@ -440,6 +456,15 @@ open class VulkanEngine(
         }
     }
 
+    /** The content features that read the mask; nothing else does. */
+    private fun maskPipelineKeys(): Set<PipelineKey> = buildSet {
+        if (maskTarget != null) {
+            plan.contentFeaturesFor(RenderBackend.Vulkan).forEach { feature ->
+                if (feature.samplesMask) add(PipelineKey.Content(feature.name))
+            }
+        }
+    }
+
     /** [depthPrePassPlaceholder]'s value: a placeholder only when the plan renders no shadow map. */
     private fun depthPlaceholderWithoutPrePass(): DepthTarget? =
         if (depthTarget == null) DepthTarget.placeholder(graphicsDevice, transferContext::runOneTimeCommands) else null
@@ -458,13 +483,14 @@ open class VulkanEngine(
 
     /** Which engine-owned groups each pipeline family reads, for the recorder to bind. */
     private fun engineSemanticsByKey(): Map<PipelineKey, Set<BindingSemantic>> = buildMap {
-        val keys = depthTargetPipelineKeys() + sceneDepthPipelineKeys()
+        val keys = depthTargetPipelineKeys() + sceneDepthPipelineKeys() + maskPipelineKeys()
         keys.forEach { key ->
             put(
                 key,
                 buildSet {
                     if (key in depthTargetPipelineKeys()) add(BindingSemantic.ShadowDepth)
                     if (key in sceneDepthPipelineKeys()) add(BindingSemantic.SceneDepth)
+                    if (key in maskPipelineKeys()) add(BindingSemantic.MaskDepth)
                 },
             )
         }
@@ -505,6 +531,7 @@ open class VulkanEngine(
         var createdRenderer: Renderer? = null
         var depthPrePass: DepthPrePassFeature? = null
         var sceneDepthPass: DepthPrePassFeature? = null
+        var maskPass: DepthPrePassFeature? = null
         var renderFeatures: List<RenderFeature<VulkanRenderFrameContext>> = emptyList()
         try {
             val headless = window as? HeadlessSurface
@@ -543,6 +570,8 @@ open class VulkanEngine(
                 )
             }
             sceneDepthTarget = plan.sceneDepthShaderSet?.let { DepthTarget(graphicsDevice) }
+            // Arrayed, one layer per mask layer, read as an array by whatever samples the mask.
+            maskTarget = plan.maskShaderSet?.let { DepthTarget(graphicsDevice, layers = MASK_LAYER_COUNT, arrayed = true) }
             pipelineDescriptorSetLayout =
                 Material.createDescriptorSetLayout(graphicsDevice)
             sceneRenderPass = createSceneRenderPass(graphicsDevice, swapchainManager)
@@ -573,6 +602,7 @@ open class VulkanEngine(
             requestedPipelines = pipelineRegistry.register(plan.toPipelineRequests(RenderBackend.Vulkan))
             depthPrePass = buildDepthPrePassFeature(depthTarget)
             sceneDepthPass = buildSceneDepthFeature()
+            maskPass = buildMaskFeature()
             renderFeatures = buildRenderFeatures(depthPrePass)
             val renderer = Renderer(
                 graphicsDevice = graphicsDevice,
@@ -584,6 +614,7 @@ open class VulkanEngine(
                 maxFramesInFlight = MAX_FRAMES_IN_FLIGHT,
                 depthPrePass = depthPrePass,
                 sceneDepthPass = sceneDepthPass,
+                maskPass = maskPass,
             ).also { renderer ->
                 renderer.contentFeatureHost = contentAttacher
                 renderer.shaderReplacement = VulkanShaderReplacement(
@@ -618,7 +649,7 @@ open class VulkanEngine(
             )
         } catch (failure: Throwable) {
             runCatching {
-                rollbackBackendCreation(createdRenderer, renderFeatures, depthPrePass, sceneDepthPass)
+                rollbackBackendCreation(createdRenderer, renderFeatures, depthPrePass, sceneDepthPass, maskPass)
             }.onFailure { cleanupFailure ->
                 failure.addSuppressed(cleanupFailure)
             }
@@ -685,6 +716,21 @@ open class VulkanEngine(
         graphicsDevice.destroy()
     }
 
+    /**
+     * A depth target is created well before the pass that owns it, so a failure in between -- a
+     * shader that will not compile, a pipeline the device rejects -- leaves it with no owner at all.
+     * Destroys each target whose pass was never built.
+     */
+    private fun destroyUnownedDepthTargets(
+        depthPrePass: DepthPrePassFeature?,
+        sceneDepthPass: DepthPrePassFeature?,
+        maskPass: DepthPrePassFeature?,
+    ) {
+        if (depthPrePass == null) depthTarget?.destroy()
+        if (sceneDepthPass == null) sceneDepthTarget?.destroy()
+        if (maskPass == null) maskTarget?.destroy()
+    }
+
     /** `GraphicsEngine` only calls [destroyBackend] after setup reaches `isReady`, so a failed
      * setup must release its own prefix of allocated Vulkan objects. */
     private fun rollbackBackendCreation(
@@ -692,6 +738,7 @@ open class VulkanEngine(
         renderFeatures: List<RenderFeature<VulkanRenderFrameContext>>,
         depthPrePass: DepthPrePassFeature?,
         sceneDepthPass: DepthPrePassFeature?,
+        maskPass: DepthPrePassFeature?,
     ) {
         if (!::graphicsDevice.isInitialized) return
         VulkanBuffers.vkDeviceWaitIdle(graphicsDevice.device)
@@ -701,16 +748,14 @@ open class VulkanEngine(
             renderFeatures.forEach { it.destroy() }
             depthPrePass?.destroy()
             sceneDepthPass?.destroy()
+            maskPass?.destroy()
         }
-        // The depth target is created well before the feature that owns it, so a failure in
-        // between -- a shader that will not compile, a pipeline the device rejects -- leaves it
-        // with no owner at all. Destroy it only in that case.
-        if (depthPrePass == null) depthTarget?.destroy()
-        if (sceneDepthPass == null) sceneDepthTarget?.destroy()
+        destroyUnownedDepthTargets(depthPrePass, sceneDepthPass, maskPass)
         depthPrePassPlaceholder?.destroy()
         depthPrePassPlaceholder = null
         depthTarget = null
         sceneDepthTarget = null
+        maskTarget = null
         if (::swapchainManager.isInitialized) {
             swapchainManager.destroy()
             if (syncObjectsCreated) swapchainManager.destroySyncObjects()

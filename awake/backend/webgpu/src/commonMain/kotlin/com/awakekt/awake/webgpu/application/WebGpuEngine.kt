@@ -13,6 +13,7 @@ import com.awakekt.awake.asset.shaders.RenderBackend
 import com.awakekt.awake.asset.shaders.RenderCapabilities
 import com.awakekt.awake.asset.shaders.RenderPlan
 import com.awakekt.awake.asset.shaders.ShaderSet
+import com.awakekt.awake.asset.shaders.ShaderStage as ShaderProgramStage
 import com.awakekt.awake.asset.shaders.ShaderStages
 import com.awakekt.awake.asset.shaders.buildContentFeature
 import com.awakekt.awake.asset.shaders.castsWithPrimaryDepthShader
@@ -24,6 +25,7 @@ import com.awakekt.awake.asset.shaders.uiShaderSet
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.engine.platform.GraphicsEngine
 import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
+import com.awakekt.awake.render.command.MASK_LAYER_COUNT
 import com.awakekt.awake.render.passes.ContentPaint
 import com.awakekt.awake.render.passes.OpaqueRenderFeature
 import com.awakekt.awake.render.passes.RenderFeature
@@ -47,7 +49,6 @@ import com.awakekt.awake.webgpu.pipeline.WebGpuUiPass
 import com.awakekt.awake.webgpu.renderer.Renderer
 import com.awakekt.awake.webgpu.renderer.activeUiPipelineTargets
 import com.awakekt.awake.webgpu.swapchain.SwapchainManager
-import com.awakekt.awake.asset.shaders.ShaderStage as ShaderProgramStage
 
 /**
  * Reusable WebGPU app bootstrap -- wasmJs counterpart to `VulkanEngine`
@@ -168,6 +169,28 @@ open class WebGpuEngine(
             )
         }
 
+        // The mask: scene depth's pipelines again, into a layer per mask layer, over the draws a
+        // mask layer names. Its own target, arrayed, which whatever samples the mask reads whole.
+        val maskPass = plan.maskShaderSet?.let { maskShaders ->
+            casterDepthPass(
+                graphicsDevice = graphicsDevice,
+                plan = plan,
+                target = com.awakekt.awake.webgpu.texture.DepthTarget(graphicsDevice, layers = MASK_LAYER_COUNT, arrayed = true),
+                primary = com.awakekt.awake.webgpu.pipeline.DepthOnlyPipeline(
+                    graphicsDevice = graphicsDevice,
+                    shaderCode = maskShaders.wgsl(),
+                    vertexFormat = vertexFormat,
+                    vertexEntryPoint = maskShaders.webGpu.entryPoint(ShaderProgramStage.VERTEX),
+                    fragmentEntryPoint = maskShaders.webGpu.entryPoint(ShaderProgramStage.FRAGMENT),
+                    bindingsByGroup = maskShaders.webGpu.bindingsByGroup,
+                    bindingsMetadataAvailable = maskShaders.webGpu.bindingsMetadataAvailable,
+                ),
+                primaryFormat = vertexFormat,
+                cascadeCount = MASK_LAYER_COUNT,
+                shadowBias = false,
+            )
+        }
+
         // The primary pipeline's own companions are keyed under its vertexFormat, but its FILL
         // is `primary` and must NOT also appear in byFormat -- that was true before this
         // refactor and `Renderer.pipelineFor` still relies on it. [includePrimary] is what keeps
@@ -245,6 +268,7 @@ open class WebGpuEngine(
             maxFramesInFlight = MAX_FRAMES_IN_FLIGHT,
             depthPrePass = depthPrePass,
             sceneDepthPass = sceneDepthPass,
+            maskPass = maskPass,
             renderFeatures = renderFeatures,
         ).also { renderer ->
             renderer.contentFeatureHost = attacher

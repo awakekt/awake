@@ -56,6 +56,8 @@ internal class RendererGpuPassExecutor(
                     splitDistances = floatArrayOf(Float.MAX_VALUE),
                 ),
             )
+            // Nothing on a frame with nothing masked; the overlay reading it draws nothing either.
+            maskPass?.recordCommands(encoder, input.maskPasses, input.environment)
             encoder.beginRenderPass(
                 RenderPassDescriptor(
                     colorAttachments = listOf(
@@ -134,6 +136,7 @@ internal class RendererGpuPassExecutor(
                 splitDistances = floatArrayOf(Float.MAX_VALUE),
             ),
         )
+        renderer.maskPass?.recordCommands(encoder, input.maskPasses, input.environment)
         encoder.beginRenderPass(
             RenderPassDescriptor(
                 colorAttachments = listOf(

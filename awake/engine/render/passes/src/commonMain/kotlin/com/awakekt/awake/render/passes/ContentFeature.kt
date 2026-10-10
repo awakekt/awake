@@ -60,6 +60,9 @@ import com.awakekt.awake.render.texture.TextureAsset
  * the group-0 bindings it reads. The feature [build] returns must then be a [ContentDepthSource].
  * @property textureUpdates Optional frame-slot journal for mutable base-level images.
  * @property samplerTextures Sampler binding to image binding for independent filtering.
+ * @property samplesMask Whether this feature's pipeline declares the mask group,
+ * [com.awakekt.awake.render.pipeline.BindingSemantic.MaskDepth]. A declaration like
+ * [samplesSceneDepth]: the pass is opted into by `RenderPlan.maskShaderSet`.
  * @property build Turns the registry's output into the feature that records with it.
  *
  * Mutable textures opt into [textureUpdates]. Backends prepare regions before any depth or scene
@@ -77,6 +80,7 @@ class ContentFeature(
     val textureUpdates: ContentTextureUpdates? = null,
     /** Sampler binding to texture binding, when different samplers are required. */
     val samplerTextures: Map<Int, Int> = emptyMap(),
+    val samplesMask: Boolean = false,
     val build: (PipelineHandle, UniformBlock, ContentGeometry?) -> RenderFeature<RenderFrameContext>,
 ) {
     init {

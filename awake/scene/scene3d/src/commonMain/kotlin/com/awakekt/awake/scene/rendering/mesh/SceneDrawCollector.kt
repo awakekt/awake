@@ -12,6 +12,7 @@ import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math.Vec4
 import com.awakekt.awake.core.pool.ScratchPool
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.render.command.NO_MASK_LAYER
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.render.passes.RenderDrawCommand
@@ -29,6 +30,7 @@ import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.animation.ModularCharacterComponent
 import com.awakekt.awake.scene.rendering.animation.SkinnedPose
 import com.awakekt.awake.scene.rendering.camera.Camera
+import com.awakekt.awake.scene.rendering.outline.Outlined
 import com.awakekt.awake.scene.rendering.spatial.FrameCulling
 import com.awakekt.awake.scene.rendering.spatial.SceneCullingCompiler
 import kotlin.math.sqrt
@@ -83,6 +85,7 @@ internal class SceneDrawCollector(
         val poseStore = world.componentStore<SkinnedPose>(resolution.poseType)
         val pbrStore = world.componentStore<PbrMaterial>(resolution.pbrType)
         val animationStore = world.componentStore<TextureAnimation>(resolution.animationType)
+        val outlineStore = world.componentStore<Outlined>(resolution.outlineType)
 
         resolution.meshFamily.forEach { entity, transform, meshRenderer ->
             if (!meshRenderer.visible) return@forEach
@@ -144,6 +147,7 @@ internal class SceneDrawCollector(
                     transparent = meshRenderer.transparent,
                     additive = meshRenderer.additive,
                     worldBounds = bounds?.writeWorldBounds(transform, beforeAabbs.obtain()),
+                    maskLayer = outlineStore?.get(entity)?.set ?: NO_MASK_LAYER,
                 ),
             )
         }
@@ -213,6 +217,7 @@ internal class SceneDrawCollector(
                         extraUniformFloats = extras,
                         timeSeconds = elapsedTimeSeconds,
                         worldBounds = bounds?.writeWorldBounds(transform, beforeAabbs.obtain()),
+                        maskLayer = outlineStore?.get(entity)?.set ?: NO_MASK_LAYER,
                     ),
                 )
             }
@@ -281,6 +286,7 @@ internal class SceneDrawCollector(
         val poseType = world.typeId(SkinnedPose::class)
         val pbrType = world.typeId(PbrMaterial::class)
         val animationType = world.typeId(TextureAnimation::class)
+        val outlineType = world.typeId(Outlined::class)
 
         val meshFamily = world.family<Transform, MeshRenderer>()
         val instancedFamily = world.family<InstancedMeshRenderer>()
@@ -308,6 +314,7 @@ internal class SceneDrawCollector(
         shadowsOnly: Boolean = false,
         worldBounds: Aabb? = null,
         additive: Boolean = false,
+        maskLayer: Int = NO_MASK_LAYER,
     ): RenderDrawCommand = obtain().set(
         mesh = mesh,
         material = material,
@@ -326,6 +333,7 @@ internal class SceneDrawCollector(
         shadowsOnly = shadowsOnly,
         worldBounds = worldBounds,
         additive = additive,
+        maskLayer = maskLayer,
     )
 }
 

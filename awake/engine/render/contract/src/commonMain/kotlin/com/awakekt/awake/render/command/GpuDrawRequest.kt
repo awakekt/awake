@@ -68,6 +68,12 @@ data class GpuDrawRequest(
     var additive: Boolean = false,
     /** Transparent draws with higher orders blend after lower orders; ties use camera depth. */
     var sortOrder: Int = 0,
+    /**
+     * The layer of the frame's mask pass this draw is also drawn into, depth only and from the
+     * camera, or [NO_MASK_LAYER]. What a mask is for, such as an outline drawn around it, is the
+     * business of whatever samples it.
+     */
+    var maskLayer: Int = NO_MASK_LAYER,
 ) {
     /**
      * Mutates this request in place so a pool can reuse the instance without allocating.
@@ -94,6 +100,7 @@ data class GpuDrawRequest(
         worldBounds: Aabb? = null,
         additive: Boolean = false,
         sortOrder: Int = 0,
+        maskLayer: Int = NO_MASK_LAYER,
     ): GpuDrawRequest {
         this.mesh = mesh
         this.material = material
@@ -113,9 +120,16 @@ data class GpuDrawRequest(
         this.worldBounds = worldBounds
         this.additive = additive
         this.sortOrder = sortOrder
+        this.maskLayer = maskLayer
         return this
     }
 }
+
+/** A [GpuDrawRequest.maskLayer] that draws into no mask. */
+const val NO_MASK_LAYER = -1
+
+/** How many layers the engine's mask target has: [GpuDrawRequest.maskLayer] is below this. */
+const val MASK_LAYER_COUNT = 2
 
 private val EMPTY_UNIFORM_FLOATS = FloatArray(0)
 private const val DEFAULT_ALPHA_CUTOFF = 0.5f

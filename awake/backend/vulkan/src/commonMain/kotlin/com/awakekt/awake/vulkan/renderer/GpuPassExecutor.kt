@@ -67,6 +67,7 @@ private fun Renderer.recordToTexture(target: RenderTarget, input: GpuPassInput):
         // The offscreen frame's own slots, past the last frame in flight, as its materials use.
         recordDepthPrePass(commandBuffer, commandBuffers.size, depthDraws, input.prePasses, input.environment)
         recordSceneDepthPass(commandBuffer, commandBuffers.size, depthDraws, cameraDepthPass(input.viewProjection))
+        recordMaskPass(commandBuffer, commandBuffers.size, input.maskPasses, input.environment)
         offscreen.prepareForColorAttachment(commandBuffer)
         Vulkan.vkCmdBeginRenderPass(
             commandBuffer,

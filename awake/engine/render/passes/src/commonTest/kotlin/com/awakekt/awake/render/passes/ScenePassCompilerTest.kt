@@ -103,6 +103,83 @@ class ScenePassCompilerTest {
         input.prePasses.forEach { pass -> assertEquals(listOf(visible, shadowOnly), pass.resolvedDraws) }
     }
 
+    /**
+     * A masked draw is also drawn into its layer's mask sub-pass, from the camera, with that layer's
+     * uniforms; a layer no draw names has no sub-pass, and a shadow-only draw is never masked.
+     */
+    @Test
+    fun aMaskedDrawJoinsItsLayersMaskPass() {
+        val mesh = object : Mesh {
+            override val format = VertexFormat.PositionNormalColor
+            override val sizeBytes = 0L
+            override fun destroy() = Unit
+        }
+        val material = object : Material {
+            override fun updateUniformBuffer(uniformFloats: FloatArray) = Unit
+            override fun destroy() = Unit
+        }
+        val drawsBySource = HashMap<Int, GpuResolvedDraw>()
+        val selected = floatArrayOf(1f, 0f, 0f, 1f, 3f)
+        val input = ScenePassCompiler.compile(
+            lens = Lens(eye = Vec3f(0f, 1f, 2f), center = Vec3f.ZERO, fovYRadians = 1f, near = 0.1f, far = 10f),
+            drawCalls = listOf(
+                RenderDrawCommand(mesh, material),
+                RenderDrawCommand(mesh, material, model = com.awakekt.awake.core.math.Mat4().translate(1f, 0f, 0f), maskLayer = 0),
+                RenderDrawCommand(mesh, material, shadowsOnly = true, maskLayer = 0),
+            ),
+            clipSpace = ClipSpace.Vulkan,
+            aspect = 1f,
+            drawPreparer = GpuDrawPreparer { _, sourceIndex, _ ->
+                GpuResolvedDraw(
+                    pipeline = object : PipelineHandle {},
+                    materialBinding = object : MaterialBinding {},
+                    vertexBuffer = object : BufferHandle {},
+                    indexBuffer = null,
+                    elementCount = 3,
+                ).also { drawsBySource[sourceIndex] = it }
+            },
+            maskLayers = listOf(selected, floatArrayOf(0f, 0f, 1f, 1f, 2f)),
+        )
+
+        val mask = input.maskPasses.single()
+        assertEquals(0, mask.targetLayer)
+        assertEquals(listOf(drawsBySource.getValue(1)), mask.resolvedDraws)
+        assertEquals(input.viewProjection, mask.viewProjection)
+        assertTrue(mask.passUniforms.contentEquals(selected))
+        assertEquals(2, input.resolvedOpaqueDraws.size, "the masked draw still draws in the scene")
+    }
+
+    /** With no mask layers, nothing is masked, whatever a draw names. */
+    @Test
+    fun noMaskLayersMeanNoMaskPass() {
+        val mesh = object : Mesh {
+            override val format = VertexFormat.PositionNormalColor
+            override val sizeBytes = 0L
+            override fun destroy() = Unit
+        }
+        val material = object : Material {
+            override fun updateUniformBuffer(uniformFloats: FloatArray) = Unit
+            override fun destroy() = Unit
+        }
+        val input = ScenePassCompiler.compile(
+            lens = Lens(eye = Vec3f(0f, 1f, 2f), center = Vec3f.ZERO, fovYRadians = 1f, near = 0.1f, far = 10f),
+            drawCalls = listOf(RenderDrawCommand(mesh, material, maskLayer = 1)),
+            clipSpace = ClipSpace.Vulkan,
+            aspect = 1f,
+            drawPreparer = GpuDrawPreparer { _, _, _ ->
+                GpuResolvedDraw(
+                    pipeline = object : PipelineHandle {},
+                    materialBinding = object : MaterialBinding {},
+                    vertexBuffer = object : BufferHandle {},
+                    indexBuffer = null,
+                    elementCount = 3,
+                )
+            },
+        )
+
+        assertTrue(input.maskPasses.isEmpty())
+    }
+
     /** A shadow pass draws only the casters its map can see; a caster with no bounds casts into every pass. */
     @Test
     fun aShadowPassSkipsCastersBesideOrBeyondItsMap() {

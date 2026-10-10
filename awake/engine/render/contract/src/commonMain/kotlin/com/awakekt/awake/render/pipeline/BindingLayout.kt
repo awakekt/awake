@@ -34,6 +34,13 @@ sealed interface BindingSemantic {
     data object SceneDepth : BindingSemantic
 
     /**
+     * The frame's mask: one depth layer per mask layer, drawn from the camera with only the
+     * draws a [com.awakekt.awake.render.command.GpuDrawRequest.maskLayer] names. What an overlay
+     * reads to draw something around those draws' silhouettes, such as an outline.
+     */
+    data object MaskDepth : BindingSemantic
+
+    /**
      * A group the engine does not name, identified by [name].
      *
      * Value-equal like the objects above, so it works as a [BindingLayout] key. Two features
@@ -115,6 +122,10 @@ data class BindingLayout private constructor(
             // IS the pass that writes the shadow map.
             ShadowCascadePassBinding to 1,
             BindingSemantic.SceneDepth to 2,
+            // The fourth group, shared with the joint palette because the two never meet: only a
+            // skinned mesh's pipeline reads a palette, and only a screen overlay reads the mask.
+            // Not a fifth: WebGPU guarantees four bind groups and no more.
+            BindingSemantic.MaskDepth to 3,
         )
     }
 }

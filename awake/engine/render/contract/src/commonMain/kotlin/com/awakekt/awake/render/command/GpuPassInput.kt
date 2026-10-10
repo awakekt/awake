@@ -43,6 +43,13 @@ data class GpuPassInput(
     val shadowCascadeData: GpuShadowCascadeData? = null,
     /** The opaque draws' edges, prepared with an edges context, drawn over the opaque draws. Empty with no wireframe. */
     val resolvedEdgeDraws: List<GpuResolvedDraw> = emptyList(),
+    /**
+     * The mask pass: a depth-only sub-pass from the camera per mask layer that has draws, into
+     * that layer of the engine's mask target, before the scene pass. Each sub-pass's
+     * [GpuSubPass.passUniforms] carries what a reader of that layer needs, such as a colour; a
+     * backend draws the depth and passes the rest through. Empty when nothing is masked.
+     */
+    val maskPasses: List<GpuSubPass> = emptyList(),
 ) {
     /** Canonical draw sequence for executors; legacy lists are deliberately excluded. */
     val resolvedDraws: List<GpuResolvedDraw>
@@ -80,10 +87,13 @@ data class GpuPassInput(
         if (!passUniforms.contentEquals(other.passUniforms)) return false
         if (environment != other.environment) return false
         if (resolvedPath != other.resolvedPath) return false
-        if (resolvedEdgeDraws != other.resolvedEdgeDraws) return false
+        if (!sameOverlayInputs(other)) return false
 
         return sameShadowInputs(other)
     }
+
+    private fun sameOverlayInputs(other: GpuPassInput): Boolean =
+        resolvedEdgeDraws == other.resolvedEdgeDraws && maskPasses == other.maskPasses
 
     private fun sameShadowInputs(other: GpuPassInput): Boolean =
         cameraForward == other.cameraForward && shadowCascadeData == other.shadowCascadeData
@@ -102,6 +112,7 @@ data class GpuPassInput(
         result = 31 * result + (cameraForward?.hashCode() ?: 0)
         result = 31 * result + (shadowCascadeData?.hashCode() ?: 0)
         result = 31 * result + resolvedEdgeDraws.hashCode()
+        result = 31 * result + maskPasses.hashCode()
         return result
     }
 }
