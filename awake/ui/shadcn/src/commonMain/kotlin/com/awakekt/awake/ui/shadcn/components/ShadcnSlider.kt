@@ -12,6 +12,7 @@ import com.awakekt.awake.compose.foundation.focusable
 import com.awakekt.awake.compose.foundation.gestures.draggable
 import com.awakekt.awake.compose.foundation.interaction.InteractionSource
 import com.awakekt.awake.compose.foundation.layout.Spacer
+import com.awakekt.awake.compose.foundation.layout.fillMaxWidth
 import com.awakekt.awake.compose.foundation.layout.heightIn
 import com.awakekt.awake.compose.foundation.style.rememberStyleState
 import com.awakekt.awake.compose.runtime.Composer
@@ -36,6 +37,9 @@ import com.awakekt.awake.ui.shadcn.theme.shadcnTheme
 
 /**
  * shadcn's slider: a muted track, a primary range up to the value, and a bordered round thumb.
+ *
+ * It fills the width it is allowed, as upstream's `w-full` slider does; give it a `width` or a
+ * `weight` to make it narrower.
  *
  * Ported from all three sources, as `awake-ui-authoring` requires, and each contributed something:
  *
@@ -104,11 +108,13 @@ fun ShadcnSlider(
     val fraction = shadcnSliderFraction(next, min, max)
 
     Spacer(
-        // Tall enough for the thumb, which the Canvas paints inside its own bounds. Without a
-        // default the control measures zero high and draws nothing wherever a caller does not
-        // happen to size it -- the parity fixture found exactly that. The reference's 6px is
-        // Radix's track alone; its thumb is absolutely positioned and overflows the root.
+        // As wide as it is allowed, as upstream's `w-full` root is: without it a slider a caller
+        // did not size measures zero wide and cannot be dragged. After the caller's modifier, so a
+        // width or weight the caller gives is the width it fills. Tall enough for the thumb, which
+        // the Canvas paints inside its own bounds; the reference's 6px is Radix's track alone, its
+        // thumb absolutely positioned and overflowing the root.
         modifier
+            .fillMaxWidth()
             .heightIn(min = SliderThumbSize)
             .onSizeChanged { width, _ ->
                 state.trackWidthPx = shadcnSliderTrack(0f, width.toFloat(), state.thumbPx).width
@@ -224,7 +230,9 @@ fun ShadcnRangeSlider(
     val resolvedEndFraction = shadcnSliderFraction(resolvedEnd, min, max)
 
     Spacer(
+        // As wide as it is allowed, after the caller's own width; see ShadcnSlider.
         modifier
+            .fillMaxWidth()
             .heightIn(min = SliderThumbSize)
             .onSizeChanged { width, _ -> state.slotWidthPx = width.toFloat() }
             .rangeDraggable(
