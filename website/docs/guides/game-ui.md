@@ -103,7 +103,7 @@ lengths are dp.
 | `gradient` | `{ start, end, horizontal }` | A gradient fill, top to bottom, or left to right when `horizontal`. It replaces the fill colour. |
 | `image` | [image](#draw-images) | An `Image`'s picture, a frame over the fill, or a `Bar`'s track. |
 | `fillImage` | [image](#draw-images) | A `Bar`'s fill, cut at its `value`. |
-| `cornerRadius` | number | Rounds the fill, gradient, border and shadow, and a `Bar`'s colour fill. Images stay square. |
+| `cornerRadius` | number | Rounds the fill, gradient, border and shadow. A `Bar`'s colour fill is rounded at both ends, a pill whose tip sits at its value. Images stay square. |
 | `borderWidth`, `borderColor` | number, colour | A border inside the element's edge. It needs both. |
 | `shadow` | `{ color, offsetX, offsetY, blur, spread }` | A shadow behind the element, in its shape. Defaults: `#00000080`, 0, 2, 4, 0. |
 | `textColor` | colour | The text of a `Text` or `Button`, in place of `color`. |

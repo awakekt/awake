@@ -146,7 +146,7 @@ data class CanvasShadow(
     }
 
     internal fun toShadow(): Shadow = Shadow(
-        radius = blur.dp,
+        radius = blur.coerceAtLeast(0f).dp,
         color = colorOf(color, Color.Transparent),
         spread = spread.dp,
         offset = DpOffset(offsetX.dp, offsetY.dp),
