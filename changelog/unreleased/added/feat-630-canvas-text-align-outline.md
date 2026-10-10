@@ -1,0 +1,4 @@
+- **Text can be placed, outlined and shadowed, in scene UI and Compose.**
+  - `canvas_element` gains `textAlign`, one of the nine anchor points, for where a Text's or Button's text sits; left out, each keeps its own.
+  - A `canvas_element` style gains `textShadow` and `textOutline`.
+  - `TextStyle` gains `shadow` (`TextShadow`) and `outline` (`TextOutline`), drawn under a Compose `Text` and a `BasicTextField`'s text.

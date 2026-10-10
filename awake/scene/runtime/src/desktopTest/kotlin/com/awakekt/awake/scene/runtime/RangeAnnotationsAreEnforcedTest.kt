@@ -92,9 +92,12 @@ class RangeAnnotationsAreEnforcedTest {
             val empty = JsonObject(emptyMap())
             val state = JsonObject(mapOf("image" to image))
             JsonObject(
-                base + (
+                base + ("layout" to empty) + (
                     "style" to JsonObject(
-                        mapOf("image" to image, "fillImage" to image, "shadow" to empty, "hovered" to state, "pressed" to state),
+                        mapOf(
+                            "image" to image, "fillImage" to image, "shadow" to empty, "textOutline" to empty,
+                            "hovered" to state, "pressed" to state,
+                        ),
                     )
                     ),
             )
@@ -164,6 +167,9 @@ class RangeAnnotationsAreEnforcedTest {
             "canvas_element.style.alpha",
             "canvas_element.style.shadow.blur",
             "canvas_element.style.pressed.alpha",
+            "canvas_element.style.textOutline.width",
+            "canvas_element.layout.gap",
+            "canvas_element.grow",
             "pbr_material.metallic",
             "pbr_material.roughness",
             "pbr_material.alphaCutoff",

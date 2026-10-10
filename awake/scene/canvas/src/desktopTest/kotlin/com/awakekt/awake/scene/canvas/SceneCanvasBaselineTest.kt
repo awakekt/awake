@@ -9,7 +9,11 @@ import com.awakekt.awake.compose.testing.assertMatchesBaseline
 import com.awakekt.awake.compose.ui.graphics.ImageBitmap
 import com.awakekt.awake.compose.ui.platform.ComposeHost
 import com.awakekt.awake.compose.ui.platform.FrameInput
+import com.awakekt.awake.core.text.font.UiFonts
+import com.awakekt.awake.core.math2d.Rectangle
+import com.awakekt.awake.core.math2d.Vec2
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.core.transform.Transform
 import kotlin.test.Test
 
@@ -75,6 +79,89 @@ class SceneCanvasBaselineTest {
 
         ComposeHost().frame(FrameInput(248, 144)) { SceneCanvas(world) }
             .primitives.assertMatchesBaseline("scene-canvas-styles", 248, 144)
+    }
+
+    @Test
+    fun centredOutlinedAndShadowedText() {
+        val world = World()
+        fun element(configure: CanvasElement.() -> Unit) = world.create().also { world.add(it, CanvasElement().apply(configure)) }
+        element {
+            kind = CanvasElementKind.Bar; offsetX = 16f; offsetY = 16f; width = 200f; height = 20f; value = 0.8f
+            color = "#C0392B"; background = "#2A2A2A"
+            style = CanvasStyle(cornerRadius = 4f)
+        }
+        element {
+            // The label over the gauge: an element of its own, so the bar's fill does not cover it.
+            offsetX = 16f; offsetY = 16f; width = 200f; height = 20f; text = "HP 120/150"; fontSize = 14f; color = "#FFFFFF"
+            textAlign = CanvasAnchor.Center; style = CanvasStyle(textOutline = CanvasTextOutline("#000000", 1f))
+        }
+        element {
+            offsetX = 16f; offsetY = 48f; width = 200f; height = 24f; text = "Harbor Guard"; fontSize = 16f; color = "#F5D76E"
+            textAlign = CanvasAnchor.Center; background = "#5A7FA0"; style = CanvasStyle(textShadow = CanvasTextShadow("#000000C0", 1f, 1f))
+        }
+
+        ComposeHost().frame(FrameInput(232, 88)) { SceneCanvas(world) }
+            .primitives.assertMatchesBaseline("scene-canvas-text", 232, 88, font = UiFonts.default())
+    }
+
+    @Test
+    fun aMarkerFramingATargetAndANamePlateAboveIt() {
+        val world = World()
+        world.create().also {
+            world.add(it, Name("Target"))
+            world.add(it, Transform())
+        }
+        fun element(parent: com.awakekt.awake.ecs.Entity? = null, configure: CanvasElement.() -> Unit) = world.create().also {
+            if (parent != null) world.add(it, Transform(parent = parent))
+            world.add(it, CanvasElement().apply(configure))
+        }
+        // Stands in for the target as drawn: the box the projector reports.
+        element { kind = CanvasElementKind.Panel; offsetX = 70f; offsetY = 40f; width = 60f; height = 90f; background = "#3A4A5A" }
+        val marker = element { kind = CanvasElementKind.Panel; follow = "Target"; followBounds = true }
+        for (corner in listOf(CanvasAnchor.TopLeft, CanvasAnchor.TopRight, CanvasAnchor.BottomLeft, CanvasAnchor.BottomRight)) {
+            element(marker) { kind = CanvasElementKind.Panel; anchor = corner; offsetX = 0f; offsetY = 0f; width = 10f; height = 10f; background = "#FF4040" }
+        }
+        element {
+            follow = "Target"; anchor = CanvasAnchor.BottomCenter; offsetX = 0f; offsetY = 6f; width = 120f; height = 18f
+            text = "Harbor Guard"; fontSize = 14f; color = "#FFFFFF"; textAlign = CanvasAnchor.Center
+            style = CanvasStyle(textOutline = CanvasTextOutline("#000000", 1f))
+        }
+        val projector = object : CanvasProjector {
+            override fun project(x: Float, y: Float, z: Float) = Vec2(100f + x, 40f + y)
+
+            override fun bounds(entity: com.awakekt.awake.ecs.Entity) = Rectangle(70f, 40f, 60f, 90f)
+        }
+
+        ComposeHost().frame(FrameInput(200, 150)) { SceneCanvas(world, projector = projector) }
+            .primitives.assertMatchesBaseline("scene-canvas-follow", 200, 150, font = UiFonts.default())
+    }
+
+    @Test
+    fun anActionBarAndAWrappingStripOfIcons() {
+        val world = World()
+        fun element(parent: com.awakekt.awake.ecs.Entity? = null, configure: CanvasElement.() -> Unit) = world.create().also {
+            if (parent != null) world.add(it, Transform(parent = parent))
+            world.add(it, CanvasElement().apply(configure))
+        }
+        val bar = element {
+            kind = CanvasElementKind.Panel; offsetX = 8f; offsetY = 8f; width = 216f; height = 32f; background = "#202830"
+            layout = CanvasLayout(gap = 4f, padding = 4f, align = CanvasAlign.Center)
+        }
+        repeat(8) { i -> element(bar) { kind = CanvasElementKind.Panel; order = i; width = 22f; height = 22f; background = "#5A7FA0"; style = CanvasStyle(cornerRadius = 3f) } }
+        val strip = element {
+            kind = CanvasElementKind.Panel; offsetX = 8f; offsetY = 48f; width = 100f; height = 56f; background = "#202830"
+            layout = CanvasLayout(gap = 2f, padding = 2f, wrap = true)
+        }
+        repeat(7) { i -> element(strip) { kind = CanvasElementKind.Panel; order = i; width = 22f; height = 22f; background = if (i % 2 == 0) "#30A46C" else "#E5484D" } }
+        val row = element {
+            kind = CanvasElementKind.Panel; offsetX = 116f; offsetY = 48f; width = 108f; height = 24f; background = "#202830"
+            layout = CanvasLayout(gap = 2f, padding = 2f)
+        }
+        element(row) { kind = CanvasElementKind.Panel; order = 0; width = 20f; height = 20f; background = "#F5D76E" }
+        element(row) { kind = CanvasElementKind.Panel; order = 1; width = 0f; height = 20f; grow = 1f; background = "#3E63DD" }
+
+        ComposeHost().frame(FrameInput(232, 112)) { SceneCanvas(world) }
+            .primitives.assertMatchesBaseline("scene-canvas-layout", 232, 112)
     }
 
     private companion object {

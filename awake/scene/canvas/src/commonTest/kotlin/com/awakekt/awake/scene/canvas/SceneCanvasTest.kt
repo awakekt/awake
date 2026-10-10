@@ -5,19 +5,30 @@
  */
 package com.awakekt.awake.scene.canvas
 
+import com.awakekt.awake.compose.runtime.CompositionLocalProvider
+import com.awakekt.awake.compose.runtime.provides
 import com.awakekt.awake.compose.testing.rasterize
 import com.awakekt.awake.compose.ui.graphics.ImageBitmap
 import com.awakekt.awake.compose.ui.platform.ComposeHost
 import com.awakekt.awake.compose.ui.platform.FrameInput
 import com.awakekt.awake.compose.ui.platform.FrameOutput
+import com.awakekt.awake.compose.ui.platform.LocalTextStyle
 import com.awakekt.awake.compose.ui.semantics.SemanticsNode
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
+import com.awakekt.awake.core.math.Mat4
+import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.core.math2d.Rectangle
+import com.awakekt.awake.core.math2d.Vec2
+import com.awakekt.awake.core.text.theme.TextOutline
+import com.awakekt.awake.core.text.theme.TextStyle
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
-import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.canvas.CanvasElementBinding.toComponent
 import com.awakekt.awake.scene.canvas.CanvasElementBinding.toSceneComponent
+import com.awakekt.awake.scene.core.Name
+import com.awakekt.awake.scene.core.transform.Transform
+import com.awakekt.awake.scene.document.SceneVec3
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -399,14 +410,222 @@ class SceneCanvasTest {
         assertEquals(
             listOf(
                 "canvas_element.style.background \"red\" must be #RRGGBB or #RRGGBBAA",
-                "canvas_element.style.gradient.end \"blue\" must be #RRGGBB or #RRGGBBAA",
                 "canvas_element.style.cornerRadius must not be negative",
-                "canvas_element.style.shadow.blur must not be negative",
                 "canvas_element.style.alpha must be between 0 and 1",
+                "canvas_element.style.gradient.end \"blue\" must be #RRGGBB or #RRGGBBAA",
+                "canvas_element.style.shadow.blur must not be negative",
                 "canvas_element.style.pressed.textColor \"white\" must be #RRGGBB or #RRGGBBAA",
             ),
             issues,
         )
+    }
+
+    private fun FrameOutput.glyphs() = primitives.filterIsInstance<UiDrawPrimitive.Glyph>()
+
+    @Test
+    fun textAlignPlacesTheTextInItsElement() {
+        element { offsetX = 0f; offsetY = 0f; width = 200f; height = 40f; text = "HP"; textAlign = CanvasAnchor.Center }
+        element { kind = CanvasElementKind.Button; offsetX = 0f; offsetY = 50f; width = 200f; height = 40f; text = "Go"; textAlign = CanvasAnchor.CenterLeft }
+
+        val glyphs = frame().glyphs()
+        val centred = glyphs.filter { it.y < 45f }
+        val left = glyphs.filter { it.y >= 45f }
+
+        assertEquals(100f, (centred.minOf { it.x } + centred.maxOf { it.x + it.w }) / 2f, 3f, "centred across")
+        assertEquals(20f, (centred.minOf { it.y } + centred.maxOf { it.y + it.h }) / 2f, 4f, "and down")
+        assertTrue(left.minOf { it.x } < 10f, "a Button label set to the left starts at its left edge")
+    }
+
+    @Test
+    fun textKeepsItsOwnPlaceWhenNoAlignIsSet() {
+        element { offsetX = 0f; offsetY = 0f; width = 200f; height = 40f; text = "HP" }
+        element { kind = CanvasElementKind.Button; offsetX = 0f; offsetY = 50f; width = 200f; height = 40f; text = "Go" }
+
+        val glyphs = frame().glyphs()
+
+        assertTrue(glyphs.filter { it.y < 45f }.minOf { it.x } < 10f, "a Text starts at its top-left")
+        assertTrue(glyphs.filter { it.y >= 45f }.minOf { it.x } > 80f, "a Button's label is centred")
+    }
+
+    @Test
+    fun aTextOutlineAndShadowDrawUnderItsText() {
+        element {
+            offsetX = 0f; offsetY = 0f; width = 200f; height = 40f; text = "HP"; color = "#FFFFFF"
+            style = CanvasStyle(textOutline = CanvasTextOutline("#000000", 2f), textShadow = CanvasTextShadow("#FF0000"))
+        }
+
+        val colours = frame().glyphs().map { it.color }
+
+        assertEquals(listOf(Color.fromHex("#FF0000"), Color.fromHex("#000000"), Color.White), colours.distinct(), "shadow, then outline, then the text")
+    }
+
+    /** Ten pixels per world unit across and down, from the screen's corner; null behind z 0. */
+    private class FlatProjector(var box: Rectangle? = null) : CanvasProjector {
+        override fun project(x: Float, y: Float, z: Float): Vec2? = if (z < 0f) null else Vec2(x * 10f, y * 10f)
+
+        override fun bounds(entity: Entity): Rectangle? = box
+    }
+
+    private fun named(name: String, x: Float, y: Float, z: Float = 0f): Entity = world.create().also {
+        world.add(it, Name(name))
+        world.add(it, Transform(position = Vec3f(x, y, z)).apply { worldMatrix = Mat4().translate(x, y, z) })
+    }
+
+    private fun followFrame(projector: CanvasProjector?, scale: Float = 1f): FrameOutput =
+        ComposeHost().frame(FrameInput(800, 600)) { SceneCanvas(world, projector = projector, scale = scale) }
+
+    @Test
+    fun aFollowerLandsOnItsNodesPixelAtAnyScale() {
+        named("Hero", 20f, 10f)
+        val plate = element { follow = "Hero"; anchor = CanvasAnchor.TopLeft; offsetX = 0f; offsetY = 0f; width = 10f; height = 10f }
+        val marker = element { follow = "Hero"; followBounds = true }
+        val projector = FlatProjector(box = Rectangle(100f, 50f, 80f, 120f))
+
+        val out = followFrame(projector, scale = 2f)
+
+        assertEquals(listOf(200, 100, 20, 20), out.box(plate), "on the projected pixel, twice the size")
+        assertEquals(listOf(100, 50, 80, 120), out.box(marker), "the box in pixels, whatever the scale")
+    }
+
+    @Test
+    fun anElementStandsOnTheNodeItFollowsWithItsAnchorOnThePoint() {
+        val hero = named("Hero", 20f, 10f)
+        val plate = element {
+            text = "Hero"; follow = "Hero"; anchor = CanvasAnchor.BottomCenter; offsetX = 0f; offsetY = 4f; width = 60f; height = 20f
+        }
+
+        val before = followFrame(FlatProjector()).box(plate)
+        world.get<Transform>(hero)!!.worldMatrix = Mat4().translate(30f, 12f, 0f)
+        val after = followFrame(FlatProjector()).box(plate)
+
+        assertEquals(listOf(200 - 30, 100 - 20 - 4, 60, 20), before, "its bottom centre 4 dp above the node's point")
+        assertEquals(listOf(300 - 30, 120 - 20 - 4, 60, 20), after, "and it moves with the node")
+    }
+
+    @Test
+    fun aFollowOffsetMovesThePointInTheWorld() {
+        named("Hero", 20f, 10f)
+        val plate = element { follow = "Hero"; followOffset = SceneVec3(0f, -2f, 0f); anchor = CanvasAnchor.TopLeft; offsetX = 0f; offsetY = 0f; width = 10f; height = 10f }
+
+        assertEquals(listOf(200, 80, 10, 10), followFrame(FlatProjector()).box(plate))
+    }
+
+    @Test
+    fun anElementFollowingANodeBehindTheCameraOrMissingIsHidden() {
+        named("Behind", 5f, 5f, -1f)
+        val behind = element { follow = "Behind" }
+        val missing = element { follow = "Nobody" }
+        val unprojected = element { follow = "Behind" }
+
+        val out = followFrame(FlatProjector())
+
+        assertNull(out.node(behind))
+        assertNull(out.node(missing))
+        assertNull(ComposeHost().frame(FrameInput(800, 600)) { SceneCanvas(world) }.node(unprojected), "no projector, nothing to follow with")
+    }
+
+    @Test
+    fun aBoundsFollowerCoversTheNodesScreenBoxAndItsChildrenFollow() {
+        named("Target", 0f, 0f)
+        val marker = element { kind = CanvasElementKind.Panel; follow = "Target"; followBounds = true; width = 5f; height = 5f }
+        val corner = child(marker) { kind = CanvasElementKind.Image; anchor = CanvasAnchor.BottomRight; offsetX = 0f; offsetY = 0f; width = 8f; height = 8f }
+
+        val out = followFrame(FlatProjector(box = Rectangle(100f, 50f, 80f, 120f)))
+
+        assertEquals(listOf(100, 50, 80, 120), out.box(marker))
+        assertEquals(listOf(100 + 80 - 8, 50 + 120 - 8, 8, 8), out.box(corner), "anchored to the box's corner")
+    }
+
+    @Test
+    fun aFollowerNestedUnderAnotherElementIsStillPlacedOnItsNode() {
+        named("Hero", 20f, 10f)
+        val window = element { kind = CanvasElementKind.Panel; offsetX = 300f; offsetY = 300f; width = 100f; height = 100f }
+        val plate = child(window) { follow = "Hero"; anchor = CanvasAnchor.TopLeft; offsetX = 0f; offsetY = 0f; width = 10f; height = 10f }
+
+        assertEquals(listOf(200, 100, 10, 10), followFrame(FlatProjector()).box(plate))
+    }
+
+    private fun slots(parent: Entity, count: Int, size: Float = 32f): List<Entity> =
+        List(count) { i -> child(parent) { kind = CanvasElementKind.Panel; order = i; width = size; height = size } }
+
+    @Test
+    fun aRowPlacesItsChildrenOneGapApart() {
+        val bar = element { kind = CanvasElementKind.Panel; offsetX = 10f; offsetY = 20f; width = 400f; height = 40f; layout = CanvasLayout(gap = 4f) }
+        val slots = slots(bar, 5)
+
+        val out = frame()
+
+        assertEquals(listOf(10, 46, 82, 118, 154), slots.map { out.box(it)[0] }, "36 dp apart, from the bar's left")
+        assertTrue(slots.all { out.box(it)[1] == 20 })
+    }
+
+    @Test
+    fun wrapMovesWhatDoesNotFitToANewLine() {
+        val strip = element { kind = CanvasElementKind.Panel; offsetX = 0f; offsetY = 0f; width = 100f; height = 200f; layout = CanvasLayout(gap = 4f, wrap = true) }
+        val icons = slots(strip, 5)
+
+        val out = frame()
+
+        assertEquals(listOf(0 to 0, 36 to 0, 0 to 36, 36 to 36, 0 to 72), icons.map { out.box(it).let { box -> box[0] to box[1] } })
+    }
+
+    @Test
+    fun aChildAddedAtRunTimeMovesTheOnesAfterIt() {
+        val bar = element { kind = CanvasElementKind.Panel; offsetX = 0f; offsetY = 0f; width = 400f; height = 40f; layout = CanvasLayout() }
+        val first = child(bar) { kind = CanvasElementKind.Panel; order = 0; width = 32f; height = 32f }
+        val last = child(bar) { kind = CanvasElementKind.Panel; order = 2; width = 32f; height = 32f }
+        val host = ComposeHost()
+        val before = frame(host).box(last)[0]
+
+        child(bar) { kind = CanvasElementKind.Panel; order = 1; width = 50f; height = 32f }
+        val after = frame(host)
+
+        assertEquals(32, before)
+        assertEquals(0, after.box(first)[0])
+        assertEquals(82, after.box(last)[0], "pushed along by the new one")
+    }
+
+    @Test
+    fun growSharesTheLeftoverSpaceAndCentreingCentres() {
+        val bar = element { kind = CanvasElementKind.Panel; offsetX = 0f; offsetY = 0f; width = 200f; height = 40f; layout = CanvasLayout(align = CanvasAlign.Center) }
+        child(bar) { kind = CanvasElementKind.Panel; order = 0; width = 32f; height = 20f }
+        val fill = child(bar) { kind = CanvasElementKind.Panel; order = 1; width = 0f; height = 20f; grow = 1f }
+        val centred = element {
+            kind = CanvasElementKind.Panel; offsetX = 0f; offsetY = 100f; width = 200f; height = 40f
+            layout = CanvasLayout(justify = CanvasJustify.Center, padding = 5f)
+        }
+        val middle = child(centred) { kind = CanvasElementKind.Panel; width = 40f; height = 10f }
+
+        val out = frame()
+
+        assertEquals(listOf(32, 10, 168, 20), out.box(fill), "the rest of the row, centred down it")
+        assertEquals(80, out.box(middle)[0], "centred along a row")
+        assertEquals(105, out.box(middle)[1], "inside the padding")
+    }
+
+    @Test
+    fun validationRejectsANegativeGapPaddingOrGrow() {
+        val issues = SceneCanvasElement(layout = CanvasLayout(gap = -1f, padding = -2f), grow = -1f).validate("nodes[0]").map { it.message }
+
+        assertEquals(
+            listOf(
+                "canvas_element.layout.gap must not be negative",
+                "canvas_element.layout.padding must not be negative",
+                "canvas_element.grow must not be negative",
+            ),
+            issues,
+        )
+    }
+
+    @Test
+    fun theHostsTextStyleDoesNotReachTheScenesText() {
+        element { offsetX = 0f; offsetY = 0f; width = 200f; height = 40f; text = "HP"; color = "#FFFFFF" }
+
+        val colours = ComposeHost().frame(FrameInput(800, 600)) {
+            CompositionLocalProvider(LocalTextStyle provides TextStyle(outline = TextOutline(Color.Black, 2f))) { SceneCanvas(world) }
+        }.primitives.filterIsInstance<UiDrawPrimitive.Glyph>().map { it.color }.distinct()
+
+        assertEquals(listOf(Color.White), colours, "no outline the scene did not ask for")
     }
 
     @Test

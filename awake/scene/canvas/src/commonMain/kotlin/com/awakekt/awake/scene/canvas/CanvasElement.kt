@@ -6,6 +6,7 @@
 package com.awakekt.awake.scene.canvas
 
 import com.awakekt.awake.compose.foundation.interaction.InteractionSource
+import com.awakekt.awake.scene.document.SceneVec3
 import kotlinx.serialization.Serializable
 import kotlin.math.sqrt
 
@@ -107,6 +108,27 @@ class CanvasElement {
 
     /** How the element looks beyond its colours: images, and their frames and fills. */
     var style: CanvasStyle = CanvasStyle()
+
+    /** Where a Text's or Button's text sits; null keeps the kind's own, top-left or centred. */
+    var textAlign: CanvasAnchor? = null
+
+    /** The name of a node this element follows on screen; empty follows none. */
+    var follow: String = ""
+
+    /** A world-space offset from the followed node, such as above its head. */
+    var followOffset: SceneVec3 = SceneVec3()
+
+    /** Whether the element covers the screen rectangle of the followed node's meshes. */
+    var followBounds: Boolean = false
+
+    /** How the element places its children itself; null anchors each child by hand. */
+    var layout: CanvasLayout? = null
+
+    /** In a parent with a layout, this element's share of its line's leftover space. */
+    var grow: Float = 0f
+
+    /** Game state the element shows without code; while it reads, it stands in for [value] and [text]. */
+    var bind: CanvasBinding? = null
 
     private var pressed = false
     internal val interactions = InteractionSource()

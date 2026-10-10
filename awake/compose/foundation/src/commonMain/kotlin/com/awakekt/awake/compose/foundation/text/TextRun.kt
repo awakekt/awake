@@ -106,6 +106,19 @@ internal class TextRun(
         }
     }
 
+    /**
+     * [paint], under its style's shadow and outline: the run again in the shadow's colour, moved by its
+     * offset, then in the outline's colour moved a step in each of eight directions, then the text.
+     */
+    fun paintDecorated(scope: DrawScope, color: Color, offsetX: Float = 0f, offsetY: Float = 0f) {
+        style.shadow?.let { paint(scope, it.color, offsetX + it.offsetX * density, offsetY + it.offsetY * density) }
+        style.outline?.let { ring ->
+            val step = ring.width * density
+            for (i in OUTLINE_X.indices) paint(scope, ring.color, offsetX + OUTLINE_X[i] * step, offsetY + OUTLINE_Y[i] * step)
+        }
+        paint(scope, color, offsetX, offsetY)
+    }
+
     fun paint(scope: DrawScope, color: Color, offsetX: Float = 0f, offsetY: Float = 0f) {
         var y = offsetY
         // Indexed: this runs for every text node every frame, and a List iterator is an allocation.
@@ -144,3 +157,7 @@ internal class TextRun(
 }
 
 internal data class TextCaretPosition(val x: Float, val y: Float)
+
+// Unit steps to the eight neighbours; the diagonals are shortened so the ring is round, not square.
+private val OUTLINE_X = floatArrayOf(1f, 0.7071f, 0f, -0.7071f, -1f, -0.7071f, 0f, 0.7071f)
+private val OUTLINE_Y = floatArrayOf(0f, 0.7071f, 1f, 0.7071f, 0f, -0.7071f, -1f, -0.7071f)

@@ -6,6 +6,8 @@
 package com.awakekt.awake.compose.foundation
 
 import com.awakekt.awake.compose.foundation.layout.Box
+import com.awakekt.awake.compose.foundation.layout.FlexAlignContent
+import com.awakekt.awake.compose.foundation.layout.FlexAlignItems
 import com.awakekt.awake.compose.foundation.layout.FlexBox
 import com.awakekt.awake.compose.foundation.layout.FlexDirection
 import com.awakekt.awake.compose.foundation.layout.FlexWrap
@@ -108,6 +110,29 @@ class FlexBoxTest {
 
         assertEquals(10, nodes.getValue("first").y)
         assertEquals(0, nodes.getValue("third").y)
+    }
+
+    @Test
+    fun stretchedLinesShareTheFreeCrossSpaceOnce() {
+        val nodes = nodes {
+            FlexBox(Modifier.size(100.dp, 40.dp), config = {
+                alignContent = FlexAlignContent.Stretch
+                alignItems = FlexAlignItems.Center
+            }) {
+                item("centred", 20.dp)
+            }
+            FlexBox(Modifier.size(100.dp, 60.dp), config = {
+                wrap = FlexWrap.Wrap
+                alignContent = FlexAlignContent.Stretch
+            }) {
+                item("top", 60.dp)
+                item("second", 60.dp)
+            }
+        }
+
+        assertEquals(15, nodes.getValue("centred").y, "centred in the one line, which spans the 40 dp")
+        // Two 10-dp lines in 60 dp: each grows by half the 40 dp left, so the second starts 30 down.
+        assertEquals(30, nodes.getValue("second").y)
     }
 
     private fun nodes(content: context(Composer) () -> Unit): Map<String, SemanticsNode> {

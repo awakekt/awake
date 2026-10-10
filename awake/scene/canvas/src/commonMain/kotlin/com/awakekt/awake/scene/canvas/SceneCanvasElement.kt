@@ -7,6 +7,7 @@ package com.awakekt.awake.scene.canvas
 
 import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.scene.document.SceneComponent
+import com.awakekt.awake.scene.document.SceneVec3
 import com.awakekt.awake.scene.document.SceneValidationIssue
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -30,6 +31,16 @@ import kotlinx.serialization.Serializable
  * @property action Action trigger identifier associated with button activation.
  * @property touchOnly If true, element is displayed only when touch controls are active.
  * @property style How the element looks beyond its colours: images, and their frames and fills.
+ * @property textAlign Where a Text's or Button's text sits in the element; null keeps the kind's own,
+ * top-left for a Text and centred for a Button.
+ * @property follow The name of a node the element follows on screen; empty follows none.
+ * @property followOffset A world-space offset from the followed node, such as above its head.
+ * @property followBounds Whether the element covers the screen rectangle of the followed node's
+ * meshes instead of standing at its point.
+ * @property layout How the element places its children itself, in rows or columns; null anchors
+ * each child by hand.
+ * @property grow In a parent with a [layout], this element's share of its line's leftover space.
+ * @property bind Game state the element shows without code: a Bar's fill, a Text's words.
  */
 @Serializable
 @SerialName("canvas_element")
@@ -50,6 +61,13 @@ data class SceneCanvasElement(
     val action: String = "",
     val touchOnly: Boolean = false,
     val style: CanvasStyle = CanvasStyle(),
+    val textAlign: CanvasAnchor? = null,
+    val follow: String = "",
+    val followOffset: SceneVec3 = SceneVec3(),
+    val followBounds: Boolean = false,
+    val layout: CanvasLayout? = null,
+    @PropertyRange(min = 0.0) val grow: Float = 0f,
+    val bind: CanvasBinding? = null,
 ) : SceneComponent {
     /**
      * Validates element dimensions, font sizes, values, and hex color syntax.
@@ -65,6 +83,9 @@ data class SceneCanvasElement(
             add(SceneValidationIssue(path, "canvas_element colour \"$it\" must be #RRGGBB or #RRGGBBAA"))
         }
         style.problems().forEach { add(SceneValidationIssue(path, "canvas_element.style.$it")) }
+        layout?.problems()?.forEach { add(SceneValidationIssue(path, "canvas_element.layout.$it")) }
+        if (grow < 0f) add(SceneValidationIssue(path, "canvas_element.grow must not be negative"))
+        bind?.problems()?.forEach { add(SceneValidationIssue(path, "canvas_element.bind.$it")) }
     }
 }
 

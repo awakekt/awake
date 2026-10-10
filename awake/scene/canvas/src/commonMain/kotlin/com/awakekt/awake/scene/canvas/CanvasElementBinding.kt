@@ -46,6 +46,13 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         it.action = action
         it.touchOnly = touchOnly
         it.style = style
+        it.textAlign = textAlign
+        it.follow = follow
+        it.followOffset = followOffset
+        it.followBounds = followBounds
+        it.layout = layout
+        it.grow = grow
+        it.bind = bind
     }
 
     /**
@@ -70,5 +77,12 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         action = action,
         touchOnly = touchOnly,
         style = style,
+        textAlign = textAlign,
+        follow = follow,
+        followOffset = followOffset,
+        followBounds = followBounds,
+        layout = layout,
+        grow = grow,
+        bind = bind,
     )
 }

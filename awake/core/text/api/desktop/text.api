@@ -212,23 +212,57 @@ public final class com/awakekt/awake/core/text/scope/UiTextScaleKt {
 	public static synthetic fun pixelPerfectTextScale$default (FFILjava/lang/Object;)F
 }
 
+public final class com/awakekt/awake/core/text/theme/TextOutline {
+	public fun <init> (Lcom/awakekt/awake/core/color/Color;F)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/color/Color;FILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/core/color/Color;
+	public final fun component2 ()F
+	public final fun copy (Lcom/awakekt/awake/core/color/Color;F)Lcom/awakekt/awake/core/text/theme/TextOutline;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/text/theme/TextOutline;Lcom/awakekt/awake/core/color/Color;FILjava/lang/Object;)Lcom/awakekt/awake/core/text/theme/TextOutline;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getColor ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getWidth ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/text/theme/TextShadow {
+	public fun <init> (Lcom/awakekt/awake/core/color/Color;FF)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/color/Color;FFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/core/color/Color;
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun copy (Lcom/awakekt/awake/core/color/Color;FF)Lcom/awakekt/awake/core/text/theme/TextShadow;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/text/theme/TextShadow;Lcom/awakekt/awake/core/color/Color;FFILjava/lang/Object;)Lcom/awakekt/awake/core/text/theme/TextShadow;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getColor ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getOffsetX ()F
+	public final fun getOffsetY ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class com/awakekt/awake/core/text/theme/TextStyle {
 	public static final field Companion Lcom/awakekt/awake/core/text/theme/TextStyle$Companion;
-	public synthetic fun <init> (Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/math2d/Sp;Lcom/awakekt/awake/core/math2d/Sp;FIFILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public synthetic fun <init> (Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/math2d/Sp;Lcom/awakekt/awake/core/math2d/Sp;FIFLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/math2d/Sp;Lcom/awakekt/awake/core/math2d/Sp;FIFLcom/awakekt/awake/core/text/theme/TextShadow;Lcom/awakekt/awake/core/text/theme/TextOutline;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/math2d/Sp;Lcom/awakekt/awake/core/math2d/Sp;FIFLcom/awakekt/awake/core/text/theme/TextShadow;Lcom/awakekt/awake/core/text/theme/TextOutline;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lcom/awakekt/awake/core/color/Color;
 	public final fun component2-cA3tPgo ()Lcom/awakekt/awake/core/math2d/Sp;
 	public final fun component3-cA3tPgo ()Lcom/awakekt/awake/core/math2d/Sp;
 	public final fun component4 ()F
 	public final fun component5-IDQ5Rls ()I
 	public final fun component6-7B0eUI0 ()F
-	public final fun copy-_WKOUJ8 (Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/math2d/Sp;Lcom/awakekt/awake/core/math2d/Sp;FIF)Lcom/awakekt/awake/core/text/theme/TextStyle;
-	public static synthetic fun copy-_WKOUJ8$default (Lcom/awakekt/awake/core/text/theme/TextStyle;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/math2d/Sp;Lcom/awakekt/awake/core/math2d/Sp;FIFILjava/lang/Object;)Lcom/awakekt/awake/core/text/theme/TextStyle;
+	public final fun component7 ()Lcom/awakekt/awake/core/text/theme/TextShadow;
+	public final fun component8 ()Lcom/awakekt/awake/core/text/theme/TextOutline;
+	public final fun copy-LqloMwE (Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/math2d/Sp;Lcom/awakekt/awake/core/math2d/Sp;FIFLcom/awakekt/awake/core/text/theme/TextShadow;Lcom/awakekt/awake/core/text/theme/TextOutline;)Lcom/awakekt/awake/core/text/theme/TextStyle;
+	public static synthetic fun copy-LqloMwE$default (Lcom/awakekt/awake/core/text/theme/TextStyle;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/math2d/Sp;Lcom/awakekt/awake/core/math2d/Sp;FIFLcom/awakekt/awake/core/text/theme/TextShadow;Lcom/awakekt/awake/core/text/theme/TextOutline;ILjava/lang/Object;)Lcom/awakekt/awake/core/text/theme/TextStyle;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getColor ()Lcom/awakekt/awake/core/color/Color;
 	public final fun getLetterSpacing-7B0eUI0 ()F
 	public final fun getLineHeight-cA3tPgo ()Lcom/awakekt/awake/core/math2d/Sp;
+	public final fun getOutline ()Lcom/awakekt/awake/core/text/theme/TextOutline;
 	public final fun getScale ()F
+	public final fun getShadow ()Lcom/awakekt/awake/core/text/theme/TextShadow;
 	public final fun getSize-cA3tPgo ()Lcom/awakekt/awake/core/math2d/Sp;
 	public final fun getWeight-IDQ5Rls ()I
 	public fun hashCode ()I

@@ -79,7 +79,7 @@ private class TextPaintNode :
     lateinit var color: Color
 
     override fun DrawScope.draw(drawContent: () -> Unit) {
-        policy.runFor(density, 1f).paint(this, color)
+        policy.runFor(density, 1f).paintDecorated(this, color)
         drawContent()
     }
 

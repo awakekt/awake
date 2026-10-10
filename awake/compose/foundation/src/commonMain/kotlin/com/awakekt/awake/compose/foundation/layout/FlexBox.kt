@@ -453,7 +453,8 @@ private class FlexBoxMeasurePolicy(private val config: FlexBoxConfig) : MeasureP
             var crossCursor = crossDistribution.before
             for (lineIndex in lines.indices) {
                 val line = lines[lineIndex]
-                val lineCross = lineCrosses[lineIndex] + crossDistribution.stretch
+                // Already holds its share of a stretch, added before the children were measured.
+                val lineCross = lineCrosses[lineIndex]
                 val mainDistribution = distribution(resolved.justifyContent, (mainSize - lineMains[lineIndex]).coerceAtLeast(0), line.size)
                 var mainCursor = mainDistribution.before
                 for (child in line) {
