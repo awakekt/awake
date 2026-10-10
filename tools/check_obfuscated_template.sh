@@ -76,7 +76,7 @@ echo "==> $NAME: a frame captured with no window"
 FRAME="$OUT_DIR/$NAME-frame.png"
 desktop "$OUT_DIR/$NAME-capture.log" "-Dawake.capture=$FRAME" "-Dawake.frames=$FRAMES" \
   || { cat "$OUT_DIR/$NAME-capture.log" >&2; fail "the capture run failed"; }
-python3 "$ENGINE_ROOT/tools/png_colours.py" "$FRAME" 2 || fail "the captured frame is blank"
+java -Djava.awt.headless=true "$ENGINE_ROOT/tools/PngColours.java" "$FRAME" 2 || fail "the captured frame is blank"
 
 WEB="$CHECKOUT/app/webApp/build/dist/wasmJs/productionExecutable"
 ls "$WEB"/*.wasm >/dev/null 2>&1 || fail "no minified web build in $WEB"

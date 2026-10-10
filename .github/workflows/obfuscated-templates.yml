@@ -23,7 +23,7 @@ on:
       - .github/workflows/obfuscated-templates.yml
       - tools/check_obfuscated_template.sh
       - tools/check_template_consumer.sh
-      - tools/png_colours.py
+      - tools/PngColours.java
       - scripts/android-launch-check.sh
 
 concurrency:
