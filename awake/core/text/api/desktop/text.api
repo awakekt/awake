@@ -207,6 +207,38 @@ public final class com/awakekt/awake/core/text/font/WeightedUiFont : com/awakekt
 	public fun uvFor (C)Lcom/awakekt/awake/core/text/font/GlyphRect;
 }
 
+public final class com/awakekt/awake/core/text/format/NumberFormat {
+	public static final field Companion Lcom/awakekt/awake/core/text/format/NumberFormat$Companion;
+	public static final field MAX_DECIMALS I
+	public fun <init> (Lcom/awakekt/awake/core/text/format/NumberStyle;I)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/text/format/NumberStyle;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/core/text/format/NumberStyle;
+	public final fun component2 ()I
+	public final fun copy (Lcom/awakekt/awake/core/text/format/NumberStyle;I)Lcom/awakekt/awake/core/text/format/NumberFormat;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/text/format/NumberFormat;Lcom/awakekt/awake/core/text/format/NumberStyle;IILjava/lang/Object;)Lcom/awakekt/awake/core/text/format/NumberFormat;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun format (D)Ljava/lang/String;
+	public final fun format (J)Ljava/lang/String;
+	public final fun getDecimals ()I
+	public final fun getStyle ()Lcom/awakekt/awake/core/text/format/NumberStyle;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/text/format/NumberFormat$Companion {
+	public final fun parse (Ljava/lang/String;)Lcom/awakekt/awake/core/text/format/NumberFormat;
+}
+
+public final class com/awakekt/awake/core/text/format/NumberStyle : java/lang/Enum {
+	public static final field Fixed Lcom/awakekt/awake/core/text/format/NumberStyle;
+	public static final field Grouped Lcom/awakekt/awake/core/text/format/NumberStyle;
+	public static final field Percent Lcom/awakekt/awake/core/text/format/NumberStyle;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getLetter ()C
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/core/text/format/NumberStyle;
+	public static fun values ()[Lcom/awakekt/awake/core/text/format/NumberStyle;
+}
+
 public final class com/awakekt/awake/core/text/scope/UiTextScaleKt {
 	public static final fun pixelPerfectTextScale (FF)F
 	public static synthetic fun pixelPerfectTextScale$default (FFILjava/lang/Object;)F
