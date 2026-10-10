@@ -139,6 +139,9 @@ Screen-space UI drawn over the game. Sizes and offsets are in dp. `SceneCanvasEl
 | `touchOnly` | boolean | `false` | Draw only where touch controls are shown. |
 | `style` | object | `{}` | How the element looks beyond its colours, as an AwakeKt Compose `Style`: `background`, `gradient` (`start`, `end`, `horizontal`), `image`, `fillImage`, `cornerRadius`, `borderWidth`, `borderColor`, `shadow` (`color`, `offsetX`, `offsetY`, `blur`, `spread`), `textColor`, `textShadow` (`color`, `offsetX`, `offsetY`), `textOutline` (`color`, `width`), `alpha`, and `hovered` and `pressed` states for a Button. `image` is an `Image`'s picture, a frame, or a `Bar`'s track; `fillImage` is a `Bar`'s fill, cut at `value`. Each image is a `CanvasImage`: `path`, a region (`regionX`, `regionY`, `regionWidth`, `regionHeight`), slice insets (`sliceLeft`, `sliceTop`, `sliceRight`, `sliceBottom`), `repeatEdges`, `repeatCenter`, `tint` and `pixelated`. See [Game UI](../guides/game-ui.md#style-an-element). |
 | `textAlign` | `TopLeft` · `TopCenter` · `TopRight` · `CenterLeft` · `Center` · `CenterRight` · `BottomLeft` · `BottomCenter` · `BottomRight` | none | Where a `Text`'s or `Button`'s text sits in the element. None keeps the kind's own: top-left for a `Text`, centred for a `Button`. |
+| `follow` | string | `""` | The name of a node the element follows on screen. Its `anchor` point stands on the node's projected position, nudged inward by its offsets, and it hides when the node is behind the camera or missing. |
+| `followOffset` | vector | `{x: 0, y: 0, z: 0}` | World-space offset from the followed node, such as above its head. |
+| `followBounds` | boolean | `false` | Cover the screen rectangle of the followed node's meshes instead of standing at its point. Its children anchor to that box's edges. |
 
 ## `character_controller`
 

@@ -337,7 +337,13 @@ class SceneAppLifecycleRuntime internal constructor(
                 LocalFrameStats provides frameStats(),
             ) {
                 // Under the app's own UI, so a menu or pause screen covers the game's canvas.
-                if (hasCanvas) SceneCanvas(world, showTouchControls = showTouchControls, images = canvasImages, scale = canvasScale)
+                if (hasCanvas) SceneCanvas(
+                        world,
+                        showTouchControls = showTouchControls,
+                        images = canvasImages,
+                        scale = canvasScale,
+                        projector = canvasProjector,
+                    )
                 if (content != null) content()
             }
         }
@@ -354,6 +360,8 @@ class SceneAppLifecycleRuntime internal constructor(
     }
 
     override fun resize(width: Float, height: Float) = Unit
+
+    private val canvasProjector by lazy { SceneCanvasProjector(world, renderer.clipSpace) { session.schedule.renderSystem?.cameraViewport } }
 
     internal val spriteBatch by lazy { SpriteRenderBatch(renderer) { requireAssetLibrary().requireTexture(it) } }
     internal val spriteFeature by lazy { SceneSpriteRenderFeature(spriteBatch) }

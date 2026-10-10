@@ -61,6 +61,9 @@ For a button the player holds down, read `isHeld` instead. For a joystick, read 
 | `text` | string | `""` | A `Text` element's content, or a `Button`'s label. |
 | `fontSize` | number (sp) | `18` | Size of `text`. |
 | `textAlign` | one of the nine anchor points | none | Where the text sits in the element. None keeps a `Text` at its top-left and a `Button`'s label centred. |
+| `follow` | string | `""` | A node to follow on screen. See [Follow a node](#follow-a-node). |
+| `followOffset` | vector | `{x: 0, y: 0, z: 0}` | A world-space offset from the followed node. |
+| `followBounds` | boolean | `false` | Cover the followed node's screen box instead of standing at its point. |
 | `color` | `#RRGGBB` or `#RRGGBBAA` | `#FFFFFF` | Text colour, a `Bar`'s fill, or a `Joystick`'s knob. |
 | `background` | `#RRGGBB` or `#RRGGBBAA` | `#00000000` | Fill behind the element. A joystick's pad. |
 | `value` | number, 0 to 1 | `1` | A `Bar`'s fill fraction. |
@@ -177,6 +180,29 @@ above is the parent.
 
 A child is laid out within its parent, so one that would stick out past the parent's edge is
 narrowed to fit.
+
+## Follow a node
+
+An element with a `follow` stands where that node is drawn and moves with it: a name over a
+character, a health bar over an enemy. Its `anchor` is the point of the element that sits on the
+node's screen position, and `offsetX` and `offsetY` nudge it inward from there, as they do from a
+screen edge; `followOffset` moves the point in the world first, such as two metres up to clear a
+head. It hides while the node is behind the camera, and when no node has that name.
+
+```json title="A name plate above a character"
+{ "component": "canvas_element", "text": "Harbor Guard", "follow": "Guard",
+  "followOffset": { "x": 0, "y": 2.2, "z": 0 }, "anchor": "BottomCenter", "offsetX": 0, "offsetY": 0,
+  "width": 120, "height": 18, "textAlign": "Center",
+  "style": { "textOutline": { "color": "#000000", "width": 1 } } }
+```
+
+With `followBounds`, the element instead covers the screen rectangle around the node's meshes and
+everything under it, whatever its own size. Give it children anchored to its corners, and a marker
+frames whatever is selected at any distance. A node with no mesh bounds falls back to its point.
+
+A follower is placed against the screen wherever it sits in the scene, so it can live on a child of
+the character it follows. The runtime projects through the camera it draws with; a host that draws
+`SceneCanvas` itself passes a `CanvasProjector`.
 
 ## Scale the UI
 

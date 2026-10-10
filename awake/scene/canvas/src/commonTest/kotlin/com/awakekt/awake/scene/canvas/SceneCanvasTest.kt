@@ -16,13 +16,19 @@ import com.awakekt.awake.compose.ui.platform.LocalTextStyle
 import com.awakekt.awake.compose.ui.semantics.SemanticsNode
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
+import com.awakekt.awake.core.math.Mat4
+import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.core.math2d.Rectangle
+import com.awakekt.awake.core.math2d.Vec2
 import com.awakekt.awake.core.text.theme.TextOutline
 import com.awakekt.awake.core.text.theme.TextStyle
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.canvas.CanvasElementBinding.toComponent
 import com.awakekt.awake.scene.canvas.CanvasElementBinding.toSceneComponent
+import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.core.transform.Transform
+import com.awakekt.awake.scene.document.SceneVec3
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -451,6 +457,79 @@ class SceneCanvasTest {
         val colours = frame().glyphs().map { it.color }
 
         assertEquals(listOf(Color.fromHex("#FF0000"), Color.fromHex("#000000"), Color.White), colours.distinct(), "shadow, then outline, then the text")
+    }
+
+    /** Ten pixels per world unit across and down, from the screen's corner; null behind z 0. */
+    private class FlatProjector(var box: Rectangle? = null) : CanvasProjector {
+        override fun project(x: Float, y: Float, z: Float): Vec2? = if (z < 0f) null else Vec2(x * 10f, y * 10f)
+
+        override fun bounds(entity: Entity): Rectangle? = box
+    }
+
+    private fun named(name: String, x: Float, y: Float, z: Float = 0f): Entity = world.create().also {
+        world.add(it, Name(name))
+        world.add(it, Transform(position = Vec3f(x, y, z)).apply { worldMatrix = Mat4().translate(x, y, z) })
+    }
+
+    private fun followFrame(projector: CanvasProjector?): FrameOutput =
+        ComposeHost().frame(FrameInput(800, 600)) { SceneCanvas(world, projector = projector) }
+
+    @Test
+    fun anElementStandsOnTheNodeItFollowsWithItsAnchorOnThePoint() {
+        val hero = named("Hero", 20f, 10f)
+        val plate = element {
+            text = "Hero"; follow = "Hero"; anchor = CanvasAnchor.BottomCenter; offsetX = 0f; offsetY = 4f; width = 60f; height = 20f
+        }
+
+        val before = followFrame(FlatProjector()).box(plate)
+        world.get<Transform>(hero)!!.worldMatrix = Mat4().translate(30f, 12f, 0f)
+        val after = followFrame(FlatProjector()).box(plate)
+
+        assertEquals(listOf(200 - 30, 100 - 20 - 4, 60, 20), before, "its bottom centre 4 dp above the node's point")
+        assertEquals(listOf(300 - 30, 120 - 20 - 4, 60, 20), after, "and it moves with the node")
+    }
+
+    @Test
+    fun aFollowOffsetMovesThePointInTheWorld() {
+        named("Hero", 20f, 10f)
+        val plate = element { follow = "Hero"; followOffset = SceneVec3(0f, -2f, 0f); anchor = CanvasAnchor.TopLeft; offsetX = 0f; offsetY = 0f; width = 10f; height = 10f }
+
+        assertEquals(listOf(200, 80, 10, 10), followFrame(FlatProjector()).box(plate))
+    }
+
+    @Test
+    fun anElementFollowingANodeBehindTheCameraOrMissingIsHidden() {
+        named("Behind", 5f, 5f, -1f)
+        val behind = element { follow = "Behind" }
+        val missing = element { follow = "Nobody" }
+        val unprojected = element { follow = "Behind" }
+
+        val out = followFrame(FlatProjector())
+
+        assertNull(out.node(behind))
+        assertNull(out.node(missing))
+        assertNull(ComposeHost().frame(FrameInput(800, 600)) { SceneCanvas(world) }.node(unprojected), "no projector, nothing to follow with")
+    }
+
+    @Test
+    fun aBoundsFollowerCoversTheNodesScreenBoxAndItsChildrenFollow() {
+        named("Target", 0f, 0f)
+        val marker = element { kind = CanvasElementKind.Panel; follow = "Target"; followBounds = true; width = 5f; height = 5f }
+        val corner = child(marker) { kind = CanvasElementKind.Image; anchor = CanvasAnchor.BottomRight; offsetX = 0f; offsetY = 0f; width = 8f; height = 8f }
+
+        val out = followFrame(FlatProjector(box = Rectangle(100f, 50f, 80f, 120f)))
+
+        assertEquals(listOf(100, 50, 80, 120), out.box(marker))
+        assertEquals(listOf(100 + 80 - 8, 50 + 120 - 8, 8, 8), out.box(corner), "anchored to the box's corner")
+    }
+
+    @Test
+    fun aFollowerNestedUnderAnotherElementIsStillPlacedOnItsNode() {
+        named("Hero", 20f, 10f)
+        val window = element { kind = CanvasElementKind.Panel; offsetX = 300f; offsetY = 300f; width = 100f; height = 100f }
+        val plate = child(window) { follow = "Hero"; anchor = CanvasAnchor.TopLeft; offsetX = 0f; offsetY = 0f; width = 10f; height = 10f }
+
+        assertEquals(listOf(200, 100, 10, 10), followFrame(FlatProjector()).box(plate))
     }
 
     @Test
