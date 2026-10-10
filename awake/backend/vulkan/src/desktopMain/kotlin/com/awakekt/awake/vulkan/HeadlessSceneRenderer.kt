@@ -8,6 +8,7 @@ package com.awakekt.awake.vulkan
 import com.awakekt.awake.asset.shaderpack.PackShaderSets
 import com.awakekt.awake.asset.shaders.ContentFeatureAttacher
 import com.awakekt.awake.asset.shaders.EngineShaderSets
+import com.awakekt.awake.asset.shaders.ShaderSet
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.render.passes.DEFAULT_SHADOW_CASCADES
 import com.awakekt.awake.render.passes.OpaqueRenderFeature
@@ -23,6 +24,7 @@ import com.awakekt.awake.vulkan.application.VulkanContentFeatureGpu
 import com.awakekt.awake.vulkan.commands.TransferContext
 import com.awakekt.awake.vulkan.debug.LineRenderPipeline
 import com.awakekt.awake.vulkan.device.GraphicsDevice
+import com.awakekt.awake.vulkan.enums.VkPolygonMode
 import com.awakekt.awake.vulkan.gen.VulkanDescriptors
 import com.awakekt.awake.vulkan.handles.DescriptorSetLayoutHandle
 import com.awakekt.awake.vulkan.material.Material
@@ -132,6 +134,26 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
     )
     val transparentTexturedPipeline = texturedCompanion(PipelineVariant.AlphaBlended)
     val additiveTexturedPipeline = texturedCompanion(PipelineVariant.AdditiveBlended)
+
+    // The opaque formats' wireframe-overlay companions, as buildPipelineTable builds them.
+    fun edgeCompanion(shaders: ShaderSet, format: VertexFormat) = RenderPipeline(
+        graphicsDevice,
+        swapchainManager,
+        sceneRenderPass,
+        descriptorSetLayout,
+        runBlocking { spirvPair(shaders) },
+        format,
+        vertexEntryPoint = "vertexMain",
+        fragmentEntryPoint = "fragmentMain",
+        polygonMode = VkPolygonMode.VK_POLYGON_MODE_LINE,
+        extraDescriptorSetLayouts = listOf(DescriptorSetLayoutHandle(depthTarget.descriptorSetLayout)),
+        variant = PipelineVariant.EdgeOverlay,
+    )
+    val edgePipelines = mapOf(
+        VertexFormat.PositionNormalColor to edgeCompanion(PackShaderSets.LitShadow, VertexFormat.PositionNormalColor),
+        VertexFormat.PositionNormalColorUv to edgeCompanion(PackShaderSets.Textured, VertexFormat.PositionNormalColorUv),
+        VertexFormat.PositionNormalColorUvSkin to edgeCompanion(PackShaderSets.SkinnedTextured, VertexFormat.PositionNormalColorUvSkin),
+    )
     val instancedTexturedPipeline = RenderPipeline(
         graphicsDevice,
         swapchainManager,
@@ -296,6 +318,7 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
             additiveByFormat = mapOf(VertexFormat.PositionNormalColorUv to additiveTexturedPipeline),
             backCulledByFormat = mapOf(VertexFormat.PositionNormalColor to backCulledScenePipeline),
             particlePipelines = mapOf(VertexFormat.PositionUv to spritePipeline),
+            edgesByFormat = edgePipelines,
         ),
         renderFeatures = listOf(
             attacher.beforeGeometry,
@@ -323,6 +346,7 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
             transparentTexturedPipeline.destroy()
             additiveTexturedPipeline.destroy()
             spritePipeline.destroy()
+            edgePipelines.values.forEach { it.destroy() }
             contentPipelines.destroyAll { it.destroy() }
             attacher.releaseAll()
             VulkanDescriptors.vkDestroyDescriptorSetLayout(graphicsDevice.device, descriptorSetLayout.handle)

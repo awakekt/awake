@@ -69,4 +69,10 @@ data class WorldDebugSettings(
      * shows (an index into the skin's joints).
      */
     var renderDebugLayer: Int = 0,
+    /**
+     * Whether each opaque mesh's triangle edges are drawn over the frame, over whichever
+     * [renderDebugView] is on. A skinned mesh's edges move with its pose. Instanced meshes, and
+     * meshes whose shader shows no debug views, draw no edges.
+     */
+    var showWireframe: Boolean = false,
 )

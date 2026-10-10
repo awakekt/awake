@@ -117,6 +117,8 @@ class OpaqueRenderFeature<C : RenderFrameContext>(
             grouped = groupedDrawCalls,
             lines = lines.lineDraw(context),
         )
+        // Over the opaque draws, against the depth they wrote, and before anything blends over them.
+        shared.recordEdges(recorder, edgeDrawCalls)
         // After the opaque draws, in the same scene pass: a transparent surface must depth-test
         // against opaque geometry already written, and blend over the colour it left behind.
         // A separate RenderPassSlot would put it after the UI, which paints over the scene.

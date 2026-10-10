@@ -66,6 +66,21 @@ class SharedOpaqueRenderFeature {
     }
 
     /**
+     * Records a wireframe overlay: [edges], each bound to its own edge pipeline, in runs of one
+     * pipeline so each binds once.
+     *
+     * @param recorder The command recorder to record GPU commands into.
+     * @param edges The opaque draws' edges, prepared with an edges context.
+     */
+    fun recordEdges(recorder: CommandRecorder, edges: List<PreparedDraw>) {
+        if (edges.isEmpty()) return
+        edges.groupBy { it.pipeline }.forEach { (pipeline, run) ->
+            recorder.bindPipeline(pipeline)
+            recordDraws(recorder, run)
+        }
+    }
+
+    /**
      * Records an ordered list of prepared draws against whatever pipeline is currently bound.
      *
      * Redundant vertex buffer and index buffer bindings across consecutive draws are elided.

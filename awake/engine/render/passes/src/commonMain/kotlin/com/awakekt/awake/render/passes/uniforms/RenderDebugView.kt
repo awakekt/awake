@@ -77,6 +77,16 @@ enum class RenderDebugView(val code: Int) {
 const val NO_DATA_GREY: Float = 0.5f
 
 /**
+ * The [GpuDebugView] code a wireframe overlay's draws carry: every scene shader draws it as
+ * [WIREFRAME_EDGE_GREY]. Not a [RenderDebugView], since the overlay is drawn over the frame, lit or
+ * under a view, rather than instead of it. Stable, as the views' codes are: it is shader ABI.
+ */
+const val WIREFRAME_EDGE_CODE: Int = 255
+
+/** The grey a wireframe overlay draws edges in: near black, readable over clay and lit surfaces. */
+const val WIREFRAME_EDGE_GREY: Float = 0.05f
+
+/**
  * Writes [UniformFields.DebugView]: the forward axis over the depth range, then the view code.
  *
  * @param view This frame's view, as the pass carries it.

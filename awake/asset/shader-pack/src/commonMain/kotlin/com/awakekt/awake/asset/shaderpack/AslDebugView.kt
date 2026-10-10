@@ -31,6 +31,8 @@ import com.awakekt.awake.asset.shaderdsl.y
 import com.awakekt.awake.asset.shaderdsl.z
 import com.awakekt.awake.render.passes.uniforms.NO_DATA_GREY
 import com.awakekt.awake.render.passes.uniforms.RenderDebugView
+import com.awakekt.awake.render.passes.uniforms.WIREFRAME_EDGE_CODE
+import com.awakekt.awake.render.passes.uniforms.WIREFRAME_EDGE_GREY
 
 /** How dark a fully shadowed point draws under [RenderDebugView.ShadowVisibility], so the cascade tint stays readable. */
 private const val SHADOWED_FLOOR = 0.25f
@@ -105,6 +107,8 @@ fun AslBlockBuilder.debugViewColor(debugView: AslExpr, cameraPosition: AslExpr, 
         show(RenderDebugView.Clay, surface.clay)
         show(RenderDebugView.JointWeights, surface.jointWeights)
         show(RenderDebugView.SelectedJointWeight, surface.selectedJointWeight?.let(::weightHeat))
+        // A wireframe overlay's edge, drawn over the frame whatever view it shows.
+        iff(view eq WIREFRAME_EDGE_CODE.toUInt().lit) { assign(rgb, vec3(WIREFRAME_EDGE_GREY.lit)) }
         assign(out, vec4(rgb, 1f.lit))
     }
     return out

@@ -82,7 +82,7 @@ class RenderPipeline(
     val vertexFormat: VertexFormat,
     private val vertexEntryPoint: String = DEFAULT_VERTEX_ENTRY_POINT,
     private val fragmentEntryPoint: String = DEFAULT_FRAGMENT_ENTRY_POINT,
-    private val topology: GPUPrimitiveTopology = GPUPrimitiveTopology.TriangleList,
+    internal val topology: GPUPrimitiveTopology = GPUPrimitiveTopology.TriangleList,
     /** See [PipelineVariant]'s own doc comment. Defaults to [PipelineVariant.Opaque] -- the
      * pipeline this class always built before any variant existed. Shared with Vulkan so a
      * pipeline shape is described once and each backend only translates it. */

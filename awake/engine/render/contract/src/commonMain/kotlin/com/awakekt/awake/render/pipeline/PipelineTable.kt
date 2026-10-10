@@ -46,7 +46,13 @@ class PipelineTable<P>(
     /** Back-face-culled twins of [instancedByFormat], for instanced copies of a `CullMode.Back`
      * mesh. A format with none cannot instance back-culled draws. */
     val instancedBackCulledByFormat: Map<VertexFormat, P> = emptyMap(),
+    /** [PipelineVariant.EdgeOverlay] companions: an opaque draw's edges, drawn over it. A format
+     * with none draws no edges. */
+    val edgesByFormat: Map<VertexFormat, P> = emptyMap(),
 )
+
+/** The pipeline that draws a [format] mesh's edges over its fill, or null when the table built none. */
+fun <P> PipelineTable<P>.edges(format: VertexFormat): P? = edgesByFormat[format]
 
 /**
  * Common set of UI shaders loaded for 2D quad, glyph, texture, rounded-quad, and sampled-target rendering.

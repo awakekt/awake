@@ -63,6 +63,10 @@ interface RenderFrameContext {
     val transparentDrawCalls: List<PreparedDraw>
         get() = emptyList()
 
+    /** This frame's wireframe overlay: the opaque draws' edges, drawn over them. Empty with no wireframe. */
+    val edgeDrawCalls: List<PreparedDraw>
+        get() = passInput?.resolvedEdgeDraws.orEmpty()
+
     /** Primary pipeline handle associated with this frame's pass. */
     val primaryPipeline: PipelineHandle
 

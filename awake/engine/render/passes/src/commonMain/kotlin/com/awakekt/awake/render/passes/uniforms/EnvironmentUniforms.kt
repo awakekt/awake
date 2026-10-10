@@ -44,6 +44,12 @@ data class EnvironmentUniforms(
     val contentFeatures: Boolean = true,
     /** The colour the pass clears to; null keeps the renderer's own. */
     val clearColor: Color? = null,
+    /**
+     * Whether the opaque draws' triangle edges are drawn over the frame, lit or under [debugView]:
+     * a skinned mesh's edges deform with it. Draws whose shader shows no debug views, and instanced
+     * draws, draw no edges.
+     */
+    val wireframe: Boolean = false,
 ) {
     init {
         require(exposure > 0f && exposure.isFinite()) { "exposure must be finite and above 0; was $exposure." }

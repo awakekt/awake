@@ -233,7 +233,11 @@ internal class SceneLightingCompiler(
             ?: EnvironmentUniforms.Default.exposure
 
     private fun EnvironmentUniforms.withDebugView(debug: WorldDebugSettings?): EnvironmentUniforms =
-        if (debug == null) this else copy(debugView = debug.renderDebugView, debugLayer = debug.renderDebugLayer)
+        if (debug == null) {
+            this
+        } else {
+            copy(debugView = debug.renderDebugView, debugLayer = debug.renderDebugLayer, wireframe = debug.showWireframe)
+        }
 }
 
 private const val POINT_SHADOW_NEAR = 0.05f

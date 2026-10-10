@@ -5,8 +5,12 @@
  */
 package com.awakekt.awake.render.parity
 
+import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.core.math.Vec4
+import com.awakekt.awake.core.math.transformPosition
 import com.awakekt.awake.render.passes.uniforms.RenderDebugView
+import com.awakekt.awake.render.passes.uniforms.WIREFRAME_EDGE_GREY
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.testing.HeadlessRenderSession
 import org.junit.AfterClass
@@ -18,8 +22,9 @@ import kotlin.test.Test
 import kotlin.test.assertTrue
 
 /**
- * Clay, the joint-weight views and the skinned shaders' debug views, on both backends. As in
- * [SceneDebugViewParityTest], each check also runs against the lit frame and must fail there.
+ * Clay, the joint-weight views, the skinned shaders' debug views and the wireframe overlay, on both
+ * backends. As in [SceneDebugViewParityTest], each check also runs against the frame without the
+ * view and must fail there.
  */
 class SceneRigDebugViewParityTest {
 
@@ -71,6 +76,35 @@ class SceneRigDebugViewParityTest {
         assertTrue(!lit.matches(CENTRE, CENTRE, ORANGE), "$backend: the lit skinned plane is already its flat texture colour")
     }
 
+    /** Edges over every kind of plane, lit and under clay, with the faces between them untouched. */
+    @Test
+    fun theWireframeOverlayDrawsEachTriangleEdgeOverTheFrame() = eachBackend { backend ->
+        listOf(RenderDebugView.Off, RenderDebugView.Clay).forEach { view ->
+            ClayPlane.entries.forEach { kind ->
+                val edged = render(backend) { renderClayPlaneScene(kind, view, wireframe = true) }
+                val plain = render(backend) { renderClayPlaneScene(kind, view) }
+                val label = "$backend, $kind, $view"
+                assertTrue(edged.edgeNear(CENTRE, CENTRE), "$label: no edge on the plane's diagonal")
+                assertTrue(!plain.edgeNear(CENTRE, CENTRE), "$label: an edge with the overlay off")
+                FACE_POINTS.forEach { (x, y) ->
+                    assertTrue(edged.matches(x, y, plain.rgb(x, y)), "$label: the overlay changed the face at $x, $y to ${edged.rgb(x, y)}")
+                }
+            }
+        }
+    }
+
+    /** A skinned mesh's edges are drawn where its pose puts it, not where it rests. */
+    @Test
+    fun aSkinnedMeshsEdgesMoveWithItsPose() = eachBackend { backend ->
+        val posed = render(backend) {
+            renderClayPlaneScene(ClayPlane.Skinned, RenderDebugView.Off, wireframe = true, jointOffset = POSE_SHIFT)
+        }
+        val posedCentre = pixelColumn(Vec3f(POSE_SHIFT, 0f, 0f))
+
+        assertTrue(posed.edgeNear(posedCentre, CENTRE), "$backend: no edge on the posed plane's diagonal, at column $posedCentre")
+        assertTrue(!posed.edgeNear(CENTRE, CENTRE), "$backend: an edge where the plane's diagonal rests")
+    }
+
     private fun eachBackend(check: (HeadlessUiBackend) -> Unit) = BACKEND_ORDER.forEach(check)
 
     private fun render(backend: HeadlessUiBackend, scene: Renderer.() -> ByteArray) = Frame(session(backend).renderer.scene(), backend)
@@ -89,6 +123,10 @@ class SceneRigDebugViewParityTest {
             val actual = rgb(x, y)
             return abs(actual.x - expected.x) <= TOLERANCE && abs(actual.y - expected.y) <= TOLERANCE && abs(actual.z - expected.z) <= TOLERANCE
         }
+
+        /** Whether an edge's grey is within [EDGE_REACH] pixels of [x], [y]: a one-pixel line rasterizes a pixel either way. */
+        fun edgeNear(x: Int, y: Int): Boolean =
+            (-EDGE_REACH..EDGE_REACH).any { dy -> (-EDGE_REACH..EDGE_REACH).any { dx -> matches(x + dx, y + dy, EDGE) } }
     }
 
     private companion object {
@@ -115,6 +153,22 @@ class SceneRigDebugViewParityTest {
         /** A mid grey: neither black, nor clipped white. */
         const val MIN_CLAY = 60f
         const val MAX_CLAY = 230f
+
+        /** Off the plane's diagonal, which crosses the centre at about 30 degrees, by 12 pixels or more. */
+        val FACE_POINTS = listOf(CENTRE to LEFT, CENTRE to RIGHT, LEFT to CENTRE, RIGHT to CENTRE)
+
+        const val EDGE_REACH = 2
+
+        /** Moves the skinned plane's diagonal about 32 pixels right along the centre row. */
+        const val POSE_SHIFT = 3f
+
+        val EDGE = Vec3f(WIREFRAME_EDGE_GREY * 255f, WIREFRAME_EDGE_GREY * 255f, WIREFRAME_EDGE_GREY * 255f)
+
+        /** The pixel column [point] lands in: the same on both backends, which differ only in y. */
+        fun pixelColumn(point: Vec3f): Int {
+            val clip = clayPlaneLens().viewProjectionMatrix(1f, ClipSpace.Vulkan).transformPosition(Vec4(point.x, point.y, point.z, 1f))
+            return ((clip.x / clip.w * 0.5f + 0.5f) * SCENE_SIZE).toInt()
+        }
 
         /** Points across the plane where every kind of surface must draw the same clay. */
         val CLAY_POINTS = listOf(LEFT, CENTRE, RIGHT).flatMap { x -> listOf(LEFT, CENTRE, RIGHT).map { y -> x to y } }

@@ -64,6 +64,7 @@ object ScenePassCompiler {
         // One preparation pass in source order, so every draw keeps its own source index; the
         // shadow-only ones are then kept out of the scene and handed to the shadow passes.
         val shadowOnly = ArrayList<Caster>()
+        var edges = emptyList<GpuResolvedDraw>()
         val resolved = drawPreparer?.let { preparer ->
             val context = GpuDrawPreparationContext(
                 viewProjection = viewProjection,
@@ -82,6 +83,7 @@ object ScenePassCompiler {
                 val caster = Caster(draw, request.worldBounds)
                 if (!request.shadowsOnly) visible += caster else if (!draw.transparent) shadowOnly += caster
             }
+            if (environment.wireframe) edges = preparer.prepareEdges(requests, context)
             sortForRecording(visible)
         }
         val opaqueCasters = resolved?.opaqueByPipeline?.values?.flatten().orEmpty()
@@ -114,6 +116,7 @@ object ScenePassCompiler {
             resolvedPath = resolved != null,
             cameraForward = cameraForward,
             shadowCascadeData = shadowCascadeData,
+            resolvedEdgeDraws = edges,
         )
     }
 }

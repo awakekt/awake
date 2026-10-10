@@ -8,6 +8,7 @@ package com.awakekt.awake.webgpu
 import com.awakekt.awake.asset.shaderpack.PackShaderSets
 import com.awakekt.awake.asset.shaders.ContentFeatureAttacher
 import com.awakekt.awake.asset.shaders.EngineShaderSets
+import com.awakekt.awake.asset.shaders.ShaderSet
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.render.passes.OpaqueRenderFeature
 import com.awakekt.awake.render.passes.uniforms.MAX_SHADOW_TARGET_LAYERS
@@ -35,6 +36,7 @@ import com.awakekt.awake.webgpu.pipeline.WebGpuShaderResolver
 import com.awakekt.awake.webgpu.pipeline.WebGpuUiPass
 import com.awakekt.awake.webgpu.swapchain.SwapchainManager
 import com.awakekt.awake.webgpu.texture.DepthTarget
+import io.ygdrasil.webgpu.GPUPrimitiveTopology
 import io.ygdrasil.webgpu.glfwContextRenderer
 import kotlinx.coroutines.runBlocking
 import com.awakekt.awake.webgpu.renderer.Renderer as WebGpuRenderer
@@ -122,6 +124,27 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
         "fragmentMain",
         bindingsByGroup = PackShaderSets.SkinnedTextured.webGpu.bindingsByGroup,
         bindingsMetadataAvailable = PackShaderSets.SkinnedTextured.webGpu.bindingsMetadataAvailable,
+    )
+
+    // The opaque formats' wireframe-overlay companions, as buildPipelineTable builds them.
+    suspend fun edgeCompanion(shaders: ShaderSet, format: VertexFormat) = RenderPipeline(
+        graphicsDevice,
+        swapchainManager,
+        DescriptorSetLayoutHandle(0),
+        wgsl(shaders),
+        ByteArray(0),
+        format,
+        "vertexMain",
+        "fragmentMain",
+        topology = GPUPrimitiveTopology.LineList,
+        variant = PipelineVariant.EdgeOverlay,
+        bindingsByGroup = shaders.webGpu.bindingsByGroup,
+        bindingsMetadataAvailable = shaders.webGpu.bindingsMetadataAvailable,
+    )
+    val edgePipelines = mapOf(
+        VertexFormat.PositionNormalColor to edgeCompanion(PackShaderSets.LitShadow, VertexFormat.PositionNormalColor),
+        VertexFormat.PositionNormalColorUv to edgeCompanion(PackShaderSets.Textured, VertexFormat.PositionNormalColorUv),
+        VertexFormat.PositionNormalColorUvSkin to edgeCompanion(PackShaderSets.SkinnedTextured, VertexFormat.PositionNormalColorUvSkin),
     )
 
     // The textured format's blended companions, as RenderPlan builds them.
@@ -260,6 +283,7 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
             additiveByFormat = mapOf(VertexFormat.PositionNormalColorUv to additiveTexturedPipeline),
             backCulledByFormat = mapOf(VertexFormat.PositionNormalColor to backCulledScenePipeline),
             particlePipelines = mapOf(VertexFormat.PositionUv to spritePipeline),
+            edgesByFormat = edgePipelines,
         ),
         lineRenderPipeline = linePipeline,
         uiShaderSources = UiShaderSources(
@@ -293,6 +317,7 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
             transparentTexturedPipeline.destroy()
             additiveTexturedPipeline.destroy()
             spritePipeline.destroy()
+            edgePipelines.values.forEach { it.destroy() }
             contentPipelines.destroyAll { it.destroy() }
             attacher.releaseAll()
             graphicsDevice.destroy()

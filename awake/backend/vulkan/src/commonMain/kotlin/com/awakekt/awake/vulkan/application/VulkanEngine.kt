@@ -190,6 +190,7 @@ open class VulkanEngine(
             }
             .toMap(),
         wireframeByFormat = companionsByFormat { it.wireframe },
+        edgesByFormat = companionsByFormat { it.edges },
         transparentByFormat = companionsByFormat { it.transparent },
         additiveByFormat = companionsByFormat { it.additive },
         backCulledByFormat = companionsByFormat { it.backCulled },

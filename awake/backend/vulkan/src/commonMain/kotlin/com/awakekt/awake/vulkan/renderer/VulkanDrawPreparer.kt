@@ -13,9 +13,12 @@ import com.awakekt.awake.render.command.GpuResolvedDraw
 import com.awakekt.awake.render.command.GpuShadowCascadeData
 import com.awakekt.awake.render.command.toGpuResolvedDraw
 import com.awakekt.awake.render.material.Material
+import com.awakekt.awake.render.passes.drawsEdges
 import com.awakekt.awake.render.pipeline.CullMode
 import com.awakekt.awake.render.pipeline.canInstance
 import com.awakekt.awake.render.pipeline.depthRenderKey
+import com.awakekt.awake.render.pipeline.edges
+import com.awakekt.awake.vulkan.pipeline.RenderPipeline
 
 /** Prepares one generic draw through Vulkan's existing resource preparation code.
  *
@@ -55,6 +58,7 @@ internal class VulkanDrawPreparer(
             // Submitted offscreen work may still read the slots this batch is about to rewrite.
             renderer.awaitSubmittedOffscreenCommandsFor(renderer.swapchainManager.currentFrame)
         }
+        val edgePipeline = if (context.edges) edgePipelineFor(request) ?: return null else null
         val cascades = context.shadowCascadeData ?: context.shadowViewProjections
             .takeIf { it.isNotEmpty() }
             ?.let { GpuShadowCascadeData(it, FloatArray(it.size) { Float.MAX_VALUE }) }
@@ -73,7 +77,10 @@ internal class VulkanDrawPreparer(
             fogDensity = context.environment.fogDensity,
             debugView = context.environment.debugView,
             exposure = context.environment.exposure,
+            edgePipeline = edgePipeline,
         ) ?: return null
+        // An edge draws over the frame and casts nothing, so it has no depth pass to join.
+        if (edgePipeline != null) return prepared.toGpuResolvedDraw()
         val format = prepared.vertexFormat
         val depthFeature = renderer.depthPrePassFeature ?: renderer.sceneDepthPassFeature
         val depthKey = request.depthRenderKey()
@@ -96,4 +103,10 @@ internal class VulkanDrawPreparer(
             depthJointPaletteBinding = prepared.jointPaletteBinding,
         )
     }
+
+    /** The edge pipeline that draws [request]'s edges, or null when a wireframe overlay draws none. */
+    private fun edgePipelineFor(request: GpuDrawRequest): RenderPipeline? =
+        (request.material as? com.awakekt.awake.vulkan.material.Material)
+            ?.takeIf { request.drawsEdges(it.uniformFloatCount) }
+            ?.let { renderer.pipelines.edges(request.mesh.format) }
 }

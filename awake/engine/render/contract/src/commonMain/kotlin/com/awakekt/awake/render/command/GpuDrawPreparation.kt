@@ -31,6 +31,12 @@ data class GpuDrawPreparationContext(
     val cameraForward: Vec3f,
     /** Shadow cascade parameters and matrix data, or `null` if shadows are disabled. */
     val shadowCascadeData: GpuShadowCascadeData?,
+    /**
+     * True when the draws prepared with this context are a wireframe overlay: each resolves to its
+     * format's edge companion and draws its triangles' edges, and a draw whose format has none, or
+     * an instanced draw, is not drawn.
+     */
+    val edges: Boolean = false,
 ) {
     /** Retains the original constructor for callers that do not supply shadow-camera metadata. */
     constructor(

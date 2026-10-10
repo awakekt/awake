@@ -314,6 +314,7 @@ open class WebGpuEngine(
             primaryFormat = vertexFormat,
             byFormat = byFormat(includePrimary = false) { it.fill },
             wireframeByFormat = byFormat(includePrimary = true) { it.wireframe },
+            edgesByFormat = byFormat(includePrimary = true) { it.edges },
             backCulledByFormat = byFormat(includePrimary = true) { it.backCulled },
             transparentByFormat = byFormat(includePrimary = true) { it.transparent },
             additiveByFormat = byFormat(includePrimary = true) { it.additive },

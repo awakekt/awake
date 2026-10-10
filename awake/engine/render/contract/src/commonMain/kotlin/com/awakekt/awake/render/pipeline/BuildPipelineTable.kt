@@ -61,6 +61,13 @@ suspend fun <P> buildPipelineTable(
                     } else {
                         null
                     },
+                    // The fill's triangles as lines, tested against the depth the fill wrote and
+                    // writing none: only ever requested for opaque, non-instanced pipelines.
+                    edges = if (request.buildEdges) {
+                        factory.create(request.key, spec.copy(wireframe = true, variant = PipelineVariant.EdgeOverlay))
+                    } else {
+                        null
+                    },
                 ),
             )
         } catch (e: Exception) {
