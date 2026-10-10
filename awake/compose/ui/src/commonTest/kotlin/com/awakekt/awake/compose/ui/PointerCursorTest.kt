@@ -76,4 +76,25 @@ class PointerCursorTest {
 
         assertEquals(PointerCursor.Pointer, cursor)
     }
+
+    @Test
+    fun aBoxInFrontThatRequestsACursorKeepsItOverOneBehind() {
+        val cursor = hoverAt(10, 10) {
+            Box(Modifier.size(40.dp).pointerCursor(PointerCursor.Text))
+            Box(Modifier.size(40.dp).pointerCursor(PointerCursor.Pointer))
+        }
+
+        assertEquals(PointerCursor.Pointer, cursor)
+    }
+
+    @Test
+    fun aPlainBoxInFrontLetsTheCursorOfOneBehindShow() {
+        // A box that asks for nothing is transparent to the pointer, so what is behind it is hovered.
+        val cursor = hoverAt(10, 10) {
+            Box(Modifier.size(40.dp).pointerCursor(PointerCursor.Text))
+            Box(Modifier.size(40.dp))
+        }
+
+        assertEquals(PointerCursor.Text, cursor)
+    }
 }

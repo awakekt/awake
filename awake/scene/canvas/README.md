@@ -48,7 +48,9 @@ pixel.
 if (world.get<CanvasElement>(jumpButton)?.consumePress() == true) jump()
 ```
 
-`consumePress()` is true once per tap.
+`consumePress()` is true once per tap. A tap goes to the topmost element under the pointer that handles
+it: a Panel, Text or Image drawn over a Button does not take the Button's taps, and elements anchored
+at the same corner with different offsets do not cover one another.
 
 ## Touch controls
 
