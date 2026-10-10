@@ -1,1 +1,0 @@
-- **The Maven fallback serves a release again when no Vulkan release has a bundle yet.** Its index page read the versions of each family it holds, and with no Vulkan bundle the lookup of the missing Vulkan folder failed the whole script under `pipefail`, so the v0.6.0 fallback deploy stopped without a word. A family with no bundle is now listed as nothing.

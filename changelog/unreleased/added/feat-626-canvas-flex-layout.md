@@ -1,2 +1,0 @@
-- **Scene UI elements can lay their children out in rows and columns.**
-  - A `canvas_element` with a `layout` places its children with `FlexBox`: `direction`, `wrap`, `gap`, `padding`, `justify` and `align`, and a child's `grow` takes a share of the leftover space.

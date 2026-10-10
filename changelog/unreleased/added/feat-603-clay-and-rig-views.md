@@ -1,6 +1,0 @@
-- **Clay and rig debug views, and debug views on skinned meshes.**
-  - `RenderDebugView.Clay` draws every lit surface one neutral grey, lit by the scene's sun, its shadow and the ambient, with no texture, colour or material and the geometric normal. It's one shared formula, so a textured surface and an untextured one draw the same clay.
-  - `JointWeights` gives each of a skinned mesh's joints its own colour, summed by each vertex's weights. Smooth skinning blends, rigid weights show hard seams, and weights that don't sum to one draw darker or brighter.
-  - `SelectedJointWeight` paints how much the joint `WorldDebugSettings.renderDebugLayer` names moves each vertex, from blue through green to red.
-  - The `skinned` and `skinned_textured` shaders now honour every debug view instead of drawing lit. `SkinnedUniformLayout` gains the sun, the eye, the view and the selected joint after its existing fields, and their lit output is unchanged.
-  - Clay and the views work headless, through `readbackAttachment`, on Vulkan and WebGPU alike.

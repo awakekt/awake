@@ -1,6 +1,0 @@
-- **UI images can draw part of a texture, tinted, and pixel-crisp.**
-  - The UI texture draw takes a `region` (`TextureRegion`), such as one icon of a sheet, and a `tint` that multiplies each texel.
-  - `drawImage` takes a source rectangle, a tint and a `FilterQuality`.
-  - `Image` takes `tint` and `filterQuality`.
-  - `FilterQuality.None` samples the nearest texel, so pixel art stays crisp when scaled.
-  - Existing draws are unchanged: white tint, whole texture, blended sampling.
