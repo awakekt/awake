@@ -23,6 +23,9 @@
             display: block;
             width: 100vw;
             height: 100vh;
+            /* The visible height: 100vh is taller on a phone while the toolbar shows, which hides
+               the bottom of the frame behind it. */
+            height: 100dvh;
             touch-action: none;
         }
     </style>
