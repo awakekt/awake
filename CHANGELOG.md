@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`awake render`: a project's scene, played headless, saved as a PNG.** `awake render <scene>` loads the scene as a played project loads its entry scene, plays `--frames` frames and writes what its primary camera sees, `--width` by `--height` pixels, on Vulkan (no window or display) or WebGPU (`--backend`). `--view` shows a debug view instead (`clay`, `normals`, `depth`, `albedo`, `shadows`, `joint-weights`, `wireframe`), and `--camera` picks a camera by its node's name. A script, CI job or agent can now see the scene it edits without Studio. The command line needs Java 25, as the WebGPU backend does.
+- **`ProjectRenderPlan`, everything a played project can draw.** `awake:project:runtime` names the render plan a host hands its backend to play a project: lit, shadowed, skinned, textured and instanced meshes, particles and the skybox. A component that needs a pipeline gains it beside the systems `runProject` runs for it, instead of in each host's copy.
 - **Clay and rig debug views, and debug views on skinned meshes.**
   - `RenderDebugView.Clay` draws every lit surface one neutral grey, lit by the scene's sun, its shadow and the ambient, with no texture, colour or material and the geometric normal. It's one shared formula, so a textured surface and an untextured one draw the same clay.
   - `JointWeights` gives each of a skinned mesh's joints its own colour, summed by each vertex's weights. Smooth skinning blends, rigid weights show hard seams, and weights that don't sum to one draw darker or brighter.
