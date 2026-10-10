@@ -170,6 +170,11 @@ class ParticleDrawBuilder {
                     instanceColors = instanceColors,
                     instanceFrames = instanceFrames,
                     extraUniformFloats = uniformFloats,
+                    // Blended and never written to depth, so drawn after every opaque draw, or one
+                    // recorded later paints over particles in front of it. The middle particle by
+                    // distance stands in for the batch when transparent draws sort far to near.
+                    model = instanceModels[instanceModels.size / 2],
+                    transparent = true,
                     additive = emitter.visual.additive,
                 ),
             )

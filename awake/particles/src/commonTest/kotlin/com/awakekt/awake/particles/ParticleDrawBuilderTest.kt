@@ -9,6 +9,7 @@ import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.core.math.squaredDistanceFrom
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
@@ -41,6 +42,22 @@ class ParticleDrawBuilderTest {
         draws.clear()
         ParticleDrawBuilder().appendWorldDrawCalls(draws, world, EmitterPlacement.None, lens, 1f)
         assertEquals(true, draws.single().additive, "an additive emitter's draw adds")
+    }
+
+    /**
+     * A particle draw blends and writes no depth, so it records with the transparent draws, after
+     * every opaque one, and sorts far to near by where its particles are rather than the origin.
+     */
+    @Test
+    fun aParticleDrawIsTransparentAndSortsWhereItsParticlesAre() {
+        val world = World()
+        world.add(world.create(), liveEmitter(ParticleFacing.Camera, at = Vec3f(3f, 0f, 0f)))
+
+        val draws = ArrayList<RenderDrawCommand>()
+        ParticleDrawBuilder().appendWorldDrawCalls(draws, world, EmitterPlacement.None, lens, 1f)
+
+        assertTrue(draws.single().transparent)
+        assertEquals(34f, draws.single().model.squaredDistanceFrom(lens.eye), "3 across and 5 back from the eye")
     }
 
     @Test
