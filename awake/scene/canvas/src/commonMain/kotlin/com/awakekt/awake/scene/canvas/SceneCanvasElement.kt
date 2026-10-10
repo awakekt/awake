@@ -29,6 +29,8 @@ import kotlinx.serialization.Serializable
  * @property order Z-ordering layer index for overlapping elements.
  * @property visible Whether this element is rendered.
  * @property action Action trigger identifier associated with button activation.
+ * @property doubleAction What a Button does when double-clicked: two presses within
+ * [CanvasElement.DOUBLE_CLICK_SECONDS]. The second press still fires [action] first.
  * @property touchOnly If true, element is displayed only when touch controls are active.
  * @property style How the element looks beyond its colours: images, and their frames and fills.
  * @property textAlign Where a Text's or Button's text sits in the element; null keeps the kind's own,
@@ -62,6 +64,7 @@ data class SceneCanvasElement(
     val order: Int = 0,
     val visible: Boolean = true,
     val action: String = "",
+    val doubleAction: String = "",
     val touchOnly: Boolean = false,
     val style: CanvasStyle = CanvasStyle(),
     val textAlign: CanvasAnchor? = null,

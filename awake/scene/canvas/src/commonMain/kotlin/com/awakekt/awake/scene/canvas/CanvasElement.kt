@@ -9,6 +9,9 @@ import com.awakekt.awake.compose.foundation.interaction.InteractionSource
 import com.awakekt.awake.scene.document.SceneVec3
 import kotlinx.serialization.Serializable
 import kotlin.math.sqrt
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 
 /** What a [CanvasElement] draws. */
 @Serializable
@@ -57,8 +60,8 @@ enum class CanvasAnchor {
  * content and a Button's label; [value] is a Bar's fill from 0 to 1. A Joystick is a round pad of
  * [width] across whose knob [color] is dragged within it.
  *
- * [action] names what an element does for the game, such as `move` or `jump`; the game or runtime
- * decides what each name means. A [touchOnly] element is drawn only where touch controls are shown.
+ * [action] names what an element does for the game, such as `move` or `jump`, and [doubleAction]
+ * what a Button does when double-clicked; the game or runtime decides what each name means. A [touchOnly] element is drawn only where touch controls are shown.
  */
 class CanvasElement {
     /** The rendering style and semantic type of this element. */
@@ -103,6 +106,9 @@ class CanvasElement {
     /** Action trigger identifier associated with button activation. */
     var action: String = ""
 
+    /** What a Button does when double-clicked: two presses within [DOUBLE_CLICK_SECONDS]. */
+    var doubleAction: String = ""
+
     /** If true, element is displayed only when touch controls are active. */
     var touchOnly: Boolean = false
 
@@ -134,6 +140,11 @@ class CanvasElement {
     var bind: CanvasBinding? = null
 
     private var pressed = false
+    private var doublePressed = false
+    private var lastPress: TimeMark? = null
+
+    /** What times presses; a test swaps it for a `TestTimeSource`. */
+    internal var clock: TimeSource = TimeSource.Monotonic
     internal val interactions = InteractionSource()
 
     /** A Joystick's deflection from -1 to 1 each way; up is negative [stickY], as on screen. */
@@ -151,11 +162,25 @@ class CanvasElement {
      */
     fun consumePress(): Boolean = pressed.also { pressed = false }
 
+    /**
+     * True once for each double-click on a Button since the last call: a press within
+     * [DOUBLE_CLICK_SECONDS] of the one before. Its second press is also a press for [consumePress].
+     */
+    fun consumeDoublePress(): Boolean = doublePressed.also { doublePressed = false }
+
     /** Whether a Button is being held down right now. */
     val isHeld: Boolean get() = interactions.isPressed
 
     internal fun press() {
         pressed = true
+        val previous = lastPress
+        if (previous != null && previous.elapsedNow() <= DOUBLE_CLICK_SECONDS.seconds) {
+            doublePressed = true
+            // A third press starts a new pair rather than making a second double-click.
+            lastPress = null
+        } else {
+            lastPress = clock.markNow()
+        }
     }
 
     /** Moves a Joystick's knob by a drag of ([dx], [dy]) in the same units as [radius]. */
@@ -193,5 +218,8 @@ class CanvasElement {
         const val DEFAULT_HEIGHT = 40f
         /** Default font size in sp. */
         const val DEFAULT_FONT_SIZE = 18f
+
+        /** How soon a second press makes a double-click, as the common desktop default. */
+        const val DOUBLE_CLICK_SECONDS = 0.5
     }
 }

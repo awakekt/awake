@@ -74,6 +74,7 @@ For a button the player holds down, read `isHeld` instead. For a joystick, read 
 | `order` | integer | `0` | Draw order. Lower values draw first, so higher ones sit on top. |
 | `visible` | boolean | `true` | Hidden elements are not drawn and take no taps. |
 | `action` | string | `""` | Names what the element does for the game, such as `move` or `jump`. The game decides what each name means. |
+| `doubleAction` | string | `""` | What a Button does when double-clicked, such as equipping an item; two presses within half a second. |
 | `touchOnly` | boolean | `false` | Draw the element only where touch controls are shown. |
 | `style` | object | `{}` | How the element looks beyond its colours: shape, border, gradient, shadow, images and button states. See [Style an element](#style-an-element). |
 
