@@ -52,6 +52,7 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         it.followBounds = followBounds
         it.layout = layout
         it.grow = grow
+        it.bind = bind
     }
 
     /**
@@ -82,5 +83,6 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         followBounds = followBounds,
         layout = layout,
         grow = grow,
+        bind = bind,
     )
 }

@@ -66,6 +66,7 @@ For a button the player holds down, read `isHeld` instead. For a joystick, read 
 | `followBounds` | boolean | `false` | Cover the followed node's screen box instead of standing at its point. |
 | `layout` | object | none | Lay the children out in rows or columns. See [Lay out children](#lay-out-children). |
 | `grow` | number | `0` | In a laid-out parent, this element's share of the leftover space. |
+| `bind` | object | none | Game state the element shows without code. See [Show game state](#show-game-state). |
 | `color` | `#RRGGBB` or `#RRGGBBAA` | `#FFFFFF` | Text colour, a `Bar`'s fill, or a `Joystick`'s knob. |
 | `background` | `#RRGGBB` or `#RRGGBBAA` | `#00000000` | Fill behind the element. A joystick's pad. |
 | `value` | number, 0 to 1 | `1` | A `Bar`'s fill fraction. |
@@ -182,6 +183,34 @@ above is the parent.
 
 A child is laid out within its parent, so one that would stick out past the parent's edge is
 narrowed to fit.
+
+## Show game state
+
+An element's `bind` reads the components of a node each frame, so a health bar or a score follows
+the game without code. A field is `component.field`: the component's name in the scene document,
+then its field, with dots for a field inside another. A game's own components bind the same way
+once its capability registers them.
+
+```json title="A health bar and its label"
+[
+  { "component": "canvas_element", "kind": "Bar", "width": 120, "height": 12, "color": "#E5484D",
+    "bind": { "node": "Player", "value": "health.current", "max": "health.max" } },
+  { "component": "canvas_element", "text": "", "textAlign": "Center", "width": 120, "height": 12,
+    "bind": { "node": "Player", "text": "HP {health.current}/{health.max}" } }
+]
+```
+
+| Field | What it does |
+| --- | --- |
+| `node` | The name of the node whose components are read. |
+| `value` | A `Bar`'s fill: this field, divided by `max`. |
+| `max` | A field, or a number such as `"100"`. Left out, `value` is already a share from 0 to 1. |
+| `text` | The words of a `Text` or `Button`, each `{component.field}` replaced by its value. Whole numbers show without a fraction, others to one decimal place. |
+
+While a binding reads nothing, because no node has the name or its component has no such field, the
+element shows its own `value` and `text`, and the log says so once. A Bar does the same for a value
+that is not a finite number and for a `max` that is not above 0; a text shows such a value as it is,
+`NaN` or `Infinity`.
 
 ## Lay out children
 

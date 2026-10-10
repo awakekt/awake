@@ -48,6 +48,7 @@ import com.awakekt.awake.core.math2d.sp
 import com.awakekt.awake.core.text.theme.TextStyle
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.core.transform.Transform
 
 context(_: Composer)
@@ -70,6 +71,9 @@ context(_: Composer)
  *   is not above 0 draws at 1.
  * @param projector Where the scene's nodes land on screen, for elements that [CanvasElement.follow]
  *   one. Without it they are not drawn.
+ * @param bindings The scene component bindings an element's [CanvasElement.bind] reads fields
+ *   through: the scene's own registry's. Null reads through every globally registered one, gathered
+ *   only on a frame where an element reads a field.
  */
 @Suppress("LongParameterList")
 fun SceneCanvas(
@@ -79,8 +83,9 @@ fun SceneCanvas(
     images: Map<String, ImageBitmap> = emptyMap(),
     scale: Float = 1f,
     projector: CanvasProjector? = null,
+    bindings: List<SceneComponentBinding<*, *>>? = null,
 ) {
-    val tree = CanvasTree(world, showTouchControls, images, projector)
+    val tree = CanvasTree(world, showTouchControls, images, projector, bindings)
     val uiScale = if (scale > 0f && scale.isFinite()) scale else 1f
     Box(modifier.fillMaxSize()) {
         val screen = this
@@ -165,19 +170,19 @@ private fun CanvasElementView(
     val styled = modifier.styleable(state, style)
     when (element.kind) {
         CanvasElementKind.Text -> Box(styled, contentAlignment = (element.textAlign ?: CanvasAnchor.TopLeft).alignment) {
-            Text(element.text, style = textStyle)
+            Text(tree.textOf(element), style = textStyle)
             Children(element, children, tree)
         }
         CanvasElementKind.Panel, CanvasElementKind.Image -> Box(styled) { Children(element, children, tree) }
         CanvasElementKind.Bar -> Box(styled) {
-            BarFill(element, fill, tree.images)
+            BarFill(element, tree.valueOf(element), fill, tree.images)
             Children(element, children, tree)
         }
         CanvasElementKind.Button -> Box(
             styled.hoverable(element.interactions).clickable(element.interactions) { element.press() },
             contentAlignment = (element.textAlign ?: CanvasAnchor.Center).alignment,
         ) {
-            Text(element.text, style = textStyle)
+            Text(tree.textOf(element), style = textStyle)
             Children(element, children, tree)
         }
         CanvasElementKind.Joystick -> JoystickView(element, modifier, back, tree, children)
@@ -185,12 +190,12 @@ private fun CanvasElementView(
 }
 
 /**
- * A Bar's fill, [CanvasElement.value] of its width: [color], or its fill image laid out at the
+ * A Bar's fill, [value] of its width: [color], or its fill image laid out at the
  * bar's full width and cut at the value, so a gauge's end and pattern stay where they are.
  */
 context(_: Composer)
-private fun BarFill(element: CanvasElement, color: Color, images: Map<String, ImageBitmap>) {
-    val filled = Modifier.fillMaxHeight().fillMaxWidth(element.value.coerceIn(0f, 1f))
+private fun BarFill(element: CanvasElement, value: Float, color: Color, images: Map<String, ImageBitmap>) {
+    val filled = Modifier.fillMaxHeight().fillMaxWidth(value.coerceIn(0f, 1f))
     val picture = element.style.fillImage?.fill(images)
     if (picture == null) {
         Box(filled.background(color, RoundedCornerShape((element.style.cornerRadius ?: 0f).dp)))
