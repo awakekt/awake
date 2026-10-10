@@ -1,1 +1,0 @@
-- **Particles no longer vanish behind props they are in front of.** A particle draw was recorded with the opaque draws, and static meshes recorded after it painted over it, since particles write no depth. It is now a transparent draw, recorded after every opaque one and sorted far to near by where its particles are.

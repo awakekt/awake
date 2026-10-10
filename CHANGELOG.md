@@ -7,7 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-10-10
+
+### Added
+
+- **`awake mcp`: a project's files served to an AI agent.** The command line's commands, served over the Model Context Protocol's stdio transport to Claude Code, Codex CLI, Gemini CLI or any MCP client. An agent can then validate a project, read and edit its scenes, and render one as an image it sees, with no Studio running, in a cloud agent or a CI job as well as on a desktop. The tools are `validate`, `list_scenes`, `show_scene`, `set_field`, `add_node`, `remove_node`, `add_component`, `remove_component` and `render`. Edits take `dry_run`, go through the same checks and minimal patch as the commands, and share Studio's MCP vocabulary (`component.field`) where the two overlap.
+
+### Fixed
+
+- **Particles no longer vanish behind props they are in front of.** A particle draw was recorded with the opaque draws, and static meshes recorded after it painted over it, since particles write no depth. It is now a transparent draw, recorded after every opaque one and sorted far to near by where its particles are.
+
 ## [0.7.0] - 2026-10-10
+
+Never published: its Publish run stopped before uploading, so these changes first ship in 0.7.1.
 
 ### Added
 
