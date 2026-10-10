@@ -84,14 +84,17 @@ class World {
      * Adds a new component of type [T] to the entity.
      *
      * Falls back to reflective construction if no pool is registered; use a factory
-     * overload or [registerPool] for iOS/wasmJs compatibility.
+     * overload or [registerPool] for iOS/wasmJs compatibility. An app that shrinks its release
+     * with R8 or ProGuard removes a no-argument constructor nothing calls directly, so it either
+     * keeps [T]'s with a rule or registers a pool.
      *
      * @return the new component instance.
      */
     inline fun <reified T : Any> add(entity: Entity): T = add(entity, T::class)
 
     /**
-     * Adds a new component of the specified [type] to the entity.
+     * Adds a new component of the specified [type] to the entity, built as [add] with no instance
+     * builds it: by its pool, or by its no-argument constructor.
      *
      * @return the new component instance.
      */

@@ -40,11 +40,6 @@ kotlin {
         // the test tree, so it inherits commonTest rather than needing a copy of it.
         withDeviceTestBuilder { sourceSetTreeName = "test" }
             .configure { instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner" }
-        // Shipped in the AAR, so an app that shrinks its release keeps what the native code reaches by name.
-        optimization {
-            consumerKeepRules.publish = true
-            consumerKeepRules.file("consumer-rules.pro")
-        }
     }
 
     // Jolt Physics integration slice 2 (see docs/reference/decision-log.md): real iOS

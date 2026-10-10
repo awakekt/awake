@@ -1,4 +1,4 @@
-# R8 rules every app that depends on this backend gets, so a shrunk release still finds what
+# Keep rules every app that depends on this backend gets, so a shrunk release still finds what
 # jolt-jni's native library reaches by name.
 
 # libjoltjni.so calls back into jolt-jni's Java classes, such as CustomContactListener, by class,

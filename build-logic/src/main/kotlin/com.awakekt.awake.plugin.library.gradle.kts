@@ -38,3 +38,24 @@ kotlin {
         }
     }
 }
+
+// A module whose native code finds its classes by name keeps those names in consumer-rules.pro, and
+// every app that shrinks its release gets them: Android apps from the library, and desktop apps from
+// the jar, under META-INF/proguard, where R8 looks for a library's rules. verifyKeepRules checks the file.
+val keepRulesFile = layout.projectDirectory.file("consumer-rules.pro")
+if (keepRulesFile.asFile.isFile) {
+    kotlin {
+        android {
+            optimization {
+                consumerKeepRules.publish = true
+                consumerKeepRules.file(keepRulesFile)
+            }
+        }
+    }
+    tasks.withType<ProcessResources>().matching { it.name == "desktopProcessResources" }.configureEach {
+        from(keepRulesFile) {
+            into("META-INF/proguard")
+            rename { "${project.path.removePrefix(":").replace(':', '-')}.pro" }
+        }
+    }
+}
