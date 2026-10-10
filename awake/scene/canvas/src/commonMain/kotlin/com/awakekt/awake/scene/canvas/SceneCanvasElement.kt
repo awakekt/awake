@@ -7,8 +7,8 @@ package com.awakekt.awake.scene.canvas
 
 import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.scene.document.SceneComponent
-import com.awakekt.awake.scene.document.SceneVec3
 import com.awakekt.awake.scene.document.SceneValidationIssue
+import com.awakekt.awake.scene.document.SceneVec3
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -37,6 +37,9 @@ import kotlinx.serialization.Serializable
  * @property followOffset A world-space offset from the followed node, such as above its head.
  * @property followBounds Whether the element covers the screen rectangle of the followed node's
  * meshes instead of standing at its point.
+ * @property followOutset How far, in dp, a [followBounds] box reaches past the node's rectangle on
+ * each side, so children anchored to its corners sit outside the node, as a target marker's corner
+ * pieces do. Negative pulls the box in; it never shrinks below nothing.
  * @property layout How the element places its children itself, in rows or columns; null anchors
  * each child by hand.
  * @property grow In a parent with a [layout], this element's share of its line's leftover space.
@@ -65,6 +68,7 @@ data class SceneCanvasElement(
     val follow: String = "",
     val followOffset: SceneVec3 = SceneVec3(),
     val followBounds: Boolean = false,
+    val followOutset: Float = 0f,
     val layout: CanvasLayout? = null,
     @PropertyRange(min = 0.0) val grow: Float = 0f,
     val bind: CanvasBinding? = null,
