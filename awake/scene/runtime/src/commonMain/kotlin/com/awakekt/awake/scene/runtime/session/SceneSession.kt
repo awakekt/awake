@@ -44,12 +44,17 @@ class SceneSession internal constructor(
     internal val schedule = SceneSchedule(spec)
     private var assetLibrary: SceneAssetLibrary? = null
 
+    // Whether ready began. The dispose hooks undo what the ready hooks did, so a scene whose backend
+    // never started, and that never became ready, has nothing for them to undo.
+    private var becameReady = false
+
     internal fun initialize() {
         world = World()
         assetLibrary = spec.assetLibraryFactory?.invoke()
     }
 
     internal suspend fun ready(runtime: SceneAppLifecycleRuntime) {
+        becameReady = true
         schedule.initialize(runtime)
         spec.scenePopulationBlock(runtime)
         spec.onReadyBlock(runtime)
@@ -61,7 +66,7 @@ class SceneSession internal constructor(
     }
 
     internal fun dispose(runtime: SceneAppLifecycleRuntime) {
-        spec.onDisposeBlock(runtime)
+        if (becameReady) spec.onDisposeBlock(runtime)
         sceneManager.close()
         assetLibrary?.dispose()
         assetLibrary = null

@@ -298,7 +298,8 @@ class SceneAppDsl internal constructor() {
     }
 
     /**
-     * Registers a callback executed when the scene is being disposed and torn down.
+     * Registers a callback executed when the scene is being disposed and torn down. It undoes what
+     * [onReady] did, so it runs only for a scene that became ready, not one whose backend never started.
      *
      * @param block The lifecycle hook executed with the [SceneAppLifecycleRuntime] receiver.
      */

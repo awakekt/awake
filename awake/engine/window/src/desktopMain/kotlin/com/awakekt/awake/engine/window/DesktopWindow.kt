@@ -14,7 +14,8 @@ private const val GLFW_CLIENT_API = 0x00022001
 private const val GLFW_NO_API = 0
 
 /**
- * Opens a desktop window for [game] and runs its frame loop until the window is closed.
+ * Opens a desktop window for [game] and runs its frame loop until the window is closed, or for
+ * [frames] frames.
  *
  * The window has no graphics context of its own; the backend draws into it. This function owns the
  * window's lifetime: it creates it, destroys it after [onDispose], and terminates GLFW.
@@ -27,6 +28,8 @@ private const val GLFW_NO_API = 0
  * @param beforeFrame Runs after input is read and before [onFrame].
  * @param afterLoop Runs once the loop ends, before [onDispose].
  * @param cursor The pointer shape the UI asks for this frame, or `null` to leave it alone.
+ * @param frames How many frames to run before ending the loop as if the window had closed, such as
+ * a smoke check's [DesktopRunLimits.frames]; null runs until the window closes.
  */
 @Suppress("LongParameterList")
 fun runDesktopWindow(
@@ -38,7 +41,9 @@ fun runDesktopWindow(
     beforeFrame: () -> Unit = {},
     afterLoop: () -> Unit = {},
     cursor: (() -> PointerCursor)? = null,
+    frames: Int? = null,
 ) {
+    require(frames == null || frames > 0) { "A run lasts at least one frame; was $frames." }
     check(GlfwWindow.glfwInit()) { "glfwInit failed" }
     GlfwWindow.glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API)
     val window = GlfwWindow.glfwCreateWindow(
@@ -53,7 +58,7 @@ fun runDesktopWindow(
     try {
         try {
             onCreate(window)
-            runFrames(window, game, onFrame, pollInput, beforeFrame, cursor)
+            runFrames(window, game, onFrame, pollInput, beforeFrame, cursor, frames)
         } finally {
             afterLoop()
             onDispose()
@@ -72,8 +77,10 @@ private fun runFrames(
     pollInput: (window: Long, input: Input) -> Unit,
     beforeFrame: () -> Unit,
     cursor: (() -> PointerCursor)?,
+    frames: Int?,
 ) {
-    while (!GlfwWindow.glfwWindowShouldClose(window)) {
+    var played = 0
+    while (!GlfwWindow.glfwWindowShouldClose(window) && (frames == null || played < frames)) {
         GlfwWindow.glfwPollEvents()
         val isFocused = GlfwWindow.glfwGetWindowAttrib(window, GLFW_FOCUSED) != 0
         DesktopFrameLoop.isWindowFocused = isFocused
@@ -81,7 +88,10 @@ private fun runFrames(
         pollGlfwTextInput(window, game.input)
         beforeFrame()
         val effectiveMode = game.windowConfig.effectiveFrameRateMode(isFocused)
-        DesktopFrameLoop.tick(effectiveMode) { deltaTime -> onFrame(deltaTime.toFloat()) }
+        DesktopFrameLoop.tick(effectiveMode) { deltaTime ->
+            onFrame(deltaTime.toFloat())
+            played++
+        }
         cursor?.let { applyUiCursor(window, it()) }
     }
 }
