@@ -7,6 +7,7 @@ package com.awakekt.awake.project.cli
 
 import java.awt.image.BufferedImage
 import java.io.File
+import java.util.Base64
 import javax.imageio.ImageIO
 import kotlin.io.path.createTempDirectory
 import kotlin.math.abs
@@ -65,6 +66,28 @@ class ProjectRenderTest {
             val away = render("harbor", backend, "--camera", "Away")
             assertTrue(difference(centre(away), centre(harbor)) >= CUBE_DIFFERENCE, "$backend: the Away camera doesn't see the cube")
         }
+    }
+
+    /** `awake mcp`'s render tool returns the picture as an image an agent sees, and the cube is in it. */
+    @Test
+    fun anAgentGetsTheRenderAsAnImageOverMcp() {
+        root.resolve("awake.project.json").writeText(MANIFEST)
+        root.resolve("scenes").mkdirs()
+        root.resolve("scenes/harbor.scene.json").writeText(scene(withCube = true))
+        root.resolve("scenes/empty.scene.json").writeText(scene(withCube = false))
+        val backend = backends().first()
+        val call = """{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"render","arguments":""" +
+            """{"scene":"harbor","backend":"$backend","width":$WIDTH,"height":$HEIGHT}}}"""
+        val out = StringBuilder()
+        val err = StringBuilder()
+
+        assertEquals(0, AwakeCli(out, err, root) { call.reader().buffered() }.run(listOf("mcp")), "$out$err")
+        val image = Regex("\"type\":\"image\",\"data\":\"([^\"]+)\",\"mimeType\":\"image/png\"").find(out)
+            ?: error("no PNG in the reply: $out")
+        val picture = ImageIO.read(Base64.getDecoder().decode(image.groupValues[1]).inputStream())
+
+        assertEquals(WIDTH to HEIGHT, picture.width to picture.height)
+        assertTrue(difference(centre(picture), centre(render("empty", backend))) >= CUBE_DIFFERENCE, "$backend: the cube shows in the MCP render")
     }
 
     private fun render(scene: String, backend: String, vararg options: String): BufferedImage {

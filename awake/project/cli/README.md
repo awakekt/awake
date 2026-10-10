@@ -23,6 +23,7 @@ awake/project/cli/build/install/awake/bin/awake validate path/to/project
 | `awake scene add-component <scene> <node> <type> [fields-json]` | Adds a component, with the fields given set on it |
 | `awake scene remove-component <scene> <node> <type>` | Removes the node's component of that type |
 | `awake render <scene> [--output <png>]` | Plays the scene headless and saves what its primary camera sees |
+| `awake mcp` | Serves these commands to an AI agent over the Model Context Protocol, on stdin and stdout |
 
 `<scene>` is a path from the project root, or a name under `scenes/`. `<node>` is a path of node
 names, such as `Player/Camera`, with `#2` for an unnamed node's index. Without `--project`, the project
@@ -57,6 +58,32 @@ primary camera.
 `./gradlew :awake:project:cli:renderTest` renders a project on both backends and checks the frame;
 `-Pawake.render.backends=webgpu` runs one, and `-Pawake.prebuiltNatives` skips building the Vulkan
 bindings where they can't be built.
+
+## Serving an AI agent
+
+`awake mcp` serves the commands above to any agent that speaks the
+[Model Context Protocol](https://modelcontextprotocol.io) over stdio: Claude Code, Codex CLI, Gemini
+CLI, Cursor and others. The agent starts it and works on the project's files with no Studio running,
+so it suits a cloud agent or a CI job as well as a desktop. Its tools are `validate`, `list_scenes`,
+`show_scene`, `set_field`, `add_node`, `remove_node`, `add_component`, `remove_component` and `render`,
+which returns the picture as an image the agent sees. Edits take `dry_run`, and go through the same
+checks and minimal patch as the commands. Where the tools overlap with Studio's MCP server, they take
+the same names and the same `component.field` form.
+
+```bash
+claude mcp add awake -- /path/to/awake/bin/awake mcp --project /path/to/project
+```
+
+Codex CLI, in `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.awake]
+command = "/path/to/awake/bin/awake"
+args = ["mcp", "--project", "/path/to/project"]
+```
+
+Other agents take the same command in their `mcpServers` settings. While it serves, anything a
+library prints goes to stderr, so stdout carries only MCP's messages.
 
 `awake` exits 0 when a command succeeds, 1 when it finds errors or refuses an edit, and 2 when the
 command line is wrong.
