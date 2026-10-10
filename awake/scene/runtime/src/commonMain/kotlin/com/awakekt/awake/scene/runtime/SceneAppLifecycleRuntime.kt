@@ -7,6 +7,7 @@ package com.awakekt.awake.scene.runtime
 
 import com.awakekt.awake.compose.runtime.CompositionLocalProvider
 import com.awakekt.awake.compose.runtime.provides
+import com.awakekt.awake.compose.ui.graphics.ImageBitmap
 import com.awakekt.awake.compose.ui.platform.ComposeHost
 import com.awakekt.awake.compose.ui.platform.InputOwnership
 import com.awakekt.awake.compose.ui.semantics.SemanticsNode
@@ -113,6 +114,9 @@ class SceneAppLifecycleRuntime internal constructor(
 
     /** Whether the scene's touch-only canvas controls are drawn, for a host on a touch screen. */
     var showTouchControls: Boolean = false
+
+    /** The decoded images the scene's canvas elements name, by path; an element whose image is missing draws without it. */
+    var canvasImages: Map<String, ImageBitmap> = emptyMap()
 
     /**
      * Whether this runtime draws the scene's canvas over its whole UI. A host that shows the game in
@@ -330,7 +334,7 @@ class SceneAppLifecycleRuntime internal constructor(
                 LocalFrameStats provides frameStats(),
             ) {
                 // Under the app's own UI, so a menu or pause screen covers the game's canvas.
-                if (hasCanvas) SceneCanvas(world, showTouchControls = showTouchControls)
+                if (hasCanvas) SceneCanvas(world, showTouchControls = showTouchControls, images = canvasImages)
                 if (content != null) content()
             }
         }

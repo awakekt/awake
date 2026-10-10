@@ -7,6 +7,8 @@ package com.awakekt.awake.project.runtime
 
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.scene.canvas.SceneCanvasElement
+import com.awakekt.awake.scene.canvas.hasCanvasImages
+import com.awakekt.awake.scene.canvas.loadCanvasImages
 import com.awakekt.awake.scene.character.CharacterControllerBinding
 import com.awakekt.awake.scene.character.CharacterControllerSystem
 import com.awakekt.awake.scene.character.SceneCharacterController
@@ -39,6 +41,7 @@ import kotlin.reflect.KClass
  */
 internal val CORE_CAPABILITIES: List<SceneCapability> = listOf(
     ControlsCapability,
+    CanvasCapability,
     StreamedTerrainCapability,
     TerrainCapability,
     PhysicsCapability,
@@ -67,6 +70,17 @@ internal object ControlsCapability : SceneCapability {
         if (moves && !scene.uses(SceneCharacterController::class)) plan.frame("movement") { MatrixRelativeMovementSystem() }
         if (scene.uses(SceneCameraRig::class)) plan.frame("camera") { CameraSystem(inputProvider = it.input) }
     }
+}
+
+/** The images the scene's canvas elements draw, decoded before it runs; the runtime draws the canvas. */
+internal object CanvasCapability : SceneCapability {
+    override val id = "com.awakekt.awake.canvas"
+
+    override suspend fun load(scene: SceneDocument, files: AssetSource, content: SceneContent.Builder) {
+        if (hasCanvasImages(scene)) content[CoreSceneContent.CanvasImages] = loadCanvasImages(scene, files)
+    }
+
+    override fun plan(scene: SceneDocument, plan: SceneSystemPlan) = Unit
 }
 
 /**

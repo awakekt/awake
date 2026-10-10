@@ -67,6 +67,22 @@ reads; pass `null` for a decorative image.
 `FilterQuality.Low`, the default, blends neighbouring pixels. To draw part of a bitmap, such as one
 icon of a sheet, call `drawImage(bitmap, …, srcX, srcY, srcWidth, srcHeight)` from a draw modifier.
 
+### Frames and gauges
+
+`Modifier.background(ImageFill(…))` fills a node of any size from one image cut into nine. The four
+`slice` insets, in the image's pixels, mark the corners, which keep their size at one dp per pixel.
+The edges stretch along their length, or repeat at that size with `repeatEdges`; the centre
+stretches, or repeats both ways with `repeatCenter`. Slice only the left and right for a three-part
+strip such as a gauge, and pass `srcX`, `srcY`, `srcWidth` and `srcHeight` to cut the frame from a
+sheet. A node too small for its corners shrinks them together.
+
+```kotlin title="Kotlin"
+--8<-- "awake/compose/ui-testing/src/desktopTest/kotlin/com/awakekt/awake/compose/testing/ComposeDocsSampleTest.kt:image-fill"
+```
+
+From a draw modifier, `drawImageFill(fill, x, y, width, height)` draws the same fill into part of the
+node.
+
 To load a PNG or JPEG, call `decodeImageBitmap(bytes)`. It suspends, because the browser decodes
 asynchronously, so decode outside the UI and show the result on a later frame. The engine uploads
 each bitmap to the GPU the first frame it appears and keeps it, so reuse a decoded bitmap instead of

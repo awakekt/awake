@@ -87,6 +87,10 @@ class RangeAnnotationsAreEnforcedTest {
         },
         "keyframe_animation" to { base -> JsonObject(base + ("duration" to JsonPrimitive(1.0f))) },
         "particle_emitter" to { base -> JsonObject(base + ("texture" to JsonPrimitive("particle.png"))) },
+        "canvas_element" to { base ->
+            val image = JsonObject(mapOf("path" to JsonPrimitive("frame.png")))
+            JsonObject(base + mapOf("image" to image, "fillImage" to image))
+        },
         "sprite_clips" to { base -> JsonObject(base + ("clips" to JsonObject(mapOf("idle" to JsonObject(emptyMap()))))) },
     )
 
@@ -146,6 +150,8 @@ class RangeAnnotationsAreEnforcedTest {
             "canvas_element.height",
             "canvas_element.fontSize",
             "canvas_element.value",
+            "canvas_element.image.sliceLeft",
+            "canvas_element.fillImage.regionWidth",
             "pbr_material.metallic",
             "pbr_material.roughness",
             "pbr_material.alphaCutoff",

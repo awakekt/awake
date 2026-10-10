@@ -26,6 +26,7 @@ import com.awakekt.awake.compose.runtime.setValue
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.graphics.ImageBitmap
+import com.awakekt.awake.compose.ui.graphics.ImageFill
 import com.awakekt.awake.compose.ui.semantics.testTag
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.color.Color
@@ -64,6 +65,14 @@ class ComposeDocsSampleTest {
 
         assertEquals(-1, pixels[0].toInt(), "the top-left quarter is the image's white pixel")
         frame.onNode(hasLabel("Checker")).assertExists()
+    }
+
+    @Test
+    fun aFramedPanelKeepsItsCorners() {
+        val frame = ImageBitmap(48, 48, ByteArray(48 * 48 * 4) { if (it < 4) -1 else 0 })
+        val pixels = composeFrame(240, 120) { FramedPanel(frame) }.primitives.rasterize(240, 120)
+
+        assertEquals(-1, pixels[0].toInt(), "the frame's top-left pixel stays in the corner")
     }
 }
 
@@ -119,3 +128,12 @@ fun Checker() {
     Image(checker, contentDescription = "Checker", modifier = Modifier.size(64.dp), contentScale = ContentScale.FillBounds)
 }
 // --8<-- [end:image]
+
+// --8<-- [start:image-fill]
+/** A window drawn from a 48 x 48 frame: its 16-pixel corners kept, its edges and centre tiled. */
+context(_: Composer)
+fun FramedPanel(frame: ImageBitmap) {
+    val fill = ImageFill(frame, sliceLeft = 16, sliceTop = 16, sliceRight = 16, sliceBottom = 16, repeatEdges = true, repeatCenter = true)
+    Box(Modifier.size(240.dp, 120.dp).background(fill))
+}
+// --8<-- [end:image-fill]

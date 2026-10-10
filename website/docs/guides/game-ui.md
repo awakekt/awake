@@ -1,6 +1,6 @@
 # Game UI
 
-<p class="awake-lede">A HUD that belongs to the scene: text, panels, bars, buttons and touch joysticks pinned to the screen. Each element is a component on a scene entity, so it saves and loads with the scene, and the scene runtime draws it over the game.</p>
+<p class="awake-lede">A HUD that belongs to the scene: text, panels, bars, buttons, images and touch joysticks pinned to the screen. Each element is a component on a scene entity, so it saves and loads with the scene, and the scene runtime draws it over the game.</p>
 
 <div class="awake-badges" markdown>
 <span class="awake-badge">component: <code>canvas_element</code></span>
@@ -52,7 +52,7 @@ For a button the player holds down, read `isHeld` instead. For a joystick, read 
 
 | Property | Type | Default | What it does |
 | --- | --- | --- | --- |
-| `kind` | `Text` · `Panel` · `Bar` · `Button` · `Joystick` | `Text` | What the element draws. |
+| `kind` | `Text` · `Panel` · `Bar` · `Button` · `Joystick` · `Image` | `Text` | What the element draws. |
 | `anchor` | `TopLeft` · `TopCenter` · `TopRight` · `CenterLeft` · `Center` · `CenterRight` · `BottomLeft` · `BottomCenter` · `BottomRight` | `TopLeft` | The screen point the element is pinned to. |
 | `offsetX` | number (dp) | `16` | Moves the element inward from its anchor. From a right anchor it moves left. |
 | `offsetY` | number (dp) | `16` | Moves the element inward from its anchor. From a bottom anchor it moves up. |
@@ -67,6 +67,8 @@ For a button the player holds down, read `isHeld` instead. For a joystick, read 
 | `visible` | boolean | `true` | Hidden elements are not drawn and take no taps. |
 | `action` | string | `""` | Names what the element does for the game, such as `move` or `jump`. The game decides what each name means. |
 | `touchOnly` | boolean | `false` | Draw the element only where touch controls are shown. |
+| `image` | [image](#draw-images) | none | An `Image`'s picture. The frame of a `Panel`, `Button` or `Text`, over its `background`. A `Bar`'s track. |
+| `fillImage` | [image](#draw-images) | none | A `Bar`'s fill, in place of `color`. |
 
 A running `CanvasElement` also has values that are not saved:
 
@@ -75,6 +77,43 @@ A running `CanvasElement` also has values that are not saved:
 | `consumePress()` | `Boolean` | `true` once for each tap on a `Button` since the last call. |
 | `isHeld` | `Boolean` | Whether a `Button` is pressed right now. |
 | `stickX`, `stickY` | `Float`, -1 to 1 | A `Joystick`'s deflection. Up is negative `stickY`, as on screen. Releasing re-centres it. |
+
+## Draw images
+
+An element's `image` and `fillImage` name a PNG or JPEG in the project and say how it fills the
+element. The image is cut into nine by four slice insets, in the image's pixels. The corners keep
+their size, one dp per pixel, so a window frame stays crisp at any size. The edges stretch along
+their length, and the centre stretches both ways.
+
+```json title="A framed panel and a gauge"
+[
+  { "component": "canvas_element", "kind": "Panel", "width": 240, "height": 120,
+    "image": { "path": "ui/window.png", "sliceLeft": 16, "sliceTop": 16, "sliceRight": 16, "sliceBottom": 16,
+               "repeatEdges": true, "pixelated": true } },
+  { "component": "canvas_element", "kind": "Bar", "width": 108, "height": 10, "value": 0.6,
+    "fillImage": { "path": "ui/gauges.png", "regionY": 10, "regionHeight": 10, "sliceLeft": 3, "sliceRight": 3 } }
+]
+```
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `path` | string | required | The image file, from the project's root. |
+| `regionX`, `regionY` | integer | `0` | The top-left pixel of the part of the image to use, such as one frame of a sheet. |
+| `regionWidth`, `regionHeight` | integer | `0` | The part's size. `0` reaches the image's right or bottom edge. |
+| `sliceLeft`, `sliceTop`, `sliceRight`, `sliceBottom` | integer | `0` | The corners' size in pixels. With none the whole image stretches. Slice only the left and right for a three-part strip, such as a gauge. |
+| `repeatEdges` | boolean | `false` | Tile the edges at their own size instead of stretching them, so a pattern keeps its spacing. |
+| `repeatCenter` | boolean | `false` | Tile the centre both ways instead of stretching it. |
+| `tint` | `#RRGGBB` or `#RRGGBBAA` | `#FFFFFF` | Multiplies the image's colour and alpha. |
+| `pixelated` | boolean | `false` | Keep the pixels sharp when the image is scaled, for pixel art. |
+
+A `Bar`'s fill image is laid out at the bar's full width and cut at its `value`, not squeezed into
+it, so the fill's pattern and its end cap stay where they are as the value changes. Corners too
+big for the element shrink together. An element whose image did not load, or whose region does not
+fit in it, draws without it.
+
+When a project is played with `awake:project:runtime`, `loadProject` reads every image the scene's
+canvas names, and the runtime draws them. If your app runs its own Compose host, pass the decoded
+images yourself: `SceneCanvas(world, images = loadCanvasImages(scene, files))`.
 
 ## How it works
 
@@ -106,7 +145,8 @@ If your app runs its own Compose host, draw the canvas yourself:
 
 !!! tip "Bad colours do not break the frame"
     `SceneValidator` reports a colour that is not `#RRGGBB` or `#RRGGBBAA`, a negative size, a
-    `fontSize` that is not positive, and a `value` outside 0 to 1. At draw time, a bad `color` falls
+    `fontSize` that is not positive, a `value` outside 0 to 1, and an image with no `path`, a negative
+    region or slice, or slices wider than their region. At draw time, a bad `color` falls
     back to white and a bad `background` falls back to transparent.
 
 ## Debugging

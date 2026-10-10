@@ -24,6 +24,9 @@ import com.awakekt.awake.compose.runtime.key
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.draw.clip
+import com.awakekt.awake.compose.ui.draw.drawBehind
+import com.awakekt.awake.compose.ui.graphics.ImageBitmap
+import com.awakekt.awake.compose.ui.graphics.drawImageFill
 import com.awakekt.awake.compose.ui.graphics.CircleShape
 import com.awakekt.awake.compose.ui.platform.LocalDensity
 import com.awakekt.awake.compose.ui.semantics.testTag
@@ -43,8 +46,15 @@ context(_: Composer)
  * @param world The ECS world containing canvas entities to render.
  * @param modifier Layout modifier applied to the overlay container.
  * @param showTouchControls Whether touch-only elements should be displayed.
+ * @param images The decoded images elements name, by path, as [loadCanvasImages] reads them. An
+ *   element whose image is missing draws without it.
  */
-fun SceneCanvas(world: World, modifier: Modifier = Modifier, showTouchControls: Boolean = false) {
+fun SceneCanvas(
+    world: World,
+    modifier: Modifier = Modifier,
+    showTouchControls: Boolean = false,
+    images: Map<String, ImageBitmap> = emptyMap(),
+) {
     val elements = ArrayList<Pair<Entity, CanvasElement>>()
     world.family<CanvasElement>().forEach { entity, element ->
         if (element.visible && (showTouchControls || !element.touchOnly)) elements += entity to element
@@ -59,6 +69,7 @@ fun SceneCanvas(world: World, modifier: Modifier = Modifier, showTouchControls: 
                     CanvasElementView(
                         element,
                         Modifier.size(element.width.dp, element.height.dp).testTag("canvas-element-${entity.id}"),
+                        images,
                     )
                 }
             }
@@ -67,21 +78,35 @@ fun SceneCanvas(world: World, modifier: Modifier = Modifier, showTouchControls: 
 }
 
 context(_: Composer)
-private fun CanvasElementView(element: CanvasElement, modifier: Modifier) {
+private fun CanvasElementView(element: CanvasElement, modifier: Modifier, images: Map<String, ImageBitmap>) {
     val fill = colorOf(element.color, Color.White)
     val back = colorOf(element.background, Color.Transparent)
     val textStyle = TextStyle(color = fill, size = element.fontSize.sp)
+    val backed = modifier.background(back).let { colored -> element.image?.fill(images)?.let { colored.background(it) } ?: colored }
     when (element.kind) {
-        CanvasElementKind.Text -> Box(modifier.background(back)) { Text(element.text, style = textStyle) }
-        CanvasElementKind.Panel -> Box(modifier.background(back))
-        CanvasElementKind.Bar -> Box(modifier.background(back)) {
-            Box(Modifier.fillMaxHeight().fillMaxWidth(element.value.coerceIn(0f, 1f)).background(fill))
-        }
+        CanvasElementKind.Text -> Box(backed) { Text(element.text, style = textStyle) }
+        CanvasElementKind.Panel, CanvasElementKind.Image -> Box(backed)
+        CanvasElementKind.Bar -> Box(backed) { BarFill(element, fill, images) }
         CanvasElementKind.Button -> Box(
-            modifier.background(back).clickable(element.interactions) { element.press() },
+            backed.clickable(element.interactions) { element.press() },
             contentAlignment = Alignment.Center,
         ) { Text(element.text, style = textStyle) }
         CanvasElementKind.Joystick -> JoystickView(element, modifier, back, fill)
+    }
+}
+
+/**
+ * A Bar's fill, [CanvasElement.value] of its width: [color], or its fill image laid out at the
+ * bar's full width and cut at the value, so a gauge's end and pattern stay where they are.
+ */
+context(_: Composer)
+private fun BarFill(element: CanvasElement, color: Color, images: Map<String, ImageBitmap>) {
+    val filled = Modifier.fillMaxHeight().fillMaxWidth(element.value.coerceIn(0f, 1f))
+    val picture = element.fillImage?.fill(images)
+    if (picture == null) {
+        Box(filled.background(color))
+    } else {
+        Box(filled.drawBehind { clipped { drawImageFill(picture, width = element.width * density) } })
     }
 }
 

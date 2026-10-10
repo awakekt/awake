@@ -5,7 +5,9 @@
  */
 package com.awakekt.awake.project.runtime
 
+import com.awakekt.awake.compose.ui.graphics.ImageBitmap
 import com.awakekt.awake.render.texture.TextureAsset
+import com.awakekt.awake.scene.canvas.loadCanvasImages
 import com.awakekt.awake.scene.physics.CollisionMeshSource
 import com.awakekt.awake.scene.shader.ShaderEffectAssets
 import com.awakekt.awake.terrain.TerrainSurfaceProvider
@@ -28,6 +30,9 @@ object CoreSceneContent {
 
     /** The particle emitters' sprite images by path, as `loadParticleSprites` reads them. */
     val ParticleSprites: SceneContentKey<Map<String, TextureAsset>> = SceneContentKey("particle sprites")
+
+    /** The images the scene's canvas elements name, by path, as [loadCanvasImages] reads them. */
+    val CanvasImages: SceneContentKey<Map<String, ImageBitmap>> = SceneContentKey("canvas images")
 
     /** The scene's shader documents and their images, as `loadShaderEffects` reads them. */
     val ShaderEffects: SceneContentKey<ShaderEffectAssets> = SceneContentKey("shader effects")

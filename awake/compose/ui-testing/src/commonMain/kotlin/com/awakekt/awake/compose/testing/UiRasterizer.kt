@@ -80,10 +80,9 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
         }
     }
 
-    /** [image] stretched over [x], [y], [w], [h], sampled at the nearest pixel, scaled by [alpha]. */
     /**
-     * Fills the rectangle with [region] of [image], times [tint]. It samples the nearest pixel
-     * whatever the draw's filter: a test rasterizer, not the GPU's sampler.
+     * Fills [x], [y], [w], [h] with [region] of [image], times [tint] and [alpha]. It samples the
+     * nearest pixel whatever the draw's filter: a test rasterizer, not the GPU's sampler.
      */
     fun fillImage(
         x: Float,
