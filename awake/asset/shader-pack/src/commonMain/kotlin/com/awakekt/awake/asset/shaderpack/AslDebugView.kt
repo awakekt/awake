@@ -29,6 +29,7 @@ import com.awakekt.awake.asset.shaderdsl.x
 import com.awakekt.awake.asset.shaderdsl.xyz
 import com.awakekt.awake.asset.shaderdsl.y
 import com.awakekt.awake.asset.shaderdsl.z
+import com.awakekt.awake.render.passes.uniforms.DEBUG_LAYER_HUE_STEP
 import com.awakekt.awake.render.passes.uniforms.NO_DATA_GREY
 import com.awakekt.awake.render.passes.uniforms.RenderDebugView
 import com.awakekt.awake.render.passes.uniforms.WIREFRAME_EDGE_CODE
@@ -38,7 +39,6 @@ import com.awakekt.awake.render.passes.uniforms.WIREFRAME_EDGE_GREY
 private const val SHADOWED_FLOOR = 0.25f
 
 /** Golden-ratio step between neighbouring layers' hues, so adjacent indices never look alike. */
-private const val LAYER_HUE_STEP = 0.618034f
 private const val TAU = 6.2831855f
 
 /** The grey every surface takes under [RenderDebugView.Clay], in linear light: mid-grey, so both lit and shaded sides read. */
@@ -119,7 +119,7 @@ fun AslBlockBuilder.debugViewColor(debugView: AslExpr, cameraPosition: AslExpr, 
  * violet, and neighbours never share a hue.
  */
 fun debugLayerColor(layer: AslExpr): AslExpr {
-    val hue = fract(layer * LAYER_HUE_STEP.lit)
+    val hue = fract(layer * DEBUG_LAYER_HUE_STEP.lit)
     return vec3(0.5f.lit) + cos((vec3(hue) + vec3(0f.lit, (1f / 3f).lit, (2f / 3f).lit)) * TAU.lit) * 0.5f.lit
 }
 

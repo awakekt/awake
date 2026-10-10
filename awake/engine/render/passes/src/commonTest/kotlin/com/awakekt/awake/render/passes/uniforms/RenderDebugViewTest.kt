@@ -51,4 +51,18 @@ class RenderDebugViewTest {
 
         assertEquals(listOf(0f, 0f, -0.25f, RenderDebugView.LinearDepth.code.toFloat()), block.slice(at until at + 4))
     }
+
+    /** Layer 0 red, 1 green, 2 violet: the palette the shaders' layer and joint views paint, on the CPU. */
+    @Test
+    fun theDebugLayerColoursStartRedGreenViolet() {
+        assertNear(listOf(1f, 0.25f, 0.25f), debugLayerColor(0))
+        assertNear(listOf(0.131f, 0.977f, 0.392f), debugLayerColor(1))
+        assertNear(listOf(0.544f, 0.047f, 0.909f), debugLayerColor(2))
+        assertEquals(1f, debugLayerColor(7).a)
+    }
+
+    private fun assertNear(expected: List<Float>, color: com.awakekt.awake.core.color.Color) {
+        val actual = listOf(color.r, color.g, color.b)
+        assertTrue(expected.zip(actual).all { (e, a) -> kotlin.math.abs(e - a) < 0.002f }, "expected $expected, was $actual")
+    }
 }

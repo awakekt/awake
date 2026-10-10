@@ -65,6 +65,7 @@ internal object ShowcaseDebugTags {
     const val SHADOWS = "showcase-debug-shadows"
     const val OCCLUSION = "showcase-debug-occlusion"
     const val LIGHTS = "showcase-debug-lights"
+    const val SKELETON = "showcase-debug-skeleton"
     const val COLLIDERS = "showcase-debug-colliders"
     const val TERRAIN_DIAGNOSTICS = "showcase-debug-terrain-diagnostics"
     const val WIREFRAME = "showcase-debug-wireframe"
@@ -146,6 +147,9 @@ private val DEBUG_TOGGLES = listOf(
     },
     DebugToggle(ShowcaseDebugOption.Lights, "Light gizmo", ShowcaseDebugTags.LIGHTS, { ShowcaseDebugToggles.showLights }) {
         ShowcaseDebugToggles.showLights = it
+    },
+    DebugToggle(ShowcaseDebugOption.Skeleton, "Skeleton", ShowcaseDebugTags.SKELETON, { ShowcaseDebugToggles.showSkeleton }) {
+        ShowcaseDebugToggles.showSkeleton = it
     },
     DebugToggle(ShowcaseDebugOption.Colliders, "Colliders", ShowcaseDebugTags.COLLIDERS, { ShowcaseDebugToggles.showColliders }) {
         ShowcaseDebugToggles.showColliders = it

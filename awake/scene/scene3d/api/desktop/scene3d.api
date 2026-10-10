@@ -572,8 +572,8 @@ public final class com/awakekt/awake/scene/rendering/debug/RenderDiagnostics {
 
 public final class com/awakekt/awake/scene/rendering/debug/WorldDebugSettings {
 	public fun <init> ()V
-	public fun <init> (ZZZZZZZZFFZLjava/lang/Boolean;Ljava/lang/Float;Lcom/awakekt/awake/core/color/Color;Ljava/lang/Integer;Lcom/awakekt/awake/render/passes/uniforms/RenderDebugView;IZ)V
-	public synthetic fun <init> (ZZZZZZZZFFZLjava/lang/Boolean;Ljava/lang/Float;Lcom/awakekt/awake/core/color/Color;Ljava/lang/Integer;Lcom/awakekt/awake/render/passes/uniforms/RenderDebugView;IZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (ZZZZZZZZFFZLjava/lang/Boolean;Ljava/lang/Float;Lcom/awakekt/awake/core/color/Color;Ljava/lang/Integer;Lcom/awakekt/awake/render/passes/uniforms/RenderDebugView;IZZ)V
+	public synthetic fun <init> (ZZZZZZZZFFZLjava/lang/Boolean;Ljava/lang/Float;Lcom/awakekt/awake/core/color/Color;Ljava/lang/Integer;Lcom/awakekt/awake/render/passes/uniforms/RenderDebugView;IZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Z
 	public final fun component10 ()F
 	public final fun component11 ()Z
@@ -584,6 +584,7 @@ public final class com/awakekt/awake/scene/rendering/debug/WorldDebugSettings {
 	public final fun component16 ()Lcom/awakekt/awake/render/passes/uniforms/RenderDebugView;
 	public final fun component17 ()I
 	public final fun component18 ()Z
+	public final fun component19 ()Z
 	public final fun component2 ()Z
 	public final fun component3 ()Z
 	public final fun component4 ()Z
@@ -592,8 +593,8 @@ public final class com/awakekt/awake/scene/rendering/debug/WorldDebugSettings {
 	public final fun component7 ()Z
 	public final fun component8 ()Z
 	public final fun component9 ()F
-	public final fun copy (ZZZZZZZZFFZLjava/lang/Boolean;Ljava/lang/Float;Lcom/awakekt/awake/core/color/Color;Ljava/lang/Integer;Lcom/awakekt/awake/render/passes/uniforms/RenderDebugView;IZ)Lcom/awakekt/awake/scene/rendering/debug/WorldDebugSettings;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/debug/WorldDebugSettings;ZZZZZZZZFFZLjava/lang/Boolean;Ljava/lang/Float;Lcom/awakekt/awake/core/color/Color;Ljava/lang/Integer;Lcom/awakekt/awake/render/passes/uniforms/RenderDebugView;IZILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/debug/WorldDebugSettings;
+	public final fun copy (ZZZZZZZZFFZLjava/lang/Boolean;Ljava/lang/Float;Lcom/awakekt/awake/core/color/Color;Ljava/lang/Integer;Lcom/awakekt/awake/render/passes/uniforms/RenderDebugView;IZZ)Lcom/awakekt/awake/scene/rendering/debug/WorldDebugSettings;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/debug/WorldDebugSettings;ZZZZZZZZFFZLjava/lang/Boolean;Ljava/lang/Float;Lcom/awakekt/awake/core/color/Color;Ljava/lang/Integer;Lcom/awakekt/awake/render/passes/uniforms/RenderDebugView;IZZILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/debug/WorldDebugSettings;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getCascadedShadows ()Z
 	public final fun getFogColorOverride ()Lcom/awakekt/awake/core/color/Color;
@@ -612,6 +613,7 @@ public final class com/awakekt/awake/scene/rendering/debug/WorldDebugSettings {
 	public final fun getShowLights ()Z
 	public final fun getShowOcclusion ()Z
 	public final fun getShowShadowFrustum ()Z
+	public final fun getShowSkeleton ()Z
 	public final fun getShowWireframe ()Z
 	public fun hashCode ()I
 	public final fun setCascadedShadows (Z)V
@@ -631,6 +633,7 @@ public final class com/awakekt/awake/scene/rendering/debug/WorldDebugSettings {
 	public final fun setShowLights (Z)V
 	public final fun setShowOcclusion (Z)V
 	public final fun setShowShadowFrustum (Z)V
+	public final fun setShowSkeleton (Z)V
 	public final fun setShowWireframe (Z)V
 	public fun toString ()Ljava/lang/String;
 }
