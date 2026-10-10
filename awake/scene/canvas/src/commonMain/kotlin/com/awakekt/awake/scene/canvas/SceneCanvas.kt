@@ -10,6 +10,7 @@ package com.awakekt.awake.scene.canvas
 import com.awakekt.awake.compose.foundation.background
 import com.awakekt.awake.compose.foundation.clickable
 import com.awakekt.awake.compose.foundation.gestures.draggable
+import com.awakekt.awake.compose.foundation.hoverable
 import com.awakekt.awake.compose.foundation.layout.Box
 import com.awakekt.awake.compose.foundation.layout.BoxScope
 import com.awakekt.awake.compose.foundation.layout.fillMaxHeight
@@ -18,9 +19,13 @@ import com.awakekt.awake.compose.foundation.layout.fillMaxWidth
 import com.awakekt.awake.compose.foundation.layout.offset
 import com.awakekt.awake.compose.foundation.layout.padding
 import com.awakekt.awake.compose.foundation.layout.size
+import com.awakekt.awake.compose.foundation.style.Style
+import com.awakekt.awake.compose.foundation.style.rememberStyleState
+import com.awakekt.awake.compose.foundation.style.resolveTextColor
+import com.awakekt.awake.compose.foundation.style.styleable
 import com.awakekt.awake.compose.foundation.text.Text
-import com.awakekt.awake.compose.runtime.CompositionLocalProvider
 import com.awakekt.awake.compose.runtime.Composer
+import com.awakekt.awake.compose.runtime.CompositionLocalProvider
 import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.key
 import com.awakekt.awake.compose.runtime.provides
@@ -28,18 +33,19 @@ import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.draw.clip
 import com.awakekt.awake.compose.ui.draw.drawBehind
-import com.awakekt.awake.compose.ui.graphics.ImageBitmap
-import com.awakekt.awake.compose.ui.graphics.drawImageFill
 import com.awakekt.awake.compose.ui.graphics.CircleShape
+import com.awakekt.awake.compose.ui.graphics.ImageBitmap
+import com.awakekt.awake.compose.ui.graphics.RoundedCornerShape
+import com.awakekt.awake.compose.ui.graphics.drawImageFill
 import com.awakekt.awake.compose.ui.platform.LocalDensity
 import com.awakekt.awake.compose.ui.semantics.testTag
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.math2d.sp
 import com.awakekt.awake.core.text.theme.TextStyle
-import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.scene.core.transform.Transform
 
 context(_: Composer)
 /**
@@ -135,20 +141,25 @@ private fun CanvasElementView(
 ) {
     val fill = colorOf(element.color, Color.White)
     val back = colorOf(element.background, Color.Transparent)
-    val textStyle = TextStyle(color = fill, size = element.fontSize.sp)
-    val backed = modifier.background(back).let { colored -> element.style.image?.fill(tree.images)?.let { colored.background(it) } ?: colored }
+    val state = rememberStyleState(element.interactions)
+    val style = Style {
+        background(back)
+        element.style.applyTo(this, tree.images)
+    }
+    val textStyle = TextStyle(color = resolveTextColor(state, style) ?: fill, size = element.fontSize.sp)
+    val styled = modifier.styleable(state, style)
     when (element.kind) {
-        CanvasElementKind.Text -> Box(backed) {
+        CanvasElementKind.Text -> Box(styled) {
             Text(element.text, style = textStyle)
             Elements(children, tree)
         }
-        CanvasElementKind.Panel, CanvasElementKind.Image -> Box(backed) { Elements(children, tree) }
-        CanvasElementKind.Bar -> Box(backed) {
+        CanvasElementKind.Panel, CanvasElementKind.Image -> Box(styled) { Elements(children, tree) }
+        CanvasElementKind.Bar -> Box(styled) {
             BarFill(element, fill, tree.images)
             Elements(children, tree)
         }
         CanvasElementKind.Button -> Box(
-            backed.clickable(element.interactions) { element.press() },
+            styled.hoverable(element.interactions).clickable(element.interactions) { element.press() },
             contentAlignment = Alignment.Center,
         ) {
             Text(element.text, style = textStyle)
@@ -167,7 +178,7 @@ private fun BarFill(element: CanvasElement, color: Color, images: Map<String, Im
     val filled = Modifier.fillMaxHeight().fillMaxWidth(element.value.coerceIn(0f, 1f))
     val picture = element.style.fillImage?.fill(images)
     if (picture == null) {
-        Box(filled.background(color))
+        Box(filled.background(color, RoundedCornerShape((element.style.cornerRadius ?: 0f).dp)))
     } else {
         Box(filled.drawBehind { clipped { drawImageFill(picture, width = element.width * density) } })
     }
@@ -239,5 +250,5 @@ private val CanvasAnchor.alignment: Alignment
     }
 
 // A colour typed wrong in the editor falls back instead of taking the whole frame down.
-private fun colorOf(hex: String, fallback: Color): Color =
-    if (isHexColor(hex)) Color.fromHex(hex) else fallback
+internal fun colorOf(hex: String?, fallback: Color): Color =
+    if (hex != null && isHexColor(hex)) Color.fromHex(hex) else fallback

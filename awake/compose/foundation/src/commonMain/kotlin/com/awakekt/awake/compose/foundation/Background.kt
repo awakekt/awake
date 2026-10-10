@@ -8,6 +8,7 @@ package com.awakekt.awake.compose.foundation
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.ModifierNodeElement
 import com.awakekt.awake.compose.ui.draw.drawBehind
+import com.awakekt.awake.compose.ui.graphics.Brush
 import com.awakekt.awake.compose.ui.graphics.ImageFill
 import com.awakekt.awake.compose.ui.graphics.RectangleShape
 import com.awakekt.awake.compose.ui.graphics.RoundedCornerShape
@@ -24,6 +25,7 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.ColoredTriangleMesh
 import com.awakekt.awake.core.graphics2d.DrawStroke
 import com.awakekt.awake.core.graphics2d.StrokeJoin
+import com.awakekt.awake.core.graphics2d.UiLinearGradient
 import com.awakekt.awake.core.graphics2d.drawPath
 import com.awakekt.awake.core.graphics2d.tessellateStrokeAa
 import com.awakekt.awake.core.graphics2d.toPath
@@ -49,6 +51,23 @@ fun Modifier.background(color: Color, cornerRadius: Dp): Modifier =
 
 /** Fills the node behind its content with [fill]: an image, or a frame cut into nine. */
 fun Modifier.background(fill: ImageFill): Modifier = drawBehind { drawImageFill(fill) }
+
+/** Fills the node behind its content with [brush] in [shape]: a flat colour, or a gradient. */
+fun Modifier.background(brush: Brush, shape: Shape = RectangleShape): Modifier = when (brush) {
+    is Brush.SolidColor -> background(brush.color, shape)
+    is Brush.LinearGradient -> drawBehind { drawGradient(brush.colors, shape) }
+}
+
+// The renderer's rounded-quad shadow with no offset, spread or blur is a rounded rectangle whose
+// corners take the gradient's colours, with the same anti-aliased edge as a rounded background.
+private fun DrawScope.drawGradient(gradient: UiLinearGradient, shape: Shape) {
+    when (val outline = shape.createOutline(Size2D(width.toFloat(), height.toFloat()), density, layoutDirection)) {
+        is ShapeOutline.Rectangle -> drawShadow(color = gradient.topLeft, gradient = gradient)
+        is ShapeOutline.Rounded -> drawShadow(color = gradient.topLeft, radius = outline.radius, gradient = gradient)
+        is ShapeOutline.RoundedCorners -> clippedPath(outline.path) { drawShadow(color = gradient.topLeft, gradient = gradient) }
+        is ShapeOutline.Generic -> clippedPath(outline.path) { drawShadow(color = gradient.topLeft, gradient = gradient) }
+    }
+}
 
 /**
  * Draws a border whose solid band sits *inside* the node's bounds.

@@ -13,6 +13,9 @@ import com.awakekt.awake.compose.foundation.layout.padding
 import com.awakekt.awake.compose.foundation.layout.width
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.draw.alpha
+import com.awakekt.awake.compose.ui.draw.dropShadow
+import com.awakekt.awake.compose.ui.graphics.RoundedCornerShape
+import com.awakekt.awake.compose.ui.graphics.Shape
 import com.awakekt.awake.compose.ui.semantics.SemanticsProperties
 import com.awakekt.awake.compose.ui.semantics.semantics
 import com.awakekt.awake.core.color.Color
@@ -59,9 +62,7 @@ private fun Modifier.applyResolved(resolved: ResolvedStyle, borderSides: BorderS
     resolved.height?.let { modifier = modifier.height(it) }
     if (resolved.alpha < 1f) modifier = modifier.alpha(resolved.alpha)
     val shape = resolved.shape
-    resolved.background?.let { color ->
-        modifier = if (shape == null) modifier.background(color, resolved.cornerRadius) else modifier.background(color, shape)
-    }
+    modifier = modifier.paint(resolved, shape ?: RoundedCornerShape(resolved.cornerRadius))
     val borderColor = resolved.borderColor
     if (borderColor != null && resolved.borderWidth.value > 0f) {
         modifier = if (shape == null) {
@@ -77,6 +78,16 @@ private fun Modifier.applyResolved(resolved: ResolvedStyle, borderSides: BorderS
         )
     }
     return modifier.styleSemantics(resolved)
+}
+
+/** The shadow under the background, the background colour or gradient, and the image over it. */
+private fun Modifier.paint(resolved: ResolvedStyle, shape: Shape): Modifier {
+    var modifier = this
+    resolved.shadow?.let { modifier = modifier.dropShadow(shape, it) }
+    resolved.background?.let { modifier = modifier.background(it, shape) }
+    resolved.backgroundBrush?.let { modifier = modifier.background(it, shape) }
+    resolved.backgroundImage?.let { modifier = modifier.background(it) }
+    return modifier
 }
 
 /**

@@ -89,7 +89,15 @@ class RangeAnnotationsAreEnforcedTest {
         "particle_emitter" to { base -> JsonObject(base + ("texture" to JsonPrimitive("particle.png"))) },
         "canvas_element" to { base ->
             val image = JsonObject(mapOf("path" to JsonPrimitive("frame.png")))
-            JsonObject(base + ("style" to JsonObject(mapOf("image" to image, "fillImage" to image))))
+            val empty = JsonObject(emptyMap())
+            val state = JsonObject(mapOf("image" to image))
+            JsonObject(
+                base + (
+                    "style" to JsonObject(
+                        mapOf("image" to image, "fillImage" to image, "shadow" to empty, "hovered" to state, "pressed" to state),
+                    )
+                    ),
+            )
         },
         "sprite_clips" to { base -> JsonObject(base + ("clips" to JsonObject(mapOf("idle" to JsonObject(emptyMap()))))) },
     )
@@ -152,6 +160,10 @@ class RangeAnnotationsAreEnforcedTest {
             "canvas_element.value",
             "canvas_element.style.image.sliceLeft",
             "canvas_element.style.fillImage.regionWidth",
+            "canvas_element.style.cornerRadius",
+            "canvas_element.style.alpha",
+            "canvas_element.style.shadow.blur",
+            "canvas_element.style.pressed.alpha",
             "pbr_material.metallic",
             "pbr_material.roughness",
             "pbr_material.alphaCutoff",

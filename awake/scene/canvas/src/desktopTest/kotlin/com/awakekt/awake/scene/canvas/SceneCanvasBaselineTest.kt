@@ -45,6 +45,38 @@ class SceneCanvasBaselineTest {
         }.primitives.assertMatchesBaseline("scene-canvas-status-window", 272, 136)
     }
 
+    @Test
+    fun corneredBorderedGradientAndShadowedElements() {
+        val world = World()
+        fun element(configure: CanvasElement.() -> Unit) = world.create().also { world.add(it, CanvasElement().apply(configure)) }
+        element {
+            kind = CanvasElementKind.Button; offsetX = 16f; offsetY = 16f; width = 120f; height = 40f
+            style = CanvasStyle(
+                gradient = CanvasGradient("#4A6FD8", "#2A3F8A"),
+                cornerRadius = 10f,
+                borderWidth = 1f,
+                borderColor = "#FFFFFF60",
+                shadow = CanvasShadow(color = "#000000A0", offsetY = 4f, blur = 8f),
+            )
+        }
+        element {
+            kind = CanvasElementKind.Panel; offsetX = 152f; offsetY = 16f; width = 80f; height = 40f; background = "#2E2A24"
+            style = CanvasStyle(cornerRadius = 6f, borderWidth = 2f, borderColor = "#C8A060")
+        }
+        element {
+            kind = CanvasElementKind.Bar; offsetX = 16f; offsetY = 80f; width = 216f; height = 12f; value = 0.65f
+            color = "#30A46C"; background = "#00000080"
+            style = CanvasStyle(cornerRadius = 6f)
+        }
+        element {
+            kind = CanvasElementKind.Panel; offsetX = 16f; offsetY = 108f; width = 216f; height = 20f
+            style = CanvasStyle(gradient = CanvasGradient("#E5484D", "#FFB224", horizontal = true), alpha = 0.6f)
+        }
+
+        ComposeHost().frame(FrameInput(248, 144)) { SceneCanvas(world) }
+            .primitives.assertMatchesBaseline("scene-canvas-styles", 248, 144)
+    }
+
     private companion object {
         val TINTS = listOf("#E5484D", "#3E63DD", "#30A46C")
 

@@ -1,6 +1,8 @@
 public final class com/awakekt/awake/compose/foundation/BackgroundKt {
+	public static final fun background (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/ui/graphics/Brush;Lcom/awakekt/awake/compose/ui/graphics/Shape;)Lcom/awakekt/awake/compose/ui/Modifier;
 	public static final fun background (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/ui/graphics/ImageFill;)Lcom/awakekt/awake/compose/ui/Modifier;
 	public static final fun background (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/compose/ui/graphics/Shape;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static synthetic fun background$default (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/ui/graphics/Brush;Lcom/awakekt/awake/compose/ui/graphics/Shape;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
 	public static synthetic fun background$default (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/compose/ui/graphics/Shape;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
 	public static final fun background-l9dllRQ (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/core/color/Color;F)Lcom/awakekt/awake/compose/ui/Modifier;
 	public static final fun border-keHTAFM (Lcom/awakekt/awake/compose/ui/Modifier;FLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/compose/ui/graphics/Shape;Lcom/awakekt/awake/compose/foundation/BorderSides;)Lcom/awakekt/awake/compose/ui/Modifier;
@@ -616,6 +618,8 @@ public final class com/awakekt/awake/compose/foundation/style/ResolvedStyle {
 	public fun <init> ()V
 	public final fun getAlpha ()F
 	public final fun getBackground ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getBackgroundBrush ()Lcom/awakekt/awake/compose/ui/graphics/Brush;
+	public final fun getBackgroundImage ()Lcom/awakekt/awake/compose/ui/graphics/ImageFill;
 	public final fun getBorderColor ()Lcom/awakekt/awake/core/color/Color;
 	public final fun getBorderWidth-LGk54g8 ()F
 	public final fun getContentPaddingHorizontal-LGk54g8 ()F
@@ -624,11 +628,14 @@ public final class com/awakekt/awake/compose/foundation/style/ResolvedStyle {
 	public final fun getExternalPaddingHorizontal-LGk54g8 ()F
 	public final fun getExternalPaddingVertical-LGk54g8 ()F
 	public final fun getHeight-x2uu33Y ()Lcom/awakekt/awake/core/math2d/Dp;
+	public final fun getShadow ()Lcom/awakekt/awake/compose/ui/graphics/shadow/Shadow;
 	public final fun getShape ()Lcom/awakekt/awake/compose/ui/graphics/Shape;
 	public final fun getTextColor ()Lcom/awakekt/awake/core/color/Color;
 	public final fun getWidth-x2uu33Y ()Lcom/awakekt/awake/core/math2d/Dp;
 	public final fun setAlpha (F)V
 	public final fun setBackground (Lcom/awakekt/awake/core/color/Color;)V
+	public final fun setBackgroundBrush (Lcom/awakekt/awake/compose/ui/graphics/Brush;)V
+	public final fun setBackgroundImage (Lcom/awakekt/awake/compose/ui/graphics/ImageFill;)V
 	public final fun setBorderColor (Lcom/awakekt/awake/core/color/Color;)V
 	public final fun setBorderWidth-Jha-xPg (F)V
 	public final fun setContentPaddingHorizontal-Jha-xPg (F)V
@@ -637,6 +644,7 @@ public final class com/awakekt/awake/compose/foundation/style/ResolvedStyle {
 	public final fun setExternalPaddingHorizontal-Jha-xPg (F)V
 	public final fun setExternalPaddingVertical-Jha-xPg (F)V
 	public final fun setHeight-BLcS0G4 (Lcom/awakekt/awake/core/math2d/Dp;)V
+	public final fun setShadow (Lcom/awakekt/awake/compose/ui/graphics/shadow/Shadow;)V
 	public final fun setShape (Lcom/awakekt/awake/compose/ui/graphics/Shape;)V
 	public final fun setTextColor (Lcom/awakekt/awake/core/color/Color;)V
 	public final fun setWidth-BLcS0G4 (Lcom/awakekt/awake/core/math2d/Dp;)V
@@ -657,11 +665,14 @@ public final class com/awakekt/awake/compose/foundation/style/StyleKt {
 
 public abstract interface class com/awakekt/awake/compose/foundation/style/StyleScope {
 	public abstract fun alpha (F)V
+	public abstract fun background (Lcom/awakekt/awake/compose/ui/graphics/Brush;)V
 	public abstract fun background (Lcom/awakekt/awake/core/color/Color;)V
+	public abstract fun backgroundImage (Lcom/awakekt/awake/compose/ui/graphics/ImageFill;)V
 	public abstract fun border-x8eJsFc (FLcom/awakekt/awake/core/color/Color;)V
 	public abstract fun contentPadding-6gMdd8Y (FF)V
 	public static synthetic fun contentPadding-6gMdd8Y$default (Lcom/awakekt/awake/compose/foundation/style/StyleScope;FFILjava/lang/Object;)V
 	public abstract fun cornerRadius-Jha-xPg (F)V
+	public abstract fun dropShadow (Lcom/awakekt/awake/compose/ui/graphics/shadow/Shadow;)V
 	public abstract fun externalPadding-6gMdd8Y (FF)V
 	public static synthetic fun externalPadding-6gMdd8Y$default (Lcom/awakekt/awake/compose/foundation/style/StyleScope;FFILjava/lang/Object;)V
 	public abstract fun getState ()Lcom/awakekt/awake/compose/foundation/style/StyleState;
