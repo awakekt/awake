@@ -83,8 +83,9 @@ runs:
       run: |
         sdkmanager="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
         for attempt in 1 2 3; do
-          # perl's alarm is a timeout macOS has without coreutils.
-          if yes | perl -e 'alarm shift; exec @ARGV' 600 "$sdkmanager" --install "ndk;${{ steps.ndk.outputs.version }}" > /dev/null; then
+          # perl's alarm is a timeout macOS has without coreutils. `yes` dies of SIGPIPE once
+          # sdkmanager exits, which pipefail would count as a failed install, hence `|| true`.
+          if (yes || true) | perl -e 'alarm shift; exec @ARGV' 600 "$sdkmanager" --install "ndk;${{ steps.ndk.outputs.version }}" > /dev/null; then
             test -f "${{ steps.ndk.outputs.path }}/source.properties" && exit 0
           fi
           echo "::warning::NDK install attempt $attempt failed; retrying"
