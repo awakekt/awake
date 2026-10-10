@@ -68,6 +68,7 @@ free ambient_light.intensity | No validate() limits it; every value is accepted 
 free canvas_element.followOffset.x | Any world offset from the followed node is valid.
 free canvas_element.followOffset.y | Any world offset from the followed node is valid.
 free canvas_element.followOffset.z | Any world offset from the followed node is valid.
+free canvas_element.followOutset | Negative pulls a followBounds box in, and the box never shrinks below nothing.
 free canvas_element.offsetX | Any screen offset or z-order integer is valid.
 free canvas_element.offsetY | Any screen offset or z-order integer is valid.
 free canvas_element.order | Any screen offset or z-order integer is valid.

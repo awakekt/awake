@@ -37,6 +37,7 @@ Core's capabilities decide what runs, each for the components it owns:
 | `particle_emitter` | `ParticleContentSystem` and `ParticleSystem`, with the sprites `loadProject` read |
 | `day_cycle` | `DayCycleSystem`: the sun's path and the blended sky, light and fog |
 | `shader_effect` | `ShaderEffectSystem`, with the shader documents `loadProject` read |
+| `audio_source` | `AudioSystem`, with the WAV clips `loadProject` read, heard from the active camera. `runProject` plays them through the platform's audio player, opened only for a scene with sound; another host passes its own to `sceneSystems(audio = …)` or `SceneHostServices.withAudio`, and with none they run silently |
 | Skinned glTF model | Its first animation clip, on a loop |
 
 One camera renders: the scene's primary camera, else its first, else a fallback looking at the

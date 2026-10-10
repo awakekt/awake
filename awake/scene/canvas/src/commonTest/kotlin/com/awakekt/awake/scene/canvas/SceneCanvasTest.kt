@@ -537,6 +537,74 @@ class SceneCanvasTest {
     }
 
     @Test
+    fun anOutsetPutsABoundsFollowersCornerPiecesOutsideTheNode() {
+        named("Target", 0f, 0f)
+        val marker = element {
+            kind = CanvasElementKind.Panel
+            follow = "Target"
+            followBounds = true
+            followOutset = 32f
+        }
+        val corners = CanvasAnchor.entries.filter { it.row != 1 && it.column != 1 }.associateWith { corner ->
+            child(marker) {
+                kind = CanvasElementKind.Image
+                anchor = corner
+                offsetX = 0f
+                offsetY = 0f
+                width = 8f
+                height = 8f
+            }
+        }
+        val projector = FlatProjector(box = Rectangle(100f, 50f, 80f, 120f))
+
+        val out = followFrame(projector)
+        val doubled = followFrame(projector, scale = 2f)
+
+        assertEquals(listOf(100 - 32, 50 - 32, 80 + 64, 120 + 64), out.box(marker), "32 dp past the node on each side")
+        assertEquals(listOf(68, 18), out.box(corners.getValue(CanvasAnchor.TopLeft)).take(2), "a corner piece 32 dp outside the node's corner")
+        assertEquals(listOf(212 - 8, 202 - 8), out.box(corners.getValue(CanvasAnchor.BottomRight)).take(2), "and the opposite corner too")
+        assertEquals(listOf(100 - 64, 50 - 64, 80 + 128, 120 + 128), doubled.box(marker), "the outset is in dp, so it scales")
+    }
+
+    @Test
+    fun aNegativeOutsetPullsTheBoxInButNeverBelowNothing() {
+        named("Target", 0f, 0f)
+        val inset = element {
+            follow = "Target"
+            followBounds = true
+            followOutset = -10f
+        }
+        val collapsed = element {
+            follow = "Target"
+            followBounds = true
+            followOutset = -100f
+        }
+        val point = element {
+            follow = "Target"
+            followOutset = 32f
+            anchor = CanvasAnchor.TopLeft
+            offsetX = 0f
+            offsetY = 0f
+            width = 10f
+            height = 10f
+        }
+
+        val out = followFrame(FlatProjector(box = Rectangle(100f, 50f, 80f, 120f)))
+
+        assertEquals(listOf(110, 60, 60, 100), out.box(inset))
+        assertEquals(listOf(140, 110, 0, 0), out.box(collapsed), "shrunk to its centre, not turned inside out")
+        assertEquals(listOf(0, 0, 10, 10), out.box(point), "a point follower has no box to grow")
+    }
+
+    @Test
+    fun anOutsetSurvivesSavingAndIsNotWrittenWhenZero() {
+        val saved = SceneCanvasElement(follow = "Target", followBounds = true, followOutset = 32f)
+
+        assertEquals(saved, saved.toComponent().toSceneComponent())
+        assertEquals(0f, CanvasElement().followOutset)
+    }
+
+    @Test
     fun aFollowerNestedUnderAnotherElementIsStillPlacedOnItsNode() {
         named("Hero", 20f, 10f)
         val window = element { kind = CanvasElementKind.Panel; offsetX = 300f; offsetY = 300f; width = 100f; height = 100f }

@@ -1,1 +1,0 @@
-- **An app whose GPU backend fails to start reports why, rather than a `lateinit` error at exit.** A scene's `onDispose` hooks now run only once it has become ready, since they undo what `onReady` did. Before, disposing an app that never started ran them anyway, and a hook that used the renderer threw `UninitializedPropertyAccessException`, hiding the startup error.

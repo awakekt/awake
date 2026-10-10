@@ -6,6 +6,7 @@
 package com.awakekt.awake.project.runtime
 
 import com.awakekt.awake.compose.ui.graphics.ImageBitmap
+import com.awakekt.awake.core.audio.AudioClip
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.scene.canvas.loadCanvasImages
 import com.awakekt.awake.scene.physics.CollisionMeshSource
@@ -33,6 +34,9 @@ object CoreSceneContent {
 
     /** The images the scene's canvas elements name, by path, as [loadCanvasImages] reads them. */
     val CanvasImages: SceneContentKey<Map<String, ImageBitmap>> = SceneContentKey("canvas images")
+
+    /** The clips the scene's `audio_source`s name, decoded, by project path, as `loadAudioClips` reads them. */
+    val AudioClips: SceneContentKey<Map<String, AudioClip>> = SceneContentKey("audio clips")
 
     /** The scene's shader documents and their images, as `loadShaderEffects` reads them. */
     val ShaderEffects: SceneContentKey<ShaderEffectAssets> = SceneContentKey("shader effects")

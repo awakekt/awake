@@ -6,6 +6,7 @@
 package com.awakekt.awake.scene.runtime
 
 import com.awakekt.awake.scene.ai.registerAiBehaviors
+import com.awakekt.awake.scene.audio.registerAudio
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.blueprint.registerBlueprints
 import com.awakekt.awake.scene.character.registerCharacter
@@ -21,4 +22,5 @@ internal fun installEveryComponentKit() {
         .registerCharacter()
         .registerAiBehaviors()
         .registerBlueprints()
+        .registerAudio()
 }

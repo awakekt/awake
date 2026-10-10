@@ -64,6 +64,7 @@ For a button the player holds down, read `isHeld` instead. For a joystick, read 
 | `follow` | string | `""` | A node to follow on screen. See [Follow a node](#follow-a-node). |
 | `followOffset` | vector | `{x: 0, y: 0, z: 0}` | A world-space offset from the followed node. |
 | `followBounds` | boolean | `false` | Cover the followed node's screen box instead of standing at its point. |
+| `followOutset` | number | `0` | With `followBounds`, how far the box reaches past the node's on each side, in dp. Negative pulls it in. |
 | `layout` | object | none | Lay the children out in rows or columns. See [Lay out children](#lay-out-children). |
 | `grow` | number | `0` | In a laid-out parent, this element's share of the leftover space. |
 | `bind` | object | none | Game state the element shows without code. See [Show game state](#show-game-state). |
@@ -73,6 +74,7 @@ For a button the player holds down, read `isHeld` instead. For a joystick, read 
 | `order` | integer | `0` | Draw order. Lower values draw first, so higher ones sit on top. |
 | `visible` | boolean | `true` | Hidden elements are not drawn and take no taps. |
 | `action` | string | `""` | Names what the element does for the game, such as `move` or `jump`. The game decides what each name means. |
+| `doubleAction` | string | `""` | What a Button does when double-clicked, such as equipping an item; two presses within half a second. |
 | `touchOnly` | boolean | `false` | Draw the element only where touch controls are shown. |
 | `style` | object | `{}` | How the element looks beyond its colours: shape, border, gradient, shadow, images and button states. See [Style an element](#style-an-element). |
 
@@ -284,7 +286,8 @@ from the point.
 
 With `followBounds`, the element instead covers the screen rectangle around the node's meshes and
 everything under it, whatever its own size. Give it children anchored to its corners, and a marker
-frames whatever is selected at any distance. The box is the meshes' resting shape, so it does not
+frames whatever is selected at any distance. `followOutset` grows the box on every side, so corner
+pieces anchored at offset 0 sit that far outside the node. The box is the meshes' resting shape, so it does not
 follow an animated character's limbs; a node with no mesh bounds falls back to its point.
 
 A follower is placed against the screen wherever it sits in the scene, so it can live on a child of

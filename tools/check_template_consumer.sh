@@ -50,11 +50,13 @@ git -C "$TEMPLATE_SOURCE" archive HEAD | tar -x -C "$CHECKOUT"
 
 # Ask Gradle for the versions actually assigned to each publication family. Do not duplicate the
 # root build's git-describe/bump rules here. A local publish (`-Pawake.version`) names its own.
+# awk reads all of Gradle's output rather than exiting at the match: an early exit can SIGPIPE
+# the still-writing Gradle, which pipefail turns into this script failing (exit 141).
 CORE_VERSION=${TEMPLATE_CORE_VERSION:-$(cd "$ENGINE_ROOT" && ./gradlew -q :awake:core:math:properties \
-  --no-configuration-cache | awk '$1 == "version:" { print $2; exit }')}
+  --no-configuration-cache | awk '$1 == "version:" && v == "" { v = $2 } END { print v }')}
 # A Core-only release builds no Vulkan, so its caller names the Vulkan release to test against.
 VULKAN_VERSION=${TEMPLATE_VULKAN_VERSION:-$(cd "$ENGINE_ROOT" && ./gradlew -q :awake:backend:vulkan:properties \
-  --no-configuration-cache | awk '$1 == "version:" { print $2; exit }')}
+  --no-configuration-cache | awk '$1 == "version:" && v == "" { v = $2 } END { print v }')}
 if [[ -z "$CORE_VERSION" || -z "$VULKAN_VERSION" ]]; then
   echo "Could not read both publication-family versions from Gradle" >&2
   exit 1

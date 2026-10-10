@@ -14,6 +14,7 @@ registers it.
 | Component id | ECS component | Module | Registered by | Guide |
 | --- | --- | --- | --- | --- |
 | [`ambient_light`](#ambient_light) | `AmbientLight` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Lights and shadows](../guides/lights-and-shadows.md) |
+| [`audio_source`](#audio_source) | `AudioSource` | `com.awakekt.awake.scene:audio` | `registerAudio()` | — |
 | [`blueprint`](#blueprint) | `BlueprintComponent` | `com.awakekt.awake.scene:blueprint` | `registerBlueprints()` | — |
 | [`camera`](#camera) | `Camera` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Cameras](../guides/cameras-and-controls.md) |
 | [`camera_rig`](#camera_rig) | `CameraRig` | `com.awakekt.awake.scene:controls` | `registerControls()` | [Cameras](../guides/cameras-and-controls.md) |
@@ -60,7 +61,8 @@ registers it.
 | `SceneComponentRegistry.registerCharacter()` | `com.awakekt.awake.scene:character` | `character_controller` |
 | `SceneComponentRegistry.registerAiBehaviors()` | `com.awakekt.awake.scene:ai` | `patrol`, `chase`, `flee`, `navigation` |
 | `SceneComponentRegistry.registerBlueprints()` | `com.awakekt.awake.scene:blueprint` | `blueprint` |
-| `loadProject(...)` | `com.awakekt.awake.project:runtime` | The defaults, plus `movement_control`, `camera_rig`, `input_actions`, `physics_body`, `character_controller`, `patrol`, `chase`, `flee`, `navigation`, and the components of the [capabilities](../guides/scene-capabilities.md) passed to it |
+| `SceneComponentRegistry.registerAudio()` | `com.awakekt.awake.scene:audio` | `audio_source` |
+| `loadProject(...)` | `com.awakekt.awake.project:runtime` | The defaults, plus `movement_control`, `camera_rig`, `input_actions`, `physics_body`, `character_controller`, `patrol`, `chase`, `flee`, `navigation`, `audio_source`, and the components of the [capabilities](../guides/scene-capabilities.md) passed to it |
 
 ## `ambient_light`
 
@@ -73,6 +75,22 @@ Uniform light added to every surface. `SceneAmbientLight`.
 | `colorR` | number | none | Legacy red channel. When `colorR`, `colorG` and `colorB` are all set, they replace `color`. |
 | `colorG` | number | none | Legacy green channel. |
 | `colorB` | number | none | Legacy blue channel. |
+
+## `audio_source`
+
+A sound this node plays: a clip from the project's files, placed at the node for a 3D sound.
+`loadProject` reads each clip once, as a 16-bit PCM WAV file; a clip that can't be read or decoded is
+logged with the node, and that source stays silent while the scene plays on. During play a 3D sound
+fades with distance from the active camera and pans with its direction. `SceneAudioSource`.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `clip` | string | `"unassigned"` | Project path of the clip's WAV file. `"unassigned"` is a source with no clip picked yet; nothing is read for it. |
+| `volume` | number | `1` | Loudness, 0 for silent, 1 as recorded. Not negative. |
+| `isSpatial3D` | boolean | `true` | Whether it fades with distance and pans with direction. |
+| `maxDistance` | number | `50` | The distance a 3D sound fades out at. Above 0. |
+| `autoPlay` | boolean | `false` | Whether it starts as soon as the scene plays. |
+| `loop` | boolean | `false` | Whether it starts again when it ends. |
 
 ## `blueprint`
 
@@ -136,12 +154,14 @@ Screen-space UI drawn over the game. Sizes and offsets are in dp. `SceneCanvasEl
 | `order` | integer | `0` | Draw order. Lowest draws first. |
 | `visible` | boolean | `true` | Whether the element is drawn. |
 | `action` | string | `""` | Name of what the element does for the game, such as `jump`. The game decides what each name means. In a played project, an element naming one of the scene's [input actions](#input_actions) adds to it, and its presses are used up: a Joystick steers an axis such as `move`, and a Button holds and presses a button such as `jump` or `run`. Any other name is left for the game to read. |
+| `doubleAction` | string | `""` | What a Button does when double-clicked: two presses within half a second. The second press also fires `action`. Like `action`, a name among the scene's input actions is pressed, and any other is left for the game to read with `consumeDoublePress()`. |
 | `touchOnly` | boolean | `false` | Draw only where touch controls are shown. |
 | `style` | object | `{}` | How the element looks beyond its colours, as an AwakeKt Compose `Style`: `background`, `gradient` (`start`, `end`, `horizontal`), `image`, `fillImage`, `fillImageMode`, `cornerRadius`, `borderWidth`, `borderColor`, `shadow` (`color`, `offsetX`, `offsetY`, `blur`, `spread`), `textColor`, `textShadow` (`color`, `offsetX`, `offsetY`), `textOutline` (`color`, `width`), `alpha`, and `hovered` and `pressed` states for a Button. `image` is an `Image`'s picture, a frame, or a `Bar`'s track; `fillImage` is a `Bar`'s fill, cut at `value` or, with `fillImageMode` `Squeeze`, drawn at the filled width with both end caps kept. Each image is a `CanvasImage`: `path`, a region (`regionX`, `regionY`, `regionWidth`, `regionHeight`), slice insets (`sliceLeft`, `sliceTop`, `sliceRight`, `sliceBottom`), `repeatEdges`, `repeatCenter`, `tint` and `pixelated`. See [Game UI](../guides/game-ui.md#style-an-element). |
 | `textAlign` | `TopLeft` · `TopCenter` · `TopRight` · `CenterLeft` · `Center` · `CenterRight` · `BottomLeft` · `BottomCenter` · `BottomRight` | none | Where a `Text`'s or `Button`'s text sits in the element. None keeps the kind's own: top-left for a `Text`, centred for a `Button`. |
 | `follow` | string | `""` | The name of a node the element follows on screen. Its `anchor` point stands on the node's projected position, nudged inward by its offsets, and it hides when the node is behind the camera or missing. |
 | `followOffset` | vector | `{x: 0, y: 0, z: 0}` | World-space offset from the followed node, such as above its head. |
 | `followBounds` | boolean | `false` | Cover the screen rectangle of the followed node's meshes instead of standing at its point. Its children anchor to that box's edges. |
+| `followOutset` | number | `0` | With `followBounds`, how far the box reaches past the node's rectangle on each side, in dp, so corner children sit outside the node. Negative pulls it in, never below nothing. |
 | `layout` | object | none | Lay the element's children out in rows or columns instead of anchoring each: `direction` (`Row` · `RowReverse` · `Column` · `ColumnReverse`), `wrap`, `gap`, `padding`, `justify` (`Start` · `Center` · `End` · `SpaceBetween` · `SpaceAround` · `SpaceEvenly`) and `align` (`Start` · `Center` · `End` · `Stretch`). A laid-out child keeps its `width` and `height` and ignores its anchor and offsets. See [Game UI](../guides/game-ui.md#lay-out-children). |
 | `grow` | number | `0` | In a parent with a `layout`, this element's share of its line's leftover space. Not negative. |
 | `bind` | object | none | Game state the element shows without code. `node` names a node; `value` is a `component.field` for a Bar's fill, divided by `max` (a field or a number); `text` fills each `{component.field}`, or `{component.field:n0}` with a number format, in a Text's or Button's words. See [Game UI](../guides/game-ui.md#show-game-state). |
