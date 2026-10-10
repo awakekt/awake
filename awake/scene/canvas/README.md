@@ -24,7 +24,8 @@ Not to be confused with Compose's `Canvas` (a surface you draw pixels on) or
   through `Modifier.styleable`: fill, gradient, corner radius, border, shadow, text colour, alpha,
   `hovered` and `pressed` states for a Button, and images. `style.image` is an Image's picture, the
   frame of a Panel, Button or Text, or a Bar's track; `style.fillImage` is a Bar's fill, cut at
-  `value`. A `CanvasImage` names a project file, the region of it to use and the slice insets that
+  `value`, or with `style.fillImageMode` `Squeeze` drawn at the filled width with both end caps kept.
+  A `CanvasImage` names a project file, the region of it to use and the slice insets that
   keep its corners whole.
 
 ## Drawing
