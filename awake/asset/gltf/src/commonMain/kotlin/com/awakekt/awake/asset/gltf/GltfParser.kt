@@ -74,16 +74,56 @@ object GltfParser {
         parse(json, external)
     }
 
-    /** Fetches all non-data URIs referenced by [json], resolved relative to [assetPath]. */
+    /**
+     * Fetches all non-data URIs referenced by [json], resolved relative to [assetPath]. A URI is a
+     * percent-encoded RFC 3986 reference, as glTF requires, so `Part%20Foot.png` reads the file
+     * `Part Foot.png`. The result is keyed by each URI as the document writes it.
+     */
     suspend fun loadExternalResources(
         json: String,
         assetPath: AssetPath,
         source: AssetSource,
     ): Result<Map<String, ByteArray>> = runCatching {
         externalUris(json).associateWith { uri ->
-            source.read(assetPath.resolve(uri)).getOrThrow()
+            source.read(assetPath.resolve(percentDecoded(uri))).getOrThrow()
         }
     }
+
+    /**
+     * [uri] with its percent-encoded bytes decoded as UTF-8, so `Part%20Foot.png` is
+     * `Part Foot.png` and `caf%C3%A9.png` is `café.png`. A `%` that isn't followed by two hex
+     * digits stays as it is, and so does `+`, which only form encoding treats as a space.
+     */
+    internal fun percentDecoded(uri: String): String {
+        if ('%' !in uri) return uri
+        val encoded = uri.encodeToByteArray()
+        val decoded = ByteArray(encoded.size)
+        var read = 0
+        var written = 0
+        while (read < encoded.size) {
+            val high = if (encoded[read] == PERCENT && read + 2 <= encoded.lastIndex) hexValue(encoded[read + 1]) else -1
+            val low = if (high >= 0) hexValue(encoded[read + 2]) else -1
+            if (low >= 0) {
+                decoded[written++] = (high * HEX_RADIX + low).toByte()
+                read += ESCAPE_LENGTH
+            } else {
+                decoded[written++] = encoded[read++]
+            }
+        }
+        return decoded.decodeToString(0, written)
+    }
+
+    private fun hexValue(byte: Byte): Int = when (val char = byte.toInt().toChar()) {
+        in '0'..'9' -> char - '0'
+        in 'a'..'f' -> char - 'a' + DECIMAL_DIGITS
+        in 'A'..'F' -> char - 'A' + DECIMAL_DIGITS
+        else -> -1
+    }
+
+    private const val PERCENT = '%'.code.toByte()
+    private const val HEX_RADIX = 16
+    private const val DECIMAL_DIGITS = 10
+    private const val ESCAPE_LENGTH = 3
 
     /**
      * Parses the first mesh from a glTF JSON string.
