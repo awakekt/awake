@@ -9,24 +9,10 @@ plugins {
     id("com.diffplug.spotless")
 }
 
-// ktlint 1.5.0 cannot parse Kotlin 2.2 context parameters (`context(name: Type)`), which
-// :awake:compose:* is built on. Bump the rest of the repo separately, against a clean tree.
-// :awake:ui:benchmark and :awake:editor declare context-parameterised helpers to drive the
-// compose engine's ComposeHost, so they need the same bump.
-val ktlintVersion = if (project.path.startsWith(":awake:compose") ||
-    project.path.startsWith(":awake:ui") ||
-    project.path.startsWith(":awake:editor") ||
-    project.path == ":awake:scene:canvas" ||
-    project.path.startsWith(":app") ||
-    project.path.startsWith(":plugins") ||
-    project.path == ":samples:ui-showcase" ||
-    project.path == ":samples:engine-showcase" ||
-    project.path == ":samples:compose-showcase"
-) {
-    "1.7.1"
-} else {
-    "1.5.0"
-}
+// One ktlint for every module. 1.5.0 can't parse Kotlin 2.2 context parameters (`context(name: Type)`),
+// and two versions in one build made the result depend on task order: a Gradle daemon reused
+// whichever version it loaded first, so a module passed or failed by which ran before it.
+val ktlintVersion = "1.7.1"
 
 // Consumers under a different license (e.g. AGPL-3.0-only OR LicenseRef-Commercial) set
 // `awake.spotless.spdxLicense` in gradle.properties instead of fighting the header step.

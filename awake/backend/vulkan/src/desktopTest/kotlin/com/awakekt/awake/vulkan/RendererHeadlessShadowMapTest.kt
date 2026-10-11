@@ -181,6 +181,7 @@ class RendererHeadlessShadowMapTest {
         const val BYTES_PER_PIXEL = 4
 
         /** Well above 8-bit dither: a real shadow covers far more of a 128x128 frame than this. */
+
         /** Ground-only band: below the caster's screen extent, inside the frame. */
         const val BAND_TOP = 70
         const val BAND_BOTTOM = 100

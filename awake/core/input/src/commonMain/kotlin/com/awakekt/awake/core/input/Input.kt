@@ -25,6 +25,7 @@ enum class Key {
     Unknown,
 
     // Gameplay movement and debug — the original set.
+
     /** The 'W' key, typically used for forward movement. */
     W,
 
@@ -62,6 +63,7 @@ enum class Key {
     // models "held" exactly right -- a second representation would be a second thing to keep in
     // sync. Left and right map to the same entry: nothing in this engine distinguishes them, and
     // splitting them would double every host's table for a difference no caller reads.
+
     /** The Control modifier key (left or right). */
     Ctrl,
 
@@ -75,6 +77,7 @@ enum class Key {
     Meta,
 
     // Navigation and activation — what a focus ring, a menu and a dialog need.
+
     /** The Tab navigation key. */
     Tab,
 
@@ -113,6 +116,7 @@ enum class Key {
 
     // The rest of the letters. A shortcut needs the key's identity: `typedText` reporting that "s"
     // was produced is not the same as knowing S went down while Ctrl was held.
+
     /** The letter key 'B'. */
     B,
 

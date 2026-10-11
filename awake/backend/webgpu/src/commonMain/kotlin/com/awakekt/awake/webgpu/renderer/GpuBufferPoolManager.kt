@@ -115,6 +115,7 @@ internal class GpuBufferPoolManager(
      * `hasDynamicOffset` would need just one of each, but threading per-draw offsets through
      * the shared `CommandRecorder` port is a cross-backend change -- worth it only if draw
      * counts make the allocation count matter. */
+
     /** Returns a draw slot only when the selected pipeline declares group 0. The handle carries
      * the shared shader metadata, so callers cannot accidentally create binding 0 for a
      * resource-free pipeline whose explicit layout is `[]`. */

@@ -231,6 +231,7 @@ class LineMesh(
         const val OFFSCREEN_FRAMES = 1
 
         /** pos (vec3) + color (vec4) -- see `debug_line.vert`. */
+
         /** Aliased, not re-declared: a second literal is exactly the stride drift Phase 1 hit
          * on rounded quads (webgpu had 15 where the shared truth was 16). */
         val FLOATS_PER_VERTEX = DebugLineLayout.FLOATS_PER_VERTEX

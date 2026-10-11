@@ -1179,6 +1179,7 @@ class JoltPhysicsWorld private constructor(
      * cost; if streamed terrain ever makes it a frame cost, the upgrade is a bulk
      * array-to-typed-array interop intrinsic, not a different shape here.
      */
+
     /**
      * Known limit: vertices and indices cross one element at a time, the same ceiling the heightfield
      * samples hit -- Kotlin/Wasm-GC arrays have no linear memory to bulk-copy from. Fine at a

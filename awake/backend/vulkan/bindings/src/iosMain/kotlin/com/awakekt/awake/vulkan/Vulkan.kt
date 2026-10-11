@@ -547,6 +547,7 @@ private fun throwOnVkFailure(result: Int, operation: String) {
 
 // Phase 6 (MoltenVK cinterop) is in progress -- see docs/mvp-plan.md. Non-TODO() functions link
 // against the vendored MoltenVK.xcframework but are compiled-only, not yet hardware-verified.
+
 /**
  * iOS actual of [Vulkan], implemented through MoltenVK cinterop and compiled but not yet
  * hardware-verified. A failed call throws an [IllegalStateException], or in a few cases a

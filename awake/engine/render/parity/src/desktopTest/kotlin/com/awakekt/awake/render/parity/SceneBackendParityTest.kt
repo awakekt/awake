@@ -101,6 +101,7 @@ class SceneBackendParityTest {
     }
 
     /** A skinned part's material tints its texture on both backends: white turns red, and stays white untinted. */
+
     /** The lit side of a turned skinned mesh is the one facing the light, not the one it was modelled facing it. */
     @Test
     fun aTurnedSkinnedMeshIsLitInTheWorldOnBothBackends() {
@@ -624,6 +625,7 @@ class SceneBackendParityTest {
      * the same 581 pixels either way; only the numbers written into them differ.
      */
     /** [below] maps the ground's lit level to the level a shadowed pixel falls below. */
+
     /** The ground's shadowed pixels, measured as [shadowCentroid] finds them. */
     private fun ByteArray.shadowedGroundPixels(): Int {
         val ground = (GROUND_TOP..GROUND_BOTTOM).flatMap { y -> (0 until SCENE_SIZE).map { x -> x to y } }

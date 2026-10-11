@@ -55,6 +55,7 @@ fun appSpec(
 // AppSpecBuilder and expose the same install/lifecycle/service methods. AppDsl adds
 // `window(...)` on top since only the top-level app {} block owns window configuration;
 // an AppModule installs into an already-windowed spec.
+
 /**
  * Base DSL scope for configuring application lifecycle, dependencies, and render hooks.
  *

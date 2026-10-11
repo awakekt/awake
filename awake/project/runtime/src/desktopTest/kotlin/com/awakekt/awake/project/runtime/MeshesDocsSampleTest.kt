@@ -142,6 +142,7 @@ class MeshesDocsSampleTest {
 }
 
 // --8<-- [start:assets]
+
 /** Registers the names `mesh_renderer` uses: a mesh called "cube" and a material called "lit-shadow". */
 fun SceneAppDsl.crateAssets() {
     assets {

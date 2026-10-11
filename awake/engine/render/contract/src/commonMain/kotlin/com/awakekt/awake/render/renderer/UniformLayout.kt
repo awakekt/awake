@@ -101,6 +101,7 @@ val GpuDataShape.uniformFloats: Int
 /** Common fields every lit shader's `Uniforms` struct draws from -- a new shader composes
  * from these instead of hand-summing a new literal; a genuinely new field (not yet covered
  * here) is added once, to this list, not to N per-shader consts. */
+
 /**
  * How many cascades a shadow map can hold.
  *

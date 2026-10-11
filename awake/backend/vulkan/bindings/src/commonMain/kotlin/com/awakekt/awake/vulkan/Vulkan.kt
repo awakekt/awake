@@ -72,6 +72,7 @@ expect object Vulkan {
     fun vkDestroyInstance(@VkHandleRef("VkInstance") instance: Long)
 
     // Device management
+
     /**
      * Enumerates the Vulkan extension properties available for the instance.
      *
@@ -180,6 +181,7 @@ expect object Vulkan {
     ): Long
 
     // Presentation - Window surface
+
     /**
      * Creates an Android surface for Vulkan presentation.
      *
@@ -219,6 +221,7 @@ expect object Vulkan {
     )
 
     // Presentation - Swap chain
+
     /**
      * Retrieves the capabilities of the surface on the specified physical device.
      *
@@ -715,6 +718,7 @@ expect object Vulkan {
     )
 
     // Debug messenger
+
     /**
      * Creates a debug messenger that forwards validation and driver messages to the callback in
      * [createInfo]. It needs `VK_EXT_debug_utils` enabled on the instance.
