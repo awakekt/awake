@@ -25,6 +25,8 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)
+            // A character walking into a sensor needs a real physics world.
+            implementation(project(":awake:backend:jolt"))
         }
     }
 }

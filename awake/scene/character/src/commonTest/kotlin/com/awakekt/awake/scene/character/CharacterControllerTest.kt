@@ -9,6 +9,8 @@ import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.InterpolatedSystem
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.physics.BodyHandle
+import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.physics.jolt.createJoltPhysicsWorld
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.binding.fromWorld
@@ -27,6 +29,7 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class CharacterControllerTest {
@@ -180,19 +183,57 @@ class CharacterControllerTest {
         assertEquals(target.z, arena.position.z, GROUND_TOLERANCE)
     }
 
+    /** The body a character carries for sensors to see is destroyed with the character, not left standing. */
+    @Test
+    fun aDestroyedCharactersOwnBodyGoesWithIt() = runTest {
+        val arena = arena(jumpSpeed = 0f).withOwnBody()
+        arena.run(1)
+        val body = assertNotNull(arena.character.controller?.body, "the character carries a body of its own")
+        assertTrue(arena.simulates(body))
+
+        arena.world.destroy(arena.player)
+        arena.run(1)
+
+        assertFalse(arena.simulates(body), "the body outlived its character")
+    }
+
+    @Test
+    fun aReplacedCharacterLeavesNoBodyBehind() = runTest {
+        val arena = arena(jumpSpeed = 0f).withOwnBody()
+        arena.run(1)
+        val first = assertNotNull(arena.character.controller?.body)
+
+        arena.withOwnBody().run(1)
+
+        assertFalse(arena.simulates(first), "the replaced character's body stayed")
+        assertTrue(arena.simulates(assertNotNull(arena.character.controller?.body)), "and the new one has its own")
+    }
+
     private suspend fun arena(jumpSpeed: Float): Arena {
         val world = World()
         SceneLoader.decode(scene(jumpSpeed)).instantiate(world = world, componentRegistry = registry)
         val physicsWorld = createJoltPhysicsWorld()
-        return Arena(world, PhysicsSystem(physicsWorld), CharacterControllerSystem(physicsWorld), world.named("Player"))
+        return Arena(world, physicsWorld, PhysicsSystem(physicsWorld), CharacterControllerSystem(physicsWorld), world.named("Player"))
     }
 
     private class Arena(
         val world: World,
+        val physicsWorld: PhysicsWorld,
         val physics: PhysicsSystem,
         val characters: CharacterControllerSystem,
         val player: Entity,
     ) {
+        /** Gives the player a fresh character that carries a body of its own, as a scene with a sensor does. */
+        fun withOwnBody(): Arena = apply {
+            world.add(player, CharacterController(character.config.copy(innerBody = true), character.jumpSpeed, character.gravity))
+        }
+
+        fun simulates(handle: BodyHandle): Boolean {
+            var found = false
+            physicsWorld.forEachBodyTransform { visited, _, _ -> if (visited == handle) found = true }
+            return found
+        }
+
         val position get() = world.get<Transform>(player)!!.position
         val intent get() = world.get<MovementControl>(player)!!
         val character get() = world.get<CharacterController>(player)!!

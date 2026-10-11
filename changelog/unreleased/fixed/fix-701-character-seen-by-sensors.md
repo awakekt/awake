@@ -1,0 +1,3 @@
+- **A sensor detects the player in a project played from data.** A character moves by sweeping its shape, so it had no body for a sensor to report, and a blueprint's On Sensor Enter never fired for it (#701).
+  - **Now:** in a scene with a sensor, the project player gives each `character_controller` a kinematic body of its own, as `CharacterConfig.innerBody` does. Scenes without a sensor are unchanged.
+  - **Cleanup:** `CharacterControllerSystem` now destroys a character's own body when the character is destroyed or its `CharacterController` replaced. Before, the body stayed behind in the physics world, solid and still tripping sensors.

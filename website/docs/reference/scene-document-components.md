@@ -179,6 +179,8 @@ A walking, jumping capsule moved by the physics character controller. `SceneChar
 | `jumpSpeed` | number | `0` | Upward speed of a jump. `0` means it cannot jump. Not negative. |
 | `gravity` | number | `-9.81` | Vertical acceleration. |
 
+In a scene with a sensor (a `physics_body` with `sensor` set), the project player gives each character a kinematic body of its own, so a sensor detects the player and a blueprint's On Sensor Enter fires. The character moves the same either way. The body is solid, so other bodies rest on or bump into it, and it's destroyed with the character.
+
 ## `chase`
 
 Pursues another node along navigation paths. `SceneChase`.
