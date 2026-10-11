@@ -94,18 +94,45 @@ class InputTest {
     }
 
     @Test
-    fun aSubFrameDownUpPairIsNotSilentlyDropped() {
-        // F11: a fast tap, a trackpad tap, or any synthetic/automation click can deliver
-        // both mousedown and mouseup before the frame reads pointerDown -- the second call
-        // used to silently erase the first with no trace either edge occurred.
+    fun aSubFrameDownUpPairIsHeldForOneSnapshotThenReleased() {
+        // A fast tap, a trackpad tap, or any synthetic/automation click can deliver both
+        // mousedown and mouseup before the frame reads the pointer. Shown as both edges with the
+        // pointer up, code that reads only pointerDown or isDown(Primary) never saw the click.
         val input = Input()
         input.setPointer(down = true, x = 10f, y = 10f)
         input.setPointer(down = false, x = 10f, y = 10f)
 
-        val frame = input.updateSnapshot()
-        assertTrue(frame.pointerPressed, "the down edge must not be erased by the up call")
-        assertTrue(frame.pointerReleased, "the up edge must also be captured")
-        assertFalse(frame.pointerDown, "continuous state still reflects the final call")
+        val tap = input.updateSnapshot()
+        assertTrue(tap.pointerPressed, "the down edge must not be erased by the up call")
+        assertTrue(tap.pointerDown, "the tap shows as held for one snapshot")
+        assertFalse(tap.pointerReleased, "its release comes in the next")
+        assertTrue(tap.isDown(PointerButton.Primary))
+        assertTrue(tap.wasPressed(PointerButton.Primary), "the button's edge matches the pointer's")
+
+        val after = input.updateSnapshot()
+        assertFalse(after.pointerDown)
+        assertFalse(after.pointerPressed)
+        assertTrue(after.pointerReleased, "the up edge is not lost either")
+        assertTrue(PointerButton.Primary in after.buttonsReleased)
+
+        val idle = input.updateSnapshot()
+        assertFalse(idle.pointerPressed || idle.pointerReleased || idle.pointerDown, "and then nothing")
+    }
+
+    @Test
+    fun aPressThatComesWhileATapsReleaseIsOwedJoinsIt() {
+        val input = Input()
+        input.setPointer(down = true, x = 10f, y = 10f)
+        input.setPointer(down = false, x = 10f, y = 10f)
+        input.updateSnapshot()
+
+        input.setPointer(down = true, x = 10f, y = 10f)
+        val held = input.updateSnapshot()
+        assertTrue(held.pointerDown, "two clicks inside two frames read as one press")
+        assertFalse(held.pointerPressed || held.pointerReleased)
+
+        input.setPointer(down = false, x = 10f, y = 10f)
+        assertTrue(input.updateSnapshot().pointerReleased)
     }
 
     @Test

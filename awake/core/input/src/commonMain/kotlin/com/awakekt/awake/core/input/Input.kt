@@ -358,11 +358,10 @@ data class InputSnapshot(
     val typedText: String,
     val editActions: List<TextEditAction>,
     val secondaryPointerDown: Boolean = false,
-    /** A press happened this frame, even if a matching release also happened before this
-     * snapshot was taken. `pointerDown` alone can miss a sub-frame down+up pair -- it only
-     * reflects the latest event, not whether one occurred. See [Input.setPointer]. */
+    /** A press happened this frame. A press released before this snapshot -- a tap -- shows
+     * here with [pointerDown] true, and its release in the next snapshot. See [Input.updateSnapshot]. */
     val pointerPressed: Boolean = false,
-    /** A release happened this frame, same caveat as [pointerPressed]. */
+    /** A release happened this frame: a press released here, or a tap from the frame before. */
     val pointerReleased: Boolean = false,
     val imeComposition: ImeComposition? = null,
     val imeCommit: String? = null,
@@ -435,6 +434,10 @@ class Input {
     private var pendingPointerPressed = false
     private var pendingPointerReleased = false
 
+    // A press released before the snapshot that would have seen it was shown held in the last
+    // snapshot, so this one owes its release. See updateSnapshot().
+    private var releaseOwed = false
+
     /** Set by the UI pass to signal focus to platform bridges (e.g. soft keyboard). */
     var textInputFocused: Boolean = false
 
@@ -477,10 +480,19 @@ class Input {
         val previousKeysDown = currentSnapshot.keysDown
         val previousButtonsDown = currentSnapshot.buttonsDown
         val heldKeys = keysDown.toSet()
+        // A press and release that both land between two snapshots -- a trackpad tap, a fast or
+        // automated click -- shows as held in this snapshot and released in the next. Code that
+        // reads only pointerDown or isDown(Primary) then sees the click, and a UI that captures on
+        // press still takes it first. A press that comes while that release is owed joins the
+        // first: two clicks inside two frames read as one.
+        val owed = releaseOwed
+        val tap = !owed && pendingPointerPressed && !pointerDown
+        releaseOwed = tap
+        val shownButtons = if (tap) heldButtons + PointerButton.Primary else heldButtons.toSet()
         currentSnapshot = InputSnapshot(
             pointerX = pointerX,
             pointerY = pointerY,
-            pointerDown = pointerDown,
+            pointerDown = pointerDown || tap,
             scrollDeltaX = scrollDeltaX,
             scrollDeltaY = scrollDeltaY,
             keysDown = heldKeys,
@@ -491,11 +503,11 @@ class Input {
             imeCommit = pendingImeCommit,
             editActions = pendingEditActions.toList(),
             secondaryPointerDown = secondaryPointerDown,
-            pointerPressed = pendingPointerPressed,
-            pointerReleased = pendingPointerReleased,
-            buttonsDown = heldButtons.toSet(),
-            buttonsPressed = heldButtons - previousButtonsDown,
-            buttonsReleased = previousButtonsDown - heldButtons,
+            pointerPressed = pendingPointerPressed && !owed,
+            pointerReleased = if (owed) !pointerDown else pendingPointerReleased && !tap,
+            buttonsDown = shownButtons,
+            buttonsPressed = shownButtons - previousButtonsDown,
+            buttonsReleased = previousButtonsDown - shownButtons,
             scrollSource = scrollSource,
             // The shared empty list on the frames without one, which is nearly all of them.
             clipboardCommands = pendingClipboardCommands.takeIf { it.isNotEmpty() }?.toList() ?: emptyList(),
