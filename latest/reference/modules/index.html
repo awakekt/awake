@@ -2664,7 +2664,7 @@
 </tr>
 <tr>
 <td>Version</td>
-<td>Core modules share one version; the newest is <code>0.8.3</code>. Vulkan family: <code>0.1.24</code>, built against Core <code>0.8.2</code>. See <a href="../releases/">Releases and compatibility</a>.</td>
+<td>Core modules share one version; the newest is <code>0.8.4</code>. Vulkan family: <code>0.1.25</code>, built against Core <code>0.8.3</code>. See <a href="../releases/">Releases and compatibility</a>.</td>
 </tr>
 <tr>
 <td>Catalog alias</td>
@@ -2682,8 +2682,8 @@
 </table>
 <p>A catalog entry looks like this:</p>
 <div class="language-toml highlight"><span class="filename">gradle/libs.versions.toml</span><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">[versions]</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">awake</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"0.8.2"</span>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">awake-vulkan</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"0.1.24"</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">awake</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"0.8.3"</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">awake-vulkan</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"0.1.25"</span>
 </span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
 </span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="k">[libraries]</span>
 </span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="n">awake-scene-runtime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">module</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"com.awakekt.awake.scene:runtime"</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="p">.</span><span class="n">ref</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"awake"</span><span class="w"> </span><span class="p">}</span>
@@ -3251,14 +3251,14 @@
 <tr>
 <td>Core</td>
 <td>Every module above except the Vulkan family</td>
-<td><code>0.8.3</code></td>
+<td><code>0.8.4</code></td>
 <td>One version for all. Tagged <code>v*</code>.</td>
 </tr>
 <tr>
 <td>Vulkan</td>
 <td><code>backend:vulkan</code>, <code>vulkan-kmp</code>, <code>vulkan-kmp-android-native</code></td>
-<td><code>0.1.24</code></td>
-<td>Its own release train, tagged <code>vulkan-v*</code>. Each release names the Core release it was built against, here <code>0.8.2</code>.</td>
+<td><code>0.1.25</code></td>
+<td>Its own release train, tagged <code>vulkan-v*</code>. Each release names the Core release it was built against, here <code>0.8.3</code>.</td>
 </tr>
 <tr>
 <td>WebGPU</td>
