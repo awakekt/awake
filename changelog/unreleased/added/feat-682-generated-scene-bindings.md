@@ -1,0 +1,6 @@
+- **A scene component's document and binding generated from one spec.** The new Gradle plugin `com.awakekt.awake.plugin.scene-components` reads `src/<sourceSet>/scene-components/<serialName>.json` and generates the component's `@Serializable` document class and the binding that copies every field by name between it and the runtime component, with no reflection (#682).
+  - **Missing fields:** a field the hand-written runtime component lacks now fails to compile, instead of being dropped when a scene is saved.
+  - **Validation:** what isn't a field copy stays hand-written, through a `validate` extension the document calls.
+  - **Docs:** with `awakeSceneComponents { docsPage }` set, `check` keeps the component's field table on a reference page to its spec, and `update…SceneComponentDocs` writes it in.
+  - **First user:** `canvas_element` is now generated this way, and its saved form and public API are unchanged.
+  - See [Scene capabilities](website/docs/guides/scene-capabilities.md#generate-a-components-document-and-binding).

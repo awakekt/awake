@@ -34,6 +34,53 @@ and runs a system that pulses every beacon:
   name of its own. A system that holds something to give back, such as GPU content, implements
   `AutoCloseable` and is closed when the scene stops.
 
+## Generate a component's document and binding
+
+A component's fields are usually written three times: in the document class a scene saves, in the
+runtime component, and in the binding that copies each one both ways. A field the binding misses still
+loads, and is quietly dropped when the scene is saved. The `com.awakekt.awake.plugin.scene-components`
+Gradle plugin writes the document class and the binding from one spec, so they can't fall out of step.
+Core's `canvas_element` is made this way.
+
+Apply the plugin, and put a spec named after the component in `src/commonMain/scene-components/`:
+
+```json title="src/commonMain/scene-components/lighthouse_beacon.json"
+{
+  "package": "com.example.harbor",
+  "serialName": "lighthouse_beacon",
+  "sceneClass": "SceneLighthouseBeacon",
+  "component": "LighthouseBeacon",
+  "binding": "LighthouseBeaconBinding",
+  "construction": "properties",
+  "validate": "validateLighthouseBeacon",
+  "fields": [
+    { "name": "range", "type": "Float", "default": "40f", "range": { "min": 0.0, "exclusiveMin": true }, "doc": "How far the beam reaches. Above 0." },
+    { "name": "colour", "type": "BeamColour", "default": "BeamColour.White", "docType": "`White` · `Red`", "docDefault": "`White`", "doc": "The beam's colour." }
+  ]
+}
+```
+
+- **Generated:** the `@Serializable` document class `sceneClass`, saved as `serialName`, with each
+  field's default and `@PropertyRange`. Also the `binding` object, with `toComponent()` and
+  `toSceneComponent()` copying every field by name, with no reflection, so an obfuscated release
+  keeps it working. Both go into `build/generated` and compile for every platform.
+- **Hand-written:** the runtime `component`, with the same field names and types. The generated
+  binding names each one, so a field it lacks fails to compile. With `construction` `properties`, the
+  binding builds the component with `LighthouseBeacon()` and sets each field. With `constructor`, it
+  passes them as named arguments.
+- **`validate`** names an extension, `fun SceneLighthouseBeacon.validateLighthouseBeacon(path: String)`,
+  that the document's `validate` returns. Write what a field copy can't check there, such as the
+  bounds each `range` declares. Leave `validate` out for a component with nothing to check.
+- **`imports`** lists, by full name, the types and constants from other packages that the fields'
+  types and defaults name.
+
+A project can keep each component's field table on a reference page the same way. Set
+`awakeSceneComponents { docsPage.set(file("docs/components.md")) }`. Then `check` fails when the
+table under a component's ``## `serialName` `` heading differs from its spec, and
+`updateCommonMainSceneComponentDocs` writes it in. The Type and Default cells are worked out from the
+type and default where they can be: a number, string, boolean, vector or list. Write `docType` and
+`docDefault` for the rest, such as an enum's values.
+
 ## Run it
 
 Pass the capability when the project loads:

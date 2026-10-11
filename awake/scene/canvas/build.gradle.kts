@@ -10,6 +10,13 @@ plugins {
     id("com.awakekt.awake.plugin.dokka")
     id("com.awakekt.awake.plugin.detekt")
     id("com.awakekt.awake.plugin.spotless")
+    id("com.awakekt.awake.plugin.scene-components")
+}
+
+// canvas_element's document class and binding are generated from src/commonMain/scene-components;
+// its field table on the reference page is kept to the same spec.
+awakeSceneComponents {
+    docsPage.set(layout.projectDirectory.file("../../../website/docs/reference/scene-document-components.md"))
 }
 
 kotlin {

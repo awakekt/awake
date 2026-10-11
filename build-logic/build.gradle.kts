@@ -19,6 +19,7 @@ val publicPluginIds = setOf(
     "com.awakekt.awake.plugin.project-content",
     "com.awakekt.awake.plugin.shader-pipeline",
     "com.awakekt.awake.plugin.icon-codegen",
+    "com.awakekt.awake.plugin.scene-components",
     "com.awakekt.awake.plugin.dokka",
     "com.awakekt.awake.plugin.detekt",
     "com.awakekt.awake.plugin.spotless",
@@ -39,6 +40,8 @@ dependencies {
     implementation(libs.spotless.gradle.plugin)
     implementation(libs.dokka.gradle.plugin)
     implementation(libs.kotlinx.serialization.json)
+    // Writes the scene component documents and bindings com.awakekt.awake.plugin.scene-components generates.
+    implementation(libs.kotlinpoet)
     implementation("com.vanniktech:gradle-maven-publish-plugin:0.37.0")
     testImplementation(gradleTestKit())
     testImplementation(kotlin("test"))

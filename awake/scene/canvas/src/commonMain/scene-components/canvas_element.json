@@ -1,0 +1,197 @@
+{
+  "package": "com.awakekt.awake.scene.canvas",
+  "serialName": "canvas_element",
+  "sceneClass": "SceneCanvasElement",
+  "component": "CanvasElement",
+  "binding": "CanvasElementBinding",
+  "construction": "properties",
+  "validate": "validateCanvasElement",
+  "doc": "The saved form of a [CanvasElement]: screen-space UI drawn over the game, with sizes and offsets in dp.",
+  "imports": [
+    "com.awakekt.awake.scene.document.SceneVec3"
+  ],
+  "fields": [
+    {
+      "name": "kind",
+      "type": "CanvasElementKind",
+      "default": "CanvasElementKind.Text",
+      "docType": "`Text` · `Panel` · `Bar` · `Button` · `Joystick` · `Image`",
+      "docDefault": "`Text`",
+      "doc": "What the element is."
+    },
+    {
+      "name": "anchor",
+      "type": "CanvasAnchor",
+      "default": "CanvasAnchor.TopLeft",
+      "docType": "`TopLeft` · `TopCenter` · `TopRight` · `CenterLeft` · `Center` · `CenterRight` · `BottomLeft` · `BottomCenter` · `BottomRight`",
+      "docDefault": "`TopLeft`",
+      "doc": "Screen point the element is placed from."
+    },
+    {
+      "name": "offsetX",
+      "type": "Float",
+      "default": "CanvasElement.DEFAULT_INSET",
+      "docDefault": "`16`",
+      "doc": "Horizontal offset from the anchor."
+    },
+    {
+      "name": "offsetY",
+      "type": "Float",
+      "default": "CanvasElement.DEFAULT_INSET",
+      "docDefault": "`16`",
+      "doc": "Vertical offset from the anchor."
+    },
+    {
+      "name": "width",
+      "type": "Float",
+      "default": "CanvasElement.DEFAULT_WIDTH",
+      "range": {
+        "min": 0.0
+      },
+      "docDefault": "`200`",
+      "doc": "Width. Not negative."
+    },
+    {
+      "name": "height",
+      "type": "Float",
+      "default": "CanvasElement.DEFAULT_HEIGHT",
+      "range": {
+        "min": 0.0
+      },
+      "docDefault": "`40`",
+      "doc": "Height. Not negative."
+    },
+    {
+      "name": "text",
+      "type": "String",
+      "default": "\"\"",
+      "doc": "A `Text` element's content, or a `Button`'s label."
+    },
+    {
+      "name": "fontSize",
+      "type": "Float",
+      "default": "CanvasElement.DEFAULT_FONT_SIZE",
+      "range": {
+        "min": 0.0,
+        "exclusiveMin": true
+      },
+      "docDefault": "`18`",
+      "doc": "Text size. Above 0."
+    },
+    {
+      "name": "color",
+      "type": "String",
+      "default": "\"#FFFFFF\"",
+      "doc": "Foreground color, `#RRGGBB` or `#RRGGBBAA`."
+    },
+    {
+      "name": "background",
+      "type": "String",
+      "default": "\"#00000000\"",
+      "doc": "Background color, `#RRGGBB` or `#RRGGBBAA`."
+    },
+    {
+      "name": "value",
+      "type": "Float",
+      "default": "1f",
+      "range": {
+        "min": 0.0,
+        "max": 1.0
+      },
+      "doc": "A `Bar`'s fill, from 0 to 1."
+    },
+    {
+      "name": "order",
+      "type": "Int",
+      "default": "0",
+      "doc": "Draw order. Lowest draws first."
+    },
+    {
+      "name": "visible",
+      "type": "Boolean",
+      "default": "true",
+      "doc": "Whether the element is drawn."
+    },
+    {
+      "name": "action",
+      "type": "String",
+      "default": "\"\"",
+      "doc": "Name of what the element does for the game, such as `jump`. The game decides what each name means. In a played project, an element naming one of the scene's [input actions](#input_actions) adds to it, and its presses are used up: a Joystick steers an axis such as `move`, and a Button holds and presses a button such as `jump` or `run`. Any other name is left for the game to read."
+    },
+    {
+      "name": "doubleAction",
+      "type": "String",
+      "default": "\"\"",
+      "doc": "What a Button does when double-clicked: two presses within half a second. The second press also fires `action`. Like `action`, a name among the scene's input actions is pressed, and any other is left for the game to read with `consumeDoublePress()`."
+    },
+    {
+      "name": "touchOnly",
+      "type": "Boolean",
+      "default": "false",
+      "doc": "Draw only where touch controls are shown."
+    },
+    {
+      "name": "style",
+      "type": "CanvasStyle",
+      "default": "CanvasStyle()",
+      "docType": "object",
+      "docDefault": "`{}`",
+      "doc": "How the element looks beyond its colours, as an AwakeKt Compose `Style`: `background`, `gradient` (`start`, `end`, `horizontal`), `image`, `fillImage`, `fillImageMode`, `cornerRadius`, `borderWidth`, `borderColor`, `shadow` (`color`, `offsetX`, `offsetY`, `blur`, `spread`), `textColor`, `textShadow` (`color`, `offsetX`, `offsetY`), `textOutline` (`color`, `width`), `alpha`, and `hovered` and `pressed` states for a Button. `image` is an `Image`'s picture, a frame, or a `Bar`'s track; `fillImage` is a `Bar`'s fill, cut at `value` or, with `fillImageMode` `Squeeze`, drawn at the filled width with both end caps kept. Each image is a `CanvasImage`: `path`, a region (`regionX`, `regionY`, `regionWidth`, `regionHeight`), slice insets (`sliceLeft`, `sliceTop`, `sliceRight`, `sliceBottom`), `repeatEdges`, `repeatCenter`, `tint` and `pixelated`. See [Game UI](../guides/game-ui.md#style-an-element)."
+    },
+    {
+      "name": "textAlign",
+      "type": "CanvasAnchor?",
+      "default": "null",
+      "docType": "`TopLeft` · `TopCenter` · `TopRight` · `CenterLeft` · `Center` · `CenterRight` · `BottomLeft` · `BottomCenter` · `BottomRight`",
+      "doc": "Where a `Text`'s or `Button`'s text sits in the element. None keeps the kind's own: top-left for a `Text`, centred for a `Button`."
+    },
+    {
+      "name": "follow",
+      "type": "String",
+      "default": "\"\"",
+      "doc": "The name of a node the element follows on screen. Its `anchor` point stands on the node's projected position, nudged inward by its offsets, and it hides when the node is behind the camera or missing."
+    },
+    {
+      "name": "followOffset",
+      "type": "SceneVec3",
+      "default": "SceneVec3()",
+      "docDefault": "`{x: 0, y: 0, z: 0}`",
+      "doc": "World-space offset from the followed node, such as above its head."
+    },
+    {
+      "name": "followBounds",
+      "type": "Boolean",
+      "default": "false",
+      "doc": "Cover the screen rectangle of the followed node's meshes instead of standing at its point. Its children anchor to that box's edges."
+    },
+    {
+      "name": "followOutset",
+      "type": "Float",
+      "default": "0f",
+      "doc": "With `followBounds`, how far the box reaches past the node's rectangle on each side, in dp, so corner children sit outside the node. Negative pulls it in, never below nothing."
+    },
+    {
+      "name": "layout",
+      "type": "CanvasLayout?",
+      "default": "null",
+      "docType": "object",
+      "doc": "Lay the element's children out in rows or columns instead of anchoring each: `direction` (`Row` · `RowReverse` · `Column` · `ColumnReverse`), `wrap`, `gap`, `padding`, `justify` (`Start` · `Center` · `End` · `SpaceBetween` · `SpaceAround` · `SpaceEvenly`) and `align` (`Start` · `Center` · `End` · `Stretch`). A laid-out child keeps its `width` and `height` and ignores its anchor and offsets. See [Game UI](../guides/game-ui.md#lay-out-children)."
+    },
+    {
+      "name": "grow",
+      "type": "Float",
+      "default": "0f",
+      "range": {
+        "min": 0.0
+      },
+      "doc": "In a parent with a `layout`, this element's share of its line's leftover space. Not negative."
+    },
+    {
+      "name": "bind",
+      "type": "CanvasBinding?",
+      "default": "null",
+      "docType": "object",
+      "doc": "Game state the element shows without code. `node` names a node; `value` is a `component.field` for a Bar's fill, divided by `max` (a field or a number); `text` fills each `{component.field}`, or `{component.field:n0}` with a number format, in a Text's or Button's words. See [Game UI](../guides/game-ui.md#show-game-state)."
+    }
+  ]
+}
