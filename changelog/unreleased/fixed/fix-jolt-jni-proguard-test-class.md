@@ -1,0 +1,1 @@
+- **A desktop app with physics builds with ProGuard.** jolt-jni's desktop jar names a test class in its module-info, `testjoltjni.app.helloworld.HelloWorld`, that the jar doesn't ship, and ProGuard failed the build on the unresolved reference. The Jolt backend's shipped rules now tell ProGuard not to warn about it.
