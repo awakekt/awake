@@ -5,9 +5,6 @@
  */
 package com.awakekt.awake.project.runtime
 
-import com.awakekt.awake.asset.gltf.firstSkinnedAsset
-import com.awakekt.awake.asset.gltf.toAnimationLibrary
-import com.awakekt.awake.core.animation.AnimationPlayer
 import com.awakekt.awake.core.audio.AudioPlayer
 import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.io.AssetSource
@@ -23,16 +20,11 @@ import com.awakekt.awake.scene.authoring.SceneAppDsl
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.controls.GameplayInput
 import com.awakekt.awake.scene.controls.camera.ActiveCamera
-import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.gltf.GltfAssetResolver
 import com.awakekt.awake.scene.rendering.Camera
-import com.awakekt.awake.scene.rendering.animation.Animator
-import com.awakekt.awake.scene.rendering.animation.SkinnedPose
-import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer
-import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import kotlin.math.PI
 
 /** Where a project keeps its manifest, relative to the project root. */
@@ -218,36 +210,6 @@ fun activatePrimaryCamera(world: World) {
     val cameraEntity = chosen ?: world.create().also { world.add(it, Camera(lens = fallbackLens(), isPrimary = true)) }
     world.queryEach(Camera::class) { entity, camera -> camera.isPrimary = entity == cameraEntity }
     if (!world.has(cameraEntity, ActiveCamera::class)) world.add(cameraEntity, ActiveCamera())
-}
-
-/**
- * Gives every skinned glTF model an [Animator] playing its first clip on a loop. A model drawn as
- * parts (`gltf-primitive:<path>#<i>`) animates once: the parts' parent node holds the animator and
- * each skinned part draws its pose, skinned to the model's first skin. A part with no joints, a
- * rigid piece no joint carries, draws in place and takes no pose.
- */
-internal fun SceneAppLifecycleRuntime.startSkinnedAnimations(models: GltfAssetResolver, among: Collection<Entity>? = null) {
-    val assets = requireAssetLibrary()
-    val drawn = mutableListOf<Pair<Entity, String>>()
-    world.queryEach(MeshRenderer::class) { entity, renderer ->
-        if (among != null && entity !in among) return@queryEach
-        val skinned = renderer.mesh.takeIf { it.format.isSkinned }
-        skinned?.let(assets::meshName)?.let { drawn += entity to it }
-    }
-    for ((entity, mesh) in drawn) {
-        val path = models.modelPath(mesh)
-        val scene = models.getLoadedScene(path)
-        val skin = scene?.firstSkinnedAsset()?.skin ?: continue
-        val owner = if (mesh == path) entity else world.get<Transform>(entity)?.parent ?: entity
-        val pose = world.get<SkinnedPose>(owner) ?: run {
-            val clips = scene.toAnimationLibrary()
-            val player = AnimationPlayer(clips)
-            clips.clips.keys.firstOrNull()?.let { player.play(it) }
-            world.add(owner, Animator(player, skin))
-            SkinnedPose(player.update(0f).jointPalette(skin)).also { world.add(owner, it) }
-        }
-        if (owner != entity) world.add(entity, pose)
-    }
 }
 
 internal suspend fun AssetSource.readText(path: String): String =
