@@ -1,0 +1,5 @@
+# Commits git blame skips, for whitespace-only changes that touched many files.
+# GitHub reads this file; locally: git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# chore(format): format every module, and check formatting in CI (#696)
+31aef08af4c655ce9ad9b399fdfbfe93db49e82a
