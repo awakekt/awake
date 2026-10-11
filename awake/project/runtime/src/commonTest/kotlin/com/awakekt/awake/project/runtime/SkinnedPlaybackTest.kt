@@ -36,6 +36,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import kotlin.io.encoding.Base64
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
@@ -233,6 +234,39 @@ class SkinnedPlaybackTest {
         assertEquals(1, reads.of(MODEL), "read once, when the project loaded")
     }
 
+    /**
+     * A skinned model with no clips, a part another skeleton poses, spawns in its rest pose with no
+     * animator: the first time, while it loads, and again once it has loaded. Its rest pose is the
+     * identity for each joint, since each joint's inverse bind undoes its rest transform.
+     */
+    @Test
+    fun aClipLessSkinnedModelSpawnsInItsRestPoseEveryTime() = runTest {
+        val (project, game, runtime) = play(Reads(), HELD to skinnedTriangleGltf(clips = false))
+        val first = runtime.spawn(project, remote(HELD))
+        game.updateUntil { runtime.world.get<MeshRenderer>(first.root) != null }
+
+        val second = runtime.spawn(project, remote(HELD))
+        game.update(DELTA, WIDTH, HEIGHT)
+
+        for ((which, node) in listOf("first" to first.root, "second" to second.root)) {
+            assertNull(runtime.world.get<Animator>(node), "the $which spawn has no animator; its owner poses it")
+            val pose = assertNotNull(runtime.world.get<SkinnedPose>(node), "the $which spawn draws in a pose")
+            assertContentEquals(REST_PALETTE, pose.jointPalette, "the $which spawn stands in its rest pose")
+        }
+        assertEquals(1, runtime.world.animators(), "only the scene's own model, which has a clip, animates")
+    }
+
+    /** A project whose own scene draws a model with no clips loads, and the model stands in its rest pose. */
+    @Test
+    fun aSceneModelWithNoClipsStandsInItsRestPose() = runTest {
+        val (_, _, runtime) = play(Reads(), MODEL to skinnedTriangleGltf(clips = false))
+
+        val arm = runtime.world.entityNamed("Arm")
+
+        assertEquals(0, runtime.world.animators())
+        assertContentEquals(REST_PALETTE, assertNotNull(runtime.world.get<SkinnedPose>(arm)).jointPalette)
+    }
+
     /** A model the project's files don't have is logged by name, and its node stays in the scene without it. */
     @Test
     fun aModelThatCantBeLoadedIsLoggedByName() = runTest {
@@ -357,9 +391,10 @@ class SkinnedPlaybackTest {
     /**
      * One triangle skinned to two joints. The second joint turns 90 degrees about Z over one second,
      * carrying the triangle's top vertex with it. With [crate], the triangle again, unskinned, on a
-     * node at the scene root 3 m along x.
+     * node at the scene root 3 m along x. Without [clips], the file has no animation: a part posed by
+     * another skeleton, as a piece of armour is.
      */
-    private fun skinnedTriangleGltf(parts: Int = 1, crate: Boolean = false): String {
+    private fun skinnedTriangleGltf(parts: Int = 1, crate: Boolean = false, clips: Boolean = true): String {
         val positions = floats(0f, 0f, 0f, 1f, 0f, 0f, 0f, 1f, 0f)
         val joints = byteArrayOf(0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0)
         val weights = floats(1f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 1f, 0f, 0f, 0f)
@@ -397,8 +432,7 @@ class SkinnedPlaybackTest {
             ${if (crate) """,{"name": "Crate", "mesh": 1, "translation": [3, 0, 0]}""" else ""}
           ],
           "skins": [{"inverseBindMatrices": 4, "joints": [0, 1]}],
-          "animations": [{"channels": [{"sampler": 0, "target": {"node": 1, "path": "rotation"}}],
-                          "samplers": [{"input": 5, "output": 6, "interpolation": "LINEAR"}]}],
+          ${if (clips) ANIMATIONS else ""}
           "scenes": [{"nodes": [0, ${(2 until 2 + parts + if (crate) 1 else 0).joinToString(",")}]}],
           "scene": 0
         }
@@ -422,6 +456,9 @@ class SkinnedPlaybackTest {
         const val ATTEMPTS = 400
         const val WAIT_MILLIS = 5L
         const val MODEL = "models/arm.gltf"
+        val REST_PALETTE = FloatArray(32) { if (it % 16 % 5 == 0) 1f else 0f }
+        const val ANIMATIONS = """"animations": [{"channels": [{"sampler": 0, "target": {"node": 1, "path": "rotation"}}],
+                          "samplers": [{"input": 5, "output": 6, "interpolation": "LINEAR"}]}],"""
 
         /** A model the scene never places, as an item picked up at runtime is. */
         const val HELD = "models/lantern.gltf"
