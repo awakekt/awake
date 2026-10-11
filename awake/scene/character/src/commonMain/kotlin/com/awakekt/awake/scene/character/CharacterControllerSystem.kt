@@ -6,6 +6,7 @@
 package com.awakekt.awake.scene.character
 
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.InterpolatedSystem
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.PhysicsWorld
@@ -36,13 +37,23 @@ class CharacterControllerSystem(
     private val basis = CameraRelativeBasis()
     private val motion = Vec3f()
 
+    // Each controller this system built, beside its character's entity, so the body a character
+    // carries of its own (CharacterConfig.innerBody) is destroyed when the character goes. Left in
+    // the physics world, it stands where the character was, solid, and still trips every sensor.
+    // Lists rather than a map, so checking them each step allocates nothing.
+    private val builtFor = ArrayList<Entity>()
+    private val built = ArrayList<KinematicCharacterController>()
+
     override fun update(world: World, delta: Float) {
         basis.update(world)
         world.queryEach(TRANSFORM, CHARACTER) { entity, transform, character ->
             character.restoreSteppedYaw(transform)
             val body = character.controller
                 ?: KinematicCharacterController(physicsWorld, character.config, transform.position)
-                    .also { character.controller = it }
+                    .also { built ->
+                        character.controller = built
+                        track(entity, built)
+                    }
             val intent = world.get<MovementControl>(entity)
             val moveX = intent?.worldX(basis) ?: 0f
             val moveZ = intent?.worldZ(basis) ?: 0f
@@ -66,6 +77,31 @@ class CharacterControllerSystem(
             world.get<GroundContact>(entity)?.grounded = body.isGrounded && character.verticalVelocity <= 0f
             intent?.turnToward(transform, moveX, moveZ, delta)
             character.record(transform)
+        }
+        releaseGone(world)
+    }
+
+    /** Keeps [controller] as [entity]'s, disposing one built for it before: its component was replaced. */
+    private fun track(entity: Entity, controller: KinematicCharacterController) {
+        val index = builtFor.indexOf(entity)
+        if (index < 0) {
+            builtFor += entity
+            built += controller
+        } else {
+            built[index].dispose()
+            built[index] = controller
+        }
+    }
+
+    /** Disposes the controllers whose character was destroyed or lost its [CharacterController]. */
+    private fun releaseGone(world: World) {
+        var index = builtFor.size
+        while (--index >= 0) {
+            val entity = builtFor[index]
+            if (world.isAlive(entity) && world.get(entity, CHARACTER)?.controller === built[index]) continue
+            built[index].dispose()
+            builtFor.removeAt(index)
+            built.removeAt(index)
         }
     }
 

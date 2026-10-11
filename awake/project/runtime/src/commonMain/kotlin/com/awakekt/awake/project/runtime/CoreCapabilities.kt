@@ -120,7 +120,11 @@ internal object PhysicsCapability : SceneCapability {
         }
         // Shared with streamed terrain, which must destroy the bodies of the cells it unloads through this step.
         plan.fixed("physics") { plan.physicsSystem(it) }
-        if (scene.uses(SceneCharacterController::class)) plan.fixed("character") { CharacterControllerSystem(requireNotNull(it.physics)) }
+        if (scene.uses(SceneCharacterController::class)) {
+            // Before the character step builds each controller: a sensor sees a character only by a body of its own.
+            if (scene.nodes.any { it.hasSensor() }) plan.fixed("character-sensor-bodies") { CharacterSensorBodies() }
+            plan.fixed("character") { CharacterControllerSystem(requireNotNull(it.physics)) }
+        }
     }
 }
 
