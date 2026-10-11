@@ -4154,6 +4154,7 @@ fades with distance from the active camera and pans with its direction. <code>Sc
 </tr>
 </tbody>
 </table>
+<p>In a scene with a sensor (a <code>physics_body</code> with <code>sensor</code> set), the project player gives each character a kinematic body of its own, so a sensor detects the player and a blueprint's On Sensor Enter fires. The character moves the same either way. The body is solid, so other bodies rest on or bump into it, and it's destroyed with the character.</p>
 <h2 id="chase"><code>chase</code></h2>
 <p>Pursues another node along navigation paths. <code>SceneChase</code>.</p>
 <table>
