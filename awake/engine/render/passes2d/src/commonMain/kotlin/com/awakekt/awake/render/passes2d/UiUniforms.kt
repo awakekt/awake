@@ -20,8 +20,10 @@ import com.awakekt.awake.render.renderer.UniformWriter
 object UiUniformLayouts {
     /** Screen-to-NDC orthographic projection transformation parameters. */
     val ScreenToNdc = UniformField("screenToNdc", GpuDataShape.Vec4)
+
     /** Font atlas sampling parameters (atlas dimensions, gamma, distance range). */
     val FontInfo = UniformField("fontInfo", GpuDataShape.Vec4)
+
     /** The complete uniform buffer layout combining [ScreenToNdc] and [FontInfo]. */
     val Buffer = UniformLayout(ScreenToNdc, FontInfo)
 }

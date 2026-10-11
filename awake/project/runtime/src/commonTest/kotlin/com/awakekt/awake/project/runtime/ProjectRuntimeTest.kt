@@ -285,7 +285,9 @@ class ProjectRuntimeTest {
         }
     }
 
-    private class TestRenderer : NoopRenderer(), GpuDrawPreparationSource {
+    private class TestRenderer :
+        NoopRenderer(),
+        GpuDrawPreparationSource {
         override val gpuDrawPreparer = GpuDrawPreparer { _, _, _ -> null }
     }
 

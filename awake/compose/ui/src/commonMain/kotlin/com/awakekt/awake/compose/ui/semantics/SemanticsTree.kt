@@ -32,8 +32,10 @@ class SemanticsNode(
 ) {
     /** The [SemanticsProperties.TestTag] value, or `null` when none is set. */
     val testTag: String? get() = config[SemanticsProperties.TestTag]
+
     /** The [SemanticsProperties.Role] value, or `null` when none is set. */
     val role: SemanticsRole? get() = config[SemanticsProperties.Role]
+
     /** The [SemanticsProperties.Label] value, or `null` when none is set. */
     val label: String? get() = config[SemanticsProperties.Label]
 

@@ -57,8 +57,7 @@ private class DraggableElement(
 private class DraggableNode(
     override var hitMarginPx: Int,
     var onDragStopped: () -> Unit,
-) :
-    Modifier.Node(),
+) : Modifier.Node(),
     PointerInputNode {
     lateinit var onDrag: (Int, Int) -> Unit
     override fun onPointerEvent(event: PointerEvent, pass: PointerEventPass) {

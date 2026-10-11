@@ -227,7 +227,9 @@ private object BeaconBinding : SceneComponentBinding<Beacon, SceneBeacon> {
 }
 
 /** Pulses every beacon by the step the project's files give, and records that it was closed. */
-private class BeaconSystem(private val step: Int) : System, AutoCloseable {
+private class BeaconSystem(private val step: Int) :
+    System,
+    AutoCloseable {
     var closed = false
 
     override fun update(world: World, delta: Float) {

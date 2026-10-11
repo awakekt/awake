@@ -308,6 +308,7 @@ fun offsetPolygon(polygon: List<DrawPoint>, distance: Float): List<DrawPoint> {
     val n = polygon.size
     if (n < 3) return polygon
     val outwardSign = if (polygonSignedArea(polygon) >= 0f) 1f else -1f
+
     // A ring can repeat a point -- a stroke outline closes on a start cap whose last point lands a
     // float epsilon from the first. That sliver edge has a normal in a random direction, which
     // corrupted the fringe along the whole edge it touched. Measure every corner against the

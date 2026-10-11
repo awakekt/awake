@@ -50,3 +50,8 @@ jobs:
 
       - name: Verify API surface
         run: ./gradlew apiCheck
+
+      # Nothing checked formatting before, so main drifted, and every spotlessApply rewrote files a
+      # change never touched. An unformatted change now fails here; `./gradlew spotlessApply` fixes it.
+      - name: Verify formatting
+        run: ./gradlew spotlessCheck

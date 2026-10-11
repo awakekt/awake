@@ -91,6 +91,7 @@ object TerrainUniformLayout {
      * extent. Written every frame from `TerrainClipmapTracker`'s ring states; a slot past the
      * configured ring count is never addressed.
      */
+
     /**
      * `xy` = the heightmap's world footprint, `zw` = one texel in UV.
      *

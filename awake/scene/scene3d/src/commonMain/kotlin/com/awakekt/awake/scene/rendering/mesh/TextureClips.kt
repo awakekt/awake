@@ -166,7 +166,6 @@ class TextureClips(val sheet: SceneTextureClips) {
     /** What the entity's `TextureAnimation` is while [frame] shows: that cell, held. */
     internal fun held(): TextureAnimation =
         TextureAnimation(sheet.columns, sheet.rows, frameCount = 1, framesPerSecond = 0f, firstFrame = frame)
-
 }
 
 /** Loads [SceneTextureClips] as the entity's [TextureClips], showing the first cell of its first clip until the system steps it. */

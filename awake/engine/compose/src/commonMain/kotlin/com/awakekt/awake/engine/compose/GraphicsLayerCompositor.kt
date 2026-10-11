@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.engine.compose
 
+import com.awakekt.awake.compose.ui.graphics.ImageBitmap
 import com.awakekt.awake.compose.ui.graphics.drawscope.GraphicsLayerFrame
 import com.awakekt.awake.compose.ui.graphics.drawscope.GraphicsLayerPlaceholder
 import com.awakekt.awake.core.graphics2d.BlendMode
@@ -12,7 +13,6 @@ import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.graphics2d.requiresDestinationSampling
 import com.awakekt.awake.core.graphics2d.translatedBy
 import com.awakekt.awake.core.text.font.UiFont
-import com.awakekt.awake.compose.ui.graphics.ImageBitmap
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.renderer.UiTargetCompositeMode

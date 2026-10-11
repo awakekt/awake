@@ -23,11 +23,11 @@ import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.document.SceneLoader
 import com.awakekt.awake.scene.physics.PhysicsSystem
 import com.awakekt.awake.scene.physics.registerPhysics
+import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import kotlinx.coroutines.test.runTest
 
 class CharacterControllerTest {
     private val registry = SceneComponentRegistry().registerControls().registerPhysics().registerCharacter()

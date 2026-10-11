@@ -22,7 +22,8 @@ import kotlin.test.assertEquals
 class FingerLongPressTest {
     private var menus = 0
     private var clicks = 0
-    private val content: context(Composer) () -> Unit = {
+    private val content: context(Composer)
+    () -> Unit = {
         Box(Modifier.onSecondaryPress { _, _ -> menus++ }) {
             Spacer(Modifier.size(80.dp).clickable { clicks++ })
         }

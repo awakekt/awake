@@ -283,7 +283,6 @@ object TerrainControlMapCodec {
             slots,
         )
     }
-
 }
 
 /** The largest 2D texture every WebGPU device must accept. */

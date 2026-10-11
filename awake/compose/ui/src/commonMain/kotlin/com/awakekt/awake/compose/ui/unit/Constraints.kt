@@ -80,6 +80,7 @@ value class Constraints private constructor(private val packed: Long) {
 
     // PascalCase, not SCREAMING_SNAKE: `Constraints.Infinity` is the name every line of Compose
     // documentation uses, and a public constant is API surface. See 11-refinements.md rule 1.
+
     /** Factories and sentinel values for [Constraints]. */
     @Suppress("ktlint:standard:property-naming")
     companion object {

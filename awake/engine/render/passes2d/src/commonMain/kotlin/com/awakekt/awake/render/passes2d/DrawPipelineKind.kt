@@ -20,10 +20,13 @@ enum class DrawPipelineKind(
 ) {
     /** Solid colored flat rectangle pipeline. */
     Quad(VertexFormats2D.Quad, UiPipelineVariant.Quad),
+
     /** Text glyph rasterization pipeline. */
     Glyph(VertexFormats2D.Glyph, UiPipelineVariant.Glyph),
+
     /** Textured 2D quad pipeline. */
     Texture(VertexFormats2D.Glyph, UiPipelineVariant.Texture),
+
     /** Rounded rectangle pipeline with corner radius and antialiasing. */
     RoundedQuad(VertexFormats2D.RoundedQuad, UiPipelineVariant.RoundedQuad),
     ;

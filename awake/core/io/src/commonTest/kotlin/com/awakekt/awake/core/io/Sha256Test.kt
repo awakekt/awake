@@ -5,9 +5,9 @@
  */
 package com.awakekt.awake.core.io
 
+import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlinx.coroutines.test.runTest
 
 class Sha256Test {
     @Test

@@ -15,10 +15,13 @@ package com.awakekt.awake.render.capture
 enum class FramebufferAttachment {
     /** Primary color attachment. */
     Color0,
+
     /** Depth buffer attachment. */
     Depth,
+
     /** Stencil buffer attachment. */
     Stencil,
+
     /** Normal buffer attachment (diagnostic or G-buffer). */
     Normal,
 }

@@ -138,6 +138,7 @@ private class FocusTargetNodeImpl :
 class FocusProperties {
     /** `null` preserves the target's own enabled state. */
     var canFocus: Boolean? = null
+
     /**
      * Target for [FocusDirection.Next] from this node, used instead of the computed focus order.
      *
@@ -145,14 +146,19 @@ class FocusProperties {
      * attached to a node or that node cannot take focus. The same holds for the other directions.
      */
     var next: FocusRequester? = null
+
     /** Target for [FocusDirection.Previous] from this node; see [next]. */
     var previous: FocusRequester? = null
+
     /** Target for [FocusDirection.Up] from this node; see [next]. */
     var up: FocusRequester? = null
+
     /** Target for [FocusDirection.Down] from this node; see [next]. */
     var down: FocusRequester? = null
+
     /** Target for [FocusDirection.Left] from this node; see [next]. */
     var left: FocusRequester? = null
+
     /** Target for [FocusDirection.Right] from this node; see [next]. */
     var right: FocusRequester? = null
 }

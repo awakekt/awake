@@ -193,6 +193,7 @@ class Renderer internal constructor(
 
     /** Real storage overriding the interface's no-op default -- see the interface's own doc
      * comment. */
+
     /** [clearColor] converted to this backend's clear-value type -- see the Vulkan `Renderer`'s
      * own `clearColorValue` for why this is a fresh-read `get()`, not a cached field. */
     internal val clearColorValue: GpuColor

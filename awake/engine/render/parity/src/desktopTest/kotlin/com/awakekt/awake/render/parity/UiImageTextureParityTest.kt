@@ -11,10 +11,10 @@ import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.math2d.Rectangle
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.render.texture.TextureFiltering
+import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-import kotlinx.coroutines.runBlocking
 
 /**
  * An uploaded image drawn by the UI pass lands the right way up on both backends: a Compose
@@ -40,6 +40,7 @@ class UiImageTextureParityTest {
                 }
             }
             fun rgb(x: Int, y: Int): List<Int> = (0 until 3).map { frame[(y * SIZE + x) * 4 + it].toInt() and 0xFF }
+
             // Linear filtering of a 2px image stretched 32x mixes a little of the neighbour in, and
             // WebGPU stores the target sRGB-encoded, which lifts that near black; so check which
             // channels are on and which are off rather than exact values.

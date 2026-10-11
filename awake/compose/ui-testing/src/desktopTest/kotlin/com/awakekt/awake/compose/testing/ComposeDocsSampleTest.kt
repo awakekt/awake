@@ -113,6 +113,7 @@ fun Counter(count: Int, onIncrement: () -> Unit, onReset: () -> Unit) {
 // --8<-- [end:state]
 
 // --8<-- [start:image]
+
 /** 2 x 2 RGBA8, rows top to bottom: white, black, then black, white. */
 private val checker = ImageBitmap(
     width = 2,
@@ -130,6 +131,7 @@ fun Checker() {
 // --8<-- [end:image]
 
 // --8<-- [start:image-fill]
+
 /** A window drawn from a 48 x 48 frame: its 16-pixel corners kept, its edges and centre tiled. */
 context(_: Composer)
 fun FramedPanel(frame: ImageBitmap) {

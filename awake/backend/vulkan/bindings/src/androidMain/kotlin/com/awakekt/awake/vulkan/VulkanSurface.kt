@@ -31,6 +31,7 @@ actual fun surfaceFramebufferExtent(window: Any): VkExtent2D? = null
 
 // Android's DisplayMetrics.density is a separate follow-up, out of this fix's scope -- null
 // keeps density at its unscaled default, the same behavior Android already had.
+
 /**
  * Returns `null`: Android reports only physical pixels, so the display scale stays at its unscaled
  * default.

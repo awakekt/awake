@@ -32,10 +32,16 @@ fun Renderer.renderUnlitAtlasScene(size: Int): ByteArray {
             SpriteDrawInput("diamonds", Mat4(), columns = 2, frame = 1, pixelsPerUnit = 4f, sortOrder = 1),
             SpriteDrawInput("diamonds", Mat4().translate(1.5f, -0.5f, 0f), columns = 2, pixelsPerUnit = 4f, flipX = true, tint = Color(0.6f, 1f, 1f, 0.7f), sortOrder = 2),
         )
-        renderToTexture(target, ScenePassCompiler.compile(
-            lens = camera, drawCalls = batch.collect(inputs), clipSpace = clipSpace, aspect = 1f,
-            drawPreparer = (this as GpuDrawPreparationSource).gpuDrawPreparer,
-        ))
+        renderToTexture(
+            target,
+            ScenePassCompiler.compile(
+                lens = camera,
+                drawCalls = batch.collect(inputs),
+                clipSpace = clipSpace,
+                aspect = 1f,
+                drawPreparer = (this as GpuDrawPreparationSource).gpuDrawPreparer,
+            ),
+        )
         return runBlocking { readPixels(target) }.data.copyOf()
     } finally {
         target.destroy()

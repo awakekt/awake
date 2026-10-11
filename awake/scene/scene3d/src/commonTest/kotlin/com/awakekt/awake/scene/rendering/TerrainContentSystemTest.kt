@@ -28,7 +28,6 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.serialization.json.JsonObject
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TerrainContentSystemTest {

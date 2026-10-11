@@ -13,6 +13,7 @@ typealias Fog = com.awakekt.awake.scene.rendering.fog.Fog
 typealias Skybox = com.awakekt.awake.scene.rendering.sky.Skybox
 
 // Default Sky & Fog Colors
+
 /** Compatibility alias for [com.awakekt.awake.scene.rendering.sky.DefaultHorizonColor]. */
 val DefaultHorizonColor get() = com.awakekt.awake.scene.rendering.sky.DefaultHorizonColor
 

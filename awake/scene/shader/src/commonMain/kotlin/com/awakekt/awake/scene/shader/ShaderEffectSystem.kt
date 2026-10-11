@@ -50,7 +50,8 @@ import kotlinx.coroutines.launch
 class ShaderEffectSystem(
     private val host: ContentFeatureHost?,
     assets: ShaderEffectAssets,
-) : System, AutoCloseable {
+) : System,
+    AutoCloseable {
     /** The documents and images effects draw from. Setting a new one re-attaches what changed in it. */
     var assets: ShaderEffectAssets = assets
         set(value) {

@@ -75,6 +75,7 @@ class RagdollSkeleton(
         boneForLimb.forEachIndexed { limb, bone -> if (bone != UNBOUND) bound[bone] = limb }
     }
     private val globalPosition = List(skeleton.bones.size) { Vec3f(0f, 0f, 0f) }
+
     /** Reused for a baked matrix's translation, which has nowhere else to live. */
     private val scratchLocal = Vec3f(0f, 0f, 0f)
     private val globalRotation = MutableList(skeleton.bones.size) { Quat() }

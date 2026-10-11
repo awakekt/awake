@@ -27,7 +27,8 @@ import kotlin.test.assertNull
 /** A touch screen has no hover, so a held finger opens a tooltip, and only while it's held. */
 class ShadcnTooltipFingerTest {
     private var clicks = 0
-    private val content: context(Composer) () -> Unit = {
+    private val content: context(Composer)
+    () -> Unit = {
         provideShadcnTheme(shadcnThemeValues(dark = true)) {
             Column {
                 Spacer(Modifier.size(60.dp))

@@ -18,14 +18,19 @@ import kotlin.time.TimeSource
 enum class CanvasElementKind {
     /** Plain textual display element. */
     Text,
+
     /** Static filled background panel or container. */
     Panel,
+
     /** Horizontal progress or status bar. */
     Bar,
+
     /** Interactive clickable button. */
     Button,
+
     /** Virtual touch analog joystick. */
     Joystick,
+
     /** A picture: its style's [CanvasStyle.image]. */
     Image,
 }
@@ -35,20 +40,28 @@ enum class CanvasElementKind {
 enum class CanvasAnchor {
     /** Top-left screen corner. */
     TopLeft,
+
     /** Top edge centered horizontally. */
     TopCenter,
+
     /** Top-right screen corner. */
     TopRight,
+
     /** Left edge centered vertically. */
     CenterLeft,
+
     /** Exact center of the screen. */
     Center,
+
     /** Right edge centered vertically. */
     CenterRight,
+
     /** Bottom-left screen corner. */
     BottomLeft,
+
     /** Bottom edge centered horizontally. */
     BottomCenter,
+
     /** Bottom-right screen corner. */
     BottomRight,
 }
@@ -212,10 +225,13 @@ class CanvasElement {
     companion object {
         /** Default edge inset offset in dp. */
         const val DEFAULT_INSET = 16f
+
         /** Default element width in dp. */
         const val DEFAULT_WIDTH = 200f
+
         /** Default element height in dp. */
         const val DEFAULT_HEIGHT = 40f
+
         /** Default font size in sp. */
         const val DEFAULT_FONT_SIZE = 18f
 

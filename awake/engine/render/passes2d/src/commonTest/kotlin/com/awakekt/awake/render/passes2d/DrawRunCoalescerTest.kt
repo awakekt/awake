@@ -26,7 +26,12 @@ class DrawRunCoalescerTest {
     @Test
     fun aTexturesRegionAndTintReachItsVertices() {
         val texture = DrawCommand.Texture(
-            0f, 0f, 10f, 10f, material = "sheet", alpha = 0.5f,
+            0f,
+            0f,
+            10f,
+            10f,
+            material = "sheet",
+            alpha = 0.5f,
             region = TextureRegion(0.25f, 0f, 0.5f, 0.5f),
             tint = Color(1f, 0.5f, 0f, 1f),
         )

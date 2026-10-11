@@ -127,6 +127,7 @@ class SkyAndFogDocsSampleTest {
 }
 
 // --8<-- [start:cubemap-system]
+
 /** Loads the scene's cubemap sky from [assets] off the frame thread. */
 fun SceneAppDsl.cubemapSky(scope: CoroutineScope, assets: AssetSource) {
     frameSystem("cubemap-sky") {

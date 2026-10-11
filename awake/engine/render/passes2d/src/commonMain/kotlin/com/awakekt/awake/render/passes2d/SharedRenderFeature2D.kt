@@ -65,6 +65,7 @@ class SharedRenderFeature2D {
 private class BoundState<M>(private val recorder: DrawRunRecorder<M>) {
     private var kind: DrawPipelineKind? = null
     private var usable = false
+
     // A clamped rect packs to non-negative values, so -1 never matches and the first clip is set.
     private var scissorOrigin = -1L
     private var scissorSize = -1L

@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-@file:Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@file:Suppress("FunctionNaming", "ktlint:standard:function-naming", "LongParameterList")
 
 package com.awakekt.awake.scene.canvas
 
@@ -75,7 +75,6 @@ context(_: Composer)
  *   through: the scene's own registry's. Null reads through every globally registered one, gathered
  *   only on a frame where an element reads a field.
  */
-@Suppress("LongParameterList")
 fun SceneCanvas(
     world: World,
     modifier: Modifier = Modifier,
@@ -96,7 +95,6 @@ fun SceneCanvas(
         }
     }
 }
-
 
 /** [children] inside [element]: each anchored by hand, or laid out in rows or columns by its layout. */
 context(_: Composer)

@@ -106,7 +106,9 @@ object CoreNodes {
     }
 
     /** Reads a variable. Its `value` output is the variable's own slot, so reading costs nothing. */
-    class VariableGet internal constructor(override val variableType: String) : PureNode, VariableNode {
+    class VariableGet internal constructor(override val variableType: String) :
+        PureNode,
+        VariableNode {
         override val spec = NodeSpec(
             type = "var.get.$variableType",
             displayName = "Get Variable",
@@ -119,7 +121,9 @@ object CoreNodes {
     }
 
     /** Writes a variable, and passes the value on. Its `value` output is the variable's own slot. */
-    class VariableSet internal constructor(override val variableType: String) : ActionNode, VariableNode {
+    class VariableSet internal constructor(override val variableType: String) :
+        ActionNode,
+        VariableNode {
         private val then = Step.Continue(THEN)
         override val spec = NodeSpec(
             type = "var.set.$variableType",

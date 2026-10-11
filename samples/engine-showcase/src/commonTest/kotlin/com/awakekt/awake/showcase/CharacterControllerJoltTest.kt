@@ -102,240 +102,258 @@ class CharacterControllerJoltTest {
 
     @Test
     fun aCharacterFallsOntoTheFloorAndStandsOnIt() {
-        runTest { world { world ->
-            world.addFloor()
-            val character = KinematicCharacterController(world, config, Vec3f(0f, 3f, 0f))
+        runTest {
+            world { world ->
+                world.addFloor()
+                val character = KinematicCharacterController(world, config, Vec3f(0f, 3f, 0f))
 
-            Walker(character).settle()
+                Walker(character).settle()
 
-            assertTrue(character.isGrounded, "expected to land on the floor")
-            // Standing means the capsule's bottom touches y=0, so its centre is a radius plus a
-            // half-height above -- give or take the skin width holding it off the surface.
-            val error = kotlin.math.abs(character.position.y - STANDING_CENTRE)
-            assertTrue(error < 0.1f, "expected to stand at y=$STANDING_CENTRE, got ${character.position.y}")
-        } }
+                assertTrue(character.isGrounded, "expected to land on the floor")
+                // Standing means the capsule's bottom touches y=0, so its centre is a radius plus a
+                // half-height above -- give or take the skin width holding it off the surface.
+                val error = kotlin.math.abs(character.position.y - STANDING_CENTRE)
+                assertTrue(error < 0.1f, "expected to stand at y=$STANDING_CENTRE, got ${character.position.y}")
+            }
+        }
     }
 
     @Test
     fun aCharacterDoesNotWalkThroughARealWall() {
-        runTest { world { world ->
-            world.addFloor()
-            // A wall 1 thick centred at x=3, so its near face is at x=2.5.
-            world.createBody(
-                BoxShape(Vec3f(0.5f, 2f, 5f)),
-                Vec3f(3f, 2f, 0f),
-                Quat.IDENTITY,
-                MotionType.STATIC,
-            )
-            val character = KinematicCharacterController(world, config, Vec3f(0f, 3f, 0f))
-            val walker = Walker(character)
-            walker.settle()
+        runTest {
+            world { world ->
+                world.addFloor()
+                // A wall 1 thick centred at x=3, so its near face is at x=2.5.
+                world.createBody(
+                    BoxShape(Vec3f(0.5f, 2f, 5f)),
+                    Vec3f(3f, 2f, 0f),
+                    Quat.IDENTITY,
+                    MotionType.STATIC,
+                )
+                val character = KinematicCharacterController(world, config, Vec3f(0f, 3f, 0f))
+                val walker = Walker(character)
+                walker.settle()
 
-            repeat(120) { walker.step(x = 0.1f) }
+                repeat(120) { walker.step(x = 0.1f) }
 
-            // The capsule's surface stops at the wall, so its centre stops a radius short of it.
-            assertTrue(
-                character.position.x < 2.5f - RADIUS + 0.1f,
-                "expected to be stopped by the wall, reached x=${character.position.x}",
-            )
-            assertTrue(character.position.x > 1.5f, "expected to actually reach the wall, x=${character.position.x}")
-        } }
+                // The capsule's surface stops at the wall, so its centre stops a radius short of it.
+                assertTrue(
+                    character.position.x < 2.5f - RADIUS + 0.1f,
+                    "expected to be stopped by the wall, reached x=${character.position.x}",
+                )
+                assertTrue(character.position.x > 1.5f, "expected to actually reach the wall, x=${character.position.x}")
+            }
+        }
     }
 
     @Test
     fun aCharacterSlidesAlongARealWallRatherThanStopping() {
-        runTest { world { world ->
-            world.addFloor()
-            world.createBody(
-                BoxShape(Vec3f(0.5f, 2f, 10f)),
-                Vec3f(3f, 2f, 0f),
-                Quat.IDENTITY,
-                MotionType.STATIC,
-            )
-            val character = KinematicCharacterController(world, config, Vec3f(0f, 3f, 0f))
-            val walker = Walker(character)
-            walker.settle()
+        runTest {
+            world { world ->
+                world.addFloor()
+                world.createBody(
+                    BoxShape(Vec3f(0.5f, 2f, 10f)),
+                    Vec3f(3f, 2f, 0f),
+                    Quat.IDENTITY,
+                    MotionType.STATIC,
+                )
+                val character = KinematicCharacterController(world, config, Vec3f(0f, 3f, 0f))
+                val walker = Walker(character)
+                walker.settle()
 
-            // Pushing diagonally into the wall: the x is absorbed, the z must survive.
-            repeat(120) { walker.step(x = 0.1f, z = 0.1f) }
+                // Pushing diagonally into the wall: the x is absorbed, the z must survive.
+                repeat(120) { walker.step(x = 0.1f, z = 0.1f) }
 
-            assertTrue(
-                character.position.z > 5f,
-                "expected to keep sliding along the wall, z=${character.position.z}",
-            )
-        } }
+                assertTrue(
+                    character.position.z > 5f,
+                    "expected to keep sliding along the wall, z=${character.position.z}",
+                )
+            }
+        }
     }
 
     @Test
     fun aCharacterWalksUpARealStepAndBackDownTheFarSide() {
-        runTest { world { world ->
-            world.addFloor()
-            // A 0.25-high step spanning x = 1 to 5, inside the 0.3 step height.
-            world.createBody(
-                BoxShape(Vec3f(2f, 0.125f, 5f)),
-                Vec3f(3f, 0.125f, 0f),
-                Quat.IDENTITY,
-                MotionType.STATIC,
-            )
-            val character = KinematicCharacterController(world, config, Vec3f(0f, 3f, 0f))
-            val walker = Walker(character)
-            walker.settle()
-            val floorHeight = character.position.y
+        runTest {
+            world { world ->
+                world.addFloor()
+                // A 0.25-high step spanning x = 1 to 5, inside the 0.3 step height.
+                world.createBody(
+                    BoxShape(Vec3f(2f, 0.125f, 5f)),
+                    Vec3f(3f, 0.125f, 0f),
+                    Quat.IDENTITY,
+                    MotionType.STATIC,
+                )
+                val character = KinematicCharacterController(world, config, Vec3f(0f, 3f, 0f))
+                val walker = Walker(character)
+                walker.settle()
+                val floorHeight = character.position.y
 
-            // Far enough to be well onto the step, not far enough to reach its far edge.
-            // Deliberately slow: a step is easy to clear at speed and easy to stall against at a
-            // crawl, and the crawl is the case that found the edge-contact bug.
-            repeat(60) { walker.step(x = 0.05f) }
+                // Far enough to be well onto the step, not far enough to reach its far edge.
+                // Deliberately slow: a step is easy to clear at speed and easy to stall against at a
+                // crawl, and the crawl is the case that found the edge-contact bug.
+                repeat(60) { walker.step(x = 0.05f) }
 
-            assertTrue(character.position.x > 1.5f, "expected to get onto the step, x=${character.position.x}")
-            assertTrue(
-                kotlin.math.abs(character.position.y - (floorHeight + 0.25f)) < 0.05f,
-                "expected to stand a step's height higher, at ${floorHeight + 0.25f}, " +
-                    "got ${character.position.y}",
-            )
-            assertTrue(character.isGrounded, "expected to be grounded on the step")
+                assertTrue(character.position.x > 1.5f, "expected to get onto the step, x=${character.position.x}")
+                assertTrue(
+                    kotlin.math.abs(character.position.y - (floorHeight + 0.25f)) < 0.05f,
+                    "expected to stand a step's height higher, at ${floorHeight + 0.25f}, " +
+                        "got ${character.position.y}",
+                )
+                assertTrue(character.isGrounded, "expected to be grounded on the step")
 
-            // Keep going, off the far edge at x = 5: step-down must follow the drop rather than
-            // leaving the character hanging at step height.
-            repeat(120) { walker.step(x = 0.05f) }
+                // Keep going, off the far edge at x = 5: step-down must follow the drop rather than
+                // leaving the character hanging at step height.
+                repeat(120) { walker.step(x = 0.05f) }
 
-            assertTrue(character.position.x > 5.5f, "expected to walk off the step, x=${character.position.x}")
-            assertTrue(
-                kotlin.math.abs(character.position.y - floorHeight) < 0.05f,
-                "expected to be back at floor height $floorHeight, got ${character.position.y}",
-            )
-            assertTrue(character.isGrounded, "expected to stay grounded stepping down")
-        } }
+                assertTrue(character.position.x > 5.5f, "expected to walk off the step, x=${character.position.x}")
+                assertTrue(
+                    kotlin.math.abs(character.position.y - floorHeight) < 0.05f,
+                    "expected to be back at floor height $floorHeight, got ${character.position.y}",
+                )
+                assertTrue(character.isGrounded, "expected to stay grounded stepping down")
+            }
+        }
     }
 
     @Test
     fun aCharacterStandsOnTheShowcaseTerrainItself() {
-        runTest { world { world ->
-            world.createBody(
-                TerrainExampleAsset.collisionShape,
-                Vec3f(0f, 0f, 0f),
-                Quat.IDENTITY,
-                MotionType.STATIC,
-            )
-            // Straight above the terrain's centre mound, which is 1.17 units high.
-            val character = KinematicCharacterController(world, config, Vec3f(0f, 6f, 0f))
+        runTest {
+            world { world ->
+                world.createBody(
+                    TerrainExampleAsset.collisionShape,
+                    Vec3f(0f, 0f, 0f),
+                    Quat.IDENTITY,
+                    MotionType.STATIC,
+                )
+                // Straight above the terrain's centre mound, which is 1.17 units high.
+                val character = KinematicCharacterController(world, config, Vec3f(0f, 6f, 0f))
 
-            Walker(character).settle()
+                Walker(character).settle()
 
-            assertTrue(character.isGrounded, "expected to land on the terrain")
-            assertTrue(
-                character.position.y > 1.17f,
-                "expected to stand above the mound, not inside it: y=${character.position.y}",
-            )
-        } }
+                assertTrue(character.isGrounded, "expected to land on the terrain")
+                assertTrue(
+                    character.position.y > 1.17f,
+                    "expected to stand above the mound, not inside it: y=${character.position.y}",
+                )
+            }
+        }
     }
 
     @Test
     fun aCharacterStandingOnAMovingPlatformIsCarriedByIt() {
-        runTest { world { world ->
-            // A kinematic slab under the character, driven sideways one step at a time.
-            val platform = world.createBody(
-                BoxShape(Vec3f(3f, 0.5f, 3f)),
-                Vec3f(0f, -0.5f, 0f),
-                Quat.IDENTITY,
-                MotionType.KINEMATIC,
-            )
-            val character = KinematicCharacterController(world, config, Vec3f(0f, 3f, 0f))
-            val walker = Walker(character)
-            walker.settle()
-            assertTrue(character.isGrounded, "precondition: standing on the platform")
+        runTest {
+            world { world ->
+                // A kinematic slab under the character, driven sideways one step at a time.
+                val platform = world.createBody(
+                    BoxShape(Vec3f(3f, 0.5f, 3f)),
+                    Vec3f(0f, -0.5f, 0f),
+                    Quat.IDENTITY,
+                    MotionType.KINEMATIC,
+                )
+                val character = KinematicCharacterController(world, config, Vec3f(0f, 3f, 0f))
+                val walker = Walker(character)
+                walker.settle()
+                assertTrue(character.isGrounded, "precondition: standing on the platform")
 
-            val speed = 1f
-            var platformX = 0f
-            repeat(120) {
-                platformX += speed * STEP
-                world.moveKinematic(platform, Vec3f(platformX, -0.5f, 0f), Quat.IDENTITY, STEP)
-                world.step(STEP)
-                // What a game does with groundVelocity: add it to the displacement it asks for.
-                walker.rideAndStep(character.groundVelocity)
+                val speed = 1f
+                var platformX = 0f
+                repeat(120) {
+                    platformX += speed * STEP
+                    world.moveKinematic(platform, Vec3f(platformX, -0.5f, 0f), Quat.IDENTITY, STEP)
+                    world.step(STEP)
+                    // What a game does with groundVelocity: add it to the displacement it asks for.
+                    walker.rideAndStep(character.groundVelocity)
+                }
+
+                // Two seconds at one unit per second. Without carrying the ground's velocity the
+                // character simply stands still while the platform slides out from under it.
+                assertTrue(
+                    character.position.x > 1.5f,
+                    "expected to be carried about $platformX, got ${character.position.x}",
+                )
             }
-
-            // Two seconds at one unit per second. Without carrying the ground's velocity the
-            // character simply stands still while the platform slides out from under it.
-            assertTrue(
-                character.position.x > 1.5f,
-                "expected to be carried about $platformX, got ${character.position.x}",
-            )
-        } }
+        }
     }
 
     @Test
     fun aCharacterOnStaticGroundIsNotCarriedAnywhere() {
-        runTest { world { world ->
-            world.addFloor()
-            val character = KinematicCharacterController(world, config, Vec3f(0f, 3f, 0f))
-            val walker = Walker(character)
-            walker.settle()
+        runTest {
+            world { world ->
+                world.addFloor()
+                val character = KinematicCharacterController(world, config, Vec3f(0f, 3f, 0f))
+                val walker = Walker(character)
+                walker.settle()
 
-            repeat(120) {
-                world.step(STEP)
-                walker.rideAndStep(character.groundVelocity)
+                repeat(120) {
+                    world.step(STEP)
+                    walker.rideAndStep(character.groundVelocity)
+                }
+
+                // The floor is static, so its velocity is zero and nothing drifts. A stale or phantom
+                // ground velocity would show up here as a character sliding off on its own.
+                assertTrue(abs(character.position.x) < 0.05f, "drifted to x=${character.position.x}")
+                assertTrue(abs(character.position.z) < 0.05f, "drifted to z=${character.position.z}")
             }
-
-            // The floor is static, so its velocity is zero and nothing drifts. A stale or phantom
-            // ground velocity would show up here as a character sliding off on its own.
-            assertTrue(abs(character.position.x) < 0.05f, "drifted to x=${character.position.x}")
-            assertTrue(abs(character.position.z) < 0.05f, "drifted to z=${character.position.z}")
-        } }
+        }
     }
 
     @Test
     fun aCharacterCrouchesUnderARealCeilingAndCannotStandBeneathIt() {
-        runTest { world { world ->
-            world.addFloor()
-            // A slab whose underside is 1.6 above the floor: too low for a 2.4-tall capsule to
-            // stand under, high enough for a crouched one to fit.
-            world.createBody(
-                BoxShape(Vec3f(3f, 0.5f, 3f)),
-                Vec3f(4f, 2.1f, 0f),
-                Quat.IDENTITY,
-                MotionType.STATIC,
-            )
-            val crouchable = CharacterConfig(
-                shape = CapsuleShape(halfHeight = HALF_HEIGHT, radius = RADIUS),
-                stepHeight = 0.3f,
-                crouchHalfHeight = 0.3f,
-            )
-            val character = KinematicCharacterController(world, crouchable, Vec3f(0f, 3f, 0f))
-            val walker = Walker(character)
-            walker.settle()
+        runTest {
+            world { world ->
+                world.addFloor()
+                // A slab whose underside is 1.6 above the floor: too low for a 2.4-tall capsule to
+                // stand under, high enough for a crouched one to fit.
+                world.createBody(
+                    BoxShape(Vec3f(3f, 0.5f, 3f)),
+                    Vec3f(4f, 2.1f, 0f),
+                    Quat.IDENTITY,
+                    MotionType.STATIC,
+                )
+                val crouchable = CharacterConfig(
+                    shape = CapsuleShape(halfHeight = HALF_HEIGHT, radius = RADIUS),
+                    stepHeight = 0.3f,
+                    crouchHalfHeight = 0.3f,
+                )
+                val character = KinematicCharacterController(world, crouchable, Vec3f(0f, 3f, 0f))
+                val walker = Walker(character)
+                walker.settle()
 
-            character.crouch()
-            assertTrue(character.isCrouching)
-            repeat(140) { walker.step(x = 0.05f) }
+                character.crouch()
+                assertTrue(character.isCrouching)
+                repeat(140) { walker.step(x = 0.05f) }
 
-            // Under the slab now, and standing must be refused against real geometry rather than
-            // against a scripted sweep.
-            assertTrue(character.position.x > 3f, "expected to get under the slab, x=${character.position.x}")
-            assertTrue(!character.standUp(), "standing under a ceiling must be refused")
-            assertTrue(character.isCrouching)
-        } }
+                // Under the slab now, and standing must be refused against real geometry rather than
+                // against a scripted sweep.
+                assertTrue(character.position.x > 3f, "expected to get under the slab, x=${character.position.x}")
+                assertTrue(!character.standUp(), "standing under a ceiling must be refused")
+                assertTrue(character.isCrouching)
+            }
+        }
     }
 
     @Test
     fun aCharacterStandsOnceItIsBackInTheOpen() {
-        runTest { world { world ->
-            world.addFloor()
-            val crouchable = CharacterConfig(
-                shape = CapsuleShape(halfHeight = HALF_HEIGHT, radius = RADIUS),
-                crouchHalfHeight = 0.3f,
-            )
-            val character = KinematicCharacterController(world, crouchable, Vec3f(0f, 3f, 0f))
-            Walker(character).settle()
-            val standingY = character.position.y
+        runTest {
+            world { world ->
+                world.addFloor()
+                val crouchable = CharacterConfig(
+                    shape = CapsuleShape(halfHeight = HALF_HEIGHT, radius = RADIUS),
+                    crouchHalfHeight = 0.3f,
+                )
+                val character = KinematicCharacterController(world, crouchable, Vec3f(0f, 3f, 0f))
+                Walker(character).settle()
+                val standingY = character.position.y
 
-            character.crouch()
-            val crouchedY = character.position.y
-            val stood = character.standUp()
+                character.crouch()
+                val crouchedY = character.position.y
+                val stood = character.standUp()
 
-            assertTrue(crouchedY < standingY, "crouching should lower the centre")
-            assertTrue(stood, "nothing overhead, so standing must succeed")
-            assertTrue(abs(character.position.y - standingY) < 1e-3f, "y=${character.position.y}")
-        } }
+                assertTrue(crouchedY < standingY, "crouching should lower the centre")
+                assertTrue(stood, "nothing overhead, so standing must succeed")
+                assertTrue(abs(character.position.y - standingY) < 1e-3f, "y=${character.position.y}")
+            }
+        }
     }
 }

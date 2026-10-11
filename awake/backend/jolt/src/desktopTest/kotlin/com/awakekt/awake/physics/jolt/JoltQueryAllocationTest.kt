@@ -13,8 +13,8 @@ import com.awakekt.awake.physics.MotionType
 import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.physics.SphereShape
 import com.sun.management.ThreadMXBean
-import java.lang.management.ManagementFactory
 import kotlinx.coroutines.test.runTest
+import java.lang.management.ManagementFactory
 import kotlin.test.Test
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue

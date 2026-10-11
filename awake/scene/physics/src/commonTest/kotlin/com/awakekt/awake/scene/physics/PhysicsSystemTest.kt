@@ -37,12 +37,22 @@ class PhysicsSystemTest {
     @Test
     fun aLegacyBackendDelegatesAllButRejectsRestrictedMotionBeforeCreatingABody() {
         val backend = FakePhysicsWorld()
-        backend.createBody(SphereShape(0.5f), Vec3f(), Quat.IDENTITY, MotionType.DYNAMIC,
-            degreesOfFreedom = DegreesOfFreedom.ALL)
+        backend.createBody(
+            SphereShape(0.5f),
+            Vec3f(),
+            Quat.IDENTITY,
+            MotionType.DYNAMIC,
+            degreesOfFreedom = DegreesOfFreedom.ALL,
+        )
         assertEquals(1, backend.createBodyCallCount)
         assertFailsWith<PhysicsCapabilityException> {
-            backend.createBody(SphereShape(0.5f), Vec3f(), Quat.IDENTITY, MotionType.DYNAMIC,
-                degreesOfFreedom = DegreesOfFreedom.PLANE_2D)
+            backend.createBody(
+                SphereShape(0.5f),
+                Vec3f(),
+                Quat.IDENTITY,
+                MotionType.DYNAMIC,
+                degreesOfFreedom = DegreesOfFreedom.PLANE_2D,
+            )
         }
         assertEquals(1, backend.createBodyCallCount)
     }

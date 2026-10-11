@@ -3,6 +3,10 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+@file:Suppress("ktlint:standard:import-ordering")
+
+// Docs snippets mark out the imports a page shows, which splits the import list.
+
 package com.awakekt.awake.showcase.docs
 
 // --8<-- [start:imports]
@@ -34,6 +38,7 @@ fun firstWindow(): AwakeAppLifecycle = app {
 // --8<-- [end:app]
 
 // --8<-- [start:plan]
+
 /** What the app draws with: the lit, shadowed shader that ships in the shader pack. */
 val GameRenderPlan = RenderPlan(
     primary = ScenePipeline(

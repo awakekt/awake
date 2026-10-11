@@ -24,8 +24,8 @@ import com.awakekt.awake.render.passes.debug.lightGizmoLines
 import com.awakekt.awake.render.passes.directionalShadowBox
 import com.awakekt.awake.render.passes.uniforms.DEFAULT_SCENE_LIGHT
 import com.awakekt.awake.render.renderer.LineSegment
-import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.renderer.RenderViewport
+import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.Camera
 import com.awakekt.awake.scene.rendering.Light
@@ -218,13 +218,20 @@ private fun appendLightLines(
 }
 
 private fun WorldDebugSettings.hasAnyDebugLines(): Boolean =
-    showFrustum || showBounds || showInstanceBounds || showOcclusion || showLights || showShadowFrustum || showGrid || showAxisLines ||
+    showFrustum ||
+        showBounds ||
+        showInstanceBounds ||
+        showOcclusion ||
+        showLights ||
+        showShadowFrustum ||
+        showGrid ||
+        showAxisLines ||
         showSkeleton
 
 private fun emitGridLines(
     lines: MutableList<LineSegment>,
     settings: WorldDebugSettings,
-    center: Vec3f = Vec3f.ZERO
+    center: Vec3f = Vec3f.ZERO,
 ) {
     val extent = settings.gridFadeDistance.coerceAtLeast(10f)
     val step = settings.gridScale.coerceAtLeast(0.1f)
@@ -326,7 +333,7 @@ internal fun cascadeBoxLines(
                     boundsDebugLines(
                         localBox,
                         it,
-                        CASCADE_COLORS[index % CASCADE_COLORS.size]
+                        CASCADE_COLORS[index % CASCADE_COLORS.size],
                     )
                 }
                 .orEmpty()

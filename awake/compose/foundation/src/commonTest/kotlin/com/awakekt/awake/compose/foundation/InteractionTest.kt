@@ -5,9 +5,9 @@
  */
 package com.awakekt.awake.compose.foundation
 
+import com.awakekt.awake.compose.foundation.gestures.draggable
 import com.awakekt.awake.compose.foundation.interaction.Interaction
 import com.awakekt.awake.compose.foundation.interaction.InteractionSource
-import com.awakekt.awake.compose.foundation.gestures.draggable
 import com.awakekt.awake.compose.foundation.layout.Column
 import com.awakekt.awake.compose.foundation.layout.ColumnMeasurePolicy
 import com.awakekt.awake.compose.foundation.layout.Spacer

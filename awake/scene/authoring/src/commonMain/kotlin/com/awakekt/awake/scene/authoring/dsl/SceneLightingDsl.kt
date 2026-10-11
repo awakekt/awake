@@ -5,9 +5,9 @@
  */
 package com.awakekt.awake.scene.authoring.dsl
 
-import com.awakekt.awake.render.passes.DEFAULT_SHADOW_DISTANCE
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.Entity
+import com.awakekt.awake.render.passes.DEFAULT_SHADOW_DISTANCE
 import com.awakekt.awake.scene.authoring.SceneAppDsl
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.fog.Fog

@@ -95,8 +95,12 @@ class RangeAnnotationsAreEnforcedTest {
                 base + ("layout" to empty) + (
                     "style" to JsonObject(
                         mapOf(
-                            "image" to image, "fillImage" to image, "shadow" to empty, "textOutline" to empty,
-                            "hovered" to state, "pressed" to state,
+                            "image" to image,
+                            "fillImage" to image,
+                            "shadow" to empty,
+                            "textOutline" to empty,
+                            "hovered" to state,
+                            "pressed" to state,
                         ),
                     )
                     ),

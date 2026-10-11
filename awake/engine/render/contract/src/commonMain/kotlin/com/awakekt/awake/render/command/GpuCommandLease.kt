@@ -9,12 +9,16 @@ package com.awakekt.awake.render.command
 enum class GpuCommandLeaseState {
     /** The command packet is actively being constructed. */
     Recording,
+
     /** The command packet is sealed and immutable, awaiting GPU submission. */
     Sealed,
+
     /** The command packet has been submitted to the GPU command queue. */
     Submitted,
+
     /** The command packet execution has finished on the GPU. */
     Retired,
+
     /** The command packet was cancelled before submission. */
     Cancelled,
 }

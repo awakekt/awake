@@ -72,7 +72,6 @@ internal class SceneDrawCollector(
      */
     private var resolved: WorldResolution? = null
 
-
     /** An animated texture on an entity with no [PbrMaterial]: glTF's default factors, packed once per animation. */
     private val defaultFactorsByAnimation = HashMap<TextureAnimation, FloatArray>()
 

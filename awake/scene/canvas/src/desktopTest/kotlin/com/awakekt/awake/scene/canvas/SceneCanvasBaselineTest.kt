@@ -9,9 +9,9 @@ import com.awakekt.awake.compose.testing.assertMatchesBaseline
 import com.awakekt.awake.compose.ui.graphics.ImageBitmap
 import com.awakekt.awake.compose.ui.platform.ComposeHost
 import com.awakekt.awake.compose.ui.platform.FrameInput
-import com.awakekt.awake.core.text.font.UiFonts
 import com.awakekt.awake.core.math2d.Rectangle
 import com.awakekt.awake.core.math2d.Vec2
+import com.awakekt.awake.core.text.font.UiFonts
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.core.transform.Transform

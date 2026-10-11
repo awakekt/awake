@@ -101,6 +101,7 @@ val GpuDataShape.uniformFloats: Int
 /** Common fields every lit shader's `Uniforms` struct draws from -- a new shader composes
  * from these instead of hand-summing a new literal; a genuinely new field (not yet covered
  * here) is added once, to this list, not to N per-shader consts. */
+
 /**
  * How many cascades a shadow map can hold.
  *
@@ -119,8 +120,10 @@ const val MAX_POINT_LIGHT_SLOTS = 4
 object UniformFields {
     /** Combined Model-View-Projection matrix uniform field. */
     val Mvp = UniformField("mvp", GpuDataShape.Mat4)
+
     /** Primary directional light direction vector uniform field. */
     val LightDirection = UniformField("lightDirection", GpuDataShape.Vec4)
+
     /** Primary directional light color and intensity uniform field. */
     val LightColor = UniformField("lightColor", GpuDataShape.Vec4)
 
@@ -174,14 +177,19 @@ object UniformFields {
 
     /** xyz = backend-neutral vertex-effect parameters; w is the current frame time in seconds. */
     val VertexAnimation = UniformField("vertexAnimation", GpuDataShape.Vec4)
+
     /** World-space model transformation matrix uniform field. */
     val Model = UniformField("model", GpuDataShape.Mat4)
+
     /** World-space camera eye position uniform field. */
     val CameraPosition = UniformField("cameraPosition", GpuDataShape.Vec4)
+
     /** World-space camera forward viewing direction vector uniform field. */
     val CameraForward = UniformField("cameraForward", GpuDataShape.Vec4)
+
     /** Atmospheric distance fog color uniform field. */
     val FogColor = UniformField("fogColor", GpuDataShape.Vec4)
+
     /** PBR surface roughness and metallic parameters uniform field. */
     val PbrFactors = UniformField("pbrFactors", GpuDataShape.Vec4)
 
@@ -191,8 +199,10 @@ object UniformFields {
      * because [UniformWriter] matches a layout's fields by identity, so a shared instance would
      * make one of the two shaders' declared names a lie. */
     val Material = UniformField("material", GpuDataShape.Vec4)
+
     /** Base color RGBA multiplier factor uniform field. */
     val BaseColorFactor = UniformField("baseColorFactor", GpuDataShape.Vec4)
+
     /** Emissive color RGB multiplier factor uniform field. */
     val EmissiveFactor = UniformField("emissiveFactor", GpuDataShape.Vec4)
 

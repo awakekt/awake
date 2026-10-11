@@ -886,6 +886,7 @@ class RendererHeadlessCascadedShadowTest {
 
         /** Pixels. Generous next to the offset being measured -- a 128px frame at this camera is
          * about 5 world units wide, and the shadow sits 1.5 units from the caster. */
+
         /** Pixels, against a measured 3.2 on a 128px frame -- the slack is PCF's soft edge and the
          * centroid of a quantised region, not room for a wrong matrix. */
         private const val POSITION_TOLERANCE = 8f
@@ -900,6 +901,7 @@ class RendererHeadlessCascadedShadowTest {
         private const val POINT_SHADOW_DELTA = 8
 
         /** The showcase scene's own values -- see `cascaded-shadows.scene.json`. */
+
         /** `EngineShowcaseModule` registers "ground" as a 10-unit plane; the scene scales it. */
         private const val SHOWCASE_GROUND_MESH_SIZE = 10f
         private const val SHOWCASE_SCENE_PATH =

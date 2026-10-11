@@ -6,11 +6,9 @@
 package com.awakekt.awake.scene.document
 
 import com.awakekt.awake.core.schema.JsonSchemaExportOptions
-import com.awakekt.awake.core.schema.PropertyKind
 import com.awakekt.awake.core.schema.PropertySchema
 import com.awakekt.awake.core.schema.toJsonSchema
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -70,42 +68,51 @@ object SceneDocumentJsonSchema {
                 "z" to buildJsonObject { put("type", "number"); put("default", 0.0) },
             )
             put("properties", sortedJsonObject(vecProps))
-            put("required", buildJsonArray {
-                add(JsonPrimitive("x"))
-                add(JsonPrimitive("y"))
-                add(JsonPrimitive("z"))
-            })
+            put(
+                "required",
+                buildJsonArray {
+                    add(JsonPrimitive("x"))
+                    add(JsonPrimitive("y"))
+                    add(JsonPrimitive("z"))
+                },
+            )
             put("additionalProperties", false)
         }
 
         defs["color"] = buildJsonObject {
             put("description", "RGBA color specification: object with r,g,b,a in [0,1], hex string '#RRGGBBAA', or array")
             val anyOf = buildJsonArray {
-                add(buildJsonObject {
-                    put("type", "object")
-                    val colProps = mapOf<String, JsonElement>(
-                        "a" to buildJsonObject { put("type", "number"); put("minimum", 0.0); put("maximum", 1.0); put("default", 1.0) },
-                        "b" to buildJsonObject { put("type", "number"); put("minimum", 0.0); put("maximum", 1.0) },
-                        "g" to buildJsonObject { put("type", "number"); put("minimum", 0.0); put("maximum", 1.0) },
-                        "r" to buildJsonObject { put("type", "number"); put("minimum", 0.0); put("maximum", 1.0) },
-                        "w" to buildJsonObject { put("type", "number"); put("minimum", 0.0); put("maximum", 1.0) },
-                        "x" to buildJsonObject { put("type", "number"); put("minimum", 0.0); put("maximum", 1.0) },
-                        "y" to buildJsonObject { put("type", "number"); put("minimum", 0.0); put("maximum", 1.0) },
-                        "z" to buildJsonObject { put("type", "number"); put("minimum", 0.0); put("maximum", 1.0) },
-                    )
-                    put("properties", sortedJsonObject(colProps))
-                    put("additionalProperties", false)
-                })
-                add(buildJsonObject {
-                    put("type", "string")
-                    put("pattern", "^#([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$")
-                })
-                add(buildJsonObject {
-                    put("type", "array")
-                    put("items", buildJsonObject { put("type", "number") })
-                    put("minItems", 3)
-                    put("maxItems", 4)
-                })
+                add(
+                    buildJsonObject {
+                        put("type", "object")
+                        val colProps = mapOf<String, JsonElement>(
+                            "a" to buildJsonObject { put("type", "number"); put("minimum", 0.0); put("maximum", 1.0); put("default", 1.0) },
+                            "b" to buildJsonObject { put("type", "number"); put("minimum", 0.0); put("maximum", 1.0) },
+                            "g" to buildJsonObject { put("type", "number"); put("minimum", 0.0); put("maximum", 1.0) },
+                            "r" to buildJsonObject { put("type", "number"); put("minimum", 0.0); put("maximum", 1.0) },
+                            "w" to buildJsonObject { put("type", "number"); put("minimum", 0.0); put("maximum", 1.0) },
+                            "x" to buildJsonObject { put("type", "number"); put("minimum", 0.0); put("maximum", 1.0) },
+                            "y" to buildJsonObject { put("type", "number"); put("minimum", 0.0); put("maximum", 1.0) },
+                            "z" to buildJsonObject { put("type", "number"); put("minimum", 0.0); put("maximum", 1.0) },
+                        )
+                        put("properties", sortedJsonObject(colProps))
+                        put("additionalProperties", false)
+                    },
+                )
+                add(
+                    buildJsonObject {
+                        put("type", "string")
+                        put("pattern", "^#([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$")
+                    },
+                )
+                add(
+                    buildJsonObject {
+                        put("type", "array")
+                        put("items", buildJsonObject { put("type", "number") })
+                        put("minItems", 3)
+                        put("maxItems", 4)
+                    },
+                )
             }
             put("anyOf", anyOf)
         }
@@ -133,11 +140,14 @@ object SceneDocumentJsonSchema {
                 "version" to buildJsonObject { put("type", "integer"); put("minimum", 1) },
             )
             put("properties", sortedJsonObject(extProps))
-            put("required", buildJsonArray {
-                add(JsonPrimitive("id"))
-                add(JsonPrimitive("payload"))
-                add(JsonPrimitive("version"))
-            })
+            put(
+                "required",
+                buildJsonArray {
+                    add(JsonPrimitive("id"))
+                    add(JsonPrimitive("payload"))
+                    add(JsonPrimitive("version"))
+                },
+            )
             put("additionalProperties", false)
         }
 
@@ -165,11 +175,14 @@ object SceneDocumentJsonSchema {
                         "type" to buildJsonObject { put("type", "string"); put("minLength", 1) },
                     )
                     put("properties", sortedJsonObject(customProps))
-                    put("required", buildJsonArray {
-                        add(JsonPrimitive("component"))
-                        add(JsonPrimitive("payload"))
-                        add(JsonPrimitive("type"))
-                    })
+                    put(
+                        "required",
+                        buildJsonArray {
+                            add(JsonPrimitive("component"))
+                            add(JsonPrimitive("payload"))
+                            add(JsonPrimitive("type"))
+                        },
+                    )
                     put("additionalProperties", false)
                 }
             } else {
@@ -189,11 +202,14 @@ object SceneDocumentJsonSchema {
                     "type" to buildJsonObject { put("type", "string"); put("minLength", 1) },
                 )
                 put("properties", sortedJsonObject(customProps))
-                put("required", buildJsonArray {
-                    add(JsonPrimitive("component"))
-                    add(JsonPrimitive("payload"))
-                    add(JsonPrimitive("type"))
-                })
+                put(
+                    "required",
+                    buildJsonArray {
+                        add(JsonPrimitive("component"))
+                        add(JsonPrimitive("payload"))
+                        add(JsonPrimitive("type"))
+                    },
+                )
                 put("additionalProperties", false)
             }
             componentRefList += "#/\$defs/component_custom"
@@ -201,11 +217,14 @@ object SceneDocumentJsonSchema {
 
         defs["component"] = buildJsonObject {
             put("description", "Attached serializable component polymorphic instance")
-            put("anyOf", buildJsonArray {
-                componentRefList.sorted().forEach { ref ->
-                    add(buildJsonObject { put("\$ref", ref) })
-                }
-            })
+            put(
+                "anyOf",
+                buildJsonArray {
+                    componentRefList.sorted().forEach { ref ->
+                        add(buildJsonObject { put("\$ref", ref) })
+                    }
+                },
+            )
         }
 
         // 5. Node definition (recursive)

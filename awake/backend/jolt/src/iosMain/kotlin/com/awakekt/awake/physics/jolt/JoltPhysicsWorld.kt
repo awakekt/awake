@@ -432,6 +432,7 @@ private const val VALUES_PER_POINT = 3
  * `staticCFunction` cannot capture, and the `self` pointer is how state reaches it -- a
  * [kotlinx.cinterop.StableRef] to one of these, freed by the caller that made it.
  */
+
 /** Collects every overlapping body id; see [PhysicsWorld.overlapShape] for why it is all of them. */
 private class OverlapHits {
     val bodyIds = mutableListOf<JPC_BodyID>()

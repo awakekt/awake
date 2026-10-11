@@ -30,7 +30,8 @@ import com.awakekt.awake.scene.core.transform.Transform
 class ParticleContentSystem(
     private val renderer: Renderer,
     private val sprites: Map<String, TextureAsset>,
-) : System, AutoCloseable {
+) : System,
+    AutoCloseable {
     private var quad: Mesh? = null
     private val materials = HashMap<String, Material>()
     private val waiting = ArrayList<Entity>()

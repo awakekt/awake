@@ -232,6 +232,7 @@ class SwapchainManager(
      * [swapChain]/[imageViews] directly). [imageViews] stays empty -- nothing on the headless
      * path (`Renderer.renderToTexture`/`readPixels`) ever indexes into it; only `Renderer.draw`
      * (never called headless) does. */
+
     /**
      * Headless WITH images, so the on-screen path can run: acquire, record, submit, read back.
      *

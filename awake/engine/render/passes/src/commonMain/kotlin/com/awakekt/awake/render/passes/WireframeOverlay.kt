@@ -71,7 +71,9 @@ internal fun edgeContext(context: GpuDrawPreparationContext): GpuDrawPreparation
  * preparer asks this when it prepares with an edges context, with its material's uniform size.
  */
 fun GpuDrawRequest.drawsEdges(materialUniformFloatCount: Int): Boolean =
-    instanceModels == null && !transparent && !shadowsOnly &&
+    instanceModels == null &&
+        !transparent &&
+        !shadowsOnly &&
         drawUniformPlan(mesh.format, materialUniformFloatCount, hasShadowCascades = false) in EDGE_PLANS
 
 private val EDGE_PLANS = setOf(DrawUniformPlan.LitShadow, DrawUniformPlan.Skinned, DrawUniformPlan.TexturedPbr)

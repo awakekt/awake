@@ -12,8 +12,8 @@ import com.awakekt.awake.physics.BoxShape
 import com.awakekt.awake.physics.MotionType
 import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.physics.jolt.createJoltPhysicsWorld
-import kotlin.math.sqrt
 import kotlinx.coroutines.test.runTest
+import kotlin.math.sqrt
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertTrue

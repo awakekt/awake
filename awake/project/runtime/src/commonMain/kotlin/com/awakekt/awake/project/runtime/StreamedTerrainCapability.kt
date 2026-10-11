@@ -131,7 +131,8 @@ internal class StreamedTerrainSystem(
     private val assets: StreamedTerrainAssets,
     private val host: ContentFeatureHost?,
     physics: PhysicsSystem?,
-) : System, AutoCloseable {
+) : System,
+    AutoCloseable {
     private val log = Logger("streamed-terrain")
     private val reads = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val attaching = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)

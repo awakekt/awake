@@ -35,6 +35,7 @@ object WebGpuHandles {
     // `as? T` fails fast with a clear error on a caller/handle-type mismatch rather than
     // corrupting state -- correctness relies on every caller resolving with the same T it
     // registered, same as the untyped table itself.
+
     /**
      * Looks up the object registered under [handle].
      *

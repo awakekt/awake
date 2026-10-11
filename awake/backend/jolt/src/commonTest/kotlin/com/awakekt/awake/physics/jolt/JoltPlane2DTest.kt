@@ -37,8 +37,11 @@ class JoltPlane2DTest {
     fun velocityWritesKeepThePlaneWhileAllowingTranslationAndSpin() = runTest {
         world { world ->
             val body = world.createBody(
-                BoxShape(Vec3f(0.5f, 0.5f, 0.5f)), Vec3f(0f, 0f, PLANE_Z), Quat.IDENTITY,
-                MotionType.DYNAMIC, degreesOfFreedom = DegreesOfFreedom.PLANE_2D,
+                BoxShape(Vec3f(0.5f, 0.5f, 0.5f)),
+                Vec3f(0f, 0f, PLANE_Z),
+                Quat.IDENTITY,
+                MotionType.DYNAMIC,
+                degreesOfFreedom = DegreesOfFreedom.PLANE_2D,
             )
             world.setLinearVelocity(body, Vec3f(2f, 3f, 10f))
             world.setAngularVelocity(body, Vec3f(4f, 5f, 1f))
@@ -57,13 +60,18 @@ class JoltPlane2DTest {
     @Test
     fun impulsesAndGravityCannotMoveAnyConvexShapeOutOfItsPlane() = runTest {
         val shapes = listOf(
-            BoxShape(Vec3f(0.5f, 0.5f, 0.5f)), SphereShape(0.5f), CapsuleShape(0.5f, 0.5f),
+            BoxShape(Vec3f(0.5f, 0.5f, 0.5f)),
+            SphereShape(0.5f),
+            CapsuleShape(0.5f, 0.5f),
             ConvexHullShape(floatArrayOf(-0.5f, -0.5f, -0.5f, 0.5f, -0.5f, -0.5f, 0f, 0.5f, -0.5f, 0f, 0f, 0.5f)),
         )
         for (shape in shapes) {
             world(gravity = Vec3f(0f, -9.81f, 8f)) { world ->
                 val body = world.createBody(
-                    shape, Vec3f(0f, 0f, PLANE_Z), Quat.IDENTITY, MotionType.DYNAMIC,
+                    shape,
+                    Vec3f(0f, 0f, PLANE_Z),
+                    Quat.IDENTITY,
+                    MotionType.DYNAMIC,
                     degreesOfFreedom = DegreesOfFreedom.PLANE_2D,
                 )
                 world.addImpulse(body, Vec3f(100f, 0f, 1000f))
@@ -81,11 +89,17 @@ class JoltPlane2DTest {
     fun contactsWithAnUnrestrictedBodyCannotPushOrTiltAPlanarBodyOutOfThePlane() = runTest {
         world { world ->
             val planar = world.createBody(
-                BoxShape(Vec3f(0.5f, 0.5f, 0.5f)), Vec3f(0f, 0f, PLANE_Z), Quat.IDENTITY,
-                MotionType.DYNAMIC, degreesOfFreedom = DegreesOfFreedom.PLANE_2D,
+                BoxShape(Vec3f(0.5f, 0.5f, 0.5f)),
+                Vec3f(0f, 0f, PLANE_Z),
+                Quat.IDENTITY,
+                MotionType.DYNAMIC,
+                degreesOfFreedom = DegreesOfFreedom.PLANE_2D,
             )
             val incoming = world.createBody(
-                SphereShape(0.5f), Vec3f(0.4f, 0.3f, PLANE_Z + 2f), Quat.IDENTITY, MotionType.DYNAMIC,
+                SphereShape(0.5f),
+                Vec3f(0.4f, 0.3f, PLANE_Z + 2f),
+                Quat.IDENTITY,
+                MotionType.DYNAMIC,
             )
             world.setContactReporting(planar, true)
             world.setLinearVelocity(incoming, Vec3f(0f, 0f, -4f))
@@ -107,8 +121,11 @@ class JoltPlane2DTest {
     fun moveKinematicRespectsThePlaneAndStillMovesInXY() = runTest {
         world { world ->
             val body = world.createBody(
-                BoxShape(Vec3f(0.5f, 0.5f, 0.5f)), Vec3f(0f, 0f, PLANE_Z), Quat.IDENTITY,
-                MotionType.KINEMATIC, degreesOfFreedom = DegreesOfFreedom.PLANE_2D,
+                BoxShape(Vec3f(0.5f, 0.5f, 0.5f)),
+                Vec3f(0f, 0f, PLANE_Z),
+                Quat.IDENTITY,
+                MotionType.KINEMATIC,
+                degreesOfFreedom = DegreesOfFreedom.PLANE_2D,
             )
             world.moveKinematic(body, Vec3f(1f, 2f, PLANE_Z + 10f), Quat.fromEuler(Vec3f(0.4f, 0.3f, 0.8f)), 1f)
             assertEquals(0f, world.getLinearVelocity(body).z, EPSILON)
@@ -129,8 +146,11 @@ class JoltPlane2DTest {
         world { world ->
             val rotation = Quat.fromEuler(Vec3f(0.2f, 0.3f, 0.4f))
             val body = world.createBody(
-                BoxShape(Vec3f(0.5f, 0.5f, 0.5f)), Vec3f(1f, 2f, PLANE_Z), rotation,
-                MotionType.DYNAMIC, degreesOfFreedom = DegreesOfFreedom.PLANE_2D,
+                BoxShape(Vec3f(0.5f, 0.5f, 0.5f)),
+                Vec3f(1f, 2f, PLANE_Z),
+                rotation,
+                MotionType.DYNAMIC,
+                degreesOfFreedom = DegreesOfFreedom.PLANE_2D,
             )
             world.step(STEP)
             val pose = world.syncTransforms().single { it.handle == body }
@@ -146,7 +166,10 @@ class JoltPlane2DTest {
     fun shiftingOriginMovesThePlaneWithoutUnlockingIt() = runTest {
         world { world ->
             val body = world.createBody(
-                SphereShape(0.5f), Vec3f(0f, 0f, PLANE_Z), Quat.IDENTITY, MotionType.DYNAMIC,
+                SphereShape(0.5f),
+                Vec3f(0f, 0f, PLANE_Z),
+                Quat.IDENTITY,
+                MotionType.DYNAMIC,
                 degreesOfFreedom = DegreesOfFreedom.PLANE_2D,
             )
             world.shiftOrigin(Vec3f(10f, 4f, -3f))
@@ -161,8 +184,13 @@ class JoltPlane2DTest {
         world { world ->
             val shape = BoxShape(Vec3f(0.5f, 0.5f, 0.5f))
             val original = world.createBody(shape, Vec3f(), Quat.IDENTITY, MotionType.DYNAMIC)
-            val explicit = world.createBody(shape, Vec3f(10f, 0f, 0f), Quat.IDENTITY, MotionType.DYNAMIC,
-                degreesOfFreedom = DegreesOfFreedom.ALL)
+            val explicit = world.createBody(
+                shape,
+                Vec3f(10f, 0f, 0f),
+                Quat.IDENTITY,
+                MotionType.DYNAMIC,
+                degreesOfFreedom = DegreesOfFreedom.ALL,
+            )
             for (body in listOf(original, explicit)) {
                 world.setLinearVelocity(body, Vec3f(0f, 0f, 2f))
                 world.setAngularVelocity(body, Vec3f(1f, 0f, 0f))

@@ -22,8 +22,6 @@ import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
-import com.awakekt.awake.scene.canvas.CanvasElement
-import com.awakekt.awake.scene.canvas.CanvasElementKind
 import com.awakekt.awake.engine.bootstrap.dsl.app
 import com.awakekt.awake.engine.bootstrap.dsl.appModule
 import com.awakekt.awake.engine.bootstrap.dsl.module
@@ -44,8 +42,10 @@ import com.awakekt.awake.scene.authoring.dsl.cameraEntity
 import com.awakekt.awake.scene.authoring.dsl.meshEntity
 import com.awakekt.awake.scene.authoring.dsl.transform
 import com.awakekt.awake.scene.authoring.infrastructure.cameraSystem
-import com.awakekt.awake.scene.core.Name
+import com.awakekt.awake.scene.canvas.CanvasElement
+import com.awakekt.awake.scene.canvas.CanvasElementKind
 import com.awakekt.awake.scene.controls.camera.CameraSystem
+import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.runtime.LocalFrameStats
 import com.awakekt.awake.scene.runtime.LocalRenderer
 import com.awakekt.awake.scene.runtime.LocalWorld
@@ -53,7 +53,6 @@ import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import com.awakekt.awake.scene.runtime.ScenePhaseStats
 import com.awakekt.awake.scene.runtime.session.SceneSession
 import com.awakekt.awake.scene.runtime.ui.sceneComposeAppModule
-import kotlin.time.TimeSource
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -61,6 +60,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
+import kotlin.time.TimeSource
 
 class SceneAppLifecycleDslTest {
 

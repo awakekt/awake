@@ -111,6 +111,7 @@ class RendererHeadlessTerrainTest {
 
     /** Non-clear pixels in one rendered frame of the selected terrain, and the distinct
      * greys among them. */
+
     /** Exposure scales the terrain's light before the shared tone curve, as it does a lit mesh's. */
     @Test
     fun exposureBrightensTheTerrainAsItDoesLitMeshes() {

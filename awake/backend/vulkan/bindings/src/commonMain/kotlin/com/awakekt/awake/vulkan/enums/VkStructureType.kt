@@ -730,86 +730,103 @@ enum class VkStructureType(val value: Int) {
     VK_STRUCTURE_TYPE_DEBUG_MARKER_MARKER_INFO_EXT(1000022002),
 
     // VK_ENABLE_BETA_EXTENSIONS
+
     /** `sType` tag for the video profile structure (Khronos extension). */
     VK_STRUCTURE_TYPE_VIDEO_PROFILE_KHR(1000023000),
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /** `sType` tag for the video capabilities structure (Khronos extension). */
     VK_STRUCTURE_TYPE_VIDEO_CAPABILITIES_KHR(1000023001),
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /** `sType` tag for the video picture resource structure (Khronos extension). */
     VK_STRUCTURE_TYPE_VIDEO_PICTURE_RESOURCE_KHR(1000023002),
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /** `sType` tag for the video get memory properties structure (Khronos extension). */
     VK_STRUCTURE_TYPE_VIDEO_GET_MEMORY_PROPERTIES_KHR(1000023003),
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /** `sType` tag for the video bind memory structure (Khronos extension). */
     VK_STRUCTURE_TYPE_VIDEO_BIND_MEMORY_KHR(1000023004),
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /** `sType` tag for the video session create info structure (Khronos extension). */
     VK_STRUCTURE_TYPE_VIDEO_SESSION_CREATE_INFO_KHR(1000023005),
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /** `sType` tag for the video session parameters create info structure (Khronos extension). */
     VK_STRUCTURE_TYPE_VIDEO_SESSION_PARAMETERS_CREATE_INFO_KHR(1000023006),
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /** `sType` tag for the video session parameters update info structure (Khronos extension). */
     VK_STRUCTURE_TYPE_VIDEO_SESSION_PARAMETERS_UPDATE_INFO_KHR(1000023007),
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /** `sType` tag for the video begin coding info structure (Khronos extension). */
     VK_STRUCTURE_TYPE_VIDEO_BEGIN_CODING_INFO_KHR(1000023008),
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /** `sType` tag for the video end coding info structure (Khronos extension). */
     VK_STRUCTURE_TYPE_VIDEO_END_CODING_INFO_KHR(1000023009),
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /** `sType` tag for the video coding control info structure (Khronos extension). */
     VK_STRUCTURE_TYPE_VIDEO_CODING_CONTROL_INFO_KHR(1000023010),
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /** `sType` tag for the video reference slot structure (Khronos extension). */
     VK_STRUCTURE_TYPE_VIDEO_REFERENCE_SLOT_KHR(1000023011),
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /** `sType` tag for the video queue family properties 2 structure (Khronos extension). */
     VK_STRUCTURE_TYPE_VIDEO_QUEUE_FAMILY_PROPERTIES_2_KHR(1000023012),
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /** `sType` tag for the video profiles structure (Khronos extension). */
     VK_STRUCTURE_TYPE_VIDEO_PROFILES_KHR(1000023013),
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /** `sType` tag for the physical device video format info structure (Khronos extension). */
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_FORMAT_INFO_KHR(1000023014),
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /** `sType` tag for the video format properties structure (Khronos extension). */
     VK_STRUCTURE_TYPE_VIDEO_FORMAT_PROPERTIES_KHR(1000023015),
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /**
      * `sType` tag for the queue family query result status properties 2 structure (Khronos
      * extension).
@@ -818,10 +835,12 @@ enum class VkStructureType(val value: Int) {
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /** `sType` tag for the video decode info structure (Khronos extension). */
     VK_STRUCTURE_TYPE_VIDEO_DECODE_INFO_KHR(1000024000),
 
     //
+
     /** `sType` tag for the dedicated allocation image create info structure (NVIDIA extension). */
     VK_STRUCTURE_TYPE_DEDICATED_ALLOCATION_IMAGE_CREATE_INFO_NV(1000026000),
 
@@ -867,11 +886,13 @@ enum class VkStructureType(val value: Int) {
     VK_STRUCTURE_TYPE_IMAGE_VIEW_ADDRESS_PROPERTIES_NVX(1000030001),
 
     // VK_ENABLE_BETA_EXTENSIONS
+
     /** `sType` tag for the video encode h264 capabilities structure (multi-vendor extension). */
     VK_STRUCTURE_TYPE_VIDEO_ENCODE_H264_CAPABILITIES_EXT(1000038000),
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /**
      * `sType` tag for the video encode h264 session create info structure (multi-vendor extension).
      */
@@ -879,6 +900,7 @@ enum class VkStructureType(val value: Int) {
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /**
      * `sType` tag for the video encode h264 session parameters create info structure (multi-vendor
      * extension).
@@ -887,6 +909,7 @@ enum class VkStructureType(val value: Int) {
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /**
      * `sType` tag for the video encode h264 session parameters add info structure (multi-vendor
      * extension).
@@ -895,21 +918,25 @@ enum class VkStructureType(val value: Int) {
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /** `sType` tag for the video encode h264 vcl frame info structure (multi-vendor extension). */
     VK_STRUCTURE_TYPE_VIDEO_ENCODE_H264_VCL_FRAME_INFO_EXT(1000038004),
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /** `sType` tag for the video encode h264 dpb slot info structure (multi-vendor extension). */
     VK_STRUCTURE_TYPE_VIDEO_ENCODE_H264_DPB_SLOT_INFO_EXT(1000038005),
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /** `sType` tag for the video encode h264 nalu slice structure (multi-vendor extension). */
     VK_STRUCTURE_TYPE_VIDEO_ENCODE_H264_NALU_SLICE_EXT(1000038006),
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /**
      * `sType` tag for the video encode h264 emit picture parameters structure (multi-vendor
      * extension).
@@ -918,11 +945,13 @@ enum class VkStructureType(val value: Int) {
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /** `sType` tag for the video encode h264 profile structure (multi-vendor extension). */
     VK_STRUCTURE_TYPE_VIDEO_ENCODE_H264_PROFILE_EXT(1000038008),
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /**
      * `sType` tag for the video encode h264 rate control info structure (multi-vendor extension).
      */
@@ -930,6 +959,7 @@ enum class VkStructureType(val value: Int) {
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /**
      * `sType` tag for the video encode h264 rate control layer info structure (multi-vendor
      * extension).
@@ -938,11 +968,13 @@ enum class VkStructureType(val value: Int) {
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /** `sType` tag for the video encode h265 capabilities structure (multi-vendor extension). */
     VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_CAPABILITIES_EXT(1000039000),
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /**
      * `sType` tag for the video encode h265 session create info structure (multi-vendor extension).
      */
@@ -950,6 +982,7 @@ enum class VkStructureType(val value: Int) {
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /**
      * `sType` tag for the video encode h265 session parameters create info structure (multi-vendor
      * extension).
@@ -958,6 +991,7 @@ enum class VkStructureType(val value: Int) {
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /**
      * `sType` tag for the video encode h265 session parameters add info structure (multi-vendor
      * extension).
@@ -966,21 +1000,25 @@ enum class VkStructureType(val value: Int) {
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /** `sType` tag for the video encode h265 vcl frame info structure (multi-vendor extension). */
     VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_VCL_FRAME_INFO_EXT(1000039004),
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /** `sType` tag for the video encode h265 dpb slot info structure (multi-vendor extension). */
     VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_DPB_SLOT_INFO_EXT(1000039005),
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /** `sType` tag for the video encode h265 nalu slice structure (multi-vendor extension). */
     VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_NALU_SLICE_EXT(1000039006),
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /**
      * `sType` tag for the video encode h265 emit picture parameters structure (multi-vendor
      * extension).
@@ -989,16 +1027,19 @@ enum class VkStructureType(val value: Int) {
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /** `sType` tag for the video encode h265 profile structure (multi-vendor extension). */
     VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_PROFILE_EXT(1000039008),
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /** `sType` tag for the video encode h265 reference lists structure (multi-vendor extension). */
     VK_STRUCTURE_TYPE_VIDEO_ENCODE_H265_REFERENCE_LISTS_EXT(1000039009),
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /**
      * `sType` tag for the video encode h265 rate control info structure (multi-vendor extension).
      */
@@ -1006,6 +1047,7 @@ enum class VkStructureType(val value: Int) {
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /**
      * `sType` tag for the video encode h265 rate control layer info structure (multi-vendor
      * extension).
@@ -1014,11 +1056,13 @@ enum class VkStructureType(val value: Int) {
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /** `sType` tag for the video decode h264 capabilities structure (multi-vendor extension). */
     VK_STRUCTURE_TYPE_VIDEO_DECODE_H264_CAPABILITIES_EXT(1000040000),
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /**
      * `sType` tag for the video decode h264 session create info structure (multi-vendor extension).
      */
@@ -1026,21 +1070,25 @@ enum class VkStructureType(val value: Int) {
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /** `sType` tag for the video decode h264 picture info structure (multi-vendor extension). */
     VK_STRUCTURE_TYPE_VIDEO_DECODE_H264_PICTURE_INFO_EXT(1000040002),
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /** `sType` tag for the video decode h264 mvc structure (multi-vendor extension). */
     VK_STRUCTURE_TYPE_VIDEO_DECODE_H264_MVC_EXT(1000040003),
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /** `sType` tag for the video decode h264 profile structure (multi-vendor extension). */
     VK_STRUCTURE_TYPE_VIDEO_DECODE_H264_PROFILE_EXT(1000040004),
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /**
      * `sType` tag for the video decode h264 session parameters create info structure (multi-vendor
      * extension).
@@ -1049,6 +1097,7 @@ enum class VkStructureType(val value: Int) {
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /**
      * `sType` tag for the video decode h264 session parameters add info structure (multi-vendor
      * extension).
@@ -1057,10 +1106,12 @@ enum class VkStructureType(val value: Int) {
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /** `sType` tag for the video decode h264 dpb slot info structure (multi-vendor extension). */
     VK_STRUCTURE_TYPE_VIDEO_DECODE_H264_DPB_SLOT_INFO_EXT(1000040007),
 
     //
+
     /** `sType` tag for the texture lod gather format properties structure (AMD extension). */
     VK_STRUCTURE_TYPE_TEXTURE_LOD_GATHER_FORMAT_PROPERTIES_AMD(1000041000),
 
@@ -1587,6 +1638,7 @@ enum class VkStructureType(val value: Int) {
     VK_STRUCTURE_TYPE_SHADER_MODULE_VALIDATION_CACHE_CREATE_INFO_EXT(1000160001),
 
     // VK_ENABLE_BETA_EXTENSIONS
+
     /**
      * `sType` tag for the physical device portability subset features structure (Khronos
      * extension).
@@ -1595,6 +1647,7 @@ enum class VkStructureType(val value: Int) {
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /**
      * `sType` tag for the physical device portability subset properties structure (Khronos
      * extension).
@@ -1602,6 +1655,7 @@ enum class VkStructureType(val value: Int) {
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PORTABILITY_SUBSET_PROPERTIES_KHR(1000163001),
 
     //
+
     /**
      * `sType` tag for the pipeline viewport shading rate image state create info structure (NVIDIA
      * extension).
@@ -1712,11 +1766,13 @@ enum class VkStructureType(val value: Int) {
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_PROPERTIES_AMD(1000185000),
 
     // VK_ENABLE_BETA_EXTENSIONS
+
     /** `sType` tag for the video decode h265 capabilities structure (multi-vendor extension). */
     VK_STRUCTURE_TYPE_VIDEO_DECODE_H265_CAPABILITIES_EXT(1000187000),
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /**
      * `sType` tag for the video decode h265 session create info structure (multi-vendor extension).
      */
@@ -1724,6 +1780,7 @@ enum class VkStructureType(val value: Int) {
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /**
      * `sType` tag for the video decode h265 session parameters create info structure (multi-vendor
      * extension).
@@ -1732,6 +1789,7 @@ enum class VkStructureType(val value: Int) {
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /**
      * `sType` tag for the video decode h265 session parameters add info structure (multi-vendor
      * extension).
@@ -1740,20 +1798,24 @@ enum class VkStructureType(val value: Int) {
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /** `sType` tag for the video decode h265 profile structure (multi-vendor extension). */
     VK_STRUCTURE_TYPE_VIDEO_DECODE_H265_PROFILE_EXT(1000187004),
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /** `sType` tag for the video decode h265 picture info structure (multi-vendor extension). */
     VK_STRUCTURE_TYPE_VIDEO_DECODE_H265_PICTURE_INFO_EXT(1000187005),
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /** `sType` tag for the video decode h265 dpb slot info structure (multi-vendor extension). */
     VK_STRUCTURE_TYPE_VIDEO_DECODE_H265_DPB_SLOT_INFO_EXT(1000187006),
 
     //
+
     /**
      * `sType` tag for the device queue global priority create info structure (Khronos extension).
      */
@@ -2232,20 +2294,24 @@ enum class VkStructureType(val value: Int) {
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRESENT_ID_FEATURES_KHR(1000294001),
 
     // VK_ENABLE_BETA_EXTENSIONS
+
     /** `sType` tag for the video encode info structure (Khronos extension). */
     VK_STRUCTURE_TYPE_VIDEO_ENCODE_INFO_KHR(1000299000),
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /** `sType` tag for the video encode rate control info structure (Khronos extension). */
     VK_STRUCTURE_TYPE_VIDEO_ENCODE_RATE_CONTROL_INFO_KHR(1000299001),
 
     //
     // VK_ENABLE_BETA_EXTENSIONS
+
     /** `sType` tag for the video encode rate control layer info structure (Khronos extension). */
     VK_STRUCTURE_TYPE_VIDEO_ENCODE_RATE_CONTROL_LAYER_INFO_KHR(1000299002),
 
     //
+
     /**
      * `sType` tag for the physical device diagnostics config features structure (NVIDIA extension).
      */

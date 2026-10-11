@@ -21,11 +21,13 @@ import com.awakekt.awake.render.renderer.UniformLayout
 sealed interface PipelineKey {
     /** Primary default 3D pipeline key. */
     data object Primary : PipelineKey
+
     /** Pipeline key for an additional [vertexFormat]. */
     data class Format(
         /** Target vertex format layout. */
         val vertexFormat: VertexFormat,
     ) : PipelineKey
+
     /** Primary format instanced pipeline key. */
     data object Instanced : PipelineKey
 
@@ -34,8 +36,10 @@ sealed interface PipelineKey {
         /** Target vertex format layout for instancing. */
         val vertexFormat: VertexFormat,
     ) : PipelineKey
+
     /** Skinned instanced pipeline key. */
     data object SkinnedInstanced : PipelineKey
+
     /** Particle billboard pipeline key. */
     data object Particle : PipelineKey
 

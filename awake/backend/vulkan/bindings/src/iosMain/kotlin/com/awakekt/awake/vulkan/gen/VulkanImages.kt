@@ -167,6 +167,7 @@ actual object VulkanImages {
 
     // Only the two transitions a texture upload needs -- see this actual object's expect
     // declaration doc comment for why this is deliberately not a generic barrier API.
+
     /**
      * Transitions `image`'s layout in `commandBuffer` between the plain-`Int`
      * [com.awakekt.awake.vulkan.models.info.VkImageLayout2] values `oldLayout`/`newLayout`.

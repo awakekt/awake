@@ -630,6 +630,7 @@ class Mat4 {
 
         // Mirrors the canonical GL entry point of the same name; collapsing the
         // parameters into an object would break that correspondence.
+
         /**
          * Creates a look-at view matrix from separate coordinate components.
          *

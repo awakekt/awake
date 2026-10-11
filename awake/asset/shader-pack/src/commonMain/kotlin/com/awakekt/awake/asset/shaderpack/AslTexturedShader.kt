@@ -47,7 +47,6 @@ import com.awakekt.awake.asset.shaderdsl.select
 import com.awakekt.awake.asset.shaderdsl.shader
 import com.awakekt.awake.asset.shaderdsl.texture2d
 import com.awakekt.awake.asset.shaderdsl.textureDepth2dArray
-import com.awakekt.awake.asset.shaderdsl.textureSample
 import com.awakekt.awake.asset.shaderdsl.textureSampleGrad
 import com.awakekt.awake.asset.shaderdsl.times
 import com.awakekt.awake.asset.shaderdsl.toU32
@@ -88,239 +87,239 @@ import com.awakekt.awake.render.pipeline.BindingSemantic
 @Suppress("LongMethod")
 private fun textured(clipSpace: ClipSpace, instanced: Boolean = false): AslShaderDefinition =
     shader(if (instanced) "instanced_textured" else "textured") {
-    val u = uniformBlock(
-        "Uniforms",
-        group = BindingLayout.Standard.slot(BindingSemantic.Material),
-        binding = 0,
-    )
-    val handles = u.fieldsFrom(MaterialUniformLayouts.PbrTextured)
-    val mvp = handles.value("mvp")
-    val lightDirection = handles.value("lightDirection")
-    val lightColor = handles.value("lightColor")
-    val pointLightPositions = handles.array("pointLightPositions")
-    val pointLightColors = handles.array("pointLightColors")
-    val model = handles.value("model")
-    val cameraPosition = handles.value("cameraPosition")
-    val pbrFactors = handles.value("pbrFactors")
-    val baseColorFactor = handles.value("baseColorFactor")
-    val emissiveFactor = handles.value("emissiveFactor")
-    val textureFrames = handles.value("textureFrames")
-    val textureScroll = handles.value("textureScroll")
-    val fogColor = handles.value("fogColor")
-    val debugView = handles.value("debugView")
-    val exposure = handles.value("exposure")
-    val cascadeInputs = CascadeShadowInputs(
-        handles.array("cascadeViewProjections"),
-        handles.array("cascadeDepthScales"),
-        cameraPosition,
-        handles.value("cameraForward"),
-    )
-    val shadowMap by textureDepth2dArray(group = BindingLayout.Standard.slot(BindingSemantic.ShadowDepth), binding = 0)
-    val shadowMapSampler by samplerComparison(group = BindingLayout.Standard.slot(BindingSemantic.ShadowDepth), binding = 1)
-
-    val baseColorTexture by texture2d(
-        group = BindingLayout.Standard.slot(BindingSemantic.Material),
-        binding = 1,
-    )
-    // One sampler for every material texture -- all five sample the same uv with the same
-    // filtering, so per-map samplers would only double the binding count.
-    val baseColorSampler by sampler(group = BindingLayout.Standard.slot(BindingSemantic.Material), binding = 2)
-    val metallicRoughnessTexture by texture2d(group = BindingLayout.Standard.slot(BindingSemantic.Material), binding = 5)
-    val normalTexture by texture2d(group = BindingLayout.Standard.slot(BindingSemantic.Material), binding = 6)
-    val occlusionTexture by texture2d(group = BindingLayout.Standard.slot(BindingSemantic.Material), binding = 7)
-    val emissiveTexture by texture2d(group = BindingLayout.Standard.slot(BindingSemantic.Material), binding = 8)
-
-    val out = varyings("VertexOutput")
-    val color by out.varying(GpuDataShape.Vec3, location = 0)
-    val normal by out.varying(GpuDataShape.Vec3, location = 1)
-    val uv by out.varying(GpuDataShape.Vec2, location = 2)
-    val worldPos by out.varying(GpuDataShape.Vec3, location = 3)
-
-    vertex {
-        val ins = inputsFrom(VertexFormat.PositionNormalColorUv)
-        val inPosition = ins.input(VertexSemantic.Position)
-        // Instanced, each copy's model comes from the instance buffer and `mvp` holds only the
-        // view-projection; otherwise `mvp` already includes this draw's model.
-        val drawModel = if (instanced) instanceModelMatrixAfter(VertexFormat.PositionNormalColorUv) else model
-        out.position set (mvp * if (instanced) drawModel * vec4(inPosition, 1f.lit) else vec4(inPosition, 1f.lit))
-        color set ins.input(VertexSemantic.Color)
-        // World-space normal (model matrix directly -- correct for the rigid/uniform scales
-        // Transform can express), so shading stays put while the mesh spins.
-        normal set (drawModel * vec4(ins.input(VertexSemantic.Normal), 0f.lit)).xyz
-        worldPos set (drawModel * vec4(inPosition, 1f.lit)).xyz
-        // Undo createBitmap's OpenGL bottom-up Y flip here rather than forking the decoder.
-        val inUv = ins.input(VertexSemantic.Uv)
-        uv set vec2(inUv.x, 1f.lit - inUv.y)
-    }
-
-    val ambientStrength = const("AMBIENT_STRENGTH", 0.08f)
-    val pi = const("PI", 3.14159265359f)
-    val epsilon = const("EPSILON", 0.0001f)
-    val dielectricF0 = const("DIELECTRIC_F0", 0.04f)
-    val minRoughness = const("MIN_ROUGHNESS", 0.05f)
-    val gamma = const("GAMMA", 2.2f)
-    val displayTransform = sceneDisplayTransform()
-
-    // glTF stores base colour and emissive as sRGB; lighting needs them linear.
-    val srgbToLinear = fn("srgbToLinear", returns = AslType.Data(GpuDataShape.Vec3)) {
-        val encoded by param(GpuDataShape.Vec3)
-        returnValue(pow(max(encoded, vec3(0f.lit)), vec3(gamma)))
-    }
-
-    val cascades = cascadeShadowSampling(cascadeInputs, shadowMap, shadowMapSampler, clipSpace, epsilon)
-
-    val distributionGgx = fn("distributionGgx") {
-        val nDotH by param(F32)
-        val roughness by param(F32)
-        val a = let("a", roughness * roughness)
-        val a2 = let("a2", a * a)
-        val d = let("d", nDotH * nDotH * (a2 - 1f.lit) + 1f.lit)
-        returnValue(a2 / max(pi * d * d, epsilon))
-    }
-
-    val geometrySmith = fn("geometrySmith") {
-        val nDotV by param(F32)
-        val nDotL by param(F32)
-        val roughness by param(F32)
-        val r = let("r", roughness + 1f.lit)
-        val k = let("k", (r * r) / 8f.lit)
-        val ggxV = let("ggxV", nDotV / (nDotV * (1f.lit - k) + k))
-        val ggxL = let("ggxL", nDotL / (nDotL * (1f.lit - k) + k))
-        returnValue(ggxV * ggxL)
-    }
-
-    val fresnelSchlick = fn("fresnelSchlick", returns = AslType.Data(GpuDataShape.Vec3)) {
-        val cosTheta by param(F32)
-        val f0 by param(GpuDataShape.Vec3)
-        returnValue(f0 + (vec3(1f.lit) - f0) * pow(clamp(1f.lit - cosTheta, 0f.lit, 1f.lit), 5f.lit))
-    }
-
-    // Screen-space TBN; degenerate uv (collapsed island, flat placeholder) falls back to the
-    // geometric normal.
-    val perturbNormal = fn("perturbNormal", returns = AslType.Data(GpuDataShape.Vec3)) {
-        val n by param(GpuDataShape.Vec3)
-        val pos by param(GpuDataShape.Vec3)
-        val surfaceUv by param(GpuDataShape.Vec2)
-        val tangentNormal by param(GpuDataShape.Vec3)
-        val dPosDx = let("dPosDx", dpdx(pos))
-        val dPosDy = let("dPosDy", dpdy(pos))
-        val dUvDx = let("dUvDx", dpdx(surfaceUv))
-        val dUvDy = let("dUvDy", dpdy(surfaceUv))
-        val perpDy = let("perpDy", cross(dPosDy, n))
-        val perpDx = let("perpDx", cross(n, dPosDx))
-        val tangent = let("tangent", perpDy * dUvDx.x + perpDx * dUvDy.x)
-        val bitangent = let("bitangent", perpDy * dUvDx.y + perpDx * dUvDy.y)
-        val scale = let("scale", max(dot(tangent, tangent), dot(bitangent, bitangent)))
-        iff(scale lt epsilon) { returnValue(n) }
-        val invMax = let("invMax", inverseSqrt(scale))
-        returnValue(
-            normalize(
-                (tangent * invMax) * tangentNormal.x + (bitangent * invMax) * tangentNormal.y +
-                    n * tangentNormal.z,
-            ),
+        val u = uniformBlock(
+            "Uniforms",
+            group = BindingLayout.Standard.slot(BindingSemantic.Material),
+            binding = 0,
         )
-    }
-
-    val applyFog = fn("applyFog", returns = AslType.Data(GpuDataShape.Vec3)) {
-        val baseColor by param(GpuDataShape.Vec3)
-        val pos by param(GpuDataShape.Vec3)
-        val fogTarget by param(GpuDataShape.Vec3)
-        val dist = let("dist", length(cameraPosition.xyz - pos))
-        val fogAmount = let("fogAmount", 1f.lit - exp(-fogColor.a * dist))
-        returnValue(mix(baseColor, fogTarget, saturate(fogAmount)))
-    }
-
-    fragment {
-        val (sampleUv, uvDx, uvDy) = animatedTextureUv(uv, textureFrames, textureScroll)
-        val baseColorSample = let("baseColorSample", textureSampleGrad(baseColorTexture, baseColorSampler, sampleUv, uvDx, uvDy))
-        val albedo = let("albedo", srgbToLinear(baseColorSample.rgb) * color * baseColorFactor.rgb)
-        // glTF convention: G = roughness, B = metalness; factor * texture channel.
-        val metallicRoughness =
-            let("metallicRoughness", textureSampleGrad(metallicRoughnessTexture, baseColorSampler, sampleUv, uvDx, uvDy))
-        val metallic = let("metallic", clamp(metallicRoughness.b * pbrFactors.x, 0f.lit, 1f.lit))
-        val roughness = let("roughness", clamp(metallicRoughness.g * pbrFactors.y, minRoughness, 1f.lit))
-        val occlusion = let("occlusion", textureSampleGrad(occlusionTexture, baseColorSampler, sampleUv, uvDx, uvDy).r)
-        val emissive =
-            let("emissive", srgbToLinear(textureSampleGrad(emissiveTexture, baseColorSampler, sampleUv, uvDx, uvDy).rgb) * emissiveFactor.rgb)
-        val tangentNormal =
-            let("tangentNormal", textureSampleGrad(normalTexture, baseColorSampler, sampleUv, uvDx, uvDy).xyz * 2f.lit - vec3(1f.lit))
-
-        val n = let("n", perturbNormal(normalize(normal), worldPos, uv, tangentNormal))
-        val l = let("l", normalize(lightDirection.xyz))
-        val v = let("v", normalize(cameraPosition.xyz - worldPos))
-        val h = let("h", normalize(v + l))
-        val nDotL = let("nDotL", max(dot(n, l), 0f.lit))
-        val nDotV = let("nDotV", max(dot(n, v), epsilon))
-        val nDotH = let("nDotH", max(dot(n, h), 0f.lit))
-        val f0 = let("f0", mix(vec3(dielectricF0), albedo, metallic))
-        val fresnel = let("fresnel", fresnelSchlick(max(dot(h, v), 0f.lit), f0))
-        val specular = let(
-            "specular",
-            (distributionGgx(nDotH, roughness) * geometrySmith(nDotV, nDotL, roughness) * fresnel) /
-                max(4f.lit * nDotV * nDotL, epsilon),
+        val handles = u.fieldsFrom(MaterialUniformLayouts.PbrTextured)
+        val mvp = handles.value("mvp")
+        val lightDirection = handles.value("lightDirection")
+        val lightColor = handles.value("lightColor")
+        val pointLightPositions = handles.array("pointLightPositions")
+        val pointLightColors = handles.array("pointLightColors")
+        val model = handles.value("model")
+        val cameraPosition = handles.value("cameraPosition")
+        val pbrFactors = handles.value("pbrFactors")
+        val baseColorFactor = handles.value("baseColorFactor")
+        val emissiveFactor = handles.value("emissiveFactor")
+        val textureFrames = handles.value("textureFrames")
+        val textureScroll = handles.value("textureScroll")
+        val fogColor = handles.value("fogColor")
+        val debugView = handles.value("debugView")
+        val exposure = handles.value("exposure")
+        val cascadeInputs = CascadeShadowInputs(
+            handles.array("cascadeViewProjections"),
+            handles.array("cascadeDepthScales"),
+            cameraPosition,
+            handles.value("cameraForward"),
         )
-        val diffuse = let("diffuse", (vec3(1f.lit) - fresnel) * (1f.lit - metallic) * albedo / pi)
-        val shadowFactor = let("shadowFactor", cascades.sampleShadow(worldPos, n, nDotL))
-        // lightColor is authored as reflectance, not radiance -- pay back the BRDF's 1/PI.
-        val radiance = let("radiance", lightColor.xyz * pi * nDotL * shadowFactor)
-        // The scene's ambient when it sets one (lightColor.w above 0), this shader's otherwise.
-        val ambientShare = let("ambientShare", select(ambientStrength, lightColor.w, lightColor.w gt 0f.lit))
-        val ambient = let("ambient", albedo * ambientShare * occlusion)
-        val litColor = variable("lit", ambient + (diffuse + specular) * radiance + emissive)
-        // Point lights: unrolled over fixed slots; a disabled slot is one compare.
-        loopU32("i", 0u.lit, MAX_POINT_LIGHTS.toUInt().lit) { i ->
-            val slot = let("slot", pointLightPositions[i])
-            iff(slot.w le 0f.lit) { continueLoop() }
-            val toLight = let("toLight", slot.xyz - worldPos)
-            val dist = let("dist", length(toLight))
-            iff(dist ge slot.w) { continueLoop() }
-            val pl = let("pl", toLight / max(dist, epsilon))
-            val pNdotL = let("pNdotL", max(dot(n, pl), 0f.lit))
-            iff(pNdotL le 0f.lit) { continueLoop() }
-            val falloff = let("falloff", clamp(1f.lit - (dist * dist) / (slot.w * slot.w), 0f.lit, 1f.lit))
-            val attenuation = let("attenuation", falloff * falloff / max(dist * dist, epsilon))
-            val ph = let("ph", normalize(v + pl))
-            val pNdotH = let("pNdotH", max(dot(n, ph), 0f.lit))
-            val pFresnel = let("pFresnel", fresnelSchlick(max(dot(ph, v), 0f.lit), f0))
-            val pSpecular = let(
-                "pSpecular",
-                (distributionGgx(pNdotH, roughness) * geometrySmith(nDotV, pNdotL, roughness) * pFresnel) /
-                    max(4f.lit * nDotV * pNdotL, epsilon),
-            )
-            val pDiffuse = let("pDiffuse", (vec3(1f.lit) - pFresnel) * (1f.lit - metallic) * albedo / pi)
-            val pRadiance = let("pRadiance", pointLightColors[i].xyz * pi * pNdotL * attenuation)
-            assign(litColor, litColor + (pDiffuse + pSpecular) * pRadiance)
+        val shadowMap by textureDepth2dArray(group = BindingLayout.Standard.slot(BindingSemantic.ShadowDepth), binding = 0)
+        val shadowMapSampler by samplerComparison(group = BindingLayout.Standard.slot(BindingSemantic.ShadowDepth), binding = 1)
+
+        val baseColorTexture by texture2d(
+            group = BindingLayout.Standard.slot(BindingSemantic.Material),
+            binding = 1,
+        )
+        // One sampler for every material texture -- all five sample the same uv with the same
+        // filtering, so per-map samplers would only double the binding count.
+        val baseColorSampler by sampler(group = BindingLayout.Standard.slot(BindingSemantic.Material), binding = 2)
+        val metallicRoughnessTexture by texture2d(group = BindingLayout.Standard.slot(BindingSemantic.Material), binding = 5)
+        val normalTexture by texture2d(group = BindingLayout.Standard.slot(BindingSemantic.Material), binding = 6)
+        val occlusionTexture by texture2d(group = BindingLayout.Standard.slot(BindingSemantic.Material), binding = 7)
+        val emissiveTexture by texture2d(group = BindingLayout.Standard.slot(BindingSemantic.Material), binding = 8)
+
+        val out = varyings("VertexOutput")
+        val color by out.varying(GpuDataShape.Vec3, location = 0)
+        val normal by out.varying(GpuDataShape.Vec3, location = 1)
+        val uv by out.varying(GpuDataShape.Vec2, location = 2)
+        val worldPos by out.varying(GpuDataShape.Vec3, location = 3)
+
+        vertex {
+            val ins = inputsFrom(VertexFormat.PositionNormalColorUv)
+            val inPosition = ins.input(VertexSemantic.Position)
+            // Instanced, each copy's model comes from the instance buffer and `mvp` holds only the
+            // view-projection; otherwise `mvp` already includes this draw's model.
+            val drawModel = if (instanced) instanceModelMatrixAfter(VertexFormat.PositionNormalColorUv) else model
+            out.position set (mvp * if (instanced) drawModel * vec4(inPosition, 1f.lit) else vec4(inPosition, 1f.lit))
+            color set ins.input(VertexSemantic.Color)
+            // World-space normal (model matrix directly -- correct for the rigid/uniform scales
+            // Transform can express), so shading stays put while the mesh spins.
+            normal set (drawModel * vec4(ins.input(VertexSemantic.Normal), 0f.lit)).xyz
+            worldPos set (drawModel * vec4(inPosition, 1f.lit)).xyz
+            // Undo createBitmap's OpenGL bottom-up Y flip here rather than forking the decoder.
+            val inUv = ins.input(VertexSemantic.Uv)
+            uv set vec2(inUv.x, 1f.lit - inUv.y)
         }
-        // pbrFactors.w is the draw's TexturedBlend. An additive draw is light added to what is
-        // behind it, so it fades out in fog, the fog being behind it already: fogged toward the fog
-        // colour, it would add that colour over its whole quad. By default it is not shaded either
-        // and adds only its own colour: lit, a black texel would still add the sun's specular
-        // reflection. A material that asks to stay lit adds its lit colour instead.
-        val blendCode = let("blendCode", toU32(pbrFactors.w + 0.5f.lit))
-        val additive = blendCode gt TexturedBlend.Covers.code.toUInt().lit
-        val unlit = blendCode eq TexturedBlend.AddsUnlit.code.toUInt().lit
-        val emitted = select(litColor, albedo + emissive, unlit)
-        val fogTarget = select(fogColor.rgb, vec3(0f.lit), additive)
-        val shaded = vec4(
-            applyFog(displayTransform.display(emitted, exposure.x), worldPos, fogTarget),
-            baseColorSample.a * baseColorFactor.a,
-        )
-        // Clay lights the geometric normal: the normal map is a texture too.
-        val clayNDotL = let("clayNDotL", max(dot(normalize(normal), l), 0f.lit))
-        val surface = DebugSurface(
-            n,
-            worldPos,
-            displayTransform.encoded(albedo),
-            shadow = shadowFactor,
-            shadowCascade = cascades.shadowCascade(worldPos),
-            clay = displayTransform.display(clayRadiance(clayNDotL, shadowFactor, lightColor.xyz, clayAmbient(lightColor)), exposure.x),
-        )
-        // A masked material's cut-out, last: after it no derivative may follow. An opaque material's
-        // cutoff is 0, so its texture alpha is ignored.
-        discardIf(baseColorSample.a * baseColorFactor.a lt pbrFactors.z)
-        colorOutput(debugViewColor(debugView, cameraPosition, surface, shaded))
+
+        val ambientStrength = const("AMBIENT_STRENGTH", 0.08f)
+        val pi = const("PI", 3.14159265359f)
+        val epsilon = const("EPSILON", 0.0001f)
+        val dielectricF0 = const("DIELECTRIC_F0", 0.04f)
+        val minRoughness = const("MIN_ROUGHNESS", 0.05f)
+        val gamma = const("GAMMA", 2.2f)
+        val displayTransform = sceneDisplayTransform()
+
+        // glTF stores base colour and emissive as sRGB; lighting needs them linear.
+        val srgbToLinear = fn("srgbToLinear", returns = AslType.Data(GpuDataShape.Vec3)) {
+            val encoded by param(GpuDataShape.Vec3)
+            returnValue(pow(max(encoded, vec3(0f.lit)), vec3(gamma)))
+        }
+
+        val cascades = cascadeShadowSampling(cascadeInputs, shadowMap, shadowMapSampler, clipSpace, epsilon)
+
+        val distributionGgx = fn("distributionGgx") {
+            val nDotH by param(F32)
+            val roughness by param(F32)
+            val a = let("a", roughness * roughness)
+            val a2 = let("a2", a * a)
+            val d = let("d", nDotH * nDotH * (a2 - 1f.lit) + 1f.lit)
+            returnValue(a2 / max(pi * d * d, epsilon))
+        }
+
+        val geometrySmith = fn("geometrySmith") {
+            val nDotV by param(F32)
+            val nDotL by param(F32)
+            val roughness by param(F32)
+            val r = let("r", roughness + 1f.lit)
+            val k = let("k", (r * r) / 8f.lit)
+            val ggxV = let("ggxV", nDotV / (nDotV * (1f.lit - k) + k))
+            val ggxL = let("ggxL", nDotL / (nDotL * (1f.lit - k) + k))
+            returnValue(ggxV * ggxL)
+        }
+
+        val fresnelSchlick = fn("fresnelSchlick", returns = AslType.Data(GpuDataShape.Vec3)) {
+            val cosTheta by param(F32)
+            val f0 by param(GpuDataShape.Vec3)
+            returnValue(f0 + (vec3(1f.lit) - f0) * pow(clamp(1f.lit - cosTheta, 0f.lit, 1f.lit), 5f.lit))
+        }
+
+        // Screen-space TBN; degenerate uv (collapsed island, flat placeholder) falls back to the
+        // geometric normal.
+        val perturbNormal = fn("perturbNormal", returns = AslType.Data(GpuDataShape.Vec3)) {
+            val n by param(GpuDataShape.Vec3)
+            val pos by param(GpuDataShape.Vec3)
+            val surfaceUv by param(GpuDataShape.Vec2)
+            val tangentNormal by param(GpuDataShape.Vec3)
+            val dPosDx = let("dPosDx", dpdx(pos))
+            val dPosDy = let("dPosDy", dpdy(pos))
+            val dUvDx = let("dUvDx", dpdx(surfaceUv))
+            val dUvDy = let("dUvDy", dpdy(surfaceUv))
+            val perpDy = let("perpDy", cross(dPosDy, n))
+            val perpDx = let("perpDx", cross(n, dPosDx))
+            val tangent = let("tangent", perpDy * dUvDx.x + perpDx * dUvDy.x)
+            val bitangent = let("bitangent", perpDy * dUvDx.y + perpDx * dUvDy.y)
+            val scale = let("scale", max(dot(tangent, tangent), dot(bitangent, bitangent)))
+            iff(scale lt epsilon) { returnValue(n) }
+            val invMax = let("invMax", inverseSqrt(scale))
+            returnValue(
+                normalize(
+                    (tangent * invMax) * tangentNormal.x + (bitangent * invMax) * tangentNormal.y +
+                        n * tangentNormal.z,
+                ),
+            )
+        }
+
+        val applyFog = fn("applyFog", returns = AslType.Data(GpuDataShape.Vec3)) {
+            val baseColor by param(GpuDataShape.Vec3)
+            val pos by param(GpuDataShape.Vec3)
+            val fogTarget by param(GpuDataShape.Vec3)
+            val dist = let("dist", length(cameraPosition.xyz - pos))
+            val fogAmount = let("fogAmount", 1f.lit - exp(-fogColor.a * dist))
+            returnValue(mix(baseColor, fogTarget, saturate(fogAmount)))
+        }
+
+        fragment {
+            val (sampleUv, uvDx, uvDy) = animatedTextureUv(uv, textureFrames, textureScroll)
+            val baseColorSample = let("baseColorSample", textureSampleGrad(baseColorTexture, baseColorSampler, sampleUv, uvDx, uvDy))
+            val albedo = let("albedo", srgbToLinear(baseColorSample.rgb) * color * baseColorFactor.rgb)
+            // glTF convention: G = roughness, B = metalness; factor * texture channel.
+            val metallicRoughness =
+                let("metallicRoughness", textureSampleGrad(metallicRoughnessTexture, baseColorSampler, sampleUv, uvDx, uvDy))
+            val metallic = let("metallic", clamp(metallicRoughness.b * pbrFactors.x, 0f.lit, 1f.lit))
+            val roughness = let("roughness", clamp(metallicRoughness.g * pbrFactors.y, minRoughness, 1f.lit))
+            val occlusion = let("occlusion", textureSampleGrad(occlusionTexture, baseColorSampler, sampleUv, uvDx, uvDy).r)
+            val emissive =
+                let("emissive", srgbToLinear(textureSampleGrad(emissiveTexture, baseColorSampler, sampleUv, uvDx, uvDy).rgb) * emissiveFactor.rgb)
+            val tangentNormal =
+                let("tangentNormal", textureSampleGrad(normalTexture, baseColorSampler, sampleUv, uvDx, uvDy).xyz * 2f.lit - vec3(1f.lit))
+
+            val n = let("n", perturbNormal(normalize(normal), worldPos, uv, tangentNormal))
+            val l = let("l", normalize(lightDirection.xyz))
+            val v = let("v", normalize(cameraPosition.xyz - worldPos))
+            val h = let("h", normalize(v + l))
+            val nDotL = let("nDotL", max(dot(n, l), 0f.lit))
+            val nDotV = let("nDotV", max(dot(n, v), epsilon))
+            val nDotH = let("nDotH", max(dot(n, h), 0f.lit))
+            val f0 = let("f0", mix(vec3(dielectricF0), albedo, metallic))
+            val fresnel = let("fresnel", fresnelSchlick(max(dot(h, v), 0f.lit), f0))
+            val specular = let(
+                "specular",
+                (distributionGgx(nDotH, roughness) * geometrySmith(nDotV, nDotL, roughness) * fresnel) /
+                    max(4f.lit * nDotV * nDotL, epsilon),
+            )
+            val diffuse = let("diffuse", (vec3(1f.lit) - fresnel) * (1f.lit - metallic) * albedo / pi)
+            val shadowFactor = let("shadowFactor", cascades.sampleShadow(worldPos, n, nDotL))
+            // lightColor is authored as reflectance, not radiance -- pay back the BRDF's 1/PI.
+            val radiance = let("radiance", lightColor.xyz * pi * nDotL * shadowFactor)
+            // The scene's ambient when it sets one (lightColor.w above 0), this shader's otherwise.
+            val ambientShare = let("ambientShare", select(ambientStrength, lightColor.w, lightColor.w gt 0f.lit))
+            val ambient = let("ambient", albedo * ambientShare * occlusion)
+            val litColor = variable("lit", ambient + (diffuse + specular) * radiance + emissive)
+            // Point lights: unrolled over fixed slots; a disabled slot is one compare.
+            loopU32("i", 0u.lit, MAX_POINT_LIGHTS.toUInt().lit) { i ->
+                val slot = let("slot", pointLightPositions[i])
+                iff(slot.w le 0f.lit) { continueLoop() }
+                val toLight = let("toLight", slot.xyz - worldPos)
+                val dist = let("dist", length(toLight))
+                iff(dist ge slot.w) { continueLoop() }
+                val pl = let("pl", toLight / max(dist, epsilon))
+                val pNdotL = let("pNdotL", max(dot(n, pl), 0f.lit))
+                iff(pNdotL le 0f.lit) { continueLoop() }
+                val falloff = let("falloff", clamp(1f.lit - (dist * dist) / (slot.w * slot.w), 0f.lit, 1f.lit))
+                val attenuation = let("attenuation", falloff * falloff / max(dist * dist, epsilon))
+                val ph = let("ph", normalize(v + pl))
+                val pNdotH = let("pNdotH", max(dot(n, ph), 0f.lit))
+                val pFresnel = let("pFresnel", fresnelSchlick(max(dot(ph, v), 0f.lit), f0))
+                val pSpecular = let(
+                    "pSpecular",
+                    (distributionGgx(pNdotH, roughness) * geometrySmith(nDotV, pNdotL, roughness) * pFresnel) /
+                        max(4f.lit * nDotV * pNdotL, epsilon),
+                )
+                val pDiffuse = let("pDiffuse", (vec3(1f.lit) - pFresnel) * (1f.lit - metallic) * albedo / pi)
+                val pRadiance = let("pRadiance", pointLightColors[i].xyz * pi * pNdotL * attenuation)
+                assign(litColor, litColor + (pDiffuse + pSpecular) * pRadiance)
+            }
+            // pbrFactors.w is the draw's TexturedBlend. An additive draw is light added to what is
+            // behind it, so it fades out in fog, the fog being behind it already: fogged toward the fog
+            // colour, it would add that colour over its whole quad. By default it is not shaded either
+            // and adds only its own colour: lit, a black texel would still add the sun's specular
+            // reflection. A material that asks to stay lit adds its lit colour instead.
+            val blendCode = let("blendCode", toU32(pbrFactors.w + 0.5f.lit))
+            val additive = blendCode gt TexturedBlend.Covers.code.toUInt().lit
+            val unlit = blendCode eq TexturedBlend.AddsUnlit.code.toUInt().lit
+            val emitted = select(litColor, albedo + emissive, unlit)
+            val fogTarget = select(fogColor.rgb, vec3(0f.lit), additive)
+            val shaded = vec4(
+                applyFog(displayTransform.display(emitted, exposure.x), worldPos, fogTarget),
+                baseColorSample.a * baseColorFactor.a,
+            )
+            // Clay lights the geometric normal: the normal map is a texture too.
+            val clayNDotL = let("clayNDotL", max(dot(normalize(normal), l), 0f.lit))
+            val surface = DebugSurface(
+                n,
+                worldPos,
+                displayTransform.encoded(albedo),
+                shadow = shadowFactor,
+                shadowCascade = cascades.shadowCascade(worldPos),
+                clay = displayTransform.display(clayRadiance(clayNDotL, shadowFactor, lightColor.xyz, clayAmbient(lightColor)), exposure.x),
+            )
+            // A masked material's cut-out, last: after it no derivative may follow. An opaque material's
+            // cutoff is 0, so its texture alpha is ignored.
+            discardIf(baseColorSample.a * baseColorFactor.a lt pbrFactors.z)
+            colorOutput(debugViewColor(debugView, cameraPosition, surface, shaded))
+        }
     }
-}
 
 /** `textured` for [clipSpace]: the shadow lookup's V axis follows the backend, as in lit_shadow. */
 fun texturedShader(clipSpace: ClipSpace): AslShaderDefinition = textured(clipSpace)

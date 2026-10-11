@@ -102,9 +102,15 @@ class TransformSystem(private val skipsStatic: Boolean = true) : System {
     private fun trsChanged(id: Int, transform: Transform): Boolean {
         val at = id * TRS_FLOATS
         val trs = builtTrs
-        return trs[at] != transform.position.x || trs[at + 1] != transform.position.y || trs[at + 2] != transform.position.z ||
-            trs[at + 3] != transform.rotation.x || trs[at + 4] != transform.rotation.y || trs[at + 5] != transform.rotation.z ||
-            trs[at + 6] != transform.scale.x || trs[at + 7] != transform.scale.y || trs[at + 8] != transform.scale.z
+        return trs[at] != transform.position.x ||
+            trs[at + 1] != transform.position.y ||
+            trs[at + 2] != transform.position.z ||
+            trs[at + 3] != transform.rotation.x ||
+            trs[at + 4] != transform.rotation.y ||
+            trs[at + 5] != transform.rotation.z ||
+            trs[at + 6] != transform.scale.x ||
+            trs[at + 7] != transform.scale.y ||
+            trs[at + 8] != transform.scale.z
     }
 
     private fun remember(id: Int, transform: Transform, parent: Transform?) {
