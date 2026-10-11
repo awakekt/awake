@@ -1,0 +1,3 @@
+- **A tap or quick click is seen by code that reads the held pointer.** A press and release that both land between two frames, as a trackpad tap, a fast click or an automated click often do, used to arrive as both edges with `pointerDown` false. A UI took the click, but code that reads `pointerDown` or `isDown(PointerButton.Primary)` never saw it, and nor did `wasPressed(PointerButton.Primary)`. In an editor, that left a tapped object unselected.
+  - **Now:** `Input.updateSnapshot` shows such a press held for one snapshot and released in the next, so every reader sees the click, and a UI that captures on press still takes it first.
+  - **Two clicks inside two frames** read as one press.
