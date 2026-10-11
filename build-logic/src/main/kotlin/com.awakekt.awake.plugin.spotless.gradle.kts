@@ -51,6 +51,9 @@ extensions.configure<SpotlessExtension> {
                 "ktlint_standard_function-signature" to "disabled",
                 "ktlint_standard_multiline-expression-wrapping" to "disabled",
                 "ktlint_standard_string-template-indent" to "disabled",
+                // Off for the same reason: the DSL configures a node in one line where it reads best,
+                // `element { kind = Panel; width = 40f }`, and so does a short `when`, `{ 0 -> x; else -> 0f }`.
+                "ktlint_standard_statement-wrapping" to "disabled",
                 // Off: this rule demands file RENAMES (matrix.kt -> Mat4.kt), which is a
                 // separate decision from formatting and would bury real history in a
                 // whitespace commit. Revisit as its own change if we want it.

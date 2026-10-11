@@ -157,8 +157,13 @@ private object LitShadowFrameFields {
         debugView: GpuDebugView,
         exposure: Float,
     ): FloatArray {
-        if (light === lightPayload && this.cascades === cascades && eye == cameraEye && forward == cameraForward &&
-            this.fogColor == fogColor && this.fogDensity == fogDensity && this.debugView == debugView &&
+        if (light === lightPayload &&
+            this.cascades === cascades &&
+            eye == cameraEye &&
+            forward == cameraForward &&
+            this.fogColor == fogColor &&
+            this.fogDensity == fogDensity &&
+            this.debugView == debugView &&
             this.exposure == exposure
         ) {
             return block

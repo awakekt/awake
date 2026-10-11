@@ -30,10 +30,7 @@ class UiHostingDocsSampleTest {
         }
         // --8<-- [end:ui-only-app]
 
-        assertDrawsText {
-            game.ready(it)
-            game.update(1f / 60f, 320f, 240f)
-        }
+        assertDrawsText { game.ready(it); game.update(1f / 60f, 320f, 240f) }
     }
 
     @Test
@@ -47,10 +44,7 @@ class UiHostingDocsSampleTest {
         }
         // --8<-- [end:scene-ui]
 
-        assertDrawsText {
-            game.ready(it)
-            game.update(1f / 60f, 320f, 240f)
-        }
+        assertDrawsText { game.ready(it); game.update(1f / 60f, 320f, 240f) }
     }
 
     @Test
@@ -64,10 +58,7 @@ class UiHostingDocsSampleTest {
         }
         // --8<-- [end:app-ui-over-scene]
 
-        assertDrawsText {
-            game.ready(it)
-            game.update(1f / 60f, 320f, 240f)
-        }
+        assertDrawsText { game.ready(it); game.update(1f / 60f, 320f, 240f) }
     }
 
     private suspend fun assertDrawsText(run: suspend (RecordingRenderer) -> Unit) {

@@ -27,10 +27,7 @@ class ScenePrefabExpansionTest {
         val reads = mutableListOf<String>()
         val document = SceneDocument(nodes = listOf(SceneNode(name = "town", children = listOf(link("a", "fx/fire.prefab.json", 1f), link("b", "fx/fire.prefab.json", 2f)))))
 
-        val expanded = document.withPrefabs { path ->
-            reads += path
-            fire.toJson()
-        }
+        val expanded = document.withPrefabs { path -> reads += path; fire.toJson() }
 
         val (a, b) = expanded.nodes.single().children
         assertEquals(listOf("fx/fire.prefab.json"), reads)

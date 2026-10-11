@@ -81,9 +81,7 @@ class AudioSystemTest {
         var updatedPan = 0f
         val trackingHandle = object : com.awakekt.awake.core.audio.SoundHandle {
             override var isPlaying: Boolean = true
-            override fun stop() {
-                isPlaying = false
-            }
+            override fun stop() { isPlaying = false }
             override fun update(volume: Float, pan: Float) {
                 updatedVolume = volume
                 updatedPan = pan

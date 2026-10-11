@@ -63,18 +63,9 @@ object SceneDocumentJsonSchema {
             put("type", "object")
             put("description", "3-component floating-point vector (x, y, z)")
             val vecProps = mapOf<String, JsonElement>(
-                "x" to buildJsonObject {
-                    put("type", "number")
-                    put("default", 0.0)
-                },
-                "y" to buildJsonObject {
-                    put("type", "number")
-                    put("default", 0.0)
-                },
-                "z" to buildJsonObject {
-                    put("type", "number")
-                    put("default", 0.0)
-                },
+                "x" to buildJsonObject { put("type", "number"); put("default", 0.0) },
+                "y" to buildJsonObject { put("type", "number"); put("default", 0.0) },
+                "z" to buildJsonObject { put("type", "number"); put("default", 0.0) },
             )
             put("properties", sortedJsonObject(vecProps))
             put(
@@ -95,47 +86,14 @@ object SceneDocumentJsonSchema {
                     buildJsonObject {
                         put("type", "object")
                         val colProps = mapOf<String, JsonElement>(
-                            "a" to buildJsonObject {
-                                put("type", "number")
-                                put("minimum", 0.0)
-                                put("maximum", 1.0)
-                                put("default", 1.0)
-                            },
-                            "b" to buildJsonObject {
-                                put("type", "number")
-                                put("minimum", 0.0)
-                                put("maximum", 1.0)
-                            },
-                            "g" to buildJsonObject {
-                                put("type", "number")
-                                put("minimum", 0.0)
-                                put("maximum", 1.0)
-                            },
-                            "r" to buildJsonObject {
-                                put("type", "number")
-                                put("minimum", 0.0)
-                                put("maximum", 1.0)
-                            },
-                            "w" to buildJsonObject {
-                                put("type", "number")
-                                put("minimum", 0.0)
-                                put("maximum", 1.0)
-                            },
-                            "x" to buildJsonObject {
-                                put("type", "number")
-                                put("minimum", 0.0)
-                                put("maximum", 1.0)
-                            },
-                            "y" to buildJsonObject {
-                                put("type", "number")
-                                put("minimum", 0.0)
-                                put("maximum", 1.0)
-                            },
-                            "z" to buildJsonObject {
-                                put("type", "number")
-                                put("minimum", 0.0)
-                                put("maximum", 1.0)
-                            },
+                            "a" to buildJsonObject { put("type", "number"); put("minimum", 0.0); put("maximum", 1.0); put("default", 1.0) },
+                            "b" to buildJsonObject { put("type", "number"); put("minimum", 0.0); put("maximum", 1.0) },
+                            "g" to buildJsonObject { put("type", "number"); put("minimum", 0.0); put("maximum", 1.0) },
+                            "r" to buildJsonObject { put("type", "number"); put("minimum", 0.0); put("maximum", 1.0) },
+                            "w" to buildJsonObject { put("type", "number"); put("minimum", 0.0); put("maximum", 1.0) },
+                            "x" to buildJsonObject { put("type", "number"); put("minimum", 0.0); put("maximum", 1.0) },
+                            "y" to buildJsonObject { put("type", "number"); put("minimum", 0.0); put("maximum", 1.0) },
+                            "z" to buildJsonObject { put("type", "number"); put("minimum", 0.0); put("maximum", 1.0) },
                         )
                         put("properties", sortedJsonObject(colProps))
                         put("additionalProperties", false)
@@ -177,15 +135,9 @@ object SceneDocumentJsonSchema {
             put("type", "object")
             put("description", "Scene extension data record")
             val extProps = mapOf<String, JsonElement>(
-                "id" to buildJsonObject {
-                    put("type", "string")
-                    put("minLength", 1)
-                },
+                "id" to buildJsonObject { put("type", "string"); put("minLength", 1) },
                 "payload" to buildJsonObject { }, // Open JSON
-                "version" to buildJsonObject {
-                    put("type", "integer")
-                    put("minimum", 1)
-                },
+                "version" to buildJsonObject { put("type", "integer"); put("minimum", 1) },
             )
             put("properties", sortedJsonObject(extProps))
             put(
@@ -220,10 +172,7 @@ object SceneDocumentJsonSchema {
                     val customProps = mapOf<String, JsonElement>(
                         "component" to buildJsonObject { put("const", "custom") },
                         "payload" to buildJsonObject { },
-                        "type" to buildJsonObject {
-                            put("type", "string")
-                            put("minLength", 1)
-                        },
+                        "type" to buildJsonObject { put("type", "string"); put("minLength", 1) },
                     )
                     put("properties", sortedJsonObject(customProps))
                     put(
@@ -250,10 +199,7 @@ object SceneDocumentJsonSchema {
                 val customProps = mapOf<String, JsonElement>(
                     "component" to buildJsonObject { put("const", "custom") },
                     "payload" to buildJsonObject { },
-                    "type" to buildJsonObject {
-                        put("type", "string")
-                        put("minLength", 1)
-                    },
+                    "type" to buildJsonObject { put("type", "string"); put("minLength", 1) },
                 )
                 put("properties", sortedJsonObject(customProps))
                 put(

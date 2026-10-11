@@ -308,9 +308,7 @@ private class IndexedDbFileSystem(
             closed = true
             chunks.clear()
         }
-        override fun close() {
-            closed = true
-        }
+        override fun close() { closed = true }
     }
 
     private data class Watcher(

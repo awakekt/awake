@@ -13,15 +13,9 @@ class SharedRenderFeature2DTest {
     private class Recording : DrawRunRecorder<String> {
         val calls = mutableListOf<String>()
         override fun bindPipeline(kind: DrawPipelineKind): Boolean = true.also { calls += "pipeline $kind" }
-        override fun drawMesh(mesh: String) {
-            calls += "draw $mesh"
-        }
-        override fun setScissor(x: Int, y: Int, width: Int, height: Int) {
-            calls += "scissor $x,$y ${width}x$height"
-        }
-        override fun drawTexturePrimitive(primitive: TexturedDrawRun, slotIndex: Int) {
-            calls += "texture $slotIndex"
-        }
+        override fun drawMesh(mesh: String) { calls += "draw $mesh" }
+        override fun setScissor(x: Int, y: Int, width: Int, height: Int) { calls += "scissor $x,$y ${width}x$height" }
+        override fun drawTexturePrimitive(primitive: TexturedDrawRun, slotIndex: Int) { calls += "texture $slotIndex" }
     }
 
     /** Runs split by clips keep their pipeline, and a clip repeating the current rect is not set again. */

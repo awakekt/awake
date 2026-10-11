@@ -102,8 +102,11 @@ class WebAudioPlayer internal constructor(
 }
 
 private fun AudioClip.supportsWebAudio(): Boolean =
-    bitsPerSample == 16 && channels in 1..2 && sampleRate in 3_000..384_000 &&
-        pcmBytes.isNotEmpty() && pcmBytes.size % (channels * 2) == 0
+    bitsPerSample == 16 &&
+        channels in 1..2 &&
+        sampleRate in 3_000..384_000 &&
+        pcmBytes.isNotEmpty() &&
+        pcmBytes.size % (channels * 2) == 0
 
 private fun createPcmBuffer(context: JsAny, clip: AudioClip): JsAny =
     createAudioBuffer(context, clip.channels, clip.pcmBytes.size / (clip.channels * 2), clip.sampleRate) { frame, channel ->

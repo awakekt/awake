@@ -37,13 +37,8 @@ class CanvasStyleParityTest {
             world.add(
                 it,
                 CanvasElement().apply {
-                    kind = CanvasElementKind.Panel
-                    offsetX = x
-                    offsetY = y
-                    this.width = width
-                    this.height = height
-                    this.background = background
-                    this.style = style
+                    kind = CanvasElementKind.Panel; offsetX = x; offsetY = y; this.width = width; this.height = height
+                    this.background = background; this.style = style
                 },
             )
         }
@@ -88,11 +83,7 @@ class CanvasStyleParityTest {
         val world = World()
         fun element(configure: CanvasElement.() -> Unit) = world.create().also { world.add(it, CanvasElement().apply(configure)) }
         element {
-            kind = CanvasElementKind.Button
-            offsetX = 16f
-            offsetY = 16f
-            width = 120f
-            height = 40f
+            kind = CanvasElementKind.Button; offsetX = 16f; offsetY = 16f; width = 120f; height = 40f
             style = CanvasStyle(
                 gradient = CanvasGradient("#4A6FD8", "#2A3F8A"),
                 cornerRadius = 10f,
@@ -102,31 +93,16 @@ class CanvasStyleParityTest {
             )
         }
         element {
-            kind = CanvasElementKind.Panel
-            offsetX = 152f
-            offsetY = 16f
-            width = 80f
-            height = 40f
-            background = "#2E2A24"
+            kind = CanvasElementKind.Panel; offsetX = 152f; offsetY = 16f; width = 80f; height = 40f; background = "#2E2A24"
             style = CanvasStyle(cornerRadius = 6f, borderWidth = 2f, borderColor = "#C8A060")
         }
         element {
-            kind = CanvasElementKind.Bar
-            offsetX = 16f
-            offsetY = 80f
-            width = 216f
-            height = 12f
-            value = 0.65f
-            color = "#30A46C"
-            background = "#00000080"
+            kind = CanvasElementKind.Bar; offsetX = 16f; offsetY = 80f; width = 216f; height = 12f; value = 0.65f
+            color = "#30A46C"; background = "#00000080"
             style = CanvasStyle(cornerRadius = 6f)
         }
         element {
-            kind = CanvasElementKind.Panel
-            offsetX = 16f
-            offsetY = 108f
-            width = 216f
-            height = 20f
+            kind = CanvasElementKind.Panel; offsetX = 16f; offsetY = 108f; width = 216f; height = 20f
             style = CanvasStyle(gradient = CanvasGradient("#E5484D", "#FFB224", horizontal = true), alpha = 0.6f)
         }
         val primitives = ComposeHost().frame(FrameInput(HUD_WIDTH, HUD_HEIGHT)) { SceneCanvas(world) }.primitives
@@ -165,14 +141,8 @@ class CanvasStyleParityTest {
             world.add(
                 it,
                 CanvasElement().apply {
-                    offsetX = 0f
-                    offsetY = 0f
-                    width = SIZE.toFloat()
-                    height = SIZE.toFloat()
-                    text = "O"
-                    fontSize = 64f
-                    color = "#FFFFFF"
-                    textAlign = CanvasAnchor.Center
+                    offsetX = 0f; offsetY = 0f; width = SIZE.toFloat(); height = SIZE.toFloat()
+                    text = "O"; fontSize = 64f; color = "#FFFFFF"; textAlign = CanvasAnchor.Center
                     style = CanvasStyle(textOutline = CanvasTextOutline("#00FF00", 3f))
                 },
             )

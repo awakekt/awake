@@ -40,9 +40,7 @@ class SpriteClips(val sheet: SceneSpriteClips) {
     /** Playback multiplier; zero pauses this entity. */
     var speed: Float
         get() = player.speed
-        set(value) {
-            player.speed = value
-        }
+        set(value) { player.speed = value }
 
     /** Selects [clipId]; repeat requests preserve time unless [restart] is true. */
     fun play(clipId: String, restart: Boolean = false) = player.play(clipId, restart)

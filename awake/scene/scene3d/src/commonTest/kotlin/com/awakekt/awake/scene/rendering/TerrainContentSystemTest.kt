@@ -38,12 +38,7 @@ class TerrainContentSystemTest {
     private val system = TerrainContentSystem(
         host,
         scope,
-        providers = mapOf(
-            PROVIDER to TerrainSurfaceProvider {
-                delay(RESOLVE_MILLIS)
-                SURFACE
-            },
-        ),
+        providers = mapOf(PROVIDER to TerrainSurfaceProvider { delay(RESOLVE_MILLIS); SURFACE }),
     )
 
     @Test

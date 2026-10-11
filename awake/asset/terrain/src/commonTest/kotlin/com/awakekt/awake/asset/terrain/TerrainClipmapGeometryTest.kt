@@ -109,8 +109,10 @@ class TerrainClipmapGeometryTest {
                     val cellMinX = coarser.minX + x * coarser.spacing
                     val cellMinZ = coarser.minZ + z * coarser.spacing
                     assertTrue(
-                        cellMinX >= finer.minX && cellMinX + coarser.spacing <= finer.maxX &&
-                            cellMinZ >= finer.minZ && cellMinZ + coarser.spacing <= finer.maxZ,
+                        cellMinX >= finer.minX &&
+                            cellMinX + coarser.spacing <= finer.maxX &&
+                            cellMinZ >= finer.minZ &&
+                            cellMinZ + coarser.spacing <= finer.maxZ,
                         "cell ($x, $z) cut from level ${coarser.level} is not under level ${finer.level} at step $step",
                     )
                 }

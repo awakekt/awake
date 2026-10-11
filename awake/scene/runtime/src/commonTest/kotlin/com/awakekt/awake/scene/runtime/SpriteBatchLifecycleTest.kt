@@ -67,9 +67,7 @@ class SpriteBatchLifecycleTest {
         override fun createMesh(geometry: MeshGeometry): Mesh {
             meshes++
             return object : Mesh by super.createMesh(geometry) {
-                override fun destroy() {
-                    destroyedMeshes++
-                }
+                override fun destroy() { destroyedMeshes++ }
             }
         }
 
@@ -78,9 +76,7 @@ class SpriteBatchLifecycleTest {
             assertEquals(TextureFiltering.Nearest, texture?.filtering)
             assertEquals(SpriteUniformLayout.total, uniformFloatCount)
             return object : Material by super.createMaterial(texture, renderTarget, uniformFloatCount, pbrTextures) {
-                override fun destroy() {
-                    destroyedMaterials++
-                }
+                override fun destroy() { destroyedMaterials++ }
             }
         }
     }

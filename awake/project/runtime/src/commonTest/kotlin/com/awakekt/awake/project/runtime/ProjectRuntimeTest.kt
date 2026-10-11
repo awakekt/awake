@@ -255,12 +255,7 @@ class ProjectRuntimeTest {
             runCatching { sources.getValue(path.value).encodeToByteArray() }
         }
 
-        val load = launch {
-            loadProject(files) {
-                made++
-                createJoltPhysicsWorld()
-            }
-        }
+        val load = launch { loadProject(files) { made++; createJoltPhysicsWorld() } }
         reading.await()
         load.cancelAndJoin()
 

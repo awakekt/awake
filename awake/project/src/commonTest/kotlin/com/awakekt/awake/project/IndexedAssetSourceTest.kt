@@ -44,10 +44,7 @@ class IndexedAssetSourceTest {
     fun aSecondReadComesFromTheCacheWithNoFetch() = runTest {
         var fetches = 0
         val serve = server()
-        val source = IndexedAssetSource(index, { url ->
-            fetches++
-            serve(url)
-        }, MemoryCache())
+        val source = IndexedAssetSource(index, { url -> fetches++; serve(url) }, MemoryCache())
 
         source.read(AssetPath("assets/crate.glb")).getOrThrow()
         source.read(AssetPath("assets/crate.glb")).getOrThrow()
@@ -61,10 +58,7 @@ class IndexedAssetSourceTest {
         val serve = server()
         val cache = MemoryCache().apply { stored[Sha256.digestHex(model)] = ByteArray(64) }
 
-        val bytes = IndexedAssetSource(index, { url ->
-            fetches++
-            serve(url)
-        }, cache).read(AssetPath("assets/crate.glb")).getOrThrow()
+        val bytes = IndexedAssetSource(index, { url -> fetches++; serve(url) }, cache).read(AssetPath("assets/crate.glb")).getOrThrow()
 
         assertContentEquals(model, bytes)
         assertEquals(1, fetches, "the corrupt cached copy is replaced from the network")

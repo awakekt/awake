@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-@file:Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@file:Suppress("FunctionNaming", "ktlint:standard:function-naming", "LongParameterList")
 
 package com.awakekt.awake.scene.canvas
 
@@ -51,6 +51,7 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.core.transform.Transform
 
+context(_: Composer)
 /**
  * Draws [world]'s visible [CanvasElement]s over whatever is beneath, lowest [CanvasElement.order]
  * first. Each element is tagged `canvas-element-<entity id>` for tests and editor picking.
@@ -74,8 +75,6 @@ import com.awakekt.awake.scene.core.transform.Transform
  *   through: the scene's own registry's. Null reads through every globally registered one, gathered
  *   only on a frame where an element reads a field.
  */
-@Suppress("LongParameterList")
-context(_: Composer)
 fun SceneCanvas(
     world: World,
     modifier: Modifier = Modifier,
@@ -245,17 +244,9 @@ private const val KNOB_FRACTION = 0.45f
 private fun Modifier.anchorInset(element: CanvasElement): Modifier {
     val x = element.offsetX.coerceAtLeast(0f)
     val y = element.offsetY.coerceAtLeast(0f)
-    val start = when (element.anchor.column) {
-        0 -> x
-        1 -> 2 * x
-        else -> 0f
-    }
+    val start = when (element.anchor.column) { 0 -> x; 1 -> 2 * x; else -> 0f }
     val end = if (element.anchor.column == 2) x else 0f
-    val top = when (element.anchor.row) {
-        0 -> y
-        1 -> 2 * y
-        else -> 0f
-    }
+    val top = when (element.anchor.row) { 0 -> y; 1 -> 2 * y; else -> 0f }
     val bottom = if (element.anchor.row == 2) y else 0f
     return padding(start = start.dp, top = top.dp, end = end.dp, bottom = bottom.dp)
 }

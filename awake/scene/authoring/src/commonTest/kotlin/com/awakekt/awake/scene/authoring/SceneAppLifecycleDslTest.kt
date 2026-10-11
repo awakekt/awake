@@ -145,13 +145,7 @@ class SceneAppLifecycleDslTest {
         game.ready(RecordingRenderer())
         val runtime = game.requireService<SceneAppLifecycleRuntime>()
         val entity = runtime.findOrCreateEntity("score")
-        runtime.world.add(
-            entity,
-            CanvasElement().apply {
-                kind = CanvasElementKind.Text
-                text = "Score 0"
-            },
-        )
+        runtime.world.add(entity, CanvasElement().apply { kind = CanvasElementKind.Text; text = "Score 0" })
         runtime.drawsSceneCanvas = false
 
         game.update(1f / 60f, 320f, 240f)

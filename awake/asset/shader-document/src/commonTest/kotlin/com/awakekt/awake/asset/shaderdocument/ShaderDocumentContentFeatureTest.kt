@@ -145,12 +145,7 @@ class ShaderDocumentContentFeatureTest {
     @Test
     fun aPlaneBindsItsGeometryAndCopiesItsModelMatrix() {
         val inputs = water.newInputs()
-        inputs.setModel(
-            Mat4().apply {
-                identity()
-                data[12] = 5f
-            },
-        )
+        inputs.setModel(Mat4().apply { identity(); data[12] = 5f })
         val geometry = ContentGeometry(object : BufferHandle {}, object : BufferHandle {}, elementCount = 96)
         val recorded = record(water.contentFeature(inputs, waterTextures).resolve(RenderBackend.WebGpu), geometry)
         assertEquals(listOf("bindPipeline", "bindMaterial:Material", "bindVertexBuffer:0", "bindIndexBuffer", "drawIndexed:96"), recorded.recorder.calls)
