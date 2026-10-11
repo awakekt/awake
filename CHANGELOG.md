@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.3] - 2026-10-11
+
+### Fixed
+
+- **A glTF whose sidecar file names need percent-encoding loads.** glTF writes a buffer's or image's `uri` as an RFC 3986 reference, so a texture named `Part Foot.png` appears as `Part%20Foot.png`. Core looked for a file with the encoded name and the model failed to load. It now decodes the URI first, `%C3%A9` and other UTF-8 escapes included, then reads the file by its real name. `data:` URIs, and names with nothing encoded, work as before.
+- **A skinned model with no animation clips loads and spawns, every time.** A body part another skeleton poses, such as a piece of armour, has no clips. Loading a project whose scene drew one, or spawning one once it had loaded, threw `IllegalArgumentException: An AnimationLibrary needs at least one clip`. Such a model now stands in its rest pose with no animator, and whoever owns it can replace the pose.
+- **A desktop app with physics builds with ProGuard.** jolt-jni's desktop jar names a test class in its module-info, `testjoltjni.app.helloworld.HelloWorld`, that the jar doesn't ship, and ProGuard failed the build on the unresolved reference. The Jolt backend's shipped rules now tell ProGuard not to warn about it.
+
 ## [0.8.2] - 2026-10-11
 
 The same code as 0.8.0, published. 0.8.0 and 0.8.1 never uploaded: in both, the Publish run's Verify lost the Android NDK download its iOS native step needs, once corrupt and once hung past the job's time limit. That step now caches the NDK and installs it bounded and retried.
