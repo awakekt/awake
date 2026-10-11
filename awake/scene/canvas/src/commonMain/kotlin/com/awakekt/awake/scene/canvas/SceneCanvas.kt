@@ -51,7 +51,6 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.core.transform.Transform
 
-@Suppress("LongParameterList")
 /**
  * Draws [world]'s visible [CanvasElement]s over whatever is beneath, lowest [CanvasElement.order]
  * first. Each element is tagged `canvas-element-<entity id>` for tests and editor picking.
@@ -75,6 +74,7 @@ import com.awakekt.awake.scene.core.transform.Transform
  *   through: the scene's own registry's. Null reads through every globally registered one, gathered
  *   only on a frame where an element reads a field.
  */
+@Suppress("LongParameterList")
 context(_: Composer)
 fun SceneCanvas(
     world: World,
