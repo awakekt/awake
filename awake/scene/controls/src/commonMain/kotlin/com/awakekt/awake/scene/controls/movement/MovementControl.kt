@@ -7,11 +7,11 @@ package com.awakekt.awake.scene.controls.movement
 
 import com.awakekt.awake.ecs.Poolable
 import com.awakekt.awake.scene.core.transform.Transform
+import kotlinx.serialization.Serializable
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.sign
-import kotlinx.serialization.Serializable
 
 private const val TWO_PI = (2 * PI).toFloat()
 

@@ -8,8 +8,8 @@ package com.awakekt.awake.render.passes.uniforms
 import com.awakekt.awake.render.command.GpuShadowCascadeData
 import com.awakekt.awake.render.passes.DEFAULT_SHADOW_CASCADES
 import com.awakekt.awake.render.passes.DEFAULT_SHADOW_DISTANCE
-import com.awakekt.awake.render.passes.cascadeShadowBoxes
 import com.awakekt.awake.render.passes.cascadeBlendStartDistances
+import com.awakekt.awake.render.passes.cascadeShadowBoxes
 import com.awakekt.awake.render.passes.cascadeSplitDistances
 import com.awakekt.awake.render.renderer.UniformFields
 import com.awakekt.awake.render.renderer.UniformLayout

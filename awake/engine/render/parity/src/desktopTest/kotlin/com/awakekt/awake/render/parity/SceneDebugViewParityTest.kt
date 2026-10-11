@@ -211,6 +211,7 @@ class SceneDebugViewParityTest {
         const val BACKGROUND = -2
         const val BACKGROUND_PEAK = 8f
         const val SHADOWED_TINT_PEAK = 150f
+
         /** Lit ground reads about 116 and ground in the cube's shadow about 78. */
         const val SHADOWED_GREY = 100f
 

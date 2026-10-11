@@ -10,6 +10,7 @@ object RenderDiagnostics {
     /** Physical render-target width/height used for the current scene projection. */
     var surfaceAspect: Float = 16f / 9f
         internal set
+
     /** Number of draw calls eliminated by frustum culling. */
     var frustumCulled: Int = 0
         internal set

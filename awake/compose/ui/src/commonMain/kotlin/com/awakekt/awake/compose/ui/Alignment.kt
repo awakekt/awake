@@ -46,10 +46,12 @@ fun interface Alignment {
             val x = if (layoutDirection == LayoutDirection.Ltr) 0 else space.width - size.width
             IntOffset(x, 0)
         }
+
         /** Top edge, centred horizontally. */
         val TopCenter: Alignment = Alignment { size, space, _ ->
             IntOffset((space.width - size.width) / 2, 0)
         }
+
         /** Top edge, end side. */
         val TopEnd: Alignment = Alignment { size, space, layoutDirection ->
             val x = if (layoutDirection == LayoutDirection.Ltr) space.width - size.width else 0
@@ -61,10 +63,12 @@ fun interface Alignment {
             val x = if (layoutDirection == LayoutDirection.Ltr) 0 else space.width - size.width
             IntOffset(x, (space.height - size.height) / 2)
         }
+
         /** Centred on both axes. */
         val Center: Alignment = Alignment { size, space, _ ->
             IntOffset((space.width - size.width) / 2, (space.height - size.height) / 2)
         }
+
         /** Centred vertically, end side. */
         val CenterEnd: Alignment = Alignment { size, space, layoutDirection ->
             val x = if (layoutDirection == LayoutDirection.Ltr) space.width - size.width else 0
@@ -76,10 +80,12 @@ fun interface Alignment {
             val x = if (layoutDirection == LayoutDirection.Ltr) 0 else space.width - size.width
             IntOffset(x, space.height - size.height)
         }
+
         /** Bottom edge, centred horizontally. */
         val BottomCenter: Alignment = Alignment { size, space, _ ->
             IntOffset((space.width - size.width) / 2, space.height - size.height)
         }
+
         /** Bottom edge, end side. */
         val BottomEnd: Alignment = Alignment { size, space, layoutDirection ->
             val x = if (layoutDirection == LayoutDirection.Ltr) space.width - size.width else 0
@@ -90,10 +96,12 @@ fun interface Alignment {
         val Start: Horizontal = Horizontal { size, space, layoutDirection ->
             if (layoutDirection == LayoutDirection.Ltr) 0 else space - size
         }
+
         /** Centred along the horizontal axis. */
         val CenterHorizontally: Horizontal = Horizontal { size, space, _ ->
             (space - size) / 2
         }
+
         /** The end edge: right under [LayoutDirection.Ltr], left under [LayoutDirection.Rtl]. */
         val End: Horizontal = Horizontal { size, space, layoutDirection ->
             if (layoutDirection == LayoutDirection.Ltr) space - size else 0
@@ -101,8 +109,10 @@ fun interface Alignment {
 
         /** The top edge. */
         val Top: Vertical = Vertical { _, _ -> 0 }
+
         /** Centred along the vertical axis. */
         val CenterVertically: Vertical = Vertical { size, space -> (space - size) / 2 }
+
         /** The bottom edge. */
         val Bottom: Vertical = Vertical { size, space -> space - size }
     }

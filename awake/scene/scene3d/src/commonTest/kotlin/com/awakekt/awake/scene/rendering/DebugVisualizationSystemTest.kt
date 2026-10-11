@@ -18,6 +18,7 @@ import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
+import com.awakekt.awake.render.passes.uniforms.DEFAULT_SCENE_LIGHT
 import com.awakekt.awake.render.renderer.LineSegment
 import com.awakekt.awake.render.renderer.RenderViewport
 import com.awakekt.awake.render.renderer.Renderer
@@ -25,18 +26,17 @@ import com.awakekt.awake.render.texture.PbrTextureSet
 import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.scene.core.transform.Transform
-import kotlin.test.assertNotNull
 import com.awakekt.awake.scene.core.transform.TransformSystem
-import com.awakekt.awake.scene.rendering.debug.DEBUG_VISUALIZATION_MAX_LINES
 import com.awakekt.awake.scene.rendering.CONSERVATIVE_ASPECT
+import com.awakekt.awake.scene.rendering.debug.DEBUG_VISUALIZATION_MAX_LINES
 import com.awakekt.awake.scene.rendering.debug.DebugVisualizationSystem
-import com.awakekt.awake.scene.rendering.debug.cascadeBoxLines
-import com.awakekt.awake.render.passes.uniforms.DEFAULT_SCENE_LIGHT
 import com.awakekt.awake.scene.rendering.debug.WorldDebugSettings
+import com.awakekt.awake.scene.rendering.debug.cascadeBoxLines
 import com.awakekt.awake.scene.rendering.mesh.InstancedMeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.MeshBounds
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class DebugVisualizationSystemTest {

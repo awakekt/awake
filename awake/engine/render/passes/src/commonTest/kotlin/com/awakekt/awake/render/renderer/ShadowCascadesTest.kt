@@ -14,8 +14,8 @@ import com.awakekt.awake.core.math.times
 import com.awakekt.awake.render.passes.DEFAULT_SHADOW_MAP_SIZE
 import com.awakekt.awake.render.passes.DirectionalShadowBox
 import com.awakekt.awake.render.passes.cascadeBlendStartDistances
-import com.awakekt.awake.render.passes.cascadeShadowBoxesWithBlendFraction
 import com.awakekt.awake.render.passes.cascadeShadowBoxes
+import com.awakekt.awake.render.passes.cascadeShadowBoxesWithBlendFraction
 import com.awakekt.awake.render.passes.cascadeSplitDistances
 import kotlin.math.abs
 import kotlin.test.Test
@@ -311,7 +311,9 @@ class ShadowCascadesTest {
 
     private fun DirectionalShadowBox.containsClipPoint(point: Vec3f): Boolean {
         val clip = Vec4(point.x, point.y, point.z, 1f) * viewProjection
-        return abs(clip.x) <= 1f + TOLERANCE && abs(clip.y) <= 1f + TOLERANCE &&
-            clip.z >= -TOLERANCE && clip.z <= 1f + TOLERANCE
+        return abs(clip.x) <= 1f + TOLERANCE &&
+            abs(clip.y) <= 1f + TOLERANCE &&
+            clip.z >= -TOLERANCE &&
+            clip.z <= 1f + TOLERANCE
     }
 }

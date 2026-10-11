@@ -148,7 +148,6 @@ fun ragdollFromSkeleton(
     return RagdollRig(limbs, joints, bones.copyOf(), offsetPositions, offsetRotations)
 }
 
-
 /**
  * Where a limb's far end sits: the mean of the driven bones hanging off [bone].
  *

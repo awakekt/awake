@@ -51,7 +51,8 @@ internal object TerrainCapability : SceneCapability {
 internal class TerrainDrawingSystem(
     host: ContentFeatureHost?,
     providers: Map<String, TerrainSurfaceProvider>,
-) : System, AutoCloseable {
+) : System,
+    AutoCloseable {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val terrains = host?.let { TerrainContentSystem(it, scope, providers) }
 

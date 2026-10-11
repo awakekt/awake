@@ -25,8 +25,7 @@ import android.view.inputmethod.InputMethodManager
  * @param targetView Target view owning this input connection.
  * @param input Target Awake [Input] accumulator receiving text events.
  */
-class AwakeInputConnection(private val targetView: View, private val input: Input) :
-    BaseInputConnection(targetView, false) {
+class AwakeInputConnection(private val targetView: View, private val input: Input) : BaseInputConnection(targetView, false) {
 
     override fun commitText(text: CharSequence, newCursorPosition: Int): Boolean {
         input.pushTypedText(text.toString())

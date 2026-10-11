@@ -23,10 +23,10 @@ import com.awakekt.awake.compose.ui.input.pointer.PointerEventType
 import com.awakekt.awake.compose.ui.layout.Layout
 import com.awakekt.awake.compose.ui.node.PointerInputNode
 import com.awakekt.awake.compose.ui.node.TextInputNode
+import com.awakekt.awake.compose.ui.platform.FrameClock
 import com.awakekt.awake.compose.ui.platform.LocalDensity
 import com.awakekt.awake.compose.ui.platform.LocalFont
 import com.awakekt.awake.compose.ui.platform.LocalFrameClock
-import com.awakekt.awake.compose.ui.platform.FrameClock
 import com.awakekt.awake.compose.ui.platform.LocalTextStyle
 import com.awakekt.awake.compose.ui.semantics.SemanticsProperties
 import com.awakekt.awake.compose.ui.semantics.semantics

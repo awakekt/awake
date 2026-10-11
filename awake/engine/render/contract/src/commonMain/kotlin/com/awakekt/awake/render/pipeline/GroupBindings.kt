@@ -9,10 +9,13 @@ package com.awakekt.awake.render.pipeline
 enum class ResourceKind {
     /** Uniform buffer object holding shader constants. */
     UniformBuffer,
+
     /** Storage buffer object holding structured or dynamic buffer data. */
     StorageBuffer,
+
     /** Texture sampler state object. */
     Sampler,
+
     /** Sampled texture image view. */
     SampledTexture,
 }
@@ -21,10 +24,13 @@ enum class ResourceKind {
 enum class TextureSampleType {
     /** Floating-point texture sample type (filterable). */
     Float,
+
     /** Depth comparison texture sample type. */
     Depth,
+
     /** Signed integer texture sample type (unfilterable). */
     Sint,
+
     /** Unsigned integer texture sample type (unfilterable). */
     Uint,
 }
@@ -33,8 +39,10 @@ enum class TextureSampleType {
 enum class SamplerType {
     /** Linear or bilinear filtering sampler. */
     Filtering,
+
     /** Nearest-neighbor non-filtering sampler. */
     NonFiltering,
+
     /** Shadow comparison sampler with reference value. */
     Comparison,
 }
@@ -50,6 +58,7 @@ enum class SamplerType {
 enum class ShaderStage {
     /** Vertex shader stage. */
     Vertex,
+
     /** Fragment / pixel shader stage. */
     Fragment,
 }

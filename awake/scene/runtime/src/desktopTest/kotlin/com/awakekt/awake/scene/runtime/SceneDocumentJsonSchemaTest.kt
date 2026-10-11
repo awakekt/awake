@@ -8,12 +8,8 @@ package com.awakekt.awake.scene.runtime
 import com.awakekt.awake.scene.document.JsonSchemaValidator
 import com.awakekt.awake.scene.document.SceneComponentCatalog
 import com.awakekt.awake.scene.document.SceneDocumentJsonSchema
-import com.awakekt.awake.scene.document.SceneLoader
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.buildJsonArray
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -76,7 +72,7 @@ class SceneDocumentJsonSchemaTest {
                     }
                 ]
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         val errors = validator.validate(docWithCustom)
         assertTrue(errors.isEmpty(), "Custom component with open payload should validate: $errors")
@@ -127,7 +123,7 @@ class SceneDocumentJsonSchemaTest {
                 "unknownTopLevelField": 123,
                 "nodes": []
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         val errors = validator.validate(docWithUnknownField)
         assertFalse(errors.isEmpty(), "Unknown field should be rejected by schema")
@@ -147,7 +143,7 @@ class SceneDocumentJsonSchemaTest {
                 "version": "not-an-integer",
                 "nodes": []
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         val errors = validator.validate(docWithWrongType)
         assertFalse(errors.isEmpty(), "Wrong type should be rejected by schema")
@@ -178,7 +174,7 @@ class SceneDocumentJsonSchemaTest {
                     }
                 ]
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
         val errors = validator.validate(docWithOutOfRange)
         assertFalse(errors.isEmpty(), "Out-of-range value should be rejected by schema")

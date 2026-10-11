@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+ *
  * SPDX-License-Identifier: Apache-2.0
  */
 package com.awakekt.awake.scene.runtime
@@ -22,7 +23,9 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 
 class SpriteClipsLoadingTest {
-    init { DefaultSceneComponentResolvers.install() }
+    init {
+        DefaultSceneComponentResolvers.install()
+    }
 
     private val sprite = SceneSprite("sheet", columns = 4, frame = 1)
     private val clips = SceneSpriteClips(
@@ -41,7 +44,10 @@ class SpriteClipsLoadingTest {
             SceneLoader.decode(SceneLoader.encode(document)).instantiate(world = world)
             var liveSprite: Sprite? = null
             var liveClips: SpriteClips? = null
-            world.queryEach<Sprite, SpriteClips> { _, s, c -> liveSprite = s; liveClips = c }
+            world.queryEach<Sprite, SpriteClips> { _, s, c ->
+                liveSprite = s
+                liveClips = c
+            }
             assertEquals(2, assertNotNull(liveSprite).frame, "initial cell must be ready before the first system update")
             val playback = assertNotNull(liveClips)
             playback.play("idle")

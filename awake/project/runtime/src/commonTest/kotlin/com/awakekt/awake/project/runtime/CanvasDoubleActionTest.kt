@@ -5,11 +5,11 @@
  */
 package com.awakekt.awake.project.runtime
 
+import com.awakekt.awake.compose.ui.platform.ComposeHost
+import com.awakekt.awake.compose.ui.platform.FrameInput
 import com.awakekt.awake.core.input.ActionTrigger
 import com.awakekt.awake.core.input.ButtonAction
 import com.awakekt.awake.core.input.InputActions
-import com.awakekt.awake.compose.ui.platform.ComposeHost
-import com.awakekt.awake.compose.ui.platform.FrameInput
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.canvas.CanvasElement
 import com.awakekt.awake.scene.canvas.CanvasElementKind

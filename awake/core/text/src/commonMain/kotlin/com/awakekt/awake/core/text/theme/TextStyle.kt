@@ -65,15 +65,22 @@ data class TextStyle(
 
     /** Whether merging this over [base] gives this: every field it leaves unset is unset in [base] too. */
     private fun inheritsNothingFrom(base: TextStyle): Boolean =
-        (color != null || base.color == null) && (size != null || base.size == null) &&
-            (lineHeight != null || base.lineHeight == null) && (shadow != null || base.shadow == null) &&
+        (color != null || base.color == null) &&
+            (size != null || base.size == null) &&
+            (lineHeight != null || base.lineHeight == null) &&
+            (shadow != null || base.shadow == null) &&
             (outline != null || base.outline == null)
 
     /** Whether merging this over [base] gives [base]: every field it sets, [base] already has. */
     private fun changesNothingIn(base: TextStyle): Boolean =
-        sameOrUnset(color, base.color) && sameOrUnset(size, base.size) && sameOrUnset(lineHeight, base.lineHeight) &&
-            sameOrUnset(shadow, base.shadow) && sameOrUnset(outline, base.outline) &&
-            scale == base.scale && weight == base.weight && letterSpacing == base.letterSpacing
+        sameOrUnset(color, base.color) &&
+            sameOrUnset(size, base.size) &&
+            sameOrUnset(lineHeight, base.lineHeight) &&
+            sameOrUnset(shadow, base.shadow) &&
+            sameOrUnset(outline, base.outline) &&
+            scale == base.scale &&
+            weight == base.weight &&
+            letterSpacing == base.letterSpacing
 }
 
 private fun <T> sameOrUnset(value: T?, base: T?): Boolean = value == null || value == base

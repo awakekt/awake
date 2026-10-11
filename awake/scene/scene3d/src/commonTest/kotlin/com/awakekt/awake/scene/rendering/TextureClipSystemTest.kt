@@ -22,8 +22,8 @@ import com.awakekt.awake.scene.rendering.mesh.SceneDrawCollector
 import com.awakekt.awake.scene.rendering.mesh.SceneTextureAnimation
 import com.awakekt.awake.scene.rendering.mesh.SceneTextureClip
 import com.awakekt.awake.scene.rendering.mesh.SceneTextureClips
-import com.awakekt.awake.scene.rendering.mesh.TextureClipSystem
 import com.awakekt.awake.scene.rendering.mesh.TextureAnimationBinding
+import com.awakekt.awake.scene.rendering.mesh.TextureClipSystem
 import com.awakekt.awake.scene.rendering.mesh.TextureClips
 import com.awakekt.awake.scene.rendering.spatial.SceneCullingCompiler
 import kotlin.test.Test

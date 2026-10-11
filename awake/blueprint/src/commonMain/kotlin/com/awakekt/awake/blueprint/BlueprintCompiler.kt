@@ -171,7 +171,11 @@ private fun findCycleNodes(successors: Array<ArrayList<Int>>): Set<Int> {
     fun visit(i: Int) {
         state[i] = VISITING
         for (next in successors[i]) {
-            if (state[next] == VISITING) found += next else if (state[next] == UNSEEN) visit(next)
+            if (state[next] == VISITING) {
+                found += next
+            } else if (state[next] == UNSEEN) {
+                visit(next)
+            }
         }
         state[i] = DONE
     }
@@ -207,4 +211,3 @@ private class SlotAllocator {
         else -> primitive?.intOrNull ?: 0
     }
 }
-

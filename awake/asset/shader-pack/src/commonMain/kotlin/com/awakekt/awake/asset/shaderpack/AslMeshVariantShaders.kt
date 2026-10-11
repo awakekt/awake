@@ -5,14 +5,14 @@
  */
 package com.awakekt.awake.asset.shaderpack
 
+import com.awakekt.awake.asset.shaderdsl.AslBlockBuilder
 import com.awakekt.awake.asset.shaderdsl.AslExpr
 import com.awakekt.awake.asset.shaderdsl.AslShaderDefinition
+import com.awakekt.awake.asset.shaderdsl.AslVaryings
+import com.awakekt.awake.asset.shaderdsl.AslVertexBuilder
 import com.awakekt.awake.asset.shaderdsl.a
 import com.awakekt.awake.asset.shaderdsl.div
 import com.awakekt.awake.asset.shaderdsl.dot
-import com.awakekt.awake.asset.shaderdsl.AslBlockBuilder
-import com.awakekt.awake.asset.shaderdsl.AslVaryings
-import com.awakekt.awake.asset.shaderdsl.AslVertexBuilder
 import com.awakekt.awake.asset.shaderdsl.fieldsFrom
 import com.awakekt.awake.asset.shaderdsl.inputsFrom
 import com.awakekt.awake.asset.shaderdsl.instanceModelMatrix

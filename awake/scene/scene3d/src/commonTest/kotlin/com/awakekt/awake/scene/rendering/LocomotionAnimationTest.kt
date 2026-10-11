@@ -255,12 +255,24 @@ class LocomotionAnimationTest {
         )
 
         val CLIP_SECONDS = mapOf(
-            "stand" to 1f, "walk" to 1f, "run" to 1f, "jump" to 1f,
-            "takeoff" to 0.25f, "rise" to 0.3f, "fall" to 0.4f, "land" to 0.4f,
+            "stand" to 1f,
+            "walk" to 1f,
+            "run" to 1f,
+            "jump" to 1f,
+            "takeoff" to 0.25f,
+            "rise" to 0.3f,
+            "fall" to 0.4f,
+            "land" to 0.4f,
         )
         val PHASES = SceneLocomotionAnimation(
-            idle = "stand", walk = "walk", run = "run", jump = "rise",
-            takeOff = "takeoff", fall = "fall", land = "land", walkAbove = 0.5f,
+            idle = "stand",
+            walk = "walk",
+            run = "run",
+            jump = "rise",
+            takeOff = "takeoff",
+            fall = "fall",
+            land = "land",
+            walkAbove = 0.5f,
         )
         const val TAKE_OFF_FRAMES = 16
         const val STEP = 1f / 60f

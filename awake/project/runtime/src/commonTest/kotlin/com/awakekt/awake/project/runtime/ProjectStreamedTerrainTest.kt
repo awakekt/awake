@@ -141,7 +141,9 @@ class ProjectStreamedTerrainTest {
         fail("The streamed terrain did not reach the expected state")
     }
 
-    private class HostRenderer : NoopRenderer(), ContentFeatureHost {
+    private class HostRenderer :
+        NoopRenderer(),
+        ContentFeatureHost {
         var attached = 0
         var detached = 0
 

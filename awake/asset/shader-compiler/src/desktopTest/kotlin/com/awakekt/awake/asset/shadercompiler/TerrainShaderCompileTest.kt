@@ -29,7 +29,6 @@ import com.awakekt.awake.asset.shaderpack.terrainClipmapVertexStage
 import com.awakekt.awake.asset.shaderpack.terrainShader
 import com.awakekt.awake.asset.shaders.RenderBackend
 import com.awakekt.awake.asset.shaders.stagesFor
-import com.awakekt.awake.asset.shaders.ShaderStage as ProgramStage
 import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.render.passes.uniforms.SHADOW_CASCADE_PASS_GROUP
 import com.awakekt.awake.render.pipeline.BindingLayout
@@ -42,6 +41,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import com.awakekt.awake.asset.shaders.ShaderStage as ProgramStage
 
 /** The base terrain shader and a surface shader on the shared clipmap stage, validated by naga. */
 class TerrainShaderCompileTest {

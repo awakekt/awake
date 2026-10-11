@@ -11,12 +11,16 @@ import kotlinx.atomicfu.atomic
 enum class GpuUploadLeaseState {
     /** The upload payload has been prepared and staged, awaiting submission. */
     Prepared,
+
     /** The upload operation has been submitted to the GPU command queue. */
     Submitted,
+
     /** The upload operation has completed on the GPU and resources are released. */
     Completed,
+
     /** The upload operation was cancelled prior to submission. */
     Cancelled,
+
     /** The upload operation or device context failed. */
     Failed,
 }

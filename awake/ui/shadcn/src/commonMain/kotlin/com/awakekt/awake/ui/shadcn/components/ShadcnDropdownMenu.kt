@@ -17,7 +17,6 @@ import com.awakekt.awake.compose.foundation.layout.IntrinsicSize
 import com.awakekt.awake.compose.foundation.layout.Row
 import com.awakekt.awake.compose.foundation.layout.fillMaxWidth
 import com.awakekt.awake.compose.foundation.layout.padding
-import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.foundation.layout.width
 import com.awakekt.awake.compose.foundation.layout.widthIn
 import com.awakekt.awake.compose.foundation.style.Style
@@ -26,6 +25,7 @@ import com.awakekt.awake.compose.foundation.style.styleable
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.remember
+import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.focus.focusTarget
 import com.awakekt.awake.compose.ui.input.key.KeyEvent

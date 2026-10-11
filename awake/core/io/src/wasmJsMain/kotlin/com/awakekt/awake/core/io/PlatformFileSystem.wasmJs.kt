@@ -143,7 +143,9 @@ private class IndexedDbFileSystem(
             val oldMetadata = metadata.getValue(oldPath)
             val content = if (oldMetadata.kind == FileKind.File) {
                 jsIndexedDbRead(namespace, oldPath.value).await<JsAny?>()?.toString()
-            } else null
+            } else {
+                null
+            }
             metadata.remove(oldPath)
             metadata[newPath] = oldMetadata
             jsIndexedDbMove(namespace, oldPath.value, newPath.value, content).await<JsAny?>()
@@ -306,7 +308,9 @@ private class IndexedDbFileSystem(
             closed = true
             chunks.clear()
         }
-        override fun close() { closed = true }
+        override fun close() {
+            closed = true
+        }
     }
 
     private data class Watcher(
@@ -335,7 +339,8 @@ private fun remap(from: FilePath, to: FilePath, path: FilePath): FilePath {
     return FilePath.of(listOf(to.value, suffix).filter(String::isNotEmpty).joinToString("/"))
 }
 
-@JsFun("""
+@JsFun(
+    """
 (namespace) => new Promise((resolve, reject) => {
   if (!globalThis.indexedDB) { resolve('[]'); return; }
   const request = indexedDB.open('awake-core-io-v2', 1);
@@ -359,10 +364,12 @@ private fun remap(from: FilePath, to: FilePath, path: FilePath): FilePath {
     };
   };
 })
-""")
+""",
+)
 private external fun jsIndexedDbList(namespace: String): Promise<JsAny?>
 
-@JsFun("""
+@JsFun(
+    """
 (namespace, path) => new Promise((resolve, reject) => {
   if (!globalThis.indexedDB) { resolve(null); return; }
   const request = indexedDB.open('awake-core-io-v2', 1);
@@ -374,10 +381,12 @@ private external fun jsIndexedDbList(namespace: String): Promise<JsAny?>
     result.onsuccess = () => resolve(result.result ?? null);
   };
 })
-""")
+""",
+)
 private external fun jsIndexedDbRead(namespace: String, path: String): Promise<JsAny?>
 
-@JsFun("""
+@JsFun(
+    """
 (namespace, path, kind, sizeBytes, modifiedAtEpochMs, content) => new Promise((resolve, reject) => {
   if (!globalThis.indexedDB) { resolve(null); return; }
   const request = indexedDB.open('awake-core-io-v2', 1);
@@ -392,7 +401,8 @@ private external fun jsIndexedDbRead(namespace: String, path: String): Promise<J
     tx.onerror = () => reject(tx.error);
   };
 })
-""")
+""",
+)
 @Suppress("LongParameterList")
 private external fun jsIndexedDbPut(
     namespace: String,
@@ -403,7 +413,8 @@ private external fun jsIndexedDbPut(
     content: String?,
 ): Promise<JsAny?>
 
-@JsFun("""
+@JsFun(
+    """
 (namespace, path) => new Promise((resolve, reject) => {
   if (!globalThis.indexedDB) { resolve(null); return; }
   const request = indexedDB.open('awake-core-io-v2', 1);
@@ -417,10 +428,12 @@ private external fun jsIndexedDbPut(
     tx.onerror = () => reject(tx.error);
   };
 })
-""")
+""",
+)
 private external fun jsIndexedDbDelete(namespace: String, path: String): Promise<JsAny?>
 
-@JsFun("""
+@JsFun(
+    """
 (namespace, from, to, content) => new Promise((resolve, reject) => {
   if (!globalThis.indexedDB) { resolve(null); return; }
   const request = indexedDB.open('awake-core-io-v2', 1);
@@ -441,7 +454,8 @@ private external fun jsIndexedDbDelete(namespace: String, path: String): Promise
     tx.onerror = () => reject(tx.error);
   };
 })
-""")
+""",
+)
 private external fun jsIndexedDbMove(namespace: String, from: String, to: String, content: String?): Promise<JsAny?>
 
 @JsFun("(key) => globalThis.localStorage ? globalThis.localStorage.getItem(key) : null")

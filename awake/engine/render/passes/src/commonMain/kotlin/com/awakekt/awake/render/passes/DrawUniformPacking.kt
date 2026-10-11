@@ -16,10 +16,10 @@ import com.awakekt.awake.render.passes.uniforms.DEFAULT_EMISSIVE_FACTOR
 import com.awakekt.awake.render.passes.uniforms.DrawUniformPlan
 import com.awakekt.awake.render.passes.uniforms.InstancedUniformLayout
 import com.awakekt.awake.render.passes.uniforms.MaterialUniformLayouts
-import com.awakekt.awake.render.passes.uniforms.SpriteUniformLayout
-import com.awakekt.awake.render.passes.uniforms.SpriteFields
 import com.awakekt.awake.render.passes.uniforms.ParticleExtraUniformLayout
 import com.awakekt.awake.render.passes.uniforms.ParticleUniformLayout
+import com.awakekt.awake.render.passes.uniforms.SpriteFields
+import com.awakekt.awake.render.passes.uniforms.SpriteUniformLayout
 import com.awakekt.awake.render.passes.uniforms.blendsAdditively
 import com.awakekt.awake.render.passes.uniforms.coverageCutoff
 import com.awakekt.awake.render.passes.uniforms.directionalLightFloats

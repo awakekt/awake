@@ -62,9 +62,29 @@ class SceneCanvasTest {
     @Test
     fun childrenAreAnchoredInsideTheirParentAndMoveWithIt() {
         lateinit var window: CanvasElement
-        val parent = element { kind = CanvasElementKind.Panel; offsetX = 16f; offsetY = 8f; width = 200f; height = 100f; window = this }
-        val topLeft = child(parent) { kind = CanvasElementKind.Bar; offsetX = 4f; offsetY = 6f; width = 50f; height = 20f }
-        val bottomRight = child(parent) { kind = CanvasElementKind.Button; anchor = CanvasAnchor.BottomRight; offsetX = 4f; offsetY = 6f; width = 50f; height = 20f }
+        val parent = element {
+            kind = CanvasElementKind.Panel
+            offsetX = 16f
+            offsetY = 8f
+            width = 200f
+            height = 100f
+            window = this
+        }
+        val topLeft = child(parent) {
+            kind = CanvasElementKind.Bar
+            offsetX = 4f
+            offsetY = 6f
+            width = 50f
+            height = 20f
+        }
+        val bottomRight = child(parent) {
+            kind = CanvasElementKind.Button
+            anchor = CanvasAnchor.BottomRight
+            offsetX = 4f
+            offsetY = 6f
+            width = 50f
+            height = 20f
+        }
 
         val before = frame()
         window.offsetX = 100f
@@ -78,16 +98,31 @@ class SceneCanvasTest {
 
     @Test
     fun anElementSitsInTheNearestElementAboveItThroughPlainNodes() {
-        val window = element { kind = CanvasElementKind.Panel; offsetX = 30f; offsetY = 20f; width = 200f; height = 100f }
+        val window = element {
+            kind = CanvasElementKind.Panel
+            offsetX = 30f
+            offsetY = 20f
+            width = 200f
+            height = 100f
+        }
         val group = world.create().also { world.add(it, Transform(parent = window)) }
-        val label = child(group) { text = "HP"; offsetX = 5f; offsetY = 5f; width = 40f; height = 20f }
+        val label = child(group) {
+            text = "HP"
+            offsetX = 5f
+            offsetY = 5f
+            width = 40f
+            height = 20f
+        }
 
         assertEquals(listOf(35, 25, 40, 20), frame().box(label))
     }
 
     @Test
     fun aHiddenParentHidesItsChildren() {
-        val window = element { kind = CanvasElementKind.Panel; visible = false }
+        val window = element {
+            kind = CanvasElementKind.Panel
+            visible = false
+        }
         val label = child(window) { text = "HP" }
 
         assertNull(frame().node(label))
@@ -95,8 +130,20 @@ class SceneCanvasTest {
 
     @Test
     fun scaleMultipliesEverySizeAndOffset() {
-        val window = element { kind = CanvasElementKind.Panel; offsetX = 16f; offsetY = 8f; width = 200f; height = 100f }
-        val bar = child(window) { kind = CanvasElementKind.Bar; offsetX = 4f; offsetY = 6f; width = 50f; height = 20f }
+        val window = element {
+            kind = CanvasElementKind.Panel
+            offsetX = 16f
+            offsetY = 8f
+            width = 200f
+            height = 100f
+        }
+        val bar = child(window) {
+            kind = CanvasElementKind.Bar
+            offsetX = 4f
+            offsetY = 6f
+            width = 50f
+            height = 20f
+        }
 
         val out = frame(scale = 2f)
 
@@ -108,10 +155,21 @@ class SceneCanvasTest {
     fun atAFractionalScaleEveryImageEdgeLandsOnAWholePixel() {
         val frameImage = ImageBitmap(6, 6, rgba(*IntArray(36) { RED }))
         val window = element {
-            kind = CanvasElementKind.Panel; offsetX = 7f; offsetY = 7f; width = 41f; height = 21f
+            kind = CanvasElementKind.Panel
+            offsetX = 7f
+            offsetY = 7f
+            width = 41f
+            height = 21f
             style = CanvasStyle(image = CanvasImage("frame.png", sliceLeft = 1, sliceTop = 1, sliceRight = 1, sliceBottom = 1, repeatEdges = true))
         }
-        child(window) { kind = CanvasElementKind.Image; offsetX = 3f; offsetY = 3f; width = 9f; height = 5f; style = CanvasStyle(image = CanvasImage("frame.png")) }
+        child(window) {
+            kind = CanvasElementKind.Image
+            offsetX = 3f
+            offsetY = 3f
+            width = 9f
+            height = 5f
+            style = CanvasStyle(image = CanvasImage("frame.png"))
+        }
 
         val pieces = ComposeHost().frame(FrameInput(800, 600)) { SceneCanvas(world, images = mapOf("frame.png" to frameImage), scale = 1.5f) }
             .primitives.filterIsInstance<UiDrawPrimitive.Texture>()
@@ -125,9 +183,27 @@ class SceneCanvasTest {
 
     @Test
     fun anchorsPlaceElementsInwardFromEachScreenEdge() {
-        val topLeft = element { anchor = CanvasAnchor.TopLeft; offsetX = 16f; offsetY = 8f; width = 200f; height = 40f }
-        val bottomRight = element { anchor = CanvasAnchor.BottomRight; offsetX = 16f; offsetY = 8f; width = 200f; height = 40f }
-        val center = element { anchor = CanvasAnchor.Center; offsetX = 0f; offsetY = 0f; width = 100f; height = 50f }
+        val topLeft = element {
+            anchor = CanvasAnchor.TopLeft
+            offsetX = 16f
+            offsetY = 8f
+            width = 200f
+            height = 40f
+        }
+        val bottomRight = element {
+            anchor = CanvasAnchor.BottomRight
+            offsetX = 16f
+            offsetY = 8f
+            width = 200f
+            height = 40f
+        }
+        val center = element {
+            anchor = CanvasAnchor.Center
+            offsetX = 0f
+            offsetY = 0f
+            width = 100f
+            height = 50f
+        }
 
         val out = frame()
 
@@ -138,7 +214,10 @@ class SceneCanvasTest {
 
     @Test
     fun hiddenElementsAreNotDrawn() {
-        val hidden = element { kind = CanvasElementKind.Panel; visible = false }
+        val hidden = element {
+            kind = CanvasElementKind.Panel
+            visible = false
+        }
 
         assertNull(frame().node(hidden))
     }
@@ -146,7 +225,15 @@ class SceneCanvasTest {
     @Test
     fun tappingAButtonIsReportedOnce() {
         lateinit var button: CanvasElement
-        element { kind = CanvasElementKind.Button; text = "Jump"; offsetX = 0f; offsetY = 0f; width = 100f; height = 40f; button = this }
+        element {
+            kind = CanvasElementKind.Button
+            text = "Jump"
+            offsetX = 0f
+            offsetY = 0f
+            width = 100f
+            height = 40f
+            button = this
+        }
         val host = ComposeHost()
         frame(host)
         frame(host, FrameInput(800, 600, pointerX = 50, pointerY = 20, pointerDown = true, pointerPressed = true))
@@ -159,7 +246,14 @@ class SceneCanvasTest {
     @Test
     fun aButtonIsHeldWhileThePointerIsDown() {
         lateinit var button: CanvasElement
-        element { kind = CanvasElementKind.Button; offsetX = 0f; offsetY = 0f; width = 100f; height = 40f; button = this }
+        element {
+            kind = CanvasElementKind.Button
+            offsetX = 0f
+            offsetY = 0f
+            width = 100f
+            height = 40f
+            button = this
+        }
         val host = ComposeHost()
         frame(host)
 
@@ -177,8 +271,12 @@ class SceneCanvasTest {
     fun draggingAJoystickDeflectsItUpToItsEdgeAndReleasingCentresIt() {
         lateinit var stick: CanvasElement
         element {
-            kind = CanvasElementKind.Joystick; anchor = CanvasAnchor.TopLeft
-            offsetX = 0f; offsetY = 0f; width = 100f; height = 100f
+            kind = CanvasElementKind.Joystick
+            anchor = CanvasAnchor.TopLeft
+            offsetX = 0f
+            offsetY = 0f
+            width = 100f
+            height = 100f
             stick = this
         }
         val host = ComposeHost()
@@ -198,7 +296,10 @@ class SceneCanvasTest {
 
     @Test
     fun touchOnlyElementsAppearOnlyWhereTouchControlsAreShown() {
-        val pad = element { kind = CanvasElementKind.Joystick; touchOnly = true }
+        val pad = element {
+            kind = CanvasElementKind.Joystick
+            touchOnly = true
+        }
 
         assertNull(frame().node(pad))
         assertNotNull(frame(touch = true).node(pad))
@@ -263,7 +364,14 @@ class SceneCanvasTest {
 
     @Test
     fun anImageElementDrawsItsPicture() {
-        element { kind = CanvasElementKind.Image; offsetX = 0f; offsetY = 0f; width = 40f; height = 40f; style = CanvasStyle(image = CanvasImage("quadrants.png")) }
+        element {
+            kind = CanvasElementKind.Image
+            offsetX = 0f
+            offsetY = 0f
+            width = 40f
+            height = 40f
+            style = CanvasStyle(image = CanvasImage("quadrants.png"))
+        }
 
         val pixels = pixels(40, 40, mapOf("quadrants.png" to QUADRANTS))
 
@@ -275,7 +383,12 @@ class SceneCanvasTest {
         // Red left cap, green middle, blue right cap: half full, the cap at the bar's end stays hidden.
         val gauge = ImageBitmap(4, 1, rgba(RED, GREEN, GREEN, BLUE))
         element {
-            kind = CanvasElementKind.Bar; offsetX = 0f; offsetY = 0f; width = 100f; height = 10f; value = 0.5f
+            kind = CanvasElementKind.Bar
+            offsetX = 0f
+            offsetY = 0f
+            width = 100f
+            height = 10f
+            value = 0.5f
             style = CanvasStyle(fillImage = CanvasImage("gauge.png", sliceLeft = 1, sliceRight = 1))
         }
 
@@ -288,8 +401,26 @@ class SceneCanvasTest {
 
     @Test
     fun anImageThatDidNotLoadIsLeftOut() {
-        element { kind = CanvasElementKind.Panel; offsetX = 0f; offsetY = 0f; width = 40f; height = 40f; background = "#FF0000"; style = CanvasStyle(image = CanvasImage("gone.png")) }
-        element { kind = CanvasElementKind.Bar; offsetX = 0f; offsetY = 0f; width = 40f; height = 40f; order = 1; value = 0.5f; color = "#00FF00"; style = CanvasStyle(fillImage = CanvasImage("gone.png")) }
+        element {
+            kind = CanvasElementKind.Panel
+            offsetX = 0f
+            offsetY = 0f
+            width = 40f
+            height = 40f
+            background = "#FF0000"
+            style = CanvasStyle(image = CanvasImage("gone.png"))
+        }
+        element {
+            kind = CanvasElementKind.Bar
+            offsetX = 0f
+            offsetY = 0f
+            width = 40f
+            height = 40f
+            order = 1
+            value = 0.5f
+            color = "#00FF00"
+            style = CanvasStyle(fillImage = CanvasImage("gone.png"))
+        }
 
         val pixels = pixels(40, 40, emptyMap())
 
@@ -299,16 +430,34 @@ class SceneCanvasTest {
 
     @Test
     fun aRegionTheImageIsTooSmallForIsLeftOut() {
-        element { kind = CanvasElementKind.Image; offsetX = 0f; offsetY = 0f; width = 40f; height = 40f; style = CanvasStyle(image = CanvasImage("quadrants.png", regionX = 1, regionWidth = 2)) }
+        element {
+            kind = CanvasElementKind.Image
+            offsetX = 0f
+            offsetY = 0f
+            width = 40f
+            height = 40f
+            style = CanvasStyle(image = CanvasImage("quadrants.png", regionX = 1, regionWidth = 2))
+        }
 
         assertEquals(BACKGROUND, pixels(40, 40, mapOf("quadrants.png" to QUADRANTS))[20][20])
     }
 
     @Test
     fun aGradientRunsFromItsStartToItsEnd() {
-        element { kind = CanvasElementKind.Panel; offsetX = 0f; offsetY = 0f; width = 40f; height = 40f; style = CanvasStyle(gradient = CanvasGradient("#FF0000", "#0000FF")) }
         element {
-            kind = CanvasElementKind.Panel; offsetX = 50f; offsetY = 0f; width = 40f; height = 40f
+            kind = CanvasElementKind.Panel
+            offsetX = 0f
+            offsetY = 0f
+            width = 40f
+            height = 40f
+            style = CanvasStyle(gradient = CanvasGradient("#FF0000", "#0000FF"))
+        }
+        element {
+            kind = CanvasElementKind.Panel
+            offsetX = 50f
+            offsetY = 0f
+            width = 40f
+            height = 40f
             style = CanvasStyle(gradient = CanvasGradient("#FF0000", "#0000FF", horizontal = true))
         }
 
@@ -320,7 +469,15 @@ class SceneCanvasTest {
 
     @Test
     fun aCornerRadiusRoundsTheFill() {
-        element { kind = CanvasElementKind.Panel; offsetX = 0f; offsetY = 0f; width = 40f; height = 40f; background = "#FF0000"; style = CanvasStyle(cornerRadius = 12f) }
+        element {
+            kind = CanvasElementKind.Panel
+            offsetX = 0f
+            offsetY = 0f
+            width = 40f
+            height = 40f
+            background = "#FF0000"
+            style = CanvasStyle(cornerRadius = 12f)
+        }
 
         val pixels = pixels(40, 40, emptyMap())
 
@@ -332,7 +489,12 @@ class SceneCanvasTest {
     @Test
     fun aBorderDrawsInsideTheEdge() {
         element {
-            kind = CanvasElementKind.Panel; offsetX = 0f; offsetY = 0f; width = 40f; height = 40f; background = "#FF0000"
+            kind = CanvasElementKind.Panel
+            offsetX = 0f
+            offsetY = 0f
+            width = 40f
+            height = 40f
+            background = "#FF0000"
             style = CanvasStyle(borderWidth = 4f, borderColor = "#00FF00")
         }
 
@@ -345,7 +507,12 @@ class SceneCanvasTest {
     @Test
     fun aShadowFallsBelowTheElement() {
         element {
-            kind = CanvasElementKind.Panel; offsetX = 20f; offsetY = 10f; width = 40f; height = 20f; background = "#FF0000"
+            kind = CanvasElementKind.Panel
+            offsetX = 20f
+            offsetY = 10f
+            width = 40f
+            height = 20f
+            background = "#FF0000"
             style = CanvasStyle(shadow = CanvasShadow(color = "#FFFFFF", offsetY = 10f, blur = 0f))
         }
 
@@ -357,7 +524,15 @@ class SceneCanvasTest {
 
     @Test
     fun alphaFadesTheElement() {
-        element { kind = CanvasElementKind.Panel; offsetX = 0f; offsetY = 0f; width = 40f; height = 40f; background = "#FF0000"; style = CanvasStyle(alpha = 0.5f) }
+        element {
+            kind = CanvasElementKind.Panel
+            offsetX = 0f
+            offsetY = 0f
+            width = 40f
+            height = 40f
+            background = "#FF0000"
+            style = CanvasStyle(alpha = 0.5f)
+        }
 
         assertEquals(128f, red(pixels(40, 40, emptyMap())[20][20]).toFloat(), 2f)
     }
@@ -365,7 +540,12 @@ class SceneCanvasTest {
     @Test
     fun aButtonTakesItsHoveredAndPressedLooks() {
         element {
-            kind = CanvasElementKind.Button; offsetX = 0f; offsetY = 0f; width = 100f; height = 40f; background = "#FF0000"
+            kind = CanvasElementKind.Button
+            offsetX = 0f
+            offsetY = 0f
+            width = 100f
+            height = 40f
+            background = "#FF0000"
             style = CanvasStyle(hovered = CanvasStateStyle(background = "#0000FF"), pressed = CanvasStateStyle(background = "#00FF00"))
         }
         val host = ComposeHost()
@@ -424,8 +604,23 @@ class SceneCanvasTest {
 
     @Test
     fun textAlignPlacesTheTextInItsElement() {
-        element { offsetX = 0f; offsetY = 0f; width = 200f; height = 40f; text = "HP"; textAlign = CanvasAnchor.Center }
-        element { kind = CanvasElementKind.Button; offsetX = 0f; offsetY = 50f; width = 200f; height = 40f; text = "Go"; textAlign = CanvasAnchor.CenterLeft }
+        element {
+            offsetX = 0f
+            offsetY = 0f
+            width = 200f
+            height = 40f
+            text = "HP"
+            textAlign = CanvasAnchor.Center
+        }
+        element {
+            kind = CanvasElementKind.Button
+            offsetX = 0f
+            offsetY = 50f
+            width = 200f
+            height = 40f
+            text = "Go"
+            textAlign = CanvasAnchor.CenterLeft
+        }
 
         val glyphs = frame().glyphs()
         val centred = glyphs.filter { it.y < 45f }
@@ -438,8 +633,21 @@ class SceneCanvasTest {
 
     @Test
     fun textKeepsItsOwnPlaceWhenNoAlignIsSet() {
-        element { offsetX = 0f; offsetY = 0f; width = 200f; height = 40f; text = "HP" }
-        element { kind = CanvasElementKind.Button; offsetX = 0f; offsetY = 50f; width = 200f; height = 40f; text = "Go" }
+        element {
+            offsetX = 0f
+            offsetY = 0f
+            width = 200f
+            height = 40f
+            text = "HP"
+        }
+        element {
+            kind = CanvasElementKind.Button
+            offsetX = 0f
+            offsetY = 50f
+            width = 200f
+            height = 40f
+            text = "Go"
+        }
 
         val glyphs = frame().glyphs()
 
@@ -450,7 +658,12 @@ class SceneCanvasTest {
     @Test
     fun aTextOutlineAndShadowDrawUnderItsText() {
         element {
-            offsetX = 0f; offsetY = 0f; width = 200f; height = 40f; text = "HP"; color = "#FFFFFF"
+            offsetX = 0f
+            offsetY = 0f
+            width = 200f
+            height = 40f
+            text = "HP"
+            color = "#FFFFFF"
             style = CanvasStyle(textOutline = CanvasTextOutline("#000000", 2f), textShadow = CanvasTextShadow("#FF0000"))
         }
 
@@ -477,8 +690,18 @@ class SceneCanvasTest {
     @Test
     fun aFollowerLandsOnItsNodesPixelAtAnyScale() {
         named("Hero", 20f, 10f)
-        val plate = element { follow = "Hero"; anchor = CanvasAnchor.TopLeft; offsetX = 0f; offsetY = 0f; width = 10f; height = 10f }
-        val marker = element { follow = "Hero"; followBounds = true }
+        val plate = element {
+            follow = "Hero"
+            anchor = CanvasAnchor.TopLeft
+            offsetX = 0f
+            offsetY = 0f
+            width = 10f
+            height = 10f
+        }
+        val marker = element {
+            follow = "Hero"
+            followBounds = true
+        }
         val projector = FlatProjector(box = Rectangle(100f, 50f, 80f, 120f))
 
         val out = followFrame(projector, scale = 2f)
@@ -491,7 +714,13 @@ class SceneCanvasTest {
     fun anElementStandsOnTheNodeItFollowsWithItsAnchorOnThePoint() {
         val hero = named("Hero", 20f, 10f)
         val plate = element {
-            text = "Hero"; follow = "Hero"; anchor = CanvasAnchor.BottomCenter; offsetX = 0f; offsetY = 4f; width = 60f; height = 20f
+            text = "Hero"
+            follow = "Hero"
+            anchor = CanvasAnchor.BottomCenter
+            offsetX = 0f
+            offsetY = 4f
+            width = 60f
+            height = 20f
         }
 
         val before = followFrame(FlatProjector()).box(plate)
@@ -505,7 +734,15 @@ class SceneCanvasTest {
     @Test
     fun aFollowOffsetMovesThePointInTheWorld() {
         named("Hero", 20f, 10f)
-        val plate = element { follow = "Hero"; followOffset = SceneVec3(0f, -2f, 0f); anchor = CanvasAnchor.TopLeft; offsetX = 0f; offsetY = 0f; width = 10f; height = 10f }
+        val plate = element {
+            follow = "Hero"
+            followOffset = SceneVec3(0f, -2f, 0f)
+            anchor = CanvasAnchor.TopLeft
+            offsetX = 0f
+            offsetY = 0f
+            width = 10f
+            height = 10f
+        }
 
         assertEquals(listOf(200, 80, 10, 10), followFrame(FlatProjector()).box(plate))
     }
@@ -527,8 +764,21 @@ class SceneCanvasTest {
     @Test
     fun aBoundsFollowerCoversTheNodesScreenBoxAndItsChildrenFollow() {
         named("Target", 0f, 0f)
-        val marker = element { kind = CanvasElementKind.Panel; follow = "Target"; followBounds = true; width = 5f; height = 5f }
-        val corner = child(marker) { kind = CanvasElementKind.Image; anchor = CanvasAnchor.BottomRight; offsetX = 0f; offsetY = 0f; width = 8f; height = 8f }
+        val marker = element {
+            kind = CanvasElementKind.Panel
+            follow = "Target"
+            followBounds = true
+            width = 5f
+            height = 5f
+        }
+        val corner = child(marker) {
+            kind = CanvasElementKind.Image
+            anchor = CanvasAnchor.BottomRight
+            offsetX = 0f
+            offsetY = 0f
+            width = 8f
+            height = 8f
+        }
 
         val out = followFrame(FlatProjector(box = Rectangle(100f, 50f, 80f, 120f)))
 
@@ -607,18 +857,45 @@ class SceneCanvasTest {
     @Test
     fun aFollowerNestedUnderAnotherElementIsStillPlacedOnItsNode() {
         named("Hero", 20f, 10f)
-        val window = element { kind = CanvasElementKind.Panel; offsetX = 300f; offsetY = 300f; width = 100f; height = 100f }
-        val plate = child(window) { follow = "Hero"; anchor = CanvasAnchor.TopLeft; offsetX = 0f; offsetY = 0f; width = 10f; height = 10f }
+        val window = element {
+            kind = CanvasElementKind.Panel
+            offsetX = 300f
+            offsetY = 300f
+            width = 100f
+            height = 100f
+        }
+        val plate = child(window) {
+            follow = "Hero"
+            anchor = CanvasAnchor.TopLeft
+            offsetX = 0f
+            offsetY = 0f
+            width = 10f
+            height = 10f
+        }
 
         assertEquals(listOf(200, 100, 10, 10), followFrame(FlatProjector()).box(plate))
     }
 
     private fun slots(parent: Entity, count: Int, size: Float = 32f): List<Entity> =
-        List(count) { i -> child(parent) { kind = CanvasElementKind.Panel; order = i; width = size; height = size } }
+        List(count) { i ->
+            child(parent) {
+                kind = CanvasElementKind.Panel
+                order = i
+                width = size
+                height = size
+            }
+        }
 
     @Test
     fun aRowPlacesItsChildrenOneGapApart() {
-        val bar = element { kind = CanvasElementKind.Panel; offsetX = 10f; offsetY = 20f; width = 400f; height = 40f; layout = CanvasLayout(gap = 4f) }
+        val bar = element {
+            kind = CanvasElementKind.Panel
+            offsetX = 10f
+            offsetY = 20f
+            width = 400f
+            height = 40f
+            layout = CanvasLayout(gap = 4f)
+        }
         val slots = slots(bar, 5)
 
         val out = frame()
@@ -629,7 +906,14 @@ class SceneCanvasTest {
 
     @Test
     fun wrapMovesWhatDoesNotFitToANewLine() {
-        val strip = element { kind = CanvasElementKind.Panel; offsetX = 0f; offsetY = 0f; width = 100f; height = 200f; layout = CanvasLayout(gap = 4f, wrap = true) }
+        val strip = element {
+            kind = CanvasElementKind.Panel
+            offsetX = 0f
+            offsetY = 0f
+            width = 100f
+            height = 200f
+            layout = CanvasLayout(gap = 4f, wrap = true)
+        }
         val icons = slots(strip, 5)
 
         val out = frame()
@@ -639,13 +923,35 @@ class SceneCanvasTest {
 
     @Test
     fun aChildAddedAtRunTimeMovesTheOnesAfterIt() {
-        val bar = element { kind = CanvasElementKind.Panel; offsetX = 0f; offsetY = 0f; width = 400f; height = 40f; layout = CanvasLayout() }
-        val first = child(bar) { kind = CanvasElementKind.Panel; order = 0; width = 32f; height = 32f }
-        val last = child(bar) { kind = CanvasElementKind.Panel; order = 2; width = 32f; height = 32f }
+        val bar = element {
+            kind = CanvasElementKind.Panel
+            offsetX = 0f
+            offsetY = 0f
+            width = 400f
+            height = 40f
+            layout = CanvasLayout()
+        }
+        val first = child(bar) {
+            kind = CanvasElementKind.Panel
+            order = 0
+            width = 32f
+            height = 32f
+        }
+        val last = child(bar) {
+            kind = CanvasElementKind.Panel
+            order = 2
+            width = 32f
+            height = 32f
+        }
         val host = ComposeHost()
         val before = frame(host).box(last)[0]
 
-        child(bar) { kind = CanvasElementKind.Panel; order = 1; width = 50f; height = 32f }
+        child(bar) {
+            kind = CanvasElementKind.Panel
+            order = 1
+            width = 50f
+            height = 32f
+        }
         val after = frame(host)
 
         assertEquals(32, before)
@@ -655,14 +961,40 @@ class SceneCanvasTest {
 
     @Test
     fun growSharesTheLeftoverSpaceAndCentreingCentres() {
-        val bar = element { kind = CanvasElementKind.Panel; offsetX = 0f; offsetY = 0f; width = 200f; height = 40f; layout = CanvasLayout(align = CanvasAlign.Center) }
-        child(bar) { kind = CanvasElementKind.Panel; order = 0; width = 32f; height = 20f }
-        val fill = child(bar) { kind = CanvasElementKind.Panel; order = 1; width = 0f; height = 20f; grow = 1f }
+        val bar = element {
+            kind = CanvasElementKind.Panel
+            offsetX = 0f
+            offsetY = 0f
+            width = 200f
+            height = 40f
+            layout = CanvasLayout(align = CanvasAlign.Center)
+        }
+        child(bar) {
+            kind = CanvasElementKind.Panel
+            order = 0
+            width = 32f
+            height = 20f
+        }
+        val fill = child(bar) {
+            kind = CanvasElementKind.Panel
+            order = 1
+            width = 0f
+            height = 20f
+            grow = 1f
+        }
         val centred = element {
-            kind = CanvasElementKind.Panel; offsetX = 0f; offsetY = 100f; width = 200f; height = 40f
+            kind = CanvasElementKind.Panel
+            offsetX = 0f
+            offsetY = 100f
+            width = 200f
+            height = 40f
             layout = CanvasLayout(justify = CanvasJustify.Center, padding = 5f)
         }
-        val middle = child(centred) { kind = CanvasElementKind.Panel; width = 40f; height = 10f }
+        val middle = child(centred) {
+            kind = CanvasElementKind.Panel
+            width = 40f
+            height = 10f
+        }
 
         val out = frame()
 
@@ -687,7 +1019,14 @@ class SceneCanvasTest {
 
     @Test
     fun theHostsTextStyleDoesNotReachTheScenesText() {
-        element { offsetX = 0f; offsetY = 0f; width = 200f; height = 40f; text = "HP"; color = "#FFFFFF" }
+        element {
+            offsetX = 0f
+            offsetY = 0f
+            width = 200f
+            height = 40f
+            text = "HP"
+            color = "#FFFFFF"
+        }
 
         val colours = ComposeHost().frame(FrameInput(800, 600)) {
             CompositionLocalProvider(LocalTextStyle provides TextStyle(outline = TextOutline(Color.Black, 2f))) { SceneCanvas(world) }

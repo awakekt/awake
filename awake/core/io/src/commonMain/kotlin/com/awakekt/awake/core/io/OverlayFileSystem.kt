@@ -82,7 +82,9 @@ class OverlayFileSystem(
         }
 
     override suspend fun delete(path: FilePath, recursive: Boolean): Result<Unit> {
-        val before = if (recursive) list(path, recursive = true).getOrElse { emptyList() } else {
+        val before = if (recursive) {
+            list(path, recursive = true).getOrElse { emptyList() }
+        } else {
             listOfNotNull(stat(path).getOrNull())
         }
         if (before.isEmpty()) return notFound(path)

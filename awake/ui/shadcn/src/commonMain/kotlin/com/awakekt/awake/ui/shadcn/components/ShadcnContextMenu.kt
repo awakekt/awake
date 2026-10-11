@@ -140,4 +140,3 @@ private class ContextMenuState {
         }
     }
 }
-

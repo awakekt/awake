@@ -51,7 +51,6 @@ class ShaderUniformStructTest {
         assertEquals(fields, uniformStructFields(SpriteShader))
     }
 
-
     @Test
     fun litShadowsStructIsExactlyWhatTheKotlinLayoutDeclares() {
         assertEquals(

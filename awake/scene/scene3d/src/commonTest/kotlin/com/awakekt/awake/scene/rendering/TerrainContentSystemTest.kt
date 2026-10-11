@@ -28,7 +28,6 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.serialization.json.JsonObject
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TerrainContentSystemTest {
@@ -39,7 +38,12 @@ class TerrainContentSystemTest {
     private val system = TerrainContentSystem(
         host,
         scope,
-        providers = mapOf(PROVIDER to TerrainSurfaceProvider { delay(RESOLVE_MILLIS); SURFACE }),
+        providers = mapOf(
+            PROVIDER to TerrainSurfaceProvider {
+                delay(RESOLVE_MILLIS)
+                SURFACE
+            },
+        ),
     )
 
     @Test

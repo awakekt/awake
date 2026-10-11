@@ -7,9 +7,9 @@ package com.awakekt.awake.scene.runtime
 
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.ecs.World
-import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
+import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneLoader
 import com.awakekt.awake.scene.document.SceneNode

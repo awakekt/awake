@@ -3,6 +3,10 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+@file:Suppress("ktlint:standard:import-ordering")
+
+// Docs snippets mark out the imports a page shows, which splits the import list.
+
 package com.awakekt.awake.showcase.docs
 
 // --8<-- [start:imports]
@@ -108,6 +112,8 @@ class FirstSceneDocsSampleTest {
 }
 
 /** Runs a scene's systems with no GPU: the scene renderer gets a preparer that draws nothing. */
-internal class DrawlessRenderer : NoopRenderer(), GpuDrawPreparationSource {
+internal class DrawlessRenderer :
+    NoopRenderer(),
+    GpuDrawPreparationSource {
     override val gpuDrawPreparer = GpuDrawPreparer { _, _, _ -> null }
 }

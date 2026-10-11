@@ -3,6 +3,10 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+@file:Suppress("ktlint:standard:import-ordering")
+
+// Docs snippets mark out the imports a page shows, which splits the import list.
+
 package com.awakekt.awake.showcase.docs.loaddocument
 
 import com.awakekt.awake.ecs.Entity

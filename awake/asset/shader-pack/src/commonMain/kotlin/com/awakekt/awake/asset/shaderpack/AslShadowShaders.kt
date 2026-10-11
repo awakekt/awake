@@ -7,8 +7,8 @@ package com.awakekt.awake.asset.shaderpack
 
 import com.awakekt.awake.asset.shaderdsl.AslExpr
 import com.awakekt.awake.asset.shaderdsl.AslShaderDefinition
-import com.awakekt.awake.asset.shaderdsl.AslVaryings
 import com.awakekt.awake.asset.shaderdsl.AslType
+import com.awakekt.awake.asset.shaderdsl.AslVaryings
 import com.awakekt.awake.asset.shaderdsl.F32
 import com.awakekt.awake.asset.shaderdsl.a
 import com.awakekt.awake.asset.shaderdsl.abs

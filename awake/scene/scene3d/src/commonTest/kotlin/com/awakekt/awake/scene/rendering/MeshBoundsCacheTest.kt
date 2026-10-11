@@ -39,6 +39,7 @@ class MeshBoundsCacheTest {
         system.update(world, 0f)
         assertEquals(19f, bounds.worldBounds(transform).min.x, "a moved transform's bounds follow it")
     }
+
     @Test
     fun cullingFollowsAMovingEntityAndHandsOutAFreshBoxPerMove() {
         val world = World()

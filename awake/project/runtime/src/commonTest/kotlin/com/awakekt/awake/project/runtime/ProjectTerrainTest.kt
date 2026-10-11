@@ -99,7 +99,9 @@ class ProjectTerrainTest {
         assertFalse(systems.frame.any { it is TerrainDrawingSystem })
     }
 
-    private class HostRenderer : NoopRenderer(), ContentFeatureHost {
+    private class HostRenderer :
+        NoopRenderer(),
+        ContentFeatureHost {
         var attached = 0
         var detached = 0
 

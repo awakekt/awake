@@ -13,14 +13,10 @@ import com.awakekt.awake.asset.shaders.RenderBackend
 import com.awakekt.awake.asset.shaders.RenderCapabilities
 import com.awakekt.awake.asset.shaders.RenderPlan
 import com.awakekt.awake.asset.shaders.ShaderSet
-import com.awakekt.awake.asset.shaders.ShaderStage as ShaderProgramStage
 import com.awakekt.awake.asset.shaders.ShaderStages
 import com.awakekt.awake.asset.shaders.buildContentFeature
-import com.awakekt.awake.asset.shaders.castsWithPrimaryDepthShader
-import com.awakekt.awake.asset.shaders.keyedCasterLayout
 import com.awakekt.awake.asset.shaders.narrowedTo
 import com.awakekt.awake.asset.shaders.resolveBytes
-import com.awakekt.awake.asset.shaders.skinnedDepthShaders
 import com.awakekt.awake.asset.shaders.uiShaderSet
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.engine.platform.GraphicsEngine
@@ -31,11 +27,9 @@ import com.awakekt.awake.render.passes.OpaqueRenderFeature
 import com.awakekt.awake.render.passes.RenderFeature
 import com.awakekt.awake.render.passes.uniforms.MAX_SHADOW_TARGET_LAYERS
 import com.awakekt.awake.render.passes2d.UiRenderFeature
-import com.awakekt.awake.render.pipeline.DepthCasterKind
 import com.awakekt.awake.render.pipeline.PipelineKey
 import com.awakekt.awake.render.pipeline.PipelineRegistry
 import com.awakekt.awake.render.pipeline.PipelineSet
-import com.awakekt.awake.render.pipeline.PipelineVariant
 import com.awakekt.awake.render.pipeline.entryPoint
 import com.awakekt.awake.webgpu.debug.LineRenderPipeline
 import com.awakekt.awake.webgpu.device.GraphicsDevice
@@ -49,6 +43,7 @@ import com.awakekt.awake.webgpu.pipeline.WebGpuUiPass
 import com.awakekt.awake.webgpu.renderer.Renderer
 import com.awakekt.awake.webgpu.renderer.activeUiPipelineTargets
 import com.awakekt.awake.webgpu.swapchain.SwapchainManager
+import com.awakekt.awake.asset.shaders.ShaderStage as ShaderProgramStage
 
 /**
  * Reusable WebGPU app bootstrap -- wasmJs counterpart to `VulkanEngine`

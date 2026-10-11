@@ -7,11 +7,11 @@ package com.awakekt.awake.compose.testing
 
 import com.awakekt.awake.compose.ui.graphics.ImageBitmap
 import com.awakekt.awake.core.color.Color
+import com.awakekt.awake.core.graphics2d.TextureRegion
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.graphics2d.containsPoint
 import com.awakekt.awake.core.graphics2d.tessellateFillAa
 import com.awakekt.awake.core.graphics2d.tessellateStrokeAa
-import com.awakekt.awake.core.graphics2d.TextureRegion
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.core.text.font.UiFontSamplingMode
 import com.awakekt.awake.render.capture.PixelMap

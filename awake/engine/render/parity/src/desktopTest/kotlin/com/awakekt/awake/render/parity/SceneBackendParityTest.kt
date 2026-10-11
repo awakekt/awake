@@ -13,6 +13,7 @@ import com.awakekt.awake.render.passes.uniforms.TextureAnimation
 import com.awakekt.awake.render.passes.uniforms.skinnedMaterialFloats
 import com.awakekt.awake.render.testing.HeadlessRenderSession
 import com.awakekt.awake.render.texture.TextureAsset
+import org.junit.AfterClass
 import java.awt.image.BufferedImage
 import java.io.File
 import javax.imageio.ImageIO
@@ -24,7 +25,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import org.junit.AfterClass
 
 /**
  * A lit, shadowed scene through both backends, compared as a picture.
@@ -634,7 +634,8 @@ class SceneBackendParityTest {
 
     /** Pixels black here, a card's clear half drawn whole, that [other] shows as lit ground. */
     private fun ByteArray.clearTexelsShowingGroundIn(other: ByteArray): Int = (0 until SCENE_SIZE * SCENE_SIZE).count { pixel ->
-        channel(pixel, 3) == 0 && other.channel(pixel, 3) == 255 &&
+        channel(pixel, 3) == 0 &&
+            other.channel(pixel, 3) == 255 &&
             other.luminanceAt(pixel % SCENE_SIZE, pixel / SCENE_SIZE) -
             luminanceAt(pixel % SCENE_SIZE, pixel / SCENE_SIZE) > CARD_TO_GROUND
     }

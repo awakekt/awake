@@ -66,7 +66,9 @@ class ProjectShaderEffectsTest {
         assertEquals(1, renderer.detached)
     }
 
-    private class HostRenderer : NoopRenderer(), ContentFeatureHost {
+    private class HostRenderer :
+        NoopRenderer(),
+        ContentFeatureHost {
         var attached = 0
         var detached = 0
 

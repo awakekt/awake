@@ -75,8 +75,11 @@ class PhysicsPlane2DSceneTest {
     @Test
     fun allShapePathsPreserveTheOptionBeforeAndAfterBuilding() {
         val shapes = listOf(
-            SceneBoxShape(), SceneSphereShape(), SceneCapsuleShape(),
-            SceneMeshShape("models/body.glb"), SceneConvexHullShape("models/body.glb"),
+            SceneBoxShape(),
+            SceneSphereShape(),
+            SceneCapsuleShape(),
+            SceneMeshShape("models/body.glb"),
+            SceneConvexHullShape("models/body.glb"),
         )
         for (shape in shapes) {
             val component = ScenePhysicsBody(

@@ -8,14 +8,14 @@ package com.awakekt.awake.scene.runtime
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
-import com.awakekt.awake.scene.canvas.CanvasAnchor
-import com.awakekt.awake.scene.canvas.CanvasElement
-import com.awakekt.awake.scene.canvas.CanvasElementKind
-import com.awakekt.awake.scene.canvas.SceneCanvasElement
 import com.awakekt.awake.render.passes.uniforms.TextureAnimation
 import com.awakekt.awake.scene.binding.fromWorld
 import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.scene.binding.renderableRequests
+import com.awakekt.awake.scene.canvas.CanvasAnchor
+import com.awakekt.awake.scene.canvas.CanvasElement
+import com.awakekt.awake.scene.canvas.CanvasElementKind
+import com.awakekt.awake.scene.canvas.SceneCanvasElement
 import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.core.transform.SceneSpinControl
 import com.awakekt.awake.scene.core.transform.SpinControl
@@ -28,7 +28,6 @@ import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.document.SceneSchemaVersionException
 import com.awakekt.awake.scene.document.SceneTransform
 import com.awakekt.awake.scene.document.SceneVec3
-import com.awakekt.awake.scene.rendering.Camera as SceneCameraComponent
 import com.awakekt.awake.scene.rendering.camera.SceneCamera
 import com.awakekt.awake.scene.rendering.light.Light
 import com.awakekt.awake.scene.rendering.light.SceneLight
@@ -39,15 +38,15 @@ import com.awakekt.awake.scene.rendering.mesh.SceneTextureAnimation
 import com.awakekt.awake.scene.rendering.mesh.SceneTextureClip
 import com.awakekt.awake.scene.rendering.mesh.SceneTextureClips
 import com.awakekt.awake.scene.rendering.mesh.TextureClips
+import kotlinx.coroutines.test.runTest
 import kotlin.math.PI
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import kotlinx.coroutines.test.runTest
+import com.awakekt.awake.scene.rendering.Camera as SceneCameraComponent
 
 class SceneLoaderTest {
     init {

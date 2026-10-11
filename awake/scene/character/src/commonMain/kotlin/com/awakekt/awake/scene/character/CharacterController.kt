@@ -19,10 +19,10 @@ import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneValidationIssue
 import com.awakekt.awake.scene.physics.character.CharacterConfig
 import com.awakekt.awake.scene.physics.character.KinematicCharacterController
-import kotlin.math.PI
-import kotlin.reflect.KClass
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlin.math.PI
+import kotlin.reflect.KClass
 
 /**
  * A character that walks and falls through physics instead of through walls, as authored in a scene.

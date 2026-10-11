@@ -255,7 +255,12 @@ class ProjectRuntimeTest {
             runCatching { sources.getValue(path.value).encodeToByteArray() }
         }
 
-        val load = launch { loadProject(files) { made++; createJoltPhysicsWorld() } }
+        val load = launch {
+            loadProject(files) {
+                made++
+                createJoltPhysicsWorld()
+            }
+        }
         reading.await()
         load.cancelAndJoin()
 
@@ -285,7 +290,9 @@ class ProjectRuntimeTest {
         }
     }
 
-    private class TestRenderer : NoopRenderer(), GpuDrawPreparationSource {
+    private class TestRenderer :
+        NoopRenderer(),
+        GpuDrawPreparationSource {
         override val gpuDrawPreparer = GpuDrawPreparer { _, _, _ -> null }
     }
 

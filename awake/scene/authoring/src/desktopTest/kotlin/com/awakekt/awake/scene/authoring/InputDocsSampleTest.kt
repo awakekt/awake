@@ -214,4 +214,3 @@ class InputDocsSampleTest {
         assertFalse(actions.isActive("jump"), "a Press lasts the frame it was pressed")
     }
 }
-

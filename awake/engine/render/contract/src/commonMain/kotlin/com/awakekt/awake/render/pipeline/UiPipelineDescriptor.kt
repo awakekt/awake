@@ -14,12 +14,16 @@ import com.awakekt.awake.core.graphics2d.BlendMode
 enum class UiPipelineVariant {
     /** Solid colored flat rectangle pipeline. */
     Quad,
+
     /** Text glyph rasterization pipeline. */
     Glyph,
+
     /** Textured 2D quad pipeline. */
     Texture,
+
     /** Rounded rectangle pipeline with corner radius and antialiasing. */
     RoundedQuad,
+
     /** Offscreen render target compositing pipeline. */
     TargetComposite,
 }
