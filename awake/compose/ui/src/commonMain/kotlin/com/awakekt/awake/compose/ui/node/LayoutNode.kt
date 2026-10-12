@@ -77,6 +77,12 @@ class LayoutNode(
      */
     var isModal: Boolean = false
 
+    /**
+     * The pointer dispatch that last found a layer among this node's descendants, or 0: the hit
+     * walk skips a subtree whose stamp isn't the current dispatch's, as it holds no layer to find.
+     */
+    internal var layerStamp: Int = 0
+
     /** A popup-level dismissal request, derived from the last placed tree during input dispatch. */
     var onDismissRequest: (() -> Unit)? = null
 
