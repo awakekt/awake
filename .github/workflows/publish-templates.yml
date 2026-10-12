@@ -1,0 +1,140 @@
+name: Publish templates
+
+# Keeps the three starter template repositories -- awake-template, awake-project-template and
+# awake-plugin-template -- in step with templates/game, templates/project and templates/plugin
+# here, so "Use this template" always gets the released version, with no bump PR in any of the
+# three repositories (awakekt/awake#721).
+#
+# Runs once a Core release (a `v*` tag, never `vulkan-v*`) has fully published: Publish's own
+# `release` and `webgpu-pin` jobs both succeeded. `workflow_run` keeps this structurally after the
+# release -- it only starts once that workflow run is done, so a push here can never affect, delay
+# or undo the release it follows, and a failed push for one template (`fail-fast: false`) never
+# blocks the other two. A later `vulkan-v*` tag on the same commit triggers this again; Core's
+# version is unchanged, but Vulkan's "newest release" on Central is, so this re-stamps the newer
+# Vulkan pin into all three templates.
+#
+# `workflow_dispatch` republishes one named template between releases, stamped with whatever Core
+# and Vulkan releases are newest on Maven Central right now -- for a template-only fix, or to retry
+# a push that failed.
+on:
+  workflow_run:
+    workflows: [Publish]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      template:
+        description: 'Template to republish'
+        required: true
+        type: choice
+        options: [game, project, plugin]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-templates
+  cancel-in-progress: false
+
+jobs:
+  resolve:
+    name: Resolve
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    outputs:
+      templates: ${{ steps.resolve.outputs.templates }}
+      core: ${{ steps.resolve.outputs.core }}
+      vulkan: ${{ steps.resolve.outputs.vulkan }}
+      webgpu: ${{ steps.resolve.outputs.webgpu }}
+      ref: ${{ steps.resolve.outputs.ref }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Tags, to read which release (if any) the triggering Publish run was for.
+          fetch-depth: 0
+
+      - name: Pick what to publish
+        id: resolve
+        env:
+          EVENT: ${{ github.event_name }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+          IN_TEMPLATE: ${{ inputs.template }}
+        run: |
+          central=https://repo1.maven.org/maven2/com/awakekt/awake
+          newest() { curl -fsS "$central/$1/maven-metadata.xml" | sed -n 's:.*<release>\(.*\)</release>.*:\1:p'; }
+
+          if [[ "$EVENT" == workflow_dispatch ]]; then
+            core=$(newest project)
+            templates="[\"$IN_TEMPLATE\"]"
+            ref="$GITHUB_SHA"
+          else
+            # The pattern alone already excludes vulkan-v*: its second character is not a digit.
+            tag=$(git tag -l 'v[0-9]*' --points-at "$SHA" | head -n 1)
+            if [[ -z "$tag" ]]; then
+              echo "::notice::$SHA carries no Core release tag; nothing to publish."
+              echo "templates=[]" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            core=${tag#v}
+            templates='["game","project","plugin"]'
+            ref="$SHA"
+          fi
+          vulkan=$(newest backend/vulkan)
+          webgpu="$core-SNAPSHOT"
+          if [[ -z "$core" || -z "$vulkan" ]]; then
+            echo "::error::Could not resolve a Core or Vulkan release from Maven Central." && exit 1
+          fi
+          echo "Publishing $templates at Core $core, Vulkan $vulkan, WebGPU $webgpu (ref $ref)"
+          {
+            echo "templates=$templates"; echo "core=$core"; echo "vulkan=$vulkan"
+            echo "webgpu=$webgpu"; echo "ref=$ref"
+          } >> "$GITHUB_OUTPUT"
+
+  publish:
+    name: Publish (${{ matrix.template }})
+    needs: resolve
+    if: needs.resolve.outputs.templates != '[]'
+    strategy:
+      fail-fast: false
+      matrix:
+        template: ${{ fromJSON(needs.resolve.outputs.templates) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      # Before any checkout or clone: a missing secret fails here, clearly, rather than after
+      # stamping a version it cannot push.
+      - name: Check the push token
+        env:
+          TEMPLATES_PUSH_TOKEN: ${{ secrets.TEMPLATES_PUSH_TOKEN }}
+        run: |
+          if [[ -z "$TEMPLATES_PUSH_TOKEN" ]]; then
+            echo "::error::TEMPLATES_PUSH_TOKEN secret is not set; cannot push templates/${{ matrix.template }}." >&2
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.resolve.outputs.ref }}
+
+      - name: Resolve the target repository
+        id: target
+        run: |
+          case "${{ matrix.template }}" in
+            game) echo "repo=awakekt/awake-template" >> "$GITHUB_OUTPUT" ;;
+            project) echo "repo=awakekt/awake-project-template" >> "$GITHUB_OUTPUT" ;;
+            plugin) echo "repo=awakekt/awake-plugin-template" >> "$GITHUB_OUTPUT" ;;
+            *) echo "::error::Unknown template ${{ matrix.template }}" && exit 1 ;;
+          esac
+
+      - name: Stamp the release's versions
+        run: |
+          tools/stamp_template_versions.sh "templates/${{ matrix.template }}/gradle/libs.versions.toml" \
+            "${{ needs.resolve.outputs.core }}" "${{ needs.resolve.outputs.vulkan }}" "${{ needs.resolve.outputs.webgpu }}"
+
+      - name: Push to ${{ steps.target.outputs.repo }}
+        env:
+          TEMPLATES_PUSH_TOKEN: ${{ secrets.TEMPLATES_PUSH_TOKEN }}
+          CORE: ${{ needs.resolve.outputs.core }}
+        run: |
+          tools/publish_template.sh "templates/${{ matrix.template }}" "${{ steps.target.outputs.repo }}" \
+            "chore: Awake Core $CORE"
