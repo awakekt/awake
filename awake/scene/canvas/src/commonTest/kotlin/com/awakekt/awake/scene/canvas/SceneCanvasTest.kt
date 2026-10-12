@@ -223,6 +223,8 @@ class SceneCanvasTest {
             order = 3,
             visible = false,
             wheel = true,
+            draggable = true,
+            dropTarget = true,
             style = CanvasStyle(
                 background = "#202020",
                 gradient = CanvasGradient("#303030", "#101010", horizontal = true),

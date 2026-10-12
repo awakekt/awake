@@ -101,13 +101,15 @@ fun SceneCanvas(
         // host's text style is not the scene's: an element's text looks only as its own data says.
         CompositionLocalProvider(LocalDensity provides LocalDensity.current * uiScale, LocalTextStyle provides TextStyle.Default) {
             screen.Elements(tree.roots, tree)
+            // Drawn last, so a dragged element's ghost sits above everything it is dragged over.
+            Ghosts(tree)
         }
     }
 }
 
 /** [children] inside [element]: each anchored by hand, or laid out in rows or columns by its layout. */
 context(_: Composer)
-private fun BoxScope.Children(element: CanvasElement, children: List<Pair<Entity, CanvasElement>>, tree: CanvasTree) {
+internal fun BoxScope.Children(element: CanvasElement, children: List<Pair<Entity, CanvasElement>>, tree: CanvasTree) {
     val layout = element.layout
     if (layout == null) {
         Elements(children, tree)
@@ -155,7 +157,7 @@ private fun BoxScope.Elements(entries: List<Pair<Entity, CanvasElement>>, tree: 
 }
 
 context(_: Composer)
-private fun CanvasElementView(
+internal fun CanvasElementView(
     element: CanvasElement,
     modifier: Modifier,
     tree: CanvasTree,
@@ -168,12 +170,11 @@ private fun CanvasElementView(
         background(back)
         element.style.applyTo(this, tree.images)
     }
-    val textStyle = TextStyle(
-        color = resolveTextColor(state, style) ?: fill,
-        size = element.fontSize.sp,
-        shadow = element.style.textShadow?.toTextShadow(),
-        outline = element.style.textOutline?.toTextOutline(),
-    )
+    val textStyle = element.textStyle(resolveTextColor(state, style) ?: fill)
+    if (LocalCanvasGhost.current) {
+        GhostElementView(element, modifier.styleable(state, style), textStyle, tree, children)
+        return
+    }
     // Tree-space pixels back to canvas units: the density every size and offset dp was resolved
     // against, with the canvas's own scale already folded in by its CompositionLocalProvider.
     val density = LocalDensity.current
@@ -185,7 +186,10 @@ private fun CanvasElementView(
     val wheeled = if (element.wheel) placed.onWheel(element::addWheel) else placed
     // A Button occludes what is under it, like any click target; every other kind only watches,
     // so it must not swallow a tap meant for something it happens to be drawn over.
-    val styled = wheeled.styleable(state, style).hoverable(element.interactions, blocksHitTest = element.kind == CanvasElementKind.Button)
+    val hovered = wheeled.styleable(state, style).hoverable(element.interactions, blocksHitTest = element.kind == CanvasElementKind.Button)
+    // Ahead of a Button's own `clickable` below, so a real drag's release never also reaches it;
+    // a press that stays under the threshold leaves the release for `clickable` to turn into a click.
+    val styled = element.draggedModifier(hovered, tree, density)
     when (element.kind) {
         CanvasElementKind.Text -> Box(styled, contentAlignment = (element.textAlign ?: CanvasAnchor.TopLeft).alignment) {
             Text(tree.textOf(element), style = textStyle)
@@ -224,6 +228,14 @@ private fun CanvasElementView(
         CanvasElementKind.Joystick -> JoystickView(element, wheeled, back, tree, children)
     }
 }
+
+/** This element's words in [color], at its size, with its shadow and outline. */
+private fun CanvasElement.textStyle(color: Color) = TextStyle(
+    color = color,
+    size = fontSize.sp,
+    shadow = style.textShadow?.toTextShadow(),
+    outline = style.textOutline?.toTextOutline(),
+)
 
 /**
  * A Bar's fill, [value] of its width: [color], or its fill image. The image is laid out at the bar's
@@ -295,7 +307,7 @@ internal val CanvasAnchor.column: Int get() = ordinal % 3
 /** 0 = top, 1 = centre, 2 = bottom. */
 internal val CanvasAnchor.row: Int get() = ordinal / 3
 
-private val CanvasAnchor.alignment: Alignment
+internal val CanvasAnchor.alignment: Alignment
     get() = when (this) {
         CanvasAnchor.TopLeft -> Alignment.TopStart
         CanvasAnchor.TopCenter -> Alignment.TopCenter

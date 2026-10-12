@@ -56,6 +56,8 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         it.grow = grow
         it.bind = bind
         it.wheel = wheel
+        it.draggable = draggable
+        it.dropTarget = dropTarget
     }
 
     /**
@@ -90,5 +92,7 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         grow = grow,
         bind = bind,
         wheel = wheel,
+        draggable = draggable,
+        dropTarget = dropTarget,
     )
 }

@@ -166,6 +166,8 @@ Screen-space UI drawn over the game. Sizes and offsets are in dp. `SceneCanvasEl
 | `grow` | number | `0` | In a parent with a `layout`, this element's share of its line's leftover space. Not negative. |
 | `bind` | object | none | Game state the element shows without code. `node` names a node; `value` is a `component.field` for a Bar's fill, divided by `max` (a field or a number); `text` fills each `{component.field}`, or `{component.field:n0}` with a number format, in a Text's or Button's words. See [Game UI](../guides/game-ui.md#show-game-state). |
 | `wheel` | boolean | `false` | Take the mouse wheel while the pointer is over this element or its children, instead of leaving it for gameplay. The innermost such element under the pointer takes it; read it back with `consumeWheel()`. |
+| `draggable` | boolean | `false` | Can be picked up: a ghost of it follows the pointer while `dragging` is true. A plain click still fires if the pointer never moves far enough to start a drag. Releasing on a `dropTarget` reports it there through `dropped`; releasing elsewhere reports it on this element's `droppedOutside`, a point in canvas units. Both are properties read once. |
+| `dropTarget` | boolean | `false` | Receives a `draggable` element released over it, read back through `dropped`. |
 
 ## `character_controller`
 

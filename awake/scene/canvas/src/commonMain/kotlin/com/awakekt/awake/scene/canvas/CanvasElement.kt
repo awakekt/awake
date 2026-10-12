@@ -9,6 +9,7 @@ import com.awakekt.awake.compose.foundation.interaction.InteractionSource
 import com.awakekt.awake.compose.foundation.text.TextFieldState
 import com.awakekt.awake.compose.ui.focus.FocusRequester
 import com.awakekt.awake.core.math2d.Rectangle
+import com.awakekt.awake.core.math2d.Vec2
 import com.awakekt.awake.scene.document.SceneVec3
 import kotlinx.serialization.Serializable
 import kotlin.math.sqrt
@@ -177,6 +178,40 @@ class CanvasElement {
      * delta, then zero.
      */
     fun consumeWheel(): Float = wheelAccumulated.also { wheelAccumulated = 0f }
+
+    /** Whether this element can be picked up and dragged onto a [dropTarget] element or the world. */
+    var draggable: Boolean = false
+
+    /** Whether a dragged element released over this one is reported here; see [dropped]. */
+    var dropTarget: Boolean = false
+
+    /** Whether this element is being dragged right now; a ghost follows the pointer while it is. */
+    var dragging: Boolean = false
+        internal set
+
+    /** Where the drag sits right now, in canvas units; what [SceneCanvas] draws the ghost at. */
+    internal var dragPointCanvasX: Float = 0f
+    internal var dragPointCanvasY: Float = 0f
+
+    /** [SceneCanvas] sets this to the source on release over a drop target; [dropped] reads it. */
+    internal var droppedSource: CanvasElement? = null
+
+    /**
+     * The element last dropped on this [dropTarget] since the last read, or null -- a property
+     * consumed once, the same way [droppedOutside] is.
+     */
+    val dropped: CanvasElement?
+        get() = droppedSource.also { droppedSource = null }
+
+    /** [SceneCanvas] sets this on release over no drop target; [droppedOutside] reads it. */
+    internal var droppedOutsideAt: Vec2? = null
+
+    /**
+     * Where this [draggable] element was released over no drop target, in canvas units, since the
+     * last read, or null -- a property consumed once, the same way [consumeWheel] is.
+     */
+    val droppedOutside: Vec2?
+        get() = droppedOutsideAt.also { droppedOutsideAt = null }
 
     private var pressed = false
     private var doublePressed = false

@@ -11,6 +11,7 @@ import com.awakekt.awake.compose.ui.input.pointer.PointerEvent
 import com.awakekt.awake.compose.ui.input.pointer.PointerEventPass
 import com.awakekt.awake.compose.ui.input.pointer.PointerEventType
 import com.awakekt.awake.compose.ui.node.PointerInputNode
+import kotlin.math.abs
 
 /**
  * Reports pointer movement while pressed.
@@ -89,4 +90,78 @@ private class DraggableNode(
     }
 
     override fun toString(): String = "draggable(hitMargin=$hitMarginPx)"
+}
+
+/**
+ * Reports a drag only once the pointer has moved [thresholdPx] from where it pressed, so a click
+ * chained after this on the same node -- a draggable button's `clickable` -- still fires when the
+ * pointer never moved that far.
+ *
+ * Claims the press at once regardless, the same unconditional [PointerEvent.consume] [draggable]
+ * uses: that is what keeps this node capturing the pointer wherever it moves once a drag actually
+ * starts. [onDrag] fires once the threshold is crossed and again on every move after, and
+ * [onDragEnd] once on release, both with the pointer's position local to this node's own box --
+ * the same coordinates a captured gesture keeps reporting after the pointer leaves it. Released
+ * before the threshold, neither fires and whatever handled the press is free to act on the release.
+ */
+fun Modifier.dragAfterThreshold(
+    thresholdPx: Int = DEFAULT_DRAG_THRESHOLD_PX,
+    onDrag: (x: Int, y: Int) -> Unit,
+    onDragEnd: (x: Int, y: Int) -> Unit,
+): Modifier = this then DragAfterThresholdElement(thresholdPx, onDrag, onDragEnd)
+
+/** About the same slop a touch screen gives a tap before it counts as a drag. */
+private const val DEFAULT_DRAG_THRESHOLD_PX = 8
+
+private class DragAfterThresholdElement(
+    private val thresholdPx: Int,
+    private val onDrag: (Int, Int) -> Unit,
+    private val onDragEnd: (Int, Int) -> Unit,
+) : ModifierNodeElement<DragAfterThresholdNode>() {
+    override fun create(): DragAfterThresholdNode = DragAfterThresholdNode(thresholdPx)
+
+    override fun update(node: DragAfterThresholdNode) {
+        node.thresholdPx = thresholdPx
+        node.onDrag = onDrag
+        node.onDragEnd = onDragEnd
+    }
+    override fun toString(): String = "dragAfterThreshold(threshold=$thresholdPx)"
+}
+
+private class DragAfterThresholdNode(
+    var thresholdPx: Int,
+) : Modifier.Node(),
+    PointerInputNode {
+    lateinit var onDrag: (Int, Int) -> Unit
+    lateinit var onDragEnd: (Int, Int) -> Unit
+    private var originX = 0
+    private var originY = 0
+    private var dragging = false
+
+    override fun onPointerEvent(event: PointerEvent, pass: PointerEventPass) {
+        if (pass != PointerEventPass.Main) return
+        when (event.type) {
+            PointerEventType.Press -> {
+                originX = event.x
+                originY = event.y
+                dragging = false
+                event.consume()
+            }
+            PointerEventType.Move -> if (event.isCaptureHolder) {
+                val crossed = abs(event.x - originX) >= thresholdPx || abs(event.y - originY) >= thresholdPx
+                if (dragging || crossed) {
+                    dragging = true
+                    onDrag(event.x, event.y)
+                }
+            }
+            PointerEventType.Release -> if (event.isCaptureHolder && dragging) {
+                dragging = false
+                onDragEnd(event.x, event.y)
+                event.consume()
+            }
+            else -> Unit
+        }
+    }
+
+    override fun toString(): String = "dragAfterThreshold(threshold=$thresholdPx)"
 }
