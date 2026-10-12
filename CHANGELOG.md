@@ -7,6 +7,76 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-10-13
+
+### Added
+
+- **A canvas text field the player types into.** `CanvasElementKind.TextField` is a single-line
+  `canvas_element` drawn with `BasicTextField`: typing fills `text`, a system writing `text`
+  replaces the field's content with the caret at the end, and a system setting `focused` gives or
+  takes the keyboard the way a click would. Enter submits once (`consumeSubmit()`) and frees focus;
+  Escape frees it without submitting. `BasicTextField` itself gains `onSubmit`, called on Enter in
+  a single-line field, and `FocusRequester` gains parameterless `requestFocus()`/`freeFocus()`,
+  queued and applied by `ComposeHost` at the start of its next frame.
+- **Canvas elements can take the mouse wheel.** `canvas_element` gains `wheel: Boolean = false`; a
+  `canvas_element` with `wheel` set takes the mouse wheel while the pointer is over it or its
+  children -- the innermost such element wins -- so the frame reports the wheel consumed and
+  `GameplayInput.scrollDeltaY` reads zero instead of zooming the camera. `CanvasElement.consumeWheel()`
+  reads what it collected since the last call, then zero.
+- **A canvas element's hover state and its box on screen.** `CanvasElement.isHovered` is true while
+  the pointer is over a Button, Image, Panel, Text, Bar or TextField; a non-button's hover is a
+  passive observer that never swallows a tap meant for something else at the same point.
+  `CanvasElement.screenBounds` is where every kind, Joystick included, was placed last frame in the
+  canvas's own units, in canvas coordinates even for a child, and null when it was not drawn. A
+  system can place a tooltip at a hovered item's `screenBounds` by setting a root element's
+  `offsetX`/`offsetY` from it. `Modifier.hoverable` gains a `blocksHitTest` parameter for this.
+- **Canvas elements can be dragged and dropped onto one another.** `draggable` on a `canvas_element`
+  picks it up once the pointer has moved a few pixels from the press -- a plain click still fires
+  below that -- and shows a dimmed ghost of it and its children following the pointer while `CanvasElement.dragging`
+  is true; the source itself stays put. Releasing over a `dropTarget` element, the one drawn on top where they overlap, reports the source
+  through that target's `CanvasElement.dropped`; releasing elsewhere reports the release point, in
+  canvas units, through the dragged element's own `CanvasElement.droppedOutside`. A drag claims the
+  pointer like a click does, so gameplay never sees the presses or moves it used.
+- **A clockwise cooldown sweep over a canvas element.** `CanvasFillImageMode.Sweep` fills a Bar's
+  box with a wedge clockwise from 12 o'clock by `value`, in its colour fill or, if set, its
+  `fillImage` cut to the same wedge -- the item and skill cooldown darkening a consumer pack's
+  original client draws over an icon. `0` draws nothing and `1` fills the whole box.
+- **Rotate a canvas element's picture.** `CanvasStyle.rotation` turns an element's image,
+  background and content, children included, clockwise about its own centre in degrees, through
+  `Modifier.graphicsLayer` -- the way a consumer pack's minimap turns the player's arrow with its
+  heading. Hit-testing still uses the element's unrotated layout box.
+- **Clickable words in canvas text.** A `Text` element's `text` can mark a `[[key|shown words]]`
+  span: "shown words" draws in `CanvasStyle.linkColor` (a default blue when unset), and a click on
+  them reports `key` once through `CanvasElement.consumeLink()` -- the clickable keywords a
+  consumer pack's original client shows in NPC dialogs. Text with links wraps by word at the box's
+  edge and at line breaks. `[[` is reserved, and plain text with no span draws unchanged.
+- **A canvas element showing a 3D view.** `CanvasElementKind.View` is a `canvas_element` whose
+  `camera` names a camera node: each frame it is drawn, that camera renders the scene into a target
+  the size of the element's box in pixels, which fills the box, opaque, inside its
+  `style.cornerRadius` and under its children. The target is rebuilt when the box changes size and
+  freed when the element or its camera goes. `SceneCanvas` takes the `CanvasViews` that supplies
+  each picture, and `SceneAppLifecycleRuntime` passes its own, rendering every View before the UI
+  that samples it. With no renderer or no such camera a View draws only its style.
+  `DrawScope.drawTexture` gains `premultiplied` for a render target's colours.
+- **`IndexedAssetSource` can cache a published project's verified files in the browser.** `IndexedDbContentCache` implements `ContentCache` over IndexedDB, keyed by SHA-256: a return visit to the same project doesn't download the files unchanged since the last one. Storage the browser blocks or fills never fails a load: it reads as a miss, and the file comes from the network. Every read and write shares one connection, which lets go when another tab upgrades the store. `retainOnly(index)` deletes the files a project's current release no longer lists, so the store doesn't keep every release's changed files.
+
+### Changed
+
+- **A Core release no longer needs a bump PR in any of the three starter template repositories.** Once a release and its WebGPU release pin both succeed, `.github/workflows/publish-templates.yml` stamps that release's Core, Vulkan and WebGPU versions into `templates/game`, `templates/project` and `templates/plugin` (`tools/stamp_template_versions.sh`) and pushes each to its own repository's `main` as one commit (`tools/publish_template.sh`), leaving anything only that repository carries, such as the project template's web player, untouched.
+- **A file `IndexedAssetSource` reads from its cache is no longer hashed again.** Every `ContentCache` hit got a full SHA-256 check, so a return visit still paid to hash every file, about 4 s for a 130 MB project on the web. A hit is now checked for size only: the cache holds bytes `IndexedAssetSource` hashed before storing them, and `ContentCache` now states that `get` must return them intact. A cached copy of the wrong size is still fetched again.
+
+### Fixed
+
+- **Vulkan draws a UI frame whose only textures are render targets.** The UI pass skipped every
+  texture in a frame until a straight-alpha image had been drawn once, so a premultiplied render
+  target such as a graphics layer or a canvas View drew nothing; WebGPU already drew it. And a
+  capture planned through `RenderSystem3D.planCapture` now makes the next frame plan afresh, so a
+  host that replays a planned frame never draws it with uniforms the capture's camera wrote.
+- **`IndexedAssetSource.prefetch` downloads shared content once and reports progress as files finish.** Paths whose files have the same SHA-256 were each downloaded and hashed; they now share one download. Progress waited behind the first file in the list even after later ones had finished; it now moves as each download finishes. Six fixed workers do the fetching instead of one coroutine per file, and the KDoc now says `prefetch` calls the host's `fetch` and cache for several files at once.
+- **An element's `alpha` now fades its `image` too.** `drawTexture` built every image quad without the enclosing `Modifier.alpha`/`CanvasStyle.alpha` dim, so a Panel's or Image element's picture, a 9-slice image included, stayed opaque while a colour background on the same element faded correctly. It now carries the dim in the texture primitive's own `alpha` field, the same field the software rasterizer and the Vulkan/WebGPU UI pipelines already multiply into the drawn colour.
+- `generateAssetsLock` reruns when an asset under its roots changes, instead of staying up to date and pinning the old hash (#729).
+- **A published project's files load faster through `IndexedAssetSource` on web.** `readResourceBytes` copied a fetched file into a `ByteArray` one byte at a time, each one crossing the JS/Wasm boundary; it now reads the buffer as 32-bit words, crossing once per four bytes instead. `IndexedAssetSource.prefetch` fetched and verified its files strictly one at a time; it now fetches and verifies up to six at once, in the same order it reported progress in before.
+
 ## [0.8.6] - 2026-10-12
 
 ### Fixed

@@ -1,1 +1,0 @@
-- `generateAssetsLock` reruns when an asset under its roots changes, instead of staying up to date and pinning the old hash (#729).
