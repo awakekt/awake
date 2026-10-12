@@ -283,6 +283,11 @@ abstract class GenerateAssetsLockTask : DefaultTask() {
     @get:Input
     abstract val assetRoots: ListProperty<String>
 
+    /** The files under [assetRoots]: the lock pins each one's size and SHA-256, so a change must rerun it. */
+    @get:InputFiles
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val assetFiles: ConfigurableFileCollection
+
     @TaskAction
     fun generate() {
         val root = project.projectDir

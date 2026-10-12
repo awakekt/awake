@@ -45,6 +45,7 @@ tasks.register<GenerateAssetsLockTask>("generateAssetsLock") {
     description = "Generate the canonical assets.lock.json."
     outputFile.set(projectContent.assetsLockFile)
     assetRoots.set(projectContent.assetRoots)
+    assetFiles.from(projectContent.assetRoots.map { roots -> roots.map(layout.projectDirectory::dir) })
 }
 
 val generateProjectIndex = tasks.register<GenerateProjectIndexTask>("generateProjectIndex") {
