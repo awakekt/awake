@@ -363,6 +363,22 @@ class SceneCanvasTest {
     }
 
     @Test
+    fun alphaFadesAnImageElementToo() {
+        // Regression for #724: a colour background honoured the element's alpha, but an `image`
+        // element's texture drew at full opacity regardless of it.
+        val white = ImageBitmap(1, 1, rgba(WHITE))
+        element {
+            kind = CanvasElementKind.Image; offsetX = 0f; offsetY = 0f; width = 40f; height = 40f
+            style = CanvasStyle(alpha = 0.2f, image = CanvasImage("w.png"))
+        }
+
+        val textures = ComposeHost().frame(FrameInput(40, 40)) { SceneCanvas(world, images = mapOf("w.png" to white)) }
+            .primitives.filterIsInstance<UiDrawPrimitive.Texture>()
+
+        assertEquals(listOf(0.2f), textures.map { it.alpha })
+    }
+
+    @Test
     fun aButtonTakesItsHoveredAndPressedLooks() {
         element {
             kind = CanvasElementKind.Button; offsetX = 0f; offsetY = 0f; width = 100f; height = 40f; background = "#FF0000"

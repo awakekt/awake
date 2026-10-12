@@ -590,7 +590,7 @@ internal class PaintScope :
         val pw = width * transform.scaleX
         val ph = height * transform.scaleY
         if (isFullyOutsideActiveClip(px, py, pw, ph)) return
-        output += UiDrawPrimitive.Texture(px, py, pw, ph, material, region = region, tint = tint, filterQuality = filterQuality)
+        output += UiDrawPrimitive.Texture(px, py, pw, ph, material, alpha = alpha, region = region, tint = tint, filterQuality = filterQuality)
     }
 
     override fun drawRoundedRect(
