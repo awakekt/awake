@@ -140,13 +140,13 @@ Screen-space UI drawn over the game. Sizes and offsets are in dp. `SceneCanvasEl
 
 | Field | Type | Default | What it does |
 | --- | --- | --- | --- |
-| `kind` | `Text` · `Panel` · `Bar` · `Button` · `Joystick` · `Image` | `Text` | What the element is. |
+| `kind` | `Text` · `Panel` · `Bar` · `Button` · `TextField` · `Joystick` · `Image` | `Text` | What the element is. |
 | `anchor` | `TopLeft` · `TopCenter` · `TopRight` · `CenterLeft` · `Center` · `CenterRight` · `BottomLeft` · `BottomCenter` · `BottomRight` | `TopLeft` | Screen point the element is placed from. |
 | `offsetX` | number | `16` | Horizontal offset from the anchor. |
 | `offsetY` | number | `16` | Vertical offset from the anchor. |
 | `width` | number | `200` | Width. Not negative. |
 | `height` | number | `40` | Height. Not negative. |
-| `text` | string | `""` | A `Text` element's content, or a `Button`'s label. |
+| `text` | string | `""` | A `Text` element's content, a `Button`'s label, or what is typed into a `TextField`: typing writes it, and a system writing it replaces the field's content, caret at the end. |
 | `fontSize` | number | `18` | Text size. Above 0. |
 | `color` | string | `"#FFFFFF"` | Foreground color, `#RRGGBB` or `#RRGGBBAA`. |
 | `background` | string | `"#00000000"` | Background color, `#RRGGBB` or `#RRGGBBAA`. |

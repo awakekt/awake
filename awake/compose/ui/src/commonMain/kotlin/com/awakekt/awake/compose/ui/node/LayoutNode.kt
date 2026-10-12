@@ -150,6 +150,7 @@ class LayoutNode(
     private val placedNodes = ArrayList<OnPlacedModifierNode>()
     private val focusNodes = ArrayList<FocusTargetNode>()
     private val focusPropertiesNodes = ArrayList<FocusPropertiesNode>()
+    private val focusRequestScratch = ArrayList<FocusRequestNode>()
     private val scrollNodes = ArrayList<ScrollableNode>()
     private val nestedScrollNodes =
         ArrayList<com.awakekt.awake.compose.ui.input.nestedscroll.NestedScrollConnection>()
@@ -209,6 +210,10 @@ class LayoutNode(
 
     /** Focus policy links, outermost first. Rebuilt with the modifier chain. */
     internal var focusProperties: List<FocusPropertiesNode> = emptyList()
+        private set
+
+    /** Queued-focus links, outermost first. Rebuilt with the modifier chain. */
+    internal var focusRequestNodes: List<FocusRequestNode> = emptyList()
         private set
 
     /** Scroll links, outermost first. Rebuilt with the chain, never per frame. */
@@ -361,6 +366,7 @@ class LayoutNode(
         placedNodes.clear()
         focusNodes.clear()
         focusPropertiesNodes.clear()
+        focusRequestScratch.clear()
         scrollNodes.clear()
         nestedScrollNodes.clear()
         textInputNodes.clear()
@@ -393,6 +399,7 @@ class LayoutNode(
             if (element is OnPlacedModifierNode) placedNodes += element
             if (element is FocusTargetNode) focusNodes += element
             if (element is FocusPropertiesNode) focusPropertiesNodes += element
+            if (element is FocusRequestNode) focusRequestScratch += element
             if (element is ScrollableNode) scrollNodes += element
             if (element is com.awakekt.awake.compose.ui.input.nestedscroll.NestedScrollNode) {
                 element.onAttachedTo(this)
@@ -418,6 +425,7 @@ class LayoutNode(
         semanticsModifiers = semanticsNodes
         focusTargets = focusNodes
         focusProperties = focusPropertiesNodes
+        focusRequestNodes = focusRequestScratch
         scrollables = scrollNodes
         nestedScrollConnections = nestedScrollNodes
         textInputs = textInputNodes
