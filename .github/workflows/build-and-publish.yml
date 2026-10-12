@@ -9,6 +9,10 @@ name: Publish
 #
 # The separation is structural rather than a convention someone remembers: the release job's `if`
 # tests the tag ref, so no branch push can reach it however the workflow is triggered.
+#
+# A tag publishes one snapshot, limited to WebGPU: the release pin, the backend at `<tag>-SNAPSHOT`
+# built from the tagged commit with every Core module held at the release. WebGPU builds on wgpu4k
+# snapshots, so Central releases refuse it, and the pin is the WebGPU a consumer pairs with the release.
 on:
   push:
     branches:
@@ -347,6 +351,17 @@ jobs:
             ./gradlew verifyPublishedArtifacts -Pawake.verifyPublishedVersion="$VULKAN_VERSION" -Pawake.verifyPublishedFamily=vulkan --no-configuration-cache
           fi
 
+      # A release pairs with its WebGPU release pin, so the templates build against the pin, published
+      # here from this commit as the webgpu-pin job publishes it once Core is on Central. A snapshot
+      # pairs with the WebGPU published beside it above.
+      - name: Publish the WebGPU release pin locally
+        if: ${{ !endsWith(env.CORE_VERSION, '-SNAPSHOT') }}
+        run: |
+          ./gradlew :awake:backend:webgpu:publishToMavenLocal -Pawake.publishFamily=webgpu -PisMainHost=true \
+            --no-configuration-cache
+          ./gradlew verifyPublishedArtifacts -Pawake.verifyPublishedVersion="$CORE_VERSION-SNAPSHOT" \
+            -Pawake.verifyPublishedFamily=webgpu -Pawake.verifyPinnedCoreVersion="$CORE_VERSION" --no-configuration-cache
+
       - name: Wait for the tagged Vulkan release on Maven Central
         if: steps.versions.outputs.vulkan_publish != 'true'
         run: ./gradlew waitForVulkanCentral -Pawake.waitForVulkanVersion="$TEMPLATE_VULKAN_VERSION" --no-configuration-cache
@@ -433,6 +448,14 @@ jobs:
       - name: Publish snapshots
         if: endsWith(steps.snapshot-version.outputs.version, '-SNAPSHOT')
         run: |
+          # A run for a commit before a cut derives the release's own -SNAPSHOT, the version the tag
+          # run's WebGPU release pin takes. Once the release is tagged, this run must not overwrite it.
+          version="${{ steps.snapshot-version.outputs.version }}"
+          base="${version%-SNAPSHOT}"
+          if git ls-remote --exit-code --tags origin "refs/tags/v$base" > /dev/null; then
+            echo "::notice::v$base is tagged; its tag run owns $version (the WebGPU release pin)."
+            exit 0
+          fi
           ./gradlew :awake:engine:window:verifyDesktopNatives -Pawake.prebuiltNatives="$PWD/build/window-natives" --no-configuration-cache
           ./gradlew publishAllPublicationsToMavenCentralRepository \
                     -PisMainHost=true \
@@ -634,6 +657,50 @@ jobs:
           ASSET="build/awake-${GITHUB_REF_NAME#v}-maven.zip"
           cp build/central-bundle.zip "$ASSET"
           gh release upload "$GITHUB_REF_NAME" "$ASSET" --clobber
+
+  # The WebGPU release pin, `<tag>-SNAPSHOT` on Central's snapshot repository, once Core is on Central
+  # (tools/publish_webgpu_pin.sh). A job of its own, so it can never undo a release and a failed pin
+  # can be re-run alone; .github/workflows/webgpu-pin.yml repairs one later.
+  #
+  # Linux, unlike the release job: WebGPU builds only its desktop JVM and wasmJs targets, which compile
+  # on any host, so it needs neither iOS cinterop, MoltenVK nor the submodules. Nor does it collect the
+  # release job's natives: libawake-window ships in engine:window's jar and libawake_naga in
+  # shader-compiler's AAR, and the pin publishes neither; its metadata names the released ones.
+  webgpu-pin:
+    name: WebGPU release pin
+    # Up to an hour waiting for Core on repo1, then the build and the upload.
+    timeout-minutes: 90
+    if: >-
+      ${{
+        !cancelled() &&
+        startsWith(github.ref, 'refs/tags/v') &&
+        !startsWith(github.ref, 'refs/tags/vulkan-v') &&
+        needs.release.result == 'success'
+      }}
+    needs: [release]
+    runs-on: ubuntu-latest
+    env:
+      MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+      MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The pin's version and its Core pin both come from `git describe --tags`.
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      # A snapshot, so unsigned, as the snapshot job uploads.
+      - name: Verify and publish the WebGPU release pin
+        run: bash tools/publish_webgpu_pin.sh
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ env.MAVEN_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ env.MAVEN_CENTRAL_PASSWORD }}
 
   vulkan-release:
     name: Vulkan Release

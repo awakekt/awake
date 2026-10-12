@@ -8,8 +8,11 @@ import com.awakekt.awake.build.tasks.VerifyCapabilityLayeringTask
 import com.awakekt.awake.build.tasks.VerifyHeadlessRuntimeTask
 import com.awakekt.awake.build.tasks.VerifyKeepRulesTask
 import com.awakekt.awake.build.tasks.VerifyPublishedArtifactsTask
+import com.awakekt.awake.build.tasks.WaitForCoreCentralTask
 import com.awakekt.awake.build.tasks.WaitForVulkanCentralTask
 import org.gradle.api.artifacts.ProjectDependency
+import org.gradle.api.publish.PublishingExtension
+import org.gradle.api.publish.maven.MavenPublication
 
 plugins {
     id("com.awakekt.awake.plugin.release-cut")
@@ -69,12 +72,29 @@ tasks.register<AwakeRepositoryVerificationTask>("awakeVerify") {
     dependsOn(verifyCapabilityLayering, verifyHeadlessRuntime, verifyKeepRules)
 }
 
-tasks.register<VerifyPublishedArtifactsTask>("verifyPublishedArtifacts") {
+val verifyPublishedArtifacts = tasks.register<VerifyPublishedArtifactsTask>("verifyPublishedArtifacts") {
     group = "awake release"
     description = "Verify Maven-local POM metadata and published native JAR contents."
+}
+
+// The coordinates a pinned family's metadata may name: what each publication is actually published as,
+// so a constraint built from a project name where an artifact id was overridden is caught.
+gradle.projectsEvaluated {
+    val published = rootProject.allprojects.flatMap { module ->
+        module.extensions.findByType(PublishingExtension::class.java)?.publications
+            ?.withType(MavenPublication::class.java)
+            ?.map { "${it.groupId}:${it.artifactId}" }
+            .orEmpty()
+    }.toSet()
+    verifyPublishedArtifacts.configure { publishedModules.set(published) }
 }
 
 tasks.register<WaitForVulkanCentralTask>("waitForVulkanCentral") {
     group = "awake release"
     description = "Wait for a Vulkan release's metadata and platform files to be served by Maven Central."
+}
+
+tasks.register<WaitForCoreCentralTask>("waitForCoreCentral") {
+    group = "awake release"
+    description = "Wait for the Core release the WebGPU release pin depends on to be served by Maven Central."
 }

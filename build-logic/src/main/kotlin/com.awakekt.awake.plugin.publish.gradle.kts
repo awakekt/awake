@@ -23,9 +23,11 @@ val publicationsFromMainHost =
     listOf("android", "desktop", "iosArm64", "iosSimulatorArm64", "kotlinMultiplatform")
 
 extensions.configure<PublishingExtension>("publishing") {
-    // Never rewrite a SNAPSHOT dependency to a guessed stable version in a published POM. The
-    // release workflow verifies locally published POMs and fails before upload if any dependency
-    // remains a snapshot; maintainers must update and verify the real dependency instead.
+    // Never rewrite a SNAPSHOT dependency to a guessed stable version in a published POM; maintainers
+    // update and verify the real dependency instead. No check here reads dependency versions before
+    // upload: scripts/central-bundle.sh refuses a staged -SNAPSHOT artifact, Central's validation
+    // refuses a release POM with a SNAPSHOT dependency, and `verifyPublishedArtifacts
+    // -Pawake.verifyPinnedCoreVersion` checks only a pinned family's Core edges.
     publications {
         matching { it.name in publicationsFromMainHost }.all {
             val targetPublication = this@all

@@ -10,7 +10,7 @@ Release notes are on [GitHub Releases](https://github.com/awakekt/awake/releases
 | --- | --- | --- | --- |
 | Core | `{{ awake_version }}` (this documentation version) | `v*` | Every published module except the Vulkan family. All share one version. |
 | Vulkan | `{{ awake_vulkan_version }}`, built against Core `{{ awake_vulkan_core_version }}` | `vulkan-v*` | `com.awakekt.awake.backend:vulkan`, `com.awakekt.awake:vulkan-kmp`, `com.awakekt.awake:vulkan-kmp-android-native` |
-| WebGPU | a `-SNAPSHOT` version | none | `com.awakekt.awake.backend:webgpu` |
+| WebGPU | `{{ awake_version }}-SNAPSHOT`, built from Core `{{ awake_version }}` | none; each Core `v*` tag publishes it | `com.awakekt.awake.backend:webgpu` |
 
 The install snippets pair the Vulkan release with the Core release it was built against:
 
@@ -36,6 +36,7 @@ awake-vulkan = "{{ awake_vulkan_version }}"
 | Item | Value |
 | --- | --- |
 | Published as | Snapshot only. It builds on a wgpu4k snapshot, and Maven Central releases cannot depend on a snapshot. |
+| Version to use | `<Core release>-SNAPSHOT`: each Core release publishes one, built from that release, with every Core module at exactly the release and held there strictly. The newer snapshots `main` publishes are built against Core snapshots. |
 | Repository | `https://central.sonatype.com/repository/maven-snapshots/` |
 | Pinned dependencies | The published module constrains the wgpu4k and webgpu-ktypes snapshots to the builds it was tested with. |
 

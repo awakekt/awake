@@ -9,7 +9,9 @@ import com.sun.net.httpserver.HttpServer
 import org.gradle.api.GradleException
 import java.net.InetSocketAddress
 import java.net.URI
+import java.nio.file.Files
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.io.path.createTempDirectory
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -43,6 +45,51 @@ class CentralAvailabilityTest {
     @Test
     fun authenticationFailureIsNotTreatedAsPropagationDelay() = repository(status = 401) { base, _ ->
         assertFailsWith<GradleException> { CentralAvailability(base, listOf(base.resolve("root.module"))).missingFiles() }
+    }
+
+    @Test
+    fun waitsForTheCoreModulesTheWebGpuPinDependsOn() = repository { base, files ->
+        val local = createTempDirectory("maven-local")
+        try {
+            // A root that points at its wasm module, which holds the edges: two Core dependencies, its own
+            // family, a third-party library and a constraint, of which only the Core dependencies count.
+            val root = local.resolve("webgpu/1.2.3-SNAPSHOT/webgpu-1.2.3-SNAPSHOT.module")
+            val wasm = local.resolve("webgpu-wasm-js/1.2.3-SNAPSHOT/webgpu-wasm-js-1.2.3-SNAPSHOT.module")
+            Files.createDirectories(root.parent)
+            Files.createDirectories(wasm.parent)
+            Files.writeString(
+                root,
+                """{"variants":[{"name":"wasm","available-at":{"url":"../../webgpu-wasm-js/1.2.3-SNAPSHOT/webgpu-wasm-js-1.2.3-SNAPSHOT.module"}}]}""",
+            )
+            Files.writeString(
+                wasm,
+                """
+                {"variants":[{"name":"wasmJsRuntimeElements","dependencies":[
+                  {"group":"com.awakekt.awake.core","module":"math","version":{"requires":"1.2.3"}},
+                  {"group":"com.awakekt.awake.engine","module":"platform","version":{"requires":"1.2.3"}},
+                  {"group":"com.awakekt.awake.backend","module":"webgpu-wasm-js","version":{"requires":"1.2.3-SNAPSHOT"}},
+                  {"group":"org.jetbrains.kotlin","module":"kotlin-stdlib","version":{"requires":"2.4.10"}}
+                ],"dependencyConstraints":[
+                  {"group":"com.awakekt.awake.scene","module":"runtime","version":{"strictly":"1.2.3"}}
+                ]}]}
+                """.trimIndent(),
+            )
+
+            val core = pinnedCoreModules(root, "1.2.3")
+            assertEquals(listOf("com.awakekt.awake.core:math", "com.awakekt.awake.engine:platform"), core)
+
+            val modules = core.map { centralModule(base, it, "1.2.3") }
+            assertEquals(base.resolve("com/awakekt/awake/core/math/1.2.3/math-1.2.3.module"), modules.first())
+            val gate = CentralAvailability(base, modules)
+            assertEquals(modules.flatMap { listOf(it, URI(it.toString().removeSuffix(".module") + ".pom")) }, gate.missingFiles())
+            for (module in modules) {
+                files[module.path] = """{"variants":[{"name":"jvm"}]}"""
+                files[module.path.removeSuffix(".module") + ".pom"] = "<project/>"
+            }
+            assertTrue(gate.missingFiles().isEmpty())
+        } finally {
+            local.toFile().deleteRecursively()
+        }
     }
 
     private fun repository(status: Int? = null, test: (URI, MutableMap<String, String>) -> Unit) {

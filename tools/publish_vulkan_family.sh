@@ -84,7 +84,12 @@ fi
 
 echo "Verifying Vulkan $version against Core $core_version"
 ./gradlew "${vulkan_local_tasks[@]}" "${gradle_args[@]}"
-./gradlew verifyPublishedArtifacts "-Pawake.verifyPublishedVersion=$version" -Pawake.verifyPublishedFamily=vulkan --no-configuration-cache
+verify_args=("-Pawake.verifyPublishedVersion=$version" -Pawake.verifyPublishedFamily=vulkan --no-configuration-cache)
+if [[ "$channel" == "release" ]]; then
+  # A release names that Core release on every Core edge, platform modules included.
+  verify_args+=("-Pawake.verifyPinnedCoreVersion=$core_version")
+fi
+./gradlew verifyPublishedArtifacts "${verify_args[@]}"
 
 if [[ "$channel" == "release" ]]; then
   staging="$PWD/build/central-staging"

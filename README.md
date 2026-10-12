@@ -52,7 +52,9 @@ awake-vulkan = { group = "com.awakekt.awake.backend", name = "vulkan", version.r
 ```
 
 The WebGPU backend is not in Maven Central releases yet: it builds on a wgpu4k snapshot, so it is
-published only as a snapshot to `https://central.sonatype.com/repository/maven-snapshots/`.
+published only as a snapshot to `https://central.sonatype.com/repository/maven-snapshots/`. Pin it
+to your Core version with `-SNAPSHOT` appended: each Core release publishes that build of WebGPU,
+with every Core module held at the release.
 
 For a desktop JVM target, use the lifecycle and shared shader contract in `commonMain`, and the
 Vulkan host in `desktopMain`:

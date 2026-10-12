@@ -13,14 +13,16 @@
 # package namespace the engine had already renamed, and how two libraries came to declare the same
 # Android namespace: both are invisible from inside either repository.
 #
-# So this copies the template somewhere with no engine beside it, points its Core and Vulkan
-# catalog entries at the two versions this working tree produces, and builds every target it declares.
+# So this copies the template somewhere with no engine beside it, points its Core, Vulkan and WebGPU
+# catalog entries at the versions this working tree produces, and builds every target it declares.
 #
 # Usage:
 #   tools/check_template_consumer.sh <path-to-awake-template> [work-dir]
 #
 # Assumes the engine has been published where the template can resolve it:
 #   ./gradlew publishToMavenLocal -PisMainHost=true
+# and, on a release tag, its WebGPU release pin:
+#   ./gradlew :awake:backend:webgpu:publishToMavenLocal -Pawake.publishFamily=webgpu -PisMainHost=true
 
 set -euo pipefail
 
@@ -61,13 +63,22 @@ if [[ -z "$CORE_VERSION" || -z "$VULKAN_VERSION" ]]; then
   echo "Could not read both publication-family versions from Gradle" >&2
   exit 1
 fi
+# A Core release pairs with its WebGPU release pin, `<release>-SNAPSHOT` (tools/publish_webgpu_pin.sh),
+# which its caller publishes locally first; a Core snapshot publishes WebGPU at its own version. A
+# version the caller names is a local publish (`-Pawake.version`), which puts WebGPU at it too.
+if [[ -n "${TEMPLATE_WEBGPU_VERSION:-}" ]]; then
+  WEBGPU_VERSION=$TEMPLATE_WEBGPU_VERSION
+elif [[ -n "${TEMPLATE_CORE_VERSION:-}" || "$CORE_VERSION" == *-SNAPSHOT ]]; then
+  WEBGPU_VERSION=$CORE_VERSION
+else
+  WEBGPU_VERSION=$CORE_VERSION-SNAPSHOT
+fi
 
-echo "==> Pointing the template at Core $CORE_VERSION and Vulkan $VULKAN_VERSION"
+echo "==> Pointing the template at Core $CORE_VERSION, Vulkan $VULKAN_VERSION and WebGPU $WEBGPU_VERSION"
 # The catalog pins whatever releases the template last used; this run is about the artifacts built
-# here. WebGPU publishes with Core, so a separately pinned WebGPU snapshot moves to Core's version
-# too. The transformation also lets Core CI exercise the new split before the template PR merges.
+# here. The transformation also lets Core CI exercise the new split before the template PR merges.
 CATALOG="$CHECKOUT/gradle/libs.versions.toml"
-CORE_VERSION="$CORE_VERSION" VULKAN_VERSION="$VULKAN_VERSION" perl -0pi -e \
+CORE_VERSION="$CORE_VERSION" VULKAN_VERSION="$VULKAN_VERSION" WEBGPU_VERSION="$WEBGPU_VERSION" perl -0pi -e \
   's/^awake = ".*"$/awake = "$ENV{CORE_VERSION}"/m;
    if (!/^awake-vulkan = /m) {
      s/^(awake = ".*")$/$1\nawake-vulkan = "$ENV{VULKAN_VERSION}"/m;
@@ -75,7 +86,7 @@ CORE_VERSION="$CORE_VERSION" VULKAN_VERSION="$VULKAN_VERSION" perl -0pi -e \
      s/^awake-vulkan = ".*"$/awake-vulkan = "$ENV{VULKAN_VERSION}"/m;
    }
    s/(^awake-backend-vulkan = \{[^\n]*version\.ref = )"awake"/${1}"awake-vulkan"/m;
-   s/^awake-webgpu = ".*"$/awake-webgpu = "$ENV{CORE_VERSION}"/m' \
+   s/^awake-webgpu = ".*"$/awake-webgpu = "$ENV{WEBGPU_VERSION}"/m' \
   "$CATALOG"
 
 # Snapshot family artifacts are served from Central's dedicated snapshot repository.
@@ -83,7 +94,10 @@ SETTINGS="$CHECKOUT/settings.gradle.kts"
 if ! grep -q 'central\.sonatype\.com/repository/maven-snapshots' "$SETTINGS"; then
   perl -0pi -e 's#(dependencyResolutionManagement\s*\{\s*repositories\s*\{\n)#$1        maven("https://central.sonatype.com/repository/maven-snapshots/")\n#' "$SETTINGS"
 fi
-grep -E '^awake(-vulkan)? = ' "$CATALOG"
+# Maven Local first, for Awake only. The templates list the snapshot repository first, and an earlier
+# upload of the same snapshot version there would otherwise win over the build published here.
+perl -0pi -e 's#(dependencyResolutionManagement\s*\{\s*repositories\s*\{\n)#$1        mavenLocal { mavenContent { includeGroupAndSubgroups("com.awakekt.awake") } }\n#' "$SETTINGS"
+grep -E '^awake(-vulkan|-webgpu)? = ' "$CATALOG"
 
 # Android needs an SDK location, and a fresh copy has no local.properties.
 if [[ -n "${ANDROID_HOME:-}" ]]; then
@@ -100,16 +114,49 @@ if [[ -n "${TEMPLATE_PREPARE_ONLY:-}" ]]; then
   exit 0
 fi
 
+template_gradle() {
+  (cd "$CHECKOUT" && export JAVA_HOME="${JAVA_HOME:-/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home}" ANDROID_HOME="${ANDROID_HOME:-/Users/ronvaldoz/Library/Android/sdk}" && ./gradlew "$@" -Dsdk.dir="${ANDROID_HOME:-/Users/ronvaldoz/Library/Android/sdk}" --no-configuration-cache --console=plain)
+}
+
 run_target() {
   local label=$1
   shift
   echo "==> $label"
-  (cd "$CHECKOUT" && export JAVA_HOME="${JAVA_HOME:-/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home}" ANDROID_HOME="${ANDROID_HOME:-/Users/ronvaldoz/Library/Android/sdk}" && ./gradlew "$@" -Dsdk.dir="${ANDROID_HOME:-/Users/ronvaldoz/Library/Android/sdk}" --no-configuration-cache --console=plain)
+  template_gradle "$@"
 }
 
 run_target "Shared and core (JVM)" :core:compileKotlinJvm :app:shared:compileKotlinJvm
 run_target "Desktop app" :app:desktopApp:compileKotlin
-run_target "Web app (wasmJs/WebGPU)" :app:webApp:compileKotlinWasmJs
+# The development executable, not just the klib: the wasm link is where a WebGPU built against
+# another Core fails, on a symbol the resolved Core does not have.
+run_target "Web app (wasmJs/WebGPU)" :app:webApp:compileDevelopmentExecutableKotlinWasmJs
+
+# WebGPU must not move any Core module of the web build off the Core under test. Each line of the
+# report names a module as group:name:requested, with " -> selected" when resolution chose another.
+echo "==> Web app's Awake modules"
+web_report=$(template_gradle -q :app:webApp:dependencies --configuration wasmJsRuntimeClasspath)
+if grep -q 'com\.awakekt\.awake.* FAILED' <<< "$web_report"; then
+  echo "The web app's wasmJsRuntimeClasspath does not resolve:" >&2
+  grep 'com\.awakekt\.awake.* FAILED' <<< "$web_report" >&2
+  exit 1
+fi
+web_modules=$(perl -ne 'while (m/(com\.awakekt\.awake[\w.-]*):([\w.-]+)(?::(\{[^}]*\}|[^\s:]+))?(?: -> ([^\s]+))?/g) {
+      my ($module, $selected) = ("$1:$2", $4 // $3);
+      next if !defined $selected || $module =~ /^com\.awakekt\.awake\.backend:webgpu/;
+      $selected =~ s/^\{(?:strictly|require|prefer) ([^}]+)\}$/$1/;
+      print "$module:$selected\n";
+    }' <<< "$web_report" | sort -u)
+if [[ -z "$web_modules" ]]; then
+  echo "The web app's wasmJsRuntimeClasspath names no Awake module." >&2
+  exit 1
+fi
+off_core=$(awk -F: -v core="$CORE_VERSION" '$NF != core' <<< "$web_modules")
+if [[ -n "$off_core" ]]; then
+  echo "The web app resolves Awake modules other than Core $CORE_VERSION:" >&2
+  echo "$off_core" >&2
+  exit 1
+fi
+echo "Every Awake module of the web app is at Core $CORE_VERSION ($(grep -c . <<< "$web_modules") modules)."
 
 # Linking is where a Kotlin/Native consumer finds out an artifact is unusable -- compiling only
 # proves the klib resolved. Apple toolchain only, so a Linux runner skips it rather than failing.

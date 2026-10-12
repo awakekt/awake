@@ -7,6 +7,8 @@ package com.awakekt.awake.build.tasks
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
+import org.gradle.api.provider.SetProperty
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
 import org.gradle.work.DisableCachingByDefault
 import java.nio.file.Files
@@ -14,14 +16,31 @@ import java.nio.file.Path
 import java.util.zip.ZipFile
 import javax.xml.parsers.DocumentBuilderFactory
 
-/** Verifies the Maven-local files produced by a publication before Central upload. */
+/**
+ * Verifies the Maven-local files produced by a publication before Central upload.
+ *
+ * With `awake.verifyPinnedCoreVersion`, it also checks that a Vulkan or WebGPU family's module
+ * metadata, platform modules included, names Core at exactly that release (see [pinnedCoreViolations]).
+ */
 @DisableCachingByDefault(because = "Inspects the external Maven local repository and publication metadata")
 abstract class VerifyPublishedArtifactsTask : DefaultTask() {
+    /** Every `group:artifact` this build publishes, root and platform publications alike. */
+    @get:Input
+    abstract val publishedModules: SetProperty<String>
+
+    init {
+        publishedModules.convention(emptySet())
+    }
+
     @TaskAction
     fun verify() {
         val version = project.findProperty("awake.verifyPublishedVersion")?.toString()
             ?: project.version.toString()
         val family = project.findProperty("awake.verifyPublishedFamily")?.toString()?.lowercase()
+        val pinnedCore = project.findProperty("awake.verifyPinnedCoreVersion")?.toString()
+        require(pinnedCore == null || family == "vulkan" || family == "webgpu") {
+            "awake.verifyPinnedCoreVersion checks the Vulkan or WebGPU family, not ${family ?: "every family"}"
+        }
         val repository = Path.of(System.getProperty("user.home"), ".m2", "repository", "com", "awakekt", "awake")
         val directories = if (Files.isDirectory(repository)) {
             Files.walk(repository).use { paths ->
@@ -36,7 +55,8 @@ abstract class VerifyPublishedArtifactsTask : DefaultTask() {
         } else emptyList()
         if (directories.isEmpty()) throw GradleException("No Maven-local Awake artifacts found for $version")
 
-        val failures = directories.flatMap { directory ->
+        val pinFailures = pinnedCore?.let { core -> verifyPinnedCore(directories, version, core, family!!) }.orEmpty()
+        val failures = pinFailures + directories.flatMap { directory ->
             val pom = directory.resolve("${directory.parent.fileName}-$version.pom")
             val metadata = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(pom.toFile())
             listOf("name", "description", "url", "licenses", "developers", "scm").filter { field ->
@@ -49,7 +69,17 @@ abstract class VerifyPublishedArtifactsTask : DefaultTask() {
                 }
         }
         if (failures.isNotEmpty()) throw GradleException(failures.joinToString("\n"))
-        logger.lifecycle("Published artifacts verified ($version, ${directories.size} module(s))")
+        val pinNote = pinnedCore?.let { ", Core pinned at $it" }.orEmpty()
+        logger.lifecycle("Published artifacts verified ($version, ${directories.size} module(s)$pinNote)")
+    }
+
+    private fun verifyPinnedCore(directories: List<Path>, version: String, core: String, family: String): List<String> {
+        val modules = directories.map { LocalModuleMetadata(it.resolve("${it.parent.fileName}-$version.module")) }
+        // A walk that found no Core edge at all read nothing, which must not pass as a clean pin.
+        if (modules.all { module -> module.edges.none { !it.constraint && !belongsToFamily(it.name, family) } }) {
+            return listOf("No $family module metadata for $version names a Core module")
+        }
+        return modules.flatMap { pinnedCoreViolations(it, core, family, publishedModules.get(), ::relative) }
     }
 
     private fun verifyVariant(
@@ -71,12 +101,6 @@ abstract class VerifyPublishedArtifactsTask : DefaultTask() {
 
     private fun isPlatformVariant(artifact: String): Boolean =
         artifact.matches(Regex(".*-(jvm|android|desktop|ios[A-Za-z0-9]*|wasm[A-Za-z0-9-]*|js|linux[A-Za-z0-9-]*|macos[A-Za-z0-9-]*|mingw[A-Za-z0-9-]*)"))
-
-    private fun belongsToFamily(artifact: String, family: String): Boolean = when (family) {
-        "vulkan" -> artifact == "vulkan" || artifact == "vulkan-kmp" || artifact == "vulkan-kmp-android-native"
-        "core" -> artifact != "vulkan" && artifact != "vulkan-kmp" && artifact != "vulkan-kmp-android-native"
-        else -> true
-    }
 
     private fun relative(path: Path): String = if (path.startsWith(project.rootDir.toPath())) {
         project.rootDir.toPath().relativize(path).toString()

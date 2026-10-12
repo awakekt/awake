@@ -60,7 +60,10 @@ The shared Core train is derived dynamically from Git tags using `git describe` 
 > **SNAPSHOT Behavior:** A commit after a Core tag increments its trailing number and appends
 `-SNAPSHOT`: after stable `v0.1.0`, main publishes `0.1.1-SNAPSHOT`; after `v0.1.0-alpha.2`, it
 publishes `0.1.0-alpha.3-SNAPSHOT`. The exact tagged commit retains the release version and is
-published by the tag workflow. A main run on that commit skips snapshot upload.
+published by the tag workflow. A main run on that commit skips snapshot upload. The tag run also
+publishes one snapshot, the WebGPU release pin `<release>-SNAPSHOT` (see
+[the WebGPU release pin](#webgpu-release-pin)), so a `main` or `release/**` run whose snapshot is
+`<release>-SNAPSHOT` skips its upload once `v<release>` is tagged.
 
 ### Cutting a Core release
 
@@ -97,7 +100,9 @@ One person or agent owns a release from cut to downstream bump. Before cutting, 
    **Publish** run stages the Core family and build-logic's plugins in one folder and uploads them
    as one Central deployment (`scripts/central-bundle.sh`, `scripts/central-upload.sh`), which
    publishes whole or not at all. Wait for it to succeed and for
-   `repo1.maven.org/.../core/host/maven-metadata.xml` to list the version.
+   `repo1.maven.org/.../core/host/maven-metadata.xml` to list the version. Its **WebGPU release
+   pin** job then publishes `com.awakekt.awake.backend:webgpu:<release>-SNAPSHOT` once Core is on
+   repo1; wait for that job too.
 3. **Vulkan:** if anything under `awake/backend/vulkan` changed since the last `vulkan-v*` tag
    (`scripts/vulkan-publication-impact.sh <last-vulkan-tag> vX.Y.Z` prints `true`), tag
    `vulkan-vA.B.C` on the **same commit** and push it once Core is on Central. A Vulkan release
@@ -105,9 +110,11 @@ One person or agent owns a release from cut to downstream bump. Before cutting, 
    Publish run uploads the three Vulkan modules as one Central deployment and attaches the bundle to
    the GitHub Release, as a Core release does.
 4. **Downstream:** bump awake-studio, awake-template, awake-project-template and
-   awake-plugin-template to the new Core and Vulkan releases. WebGPU stays on the Core train's
-   `<next patch>-SNAPSHOT` after a stable cut (for `0.1.0`, pin `0.1.1-SNAPSHOT` once its main
-   Snapshot run succeeds). Do not append `-SNAPSHOT` to the stable version.
+   awake-plugin-template to the new Core and Vulkan releases. Pin
+   `awake-webgpu = "<release>-SNAPSHOT"` once the WebGPU release pin job succeeds (for `0.1.0`,
+   `0.1.0-SNAPSHOT`), never the next patch: `<next patch>-SNAPSHOT` is `main` after the release,
+   and its Core edges sort above the release, so it moves part of Core up on the web build only.
+   The project template's web player builds the pin by default.
    Re-record moved baselines only after stating which ones should move and why.
 5. Close the milestone.
 
@@ -131,11 +138,15 @@ the repository. The other 59 published modules remain on the shared Core train.
 
 Vulkan snapshots pin `awake.coreVersion` to the exact Core snapshot they integrate with. Vulkan
 releases must pin it to an exact published, non-snapshot Core release; the workflow selects the
-latest reachable Core release tag and verifies its complete dependency closure exists on Maven
-Central before upload. Local publication may pass `-Pawake.coreVersion=<version>` explicitly. Both
-the Maven POM and Gradle module metadata use that Core version for non-Vulkan dependencies and the
-family version for Vulkan-family dependencies. Snapshot POMs may contain snapshot dependencies;
-release verification rejects them and does not strip the suffix.
+latest reachable Core release tag, and before upload `verifyPublishedArtifacts
+-Pawake.verifyPinnedCoreVersion` checks that every Core edge of the family's Gradle module metadata,
+platform modules included, names exactly that release. Nothing checks that the Core closure is on
+Maven Central before the upload. Local publication may pass `-Pawake.coreVersion=<version>`
+explicitly. Both the Maven POM and Gradle module metadata use that Core version for non-Vulkan
+dependencies and the family version for Vulkan-family dependencies. Snapshot POMs may contain
+snapshot dependencies. A release never does: `scripts/central-bundle.sh` refuses a staged
+`-SNAPSHOT` artifact, Central's validation refuses a release POM with a SNAPSHOT dependency, and
+nothing strips the suffix.
 
 Core `v*` snapshots and releases publish only the Core family. Vulkan snapshots publish only when a
 Vulkan-family source/build change occurs; `vulkan-v*` tags publish only the three Vulkan modules.
@@ -154,12 +165,26 @@ well as uploads. An excluded stable module must not register an empty release bu
 Core snapshot run. A run with no selected publications succeeds without contacting Central;
 errors from selected uploads still fail the run.
 
-Release verification rejects SNAPSHOT dependencies instead of stripping the suffix and guessing a
-stable version. The WebGPU backend builds on upstream wgpu4k snapshots, so it is held out of
-releases and publishes snapshots only (its last Central release is `0.1.0-alpha.4`); consumers pin
-it to `<next patch>-SNAPSHOT` after a stable Core release, from Central's snapshot repository.
-Verify that snapshot's successful upload before updating downstream pins. Core releases are not
-blocked by it.
+### WebGPU release pin
+
+A SNAPSHOT dependency is never stripped to a guessed stable version. The WebGPU backend builds on
+upstream wgpu4k snapshots, which Central refuses in a release, so it is held out of releases (its
+last Central release is `0.1.0-alpha.4`) and publishes to Central's snapshot repository on two lines:
+
+- **The release pin**, `<release>-SNAPSHOT`, is what a consumer of a Core release pins. Each `v*`
+  tag's **WebGPU release pin** job builds it from the tagged commit
+  (`tools/publish_webgpu_pin.sh`, `-Pawake.publishFamily=webgpu`) and uploads it once Core is on
+  repo1. Every Core module it depends on is at exactly the release, and its metadata holds every
+  published Core coordinate `strictly` at the release, so pairing it with a newer Core fails
+  resolution instead of mixing two Cores into a web build that fails to link. The weekly **WebGPU
+  release pin** workflow republishes the pins of the newest three releases before Central's 90-day
+  snapshot cleanup can remove them, and repairs one on request (`tag` input).
+- **The main train**, `<next patch>-SNAPSHOT`, is published from `main` with every Core snapshot,
+  for integrating with a Core snapshot only: its Core edges name that snapshot, which sorts above the
+  release.
+
+Core releases are not blocked by the pin: it is a job of its own after the release, and since it is
+a snapshot, a failed one can be re-run.
 
 ---
 

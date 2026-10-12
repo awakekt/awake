@@ -34,12 +34,21 @@ no published artifact. Test-source dependencies are intentionally excluded.
 |---|---:|---|
 | Core | 81 | Existing root `v*` tags and the shared Core release train |
 | Vulkan | 3 | `vulkan-v*` tags; renderer, raw bindings, and Android JNI bridge move together |
+| WebGPU release pin | 1 | Each root `v*` tag publishes `:awake:backend:webgpu` as `<release>-SNAPSHOT`, Core held strictly at the release; `main` publishes it on the Core train |
 
 Vulkan snapshots pin the exact Core snapshot used for integration. Vulkan releases depend on an
 exact, published non-snapshot Core release. The family workflow assigns that Core version to
-non-Vulkan dependencies and verifies the complete pinned Core dependency closure exists on Maven
-Central before release upload. The published POM and Gradle module metadata carry the same exact
-dependency versions. No published Core module has a main-source dependency on the Vulkan family.
+non-Vulkan dependencies, and before release upload `verifyPublishedArtifacts
+-Pawake.verifyPinnedCoreVersion` checks that every Core edge of the family's Gradle module metadata,
+platform modules included, names exactly that release. The published POM and Gradle module metadata
+carry the same exact dependency versions. No published Core module has a main-source dependency on
+the Vulkan family.
+
+WebGPU is held out of Central releases while it builds on wgpu4k snapshots. Its release pin is the
+WebGPU build a Core release's consumers use: built from the tagged commit, it depends on Core at
+exactly the release and holds every published Core coordinate `strictly` there, so it cannot pull a
+newer Core into a web build. No published module depends on WebGPU, so the pin's version changes no
+other coordinate.
 
 For development, use `0.1.0-SNAPSHOT` for the Vulkan family until its first `vulkan-vX.Y.Z` tag.
 Commits after a family release use the next patch `-SNAPSHOT`; a family tag publishes only the three
@@ -64,7 +73,7 @@ Vulkan modules. Core `v*` releases and main snapshots do not publish or change t
 | `com.awakekt.awake.backend:vulkan` | `:awake:backend:vulkan` | `vulkan` | `implementation` → `:awake:engine:render:passes2d`; `implementation` → `:awake:core:graphics2d`; `implementation` → `:awake:core:math2d`; `implementation` → `:awake:core:color`; `implementation` → `:awake:core:host`; `implementation` → `:awake:core:image`; `implementation` → `:awake:core:input`; `implementation` → `:awake:core:logging`; `implementation` → `:awake:core:math`; `implementation` → `:awake:core:text`; `api` → `:awake:engine:render:contract`; `implementation` → `:awake:engine:render:passes`; `api` → `:awake:backend:vulkan:bindings`; `api` → `:awake:engine:platform`; `api` → `:awake:asset:shaders`; `implementation` → `:awake:asset:shader-compiler`; `api` → `:awake:engine:render:testing`; `implementation` → `:awake:asset:shader-pack` |
 | `com.awakekt.awake:vulkan-kmp` | `:awake:backend:vulkan:bindings` | `vulkan` | `api` → `:awake:backend:vulkan:bindings:android-native` |
 | `com.awakekt.awake:vulkan-kmp-android-native` | `:awake:backend:vulkan:bindings:android-native` | `vulkan` | — |
-| `com.awakekt.awake.backend:webgpu` | `:awake:backend:webgpu` | `core` | `implementation` → `:awake:engine:render:passes2d`; `implementation` → `:awake:core:graphics2d`; `implementation` → `:awake:core:math2d`; `implementation` → `:awake:core:color`; `implementation` → `:awake:core:host`; `implementation` → `:awake:core:input`; `implementation` → `:awake:core:math`; `implementation` → `:awake:core:text`; `api` → `:awake:engine:render:contract`; `implementation` → `:awake:engine:render:passes`; `api` → `:awake:asset:shaders`; `implementation` → `:awake:asset:shader-pack`; `api` → `:awake:engine:render:testing`; `api` → `:awake:engine:platform`; `api` → `:awake:engine:window` |
+| `com.awakekt.awake.backend:webgpu` | `:awake:backend:webgpu` | `core`, `webgpu` | `implementation` → `:awake:engine:render:passes2d`; `implementation` → `:awake:core:graphics2d`; `implementation` → `:awake:core:math2d`; `implementation` → `:awake:core:color`; `implementation` → `:awake:core:host`; `implementation` → `:awake:core:input`; `implementation` → `:awake:core:math`; `implementation` → `:awake:core:text`; `api` → `:awake:engine:render:contract`; `implementation` → `:awake:engine:render:passes`; `api` → `:awake:asset:shaders`; `implementation` → `:awake:asset:shader-pack`; `api` → `:awake:engine:render:testing`; `api` → `:awake:engine:platform`; `api` → `:awake:engine:window` |
 | `com.awakekt.awake.compose:di` | `:awake:compose:di` | `core` | `api` → `:awake:compose:runtime`; `api` → `:awake:core:di` |
 | `com.awakekt.awake.compose:foundation` | `:awake:compose:foundation` | `core` | `api` → `:awake:compose:ui` |
 | `com.awakekt.awake.compose:runtime` | `:awake:compose:runtime` | `core` | — |

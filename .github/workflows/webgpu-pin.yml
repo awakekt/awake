@@ -1,0 +1,115 @@
+name: WebGPU release pin
+
+# Keeps each recent Core release's WebGPU release pin, `<release>-SNAPSHOT` on Central's snapshot
+# repository, from expiring. Central documents removing snapshot builds after 90 days, and a pin it
+# removed would break every downstream catalog that pairs a Core release with it. So once a week this
+# republishes, from the release's own tag, any pin of the newest three releases whose latest build is
+# over 60 days old or missing. Run it by hand with a tag to repair one pin whatever its age, such as one
+# whose Publish run's webgpu-pin job failed.
+#
+# Only tags that carry tools/publish_webgpu_pin.sh have a pin: the pin is built by the tag's own
+# script, from the tag's own build, never by main's code over an older release.
+on:
+  schedule:
+    - cron: '41 4 * * 1'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'A Core release tag (v0.8.6) to republish the pin for. Blank: the newest three that need it.'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: webgpu-pin
+  cancel-in-progress: false
+
+env:
+  JAVA_VERSION: '17'
+
+jobs:
+  select:
+    name: Select
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      tags: ${{ steps.select.outputs.tags }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Select the pins to republish
+        id: select
+        env:
+          IN_TAG: ${{ inputs.tag }}
+        run: |
+          snapshots=https://central.sonatype.com/repository/maven-snapshots/com/awakekt/awake/backend/webgpu
+          has_script() { git cat-file -e "$1:tools/publish_webgpu_pin.sh" 2> /dev/null; }
+          selected=()
+          if [[ -n "$IN_TAG" ]]; then
+            if [[ ! "$IN_TAG" =~ ^v[0-9] ]] || ! git rev-parse -q --verify "refs/tags/$IN_TAG" > /dev/null; then
+              echo "::error::$IN_TAG is not a Core release tag." && exit 1
+            fi
+            has_script "$IN_TAG" || { echo "::error::$IN_TAG predates the WebGPU release pin." && exit 1; }
+            selected+=("$IN_TAG")
+          else
+            cutoff=$(date -u -d '60 days ago' +%Y%m%d%H%M%S)
+            day_ago=$(date -u -d '1 day ago' +%s)
+            for tag in $(git tag --list 'v[0-9]*' --sort=-creatordate); do
+              has_script "$tag" || continue
+              candidates=$((${candidates:-0} + 1))
+              # A tag's own Publish run publishes its pin once Core is on Central, which can take hours.
+              if (( $(git for-each-ref --format='%(creatordate:unix)' "refs/tags/$tag") > day_ago )); then
+                echo "$tag: its Publish run owns the pin"
+              else
+                updated=$(curl -fsS --retry 3 --retry-all-errors "$snapshots/${tag#v}-SNAPSHOT/maven-metadata.xml" 2> /dev/null \
+                  | sed -n 's:.*<lastUpdated>\(.*\)</lastUpdated>.*:\1:p' | head -1 || true)
+                if [[ -z "$updated" || "$updated" < "$cutoff" ]]; then
+                  echo "$tag: pin last built ${updated:-never}; republishing"
+                  selected+=("$tag")
+                else
+                  echo "$tag: pin built $updated"
+                fi
+              fi
+              (( candidates < 3 )) || break
+            done
+          fi
+          echo "tags=$(jq -cn '$ARGS.positional' --args "${selected[@]}")" >> "$GITHUB_OUTPUT"
+
+  publish:
+    name: Publish (${{ matrix.tag }})
+    needs: select
+    if: needs.select.outputs.tags != '[]'
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        tag: ${{ fromJSON(needs.select.outputs.tags) }}
+    # Room for the wait on Core, which is immediate for a release already on Central.
+    timeout-minutes: 90
+    runs-on: ubuntu-latest
+    env:
+      MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+      MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refs/tags/${{ matrix.tag }}
+          # The pin's version and its Core pin both come from `git describe --tags`.
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Verify and publish the WebGPU release pin
+        run: bash tools/publish_webgpu_pin.sh
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ env.MAVEN_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ env.MAVEN_CENTRAL_PASSWORD }}

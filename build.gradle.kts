@@ -369,6 +369,12 @@ val gitDerivedVulkanVersion: String = run {
     }
 }
 
+// The WebGPU release pin. WebGPU builds on wgpu4k snapshots, so Central releases refuse it, and each
+// Core release publishes it instead as `<release>-SNAPSHOT`, built from the tagged commit with every
+// Core module it reaches at that release. No published module depends on WebGPU (PR #97), so it can
+// take a version of its own without changing any other coordinate.
+val webgpuFamilyProjects = setOf(":awake:backend:webgpu")
+
 val publishFamily = providers.gradleProperty("awake.publishFamily").orNull
 
 // `publishToMavenLocal -Pawake.version=0.1.0-local` publishes this checkout for a consumer (Studio, a
@@ -378,8 +384,13 @@ val localVersion = providers.gradleProperty("awake.version").orNull
 require(localVersion == null || publishFamily == null) {
     "awake.version is for local builds; a release takes its version from the tags, not awake.publishFamily with it."
 }
-require(publishFamily == null || publishFamily in setOf("core", "vulkan")) {
-    "awake.publishFamily must be either 'core' or 'vulkan', not '$publishFamily'."
+require(publishFamily == null || publishFamily in setOf("core", "vulkan", "webgpu")) {
+    "awake.publishFamily must be 'core', 'vulkan' or 'webgpu', not '$publishFamily'."
+}
+// The pin names the Core release it was built from, so only that release's tagged commit builds it.
+// The tag gives every other project the release version; no Core pin needs passing.
+require(publishFamily != "webgpu" || !gitDerivedVersion.endsWith("-SNAPSHOT")) {
+    "The WebGPU release pin is built from the commit tagged v<release>, not $gitDerivedVersion."
 }
 val pinnedCoreVersion = providers.gradleProperty("awake.coreVersion").orNull
     ?: if (gitDerivedVulkanVersion.endsWith("-SNAPSHOT")) {
@@ -437,6 +448,26 @@ project(":awake:backend:webgpu") {
                 }
             }
         }
+        // The release pin holds every published Core module strictly at its release, not only the ones
+        // it depends on, so a consumer's whole web graph stays on one Core. A newer Core on the same
+        // classpath is a resolution error then, not a web build that fails to link at startup. `api`,
+        // so the constraints reach the published API variants and a consumer's compile classpath.
+        if (publishFamily == "webgpu") {
+            val webgpu = this@project
+            rootProject.subprojects
+                .filter { it.path !in vulkanFamilyProjects && it.path !in webgpuFamilyProjects }
+                .forEach { core ->
+                    core.pluginManager.withPlugin("com.awakekt.awake.plugin.publish") {
+                        webgpu.dependencies.constraints.add("commonMainApi", "${core.group}:${core.name}") {
+                            version { strictly(gitDerivedVersion) }
+                            because(
+                                "WebGPU $gitDerivedVersion-SNAPSHOT is built from v$gitDerivedVersion; " +
+                                    "another Core on the same classpath can fail to link",
+                            )
+                        }
+                    }
+                }
+        }
     }
 }
 
@@ -474,6 +505,7 @@ allprojects {
         localVersion != null -> localVersion
         path in vulkanFamilyProjects -> gitDerivedVulkanVersion
         publishFamily == "vulkan" -> pinnedCoreVersion!!
+        publishFamily == "webgpu" && path in webgpuFamilyProjects -> "$gitDerivedVersion-SNAPSHOT"
         else -> gitDerivedVersion
     }
     // io.ygdrasil (wgpu4k and its type libraries) publishes only SNAPSHOTs, and each family
@@ -500,13 +532,15 @@ allprojects {
     configurePublicationFamily(when (publishFamily) {
         "core" -> path !in vulkanFamilyProjects
         "vulkan" -> path in vulkanFamilyProjects
+        "webgpu" -> path in webgpuFamilyProjects
         else -> true
     })
 }
 
 // Maven Central rejects release POMs with SNAPSHOT dependencies. The WebGPU backend builds on a
 // wgpu4k SNAPSHOT, so it stays out of Central releases (snapshots and Maven Local are unaffected)
-// until wgpu4k publishes a matching stable version.
+// until wgpu4k publishes a matching stable version. Its release pin is a `-SNAPSHOT` version, so it
+// goes to the snapshot repository and never to centralStaging.
 val releaseHeldProjects = if (libs.versions.wgpu4k.get().endsWith("-SNAPSHOT")) setOf(":awake:backend:webgpu") else emptySet()
 allprojects {
     tasks.matching {
