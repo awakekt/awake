@@ -165,6 +165,7 @@ Screen-space UI drawn over the game. Sizes and offsets are in dp. `SceneCanvasEl
 | `layout` | object | none | Lay the element's children out in rows or columns instead of anchoring each: `direction` (`Row` · `RowReverse` · `Column` · `ColumnReverse`), `wrap`, `gap`, `padding`, `justify` (`Start` · `Center` · `End` · `SpaceBetween` · `SpaceAround` · `SpaceEvenly`) and `align` (`Start` · `Center` · `End` · `Stretch`). A laid-out child keeps its `width` and `height` and ignores its anchor and offsets. See [Game UI](../guides/game-ui.md#lay-out-children). |
 | `grow` | number | `0` | In a parent with a `layout`, this element's share of its line's leftover space. Not negative. |
 | `bind` | object | none | Game state the element shows without code. `node` names a node; `value` is a `component.field` for a Bar's fill, divided by `max` (a field or a number); `text` fills each `{component.field}`, or `{component.field:n0}` with a number format, in a Text's or Button's words. See [Game UI](../guides/game-ui.md#show-game-state). |
+| `wheel` | boolean | `false` | Take the mouse wheel while the pointer is over this element or its children, instead of leaving it for gameplay. The innermost such element under the pointer takes it; read it back with `consumeWheel()`. |
 
 ## `character_controller`
 

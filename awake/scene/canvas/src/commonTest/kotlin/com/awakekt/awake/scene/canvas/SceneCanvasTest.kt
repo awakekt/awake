@@ -222,6 +222,7 @@ class SceneCanvasTest {
             value = 0.4f,
             order = 3,
             visible = false,
+            wheel = true,
             style = CanvasStyle(
                 background = "#202020",
                 gradient = CanvasGradient("#303030", "#101010", horizontal = true),

@@ -55,6 +55,7 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         it.layout = layout
         it.grow = grow
         it.bind = bind
+        it.wheel = wheel
     }
 
     /**
@@ -88,5 +89,6 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         layout = layout,
         grow = grow,
         bind = bind,
+        wheel = wheel,
     )
 }

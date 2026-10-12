@@ -46,6 +46,8 @@ import kotlinx.serialization.Serializable
  * each child by hand.
  * @property grow In a parent with a [layout], this element's share of its line's leftover space.
  * @property bind Game state the element shows without code: a Bar's fill, a Text's words.
+ * @property wheel Whether this element takes the mouse wheel while the pointer is over it or its
+ * children, instead of leaving it for gameplay. [CanvasElement.consumeWheel] reads what it took.
  */
 @Serializable
 @SerialName("canvas_element")
@@ -75,6 +77,7 @@ data class SceneCanvasElement(
     val layout: CanvasLayout? = null,
     @PropertyRange(min = 0.0) val grow: Float = 0f,
     val bind: CanvasBinding? = null,
+    val wheel: Boolean = false,
 ) : SceneComponent {
     /**
      * Validates element dimensions, font sizes, values, and hex color syntax.

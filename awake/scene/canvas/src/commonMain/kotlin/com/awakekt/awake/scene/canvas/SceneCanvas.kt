@@ -10,6 +10,7 @@ package com.awakekt.awake.scene.canvas
 import com.awakekt.awake.compose.foundation.background
 import com.awakekt.awake.compose.foundation.clickable
 import com.awakekt.awake.compose.foundation.gestures.draggable
+import com.awakekt.awake.compose.foundation.gestures.onWheel
 import com.awakekt.awake.compose.foundation.hoverable
 import com.awakekt.awake.compose.foundation.layout.Box
 import com.awakekt.awake.compose.foundation.layout.BoxScope
@@ -171,7 +172,10 @@ private fun CanvasElementView(
         shadow = element.style.textShadow?.toTextShadow(),
         outline = element.style.textOutline?.toTextOutline(),
     )
-    val styled = modifier.styleable(state, style)
+    // Applied before styling and per-kind modifiers, so it covers every kind, Joystick included,
+    // and sits outermost -- an ancestor's wheel element only sees what this one left unconsumed.
+    val wheeled = if (element.wheel) modifier.onWheel(element::addWheel) else modifier
+    val styled = wheeled.styleable(state, style)
     when (element.kind) {
         CanvasElementKind.Text -> Box(styled, contentAlignment = (element.textAlign ?: CanvasAnchor.TopLeft).alignment) {
             Text(tree.textOf(element), style = textStyle)
@@ -207,7 +211,7 @@ private fun CanvasElementView(
             )
             Children(element, children, tree)
         }
-        CanvasElementKind.Joystick -> JoystickView(element, modifier, back, tree, children)
+        CanvasElementKind.Joystick -> JoystickView(element, wheeled, back, tree, children)
     }
 }
 
