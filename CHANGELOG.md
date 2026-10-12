@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.6] - 2026-10-12
+
+### Fixed
+
+- **WebGPU draws a textured material that has no PBR maps.** `createMaterial(texture, pbrTextures = null)`, which a glTF material with only a base-colour texture produces, gave the material no textures for the metallic-roughness, normal, occlusion and emissive bindings, so its first draw failed ("Declaration needs 4 sampled textures past the base-color one … supplied 0") and the engine never started. Each missing map now gets its neutral 1×1 texture, as on Vulkan.
+- **A pointer moving over a deep stack of plain boxes no longer stalls the frame.** Finding what the pointer is over walked a box that handles nothing again after trying its siblings, which doubled the work at every level. It also searched every child's whole subtree for popup layers at every level. Over Awake Studio's 3D view, a stack of such boxes, a pointer move cost about 70 ms a frame on desktop and most of a second on the web, so camera drags collapsed into a frame or two and Play lagged.
+  - **The walk is now linear in the number of nodes.** A passed-over box keeps the path it already found. The search for popup layers runs once per walk, from its root, and each dispatch marks which subtrees hold a layer, so the search skips the rest.
+  - **Nothing it allocates grows with the tree.** What the pointer reaches, and in what order, is unchanged.
+- **`generateProjectIndex` reruns when a project file changes, and finds files with spaces in their names.** The task declared only its settings as inputs, so after an asset changed it stayed up to date and kept the old size and SHA-256, and a browser loading the project through `IndexedAssetSource` rejected the file. It now takes the files it indexes as inputs. A file's URL also encodes a space as `%20` instead of form encoding's `+`, which a static server reads as a literal plus.
+- **Each Core release publishes a WebGPU backend built from it.** `com.awakekt.awake.backend:webgpu:<release>-SNAPSHOT` holds every Core module at that release, so pairing a Core release with WebGPU no longer pulls a newer Core into web builds. WebGPU stays out of Central releases while it builds on wgpu4k snapshots, and the only WebGPU snapshot after a release used to be `main`'s next patch, whose Core snapshots sort above the release and moved part of Core up on the web build alone.
+  - **Now:** the release's tag publishes the pin from the tagged commit once Core is on Central, with every published Core coordinate held `strictly` at the release, so a build that also asks for a newer Core fails to resolve instead of failing to link at startup. Pin `awake-webgpu = "<awake>-SNAPSHOT"`; a weekly workflow republishes the newest three pins before Central's snapshot cleanup removes them.
+
 ## [0.8.5] - 2026-10-11
 
 ### Fixed
