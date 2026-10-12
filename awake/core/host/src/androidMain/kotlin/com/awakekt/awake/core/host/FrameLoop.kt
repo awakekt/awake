@@ -17,7 +17,7 @@ object AndroidFrameLoop : FrameLoop {
     ) {
         val currentFrameTime = System.nanoTime()
         val rawDeltaTime = (currentFrameTime - previousFrameTime) / 1e9
-        val deltaTime = rawDeltaTime.coerceAtMost(MAX_FRAME_DELTA_SECONDS)
+        val deltaTime = clampFrameDelta(rawDeltaTime)
         previousFrameTime = currentFrameTime
 
         onUpdate(deltaTime)
