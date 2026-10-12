@@ -34,9 +34,14 @@ class BasicTextFieldSubmitTest {
         state: TextFieldState,
         singleLine: Boolean,
         onSubmit: () -> Unit,
-    ): Pair<ComposeHost, context(Composer) () -> Unit> {
+    ): Pair<
+        ComposeHost,
+        context(Composer)
+        () -> Unit,
+        > {
         val host = ComposeHost()
-        val content: context(Composer) () -> Unit = {
+        val content: context(Composer)
+        () -> Unit = {
             BasicTextField(state, Modifier.size(100.dp, 20.dp), singleLine = singleLine, onSubmit = onSubmit)
         }
         host.frame(idle, content)

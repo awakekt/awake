@@ -39,7 +39,8 @@ class FocusRequesterQueueTest {
     fun requestFocusAppliesAtTheStartOfTheNextFrameNotImmediately() {
         val host = ComposeHost(density = 1f)
         val requester = FocusRequester()
-        val content: context(Composer) () -> Unit = {
+        val content: context(Composer)
+        () -> Unit = {
             Layout(nodeType = "field", modifier = Modifier.size(50.dp).focusRequester(requester).focusTarget(), measurePolicy = stackPolicy)
         }
 
@@ -57,7 +58,8 @@ class FocusRequesterQueueTest {
     fun freeFocusAppliesAtTheStartOfTheNextFrame() {
         val host = ComposeHost(density = 1f)
         val requester = FocusRequester()
-        val content: context(Composer) () -> Unit = {
+        val content: context(Composer)
+        () -> Unit = {
             Layout(nodeType = "field", modifier = Modifier.size(50.dp).focusRequester(requester).focusTarget(), measurePolicy = stackPolicy)
         }
 
@@ -78,7 +80,8 @@ class FocusRequesterQueueTest {
         val stays = FocusRequester()
         val leaves = FocusRequester()
         var includeLeaves = true
-        val content: context(Composer) () -> Unit = {
+        val content: context(Composer)
+        () -> Unit = {
             Layout(nodeType = "stays", modifier = Modifier.size(50.dp).focusRequester(stays).focusTarget(), measurePolicy = stackPolicy)
             if (includeLeaves) {
                 Layout(nodeType = "leaves", modifier = Modifier.size(50.dp).focusRequester(leaves).focusTarget(), measurePolicy = stackPolicy)
@@ -103,7 +106,8 @@ class FocusRequesterQueueTest {
     fun theLaterOfARequestAndAFreeInOneFrameWins() {
         val host = ComposeHost(density = 1f)
         val requester = FocusRequester()
-        val content: context(Composer) () -> Unit = {
+        val content: context(Composer)
+        () -> Unit = {
             Layout(nodeType = "field", modifier = Modifier.size(50.dp).focusRequester(requester).focusTarget(), measurePolicy = stackPolicy)
         }
         host.frame(frameInput(), content)
@@ -125,7 +129,8 @@ class FocusRequesterQueueTest {
         val host = ComposeHost(density = 1f)
         val requester = FocusRequester()
         var shown = false
-        val content: context(Composer) () -> Unit = {
+        val content: context(Composer)
+        () -> Unit = {
             if (shown) {
                 Layout(nodeType = "field", modifier = Modifier.size(50.dp).focusRequester(requester).focusTarget(), measurePolicy = stackPolicy)
             }
@@ -146,7 +151,8 @@ class FocusRequesterQueueTest {
         val host = ComposeHost(density = 1f)
         val a = FocusRequester()
         val b = FocusRequester()
-        val content: context(Composer) () -> Unit = {
+        val content: context(Composer)
+        () -> Unit = {
             Layout(nodeType = "a", modifier = Modifier.size(50.dp).focusRequester(a).focusTarget(), measurePolicy = stackPolicy)
             Layout(nodeType = "b", modifier = Modifier.size(50.dp).focusRequester(b).focusTarget(), measurePolicy = stackPolicy)
         }
