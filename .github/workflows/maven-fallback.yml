@@ -2,7 +2,8 @@ name: Maven fallback
 
 # Serves the newest two Core releases and the newest two Vulkan releases as a static Maven
 # repository on GitHub Pages, https://awakekt.github.io/awake/, for a release Maven Central refuses
-# under its publishing limits.
+# under its publishing limits. It also serves the io.ygdrasil (wgpu4k) snapshot builds the WebGPU
+# backend pins, from the mirror-io.ygdrasil-* releases, once Central's snapshot cleanup removes them.
 # The files are the ones the release job signed and staged for Central and attached to each GitHub
 # Release, so they keep Central's coordinates and a build adds this repository after mavenCentral().
 #
@@ -62,6 +63,25 @@ jobs:
       - name: Build the repository
         if: steps.bundles.outputs.count != '0'
         run: scripts/maven-fallback-site.sh build/maven-fallback $(find build/bundles -name '*.zip' | sort)
+
+      # Central's own files at Central's paths, maven-metadata.xml included, so they go in after the
+      # site is built: the site script would write release metadata over a snapshot's.
+      - name: Add the wgpu4k mirror
+        if: steps.bundles.outputs.count != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Listed apart from the filter, so a failed listing fails the step instead of serving no mirror.
+          releases="$(gh release list --limit 100 --json tagName --jq '.[].tagName')"
+          tags="$(grep -E '^mirror-io\.ygdrasil-' <<< "$releases" || true)"
+          for tag in $tags; do
+            gh release download "$tag" --pattern 'io-ygdrasil-*-maven.zip' --dir build/mirrors
+            echo "Serving $tag"
+          done
+          for zip in build/mirrors/*.zip; do
+            [ -e "$zip" ] || continue
+            unzip -q -o "$zip" -d build/maven-fallback
+          done
 
       - uses: actions/upload-pages-artifact@v5
         if: steps.bundles.outputs.count != '0'
