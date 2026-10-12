@@ -145,6 +145,10 @@ public abstract interface class com/awakekt/awake/compose/foundation/gestures/Tr
 	public abstract fun transform (FFFF)V
 }
 
+public final class com/awakekt/awake/compose/foundation/gestures/WheelKt {
+	public static final fun onWheel (Lcom/awakekt/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/compose/ui/Modifier;
+}
+
 public abstract interface class com/awakekt/awake/compose/foundation/interaction/Interaction {
 }
 

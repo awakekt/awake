@@ -157,6 +157,26 @@ class CanvasElement {
     /** Game state the element shows without code; while it reads, it stands in for [value] and [text]. */
     var bind: CanvasBinding? = null
 
+    /**
+     * Whether this element takes the mouse wheel while the pointer is over it or its children,
+     * instead of leaving it for gameplay. The innermost such element under the pointer takes it;
+     * [consumeWheel] reads what it collected.
+     */
+    var wheel: Boolean = false
+
+    private var wheelAccumulated = 0f
+
+    /** Adds to the wheel collected since the last [consumeWheel]; [SceneCanvas] calls this. */
+    internal fun addWheel(delta: Float) {
+        wheelAccumulated += delta
+    }
+
+    /**
+     * The wheel collected since the last call, in the same sign and units as a frame's raw scroll
+     * delta, then zero.
+     */
+    fun consumeWheel(): Float = wheelAccumulated.also { wheelAccumulated = 0f }
+
     private var pressed = false
     private var doublePressed = false
     private var lastPress: TimeMark? = null
