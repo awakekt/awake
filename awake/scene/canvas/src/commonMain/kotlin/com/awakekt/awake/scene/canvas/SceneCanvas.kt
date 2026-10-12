@@ -26,7 +26,6 @@ import com.awakekt.awake.compose.foundation.style.Style
 import com.awakekt.awake.compose.foundation.style.rememberStyleState
 import com.awakekt.awake.compose.foundation.style.resolveTextColor
 import com.awakekt.awake.compose.foundation.style.styleable
-import com.awakekt.awake.compose.foundation.text.BasicTextField
 import com.awakekt.awake.compose.foundation.text.Text
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.CompositionLocalProvider
@@ -38,15 +37,11 @@ import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.draw.clip
 import com.awakekt.awake.compose.ui.draw.drawBehind
 import com.awakekt.awake.compose.ui.draw.graphicsLayer
-import com.awakekt.awake.compose.ui.focus.focusRequester
-import com.awakekt.awake.compose.ui.focus.onFocusChanged
 import com.awakekt.awake.compose.ui.graphics.CircleShape
 import com.awakekt.awake.compose.ui.graphics.ImageBitmap
 import com.awakekt.awake.compose.ui.graphics.ImageFill
 import com.awakekt.awake.compose.ui.graphics.RoundedCornerShape
 import com.awakekt.awake.compose.ui.graphics.drawImageFill
-import com.awakekt.awake.compose.ui.input.key.KeyEventType
-import com.awakekt.awake.compose.ui.input.key.onKeyEvent
 import com.awakekt.awake.compose.ui.layout.onPlaced
 import com.awakekt.awake.compose.ui.platform.LocalDensity
 import com.awakekt.awake.compose.ui.platform.LocalTextStyle
@@ -54,13 +49,11 @@ import com.awakekt.awake.compose.ui.semantics.testTag
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.drawPath
-import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.math2d.Rectangle
 import com.awakekt.awake.core.text.theme.TextStyle
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.binding.SceneComponentBinding
-import com.awakekt.awake.scene.core.transform.Transform
 
 context(_: Composer)
 /**
@@ -212,58 +205,9 @@ internal fun CanvasElementView(
             Text(tree.textOf(element), style = textStyle)
             Children(element, children, tree)
         }
-        CanvasElementKind.TextField -> Box(styled) {
-            element.syncTextField()
-            BasicTextField(
-                state = element.textFieldState,
-                modifier = Modifier.fillMaxSize()
-                    .focusRequester(element.focusRequester)
-                    .onFocusChanged { element.focused = it }
-                    .onKeyEvent { event ->
-                        val escape = event.type == KeyEventType.Down && event.key == Key.Escape
-                        if (escape) element.focused = false
-                        escape
-                    },
-                style = textStyle,
-                singleLine = true,
-                onSubmit = element::submit,
-            )
-            Children(element, children, tree)
-        }
+        CanvasElementKind.TextField -> TextFieldView(element, styled, textStyle, tree, children)
         CanvasElementKind.Joystick -> JoystickView(element, wheeled, back, tree, children)
         CanvasElementKind.View -> CameraView(element, styled, tree, children)
-    }
-}
-
-/**
- * A View: what its camera sees, filling its box inside its style's rounded corners at the box's size
- * in pixels, under its children. No picture without [CanvasTree.views] or a node of that name.
- *
- * Opaque, as the camera's picture is on screen: a blended draw lowers the target's alpha even over a
- * solid surface, so the picture goes over black rather than over what is behind the element.
- */
-context(_: Composer)
-private fun CameraView(
-    element: CanvasElement,
-    modifier: Modifier,
-    tree: CanvasTree,
-    children: List<Pair<Entity, CanvasElement>>,
-) {
-    val views = tree.views
-    val camera = element.camera.takeIf { it.isNotEmpty() }?.let(tree::node)
-    val radius = element.style.cornerRadius ?: 0f
-    val box = if (radius > 0f) Modifier.fillMaxSize().clip(RoundedCornerShape(radius.dp)) else Modifier.fillMaxSize()
-    Box(modifier) {
-        Box(
-            box.drawBehind {
-                val picture = if (views != null && camera != null) views.texture(element, camera, width, height) else null
-                if (picture != null) {
-                    drawRect(0f, 0f, width.toFloat(), height.toFloat(), Color.Black)
-                    drawTexture(picture, premultiplied = true)
-                }
-            },
-        )
-        Children(element, children, tree)
     }
 }
 
