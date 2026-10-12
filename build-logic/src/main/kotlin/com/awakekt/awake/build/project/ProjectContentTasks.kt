@@ -145,6 +145,9 @@ abstract class ValidateProjectTask : DefaultTask() {
                 return@forEachIndexed
             }
             val path = plugin["path"]?.jsonPrimitive?.contentOrNull
+            // A capability compiled into the game's own app project has no file, as ProjectContract allows.
+            val compiledIntoTheGame = path.isNullOrEmpty() && plugin["capabilityClass"]?.jsonPrimitive?.contentOrNull != null
+            if (compiledIntoTheGame) return@forEachIndexed
             if (!safePath(path)) {
                 errors += "manifest.plugins[$index].path must be safe"
             } else if (!root.resolve(path!!).isFile) {

@@ -1,0 +1,1 @@
+- `validateProject` accepts a plugin compiled into the game: a `manifest.plugins` entry with a `capabilityClass` and no `path`, which the project contract already allowed (#715).
