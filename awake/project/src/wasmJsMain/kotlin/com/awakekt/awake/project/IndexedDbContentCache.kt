@@ -15,7 +15,13 @@ import org.khronos.webgl.get
 import org.khronos.webgl.set
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.js.JsAny
+import kotlin.js.JsArray
+import kotlin.js.JsNumber
+import kotlin.js.JsString
 import kotlin.js.Promise
+import kotlin.js.toInt
+import kotlin.js.toJsArray
+import kotlin.js.toJsString
 
 private const val DATABASE_NAME = "awake-content-cache-v1"
 
@@ -30,6 +36,9 @@ private const val DATABASE_NAME = "awake-content-cache-v1"
  *
  * Every read and write shares one connection, opened on first use. Another tab upgrading the
  * store closes it, and the next read or write opens a new one.
+ *
+ * Files are kept by content and never expire, so call [retainOnly] with each release's index, or
+ * the store keeps every release's changed files until the browser's quota runs out.
  */
 class IndexedDbContentCache internal constructor(
     private val namespace: String,
@@ -47,6 +56,17 @@ class IndexedDbContentCache internal constructor(
     override suspend fun put(sha256: String, bytes: ByteArray) {
         val content = bytes.toArrayBuffer()
         useDatabase { jsContentCachePut(it, namespace, sha256, content) }
+    }
+
+    /**
+     * Deletes this namespace's files that [index] doesn't list, such as files an earlier release
+     * used and this one doesn't. Other namespaces are untouched.
+     *
+     * @return How many files were deleted; 0 when the browser's storage is blocked or unavailable.
+     */
+    suspend fun retainOnly(index: ProjectIndex): Int {
+        val keep = index.files.map { it.sha256.lowercase().toJsString() }.toTypedArray().toJsArray()
+        return useDatabase { jsContentCacheRetain(it, namespace, keep) }?.unsafeCast<JsNumber>()?.toInt() ?: 0
     }
 
     private suspend fun useDatabase(request: (database: JsAny) -> Promise<JsAny?>): JsAny? {
@@ -170,3 +190,30 @@ private external fun jsContentCacheGet(db: JsAny, namespace: String, key: String
     """,
 )
 private external fun jsContentCachePut(db: JsAny, namespace: String, key: String, content: ArrayBuffer): Promise<JsAny?>
+
+// Walks only [namespace]'s keys: [namespace] sorts before every [namespace, sha256], and
+// [namespace, []] after, since IndexedDB orders an array after any string.
+@JsFun(
+    """
+(db, namespace, keep) => new Promise((resolve, reject) => {
+  let tx;
+  try { tx = db.transaction('files', 'readwrite'); } catch (e) { reject(e); return; }
+  const kept = new Set(keep);
+  let deleted = 0;
+  tx.oncomplete = () => resolve(deleted);
+  tx.onerror = () => resolve(null);
+  tx.onabort = () => resolve(null);
+  try {
+    const store = tx.objectStore('files');
+    const cursor = store.openKeyCursor(IDBKeyRange.bound([namespace], [namespace, []]));
+    cursor.onsuccess = () => {
+      const item = cursor.result;
+      if (!item) return;
+      if (!kept.has(item.key[1])) { store.delete(item.primaryKey); deleted++; }
+      item.continue();
+    };
+  } catch (e) { resolve(null); }
+})
+    """,
+)
+private external fun jsContentCacheRetain(db: JsAny, namespace: String, keep: JsArray<JsString>): Promise<JsAny?>

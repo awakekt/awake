@@ -157,6 +157,48 @@ class IndexedDbContentCacheTest {
         assertContentEquals(byteArrayOf(7), cache.get("key"))
     }
 
+    @Test
+    fun retainOnlyDeletesWhatTheIndexNoLongerLists() = runTest {
+        val cache = cache()
+        val (kept, dropped, alsoKept) = listOf(byteArrayOf(1), byteArrayOf(2), byteArrayOf(3))
+        listOf(kept, dropped, alsoKept).forEach { cache.put(Sha256.digestHex(it), it) }
+
+        val deleted = cache.retainOnly(indexOf("assets/a.bin" to kept, "assets/c.bin" to alsoKept))
+
+        assertEquals(1, deleted)
+        assertNull(cache.get(Sha256.digestHex(dropped)))
+        assertContentEquals(kept, cache.get(Sha256.digestHex(kept)))
+        assertContentEquals(alsoKept, cache.get(Sha256.digestHex(alsoKept)))
+    }
+
+    @Test
+    fun retainOnlyLeavesOtherNamespacesAlone() = runTest {
+        val suffix = Random.nextInt()
+        val other = IndexedDbContentCache("test-$suffix-other")
+        val bytes = byteArrayOf(5)
+        other.put(Sha256.digestHex(bytes), bytes)
+
+        assertEquals(0, IndexedDbContentCache("test-$suffix").retainOnly(ProjectIndex()))
+
+        assertContentEquals(bytes, other.get(Sha256.digestHex(bytes)))
+    }
+
+    @Test
+    fun retainOnlyDeletesNothingWhenStorageIsBlocked() = runTest {
+        installBlockedIndexedDb()
+        try {
+            assertEquals(0, cache().retainOnly(ProjectIndex()))
+        } finally {
+            restoreIndexedDb()
+        }
+    }
+
+    private fun indexOf(vararg files: Pair<String, ByteArray>) = ProjectIndex(
+        files = files.map { (path, bytes) ->
+            ProjectIndexEntry(path = path, sizeBytes = bytes.size.toLong(), sha256 = Sha256.digestHex(bytes), url = "files/$path")
+        },
+    )
+
     private val model = ByteArray(64) { it.toByte() }
 
     private fun sourceOver(cache: ContentCache): IndexedAssetSource {
