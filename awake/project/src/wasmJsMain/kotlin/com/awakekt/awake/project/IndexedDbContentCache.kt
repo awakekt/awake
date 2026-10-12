@@ -13,24 +13,41 @@ import org.khronos.webgl.Int32Array
 import org.khronos.webgl.Int8Array
 import org.khronos.webgl.get
 import org.khronos.webgl.set
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.js.JsAny
 import kotlin.js.Promise
 
 /**
  * Caches [IndexedAssetSource]'s verified files in the browser's IndexedDB, keyed by SHA-256, so a
- * return visit to the same project neither re-fetches nor re-hashes a file whose content hasn't
- * changed. IndexedDB stores the bytes as the [ArrayBuffer] they already are -- no base64 detour.
+ * return visit to the same project doesn't download a file whose content hasn't changed. Bytes are
+ * stored as an [ArrayBuffer], with no base64 round trip.
+ *
+ * The cache never fails a load: storage the browser blocks, fills or loses reads as a miss, so the
+ * file comes from the network, and a file it can't keep is dropped, costing only the next visit a
+ * download.
  *
  * @param namespace Separates one project's cached files from another's under the same origin.
  */
 class IndexedDbContentCache(private val namespace: String = "default") : ContentCache {
     override suspend fun get(sha256: String): ByteArray? {
-        val stored = jsContentCacheGet(namespace, sha256).await<JsAny?>() ?: return null
-        return stored.unsafeCast<ArrayBuffer>().copyToByteArray()
+        val stored = try {
+            jsContentCacheGet(namespace, sha256).await<JsAny?>()
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (ignored: Throwable) {
+            null
+        }
+        return stored?.unsafeCast<ArrayBuffer>()?.copyToByteArray()
     }
 
     override suspend fun put(sha256: String, bytes: ByteArray) {
-        jsContentCachePut(namespace, sha256, bytes.toArrayBuffer()).await<JsAny?>()
+        try {
+            jsContentCachePut(namespace, sha256, bytes.toArrayBuffer()).await<JsAny?>()
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (ignored: Throwable) {
+            // Not kept: the bytes in hand are already checked, so only the next visit pays a download.
+        }
     }
 }
 
@@ -91,9 +108,13 @@ private fun ByteArray.toArrayBuffer(): ArrayBuffer {
   };
   request.onerror = () => reject(request.error);
   request.onsuccess = () => {
-    const result = request.result.transaction('files', 'readonly').objectStore('files').get(namespace + ':' + key);
-    result.onerror = () => reject(result.error);
-    result.onsuccess = () => resolve(result.result ?? null);
+    try {
+      const tx = request.result.transaction('files', 'readonly');
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error ?? new Error('IndexedDB transaction aborted'));
+      const result = tx.objectStore('files').get(namespace + ':' + key);
+      result.onsuccess = () => resolve(result.result ?? null);
+    } catch (e) { reject(e); }
   };
 })
     """,
@@ -110,10 +131,14 @@ private external fun jsContentCacheGet(namespace: String, key: String): Promise<
   };
   request.onerror = () => reject(request.error);
   request.onsuccess = () => {
-    const tx = request.result.transaction('files', 'readwrite');
-    tx.objectStore('files').put(content, namespace + ':' + key);
-    tx.oncomplete = () => resolve(null);
-    tx.onerror = () => reject(tx.error);
+    try {
+      const tx = request.result.transaction('files', 'readwrite');
+      tx.oncomplete = () => resolve(null);
+      tx.onerror = () => reject(tx.error);
+      // A full origin aborts the transaction with QuotaExceededError, which fires abort, not error.
+      tx.onabort = () => reject(tx.error ?? new Error('IndexedDB transaction aborted'));
+      tx.objectStore('files').put(content, namespace + ':' + key);
+    } catch (e) { reject(e); }
   };
 })
     """,

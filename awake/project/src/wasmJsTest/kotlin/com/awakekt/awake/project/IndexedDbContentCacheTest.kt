@@ -3,8 +3,12 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+@file:OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
+
 package com.awakekt.awake.project
 
+import com.awakekt.awake.core.io.AssetPath
+import com.awakekt.awake.core.io.Sha256
 import kotlinx.coroutines.test.runTest
 import kotlin.random.Random
 import kotlin.test.Test
@@ -72,5 +76,92 @@ class IndexedDbContentCacheTest {
         assertContentEquals(byteArrayOf(2), b.get("same-sha256"))
     }
 
+    @Test
+    fun aFullOriginStillLoadsFromTheNetwork() = runTest {
+        installAbortingIndexedDb()
+        try {
+            val cache = cache()
+
+            // Returning at all is the point: an abort fires `abort`, not `error`, and used to hang.
+            assertContentEquals(model, sourceOver(cache).read(AssetPath("assets/crate.glb")).getOrThrow())
+            assertNull(cache.get(Sha256.digestHex(model)), "an aborted put keeps nothing")
+        } finally {
+            restoreIndexedDb()
+        }
+    }
+
+    @Test
+    fun blockedStorageStillLoadsFromTheNetwork() = runTest {
+        installBlockedIndexedDb()
+        try {
+            val cache = cache()
+
+            assertContentEquals(model, sourceOver(cache).read(AssetPath("assets/crate.glb")).getOrThrow())
+            assertNull(cache.get(Sha256.digestHex(model)), "blocked storage reads as a miss")
+        } finally {
+            restoreIndexedDb()
+        }
+    }
+
+    private val model = ByteArray(64) { it.toByte() }
+
+    private fun sourceOver(cache: ContentCache): IndexedAssetSource {
+        val entry = ProjectIndexEntry(
+            path = "assets/crate.glb",
+            sizeBytes = model.size.toLong(),
+            sha256 = Sha256.digestHex(model),
+            url = "files/assets/crate.glb",
+        )
+        return IndexedAssetSource(ProjectIndex(files = listOf(entry)), { model }, cache)
+    }
+
     private fun cache() = IndexedDbContentCache("test-${Random.nextInt()}")
 }
+
+// Every transaction aborts with QuotaExceededError, as on an origin out of storage.
+@JsFun(
+    """
+() => {
+  globalThis.__awakeRealIndexedDb = Object.getOwnPropertyDescriptor(globalThis, 'indexedDB');
+  const db = {
+    objectStoreNames: { contains: () => true },
+    transaction: () => {
+      const tx = { error: new DOMException('The quota has been exceeded.', 'QuotaExceededError') };
+      tx.objectStore = () => ({ get: () => ({}), put: () => ({}) });
+      setTimeout(() => tx.onabort && tx.onabort(), 0);
+      return tx;
+    },
+  };
+  Object.defineProperty(globalThis, 'indexedDB', {
+    configurable: true,
+    value: { open: () => { const request = { result: db }; setTimeout(() => request.onsuccess(), 0); return request; } },
+  });
+}
+    """,
+)
+private external fun installAbortingIndexedDb()
+
+// Opening throws SecurityError, as in a sandboxed iframe or with site storage blocked.
+@JsFun(
+    """
+() => {
+  globalThis.__awakeRealIndexedDb = Object.getOwnPropertyDescriptor(globalThis, 'indexedDB');
+  Object.defineProperty(globalThis, 'indexedDB', {
+    configurable: true,
+    value: { open: () => { throw new DOMException('Access to storage is denied.', 'SecurityError'); } },
+  });
+}
+    """,
+)
+private external fun installBlockedIndexedDb()
+
+@JsFun(
+    """
+() => {
+  const real = globalThis.__awakeRealIndexedDb;
+  if (real) Object.defineProperty(globalThis, 'indexedDB', real); else delete globalThis.indexedDB;
+  delete globalThis.__awakeRealIndexedDb;
+}
+    """,
+)
+private external fun restoreIndexedDb()
