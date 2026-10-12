@@ -13,8 +13,8 @@ WebGPU backend, and a page to host it.
 ## Add the WebGPU backend
 
 The WebGPU backend builds on wgpu4k, which only publishes snapshot builds. So the backend is
-published as a snapshot too, to Maven Central's snapshot repository, and recent Core releases do
-not include it.
+published as a snapshot too, to Maven Central's snapshot repository, and Core releases do not
+include it. Each Core release publishes a WebGPU snapshot built from it instead.
 
 Add the snapshot repository in `settings.gradle.kts`:
 
@@ -27,12 +27,12 @@ dependencyResolutionManagement {
 }
 ```
 
-Add the backend to the catalog. For `<snapshot version>`, take the newest `-SNAPSHOT` listed in
-the [backend's snapshot metadata](https://central.sonatype.com/repository/maven-snapshots/com/awakekt/awake/backend/webgpu/maven-metadata.xml):
+Add the backend to the catalog at your Core version with `-SNAPSHOT` appended, the WebGPU build of
+that Core release:
 
 ```toml title="gradle/libs.versions.toml"
 [libraries]
-awake-backend-webgpu = { module = "com.awakekt.awake.backend:webgpu", version = "<snapshot version>" }
+awake-backend-webgpu = { module = "com.awakekt.awake.backend:webgpu", version = "{{ awake_version }}-SNAPSHOT" }
 ```
 
 Then add a browser target and the dependency:
@@ -56,10 +56,12 @@ kotlin {
 The snapshot carries the exact wgpu4k builds it was tested with, so Gradle resolves those without
 more setup.
 
-!!! warning "The browser build runs on Core snapshots"
-    The WebGPU snapshot depends on Core modules at its own snapshot version, such as
-    `0.1.0-alpha.16-SNAPSHOT`. Gradle picks the higher version, so the `wasmJs` target uses those
-    Core snapshots rather than `{{ awake_version }}`. Snapshots change with every push to `main`.
+!!! warning "Keep WebGPU on your Core release"
+    `{{ awake_version }}-SNAPSHOT` depends on every Core module at exactly `{{ awake_version }}` and
+    holds them there, so a build that also asks for a newer Core fails to resolve rather than mixing
+    two, and an older Core in the build is moved up to `{{ awake_version }}`. Do not take the newest
+    `-SNAPSHOT` in the snapshot repository instead: that one is built from `main` after the release,
+    and it moves the `wasmJs` target onto Core snapshots.
 
 ## Launch the app
 

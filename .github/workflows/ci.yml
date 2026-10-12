@@ -442,3 +442,49 @@ jobs:
       # every other target.
       - name: Physics backend verification (wasmJs)
         run: ./gradlew :awake:backend:jolt:wasmJsTest :awake:scene:physics:wasmJsTest
+
+  # The WebGPU release pin is built only from a commit tagged v<release>, and on the tag run its
+  # Consumer gate builds it before the release can publish. Without this job a tag would be the
+  # first run of that build, its strictly constraints and its metadata check, on Linux at least. A
+  # throwaway local tag at this commit gives Gradle the release version; nothing is pushed or
+  # uploaded. It runs on the same runner and setup as the Publish run's webgpu-pin job.
+  webgpu-release-pin:
+    name: WebGPU release pin
+    needs: platform-impact
+    if: needs.platform-impact.outputs.web == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          # The version comes from `git describe --tags`, which needs the tags.
+          fetch-depth: 0
+
+      - name: Setup JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Setup Gradle (with cache)
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-provider: basic
+
+      - name: Tag this commit as the next release, locally
+        id: release
+        run: |
+          version=$(./gradlew -q :awake:core:math:properties --no-configuration-cache | awk '$1 == "version:" && v == "" { v = $2 } END { print v }')
+          base="${version%-SNAPSHOT}"
+          git tag -f "v$base"
+          echo "version=$base" >> "$GITHUB_OUTPUT"
+
+      - name: Build and verify the pin in Maven Local
+        run: bash tools/publish_webgpu_pin.sh --local
+
+      # The throwaway release is not on Central, so the wait itself cannot run; this checks that the
+      # task the script calls next resolves with the pin's arguments.
+      - name: Resolve the wait for Core on Central
+        run: ./gradlew waitForCoreCentral -Pawake.waitForCoreVersion="${{ steps.release.outputs.version }}" --dry-run --no-configuration-cache

@@ -11,6 +11,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
+import org.gradle.api.logging.Logger
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
@@ -48,20 +49,7 @@ abstract class WaitForVulkanCentralTask : DefaultTask() {
             "com/awakekt/awake/vulkan-kmp",
             "com/awakekt/awake/vulkan-kmp-android-native",
         ).map { module -> repository.resolve("$module/$version/${module.substringAfterLast('/')}-$version.module") }
-        val gate = CentralAvailability(repository, modules)
-        require(timeoutSeconds.get() > 0) { "Central availability timeout must be positive" }
-        val deadline = System.nanoTime() + Duration.ofSeconds(timeoutSeconds.get()).toNanos()
-        while (true) {
-            val missing = gate.missingFiles()
-            if (missing.isEmpty()) {
-                logger.lifecycle("Vulkan $version metadata and binaries are available on Maven Central")
-                return
-            }
-            val remaining = deadline - System.nanoTime()
-            if (remaining <= 0) throw GradleException("Vulkan $version is not available on Maven Central: ${missing.joinToString()}")
-            logger.lifecycle("Waiting for Vulkan $version on Maven Central (${missing.size} missing): ${missing.first()}")
-            Thread.sleep(minOf(30_000L, maxOf(1L, Duration.ofNanos(remaining).toMillis())))
-        }
+        CentralAvailability(repository, modules).await("Vulkan $version", timeoutSeconds.get(), logger)
     }
 }
 
@@ -73,6 +61,23 @@ internal class CentralAvailability(private val repository: URI, modules: List<UR
 
     init {
         modules.forEach(::addModule)
+    }
+
+    /** Polls until Central serves every file, or fails once [timeoutSeconds] have passed. */
+    fun await(subject: String, timeoutSeconds: Long, logger: Logger) {
+        require(timeoutSeconds > 0) { "Central availability timeout must be positive" }
+        val deadline = System.nanoTime() + Duration.ofSeconds(timeoutSeconds).toNanos()
+        while (true) {
+            val missing = missingFiles()
+            if (missing.isEmpty()) {
+                logger.lifecycle("$subject metadata and binaries are available on Maven Central")
+                return
+            }
+            val remaining = deadline - System.nanoTime()
+            if (remaining <= 0) throw GradleException("$subject is not available on Maven Central: ${missing.joinToString()}")
+            logger.lifecycle("Waiting for $subject on Maven Central (${missing.size} missing): ${missing.first()}")
+            Thread.sleep(minOf(30_000L, maxOf(1L, Duration.ofNanos(remaining).toMillis())))
+        }
     }
 
     fun missingFiles(): List<URI> {

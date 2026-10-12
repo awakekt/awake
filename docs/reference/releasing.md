@@ -29,8 +29,14 @@ your code imports or otherwise uses them.
 - **Vulkan** renderer, raw bindings, and Android JNI bridge use one independent version derived from
   `vulkan-v*` tags. Snapshot POMs pin the exact Core snapshot used for integration; releases pin an
   exact published non-snapshot Core version in Maven and Gradle metadata.
-- A `-SNAPSHOT` is a mutable integration build, not a stable release. Release verification rejects
-  snapshot dependencies and never guesses a stable replacement by deleting the suffix.
+- **WebGPU** stays out of Central releases while it builds on wgpu4k snapshots. Each Core release
+  publishes its release pin, `com.awakekt.awake.backend:webgpu:<release>-SNAPSHOT`, to Central's
+  snapshot repository: built from the release's tag, with every Core module at exactly that release
+  and held there by `strictly` constraints. Pair a Core release with that pin, never with the newer
+  `-SNAPSHOT` that `main` publishes, whose Core is a snapshot above the release.
+- A `-SNAPSHOT` is a mutable integration build, not a stable release. Central refuses a release POM
+  with a snapshot dependency, a release bundle refuses a staged snapshot, and nothing guesses a
+  stable replacement by deleting the suffix.
 
 To build a consumer against an unreleased checkout, publish it to the local Maven repository under a
 version no release uses, and point the consumer at it:
