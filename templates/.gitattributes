@@ -1,0 +1,2 @@
+# Gradle writes gradlew.bat with CRLF line endings; store it byte for byte, as the template repos do.
+*.bat -text

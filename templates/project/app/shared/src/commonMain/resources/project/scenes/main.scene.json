@@ -1,0 +1,114 @@
+{
+  "version": 1,
+  "name": "sample",
+  "nodes": [
+    {
+      "name": "Camera",
+      "components": [
+        {
+          "component": "camera",
+          "eye": {
+            "x": 0.0,
+            "y": 5.0,
+            "z": 10.0
+          },
+          "center": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "fovYDegrees": 45.0,
+          "near": 0.1,
+          "far": 500.0,
+          "primary": true
+        }
+      ]
+    },
+    {
+      "name": "Ground",
+      "transform": {
+        "position": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        }
+      },
+      "components": [
+        {
+          "component": "meshRenderer",
+          "mesh": "ground",
+          "material": "lit-shadow",
+          "cullMode": "Back"
+        }
+      ]
+    },
+    {
+      "name": "Cube",
+      "transform": {
+        "position": {
+          "x": 0.0,
+          "y": 1.0,
+          "z": 0.0
+        }
+      },
+      "components": [
+        {
+          "component": "meshRenderer",
+          "mesh": "cube",
+          "material": "lit-shadow"
+        },
+        {
+          "component": "spinControl",
+          "speed": 1.0
+        }
+      ]
+    },
+    {
+      "name": "Environment",
+      "children": [
+        {
+          "name": "Sunlight",
+          "components": [
+            {
+              "component": "light",
+              "type": "Directional",
+              "color": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+              },
+              "intensity": 1.2,
+              "direction": {
+                "x": 0.5,
+                "y": 0.7,
+                "z": 0.4
+              },
+              "shadowsEnabled": true
+            }
+          ]
+        },
+        {
+          "name": "Skybox",
+          "components": [
+            {
+              "component": "skybox",
+              "enabled": true,
+              "horizonColor": {
+                "r": 0.7,
+                "g": 0.8,
+                "b": 0.9
+              },
+              "zenithColor": {
+                "r": 0.2,
+                "g": 0.4,
+                "b": 0.8
+              },
+              "exposure": 1.0,
+              "type": "Procedural"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

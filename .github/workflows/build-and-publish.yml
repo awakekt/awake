@@ -227,11 +227,12 @@ jobs:
       - name: Verify the public Awake Gradle plugin set
         run: ./gradlew -p build-logic verifyAwakePluginPublications build --no-configuration-cache
 
-  # Builds both starter templates against these artifacts, the way someone who clicked "Use this
-  # template" would: awake-template (a game written in Kotlin) and awake-project-template (an app
-  # that plays an Awake Studio project, which Studio's app export ships). Every bug this has caught --
-  # a package namespace the template never followed, two libraries claiming one Android namespace --
-  # is invisible from inside either repository.
+  # Builds the starter templates in templates/ against these artifacts, the way someone who clicked
+  # "Use this template" would: game (awake-template, a game written in Kotlin), project
+  # (awake-project-template, an app that plays an Awake Studio project, which Studio's app export
+  # ships) and plugin (awake-plugin-template, an editor plugin). Every bug this has caught -- a
+  # package namespace the template never followed, two libraries claiming one Android namespace --
+  # is invisible from inside any one repository.
   #
   # macOS because it is the only runner that can link the iOS framework, and iOS is otherwise
   # untested anywhere in this repository.
@@ -259,22 +260,6 @@ jobs:
           # against MoltenVK and JoltC. Both are submodules, and this job is the one that claims
           # to link the iOS framework, so it is the last place that can afford to skip them.
           submodules: recursive
-
-      - name: Check out the template beside nothing
-        uses: actions/checkout@v4
-        with:
-          repository: awakekt/awake-template
-          # Deliberately not a sibling named `awaken`: the template's settings.gradle.kts
-          # substitutes engine projects for the published artifacts when one is next to it, and
-          # then this job would prove nothing.
-          path: consumer/awake-template
-
-      - name: Check out the project template beside nothing
-        uses: actions/checkout@v4
-        with:
-          # The app that plays an Awake Studio project; Studio's app export starts from it.
-          repository: awakekt/awake-project-template
-          path: consumer/awake-project-template
 
       - uses: actions/setup-java@v5
         with:
@@ -366,14 +351,15 @@ jobs:
         if: steps.versions.outputs.vulkan_publish != 'true'
         run: ./gradlew waitForVulkanCentral -Pawake.waitForVulkanVersion="$TEMPLATE_VULKAN_VERSION" --no-configuration-cache
 
-      - name: Build both templates against it
+      - name: Build the templates against it
         run: |
           # A Core-only build put no Vulkan in Maven Local, and the derived Vulkan version is a
           # snapshot once Vulkan has changed since its last tag. Test against the last Vulkan
           # release instead: it's what a consumer gets until the next vulkan-v* tag.
           # The version was resolved above and its metadata and binaries checked on Central.
-          tools/check_template_consumer.sh consumer/awake-template "$RUNNER_TEMP/consumer"
-          tools/check_template_consumer.sh consumer/awake-project-template "$RUNNER_TEMP/consumer-project"
+          tools/check_template_consumer.sh templates/game "$RUNNER_TEMP/consumer"
+          tools/check_template_consumer.sh templates/project "$RUNNER_TEMP/consumer-project"
+          tools/check_template_consumer.sh templates/plugin "$RUNNER_TEMP/consumer-plugin"
 
   # `main` builds. Resolvable only by a consumer who adds the snapshot repository, and replaced by
   # the next push, so this path stays deliberately light.

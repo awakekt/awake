@@ -1,0 +1,79 @@
+# Builds the starter templates in templates/ against this pull request's Core, published to Maven
+# Local, the way a game made from one resolves it. The Consumer job in build-and-publish.yml does the
+# same after a merge, on macOS and with the iOS link; this catches a break before the merge, in the
+# pull request that causes it.
+#
+# A pull request runs it when it can break a template: the templates themselves, Core's public API
+# (its dumps change with it), the version catalog, and the build logic that publishes Core.
+name: Templates
+
+on:
+  pull_request:
+    paths:
+      - templates/**
+      - tools/check_template_consumer.sh
+      - .github/workflows/templates.yml
+      - 'awake/**/api/**'
+      - gradle/libs.versions.toml
+      - build-logic/**
+  workflow_dispatch:
+
+concurrency:
+  group: templates-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  JAVA_VERSION: '17'
+
+jobs:
+  templates:
+    name: Templates
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          # The tags, from which the build derives this commit's version (see "Name the local version").
+          fetch-depth: 0
+
+      # Core's full publish and three templates' builds don't fit the runner's free space otherwise.
+      - name: Free disk space
+        run: sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost /opt/hostedtoolcache/CodeQL
+
+      - name: Setup JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Setup Gradle (with cache)
+        uses: gradle/actions/setup-gradle@v6
+
+      # Vulkan headers and loader, and GLFW, to build the desktop native libraries Core publishes.
+      - name: Install desktop Vulkan and GLFW
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libvulkan-dev libglfw3-dev
+
+      # A version no release uses, so the templates resolve exactly what this run publishes.
+      - name: Name the local version
+        run: |
+          version=$(./gradlew -q :awake:core:math:properties --no-configuration-cache | awk '$1 == "version:" { print $2; exit }')
+          echo "LOCAL_VERSION=${version%-SNAPSHOT}-templates" | tee -a "$GITHUB_ENV"
+
+      # The window's and the Vulkan bindings' desktop libraries are built on demand, for this host.
+      - name: Publish this pull request's Core locally
+        run: |
+          ./gradlew :awake:engine:window:buildDesktopNative :awake:backend:vulkan:bindings:buildDesktopNative --no-configuration-cache
+          ./gradlew publishToMavenLocal -Pawake.version="$LOCAL_VERSION" --no-configuration-cache
+
+      - name: Build the templates against it
+        env:
+          TEMPLATE_CORE_VERSION: ${{ env.LOCAL_VERSION }}
+          TEMPLATE_VULKAN_VERSION: ${{ env.LOCAL_VERSION }}
+        run: |
+          tools/check_template_consumer.sh templates/game "$RUNNER_TEMP/game"
+          tools/check_template_consumer.sh templates/project "$RUNNER_TEMP/project"
+          tools/check_template_consumer.sh templates/plugin "$RUNNER_TEMP/plugin"

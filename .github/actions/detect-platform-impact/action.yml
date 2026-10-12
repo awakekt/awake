@@ -94,6 +94,14 @@ runs:
             continue
           fi
 
+          # A starter template builds in its own workflow (templates.yml) against Core published
+          # locally; on its own it touches no Core target. Ahead of the shared rule below, which a
+          # template's own build.gradle.kts would otherwise match.
+          if [[ "$path" =~ ^templates/ ]]; then
+            docs_only=false
+            continue
+          fi
+
           docs_only=false
           core=true
 

@@ -3,7 +3,8 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #
-# Builds a starter template (awake-template or awake-project-template) against Awake as a
+# Builds a starter template (templates/game, templates/project or templates/plugin, published as
+# awake-template, awake-project-template and awake-plugin-template) against Awake as a
 # *published dependency*, the way someone who clicked
 # "Use this template" would.
 #
@@ -17,7 +18,7 @@
 # catalog entries at the versions this working tree produces, and builds every target it declares.
 #
 # Usage:
-#   tools/check_template_consumer.sh <path-to-awake-template> [work-dir]
+#   tools/check_template_consumer.sh templates/<game|project|plugin> [work-dir]
 #
 # Assumes the engine has been published where the template can resolve it:
 #   ./gradlew publishToMavenLocal -PisMainHost=true
@@ -46,9 +47,10 @@ fi
 echo "==> Copying the template to $CHECKOUT"
 rm -rf "$CHECKOUT"
 mkdir -p "$CHECKOUT"
-# git archive rather than cp: it takes exactly what is committed, leaving build output, .gradle
-# caches and local.properties behind -- the same content a fresh clone would have.
-git -C "$TEMPLATE_SOURCE" archive HEAD | tar -x -C "$CHECKOUT"
+# Only the files git tracks, rather than cp: build output, .gradle caches and local.properties stay
+# behind, the same content a fresh clone would have. It works for a template that is a directory of
+# a larger checkout, as templates/ in Core is, and takes uncommitted edits to tracked files.
+git -C "$TEMPLATE_SOURCE" ls-files -z | (cd "$TEMPLATE_SOURCE" && tar --null -T - -cf -) | tar -x -C "$CHECKOUT"
 
 # Ask Gradle for the versions actually assigned to each publication family. Do not duplicate the
 # root build's git-describe/bump rules here. A local publish (`-Pawake.version`) names its own.
@@ -124,6 +126,17 @@ run_target() {
   echo "==> $label"
   template_gradle "$@"
 }
+
+# The plugin template is a single module against the editor contract, with no apps to build.
+if [[ -f "$CHECKOUT/plugin/plugin.json" ]]; then
+  run_target "Plugin (desktop) and its tests" :plugin:desktopTest
+  run_target "Plugin (wasmJs)" :plugin:compileKotlinWasmJs
+  run_target "Plugin archive" :plugin:awakePlugin
+  echo
+  echo "Plugin template builds against Core $CORE_VERSION as a published dependency."
+  echo "Checkout kept at $CHECKOUT"
+  exit 0
+fi
 
 run_target "Shared and core (JVM)" :core:compileKotlinJvm :app:shared:compileKotlinJvm
 run_target "Desktop app" :app:desktopApp:compileKotlin
