@@ -208,6 +208,7 @@ public final class com/awakekt/awake/scene/canvas/CanvasFillImageMode : java/lan
 	public static final field Companion Lcom/awakekt/awake/scene/canvas/CanvasFillImageMode$Companion;
 	public static final field Cut Lcom/awakekt/awake/scene/canvas/CanvasFillImageMode;
 	public static final field Squeeze Lcom/awakekt/awake/scene/canvas/CanvasFillImageMode;
+	public static final field Sweep Lcom/awakekt/awake/scene/canvas/CanvasFillImageMode;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/scene/canvas/CanvasFillImageMode;
 	public static fun values ()[Lcom/awakekt/awake/scene/canvas/CanvasFillImageMode;

@@ -29,7 +29,7 @@ import kotlinx.serialization.Serializable
  * track.
  * @property fillImage A Bar's fill, cut at its value or squeezed into it as [fillImageMode] says.
  * @property fillImageMode How [fillImage] meets the Bar's value: [CanvasFillImageMode.Cut], the default,
- * or [CanvasFillImageMode.Squeeze].
+ * [CanvasFillImageMode.Squeeze], or [CanvasFillImageMode.Sweep].
  * @property cornerRadius Rounds the fill, gradient, border and shadow, and a Bar's colour fill.
  * Images stay square.
  * @property borderWidth The border's width, inside the element's edge.
@@ -108,6 +108,13 @@ enum class CanvasFillImageMode {
      * rather than overlap.
      */
     Squeeze,
+
+    /**
+     * The fill sweeps clockwise from 12 o'clock over the Bar's whole box, like a cooldown overlay
+     * darkening an icon as it finishes: a wedge from 0 up to the value's share of a full turn, in
+     * the colour fill or, if set, [CanvasStyle.fillImage] cut to the same wedge.
+     */
+    Sweep,
 }
 
 /**

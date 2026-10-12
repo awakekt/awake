@@ -41,6 +41,7 @@ import com.awakekt.awake.compose.ui.focus.focusRequester
 import com.awakekt.awake.compose.ui.focus.onFocusChanged
 import com.awakekt.awake.compose.ui.graphics.CircleShape
 import com.awakekt.awake.compose.ui.graphics.ImageBitmap
+import com.awakekt.awake.compose.ui.graphics.ImageFill
 import com.awakekt.awake.compose.ui.graphics.RoundedCornerShape
 import com.awakekt.awake.compose.ui.graphics.drawImageFill
 import com.awakekt.awake.compose.ui.input.key.KeyEventType
@@ -51,6 +52,7 @@ import com.awakekt.awake.compose.ui.platform.LocalTextStyle
 import com.awakekt.awake.compose.ui.semantics.testTag
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.color.Color
+import com.awakekt.awake.core.graphics2d.drawPath
 import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.math2d.Rectangle
 import com.awakekt.awake.core.math2d.sp
@@ -240,12 +242,17 @@ private fun CanvasElement.textStyle(color: Color) = TextStyle(
 /**
  * A Bar's fill, [value] of its width: [color], or its fill image. The image is laid out at the bar's
  * full width and cut at the value, so a gauge's end and pattern stay where they are, or with
- * [CanvasFillImageMode.Squeeze] drawn at the filled width, keeping both end caps.
+ * [CanvasFillImageMode.Squeeze] drawn at the filled width, keeping both end caps, or with
+ * [CanvasFillImageMode.Sweep] revealed clockwise from 12 o'clock over the Bar's whole box.
  */
 context(_: Composer)
 private fun BarFill(element: CanvasElement, value: Float, color: Color, images: Map<String, ImageBitmap>) {
-    val filled = Modifier.fillMaxHeight().fillMaxWidth(value.coerceIn(0f, 1f))
     val picture = element.style.fillImage?.fill(images)
+    if (element.style.fillImageMode == CanvasFillImageMode.Sweep) {
+        SweepFill(value, color, picture)
+        return
+    }
+    val filled = Modifier.fillMaxHeight().fillMaxWidth(value.coerceIn(0f, 1f))
     if (picture == null) {
         Box(filled.background(color, RoundedCornerShape((element.style.cornerRadius ?: 0f).dp)))
     } else if (element.style.fillImageMode == CanvasFillImageMode.Squeeze) {
@@ -254,6 +261,42 @@ private fun BarFill(element: CanvasElement, value: Float, color: Color, images: 
         Box(filled.drawBehind { clipped { drawImageFill(picture, width = element.width * density) } })
     }
 }
+
+/**
+ * [value]'s share of a full turn, as a wedge clockwise from 12 o'clock over the Bar's whole box:
+ * [color], or [picture] cut to the same wedge. The wedge's radius reaches past the box's farthest
+ * corner, so [clipped] -- not the wedge's own shape -- is what keeps it inside the box.
+ */
+context(_: Composer)
+private fun SweepFill(value: Float, color: Color, picture: ImageFill?) {
+    val amount = value.coerceIn(0f, 1f)
+    if (amount <= 0f) return
+    Box(
+        Modifier.fillMaxSize().drawBehind {
+            // A full turn needs no wedge: its start and end would be the same point, and asking the
+            // arc tessellator to close exactly back onto it leaves a hairline, float-precision gap.
+            if (amount >= 1f) {
+                if (picture == null) drawRect(color = color) else drawImageFill(picture)
+                return@drawBehind
+            }
+            val centerX = width / 2f
+            val centerY = height / 2f
+            val radius = kotlin.math.hypot(width.toFloat(), height.toFloat())
+            val wedge = drawPath {
+                moveTo(centerX, centerY)
+                lineTo(centerX, centerY - radius)
+                arcTo(centerX - radius, centerY - radius, centerX + radius, centerY + radius, SWEEP_START_DEGREES, amount * 360f)
+                close()
+            }
+            clipped {
+                if (picture == null) drawPath(wedge, color) else clippedPath(wedge) { drawImageFill(picture) }
+            }
+        },
+    )
+}
+
+/** 12 o'clock, in `arcTo`'s degrees clockwise from the positive X axis. */
+private const val SWEEP_START_DEGREES = 270f
 
 /** A round pad whose knob follows a drag, up to the pad's edge, and springs back on release. */
 context(_: Composer)
