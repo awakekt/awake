@@ -45,6 +45,7 @@ kotlin {
             // The rule a tag follows (Tags.isValid), so the manifest's tags list checks against it.
             implementation(project(":awake:ecs"))
             implementation(libs.kotlinx.serialization.json)
+            implementation(libs.kotlinx.coroutines.core)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

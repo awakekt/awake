@@ -8,6 +8,9 @@ package com.awakekt.awake.project
 import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.core.io.Sha256
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
@@ -76,6 +79,34 @@ class IndexedAssetSourceTest {
         val total = (scene.size + model.size).toLong()
         assertEquals(listOf(scene.size.toLong() to total, total to total), progress)
         assertEquals(2, cache.stored.size, "prefetched files are cached")
+    }
+
+    @Test
+    fun prefetchFetchesMultipleFilesConcurrently() = runTest {
+        val paths = listOf("scenes/main.scene.json", "assets/crate.glb")
+        val started = Channel<Unit>(Channel.UNLIMITED)
+        val release = CompletableDeferred<Unit>()
+        val serve = server()
+        val source = IndexedAssetSource(index, { url -> started.send(Unit); release.await(); serve(url) })
+
+        val job = launch { source.prefetch(paths) }
+        // Both fetches start before either's fetch() call is allowed to return: they overlap,
+        // rather than the second waiting for the first to finish.
+        started.receive()
+        started.receive()
+        release.complete(Unit)
+        job.join()
+    }
+
+    @Test
+    fun prefetchFailsForATamperedFileAndNamesIt() = runTest {
+        val tampered = server(override = mapOf("files/assets/crate.glb" to model.copyOf().also { it[10] = 99 }))
+
+        val failure = assertFailsWith<IllegalStateException> {
+            IndexedAssetSource(index, tampered).prefetch(listOf("scenes/main.scene.json", "assets/crate.glb"))
+        }
+
+        assertTrue(failure.message.orEmpty().contains("assets/crate.glb"), "the failure names the file: $failure")
     }
 
     @Test
