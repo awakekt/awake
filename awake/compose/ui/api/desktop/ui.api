@@ -1164,11 +1164,13 @@ public abstract interface class com/awakekt/awake/compose/ui/node/PointerCursorN
 }
 
 public abstract interface class com/awakekt/awake/compose/ui/node/PointerInputNode {
+	public fun getBlocksHitTest ()Z
 	public fun getHitMarginPx ()I
 	public abstract fun onPointerEvent (Lcom/awakekt/awake/compose/ui/input/pointer/PointerEvent;Lcom/awakekt/awake/compose/ui/input/pointer/PointerEventPass;)V
 }
 
 public final class com/awakekt/awake/compose/ui/node/PointerInputNode$DefaultImpls {
+	public static fun getBlocksHitTest (Lcom/awakekt/awake/compose/ui/node/PointerInputNode;)Z
 	public static fun getHitMarginPx (Lcom/awakekt/awake/compose/ui/node/PointerInputNode;)I
 }
 

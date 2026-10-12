@@ -38,27 +38,34 @@ fun rememberInteractionSource(): InteractionSource = remember { InteractionSourc
  * [hitMarginPx] matches [com.awakekt.awake.compose.foundation.gestures.draggable]'s:
  * a control that can be grabbed from beside itself has to light up from there too, or the pointer
  * sits in the grab margin looking at something that does not appear grabbable.
+ *
+ * [blocksHitTest] false makes this an observer only: it still reports [InteractionSource.isHovered]
+ * but, unlike a click target, never occludes a sibling under it, so a decorative element can track
+ * the pointer without swallowing a tap meant for something it happens to sit over.
  */
 fun Modifier.hoverable(
     interactionSource: InteractionSource,
     enabled: Boolean = true,
     hitMarginPx: Int = 0,
-): Modifier = if (enabled) this then HoverableElement(interactionSource, hitMarginPx) else this
+    blocksHitTest: Boolean = true,
+): Modifier = if (enabled) this then HoverableElement(interactionSource, hitMarginPx, blocksHitTest) else this
 
 private class HoverableElement(
     private val source: InteractionSource,
     private val hitMarginPx: Int,
+    private val blocksHitTest: Boolean,
 ) : ModifierNodeElement<HoverableNode>() {
-    override fun create(): HoverableNode = HoverableNode(hitMarginPx)
+    override fun create(): HoverableNode = HoverableNode(hitMarginPx, blocksHitTest)
 
     override fun update(node: HoverableNode) {
         node.source = source
         node.hitMarginPx = hitMarginPx
+        node.blocksHitTest = blocksHitTest
     }
     override fun toString(): String = "hoverable(hitMargin=$hitMarginPx)"
 }
 
-private class HoverableNode(override var hitMarginPx: Int) :
+private class HoverableNode(override var hitMarginPx: Int, override var blocksHitTest: Boolean) :
     Modifier.Node(),
     PointerInputNode {
     lateinit var source: InteractionSource

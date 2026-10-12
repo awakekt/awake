@@ -428,15 +428,21 @@ class PointerInputDispatcher(
     }
 
     /**
-     * Whether this node does anything with a pointer at ([x], [y]): a pointer link whose own box holds
-     * it, or something that scrolls, takes focus or asks for a cursor.
+     * Whether this node does anything with a pointer at ([x], [y]): a blocking pointer link whose
+     * own box holds it, or something that scrolls, takes focus or asks for a cursor.
+     *
+     * A link with [PointerInputNode.blocksHitTest] false, a passive hover observer, is skipped: it
+     * must not make this node occlude a sibling under it that does take the point.
      */
     private fun LayoutNode.takes(x: Int, y: Int): Boolean {
         var takes = scrollables.isNotEmpty() || focusTargets.isNotEmpty() || pointerCursor != null
         var h = 0
         while (!takes && h < pointerInputs.size) {
-            drawBoundsAt(pointerDepths[h], linkBounds)
-            takes = linkBounds.holds(x - absoluteX - linkBounds[0], y - absoluteY - linkBounds[1], pointerInputs[h].hitMarginPx)
+            val link = pointerInputs[h]
+            if (link.blocksHitTest) {
+                drawBoundsAt(pointerDepths[h], linkBounds)
+                takes = linkBounds.holds(x - absoluteX - linkBounds[0], y - absoluteY - linkBounds[1], link.hitMarginPx)
+            }
             h++
         }
         return takes

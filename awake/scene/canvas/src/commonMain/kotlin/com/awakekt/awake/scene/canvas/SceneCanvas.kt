@@ -45,12 +45,14 @@ import com.awakekt.awake.compose.ui.graphics.RoundedCornerShape
 import com.awakekt.awake.compose.ui.graphics.drawImageFill
 import com.awakekt.awake.compose.ui.input.key.KeyEventType
 import com.awakekt.awake.compose.ui.input.key.onKeyEvent
+import com.awakekt.awake.compose.ui.layout.onPlaced
 import com.awakekt.awake.compose.ui.platform.LocalDensity
 import com.awakekt.awake.compose.ui.platform.LocalTextStyle
 import com.awakekt.awake.compose.ui.semantics.testTag
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.input.Key
+import com.awakekt.awake.core.math2d.Rectangle
 import com.awakekt.awake.core.math2d.sp
 import com.awakekt.awake.core.text.theme.TextStyle
 import com.awakekt.awake.ecs.Entity
@@ -172,10 +174,18 @@ private fun CanvasElementView(
         shadow = element.style.textShadow?.toTextShadow(),
         outline = element.style.textOutline?.toTextOutline(),
     )
+    // Tree-space pixels back to canvas units: the density every size and offset dp was resolved
+    // against, with the canvas's own scale already folded in by its CompositionLocalProvider.
+    val density = LocalDensity.current
+    val placed = modifier.onPlaced { x, y, w, h ->
+        element.screenBounds = Rectangle(x / density, y / density, w / density, h / density)
+    }
     // Applied before styling and per-kind modifiers, so it covers every kind, Joystick included,
     // and sits outermost -- an ancestor's wheel element only sees what this one left unconsumed.
-    val wheeled = if (element.wheel) modifier.onWheel(element::addWheel) else modifier
-    val styled = wheeled.styleable(state, style)
+    val wheeled = if (element.wheel) placed.onWheel(element::addWheel) else placed
+    // A Button occludes what is under it, like any click target; every other kind only watches,
+    // so it must not swallow a tap meant for something it happens to be drawn over.
+    val styled = wheeled.styleable(state, style).hoverable(element.interactions, blocksHitTest = element.kind == CanvasElementKind.Button)
     when (element.kind) {
         CanvasElementKind.Text -> Box(styled, contentAlignment = (element.textAlign ?: CanvasAnchor.TopLeft).alignment) {
             Text(tree.textOf(element), style = textStyle)
@@ -187,7 +197,7 @@ private fun CanvasElementView(
             Children(element, children, tree)
         }
         CanvasElementKind.Button -> Box(
-            styled.hoverable(element.interactions).clickable(element.interactions) { element.press() },
+            styled.clickable(element.interactions) { element.press() },
             contentAlignment = (element.textAlign ?: CanvasAnchor.Center).alignment,
         ) {
             Text(tree.textOf(element), style = textStyle)
