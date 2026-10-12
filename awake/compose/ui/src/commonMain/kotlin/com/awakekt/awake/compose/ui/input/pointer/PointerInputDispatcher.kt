@@ -354,34 +354,34 @@ class PointerInputDispatcher(
      * level walked the layer-bearing part of the tree once per level.
      */
     private fun descendInto(into: MutableList<LayoutNode>, node: LayoutNode, x: Int, y: Int, searchLayers: Boolean): Boolean {
+        var layer = MISS
         if (searchLayers) {
-            val own = hitOwnLayers(into, node, x, y)
-            if (own != MISS) return own == TAKEN
+            layer = hitOwnLayers(into, node, x, y)
             // A layer declared under an early sibling (a top bar's popup) is painted above a later
             // sibling (the workspace). Check every descendant layer before ordinary child content so
             // input follows that same global overlay ordering.
-            for (i in node.children.size - 1 downTo 0) {
-                val detached = hitDetachedLayer(into, node.children[i], x, y)
-                if (detached != MISS) return detached == TAKEN
+            var i = node.children.size - 1
+            while (layer == MISS && i >= 0) {
+                layer = hitDetachedLayer(into, node.children[i], x, y)
+                i--
             }
         }
+        return if (layer != MISS) layer == TAKEN else hitChildren(into, node, x, y, childOrder(node))
+    }
+
+    /** [node]'s children's indices in hit order when one has a zIndex, or null for reverse declaration order. */
+    private fun childOrder(node: LayoutNode): Array<Int>? {
         val count = node.children.size
-        if (count == 0) return false
-        var hasNonZeroZ = false
-        for (i in 0 until count) {
-            if (node.children[i].zIndex != 0f) {
-                hasNonZeroZ = true
-                break
-            }
-        }
-        if (!hasNonZeroZ) return hitChildren(into, node, x, y, null)
+        var i = 0
+        while (i < count && node.children[i].zIndex == 0f) i++
+        if (i == count) return null
         val indices = Array(count) { it }
         indices.sortWith { a, b ->
             val zA = node.children[a].zIndex
             val zB = node.children[b].zIndex
             if (zA != zB) zB.compareTo(zA) else b.compareTo(a)
         }
-        return hitChildren(into, node, x, y, indices)
+        return indices
     }
 
     /**
@@ -407,26 +407,30 @@ class PointerInputDispatcher(
         for (n in 0 until count) {
             val child = node.children[if (order == null) count - 1 - n else order[n]]
             val mark = into.size
-            val hit = hitTest(into, child, x, y, searchLayers = false)
-            if (hit == MISS) continue
-            if (hit == TAKEN) {
-                // The kept path is under the taker's, which starts at keptTo: cut it out by moving
-                // the taker's down over it once.
-                val cut = keptTo - keptFrom
-                if (cut > 0) {
-                    for (i in keptTo until into.size) into[i - cut] = into[i]
-                    repeat(cut) { into.removeAt(into.lastIndex) }
+            when (hitTest(into, child, x, y, searchLayers = false)) {
+                MISS -> Unit
+                TAKEN -> {
+                    // The kept path is under the taker's, which starts at keptTo.
+                    cutOut(into, keptFrom, keptTo)
+                    return true
                 }
-                return true
-            }
-            if (keptFrom < 0) {
-                keptFrom = mark
-                keptTo = into.size
-            } else {
-                while (into.size > mark) into.removeAt(into.lastIndex)
+                else -> if (keptFrom < 0) {
+                    keptFrom = mark
+                    keptTo = into.size
+                } else {
+                    cutOut(into, mark, into.size)
+                }
             }
         }
         return false
+    }
+
+    /** Removes [into]'s nodes from [from] until [to], moving the ones after them down once. */
+    private fun cutOut(into: MutableList<LayoutNode>, from: Int, to: Int) {
+        val cut = to - from
+        if (cut <= 0) return
+        for (i in to until into.size) into[i - cut] = into[i]
+        repeat(cut) { into.removeAt(into.lastIndex) }
     }
 
     /**
@@ -464,9 +468,10 @@ class PointerInputDispatcher(
         }
         if (hit == MISS) {
             into.removeAt(into.lastIndex)
-            return MISS
+        } else if (hit == HELD && node.takes(x, y)) {
+            hit = TAKEN
         }
-        return if (hit == TAKEN || node.takes(x, y)) TAKEN else HELD
+        return hit
     }
 
     /**
@@ -474,17 +479,19 @@ class PointerInputDispatcher(
      * order, and returns the hit test of the first that holds it, or [MISS].
      */
     private fun hitOwnLayers(into: MutableList<LayoutNode>, node: LayoutNode, x: Int, y: Int): Int {
-        if (node.layers.size == 0) return MISS
-        for (i in hitOrder.indices) {
-            val kind = hitOrder[i]
-            for (j in node.layers.size - 1 downTo 0) {
+        var hit = MISS
+        var k = 0
+        while (hit == MISS && k < hitOrder.size && node.layers.size > 0) {
+            val kind = hitOrder[k]
+            var j = node.layers.size - 1
+            while (hit == MISS && j >= 0) {
                 val layer = node.layers[j]
-                if (layer.nodeType != kind) continue
-                val hit = hitTest(into, layer, x, y, searchLayers = true)
-                if (hit != MISS) return hit
+                if (layer.nodeType == kind) hit = hitTest(into, layer, x, y, searchLayers = true)
+                j--
             }
+            k++
         }
-        return MISS
+        return hit
     }
 
     /** Stamps every node under [root] that has a layer of its own or below it, for this dispatch. */
