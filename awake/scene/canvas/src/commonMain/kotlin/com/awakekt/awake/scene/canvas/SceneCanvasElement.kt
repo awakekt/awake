@@ -55,6 +55,8 @@ import kotlinx.serialization.Serializable
  * to start a drag.
  * @property dropTarget Whether a [draggable] element released over this one is reported here,
  * through [CanvasElement.dropped].
+ * @property camera A View's camera: the name of a node with a camera, whose picture it shows; empty
+ * shows none.
  */
 @Serializable
 @SerialName("canvas_element")
@@ -87,6 +89,7 @@ data class SceneCanvasElement(
     val wheel: Boolean = false,
     val draggable: Boolean = false,
     val dropTarget: Boolean = false,
+    val camera: String = "",
 ) : SceneComponent {
     /**
      * Validates element dimensions, font sizes, values, and hex color syntax.

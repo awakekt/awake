@@ -40,6 +40,9 @@ enum class CanvasElementKind {
 
     /** A picture: its style's [CanvasStyle.image]. */
     Image,
+
+    /** What a camera sees: the scene from the camera on the node [CanvasElement.camera] names, under the element's children. */
+    View,
 }
 
 /** The screen point a [CanvasElement] is pinned to; its offset moves it inward from there. */
@@ -78,7 +81,8 @@ enum class CanvasAnchor {
  *
  * Sizes and offsets are in dp. Colours are `#RRGGBB` or `#RRGGBBAA`. [text] is a Text element's
  * content and a Button's label; [value] is a Bar's fill from 0 to 1. A Joystick is a round pad of
- * [width] across whose knob [color] is dragged within it.
+ * [width] across whose knob [color] is dragged within it. A View shows what the camera on the node
+ * [camera] names sees.
  *
  * [action] names what an element does for the game, such as `move` or `jump`, and [doubleAction]
  * what a Button does when double-clicked; the game or runtime decides what each name means. A [touchOnly] element is drawn only where touch controls are shown.
@@ -165,6 +169,9 @@ class CanvasElement {
      * [consumeWheel] reads what it collected.
      */
     var wheel: Boolean = false
+
+    /** A View's camera: the name of a node with a camera, whose picture it shows; empty shows none. */
+    var camera: String = ""
 
     private var wheelAccumulated = 0f
 

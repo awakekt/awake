@@ -195,7 +195,8 @@ interface DrawScope {
 
     /**
      * Draws [region] of a backend texture into this node's bounds, its colour multiplied by
-     * [tint] and its texels sampled as [filterQuality] says.
+     * [tint] and its texels sampled as [filterQuality] says. [premultiplied] says its colours are
+     * already multiplied by its alpha, as a render target's are.
      *
      * A helper rather than an [emit] at the call site, because a caller cannot position one: the
      * origin and transform this scope maps against are its own, and nothing on this interface
@@ -210,6 +211,7 @@ interface DrawScope {
         region: TextureRegion = TextureRegion.Whole,
         tint: Color = Color.White,
         filterQuality: FilterQuality = FilterQuality.Low,
+        premultiplied: Boolean = false,
     )
 
     /**
@@ -584,13 +586,14 @@ internal class PaintScope :
         region: TextureRegion,
         tint: Color,
         filterQuality: FilterQuality,
+        premultiplied: Boolean,
     ) {
         val px = transform.mapX(originX + x)
         val py = transform.mapY(originY + y)
         val pw = width * transform.scaleX
         val ph = height * transform.scaleY
         if (isFullyOutsideActiveClip(px, py, pw, ph)) return
-        output += UiDrawPrimitive.Texture(px, py, pw, ph, material, alpha = alpha, region = region, tint = tint, filterQuality = filterQuality)
+        output += UiDrawPrimitive.Texture(px, py, pw, ph, material, alpha = alpha, premultiplied = premultiplied, region = region, tint = tint, filterQuality = filterQuality)
     }
 
     override fun drawRoundedRect(

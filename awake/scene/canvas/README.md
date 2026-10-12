@@ -12,7 +12,7 @@ Not to be confused with Compose's `Canvas` (a surface you draw pixels on) or
 
 `CanvasElement` (saved as `canvas_element`) has:
 
-- **`kind`**: `Text`, `Panel`, `Bar`, `Button`, `Joystick` or `Image`.
+- **`kind`**: `Text`, `Panel`, `Bar`, `Button`, `TextField`, `Joystick`, `Image` or `View`.
 - **`anchor`**: one of nine screen points (`TopLeft` … `BottomRight`). The element sits against that
   point, and **`offsetX` / `offsetY`** move it inward: a right or bottom anchor moves it left or up.
 - **`width` / `height`** in dp.
@@ -35,6 +35,13 @@ has any, under the app's own `ui { }`, with the images in its `canvasImages`. A 
 Compose tree calls `SceneCanvas(world, images = …)` itself. `loadCanvasImages(scene, files)` reads and
 decodes the images a scene names. A host that draws nothing, such as a game server, calls
 `checkCanvasImages(scene, files)` instead: it reads them, logs those it cannot, and decodes none.
+
+## A 3D view
+
+A `View` shows what the camera on the node its `camera` names sees, filling its box under its
+children. `SceneCanvas(world, views = …)` takes the `CanvasViews` that renders each picture;
+`SceneAppLifecycleRuntime` passes its own, which renders every View drawn this frame into a target
+the size of its box before the UI samples it. Without one a View draws only its style.
 
 ## Nesting and scale
 

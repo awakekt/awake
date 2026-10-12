@@ -24,6 +24,7 @@ internal class CanvasTree(
     val images: Map<String, ImageBitmap>,
     val projector: CanvasProjector?,
     private val bindings: List<SceneComponentBinding<*, *>>?,
+    val views: CanvasViews? = null,
 ) {
     // Built, and the global bindings gathered, only on a frame where an element reads a field.
     private val data by lazy { CanvasData(world, bindings ?: globalCanvasBindings()) }

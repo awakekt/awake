@@ -58,6 +58,7 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         it.wheel = wheel
         it.draggable = draggable
         it.dropTarget = dropTarget
+        it.camera = camera
     }
 
     /**
@@ -94,5 +95,6 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         wheel = wheel,
         draggable = draggable,
         dropTarget = dropTarget,
+        camera = camera,
     )
 }

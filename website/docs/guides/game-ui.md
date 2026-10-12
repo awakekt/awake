@@ -52,7 +52,7 @@ For a button the player holds down, read `isHeld` instead. For a joystick, read 
 
 | Property | Type | Default | What it does |
 | --- | --- | --- | --- |
-| `kind` | `Text` · `Panel` · `Bar` · `Button` · `TextField` · `Joystick` · `Image` | `Text` | What the element draws. |
+| `kind` | `Text` · `Panel` · `Bar` · `Button` · `TextField` · `Joystick` · `Image` · `View` | `Text` | What the element draws. |
 | `anchor` | `TopLeft` · `TopCenter` · `TopRight` · `CenterLeft` · `Center` · `CenterRight` · `BottomLeft` · `BottomCenter` · `BottomRight` | `TopLeft` | The screen point the element is pinned to. |
 | `offsetX` | number (dp) | `16` | Moves the element inward from its anchor. From a right anchor it moves left. |
 | `offsetY` | number (dp) | `16` | Moves the element inward from its anchor. From a bottom anchor it moves up. |
@@ -68,6 +68,7 @@ For a button the player holds down, read `isHeld` instead. For a joystick, read 
 | `layout` | object | none | Lay the children out in rows or columns. See [Lay out children](#lay-out-children). |
 | `grow` | number | `0` | In a laid-out parent, this element's share of the leftover space. |
 | `bind` | object | none | Game state the element shows without code. See [Show game state](#show-game-state). |
+| `camera` | string | `""` | A `View`'s camera node. See [Show a 3D view](#show-a-3d-view). |
 | `color` | `#RRGGBB` or `#RRGGBBAA` | `#FFFFFF` | Text colour, a `Bar`'s fill, or a `Joystick`'s knob. |
 | `background` | `#RRGGBB` or `#RRGGBBAA` | `#00000000` | Fill behind the element. A joystick's pad. |
 | `value` | number, 0 to 1 | `1` | A `Bar`'s fill fraction. |
@@ -295,6 +296,28 @@ follow an animated character's limbs; a node with no mesh bounds falls back to i
 A follower is placed against the screen wherever it sits in the scene, so it can live on a child of
 the character it follows. The runtime projects through the camera it draws with; a host that draws
 `SceneCanvas` itself passes a `CanvasProjector`.
+
+## Show a 3D view
+
+A `View` element shows what another camera sees, such as a character turning on a select screen.
+`camera` names a node with a `camera` component; give that camera `primary: false`, or it could
+become the main view. Each frame the element is drawn, that camera renders the scene into a picture
+the size of the element's box in pixels, which fills the box, opaque, inside its
+`style.cornerRadius` and under its children. The camera's own `eye`, `center` and `fovYDegrees`
+frame it. It renders the whole scene, as the main view does, so place what it looks at where the
+main camera does not see it.
+
+```json title="Two nodes: a portrait camera and the window that shows it"
+[
+  { "name": "Portrait Camera", "components": [ { "component": "camera", "primary": false,
+    "eye": { "x": 100, "y": 1.5, "z": 3 }, "center": { "x": 100, "y": 1, "z": 0 }, "fovYDegrees": 40 } ] },
+  { "name": "Portrait", "components": [ { "component": "canvas_element", "kind": "View", "camera": "Portrait Camera",
+    "anchor": "CenterLeft", "width": 240, "height": 320, "style": { "cornerRadius": 8 } } ] }
+]
+```
+
+With no node of that name, no camera on it, or no renderer, the element draws only its style. A
+host that draws `SceneCanvas` itself passes a `CanvasViews` to show views.
 
 ## Scale the UI
 

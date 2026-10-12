@@ -140,7 +140,7 @@ Screen-space UI drawn over the game. Sizes and offsets are in dp. `SceneCanvasEl
 
 | Field | Type | Default | What it does |
 | --- | --- | --- | --- |
-| `kind` | `Text` · `Panel` · `Bar` · `Button` · `TextField` · `Joystick` · `Image` | `Text` | What the element is. |
+| `kind` | `Text` · `Panel` · `Bar` · `Button` · `TextField` · `Joystick` · `Image` · `View` | `Text` | What the element is. A `View` shows what a camera sees. |
 | `anchor` | `TopLeft` · `TopCenter` · `TopRight` · `CenterLeft` · `Center` · `CenterRight` · `BottomLeft` · `BottomCenter` · `BottomRight` | `TopLeft` | Screen point the element is placed from. |
 | `offsetX` | number | `16` | Horizontal offset from the anchor. |
 | `offsetY` | number | `16` | Vertical offset from the anchor. |
@@ -168,6 +168,7 @@ Screen-space UI drawn over the game. Sizes and offsets are in dp. `SceneCanvasEl
 | `wheel` | boolean | `false` | Take the mouse wheel while the pointer is over this element or its children, instead of leaving it for gameplay. The innermost such element under the pointer takes it; read it back with `consumeWheel()`. |
 | `draggable` | boolean | `false` | Can be picked up: a ghost of it follows the pointer while `dragging` is true. A plain click still fires if the pointer never moves far enough to start a drag. Releasing on a `dropTarget` reports it there through `dropped`; releasing elsewhere reports it on this element's `droppedOutside`, a point in canvas units. Both are properties read once. |
 | `dropTarget` | boolean | `false` | Receives a `draggable` element released over it, read back through `dropped`. |
+| `camera` | string | `""` | A `View`'s camera: the name of a node with a `camera`, whose picture fills the element's box, opaque, at its size in pixels, inside its `style.cornerRadius` and under its children. Give that camera `primary: false` so it does not become the main view. With no such node, or no renderer, the element draws only its style. |
 
 ## `character_controller`
 

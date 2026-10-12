@@ -5,8 +5,6 @@
  */
 package com.awakekt.awake.vulkan.pipeline
 
-import com.awakekt.awake.core.graphics2d.BlendMode
-import com.awakekt.awake.core.graphics2d.TextureCompositeMode
 import com.awakekt.awake.render.command.BufferHandle
 import com.awakekt.awake.render.command.MaterialBinding
 import com.awakekt.awake.render.command.PipelineHandle
@@ -80,7 +78,10 @@ private class VulkanUiRunRecorder(
             UiPipelineKind.Quad -> pipelines.quad
             UiPipelineKind.RoundedQuad -> pipelines.roundedQuad
             UiPipelineKind.Glyph -> pipelines.glyph
-            UiPipelineKind.Texture -> pipelines.textures[TextureCompositeMode(BlendMode.SourceOver, false)]
+            // A texture binds its exact blend/alpha-convention pipeline in drawTexturePrimitive.
+            // Requiring the straight-alpha default here dropped a run holding only premultiplied
+            // render-target textures.
+            UiPipelineKind.Texture -> pipelines.textures.values.firstOrNull()
         }
         // Texture binds nothing up front: bindMaterial rebinds the pipeline per primitive,
         // since each one also needs its own descriptor set bound at the same point.
