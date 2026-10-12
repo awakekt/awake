@@ -116,6 +116,16 @@ interface PointerInputNode {
      * costs the panels one pixel rather than eleven. This is that: hit area only, layout untouched.
      */
     val hitMarginPx: Int get() = 0
+
+    /**
+     * Whether this link makes its node occlude a sibling under it at the same point.
+     *
+     * True for everything that acts on a click, a drag or the like: a control one pixel
+     * above another must not let a tap fall through to what it is covering. An observer that
+     * only watches, such as a passive hover link, sets this false so a decorative element can
+     * track the pointer without taking a tap meant for whatever is behind it.
+     */
+    val blocksHitTest: Boolean get() = true
 }
 
 /** A modifier link that contributes semantics. */

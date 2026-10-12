@@ -8,6 +8,7 @@ package com.awakekt.awake.scene.canvas
 import com.awakekt.awake.compose.foundation.interaction.InteractionSource
 import com.awakekt.awake.compose.foundation.text.TextFieldState
 import com.awakekt.awake.compose.ui.focus.FocusRequester
+import com.awakekt.awake.core.math2d.Rectangle
 import com.awakekt.awake.scene.document.SceneVec3
 import kotlinx.serialization.Serializable
 import kotlin.math.sqrt
@@ -260,6 +261,19 @@ class CanvasElement {
 
     /** Whether a Button is being held down right now. */
     val isHeld: Boolean get() = interactions.isPressed
+
+    /** Whether the pointer is over this element right now. */
+    val isHovered: Boolean get() = interactions.isHovered
+
+    /**
+     * Where this element was placed last frame, in the canvas's own units -- a box from the
+     * canvas's top-left, in the same units as [offsetX] and [width]. Null when it was not drawn:
+     * not [visible], hidden by [touchOnly], or a [follow] with nowhere to land this frame.
+     *
+     * A child's box is already in canvas coordinates, not relative to its parent.
+     */
+    var screenBounds: Rectangle? = null
+        internal set
 
     internal fun press() {
         pressed = true

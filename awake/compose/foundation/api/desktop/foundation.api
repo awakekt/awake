@@ -65,8 +65,8 @@ public final class com/awakekt/awake/compose/foundation/FocusableKt {
 }
 
 public final class com/awakekt/awake/compose/foundation/HoverableKt {
-	public static final fun hoverable (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/interaction/InteractionSource;ZI)Lcom/awakekt/awake/compose/ui/Modifier;
-	public static synthetic fun hoverable$default (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/interaction/InteractionSource;ZIILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static final fun hoverable (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/interaction/InteractionSource;ZIZ)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static synthetic fun hoverable$default (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/interaction/InteractionSource;ZIZILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
 	public static final fun rememberInteractionSource (Lcom/awakekt/awake/compose/runtime/Composer;)Lcom/awakekt/awake/compose/foundation/interaction/InteractionSource;
 }
 

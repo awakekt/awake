@@ -117,6 +117,7 @@ public final class com/awakekt/awake/scene/canvas/CanvasElement {
 	public final fun getOffsetX ()F
 	public final fun getOffsetY ()F
 	public final fun getOrder ()I
+	public final fun getScreenBounds ()Lcom/awakekt/awake/core/math2d/Rectangle;
 	public final fun getStickX ()F
 	public final fun getStickY ()F
 	public final fun getStyle ()Lcom/awakekt/awake/scene/canvas/CanvasStyle;
@@ -128,6 +129,7 @@ public final class com/awakekt/awake/scene/canvas/CanvasElement {
 	public final fun getWheel ()Z
 	public final fun getWidth ()F
 	public final fun isHeld ()Z
+	public final fun isHovered ()Z
 	public final fun setAction (Ljava/lang/String;)V
 	public final fun setAnchor (Lcom/awakekt/awake/scene/canvas/CanvasAnchor;)V
 	public final fun setBackground (Ljava/lang/String;)V

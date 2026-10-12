@@ -35,6 +35,9 @@ internal class CanvasTree(
 
     init {
         world.family<CanvasElement>().forEach { entity, element ->
+            // Cleared up front so an element not composed this frame -- hidden, or a follower with
+            // nowhere to land -- reports null rather than where it last was.
+            element.screenBounds = null
             val parent = if (element.follow.isEmpty()) world.canvasParent(entity) else null
             (if (parent == null) roots else children.getOrPut(parent) { ArrayList() }) += entity to element
         }
