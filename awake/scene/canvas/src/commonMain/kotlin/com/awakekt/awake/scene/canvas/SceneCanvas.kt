@@ -56,7 +56,6 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.drawPath
 import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.math2d.Rectangle
-import com.awakekt.awake.core.math2d.sp
 import com.awakekt.awake.core.text.theme.TextStyle
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
@@ -232,14 +231,6 @@ internal fun CanvasElementView(
         CanvasElementKind.Joystick -> JoystickView(element, wheeled, back, tree, children)
     }
 }
-
-/** This element's words in [color], at its size, with its shadow and outline. */
-private fun CanvasElement.textStyle(color: Color) = TextStyle(
-    color = color,
-    size = fontSize.sp,
-    shadow = style.textShadow?.toTextShadow(),
-    outline = style.textOutline?.toTextOutline(),
-)
 
 /**
  * Turns what this node paints -- image, background and content, children included -- clockwise by

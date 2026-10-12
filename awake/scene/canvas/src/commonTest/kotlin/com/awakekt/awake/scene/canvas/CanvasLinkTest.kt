@@ -14,6 +14,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 /**
  * A Text element's `[[key|shown words]]` span draws in the link colour, and a click on its words
@@ -24,8 +25,8 @@ class CanvasLinkTest {
     private val world = World()
     private val host = ComposeHost()
 
-    private fun textElement(text: String): CanvasElement {
-        val element = CanvasElement().apply { kind = CanvasElementKind.Text; this.text = text; width = 300f; height = 40f }
+    private fun textElement(text: String, width: Float = 300f, height: Float = 40f): CanvasElement {
+        val element = CanvasElement().apply { kind = CanvasElementKind.Text; this.text = text; this.width = width; this.height = height }
         world.add(world.create(), element)
         return element
     }
@@ -71,6 +72,18 @@ class CanvasLinkTest {
         assertNull(output.semantics.find("canvas-link-quest"), "plain text must not gain a clickable span")
         tap(10, 10)
         assertNull(element.consumeLink())
+    }
+
+    @Test
+    fun wordsWithLinksWrapAtTheBoxsEdgeAndAtALineBreak() {
+        textElement("[[a|one]] [[b|two]] [[c|three]]\n[[d|four]]", width = 60f, height = 200f)
+        val semantics = frame().semantics
+        val first = assertNotNull(semantics.find("canvas-link-a"))
+        val wrapped = assertNotNull(semantics.find("canvas-link-c"))
+        val broken = assertNotNull(semantics.find("canvas-link-d"))
+
+        assertTrue(wrapped.y > first.y, "three words do not fit 60 wide, so the last wraps below the first")
+        assertTrue(broken.y > wrapped.y, "the line break starts a line below")
     }
 
     private companion object {
