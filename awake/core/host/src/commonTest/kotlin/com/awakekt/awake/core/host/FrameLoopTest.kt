@@ -26,4 +26,12 @@ class FrameLoopTest {
     fun maxFrameDeltaConstantIsQuarterSecond() {
         assertEquals(0.25, MAX_FRAME_DELTA_SECONDS)
     }
+
+    /** A frame that reads as starting before the last one, as a browser's first animation frame can, takes no time. */
+    @Test
+    fun aFrameDeltaIsNeverNegativeNorAboveTheCap() {
+        assertEquals(0.0, clampFrameDelta(-0.004))
+        assertEquals(0.016, clampFrameDelta(0.016))
+        assertEquals(MAX_FRAME_DELTA_SECONDS, clampFrameDelta(3.0))
+    }
 }

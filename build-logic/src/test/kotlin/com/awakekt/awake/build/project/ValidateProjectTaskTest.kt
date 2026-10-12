@@ -14,7 +14,7 @@ import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertFailsWith
 
-/** `validateProject` against a small project on disk: the manifest's `tags`. */
+/** `validateProject` against a small project on disk: the manifest's `tags` and `plugins`. */
 class ValidateProjectTaskTest {
     private val root: File = createTempDirectory("validate-project").toFile()
 
@@ -42,10 +42,22 @@ class ValidateProjectTaskTest {
         assertContains(assertFailsWith<GradleException> { validate(tags = "[{}, 3]") }.message!!, "manifest.tags must contain only strings")
     }
 
-    private fun validate(tags: String) {
+    @Test
+    fun aPluginCompiledIntoTheGameNeedsNoPath() {
+        validate(plugins = """[{ "id": "com.example.harbor", "required": true, "capabilityClass": "com.example.harbor.HarborCapability" }]""")
+    }
+
+    @Test
+    fun aPluginWithNeitherAPathNorACapabilityClassIsAnError() {
+        val failure = assertFailsWith<GradleException> { validate(plugins = """[{ "id": "com.example.harbor", "required": true }]""") }
+
+        assertContains(failure.message!!, "manifest.plugins[0].path must be safe")
+    }
+
+    private fun validate(tags: String = "[]", plugins: String = "[]") {
         root.resolve("awake.project.json").writeText(
             """{ "formatVersion": 1, "id": "com.example.harbor", "name": "Harbor Town", "version": "1.0.0", """ +
-                """"entryScene": "scenes/main.scene.json", "tags": $tags }""",
+                """"entryScene": "scenes/main.scene.json", "tags": $tags, "plugins": $plugins }""",
         )
         root.resolve("scenes").mkdirs()
         root.resolve("scenes/main.scene.json").writeText("""{ "version": 1, "name": "main", "nodes": [] }""")
