@@ -35,7 +35,7 @@
       },
       "components": [
         {
-          "component": "meshRenderer",
+          "component": "mesh_renderer",
           "mesh": "ground",
           "material": "lit-shadow",
           "cullMode": "Back"
@@ -53,12 +53,12 @@
       },
       "components": [
         {
-          "component": "meshRenderer",
+          "component": "mesh_renderer",
           "mesh": "cube",
           "material": "lit-shadow"
         },
         {
-          "component": "spinControl",
+          "component": "spin_control",
           "speed": 1.0
         }
       ]
