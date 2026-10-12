@@ -225,6 +225,7 @@ class SceneCanvasTest {
             wheel = true,
             draggable = true,
             dropTarget = true,
+            camera = "Portrait Camera",
             style = CanvasStyle(
                 background = "#202020",
                 gradient = CanvasGradient("#303030", "#101010", horizontal = true),

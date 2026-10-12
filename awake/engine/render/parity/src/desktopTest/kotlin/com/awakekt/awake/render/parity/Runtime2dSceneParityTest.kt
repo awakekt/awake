@@ -7,15 +7,11 @@ package com.awakekt.awake.render.parity
 
 import com.awakekt.awake.core.math.ViewportScaling
 import com.awakekt.awake.ecs.Entity
-import com.awakekt.awake.engine.platform.HeadlessSurface
 import com.awakekt.awake.engine.platform.dsl.requireService
 import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
 import com.awakekt.awake.physics.DegreesOfFreedom
 import com.awakekt.awake.render.capture.FramebufferAttachment
 import com.awakekt.awake.render.capture.FramebufferAttachmentData
-import com.awakekt.awake.render.command.GpuDrawPreparationSource
-import com.awakekt.awake.render.command.GpuPassInput
-import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.testing.HeadlessRenderSession
 import com.awakekt.awake.scene.binding.destroy
 import com.awakekt.awake.scene.binding.fromWorld
@@ -29,10 +25,7 @@ import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import com.awakekt.awake.scene.scene2d.Sprite
 import com.awakekt.awake.scene.scene2d.SpriteClips
 import com.awakekt.awake.scene.scene2d.Tilemap
-import com.awakekt.awake.showcase.app.EngineShowcaseRenderPlan
 import com.awakekt.awake.showcase.app.engineShowcaseApp
-import com.awakekt.awake.vulkan.application.VulkanEngine
-import com.awakekt.awake.webgpu.webGpuHeadlessPlan
 import kotlinx.coroutines.runBlocking
 import kotlin.math.abs
 import kotlin.test.Test
@@ -169,43 +162,8 @@ class Runtime2dSceneParityTest {
         return Counts(green, blue, gold, red)
     }
 
-    private fun open(backend: HeadlessUiBackend, app: AwakeAppLifecycle): HeadlessRenderSession = when (backend) {
-        HeadlessUiBackend.WebGpu -> {
-            val session = webGpuHeadlessPlan(EngineShowcaseRenderPlan, surface = HeadlessSurface(WIDTH, HEIGHT))
-            val renderer = OffscreenFrames(session.renderer)
-            object : HeadlessRenderSession {
-                override val renderer: Renderer = renderer
-                override fun close() {
-                    renderer.destroyFrameTarget()
-                    session.close()
-                }
-            }
-        }
-        HeadlessUiBackend.Vulkan -> {
-            val renderer = runBlocking { PlanEngine(app).boot() }
-            object : HeadlessRenderSession {
-                override val renderer: Renderer = renderer
-                override fun close() = renderer.destroy()
-            }
-        }
-    }
-
-    private class PlanEngine(app: AwakeAppLifecycle) : VulkanEngine(app, EngineShowcaseRenderPlan) {
-        suspend fun boot(): Renderer = createBackendResources(HeadlessSurface(WIDTH, HEIGHT)).renderer
-    }
-
-    /** wgpu-native's fixture has no presentation loop; execute scheduled frames offscreen. */
-    private class OffscreenFrames(private val backend: Renderer) :
-        Renderer by backend,
-        GpuDrawPreparationSource {
-        override val gpuDrawPreparer = (backend as GpuDrawPreparationSource).gpuDrawPreparer
-        private val target = backend.createRenderTarget(WIDTH, HEIGHT)
-        override fun draw(input: GpuPassInput) = backend.renderToTexture(target, input)
-        fun destroyFrameTarget() {
-            backend.waitIdle()
-            target.destroy()
-        }
-    }
+    private fun open(backend: HeadlessUiBackend, app: AwakeAppLifecycle): HeadlessRenderSession =
+        openRuntimeSession(backend, app, WIDTH, HEIGHT)
 
     private data class Counts(val green: Int, val blue: Int, val gold: Int, val red: Int)
 

@@ -111,13 +111,20 @@ class RenderSystem3D(
      */
     fun planCapture(world: World, camera: Camera, aspect: Float): GpuPassInput {
         require(camera.viewport == null) { "A virtual viewport capture requires pixel width and height." }
-        return planner.plan(world, camera, elapsedTimeSeconds, aspect, viewport = null).passInput
+        return planner.plan(world, camera, elapsedTimeSeconds, aspect, viewport = null).passInput.also { forgetPlannedFrame() }
     }
 
     /** Plans an offscreen view with physical-pixel dimensions, including virtual viewport scaling. */
     fun planCapture(world: World, camera: Camera, width: Int, height: Int): GpuPassInput {
         require(captureViewport.update(camera, width.toFloat(), height.toFloat())) { "Capture dimensions must be positive." }
         return planner.plan(world, captureViewport.camera, elapsedTimeSeconds, captureViewport.aspect, captureViewport.viewport).passInput
+            .also { forgetPlannedFrame() }
+    }
+
+    // A capture's draws are prepared into the per-draw uniform slots a replayed frame's draws point
+    // at, so the next frame plans afresh rather than drawing with the capture's camera.
+    private fun forgetPlannedFrame() {
+        lastPlannedFrame = null
     }
 
     override fun update(world: World, delta: Float) {

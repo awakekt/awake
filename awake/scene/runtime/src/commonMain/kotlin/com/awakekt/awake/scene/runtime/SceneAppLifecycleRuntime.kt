@@ -278,6 +278,8 @@ class SceneAppLifecycleRuntime internal constructor(
                 // expensive UI. See Renderer.awaitFrameResources.
                 timePhase({ uiWaitMs = it }) { renderer.awaitFrameResources() }
                 timePhase({ uiStageMs = it }) {
+                    // Before the UI that samples them, so each View shows this frame's picture.
+                    canvasViews?.render()
                     renderer.drawUi(
                         graphicsLayers.composite(
                             renderer = renderer,
@@ -302,6 +304,8 @@ class SceneAppLifecycleRuntime internal constructor(
             uiSemantics = uiFrame.semantics
             uiPrimitives = stagedUiPrimitives + uiFrame.primitives
         } else {
+            // No canvas this frame: frees every View's target.
+            canvasViews?.render()
             val composeRuntime = services.service(ComposeAppRuntime::class)
             if (composeRuntime != null) {
                 uiOwnership = composeRuntime.inputOwnership
@@ -353,6 +357,7 @@ class SceneAppLifecycleRuntime internal constructor(
                         scale = canvasScale,
                         projector = canvasProjector,
                         bindings = canvasBindings ?: globalBindings,
+                        views = canvasViews ?: SceneCanvasViews(world, renderer, ::planCapture).also { canvasViews = it },
                     )
                 }
                 if (content != null) content()
@@ -377,12 +382,16 @@ class SceneAppLifecycleRuntime internal constructor(
 
     private val canvasProjector by lazy { SceneCanvasProjector(world, renderer.clipSpace) { session.schedule.renderSystem?.cameraViewport } }
 
+    // Made by the first frame that draws the canvas.
+    private var canvasViews: SceneCanvasViews? = null
+
     internal val spriteBatch by lazy { SpriteRenderBatch(renderer) { requireAssetLibrary().requireTexture(it) } }
     internal val spriteFeature by lazy { SceneSpriteRenderFeature(spriteBatch) }
     internal val tilemapFeature by lazy { SceneTilemapRenderFeature(renderer) { requireAssetLibrary().requireTexture(it) } }
 
     override fun dispose() {
         if (::renderer.isInitialized) {
+            canvasViews?.dispose()
             spriteBatch.destroy()
             tilemapFeature.destroy()
         }

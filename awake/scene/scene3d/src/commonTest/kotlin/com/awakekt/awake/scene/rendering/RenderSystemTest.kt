@@ -879,6 +879,21 @@ class RenderSystemTest {
     }
 
     @Test
+    fun aCaptureMakesTheNextFrameReplanWhenRealtimeIsDisabled() {
+        val world = worldWithPrimaryCamera()
+        val system = RenderSystem3D(RecordingRenderer(), isRealtimeProvider = { false }, isDirtyProvider = { false })
+        system.update(world, 1f / 60f)
+        system.update(world, 1f / 60f)
+        assertFalse(system.lastFramePlanned, "unchanged, so replayed")
+
+        // A capture prepares its draws into the uniform slots the replayed frame's draws read.
+        system.planCapture(world, primaryCamera(world)!!, 64, 32)
+        system.update(world, 1f / 60f)
+
+        assertTrue(system.lastFramePlanned)
+    }
+
+    @Test
     fun alwaysPlansWhenRealtimeIsEnabled() {
         val world = worldWithPrimaryCamera()
         val renderer = RecordingRenderer()

@@ -85,6 +85,7 @@ context(_: Composer)
  * @param bindings The scene component bindings an element's [CanvasElement.bind] reads fields
  *   through: the scene's own registry's. Null reads through every globally registered one, gathered
  *   only on a frame where an element reads a field.
+ * @param views What [CanvasElementKind.View] elements show. Without it they draw only their style.
  */
 fun SceneCanvas(
     world: World,
@@ -94,8 +95,9 @@ fun SceneCanvas(
     scale: Float = 1f,
     projector: CanvasProjector? = null,
     bindings: List<SceneComponentBinding<*, *>>? = null,
+    views: CanvasViews? = null,
 ) {
-    val tree = CanvasTree(world, showTouchControls, images, projector, bindings)
+    val tree = CanvasTree(world, showTouchControls, images, projector, bindings, views)
     val uiScale = if (scale > 0f && scale.isFinite()) scale else 1f
     Box(modifier.fillMaxSize()) {
         val screen = this
@@ -229,6 +231,39 @@ internal fun CanvasElementView(
             Children(element, children, tree)
         }
         CanvasElementKind.Joystick -> JoystickView(element, wheeled, back, tree, children)
+        CanvasElementKind.View -> CameraView(element, styled, tree, children)
+    }
+}
+
+/**
+ * A View: what its camera sees, filling its box inside its style's rounded corners at the box's size
+ * in pixels, under its children. No picture without [CanvasTree.views] or a node of that name.
+ *
+ * Opaque, as the camera's picture is on screen: a blended draw lowers the target's alpha even over a
+ * solid surface, so the picture goes over black rather than over what is behind the element.
+ */
+context(_: Composer)
+private fun CameraView(
+    element: CanvasElement,
+    modifier: Modifier,
+    tree: CanvasTree,
+    children: List<Pair<Entity, CanvasElement>>,
+) {
+    val views = tree.views
+    val camera = element.camera.takeIf { it.isNotEmpty() }?.let(tree::node)
+    val radius = element.style.cornerRadius ?: 0f
+    val box = if (radius > 0f) Modifier.fillMaxSize().clip(RoundedCornerShape(radius.dp)) else Modifier.fillMaxSize()
+    Box(modifier) {
+        Box(
+            box.drawBehind {
+                val picture = if (views != null && camera != null) views.texture(element, camera, width, height) else null
+                if (picture != null) {
+                    drawRect(0f, 0f, width.toFloat(), height.toFloat(), Color.Black)
+                    drawTexture(picture, premultiplied = true)
+                }
+            },
+        )
+        Children(element, children, tree)
     }
 }
 
