@@ -50,6 +50,14 @@ kotlin {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)
         }
+        // IndexedDbContentCache's IndexedDB access, and the coroutine `await` that turns its
+        // Promises into suspend calls. wasmJs-only -- see the note in awake:core:host's history.
+        named("wasmJsMain") {
+            dependencies {
+                implementation(libs.kotlinx.browser)
+                implementation(libs.kotlinx.coroutines.core)
+            }
+        }
     }
 }
 

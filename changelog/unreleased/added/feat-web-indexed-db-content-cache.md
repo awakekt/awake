@@ -1,0 +1,1 @@
+- **`IndexedAssetSource` can cache a published project's verified files in the browser.** `IndexedDbContentCache` implements `ContentCache` over IndexedDB, keyed by SHA-256: a return visit to the same project, with files unchanged since the last one, neither re-fetches nor re-hashes them.
