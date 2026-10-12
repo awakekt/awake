@@ -69,15 +69,17 @@ internal class CanvasTree(
     }
 
     /**
-     * The visible drop target, other than [exclude], whose last placed box holds canvas point
-     * ([x], [y]), or null. Picks the first one iteration finds; overlapping drop targets have no
-     * defined winner.
+     * The drop target, other than [exclude], drawn topmost at canvas point ([x], [y]) by its last
+     * placed box, or null: a child over its parent, a later sibling over an earlier one.
      */
-    fun dropTargetAt(x: Float, y: Float, exclude: CanvasElement): CanvasElement? {
+    fun dropTargetAt(x: Float, y: Float, exclude: CanvasElement): CanvasElement? = dropTargetIn(roots, x, y, exclude)
+
+    private fun dropTargetIn(entries: List<Pair<Entity, CanvasElement>>, x: Float, y: Float, exclude: CanvasElement): CanvasElement? {
         var found: CanvasElement? = null
-        world.family<CanvasElement>().forEach { _, candidate ->
-            if (found != null || candidate === exclude || !candidate.dropTarget) return@forEach
-            if (candidate.screenBounds?.contains(x, y) == true) found = candidate
+        for ((entity, element) in entries) {
+            if (!shows(element)) continue
+            val here = element !== exclude && element.dropTarget && element.screenBounds?.contains(x, y) == true
+            found = dropTargetIn(childrenOf(entity), x, y, exclude) ?: (if (here) element else found)
         }
         return found
     }

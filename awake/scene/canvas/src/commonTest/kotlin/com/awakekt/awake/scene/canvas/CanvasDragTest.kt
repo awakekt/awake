@@ -9,7 +9,9 @@ import com.awakekt.awake.compose.ui.platform.ComposeHost
 import com.awakekt.awake.compose.ui.platform.FrameInput
 import com.awakekt.awake.compose.ui.platform.FrameOutput
 import com.awakekt.awake.core.math2d.Vec2
+import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.scene.core.transform.Transform
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -27,11 +29,16 @@ class CanvasDragTest {
     private val world = World()
     private val host = ComposeHost()
 
-    private fun element(kind: CanvasElementKind, configure: CanvasElement.() -> Unit): CanvasElement {
+    private fun element(kind: CanvasElementKind, parent: CanvasElement? = null, configure: CanvasElement.() -> Unit): CanvasElement {
         val element = CanvasElement().apply { this.kind = kind }.apply(configure)
-        world.add(world.create(), element)
+        val entity = world.create()
+        world.add(entity, element)
+        if (parent != null) world.add(entity, Transform(parent = entities.getValue(parent)))
+        entities[element] = entity
         return element
     }
+
+    private val entities = HashMap<CanvasElement, Entity>()
 
     private fun CanvasElement.at(x: Float, y: Float, w: Float, h: Float) {
         anchor = CanvasAnchor.TopLeft
@@ -99,6 +106,36 @@ class CanvasDragTest {
 
         val afterRelease = frame(220, 30, released = true)
         assertFalse(afterRelease.ownership.isCaptured, "released, so gameplay has the pointer back")
+    }
+
+    @Test
+    fun aDropLandsOnTheTargetDrawnOnTop() {
+        val source = element(CanvasElementKind.Panel) { at(10f, 10f, 40f, 40f); draggable = true }
+        val window = element(CanvasElementKind.Panel) { at(200f, 10f, 200f, 200f); dropTarget = true }
+        val slot = element(CanvasElementKind.Panel, parent = window) { at(10f, 10f, 40f, 40f); dropTarget = true }
+
+        frame(30, 30)
+        frame(30, 30, pressed = true, down = true)
+        frame(230, 40, down = true)
+        frame(230, 40, released = true)
+
+        assertEquals(source, slot.dropped, "the slot is drawn over its window")
+        assertNull(window.dropped, "and the window under it gets nothing")
+    }
+
+    @Test
+    fun theGhostDrawsTheChildrenWithoutMovingTheirBoxes() {
+        val source = element(CanvasElementKind.Panel) { at(10f, 10f, 40f, 40f); draggable = true }
+        val icon = element(CanvasElementKind.Image, parent = source) { at(4f, 4f, 32f, 32f) }
+
+        frame(30, 30)
+        val before = icon.screenBounds
+        frame(30, 30, pressed = true, down = true)
+        val midDrag = frame(400, 300, down = true)
+
+        assertTrue(source.dragging)
+        assertEquals(before, icon.screenBounds, "the icon's box is where the slot is, not where its ghost is")
+        assertTrue(midDrag.ownership.isCaptured)
     }
 
     private companion object {
