@@ -41,6 +41,10 @@ import kotlinx.serialization.Serializable
  * @property alpha The element's opacity, from 0 to 1, its children included.
  * @property hovered What changes while the pointer is over a Button.
  * @property pressed What changes while a Button is held, over [hovered].
+ * @property rotation Degrees clockwise to turn the element's image, background and content about
+ * its own centre; null leaves it unrotated. Children turn with it. Hit-testing still uses the
+ * element's unrotated layout box, the way a Compose `graphicsLayer` rotation leaves hit-testing on
+ * the unrotated box.
  */
 @Serializable
 data class CanvasStyle(
@@ -59,6 +63,7 @@ data class CanvasStyle(
     @PropertyRange(min = 0.0, max = 1.0) val alpha: Float? = null,
     val hovered: CanvasStateStyle? = null,
     val pressed: CanvasStateStyle? = null,
+    val rotation: Float? = null,
 ) {
     /** What is wrong with this style, as messages naming the field; empty when nothing is. */
     internal fun problems(): List<String> = buildList {

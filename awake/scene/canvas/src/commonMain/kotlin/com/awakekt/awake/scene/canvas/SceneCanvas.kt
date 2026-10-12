@@ -37,6 +37,7 @@ import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.draw.clip
 import com.awakekt.awake.compose.ui.draw.drawBehind
+import com.awakekt.awake.compose.ui.draw.graphicsLayer
 import com.awakekt.awake.compose.ui.focus.focusRequester
 import com.awakekt.awake.compose.ui.focus.onFocusChanged
 import com.awakekt.awake.compose.ui.graphics.CircleShape
@@ -174,7 +175,7 @@ internal fun CanvasElementView(
     }
     val textStyle = element.textStyle(resolveTextColor(state, style) ?: fill)
     if (LocalCanvasGhost.current) {
-        GhostElementView(element, modifier.styleable(state, style), textStyle, tree, children)
+        GhostElementView(element, modifier.rotated(element.style.rotation).styleable(state, style), textStyle, tree, children)
         return
     }
     // Tree-space pixels back to canvas units: the density every size and offset dp was resolved
@@ -188,7 +189,8 @@ internal fun CanvasElementView(
     val wheeled = if (element.wheel) placed.onWheel(element::addWheel) else placed
     // A Button occludes what is under it, like any click target; every other kind only watches,
     // so it must not swallow a tap meant for something it happens to be drawn over.
-    val hovered = wheeled.styleable(state, style).hoverable(element.interactions, blocksHitTest = element.kind == CanvasElementKind.Button)
+    val hovered = wheeled.rotated(element.style.rotation).styleable(state, style)
+        .hoverable(element.interactions, blocksHitTest = element.kind == CanvasElementKind.Button)
     // Ahead of a Button's own `clickable` below, so a real drag's release never also reaches it;
     // a press that stays under the threshold leaves the release for `clickable` to turn into a click.
     val styled = element.draggedModifier(hovered, tree, density)
@@ -238,6 +240,15 @@ private fun CanvasElement.textStyle(color: Color) = TextStyle(
     shadow = style.textShadow?.toTextShadow(),
     outline = style.textOutline?.toTextOutline(),
 )
+
+/**
+ * Turns what this node paints -- image, background and content, children included -- clockwise by
+ * [degrees] about its own centre, through a draw-only `graphicsLayer`: it never moves the layout
+ * box, so hit-testing (and an ancestor's own layout) stays on the unrotated box. Null or zero
+ * degrees draws unrotated, with no layer at all.
+ */
+private fun Modifier.rotated(degrees: Float?): Modifier =
+    if (degrees == null || degrees == 0f) this else graphicsLayer(rotationDegrees = degrees)
 
 /**
  * A Bar's fill, [value] of its width: [color], or its fill image. The image is laid out at the bar's

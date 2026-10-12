@@ -6,7 +6,10 @@
 package com.awakekt.awake.compose.testing
 
 import com.awakekt.awake.compose.ui.graphics.ImageBitmap
+import com.awakekt.awake.compose.ui.graphics.drawscope.GraphicsLayerFrame
+import com.awakekt.awake.compose.ui.graphics.drawscope.GraphicsLayerPlaceholder
 import com.awakekt.awake.core.color.Color
+import com.awakekt.awake.core.graphics2d.DrawPoint
 import com.awakekt.awake.core.graphics2d.TextureRegion
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.graphics2d.containsPoint
@@ -15,10 +18,14 @@ import com.awakekt.awake.core.graphics2d.tessellateStrokeAa
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.core.text.font.UiFontSamplingMode
 import com.awakekt.awake.render.capture.PixelMap
+import kotlin.math.PI
 import kotlin.math.ceil
+import kotlin.math.cos
+import kotlin.math.hypot
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
+import kotlin.math.sin
 
 private const val GLYPH_GAMMA = 1.45f
 private const val MIN_TEXEL_WIDTH = 1e-4f
@@ -27,6 +34,56 @@ private val MissingFontColor = Color(1f, 0f, 1f, 1f)
 /** Supersamples every source-texel footprint without allowing pathological work per pixel. */
 internal fun glyphSampleCount(sourceTexels: Float, screenPixels: Float): Int =
     ceil(sourceTexels / screenPixels.coerceAtLeast(1f)).toInt().coerceIn(1, 6)
+
+/** The straight-alpha colour [image] samples at fraction ([u], [v]) of [region], tinted and scaled by [alpha]. */
+@Suppress("LongParameterList")
+private fun sampleImage(image: ImageBitmap, region: TextureRegion, tint: Color, alpha: Float, u: Float, v: Float): Color {
+    val sx = ((region.u0 + (region.u1 - region.u0) * u) * image.width).toInt().coerceIn(0, image.width - 1)
+    val sy = ((region.v0 + (region.v1 - region.v0) * v) * image.height).toInt().coerceIn(0, image.height - 1)
+    val rgba = image.pixel(sx, sy)
+    return Color(
+        ((rgba ushr 24) and 0xFF) / 255f * tint.r,
+        ((rgba ushr 16) and 0xFF) / 255f * tint.g,
+        ((rgba ushr 8) and 0xFF) / 255f * tint.b,
+        (rgba and 0xFF) / 255f * alpha * tint.a,
+    )
+}
+
+/**
+ * Where destination pixel ([px], [py]) samples from in a [w] by [h] rect, rotating *backwards* by
+ * [cosine]/[sine] about the rect's own centre ([centerX], [centerY]) -- the inverse of the rotation
+ * a renderer applies forwards to the quad's corners (`DrawCommand.Texture.rotationDegrees`'s own
+ * doc, and `DrawRunCoalescer.rotatedAboutCenter` for the real backends).
+ */
+@Suppress("LongParameterList")
+private fun unrotatedSample(px: Int, py: Int, centerX: Float, centerY: Float, cosine: Float, sine: Float, w: Float, h: Float): DrawPoint {
+    val dx = px + 0.5f - centerX
+    val dy = py + 0.5f - centerY
+    return DrawPoint(dx * cosine - dy * sine + w / 2f, dx * sine + dy * cosine + h / 2f)
+}
+
+/** Whether this point falls inside a rect of [w] by [h] starting at its own origin. */
+private fun DrawPoint.isWithin(w: Float, h: Float): Boolean {
+    if (x < 0f || x >= w) return false
+    return y >= 0f && y < h
+}
+
+/**
+ * Flattens each of [layers]' own primitives into its own [ImageBitmap], keyed by its
+ * [GraphicsLayerFrame.id], so a `GraphicsLayerPlaceholder` material resolves to real pixels. Kept
+ * apart from [rasterizeToPixelMap] rather than inlined into it, the way its other helpers are: one
+ * function doing one thing, read on its own.
+ */
+private fun resolveLayerImages(layers: List<GraphicsLayerFrame>, font: UiFont?): Map<Int, ImageBitmap> {
+    if (layers.isEmpty()) return emptyMap()
+    return layers.associate { layer ->
+        val layerWidth = layer.width.coerceAtLeast(1)
+        val layerHeight = layer.height.coerceAtLeast(1)
+        // Not recursed with layers again: a layer's own content does not nest another layer here.
+        val flattened = layer.primitives.rasterizeToPixelMap(layerWidth, layerHeight, Color(0f, 0f, 0f, 0f), font)
+        layer.id to ImageBitmap(layerWidth, layerHeight, flattened.pixels)
+    }
+}
 
 /**
  * Software-rasterizes a [UiDrawPrimitive] list into a tightly-packed RGBA8 buffer for
@@ -37,17 +94,34 @@ fun List<UiDrawPrimitive>.rasterize(
     height: Int,
     background: Color = Color(0.1f, 0.1f, 0.12f, 1f),
     font: UiFont? = null,
-): ByteArray = rasterizeToPixelMap(width, height, background, font).pixels
+    layers: List<GraphicsLayerFrame> = emptyList(),
+): ByteArray = rasterizeToPixelMap(width, height, background, font, layers).pixels
 
-/** Software-rasterizes UI primitives into the shared diagnostic pixel representation. */
+/**
+ * Software-rasterizes UI primitives into the shared diagnostic pixel representation.
+ *
+ * [layers] flattens a `Modifier.graphicsLayer` subtree into its own [ImageBitmap] first, the same
+ * composite step a renderer-backed [com.awakekt.awake.engine.compose.GraphicsLayerCompositor] does
+ * against a real render target, so a layer's `GraphicsLayerPlaceholder` material resolves to real
+ * pixels instead of this rasterizer's plain grey "unknown material" fallback. A layer nested inside
+ * another is not resolved, and blend modes that need the destination (`Screen`, `Overlay`) are not
+ * composited here; only the common straight paint-and-rotate case this test tool exists for is.
+ */
+// Detekt's length/complexity count for this one function jumps from clean to the triple digits the
+// moment its parameter list reaches five, reproduced with a fifth parameter that is not even read
+// anywhere in the body; the function's own complexity has not changed. Suppressed rather than
+// reshaped around a measurement that does not track what it is meant to.
+@Suppress("LongMethod", "CyclomaticComplexMethod", "NestedBlockDepth")
 fun List<UiDrawPrimitive>.rasterizeToPixelMap(
     width: Int,
     height: Int,
     background: Color = Color(0.1f, 0.1f, 0.12f, 1f),
     font: UiFont? = null,
+    layers: List<GraphicsLayerFrame> = emptyList(),
 ): PixelMap {
     val pixelMap = PixelMap(width, height)
     pixelMap.fill(background)
+    val layerImages = resolveLayerImages(layers, font)
     val meshCoverage = IntArray(width * height)
     var meshStamp = 0
 
@@ -100,20 +174,53 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
         val x1 = min(x + w, clipX1).toInt().coerceIn(0, width)
         val y1 = min(y + h, clipY1).toInt().coerceIn(0, height)
         for (py in y0 until y1) {
-            val v = region.v0 + (region.v1 - region.v0) * ((py + 0.5f - y) / h)
-            val sy = (v * image.height).toInt().coerceIn(0, image.height - 1)
             for (px in x0 until x1) {
                 if (!passesPathClips(px + 0.5f, py + 0.5f)) continue
-                val u = region.u0 + (region.u1 - region.u0) * ((px + 0.5f - x) / w)
-                val sx = (u * image.width).toInt().coerceIn(0, image.width - 1)
-                val rgba = image.pixel(sx, sy)
-                val color = Color(
-                    ((rgba ushr 24) and 0xFF) / 255f * tint.r,
-                    ((rgba ushr 16) and 0xFF) / 255f * tint.g,
-                    ((rgba ushr 8) and 0xFF) / 255f * tint.b,
-                    (rgba and 0xFF) / 255f * alpha * tint.a,
-                )
-                pixelMap.blend(px, py, color)
+                pixelMap.blend(px, py, sampleImage(image, region, tint, alpha, (px + 0.5f - x) / w, (py + 0.5f - y) / h))
+            }
+        }
+    }
+
+    /**
+     * Like [fillImage], but [rotationDegrees] clockwise about the destination rect's own centre.
+     *
+     * Scattering source pixels forward by the rotation would leave gaps between them at any angle
+     * that is not a multiple of 90 degrees, so this walks destination pixels and inverse-rotates
+     * each one into source space instead; see [unrotatedSample].
+     */
+    @Suppress("LongParameterList")
+    fun fillRotatedImage(
+        x: Float,
+        y: Float,
+        w: Float,
+        h: Float,
+        rotationDegrees: Float,
+        image: ImageBitmap,
+        alpha: Float,
+        region: TextureRegion = TextureRegion.Whole,
+        tint: Color = Color.White,
+    ) {
+        if (rotationDegrees == 0f) {
+            fillImage(x, y, w, h, image, alpha, region, tint)
+            return
+        }
+        if (w <= 0f || h <= 0f) return
+        val centerX = x + w / 2f
+        val centerY = y + h / 2f
+        val radians = -rotationDegrees * PI.toFloat() / 180f
+        val cosine = cos(radians)
+        val sine = sin(radians)
+        // The rotated rect's own bounding box can only ever be this far from its centre.
+        val half = hypot(w, h) / 2f
+        val x0 = max(centerX - half, clipX0).toInt().coerceIn(0, width)
+        val y0 = max(centerY - half, clipY0).toInt().coerceIn(0, height)
+        val x1 = min(centerX + half, clipX1).toInt().coerceIn(0, width)
+        val y1 = min(centerY + half, clipY1).toInt().coerceIn(0, height)
+        for (py in y0 until y1) {
+            for (px in x0 until x1) {
+                val local = unrotatedSample(px, py, centerX, centerY, cosine, sine, w, h)
+                if (!local.isWithin(w, h) || !passesPathClips(px + 0.5f, py + 0.5f)) continue
+                pixelMap.blend(px, py, sampleImage(image, region, tint, alpha, local.x / w, local.y / h))
             }
         }
     }
@@ -471,8 +578,9 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
                     primitive.transform,
                 ) { x, y, w, h ->
                     val image = primitive.material as? ImageBitmap
+                        ?: (primitive.material as? GraphicsLayerPlaceholder)?.let { layerImages[it.id] }
                     if (image != null) {
-                        fillImage(x, y, w, h, image, primitive.alpha, primitive.region, primitive.tint)
+                        fillRotatedImage(x, y, w, h, primitive.rotationDegrees, image, primitive.alpha, primitive.region, primitive.tint)
                     } else {
                         fillRect(x, y, w, h, Color(0.5f, 0.5f, 0.5f, 1f))
                     }
