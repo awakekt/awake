@@ -196,7 +196,7 @@ internal fun CanvasElementView(
     val styled = element.draggedModifier(hovered, tree, density)
     when (element.kind) {
         CanvasElementKind.Text -> Box(styled, contentAlignment = (element.textAlign ?: CanvasAnchor.TopLeft).alignment) {
-            Text(tree.textOf(element), style = textStyle)
+            CanvasText(element, tree.textOf(element), textStyle)
             Children(element, children, tree)
         }
         CanvasElementKind.Panel, CanvasElementKind.Image -> Box(styled) { Children(element, children, tree) }

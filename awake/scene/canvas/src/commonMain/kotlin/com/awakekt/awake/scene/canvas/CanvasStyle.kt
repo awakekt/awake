@@ -45,6 +45,8 @@ import kotlinx.serialization.Serializable
  * its own centre; null leaves it unrotated. Children turn with it. Hit-testing still uses the
  * element's unrotated layout box, the way a Compose `graphicsLayer` rotation leaves hit-testing on
  * the unrotated box.
+ * @property linkColor The colour of a Text's `[[key|shown words]]` spans; null draws them in a
+ * default blue.
  */
 @Serializable
 data class CanvasStyle(
@@ -64,10 +66,18 @@ data class CanvasStyle(
     val hovered: CanvasStateStyle? = null,
     val pressed: CanvasStateStyle? = null,
     val rotation: Float? = null,
+    val linkColor: String? = null,
 ) {
     /** What is wrong with this style, as messages naming the field; empty when nothing is. */
     internal fun problems(): List<String> = buildList {
-        addAll(colourProblems("background" to background, "borderColor" to borderColor, "textColor" to textColor))
+        addAll(
+            colourProblems(
+                "background" to background,
+                "borderColor" to borderColor,
+                "textColor" to textColor,
+                "linkColor" to linkColor,
+            ),
+        )
         if ((cornerRadius ?: 0f) < 0f) add("cornerRadius must not be negative")
         if ((borderWidth ?: 0f) < 0f) add("borderWidth must not be negative")
         if (alpha != null && alpha !in 0f..1f) add("alpha must be between 0 and 1")
