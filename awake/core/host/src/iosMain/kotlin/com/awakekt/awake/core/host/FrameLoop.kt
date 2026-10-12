@@ -27,7 +27,7 @@ object IOSFrameLoop : FrameLoop {
     ) {
         val currentMark = TimeSource.Monotonic.markNow()
         val rawDeltaTime = (currentMark - previousMark).inWholeNanoseconds / 1e9
-        val deltaTime = rawDeltaTime.coerceAtMost(MAX_FRAME_DELTA_SECONDS)
+        val deltaTime = clampFrameDelta(rawDeltaTime)
         previousMark = currentMark
 
         onUpdate(deltaTime)

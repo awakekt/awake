@@ -7,7 +7,7 @@
 
 package com.awakekt.awake.engine.window
 
-import com.awakekt.awake.core.host.MAX_FRAME_DELTA_SECONDS
+import com.awakekt.awake.core.host.clampFrameDelta
 import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.input.PointerButton
@@ -246,8 +246,8 @@ fun runBrowserCanvas(
                     frameLoopStopped = true
                     return
                 }
-                val rawDeltaSeconds = ((time - lastFrameTime) / 1000.0).toFloat()
-                val deltaSeconds = rawDeltaSeconds.coerceAtMost(MAX_FRAME_DELTA_SECONDS.toFloat())
+                // The first frame's timestamp can come before lastFrameTime's performance.now().
+                val deltaSeconds = clampFrameDelta((time - lastFrameTime) / 1000.0).toFloat()
                 lastFrameTime = time
                 try {
                     lifecycle.update(deltaSeconds)

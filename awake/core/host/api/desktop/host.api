@@ -38,6 +38,7 @@ public final class com/awakekt/awake/core/host/FrameLoop$DefaultImpls {
 public final class com/awakekt/awake/core/host/FrameLoopKt {
 	public static final field MAX_FRAME_DELTA_SECONDS D
 	public static final field TARGET_FPS I
+	public static final fun clampFrameDelta (D)D
 }
 
 public abstract interface class com/awakekt/awake/core/host/FrameRateMode {

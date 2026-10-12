@@ -12,6 +12,14 @@ const val TARGET_FPS = 60
 const val MAX_FRAME_DELTA_SECONDS: Double = 0.25
 
 /**
+ * A measured frame delta, from [rawSeconds], as every host passes it on: never above
+ * [MAX_FRAME_DELTA_SECONDS], and never below 0. A frame's start can read earlier than the time a host took
+ * before it, as a browser's `requestAnimationFrame` timestamp does against `performance.now()`, and a
+ * negative step would run time backwards.
+ */
+fun clampFrameDelta(rawSeconds: Double): Double = rawSeconds.coerceIn(0.0, MAX_FRAME_DELTA_SECONDS)
+
+/**
  * Core interface driving per-frame tick updates and rate limiting across platform hosts.
  */
 interface FrameLoop {
