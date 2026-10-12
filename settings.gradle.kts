@@ -135,5 +135,8 @@ dependencyResolutionManagement {
         // v0.1.1, June 2025) -- only snapshots via Sonatype's current Central Portal
         // snapshot repo (not the legacy oss.sonatype.org ones above).
         maven("https://central.sonatype.com/repository/maven-snapshots/")
+        // The wgpu4k builds pinned in build.gradle.kts, byte for byte, for when Central's 90-day
+        // snapshot cleanup removes them (the Maven fallback workflow serves the mirror release).
+        maven("https://awakekt.github.io/awake/") { content { includeGroup("io.ygdrasil") } }
     }
 }
