@@ -45,21 +45,15 @@ internal fun Renderer.performCreateMaterial(
         val sampler = graphicsDevice.wgpuContext.device.createSampler(SamplerDescriptor())
         material.createResourcesFromRenderTarget(offscreen.colorView, sampler)
     } else if (texture != null) {
-        val pbr = if (pbrTextures != null) {
-            listOf(
-                pbrTextures.metallicRoughness to Renderer.NEUTRAL_METALLIC_ROUGHNESS,
-                pbrTextures.normal to Renderer.NEUTRAL_NORMAL,
-                pbrTextures.occlusion to Renderer.NEUTRAL_OCCLUSION,
-                pbrTextures.emissive to Renderer.NEUTRAL_EMISSIVE,
-            ).map { (asset, neutral) ->
-                asset?.let(::uploadTexture) ?: textureResources.neutral(neutral) {
-                    uploadTexture(
-                        neutral,
-                    )
-                }
-            }
-        } else {
-            emptyList()
+        // Every map gets a texture, a neutral one where the material has none, as on Vulkan: a textured
+        // pipeline's declaration binds all four, so a glTF material with only a base colour must still fill them.
+        val pbr = listOf(
+            pbrTextures?.metallicRoughness to Renderer.NEUTRAL_METALLIC_ROUGHNESS,
+            pbrTextures?.normal to Renderer.NEUTRAL_NORMAL,
+            pbrTextures?.occlusion to Renderer.NEUTRAL_OCCLUSION,
+            pbrTextures?.emissive to Renderer.NEUTRAL_EMISSIVE,
+        ).map { (asset, neutral) ->
+            asset?.let(::uploadTexture) ?: textureResources.neutral(neutral) { uploadTexture(neutral) }
         }
         material.createResources(uploadTexture(texture), pbr)
     }
