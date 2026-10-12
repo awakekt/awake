@@ -11,7 +11,6 @@ import com.awakekt.awake.compose.foundation.gestures.dragAfterThreshold
 import com.awakekt.awake.compose.foundation.layout.Box
 import com.awakekt.awake.compose.foundation.layout.offset
 import com.awakekt.awake.compose.foundation.layout.size
-import com.awakekt.awake.compose.foundation.text.Text
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.CompositionLocalProvider
 import com.awakekt.awake.compose.runtime.compositionLocalOf
@@ -89,7 +88,7 @@ internal fun GhostElementView(element: CanvasElement, styled: Modifier, textStyl
     val words = if (element.kind in WORDED) tree.textOf(element) else ""
     val align = element.textAlign ?: if (element.kind == CanvasElementKind.Button) CanvasAnchor.Center else CanvasAnchor.TopLeft
     Box(styled, contentAlignment = align.alignment) {
-        if (words.isNotEmpty()) Text(words, style = textStyle)
+        if (words.isNotEmpty()) CanvasText(element, words, textStyle)
         Children(element, children, tree)
     }
 }

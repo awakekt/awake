@@ -29,7 +29,7 @@ import kotlinx.serialization.Serializable
  * track.
  * @property fillImage A Bar's fill, cut at its value or squeezed into it as [fillImageMode] says.
  * @property fillImageMode How [fillImage] meets the Bar's value: [CanvasFillImageMode.Cut], the default,
- * or [CanvasFillImageMode.Squeeze].
+ * [CanvasFillImageMode.Squeeze], or [CanvasFillImageMode.Sweep].
  * @property cornerRadius Rounds the fill, gradient, border and shadow, and a Bar's colour fill.
  * Images stay square.
  * @property borderWidth The border's width, inside the element's edge.
@@ -41,6 +41,12 @@ import kotlinx.serialization.Serializable
  * @property alpha The element's opacity, from 0 to 1, its children included.
  * @property hovered What changes while the pointer is over a Button.
  * @property pressed What changes while a Button is held, over [hovered].
+ * @property rotation Degrees clockwise to turn the element's image, background and content about
+ * its own centre; null leaves it unrotated. Children turn with it. Hit-testing still uses the
+ * element's unrotated layout box, the way a Compose `graphicsLayer` rotation leaves hit-testing on
+ * the unrotated box.
+ * @property linkColor The colour of a Text's `[[key|shown words]]` spans; null draws them in a
+ * default blue.
  */
 @Serializable
 data class CanvasStyle(
@@ -59,10 +65,19 @@ data class CanvasStyle(
     @PropertyRange(min = 0.0, max = 1.0) val alpha: Float? = null,
     val hovered: CanvasStateStyle? = null,
     val pressed: CanvasStateStyle? = null,
+    val rotation: Float? = null,
+    val linkColor: String? = null,
 ) {
     /** What is wrong with this style, as messages naming the field; empty when nothing is. */
     internal fun problems(): List<String> = buildList {
-        addAll(colourProblems("background" to background, "borderColor" to borderColor, "textColor" to textColor))
+        addAll(
+            colourProblems(
+                "background" to background,
+                "borderColor" to borderColor,
+                "textColor" to textColor,
+                "linkColor" to linkColor,
+            ),
+        )
         if ((cornerRadius ?: 0f) < 0f) add("cornerRadius must not be negative")
         if ((borderWidth ?: 0f) < 0f) add("borderWidth must not be negative")
         if (alpha != null && alpha !in 0f..1f) add("alpha must be between 0 and 1")
@@ -108,6 +123,13 @@ enum class CanvasFillImageMode {
      * rather than overlap.
      */
     Squeeze,
+
+    /**
+     * The fill sweeps clockwise from 12 o'clock over the Bar's whole box, like a cooldown overlay
+     * darkening an icon as it finishes: a wedge from 0 up to the value's share of a full turn, in
+     * the colour fill or, if set, [CanvasStyle.fillImage] cut to the same wedge.
+     */
+    Sweep,
 }
 
 /**

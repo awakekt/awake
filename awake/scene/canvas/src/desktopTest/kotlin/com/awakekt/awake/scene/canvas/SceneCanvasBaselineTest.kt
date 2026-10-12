@@ -188,6 +188,29 @@ class SceneCanvasBaselineTest {
             .primitives.assertMatchesBaseline("scene-canvas-layout", 232, 112)
     }
 
+    /** A cooldown sweep over an icon-like square, a rotated picture, and a line of text with a link. */
+    @Test
+    fun aCooldownSweepARotatedPictureAndALinkInText() {
+        val world = World()
+        fun element(configure: CanvasElement.() -> Unit) = world.create().also { world.add(it, CanvasElement().apply(configure)) }
+        element {
+            kind = CanvasElementKind.Bar; offsetX = 16f; offsetY = 16f; width = 48f; height = 48f
+            value = 0.3f; color = "#000000A0"; background = "#C8A060"
+            style = CanvasStyle(fillImageMode = CanvasFillImageMode.Sweep, cornerRadius = 6f)
+        }
+        element {
+            kind = CanvasElementKind.Image; offsetX = 92f; offsetY = 16f; width = 72f; height = 36f
+            style = CanvasStyle(image = CanvasImage("frame.png", pixelated = true), rotation = 30f)
+        }
+        element {
+            offsetX = 16f; offsetY = 84f; width = 200f; height = 20f; fontSize = 14f; color = "#FFFFFF"
+            text = "Visit the [[quest|quest board]] for work."
+        }
+
+        val output = ComposeHost().frame(FrameInput(224, 112)) { SceneCanvas(world, images = mapOf("frame.png" to FRAME)) }
+        output.primitives.assertMatchesBaseline("scene-canvas-sweep-rotation-links", 224, 112, font = UiFonts.default(), layers = output.graphicsLayers)
+    }
+
     private companion object {
         val TINTS = listOf("#E5484D", "#3E63DD", "#30A46C")
 

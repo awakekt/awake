@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.compose.testing
 
+import com.awakekt.awake.compose.ui.graphics.drawscope.GraphicsLayerFrame
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.text.font.UiFont
@@ -49,6 +50,9 @@ fun ComposeComponentFrame.assertMatchesBaseline(
 /**
  * The same exact comparison for primitives captured some other way, such as a whole app driven
  * through a capturing renderer, where there is no [ComposeComponentFrame] to hand.
+ *
+ * [layers] resolves a `Modifier.graphicsLayer` subtree's `GraphicsLayerPlaceholder`, such as
+ * `FrameOutput.graphicsLayers`, to real pixels; see [rasterizeToPixelMap].
  */
 fun List<UiDrawPrimitive>.assertMatchesBaseline(
     name: String,
@@ -56,8 +60,9 @@ fun List<UiDrawPrimitive>.assertMatchesBaseline(
     height: Int,
     background: Color = OpaqueBackground,
     font: UiFont? = null,
+    layers: List<GraphicsLayerFrame> = emptyList(),
 ) {
-    val actual = rasterizeToPixelMap(width, height, background, font)
+    val actual = rasterizeToPixelMap(width, height, background, font, layers)
     val baselineFile = File("$BASELINE_ROOT/$name.png")
 
     if (System.getProperty(RECORD_PROPERTY) != null) {

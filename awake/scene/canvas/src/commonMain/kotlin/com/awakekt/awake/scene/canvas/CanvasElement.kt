@@ -213,6 +213,9 @@ class CanvasElement {
     val droppedOutside: Vec2?
         get() = droppedOutsideAt.also { droppedOutsideAt = null }
 
+    /** The key of a clicked `[[key|shown words]]` span, until [consumeLink] reads it; [SceneCanvas] writes this. */
+    internal var linkKey: String? = null
+
     private var pressed = false
     private var doublePressed = false
     private var lastPress: TimeMark? = null
@@ -363,5 +366,43 @@ class CanvasElement {
 
         /** How soon a second press makes a double-click, as the common desktop default. */
         const val DOUBLE_CLICK_SECONDS = 0.5
+    }
+}
+
+/**
+ * The key of a `[[key|shown words]]` span clicked in [CanvasElement.text] since the last call, then
+ * null.
+ *
+ * @return The clicked span's key, or null when none was clicked since the last call.
+ */
+fun CanvasElement.consumeLink(): String? = linkKey.also { linkKey = null }
+
+/** A run of a Text element's words, plain or a clickable `[[key|shown words]]` span. */
+internal sealed class CanvasTextSpan {
+    /** Words drawn in the Text's own colour. */
+    data class Plain(val text: String) : CanvasTextSpan()
+
+    /** Words drawn in the link colour; a click on them reports [key] through [CanvasElement.consumeLink]. */
+    data class Link(val key: String, val text: String) : CanvasTextSpan()
+}
+
+/** `[[key|shown words]]`, key and words each everything but `|` and `]]`. */
+private val LINK_SPAN = Regex("""\[\[([^|\]]+)\|([^]]+)]]""")
+
+/**
+ * Splits [text] on `[[key|shown words]]` spans. Text with none comes back as its one [CanvasTextSpan.Plain].
+ *
+ * `[[` is reserved: there is no escape for a literal `[[` in plain text.
+ */
+internal fun parseCanvasTextSpans(text: String): List<CanvasTextSpan> {
+    if ("[[" !in text) return listOf(CanvasTextSpan.Plain(text))
+    return buildList {
+        var last = 0
+        for (match in LINK_SPAN.findAll(text)) {
+            if (match.range.first > last) add(CanvasTextSpan.Plain(text.substring(last, match.range.first)))
+            add(CanvasTextSpan.Link(match.groupValues[1], match.groupValues[2]))
+            last = match.range.last + 1
+        }
+        if (last < text.length) add(CanvasTextSpan.Plain(text.substring(last)))
     }
 }
