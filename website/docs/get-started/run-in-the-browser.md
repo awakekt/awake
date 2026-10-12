@@ -58,9 +58,10 @@ more setup.
 
 !!! warning "Keep WebGPU on your Core release"
     `{{ awake_version }}-SNAPSHOT` depends on every Core module at exactly `{{ awake_version }}` and
-    holds them there, so a build that also asks for another Core version fails to resolve rather than
-    mixing two. Do not take the newest `-SNAPSHOT` in the snapshot repository instead: that one is
-    built from `main` after the release, and it moves the `wasmJs` target onto Core snapshots.
+    holds them there, so a build that also asks for a newer Core fails to resolve rather than mixing
+    two, and an older Core in the build is moved up to `{{ awake_version }}`. Do not take the newest
+    `-SNAPSHOT` in the snapshot repository instead: that one is built from `main` after the release,
+    and it moves the `wasmJs` target onto Core snapshots.
 
 ## Launch the app
 

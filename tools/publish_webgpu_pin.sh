@@ -10,8 +10,22 @@
 # constraint, so a newer Core on the same classpath fails resolution instead of linking at startup.
 #
 # Usage, from the tagged checkout:
-#   bash tools/publish_webgpu_pin.sh
+#   bash tools/publish_webgpu_pin.sh            # build, verify, wait for Core on Central, upload
+#   bash tools/publish_webgpu_pin.sh --local    # build into Maven Local and verify only
+#
+# CI's WebGPU release pin job runs --local from a throwaway tag on pull requests and main, so the
+# build and its checks have run long before a release tag depends on them.
 set -euo pipefail
+
+local_only=false
+case "${1:-}" in
+  "") ;;
+  --local) local_only=true ;;
+  *)
+    echo "Usage: bash tools/publish_webgpu_pin.sh [--local]" >&2
+    exit 2
+    ;;
+esac
 
 tag="$(git describe --exact-match --tags --match 'v[0-9]*' HEAD 2> /dev/null || true)"
 if [[ -z "$tag" ]]; then
@@ -39,6 +53,10 @@ echo "Verifying WebGPU $version against Core $core"
 ./gradlew :awake:backend:webgpu:publishToMavenLocal "${gradle_args[@]}"
 ./gradlew verifyPublishedArtifacts "-Pawake.verifyPublishedVersion=$version" -Pawake.verifyPublishedFamily=webgpu \
   "-Pawake.verifyPinnedCoreVersion=$core" --no-configuration-cache
+if [[ "$local_only" == true ]]; then
+  echo "WebGPU $version in Maven Local pins Core $core"
+  exit 0
+fi
 
 # The Core release's upload returns once Central is publishing it, before repo1 serves the files.
 ./gradlew waitForCoreCentral "-Pawake.waitForCoreVersion=$core" --no-configuration-cache

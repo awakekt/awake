@@ -450,12 +450,25 @@ jobs:
         run: |
           # A run for a commit before a cut derives the release's own -SNAPSHOT, the version the tag
           # run's WebGPU release pin takes. Once the release is tagged, this run must not overwrite it.
+          # ls-remote exits 2 when the tag does not exist; any other failure (network, auth) must not
+          # read as "not tagged", or it publishes over the pin.
           version="${{ steps.snapshot-version.outputs.version }}"
           base="${version%-SNAPSHOT}"
-          if git ls-remote --exit-code --tags origin "refs/tags/v$base" > /dev/null; then
-            echo "::notice::v$base is tagged; its tag run owns $version (the WebGPU release pin)."
-            exit 0
-          fi
+          set +e
+          git ls-remote --exit-code --tags origin "refs/tags/v$base" > /dev/null
+          tagged=$?
+          set -e
+          case "$tagged" in
+            0)
+              echo "::notice::v$base is tagged; its tag run owns $version (the WebGPU release pin)."
+              exit 0
+              ;;
+            2) ;;
+            *)
+              echo "::error::Cannot tell whether v$base is tagged (git ls-remote exited $tagged); not publishing $version over a possible WebGPU release pin."
+              exit 1
+              ;;
+          esac
           ./gradlew :awake:engine:window:verifyDesktopNatives -Pawake.prebuiltNatives="$PWD/build/window-natives" --no-configuration-cache
           ./gradlew publishAllPublicationsToMavenCentralRepository \
                     -PisMainHost=true \

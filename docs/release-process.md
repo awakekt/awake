@@ -183,8 +183,14 @@ last Central release is `0.1.0-alpha.4`) and publishes to Central's snapshot rep
   for integrating with a Core snapshot only: its Core edges name that snapshot, which sorts above the
   release.
 
-Core releases are not blocked by the pin: it is a job of its own after the release, and since it is
-a snapshot, a failed one can be re-run.
+The pin gates the release as well. The tag run's **Consumer** job builds it into Maven Local from
+the tagged commit, checks its metadata (`-Pawake.verifyPinnedCoreVersion`), and builds and links both
+templates' web apps against it, and the release waits for that job: a pin that cannot be built or
+does not hold Core at the release stops the release before anything reaches Central. Only the
+upload is a job of its own after the release, so a failed upload leaves the release in place, and
+since the pin is a snapshot that job can be re-run. Pull requests and `main` run the same local
+build and metadata check (CI's **WebGPU release pin** job, on a throwaway tag), so a tag is not the
+first run of it.
 
 ---
 
