@@ -109,17 +109,12 @@ One person or agent owns a release from cut to downstream bump. Before cutting, 
    pins the Core release it was built with; pairing it with a newer Core can fail at runtime. Its
    Publish run uploads the three Vulkan modules as one Central deployment and attaches the bundle to
    the GitHub Release, as a Core release does.
-4. **Downstream:** bump awake-studio, awake-template, awake-project-template and
-   awake-plugin-template to the new Core and Vulkan releases. The templates' sources live in Core,
-   under `templates/game`, `templates/project` and `templates/plugin`, and every PR that can break
-   one builds it there (`.github/workflows/templates.yml`). So copy a template repo's files from
-   its directory there, keeping only the repo's own README, licence and `.github/`, and change a
-   template in Core first, never only in its repo. A publish job will replace these three PRs
-   (#721). Pin
-   `awake-webgpu = "<release>-SNAPSHOT"` once the WebGPU release pin job succeeds (for `0.1.0`,
-   `0.1.0-SNAPSHOT`), never the next patch: `<next patch>-SNAPSHOT` is `main` after the release,
-   and its Core edges sort above the release, so it moves part of Core up on the web build only.
-   The project template's web player builds the pin by default.
+4. **Downstream:** bump awake-studio to the new Core and Vulkan releases by hand. The three
+   starter template repositories (awake-template, awake-project-template, awake-plugin-template)
+   need no bump PR: their sources live in Core, under `templates/game`, `templates/project` and
+   `templates/plugin`, and once this release and its WebGPU release pin both succeed, the
+   **Publish templates** job stamps and pushes each of them on its own. See "Template publishing"
+   below.
    Re-record moved baselines only after stating which ones should move and why.
 5. Close the milestone.
 
@@ -196,6 +191,33 @@ upload is a job of its own after the release, so a failed upload leaves the rele
 since the pin is a snapshot that job can be re-run. Pull requests and `main` run the same local
 build and metadata check (CI's **WebGPU release pin** job, on a throwaway tag), so a tag is not the
 first run of it.
+
+### Template publishing
+
+The three starter templates (`templates/game`, `templates/project`, `templates/plugin`) live in
+this repository and are tested from there: `.github/workflows/templates.yml` and
+`obfuscated-templates.yml` build the in-tree copy through `tools/check_template_consumer.sh`, so a
+PR that breaks one fails against the change that broke it, not a template repository's `main` that
+may already be ahead or behind it.
+
+Once a Core release's **release** and **webgpu-pin** jobs both succeed, `workflow_run` starts
+**Publish templates** (`.github/workflows/publish-templates.yml`): it stamps that release's Core
+and Vulkan versions, and `awake-webgpu = "<release>-SNAPSHOT"`, into each template
+(`tools/stamp_template_versions.sh`), and pushes the result to its own repository's `main` as one
+commit, `chore: Awake Core X.Y.Z` (`tools/publish_template.sh`). A later `vulkan-v*` tag on the same
+commit triggers it again, re-stamping the newer Vulkan release though Core's own version is
+unchanged. `workflow_dispatch` republishes one named template between releases, at whatever Core
+and Vulkan releases are newest on Maven Central.
+
+Starting after the triggering workflow run, rather than as one of its own jobs, is what keeps a
+failed template push from affecting the release: the release has already fully finished by the time
+this starts, and each template is its own matrix job (`fail-fast: false`), so one failing does not
+stop the others. It authenticates with the `TEMPLATES_PUSH_TOKEN` repository secret, a fine-grained
+personal access token with *Contents* read/write on the three template repositories; a missing
+secret fails the run before anything is cloned or pushed, and a push that does happen is one atomic
+commit per template, never a partial one. See `templates/README.md` for what each publish leaves
+alone (the project template's own GitHub Pages web player and its webgpu-pin check script, issue
+templates, and anything else only the repository carries).
 
 ---
 

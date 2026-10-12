@@ -77,19 +77,10 @@ else
 fi
 
 echo "==> Pointing the template at Core $CORE_VERSION, Vulkan $VULKAN_VERSION and WebGPU $WEBGPU_VERSION"
-# The catalog pins whatever releases the template last used; this run is about the artifacts built
-# here. The transformation also lets Core CI exercise the new split before the template PR merges.
+# templates/<name>'s catalog pins whatever release it was last published at; this run is about the
+# artifacts built here. tools/publish_template.sh stamps a real release's versions the same way.
 CATALOG="$CHECKOUT/gradle/libs.versions.toml"
-CORE_VERSION="$CORE_VERSION" VULKAN_VERSION="$VULKAN_VERSION" WEBGPU_VERSION="$WEBGPU_VERSION" perl -0pi -e \
-  's/^awake = ".*"$/awake = "$ENV{CORE_VERSION}"/m;
-   if (!/^awake-vulkan = /m) {
-     s/^(awake = ".*")$/$1\nawake-vulkan = "$ENV{VULKAN_VERSION}"/m;
-   } else {
-     s/^awake-vulkan = ".*"$/awake-vulkan = "$ENV{VULKAN_VERSION}"/m;
-   }
-   s/(^awake-backend-vulkan = \{[^\n]*version\.ref = )"awake"/${1}"awake-vulkan"/m;
-   s/^awake-webgpu = ".*"$/awake-webgpu = "$ENV{WEBGPU_VERSION}"/m' \
-  "$CATALOG"
+"$ENGINE_ROOT/tools/stamp_template_versions.sh" "$CATALOG" "$CORE_VERSION" "$VULKAN_VERSION" "$WEBGPU_VERSION"
 
 # Snapshot family artifacts are served from Central's dedicated snapshot repository.
 SETTINGS="$CHECKOUT/settings.gradle.kts"
@@ -99,7 +90,6 @@ fi
 # Maven Local first, for Awake only. The templates list the snapshot repository first, and an earlier
 # upload of the same snapshot version there would otherwise win over the build published here.
 perl -0pi -e 's#(dependencyResolutionManagement\s*\{\s*repositories\s*\{\n)#$1        mavenLocal { mavenContent { includeGroupAndSubgroups("com.awakekt.awake") } }\n#' "$SETTINGS"
-grep -E '^awake(-vulkan|-webgpu)? = ' "$CATALOG"
 
 # Android needs an SDK location, and a fresh copy has no local.properties.
 if [[ -n "${ANDROID_HOME:-}" ]]; then
