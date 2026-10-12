@@ -99,6 +99,17 @@ class IndexedAssetSourceTest {
     }
 
     @Test
+    fun prefetchFailsForATamperedFileAndNamesIt() = runTest {
+        val tampered = server(override = mapOf("files/assets/crate.glb" to model.copyOf().also { it[10] = 99 }))
+
+        val failure = assertFailsWith<IllegalStateException> {
+            IndexedAssetSource(index, tampered).prefetch(listOf("scenes/main.scene.json", "assets/crate.glb"))
+        }
+
+        assertTrue(failure.message.orEmpty().contains("assets/crate.glb"), "the failure names the file: $failure")
+    }
+
+    @Test
     fun aPathOutsideTheIndexFails() = runTest {
         val failure = IndexedAssetSource(index, server()).read(AssetPath("assets/missing.glb")).exceptionOrNull()
 

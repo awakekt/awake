@@ -62,10 +62,10 @@ class IndexedAssetSource(
 
     /**
      * Reads every one of [paths] ahead of play, so the files are cached before a scene asks for them,
-     * fetching and verifying up to [MAX_CONCURRENT_PREFETCHES] of them at once, and reporting the
-     * bytes done of the bytes [paths] add up to after each file -- always in [paths]' order, whichever
-     * fetch actually finishes first. Throws for the first file, in that order, that is missing from
-     * the index or fails its check; any of the rest still in flight are cancelled.
+     * fetching and verifying up to six at once, and reporting the bytes done of the bytes [paths] add
+     * up to after each file, in [paths]' order whichever fetch finishes first. Throws before fetching
+     * anything if a path isn't in the index. Otherwise throws for the first file to fail its check --
+     * first to fail, not necessarily first in [paths] -- and cancels the fetches still in flight.
      */
     suspend fun prefetch(paths: List<String>, onProgress: (done: Long, total: Long) -> Unit = { _, _ -> }) {
         val chosen = paths.map { path ->
@@ -75,7 +75,9 @@ class IndexedAssetSource(
         var done = 0L
         coroutineScope {
             val limit = Semaphore(MAX_CONCURRENT_PREFETCHES)
-            val pending = chosen.map { entry -> entry to async { limit.withPermit { readChecked(entry) } } }
+            // Unit, not the bytes: every Deferred lives until the last file is done, so returning the
+            // bytes would hold the whole prefetch in memory at once.
+            val pending = chosen.map { entry -> entry to async<Unit> { limit.withPermit { readChecked(entry) } } }
             for ((entry, fetch) in pending) {
                 fetch.await()
                 done += entry.sizeBytes
