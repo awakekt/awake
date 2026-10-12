@@ -48,6 +48,13 @@ import kotlinx.serialization.Serializable
  * @property bind Game state the element shows without code: a Bar's fill, a Text's words.
  * @property wheel Whether this element takes the mouse wheel while the pointer is over it or its
  * children, instead of leaving it for gameplay. [CanvasElement.consumeWheel] reads what it took.
+ * @property draggable Whether this element can be picked up and dragged: a ghost of it follows the
+ * pointer while [CanvasElement.dragging] is true. Releasing on a [dropTarget] reports it there
+ * through [CanvasElement.dropped]; releasing elsewhere reports it on this element instead, through
+ * [CanvasElement.droppedOutside]. A plain click still fires if the pointer never moves far enough
+ * to start a drag.
+ * @property dropTarget Whether a [draggable] element released over this one is reported here,
+ * through [CanvasElement.dropped].
  */
 @Serializable
 @SerialName("canvas_element")
@@ -78,6 +85,8 @@ data class SceneCanvasElement(
     @PropertyRange(min = 0.0) val grow: Float = 0f,
     val bind: CanvasBinding? = null,
     val wheel: Boolean = false,
+    val draggable: Boolean = false,
+    val dropTarget: Boolean = false,
 ) : SceneComponent {
     /**
      * Validates element dimensions, font sizes, values, and hex color syntax.

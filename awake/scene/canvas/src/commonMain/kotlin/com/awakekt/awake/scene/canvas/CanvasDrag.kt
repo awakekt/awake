@@ -1,0 +1,95 @@
+/*
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+@file:Suppress("FunctionNaming", "ktlint:standard:function-naming")
+
+package com.awakekt.awake.scene.canvas
+
+import com.awakekt.awake.compose.foundation.background
+import com.awakekt.awake.compose.foundation.gestures.dragAfterThreshold
+import com.awakekt.awake.compose.foundation.layout.Box
+import com.awakekt.awake.compose.foundation.layout.offset
+import com.awakekt.awake.compose.foundation.layout.size
+import com.awakekt.awake.compose.foundation.text.Text
+import com.awakekt.awake.compose.runtime.Composer
+import com.awakekt.awake.compose.runtime.key
+import com.awakekt.awake.compose.ui.Alignment
+import com.awakekt.awake.compose.ui.Modifier
+import com.awakekt.awake.compose.ui.draw.alpha
+import com.awakekt.awake.compose.ui.graphics.RoundedCornerShape
+import com.awakekt.awake.compose.ui.unit.dp
+import com.awakekt.awake.core.color.Color
+import com.awakekt.awake.core.math2d.Vec2
+import com.awakekt.awake.core.math2d.sp
+import com.awakekt.awake.core.text.theme.TextStyle
+
+/**
+ * [hovered] with a drag added when this element is [CanvasElement.draggable], ahead of a Button's
+ * own `clickable` so a real drag's release never also reaches it; a press that stays under the
+ * threshold leaves the release for `clickable` to turn into a click.
+ */
+internal fun CanvasElement.draggedModifier(hovered: Modifier, tree: CanvasTree, density: Float): Modifier =
+    if (!draggable) {
+        hovered
+    } else {
+        hovered.dragAfterThreshold(
+            onDrag = { x, y -> dragCanvasElement(this, density, x, y) },
+            onDragEnd = { x, y -> dropCanvasElement(this, tree, density, x, y) },
+        )
+    }
+
+/**
+ * Marks [element] dragging and moves its drag point to local ([x], [y]) pixels on its own, still
+ * unmoved, box -- [CanvasElement.screenBounds] plus the pointer's offset into it, in canvas units.
+ * Does nothing before the element has ever been placed.
+ */
+private fun dragCanvasElement(element: CanvasElement, density: Float, x: Int, y: Int) {
+    val bounds = element.screenBounds ?: return
+    element.dragging = true
+    element.dragPointCanvasX = bounds.x + x / density
+    element.dragPointCanvasY = bounds.y + y / density
+}
+
+/**
+ * Ends [element]'s drag at local ([x], [y]), and reports it to whichever [CanvasElement.dropTarget]
+ * sits under that point, or to [element] itself as dropped outside when none does.
+ */
+private fun dropCanvasElement(element: CanvasElement, tree: CanvasTree, density: Float, x: Int, y: Int) {
+    val bounds = element.screenBounds
+    val px = (bounds?.x ?: element.dragPointCanvasX) + x / density
+    val py = (bounds?.y ?: element.dragPointCanvasY) + y / density
+    element.dragging = false
+    val target = tree.dropTargetAt(px, py, exclude = element)
+    if (target != null) target.droppedSource = element else element.droppedOutsideAt = Vec2(px, py)
+}
+
+/** A picture of every dragging element, at its drag point, for the pointer to drag visibly. */
+context(_: Composer)
+internal fun Ghosts(tree: CanvasTree) {
+    tree.world.family<CanvasElement>().forEach { entity, element ->
+        if (!element.dragging) return@forEach
+        key(entity) { GhostView(element, tree) }
+    }
+}
+
+/** A dimmed, non-interactive copy of [element]'s own look, centred on its drag point. */
+context(_: Composer)
+private fun GhostView(element: CanvasElement, tree: CanvasTree) {
+    val shape = RoundedCornerShape((element.style.cornerRadius ?: 0f).dp)
+    Box(
+        Modifier
+            .offset((element.dragPointCanvasX - element.width / 2f).dp, (element.dragPointCanvasY - element.height / 2f).dp)
+            .size(element.width.dp, element.height.dp)
+            .alpha(GHOST_ALPHA)
+            .background(colorOf(element.background, Color.Transparent), shape),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (element.text.isNotEmpty()) {
+            Text(tree.textOf(element), style = TextStyle(color = colorOf(element.color, Color.White), size = element.fontSize.sp))
+        }
+    }
+}
+
+private const val GHOST_ALPHA = 0.6f

@@ -7,6 +7,7 @@ package com.awakekt.awake.scene.canvas
 
 import com.awakekt.awake.compose.ui.graphics.ImageBitmap
 import com.awakekt.awake.core.math2d.Rectangle
+import com.awakekt.awake.core.math2d.contains
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.binding.SceneComponentBinding
@@ -65,6 +66,20 @@ internal class CanvasTree(
     fun textOf(element: CanvasElement): String {
         val bind = element.bind?.takeIf { it.text.isNotBlank() } ?: return element.text
         return node(bind.node)?.let { data.text(it, bind.text) } ?: element.text
+    }
+
+    /**
+     * The visible drop target, other than [exclude], whose last placed box holds canvas point
+     * ([x], [y]), or null. Picks the first one iteration finds; overlapping drop targets have no
+     * defined winner.
+     */
+    fun dropTargetAt(x: Float, y: Float, exclude: CanvasElement): CanvasElement? {
+        var found: CanvasElement? = null
+        world.family<CanvasElement>().forEach { _, candidate ->
+            if (found != null || candidate === exclude || !candidate.dropTarget) return@forEach
+            if (candidate.screenBounds?.contains(x, y) == true) found = candidate
+        }
+        return found
     }
 }
 

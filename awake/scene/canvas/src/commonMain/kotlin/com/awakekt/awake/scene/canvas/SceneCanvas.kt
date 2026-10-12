@@ -101,6 +101,8 @@ fun SceneCanvas(
         // host's text style is not the scene's: an element's text looks only as its own data says.
         CompositionLocalProvider(LocalDensity provides LocalDensity.current * uiScale, LocalTextStyle provides TextStyle.Default) {
             screen.Elements(tree.roots, tree)
+            // Drawn last, so a dragged element's ghost sits above everything it is dragged over.
+            Ghosts(tree)
         }
     }
 }
@@ -185,7 +187,10 @@ private fun CanvasElementView(
     val wheeled = if (element.wheel) placed.onWheel(element::addWheel) else placed
     // A Button occludes what is under it, like any click target; every other kind only watches,
     // so it must not swallow a tap meant for something it happens to be drawn over.
-    val styled = wheeled.styleable(state, style).hoverable(element.interactions, blocksHitTest = element.kind == CanvasElementKind.Button)
+    val hovered = wheeled.styleable(state, style).hoverable(element.interactions, blocksHitTest = element.kind == CanvasElementKind.Button)
+    // Ahead of a Button's own `clickable` below, so a real drag's release never also reaches it;
+    // a press that stays under the threshold leaves the release for `clickable` to turn into a click.
+    val styled = element.draggedModifier(hovered, tree, density)
     when (element.kind) {
         CanvasElementKind.Text -> Box(styled, contentAlignment = (element.textAlign ?: CanvasAnchor.TopLeft).alignment) {
             Text(tree.textOf(element), style = textStyle)
