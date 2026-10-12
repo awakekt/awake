@@ -253,6 +253,34 @@ class FocusOwner {
     }
 }
 
+/**
+ * Applies every `FocusRequester.requestFocus()`/`freeFocus()` call queued since the last frame,
+ * so an edit made with no [FocusOwner] or root in hand -- a scene system setting
+ * `CanvasElement.focused` -- lands before this frame's input is dispatched.
+ *
+ * Walks the placed tree [root] owns rather than a list of requesters: a request against a node
+ * that detached in between is simply never visited, which is how it is dropped.
+ */
+fun FocusOwner.applyPendingFocusRequests(root: LayoutNode) {
+    resolvePendingFocusRequests(root, root)
+}
+
+private fun FocusOwner.resolvePendingFocusRequests(root: LayoutNode, node: LayoutNode) {
+    val links = node.focusRequestNodes
+    for (i in links.indices) {
+        val link = links[i]
+        if (link.pendingTake) {
+            requestFocus(root, node)
+        } else if (link.pendingFree && isFocused(node)) {
+            clearFocus()
+        }
+        link.pendingTake = false
+        link.pendingFree = false
+    }
+    for (i in node.children.indices) resolvePendingFocusRequests(root, node.children[i])
+    for (i in node.layers.indices) resolvePendingFocusRequests(root, node.layers[i])
+}
+
 private fun LayoutNode.canTakeFocus(): Boolean {
     val enabled = focusTargets.any { it.canFocus }
     val override = focusProperties.firstNotNullOfOrNull { it.canFocusOverride }

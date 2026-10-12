@@ -6,6 +6,8 @@
 package com.awakekt.awake.scene.canvas
 
 import com.awakekt.awake.compose.foundation.interaction.InteractionSource
+import com.awakekt.awake.compose.foundation.text.TextFieldState
+import com.awakekt.awake.compose.ui.focus.FocusRequester
 import com.awakekt.awake.scene.document.SceneVec3
 import kotlinx.serialization.Serializable
 import kotlin.math.sqrt
@@ -27,6 +29,9 @@ enum class CanvasElementKind {
 
     /** Interactive clickable button. */
     Button,
+
+    /** A single-line field the player types into. */
+    TextField,
 
     /** Virtual touch analog joystick. */
     Joystick,
@@ -159,6 +164,58 @@ class CanvasElement {
     /** What times presses; a test swaps it for a `TestTimeSource`. */
     internal var clock: TimeSource = TimeSource.Monotonic
     internal val interactions = InteractionSource()
+
+    /** A TextField's live content and caret; kept in step with [text] by [syncTextField]. */
+    internal val textFieldState = TextFieldState()
+
+    /** Points a TextField at the keyboard; what [focused] queues a request or a free against. */
+    internal val focusRequester = FocusRequester()
+
+    /** [text] as of the last [syncTextField], so a system's write to it can be told from typing. */
+    private var lastSyncedText: String? = null
+
+    private var submitted = false
+
+    /**
+     * Whether a TextField holds the keyboard right now.
+     *
+     * A system setting this true or false asks for the same thing a click on the field, or
+     * elsewhere, would: the write queues a request or a free on [focusRequester], applied before
+     * the scene's next frame. A click focusing the field, or anything taking focus away, writes
+     * this back through `onFocusChanged`, so it always answers for the field's real state.
+     */
+    var focused: Boolean = false
+        set(value) {
+            field = value
+            if (value) focusRequester.requestFocus() else focusRequester.freeFocus()
+        }
+
+    /**
+     * True once after Enter submits a TextField since the last call; game code polls it, as
+     * [consumePress] polls a Button. Submitting frees the field's focus, so gameplay keys work
+     * again the next frame.
+     */
+    fun consumeSubmit(): Boolean = submitted.also { submitted = false }
+
+    internal fun submit() {
+        submitted = true
+        focused = false
+    }
+
+    /**
+     * Keeps [textFieldState] and [text] pointed at the same string, in whichever direction
+     * changed: typing updates [textFieldState] first, so that reaches [text]; a system writing
+     * [text] directly -- clearing it after a send -- is not [lastSyncedText], so that reaches
+     * [textFieldState] instead, caret at the end.
+     */
+    internal fun syncTextField() {
+        if (text != lastSyncedText) {
+            textFieldState.setText(text)
+        } else if (textFieldState.text != text) {
+            text = textFieldState.text
+        }
+        lastSyncedText = text
+    }
 
     /** A Joystick's deflection from -1 to 1 each way; up is negative [stickY], as on screen. */
     var stickX: Float = 0f

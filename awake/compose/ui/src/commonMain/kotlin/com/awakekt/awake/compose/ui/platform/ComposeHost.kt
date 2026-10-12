@@ -9,6 +9,7 @@ import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.CompositionLocalProvider
 import com.awakekt.awake.compose.runtime.provides
 import com.awakekt.awake.compose.ui.focus.FocusOwner
+import com.awakekt.awake.compose.ui.focus.applyPendingFocusRequests
 import com.awakekt.awake.compose.ui.graphics.Painter
 import com.awakekt.awake.compose.ui.input.key.KeyEventType
 import com.awakekt.awake.compose.ui.input.key.KeyInputDispatcher
@@ -119,6 +120,10 @@ class ComposeHost(
      */
     fun frame(input: FrameInput, content: context(Composer) () -> Unit): FrameOutput {
         scrollConsumed = false
+        // Before input, as documented: a `FocusRequester.requestFocus()`/`freeFocus()` queued
+        // since the last frame -- typically from outside composition entirely -- takes effect
+        // before this frame's click or key can see a stale focus owner.
+        focusOwner.applyPendingFocusRequests(root)
         if (placedOnce) dispatchInput(input)
         // Before content, not after: an animation reads the clock as it is declared, so advancing
         // afterwards would paint every frame one step stale.

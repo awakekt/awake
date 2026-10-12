@@ -169,6 +169,21 @@ interface FocusPropertiesNode {
 }
 
 /**
+ * A link a [com.awakekt.awake.compose.ui.focus.FocusRequester] may queue a take or free against.
+ *
+ * Booleans, not a reference to the requester itself: `node` stays free of `focus`'s types, the same
+ * reason [FocusPropertiesNode]'s own requester slots are typed `Any?`. A `FocusOwner` resolves the
+ * flags once at the start of the next frame, before that frame's input, then clears both.
+ */
+interface FocusRequestNode {
+    /** True to take focus on this node next frame. */
+    var pendingTake: Boolean
+
+    /** True to free focus from this node next frame, but only if it still holds it then. */
+    var pendingFree: Boolean
+}
+
+/**
  * A link that needs a handle on the node it decorates.
  *
  * Rare by design -- most links are told everything they need through their own callback. A focus

@@ -94,6 +94,10 @@ context(_: Composer)
  *
  * Pass [PasswordMask] unless a design calls for another character. The bundled UI font covers
  * printable ASCII and the bullet; any other mask character draws that font's fallback glyph.
+ *
+ * [onSubmit] fires on Enter in a single-line field (`singleLine`, or masked since a password field
+ * is always single-line) -- Compose's `KeyboardActions.onDone`. A multi-line field has nowhere to
+ * submit from, so Enter inserts a newline there instead, same as always.
  */
 fun BasicTextField(
     state: TextFieldState,
@@ -106,6 +110,7 @@ fun BasicTextField(
     onClick: (() -> Unit)? = null,
     mask: Char? = null,
     revealLastTyped: Boolean = false,
+    onSubmit: (() -> Unit)? = null,
 ) {
     // A newline in a password could only draw as one more mask, so the field never breaks lines.
     val oneLine = singleLine || mask != null
@@ -139,7 +144,7 @@ fun BasicTextField(
             .then(
                 TextFieldInputElement(
                     state, oneLine, mask, reveal.takeIf { revealLastTyped }, clock,
-                    policy, density, horizontalOffset, onClick,
+                    policy, density, horizontalOffset, onClick, onSubmit,
                 ),
             )
             .clickable { }
@@ -298,6 +303,7 @@ private class TextFieldInputElement(
     private val density: Float,
     private val horizontalOffset: ScrollState,
     private val onClick: (() -> Unit)?,
+    private val onSubmit: (() -> Unit)?,
 ) : ModifierNodeElement<TextFieldInputNode>() {
     override fun create(): TextFieldInputNode = TextFieldInputNode()
 
@@ -311,6 +317,7 @@ private class TextFieldInputElement(
         node.density = density
         node.horizontalOffset = horizontalOffset
         node.onClick = onClick
+        node.onSubmit = onSubmit
     }
 }
 
@@ -327,6 +334,7 @@ private class TextFieldInputNode :
     var density: Float = 0f
     lateinit var horizontalOffset: ScrollState
     var onClick: (() -> Unit)? = null
+    var onSubmit: (() -> Unit)? = null
 
     override val isPassword: Boolean get() = mask != null
 
@@ -355,8 +363,8 @@ private class TextFieldInputNode :
     }
 
     override fun onEditAction(action: TextEditAction) {
-        if (action == TextEditAction.Enter && !singleLine) {
-            state.insert("\n")
+        if (action == TextEditAction.Enter) {
+            if (singleLine) onSubmit?.invoke() else state.insert("\n")
         } else {
             state.apply(action)
         }

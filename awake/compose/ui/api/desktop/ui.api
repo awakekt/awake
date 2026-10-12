@@ -158,6 +158,10 @@ public final class com/awakekt/awake/compose/ui/focus/FocusOwner {
 	public final fun revalidate (Lcom/awakekt/awake/compose/ui/node/LayoutNode;)V
 }
 
+public final class com/awakekt/awake/compose/ui/focus/FocusOwnerKt {
+	public static final fun applyPendingFocusRequests (Lcom/awakekt/awake/compose/ui/focus/FocusOwner;Lcom/awakekt/awake/compose/ui/node/LayoutNode;)V
+}
+
 public final class com/awakekt/awake/compose/ui/focus/FocusProperties {
 	public fun <init> ()V
 	public final fun getCanFocus ()Ljava/lang/Boolean;
@@ -178,6 +182,8 @@ public final class com/awakekt/awake/compose/ui/focus/FocusProperties {
 
 public final class com/awakekt/awake/compose/ui/focus/FocusRequester {
 	public fun <init> ()V
+	public final fun freeFocus ()V
+	public final fun requestFocus ()V
 	public final fun requestFocus (Lcom/awakekt/awake/compose/ui/focus/FocusOwner;Lcom/awakekt/awake/compose/ui/node/LayoutNode;)Z
 }
 
@@ -1037,6 +1043,13 @@ public final class com/awakekt/awake/compose/ui/node/FocusPropertiesNode$Default
 	public static fun getLeftRequester (Lcom/awakekt/awake/compose/ui/node/FocusPropertiesNode;)Ljava/lang/Object;
 	public static fun getRightRequester (Lcom/awakekt/awake/compose/ui/node/FocusPropertiesNode;)Ljava/lang/Object;
 	public static fun getUpRequester (Lcom/awakekt/awake/compose/ui/node/FocusPropertiesNode;)Ljava/lang/Object;
+}
+
+public abstract interface class com/awakekt/awake/compose/ui/node/FocusRequestNode {
+	public abstract fun getPendingFree ()Z
+	public abstract fun getPendingTake ()Z
+	public abstract fun setPendingFree (Z)V
+	public abstract fun setPendingTake (Z)V
 }
 
 public abstract interface class com/awakekt/awake/compose/ui/node/FocusTargetNode {

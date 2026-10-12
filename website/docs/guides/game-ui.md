@@ -1,6 +1,6 @@
 # Game UI
 
-<p class="awake-lede">A HUD that belongs to the scene: text, panels, bars, buttons, images and touch joysticks pinned to the screen. Each element is a component on a scene entity, so it saves and loads with the scene, and the scene runtime draws it over the game.</p>
+<p class="awake-lede">A HUD that belongs to the scene: text, panels, bars, buttons, a typed field, images and touch joysticks pinned to the screen. Each element is a component on a scene entity, so it saves and loads with the scene, and the scene runtime draws it over the game.</p>
 
 <div class="awake-badges" markdown>
 <span class="awake-badge">component: <code>canvas_element</code></span>
@@ -52,13 +52,13 @@ For a button the player holds down, read `isHeld` instead. For a joystick, read 
 
 | Property | Type | Default | What it does |
 | --- | --- | --- | --- |
-| `kind` | `Text` · `Panel` · `Bar` · `Button` · `Joystick` · `Image` | `Text` | What the element draws. |
+| `kind` | `Text` · `Panel` · `Bar` · `Button` · `TextField` · `Joystick` · `Image` | `Text` | What the element draws. |
 | `anchor` | `TopLeft` · `TopCenter` · `TopRight` · `CenterLeft` · `Center` · `CenterRight` · `BottomLeft` · `BottomCenter` · `BottomRight` | `TopLeft` | The screen point the element is pinned to. |
 | `offsetX` | number (dp) | `16` | Moves the element inward from its anchor. From a right anchor it moves left. |
 | `offsetY` | number (dp) | `16` | Moves the element inward from its anchor. From a bottom anchor it moves up. |
 | `width` | number (dp) | `200` | Element width. A joystick is a round pad of this width. |
 | `height` | number (dp) | `40` | Element height. |
-| `text` | string | `""` | A `Text` element's content, or a `Button`'s label. |
+| `text` | string | `""` | A `Text` element's content, a `Button`'s label, or what is typed into a `TextField`. Typing writes it; a system writing it replaces the field's content, caret at the end. |
 | `fontSize` | number (sp) | `18` | Size of `text`. |
 | `textAlign` | one of the nine anchor points | none | Where the text sits in the element. None keeps a `Text` at its top-left and a `Button`'s label centred. |
 | `follow` | string | `""` | A node to follow on screen. See [Follow a node](#follow-a-node). |
@@ -85,6 +85,8 @@ A running `CanvasElement` also has values that are not saved:
 | `consumePress()` | `Boolean` | `true` once for each tap on a `Button` since the last call. |
 | `isHeld` | `Boolean` | Whether a `Button` is pressed right now. |
 | `stickX`, `stickY` | `Float`, -1 to 1 | A `Joystick`'s deflection. Up is negative `stickY`, as on screen. Releasing re-centres it. |
+| `focused` | `Boolean` | Whether a `TextField` holds the keyboard. Set it `true` to focus the field, or `false` to free it; it reads back whatever a click, Enter, Escape, or anything else taking focus away leaves it at. |
+| `consumeSubmit()` | `Boolean` | `true` once after Enter submits a `TextField` since the last call. Submitting frees its focus. Escape also frees focus, without this becoming `true`. |
 
 ## Style an element
 
@@ -310,6 +312,11 @@ drawn under the app's own `ui { }` content, so a pause menu covers the HUD.
 The element's anchor places it against one of nine screen points. The offsets move it inward. On a
 centred axis, the offset shifts it right or down. Negative offsets are treated as zero. The element's
 hit area is exactly its `width` by `height`.
+
+A `TextField` is a single-line field the player types into: a click focuses it, Enter submits and
+frees it (`consumeSubmit()`), and Escape frees it without submitting. A system sets `focused` to
+move the keyboard to or from it in code -- a chat window opening, say -- and reads it back for
+whatever a click or a key already changed it to.
 
 A `Joystick` knob follows a drag up to the pad's edge and springs back on release. A `touchOnly`
 element is drawn only when `SceneCanvas(world, showTouchControls = true)` is called, or when

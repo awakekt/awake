@@ -104,6 +104,30 @@ class SceneCanvasBaselineTest {
             .primitives.assertMatchesBaseline("scene-canvas-text", 232, 88, font = UiFonts.default())
     }
 
+    /** A chat line written by a system, and below it a focused, typed-into line with its caret. */
+    @Test
+    fun textFieldsWrittenAndTypedInto() {
+        val world = World()
+        fun element(configure: CanvasElement.() -> Unit) = CanvasElement().apply(configure).also { world.add(world.create(), it) }
+        element {
+            kind = CanvasElementKind.TextField; offsetX = 16f; offsetY = 16f; width = 200f; height = 20f
+            text = "Hello, Harbor Town"; fontSize = 14f; background = "#00000080"
+        }
+        val typing = element {
+            kind = CanvasElementKind.TextField; offsetX = 16f; offsetY = 48f; width = 200f; height = 20f
+            fontSize = 14f; color = "#F5D76E"; background = "#00000080"
+            style = CanvasStyle(borderWidth = 1f, borderColor = "#FFFFFF60")
+        }
+        val host = ComposeHost()
+        fun frame(typed: String = "") = host.frame(FrameInput(232, 84, typedText = typed)) { SceneCanvas(world) }
+        frame()
+        typing.focused = true
+        frame()
+
+        frame(typed = "On my way")
+            .primitives.assertMatchesBaseline("scene-canvas-text-field", 232, 84, font = UiFonts.default())
+    }
+
     @Test
     fun aMarkerFramingATargetAndANamePlateAboveIt() {
         val world = World()

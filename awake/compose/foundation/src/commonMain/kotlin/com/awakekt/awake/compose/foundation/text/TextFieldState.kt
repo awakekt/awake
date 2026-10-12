@@ -127,7 +127,8 @@ class TextFieldState(text: String = "", cursor: Int = text.length) {
      * Applies a key-driven edit or caret move, committing any IME composition first.
      *
      * Backspace and Delete remove the selection if there is one, otherwise a single character.
-     * [TextEditAction.Enter] is ignored: a caller that wants to submit reads the key itself.
+     * [TextEditAction.Enter] is ignored here: `BasicTextField` reads it itself, to call its own
+     * `onSubmit` in a single-line field or insert a newline in a multi-line one.
      */
     fun apply(action: TextEditAction) {
         commitComposition()
@@ -172,8 +173,8 @@ class TextFieldState(text: String = "", cursor: Int = text.length) {
             // Listed rather than swept into an `else`: a new action must break the build here and
             // force a decision, which is what an `else` would silently absorb.
             //
-            // Enter has nowhere to go in a single-line field -- a caller wanting submit reads it
-            // through `onKeyEvent`, where it is visible, rather than having it swallowed here.
+            // `BasicTextField.onEditAction` intercepts Enter before it ever reaches `apply`, to
+            // call `onSubmit` or insert a newline. Never swallowed here.
             // Vertical motion has no meaning until there is more than one line.
             TextEditAction.Enter -> Unit
             TextEditAction.ArrowUp -> moveVertical(-1)

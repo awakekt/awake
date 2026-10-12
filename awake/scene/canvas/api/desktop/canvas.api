@@ -96,12 +96,14 @@ public final class com/awakekt/awake/scene/canvas/CanvasElement {
 	public fun <init> ()V
 	public final fun consumeDoublePress ()Z
 	public final fun consumePress ()Z
+	public final fun consumeSubmit ()Z
 	public final fun getAction ()Ljava/lang/String;
 	public final fun getAnchor ()Lcom/awakekt/awake/scene/canvas/CanvasAnchor;
 	public final fun getBackground ()Ljava/lang/String;
 	public final fun getBind ()Lcom/awakekt/awake/scene/canvas/CanvasBinding;
 	public final fun getColor ()Ljava/lang/String;
 	public final fun getDoubleAction ()Ljava/lang/String;
+	public final fun getFocused ()Z
 	public final fun getFollow ()Ljava/lang/String;
 	public final fun getFollowBounds ()Z
 	public final fun getFollowOffset ()Lcom/awakekt/awake/scene/document/SceneVec3;
@@ -130,6 +132,7 @@ public final class com/awakekt/awake/scene/canvas/CanvasElement {
 	public final fun setBind (Lcom/awakekt/awake/scene/canvas/CanvasBinding;)V
 	public final fun setColor (Ljava/lang/String;)V
 	public final fun setDoubleAction (Ljava/lang/String;)V
+	public final fun setFocused (Z)V
 	public final fun setFollow (Ljava/lang/String;)V
 	public final fun setFollowBounds (Z)V
 	public final fun setFollowOffset (Lcom/awakekt/awake/scene/document/SceneVec3;)V
@@ -179,6 +182,7 @@ public final class com/awakekt/awake/scene/canvas/CanvasElementKind : java/lang/
 	public static final field Joystick Lcom/awakekt/awake/scene/canvas/CanvasElementKind;
 	public static final field Panel Lcom/awakekt/awake/scene/canvas/CanvasElementKind;
 	public static final field Text Lcom/awakekt/awake/scene/canvas/CanvasElementKind;
+	public static final field TextField Lcom/awakekt/awake/scene/canvas/CanvasElementKind;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/scene/canvas/CanvasElementKind;
 	public static fun values ()[Lcom/awakekt/awake/scene/canvas/CanvasElementKind;

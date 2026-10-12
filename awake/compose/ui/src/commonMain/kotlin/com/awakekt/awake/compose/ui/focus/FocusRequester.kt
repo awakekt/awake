@@ -8,6 +8,7 @@ package com.awakekt.awake.compose.ui.focus
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.ModifierNodeElement
 import com.awakekt.awake.compose.ui.node.FocusPropertiesNode
+import com.awakekt.awake.compose.ui.node.FocusRequestNode
 import com.awakekt.awake.compose.ui.node.FocusTargetNode
 import com.awakekt.awake.compose.ui.node.LayoutNode
 
@@ -23,6 +24,12 @@ import com.awakekt.awake.compose.ui.node.LayoutNode
 class FocusRequester {
     internal var node: LayoutNode? = null
 
+    /** The attached modifier link this requester points at, or null when nothing is attached. */
+    internal var requesterNode: FocusRequesterNode? = null
+
+    /** A [requestFocus] made while nothing was attached, handed to the next node that attaches. */
+    private var takeOnAttach = false
+
     /**
      * True if a focusable node is currently attached and took focus.
      *
@@ -32,6 +39,40 @@ class FocusRequester {
     fun requestFocus(owner: FocusOwner, root: LayoutNode): Boolean {
         val target = node
         return target != null && owner.requestFocus(root, target)
+    }
+
+    /**
+     * Queues this requester's node to take focus at the start of the next frame, before that
+     * frame dispatches input -- like Jetpack Compose's `FocusRequester.requestFocus()`, but
+     * deferred: a caller outside composition, such as a scene system, has no `FocusOwner` or root
+     * to apply the request with right away. Asked before its node attaches, such as a field in a
+     * window that opens this frame, it waits for the node; one detached by the drain is dropped.
+     * The later of a request and a free in one frame wins.
+     */
+    fun requestFocus() {
+        val link = requesterNode ?: run {
+            takeOnAttach = true
+            return
+        }
+        link.pendingTake = true
+        link.pendingFree = false
+    }
+
+    /**
+     * Queues this requester's node to free focus at the start of the next frame, but only if it
+     * still holds it then -- so a focus change made in between is not undone a frame late.
+     */
+    fun freeFocus() {
+        takeOnAttach = false
+        val link = requesterNode ?: return
+        link.pendingFree = true
+        link.pendingTake = false
+    }
+
+    internal fun attached(link: FocusRequesterNode) {
+        requesterNode = link
+        if (takeOnAttach) link.pendingTake = true
+        takeOnAttach = false
     }
 }
 
@@ -51,21 +92,40 @@ private class FocusRequesterElement(
     override fun toString(): String = "focusRequester()"
 }
 
-private class FocusRequesterNode : Modifier.Node() {
+internal class FocusRequesterNode :
+    Modifier.Node(),
+    FocusRequestNode {
     var requester: FocusRequester? = null
         set(value) {
             if (field === value) return
-            if (field?.node === layoutNode) field?.node = null
+            detachFrom(field)
             field = value
-            if (layoutNode != null) value?.node = layoutNode
+            if (layoutNode != null) attachTo(value)
         }
 
+    override var pendingTake: Boolean = false
+    override var pendingFree: Boolean = false
+
     override fun onAttach() {
-        requester?.node = layoutNode
+        attachTo(requester)
     }
 
     override fun onDetach() {
-        if (requester?.node === layoutNode) requester?.node = null
+        detachFrom(requester)
+        pendingTake = false
+        pendingFree = false
+    }
+
+    private fun attachTo(target: FocusRequester?) {
+        if (target == null) return
+        target.node = layoutNode
+        target.attached(this)
+    }
+
+    private fun detachFrom(target: FocusRequester?) {
+        if (target == null) return
+        if (target.node === layoutNode) target.node = null
+        if (target.requesterNode === this) target.requesterNode = null
     }
 }
 

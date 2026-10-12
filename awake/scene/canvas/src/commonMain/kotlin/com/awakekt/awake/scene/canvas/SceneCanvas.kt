@@ -25,6 +25,7 @@ import com.awakekt.awake.compose.foundation.style.Style
 import com.awakekt.awake.compose.foundation.style.rememberStyleState
 import com.awakekt.awake.compose.foundation.style.resolveTextColor
 import com.awakekt.awake.compose.foundation.style.styleable
+import com.awakekt.awake.compose.foundation.text.BasicTextField
 import com.awakekt.awake.compose.foundation.text.Text
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.CompositionLocalProvider
@@ -35,15 +36,20 @@ import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.draw.clip
 import com.awakekt.awake.compose.ui.draw.drawBehind
+import com.awakekt.awake.compose.ui.focus.focusRequester
+import com.awakekt.awake.compose.ui.focus.onFocusChanged
 import com.awakekt.awake.compose.ui.graphics.CircleShape
 import com.awakekt.awake.compose.ui.graphics.ImageBitmap
 import com.awakekt.awake.compose.ui.graphics.RoundedCornerShape
 import com.awakekt.awake.compose.ui.graphics.drawImageFill
+import com.awakekt.awake.compose.ui.input.key.KeyEventType
+import com.awakekt.awake.compose.ui.input.key.onKeyEvent
 import com.awakekt.awake.compose.ui.platform.LocalDensity
 import com.awakekt.awake.compose.ui.platform.LocalTextStyle
 import com.awakekt.awake.compose.ui.semantics.testTag
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.color.Color
+import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.math2d.sp
 import com.awakekt.awake.core.text.theme.TextStyle
 import com.awakekt.awake.ecs.Entity
@@ -181,6 +187,24 @@ private fun CanvasElementView(
             contentAlignment = (element.textAlign ?: CanvasAnchor.Center).alignment,
         ) {
             Text(tree.textOf(element), style = textStyle)
+            Children(element, children, tree)
+        }
+        CanvasElementKind.TextField -> Box(styled) {
+            element.syncTextField()
+            BasicTextField(
+                state = element.textFieldState,
+                modifier = Modifier.fillMaxSize()
+                    .focusRequester(element.focusRequester)
+                    .onFocusChanged { element.focused = it }
+                    .onKeyEvent { event ->
+                        val escape = event.type == KeyEventType.Down && event.key == Key.Escape
+                        if (escape) element.focused = false
+                        escape
+                    },
+                style = textStyle,
+                singleLine = true,
+                onSubmit = element::submit,
+            )
             Children(element, children, tree)
         }
         CanvasElementKind.Joystick -> JoystickView(element, modifier, back, tree, children)
