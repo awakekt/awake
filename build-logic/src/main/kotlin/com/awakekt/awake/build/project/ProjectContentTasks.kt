@@ -26,12 +26,14 @@ import kotlinx.serialization.json.add
 import kotlinx.serialization.json.put
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
+import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
@@ -319,6 +321,14 @@ abstract class GenerateProjectIndexTask : DefaultTask() {
     @get:Input
     abstract val baseUrl: Property<String>
 
+    /**
+     * The files the index lists, so the task runs again when one changes: their sizes and SHA-256s are in it,
+     * and a stale index makes a browser reject the file it fetches.
+     */
+    @get:InputFiles
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val indexedFiles: ConfigurableFileCollection
+
     @TaskAction
     fun generate() {
         val root = project.projectDir
@@ -343,7 +353,7 @@ abstract class GenerateProjectIndexTask : DefaultTask() {
                         put("path", path)
                         put("sizeBytes", file.length())
                         put("sha256", sha256(file))
-                        put("url", "$baseUrl/${path.split('/').joinToString("/") { java.net.URLEncoder.encode(it, Charsets.UTF_8) }}")
+                        put("url", "$baseUrl/${path.split('/').joinToString("/", transform = ::encodePathSegment)}")
                     })
                 }
             })
@@ -355,6 +365,12 @@ abstract class GenerateProjectIndexTask : DefaultTask() {
         logger.lifecycle("Generated project index: ${files.size} files")
     }
 }
+
+/**
+ * [segment] as a URL path segment. `URLEncoder` is form encoding, which writes a space as `+`, and a static
+ * server reads `+` in a path as itself, so a file with a space in its name would not be found.
+ */
+internal fun encodePathSegment(segment: String): String = java.net.URLEncoder.encode(segment, Charsets.UTF_8).replace("+", "%20")
 
 private fun safePath(path: String?): Boolean = path != null && path.isNotBlank() &&
     !path.startsWith('/') && !path.matches(Regex("^[A-Za-z]:.*")) &&
