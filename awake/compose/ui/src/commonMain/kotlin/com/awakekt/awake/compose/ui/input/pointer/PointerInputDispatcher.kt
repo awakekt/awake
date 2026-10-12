@@ -320,12 +320,6 @@ class PointerInputDispatcher(
 
     private companion object {
         const val LONG_PRESS_SECONDS = 0.5f
-
-        // What a hit test found: nothing, a path of nodes that do nothing with a pointer there, or a
-        // path with one that does.
-        const val MISS = 0
-        const val HELD = 1
-        const val TAKEN = 2
     }
 
     /**
@@ -613,3 +607,9 @@ private fun unpackY(packed: Long): Int = packed.toInt()
 
 /** Pointer id 0 is the mouse's; fingers have their own. */
 private const val MOUSE_POINTER = 0L
+
+// What a hit test found: nothing, a path of nodes that do nothing with a pointer there, or a path
+// with one that does. Top level, not in the companion, where a JVM const is a public field.
+private const val MISS = 0
+private const val HELD = 1
+private const val TAKEN = 2
