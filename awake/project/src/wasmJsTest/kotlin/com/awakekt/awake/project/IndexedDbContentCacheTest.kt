@@ -9,10 +9,16 @@ package com.awakekt.awake.project
 
 import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.io.Sha256
+import kotlinx.coroutines.await
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
+import kotlin.js.JsString
+import kotlin.js.Promise
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
+import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
 /** [IndexedDbContentCache] against the real browser's IndexedDB, each test under its own namespace. */
@@ -103,6 +109,54 @@ class IndexedDbContentCacheTest {
         }
     }
 
+    @Test
+    fun opensTheDatabaseOnceForEveryReadAndWrite() = runTest {
+        countIndexedDbOpens()
+        try {
+            val cache = cache()
+
+            // Four first calls at once: they share the one open rather than racing to each start one.
+            coroutineScope { repeat(4) { n -> launch { cache.put("key-$n", byteArrayOf(n.toByte())) } } }
+            repeat(4) { n -> assertContentEquals(byteArrayOf(n.toByte()), cache.get("key-$n")) }
+
+            assertEquals(1, indexedDbOpens())
+        } finally {
+            stopCountingIndexedDbOpens()
+        }
+    }
+
+    @Test
+    fun anotherTabCanUpgradeTheStoreWhileACacheHasItOpen() = runTest {
+        val name = "awake-content-cache-test-${Random.nextInt()}"
+        IndexedDbContentCache("test", name).put("key", byteArrayOf(1))
+
+        assertEquals("upgraded", upgradeIndexedDb(name).await<JsString>().toString())
+    }
+
+    @Test
+    fun aColonInANamespaceDoesNotReachAnotherNamespace() = runTest {
+        val suffix = Random.nextInt()
+        IndexedDbContentCache("test-$suffix:a").put("key", byteArrayOf(1))
+
+        // Joined with ':', namespace "x:a" and key "key" made the same entry as namespace "x" and key "a:key".
+        assertNull(IndexedDbContentCache("test-$suffix").get("a:key"))
+    }
+
+    @Test
+    fun aCacheWorksAgainOnceBlockedStorageIsBack() = runTest {
+        val cache = cache()
+        installBlockedIndexedDb()
+        try {
+            assertNull(cache.get("key"))
+        } finally {
+            restoreIndexedDb()
+        }
+
+        cache.put("key", byteArrayOf(7))
+
+        assertContentEquals(byteArrayOf(7), cache.get("key"))
+    }
+
     private val model = ByteArray(64) { it.toByte() }
 
     private fun sourceOver(cache: ContentCache): IndexedAssetSource {
@@ -165,3 +219,33 @@ private external fun installBlockedIndexedDb()
     """,
 )
 private external fun restoreIndexedDb()
+
+@JsFun(
+    """
+() => {
+  const factory = globalThis.indexedDB, open = factory.open;
+  globalThis.__awakeIndexedDbOpens = 0;
+  factory.open = (...args) => { globalThis.__awakeIndexedDbOpens++; return open.apply(factory, args); };
+}
+    """,
+)
+private external fun countIndexedDbOpens()
+
+@JsFun("() => globalThis.__awakeIndexedDbOpens")
+private external fun indexedDbOpens(): Int
+
+@JsFun("() => { delete globalThis.indexedDB.open; delete globalThis.__awakeIndexedDbOpens; }")
+private external fun stopCountingIndexedDbOpens()
+
+// Opens [name] at version 2, as a newer tab would: 'blocked' if a connection held on to version 1.
+@JsFun(
+    """
+(name) => new Promise((resolve) => {
+  const request = indexedDB.open(name, 2);
+  request.onblocked = () => resolve('blocked');
+  request.onerror = () => resolve('error: ' + request.error);
+  request.onsuccess = () => { request.result.close(); indexedDB.deleteDatabase(name); resolve('upgraded'); };
+})
+    """,
+)
+private external fun upgradeIndexedDb(name: String): Promise<JsString>
