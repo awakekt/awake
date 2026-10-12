@@ -114,7 +114,7 @@ runs:
             vulkan=true
           fi
 
-          if [[ "$path" =~ ^(awake/backend/webgpu/|samples/|awake/compose/|awake/ui/) ]]; then
+          if [[ "$path" =~ ^(awake/backend/webgpu/|samples/|awake/compose/|awake/ui/|awake/project/) ]]; then
             web=true
           fi
 

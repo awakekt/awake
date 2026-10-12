@@ -436,6 +436,11 @@ jobs:
       - name: ECS and sprite browser tests
         run: ./gradlew :awake:ecs:wasmJsBrowserTest :awake:asset:sprite:wasmJsBrowserTest :awake:scene:scene2d:wasmJsBrowserTest
 
+      # Code that only runs in a browser: copying a fetched response into a ByteArray, and the
+      # IndexedDB content cache, including a store that's full or blocked. Desktop tests can't reach it.
+      - name: Project loading browser tests
+        run: ./gradlew :awake:core:host:wasmJsBrowserTest :awake:project:wasmJsBrowserTest
+
       # The physics backend has four bindings and CI only ran one of them. This is the wasmJs
       # binding executing the same commonTest suite as desktop, on the runner already here --
       # it caught a body filter comparing an Emscripten pointer to a body id, which passed on
