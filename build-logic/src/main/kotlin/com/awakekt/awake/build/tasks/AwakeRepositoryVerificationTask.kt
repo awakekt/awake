@@ -200,6 +200,8 @@ abstract class AwakeRepositoryVerificationTask : DefaultTask() {
                 name.endsWith(".kt") || name.endsWith(".kts") || name.endsWith(".sh")
             }
         }.filterNot { relative(it).startsWith("build/") || relative(it).startsWith(".gradle/") }
+            // A starter template becomes the user's own code, so it carries no Core copyright header.
+            .filterNot { relative(it).startsWith("templates/") }
             .forEach { path ->
                 val lines = Files.readAllLines(path).take(24)
                 if (lines.none { it.contains("SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz") }) {

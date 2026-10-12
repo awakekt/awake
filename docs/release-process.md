@@ -110,7 +110,12 @@ One person or agent owns a release from cut to downstream bump. Before cutting, 
    Publish run uploads the three Vulkan modules as one Central deployment and attaches the bundle to
    the GitHub Release, as a Core release does.
 4. **Downstream:** bump awake-studio, awake-template, awake-project-template and
-   awake-plugin-template to the new Core and Vulkan releases. Pin
+   awake-plugin-template to the new Core and Vulkan releases. The templates' sources live in Core,
+   under `templates/game`, `templates/project` and `templates/plugin`, and every PR that can break
+   one builds it there (`.github/workflows/templates.yml`). So copy a template repo's files from
+   its directory there, keeping only the repo's own README, licence and `.github/`, and change a
+   template in Core first, never only in its repo. A publish job will replace these three PRs
+   (#721). Pin
    `awake-webgpu = "<release>-SNAPSHOT"` once the WebGPU release pin job succeeds (for `0.1.0`,
    `0.1.0-SNAPSHOT`), never the next patch: `<next patch>-SNAPSHOT` is `main` after the release,
    and its Core edges sort above the release, so it moves part of Core up on the web build only.
@@ -154,7 +159,7 @@ Consumers normally declare the modules they directly use and let Maven/Gradle re
 published dependency metadata; they do not need to list the full internal closure themselves.
 
 The Consumer gate publishes Core locally for a Core-only change and uses the latest reachable
-Vulkan release tag. Before building either template it waits up to one hour for that release's
+Vulkan release tag. Before building the templates it waits up to one hour for that release's
 POMs, Gradle module metadata, and all declared platform files to be served by Maven Central.
 A tag alone does not prove availability. Missing files and transient repository failures are
 retried within that deadline; authentication and other permanent HTTP errors fail immediately.

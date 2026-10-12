@@ -1,0 +1,12 @@
+{
+  "id": "com.awakekt.awake.plugin.template",
+  "name": "Weather (template plugin)",
+  "version": "${version}",
+  "author": "Awake",
+  "description": "A starter plugin: a weather panel, a rain toggle on the toolbar and Ctrl+R, and a rain cloud entity template.",
+  "entrypointClass": "com.awakekt.awake.plugin.template.WeatherPlugin",
+  "requiredApiVersion": 1,
+  "supportedPlatforms": ["desktop"],
+  "category": "Tools",
+  "tags": ["template", "sample"]
+}
