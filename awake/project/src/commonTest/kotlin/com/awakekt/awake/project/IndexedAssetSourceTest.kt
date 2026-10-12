@@ -10,7 +10,9 @@ import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.core.io.Sha256
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
@@ -56,15 +58,27 @@ class IndexedAssetSourceTest {
     }
 
     @Test
-    fun aCachedCopyThatDoesNotMatchIsFetchedAgain() = runTest {
+    fun aCachedCopyOfTheWrongSizeIsFetchedAgain() = runTest {
         var fetches = 0
         val serve = server()
-        val cache = MemoryCache().apply { stored[Sha256.digestHex(model)] = ByteArray(64) }
+        val cache = MemoryCache().apply { stored[Sha256.digestHex(model)] = model.copyOf(32) }
 
         val bytes = IndexedAssetSource(index, { url -> fetches++; serve(url) }, cache).read(AssetPath("assets/crate.glb")).getOrThrow()
 
         assertContentEquals(model, bytes)
-        assertEquals(1, fetches, "the corrupt cached copy is replaced from the network")
+        assertEquals(1, fetches, "the truncated cached copy is replaced from the network")
+    }
+
+    @Test
+    fun aCacheHitIsNotHashedAgain() = runTest {
+        // Same size, different bytes: only a hash would notice, and keeping what was put intact is
+        // ContentCache's job, so the hit is served as stored rather than hashed on every visit.
+        val stored = ByteArray(64)
+        val cache = MemoryCache().apply { this.stored[Sha256.digestHex(model)] = stored }
+
+        val bytes = IndexedAssetSource(index, { error("a cache hit must not fetch") }, cache).read(AssetPath("assets/crate.glb")).getOrThrow()
+
+        assertContentEquals(stored, bytes)
     }
 
     @Test
@@ -96,6 +110,55 @@ class IndexedAssetSourceTest {
         started.receive()
         release.complete(Unit)
         job.join()
+    }
+
+    @Test
+    fun prefetchFetchesNoMoreThanTheLimitAtOnce() = runTest {
+        val contents = (0 until MAX_CONCURRENT_PREFETCHES + 3).associate { n -> "assets/file$n.bin" to ByteArray(8) { (n * 8 + it).toByte() } }
+        var inFlight = 0
+        var peak = 0
+        val source = IndexedAssetSource(ProjectIndex(files = contents.map { (path, bytes) -> entry(path, bytes) }), { url ->
+            inFlight++
+            peak = maxOf(peak, inFlight)
+            delay(10)
+            inFlight--
+            contents.getValue(url.removePrefix("files/"))
+        })
+
+        source.prefetch(contents.keys.toList())
+
+        assertEquals(MAX_CONCURRENT_PREFETCHES, peak)
+    }
+
+    @Test
+    fun prefetchDownloadsContentTwoPathsShareOnce() = runTest {
+        val shared = ProjectIndex(files = listOf(entry("assets/a.glb", model), entry("assets/b.glb", model)))
+        var fetches = 0
+        val progress = mutableListOf<Long>()
+
+        IndexedAssetSource(shared, { fetches++; model }).prefetch(listOf("assets/a.glb", "assets/b.glb")) { done, _ -> progress += done }
+
+        assertEquals(1, fetches)
+        assertEquals(listOf(2L * model.size), progress, "both paths' bytes count once the shared download is done")
+    }
+
+    @Test
+    fun prefetchReportsEachFileAsItFinishes() = runTest {
+        val release = CompletableDeferred<Unit>()
+        val serve = server()
+        val progress = mutableListOf<Long>()
+        val source = IndexedAssetSource(index, { url ->
+            if (url == "files/scenes/main.scene.json") release.await()
+            serve(url)
+        })
+
+        val job = launch { source.prefetch(listOf("scenes/main.scene.json", "assets/crate.glb")) { done, _ -> progress += done } }
+        advanceUntilIdle()
+
+        assertEquals(listOf(model.size.toLong()), progress, "the model is reported while the scene ahead of it is still downloading")
+        release.complete(Unit)
+        job.join()
+        assertEquals(listOf(model.size.toLong(), (model.size + scene.size).toLong()), progress)
     }
 
     @Test

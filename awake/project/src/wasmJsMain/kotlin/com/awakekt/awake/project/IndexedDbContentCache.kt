@@ -19,7 +19,7 @@ import kotlin.js.Promise
 
 /**
  * Caches [IndexedAssetSource]'s verified files in the browser's IndexedDB, keyed by SHA-256, so a
- * return visit to the same project doesn't download a file whose content hasn't changed. Bytes are
+ * return visit to the same project neither downloads nor hashes a file whose content hasn't changed. Bytes are
  * stored as an [ArrayBuffer], with no base64 round trip.
  *
  * The cache never fails a load: storage the browser blocks, fills or loses reads as a miss, so the

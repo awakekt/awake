@@ -8,19 +8,26 @@ package com.awakekt.awake.project
 import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.core.io.Sha256
-import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.sync.Semaphore
-import kotlinx.coroutines.sync.withPermit
+import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
 
-/** How many of [IndexedAssetSource.prefetch]'s files are fetched and verified at once. */
-private const val MAX_CONCURRENT_PREFETCHES = 6
+/**
+ * How many of [IndexedAssetSource.prefetch]'s files are fetched and verified at once. Its KDoc
+ * spells the number out, so change both together.
+ */
+internal const val MAX_CONCURRENT_PREFETCHES = 6
 
 /**
  * Where [IndexedAssetSource] keeps files it has checked, by SHA-256, so a file read twice, or
- * unchanged between two releases of a project, downloads once. A host backs it with what it has: a
- * folder on desktop and mobile, the origin private file system or IndexedDB in a browser.
+ * unchanged between two releases of a project, downloads once and isn't hashed again. A host backs
+ * it with what it has: a folder on desktop and mobile, the origin private file system or IndexedDB
+ * in a browser.
+ *
+ * [get] must return exactly the bytes [put] stored under that SHA-256, or null: [IndexedAssetSource]
+ * checks a hit's size but not its hash, so storage that can damage bytes in place has to check them
+ * itself. [IndexedAssetSource.prefetch] calls both for several files at once.
  */
 interface ContentCache {
     /** The bytes stored under [sha256], or null when there are none. */
@@ -35,9 +42,10 @@ interface ContentCache {
  * `url`, checked against the entry's size and SHA-256 before a parser sees it, and kept in [cache].
  *
  * [fetch] is the host's: it resolves a relative `url` against wherever the index came from, sends any
- * sign-in, retries and resumes, so Core carries no HTTP library. A file that doesn't match its entry,
- * from the network or from the cache, fails the read and names the path; a cached copy that doesn't
- * match is fetched again.
+ * sign-in, retries and resumes, so Core carries no HTTP library. [prefetch] calls it for several files
+ * at once. A file from the network that doesn't match its entry fails the read and names the path. A
+ * copy from [cache] is one this source checked before storing it, so only its size is checked again;
+ * a copy of the wrong size is fetched again.
  *
  * Throws [IllegalArgumentException] for an index [ProjectContentValidator] finds problems in.
  */
@@ -62,25 +70,36 @@ class IndexedAssetSource(
 
     /**
      * Reads every one of [paths] ahead of play, so the files are cached before a scene asks for them,
-     * fetching and verifying up to six at once, and reporting the bytes done of the bytes [paths] add
-     * up to after each file, in [paths]' order whichever fetch finishes first. Throws before fetching
-     * anything if a path isn't in the index. Otherwise throws for the first file to fail its check --
-     * first to fail, not necessarily first in [paths] -- and cancels the fetches still in flight.
+     * fetching and verifying up to six at once. Paths whose files share a SHA-256 download once. As
+     * each download finishes, [onProgress] gets the bytes done of the bytes [paths] add up to. Throws
+     * before fetching anything if a path isn't in the index. Otherwise throws for the first file to
+     * fail its check -- first to fail, not necessarily first in [paths] -- and cancels the fetches
+     * still in flight.
      */
     suspend fun prefetch(paths: List<String>, onProgress: (done: Long, total: Long) -> Unit = { _, _ -> }) {
         val chosen = paths.map { path ->
             entries[path.removePrefix("/")] ?: throw NoSuchElementException("$path is not in the project index")
         }
         val total = chosen.sumOf { it.sizeBytes }
-        var done = 0L
+        // One download per SHA-256, through the first path that has it.
+        val downloads = chosen.groupBy { it.sha256 }.values
+        val queue = Channel<List<ProjectIndexEntry>>(Channel.UNLIMITED)
+        downloads.forEach { queue.trySend(it) }
+        queue.close()
         coroutineScope {
-            val limit = Semaphore(MAX_CONCURRENT_PREFETCHES)
-            // Unit, not the bytes: every Deferred lives until the last file is done, so returning the
-            // bytes would hold the whole prefetch in memory at once.
-            val pending = chosen.map { entry -> entry to async<Unit> { limit.withPermit { readChecked(entry) } } }
-            for ((entry, fetch) in pending) {
-                fetch.await()
-                done += entry.sizeBytes
+            val finished = Channel<Long>(Channel.UNLIMITED)
+            repeat(minOf(MAX_CONCURRENT_PREFETCHES, downloads.size)) {
+                launch {
+                    for (sameContent in queue) {
+                        readChecked(sameContent.first())
+                        finished.send(sameContent.sumOf { it.sizeBytes })
+                    }
+                }
+            }
+            // Reported on the caller's coroutine, so onProgress never runs on two threads at once.
+            var done = 0L
+            repeat(downloads.size) {
+                done += finished.receive()
                 onProgress(done, total)
             }
         }
@@ -88,7 +107,8 @@ class IndexedAssetSource(
 
     private suspend fun readChecked(entry: ProjectIndexEntry): ByteArray {
         val sha256 = entry.sha256.lowercase()
-        cache?.get(sha256)?.takeIf { matches(it, entry) }?.let { return it }
+        // Hashing every cached file again on every visit is what the cache exists to avoid.
+        cache?.get(sha256)?.takeIf { it.size.toLong() == entry.sizeBytes }?.let { return it }
         val bytes = fetch(entry.url)
         check(matches(bytes, entry)) {
             "${entry.path} doesn't match the project index: expected ${entry.sizeBytes} bytes with SHA-256 $sha256"
