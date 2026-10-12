@@ -29,6 +29,19 @@ class IndexedDbContentCacheTest {
     }
 
     @Test
+    fun everyTailLengthAndSignBitRoundTrips() = runTest {
+        val cache = cache()
+        // 0..11 covers every remainder the 4-byte word packing leaves as a tail, in both directions.
+        for (length in 0..11) {
+            val bytes = ByteArray(length) { (it * 37 - 128).toByte() }
+
+            cache.put("length-$length", bytes)
+
+            assertContentEquals(bytes, cache.get("length-$length"), "length $length")
+        }
+    }
+
+    @Test
     fun emptyContentRoundTrips() = runTest {
         val cache = cache()
 

@@ -12,7 +12,7 @@ import org.khronos.webgl.ArrayBuffer
 import org.khronos.webgl.Int32Array
 import org.khronos.webgl.Int8Array
 import org.khronos.webgl.get
-import org.khronos.webgl.toInt8Array
+import org.khronos.webgl.set
 import kotlin.js.JsAny
 import kotlin.js.Promise
 
@@ -30,12 +30,12 @@ class IndexedDbContentCache(private val namespace: String = "default") : Content
     }
 
     override suspend fun put(sha256: String, bytes: ByteArray) {
-        jsContentCachePut(namespace, sha256, bytes.toInt8Array().buffer).await<JsAny?>()
+        jsContentCachePut(namespace, sha256, bytes.toArrayBuffer()).await<JsAny?>()
     }
 }
 
-// Mirrors awake:core:host's Resource.kt: Int8Array.get crosses the JS/Wasm boundary once per
-// byte, so the buffer is read as 32-bit words instead, crossing once per four bytes. Duplicated
+// Mirrors awake:core:host's Resource.kt: indexing a typed array crosses the JS/Wasm boundary once
+// per element, so both directions move 32-bit words, crossing once per four bytes. Duplicated
 // rather than shared across modules -- see that file's note on why this isn't the full fix.
 private fun ArrayBuffer.copyToByteArray(): ByteArray {
     val length = byteLength
@@ -58,6 +58,27 @@ private fun ArrayBuffer.copyToByteArray(): ByteArray {
         }
     }
     return bytes
+}
+
+private fun ByteArray.toArrayBuffer(): ArrayBuffer {
+    val buffer = ArrayBuffer(size)
+    val wordCount = size / 4
+    val words = Int32Array(buffer, 0, wordCount)
+    for (i in 0 until wordCount) {
+        val offset = i * 4
+        words[i] = (this[offset].toInt() and 0xFF) or
+            ((this[offset + 1].toInt() and 0xFF) shl 8) or
+            ((this[offset + 2].toInt() and 0xFF) shl 16) or
+            (this[offset + 3].toInt() shl 24)
+    }
+    val tailStart = wordCount * 4
+    if (tailStart < size) {
+        val tail = Int8Array(buffer, tailStart, size - tailStart)
+        for (i in 0 until size - tailStart) {
+            tail[i] = this[tailStart + i]
+        }
+    }
+    return buffer
 }
 
 @JsFun(
