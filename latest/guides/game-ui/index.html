@@ -1891,6 +1891,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#show-a-3d-view" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Show a 3D view
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#scale-the-ui" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2552,6 +2563,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#show-a-3d-view" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Show a 3D view
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#scale-the-ui" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2616,7 +2638,7 @@
 
 
 <h1 id="game-ui">Game UI</h1>
-<p class="awake-lede">A HUD that belongs to the scene: text, panels, bars, buttons, images and touch joysticks pinned to the screen. Each element is a component on a scene entity, so it saves and loads with the scene, and the scene runtime draws it over the game.</p>
+<p class="awake-lede">A HUD that belongs to the scene: text, panels, bars, buttons, a typed field, images and touch joysticks pinned to the screen. Each element is a component on a scene entity, so it saves and loads with the scene, and the scene runtime draws it over the game.</p>
 
 <div class="awake-badges">
 <p><span class="awake-badge">component: <code>canvas_element</code></span>
@@ -2747,7 +2769,7 @@ until the next tap.</p>
 <tbody>
 <tr>
 <td><code>kind</code></td>
-<td><code>Text</code> · <code>Panel</code> · <code>Bar</code> · <code>Button</code> · <code>Joystick</code> · <code>Image</code></td>
+<td><code>Text</code> · <code>Panel</code> · <code>Bar</code> · <code>Button</code> · <code>TextField</code> · <code>Joystick</code> · <code>Image</code> · <code>View</code></td>
 <td><code>Text</code></td>
 <td>What the element draws.</td>
 </tr>
@@ -2785,7 +2807,7 @@ until the next tap.</p>
 <td><code>text</code></td>
 <td>string</td>
 <td><code>""</code></td>
-<td>A <code>Text</code> element's content, or a <code>Button</code>'s label.</td>
+<td>A <code>Text</code> element's content, a <code>Button</code>'s label, or what is typed into a <code>TextField</code>. Typing writes it; a system writing it replaces the field's content, caret at the end.</td>
 </tr>
 <tr>
 <td><code>fontSize</code></td>
@@ -2840,6 +2862,12 @@ until the next tap.</p>
 <td>object</td>
 <td>none</td>
 <td>Game state the element shows without code. See <a href="#show-game-state">Show game state</a>.</td>
+</tr>
+<tr>
+<td><code>camera</code></td>
+<td>string</td>
+<td><code>""</code></td>
+<td>A <code>View</code>'s camera node. See <a href="#show-a-3d-view">Show a 3D view</a>.</td>
 </tr>
 <tr>
 <td><code>color</code></td>
@@ -2921,6 +2949,16 @@ until the next tap.</p>
 <td><code>stickX</code>, <code>stickY</code></td>
 <td><code>Float</code>, -1 to 1</td>
 <td>A <code>Joystick</code>'s deflection. Up is negative <code>stickY</code>, as on screen. Releasing re-centres it.</td>
+</tr>
+<tr>
+<td><code>focused</code></td>
+<td><code>Boolean</code></td>
+<td>Whether a <code>TextField</code> holds the keyboard. Set it <code>true</code> to focus the field, or <code>false</code> to free it; it reads back whatever a click, Enter, Escape, or anything else taking focus away leaves it at.</td>
+</tr>
+<tr>
+<td><code>consumeSubmit()</code></td>
+<td><code>Boolean</code></td>
+<td><code>true</code> once after Enter submits a <code>TextField</code> since the last call. Submitting frees its focus. Escape also frees focus, without this becoming <code>true</code>.</td>
 </tr>
 </tbody>
 </table>
@@ -3282,6 +3320,23 @@ follow an animated character's limbs; a node with no mesh bounds falls back to i
 <p>A follower is placed against the screen wherever it sits in the scene, so it can live on a child of
 the character it follows. The runtime projects through the camera it draws with; a host that draws
 <code>SceneCanvas</code> itself passes a <code>CanvasProjector</code>.</p>
+<h2 id="show-a-3d-view">Show a 3D view</h2>
+<p>A <code>View</code> element shows what another camera sees, such as a character turning on a select screen.
+<code>camera</code> names a node with a <code>camera</code> component; give that camera <code>primary: false</code>, or it could
+become the main view. Each frame the element is drawn, that camera renders the scene into a picture
+the size of the element's box in pixels, which fills the box, opaque, inside its
+<code>style.cornerRadius</code> and under its children. The camera's own <code>eye</code>, <code>center</code> and <code>fovYDegrees</code>
+frame it. It renders the whole scene, as the main view does, so place what it looks at where the
+main camera does not see it.</p>
+<div class="language-json highlight"><span class="filename">Two nodes: a portrait camera and the window that shows it</span><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="p">[</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Portrait Camera"</span><span class="p">,</span><span class="w"> </span><span class="nt">"components"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"camera"</span><span class="p">,</span><span class="w"> </span><span class="nt">"primary"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">    </span><span class="nt">"eye"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"x"</span><span class="p">:</span><span class="w"> </span><span class="mi">100</span><span class="p">,</span><span class="w"> </span><span class="nt">"y"</span><span class="p">:</span><span class="w"> </span><span class="mf">1.5</span><span class="p">,</span><span class="w"> </span><span class="nt">"z"</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="nt">"center"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"x"</span><span class="p">:</span><span class="w"> </span><span class="mi">100</span><span class="p">,</span><span class="w"> </span><span class="nt">"y"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">"z"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="nt">"fovYDegrees"</span><span class="p">:</span><span class="w"> </span><span class="mi">40</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">},</span>
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Portrait"</span><span class="p">,</span><span class="w"> </span><span class="nt">"components"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"canvas_element"</span><span class="p">,</span><span class="w"> </span><span class="nt">"kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">"View"</span><span class="p">,</span><span class="w"> </span><span class="nt">"camera"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Portrait Camera"</span><span class="p">,</span>
+</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">    </span><span class="nt">"anchor"</span><span class="p">:</span><span class="w"> </span><span class="s2">"CenterLeft"</span><span class="p">,</span><span class="w"> </span><span class="nt">"width"</span><span class="p">:</span><span class="w"> </span><span class="mi">240</span><span class="p">,</span><span class="w"> </span><span class="nt">"height"</span><span class="p">:</span><span class="w"> </span><span class="mi">320</span><span class="p">,</span><span class="w"> </span><span class="nt">"style"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"cornerRadius"</span><span class="p">:</span><span class="w"> </span><span class="mi">8</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="p">]</span>
+</span></code></pre></div>
+<p>With no node of that name, no camera on it, or no renderer, the element draws only its style. A
+host that draws <code>SceneCanvas</code> itself passes a <code>CanvasViews</code> to show views.</p>
 <h2 id="scale-the-ui">Scale the UI</h2>
 <p><code>SceneAppLifecycleRuntime.canvasScale</code>, or <code>SceneCanvas(world, scale = …)</code>, multiplies every
 element's size, offset, text and image pixels. A HUD drawn from 1x pixel art reads at 2 on a large
@@ -3294,6 +3349,10 @@ drawn under the app's own <code>ui { }</code> content, so a pause menu covers th
 <p>The element's anchor places it against one of nine screen points. The offsets move it inward. On a
 centred axis, the offset shifts it right or down. Negative offsets are treated as zero. The element's
 hit area is exactly its <code>width</code> by <code>height</code>.</p>
+<p>A <code>TextField</code> is a single-line field the player types into: a click focuses it, Enter submits and
+frees it (<code>consumeSubmit()</code>), and Escape frees it without submitting. A system sets <code>focused</code> to
+move the keyboard to or from it in code -- a chat window opening, say -- and reads it back for
+whatever a click or a key already changed it to.</p>
 <p>A <code>Joystick</code> knob follows a drag up to the pad's edge and springs back on release. A <code>touchOnly</code>
 element is drawn only when <code>SceneCanvas(world, showTouchControls = true)</code> is called, or when
 <code>SceneAppLifecycleRuntime.showTouchControls</code> is <code>true</code>. When a project is played with
@@ -3302,8 +3361,8 @@ element is drawn only when <code>SceneCanvas(world, showTouchControls = true)</c
 a <code>jump</code> button jumps while held and a <code>run</code> button runs, as the keys do, and a button for an action of
 your own holds and presses that action.</p>
 <p>If your app runs its own Compose host, draw the canvas yourself:</p>
-<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">host</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ComposeHost</span><span class="p">()</span>
-</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="n">host</span><span class="p">.</span><span class="na">frame</span><span class="p">(</span><span class="n">FrameInput</span><span class="p">(</span><span class="n">viewportWidth</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">800</span><span class="p">,</span><span class="w"> </span><span class="n">viewportHeight</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">600</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">SceneCanvas</span><span class="p">(</span><span class="n">world</span><span class="p">)</span><span class="w"> </span><span class="p">}</span>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">host</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ComposeHost</span><span class="p">()</span>
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="n">host</span><span class="p">.</span><span class="na">frame</span><span class="p">(</span><span class="n">FrameInput</span><span class="p">(</span><span class="n">viewportWidth</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">800</span><span class="p">,</span><span class="w"> </span><span class="n">viewportHeight</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">600</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">SceneCanvas</span><span class="p">(</span><span class="n">world</span><span class="p">)</span><span class="w"> </span><span class="p">}</span>
 </span></code></pre></div>
 <div class="admonition warning">
 <p class="admonition-title">One tap, one reader</p>

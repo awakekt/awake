@@ -3954,9 +3954,9 @@ fades with distance from the active camera and pans with its direction. <code>Sc
 <tbody>
 <tr>
 <td><code>kind</code></td>
-<td><code>Text</code> · <code>Panel</code> · <code>Bar</code> · <code>Button</code> · <code>Joystick</code> · <code>Image</code></td>
+<td><code>Text</code> · <code>Panel</code> · <code>Bar</code> · <code>Button</code> · <code>TextField</code> · <code>Joystick</code> · <code>Image</code> · <code>View</code></td>
 <td><code>Text</code></td>
-<td>What the element is.</td>
+<td>What the element is. A <code>View</code> shows what a camera sees.</td>
 </tr>
 <tr>
 <td><code>anchor</code></td>
@@ -3992,7 +3992,7 @@ fades with distance from the active camera and pans with its direction. <code>Sc
 <td><code>text</code></td>
 <td>string</td>
 <td><code>""</code></td>
-<td>A <code>Text</code> element's content, or a <code>Button</code>'s label.</td>
+<td>A <code>Text</code> element's content, a <code>Button</code>'s label, or what is typed into a <code>TextField</code>: typing writes it, and a system writing it replaces the field's content, caret at the end. In a <code>Text</code> element, a <code>[[key&amp;#124;shown words]]</code> span draws "shown words" in <code>style</code>'s <code>linkColor</code> and reports <code>key</code> once through <code>consumeLink()</code> when clicked; <code>[[</code> is reserved and has no escape. Plain text with no span draws unchanged.</td>
 </tr>
 <tr>
 <td><code>fontSize</code></td>
@@ -4052,7 +4052,7 @@ fades with distance from the active camera and pans with its direction. <code>Sc
 <td><code>style</code></td>
 <td>object</td>
 <td><code>{}</code></td>
-<td>How the element looks beyond its colours, as an AwakeKt Compose <code>Style</code>: <code>background</code>, <code>gradient</code> (<code>start</code>, <code>end</code>, <code>horizontal</code>), <code>image</code>, <code>fillImage</code>, <code>fillImageMode</code>, <code>cornerRadius</code>, <code>borderWidth</code>, <code>borderColor</code>, <code>shadow</code> (<code>color</code>, <code>offsetX</code>, <code>offsetY</code>, <code>blur</code>, <code>spread</code>), <code>textColor</code>, <code>textShadow</code> (<code>color</code>, <code>offsetX</code>, <code>offsetY</code>), <code>textOutline</code> (<code>color</code>, <code>width</code>), <code>alpha</code>, and <code>hovered</code> and <code>pressed</code> states for a Button. <code>image</code> is an <code>Image</code>'s picture, a frame, or a <code>Bar</code>'s track; <code>fillImage</code> is a <code>Bar</code>'s fill, cut at <code>value</code> or, with <code>fillImageMode</code> <code>Squeeze</code>, drawn at the filled width with both end caps kept. Each image is a <code>CanvasImage</code>: <code>path</code>, a region (<code>regionX</code>, <code>regionY</code>, <code>regionWidth</code>, <code>regionHeight</code>), slice insets (<code>sliceLeft</code>, <code>sliceTop</code>, <code>sliceRight</code>, <code>sliceBottom</code>), <code>repeatEdges</code>, <code>repeatCenter</code>, <code>tint</code> and <code>pixelated</code>. See <a href="../../guides/game-ui/#style-an-element">Game UI</a>.</td>
+<td>How the element looks beyond its colours, as an AwakeKt Compose <code>Style</code>: <code>background</code>, <code>gradient</code> (<code>start</code>, <code>end</code>, <code>horizontal</code>), <code>image</code>, <code>fillImage</code>, <code>fillImageMode</code>, <code>cornerRadius</code>, <code>borderWidth</code>, <code>borderColor</code>, <code>shadow</code> (<code>color</code>, <code>offsetX</code>, <code>offsetY</code>, <code>blur</code>, <code>spread</code>), <code>textColor</code>, <code>textShadow</code> (<code>color</code>, <code>offsetX</code>, <code>offsetY</code>), <code>textOutline</code> (<code>color</code>, <code>width</code>), <code>alpha</code>, <code>rotation</code>, <code>linkColor</code>, and <code>hovered</code> and <code>pressed</code> states for a Button. <code>image</code> is an <code>Image</code>'s picture, a frame, or a <code>Bar</code>'s track; <code>fillImage</code> is a <code>Bar</code>'s fill, cut at <code>value</code> or, with <code>fillImageMode</code> <code>Squeeze</code>, drawn at the filled width with both end caps kept, or with <code>fillImageMode</code> <code>Sweep</code>, revealed clockwise from 12 o'clock over the Bar's whole box, like a cooldown overlay -- <code>fillImage</code> is optional there, and the colour fill sweeps on its own. Each image is a <code>CanvasImage</code>: <code>path</code>, a region (<code>regionX</code>, <code>regionY</code>, <code>regionWidth</code>, <code>regionHeight</code>), slice insets (<code>sliceLeft</code>, <code>sliceTop</code>, <code>sliceRight</code>, <code>sliceBottom</code>), <code>repeatEdges</code>, <code>repeatCenter</code>, <code>tint</code> and <code>pixelated</code>. <code>rotation</code> turns the element's image, background and content, children included, clockwise about its own centre in degrees; hit-testing still uses the unrotated box. <code>linkColor</code> colours a Text's <code>[[key&amp;#124;shown words]]</code> spans; unset draws them in a default blue. See <a href="../../guides/game-ui/#style-an-element">Game UI</a>.</td>
 </tr>
 <tr>
 <td><code>textAlign</code></td>
@@ -4101,6 +4101,30 @@ fades with distance from the active camera and pans with its direction. <code>Sc
 <td>object</td>
 <td>none</td>
 <td>Game state the element shows without code. <code>node</code> names a node; <code>value</code> is a <code>component.field</code> for a Bar's fill, divided by <code>max</code> (a field or a number); <code>text</code> fills each <code>{component.field}</code>, or <code>{component.field:n0}</code> with a number format, in a Text's or Button's words. See <a href="../../guides/game-ui/#show-game-state">Game UI</a>.</td>
+</tr>
+<tr>
+<td><code>wheel</code></td>
+<td>boolean</td>
+<td><code>false</code></td>
+<td>Take the mouse wheel while the pointer is over this element or its children, instead of leaving it for gameplay. The innermost such element under the pointer takes it; read it back with <code>consumeWheel()</code>.</td>
+</tr>
+<tr>
+<td><code>draggable</code></td>
+<td>boolean</td>
+<td><code>false</code></td>
+<td>Can be picked up: a ghost of it follows the pointer while <code>dragging</code> is true. A plain click still fires if the pointer never moves far enough to start a drag. Releasing on a <code>dropTarget</code> reports it there through <code>dropped</code>; releasing elsewhere reports it on this element's <code>droppedOutside</code>, a point in canvas units. Both are properties read once.</td>
+</tr>
+<tr>
+<td><code>dropTarget</code></td>
+<td>boolean</td>
+<td><code>false</code></td>
+<td>Receives a <code>draggable</code> element released over it, read back through <code>dropped</code>.</td>
+</tr>
+<tr>
+<td><code>camera</code></td>
+<td>string</td>
+<td><code>""</code></td>
+<td>A <code>View</code>'s camera: the name of a node with a <code>camera</code>, whose picture fills the element's box, opaque, at its size in pixels, inside its <code>style.cornerRadius</code> and under its children. Give that camera <code>primary: false</code> so it does not become the main view. With no such node, or no renderer, the element draws only its style.</td>
 </tr>
 </tbody>
 </table>
