@@ -49,6 +49,20 @@ class CanvasTextFieldTest {
     }
 
     @Test
+    fun aHiddenFieldShownAndFocusedInOneStepTakesTheKeyboard() {
+        val field = textField { visible = false }
+        frame()
+
+        field.visible = true
+        field.focused = true
+        frame() // the field composes and attaches
+        val output = frame() // the waiting request is applied
+
+        assertTrue(field.focused)
+        assertTrue(output.ownership.isTextInputFocused)
+    }
+
+    @Test
     fun typingFillsTheFocusedFieldsText() {
         val field = textField()
         field.focus()

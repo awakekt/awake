@@ -100,6 +100,48 @@ class FocusRequesterQueueTest {
     }
 
     @Test
+    fun theLaterOfARequestAndAFreeInOneFrameWins() {
+        val host = ComposeHost(density = 1f)
+        val requester = FocusRequester()
+        val content: context(Composer) () -> Unit = {
+            Layout(nodeType = "field", modifier = Modifier.size(50.dp).focusRequester(requester).focusTarget(), measurePolicy = stackPolicy)
+        }
+        host.frame(frameInput(), content)
+        val field = host.root.children[0]
+
+        requester.freeFocus()
+        requester.requestFocus()
+        host.frame(frameInput(), content)
+        assertEquals(field, host.focusOwner.focused, "free, then request: focused")
+
+        requester.requestFocus()
+        requester.freeFocus()
+        host.frame(frameInput(), content)
+        assertNull(host.focusOwner.focused, "request, then free: not")
+    }
+
+    @Test
+    fun aRequestMadeBeforeItsNodeIsComposedWaitsForIt() {
+        val host = ComposeHost(density = 1f)
+        val requester = FocusRequester()
+        var shown = false
+        val content: context(Composer) () -> Unit = {
+            if (shown) {
+                Layout(nodeType = "field", modifier = Modifier.size(50.dp).focusRequester(requester).focusTarget(), measurePolicy = stackPolicy)
+            }
+        }
+        host.frame(frameInput(), content)
+
+        // A window opening and focusing its field in one step: the field isn't composed yet.
+        requester.requestFocus()
+        shown = true
+        host.frame(frameInput(), content)
+        host.frame(frameInput(), content)
+
+        assertEquals(host.root.children[0], host.focusOwner.focused)
+    }
+
+    @Test
     fun freeFocusOnlyClearsFocusIfThisRequestersNodeStillHoldsItWhenApplied() {
         val host = ComposeHost(density = 1f)
         val a = FocusRequester()

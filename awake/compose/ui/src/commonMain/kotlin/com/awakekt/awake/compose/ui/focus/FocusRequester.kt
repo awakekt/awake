@@ -27,6 +27,9 @@ class FocusRequester {
     /** The attached modifier link this requester points at, or null when nothing is attached. */
     internal var requesterNode: FocusRequesterNode? = null
 
+    /** A [requestFocus] made while nothing was attached, handed to the next node that attaches. */
+    private var takeOnAttach = false
+
     /**
      * True if a focusable node is currently attached and took focus.
      *
@@ -42,11 +45,17 @@ class FocusRequester {
      * Queues this requester's node to take focus at the start of the next frame, before that
      * frame dispatches input -- like Jetpack Compose's `FocusRequester.requestFocus()`, but
      * deferred: a caller outside composition, such as a scene system, has no `FocusOwner` or root
-     * to apply the request with right away. Dropped silently if the node is no longer attached
-     * when the queue is drained.
+     * to apply the request with right away. Asked before its node attaches, such as a field in a
+     * window that opens this frame, it waits for the node; one detached by the drain is dropped.
+     * The later of a request and a free in one frame wins.
      */
     fun requestFocus() {
-        requesterNode?.pendingTake = true
+        val link = requesterNode ?: run {
+            takeOnAttach = true
+            return
+        }
+        link.pendingTake = true
+        link.pendingFree = false
     }
 
     /**
@@ -54,7 +63,16 @@ class FocusRequester {
      * still holds it then -- so a focus change made in between is not undone a frame late.
      */
     fun freeFocus() {
-        requesterNode?.pendingFree = true
+        takeOnAttach = false
+        val link = requesterNode ?: return
+        link.pendingFree = true
+        link.pendingTake = false
+    }
+
+    internal fun attached(link: FocusRequesterNode) {
+        requesterNode = link
+        if (takeOnAttach) link.pendingTake = true
+        takeOnAttach = false
     }
 }
 
@@ -101,7 +119,7 @@ internal class FocusRequesterNode :
     private fun attachTo(target: FocusRequester?) {
         if (target == null) return
         target.node = layoutNode
-        target.requesterNode = this
+        target.attached(this)
     }
 
     private fun detachFrom(target: FocusRequester?) {
