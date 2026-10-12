@@ -57,6 +57,27 @@ private fun hit(
 ) =
     Layout(HitType, modifier = modifier, measurePolicy = stackPolicy, content = content)
 
+/**
+ * [levels] nested boxes that handle nothing, each beside a sibling that holds the point and handles
+ * nothing either, with a closed-looking [popup] in the innermost: a layer placed away from the point.
+ */
+context(_: Composer)
+private fun plainStack(levels: Int, popup: Boolean = false) {
+    hit(Modifier.size(100.dp)) {
+        hit(Modifier.size(100.dp))
+        if (levels > 1) {
+            plainStack(levels - 1, popup)
+        } else if (popup) {
+            Layer(
+                LayerKind.Popup,
+                modifier = Modifier.size(10.dp).clickable {},
+                positionProvider = LayerPositionProvider { _, _, _, _, _, _ -> LayerPosition(150, 150) },
+                measurePolicy = stackPolicy,
+            )
+        }
+    }
+}
+
 private fun tree(content: context(Composer) () -> Unit): LayoutNode {
     val root = LayoutNode(stackPolicy)
     composeInto(root, content)
@@ -288,6 +309,24 @@ class PointerInputTest {
     }
 
     @Test
+    fun aBoxPassedOverForOneBeneathIsNotHovered() {
+        // On the padding the pointer is over the one beneath only, so leaving owes the padded
+        // handler no Exit.
+        val log = mutableListOf<String>()
+        val root = tree {
+            hit(Modifier.size(50.dp).record(log, "under"))
+            hit(Modifier.size(50.dp).padding(10.dp).record(log, "over"))
+        }
+        val dispatcher = PointerInputDispatcher()
+
+        dispatcher.dispatch(root, PointerEvent(PointerEventType.Move), 5, 5)
+        dispatcher.dispatch(root, PointerEvent(PointerEventType.Move), 150, 150)
+
+        assertTrue(log.none { it.startsWith("over") }, "the padded handler was hovered: $log")
+        assertTrue(log.any { it.startsWith("under:Exit") }, "the one beneath was: $log")
+    }
+
+    @Test
     fun aBoxThatHandlesNothingIsPassedOverAtAnyDepthAndInZOrder() {
         val log = mutableListOf<String>()
         val root = tree {
@@ -299,6 +338,41 @@ class PointerInputTest {
         PointerInputDispatcher().dispatch(root, PointerEvent(PointerEventType.Press), 5, 5)
 
         assertTrue(log.any { it.startsWith("deep") }, "the raised plain boxes in front took the press: $log")
+    }
+
+    /**
+     * A 3D view is a deep stack of boxes that handle nothing, over which the pointer moves every
+     * frame. Walking each passed-over box again once its siblings were tried doubled the work at
+     * every level, so a pointer moving over the view cost most of a second a frame on the web. And
+     * looking for a popup below every level, not just below the root, walked the rest of the stack
+     * again at each.
+     */
+    @Test
+    fun aDeepStackOfBoxesThatHandleNothingIsWalkedOnce() {
+        fun moveSteps(levels: Int, popup: Boolean): Int {
+            val root = tree {
+                hit(Modifier.size(100.dp).clickable {})
+                plainStack(levels, popup)
+            }
+            val dispatcher = PointerInputDispatcher()
+            dispatcher.dispatch(root, PointerEvent(PointerEventType.Move), 10, 10)
+            return dispatcher.hitSteps
+        }
+        for (popup in listOf(false, true)) {
+            val shallow = moveSteps(levels = 12, popup)
+            val deep = moveSteps(levels = 24, popup)
+            assertTrue(deep <= 2 * shallow + 8, "twice the depth took $deep hit-test steps, not about twice $shallow (popup = $popup)")
+        }
+
+        var clicks = 0
+        val root = tree {
+            hit(Modifier.size(100.dp).clickable { clicks++ })
+            plainStack(levels = 24, popup = true)
+        }
+        val dispatcher = PointerInputDispatcher()
+        dispatcher.dispatch(root, PointerEvent(PointerEventType.Press), 10, 10)
+        dispatcher.dispatch(root, PointerEvent(PointerEventType.Release), 10, 10)
+        assertEquals(1, clicks, "the press still passes over the stack to the clickable beneath")
     }
 
     @Test
@@ -369,6 +443,70 @@ class PointerInputTest {
 
         assertEquals(1, popupClicks)
         assertEquals(0, siblingClicks, "the later sibling took the popup's click")
+    }
+
+    @Test
+    fun aDeepLayerInsideADialogIsHitBeforeALaterSiblingThere() {
+        // The walk inside a layer looks for detached layers too, so a menu in a dialog opens as one
+        // on the page does.
+        var popupClicks = 0
+        var siblingClicks = 0
+        val root = tree {
+            Layer(LayerKind.Dialog, modifier = Modifier.size(200.dp), modal = true, measurePolicy = stackPolicy) {
+                hit(Modifier.size(20.dp)) {
+                    Layer(
+                        LayerKind.Popup,
+                        modifier = Modifier.size(50.dp).clickable { popupClicks++ },
+                        positionProvider = LayerPositionProvider { _, _, _, _, _, _ -> LayerPosition(0, 50) },
+                        measurePolicy = stackPolicy,
+                    )
+                }
+                hit(Modifier.size(200.dp).clickable { siblingClicks++ })
+            }
+        }
+        val dispatcher = PointerInputDispatcher()
+
+        dispatcher.dispatch(root, PointerEvent(PointerEventType.Press), 5, 55)
+        dispatcher.dispatch(root, PointerEvent(PointerEventType.Release), 5, 55)
+
+        assertEquals(1, popupClicks)
+        assertEquals(0, siblingClicks, "the dialog's later child took the popup's click")
+    }
+
+    @Test
+    fun aPopupThatOpensOrClosesBetweenClicksIsFoundOrLeftByTheNext() {
+        var open = true
+        var popupClicks = 0
+        var pageClicks = 0
+        val root = LayoutNode(stackPolicy)
+        val dispatcher = PointerInputDispatcher()
+        fun clickWithPopup(isOpen: Boolean) {
+            open = isOpen
+            composeInto(root) {
+                hit(Modifier.size(20.dp)) {
+                    if (open) {
+                        Layer(
+                            LayerKind.Popup,
+                            modifier = Modifier.size(50.dp).clickable { popupClicks++ },
+                            positionProvider = LayerPositionProvider { _, _, _, _, _, _ -> LayerPosition(0, 50) },
+                            measurePolicy = stackPolicy,
+                        )
+                    }
+                }
+                hit(Modifier.size(200.dp).clickable { pageClicks++ })
+            }
+            root.layoutTree(Constraints.of(0, 200, 0, 200))
+            dispatcher.dispatch(root, PointerEvent(PointerEventType.Press), 5, 55)
+            dispatcher.dispatch(root, PointerEvent(PointerEventType.Release), 5, 55)
+        }
+
+        clickWithPopup(isOpen = false)
+        clickWithPopup(isOpen = true)
+        clickWithPopup(isOpen = false)
+        clickWithPopup(isOpen = true)
+
+        assertEquals(2, popupClicks, "a popup opened since the last click was found")
+        assertEquals(2, pageClicks, "a closed popup's place went back to the page")
     }
 
     @Test

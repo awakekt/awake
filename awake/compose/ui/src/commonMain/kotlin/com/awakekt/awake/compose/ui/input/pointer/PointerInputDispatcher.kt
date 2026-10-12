@@ -85,6 +85,16 @@ class PointerInputDispatcher(
     // Reused: drawBoundsAt writes into it once per pointer link per delivered node.
     private val linkBounds = IntArray(4)
 
+    // This dispatch's stamp on the nodes with a layer somewhere among their descendants. A layer
+    // may sit outside its declaring node, so a walk looks for one below each child of its root;
+    // the stamps keep that look out of the subtrees with no layer, which is most of them. A stamp
+    // on the node rather than a set, so marking them allocates nothing per pointer move.
+    private var layerStamp = 0
+
+    /** Hit-test walk steps taken by the last dispatch, for tests that keep the walk linear. */
+    internal var hitSteps: Int = 0
+        private set
+
     // Who consumed the event currently being dispatched, cleared per dispatch.
     //
     // Capture follows consumption, not depth. `path.last()` is the innermost node the pointer is
@@ -113,6 +123,7 @@ class PointerInputDispatcher(
         event.dy = dy
         path.clear()
         consumer = null
+        hitSteps = 0
 
         // A modal owns the frame: nothing outside it is hit, so a click on the backdrop reaches
         // nothing rather than falling through to the page behind. Derived from the tree, not
@@ -125,13 +136,19 @@ class PointerInputDispatcher(
             if (event.type == PointerEventType.Press) {
                 dismissable.onDismissRequest?.invoke()
                 event.consume()
-                if (event.pointerId == MOUSE_POINTER) updateHover(modal ?: root, x, y)
+                if (event.pointerId == MOUSE_POINTER) {
+                    indexLayers(root)
+                    updateHover(modal ?: root, x, y)
+                }
                 return true
             } else if (event.type == PointerEventType.SecondaryPress) {
                 dismissable.onDismissRequest?.invoke()
             }
         }
         val hitRoot = modal ?: root
+        // After onDismissRequest, the only code of the app's that runs before the walks: a dispatch
+        // it made would leave its own stamps behind.
+        indexLayers(root)
 
         val holder = captures[event.pointerId]
         if (holder != null && holder.isAttachedTo(root)) {
@@ -143,7 +160,7 @@ class PointerInputDispatcher(
             longPressTriggered.remove(event.pointerId)
             longPressConsumed.remove(event.pointerId)
             pressOrigins.remove(event.pointerId)
-            hitTest(path, hitRoot, x, y)
+            hitTest(path, hitRoot, x, y, searchLayers = true)
         }
         // Before the empty-path return: a pointer leaving everything must still un-hover what it left.
         // Only the mouse hovers: a finger has no hover, and one would stay "over" whatever it lifted from.
@@ -228,7 +245,7 @@ class PointerInputDispatcher(
 
     private fun updateHover(root: LayoutNode, x: Int, y: Int) {
         hoverPath.clear()
-        hitTest(hoverPath, root, x, y)
+        hitTest(hoverPath, root, x, y, searchLayers = true)
         for (i in hovered.indices) {
             val node = hovered[i]
             if (!hoverPath.contains(node)) deliverTo(node, exitEvent, x, y)
@@ -306,56 +323,64 @@ class PointerInputDispatcher(
     }
 
     /**
-     * Fills [into] root-first with the nodes under the point, or leaves it untouched.
+     * Fills [into] root-first with the nodes under the point, or leaves it untouched. Returns [MISS]
+     * when [node] doesn't hold the point, [TAKEN] when a node on the path it added does something
+     * with a pointer there, and [HELD] when none does.
      *
      * Reverse of paint order: whatever is drawn last is on top, so it is offered the event first.
+     *
+     * [searchLayers] is for the root of a walk and for a layer: see [descendInto].
      */
-    private fun hitTest(into: MutableList<LayoutNode>, node: LayoutNode, x: Int, y: Int): Boolean {
-        if (!node.contains(x, y)) return false
+    private fun hitTest(into: MutableList<LayoutNode>, node: LayoutNode, x: Int, y: Int, searchLayers: Boolean): Int {
+        hitSteps++
+        if (!node.contains(x, y)) return MISS
         into.add(node)
-        descendInto(into, node, x, y)
-        return true
-    }
-
-    /** Layers first, highest kind on top, then children -- all in reverse declaration order. */
-    private fun descendInto(into: MutableList<LayoutNode>, node: LayoutNode, x: Int, y: Int) {
-        for (i in hitOrder.indices) {
-            val kind = hitOrder[i]
-            for (j in node.layers.indices.reversed()) {
-                val layer = node.layers[j]
-                if (layer.nodeType == kind && hitTest(into, layer, x, y)) return
-            }
-        }
-        // A layer declared under an early sibling (a top bar's popup) is painted above a later
-        // sibling (the workspace). Check every descendant layer before ordinary child content so
-        // input follows that same global overlay ordering.
-        for (i in node.children.indices.reversed()) {
-            if (hitDetachedLayer(into, node.children[i], x, y)) return
-        }
-        val count = node.children.size
-        if (count == 0) return
-        var hasNonZeroZ = false
-        for (i in 0 until count) {
-            if (node.children[i].zIndex != 0f) {
-                hasNonZeroZ = true
-                break
-            }
-        }
-        if (!hasNonZeroZ) {
-            hitChildren(into, node, x, y, null)
-        } else {
-            val indices = Array(count) { it }
-            indices.sortWith { a, b ->
-                val zA = node.children[a].zIndex
-                val zB = node.children[b].zIndex
-                if (zA != zB) zB.compareTo(zA) else b.compareTo(a)
-            }
-            hitChildren(into, node, x, y, indices)
-        }
+        return if (descendInto(into, node, x, y, searchLayers) || node.takes(x, y)) TAKEN else HELD
     }
 
     /**
-     * Offers the point to [node]'s children topmost first, stopping at the first that takes it.
+     * Layers first, highest kind on top, then children -- all in reverse declaration order. True when
+     * a node it added to [into] takes the point.
+     *
+     * Only the root of a walk, or a layer, looks for layers below it. That look offers the point to
+     * every layer under the node's children, and a layer holds the point or not by where it is
+     * placed, so the same look again a level down could only miss them again. Looking at every
+     * level walked the layer-bearing part of the tree once per level.
+     */
+    private fun descendInto(into: MutableList<LayoutNode>, node: LayoutNode, x: Int, y: Int, searchLayers: Boolean): Boolean {
+        var layer = MISS
+        if (searchLayers) {
+            layer = hitOwnLayers(into, node, x, y)
+            // A layer declared under an early sibling (a top bar's popup) is painted above a later
+            // sibling (the workspace). Check every descendant layer before ordinary child content so
+            // input follows that same global overlay ordering.
+            var i = node.children.size - 1
+            while (layer == MISS && i >= 0) {
+                layer = hitDetachedLayer(into, node.children[i], x, y)
+                i--
+            }
+        }
+        return if (layer != MISS) layer == TAKEN else hitChildren(into, node, x, y, childOrder(node))
+    }
+
+    /** [node]'s children's indices in hit order when one has a zIndex, or null for reverse declaration order. */
+    private fun childOrder(node: LayoutNode): Array<Int>? {
+        val count = node.children.size
+        var i = 0
+        while (i < count && node.children[i].zIndex == 0f) i++
+        if (i == count) return null
+        val indices = Array(count) { it }
+        indices.sortWith { a, b ->
+            val zA = node.children[a].zIndex
+            val zB = node.children[b].zIndex
+            if (zA != zB) zB.compareTo(zA) else b.compareTo(a)
+        }
+        return indices
+    }
+
+    /**
+     * Offers the point to [node]'s children topmost first, stopping at the first that takes it, and
+     * returns whether one did.
      *
      * A child whose box holds the point but whose subtree does nothing with a pointer there -- the
      * padding box a layout wraps around a child, a decorative panel -- is passed over, so a handler
@@ -366,26 +391,40 @@ class PointerInputDispatcher(
      *
      * [order] is the children's indices in hit order, or null for reverse declaration order.
      */
-    private fun hitChildren(into: MutableList<LayoutNode>, node: LayoutNode, x: Int, y: Int, order: Array<Int>?) {
+    private fun hitChildren(into: MutableList<LayoutNode>, node: LayoutNode, x: Int, y: Int, order: Array<Int>?): Boolean {
         val count = node.children.size
-        var passedOver: LayoutNode? = null
+        // The first child that held the point but took nothing keeps its path where it is, from
+        // keptFrom to keptTo, in case no later child takes the point. Walking it again at the end
+        // instead doubled the work at every level of plain boxes, as over a 3D view.
+        var keptFrom = -1
+        var keptTo = -1
         for (n in 0 until count) {
             val child = node.children[if (order == null) count - 1 - n else order[n]]
             val mark = into.size
-            if (!hitTest(into, child, x, y)) continue
-            if (takesPoint(into, mark, x, y)) return
-            while (into.size > mark) into.removeAt(into.lastIndex)
-            if (passedOver == null) passedOver = child
-        }
-        if (passedOver != null) hitTest(into, passedOver, x, y)
-    }
-
-    /** Whether any node of [path] from index [from] on does something with a pointer at ([x], [y]). */
-    private fun takesPoint(path: List<LayoutNode>, from: Int, x: Int, y: Int): Boolean {
-        for (i in from until path.size) {
-            if (path[i].takes(x, y)) return true
+            when (hitTest(into, child, x, y, searchLayers = false)) {
+                MISS -> Unit
+                TAKEN -> {
+                    // The kept path is under the taker's, which starts at keptTo.
+                    cutOut(into, keptFrom, keptTo)
+                    return true
+                }
+                else -> if (keptFrom < 0) {
+                    keptFrom = mark
+                    keptTo = into.size
+                } else {
+                    cutOut(into, mark, into.size)
+                }
+            }
         }
         return false
+    }
+
+    /** Removes [into]'s nodes from [from] until [to], moving the ones after them down once. */
+    private fun cutOut(into: MutableList<LayoutNode>, from: Int, to: Int) {
+        val cut = to - from
+        if (cut <= 0) return
+        for (i in to until into.size) into[i - cut] = into[i]
+        repeat(cut) { into.removeAt(into.lastIndex) }
     }
 
     /**
@@ -406,21 +445,67 @@ class PointerInputDispatcher(
     /**
      * Layers may be positioned outside their declaring node (an anchored popup under a small
      * trigger), so a miss on that node must not make its layer subtree unreachable to input.
+     *
+     * Follows children, not layers: a layer is entered only through [hitTest], when it holds the
+     * point, so a layer declared in another and placed outside it is not reached.
      */
-    private fun hitDetachedLayer(into: MutableList<LayoutNode>, node: LayoutNode, x: Int, y: Int): Boolean {
+    private fun hitDetachedLayer(into: MutableList<LayoutNode>, node: LayoutNode, x: Int, y: Int): Int {
+        // Most subtrees hold no layer at all; nothing below them can be detached.
+        if (node.layerStamp != layerStamp) return MISS
+        hitSteps++
         into.add(node)
-        for (i in hitOrder.indices) {
-            val kind = hitOrder[i]
-            for (j in node.layers.indices.reversed()) {
+        var hit = hitOwnLayers(into, node, x, y)
+        var i = node.children.size - 1
+        while (hit == MISS && i >= 0) {
+            hit = hitDetachedLayer(into, node.children[i], x, y)
+            i--
+        }
+        if (hit == MISS) {
+            into.removeAt(into.lastIndex)
+        } else if (hit == HELD && node.takes(x, y)) {
+            hit = TAKEN
+        }
+        return hit
+    }
+
+    /**
+     * Offers the point to [node]'s own layers, highest kind first, each kind in reverse declaration
+     * order, and returns the hit test of the first that holds it, or [MISS].
+     */
+    private fun hitOwnLayers(into: MutableList<LayoutNode>, node: LayoutNode, x: Int, y: Int): Int {
+        var hit = MISS
+        var k = 0
+        while (hit == MISS && k < hitOrder.size && node.layers.size > 0) {
+            val kind = hitOrder[k]
+            var j = node.layers.size - 1
+            while (hit == MISS && j >= 0) {
                 val layer = node.layers[j]
-                if (layer.nodeType == kind && hitTest(into, layer, x, y)) return true
+                if (layer.nodeType == kind) hit = hitTest(into, layer, x, y, searchLayers = true)
+                j--
             }
+            k++
         }
-        for (i in node.children.indices.reversed()) {
-            if (hitDetachedLayer(into, node.children[i], x, y)) return true
+        return hit
+    }
+
+    /** Stamps every node under [root] that has a layer of its own or below it, for this dispatch. */
+    private fun indexLayers(root: LayoutNode) {
+        // Never 0, the stamp a node starts with; wrapping after two billion dispatches is harmless.
+        layerStamp = if (layerStamp == Int.MAX_VALUE) 1 else layerStamp + 1
+        markLayerBearing(root)
+    }
+
+    private fun markLayerBearing(node: LayoutNode): Boolean {
+        var bearing = node.layers.size > 0
+        for (i in 0 until node.children.size) {
+            if (markLayerBearing(node.children[i])) bearing = true
         }
-        into.removeAt(into.lastIndex)
-        return false
+        // A walk inside a layer looks for the layers below its children too, so the nodes inside a
+        // layer need stamps of their own. Whether they bear one doesn't matter here: this node's
+        // own layer already makes it bearing.
+        for (i in 0 until node.layers.size) markLayerBearing(node.layers[i])
+        if (bearing) node.layerStamp = layerStamp
+        return bearing
     }
 
     /** Rebuilds the root-first path to a captured node, so its ancestors still see the passes. */
@@ -522,3 +607,9 @@ private fun unpackY(packed: Long): Int = packed.toInt()
 
 /** Pointer id 0 is the mouse's; fingers have their own. */
 private const val MOUSE_POINTER = 0L
+
+// What a hit test found: nothing, a path of nodes that do nothing with a pointer there, or a path
+// with one that does. Top level, not in the companion, where a JVM const is a public field.
+private const val MISS = 0
+private const val HELD = 1
+private const val TAKEN = 2

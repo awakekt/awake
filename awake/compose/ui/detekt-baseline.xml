@@ -8,7 +8,6 @@
     <ID>CyclomaticComplexMethod:ComposeHost.kt$ComposeHost$private fun dispatchTouchInput(input: FrameInput)</ID>
     <ID>CyclomaticComplexMethod:FocusOwner.kt$FocusOwner$private fun moveSpatial(root: LayoutNode, direction: FocusDirection): Boolean</ID>
     <ID>CyclomaticComplexMethod:LayoutNode.kt$LayoutNode$private fun rebuildChain()</ID>
-    <ID>CyclomaticComplexMethod:PointerInputDispatcher.kt$PointerInputDispatcher$private fun descendInto(into: MutableList&lt;LayoutNode>, node: LayoutNode, x: Int, y: Int)</ID>
     <ID>LongMethod:DrawScope.kt$PaintScope$override fun drawLayer( alpha: Float, scaleX: Float, scaleY: Float, translationX: Float, translationY: Float, rotationDegrees: Float, blendMode: BlendMode, renderEffect: RenderEffect?, shadowElevation: Dp, shape: Shape, drawContent: () -> Unit, )</ID>
     <ID>LongMethod:FocusOwner.kt$FocusOwner$private fun moveSpatial(root: LayoutNode, direction: FocusDirection): Boolean</ID>
     <ID>LongMethod:LayoutNode.kt$LayoutNode$private fun rebuildChain()</ID>
@@ -21,8 +20,6 @@
     <ID>ReturnCount:KeyInputDispatcher.kt$KeyInputDispatcher$fun handleFocusTraversal(root: LayoutNode, event: KeyEvent): Boolean</ID>
     <ID>ReturnCount:LayoutNode.kt$LayoutNode$private fun retainModifierNode(index: Int, element: Modifier.Element): Any</ID>
     <ID>ReturnCount:PointerInputDispatcher.kt$PointerInputDispatcher$fun dispatch(root: LayoutNode, event: PointerEvent, x: Int, y: Int, dx: Int = 0, dy: Int = 0): Boolean</ID>
-    <ID>ReturnCount:PointerInputDispatcher.kt$PointerInputDispatcher$private fun descendInto(into: MutableList&lt;LayoutNode>, node: LayoutNode, x: Int, y: Int)</ID>
-    <ID>ReturnCount:PointerInputDispatcher.kt$PointerInputDispatcher$private fun hitDetachedLayer(into: MutableList&lt;LayoutNode>, node: LayoutNode, x: Int, y: Int): Boolean</ID>
     <ID>ReturnCount:Shape.kt$RoundedCornerShape$fun createOutline( bounds: BoundsRectangle, density: Float, radiusInset: Float = 0f, layoutDirection: LayoutDirection = LayoutDirection.Ltr, ): ShapeOutline</ID>
     <ID>TooManyFunctions:DrawModifiers.kt$com.awakekt.awake.compose.ui.draw.DrawModifiers.kt</ID>
     <ID>TooManyFunctions:DrawScope.kt$DrawScope</ID>

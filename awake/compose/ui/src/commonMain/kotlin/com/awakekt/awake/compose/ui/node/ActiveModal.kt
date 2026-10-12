@@ -22,10 +22,10 @@ package com.awakekt.awake.compose.ui.node
  */
 internal fun LayoutNode.activeModalLayer(): LayoutNode? {
     var found: LayoutNode? = null
-    for (i in children.indices) {
+    for (i in 0 until children.size) {
         children[i].activeModalLayer()?.let { found = it }
     }
-    for (i in layers.indices) {
+    for (i in 0 until layers.size) {
         val layer = layers[i]
         if (layer.isModal) found = layer
         layer.activeModalLayer()?.let { found = it }
@@ -50,10 +50,10 @@ internal fun LayoutNode.activeEscapeDismissLayer(): LayoutNode? =
 
 private fun LayoutNode.topmostLayer(wants: (LayoutNode) -> Boolean): LayoutNode? {
     var found: LayoutNode? = null
-    for (i in children.indices) {
+    for (i in 0 until children.size) {
         children[i].topmostLayer(wants)?.let { found = it }
     }
-    for (i in layers.indices) {
+    for (i in 0 until layers.size) {
         val layer = layers[i]
         if (wants(layer) && layer.onDismissRequest != null) found = layer
         layer.topmostLayer(wants)?.let { found = it }
