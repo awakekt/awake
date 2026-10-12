@@ -54,6 +54,11 @@ val generateProjectIndex = tasks.register<GenerateProjectIndexTask>("generatePro
     indexRoots.set(projectContent.indexRoots)
     indexRootPath.set(projectContent.indexRootPath)
     baseUrl.set(projectContent.indexBaseUrl)
+    indexedFiles.from(
+        layout.projectDirectory.file("awake.project.json"),
+        layout.projectDirectory.file("assets.lock.json"),
+        projectContent.indexRoots.map { roots -> roots.map(layout.projectDirectory::dir) },
+    )
 }
 
 val checkProjectContent = tasks.register("checkProjectContent") {
