@@ -8,7 +8,14 @@ package com.awakekt.awake.project
 import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.core.io.Sha256
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import kotlin.coroutines.cancellation.CancellationException
+
+/** How many of [IndexedAssetSource.prefetch]'s files are fetched and verified at once. */
+private const val MAX_CONCURRENT_PREFETCHES = 6
 
 /**
  * Where [IndexedAssetSource] keeps files it has checked, by SHA-256, so a file read twice, or
@@ -55,8 +62,10 @@ class IndexedAssetSource(
 
     /**
      * Reads every one of [paths] ahead of play, so the files are cached before a scene asks for them,
-     * reporting the bytes done of the bytes [paths] add up to after each file. Throws for the first
-     * file that is missing from the index or fails its check.
+     * fetching and verifying up to [MAX_CONCURRENT_PREFETCHES] of them at once, and reporting the
+     * bytes done of the bytes [paths] add up to after each file -- always in [paths]' order, whichever
+     * fetch actually finishes first. Throws for the first file, in that order, that is missing from
+     * the index or fails its check; any of the rest still in flight are cancelled.
      */
     suspend fun prefetch(paths: List<String>, onProgress: (done: Long, total: Long) -> Unit = { _, _ -> }) {
         val chosen = paths.map { path ->
@@ -64,10 +73,14 @@ class IndexedAssetSource(
         }
         val total = chosen.sumOf { it.sizeBytes }
         var done = 0L
-        for (entry in chosen) {
-            readChecked(entry)
-            done += entry.sizeBytes
-            onProgress(done, total)
+        coroutineScope {
+            val limit = Semaphore(MAX_CONCURRENT_PREFETCHES)
+            val pending = chosen.map { entry -> entry to async { limit.withPermit { readChecked(entry) } } }
+            for ((entry, fetch) in pending) {
+                fetch.await()
+                done += entry.sizeBytes
+                onProgress(done, total)
+            }
         }
     }
 
