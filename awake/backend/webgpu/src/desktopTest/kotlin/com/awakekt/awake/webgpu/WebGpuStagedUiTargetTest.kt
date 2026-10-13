@@ -9,9 +9,6 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.texture.RenderTarget
-import io.ygdrasil.webgpu.CompositeAlphaMode
-import io.ygdrasil.webgpu.GPUTextureUsage
-import io.ygdrasil.webgpu.SurfaceConfiguration
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import com.awakekt.awake.webgpu.renderer.Renderer as WebGpuRenderer
@@ -24,8 +21,6 @@ import com.awakekt.awake.webgpu.renderer.Renderer as WebGpuRenderer
  * frame that stages none draws none.
  */
 class WebGpuStagedUiTargetTest {
-    private val errors = mutableListOf<String>()
-
     @Test
     fun uiStagedBeforeItsMaterialAndTargetWereDestroyedDrawsNothingOfThem() = staged { material, target ->
         material.destroy()
@@ -72,25 +67,7 @@ class WebGpuStagedUiTargetTest {
     }
 
     /** Runs [block] with a renderer whose surface presents, and a frame step; no WebGPU error may occur. */
-    private fun presenting(block: (WebGpuRenderer, frame: () -> Unit) -> Unit) =
-        webGpuHeadlessUi(onUncapturedError = { errors += it }).use { session ->
-            val renderer = session.renderer as WebGpuRenderer
-            val context = renderer.graphicsDevice.wgpuContext
-            context.surface.configure(
-                SurfaceConfiguration(
-                    device = context.device,
-                    format = context.renderingContext.textureFormat,
-                    usage = GPUTextureUsage.RenderAttachment,
-                    alphaMode = CompositeAlphaMode.Opaque,
-                ),
-            )
-            // A browser presents on its own; over wgpu-native the test hands each frame back.
-            block(renderer) {
-                renderer.presentWithoutScene()
-                context.surface.present()
-            }
-            assertEquals(emptyList(), errors)
-        }
+    private fun presenting(block: (WebGpuRenderer, frame: () -> Unit) -> Unit) = withPresentingUi(block)
 
     private fun redQuad() = UiDrawPrimitive.Quad(0f, 0f, SIZE.toFloat(), SIZE.toFloat(), Color(1f, 0f, 0f, 1f))
 

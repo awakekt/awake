@@ -143,6 +143,7 @@ internal class TextRun(
                     u1 = uv.u1,
                     v1 = uv.v1,
                     color = color,
+                    font = font,
                 )
             }
             x += font.advanceFor(line[i], glyphPx, style.weight) + letterSpacing

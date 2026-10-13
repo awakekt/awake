@@ -219,12 +219,11 @@ class Renderer internal constructor(
     internal fun frameInstanceBufferForRun(index: Int): FrameInstanceBuffer = bufferPools.frameInstanceBufferForRun(index)
 
     // Lazily built on the first drawUi() call of any kind (uiRenderPipeline) and on the
-    // first call that passes a non-null font (uiGlyphRenderPipeline) -- see
+    // first call that draws a glyph (uiGlyphRenderPipeline) -- see
     // ensureUiQuadPipeline()/ensureGlyphPipeline()'s doc comments. A game that never calls
     // drawUi never builds either pipeline at all.
     internal var uiRenderPipeline: UiRenderPipeline? = null
     internal var uiGlyphRenderPipeline: UiRenderPipeline? = null
-    internal var currentUiFont: UiFont? = null
 
     // Lazily built on the first drawUi() call that has any Texture primitives -- see
     // ensureTextureQuadPipeline()'s doc comment.

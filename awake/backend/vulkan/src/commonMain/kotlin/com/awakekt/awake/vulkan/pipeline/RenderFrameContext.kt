@@ -6,12 +6,14 @@
 package com.awakekt.awake.vulkan.pipeline
 
 import com.awakekt.awake.core.graphics2d.TextureCompositeMode
+import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.command.PreparedDraw
 import com.awakekt.awake.render.passes.RenderFrameContext
 import com.awakekt.awake.render.passes2d.UiRun
 import com.awakekt.awake.render.renderer.RenderStatsCounter
 import com.awakekt.awake.vulkan.debug.LineMesh
+import com.awakekt.awake.vulkan.texture.Texture
 import com.awakekt.awake.vulkan.ui.DynamicMesh
 import com.awakekt.awake.vulkan.ui.UiRenderPipeline
 
@@ -50,10 +52,12 @@ internal interface VulkanRenderFrameContext : RenderFrameContext {
 
 /** The lazily built UI pipelines, snapshotted for one feature call. [quad] is non-null by
  * construction (it is what "UI exists this frame" means); the other three stay nullable, each
- * built only once a frame actually contains that kind of primitive. */
+ * built only once a frame actually contains that kind of primitive. [fontAtlases] holds every
+ * font staging uploaded, which [glyph] binds per run. */
 internal class UiPipelineSet(
     val quad: UiRenderPipeline,
     val glyph: UiRenderPipeline?,
     val textures: Map<TextureCompositeMode, UiRenderPipeline>,
     val roundedQuad: UiRenderPipeline?,
+    val fontAtlases: Map<UiFont, Texture>,
 )

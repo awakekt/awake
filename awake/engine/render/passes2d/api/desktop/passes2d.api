@@ -5,8 +5,10 @@ public abstract interface class com/awakekt/awake/render/passes2d/DrawMeshUpload
 }
 
 public final class com/awakekt/awake/render/passes2d/DrawMeshUploaderKt {
-	public static final fun uploadDrawRuns (Ljava/util/List;Lcom/awakekt/awake/render/passes2d/DrawMeshUploader;)Ljava/util/List;
-	public static final fun uploadUiRuns (Ljava/util/List;Lcom/awakekt/awake/render/passes2d/DrawMeshUploader;)Ljava/util/List;
+	public static final fun uploadDrawRuns (Ljava/util/List;Lcom/awakekt/awake/render/passes2d/DrawMeshUploader;Lcom/awakekt/awake/core/text/font/UiFont;)Ljava/util/List;
+	public static synthetic fun uploadDrawRuns$default (Ljava/util/List;Lcom/awakekt/awake/render/passes2d/DrawMeshUploader;Lcom/awakekt/awake/core/text/font/UiFont;ILjava/lang/Object;)Ljava/util/List;
+	public static final fun uploadUiRuns (Ljava/util/List;Lcom/awakekt/awake/render/passes2d/DrawMeshUploader;Lcom/awakekt/awake/core/text/font/UiFont;)Ljava/util/List;
+	public static synthetic fun uploadUiRuns$default (Ljava/util/List;Lcom/awakekt/awake/render/passes2d/DrawMeshUploader;Lcom/awakekt/awake/core/text/font/UiFont;ILjava/lang/Object;)Ljava/util/List;
 }
 
 public abstract interface class com/awakekt/awake/render/passes2d/DrawPass {
@@ -36,7 +38,8 @@ public final class com/awakekt/awake/render/passes2d/DrawRun$ClipRun : com/awake
 }
 
 public final class com/awakekt/awake/render/passes2d/DrawRun$GlyphRun : com/awakekt/awake/render/passes2d/DrawRun {
-	public fun <init> (Ljava/lang/Object;)V
+	public fun <init> (Ljava/lang/Object;Lcom/awakekt/awake/core/text/font/UiFont;)V
+	public final fun getFont ()Lcom/awakekt/awake/core/text/font/UiFont;
 	public final fun getMesh ()Ljava/lang/Object;
 }
 
@@ -57,7 +60,8 @@ public final class com/awakekt/awake/render/passes2d/DrawRun$TextureRun : com/aw
 
 public final class com/awakekt/awake/render/passes2d/DrawRunCoalescer {
 	public static final field INSTANCE Lcom/awakekt/awake/render/passes2d/DrawRunCoalescer;
-	public final fun buildGlyphRun (Ljava/util/List;)Lcom/awakekt/awake/render/passes2d/StagedDrawRun$GlyphRun;
+	public final fun buildGlyphRun (Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;)Lcom/awakekt/awake/render/passes2d/StagedDrawRun$GlyphRun;
+	public static synthetic fun buildGlyphRun$default (Lcom/awakekt/awake/render/passes2d/DrawRunCoalescer;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;ILjava/lang/Object;)Lcom/awakekt/awake/render/passes2d/StagedDrawRun$GlyphRun;
 	public final fun buildGradientQuadRun (Ljava/util/List;)Lcom/awakekt/awake/render/passes2d/StagedDrawRun$QuadRun;
 	public final fun buildQuadRun (Ljava/util/List;)Lcom/awakekt/awake/render/passes2d/StagedDrawRun$QuadRun;
 	public final fun buildRoundedQuadRun (Ljava/util/List;)Lcom/awakekt/awake/render/passes2d/StagedDrawRun$RoundedQuadRun;
@@ -81,6 +85,7 @@ public final class com/awakekt/awake/render/passes2d/DrawRunCoalescer {
 }
 
 public abstract interface class com/awakekt/awake/render/passes2d/DrawRunRecorder {
+	public abstract fun bindGlyphFont (Lcom/awakekt/awake/core/text/font/UiFont;)Z
 	public abstract fun bindPipeline (Lcom/awakekt/awake/render/passes2d/DrawPipelineKind;)Z
 	public abstract fun drawMesh (Ljava/lang/Object;)V
 	public abstract fun drawTexturePrimitive (Lcom/awakekt/awake/render/passes2d/TexturedDrawRun;I)V
@@ -125,7 +130,9 @@ public final class com/awakekt/awake/render/passes2d/StagedDrawRun$ClipRun : com
 }
 
 public final class com/awakekt/awake/render/passes2d/StagedDrawRun$GlyphRun : com/awakekt/awake/render/passes2d/StagedDrawRun {
-	public fun <init> ([F[I)V
+	public fun <init> ([F[ILcom/awakekt/awake/core/text/font/UiFont;)V
+	public synthetic fun <init> ([F[ILcom/awakekt/awake/core/text/font/UiFont;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getFont ()Lcom/awakekt/awake/core/text/font/UiFont;
 	public final fun getIndices ()[I
 	public final fun getVertices ()[F
 }
@@ -183,6 +190,7 @@ public final class com/awakekt/awake/render/passes2d/UiUniformLayouts {
 
 public final class com/awakekt/awake/render/passes2d/UiUniformsKt {
 	public static final fun getUiTargetCompositeUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
+	public static final fun uiFontInfo (Lcom/awakekt/awake/render/font/UiFontSamplingInfo;)Lcom/awakekt/awake/core/math/Vec4;
 	public static final fun uiUniformFloats (Lcom/awakekt/awake/core/math/Vec4;Lcom/awakekt/awake/core/math/Vec4;)[F
 	public static synthetic fun uiUniformFloats$default (Lcom/awakekt/awake/core/math/Vec4;Lcom/awakekt/awake/core/math/Vec4;ILjava/lang/Object;)[F
 }

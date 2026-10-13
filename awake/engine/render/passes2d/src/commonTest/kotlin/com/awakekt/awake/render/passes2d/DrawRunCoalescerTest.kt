@@ -16,11 +16,55 @@ import com.awakekt.awake.core.graphics2d.UiLinearGradient
 import com.awakekt.awake.core.graphics2d.drawPath
 import com.awakekt.awake.core.math2d.Rectangle
 import com.awakekt.awake.core.math2d.dp
+import com.awakekt.awake.core.text.font.UiFont
+import com.awakekt.awake.core.text.font.UiFonts
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 class DrawRunCoalescerTest {
+
+    /**
+     * A glyph batch ends where the font changes and nowhere else, and the runs keep paint order:
+     * the third glyph's font matches the first's, and still draws after the second.
+     */
+    @Test
+    fun glyphRunsSplitWhereTheFontChangesAndKeepPaintOrder() {
+        val roboto = UiFonts.default()
+        val bitmap = UiFonts.bitmap()
+        fun glyph(x: Float, font: UiFont?) = DrawCommand.Glyph(x, 0f, 8f, 8f, 0f, 0f, 1f, 1f, Color.White, font = font)
+
+        val runs = DrawRunCoalescer.coalesce(
+            listOf(glyph(0f, roboto), glyph(8f, roboto), glyph(16f, bitmap), glyph(24f, roboto), glyph(32f, null)),
+        ).map { it as StagedDrawRun.GlyphRun }
+
+        assertEquals(listOf(roboto, bitmap, roboto, null), runs.map { it.font })
+        assertEquals(listOf(2, 1, 1, 1), runs.map { it.indices.size / 6 })
+        assertEquals(16f, runs[1].vertices[0], "the bitmap run holds the third glyph")
+    }
+
+    /** The exact-clip path stages glyph runs too; they must name their font the same way. */
+    @Test
+    fun aPathClippedGlyphRunKeepsItsFont() {
+        val bitmap = UiFonts.bitmap()
+        val clip = drawPath {
+            moveTo(0f, 0f)
+            lineTo(20f, 0f)
+            lineTo(20f, 20f)
+            lineTo(0f, 20f)
+            close()
+        }
+        val runs = DrawRunCoalescer.coalesce(
+            listOf(
+                DrawCommand.ClipPathPush(clip, Rectangle(0f, 0f, 20f, 20f)),
+                DrawCommand.Glyph(10f, 10f, 16f, 16f, 0f, 0f, 1f, 1f, Color.White, font = bitmap),
+                DrawCommand.ClipPop(Rectangle(0f, 0f, 100f, 100f)),
+            ),
+        )
+
+        assertSame(bitmap, runs.filterIsInstance<StagedDrawRun.GlyphRun>().single().font)
+    }
 
     /** A region and a tint reach the vertices: the region's UVs at its corners, the tint times alpha. */
     @Test

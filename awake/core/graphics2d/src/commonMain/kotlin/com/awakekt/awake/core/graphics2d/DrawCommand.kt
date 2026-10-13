@@ -7,6 +7,7 @@ package com.awakekt.awake.core.graphics2d
 
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.math2d.Rectangle
+import com.awakekt.awake.core.text.font.UiFont
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -155,6 +156,9 @@ sealed class DrawCommand {
      * @property color Tint color applied to the glyph.
      * @property tokenId Optional design system token identifier.
      * @property transform Optional per-primitive GPU scale transform.
+     * @property font The font whose atlas the UVs index, compared by identity, or null for the font
+     * the frame is drawn with (`Renderer.drawUi`'s). A renderer splits a glyph batch wherever this
+     * changes, so glyphs of several fonts draw in one frame in paint order.
      */
     data class Glyph(
         val x: Float,
@@ -168,6 +172,7 @@ sealed class DrawCommand {
         val color: Color,
         val tokenId: String? = null,
         val transform: DrawTransform? = null,
+        val font: UiFont? = null,
     ) : UiDrawPrimitive()
 
     /**

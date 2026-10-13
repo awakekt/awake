@@ -8,8 +8,10 @@ package com.awakekt.awake.webgpu.ui
 import com.awakekt.awake.core.graphics2d.BlendMode
 import com.awakekt.awake.core.math.Vec4
 import com.awakekt.awake.core.text.font.UiFont
+import com.awakekt.awake.render.font.samplingInfo
 import com.awakekt.awake.render.passes2d.UiPipelineKind
 import com.awakekt.awake.render.passes2d.UiUniformLayouts
+import com.awakekt.awake.render.passes2d.uiFontInfo
 import com.awakekt.awake.render.passes2d.uiUniformFloats
 import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.pipeline.UiPipelineDescriptor
@@ -34,14 +36,17 @@ import io.ygdrasil.webgpu.GPUBindGroup
 import io.ygdrasil.webgpu.GPUBlendFactor
 import io.ygdrasil.webgpu.GPUBuffer
 import io.ygdrasil.webgpu.GPUBufferUsage
+import io.ygdrasil.webgpu.GPUDevice
 import io.ygdrasil.webgpu.GPUFilterMode
 import io.ygdrasil.webgpu.GPUMipmapFilterMode
 import io.ygdrasil.webgpu.GPUPrimitiveTopology
 import io.ygdrasil.webgpu.GPURenderPipeline
+import io.ygdrasil.webgpu.GPUSampler
 import io.ygdrasil.webgpu.GPUTexture
 import io.ygdrasil.webgpu.GPUTextureDimension
 import io.ygdrasil.webgpu.GPUTextureFormat
 import io.ygdrasil.webgpu.GPUTextureUsage
+import io.ygdrasil.webgpu.GPUTextureView
 import io.ygdrasil.webgpu.PrimitiveState
 import io.ygdrasil.webgpu.RenderPipelineDescriptor
 import io.ygdrasil.webgpu.SamplerDescriptor
@@ -66,20 +71,17 @@ class UiRenderPipeline(
      * group 0.
      */
     val kind: UiPipelineKind = UiPipelineKind.Quad,
-    font: UiFont? = null,
     private val blendMode: BlendMode = BlendMode.SourceOver,
     private val premultiplied: Boolean = false,
 ) {
-    /** The uniform block's two halves, kept so either can be rewritten without dropping the other. */
+    /** The screen half of every uniform block this pipeline writes; each font holds its own other half. */
     private var screenToNdc = Vec4()
-    private var fontInfo = Vec4()
 
     constructor(
         graphicsDevice: GraphicsDevice,
         swapchainManager: SwapchainManager,
         shaderCode: ByteArray,
         descriptor: UiPipelineDescriptor,
-        font: UiFont? = null,
     ) : this(
         graphicsDevice = graphicsDevice,
         swapchainManager = swapchainManager,
@@ -91,7 +93,6 @@ class UiRenderPipeline(
             com.awakekt.awake.render.pipeline.UiPipelineVariant.Texture -> UiPipelineKind.Texture
             com.awakekt.awake.render.pipeline.UiPipelineVariant.TargetComposite -> UiPipelineKind.Texture
         },
-        font = font,
         blendMode = descriptor.blendMode,
         premultiplied = descriptor.isPremultiplied,
     )
@@ -105,14 +106,10 @@ class UiRenderPipeline(
     var pipeline: GPURenderPipeline
         private set
     private val screenSizeBuffer: GPUBuffer
-    private var fontTexture: GPUTexture? = null
-    private var fontTextureView: io.ygdrasil.webgpu.GPUTextureView? = null
-    private var fontSampler: io.ygdrasil.webgpu.GPUSampler? = null
 
     /**
-     * Group-0 bind group holding the screen-size uniform and, for glyph pipelines, the font atlas
-     * and sampler. It is not built for texture pipelines, whose bind groups come per material, so
-     * reading it there throws.
+     * Group-0 bind group holding the screen-size uniform. It is not built for texture or glyph
+     * pipelines, whose bind groups come per material and per font, so reading it there throws.
      */
     lateinit var bindGroup: GPUBindGroup
         private set
@@ -121,71 +118,37 @@ class UiRenderPipeline(
     val screenSizeBindGroup: GPUBindGroup get() = bindGroup
     private val materialBindGroups = HashMap<Material, GPUBindGroup>()
 
+    /** One font's atlas, its own uniform block, and the bind group over both. */
+    internal class FontBinding(
+        val texture: GPUTexture,
+        val view: GPUTextureView,
+        val sampler: GPUSampler,
+        val uniforms: GPUBuffer,
+        val fontInfo: Vec4,
+    ) {
+        var bindGroup: GPUBindGroup? = null
+    }
+
+    /**
+     * Every font drawn through this glyph pipeline, by identity: uploaded on its first draw and kept
+     * until [destroy]. A font no longer drawn keeps its atlas; there is no eviction yet.
+     */
+    internal val fontBindings = HashMap<UiFont, FontBinding>()
+
     init {
         val initialWgslSource = shaderCode.decodeToString()
         pipeline = buildPipeline(initialWgslSource, vertexEntryPoint = "vertexMain", fragmentEntryPoint = "fragmentMain")
 
-        screenSizeBuffer = device.createBuffer(
-            BufferDescriptor(
-                size = (UiUniformLayouts.Buffer.total * Float.SIZE_BYTES).toULong(),
-                usage = GPUBufferUsage.Uniform or GPUBufferUsage.CopyDst,
-            ),
-        )
+        screenSizeBuffer = device.createUiUniformBuffer()
 
-        if (kind == UiPipelineKind.Glyph && font != null) {
-            val tex = device.createTexture(
-                TextureDescriptor(
-                    size = Extent3D(width = font.atlasWidth.toUInt(), height = font.atlasHeight.toUInt()),
-                    format = GPUTextureFormat.RGBA8Unorm,
-                    usage = GPUTextureUsage.TextureBinding or GPUTextureUsage.CopyDst,
-                    dimension = GPUTextureDimension.TwoD,
-                ),
-            )
-            fontTexture = tex
-            device.queue.writeTexture(
-                destination = TexelCopyTextureInfo(texture = tex),
-                data = fastArrayBufferOf(font.atlasPixelsRgba),
-                dataLayout = TexelCopyBufferLayout(
-                    bytesPerRow = (font.atlasWidth * 4).toUInt(),
-                    rowsPerImage = font.atlasHeight.toUInt(),
-                ),
-                size = Extent3D(width = font.atlasWidth.toUInt(), height = font.atlasHeight.toUInt()),
-            )
-            val view = tex.createView(TextureViewDescriptor())
-            fontTextureView = view
-            val sampler = device.createSampler(
-                SamplerDescriptor(
-                    addressModeU = GPUAddressMode.ClampToEdge,
-                    addressModeV = GPUAddressMode.ClampToEdge,
-                    addressModeW = GPUAddressMode.ClampToEdge,
-                    magFilter = GPUFilterMode.Linear,
-                    minFilter = GPUFilterMode.Linear,
-                    mipmapFilter = GPUMipmapFilterMode.Linear,
-                ),
-            )
-            fontSampler = sampler
-            recreateBindGroup()
-        } else if (kind != UiPipelineKind.Texture) {
-            recreateBindGroup()
-        }
+        recreateBindGroup()
 
         val renderingContext = graphicsDevice.wgpuContext.renderingContext
         writeScreenSize(renderingContext.width.toFloat(), renderingContext.height.toFloat())
     }
 
     private fun recreateBindGroup() {
-        if (kind == UiPipelineKind.Glyph && fontTextureView != null && fontSampler != null) {
-            bindGroup = device.createBindGroup(
-                BindGroupDescriptor(
-                    layout = pipeline.getBindGroupLayout(0u),
-                    entries = listOf(
-                        BindGroupEntry(binding = 0u, resource = BufferBinding(buffer = screenSizeBuffer)),
-                        BindGroupEntry(binding = 1u, resource = fontTextureView!!),
-                        BindGroupEntry(binding = 2u, resource = fontSampler!!),
-                    ),
-                ),
-            )
-        } else if (kind != UiPipelineKind.Texture) {
+        if (kind == UiPipelineKind.Quad || kind == UiPipelineKind.RoundedQuad) {
             bindGroup = device.createBindGroup(
                 BindGroupDescriptor(
                     layout = pipeline.getBindGroupLayout(0u),
@@ -275,6 +238,7 @@ class UiRenderPipeline(
         val old = pipeline
         pipeline = newPipeline
         materialBindGroups.clear()
+        fontBindings.values.forEach { it.bindGroup = null }
         recreateBindGroup()
         return old
     }
@@ -285,37 +249,31 @@ class UiRenderPipeline(
         writeUniforms()
     }
 
-    /**
-     * Sets the glyph shader's font fields.
-     *
-     * The glyph shader reads:
-     *   fontInfo.x — 1.0 for a distance-field atlas, 0.0 for a coverage-alpha atlas. Zero takes
-     *                the coverage branch, which samples an MTSDF atlas's alpha as if it were ink
-     *                and turns every glyph edge into a wide linear ramp.
-     *   fontInfo.y — distanceFieldRangePx, in atlas texels. Zero collapses `screenPxRange` to 1,
-     *                which is the same soft ramp by a different route.
-     *
-     * Call once when the glyph pipeline is built or the font changes.
-     */
-    fun writeFontInfo(isDistanceField: Boolean, rangePx: Float) {
-        fontInfo = Vec4(if (isDistanceField) 1f else 0f, rangePx, 0f, 0f)
-        writeUniforms()
+    private fun writeUniforms() {
+        device.writeUiUniforms(screenSizeBuffer, screenToNdc, NO_FONT_INFO)
+        for (binding in fontBindings.values) device.writeUiUniforms(binding.uniforms, screenToNdc, binding.fontInfo)
     }
 
     /**
-     * Writes the whole uniform block from offset zero, the way the Vulkan pipeline does.
-     *
-     * Not two partial writes at their own offsets: a partial write of `fontInfo` alone reached the
-     * buffer but never the shader, so glyphs took the coverage branch and rendered two pixels wider
-     * on every side than Vulkan's. Holding both halves and writing them together costs one extra
-     * `writeBuffer` at startup and removes the whole class of question.
+     * The group-0 bind group that samples [font]'s atlas with its own `fontInfo`. The atlas is
+     * uploaded and the group built the first time [font] is drawn; after that a font switch is one
+     * `setBindGroup`, never a pipeline rebuild or a second upload.
      */
-    private fun writeUniforms() {
-        device.queue.writeBufferData(
-            screenSizeBuffer,
-            0uL,
-            fastArrayBufferOf(uiUniformFloats(screenToNdc, fontInfo)),
-        )
+    fun fontBindGroup(font: UiFont): GPUBindGroup {
+        check(kind == UiPipelineKind.Glyph) { "fontBindGroup requires a glyph UiRenderPipeline." }
+        val binding = fontBindings.getOrPut(font) {
+            device.uploadFont(font).also { device.writeUiUniforms(it.uniforms, screenToNdc, it.fontInfo) }
+        }
+        return binding.bindGroup ?: device.createBindGroup(
+            BindGroupDescriptor(
+                layout = pipeline.getBindGroupLayout(0u),
+                entries = listOf(
+                    BindGroupEntry(binding = 0u, resource = BufferBinding(buffer = binding.uniforms)),
+                    BindGroupEntry(binding = 1u, resource = binding.view),
+                    BindGroupEntry(binding = 2u, resource = binding.sampler),
+                ),
+            ),
+        ).also { binding.bindGroup = it }
     }
 
     /** Builds (once) and returns the bind group for [material]'s `previewTextureView`/`previewSampler`. */
@@ -351,12 +309,77 @@ class UiRenderPipeline(
     }
 
     /**
-     * Drops the cached per-material bind groups and closes the font atlas texture and the
-     * screen-size uniform buffer.
+     * Drops the cached per-material bind groups and closes every font's atlas and uniform buffer and
+     * the screen-size uniform buffer.
      */
     fun destroy() {
         materialBindGroups.clear()
-        fontTexture?.close()
+        fontBindings.values.forEach {
+            it.texture.close()
+            it.uniforms.close()
+        }
+        fontBindings.clear()
         screenSizeBuffer.close()
     }
+}
+
+/** The `fontInfo` lanes of a uniform block no glyph reads. */
+private val NO_FONT_INFO = Vec4(0f, 0f, 0f, 0f)
+
+/**
+ * Writes a whole UI uniform block from offset zero, the way the Vulkan pipeline does.
+ *
+ * Not two partial writes at their own offsets: a partial write of `fontInfo` alone reached the
+ * buffer but never the shader, so glyphs took the coverage branch and rendered two pixels wider
+ * on every side than Vulkan's. Writing both halves together removes the whole class of question.
+ */
+private fun GPUDevice.writeUiUniforms(buffer: GPUBuffer, screenToNdc: Vec4, fontInfo: Vec4) {
+    queue.writeBufferData(buffer, 0uL, fastArrayBufferOf(uiUniformFloats(screenToNdc, fontInfo)))
+}
+
+/** A buffer sized for one UI uniform block. */
+private fun GPUDevice.createUiUniformBuffer(): GPUBuffer = createBuffer(
+    BufferDescriptor(
+        size = (UiUniformLayouts.Buffer.total * Float.SIZE_BYTES).toULong(),
+        usage = GPUBufferUsage.Uniform or GPUBufferUsage.CopyDst,
+    ),
+)
+
+/** Uploads [font]'s atlas once, with a uniform block of its own carrying its `fontInfo`. */
+private fun GPUDevice.uploadFont(font: UiFont): UiRenderPipeline.FontBinding {
+    val size = Extent3D(width = font.atlasWidth.toUInt(), height = font.atlasHeight.toUInt())
+    val texture = createTexture(
+        TextureDescriptor(
+            size = size,
+            format = GPUTextureFormat.RGBA8Unorm,
+            usage = GPUTextureUsage.TextureBinding or GPUTextureUsage.CopyDst,
+            dimension = GPUTextureDimension.TwoD,
+        ),
+    )
+    queue.writeTexture(
+        destination = TexelCopyTextureInfo(texture = texture),
+        data = fastArrayBufferOf(font.atlasPixelsRgba),
+        dataLayout = TexelCopyBufferLayout(
+            bytesPerRow = (font.atlasWidth * 4).toUInt(),
+            rowsPerImage = font.atlasHeight.toUInt(),
+        ),
+        size = size,
+    )
+    val sampler = createSampler(
+        SamplerDescriptor(
+            addressModeU = GPUAddressMode.ClampToEdge,
+            addressModeV = GPUAddressMode.ClampToEdge,
+            addressModeW = GPUAddressMode.ClampToEdge,
+            magFilter = GPUFilterMode.Linear,
+            minFilter = GPUFilterMode.Linear,
+            mipmapFilter = GPUMipmapFilterMode.Linear,
+        ),
+    )
+    return UiRenderPipeline.FontBinding(
+        texture = texture,
+        view = texture.createView(TextureViewDescriptor()),
+        sampler = sampler,
+        uniforms = createUiUniformBuffer(),
+        fontInfo = uiFontInfo(font.samplingInfo),
+    )
 }

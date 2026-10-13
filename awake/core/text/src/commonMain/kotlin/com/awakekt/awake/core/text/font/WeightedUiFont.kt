@@ -9,8 +9,8 @@ package com.awakekt.awake.core.text.font
  * A font family backed by several packed faces and one combined atlas.
  *
  * Compose resolves a requested [FontWeight] to the closest face in a [FontFamily]. Awake keeps
- * that same contract while preserving the renderer's one-atlas-per-frame boundary: the face
- * atlases are stacked vertically once, and each weighted glyph receives UVs in its own slice.
+ * that same contract with one atlas for the whole family: the face atlases are stacked
+ * vertically once, and each weighted glyph receives UVs in its own slice.
  */
 class WeightedUiFont(
     faceMap: Map<FontWeight, UiFont>,

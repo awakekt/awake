@@ -5,6 +5,8 @@
  */
 package com.awakekt.awake.render.passes2d
 
+import com.awakekt.awake.core.text.font.UiFont
+
 /**
  * Uploads one coalesced run's geometry into a backend mesh, for [uploadDrawRuns].
  *
@@ -29,11 +31,14 @@ typealias UiMeshUploader<M> = DrawMeshUploader<M>
  * @param M The backend's 2D mesh type.
  * @param staged Output of [DrawRunCoalescer.coalesce].
  * @param uploader The backend's mesh fetch-and-fill.
+ * @param defaultFont The font a glyph run without its own font samples. A glyph run with neither
+ * is dropped: it has no atlas to draw from.
  * @return Runs ready for [SharedRenderFeature2D].
  */
 fun <M> uploadDrawRuns(
     staged: List<StagedDrawRun>,
     uploader: DrawMeshUploader<M>,
+    defaultFont: UiFont? = null,
 ): List<DrawRun<M>> {
     val runs = ArrayList<DrawRun<M>>(staged.size)
     var quadRunCount = 0
@@ -56,14 +61,12 @@ fun <M> uploadDrawRuns(
                     uploader.roundedQuadMesh(roundedQuadRunCount++, run.vertices, run.indices),
                 )
 
-            is StagedDrawRun.GlyphRun ->
-                runs += DrawRun.GlyphRun(
-                    uploader.glyphMesh(
-                        glyphRunCount++,
-                        run.vertices,
-                        run.indices,
-                    ),
-                )
+            is StagedDrawRun.GlyphRun -> {
+                val font = run.font ?: defaultFont
+                if (font != null) {
+                    runs += DrawRun.GlyphRun(uploader.glyphMesh(glyphRunCount++, run.vertices, run.indices), font)
+                }
+            }
 
             is StagedDrawRun.TextureRun -> runs += DrawRun.TextureRun(run.primitives)
 
@@ -75,5 +78,8 @@ fun <M> uploadDrawRuns(
 }
 
 /** Legacy alias for [uploadDrawRuns]. */
-fun <M> uploadUiRuns(staged: List<StagedDrawRun>, uploader: DrawMeshUploader<M>): List<DrawRun<M>> =
-    uploadDrawRuns(staged, uploader)
+fun <M> uploadUiRuns(
+    staged: List<StagedDrawRun>,
+    uploader: DrawMeshUploader<M>,
+    defaultFont: UiFont? = null,
+): List<DrawRun<M>> = uploadDrawRuns(staged, uploader, defaultFont)

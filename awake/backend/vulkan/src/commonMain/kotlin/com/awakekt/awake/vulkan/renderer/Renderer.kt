@@ -303,16 +303,17 @@ class Renderer internal constructor(
     internal var commandBuffers: LongArray = LongArray(maxFramesInFlight)
 
     // Lazily built on the first drawUi() call of any kind (uiRenderPipeline/uiFramebuffers)
-    // and on the first call that passes a non-null font (uiGlyphRenderPipeline/fontTexture)
-    // -- see ensureUiQuadPipeline()/ensureGlyphPipeline()'s doc comments. A game that never
-    // calls drawUi never builds either pipeline at all.
+    // and on the first call that draws a glyph (uiGlyphRenderPipeline, plus that glyph's font
+    // in fontAtlases) -- see ensureUiQuadPipeline()/ensureGlyphPipeline()'s doc comments. A
+    // game that never calls drawUi never builds either pipeline at all.
     internal var uiRenderPipeline: UiRenderPipeline? = null
     internal var uiFramebuffers: List<Long> = emptyList()
     internal var presentTransitionFramebuffers: List<Long> = emptyList()
     internal var uiGlyphRenderPipeline: UiRenderPipeline? = null
     internal var offscreenGlyphRenderPipeline: UiRenderPipeline? = null
-    internal var fontTexture: Texture? = null
-    internal var currentUiFont: UiFont? = null
+
+    /** Every font's uploaded atlas, by identity -- see [ensureFontAtlas]. Released with [textureResources]. */
+    internal val fontAtlases = HashMap<UiFont, Texture>()
 
     // Offscreen counterparts of uiRenderPipeline/uiRoundedQuadRenderPipeline, bound to
     // renderPipeline.renderPass instead of the swapchain UI pass -- used by

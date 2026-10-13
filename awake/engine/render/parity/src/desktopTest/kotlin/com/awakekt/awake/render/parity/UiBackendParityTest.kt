@@ -39,7 +39,7 @@ class UiBackendParityTest {
             openHeadlessUi(backend).use { session ->
                 UI_PARITY_SCENARIOS.associate { scenario ->
                     val pixels = session.renderer.render(scenario)
-                    write(scenario.name, backend, pixels)
+                    write(scenario, backend, pixels)
                     // A comparison passes vacuously when both sides drew nothing, which is what a
                     // pipeline that failed to build produces.
                     assertTrue(pixels.anyInk(), "$backend drew nothing for ${scenario.name}")
@@ -87,7 +87,7 @@ class UiBackendParityTest {
                 opaqueColourDiffs++
             }
         }
-        val pixels = SCENARIO_SIZE * SCENARIO_SIZE
+        val pixels = vulkan.size / 4
         // Not zero: a driver update may move an edge pixel or two without that being a regression.
         val coverageDiverged = coverageDiffs.toFloat() / pixels > MAX_DIFFERING_FRACTION
         val colourDiverged = opaqueColourDiffs.toFloat() / pixels > MAX_DIFFERING_FRACTION
@@ -100,11 +100,12 @@ class UiBackendParityTest {
 
     private fun ByteArray.anyInk(): Boolean = indices.step(4).any { this[it + 3].toInt() != 0 }
 
-    private fun write(scenario: String, backend: HeadlessUiBackend, pixels: ByteArray) {
-        val image = BufferedImage(SCENARIO_SIZE, SCENARIO_SIZE, BufferedImage.TYPE_INT_ARGB)
-        for (y in 0 until SCENARIO_SIZE) {
-            for (x in 0 until SCENARIO_SIZE) {
-                val offset = (y * SCENARIO_SIZE + x) * 4
+    private fun write(scenario: UiScenario, backend: HeadlessUiBackend, pixels: ByteArray) {
+        val size = scenario.size
+        val image = BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB)
+        for (y in 0 until size) {
+            for (x in 0 until size) {
+                val offset = (y * size + x) * 4
                 fun channel(index: Int) = pixels[offset + index].toInt() and 0xFF
                 image.setRGB(
                     x,
@@ -114,7 +115,7 @@ class UiBackendParityTest {
             }
         }
         val out = File(REPORT_DIR).apply { mkdirs() }
-        ImageIO.write(image, "png", File(out, "$scenario-${backend.name.lowercase()}.png"))
+        ImageIO.write(image, "png", File(out, "${scenario.name}-${backend.name.lowercase()}.png"))
     }
 
     private companion object {

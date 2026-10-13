@@ -6,6 +6,7 @@
 package com.awakekt.awake.render.passes2d
 
 import com.awakekt.awake.core.math2d.Rectangle
+import com.awakekt.awake.core.text.font.UiFont
 
 /**
  * Backend-neutral command recording engine for 2D draw runs.
@@ -29,7 +30,7 @@ class SharedRenderFeature2D {
             when (val run = runs[runIndex]) {
                 is DrawRun.QuadRun -> bound.draw(DrawPipelineKind.Quad, run.mesh)
                 is DrawRun.RoundedQuadRun -> bound.draw(DrawPipelineKind.RoundedQuad, run.mesh)
-                is DrawRun.GlyphRun -> bound.draw(DrawPipelineKind.Glyph, run.mesh)
+                is DrawRun.GlyphRun -> bound.drawGlyphs(run.font, run.mesh)
                 is DrawRun.ClipRun -> bound.clip(run.rect, surfaceWidth, surfaceHeight)
                 is DrawRun.TextureRun -> {
                     textureSlotIndex = recordTextureRun(run, textureSlotIndex, recorder)
@@ -59,23 +60,41 @@ class SharedRenderFeature2D {
 }
 
 /**
- * What the previous run left bound. Runs alternate with clips, so the same pipeline and the same
- * rect recur back to back; neither is set again while it is already in place.
+ * What the previous run left bound. Runs alternate with clips, so the same pipeline, font and rect
+ * recur back to back; none is set again while it is already in place.
  */
 private class BoundState<M>(private val recorder: DrawRunRecorder<M>) {
     private var kind: DrawPipelineKind? = null
     private var usable = false
+    private var font: UiFont? = null
+    private var fontUsable = false
 
     // A clamped rect packs to non-negative values, so -1 never matches and the first clip is set.
     private var scissorOrigin = -1L
     private var scissorSize = -1L
 
     fun draw(next: DrawPipelineKind, mesh: M) {
+        if (bind(next)) recorder.drawMesh(mesh)
+    }
+
+    /** A font change binds the next atlas into the glyph pipeline already bound; paint order stays. */
+    fun drawGlyphs(nextFont: UiFont, mesh: M) {
+        if (!bind(DrawPipelineKind.Glyph)) return
+        if (nextFont !== font) {
+            fontUsable = recorder.bindGlyphFont(nextFont)
+            font = nextFont
+        }
+        if (fontUsable) recorder.drawMesh(mesh)
+    }
+
+    private fun bind(next: DrawPipelineKind): Boolean {
         if (next != kind) {
             usable = recorder.bindPipeline(next)
             kind = next
+            // Another pipeline's bind replaced group 0, so the next glyph run binds its font again.
+            font = null
         }
-        if (usable) recorder.drawMesh(mesh)
+        return usable
     }
 
     fun clip(rect: Rectangle, surfaceWidth: Int, surfaceHeight: Int) {
@@ -95,6 +114,7 @@ private class BoundState<M>(private val recorder: DrawRunRecorder<M>) {
 
     fun forgetPipeline() {
         kind = null
+        font = null
     }
 
     private companion object {
