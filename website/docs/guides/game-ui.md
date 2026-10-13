@@ -54,8 +54,8 @@ For a button the player holds down, read `isHeld` instead. For a joystick, read 
 | --- | --- | --- | --- |
 | `kind` | `Text` · `Panel` · `Bar` · `Button` · `TextField` · `Joystick` · `Image` · `View` | `Text` | What the element draws. |
 | `anchor` | `TopLeft` · `TopCenter` · `TopRight` · `CenterLeft` · `Center` · `CenterRight` · `BottomLeft` · `BottomCenter` · `BottomRight` | `TopLeft` | The screen point the element is pinned to. |
-| `offsetX` | number (dp) | `16` | Moves the element inward from its anchor. From a right anchor it moves left. |
-| `offsetY` | number (dp) | `16` | Moves the element inward from its anchor. From a bottom anchor it moves up. |
+| `offsetX` | number (dp) | `16` | Moves the element inward from its anchor. From a right anchor it moves left. On a centred axis it moves right of centre, or left when negative. |
+| `offsetY` | number (dp) | `16` | Moves the element inward from its anchor. From a bottom anchor it moves up. On a centred axis it moves below centre, or above when negative. |
 | `width` | number (dp) | `200` | Element width. A joystick is a round pad of this width. |
 | `height` | number (dp) | `40` | Element height. |
 | `text` | string | `""` | A `Text` element's content, a `Button`'s label, or what is typed into a `TextField`. Typing writes it; a system writing it replaces the field's content, caret at the end. |
@@ -335,8 +335,10 @@ When a scene has any `canvas_element`, the scene runtime draws every visible ele
 drawn under the app's own `ui { }` content, so a pause menu covers the HUD.
 
 The element's anchor places it against one of nine screen points. The offsets move it inward. On a
-centred axis, the offset shifts it right or down. Negative offsets are treated as zero. The element's
-hit area is exactly its `width` by `height`.
+centred axis, the offset shifts it right or down, and a negative offset shifts it left or up, so an
+element can sit either side of the centre. At an edge a negative offset is treated as zero, which
+keeps the element against that edge rather than past it. The element's hit area is exactly its
+`width` by `height`.
 
 A `TextField` is a single-line field the player types into: a click focuses it, Enter submits and
 frees it (`consumeSubmit()`), and Escape frees it without submitting. A system sets `focused` to

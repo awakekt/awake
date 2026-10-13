@@ -14,7 +14,9 @@ Not to be confused with Compose's `Canvas` (a surface you draw pixels on) or
 
 - **`kind`**: `Text`, `Panel`, `Bar`, `Button`, `TextField`, `Joystick`, `Image` or `View`.
 - **`anchor`**: one of nine screen points (`TopLeft` … `BottomRight`). The element sits against that
-  point, and **`offsetX` / `offsetY`** move it inward: a right or bottom anchor moves it left or up.
+  point, and **`offsetX` / `offsetY`** move it inward: a right or bottom anchor moves it left or up,
+  and a negative offset at an edge is held there. On a centred axis an offset moves it right or down
+  of centre, and a negative one left or up.
 - **`width` / `height`** in dp.
 - **`text`** (Text content, Button label), **`fontSize`**, **`color`** (text, or a Bar's fill) and
   **`background`**, as `#RRGGBB` or `#RRGGBBAA`.

@@ -310,18 +310,21 @@ private fun JoystickView(
 private const val KNOB_FRACTION = 0.45f
 
 /**
- * Moves the element inward from its anchor with padding, not `offset`: `offset` only moves the
- * drawing, so hit-testing and editor picking would still find the element at the anchor.
- * On a centred axis the padding goes on one side twice over, which shifts the centred box by the
- * offset. Offsets pointing off-screen (negative) are clamped to the anchor.
+ * Moves the element from its anchor with padding around it, not `offset`, so the element's own
+ * bounds (its hit area, editor picking) stay exactly its size wherever it lands.
+ *
+ * At an edge the offset moves it inward, and a negative one is held at the edge: padding cannot
+ * reach past it. On a centred axis the padding goes on one side twice over, which shifts the
+ * centred box by the offset: a positive one right or down, a negative one, padded on the other
+ * side, left or up.
  */
 private fun Modifier.anchorInset(element: CanvasElement): Modifier {
-    val x = element.offsetX.coerceAtLeast(0f)
-    val y = element.offsetY.coerceAtLeast(0f)
-    val start = when (element.anchor.column) { 0 -> x; 1 -> 2 * x; else -> 0f }
-    val end = if (element.anchor.column == 2) x else 0f
-    val top = when (element.anchor.row) { 0 -> y; 1 -> 2 * y; else -> 0f }
-    val bottom = if (element.anchor.row == 2) y else 0f
+    val x = element.offsetX
+    val y = element.offsetY
+    val start = when (element.anchor.column) { 0 -> x.coerceAtLeast(0f); 1 -> 2 * x.coerceAtLeast(0f); else -> 0f }
+    val end = when (element.anchor.column) { 1 -> 2 * (-x).coerceAtLeast(0f); 2 -> x.coerceAtLeast(0f); else -> 0f }
+    val top = when (element.anchor.row) { 0 -> y.coerceAtLeast(0f); 1 -> 2 * y.coerceAtLeast(0f); else -> 0f }
+    val bottom = when (element.anchor.row) { 1 -> 2 * (-y).coerceAtLeast(0f); 2 -> y.coerceAtLeast(0f); else -> 0f }
     return padding(start = start.dp, top = top.dp, end = end.dp, bottom = bottom.dp)
 }
 
