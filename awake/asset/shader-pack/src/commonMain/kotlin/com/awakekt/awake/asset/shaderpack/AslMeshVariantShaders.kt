@@ -5,17 +5,21 @@
  */
 package com.awakekt.awake.asset.shaderpack
 
+import com.awakekt.awake.asset.shaderdsl.AslArrayHandle
 import com.awakekt.awake.asset.shaderdsl.AslBlockBuilder
 import com.awakekt.awake.asset.shaderdsl.AslExpr
 import com.awakekt.awake.asset.shaderdsl.AslShaderDefinition
 import com.awakekt.awake.asset.shaderdsl.AslVaryings
 import com.awakekt.awake.asset.shaderdsl.AslVertexBuilder
 import com.awakekt.awake.asset.shaderdsl.a
+import com.awakekt.awake.asset.shaderdsl.clamp
 import com.awakekt.awake.asset.shaderdsl.div
 import com.awakekt.awake.asset.shaderdsl.dot
 import com.awakekt.awake.asset.shaderdsl.fieldsFrom
+import com.awakekt.awake.asset.shaderdsl.ge
 import com.awakekt.awake.asset.shaderdsl.inputsFrom
 import com.awakekt.awake.asset.shaderdsl.instanceModelMatrix
+import com.awakekt.awake.asset.shaderdsl.le
 import com.awakekt.awake.asset.shaderdsl.length
 import com.awakekt.awake.asset.shaderdsl.lit
 import com.awakekt.awake.asset.shaderdsl.lt
@@ -41,6 +45,7 @@ import com.awakekt.awake.core.geometry.GpuDataShape
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.geometry.VertexSemantic
 import com.awakekt.awake.render.passes.uniforms.InstancedUniformLayout
+import com.awakekt.awake.render.passes.uniforms.MAX_POINT_LIGHTS
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.renderer.MAX_JOINTS
@@ -63,7 +68,8 @@ private fun meshVariant(name: String, instanced: Boolean, skinned: Boolean): Asl
         val tint = if (skinned && !instanced) handles.value("baseColorFactor") else null
         val glow = if (skinned && !instanced) handles.value("emissiveFactor") else null
         val exposure = handles.value("exposure")
-        // The single-draw skinned block carries what the debug views read; the instanced block doesn't.
+        // The single-draw skinned block carries the point lights and what the debug views read; the instanced block doesn't.
+        val pointLights = if (skinned && !instanced) SkinnedPointLights(handles::array) else null
         val debug = if (skinned && !instanced) SkinnedDebugInputs(handles::value) else null
         val displayTransform = sceneDisplayTransform(decodesDisplayReferred = true)
         val storagePalettes = if (skinned && instanced) {
@@ -131,7 +137,8 @@ private fun meshVariant(name: String, instanced: Boolean, skinned: Boolean): Asl
             val n = let("n", normalize(normal))
             val l = let("l", normalize(lightDirection.xyz))
             val diffuse = let("diffuse", max(dot(n, l), 0f.lit))
-            val shade = let("shade", sunShade(ambient, diffuse, lightColor))
+            val shade = variable("shade", sunShade(ambient, diffuse, lightColor))
+            if (pointLights != null) addPointLights(shade, ambient, n, debugVaryings!!.worldPosition, pointLights)
             val rgb = if (instanceTints != null) color.xyz else color
             val lit = rgb * shade
             // Colours here are display-referred, lit as stored; the transform decodes them first.
@@ -203,11 +210,13 @@ private fun skinnedTextured(): AslShaderDefinition = shader("skinned_textured") 
     val ambient = const("AMBIENT_STRENGTH", 0.35f)
 
     fragment {
+        // Sampled before the light loop: implicit derivatives need uniform control flow.
+        val texColor = let("texColor", textureSample(baseColorTexture, baseColorSampler, uv))
         val n = let("n", normalize(normal))
         val l = let("l", normalize(handles.value("lightDirection").xyz))
         val diffuse = let("diffuse", max(dot(n, l), 0f.lit))
-        val shade = let("shade", sunShade(ambient, diffuse, handles.value("lightColor")))
-        val texColor = let("texColor", textureSample(baseColorTexture, baseColorSampler, uv))
+        val shade = variable("shade", sunShade(ambient, diffuse, handles.value("lightColor")))
+        addPointLights(shade, ambient, n, debugVaryings.worldPosition, SkinnedPointLights(handles::array))
         // The material's factors tint it as glTF's do; untinted they are white and black.
         val lit = texColor.rgb * color * tint.xyz * shade + glow.xyz
         val alpha = let("alpha", texColor.a * tint.w)
@@ -225,6 +234,33 @@ private fun skinnedTextured(): AslShaderDefinition = shader("skinned_textured") 
  */
 private fun sunShade(ambient: AslExpr, diffuse: AslExpr, lightColor: AslExpr): AslExpr =
     ambient + (1f.lit - ambient) * diffuse * lightColor.xyz
+
+/** The single-draw skinned block's point-light slots: position with range in `w`, and colour. */
+private class SkinnedPointLights(array: (String) -> AslArrayHandle) {
+    val positions = array("pointLightPositions")
+    val colors = array("pointLightColors")
+}
+
+/**
+ * Adds the scene's point [lights] to [shade] as [sunShade] adds the sun: each on the share [ambient]
+ * leaves, by its cosine at [worldPosition] and the windowed inverse-square falloff the lit shaders
+ * use, which reaches zero at its range. A slot with no range is off.
+ */
+private fun AslBlockBuilder.addPointLights(shade: AslExpr, ambient: AslExpr, normal: AslExpr, worldPosition: AslExpr, lights: SkinnedPointLights) {
+    loopU32("i", 0u.lit, MAX_POINT_LIGHTS.toUInt().lit) { i ->
+        val slot = let("slot", lights.positions[i])
+        iff(slot.w le 0f.lit) { continueLoop() }
+        val toLight = let("toLight", slot.xyz - worldPosition)
+        val dist = let("dist", length(toLight))
+        iff(dist ge slot.w) { continueLoop() }
+        val pNdotL = let("pNdotL", max(dot(normal, toLight / max(dist, POINT_EPSILON.lit)), 0f.lit))
+        val falloff = let("falloff", clamp(1f.lit - (dist * dist) / (slot.w * slot.w), 0f.lit, 1f.lit))
+        val attenuation = let("attenuation", falloff * falloff / max(dist * dist, POINT_EPSILON.lit))
+        assign(shade, shade + (1f.lit - ambient) * pNdotL * attenuation * lights.colors[i].xyz)
+    }
+}
+
+private const val POINT_EPSILON = 0.0001f
 
 /** What the single-draw skinned block holds for the debug views: the scene's sun, the eye, the view and the joint. */
 private class SkinnedDebugInputs(value: (String) -> AslExpr) {

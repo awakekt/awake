@@ -9,6 +9,7 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.passes.uniforms.EnvironmentUniforms
+import com.awakekt.awake.render.passes.uniforms.PointLight
 import com.awakekt.awake.render.passes.uniforms.SceneLight
 import com.awakekt.awake.render.passes.uniforms.TextureAnimation
 import com.awakekt.awake.render.passes.uniforms.skinnedMaterialFloats
@@ -141,6 +142,46 @@ class SceneBackendParityTest {
             assertTrue(above > 0, "$backend: the plane lit from above must show")
             assertTrue(below < above * TURNED_AWAY_MAX, "$backend: with the sun below, the plane still shades $below against $above lit from above")
             assertTrue(centre(red, GREEN) < centre(red, RED) * TURNED_AWAY_MAX, "$backend: a red sun lights the white plane ${centre(red, RED)}/${centre(red, GREEN)}")
+        }
+    }
+
+    /**
+     * A textured skinned mesh in a scene lit only by a point light takes that light: the half of the
+     * plane under it is brighter than the far half, and both are brighter than with the light removed.
+     * A static textured plane under the same light is the control that the light reaches the plane.
+     * Measured red near, far and unlit: Vulkan 178, 107, 71; WebGPU 217, 174, 144, against the static
+     * plane's 186/118 and 222/181. Before the skinned shaders took point lights all three read the
+     * ambient share, 71 on Vulkan and 144 on WebGPU.
+     */
+    @Test
+    fun aTexturedSkinnedMeshIsLitByAPointLightOnBothBackends() {
+        val identity = floatArrayOf(1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f)
+        // Above the left half of the plane, reaching all of it.
+        val torch = PointLight(position = Vec3f(-1.5f, 4f, 0f), color = Vec3f(12f, 12f, 12f), range = 20f)
+        BACKEND_ORDER.forEach { backend ->
+            val renderer = session(backend).renderer
+            fun red(pixels: ByteArray, x: Int) = pixels[((SCENE_SIZE / 2) * SCENE_SIZE + x) * 4].toInt() and 0xFF
+            // A black sun: the point light is the only light.
+            fun skinned(points: List<PointLight>) = renderer.renderTexturedSkinnedScene(
+                identity,
+                SolidWhite,
+                light = SceneLight(direction = Vec3f(0f, 1f, 0f), color = Vec3f(0f, 0f, 0f), points = points),
+            )
+
+            val lit = skinned(listOf(torch))
+            val unlit = red(skinned(emptyList()), FAR_X)
+            val near = red(lit, NEAR_X)
+            val far = red(lit, FAR_X)
+            // The control: a static plane under the same light, its sun below it adding nothing.
+            val prop = renderer.renderTexturedPbrScene(texture = SolidWhite, sunDirection = Vec3f(0f, -1f, 0f), points = listOf(torch))
+            val propNear = red(prop, NEAR_X)
+            val propFar = red(prop, FAR_X)
+            println("$backend skinned point light: near $near, far $far, unlit $unlit; static near $propNear, far $propFar")
+
+            assertTrue(propNear > propFar, "$backend: the control, a static plane, shades $propNear under the light against $propFar")
+            assertTrue(unlit > 0, "$backend: the unlit plane must show")
+            assertTrue(near > far, "$backend: the half under the light shades $near against $far for the far half")
+            assertTrue(far > unlit, "$backend: the far half shades $far against $unlit unlit")
         }
     }
 
@@ -726,6 +767,10 @@ class SceneBackendParityTest {
     private companion object {
         /** At most this share of the upright plane's shade once it faces away: ambient light only. */
         const val TURNED_AWAY_MAX = 0.75
+
+        /** A quarter and three quarters across the centre row: the plane's left and right halves. */
+        const val NEAR_X = SCENE_SIZE / 4
+        const val FAR_X = SCENE_SIZE * 3 / 4
 
         /** Vulkan first, for the loader reason [UiBackendParityTest] documents. */
         val BACKEND_ORDER = listOf(HeadlessUiBackend.Vulkan, HeadlessUiBackend.WebGpu)

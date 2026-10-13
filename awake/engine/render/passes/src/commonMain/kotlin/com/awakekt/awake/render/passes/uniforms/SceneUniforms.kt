@@ -166,7 +166,8 @@ class SceneLightUniforms(
 
     /**
      * Writes all four light fields, in layout order -- for a layout whose shader declares the
-     * point-light slot arrays. Today that is the two PBR paths, `textured` and `lit_shadow`.
+     * point-light slot arrays. Today that is the two PBR paths, `textured` and `lit_shadow`, and the
+     * single-draw skinned block.
      */
     fun writeTo(writer: UniformWriter): UniformWriter = writer
         .put(directional, UniformFields.LightDirection, UniformFields.LightColor)

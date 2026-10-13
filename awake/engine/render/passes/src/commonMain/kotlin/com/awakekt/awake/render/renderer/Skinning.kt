@@ -37,9 +37,9 @@ object SkinnedFields {
 
 /**
  * Uniform layout for single-draw skinned meshes: MVP, joint matrices, model matrix, material
- * factors and exposure, then the scene's sun, which lights the mesh, and what the debug views read:
- * the eye, the view and the joint a joint view shows. These come last, so the depth shaders that
- * read this block keep the offsets they had.
+ * factors and exposure, then the scene's lights, the sun and the point-light slots laid out as the
+ * frame's light payload is, and what the debug views read: the eye, the view and the joint a joint
+ * view shows. These come last, so the depth shaders that read this block keep the offsets they had.
  */
 val SkinnedUniformLayout = UniformLayout(
     UniformFields.Mvp,
@@ -51,6 +51,8 @@ val SkinnedUniformLayout = UniformLayout(
     UniformFields.Exposure,
     UniformFields.LightDirection,
     UniformFields.LightColor,
+    UniformFields.PointLightPositions,
+    UniformFields.PointLightColors,
     UniformFields.CameraPosition,
     UniformFields.DebugView,
     SkinnedFields.DebugJoint,
