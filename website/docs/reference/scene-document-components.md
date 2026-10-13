@@ -142,8 +142,8 @@ Screen-space UI drawn over the game. Sizes and offsets are in dp. `SceneCanvasEl
 | --- | --- | --- | --- |
 | `kind` | `Text` · `Panel` · `Bar` · `Button` · `TextField` · `Joystick` · `Image` · `View` | `Text` | What the element is. A `View` shows what a camera sees. |
 | `anchor` | `TopLeft` · `TopCenter` · `TopRight` · `CenterLeft` · `Center` · `CenterRight` · `BottomLeft` · `BottomCenter` · `BottomRight` | `TopLeft` | Screen point the element is placed from. |
-| `offsetX` | number | `16` | Horizontal offset from the anchor. |
-| `offsetY` | number | `16` | Vertical offset from the anchor. |
+| `offsetX` | number | `16` | Horizontal offset from the anchor: inward from a left or right edge, never past it, and right of centre on a centred axis, or left when negative. |
+| `offsetY` | number | `16` | Vertical offset from the anchor: inward from a top or bottom edge, never past it, and below centre on a centred axis, or above when negative. |
 | `width` | number | `200` | Width. Not negative. |
 | `height` | number | `40` | Height. Not negative. |
 | `text` | string | `""` | A `Text` element's content, a `Button`'s label, or what is typed into a `TextField`: typing writes it, and a system writing it replaces the field's content, caret at the end. In a `Text` element with `links` true, a `[[key&#124;shown words]]` span draws "shown words" in `style`'s `linkColor` and reports `key` once through `consumeLink()` when clicked; `[[` is reserved and has no escape. Plain text with no span draws unchanged. |

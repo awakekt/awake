@@ -63,6 +63,8 @@ kotlin {
             implementation(libs.kotlinx.coroutines.test)
             // SceneReadbackTest records what reaches a GPU-free renderer.
             implementation(project(":awake:engine:render:testing"))
+            // SceneCanvasHostTest lays a host's game view out in part of the window.
+            implementation(project(":awake:compose:foundation"))
         }
         // The kits that register scene components, so SceneComponentReferenceDocsTest sees them all.
         desktopTest.dependencies {

@@ -45,7 +45,10 @@ enum class CanvasElementKind {
     View,
 }
 
-/** The screen point a [CanvasElement] is pinned to; its offset moves it inward from there. */
+/**
+ * The screen point a [CanvasElement] is pinned to. Its offset moves it inward from an edge, and
+ * along a centred axis right or down, or left or up when negative.
+ */
 @Serializable
 enum class CanvasAnchor {
     /** Top-left screen corner. */
@@ -94,10 +97,18 @@ class CanvasElement {
     /** Screen anchor point determining reference origin. */
     var anchor: CanvasAnchor = CanvasAnchor.TopLeft
 
-    /** Inset offset in density-independent pixels along the X axis. */
+    /**
+     * How far, in dp, the element moves from its anchor along the X axis: inward from a left or
+     * right edge, where a negative offset is held at the edge, and right of centre on a centred
+     * axis, or left of it when negative.
+     */
     var offsetX: Float = DEFAULT_INSET
 
-    /** Inset offset in density-independent pixels along the Y axis. */
+    /**
+     * How far, in dp, the element moves from its anchor along the Y axis: inward from a top or
+     * bottom edge, where a negative offset is held at the edge, and below centre on a centred axis,
+     * or above it when negative.
+     */
     var offsetY: Float = DEFAULT_INSET
 
     /** Width in density-independent pixels. */

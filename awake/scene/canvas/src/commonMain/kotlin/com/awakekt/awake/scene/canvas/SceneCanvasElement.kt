@@ -17,8 +17,12 @@ import kotlinx.serialization.Serializable
  *
  * @property kind The rendering kind and semantic type of this element.
  * @property anchor Screen anchor point determining reference origin.
- * @property offsetX Inset offset in density-independent pixels along the X axis.
- * @property offsetY Inset offset in density-independent pixels along the Y axis.
+ * @property offsetX How far, in dp, the element moves from its anchor along the X axis: inward from
+ * a left or right edge, where a negative offset is held at the edge, and right of centre on a
+ * centred axis, or left of it when negative.
+ * @property offsetY How far, in dp, the element moves from its anchor along the Y axis: inward from
+ * a top or bottom edge, where a negative offset is held at the edge, and below centre on a centred
+ * axis, or above it when negative.
  * @property width Width in density-independent pixels.
  * @property height Height in density-independent pixels.
  * @property text Textual content for text displays and button labels.
