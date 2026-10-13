@@ -40,7 +40,8 @@ const val PROJECT_MANIFEST = "awake.project.json"
  *
  * @property manifest Validated project manifest describing entry points and asset directories.
  * @property scene Loaded initial scene document ready for simulation instantiation.
- * @property models Asset resolver providing access to loaded glTF meshes and models.
+ * @property models Asset resolver providing access to loaded glTF meshes and models; empty of them
+ * when the project loaded with `hasRenderer = false`.
  * @property physics Physics simulation world instance if required by the scene, or `null`.
  * @property content What Core's and [capabilities]' loads read from the project's files.
  * @property capabilities The capabilities the project was loaded with besides Core's.
@@ -77,10 +78,10 @@ class LoadedProject internal constructor(
 }
 
 /**
- * Reads [PROJECT_MANIFEST] and its entry scene from [files], a project root, loads the glTF models
- * the scene names and what each capability reads, and calls [physicsWorld] when the scene has bodies
- * or characters. The host picks the backend, for example `::createJoltPhysicsWorld`, and the returned
- * project owns the world it makes.
+ * Reads [PROJECT_MANIFEST] and its entry scene from [files], a project root, loads the glTF models its
+ * `mesh_renderer`s name (with a renderer; see below) and what each capability reads, and calls
+ * [physicsWorld] when the scene has bodies or characters. The host picks the backend, for example
+ * `::createJoltPhysicsWorld`, and the returned project owns the world it makes.
  *
  * The scene runs with Core's capabilities and then [capabilities], in order: a game passes its own,
  * and those of the packages it depends on, so their components decode and their systems run. A
@@ -88,8 +89,11 @@ class LoadedProject internal constructor(
  *
  * A host with no renderer, such as a game server that plays the project with [sceneSystems] and no
  * renderer, passes `hasRenderer = false`: the scene's canvas images are then checked to resolve and not
- * decoded, which saves the time and memory of pictures nothing draws. Such a project, if it is played by
- * [runProject] after all, draws its canvas without the images.
+ * decoded, and the glTF models its `mesh_renderer`s name are not read or decoded either, which saves the
+ * time and memory of pictures and meshes nothing draws. A collision shape's model still loads, through
+ * its capability, not [models]. Such a project, if it is played by [runProject] after all, draws its
+ * canvas without the images and its meshes without their models; load with `hasRenderer = true` for a
+ * host that later draws.
  *
  * Throws [IllegalArgumentException] naming every problem in the manifest, a required plugin with no
  * capability, a component no capability registers, content a capability cannot load (a collision
@@ -141,11 +145,13 @@ private suspend fun loadProjectInto(
     val scene = decodeScene(manifest.entryScene, files, registry)
     warnUnlistedTags(manifest, scene)
     val models = GltfAssetResolver().apply { setAssetSource(files) }
-    scene.nodes.flatMap { it.meshNames() }
-        .filter(models::canResolveMesh)
-        .map(models::modelPath)
-        .distinct()
-        .forEach { models.preload(it) }
+    if (hasRenderer) {
+        scene.nodes.flatMap { it.meshNames() }
+            .filter(models::canResolveMesh)
+            .map(models::modelPath)
+            .distinct()
+            .forEach { models.preload(it) }
+    }
     // Every file is read before the physics world exists, so a missing model, or a load cancelled
     // part way, leaves no world behind that nothing would destroy.
     val content = loadContent(scene, files, installed, manifest.entryScene, SceneContent.Builder(emptyMap(), hasRenderer))
