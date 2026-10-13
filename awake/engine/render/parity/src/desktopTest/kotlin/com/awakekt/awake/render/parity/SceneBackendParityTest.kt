@@ -161,6 +161,7 @@ class SceneBackendParityTest {
         BACKEND_ORDER.forEach { backend ->
             val renderer = session(backend).renderer
             fun red(pixels: ByteArray, x: Int) = pixels[((SCENE_SIZE / 2) * SCENE_SIZE + x) * 4].toInt() and 0xFF
+
             // A black sun: the point light is the only light.
             fun skinned(points: List<PointLight>) = renderer.renderTexturedSkinnedScene(
                 identity,
