@@ -11,7 +11,10 @@ plugins {
     id("com.awakekt.awake.plugin.detekt")
     id("com.awakekt.awake.plugin.spotless")
     alias(libs.plugins.kover)
+    id("com.awakekt.awake.plugin.test-resources")
 }
+
+val generatorFonts = rootProject.layout.projectDirectory.dir("awake/ui/font-atlas-generator/fonts")
 
 kotlin {
     android {
@@ -26,10 +29,20 @@ kotlin {
             implementation(project(":awake:engine:render:testing"))
             implementation(project(":awake:core:text"))
         }
-        commonTest.dependencies {
-            implementation(kotlin("test"))
+        commonTest {
+            // The Roboto faces LoadedFontRasterTest loads at run time.
+            resources.srcDir(generatorFonts)
+            dependencies {
+                implementation(kotlin("test"))
+                implementation(project(":awake:core:host"))
+                implementation(libs.kotlinx.coroutines.test)
+            }
         }
     }
+}
+
+awakeTestResources {
+    roots.from(generatorFonts)
 }
 
 tasks.named<Test>("desktopTest") {

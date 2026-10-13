@@ -82,6 +82,7 @@ Every generator that can be gated now is:
 | `vendor_reference_components.py` | the script's own `--check` mode |
 | `:awake:tailwind-generator` | Gradle generator task and generated-source review |
 | `:awake:ui:font-atlas-generator` | Gradle generator task and generated-source review |
+| `make_test_fonts.py` | **none.** Its fixtures are test input, read by `OpenTypeUiFontTest`; a re-run is byte-identical. |
 | `instantiate_roboto.py` | **none, deliberately.** Its output is a TTF and re-running rewrites `head.modified` plus checksums — nine bytes, every glyph identical. A gate that always fails is worse than no gate; gating it needs a normalised compare that ignores the volatile tables. |
 | `com.awakekt.awake.plugin.icon-codegen` | **not needed.** Its Kotlin goes to `build/generated` and is rebuilt from the vendored SVGs on every build, so nothing committed can go stale. |
 
@@ -122,6 +123,7 @@ Ordered as the pipeline runs: `fetch → extract → vendor → verify → captu
 |---|---|---|---|
 | `compare_icon_sheets.py` | INVESTIGATION | Checking how Awake's Lucide sheet differs from Chromium's, using the two images render evidence publishes | Don't read the ink ratio alone. A symmetric glyph whose halves differ (one chevron arm heavier than the other) is a per-edge fringe defect even when total ink looks right |
 | `instantiate_roboto.py` | GENERATOR | Changing the shipped font instance | Don't expect a byte-identical re-run; see the gate table below |
+| `make_test_fonts.py` | GENERATOR | Changing the TrueType and CFF fixtures `UiFonts.load`'s tests read | Don't regenerate them to make a test pass. A re-run writes the same bytes, so a diff means the source font or fontTools moved |
 | `capture_font_reference.py` | INVESTIGATION | Investigating glyph baseline drift | Don't compare Awake against Awake. The whole point is Chromium as an external control — it is what proved real Roboto puts every glyph on one baseline while our atlas splits round and flat glyphs by a pixel |
 
 ## Choose the right lane

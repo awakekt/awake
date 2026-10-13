@@ -171,12 +171,15 @@ public final class com/awakekt/awake/core/text/font/UiFontSamplingMode : java/la
 }
 
 public final class com/awakekt/awake/core/text/font/UiFonts {
+	public static final field DEFAULT_CHARS Ljava/lang/String;
 	public static final field INSTANCE Lcom/awakekt/awake/core/text/font/UiFonts;
 	public final fun bitmap (I)Lcom/awakekt/awake/core/text/font/UiFont;
 	public static synthetic fun bitmap$default (Lcom/awakekt/awake/core/text/font/UiFonts;IILjava/lang/Object;)Lcom/awakekt/awake/core/text/font/UiFont;
 	public final fun default (I)Lcom/awakekt/awake/core/text/font/UiFont;
 	public static synthetic fun default$default (Lcom/awakekt/awake/core/text/font/UiFonts;IILjava/lang/Object;)Lcom/awakekt/awake/core/text/font/UiFont;
 	public final fun family (Ljava/util/Map;)Lcom/awakekt/awake/core/text/font/UiFont;
+	public final fun load ([BLjava/lang/String;Ljava/lang/String;I)Lcom/awakekt/awake/core/text/font/UiFont;
+	public static synthetic fun load$default (Lcom/awakekt/awake/core/text/font/UiFonts;[BLjava/lang/String;Ljava/lang/String;IILjava/lang/Object;)Lcom/awakekt/awake/core/text/font/UiFont;
 	public final fun msdf (I)Lcom/awakekt/awake/core/text/font/UiFont;
 	public static synthetic fun msdf$default (Lcom/awakekt/awake/core/text/font/UiFonts;IILjava/lang/Object;)Lcom/awakekt/awake/core/text/font/UiFont;
 	public final fun trueSans (I)Lcom/awakekt/awake/core/text/font/UiFont;

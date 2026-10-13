@@ -9,7 +9,10 @@ plugins {
     id("com.awakekt.awake.plugin.dokka")
     id("com.awakekt.awake.plugin.detekt")
     id("com.awakekt.awake.plugin.spotless")
+    id("com.awakekt.awake.plugin.test-resources")
 }
+
+val generatorFonts = rootProject.layout.projectDirectory.dir("awake/ui/font-atlas-generator/fonts")
 
 kotlin {
     android {
@@ -21,10 +24,20 @@ kotlin {
             implementation(project(":awake:core:math2d"))
             implementation(project(":awake:core:color"))
         }
-        commonTest.dependencies {
-            implementation(kotlin("test"))
+        commonTest {
+            // The generator's Roboto faces, which the loader tests bake at run time and hold against the committed atlases.
+            resources.srcDir(generatorFonts)
+            dependencies {
+                implementation(kotlin("test"))
+                implementation(project(":awake:core:host"))
+                implementation(libs.kotlinx.coroutines.test)
+            }
         }
     }
+}
+
+awakeTestResources {
+    roots.from(layout.projectDirectory.dir("src/commonTest/resources"), generatorFonts)
 }
 
 mavenPublishing {
