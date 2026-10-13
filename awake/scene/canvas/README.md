@@ -60,6 +60,11 @@ if (world.get<CanvasElement>(jumpButton)?.consumePress() == true) jump()
 it: a Panel, Text or Image drawn over a Button does not take the Button's taps, and elements anchored
 at the same corner with different offsets do not cover one another.
 
+`consumePress()` takes the tap, so of two readers only the first sees it. A reader that shares the
+Button with another counts `presses` instead, the number of taps since the element was made: it keeps
+the count it saw last, and takes nothing. A blueprint's On Button Pressed reads it this way, so a
+Button's `action` and a blueprint both react to one tap.
+
 ## Touch controls
 
 A `Joystick` is a round pad of `width` across; dragging its knob sets `stickX` and `stickY` from -1 to

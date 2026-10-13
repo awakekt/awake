@@ -10,6 +10,7 @@ import com.awakekt.awake.blueprint.BlueprintInstance
 import com.awakekt.awake.blueprint.BlueprintInterpreter
 import com.awakekt.awake.blueprint.BlueprintNodes
 import com.awakekt.awake.blueprint.BlueprintProgram
+import com.awakekt.awake.blueprint.EventFilter
 import com.awakekt.awake.blueprint.EventPayload
 import com.awakekt.awake.blueprint.NoEntity
 import com.awakekt.awake.ecs.Entity
@@ -18,6 +19,8 @@ import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.nodegraph.NodeGraph
 import com.awakekt.awake.physics.ContactPhase
+import com.awakekt.awake.scene.canvas.CanvasElement
+import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.physics.PhysicsBody
 import com.awakekt.awake.scene.physics.PhysicsSystem
 
@@ -28,7 +31,11 @@ import com.awakekt.awake.scene.physics.PhysicsSystem
  * Each step, in order:
  * 1. blueprints new since the last step start, and On Start fires;
  * 2. the others' waits are polled;
- * 3. On Sensor Enter and On Sensor Exit fire on sensors from the step's contacts.
+ * 3. On Sensor Enter and On Sensor Exit fire on sensors from the step's contacts;
+ * 4. On Button Pressed fires once for each press of a canvas Button since the last step.
+ *
+ * A press is read from [CanvasElement.presses], which takes it from no other reader: a Button whose
+ * `action` names an input action presses that action as well.
  *
  * A graph compiles once per path. A step in which nothing happens allocates nothing.
  *
@@ -44,8 +51,11 @@ class BlueprintSystem(
     /** Pass this to game nodes that act on the scene. */
     val scene = BlueprintScene(physics)
 
-    /** Core and scene nodes. Register game nodes here before the first update. */
-    val nodes: BlueprintNodes = BlueprintNodes.core().apply { SceneNodes.all(scene).forEach(::register) }
+    /** Core, scene and canvas nodes. Register game nodes here before the first update. */
+    val nodes: BlueprintNodes = BlueprintNodes.core().apply {
+        SceneNodes.all(scene).forEach(::register)
+        CanvasNodes.all(scene).forEach(::register)
+    }
 
     private val interpreter = BlueprintInterpreter(runPresentation)
     private val programs = HashMap<String, BlueprintProgram>()
@@ -54,6 +64,19 @@ class BlueprintSystem(
     private var ownerCount = 0
     private var sensorOther = NoEntity
     private val sensorPayload = EventPayload { it.setEntity(SceneNodes.OTHER, sensorOther) }
+    private var canvas: Family1<CanvasElement>? = null
+    private val pressCounts = PressCounts()
+    private var pressed = LongArray(INITIAL_PRESSES)
+    private var pressedCount = 0
+    private var pressedElement = NoEntity
+    private var pressedName: String? = null
+    private val buttonPayload = EventPayload { it.setEntity(CanvasNodes.ELEMENT, pressedElement) }
+
+    /** A node with no name listens to its own entity's element, and a named one to elements of that name. */
+    private val buttonFilter = EventFilter { event ->
+        val name = event.string(CanvasNodes.NAME)
+        if (name.isNullOrEmpty()) event.owner == pressedElement else name == pressedName
+    }
 
     /**
      * Executes one fixed simulation frame of all active entity blueprints.
@@ -62,7 +85,11 @@ class BlueprintSystem(
      * @param delta Elapsed time in seconds since the previous simulation step.
      */
     override fun update(world: World, delta: Float) {
-        if (scene.bind(world)) family = world.family(BlueprintComponent::class)
+        if (scene.bind(world)) {
+            family = world.family(BlueprintComponent::class)
+            canvas = world.family(CanvasElement::class)
+            pressCounts.clear()
+        }
         // Collected first: a chain may create or destroy entities, which a live query must not see.
         ownerCount = 0
         family?.forEach { entity, _ -> addOwner(entity) }
@@ -73,6 +100,7 @@ class BlueprintSystem(
             if (instance == null) start(owner, component) else interpreter.tick(instance, delta)
         }
         fireSensorEvents(world)
+        fireButtonEvents(world)
     }
 
     /**
@@ -124,6 +152,28 @@ class BlueprintSystem(
         interpreter.fire(instance, type, sensorPayload)
     }
 
+    private fun fireButtonEvents(world: World) {
+        // Collected first, as the owners are: a chain may create or destroy elements.
+        pressedCount = 0
+        canvas?.forEach { entity, element ->
+            repeat(pressCounts.take(entity, element.presses)) { addPressed(entity) }
+        }
+        for (p in 0 until pressedCount) {
+            pressedElement = Entity(pressed[p])
+            pressedName = world.get<Name>(pressedElement)?.value
+            for (i in 0 until ownerCount) {
+                val instance = world.get<BlueprintComponent>(Entity(owners[i]))?.instance ?: continue
+                interpreter.fire(instance, CanvasNodes.OnButtonPressed.TYPE, buttonPayload, buttonFilter)
+            }
+        }
+        pressedName = null
+    }
+
+    private fun addPressed(entity: Entity) {
+        if (pressedCount == pressed.size) pressed = pressed.copyOf(pressed.size * 2)
+        pressed[pressedCount++] = entity.packed
+    }
+
     private fun addOwner(entity: Entity) {
         if (ownerCount == owners.size) owners = owners.copyOf(owners.size * 2)
         owners[ownerCount++] = entity.packed
@@ -133,3 +183,5 @@ class BlueprintSystem(
         const val INITIAL_OWNERS = 16
     }
 }
+
+private const val INITIAL_PRESSES = 4

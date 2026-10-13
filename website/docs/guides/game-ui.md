@@ -48,6 +48,17 @@ until the next tap.
 For a button the player holds down, read `isHeld` instead. For a joystick, read `stickX` and
 `stickY`.
 
+Without code, a blueprint on any node of the scene reacts to the button. Its On Button Pressed node
+names the button by its node's name, or leaves the name empty to listen to the button on its own
+node. Set Text and Set Visible change another element, named the same way:
+
+```text
+On Button Pressed (name: Play) -> Set Text (name: Title, text: Loading) -> Set Visible (name: Window, visible: false)
+```
+
+The project needs the blueprint capability. A blueprint takes no tap from the button: its `action`,
+or a system polling `consumePress()`, sees the tap as it would without the blueprint.
+
 ## Properties
 
 | Property | Type | Default | What it does |
@@ -85,6 +96,7 @@ A running `CanvasElement` also has values that are not saved:
 | Member | Type | What it gives |
 | --- | --- | --- |
 | `consumePress()` | `Boolean` | `true` once for each tap on a `Button` since the last call. |
+| `presses` | `Int` | How many times a `Button` has been tapped since it was made. Reading it takes no tap. |
 | `isHeld` | `Boolean` | Whether a `Button` is pressed right now. |
 | `stickX`, `stickY` | `Float`, -1 to 1 | A `Joystick`'s deflection. Up is negative `stickY`, as on screen. Releasing re-centres it. |
 | `focused` | `Boolean` | Whether a `TextField` holds the keyboard. Set it `true` to focus the field, or `false` to free it; it reads back whatever a click, Enter, Escape, or anything else taking focus away leaves it at. |
@@ -363,7 +375,8 @@ If your app runs its own Compose host, draw the canvas yourself:
 
 !!! warning "One tap, one reader"
     `consumePress()` clears the tap it returns. If two systems poll the same button, only the first
-    one sees the tap. Poll it in one place and share the result, or read `isHeld`.
+    one sees the tap. Poll it in one place and share the result, read `isHeld`, or count `presses`:
+    keep the count you saw last, and each tap since is one more, whoever else reads the button.
 
 !!! tip "Bad colours do not break the frame"
     `SceneValidator` reports a colour that is not `#RRGGBB` or `#RRGGBBAA`, a negative size, a
