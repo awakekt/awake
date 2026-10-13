@@ -91,8 +91,8 @@ internal suspend fun joltHeapBytesInUse(): Long = joltHeapInUse(JoltModule.get()
 //
 // Every `new jolt.X` is malloc'd on the module's fixed heap and stays there until `jolt.destroy`,
 // so each function destroys what it constructs once the call it was for has copied it. What the
-// world keeps goes in joltDestroyWorld, and a body's shape goes with the body. JoltHeapLeakTest
-// holds every call to that.
+// world keeps, the queries' filters, settings, collectors and scratch vectors included, goes in
+// joltDestroyWorld, and a body's shape goes with the body. JoltHeapLeakTest holds every call to that.
 
 /**
  * [jolt.JoltInterface]'s own object-layer/broadphase-layer collision-filtering setup, plus
@@ -196,6 +196,61 @@ internal suspend fun joltHeapBytesInUse(): Long = joltHeapInUse(JoltModule.get()
         };
         physicsSystem.SetContactListener(listener);
         world.contactListener = listener;
+
+        // What every query passes and none changes, built once here rather than on every call:
+        // a sweep made and freed 13 objects. A query sets the scratch vectors, resets the
+        // collector it uses and builds only its shape and cast. joltDestroyWorld frees these.
+        world.ignoreId = -1;
+        const solidBodies = new jolt.BodyFilterJS();
+        // Both callbacks are handed Emscripten POINTERS, not values -- the id form gets a BodyID*,
+        // not the id itself, so comparing it to a body id directly never matches and the exclusion
+        // silently does nothing. Only running this backend showed that.
+        solidBodies.ShouldCollide =
+            (bodyId) => jolt.wrapPointer(bodyId, jolt.BodyID).GetIndexAndSequenceNumber() !== world.ignoreId;
+        solidBodies.ShouldCollideLocked =
+            (body) => !jolt.wrapPointer(body, jolt.Body).IsSensor();
+        const query = {
+            unitScale: new jolt.Vec3(1, 1, 1),
+            zeroOffset: new jolt.RVec3(0, 0, 0),
+            point: new jolt.RVec3(0, 0, 0),
+            vector: new jolt.Vec3(0, 0, 0),
+            halfExtent: new jolt.Vec3(0, 0, 0),
+            ray: new jolt.RRayCast(),
+            castSettings: new jolt.ShapeCastSettings(),
+            raySettings: new jolt.RayCastSettings(),
+            collideSettings: new jolt.CollideShapeSettings(),
+            castCollector: new jolt.CastShapeClosestHitCollisionCollector(),
+            rayCollector: new jolt.CastRayClosestHitCollisionCollector(),
+            overlapCollector: new jolt.CollideShapeAllHitCollisionCollector(),
+            anyLayer: new jolt.ObjectLayerFilter(),
+            anyBroadPhase: new jolt.BroadPhaseLayerFilter(),
+            anyBody: new jolt.BodyFilter(),
+            solidBodies,
+            anyShape: new jolt.ShapeFilter(),
+        };
+        // One filter per layer a query has asked for, made the first time it does.
+        const oneLayer = new Map();
+        world.query = query;
+        world.oneLayer = oneLayer;
+        world.layerFilter = (onlyLayer) => {
+            if (onlyLayer < 0) return query.anyLayer;
+            let filter = oneLayer.get(onlyLayer);
+            if (filter === undefined) {
+                filter = new jolt.SpecifiedObjectLayerFilter(onlyLayer);
+                oneLayer.set(onlyLayer, filter);
+            }
+            return filter;
+        };
+        // The caller destroys the shape; a box copies its half extent, so the scratch is free again.
+        world.queryShape = (shapeKind, hx, hy, hz, radius, halfHeight) => {
+            if (shapeKind === 0) {
+                query.halfExtent.Set(hx, hy, hz);
+                return new jolt.BoxShape(query.halfExtent, 0.05, null);
+            }
+            return shapeKind === 1
+                ? new jolt.SphereShape(radius, null)
+                : new jolt.CapsuleShape(halfHeight, radius, null);
+        };
         return world;
     }
     """,
@@ -513,40 +568,22 @@ private const val SHAPE_KIND_CAPSULE = 2
     """
     (world, shapeKind, hx, hy, hz, radius, halfHeight, fx, fy, fz, tx, ty, tz, onlyLayer, ignoreId) => {
         const jolt = world.jolt;
-        const halfExtent = new jolt.Vec3(hx, hy, hz);
-        const shape = shapeKind === 0
-            ? new jolt.BoxShape(halfExtent, 0.05, null)
-            : (shapeKind === 1
-                ? new jolt.SphereShape(radius, null)
-                : new jolt.CapsuleShape(halfHeight, radius, null));
-        const from = new jolt.RVec3(fx, fy, fz);
-        const start = jolt.RMat44.prototype.sTranslation(from);
-        const direction = new jolt.Vec3(tx - fx, ty - fy, tz - fz);
-        const scale = new jolt.Vec3(1, 1, 1);
-        const cast = new jolt.RShapeCast(shape, scale, start, direction);
-        const settings = new jolt.ShapeCastSettings();
-        const collector = new jolt.CastShapeClosestHitCollisionCollector();
-        const layerFilter = onlyLayer < 0
-            ? new jolt.ObjectLayerFilter()
-            : new jolt.SpecifiedObjectLayerFilter(onlyLayer);
+        const query = world.query;
+        const shape = world.queryShape(shapeKind, hx, hy, hz, radius, halfHeight);
+        query.point.Set(fx, fy, fz);
+        const start = jolt.RMat44.prototype.sTranslation(query.point);
+        query.vector.Set(tx - fx, ty - fy, tz - fz);
+        const cast = new jolt.RShapeCast(shape, query.unitScale, start, query.vector);
+        const collector = query.castCollector;
+        collector.Reset();
         // Skips sensors as well as the ignored body, and does it inside the query so the collector
         // still reports the nearest body that genuinely blocks. A sensor is not solid, and
         // reporting one turns every trigger volume into an invisible wall.
-        const bodyFilter = new jolt.BodyFilterJS();
-        // Both callbacks are handed Emscripten POINTERS, not values -- the id form gets a BodyID*,
-        // not the id itself, so comparing it to a body id directly never matches and the exclusion
-        // silently does nothing. Only running this backend showed that.
-        bodyFilter.ShouldCollide =
-            (bodyId) => jolt.wrapPointer(bodyId, jolt.BodyID).GetIndexAndSequenceNumber() !== ignoreId;
-        bodyFilter.ShouldCollideLocked =
-            (body) => !jolt.wrapPointer(body, jolt.Body).IsSensor();
-        const baseOffset = new jolt.RVec3(0, 0, 0);
-        const broadPhaseFilter = new jolt.BroadPhaseLayerFilter();
-        const shapeFilter = new jolt.ShapeFilter();
+        world.ignoreId = ignoreId;
         world.physicsSystem.GetNarrowPhaseQuery().CastShape(
-            cast, settings, baseOffset, collector,
-            broadPhaseFilter, layerFilter,
-            bodyFilter, shapeFilter
+            cast, query.castSettings, query.zeroOffset, collector,
+            query.anyBroadPhase, world.layerFilter(onlyLayer),
+            query.solidBodies, query.anyShape
         );
         const hadHit = collector.HadHit();
         let out = [0, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -561,10 +598,8 @@ private const val SHAPE_KIND_CAPSULE = 2
                 hit.mFraction,
             ];
         }
-        for (const made of [
-            shapeFilter, broadPhaseFilter, baseOffset, bodyFilter, layerFilter, collector, settings,
-            cast, scale, direction, from, shape, halfExtent,
-        ]) jolt.destroy(made);
+        jolt.destroy(cast);
+        jolt.destroy(shape);
         return out;
     }
     """,
@@ -599,38 +634,23 @@ private external fun joltShapeCast(
     """
     (world, shapeKind, hx, hy, hz, radius, halfHeight, px, py, pz, onlyLayer) => {
         const jolt = world.jolt;
-        const halfExtent = new jolt.Vec3(hx, hy, hz);
-        const shape = shapeKind === 0
-            ? new jolt.BoxShape(halfExtent, 0.05, null)
-            : (shapeKind === 1
-                ? new jolt.SphereShape(radius, null)
-                : new jolt.CapsuleShape(halfHeight, radius, null));
-        const position = new jolt.RVec3(px, py, pz);
-        const transform = jolt.RMat44.prototype.sTranslation(position);
-        const settings = new jolt.CollideShapeSettings();
-        const collector = new jolt.CollideShapeAllHitCollisionCollector();
-        const layerFilter = onlyLayer < 0
-            ? new jolt.ObjectLayerFilter()
-            : new jolt.SpecifiedObjectLayerFilter(onlyLayer);
-        const scale = new jolt.Vec3(1, 1, 1);
-        const baseOffset = new jolt.RVec3(0, 0, 0);
-        const broadPhaseFilter = new jolt.BroadPhaseLayerFilter();
-        const bodyFilter = new jolt.BodyFilter();
-        const shapeFilter = new jolt.ShapeFilter();
+        const query = world.query;
+        const shape = world.queryShape(shapeKind, hx, hy, hz, radius, halfHeight);
+        query.point.Set(px, py, pz);
+        const transform = jolt.RMat44.prototype.sTranslation(query.point);
+        const collector = query.overlapCollector;
+        collector.Reset();
         world.physicsSystem.GetNarrowPhaseQuery().CollideShape(
-            shape, scale, transform, settings, baseOffset, collector,
-            broadPhaseFilter, layerFilter,
-            bodyFilter, shapeFilter
+            shape, query.unitScale, transform, query.collideSettings, query.zeroOffset, collector,
+            query.anyBroadPhase, world.layerFilter(onlyLayer),
+            query.anyBody, query.anyShape
         );
         const hits = collector.mHits;
         const out = [hits.size()];
         for (let i = 0; i < hits.size(); i++) {
             out.push(hits.at(i).mBodyID2.GetIndexAndSequenceNumber());
         }
-        for (const made of [
-            shapeFilter, bodyFilter, broadPhaseFilter, baseOffset, scale, layerFilter, collector,
-            settings, position, shape, halfExtent,
-        ]) jolt.destroy(made);
+        jolt.destroy(shape);
         return out;
     }
     """,
@@ -1108,45 +1128,33 @@ private external fun joltTranslateBody(world: JsAny, idNum: Int, dx: Double, dy:
 
 /** Returns `null` on no hit, else `[fraction, bodyIdIndexAndSequenceNumber]` -- same "plain
  * JS array, no dynamic type" reasoning as [joltGetBodyTransform]. The four filter arguments
- * `NarrowPhaseQuery.CastRay` requires are each constructed from their accept-everything base
- * class (`new jolt.BroadPhaseLayerFilter()` etc.) -- the exact JS-side equivalent of the
- * desktop/iOS backends passing `null` broadphase/object-layer/body/shape filters into their
- * own raycast call. */
+ * `NarrowPhaseQuery.CastRay` requires are the world's accept-everything ones, built once in
+ * [joltCreateWorld] -- the JS-side equivalent of the desktop/iOS backends passing `null`
+ * broadphase/object-layer/shape filters into their own raycast call -- with sensors left out. */
 // Called from JoltPhysicsWorld.raycast() below; detekt's unused-check can't trace
 // calls through an external @JsFun-bound declaration.
 @Suppress("unused", "LongParameterList") // @JsFun carries primitives, not a ray type.
 @JsFun(
     """
     (world, ox, oy, oz, dx, dy, dz, onlyLayer) => {
-        const jolt = world.jolt;
-        const origin = new jolt.RVec3(ox, oy, oz);
-        const direction = new jolt.Vec3(dx, dy, dz);
-        const ray = new jolt.RRayCast(origin, direction);
-        const raySettings = new jolt.RayCastSettings();
-        const collector = new jolt.CastRayClosestHitCollisionCollector();
-        const layerFilter = onlyLayer < 0
-            ? new jolt.ObjectLayerFilter()
-            : new jolt.SpecifiedObjectLayerFilter(onlyLayer);
+        const query = world.query;
+        query.point.Set(ox, oy, oz);
+        query.vector.Set(dx, dy, dz);
+        const ray = query.ray;
+        ray.mOrigin = query.point;
+        ray.mDirection = query.vector;
+        const collector = query.rayCollector;
+        collector.Reset();
         // A sensor is not solid, so it is not what a ray is stopped by -- the same rule the sweep
-        // above follows.
-        const bodyFilter = new jolt.BodyFilterJS();
-        bodyFilter.ShouldCollide = () => true;
-        bodyFilter.ShouldCollideLocked =
-            (body) => !jolt.wrapPointer(body, jolt.Body).IsSensor();
-        const broadPhaseFilter = new jolt.BroadPhaseLayerFilter();
-        const shapeFilter = new jolt.ShapeFilter();
+        // above follows. A ray ignores no body by id.
+        world.ignoreId = -1;
         world.physicsSystem.GetNarrowPhaseQuery().CastRay(
-            ray, raySettings, collector,
-            broadPhaseFilter, layerFilter,
-            bodyFilter, shapeFilter
+            ray, query.raySettings, collector,
+            query.anyBroadPhase, world.layerFilter(onlyLayer),
+            query.solidBodies, query.anyShape
         );
         const hit = collector.mHit;
-        const out = collector.HadHit() ? [hit.mFraction, hit.mBodyID.GetIndexAndSequenceNumber()] : null;
-        for (const made of [
-            shapeFilter, broadPhaseFilter, bodyFilter, layerFilter, collector, raySettings, ray,
-            direction, origin,
-        ]) jolt.destroy(made);
-        return out;
+        return collector.HadHit() ? [hit.mFraction, hit.mBodyID.GetIndexAndSequenceNumber()] : null;
     }
     """,
 )
@@ -1168,9 +1176,9 @@ private external fun joltRaycast(
 private external fun jsArrayGet(arr: JsAny, index: Int): Double
 
 /**
- * Frees the world. The interface owns and frees its filter tables, but not the contact listener,
- * which would otherwise stay behind wherever it landed between the freed world's large blocks and
- * keep the next world from fitting.
+ * Frees the world. The interface owns and frees its filter tables, but not the contact listener
+ * or the queries' objects, which would otherwise stay behind wherever they landed between the
+ * freed world's large blocks and keep the next world from fitting.
  */
 // Called from JoltPhysicsWorld.destroy() below; detekt's unused-check can't trace
 // calls through an external @JsFun-bound declaration.
@@ -1178,8 +1186,11 @@ private external fun jsArrayGet(arr: JsAny, index: Int): Double
 @JsFun(
     """
     (world) => {
-        world.jolt.destroy(world.joltInterface);
-        world.jolt.destroy(world.contactListener);
+        const jolt = world.jolt;
+        for (const made of Object.values(world.query)) jolt.destroy(made);
+        for (const made of world.oneLayer.values()) jolt.destroy(made);
+        jolt.destroy(world.joltInterface);
+        jolt.destroy(world.contactListener);
     }
     """,
 )
