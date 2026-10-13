@@ -1,7 +1,7 @@
 # `awake:scene:blueprint`
 
 Runs [blueprints](../../blueprint/README.md) on scene entities: the `blueprint` scene component,
-`BlueprintSystem`, and the engine nodes that act on the scene.
+`BlueprintSystem`, and the engine nodes that act on the scene and its game UI.
 
 ## Setup
 
@@ -40,8 +40,28 @@ fires. Entity variables cannot be set from JSON.
 | Destroy | `entity.destroy` | Frees the target's physics body, then destroys it |
 | Load Scene | `scene.load` | Asks the game to play the scene at `scene`, a path relative to the project root, in place of this one; see [Switching scenes](#switching-scenes) |
 | Play Animation | `animation.play` | Plays `clip` on the target's `Animator`, once unless `loop`; a missing animator or clip is skipped. Presentation |
+| On Button Pressed | `event.button.pressed` | Fires once for each press of the Button whose `Name` is `name`, or of the blueprint's own Button when `name` is empty; `element` is the pressed element's entity |
+| Set Text | `ui.set-text` | Sets a canvas element's `text`: a Text's words, a Button's label, a TextField's content. Presentation |
+| Set Visible | `ui.set-visible` | Shows or hides a canvas element and what is inside it. Presentation |
 
 A `target` input with nothing wired to it means the blueprint's own entity.
+
+## Game UI
+
+The canvas nodes act on the scene's `canvas_element`s ([`awake:scene:canvas`](../canvas/README.md)),
+so a menu or a HUD works without code:
+
+```text
+On Button Pressed (name: Play) -> Set Text (name: Title, text: Loading) -> Set Visible (name: Window, visible: false)
+```
+
+- **Which element.** Set Text and Set Visible act on the `target` wired to them, else the element
+  whose `Name` is `name`, else the blueprint's own entity's. A name that matches no element is
+  skipped. On Button Pressed listens to its `name` the same way, or to its own entity's Button.
+- **Presses.** Each fixed step, after the sensor events, On Button Pressed fires once for each press
+  since the last step, however many steps a frame runs. It counts `CanvasElement.presses` and takes
+  nothing: a Button's `action`, or a game system calling `consumePress()`, sees the press as it would
+  without the blueprint.
 
 Nodes that reach the world take `BlueprintSystem.scene`, which gives `world`, `names` and a
 body-first `destroy`. Game nodes use it the same way.
@@ -71,3 +91,8 @@ plays a project whose menu's blueprint loads the level, and the level's own blue
 `DoorSampleTest` is the headless gate. A box falls into a door's sensor on real Jolt, and the door
 plays `open`, then `close` 2 s later. A copy of the graph without the wire after the wait fails the
 same check.
+
+`CanvasNodesTest` taps Buttons through a real `SceneCanvas` frame: pressing Play sets a Text and hides
+a Panel, and the Button keeps its press for its other readers. In `awake:project:blueprint`,
+`ButtonActionTest` plays a project whose Button has an `action` and a blueprint listening to it, and
+one press reaches both, whichever system runs first.

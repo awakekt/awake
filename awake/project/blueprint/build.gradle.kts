@@ -27,7 +27,8 @@ kotlin {
             implementation(libs.kotlinx.coroutines.test)
             // A character walking into a sensor needs a real physics world.
             implementation(project(":awake:backend:jolt"))
-            // A project played by runProject, as Load Scene's is, needs a renderer; this one draws nothing.
+            // A host that draws, so the canvas nodes, which only change what is shown, run, and a
+            // renderer for a project runtime plays, as Load Scene's does; this one draws nothing.
             implementation(project(":awake:engine:render:testing"))
         }
     }

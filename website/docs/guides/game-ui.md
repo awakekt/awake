@@ -48,14 +48,25 @@ until the next tap.
 For a button the player holds down, read `isHeld` instead. For a joystick, read `stickX` and
 `stickY`.
 
+Without code, a blueprint on any node of the scene reacts to the button. Its On Button Pressed node
+names the button by its node's name, or leaves the name empty to listen to the button on its own
+node. Set Text and Set Visible change another element, named the same way:
+
+```text
+On Button Pressed (name: Play) -> Set Text (name: Title, text: Loading) -> Set Visible (name: Window, visible: false)
+```
+
+The project needs the blueprint capability. A blueprint takes no tap from the button: its `action`,
+or a system polling `consumePress()`, sees the tap as it would without the blueprint.
+
 ## Properties
 
 | Property | Type | Default | What it does |
 | --- | --- | --- | --- |
 | `kind` | `Text` · `Panel` · `Bar` · `Button` · `TextField` · `Joystick` · `Image` · `View` | `Text` | What the element draws. |
 | `anchor` | `TopLeft` · `TopCenter` · `TopRight` · `CenterLeft` · `Center` · `CenterRight` · `BottomLeft` · `BottomCenter` · `BottomRight` | `TopLeft` | The screen point the element is pinned to. |
-| `offsetX` | number (dp) | `16` | Moves the element inward from its anchor. From a right anchor it moves left. |
-| `offsetY` | number (dp) | `16` | Moves the element inward from its anchor. From a bottom anchor it moves up. |
+| `offsetX` | number (dp) | `16` | Moves the element inward from its anchor. From a right anchor it moves left. On a centred axis it moves right of centre, or left when negative. |
+| `offsetY` | number (dp) | `16` | Moves the element inward from its anchor. From a bottom anchor it moves up. On a centred axis it moves below centre, or above when negative. |
 | `width` | number (dp) | `200` | Element width. A joystick is a round pad of this width. |
 | `height` | number (dp) | `40` | Element height. |
 | `text` | string | `""` | A `Text` element's content, a `Button`'s label, or what is typed into a `TextField`. Typing writes it; a system writing it replaces the field's content, caret at the end. |
@@ -85,6 +96,7 @@ A running `CanvasElement` also has values that are not saved:
 | Member | Type | What it gives |
 | --- | --- | --- |
 | `consumePress()` | `Boolean` | `true` once for each tap on a `Button` since the last call. |
+| `presses` | `Int` | How many times a `Button` has been tapped since it was made. Reading it takes no tap. |
 | `isHeld` | `Boolean` | Whether a `Button` is pressed right now. |
 | `stickX`, `stickY` | `Float`, -1 to 1 | A `Joystick`'s deflection. Up is negative `stickY`, as on screen. Releasing re-centres it. |
 | `focused` | `Boolean` | Whether a `TextField` holds the keyboard. Set it `true` to focus the field, or `false` to free it; it reads back whatever a click, Enter, Escape, or anything else taking focus away leaves it at. |
@@ -128,7 +140,8 @@ lengths are dp.
 
 A state may set `background`, `gradient`, `image`, `borderColor`, `textColor` and `alpha`; anything it
 leaves out keeps the style's value. `pressed` applies over `hovered`. A button drawn from a sheet of
-art changes its `image` region per state. A `Joystick` draws only its colours.
+art changes its `image` region per state, and a state's `image` can name a file of its own, which
+`loadCanvasImages` reads with the rest. A `Joystick` draws only its colours.
 
 ## Draw images
 
@@ -296,7 +309,9 @@ follow an animated character's limbs; a node with no mesh bounds falls back to i
 
 A follower is placed against the screen wherever it sits in the scene, so it can live on a child of
 the character it follows. The runtime projects through the camera it draws with; a host that draws
-`SceneCanvas` itself passes a `CanvasProjector`.
+`SceneCanvas` itself passes the runtime's, `canvasProjector(world)`, or a `CanvasProjector` of its
+own, which reports points in the window's pixels. A canvas drawn over part of the window, such as an
+editor's game view, still lands on what it follows.
 
 ## Show a 3D view
 
@@ -318,7 +333,8 @@ main camera does not see it.
 ```
 
 With no node of that name, no camera on it, or no renderer, the element draws only its style. A
-host that draws `SceneCanvas` itself passes a `CanvasViews` to show views.
+host that draws `SceneCanvas` itself passes the runtime's `canvasViews(world)` to show views: the
+runtime renders each picture before the frame's UI and frees it once nothing draws it.
 
 ## Scale the UI
 
@@ -334,8 +350,10 @@ When a scene has any `canvas_element`, the scene runtime draws every visible ele
 drawn under the app's own `ui { }` content, so a pause menu covers the HUD.
 
 The element's anchor places it against one of nine screen points. The offsets move it inward. On a
-centred axis, the offset shifts it right or down. Negative offsets are treated as zero. The element's
-hit area is exactly its `width` by `height`.
+centred axis, the offset shifts it right or down, and a negative offset shifts it left or up, so an
+element can sit either side of the centre. At an edge a negative offset is treated as zero, which
+keeps the element against that edge rather than past it. The element's hit area is exactly its
+`width` by `height`.
 
 A `TextField` is a single-line field the player types into: a click focuses it, Enter submits and
 frees it (`consumeSubmit()`), and Escape frees it without submitting. A system sets `focused` to
@@ -361,9 +379,20 @@ If your app runs its own Compose host, draw the canvas yourself:
 --8<-- "awake/scene/authoring/src/desktopTest/kotlin/com/awakekt/awake/scene/authoring/GameUiDocsSampleTest.kt:own-host"
 ```
 
+A host that runs on `SceneAppLifecycleRuntime` but shows the game in part of its window, as an
+editor's game view does, sets `drawsSceneCanvas = false` and draws the canvas over that part in its
+`ui { }` content, with the runtime's projector and views so followers and `View`s draw. Here the game
+view shows `play`, the world an editor plays the scene in, which the runtime's render system draws in
+place of its own; leave the world out to use the runtime's own.
+
+```kotlin title="Kotlin"
+--8<-- "awake/scene/runtime/src/commonTest/kotlin/com/awakekt/awake/scene/runtime/SceneCanvasHostTest.kt:game-view"
+```
+
 !!! warning "One tap, one reader"
     `consumePress()` clears the tap it returns. If two systems poll the same button, only the first
-    one sees the tap. Poll it in one place and share the result, or read `isHeld`.
+    one sees the tap. Poll it in one place and share the result, read `isHeld`, or count `presses`:
+    keep the count you saw last, and each tap since is one more, whoever else reads the button.
 
 !!! tip "Bad colours do not break the frame"
     `SceneValidator` reports a colour that is not `#RRGGBB` or `#RRGGBBAA`, a negative size, a

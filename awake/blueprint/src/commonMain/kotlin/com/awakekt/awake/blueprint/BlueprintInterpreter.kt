@@ -36,6 +36,24 @@ class BlueprintInterpreter(
     }
 
     /**
+     * Runs the chains that start at the event nodes of [eventType] that [filter] accepts, each after
+     * [payload] sets its outputs.
+     *
+     * An event node with data inputs listens to something in particular, such as the button it names;
+     * [filter] reads those inputs, set on the node or wired to it, from the context it is given.
+     */
+    fun fire(instance: BlueprintInstance, eventType: String, payload: EventPayload?, filter: EventFilter) {
+        val nodes = instance.program.events[eventType] ?: return
+        for (node in nodes) {
+            runner.prepareInputs(instance, node)
+            if (!filter.accepts(runner.bind(instance, node))) continue
+            if (payload != null) payload.write(runner.bind(instance, node))
+            runner.record(instance, node)
+            runner.continueFrom(instance, node, runner.firstExecOutput(instance, node))
+        }
+    }
+
+    /**
      * Polls every wait pending at the start of this tick. A wait that finishes continues its chain;
      * waits that chain starts are first polled next tick.
      */
@@ -99,6 +117,17 @@ fun interface EventPayload {
      * @param outputs Blueprint context bound to the triggered event node.
      */
     fun write(outputs: BlueprintContext)
+}
+
+/** Decides which event nodes of a type an event reaches, for example only those naming the pressed button. */
+fun interface EventFilter {
+    /**
+     * Whether the chain starting at the event node [event] is bound to runs.
+     *
+     * @param event Blueprint context bound to the event node, its inputs ready to read.
+     * @return True to run the node's chain.
+     */
+    fun accepts(event: BlueprintContext): Boolean
 }
 
 /** Follows execution wires with an explicit stack, so a long chain cannot overflow a native stack. */
@@ -165,7 +194,7 @@ internal class ChainRunner(private val runPresentation: Boolean) {
     }
 
     /** Evaluates the pure nodes feeding [node], each at most once for this step. */
-    private fun prepareInputs(instance: BlueprintInstance, node: Int) {
+    fun prepareInputs(instance: BlueprintInstance, node: Int) {
         stamp++
         evaluateSources(instance, node)
     }

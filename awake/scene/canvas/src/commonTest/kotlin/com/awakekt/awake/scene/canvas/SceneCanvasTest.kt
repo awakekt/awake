@@ -137,6 +137,43 @@ class SceneCanvasTest {
     }
 
     @Test
+    fun aNegativeOffsetOnACentredAxisPlacesTheElementLeftOfOrAboveCentre() {
+        val center = element { anchor = CanvasAnchor.Center; offsetX = -30f; offsetY = -20f; width = 100f; height = 50f }
+        val top = element { anchor = CanvasAnchor.TopCenter; offsetX = -30f; offsetY = 8f; width = 100f; height = 50f }
+        val right = element { anchor = CanvasAnchor.CenterRight; offsetX = 16f; offsetY = -20f; width = 100f; height = 50f }
+        lateinit var pressable: CanvasElement
+        val button = element {
+            kind = CanvasElementKind.Button; anchor = CanvasAnchor.BottomCenter; offsetX = -120f; offsetY = 8f; width = 100f; height = 40f
+            pressable = this
+        }
+        val host = ComposeHost()
+
+        val out = frame(host)
+        frame(host, FrameInput(800, 600, pointerX = 280, pointerY = 572, pointerDown = true, pointerPressed = true))
+        frame(host, FrameInput(800, 600, pointerX = 280, pointerY = 572, pointerReleased = true))
+
+        assertEquals(listOf(350 - 30, 275 - 20, 100, 50), out.box(center), "30 dp left of and 20 dp above centre, at its own size")
+        assertEquals(listOf(350 - 30, 8, 100, 50), out.box(top), "left of centre, the edge axis unchanged")
+        assertEquals(listOf(800 - 16 - 100, 275 - 20, 100, 50), out.box(right), "above centre, the edge axis unchanged")
+        assertEquals(listOf(350 - 120, 600 - 8 - 40, 100, 40), out.box(button))
+        assertTrue(pressable.consumePress(), "a tap where it is drawn, left of centre, presses it")
+    }
+
+    @Test
+    fun aNegativeOffsetAtAnEdgeIsHeldAtTheEdge() {
+        val topLeft = element { anchor = CanvasAnchor.TopLeft; offsetX = -10f; offsetY = -10f; width = 100f; height = 50f }
+        val bottomRight = element { anchor = CanvasAnchor.BottomRight; offsetX = -10f; offsetY = -10f; width = 100f; height = 50f }
+        val parent = element { kind = CanvasElementKind.Panel; offsetX = 40f; offsetY = 40f; width = 200f; height = 100f }
+        val inside = child(parent) { anchor = CanvasAnchor.TopRight; offsetX = -10f; offsetY = -10f; width = 50f; height = 20f }
+
+        val out = frame()
+
+        assertEquals(listOf(0, 0, 100, 50), out.box(topLeft))
+        assertEquals(listOf(800 - 100, 600 - 50, 100, 50), out.box(bottomRight))
+        assertEquals(listOf(40 + 200 - 50, 40, 50, 20), out.box(inside), "against the parent's corner, not past it")
+    }
+
+    @Test
     fun hiddenElementsAreNotDrawn() {
         val hidden = element { kind = CanvasElementKind.Panel; visible = false }
 
@@ -154,6 +191,22 @@ class SceneCanvasTest {
 
         assertTrue(button.consumePress())
         assertFalse(button.consumePress())
+    }
+
+    @Test
+    fun pressesCountsEveryTapAndTakesNoneFromConsumePress() {
+        lateinit var button: CanvasElement
+        element { kind = CanvasElementKind.Button; offsetX = 0f; offsetY = 0f; width = 100f; height = 40f; button = this }
+        val host = ComposeHost()
+        frame(host)
+        repeat(2) {
+            frame(host, FrameInput(800, 600, pointerX = 50, pointerY = 20, pointerDown = true, pointerPressed = true))
+            frame(host, FrameInput(800, 600, pointerX = 50, pointerY = 20, pointerReleased = true))
+        }
+
+        assertEquals(2, button.presses)
+        assertTrue(button.consumePress(), "reading the count took no tap")
+        assertEquals(2, button.presses, "taking the tap leaves the count")
     }
 
     @Test

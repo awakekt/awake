@@ -48,6 +48,7 @@ val interpreter = BlueprintInterpreter()
 
 interpreter.start(instance)                              // fires On Start once
 interpreter.fire(instance, "event.sensor.enter") { it.setEntity("other", body) }
+interpreter.fire(instance, "event.button.pressed", payload) { it.string("name") == pressed }  // only the nodes it accepts
 interpreter.tick(instance, delta)                        // every fixed step: polls waits
 interpreter.reload(instance, BlueprintCompiler.compile(edited, nodes))
 ```
@@ -57,6 +58,9 @@ interpreter.reload(instance, BlueprintCompiler.compile(edited, nodes))
 - **Data.** Data is read when the node that needs it runs, and a pure node runs at most once per
   step.
 - **Waits.** A wait triggered again while it is waiting restarts; it never runs twice at once.
+- **Filtered events.** An event node may take data inputs, set on it or wired, to name what it
+  listens to, such as the button On Button Pressed names. `fire` with an `EventFilter` runs only the
+  event nodes whose inputs the filter accepts, and reads them as an action's are read.
 - **Reload.** Reload keeps variables whose name and type still exist, cancels waits and fires
   nothing.
 - **Variables.** `instance.setVariable(name, JsonPrimitive(2.5))` sets a starting value, as scene

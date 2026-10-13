@@ -89,7 +89,8 @@ data class CanvasImage(
 }
 
 /**
- * Reads and decodes every image [document]'s `canvas_element`s name, once each, by path. An image
+ * Reads and decodes every image [document]'s `canvas_element`s name, once each, by path: each
+ * style's `image` and `fillImage`, and the `image` of its `hovered` and `pressed` states. An image
  * that cannot be read or decoded is logged and left out, and its elements draw without it.
  */
 // A file's reader and each platform's decoder fail with exceptions of their own.
@@ -135,7 +136,9 @@ fun hasCanvasImages(document: SceneDocument): Boolean = document.nodes.any { it.
 private fun SceneDocument.canvasImagePaths(): List<String> = nodes.flatMap { it.canvasImagePaths() }.distinct()
 
 private fun SceneNode.canvasImagePaths(): List<String> =
-    components.filterIsInstance<SceneCanvasElement>().flatMap { listOfNotNull(it.style.image?.path, it.style.fillImage?.path) } +
-        children.flatMap { it.canvasImagePaths() }
+    components.filterIsInstance<SceneCanvasElement>().flatMap { it.style.imagePaths() } + children.flatMap { it.canvasImagePaths() }
+
+/** Every image this style draws: its picture or frame, a Bar's fill, and a Button's hovered and pressed pictures. */
+private fun CanvasStyle.imagePaths(): List<String> = listOfNotNull(image?.path, fillImage?.path, hovered?.image?.path, pressed?.image?.path)
 
 private val log = Logger("scene-canvas")

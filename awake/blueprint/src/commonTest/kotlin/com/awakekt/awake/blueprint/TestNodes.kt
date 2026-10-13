@@ -58,6 +58,16 @@ internal object Touched : EventNode {
     )
 }
 
+/** An event that listens to one thing, by the `target` it names, like a button's press. */
+internal object Called : EventNode {
+    override val spec = NodeSpec(
+        type = "test.called",
+        displayName = "Called",
+        inputs = listOf(PortSpec("target", STRING)),
+        outputs = listOf(PortSpec("then", EXEC)),
+    )
+}
+
 /** A tiny graph builder: `node("id", "type", "key" to value)`, then `wire("a.out", "b.in")`. */
 internal class GraphBuilder {
     private val nodes = ArrayList<GraphNode>()

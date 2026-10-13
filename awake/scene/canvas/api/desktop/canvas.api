@@ -125,6 +125,7 @@ public final class com/awakekt/awake/scene/canvas/CanvasElement {
 	public final fun getOffsetX ()F
 	public final fun getOffsetY ()F
 	public final fun getOrder ()I
+	public final fun getPresses ()I
 	public final fun getScreenBounds ()Lcom/awakekt/awake/core/math2d/Rectangle;
 	public final fun getStickX ()F
 	public final fun getStickY ()F

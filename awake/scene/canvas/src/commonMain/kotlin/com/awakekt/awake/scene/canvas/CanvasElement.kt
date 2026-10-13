@@ -45,7 +45,10 @@ enum class CanvasElementKind {
     View,
 }
 
-/** The screen point a [CanvasElement] is pinned to; its offset moves it inward from there. */
+/**
+ * The screen point a [CanvasElement] is pinned to. Its offset moves it inward from an edge, and
+ * along a centred axis right or down, or left or up when negative.
+ */
 @Serializable
 enum class CanvasAnchor {
     /** Top-left screen corner. */
@@ -94,10 +97,18 @@ class CanvasElement {
     /** Screen anchor point determining reference origin. */
     var anchor: CanvasAnchor = CanvasAnchor.TopLeft
 
-    /** Inset offset in density-independent pixels along the X axis. */
+    /**
+     * How far, in dp, the element moves from its anchor along the X axis: inward from a left or
+     * right edge, where a negative offset is held at the edge, and right of centre on a centred
+     * axis, or left of it when negative.
+     */
     var offsetX: Float = DEFAULT_INSET
 
-    /** Inset offset in density-independent pixels along the Y axis. */
+    /**
+     * How far, in dp, the element moves from its anchor along the Y axis: inward from a top or
+     * bottom edge, where a negative offset is held at the edge, and below centre on a centred axis,
+     * or above it when negative.
+     */
     var offsetY: Float = DEFAULT_INSET
 
     /** Width in density-independent pixels. */
@@ -319,9 +330,22 @@ class CanvasElement {
     /**
      * True once for each tap on a Button since the last call; game code polls it.
      *
+     * It takes the tap: a second reader polling the same Button sees nothing. A reader that must not
+     * take a tap from another, such as a blueprint beside a Button's [action], reads [presses].
+     *
      * @return True if a tap event was registered and unconsumed.
      */
     fun consumePress(): Boolean = pressed.also { pressed = false }
+
+    /**
+     * How many times this Button has been tapped since it was made, never reset.
+     *
+     * Reading it takes nothing: a reader keeps the count it saw last, and each tap since is one more.
+     * Any number of readers so react to the same tap, alongside [consumePress], in whatever order
+     * they run.
+     */
+    var presses: Int = 0
+        private set
 
     /**
      * True once for each double-click on a Button since the last call: a press within
@@ -347,6 +371,7 @@ class CanvasElement {
 
     internal fun press() {
         pressed = true
+        presses++
         val previous = lastPress
         if (previous != null && previous.elapsedNow() <= DOUBLE_CLICK_SECONDS.seconds) {
             doublePressed = true

@@ -32,6 +32,7 @@ import com.awakekt.awake.compose.runtime.CompositionLocalProvider
 import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.key
 import com.awakekt.awake.compose.runtime.provides
+import com.awakekt.awake.compose.runtime.remember
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.draw.clip
@@ -73,12 +74,15 @@ context(_: Composer)
  * @param scale Multiplies every element's size, offset, text and image pixels: 2 draws 1x art at
  *   twice its size. Edges land on whole pixels at any scale, so pixel art stays crisp. A scale that
  *   is not above 0 draws at 1.
- * @param projector Where the scene's nodes land on screen, for elements that [CanvasElement.follow]
- *   one. Without it they are not drawn.
+ * @param projector Where the scene's nodes land in the frame, for elements that
+ *   [CanvasElement.follow] one. Without it they are not drawn. `SceneAppLifecycleRuntime`'s
+ *   `canvasProjector(world)` gives a host that draws the canvas itself the runtime's own.
  * @param bindings The scene component bindings an element's [CanvasElement.bind] reads fields
  *   through: the scene's own registry's. Null reads through every globally registered one, gathered
  *   only on a frame where an element reads a field.
  * @param views What [CanvasElementKind.View] elements show. Without it they draw only their style.
+ *   `SceneAppLifecycleRuntime`'s `canvasViews(world)` gives a host that draws the canvas itself the
+ *   runtime's own.
  */
 fun SceneCanvas(
     world: World,
@@ -90,17 +94,39 @@ fun SceneCanvas(
     bindings: List<SceneComponentBinding<*, *>>? = null,
     views: CanvasViews? = null,
 ) {
-    val tree = CanvasTree(world, showTouchControls, images, projector, bindings, views)
+    val origin = remember { CanvasOrigin() }
+    val tree = CanvasTree(world, showTouchControls, images, projector, bindings, views, origin)
     val uiScale = if (scale > 0f && scale.isFinite()) scale else 1f
     Box(modifier.fillMaxSize()) {
-        val screen = this
-        // A denser dp scales every size, offset, font and image corner beneath it in one place. The
-        // host's text style is not the scene's: an element's text looks only as its own data says.
-        CompositionLocalProvider(LocalDensity provides LocalDensity.current * uiScale, LocalTextStyle provides TextStyle.Default) {
-            screen.Elements(tree.roots, tree)
-            // Drawn last, so a dragged element's ghost sits above everything it is dragged over.
-            Ghosts(tree)
+        // The box the elements are placed in, inside any padding the host's modifier adds: where it
+        // sits in the frame is what a follower's projected point is moved by.
+        Box(Modifier.fillMaxSize().onPlaced { x, y, _, _ -> origin.place(x, y) }) {
+            val screen = this
+            // A denser dp scales every size, offset, font and image corner beneath it in one place. The
+            // host's text style is not the scene's: an element's text looks only as its own data says.
+            CompositionLocalProvider(LocalDensity provides LocalDensity.current * uiScale, LocalTextStyle provides TextStyle.Default) {
+                screen.Elements(tree.roots, tree)
+                // Drawn last, so a dragged element's ghost sits above everything it is dragged over.
+                Ghosts(tree)
+            }
         }
+    }
+}
+
+/**
+ * Where a canvas's box sat in the frame, in pixels from its top-left, when it was last placed: the
+ * frame before this one, since elements are placed before the canvas is laid out. (0, 0) until then,
+ * where a canvas filling the window is from its first frame.
+ */
+internal class CanvasOrigin {
+    var x = 0f
+        private set
+    var y = 0f
+        private set
+
+    fun place(x: Int, y: Int) {
+        this.x = x.toFloat()
+        this.y = y.toFloat()
     }
 }
 
@@ -310,18 +336,21 @@ private fun JoystickView(
 private const val KNOB_FRACTION = 0.45f
 
 /**
- * Moves the element inward from its anchor with padding, not `offset`: `offset` only moves the
- * drawing, so hit-testing and editor picking would still find the element at the anchor.
- * On a centred axis the padding goes on one side twice over, which shifts the centred box by the
- * offset. Offsets pointing off-screen (negative) are clamped to the anchor.
+ * Moves the element from its anchor with padding around it, not `offset`, so the element's own
+ * bounds (its hit area, editor picking) stay exactly its size wherever it lands.
+ *
+ * At an edge the offset moves it inward, and a negative one is held at the edge: padding cannot
+ * reach past it. On a centred axis the padding goes on one side twice over, which shifts the
+ * centred box by the offset: a positive one right or down, a negative one, padded on the other
+ * side, left or up.
  */
 private fun Modifier.anchorInset(element: CanvasElement): Modifier {
-    val x = element.offsetX.coerceAtLeast(0f)
-    val y = element.offsetY.coerceAtLeast(0f)
-    val start = when (element.anchor.column) { 0 -> x; 1 -> 2 * x; else -> 0f }
-    val end = if (element.anchor.column == 2) x else 0f
-    val top = when (element.anchor.row) { 0 -> y; 1 -> 2 * y; else -> 0f }
-    val bottom = if (element.anchor.row == 2) y else 0f
+    val x = element.offsetX
+    val y = element.offsetY
+    val start = when (element.anchor.column) { 0 -> x.coerceAtLeast(0f); 1 -> 2 * x.coerceAtLeast(0f); else -> 0f }
+    val end = when (element.anchor.column) { 1 -> 2 * (-x).coerceAtLeast(0f); 2 -> x.coerceAtLeast(0f); else -> 0f }
+    val top = when (element.anchor.row) { 0 -> y.coerceAtLeast(0f); 1 -> 2 * y.coerceAtLeast(0f); else -> 0f }
+    val bottom = when (element.anchor.row) { 1 -> 2 * (-y).coerceAtLeast(0f); 2 -> y.coerceAtLeast(0f); else -> 0f }
     return padding(start = start.dp, top = top.dp, end = end.dp, bottom = bottom.dp)
 }
 

@@ -14,7 +14,9 @@ Not to be confused with Compose's `Canvas` (a surface you draw pixels on) or
 
 - **`kind`**: `Text`, `Panel`, `Bar`, `Button`, `TextField`, `Joystick`, `Image` or `View`.
 - **`anchor`**: one of nine screen points (`TopLeft` … `BottomRight`). The element sits against that
-  point, and **`offsetX` / `offsetY`** move it inward: a right or bottom anchor moves it left or up.
+  point, and **`offsetX` / `offsetY`** move it inward: a right or bottom anchor moves it left or up,
+  and a negative offset at an edge is held there. On a centred axis an offset moves it right or down
+  of centre, and a negative one left or up.
 - **`width` / `height`** in dp.
 - **`text`** (Text content, Button label), **`fontSize`**, **`color`** (text, or a Bar's fill) and
   **`background`**, as `#RRGGBB` or `#RRGGBBAA`.
@@ -32,7 +34,11 @@ Not to be confused with Compose's `Canvas` (a surface you draw pixels on) or
 
 `SceneAppLifecycleRuntime` draws every visible element with `SceneCanvas(world)` whenever the scene
 has any, under the app's own `ui { }`, with the images in its `canvasImages`. A host with its own
-Compose tree calls `SceneCanvas(world, images = …)` itself. `loadCanvasImages(scene, files)` reads and
+Compose tree calls `SceneCanvas(world, images = …)` itself. A host that shows the game in part of its
+window, such as an editor's game view, turns the runtime's `drawsSceneCanvas` off and draws
+`SceneCanvas(world, projector = runtime.canvasProjector(world), views = runtime.canvasViews(world))`
+there: the runtime's own projector and views, for its world or for another its render system draws,
+such as a Play world. The runtime renders and frees the views' pictures; the host only passes them on. `loadCanvasImages(scene, files)` reads and
 decodes the images a scene names. A host that draws nothing, such as a game server, calls
 `checkCanvasImages(scene, files)` instead: it reads them, logs those it cannot, and decodes none.
 
@@ -41,7 +47,13 @@ decodes the images a scene names. A host that draws nothing, such as a game serv
 A `View` shows what the camera on the node its `camera` names sees, filling its box under its
 children. `SceneCanvas(world, views = …)` takes the `CanvasViews` that renders each picture;
 `SceneAppLifecycleRuntime` passes its own, which renders every View drawn this frame into a target
-the size of its box before the UI samples it. Without one a View draws only its style.
+the size of its box before the UI samples it, and `canvasViews(world)` hands it to a host. Without
+one a View draws only its style.
+
+An element that follows a node is placed by a `CanvasProjector`, which reports where the node lands in
+the frame's pixels. `SceneCanvas` moves that into its own box by where the box sat in the frame when
+it was last placed, so a canvas drawn over part of the window lands on what it follows from its
+second frame; one filling the window does from its first.
 
 ## Nesting and scale
 
@@ -59,6 +71,11 @@ if (world.get<CanvasElement>(jumpButton)?.consumePress() == true) jump()
 `consumePress()` is true once per tap. A tap goes to the topmost element under the pointer that handles
 it: a Panel, Text or Image drawn over a Button does not take the Button's taps, and elements anchored
 at the same corner with different offsets do not cover one another.
+
+`consumePress()` takes the tap, so of two readers only the first sees it. A reader that shares the
+Button with another counts `presses` instead, the number of taps since the element was made: it keeps
+the count it saw last, and takes nothing. A blueprint's On Button Pressed reads it this way, so a
+Button's `action` and a blueprint both react to one tap.
 
 ## Touch controls
 

@@ -43,6 +43,32 @@ public final class com/awakekt/awake/scene/blueprint/BlueprintSystem : com/awake
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 
+public final class com/awakekt/awake/scene/blueprint/CanvasNodes {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/blueprint/CanvasNodes;
+	public final fun all (Lcom/awakekt/awake/scene/blueprint/BlueprintScene;)Ljava/util/List;
+}
+
+public final class com/awakekt/awake/scene/blueprint/CanvasNodes$OnButtonPressed : com/awakekt/awake/blueprint/EventNode {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/blueprint/CanvasNodes$OnButtonPressed;
+	public static final field TYPE Ljava/lang/String;
+	public fun getEffect ()Lcom/awakekt/awake/blueprint/Effect;
+	public fun getSpec ()Lcom/awakekt/awake/nodegraph/NodeSpec;
+}
+
+public final class com/awakekt/awake/scene/blueprint/CanvasNodes$SetText : com/awakekt/awake/blueprint/ActionNode {
+	public fun <init> (Lcom/awakekt/awake/scene/blueprint/BlueprintScene;)V
+	public fun getEffect ()Lcom/awakekt/awake/blueprint/Effect;
+	public fun getSpec ()Lcom/awakekt/awake/nodegraph/NodeSpec;
+	public fun run (Lcom/awakekt/awake/blueprint/BlueprintContext;)Lcom/awakekt/awake/blueprint/Step;
+}
+
+public final class com/awakekt/awake/scene/blueprint/CanvasNodes$SetVisible : com/awakekt/awake/blueprint/ActionNode {
+	public fun <init> (Lcom/awakekt/awake/scene/blueprint/BlueprintScene;)V
+	public fun getEffect ()Lcom/awakekt/awake/blueprint/Effect;
+	public fun getSpec ()Lcom/awakekt/awake/nodegraph/NodeSpec;
+	public fun run (Lcom/awakekt/awake/blueprint/BlueprintContext;)Lcom/awakekt/awake/blueprint/Step;
+}
+
 public final class com/awakekt/awake/scene/blueprint/SceneBlueprint : com/awakekt/awake/scene/document/SceneComponent {
 	public static final field Companion Lcom/awakekt/awake/scene/blueprint/SceneBlueprint$Companion;
 	public fun <init> (Ljava/lang/String;Ljava/util/Map;)V

@@ -67,6 +67,24 @@ class BlueprintAllocationProbe {
         assertEquals(3f, instance.variable("copy"))
     }
 
+    @Test
+    fun firingAFilteredEventAllocatesNothing() {
+        val program = BlueprintCompiler.compile(
+            graph {
+                node("play", "test.called", "target" to "play")
+                node("quit", "test.called", "target" to "quit")
+                node("set", "var.set.float", "name" to "played", "value" to 1f)
+                wire("play.then", "set.exec")
+            },
+            BlueprintNodes.core().register(Called),
+        )
+        val instance = BlueprintInstance(program)
+        val onlyPlay = EventFilter { it.string("target") == "play" }
+
+        assertEquals(0L, bytesPer { interpreter.fire(instance, "test.called", null, onlyPlay) })
+        assertEquals(1f, instance.variable("played"))
+    }
+
     private fun bytesPer(block: () -> Unit): Long {
         repeat(WARMUP) { block() }
         val before = allocated()
