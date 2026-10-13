@@ -200,6 +200,13 @@ class CanvasElement {
      */
     var mask: String = ""
 
+    /**
+     * The font a Text's, TextField's or Button's words draw in: a project `.ttf` or `.otf` file
+     * that [SceneCanvas] was given, or a built-in family, `default` or `bitmap`.
+     * Empty, a file that did not load, or a name that is neither draws in the default font.
+     */
+    var font: String = ""
+
     private var wheelAccumulated = 0f
 
     /** Adds to the wheel collected since the last [consumeWheel]; [SceneCanvas] calls this. */

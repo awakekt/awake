@@ -26,6 +26,7 @@ import com.awakekt.awake.compose.ui.semantics.testTag
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.math2d.sp
+import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.core.text.theme.TextStyle
 import com.awakekt.awake.ecs.Entity
 
@@ -91,12 +92,13 @@ private val WORD = Regex("""\S+\s*|\s+""")
 
 private val WRAPPING = FlexBoxConfig { wrap = FlexWrap.Wrap }
 
-/** This element's words in [color], at its size, with its shadow and outline. */
-internal fun CanvasElement.textStyle(color: Color) = TextStyle(
+/** This element's words in [color] and [font], at its size, with its shadow and outline. */
+internal fun CanvasElement.textStyle(color: Color, font: UiFont?) = TextStyle(
     color = color,
     size = fontSize.sp,
     shadow = style.textShadow?.toTextShadow(),
     outline = style.textOutline?.toTextOutline(),
+    font = font,
 )
 
 /** A TextField: the player's line, typed into its box, submitted on Enter and let go on Escape. */

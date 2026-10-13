@@ -141,4 +141,4 @@ private fun SceneNode.canvasImagePaths(): List<String> =
 /** Every image this style draws: its picture or frame, a Bar's fill, and a Button's hovered and pressed pictures. */
 private fun CanvasStyle.imagePaths(): List<String> = listOfNotNull(image?.path, fillImage?.path, hovered?.image?.path, pressed?.image?.path)
 
-private val log = Logger("scene-canvas")
+internal val log = Logger("scene-canvas")

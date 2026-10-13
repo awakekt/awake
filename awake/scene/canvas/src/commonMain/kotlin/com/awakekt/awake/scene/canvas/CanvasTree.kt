@@ -8,6 +8,7 @@ package com.awakekt.awake.scene.canvas
 import com.awakekt.awake.compose.ui.graphics.ImageBitmap
 import com.awakekt.awake.core.math2d.Rectangle
 import com.awakekt.awake.core.math2d.contains
+import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.binding.SceneComponentBinding
@@ -27,6 +28,7 @@ internal class CanvasTree(
     private val bindings: List<SceneComponentBinding<*, *>>?,
     val views: CanvasViews? = null,
     val origin: CanvasOrigin = CanvasOrigin(),
+    private val fonts: Map<String, UiFont> = emptyMap(),
 ) {
     // Built, and the global bindings gathered, only on a frame where an element reads a field.
     private val data by lazy { CanvasData(world, bindings ?: globalCanvasBindings()) }
@@ -55,6 +57,9 @@ internal class CanvasTree(
 
     /** The first node named [name], or null when there is none. */
     fun node(name: String): Entity? = named[name]
+
+    /** The font an element's words draw in: its loaded file or built-in family, or null for the default. */
+    fun fontOf(element: CanvasElement): UiFont? = canvasFont(element.font, fonts)
 
     /** A Bar's fill: what its binding reads, or its own value when it has none or it reads nothing. */
     fun valueOf(element: CanvasElement): Float {

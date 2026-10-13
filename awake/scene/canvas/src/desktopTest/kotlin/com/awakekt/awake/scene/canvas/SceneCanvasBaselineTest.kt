@@ -15,6 +15,7 @@ import com.awakekt.awake.core.text.font.UiFonts
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.core.transform.Transform
+import java.io.File
 import kotlin.test.Test
 
 class SceneCanvasBaselineTest {
@@ -148,6 +149,28 @@ class SceneCanvasBaselineTest {
             .primitives.assertMatchesBaseline("scene-canvas-password-field", 232, 52, font = UiFonts.default())
     }
 
+    /**
+     * The same words twice: above in a font file the project loaded, Roboto Black, below in the
+     * default Roboto. Before `font` both lines drew as the lower one.
+     */
+    @Test
+    fun aTextInAProjectFontBesideTheDefault() {
+        val world = World()
+        for ((row, font) in listOf("fonts/title.ttf", "").withIndex()) {
+            world.add(
+                world.create(),
+                CanvasElement().apply {
+                    offsetX = 12f; offsetY = 8f + row * 36f; width = 216f; height = 32f
+                    text = "Harbor Town"; fontSize = 28f; color = "#1A1A1A"; this.font = font
+                },
+            )
+        }
+        val title = UiFonts.load(File(ROBOTO_BLACK).readBytes(), "Roboto-Black.ttf")
+
+        ComposeHost().frame(FrameInput(240, 84)) { SceneCanvas(world, fonts = mapOf("fonts/title.ttf" to title)) }
+            .primitives.assertMatchesBaseline("scene-canvas-font-file", 240, 84)
+    }
+
     @Test
     fun aMarkerFramingATargetAndANamePlateAboveIt() {
         val world = World()
@@ -232,6 +255,9 @@ class SceneCanvasBaselineTest {
     }
 
     private companion object {
+        /** An OFL font the atlas generator bakes, read where it lies, its licence beside it: heavy enough to tell apart. */
+        const val ROBOTO_BLACK = "../../ui/font-atlas-generator/fonts/Roboto-Black.ttf"
+
         val TINTS = listOf("#E5484D", "#3E63DD", "#30A46C")
 
         /** 12 x 12: a dark frame with a light bevel, 4-pixel corners, its edges dashed. */

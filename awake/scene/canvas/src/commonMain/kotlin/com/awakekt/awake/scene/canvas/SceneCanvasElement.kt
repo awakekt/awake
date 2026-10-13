@@ -65,6 +65,10 @@ import kotlinx.serialization.Serializable
  * them as typed and reports no key from a click, for text a game cannot trust such as player chat.
  * @property mask A TextField's password mask: one character drawn for each typed one, such as `*`;
  * empty draws the text as typed.
+ * @property font The font a Text's, TextField's or Button's words draw in: a project path ending in
+ * `.ttf` or `.otf`, any case, loaded with the scene, or a built-in family, `default` (Roboto) or
+ * `bitmap` (a fixed-pitch pixel font). Empty draws in the default font, as a file that does not load
+ * does.
  */
 @Serializable
 @SerialName("canvas_element")
@@ -100,6 +104,7 @@ data class SceneCanvasElement(
     val camera: String = "",
     val links: Boolean = true,
     val mask: String = "",
+    val font: String = "",
 ) : SceneComponent {
     /**
      * Validates element dimensions, font sizes, values, and hex color syntax.
@@ -122,6 +127,7 @@ data class SceneCanvasElement(
         if (mask.isNotEmpty() && kind != CanvasElementKind.TextField) {
             add(SceneValidationIssue(path, "canvas_element.mask only masks a TextField"))
         }
+        fontProblem(font)?.let { add(SceneValidationIssue(path, "canvas_element.$it")) }
     }
 }
 
