@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-10-13
+
+### Added
+
+- **A canvas TextField can be a password field.** `canvas_element` and `CanvasElement` gain
+  `mask: String = ""`; a TextField with a one-character mask draws it once for each typed character
+  while `text` keeps what was typed, so the caret, selection and clicks follow the masked string,
+  copy and cut yield nothing, and accessibility services and the platform keyboard see a password.
+  Clearing `mask` at runtime shows the password. A longer mask, or one on another kind, is reported.
+
+### Fixed
+
+- **A skinned mesh is lit by the scene's sun.** A skinned mesh drawn on its own (`skinned_textured` and the non-instanced `skinned` shader) lit every pose with a fixed sun, so turning the scene's `Light` or changing its colour left the mesh as it was. Both shaders now take the sun's direction and colour from the skinned uniform block, which already carried them for the debug views; a scene without a light gets the default sun, which points where the fixed one did. The sun's colour tints only its own light: a black sun adds nothing to a skinned mesh's ambient share, where the fixed sun lit it.
+- **Vulkan no longer draws a UI texture whose render target was destroyed after the UI was staged.** `drawUi` stages a frame's UI and the next `draw` records it, so a scene switch that freed the old scene's canvas View targets in between left the new scene's first frame writing their freed image view and sampler into a UI descriptor set, which crashed natively inside MoltenVK's `vkUpdateDescriptorSets`. Destroying a render target now removes the staged textures that sample it.
+- **Staged UI never draws a destroyed material or render target, and never draws a past frame again.** On WebGPU, UI staged by `drawUi` and recorded at the next `draw` threw `Material has no previewTextureView` when a scene switch destroyed a canvas View's material in between, and sampled the closed texture when only its render target went. It now draws nothing of them, as Vulkan does since #760. On both backends the next `draw` uses staged UI up, so a frame that stages none draws none. Before, a canvas-only scene that lost its last element kept drawing its last UI. On Vulkan that UI came back every other frame.
+- **A skinned mesh is lit by point lights.** A skinned mesh drawn on its own (`skinned_textured` and the non-instanced `skinned` shader) took the scene's sun but none of its point lights, so in a scene lit only by point lights, such as a torch-lit interior, it drew at its ambient share alone. The skinned uniform block now carries the point-light slots the lit static-mesh shaders read, filled from the same frame light payload, and both shaders add each light by its cosine and the same windowed inverse-square falloff, reaching zero at its range.
+
 ## [0.10.0] - 2026-10-13
 
 ### Added
