@@ -17,6 +17,13 @@ private const val GLFW_KEY_F2 = 291
 private const val GLFW_KEY_F3 = 292
 private const val GLFW_KEY_F4 = 293
 private const val GLFW_KEY_F5 = 294
+private const val GLFW_KEY_F6 = 295
+private const val GLFW_KEY_F7 = 296
+private const val GLFW_KEY_F8 = 297
+private const val GLFW_KEY_F9 = 298
+private const val GLFW_KEY_F10 = 299
+private const val GLFW_KEY_F11 = 300
+private const val GLFW_KEY_F12 = 301
 private const val GLFW_KEY_RIGHT = 262
 private const val GLFW_KEY_LEFT = 263
 private const val GLFW_KEY_DOWN = 264
@@ -48,6 +55,13 @@ val DefaultGlfwGameplayKeys: Map<Int, Key> = linkedMapOf(
     GLFW_KEY_F3 to Key.F3,
     GLFW_KEY_F4 to Key.F4,
     GLFW_KEY_F5 to Key.F5,
+    GLFW_KEY_F6 to Key.F6,
+    GLFW_KEY_F7 to Key.F7,
+    GLFW_KEY_F8 to Key.F8,
+    GLFW_KEY_F9 to Key.F9,
+    GLFW_KEY_F10 to Key.F10,
+    GLFW_KEY_F11 to Key.F11,
+    GLFW_KEY_F12 to Key.F12,
 )
 
 /**

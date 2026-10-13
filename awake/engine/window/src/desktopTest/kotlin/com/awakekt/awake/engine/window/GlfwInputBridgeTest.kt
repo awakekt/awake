@@ -100,6 +100,27 @@ class GlfwInputBridgeTest {
     }
 
     @Test
+    fun everyFunctionKeyF1ThroughF12MapsToItsGlfwCode() {
+        val input = Input()
+        val reader = FakeGlfwWindowInput()
+        // GLFW's own codes, independent of DefaultGlfwGameplayKeys's private constants, so a
+        // mapping removed from the table -- not merely renumbered -- still fails this.
+        val expected = mapOf(
+            290 to Key.F1, 291 to Key.F2, 292 to Key.F3, 293 to Key.F4, 294 to Key.F5,
+            295 to Key.F6, 296 to Key.F7, 297 to Key.F8, 298 to Key.F9,
+            299 to Key.F10, 300 to Key.F11, 301 to Key.F12,
+        )
+
+        expected.forEach { (glfwKey, key) ->
+            assertEquals(key, DefaultGlfwGameplayKeys[glfwKey], "GLFW key code $glfwKey must map to $key")
+            reader.keysDown.clear()
+            reader.keysDown += glfwKey
+            pollGlfwInput(reader, input)
+            assertTrue(input.isKeyDown(key), "GLFW key code $glfwKey must map to $key")
+        }
+    }
+
+    @Test
     fun unmappedKeyIsIgnored() {
         val input = Input()
         val reader = FakeGlfwWindowInput().apply { keysDown += GLFW_KEY_SPACE }

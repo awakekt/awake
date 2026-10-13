@@ -227,10 +227,17 @@ public final class com/awakekt/awake/core/input/Key : java/lang/Enum {
 	public static final field Escape Lcom/awakekt/awake/core/input/Key;
 	public static final field F Lcom/awakekt/awake/core/input/Key;
 	public static final field F1 Lcom/awakekt/awake/core/input/Key;
+	public static final field F10 Lcom/awakekt/awake/core/input/Key;
+	public static final field F11 Lcom/awakekt/awake/core/input/Key;
+	public static final field F12 Lcom/awakekt/awake/core/input/Key;
 	public static final field F2 Lcom/awakekt/awake/core/input/Key;
 	public static final field F3 Lcom/awakekt/awake/core/input/Key;
 	public static final field F4 Lcom/awakekt/awake/core/input/Key;
 	public static final field F5 Lcom/awakekt/awake/core/input/Key;
+	public static final field F6 Lcom/awakekt/awake/core/input/Key;
+	public static final field F7 Lcom/awakekt/awake/core/input/Key;
+	public static final field F8 Lcom/awakekt/awake/core/input/Key;
+	public static final field F9 Lcom/awakekt/awake/core/input/Key;
 	public static final field G Lcom/awakekt/awake/core/input/Key;
 	public static final field H Lcom/awakekt/awake/core/input/Key;
 	public static final field Home Lcom/awakekt/awake/core/input/Key;
