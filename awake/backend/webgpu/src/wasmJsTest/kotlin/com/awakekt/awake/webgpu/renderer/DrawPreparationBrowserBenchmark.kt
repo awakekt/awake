@@ -24,7 +24,6 @@ import com.awakekt.awake.render.passes.uniforms.SceneLight
 import com.awakekt.awake.render.passes.uniforms.pbrMaterialFloats
 import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.pipeline.PipelineKey
-import com.awakekt.awake.render.renderer.Renderer as RenderRenderer
 import com.awakekt.awake.render.renderer.createMaterial
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.webgpu.application.WebGpuEngine
@@ -33,12 +32,13 @@ import io.ygdrasil.webgpu.WGPUContext
 import kotlinx.coroutines.test.runTest
 import web.dom.document
 import web.html.HTMLCanvasElement
+import kotlin.math.roundToInt
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
-import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.TimeSource
+import com.awakekt.awake.render.renderer.Renderer as RenderRenderer
 
 /**
  * Times the WebGPU backend's draw preparation over a few thousand distinct draws in a real browser,
@@ -111,10 +111,11 @@ class DrawPreparationBrowserBenchmark {
         engine.destroy()
     }
 
-    private class BenchmarkEngine : WebGpuEngine(
-        AppSpecBuilder().apply { window { size(SIZE, SIZE) } }.build().createLifecycle(),
-        PLAN,
-    ) {
+    private class BenchmarkEngine :
+        WebGpuEngine(
+            AppSpecBuilder().apply { window { size(SIZE, SIZE) } }.build().createLifecycle(),
+            PLAN,
+        ) {
         fun boot(context: WGPUContext): RenderRenderer {
             create(context)
             return renderer
@@ -149,7 +150,10 @@ class DrawPreparationBrowserBenchmark {
         /** A unit cube in [format], every vertex white with an upward normal; the shading is not under test. */
         fun cube(format: VertexFormat): MeshGeometry {
             val corners = listOf(
-                -1f to -1f, 1f to -1f, 1f to 1f, -1f to 1f,
+                -1f to -1f,
+                1f to -1f,
+                1f to 1f,
+                -1f to 1f,
             )
             val vertices = buildList {
                 for (y in listOf(-0.5f, 0.5f)) {
