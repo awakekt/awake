@@ -10,6 +10,7 @@ package com.awakekt.awake.ui.shadcn.components
 import com.awakekt.awake.compose.foundation.text.Text
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.remember
+import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.semantics.SemanticsProperties
 import com.awakekt.awake.compose.ui.semantics.SemanticsRole
@@ -52,33 +53,35 @@ fun ShadcnText(
      */
     weight: FontWeight? = null,
 ) {
-    val theme = shadcnTheme
-    // Two remembers rather than one three-key call: `remember` takes at most two keys, and a
-    // composite key object would allocate every frame.
-    val base = remember(theme, variant) {
-        TextStyle(
-            size = variant.size,
-            lineHeight = variant.lineHeight,
-            weight = weight ?: variant.weight,
-            color = if (variant.muted) theme.palette.mutedForeground else null,
+    rememberGroup(ShadcnTextGroup) {
+        val theme = shadcnTheme
+        // Two remembers rather than one three-key call: `remember` takes at most two keys, and a
+        // composite key object would allocate every frame.
+        val base = remember(theme, variant) {
+            TextStyle(
+                size = variant.size,
+                lineHeight = variant.lineHeight,
+                weight = weight ?: variant.weight,
+                color = if (variant.muted) theme.palette.mutedForeground else null,
+            )
+        }
+        val style = remember(base, lineHeight) {
+            if (lineHeight == null) base else base.copy(lineHeight = lineHeight)
+        }
+        val styled = remember(style, weight) { if (weight == null) style else style.copy(weight = weight) }
+        // An explicit colour wins over the variant's; both absent leaves the ambient one.
+        Text(
+            text,
+            // Text a reader can read. Without this a screen reader hears nothing at all from a label,
+            // and only controls that declare their own semantics are addressable -- which is also why
+            // an empty state's title was invisible to the parity harness.
+            modifier.semantics {
+                this[SemanticsProperties.Role] = SemanticsRole.Text
+                this[SemanticsProperties.Label] = text
+            },
+            if (color != null) styled.copy(color = color) else styled,
         )
     }
-    val style = remember(base, lineHeight) {
-        if (lineHeight == null) base else base.copy(lineHeight = lineHeight)
-    }
-    val styled = remember(style, weight) { if (weight == null) style else style.copy(weight = weight) }
-    // An explicit colour wins over the variant's; both absent leaves the ambient one.
-    Text(
-        text,
-        // Text a reader can read. Without this a screen reader hears nothing at all from a label,
-        // and only controls that declare their own semantics are addressable -- which is also why
-        // an empty state's title was invisible to the parity harness.
-        modifier.semantics {
-            this[SemanticsProperties.Role] = SemanticsRole.Text
-            this[SemanticsProperties.Label] = text
-        },
-        if (color != null) styled.copy(color = color) else styled,
-    )
 }
 
 /** `ShadcnText(variant = Muted)`, spelled out for the common case of a lone caption line. */
@@ -113,3 +116,6 @@ fun shadcnLarge(text: String, modifier: Modifier = Modifier) =
 context(_: Composer)
 fun shadcnSmall(text: String, modifier: Modifier = Modifier) =
     ShadcnText(text, modifier, variant = ShadcnTextVariant.Small)
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnTextGroup

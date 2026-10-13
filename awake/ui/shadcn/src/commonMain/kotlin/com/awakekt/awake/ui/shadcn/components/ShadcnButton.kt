@@ -24,6 +24,7 @@ import com.awakekt.awake.compose.runtime.CompositionLocalProvider
 import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.provides
 import com.awakekt.awake.compose.runtime.remember
+import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.graphics.Shape
@@ -120,58 +121,63 @@ internal fun shadcnButtonContent(
     hasIcon: Boolean,
     content: context(Composer) () -> Unit,
 ) {
-    val theme = shadcnTheme
-    val interaction = remember { InteractionSource() }
-    val state = rememberStyleState(interaction, enabled = enabled)
-    val style = remember(theme, variant) { theme.shadcnButtonStyle(variant) }
+    rememberGroup(ShadcnButtonGroup) {
+        val theme = shadcnTheme
+        val interaction = remember { InteractionSource() }
+        val state = rememberStyleState(interaction, enabled = enabled)
+        val style = remember(theme, variant) { theme.shadcnButtonStyle(variant) }
 
-    val sized = if (size.square) {
-        modifier.width(size.height).height(size.height)
-    } else {
-        modifier.height(size.height)
-    }
-    val boxModel = Style {
-        val inset = if (variant.bordered) ShadcnButtonBorderWidth else Tw.Spacing.s0
-        val horizontal = if (hasIcon && !size.square) ShadcnButtonIconPadding else size.paddingX
-        contentPadding(horizontal + inset, size.paddingY + inset)
-    }
-    val interactive = sized
-        // The border is folded into the inset, not added beside it. shadcn is `border-box`, so
-        // an outline button's 1px border consumes layout space and the button ends up 2px wider
-        // than the same label unbordered; Awake's border paints inside the bounds and reserves
-        // nothing, which left outline 2.53px narrow against the reference while every unbordered
-        // variant matched. Same fix as `popoverSurfaceStyle`.
-        .hoverable(interaction, enabled = enabled)
-        .clickable(interaction) { if (enabled) onClick() }
-    val surface = if (shape == null) {
-        interactive.styleable(state, borderSides, style, boxModel)
-    } else {
-        interactive.styleable(state, borderSides, style, boxModel, Style { shape(shape) })
-    }
-    Box(
-        surface,
-        // `inline-flex items-center justify-center` on upstream's shared class. Without it a label
-        // sits top-left, which only shows on the fixed-square icon sizes -- the text sizes hug their
-        // content and hide the omission.
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        // Upstream's `text-primary-foreground` cascades to both text and SVG `currentColor`.
-        // LocalTextStyle is Awake's existing composition-scoped content-colour mechanism; icons
-        // consume it unless an explicit tint asks to opt out.
-        CompositionLocalProvider(
-            LocalTextStyle provides LocalTextStyle.current.copy(
-                color = theme.buttonForeground(
-                    variant,
-                ),
-            ),
+        val sized = if (size.square) {
+            modifier.width(size.height).height(size.height)
+        } else {
+            modifier.height(size.height)
+        }
+        val boxModel = Style {
+            val inset = if (variant.bordered) ShadcnButtonBorderWidth else Tw.Spacing.s0
+            val horizontal = if (hasIcon && !size.square) ShadcnButtonIconPadding else size.paddingX
+            contentPadding(horizontal + inset, size.paddingY + inset)
+        }
+        val interactive = sized
+            // The border is folded into the inset, not added beside it. shadcn is `border-box`, so
+            // an outline button's 1px border consumes layout space and the button ends up 2px wider
+            // than the same label unbordered; Awake's border paints inside the bounds and reserves
+            // nothing, which left outline 2.53px narrow against the reference while every unbordered
+            // variant matched. Same fix as `popoverSurfaceStyle`.
+            .hoverable(interaction, enabled = enabled)
+            .clickable(interaction) { if (enabled) onClick() }
+        val surface = if (shape == null) {
+            interactive.styleable(state, borderSides, style, boxModel)
+        } else {
+            interactive.styleable(state, borderSides, style, boxModel, Style { shape(shape) })
+        }
+        Box(
+            surface,
+            // `inline-flex items-center justify-center` on upstream's shared class. Without it a label
+            // sits top-left, which only shows on the fixed-square icon sizes -- the text sizes hug their
+            // content and hide the omission.
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedByHorizontal(ShadcnButtonIconLabelGap),
-                verticalAlignment = Alignment.CenterVertically,
+            // Upstream's `text-primary-foreground` cascades to both text and SVG `currentColor`.
+            // LocalTextStyle is Awake's existing composition-scoped content-colour mechanism; icons
+            // consume it unless an explicit tint asks to opt out.
+            CompositionLocalProvider(
+                LocalTextStyle provides LocalTextStyle.current.copy(
+                    color = theme.buttonForeground(
+                        variant,
+                    ),
+                ),
             ) {
-                content()
+                Row(
+                    horizontalArrangement = Arrangement.spacedByHorizontal(ShadcnButtonIconLabelGap),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    content()
+                }
             }
         }
     }
 }
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnButtonGroup

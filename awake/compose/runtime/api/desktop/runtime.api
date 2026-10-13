@@ -12,10 +12,13 @@ public abstract interface class com/awakekt/awake/compose/runtime/Applier {
 
 public final class com/awakekt/awake/compose/runtime/Composer {
 	public static final field INITIAL_DEPTH I
+	public final fun endGroup ()V
 	public final fun getLocalsSnapshot ()Lcom/awakekt/awake/compose/runtime/ProvidedLocals;
 	public final fun key (Ljava/lang/Object;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
 	public final fun node (Ljava/lang/Object;Lcom/awakekt/awake/compose/runtime/Slot;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;)V
 	public static synthetic fun node$default (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/Object;Lcom/awakekt/awake/compose/runtime/Slot;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
+	public final fun remember (Ljava/lang/Object;Ljava/lang/Object;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
+	public final fun startGroup (Ljava/lang/Object;)V
 }
 
 public final class com/awakekt/awake/compose/runtime/ComposerKt {
@@ -71,9 +74,7 @@ public abstract interface class com/awakekt/awake/compose/runtime/RememberHolder
 }
 
 public final class com/awakekt/awake/compose/runtime/RememberKt {
-	public static final fun remember (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/Object;Ljava/lang/Object;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
-	public static final fun remember (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/Object;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
-	public static final fun remember (Lcom/awakekt/awake/compose/runtime/Composer;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
+	public static final fun rememberGroup (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/Object;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
 }
 
 public final class com/awakekt/awake/compose/runtime/Slot : java/lang/Enum {
@@ -101,5 +102,9 @@ public final class com/awakekt/awake/compose/runtime/StateKt {
 	public static final fun getValue (Lcom/awakekt/awake/compose/runtime/State;Ljava/lang/Object;Lkotlin/reflect/KProperty;)Ljava/lang/Object;
 	public static final fun mutableStateOf (Ljava/lang/Object;)Lcom/awakekt/awake/compose/runtime/MutableState;
 	public static final fun setValue (Lcom/awakekt/awake/compose/runtime/MutableState;Ljava/lang/Object;Lkotlin/reflect/KProperty;Ljava/lang/Object;)V
+}
+
+public final class com/awakekt/awake/compose/runtime/Unkeyed {
+	public static final field INSTANCE Lcom/awakekt/awake/compose/runtime/Unkeyed;
 }
 

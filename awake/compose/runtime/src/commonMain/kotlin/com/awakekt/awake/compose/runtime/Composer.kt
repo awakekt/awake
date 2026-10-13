@@ -15,7 +15,8 @@ package com.awakekt.awake.compose.runtime
  *
  * Positional identity breaks the same way React's index keys do: reorder a list and state follows
  * the slot rather than the item. [key] is the same escape hatch, and it is a runtime function in
- * Compose too, not a compiler feature.
+ * Compose too, not a compiler feature. It keys the nodes its block declares and gives the block's
+ * `remember` calls their own slot group, so both follow the key rather than the position.
  */
 class Composer internal constructor(
     private val applier: Applier,
@@ -26,9 +27,15 @@ class Composer internal constructor(
     // One cursor per depth, per slot. Grown once and reused, so composing allocates nothing here.
     private var childCursors = IntArray(INITIAL_DEPTH)
     private var layerCursors = IntArray(INITIAL_DEPTH)
-    private var rememberCursors = IntArray(INITIAL_DEPTH)
     private var depth = 0
     private var pendingKey: Any? = null
+
+    // Where `remember` stores, innermost last: the node whose content is executing, or a slot group
+    // open inside it, each with its cursor. The applier's own cursor cannot serve: an accessor there
+    // would put the tree back into the reconciler's interface, which is what keeps `:runtime` free of
+    // layout. An owner that cannot remember is held as null.
+    private val slotOwners = ArrayList<Any?>().apply { add(root) }
+    private var slotCursors = IntArray(INITIAL_DEPTH)
 
     internal val locals = parentLocals?.snapshot() ?: ProvidedLocals()
 
@@ -37,11 +44,6 @@ class Composer internal constructor(
      * here -- a subcomposition measured later still reads the theme its parent provided.
      */
     val localsSnapshot: ProvidedLocals get() = locals.snapshot()
-
-    // The node whose content is executing, innermost last. `remember` needs it, and the applier's
-    // own cursor cannot serve: adding an accessor there would put the tree back into the reconciler's
-    // interface, which is what keeps `:runtime` free of layout.
-    private val nodeStack = ArrayList<Any>().apply { if (root != null) add(root) }
 
     /**
      * Declares a node, reusing the one at this position if it matches.
@@ -70,7 +72,7 @@ class Composer internal constructor(
 
         if (content != null) {
             applier.down(slot, index)
-            nodeStack.add(instance)
+            openSlots(instance)
             pushDepth()
             // Descendants get their own identity from their own position. An enclosing key applies
             // to the siblings it wraps, not to everything underneath them.
@@ -81,29 +83,53 @@ class Composer internal constructor(
             // Whatever this pass stopped declaring is gone; anything left is stale.
             applier.truncateFrom(Slot.Children, cursor(Slot.Children))
             applier.truncateFrom(Slot.Layers, cursor(Slot.Layers))
-            (instance as? RememberHolder)?.trimRememberedTo(rememberCursors[depth])
+            closeSlots()
             popDepth()
-            nodeStack.removeAt(nodeStack.lastIndex)
             applier.up()
         }
         advance(slot)
     }
 
     /**
-     * Gives everything declared inside [block] an identity tied to [value] rather than its position.
+     * Gives everything declared inside [block] an identity tied to [value] rather than its position:
+     * the nodes it declares, and the values it remembers, which get a slot group of their own.
      *
-     * Needed whenever a list can reorder or a branch can swap: without it the node at index 3 stays
-     * the node at index 3, and its state follows the slot instead of the item.
+     * Needed whenever a list can reorder or a branch can come and go: without it the node at index 3
+     * stays the node at index 3, and its state follows the slot instead of the item.
      */
     fun <T> key(value: Any, block: () -> T): T {
         val previous = pendingKey
         pendingKey = value
+        startGroup(value)
         try {
             return block()
         } finally {
+            endGroup()
             pendingKey = previous
         }
     }
+
+    /**
+     * Opens a slot group keyed by [key] at this point of the current node's `remember` slots.
+     *
+     * The group takes one slot of its owner whatever it remembers, and is found by key: a group that
+     * moved is moved back, and one not found is inserted, so the slots after it keep lining up.
+     */
+    @PublishedApi
+    internal fun startGroup(key: Any) {
+        val top = slotOwners.lastIndex
+        val slots = slotsOf(slotOwners[top])
+        var group: RememberedGroup? = null
+        if (slots != null) {
+            group = claimGroup(slots, slotCursors[top], key)
+            slotCursors[top]++
+        }
+        openSlots(group)
+    }
+
+    /** Closes the group [startGroup] opened, dropping what it stopped remembering. */
+    @PublishedApi
+    internal fun endGroup() = closeSlots()
 
     /**
      * The index of a reusable node, or -1 to create one.
@@ -131,28 +157,33 @@ class Composer internal constructor(
     }
 
     /**
-     * The value held in this node's slot [index], computed on the pass that first reached it.
+     * The value held in the next slot of the current node or group, computed on the pass that first
+     * reached it, and again whenever a key changes or the slot holds something [isT] refuses.
      *
      * Slots belong to the enclosing node, so they survive exactly as long as it does. A node with no
      * store -- a test double, say -- cannot remember, and says so rather than silently recomputing.
-     */
-    internal fun <T> remember(key: Any?, calculate: () -> T): T = remember(key, Unkeyed, calculate)
-
-    /**
-     * Two keys are stored side by side rather than combined into one.
      *
-     * Combining them -- a `Pair`, a vararg array -- would allocate per call per pass, and `remember`
-     * runs in the per-frame path this engine exists to keep allocation-free. Two fields cost nothing.
+     * Two keys are stored side by side rather than combined into one. Combining them -- a `Pair`, a
+     * vararg array -- would allocate per call per pass, and `remember` runs in the per-frame path
+     * this engine exists to keep allocation-free. Two fields cost nothing.
      */
-    internal fun <T> remember(key1: Any?, key2: Any?, calculate: () -> T): T {
-        val holder = nodeStack.lastOrNull() as? RememberHolder
+    @PublishedApi
+    internal fun <T> remember(key1: Any?, key2: Any?, isT: (Any?) -> Boolean, calculate: () -> T): T {
+        val top = slotOwners.lastIndex
+        val slots = slotsOf(slotOwners[top])
             ?: error("remember() needs an enclosing node that implements RememberHolder")
-        val slots = holder.mutableSlots()
-        val index = rememberCursors[depth]
-        rememberCursors[depth] = index + 1
-        if (index == slots.size) slots.add(RememberedSlot(key1, key2, calculate()))
-        val slot = slots[index] as RememberedSlot
-        if (slot.key != key1 || slot.key2 != key2) {
+        val index = slotCursors[top]
+        slotCursors[top] = index + 1
+        val slot = slots.getOrNull(index) as? RememberedSlot ?: claimSlot(slots, index)
+        if (slot == null) {
+            val fresh = RememberedSlot(key1, key2, calculate())
+            slots.add(index, fresh)
+            @Suppress("UNCHECKED_CAST")
+            return fresh.value as T
+        }
+        // A value of another type is another call's: the calls before this one changed. Recompute
+        // rather than hand it over and fail with a ClassCastException at the caller.
+        if (slot.key != key1 || slot.key2 != key2 || !isT(slot.value)) {
             slot.key = key1
             slot.key2 = key2
             slot.value = calculate()
@@ -164,7 +195,7 @@ class Composer internal constructor(
     internal fun finishRoot() {
         applier.truncateFrom(Slot.Children, cursor(Slot.Children))
         applier.truncateFrom(Slot.Layers, cursor(Slot.Layers))
-        (nodeStack.firstOrNull() as? RememberHolder)?.trimRememberedTo(rememberCursors[0])
+        slotsOf(slotOwners[0])?.trimTo(slotCursors[0])
     }
 
     /** Prepares this retained composer for its next root pass. */
@@ -172,8 +203,29 @@ class Composer internal constructor(
         depth = 0
         childCursors[0] = 0
         layerCursors[0] = 0
-        rememberCursors[0] = 0
+        while (slotOwners.size > 1) slotOwners.removeAt(slotOwners.lastIndex)
+        slotCursors[0] = 0
         pendingKey = null
+    }
+
+    private fun openSlots(owner: Any?) {
+        slotOwners.add(owner)
+        val top = slotOwners.lastIndex
+        if (top == slotCursors.size) slotCursors = slotCursors.copyOf(top * 2)
+        slotCursors[top] = 0
+    }
+
+    /** Pops the innermost owner, dropping the slots this pass no longer reached. */
+    private fun closeSlots() {
+        val top = slotOwners.lastIndex
+        slotsOf(slotOwners[top])?.trimTo(slotCursors[top])
+        slotOwners.removeAt(top)
+    }
+
+    private fun slotsOf(owner: Any?): MutableList<Any?>? = when (owner) {
+        is RememberedGroup -> owner.slots
+        is RememberHolder -> owner.mutableSlots()
+        else -> null
     }
 
     private fun cursor(slot: Slot): Int =
@@ -188,11 +240,9 @@ class Composer internal constructor(
         if (depth == childCursors.size) {
             childCursors = childCursors.copyOf(depth * 2)
             layerCursors = layerCursors.copyOf(depth * 2)
-            rememberCursors = rememberCursors.copyOf(depth * 2)
         }
         childCursors[depth] = 0
         layerCursors[depth] = 0
-        rememberCursors[depth] = 0
     }
 
     private fun popDepth() {

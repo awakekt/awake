@@ -30,31 +30,32 @@ context(composer: Composer)
 /**
  * Computes [calculate] on the first pass and returns that same value on every pass after.
  *
- * **Slots are positional within the enclosing node**, and `key(...)` is *not* the escape hatch --
- * a key fixes which node an item reuses, and this value does not live in that node, it lives in the
- * nearest enclosing one, indexed by call order. The two are separate mechanisms.
+ * **Slots are positional within the enclosing node**, in call order, so a call that comes or goes
+ * partway through a node shifts the slots of every call after it. Two guards keep that from handing
+ * one call another's value:
  *
- * So: nothing may `remember` after a variable-length sequence in the same node. Add or remove one
- * item and every slot after it shifts by one -- silently handing the wrong value over when the
- * types match, and throwing a `ClassCastException` from the slot table when they do not. Give each
- * repeated item its own node (a `Column`, a `Box`) so its slots are its own, *and* key that node so
- * an inserted sibling does not adopt it by position.
+ * - A slot holding a value that is not a [T] is recomputed rather than cast, so a shift between
+ *   calls of different types costs that state instead of throwing a `ClassCastException`.
+ * - [key] gives its block a slot group of its own, found by key, which takes one slot of the node
+ *   whatever it remembers. Wrap a branch that remembers, or each item of a list, in `key(...)`, and
+ *   its state follows the key, and the calls after it keep their slots.
  *
- * The same applies to a branch: a subtree that remembers must not be conditionally composed. Draw
- * the control always and disable it, or hoist the state above the branch. A conditional subtree
- * that remembers nothing is fine -- it is the slot that moves, not the node.
+ * A shift between calls of the same type still hands the value over silently, so a branch or a
+ * variable-length sequence that remembers must be keyed. A component that remembers wraps its body
+ * in [rememberGroup], so its state does not depend on what its caller draws around it.
  */
-fun <T> remember(calculate: () -> T): T = composer.remember(Unkeyed, calculate)
+inline fun <reified T> remember(noinline calculate: () -> T): T =
+    composer.remember(Unkeyed, Unkeyed, { it is T }, calculate)
 
 context(composer: Composer)
 /**
  * Recomputes [calculate] whenever [key] changes, by `==`.
  *
  * Deliberately not a vararg: `remember(a, b)` would allocate an array on every pass, and per-frame
- * allocation is the cost this engine exists to remove. Add a two-key overload when something needs
- * one.
+ * allocation is the cost this engine exists to remove. The two-key overload covers two.
  */
-fun <T> remember(key: Any?, calculate: () -> T): T = composer.remember(key, calculate)
+inline fun <reified T> remember(key: Any?, noinline calculate: () -> T): T =
+    composer.remember(key, Unkeyed, { it is T }, calculate)
 
 context(composer: Composer)
 /**
@@ -67,18 +68,70 @@ context(composer: Composer)
  * Still not a vararg, for the reason stated above: the two keys are stored side by side in the slot,
  * so this allocates nothing. A vararg array -- or a `Pair` to combine them -- would, per call per pass.
  */
-fun <T> remember(key1: Any?, key2: Any?, calculate: () -> T): T =
-    composer.remember(key1, key2, calculate)
+inline fun <reified T> remember(key1: Any?, key2: Any?, noinline calculate: () -> T): T =
+    composer.remember(key1, key2, { it is T }, calculate)
+
+context(composer: Composer)
+/**
+ * Gives the `remember` calls inside [block] a slot group of their own, keyed by [key], without
+ * changing which node anything inside reuses.
+ *
+ * For a component's own state: wrapped, it takes one slot of its caller's node however many values it
+ * remembers, and the group is found by [key], so a component that comes or goes beside it leaves its
+ * state where it was. Use a key private to the component. [key] is the call for a caller's branch or
+ * list, since it keys the nodes too; a component must not use it, or it would replace the key its
+ * caller gave the node.
+ */
+inline fun <T> rememberGroup(key: Any, block: () -> T): T {
+    composer.startGroup(key)
+    try {
+        return block()
+    } finally {
+        composer.endGroup()
+    }
+}
 
 /** Sentinel for the keyless overload -- never equal to anything a caller can pass. */
+@PublishedApi
 internal object Unkeyed
 
 internal class RememberedSlot(var key: Any?, var key2: Any?, var value: Any?)
 
-/** Drops slots this pass stopped declaring, the way [Applier.truncateFrom] drops children. */
-internal fun RememberHolder.trimRememberedTo(count: Int) {
-    val slots = mutableSlots()
-    while (slots.size > count) {
-        slots.removeAt(slots.lastIndex)
+/** A [key] or [rememberGroup] block's own slots, held as one slot of the node or group around it. */
+internal class RememberedGroup(val key: Any) {
+    val slots: MutableList<Any?> = ArrayList()
+}
+
+/**
+ * The group keyed [key] for slot [index] of [slots]: there already, moved back from later in the
+ * list, or inserted new. The slots it passes over stay where they are for later calls to claim.
+ */
+internal fun claimGroup(slots: MutableList<Any?>, index: Int, key: Any): RememberedGroup {
+    for (i in index until slots.size) {
+        val group = slots[i] as? RememberedGroup ?: continue
+        if (group.key == key) {
+            if (i != index) slots.add(index, slots.removeAt(i))
+            return group
+        }
     }
+    return RememberedGroup(key).also { slots.add(index, it) }
+}
+
+/**
+ * The plain slot for [index] when a group sits there -- one whose block did not run this pass, or
+ * not yet: the next plain slot after it, moved back to [index], or null for a new one. The groups
+ * it passes over stay for a later [claimGroup], so a branch that remembers and comes back finds them.
+ */
+internal fun claimSlot(slots: MutableList<Any?>, index: Int): RememberedSlot? {
+    for (i in index + 1 until slots.size) {
+        val slot = slots[i] as? RememberedSlot ?: continue
+        slots.add(index, slots.removeAt(i))
+        return slot
+    }
+    return null
+}
+
+/** Drops slots this pass stopped declaring, the way [Applier.truncateFrom] drops children. */
+internal fun MutableList<Any?>.trimTo(count: Int) {
+    while (size > count) removeAt(lastIndex)
 }

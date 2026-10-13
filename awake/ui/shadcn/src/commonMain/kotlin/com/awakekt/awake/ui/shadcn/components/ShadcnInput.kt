@@ -17,6 +17,7 @@ import com.awakekt.awake.compose.foundation.text.BasicTextField
 import com.awakekt.awake.compose.foundation.text.TextFieldState
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.remember
+import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.core.math2d.sp
 import com.awakekt.awake.core.text.theme.TextStyle
@@ -63,31 +64,36 @@ fun ShadcnInput(
     mask: Char? = null,
     revealLastTyped: Boolean = false,
 ) {
-    val theme = shadcnTheme
-    val interaction = remember { InteractionSource() }
-    val styleState = rememberStyleState(interaction, enabled = enabled)
-    val focusRingAlpha = animateFloat(if (styleState.isFocused) 1f else 0f)
-    val box = remember(theme, focusRingMode) {
-        theme.fieldStyle(Tw.Spacing.s1, focusRingMode)
-    }
+    rememberGroup(ShadcnInputGroup) {
+        val theme = shadcnTheme
+        val interaction = remember { InteractionSource() }
+        val styleState = rememberStyleState(interaction, enabled = enabled)
+        val focusRingAlpha = animateFloat(if (styleState.isFocused) 1f else 0f)
+        val box = remember(theme, focusRingMode) {
+            theme.fieldStyle(Tw.Spacing.s1, focusRingMode)
+        }
 
-    BasicTextField(
-        state = state,
-        modifier = modifier.fillMaxWidth().height(ShadcnInputHeight)
-            .focusRing(
-                alpha = if (focusRingMode == ShadcnFocusRingMode.DrawWithContent) focusRingAlpha else 0f,
-                width = FieldFocusRingWidth,
-                color = theme.palette.ring.withAlpha(0.5f),
-                cornerRadius = theme.radii.md,
-            )
-            .styleable(styleState, box),
-        style = TextStyle(size = Tw.Text.sm, lineHeight = 20f.sp, color = theme.palette.foreground),
-        interactionSource = interaction,
-        placeholder = placeholder,
-        placeholderColor = theme.palette.mutedForeground,
-        singleLine = true,
-        onClick = onClick,
-        mask = mask,
-        revealLastTyped = revealLastTyped,
-    )
+        BasicTextField(
+            state = state,
+            modifier = modifier.fillMaxWidth().height(ShadcnInputHeight)
+                .focusRing(
+                    alpha = if (focusRingMode == ShadcnFocusRingMode.DrawWithContent) focusRingAlpha else 0f,
+                    width = FieldFocusRingWidth,
+                    color = theme.palette.ring.withAlpha(0.5f),
+                    cornerRadius = theme.radii.md,
+                )
+                .styleable(styleState, box),
+            style = TextStyle(size = Tw.Text.sm, lineHeight = 20f.sp, color = theme.palette.foreground),
+            interactionSource = interaction,
+            placeholder = placeholder,
+            placeholderColor = theme.palette.mutedForeground,
+            singleLine = true,
+            onClick = onClick,
+            mask = mask,
+            revealLastTyped = revealLastTyped,
+        )
+    }
 }
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnInputGroup

@@ -25,6 +25,7 @@ import com.awakekt.awake.compose.foundation.style.styleable
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.remember
+import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.focus.focusTarget
@@ -96,63 +97,65 @@ fun ShadcnDropdownMenu(
     id: String? = null,
     highlightedIndex: Int? = null,
 ): Int? {
-    val theme = shadcnTheme
-    val style = remember(theme) { theme.popoverSurfaceStyle(Tw.Spacing.s1) }
-    val state = remember { MenuState() }
-    val clicked = state.clicked
-    state.clicked = null
+    return rememberGroup(ShadcnDropdownMenuGroup) {
+        val theme = shadcnTheme
+        val style = remember(theme) { theme.popoverSurfaceStyle(Tw.Spacing.s1) }
+        val state = remember { MenuState() }
+        val clicked = state.clicked
+        state.clicked = null
 
-    Box(modifier.menuSurface(style)) {
-        Column {
-            entries.forEachIndexed { index, entry ->
-                if (entry is ShadcnMenuSeparator) {
-                    ShadcnSeparator(Modifier.padding(vertical = Tw.Spacing.s1))
-                    return@forEachIndexed
-                }
-                val item = entry as ShadcnMenuItem
-                val interaction = remember { InteractionSource() }
-                val highlighted =
-                    item.enabled && (interaction.isHovered || index == highlightedIndex)
-                Box(
-                    Modifier
-                        .fillMaxWidth()
-                        // Pointer links after padding only see the text's inner box. The menu row
-                        // is the target, so capture hover/click before the visual inset.
-                        .hoverable(interaction, enabled = item.enabled)
-                        .clickable(interaction) { if (item.enabled) state.clicked = index }
-                        .let {
-                            if (!highlighted) {
-                                it
-                            } else {
-                                it.background(
-                                    if (item.destructive) {
-                                        theme.palette.destructive.withAlpha(
-                                            DESTRUCTIVE_HIGHLIGHT_ALPHA,
-                                        )
-                                    } else {
-                                        theme.palette.accent
-                                    },
-                                    theme.radii.sm,
-                                )
+        Box(modifier.menuSurface(style)) {
+            Column {
+                entries.forEachIndexed { index, entry ->
+                    if (entry is ShadcnMenuSeparator) {
+                        ShadcnSeparator(Modifier.padding(vertical = Tw.Spacing.s1))
+                        return@forEachIndexed
+                    }
+                    val item = entry as ShadcnMenuItem
+                    val interaction = remember { InteractionSource() }
+                    val highlighted =
+                        item.enabled && (interaction.isHovered || index == highlightedIndex)
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            // Pointer links after padding only see the text's inner box. The menu row
+                            // is the target, so capture hover/click before the visual inset.
+                            .hoverable(interaction, enabled = item.enabled)
+                            .clickable(interaction) { if (item.enabled) state.clicked = index }
+                            .let {
+                                if (!highlighted) {
+                                    it
+                                } else {
+                                    it.background(
+                                        if (item.destructive) {
+                                            theme.palette.destructive.withAlpha(
+                                                DESTRUCTIVE_HIGHLIGHT_ALPHA,
+                                            )
+                                        } else {
+                                            theme.palette.accent
+                                        },
+                                        theme.radii.sm,
+                                    )
+                                }
                             }
-                        }
-                        .padding(horizontal = Tw.Spacing.s2, vertical = Tw.Spacing.s1_5)
-                        // An item is a node a screen reader can land on and a test can address.
-                        // Without this the row has no semantics at all, so the menu reports as one
-                        // opaque box -- which is also why the parity harness could not see the items.
-                        .semantics {
-                            this[SemanticsProperties.Role] = SemanticsRole.Button
-                            this[SemanticsProperties.Label] = item.label
-                            if (id != null) this[SemanticsProperties.TestTag] = "$id.item.$index"
-                            if (!item.enabled) this[SemanticsProperties.Disabled] = true
-                        },
-                ) {
-                    dropdownMenuItemContent(item, highlighted)
+                            .padding(horizontal = Tw.Spacing.s2, vertical = Tw.Spacing.s1_5)
+                            // An item is a node a screen reader can land on and a test can address.
+                            // Without this the row has no semantics at all, so the menu reports as one
+                            // opaque box -- which is also why the parity harness could not see the items.
+                            .semantics {
+                                this[SemanticsProperties.Role] = SemanticsRole.Button
+                                this[SemanticsProperties.Label] = item.label
+                                if (id != null) this[SemanticsProperties.TestTag] = "$id.item.$index"
+                                if (!item.enabled) this[SemanticsProperties.Disabled] = true
+                            },
+                    ) {
+                        dropdownMenuItemContent(item, highlighted)
+                    }
                 }
             }
         }
+        clicked
     }
-    return clicked
 }
 
 context(_: Composer)
@@ -212,40 +215,42 @@ fun ShadcnDropdownMenu(
     id: String? = null,
     trigger: context(Composer) (onClick: () -> Unit) -> Unit,
 ) {
-    val anchor = remember { PopupAnchor() }
-    val keyboard = remember { MenuKeyboardState() }
-    val density = LocalDensity.current
-    Box(
-        modifier
-            .focusTarget()
-            .onKeyEvent { event ->
-                handleMenuKey(event, entries, expanded, keyboard, onExpandedChange, onItemSelected)
+    rememberGroup(ShadcnDropdownMenuGroup) {
+        val anchor = remember { PopupAnchor() }
+        val keyboard = remember { MenuKeyboardState() }
+        val density = LocalDensity.current
+        Box(
+            modifier
+                .focusTarget()
+                .onKeyEvent { event ->
+                    handleMenuKey(event, entries, expanded, keyboard, onExpandedChange, onItemSelected)
+                }
+                .popupAnchor(anchor),
+        ) {
+            trigger {
+                if (expanded) keyboard.highlightedIndex = null
+                onExpandedChange(!expanded)
             }
-            .popupAnchor(anchor),
-    ) {
-        trigger {
-            if (expanded) keyboard.highlightedIndex = null
-            onExpandedChange(!expanded)
-        }
-        if (expanded) {
-            Layer(
-                kind = LayerKind.Popup,
-                dismissOnOutsideClick = true,
-                onDismissRequest = { onExpandedChange(false) },
-                positionProvider = remember(density) {
-                    AnchoredBelowPositionProvider(anchor, (DROPDOWN_GAP.value * density).toInt())
-                },
-                measurePolicy = BoxMeasurePolicy(),
-            ) {
-                ShadcnDropdownMenu(
-                    entries,
-                    modifier = menuModifier,
-                    id = id,
-                    highlightedIndex = keyboard.highlightedIndex,
-                )?.let { selected ->
-                    onItemSelected(selected)
-                    keyboard.highlightedIndex = null
-                    onExpandedChange(false)
+            if (expanded) {
+                Layer(
+                    kind = LayerKind.Popup,
+                    dismissOnOutsideClick = true,
+                    onDismissRequest = { onExpandedChange(false) },
+                    positionProvider = remember(density) {
+                        AnchoredBelowPositionProvider(anchor, (DROPDOWN_GAP.value * density).toInt())
+                    },
+                    measurePolicy = BoxMeasurePolicy(),
+                ) {
+                    ShadcnDropdownMenu(
+                        entries,
+                        modifier = menuModifier,
+                        id = id,
+                        highlightedIndex = keyboard.highlightedIndex,
+                    )?.let { selected ->
+                        onItemSelected(selected)
+                        keyboard.highlightedIndex = null
+                        onExpandedChange(false)
+                    }
                 }
             }
         }
@@ -328,3 +333,6 @@ private const val DESTRUCTIVE_HIGHLIGHT_ALPHA = 0.1f
 
 /** `data-[disabled]:opacity-50`. */
 private const val DISABLED_ALPHA = 0.5f
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnDropdownMenuGroup
