@@ -113,7 +113,10 @@ class SceneSystemSet internal constructor(
      * Call it after the fixed steps and before the [frame] systems, which read what it places, as
      * `runProject` does; without it, bodies move in fixed-step jumps.
      */
-    fun interpolate(world: World, alpha: Float) = interpolated.forEach { it.interpolate(world, alpha) }
+    fun interpolate(world: World, alpha: Float) {
+        // By index: forEach takes an iterator, a small allocation every frame.
+        for (index in interpolated.indices) interpolated[index].interpolate(world, alpha)
+    }
 
     override fun close() = release()
 }

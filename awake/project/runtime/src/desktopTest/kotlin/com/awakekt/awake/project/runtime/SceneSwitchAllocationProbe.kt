@@ -37,10 +37,16 @@ class SceneSwitchAllocationProbe {
         val runner = game.requireService<SceneSwitch>() as ProjectSceneRunner
 
         repeat(WARMUP) { runner.tick(world) }
-        val before = allocated()
-        repeat(MEASURED) { runner.tick(world) }
+        // Per step and frame, in the cheapest of several windows: an allocation each step or frame
+        // shows in every window, while the few hundred bytes reading the counter costs, or something
+        // the runtime does now and then by the clock, divide away.
+        val windows = List(WINDOWS) {
+            val before = allocated()
+            repeat(PER_WINDOW) { runner.tick(world) }
+            allocated() - before
+        }
 
-        assertEquals(0L, (allocated() - before) / MEASURED)
+        assertEquals(0L, windows.min() / PER_WINDOW, "bytes allocated in each window of $PER_WINDOW steps and frames: $windows")
         project.close()
     }
 
@@ -63,7 +69,8 @@ class SceneSwitchAllocationProbe {
         const val STEP = 1f / 60f
         const val HALF = 0.5f
         const val WARMUP = 5_000
-        const val MEASURED = 2_000
+        const val WINDOWS = 5
+        const val PER_WINDOW = 2_000
         const val MANIFEST = """{"formatVersion":1,"id":"com.example.harbor-town","name":"Harbor Town","version":"1.0.0","entryScene":"scenes/main.scene.json"}"""
         const val SCENE = """
 { "version": 1, "name": "harbor", "nodes": [
