@@ -207,6 +207,21 @@ internal class DepthPrePassFeature(
         cascade: Int,
         content: GpuEnvironmentState? = null,
     ) {
+        // The render pass's incoming dependency states this too, and MoltenVK drops it like the
+        // outgoing one below. Without it, this pass can overwrite the layer while an earlier scene
+        // pass still samples it: the previous frame's, or the main frame's when an offscreen render
+        // (a canvas View, a readback) reuses the target.
+        VulkanImages.vkCmdMemoryBarrier(
+            commandBuffer,
+            srcStageMask = VkPipelineStageFlagBits.VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT.value or
+                VkPipelineStageFlagBits.VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT.value or
+                VkPipelineStageFlagBits.VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT.value,
+            srcAccessMask = VkAccessFlagBits.VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT.value,
+            dstStageMask = VkPipelineStageFlagBits.VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT.value or
+                VkPipelineStageFlagBits.VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT.value,
+            dstAccessMask = VkAccessFlagBits.VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT.value or
+                VkAccessFlagBits.VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT.value,
+        )
         val renderPassInfo = VkRenderPassBeginInfo(
             renderPass = depthTarget.renderPass,
             framebuffer = depthTarget.framebufferFor(cascade),
