@@ -34,7 +34,7 @@ internal interface PackedUiFontData {
      * MTSDF one (RGB carries the multi-channel distance, A a true signed distance). */
     val atlasChannels: Int get() = 1
 
-    /** Raw atlas bytes, [atlasChannels] per texel, row-major from the top-left. */
+    /** Raw atlas bytes, [atlasChannels] per texel, row-major from the top-left, as base64. */
     val encodedAtlasBase64: String
     val glyphOrder: String
     val uvBoundsPx: IntArray
@@ -51,6 +51,9 @@ internal interface PackedUiFontData {
      * [quadMetricsEm] for data generated before the split. */
     val inkMetricsEm: FloatArray get() = quadMetricsEm
     val advancesEm: FloatArray
+
+    /** The atlas bytes [encodedAtlasBase64] holds. A font baked at run time hands its bytes over instead. */
+    fun atlasBytes(): ByteArray = Base64.Default.decode(encodedAtlasBase64.filterNot(Char::isWhitespace))
 }
 
 /**
@@ -159,8 +162,7 @@ class PackedUiFont internal constructor(
     }
 
     private fun decodeAtlasPixels(): ByteArray {
-        val normalizedBase64 = data.encodedAtlasBase64.filterNot(Char::isWhitespace)
-        val decoded = Base64.Default.decode(normalizedBase64)
+        val decoded = data.atlasBytes()
         // An MTSDF atlas is already RGBA -- RGB carries the multi-channel distance the shader
         // takes a median of, A a true signed distance. Handing it back verbatim is the point;
         // rewriting RGB to white (as the coverage path must) would erase the distance field.

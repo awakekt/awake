@@ -5,8 +5,10 @@ source, one object per weight, into `awake:core:text` (`Roboto*UiFontData.kt`). 
 committed: nothing runs this at build time, so a change to the atlas is a change to those files.
 
 It reads the Roboto faces in `fonts/`, which `tools/fonts-tooling/instantiate_roboto.py` instantiates
-from the variable source. They are this generator's input only: nothing loads them at run time, so
-they live here rather than in `awake:core:text`, and games and releases do not carry them.
+from the variable source. Nothing loads them at run time, so they live here rather than in
+`awake:core:text`, and games and releases do not carry them. Besides this generator only tests read
+them: `awake:core:text` and `awake:compose:ui-testing` bake them with `UiFonts.load` and hold the
+result against the committed atlases.
 `awake:core:text` keeps `fonts/Roboto-LICENSE.txt`, since the atlases it ships are drawn from Roboto.
 
 Roboto is licensed under the SIL Open Font License 1.1, not Apache-2.0. An atlas is the font in

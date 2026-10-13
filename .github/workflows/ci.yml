@@ -198,6 +198,13 @@ jobs:
       - name: Sprite metadata, animation and scene runtime tests
         run: ./gradlew :awake:asset:sprite:desktopTest :awake:core:animation:desktopTest :awake:tilemap:desktopTest :awake:scene:scene2d:desktopTest :awake:scene:runtime:desktopTest
 
+      # The committed font atlases and the run-time TTF/OTF loader, held against them: metrics,
+      # layout, the distance field, a CFF fixture, corrupt input, and the same text drawn both ways.
+      - name: Text and run-time font loading tests
+        run: |
+          ./gradlew :awake:core:text:desktopTest
+          ./gradlew :awake:compose:ui-testing:desktopTest --tests com.awakekt.awake.compose.testing.LoadedFontRasterTest
+
       # Includes typed-query allocation probes and family lifecycle tests; compiling them alone
       # cannot catch per-frame allocations or stale wrappers after World.clear().
       - name: ECS runtime and allocation tests
@@ -435,6 +442,10 @@ jobs:
 
       - name: ECS and sprite browser tests
         run: ./gradlew :awake:ecs:wasmJsBrowserTest :awake:asset:sprite:wasmJsBrowserTest :awake:scene:scene2d:wasmJsBrowserTest
+
+      # The loader bakes a font in the browser and checks the atlas hash desktop pins: same file, same bytes.
+      - name: Font loading browser tests
+        run: ./gradlew :awake:core:text:wasmJsBrowserTest
 
       # Code that only runs in a browser: copying a fetched response into a ByteArray, and the
       # IndexedDB content cache, including a store that's full or blocked. Desktop tests can't reach it.

@@ -81,6 +81,31 @@ object UiFonts {
      * @return An MSDF-sampled [UiFont] instance.
      */
     fun msdf(cellSize: Int = 12): UiFont = MsdfFont(cellSize = cellSize)
+
+    /** The chars [load] bakes when a caller names none: the built-in atlas's own set, printable ASCII plus • · … – — × −. */
+    const val DEFAULT_CHARS: String =
+        " !\"#\$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~•·…–—×−"
+
+    /**
+     * Loads a TrueType (`.ttf`) or OpenType (`.otf`) font from its file's bytes and bakes [chars] into a
+     * distance-field atlas like the built-in Roboto's, so it draws through the same glyph shader.
+     *
+     * The glyph set is fixed here: a char outside [chars], or one the font lacks, draws as `'?'`.
+     * Kerning is not applied, as it is not for the built-in fonts. Every target bakes the same bytes from
+     * the same file. All the work happens in this call, none per frame: the default set takes tens of
+     * milliseconds on desktop, so load a font while a scene loads, not during one.
+     *
+     * @param bytes The font file.
+     * @param name Names the font in error messages.
+     * @param chars The chars to bake.
+     * @param cellSize The base cell size in pixels, as for [default].
+     * @return A [UiFont] with its own atlas.
+     * @throws IllegalArgumentException when [bytes] are not a font this reads (truncated or corrupt, a
+     *   collection, WOFF, CID-keyed or CFF2; the message names the table at fault), or when its glyphs
+     *   are too large or detailed to bake.
+     */
+    fun load(bytes: ByteArray, name: String, chars: String = DEFAULT_CHARS, cellSize: Int = 12): UiFont =
+        PackedUiFont(OpenTypeUiFontData.load(bytes, name, chars), cellSize = cellSize)
 }
 
 typealias Fonts = UiFonts
