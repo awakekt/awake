@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.1] - 2026-10-13
+
+### Fixed
+
+- **Jolt physics starts on every arm64 Linux CPU.** The bundled jolt-jni 5.2.0 Linux arm64 native was compiled for SVE2. On CPUs without it, such as Apple silicon under Docker Desktop, Graviton2, Graviton3 and Ampere Altra, it died with SIGILL in `JPH::CollisionDispatch::sInit` at physics init. jolt-jni is now 6.1.1, whose native uses no SVE. A test reads the bundled native's code and fails if an SVE instruction comes back.
+
 ## [0.11.0] - 2026-10-13
 
 ### Added
