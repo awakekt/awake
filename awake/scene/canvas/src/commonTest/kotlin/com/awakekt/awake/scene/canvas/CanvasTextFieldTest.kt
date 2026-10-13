@@ -10,12 +10,16 @@ import com.awakekt.awake.compose.ui.input.key.KeyEventType
 import com.awakekt.awake.compose.ui.platform.ComposeHost
 import com.awakekt.awake.compose.ui.platform.FrameInput
 import com.awakekt.awake.compose.ui.platform.FrameOutput
+import com.awakekt.awake.compose.ui.semantics.SemanticsNode
+import com.awakekt.awake.compose.ui.semantics.SemanticsProperties
+import com.awakekt.awake.core.graphics2d.DrawCommand
 import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.input.TextEditAction
 import com.awakekt.awake.ecs.World
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -154,6 +158,65 @@ class CanvasTextFieldTest {
         assertNull(field.consumeSubmit(), "Escape must not submit")
         val released = frame()
         assertFalse(released.ownership.isTextInputFocused, "focus must be released by the frame after Escape")
+    }
+
+    @Test
+    fun aMaskedFieldDrawsTheSameForAnyTextOfOneLength() {
+        fun glyphs(text: String, mask: String) = CanvasTextFieldTest().run {
+            textField { this.text = text; this.mask = mask }
+            frame().primitives.filterIsInstance<DrawCommand.Glyph>()
+        }
+
+        assertTrue(glyphs("abcd", "*").isNotEmpty(), "the masked field drew nothing")
+        assertEquals(glyphs("abcd", "*"), glyphs("wxyz", "*"))
+        assertNotEquals(glyphs("abcd", ""), glyphs("wxyz", ""), "without a mask the two texts must draw apart")
+    }
+
+    @Test
+    fun clearingTheMaskShowsThePassword() {
+        val field = textField { text = "abcd"; mask = "*" }
+        val masked = frame().primitives.filterIsInstance<DrawCommand.Glyph>()
+
+        field.mask = ""
+        val shown = frame().primitives.filterIsInstance<DrawCommand.Glyph>()
+
+        assertNotEquals(masked, shown)
+        assertEquals("abcd", field.text)
+    }
+
+    @Test
+    fun aMaskedFieldIsAPasswordToAccessibility() {
+        fun flatten(nodes: List<SemanticsNode>): List<SemanticsNode> = nodes.flatMap { listOf(it) + flatten(it.children) }
+        val field = textField { mask = "*" }
+
+        fun passwords() = flatten(frame().semantics).count { it.config[SemanticsProperties.Password] == true }
+
+        assertEquals(1, passwords())
+        field.mask = ""
+        assertEquals(0, passwords(), "a plain field was announced as a password")
+    }
+
+    @Test
+    fun copyFromAMaskedFieldYieldsNothing() {
+        val field = textField { text = "secret"; mask = "*" }
+        field.focus()
+        field.textFieldState.selectAll()
+
+        assertNull(host.copyFocusedSelection())
+        field.mask = ""
+        frame()
+        assertEquals("secret", host.copyFocusedSelection(), "a plain field must still copy")
+    }
+
+    @Test
+    fun theArrowKeysMoveTheCaretInAMaskedField() {
+        val field = textField { mask = "*" }
+        field.focus()
+        frame(typedText = "abcd")
+
+        frame(editActions = listOf(TextEditAction.ArrowLeft, TextEditAction.ArrowLeft))
+
+        assertEquals(2, field.textFieldState.cursor)
     }
 
     private companion object {

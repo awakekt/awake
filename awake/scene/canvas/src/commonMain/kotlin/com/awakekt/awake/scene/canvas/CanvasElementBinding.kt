@@ -60,6 +60,7 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         it.dropTarget = dropTarget
         it.camera = camera
         it.links = links
+        it.mask = mask
     }
 
     /**
@@ -98,5 +99,6 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         dropTarget = dropTarget,
         camera = camera,
         links = links,
+        mask = mask,
     )
 }

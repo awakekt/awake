@@ -128,6 +128,26 @@ class SceneCanvasBaselineTest {
             .primitives.assertMatchesBaseline("scene-canvas-text-field", 232, 84, font = UiFonts.default())
     }
 
+    /** A focused password field typed into: one mask a character, the caret after the last. */
+    @Test
+    fun aPasswordFieldTypedInto() {
+        val world = World()
+        val field = CanvasElement().apply {
+            kind = CanvasElementKind.TextField; offsetX = 16f; offsetY = 16f; width = 200f; height = 20f
+            fontSize = 14f; background = "#00000080"; mask = "*"
+            style = CanvasStyle(borderWidth = 1f, borderColor = "#FFFFFF60")
+        }
+        world.add(world.create(), field)
+        val host = ComposeHost()
+        fun frame(typed: String = "") = host.frame(FrameInput(232, 52, typedText = typed)) { SceneCanvas(world) }
+        frame()
+        field.focused = true
+        frame()
+
+        frame(typed = "open sesame")
+            .primitives.assertMatchesBaseline("scene-canvas-password-field", 232, 52, font = UiFonts.default())
+    }
+
     @Test
     fun aMarkerFramingATargetAndANamePlateAboveIt() {
         val world = World()

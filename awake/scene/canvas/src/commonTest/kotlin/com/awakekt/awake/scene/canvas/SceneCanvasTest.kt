@@ -226,6 +226,7 @@ class SceneCanvasTest {
             draggable = true,
             dropTarget = true,
             camera = "Portrait Camera",
+            mask = "*",
             style = CanvasStyle(
                 background = "#202020",
                 gradient = CanvasGradient("#303030", "#101010", horizontal = true),
@@ -722,6 +723,15 @@ class SceneCanvasTest {
 
         assertEquals(3, issues.size)
         assertTrue(SceneCanvasElement().validate("nodes[0]").isEmpty())
+    }
+
+    @Test
+    fun validationRejectsAMaskOfMoreThanOneCharacterOrOffATextField() {
+        fun issues(kind: CanvasElementKind, mask: String) = SceneCanvasElement(kind = kind, mask = mask).validate("n").map { it.message }
+
+        assertEquals(listOf("canvas_element.mask must be one character"), issues(CanvasElementKind.TextField, "**"))
+        assertEquals(listOf("canvas_element.mask only masks a TextField"), issues(CanvasElementKind.Text, "*"))
+        assertEquals(emptyList(), issues(CanvasElementKind.TextField, "*"))
     }
 }
 
