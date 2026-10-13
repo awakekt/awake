@@ -165,9 +165,16 @@ class CanvasViewParityTest {
         }
     }
 
-    /** Ground in the cube's shadow: darker than the lit ground, brighter than the cleared background. */
-    private fun ByteArray.shadowPixels(): Int = (0 until HEIGHT).sumOf { y ->
-        (0 until WIDTH).count { x -> !inBox(x, y) && luma(x, y) in SHADOW_FLOOR..SHADOW_CEILING }
+    /**
+     * Ground in the cube's shadow: darker than the cube's faces (luma 140) and the lit ground (225),
+     * brighter than the cleared background (0). A pixel with background beside it is the ground's
+     * anti-aliased edge, which passes through the same range.
+     */
+    private fun ByteArray.shadowPixels(): Int = (1 until HEIGHT - 1).sumOf { y ->
+        (1 until WIDTH - 1).count { x ->
+            !inBox(x, y) && luma(x, y) in SHADOW_FLOOR..SHADOW_CEILING &&
+                listOf(x - 1 to y, x + 1 to y, x to y - 1, x to y + 1).all { (nx, ny) -> luma(nx, ny) > SHADOW_FLOOR }
+        }
     }
 
     private fun ByteArray.luma(x: Int, y: Int): Int = (0..2).sumOf { channel(x, y, it) } / 3
@@ -259,8 +266,8 @@ class CanvasViewParityTest {
         const val BYTE = 0xFF
         const val REPORT_DIR = "build/reports/render-parity"
         const val GROUND = 12f
-        const val SHADOW_FLOOR = 10
-        const val SHADOW_CEILING = 100
-        const val MIN_SHADOW = 200
+        const val SHADOW_FLOOR = 40
+        const val SHADOW_CEILING = 110
+        const val MIN_SHADOW = 100
     }
 }
