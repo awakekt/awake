@@ -7,6 +7,110 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-10-14
+
+### Added
+
+- **A canvas element can draw in a project font or a built-in family.** `canvas_element` and
+  `CanvasElement` gain `font: String = ""`: a `.ttf` or `.otf` path from the project's root, or the
+  built-in `default` (Roboto) or `bitmap`. A Text, TextField or Button draws its words in it.
+  `loadProject` loads each file once with a renderer and none without; `loadCanvasFonts` loads them
+  for a host of its own, `SceneCanvas` takes them as `fonts`, and `SceneAppLifecycleRuntime` keeps
+  them in `canvasFonts`. A file that cannot be read or is not a font is logged once, and its elements
+  draw in the default font. Another family name, or a path with another extension, is reported.
+- **Text in several fonts draws in one UI frame.** `UiDrawPrimitive.Glyph` carries the `font` whose atlas its UVs index, and `Text` and `BasicTextField` fill it from the font they measured with. Vulkan, WebGPU and the offscreen path split a glyph batch where the font changes, in paint order, and bind that font's atlas; each atlas is uploaded once and kept, keyed by font identity, until the renderer is destroyed. `drawUi(primitives, font)` keeps its signature: `font` is the default for glyphs that carry none. `DrawScope.drawGlyph` takes an optional `font`, and `DrawRunRecorder` gains `bindGlyphFont`. Each backend's `UiRenderPipeline` no longer holds a font: `writeFontInfo`, Vulkan's `fixedTexture` and WebGPU's `font` parameter are gone.
+- **Load a TrueType or OpenType font at run time.** `UiFonts.load(bytes, name, chars, cellSize)` reads
+  a `.ttf` (`glyf`, composite glyphs included) or `.otf` (CFF Type 2 charstrings with their
+  subroutines) and bakes `chars`, by default `UiFonts.DEFAULT_CHARS`, the built-in atlas's own set, into
+  a distance-field atlas laid out like the built-in Roboto's, so the glyph shader draws it unchanged.
+  It is pure Kotlin: desktop, Android, iOS and the browser bake the same bytes from the same file, and
+  no display is needed. A char the font lacks draws as `?`. Truncated, corrupt or unsupported files
+  (collections, WOFF, CID-keyed CFF, CFF2) throw an `IllegalArgumentException` that names the table.
+- **`TextStyle` carries the font `Text` and `BasicTextField` measure and draw with.** A null `font`
+  inherits `LocalFont`, same as before. `Text`, `BasicTextField`'s glyphs, its caret, its selection
+  and its masked-password path all measure and paint through the resolved `style.font ?: LocalFont.current`,
+  so two text nodes in one frame can each use a different font. `UiFonts.bitmap()`, `trueSans()` and
+  `msdf()` are now memoized per cell size, matching `default()`, so a `TextStyle` built fresh every
+  frame does not re-upload its atlas every frame.
+- **A plugin archive can be signed and checked against its publisher.** `PluginManifest` gains a
+  reverse-domain `publisher` id, validated separately from the free-text `author`. The plugin
+  template's `awakePlugin` task signs the archive's canonical digest (every entry except
+  `signature.sig`, sorted by name) with `SHA256withRSA` when `AWAKE_PLUGIN_SIGNING_KEY` (PEM or
+  base64 PKCS#8, never from the repository) or `-Pawake.plugin.signingKey` is set, and writes
+  `signature.sig` into the archive; with no key it still packages, unsigned, and says so. The
+  editor contract's new `PluginArchiveVerifier.verify` checks that signature in pure Kotlin
+  (`com.ionspin.kotlin:bignum` for the RSA public-key operation), so any host can check a plugin on
+  every Awake target, including wasmJs and iOS, without a platform crypto provider.
+- **Blueprints drive game UI.** Three nodes join the ones `BlueprintSystem` registers, so a menu or
+  a HUD reacts to its buttons without code: On Button Pressed (`event.button.pressed`) fires once for
+  each press of the Button whose `Name` is its `name`, or of the blueprint's own Button, and gives the
+  pressed `element`; Set Text (`ui.set-text`) and Set Visible (`ui.set-visible`) change a
+  `canvas_element`'s `text` and `visible`, found by a wired `target`, by `name`, or as the
+  blueprint's own. `CanvasElement.presses` counts a Button's taps and takes none, so a blueprint takes
+  no tap from the Button's `action` or from a system calling `consumePress()`.
+  `BlueprintInterpreter.fire` takes an `EventFilter`, which runs only the event nodes whose own inputs
+  it accepts.
+- **A host that draws the scene canvas itself gets the runtime's projector and views.** A host
+  that turns `SceneAppLifecycleRuntime.drawsSceneCanvas` off to draw `SceneCanvas` in part of its
+  window, such as an editor's game view, could not pass a `projector` or `views`, so its followers
+  never drew and its Views showed only their style. `canvasProjector(world)` and
+  `canvasViews(world)` now hand it the runtime's own, for the runtime's world by default or for
+  another world its render system draws, such as a Play world. The runtime still renders every
+  View picture before the frame's UI, frees one nothing draws, and frees all of them on `dispose`.
+  `SceneCanvas` now places a follower by where its own box sits in the window, so one drawn over
+  part of it lands on the node rather than offset by the box's corner; `CanvasProjector` reports
+  the window's pixels, as before for a canvas that fills it.
+- **A played project switches to another of its scenes.** A project run by `runProject` can leave its entry scene for any other scene in its files, as a menu's Play button or a level's exit does: a system asks with `SceneHostServices.sceneSwitch?.request("scenes/level-2.scene.json")`, the app through its `SceneSwitch` service, and a blueprint with the new Load Scene node (`scene.load`, input `scene`), which `BlueprintCapability` connects to the switch. The next scene loads off the frame thread the way `loadProject` loads the entry scene (decoded and checked, its models, capability content and physics world made) while the old one plays on, then takes its place at the start of the next fixed step or frame, never inside a system's update. The old scene's systems close, its sounds stop, its spawned nodes despawn, every entity in the world goes, its meshes are given back and its physics world is destroyed; nothing of it carries across. A scene that can't be loaded or drawn is logged once and the old one plays on. `LoadedProject.scene` is the scene playing now and `close()` closes it. Where nothing switches scenes, such as an editor playing one scene, Load Scene warns once and carries on; a host that runs the systems itself passes its own switch with `SceneHostServices.withSceneSwitch`.
+
+### Fixed
+
+- **A played project's fixed-step interpolation no longer allocates every frame.** `SceneSystemSet.interpolate` walked its systems with `forEach`, which takes an iterator, 32 bytes each frame in every game that `runProject` plays. It walks them by index now.
+- **A headless `loadProject` no longer reads render models.** `loadProject(..., hasRenderer = false)` still preloaded every `mesh_renderer` glTF, textures decoded included, so a host with no renderer, such as a consumer pack's game server, read megabytes of render models it never drew. The preload now runs only with `hasRenderer = true`; a collision shape's model still loads through its capability either way.
+- **The web Jolt backend no longer runs its fixed heap out with `Aborted(OOM)`.** JoltPhysics.js has a fixed 128 MiB heap, and most calls into it left their temporary vectors, body ids, filters and query objects on that heap. A shape cast kept about 200 bytes and a velocity read 16 bytes. A consumer pack that makes about 1,900 casts and 1,200 velocity reads a step filled the heap in about 200 steps after loading, and the page aborted. Every call now frees what it makes, and destroying a world frees its contact listener too.
+- **A character standing still on the ground no longer sweeps every step.** `KinematicCharacterController.move` probed for ground on every call, so each standing character cost one shape cast per fixed step. Grounded, asked to move less than a sweep is worth, on a body that is not active, it now keeps its ground state and makes no sweep; ground that starts moving, such as a lift setting off, is active and is probed again. In a consumer pack's region of 1,245 characters, a fixed step went from 1,270 casts to 33, and its web frame from about 100 ms to about 68 ms. Ground destroyed under a character that stands still holds it up until it moves.
+- **The web Jolt backend's queries build their filters and settings once per world.** A `shapeCast` made and freed 13 Jolt objects on every call, a `raycast` 9 and an `overlapShape` 11. The unit scale, zero offset, settings, collectors, layer, broadphase, body and shape filters and scratch vectors are now built with the world and freed with it, and a query makes only its shape and its cast. A capsule sweep against a floor went from about 5 µs to about 2.4 µs in Node, and a consumer pack's web frame at about 6,300 sweeps a frame from p50 93.5 ms to 81.7 ms.
+- **Every shadcn component, and `BasicTextField`, keeps its own `remember` state.** These components remembered in their caller's node, so one that came or went beside another could hand over its state. Each now holds its state in a `rememberGroup` of its own:
+  - the remaining shadcn components, 51 functions;
+  - foundation's `BasicTextField`, `rememberStyleState`, `animateFloat` and `rememberLoopingPhase`;
+  - `SubcomposeLayout`.
+- **A `remember` call no longer gets another call's value when a call before it comes or goes.** `remember` slots are positional within a node, so a branch or list item that remembered and then went away shifted every slot after it. A value of another type then threw `ClassCastException` (Studio's inspector hit `InteractionSource cannot be cast to TextFieldState`), and one of the same type silently moved to the wrong call.
+  - `key(value) { }` now also gives its block's `remember` calls a slot group of their own, found by key. A keyed branch or list item keeps its state as it comes, goes or moves, and the calls after it keep theirs.
+  - New `rememberGroup(key) { }` gives a component's own state such a group without changing node identity. `ShadcnText`, `ShadcnInput`, `ShadcnButton`, `ShadcnSwitch` and `ShadcnDropdownMenu` use it.
+  - A slot holding a value of another type is recomputed rather than cast. `remember` is now `inline` with a reified type for that check, so code compiled against an earlier Core must be recompiled.
+- **A desktop app can start on Windows and Linux, not only macOS.** The published
+  `shader-compiler-desktop` jar carried `libawake_naga` for `macos-arm64` alone in every
+  0.6.0-0.11.1 release, because the one job that built it ran on a single macOS host and nothing
+  else fed it the other platforms. `VulkanShaderResolver` compiles every WGSL shader through it at
+  startup, so a Windows or Linux app threw `Native Naga library 'awake_naga' not found` before its
+  first frame. A `naga-desktop` matrix now builds the library on macOS, Linux and Windows and the
+  publish jobs collect all three before the jar is packaged, and `verifyNagaDesktopNatives` fails
+  the build if one goes missing again.
+- **A canvas element can sit left of or above centre.** Every negative `offsetX` and `offsetY` was
+  clamped to 0, so on a centred axis (`TopCenter`, `Center`, `BottomCenter` across, `CenterLeft`,
+  `Center`, `CenterRight` down) an element could only move right of or below the centre. A
+  negative offset there now moves it that far left or up, its hit area with it. At an edge a
+  negative offset is still held at the edge, and the scene format is unchanged.
+- **A canvas drawn over part of the window reports its elements' boxes from its own corner.** In a
+  host's view, such as an editor's game view, `CanvasElement.screenBounds` was measured from the
+  window's corner rather than the canvas's, as its documentation says, so a dragged element's ghost
+  drew that far past the pointer, `droppedOutside` reported a point that far off, and a tooltip a
+  system placed beside a hovered element landed that far away. Each is now in canvas units from the
+  canvas's own top-left, the same as a canvas filling the window, which nothing changes for. A host
+  that added its view's corner to compare a pointer with `screenBounds` no longer adds it.
+- **A canvas Button's hover and press pictures load.** `loadCanvasImages`, `checkCanvasImages` and
+  `hasCanvasImages` read only `style.image` and `style.fillImage`, so a Button whose
+  `style.hovered.image` or `style.pressed.image` named a file of its own drew its state without
+  that picture. They now read both states' images too, each file once.
+- **A wired target that finds no one makes a blueprint node do nothing.** Destroy, Play Animation,
+  Set Text and Set Visible fell back to the blueprint's own entity whenever their `target` held no
+  entity, so a wired Find By Name with a mistyped name destroyed, animated or changed the blueprint's
+  own entity or element instead. Only a `target` with nothing wired to it now means the blueprint's own
+  entity; a wired one that gives no entity, such as a Find By Name that found no one or a sensor body
+  no entity owns, makes the node do nothing, and it warns once rather than every time it runs. Set
+  Text and Set Visible no longer fall back to their `name` then either. A node tells the two apart
+  with `BlueprintContext.isWired`, and says why it did nothing with `BlueprintContext.warnOnce`.
+- **The WebGPU backend prepares a frame's draws about four times faster on the web.** Each draw's uniform block crossed from wasm into JS one float at a time, so a consumer pack's web frame of about 4,900 draws spent 32 to 35 ms in draw preparation. The blocks are now staged in one reused array and written before the frame records: one copy into wasm memory, then one write per buffer. In Chrome on a Mac, preparing and uploading 4,900 distinct lit and textured draws went from about 60 ms to about 14 ms a frame.
+
 ## [0.11.1] - 2026-10-13
 
 ### Fixed
