@@ -38,16 +38,20 @@ internal const val FRAMES_IN_FLIGHT = 1
  *
  * **This is wgpu-native, not a browser.** Canvas sizing, JS interop and wasm memory stay uncovered,
  * so a parity pass here does not promise the web build looks the same.
+ *
+ * [onUncapturedError] hears every WebGPU validation error; by default they are only printed.
  */
-fun webGpuHeadlessUi(): HeadlessRenderSession = runBlocking {
+fun webGpuHeadlessUi(
+    onUncapturedError: (String) -> Unit = { println("WGPU UNCAPTURED: $it") },
+): HeadlessRenderSession = runBlocking {
     val context = glfwContextRenderer(
         width = 1,
         height = 1,
         title = "awake-render-parity",
-        onUncapturedError = { error -> println("WGPU UNCAPTURED: $error") },
+        onUncapturedError = { error -> onUncapturedError("$error") },
     )
     val graphicsDevice = GraphicsDevice()
-    graphicsDevice.create(context.wgpuContext.withGpuTiming { error -> println("WGPU UNCAPTURED: $error") })
+    graphicsDevice.create(context.wgpuContext.withGpuTiming { error -> onUncapturedError("$error") })
     val swapchainManager = SwapchainManager(graphicsDevice, FRAMES_IN_FLIGHT)
     swapchainManager.create()
     val scenePipeline = RenderPipeline(

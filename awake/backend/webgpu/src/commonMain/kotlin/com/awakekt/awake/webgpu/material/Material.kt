@@ -12,6 +12,7 @@ import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.fastArrayBufferOf
 import com.awakekt.awake.webgpu.pipeline.WebGpuBindGroupHandle
 import com.awakekt.awake.webgpu.pipeline.WebGpuPipelineHandle
+import com.awakekt.awake.webgpu.texture.OffscreenRenderTarget
 import com.awakekt.awake.webgpu.texture.Texture
 import com.awakekt.awake.webgpu.writeBufferData
 import io.ygdrasil.webgpu.BindGroupDescriptor
@@ -63,6 +64,16 @@ class Material(
     /** The sampler paired with [previewTextureView], with the same lifetime and `null` rules. */
     var previewSampler: GPUSampler? = null
         private set
+
+    /** The render target [previewTextureView] shows, if this material was built from one. */
+    internal var sourceTarget: OffscreenRenderTarget? = null
+
+    /**
+     * Whether a UI pass can still sample this material: neither it nor its render target has been
+     * destroyed. UI staged by `drawUi` is recorded at the next `draw`, so either can go in between.
+     */
+    internal val isSampleable: Boolean
+        get() = previewTextureView != null && sourceTarget?.isDestroyed != true
 
     private var texture: Texture? = null
     private var pbrTextures: List<Texture> = emptyList()
@@ -198,6 +209,7 @@ class Material(
     override fun destroy() {
         previewTextureView = null
         previewSampler = null
+        sourceTarget = null
         uniformBuffer?.close()
         uniformBuffer = null
         bindGroups.clear()

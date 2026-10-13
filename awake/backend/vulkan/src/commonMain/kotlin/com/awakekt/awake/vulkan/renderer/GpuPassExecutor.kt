@@ -43,6 +43,8 @@ internal class RendererGpuPassExecutor(
             sceneViewport = input.viewport,
             passInput = input,
         )
+        // Staged UI is one frame's: a frame that stages none draws none, not the last one again.
+        renderer.uiRuns = emptyList()
         renderer.submitAndPresent(currentFrame, imageIndex)
     }
 

@@ -147,6 +147,7 @@ interface Renderer : GpuDevice {
 
     /** Draws this frame's UI overlay on top of whatever [draw] already wrote -- a separate
      * method (not folded into [draw]) so the 3D `Lens`+draw command contract stays untouched.
+     * The next [draw] uses it up: a frame that stages no UI draws none, not the last one again.
      * Each backend composites this as a second render pass with `loadOp = LOAD`, after the
      * 3D pass, in the same frame. [font] is only needed the first time a caller draws glyph
      * primitives -- both the (colored-quad) UI pipeline and the glyph pipeline are built

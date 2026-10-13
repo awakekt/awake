@@ -44,6 +44,7 @@ internal fun Renderer.performCreateMaterial(
         val offscreen = renderTarget as OffscreenRenderTarget
         val sampler = graphicsDevice.wgpuContext.device.createSampler(SamplerDescriptor())
         material.createResourcesFromRenderTarget(offscreen.colorView, sampler)
+        material.sourceTarget = offscreen
     } else if (texture != null) {
         // Every map gets a texture, a neutral one where the material has none, as on Vulkan: a textured
         // pipeline's declaration binds all four, so a glTF material with only a base colour must still fill them.
