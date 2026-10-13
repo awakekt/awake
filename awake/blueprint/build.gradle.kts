@@ -20,6 +20,8 @@ kotlin {
         commonMain.dependencies {
             api(project(":awake:node-graph"))
             api(project(":awake:ecs"))
+            // A node that cannot do what it is wired to do says so once.
+            implementation(project(":awake:core:logging"))
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

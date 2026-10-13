@@ -18,6 +18,7 @@ public final class com/awakekt/awake/blueprint/BlueprintContext {
 	public final fun float (Ljava/lang/String;)F
 	public final fun getOwner-LaMO_uA ()J
 	public final fun int (Ljava/lang/String;)I
+	public final fun isWired (Ljava/lang/String;)Z
 	public final fun setBool (Ljava/lang/String;Z)V
 	public final fun setEntity-Fr3QF18 (Ljava/lang/String;J)V
 	public final fun setFloat (Ljava/lang/String;F)V
@@ -26,6 +27,7 @@ public final class com/awakekt/awake/blueprint/BlueprintContext {
 	public final fun setString (Ljava/lang/String;Ljava/lang/String;)V
 	public final fun stateFloat (I)F
 	public final fun string (Ljava/lang/String;)Ljava/lang/String;
+	public final fun warnOnce (Ljava/lang/String;)V
 }
 
 public final class com/awakekt/awake/blueprint/BlueprintGraphKind : com/awakekt/awake/nodegraph/GraphKind {

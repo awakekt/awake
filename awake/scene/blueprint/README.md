@@ -44,7 +44,9 @@ fires. Entity variables cannot be set from JSON.
 | Set Text | `ui.set-text` | Sets a canvas element's `text`: a Text's words, a Button's label, a TextField's content. Presentation |
 | Set Visible | `ui.set-visible` | Shows or hides a canvas element and what is inside it. Presentation |
 
-A `target` input with nothing wired to it means the blueprint's own entity.
+A `target` input with nothing wired to it means the blueprint's own entity. A wired `target` that
+gives no entity, such as a Find By Name that found no one, makes the node do nothing: it never falls
+back to the blueprint's own entity, and it warns once rather than every time it runs.
 
 ## Game UI
 
@@ -56,8 +58,8 @@ On Button Pressed (name: Play) -> Set Text (name: Title, text: Loading) -> Set V
 ```
 
 - **Which element.** Set Text and Set Visible act on the `target` wired to them, else the element
-  whose `Name` is `name`, else the blueprint's own entity's. A name that matches no element is
-  skipped. On Button Pressed listens to its `name` the same way, or to its own entity's Button.
+  whose `Name` is `name`, else the blueprint's own entity's. A wired `target` that gives no entity,
+  and a name that matches no element, are skipped. On Button Pressed listens to its `name` the same way, or to its own entity's Button.
 - **Presses.** Each fixed step, after the sensor events, On Button Pressed fires once for each press
   since the last step, however many steps a frame runs. It counts `CanvasElement.presses` and takes
   nothing: a Button's `action`, or a game system calling `consumePress()`, sees the press as it would

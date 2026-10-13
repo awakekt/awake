@@ -28,6 +28,7 @@ import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class BlueprintSystemTest {
@@ -72,10 +73,25 @@ class BlueprintSystemTest {
         val self = blueprint("vanish")
         val bystander = world.create()
 
-        step()
+        val warnings = blueprintWarnings { step() }
 
         assertFalse(world.isAlive(self))
         assertTrue(world.isAlive(bystander))
+        assertEquals(emptyList(), warnings)
+    }
+
+    @Test
+    fun destroyWithAFindByNameThatFindsNoOneDestroysNothingAndWarnsOnce() {
+        graphs["typo"] = everyStep("entity.destroy", find = "crat")
+        val crate = world.create().also { world.add(it, Name("crate")) }
+        val self = blueprint("typo")
+
+        val warnings = blueprintWarnings { assertEquals(RUNS, runs(system, world, self, "act", RUNS), "Destroy ran every step") }
+
+        assertTrue(world.isAlive(self), "a wire that found no one is not the blueprint's own entity")
+        assertTrue(world.isAlive(crate))
+        assertEquals(1, warnings.size, "one warning, not one a step: $warnings")
+        assertContains(warnings.single(), "'act' (Destroy)")
     }
 
     @Test
@@ -141,6 +157,19 @@ class BlueprintSystemTest {
     }
 
     @Test
+    fun playAnimationWithAFindByNameThatFindsNoOnePlaysNothingAndWarnsOnce() {
+        graphs["typo"] = everyStep("animation.play", find = "hero", "clip" to "wave")
+        val self = blueprint("typo")
+        val player = animated(self, "wave")
+
+        val warnings = blueprintWarnings { assertEquals(RUNS, runs(system, world, self, "act", RUNS), "Play Animation ran every step") }
+
+        assertNull(player.activeClipId, "a wire that found no one is not the blueprint's own entity")
+        assertEquals(1, warnings.size, "one warning, not one a step: $warnings")
+        assertContains(warnings.single(), "'act' (Play Animation)")
+    }
+
+    @Test
     fun reloadSwapsTheGraphKeepingVariablesWithoutRestarting() {
         graphs["door"] = graph {
             node("start", "event.start")
@@ -186,6 +215,10 @@ class BlueprintSystemTest {
         val player = AnimationPlayer(library)
         world.add(entity, Animator(player, Skin(joints = listOf(0), inverseBindMatrices = listOf(Mat4()))))
         return player
+    }
+
+    private companion object {
+        const val RUNS = 4
     }
 
     private fun clip(name: String) = AnimationClip(

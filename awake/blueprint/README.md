@@ -36,6 +36,10 @@ object PlaySound : ActionNode {
 - Keep `Step.Continue` instances in the node, so returning one allocates nothing.
 - Registering a node makes each data input settable on the node, which is how an unwired input gets
   its value.
+- `ctx.isWired(input)` tells a wire that gave nothing, such as a Find By Name that found no one, from
+  no wire, so a node falls back to a default only when nothing is wired.
+- `ctx.warnOnce(message)` warns the first time a node of an instance cannot do what it is wired to
+  do, naming the node and the owner, and never again until a reload.
 - `Effect.Presentation` marks nodes a server skips.
 
 ## Running a graph

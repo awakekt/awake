@@ -38,6 +38,30 @@ internal class Log(
     }
 }
 
+/**
+ * Appends what its `target` is to [log]: `self` when nothing is wired to it, the entity's id when a
+ * wire gives one, and `none`, warning once, when a wire gives no entity.
+ */
+internal class Aim(val log: MutableList<String>) : ActionNode {
+    private val then = Step.Continue("then")
+    override val spec = NodeSpec(
+        type = "test.aim",
+        displayName = "Aim",
+        inputs = listOf(PortSpec("exec", EXEC, multiple = true), PortSpec("target", ENTITY)),
+        outputs = listOf(PortSpec("then", EXEC)),
+    )
+
+    override fun run(ctx: BlueprintContext): Step {
+        val target = ctx.entity("target")
+        log += when {
+            !ctx.isWired("target") -> "self"
+            target == NoEntity -> "none".also { ctx.warnOnce("no target") }
+            else -> "${target.id}"
+        }
+        return then
+    }
+}
+
 /** Outputs a constant and counts how often it is evaluated. */
 internal class Counted : PureNode {
     var evaluations = 0
