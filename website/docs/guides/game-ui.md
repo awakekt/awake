@@ -60,6 +60,7 @@ For a button the player holds down, read `isHeld` instead. For a joystick, read 
 | `height` | number (dp) | `40` | Element height. |
 | `text` | string | `""` | A `Text` element's content, a `Button`'s label, or what is typed into a `TextField`. Typing writes it; a system writing it replaces the field's content, caret at the end. |
 | `fontSize` | number (sp) | `18` | Size of `text`. |
+| `mask` | string | `""` | A `TextField`'s password mask: one character drawn for each typed one. Empty shows the text. |
 | `textAlign` | one of the nine anchor points | none | Where the text sits in the element. None keeps a `Text` at its top-left and a `Button`'s label centred. |
 | `follow` | string | `""` | A node to follow on screen. See [Follow a node](#follow-a-node). |
 | `followOffset` | vector | `{x: 0, y: 0, z: 0}` | A world-space offset from the followed node. |
@@ -341,6 +342,10 @@ frees it (`consumeSubmit()`), and Escape frees it without submitting. A system s
 move the keyboard to or from it in code -- a chat window opening, say -- and reads it back for
 whatever a click or a key already changed it to. The Enter a system reads to open the field this
 way does not also submit it, even though the system and the field both see that same frame's Enter.
+Give a `TextField` a one-character `mask`, such as `"*"`, to make it a password field: it draws
+the mask once for each typed character while `text` keeps what was typed, refuses copy and cut, and
+reads as a password to accessibility services and the platform keyboard. Set `mask` back to `""` to
+show the password.
 
 A `Joystick` knob follows a drag up to the pad's edge and springs back on release. A `touchOnly`
 element is drawn only when `SceneCanvas(world, showTouchControls = true)` is called, or when

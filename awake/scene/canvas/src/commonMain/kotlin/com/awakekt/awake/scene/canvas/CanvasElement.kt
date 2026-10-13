@@ -181,6 +181,14 @@ class CanvasElement {
      */
     var links: Boolean = true
 
+    /**
+     * A TextField's password mask: one character drawn for each typed one; empty draws the text.
+     *
+     * A masked field keeps [text] as typed, refuses copy and cut, and reads as a password to an
+     * accessibility service and the platform keyboard. Clearing it shows the password.
+     */
+    var mask: String = ""
+
     private var wheelAccumulated = 0f
 
     /** Adds to the wheel collected since the last [consumeWheel]; [SceneCanvas] calls this. */

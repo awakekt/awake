@@ -59,6 +59,8 @@ import kotlinx.serialization.Serializable
  * shows none.
  * @property links Whether a Text element's `[[key|shown words]]` spans draw as links; false draws
  * them as typed and reports no key from a click, for text a game cannot trust such as player chat.
+ * @property mask A TextField's password mask: one character drawn for each typed one, such as `*`;
+ * empty draws the text as typed.
  */
 @Serializable
 @SerialName("canvas_element")
@@ -93,6 +95,7 @@ data class SceneCanvasElement(
     val dropTarget: Boolean = false,
     val camera: String = "",
     val links: Boolean = true,
+    val mask: String = "",
 ) : SceneComponent {
     /**
      * Validates element dimensions, font sizes, values, and hex color syntax.
@@ -111,6 +114,10 @@ data class SceneCanvasElement(
         layout?.problems()?.forEach { add(SceneValidationIssue(path, "canvas_element.layout.$it")) }
         if (grow < 0f) add(SceneValidationIssue(path, "canvas_element.grow must not be negative"))
         bind?.problems()?.forEach { add(SceneValidationIssue(path, "canvas_element.bind.$it")) }
+        if (mask.length > 1) add(SceneValidationIssue(path, "canvas_element.mask must be one character"))
+        if (mask.isNotEmpty() && kind != CanvasElementKind.TextField) {
+            add(SceneValidationIssue(path, "canvas_element.mask only masks a TextField"))
+        }
     }
 }
 

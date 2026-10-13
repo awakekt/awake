@@ -130,6 +130,7 @@ internal fun TextFieldView(
                 },
             style = textStyle,
             singleLine = true,
+            mask = element.mask.firstOrNull(),
             onSubmit = { if (!justFocused) element.submit() },
         )
         Children(element, children, tree)
