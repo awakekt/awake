@@ -1,4 +1,0 @@
-- **Every shadcn component, and `BasicTextField`, keeps its own `remember` state.** These components remembered in their caller's node, so one that came or went beside another could hand over its state. Each now holds its state in a `rememberGroup` of its own:
-  - the remaining shadcn components, 51 functions;
-  - foundation's `BasicTextField`, `rememberStyleState`, `animateFloat` and `rememberLoopingPhase`;
-  - `SubcomposeLayout`.
