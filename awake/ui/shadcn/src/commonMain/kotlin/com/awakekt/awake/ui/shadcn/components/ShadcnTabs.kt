@@ -22,6 +22,7 @@ import com.awakekt.awake.compose.foundation.layout.padding
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.key
 import com.awakekt.awake.compose.runtime.remember
+import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.draw.dropShadow
@@ -80,46 +81,48 @@ fun ShadcnTabs(
     size: ShadcnTabsSize = ShadcnTabsSize.Default,
     content: ShadcnTabsScope.() -> Unit,
 ) {
-    val items = remember(content) { ShadcnTabsScope().apply(content).items }
-    val theme = shadcnTheme
+    rememberGroup(ShadcnTabsGroup) {
+        val items = remember(content) { ShadcnTabsScope().apply(content).items }
+        val theme = shadcnTheme
 
-    key("shadcn-tabs-bar") {
-        when (variant) {
-            ShadcnTabsVariant.Line -> {
-                Row(
-                    modifier
-                        .height(ShadcnTabsHeight)
-                        .border(1.dp, theme.palette.border, sides = BorderSides(top = false, end = false, bottom = true, start = false)),
-                ) {
-                    items.forEach { item ->
-                        key(item.value) {
-                            ShadcnTabLineTrigger(item, selectedValue, onSelectedChange)
+        key("shadcn-tabs-bar") {
+            when (variant) {
+                ShadcnTabsVariant.Line -> {
+                    Row(
+                        modifier
+                            .height(ShadcnTabsHeight)
+                            .border(1.dp, theme.palette.border, sides = BorderSides(top = false, end = false, bottom = true, start = false)),
+                    ) {
+                        items.forEach { item ->
+                            key(item.value) {
+                                ShadcnTabLineTrigger(item, selectedValue, onSelectedChange)
+                            }
                         }
                     }
                 }
-            }
-            ShadcnTabsVariant.Pill -> {
-                Row(
-                    modifier
-                        .height(ShadcnTabsHeight)
-                        .background(theme.palette.muted, theme.radii.lg)
-                        .padding(ShadcnTabsListPadding),
-                ) {
-                    items.forEach { item ->
-                        key(item.value) {
-                            ShadcnTabTrigger(item, selectedValue, onSelectedChange)
+                ShadcnTabsVariant.Pill -> {
+                    Row(
+                        modifier
+                            .height(ShadcnTabsHeight)
+                            .background(theme.palette.muted, theme.radii.lg)
+                            .padding(ShadcnTabsListPadding),
+                    ) {
+                        items.forEach { item ->
+                            key(item.value) {
+                                ShadcnTabTrigger(item, selectedValue, onSelectedChange)
+                            }
                         }
                     }
                 }
-            }
-            ShadcnTabsVariant.Ghost -> {
-                Row(
-                    modifier.height(size.height),
-                    horizontalArrangement = Arrangement.spacedByHorizontal(Tw.Spacing.s1),
-                ) {
-                    items.forEach { item ->
-                        key(item.value) {
-                            ShadcnTabGhostTrigger(item, selectedValue, onSelectedChange, size)
+                ShadcnTabsVariant.Ghost -> {
+                    Row(
+                        modifier.height(size.height),
+                        horizontalArrangement = Arrangement.spacedByHorizontal(Tw.Spacing.s1),
+                    ) {
+                        items.forEach { item ->
+                            key(item.value) {
+                                ShadcnTabGhostTrigger(item, selectedValue, onSelectedChange, size)
+                            }
                         }
                     }
                 }
@@ -319,3 +322,6 @@ class ShadcnTabsScope internal constructor() {
 
 @DslMarker
 annotation class ShadcnTabsDsl
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnTabsGroup

@@ -15,6 +15,7 @@ import com.awakekt.awake.compose.foundation.layout.Row
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.remember
+import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.draw.alpha
@@ -62,35 +63,37 @@ fun ShadcnNavigationMenuTrigger(
         () -> Unit
     )? = null,
 ) {
-    val anchor = remember { PopupAnchor() }
-    val density = LocalDensity.current
-    val alpha = rememberOverlayAlpha(isOpen)
+    rememberGroup(ShadcnNavigationMenuTriggerGroup) {
+        val anchor = remember { PopupAnchor() }
+        val density = LocalDensity.current
+        val alpha = rememberOverlayAlpha(isOpen)
 
-    Box(modifier.popupAnchor(anchor)) {
-        ShadcnButton(
-            label = title,
-            variant = ShadcnButtonVariant.Ghost,
-            onClick = { onOpenChange(!isOpen) },
-        )
-        if (isPresent(isOpen, alpha)) {
-            Layer(
-                kind = LayerKind.Popup,
-                dismissOnOutsideClick = true,
-                onDismissRequest = { onOpenChange(false) },
-                positionProvider = remember(density) {
-                    AnchoredBelowPositionProvider(anchor, (NavMenuGap.value * density).toInt())
-                },
-                measurePolicy = BoxMeasurePolicy(),
-            ) {
-                ShadcnPopover(
-                    modifier = Modifier.alpha(alpha).semantics {
-                        if (id != null) this[SemanticsProperties.TestTag] = id
+        Box(modifier.popupAnchor(anchor)) {
+            ShadcnButton(
+                label = title,
+                variant = ShadcnButtonVariant.Ghost,
+                onClick = { onOpenChange(!isOpen) },
+            )
+            if (isPresent(isOpen, alpha)) {
+                Layer(
+                    kind = LayerKind.Popup,
+                    dismissOnOutsideClick = true,
+                    onDismissRequest = { onOpenChange(false) },
+                    positionProvider = remember(density) {
+                        AnchoredBelowPositionProvider(anchor, (NavMenuGap.value * density).toInt())
                     },
+                    measurePolicy = BoxMeasurePolicy(),
                 ) {
-                    val body = panelContent
-                    if (body != null) {
-                        Column(verticalArrangement = Arrangement.spacedBy(Tw.Spacing.s2)) {
-                            body()
+                    ShadcnPopover(
+                        modifier = Modifier.alpha(alpha).semantics {
+                            if (id != null) this[SemanticsProperties.TestTag] = id
+                        },
+                    ) {
+                        val body = panelContent
+                        if (body != null) {
+                            Column(verticalArrangement = Arrangement.spacedBy(Tw.Spacing.s2)) {
+                                body()
+                            }
                         }
                     }
                 }
@@ -100,3 +103,6 @@ fun ShadcnNavigationMenuTrigger(
 }
 
 private val NavMenuGap: Dp = 4.dp
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnNavigationMenuTriggerGroup

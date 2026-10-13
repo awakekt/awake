@@ -17,6 +17,7 @@ import com.awakekt.awake.compose.foundation.layout.padding
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.remember
+import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.draw.alpha
@@ -76,37 +77,39 @@ fun ShadcnMenubarMenu(
     id: String? = null,
     triggerModifier: Modifier = Modifier,
 ) {
-    val anchor = remember { PopupAnchor() }
-    val density = LocalDensity.current
-    val alpha = rememberOverlayAlpha(isOpen)
+    rememberGroup(ShadcnMenubarMenuGroup) {
+        val anchor = remember { PopupAnchor() }
+        val density = LocalDensity.current
+        val alpha = rememberOverlayAlpha(isOpen)
 
-    Box(modifier.popupAnchor(anchor)) {
-        ShadcnButton(
-            label = title,
-            variant = if (isOpen) ShadcnButtonVariant.Secondary else ShadcnButtonVariant.Ghost,
-            size = ShadcnButtonSizeVariant.Sm,
-            modifier = triggerModifier,
-            onClick = { onOpenChange(!isOpen) },
-        )
-        if (isPresent(isOpen, alpha)) {
-            Layer(
-                kind = LayerKind.Popup,
-                dismissOnOutsideClick = true,
-                onDismissRequest = { onOpenChange(false) },
-                positionProvider = remember(density) {
-                    AnchoredBelowPositionProvider(anchor, (MenubarGap.value * density).toInt())
-                },
-                measurePolicy = BoxMeasurePolicy(),
-            ) {
-                ShadcnDropdownMenu(
-                    entries = entries,
-                    id = id,
-                    modifier = Modifier.alpha(alpha).semantics {
-                        if (id != null) this[SemanticsProperties.TestTag] = id
+        Box(modifier.popupAnchor(anchor)) {
+            ShadcnButton(
+                label = title,
+                variant = if (isOpen) ShadcnButtonVariant.Secondary else ShadcnButtonVariant.Ghost,
+                size = ShadcnButtonSizeVariant.Sm,
+                modifier = triggerModifier,
+                onClick = { onOpenChange(!isOpen) },
+            )
+            if (isPresent(isOpen, alpha)) {
+                Layer(
+                    kind = LayerKind.Popup,
+                    dismissOnOutsideClick = true,
+                    onDismissRequest = { onOpenChange(false) },
+                    positionProvider = remember(density) {
+                        AnchoredBelowPositionProvider(anchor, (MenubarGap.value * density).toInt())
                     },
-                )?.let { selectedIndex ->
-                    onItemSelected(selectedIndex)
-                    onOpenChange(false)
+                    measurePolicy = BoxMeasurePolicy(),
+                ) {
+                    ShadcnDropdownMenu(
+                        entries = entries,
+                        id = id,
+                        modifier = Modifier.alpha(alpha).semantics {
+                            if (id != null) this[SemanticsProperties.TestTag] = id
+                        },
+                    )?.let { selectedIndex ->
+                        onItemSelected(selectedIndex)
+                        onOpenChange(false)
+                    }
                 }
             }
         }
@@ -114,3 +117,6 @@ fun ShadcnMenubarMenu(
 }
 
 private val MenubarGap: Dp = 4.dp
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnMenubarMenuGroup

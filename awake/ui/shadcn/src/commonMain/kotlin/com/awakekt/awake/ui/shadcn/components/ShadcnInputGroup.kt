@@ -21,6 +21,7 @@ import com.awakekt.awake.compose.foundation.text.BasicTextField
 import com.awakekt.awake.compose.foundation.text.TextFieldState
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.remember
+import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.unit.dp
@@ -55,50 +56,55 @@ fun ShadcnInputGroup(
     focusRingMode: ShadcnFocusRingMode = ShadcnFocusRingMode.DrawWithContent,
     onClick: (() -> Unit)? = null,
 ) {
-    val theme = shadcnTheme
-    val interaction = remember { InteractionSource() }
-    val styleState = rememberStyleState(interaction, enabled = enabled)
-    val focusRingAlpha = animateFloat(if (styleState.isFocused) 1f else 0f)
-    val box = remember(theme, focusRingMode) {
-        theme.fieldStyle(0.dp, focusRingMode)
-    }
-
-    Row(
-        modifier = modifier.fillMaxWidth().height(ShadcnInputHeight)
-            .focusRing(
-                alpha = if (focusRingMode == ShadcnFocusRingMode.DrawWithContent) focusRingAlpha else 0f,
-                width = FieldFocusRingWidth,
-                color = theme.palette.ring.withAlpha(0.5f),
-                cornerRadius = theme.radii.md,
-            )
-            .styleable(styleState, box),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        if (prefix != null) {
-            Box(Modifier.padding(start = Tw.Spacing.s3, end = Tw.Spacing.s1_5)) {
-                prefix()
-            }
+    rememberGroup(ShadcnInputGroupGroup) {
+        val theme = shadcnTheme
+        val interaction = remember { InteractionSource() }
+        val styleState = rememberStyleState(interaction, enabled = enabled)
+        val focusRingAlpha = animateFloat(if (styleState.isFocused) 1f else 0f)
+        val box = remember(theme, focusRingMode) {
+            theme.fieldStyle(0.dp, focusRingMode)
         }
-        BasicTextField(
-            state = state,
-            modifier = Modifier.weight(1f)
-                .padding(
-                    start = if (prefix == null) Tw.Spacing.s3 else 0.dp,
-                    end = if (suffix == null) Tw.Spacing.s3 else 0.dp,
-                    top = Tw.Spacing.s1,
-                    bottom = Tw.Spacing.s1,
-                ),
-            style = TextStyle(size = Tw.Text.sm, lineHeight = 20f.sp, color = theme.palette.foreground),
-            interactionSource = interaction,
-            placeholder = placeholder,
-            placeholderColor = theme.palette.mutedForeground,
-            singleLine = true,
-            onClick = onClick,
-        )
-        if (suffix != null) {
-            Box(Modifier.padding(start = Tw.Spacing.s1_5, end = Tw.Spacing.s3)) {
-                suffix()
+
+        Row(
+            modifier = modifier.fillMaxWidth().height(ShadcnInputHeight)
+                .focusRing(
+                    alpha = if (focusRingMode == ShadcnFocusRingMode.DrawWithContent) focusRingAlpha else 0f,
+                    width = FieldFocusRingWidth,
+                    color = theme.palette.ring.withAlpha(0.5f),
+                    cornerRadius = theme.radii.md,
+                )
+                .styleable(styleState, box),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (prefix != null) {
+                Box(Modifier.padding(start = Tw.Spacing.s3, end = Tw.Spacing.s1_5)) {
+                    prefix()
+                }
+            }
+            BasicTextField(
+                state = state,
+                modifier = Modifier.weight(1f)
+                    .padding(
+                        start = if (prefix == null) Tw.Spacing.s3 else 0.dp,
+                        end = if (suffix == null) Tw.Spacing.s3 else 0.dp,
+                        top = Tw.Spacing.s1,
+                        bottom = Tw.Spacing.s1,
+                    ),
+                style = TextStyle(size = Tw.Text.sm, lineHeight = 20f.sp, color = theme.palette.foreground),
+                interactionSource = interaction,
+                placeholder = placeholder,
+                placeholderColor = theme.palette.mutedForeground,
+                singleLine = true,
+                onClick = onClick,
+            )
+            if (suffix != null) {
+                Box(Modifier.padding(start = Tw.Spacing.s1_5, end = Tw.Spacing.s3)) {
+                    suffix()
+                }
             }
         }
     }
 }
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnInputGroupGroup

@@ -18,6 +18,7 @@ import com.awakekt.awake.compose.foundation.layout.Row
 import com.awakekt.awake.compose.foundation.layout.size
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.remember
+import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.graphics.RoundedCornerShape
@@ -44,7 +45,7 @@ fun ShadcnRadioGroup(
     selected: Int,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-): Int {
+): Int = rememberGroup(ShadcnRadioGroupGroup) {
     val theme = shadcnTheme
     val state = remember { RadioGroupState() }
     val next = state.clicked?.also { state.clicked = null } ?: selected
@@ -58,7 +59,7 @@ fun ShadcnRadioGroup(
             ShadcnRadioItem(state, index, option)
         }
     }
-    return next
+    next
 }
 
 context(_: Composer)
@@ -149,3 +150,6 @@ private class RadioGroupState {
 }
 
 private const val RADIO_INPUT_ALPHA = 0.3f
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnRadioGroupGroup

@@ -9,6 +9,7 @@ import com.awakekt.awake.compose.foundation.Canvas
 import com.awakekt.awake.compose.foundation.layout.size
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.current
+import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.graphics.vector.ImageVector
 import com.awakekt.awake.compose.ui.graphics.vector.rememberVectorPainter
@@ -42,12 +43,17 @@ fun ShadcnIcon(
     size: Dp = IconSize,
     tint: Color? = null,
 ) {
-    val color = tint ?: LocalTextStyle.current.color ?: shadcnTheme.palette.foreground
-    val painter = rememberVectorPainter(icon)
-    Canvas(modifier.size(size)) {
-        painter.draw(this, Rectangle(0f, 0f, width.toFloat(), height.toFloat()), color)
+    rememberGroup(ShadcnIconGroup) {
+        val color = tint ?: LocalTextStyle.current.color ?: shadcnTheme.palette.foreground
+        val painter = rememberVectorPainter(icon)
+        Canvas(modifier.size(size)) {
+            painter.draw(this, Rectangle(0f, 0f, width.toFloat(), height.toFloat()), color)
+        }
     }
 }
 
 /** shadcn's `size-4` for an icon inside a control. */
 private val IconSize: Dp = 16.dp
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnIconGroup

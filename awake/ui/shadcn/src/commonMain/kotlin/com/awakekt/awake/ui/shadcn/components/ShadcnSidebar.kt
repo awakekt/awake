@@ -25,6 +25,7 @@ import com.awakekt.awake.compose.runtime.CompositionLocalProvider
 import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.provides
 import com.awakekt.awake.compose.runtime.remember
+import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.draw.clipToBounds
@@ -68,40 +69,42 @@ fun ShadcnSidebar(
     )? = null,
     content: context(Composer) () -> Unit,
 ) {
-    val theme = shadcnTheme
-    Column(
-        modifier
-            .fillMaxHeight()
-            .background(theme.palette.sidebar)
-            .padding(SidebarPadding)
-            .clipToBounds(),
-        verticalArrangement = Arrangement.spacedBy(Tw.Spacing.s2),
-    ) {
-        CompositionLocalProvider(
-            LocalTextStyle provides
-                LocalTextStyle.current.copy(color = theme.palette.sidebarForeground),
+    rememberGroup(ShadcnSidebarGroup) {
+        val theme = shadcnTheme
+        Column(
+            modifier
+                .fillMaxHeight()
+                .background(theme.palette.sidebar)
+                .padding(SidebarPadding)
+                .clipToBounds(),
+            verticalArrangement = Arrangement.spacedBy(Tw.Spacing.s2),
         ) {
-            val head = header
-            if (head != null) head()
-            // The only slot that takes the slack, which is what pins the other two.
-            //
-            // It scrolls. `clipToBounds` alone was the whole of upstream's `overflow-auto`, so a
-            // panel taller than its frame lost everything past the bottom edge with no way to
-            // reach it -- a scene outliner and a component inspector are the two panels in an
-            // editor guaranteed to outgrow their height, and a four-entity fixture is exactly the
-            // scene that never shows it.
-            // A Column, not a Box: upstream's `SidebarContent` is `flex flex-col gap-2`, and a
-            // Box stacks its children at the same origin. With one child -- which is every caller
-            // that existed when the scroll was added -- the two are indistinguishable, so this
-            // survived until the inspector started emitting a section per component and drew all
-            // of them on top of each other.
-            Column(
-                Modifier.fillMaxWidth().weight(1f).clipToBounds()
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(Tw.Spacing.s2),
-            ) { content() }
-            val foot = footer
-            if (foot != null) foot()
+            CompositionLocalProvider(
+                LocalTextStyle provides
+                    LocalTextStyle.current.copy(color = theme.palette.sidebarForeground),
+            ) {
+                val head = header
+                if (head != null) head()
+                // The only slot that takes the slack, which is what pins the other two.
+                //
+                // It scrolls. `clipToBounds` alone was the whole of upstream's `overflow-auto`, so a
+                // panel taller than its frame lost everything past the bottom edge with no way to
+                // reach it -- a scene outliner and a component inspector are the two panels in an
+                // editor guaranteed to outgrow their height, and a four-entity fixture is exactly the
+                // scene that never shows it.
+                // A Column, not a Box: upstream's `SidebarContent` is `flex flex-col gap-2`, and a
+                // Box stacks its children at the same origin. With one child -- which is every caller
+                // that existed when the scroll was added -- the two are indistinguishable, so this
+                // survived until the inspector started emitting a section per component and drew all
+                // of them on top of each other.
+                Column(
+                    Modifier.fillMaxWidth().weight(1f).clipToBounds()
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(Tw.Spacing.s2),
+                ) { content() }
+                val foot = footer
+                if (foot != null) foot()
+            }
         }
     }
 }
@@ -141,50 +144,52 @@ fun ShadcnSidebarMenuItem(
     )? = null,
     onClick: () -> Unit = {},
 ) {
-    val theme = shadcnTheme
-    val interaction = remember("item-interaction", label) { InteractionSource() }
-    // Icon-only when the enclosing Sidebar is collapsed -- matches upstream's
-    // `group-data-[collapsible=icon]` selector, which hides SidebarMenuButton's own label text.
-    // A collapsed item with no icon renders as an empty button rather than truncated label text;
-    // that is the honest state for a caller that has not supplied a leadingIcon yet, not a bug.
-    val collapsed = LocalSidebarCollapsed.current
+    rememberGroup(ShadcnSidebarMenuItemGroup) {
+        val theme = shadcnTheme
+        val interaction = remember("item-interaction", label) { InteractionSource() }
+        // Icon-only when the enclosing Sidebar is collapsed -- matches upstream's
+        // `group-data-[collapsible=icon]` selector, which hides SidebarMenuButton's own label text.
+        // A collapsed item with no icon renders as an empty button rather than truncated label text;
+        // that is the honest state for a caller that has not supplied a leadingIcon yet, not a bug.
+        val collapsed = LocalSidebarCollapsed.current
 
-    Row(
-        modifier
-            .fillMaxWidth()
-            .height(MenuButtonHeight)
-            .let {
-                when {
-                    active -> it.background(theme.palette.secondary, theme.radii.md)
-                    interaction.isHovered -> it.background(theme.palette.accent, theme.radii.md)
-                    else -> it
+        Row(
+            modifier
+                .fillMaxWidth()
+                .height(MenuButtonHeight)
+                .let {
+                    when {
+                        active -> it.background(theme.palette.secondary, theme.radii.md)
+                        interaction.isHovered -> it.background(theme.palette.accent, theme.radii.md)
+                        else -> it
+                    }
                 }
-            }
-            .padding(horizontal = if (collapsed) 0.dp else Tw.Spacing.s2)
-            .hoverable(interaction)
-            .clickable(interaction) { onClick() }
-            .semantics {
-                this[SemanticsProperties.Role] = SemanticsRole.Button
-                this[SemanticsProperties.Label] = label
-                this[SemanticsProperties.Selected] = active
+                .padding(horizontal = if (collapsed) 0.dp else Tw.Spacing.s2)
+                .hoverable(interaction)
+                .clickable(interaction) { onClick() }
+                .semantics {
+                    this[SemanticsProperties.Role] = SemanticsRole.Button
+                    this[SemanticsProperties.Label] = label
+                    this[SemanticsProperties.Selected] = active
+                },
+            horizontalArrangement = if (collapsed) {
+                Arrangement.CenterHorizontally
+            } else {
+                Arrangement.spacedByHorizontal(Tw.Spacing.s2)
             },
-        horizontalArrangement = if (collapsed) {
-            Arrangement.CenterHorizontally
-        } else {
-            Arrangement.spacedByHorizontal(Tw.Spacing.s2)
-        },
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        leadingIcon?.let { ShadcnIcon(it) }
-        if (!collapsed) {
-            ShadcnText(
-                label,
-                Modifier.weight(1f),
-                variant = ShadcnTextVariant.Small,
-                color = if (active) theme.palette.secondaryForeground else theme.palette.sidebarForeground,
-            )
-            val end = trailing
-            if (end != null) end()
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            leadingIcon?.let { ShadcnIcon(it) }
+            if (!collapsed) {
+                ShadcnText(
+                    label,
+                    Modifier.weight(1f),
+                    variant = ShadcnTextVariant.Small,
+                    color = if (active) theme.palette.secondaryForeground else theme.palette.sidebarForeground,
+                )
+                val end = trailing
+                if (end != null) end()
+            }
         }
     }
 }
@@ -218,56 +223,58 @@ fun ShadcnSidebarMenuCollapsibleItem(
     onClick: (() -> Unit)? = null,
     items: context(Composer) () -> Unit,
 ) {
-    val collapsed = LocalSidebarCollapsed.current
-    val group = remember("collapsible-group", label) { CollapsibleGroupState(defaultExpanded) }
+    rememberGroup(ShadcnSidebarMenuCollapsibleItemGroup) {
+        val collapsed = LocalSidebarCollapsed.current
+        val group = remember("collapsible-group", label) { CollapsibleGroupState(defaultExpanded) }
 
-    if (collapsed) {
-        ShadcnSidebarMenuItem(
-            label = label,
-            modifier = modifier,
-            active = active,
-            leadingIcon = leadingIcon,
-            trailing = trailing,
-            onClick = onClick ?: {},
-        )
-        return
-    }
+        if (collapsed) {
+            ShadcnSidebarMenuItem(
+                label = label,
+                modifier = modifier,
+                active = active,
+                leadingIcon = leadingIcon,
+                trailing = trailing,
+                onClick = onClick ?: {},
+            )
+            return
+        }
 
-    Column(modifier.fillMaxWidth()) {
-        ShadcnSidebarMenuItem(
-            label = label,
-            modifier = modifier,
-            active = active,
-            leadingIcon = leadingIcon,
-            trailing = {
-                Row(
-                    horizontalArrangement = Arrangement.spacedByHorizontal(Tw.Spacing.s1),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    val end = trailing
-                    if (end != null) end()
-                    ShadcnButton(
-                        variant = ShadcnButtonVariant.Ghost,
-                        size = ShadcnButtonSizeVariant.IconXs,
-                        onClick = { group.expanded = !group.expanded },
+        Column(modifier.fillMaxWidth()) {
+            ShadcnSidebarMenuItem(
+                label = label,
+                modifier = modifier,
+                active = active,
+                leadingIcon = leadingIcon,
+                trailing = {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedByHorizontal(Tw.Spacing.s1),
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        ShadcnIcon(
-                            if (group.expanded) ShadcnIcons.chevronDown else ShadcnIcons.chevronRight,
-                            tint = shadcnTheme.palette.mutedForeground,
-                        )
+                        val end = trailing
+                        if (end != null) end()
+                        ShadcnButton(
+                            variant = ShadcnButtonVariant.Ghost,
+                            size = ShadcnButtonSizeVariant.IconXs,
+                            onClick = { group.expanded = !group.expanded },
+                        ) {
+                            ShadcnIcon(
+                                if (group.expanded) ShadcnIcons.chevronDown else ShadcnIcons.chevronRight,
+                                tint = shadcnTheme.palette.mutedForeground,
+                            )
+                        }
                     }
-                }
-            },
-            onClick = {
-                if (onClick != null) {
-                    onClick()
-                } else {
-                    group.expanded = !group.expanded
-                }
-            },
-        )
-        if (group.expanded) {
-            ShadcnSidebarMenuSub { items() }
+                },
+                onClick = {
+                    if (onClick != null) {
+                        onClick()
+                    } else {
+                        group.expanded = !group.expanded
+                    }
+                },
+            )
+            if (group.expanded) {
+                ShadcnSidebarMenuSub { items() }
+            }
         }
     }
 }
@@ -367,3 +374,12 @@ private val MenuButtonHeight: Dp = 32.dp
 
 /** Whether a collapsible sidebar group is open, kept across passes by `remember`. */
 private class CollapsibleGroupState(var expanded: Boolean)
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnSidebarGroup
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnSidebarMenuCollapsibleItemGroup
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnSidebarMenuItemGroup

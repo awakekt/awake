@@ -14,6 +14,7 @@ import com.awakekt.awake.compose.foundation.interaction.InteractionSource
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.remember
+import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.ModifierNodeElement
 import com.awakekt.awake.compose.ui.draw.drawBehind
@@ -112,73 +113,75 @@ fun BasicTextField(
     revealLastTyped: Boolean = false,
     onSubmit: (() -> Unit)? = null,
 ) {
-    // A newline in a password could only draw as one more mask, so the field never breaks lines.
-    val oneLine = singleLine || mask != null
-    val resolved = LocalTextStyle.current then style
-    val font = resolved.resolveFont(LocalFont.current)
-    val source = interactionSource ?: remember { InteractionSource() }
-    val density = LocalDensity.current
-    val clock = LocalFrameClock.current
-    val horizontalOffset = remember { ScrollState() }
-    val reveal = remember(state) { LastTypedReveal() }
-    // Measure and paint the placeholder through the same run as real text. That keeps baselines,
-    // clipping, and the empty-field minimum line height identical instead of treating a placeholder
-    // as a decoration with its own layout rules.
-    //
-    // Read through a lambda, not captured: the string this resolves to must be this frame's, and
-    // composition is a phase too early for that. See TextMeasurePolicy.text.
-    //
-    // The mask is applied here, to the same string the caret, selection and hit-test geometry are
-    // read from, so all of them see the masked glyphs.
-    val displayedText = { fieldText(state, mask, reveal, clock, singleLine).ifEmpty { placeholder ?: " " } }
-    val policy = TextMeasurePolicy(displayedText, resolved, font, singleLine = oneLine)
-    // Likewise a lambda: whether the field is showing its placeholder is a per-frame answer.
-    val textColor = resolved.color ?: DefaultTextColor
-    val color = { if (state.text.isEmpty() && placeholder != null) placeholderColor ?: textColor else textColor }
+    rememberGroup(BasicTextFieldGroup) {
+        // A newline in a password could only draw as one more mask, so the field never breaks lines.
+        val oneLine = singleLine || mask != null
+        val resolved = LocalTextStyle.current then style
+        val font = resolved.resolveFont(LocalFont.current)
+        val source = interactionSource ?: remember { InteractionSource() }
+        val density = LocalDensity.current
+        val clock = LocalFrameClock.current
+        val horizontalOffset = remember { ScrollState() }
+        val reveal = remember(state) { LastTypedReveal() }
+        // Measure and paint the placeholder through the same run as real text. That keeps baselines,
+        // clipping, and the empty-field minimum line height identical instead of treating a placeholder
+        // as a decoration with its own layout rules.
+        //
+        // Read through a lambda, not captured: the string this resolves to must be this frame's, and
+        // composition is a phase too early for that. See TextMeasurePolicy.text.
+        //
+        // The mask is applied here, to the same string the caret, selection and hit-test geometry are
+        // read from, so all of them see the masked glyphs.
+        val displayedText = { fieldText(state, mask, reveal, clock, singleLine).ifEmpty { placeholder ?: " " } }
+        val policy = TextMeasurePolicy(displayedText, resolved, font, singleLine = oneLine)
+        // Likewise a lambda: whether the field is showing its placeholder is a per-frame answer.
+        val textColor = resolved.color ?: DefaultTextColor
+        val color = { if (state.text.isEmpty() && placeholder != null) placeholderColor ?: textColor else textColor }
 
-    Layout(
-        nodeType = TextFieldNodeType,
-        modifier = modifier
-            .focusable(interactionSource = source)
-            .then(if (mask != null) PasswordSemantics else Modifier)
-            .then(
-                TextFieldInputElement(
-                    state, oneLine, mask, reveal.takeIf { revealLastTyped }, clock,
-                    policy, density, horizontalOffset, onClick, onSubmit,
-                ),
-            )
-            .clickable { }
-            .drawBehind {
-                clipped {
-                    val paintColor = color()
-                    val run = policy.runFor(density, 1f)
-                    val textOffsetY = if (oneLine) ((height - run.lineHeightPx) / 2f).coerceAtLeast(0f) else 0f
-                    val caret = TextRunOf(state, policy, density).position()
-                    val focused = source.isFocused
-                    val textOffsetX = if (oneLine) horizontalOffset.followCaret(caret.x, focused, run, policy, width) else 0f
-                    run.forEachSelectionSegment(state.displayedSelectionStart, state.displayedSelectionEnd) { x, y, width, height ->
-                        drawRect(
-                            x = x + textOffsetX,
-                            y = y + textOffsetY,
-                            width = width,
-                            height = height,
-                            color = paintColor.withAlpha(0.35f),
-                        )
+        Layout(
+            nodeType = TextFieldNodeType,
+            modifier = modifier
+                .focusable(interactionSource = source)
+                .then(if (mask != null) PasswordSemantics else Modifier)
+                .then(
+                    TextFieldInputElement(
+                        state, oneLine, mask, reveal.takeIf { revealLastTyped }, clock,
+                        policy, density, horizontalOffset, onClick, onSubmit,
+                    ),
+                )
+                .clickable { }
+                .drawBehind {
+                    clipped {
+                        val paintColor = color()
+                        val run = policy.runFor(density, 1f)
+                        val textOffsetY = if (oneLine) ((height - run.lineHeightPx) / 2f).coerceAtLeast(0f) else 0f
+                        val caret = TextRunOf(state, policy, density).position()
+                        val focused = source.isFocused
+                        val textOffsetX = if (oneLine) horizontalOffset.followCaret(caret.x, focused, run, policy, width) else 0f
+                        run.forEachSelectionSegment(state.displayedSelectionStart, state.displayedSelectionEnd) { x, y, width, height ->
+                            drawRect(
+                                x = x + textOffsetX,
+                                y = y + textOffsetY,
+                                width = width,
+                                height = height,
+                                color = paintColor.withAlpha(0.35f),
+                            )
+                        }
+                        run.paintDecorated(this, paintColor, offsetX = textOffsetX, offsetY = textOffsetY)
+                        if (focused && isCaretVisible(clock.totalSeconds)) {
+                            drawRect(
+                                x = caret.x + textOffsetX,
+                                y = if (oneLine) textOffsetY else caret.y,
+                                width = CARET_WIDTH,
+                                height = run.lineHeightPx,
+                                color = paintColor,
+                            )
+                        }
                     }
-                    run.paintDecorated(this, paintColor, offsetX = textOffsetX, offsetY = textOffsetY)
-                    if (focused && isCaretVisible(clock.totalSeconds)) {
-                        drawRect(
-                            x = caret.x + textOffsetX,
-                            y = if (oneLine) textOffsetY else caret.y,
-                            width = CARET_WIDTH,
-                            height = run.lineHeightPx,
-                            color = paintColor,
-                        )
-                    }
-                }
-            },
-        measurePolicy = policy,
-    )
+                },
+            measurePolicy = policy,
+        )
+    }
 }
 
 /**
@@ -392,3 +395,6 @@ private class TextFieldInputNode :
 
     override fun toString(): String = "textInput(cursor=${state.cursor})"
 }
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object BasicTextFieldGroup

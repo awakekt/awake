@@ -11,6 +11,7 @@ import com.awakekt.awake.compose.foundation.layout.size
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.remember
+import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.platform.LocalDensity
 import com.awakekt.awake.compose.ui.unit.Dp
@@ -42,25 +43,27 @@ fun ShadcnSpinner(
     modifier: Modifier = Modifier,
     size: Dp = SpinnerSize,
 ) {
-    val theme = shadcnTheme
-    val phase = rememberLoopingPhase(SPIN_SECONDS)
-    val density = LocalDensity.current
-    val mesh = remember(size, density) {
-        SpinnerMeshCache(size, density)
-    }.mesh(theme.palette.primary)
-    Canvas(modifier.size(size)) {
-        // `emit` expects tree-space coordinates and bypasses this Canvas node's origin. Rotate the
-        // cached local mesh first, then hand it to drawMesh so padding/offsets from the showcase
-        // layout are applied. The old direct emit left nested spinners at the root origin, where a
-        // parent clip could make them appear to vanish.
-        drawMesh(
-            UiDrawPrimitive.Mesh(
-                mesh = mesh,
-                rotationDegrees = phase * 360f,
-                pivotX = width / 2f,
-                pivotY = height / 2f,
-            ).placedMesh(),
-        )
+    rememberGroup(ShadcnSpinnerGroup) {
+        val theme = shadcnTheme
+        val phase = rememberLoopingPhase(SPIN_SECONDS)
+        val density = LocalDensity.current
+        val mesh = remember(size, density) {
+            SpinnerMeshCache(size, density)
+        }.mesh(theme.palette.primary)
+        Canvas(modifier.size(size)) {
+            // `emit` expects tree-space coordinates and bypasses this Canvas node's origin. Rotate the
+            // cached local mesh first, then hand it to drawMesh so padding/offsets from the showcase
+            // layout are applied. The old direct emit left nested spinners at the root origin, where a
+            // parent clip could make them appear to vanish.
+            drawMesh(
+                UiDrawPrimitive.Mesh(
+                    mesh = mesh,
+                    rotationDegrees = phase * 360f,
+                    pivotX = width / 2f,
+                    pivotY = height / 2f,
+                ).placedMesh(),
+            )
+        }
     }
 }
 
@@ -115,3 +118,6 @@ private val SpinnerStroke: Dp = 2.dp
 
 /** `animate-spin` is one turn per second. */
 private const val SPIN_SECONDS = 1f
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnSpinnerGroup

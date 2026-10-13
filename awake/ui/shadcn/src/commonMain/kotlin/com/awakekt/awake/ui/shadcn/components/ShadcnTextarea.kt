@@ -15,6 +15,7 @@ import com.awakekt.awake.compose.foundation.text.BasicTextField
 import com.awakekt.awake.compose.foundation.text.TextFieldState
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.remember
+import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.unit.Dp
 import com.awakekt.awake.compose.ui.unit.dp
@@ -39,26 +40,31 @@ fun ShadcnTextarea(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
 ) {
-    val theme = shadcnTheme
-    val interaction = remember { InteractionSource() }
-    val styleState = rememberStyleState(interaction, enabled = enabled)
-    val focusRingAlpha = animateFloat(if (styleState.isFocused) 1f else 0f)
-    val box = remember(theme) { theme.fieldStyle(verticalPadding = Tw.Spacing.s2) }
+    rememberGroup(ShadcnTextareaGroup) {
+        val theme = shadcnTheme
+        val interaction = remember { InteractionSource() }
+        val styleState = rememberStyleState(interaction, enabled = enabled)
+        val focusRingAlpha = animateFloat(if (styleState.isFocused) 1f else 0f)
+        val box = remember(theme) { theme.fieldStyle(verticalPadding = Tw.Spacing.s2) }
 
-    BasicTextField(
-        state = state,
-        modifier = modifier.fillMaxWidth().heightIn(min = TextareaMinHeight)
-            .focusRing(
-                alpha = focusRingAlpha,
-                width = FieldFocusRingWidth,
-                color = theme.palette.ring.withAlpha(0.5f),
-                cornerRadius = theme.radii.md,
-            )
-            .styleable(styleState, box),
-        style = TextStyle(size = Tw.Text.sm, lineHeight = 20f.sp, color = theme.palette.foreground),
-        interactionSource = interaction,
-    )
+        BasicTextField(
+            state = state,
+            modifier = modifier.fillMaxWidth().heightIn(min = TextareaMinHeight)
+                .focusRing(
+                    alpha = focusRingAlpha,
+                    width = FieldFocusRingWidth,
+                    color = theme.palette.ring.withAlpha(0.5f),
+                    cornerRadius = theme.radii.md,
+                )
+                .styleable(styleState, box),
+            style = TextStyle(size = Tw.Text.sm, lineHeight = 20f.sp, color = theme.palette.foreground),
+            interactionSource = interaction,
+        )
+    }
 }
 
 /** shadcn's `min-h-16`. */
 private val TextareaMinHeight: Dp = 64.dp
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnTextareaGroup

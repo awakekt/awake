@@ -21,6 +21,7 @@ import com.awakekt.awake.compose.foundation.text.TextFieldState
 import com.awakekt.awake.compose.foundation.text.rememberTextFieldState
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.remember
+import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.draw.alpha
@@ -62,131 +63,133 @@ fun ShadcnInputOtp(
     groupSize: Int = 0,
     pattern: Regex? = null,
 ) {
-    val theme = shadcnTheme
-    val radius = theme.radii.md
-    val interaction = remember { InteractionSource() }
-    val isFocused = interaction.isFocused
-    // Hoisted rather than read inside the active slot: `remember` is keyed by call site, and that
-    // call site only exists while a slot is active.
-    val caretPhase = rememberLoopingPhase(CARET_BLINK_SECONDS)
-    val text = state.acceptOtp(length, pattern)
+    rememberGroup(ShadcnInputOtpGroup) {
+        val theme = shadcnTheme
+        val radius = theme.radii.md
+        val interaction = remember { InteractionSource() }
+        val isFocused = interaction.isFocused
+        // Hoisted rather than read inside the active slot: `remember` is keyed by call site, and that
+        // call site only exists while a slot is active.
+        val caretPhase = rememberLoopingPhase(CARET_BLINK_SECONDS)
+        val text = state.acceptOtp(length, pattern)
 
-    val groups = if (groupSize > 0 && groupSize < length) {
-        val count = (length + groupSize - 1) / groupSize
-        (0 until count).map { g ->
-            val start = g * groupSize
-            val end = (start + groupSize).coerceAtMost(length)
-            start until end
+        val groups = if (groupSize > 0 && groupSize < length) {
+            val count = (length + groupSize - 1) / groupSize
+            (0 until count).map { g ->
+                val start = g * groupSize
+                val end = (start + groupSize).coerceAtMost(length)
+                start until end
+            }
+        } else {
+            listOf(0 until length)
         }
-    } else {
-        listOf(0 until length)
-    }
 
-    Box(
-        // `has-disabled:opacity-50`: upstream dims the control and leaves it otherwise identical.
-        // Swapping the slot fill to `muted` instead turned it into a grey slab that shared no
-        // colour with the enabled state.
-        modifier = modifier
-            .alpha(if (enabled) 1f else DISABLED_ALPHA)
-            .semantics { this[SemanticsProperties.Label] = text },
-    ) {
-        // Visual slots rendering
-        Row(
-            horizontalArrangement = Arrangement.spacedByHorizontal(Tw.Spacing.s2),
-            verticalAlignment = Alignment.CenterVertically,
+        Box(
+            // `has-disabled:opacity-50`: upstream dims the control and leaves it otherwise identical.
+            // Swapping the slot fill to `muted` instead turned it into a grey slab that shared no
+            // colour with the enabled state.
+            modifier = modifier
+                .alpha(if (enabled) 1f else DISABLED_ALPHA)
+                .semantics { this[SemanticsProperties.Label] = text },
         ) {
-            groups.forEachIndexed { groupIndex, slotIndices ->
-                if (groupIndex > 0) {
-                    ShadcnInputOtpSeparator()
-                }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    val groupCount = slotIndices.count()
-                    slotIndices.forEachIndexed { indexInGroup, slotIndex ->
-                        val char = if (slotIndex < text.length) text[slotIndex].toString() else ""
-                        val isActive = isFocused && enabled && slotIndex == text.length.coerceAtMost(length - 1)
-                        val shape = slotShape(indexInGroup, groupCount, radius)
-                        val borderSides = slotBorderSides(indexInGroup)
-                        val borderColor = if (isError) {
-                            theme.palette.destructive
-                        } else if (isActive) {
-                            theme.palette.ring
-                        } else {
-                            theme.palette.input
-                        }
-                        Box(
-                            Modifier
-                                .size(SLOT_SIZE)
-                                .let { if (isActive) it.zIndex(1f) else it.zIndex(0f) }
-                                // `data-[active=true]:ring-[3px]` with `ring-ring/50`, drawn outside
-                                // the slot. The border itself stays 1px and only changes colour --
-                                // thickening it to 2px instead made the active slot read as a
-                                // heavier box than its neighbours rather than a highlighted one.
-                                // The slot's own shape, not one radius: a first or last slot is
-                                // rounded on its outer side and square where it meets its
-                                // neighbour, and a uniform ring drew it as a detached rounded box
-                                // floating above the row.
-                                .focusRing(
-                                    alpha = if (isActive) 1f else 0f,
-                                    width = FieldFocusRingWidth,
-                                    color = theme.palette.ring.scaleAlpha(RING_ALPHA),
-                                    shape = shape,
-                                )
-                                .border(
-                                    width = SLOT_BORDER_WIDTH,
-                                    color = borderColor,
-                                    shape = shape,
-                                    // Unchanged when active. Upstream's `data-[active=true]` rules
-                                    // change the border's *colour* and add the ring; switching a
-                                    // middle slot to all four sides drew edges its neighbours
-                                    // already own and broke the seam the group is made of.
-                                    sides = borderSides,
-                                )
-                                // Upstream only adds `dark:bg-input/30`; light mode leaves the
-                                // slot transparent so the border and page surface stay clean.
-                                .let {
-                                    if (theme.config.dark) {
-                                        it.background(color = theme.palette.input.scaleAlpha(SLOT_FILL_ALPHA), shape = shape)
-                                    } else {
-                                        it
-                                    }
-                                },
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            if (char.isNotEmpty()) {
-                                ShadcnText(
-                                    char,
-                                    variant = ShadcnTextVariant.Small,
-                                    color = theme.palette.foreground,
-                                )
-                            } else if (isActive && caretPhase < CARET_VISIBLE_FRACTION) {
-                                // `h-4 w-px`, on `animate-caret-blink`'s duty cycle: lit for the
-                                // first 70% of each second, dark for the rest.
-                                Box(
-                                    Modifier
-                                        .size(width = CARET_WIDTH, height = CARET_HEIGHT)
-                                        .background(theme.palette.foreground),
-                                )
+            // Visual slots rendering
+            Row(
+                horizontalArrangement = Arrangement.spacedByHorizontal(Tw.Spacing.s2),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                groups.forEachIndexed { groupIndex, slotIndices ->
+                    if (groupIndex > 0) {
+                        ShadcnInputOtpSeparator()
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        val groupCount = slotIndices.count()
+                        slotIndices.forEachIndexed { indexInGroup, slotIndex ->
+                            val char = if (slotIndex < text.length) text[slotIndex].toString() else ""
+                            val isActive = isFocused && enabled && slotIndex == text.length.coerceAtMost(length - 1)
+                            val shape = slotShape(indexInGroup, groupCount, radius)
+                            val borderSides = slotBorderSides(indexInGroup)
+                            val borderColor = if (isError) {
+                                theme.palette.destructive
+                            } else if (isActive) {
+                                theme.palette.ring
+                            } else {
+                                theme.palette.input
+                            }
+                            Box(
+                                Modifier
+                                    .size(SLOT_SIZE)
+                                    .let { if (isActive) it.zIndex(1f) else it.zIndex(0f) }
+                                    // `data-[active=true]:ring-[3px]` with `ring-ring/50`, drawn outside
+                                    // the slot. The border itself stays 1px and only changes colour --
+                                    // thickening it to 2px instead made the active slot read as a
+                                    // heavier box than its neighbours rather than a highlighted one.
+                                    // The slot's own shape, not one radius: a first or last slot is
+                                    // rounded on its outer side and square where it meets its
+                                    // neighbour, and a uniform ring drew it as a detached rounded box
+                                    // floating above the row.
+                                    .focusRing(
+                                        alpha = if (isActive) 1f else 0f,
+                                        width = FieldFocusRingWidth,
+                                        color = theme.palette.ring.scaleAlpha(RING_ALPHA),
+                                        shape = shape,
+                                    )
+                                    .border(
+                                        width = SLOT_BORDER_WIDTH,
+                                        color = borderColor,
+                                        shape = shape,
+                                        // Unchanged when active. Upstream's `data-[active=true]` rules
+                                        // change the border's *colour* and add the ring; switching a
+                                        // middle slot to all four sides drew edges its neighbours
+                                        // already own and broke the seam the group is made of.
+                                        sides = borderSides,
+                                    )
+                                    // Upstream only adds `dark:bg-input/30`; light mode leaves the
+                                    // slot transparent so the border and page surface stay clean.
+                                    .let {
+                                        if (theme.config.dark) {
+                                            it.background(color = theme.palette.input.scaleAlpha(SLOT_FILL_ALPHA), shape = shape)
+                                        } else {
+                                            it
+                                        }
+                                    },
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                if (char.isNotEmpty()) {
+                                    ShadcnText(
+                                        char,
+                                        variant = ShadcnTextVariant.Small,
+                                        color = theme.palette.foreground,
+                                    )
+                                } else if (isActive && caretPhase < CARET_VISIBLE_FRACTION) {
+                                    // `h-4 w-px`, on `animate-caret-blink`'s duty cycle: lit for the
+                                    // first 70% of each second, dark for the rest.
+                                    Box(
+                                        Modifier
+                                            .size(width = CARET_WIDTH, height = CARET_HEIGHT)
+                                            .background(theme.palette.foreground),
+                                    )
+                                }
                             }
                         }
                     }
                 }
             }
-        }
 
-        // Focus & Keyboard input overlay (top layer so it directly captures clicks across the entire box)
-        // matchParentSize, not fillMaxSize: the latter takes the incoming maximum, so the Box
-        // reported its parent's whole area and an enabled field measured 300x60 where a disabled one
-        // measured 216x36 -- the control's own size depended on whether it was editable, and its
-        // click target covered the entire parent. Upstream's real input is `absolute inset-0`.
-        if (enabled) {
-            BasicTextField(
-                state = state,
-                modifier = Modifier.matchParentSize().zIndex(10f),
-                style = TextStyle(color = Color(0f, 0f, 0f, 0f)),
-                interactionSource = interaction,
-                singleLine = true,
-            )
+            // Focus & Keyboard input overlay (top layer so it directly captures clicks across the entire box)
+            // matchParentSize, not fillMaxSize: the latter takes the incoming maximum, so the Box
+            // reported its parent's whole area and an enabled field measured 300x60 where a disabled one
+            // measured 216x36 -- the control's own size depended on whether it was editable, and its
+            // click target covered the entire parent. Upstream's real input is `absolute inset-0`.
+            if (enabled) {
+                BasicTextField(
+                    state = state,
+                    modifier = Modifier.matchParentSize().zIndex(10f),
+                    style = TextStyle(color = Color(0f, 0f, 0f, 0f)),
+                    interactionSource = interaction,
+                    singleLine = true,
+                )
+            }
         }
     }
 }
@@ -208,21 +211,23 @@ fun ShadcnInputOtp(
     pattern: Regex? = null,
     onValueChange: (String) -> Unit = {},
 ) {
-    val state = rememberTextFieldState(value)
-    // Clamped before the comparison, not after: the state is what the field wrote, so an
-    // over-long or rejected keystroke would otherwise report as a change and then be dropped.
-    if (state.acceptOtp(length, pattern) != value) {
-        onValueChange(state.text)
+    rememberGroup(ShadcnInputOtpGroup) {
+        val state = rememberTextFieldState(value)
+        // Clamped before the comparison, not after: the state is what the field wrote, so an
+        // over-long or rejected keystroke would otherwise report as a change and then be dropped.
+        if (state.acceptOtp(length, pattern) != value) {
+            onValueChange(state.text)
+        }
+        ShadcnInputOtp(
+            state = state,
+            length = length,
+            modifier = modifier,
+            enabled = enabled,
+            isError = isError,
+            groupSize = groupSize,
+            pattern = pattern,
+        )
     }
-    ShadcnInputOtp(
-        state = state,
-        length = length,
-        modifier = modifier,
-        enabled = enabled,
-        isError = isError,
-        groupSize = groupSize,
-        pattern = pattern,
-    )
 }
 
 /**
@@ -321,3 +326,6 @@ private const val CARET_VISIBLE_FRACTION = 0.7f
 private val SEPARATOR_BOX = 24.dp
 private val SEPARATOR_LINE_LENGTH = 14.dp
 private val SEPARATOR_LINE_WEIGHT = 2.dp
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnInputOtpGroup

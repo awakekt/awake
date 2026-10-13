@@ -13,6 +13,7 @@ import com.awakekt.awake.compose.foundation.style.StyleState
 import com.awakekt.awake.compose.foundation.style.styleable
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.remember
+import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.unit.Dp
@@ -38,14 +39,16 @@ fun ShadcnKbd(
     key: String,
     modifier: Modifier = Modifier,
 ) {
-    val theme = shadcnTheme
-    val style = remember(theme) { theme.kbdStyle() }
-    Box(
-        modifier.height(KbdSize).widthIn(min = KbdSize).styleable(StyleState.Default, style),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        ShadcnText(key, variant = ShadcnTextVariant.Xs, color = theme.palette.mutedForeground)
+    rememberGroup(ShadcnKbdGroup) {
+        val theme = shadcnTheme
+        val style = remember(theme) { theme.kbdStyle() }
+        Box(
+            modifier.height(KbdSize).widthIn(min = KbdSize).styleable(StyleState.Default, style),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            ShadcnText(key, variant = ShadcnTextVariant.Xs, color = theme.palette.mutedForeground)
+        }
     }
 }
 
@@ -60,3 +63,6 @@ private fun ShadcnThemeValues.kbdStyle(): Style = Style {
 
 /** shadcn's `h-5` and `min-w-5`. */
 private val KbdSize: Dp = 20.dp
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnKbdGroup

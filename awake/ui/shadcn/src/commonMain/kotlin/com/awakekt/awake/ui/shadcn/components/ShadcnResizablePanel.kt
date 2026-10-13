@@ -23,6 +23,7 @@ import com.awakekt.awake.compose.foundation.layout.width
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.remember
+import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.graphics.RoundedCornerShape
@@ -140,42 +141,44 @@ fun shadcnResizablePanelGroup(
     /** Upstream's `withHandle`: draw the grip that says the divider can be dragged. */
     withHandle: Boolean = false,
 ) {
-    require(panels.size >= 2) { "a resizable group needs at least two panels" }
-    val density = LocalDensity.current
-    val state = remember { ResizableState() }
-    state.sync(panels, density)
-    if (orientation == ShadcnResizableOrientation.Horizontal) {
-        Row(modifier.onSizeChanged { width, _ -> state.extentPx = width.toFloat() }) {
-            panels.forEachIndexed { index, panel ->
-                if (index > 0) {
-                    resizableHandle(
-                        interaction = state.handleInteraction(index - 1),
-                        orientation = ShadcnResizableOrientation.Horizontal,
-                        withHandle = withHandle,
-                        tag = handleTags.getOrNull(index - 1),
-                        onDrag = { delta -> state.drag(index - 1, delta, panels, density) },
-                    )
+    rememberGroup(ShadcnResizablePanelGroupGroup) {
+        require(panels.size >= 2) { "a resizable group needs at least two panels" }
+        val density = LocalDensity.current
+        val state = remember { ResizableState() }
+        state.sync(panels, density)
+        if (orientation == ShadcnResizableOrientation.Horizontal) {
+            Row(modifier.onSizeChanged { width, _ -> state.extentPx = width.toFloat() }) {
+                panels.forEachIndexed { index, panel ->
+                    if (index > 0) {
+                        resizableHandle(
+                            interaction = state.handleInteraction(index - 1),
+                            orientation = ShadcnResizableOrientation.Horizontal,
+                            withHandle = withHandle,
+                            tag = handleTags.getOrNull(index - 1),
+                            onDrag = { delta -> state.drag(index - 1, delta, panels, density) },
+                        )
+                    }
+                    Box(
+                        Modifier.weight(state.sizeOf(index)).fillMaxHeight().tagged(panel.tag),
+                    ) { panel.content() }
                 }
-                Box(
-                    Modifier.weight(state.sizeOf(index)).fillMaxHeight().tagged(panel.tag),
-                ) { panel.content() }
             }
-        }
-    } else {
-        Column(modifier.onSizeChanged { _, height -> state.extentPx = height.toFloat() }) {
-            panels.forEachIndexed { index, panel ->
-                if (index > 0) {
-                    resizableHandle(
-                        interaction = state.handleInteraction(index - 1),
-                        orientation = ShadcnResizableOrientation.Vertical,
-                        withHandle = withHandle,
-                        tag = handleTags.getOrNull(index - 1),
-                        onDrag = { delta -> state.drag(index - 1, delta, panels, density) },
-                    )
+        } else {
+            Column(modifier.onSizeChanged { _, height -> state.extentPx = height.toFloat() }) {
+                panels.forEachIndexed { index, panel ->
+                    if (index > 0) {
+                        resizableHandle(
+                            interaction = state.handleInteraction(index - 1),
+                            orientation = ShadcnResizableOrientation.Vertical,
+                            withHandle = withHandle,
+                            tag = handleTags.getOrNull(index - 1),
+                            onDrag = { delta -> state.drag(index - 1, delta, panels, density) },
+                        )
+                    }
+                    Box(
+                        Modifier.weight(state.sizeOf(index)).fillMaxWidth().tagged(panel.tag),
+                    ) { panel.content() }
                 }
-                Box(
-                    Modifier.weight(state.sizeOf(index)).fillMaxWidth().tagged(panel.tag),
-                ) { panel.content() }
             }
         }
     }
@@ -443,3 +446,6 @@ private const val GRIP_COLUMNS = 2
 private const val GRIP_DOTS_PER_COLUMN = 3
 private val GripDotSize: Dp = 2.dp
 private val GripDotGap: Dp = 2.dp
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnResizablePanelGroupGroup

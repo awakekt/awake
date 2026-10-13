@@ -14,6 +14,7 @@ import com.awakekt.awake.compose.foundation.layout.fillMaxWidth
 import com.awakekt.awake.compose.foundation.layout.height
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.remember
+import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.semantics.SemanticsProperties
@@ -44,31 +45,33 @@ fun ShadcnCollapsible(
         () -> Unit
     )? = null,
 ) {
-    val theme = shadcnTheme
-    val open = expanded
+    rememberGroup(ShadcnCollapsibleGroup) {
+        val theme = shadcnTheme
+        val open = expanded
 
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(Tw.Spacing.s2)) {
-        val interaction = remember { InteractionSource() }
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .height(TriggerHeight)
-                .clickable(interaction) { onExpandedChange(!expanded) }
-                .semantics {
-                    this[SemanticsProperties.Role] = SemanticsRole.Button
-                    this[SemanticsProperties.Label] = title
-                    this[SemanticsProperties.Selected] = open
-                },
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            ShadcnText(title, Modifier.weight(1f), variant = ShadcnTextVariant.Small)
-            ShadcnIcon(
-                if (open) ShadcnIcons.chevronUp else ShadcnIcons.chevronDown,
-                tint = theme.palette.mutedForeground,
-            )
+        Column(modifier, verticalArrangement = Arrangement.spacedBy(Tw.Spacing.s2)) {
+            val interaction = remember { InteractionSource() }
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .height(TriggerHeight)
+                    .clickable(interaction) { onExpandedChange(!expanded) }
+                    .semantics {
+                        this[SemanticsProperties.Role] = SemanticsRole.Button
+                        this[SemanticsProperties.Label] = title
+                        this[SemanticsProperties.Selected] = open
+                    },
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                ShadcnText(title, Modifier.weight(1f), variant = ShadcnTextVariant.Small)
+                ShadcnIcon(
+                    if (open) ShadcnIcons.chevronUp else ShadcnIcons.chevronDown,
+                    tint = theme.palette.mutedForeground,
+                )
+            }
+            val body = content
+            if (open && body != null) body()
         }
-        val body = content
-        if (open && body != null) body()
     }
 }
 
@@ -87,3 +90,6 @@ fun shadcnCollapsible(
         () -> Unit
     )? = null,
 ) = ShadcnCollapsible(title, expanded, modifier, onExpandedChange, content)
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnCollapsibleGroup

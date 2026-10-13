@@ -16,6 +16,7 @@ import com.awakekt.awake.compose.runtime.CompositionLocalProvider
 import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.provides
 import com.awakekt.awake.compose.runtime.remember
+import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.draw.alpha
 import com.awakekt.awake.compose.ui.layout.Layer
@@ -54,20 +55,22 @@ fun ShadcnPopover(
         BoxScope.() -> Unit
     )? = null,
 ) {
-    val theme = shadcnTheme
-    val style = remember(theme) { theme.popoverSurfaceStyle(Tw.Spacing.s4) }
-    Box(modifier.width(width).styleable(StyleState.Default, style)) {
-        // `text-popover-foreground` on the panel, which children inherit. `styleable` records a
-        // style's text colour for `resolveTextColor` to read deliberately -- it does not propagate --
-        // so without this the body fell through to the engine's default light grey, which is
-        // near-invisible on a light popover and which only looking at a render would catch.
-        val body = content
-        if (body != null) {
-            CompositionLocalProvider(
-                LocalTextStyle provides
-                    LocalTextStyle.current.copy(color = theme.palette.popoverForeground),
-            ) {
-                body()
+    rememberGroup(ShadcnPopoverGroup) {
+        val theme = shadcnTheme
+        val style = remember(theme) { theme.popoverSurfaceStyle(Tw.Spacing.s4) }
+        Box(modifier.width(width).styleable(StyleState.Default, style)) {
+            // `text-popover-foreground` on the panel, which children inherit. `styleable` records a
+            // style's text colour for `resolveTextColor` to read deliberately -- it does not propagate --
+            // so without this the body fell through to the engine's default light grey, which is
+            // near-invisible on a light popover and which only looking at a render would catch.
+            val body = content
+            if (body != null) {
+                CompositionLocalProvider(
+                    LocalTextStyle provides
+                        LocalTextStyle.current.copy(color = theme.palette.popoverForeground),
+                ) {
+                    body()
+                }
             }
         }
     }
@@ -95,28 +98,30 @@ fun ShadcnPopover(
         BoxScope.() -> Unit
     )? = null,
 ) {
-    val anchor = remember { PopupAnchor() }
-    val density = LocalDensity.current
-    val alpha = rememberOverlayAlpha(visible)
-    Box(modifier.popupAnchor(anchor)) {
-        trigger { onVisibleChange(!visible) }
-        if (isPresent(visible, alpha)) {
-            Layer(
-                kind = LayerKind.Popup,
-                dismissOnOutsideClick = true,
-                onDismissRequest = { onVisibleChange(false) },
-                positionProvider = remember(density) {
-                    AnchoredBelowPositionProvider(anchor, (PopoverGap.value * density).toInt())
-                },
-                measurePolicy = BoxMeasurePolicy(),
-            ) {
-                ShadcnPopover(
-                    modifier = panelModifier.alpha(alpha).semantics {
-                        if (id != null) this[SemanticsProperties.TestTag] = id
+    rememberGroup(ShadcnPopoverGroup) {
+        val anchor = remember { PopupAnchor() }
+        val density = LocalDensity.current
+        val alpha = rememberOverlayAlpha(visible)
+        Box(modifier.popupAnchor(anchor)) {
+            trigger { onVisibleChange(!visible) }
+            if (isPresent(visible, alpha)) {
+                Layer(
+                    kind = LayerKind.Popup,
+                    dismissOnOutsideClick = true,
+                    onDismissRequest = { onVisibleChange(false) },
+                    positionProvider = remember(density) {
+                        AnchoredBelowPositionProvider(anchor, (PopoverGap.value * density).toInt())
                     },
-                    width = width,
-                    content = content,
-                )
+                    measurePolicy = BoxMeasurePolicy(),
+                ) {
+                    ShadcnPopover(
+                        modifier = panelModifier.alpha(alpha).semantics {
+                            if (id != null) this[SemanticsProperties.TestTag] = id
+                        },
+                        width = width,
+                        content = content,
+                    )
+                }
             }
         }
     }
@@ -127,3 +132,6 @@ private val PopoverWidth: Dp = 288.dp
 
 /** `sideOffset={4}`, the same gap the dropdown uses. */
 private val PopoverGap: Dp = 4.dp
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnPopoverGroup
