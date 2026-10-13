@@ -32,7 +32,10 @@ data class PluginDependency(
  * @property id Unique reversed-domain plugin ID (e.g. "awake.terrain" or "com.acme.dialogue").
  * @property name Human-readable display name.
  * @property version SemVer version string (e.g. "1.2.0").
- * @property author Author or studio name.
+ * @property author Author or studio name. Free-text display only; carries no trust meaning.
+ * @property publisher Reverse-domain publisher id (e.g. "com.example.studio"), blank when unset.
+ *   A signed archive's `signature.sig` is checked against the public key a host's trust registry
+ *   holds for this id ([PluginArchiveVerifier]); `author` is not part of that lookup.
  * @property description Short description of the extension capabilities.
  * @property entrypointClass Fully-qualified class name implementing [EditorPlugin]. When non-blank
  *   the plugin archive **must** contain a non-empty bytecode payload; a metadata-only archive with
@@ -54,6 +57,7 @@ data class PluginManifest(
     val name: String,
     val version: String,
     val author: String = "Community",
+    val publisher: String = "",
     val description: String = "",
     val entrypointClass: String = "",
     val requiredApiVersion: Int = 1,
@@ -70,6 +74,9 @@ data class PluginManifest(
         require(id.isNotBlank()) { "Plugin ID must not be blank." }
         require(name.isNotBlank()) { "Plugin name must not be blank." }
         require(version.isNotBlank()) { "Plugin version must not be blank." }
+        require(publisher.isBlank() || publisherIdPattern.matches(publisher)) {
+            "Plugin publisher must be blank or a reverse-domain id (e.g. 'com.example'), was '$publisher'."
+        }
     }
 
     /** Converts this manifest to JSON string representation. */
@@ -83,6 +90,10 @@ data class PluginManifest(
             ignoreUnknownKeys = true
             encodeDefaults = true
         }
+
+        // At least two lowercase, alphanumeric-and-hyphen labels joined by dots: "com.example", not
+        // a bare label or an uppercase one.
+        private val publisherIdPattern = Regex("^[a-z0-9]+(-[a-z0-9]+)*(\\.[a-z0-9]+(-[a-z0-9]+)*)+$")
 
         /** Parses a [PluginManifest] from JSON text. */
         fun fromJson(jsonText: String): PluginManifest =

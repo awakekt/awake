@@ -28,7 +28,9 @@ kotlin {
             api(project(":awake:compose:ui"))
             api(project(":awake:core:schema"))
             api(project(":awake:ecs"))
+            implementation(project(":awake:core:io"))
             implementation(libs.kotlinx.serialization.json)
+            implementation(libs.bignum)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

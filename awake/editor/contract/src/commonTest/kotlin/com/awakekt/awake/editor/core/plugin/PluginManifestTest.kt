@@ -19,6 +19,7 @@ class PluginManifestTest {
             name = "Terrain Tools",
             version = "1.2.0",
             author = "Awake",
+            publisher = "com.awakekt",
             description = "Heightmap sculpting and painting",
             entrypointClass = "com.awakekt.plugin.terrain.TerrainPlugin",
             requiredApiVersion = 1,
@@ -69,6 +70,23 @@ class PluginManifestTest {
     fun rejectsBlankDependencyId() {
         assertFailsWith<IllegalArgumentException> {
             PluginDependency(id = "")
+        }
+    }
+
+    @Test
+    fun acceptsABlankPublisher() {
+        val manifest = PluginManifest(id = "test", name = "Test", version = "1.0.0")
+
+        assertEquals("", manifest.publisher)
+    }
+
+    @Test
+    fun rejectsAPublisherThatIsNotReverseDomain() {
+        assertFailsWith<IllegalArgumentException> {
+            PluginManifest(id = "test", name = "Test", version = "1.0.0", publisher = "NotReverseDomain")
+        }
+        assertFailsWith<IllegalArgumentException> {
+            PluginManifest(id = "test", name = "Test", version = "1.0.0", publisher = "com")
         }
     }
 }
