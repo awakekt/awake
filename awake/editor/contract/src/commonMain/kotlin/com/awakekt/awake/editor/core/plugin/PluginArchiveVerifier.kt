@@ -66,6 +66,10 @@ private fun checkRsaSignature(
     val signature = BigInteger.fromByteArray(signatureBytes, Sign.POSITIVE)
 
     return when {
+        publicKey.byteLength < MIN_MODULUS_BYTES ->
+            PluginArchiveVerification.Unverified("RSA key is shorter than ${MIN_MODULUS_BYTES * 8} bits.")
+        publicKey.exponent < BigInteger.fromInt(3) || (publicKey.exponent mod BigInteger.TWO) == BigInteger.ZERO ->
+            PluginArchiveVerification.Unverified("RSA public exponent must be odd and at least 3.")
         expected == null ->
             PluginArchiveVerification.Unverified("RSA modulus is too small for a SHA-256 signature.")
         signature.isZero() || signature >= publicKey.modulus ->
@@ -80,6 +84,9 @@ private fun checkRsaSignature(
         }
     }
 }
+
+/** 2048 bits: shorter RSA keys are factorable, and a signature they make proves nothing. */
+private const val MIN_MODULUS_BYTES = 256
 
 private class RsaPublicKey(val modulus: BigInteger, val exponent: BigInteger, val byteLength: Int)
 

@@ -51,6 +51,16 @@ class PluginArchiveSigningDesktopTest {
     }
 
     @Test
+    fun aValidSignatureFromAKeyShorterThan2048BitsIsRefused() {
+        val keyPair = KeyPairGenerator.getInstance("RSA").apply { initialize(1024) }.genKeyPair()
+        val signed = entries() + sign(entries(), keyPair.private)
+
+        val result = PluginArchiveVerifier.verify(signed, keyPair.public.toPem())
+
+        assertIs<PluginArchiveVerification.Unverified>(result)
+    }
+
+    @Test
     fun aChangedEntryFailsVerification() {
         val keyPair = KeyPairGenerator.getInstance("RSA").apply { initialize(2048) }.genKeyPair()
         val signature = sign(entries(), keyPair.private)
