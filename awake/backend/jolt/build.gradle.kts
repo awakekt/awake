@@ -195,11 +195,11 @@ kotlin {
                 implementation(libs.jolt.jni.desktop)
                 // Native desktop libraries for all supported desktop platforms (ReleaseSp flavor).
                 // Snaploader picks and extracts the matching library at runtime.
-                runtimeOnly("com.github.stephengold:jolt-jni-MacOSX_ARM64:5.2.0:ReleaseSp")
-                runtimeOnly("com.github.stephengold:jolt-jni-MacOSX64:5.2.0:ReleaseSp")
-                runtimeOnly("com.github.stephengold:jolt-jni-Linux64:5.2.0:ReleaseSp")
-                runtimeOnly("com.github.stephengold:jolt-jni-Linux_ARM64:5.2.0:ReleaseSp")
-                runtimeOnly("com.github.stephengold:jolt-jni-Windows64:5.2.0:ReleaseSp")
+                runtimeOnly("com.github.stephengold:jolt-jni-MacOSX_ARM64:${libs.versions.jolt.jni.get()}:ReleaseSp")
+                runtimeOnly("com.github.stephengold:jolt-jni-MacOSX64:${libs.versions.jolt.jni.get()}:ReleaseSp")
+                runtimeOnly("com.github.stephengold:jolt-jni-Linux64:${libs.versions.jolt.jni.get()}:ReleaseSp")
+                runtimeOnly("com.github.stephengold:jolt-jni-Linux_ARM64:${libs.versions.jolt.jni.get()}:ReleaseSp")
+                runtimeOnly("com.github.stephengold:jolt-jni-Windows64:${libs.versions.jolt.jni.get()}:ReleaseSp")
                 // Extracts + loads the native library above at runtime (see JoltNative.kt).
                 implementation(libs.snaploader)
                 implementation(libs.oshi.core)

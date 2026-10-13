@@ -27,9 +27,9 @@ wgpu4k = "0.2.0-SNAPSHOT"
 # wgpu4k-toolkit; the toolkit is wasm-only, so the desktop test target needs them declared.
 webgpu-ktypes = "0.0.10-SNAPSHOT"
 # Jolt Physics integration slice 1 (see docs/MVP_PLAN.md's decision log) -- stephengold's
-# jolt-jni provides JVM bindings for desktop+Android; confirmed current coordinates/version
-# via repo1.maven.org's maven-metadata.xml for jolt-jni-MacOSX_ARM64 (2026-07-07).
-jolt-jni = "5.2.0"
+# jolt-jni provides JVM bindings for desktop+Android. 6.x, not 5.x: 5.1.0 and 5.2.0 shipped a
+# Linux arm64 native built for SVE2, which dies with SIGILL on arm64 CPUs without it.
+jolt-jni = "6.1.1"
 snaploader = "1.1.1-stable"
 oshi-core = "7.4.0"
 # Desktop-only Ktor WebSocket debug-control channel for sample-hello-cube (see
