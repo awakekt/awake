@@ -107,6 +107,8 @@ internal class WebGpuDrawPreparer(
     }
 
     private fun startBatch() {
+        // A batch prepared and never drawn has its writes land now, so the stage holds one batch at most.
+        renderer.flushUniformUploads()
         instancedRuns = 0
         edgeRuns = 0
     }

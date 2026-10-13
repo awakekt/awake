@@ -213,6 +213,9 @@ class Renderer internal constructor(
 
     internal val bufferPools = GpuBufferPoolManager(graphicsDevice)
 
+    /** This frame's per-draw uniform blocks, written before the frame records -- see [UniformUploads]. */
+    internal val uniformUploads = UniformUploads()
+
     internal fun instanceBufferForRun(index: Int): InstanceBuffer = bufferPools.instanceBufferForRun(index)
     internal fun skinnedInstanceBufferForRun(index: Int): SkinnedInstanceBuffer = bufferPools.skinnedInstanceBufferForRun(index)
     internal fun alphaInstanceBufferForRun(index: Int): AlphaInstanceBuffer = bufferPools.alphaInstanceBufferForRun(index)
