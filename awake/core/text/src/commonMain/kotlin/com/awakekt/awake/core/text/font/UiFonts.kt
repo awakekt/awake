@@ -11,8 +11,13 @@ package com.awakekt.awake.core.text.font
 object UiFonts {
     // Memoized: a renderer uploads one atlas per UiFont instance and keeps it, keyed by
     // identity, on the assumption that independent callers asking for "the default font" get
-    // the same instance. A fresh PackedUiFont per call would upload another atlas every frame.
+    // the same instance. A fresh PackedUiFont per call would upload another atlas every frame --
+    // which is exactly what a `TextStyle(font = UiFonts.bitmap())` built fresh every frame does
+    // unless the factory itself returns the same instance back.
     private val defaultCache = mutableMapOf<Int, UiFont>()
+    private val bitmapCache = mutableMapOf<Int, UiFont>()
+    private val trueSansCache = mutableMapOf<Int, UiFont>()
+    private val msdfCache = mutableMapOf<Int, UiFont>()
 
     /**
      * Stable bundled atlas used by all targets unless a caller explicitly supplies another font.
@@ -28,18 +33,19 @@ object UiFonts {
      * Creates a retro fixed-pitch bitmap font instance.
      *
      * @param cellSize The base cell size in pixels.
-     * @return A bitmap-sampled [UiFont] instance.
+     * @return The cached bitmap-sampled [UiFont] instance at the requested cell size.
      */
-    fun bitmap(cellSize: Int = 12): UiFont = BitmapFont(cellSize = cellSize)
+    fun bitmap(cellSize: Int = 12): UiFont = bitmapCache.getOrPut(cellSize) { BitmapFont(cellSize = cellSize) }
 
     /**
      * Creates a single-weight sans-serif font instance backed by bundled regular Roboto data.
      *
      * @param cellSize The base cell size in pixels.
-     * @return A packed sans-serif [UiFont] instance.
+     * @return The cached packed sans-serif [UiFont] instance at the requested cell size.
      */
-    fun trueSans(cellSize: Int = 12): UiFont =
+    fun trueSans(cellSize: Int = 12): UiFont = trueSansCache.getOrPut(cellSize) {
         PackedUiFont(RobotoRegularUiFontData, cellSize = cellSize)
+    }
 
     /**
      * Bundled family with real face selection when additional generated faces are present.
@@ -75,9 +81,9 @@ object UiFonts {
      * Creates a multi-channel signed distance field (MSDF) font instance.
      *
      * @param cellSize The base cell size in pixels.
-     * @return An MSDF-sampled [UiFont] instance.
+     * @return The cached MSDF-sampled [UiFont] instance at the requested cell size.
      */
-    fun msdf(cellSize: Int = 12): UiFont = MsdfFont(cellSize = cellSize)
+    fun msdf(cellSize: Int = 12): UiFont = msdfCache.getOrPut(cellSize) { MsdfFont(cellSize = cellSize) }
 
     /** The chars [load] bakes when a caller names none: the built-in atlas's own set, printable ASCII plus • · … – — × −. */
     const val DEFAULT_CHARS: String =

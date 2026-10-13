@@ -20,10 +20,13 @@ import com.awakekt.awake.core.graphics2d.DrawCommand
 import com.awakekt.awake.core.input.ImeComposition
 import com.awakekt.awake.core.input.TextEditAction
 import com.awakekt.awake.core.math2d.sp
+import com.awakekt.awake.core.text.font.UiFont
+import com.awakekt.awake.core.text.font.UiFonts
 import com.awakekt.awake.core.text.theme.TextStyle
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 private val idle = FrameInput(viewportWidth = 200, viewportHeight = 200, pointerX = 5, pointerY = 5)
@@ -596,5 +599,37 @@ class TextFieldGainedActionsTest {
         state.apply(TextEditAction.ArrowDown)
 
         assertEquals(2, state.cursor, "the caret moved on a field with one line")
+    }
+}
+
+/** A `style.font` must reach the caret, not just the glyphs -- both read the same [TextRun]. */
+class TextFieldStyleFontTest {
+
+    private fun caretXFor(font: UiFont?): Float {
+        val state = TextFieldState("Hg", cursor = 2)
+        val host = ComposeHost()
+        val content: context(Composer)
+        () -> Unit = {
+            BasicTextField(
+                state,
+                Modifier.size(120.dp, 20.dp),
+                style = if (font == null) TextStyle(size = 20f.sp) else TextStyle(size = 20f.sp, font = font),
+            )
+        }
+        host.frame(FrameInput(200, 80, 5, 5), content)
+        host.frame(FrameInput(200, 80, 5, 5, pointerDown = true), content)
+        // The click itself places the cursor by hit-testing; put it back at the end explicitly,
+        // same as the other tests that want a specific caret position rather than the click's own.
+        state.moveCursorTo(2)
+        val focused = host.frame(FrameInput(200, 80, 5, 5, deltaSeconds = 0.1f), content)
+        return focused.primitives.filterIsInstance<DrawCommand.Quad>().first { it.w == 1f }.x
+    }
+
+    @Test
+    fun theCaretIsPositionedWithTheStyleFontNotTheAmbientOne() {
+        val ambient = caretXFor(font = null)
+        val styled = caretXFor(font = UiFonts.bitmap())
+
+        assertNotEquals(ambient, styled, "the caret used the ambient font instead of the style's")
     }
 }

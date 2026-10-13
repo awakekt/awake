@@ -8,6 +8,7 @@ package com.awakekt.awake.core.text
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.math2d.sp
 import com.awakekt.awake.core.text.font.FontWeight
+import com.awakekt.awake.core.text.font.UiFonts
 import com.awakekt.awake.core.text.theme.TextOutline
 import com.awakekt.awake.core.text.theme.TextShadow
 import com.awakekt.awake.core.text.theme.TextStyle
@@ -32,6 +33,8 @@ class TextStyleThenTest {
         TextStyle(shadow = TextShadow(Color.Black)),
         TextStyle(outline = TextOutline(Color.Black, 2f)),
         TextStyle(color = Color.White, shadow = TextShadow(Color.Black, 2f, 2f), outline = TextOutline(Color.Black)),
+        TextStyle(font = UiFonts.bitmap()),
+        TextStyle(size = 14.sp, font = UiFonts.default()),
     )
 
     private fun reference(base: TextStyle, other: TextStyle) = TextStyle(
@@ -43,6 +46,7 @@ class TextStyleThenTest {
         letterSpacing = other.letterSpacing,
         shadow = other.shadow ?: base.shadow,
         outline = other.outline ?: base.outline,
+        font = other.font ?: base.font,
     )
 
     @Test

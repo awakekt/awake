@@ -115,7 +115,7 @@ fun BasicTextField(
     // A newline in a password could only draw as one more mask, so the field never breaks lines.
     val oneLine = singleLine || mask != null
     val resolved = LocalTextStyle.current then style
-    val font = LocalFont.current
+    val font = resolved.resolveFont(LocalFont.current)
     val source = interactionSource ?: remember { InteractionSource() }
     val density = LocalDensity.current
     val clock = LocalFrameClock.current

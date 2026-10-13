@@ -9,6 +9,7 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.math2d.Sp
 import com.awakekt.awake.core.math2d.sp
 import com.awakekt.awake.core.text.font.FontWeight
+import com.awakekt.awake.core.text.font.UiFont
 
 /**
  * Groups text-related styling properties.
@@ -21,6 +22,9 @@ import com.awakekt.awake.core.text.font.FontWeight
  * @property letterSpacing Additional spacing between adjacent characters.
  * @property shadow A shadow drawn under the text, or null to inherit.
  * @property outline An outline drawn around the text, or null to inherit.
+ * @property font The typeface to measure and draw with, or null to inherit `LocalFont`.
+ *   Compared by whatever equality the [UiFont] instance itself provides -- identity unless a
+ *   font overrides it -- which matches the atlas cache a renderer keys on the same instance.
  */
 data class TextStyle(
     val color: Color? = null,
@@ -31,6 +35,7 @@ data class TextStyle(
     val letterSpacing: Sp = 0f.sp,
     val shadow: TextShadow? = null,
     val outline: TextOutline? = null,
+    val font: UiFont? = null,
 ) {
     /**
      * Default text style constants.
@@ -60,6 +65,7 @@ data class TextStyle(
             other.letterSpacing,
             other.shadow ?: shadow,
             other.outline ?: outline,
+            other.font ?: font,
         )
     }
 
@@ -67,12 +73,12 @@ data class TextStyle(
     private fun inheritsNothingFrom(base: TextStyle): Boolean =
         (color != null || base.color == null) && (size != null || base.size == null) &&
             (lineHeight != null || base.lineHeight == null) && (shadow != null || base.shadow == null) &&
-            (outline != null || base.outline == null)
+            (outline != null || base.outline == null) && (font != null || base.font == null)
 
     /** Whether merging this over [base] gives [base]: every field it sets, [base] already has. */
     private fun changesNothingIn(base: TextStyle): Boolean =
         sameOrUnset(color, base.color) && sameOrUnset(size, base.size) && sameOrUnset(lineHeight, base.lineHeight) &&
-            sameOrUnset(shadow, base.shadow) && sameOrUnset(outline, base.outline) &&
+            sameOrUnset(shadow, base.shadow) && sameOrUnset(outline, base.outline) && sameOrUnset(font, base.font) &&
             scale == base.scale && weight == base.weight && letterSpacing == base.letterSpacing
 }
 
