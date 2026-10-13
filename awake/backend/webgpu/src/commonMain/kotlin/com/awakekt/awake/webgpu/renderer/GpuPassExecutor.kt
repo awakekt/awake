@@ -28,6 +28,7 @@ internal class RendererGpuPassExecutor(
 ) : GpuPassExecutor {
     override fun draw(input: GpuPassInput) {
         with(renderer) {
+            flushUniformUploads()
             swapchainManager.syncSurface()
             val renderingContext = graphicsDevice.wgpuContext.renderingContext
             val useWireframe = wireframe && wireframeRenderPipeline != null
@@ -115,6 +116,7 @@ internal class RendererGpuPassExecutor(
 
     override fun renderToTexture(target: RenderTarget, input: GpuPassInput) {
         val renderer = this.renderer
+        renderer.flushUniformUploads()
         val offscreen = target as OffscreenRenderTarget
         val primary = PrimaryPipelineBinding(pipeline = renderer.renderPipeline.handle, wireframe = false)
         check(input.resolvedPath) { "WebGPU requires a resolved GpuPassInput." }

@@ -23,9 +23,9 @@ import io.ygdrasil.webgpu.GPUQueue
  * per-element pass, skipping the intermediate boxed `JsArray` entirely.
  *
  * Known limit: still a per-element loop under the hood (Kotlin/Wasm-GC arrays have no linear
- * memory to bulk-copy/view from), so this halves the work rather than eliminating it.
- * Upgrade path: a wgpu4k fix upstream, or a future Kotlin/Wasm bulk array-to-typed-array
- * interop intrinsic.
+ * memory to bulk-copy/view from), so this halves the work rather than eliminating it. Per-draw
+ * uniforms no longer come through here: `UniformUploads` stores a frame's blocks into linear memory
+ * and writes from there, which a hot caller of this function could do the same way.
  */
 internal fun fastArrayBufferOf(data: FloatArray): ArrayBuffer =
     ArrayBuffer.allocate((Float.SIZE_BYTES * data.size).toULong()).apply { setFloats(0uL, data) }

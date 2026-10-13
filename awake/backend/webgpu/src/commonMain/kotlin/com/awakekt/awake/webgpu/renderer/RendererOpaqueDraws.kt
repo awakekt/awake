@@ -16,8 +16,6 @@ import com.awakekt.awake.render.command.GpuShadowCascadeData
 import com.awakekt.awake.render.command.MaterialBinding
 import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.command.PreparedDraw
-import com.awakekt.awake.render.command.SortedDraws
-import com.awakekt.awake.render.command.sortForRecording
 import com.awakekt.awake.render.passes.instancedUniformFloats
 import com.awakekt.awake.render.passes.uniformFloats
 import com.awakekt.awake.render.pipeline.BindingSemantic
@@ -27,7 +25,6 @@ import com.awakekt.awake.render.pipeline.depthSortKey
 import com.awakekt.awake.render.pipeline.instancedDrawKind
 import com.awakekt.awake.render.pipeline.resolve
 import com.awakekt.awake.render.pipeline.resolveInstanced
-import com.awakekt.awake.webgpu.fastArrayBufferOf
 import com.awakekt.awake.webgpu.material.Material
 import com.awakekt.awake.webgpu.mesh.Mesh
 import com.awakekt.awake.webgpu.pipeline.RenderPipeline
@@ -36,52 +33,8 @@ import com.awakekt.awake.webgpu.pipeline.WebGpuPipelineHandle
 import com.awakekt.awake.webgpu.pipeline.hasBindingGroup
 import com.awakekt.awake.webgpu.pipeline.texturedMaterialBindings
 import com.awakekt.awake.webgpu.pipeline.uniformByteSize
-import com.awakekt.awake.webgpu.writeBufferData
 import io.ygdrasil.webgpu.GPUBuffer
 import io.ygdrasil.webgpu.GPUPrimitiveTopology
-
-internal fun Renderer.prepareGpuDraws(
-    draws: List<GpuDrawRequest>,
-    isTransparent: Boolean,
-    primary: PrimaryPipelineBinding,
-    viewProjection: Mat4,
-    cameraEye: Vec3f,
-    cameraForward: Vec3f = Vec3f(0f, 0f, -1f),
-    lightUniforms: FloatArray,
-    shadowCascades: GpuShadowCascadeData? = null,
-    fogColor: Color = Color.Black,
-    fogDensity: Float = 0f,
-    singleIndexStart: Int = 0,
-): SortedDraws<PreparedDraw> {
-    var singleIndex = singleIndexStart
-    var instancedIndex = 0
-    val prepared = buildList(draws.size) {
-        for (cmd in draws) {
-            prepareGpuDraw(
-                cmd = cmd,
-                singleIndex = singleIndex,
-                instancedIndex = instancedIndex,
-                isTransparent = isTransparent,
-                primary = primary,
-                viewProjection = viewProjection,
-                cameraEye = cameraEye,
-                cameraForward = cameraForward,
-                lightUniforms = lightUniforms,
-                shadowCascades = shadowCascades,
-                fogColor = fogColor,
-                fogDensity = fogDensity,
-            )?.let {
-                add(it)
-                if (cmd.instanceModels != null) {
-                    instancedIndex += 1
-                } else {
-                    singleIndex += 1
-                }
-            }
-        }
-    }
-    return sortForRecording(prepared)
-}
 
 internal fun Renderer.prepareGpuDraw(
     cmd: GpuDrawRequest,
@@ -146,13 +99,7 @@ internal fun Renderer.prepareGpuDraw(
         debugView = debugView,
         exposure = exposure,
     )
-    slot?.let {
-        graphicsDevice.wgpuContext.device.queue.writeBufferData(
-            it.buffer,
-            0uL,
-            fastArrayBufferOf(uniformFloats),
-        )
-    }
+    slot?.let { uniformUploads.stage(it.buffer, uniformFloats) }
     return WebGpuPreparedDraw(
         pipeline = pipeline,
         materialBinding = when {
@@ -248,7 +195,7 @@ private fun Renderer.prepareInstancedGpuDraw(
     when (kind) {
         InstancedDrawKind.Particle -> {
             val slot = drawSlot?.takeIf { material.hasTexture } ?: return null
-            graphicsDevice.wgpuContext.device.queue.writeBufferData(slot.buffer, 0uL, fastArrayBufferOf(uniformFloats))
+            uniformUploads.stage(slot.buffer, uniformFloats)
             materialBinding = WebGpuBindGroupHandle(
                 material.bindGroupFor(pipeline.pipeline, slot.buffer, pipeline.texturedMaterialBindings),
             )
@@ -258,11 +205,7 @@ private fun Renderer.prepareInstancedGpuDraw(
 
         InstancedDrawKind.Skinned -> {
             val resources = skinnedUniformResources ?: return null
-            graphicsDevice.wgpuContext.device.queue.writeBufferData(
-                resources.buffer,
-                0uL,
-                fastArrayBufferOf(uniformFloats),
-            )
+            uniformUploads.stage(resources.buffer, uniformFloats)
             materialBinding = resources.binding
             jointPaletteBinding = cmd.instanceJointPalettes?.let { palettes ->
                 skinnedInstanceBufferForRun(instanceIndex).run {
@@ -275,7 +218,7 @@ private fun Renderer.prepareInstancedGpuDraw(
 
         InstancedDrawKind.Plain -> {
             val slot = drawSlot ?: return null
-            graphicsDevice.wgpuContext.device.queue.writeBufferData(slot.buffer, 0uL, fastArrayBufferOf(uniformFloats))
+            uniformUploads.stage(slot.buffer, uniformFloats)
             materialBinding = if (material.hasTexture) {
                 WebGpuBindGroupHandle(
                     material.bindGroupFor(
