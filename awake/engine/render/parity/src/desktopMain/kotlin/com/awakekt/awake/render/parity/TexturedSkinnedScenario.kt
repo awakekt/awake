@@ -26,7 +26,8 @@ import kotlinx.coroutines.runBlocking
  * A textured plane skinned to one joint, drawn with [palette] as that joint's matrix: the identity
  * shows the texture where the plane lies, a zero matrix collapses it to nothing. [palette] may also be
  * one tinted by `skinnedMaterialFloats`. [exposure] is the scene's, applied before the tone curve.
- * [model] places the posed plane in the world, as an entity's transform does.
+ * [model] places the posed plane in the world, as an entity's transform does. [light] is the scene's
+ * sun: white and straight down onto the plane's face unless given.
  */
 fun Renderer.renderTexturedSkinnedScene(
     palette: FloatArray,
@@ -34,6 +35,7 @@ fun Renderer.renderTexturedSkinnedScene(
     exposure: Float = 1f,
     size: Int = SCENE_SIZE,
     model: Mat4 = Mat4(),
+    light: SceneLight = SceneLight(direction = Vec3f(0f, 1f, 0f), color = Vec3f(1f, 1f, 1f)),
 ): ByteArray {
     val target = createRenderTarget(size, size)
     val mesh = createMesh(skinnedTexturedPlane())
@@ -45,7 +47,7 @@ fun Renderer.renderTexturedSkinnedScene(
             ScenePassCompiler.compile(
                 lens = lens,
                 drawCalls = listOf(RenderDrawCommand(mesh = mesh, material = material, model = model, extraUniformFloats = palette)),
-                light = SceneLight(direction = Vec3f(0f, 1f, 0f), color = Vec3f(1f, 1f, 1f)),
+                light = light,
                 environment = EnvironmentUniforms.Default.copy(shadowsEnabled = false, exposure = exposure),
                 clipSpace = clipSpace,
                 aspect = 1f,

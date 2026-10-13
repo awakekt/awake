@@ -9,6 +9,7 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.passes.uniforms.EnvironmentUniforms
+import com.awakekt.awake.render.passes.uniforms.SceneLight
 import com.awakekt.awake.render.passes.uniforms.TextureAnimation
 import com.awakekt.awake.render.passes.uniforms.skinnedMaterialFloats
 import com.awakekt.awake.render.testing.HeadlessRenderSession
@@ -116,6 +117,30 @@ class SceneBackendParityTest {
 
             assertTrue(upright > 0, "$backend: the upright plane must show")
             assertTrue(turned < upright * TURNED_AWAY_MAX, "$backend: turned away from the light the plane still shades $turned against $upright upright")
+        }
+    }
+
+    /**
+     * A textured skinned mesh is lit by the scene's sun, not a fixed one: turned under the plane the
+     * sun leaves it ambient only, and a red sun lights no green. Measured red at the centre from
+     * above and below, then red/green under a red sun: Vulkan 239, 71, 239/73; WebGPU 248, 144,
+     * 248/146. The shader's old fixed sun drew all three alike, 219 on Vulkan and 239 on WebGPU.
+     */
+    @Test
+    fun aTexturedSkinnedMeshIsLitByTheScenesSunOnBothBackends() {
+        val identity = floatArrayOf(1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f)
+        BACKEND_ORDER.forEach { backend ->
+            val renderer = session(backend).renderer
+            fun centre(pixels: ByteArray, channel: Int) = pixels[((SCENE_SIZE / 2) * SCENE_SIZE + SCENE_SIZE / 2) * 4 + channel].toInt() and 0xFF
+            fun sun(direction: Vec3f, color: Vec3f = Vec3f(1f, 1f, 1f)) = SceneLight(direction = direction, color = color)
+
+            val above = centre(renderer.renderTexturedSkinnedScene(identity, SolidWhite, light = sun(Vec3f(0f, 1f, 0f))), RED)
+            val below = centre(renderer.renderTexturedSkinnedScene(identity, SolidWhite, light = sun(Vec3f(0f, -1f, 0f))), RED)
+            val red = renderer.renderTexturedSkinnedScene(identity, SolidWhite, light = sun(Vec3f(0f, 1f, 0f), Vec3f(1f, 0f, 0f)))
+
+            assertTrue(above > 0, "$backend: the plane lit from above must show")
+            assertTrue(below < above * TURNED_AWAY_MAX, "$backend: with the sun below, the plane still shades $below against $above lit from above")
+            assertTrue(centre(red, GREEN) < centre(red, RED) * TURNED_AWAY_MAX, "$backend: a red sun lights the white plane ${centre(red, RED)}/${centre(red, GREEN)}")
         }
     }
 

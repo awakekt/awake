@@ -31,7 +31,6 @@ import com.awakekt.awake.asset.shaderdsl.texture2d
 import com.awakekt.awake.asset.shaderdsl.textureSample
 import com.awakekt.awake.asset.shaderdsl.times
 import com.awakekt.awake.asset.shaderdsl.vec2
-import com.awakekt.awake.asset.shaderdsl.vec3
 import com.awakekt.awake.asset.shaderdsl.vec4
 import com.awakekt.awake.asset.shaderdsl.w
 import com.awakekt.awake.asset.shaderdsl.x
@@ -57,8 +56,8 @@ private fun meshVariant(name: String, instanced: Boolean, skinned: Boolean): Asl
         )
         val handles = u.fieldsFrom(if (skinned && !instanced) SkinnedUniformLayout else InstancedUniformLayout)
         val camera = handles.value("mvp")
-        val lightDirection = if (instanced) handles.value("lightDirection") else null
-        val lightColor = if (instanced) handles.value("lightColor") else null
+        val lightDirection = handles.value("lightDirection")
+        val lightColor = handles.value("lightColor")
         val uniformPalette = if (skinned && !instanced) handles.array("jointPalette") else null
         val entityModel = if (skinned && !instanced) handles.value("model") else null
         val tint = if (skinned && !instanced) handles.value("baseColorFactor") else null
@@ -126,17 +125,15 @@ private fun meshVariant(name: String, instanced: Boolean, skinned: Boolean): Asl
             color set instanceTintedColor(ins.input(VertexSemantic.Color), instanceTints, instance)
         }
 
-        val lightVector = lightDirection?.xyz
-            ?: const("LIGHT_DIRECTION", vec3(0.4f.lit, 0.8f.lit, 0.4f.lit))
         val ambient = const("AMBIENT_STRENGTH", 0.35f)
 
         fragment {
             val n = let("n", normalize(normal))
-            val l = let("l", normalize(lightVector))
+            val l = let("l", normalize(lightDirection.xyz))
             val diffuse = let("diffuse", max(dot(n, l), 0f.lit))
-            val shade = let("shade", ambient + (1f.lit - ambient) * diffuse)
+            val shade = let("shade", sunShade(ambient, diffuse, lightColor))
             val rgb = if (instanceTints != null) color.xyz else color
-            val lit = if (lightColor != null) rgb * shade * lightColor.xyz else rgb * shade
+            val lit = rgb * shade
             // Colours here are display-referred, lit as stored; the transform decodes them first.
             if (tint != null && glow != null) {
                 val shaded = vec4(displayTransform.displayReferred(lit * tint.xyz + glow.xyz, exposure.x), tint.w)
@@ -203,14 +200,13 @@ private fun skinnedTextured(): AslShaderDefinition = shader("skinned_textured") 
         uv set vec2(inUv.x, 1f.lit - inUv.y)
     }
 
-    val lightVector = const("LIGHT_DIRECTION", vec3(0.4f.lit, 0.8f.lit, 0.4f.lit))
     val ambient = const("AMBIENT_STRENGTH", 0.35f)
 
     fragment {
         val n = let("n", normalize(normal))
-        val l = let("l", normalize(lightVector))
+        val l = let("l", normalize(handles.value("lightDirection").xyz))
         val diffuse = let("diffuse", max(dot(n, l), 0f.lit))
-        val shade = let("shade", ambient + (1f.lit - ambient) * diffuse)
+        val shade = let("shade", sunShade(ambient, diffuse, handles.value("lightColor")))
         val texColor = let("texColor", textureSample(baseColorTexture, baseColorSampler, uv))
         // The material's factors tint it as glTF's do; untinted they are white and black.
         val lit = texColor.rgb * color * tint.xyz * shade + glow.xyz
@@ -221,6 +217,14 @@ private fun skinnedTextured(): AslShaderDefinition = shader("skinned_textured") 
         colorOutput(skinnedDebugColor(debug, debugVaryings, n, texColor.rgb * color * tint.xyz, displayTransform, exposure, shaded))
     }
 }
+
+/**
+ * How lit a surface is under the scene's sun: [ambient], plus the sun's [lightColor] on the rest by
+ * its [diffuse] cosine. Only the sun's own light takes its colour, so a scene without a sun, whose
+ * colour is black, keeps the ambient share.
+ */
+private fun sunShade(ambient: AslExpr, diffuse: AslExpr, lightColor: AslExpr): AslExpr =
+    ambient + (1f.lit - ambient) * diffuse * lightColor.xyz
 
 /** What the single-draw skinned block holds for the debug views: the scene's sun, the eye, the view and the joint. */
 private class SkinnedDebugInputs(value: (String) -> AslExpr) {
