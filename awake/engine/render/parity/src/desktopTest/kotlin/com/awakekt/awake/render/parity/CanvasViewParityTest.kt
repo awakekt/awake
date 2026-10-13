@@ -103,6 +103,95 @@ class CanvasViewParityTest {
         }
     }
 
+    /**
+     * A View whose camera renders shadows leaves the main frame's shadows as they were (#743). An
+     * offscreen render reuses the shadow map, so its depth pass must not overwrite cascades the main
+     * frame samples. The View's camera is [SIDE] units away, so its cascades cover ground the main
+     * camera never sees: a main frame that sampled them would lose or move its shadow.
+     *
+     * The barrier #743 added can't fail this on its own: lavapipe honours the subpass dependency it
+     * restates, and only MoltenVK drops it. This guards what the barrier protects.
+     *
+     * On CI the main frame holds 166 shadow pixels and none change. Negative control, run once: with
+     * the main frame skipping its own shadow pass after an offscreen render, so it sampled the View's
+     * cascades, 39,977 pixels outside the box changed and the whole ground read as shadow (39,351).
+     */
+    @Test
+    fun vulkanViewWithShadowsLeavesTheMainFramesShadowsAsTheyWere() = runBlocking {
+        val game = app {
+            window { size(WIDTH, HEIGHT) }
+            scene("view-shadows") { onReady { populateWithShadows() } }
+        }
+        openRuntimeSession(HeadlessUiBackend.Vulkan, game, WIDTH, HEIGHT).use { session ->
+            val renderer = session.renderer
+            try {
+                game.ready(renderer)
+                val runtime = game.requireService<SceneAppLifecycleRuntime>()
+                repeat(FRAMES) { game.update(FRAME, WIDTH.toFloat(), HEIGHT.toFloat()) }
+                val before = mainFrame(renderer)
+
+                runtime.world.add(runtime.world.create(), portrait())
+                repeat(FRAMES) { game.update(FRAME, WIDTH.toFloat(), HEIGHT.toFloat()) }
+                val after = mainFrame(renderer)
+                PixelMap(WIDTH, HEIGHT, before.copyOf()).writePng(File(REPORT_DIR, "canvas-view-shadows-before.png"))
+                PixelMap(WIDTH, HEIGHT, after.copyOf()).writePng(File(REPORT_DIR, "canvas-view-shadows-after.png"))
+
+                val shadowBefore = before.shadowPixels()
+                val shadowAfter = after.shadowPixels()
+                val changed = (0 until HEIGHT).sumOf { y -> (0 until WIDTH).count { x -> !inBox(x, y) && !before.sameAt(after, x, y) } }
+                println("vulkan canvas view shadows: shadowBefore=$shadowBefore shadowAfter=$shadowAfter changed=$changed")
+
+                assertTrue(shadowBefore > MIN_SHADOW, "control: the cube casts a shadow on the main camera's ground: $shadowBefore")
+                assertEquals(0, changed, "the main frame is the one it drew with no View, shadows and all")
+            } finally {
+                renderer.waitIdle()
+                game.dispose()
+            }
+        }
+    }
+
+    /**
+     * The main camera looks down at a white cube on a white ground, the sun to its left, so the
+     * cube's shadow falls to its right. The portrait camera looks at its own cube and ground
+     * [SIDE] units away: its cascades cover ground the main camera never sees.
+     */
+    private fun SceneAppLifecycleRuntime.populateWithShadows() {
+        val cube = generate { cube(size = 1f) }
+        val ground = generate { plane(size = GROUND) }
+        val lit = renderer.createMaterial(LitShadowUniformLayout)
+        world.add(world.create(), Camera(Lens(eye = Vec3f(0f, 4f, 5f), center = Vec3f.ZERO, fovYRadians = 1f, near = 0.1f, far = 100f)))
+        world.add(world.create(), Light(direction = Vec3f(-1f, 2f, 0.5f)))
+        for (x in listOf(0f, SIDE)) {
+            world.create().also {
+                world.add(it, Transform(position = Vec3f(x, 0f, 0f)))
+                world.add(it, MeshRenderer(renderer.createMesh(ground), lit))
+            }
+            world.create().also {
+                world.add(it, Transform(position = Vec3f(x, 0.5f, 0f)))
+                world.add(it, MeshRenderer(renderer.createMesh(cube), lit))
+            }
+        }
+        world.create().also {
+            world.add(it, Name("Portrait Camera"))
+            val lens = Lens(eye = Vec3f(SIDE, 4f, 5f), center = Vec3f(SIDE, 0f, 0f), fovYRadians = 1f, near = 0.1f, far = 100f)
+            world.add(it, Camera(lens, isPrimary = false))
+        }
+    }
+
+    /**
+     * Ground in the cube's shadow: darker than the cube's faces (luma 140) and the lit ground (225),
+     * brighter than the cleared background (0). A pixel with background beside it is the ground's
+     * anti-aliased edge, which passes through the same range.
+     */
+    private fun ByteArray.shadowPixels(): Int = (1 until HEIGHT - 1).sumOf { y ->
+        (1 until WIDTH - 1).count { x ->
+            !inBox(x, y) && luma(x, y) in SHADOW_FLOOR..SHADOW_CEILING &&
+                listOf(x - 1 to y, x + 1 to y, x to y - 1, x to y + 1).all { (nx, ny) -> luma(nx, ny) > SHADOW_FLOOR }
+        }
+    }
+
+    private fun ByteArray.luma(x: Int, y: Int): Int = (0..2).sumOf { channel(x, y, it) } / 3
+
     private fun SceneAppLifecycleRuntime.populate() {
         val white = generate { cube(size = 1f) }
         val red = generate { cube(size = RED_CUBE) }.let { geometry ->
@@ -189,5 +278,9 @@ class CanvasViewParityTest {
         const val TOLERANCE = 2
         const val BYTE = 0xFF
         const val REPORT_DIR = "build/reports/render-parity"
+        const val GROUND = 12f
+        const val SHADOW_FLOOR = 40
+        const val SHADOW_CEILING = 110
+        const val MIN_SHADOW = 100
     }
 }
