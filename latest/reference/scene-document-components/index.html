@@ -3992,7 +3992,7 @@ fades with distance from the active camera and pans with its direction. <code>Sc
 <td><code>text</code></td>
 <td>string</td>
 <td><code>""</code></td>
-<td>A <code>Text</code> element's content, a <code>Button</code>'s label, or what is typed into a <code>TextField</code>: typing writes it, and a system writing it replaces the field's content, caret at the end. In a <code>Text</code> element, a <code>[[key&amp;#124;shown words]]</code> span draws "shown words" in <code>style</code>'s <code>linkColor</code> and reports <code>key</code> once through <code>consumeLink()</code> when clicked; <code>[[</code> is reserved and has no escape. Plain text with no span draws unchanged.</td>
+<td>A <code>Text</code> element's content, a <code>Button</code>'s label, or what is typed into a <code>TextField</code>: typing writes it, and a system writing it replaces the field's content, caret at the end. In a <code>Text</code> element with <code>links</code> true, a <code>[[key&amp;#124;shown words]]</code> span draws "shown words" in <code>style</code>'s <code>linkColor</code> and reports <code>key</code> once through <code>consumeLink()</code> when clicked; <code>[[</code> is reserved and has no escape. Plain text with no span draws unchanged.</td>
 </tr>
 <tr>
 <td><code>fontSize</code></td>
@@ -4125,6 +4125,12 @@ fades with distance from the active camera and pans with its direction. <code>Sc
 <td>string</td>
 <td><code>""</code></td>
 <td>A <code>View</code>'s camera: the name of a node with a <code>camera</code>, whose picture fills the element's box, opaque, at its size in pixels, inside its <code>style.cornerRadius</code> and under its children. Give that camera <code>primary: false</code> so it does not become the main view. With no such node, or no renderer, the element draws only its style.</td>
+</tr>
+<tr>
+<td><code>links</code></td>
+<td>boolean</td>
+<td><code>true</code></td>
+<td>Whether a <code>Text</code> element's <code>[[key&amp;#124;shown words]]</code> spans draw as links. <code>false</code> draws <code>[[</code> and <code>]]</code> as typed and no click reports a key -- set it for text the game cannot trust, such as player chat.</td>
 </tr>
 </tbody>
 </table>

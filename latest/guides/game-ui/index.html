@@ -2957,8 +2957,8 @@ until the next tap.</p>
 </tr>
 <tr>
 <td><code>consumeSubmit()</code></td>
-<td><code>Boolean</code></td>
-<td><code>true</code> once after Enter submits a <code>TextField</code> since the last call. Submitting frees its focus. Escape also frees focus, without this becoming <code>true</code>.</td>
+<td><code>String?</code></td>
+<td>The submitted line once after Enter submits a <code>TextField</code> since the last call, taken from the field's live state so a character typed the same frame is included; <code>null</code> otherwise. Submitting frees its focus. Escape frees focus without submitting. An Enter that only just focused the field, in the same frame a system granted it, does not also submit it.</td>
 </tr>
 </tbody>
 </table>
@@ -3352,7 +3352,8 @@ hit area is exactly its <code>width</code> by <code>height</code>.</p>
 <p>A <code>TextField</code> is a single-line field the player types into: a click focuses it, Enter submits and
 frees it (<code>consumeSubmit()</code>), and Escape frees it without submitting. A system sets <code>focused</code> to
 move the keyboard to or from it in code -- a chat window opening, say -- and reads it back for
-whatever a click or a key already changed it to.</p>
+whatever a click or a key already changed it to. The Enter a system reads to open the field this
+way does not also submit it, even though the system and the field both see that same frame's Enter.</p>
 <p>A <code>Joystick</code> knob follows a drag up to the pad's edge and springs back on release. A <code>touchOnly</code>
 element is drawn only when <code>SceneCanvas(world, showTouchControls = true)</code> is called, or when
 <code>SceneAppLifecycleRuntime.showTouchControls</code> is <code>true</code>. When a project is played with

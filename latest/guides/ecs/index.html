@@ -2618,11 +2618,6 @@ read every frame and change structure rarely.</p>
 <p>When a type has a pool (<code>registerPool</code>), a removed instance goes back to the pool, and if it
 implements <code>Poolable</code> its <code>reset()</code> runs first, so it does not carry old state into its next use.</p>
 <div class="admonition warning">
-<p class="admonition-title">At most 64 component types per world</p>
-<p>Each entity's component set is one 64-bit mask, so a <code>World</code> accepts at most 64 distinct
-component types. Adding a 65th type throws <code>IllegalArgumentException</code>.</p>
-</div>
-<div class="admonition warning">
 <p class="admonition-title">One thread</p>
 <p>The ECS is not thread-safe. Drive a <code>World</code> from one thread, the one the scene runtime runs on.</p>
 </div>
