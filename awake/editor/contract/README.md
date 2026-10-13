@@ -71,6 +71,19 @@ A plugin ships as a `.awakeplugin` archive with a `plugin.json` `PluginManifest`
 `entrypointClass` needs a bytecode payload. A plugin is free unless `requiredLicense` names an
 entitlement; each host maps that identifier to its own tiers.
 
+### Publisher identity and signing
+
+`PluginManifest.publisher` is a reverse-domain id (e.g. `com.example.studio`), separate from the
+free-text `author`. A host's trust registry looks up a signing key by `publisher`, never `author`.
+
+`PluginArchiveDigest.canonicalDigest` hashes every archive entry except `signature.sig`, sorted by
+name, each framed by its own length so entries cannot collide under concatenation. A publisher
+signs `PluginArchiveDigest.signingPayload(digest)` with `SHA256withRSA` over their private key and
+writes the signature into `signature.sig` (`templates/plugin`'s `awakePlugin` task does this when
+`AWAKE_PLUGIN_SIGNING_KEY` is set; unsigned otherwise). `PluginArchiveVerifier.verify` checks that
+signature against the publisher's public key (an X.509 `SubjectPublicKeyInfo`, PEM or base64 DER)
+in pure Kotlin, so it runs on every target, not only where `java.security` is available.
+
 ## Changing this module
 
 New extension points start here with a test, then get hosted. Run

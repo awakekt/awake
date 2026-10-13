@@ -46,6 +46,11 @@ espresso-core = "3.7.0"
 androidx-test-runner = "1.7.0"
 appcompat = "1.7.1"
 material = "1.10.0"
+# Pure-Kotlin Multiplatform arbitrary-precision arithmetic -- the only dependency
+# :awake:editor:contract's RSA signature verifier (PluginArchiveVerifier) needs: modular
+# exponentiation for the public-key operation. No JVM/Android-only java.security here, so the
+# same verifier code runs on wasmJs and iOS too.
+bignum = "0.3.10"
 
 [libraries]
 kotlinpoet = { module = "com.squareup:kotlinpoet", version.ref = "kotlinpoet" }
@@ -132,6 +137,7 @@ androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-co
 androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "androidx-test-runner" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+bignum = { module = "com.ionspin.kotlin:bignum", version.ref = "bignum" }
 
 [plugins]
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
