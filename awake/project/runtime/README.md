@@ -47,6 +47,54 @@ the `lit-shadow` material; anything else a scene draws is a project asset.
 `runProject(project, touchControls = true)` shows the scene's `touchOnly` canvas elements; a host on a
 touch screen passes it. The scene decides where the controls sit and how big they are.
 
+## Switching to another scene
+
+A project plays its entry scene first and can go on to any other scene in its files, as a menu's Play
+button or a level's exit does. Ask with the scene's path relative to the project root:
+
+```kotlin
+// In a system a capability plans:
+services.sceneSwitch?.request("scenes/level-2.scene.json")
+// From the app that runs the project:
+game.requireService<SceneSwitch>().request("scenes/level-2.scene.json")
+```
+
+A blueprint asks with its Load Scene node (`scene.load`, in
+[`awake:scene:blueprint`](../../scene/blueprint/README.md)), which `BlueprintCapability` connects to
+the switch.
+
+- **When.** The next scene loads off the frame thread, through the project's files, the way
+  `loadProject` loads the entry scene: decoded and checked, its models and its capabilities' content
+  read (collision meshes, particle sprites, canvas images, shader effects, terrain surfaces), and a
+  physics world made when it has bodies. The scene that asked plays on meanwhile. The next one takes
+  its place at the start of the next fixed step, or of the frame's own systems once the fixed steps
+  have run, never inside a system's update: a request made during a fixed step finishes that step
+  with the old scene around it.
+- **What goes.** The old scene's systems are closed, its sounds stop, the nodes spawned into it with
+  `spawn(project, node)` are despawned, every entity in the world is destroyed (its blueprints with
+  them, and whatever else joined the scene: a fallback camera, what its systems made), its meshes
+  and materials are given back to the asset library, and its physics world is destroyed.
+- **What comes.** The next scene's entities, the systems its components call for (planned through the
+  same capabilities, Core's then the game's), its canvas images and its primary camera.
+- **What carries across.** Nothing of the scene: positions, variables, scores and spawned nodes start
+  over. The app does: the renderer, the UI, the touch-controls setting, the platform's audio player,
+  and a mesh both scenes draw, which stays loaded. A game that keeps something across scenes keeps it
+  outside the world.
+- **Failure.** A scene that can't be read, decoded, checked or drawn is logged once, as an error naming
+  it, and the scene playing goes on as it was. A scene that fails while it is put in is taken out
+  again first.
+- **Again and again.** Asking again for the scene on its way changes nothing, and asking for another
+  instead replaces the request. Asking for the scene that is playing starts it again from its file.
+
+`project.scene` is the scene playing now, and `project.close()` closes it, whichever it is: a switch
+closes the scene it leaves, the entry scene included. The manifest lists no scenes, so any scene file
+the project has can be asked for, and a build has to ship the scenes a switch names: Awake Studio's
+exports and its publish copy the whole project folder, so they all do. The project-content Gradle
+plugin's browser index covers `assets/`, `scenes/` and `plugins/` only, so keep a project's scenes
+under one of those. A host that runs the systems in a world of its own, with `sceneSystemsFor` or
+`project.sceneSystems`, has no switch unless it gives one with `SceneHostServices.withSceneSwitch`;
+without it, Load Scene only warns.
+
 ## Playing a scene in a world of your own
 
 An editor that plays the scene it is editing, in an isolated world, wants the same systems without

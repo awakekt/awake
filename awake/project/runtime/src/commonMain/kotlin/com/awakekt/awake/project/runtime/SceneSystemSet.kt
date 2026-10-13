@@ -6,15 +6,11 @@
 package com.awakekt.awake.project.runtime
 
 import com.awakekt.awake.core.audio.AudioPlayer
-import com.awakekt.awake.core.audio.AudioPlayerFactory
 import com.awakekt.awake.ecs.InterpolatedSystem
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.render.renderer.Renderer
-import com.awakekt.awake.scene.audio.SceneAudioSource
-import com.awakekt.awake.scene.authoring.SceneAppDsl
-import com.awakekt.awake.scene.authoring.infrastructure.gameplayInput
 import com.awakekt.awake.scene.controls.GameplayInput
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneNode
@@ -37,6 +33,13 @@ class SceneHostServices private constructor(
     private val spawner: ((SceneNode) -> SpawnedNode)? = null,
     /** What the scene's sounds play through; null plays them silently. A host adds one with [withAudio]. */
     val audio: AudioPlayer? = null,
+    /**
+     * Where a system asks to play another of the project's scenes, as a menu's Play button or a level's
+     * exit does: `runProject` gives one. Null where nothing switches scenes, such as an editor playing the
+     * scene it edits or a host that runs these systems in a world of its own, unless it adds its own
+     * with [withSceneSwitch].
+     */
+    val sceneSwitch: SceneSwitch? = null,
 ) {
     /** Services for a host that draws through [renderer]. */
     constructor(
@@ -69,10 +72,14 @@ class SceneHostServices private constructor(
 
     /** These services, with [spawn] putting nodes into the scene through [spawner]. */
     fun withSpawner(spawner: (SceneNode) -> SpawnedNode): SceneHostServices =
-        SceneHostServices(gpu, input, physics, content, spawner, audio)
+        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch)
 
     /** These services, with the scene's `audio_source`s playing through [audio], as `runProject` does. */
-    fun withAudio(audio: AudioPlayer): SceneHostServices = SceneHostServices(gpu, input, physics, content, spawner, audio)
+    fun withAudio(audio: AudioPlayer): SceneHostServices = SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch)
+
+    /** These services, with [sceneSwitch] carrying out the systems' requests for another scene, as `runProject` does. */
+    fun withSceneSwitch(sceneSwitch: SceneSwitch): SceneHostServices =
+        SceneHostServices(gpu, input, physics, content, spawner, audio, sceneSwitch)
 
     /** Makes services for a host with no renderer. */
     companion object {
@@ -106,7 +113,10 @@ class SceneSystemSet internal constructor(
      * Call it after the fixed steps and before the [frame] systems, which read what it places, as
      * `runProject` does; without it, bodies move in fixed-step jumps.
      */
-    fun interpolate(world: World, alpha: Float) = interpolated.forEach { it.interpolate(world, alpha) }
+    fun interpolate(world: World, alpha: Float) {
+        // By index: forEach takes an iterator, a small allocation every frame.
+        for (index in interpolated.indices) interpolated[index].interpolate(world, alpha)
+    }
 
     override fun close() = release()
 }
@@ -193,32 +203,6 @@ internal fun installedCapabilities(extra: List<SceneCapability>): List<SceneCapa
     val repeated = installed.groupBy { it.id }.filterValues { it.size > 1 }.keys
     require(repeated.isEmpty()) { "More than one capability has the id ${repeated.joinToString()}" }
     return installed
-}
-
-/**
- * Registers [sceneSystemSpecsFor] on this app's schedule for [project], building each system once the
- * runtime exists so it can read the runtime's input and renderer, and closing them when it stops.
- */
-internal fun SceneAppDsl.registerSystemSpecs(project: LoadedProject) {
-    val releasing = SystemReleases()
-    // The platform's player, opened only for a scene with sound, and closed with the scene.
-    val audio = lazy { AudioPlayerFactory.create() }
-    val sounds = project.scene.uses(SceneAudioSource::class)
-    sceneSystemSpecsFor(project.scene, hasPhysics = project.physics != null, project.capabilities).forEach { spec ->
-        system(spec.name, spec.phase) {
-            val services = SceneHostServices(
-                input = { gameplayInput() },
-                renderer = renderer,
-                physics = project.physics,
-                content = project.content,
-            ).withSpawner { node -> spawn(project, node) }
-            releasing.keep(spec.create(if (sounds) services.withAudio(audio.value) else services))
-        }
-    }
-    onDispose {
-        releasing.release()
-        if (audio.isInitialized()) audio.value.dispose()
-    }
 }
 
 /** The systems that hold something to give back, closed newest first when the scene stops. */

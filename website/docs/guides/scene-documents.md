@@ -90,6 +90,12 @@ before it loads the next, so there is no step to forget:
 Inside an app, the runtime's own manager is `sceneManager`, available in `onReady` and system
 factories.
 
+`switchTo` keeps the systems the app registered. A project played with `runProject` goes to another of
+its scenes through its `SceneSwitch` instead, which also closes the old scene's systems and physics
+and plans the next scene's own: a system asks with `services.sceneSwitch?.request("scenes/level-2.scene.json")`,
+and a blueprint with its Load Scene node. See
+[`awake:project:runtime`](https://github.com/awakekt/awake/blob/main/awake/project/runtime/README.md#switching-to-another-scene).
+
 ## Save a world
 
 `fromWorld` walks the entities that have a `Transform`, follows their parent links to rebuild the
