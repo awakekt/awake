@@ -8,6 +8,7 @@ package com.awakekt.awake.render.passes2d
 import com.awakekt.awake.core.graphics2d.BlendMode
 import com.awakekt.awake.core.graphics2d.TextureCompositeMode
 import com.awakekt.awake.core.math2d.Rectangle
+import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.render.pipeline.UiPipelineDescriptor
 
 /**
@@ -31,12 +32,13 @@ sealed class StagedDrawRun {
     class RoundedQuadRun(val vertices: FloatArray, val indices: IntArray) : StagedDrawRun()
 
     /**
-     * Textured font glyph quads.
+     * Textured font glyph quads, all sampling one font's atlas.
      *
      * @property vertices The interleaved vertex data.
      * @property indices The index data.
+     * @property font The glyphs' own font, or null for the frame's default font.
      */
-    class GlyphRun(val vertices: FloatArray, val indices: IntArray) : StagedDrawRun()
+    class GlyphRun(val vertices: FloatArray, val indices: IntArray, val font: UiFont? = null) : StagedDrawRun()
 
     /**
      * Textured image or render target primitives.
@@ -104,8 +106,9 @@ sealed class DrawRun<out M> {
      *
      * @param M The backend's own mesh handle type.
      * @property mesh The mesh handle.
+     * @property font The font whose atlas the run samples, already resolved from the frame default.
      */
-    class GlyphRun<M>(val mesh: M) : DrawRun<M>()
+    class GlyphRun<M>(val mesh: M, val font: UiFont) : DrawRun<M>()
 
     /**
      * A texture draw run.

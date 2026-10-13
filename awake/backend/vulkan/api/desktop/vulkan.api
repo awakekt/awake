@@ -500,12 +500,13 @@ public final class com/awakekt/awake/vulkan/ui/DynamicMesh$Companion {
 
 public final class com/awakekt/awake/vulkan/ui/UiRenderPipeline {
 	public static final field Companion Lcom/awakekt/awake/vulkan/ui/UiRenderPipeline$Companion;
-	public fun <init> (Lcom/awakekt/awake/vulkan/device/GraphicsDevice;Lcom/awakekt/awake/vulkan/swapchain/SwapchainManager;[B[BLcom/awakekt/awake/render/passes2d/DrawPipelineKind;ZLjava/lang/Long;ILcom/awakekt/awake/vulkan/texture/Texture;Lcom/awakekt/awake/core/graphics2d/BlendMode;ZZLjava/lang/String;Ljava/lang/String;)V
-	public synthetic fun <init> (Lcom/awakekt/awake/vulkan/device/GraphicsDevice;Lcom/awakekt/awake/vulkan/swapchain/SwapchainManager;[B[BLcom/awakekt/awake/render/passes2d/DrawPipelineKind;ZLjava/lang/Long;ILcom/awakekt/awake/vulkan/texture/Texture;Lcom/awakekt/awake/core/graphics2d/BlendMode;ZZLjava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun <init> (Lcom/awakekt/awake/vulkan/device/GraphicsDevice;Lcom/awakekt/awake/vulkan/swapchain/SwapchainManager;[B[BLcom/awakekt/awake/render/pipeline/UiPipelineDescriptor;Ljava/lang/Long;ILcom/awakekt/awake/vulkan/texture/Texture;)V
-	public synthetic fun <init> (Lcom/awakekt/awake/vulkan/device/GraphicsDevice;Lcom/awakekt/awake/vulkan/swapchain/SwapchainManager;[B[BLcom/awakekt/awake/render/pipeline/UiPipelineDescriptor;Ljava/lang/Long;ILcom/awakekt/awake/vulkan/texture/Texture;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/vulkan/device/GraphicsDevice;Lcom/awakekt/awake/vulkan/swapchain/SwapchainManager;[B[BLcom/awakekt/awake/render/passes2d/DrawPipelineKind;ZLjava/lang/Long;ILcom/awakekt/awake/core/graphics2d/BlendMode;ZZLjava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/vulkan/device/GraphicsDevice;Lcom/awakekt/awake/vulkan/swapchain/SwapchainManager;[B[BLcom/awakekt/awake/render/passes2d/DrawPipelineKind;ZLjava/lang/Long;ILcom/awakekt/awake/core/graphics2d/BlendMode;ZZLjava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/vulkan/device/GraphicsDevice;Lcom/awakekt/awake/vulkan/swapchain/SwapchainManager;[B[BLcom/awakekt/awake/render/pipeline/UiPipelineDescriptor;Ljava/lang/Long;I)V
+	public synthetic fun <init> (Lcom/awakekt/awake/vulkan/device/GraphicsDevice;Lcom/awakekt/awake/vulkan/swapchain/SwapchainManager;[B[BLcom/awakekt/awake/render/pipeline/UiPipelineDescriptor;Ljava/lang/Long;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun bind (JLjava/lang/Long;)V
 	public static synthetic fun bind$default (Lcom/awakekt/awake/vulkan/ui/UiRenderPipeline;JLjava/lang/Long;ILjava/lang/Object;)V
+	public final fun bindFontAtlas (JLcom/awakekt/awake/core/text/font/UiFont;Lcom/awakekt/awake/vulkan/texture/Texture;)V
 	public final fun bindMaterial (JIIJJ)V
 	public final fun bindMaterial (JJJ)V
 	public final fun bindTargetComposite (JIJJJJLcom/awakekt/awake/render/renderer/UiTargetCompositeMode;)V
@@ -515,7 +516,6 @@ public final class com/awakekt/awake/vulkan/ui/UiRenderPipeline {
 	public final fun getRenderPass ()J
 	public final fun prepareDescriptorSet (Lcom/awakekt/awake/vulkan/texture/Texture;I)J
 	public static synthetic fun prepareDescriptorSet$default (Lcom/awakekt/awake/vulkan/ui/UiRenderPipeline;Lcom/awakekt/awake/vulkan/texture/Texture;IILjava/lang/Object;)J
-	public final fun writeFontInfo (ZF)V
 	public final fun writeScreenSize (FF)V
 }
 

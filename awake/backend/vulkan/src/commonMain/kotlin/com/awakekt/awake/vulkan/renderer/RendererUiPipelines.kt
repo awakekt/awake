@@ -10,9 +10,6 @@ import com.awakekt.awake.core.geometry.VertexFormats2D
 import com.awakekt.awake.core.graphics2d.BlendMode
 import com.awakekt.awake.core.graphics2d.TextureCompositeMode
 import com.awakekt.awake.core.text.font.UiFont
-import com.awakekt.awake.core.text.font.UiFontSamplingMode
-import com.awakekt.awake.render.font.UiFontSamplingInfo
-import com.awakekt.awake.render.font.samplingInfo
 import com.awakekt.awake.render.passes2d.UiPipelineKind
 import com.awakekt.awake.render.pipeline.UiPipelineDescriptor
 import com.awakekt.awake.render.pipeline.UiPipelineVariant
@@ -57,36 +54,20 @@ internal fun Renderer.buildUiFramebuffers(renderPass: Long): List<Long> = swapch
     )
 }.toList()
 
-internal fun Renderer.ensureGlyphPipeline(font: UiFont) {
-    if (currentUiFont !== font) {
-        uiGlyphRenderPipeline?.destroy()
-        uiGlyphRenderPipeline = null
-        offscreenGlyphRenderPipeline?.destroy()
-        offscreenGlyphRenderPipeline = null
-        fontTexture?.let(textureResources::release)
-        fontTexture = null
-        currentUiFont = font
-    }
+/** Builds the swapchain glyph pipeline once. It holds no font: each font binds its own atlas. */
+internal fun Renderer.ensureGlyphPipeline() {
     if (uiGlyphRenderPipeline != null) return
     val renderPass = requireNotNull(uiRenderPipeline) { "ensureUiQuadPipeline() must run first." }.renderPass
-    uiGlyphRenderPipeline = buildUiGlyphRenderPipeline(renderPass, font)
+    uiGlyphRenderPipeline = buildUiGlyphRenderPipeline(renderPass)
 }
 
-internal fun Renderer.ensureOffscreenGlyphPipeline(font: UiFont) {
-    if (currentUiFont !== font) {
-        uiGlyphRenderPipeline?.destroy()
-        uiGlyphRenderPipeline = null
-        offscreenGlyphRenderPipeline?.destroy()
-        offscreenGlyphRenderPipeline = null
-        fontTexture?.let(textureResources::release)
-        fontTexture = null
-        currentUiFont = font
-    }
+/** [ensureGlyphPipeline]'s offscreen counterpart, for [renderUiToTexture]. */
+internal fun Renderer.ensureOffscreenGlyphPipeline() {
     if (offscreenGlyphRenderPipeline != null) return
-    offscreenGlyphRenderPipeline = buildUiGlyphRenderPipeline(renderPipeline.renderPass, font)
+    offscreenGlyphRenderPipeline = buildUiGlyphRenderPipeline(renderPipeline.renderPass)
 }
 
-private fun Renderer.buildUiGlyphRenderPipeline(renderPass: Long, font: UiFont): UiRenderPipeline =
+private fun Renderer.buildUiGlyphRenderPipeline(renderPass: Long): UiRenderPipeline =
     UiRenderPipeline(
         graphicsDevice = graphicsDevice,
         swapchainManager = swapchainManager,
@@ -94,21 +75,15 @@ private fun Renderer.buildUiGlyphRenderPipeline(renderPass: Long, font: UiFont):
         fragShaderCode = uiGlyphShaders.fragment,
         descriptor = uiPipelineDescriptor(UiPipelineKind.Glyph),
         externalRenderPass = renderPass,
-        fixedTexture = ensureFontTexture(font),
-    ).also { it.writeFontInfo(font.samplingInfo) }
-
-/** Writes the two glyph-shader UBO font fields from [font]'s declared sampling attributes. */
-private fun UiRenderPipeline.writeFontInfo(info: UiFontSamplingInfo) {
-    writeFontInfo(
-        isDistanceField = info.mode == UiFontSamplingMode.DistanceField,
-        rangePx = info.distanceFieldRangePx,
     )
-}
 
-internal fun Renderer.ensureFontTexture(font: UiFont): Texture {
-    fontTexture?.let { return it }
+/**
+ * [font]'s atlas, uploaded the first time any glyph pipeline needs it and shared by all of them.
+ * Keyed by identity and released with the renderer; a font no longer drawn stays uploaded.
+ */
+internal fun Renderer.ensureFontAtlas(font: UiFont): Texture = fontAtlases.getOrPut(font) {
     val glyphFilter = VkFilter.VK_FILTER_LINEAR
-    return Texture(
+    Texture(
         graphicsDevice,
         transferContext::runOneTimeCommands,
         font.atlasPixelsRgba,
@@ -122,7 +97,7 @@ internal fun Renderer.ensureFontTexture(font: UiFont): Texture {
             addressModeW = VkSamplerAddressMode.VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
             mipmapMode = VkSamplerMipmapMode.VK_SAMPLER_MIPMAP_MODE_NEAREST,
         ),
-    ).let(textureResources::register).also { fontTexture = it }
+    ).let(textureResources::register)
 }
 
 internal fun Renderer.ensureTextureQuadPipeline(mode: TextureCompositeMode) {

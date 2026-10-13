@@ -7,6 +7,8 @@ package com.awakekt.awake.render.passes2d
 
 import com.awakekt.awake.core.geometry.GpuDataShape
 import com.awakekt.awake.core.math.Vec4
+import com.awakekt.awake.core.text.font.UiFontSamplingMode
+import com.awakekt.awake.render.font.UiFontSamplingInfo
 import com.awakekt.awake.render.renderer.UniformField
 import com.awakekt.awake.render.renderer.UniformLayout
 import com.awakekt.awake.render.renderer.UniformWriter
@@ -39,3 +41,11 @@ fun uiUniformFloats(screenToNdc: Vec4, fontInfo: Vec4 = Vec4(0f, 0f, 0f, 0f)): F
         .put(UiUniformLayouts.ScreenToNdc, screenToNdc.x, screenToNdc.y, screenToNdc.z, screenToNdc.w)
         .put(UiUniformLayouts.FontInfo, fontInfo.x, fontInfo.y, fontInfo.z, fontInfo.w)
         .build()
+
+/**
+ * The glyph shader's `fontInfo` for one font: x is 1 for a distance-field atlas and 0 for coverage
+ * alpha, y is the distance-field range in atlas texels. The shader reads the atlas size from the
+ * texture itself, so two fonts differ only in these lanes and share one pipeline.
+ */
+fun uiFontInfo(info: UiFontSamplingInfo): Vec4 =
+    Vec4(if (info.mode == UiFontSamplingMode.DistanceField) 1f else 0f, info.distanceFieldRangePx, 0f, 0f)

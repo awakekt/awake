@@ -55,6 +55,7 @@ internal class VulkanFrameContext(
             glyph = renderer.uiGlyphRenderPipeline,
             textures = renderer.uiTextureRenderPipelines,
             roundedQuad = renderer.uiRoundedQuadRenderPipeline,
+            fontAtlases = renderer.fontAtlases,
         )
     }
 

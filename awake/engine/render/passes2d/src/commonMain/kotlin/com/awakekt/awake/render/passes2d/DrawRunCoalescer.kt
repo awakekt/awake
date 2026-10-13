@@ -30,13 +30,15 @@ import com.awakekt.awake.core.math2d.Dp
 import com.awakekt.awake.core.math2d.Rectangle
 import com.awakekt.awake.core.math2d.contains
 import com.awakekt.awake.core.math2d.intersect
+import com.awakekt.awake.core.text.font.UiFont
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 
 /**
  * Splits a raw [DrawCommand] list into typed [StagedDrawRun]s -- maximal *contiguous* spans of
- * primitives sharing one pipeline, in original emission order.
+ * primitives sharing one pipeline, in original emission order. A glyph span also ends where the
+ * glyphs' font changes, so each glyph run samples one atlas; nothing is reordered to merge them.
  */
 object DrawRunCoalescer {
 
@@ -122,7 +124,7 @@ object DrawRunCoalescer {
             val runStart = index
             val first = primitives[runStart]
             index += 1
-            while (index < primitives.size && primitives[index]::class == first::class) index += 1
+            while (index < primitives.size && continuesSpan(first, primitives[index])) index += 1
             val slice = primitives.subList(runStart, index)
             val safeInteriorRect = safeInteriorRectStack.lastOrNull()
             // Rect clips only affect the scissor command. Path clips change generated geometry,
@@ -283,6 +285,7 @@ object DrawRunCoalescer {
                 is DrawCommand.Glyph -> {
                     @Suppress("UNCHECKED_CAST")
                     val glyphSlice = slice as List<DrawCommand.Glyph>
+                    val font = first.font
                     if (canExactClip(activePathClips)) {
                         val clipped = glyphSlice.map { glyph ->
                             val raw = texturedQuadMesh(glyph.x, glyph.y, glyph.w, glyph.h, glyph.u0, glyph.v0, glyph.u1, glyph.v1)
@@ -293,12 +296,12 @@ object DrawRunCoalescer {
                             }
                             mesh to glyph.color
                         }
-                        chunkTexturedTriangleMeshes(runs, clipped, maxQuadsPerRun)
+                        chunkTexturedTriangleMeshes(runs, clipped, maxQuadsPerRun, font)
                     } else {
                         var chunkStart = 0
                         while (chunkStart < glyphSlice.size) {
                             val chunkEnd = minOf(chunkStart + maxQuadsPerRun, glyphSlice.size)
-                            runs += buildGlyphRun(glyphSlice.subList(chunkStart, chunkEnd))
+                            runs += buildGlyphRun(glyphSlice.subList(chunkStart, chunkEnd), font)
                             chunkStart = chunkEnd
                         }
                     }
@@ -363,6 +366,10 @@ object DrawRunCoalescer {
         }
         return runs
     }
+
+    /** Whether [next] joins [first]'s span: the same primitive type, and for glyphs the same font. */
+    private fun continuesSpan(first: DrawCommand, next: DrawCommand): Boolean =
+        next::class == first::class && (first !is DrawCommand.Glyph || first.font === (next as DrawCommand.Glyph).font)
 
     /** Returns whether a rectangle at ([x], [y], [w], [h]) is fully within [safeInteriorRect], avoiding clipping. */
     fun canSkipExactClip(safeInteriorRect: Rectangle?, x: Float, y: Float, w: Float, h: Float): Boolean =
@@ -519,8 +526,11 @@ object DrawRunCoalescer {
         return StagedDrawRun.RoundedQuadRun(vertices, indices)
     }
 
-    /** Builds staged glyph vertex and index buffers from a list of text font [glyphs]. */
-    fun buildGlyphRun(glyphs: List<DrawCommand.Glyph>): StagedDrawRun.GlyphRun {
+    /** Builds staged glyph vertex and index buffers from [glyphs], all sampling [font]'s atlas. */
+    fun buildGlyphRun(
+        glyphs: List<DrawCommand.Glyph>,
+        font: UiFont? = glyphs.firstOrNull()?.font,
+    ): StagedDrawRun.GlyphRun {
         val glyphVertices = FloatArray(glyphs.size * VertexFormats2D.VERTICES_PER_QUAD * VertexFormats2D.GLYPH_FLOATS_PER_VERTEX)
         val glyphIndices = IntArray(glyphs.size * VertexFormats2D.INDICES_PER_QUAD)
         var glyphIndex = 0
@@ -542,7 +552,7 @@ object DrawRunCoalescer {
             glyphIndices[indexBase + 5] = vertexOffset
             glyphIndex += 1
         }
-        return StagedDrawRun.GlyphRun(glyphVertices, glyphIndices)
+        return StagedDrawRun.GlyphRun(glyphVertices, glyphIndices, font)
     }
 
     /** Builds a staged texture run from [textures] clipped against [activePathClips]. */
@@ -701,6 +711,7 @@ object DrawRunCoalescer {
         runs: MutableList<StagedDrawRun>,
         geometries: List<Pair<TexturedTriangleMesh, Color>>,
         maxQuads: Int,
+        font: UiFont?,
     ) {
         val maxVertices = maxQuads * VertexFormats2D.VERTICES_PER_QUAD
         val maxIndices = maxQuads * VertexFormats2D.INDICES_PER_QUAD
@@ -710,7 +721,7 @@ object DrawRunCoalescer {
 
         fun flushChunk() {
             if (chunk.isEmpty()) return
-            runs += stageTexturedTriangleMeshesToRun(chunk)
+            runs += stageTexturedTriangleMeshesToRun(chunk, font)
             chunk = mutableListOf()
             chunkVertices = 0
             chunkIndices = 0
@@ -775,7 +786,10 @@ object DrawRunCoalescer {
         return StagedDrawRun.QuadRun(vertices, indices)
     }
 
-    private fun stageTexturedTriangleMeshesToRun(geometries: List<Pair<TexturedTriangleMesh, Color>>): StagedDrawRun.GlyphRun {
+    private fun stageTexturedTriangleMeshesToRun(
+        geometries: List<Pair<TexturedTriangleMesh, Color>>,
+        font: UiFont?,
+    ): StagedDrawRun.GlyphRun {
         val totalVertices = geometries.sumOf { it.first.vertices.size }
         val totalIndices = geometries.sumOf { it.first.indices.size }
         val vertices = FloatArray(totalVertices * VertexFormats2D.GLYPH_FLOATS_PER_VERTEX)
@@ -795,7 +809,7 @@ object DrawRunCoalescer {
             }
             vertexOffset += triangleMesh.vertices.size
         }
-        return StagedDrawRun.GlyphRun(vertices, indices)
+        return StagedDrawRun.GlyphRun(vertices, indices, font)
     }
 }
 

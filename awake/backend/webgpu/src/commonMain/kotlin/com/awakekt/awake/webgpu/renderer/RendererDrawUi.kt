@@ -8,6 +8,7 @@ package com.awakekt.awake.webgpu.renderer
 import com.awakekt.awake.core.graphics2d.TextureCompositeMode
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.text.font.UiFont
+import com.awakekt.awake.render.passes2d.DrawRun
 import com.awakekt.awake.render.passes2d.SharedUiRenderFeature
 import com.awakekt.awake.render.passes2d.UiMeshUploader
 import com.awakekt.awake.render.passes2d.UiRunCoalescer
@@ -24,11 +25,11 @@ import io.ygdrasil.webgpu.RenderPassDescriptor
 import io.ygdrasil.webgpu.beginRenderPass
 
 /**
- * UI primitive staging for the WebGPU backend.
+ * UI primitive staging for the WebGPU backend. [font] samples the glyphs that carry no font of
+ * their own; the glyph pipeline uploads each font's atlas the first time it binds it.
  */
 internal fun Renderer.performDrawUi(primitives: List<UiDrawPrimitive>, font: UiFont?) {
     ensureUiQuadPipeline()
-    if (font != null) ensureGlyphPipeline(font)
     primitives.filterIsInstance<UiDrawPrimitive.Texture>().map { TextureCompositeMode(it.blendMode, it.premultiplied) }.distinct()
         .forEach(::ensureTextureQuadPipeline)
     if (primitives.any { it is UiDrawPrimitive.RoundedQuad || it is UiDrawPrimitive.ShadowQuad }) ensureRoundedQuadPipeline()
@@ -36,7 +37,14 @@ internal fun Renderer.performDrawUi(primitives: List<UiDrawPrimitive>, font: UiF
     uiRuns = uploadUiRuns(
         UiRunCoalescer.coalesce(primitives, Renderer.MAX_UI_QUADS, uiRunCache),
         WebGpuUiMeshUploader(this),
+        defaultFont = font,
     )
+    for (index in uiRuns.indices) {
+        if (uiRuns[index] is DrawRun.GlyphRun) {
+            ensureGlyphPipeline()
+            break
+        }
+    }
 }
 
 /** Executes the shared, paint-order-preserving UI pass against an offscreen attachment. */

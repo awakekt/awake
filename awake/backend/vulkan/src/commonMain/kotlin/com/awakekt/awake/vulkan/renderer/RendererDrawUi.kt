@@ -9,6 +9,7 @@ import com.awakekt.awake.core.graphics2d.TextureCompositeMode
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.render.passes2d.DrawRun
+import com.awakekt.awake.render.passes2d.SharedUiRenderFeature
 import com.awakekt.awake.render.passes2d.UiMeshUploader
 import com.awakekt.awake.render.passes2d.UiRunCoalescer
 import com.awakekt.awake.render.passes2d.uploadUiRuns
@@ -19,10 +20,11 @@ import com.awakekt.awake.vulkan.enums.VkSubpassContents
 import com.awakekt.awake.vulkan.material.Material
 import com.awakekt.awake.vulkan.models.VkClearColorValue
 import com.awakekt.awake.vulkan.models.VkExtent2D
-import com.awakekt.awake.vulkan.models.VkOffset2D
 import com.awakekt.awake.vulkan.models.VkRect2D
 import com.awakekt.awake.vulkan.models.VkViewport
 import com.awakekt.awake.vulkan.models.info.VkRenderPassBeginInfo
+import com.awakekt.awake.vulkan.pipeline.UiPipelineSet
+import com.awakekt.awake.vulkan.pipeline.VulkanUiRunRecorder
 import com.awakekt.awake.vulkan.texture.OffscreenRenderTarget
 import com.awakekt.awake.vulkan.ui.DynamicMesh
 
@@ -32,21 +34,37 @@ import com.awakekt.awake.vulkan.ui.DynamicMesh
 
 /**
  * Stages this frame's UI overlay content by coalescing [primitives] and uploading to dynamic meshes.
+ * [font] samples the glyphs that carry no font of their own; every font a glyph run samples has its
+ * atlas uploaded here, once, so recording only binds it.
  */
 internal fun Renderer.performDrawUi(primitives: List<UiDrawPrimitive>, font: UiFont?) {
     waitForCurrentFrameResourceSlot()
+    uiRuns = uploadUiRuns(
+        UiRunCoalescer.coalesce(primitives, Renderer.MAX_UI_QUADS, uiRunCache),
+        VulkanUiMeshUploader(this, swapchainManager.currentFrame),
+        defaultFont = font,
+    )
+    val hasGlyphs = ensureGlyphRunAtlases()
     if (swapchainManager.imageViews.isNotEmpty()) {
         ensureUiQuadPipeline()
-        if (font != null) ensureGlyphPipeline(font)
+        if (hasGlyphs) ensureGlyphPipeline()
         primitives.filterIsInstance<UiDrawPrimitive.Texture>().map { TextureCompositeMode(it.blendMode, it.premultiplied) }.distinct()
             .forEach(::ensureTextureQuadPipeline)
         if (primitives.any { it is UiDrawPrimitive.RoundedQuad || it is UiDrawPrimitive.ShadowQuad }) ensureRoundedQuadPipeline()
     }
+}
 
-    uiRuns = uploadUiRuns(
-        UiRunCoalescer.coalesce(primitives, Renderer.MAX_UI_QUADS, uiRunCache),
-        VulkanUiMeshUploader(this, swapchainManager.currentFrame),
-    )
+/** Uploads the atlas of every font this frame's glyph runs sample; true when there is one. */
+private fun Renderer.ensureGlyphRunAtlases(): Boolean {
+    var any = false
+    for (index in uiRuns.indices) {
+        val run = uiRuns[index]
+        if (run is DrawRun.GlyphRun) {
+            ensureFontAtlas(run.font)
+            any = true
+        }
+    }
+    return any
 }
 
 /**
@@ -63,7 +81,8 @@ internal fun Renderer.dropStagedUiSampling(target: OffscreenRenderTarget) {
 }
 
 /**
- * Headless/offscreen test hook: renders a full frame's worth of [UiDrawPrimitive]s into [target].
+ * Headless/offscreen test hook: renders a full frame's worth of [UiDrawPrimitive]s into [target],
+ * through the same shared, paint-order-preserving UI pass the swapchain uses.
  */
 fun Renderer.renderUiToTexture(target: RenderTarget, primitives: List<UiDrawPrimitive>, font: UiFont?) {
     val offscreen = target as OffscreenRenderTarget
@@ -71,16 +90,22 @@ fun Renderer.renderUiToTexture(target: RenderTarget, primitives: List<UiDrawPrim
     val frameIndex = swapchainManager.currentFrame
 
     ensureOffscreenQuadPipeline()
-    if (font != null) ensureOffscreenGlyphPipeline(font)
+    if (ensureGlyphRunAtlases()) ensureOffscreenGlyphPipeline()
     primitives.filterIsInstance<UiDrawPrimitive.Texture>().map { TextureCompositeMode(it.blendMode, it.premultiplied) }.distinct()
         .forEach(::ensureOffscreenTexturePipeline)
     if (primitives.any { it is UiDrawPrimitive.RoundedQuad || it is UiDrawPrimitive.ShadowQuad }) ensureOffscreenRoundedQuadPipeline()
 
-    val quadPipeline = requireNotNull(offscreenQuadRenderPipeline)
-    quadPipeline.writeScreenSize(offscreen.width.toFloat(), offscreen.height.toFloat())
-    offscreenRoundedQuadRenderPipeline?.writeScreenSize(offscreen.width.toFloat(), offscreen.height.toFloat())
-    offscreenGlyphRenderPipeline?.writeScreenSize(offscreen.width.toFloat(), offscreen.height.toFloat())
-    offscreenTextureRenderPipelines.values.forEach {
+    val pipelines = UiPipelineSet(
+        quad = requireNotNull(offscreenQuadRenderPipeline),
+        glyph = offscreenGlyphRenderPipeline,
+        textures = offscreenTextureRenderPipelines,
+        roundedQuad = offscreenRoundedQuadRenderPipeline,
+        fontAtlases = fontAtlases,
+    )
+    pipelines.quad.writeScreenSize(offscreen.width.toFloat(), offscreen.height.toFloat())
+    pipelines.roundedQuad?.writeScreenSize(offscreen.width.toFloat(), offscreen.height.toFloat())
+    pipelines.glyph?.writeScreenSize(offscreen.width.toFloat(), offscreen.height.toFloat())
+    pipelines.textures.values.forEach {
         it.writeScreenSize(offscreen.width.toFloat(), offscreen.height.toFloat())
     }
 
@@ -100,59 +125,12 @@ fun Renderer.renderUiToTexture(target: RenderTarget, primitives: List<UiDrawPrim
         val fullScissor = VkRect2D(extent = VkExtent2D(offscreen.width, offscreen.height))
         Vulkan.vkCmdSetScissor(commandBuffer, 0, arrayOf(fullScissor))
 
-        var runIndex = 0
-        while (runIndex < uiRuns.size) {
-            when (val run = uiRuns[runIndex]) {
-                is DrawRun.QuadRun -> {
-                    quadPipeline.bind(commandBuffer)
-                    run.mesh.bind(frameIndex, commandBuffer)
-                    run.mesh.draw(frameIndex, commandBuffer, statsCounter)
-                }
-                is DrawRun.RoundedQuadRun -> {
-                    offscreenRoundedQuadRenderPipeline?.let { pipeline ->
-                        pipeline.bind(commandBuffer)
-                        run.mesh.bind(frameIndex, commandBuffer)
-                        run.mesh.draw(frameIndex, commandBuffer, statsCounter)
-                    }
-                }
-                is DrawRun.GlyphRun -> {
-                    offscreenGlyphRenderPipeline?.let { pipeline ->
-                        pipeline.bind(commandBuffer)
-                        run.mesh.bind(frameIndex, commandBuffer)
-                        run.mesh.draw(frameIndex, commandBuffer, statsCounter)
-                    }
-                }
-                is DrawRun.ClipRun -> {
-                    val maxX = offscreen.width
-                    val maxY = offscreen.height
-                    val x = run.rect.x.toInt().coerceIn(0, maxX)
-                    val y = run.rect.y.toInt().coerceIn(0, maxY)
-                    val width = run.rect.width.toInt().coerceAtLeast(0).coerceAtMost(maxX - x)
-                    val height = run.rect.height.toInt().coerceAtLeast(0).coerceAtMost(maxY - y)
-                    val scissor = VkRect2D(offset = VkOffset2D(x, y), extent = VkExtent2D(width, height))
-                    Vulkan.vkCmdSetScissor(commandBuffer, 0, arrayOf(scissor))
-                }
-                is DrawRun.TextureRun -> {
-                    for (slotIndex in run.primitives.indices) {
-                        val primitive = run.primitives[slotIndex]
-                        val pipeline = offscreenTextureRenderPipelines[primitive.compositeMode] ?: continue
-                        val material = primitive.texture as Material
-                        val mesh = textureMeshForPrimitive(slotIndex)
-                        pipeline.bindMaterial(
-                            commandBuffer,
-                            frameIndex,
-                            slotIndex,
-                            material.samplerHandle,
-                            material.imageViewHandle,
-                        )
-                        mesh.update(frameIndex, primitive.vertices, primitive.indices)
-                        mesh.bind(frameIndex, commandBuffer)
-                        mesh.draw(frameIndex, commandBuffer, statsCounter)
-                    }
-                }
-            }
-            runIndex += 1
-        }
+        SharedUiRenderFeature().recordCommands(
+            runs = uiRuns,
+            surfaceWidth = offscreen.width,
+            surfaceHeight = offscreen.height,
+            recorder = VulkanUiRunRecorder(commandBuffer, frameIndex, statsCounter, pipelines, ::textureMeshForPrimitive),
+        )
 
         Vulkan.vkCmdEndRenderPass(commandBuffer)
         offscreen.transitionToShaderReadOnly(commandBuffer)
@@ -217,8 +195,9 @@ fun Renderer.renderUiGlyphsToTexture(target: RenderTarget, glyphs: List<UiDrawPr
     val offscreen = target as OffscreenRenderTarget
     waitForCurrentFrameResourceSlot()
     val frameIndex = swapchainManager.currentFrame
-    ensureOffscreenGlyphPipeline(font)
+    ensureOffscreenGlyphPipeline()
     val glyphPipeline = requireNotNull(offscreenGlyphRenderPipeline)
+    val atlas = ensureFontAtlas(font)
     glyphPipeline.writeScreenSize(offscreen.width.toFloat(), offscreen.height.toFloat())
 
     val glyphRunMeshes = buildList {
@@ -249,6 +228,7 @@ fun Renderer.renderUiGlyphsToTexture(target: RenderTarget, glyphs: List<UiDrawPr
         val scissor = VkRect2D(extent = VkExtent2D(offscreen.width, offscreen.height))
         Vulkan.vkCmdSetScissor(commandBuffer, 0, arrayOf(scissor))
         glyphPipeline.bind(commandBuffer)
+        glyphPipeline.bindFontAtlas(commandBuffer, font, atlas)
         glyphRunMeshes.forEach { mesh ->
             mesh.bind(frameIndex, commandBuffer)
             mesh.draw(frameIndex, commandBuffer, statsCounter)

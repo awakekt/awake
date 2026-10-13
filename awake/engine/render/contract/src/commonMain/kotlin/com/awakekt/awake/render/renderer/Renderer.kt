@@ -149,10 +149,17 @@ interface Renderer : GpuDevice {
      * method (not folded into [draw]) so the 3D `Lens`+draw command contract stays untouched.
      * The next [draw] uses it up: a frame that stages no UI draws none, not the last one again.
      * Each backend composites this as a second render pass with `loadOp = LOAD`, after the
-     * 3D pass, in the same frame. [font] is only needed the first time a caller draws glyph
-     * primitives -- both the (colored-quad) UI pipeline and the glyph pipeline are built
-     * lazily, on the first call that needs them, not unconditionally at `Renderer`
-     * construction time, so a game that never calls this never pays for either pipeline. */
+     * 3D pass, in the same frame.
+     *
+     * Each glyph samples the atlas of its own `UiDrawPrimitive.Glyph.font`; [font] is the default
+     * for glyphs that carry none, and a glyph with neither is not drawn. Glyphs of several fonts
+     * draw in one call, in paint order: the batch splits where the font changes. A backend
+     * uploads each font's atlas the first time it draws it and keeps it, keyed by identity, until
+     * the renderer is destroyed -- a font no longer drawn stays uploaded, so reuse one [UiFont]
+     * instance rather than building a new one per frame.
+     *
+     * The UI pipelines are built lazily, on the first call that needs them, not unconditionally at
+     * `Renderer` construction time, so a game that never calls this never pays for them. */
     fun drawUi(primitives: List<UiDrawPrimitive>, font: UiFont? = null)
 
     /**
@@ -171,7 +178,7 @@ interface Renderer : GpuDevice {
      */
     fun awaitFrameResources() = Unit
 
-    /** Renders UI into an offscreen target for compositing as one texture. */
+    /** Renders UI into an offscreen target for compositing as one texture; [font] as in [drawUi]. */
     fun drawUiToTexture(
         target: RenderTarget,
         primitives: List<UiDrawPrimitive>,

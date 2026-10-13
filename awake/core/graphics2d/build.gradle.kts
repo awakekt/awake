@@ -25,6 +25,8 @@ kotlin {
             // VertexFormat/VertexAttribute/GpuDataShape -- UiVertexLayout describes the 2D
             // vertex layout in exactly the terms the 3D side already uses.
             api(project(":awake:core:geometry"))
+            // UiFont: a glyph names the font whose atlas its UVs index.
+            api(project(":awake:core:text"))
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

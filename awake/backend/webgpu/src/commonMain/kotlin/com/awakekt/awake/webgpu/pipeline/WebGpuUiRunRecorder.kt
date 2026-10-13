@@ -6,6 +6,7 @@
 package com.awakekt.awake.webgpu.pipeline
 
 import com.awakekt.awake.core.graphics2d.TextureCompositeMode
+import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.render.passes2d.TexturedPrimitiveRun
 import com.awakekt.awake.render.passes2d.UiPipelineKind
 import com.awakekt.awake.render.passes2d.UiRunRecorder
@@ -48,11 +49,16 @@ internal class WebGpuUiRunRecorder(
         // Texture binds nothing up front: each primitive binds its own material bind group.
         if (pipeline != null && kind != UiPipelineKind.Texture) {
             encoder.setPipeline(pipeline.pipeline)
-            // Glyph reads its font atlas through the same group 0 its screen-size uniform uses.
-            val group = if (kind == UiPipelineKind.Glyph) pipeline.bindGroup else pipeline.screenSizeBindGroup
-            encoder.setBindGroup(0u, group)
+            // Glyph's group 0 is its font's -- atlas and uniforms -- bound in bindGlyphFont.
+            if (kind != UiPipelineKind.Glyph) encoder.setBindGroup(0u, pipeline.screenSizeBindGroup)
         }
         return pipeline != null
+    }
+
+    override fun bindGlyphFont(font: UiFont): Boolean {
+        val pipeline = glyph ?: return false
+        encoder.setBindGroup(0u, pipeline.fontBindGroup(font))
+        return true
     }
 
     override fun drawMesh(mesh: DynamicMesh) {

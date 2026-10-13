@@ -8,10 +8,6 @@ package com.awakekt.awake.webgpu.renderer
 import com.awakekt.awake.asset.shaders.program
 import com.awakekt.awake.core.graphics2d.BlendMode
 import com.awakekt.awake.core.graphics2d.TextureCompositeMode
-import com.awakekt.awake.core.text.font.UiFont
-import com.awakekt.awake.core.text.font.UiFontSamplingMode
-import com.awakekt.awake.render.font.UiFontSamplingInfo
-import com.awakekt.awake.render.font.samplingInfo
 import com.awakekt.awake.render.passes2d.UiPipelineKind
 import com.awakekt.awake.render.pipeline.UiPipelineDescriptor
 import com.awakekt.awake.webgpu.ui.UiRenderPipeline
@@ -35,29 +31,16 @@ internal fun Renderer.ensureUiQuadPipeline() {
     )
 }
 
-/** Builds [Renderer.uiGlyphRenderPipeline] on the first `drawUi` call that passes a non-null
- * [font] -- cached after that (a game calls `drawUi` with the same font every frame). */
-internal fun Renderer.ensureGlyphPipeline(font: UiFont) {
-    if (currentUiFont !== font) {
-        uiGlyphRenderPipeline?.destroy()
-        uiGlyphRenderPipeline = null
-        currentUiFont = font
-    }
+/** Builds [Renderer.uiGlyphRenderPipeline] on the first `drawUi` call that draws a glyph, once.
+ * It holds no font: each font's atlas is uploaded and bound per run through
+ * [UiRenderPipeline.fontBindGroup]. */
+internal fun Renderer.ensureGlyphPipeline() {
     if (uiGlyphRenderPipeline != null) return
     uiGlyphRenderPipeline = UiRenderPipeline(
         graphicsDevice,
         swapchainManager,
         uiGlyphShaderCode,
         descriptor = uiPipelineDescriptor(UiPipelineKind.Glyph),
-        font = font,
-    ).also { it.writeFontInfo(font.samplingInfo) }
-}
-
-/** Writes the two glyph-shader UBO font fields from [font]'s declared sampling attributes. */
-private fun UiRenderPipeline.writeFontInfo(info: UiFontSamplingInfo) {
-    writeFontInfo(
-        isDistanceField = info.mode == UiFontSamplingMode.DistanceField,
-        rangePx = info.distanceFieldRangePx,
     )
 }
 

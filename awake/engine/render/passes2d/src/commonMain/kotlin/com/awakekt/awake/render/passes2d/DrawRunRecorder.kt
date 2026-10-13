@@ -5,6 +5,8 @@
  */
 package com.awakekt.awake.render.passes2d
 
+import com.awakekt.awake.core.text.font.UiFont
+
 /**
  * The backend hooks [com.awakekt.awake.render.passes2d.SharedRenderFeature2D] needs:
  * paint order, scissor clamping and texture-slot allocation live once in the shared feature, and
@@ -20,6 +22,15 @@ interface DrawRunRecorder<in M> {
      * skips the run rather than drawing it through whatever was bound before.
      */
     fun bindPipeline(kind: DrawPipelineKind): Boolean
+
+    /**
+     * Binds [font]'s atlas and sampling uniforms for the glyph draws that follow, after
+     * [bindPipeline] prepared the glyph pipeline. Called again only when the font changes, and
+     * never rebuilds a pipeline: a backend uploads each atlas once and keeps it, keyed by font.
+     *
+     * @return `false` when [font] cannot be bound, in which case its runs are skipped.
+     */
+    fun bindGlyphFont(font: UiFont): Boolean
 
     /** Binds and draws [mesh] against the pipeline [bindPipeline] just prepared. */
     fun drawMesh(mesh: M)

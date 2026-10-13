@@ -24,6 +24,7 @@ import com.awakekt.awake.core.graphics2d.translatedBy
 import com.awakekt.awake.core.math2d.Dp
 import com.awakekt.awake.core.math2d.Rectangle
 import com.awakekt.awake.core.math2d.intersect
+import com.awakekt.awake.core.text.font.UiFont
 
 /** Private bridge for scopes that can preserve geometry the caller guarantees is immutable. */
 internal interface RetainedMeshDrawScope {
@@ -127,11 +128,12 @@ interface DrawScope {
     fun withScale(scaleX: Float, scaleY: Float, block: () -> Unit)
 
     /**
-     * Draws one glyph from an atlas cell.
+     * Draws one glyph from an atlas cell of [font].
      *
-     * Takes UVs rather than a character because the scope knows nothing about fonts -- resolving a
-     * character to an atlas cell is the caller's job, and doing it here would put font lookup in the
-     * paint path of every primitive.
+     * Takes UVs rather than a character because the scope looks nothing up -- resolving a character
+     * to an atlas cell is the caller's job, and doing it here would put font lookup in the paint path
+     * of every primitive. [font] only says which atlas those UVs index; null draws from the font the
+     * frame is drawn with.
      *
      * Nine loose floats rather than a rect and a UV pair: this runs once per glyph per frame, and
      * grouping them would allocate two objects per character on every frame.
@@ -147,6 +149,7 @@ interface DrawScope {
         u1: Float,
         v1: Float,
         color: Color,
+        font: UiFont? = null,
     )
 
     /**
@@ -668,13 +671,14 @@ internal class PaintScope :
         u1: Float,
         v1: Float,
         color: Color,
+        font: UiFont?,
     ) {
         val px = transform.mapX(originX + x)
         val py = transform.mapY(originY + y)
         val pw = width * transform.scaleX
         val ph = height * transform.scaleY
         if (isFullyOutsideActiveClip(px, py, pw, ph)) return
-        output += UiDrawPrimitive.Glyph(px, py, pw, ph, u0, v0, u1, v1, color.dimmedBy(alpha))
+        output += UiDrawPrimitive.Glyph(px, py, pw, ph, u0, v0, u1, v1, color.dimmedBy(alpha), font = font)
     }
 
     override fun clipped(inset: Float, block: () -> Unit) {

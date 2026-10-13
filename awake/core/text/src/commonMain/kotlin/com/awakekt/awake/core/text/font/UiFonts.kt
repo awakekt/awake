@@ -9,12 +9,9 @@ package com.awakekt.awake.core.text.font
  * Factory and registry providing pre-configured standard UI font instances and families.
  */
 object UiFonts {
-    // Memoized: Renderer.ensureGlyphPipeline() caches its glyph pipeline by UiFont reference
+    // Memoized: a renderer uploads one atlas per UiFont instance and keeps it, keyed by
     // identity, on the assumption that independent callers asking for "the default font" get
-    // the same instance. Two callers each independently calling default() and getting a fresh
-    // PackedUiFont was silently defeating that cache -- every drawUi() call from a different
-    // caller evicted and rebuilt the other's pipeline (a full font-atlas GPU upload), every
-    // frame, forever. See awake-render-backend-engineer's UiGlyphRenderPipeline fix.
+    // the same instance. A fresh PackedUiFont per call would upload another atlas every frame.
     private val defaultCache = mutableMapOf<Int, UiFont>()
 
     /**
@@ -67,7 +64,7 @@ object UiFonts {
      * Builds a Compose-shaped font family from caller-provided weighted faces.
      *
      * Every face must expose the same glyph coordinate space and sampling mode. The family
-     * combines their atlases so a renderer still binds one font texture for a frame.
+     * combines their atlases so every weight of the family samples one texture.
      *
      * @param faces Map of font weights to corresponding [UiFont] instances.
      * @return A unified [UiFont] family supporting weight selection.

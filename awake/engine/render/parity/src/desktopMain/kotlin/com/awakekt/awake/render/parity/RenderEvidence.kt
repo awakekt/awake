@@ -71,7 +71,7 @@ fun main(args: Array<String>) {
     }
     withHeadlessUi(HeadlessUiBackend.Vulkan) { renderer ->
         UI_PARITY_SCENARIOS.forEach { scenario ->
-            write("ui-${scenario.name}", "UI pipeline: ${scenario.name}", SCENARIO_SIZE, renderer.render(scenario))
+            write("ui-${scenario.name}", "UI pipeline: ${scenario.name}", scenario.size, renderer.render(scenario))
         }
     }
     File(out, "captions.tsv").writeText(captions.toString())

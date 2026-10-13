@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.vulkan.pipeline
 
+import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.render.command.BufferHandle
 import com.awakekt.awake.render.command.MaterialBinding
 import com.awakekt.awake.render.command.PipelineHandle
@@ -15,9 +16,14 @@ import com.awakekt.awake.render.passes2d.UiPass
 import com.awakekt.awake.render.passes2d.UiPipelineKind
 import com.awakekt.awake.render.passes2d.UiRun
 import com.awakekt.awake.render.passes2d.UiRunRecorder
+import com.awakekt.awake.render.renderer.RenderStatsCounter
+import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.debug.LineMesh
 import com.awakekt.awake.vulkan.debug.LineRenderPipeline
 import com.awakekt.awake.vulkan.material.Material
+import com.awakekt.awake.vulkan.models.VkExtent2D
+import com.awakekt.awake.vulkan.models.VkOffset2D
+import com.awakekt.awake.vulkan.models.VkRect2D
 import com.awakekt.awake.vulkan.ui.DynamicMesh
 
 /**
@@ -46,7 +52,13 @@ internal class VulkanUiPass : UiPass<DynamicMesh, VulkanRenderFrameContext> {
 
     override fun recorder(context: VulkanRenderFrameContext): UiRunRecorder<DynamicMesh>? {
         val pipelines = context.uiPipelines() ?: return null
-        return VulkanUiRunRecorder(context, pipelines)
+        return VulkanUiRunRecorder(
+            commandBuffer = context.commandBuffer,
+            frameIndex = context.frameIndex,
+            stats = context.stats,
+            pipelines = pipelines,
+            textureMeshForPrimitive = context::textureMeshForPrimitive,
+        )
     }
 }
 
@@ -67,10 +79,17 @@ private class LineDraw(
     override val elementCount: Int get() = lineMesh.vertexCount(frameIndex)
 }
 
-/** One frame's Vulkan translation of [UiRunRecorder]; cheap enough to build per UI pass. */
-private class VulkanUiRunRecorder(
-    private val context: VulkanRenderFrameContext,
+/**
+ * One frame's Vulkan translation of [UiRunRecorder]; cheap enough to build per UI pass. The swapchain
+ * UI pass and the offscreen `renderUiToTexture` each build one over their own [pipelines], so both
+ * record through the shared feature.
+ */
+internal class VulkanUiRunRecorder(
+    private val commandBuffer: Long,
+    private val frameIndex: Int,
+    private val stats: RenderStatsCounter,
     private val pipelines: UiPipelineSet,
+    private val textureMeshForPrimitive: (Int) -> DynamicMesh,
 ) : UiRunRecorder<DynamicMesh> {
 
     override fun bindPipeline(kind: UiPipelineKind): Boolean {
@@ -85,31 +104,44 @@ private class VulkanUiRunRecorder(
         }
         // Texture binds nothing up front: bindMaterial rebinds the pipeline per primitive,
         // since each one also needs its own descriptor set bound at the same point.
-        if (pipeline != null && kind != UiPipelineKind.Texture) pipeline.bind(context.commandBuffer)
+        // Glyph binds only the pipeline here: its group 0 is the font's, bound in bindGlyphFont.
+        if (pipeline != null && kind != UiPipelineKind.Texture) pipeline.bind(commandBuffer)
         return pipeline != null
     }
 
+    override fun bindGlyphFont(font: UiFont): Boolean {
+        val pipeline = pipelines.glyph
+        val atlas = pipelines.fontAtlases[font]
+        if (pipeline == null || atlas == null) return false
+        pipeline.bindFontAtlas(commandBuffer, font, atlas)
+        return true
+    }
+
     override fun drawMesh(mesh: DynamicMesh) {
-        mesh.bind(context.frameIndex, context.commandBuffer)
-        mesh.draw(context.frameIndex, context.commandBuffer, context.stats)
+        mesh.bind(frameIndex, commandBuffer)
+        mesh.draw(frameIndex, commandBuffer, stats)
     }
 
     override fun setScissor(x: Int, y: Int, width: Int, height: Int) =
-        context.recorder.setScissor(x, y, width, height)
+        Vulkan.vkCmdSetScissor(
+            commandBuffer,
+            0,
+            arrayOf(VkRect2D(offset = VkOffset2D(x = x, y = y), extent = VkExtent2D(width = width, height = height))),
+        )
 
     override fun drawTexturePrimitive(primitive: TexturedPrimitiveRun, slotIndex: Int) {
         val pipeline = pipelines.textures[primitive.compositeMode] ?: return
         val material = primitive.texture as Material
-        val mesh = context.textureMeshForPrimitive(slotIndex)
+        val mesh = textureMeshForPrimitive(slotIndex)
         pipeline.bindMaterial(
-            context.commandBuffer,
-            context.frameIndex,
+            commandBuffer,
+            frameIndex,
             slotIndex,
             material.samplerHandle,
             material.imageViewHandle,
         )
-        mesh.update(context.frameIndex, primitive.vertices, primitive.indices)
-        mesh.bind(context.frameIndex, context.commandBuffer)
-        mesh.draw(context.frameIndex, context.commandBuffer, context.stats)
+        mesh.update(frameIndex, primitive.vertices, primitive.indices)
+        mesh.bind(frameIndex, commandBuffer)
+        mesh.draw(frameIndex, commandBuffer, stats)
     }
 }

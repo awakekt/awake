@@ -93,11 +93,12 @@ public final class com/awakekt/awake/core/graphics2d/DrawCommand$FilledPath : co
 }
 
 public final class com/awakekt/awake/core/graphics2d/DrawCommand$Glyph : com/awakekt/awake/core/graphics2d/UiDrawPrimitive {
-	public fun <init> (FFFFFFFFLcom/awakekt/awake/core/color/Color;Ljava/lang/String;Lcom/awakekt/awake/core/graphics2d/DrawTransform;)V
-	public synthetic fun <init> (FFFFFFFFLcom/awakekt/awake/core/color/Color;Ljava/lang/String;Lcom/awakekt/awake/core/graphics2d/DrawTransform;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (FFFFFFFFLcom/awakekt/awake/core/color/Color;Ljava/lang/String;Lcom/awakekt/awake/core/graphics2d/DrawTransform;Lcom/awakekt/awake/core/text/font/UiFont;)V
+	public synthetic fun <init> (FFFFFFFFLcom/awakekt/awake/core/color/Color;Ljava/lang/String;Lcom/awakekt/awake/core/graphics2d/DrawTransform;Lcom/awakekt/awake/core/text/font/UiFont;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()F
 	public final fun component10 ()Ljava/lang/String;
 	public final fun component11 ()Lcom/awakekt/awake/core/graphics2d/DrawTransform;
+	public final fun component12 ()Lcom/awakekt/awake/core/text/font/UiFont;
 	public final fun component2 ()F
 	public final fun component3 ()F
 	public final fun component4 ()F
@@ -106,10 +107,11 @@ public final class com/awakekt/awake/core/graphics2d/DrawCommand$Glyph : com/awa
 	public final fun component7 ()F
 	public final fun component8 ()F
 	public final fun component9 ()Lcom/awakekt/awake/core/color/Color;
-	public final fun copy (FFFFFFFFLcom/awakekt/awake/core/color/Color;Ljava/lang/String;Lcom/awakekt/awake/core/graphics2d/DrawTransform;)Lcom/awakekt/awake/core/graphics2d/DrawCommand$Glyph;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/core/graphics2d/DrawCommand$Glyph;FFFFFFFFLcom/awakekt/awake/core/color/Color;Ljava/lang/String;Lcom/awakekt/awake/core/graphics2d/DrawTransform;ILjava/lang/Object;)Lcom/awakekt/awake/core/graphics2d/DrawCommand$Glyph;
+	public final fun copy (FFFFFFFFLcom/awakekt/awake/core/color/Color;Ljava/lang/String;Lcom/awakekt/awake/core/graphics2d/DrawTransform;Lcom/awakekt/awake/core/text/font/UiFont;)Lcom/awakekt/awake/core/graphics2d/DrawCommand$Glyph;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/graphics2d/DrawCommand$Glyph;FFFFFFFFLcom/awakekt/awake/core/color/Color;Ljava/lang/String;Lcom/awakekt/awake/core/graphics2d/DrawTransform;Lcom/awakekt/awake/core/text/font/UiFont;ILjava/lang/Object;)Lcom/awakekt/awake/core/graphics2d/DrawCommand$Glyph;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getColor ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getFont ()Lcom/awakekt/awake/core/text/font/UiFont;
 	public final fun getH ()F
 	public final fun getTokenId ()Ljava/lang/String;
 	public final fun getTransform ()Lcom/awakekt/awake/core/graphics2d/DrawTransform;

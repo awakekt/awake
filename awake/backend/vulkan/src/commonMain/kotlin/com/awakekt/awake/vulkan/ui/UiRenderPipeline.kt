@@ -8,8 +8,11 @@ package com.awakekt.awake.vulkan.ui
 import com.awakekt.awake.core.geometry.toByteArrayLE
 import com.awakekt.awake.core.graphics2d.BlendMode
 import com.awakekt.awake.core.math.Vec4
+import com.awakekt.awake.core.text.font.UiFont
+import com.awakekt.awake.render.font.samplingInfo
 import com.awakekt.awake.render.passes2d.UiPipelineKind
 import com.awakekt.awake.render.passes2d.UiUniformLayouts
+import com.awakekt.awake.render.passes2d.uiFontInfo
 import com.awakekt.awake.render.passes2d.uiUniformFloats
 import com.awakekt.awake.render.pipeline.UiPipelineDescriptor
 import com.awakekt.awake.render.renderer.UiTargetCompositeMode
@@ -89,13 +92,12 @@ class UiRenderPipeline(
     val kind: UiPipelineKind = UiPipelineKind.Quad,
     /**
      * Whether the pipeline samples a texture, which is true for the texture and glyph variants.
-     * Such a pipeline normally binds its image per draw through [bindMaterial]; a fixed texture
-     * supplied at construction is bound once instead.
+     * A texture pipeline binds its image per draw through [bindMaterial]; a glyph pipeline binds a
+     * font's atlas through [bindFontAtlas].
      */
     val hasTexture: Boolean = false,
     externalRenderPass: Long? = null,
     private val framesInFlight: Int = 1,
-    fixedTexture: Texture? = null,
     private val blendMode: BlendMode = BlendMode.SourceOver,
     private val premultiplied: Boolean = false,
     /** Fullscreen two-texture composite instead of a regular UI primitive pipeline. */
@@ -111,7 +113,6 @@ class UiRenderPipeline(
         descriptor: UiPipelineDescriptor,
         externalRenderPass: Long? = null,
         framesInFlight: Int = 1,
-        fixedTexture: Texture? = null,
     ) : this(
         graphicsDevice = graphicsDevice,
         swapchainManager = swapchainManager,
@@ -127,7 +128,6 @@ class UiRenderPipeline(
         hasTexture = descriptor.variant == com.awakekt.awake.render.pipeline.UiPipelineVariant.Texture || descriptor.variant == com.awakekt.awake.render.pipeline.UiPipelineVariant.Glyph,
         externalRenderPass = externalRenderPass,
         framesInFlight = framesInFlight,
-        fixedTexture = fixedTexture,
         blendMode = descriptor.blendMode,
         premultiplied = descriptor.isPremultiplied,
         targetComposite = descriptor.variant == com.awakekt.awake.render.pipeline.UiPipelineVariant.TargetComposite,
@@ -154,8 +154,6 @@ class UiRenderPipeline(
 
     private var screenWidth = 0f
     private var screenHeight = 0f
-    private var fontIsDistanceField = false
-    private var fontRangePx = 0f
 
     private val descriptorSlotsByFrame = List(framesInFlight) {
         mutableListOf<TextureDescriptorSlot>()
@@ -166,6 +164,24 @@ class UiRenderPipeline(
         val descriptorSet: Long,
     )
 
+    /** One font's descriptor set: its atlas, and a uniform block of its own carrying its `fontInfo`. */
+    private class FontSlot(
+        val descriptorPool: Long,
+        val descriptorSet: Long,
+        val uniformBuffer: Long,
+        val uniformMemory: Long,
+        val fontInfo: Vec4,
+    )
+
+    /**
+     * Every font drawn through this pipeline, by identity, built on its first draw and kept until
+     * [destroy]. A font no longer drawn keeps its slot; there is no eviction yet.
+     */
+    private val fontSlots = HashMap<UiFont, FontSlot>()
+
+    /** How many fonts this pipeline holds a descriptor set for. */
+    internal val fontSlotCount: Int get() = fontSlots.size
+
     private var ownsRenderPass: Boolean = externalRenderPass == null
 
     init {
@@ -174,9 +190,7 @@ class UiRenderPipeline(
             renderPass = externalRenderPass ?: createRenderPass()
             descriptorSetLayout = createDescriptorSetLayout()
             createScreenSizeUniformBuffer()
-            if (!targetComposite && (!hasTexture || fixedTexture != null)) {
-                createFixedDescriptorSet(fixedTexture)
-            }
+            if (!targetComposite && !hasTexture) createFixedDescriptorSet()
             createGraphicsPipeline(vertShaderCode, fragShaderCode)
             if (!targetComposite) writeScreenSize(swapchainManager.extent.width.toFloat(), swapchainManager.extent.height.toFloat())
         } catch (e: Throwable) {
@@ -285,74 +299,110 @@ class UiRenderPipeline(
     }
 
     private fun createScreenSizeUniformBuffer() {
+        val (buffer, memory) = createUniformBuffer()
+        screenSizeBuffer = buffer
+        screenSizeBufferMemory = memory
+    }
+
+    /** A host-visible buffer sized for [UiUniformLayouts.Buffer], and its memory. */
+    private fun createUniformBuffer(): Pair<Long, Long> {
         val bufferSize = (UiUniformLayouts.Buffer.total * Float.SIZE_BYTES).toLong()
-        screenSizeBuffer = VulkanBuffers.vkCreateBuffer(
+        val buffer = VulkanBuffers.vkCreateBuffer(
             device,
             VkBufferCreateInfo(size = bufferSize, usage = VkBufferUsageFlagBits.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT),
         )
-        val requirements = VulkanBuffers.vkGetBufferMemoryRequirements(device, screenSizeBuffer)
+        val requirements = VulkanBuffers.vkGetBufferMemoryRequirements(device, buffer)
         val memoryTypeIndex = VulkanBuffers.findMemoryType(
             physicalDevice,
             requirements.memoryTypeBits,
             VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT or
                 VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
         )
-        screenSizeBufferMemory = VulkanBuffers.vkAllocateMemory(
+        val memory = VulkanBuffers.vkAllocateMemory(
             device,
             VkMemoryAllocateInfo(allocationSize = requirements.size, memoryTypeIndex = memoryTypeIndex),
         )
-        VulkanBuffers.vkBindBufferMemory(device, screenSizeBuffer, screenSizeBufferMemory, 0)
+        VulkanBuffers.vkBindBufferMemory(device, buffer, memory, 0)
+        return buffer to memory
     }
 
-    private fun createFixedDescriptorSet(fixedTexture: Texture?) {
-        val poolSizes = if (fixedTexture != null) {
-            arrayOf(
-                VkDescriptorPoolSize(type = VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, descriptorCount = 1),
-                VkDescriptorPoolSize(type = VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, descriptorCount = 1),
-                VkDescriptorPoolSize(type = VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLER, descriptorCount = 1),
-            )
-        } else {
-            arrayOf(
-                VkDescriptorPoolSize(type = VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, descriptorCount = 1),
-            )
-        }
+    private fun createFixedDescriptorSet() {
         descriptorPool = VulkanDescriptors.vkCreateDescriptorPool(
             device,
-            VkDescriptorPoolCreateInfo(maxSets = 1, pPoolSizes = poolSizes),
+            VkDescriptorPoolCreateInfo(
+                maxSets = 1,
+                pPoolSizes = arrayOf(
+                    VkDescriptorPoolSize(type = VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, descriptorCount = 1),
+                ),
+            ),
         )
         descriptorSet = VulkanDescriptors.vkAllocateDescriptorSet(device, descriptorPool, descriptorSetLayout)
+        writeUniformBinding(descriptorSet, screenSizeBuffer)
+    }
+
+    private fun writeUniformBinding(set: Long, buffer: Long) {
         VulkanDescriptors.vkUpdateDescriptorSetBuffer(
             device,
-            descriptorSet,
+            set,
             0,
             VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
             VkDescriptorBufferInfo(
-                buffer = screenSizeBuffer,
+                buffer = buffer,
                 range = (UiUniformLayouts.Buffer.total * Float.SIZE_BYTES).toLong(),
             ),
         )
-        if (fixedTexture != null) {
-            VulkanDescriptors.vkUpdateDescriptorSetImage(
-                device,
-                descriptorSet,
-                1,
-                VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-                VkDescriptorImageInfo(
-                    sampler = 0,
-                    imageView = fixedTexture.imageView.handle,
+    }
+
+    private fun writeImageBindings(set: Long, sampler: Long, imageView: Long) {
+        VulkanDescriptors.vkUpdateDescriptorSetImage(
+            device,
+            set,
+            1,
+            VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+            VkDescriptorImageInfo(sampler = 0, imageView = imageView),
+        )
+        VulkanDescriptors.vkUpdateDescriptorSetImage(
+            device,
+            set,
+            2,
+            VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLER,
+            VkDescriptorImageInfo(sampler = sampler, imageView = 0),
+        )
+    }
+
+    /**
+     * Binds [font]'s descriptor set, which samples [atlas] with the font's own `fontInfo`, for the
+     * draws that follow [bind]. The set and its uniform block are built the first time [font] is
+     * drawn here; after that a font switch is one descriptor-set bind, never a pipeline rebuild.
+     *
+     * @param commandBuffer The command buffer being recorded.
+     * @param font The font, by identity, whose atlas the next glyphs index.
+     * @param atlas That font's uploaded atlas.
+     */
+    fun bindFontAtlas(commandBuffer: Long, font: UiFont, atlas: Texture) {
+        check(kind == UiPipelineKind.Glyph) { "bindFontAtlas requires a glyph UiRenderPipeline." }
+        val slot = fontSlots.getOrPut(font) { createFontSlot(atlas, uiFontInfo(font.samplingInfo)) }
+        VulkanDescriptors.vkCmdBindDescriptorSet(commandBuffer, pipelineLayout, 0, slot.descriptorSet)
+    }
+
+    private fun createFontSlot(atlas: Texture, fontInfo: Vec4): FontSlot {
+        val pool = VulkanDescriptors.vkCreateDescriptorPool(
+            device,
+            VkDescriptorPoolCreateInfo(
+                maxSets = 1,
+                pPoolSizes = arrayOf(
+                    VkDescriptorPoolSize(type = VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, descriptorCount = 1),
+                    VkDescriptorPoolSize(type = VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, descriptorCount = 1),
+                    VkDescriptorPoolSize(type = VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLER, descriptorCount = 1),
                 ),
-            )
-            VulkanDescriptors.vkUpdateDescriptorSetImage(
-                device,
-                descriptorSet,
-                2,
-                VkDescriptorType.VK_DESCRIPTOR_TYPE_SAMPLER,
-                VkDescriptorImageInfo(
-                    sampler = fixedTexture.sampler.handle,
-                    imageView = 0,
-                ),
-            )
-        }
+            ),
+        )
+        val set = VulkanDescriptors.vkAllocateDescriptorSet(device, pool, descriptorSetLayout)
+        val (buffer, memory) = createUniformBuffer()
+        writeUniformBinding(set, buffer)
+        writeImageBindings(set, atlas.sampler.handle, atlas.imageView.handle)
+        writeUniforms(memory, fontInfo)
+        return FontSlot(pool, set, buffer, memory, fontInfo)
     }
 
     private fun descriptorSlot(frameIndex: Int, drawSlotIndex: Int): TextureDescriptorSlot {
@@ -561,36 +611,21 @@ class UiRenderPipeline(
     }
 
     private fun writeUiUniforms() {
-        VulkanBuffers.writeBufferMemoryFloats(
-            device,
-            screenSizeBufferMemory,
-            0,
-            uiUniformFloats(
-                screenToNdc = Vec4(2f / screenWidth, 2f / screenHeight, -1f, -1f),
-                fontInfo = Vec4(if (fontIsDistanceField) 1f else 0f, fontRangePx, 0f, 0f),
-            ),
-        )
+        writeUniforms(screenSizeBufferMemory, NO_FONT_INFO)
+        for (slot in fontSlots.values) writeUniforms(slot.uniformMemory, slot.fontInfo)
     }
 
     /**
-     * Writes the glyph-shader font-info fields (bytes 8–15 of the shared UBO).
-     *
-     * The glyph fragment shader reads:
-     *   fontInfo.x — 1.0 for a distance-field atlas, 0.0 for a coverage-alpha atlas.
-     *   fontInfo.y — distanceFieldRangePx (the `-pxrange` the atlas was generated with,
-     *                in atlas texels). The shader divides by atlasSize to recover UV-space
-     *                range; handing it zero makes screenPxRange collapse to 1, producing
-     *                a hard-edge 1px band regardless of the glyph's on-screen size.
-     *
-     * Call once after [writeScreenSize] when the glyph pipeline is first constructed or
-     * when the font changes. Screen-resize events only need to re-call [writeScreenSize].
+     * Writes a whole UI block from offset zero. Partial mapped writes at the `fontInfo` offset are
+     * not portable: Vulkan requires vkMapMemory offsets to satisfy minMemoryMapAlignment.
      */
-    fun writeFontInfo(isDistanceField: Boolean, rangePx: Float) {
-        fontIsDistanceField = isDistanceField
-        fontRangePx = rangePx
-        // Write the complete UBO from offset zero. Partial mapped writes at offset 8 are not
-        // portable: Vulkan requires vkMapMemory offsets to satisfy minMemoryMapAlignment.
-        writeUiUniforms()
+    private fun writeUniforms(memory: Long, fontInfo: Vec4) {
+        VulkanBuffers.writeBufferMemoryFloats(
+            device,
+            memory,
+            0,
+            uiUniformFloats(screenToNdc = Vec4(2f / screenWidth, 2f / screenHeight, -1f, -1f), fontInfo = fontInfo),
+        )
     }
 
     private fun createGraphicsPipeline(vertShaderCode: ByteArray, fragShaderCode: ByteArray) {
@@ -948,6 +983,12 @@ class UiRenderPipeline(
      * pipeline.
      */
     fun destroy() {
+        fontSlots.values.forEach { slot ->
+            VulkanDescriptors.vkDestroyDescriptorPool(device, slot.descriptorPool)
+            VulkanBuffers.vkDestroyBuffer(device, slot.uniformBuffer)
+            VulkanBuffers.vkFreeMemory(device, slot.uniformMemory)
+        }
+        fontSlots.clear()
         descriptorSlotsByFrame.forEach { slots ->
             slots.forEach { slot ->
                 VulkanDescriptors.vkDestroyDescriptorPool(device, slot.descriptorPool)
@@ -989,3 +1030,6 @@ class UiRenderPipeline(
     /** Declares nothing; kept only so the class has a companion. */
     companion object
 }
+
+/** The `fontInfo` lanes of a uniform block no glyph reads. */
+private val NO_FONT_INFO = Vec4(0f, 0f, 0f, 0f)
