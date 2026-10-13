@@ -89,10 +89,10 @@ class LoadedProject internal constructor(
  *
  * A host with no renderer, such as a game server that plays the project with [sceneSystems] and no
  * renderer, passes `hasRenderer = false`: the scene's canvas images are then checked to resolve and not
- * decoded, and the glTF models its `mesh_renderer`s name are not read or decoded either, which saves the
- * time and memory of pictures and meshes nothing draws. A collision shape's model still loads, through
+ * decoded, its canvas font files are not read, and the glTF models its `mesh_renderer`s name are not
+ * read or decoded either, which saves the time and memory of pictures, fonts and meshes nothing draws. A collision shape's model still loads, through
  * its capability, not [models]. Such a project, if it is played by [runProject] after all, draws its
- * canvas without the images and its meshes without their models; load with `hasRenderer = true` for a
+ * canvas without the images or fonts and its meshes without their models; load with `hasRenderer = true` for a
  * host that later draws.
  *
  * Throws [IllegalArgumentException] naming every problem in the manifest, a required plugin with no
@@ -200,6 +200,7 @@ fun SceneAppDsl.runProject(project: LoadedProject, touchControls: Boolean = fals
     onReady {
         showTouchControls = touchControls
         canvasImages = project.content[CoreSceneContent.CanvasImages].orEmpty()
+        canvasFonts = project.content[CoreSceneContent.CanvasFonts].orEmpty()
         registry?.let { canvasBindings = it.bindings }
         activatePrimaryCamera(world)
         startSkinnedAnimations(project.models)

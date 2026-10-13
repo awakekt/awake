@@ -243,6 +243,7 @@ class SceneCanvasTest {
             dropTarget = true,
             camera = "Portrait Camera",
             mask = "*",
+            font = "fonts/title.ttf",
             style = CanvasStyle(
                 background = "#202020",
                 gradient = CanvasGradient("#303030", "#101010", horizontal = true),

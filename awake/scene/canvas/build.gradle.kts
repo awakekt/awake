@@ -30,7 +30,7 @@ kotlin {
             implementation(project(":awake:core:color"))
             implementation(project(":awake:core:logging"))
             implementation(project(":awake:core:math2d"))
-            implementation(project(":awake:core:text"))
+            api(project(":awake:core:text"))
             implementation(libs.kotlinx.serialization.json)
         }
         commonTest.dependencies {

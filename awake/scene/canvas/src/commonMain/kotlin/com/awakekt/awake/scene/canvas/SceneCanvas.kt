@@ -51,6 +51,7 @@ import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.drawPath
 import com.awakekt.awake.core.math2d.Rectangle
+import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.core.text.theme.TextStyle
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
@@ -83,6 +84,8 @@ context(_: Composer)
  * @param views What [CanvasElementKind.View] elements show. Without it they draw only their style.
  *   `SceneAppLifecycleRuntime`'s `canvasViews(world)` gives a host that draws the canvas itself the
  *   runtime's own.
+ * @param fonts The loaded font files elements name in [CanvasElement.font], by path, as
+ *   [loadCanvasFonts] reads them. An element whose file is missing draws in the default font.
  */
 fun SceneCanvas(
     world: World,
@@ -93,9 +96,10 @@ fun SceneCanvas(
     projector: CanvasProjector? = null,
     bindings: List<SceneComponentBinding<*, *>>? = null,
     views: CanvasViews? = null,
+    fonts: Map<String, UiFont> = emptyMap(),
 ) {
     val origin = remember { CanvasOrigin() }
-    val tree = CanvasTree(world, showTouchControls, images, projector, bindings, views, origin)
+    val tree = CanvasTree(world, showTouchControls, images, projector, bindings, views, origin, fonts)
     val uiScale = if (scale > 0f && scale.isFinite()) scale else 1f
     Box(modifier.fillMaxSize()) {
         // The box the elements are placed in, inside any padding the host's modifier adds: where it
@@ -193,7 +197,7 @@ internal fun CanvasElementView(
         background(back)
         element.style.applyTo(this, tree.images)
     }
-    val textStyle = element.textStyle(resolveTextColor(state, style) ?: fill)
+    val textStyle = element.textStyle(resolveTextColor(state, style) ?: fill, tree.fontOf(element))
     if (LocalCanvasGhost.current) {
         GhostElementView(element, modifier.rotated(element.style.rotation).styleable(state, style), textStyle, tree, children)
         return

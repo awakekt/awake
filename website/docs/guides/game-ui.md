@@ -71,6 +71,7 @@ or a system polling `consumePress()`, sees the tap as it would without the bluep
 | `height` | number (dp) | `40` | Element height. |
 | `text` | string | `""` | A `Text` element's content, a `Button`'s label, or what is typed into a `TextField`. Typing writes it; a system writing it replaces the field's content, caret at the end. |
 | `fontSize` | number (sp) | `18` | Size of `text`. |
+| `font` | string | `""` | The font of `text`: a `.ttf` or `.otf` file from the project, or a built-in family. See [Use a font](#use-a-font). |
 | `mask` | string | `""` | A `TextField`'s password mask: one character drawn for each typed one. Empty shows the text. |
 | `textAlign` | one of the nine anchor points | none | Where the text sits in the element. None keeps a `Text` at its top-left and a `Button`'s label centred. |
 | `follow` | string | `""` | A node to follow on screen. See [Follow a node](#follow-a-node). |
@@ -184,6 +185,22 @@ element whose image did not load, or whose region does not fit in it, draws with
 When a project is played with `awake:project:runtime`, `loadProject` reads every image the scene's
 canvas names, and the runtime draws them. If your app runs its own Compose host, pass the decoded
 images yourself: `SceneCanvas(world, images = loadCanvasImages(scene, files))`.
+
+## Use a font
+
+A `Text`, `TextField` or `Button` draws its words in Roboto unless its `font` names another. A value
+ending in `.ttf` or `.otf` is a TrueType or OpenType file from the project's root. Any other value is
+a built-in family: `default` is Roboto, and `bitmap` is a fixed-pitch pixel font.
+
+```json title="A title in the project's own font"
+{ "component": "canvas_element", "text": "Harbor Town", "fontSize": 32, "font": "fonts/title.ttf" }
+```
+
+`loadProject` loads each file once, while the scene loads, with the glyphs of printable ASCII and
+`• · … – — × −`; any other character draws as `?`. A file that cannot be read, or is not a font
+Awake reads, such as a collection or a WOFF file, is logged once, and its elements draw in the
+default font. A host with no renderer reads no font. If your app runs its own Compose host, pass the
+fonts yourself: `SceneCanvas(world, fonts = loadCanvasFonts(scene, files))`.
 
 ## Put elements inside others
 
@@ -396,8 +413,9 @@ place of its own; leave the world out to use the runtime's own.
 
 !!! tip "Bad colours do not break the frame"
     `SceneValidator` reports a colour that is not `#RRGGBB` or `#RRGGBBAA`, a negative size, a
-    `fontSize` that is not positive, a `value` outside 0 to 1, and an image with no `path`, a negative
-    region or slice, or slices wider than their region. At draw time, a bad `color` falls
+    `fontSize` that is not positive, a `value` outside 0 to 1, a `font` that is neither a `.ttf` or
+    `.otf` file nor a built-in family, and an image with no `path`, a negative region or slice, or
+    slices wider than their region. At draw time, a bad `color` falls
     back to white and a bad `background` falls back to transparent.
 
 ## Debugging

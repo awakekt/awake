@@ -123,6 +123,9 @@ class SceneAppLifecycleRuntime internal constructor(
     /** The decoded images the scene's canvas elements name, by path; an element whose image is missing draws without it. */
     var canvasImages: Map<String, ImageBitmap> = emptyMap()
 
+    /** The loaded font files the scene's canvas elements name, by path; an element whose file is missing draws in the default font. */
+    var canvasFonts: Map<String, UiFont> = emptyMap()
+
     /** The scene canvas's UI scale: 2 draws every element, its text and its images at twice the size. */
     var canvasScale: Float = 1f
 
@@ -361,6 +364,7 @@ class SceneAppLifecycleRuntime internal constructor(
                         projector = canvasProjector(),
                         bindings = canvasBindings ?: globalBindings,
                         views = canvasViews(),
+                        fonts = canvasFonts,
                     )
                 }
                 if (content != null) content()

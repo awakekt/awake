@@ -9,6 +9,7 @@ import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.scene.canvas.SceneCanvasElement
 import com.awakekt.awake.scene.canvas.checkCanvasImages
 import com.awakekt.awake.scene.canvas.hasCanvasImages
+import com.awakekt.awake.scene.canvas.loadCanvasFonts
 import com.awakekt.awake.scene.canvas.loadCanvasImages
 import com.awakekt.awake.scene.character.CharacterControllerBinding
 import com.awakekt.awake.scene.character.CharacterControllerSystem
@@ -75,13 +76,15 @@ internal object ControlsCapability : SceneCapability {
 }
 
 /**
- * The images the scene's canvas elements draw, decoded before it runs; the runtime draws the canvas.
- * A host with no renderer draws none, so it only checks that the images resolve.
+ * The images and font files the scene's canvas elements draw, decoded before it runs; the runtime
+ * draws the canvas. A host with no renderer draws none, so it only checks that the images resolve,
+ * and reads no font.
  */
 internal object CanvasCapability : SceneCapability {
     override val id = "com.awakekt.awake.canvas"
 
     override suspend fun load(scene: SceneDocument, files: AssetSource, content: SceneContent.Builder) {
+        if (content.hasRenderer) loadCanvasFonts(scene, files).takeIf { it.isNotEmpty() }?.let { content[CoreSceneContent.CanvasFonts] = it }
         if (!hasCanvasImages(scene)) return
         if (content.hasRenderer) content[CoreSceneContent.CanvasImages] = loadCanvasImages(scene, files) else checkCanvasImages(scene, files)
     }

@@ -61,6 +61,7 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         it.camera = camera
         it.links = links
         it.mask = mask
+        it.font = font
     }
 
     /**
@@ -100,5 +101,6 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         camera = camera,
         links = links,
         mask = mask,
+        font = font,
     )
 }

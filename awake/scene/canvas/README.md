@@ -20,6 +20,8 @@ Not to be confused with Compose's `Canvas` (a surface you draw pixels on) or
 - **`width` / `height`** in dp.
 - **`text`** (Text content, Button label), **`fontSize`**, **`color`** (text, or a Bar's fill) and
   **`background`**, as `#RRGGBB` or `#RRGGBBAA`.
+- **`font`**: a project `.ttf` or `.otf` file, or a built-in family, `default` or `bitmap`; empty
+  is the default Roboto.
 - **`value`**: a Bar's fill from 0 to 1.
 - **`order`**: lower draws first. **`visible`** hides it.
 - **`style`**: how it looks beyond its colours, as the saved form of a Compose `Style` drawn
@@ -41,6 +43,9 @@ there: the runtime's own projector and views, for its world or for another its r
 such as a Play world. The runtime renders and frees the views' pictures; the host only passes them on. `loadCanvasImages(scene, files)` reads and
 decodes the images a scene names. A host that draws nothing, such as a game server, calls
 `checkCanvasImages(scene, files)` instead: it reads them, logs those it cannot, and decodes none.
+`loadCanvasFonts(scene, files)` loads the font files a scene names, which the runtime keeps in its
+`canvasFonts` and a host passes as `SceneCanvas(world, fonts = …)`. One that does not load is logged
+once and its elements draw in the default font. A host that draws nothing loads none.
 
 ## A 3D view
 
