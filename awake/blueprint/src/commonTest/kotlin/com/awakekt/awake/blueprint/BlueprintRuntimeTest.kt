@@ -23,6 +23,7 @@ class BlueprintRuntimeTest {
         .register(Log(log, type = "test.sound", effect = Effect.Presentation))
         .register(counted)
         .register(Touched)
+        .register(Called)
     private val interpreter = BlueprintInterpreter()
 
     private fun run(block: GraphBuilder.() -> Unit): BlueprintInstance =
@@ -258,6 +259,28 @@ class BlueprintRuntimeTest {
         val other = Entity.of(7, 0)
         interpreter.fire(instance, "test.touched") { it.setEntity("other", other) }
         assertEquals(other, instance.variable("last"))
+    }
+
+    @Test
+    fun aFilteredEventRunsOnlyTheNodesItAcceptsReadingTheirInputs() {
+        val instance = run {
+            node("play", "test.called", "target" to "play")
+            node("quit", "test.called", "target" to "quit")
+            node("named", "var.get.string", "name" to "which")
+            node("wired", "test.called")
+            node("logPlay", "test.log", "label" to "play")
+            node("logQuit", "test.log", "label" to "quit")
+            node("logWired", "test.log", "label" to "wired")
+            wire("play.then", "logPlay.exec")
+            wire("quit.then", "logQuit.exec")
+            wire("wired.then", "logWired.exec")
+            wire("named.value", "wired.target")
+        }
+        instance.setVariable("which", JsonPrimitive("quit"))
+
+        interpreter.fire(instance, "test.called", payload = null) { it.string("target") == "quit" }
+
+        assertEquals(listOf("quit", "wired"), log, "both nodes naming quit ran, the one wired to a variable too")
     }
 
     @Test

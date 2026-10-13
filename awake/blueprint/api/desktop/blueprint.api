@@ -59,6 +59,7 @@ public final class com/awakekt/awake/blueprint/BlueprintInterpreter {
 	public synthetic fun <init> (ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun cancelPending (Lcom/awakekt/awake/blueprint/BlueprintInstance;)V
 	public final fun fire (Lcom/awakekt/awake/blueprint/BlueprintInstance;Ljava/lang/String;Lcom/awakekt/awake/blueprint/EventPayload;)V
+	public final fun fire (Lcom/awakekt/awake/blueprint/BlueprintInstance;Ljava/lang/String;Lcom/awakekt/awake/blueprint/EventPayload;Lcom/awakekt/awake/blueprint/EventFilter;)V
 	public static synthetic fun fire$default (Lcom/awakekt/awake/blueprint/BlueprintInterpreter;Lcom/awakekt/awake/blueprint/BlueprintInstance;Ljava/lang/String;Lcom/awakekt/awake/blueprint/EventPayload;ILjava/lang/Object;)V
 	public final fun getRunPresentation ()Z
 	public final fun reload (Lcom/awakekt/awake/blueprint/BlueprintInstance;Lcom/awakekt/awake/blueprint/BlueprintProgram;)V
@@ -178,6 +179,10 @@ public final class com/awakekt/awake/blueprint/Effect : java/lang/Enum {
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/blueprint/Effect;
 	public static fun values ()[Lcom/awakekt/awake/blueprint/Effect;
+}
+
+public abstract interface class com/awakekt/awake/blueprint/EventFilter {
+	public abstract fun accepts (Lcom/awakekt/awake/blueprint/BlueprintContext;)Z
 }
 
 public abstract interface class com/awakekt/awake/blueprint/EventNode : com/awakekt/awake/blueprint/BlueprintNode {
