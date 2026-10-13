@@ -34,10 +34,14 @@ internal class RendererGpuPassExecutor(
         val resolvedDraws = input.resolvedDraws
         val depthDraws = renderer.prepareDepthDraws(input)
         Vulkan.vkResetCommandBuffer(renderer.commandBuffers[currentFrame], 0)
+        // NEGATIVE CONTROL FOR #743, REVERTED IN THE NEXT COMMIT: after an offscreen render, skip
+        // the main frame's own shadow pass, so it samples the cascades the offscreen render left.
+        val prePasses = if (negativeControlOffscreenRan) emptyList() else input.prePasses
+        negativeControlOffscreenRan = false
         renderer.recordResolvedCommandBuffer(
             renderer.commandBuffers[currentFrame], currentFrame, imageIndex, resolvedDraws,
             input.viewProjection, input.cameraEye, depthDraws = depthDraws,
-            prePasses = input.prePasses,
+            prePasses = prePasses,
             postPasses = input.postPasses,
             environment = input.environment,
             sceneViewport = input.viewport,
@@ -63,6 +67,7 @@ private fun Renderer.recordToTexture(target: RenderTarget, input: GpuPassInput):
     val sorted = sortForRecording(input.resolvedDraws)
     val depthDraws = prepareDepthDraws(input)
     return { commandBuffer ->
+        negativeControlOffscreenRan = true
         prepareResources(commandBuffers.size, commandBuffer)
         // The offscreen frame's own slots, past the last frame in flight, as its materials use.
         recordDepthPrePass(commandBuffer, commandBuffers.size, depthDraws, input.prePasses, input.environment)
@@ -113,6 +118,8 @@ private fun Renderer.recordToTexture(target: RenderTarget, input: GpuPassInput):
         offscreen.transitionToShaderReadOnly(commandBuffer)
     }
 }
+
+internal var negativeControlOffscreenRan = false
 
 private fun Renderer.prepareDepthDraws(input: GpuPassInput): List<PreparedDraw> {
     if (input.prePasses.isEmpty() && sceneDepthTarget == null) return emptyList()
