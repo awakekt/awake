@@ -34,7 +34,11 @@ Not to be confused with Compose's `Canvas` (a surface you draw pixels on) or
 
 `SceneAppLifecycleRuntime` draws every visible element with `SceneCanvas(world)` whenever the scene
 has any, under the app's own `ui { }`, with the images in its `canvasImages`. A host with its own
-Compose tree calls `SceneCanvas(world, images = …)` itself. `loadCanvasImages(scene, files)` reads and
+Compose tree calls `SceneCanvas(world, images = …)` itself. A host that shows the game in part of its
+window, such as an editor's game view, turns the runtime's `drawsSceneCanvas` off and draws
+`SceneCanvas(world, projector = runtime.canvasProjector(world), views = runtime.canvasViews(world))`
+there: the runtime's own projector and views, for its world or for another its render system draws,
+such as a Play world. The runtime renders and frees the views' pictures; the host only passes them on. `loadCanvasImages(scene, files)` reads and
 decodes the images a scene names. A host that draws nothing, such as a game server, calls
 `checkCanvasImages(scene, files)` instead: it reads them, logs those it cannot, and decodes none.
 
@@ -43,7 +47,13 @@ decodes the images a scene names. A host that draws nothing, such as a game serv
 A `View` shows what the camera on the node its `camera` names sees, filling its box under its
 children. `SceneCanvas(world, views = …)` takes the `CanvasViews` that renders each picture;
 `SceneAppLifecycleRuntime` passes its own, which renders every View drawn this frame into a target
-the size of its box before the UI samples it. Without one a View draws only its style.
+the size of its box before the UI samples it, and `canvasViews(world)` hands it to a host. Without
+one a View draws only its style.
+
+An element that follows a node is placed by a `CanvasProjector`, which reports where the node lands in
+the frame's pixels. `SceneCanvas` moves that into its own box by where the box sat in the frame when
+it was last placed, so a canvas drawn over part of the window lands on what it follows from its
+second frame; one filling the window does from its first.
 
 ## Nesting and scale
 

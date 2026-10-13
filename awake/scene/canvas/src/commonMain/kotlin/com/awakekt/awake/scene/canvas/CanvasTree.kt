@@ -16,7 +16,8 @@ import com.awakekt.awake.scene.core.transform.Transform
 
 /**
  * The elements of a world, each under the nearest element above it in the scene hierarchy. One that
- * follows a node is placed against the screen wherever it sits in the scene.
+ * follows a node is placed against the screen wherever it sits in the scene, by where [projector]
+ * puts the node in the frame less where the canvas sits in it, [origin].
  */
 internal class CanvasTree(
     val world: World,
@@ -25,6 +26,7 @@ internal class CanvasTree(
     val projector: CanvasProjector?,
     private val bindings: List<SceneComponentBinding<*, *>>?,
     val views: CanvasViews? = null,
+    val origin: CanvasOrigin = CanvasOrigin(),
 ) {
     // Built, and the global bindings gathered, only on a frame where an element reads a field.
     private val data by lazy { CanvasData(world, bindings ?: globalCanvasBindings()) }
@@ -87,9 +89,10 @@ internal class CanvasTree(
 }
 
 /**
- * Where a following [element] goes, in dp at [density] pixels each: on its node's screen box grown
- * by its outset, or with its anchor point on the node's screen point, nudged inward by its offsets.
- * Null hides it: no projector, no such node, or the node behind the camera.
+ * Where a following [element] goes in the canvas, in dp at [density] pixels each: on its node's
+ * screen box grown by its outset, or with its anchor point on the node's screen point, nudged inward
+ * by its offsets. The projector reports the frame's pixels, so the canvas's own corner in the frame
+ * comes off first. Null hides it: no projector, no such node, or the node behind the camera.
  */
 internal fun CanvasTree.placeFollower(element: CanvasElement, density: Float): Rectangle? {
     val projector = projector
@@ -97,7 +100,7 @@ internal fun CanvasTree.placeFollower(element: CanvasElement, density: Float): R
     if (projector == null || node == null) return null
     val box = if (element.followBounds) projector.bounds(node) else null
     return if (box != null) {
-        Rectangle(box.x / density, box.y / density, box.width / density, box.height / density).outset(element.followOutset)
+        Rectangle((box.x - origin.x) / density, (box.y - origin.y) / density, box.width / density, box.height / density).outset(element.followOutset)
     } else {
         placeOnPoint(element, node, projector, density)
     }
@@ -117,8 +120,8 @@ private fun CanvasTree.placeOnPoint(element: CanvasElement, node: Entity, projec
         ?: return null
     val column = element.anchor.column
     val row = element.anchor.row
-    val x = point.x / density - column / 2f * element.width + if (column == 2) -element.offsetX else element.offsetX
-    val y = point.y / density - row / 2f * element.height + if (row == 2) -element.offsetY else element.offsetY
+    val x = (point.x - origin.x) / density - column / 2f * element.width + if (column == 2) -element.offsetX else element.offsetX
+    val y = (point.y - origin.y) / density - row / 2f * element.height + if (row == 2) -element.offsetY else element.offsetY
     return Rectangle(x, y, element.width, element.height)
 }
 

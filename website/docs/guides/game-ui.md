@@ -297,7 +297,9 @@ follow an animated character's limbs; a node with no mesh bounds falls back to i
 
 A follower is placed against the screen wherever it sits in the scene, so it can live on a child of
 the character it follows. The runtime projects through the camera it draws with; a host that draws
-`SceneCanvas` itself passes a `CanvasProjector`.
+`SceneCanvas` itself passes the runtime's, `canvasProjector(world)`, or a `CanvasProjector` of its
+own, which reports points in the window's pixels. A canvas drawn over part of the window, such as an
+editor's game view, still lands on what it follows.
 
 ## Show a 3D view
 
@@ -319,7 +321,8 @@ main camera does not see it.
 ```
 
 With no node of that name, no camera on it, or no renderer, the element draws only its style. A
-host that draws `SceneCanvas` itself passes a `CanvasViews` to show views.
+host that draws `SceneCanvas` itself passes the runtime's `canvasViews(world)` to show views: the
+runtime renders each picture before the frame's UI and frees it once nothing draws it.
 
 ## Scale the UI
 
@@ -362,6 +365,16 @@ If your app runs its own Compose host, draw the canvas yourself:
 
 ```kotlin title="Kotlin"
 --8<-- "awake/scene/authoring/src/desktopTest/kotlin/com/awakekt/awake/scene/authoring/GameUiDocsSampleTest.kt:own-host"
+```
+
+A host that runs on `SceneAppLifecycleRuntime` but shows the game in part of its window, as an
+editor's game view does, sets `drawsSceneCanvas = false` and draws the canvas over that part in its
+`ui { }` content, with the runtime's projector and views so followers and `View`s draw. Here the game
+view shows `play`, the world an editor plays the scene in, which the runtime's render system draws in
+place of its own; leave the world out to use the runtime's own.
+
+```kotlin title="Kotlin"
+--8<-- "awake/scene/runtime/src/commonTest/kotlin/com/awakekt/awake/scene/runtime/SceneCanvasHostTest.kt:game-view"
 ```
 
 !!! warning "One tap, one reader"

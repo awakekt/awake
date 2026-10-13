@@ -43,6 +43,8 @@ import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.canvas.CanvasElement
+import com.awakekt.awake.scene.canvas.CanvasProjector
+import com.awakekt.awake.scene.canvas.CanvasViews
 import com.awakekt.awake.scene.canvas.SceneCanvas
 import com.awakekt.awake.scene.canvas.globalCanvasBindings
 import com.awakekt.awake.scene.core.Name
@@ -50,6 +52,7 @@ import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.core.transform.TransformSystem
 import com.awakekt.awake.scene.rendering.Camera
 import com.awakekt.awake.scene.rendering.RenderSystem3D
+import com.awakekt.awake.scene.rendering.camera.CameraViewport
 import com.awakekt.awake.scene.rendering.debug.DebugVisualizationSystem
 import com.awakekt.awake.scene.runtime.session.SceneSession
 import com.awakekt.awake.scene.scene2d.SpriteClipSystem
@@ -132,7 +135,7 @@ class SceneAppLifecycleRuntime internal constructor(
     /**
      * Whether this runtime draws the scene's canvas over its whole UI. A host that shows the game in
      * part of its window, such as an editor's game view, turns this off and draws `SceneCanvas`
-     * there itself.
+     * there itself, passing [canvasProjector] and [canvasViews] so its followers and Views draw.
      */
     var drawsSceneCanvas: Boolean = true
 
@@ -279,7 +282,7 @@ class SceneAppLifecycleRuntime internal constructor(
                 timePhase({ uiWaitMs = it }) { renderer.awaitFrameResources() }
                 timePhase({ uiStageMs = it }) {
                     // Before the UI that samples them, so each View shows this frame's picture.
-                    canvasViews?.render()
+                    viewStore?.render()
                     renderer.drawUi(
                         graphicsLayers.composite(
                             renderer = renderer,
@@ -305,7 +308,7 @@ class SceneAppLifecycleRuntime internal constructor(
             uiPrimitives = stagedUiPrimitives + uiFrame.primitives
         } else {
             // No canvas this frame: frees every View's target.
-            canvasViews?.render()
+            viewStore?.render()
             val composeRuntime = services.service(ComposeAppRuntime::class)
             if (composeRuntime != null) {
                 uiOwnership = composeRuntime.inputOwnership
@@ -355,9 +358,9 @@ class SceneAppLifecycleRuntime internal constructor(
                         showTouchControls = showTouchControls,
                         images = canvasImages,
                         scale = canvasScale,
-                        projector = canvasProjector,
+                        projector = canvasProjector(),
                         bindings = canvasBindings ?: globalBindings,
-                        views = canvasViews ?: SceneCanvasViews(world, renderer, ::planCapture).also { canvasViews = it },
+                        views = canvasViews(),
                     )
                 }
                 if (content != null) content()
@@ -380,10 +383,55 @@ class SceneAppLifecycleRuntime internal constructor(
     // Read at the first frame that draws a canvas, once a project has registered its components.
     private val globalBindings by lazy { globalCanvasBindings() }
 
-    private val canvasProjector by lazy { SceneCanvasProjector(world, renderer.clipSpace) { session.schedule.renderSystem?.cameraViewport } }
+    /**
+     * Where [world]'s nodes land on screen as this runtime draws them: what a host that draws
+     * `SceneCanvas` itself passes as its `projector`, so an element that follows a node is drawn on it.
+     *
+     * It projects through the camera the scene's render system drew this frame with, so [world] must
+     * be the world that system draws: this runtime's own, or the one its `renderWorldProvider` hands
+     * it, such as an editor's Play world. A follower's box covers [world]'s own meshes. Points come
+     * in the frame's pixels, which `SceneCanvas` moves into its own box, so the canvas can sit over
+     * any part of the window, such as the game view the scene is drawn in.
+     *
+     * Call it once the backend is ready, such as from `ui { }` content. This runtime's own world's
+     * projector is made once; another world's is made on each call and holds on to nothing else, so
+     * a host asks for it on each frame it draws the canvas.
+     *
+     * @param world The world the canvas draws; this runtime's own by default.
+     * @return The projector to pass to `SceneCanvas` for [world].
+     */
+    fun canvasProjector(world: World = this.world): CanvasProjector =
+        if (world === this.world) ownCanvasProjector else SceneCanvasProjector(world, renderer.clipSpace, ::renderedCameraViewport)
 
-    // Made by the first frame that draws the canvas.
-    private var canvasViews: SceneCanvasViews? = null
+    /**
+     * What [world]'s View elements show: what a host that draws `SceneCanvas` itself passes as its
+     * `views`, so each View shows what the camera on the node it names, in [world], sees.
+     *
+     * The host only passes it on; this runtime owns the pictures. Every one asked for while the
+     * frame's UI is built is rendered from [world] before that UI is drawn, one that nothing asks for
+     * in a frame is freed, and [dispose] frees them all. [world] can be another world than this
+     * runtime's, such as an editor's Play world, as long as its meshes and materials were made by this
+     * runtime's renderer, as for [readback]. A host composing outside this runtime's frame, in an
+     * app-level Compose module, sees each picture one frame late.
+     *
+     * Call it once the backend is ready, such as from `ui { }` content. The result for this runtime's
+     * own world is made once; another world's is a light handle made on each call.
+     *
+     * @param world The world the canvas draws; this runtime's own by default.
+     * @return The views to pass to `SceneCanvas` for [world].
+     */
+    fun canvasViews(world: World = this.world): CanvasViews = if (world === this.world) ownCanvasViews else views().forWorld(world)
+
+    private val ownCanvasProjector by lazy { SceneCanvasProjector(world, renderer.clipSpace, ::renderedCameraViewport) }
+
+    private fun renderedCameraViewport(): CameraViewport? = session.schedule.renderSystem?.cameraViewport
+
+    // Every world's View pictures, made by the first canvas that asks for one.
+    private var viewStore: SceneCanvasViews? = null
+
+    private fun views(): SceneCanvasViews = viewStore ?: SceneCanvasViews(renderer, ::planCapture).also { viewStore = it }
+
+    private val ownCanvasViews by lazy { views().forWorld(world) }
 
     internal val spriteBatch by lazy { SpriteRenderBatch(renderer) { requireAssetLibrary().requireTexture(it) } }
     internal val spriteFeature by lazy { SceneSpriteRenderFeature(spriteBatch) }
@@ -391,7 +439,7 @@ class SceneAppLifecycleRuntime internal constructor(
 
     override fun dispose() {
         if (::renderer.isInitialized) {
-            canvasViews?.dispose()
+            viewStore?.dispose()
             spriteBatch.destroy()
             tilemapFeature.destroy()
         }
