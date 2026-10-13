@@ -12,9 +12,12 @@ import com.awakekt.awake.scene.core.SceneTag
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneNode
 
-/** Logs each tag [scene] uses that the manifest's `tags` list leaves out: a typo guard, so loading goes on. */
-internal fun warnUnlistedTags(manifest: AwakeProjectManifest, scene: SceneDocument) {
-    ProjectContentValidator.unlistedTagIssues(manifest, scene.nodes.flatMap { it.tags() }, manifest.entryScene)
+/**
+ * Logs each tag [scene], the project's scene at [path], uses that the manifest's `tags` list leaves out:
+ * a typo guard, so loading goes on.
+ */
+internal fun warnUnlistedTags(manifest: AwakeProjectManifest, scene: SceneDocument, path: String = manifest.entryScene) {
+    ProjectContentValidator.unlistedTagIssues(manifest, scene.nodes.flatMap { it.tags() }, path)
         .forEach { issue -> log.warn { "${issue.path}: ${issue.message}" } }
 }
 

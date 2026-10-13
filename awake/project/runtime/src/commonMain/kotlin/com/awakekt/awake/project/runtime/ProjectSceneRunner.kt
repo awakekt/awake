@@ -1,0 +1,295 @@
+/*
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+package com.awakekt.awake.project.runtime
+
+import com.awakekt.awake.core.audio.AudioPlayerFactory
+import com.awakekt.awake.core.logging.Logger
+import com.awakekt.awake.ecs.Entity
+import com.awakekt.awake.ecs.InterpolatedSystem
+import com.awakekt.awake.ecs.System
+import com.awakekt.awake.ecs.World
+import com.awakekt.awake.render.material.Material
+import com.awakekt.awake.render.mesh.Mesh
+import com.awakekt.awake.scene.audio.AudioSource
+import com.awakekt.awake.scene.audio.SceneAudioSource
+import com.awakekt.awake.scene.authoring.infrastructure.gameplayInput
+import com.awakekt.awake.scene.binding.Scene
+import com.awakekt.awake.scene.binding.SceneComponentRegistry
+import com.awakekt.awake.scene.binding.destroy
+import com.awakekt.awake.scene.binding.instantiate
+import com.awakekt.awake.scene.binding.renderableRequests
+import com.awakekt.awake.scene.controls.GameplayInput
+import com.awakekt.awake.scene.document.SceneNode
+import com.awakekt.awake.scene.gltf.GltfAssetResolver
+import com.awakekt.awake.scene.rendering.mesh.PbrMaterial
+import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
+import com.awakekt.awake.scene.runtime.SceneAssetResolver
+import com.awakekt.awake.scene.runtime.SpawnedNode
+import com.awakekt.awake.scene.runtime.attachRenderableComponents
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
+import kotlin.reflect.KClass
+
+/**
+ * Plays [project]'s scenes in one app scene, one at a time, for [runProject]: the playing scene's
+ * entities, its systems in [fixedSystems] and [frameSystems], and the [SceneSwitch] that moves the
+ * project to another of its scenes.
+ *
+ * A request reads the next scene off the frame thread, in [LoadedProject.sceneLoads]. The scene that
+ * asked plays on meanwhile, and the next takes its place at a safe point on the frame thread: the start
+ * of a fixed step, or of the frame's own systems once the fixed steps have run. Nothing else in the
+ * frame runs then, so no system sees the world change under it.
+ *
+ * The next scene is put in before the last one is taken out: its systems are built and its entities
+ * made and drawn first, so a scene that fails there is taken out again and the last plays on. Then the
+ * last one's systems close, its sounds stop, its spawned nodes despawn, its entities go with every
+ * other entity the world held, and its physics world is destroyed.
+ */
+internal class ProjectSceneRunner(private val project: LoadedProject) : SceneSwitch {
+    /** Resolves the playing scene's glTF models for the app's asset library, whichever scene plays. */
+    val models = PlayingModels(project.models)
+
+    /** Carries out a switch that has loaded, then runs the playing scene's fixed systems. */
+    val fixedSystems: InterpolatedSystem = FixedSystems()
+
+    /** Carries out a switch that has loaded, then gives spawned nodes their models and runs the frame systems. */
+    val frameSystems: System = FrameSystems()
+
+    private lateinit var runtime: SceneAppLifecycleRuntime
+    private var systems: SceneSystemSet? = null
+    private var instance: Scene? = null
+
+    // The platform's player, opened for the first scene with sound and kept for the ones after it rather
+    // than opened again: a browser starts a page's sound only from a tap, which a switch is not. Closed
+    // with the app's scene.
+    private val audio = lazy { AudioPlayerFactory.create() }
+
+    private val loads = CoroutineScope(SupervisorJob() + project.sceneLoads)
+    private val finished = Channel<FinishedLoad>(Channel.UNLIMITED)
+
+    // Read and written on the frame thread only.
+    private var loadingPath: String? = null
+    private var loading: Job? = null
+    private var requests = 0
+    private var stopped = false
+
+    private val input: () -> GameplayInput = { runtime.gameplayInput() }
+    private val spawner: (SceneNode) -> SpawnedNode = { node -> runtime.spawn(project, node) }
+
+    /** Runs in [runtime]'s schedule: what its fixed-step system factory calls, before the scene populates. */
+    fun bind(runtime: SceneAppLifecycleRuntime): InterpolatedSystem {
+        this.runtime = runtime
+        return fixedSystems
+    }
+
+    /** Plays the project's entry scene, as the runtime's scene populates. */
+    fun start() {
+        val scene = project.playing
+        systems = sceneSystemsFor(scene.document, services(scene), project.capabilities)
+        instance = runtime.instantiate(scene, project.componentRegistry)
+        begin()
+    }
+
+    override fun request(path: String) {
+        if (stopped || path == loadingPath) return
+        loading?.cancel()
+        val number = ++requests
+        loadingPath = path
+        loading = loads.launch {
+            val result = project.readScene(path)
+            // A load that finishes as the scene stops has nothing left to play it.
+            if (finished.trySend(FinishedLoad(number, path, result)).isFailure) result.getOrNull()?.close()
+        }
+    }
+
+    /** Stops playing when the app's scene stops: the systems close, and what still loads is dropped. */
+    fun stop() {
+        if (stopped) return
+        stopped = true
+        systems?.close()
+        systems = null
+        if (audio.isInitialized()) audio.value.dispose()
+        loads.cancel()
+        finished.close()
+        while (true) {
+            val load = finished.tryReceive().getOrNull() ?: break
+            load.result.getOrNull()?.close()
+        }
+        project.spawnedModels.close()
+    }
+
+    /** At a safe point: plays the scene the current request loaded, or logs why it can't. */
+    private fun carryOut() {
+        if (loadingPath == null) return
+        var load = finished.tryReceive().getOrNull()
+        while (load != null && load.number != requests) {
+            // Replaced by a later request before it finished.
+            load.result.getOrNull()?.close()
+            load = finished.tryReceive().getOrNull()
+        }
+        if (load == null) return
+        loadingPath = null
+        loading = null
+        load.result.fold(
+            onSuccess = ::switchTo,
+            onFailure = { failure -> refuse(load.path, project.playing.path, failure) },
+        )
+    }
+
+    // TooGenericExceptionCaught: a scene that fails as it is put in, whatever the reason, must leave the playing one running.
+    @Suppress("TooGenericExceptionCaught")
+    private fun switchTo(next: ProjectScene) {
+        val world = runtime.world
+        val leaving = project.playing
+        val before = world.liveEntities()
+        models.target = next.models
+        var nextSystems: SceneSystemSet? = null
+        var nextInstance: Scene? = null
+        try {
+            nextSystems = sceneSystemsFor(next.document, services(next), project.capabilities)
+            nextInstance = runtime.instantiate(next, project.componentRegistry)
+        } catch (failure: Exception) {
+            nextSystems?.close()
+            world.destroyAllBut(before)
+            models.target = leaving.models
+            next.close()
+            refuse(next.path, leaving.path, failure)
+            return
+        }
+        leave(world, leaving, before)
+        project.playing = next
+        systems = nextSystems
+        instance = nextInstance
+        begin()
+    }
+
+    /** Closes [leaving]: its systems, sounds, spawned nodes, every entity [before] held, and its physics world. */
+    private fun leave(world: World, leaving: ProjectScene, before: List<Entity>) {
+        systems?.close()
+        systems = null
+        world.queryEach(AudioSource::class) { _, source -> source.stop() }
+        if (audio.isInitialized()) audio.value.stopMusic()
+        leaving.despawnAll()
+        instance?.let { scene ->
+            runtime.release(scene)
+            scene.destroy()
+        }
+        instance = null
+        // What else joined the scene: a fallback camera, what its systems made, what the host added.
+        before.forEach { if (world.isAlive(it)) world.destroy(it) }
+        leaving.close()
+    }
+
+    /** What every scene does once its entities are in: its canvas images, its camera and its skinned clips. */
+    private fun begin() {
+        runtime.canvasImages = project.content[CoreSceneContent.CanvasImages].orEmpty()
+        activatePrimaryCamera(runtime.world)
+        runtime.startSkinnedAnimations(project.models)
+    }
+
+    private fun services(scene: ProjectScene): SceneHostServices {
+        val services = SceneHostServices(input = input, renderer = runtime.renderer, physics = scene.physics, content = scene.content)
+            .withSpawner(spawner)
+            .withSceneSwitch(this)
+        return if (scene.document.uses(SceneAudioSource::class)) services.withAudio(audio.value) else services
+    }
+
+    private inner class FixedSystems : InterpolatedSystem {
+        override fun update(world: World, delta: Float) {
+            carryOut()
+            val fixed = systems?.fixed ?: return
+            for (index in fixed.indices) fixed[index].update(world, delta)
+        }
+
+        override fun interpolate(world: World, alpha: Float) {
+            systems?.interpolate(world, alpha)
+        }
+    }
+
+    private inner class FrameSystems : System {
+        override fun update(world: World, delta: Float) {
+            carryOut()
+            project.spawnedModels.attachLoaded(runtime)
+            val frame = systems?.frame ?: return
+            for (index in frame.indices) frame[index].update(world, delta)
+        }
+    }
+
+    private class FinishedLoad(val number: Int, val path: String, val result: Result<ProjectScene>)
+}
+
+/** The glTF models of whichever scene plays, for the app's asset library, which outlives a switch. */
+internal class PlayingModels(var target: GltfAssetResolver) : SceneAssetResolver {
+    override fun canResolveMesh(name: String): Boolean = target.canResolveMesh(name)
+
+    override fun createMesh(runtime: SceneAppLifecycleRuntime, name: String): Mesh? = target.createMesh(runtime, name)
+
+    override fun canResolveMaterial(name: String): Boolean = target.canResolveMaterial(name)
+
+    override fun createMaterial(runtime: SceneAppLifecycleRuntime, name: String): Material? = target.createMaterial(runtime, name)
+
+    override fun materialDefaults(name: String): PbrMaterial? = target.materialDefaults(name)
+
+    override fun materialDefaults(mesh: String, material: String): PbrMaterial? = target.materialDefaults(mesh, material)
+}
+
+/** The scene at [path], or why it can't be played. Cancelling the load throws, as cancelling does. */
+@Suppress("TooGenericExceptionCaught") // An asset source, a decoder or a capability reports a bad file in its own type.
+private suspend fun LoadedProject.readScene(path: String): Result<ProjectScene> = try {
+    Result.success(loadScene(path))
+} catch (cancelled: CancellationException) {
+    throw cancelled
+} catch (failure: Exception) {
+    Result.failure(failure)
+}
+
+/**
+ * Makes [scene]'s entities, attaching their components with [registry] or the global ones, and their
+ * renderers. When a renderer can't be made, the holds the others took in the asset library are given
+ * back before it throws; its entities stay for the caller to take out.
+ */
+private fun SceneAppLifecycleRuntime.instantiate(scene: ProjectScene, registry: SceneComponentRegistry?): Scene {
+    val made = scene.document.instantiate(world, registry ?: SceneComponentRegistry())
+    var drawn = false
+    try {
+        made.attachRenderableComponents { request -> spec.renderableFactory(this, request) }
+        drawn = true
+    } finally {
+        if (!drawn) release(made)
+    }
+    return made
+}
+
+/** Gives back the holds [scene]'s renderers took in the asset library. */
+private fun SceneAppLifecycleRuntime.release(scene: Scene) {
+    val library = requireAssetLibrary()
+    scene.renderableRequests.forEach(library::releaseRenderable)
+}
+
+/** Destroys every live entity [kept] doesn't hold: what a scene that failed to go in left behind. */
+private fun World.destroyAllBut(kept: List<Entity>) {
+    val keep = kept.toHashSet()
+    liveEntities().filter { it !in keep }.forEach(::destroy)
+}
+
+/** Logs that the scene at [path] can't be played, so the one at [playing] plays on. */
+private fun refuse(path: String, playing: String, failure: Throwable) {
+    log.error(failure) { "Can't play $path, so $playing plays on: ${failure.message}" }
+}
+
+/** Every live entity, copied: the world's own list changes as entities come and go. */
+@Suppress("SpreadOperator") // An empty array, once per switch.
+private fun World.liveEntities(): List<Entity> = query(*NO_COMPONENTS).toList()
+
+/** A query naming no component types, which matches every live entity. */
+private val NO_COMPONENTS = emptyArray<KClass<out Any>>()
+
+private val log = Logger("project.scenes")

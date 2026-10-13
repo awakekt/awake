@@ -8,9 +8,6 @@ package com.awakekt.awake.project.runtime
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.ecs.Entity
-import com.awakekt.awake.ecs.System
-import com.awakekt.awake.ecs.World
-import com.awakekt.awake.scene.authoring.SceneAppDsl
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.document.SceneNode
@@ -40,31 +37,16 @@ import kotlinx.coroutines.launch
  * waited for it stay in the scene without it.
  *
  * Call it on the frame thread of a scene that plays [project] with [runProject], which attaches what
- * has loaded. [SpawnedNode.despawn] takes the node out, whether its models have loaded or not.
+ * has loaded. [SpawnedNode.despawn] takes the node out, whether its models have loaded or not, and a
+ * switch to another of the project's scenes despawns it with the scene it joined.
  */
 fun SceneAppLifecycleRuntime.spawn(project: LoadedProject, node: SceneNode): SpawnedNode {
     val models = project.spawnedModels
     val spawned = spawn(node, SceneComponentRegistry()) { request -> !models.mustLoad(request) }
     startSkinnedAnimations(project.models, spawned.entities.toSet())
     models.load(spawned)
+    project.playing.track(spawned, world)
     return spawned
-}
-
-/**
- * Gives spawned nodes the models [project] loads for them, in a frame system that runs before the
- * scene's own, so a model that has loaded draws, and animates, that frame. Loading stops when the scene
- * does.
- */
-internal fun SceneAppDsl.attachSpawnedModels(project: LoadedProject) {
-    frameSystem("spawned-models") { SpawnedModelSystem(this, project.spawnedModels) }
-    onDispose { project.spawnedModels.close() }
-}
-
-private class SpawnedModelSystem(
-    private val runtime: SceneAppLifecycleRuntime,
-    private val models: SpawnedModels,
-) : System {
-    override fun update(world: World, delta: Float) = models.attachLoaded(runtime)
 }
 
 /**
@@ -107,7 +89,8 @@ internal class SpawnedModels(
      */
     fun attachLoaded(runtime: SceneAppLifecycleRuntime) {
         if (closed) return
-        while (true) {
+        // Only while something loads, so a frame with nothing to adopt polls nothing.
+        while (loading.isNotEmpty()) {
             val load = finished.tryReceive().getOrNull() ?: break
             loading -= load.path
             load.result.fold(
@@ -119,7 +102,7 @@ internal class SpawnedModels(
             )
         }
         // A node despawned, or one left waiting only for models that failed, waits no longer.
-        waiting.removeAll { node -> node.unattachedRenderables.none { modelOf(it) in loading } }
+        if (waiting.isNotEmpty()) waiting.removeAll { node -> node.unattachedRenderables.none { modelOf(it) in loading } }
     }
 
     override fun close() {
