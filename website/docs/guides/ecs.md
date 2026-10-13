@@ -88,10 +88,6 @@ read every frame and change structure rarely.
 When a type has a pool (`registerPool`), a removed instance goes back to the pool, and if it
 implements `Poolable` its `reset()` runs first, so it does not carry old state into its next use.
 
-!!! warning "At most 64 component types per world"
-    Each entity's component set is one 64-bit mask, so a `World` accepts at most 64 distinct
-    component types. Adding a 65th type throws `IllegalArgumentException`.
-
 !!! warning "One thread"
     The ECS is not thread-safe. Drive a `World` from one thread, the one the scene runtime runs on.
 

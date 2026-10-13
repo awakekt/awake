@@ -44,7 +44,7 @@ fun World.describeStorage(): List<ComponentStorageInfo> = components.storageInfo
  */
 fun World.componentTypes(entity: Entity): List<KClass<out Any>> {
     if (!entities.isAlive(entity)) return emptyList()
-    return components.componentTypes(entities.signature(entity.id))
+    return components.componentTypes(entities, entity.id)
 }
 
 /**
@@ -52,5 +52,5 @@ fun World.componentTypes(entity: Entity): List<KClass<out Any>> {
  */
 fun World.inspectStorage(entity: Entity): EntityStorageInfo? {
     if (!entities.isAlive(entity)) return null
-    return EntityStorageInfo(entity, components.storageInfo(entities.signature(entity.id)))
+    return EntityStorageInfo(entity, components.storageInfo(entities, entity.id))
 }

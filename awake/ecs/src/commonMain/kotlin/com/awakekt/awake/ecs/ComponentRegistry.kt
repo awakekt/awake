@@ -57,16 +57,16 @@ internal class ComponentRegistry {
         return storage.storageKind(typeId)
     }
 
-    fun storageInfo(): List<ComponentStorageInfo> = storage.storageInfo(types)
+    fun storageInfo(): List<ComponentStorageInfo> = storage.storageInfo(types) { true }
 
-    fun storageInfo(signature: Long): List<ComponentStorageInfo> = storage.storageInfo(types, signature)
+    internal fun storageInfo(entities: EntityArena, id: Int): List<ComponentStorageInfo> =
+        storage.storageInfo(types) { typeId -> entities.hasComponent(id, typeId) }
 
-    fun componentTypes(signature: Long): List<KClass<out Any>> =
-        buildList(signature.countOneBits()) {
-            for (id in 0 until types.size) {
-                if ((signature and (1L shl id)) != 0L) types.typeAt(id)?.let(::add)
-            }
+    internal fun componentTypes(entities: EntityArena, id: Int): List<KClass<out Any>> = buildList {
+        for (typeId in 0 until types.size) {
+            if (entities.hasComponent(id, typeId)) types.typeAt(typeId)?.let(::add)
         }
+    }
 
     fun <T : Any> store(typeId: ComponentTypeId, type: KClass<T>): ComponentStore<T> = storage.store(typeId, type)
 
@@ -75,8 +75,7 @@ internal class ComponentRegistry {
     fun <T : Any> storeForKey(typeId: ComponentTypeId, type: () -> KClass<T>): ComponentStore<T> =
         storage.storeOrNull(typeId) ?: storage.store(typeId, type())
 
-    fun removeEntity(entity: Entity, signature: Long) {
-        if (signature == 0L) return
+    internal fun removeEntity(entity: Entity) {
         storage.forEach { store ->
             store.remove(entity)?.let { removed -> pools.recycle(store.type, removed) }
         }

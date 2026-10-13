@@ -181,15 +181,12 @@ falls back to reflection for zero-arg-constructor components on JVM/Android. **i
 reflection-based instantiation** — register an explicit factory via `registerPool` for any
 type you construct this way if the code needs to run there.
 
-## A hard limit: 64 component types per `World`
+## Component types per `World`
 
-Entity-component membership is tracked as a single `Long` bitmask per entity (one bit per
-component type), which is how `has()`/family-matching stay cheap. That caps this ECS at
-**64 distinct component types per `World`** — registering a 65th type throws a clear
-`IllegalArgumentException` from `world.typeId(...)`/`add(...)` rather than silently
-overflowing. This is a deliberate tradeoff, not an oversight; if your game genuinely needs
-more than 64 component types in one `World`, that's worth raising as a design question
-before working around it.
+A `World` takes any number of component types. Each entity's signature holds one bit per type,
+which is what `has()` and `family { }` matching read: one `Long` while the world's types fit in
+64, and one more `Long` per entity for each further 64. A world that never adds a component
+whose type ID is 64 or above keeps the one-word signature.
 
 ## Queries and families
 

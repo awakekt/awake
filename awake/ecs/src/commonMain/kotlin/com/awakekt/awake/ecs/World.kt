@@ -53,7 +53,7 @@ class World {
         }
 
         familyRegistry.removeEntity(entity)
-        components.removeEntity(entity, entities.signature(entity.id))
+        if (entities.hasAnyComponent(entity.id)) components.removeEntity(entity)
 
         val destroyed = entities.destroy(entity)
         if (destroyed) {
@@ -422,7 +422,7 @@ class World {
      */
     fun componentTypes(entity: Entity): List<KClass<out Any>> {
         if (!entities.isAlive(entity)) return emptyList()
-        return components.componentTypes(entities.signature(entity.id))
+        return components.componentTypes(entities, entity.id)
     }
 
     /**
@@ -433,7 +433,7 @@ class World {
      */
     fun inspectStorage(entity: Entity): EntityStorageInfo? {
         if (!entities.isAlive(entity)) return null
-        return EntityStorageInfo(entity, components.storageInfo(entities.signature(entity.id)))
+        return EntityStorageInfo(entity, components.storageInfo(entities, entity.id))
     }
 
     /**
@@ -450,11 +450,6 @@ class World {
      */
     @PublishedApi
     internal fun <T : Any> store(typeId: ComponentTypeId, type: KClass<T>): ComponentStore<T> = components.store(typeId, type)
-
-    /**
-     * Returns the internal bitmask signature for the entity at [id].
-     */
-    internal fun getSignature(id: Int): Long = entities.signature(id)
 
     private fun requireAlive(entity: Entity) {
         require(entities.isAlive(entity)) { "Entity is not alive: $entity" }

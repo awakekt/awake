@@ -428,7 +428,7 @@ design tradeoffs; only the Awake/Fleks/Artemis/Ashley tables above are same-runt
 
 | ECS | Core storage | Iteration bias | Structural-change bias | Complexity / portability |
 |---|---|---|---|---|
-| Awake | Per-type sparse sets plus maintained dense typed families; singleton tag columns | Dense arrays; tags branch once outside the loop | O(1) swap removal; no archetype migration | Small dependency-free KMP API; 64 types, single-threaded by design |
+| Awake | Per-type sparse sets plus maintained dense typed families; singleton tag columns | Dense arrays; tags branch once outside the loop | O(1) swap removal; no archetype migration | Small dependency-free KMP API; single-threaded by design |
 | Flecs 4.1 | Archetype tables, cached queries, optional `Sparse`/`DontFragment` traits | Table streaming and cached table matches | Default add/remove changes archetype; `DontFragment` avoids table fragmentation | Feature-rich C/C++ runtime with relationships, observers, reflection, pipelines |
 | EnTT | Paged sparse sets and packed pools | Packed-pool views/groups | Sparse-set optimized; configurable deletion/pointer policies | Header-only, highly customizable C++ templates |
 | Bevy 0.19 | Per-component table or sparse-set choice | Table is documented as cache-friendly | Sparse set is documented as faster for add/remove | Explicit hybrid policy inside a full Rust engine/scheduler |
@@ -490,4 +490,66 @@ Raw matched results: [before](benchmarks/2026-10-06-ecs-typed-query-before.json)
 ./gradlew :awake:ecs:benchmark:mainBenchmarkJar
 java -jar awake/ecs/benchmark/build/benchmarks/main/jars/benchmark-main-jmh-*-JMH.jar \
   '.*TypedQueryBenchmarks.reified.*' -p entityCount=32 -prof gc -rf json -rff typed-query.json
+```
+
+## More than 64 component types (2026-10-13)
+
+A `World` no longer stops at 64 component types. Word 0 of each entity's signature, type IDs 0 to
+63, stays the one `Long` per entity it was; each further 64 type IDs get their own `LongArray`,
+created the first time a component in that range is added. `has`, add/remove marking and destroy
+read word 0 first, and a `family { }` whose types are all below 64 keeps its single-`Long` test.
+Typed `Family1`/`Family2` caches never read signatures.
+
+A first candidate kept every signature in one strided array, `words` Longs per entity (one until a
+65th type). It was slower on the tightest paths, so it was replaced by the layout above. Three
+interleaved single-fork rounds per jar, Kotlin 2.4.10, Temurin JDK 17.0.19, Apple M3 Pro, 5
+one-second warmups and 5 one-second measurements, `-prof gc`; ops/s ± 99.9% error:
+
+| Awake workload | Size | Before | Strided candidate | Chosen |
+|---|---:|---:|---:|---:|
+| `has` probe | 10k | 66,729.0 ± 2,146.7 | 64,434.3 ± 10,768.0 | **67,510.5 ± 2,851.9** |
+| `has` probe | 100k | 7,601.6 ± 309.1 | 7,062.2 ± 270.7 | **7,702.2 ± 340.7** |
+| `family { }` churn | 10k | 3,348.0 ± 811.9 | 2,956.3 ± 185.5 | **3,645.6 ± 284.3** |
+| `family { }` churn | 100k | 235.9 ± 51.9 | 191.4 ± 75.9 | **249.1 ± 55.2** |
+| Entity create/destroy | 10k | **8,955.0 ± 32.4** | 7,820.5 ± 218.8 | 8,390.1 ± 940.0 |
+| Entity create/destroy | 100k | **936.9 ± 23.7** | 782.0 ± 60.8 | 870.0 ± 109.0 |
+| Component add/remove | 10k | 2,490.4 ± 130.1 | 2,403.6 ± 346.8 | **2,651.6 ± 250.5** |
+| Component add/remove | 100k | **224.7 ± 4.9** | 191.0 ± 37.8 | 204.6 ± 15.5 |
+| Family churn (`Family2`) | 10k | 2,509.4 ± 56.6 | 2,346.9 ± 309.1 | **2,589.8 ± 108.2** |
+| Family churn (`Family2`) | 100k | 115.2 ± 22.0 | 101.8 ± 33.9 | **119.6 ± 33.5** |
+
+The chosen layout's create/destroy and add/remove errors come from one slow round on a shared host
+(load averages 4 to 10). Rerun before against chosen only, four rounds, and five for the last two
+rows:
+
+| Awake workload | Size | Before | Chosen |
+|---|---:|---:|---:|
+| Entity create/destroy | 10k | 8,583.0 ± 242.4 | 8,439.9 ± 276.2 |
+| Entity create/destroy | 100k | 847.5 ± 62.0 | 868.4 ± 47.3 |
+| Component add/remove | 10k | 2,407.8 ± 206.1 | 2,425.1 ± 156.3 |
+| Component add/remove | 100k | 202.2 ± 9.9 | 202.2 ± 12.7 |
+| Pooled churn, no family | 10k | 4,232.8 ± 163.8 | 4,236.1 ± 120.4 |
+| Pooled churn, no family | 100k | 233.8 ± 40.3 | 232.2 ± 37.2 |
+| Tag-family churn | 100k | 343.2 ± 10.9 | 337.5 ± 18.4 |
+| Pooled churn, `Family1` | 100k | 191.5 ± 5.0 | 188.9 ± 6.8 |
+
+Every row is within error. Past 64 types (`fillerTypes=128` registers 128 types first, so the
+measured ones sit in the third word), the chosen layout measured:
+
+| Awake workload | Size | Type IDs below 64 | Type IDs 128 and up |
+|---|---:|---:|---:|
+| `has` probe | 10k | 67,510.5 ± 2,851.9 | 64,083.5 ± 2,499.1 |
+| `has` probe | 100k | 7,702.2 ± 340.7 | 7,298.1 ± 924.5 |
+| `family { }` churn | 10k | 3,645.6 ± 284.3 | 2,390.0 ± 205.2 |
+| `family { }` churn | 100k | 249.1 ± 55.2 | 163.5 ± 22.8 |
+
+A `family { }` whose masks reach past word 0 loops over its words and churns about a third slower;
+the strided candidate ran that loop faster (2,743.7 ± 39.3 and 211.3 ± 19.5) but slowed every
+world. Normalized allocation matched the baseline on every row, and the wide runs recorded no
+collection.
+
+```bash
+./gradlew :awake:ecs:benchmark:mainBenchmarkJar
+java -jar awake/ecs/benchmark/build/benchmarks/main/jars/benchmark-main-jmh-*-JMH.jar \
+  'ComponentSignatureBenchmarks' -p fillerTypes=0,128 -f 1 -wi 5 -i 5 -w 1s -r 1s -prof gc
 ```

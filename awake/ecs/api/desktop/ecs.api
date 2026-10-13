@@ -24,16 +24,13 @@ public final class com/awakekt/awake/ecs/ComponentRegistry {
 	public fun <init> ()V
 	public final fun clear ()V
 	public final fun componentCount (Lkotlin/reflect/KClass;)I
-	public final fun componentTypes (J)Ljava/util/List;
 	public final fun pool (Lkotlin/reflect/KClass;)Lcom/awakekt/awake/ecs/ComponentPool;
 	public final fun pool-1VG1NCY (I)Lcom/awakekt/awake/ecs/ComponentPool;
 	public final fun recycle (Ljava/lang/Object;)V
 	public final fun recycle (Lkotlin/reflect/KClass;Ljava/lang/Object;)V
 	public final fun recycle-2JZkb7c (ILjava/lang/Object;)V
 	public final fun registerPool (Lkotlin/reflect/KClass;Lkotlin/jvm/functions/Function0;)V
-	public final fun removeEntity-smMvhPQ (JJ)V
 	public final fun storageInfo ()Ljava/util/List;
-	public final fun storageInfo (J)Ljava/util/List;
 	public final fun storageKind (Lkotlin/reflect/KClass;)Lcom/awakekt/awake/ecs/ComponentStorageKind;
 	public final fun store-2JZkb7c (ILkotlin/reflect/KClass;)Lcom/awakekt/awake/ecs/ComponentStore;
 	public final fun storeForKey-2JZkb7c (ILkotlin/jvm/functions/Function0;)Lcom/awakekt/awake/ecs/ComponentStore;
@@ -132,7 +129,6 @@ public final class com/awakekt/awake/ecs/EntityArena {
 	public final fun isAlive-H_EwOg4 (J)Z
 	public final fun markComponentAdded-HdWnuuM (II)V
 	public final fun markComponentRemoved-HdWnuuM (II)V
-	public final fun signature (I)J
 }
 
 public final class com/awakekt/awake/ecs/EntityBuilder {

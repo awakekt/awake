@@ -7,7 +7,6 @@ package com.awakekt.awake.ecs
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotSame
 import kotlin.test.assertNull
@@ -278,15 +277,11 @@ class EcsOptimizationTest {
     }
 
     @Test
-    fun registeringMoreThanLongSignatureCapacityFailsClearly() {
+    fun aSixtyFifthComponentTypeOpensASecondSignatureWord() {
         val world = World()
         first64ComponentTypes.forEach { world.typeId(it) }
 
-        val failure = assertFailsWith<IllegalArgumentException> {
-            world.typeId(ComponentType64::class)
-        }
-
-        assertTrue(failure.message?.contains("64 component types") == true)
+        assertEquals(64, world.typeId(ComponentType64::class).value)
     }
 
     private class PooledComponent : Poolable {

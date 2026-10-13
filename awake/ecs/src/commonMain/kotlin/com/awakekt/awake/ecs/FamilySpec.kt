@@ -91,9 +91,15 @@ internal class FamilySpecCache(
     internal var count: Int = 0
     private val sparse = EntityIndexMap()
 
-    private val allMask = spec.all.fold(0L) { acc, type -> acc or (1L shl world.typeId(type).value) }
-    private val oneMask = spec.one.fold(0L) { acc, type -> acc or (1L shl world.typeId(type).value) }
-    private val excludeMask = spec.exclude.fold(0L) { acc, type -> acc or (1L shl world.typeId(type).value) }
+    private val allMask = maskOf(spec.all)
+    private val oneMask = maskOf(spec.one)
+    private val excludeMask = maskOf(spec.exclude)
+
+    // Word 0 of each mask is the whole mask unless one of them names a type ID of 64 or above.
+    private val wide = maxOf(allMask.size, oneMask.size, excludeMask.size) > 1
+    private val allLow = allMask.firstOrNull() ?: 0L
+    private val oneLow = oneMask.firstOrNull() ?: 0L
+    private val excludeLow = excludeMask.firstOrNull() ?: 0L
 
     override fun types(): Set<KClass<out Any>> = spec.all + spec.one + spec.exclude
 
@@ -113,17 +119,17 @@ internal class FamilySpecCache(
      * initial membership when the cache is first built and to re-check membership after a
      * structural change. */
     fun matches(world: World, entity: Entity): Boolean {
-        val signature = world.getSignature(entity.id)
-        if (allMask != 0L && (signature and allMask) != allMask) {
-            return false
+        val signatures = world.entities
+        val id = entity.id
+        if (wide) {
+            return signatures.containsAll(id, allMask) &&
+                (oneMask.isEmpty() || signatures.intersects(id, oneMask)) &&
+                !signatures.intersects(id, excludeMask)
         }
-        if (oneMask != 0L && (signature and oneMask) == 0L) {
-            return false
-        }
-        if (excludeMask != 0L && (signature and excludeMask) != 0L) {
-            return false
-        }
-        return true
+        val signature = signatures.signatureWord(id, 0)
+        return (signature and allLow) == allLow &&
+            (oneLow == 0L || (signature and oneLow) != 0L) &&
+            (signature and excludeLow) == 0L
     }
 
     fun add(entity: Entity) {
@@ -196,6 +202,14 @@ internal class FamilySpecCache(
         }
         val newCapacity = maxOf(requiredCapacity, entities.size * CAPACITY_GROWTH_FACTOR)
         entities = entities.copyOf(newCapacity)
+    }
+
+    /** [types] as a signature-shaped bit set, one word per 64 type IDs; empty for no types. */
+    private fun maskOf(types: Set<KClass<out Any>>): LongArray {
+        val ids = types.map { world.typeId(it).value }
+        val mask = LongArray(ids.maxOrNull()?.let { (it ushr 6) + 1 } ?: 0)
+        for (id in ids) mask[id ushr 6] = mask[id ushr 6] or (1L shl (id and 63))
+        return mask
     }
 
     private companion object {
