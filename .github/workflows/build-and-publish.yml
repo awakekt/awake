@@ -168,6 +168,48 @@ jobs:
           path: awake/engine/window/build/generated/natives-resources/natives/${{ matrix.platform }}
           if-no-files-found: error
 
+  # The Vulkan renderer compiles every WGSL shader through naga at runtime
+  # (NagaShaderCompiler/VulkanShaderResolver), so the published shader-compiler-desktop jar must
+  # carry libawake_naga for every desktop host, not just the one that built it. Naga builds with
+  # cargo rather than CMake, so unlike natives/window-natives above it has no reason to skip
+  # Windows. A host builds only its own; the publish jobs below collect them all before the jar
+  # is packaged (#795: every 0.6.0-0.11.1 release shipped macOS-only and failed to start on
+  # Windows and Linux).
+  naga-desktop:
+    name: Naga desktop (${{ matrix.platform }})
+    timeout-minutes: 30
+    if: ${{ !startsWith(github.ref, 'refs/tags/vulkan-v') }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-14
+            platform: macos-arm64
+          - runner: ubuntu-latest
+            platform: linux-x86_64
+          - runner: windows-latest
+            platform: windows-x86_64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+      - uses: gradle/actions/setup-gradle@v4
+      - uses: ./.github/actions/cache-naga
+        with:
+          variant: desktop
+          target-path: awake/asset/shader-compiler/rust-native/target
+      - name: Build libawake_naga
+        run: ./gradlew :awake:asset:shader-compiler:buildNagaDesktop
+      - name: Upload ${{ matrix.platform }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: naga-desktop-${{ matrix.platform }}
+          path: awake/asset/shader-compiler/build/generated/natives-resources/natives/${{ matrix.platform }}
+          if-no-files-found: error
+
   naga-android:
     name: Naga (Android)
     timeout-minutes: 30
@@ -374,9 +416,10 @@ jobs:
         needs.verify.result == 'success' &&
         needs.consumer.result == 'success' &&
         needs.naga-android.result == 'success' &&
+        needs.naga-desktop.result == 'success' &&
         needs.window-natives.result == 'success'
       }}
-    needs: [verify, consumer, naga-android, window-natives]
+    needs: [verify, consumer, naga-android, naga-desktop, window-natives]
     runs-on: macos-14
     env:
       MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
@@ -422,6 +465,15 @@ jobs:
         run: |
           cd build/window-natives/awake-window/natives
           for d in window-native-*; do mv "$d" "${d#window-native-}"; done
+      - name: Collect libawake_naga
+        uses: actions/download-artifact@v4
+        with:
+          pattern: naga-desktop-*
+          path: build/window-natives/awake_naga/natives
+      - name: Flatten Naga desktop native directories
+        run: |
+          cd build/window-natives/awake_naga/natives
+          for d in naga-desktop-*; do mv "$d" "${d#naga-desktop-}"; done
       # A tag pushed right after its commit makes this main run derive the release version; the tag
       # run owns that publication.
       - name: Resolve snapshot version
@@ -456,6 +508,7 @@ jobs:
               ;;
           esac
           ./gradlew :awake:engine:window:verifyDesktopNatives -Pawake.prebuiltNatives="$PWD/build/window-natives" --no-configuration-cache
+          ./gradlew :awake:asset:shader-compiler:verifyNagaDesktopNatives -Pawake.prebuiltNatives="$PWD/build/window-natives" --no-configuration-cache
           ./gradlew publishAllPublicationsToMavenCentralRepository \
                     -PisMainHost=true \
                     -Pawake.publishFamily=core \
@@ -528,9 +581,10 @@ jobs:
         needs.verify.result == 'success' &&
         needs.consumer.result == 'success' &&
         needs.naga-android.result == 'success' &&
+        needs.naga-desktop.result == 'success' &&
         needs.window-natives.result == 'success'
       }}
-    needs: [verify, consumer, naga-android, window-natives]
+    needs: [verify, consumer, naga-android, naga-desktop, window-natives]
     runs-on: macos-14
     env:
       MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
@@ -596,6 +650,15 @@ jobs:
         run: |
           cd build/window-natives/awake-window/natives
           for d in window-native-*; do mv "$d" "${d#window-native-}"; done
+      - name: Collect libawake_naga
+        uses: actions/download-artifact@v4
+        with:
+          pattern: naga-desktop-*
+          path: build/window-natives/awake_naga/natives
+      - name: Flatten Naga desktop native directories
+        run: |
+          cd build/window-natives/awake_naga/natives
+          for d in naga-desktop-*; do mv "$d" "${d#naga-desktop-}"; done
       - name: Verify what will be published
         run: |
           VERSION=$(./gradlew -q :awake:core:math:properties --no-configuration-cache \
@@ -606,6 +669,7 @@ jobs:
                     --no-configuration-cache
           ./gradlew verifyPublishedArtifacts -Pawake.verifyPublishedVersion="$VERSION" -Pawake.verifyPublishedFamily=core --no-configuration-cache
           ./gradlew :awake:engine:window:verifyDesktopNatives -Pawake.prebuiltNatives="$PWD/build/window-natives" --no-configuration-cache
+          ./gradlew :awake:asset:shader-compiler:verifyNagaDesktopNatives -Pawake.prebuiltNatives="$PWD/build/window-natives" --no-configuration-cache
 
       # The modules and build-logic's plugins go to Central as one deployment, so a release lands
       # whole or not at all. Uploaded separately, a refused second upload would leave modules on

@@ -10,7 +10,9 @@ import com.awakekt.awake.build.extension.*
 // its pinned naga version does. wasmJs compiles a throwing actual: browsers take WGSL
 // directly.
 import org.gradle.api.tasks.PathSensitivity
+import org.gradle.jvm.tasks.Jar
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
+import java.util.zip.ZipFile
 
 plugins {
     id("com.awakekt.awake.plugin.library")
@@ -133,9 +135,12 @@ kotlin {
     sourceSets {
         named("desktopMain") {
             resources.srcDir(layout.buildDirectory.dir("generated/natives-resources"))
+            // CI builds each desktop host's library separately and collects them under one
+            // root shared with other native libraries (libawake-window); the awake_naga
+            // segment keeps this module reading only its own natives out of that root.
             (findProperty("awake.prebuiltNatives") as String?)
                 ?.takeIf { it.isNotBlank() }
-                ?.let { resources.srcDir(it) }
+                ?.let { resources.srcDir(File(it, "awake_naga")) }
         }
         commonTest.dependencies {
             // The pack's ASL definitions are the naga binding's real workload; compiling the
@@ -170,4 +175,36 @@ tasks.named<Test>("desktopTest") {
 
 tasks.named("desktopProcessResources") {
     dependsOn(buildNagaDesktop)
+}
+
+// A host builds only its own library, so a published jar covering more than one platform is
+// assembled from several CI runs (see build-and-publish.yml's naga-desktop matrix). #795: the
+// published jar carried only the macOS native for every 0.6.0-0.11.1 release because nothing
+// checked for the others, so a Windows or Linux app failed at startup rather than at build time.
+val requiredNagaPlatforms = listOf("macos-arm64", "linux-x86_64", "windows-x86_64")
+val desktopJar = tasks.named<Jar>("desktopJar")
+
+tasks.register("verifyNagaDesktopNatives") {
+    group = "awake native"
+    description = "Fail if the final desktop jar is missing awake_naga for a supported platform."
+    dependsOn(desktopJar)
+    doLast {
+        val archive = desktopJar.get().archiveFile.get().asFile
+        check(archive.isFile) { "The final desktop publication jar was not produced: $archive" }
+        val entries = ZipFile(archive).use { zip -> zip.entries().asSequence().map { it.name }.toSet() }
+        val missing = requiredNagaPlatforms.filter { platform ->
+            val fileName = when {
+                platform.startsWith("macos-") -> "libawake_naga.dylib"
+                platform.startsWith("windows-") -> "awake_naga.dll"
+                else -> "libawake_naga.so"
+            }
+            "natives/$platform/$fileName" !in entries
+        }
+        check(missing.isEmpty()) {
+            "$archive is missing awake_naga for: ${missing.joinToString(", ")}. A host builds only " +
+                "its own library; a release collects them from per-OS CI runs and passes " +
+                "-Pawake.prebuiltNatives=<root>, holding <root>/awake_naga/natives/<platform>/."
+        }
+        println("$archive carries awake_naga for: ${requiredNagaPlatforms.joinToString(", ")}")
+    }
 }

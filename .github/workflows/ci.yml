@@ -256,6 +256,55 @@ jobs:
       - name: Build vulkan generator
         run: ./gradlew :awake:backend:vulkan:generator:assemble
 
+  # Naga builds with cargo, not CMake, so unlike the native libraries above it has no reason
+  # to skip Windows for want of a CI job. The published shader-compiler-desktop jar carried only
+  # the macOS native for every 0.6.0-0.11.1 release because nothing proved the other hosts also
+  # build (#795); this is the PR-time half of that proof, on the same two hosts
+  # build-and-publish.yml's naga-desktop matrix collects from for a real release.
+  naga-desktop:
+    name: Naga desktop (${{ matrix.platform }})
+    needs: platform-impact
+    if: needs.platform-impact.outputs.core == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-latest
+            platform: windows-x86_64
+            lib: awake_naga.dll
+          - runner: ubuntu-latest
+            platform: linux-x86_64
+            lib: libawake_naga.so
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Setup Gradle (with cache)
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-provider: basic
+
+      - uses: ./.github/actions/cache-naga
+        with:
+          variant: desktop
+          target-path: awake/asset/shader-compiler/rust-native/target
+
+      - name: Build libawake_naga for this host
+        run: ./gradlew :awake:asset:shader-compiler:buildNagaDesktop
+
+      - name: Verify the native library was packaged
+        shell: bash
+        run: test -f "awake/asset/shader-compiler/build/generated/natives-resources/natives/${{ matrix.platform }}/${{ matrix.lib }}"
+
   # Runner GPUs aren't available on GitHub-hosted runners, so this uses Mesa's lavapipe
   # (a real, fully-conformant software Vulkan implementation -- not a stub) to run the
   # actual vkCreateInstance/vkDestroyInstance smoke test (VulkanDesktopNativeSmokeTest)
