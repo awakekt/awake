@@ -319,9 +319,22 @@ class CanvasElement {
     /**
      * True once for each tap on a Button since the last call; game code polls it.
      *
+     * It takes the tap: a second reader polling the same Button sees nothing. A reader that must not
+     * take a tap from another, such as a blueprint beside a Button's [action], reads [presses].
+     *
      * @return True if a tap event was registered and unconsumed.
      */
     fun consumePress(): Boolean = pressed.also { pressed = false }
+
+    /**
+     * How many times this Button has been tapped since it was made, never reset.
+     *
+     * Reading it takes nothing: a reader keeps the count it saw last, and each tap since is one more.
+     * Any number of readers so react to the same tap, alongside [consumePress], in whatever order
+     * they run.
+     */
+    var presses: Int = 0
+        private set
 
     /**
      * True once for each double-click on a Button since the last call: a press within
@@ -347,6 +360,7 @@ class CanvasElement {
 
     internal fun press() {
         pressed = true
+        presses++
         val previous = lastPress
         if (previous != null && previous.elapsedNow() <= DOUBLE_CLICK_SECONDS.seconds) {
             doublePressed = true
