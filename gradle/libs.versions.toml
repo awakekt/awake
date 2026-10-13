@@ -86,6 +86,13 @@ dokka-gradle-plugin = { module = "org.jetbrains.dokka:dokka-gradle-plugin", vers
 # IDs (one per native platform); MacOSX_ARM64 is the one whose matching native classifier
 # jar this dev machine also needs, so it's reused for both here.
 jolt-jni-desktop = { module = "com.github.stephengold:jolt-jni-MacOSX_ARM64", version.ref = "jolt-jni" }
+# The desktop natives, one artifact per platform; each is used with its `ReleaseSp` classifier,
+# which a catalog entry cannot hold, so `variantOf` adds it where it is used.
+jolt-jni-native-macos-arm64 = { module = "com.github.stephengold:jolt-jni-MacOSX_ARM64", version.ref = "jolt-jni" }
+jolt-jni-native-macos-x64 = { module = "com.github.stephengold:jolt-jni-MacOSX64", version.ref = "jolt-jni" }
+jolt-jni-native-linux-x64 = { module = "com.github.stephengold:jolt-jni-Linux64", version.ref = "jolt-jni" }
+jolt-jni-native-linux-arm64 = { module = "com.github.stephengold:jolt-jni-Linux_ARM64", version.ref = "jolt-jni" }
+jolt-jni-native-windows-x64 = { module = "com.github.stephengold:jolt-jni-Windows64", version.ref = "jolt-jni" }
 # Android ships a single self-contained AAR per build type (Java classes + all native ABIs),
 # unlike desktop's split JVM-library/native-library artifacts.
 jolt-jni-android = { module = "com.github.stephengold:jolt-jni-Android", version.ref = "jolt-jni" }
