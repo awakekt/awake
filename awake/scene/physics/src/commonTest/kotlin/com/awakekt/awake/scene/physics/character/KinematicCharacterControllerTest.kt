@@ -108,7 +108,11 @@ class KinematicCharacterControllerTest {
 
         override fun setActive(handle: BodyHandle, active: Boolean) = Unit
 
-        override fun isActive(handle: BodyHandle): Boolean = false
+        /** Bodies the simulation is moving besides those with a velocity, which always are. */
+        var active: Set<BodyHandle> = emptySet()
+
+        override fun isActive(handle: BodyHandle): Boolean =
+            handle in active || (velocities[handle]?.length3() ?: 0f) > 0f
 
         override fun createConstraint(constraint: Constraint): ConstraintHandle =
             ConstraintHandle(0)
@@ -212,6 +216,25 @@ class KinematicCharacterControllerTest {
         assertTrue(character.isGrounded)
         assertEquals(BodyHandle(7L), character.groundBody)
         assertEquals(1f, character.groundNormal.y)
+    }
+
+    @Test
+    fun aCharacterStandingStillOnStillGroundSweepsNothing() {
+        val world = groundOnly(Vec3f(0f, 1f, 0f))
+        val character = controller(world)
+        character.move(Vec3f(0f, 0f, 0f))
+        world.sweeps.clear()
+
+        repeat(3) { character.move(Vec3f(0f, 0f, 0f)) }
+
+        assertEquals(0, world.sweeps.size, "the floor it stands on has not moved")
+        assertTrue(character.isGrounded)
+        assertEquals(BodyHandle(7L), character.groundBody)
+
+        // The positive control: ground the simulation is moving, a lift setting off, is probed each step.
+        world.active = setOf(BodyHandle(7L))
+        repeat(3) { character.move(Vec3f(0f, 0f, 0f)) }
+        assertEquals(3, world.sweeps.size)
     }
 
     @Test
