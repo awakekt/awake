@@ -87,7 +87,7 @@ A running `CanvasElement` also has values that are not saved:
 | `isHeld` | `Boolean` | Whether a `Button` is pressed right now. |
 | `stickX`, `stickY` | `Float`, -1 to 1 | A `Joystick`'s deflection. Up is negative `stickY`, as on screen. Releasing re-centres it. |
 | `focused` | `Boolean` | Whether a `TextField` holds the keyboard. Set it `true` to focus the field, or `false` to free it; it reads back whatever a click, Enter, Escape, or anything else taking focus away leaves it at. |
-| `consumeSubmit()` | `Boolean` | `true` once after Enter submits a `TextField` since the last call. Submitting frees its focus. Escape also frees focus, without this becoming `true`. |
+| `consumeSubmit()` | `String?` | The submitted line once after Enter submits a `TextField` since the last call, taken from the field's live state so a character typed the same frame is included; `null` otherwise. Submitting frees its focus. Escape frees focus without submitting. An Enter that only just focused the field, in the same frame a system granted it, does not also submit it. |
 
 ## Style an element
 
@@ -339,7 +339,8 @@ hit area is exactly its `width` by `height`.
 A `TextField` is a single-line field the player types into: a click focuses it, Enter submits and
 frees it (`consumeSubmit()`), and Escape frees it without submitting. A system sets `focused` to
 move the keyboard to or from it in code -- a chat window opening, say -- and reads it back for
-whatever a click or a key already changed it to.
+whatever a click or a key already changed it to. The Enter a system reads to open the field this
+way does not also submit it, even though the system and the field both see that same frame's Enter.
 
 A `Joystick` knob follows a drag up to the pad's edge and springs back on release. A `touchOnly`
 element is drawn only when `SceneCanvas(world, showTouchControls = true)` is called, or when

@@ -40,6 +40,10 @@ private val DefaultLinkColor = Color.fromHex("#3B82F6")
  */
 context(_: Composer)
 internal fun CanvasText(element: CanvasElement, text: String, style: TextStyle) {
+    if (!element.links) {
+        Text(text, style = style)
+        return
+    }
     val spans = parseCanvasTextSpans(text)
     val plainOnly = spans.singleOrNull() as? CanvasTextSpan.Plain
     if (plainOnly != null) {
@@ -106,11 +110,19 @@ internal fun TextFieldView(
 ) {
     Box(modifier) {
         element.syncTextField()
+        // Read and clear once a composition: true here means this very frame's applied focus
+        // request is what set it, strictly before this pass, so the Enter this same frame's
+        // dispatch is about to deliver is the one that opened the field, not one meant to submit it.
+        val justFocused = element.focusGainedThisFrame
+        element.focusGainedThisFrame = false
         BasicTextField(
             state = element.textFieldState,
             modifier = Modifier.fillMaxSize()
                 .focusRequester(element.focusRequester)
-                .onFocusChanged { element.focused = it }
+                .onFocusChanged {
+                    element.focused = it
+                    if (it) element.focusGainedThisFrame = true
+                }
                 .onKeyEvent { event ->
                     val escape = event.type == KeyEventType.Down && event.key == Key.Escape
                     if (escape) element.focused = false
@@ -118,7 +130,7 @@ internal fun TextFieldView(
                 },
             style = textStyle,
             singleLine = true,
-            onSubmit = element::submit,
+            onSubmit = { if (!justFocused) element.submit() },
         )
         Children(element, children, tree)
     }

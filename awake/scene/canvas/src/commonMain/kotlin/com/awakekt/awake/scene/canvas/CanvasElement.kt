@@ -173,6 +173,14 @@ class CanvasElement {
     /** A View's camera: the name of a node with a camera, whose picture it shows; empty shows none. */
     var camera: String = ""
 
+    /**
+     * Whether a Text element's `[[key|shown words]]` spans draw as links.
+     *
+     * False for text a game cannot trust, such as player chat: `[[` and `]]` then draw as typed and
+     * never report a key, so a player cannot make their own line clickable.
+     */
+    var links: Boolean = true
+
     private var wheelAccumulated = 0f
 
     /** Adds to the wheel collected since the last [consumeWheel]; [SceneCanvas] calls this. */
@@ -240,7 +248,7 @@ class CanvasElement {
     /** [text] as of the last [syncTextField], so a system's write to it can be told from typing. */
     private var lastSyncedText: String? = null
 
-    private var submitted = false
+    private var submittedText: String? = null
 
     /**
      * Whether a TextField holds the keyboard right now.
@@ -257,14 +265,23 @@ class CanvasElement {
         }
 
     /**
-     * True once after Enter submits a TextField since the last call; game code polls it, as
-     * [consumePress] polls a Button. Submitting frees the field's focus, so gameplay keys work
-     * again the next frame.
+     * Set by [TextFieldView]'s focus callback when this element gains focus, until the same frame's
+     * composition reads and clears it. Lets that frame's Enter -- the one a system read to focus the
+     * field in the first place -- skip [submit] instead of submitting the field the instant it opens.
      */
-    fun consumeSubmit(): Boolean = submitted.also { submitted = false }
+    internal var focusGainedThisFrame: Boolean = false
+
+    /**
+     * The line submitted by Enter since the last call, or null when nothing was; game code polls it,
+     * as [consumePress] polls a Button. The text is the field's live state as of the submit, so a
+     * character typed the same frame Enter was pressed is included even though it has not reached
+     * [text] yet -- that happens at the next composition. Submitting frees the field's focus, so
+     * gameplay keys work again the next frame.
+     */
+    fun consumeSubmit(): String? = submittedText.also { submittedText = null }
 
     internal fun submit() {
-        submitted = true
+        submittedText = textFieldState.text
         focused = false
     }
 

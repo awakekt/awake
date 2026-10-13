@@ -57,6 +57,8 @@ import kotlinx.serialization.Serializable
  * through [CanvasElement.dropped].
  * @property camera A View's camera: the name of a node with a camera, whose picture it shows; empty
  * shows none.
+ * @property links Whether a Text element's `[[key|shown words]]` spans draw as links; false draws
+ * them as typed and reports no key from a click, for text a game cannot trust such as player chat.
  */
 @Serializable
 @SerialName("canvas_element")
@@ -90,6 +92,7 @@ data class SceneCanvasElement(
     val draggable: Boolean = false,
     val dropTarget: Boolean = false,
     val camera: String = "",
+    val links: Boolean = true,
 ) : SceneComponent {
     /**
      * Validates element dimensions, font sizes, values, and hex color syntax.

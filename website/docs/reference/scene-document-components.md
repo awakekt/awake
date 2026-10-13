@@ -146,7 +146,7 @@ Screen-space UI drawn over the game. Sizes and offsets are in dp. `SceneCanvasEl
 | `offsetY` | number | `16` | Vertical offset from the anchor. |
 | `width` | number | `200` | Width. Not negative. |
 | `height` | number | `40` | Height. Not negative. |
-| `text` | string | `""` | A `Text` element's content, a `Button`'s label, or what is typed into a `TextField`: typing writes it, and a system writing it replaces the field's content, caret at the end. In a `Text` element, a `[[key&#124;shown words]]` span draws "shown words" in `style`'s `linkColor` and reports `key` once through `consumeLink()` when clicked; `[[` is reserved and has no escape. Plain text with no span draws unchanged. |
+| `text` | string | `""` | A `Text` element's content, a `Button`'s label, or what is typed into a `TextField`: typing writes it, and a system writing it replaces the field's content, caret at the end. In a `Text` element with `links` true, a `[[key&#124;shown words]]` span draws "shown words" in `style`'s `linkColor` and reports `key` once through `consumeLink()` when clicked; `[[` is reserved and has no escape. Plain text with no span draws unchanged. |
 | `fontSize` | number | `18` | Text size. Above 0. |
 | `color` | string | `"#FFFFFF"` | Foreground color, `#RRGGBB` or `#RRGGBBAA`. |
 | `background` | string | `"#00000000"` | Background color, `#RRGGBB` or `#RRGGBBAA`. |
@@ -169,6 +169,7 @@ Screen-space UI drawn over the game. Sizes and offsets are in dp. `SceneCanvasEl
 | `draggable` | boolean | `false` | Can be picked up: a ghost of it follows the pointer while `dragging` is true. A plain click still fires if the pointer never moves far enough to start a drag. Releasing on a `dropTarget` reports it there through `dropped`; releasing elsewhere reports it on this element's `droppedOutside`, a point in canvas units. Both are properties read once. |
 | `dropTarget` | boolean | `false` | Receives a `draggable` element released over it, read back through `dropped`. |
 | `camera` | string | `""` | A `View`'s camera: the name of a node with a `camera`, whose picture fills the element's box, opaque, at its size in pixels, inside its `style.cornerRadius` and under its children. Give that camera `primary: false` so it does not become the main view. With no such node, or no renderer, the element draws only its style. |
+| `links` | boolean | `true` | Whether a `Text` element's `[[key&#124;shown words]]` spans draw as links. `false` draws `[[` and `]]` as typed and no click reports a key -- set it for text the game cannot trust, such as player chat. |
 
 ## `character_controller`
 

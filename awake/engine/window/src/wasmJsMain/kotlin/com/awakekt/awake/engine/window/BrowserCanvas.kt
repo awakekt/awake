@@ -42,6 +42,13 @@ val DefaultDomGameplayKeys: Map<String, Key> = linkedMapOf(
     "f3" to Key.F3,
     "f4" to Key.F4,
     "f5" to Key.F5,
+    "f6" to Key.F6,
+    "f7" to Key.F7,
+    "f8" to Key.F8,
+    "f9" to Key.F9,
+    "f10" to Key.F10,
+    "f11" to Key.F11,
+    "f12" to Key.F12,
 )
 
 /** `MouseEvent.button` value for the right mouse button. */

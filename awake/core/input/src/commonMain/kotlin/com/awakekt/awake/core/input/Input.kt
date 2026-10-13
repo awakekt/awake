@@ -59,6 +59,27 @@ enum class Key {
     /** Function key F5. */
     F5,
 
+    /** Function key F6. */
+    F6,
+
+    /** Function key F7. */
+    F7,
+
+    /** Function key F8. */
+    F8,
+
+    /** Function key F9. */
+    F9,
+
+    /** Function key F10. */
+    F10,
+
+    /** Function key F11. */
+    F11,
+
+    /** Function key F12. */
+    F12,
+
     // Modifiers. Entries rather than a separate flag set, because [InputSnapshot.keysDown] already
     // models "held" exactly right -- a second representation would be a second thing to keep in
     // sync. Left and right map to the same entry: nothing in this engine distinguishes them, and
