@@ -248,8 +248,9 @@ class CanvasElement {
     internal var droppedOutsideAt: Vec2? = null
 
     /**
-     * Where this [draggable] element was released over no drop target, in canvas units, since the
-     * last read, or null -- a property consumed once, the same way [consumeWheel] is.
+     * Where this [draggable] element was released over no drop target, in canvas units from the
+     * canvas's top-left as [screenBounds] is, since the last read, or null -- a property consumed
+     * once, the same way [consumeWheel] is.
      */
     val droppedOutside: Vec2?
         get() = droppedOutsideAt.also { droppedOutsideAt = null }
@@ -371,7 +372,9 @@ class CanvasElement {
      * canvas's top-left, in the same units as [offsetX] and [width]. Null when it was not drawn:
      * not [visible], hidden by [touchOnly], or a [follow] with nowhere to land this frame.
      *
-     * A child's box is already in canvas coordinates, not relative to its parent.
+     * A child's box is already in canvas coordinates, not relative to its parent. A canvas a host
+     * draws over part of the window, such as an editor's game view, reports the same boxes as one
+     * filling it: from its own corner, not the window's.
      */
     var screenBounds: Rectangle? = null
         internal set
