@@ -18,6 +18,7 @@ import com.awakekt.awake.showcase.terrain.TerrainExampleAsset
 import kotlinx.coroutines.test.runTest
 import kotlin.math.abs
 import kotlin.test.Test
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
@@ -268,6 +269,43 @@ class CharacterControllerJoltTest {
 
                 // Two seconds at one unit per second. Without carrying the ground's velocity the
                 // character simply stands still while the platform slides out from under it.
+                assertTrue(
+                    character.position.x > 1.5f,
+                    "expected to be carried about $platformX, got ${character.position.x}",
+                )
+            }
+        }
+    }
+
+    @Test
+    fun aCharacterStandingStillOnAPlatformThatSetsOffIsCarried() {
+        runTest {
+            world { world ->
+                val platform = world.createBody(
+                    BoxShape(Vec3f(3f, 0.5f, 3f)),
+                    Vec3f(0f, -0.5f, 0f),
+                    Quat.IDENTITY,
+                    MotionType.KINEMATIC,
+                )
+                val character = KinematicCharacterController(world, config, Vec3f(0f, 3f, 0f))
+                val walker = Walker(character)
+                walker.settle()
+                // Long enough at rest for the platform to sleep, and for the controller to stop probing it.
+                repeat(120) {
+                    world.step(STEP)
+                    walker.rideAndStep(character.groundVelocity)
+                }
+                assertFalse(world.isActive(platform), "precondition: the platform at rest is asleep")
+
+                var platformX = 0f
+                repeat(120) {
+                    platformX += STEP
+                    world.moveKinematic(platform, Vec3f(platformX, -0.5f, 0f), Quat.IDENTITY, STEP)
+                    world.step(STEP)
+                    walker.rideAndStep(character.groundVelocity)
+                }
+
+                // Setting off wakes the platform, so the controller probes it again and rides it.
                 assertTrue(
                     character.position.x > 1.5f,
                     "expected to be carried about $platformX, got ${character.position.x}",

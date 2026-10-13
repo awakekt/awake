@@ -313,8 +313,17 @@ class KinematicCharacterController(
      * the rest of the motion along the surface instead of into it -- so a character walking into
      * a wall at an angle keeps moving along the wall rather than stopping dead. Motion is only
      * ever removed, never added, so sliding cannot accelerate the character.
+     *
+     * A character that stands still makes no sweep at all: grounded, asked to move less than a sweep is
+     * worth, on a body the simulation isn't moving, it keeps the ground state it has. A ground body that
+     * starts to move, such as a lift setting off, is active, and the probe runs again from that step.
+     * Known limit: ground destroyed under a character that stands still holds it up until it moves.
      */
     fun move(motion: Vec3f, deltaTime: Float = DEFAULT_SYNC_DELTA) {
+        if (standsStill(motion)) {
+            syncBody(deltaTime)
+            return
+        }
         val wasGrounded = isGrounded
         remaining.set(motion)
         var iterations = 0
@@ -344,6 +353,12 @@ class KinematicCharacterController(
         updateGroundState(ascending = motion.y > MIN_MOTION, risingSpeed = risingSpeed)
         if (wasGrounded && !isGrounded && !leftGround) snapDownToGround()
         syncBody(deltaTime)
+    }
+
+    /** Whether [motion] leaves a grounded character on still ground where it stands; see [move]. */
+    private fun standsStill(motion: Vec3f): Boolean {
+        val ground = groundBody ?: return false
+        return isGrounded && motion.length3() <= MIN_MOTION && !world.isActive(ground)
     }
 
     /**
