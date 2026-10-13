@@ -157,6 +157,22 @@ class SceneCanvasTest {
     }
 
     @Test
+    fun pressesCountsEveryTapAndTakesNoneFromConsumePress() {
+        lateinit var button: CanvasElement
+        element { kind = CanvasElementKind.Button; offsetX = 0f; offsetY = 0f; width = 100f; height = 40f; button = this }
+        val host = ComposeHost()
+        frame(host)
+        repeat(2) {
+            frame(host, FrameInput(800, 600, pointerX = 50, pointerY = 20, pointerDown = true, pointerPressed = true))
+            frame(host, FrameInput(800, 600, pointerX = 50, pointerY = 20, pointerReleased = true))
+        }
+
+        assertEquals(2, button.presses)
+        assertTrue(button.consumePress(), "reading the count took no tap")
+        assertEquals(2, button.presses, "taking the tap leaves the count")
+    }
+
+    @Test
     fun aButtonIsHeldWhileThePointerIsDown() {
         lateinit var button: CanvasElement
         element { kind = CanvasElementKind.Button; offsetX = 0f; offsetY = 0f; width = 100f; height = 40f; button = this }

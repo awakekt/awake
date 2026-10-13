@@ -27,6 +27,8 @@ kotlin {
             api(project(":awake:scene:physics"))
             implementation(project(":awake:scene:scene3d"))
             implementation(project(":awake:core:animation"))
+            // The canvas nodes: a Button's presses, and the text and visibility of the scene's game UI.
+            implementation(project(":awake:scene:canvas"))
             implementation(libs.kotlinx.serialization.json)
         }
         commonTest.dependencies {
