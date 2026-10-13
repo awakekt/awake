@@ -21,60 +21,75 @@ import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.controls.GameplayInput
 import com.awakekt.awake.scene.controls.camera.ActiveCamera
 import com.awakekt.awake.scene.document.SceneDocument
-import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.gltf.GltfAssetResolver
 import com.awakekt.awake.scene.rendering.Camera
-import com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer
+import kotlinx.coroutines.Dispatchers
+import kotlin.coroutines.CoroutineContext
 import kotlin.math.PI
 
 /** Where a project keeps its manifest, relative to the project root. */
 const val PROJECT_MANIFEST = "awake.project.json"
 
 /**
- * A project read from its files, ready to [runProject]: its manifest, entry scene, loaded models,
- * what its capabilities loaded, and a physics world when the scene has bodies or characters.
+ * A project read from its files, ready to [runProject]: its manifest and the scene it plays, with that
+ * scene's loaded models, what its capabilities loaded, and a physics world when the scene has bodies or
+ * characters. It plays its entry scene until a [SceneSwitch] request has [runProject] play another of
+ * its scenes.
  *
- * It owns that physics world, whose native memory nothing else frees: [close] it once the scene
- * that plays it has stopped. A project is played once, because the bodies it creates stay in its
- * world; to play the scene again, load the project again.
+ * It owns the playing scene's physics world, whose native memory nothing else frees: [close] it once
+ * the scene that plays it has stopped. A switch closes the scene it leaves, the entry scene included.
+ * A project is played once, because the bodies it creates stay in its world; to play it again, load
+ * the project again.
  *
  * @property manifest Validated project manifest describing entry points and asset directories.
- * @property scene Loaded initial scene document ready for simulation instantiation.
- * @property models Asset resolver providing access to loaded glTF meshes and models; empty of them
- * when the project loaded with `hasRenderer = false`.
- * @property physics Physics simulation world instance if required by the scene, or `null`.
- * @property content What Core's and [capabilities]' loads read from the project's files.
+ * @param entry The entry scene, as it loaded.
  * @property capabilities The capabilities the project was loaded with besides Core's.
  * @property componentRegistry The registry the project was loaded into, which [runProject] attaches
  * its components with, or null when its components were registered globally.
- * @param files The project's files, which the models of spawned nodes that [models] lacks load from.
+ * @property files The project's files, which a switch reads its next scene from.
+ * @property hasRenderer Whether the project loaded for a host that draws, so a switch loads its next
+ * scene the same way.
+ * @property physicsWorld Makes the physics world of a scene that has bodies or characters, for the
+ * entry scene and for each scene a switch plays.
  */
 class LoadedProject internal constructor(
     val manifest: AwakeProjectManifest,
-    val scene: SceneDocument,
-    internal val models: GltfAssetResolver,
-    internal val physics: PhysicsWorld?,
-    internal val content: SceneContent = SceneContent.Empty,
+    entry: ProjectScene,
     internal val capabilities: List<SceneCapability> = emptyList(),
     internal val componentRegistry: SceneComponentRegistry? = null,
-    files: AssetSource,
+    internal val files: AssetSource,
+    internal val hasRenderer: Boolean = true,
+    internal val physicsWorld: (suspend () -> PhysicsWorld)? = null,
 ) : AutoCloseable {
-    private var closed = false
-
-    /** The models spawned nodes draw that the scene didn't load, loaded as they are spawned. */
-    internal val spawnedModels = SpawnedModels(models, files)
+    /** The scene playing now, which a switch replaces on the frame thread. */
+    internal var playing: ProjectScene = entry
 
     /**
-     * Destroys the physics world, if the scene had one, and stops loading models for spawned nodes.
-     * Closing twice is harmless.
+     * The document of the scene playing now: the entry scene, until a [SceneSwitch] request has
+     * [runProject] play another.
      */
-    override fun close() {
-        if (!closed) {
-            physics?.destroy()
-            spawnedModels.close()
-        }
-        closed = true
-    }
+    val scene: SceneDocument get() = playing.document
+
+    /** The playing scene's glTF models; empty of them when the project loaded with `hasRenderer = false`. */
+    internal val models: GltfAssetResolver get() = playing.models
+
+    /** The playing scene's physics world, or null when it has no bodies or characters. */
+    internal val physics: PhysicsWorld? get() = playing.physics
+
+    /** What Core's and [capabilities]' loads read for the playing scene. */
+    internal val content: SceneContent get() = playing.content
+
+    /** The models the playing scene's spawned nodes draw that it didn't load, loaded as they are spawned. */
+    internal val spawnedModels: SpawnedModels get() = playing.spawnedModels
+
+    /** Where a switch reads its next scene: off the frame thread. A test passes one that runs at once. */
+    internal var sceneLoads: CoroutineContext = Dispatchers.Default
+
+    /**
+     * Destroys the playing scene's physics world, if it has one, and stops loading models for spawned
+     * nodes. Closing twice is harmless.
+     */
+    override fun close() = playing.close()
 }
 
 /**
@@ -142,25 +157,8 @@ private suspend fun loadProjectInto(
     requireRequiredPlugins(manifest, installed)
 
     if (registry == null) installProjectComponents(capabilities) else registry.registerProjectComponents(capabilities)
-    val scene = decodeScene(manifest.entryScene, files, registry)
-    warnUnlistedTags(manifest, scene)
-    val models = GltfAssetResolver().apply { setAssetSource(files) }
-    if (hasRenderer) {
-        scene.nodes.flatMap { it.meshNames() }
-            .filter(models::canResolveMesh)
-            .map(models::modelPath)
-            .distinct()
-            .forEach { models.preload(it) }
-    }
-    // Every file is read before the physics world exists, so a missing model, or a load cancelled
-    // part way, leaves no world behind that nothing would destroy.
-    val content = loadContent(scene, files, installed, manifest.entryScene, SceneContent.Builder(emptyMap(), hasRenderer))
-    val physics = if (PhysicsCapability.needsPhysics(scene)) {
-        requireNotNull(physicsWorld) { "${manifest.entryScene} has physics bodies or characters; pass a physicsWorld factory" }()
-    } else {
-        null
-    }
-    return LoadedProject(manifest, scene, models, physics, content, capabilities, registry, files)
+    val entry = loadProjectScene(manifest.entryScene, manifest, files, registry, installed, hasRenderer, physicsWorld)
+    return LoadedProject(manifest, entry, capabilities, registry, files, hasRenderer, physicsWorld)
 }
 
 /**
@@ -187,24 +185,31 @@ fun LoadedProject.sceneSystems(input: () -> GameplayInput, renderer: Renderer? =
  * distance and size comes from the scene; this adds no tuning of its own. A node spawned into it
  * with [spawn] draws a model the scene didn't load once that has loaded. [LoadedProject.close]
  * the project once the scene has stopped.
+ *
+ * The scene can play another of the project's scenes: a system asks through
+ * [SceneHostServices.sceneSwitch], and the app through its [SceneSwitch] service. The next scene
+ * loads off the frame thread while this one plays on, and takes its place at the start of the next
+ * fixed step or frame, never inside a system's update. Nothing carries across: the world is emptied,
+ * whatever joined it included, and the next scene starts from its file with systems, content and a
+ * physics world of its own. A scene that can't load or play is logged, and the one playing goes on.
  */
 fun SceneAppDsl.runProject(project: LoadedProject, touchControls: Boolean = false) {
-    val registry = project.componentRegistry
-    if (registry == null) scene(project.scene) else scene(project.scene, registry)
+    val scenes = ProjectSceneRunner(project)
+    // Put in as the scene populates, as a document's entities are, so they exist before any onReady runs.
+    scene(project.scene.name) { scenes.start() }
     assets {
         builtInSceneAssets()
-        resolver(project.models)
+        resolver(scenes.models)
     }
-    attachSpawnedModels(project)
-    registerSystemSpecs(project)
+    // Built before the scene populates, which is how the runner learns its runtime.
+    fixedSystem(PROJECT_FIXED_SYSTEMS) { scenes.bind(this) }
+    frameSystem(PROJECT_FRAME_SYSTEMS) { scenes.frameSystems }
+    service(SceneSwitch::class) { scenes }
     onReady {
         showTouchControls = touchControls
-        canvasImages = project.content[CoreSceneContent.CanvasImages].orEmpty()
-        canvasFonts = project.content[CoreSceneContent.CanvasFonts].orEmpty()
-        registry?.let { canvasBindings = it.bindings }
-        activatePrimaryCamera(world)
-        startSkinnedAnimations(project.models)
+        project.componentRegistry?.let { canvasBindings = it.bindings }
     }
+    onDispose { scenes.stop() }
 }
 
 /**
@@ -223,9 +228,6 @@ internal suspend fun AssetSource.readText(path: String): String =
     read(AssetPath(path)).getOrElse { throw IllegalArgumentException("Can't read $path from the project", it) }
         .decodeToString()
 
-private fun SceneNode.meshNames(): List<String> =
-    components.filterIsInstance<SceneMeshRenderer>().map { it.mesh } + children.flatMap { it.meshNames() }
-
 private fun fallbackLens() = Lens(
     eye = Vec3f(0f, 2f, 6f),
     center = Vec3f(0f, 0f, 0f),
@@ -236,3 +238,7 @@ private fun fallbackLens() = Lens(
 )
 
 private const val FALLBACK_FOV_DEGREES = 60f
+
+/** The names of the two systems that run the playing scene's own, in the app's schedule. */
+private const val PROJECT_FIXED_SYSTEMS = "project-fixed"
+private const val PROJECT_FRAME_SYSTEMS = "project-frame"

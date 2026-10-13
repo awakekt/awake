@@ -76,6 +76,8 @@ object BlueprintCapability : SceneCapability {
                 // A host that doesn't draw, such as a game server, skips what only shows.
                 runPresentation = plan.hasRenderer,
             )
+            // Load Scene asks the host's switch, where it has one: a played project's does.
+            services.sceneSwitch?.let { switch -> system.scene.loadScene = switch::request }
             RunningBlueprints(system, services.content[BlueprintContent.Reloads])
         }
     }

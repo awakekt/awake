@@ -18,6 +18,7 @@ import com.awakekt.awake.blueprint.PortTypes.STRING
 import com.awakekt.awake.blueprint.PureNode
 import com.awakekt.awake.blueprint.Step
 import com.awakekt.awake.core.animation.AnimationPlayback
+import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.nodegraph.NodeSpec
 import com.awakekt.awake.nodegraph.PortSpec
@@ -36,7 +37,7 @@ object SceneNodes {
      * @return List of all instantiated scene blueprint nodes.
      */
     fun all(scene: BlueprintScene): List<BlueprintNode> =
-        listOf(OnSensorEnter, OnSensorExit, Self, FindByName(scene), Destroy(scene), PlayAnimation(scene))
+        listOf(OnSensorEnter, OnSensorExit, Self, FindByName(scene), Destroy(scene), PlayAnimation(scene), LoadScene(scene))
 
     /** Fired on a sensor's entity when a body starts touching it; `other` is the body's entity. */
     object OnSensorEnter : EventNode {
@@ -133,6 +134,56 @@ object SceneNodes {
         }
     }
 
+    /**
+     * Asks the game to play another of its scenes: `scene` is its path relative to the project root,
+     * such as `scenes/level-2.scene.json`. The scene playing now runs on until the next one has loaded,
+     * then stops for it at the start of a later step, and nothing it holds carries across. A scene
+     * that can't be loaded is logged and the one playing goes on.
+     *
+     * Where nothing switches scenes ([BlueprintScene.loadScene] is null), such as an editor playing the
+     * one scene it edits, and for an empty `scene`, it logs a warning, once, and carries on.
+     *
+     * @param scene The blueprint scene execution bridge.
+     */
+    class LoadScene(private val scene: BlueprintScene) : ActionNode {
+        private val then = Step.Continue(THEN)
+        private var warned = false
+        override val spec = NodeSpec(
+            type = TYPE,
+            displayName = "Load Scene",
+            category = "Scene",
+            description = "Plays another of the project's scenes in place of this one, once it has loaded.",
+            inputs = listOf(execIn(), PortSpec(SCENE, STRING, "The scene's path relative to the project root.")),
+            outputs = listOf(PortSpec(THEN, EXEC)),
+        )
+
+        override fun run(ctx: BlueprintContext): Step {
+            val path = ctx.string(SCENE)
+            val load = scene.loadScene
+            when {
+                path.isNullOrEmpty() -> warnOnce { "Load Scene names no scene, so it loads none" }
+                load == null -> warnOnce { "Load Scene can't load $path: nothing here plays another scene" }
+                else -> load(path)
+            }
+            return then
+        }
+
+        private inline fun warnOnce(message: () -> String) {
+            if (warned) return
+            warned = true
+            log.warn(message)
+        }
+
+        /** Identifiers for Load Scene. */
+        companion object {
+            /** The node type, as a graph names it. */
+            const val TYPE = "scene.load"
+
+            /** The input naming the scene to play. */
+            const val SCENE = "scene"
+        }
+    }
+
     /** The sensor events' output naming the body's entity; no entity for a body none owns. */
     const val OTHER = "other"
     private const val THEN = "then"
@@ -156,3 +207,5 @@ object SceneNodes {
         return if (target == NoEntity) ctx.owner else target
     }
 }
+
+private val log = Logger("blueprint")

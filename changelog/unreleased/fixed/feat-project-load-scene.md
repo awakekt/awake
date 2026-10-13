@@ -1,0 +1,1 @@
+- **A played project's fixed-step interpolation no longer allocates every frame.** `SceneSystemSet.interpolate` walked its systems with `forEach`, which takes an iterator, 32 bytes each frame in every game that `runProject` plays. It walks them by index now.

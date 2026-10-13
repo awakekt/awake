@@ -120,14 +120,20 @@ public final class com/awakekt/awake/project/runtime/SceneHostServices {
 	public final fun getInput ()Lkotlin/jvm/functions/Function0;
 	public final fun getPhysics ()Lcom/awakekt/awake/physics/PhysicsWorld;
 	public final fun getRenderer ()Lcom/awakekt/awake/render/renderer/Renderer;
+	public final fun getSceneSwitch ()Lcom/awakekt/awake/project/runtime/SceneSwitch;
 	public final fun spawn (Lcom/awakekt/awake/scene/document/SceneNode;)Lcom/awakekt/awake/scene/runtime/SpawnedNode;
 	public final fun withAudio (Lcom/awakekt/awake/core/audio/AudioPlayer;)Lcom/awakekt/awake/project/runtime/SceneHostServices;
+	public final fun withSceneSwitch (Lcom/awakekt/awake/project/runtime/SceneSwitch;)Lcom/awakekt/awake/project/runtime/SceneHostServices;
 	public final fun withSpawner (Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/project/runtime/SceneHostServices;
 }
 
 public final class com/awakekt/awake/project/runtime/SceneHostServices$Companion {
 	public final fun headless (Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/project/runtime/SceneContent;)Lcom/awakekt/awake/project/runtime/SceneHostServices;
 	public static synthetic fun headless$default (Lcom/awakekt/awake/project/runtime/SceneHostServices$Companion;Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/project/runtime/SceneContent;ILjava/lang/Object;)Lcom/awakekt/awake/project/runtime/SceneHostServices;
+}
+
+public abstract interface class com/awakekt/awake/project/runtime/SceneSwitch {
+	public abstract fun request (Ljava/lang/String;)V
 }
 
 public final class com/awakekt/awake/project/runtime/SceneSystemPlan {
