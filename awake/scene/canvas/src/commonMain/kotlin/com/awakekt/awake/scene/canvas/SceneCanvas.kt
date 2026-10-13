@@ -114,9 +114,11 @@ fun SceneCanvas(
 }
 
 /**
- * Where a canvas's box sat in the frame, in pixels from its top-left, when it was last placed: the
- * frame before this one, since elements are placed before the canvas is laid out. (0, 0) until then,
- * where a canvas filling the window is from its first frame.
+ * Where a canvas's box sat in the frame, in pixels from its top-left, when it was last placed. A
+ * follower is placed in composition, before layout, so it reads where the box was the frame before;
+ * an element's [CanvasElement.screenBounds] is measured as it is placed, which is after the box it
+ * sits in, so from where the box is now. (0, 0) until then, where a canvas filling the window is
+ * from its first frame.
  */
 internal class CanvasOrigin {
     var x = 0f
@@ -198,11 +200,13 @@ internal fun CanvasElementView(
         GhostElementView(element, modifier.rotated(element.style.rotation).styleable(state, style), textStyle, tree, children)
         return
     }
-    // Tree-space pixels back to canvas units: the density every size and offset dp was resolved
+    // Tree-space pixels back to canvas units: from the canvas box's corner, which its own onPlaced
+    // has already reported this pass, and by the density every size and offset dp was resolved
     // against, with the canvas's own scale already folded in by its CompositionLocalProvider.
     val density = LocalDensity.current
+    val origin = tree.origin
     val placed = modifier.onPlaced { x, y, w, h ->
-        element.screenBounds = Rectangle(x / density, y / density, w / density, h / density)
+        element.screenBounds = Rectangle((x - origin.x) / density, (y - origin.y) / density, w / density, h / density)
     }
     // Applied before styling and per-kind modifiers, so it covers every kind, Joystick included,
     // and sits outermost -- an ancestor's wheel element only sees what this one left unconsumed.
