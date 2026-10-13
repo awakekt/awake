@@ -40,8 +40,9 @@ import kotlin.test.fail
  * Breaking the renderer instead -- binding only the first font a frame draws -- fails the frame's
  * own check and its baseline by the same 1,487 / 1,485 px.
  *
- * Both frames are also pinned to committed PNGs per backend, zero differing pixels at the default
- * two-level channel tolerance. Re-record with `-DAWAKE_RECORD_SNAPSHOTS=true`, and only after
+ * Both frames are also pinned to committed PNGs per backend, zero differing pixels at a two-level
+ * channel tolerance on Vulkan and [WEBGPU_EDGE_TOLERANCE] on WebGPU, whose Metal and Vulkan paths
+ * shade glyph edges a few levels apart. Re-record with `-DAWAKE_RECORD_SNAPSHOTS=true`, and only after
  * stating what should change and why.
  */
 class UiMultiFontAtlasTest {
@@ -78,7 +79,7 @@ class UiMultiFontAtlasTest {
         }
 
         listOf("two-fonts" to frame, "two-fonts-one-atlas" to oneAtlas).forEach { (name, pixels) ->
-            baselineProblem("ui-$name-${backend.name.lowercase()}", pixels, record)?.let { failures += it }
+            baselineProblem("ui-$name-${backend.name.lowercase()}", pixels, record, backend)?.let { failures += it }
         }
     }
 
@@ -145,7 +146,7 @@ class UiMultiFontAtlasTest {
     }
 
     /** Records or compares [pixels] against `baselines/[name].png`; a message on mismatch. */
-    private fun baselineProblem(name: String, pixels: ByteArray, record: Boolean): String? {
+    private fun baselineProblem(name: String, pixels: ByteArray, record: Boolean, backend: HeadlessUiBackend): String? {
         val file = File("src/desktopTest/resources/baselines/$name.png")
         return when {
             record -> {
@@ -154,12 +155,12 @@ class UiMultiFontAtlasTest {
                 null
             }
             !file.exists() -> "${file.path} does not exist -- record it with -DAWAKE_RECORD_SNAPSHOTS=true"
-            else -> mismatch(name, pixels, file)
+            else -> mismatch(name, pixels, file, if (backend == HeadlessUiBackend.WebGpu) WEBGPU_EDGE_TOLERANCE else CHANNEL_TOLERANCE)
         }
     }
 
-    private fun mismatch(name: String, pixels: ByteArray, baseline: File): String? {
-        val result = comparePixels(pixels, ImageIO.read(baseline).toRgba())
+    private fun mismatch(name: String, pixels: ByteArray, baseline: File, tolerance: Int): String? {
+        val result = comparePixels(pixels, ImageIO.read(baseline).toRgba(), tolerance)
         if (result.matches) return null
         val actual = File(FAILURE_DIR, "$name-actual.png").apply { parentFile.mkdirs() }
         ImageIO.write(pixels.toImage(), "png", actual)
@@ -199,6 +200,12 @@ class UiMultiFontAtlasTest {
     private companion object {
         const val OPAQUE = 255
         const val CHANNEL_TOLERANCE = 2
+
+        /**
+         * WebGPU's baseline tolerance. wgpu shades glyph edge texels up to 20 levels apart on Metal
+         * and on Vulkan (CI's lavapipe); a wrong atlas or a reordered draw moves whole glyphs.
+         */
+        const val WEBGPU_EDGE_TOLERANCE = 24
         const val FAILURE_DIR = "build/test-failures/UiMultiFontAtlasTest"
 
         val firstFont: UiFont = checkNotNull(TWO_FONT_LINES.first().first().font)
