@@ -24,6 +24,14 @@ class BlueprintScene internal constructor(private val physics: PhysicsSystem?) {
         private set
 
     /**
+     * Asks the running game to play another of its scenes, by the scene's path relative to the project
+     * root, as Load Scene does. The host that runs [BlueprintSystem] sets it: a played project's
+     * blueprint capability passes its scene switch. Null where nothing switches scenes, such as an
+     * editor playing the one scene it edits, and Load Scene then only warns.
+     */
+    var loadScene: ((path: String) -> Unit)? = null
+
+    /**
      * Destroys [entity], freeing its physics body first so the body cannot outlive it.
      *
      * @param entity The entity to destroy.

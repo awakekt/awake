@@ -27,8 +27,10 @@ public final class com/awakekt/awake/scene/blueprint/BlueprintComponentKt {
 
 public final class com/awakekt/awake/scene/blueprint/BlueprintScene {
 	public final fun destroy-H_EwOg4 (J)V
+	public final fun getLoadScene ()Lkotlin/jvm/functions/Function1;
 	public final fun getNames ()Lcom/awakekt/awake/scene/core/EntityNames;
 	public final fun getWorld ()Lcom/awakekt/awake/ecs/World;
+	public final fun setLoadScene (Lkotlin/jvm/functions/Function1;)V
 }
 
 public final class com/awakekt/awake/scene/blueprint/BlueprintSystem : com/awakekt/awake/ecs/System {
@@ -92,6 +94,19 @@ public final class com/awakekt/awake/scene/blueprint/SceneNodes$FindByName : com
 	public fun evaluate (Lcom/awakekt/awake/blueprint/BlueprintContext;)V
 	public fun getEffect ()Lcom/awakekt/awake/blueprint/Effect;
 	public fun getSpec ()Lcom/awakekt/awake/nodegraph/NodeSpec;
+}
+
+public final class com/awakekt/awake/scene/blueprint/SceneNodes$LoadScene : com/awakekt/awake/blueprint/ActionNode {
+	public static final field Companion Lcom/awakekt/awake/scene/blueprint/SceneNodes$LoadScene$Companion;
+	public static final field SCENE Ljava/lang/String;
+	public static final field TYPE Ljava/lang/String;
+	public fun <init> (Lcom/awakekt/awake/scene/blueprint/BlueprintScene;)V
+	public fun getEffect ()Lcom/awakekt/awake/blueprint/Effect;
+	public fun getSpec ()Lcom/awakekt/awake/nodegraph/NodeSpec;
+	public fun run (Lcom/awakekt/awake/blueprint/BlueprintContext;)Lcom/awakekt/awake/blueprint/Step;
+}
+
+public final class com/awakekt/awake/scene/blueprint/SceneNodes$LoadScene$Companion {
 }
 
 public final class com/awakekt/awake/scene/blueprint/SceneNodes$OnSensorEnter : com/awakekt/awake/blueprint/EventNode {

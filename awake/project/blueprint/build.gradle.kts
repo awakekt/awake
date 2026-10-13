@@ -27,6 +27,8 @@ kotlin {
             implementation(libs.kotlinx.coroutines.test)
             // A character walking into a sensor needs a real physics world.
             implementation(project(":awake:backend:jolt"))
+            // A project played by runProject, as Load Scene's is, needs a renderer; this one draws nothing.
+            implementation(project(":awake:engine:render:testing"))
         }
     }
 }
