@@ -26,10 +26,12 @@ import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.compose.ui.unit.sp
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.text.font.FontWeight
+import com.awakekt.awake.core.text.font.UiFonts
 import com.awakekt.awake.core.text.theme.TextStyle
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 private fun measureText(
@@ -125,6 +127,18 @@ class TextTest {
 
         assertTrue(root.children[0].width > 0)
         assertTrue(root.children[0].height > 0)
+    }
+
+    @Test
+    fun aStyleFontChangesTheMeasuredWidthFromTheAmbientOne() {
+        // Same text, same size, same ambient LocalFont -- only the style's font differs, so a
+        // width difference can only come from TextMeasurePolicy reading it.
+        val root = measureText {
+            Text("Hg", style = TextStyle(size = 24.sp))
+            Text("Hg", style = TextStyle(size = 24.sp, font = UiFonts.bitmap()))
+        }
+
+        assertNotEquals(root.children[0].width, root.children[1].width, "a style font did not change the measured width")
     }
 
     @Test
@@ -232,6 +246,22 @@ class TextPaintingTest {
 
         assertTrue(glyph.u1 > glyph.u0, "degenerate horizontal UV span")
         assertTrue(glyph.v1 > glyph.v0, "degenerate vertical UV span")
+    }
+
+    @Test
+    fun eachTextNodeDrawsWithItsOwnStyleFont() {
+        // Two siblings in the same frame, one with a style font and one inheriting the ambient
+        // default. Each glyph must carry the instance it was actually measured and drawn with --
+        // the renderer keys its atlas cache on that identity, so the wrong one here is a wrong
+        // texture, not just a wrong metric.
+        val bitmapFont = UiFonts.bitmap()
+        val glyphs = glyphsOf {
+            Text("a", style = TextStyle(font = bitmapFont))
+            Text("a")
+        }
+
+        assertSame(bitmapFont, glyphs[0].font, "the styled run did not draw with its own font")
+        assertSame(UiFonts.default(), glyphs[1].font, "the unstyled run did not fall back to LocalFont")
     }
 
     @Test

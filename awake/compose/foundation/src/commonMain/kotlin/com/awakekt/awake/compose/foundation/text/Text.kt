@@ -17,6 +17,7 @@ import com.awakekt.awake.compose.ui.node.DrawModifierNode
 import com.awakekt.awake.compose.ui.platform.LocalFont
 import com.awakekt.awake.compose.ui.platform.LocalTextStyle
 import com.awakekt.awake.core.color.Color
+import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.core.text.theme.TextStyle
 
 // PascalCase composables: Compose's own convention, and this is public API surface -- the same
@@ -45,7 +46,7 @@ fun Text(
     style: TextStyle = TextStyle.Default,
 ) {
     val resolved = LocalTextStyle.current then style
-    val font = LocalFont.current
+    val font = resolved.resolveFont(LocalFont.current)
     val policy = TextMeasurePolicy(text, resolved, font)
     Layout(
         nodeType = TextNodeType,
@@ -88,3 +89,6 @@ private class TextPaintNode :
 
 /** Used when nothing in the chain provided one. Mid grey reads on both light and dark. */
 internal val DefaultTextColor: Color = Color(0.9f, 0.9f, 0.92f, 1f)
+
+/** The font a run measures and draws with: the style's own, or [ambient] (`LocalFont.current`). */
+internal fun TextStyle.resolveFont(ambient: UiFont): UiFont = font ?: ambient
