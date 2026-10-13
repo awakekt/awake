@@ -19,6 +19,7 @@ import com.awakekt.awake.compose.runtime.CompositionLocalProvider
 import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.provides
 import com.awakekt.awake.compose.runtime.remember
+import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.draw.alpha
 import com.awakekt.awake.compose.ui.layout.Layer
@@ -46,15 +47,17 @@ fun ShadcnHoverCardContent(
         () -> Unit
     )? = null,
 ) {
-    val theme = shadcnTheme
-    val style = remember(theme) { theme.popoverSurfaceStyle(Tw.Spacing.s4) }
-    Box(modifier.width(width).styleable(StyleState.Default, style)) {
-        val body = content
-        if (body != null) {
-            CompositionLocalProvider(
-                LocalTextStyle provides LocalTextStyle.current.copy(color = theme.palette.popoverForeground),
-            ) {
-                body()
+    rememberGroup(ShadcnHoverCardContentGroup) {
+        val theme = shadcnTheme
+        val style = remember(theme) { theme.popoverSurfaceStyle(Tw.Spacing.s4) }
+        Box(modifier.width(width).styleable(StyleState.Default, style)) {
+            val body = content
+            if (body != null) {
+                CompositionLocalProvider(
+                    LocalTextStyle provides LocalTextStyle.current.copy(color = theme.palette.popoverForeground),
+                ) {
+                    body()
+                }
             }
         }
     }
@@ -74,36 +77,38 @@ fun ShadcnHoverCard(
         () -> Unit
     )? = null,
 ) {
-    val interaction = remember { InteractionSource() }
-    val cardInteraction = remember { InteractionSource() }
-    val anchor = remember { PopupAnchor() }
-    val density = LocalDensity.current
+    rememberGroup(ShadcnHoverCardGroup) {
+        val interaction = remember { InteractionSource() }
+        val cardInteraction = remember { InteractionSource() }
+        val anchor = remember { PopupAnchor() }
+        val density = LocalDensity.current
 
-    val isOpen = interaction.isHovered || cardInteraction.isHovered
-    val alpha = rememberOverlayAlpha(isOpen)
+        val isOpen = interaction.isHovered || cardInteraction.isHovered
+        val alpha = rememberOverlayAlpha(isOpen)
 
-    Box(
-        modifier
-            .popupAnchor(anchor)
-            .hoverable(interaction),
-    ) {
-        trigger()
-        if (isPresent(isOpen, alpha)) {
-            Layer(
-                kind = LayerKind.Popup,
-                positionProvider = remember(density) {
-                    AnchoredBelowPositionProvider(anchor, (HoverCardGap.value * density).toInt())
-                },
-                measurePolicy = BoxMeasurePolicy(),
-            ) {
-                Box(Modifier.hoverable(cardInteraction)) {
-                    ShadcnHoverCardContent(
-                        modifier = Modifier.alpha(alpha).semantics {
-                            if (id != null) this[SemanticsProperties.TestTag] = id
-                        },
-                        width = width,
-                        content = content,
-                    )
+        Box(
+            modifier
+                .popupAnchor(anchor)
+                .hoverable(interaction),
+        ) {
+            trigger()
+            if (isPresent(isOpen, alpha)) {
+                Layer(
+                    kind = LayerKind.Popup,
+                    positionProvider = remember(density) {
+                        AnchoredBelowPositionProvider(anchor, (HoverCardGap.value * density).toInt())
+                    },
+                    measurePolicy = BoxMeasurePolicy(),
+                ) {
+                    Box(Modifier.hoverable(cardInteraction)) {
+                        ShadcnHoverCardContent(
+                            modifier = Modifier.alpha(alpha).semantics {
+                                if (id != null) this[SemanticsProperties.TestTag] = id
+                            },
+                            width = width,
+                            content = content,
+                        )
+                    }
                 }
             }
         }
@@ -112,3 +117,9 @@ fun ShadcnHoverCard(
 
 private val HoverCardWidth: Dp = 320.dp
 private val HoverCardGap: Dp = 4.dp
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnHoverCardContentGroup
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnHoverCardGroup

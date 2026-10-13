@@ -18,6 +18,7 @@ import com.awakekt.awake.compose.foundation.layout.size
 import com.awakekt.awake.compose.foundation.layout.width
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.remember
+import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.unit.dp
@@ -139,101 +140,103 @@ fun ShadcnCalendar(
     initialMonth: Int = 10,
     initialYear: Int = 2026,
 ) {
-    val currentMonthState = remember { CalendarIntState(initialMonth.coerceIn(1, 12)) }
-    val currentYearState = remember { CalendarIntState(initialYear) }
+    rememberGroup(ShadcnCalendarGroup) {
+        val currentMonthState = remember { CalendarIntState(initialMonth.coerceIn(1, 12)) }
+        val currentYearState = remember { CalendarIntState(initialYear) }
 
-    val month = currentMonthState.value
-    val year = currentYearState.value
-    val monthTitle = "${MonthNames.getOrElse(month - 1) { "October" }} $year"
-    val totalDays = ShadcnCalendarDate.daysInMonth(month, year)
-    val startWeekdayOffset = ShadcnCalendarDate.firstDayWeekday(year, month)
+        val month = currentMonthState.value
+        val year = currentYearState.value
+        val monthTitle = "${MonthNames.getOrElse(month - 1) { "October" }} $year"
+        val totalDays = ShadcnCalendarDate.daysInMonth(month, year)
+        val startWeekdayOffset = ShadcnCalendarDate.firstDayWeekday(year, month)
 
-    ShadcnCard(modifier = modifier.width(280.dp), contentPadding = Tw.Spacing.s3) {
-        Column(verticalArrangement = Arrangement.spacedBy(Tw.Spacing.s3)) {
-            // Header: Month title and month navigation
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetweenHorizontal,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                ShadcnButton(
-                    label = "<",
-                    variant = ShadcnButtonVariant.Outline,
-                    size = ShadcnButtonSizeVariant.Sm,
-                    onClick = {
-                        if (currentMonthState.value == 1) {
-                            currentMonthState.value = 12
-                            currentYearState.value--
-                        } else {
-                            currentMonthState.value--
+        ShadcnCard(modifier = modifier.width(280.dp), contentPadding = Tw.Spacing.s3) {
+            Column(verticalArrangement = Arrangement.spacedBy(Tw.Spacing.s3)) {
+                // Header: Month title and month navigation
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetweenHorizontal,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    ShadcnButton(
+                        label = "<",
+                        variant = ShadcnButtonVariant.Outline,
+                        size = ShadcnButtonSizeVariant.Sm,
+                        onClick = {
+                            if (currentMonthState.value == 1) {
+                                currentMonthState.value = 12
+                                currentYearState.value--
+                            } else {
+                                currentMonthState.value--
+                            }
+                        },
+                    )
+                    ShadcnText(monthTitle, variant = ShadcnTextVariant.Small)
+                    ShadcnButton(
+                        label = ">",
+                        variant = ShadcnButtonVariant.Outline,
+                        size = ShadcnButtonSizeVariant.Sm,
+                        onClick = {
+                            if (currentMonthState.value == 12) {
+                                currentMonthState.value = 1
+                                currentYearState.value++
+                            } else {
+                                currentMonthState.value++
+                            }
+                        },
+                    )
+                }
+
+                ShadcnSeparator()
+
+                // Days of Week Row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetweenHorizontal,
+                ) {
+                    WeekdayHeaders.forEach { day ->
+                        Box(
+                            modifier = Modifier.size(32.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            shadcnMuted(day)
                         }
-                    },
-                )
-                ShadcnText(monthTitle, variant = ShadcnTextVariant.Small)
-                ShadcnButton(
-                    label = ">",
-                    variant = ShadcnButtonVariant.Outline,
-                    size = ShadcnButtonSizeVariant.Sm,
-                    onClick = {
-                        if (currentMonthState.value == 12) {
-                            currentMonthState.value = 1
-                            currentYearState.value++
-                        } else {
-                            currentMonthState.value++
-                        }
-                    },
-                )
-            }
-
-            ShadcnSeparator()
-
-            // Days of Week Row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetweenHorizontal,
-            ) {
-                WeekdayHeaders.forEach { day ->
-                    Box(
-                        modifier = Modifier.size(32.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        shadcnMuted(day)
                     }
                 }
-            }
 
-            // Month Grid
-            Column(verticalArrangement = Arrangement.spacedBy(Tw.Spacing.s1)) {
-                var currentDay = 1
-                for (week in 0..5) {
-                    if (currentDay > totalDays) break
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetweenHorizontal,
-                    ) {
-                        for (dayOfWeek in 0..6) {
-                            val isOffsetCell = week == 0 && dayOfWeek < startWeekdayOffset
-                            if (isOffsetCell || currentDay > totalDays) {
-                                Box(modifier = Modifier.size(32.dp))
-                            } else {
-                                val dayNumber = currentDay
-                                val cellDate = ShadcnCalendarDate(year, month, dayNumber)
-                                val isSelected = cellDate == selectedDate
-                                Box(
-                                    modifier = Modifier
-                                        .size(32.dp)
-                                        .clickable { onDateSelected(cellDate) },
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    if (isSelected) {
-                                        ShadcnBadge(label = dayNumber.toString())
-                                    } else {
-                                        ShadcnText(dayNumber.toString(), variant = ShadcnTextVariant.Small)
+                // Month Grid
+                Column(verticalArrangement = Arrangement.spacedBy(Tw.Spacing.s1)) {
+                    var currentDay = 1
+                    for (week in 0..5) {
+                        if (currentDay > totalDays) break
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetweenHorizontal,
+                        ) {
+                            for (dayOfWeek in 0..6) {
+                                val isOffsetCell = week == 0 && dayOfWeek < startWeekdayOffset
+                                if (isOffsetCell || currentDay > totalDays) {
+                                    Box(modifier = Modifier.size(32.dp))
+                                } else {
+                                    val dayNumber = currentDay
+                                    val cellDate = ShadcnCalendarDate(year, month, dayNumber)
+                                    val isSelected = cellDate == selectedDate
+                                    Box(
+                                        modifier = Modifier
+                                            .size(32.dp)
+                                            .clickable { onDateSelected(cellDate) },
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        if (isSelected) {
+                                            ShadcnBadge(label = dayNumber.toString())
+                                        } else {
+                                            ShadcnText(dayNumber.toString(), variant = ShadcnTextVariant.Small)
+                                        }
                                     }
+                                    currentDay++
                                 }
-                                currentDay++
                             }
                         }
                     }
@@ -281,25 +284,27 @@ fun ShadcnDatePicker(
     modifier: Modifier = Modifier,
     placeholder: String = "Pick a date",
 ) {
-    val popoverState = remember { BooleanState(false) }
-    val labelText = selectedDate?.toShortString() ?: placeholder
+    rememberGroup(ShadcnDatePickerGroup) {
+        val popoverState = remember { BooleanState(false) }
+        val labelText = selectedDate?.toShortString() ?: placeholder
 
-    Box(modifier = modifier) {
-        ShadcnButton(
-            label = labelText,
-            variant = ShadcnButtonVariant.Outline,
-            onClick = { popoverState.value = !popoverState.value },
-        )
-
-        if (popoverState.value) {
-            ShadcnCalendar(
-                selectedDate = selectedDate,
-                onDateSelected = { date ->
-                    onDateSelected(date)
-                    popoverState.value = false
-                },
-                modifier = Modifier.padding(top = 40.dp),
+        Box(modifier = modifier) {
+            ShadcnButton(
+                label = labelText,
+                variant = ShadcnButtonVariant.Outline,
+                onClick = { popoverState.value = !popoverState.value },
             )
+
+            if (popoverState.value) {
+                ShadcnCalendar(
+                    selectedDate = selectedDate,
+                    onDateSelected = { date ->
+                        onDateSelected(date)
+                        popoverState.value = false
+                    },
+                    modifier = Modifier.padding(top = 40.dp),
+                )
+            }
         }
     }
 }
@@ -325,3 +330,9 @@ fun ShadcnDatePicker(
 
 private class CalendarIntState(var value: Int)
 private class BooleanState(var value: Boolean)
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnCalendarGroup
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnDatePickerGroup

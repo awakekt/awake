@@ -8,6 +8,7 @@ package com.awakekt.awake.compose.foundation.style
 import com.awakekt.awake.compose.foundation.interaction.InteractionSource
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.remember
+import com.awakekt.awake.compose.runtime.rememberGroup
 
 /**
  * What a component currently is, as far as styling is concerned.
@@ -82,11 +83,14 @@ fun rememberStyleState(
     enabled: Boolean = true,
     selected: Boolean = false,
     checked: Boolean = false,
-): StyleState {
+): StyleState = rememberGroup(RememberStyleStateGroup) {
     val state = remember { MutableStyleState() }
     state.updateFrom(interactionSource)
     state.isEnabled = enabled
     state.isSelected = selected
     state.isChecked = checked
-    return state
+    state
 }
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object RememberStyleStateGroup

@@ -12,6 +12,7 @@ import com.awakekt.awake.compose.foundation.layout.Box
 import com.awakekt.awake.compose.foundation.layout.BoxMeasurePolicy
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.remember
+import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.draw.alpha
 import com.awakekt.awake.compose.ui.layout.Layer
@@ -68,43 +69,45 @@ fun shadcnContextMenu(
         () -> Unit
     )? = null,
 ) {
-    val state = remember { ContextMenuState() }
-    val origin = remember { PopupAnchor() }
+    rememberGroup(ShadcnContextMenuGroup) {
+        val state = remember { ContextMenuState() }
+        val origin = remember { PopupAnchor() }
 
-    Box(
-        modifier
-            .onPlaced { x, y, _, _ ->
-                origin.x = x
-                origin.y = y
-            }
-            // Local coordinates, so the caller's own placed origin turns them into root space.
-            .onSecondaryPress { x, y ->
-                state.openAt(origin.x + x, origin.y + y)
-            },
-    ) {
-        content?.let { it() }
-        val alpha = rememberOverlayAlpha(state.open)
-        if (isPresent(state.open, alpha)) {
-            Layer(
-                kind = LayerKind.Popup,
-                dismissOnOutsideClick = true,
-                onDismissRequest = { state.close() },
-                // A zero-sized anchor at the pointer: "below" a point is at the point.
-                positionProvider = remember {
-                    AnchoredBelowPositionProvider(
-                        state.anchor,
-                        gap = 0,
-                    )
+        Box(
+            modifier
+                .onPlaced { x, y, _, _ ->
+                    origin.x = x
+                    origin.y = y
+                }
+                // Local coordinates, so the caller's own placed origin turns them into root space.
+                .onSecondaryPress { x, y ->
+                    state.openAt(origin.x + x, origin.y + y)
                 },
-                measurePolicy = BoxMeasurePolicy(),
-            ) {
-                ShadcnDropdownMenu(
-                    entries,
-                    modifier = menuModifier.alpha(alpha),
-                    id = id,
-                )?.let { selected ->
-                    onItemSelected(selected)
-                    state.close()
+        ) {
+            content?.let { it() }
+            val alpha = rememberOverlayAlpha(state.open)
+            if (isPresent(state.open, alpha)) {
+                Layer(
+                    kind = LayerKind.Popup,
+                    dismissOnOutsideClick = true,
+                    onDismissRequest = { state.close() },
+                    // A zero-sized anchor at the pointer: "below" a point is at the point.
+                    positionProvider = remember {
+                        AnchoredBelowPositionProvider(
+                            state.anchor,
+                            gap = 0,
+                        )
+                    },
+                    measurePolicy = BoxMeasurePolicy(),
+                ) {
+                    ShadcnDropdownMenu(
+                        entries,
+                        modifier = menuModifier.alpha(alpha),
+                        id = id,
+                    )?.let { selected ->
+                        onItemSelected(selected)
+                        state.close()
+                    }
                 }
             }
         }
@@ -140,3 +143,6 @@ private class ContextMenuState {
         }
     }
 }
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnContextMenuGroup

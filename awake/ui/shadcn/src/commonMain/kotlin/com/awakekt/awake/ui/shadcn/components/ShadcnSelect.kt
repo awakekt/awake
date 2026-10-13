@@ -32,6 +32,7 @@ import com.awakekt.awake.compose.foundation.verticalScroll
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.remember
+import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.draw.clipToBounds
@@ -71,60 +72,62 @@ fun ShadcnSelect(
     placeholder: String = "Select...",
     enabled: Boolean = true,
 ) {
-    val anchor = remember { PopupAnchor() }
-    val keyboard = remember { SelectKeyboardState() }
-    val density = LocalDensity.current
-    Box(
-        modifier.popupAnchor(anchor),
-    ) {
-        ShadcnSelectTrigger(
-            value = selectedIndex?.let(items::getOrNull)?.label,
-            placeholder = placeholder,
-            enabled = enabled,
-            modifier = Modifier.fillMaxWidth(),
-            onClick = {
-                keyboard.highlightedIndex = selectedIndex
-                onExpandedChange(!expanded)
-            },
-            onKeyEvent = { event ->
-                handleSelectKey(
-                    event = event,
-                    items = items,
-                    selectedIndex = selectedIndex,
-                    expanded = expanded,
-                    state = keyboard,
-                    onExpandedChange = onExpandedChange,
-                    onItemSelected = onItemSelected,
-                )
-            },
-        )
-        if (expanded) {
-            Layer(
-                kind = LayerKind.Popup,
-                dismissOnOutsideClick = true,
-                onDismissRequest = { onExpandedChange(false) },
-                positionProvider = remember(density) {
-                    SelectPositionProvider(
-                        anchor,
-                        (SelectPopupGap.value * density).toInt(),
-                        selectedIndex,
-                        (ShadcnSelectSurfaceInset.value * density).toInt(),
+    rememberGroup(ShadcnSelectGroup) {
+        val anchor = remember { PopupAnchor() }
+        val keyboard = remember { SelectKeyboardState() }
+        val density = LocalDensity.current
+        Box(
+            modifier.popupAnchor(anchor),
+        ) {
+            ShadcnSelectTrigger(
+                value = selectedIndex?.let(items::getOrNull)?.label,
+                placeholder = placeholder,
+                enabled = enabled,
+                modifier = Modifier.fillMaxWidth(),
+                onClick = {
+                    keyboard.highlightedIndex = selectedIndex
+                    onExpandedChange(!expanded)
+                },
+                onKeyEvent = { event ->
+                    handleSelectKey(
+                        event = event,
+                        items = items,
+                        selectedIndex = selectedIndex,
+                        expanded = expanded,
+                        state = keyboard,
+                        onExpandedChange = onExpandedChange,
+                        onItemSelected = onItemSelected,
                     )
                 },
-                measurePolicy = BoxMeasurePolicy(),
-            ) {
-                val triggerWidth =
-                    (anchor.width / density).coerceAtLeast(POPOVER_MIN_WIDTH.value).dp
-                ShadcnSelectContent(
-                    items = items,
-                    selectedIndex = selectedIndex,
-                    highlightedIndex = keyboard.highlightedIndex,
-                    modifier = Modifier.width(triggerWidth),
-                    id = id,
-                )?.let { selected ->
-                    onItemSelected(selected)
-                    keyboard.highlightedIndex = null
-                    onExpandedChange(false)
+            )
+            if (expanded) {
+                Layer(
+                    kind = LayerKind.Popup,
+                    dismissOnOutsideClick = true,
+                    onDismissRequest = { onExpandedChange(false) },
+                    positionProvider = remember(density) {
+                        SelectPositionProvider(
+                            anchor,
+                            (SelectPopupGap.value * density).toInt(),
+                            selectedIndex,
+                            (ShadcnSelectSurfaceInset.value * density).toInt(),
+                        )
+                    },
+                    measurePolicy = BoxMeasurePolicy(),
+                ) {
+                    val triggerWidth =
+                        (anchor.width / density).coerceAtLeast(POPOVER_MIN_WIDTH.value).dp
+                    ShadcnSelectContent(
+                        items = items,
+                        selectedIndex = selectedIndex,
+                        highlightedIndex = keyboard.highlightedIndex,
+                        modifier = Modifier.width(triggerWidth),
+                        id = id,
+                    )?.let { selected ->
+                        onItemSelected(selected)
+                        keyboard.highlightedIndex = null
+                        onExpandedChange(false)
+                    }
                 }
             }
         }
@@ -141,36 +144,38 @@ fun ShadcnSelectTrigger(
     onClick: () -> Unit = {},
     onKeyEvent: (KeyEvent) -> Boolean = { false },
 ) {
-    val theme = shadcnTheme
-    val interaction = remember { InteractionSource() }
-    val styleState = rememberStyleState(interaction, enabled = enabled)
-    val focusRingAlpha = animateFloat(if (styleState.isFocused) 1f else 0f)
-    val box = remember(theme) { theme.selectTriggerStyle() }
+    rememberGroup(ShadcnSelectTriggerGroup) {
+        val theme = shadcnTheme
+        val interaction = remember { InteractionSource() }
+        val styleState = rememberStyleState(interaction, enabled = enabled)
+        val focusRingAlpha = animateFloat(if (styleState.isFocused) 1f else 0f)
+        val box = remember(theme) { theme.selectTriggerStyle() }
 
-    Row(
-        modifier
-            .height(ShadcnSelectHeight)
-            .hoverable(interaction, enabled = enabled)
-            .clickable(interaction) { if (enabled) onClick() }
-            .focusable(enabled = enabled, interactionSource = interaction)
-            .onKeyEvent { if (enabled) onKeyEvent(it) else false }
-            .focusRing(
-                alpha = focusRingAlpha,
-                width = FieldFocusRingWidth,
-                color = theme.palette.ring.withAlpha(0.5f),
-                cornerRadius = theme.radii.md,
+        Row(
+            modifier
+                .height(ShadcnSelectHeight)
+                .hoverable(interaction, enabled = enabled)
+                .clickable(interaction) { if (enabled) onClick() }
+                .focusable(enabled = enabled, interactionSource = interaction)
+                .onKeyEvent { if (enabled) onKeyEvent(it) else false }
+                .focusRing(
+                    alpha = focusRingAlpha,
+                    width = FieldFocusRingWidth,
+                    color = theme.palette.ring.withAlpha(0.5f),
+                    cornerRadius = theme.radii.md,
+                )
+                .styleable(styleState, box),
+            horizontalArrangement = Arrangement.SpaceBetweenHorizontal,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            ShadcnText(
+                value ?: placeholder,
+                variant = ShadcnTextVariant.Small,
+                color = if (value == null) theme.palette.mutedForeground else theme.palette.foreground,
+                weight = FontWeight.Normal,
             )
-            .styleable(styleState, box),
-        horizontalArrangement = Arrangement.SpaceBetweenHorizontal,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        ShadcnText(
-            value ?: placeholder,
-            variant = ShadcnTextVariant.Small,
-            color = if (value == null) theme.palette.mutedForeground else theme.palette.foreground,
-            weight = FontWeight.Normal,
-        )
-        ShadcnIcon(ShadcnIcons.chevronDown, tint = theme.palette.mutedForeground)
+            ShadcnIcon(ShadcnIcons.chevronDown, tint = theme.palette.mutedForeground)
+        }
     }
 }
 
@@ -434,3 +439,9 @@ private class SelectPositionProvider(
         return LayerPosition(x - parentX, y - parentY)
     }
 }
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnSelectGroup
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnSelectTriggerGroup

@@ -16,6 +16,7 @@ import com.awakekt.awake.compose.foundation.style.StyleState
 import com.awakekt.awake.compose.foundation.style.styleable
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.remember
+import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.unit.Dp
 import com.awakekt.awake.compose.ui.unit.dp
@@ -40,29 +41,31 @@ fun ShadcnAlert(
     description: String? = null,
     variant: ShadcnAlertVariant = ShadcnAlertVariant.Default,
 ) {
-    val theme = shadcnTheme
-    val style = remember(theme) { theme.alertStyle() }
-    val foreground = when (variant) {
-        ShadcnAlertVariant.Default -> theme.palette.cardForeground
-        ShadcnAlertVariant.Destructive -> theme.palette.destructive
-    }
+    rememberGroup(ShadcnAlertGroup) {
+        val theme = shadcnTheme
+        val style = remember(theme) { theme.alertStyle() }
+        val foreground = when (variant) {
+            ShadcnAlertVariant.Default -> theme.palette.cardForeground
+            ShadcnAlertVariant.Destructive -> theme.palette.destructive
+        }
 
-    Box(modifier.fillMaxWidth().styleable(StyleState.Default, style)) {
-        // `grid gap-y-0.5` -- 2px between the title and the description, which is the last 2px of
-        // the reference's 88px height.
-        Column(verticalArrangement = Arrangement.spacedBy(Tw.Spacing.s0_5)) {
-            ShadcnText(title, variant = ShadcnTextVariant.Small, color = foreground)
-            if (description != null) {
-                ShadcnText(
-                    description,
-                    variant = ShadcnTextVariant.Small,
-                    color = when (variant) {
-                        ShadcnAlertVariant.Default -> theme.palette.mutedForeground
-                        // `*:data-[slot=alert-description]:text-destructive/90`
-                        ShadcnAlertVariant.Destructive ->
-                            theme.palette.destructive.withAlpha(DESCRIPTION_ALPHA)
-                    },
-                )
+        Box(modifier.fillMaxWidth().styleable(StyleState.Default, style)) {
+            // `grid gap-y-0.5` -- 2px between the title and the description, which is the last 2px of
+            // the reference's 88px height.
+            Column(verticalArrangement = Arrangement.spacedBy(Tw.Spacing.s0_5)) {
+                ShadcnText(title, variant = ShadcnTextVariant.Small, color = foreground)
+                if (description != null) {
+                    ShadcnText(
+                        description,
+                        variant = ShadcnTextVariant.Small,
+                        color = when (variant) {
+                            ShadcnAlertVariant.Default -> theme.palette.mutedForeground
+                            // `*:data-[slot=alert-description]:text-destructive/90`
+                            ShadcnAlertVariant.Destructive ->
+                                theme.palette.destructive.withAlpha(DESCRIPTION_ALPHA)
+                        },
+                    )
+                }
             }
         }
     }
@@ -95,3 +98,6 @@ fun shadcnAlert(
     description: String? = null,
     variant: ShadcnAlertVariant = ShadcnAlertVariant.Default,
 ) = ShadcnAlert(title, modifier, description, variant)
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnAlertGroup

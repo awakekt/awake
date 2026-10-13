@@ -19,6 +19,7 @@ import com.awakekt.awake.compose.runtime.CompositionLocalProvider
 import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.provides
 import com.awakekt.awake.compose.runtime.remember
+import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.platform.LocalDensity
@@ -56,58 +57,60 @@ fun shadcnDrawer(
         () -> Unit
     )? = null,
 ) {
-    val theme = shadcnTheme
-    val density = LocalDensity.current
-    val drag = remember { DrawerDragState() }
-    // Read and acted on during this build, the way the slider consumes its own pending delta: the
-    // pointer delta arrived during input dispatch, which is before this runs.
-    val dismissAt = DrawerDismissTravel.value * density
-    if (drag.travelPx >= dismissAt) {
-        drag.travelPx = 0f
-        onDismissRequest()
-        return
-    }
+    rememberGroup(ShadcnDrawerGroup) {
+        val theme = shadcnTheme
+        val density = LocalDensity.current
+        val drag = remember { DrawerDragState() }
+        // Read and acted on during this build, the way the slider consumes its own pending delta: the
+        // pointer delta arrived during input dispatch, which is before this runs.
+        val dismissAt = DrawerDismissTravel.value * density
+        if (drag.travelPx >= dismissAt) {
+            drag.travelPx = 0f
+            onDismissRequest()
+            return
+        }
 
-    shadcnModalLayer(
-        visible = visible,
-        alignment = Alignment.BottomCenter,
-        onDismissRequest = {
-            drag.travelPx = 0f
-            onDismissRequest()
-        },
-        scrimModifier = scrimModifier(id) {
-            drag.travelPx = 0f
-            onDismissRequest()
-        },
-    ) {
-        Box(
-            modifier
-                .fillMaxWidth()
-                .offset(y = (drag.travelPx / density).dp)
-                .background(theme.palette.background, theme.radii.lg)
-                .semantics {
-                    this[SemanticsProperties.Role] = SemanticsRole.Dialog
-                    if (title != null) this[SemanticsProperties.Label] = title
-                    if (id != null) this[SemanticsProperties.TestTag] = id
-                },
+        shadcnModalLayer(
+            visible = visible,
+            alignment = Alignment.BottomCenter,
+            onDismissRequest = {
+                drag.travelPx = 0f
+                onDismissRequest()
+            },
+            scrimModifier = scrimModifier(id) {
+                drag.travelPx = 0f
+                onDismissRequest()
+            },
         ) {
-            CompositionLocalProvider(
-                LocalTextStyle provides LocalTextStyle.current.copy(color = theme.palette.foreground),
+            Box(
+                modifier
+                    .fillMaxWidth()
+                    .offset(y = (drag.travelPx / density).dp)
+                    .background(theme.palette.background, theme.radii.lg)
+                    .semantics {
+                        this[SemanticsProperties.Role] = SemanticsRole.Dialog
+                        if (title != null) this[SemanticsProperties.Label] = title
+                        if (id != null) this[SemanticsProperties.TestTag] = id
+                    },
             ) {
-                Column(
-                    Modifier.padding(DrawerPadding),
-                    verticalArrangement = Arrangement.spacedBy(DrawerSectionGap),
+                CompositionLocalProvider(
+                    LocalTextStyle provides LocalTextStyle.current.copy(color = theme.palette.foreground),
                 ) {
-                    drawerHandle(drag, id)
-                    if (title != null || description != null) {
-                        Column(verticalArrangement = Arrangement.spacedBy(DrawerHeaderGap)) {
-                            if (title != null) ShadcnText(title, weight = DrawerTitleWeight)
-                            if (description != null) {
-                                ShadcnText(description, variant = ShadcnTextVariant.Muted)
+                    Column(
+                        Modifier.padding(DrawerPadding),
+                        verticalArrangement = Arrangement.spacedBy(DrawerSectionGap),
+                    ) {
+                        drawerHandle(drag, id)
+                        if (title != null || description != null) {
+                            Column(verticalArrangement = Arrangement.spacedBy(DrawerHeaderGap)) {
+                                if (title != null) ShadcnText(title, weight = DrawerTitleWeight)
+                                if (description != null) {
+                                    ShadcnText(description, variant = ShadcnTextVariant.Muted)
+                                }
                             }
                         }
+                        content?.let { it() }
                     }
-                    content?.let { it() }
                 }
             }
         }
@@ -149,3 +152,6 @@ private const val DRAWER_HANDLE_GRAB_MARGIN_PX = 8
 /** Far enough that a stray scroll does not close it, short enough to feel like a flick. */
 private val DrawerDismissTravel: Dp = 96.dp
 private val DrawerTitleWeight: FontWeight = FontWeight.SemiBold
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnDrawerGroup

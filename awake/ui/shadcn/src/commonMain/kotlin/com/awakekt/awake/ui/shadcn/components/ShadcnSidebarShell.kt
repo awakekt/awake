@@ -32,6 +32,7 @@ import com.awakekt.awake.compose.runtime.compositionLocalOf
 import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.provides
 import com.awakekt.awake.compose.runtime.remember
+import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.draw.clipToBounds
@@ -108,35 +109,37 @@ fun SidebarProvider(
     modifier: Modifier = Modifier,
     content: context(Composer) RowScope.() -> Unit,
 ) {
-    val scope = remember { SidebarProviderScope() }
-    scope.rail = null
-    CompositionLocalProvider(
-        LocalSidebarState provides state,
-        LocalSidebarProviderScope provides scope,
-    ) {
-        // A hand-written MeasurePolicy, not Box(contentAlignment): Box shares one alignment across
-        // every child, but the content Row needs TopStart/fillMaxSize while the rail needs an
-        // arbitrary x deep inside that area -- incompatible within one alignment. Explicit
-        // placeAt(x, 0) is also what sidesteps the bug offset()/Spacer positioning both hit: this
-        // engine's LayoutNode only ever contributes a chain link's shift to contentAbsoluteX, never
-        // to the node's own absoluteX (see resolveAbsolutePositions), and contains()'s hit-test
-        // envelope is a permissive union of the two -- so a rail shifted this far from its own
-        // origin (most of the sidebar's width) produced a hit region spanning that entire gap,
-        // silently swallowing every click on the sidebar underneath it. Confirmed by instrumenting
-        // the dispatcher directly. A real MeasurePolicy placement (the same mechanism Row already
-        // uses correctly for its own children) gives the rail its own tight, correctly-positioned
-        // bounds instead.
-        Layout(
-            nodeType = SidebarProviderRootNodeType,
-            modifier = modifier.fillMaxSize(),
-            measurePolicy = remember(state) { SidebarProviderRootMeasurePolicy(state) },
+    rememberGroup(SidebarProviderGroup) {
+        val scope = remember { SidebarProviderScope() }
+        scope.rail = null
+        CompositionLocalProvider(
+            LocalSidebarState provides state,
+            LocalSidebarProviderScope provides scope,
         ) {
-            Row(Modifier.fillMaxSize()) { content(composer, this) }
-            val request = scope.rail
-            if (request != null) {
-                SidebarRailOverlay(request)
-            } else {
-                Spacer(Modifier)
+            // A hand-written MeasurePolicy, not Box(contentAlignment): Box shares one alignment across
+            // every child, but the content Row needs TopStart/fillMaxSize while the rail needs an
+            // arbitrary x deep inside that area -- incompatible within one alignment. Explicit
+            // placeAt(x, 0) is also what sidesteps the bug offset()/Spacer positioning both hit: this
+            // engine's LayoutNode only ever contributes a chain link's shift to contentAbsoluteX, never
+            // to the node's own absoluteX (see resolveAbsolutePositions), and contains()'s hit-test
+            // envelope is a permissive union of the two -- so a rail shifted this far from its own
+            // origin (most of the sidebar's width) produced a hit region spanning that entire gap,
+            // silently swallowing every click on the sidebar underneath it. Confirmed by instrumenting
+            // the dispatcher directly. A real MeasurePolicy placement (the same mechanism Row already
+            // uses correctly for its own children) gives the rail its own tight, correctly-positioned
+            // bounds instead.
+            Layout(
+                nodeType = SidebarProviderRootNodeType,
+                modifier = modifier.fillMaxSize(),
+                measurePolicy = remember(state) { SidebarProviderRootMeasurePolicy(state) },
+            ) {
+                Row(Modifier.fillMaxSize()) { content(composer, this) }
+                val request = scope.rail
+                if (request != null) {
+                    SidebarRailOverlay(request)
+                } else {
+                    Spacer(Modifier)
+                }
             }
         }
     }
@@ -173,28 +176,30 @@ fun Sidebar(
     modifier: Modifier = Modifier,
     content: context(Composer) ColumnScope.() -> Unit,
 ) {
-    val state = requireSidebarState()
-    val scope = remember { SidebarScope() }
-    val sidebarWidth = if (state.isOpen) state.width else state.collapsedWidth
+    rememberGroup(SidebarGroup) {
+        val state = requireSidebarState()
+        val scope = remember { SidebarScope() }
+        val sidebarWidth = if (state.isOpen) state.width else state.collapsedWidth
 
-    Box(modifier.width(sidebarWidth).fillMaxHeight()) {
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .fillMaxHeight()
-                .background(shadcnTheme.palette.sidebar)
-                .border(
-                    width = SidebarPanelBorderWidth,
-                    color = shadcnTheme.palette.sidebarBorder,
-                    sides = BorderSides(end = true, top = false, bottom = false, start = false),
-                ),
-            verticalArrangement = Arrangement.spacedBy(Tw.Spacing.s2),
-        ) {
-            CompositionLocalProvider(
-                LocalSidebarScope provides scope,
-                LocalSidebarCollapsed provides !state.isOpen,
+        Box(modifier.width(sidebarWidth).fillMaxHeight()) {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight()
+                    .background(shadcnTheme.palette.sidebar)
+                    .border(
+                        width = SidebarPanelBorderWidth,
+                        color = shadcnTheme.palette.sidebarBorder,
+                        sides = BorderSides(end = true, top = false, bottom = false, start = false),
+                    ),
+                verticalArrangement = Arrangement.spacedBy(Tw.Spacing.s2),
             ) {
-                content(composer, this)
+                CompositionLocalProvider(
+                    LocalSidebarScope provides scope,
+                    LocalSidebarCollapsed provides !state.isOpen,
+                ) {
+                    content(composer, this)
+                }
             }
         }
     }
@@ -215,12 +220,14 @@ fun SidebarContent(
     modifier: Modifier = Modifier,
     content: context(Composer) () -> Unit,
 ) {
-    val scroll = rememberScrollState()
-    Column(
-        // Keep the weighted content slot from painting through the pinned header or footer.
-        scope.run { modifier.fillMaxWidth().weight(1f).clipToBounds().verticalScroll(scroll) },
-        verticalArrangement = Arrangement.spacedBy(Tw.Spacing.s2),
-    ) { content() }
+    rememberGroup(SidebarContentGroup) {
+        val scroll = rememberScrollState()
+        Column(
+            // Keep the weighted content slot from painting through the pinned header or footer.
+            scope.run { modifier.fillMaxWidth().weight(1f).clipToBounds().verticalScroll(scroll) },
+            verticalArrangement = Arrangement.spacedBy(Tw.Spacing.s2),
+        ) { content() }
+    }
 }
 
 /** Pinned content slot at the bottom of a [Sidebar]. */
@@ -302,3 +309,12 @@ context(_: Composer)
 private fun requireSidebarState(): SidebarState = requireNotNull(LocalSidebarState.current) {
     "Sidebar must be declared inside SidebarProvider { ... }."
 }
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object SidebarContentGroup
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object SidebarGroup
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object SidebarProviderGroup

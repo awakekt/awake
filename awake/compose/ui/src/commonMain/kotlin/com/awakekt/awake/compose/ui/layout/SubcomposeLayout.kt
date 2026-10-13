@@ -13,6 +13,7 @@ import com.awakekt.awake.compose.runtime.ProvidedLocals
 import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.node
 import com.awakekt.awake.compose.runtime.remember
+import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.node.EmptyMeasurePolicy
 import com.awakekt.awake.compose.ui.node.LayoutNode
@@ -168,11 +169,13 @@ fun SubcomposeLayout(
     modifier: Modifier = Modifier,
     measurePolicy: SubcomposeMeasureScope.(Constraints) -> MeasureResult,
 ) {
-    SubcomposeLayout(
-        modifier = modifier,
-        state = remember { SubcomposeLayoutState() },
-        measurePolicy = measurePolicy,
-    )
+    rememberGroup(SubcomposeLayoutGroup) {
+        SubcomposeLayout(
+            modifier = modifier,
+            state = remember { SubcomposeLayoutState() },
+            measurePolicy = measurePolicy,
+        )
+    }
 }
 
 private class SubcomposeMeasurePolicy(
@@ -202,3 +205,6 @@ private class SubcomposeMeasurePolicy(
         return result
     }
 }
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object SubcomposeLayoutGroup

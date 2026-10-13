@@ -13,6 +13,7 @@ import com.awakekt.awake.compose.foundation.style.StyleState
 import com.awakekt.awake.compose.foundation.style.styleable
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.remember
+import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.tailwind.Tw
@@ -37,10 +38,12 @@ fun ShadcnBadge(
     modifier: Modifier = Modifier,
     variant: ShadcnBadgeVariant = ShadcnBadgeVariant.Default,
 ) {
-    val theme = shadcnTheme
-    val style = remember(theme, variant) { theme.badgeStyle(variant) }
-    Box(modifier.styleable(StyleState.Default, style)) {
-        ShadcnText(label, variant = ShadcnTextVariant.Xs, color = theme.badgeForeground(variant))
+    rememberGroup(ShadcnBadgeGroup) {
+        val theme = shadcnTheme
+        val style = remember(theme, variant) { theme.badgeStyle(variant) }
+        Box(modifier.styleable(StyleState.Default, style)) {
+            ShadcnText(label, variant = ShadcnTextVariant.Xs, color = theme.badgeForeground(variant))
+        }
     }
 }
 
@@ -85,3 +88,6 @@ private fun ShadcnThemeValues.badgeForeground(variant: ShadcnBadgeVariant): Colo
 
 /** Tailwind's bare `border` is 1px; the width scale is not generated -- see `ShadcnCard`. */
 private val BadgeBorderWidth = com.awakekt.awake.compose.ui.unit.Dp(1f)
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnBadgeGroup

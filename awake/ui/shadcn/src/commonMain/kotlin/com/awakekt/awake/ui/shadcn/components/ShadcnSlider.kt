@@ -17,6 +17,7 @@ import com.awakekt.awake.compose.foundation.layout.heightIn
 import com.awakekt.awake.compose.foundation.style.rememberStyleState
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.remember
+import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.ModifierNodeElement
 import com.awakekt.awake.compose.ui.draw.drawBehind
@@ -70,100 +71,102 @@ fun ShadcnSlider(
     onValueChange: (Float) -> Unit = {},
     onValueChangeFinished: () -> Unit = {},
 ) {
-    val theme = shadcnTheme
-    val state = remember { SliderDragState() }
-    state.onValueChangeFinished = onValueChangeFinished
-    val interaction = remember { InteractionSource() }
-    val styleState = rememberStyleState(interaction, enabled = enabled)
-    val focusRingAlpha = animateFloat(if (styleState.isFocused) 1f else 0f)
+    rememberGroup(ShadcnSliderGroup) {
+        val theme = shadcnTheme
+        val state = remember { SliderDragState() }
+        state.onValueChangeFinished = onValueChangeFinished
+        val interaction = remember { InteractionSource() }
+        val styleState = rememberStyleState(interaction, enabled = enabled)
+        val focusRingAlpha = animateFloat(if (styleState.isFocused) 1f else 0f)
 
-    // A pointer delta or an arrow-key step arrives during input dispatch, which is before this
-    // build runs, so one that happened is already waiting here. Consuming it now rather than on the
-    // next frame is what keeps the thumb under the pointer (or the keyboard) instead of one frame
-    // behind it.
-    val next = if (enabled && state.pendingPx != 0f && state.trackWidthPx > 0f) {
-        val track = ShadcnSliderTrack(0f, state.trackWidthPx)
-        val moved = shadcnSliderValueAt(
-            pointerX = shadcnSliderFraction(value, min, max) * track.width + state.pendingPx,
-            track = track,
-            min = min,
-            max = max,
-        )
-        state.pendingPx = 0f
-        val snapped = shadcnSliderSnap(moved, min, max, steps)
-        onValueChange(snapped)
-        snapped
-    } else if (enabled && state.pendingKeyDelta != 0f) {
-        val moved = (value + state.pendingKeyDelta).coerceIn(min, max)
-        state.pendingKeyDelta = 0f
-        val snapped = shadcnSliderSnap(moved, min, max, steps)
-        onValueChange(snapped)
-        snapped
-    } else {
-        state.pendingPx = 0f
-        state.pendingKeyDelta = 0f
-        value.coerceIn(min, max)
-    }
-
-    val fraction = shadcnSliderFraction(next, min, max)
-
-    Spacer(
-        // As wide as it is allowed, as upstream's `w-full` root is: without it a slider a caller
-        // did not size measures zero wide and cannot be dragged. After the caller's modifier, so a
-        // width or weight the caller gives is the width it fills. Tall enough for the thumb, which
-        // the Canvas paints inside its own bounds; the reference's 6px is Radix's track alone, its
-        // thumb absolutely positioned and overflowing the root.
-        modifier
-            .fillMaxWidth()
-            .heightIn(min = SliderThumbSize)
-            .onSizeChanged { width, _ ->
-                state.trackWidthPx = shadcnSliderTrack(0f, width.toFloat(), state.thumbPx).width
-            }
-            .draggable(
-                onDrag = { dx, _ -> if (enabled) state.pendingPx += dx.toFloat() },
-                onDragStopped = onValueChangeFinished,
+        // A pointer delta or an arrow-key step arrives during input dispatch, which is before this
+        // build runs, so one that happened is already waiting here. Consuming it now rather than on the
+        // next frame is what keeps the thumb under the pointer (or the keyboard) instead of one frame
+        // behind it.
+        val next = if (enabled && state.pendingPx != 0f && state.trackWidthPx > 0f) {
+            val track = ShadcnSliderTrack(0f, state.trackWidthPx)
+            val moved = shadcnSliderValueAt(
+                pointerX = shadcnSliderFraction(value, min, max) * track.width + state.pendingPx,
+                track = track,
+                min = min,
+                max = max,
             )
-            .focusable(enabled = enabled, interactionSource = interaction)
-            .onKeyEvent { handleSliderKey(it, min, max, steps, state) }
-            .focusRing(
-                alpha = focusRingAlpha,
-                width = FieldFocusRingWidth,
-                color = theme.palette.ring.withAlpha(0.5f),
-                cornerRadius = SliderTrackHeight / 2f,
-            )
-            // drawBehind, not drawWithCache: the cache rebuilds on size, density and layout
-            // direction only, and a drag changes none of them. It captured `fraction`, so the
-            // range and thumb stayed where the first frame put them while onValueChange kept
-            // reporting the new value -- a slider whose number moves and whose bar does not.
-            // Nothing here is worth caching anyway; it is six multiplications, not a tessellation.
-            .drawBehind {
-                val thumb = SliderThumbSize.value * density
-                state.thumbPx = thumb
-                val track = shadcnSliderTrack(0f, width.toFloat(), thumb)
-                val trackH = SliderTrackHeight.value * density
-                val trackY = (height - trackH) / 2f
-                val ring = ThumbRingWidth.value * density
-                withAlpha(if (enabled) 1f else DISABLED_ALPHA) {
-                    drawRoundedRect(
-                        x = track.x,
-                        y = trackY,
-                        width = track.width,
-                        height = trackH,
-                        color = theme.palette.muted,
-                        radius = trackH / 2f,
-                    )
-                    drawRoundedRect(
-                        x = track.x,
-                        y = trackY,
-                        width = track.width * fraction,
-                        height = trackH,
-                        color = theme.palette.primary,
-                        radius = trackH / 2f,
-                    )
-                    drawSliderThumb(track, fraction, thumb, ring, theme.palette.primary)
+            state.pendingPx = 0f
+            val snapped = shadcnSliderSnap(moved, min, max, steps)
+            onValueChange(snapped)
+            snapped
+        } else if (enabled && state.pendingKeyDelta != 0f) {
+            val moved = (value + state.pendingKeyDelta).coerceIn(min, max)
+            state.pendingKeyDelta = 0f
+            val snapped = shadcnSliderSnap(moved, min, max, steps)
+            onValueChange(snapped)
+            snapped
+        } else {
+            state.pendingPx = 0f
+            state.pendingKeyDelta = 0f
+            value.coerceIn(min, max)
+        }
+
+        val fraction = shadcnSliderFraction(next, min, max)
+
+        Spacer(
+            // As wide as it is allowed, as upstream's `w-full` root is: without it a slider a caller
+            // did not size measures zero wide and cannot be dragged. After the caller's modifier, so a
+            // width or weight the caller gives is the width it fills. Tall enough for the thumb, which
+            // the Canvas paints inside its own bounds; the reference's 6px is Radix's track alone, its
+            // thumb absolutely positioned and overflowing the root.
+            modifier
+                .fillMaxWidth()
+                .heightIn(min = SliderThumbSize)
+                .onSizeChanged { width, _ ->
+                    state.trackWidthPx = shadcnSliderTrack(0f, width.toFloat(), state.thumbPx).width
                 }
-            },
-    )
+                .draggable(
+                    onDrag = { dx, _ -> if (enabled) state.pendingPx += dx.toFloat() },
+                    onDragStopped = onValueChangeFinished,
+                )
+                .focusable(enabled = enabled, interactionSource = interaction)
+                .onKeyEvent { handleSliderKey(it, min, max, steps, state) }
+                .focusRing(
+                    alpha = focusRingAlpha,
+                    width = FieldFocusRingWidth,
+                    color = theme.palette.ring.withAlpha(0.5f),
+                    cornerRadius = SliderTrackHeight / 2f,
+                )
+                // drawBehind, not drawWithCache: the cache rebuilds on size, density and layout
+                // direction only, and a drag changes none of them. It captured `fraction`, so the
+                // range and thumb stayed where the first frame put them while onValueChange kept
+                // reporting the new value -- a slider whose number moves and whose bar does not.
+                // Nothing here is worth caching anyway; it is six multiplications, not a tessellation.
+                .drawBehind {
+                    val thumb = SliderThumbSize.value * density
+                    state.thumbPx = thumb
+                    val track = shadcnSliderTrack(0f, width.toFloat(), thumb)
+                    val trackH = SliderTrackHeight.value * density
+                    val trackY = (height - trackH) / 2f
+                    val ring = ThumbRingWidth.value * density
+                    withAlpha(if (enabled) 1f else DISABLED_ALPHA) {
+                        drawRoundedRect(
+                            x = track.x,
+                            y = trackY,
+                            width = track.width,
+                            height = trackH,
+                            color = theme.palette.muted,
+                            radius = trackH / 2f,
+                        )
+                        drawRoundedRect(
+                            x = track.x,
+                            y = trackY,
+                            width = track.width * fraction,
+                            height = trackH,
+                            color = theme.palette.primary,
+                            radius = trackH / 2f,
+                        )
+                        drawSliderThumb(track, fraction, thumb, ring, theme.palette.primary)
+                    }
+                },
+        )
+    }
 }
 
 /**
@@ -192,93 +195,95 @@ fun ShadcnRangeSlider(
     onStartChange: (Float) -> Unit = {},
     onEndChange: (Float) -> Unit = {},
 ) {
-    val theme = shadcnTheme
-    val state = remember { RangeSliderDragState() }
+    rememberGroup(ShadcnRangeSliderGroup) {
+        val theme = shadcnTheme
+        val state = remember { RangeSliderDragState() }
 
-    val startFraction = shadcnSliderFraction(start, min, max)
-    val endFraction = shadcnSliderFraction(end, min, max)
+        val startFraction = shadcnSliderFraction(start, min, max)
+        val endFraction = shadcnSliderFraction(end, min, max)
 
-    // Same before-this-build timing as ShadcnSlider: a press picks the nearer thumb and an absolute
-    // pointer x, a move only updates the x, and both are resolved into a value here so the draw
-    // below and the caller's state agree within the same frame.
-    val resolved = state.pendingXPx?.let { x ->
-        if (!enabled || state.slotWidthPx <= 0f) {
+        // Same before-this-build timing as ShadcnSlider: a press picks the nearer thumb and an absolute
+        // pointer x, a move only updates the x, and both are resolved into a value here so the draw
+        // below and the caller's state agree within the same frame.
+        val resolved = state.pendingXPx?.let { x ->
+            if (!enabled || state.slotWidthPx <= 0f) {
+                state.pendingXPx = null
+                state.activeThumb = null
+                return@let null
+            }
+            val track = shadcnSliderTrack(0f, state.slotWidthPx, state.thumbPx)
+            val moved = shadcnSliderValueAt(x.toFloat(), track, min, max)
             state.pendingXPx = null
-            state.activeThumb = null
-            return@let null
-        }
-        val track = shadcnSliderTrack(0f, state.slotWidthPx, state.thumbPx)
-        val moved = shadcnSliderValueAt(x.toFloat(), track, min, max)
-        state.pendingXPx = null
-        when (state.activeThumb) {
-            ShadcnSliderThumb.Start -> {
-                val snapped = shadcnSliderSnap(moved, min, max, steps).coerceAtMost(end)
-                onStartChange(snapped)
-                snapped to end
+            when (state.activeThumb) {
+                ShadcnSliderThumb.Start -> {
+                    val snapped = shadcnSliderSnap(moved, min, max, steps).coerceAtMost(end)
+                    onStartChange(snapped)
+                    snapped to end
+                }
+                ShadcnSliderThumb.End -> {
+                    val snapped = shadcnSliderSnap(moved, min, max, steps).coerceAtLeast(start)
+                    onEndChange(snapped)
+                    start to snapped
+                }
+                null -> null
             }
-            ShadcnSliderThumb.End -> {
-                val snapped = shadcnSliderSnap(moved, min, max, steps).coerceAtLeast(start)
-                onEndChange(snapped)
-                start to snapped
-            }
-            null -> null
-        }
-    } ?: (start.coerceIn(min, max) to end.coerceIn(min, max))
-    val (resolvedStart, resolvedEnd) = resolved
+        } ?: (start.coerceIn(min, max) to end.coerceIn(min, max))
+        val (resolvedStart, resolvedEnd) = resolved
 
-    val resolvedStartFraction = shadcnSliderFraction(resolvedStart, min, max)
-    val resolvedEndFraction = shadcnSliderFraction(resolvedEnd, min, max)
+        val resolvedStartFraction = shadcnSliderFraction(resolvedStart, min, max)
+        val resolvedEndFraction = shadcnSliderFraction(resolvedEnd, min, max)
 
-    Spacer(
-        // As wide as it is allowed, after the caller's own width; see ShadcnSlider.
-        modifier
-            .fillMaxWidth()
-            .heightIn(min = SliderThumbSize)
-            .onSizeChanged { width, _ -> state.slotWidthPx = width.toFloat() }
-            .rangeDraggable(
-                onPress = { x ->
-                    if (enabled && state.slotWidthPx > 0f) {
-                        val track = shadcnSliderTrack(0f, state.slotWidthPx, state.thumbPx)
-                        val startThumbX = track.x + track.width * startFraction
-                        val endThumbX = track.x + track.width * endFraction
-                        state.activeThumb = shadcnNearerThumb(x.toFloat(), startThumbX, endThumbX)
-                        state.pendingXPx = x
+        Spacer(
+            // As wide as it is allowed, after the caller's own width; see ShadcnSlider.
+            modifier
+                .fillMaxWidth()
+                .heightIn(min = SliderThumbSize)
+                .onSizeChanged { width, _ -> state.slotWidthPx = width.toFloat() }
+                .rangeDraggable(
+                    onPress = { x ->
+                        if (enabled && state.slotWidthPx > 0f) {
+                            val track = shadcnSliderTrack(0f, state.slotWidthPx, state.thumbPx)
+                            val startThumbX = track.x + track.width * startFraction
+                            val endThumbX = track.x + track.width * endFraction
+                            state.activeThumb = shadcnNearerThumb(x.toFloat(), startThumbX, endThumbX)
+                            state.pendingXPx = x
+                        }
+                    },
+                    onDrag = { x -> if (enabled) state.pendingXPx = x },
+                )
+                // Same reason as ShadcnSlider: the captured fractions change on drag, the size does not.
+                .drawBehind {
+                    val thumb = SliderThumbSize.value * density
+                    state.thumbPx = thumb
+                    val track = shadcnSliderTrack(0f, width.toFloat(), thumb)
+                    val trackH = SliderTrackHeight.value * density
+                    val trackY = (height - trackH) / 2f
+                    val ring = ThumbRingWidth.value * density
+                    withAlpha(if (enabled) 1f else DISABLED_ALPHA) {
+                        drawRoundedRect(
+                            x = track.x,
+                            y = trackY,
+                            width = track.width,
+                            height = trackH,
+                            color = theme.palette.muted,
+                            radius = trackH / 2f,
+                        )
+                        val spanX = track.x + track.width * resolvedStartFraction
+                        val spanW = track.width * (resolvedEndFraction - resolvedStartFraction)
+                        drawRoundedRect(
+                            x = spanX,
+                            y = trackY,
+                            width = spanW,
+                            height = trackH,
+                            color = theme.palette.primary,
+                            radius = trackH / 2f,
+                        )
+                        drawSliderThumb(track, resolvedStartFraction, thumb, ring, theme.palette.primary)
+                        drawSliderThumb(track, resolvedEndFraction, thumb, ring, theme.palette.primary)
                     }
                 },
-                onDrag = { x -> if (enabled) state.pendingXPx = x },
-            )
-            // Same reason as ShadcnSlider: the captured fractions change on drag, the size does not.
-            .drawBehind {
-                val thumb = SliderThumbSize.value * density
-                state.thumbPx = thumb
-                val track = shadcnSliderTrack(0f, width.toFloat(), thumb)
-                val trackH = SliderTrackHeight.value * density
-                val trackY = (height - trackH) / 2f
-                val ring = ThumbRingWidth.value * density
-                withAlpha(if (enabled) 1f else DISABLED_ALPHA) {
-                    drawRoundedRect(
-                        x = track.x,
-                        y = trackY,
-                        width = track.width,
-                        height = trackH,
-                        color = theme.palette.muted,
-                        radius = trackH / 2f,
-                    )
-                    val spanX = track.x + track.width * resolvedStartFraction
-                    val spanW = track.width * (resolvedEndFraction - resolvedStartFraction)
-                    drawRoundedRect(
-                        x = spanX,
-                        y = trackY,
-                        width = spanW,
-                        height = trackH,
-                        color = theme.palette.primary,
-                        radius = trackH / 2f,
-                    )
-                    drawSliderThumb(track, resolvedStartFraction, thumb, ring, theme.palette.primary)
-                    drawSliderThumb(track, resolvedEndFraction, thumb, ring, theme.palette.primary)
-                }
-            },
-    )
+        )
+    }
 }
 
 /**
@@ -434,3 +439,9 @@ private class RangeDraggableNode :
 
     override fun toString(): String = "rangeDraggable()"
 }
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnRangeSliderGroup
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnSliderGroup

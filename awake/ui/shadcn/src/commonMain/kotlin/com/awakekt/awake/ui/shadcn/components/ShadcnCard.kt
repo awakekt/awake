@@ -20,6 +20,7 @@ import com.awakekt.awake.compose.foundation.style.StyleState
 import com.awakekt.awake.compose.foundation.style.styleable
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.remember
+import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.unit.Dp
@@ -118,16 +119,18 @@ fun ShadcnCard(
         ShadcnCardScope.() -> Unit
     )? = null,
 ) {
-    val theme = shadcnTheme
-    val style = remember(theme, contentPadding) { theme.cardStyle(contentPadding) }
-    Box(modifier.styleable(StyleState.Default, style)) {
-        Column(
-            Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(Tw.Spacing.s6),
-        ) {
-            if (content != null) {
-                val scope = remember(this) { ShadcnCardScope(this) }
-                scope.content()
+    rememberGroup(ShadcnCardGroup) {
+        val theme = shadcnTheme
+        val style = remember(theme, contentPadding) { theme.cardStyle(contentPadding) }
+        Box(modifier.styleable(StyleState.Default, style)) {
+            Column(
+                Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(Tw.Spacing.s6),
+            ) {
+                if (content != null) {
+                    val scope = remember(this) { ShadcnCardScope(this) }
+                    scope.content()
+                }
             }
         }
     }
@@ -150,3 +153,6 @@ private fun ShadcnThemeValues.cardStyle(contentPadding: Dp): Style = Style {
 }
 
 private val CardBorderWidth: Dp = 1.dp
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnCardGroup

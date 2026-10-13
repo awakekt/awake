@@ -17,6 +17,7 @@ import com.awakekt.awake.compose.foundation.style.rememberStyleState
 import com.awakekt.awake.compose.foundation.style.styleable
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.remember
+import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.semantics.SemanticsProperties
@@ -53,7 +54,7 @@ fun ShadcnToggle(
      * shift the slot table depending on whether a caller passed one.
      */
     interactionSource: InteractionSource? = null,
-): Boolean {
+): Boolean = rememberGroup(ShadcnToggleGroup) {
     val theme = shadcnTheme
     val owned = remember { InteractionSource() }
     val interaction = interactionSource ?: owned
@@ -84,7 +85,7 @@ fun ShadcnToggle(
             color = if (next) theme.palette.accentForeground else theme.palette.foreground,
         )
     }
-    return next
+    next
 }
 
 private fun ShadcnThemeValues.toggleStyle(checked: Boolean): Style = Style {
@@ -106,3 +107,6 @@ private val ToggleSize: Dp = 40.dp
 
 /** `disabled:opacity-50`. */
 private const val DISABLED_ALPHA = 0.5f
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnToggleGroup

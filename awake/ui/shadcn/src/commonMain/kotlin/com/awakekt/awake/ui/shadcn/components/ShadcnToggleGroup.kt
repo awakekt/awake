@@ -26,6 +26,7 @@ import com.awakekt.awake.compose.foundation.style.rememberStyleState
 import com.awakekt.awake.compose.foundation.style.styleable
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.remember
+import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.graphics.RoundedCornerShape
@@ -64,32 +65,34 @@ fun ShadcnToggleGroup(
     spacing: Dp = 0.dp,
     content: ShadcnToggleGroupScope.() -> Unit,
 ) {
-    val items = remember(content) { ShadcnToggleGroupScope().apply(content).items }
-    // One value rather than three parallel arguments threaded to every item: they are the group's
-    // appearance and behaviour, and an item never varies one without the others.
-    val spec = ToggleGroupSpec(selection, variant, size, orientation, spacing)
-    val arrangement = Arrangement.spacedBy(spacing)
-    val group = modifier.semantics {
-        // What makes a strip of radios *one* choice rather than several independent ones.
-        if (selection == ShadcnToggleGroupSelection.Single) {
-            this[SemanticsProperties.SelectableGroup] = true
-        }
-    }
-    val count = items.size
-    when (orientation) {
-        ShadcnButtonGroupOrientation.Horizontal -> Row(
-            group,
-            horizontalArrangement = Arrangement.spacedByHorizontal(spacing),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            items.forEachIndexed { index, item ->
-                ToggleGroupItem(item, index, count, selected, spec, onSelectedChange)
+    rememberGroup(ShadcnToggleGroupGroup) {
+        val items = remember(content) { ShadcnToggleGroupScope().apply(content).items }
+        // One value rather than three parallel arguments threaded to every item: they are the group's
+        // appearance and behaviour, and an item never varies one without the others.
+        val spec = ToggleGroupSpec(selection, variant, size, orientation, spacing)
+        val arrangement = Arrangement.spacedBy(spacing)
+        val group = modifier.semantics {
+            // What makes a strip of radios *one* choice rather than several independent ones.
+            if (selection == ShadcnToggleGroupSelection.Single) {
+                this[SemanticsProperties.SelectableGroup] = true
             }
         }
+        val count = items.size
+        when (orientation) {
+            ShadcnButtonGroupOrientation.Horizontal -> Row(
+                group,
+                horizontalArrangement = Arrangement.spacedByHorizontal(spacing),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                items.forEachIndexed { index, item ->
+                    ToggleGroupItem(item, index, count, selected, spec, onSelectedChange)
+                }
+            }
 
-        ShadcnButtonGroupOrientation.Vertical -> Column(group, verticalArrangement = arrangement) {
-            items.forEachIndexed { index, item ->
-                ToggleGroupItem(item, index, count, selected, spec, onSelectedChange)
+            ShadcnButtonGroupOrientation.Vertical -> Column(group, verticalArrangement = arrangement) {
+                items.forEachIndexed { index, item ->
+                    ToggleGroupItem(item, index, count, selected, spec, onSelectedChange)
+                }
             }
         }
     }
@@ -305,3 +308,6 @@ private val ItemBorderWidth: Dp = 1.dp
 
 /** `disabled:opacity-50`. */
 private const val DISABLED_ALPHA = 0.5f
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnToggleGroupGroup

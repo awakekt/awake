@@ -23,6 +23,7 @@ import com.awakekt.awake.compose.runtime.compositionLocalOf
 import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.provides
 import com.awakekt.awake.compose.runtime.remember
+import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.unit.Dp
@@ -131,19 +132,21 @@ fun ShadcnTable(
         ShadcnTableScope.() -> Unit
     )? = null,
 ) {
-    val scope = remember { ShadcnTableScope() }
-    Column(modifier.fillMaxWidth()) {
-        if (header != null) {
-            ShadcnTableHeader { header() }
-        }
-        if (content != null) {
-            content(scope)
-        }
-        if (footer != null) {
-            ShadcnTableFooter { footer() }
-        }
-        if (caption != null) {
-            ShadcnTableCaption(caption)
+    rememberGroup(ShadcnTableGroup) {
+        val scope = remember { ShadcnTableScope() }
+        Column(modifier.fillMaxWidth()) {
+            if (header != null) {
+                ShadcnTableHeader { header() }
+            }
+            if (content != null) {
+                content(scope)
+            }
+            if (footer != null) {
+                ShadcnTableFooter { footer() }
+            }
+            if (caption != null) {
+                ShadcnTableCaption(caption)
+            }
         }
     }
 }
@@ -166,9 +169,11 @@ fun ShadcnTableHeader(
         ShadcnTableHeaderScope.() -> Unit
     )? = null,
 ) {
-    val scope = remember { ShadcnTableHeaderScope() }
-    Column(modifier.fillMaxWidth()) {
-        content?.let { it(scope) }
+    rememberGroup(ShadcnTableHeaderGroup) {
+        val scope = remember { ShadcnTableHeaderScope() }
+        Column(modifier.fillMaxWidth()) {
+            content?.let { it(scope) }
+        }
     }
 }
 
@@ -187,14 +192,16 @@ fun ShadcnTableBody(
     modifier: Modifier = Modifier,
     content: ShadcnTableRowsScope.() -> Unit,
 ) {
-    val rows = remember(content) { ShadcnTableRowsScope().apply(content).rows }
-    Column(modifier.fillMaxWidth()) {
-        rows.forEachIndexed { index, row ->
-            ShadcnTableRow(
-                selected = row.selected,
-                bordered = index < rows.lastIndex,
-                content = row.content,
-            )
+    rememberGroup(ShadcnTableBodyGroup) {
+        val rows = remember(content) { ShadcnTableRowsScope().apply(content).rows }
+        Column(modifier.fillMaxWidth()) {
+            rows.forEachIndexed { index, row ->
+                ShadcnTableRow(
+                    selected = row.selected,
+                    bordered = index < rows.lastIndex,
+                    content = row.content,
+                )
+            }
         }
     }
 }
@@ -214,19 +221,21 @@ fun ShadcnTableFooter(
     modifier: Modifier = Modifier,
     content: ShadcnTableRowsScope.() -> Unit,
 ) {
-    val theme = shadcnTheme
-    val rows = remember(content) { ShadcnTableRowsScope().apply(content).rows }
-    CompositionLocalProvider(LocalTableCellWeight provides FontWeight.Medium) {
-        Column(
-            modifier.fillMaxWidth().background(theme.palette.muted.withAlpha(FOOTER_MUTED_ALPHA)),
-        ) {
-            ShadcnSeparator(Modifier.fillMaxWidth().height(RowBorderThickness))
-            rows.forEachIndexed { index, row ->
-                ShadcnTableRow(
-                    selected = row.selected,
-                    bordered = index < rows.lastIndex,
-                    content = row.content,
-                )
+    rememberGroup(ShadcnTableFooterGroup) {
+        val theme = shadcnTheme
+        val rows = remember(content) { ShadcnTableRowsScope().apply(content).rows }
+        CompositionLocalProvider(LocalTableCellWeight provides FontWeight.Medium) {
+            Column(
+                modifier.fillMaxWidth().background(theme.palette.muted.withAlpha(FOOTER_MUTED_ALPHA)),
+            ) {
+                ShadcnSeparator(Modifier.fillMaxWidth().height(RowBorderThickness))
+                rows.forEachIndexed { index, row ->
+                    ShadcnTableRow(
+                        selected = row.selected,
+                        bordered = index < rows.lastIndex,
+                        content = row.content,
+                    )
+                }
             }
         }
     }
@@ -285,24 +294,26 @@ fun ShadcnTableRow(
         RowScope.() -> Unit
     )? = null,
 ) {
-    val theme = shadcnTheme
-    val interaction = remember { InteractionSource() }
-    val background = when {
-        selected -> theme.palette.muted
-        interaction.isHovered -> theme.palette.muted.withAlpha(ROW_HOVER_ALPHA)
-        else -> null
-    }
-    Column(Modifier.fillMaxWidth()) {
-        Row(
-            modifier
-                .fillMaxWidth()
-                .let { if (background == null) it else it.background(background) }
-                .hoverable(interaction),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            content?.let { it() }
+    rememberGroup(ShadcnTableRowGroup) {
+        val theme = shadcnTheme
+        val interaction = remember { InteractionSource() }
+        val background = when {
+            selected -> theme.palette.muted
+            interaction.isHovered -> theme.palette.muted.withAlpha(ROW_HOVER_ALPHA)
+            else -> null
         }
-        if (bordered) ShadcnSeparator(Modifier.fillMaxWidth().height(RowBorderThickness))
+        Column(Modifier.fillMaxWidth()) {
+            Row(
+                modifier
+                    .fillMaxWidth()
+                    .let { if (background == null) it else it.background(background) }
+                    .hoverable(interaction),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                content?.let { it() }
+            }
+            if (bordered) ShadcnSeparator(Modifier.fillMaxWidth().height(RowBorderThickness))
+        }
     }
 }
 
@@ -427,3 +438,18 @@ private val RowBorderThickness: Dp = Dp(1f)
 private const val ROW_HOVER_ALPHA = 0.5f
 private const val FOOTER_MUTED_ALPHA = 0.5f
 private val CaptionTopMargin: Dp = Tw.Spacing.s4
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnTableBodyGroup
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnTableFooterGroup
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnTableGroup
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnTableHeaderGroup
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnTableRowGroup

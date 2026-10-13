@@ -15,6 +15,7 @@ import com.awakekt.awake.compose.foundation.layout.width
 import com.awakekt.awake.compose.foundation.text.TextFieldState
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.remember
+import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.draw.alpha
 import com.awakekt.awake.compose.ui.layout.Layer
@@ -74,40 +75,42 @@ fun ShadcnCommand(
     placeholder: String = "Type a command or search...",
     width: Dp = 480.dp,
 ) {
-    val searchState = remember { TextFieldState("") }
-    val query = searchState.text.lowercase()
-    val filteredItems = if (query.isEmpty()) {
-        items
-    } else {
-        items.filter {
-            it.title.lowercase().contains(query) ||
-                (it.description != null && it.description.lowercase().contains(query)) ||
-                it.category.lowercase().contains(query)
+    rememberGroup(ShadcnCommandGroup) {
+        val searchState = remember { TextFieldState("") }
+        val query = searchState.text.lowercase()
+        val filteredItems = if (query.isEmpty()) {
+            items
+        } else {
+            items.filter {
+                it.title.lowercase().contains(query) ||
+                    (it.description != null && it.description.lowercase().contains(query)) ||
+                    it.category.lowercase().contains(query)
+            }
         }
-    }
-    val grouped = filteredItems.groupBy { it.category }
+        val grouped = filteredItems.groupBy { it.category }
 
-    ShadcnCard(modifier = modifier.width(width)) {
-        Column(verticalArrangement = Arrangement.spacedBy(Tw.Spacing.s3)) {
-            ShadcnInput(state = searchState, placeholder = placeholder)
-            ShadcnSeparator()
+        ShadcnCard(modifier = modifier.width(width)) {
+            Column(verticalArrangement = Arrangement.spacedBy(Tw.Spacing.s3)) {
+                ShadcnInput(state = searchState, placeholder = placeholder)
+                ShadcnSeparator()
 
-            if (grouped.isEmpty()) {
-                shadcnMuted("No results found.")
-            } else {
-                grouped.forEach { (category, categoryItems) ->
-                    shadcnMuted(category)
-                    categoryItems.forEach { item ->
-                        ShadcnItem(
-                            title = item.title,
-                            description = item.description,
-                            modifier = Modifier.clickable { onItemSelected(item) },
-                            trailing = {
-                                if (item.shortcut != null) {
-                                    ShadcnBadge(label = item.shortcut)
-                                }
-                            },
-                        )
+                if (grouped.isEmpty()) {
+                    shadcnMuted("No results found.")
+                } else {
+                    grouped.forEach { (category, categoryItems) ->
+                        shadcnMuted(category)
+                        categoryItems.forEach { item ->
+                            ShadcnItem(
+                                title = item.title,
+                                description = item.description,
+                                modifier = Modifier.clickable { onItemSelected(item) },
+                                trailing = {
+                                    if (item.shortcut != null) {
+                                        ShadcnBadge(label = item.shortcut)
+                                    }
+                                },
+                            )
+                        }
                     }
                 }
             }
@@ -132,22 +135,30 @@ fun ShadcnCommandDialog(
     onItemSelected: (ShadcnCommandItem) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val alpha = rememberOverlayAlpha(visible)
-    if (isPresent(visible, alpha)) {
-        Layer(
-            kind = LayerKind.Popup,
-            dismissOnOutsideClick = true,
-            onDismissRequest = { onVisibleChange(false) },
-            measurePolicy = BoxMeasurePolicy(),
-        ) {
-            ShadcnCommand(
-                items = items,
-                onItemSelected = {
-                    onItemSelected(it)
-                    onVisibleChange(false)
-                },
-                modifier = modifier.alpha(alpha),
-            )
+    rememberGroup(ShadcnCommandDialogGroup) {
+        val alpha = rememberOverlayAlpha(visible)
+        if (isPresent(visible, alpha)) {
+            Layer(
+                kind = LayerKind.Popup,
+                dismissOnOutsideClick = true,
+                onDismissRequest = { onVisibleChange(false) },
+                measurePolicy = BoxMeasurePolicy(),
+            ) {
+                ShadcnCommand(
+                    items = items,
+                    onItemSelected = {
+                        onItemSelected(it)
+                        onVisibleChange(false)
+                    },
+                    modifier = modifier.alpha(alpha),
+                )
+            }
         }
     }
 }
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnCommandDialogGroup
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnCommandGroup

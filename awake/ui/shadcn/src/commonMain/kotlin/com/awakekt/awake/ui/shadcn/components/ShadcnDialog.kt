@@ -25,6 +25,7 @@ import com.awakekt.awake.compose.runtime.CompositionLocalProvider
 import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.provides
 import com.awakekt.awake.compose.runtime.remember
+import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.platform.LocalTextStyle
@@ -202,49 +203,51 @@ fun ShadcnDialog(
         ShadcnDialogScope.() -> Unit
     )? = null,
 ) {
-    val theme = shadcnTheme
-    val style = remember(theme) { theme.dialogStyle() }
+    rememberGroup(ShadcnDialogGroup) {
+        val theme = shadcnTheme
+        val style = remember(theme) { theme.dialogStyle() }
 
-    shadcnModalLayer(
-        visible = visible,
-        alignment = Alignment.Center,
-        onDismissRequest = onDismissRequest,
-        scrimModifier = scrimModifier(id, onScrimClick = onDismissRequest),
-    ) {
-        // `w-full max-w-[calc(100%-2rem)] sm:max-w-lg`: keep the mobile gutter outside the tagged
-        // surface so its semantics bounds describe the actual painted dialog.
-        Box(Modifier.padding(horizontal = DialogViewportMargin)) {
-            Box(
-                modifier = modifier
-                    .widthIn(max = width)
-                    .fillMaxWidth()
-                    .styleable(StyleState.Default, style)
-                    .semantics {
-                        this[SemanticsProperties.Role] = SemanticsRole.Dialog
-                        if (id != null) this[SemanticsProperties.TestTag] = id
-                    },
-            ) {
-                CompositionLocalProvider(
-                    LocalTextStyle provides LocalTextStyle.current.copy(color = theme.palette.foreground),
+        shadcnModalLayer(
+            visible = visible,
+            alignment = Alignment.Center,
+            onDismissRequest = onDismissRequest,
+            scrimModifier = scrimModifier(id, onScrimClick = onDismissRequest),
+        ) {
+            // `w-full max-w-[calc(100%-2rem)] sm:max-w-lg`: keep the mobile gutter outside the tagged
+            // surface so its semantics bounds describe the actual painted dialog.
+            Box(Modifier.padding(horizontal = DialogViewportMargin)) {
+                Box(
+                    modifier = modifier
+                        .widthIn(max = width)
+                        .fillMaxWidth()
+                        .styleable(StyleState.Default, style)
+                        .semantics {
+                            this[SemanticsProperties.Role] = SemanticsRole.Dialog
+                            if (id != null) this[SemanticsProperties.TestTag] = id
+                        },
                 ) {
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(DialogSectionGap),
+                    CompositionLocalProvider(
+                        LocalTextStyle provides LocalTextStyle.current.copy(color = theme.palette.foreground),
                     ) {
-                        if (content != null) {
-                            val scope = remember(this) { ShadcnDialogScope(this) }
-                            scope.content()
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(DialogSectionGap),
+                        ) {
+                            if (content != null) {
+                                val scope = remember(this) { ShadcnDialogScope(this) }
+                                scope.content()
+                            }
                         }
                     }
-                }
-                if (showCloseButton) {
-                    shadcnOverlayClose(
-                        // `absolute top-4 right-4` counts from inside the border, and the panel's
-                        // children start inside its `p-6`, so it moves back out by the difference.
-                        Modifier.align(Alignment.TopEnd).offset(x = DialogCloseShift, y = 0.dp - DialogCloseShift),
-                        id,
-                        onDismissRequest,
-                    )
+                    if (showCloseButton) {
+                        shadcnOverlayClose(
+                            // `absolute top-4 right-4` counts from inside the border, and the panel's
+                            // children start inside its `p-6`, so it moves back out by the difference.
+                            Modifier.align(Alignment.TopEnd).offset(x = DialogCloseShift, y = 0.dp - DialogCloseShift),
+                            id,
+                            onDismissRequest,
+                        )
+                    }
                 }
             }
         }
@@ -280,3 +283,6 @@ private val DialogBorderWidth: Dp = 1.dp
 
 /** From `p-6` back out to `top-4 right-4`. */
 private val DialogCloseShift: Dp = Tw.Spacing.s6 - OverlayCloseInset
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnDialogGroup

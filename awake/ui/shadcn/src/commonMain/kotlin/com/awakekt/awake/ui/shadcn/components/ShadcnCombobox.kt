@@ -29,6 +29,7 @@ import com.awakekt.awake.compose.foundation.verticalScroll
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.remember
+import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.layout.Layer
@@ -66,53 +67,55 @@ fun ShadcnCombobox(
     id: String = "combobox",
     enabled: Boolean = true,
 ) {
-    val selectedItem = selectedIndex?.let { items.getOrNull(it) }
-    val anchor = remember { PopupAnchor() }
-    // Written by layout, read by the popup on the next frame -- hence a remembered cell
-    // rather than a local, which the next pass would reset to zero.
-    val triggerWidth = remember { MeasuredWidth() }
-    val density = LocalDensity.current
-    val searchState = remember { TextFieldState(selectedItem?.label.orEmpty()) }
+    rememberGroup(ShadcnComboboxGroup) {
+        val selectedItem = selectedIndex?.let { items.getOrNull(it) }
+        val anchor = remember { PopupAnchor() }
+        // Written by layout, read by the popup on the next frame -- hence a remembered cell
+        // rather than a local, which the next pass would reset to zero.
+        val triggerWidth = remember { MeasuredWidth() }
+        val density = LocalDensity.current
+        val searchState = remember { TextFieldState(selectedItem?.label.orEmpty()) }
 
-    Box(
-        modifier.popupAnchor(anchor).onSizeChanged { width, _ -> triggerWidth.px = width }
-            .semantics { this[SemanticsProperties.TestTag] = "$id.trigger" },
-    ) {
-        ShadcnInput(
-            state = searchState,
-            placeholder = if (expanded) searchPlaceholder else placeholder,
-            enabled = enabled,
-            modifier = Modifier
-                .fillMaxWidth()
-                .semantics {
-                    this[SemanticsProperties.TestTag] = "$id.search"
-                },
-            onClick = { if (enabled) onExpandedChange(true) },
-        )
+        Box(
+            modifier.popupAnchor(anchor).onSizeChanged { width, _ -> triggerWidth.px = width }
+                .semantics { this[SemanticsProperties.TestTag] = "$id.trigger" },
+        ) {
+            ShadcnInput(
+                state = searchState,
+                placeholder = if (expanded) searchPlaceholder else placeholder,
+                enabled = enabled,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .semantics {
+                        this[SemanticsProperties.TestTag] = "$id.search"
+                    },
+                onClick = { if (enabled) onExpandedChange(true) },
+            )
 
-        if (expanded) {
-            val provider = remember(density) {
-                AnchoredBelowPositionProvider(anchor, (ComboboxPopupGap.value * density).toInt())
-            }
-            val popupWidth = (triggerWidth.px / density).coerceAtLeast(POPOVER_MIN_WIDTH.value).dp
-            Layer(
-                kind = LayerKind.Popup,
-                dismissOnOutsideClick = true,
-                onDismissRequest = { onExpandedChange(false) },
-                positionProvider = provider,
-                measurePolicy = BoxMeasurePolicy(),
-            ) {
-                ShadcnComboboxContent(
-                    items = items,
-                    selectedIndex = selectedIndex,
-                    searchState = searchState,
-                    emptyText = emptyText,
-                    modifier = Modifier.width(popupWidth),
-                    id = id,
-                )?.let { selected ->
-                    searchState.setText(items.getOrNull(selected)?.label.orEmpty())
-                    onItemSelected(selected)
-                    onExpandedChange(false)
+            if (expanded) {
+                val provider = remember(density) {
+                    AnchoredBelowPositionProvider(anchor, (ComboboxPopupGap.value * density).toInt())
+                }
+                val popupWidth = (triggerWidth.px / density).coerceAtLeast(POPOVER_MIN_WIDTH.value).dp
+                Layer(
+                    kind = LayerKind.Popup,
+                    dismissOnOutsideClick = true,
+                    onDismissRequest = { onExpandedChange(false) },
+                    positionProvider = provider,
+                    measurePolicy = BoxMeasurePolicy(),
+                ) {
+                    ShadcnComboboxContent(
+                        items = items,
+                        selectedIndex = selectedIndex,
+                        searchState = searchState,
+                        emptyText = emptyText,
+                        modifier = Modifier.width(popupWidth),
+                        id = id,
+                    )?.let { selected ->
+                        searchState.setText(items.getOrNull(selected)?.label.orEmpty())
+                        onItemSelected(selected)
+                        onExpandedChange(false)
+                    }
                 }
             }
         }
@@ -239,3 +242,6 @@ private val ComboboxPopupGap = 6.dp
 private class MeasuredWidth {
     var px: Int = 0
 }
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnComboboxGroup

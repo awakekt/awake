@@ -18,6 +18,7 @@ import com.awakekt.awake.compose.foundation.style.rememberStyleState
 import com.awakekt.awake.compose.foundation.style.styleable
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.remember
+import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.draw.alpha
@@ -57,33 +58,35 @@ internal fun shadcnModalLayer(
     scrimModifier: Modifier,
     panel: (context(Composer) () -> Unit),
 ) {
-    val theme = shadcnTheme
-    // Held open while it fades: the caller no longer removes the subtree, so there is something
-    // left to animate. See `rememberOverlayAlpha`.
-    val alpha = rememberOverlayAlpha(visible)
-    if (!isPresent(visible, alpha)) return
-    Layer(
-        kind = LayerKind.Dialog,
-        modal = true,
-        // Inert while a scrim covers the layer; see the note above. Escape is the live one.
-        dismissOnOutsideClick = false,
-        dismissOnEscape = true,
-        onDismissRequest = onDismissRequest,
-        // Modal content is portal-like: it owns the viewport, even when it is declared inside a
-        // page preview or another nested layout. Anchored popups intentionally keep their parent
-        // origin; a scrimmed modal must cancel that origin so its backdrop and panel share the
-        // actual window bounds.
-        positionProvider = GlobalModalPositionProvider,
-        measurePolicy = BoxMeasurePolicy(alignment),
-    ) {
-        Box(
-            Modifier
-                .fillMaxSize()
-                .alpha(alpha)
-                .background(theme.palette.overlay)
-                .then(scrimModifier),
-        )
-        Box(Modifier.alpha(alpha)) { panel() }
+    rememberGroup(ShadcnModalLayerGroup) {
+        val theme = shadcnTheme
+        // Held open while it fades: the caller no longer removes the subtree, so there is something
+        // left to animate. See `rememberOverlayAlpha`.
+        val alpha = rememberOverlayAlpha(visible)
+        if (!isPresent(visible, alpha)) return
+        Layer(
+            kind = LayerKind.Dialog,
+            modal = true,
+            // Inert while a scrim covers the layer; see the note above. Escape is the live one.
+            dismissOnOutsideClick = false,
+            dismissOnEscape = true,
+            onDismissRequest = onDismissRequest,
+            // Modal content is portal-like: it owns the viewport, even when it is declared inside a
+            // page preview or another nested layout. Anchored popups intentionally keep their parent
+            // origin; a scrimmed modal must cancel that origin so its backdrop and panel share the
+            // actual window bounds.
+            positionProvider = GlobalModalPositionProvider,
+            measurePolicy = BoxMeasurePolicy(alignment),
+        ) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .alpha(alpha)
+                    .background(theme.palette.overlay)
+                    .then(scrimModifier),
+            )
+            Box(Modifier.alpha(alpha)) { panel() }
+        }
     }
 }
 
@@ -113,23 +116,25 @@ internal fun scrimModifier(id: String?, onScrimClick: (() -> Unit)?): Modifier =
  */
 context(_: Composer)
 internal fun shadcnOverlayClose(placement: Modifier, id: String?, onClick: () -> Unit) {
-    val theme = shadcnTheme
-    val interaction = remember { InteractionSource() }
-    val state = rememberStyleState(interaction)
-    val style = remember(theme) { theme.overlayCloseStyle() }
-    Box(placement) {
-        Box(
-            Modifier
-                .hoverable(interaction)
-                .clickable(interaction) { onClick() }
-                .styleable(state, style)
-                .semantics {
-                    this[SemanticsProperties.Role] = SemanticsRole.Button
-                    this[SemanticsProperties.Label] = "Close"
-                    if (id != null) this[SemanticsProperties.TestTag] = "$id.close"
-                },
-        ) {
-            ShadcnIcon(ShadcnIcons.x, tint = theme.palette.foreground)
+    rememberGroup(ShadcnOverlayCloseGroup) {
+        val theme = shadcnTheme
+        val interaction = remember { InteractionSource() }
+        val state = rememberStyleState(interaction)
+        val style = remember(theme) { theme.overlayCloseStyle() }
+        Box(placement) {
+            Box(
+                Modifier
+                    .hoverable(interaction)
+                    .clickable(interaction) { onClick() }
+                    .styleable(state, style)
+                    .semantics {
+                        this[SemanticsProperties.Role] = SemanticsRole.Button
+                        this[SemanticsProperties.Label] = "Close"
+                        if (id != null) this[SemanticsProperties.TestTag] = "$id.close"
+                    },
+            ) {
+                ShadcnIcon(ShadcnIcons.x, tint = theme.palette.foreground)
+            }
         }
     }
 }
@@ -145,3 +150,9 @@ private const val OVERLAY_CLOSE_ALPHA = 0.7f
 
 /** `top-4 right-4`: the close control's inset from the panel's edges. */
 internal val OverlayCloseInset: Dp = Tw.Spacing.s4
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnModalLayerGroup
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnOverlayCloseGroup

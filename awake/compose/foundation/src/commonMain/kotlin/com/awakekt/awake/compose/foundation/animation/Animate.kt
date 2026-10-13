@@ -8,6 +8,7 @@ package com.awakekt.awake.compose.foundation.animation
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.remember
+import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.platform.LocalFrameClock
 
 context(_: Composer)
@@ -25,11 +26,11 @@ context(_: Composer)
  * There is no id. Identity is the node's position in the tree, so two spinners cannot collide the
  * way `animateFloat(id, ...)` lets two callers pick the same string and share one phase.
  */
-fun rememberLoopingPhase(durationSeconds: Float): Float {
+fun rememberLoopingPhase(durationSeconds: Float): Float = rememberGroup(RememberLoopingPhaseGroup) {
     require(durationSeconds > 0f) { "durationSeconds must be positive, was $durationSeconds" }
     val clock = LocalFrameClock.current
     val phase = remember { Phase() }
-    return phase.advance(clock.deltaSeconds / durationSeconds)
+    phase.advance(clock.deltaSeconds / durationSeconds)
 }
 
 context(_: Composer)
@@ -43,10 +44,10 @@ context(_: Composer)
  * Linear. Easing curves are a `05-animation` follow-up -- shipping the interpolation without the
  * clock behind it would have been the harder half done first.
  */
-fun animateFloat(target: Float, durationSeconds: Float = DEFAULT_DURATION_SECONDS): Float {
+fun animateFloat(target: Float, durationSeconds: Float = DEFAULT_DURATION_SECONDS): Float = rememberGroup(AnimateFloatGroup) {
     val clock = LocalFrameClock.current
     val animation = remember { AnimatedFloat(target) }
-    return animation.advance(target, durationSeconds, clock.deltaSeconds)
+    animation.advance(target, durationSeconds, clock.deltaSeconds)
 }
 
 /** 200 ms, the shadcn transition default and close enough to Compose's own short tween. */
@@ -94,3 +95,9 @@ private class AnimatedFloat(initial: Float) {
         return from + (to - from) * t
     }
 }
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object AnimateFloatGroup
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object RememberLoopingPhaseGroup

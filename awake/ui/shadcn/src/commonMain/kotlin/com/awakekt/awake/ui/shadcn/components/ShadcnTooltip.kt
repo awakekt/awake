@@ -14,6 +14,7 @@ import com.awakekt.awake.compose.foundation.style.styleable
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.remember
+import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.ModifierNodeElement
 import com.awakekt.awake.compose.ui.input.pointer.PointerEvent
@@ -52,10 +53,12 @@ fun ShadcnTooltip(
     text: String,
     modifier: Modifier = Modifier,
 ) {
-    val theme = shadcnTheme
-    val style = remember(theme) { theme.tooltipStyle() }
-    Box(modifier.styleable(StyleState.Default, style)) {
-        ShadcnText(text, variant = ShadcnTextVariant.Xs, color = theme.palette.background)
+    rememberGroup(ShadcnTooltipGroup) {
+        val theme = shadcnTheme
+        val style = remember(theme) { theme.tooltipStyle() }
+        Box(modifier.styleable(StyleState.Default, style)) {
+            ShadcnText(text, variant = ShadcnTextVariant.Xs, color = theme.palette.background)
+        }
     }
 }
 
@@ -95,36 +98,38 @@ fun ShadcnTooltipped(
     modifier: Modifier = Modifier,
     content: context(Composer) () -> Unit,
 ) {
-    val interaction = remember { InteractionSource() }
-    val anchor = remember { TooltipAnchor() }
-    val viewport = LocalViewportSize.current
-    val density = LocalDensity.current
+    rememberGroup(ShadcnTooltippedGroup) {
+        val interaction = remember { InteractionSource() }
+        val anchor = remember { TooltipAnchor() }
+        val viewport = LocalViewportSize.current
+        val density = LocalDensity.current
 
-    Box(
-        modifier
-            .hoverable(interaction)
-            .then(FingerHoldElement(anchor))
-            // The trigger's resolved bounds, in viewport space. Read a frame later than they are
-            // written, which costs nothing here: the tooltip cannot open before the pointer has
-            // been over the trigger for a frame anyway.
-            .onPlaced { x, y, width, height ->
-                anchor.x = x
-                anchor.y = y
-                anchor.width = width
-                anchor.height = height
-            },
-    ) {
-        content()
-        if (interaction.isHovered || anchor.heldByFinger) {
-            Layer(
-                kind = LayerKind.Tooltip,
-                // Two keys, because `remember` has no three-key overload; the anchor is the same
-                // instance for this trigger's whole life, so it is not one.
-                measurePolicy = remember(viewport, density) {
-                    TooltipPlacementPolicy(anchor, viewport, (TOOLTIP_GAP.value * density).toInt())
+        Box(
+            modifier
+                .hoverable(interaction)
+                .then(FingerHoldElement(anchor))
+                // The trigger's resolved bounds, in viewport space. Read a frame later than they are
+                // written, which costs nothing here: the tooltip cannot open before the pointer has
+                // been over the trigger for a frame anyway.
+                .onPlaced { x, y, width, height ->
+                    anchor.x = x
+                    anchor.y = y
+                    anchor.width = width
+                    anchor.height = height
                 },
-            ) {
-                ShadcnTooltip(text)
+        ) {
+            content()
+            if (interaction.isHovered || anchor.heldByFinger) {
+                Layer(
+                    kind = LayerKind.Tooltip,
+                    // Two keys, because `remember` has no three-key overload; the anchor is the same
+                    // instance for this trigger's whole life, so it is not one.
+                    measurePolicy = remember(viewport, density) {
+                        TooltipPlacementPolicy(anchor, viewport, (TOOLTIP_GAP.value * density).toInt())
+                    },
+                ) {
+                    ShadcnTooltip(text)
+                }
             }
         }
     }
@@ -208,3 +213,9 @@ private class TooltipPlacementPolicy(
 
 /** `sideOffset={4}` on shadcn's own `TooltipContent`. */
 private val TOOLTIP_GAP: Dp = 4.dp
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnTooltipGroup
+
+/** Keys this component's `remember` slots as one group in its caller's node. */
+private object ShadcnTooltippedGroup
