@@ -65,6 +65,17 @@ class CanvasLinkTest {
     }
 
     @Test
+    fun linksFalseDrawsTheSpanSyntaxAsTypedAndReportsNoKey() {
+        val element = textElement("See [[quest|the quest board]] for work.").apply { links = false }
+        val output = frame()
+
+        assertNull(output.semantics.find("canvas-link-quest"), "links = false must gain no clickable span")
+        tap(0, 0)
+
+        assertNull(element.consumeLink())
+    }
+
+    @Test
     fun plainTextWithNoSpansDrawsNoLinkAndNeverReportsOne() {
         val element = textElement("Just words, no brackets.")
         val output = frame()

@@ -173,6 +173,14 @@ class CanvasElement {
     /** A View's camera: the name of a node with a camera, whose picture it shows; empty shows none. */
     var camera: String = ""
 
+    /**
+     * Whether a Text element's `[[key|shown words]]` spans draw as links.
+     *
+     * False for text a game cannot trust, such as player chat: `[[` and `]]` then draw as typed and
+     * never report a key, so a player cannot make their own line clickable.
+     */
+    var links: Boolean = true
+
     private var wheelAccumulated = 0f
 
     /** Adds to the wheel collected since the last [consumeWheel]; [SceneCanvas] calls this. */

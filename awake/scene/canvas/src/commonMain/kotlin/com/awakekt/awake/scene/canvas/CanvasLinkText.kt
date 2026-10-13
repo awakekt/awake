@@ -40,6 +40,10 @@ private val DefaultLinkColor = Color.fromHex("#3B82F6")
  */
 context(_: Composer)
 internal fun CanvasText(element: CanvasElement, text: String, style: TextStyle) {
+    if (!element.links) {
+        Text(text, style = style)
+        return
+    }
     val spans = parseCanvasTextSpans(text)
     val plainOnly = spans.singleOrNull() as? CanvasTextSpan.Plain
     if (plainOnly != null) {
