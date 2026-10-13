@@ -103,6 +103,19 @@ class CanvasViewParityTest {
         }
     }
 
+    /**
+     * A View whose camera renders shadows leaves the main frame's shadows as they were (#743). An
+     * offscreen render reuses the shadow map, so its depth pass must not overwrite cascades the main
+     * frame samples. The View's camera is [SIDE] units away, so its cascades cover ground the main
+     * camera never sees: a main frame that sampled them would lose or move its shadow.
+     *
+     * The barrier #743 added can't fail this on its own: lavapipe honours the subpass dependency it
+     * restates, and only MoltenVK drops it. This guards what the barrier protects.
+     *
+     * On CI the main frame holds 166 shadow pixels and none change. Negative control, run once: with
+     * the main frame skipping its own shadow pass after an offscreen render, so it sampled the View's
+     * cascades, 39,977 pixels outside the box changed and the whole ground read as shadow (39,351).
+     */
     @Test
     fun vulkanViewWithShadowsLeavesTheMainFramesShadowsAsTheyWere() = runBlocking {
         val game = app {
