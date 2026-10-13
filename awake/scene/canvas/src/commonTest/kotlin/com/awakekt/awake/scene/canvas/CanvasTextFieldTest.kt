@@ -16,6 +16,7 @@ import com.awakekt.awake.ecs.World
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -107,11 +108,40 @@ class CanvasTextFieldTest {
 
         frame(editActions = listOf(TextEditAction.Enter))
 
-        assertTrue(field.consumeSubmit())
-        assertFalse(field.consumeSubmit(), "consumeSubmit must answer true only once per Enter")
+        assertEquals("", field.consumeSubmit())
+        assertNull(field.consumeSubmit(), "consumeSubmit must answer non-null only once per Enter")
         // Still focused for the rest of the frame Enter arrived on.
         val released = frame()
         assertFalse(released.ownership.isTextInputFocused, "focus must be released by the frame after Enter")
+    }
+
+    @Test
+    fun theLineTypedAndSubmittedInOneFrameComesBackWholeFromConsumeSubmit() {
+        val field = textField()
+        field.focus()
+
+        frame(typedText = "hi", editActions = listOf(TextEditAction.Enter))
+
+        assertEquals("hi", field.consumeSubmit(), "this frame's typing must be in what Enter submits, not just `text`")
+        assertEquals("", field.text, "`text` itself only catches up at the next composition")
+    }
+
+    @Test
+    fun enterThatFocusesAFieldOnThisFrameDoesNotAlsoSubmitIt() {
+        val field = textField()
+        frame() // compose once so the field's modifier chain attaches
+
+        // A system reacting to this frame's Enter going down, the way the bug report's chat
+        // window does -- the same Enter also reaches this frame's dispatch below.
+        field.focused = true
+        val focusFrame = frame(editActions = listOf(TextEditAction.Enter))
+
+        assertNull(field.consumeSubmit(), "the Enter that opened the field must not also submit it")
+        assertTrue(focusFrame.ownership.isTextInputFocused, "the field must still take this frame's focus request")
+
+        frame(editActions = listOf(TextEditAction.Enter)) // a later, real Enter
+
+        assertEquals("", field.consumeSubmit(), "a later Enter submits normally")
     }
 
     @Test
@@ -121,7 +151,7 @@ class CanvasTextFieldTest {
 
         frame(keyEvents = listOf(KeyEvent(Key.Escape, KeyEventType.Down)))
 
-        assertFalse(field.consumeSubmit(), "Escape must not submit")
+        assertNull(field.consumeSubmit(), "Escape must not submit")
         val released = frame()
         assertFalse(released.ownership.isTextInputFocused, "focus must be released by the frame after Escape")
     }

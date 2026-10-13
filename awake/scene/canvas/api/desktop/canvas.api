@@ -96,7 +96,7 @@ public final class com/awakekt/awake/scene/canvas/CanvasElement {
 	public fun <init> ()V
 	public final fun consumeDoublePress ()Z
 	public final fun consumePress ()Z
-	public final fun consumeSubmit ()Z
+	public final fun consumeSubmit ()Ljava/lang/String;
 	public final fun consumeWheel ()F
 	public final fun getAction ()Ljava/lang/String;
 	public final fun getAnchor ()Lcom/awakekt/awake/scene/canvas/CanvasAnchor;
