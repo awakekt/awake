@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-10-13
+
+### Added
+
+- **A canvas Text element can turn off its `[[key|shown words]]` links.** `canvas_element` gains
+  `links: Boolean = true`; with `links` set to `false`, a `[[key|shown words]]` span draws as typed
+  and a click on it reports no key, so a game can show untrusted text, such as player chat, without
+  letting it make its own words clickable.
+- **Function keys F6 through F12.** `Key` gained `F6`-`F12`, mapped on desktop (GLFW) and the
+  browser canvas alongside the existing `F1`-`F5`.
+
+### Changed
+
+- **A canvas `TextField`'s Enter behaves one frame earlier.** `CanvasElement.consumeSubmit()` now
+  returns the submitted line (`String?`, `null` when nothing was submitted) instead of a `Boolean`,
+  taken from the field's live state at submit time so a character typed the same frame Enter is
+  pressed is included, not just what `text` held as of the frame's last composition. An Enter whose
+  down event focused the field -- a system reading that same Enter to open a chat window, say --
+  no longer also submits the field it just opened; only a later Enter does.
+- **A `World` holds more than 64 component types.** Registering a 65th type no longer throws
+  `IllegalArgumentException`: each entity's component signature grows by one `Long` per further 64
+  types, and a world that stays within 64 keeps its one-`Long` signature.
+
+### Fixed
+
+- **On MoltenVK, an offscreen render can no longer overwrite a shadow map the main frame is still sampling.** An offscreen render (a canvas View, `readback()`) reuses the shadow map, and the scene-depth and mask targets, rendering into them before the frame that samples them has finished. Their render pass declares that ordering as a subpass dependency, which MoltenVK ignores, and only the barrier after each depth pass was recorded explicitly. Each depth pass now records the one before it too: earlier sampling and depth writes finish before it writes.
+
 ## [0.9.0] - 2026-10-13
 
 ### Added
