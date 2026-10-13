@@ -74,9 +74,25 @@ private object JoltModule {
     }
 }
 
+// Called from joltHeapBytesInUse() below; detekt cannot trace @JsFun calls.
+@Suppress("unused")
+@JsFun("(jolt) => jolt.JoltInterface.prototype.sGetTotalMemory() - jolt.JoltInterface.prototype.sGetFreeMemory()")
+private external fun joltHeapInUse(jolt: JsAny): Double
+
+/**
+ * Bytes in use on the module's heap. That heap is fixed at 128 MiB and an allocation past it
+ * aborts the page with `Aborted(OOM)`, so whatever a call makes with `new jolt.X` it destroys.
+ */
+internal suspend fun joltHeapBytesInUse(): Long = joltHeapInUse(JoltModule.get()).toLong()
+
 // @JsFun glue below mirrors jrouwe/JoltPhysics.js's Examples/js/example.js call sequence
 // verbatim; `jolt.XXX` values are read from the untyped namespace object [JoltModule.get]
 // resolves since Kotlin/Wasm has no per-field typed handle for them (no `dynamic`).
+//
+// Every `new jolt.X` is malloc'd on the module's fixed heap and stays there until `jolt.destroy`,
+// so each function destroys what it constructs once the call it was for has copied it. What the
+// world keeps goes in joltDestroyWorld, and a body's shape goes with the body. JoltHeapLeakTest
+// holds every call to that.
 
 /**
  * [jolt.JoltInterface]'s own object-layer/broadphase-layer collision-filtering setup, plus
@@ -123,9 +139,9 @@ private object JoltModule {
 
         const bpInterface = new jolt.BroadPhaseLayerInterfaceTable(layerCount, NUM_BROAD_PHASE_LAYERS);
         for (let i = 0; i < layerCount; i++) {
-            bpInterface.MapObjectToBroadPhaseLayer(
-                i, new jolt.BroadPhaseLayer(movingFlat[i] ? BP_MOVING : BP_STATIC)
-            );
+            const layer = new jolt.BroadPhaseLayer(movingFlat[i] ? BP_MOVING : BP_STATIC);
+            bpInterface.MapObjectToBroadPhaseLayer(i, layer);
+            jolt.destroy(layer);
         }
 
         settings.mObjectLayerPairFilter = objectFilter;
@@ -137,7 +153,9 @@ private object JoltModule {
         const joltInterface = new jolt.JoltInterface(settings);
         jolt.destroy(settings);
         const physicsSystem = joltInterface.GetPhysicsSystem();
-        physicsSystem.SetGravity(new jolt.Vec3(gx, gy, gz));
+        const gravity = new jolt.Vec3(gx, gy, gz);
+        physicsSystem.SetGravity(gravity);
+        jolt.destroy(gravity);
         const bodyInterface = physicsSystem.GetBodyInterface();
 
         // Contacts are buffered here rather than delivered as they happen: JoltPhysics.js calls
@@ -200,8 +218,9 @@ private external fun joltCreateWorld(
     """
     (world, shapeKind, hx, hy, hz, radius, halfHeight, px, py, pz, qw, qx, qy, qz, motionTypeCode, isStatic, layerIndex, isSensor, plane2d) => {
         const jolt = world.jolt;
+        const halfExtent = new jolt.Vec3(hx, hy, hz);
         const shape = shapeKind === 0
-            ? new jolt.BoxShape(new jolt.Vec3(hx, hy, hz), 0.05, null)
+            ? new jolt.BoxShape(halfExtent, 0.05, null)
             : (shapeKind === 1
                 ? new jolt.SphereShape(radius, null)
                 : new jolt.CapsuleShape(halfHeight, radius, null));
@@ -209,13 +228,18 @@ private external fun joltCreateWorld(
             ? jolt.EMotionType_Static
             : (motionTypeCode === 1 ? jolt.EMotionType_Kinematic : jolt.EMotionType_Dynamic);
 
+        const position = new jolt.RVec3(px, py, pz);
+        const rotation = new jolt.Quat(qx, qy, qz, qw);
         const bodyCreationSettings = new jolt.BodyCreationSettings(
-            shape, new jolt.RVec3(px, py, pz), new jolt.Quat(qx, qy, qz, qw), motionType, layerIndex
+            shape, position, rotation, motionType, layerIndex
         );
         bodyCreationSettings.mIsSensor = isSensor;
         bodyCreationSettings.mAllowedDOFs = plane2d ? jolt.EAllowedDOFs_Plane2D : jolt.EAllowedDOFs_All;
         const body = world.bodyInterface.CreateBody(bodyCreationSettings);
         jolt.destroy(bodyCreationSettings);
+        jolt.destroy(rotation);
+        jolt.destroy(position);
+        jolt.destroy(halfExtent);
         const activation = isStatic ? jolt.EActivation_DontActivate : jolt.EActivation_Activate;
         world.bodyInterface.AddBody(body.GetID(), activation);
         return body.GetID().GetIndexAndSequenceNumber();
@@ -298,7 +322,9 @@ private fun flatten(shape: PhysicsShape, unsupported: String): FlatShape = when 
         const jolt = world.jolt;
         const points = new jolt.ArrayVec3();
         for (let i = 0; i < pts.length; i += 3) {
-            points.push_back(new jolt.Vec3(pts[i], pts[i + 1], pts[i + 2]));
+            const point = new jolt.Vec3(pts[i], pts[i + 1], pts[i + 2]);
+            points.push_back(point);
+            jolt.destroy(point);
         }
         const settings = new jolt.ConvexHullShapeSettings();
         settings.mPoints = points;
@@ -306,13 +332,17 @@ private fun flatten(shape: PhysicsShape, unsupported: String): FlatShape = when 
         const motionType = motionTypeCode === 0
             ? jolt.EMotionType_Static
             : (motionTypeCode === 1 ? jolt.EMotionType_Kinematic : jolt.EMotionType_Dynamic);
+        const position = new jolt.RVec3(px, py, pz);
+        const rotation = new jolt.Quat(qx, qy, qz, qw);
         const bodyCreationSettings = new jolt.BodyCreationSettings(
-            shape, new jolt.RVec3(px, py, pz), new jolt.Quat(qx, qy, qz, qw), motionType, layerIndex
+            shape, position, rotation, motionType, layerIndex
         );
         bodyCreationSettings.mIsSensor = isSensor;
         bodyCreationSettings.mAllowedDOFs = plane2d ? jolt.EAllowedDOFs_Plane2D : jolt.EAllowedDOFs_All;
         const body = world.bodyInterface.CreateBody(bodyCreationSettings);
         jolt.destroy(bodyCreationSettings);
+        jolt.destroy(rotation);
+        jolt.destroy(position);
         jolt.destroy(settings);
         jolt.destroy(points);
         const activation = isStatic ? jolt.EActivation_DontActivate : jolt.EActivation_Activate;
@@ -353,21 +383,28 @@ private external fun joltCreateHullBody(
         const triangles = new jolt.TriangleList();
         const count = indices.length / 3;
         triangles.resize(count);
+        const setCorner = (tri, slot, i) => {
+            const corner = new jolt.Float3(verts[i], verts[i + 1], verts[i + 2]);
+            tri.set_mV(slot, corner);
+            jolt.destroy(corner);
+        };
         for (let t = 0; t < count; t++) {
-            const a = indices[t * 3] * 3, b = indices[t * 3 + 1] * 3, c = indices[t * 3 + 2] * 3;
             const tri = triangles.at(t);
-            tri.set_mV(0, new jolt.Float3(verts[a], verts[a + 1], verts[a + 2]));
-            tri.set_mV(1, new jolt.Float3(verts[b], verts[b + 1], verts[b + 2]));
-            tri.set_mV(2, new jolt.Float3(verts[c], verts[c + 1], verts[c + 2]));
+            setCorner(tri, 0, indices[t * 3] * 3);
+            setCorner(tri, 1, indices[t * 3 + 1] * 3);
+            setCorner(tri, 2, indices[t * 3 + 2] * 3);
         }
         const settings = new jolt.MeshShapeSettings(triangles);
         const shape = settings.Create().Get();
+        const position = new jolt.RVec3(px, py, pz);
+        const rotation = new jolt.Quat(qx, qy, qz, qw);
         const bodyCreationSettings = new jolt.BodyCreationSettings(
-            shape, new jolt.RVec3(px, py, pz), new jolt.Quat(qx, qy, qz, qw),
-            jolt.EMotionType_Static, layerIndex
+            shape, position, rotation, jolt.EMotionType_Static, layerIndex
         );
         const body = world.bodyInterface.CreateBody(bodyCreationSettings);
         jolt.destroy(bodyCreationSettings);
+        jolt.destroy(rotation);
+        jolt.destroy(position);
         jolt.destroy(settings);
         jolt.destroy(triangles);
         world.bodyInterface.AddBody(body.GetID(), jolt.EActivation_DontActivate);
@@ -419,15 +456,22 @@ private external fun jsArrayPush(arr: JsAny, value: Double)
         const settings = new jolt.HeightFieldShapeSettings();
         settings.mHeightSamples = heights;
         settings.mSampleCount = sampleCount;
-        settings.mOffset = new jolt.Vec3(offsetX, 0, offsetZ);
-        settings.mScale = new jolt.Vec3(sx, sy, sz);
+        const offset = new jolt.Vec3(offsetX, 0, offsetZ);
+        const scale = new jolt.Vec3(sx, sy, sz);
+        settings.mOffset = offset;
+        settings.mScale = scale;
         const shape = settings.Create().Get();
+        const position = new jolt.RVec3(px, py, pz);
+        const rotation = new jolt.Quat(0, 0, 0, 1);
         const bodyCreationSettings = new jolt.BodyCreationSettings(
-            shape, new jolt.RVec3(px, py, pz), new jolt.Quat(0, 0, 0, 1),
-            jolt.EMotionType_Static, 0
+            shape, position, rotation, jolt.EMotionType_Static, 0
         );
         const body = world.bodyInterface.CreateBody(bodyCreationSettings);
         jolt.destroy(bodyCreationSettings);
+        jolt.destroy(rotation);
+        jolt.destroy(position);
+        jolt.destroy(scale);
+        jolt.destroy(offset);
         jolt.destroy(settings);
         jolt.destroy(heights);
         world.bodyInterface.AddBody(body.GetID(), jolt.EActivation_DontActivate);
@@ -469,14 +513,17 @@ private const val SHAPE_KIND_CAPSULE = 2
     """
     (world, shapeKind, hx, hy, hz, radius, halfHeight, fx, fy, fz, tx, ty, tz, onlyLayer, ignoreId) => {
         const jolt = world.jolt;
+        const halfExtent = new jolt.Vec3(hx, hy, hz);
         const shape = shapeKind === 0
-            ? new jolt.BoxShape(new jolt.Vec3(hx, hy, hz), 0.05, null)
+            ? new jolt.BoxShape(halfExtent, 0.05, null)
             : (shapeKind === 1
                 ? new jolt.SphereShape(radius, null)
                 : new jolt.CapsuleShape(halfHeight, radius, null));
-        const start = jolt.RMat44.prototype.sTranslation(new jolt.RVec3(fx, fy, fz));
+        const from = new jolt.RVec3(fx, fy, fz);
+        const start = jolt.RMat44.prototype.sTranslation(from);
         const direction = new jolt.Vec3(tx - fx, ty - fy, tz - fz);
-        const cast = new jolt.RShapeCast(shape, new jolt.Vec3(1, 1, 1), start, direction);
+        const scale = new jolt.Vec3(1, 1, 1);
+        const cast = new jolt.RShapeCast(shape, scale, start, direction);
         const settings = new jolt.ShapeCastSettings();
         const collector = new jolt.CastShapeClosestHitCollisionCollector();
         const layerFilter = onlyLayer < 0
@@ -493,10 +540,13 @@ private const val SHAPE_KIND_CAPSULE = 2
             (bodyId) => jolt.wrapPointer(bodyId, jolt.BodyID).GetIndexAndSequenceNumber() !== ignoreId;
         bodyFilter.ShouldCollideLocked =
             (body) => !jolt.wrapPointer(body, jolt.Body).IsSensor();
+        const baseOffset = new jolt.RVec3(0, 0, 0);
+        const broadPhaseFilter = new jolt.BroadPhaseLayerFilter();
+        const shapeFilter = new jolt.ShapeFilter();
         world.physicsSystem.GetNarrowPhaseQuery().CastShape(
-            cast, settings, new jolt.RVec3(0, 0, 0), collector,
-            new jolt.BroadPhaseLayerFilter(), layerFilter,
-            bodyFilter, new jolt.ShapeFilter()
+            cast, settings, baseOffset, collector,
+            broadPhaseFilter, layerFilter,
+            bodyFilter, shapeFilter
         );
         const hadHit = collector.HadHit();
         let out = [0, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -511,10 +561,10 @@ private const val SHAPE_KIND_CAPSULE = 2
                 hit.mFraction,
             ];
         }
-        jolt.destroy(collector);
-        jolt.destroy(settings);
-        jolt.destroy(cast);
-        jolt.destroy(shape);
+        for (const made of [
+            shapeFilter, broadPhaseFilter, baseOffset, bodyFilter, layerFilter, collector, settings,
+            cast, scale, direction, from, shape, halfExtent,
+        ]) jolt.destroy(made);
         return out;
     }
     """,
@@ -549,30 +599,38 @@ private external fun joltShapeCast(
     """
     (world, shapeKind, hx, hy, hz, radius, halfHeight, px, py, pz, onlyLayer) => {
         const jolt = world.jolt;
+        const halfExtent = new jolt.Vec3(hx, hy, hz);
         const shape = shapeKind === 0
-            ? new jolt.BoxShape(new jolt.Vec3(hx, hy, hz), 0.05, null)
+            ? new jolt.BoxShape(halfExtent, 0.05, null)
             : (shapeKind === 1
                 ? new jolt.SphereShape(radius, null)
                 : new jolt.CapsuleShape(halfHeight, radius, null));
-        const transform = jolt.RMat44.prototype.sTranslation(new jolt.RVec3(px, py, pz));
+        const position = new jolt.RVec3(px, py, pz);
+        const transform = jolt.RMat44.prototype.sTranslation(position);
         const settings = new jolt.CollideShapeSettings();
         const collector = new jolt.CollideShapeAllHitCollisionCollector();
         const layerFilter = onlyLayer < 0
             ? new jolt.ObjectLayerFilter()
             : new jolt.SpecifiedObjectLayerFilter(onlyLayer);
+        const scale = new jolt.Vec3(1, 1, 1);
+        const baseOffset = new jolt.RVec3(0, 0, 0);
+        const broadPhaseFilter = new jolt.BroadPhaseLayerFilter();
+        const bodyFilter = new jolt.BodyFilter();
+        const shapeFilter = new jolt.ShapeFilter();
         world.physicsSystem.GetNarrowPhaseQuery().CollideShape(
-            shape, new jolt.Vec3(1, 1, 1), transform, settings, new jolt.RVec3(0, 0, 0), collector,
-            new jolt.BroadPhaseLayerFilter(), layerFilter,
-            new jolt.BodyFilter(), new jolt.ShapeFilter()
+            shape, scale, transform, settings, baseOffset, collector,
+            broadPhaseFilter, layerFilter,
+            bodyFilter, shapeFilter
         );
         const hits = collector.mHits;
         const out = [hits.size()];
         for (let i = 0; i < hits.size(); i++) {
             out.push(hits.at(i).mBodyID2.GetIndexAndSequenceNumber());
         }
-        jolt.destroy(collector);
-        jolt.destroy(settings);
-        jolt.destroy(shape);
+        for (const made of [
+            shapeFilter, bodyFilter, broadPhaseFilter, baseOffset, scale, layerFilter, collector,
+            settings, position, shape, halfExtent,
+        ]) jolt.destroy(made);
         return out;
     }
     """,
@@ -600,6 +658,7 @@ private external fun joltOverlapShape(
         const id = new world.jolt.BodyID(idNum);
         world.bodyInterface.RemoveBody(id);
         world.bodyInterface.DestroyBody(id);
+        world.jolt.destroy(id);
     }
     """,
 )
@@ -612,10 +671,11 @@ private external fun joltDestroyBody(world: JsAny, idNum: Int)
     """
     (world, idNum, enabled) => {
         const jolt = world.jolt;
+        const id = new jolt.BodyID(idNum);
         world.bodyInterface.SetMotionQuality(
-            new jolt.BodyID(idNum),
-            enabled ? jolt.EMotionQuality_LinearCast : jolt.EMotionQuality_Discrete
+            id, enabled ? jolt.EMotionQuality_LinearCast : jolt.EMotionQuality_Discrete
         );
+        jolt.destroy(id);
     }
     """,
 )
@@ -628,6 +688,7 @@ private external fun joltSetMotionQuality(world: JsAny, idNum: Int, enabled: Boo
     (world, idNum, active) => {
         const id = new world.jolt.BodyID(idNum);
         if (active) world.bodyInterface.ActivateBody(id); else world.bodyInterface.DeactivateBody(id);
+        world.jolt.destroy(id);
     }
     """,
 )
@@ -635,7 +696,16 @@ private external fun joltSetActive(world: JsAny, idNum: Int, active: Boolean)
 
 // Called from JoltPhysicsWorld.isActive() below; detekt cannot trace @JsFun calls.
 @Suppress("unused")
-@JsFun("(world, idNum) => world.bodyInterface.IsActive(new world.jolt.BodyID(idNum))")
+@JsFun(
+    """
+    (world, idNum) => {
+        const id = new world.jolt.BodyID(idNum);
+        const active = world.bodyInterface.IsActive(id);
+        world.jolt.destroy(id);
+        return active;
+    }
+    """,
+)
 private external fun joltIsActive(world: JsAny, idNum: Int): Boolean
 
 /**
@@ -651,31 +721,37 @@ private external fun joltIsActive(world: JsAny, idNum: Int): Boolean
     (world, hinge, idA, idB, ax, ay, az, bx, by, bz, dx, dy, dz, nx, ny, nz, low, high) => {
         const jolt = world.jolt;
         const lock = world.physicsSystem.GetBodyLockInterfaceNoLock();
-        const bodyA = lock.TryGetBody(new jolt.BodyID(idA));
-        const bodyB = lock.TryGetBody(new jolt.BodyID(idB));
+        const idOfA = new jolt.BodyID(idA);
+        const idOfB = new jolt.BodyID(idB);
+        const bodyA = lock.TryGetBody(idOfA);
+        const bodyB = lock.TryGetBody(idOfB);
+        const pointA = new jolt.RVec3(ax, ay, az);
+        const pointB = new jolt.RVec3(bx, by, bz);
+        const axis = new jolt.Vec3(dx, dy, dz);
+        const normal = new jolt.Vec3(nx, ny, nz);
         let settings;
         if (hinge) {
             settings = new jolt.HingeConstraintSettings();
             settings.mSpace = jolt.EConstraintSpace_WorldSpace;
-            settings.mPoint1 = new jolt.RVec3(ax, ay, az);
-            settings.mPoint2 = new jolt.RVec3(ax, ay, az);
-            settings.mHingeAxis1 = new jolt.Vec3(dx, dy, dz);
-            settings.mHingeAxis2 = new jolt.Vec3(dx, dy, dz);
+            settings.mPoint1 = pointA;
+            settings.mPoint2 = pointA;
+            settings.mHingeAxis1 = axis;
+            settings.mHingeAxis2 = axis;
             // Jolt requires a normal axis perpendicular to the hinge axis and does not derive one.
-            settings.mNormalAxis1 = new jolt.Vec3(nx, ny, nz);
-            settings.mNormalAxis2 = new jolt.Vec3(nx, ny, nz);
+            settings.mNormalAxis1 = normal;
+            settings.mNormalAxis2 = normal;
             if (low <= high) { settings.mLimitsMin = low; settings.mLimitsMax = high; }
         } else {
             settings = new jolt.DistanceConstraintSettings();
             settings.mSpace = jolt.EConstraintSpace_WorldSpace;
-            settings.mPoint1 = new jolt.RVec3(ax, ay, az);
-            settings.mPoint2 = new jolt.RVec3(bx, by, bz);
+            settings.mPoint1 = pointA;
+            settings.mPoint2 = pointB;
             settings.mMinDistance = low;
             settings.mMaxDistance = high;
         }
         const constraint = settings.Create(bodyA, bodyB);
         world.physicsSystem.AddConstraint(constraint);
-        jolt.destroy(settings);
+        for (const made of [settings, normal, axis, pointB, pointA, idOfB, idOfA]) jolt.destroy(made);
         return constraint;
     }
     """,
@@ -715,16 +791,21 @@ private external fun joltCreateConstraint(
     (world, idA, idB, px, py, pz, tx, ty, tz, rx, ry, rz, twistMin, twistMax, swing) => {
         const jolt = world.jolt;
         const lock = world.physicsSystem.GetBodyLockInterfaceNoLock();
-        const bodyA = lock.TryGetBody(new jolt.BodyID(idA));
-        const bodyB = lock.TryGetBody(new jolt.BodyID(idB));
+        const idOfA = new jolt.BodyID(idA);
+        const idOfB = new jolt.BodyID(idB);
+        const bodyA = lock.TryGetBody(idOfA);
+        const bodyB = lock.TryGetBody(idOfB);
+        const point = new jolt.RVec3(px, py, pz);
+        const twist = new jolt.Vec3(tx, ty, tz);
+        const reference = new jolt.Vec3(rx, ry, rz);
         const settings = new jolt.SixDOFConstraintSettings();
         settings.mSpace = jolt.EConstraintSpace_WorldSpace;
-        settings.mPosition1 = new jolt.RVec3(px, py, pz);
-        settings.mPosition2 = new jolt.RVec3(px, py, pz);
-        settings.mAxisX1 = new jolt.Vec3(tx, ty, tz);
-        settings.mAxisX2 = new jolt.Vec3(tx, ty, tz);
-        settings.mAxisY1 = new jolt.Vec3(rx, ry, rz);
-        settings.mAxisY2 = new jolt.Vec3(rx, ry, rz);
+        settings.mPosition1 = point;
+        settings.mPosition2 = point;
+        settings.mAxisX1 = twist;
+        settings.mAxisX2 = twist;
+        settings.mAxisY1 = reference;
+        settings.mAxisY2 = reference;
         // A ball joint pivots and does not slide, so all three translations are pinned.
         settings.MakeFixedAxis(jolt.SixDOFConstraintSettings_EAxis_TranslationX);
         settings.MakeFixedAxis(jolt.SixDOFConstraintSettings_EAxis_TranslationY);
@@ -744,7 +825,7 @@ private external fun joltCreateConstraint(
         }
         const constraint = settings.Create(bodyA, bodyB);
         world.physicsSystem.AddConstraint(constraint);
-        jolt.destroy(settings);
+        for (const made of [settings, reference, twist, point, idOfB, idOfA]) jolt.destroy(made);
         return constraint;
     }
     """,
@@ -792,17 +873,18 @@ private external fun joltRemoveConstraint(world: JsAny, constraint: JsAny)
     (world, idNum, surfaceY, strength, linearDrag, angularDrag, fx, fy, fz, deltaTime) => {
         const jolt = world.jolt;
         const id = new jolt.BodyID(idNum);
-        if (world.bodyInterface.GetMotionType(id) !== jolt.EMotionType_Dynamic) return;
+        if (world.bodyInterface.GetMotionType(id) !== jolt.EMotionType_Dynamic) {
+            jolt.destroy(id);
+            return;
+        }
         const g = world.physicsSystem.GetGravity();
+        const surface = new jolt.RVec3(0, surfaceY, 0);
+        const up = new jolt.Vec3(0, 1, 0);
+        const fluid = new jolt.Vec3(fx, fy, fz);
         world.bodyInterface.ApplyBuoyancyImpulse(
-            id,
-            new jolt.RVec3(0, surfaceY, 0),
-            new jolt.Vec3(0, 1, 0),
-            strength, linearDrag, angularDrag,
-            new jolt.Vec3(fx, fy, fz),
-            g,
-            deltaTime
+            id, surface, up, strength, linearDrag, angularDrag, fluid, g, deltaTime
         );
+        for (const made of [fluid, up, surface, id]) jolt.destroy(made);
     }
     """,
 )
@@ -850,7 +932,11 @@ private external fun joltDrainContacts(world: JsAny): JsAny
 @JsFun(
     """
     (world, idNum, vx, vy, vz) => {
-        world.bodyInterface.SetLinearVelocity(new world.jolt.BodyID(idNum), new world.jolt.Vec3(vx, vy, vz));
+        const id = new world.jolt.BodyID(idNum);
+        const velocity = new world.jolt.Vec3(vx, vy, vz);
+        world.bodyInterface.SetLinearVelocity(id, velocity);
+        world.jolt.destroy(velocity);
+        world.jolt.destroy(id);
     }
     """,
 )
@@ -861,7 +947,11 @@ private external fun joltSetLinearVelocity(world: JsAny, idNum: Int, vx: Double,
 @JsFun(
     """
     (world, idNum, vx, vy, vz) => {
-        world.bodyInterface.SetAngularVelocity(new world.jolt.BodyID(idNum), new world.jolt.Vec3(vx, vy, vz));
+        const id = new world.jolt.BodyID(idNum);
+        const velocity = new world.jolt.Vec3(vx, vy, vz);
+        world.bodyInterface.SetAngularVelocity(id, velocity);
+        world.jolt.destroy(velocity);
+        world.jolt.destroy(id);
     }
     """,
 )
@@ -873,7 +963,9 @@ private external fun joltSetAngularVelocity(world: JsAny, idNum: Int, vx: Double
 @JsFun(
     """
     (world, idNum) => {
-        const v = world.bodyInterface.GetLinearVelocity(new world.jolt.BodyID(idNum));
+        const id = new world.jolt.BodyID(idNum);
+        const v = world.bodyInterface.GetLinearVelocity(id);
+        world.jolt.destroy(id);
         return [v.GetX(), v.GetY(), v.GetZ()];
     }
     """,
@@ -885,7 +977,11 @@ private external fun joltGetLinearVelocity(world: JsAny, idNum: Int): JsAny
 @JsFun(
     """
     (world, idNum, ix, iy, iz) => {
-        world.bodyInterface.AddImpulse(new world.jolt.BodyID(idNum), new world.jolt.Vec3(ix, iy, iz));
+        const id = new world.jolt.BodyID(idNum);
+        const impulse = new world.jolt.Vec3(ix, iy, iz);
+        world.bodyInterface.AddImpulse(id, impulse);
+        world.jolt.destroy(impulse);
+        world.jolt.destroy(id);
     }
     """,
 )
@@ -896,12 +992,12 @@ private external fun joltAddImpulse(world: JsAny, idNum: Int, ix: Double, iy: Do
 @JsFun(
     """
     (world, idNum, px, py, pz, qw, qx, qy, qz, deltaTime) => {
-        world.bodyInterface.MoveKinematic(
-            new world.jolt.BodyID(idNum),
-            new world.jolt.RVec3(px, py, pz),
-            new world.jolt.Quat(qx, qy, qz, qw),
-            deltaTime
-        );
+        const jolt = world.jolt;
+        const id = new jolt.BodyID(idNum);
+        const position = new jolt.RVec3(px, py, pz);
+        const rotation = new jolt.Quat(qx, qy, qz, qw);
+        world.bodyInterface.MoveKinematic(id, position, rotation, deltaTime);
+        for (const made of [rotation, position, id]) jolt.destroy(made);
     }
     """,
 )
@@ -974,6 +1070,7 @@ private external fun joltActiveBodyTransforms(world: JsAny): JsAny
         const id = new world.jolt.BodyID(idNum);
         const position = world.bodyInterface.GetPosition(id);
         const rotation = world.bodyInterface.GetRotation(id);
+        world.jolt.destroy(id);
         return [
             position.GetX(), position.GetY(), position.GetZ(),
             rotation.GetW(), rotation.GetX(), rotation.GetY(), rotation.GetZ()
@@ -1003,6 +1100,7 @@ private external fun joltGetBodyTransform(world: JsAny, idNum: Int): JsAny
         const rotation = world.bodyInterface.GetRotation(id);
         world.bodyInterface.SetPositionAndRotation(id, moved, rotation, world.jolt.EActivation_Activate);
         world.jolt.destroy(moved);
+        world.jolt.destroy(id);
     }
     """,
 )
@@ -1021,7 +1119,9 @@ private external fun joltTranslateBody(world: JsAny, idNum: Int, dx: Double, dy:
     """
     (world, ox, oy, oz, dx, dy, dz, onlyLayer) => {
         const jolt = world.jolt;
-        const ray = new jolt.RRayCast(new jolt.RVec3(ox, oy, oz), new jolt.Vec3(dx, dy, dz));
+        const origin = new jolt.RVec3(ox, oy, oz);
+        const direction = new jolt.Vec3(dx, dy, dz);
+        const ray = new jolt.RRayCast(origin, direction);
         const raySettings = new jolt.RayCastSettings();
         const collector = new jolt.CastRayClosestHitCollisionCollector();
         const layerFilter = onlyLayer < 0
@@ -1033,16 +1133,20 @@ private external fun joltTranslateBody(world: JsAny, idNum: Int, dx: Double, dy:
         bodyFilter.ShouldCollide = () => true;
         bodyFilter.ShouldCollideLocked =
             (body) => !jolt.wrapPointer(body, jolt.Body).IsSensor();
+        const broadPhaseFilter = new jolt.BroadPhaseLayerFilter();
+        const shapeFilter = new jolt.ShapeFilter();
         world.physicsSystem.GetNarrowPhaseQuery().CastRay(
             ray, raySettings, collector,
-            new jolt.BroadPhaseLayerFilter(), layerFilter,
-            bodyFilter, new jolt.ShapeFilter()
+            broadPhaseFilter, layerFilter,
+            bodyFilter, shapeFilter
         );
-        if (!collector.HadHit()) {
-            return null;
-        }
         const hit = collector.mHit;
-        return [hit.mFraction, hit.mBodyID.GetIndexAndSequenceNumber()];
+        const out = collector.HadHit() ? [hit.mFraction, hit.mBodyID.GetIndexAndSequenceNumber()] : null;
+        for (const made of [
+            shapeFilter, broadPhaseFilter, bodyFilter, layerFilter, collector, raySettings, ray,
+            direction, origin,
+        ]) jolt.destroy(made);
+        return out;
     }
     """,
 )
@@ -1063,10 +1167,22 @@ private external fun joltRaycast(
 @JsFun("(arr, index) => arr[index]")
 private external fun jsArrayGet(arr: JsAny, index: Int): Double
 
+/**
+ * Frees the world. The interface owns and frees its filter tables, but not the contact listener,
+ * which would otherwise stay behind wherever it landed between the freed world's large blocks and
+ * keep the next world from fitting.
+ */
 // Called from JoltPhysicsWorld.destroy() below; detekt's unused-check can't trace
 // calls through an external @JsFun-bound declaration.
 @Suppress("unused")
-@JsFun("(world) => { world.jolt.destroy(world.joltInterface); }")
+@JsFun(
+    """
+    (world) => {
+        world.jolt.destroy(world.joltInterface);
+        world.jolt.destroy(world.contactListener);
+    }
+    """,
+)
 private external fun joltDestroyWorld(world: JsAny)
 
 /**
