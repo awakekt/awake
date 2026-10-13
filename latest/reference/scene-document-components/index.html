@@ -4132,6 +4132,12 @@ fades with distance from the active camera and pans with its direction. <code>Sc
 <td><code>true</code></td>
 <td>Whether a <code>Text</code> element's <code>[[key&amp;#124;shown words]]</code> spans draw as links. <code>false</code> draws <code>[[</code> and <code>]]</code> as typed and no click reports a key -- set it for text the game cannot trust, such as player chat.</td>
 </tr>
+<tr>
+<td><code>mask</code></td>
+<td>string</td>
+<td><code>""</code></td>
+<td>A <code>TextField</code>'s password mask: one character, such as <code>*</code>, drawn for each typed one. <code>text</code> keeps what was typed; copy and cut yield nothing, and accessibility services and the platform keyboard treat the field as a password. Empty draws the text as typed, so clearing it at runtime shows the password. Longer than one character, or set on another kind, is reported.</td>
+</tr>
 </tbody>
 </table>
 <h2 id="character_controller"><code>character_controller</code></h2>
