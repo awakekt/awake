@@ -16,9 +16,6 @@ internal class ComponentTypeCatalog {
     val size: Int get() = typeIds.size
 
     fun register(type: KClass<out Any>): ComponentTypeId = typeIds.getOrPut(type) {
-        require(typeIds.size < MAX_COMPONENT_TYPES) {
-            "Awake ECS currently supports up to $MAX_COMPONENT_TYPES component types per World."
-        }
         val id = typeIds.size
         ensureCapacity(id)
         ComponentTypeId(id).also { typeId ->
@@ -47,6 +44,5 @@ internal class ComponentTypeCatalog {
 
     private companion object {
         const val INITIAL_CAPACITY = 16
-        const val MAX_COMPONENT_TYPES = Long.SIZE_BITS
     }
 }

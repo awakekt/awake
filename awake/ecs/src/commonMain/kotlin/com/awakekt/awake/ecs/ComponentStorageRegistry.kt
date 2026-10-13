@@ -27,10 +27,11 @@ internal class ComponentStorageRegistry {
     fun storageKind(typeId: ComponentTypeId): ComponentStorageKind =
         storeOrNull<Any>(typeId)?.storageKind ?: ComponentStorageKind.Uninitialized
 
-    fun storageInfo(types: ComponentTypeCatalog, signature: Long? = null): List<ComponentStorageInfo> =
-        buildList(if (signature == null) types.size else signature.countOneBits()) {
+    /** Storage of every registered type whose ID passes [includes]. */
+    inline fun storageInfo(types: ComponentTypeCatalog, includes: (Int) -> Boolean): List<ComponentStorageInfo> =
+        buildList {
             for (id in 0 until types.size) {
-                if (signature == null || (signature and (1L shl id)) != 0L) {
+                if (includes(id)) {
                     val type = types.typeAt(id) ?: continue
                     val store = storeOrNull<Any>(ComponentTypeId(id))
                     add(ComponentStorageInfo(type, store?.storageKind ?: ComponentStorageKind.Uninitialized, store?.size ?: 0))
