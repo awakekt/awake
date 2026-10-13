@@ -27,7 +27,9 @@ import com.awakekt.awake.scene.rendering.animation.Animator
 /**
  * Nodes that act on scene entities: sensor events, entities and animation.
  *
- * A node with a `target` input acts on the blueprint's own entity when nothing is wired to it.
+ * A node with a `target` input acts on the blueprint's own entity when nothing is wired to it. When a
+ * wire gives no entity, such as a Find By Name that found no one, the node acts on nothing and warns
+ * once.
  */
 object SceneNodes {
     /**
@@ -87,7 +89,7 @@ object SceneNodes {
     }
 
     /**
-     * Destroys the target and its physics body.
+     * Destroys the target and its physics body. A wired target that gives no entity destroys nothing.
      *
      * @param scene The blueprint scene execution bridge.
      */
@@ -109,7 +111,8 @@ object SceneNodes {
     }
 
     /**
-     * Plays a clip on the target's `Animator`. A missing animator or clip is skipped.
+     * Plays a clip on the target's `Animator`. A missing animator or clip, or a wired target that
+     * gives no entity, is skipped.
      *
      * @param scene The blueprint scene execution bridge.
      */
@@ -125,6 +128,7 @@ object SceneNodes {
         override val effect = Effect.Presentation
 
         override fun run(ctx: BlueprintContext): Step {
+            // A wired target that gives no entity has no Animator: NoEntity is never alive.
             val player = scene.world.get<Animator>(targetOrOwner(ctx))?.player ?: return then
             val clip = ctx.string(CLIP)
             if (clip != null && clip in player.clipEntries) {
@@ -202,10 +206,21 @@ object SceneNodes {
         outputs = listOf(PortSpec(THEN, EXEC), PortSpec(OTHER, ENTITY)),
     )
 
-    private fun targetOrOwner(ctx: BlueprintContext): Entity {
-        val target = ctx.entity(TARGET)
-        return if (target == NoEntity) ctx.owner else target
-    }
+    /** The wired `target`, or the owner when nothing is wired to it; see [wiredTarget]. */
+    private fun targetOrOwner(ctx: BlueprintContext): Entity = if (ctx.isWired(TARGET)) wiredTarget(ctx) else ctx.owner
 }
 
 private val log = Logger("blueprint")
+
+/**
+ * The entity wired to a node's `target`. A wire that gives none, such as a Find By Name that found no
+ * one, gives [NoEntity] and warns once, so the node acts on nothing rather than on its own entity.
+ */
+internal fun wiredTarget(ctx: BlueprintContext): Entity {
+    val target = ctx.entity(TARGET_INPUT)
+    if (target == NoEntity) ctx.warnOnce(NO_TARGET)
+    return target
+}
+
+private const val TARGET_INPUT = "target"
+private const val NO_TARGET = "its target is wired but was given no entity, as by a Find By Name that found no one, so it does nothing."

@@ -10,7 +10,6 @@ import com.awakekt.awake.blueprint.BlueprintContext
 import com.awakekt.awake.blueprint.BlueprintNode
 import com.awakekt.awake.blueprint.Effect
 import com.awakekt.awake.blueprint.EventNode
-import com.awakekt.awake.blueprint.NoEntity
 import com.awakekt.awake.blueprint.PortTypes.BOOL
 import com.awakekt.awake.blueprint.PortTypes.ENTITY
 import com.awakekt.awake.blueprint.PortTypes.EXEC
@@ -25,7 +24,9 @@ import com.awakekt.awake.scene.canvas.CanvasElement
  * scene's `canvas_element`s.
  *
  * An element is named the way the other scene nodes name an entity: the `target` wired to the node,
- * else the element whose `Name` is the node's `name`, else the blueprint's own entity's element.
+ * else the element whose `Name` is the node's `name`, else the blueprint's own entity's element. A
+ * wired `target` that gives no entity, such as a Find By Name that found no one, names no element:
+ * the node does nothing and warns once.
  */
 object CanvasNodes {
     /**
@@ -122,11 +123,13 @@ private fun targetIn() = PortSpec(TARGET, ENTITY, "The element's entity; leave i
 
 private fun nameIn() = PortSpec(CanvasNodes.NAME, STRING, "The element's name, when no target is wired; empty is this blueprint's own element.")
 
-/** The element a canvas node acts on: the wired `target`, else the one named `name`, else the owner's. */
+/**
+ * The element a canvas node acts on: the wired `target`, else the one named `name`, else the owner's.
+ * A wired `target` that gives no entity names none, without falling back to the name or the owner.
+ */
 private fun BlueprintScene.canvasElement(ctx: BlueprintContext): CanvasElement? {
-    val target = ctx.entity(TARGET)
-    val entity = if (target != NoEntity) {
-        target
+    val entity = if (ctx.isWired(TARGET)) {
+        wiredTarget(ctx)
     } else {
         val name = ctx.string(CanvasNodes.NAME)
         if (name.isNullOrEmpty()) ctx.owner else names.find(name) ?: return null

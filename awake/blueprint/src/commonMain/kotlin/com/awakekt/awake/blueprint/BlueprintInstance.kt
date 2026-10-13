@@ -30,6 +30,9 @@ class BlueprintInstance(program: BlueprintProgram, val owner: Entity = NoEntity)
     /** Per node, the evaluation stamp its pure outputs were last computed at. */
     internal var stamps = IntArray(program.nodes.size)
 
+    /** Per node, whether it has warned; see [BlueprintContext.warnOnce]. */
+    internal var warned = BooleanArray(program.nodes.size)
+
     internal var pending = IntArray(INITIAL_PENDING)
     internal var pendingCount = 0
 

@@ -5,6 +5,8 @@
  */
 package com.awakekt.awake.blueprint
 
+import com.awakekt.awake.core.logging.LogLevel
+import com.awakekt.awake.core.logging.LogSink
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.nodegraph.GraphIssueCode
 import com.awakekt.awake.nodegraph.InvalidNodeGraphException
@@ -14,6 +16,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import com.awakekt.awake.core.logging.Log as EngineLog
 
 class BlueprintRuntimeTest {
     private val log = ArrayList<String>()
@@ -24,6 +27,7 @@ class BlueprintRuntimeTest {
         .register(counted)
         .register(Touched)
         .register(Called)
+        .register(Aim(log))
     private val interpreter = BlueprintInterpreter()
 
     private fun run(block: GraphBuilder.() -> Unit): BlueprintInstance =
@@ -259,6 +263,46 @@ class BlueprintRuntimeTest {
         val other = Entity.of(7, 0)
         interpreter.fire(instance, "test.touched") { it.setEntity("other", other) }
         assertEquals(other, instance.variable("last"))
+    }
+
+    @Test
+    fun aNodeTellsAWireThatGaveNoEntityFromNoWireAndWarnsOncePerInstance() {
+        val warnings = ArrayList<String>()
+        val sink = LogSink { record -> if (record.level == LogLevel.Warn && record.tag == "blueprint") warnings += record.message }
+        EngineLog.install(sink)
+        try {
+            val program = BlueprintCompiler.compile(
+                graph {
+                    node("touched", "test.touched")
+                    node("unwired", "test.aim")
+                    node("wired", "test.aim")
+                    wire("touched.then", "unwired.exec")
+                    wire("unwired.then", "wired.exec")
+                    wire("touched.other", "wired.target")
+                },
+                nodes,
+            )
+            val owner = Entity.of(1, 0)
+            val instance = BlueprintInstance(program, owner)
+            val other = Entity.of(7, 0)
+
+            interpreter.fire(instance, "test.touched") { it.setEntity("other", other) }
+            repeat(3) { interpreter.fire(instance, "test.touched") { it.setEntity("other", NoEntity) } }
+
+            assertEquals(listOf("self", "7", "self", "none", "self", "none", "self", "none"), log)
+            assertEquals(1, warnings.size, "one warning however often the node runs: $warnings")
+            val warning = warnings.single()
+            assertTrue("'wired'" in warning && "(Aim)" in warning && "$owner" in warning && "no target" in warning, warning)
+
+            interpreter.fire(BlueprintInstance(program, Entity.of(2, 0)), "test.touched") { it.setEntity("other", NoEntity) }
+            assertEquals(2, warnings.size, "another entity running the graph warns for itself")
+
+            interpreter.reload(instance, program)
+            repeat(2) { interpreter.fire(instance, "test.touched") { it.setEntity("other", NoEntity) } }
+            assertEquals(3, warnings.size, "a reload forgets what was said")
+        } finally {
+            EngineLog.remove(sink)
+        }
     }
 
     @Test

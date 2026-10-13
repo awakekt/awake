@@ -34,6 +34,8 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation(project(":awake:scene:runtime"))
+            // To read the warning a node gives when its wired target is no entity.
+            implementation(project(":awake:core:logging"))
         }
         // Desktop only: the door test runs real Jolt, and jolt-jni ships no library for an Android host.
         desktopTest.dependencies {

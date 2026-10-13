@@ -68,7 +68,8 @@ class BlueprintInterpreter(
 
     /**
      * Swaps in [program], typically a recompiled version of the same graph. Variables whose name and
-     * type still exist keep their values; pending waits are cancelled; nothing is fired.
+     * type still exist keep their values; pending waits are cancelled; nothing is fired; each node may
+     * warn once again.
      */
     fun reload(instance: BlueprintInstance, program: BlueprintProgram) {
         cancelPending(instance)
@@ -82,6 +83,7 @@ class BlueprintInterpreter(
         instance.program = program
         instance.values = values
         instance.stamps = IntArray(program.nodes.size)
+        instance.warned = BooleanArray(program.nodes.size)
     }
 
     /** Drops every pending wait, telling each latent node it was cancelled. */

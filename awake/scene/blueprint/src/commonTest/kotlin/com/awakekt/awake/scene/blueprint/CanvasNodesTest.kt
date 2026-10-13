@@ -16,6 +16,7 @@ import com.awakekt.awake.scene.canvas.CanvasElementKind
 import com.awakekt.awake.scene.canvas.SceneCanvas
 import com.awakekt.awake.scene.core.Name
 import kotlin.test.Test
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
@@ -177,6 +178,59 @@ class CanvasNodesTest {
     }
 
     @Test
+    fun setTextWithAFindByNameThatFindsNoOneChangesNoTextAndWarnsOnce() {
+        graphs["typo"] = everyStep("ui.set-text", find = "Titel", "text" to "lost")
+        blueprint("typo", on = play)
+
+        val warnings = blueprintWarnings { assertEquals(RUNS, runs(system, world, play, "act", RUNS), "Set Text ran every step") }
+
+        assertEquals("Play", canvas(play).text, "a wire that found no one is not the blueprint's own element")
+        assertEquals(1, warnings.size, "one warning, not one a step: $warnings")
+        assertContains(warnings.single(), "'act' (Set Text)")
+    }
+
+    @Test
+    fun setVisibleWithAFindByNameThatFindsNoOneHidesNothingAndWarnsOnce() {
+        graphs["typo"] = everyStep("ui.set-visible", find = "Windw", "visible" to false)
+        blueprint("typo", on = play)
+
+        val warnings = blueprintWarnings { assertEquals(RUNS, runs(system, world, play, "act", RUNS), "Set Visible ran every step") }
+
+        assertTrue(canvas(play).visible, "a wire that found no one is not the blueprint's own element")
+        assertEquals(1, warnings.size, "one warning, not one a step: $warnings")
+        assertContains(warnings.single(), "'act' (Set Visible)")
+    }
+
+    @Test
+    fun aWiredTargetThatFindsNoOneIsNotTheElementNamedOnTheNode() {
+        graphs["typo"] = everyStep("ui.set-visible", find = "Windw", "name" to "Window", "visible" to false)
+        blueprint("typo")
+
+        val warnings = blueprintWarnings { step() }
+
+        assertTrue(canvas(window).visible)
+        assertEquals(1, warnings.size)
+    }
+
+    @Test
+    fun setTextAndSetVisibleWithNothingWiredChangeTheBlueprintsOwnElement() {
+        graphs["self"] = graph {
+            node("start", "event.start")
+            node("label", "ui.set-text", "text" to "Done")
+            node("hide", "ui.set-visible", "visible" to false)
+            wire("start.then", "label.exec")
+            wire("label.then", "hide.exec")
+        }
+        blueprint("self", on = play)
+
+        val warnings = blueprintWarnings { step() }
+
+        assertEquals("Done", canvas(play).text)
+        assertFalse(canvas(play).visible)
+        assertEquals(emptyList(), warnings)
+    }
+
+    @Test
     fun aServerSkipsTheNodesThatOnlyChangeWhatIsShown() {
         val server = BlueprintSystem(graphs = { NodeGraphJson.decode(MENU_GRAPH) }, runPresentation = false)
         blueprint("menu")
@@ -219,6 +273,7 @@ class CanvasNodesTest {
         const val HEIGHT = 300
         const val ELEMENT_WIDTH = 80f
         const val ELEMENT_HEIGHT = 30f
+        const val RUNS = 4
 
         /** What Studio saves: pressing Play shows Loading and hides the window. */
         val MENU_GRAPH = """

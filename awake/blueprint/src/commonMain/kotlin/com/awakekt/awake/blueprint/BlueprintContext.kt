@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.blueprint
 
+import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.ecs.Entity
 
 /**
@@ -66,6 +67,35 @@ class BlueprintContext internal constructor() {
 
     /** The entity on [input], or [NoEntity]. */
     fun entity(input: String): Entity = Entity(instance.values.longs[index(inputSlot(input), Slots.LONG)])
+
+    /**
+     * Whether a wire feeds the data input [input]. An unwired input holds the value set on the node,
+     * so this tells a wire that gave nothing, such as a Find By Name that found no one, from no wire.
+     */
+    fun isWired(input: String): Boolean {
+        val port = inputPort(input)
+        require(instance.program.table.inputSlots[node][port] != Slots.NONE) {
+            "'${instance.program.nodes[node].spec.type}' input '$input' is an execution input."
+        }
+        return instance.program.table.inputSources[node][port] != Slots.NONE
+    }
+
+    /**
+     * Logs [message] as a warning naming this node and the owner, but only the first time this node
+     * warns in this instance: a node that runs every step warns once, not every step. A reload
+     * forgets what was said.
+     *
+     * For a node that cannot do what it is wired to do, such as one given no entity to act on. Pass a
+     * constant: a message built for the call is built on every call, said or not.
+     */
+    fun warnOnce(message: String) {
+        val warned = instance.warned
+        if (warned[node]) return
+        warned[node] = true
+        val spec = instance.program.nodes[node].spec
+        val id = instance.program.graph.nodes[node].id
+        log.warn { "Blueprint node '$id' (${spec.displayName}) on ${instance.owner}: $message" }
+    }
 
     /**
      * Writes a float value to the specified output port.
@@ -143,9 +173,11 @@ class BlueprintContext internal constructor() {
         }
     }
 
-    private fun inputSlot(name: String): Int {
+    private fun inputSlot(name: String): Int = instance.program.table.inputSlots[node][inputPort(name)]
+
+    private fun inputPort(name: String): Int {
         val inputs = instance.program.nodes[node].spec.inputs
-        for (p in inputs.indices) if (inputs[p].name == name) return instance.program.table.inputSlots[node][p]
+        for (p in inputs.indices) if (inputs[p].name == name) return p
         throw IllegalArgumentException("'${instance.program.nodes[node].spec.type}' has no input '$name'.")
     }
 
@@ -168,3 +200,5 @@ class BlueprintContext internal constructor() {
         return base + i
     }
 }
+
+private val log = Logger("blueprint")
