@@ -128,7 +128,8 @@ lengths are dp.
 
 A state may set `background`, `gradient`, `image`, `borderColor`, `textColor` and `alpha`; anything it
 leaves out keeps the style's value. `pressed` applies over `hovered`. A button drawn from a sheet of
-art changes its `image` region per state. A `Joystick` draws only its colours.
+art changes its `image` region per state, and a state's `image` can name a file of its own, which
+`loadCanvasImages` reads with the rest. A `Joystick` draws only its colours.
 
 ## Draw images
 
