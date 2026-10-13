@@ -50,6 +50,19 @@ internal fun Renderer.performDrawUi(primitives: List<UiDrawPrimitive>, font: UiF
 }
 
 /**
+ * Removes the staged textures that sample [target], which is being destroyed. Staged UI is
+ * recorded at the next `draw`, so a target freed in between, such as a canvas View of a scene
+ * being switched away, would otherwise have its freed image view and sampler written into a
+ * descriptor set.
+ */
+internal fun Renderer.dropStagedUiSampling(target: OffscreenRenderTarget) {
+    uiRuns = uiRuns.map { run ->
+        if (run !is DrawRun.TextureRun) return@map run
+        DrawRun.TextureRun(run.primitives.filterNot { (it.texture as? Material)?.imageViewHandle == target.colorImageView })
+    }
+}
+
+/**
  * Headless/offscreen test hook: renders a full frame's worth of [UiDrawPrimitive]s into [target].
  */
 fun Renderer.renderUiToTexture(target: RenderTarget, primitives: List<UiDrawPrimitive>, font: UiFont?) {

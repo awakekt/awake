@@ -125,7 +125,10 @@ internal fun Renderer.performCreateRenderTarget(width: Int, height: Int): Render
         width,
         height,
         swapchainManager.imageFormat.value,
-        onDestroy = { createdRenderTargets.remove(target) },
+        onDestroy = {
+            createdRenderTargets.remove(target)
+            dropStagedUiSampling(target)
+        },
     )
     createdRenderTargets += target
     return target
