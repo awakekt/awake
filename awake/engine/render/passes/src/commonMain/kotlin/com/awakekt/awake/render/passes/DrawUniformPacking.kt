@@ -225,21 +225,33 @@ fun RenderDrawCommand.instancedUniformFloats(
     }
 }
 
-/** The sun's direction and colour from the frame's [lightPayload], or none when a draw was packed without one. */
-private fun UniformWriter.putSun(lightPayload: FloatArray): UniformWriter =
-    if (lightPayload.size >= SUN_FLOATS) {
+/**
+ * The frame's lights from [lightPayload], laid out as [MaterialUniformLayouts.SceneLight]: the sun's
+ * direction and colour, then the point-light slots. What a draw was packed without stays zero, which
+ * the shaders read as no sun and no point light.
+ */
+private fun UniformWriter.putLights(lightPayload: FloatArray): UniformWriter {
+    val sun = if (lightPayload.size >= SUN_FLOATS) {
         put(lightPayload, UniformFields.LightDirection, UniformFields.LightColor)
     } else {
         put(UniformFields.LightDirection, 0f, 0f, 0f, 0f).put(UniformFields.LightColor, 0f, 0f, 0f, 0f)
     }
+    return if (lightPayload.size >= MaterialUniformLayouts.SceneLight.total) {
+        sun.put(lightPayload, POINTS_AT, UniformFields.PointLightPositions, UniformFields.PointLightColors)
+    } else {
+        sun.putPadded(UniformFields.PointLightPositions, NO_LIGHTS).putPadded(UniformFields.PointLightColors, NO_LIGHTS)
+    }
+}
 
 private val SUN_FLOATS = UniformFields.LightDirection.floats + UniformFields.LightColor.floats
+private val POINTS_AT = MaterialUniformLayouts.SceneLight.offsetOf(UniformFields.PointLightPositions)
+private val NO_LIGHTS = FloatArray(0)
 
 /**
  * A skinned draw's block: its palette, tinted by its material's factors when [extras] carries them
  * as [SkinnedMaterialLayout], untinted (glTF's default factors) when it is a palette alone, and the
- * [alphaCutoff] a masked one is cut out below; then the sun from [lightPayload], the eye and the
- * [debugView] the debug views read.
+ * [alphaCutoff] a masked one is cut out below; then the sun and point lights from [lightPayload], the
+ * eye and the [debugView] the debug views read.
  */
 @Suppress("LongParameterList") // One argument per draw input the block holds.
 private fun skinnedUniforms(
@@ -268,7 +280,7 @@ private fun skinnedUniforms(
             .put(UniformFields.EmissiveFactor, DEFAULT_EMISSIVE_FACTOR)
     }.put(UniformFields.PbrFactors, 0f, 0f, alphaCutoff, 0f)
         .put(UniformFields.Exposure, exposure, 0f, 0f, 0f)
-        .putSun(lightPayload)
+        .putLights(lightPayload)
         .put(UniformFields.CameraPosition, cameraEye)
         .putDebugView(debugView, cameraForward)
         .put(SkinnedFields.DebugJoint, debugView.layer.toFloat(), 0f, 0f, 0f)

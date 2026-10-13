@@ -20,6 +20,7 @@ import com.awakekt.awake.render.passes.directionalShadowBox
 import com.awakekt.awake.render.passes.shadowCascadeUniforms
 import com.awakekt.awake.render.passes.uniforms.EnvironmentUniforms
 import com.awakekt.awake.render.passes.uniforms.MaterialUniformLayouts
+import com.awakekt.awake.render.passes.uniforms.PointLight
 import com.awakekt.awake.render.passes.uniforms.SceneLight
 import com.awakekt.awake.render.passes.uniforms.TextureAnimation
 import com.awakekt.awake.render.passes.uniforms.pbrMaterialFloats
@@ -102,6 +103,7 @@ fun Renderer.renderTexturedPbrScene(
     timeSeconds: Float = 0f,
     sunDirection: Vec3f = Vec3f(0f, 1f, 0f),
     ambient: Float? = null,
+    points: List<PointLight> = emptyList(),
     metallic: Float = 0.1f,
     roughness: Float = 0.45f,
     size: Int = SCENE_SIZE,
@@ -138,7 +140,7 @@ fun Renderer.renderTexturedPbrScene(
             ScenePassCompiler.compile(
                 lens = lens,
                 drawCalls = listOf(draw),
-                light = SceneLight(direction = sunDirection, color = Vec3f(1f, 1f, 1f), ambient = ambient),
+                light = SceneLight(direction = sunDirection, color = Vec3f(1f, 1f, 1f), points = points, ambient = ambient),
                 environment = environment,
                 clipSpace = clipSpace,
                 aspect = 1f,
