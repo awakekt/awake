@@ -20,6 +20,7 @@ import com.awakekt.awake.vulkan.renderer.Renderer
 import com.awakekt.awake.vulkan.swapchain.SwapchainManager
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
@@ -32,22 +33,58 @@ import kotlin.test.assertTrue
  * Before the fix the second frame reported `vkUpdateDescriptorSets():
  * pDescriptorWrites[0].pImageInfo[0].imageView Invalid VkImageView Object`, the same for the
  * sampler, and `vkCmdDrawIndexed()` reading both destroyed descriptors.
+ *
+ * Staged UI is used up by that `draw`, so a frame that stages none draws none.
  */
 class RendererStagedUiTargetTest {
     @Test
-    fun aTargetDestroyedAfterItsUiWasStagedIsNotDrawn() {
+    fun aTargetDestroyedAfterItsUiWasStagedIsNotDrawn() = withRenderer { renderer ->
+        val target = renderer.createRenderTarget(SIZE, SIZE)
+        renderer.drawUiToTexture(target, listOf(redQuad()))
+        val material = renderer.createMaterial(renderTarget = target)
+        val ui = listOf(UiDrawPrimitive.Texture(0f, 0f, SIZE.toFloat(), SIZE.toFloat(), material, premultiplied = true))
+
+        // Positive control: the staged UI really samples the target, so a clean second frame
+        // is not just a frame that drew no texture at all.
+        renderer.drawUi(ui)
+        renderer.presentWithoutScene()
+        assertTrue(isRed(centre(renderer)), "the staged UI shows the target")
+
+        renderer.drawUi(ui)
+        material.destroy()
+        target.destroy()
+        renderer.presentWithoutScene()
+    }
+
+    @Test
+    fun aFrameThatStagesNoUiDrawsNone() = withRenderer { renderer ->
+        renderer.drawUi(listOf(redQuad()))
+        renderer.presentWithoutScene()
+        assertTrue(isRed(centre(renderer)), "the staged UI is drawn")
+
+        // Each frame in flight has its own UI mesh, so a stale UI shows again on the slot it was
+        // uploaded to: every frame of a full cycle must come out without it.
+        repeat(FRAMES_IN_FLIGHT) { frame ->
+            renderer.presentWithoutScene()
+            assertFalse(isRed(centre(renderer)), "frame ${frame + 1} after the last staged UI drew it again")
+        }
+    }
+
+    private fun redQuad() = UiDrawPrimitive.Quad(0f, 0f, SIZE.toFloat(), SIZE.toFloat(), Color(1f, 0f, 0f, 1f))
+
+    private fun withRenderer(block: (Renderer) -> Unit) {
         val device = GraphicsDevice()
         device.createHeadless()
         try {
             assertTrue(device.validationLayerEnabled, "Install VK_LAYER_KHRONOS_validation to run this gate")
-            exercise(device)
+            exercise(device, block)
         } finally {
             // createHeadless makes every validation ERROR fail here.
             device.destroy()
         }
     }
 
-    private fun exercise(device: GraphicsDevice) {
+    private fun exercise(device: GraphicsDevice, block: (Renderer) -> Unit) {
         val swapchain = SwapchainManager(device, FRAMES_IN_FLIGHT)
         swapchain.createHeadlessPresentable(SIZE, SIZE)
         val layout = Material.createDescriptorSetLayout(device)
@@ -75,21 +112,7 @@ class RendererStagedUiTargetTest {
         swapchain.createSyncObjects()
         val cleanup = headlessCleanup(device, transfer, renderPass, layout, pipeline)
         try {
-            val target = renderer.createRenderTarget(SIZE, SIZE)
-            renderer.drawUiToTexture(target, listOf(UiDrawPrimitive.Quad(0f, 0f, SIZE.toFloat(), SIZE.toFloat(), Color(1f, 0f, 0f, 1f))))
-            val material = renderer.createMaterial(renderTarget = target)
-            val ui = listOf(UiDrawPrimitive.Texture(0f, 0f, SIZE.toFloat(), SIZE.toFloat(), material, premultiplied = true))
-
-            // Positive control: the staged UI really samples the target, so a clean second frame
-            // is not just a frame that drew no texture at all.
-            renderer.drawUi(ui)
-            renderer.presentWithoutScene()
-            assertTrue(isRed(centre(renderer)), "the staged UI shows the target")
-
-            renderer.drawUi(ui)
-            material.destroy()
-            target.destroy()
-            renderer.presentWithoutScene()
+            block(renderer)
         } finally {
             renderer.destroy()
             swapchain.destroy()

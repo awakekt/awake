@@ -69,6 +69,8 @@ internal class WebGpuUiRunRecorder(
     override fun drawTexturePrimitive(primitive: TexturedPrimitiveRun, slotIndex: Int) {
         val pipeline = textures[primitive.compositeMode] ?: return
         val material = primitive.texture as Material
+        // Its owner destroyed it after this UI was staged, so it is no longer on screen to draw.
+        if (!material.isSampleable) return
         val mesh = textureMeshForPrimitive(slotIndex)
         encoder.setPipeline(pipeline.pipeline)
         encoder.setBindGroup(0u, pipeline.bindGroupFor(material))
