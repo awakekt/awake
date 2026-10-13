@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "name": "arm",
+      "components": [
+        {
+          "component": "mesh_renderer",
+          "mesh": "assets/models/arm.gltf",
+          "material": "skinned-material"
+        }
+      ]
+    }
+  ]
+}

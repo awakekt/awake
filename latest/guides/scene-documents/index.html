@@ -2682,6 +2682,11 @@ before it loads the next, so there is no step to forget:</p>
 </span></code></pre></div>
 <p>Inside an app, the runtime's own manager is <code>sceneManager</code>, available in <code>onReady</code> and system
 factories.</p>
+<p><code>switchTo</code> keeps the systems the app registered. A project played with <code>runProject</code> goes to another of
+its scenes through its <code>SceneSwitch</code> instead, which also closes the old scene's systems and physics
+and plans the next scene's own: a system asks with <code>services.sceneSwitch?.request("scenes/level-2.scene.json")</code>,
+and a blueprint with its Load Scene node. See
+<a href="https://github.com/awakekt/awake/blob/main/awake/project/runtime/README.md#switching-to-another-scene"><code>awake:project:runtime</code></a>.</p>
 <h2 id="save-a-world">Save a world</h2>
 <p><code>fromWorld</code> walks the entities that have a <code>Transform</code>, follows their parent links to rebuild the
 tree, and writes each component that has a registered binding:</p>
