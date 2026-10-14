@@ -6,6 +6,7 @@
 package com.awakekt.awake.scene.runtime
 
 import com.awakekt.awake.ecs.Entity
+import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.binding.Scene
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.binding.SceneNodeInstance
@@ -17,14 +18,17 @@ import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.rendering.mesh.SceneRenderableRequest
 
 /**
- * A node [spawn] put into the running scene: its [root] and every entity under it. [despawn] takes it
- * out again.
+ * A node [spawn] put into a running scene, its own or a world the host passes it: its [root] and
+ * every entity under it. [despawn] takes it out again.
  */
 class SpawnedNode internal constructor(
     private val runtime: SceneAppLifecycleRuntime,
     private val scene: Scene,
     unattached: List<SceneRenderableRequest> = emptyList(),
 ) {
+    /** The world this node's entities live in: the one [spawn] put it into. */
+    val world: World get() = scene.world
+
     /** The spawned node's own entity. */
     val root: Entity get() = scene.roots.single().entity
 
@@ -52,8 +56,8 @@ class SpawnedNode internal constructor(
         val attached = mutableListOf<Entity>()
         waiting.filter(which).forEach { request ->
             waiting -= request
-            if (runtime.world.isAlive(request.entity)) {
-                runtime.world.attachRenderable(request, runtime.spec.renderableFactory(runtime, request))
+            if (world.isAlive(request.entity)) {
+                world.attachRenderable(request, runtime.spec.renderableFactory(runtime, request))
                 attached += request.entity
             }
         }
@@ -90,7 +94,7 @@ class SpawnedNode internal constructor(
 fun SceneAppLifecycleRuntime.spawn(
     node: SceneNode,
     componentRegistry: SceneComponentRegistry = SceneComponentRegistry(),
-): SpawnedNode = spawn(node, componentRegistry) { true }
+): SpawnedNode = spawn(node, world, componentRegistry)
 
 /**
  * [spawn], leaving off the renderer of each request [attachNow] turns down: the node and all its
@@ -100,6 +104,29 @@ fun SceneAppLifecycleRuntime.spawn(
  */
 fun SceneAppLifecycleRuntime.spawn(
     node: SceneNode,
+    componentRegistry: SceneComponentRegistry,
+    attachNow: (SceneRenderableRequest) -> Boolean,
+): SpawnedNode = spawn(node, world, componentRegistry, attachNow)
+
+/**
+ * [spawn] into [world] instead of this runtime's own: for a host that plays a scene in a world it
+ * owns, such as an editor's Play mode. Renderers still resolve through this runtime's asset library
+ * and resolvers, and [SpawnedNode.despawn] still releases them there; only where the node's entities
+ * live is [world], not [SceneAppLifecycleRuntime.world].
+ */
+fun SceneAppLifecycleRuntime.spawn(
+    node: SceneNode,
+    world: World,
+    componentRegistry: SceneComponentRegistry = SceneComponentRegistry(),
+): SpawnedNode = spawn(node, world, componentRegistry) { true }
+
+/**
+ * [spawn] into [world], leaving off the renderer of each request [attachNow] turns down, as the
+ * runtime-world [spawn] does.
+ */
+fun SceneAppLifecycleRuntime.spawn(
+    node: SceneNode,
+    world: World,
     componentRegistry: SceneComponentRegistry,
     attachNow: (SceneRenderableRequest) -> Boolean,
 ): SpawnedNode {
