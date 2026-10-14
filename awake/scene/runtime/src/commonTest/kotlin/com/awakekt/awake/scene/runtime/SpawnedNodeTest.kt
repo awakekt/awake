@@ -6,6 +6,7 @@
 package com.awakekt.awake.scene.runtime
 
 import com.awakekt.awake.core.geometry.VertexFormat
+import com.awakekt.awake.ecs.World
 import com.awakekt.awake.engine.platform.dsl.AppServiceLookup
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
@@ -16,6 +17,7 @@ import com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer
 import kotlin.reflect.KClass
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
@@ -88,6 +90,50 @@ class SpawnedNodeTest {
         assertEquals(emptyList(), spawned.attachRenderers { true })
         assertEquals(emptyList(), spawned.unattachedRenderables)
         assertEquals(listOf(CUBE), built)
+    }
+
+    /** A host that plays a scene in a world of its own can spawn into that world, not the runtime's. */
+    @Test
+    fun spawningIntoASeparateWorldPutsItsEntitiesThere() {
+        val target = World()
+        val spawned = runtime.spawn(CART, target)
+
+        assertEquals(target, spawned.world)
+        spawned.entities.forEach { entity ->
+            assertNotNull(target.get<MeshRenderer>(entity))
+            assertFalse(runtime.world.isAlive(entity), "nothing was spawned into the runtime's own world")
+        }
+    }
+
+    /**
+     * The positive control for the world-aware spawn: before it existed, [attachRenderers] checked and
+     * attached through the runtime's own world, so a renderer left off for a node spawned into another
+     * world could never attach -- its entity is never alive there.
+     */
+    @Test
+    fun aRendererLeftOffInASeparateWorldAttachesThere() {
+        val target = World()
+        val spawned = runtime.spawn(CART, target, SceneComponentRegistry()) { it.meshRenderer.mesh != HELD }
+        val (cart, crate) = spawned.entities
+
+        assertNotNull(target.get<MeshRenderer>(cart), "the others attach at once")
+        assertNull(target.get<MeshRenderer>(crate))
+
+        assertEquals(listOf(crate), spawned.attachRenderers { true })
+
+        assertNotNull(target.get<MeshRenderer>(crate), "the renderer attaches into the node's own world")
+        assertNull(runtime.world.get<MeshRenderer>(crate), "not into the runtime's own world")
+    }
+
+    @Test
+    fun despawningASeparateWorldSpawnRemovesItsEntitiesThere() {
+        val target = World()
+        val spawned = runtime.spawn(CART, target)
+        val entities = spawned.entities
+
+        spawned.despawn()
+
+        entities.forEach { assertFalse(target.isAlive(it)) }
     }
 
     private object FakeMesh : Mesh {
