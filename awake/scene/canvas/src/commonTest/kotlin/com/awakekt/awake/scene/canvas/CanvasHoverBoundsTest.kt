@@ -95,6 +95,19 @@ class CanvasHoverBoundsTest {
     }
 
     @Test
+    fun aLaterSiblingsAnchorWrapperOverAnElementLeavesTheHoverToTheElement() {
+        val (_, image) = element(CanvasElementKind.Image) { offsetX = 0f; offsetY = 0f; width = 40f; height = 40f }
+        // Inset 100 from the top-left: its padded wrapper spans the image, its own box doesn't.
+        val (_, later) = element(CanvasElementKind.Panel) { order = 1; offsetX = 100f; offsetY = 100f; width = 40f; height = 40f }
+        frame()
+
+        frame(20, 20)
+
+        assertTrue(image.isHovered, "the pointer is over the image's own box, under only the later panel's padding")
+        assertFalse(later.isHovered)
+    }
+
+    @Test
     fun screenBoundsMatchesWhereAnElementAndItsChildWerePlaced() {
         val (window, parent) = element(CanvasElementKind.Panel) { offsetX = 16f; offsetY = 8f; width = 200f; height = 100f }
         val (_, corner) = element(CanvasElementKind.Button, window) {
