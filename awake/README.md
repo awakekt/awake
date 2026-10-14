@@ -88,7 +88,7 @@ Paths below are Gradle coordinates minus the `:awake:` prefix.
 | `scene:navigation` | The `navigation` scene component: the walkable grid a scene carries, over `navigation` |
 | `scene:shader` | The `shader_effect` scene component: a project's shader documents drawn in a scene, over `asset:shader-document` |
 | `scene:scene2d` | The 2D scene components, starting with `sprite`: schema, binding and the systems that run them |
-| `scene:canvas` | Game UI in scenes: anchored text, panels, bars and buttons drawn over the game |
+| `scene:canvas` | The `canvas_element` scene component, over `ui:canvas` |
 | `scene:character` | A walking, jumping character moved by the physics character controller, saved in scenes |
 | `scene:gltf` | glTF and GLB models in scenes: meshes, textured materials and skins |
 | `scene:world` | Open-world partitioning, streaming and the floating origin, over `world` |
@@ -132,6 +132,7 @@ See [docs/reference/compose-engine/](../docs/reference/compose-engine/).
 |---|---|
 | `ui:shadcn` | shadcn/ui themes, tokens, variants, and component recipes |
 | `ui:material3` | Material 3 components and theme contracts (not yet published) |
+| `ui:canvas` | Game UI: anchored text, panels, bars and buttons drawn over the game from a host-supplied element list; no scene or ECS dependency |
 | `ui:node-graph-canvas` | The editing surface for `node-graph` documents |
 | `ui:benchmark` | UI frame benchmarks (not published) |
 | `ui:font-atlas-generator` | Generates the bundled font atlases (not published) |

@@ -19,6 +19,7 @@ document. It is not repeated here.
 |---|---|
 | [`:awake:ui:material3`](material3/README.md) | Material 3 colour schemes, components and screen recipes such as `Scaffold` |
 | [`:awake:ui:shadcn`](shadcn/README.md) | [shadcn/ui](https://ui.shadcn.com/) themes, tokens, variants and `Shadcn*` recipes |
+| [`:awake:ui:canvas`](canvas/README.md) | The screen-anchored game UI capability: elements, styling and drawing a host-supplied list; no scene or ECS dependency |
 | `:awake:ui:benchmark` | JVM layout benchmarks (kotlinx-benchmark); not published |
 | `:awake:ui:font-atlas-generator` | Build tool that generates the embedded font-atlas sources in `:awake:core:text`; not published |
 

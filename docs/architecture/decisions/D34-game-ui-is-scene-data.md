@@ -4,10 +4,12 @@ Status: accepted (2026-09-30)
 
 ## Decision
 
-Game UI that a scene carries is `awake:scene:canvas`: `canvas_element` components saved in the
-scene, edited in Awake Studio, and loaded by `awake:project:runtime` without compiling code. The
-shadcn design system (`awake:ui:shadcn`) stays the toolkit for editor UI and for Kotlin-written
-game UI in `ui { }`, which draws over the scene's canvas. `scene:canvas` does not depend on it.
+Game UI that a scene carries is data: `canvas_element` components saved in the scene, edited in
+Awake Studio, and loaded by `awake:project:runtime` without compiling code. The element model and
+drawing are the scene-free `awake:ui:canvas`; `awake:scene:canvas` is the `canvas_element` schema
+and its binding to that capability. The shadcn design system (`awake:ui:shadcn`) stays the toolkit
+for editor UI and for Kotlin-written game UI in `ui { }`, which draws over the scene's canvas.
+Neither canvas module depends on it.
 
 ## Why
 

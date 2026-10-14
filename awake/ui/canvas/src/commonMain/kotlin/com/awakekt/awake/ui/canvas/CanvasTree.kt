@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package com.awakekt.awake.scene.canvas
+package com.awakekt.awake.ui.canvas
 
 import com.awakekt.awake.compose.ui.graphics.ImageBitmap
 import com.awakekt.awake.core.math.Vec3f
@@ -13,12 +13,15 @@ import com.awakekt.awake.core.math2d.contains
 import com.awakekt.awake.core.text.font.UiFont
 
 /**
- * One drawn [CanvasElement], carrying what [CanvasOverlay] needs but a `World` would otherwise hold:
- * [id] for its `canvas-element-<id>` test tag, and [parent], the nearest element above it in the
- * scene hierarchy the host found there, or null for a root. A follower is always a root regardless
- * of [parent]: it is placed on what it follows, not inside a box.
+ * One drawn [CanvasElement], carrying what [CanvasOverlay] needs but a host's own object graph
+ * would otherwise hold. A follower is always a root regardless of [parent]: it is placed on what
+ * it follows, not inside a box.
+ *
+ * @property id Its `canvas-element-<id>` test tag.
+ * @property element The element to draw.
+ * @property parent The nearest element above it the host found there, or null for a root.
  */
-internal class CanvasItem(val id: Int, val element: CanvasElement, val parent: CanvasElement? = null)
+class CanvasItem(val id: Int, val element: CanvasElement, val parent: CanvasElement? = null)
 
 /**
  * What [CanvasOverlay] asks its host for: a [CanvasElement.follow]ed node's projected point or
@@ -26,7 +29,7 @@ internal class CanvasItem(val id: Int, val element: CanvasElement, val parent: C
  * null, so a host that implements none of what an element asks for still draws it, minus that one
  * thing.
  */
-internal interface CanvasResolver {
+interface CanvasResolver {
     /** The followed node named [target]'s screen point, in frame pixels, offset by [offset] in world space. */
     fun point(target: String, offset: Vec3f): Vec2? = null
 
@@ -39,6 +42,7 @@ internal interface CanvasResolver {
     /** A bound field's raw text on the node named [node], addressed as `component.field`. */
     fun field(node: String, path: String): String? = null
 
+    /** Holds [None]. */
     companion object {
         /** A resolver with nothing behind it: every member answers null. */
         val None: CanvasResolver = object : CanvasResolver {}

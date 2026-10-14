@@ -3,13 +3,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package com.awakekt.awake.scene.canvas
+package com.awakekt.awake.ui.canvas
 
 import com.awakekt.awake.compose.ui.platform.ComposeHost
 import com.awakekt.awake.compose.ui.platform.FrameInput
-import com.awakekt.awake.ecs.World
 import kotlin.test.Test
-import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
@@ -17,7 +15,6 @@ import kotlin.time.TestTimeSource
 
 /** Two presses on a Button within [CanvasElement.DOUBLE_CLICK_SECONDS] make one double-click. */
 class CanvasDoubleClickTest {
-    private val world = World()
     private val host = ComposeHost()
     private val clock = TestTimeSource()
     private val button = CanvasElement().apply {
@@ -28,11 +25,12 @@ class CanvasDoubleClickTest {
         height = 20f
         doubleAction = "equip"
         clock = this@CanvasDoubleClickTest.clock
-    }.also { world.add(world.create(), it) }
+    }
+    private val items = listOf(CanvasItem(1, button))
 
     private fun frame(pressed: Boolean = false, down: Boolean = false, released: Boolean = false) {
         host.frame(FrameInput(WIDTH, HEIGHT, pointerX = 30, pointerY = 20, pointerDown = down, pointerPressed = pressed, pointerReleased = released)) {
-            SceneCanvas(world)
+            CanvasOverlay(items)
         }
     }
 
@@ -76,14 +74,6 @@ class CanvasDoubleClickTest {
         clock += 100.milliseconds
         click()
         assertTrue(button.consumeDoublePress())
-    }
-
-    @Test
-    fun aSavedElementKeepsItsDoubleAction() {
-        val saved = with(CanvasElementBinding) { button.toSceneComponent() }
-
-        assertEquals("equip", saved.doubleAction)
-        assertEquals("equip", with(CanvasElementBinding) { saved.toComponent() }.doubleAction)
     }
 
     private companion object {

@@ -9,6 +9,8 @@ import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneValidationIssue
 import com.awakekt.awake.scene.document.SceneVec3
+import com.awakekt.awake.ui.canvas.canvasFontProblem
+import com.awakekt.awake.ui.canvas.isCanvasColor
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -116,7 +118,7 @@ data class SceneCanvasElement(
         if (width < 0f || height < 0f) add(SceneValidationIssue(path, "canvas_element size must not be negative"))
         if (fontSize <= 0f) add(SceneValidationIssue(path, "canvas_element.fontSize must be positive"))
         if (value !in 0f..1f) add(SceneValidationIssue(path, "canvas_element.value must be between 0 and 1"))
-        listOf(color, background).filterNot(::isHexColor).forEach {
+        listOf(color, background).filterNot(::isCanvasColor).forEach {
             add(SceneValidationIssue(path, "canvas_element colour \"$it\" must be #RRGGBB or #RRGGBBAA"))
         }
         style.problems().forEach { add(SceneValidationIssue(path, "canvas_element.style.$it")) }
@@ -127,10 +129,6 @@ data class SceneCanvasElement(
         if (mask.isNotEmpty() && kind != CanvasElementKind.TextField) {
             add(SceneValidationIssue(path, "canvas_element.mask only masks a TextField"))
         }
-        fontProblem(font)?.let { add(SceneValidationIssue(path, "canvas_element.$it")) }
+        canvasFontProblem(font)?.let { add(SceneValidationIssue(path, "canvas_element.$it")) }
     }
 }
-
-internal fun isHexColor(value: String): Boolean = HEX_COLOR.matches(value)
-
-private val HEX_COLOR = Regex("^#([0-9a-fA-F]{6}|[0-9a-fA-F]{8})$")

@@ -19,6 +19,7 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            api(project(":awake:ui:canvas"))
             api(project(":awake:ecs"))
             api(project(":awake:scene:document"))
             api(project(":awake:scene:binding"))
@@ -26,8 +27,6 @@ kotlin {
             api(project(":awake:compose:runtime"))
             api(project(":awake:compose:ui"))
             api(project(":awake:core:io"))
-            implementation(project(":awake:compose:foundation"))
-            implementation(project(":awake:core:color"))
             implementation(project(":awake:core:logging"))
             api(project(":awake:core:math"))
             implementation(project(":awake:core:math2d"))
@@ -38,6 +37,8 @@ kotlin {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)
             implementation(project(":awake:compose:ui-testing"))
+            implementation(project(":awake:compose:foundation"))
+            implementation(project(":awake:core:color"))
         }
     }
 }
@@ -45,7 +46,7 @@ kotlin {
 mavenPublishing {
     pom {
         name.set("Awake Scene Canvas")
-        description.set("Screen-anchored game UI (text, panels, bars, buttons) stored in scenes and drawn over the game")
+        description.set("The canvas_element scene component: the schema, validation and World binding for awake:ui:canvas")
     }
 }
 

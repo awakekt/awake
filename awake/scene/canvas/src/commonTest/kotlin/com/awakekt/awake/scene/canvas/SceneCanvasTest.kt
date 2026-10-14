@@ -234,6 +234,7 @@ class SceneCanvasTest {
             color = "#E5484D",
             background = "#00000080",
             action = "jump",
+            doubleAction = "equip",
             touchOnly = true,
             value = 0.4f,
             order = 3,
@@ -583,7 +584,8 @@ class SceneCanvasTest {
             followBounds = true
             followOutset = 32f
         }
-        val corners = CanvasAnchor.entries.filter { it.row != 1 && it.column != 1 }.associateWith { corner ->
+        // Every corner anchor: row and column 0 (top, left) or 2 (bottom, right), never 1 (centred).
+        val corners = CanvasAnchor.entries.filter { it.ordinal / 3 != 1 && it.ordinal % 3 != 1 }.associateWith { corner ->
             child(marker) {
                 kind = CanvasElementKind.Image
                 anchor = corner

@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package com.awakekt.awake.scene.canvas
+package com.awakekt.awake.ui.canvas
 
 import com.awakekt.awake.compose.foundation.layout.FlexAlignContent
 import com.awakekt.awake.compose.foundation.layout.FlexAlignItems
@@ -37,7 +37,8 @@ data class CanvasLayout(
     val justify: CanvasJustify = CanvasJustify.Start,
     val align: CanvasAlign = CanvasAlign.Start,
 ) {
-    internal fun problems(): List<String> = buildList {
+    /** What is wrong with this layout, as messages naming the field; empty when nothing is. */
+    fun problems(): List<String> = buildList {
         if (gap < 0f) add("gap must not be negative")
         if (padding < 0f) add("padding must not be negative")
     }

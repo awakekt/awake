@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package com.awakekt.awake.scene.canvas
+package com.awakekt.awake.ui.canvas
 
 import com.awakekt.awake.compose.ui.input.key.KeyEvent
 import com.awakekt.awake.compose.ui.input.key.KeyEventType
@@ -15,7 +15,6 @@ import com.awakekt.awake.compose.ui.semantics.SemanticsProperties
 import com.awakekt.awake.core.graphics2d.DrawCommand
 import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.input.TextEditAction
-import com.awakekt.awake.ecs.World
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -29,12 +28,13 @@ import kotlin.test.assertTrue
  */
 class CanvasTextFieldTest {
 
-    private val world = World()
     private val host = ComposeHost()
+    private var nextId = 0
+    private var items: List<CanvasItem> = emptyList()
 
     private fun textField(configure: CanvasElement.() -> Unit = {}): CanvasElement {
         val element = CanvasElement().apply { kind = CanvasElementKind.TextField }.apply(configure)
-        world.add(world.create(), element)
+        items = items + CanvasItem(nextId++, element)
         return element
     }
 
@@ -44,7 +44,7 @@ class CanvasTextFieldTest {
         keyEvents: List<KeyEvent> = emptyList(),
     ): FrameOutput = host.frame(
         FrameInput(WIDTH, HEIGHT, typedText = typedText, editActions = editActions, keyEvents = keyEvents),
-    ) { SceneCanvas(world) }
+    ) { CanvasOverlay(items) }
 
     /** Composes the field once, so its modifier chain attaches, then takes its focus. */
     private fun CanvasElement.focus() {

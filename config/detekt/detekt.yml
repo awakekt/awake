@@ -119,6 +119,7 @@ comments:
       - '**/awake/compose/ui/**'
       - '**/awake/scene/audio/**'
       - '**/awake/scene/canvas/**'
+      - '**/awake/ui/canvas/**'
       - '**/awake/scene/blueprint/**'
       - '**/awake/ui/material3/**'
       - '**/awake/engine/compose/**'

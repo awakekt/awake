@@ -13,6 +13,11 @@ import com.awakekt.awake.scene.binding.SceneResolutionContext
 import com.awakekt.awake.scene.document.SceneVec3
 import kotlin.reflect.KClass
 
+// Where a scene file's `canvas_element` becomes the live [CanvasElement]'s settings, and back. It is
+// the only place the two meet, so a capability option added to either side is wrong until it is
+// handled here: `CanvasElementExposureTest` fails when a [CanvasElement] option is neither set from
+// this mapping nor listed there as set from code only.
+
 /** Loads and saves [CanvasElement]s as `canvas_element` scene components. */
 object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasElement> {
     override val componentClass: KClass<CanvasElement> = CanvasElement::class

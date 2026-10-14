@@ -12,6 +12,7 @@ This document is the canonical source for Awake's current reusable UI boundaries
 | `:awake:ui:material3` | Material 3 color schemes, components, and screen recipes such as `Scaffold` | Shadcn tokens, recipes, or product branding |
 | `:awake:ui:shadcn` | Shadcn themes, tokens, variants, and `shadcn*` recipes | Core layout/runtime mechanics |
 | `:awake:ui:node-graph-canvas` | The node-graph editing surface: node placement, wires, pan and zoom, and selection and wiring gestures, reported as intents | Graph semantics (`:awake:node-graph` and each graph kind), palettes, inspectors, undo, and design-system styling |
+| `:awake:ui:canvas` | The screen-anchored game UI capability: `CanvasElement` and its style/layout/binding types, text and link parsing, and drawing a flat item list through a host-answered `CanvasResolver` | A scene or ECS dependency, the `canvas_element` schema (`:awake:scene:canvas`), and design-system styling |
 | `:awake:compose:ui-testing` | Frame composition, semantics, rasterization, and UI verification helpers | Production UI behavior |
 | `:samples:*` | Showcase pages, debug shells, and sample-specific adapters | Reusable widgets and design-system policy |
 

@@ -11,6 +11,7 @@ import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.core.text.font.UiFonts
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneNode
+import com.awakekt.awake.ui.canvas.isCanvasFontFile
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
@@ -35,28 +36,5 @@ suspend fun loadCanvasFonts(document: SceneDocument, assets: AssetSource): Map<S
     }
 }
 
-/** The font an element's [name] draws in, from the loaded [fonts] or the built-in families; null for the default. */
-internal fun canvasFont(name: String, fonts: Map<String, UiFont>): UiFont? =
-    if (isFontFile(name)) fonts[name] else BUILT_IN_FONTS[name]?.invoke()
-
-/** What is wrong with a `font` value, as a message naming the field; null when nothing is. */
-internal fun fontProblem(font: String): String? = when {
-    font.isEmpty() || isFontFile(font) || font in BUILT_IN_FONTS -> null
-    '/' in font || '.' in font -> "font \"$font\" must be a .ttf or .otf file"
-    else -> "font \"$font\" is not a built-in family: ${BUILT_IN_FONTS.keys.joinToString()}"
-}
-
-private fun isFontFile(font: String) = font.endsWith(".ttf", ignoreCase = true) || font.endsWith(".otf", ignoreCase = true)
-
-/**
- * The families a `font` can name, each [UiFonts]' memoized instance, so its atlas uploads once.
- * `trueSans` is left out because an element has no weight, so it would draw as `default` does, and
- * `msdf` because nothing draws with it yet.
- */
-private val BUILT_IN_FONTS: Map<String, () -> UiFont> = mapOf(
-    "default" to { UiFonts.default() },
-    "bitmap" to { UiFonts.bitmap() },
-)
-
 private fun SceneNode.canvasFontPaths(): List<String> =
-    components.filterIsInstance<SceneCanvasElement>().map { it.font }.filter(::isFontFile) + children.flatMap { it.canvasFontPaths() }
+    components.filterIsInstance<SceneCanvasElement>().map { it.font }.filter(::isCanvasFontFile) + children.flatMap { it.canvasFontPaths() }
