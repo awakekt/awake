@@ -29,7 +29,7 @@ kotlin {
             implementation(project(":awake:compose:foundation"))
             implementation(project(":awake:core:color"))
             implementation(project(":awake:core:logging"))
-            implementation(project(":awake:core:math"))
+            api(project(":awake:core:math"))
             implementation(project(":awake:core:math2d"))
             api(project(":awake:core:text"))
             implementation(libs.kotlinx.serialization.json)

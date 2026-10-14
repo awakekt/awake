@@ -5,10 +5,12 @@
  */
 package com.awakekt.awake.scene.canvas
 
+import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneResolutionContext
+import com.awakekt.awake.scene.document.SceneVec3
 import kotlin.reflect.KClass
 
 /** Loads and saves [CanvasElement]s as `canvas_element` scene components. */
@@ -49,7 +51,7 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         it.style = style
         it.textAlign = textAlign
         it.follow = follow
-        it.followOffset = followOffset
+        it.followOffset = Vec3f(followOffset.x, followOffset.y, followOffset.z)
         it.followBounds = followBounds
         it.followOutset = followOutset
         it.layout = layout
@@ -89,7 +91,7 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         style = style,
         textAlign = textAlign,
         follow = follow,
-        followOffset = followOffset,
+        followOffset = SceneVec3(followOffset.x, followOffset.y, followOffset.z),
         followBounds = followBounds,
         followOutset = followOutset,
         layout = layout,

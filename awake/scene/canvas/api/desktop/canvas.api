@@ -113,7 +113,7 @@ public final class com/awakekt/awake/scene/canvas/CanvasElement {
 	public final fun getFocused ()Z
 	public final fun getFollow ()Ljava/lang/String;
 	public final fun getFollowBounds ()Z
-	public final fun getFollowOffset ()Lcom/awakekt/awake/scene/document/SceneVec3;
+	public final fun getFollowOffset ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun getFollowOutset ()F
 	public final fun getFont ()Ljava/lang/String;
 	public final fun getFontSize ()F
@@ -152,7 +152,7 @@ public final class com/awakekt/awake/scene/canvas/CanvasElement {
 	public final fun setFocused (Z)V
 	public final fun setFollow (Ljava/lang/String;)V
 	public final fun setFollowBounds (Z)V
-	public final fun setFollowOffset (Lcom/awakekt/awake/scene/document/SceneVec3;)V
+	public final fun setFollowOffset (Lcom/awakekt/awake/core/math/Vec3f;)V
 	public final fun setFollowOutset (F)V
 	public final fun setFont (Ljava/lang/String;)V
 	public final fun setFontSize (F)V
