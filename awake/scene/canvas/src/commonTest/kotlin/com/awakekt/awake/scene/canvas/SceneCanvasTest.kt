@@ -243,6 +243,7 @@ class SceneCanvasTest {
             dropTarget = true,
             camera = "Portrait Camera",
             mask = "*",
+            pressable = true,
             font = "fonts/title.ttf",
             style = CanvasStyle(
                 background = "#202020",
