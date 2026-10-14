@@ -147,6 +147,10 @@ class ComposeHost(
         val focusedTextInputs = focusOwner.focused?.textInputs.orEmpty()
         val textFocused = focusedTextInputs.isNotEmpty()
         val passwordFocused = focusedTextInputs.any { it.isPassword }
+        // Blocked only if EVERY focused input is single-line: one multi-line field among them still
+        // needs Up/Down for its own caret.
+        val singleLineFocused = focusedTextInputs.all { it.isSingleLine }
+        val passThroughKeys = focusedTextInputs.flatMapTo(mutableSetOf()) { it.passThroughKeys }
         val clipboardText = answerClipboardCommands(input.clipboardCommands)
 
         val paint = painter.paintOutput(root)
@@ -160,6 +164,8 @@ class ComposeHost(
                 isScrollConsumed = scrollConsumed,
                 isTextInputFocused = textFocused,
                 isModalOpen = root.activeModalLayer() != null || dispatcher.isModalOpen,
+                isTextInputSingleLine = singleLineFocused,
+                textInputPassThroughKeys = passThroughKeys,
             ),
             // The platform raises a soft keyboard while a field holds focus; on desktop nothing
             // acts on it, which is why it is a request rather than a call.

@@ -12,6 +12,7 @@ import com.awakekt.awake.compose.ui.semantics.SemanticsNode
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.input.ClipboardCommand
 import com.awakekt.awake.core.input.ImeComposition
+import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.input.PointerCursor
 import com.awakekt.awake.core.input.TextEditAction
 
@@ -116,10 +117,83 @@ data class InputOwnership(
     val isTextInputFocused: Boolean = false,
     /** A modal layer is open, so a click anywhere belongs to the UI -- backdrop included. */
     val isModalOpen: Boolean = false,
+    /**
+     * Whether every focused [com.awakekt.awake.compose.ui.node.TextInputNode] spans one line.
+     *
+     * Only meaningful with [isTextInputFocused]. Drives [blocksGameplayKey]: a single-line field has
+     * no use for [Key.ArrowUp]/[Key.ArrowDown], so they stay readable by gameplay (a chat line
+     * stepping through sent history); a multi-line field moves its caret with them, so they stay
+     * taken. True when nothing is focused, matching [TextInputNode][com.awakekt.awake.compose.ui.node.TextInputNode]'s own default.
+     */
+    val isTextInputSingleLine: Boolean = true,
+    /**
+     * Keys the focused text input declared it does not use, so [blocksGameplayKey] lets them through
+     * even though they would otherwise be taken -- the union of every focused
+     * [com.awakekt.awake.compose.ui.node.TextInputNode.passThroughKeys]. Empty when nothing is focused.
+     */
+    val textInputPassThroughKeys: Set<Key> = emptySet(),
 )
 
-/** Gameplay must ignore keys when the UI owns the pointer, is taking text, or a modal is open. */
+/**
+ * Gameplay must ignore keys when the UI owns the pointer, is taking text, or a modal is open.
+ *
+ * While [isTextInputFocused] this is `true` even though a focused field only takes *some* keys --
+ * see [blocksGameplayKey] for the per-key answer. Kept, rather than narrowed, because a caller that
+ * only wants "is the keyboard partly spoken for" (clearing a held movement intent, say) still needs
+ * one cheap boolean.
+ */
 val InputOwnership.blocksGameplayKeys: Boolean get() = isCaptured || isTextInputFocused || isModalOpen
+
+/**
+ * Keys a focused text input of [isTextInputSingleLine] handles itself, before
+ * [InputOwnership.textInputPassThroughKeys] subtracts anything a field declared it does not want.
+ *
+ * Matches what [com.awakekt.awake.compose.foundation.text.BasicTextField] actually routes to typing
+ * (`Key` identity, not [TextEditAction]) and to [TextEditAction] through `ComposeHost.dispatchText`:
+ * every letter and digit and [Key.Space] produce typed text; [Key.Backspace], [Key.Delete],
+ * [Key.ArrowLeft], [Key.ArrowRight], [Key.Home], [Key.End] and [Key.Enter] are mapped
+ * [TextEditAction]s; [Key.Escape] and [Key.Tab] are not field behavior but are reserved for the UI
+ * (dismissing a modal, moving focus) while a field is focused. [Key.ArrowUp]/[Key.ArrowDown] move the
+ * caret only in a multi-line field, so they are added only there. [Key.PageUp]/[Key.PageDown] are
+ * left out on purpose: no [TextEditAction] exists for them, so even a multi-line field does not yet
+ * handle them, and `scene:controls`' fly camera already reads them -- blocking them on a guess would
+ * take that away with nothing to show for it.
+ */
+private fun textInputUsedKeys(singleLine: Boolean): Set<Key> =
+    if (singleLine) SINGLE_LINE_TEXT_INPUT_KEYS else MULTILINE_TEXT_INPUT_KEYS
+
+private val PRINTABLE_KEYS: Set<Key> = setOf(
+    Key.Space,
+    Key.A, Key.B, Key.C, Key.D, Key.E, Key.F, Key.G, Key.H, Key.I, Key.J, Key.K, Key.L, Key.M,
+    Key.N, Key.O, Key.P, Key.Q, Key.R, Key.S, Key.T, Key.U, Key.V, Key.W, Key.X, Key.Y, Key.Z,
+    Key.Digit0, Key.Digit1, Key.Digit2, Key.Digit3, Key.Digit4,
+    Key.Digit5, Key.Digit6, Key.Digit7, Key.Digit8, Key.Digit9,
+)
+
+// Modifier chords such as Ctrl+C need no entry of their own: the letter they combine with (C, V, X,
+// A, Z) is already in PRINTABLE_KEYS, so the chord is taken regardless of Ctrl being held.
+private val SINGLE_LINE_TEXT_INPUT_KEYS: Set<Key> = PRINTABLE_KEYS + setOf(
+    Key.Backspace, Key.Delete, Key.ArrowLeft, Key.ArrowRight, Key.Home, Key.End,
+    Key.Enter, Key.Escape, Key.Tab,
+)
+
+private val MULTILINE_TEXT_INPUT_KEYS: Set<Key> = SINGLE_LINE_TEXT_INPUT_KEYS + setOf(Key.ArrowUp, Key.ArrowDown)
+
+/**
+ * Whether gameplay must ignore [key] specifically this frame.
+ *
+ * The per-key refinement of [blocksGameplayKeys]: pointer capture and a modal still take every key,
+ * but a focused text field takes only the keys it uses (see [textInputUsedKeys]), minus whatever it
+ * declared through [InputOwnership.textInputPassThroughKeys]. That is what lets a single-line chat
+ * field's Up/Down reach a game system for stepping through sent lines while the field still keeps
+ * letters and Backspace for itself.
+ */
+fun InputOwnership.blocksGameplayKey(key: Key): Boolean = when {
+    isCaptured || isModalOpen -> true
+    !isTextInputFocused -> false
+    key in textInputPassThroughKeys -> false
+    else -> key in textInputUsedKeys(isTextInputSingleLine)
+}
 
 /** Things only the platform can do, requested rather than performed. */
 data class PlatformEffects(

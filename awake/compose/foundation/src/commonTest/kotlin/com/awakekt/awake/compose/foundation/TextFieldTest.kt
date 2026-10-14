@@ -285,6 +285,41 @@ class TextFieldThroughFrameTest {
         assertTrue(output.ownership.isTextInputFocused)
         assertTrue(output.ownership.blocksGameplayKeys)
         assertTrue(output.effects.requestKeyboard, "the platform was never asked for a keyboard")
+        // The default field here is multi-line (`singleLine` defaults to false), so its own caret
+        // movement still needs Up/Down.
+        assertFalse(output.ownership.isTextInputSingleLine, "a multi-line field reported single-line")
+    }
+
+    @Test
+    fun aSingleLineFieldReportsItselfAsSingleLineInOwnership() {
+        val state = TextFieldState()
+        val host = ComposeHost()
+        val content: context(Composer)
+        () -> Unit = { BasicTextField(state, Modifier.size(100.dp, 20.dp), singleLine = true) }
+        host.frame(idle, content)
+        host.frame(FrameInput(200, 200, 5, 5, pointerDown = true), content)
+
+        assertTrue(host.frame(idle, content).ownership.isTextInputSingleLine)
+    }
+
+    @Test
+    fun passThroughKeysDeclaredOnTheFieldReachOwnership() {
+        val state = TextFieldState()
+        val host = ComposeHost()
+        val content: context(Composer)
+        () -> Unit = {
+            BasicTextField(
+                state,
+                Modifier.size(100.dp, 20.dp),
+                singleLine = true,
+                passThroughKeys = setOf(com.awakekt.awake.core.input.Key.Escape),
+            )
+        }
+        host.frame(idle, content)
+        host.frame(FrameInput(200, 200, 5, 5, pointerDown = true), content)
+
+        val ownership = host.frame(idle, content).ownership
+        assertEquals(setOf(com.awakekt.awake.core.input.Key.Escape), ownership.textInputPassThroughKeys)
     }
 
     @Test

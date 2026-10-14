@@ -6,6 +6,7 @@
 package com.awakekt.awake.scene.controls
 
 import com.awakekt.awake.compose.ui.platform.InputOwnership
+import com.awakekt.awake.compose.ui.platform.blocksGameplayKey
 import com.awakekt.awake.compose.ui.platform.blocksGameplayKeys
 import com.awakekt.awake.core.input.ActionInputSource
 import com.awakekt.awake.core.input.InputSnapshot
@@ -22,8 +23,9 @@ import com.awakekt.awake.core.input.ScrollSource
  *
  * - **Pointer** reads subtract [InputOwnership.isCaptured]. A drag the UI is holding is not a world
  *   drag.
- * - **Keys** subtract [blocksGameplayKeys]. Typing "wasd" into a focused field must not walk the
- *   player.
+ * - **Keys** subtract [blocksGameplayKey] per key. Typing "wasd" into a focused field must not walk
+ *   the player, but a single-line field has no use for Up/Down and lets them reach a game system --
+ *   a consumer pack's chat line stepping through its sent history.
  * - **Scroll** subtracts [InputOwnership.isScrollConsumed], so a scrolled panel does not also zoom.
  *
  * A focused text field owns the keyboard and *not* the mouse, so dragging the world while a field
@@ -70,16 +72,16 @@ class GameplayInput(
     override fun wasPressed(button: PointerButton): Boolean =
         !claimed.isCaptured && !claimed.isModalOpen && snapshot.wasPressed(button)
 
-    /** False while the UI owns the keyboard, whatever the key. */
-    override fun isDown(key: Key): Boolean = !claimed.blocksGameplayKeys && snapshot.keysDown.contains(key)
+    /** False while the UI takes [key] for itself -- a captured pointer or a modal take every key, a focused text field only the keys it uses. */
+    override fun isDown(key: Key): Boolean = !claimed.blocksGameplayKey(key) && snapshot.keysDown.contains(key)
 
     /**
-     * Returns whether [key] was newly pressed this frame, false while the UI owns the keyboard.
+     * Returns whether [key] was newly pressed this frame, false while the UI takes [key] for itself.
      *
      * @param key The key code to check.
-     * @return `true` if the key transitioned from released to pressed this frame and UI does not own the keyboard.
+     * @return `true` if the key transitioned from released to pressed this frame and the UI does not take [key].
      */
-    override fun wasPressed(key: Key): Boolean = !claimed.blocksGameplayKeys && snapshot.wasPressed(key)
+    override fun wasPressed(key: Key): Boolean = !claimed.blocksGameplayKey(key) && snapshot.wasPressed(key)
 
     /**
      * Whether the UI has the keyboard.

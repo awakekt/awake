@@ -40,6 +40,56 @@ class TextFocusBlocksGameplayTest {
     }
 
     @Test
+    fun aSingleLineFieldLetsUpAndDownReachGameplayButKeepsLettersAndBackspace() {
+        // A consumer pack's single-line chat field steps through its sent lines with Up/Down; the
+        // field itself has no use for them, so they must not disappear into `blocksGameplayKeys`.
+        val ownership = InputOwnership(isTextInputFocused = true, isTextInputSingleLine = true)
+        val input = GameplayInput(
+            snapshotWith(Key.ArrowUp, Key.ArrowDown, Key.W, Key.Backspace, Key.F1),
+            ownership,
+        )
+
+        assertTrue(input.isDown(Key.ArrowUp), "a single-line field has no use for Up")
+        assertTrue(input.isDown(Key.ArrowDown), "a single-line field has no use for Down")
+        assertTrue(input.wasPressed(Key.ArrowUp))
+        assertTrue(input.isDown(Key.F1), "a field never handles function keys")
+        assertFalse(input.isDown(Key.W), "a single-line field still takes typed letters")
+        assertFalse(input.isDown(Key.Backspace), "a single-line field still takes Backspace")
+    }
+
+    @Test
+    fun aMultilineFieldKeepsUpAndDownForItsOwnCaret() {
+        val ownership = InputOwnership(isTextInputFocused = true, isTextInputSingleLine = false)
+        val input = GameplayInput(snapshotWith(Key.ArrowUp, Key.ArrowDown), ownership)
+
+        assertFalse(input.isDown(Key.ArrowUp), "a multi-line field moves its caret with Up")
+        assertFalse(input.isDown(Key.ArrowDown), "a multi-line field moves its caret with Down")
+    }
+
+    @Test
+    fun aFieldCanDeclareExtraKeysItLetsThrough() {
+        // Escape is taken by default while a field is focused, but a field may give it up too.
+        val blocking = InputOwnership(isTextInputFocused = true, isTextInputSingleLine = true)
+        val passThrough = blocking.copy(textInputPassThroughKeys = setOf(Key.Escape))
+
+        assertFalse(GameplayInput(snapshotWith(Key.Escape), blocking).isDown(Key.Escape))
+        assertTrue(GameplayInput(snapshotWith(Key.Escape), passThrough).isDown(Key.Escape))
+    }
+
+    @Test
+    fun capturedPointerStillBlocksEveryKeyRegardlessOfTextInput() {
+        // Positive control: the blanket block is still in force for capture and modal, even though
+        // a focused text field now takes only the keys it uses.
+        val captured = GameplayInput(snapshotWith(Key.ArrowUp, Key.F1), InputOwnership(isCaptured = true))
+        assertFalse(captured.isDown(Key.ArrowUp), "pointer capture must still block a key no field uses")
+        assertFalse(captured.isDown(Key.F1), "pointer capture must still block every key")
+
+        val modal = GameplayInput(snapshotWith(Key.ArrowUp, Key.F1), InputOwnership(isModalOpen = true))
+        assertFalse(modal.isDown(Key.ArrowUp), "a modal must still block a key no field uses")
+        assertFalse(modal.isDown(Key.F1), "a modal must still block every key")
+    }
+
+    @Test
     fun typingIntoAFocusedFieldDoesNotMoveThePlayer() {
         val world = World()
         val subject = world.create()
@@ -68,7 +118,28 @@ class TextFocusBlocksGameplayTest {
     }
 
     @Test
-    fun cameraHotkeyIsIgnoredWhileTextInputIsFocused() {
+    fun theDefaultCameraHotkeysAreFunctionKeysSoTheyStillFireWhileATextFieldIsFocused() {
+        // CameraInputSystem.DEFAULT_MODE_KEYS maps only F1/F2/F4/F5. No text field handles a
+        // function key, so #809's per-key rule now lets it through even while a plain field holds
+        // focus -- the over-broad blocking this issue fixes.
+        val world = World()
+        val config = activeCamera(world)
+        val input = Input()
+        val system = CameraInputSystem(
+            inputProvider = { GameplayInput(input.currentSnapshot, InputOwnership(isTextInputFocused = true)) },
+        )
+
+        input.setKeyDown(Key.F2, down = true)
+        input.updateSnapshot()
+        system.update(world, DELTA)
+
+        assertEquals(CameraMode.ThirdPerson, config.mode, "a function-key hotkey must still reach the game")
+    }
+
+    @Test
+    fun aCameraHotkeyMappedToALetterIsStillIgnoredWhileTextInputIsFocused() {
+        // A hotkey an app maps onto a key the field actually uses (a letter) must stay blocked --
+        // the original `ui-core` defect this guards.
         val world = World()
         val config = activeCamera(world)
         var focused = true
@@ -76,15 +147,16 @@ class TextFocusBlocksGameplayTest {
         val input = Input()
         val system = CameraInputSystem(
             inputProvider = { GameplayInput(input.currentSnapshot, InputOwnership(isTextInputFocused = focused)) },
+            modeKeys = mapOf(Key.W to CameraMode.ThirdPerson),
         )
 
-        input.setKeyDown(Key.F2, down = true)
+        input.setKeyDown(Key.W, down = true)
         input.updateSnapshot()
         system.update(world, DELTA)
         assertEquals(
             CameraMode.FirstPerson,
             config.mode,
-            "F2 typed into a field must not switch mode",
+            "W typed into a field must not switch mode",
         )
 
         // Releasing focus while the key is still held must not replay the press: the edge was
@@ -95,9 +167,9 @@ class TextFocusBlocksGameplayTest {
         system.update(world, DELTA)
         assertEquals(CameraMode.FirstPerson, config.mode, "a still-held key must not re-fire")
 
-        input.setKeyDown(Key.F2, down = false)
+        input.setKeyDown(Key.W, down = false)
         input.updateSnapshot()
-        input.setKeyDown(Key.F2, down = true)
+        input.setKeyDown(Key.W, down = true)
         input.updateSnapshot()
         system.update(world, DELTA)
         assertEquals(CameraMode.ThirdPerson, config.mode, "a fresh press must switch mode")
