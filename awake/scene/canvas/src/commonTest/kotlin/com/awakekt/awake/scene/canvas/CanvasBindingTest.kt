@@ -77,7 +77,7 @@ class CanvasBindingTest {
         }
     }
 
-    private fun tree() = CanvasTree(world, false, emptyMap(), null, listOf(HealthBinding, PurseBinding))
+    private fun tree() = CanvasTree(emptyList(), false, emptyMap(), SceneCanvasResolver(world, null, null, listOf(HealthBinding, PurseBinding)))
 
     private fun textOf(template: String) = tree().textOf(bound(CanvasBinding("Player", text = template)))
 
