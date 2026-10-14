@@ -20,6 +20,7 @@ import com.awakekt.awake.compose.ui.semantics.SemanticsConfiguration
 import com.awakekt.awake.compose.ui.unit.Constraints
 import com.awakekt.awake.compose.ui.unit.Density
 import com.awakekt.awake.core.input.ImeComposition
+import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.input.PointerCursor
 import com.awakekt.awake.core.input.TextEditAction
 
@@ -243,6 +244,24 @@ interface TextInputNode {
      * `PlatformEffects.passwordKeyboard` while the node holds focus.
      */
     val isPassword: Boolean get() = false
+
+    /**
+     * Whether this node spans one line.
+     *
+     * Read into `InputOwnership.isTextInputSingleLine` while this node holds focus, which is what
+     * lets a single-line field's [Key.ArrowUp]/[Key.ArrowDown] reach gameplay -- a chat line
+     * stepping through sent history -- while a multi-line editor keeps them for moving its caret.
+     * `true` by default, matching `BasicTextField(singleLine = ...)`'s own default meaning "nothing
+     * declared otherwise."
+     */
+    val isSingleLine: Boolean get() = true
+
+    /**
+     * Keys this node does not use, so gameplay keeps reading them even though
+     * `InputOwnership.blocksGameplayKey` would otherwise take them for a focused field of this
+     * node's [isSingleLine]. Empty by default.
+     */
+    val passThroughKeys: Set<Key> get() = emptySet()
 
     /** Receives [text] typed on the keyboard. */
     fun onTextTyped(text: String)

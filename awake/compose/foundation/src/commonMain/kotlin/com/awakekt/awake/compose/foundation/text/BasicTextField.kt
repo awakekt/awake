@@ -33,6 +33,7 @@ import com.awakekt.awake.compose.ui.semantics.SemanticsProperties
 import com.awakekt.awake.compose.ui.semantics.semantics
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.input.ImeComposition
+import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.input.TextEditAction
 import com.awakekt.awake.core.text.theme.TextStyle
 import kotlin.math.roundToInt
@@ -99,6 +100,12 @@ context(_: Composer)
  * [onSubmit] fires on Enter in a single-line field (`singleLine`, or masked since a password field
  * is always single-line) -- Compose's `KeyboardActions.onDone`. A multi-line field has nowhere to
  * submit from, so Enter inserts a newline there instead, same as always.
+ *
+ * [singleLine] also decides which keys gameplay keeps reading while this field holds focus: Up and
+ * Down move the caret in a multi-line field, so they stay taken there, but a single-line field has
+ * no use for them and lets them through -- a consumer pack's chat line steps through its sent
+ * history with them. [passThroughKeys] lets a field give up more than that default, e.g. a
+ * multi-line notes field that still wants Up/Down to reach the game.
  */
 fun BasicTextField(
     state: TextFieldState,
@@ -112,6 +119,7 @@ fun BasicTextField(
     mask: Char? = null,
     revealLastTyped: Boolean = false,
     onSubmit: (() -> Unit)? = null,
+    passThroughKeys: Set<Key> = emptySet(),
 ) {
     rememberGroup(BasicTextFieldGroup) {
         // A newline in a password could only draw as one more mask, so the field never breaks lines.
@@ -146,7 +154,7 @@ fun BasicTextField(
                 .then(
                     TextFieldInputElement(
                         state, oneLine, mask, reveal.takeIf { revealLastTyped }, clock,
-                        policy, density, horizontalOffset, onClick, onSubmit,
+                        policy, density, horizontalOffset, onClick, onSubmit, passThroughKeys,
                     ),
                 )
                 .clickable { }
@@ -307,6 +315,7 @@ private class TextFieldInputElement(
     private val horizontalOffset: ScrollState,
     private val onClick: (() -> Unit)?,
     private val onSubmit: (() -> Unit)?,
+    private val passThroughKeys: Set<Key>,
 ) : ModifierNodeElement<TextFieldInputNode>() {
     override fun create(): TextFieldInputNode = TextFieldInputNode()
 
@@ -321,6 +330,7 @@ private class TextFieldInputElement(
         node.horizontalOffset = horizontalOffset
         node.onClick = onClick
         node.onSubmit = onSubmit
+        node.passThroughKeys = passThroughKeys
     }
 }
 
@@ -338,8 +348,10 @@ private class TextFieldInputNode :
     lateinit var horizontalOffset: ScrollState
     var onClick: (() -> Unit)? = null
     var onSubmit: (() -> Unit)? = null
+    override var passThroughKeys: Set<Key> = emptySet()
 
     override val isPassword: Boolean get() = mask != null
+    override val isSingleLine: Boolean get() = singleLine
 
     // A masked field never hands its text to the clipboard, the way a browser treats a password
     // input: copy yields nothing and cut neither yields nor removes anything.
