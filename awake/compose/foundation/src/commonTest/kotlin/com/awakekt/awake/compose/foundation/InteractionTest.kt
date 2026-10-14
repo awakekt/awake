@@ -8,9 +8,11 @@ package com.awakekt.awake.compose.foundation
 import com.awakekt.awake.compose.foundation.gestures.draggable
 import com.awakekt.awake.compose.foundation.interaction.Interaction
 import com.awakekt.awake.compose.foundation.interaction.InteractionSource
+import com.awakekt.awake.compose.foundation.layout.Box
 import com.awakekt.awake.compose.foundation.layout.Column
 import com.awakekt.awake.compose.foundation.layout.ColumnMeasurePolicy
 import com.awakekt.awake.compose.foundation.layout.Spacer
+import com.awakekt.awake.compose.foundation.layout.padding
 import com.awakekt.awake.compose.foundation.layout.size
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.ui.Modifier
@@ -87,6 +89,39 @@ class InteractionSourceTest {
 }
 
 class HoverableTest {
+
+    @Test
+    fun aPassiveObserverIsHoveredUnderALaterSiblingsPlainPaddingBox() {
+        val watcher = InteractionSource()
+        val root = laidOut {
+            Box(Modifier.size(200.dp)) {
+                Spacer(Modifier.size(40.dp).hoverable(watcher, blocksHitTest = false))
+                // Later, so on top: its padding covers the spacer, its content does not.
+                Box(Modifier.padding(start = 100.dp, top = 100.dp)) { Spacer(Modifier.size(40.dp)) }
+            }
+        }
+
+        PointerInputDispatcher().dispatch(root, PointerEvent(PointerEventType.Move), 20, 20)
+
+        assertTrue(watcher.isHovered, "a box without pointer input is transparent to the pointer")
+    }
+
+    @Test
+    fun aSiblingThatTakesThePointStillWinsOverAPassiveObserver() {
+        val watcher = InteractionSource()
+        val taker = InteractionSource()
+        val root = laidOut {
+            Box(Modifier.size(200.dp)) {
+                Spacer(Modifier.size(40.dp).hoverable(watcher, blocksHitTest = false))
+                Spacer(Modifier.size(40.dp).hoverable(taker))
+            }
+        }
+
+        PointerInputDispatcher().dispatch(root, PointerEvent(PointerEventType.Move), 20, 20)
+
+        assertTrue(taker.isHovered)
+        assertFalse(watcher.isHovered, "the taker on top occludes it")
+    }
 
     @Test
     fun thePointerArrivingMarksTheNodeHovered() {

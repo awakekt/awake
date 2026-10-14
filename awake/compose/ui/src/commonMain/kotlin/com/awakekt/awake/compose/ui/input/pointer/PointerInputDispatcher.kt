@@ -325,7 +325,8 @@ class PointerInputDispatcher(
     /**
      * Fills [into] root-first with the nodes under the point, or leaves it untouched. Returns [MISS]
      * when [node] doesn't hold the point, [TAKEN] when a node on the path it added does something
-     * with a pointer there, and [HELD] when none does.
+     * with a pointer there, [WATCHED] when one only watches it, a passive hover observer, and [HELD]
+     * when none does either.
      *
      * Reverse of paint order: whatever is drawn last is on top, so it is offered the event first.
      *
@@ -335,19 +336,24 @@ class PointerInputDispatcher(
         hitSteps++
         if (!node.contains(x, y)) return MISS
         into.add(node)
-        return if (descendInto(into, node, x, y, searchLayers) || node.takes(x, y)) TAKEN else HELD
+        val below = descendInto(into, node, x, y, searchLayers)
+        return when {
+            below == TAKEN || node.takes(x, y) -> TAKEN
+            below == WATCHED || node.watches(x, y) -> WATCHED
+            else -> HELD
+        }
     }
 
     /**
-     * Layers first, highest kind on top, then children -- all in reverse declaration order. True when
-     * a node it added to [into] takes the point.
+     * Layers first, highest kind on top, then children -- all in reverse declaration order. Returns
+     * how the path it added to [into] takes the point, as [hitTest] does, or [MISS] for none.
      *
      * Only the root of a walk, or a layer, looks for layers below it. That look offers the point to
      * every layer under the node's children, and a layer holds the point or not by where it is
      * placed, so the same look again a level down could only miss them again. Looking at every
      * level walked the layer-bearing part of the tree once per level.
      */
-    private fun descendInto(into: MutableList<LayoutNode>, node: LayoutNode, x: Int, y: Int, searchLayers: Boolean): Boolean {
+    private fun descendInto(into: MutableList<LayoutNode>, node: LayoutNode, x: Int, y: Int, searchLayers: Boolean): Int {
         var layer = MISS
         if (searchLayers) {
             layer = hitOwnLayers(into, node, x, y)
@@ -360,7 +366,7 @@ class PointerInputDispatcher(
                 i--
             }
         }
-        return if (layer != MISS) layer == TAKEN else hitChildren(into, node, x, y, childOrder(node))
+        return if (layer != MISS) layer else hitChildren(into, node, x, y, childOrder(node))
     }
 
     /** [node]'s children's indices in hit order when one has a zIndex, or null for reverse declaration order. */
@@ -380,43 +386,48 @@ class PointerInputDispatcher(
 
     /**
      * Offers the point to [node]'s children topmost first, stopping at the first that takes it, and
-     * returns whether one did.
+     * returns how the path it kept takes the point, as [hitTest] does, or [MISS] for none.
      *
      * A child whose box holds the point but whose subtree does nothing with a pointer there -- the
      * padding box a layout wraps around a child, a decorative panel -- is passed over, so a handler
      * beneath it is still reachable. That is how Compose hit-tests: only a node with pointer input
      * is hit, and a box without any is transparent to the pointer. When no child takes the point,
-     * the topmost one that held it is kept, as the walk always has, so a point over nothing but
-     * plain boxes still finds the innermost of them.
+     * the topmost one that watches it is kept, so a passive hover observer is hovered under a
+     * sibling's plain wrapper; failing that, the topmost one that held it, so a point over nothing
+     * but plain boxes still finds the innermost of them.
      *
      * [order] is the children's indices in hit order, or null for reverse declaration order.
      */
-    private fun hitChildren(into: MutableList<LayoutNode>, node: LayoutNode, x: Int, y: Int, order: Array<Int>?): Boolean {
+    private fun hitChildren(into: MutableList<LayoutNode>, node: LayoutNode, x: Int, y: Int, order: Array<Int>?): Int {
         val count = node.children.size
-        // The first child that held the point but took nothing keeps its path where it is, from
-        // keptFrom to keptTo, in case no later child takes the point. Walking it again at the end
-        // instead doubled the work at every level of plain boxes, as over a 3D view.
+        // The best child so far that held the point but took nothing keeps its path where it is,
+        // from keptFrom to keptTo, in case no later child takes the point. Walking it again at the
+        // end instead doubled the work at every level of plain boxes, as over a 3D view.
+        var kept = MISS
         var keptFrom = -1
         var keptTo = -1
         for (n in 0 until count) {
             val child = node.children[if (order == null) count - 1 - n else order[n]]
             val mark = into.size
-            when (hitTest(into, child, x, y, searchLayers = false)) {
-                MISS -> Unit
-                TAKEN -> {
+            val hit = hitTest(into, child, x, y, searchLayers = false)
+            when {
+                hit == MISS -> Unit
+                hit == TAKEN -> {
                     // The kept path is under the taker's, which starts at keptTo.
                     cutOut(into, keptFrom, keptTo)
-                    return true
+                    return TAKEN
                 }
-                else -> if (keptFrom < 0) {
-                    keptFrom = mark
+                hit > kept -> {
+                    // A watcher outranks a plain holder above it: drop the holder's path.
+                    cutOut(into, keptFrom, keptTo)
+                    kept = hit
+                    keptFrom = mark - (keptTo - keptFrom).coerceAtLeast(0)
                     keptTo = into.size
-                } else {
-                    cutOut(into, mark, into.size)
                 }
+                else -> cutOut(into, mark, into.size)
             }
         }
-        return false
+        return kept
     }
 
     /** Removes [into]'s nodes from [from] until [to], moving the ones after them down once. */
@@ -448,6 +459,20 @@ class PointerInputDispatcher(
         return takes
     }
 
+    /** Whether this node only watches a pointer at ([x], [y]): a passive link whose own box holds it. */
+    private fun LayoutNode.watches(x: Int, y: Int): Boolean {
+        var h = 0
+        while (h < pointerInputs.size) {
+            val link = pointerInputs[h]
+            if (!link.blocksHitTest) {
+                drawBoundsAt(pointerDepths[h], linkBounds)
+                if (linkBounds.holds(x - absoluteX - linkBounds[0], y - absoluteY - linkBounds[1], link.hitMarginPx)) return true
+            }
+            h++
+        }
+        return false
+    }
+
     /**
      * Layers may be positioned outside their declaring node (an anchored popup under a small
      * trigger), so a miss on that node must not make its layer subtree unreachable to input.
@@ -468,8 +493,10 @@ class PointerInputDispatcher(
         }
         if (hit == MISS) {
             into.removeAt(into.lastIndex)
-        } else if (hit == HELD && node.takes(x, y)) {
+        } else if (hit != TAKEN && node.takes(x, y)) {
             hit = TAKEN
+        } else if (hit == HELD && node.watches(x, y)) {
+            hit = WATCHED
         }
         return hit
     }
@@ -616,6 +643,8 @@ private const val MOUSE_POINTER = 0L
 
 // What a hit test found: nothing, a path of nodes that do nothing with a pointer there, or a path
 // with one that does. Top level, not in the companion, where a JVM const is a public field.
+// Ranked: a path that takes the point beats one that watches it, which beats one that only holds it.
 private const val MISS = 0
 private const val HELD = 1
-private const val TAKEN = 2
+private const val WATCHED = 2
+private const val TAKEN = 3
