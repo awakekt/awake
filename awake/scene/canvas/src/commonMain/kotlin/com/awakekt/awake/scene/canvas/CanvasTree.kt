@@ -137,8 +137,7 @@ private fun Rectangle.outset(by: Float): Rectangle {
 
 /** [element] with its anchor point on [node]'s screen point, or null when the node is behind the camera. */
 private fun CanvasTree.placeOnPoint(element: CanvasElement, node: String, density: Float): Rectangle? {
-    val offset = element.followOffset
-    val point = resolver.point(node, Vec3f(offset.x, offset.y, offset.z)) ?: return null
+    val point = resolver.point(node, element.followOffset) ?: return null
     val column = element.anchor.column
     val row = element.anchor.row
     val x = (point.x - origin.x) / density - column / 2f * element.width + if (column == 2) -element.offsetX else element.offsetX

@@ -543,7 +543,7 @@ class SceneCanvasTest {
     @Test
     fun aFollowOffsetMovesThePointInTheWorld() {
         named("Hero", 20f, 10f)
-        val plate = element { follow = "Hero"; followOffset = SceneVec3(0f, -2f, 0f); anchor = CanvasAnchor.TopLeft; offsetX = 0f; offsetY = 0f; width = 10f; height = 10f }
+        val plate = element { follow = "Hero"; followOffset = Vec3f(0f, -2f, 0f); anchor = CanvasAnchor.TopLeft; offsetX = 0f; offsetY = 0f; width = 10f; height = 10f }
 
         assertEquals(listOf(200, 80, 10, 10), followFrame(FlatProjector()).box(plate))
     }

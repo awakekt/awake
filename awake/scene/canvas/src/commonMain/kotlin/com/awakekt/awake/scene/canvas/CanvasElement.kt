@@ -8,9 +8,9 @@ package com.awakekt.awake.scene.canvas
 import com.awakekt.awake.compose.foundation.interaction.InteractionSource
 import com.awakekt.awake.compose.foundation.text.TextFieldState
 import com.awakekt.awake.compose.ui.focus.FocusRequester
+import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math2d.Rectangle
 import com.awakekt.awake.core.math2d.Vec2
-import com.awakekt.awake.scene.document.SceneVec3
 import kotlinx.serialization.Serializable
 import kotlin.math.sqrt
 import kotlin.time.Duration.Companion.seconds
@@ -157,7 +157,7 @@ class CanvasElement {
     var follow: String = ""
 
     /** A world-space offset from the followed node, such as above its head. */
-    var followOffset: SceneVec3 = SceneVec3()
+    var followOffset: Vec3f = Vec3f(0f, 0f, 0f)
 
     /** Whether the element covers the screen rectangle of the followed node's meshes. */
     var followBounds: Boolean = false
