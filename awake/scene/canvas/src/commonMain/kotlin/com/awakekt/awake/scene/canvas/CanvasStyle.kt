@@ -267,3 +267,7 @@ private fun paint(
 
 private fun colourProblems(vararg colours: Pair<String, String?>): List<String> =
     colours.mapNotNull { (name, value) -> if (value != null && !isHexColor(value)) "$name \"$value\" must be #RRGGBB or #RRGGBBAA" else null }
+
+// A colour typed wrong in the editor falls back instead of taking the whole frame down.
+internal fun colorOf(hex: String?, fallback: Color): Color =
+    if (hex != null && isHexColor(hex)) Color.fromHex(hex) else fallback

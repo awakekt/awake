@@ -28,7 +28,6 @@ import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.math2d.sp
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.core.text.theme.TextStyle
-import com.awakekt.awake.ecs.Entity
 
 /** A sensible blue for a Text's link spans when [CanvasStyle.linkColor] is not set. */
 private val DefaultLinkColor = Color.fromHex("#3B82F6")
@@ -108,7 +107,7 @@ internal fun TextFieldView(
     modifier: Modifier,
     textStyle: TextStyle,
     tree: CanvasTree,
-    children: List<Pair<Entity, CanvasElement>>,
+    children: List<CanvasItem>,
 ) {
     Box(modifier) {
         element.syncTextField()

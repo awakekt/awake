@@ -7,20 +7,9 @@ package com.awakekt.awake.scene.canvas
 
 import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.core.text.format.NumberFormat
-import com.awakekt.awake.ecs.Entity
-import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
-import com.awakekt.awake.scene.document.SceneComponent
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.SerializationException
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.booleanOrNull
-import kotlinx.serialization.json.floatOrNull
 import kotlin.math.abs
 import kotlin.math.roundToLong
 
@@ -68,104 +57,66 @@ data class CanvasBinding(
 }
 
 /**
- * Reads the fields bindings name from a [world], exporting each component once per frame through
- * its scene binding in [bindings], so it reads exactly what a saved scene would hold.
+ * A Bar's fill or a Text's filled-in template, read through a [CanvasResolver]'s raw field text
+ * rather than a world: the scene side turns a component's field into that text, so this side never
+ * needs to know what a component or a binding is.
  */
-internal class CanvasData(private val world: World, bindings: List<SceneComponentBinding<*, *>>) {
-    private val byName = bindings.mapNotNull { binding -> binding.serializer?.descriptor?.serialName?.let { it to binding } }.toMap()
-    private val exported = HashMap<Pair<Entity, String>, JsonObject?>()
-
-    /**
-     * [path]'s number on [entity], or a number [path] spells, or null when there is neither or it is
-     * not finite: a NaN health shows the element's own value rather than an empty bar.
-     */
-    fun number(entity: Entity, path: String): Float? {
-        val number = path.toFloatOrNull() ?: read(entity, path)?.let { primitive ->
-            primitive.floatOrNull ?: primitive.booleanOrNull?.let { if (it) 1f else 0f }
-        }
-        return number?.takeIf { it.isFinite() }
+internal fun CanvasResolver.numberField(node: String, path: String): Float? {
+    val number = path.toFloatOrNull() ?: field(node, path)?.let { content ->
+        content.toFloatOrNull() ?: content.toBooleanStrictOrNull()?.let { if (it) 1f else 0f }
     }
+    return number?.takeIf { it.isFinite() }
+}
 
-    /** [template] with each `{component.field}` or `{component.field:format}` replaced by that field's value on [entity]. */
-    fun text(entity: Entity, template: String): String = PLACEHOLDER.replace(template) { match ->
-        val path = match.groupValues[1]
-        val primitive = read(entity, path) ?: return@replace match.value
-        val spec = match.groupValues[FORMAT_GROUP]
-        if (spec.isEmpty()) {
-            show(primitive)
+/** [template] with each `{component.field}` or `{component.field:format}` replaced by that field's text on [node]. */
+internal fun CanvasResolver.textField(node: String, template: String): String = PLACEHOLDER.replace(template) { match ->
+    val path = match.groupValues[1]
+    val content = field(node, path) ?: return@replace match.value
+    val spec = match.groupValues[FORMAT_GROUP]
+    if (spec.isEmpty()) {
+        showField(content)
+    } else {
+        val format = NumberFormat.parse(spec)
+        if (format == null) {
+            warnUnknownFormat("$path:$spec", spec)
+            match.value
         } else {
-            val format = NumberFormat.parse(spec)
-            if (format == null) {
-                warnOnce("$path:$spec", "'$spec' is not a number format, which is n, f or p and a digit, such as n0", "the text keeps its placeholder")
-                match.value
-            } else {
-                show(primitive, format)
-            }
+            showField(content, format)
         }
     }
+}
 
-    // A whole number is its own digits, exact at any size: through a Float it would lose its low ones
-    // from 16,777,217 up. Any other number is shown to one decimal place, or in the format it asked for.
-    private fun show(primitive: JsonPrimitive, format: NumberFormat? = null): String {
-        val whole = primitive.content.toLongOrNull()
-        return when {
-            format == null -> whole?.toString() ?: primitive.floatOrNull?.let(::formatNumber) ?: primitive.content
-            whole != null -> format.format(whole)
-            else -> primitive.content.toDoubleOrNull()?.let(format::format) ?: primitive.content
-        }
+// A whole number is its own digits, exact at any size: through a Float it would lose its low ones
+// from 16,777,217 up. Any other number is shown to one decimal place, or in the format it asked for.
+private fun showField(content: String, format: NumberFormat? = null): String {
+    val whole = content.toLongOrNull()
+    return when {
+        format == null -> whole?.toString() ?: content.toFloatOrNull()?.let(::formatNumber) ?: content
+        whole != null -> format.format(whole)
+        else -> content.toDoubleOrNull()?.let(format::format) ?: content
     }
+}
 
-    private fun read(entity: Entity, path: String): JsonPrimitive? {
-        val component = path.substringBefore('.')
-        val fields = path.substringAfter('.', "").split('.')
-        val json = exported.getOrPut(entity to component) { export(entity, component) }
-        var element: JsonElement? = json
-        for (field in fields) element = (element as? JsonObject)?.get(field)
-        return (element as? JsonPrimitive).also { if (it == null) warnOnce(path) }
-    }
+/** To one decimal place, without it when it is 0: `120`, `0.5`, `-1.5`; past a trillion, or not finite, as it is. */
+private fun formatNumber(value: Float): String {
+    // First: roundToLong refuses NaN.
+    if (!value.isFinite() || abs(value) > LARGEST_FORMATTED) return value.toString()
+    val tenths = (value * TENTHS).roundToLong()
+    val sign = if (tenths < 0) "-" else ""
+    return if (tenths % 10 == 0L) (tenths / 10).toString() else "$sign${abs(tenths) / 10}.${abs(tenths) % 10}"
+}
 
-    // Safe: a binding's serializer is the serializer of its own schema class, which export returns.
-    @Suppress("UNCHECKED_CAST")
-    private fun export(entity: Entity, component: String): JsonObject? {
-        val binding = byName[component]
-        val serializer = binding?.serializer as? KSerializer<SceneComponent>
-        val saved = if (serializer != null) binding.exportFrom(world, entity) else null
-        return try {
-            if (serializer != null && saved != null) json.encodeToJsonElement(serializer, saved) as? JsonObject else null
-        } catch (unwritable: SerializationException) {
-            warnOnce(component, "it could not be read: ${unwritable.message}")
-            null
-        }
-    }
+private const val TENTHS = 10f
+private const val LARGEST_FORMATTED = 1e12f
 
-    private companion object {
-        // Defaults kept: a field at its default is still a value to show. A NaN or an infinity is a
-        // value too, and the scene format's strict default would refuse the whole component.
-        val json = Json {
-            encodeDefaults = true
-            allowSpecialFloatingPointValues = true
-        }
+private val formatLog = Logger("scene-canvas")
 
-        val log = Logger("scene-canvas")
+// Bad format specs a scene's own `bind.text` templates spell: as many as the scenes write, so it stays small.
+private val warnedFormats = HashSet<String>()
 
-        // Paths a scene's bindings name: as many as the scenes write, so it stays small.
-        val warned = HashSet<String>()
-
-        fun warnOnce(path: String, why: String = "no node's component has it", result: String = "the element shows its own value") {
-            if (warned.add(path)) log.warn { "A canvas binding reads '$path', but $why; $result" }
-        }
-
-        /** To one decimal place, without it when it is 0: `120`, `0.5`, `-1.5`; past a trillion, or not finite, as it is. */
-        fun formatNumber(value: Float): String {
-            // First: roundToLong refuses NaN.
-            if (!value.isFinite() || abs(value) > LARGEST_FORMATTED) return value.toString()
-            val tenths = (value * TENTHS).roundToLong()
-            val sign = if (tenths < 0) "-" else ""
-            return if (tenths % 10 == 0L) (tenths / 10).toString() else "$sign${abs(tenths) / 10}.${abs(tenths) % 10}"
-        }
-
-        const val TENTHS = 10f
-        const val LARGEST_FORMATTED = 1e12f
+private fun warnUnknownFormat(key: String, spec: String) {
+    if (warnedFormats.add(key)) {
+        formatLog.warn { "A canvas binding reads '$spec', but it is not a number format, which is n, f or p and a digit, such as n0; the text keeps its placeholder" }
     }
 }
 

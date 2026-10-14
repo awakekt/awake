@@ -53,9 +53,60 @@ import com.awakekt.awake.core.graphics2d.drawPath
 import com.awakekt.awake.core.math2d.Rectangle
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.core.text.theme.TextStyle
-import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.binding.SceneComponentBinding
+
+context(_: Composer)
+/**
+ * Draws [items] over whatever is beneath, lowest [CanvasElement.order] first. Each item is tagged
+ * `canvas-element-<id>` for tests and editor picking. [CanvasElement.touchOnly] elements are drawn
+ * only when [showTouchControls] is true.
+ *
+ * An item whose [CanvasItem.parent] is in [items] is drawn inside that parent's box: anchored and
+ * offset within it, after the parent's own content, and hidden when it is. A window and its
+ * controls move as one.
+ *
+ * @param items The elements to draw, each with the nearest canvas element above it in the scene
+ *   hierarchy, as the host's own walk found it.
+ * @param modifier Layout modifier applied to the overlay container.
+ * @param showTouchControls Whether touch-only elements should be displayed.
+ * @param images The decoded images elements name, by path, as [loadCanvasImages] reads them. An
+ *   element whose image is missing draws without it.
+ * @param scale Multiplies every element's size, offset, text and image pixels: 2 draws 1x art at
+ *   twice its size. Edges land on whole pixels at any scale, so pixel art stays crisp. A scale that
+ *   is not above 0 draws at 1.
+ * @param resolver Where a [CanvasElement.follow]ed node lands in the frame, a View's camera picture,
+ *   and a [CanvasElement.bind]'s field text. Without it, none of those three draw.
+ * @param fonts The loaded font files elements name in [CanvasElement.font], by path, as
+ *   [loadCanvasFonts] reads them. An element whose file is missing draws in the default font.
+ */
+internal fun CanvasOverlay(
+    items: List<CanvasItem>,
+    modifier: Modifier = Modifier,
+    showTouchControls: Boolean = false,
+    images: Map<String, ImageBitmap> = emptyMap(),
+    scale: Float = 1f,
+    resolver: CanvasResolver = CanvasResolver.None,
+    fonts: Map<String, UiFont> = emptyMap(),
+) {
+    val origin = remember { CanvasOrigin() }
+    val tree = CanvasTree(items, showTouchControls, images, resolver, origin, fonts)
+    val uiScale = if (scale > 0f && scale.isFinite()) scale else 1f
+    Box(modifier.fillMaxSize()) {
+        // The box the elements are placed in, inside any padding the host's modifier adds: where it
+        // sits in the frame is what a follower's projected point is moved by.
+        Box(Modifier.fillMaxSize().onPlaced { x, y, _, _ -> origin.place(x, y) }) {
+            val screen = this
+            // A denser dp scales every size, offset, font and image corner beneath it in one place. The
+            // host's text style is not the scene's: an element's text looks only as its own data says.
+            CompositionLocalProvider(LocalDensity provides LocalDensity.current * uiScale, LocalTextStyle provides TextStyle.Default) {
+                screen.Elements(tree.roots, tree)
+                // Drawn last, so a dragged element's ghost sits above everything it is dragged over.
+                Ghosts(tree)
+            }
+        }
+    }
+}
 
 context(_: Composer)
 /**
@@ -98,23 +149,15 @@ fun SceneCanvas(
     views: CanvasViews? = null,
     fonts: Map<String, UiFont> = emptyMap(),
 ) {
-    val origin = remember { CanvasOrigin() }
-    val tree = CanvasTree(world, showTouchControls, images, projector, bindings, views, origin, fonts)
-    val uiScale = if (scale > 0f && scale.isFinite()) scale else 1f
-    Box(modifier.fillMaxSize()) {
-        // The box the elements are placed in, inside any padding the host's modifier adds: where it
-        // sits in the frame is what a follower's projected point is moved by.
-        Box(Modifier.fillMaxSize().onPlaced { x, y, _, _ -> origin.place(x, y) }) {
-            val screen = this
-            // A denser dp scales every size, offset, font and image corner beneath it in one place. The
-            // host's text style is not the scene's: an element's text looks only as its own data says.
-            CompositionLocalProvider(LocalDensity provides LocalDensity.current * uiScale, LocalTextStyle provides TextStyle.Default) {
-                screen.Elements(tree.roots, tree)
-                // Drawn last, so a dragged element's ghost sits above everything it is dragged over.
-                Ghosts(tree)
-            }
-        }
-    }
+    CanvasOverlay(
+        world.canvasItems(),
+        modifier,
+        showTouchControls,
+        images,
+        scale,
+        SceneCanvasResolver(world, projector, views, bindings),
+        fonts,
+    )
 }
 
 /**
@@ -138,22 +181,23 @@ internal class CanvasOrigin {
 
 /** [children] inside [element]: each anchored by hand, or laid out in rows or columns by its layout. */
 context(_: Composer)
-internal fun BoxScope.Children(element: CanvasElement, children: List<Pair<Entity, CanvasElement>>, tree: CanvasTree) {
+internal fun BoxScope.Children(element: CanvasElement, children: List<CanvasItem>, tree: CanvasTree) {
     val layout = element.layout
     if (layout == null) {
         Elements(children, tree)
         return
     }
     FlexBox(Modifier.fillMaxSize().padding(layout.padding.coerceAtLeast(0f).dp), config = layout.toConfig()) {
-        for ((entity, child) in children) {
+        for (item in children) {
+            val child = item.element
             if (!tree.shows(child)) continue
-            key(entity) {
+            key(child) {
                 val share = child.grow.coerceAtLeast(0f)
                 CanvasElementView(
                     child,
-                    Modifier.flex { grow(share) }.size(child.width.dp, child.height.dp).testTag("canvas-element-${entity.id}"),
+                    Modifier.flex { grow(share) }.size(child.width.dp, child.height.dp).testTag("canvas-element-${item.id}"),
                     tree,
-                    tree.childrenOf(entity),
+                    tree.childrenOf(child),
                 )
             }
         }
@@ -162,22 +206,23 @@ internal fun BoxScope.Children(element: CanvasElement, children: List<Pair<Entit
 
 /** Places [entries] in this box, each against its anchor, and their children inside them. */
 context(_: Composer)
-private fun BoxScope.Elements(entries: List<Pair<Entity, CanvasElement>>, tree: CanvasTree) {
-    for ((entity, element) in entries) {
+private fun BoxScope.Elements(entries: List<CanvasItem>, tree: CanvasTree) {
+    for (item in entries) {
+        val element = item.element
         if (!tree.shows(element)) continue
-        key(entity) {
-            val tag = "canvas-element-${entity.id}"
+        key(element) {
+            val tag = "canvas-element-${item.id}"
             if (element.follow.isEmpty()) {
                 // The inset wraps the element rather than sitting in its modifier chain, so the
                 // element's own bounds (hit area, editor picking) are exactly its size.
                 Box(Modifier.align(element.anchor.alignment).anchorInset(element)) {
-                    CanvasElementView(element, Modifier.size(element.width.dp, element.height.dp).testTag(tag), tree, tree.childrenOf(entity))
+                    CanvasElementView(element, Modifier.size(element.width.dp, element.height.dp).testTag(tag), tree, tree.childrenOf(element))
                 }
             } else {
                 val placed = tree.placeFollower(element, LocalDensity.current)
                 if (placed != null) {
                     Box(Modifier.offset(placed.x.dp, placed.y.dp)) {
-                        CanvasElementView(element, Modifier.size(placed.width.dp, placed.height.dp).testTag(tag), tree, tree.childrenOf(entity))
+                        CanvasElementView(element, Modifier.size(placed.width.dp, placed.height.dp).testTag(tag), tree, tree.childrenOf(element))
                     }
                 }
             }
@@ -190,7 +235,7 @@ internal fun CanvasElementView(
     element: CanvasElement,
     modifier: Modifier,
     tree: CanvasTree,
-    children: List<Pair<Entity, CanvasElement>>,
+    children: List<CanvasItem>,
 ) {
     val fill = colorOf(element.color, Color.White)
     val back = colorOf(element.background, Color.Transparent)
@@ -320,7 +365,7 @@ private fun JoystickView(
     modifier: Modifier,
     back: Color,
     tree: CanvasTree,
-    children: List<Pair<Entity, CanvasElement>>,
+    children: List<CanvasItem>,
 ) {
     val density = LocalDensity.current
     val radius = minOf(element.width, element.height) / 2f * density
@@ -380,7 +425,3 @@ internal val CanvasAnchor.alignment: Alignment
         CanvasAnchor.BottomCenter -> Alignment.BottomCenter
         CanvasAnchor.BottomRight -> Alignment.BottomEnd
     }
-
-// A colour typed wrong in the editor falls back instead of taking the whole frame down.
-internal fun colorOf(hex: String?, fallback: Color): Color =
-    if (hex != null && isHexColor(hex)) Color.fromHex(hex) else fallback

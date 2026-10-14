@@ -21,7 +21,6 @@ import com.awakekt.awake.compose.ui.draw.alpha
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.math2d.Vec2
 import com.awakekt.awake.core.text.theme.TextStyle
-import com.awakekt.awake.ecs.Entity
 
 /**
  * [hovered] with a drag added when this element is [CanvasElement.draggable], ahead of a Button's
@@ -70,12 +69,13 @@ internal val LocalCanvasGhost = compositionLocalOf { false }
 context(_: Composer)
 internal fun Ghosts(tree: CanvasTree) {
     CompositionLocalProvider(LocalCanvasGhost provides true) {
-        tree.world.family<CanvasElement>().forEach { entity, element ->
-            if (!element.dragging) return@forEach
-            key(entity) {
+        for (item in tree.items) {
+            val element = item.element
+            if (!element.dragging) continue
+            key(element) {
                 // Its own look and its children's, dimmed and centred on the drag point.
                 Box(Modifier.offset((element.dragPointCanvasX - element.width / 2f).dp, (element.dragPointCanvasY - element.height / 2f).dp).alpha(GHOST_ALPHA)) {
-                    CanvasElementView(element, Modifier.size(element.width.dp, element.height.dp), tree, tree.childrenOf(entity))
+                    CanvasElementView(element, Modifier.size(element.width.dp, element.height.dp), tree, tree.childrenOf(element))
                 }
             }
         }
@@ -84,7 +84,7 @@ internal fun Ghosts(tree: CanvasTree) {
 
 /** [element] in a ghost: its box, its words where its kind has them, and its children. */
 context(_: Composer)
-internal fun GhostElementView(element: CanvasElement, styled: Modifier, textStyle: TextStyle, tree: CanvasTree, children: List<Pair<Entity, CanvasElement>>) {
+internal fun GhostElementView(element: CanvasElement, styled: Modifier, textStyle: TextStyle, tree: CanvasTree, children: List<CanvasItem>) {
     val words = if (element.kind in WORDED) tree.textOf(element) else ""
     val align = element.textAlign ?: if (element.kind == CanvasElementKind.Button) CanvasAnchor.Center else CanvasAnchor.TopLeft
     Box(styled, contentAlignment = align.alignment) {
