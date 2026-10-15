@@ -73,6 +73,7 @@ or a system polling `consumePress()`, sees the tap as it would without the bluep
 | `fontSize` | number (sp) | `18` | Size of `text`. |
 | `font` | string | `""` | The font of `text`: a `.ttf` or `.otf` file from the project, or a built-in family. See [Use a font](#use-a-font). |
 | `mask` | string | `""` | A `TextField`'s password mask: one character drawn for each typed one. Empty shows the text. |
+| `pressable` | boolean | `false` | Lets an `Image` or `Panel` take a tap as a `Button` does. Without it, a tap passes through. |
 | `textAlign` | one of the nine anchor points | none | Where the text sits in the element. None keeps a `Text` at its top-left and a `Button`'s label centred. |
 | `follow` | string | `""` | A node to follow on screen. See [Follow a node](#follow-a-node). |
 | `followOffset` | vector | `{x: 0, y: 0, z: 0}` | A world-space offset from the followed node. |
@@ -97,6 +98,7 @@ A running `CanvasElement` also has values that are not saved:
 | Member | Type | What it gives |
 | --- | --- | --- |
 | `consumePress()` | `Boolean` | `true` once for each tap on a `Button` since the last call. |
+| `consumePressAt()` | `Vec2?` | Where that tap landed, in the element's own units from its top-left, whatever the canvas's scale, and on a rotated element the point on its picture as if unturned; then takes the tap as `consumePress()` does. `null` when there is none. A map picture, as a pressable `Image`, turns it into a place. |
 | `presses` | `Int` | How many times a `Button` has been tapped since it was made. Reading it takes no tap. |
 | `isHeld` | `Boolean` | Whether a `Button` is pressed right now. |
 | `stickX`, `stickY` | `Float`, -1 to 1 | A `Joystick`'s deflection. Up is negative `stickY`, as on screen. Releasing re-centres it. |

@@ -91,6 +91,7 @@ enum class CanvasAnchor {
  * [action] names what an element does for the game, such as `move` or `jump`, and [doubleAction]
  * what a Button does when double-clicked; the game or runtime decides what each name means. A [touchOnly] element is drawn only where touch controls are shown.
  */
+@Suppress("TooManyFunctions") // One small reader per input an element reports.
 class CanvasElement {
     /** The rendering style and semantic type of this element. */
     var kind: CanvasElementKind = CanvasElementKind.Text
@@ -207,6 +208,17 @@ class CanvasElement {
      * Empty, a file that did not load, or a name that is neither draws in the default font.
      */
     var font: String = ""
+
+    /**
+     * Whether an Image or Panel takes a tap as a Button does: [consumePress], [consumePressAt] and
+     * [presses] report it, and what is under it does not get it. False leaves it watching only.
+     */
+    var pressable: Boolean = false
+
+    /** Where the press [CanvasOverlay] is turning into a tap began, in this element's own units. */
+    internal var pressStart: Vec2? = null
+
+    private var pressPoint: Vec2? = null
 
     private var wheelAccumulated = 0f
 
@@ -347,6 +359,16 @@ class CanvasElement {
     fun consumePress(): Boolean = pressed.also { pressed = false }
 
     /**
+     * Where the tap [consumePress] would report landed, then takes it as [consumePress] does; null
+     * when there is none.
+     *
+     * In this element's own units, from its top-left: the same units as [width], whatever the
+     * canvas's scale. On an element with a `style.rotation`, it is the point on the turned picture,
+     * as it would be with the rotation undone.
+     */
+    fun consumePressAt(): Vec2? = if (consumePress()) pressPoint else null
+
+    /**
      * How many times this Button has been tapped since it was made, never reset.
      *
      * Reading it takes nothing: a reader keeps the count it saw last, and each tap since is one more.
@@ -382,6 +404,7 @@ class CanvasElement {
 
     internal fun press() {
         pressed = true
+        pressPoint = pressStart
         presses++
         val previous = lastPress
         if (previous != null && previous.elapsedNow() <= DOUBLE_CLICK_SECONDS.seconds) {

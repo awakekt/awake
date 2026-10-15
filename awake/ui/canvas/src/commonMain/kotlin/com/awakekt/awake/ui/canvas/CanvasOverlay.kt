@@ -206,10 +206,12 @@ internal fun CanvasElementView(
     // Applied before styling and per-kind modifiers, so it covers every kind, Joystick included,
     // and sits outermost -- an ancestor's wheel element only sees what this one left unconsumed.
     val wheeled = if (element.wheel) placed.onWheel(element::addWheel) else placed
-    // A Button occludes what is under it, like any click target; every other kind only watches,
-    // so it must not swallow a tap meant for something it happens to be drawn over.
+    // A Button, or an Image or Panel made pressable, occludes what is under it, like any click
+    // target; every other kind only watches, so it must not swallow a tap meant for something it
+    // happens to be drawn over.
     val hovered = wheeled.rotated(element.style.rotation).styleable(state, style)
-        .hoverable(element.interactions, blocksHitTest = element.kind == CanvasElementKind.Button)
+        .hoverable(element.interactions, blocksHitTest = element.takesTaps)
+        .pressPoint(element, density)
     // Ahead of a Button's own `clickable` below, so a real drag's release never also reaches it;
     // a press that stays under the threshold leaves the release for `clickable` to turn into a click.
     val styled = element.draggedModifier(hovered, tree, density)
@@ -218,7 +220,7 @@ internal fun CanvasElementView(
             CanvasText(element, tree.textOf(element), textStyle)
             Children(element, children, tree)
         }
-        CanvasElementKind.Panel, CanvasElementKind.Image -> Box(styled) { Children(element, children, tree) }
+        CanvasElementKind.Panel, CanvasElementKind.Image -> Box(styled.pressableTap(element)) { Children(element, children, tree) }
         CanvasElementKind.Bar -> Box(styled) {
             BarFill(element, tree.valueOf(element), fill, tree.images)
             Children(element, children, tree)

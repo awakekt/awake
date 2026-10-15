@@ -71,6 +71,9 @@ import kotlinx.serialization.Serializable
  * `.ttf` or `.otf`, any case, loaded with the scene, or a built-in family, `default` (Roboto) or
  * `bitmap` (a fixed-pitch pixel font). Empty draws in the default font, as a file that does not load
  * does.
+ * @property pressable Whether an Image or Panel takes a tap as a Button does: reported through
+ * [CanvasElement.consumePress] and [CanvasElement.consumePressAt], and kept from what is under it.
+ * False leaves it watching the pointer only. A Button is always pressable.
  */
 @Serializable
 @SerialName("canvas_element")
@@ -107,6 +110,7 @@ data class SceneCanvasElement(
     val links: Boolean = true,
     val mask: String = "",
     val font: String = "",
+    val pressable: Boolean = false,
 ) : SceneComponent {
     /**
      * Validates element dimensions, font sizes, values, and hex color syntax.
@@ -126,9 +130,15 @@ data class SceneCanvasElement(
         if (grow < 0f) add(SceneValidationIssue(path, "canvas_element.grow must not be negative"))
         bind?.problems()?.forEach { add(SceneValidationIssue(path, "canvas_element.bind.$it")) }
         if (mask.length > 1) add(SceneValidationIssue(path, "canvas_element.mask must be one character"))
-        if (mask.isNotEmpty() && kind != CanvasElementKind.TextField) {
-            add(SceneValidationIssue(path, "canvas_element.mask only masks a TextField"))
-        }
         canvasFontProblem(font)?.let { add(SceneValidationIssue(path, "canvas_element.$it")) }
+        kindProblems().forEach { add(SceneValidationIssue(path, "canvas_element.$it")) }
     }
+
+    /** Fields set on a kind they do nothing for. */
+    private fun kindProblems(): List<String> = listOfNotNull(
+        "mask only masks a TextField".takeIf { mask.isNotEmpty() && kind != CanvasElementKind.TextField },
+        "pressable makes an Image or a Panel pressable; a Button always is".takeIf {
+            pressable && kind != CanvasElementKind.Image && kind != CanvasElementKind.Panel
+        },
+    )
 }

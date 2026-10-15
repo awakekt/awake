@@ -98,6 +98,7 @@ public final class com/awakekt/awake/ui/canvas/CanvasElement {
 	public fun <init> ()V
 	public final fun consumeDoublePress ()Z
 	public final fun consumePress ()Z
+	public final fun consumePressAt ()Lcom/awakekt/awake/core/math2d/Vec2;
 	public final fun consumeSubmit ()Ljava/lang/String;
 	public final fun consumeWheel ()F
 	public final fun getAction ()Ljava/lang/String;
@@ -128,6 +129,7 @@ public final class com/awakekt/awake/ui/canvas/CanvasElement {
 	public final fun getOffsetX ()F
 	public final fun getOffsetY ()F
 	public final fun getOrder ()I
+	public final fun getPressable ()Z
 	public final fun getPresses ()I
 	public final fun getScreenBounds ()Lcom/awakekt/awake/core/math2d/Rectangle;
 	public final fun getStickX ()F
@@ -167,6 +169,7 @@ public final class com/awakekt/awake/ui/canvas/CanvasElement {
 	public final fun setOffsetX (F)V
 	public final fun setOffsetY (F)V
 	public final fun setOrder (I)V
+	public final fun setPressable (Z)V
 	public final fun setStyle (Lcom/awakekt/awake/ui/canvas/CanvasStyle;)V
 	public final fun setText (Ljava/lang/String;)V
 	public final fun setTextAlign (Lcom/awakekt/awake/ui/canvas/CanvasAnchor;)V

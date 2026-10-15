@@ -69,6 +69,7 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         it.links = links
         it.mask = mask
         it.font = font
+        it.pressable = pressable
     }
 
     /**
@@ -109,5 +110,6 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         links = links,
         mask = mask,
         font = font,
+        pressable = pressable,
     )
 }
