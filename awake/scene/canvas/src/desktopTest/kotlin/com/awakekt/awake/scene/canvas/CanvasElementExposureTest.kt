@@ -29,7 +29,7 @@ class CanvasElementExposureTest {
         "kind", "anchor", "offsetX", "offsetY", "width", "height", "text", "fontSize", "color",
         "background", "value", "order", "visible", "action", "doubleAction", "touchOnly", "style",
         "textAlign", "follow", "followOffset", "followBounds", "followOutset", "layout", "grow",
-        "bind", "wheel", "draggable", "dropTarget", "camera", "links", "mask", "font",
+        "bind", "wheel", "draggable", "dropTarget", "camera", "links", "mask", "font", "pressable",
     ).associateWith { it }
 
     /** Options that cannot be written as data, with why. Each is set from code through the live element. */

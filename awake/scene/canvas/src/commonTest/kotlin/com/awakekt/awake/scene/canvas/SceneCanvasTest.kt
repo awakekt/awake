@@ -244,6 +244,7 @@ class SceneCanvasTest {
             dropTarget = true,
             camera = "Portrait Camera",
             mask = "*",
+            pressable = true,
             font = "fonts/title.ttf",
             style = CanvasStyle(
                 background = "#202020",
@@ -742,6 +743,14 @@ class SceneCanvasTest {
 
         assertEquals(3, issues.size)
         assertTrue(SceneCanvasElement().validate("nodes[0]").isEmpty())
+    }
+
+    @Test
+    fun pressableIsReportedOnAKindItDoesNothingFor() {
+        val issues = SceneCanvasElement(kind = CanvasElementKind.Text, pressable = true).validate("n").map { it.message }
+
+        assertEquals(listOf("canvas_element.pressable makes an Image or a Panel pressable; a Button always is"), issues)
+        assertTrue(SceneCanvasElement(kind = CanvasElementKind.Panel, pressable = true).validate("n").isEmpty())
     }
 
     @Test
