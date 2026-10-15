@@ -90,11 +90,153 @@ class VerifyPublishedArtifactsTaskTest {
         // Its own family's edges carry the Vulkan version, and only WebGPU holds Core strictly.
         val root = "com/awakekt/awake/backend/vulkan/0.1.26/vulkan-0.1.26.module"
         val family = "com.awakekt.awake:vulkan-kmp" to "0.1.26"
-        write(local.resolve(root), variant("desktopRuntimeElements", dependencies = listOf(MATH to PIN, family)))
+        write(local.resolve(root), variant("desktopRuntimeElements", dependencies = listOf(BOM to PIN, MATH to PIN, family)))
         assertEquals(emptyList(), violations(local, root, "vulkan"))
 
-        write(local.resolve(root), variant("desktopRuntimeElements", dependencies = listOf(MATH to "$PIN-SNAPSHOT", family)))
+        write(local.resolve(root), variant("desktopRuntimeElements", dependencies = listOf(BOM to PIN, MATH to "$PIN-SNAPSHOT", family)))
         assertEquals(listOf("$root (desktopRuntimeElements): $MATH is at $PIN-SNAPSHOT, not Core $PIN"), violations(local, root, "vulkan"))
+    }
+
+    @Test
+    fun aVulkanVariantReachingCoreWithoutThePlatformFails() = repository { local ->
+        val root = "com/awakekt/awake/backend/vulkan/0.1.26/vulkan-0.1.26.module"
+        write(local.resolve(root), variant("desktopRuntimeElements", dependencies = listOf(MATH to PIN)))
+
+        assertEquals(listOf("$root (desktopRuntimeElements): reaches Core without $BOM at $PIN"), violations(local, root, "vulkan"))
+    }
+
+    @Test
+    fun aCoreModuleWhoseEveryVariantNamesThePlatformPasses() = repository { local ->
+        coreModule(local, "math", apiEdges = listOf(BOM to VERSION), runtimeEdges = listOf(BOM to VERSION, MATH to VERSION))
+
+        assertEquals(emptyList(), platformEdgeViolations(local, "math"))
+    }
+
+    @Test
+    fun aCoreVariantWithoutThePlatformFails() = repository { local ->
+        // The variant keeps another dependency, so it is not simply empty, but the platform never reaches it.
+        coreModule(local, "math", apiEdges = listOf(BOM to VERSION), runtimeEdges = listOf(MATH to VERSION))
+
+        assertEquals(
+            listOf("$MATH_DESKTOP (desktopRuntimeElements-published): no dependency on $BOM at $VERSION"),
+            platformEdgeViolations(local, "math"),
+        )
+    }
+
+    @Test
+    fun aCorePlatformEdgeAtAnotherVersionFails() = repository { local ->
+        coreModule(local, "math", apiEdges = listOf(BOM to "1.2.2"), runtimeEdges = listOf(BOM to VERSION))
+
+        assertEquals(
+            listOf("$MATH_DESKTOP (desktopApiElements-published): no dependency on $BOM at $VERSION"),
+            platformEdgeViolations(local, "math"),
+        )
+    }
+
+    @Test
+    fun theCorePlatformListingEveryPublishedCoreModulePasses() = repository { local ->
+        bomModule(local, listOf(MATH, PLATFORM))
+
+        assertEquals(emptyList(), listingViolations(local, members = setOf(MATH, PLATFORM), held = setOf(MATH, PLATFORM)))
+    }
+
+    @Test
+    fun theCorePlatformNamingAModuleMavenLocalDoesNotHoldFails() = repository { local ->
+        bomModule(local, listOf(MATH, PLATFORM))
+
+        assertEquals(
+            listOf(
+                "$BOM_MODULE (apiElements): $PLATFORM is not in Maven Local at $VERSION",
+                "$BOM_MODULE (runtimeElements): $PLATFORM is not in Maven Local at $VERSION",
+            ),
+            listingViolations(local, members = setOf(MATH, PLATFORM), held = setOf(MATH)),
+        )
+    }
+
+    @Test
+    fun theCorePlatformNamingAModuleThisBuildDoesNotPublishFails() = repository { local ->
+        bomModule(local, listOf(MATH, "com.awakekt.awake.backend:vulkan"))
+
+        assertEquals(
+            listOf(
+                "$BOM_MODULE (apiElements): com.awakekt.awake.backend:vulkan is not a Core module this build publishes",
+                "$BOM_MODULE (runtimeElements): com.awakekt.awake.backend:vulkan is not a Core module this build publishes",
+            ),
+            listingViolations(local, members = setOf(MATH), held = setOf(MATH, "com.awakekt.awake.backend:vulkan")),
+        )
+    }
+
+    @Test
+    fun theCorePlatformLeavingOutAPublishedModuleFails() = repository { local ->
+        bomModule(local, listOf(MATH))
+
+        assertEquals(
+            listOf(
+                "$BOM_MODULE (apiElements): $PLATFORM is published but not listed",
+                "$BOM_MODULE (runtimeElements): $PLATFORM is published but not listed",
+            ),
+            listingViolations(local, members = setOf(MATH, PLATFORM), held = setOf(MATH, PLATFORM)),
+        )
+    }
+
+    @Test
+    fun theCorePlatformAtAnotherVersionFails() = repository { local ->
+        bomModule(local, listOf(MATH), version = "1.2.2")
+
+        assertEquals(
+            listOf(
+                "$BOM_MODULE (apiElements): $MATH is at 1.2.2, not $VERSION",
+                "$BOM_MODULE (runtimeElements): $MATH is at 1.2.2, not $VERSION",
+            ),
+            listingViolations(local, members = setOf(MATH), held = setOf(MATH)),
+        )
+    }
+
+    @Test
+    fun theCoordinatesMavenLocalHoldsAreReadFromTheirFolders() = repository { local ->
+        val repository = local.resolve("com/awakekt/awake")
+        write(repository.resolve("core/math/$VERSION/math-$VERSION.pom"), "<project/>")
+        write(repository.resolve("bom/$VERSION/bom-$VERSION.pom"), "<project/>")
+        write(repository.resolve("core/math/1.0.0/math-1.0.0.pom"), "<project/>")
+        write(repository.resolve("engine/render/passes/$VERSION/passes-$VERSION.pom"), "<project/>")
+
+        assertEquals(
+            setOf(MATH, BOM, "com.awakekt.awake.engine.render:passes"),
+            heldCoordinates(repository, VERSION).keys,
+        )
+    }
+
+    private fun platformEdgeViolations(local: Path, artifact: String): List<String> =
+        coreBomViolations(LocalModuleMetadata(local.resolve("com/awakekt/awake/core/$artifact/$VERSION/$artifact-$VERSION.module")), VERSION) {
+            local.relativize(it).toString().replace('\\', '/')
+        }
+
+    private fun listingViolations(local: Path, members: Set<String>, held: Set<String>): List<String> =
+        coreBomListingViolations(LocalModuleMetadata(local.resolve(BOM_MODULE)), VERSION, members, held) {
+            local.relativize(it).toString().replace('\\', '/')
+        }
+
+    /** A Core module as Kotlin Multiplatform lays it out: a root that points at its desktop platform module. */
+    private fun coreModule(local: Path, artifact: String, apiEdges: List<Pair<String, String>>, runtimeEdges: List<Pair<String, String>>) {
+        write(
+            local.resolve("com/awakekt/awake/core/$artifact/$VERSION/$artifact-$VERSION.module"),
+            """{"variants":[{"name":"desktopApiElements-published","available-at":{"url":"../../$artifact-desktop/$VERSION/$artifact-desktop-$VERSION.module"}}]}""",
+        )
+        val api = variantObject("desktopApiElements-published", apiEdges)
+        val runtime = variantObject("desktopRuntimeElements-published", runtimeEdges)
+        write(
+            local.resolve("com/awakekt/awake/core/$artifact-desktop/$VERSION/$artifact-desktop-$VERSION.module"),
+            """{"variants":[$api,$runtime,{"name":"desktopSourcesElements-published"}]}""",
+        )
+    }
+
+    /** The Core platform: one constraint per coordinate, on the API and runtime variants alike. */
+    private fun bomModule(local: Path, coordinates: List<String>, version: String = VERSION) {
+        val constraints = coordinates.joinToString { edge(it, """{"requires":"$version"}""") }
+        write(
+            local.resolve(BOM_MODULE),
+            """{"variants":[{"name":"apiElements","dependencyConstraints":[$constraints]},{"name":"runtimeElements","dependencyConstraints":[$constraints]}]}""",
+        )
     }
 
     private fun violations(local: Path, root: String = ROOT, family: String = "webgpu"): List<String> =
@@ -118,9 +260,12 @@ class VerifyPublishedArtifactsTaskTest {
         )
     }
 
-    private fun variant(name: String, dependencies: List<Pair<String, String>>): String {
+    private fun variant(name: String, dependencies: List<Pair<String, String>>): String =
+        """{"variants":[${variantObject(name, dependencies)}]}"""
+
+    private fun variantObject(name: String, dependencies: List<Pair<String, String>>): String {
         val deps = dependencies.map { (coordinate, version) -> edge(coordinate, """{"requires":"$version"}""") }
-        return """{"variants":[{"name":"$name","dependencies":[${deps.joinToString()}]}]}"""
+        return """{"name":"$name","dependencies":[${deps.joinToString()}]}"""
     }
 
     private fun edge(coordinate: String, version: String): String {
@@ -146,10 +291,14 @@ class VerifyPublishedArtifactsTaskTest {
 
     private companion object {
         const val PIN = "1.2.3"
+        const val VERSION = PIN
         const val MATH = "com.awakekt.awake.core:math"
         const val PLATFORM = "com.awakekt.awake.engine:platform"
+        const val BOM = "com.awakekt.awake:bom"
+        const val BOM_MODULE = "com/awakekt/awake/bom/$VERSION/bom-$VERSION.module"
+        const val MATH_DESKTOP = "com/awakekt/awake/core/math-desktop/$VERSION/math-desktop-$VERSION.module"
         const val ROOT = "com/awakekt/awake/backend/webgpu/$PIN-SNAPSHOT/webgpu-$PIN-SNAPSHOT.module"
         const val WASM = "com/awakekt/awake/backend/webgpu-wasm-js/$PIN-SNAPSHOT/webgpu-wasm-js-$PIN-SNAPSHOT.module"
-        val PUBLISHED = setOf(MATH, PLATFORM, "com.awakekt.awake.backend:vulkan", "com.awakekt.awake:vulkan-kmp")
+        val PUBLISHED = setOf(MATH, PLATFORM, BOM, "com.awakekt.awake.backend:vulkan", "com.awakekt.awake:vulkan-kmp")
     }
 }

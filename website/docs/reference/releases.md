@@ -30,6 +30,7 @@ awake-vulkan = "{{ awake_vulkan_version }}"
 | Core releases do not move Vulkan | A Core release publishes no Vulkan module and changes no Vulkan version. |
 | Core never depends on Vulkan | No published Core module has a main-source dependency on the Vulkan family. |
 | Keep Core modules on one version | Every Core module you declare uses the same `awake` version. |
+| Mixed versions line up for Gradle builds | Every Core release publishes `com.awakekt.awake:bom`, which constrains all Core modules to that release. Each Core module, and the Vulkan backend at the Core release it names, depends on it, so a build holding two Core versions resolves every Core module to the newest. [Installation](../get-started/installation.md#mixed-core-versions-line-up-on-their-own) shows how to state the version and how a Maven build imports it. |
 
 ## WebGPU
 

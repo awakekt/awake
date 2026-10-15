@@ -29,6 +29,13 @@ your code imports or otherwise uses them.
 - **Vulkan** renderer, raw bindings, and Android JNI bridge use one independent version derived from
   `vulkan-v*` tags. Snapshot POMs pin the exact Core snapshot used for integration; releases pin an
   exact published non-snapshot Core version in Maven and Gradle metadata.
+- **Alignment across the trains.** Every Core release publishes `com.awakekt.awake:bom`, a platform
+  that constrains all Core modules to the release. Each Core module, and the Vulkan backend at the Core
+  it pins, depends on it, so a Gradle build holding two Core versions (a newer Core you declare, the
+  older one a Vulkan release was built with) resolves every Core module to the newest. Nothing to
+  declare; `implementation(platform("com.awakekt.awake:bom:<version>"))` states the version
+  explicitly, and a Maven build imports the BOM in `dependencyManagement`. See
+  [the Core alignment BOM](../release-process.md#core-alignment-bom).
 - **WebGPU** stays out of Central releases while it builds on wgpu4k snapshots. Each Core release
   publishes its release pin, `com.awakekt.awake.backend:webgpu:<release>-SNAPSHOT`, to Central's
   snapshot repository: built from the release's tag, with every Core module at exactly that release

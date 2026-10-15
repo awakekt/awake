@@ -44,6 +44,13 @@ platform modules included, names exactly that release. The published POM and Gra
 carry the same exact dependency versions. No published Core module has a main-source dependency on
 the Vulkan family.
 
+`com.awakekt.awake:bom` is the Core family's alignment platform. It constrains every published Core
+coordinate, root and per-target, to its own version, and is published with each Core release. Every
+Core module depends on it at its own version, and so does the Vulkan backend at the Core release it
+pins, so a Gradle build that holds two Core versions resolves all Core modules to the newest. Maven
+builds import it in `dependencyManagement`. The Vulkan family and the WebGPU release pin are not
+listed. See [the Core alignment BOM](../release-process.md#core-alignment-bom).
+
 WebGPU is held out of Central releases while it builds on wgpu4k snapshots. Its release pin is the
 WebGPU build a Core release's consumers use: built from the tagged commit, it depends on Core at
 exactly the release and holds every published Core coordinate `strictly` there, so it cannot pull a
@@ -61,6 +68,7 @@ Vulkan modules. Core `v*` releases and main snapshots do not publish or change t
 | `com.awakekt.awake:ai` | `:awake:ai` | `core` | `api` → `:awake:ecs` |
 | `com.awakekt.awake.ai:behavior` | `:awake:ai:behavior` | `core` | `api` → `:awake:ai`; `api` → `:awake:core:math`; `api` → `:awake:ecs`; `api` → `:awake:navigation` |
 | `com.awakekt.awake:blueprint` | `:awake:blueprint` | `core` | `api` → `:awake:node-graph`; `api` → `:awake:ecs` |
+| `com.awakekt.awake:bom` | `:awake:bom` | `core` | — (constraints only) |
 | `com.awakekt.awake.asset:gltf` | `:awake:asset:gltf` | `core` | `implementation` → `:awake:core:image`; `implementation` → `:awake:core:io`; `implementation` → `:awake:core:math`; `implementation` → `:awake:core:geometry`; `implementation` → `:awake:core:animation` |
 | `com.awakekt.awake.asset:shader-compiler` | `:awake:asset:shader-compiler` | `core` | — |
 | `com.awakekt.awake.asset:shader-document` | `:awake:asset:shader-document` | `core` | `api` → `:awake:asset:shader-dsl`; `api` → `:awake:asset:shaders`; `api` → `:awake:engine:render:contract`; `api` → `:awake:engine:render:passes`; `api` → `:awake:core:geometry`; `api` → `:awake:core:math` |

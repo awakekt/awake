@@ -77,6 +77,29 @@ The newest Core release is `{{ awake_version }}`. When it is newer than the pair
 only in the browser can use it; a desktop app waits for a Vulkan release built on it. See
 [Releases and compatibility](../reference/releases.md).
 
+### Mixed Core versions line up on their own
+
+Every Core module depends on the Core platform, `com.awakekt.awake:bom`, at its own version, and so
+does the Vulkan backend at the Core release it was built against. When your build holds two Core
+versions, say a newer `awake` you declare and the older one a Vulkan release names, Gradle takes the
+newest platform and raises every Core module to it. You declare nothing, and a fix in a Core module
+reaches you even when the Vulkan release behind it is older.
+
+To state the version yourself, add the platform to the catalog and depend on it:
+
+```toml title="gradle/libs.versions.toml"
+awake-bom = { module = "com.awakekt.awake:bom", version.ref = "awake" }
+```
+
+```kotlin title="build.gradle.kts"
+commonMain.dependencies {
+    implementation(platform(libs.awake.bom))
+}
+```
+
+Maven does not read Gradle's module metadata. A Maven build imports the BOM in its
+`dependencyManagement` with `<type>pom</type>` and `<scope>import</scope>`.
+
 ## Android release builds
 
 An Android release shrunk by R8 (`isMinifyEnabled = true`) needs no keep rules of its own for Awake.
