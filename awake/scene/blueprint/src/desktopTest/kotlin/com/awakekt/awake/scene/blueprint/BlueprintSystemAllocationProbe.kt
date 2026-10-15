@@ -6,8 +6,8 @@
 package com.awakekt.awake.scene.blueprint
 
 import com.awakekt.awake.ecs.World
-import com.awakekt.awake.scene.canvas.CanvasElement
-import com.awakekt.awake.scene.canvas.CanvasElementKind
+import com.awakekt.awake.ui.canvas.CanvasElement
+import com.awakekt.awake.ui.canvas.CanvasElementKind
 import com.sun.management.ThreadMXBean
 import java.lang.management.ManagementFactory
 import kotlin.test.Test

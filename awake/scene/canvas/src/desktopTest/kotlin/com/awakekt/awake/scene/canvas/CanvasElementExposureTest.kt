@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.canvas
 
+import com.awakekt.awake.ui.canvas.CanvasElement
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.descriptors.elementNames
 import java.lang.reflect.Modifier

@@ -11,6 +11,7 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneResolutionContext
 import com.awakekt.awake.scene.document.SceneVec3
+import com.awakekt.awake.ui.canvas.CanvasElement
 import kotlin.reflect.KClass
 
 // Where a scene file's `canvas_element` becomes the live [CanvasElement]'s settings, and back. It is

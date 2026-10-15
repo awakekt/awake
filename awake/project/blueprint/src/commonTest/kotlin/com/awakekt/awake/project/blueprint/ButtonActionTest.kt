@@ -18,12 +18,12 @@ import com.awakekt.awake.project.runtime.sceneSystems
 import com.awakekt.awake.render.testing.NoopRenderer
 import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.scene.blueprint.BlueprintComponent
-import com.awakekt.awake.scene.canvas.CanvasElement
 import com.awakekt.awake.scene.canvas.SceneCanvas
 import com.awakekt.awake.scene.controls.GameplayInput
 import com.awakekt.awake.scene.controls.input.inputActions
 import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.document.SceneLoader
+import com.awakekt.awake.ui.canvas.CanvasElement
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals

@@ -12,6 +12,7 @@ import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneNode
+import com.awakekt.awake.ui.canvas.CanvasStyle
 import kotlin.coroutines.cancellation.CancellationException
 
 /**

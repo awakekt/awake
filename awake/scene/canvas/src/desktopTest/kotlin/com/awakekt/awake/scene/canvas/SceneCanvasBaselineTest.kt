@@ -15,6 +15,18 @@ import com.awakekt.awake.core.text.font.UiFonts
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.core.transform.Transform
+import com.awakekt.awake.ui.canvas.CanvasAlign
+import com.awakekt.awake.ui.canvas.CanvasAnchor
+import com.awakekt.awake.ui.canvas.CanvasElement
+import com.awakekt.awake.ui.canvas.CanvasElementKind
+import com.awakekt.awake.ui.canvas.CanvasFillImageMode
+import com.awakekt.awake.ui.canvas.CanvasGradient
+import com.awakekt.awake.ui.canvas.CanvasImage
+import com.awakekt.awake.ui.canvas.CanvasLayout
+import com.awakekt.awake.ui.canvas.CanvasShadow
+import com.awakekt.awake.ui.canvas.CanvasStyle
+import com.awakekt.awake.ui.canvas.CanvasTextOutline
+import com.awakekt.awake.ui.canvas.CanvasTextShadow
 import java.io.File
 import kotlin.test.Test
 

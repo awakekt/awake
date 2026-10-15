@@ -10,10 +10,10 @@ import com.awakekt.awake.compose.ui.platform.FrameInput
 import com.awakekt.awake.core.input.InputSnapshot
 import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.ecs.World
-import com.awakekt.awake.scene.canvas.CanvasElement
-import com.awakekt.awake.scene.canvas.CanvasElementKind
 import com.awakekt.awake.scene.canvas.SceneCanvas
 import com.awakekt.awake.scene.controls.GameplayInput
+import com.awakekt.awake.ui.canvas.CanvasElement
+import com.awakekt.awake.ui.canvas.CanvasElementKind
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue

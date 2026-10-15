@@ -11,9 +11,9 @@ import com.awakekt.awake.core.input.ActionTrigger
 import com.awakekt.awake.core.input.ButtonAction
 import com.awakekt.awake.core.input.InputActions
 import com.awakekt.awake.ecs.World
-import com.awakekt.awake.scene.canvas.CanvasElement
-import com.awakekt.awake.scene.canvas.CanvasElementKind
 import com.awakekt.awake.scene.canvas.SceneCanvas
+import com.awakekt.awake.ui.canvas.CanvasElement
+import com.awakekt.awake.ui.canvas.CanvasElementKind
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue

@@ -11,6 +11,11 @@ import com.awakekt.awake.compose.ui.platform.ComposeHost
 import com.awakekt.awake.compose.ui.platform.FrameInput
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.ui.canvas.CanvasElement
+import com.awakekt.awake.ui.canvas.CanvasElementKind
+import com.awakekt.awake.ui.canvas.CanvasFillImageMode
+import com.awakekt.awake.ui.canvas.CanvasImage
+import com.awakekt.awake.ui.canvas.CanvasStyle
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

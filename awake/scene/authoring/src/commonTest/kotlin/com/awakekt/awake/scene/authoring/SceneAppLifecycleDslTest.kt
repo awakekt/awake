@@ -42,8 +42,6 @@ import com.awakekt.awake.scene.authoring.dsl.cameraEntity
 import com.awakekt.awake.scene.authoring.dsl.meshEntity
 import com.awakekt.awake.scene.authoring.dsl.transform
 import com.awakekt.awake.scene.authoring.infrastructure.cameraSystem
-import com.awakekt.awake.scene.canvas.CanvasElement
-import com.awakekt.awake.scene.canvas.CanvasElementKind
 import com.awakekt.awake.scene.controls.camera.CameraSystem
 import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.runtime.LocalFrameStats
@@ -53,6 +51,8 @@ import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import com.awakekt.awake.scene.runtime.ScenePhaseStats
 import com.awakekt.awake.scene.runtime.session.SceneSession
 import com.awakekt.awake.scene.runtime.ui.sceneComposeAppModule
+import com.awakekt.awake.ui.canvas.CanvasElement
+import com.awakekt.awake.ui.canvas.CanvasElementKind
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals

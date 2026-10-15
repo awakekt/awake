@@ -15,6 +15,9 @@ import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneResolutionContext
 import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.document.SceneComponent
+import com.awakekt.awake.ui.canvas.CanvasBinding
+import com.awakekt.awake.ui.canvas.CanvasElement
+import com.awakekt.awake.ui.canvas.CanvasElementKind
 import com.awakekt.awake.ui.canvas.CanvasResolver
 import com.awakekt.awake.ui.canvas.numberField
 import com.awakekt.awake.ui.canvas.textField

@@ -11,9 +11,9 @@ import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.texture.RenderTarget
-import com.awakekt.awake.scene.canvas.CanvasElement
 import com.awakekt.awake.scene.canvas.CanvasViews
 import com.awakekt.awake.scene.rendering.Camera
+import com.awakekt.awake.ui.canvas.CanvasElement
 
 /**
  * Each View element's picture, whichever world it is in: a target the size of its box, kept while the
