@@ -55,7 +55,7 @@
 | **AwakeKt Compose** | The `awake:compose:*` UI runtime. Compose-shaped, but its own engine, not Jetpack Compose. |
 | **Compose Foundation** | `awake:compose:foundation`: `Row`, `Column`, `Box`, scrolling and layout modifiers. |
 | **shadcn components** | `awake:ui:shadcn`: themed component recipes built on Compose Foundation. `Shadcn*` is only the code prefix. |
-| **game UI** | Screen-space UI stored in a scene as `canvas_element` components (`awake:scene:canvas`). |
+| **game UI** | Screen-space UI, drawn by `awake:ui:canvas`; stored in a scene as `canvas_element` components (`awake:scene:canvas`). |
 | **`Dp`** | Density-independent pixel: a size that looks the same at any screen density. |
 | **constraints** | The minimum and maximum size a parent offers a child during layout. |
 | **semantics** | The meaning of UI for tests and accessibility: ids, roles, labels, bounds. Not pixels. |

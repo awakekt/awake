@@ -726,6 +726,30 @@ With this, no capability module depends on the scene layer, so `verifyCapability
 list of tolerated modules any more: a coupling fails, with no way to record it as debt. The old
 names were removed, not kept as deprecated aliases, on the owner's decision.
 
+## 13. The game UI canvas is a capability and `scene:canvas` is its wrapper — **Done**
+
+The element model, styling, binding, text and drawing all lived in `scene:canvas`, so an app with
+its own list of elements and no `World` could not use the canvas, and every option added there
+looked like a scene-only feature (#804). The split follows particles (§9):
+
+- `awake:ui:canvas` holds `CanvasElement` and its value types (style, layout, binding, image), the
+  text and link parsing, and the drawing: `CanvasOverlay(items, resolver, …)` draws a flat
+  `CanvasItem(id, element, parent)` list through a host-implemented `CanvasResolver`, for a
+  followed node's point or bounds, a View's camera picture, and a bound field's text. It depends on
+  `compose:runtime`, `compose:ui`, `core:math`, `core:math2d`, `core:text` and `core:schema`, and on
+  no `scene:*` or `ecs` module.
+- `scene:canvas` holds the `canvas_element` schema and its validation, `CanvasElementBinding` (the
+  one mapping between the two), the `World` walk and `SceneCanvasResolver`, `CanvasProjector` and
+  `CanvasViews` (the host contracts a `World`'s camera and renderer answer), and asset loading.
+  `SceneCanvas(world, …)` keeps its signature; it builds the item list and resolver from the world
+  and hands them to `CanvasOverlay`.
+
+Non-deprecated typealiases for the 16 moved public types, and a `consumeLink` forwarder, keep
+source written against `scene:canvas` compiling; the moved types' binary (JVM class) names changed,
+so precompiled consumers need a recompile. `CanvasElementExposureTest` is `scene:canvas`'s
+`ParticleExposureTest` (§9): a `CanvasElement` option neither mapped from a scene field nor listed
+as code-only fails it.
+
 ## Adding a new module
 
 1. **Name it for the subsystem**, never the layer. If the name is `engine`, `backend`, `common`,

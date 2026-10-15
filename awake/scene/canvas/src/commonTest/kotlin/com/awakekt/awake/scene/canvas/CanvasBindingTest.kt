@@ -15,6 +15,9 @@ import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneResolutionContext
 import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.document.SceneComponent
+import com.awakekt.awake.ui.canvas.CanvasResolver
+import com.awakekt.awake.ui.canvas.numberField
+import com.awakekt.awake.ui.canvas.textField
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlin.reflect.KClass
@@ -64,6 +67,21 @@ private object PurseBinding : SceneComponentBinding<Purse, ScenePurse> {
         ScenePurse(component.gold, component.share, component.ratio, component.owner)
 }
 
+/** What a [CanvasOverlay][com.awakekt.awake.ui.canvas.CanvasOverlay] resolves a bound element's value and text to. */
+private class Binder(private val resolver: CanvasResolver) {
+    fun valueOf(element: CanvasElement): Float {
+        val bind = element.bind?.takeIf { it.value.isNotBlank() } ?: return element.value
+        val value = resolver.numberField(bind.node, bind.value)
+        val max = if (bind.max.isBlank()) 1f else resolver.numberField(bind.node, bind.max)
+        return if (value == null || max == null || max <= 0f) element.value else (value / max).coerceIn(0f, 1f)
+    }
+
+    fun textOf(element: CanvasElement): String {
+        val bind = element.bind?.takeIf { it.text.isNotBlank() } ?: return element.text
+        return resolver.textField(bind.node, bind.text)
+    }
+}
+
 class CanvasBindingTest {
     private val world = World()
     private val health = Health(current = 120f, max = 150f)
@@ -77,9 +95,10 @@ class CanvasBindingTest {
         }
     }
 
-    private fun tree() = CanvasTree(emptyList(), false, emptyMap(), SceneCanvasResolver(world, null, null, listOf(HealthBinding, PurseBinding)))
+    /** The same resolving a bound [CanvasElement] does, without composing a [CanvasOverlay][com.awakekt.awake.ui.canvas.CanvasOverlay]. */
+    private fun binder() = Binder(SceneCanvasResolver(world, null, null, listOf(HealthBinding, PurseBinding)))
 
-    private fun textOf(template: String) = tree().textOf(bound(CanvasBinding("Player", text = template)))
+    private fun textOf(template: String) = binder().textOf(bound(CanvasBinding("Player", text = template)))
 
     private fun bound(bind: CanvasBinding, value: Float = 0.5f, text: String = "unbound") =
         CanvasElement().also {
@@ -92,9 +111,9 @@ class CanvasBindingTest {
     fun aBarFollowsAFieldAsAShareOfAnother() {
         val bar = bound(CanvasBinding("Player", value = "health.current", max = "health.max"))
 
-        val full = tree().valueOf(bar)
+        val full = binder().valueOf(bar)
         health.current = 30f
-        val low = tree().valueOf(bar)
+        val low = binder().valueOf(bar)
 
         assertEquals(0.8f, full, 1e-5f)
         assertEquals(0.2f, low, 1e-5f)
@@ -102,18 +121,18 @@ class CanvasBindingTest {
 
     @Test
     fun aMaxMayBeANumberAndAValueAlreadyAShare() {
-        assertEquals(0.6f, tree().valueOf(bound(CanvasBinding("Player", value = "health.current", max = "200"))), 1e-5f)
+        assertEquals(0.6f, binder().valueOf(bound(CanvasBinding("Player", value = "health.current", max = "200"))), 1e-5f)
         health.current = 0.25f
-        assertEquals(0.25f, tree().valueOf(bound(CanvasBinding("Player", value = "health.current"))), 1e-5f)
+        assertEquals(0.25f, binder().valueOf(bound(CanvasBinding("Player", value = "health.current"))), 1e-5f)
     }
 
     @Test
     fun aTextFillsInEveryFieldItNames() {
         val label = bound(CanvasBinding("Player", text = "HP {health.current}/{health.max}, reserve {health.pool.reserve}, {health.regenerating}"))
 
-        assertEquals("HP 120/150, reserve 40, false", tree().textOf(label))
+        assertEquals("HP 120/150, reserve 40, false", binder().textOf(label))
         health.current = 87.5f
-        assertEquals("HP 87.5/150, reserve 40, false", tree().textOf(label), "it follows the field")
+        assertEquals("HP 87.5/150, reserve 40, false", binder().textOf(label), "it follows the field")
     }
 
     @Test
@@ -181,10 +200,10 @@ class CanvasBindingTest {
 
     @Test
     fun anUnknownNodeOrFieldShowsTheElementsOwnValue() {
-        assertEquals(0.5f, tree().valueOf(bound(CanvasBinding("Nobody", value = "health.current"))))
-        assertEquals(0.5f, tree().valueOf(bound(CanvasBinding("Player", value = "health.missing"))))
-        assertEquals(0.5f, tree().valueOf(bound(CanvasBinding("Player", value = "mana.current"))))
-        assertEquals("HP {mana.current}", tree().textOf(bound(CanvasBinding("Player", text = "HP {mana.current}"))))
+        assertEquals(0.5f, binder().valueOf(bound(CanvasBinding("Nobody", value = "health.current"))))
+        assertEquals(0.5f, binder().valueOf(bound(CanvasBinding("Player", value = "health.missing"))))
+        assertEquals(0.5f, binder().valueOf(bound(CanvasBinding("Player", value = "mana.current"))))
+        assertEquals("HP {mana.current}", binder().textOf(bound(CanvasBinding("Player", text = "HP {mana.current}"))))
     }
 
     @Test
@@ -193,17 +212,17 @@ class CanvasBindingTest {
         val bar = bound(CanvasBinding("Player", value = "health.current", max = "health.max"))
         val label = bound(CanvasBinding("Player", text = "HP {health.current}"))
 
-        assertEquals(0.5f, tree().valueOf(bar))
-        assertEquals("HP NaN", tree().textOf(label))
+        assertEquals(0.5f, binder().valueOf(bar))
+        assertEquals("HP NaN", binder().textOf(label))
         health.current = Float.NEGATIVE_INFINITY
-        assertEquals("HP -Infinity", tree().textOf(label))
+        assertEquals("HP -Infinity", binder().textOf(label))
     }
 
     @Test
     fun aMaxThatIsNotAboveZeroShowsTheElementsOwnValue() {
         health.max = -10f
-        assertEquals(0.5f, tree().valueOf(bound(CanvasBinding("Player", value = "health.current", max = "health.max"))))
-        assertEquals(0.5f, tree().valueOf(bound(CanvasBinding("Player", value = "health.current", max = "0"))))
+        assertEquals(0.5f, binder().valueOf(bound(CanvasBinding("Player", value = "health.current", max = "health.max"))))
+        assertEquals(0.5f, binder().valueOf(bound(CanvasBinding("Player", value = "health.current", max = "0"))))
     }
 
     @Test

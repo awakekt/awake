@@ -5,7 +5,7 @@
  */
 @file:Suppress("FunctionNaming", "ktlint:standard:function-naming")
 
-package com.awakekt.awake.scene.canvas
+package com.awakekt.awake.ui.canvas
 
 import com.awakekt.awake.compose.foundation.clickable
 import com.awakekt.awake.compose.foundation.layout.Box

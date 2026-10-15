@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package com.awakekt.awake.scene.canvas
+package com.awakekt.awake.ui.canvas
 
 import com.awakekt.awake.compose.foundation.style.StyleScope
 import com.awakekt.awake.compose.ui.graphics.Brush
@@ -69,7 +69,7 @@ data class CanvasStyle(
     val linkColor: String? = null,
 ) {
     /** What is wrong with this style, as messages naming the field; empty when nothing is. */
-    internal fun problems(): List<String> = buildList {
+    fun problems(): List<String> = buildList {
         addAll(
             colourProblems(
                 "background" to background,
@@ -266,8 +266,13 @@ private fun paint(
 }
 
 private fun colourProblems(vararg colours: Pair<String, String?>): List<String> =
-    colours.mapNotNull { (name, value) -> if (value != null && !isHexColor(value)) "$name \"$value\" must be #RRGGBB or #RRGGBBAA" else null }
+    colours.mapNotNull { (name, value) -> if (value != null && !isCanvasColor(value)) "$name \"$value\" must be #RRGGBB or #RRGGBBAA" else null }
 
 // A colour typed wrong in the editor falls back instead of taking the whole frame down.
 internal fun colorOf(hex: String?, fallback: Color): Color =
-    if (hex != null && isHexColor(hex)) Color.fromHex(hex) else fallback
+    if (hex != null && isCanvasColor(hex)) Color.fromHex(hex) else fallback
+
+/** Whether [value] is a `#RRGGBB` or `#RRGGBBAA` colour. */
+fun isCanvasColor(value: String): Boolean = HEX_COLOR.matches(value)
+
+private val HEX_COLOR = Regex("^#([0-9a-fA-F]{6}|[0-9a-fA-F]{8})$")

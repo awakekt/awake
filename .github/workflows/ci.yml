@@ -198,10 +198,11 @@ jobs:
       - name: Sprite metadata, animation and scene runtime tests
         run: ./gradlew :awake:asset:sprite:desktopTest :awake:core:animation:desktopTest :awake:tilemap:desktopTest :awake:scene:scene2d:desktopTest :awake:scene:runtime:desktopTest
 
-      # The game UI canvas: its elements' input, drawing and zero-tolerance pixel baselines. Before
-      # this step it was only compiled here, so a change to how it draws or routes a tap stayed green.
+      # The game UI canvas: its elements' input, drawing and zero-tolerance pixel baselines, in the
+      # scene-free capability and its scene wrapper. Before this step it was only compiled here, so a
+      # change to how it draws or routes a tap stayed green.
       - name: Game UI canvas tests
-        run: ./gradlew :awake:scene:canvas:desktopTest
+        run: ./gradlew :awake:ui:canvas:desktopTest :awake:scene:canvas:desktopTest
 
       # The committed font atlases and the run-time TTF/OTF loader, held against them: metrics,
       # layout, the distance field, a CFF fixture, corrupt input, and the same text drawn both ways.
