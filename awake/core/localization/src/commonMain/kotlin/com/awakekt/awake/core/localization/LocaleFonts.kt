@@ -10,9 +10,9 @@ import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.core.text.font.UiFonts
-import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
@@ -64,14 +64,14 @@ class LocaleFonts(fonts: Map<LocaleId, List<String>>) {
                 throw StringTableException("Locale fonts are not valid JSON: ${e.message}", e)
             }
             if (root !is JsonObject) throw StringTableException("Locale fonts must be a JSON object of locale tags to font paths.")
-            return LocaleFonts(
-                root.entries.associate { (tag, value) ->
-                    val locale = LocaleId.parseOrNull(tag) ?: throw StringTableException("Locale fonts: \"$tag\" is not a locale tag.")
-                    val paths = (value as? JsonArray)?.map { (it as? JsonPrimitive)?.takeIf { p -> p.isString }?.content }
-                    if (paths == null || paths.any { it == null }) throw StringTableException("Locale fonts: \"$tag\" must be an array of font paths.")
-                    locale to paths.filterNotNull()
-                },
-            )
+            return LocaleFonts(root.entries.associate { (tag, value) -> localeEntry(tag, value) })
+        }
+
+        private fun localeEntry(tag: String, value: JsonElement): Pair<LocaleId, List<String>> {
+            val locale = LocaleId.parseOrNull(tag) ?: throw StringTableException("Locale fonts: \"$tag\" is not a locale tag.")
+            val paths = (value as? JsonArray)?.map { (it as? JsonPrimitive)?.takeIf { p -> p.isString }?.content }
+            if (paths == null || paths.any { it == null }) throw StringTableException("Locale fonts: \"$tag\" must be an array of font paths.")
+            return locale to paths.filterNotNull()
         }
 
         /**
@@ -124,25 +124,39 @@ suspend fun Strings.loadFont(
         .toSet()
     val fallbacks = mutableListOf<UiFont>()
     for (path in paths) {
-        if (missing.isEmpty()) break
-        val font = try {
-            val bytes = assets.read(AssetPath(path)).getOrThrow()
-            UiFonts.load(bytes, path, chars = missing.joinToString(""), cellSize = primary.cellSize)
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            fontLog.error(e) { "Font $path for ${locale.value} could not be loaded: ${e.message}" }
-            continue
+        if (missing.isNotEmpty()) {
+            val font = loadFallbackFont(assets, path, missing, primary.cellSize)
+            if (font != null) {
+                fallbacks += font
+                missing = missing.filterTo(HashSet()) { !font.hasGlyph(it) }
+            }
         }
-        if (missing.none(font::hasGlyph)) {
-            fontLog.warn { "Font $path for ${locale.value} draws none of the chars its text needs; it is not used." }
-            continue
-        }
-        fallbacks += font
-        missing = missing.filterTo(HashSet()) { !font.hasGlyph(it) }
     }
     if (missing.isNotEmpty()) {
         fontLog.warn { "No font for ${locale.value} draws ${missing.size} chars of its text, such as '${missing.first()}'." }
     }
     return UiFonts.fallback(primary, fallbacks)
+}
+
+/** [path] baked with the chars of [missing] it has, or null, logged, when it can't be read or has none of them. */
+private suspend fun Strings.loadFallbackFont(assets: AssetSource, path: String, missing: Set<Char>, cellSize: Int): UiFont? {
+    val font = assets.read(AssetPath(path)).fold(
+        onSuccess = { bytes -> bakeFont(bytes, path, missing, cellSize) },
+        onFailure = { e ->
+            fontLog.error(e) { "Font $path for ${locale.value} could not be read: ${e.message}" }
+            null
+        },
+    )
+    if (font != null && missing.none(font::hasGlyph)) {
+        fontLog.warn { "Font $path for ${locale.value} draws none of the chars its text needs; it is not used." }
+        return null
+    }
+    return font
+}
+
+private fun Strings.bakeFont(bytes: ByteArray, path: String, chars: Set<Char>, cellSize: Int): UiFont? = try {
+    UiFonts.load(bytes, path, chars = chars.joinToString(""), cellSize = cellSize)
+} catch (e: IllegalArgumentException) {
+    fontLog.error(e) { "Font $path for ${locale.value} could not be baked: ${e.message}" }
+    null
 }

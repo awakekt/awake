@@ -63,8 +63,8 @@ class LocaleId private constructor(val tag: String) {
         fun parseOrNull(tag: String): LocaleId? {
             // A POSIX locale may carry a codeset or modifier, "en_US.UTF-8@euro"; neither names a table.
             val subtags = tag.trim().substringBefore('.').substringBefore('@').split('-', '_').filter { it.isNotEmpty() }
-            val language = subtags.firstOrNull()?.lowercase() ?: return null
-            if (language.length !in 2..3 || !language.all { it in 'a'..'z' }) return null
+            val language = subtags.firstOrNull()?.lowercase()
+            if (language == null || language.length !in 2..3 || !language.all { it in 'a'..'z' }) return null
             val normalized = StringBuilder(language)
             var index = 1
             subtags.getOrNull(index)?.takeIf { it.length == 4 && it.all(Char::isLetter) }?.let {

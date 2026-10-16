@@ -6,7 +6,6 @@
 package com.awakekt.awake.core.localization
 
 import com.awakekt.awake.core.logging.Logger
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -95,19 +94,34 @@ class Strings internal constructor(
      */
     fun text(key: String, arguments: Map<String, Any?> = emptyMap()): String {
         val current = chain
+        var found: Table? = null
+        var raw: String? = null
         for (table in current.tables) {
-            val raw = table.text[key] ?: continue
-            if (MessageFormat.isPlain(raw)) return raw
-            val message = table.message(key, raw) ?: run {
-                current.report("$key@${table.locale}") { "Text \"$key\" in ${table.locale} is not a valid message: ${table.errors[key]}" }
-                return key
+            raw = table.text[key]
+            if (raw != null) {
+                found = table
+                break
             }
-            return message.format(arguments, table.plurals) { problem ->
+        }
+        if (found == null || raw == null) {
+            current.report(key) { "No text for \"$key\" in ${current.locale} or the default locale $defaultLocale." }
+            return key
+        }
+        return format(current, found, key, raw, arguments)
+    }
+
+    private fun format(current: Chain, table: Table, key: String, raw: String, arguments: Map<String, Any?>): String {
+        val message = if (MessageFormat.isPlain(raw)) null else table.message(key, raw)
+        return when {
+            MessageFormat.isPlain(raw) -> raw
+            message == null -> {
+                current.report("$key@${table.locale}") { "Text \"$key\" in ${table.locale} is not a valid message: ${table.errors[key]}" }
+                key
+            }
+            else -> message.format(arguments, table.plurals) { problem ->
                 current.report("$key@${table.locale}:$problem") { "Text \"$key\" in ${table.locale}: $problem." }
             }
         }
-        current.report(key) { "No text for \"$key\" in ${current.locale} or the default locale $defaultLocale." }
-        return key
     }
 
     /**
@@ -141,11 +155,11 @@ class Strings internal constructor(
 
     private suspend fun tableFor(locale: LocaleId): Table? {
         if (locale in loaded) return loaded[locale]
+        // A table that can't be read is a StringTableException, an IllegalArgumentException, as is a
+        // kotlinx.serialization failure in a custom source.
         val table = try {
             source.load(locale)?.let { Table(locale, it, pluralRules(locale)) }
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
+        } catch (e: IllegalArgumentException) {
             log.error(e) { "String table for $locale could not be read: ${e.message}" }
             null
         }
@@ -166,15 +180,14 @@ class Strings internal constructor(
         private val parsed = HashMap<String, MessageFormat>()
         val errors = HashMap<String, String>()
 
-        fun message(key: String, raw: String): MessageFormat? {
-            parsed[key]?.let { return it }
-            if (key in errors) return null
-            return try {
-                MessageFormat.parse(raw).also { parsed[key] = it }
-            } catch (e: MessageSyntaxException) {
-                errors[key] = e.message.orEmpty()
-                null
-            }
+        fun message(key: String, raw: String): MessageFormat? =
+            parsed[key] ?: if (key in errors) null else parse(key, raw)
+
+        private fun parse(key: String, raw: String): MessageFormat? = try {
+            MessageFormat.parse(raw).also { parsed[key] = it }
+        } catch (e: MessageSyntaxException) {
+            errors[key] = e.message.orEmpty()
+            null
         }
     }
 

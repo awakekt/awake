@@ -48,52 +48,58 @@ class MessageFormat private constructor(val pattern: String, private val parts: 
         arguments: Map<String, Any?>,
         plurals: PluralRule = PluralRules.Root,
         onProblem: (String) -> Unit = {},
-    ): String = buildString { appendParts(parts, arguments, plurals, onProblem, pound = null) }
+    ): String = buildString { Formatter(this, arguments, plurals, onProblem).appendParts(parts, pound = null) }
 
     override fun toString(): String = pattern
 
-    private fun StringBuilder.appendParts(
-        parts: List<Part>,
-        arguments: Map<String, Any?>,
-        plurals: PluralRule,
-        onProblem: (String) -> Unit,
-        pound: String?,
+    /** Writes parts into [out], reading [arguments]. */
+    private class Formatter(
+        private val out: StringBuilder,
+        private val arguments: Map<String, Any?>,
+        private val plurals: PluralRule,
+        private val onProblem: (String) -> Unit,
     ) {
-        for (part in parts) {
-            when (part) {
-                is Part.Text -> append(part.text)
-                is Part.Pound -> append(pound ?: "#")
-                is Part.Argument -> {
-                    val value = arguments[part.name]
-                    if (value == null) {
-                        onProblem("argument \"${part.name}\" is missing")
-                        append('{').append(part.name).append('}')
-                    } else {
-                        append(formatValue(value))
-                    }
-                }
-                is Part.Select -> {
-                    val value = arguments[part.name]
-                    if (value == null) onProblem("argument \"${part.name}\" is missing")
-                    val branch = value?.let { part.cases[formatValue(it)] } ?: part.other
-                    appendParts(branch, arguments, plurals, onProblem, pound)
-                }
-                is Part.Plural -> {
-                    val number = arguments[part.name]?.let(::numberOrNull)
-                    if (number == null) {
-                        onProblem("argument \"${part.name}\" is missing or not a number")
-                        appendParts(part.other, arguments, plurals, onProblem, pound)
-                    } else {
-                        val exact = part.exact.entries.firstOrNull { it.key == number.toDouble() }?.value
-                        val shown = if (part.offset == 0.0) number else number.toDouble() - part.offset
-                        val branch = exact ?: run {
-                            val category = runCatching { plurals.select(PluralOperands.of(shown)) }.getOrDefault(PluralCategory.Other)
-                            part.categories[category] ?: part.other
-                        }
-                        appendParts(branch, arguments, plurals, onProblem, formatValue(shown))
-                    }
+        fun appendParts(parts: List<Part>, pound: String?) {
+            for (part in parts) {
+                when (part) {
+                    is Part.Text -> out.append(part.text)
+                    is Part.Pound -> out.append(pound ?: "#")
+                    is Part.Argument -> appendArgument(part)
+                    is Part.Select -> appendParts(selectBranch(part), pound)
+                    is Part.Plural -> appendPlural(part, pound)
                 }
             }
+        }
+
+        private fun appendArgument(part: Part.Argument) {
+            val value = arguments[part.name]
+            if (value == null) {
+                onProblem("argument \"${part.name}\" is missing")
+                out.append('{').append(part.name).append('}')
+            } else {
+                out.append(formatValue(value))
+            }
+        }
+
+        private fun selectBranch(part: Part.Select): List<Part> {
+            val value = arguments[part.name]
+            if (value == null) onProblem("argument \"${part.name}\" is missing")
+            return value?.let { part.cases[formatValue(it)] } ?: part.other
+        }
+
+        private fun appendPlural(part: Part.Plural, pound: String?) {
+            val number = arguments[part.name]?.let(::numberOrNull)
+            if (number == null) {
+                onProblem("argument \"${part.name}\" is missing or not a number")
+                appendParts(part.other, pound)
+                return
+            }
+            val shown = if (part.offset == 0.0) number else number.toDouble() - part.offset
+            val branch = part.exact[number.toDouble()] ?: run {
+                val category = runCatching { plurals.select(PluralOperands.of(shown)) }.getOrDefault(PluralCategory.Other)
+                part.categories[category] ?: part.other
+            }
+            appendParts(branch, formatValue(shown))
         }
     }
 
@@ -163,12 +169,13 @@ class MessageFormat private constructor(val pattern: String, private val parts: 
         }
     }
 
-    private class Parser(private val source: String) {
-        private var index = 0
+    /** Reads a pattern's message structure; [Scanner] reads its tokens. */
+    private class Parser(source: String) {
+        private val scan = Scanner(source)
 
         fun parseTop(): List<Part> {
             val parts = parseMessage(inPlural = false)
-            if (index < source.length) fail("unmatched '}'")
+            if (!scan.atEnd) scan.fail("unmatched '}'")
             return parts
         }
 
@@ -182,24 +189,20 @@ class MessageFormat private constructor(val pattern: String, private val parts: 
                     text.clear()
                 }
             }
-            while (index < source.length) {
-                val c = source[index]
+            while (!scan.atEnd && scan.peek() != '}') {
+                val c = scan.peek()
                 when {
                     c == '\'' -> readApostrophe(text, inPlural)
                     c == '{' -> {
                         flush()
                         parts += parseArgument()
                     }
-                    c == '}' -> break
                     c == '#' && inPlural -> {
                         flush()
                         parts += Part.Pound
-                        index++
+                        scan.next()
                     }
-                    else -> {
-                        text.append(c)
-                        index++
-                    }
+                    else -> text.append(scan.next())
                 }
             }
             flush()
@@ -207,159 +210,174 @@ class MessageFormat private constructor(val pattern: String, private val parts: 
         }
 
         private fun readApostrophe(text: StringBuilder, inPlural: Boolean) {
-            val next = source.getOrNull(index + 1)
+            val next = scan.peek(1)
             when {
                 next == '\'' -> {
-                    text.append('\'')
-                    index += 2
+                    text.append(scan.next())
+                    scan.next()
                 }
                 next == '{' || next == '}' || (next == '#' && inPlural) -> {
-                    index++
-                    // Quoted literal text up to the next single apostrophe; '' inside is one apostrophe.
-                    while (index < source.length) {
-                        val c = source[index]
-                        if (c == '\'') {
-                            if (source.getOrNull(index + 1) == '\'') {
-                                text.append('\'')
-                                index += 2
-                            } else {
-                                index++
-                                return
-                            }
-                        } else {
-                            text.append(c)
-                            index++
-                        }
-                    }
+                    scan.next()
+                    readQuoted(text)
                 }
-                else -> {
+                else -> text.append(scan.next())
+            }
+        }
+
+        /** Quoted literal text up to the next single apostrophe; `''` inside is one apostrophe. */
+        private fun readQuoted(text: StringBuilder) {
+            while (!scan.atEnd) {
+                val c = scan.next()
+                if (c != '\'') {
+                    text.append(c)
+                } else if (scan.peek() == '\'') {
                     text.append('\'')
-                    index++
+                    scan.next()
+                } else {
+                    return
                 }
             }
         }
 
         private fun parseArgument(): Part {
-            val start = index
-            index++ // {
-            skipSpace()
-            val name = readIdentifier() ?: fail("expected an argument name at ${index}")
-            skipSpace()
-            when (source.getOrNull(index)) {
+            val start = scan.index
+            scan.next() // {
+            scan.skipSpace()
+            val name = scan.readIdentifier() ?: scan.fail("expected an argument name at ${scan.index}")
+            scan.skipSpace()
+            when (scan.peek()) {
                 '}' -> {
-                    index++
+                    scan.next()
                     return Part.Argument(name)
                 }
-                ',' -> index++
-                null -> fail("unclosed '{' at $start")
-                else -> fail("unexpected '${source[index]}' in argument \"$name\" at $index")
+                ',' -> scan.next()
+                null -> scan.fail("unclosed '{' at $start")
+                else -> scan.fail("unexpected '${scan.peek()}' in argument \"$name\" at ${scan.index}")
             }
-            skipSpace()
-            val type = readIdentifier() ?: fail("expected an argument type after \"$name\" at $index")
-            skipSpace()
+            scan.skipSpace()
+            val type = scan.readIdentifier() ?: scan.fail("expected an argument type after \"$name\" at ${scan.index}")
+            scan.skipSpace()
             val part = when (type) {
                 "number" -> {
-                    if (source.getOrNull(index) == ',') skipStyle()
+                    if (scan.peek() == ',') scan.skipStyle()
                     Part.Argument(name)
                 }
                 "plural" -> {
-                    expect(',', "after \"plural\"")
+                    scan.expect(',', "after \"plural\"")
                     parsePlural(name)
                 }
                 "select" -> {
-                    expect(',', "after \"select\"")
+                    scan.expect(',', "after \"select\"")
                     parseSelect(name)
                 }
-                else -> fail("argument type \"$type\" is not supported; use number, plural or select")
+                else -> scan.fail("argument type \"$type\" is not supported; use number, plural or select")
             }
-            skipSpace()
-            expect('}', "to close argument \"$name\" opened at $start")
+            scan.skipSpace()
+            scan.expect('}', "to close argument \"$name\" opened at $start")
             return part
         }
 
         private fun parsePlural(name: String): Part {
-            skipSpace()
+            scan.skipSpace()
             var offset = 0.0
-            if (source.startsWith("offset:", index)) {
-                index += "offset:".length
-                skipSpace()
-                offset = readNumber() ?: fail("expected a number after offset: at $index")
+            if (scan.skipPrefix("offset:")) {
+                scan.skipSpace()
+                offset = scan.readNumber() ?: scan.fail("expected a number after offset: at ${scan.index}")
             }
             val exact = linkedMapOf<Double, List<Part>>()
             val categories = linkedMapOf<PluralCategory, List<Part>>()
             var other: List<Part>? = null
-            while (true) {
-                skipSpace()
-                if (index >= source.length || source[index] == '}') break
-                if (source[index] == '=') {
-                    index++
-                    val value = readNumber() ?: fail("expected a number after '=' at $index")
+            while (scan.atBranch()) {
+                if (scan.peek() == '=') {
+                    scan.next()
+                    val value = scan.readNumber() ?: scan.fail("expected a number after '=' at ${scan.index}")
                     exact[value] = parseBranch(inPlural = true)
                 } else {
-                    val keyword = readIdentifier() ?: fail("expected a plural category at $index")
-                    val category = PluralCategory.ofKeyword(keyword) ?: fail("\"$keyword\" is not a plural category")
+                    val keyword = scan.readIdentifier() ?: scan.fail("expected a plural category at ${scan.index}")
+                    val category = PluralCategory.ofKeyword(keyword) ?: scan.fail("\"$keyword\" is not a plural category")
                     val branch = parseBranch(inPlural = true)
                     if (category == PluralCategory.Other) other = branch else categories[category] = branch
                 }
             }
-            return Part.Plural(name, offset, exact, categories, other ?: fail("plural \"$name\" has no 'other' branch"))
+            return Part.Plural(name, offset, exact, categories, other ?: scan.fail("plural \"$name\" has no 'other' branch"))
         }
 
         private fun parseSelect(name: String): Part {
             val cases = linkedMapOf<String, List<Part>>()
             var other: List<Part>? = null
-            while (true) {
-                skipSpace()
-                if (index >= source.length || source[index] == '}') break
-                val keyword = readIdentifier() ?: fail("expected a select keyword at $index")
+            while (scan.atBranch()) {
+                val keyword = scan.readIdentifier() ?: scan.fail("expected a select keyword at ${scan.index}")
                 val branch = parseBranch(inPlural = false)
                 if (keyword == "other") other = branch else cases[keyword] = branch
             }
-            return Part.Select(name, cases, other ?: fail("select \"$name\" has no 'other' branch"))
+            return Part.Select(name, cases, other ?: scan.fail("select \"$name\" has no 'other' branch"))
         }
 
         private fun parseBranch(inPlural: Boolean): List<Part> {
-            skipSpace()
-            expect('{', "to open a branch")
+            scan.skipSpace()
+            scan.expect('{', "to open a branch")
             val parts = parseMessage(inPlural)
-            expect('}', "to close a branch")
+            scan.expect('}', "to close a branch")
             return parts
+        }
+    }
+
+    /** The characters of a pattern, read a token at a time. */
+    private class Scanner(private val source: String) {
+        var index = 0
+            private set
+
+        val atEnd: Boolean get() = index >= source.length
+
+        fun peek(ahead: Int = 0): Char? = source.getOrNull(index + ahead)
+
+        fun next(): Char = source[index++]
+
+        /** Skips [prefix] when the source continues with it, and says whether it did. */
+        fun skipPrefix(prefix: String): Boolean = source.startsWith(prefix, index).also { if (it) index += prefix.length }
+
+        fun skipSpace() {
+            while (!atEnd && source[index].isWhitespace()) index++
+        }
+
+        /** Skips whitespace, then whether another `plural` or `select` branch follows. */
+        fun atBranch(): Boolean {
+            skipSpace()
+            return !atEnd && source[index] != '}'
         }
 
         /** Skips a `number` style, such as `, integer`, up to the argument's closing brace. */
-        private fun skipStyle() {
+        fun skipStyle() {
             var depth = 0
-            while (index < source.length) {
+            while (!atEnd && !(source[index] == '}' && depth == 0)) {
                 when (source[index]) {
                     '{' -> depth++
-                    '}' -> if (depth == 0) return else depth--
+                    '}' -> depth--
                 }
                 index++
             }
         }
 
-        private fun readIdentifier(): String? {
+        fun readIdentifier(): String? {
             val start = index
-            while (index < source.length && (source[index].isLetterOrDigit() || source[index] == '_' || source[index] == '-' || source[index] == '.')) index++
+            while (!atEnd && isIdentifierChar(source[index])) index++
             return if (index > start) source.substring(start, index) else null
         }
 
-        private fun readNumber(): Double? {
+        fun readNumber(): Double? {
             val start = index
-            if (source.getOrNull(index) == '-') index++
-            while (index < source.length && (source[index].isDigit() || source[index] == '.')) index++
+            if (peek() == '-') index++
+            while (!atEnd && (source[index].isDigit() || source[index] == '.')) index++
             return source.substring(start, index).toDoubleOrNull()
         }
 
-        private fun skipSpace() {
-            while (index < source.length && source[index].isWhitespace()) index++
-        }
-
-        private fun expect(char: Char, what: String) {
-            if (source.getOrNull(index) != char) fail("expected '$char' $what at $index")
+        fun expect(char: Char, what: String) {
+            if (peek() != char) fail("expected '$char' $what at $index")
             index++
         }
 
-        private fun fail(message: String): Nothing = throw MessageSyntaxException("$message in \"$source\"")
+        fun fail(message: String): Nothing = throw MessageSyntaxException("$message in \"$source\"")
     }
 }
+
+private fun isIdentifierChar(c: Char): Boolean = c.isLetterOrDigit() || c == '_' || c == '-' || c == '.'

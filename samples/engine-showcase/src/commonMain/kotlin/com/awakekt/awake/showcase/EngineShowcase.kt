@@ -13,9 +13,9 @@ import com.awakekt.awake.scene.runtime.SceneContent
 import com.awakekt.awake.showcase.examples.CharacterExampleDriver
 import com.awakekt.awake.showcase.examples.EcsStressExampleDriver
 import com.awakekt.awake.showcase.examples.GltfViewerAssets
-import com.awakekt.awake.showcase.examples.LocalizationExampleDriver
 import com.awakekt.awake.showcase.examples.InstancedCubesExampleDriver
 import com.awakekt.awake.showcase.examples.InstancedSkinnedExampleDriver
+import com.awakekt.awake.showcase.examples.LocalizationExampleDriver
 import com.awakekt.awake.showcase.examples.NavChaseExampleDriver
 import com.awakekt.awake.showcase.examples.ParticleEmitterExampleDriver
 import com.awakekt.awake.showcase.examples.RpgSprites2dExampleAssets
