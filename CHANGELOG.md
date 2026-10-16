@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Desktop games start on Windows.** `awake:engine:window` and the Vulkan bindings shipped their natives for macOS and Linux only, so a desktop game on Windows stopped at "Native library 'awake-window' is not available for 'windows-x86_64'". Releases now build both on a Windows runner and carry `awake-window.dll` and `awake-vulkan.dll`, with GLFW 3.4 as `glfw3.dll` beside the window library, which `GlfwWindow` loads first so both share one GLFW. The Windows natives link the C runtime in, so a player needs no Visual C++ redistributable, only a Vulkan driver. Building them needs Visual Studio's C++ tools, CMake and the Vulkan SDK; GLFW is fetched by the build.
 
+## [0.13.1] - 2026-10-16
+
 ### Fixed
 
 - **The WebGPU backend resolves its pinned wgpu4k builds again.** Sonatype removed the `io.ygdrasil` snapshots the backend pins, and a restored Gradle cache that recorded them as coming from Sonatype searched only there, so the v0.13.0 release stopped at `wasmJsPackageJson`. The build and the templates now read those builds, hosted by Awake, for `io.ygdrasil` only and leave that group off the Sonatype snapshot repos. The website guide and the README show the same two repositories, and the Maven fallback deploy checks that every pinned file is still served.
