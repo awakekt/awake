@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-10-16
+
+### Added
+
+- **A canvas element reports where a tap landed on it.** `CanvasElement.consumePressAt(): Vec2?` gives the point in the element's own units from its top-left, whatever the canvas's scale. On an element with a `style.rotation`, it gives the point on its picture as if unturned. It then takes the tap as `consumePress()` does. `canvas_element` and `CanvasElement` gain `pressable: Boolean = false`, so an `Image` or `Panel` can take a tap as a `Button` does, for a map picture a player clicks to place a mark. Without it, a tap still passes through them.
+- **A host can spawn a scene node into a `World` it owns.** `SceneAppLifecycleRuntime.spawn` gains
+  overloads that take a `world: World` alongside `node`, so a host that plays a scene in a world of
+  its own, such as an editor's Play mode, gets a working `SpawnedNode` back for it instead of only
+  the runtime's own world. `SpawnedNode.attachRenderers` now attaches into that node's own `world`
+  (a new public property) rather than the runtime's, and the no-`world` overloads keep spawning into
+  the runtime's own world as before.
+
+### Changed
+
+- **`CanvasElement.followOffset` is a `Vec3f`.** It was the scene document's `SceneVec3`, a scene type that the game UI canvas can't hold once it moves out of `awake:scene:canvas` (#804). The `canvas_element` document's `followOffset` is unchanged. Code that sets the component writes `followOffset = Vec3f(x, y, z)` in place of `SceneVec3(x, y, z)`. `Vec3f`'s own defaults are 1, so write all three values.
+- **The game UI canvas is `awake:ui:canvas`, a scene-free capability; `awake:scene:canvas` is now its wrapper.** `CanvasElement`, its style/layout/binding/image types, text and link parsing, and the drawing itself (`CanvasOverlay`) moved; `awake:scene:canvas` keeps the `canvas_element` schema, `CanvasElementBinding`, `SceneCanvasResolver`, `CanvasProjector`, `CanvasViews` and `SceneCanvas(world, …)`, whose signature is unchanged (#804). Non-deprecated typealiases for the 16 moved public types, and a `consumeLink` forwarder, keep source written against `awake:scene:canvas` compiling. The moved types' binary (JVM class) names changed, so a precompiled consumer needs a recompile, not just a classpath bump.
+
+### Deprecated
+
+- **The `com.awakekt.awake.scene.canvas` names of the canvas capability's types are deprecated.** `CanvasElement`, its kinds and anchors, and the style, layout, binding and image types now live in `com.awakekt.awake.ui.canvas` (`awake:ui:canvas`). The old names are typealiases that still compile, each with a `ReplaceWith` the IDE applies. The same goes for `CanvasElement.consumeLink()`. The scene names (`SceneCanvasElement`, `CanvasElementBinding`, `SceneCanvas`, the loaders, `CanvasProjector` and `CanvasViews`) are unchanged.
+
+### Fixed
+
+- **A passive hover observer is hovered under a later sibling's plain box.** When no sibling took the point, hit testing kept the topmost child that merely held it, so a `hoverable(blocksHitTest = false)` under a later sibling's empty padding box was never hovered. Now a node that only watches the point outranks one that only holds it, as Compose's rule says: a box with no pointer input is transparent to the pointer. A node that takes the point still wins over both. In a `SceneCanvas`, a non-button element is now hovered even where a later element's anchor padding covers it.
+- **A focused text field blocked every key from gameplay, not just the ones it uses.** `InputOwnership.blocksGameplayKeys` took the whole keyboard while any field was focused, so a consumer pack's single-line chat field could never read Up/Down to step through its sent lines. `InputOwnership` now carries whether the focused field is single-line and any extra keys it lets through (`BasicTextField(singleLine = ..., passThroughKeys = ...)`), and a new `InputOwnership.blocksGameplayKey(key)` answers per key: typed text, Backspace/Delete, caret movement, Enter, Escape and Tab stay taken, Up/Down are also taken only by a multi-line field, and `GameplayInput` now gates each key this way. Pointer capture and an open modal still block every key. `blocksGameplayKeys` is unchanged and still means "this field is taking some keys."
+- **A Core fix now reaches a consumer through a Vulkan release that pins an older Core.** Each Vulkan release names the exact Core release it was built with, so `vulkan-desktop:0.1.28` kept requesting `shader-compiler-desktop:0.11.0` and a build on Core 0.12.0 never got #795's Windows and Linux Naga natives, because nothing else in its graph asked for a newer one. Core now publishes `com.awakekt.awake:bom`, a platform listing every published Core module at the release version in the same Central deployment. Every Core module depends on it, and so does the Vulkan backend at the Core release it pins. A build holding two Core versions resolves the platform to the newest and lifts every Core module with it, with nothing to declare; Maven builds import the BOM in `dependencyManagement`. `verifyPublishedArtifacts` checks that every variant names the platform and that it lists exactly the Core modules published.
+
 ## [0.12.0] - 2026-10-14
 
 ### Added
