@@ -42,8 +42,13 @@ tasks.register("checkCoreAlignment") {
         }
         walk(root.get())
 
-        // The Vulkan family is its own version train; every other Awake module is Core.
-        val vulkanFamily = awake.filterKeys { it.startsWith("com.awakekt.awake.backend:vulkan") }
+        // The Vulkan family is its own version train; every other Awake module is Core. Its bindings
+        // publish as com.awakekt.awake:vulkan-kmp, outside the backend group, and are part of it too.
+        val vulkanFamily = awake.filterKeys { module ->
+            module.startsWith("com.awakekt.awake.backend:vulkan") ||
+                module.startsWith("com.awakekt.awake.backend.vulkan:") ||
+                module.startsWith("com.awakekt.awake:vulkan-kmp")
+        }
         val coreModules = awake - vulkanFamily.keys
         coreModules.forEach { (module, version) -> println("$module:$version") }
 
