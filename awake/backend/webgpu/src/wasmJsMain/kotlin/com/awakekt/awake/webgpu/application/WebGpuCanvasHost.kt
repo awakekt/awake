@@ -7,6 +7,7 @@
 
 package com.awakekt.awake.webgpu.application
 
+import com.awakekt.awake.core.input.PointerCursor
 import com.awakekt.awake.core.logging.Log
 import com.awakekt.awake.core.logging.LogLevel
 import com.awakekt.awake.core.logging.PrintLogSink
@@ -22,12 +23,19 @@ import web.html.HTMLCanvasElement
 
 /**
  * Reusable WebGPU canvas host for authored games.
+ *
+ * @param canvasId The id of the canvas element to render into.
+ * @param cursor The pointer shape the UI asks for this frame, or `null` to leave the canvas's cursor
+ * alone. Pass the app runtime's, as the desktop hosts do: `cursor = { runtime.cursor }`. It is set
+ * as the canvas's CSS `cursor` when it changes.
+ * @param applicationFactory Builds the engine; see the canvas overload.
  */
 fun launchWebGpuGame(
     canvasId: String = "awake-canvas",
+    cursor: (() -> PointerCursor)? = null,
     applicationFactory: () -> WebGpuEngine,
 ) {
-    launchWebGpuGame(findCanvas(canvasId).unsafeCast<HTMLCanvasElement>(), applicationFactory)
+    launchWebGpuGame(findCanvas(canvasId).unsafeCast<HTMLCanvasElement>(), cursor, applicationFactory)
 }
 
 /**
@@ -38,12 +46,15 @@ fun launchWebGpuGame(
  * failure the host stops drawing instead of repeating the error every frame.
  *
  * @param canvas The canvas element to render into and to size the surface from.
+ * @param cursor The pointer shape the UI asks for this frame, or `null` to leave the canvas's cursor
+ * alone; see the canvas-id overload.
  * @param applicationFactory Builds the engine, called once after the capability check and before
  * the device is created.
  * @throws IllegalStateException If the browser or device does not expose WebGPU.
  */
 fun launchWebGpuGame(
     canvas: HTMLCanvasElement,
+    cursor: (() -> PointerCursor)? = null,
     applicationFactory: () -> WebGpuEngine,
 ) {
     check(browserExposesWebGpu()) {
@@ -68,6 +79,7 @@ fun launchWebGpuGame(
         // A device that failed asynchronously stays failed: stop drawing instead of repeating
         // the failure every frame.
         isStopped = { runtimeFailure != null },
+        cursor = cursor,
         initBackend = { _, width, height ->
             val resolvedContext = createCanvasGpuContext(
                 canvas,

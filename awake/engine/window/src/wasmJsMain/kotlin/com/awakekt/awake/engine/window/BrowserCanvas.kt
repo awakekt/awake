@@ -11,6 +11,7 @@ import com.awakekt.awake.core.host.clampFrameDelta
 import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.input.PointerButton
+import com.awakekt.awake.core.input.PointerCursor
 import com.awakekt.awake.core.logging.Log
 import com.awakekt.awake.core.logging.LogLevel
 import com.awakekt.awake.core.logging.PrintLogSink
@@ -206,6 +207,9 @@ fun findCanvas(canvasId: String = "awake-canvas"): HTMLCanvasElement =
  * @param onResize Hook invoked when window resize occurs, before [lifecycle.resize].
  * @param isStopped Checked before every frame; once it answers true the loop stops scheduling
  *                  frames, as a backend whose device failed asynchronously needs.
+ * @param cursor The pointer shape the UI asks for this frame, or `null` to leave the canvas's cursor
+ *               alone. It is read after every frame and set as the canvas's CSS `cursor` when it
+ *               changes, as the desktop window does with GLFW.
  * @param initBackend Hook invoked asynchronously on [MainScope] after input binding and initial canvas sync,
  *                    allowing the rendering backend (e.g. WebGPU) to initialize its device, context, or surface.
  */
@@ -215,6 +219,7 @@ fun runBrowserCanvas(
     lifecycle: WindowLifecycle,
     onResize: (width: Int, height: Int) -> Unit = { _, _ -> },
     isStopped: () -> Boolean = { false },
+    cursor: (() -> PointerCursor)? = null,
     initBackend: suspend (canvas: HTMLCanvasElement, width: Int, height: Int) -> Unit = { _, _, _ -> },
 ) {
     if (!Log.hasSinks) Log.install(PrintLogSink(minimumLevel = LogLevel.Warn))
@@ -223,6 +228,7 @@ fun runBrowserCanvas(
     bindWindowPointerInput(input, canvas)
     bindWindowKeyboardInput(input)
     val textInput = DomTextInputBridge(input)
+    val canvasCursor = CanvasCursor { css -> canvas.style.cursor = css }
 
     val initialSize = currentCanvasSize(canvas)
     syncCanvasSize(canvas, initialSize.first, initialSize.second)
@@ -259,6 +265,7 @@ fun runBrowserCanvas(
                 try {
                     lifecycle.update(deltaSeconds)
                     textInput.sync()
+                    cursor?.let { canvasCursor.show(it()) }
                 } catch (error: Throwable) {
                     frameLoopStopped = true
                     reportBrowserFrameFailure(
