@@ -124,7 +124,8 @@ fun hostNativePlatform(): String {
     }
 }
 
-private fun platformLibraryFileName(platform: String, libName: String): String = when {
+/** The file [libName] builds to on [platform]: `lib<name>.dylib`, `<name>.dll` or `lib<name>.so`. */
+fun platformLibraryFileName(platform: String, libName: String): String = when {
     platform.startsWith("macos-") -> "lib$libName.dylib"
     platform.startsWith("windows-") -> "$libName.dll"
     else -> "lib$libName.so"
