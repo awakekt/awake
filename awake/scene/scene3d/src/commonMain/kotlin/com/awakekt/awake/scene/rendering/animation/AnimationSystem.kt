@@ -27,8 +27,17 @@ class AnimationSystem : System {
             if (unseen) {
                 animator.player.advance(delta)
             } else {
-                skinnedPose.jointPalette = animator.player.update(delta).jointPalette(animator.skin)
+                val pose = animator.player.update(delta)
+                val palette = skinnedPose.jointPalette
+                // In place when the palette fits: a new one per model per frame is garbage that lives a frame.
+                skinnedPose.jointPalette = if (palette.size == animator.skin.joints.size * MATRIX_FLOATS) {
+                    pose.jointPalette(animator.skin, palette)
+                } else {
+                    pose.jointPalette(animator.skin)
+                }
             }
         }
     }
 }
+
+private const val MATRIX_FLOATS = 16

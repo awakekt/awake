@@ -72,6 +72,9 @@ class AnimationPlayer(
     var activeClipId: String? = null
         private set
 
+    /** The clip [activeClipId] names, kept so a frame does not look it up by name. */
+    private var activeClip: AnimationClip? = null
+
     /** Whether the animation player is currently advancing playback time. */
     var isPlaying: Boolean = false
         private set
@@ -128,9 +131,10 @@ class AnimationPlayer(
         restart: Boolean = true,
     ) {
         val sameClip = activeClipId == clipId
-        clip(clipId)
+        val clip = clip(clipId)
         if (sameClip && !restart) return
         activeClipId = clipId
+        activeClip = clip
         this.playback = playback
         elapsedSeconds = 0f
         outgoingActive = false
@@ -155,7 +159,7 @@ class AnimationPlayer(
             return
         }
         if (activeClipId == clipId) return
-        clip(clipId)
+        val clip = clip(clipId)
         if (outgoingActive) {
             outgoingPose.copyFrom(blendedPose)
         } else {
@@ -165,6 +169,7 @@ class AnimationPlayer(
         blendElapsedSeconds = 0f
         blendDurationSeconds = durationSeconds
         activeClipId = clipId
+        activeClip = clip
         this.playback = playback
         elapsedSeconds = 0f
         isPlaying = true
@@ -180,7 +185,7 @@ class AnimationPlayer(
     fun update(deltaSeconds: Float): AnimationPose {
         val blending = outgoingActive
         advance(deltaSeconds)
-        val clip = activeClipId?.let(::clip) ?: return currentPose
+        val clip = activeClip ?: return currentPose
 
         currentPose.resetToBindPose()
         currentPose.sample(clip, elapsedSeconds)
@@ -200,8 +205,8 @@ class AnimationPlayer(
      */
     fun advance(deltaSeconds: Float) {
         require(deltaSeconds >= 0f) { "Animation delta must be non-negative." }
-        val clipId = activeClipId ?: return
-        if (isPlaying) elapsedSeconds = advanceTime(clip(clipId), deltaSeconds * speed)
+        val clip = activeClip ?: return
+        if (isPlaying) elapsedSeconds = advanceTime(clip, deltaSeconds * speed)
         if (outgoingActive) {
             blendElapsedSeconds = (blendElapsedSeconds + deltaSeconds * speed).coerceAtMost(blendDurationSeconds)
             if (blendElapsedSeconds / blendDurationSeconds >= 1f) outgoingActive = false

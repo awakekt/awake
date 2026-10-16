@@ -80,6 +80,7 @@ public final class com/awakekt/awake/core/animation/AnimationPose {
 	public final fun boneTranslation (I)Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun copyFrom (Lcom/awakekt/awake/core/animation/AnimationPose;)V
 	public final fun jointPalette (Lcom/awakekt/awake/core/animation/Skin;)[F
+	public final fun jointPalette (Lcom/awakekt/awake/core/animation/Skin;[F)[F
 	public final fun resetToBindPose ()V
 	public final fun sample (Lcom/awakekt/awake/core/animation/AnimationClip;F)V
 	public final fun setBoneTransform (ILcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Quat;)V
