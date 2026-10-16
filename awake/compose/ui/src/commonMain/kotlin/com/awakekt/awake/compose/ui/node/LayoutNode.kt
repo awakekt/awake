@@ -158,8 +158,11 @@ class LayoutNode(
     private val keyInputNodes = ArrayList<KeyInputNode>()
     private val drawDepthScratch = ArrayList<Int>()
     private val pointerDepthScratch = ArrayList<Int>()
-    private val focusDepthScratch = ArrayList<Int>()
-    private val scrollDepthScratch = ArrayList<Int>()
+
+    // Made on the first focus or scroll link, not per node: most nodes have neither, and a node
+    // is built per element per frame, so two lists each was a measurable share of the allocation.
+    private var focusDepthScratch: ArrayList<Int>? = null
+    private var scrollDepthScratch: ArrayList<Int>? = null
 
     // The four link lists below are the node's own scratch lists, published rather than copied.
     // Copying cost four ArrayLists per node per frame. The contract that makes it safe is the frame
@@ -392,11 +395,13 @@ class LayoutNode(
         keyInputNodes.clear()
         drawDepthScratch.clear()
         pointerDepthScratch.clear()
-        focusDepthScratch.clear()
-        scrollDepthScratch.clear()
+        focusDepthScratch.clearIfMade()
+        scrollDepthScratch.clearIfMade()
         var data: Any? = null
         var cursorRequest: PointerCursor? = null
-        var cursorDepth = 0
+        // Not a local: the fold's lambda would capture a local it assigns in a heap box, one per
+        // node per frame, which the node graph canvas's allocation ratchet counted.
+        pointerCursorDepth = 0
         var nodeZIndex = 0f
         var modifierIndex = 0
         modifier.foldIn(Unit) { _, declaredElement ->
@@ -421,13 +426,13 @@ class LayoutNode(
             if (element is OnPlacedModifierNode) placedNodes += element
             if (element is FocusTargetNode) {
                 focusNodes += element
-                focusDepthScratch += layoutModifiersOutside
+                focusDepthScratch = focusDepthScratch.with(layoutModifiersOutside)
             }
             if (element is FocusPropertiesNode) focusPropertiesNodes += element
             if (element is FocusRequestNode) focusRequestScratch += element
             if (element is ScrollableNode) {
                 scrollNodes += element
-                scrollDepthScratch += layoutModifiersOutside
+                scrollDepthScratch = scrollDepthScratch.with(layoutModifiersOutside)
             }
             if (element is com.awakekt.awake.compose.ui.input.nestedscroll.NestedScrollNode) {
                 element.onAttachedTo(this)
@@ -437,7 +442,7 @@ class LayoutNode(
             if (element is KeyInputNode) keyInputNodes += element
             if (element is ZIndexModifierNode) nodeZIndex = element.modifyZIndex(nodeZIndex)
             cursorRequest = element.cursorOrKeep(cursorRequest)
-            cursorDepth = element.cursorDepthOrKeep(cursorDepth, layoutModifiersOutside)
+            pointerCursorDepth = element.cursorDepthOrKeep(pointerCursorDepth, layoutModifiersOutside)
             if (element is NodeAttachedModifierNode) element.onAttachedTo(this)
             if (element is ParentDataModifierNode) data = element.modifyParentData(data)
         }
@@ -453,15 +458,14 @@ class LayoutNode(
         maxPointerHitMargin = pointerNodes.maxOfOrNull { it.hitMarginPx } ?: 0
         semanticsModifiers = semanticsNodes
         focusTargets = focusNodes
-        focusDepths = focusDepthScratch.snapshotInto(focusDepths)
+        focusDepths = focusDepthScratch.snapshotIntoOrEmpty(focusDepths)
         focusProperties = focusPropertiesNodes
         focusRequestNodes = focusRequestScratch
         scrollables = scrollNodes
-        scrollDepths = scrollDepthScratch.snapshotInto(scrollDepths)
+        scrollDepths = scrollDepthScratch.snapshotIntoOrEmpty(scrollDepths)
         nestedScrollConnections = nestedScrollNodes
         textInputs = textInputNodes
         pointerCursor = cursorRequest
-        pointerCursorDepth = cursorDepth
         keyInputs = keyInputNodes
         // A chain of the same length is re-pointed rather than rebuilt. The modifier objects are
         // new every frame -- nothing memoizes them until Stage 2's `remember` -- and rebuilding
@@ -620,6 +624,15 @@ private fun List<Int>.snapshotInto(existing: IntArray): IntArray {
     for (i in indices) target[i] = this[i]
     return target
 }
+
+private fun ArrayList<Int>?.clearIfMade() {
+    this?.clear()
+}
+
+private fun ArrayList<Int>?.with(depth: Int): ArrayList<Int> = (this ?: ArrayList()).also { it += depth }
+
+private fun List<Int>?.snapshotIntoOrEmpty(existing: IntArray): IntArray =
+    if (this == null) EMPTY_DEPTHS else snapshotInto(existing)
 
 /**
  * This element's cursor request, or [current] when it makes none.
