@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.vulkan
 
+import com.awakekt.awake.compose.ui.graphics.ImageBitmap
 import com.awakekt.awake.compose.ui.graphics.drawscope.GraphicsLayerFrame
 import com.awakekt.awake.compose.ui.graphics.drawscope.GraphicsLayerPlaceholder
 import com.awakekt.awake.core.color.Color
@@ -101,6 +102,47 @@ class RendererHeadlessTransparencyTest {
         } finally {
             compositor.dispose()
             output.destroy()
+        }
+    }
+
+    /**
+     * The compositor draws a turned picture straight into its parent instead of through an
+     * offscreen layer, and the pixels match the layer's: at its own size at any angle, and scaled
+     * at a quarter turn. A clip inside the layer keeps the reference on its offscreen pass.
+     */
+    @Test
+    fun aRotatedPictureDrawnDirectlyMatchesItsOffscreenLayer() = withHeadlessRenderer { renderer ->
+        fun render(width: Int, height: Int, degrees: Float, offscreen: Boolean): ByteArray {
+            val output = renderer.createRenderTarget(TARGET_SIZE, TARGET_SIZE)
+            val compositor = GraphicsLayerCompositor()
+            try {
+                val picture = UiDrawPrimitive.Texture(0f, 0f, width.toFloat(), height.toFloat(), ARROW)
+                val bounds = Rectangle(0f, 0f, width.toFloat(), height.toFloat())
+                val children = if (offscreen) listOf(UiDrawPrimitive.ClipPush(bounds), picture, UiDrawPrimitive.ClipPop(bounds)) else listOf(picture)
+                val primitives = compositor.composite(
+                    renderer = renderer,
+                    primitives = listOf(
+                        UiDrawPrimitive.Texture(40f, 50f, width.toFloat(), height.toFloat(), GraphicsLayerPlaceholder(1), rotationDegrees = degrees, premultiplied = true),
+                    ),
+                    layers = listOf(GraphicsLayerFrame(id = 1, x = 40f, y = 50f, width = width, height = height, alpha = 1f, primitives = children)),
+                    font = UiFonts.default(),
+                    viewportWidth = TARGET_SIZE,
+                    viewportHeight = TARGET_SIZE,
+                )
+                renderer.drawUiToTexture(output, primitives)
+                return runBlocking { renderer.readPixels(output) }.data
+            } finally {
+                compositor.dispose()
+                output.destroy()
+            }
+        }
+
+        for ((size, degrees) in listOf(Pair(4 to 2, 30f), Pair(4 to 2, 90f), Pair(40 to 20, 90f))) {
+            val (width, height) = size
+            assertTrue(
+                render(width, height, degrees, offscreen = true).contentEquals(render(width, height, degrees, offscreen = false)),
+                "a ${width}x$height picture turned $degrees degrees moved a pixel",
+            )
         }
     }
 
@@ -498,6 +540,16 @@ class RendererHeadlessTransparencyTest {
         }
 
         const val TARGET_SIZE = 128
+
+        /** 4 x 2, each texel a different colour from its neighbours, so a turn moves a feature. */
+        val ARROW = ImageBitmap(
+            4,
+            2,
+            byteArrayOf(
+                -1, 0, 0, -1, 0, 0, -1, -1, 0, 0, -1, -1, 0, -1, 0, -1,
+                0, 0, -1, -1, 0, 0, -1, -1, -1, -1, 0, -1, 0, 0, -1, -1,
+            ),
+        )
         const val MAX_FRAMES_IN_FLIGHT = 1
         const val BYTES_PER_PIXEL = 4
         const val CENTER = TARGET_SIZE / 2

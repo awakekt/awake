@@ -8,7 +8,9 @@ package com.awakekt.awake.engine.compose
 import com.awakekt.awake.compose.ui.graphics.ImageBitmap
 import com.awakekt.awake.compose.ui.graphics.drawscope.GraphicsLayerFrame
 import com.awakekt.awake.compose.ui.graphics.drawscope.GraphicsLayerPlaceholder
+import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.BlendMode
+import com.awakekt.awake.core.graphics2d.TextureRegion
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.graphics2d.requiresDestinationSampling
 import com.awakekt.awake.core.graphics2d.translatedBy
@@ -17,6 +19,9 @@ import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.renderer.UiTargetCompositeMode
 import com.awakekt.awake.render.texture.RenderTarget
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 
 /**
  * Renderer-owned resources for the renderer-neutral texture slots in [FrameOutput]: graphics layers
@@ -48,11 +53,13 @@ class GraphicsLayerCompositor {
     ): List<UiDrawPrimitive> {
         val used = HashSet<Int>(layers.size)
         val materials = HashMap<Int, Material>(layers.size)
+        val flat = flattenable(primitives, layers)
         for (layer in layers) {
+            if (layer.id in flat) continue
             used += layer.id
             val slot = slotFor(renderer, layer)
             val childPrimitives = layer.primitives
-                .resolve(renderer, materials)
+                .resolve(renderer, materials, flat)
                 .map { it.translatedBy(layer.effectInsetX.toFloat(), layer.effectInsetY.toFloat()) }
             renderer.drawUiToTexture(slot.target, childPrimitives, font)
             materials[layer.id] = if (layer.blurRadiusX > 0f || layer.blurRadiusY > 0f) {
@@ -69,7 +76,7 @@ class GraphicsLayerCompositor {
                 true
             }
         }
-        val resolved = primitives.resolve(renderer, materials)
+        val resolved = primitives.resolve(renderer, materials, flat)
         if (resolved.none { it is UiDrawPrimitive.Texture && it.blendMode.requiresDestinationSampling }) {
             frameTargets?.destroy()
             frameTargets = null
@@ -106,15 +113,36 @@ class GraphicsLayerCompositor {
         images.dispose()
     }
 
-    private fun List<UiDrawPrimitive>.resolve(renderer: Renderer, materials: Map<Int, Material>): List<UiDrawPrimitive> =
-        map { primitive ->
-            if (primitive !is UiDrawPrimitive.Texture) return@map primitive
+    private fun List<UiDrawPrimitive>.resolve(
+        renderer: Renderer,
+        materials: Map<Int, Material>,
+        flat: Map<Int, GraphicsLayerFrame>,
+    ): List<UiDrawPrimitive> =
+        flatMap { primitive ->
+            if (primitive !is UiDrawPrimitive.Texture) return@flatMap listOf(primitive)
             when (val slot = primitive.material) {
-                is GraphicsLayerPlaceholder -> primitive.copy(material = materials.getValue(slot.id))
-                is ImageBitmap -> primitive.copy(material = images.materialFor(renderer, slot, primitive.filterQuality))
-                else -> primitive
+                is GraphicsLayerPlaceholder -> flat[slot.id]?.drawnDirectly(primitive)?.resolve(renderer, materials, flat)
+                    ?: listOf(primitive.copy(material = materials.getValue(slot.id)))
+                is ImageBitmap -> listOf(primitive.copy(material = images.materialFor(renderer, slot, primitive.filterQuality)))
+                else -> listOf(primitive)
             }
         }
+
+    /**
+     * The [layers] that skip their offscreen pass, by id: those [drawnDirectly] can draw straight
+     * into the parent. Rendering a layer offscreen makes the CPU wait for the GPU on Vulkan.
+     */
+    private fun flattenable(primitives: List<UiDrawPrimitive>, layers: List<GraphicsLayerFrame>): Map<Int, GraphicsLayerFrame> {
+        if (layers.isEmpty()) return emptyMap()
+        val composites = HashMap<Int, UiDrawPrimitive.Texture>()
+        fun collect(list: List<UiDrawPrimitive>) = list.forEach { primitive ->
+            val slot = (primitive as? UiDrawPrimitive.Texture)?.material as? GraphicsLayerPlaceholder
+            if (slot != null) composites[slot.id] = primitive
+        }
+        collect(primitives)
+        layers.forEach { collect(it.primitives) }
+        return layers.filter { layer -> composites[layer.id]?.let(layer::drawnDirectly) != null }.associateBy { it.id }
+    }
 
     private data class Slot(
         val target: RenderTarget,
@@ -252,4 +280,57 @@ class GraphicsLayerCompositor {
             source.destroy()
         }
     }
+}
+
+/**
+ * This layer's pictures drawn straight into the parent with [composite]'s rotation, scale and
+ * offset, the way Compose draws a transform-only `graphicsLayer` without an offscreen buffer; null
+ * when only an offscreen pass draws it the same. That holds while the layer has no effect and only
+ * [drawsAsIs] textures, and, under a layer alpha, only one, since alpha applied per texture differs
+ * from alpha applied once where two overlap.
+ */
+private fun GraphicsLayerFrame.drawnDirectly(composite: UiDrawPrimitive.Texture): List<UiDrawPrimitive>? {
+    val noEffect = maxOf(blurRadiusX, blurRadiusY) == 0f && effectInsetX == 0 && effectInsetY == 0
+    val plainComposite = composite.blendMode == BlendMode.SourceOver && composite.region == TextureRegion.Whole && composite.tint == Color.White
+    // An element's transparent background quad paints nothing.
+    val pictures = primitives.filterNot { it is UiDrawPrimitive.Quad && it.color.a == 0f && it.transform == null }
+    val oneAlpha = composite.alpha >= 1f || pictures.size <= 1
+    val direct = width > 0 && height > 0 && noEffect && plainComposite && oneAlpha && pictures.all { drawsAsIs(it) }
+    if (!direct) return null
+    val scaleX = composite.w / width
+    val scaleY = composite.h / height
+    val centerX = composite.x + composite.w / 2f
+    val centerY = composite.y + composite.h / 2f
+    val radians = composite.rotationDegrees * PI.toFloat() / 180f
+    val cosine = cos(radians)
+    val sine = sin(radians)
+    return pictures.map { primitive ->
+        val picture = primitive as UiDrawPrimitive.Texture
+        val w = picture.w * scaleX
+        val h = picture.h * scaleY
+        // The picture's centre, turned clockwise about the layer's centre as the composite would turn it.
+        val dx = composite.x + (picture.x + picture.w / 2f) * scaleX - centerX
+        val dy = composite.y + (picture.y + picture.h / 2f) * scaleY - centerY
+        picture.copy(
+            x = centerX + dx * cosine - dy * sine - w / 2f,
+            y = centerY + dx * sine + dy * cosine - h / 2f,
+            w = w,
+            h = h,
+            alpha = picture.alpha * composite.alpha,
+            rotationDegrees = composite.rotationDegrees,
+            transform = composite.transform,
+        )
+    }
+}
+
+/**
+ * Whether [primitive] is a texture this layer would draw unchanged: unturned, untransformed,
+ * blended over and wholly inside the layer, which would otherwise clip it. A nested layer keeps its
+ * offscreen pass.
+ */
+private fun GraphicsLayerFrame.drawsAsIs(primitive: UiDrawPrimitive): Boolean {
+    if (primitive !is UiDrawPrimitive.Texture || primitive.material is GraphicsLayerPlaceholder) return false
+    val plain = primitive.blendMode == BlendMode.SourceOver && primitive.rotationDegrees == 0f && primitive.transform == null
+    val inside = minOf(primitive.x, primitive.y) >= 0f && primitive.x + primitive.w <= width && primitive.y + primitive.h <= height
+    return plain && inside
 }

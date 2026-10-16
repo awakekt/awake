@@ -38,6 +38,13 @@ the renderer-aware Compose host owns size-matched render targets and materials, 
 layers from inner to outer, then replaces each placeholder with its sampled target. Studio's scene
 runtime and standalone Compose apps share this compositor.
 
+A layer that only moves, scales or turns pictures skips its target: with no blur, a `SourceOver`
+composite, and only unturned textures inside its bounds (one, under a layer alpha), the compositor
+draws each texture straight into the parent with the layer's transform, as Compose does for a
+transform-only layer. An offscreen pass costs a CPU wait for the GPU on Vulkan. A picture scaled
+and turned off a quarter turn is then sampled once rather than twice, so its edges can differ
+slightly from the offscreen result.
+
 This first slice establishes real target lifetime, transparent clearing, paint order, nested-layer
 composition, one-time alpha, scale, translation, rotation, and fixed-function blend-mode selection
 at texture composite time without making `:compose:ui` depend on either backend. `SourceOver` and
