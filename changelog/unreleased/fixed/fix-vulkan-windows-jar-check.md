@@ -1,1 +1,0 @@
-- **A Vulkan release finds the Windows library in its desktop jar.** The release's check that the bindings' desktop jar carries every platform's library looked for `libawake-vulkan` on Windows, where the library is `awake-vulkan.dll`, so it failed every Vulkan release since Windows joined the required platforms, before anything was published.
