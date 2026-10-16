@@ -1,0 +1,16 @@
+{
+  "localization": {
+    "title": "Lokalisasyon",
+    "language": {
+      "filipino": "Ipakita sa Filipino"
+    },
+    "items": {
+      "label": "Mga gamit sa bag"
+    },
+    "inventory": {
+      "count": "{count, plural, =0 {Walang laman ang bag} one {# gamit sa bag} other {# na gamit sa bag}}"
+    },
+    "greeting": "Maligayang pagbabalik, {name}!",
+    "hint": "I-type ang '{name}' para palitan ang pangalan ng karakter mo."
+  }
+}

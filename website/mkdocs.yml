@@ -97,6 +97,7 @@ nav:
           - Game UI: guides/game-ui.md
           - UI with AwakeKt Compose: guides/ui.md
           - shadcn components: guides/shadcn.md
+          - Localization: guides/localization.md
   - Reference:
       - Scene document schema: reference/scene-document-schema.md
       - Scene document components: reference/scene-document-components.md

@@ -85,6 +85,7 @@ kotlin {
             implementation(project(":awake:ai:behavior"))
             implementation(project(":awake:scene:ai"))
             implementation(project(":awake:core:audio"))
+            implementation(project(":awake:core:localization"))
             implementation(project(":awake:scene:audio"))
             implementation(project(":awake:scene:authoring"))
             // The nav-chase showcase bakes a walkability grid from its own heightmap.
