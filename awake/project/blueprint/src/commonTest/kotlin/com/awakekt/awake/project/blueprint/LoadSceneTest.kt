@@ -10,6 +10,9 @@ import com.awakekt.awake.blueprint.CoreNodes
 import com.awakekt.awake.compose.ui.platform.InputOwnership
 import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.io.AssetSource
+import com.awakekt.awake.core.logging.Log
+import com.awakekt.awake.core.logging.LogLevel
+import com.awakekt.awake.core.logging.LogSink
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.engine.bootstrap.dsl.app
 import com.awakekt.awake.engine.platform.dsl.requireService
@@ -40,11 +43,15 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlin.test.Test
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.fail
 
-/** A blueprint's Load Scene moves a played project from its menu to its level, with no code of the game's own. */
+/**
+ * A blueprint's Load Scene moves a played project from its menu to its level, with no code of the game's
+ * own, and one naming a scene the project doesn't have says so as the project loads.
+ */
 class LoadSceneTest {
     @Test
     fun aLoadSceneNodePlaysTheLevelOfARunningProject() = runTest {
@@ -84,6 +91,67 @@ class LoadSceneTest {
         systems.close()
     }
 
+    /** A Load Scene naming a scene the project doesn't have says so as the project loads, which still plays. */
+    @Test
+    fun aLoadSceneNamingAMissingSceneWarnsAsTheProjectLoads() = runTest {
+        val warnings = blueprintWarnings {
+            loadProject(files(play = graph(loadScene(MISSING))), capabilities = listOf(BlueprintCapability), hasRenderer = false).close()
+        }
+
+        assertEquals(1, warnings.size, "one warning, for the one node: $warnings")
+        listOf(PLAY, "'load'", MISSING).forEach { assertContains(warnings.single(), it) }
+    }
+
+    @Test
+    fun aLoadSceneNamingOneOfTheProjectsScenesLoadsQuietly() = runTest {
+        val warnings = blueprintWarnings {
+            loadProject(files(), capabilities = listOf(BlueprintCapability), hasRenderer = false).close()
+        }
+
+        assertEquals(emptyList(), warnings)
+    }
+
+    /** A wired scene is only known when the node runs, so the path set on the node, which it hides, isn't checked. */
+    @Test
+    fun aWiredSceneIsNotCheckedAsTheProjectLoads() = runTest {
+        val wired = NodeGraphJson.encode(
+            NodeGraph(
+                kind = BlueprintGraphKind.id,
+                nodes = listOf(
+                    GraphNode("start", CoreNodes.OnStart.TYPE),
+                    GraphNode("next", "var.get.string", config = config("name" to JsonPrimitive("next"))),
+                    loadScene(MISSING),
+                ),
+                edges = listOf(
+                    GraphEdge("start", "then", "load", "exec"),
+                    GraphEdge("next", "value", "load", SceneNodes.LoadScene.SCENE),
+                ),
+            ),
+        )
+
+        val warnings = blueprintWarnings {
+            loadProject(files(play = wired), capabilities = listOf(BlueprintCapability), hasRenderer = false).close()
+        }
+
+        assertEquals(emptyList(), warnings)
+    }
+
+    /** The blueprint warnings logged while [block] runs. */
+    private suspend fun blueprintWarnings(block: suspend () -> Unit): List<String> {
+        val warnings = ArrayList<String>()
+        val sink = LogSink { record -> if (record.level == LogLevel.Warn && record.tag == "blueprint") warnings += record.message }
+        Log.install(sink)
+        try {
+            block()
+        } finally {
+            Log.remove(sink)
+        }
+        return warnings
+    }
+
+    private fun loadScene(path: String) =
+        GraphNode("load", SceneNodes.LoadScene.TYPE, config = config(SceneNodes.LoadScene.SCENE to JsonPrimitive(path)))
+
     private fun World.names(): List<String> = buildList { queryEach(Name::class) { _, name -> add(name.value) } }
 
     private fun World.blueprint(): BlueprintComponent {
@@ -92,12 +160,13 @@ class LoadSceneTest {
         return checkNotNull(found) { "no blueprint in the scene" }
     }
 
-    private fun files(): AssetSource {
+    /** The project, whose menu plays [play]: by default, On Start then Load Scene of the level. */
+    private fun files(play: String = graph(loadScene(LEVEL))): AssetSource {
         val texts = mapOf(
             MANIFEST_PATH to MANIFEST,
             MENU to MENU_SCENE,
             LEVEL to LEVEL_SCENE,
-            PLAY to graph(GraphNode("load", SceneNodes.LoadScene.TYPE, config = config(SceneNodes.LoadScene.SCENE to JsonPrimitive(LEVEL)))),
+            PLAY to play,
             ARRIVE to graph(GraphNode("set", "var.set.float", config = config("name" to JsonPrimitive("arrived"), "value" to JsonPrimitive(1f)))),
         )
         return AssetSource { path -> runCatching { texts.getValue(path.value).encodeToByteArray() } }
@@ -129,6 +198,7 @@ class LoadSceneTest {
         const val MANIFEST_PATH = "awake.project.json"
         const val MENU = "scenes/menu.scene.json"
         const val LEVEL = "scenes/level.scene.json"
+        const val MISSING = "scenes/missing.scene.json"
         const val PLAY = "logic/play.graph.json"
         const val ARRIVE = "logic/arrive.graph.json"
         const val MANIFEST = """{"formatVersion":1,"id":"com.example.harbor-town","name":"Harbor Town","version":"1.0.0","entryScene":"scenes/menu.scene.json"}"""
