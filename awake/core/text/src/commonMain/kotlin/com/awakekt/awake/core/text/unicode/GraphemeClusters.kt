@@ -18,7 +18,7 @@ package com.awakekt.awake.core.text.unicode
  * a cluster starts or ends at; `0` and `text.length` always are.
  *
  * The break properties come from the Unicode Character Database, version
- * [GRAPHEME_BREAK_UNICODE_VERSION], built into a table by `tools/unicode/generate_grapheme_break_table.py`.
+ * [GRAPHEME_BREAK_UNICODE_VERSION], built into a table by the `generateGraphemeBreakTable` task.
  * Nothing here allocates, so a layout or paint pass can call it for every cluster of every frame.
  */
 object GraphemeClusters {

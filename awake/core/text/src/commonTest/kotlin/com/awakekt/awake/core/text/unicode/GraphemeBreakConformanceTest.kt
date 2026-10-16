@@ -13,7 +13,7 @@ import kotlin.test.assertTrue
 import kotlin.test.fail
 
 /**
- * Every case of Unicode's own `GraphemeBreakTest.txt`, the file `tools/unicode/generate_grapheme_break_table.py`
+ * Every case of Unicode's own `GraphemeBreakTest.txt`, the file the `generateGraphemeBreakTable` task
  * copies from the same Unicode version as the table.
  */
 class GraphemeBreakConformanceTest {

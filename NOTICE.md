@@ -63,7 +63,7 @@ This project includes third-party software components and compiled binaries unde
 ---
 
 ### Unicode Character Database
-* **Description**: Grapheme cluster break properties (`GraphemeBreakProperty.txt`, `emoji-data.txt`'s Extended_Pictographic and `DerivedCoreProperties.txt`'s Indic_Conjunct_Break), which `tools/unicode/generate_grapheme_break_table.py` turns into the table `awake:core:text` ships, and Unicode's `GraphemeBreakTest.txt`, copied unchanged for its tests.
+* **Description**: Grapheme cluster break properties (`GraphemeBreakProperty.txt`, `emoji-data.txt`'s Extended_Pictographic and `DerivedCoreProperties.txt`'s Indic_Conjunct_Break), which the `:awake:core:text:generateGraphemeBreakTable` task turns into the table `awake:core:text` ships, and Unicode's `GraphemeBreakTest.txt`, copied unchanged for its tests.
 * **Copyright**: Copyright (c) 1991-2026 Unicode, Inc.
 * **License**: Unicode License v3 (https://www.unicode.org/license.txt), retained in `LICENSES/Unicode-3.0.txt`
 * **Version**: 18.0.0

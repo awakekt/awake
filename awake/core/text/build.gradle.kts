@@ -40,6 +40,16 @@ awakeTestResources {
     roots.from(layout.projectDirectory.dir("src/commonTest/resources"), generatorFonts)
 }
 
+// Run by hand to move to a new Unicode version; both outputs are checked in. -PucdDirectory=<dir>
+// reads the UCD files from a directory instead of downloading them from unicode.org.
+tasks.register<com.awakekt.awake.build.tasks.GenerateGraphemeBreakTableTask>("generateGraphemeBreakTable") {
+    description = "Regenerates the grapheme break table and its Unicode test data from the Unicode Character Database"
+    unicodeVersion.set("18.0.0")
+    providers.gradleProperty("ucdDirectory").orNull?.let { ucdDirectory.set(file(it)) }
+    tableFile.set(layout.projectDirectory.file("src/commonMain/kotlin/com/awakekt/awake/core/text/unicode/GraphemeBreakTable.kt"))
+    testDataFile.set(layout.projectDirectory.file("src/commonTest/resources/unicode/GraphemeBreakTest.txt"))
+}
+
 mavenPublishing {
     pom {
         name.set("Awake Core Text")
