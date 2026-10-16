@@ -67,6 +67,9 @@ class LockVerifiedAssetSource(
         return if (refuseMismatches) Result.failure(AssetMismatchException(mismatch)) else read
     }
 
+    /** Whether [files] has [path], asked of [files] itself. Nothing is read, so a mismatch is not found here. */
+    override suspend fun exists(path: AssetPath): Boolean = files.exists(path)
+
     private fun mismatchOf(path: String, bytes: ByteArray, pin: AwakeAssetLockEntry): AssetMismatch? {
         val expected = pin.sha256.lowercase()
         // A size that differs is a mismatch already; hashing it would only cost time.

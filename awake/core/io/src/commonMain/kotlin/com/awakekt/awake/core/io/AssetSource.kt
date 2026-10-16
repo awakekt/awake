@@ -7,6 +7,9 @@ package com.awakekt.awake.core.io
 
 /**
  * Reads engine assets without coupling parsers to a filesystem or browser API.
+ *
+ * Only [read] has to be written, so a lambda is a source; [exists] answers by reading unless a
+ * source knows a cheaper way.
  */
 fun interface AssetSource {
     /**
@@ -16,6 +19,18 @@ fun interface AssetSource {
      * @return Success result containing the byte array, or failure.
      */
     suspend fun read(path: AssetPath): Result<ByteArray>
+
+    /**
+     * Whether there is an asset at [path], for a caller that only needs to know it is there, such as
+     * a check that a path a scene names leads somewhere. A source that can tell without loading the
+     * bytes, as a filesystem or an index of files can, overrides it; this default reads the asset and
+     * reports whether the read succeeded. A read of an asset that is there can still fail for what
+     * only reading finds, such as bytes that don't match what they should be.
+     *
+     * @param path The logical asset path to look for.
+     * @return True when the asset is there.
+     */
+    suspend fun exists(path: AssetPath): Boolean = read(path).isSuccess
 }
 
 /**
@@ -27,6 +42,13 @@ class FileSystemAssetSource(
     private val fileSystem: FileSystem,
 ) : AssetSource {
     override suspend fun read(path: AssetPath): Result<ByteArray> = fileSystem.read(path.asFilePath())
+
+    /** Whether [path] is a file, asked of the filesystem's [FileSystem.stat]; read instead when that fails. */
+    override suspend fun exists(path: AssetPath): Boolean =
+        fileSystem.stat(path.asFilePath()).fold(
+            onSuccess = { entry -> entry?.kind == FileKind.File },
+            onFailure = { read(path).isSuccess },
+        )
 }
 
 /**

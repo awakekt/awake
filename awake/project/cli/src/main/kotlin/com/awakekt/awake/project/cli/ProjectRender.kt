@@ -6,6 +6,7 @@
 package com.awakekt.awake.project.cli
 
 import com.awakekt.awake.asset.shaders.ContentFeatureHost
+import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.core.io.FileSystemAssetSource
 import com.awakekt.awake.core.io.createPlatformFileSystem
@@ -186,16 +187,20 @@ internal class ProjectRender(private val project: ProjectScenes) {
     /** The project's files, with [scene] as the manifest's entry scene, which is the one a project loads. */
     private fun sceneAsEntry(scene: String): AssetSource {
         val files = FileSystemAssetSource(createPlatformFileSystem(project.root.absolutePath))
-        return AssetSource { path ->
-            val read = files.read(path)
-            if (path.value.removePrefix("/") != PROJECT_MANIFEST) {
-                read
-            } else {
-                read.map { bytes ->
-                    val manifest = Json.parseToJsonElement(bytes.decodeToString()).jsonObject
-                    JsonObject(manifest + ("entryScene" to JsonPrimitive(scene))).toString().encodeToByteArray()
+        return object : AssetSource {
+            override suspend fun read(path: AssetPath): Result<ByteArray> {
+                val read = files.read(path)
+                return if (path.value.removePrefix("/") != PROJECT_MANIFEST) {
+                    read
+                } else {
+                    read.map { bytes ->
+                        val manifest = Json.parseToJsonElement(bytes.decodeToString()).jsonObject
+                        JsonObject(manifest + ("entryScene" to JsonPrimitive(scene))).toString().encodeToByteArray()
+                    }
                 }
             }
+
+            override suspend fun exists(path: AssetPath): Boolean = files.exists(path)
         }
     }
 

@@ -82,16 +82,18 @@ scene loads while this one plays on, then replaces it at the start of a later st
 this scene carries across ([`awake:project:runtime`](../../project/runtime/README.md#switching-to-another-scene)).
 A scene that can't be loaded is logged and this one goes on. A `scene` set on the node, not wired,
 that names no file of the project is caught sooner: `BlueprintCapability` logs a warning naming the
-graph, the node and the path as the project loads, and the project still plays. A wired path is only
-known when the node runs, so it isn't checked. Where nothing switches scenes, such as
+graph, the node and the path as the project loads, and the project still plays. It asks the project's
+files whether the scene is there with `AssetSource.exists`, without reading it, and a graph several
+of the project's scenes use warns as the first of them loads, not again as each one does. A wired
+path is only known when the node runs, so it isn't checked. Where nothing switches scenes, such as
 an editor playing the one scene it edits, `loadScene` is null and Load Scene logs a warning, once, and
 carries on to `then`, as it does for an empty `scene`. A host of its own sets it to whatever plays
 another scene for it.
 
 `LoadSceneNodeTest` checks the request and the warning. In `awake:project:blueprint`, `LoadSceneTest`
 plays a project whose menu's blueprint loads the level, and the level's own blueprint runs, and
-checks the load-time warning for a missing scene, and its silence for a scene the project has or a
-wired one.
+checks the load-time warning for a missing scene, that it reads no scene to find it, that a graph two
+scenes share warns once, and its silence for a scene the project has or a wired one.
 
 ## Verification
 

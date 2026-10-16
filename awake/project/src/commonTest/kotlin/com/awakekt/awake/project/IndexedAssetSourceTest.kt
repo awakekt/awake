@@ -18,6 +18,7 @@ import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /** A published project's files arrive checked against the index, once each, from the cache after that. */
@@ -177,6 +178,15 @@ class IndexedAssetSourceTest {
         val failure = IndexedAssetSource(index, server()).read(AssetPath("assets/missing.glb")).exceptionOrNull()
 
         assertTrue(failure is NoSuchElementException, "got $failure")
+    }
+
+    @Test
+    fun aFileIsFoundInTheIndexWithNothingFetched() = runTest {
+        val source = IndexedAssetSource(index, { error("finding a file must not fetch it") })
+
+        assertTrue(source.exists(AssetPath("assets/crate.glb")))
+        assertTrue(source.exists(AssetPath("/scenes/main.scene.json")), "a leading slash names the same file")
+        assertFalse(source.exists(AssetPath("assets/missing.glb")))
     }
 
     @Test

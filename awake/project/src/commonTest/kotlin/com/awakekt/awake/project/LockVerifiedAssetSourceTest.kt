@@ -12,6 +12,7 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -101,6 +102,19 @@ class LockVerifiedAssetSourceTest {
 
         assertTrue(failure is NoSuchElementException, "got $failure")
         assertTrue(mismatches.isEmpty())
+    }
+
+    @Test
+    fun findingAnAssetAsksTheFilesAndReadsNothing() = runTest {
+        val files = object : AssetSource {
+            override suspend fun read(path: AssetPath): Result<ByteArray> = error("finding an asset must not read it")
+
+            override suspend fun exists(path: AssetPath): Boolean = path.value == "assets/crate.glb"
+        }
+
+        assertTrue(verified(files).exists(AssetPath("assets/crate.glb")))
+        assertFalse(verified(files).exists(AssetPath("assets/missing.glb")))
+        assertTrue(mismatches.isEmpty(), "nothing read, so nothing checked")
     }
 
     private fun verified(files: AssetSource, refuse: Boolean = false) =
