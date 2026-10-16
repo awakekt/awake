@@ -26,7 +26,8 @@ import com.awakekt.awake.ui.canvas.CanvasElement
  * An element is named the way the other scene nodes name an entity: the `target` wired to the node,
  * else the element whose `Name` is the node's `name`, else the blueprint's own entity's element. A
  * wired `target` that gives no entity, such as a Find By Name that found no one, names no element:
- * the node does nothing and warns once.
+ * the node does nothing and warns once. So does a `name` no node has, or one whose node has no
+ * canvas element, such as a typo or a node since renamed.
  */
 object CanvasNodes {
     /**
@@ -59,7 +60,7 @@ object CanvasNodes {
 
     /**
      * Sets a canvas element's text: a Text's words, a Button's label, a TextField's content. A
-     * missing element is skipped.
+     * missing element is skipped, and one named or wired that isn't there warns once.
      *
      * @param scene The blueprint scene execution bridge.
      */
@@ -83,7 +84,7 @@ object CanvasNodes {
 
     /**
      * Shows or hides a canvas element, and the elements inside it. A hidden Button takes no presses.
-     * A missing element is skipped.
+     * A missing element is skipped, and one named or wired that isn't there warns once.
      *
      * @param scene The blueprint scene execution bridge.
      */
@@ -126,13 +127,23 @@ private fun nameIn() = PortSpec(CanvasNodes.NAME, STRING, "The element's name, w
 /**
  * The element a canvas node acts on: the wired `target`, else the one named `name`, else the owner's.
  * A wired `target` that gives no entity names none, without falling back to the name or the owner.
+ * A `name` no node has, or whose node has no canvas element, names none either, and warns once.
  */
+@Suppress("ReturnCount") // Guards: no node by the name, none alive.
 private fun BlueprintScene.canvasElement(ctx: BlueprintContext): CanvasElement? {
-    val entity = if (ctx.isWired(TARGET)) {
-        wiredTarget(ctx)
-    } else {
-        val name = ctx.string(CanvasNodes.NAME)
-        if (name.isNullOrEmpty()) ctx.owner else names.find(name) ?: return null
+    val name = ctx.string(CanvasNodes.NAME)
+    val named = !ctx.isWired(TARGET) && !name.isNullOrEmpty()
+    val entity = when {
+        ctx.isWired(TARGET) -> wiredTarget(ctx)
+        named -> names.find(checkNotNull(name)) ?: return null.also { ctx.warnOnce(noNodeNamed(name)) }
+        else -> ctx.owner
     }
-    return if (world.isAlive(entity)) world.get<CanvasElement>(entity) else null
+    if (!world.isAlive(entity)) return null
+    val element = world.get<CanvasElement>(entity)
+    if (element == null && named) ctx.warnOnce(noElementOn(checkNotNull(name)))
+    return element
 }
+
+private fun noNodeNamed(name: String) = "no node is named \"$name\", so it does nothing."
+
+private fun noElementOn(name: String) = "the node named \"$name\" has no canvas element, so it does nothing."

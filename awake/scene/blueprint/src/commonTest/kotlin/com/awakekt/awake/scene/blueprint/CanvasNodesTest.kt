@@ -201,6 +201,33 @@ class CanvasNodesTest {
         assertContains(warnings.single(), "'act' (Set Visible)")
     }
 
+    /** A name no node has, such as a typo or a node since renamed, changes nothing and says so once. */
+    @Test
+    fun aNameNoNodeHasChangesNothingAndWarnsOnce() {
+        graphs["typo"] = everyStep("ui.set-text", find = null, "name" to "Titel", "text" to "lost")
+        blueprint("typo", on = play)
+
+        val warnings = blueprintWarnings { assertEquals(RUNS, runs(system, world, play, "act", RUNS), "Set Text ran every step") }
+
+        assertEquals("Main Menu" to "Play", canvas(title).text to canvas(play).text, "neither the title nor its own element")
+        assertEquals(1, warnings.size, "one warning, not one a step: $warnings")
+        assertContains(warnings.single(), "'act' (Set Text)")
+        assertContains(warnings.single(), "no node is named \"Titel\"")
+    }
+
+    @Test
+    fun aNameWhoseNodeHasNoElementHidesNothingAndWarnsOnce() {
+        world.create().also { world.add(it, Name("Crate")) }
+        graphs["crate"] = everyStep("ui.set-visible", find = null, "name" to "Crate", "visible" to false)
+        blueprint("crate", on = play)
+
+        val warnings = blueprintWarnings { assertEquals(RUNS, runs(system, world, play, "act", RUNS), "Set Visible ran every step") }
+
+        assertTrue(canvas(play).visible, "not its own element either")
+        assertEquals(1, warnings.size, "one warning, not one a step: $warnings")
+        assertContains(warnings.single(), "the node named \"Crate\" has no canvas element")
+    }
+
     @Test
     fun aWiredTargetThatFindsNoOneIsNotTheElementNamedOnTheNode() {
         graphs["typo"] = everyStep("ui.set-visible", find = "Windw", "name" to "Window", "visible" to false)
