@@ -314,14 +314,19 @@ class CanvasElement {
     /**
      * The line submitted by Enter since the last call, or null when nothing was; game code polls it,
      * as [consumePress] polls a Button. The text is the field's live state as of the submit, so a
-     * character typed the same frame Enter was pressed is included even though it has not reached
-     * [text] yet -- that happens at the next composition. Submitting frees the field's focus, so
-     * gameplay keys work again the next frame.
+     * character typed the same frame Enter was pressed is included, and [text] holds the same line
+     * from the submit on: a system that then clears [text] empties the field. Submitting frees the
+     * field's focus, so gameplay keys work again the next frame.
      */
     fun consumeSubmit(): String? = submittedText.also { submittedText = null }
 
     internal fun submit() {
         submittedText = textFieldState.text
+        // Synced here rather than at the next composition. A line typed the same frame as its Enter
+        // hasn't reached [text] yet, so a system clearing [text] would look like no change at all,
+        // and the next sync would put the sent line back.
+        text = textFieldState.text
+        lastSyncedText = text
         focused = false
     }
 

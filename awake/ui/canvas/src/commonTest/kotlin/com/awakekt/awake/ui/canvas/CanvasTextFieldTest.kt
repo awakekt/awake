@@ -127,7 +127,21 @@ class CanvasTextFieldTest {
         frame(typedText = "hi", editActions = listOf(TextEditAction.Enter))
 
         assertEquals("hi", field.consumeSubmit(), "this frame's typing must be in what Enter submits, not just `text`")
-        assertEquals("", field.text, "`text` itself only catches up at the next composition")
+        assertEquals("hi", field.text, "the submit brings `text` up to date, so a write after it counts as one")
+    }
+
+    @Test
+    fun aLineTypedAndSubmittedInOneFrameThenClearedLeavesTheFieldEmpty() {
+        val field = textField()
+        field.focus()
+        frame(typedText = "hi", editActions = listOf(TextEditAction.Enter))
+        assertEquals("hi", field.consumeSubmit())
+
+        field.text = "" // the game sends the line and empties the field.
+        frame()
+
+        assertEquals("", field.text, "the sent line must not come back")
+        assertEquals("", field.textFieldState.text)
     }
 
     @Test
