@@ -87,6 +87,8 @@ jobs:
             platform: macos-arm64
           - runner: ubuntu-latest
             platform: linux-x86_64
+          - runner: windows-latest
+            platform: windows-x86_64
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
@@ -107,6 +109,11 @@ jobs:
       - name: Install Vulkan (macOS)
         if: runner.os == 'macOS'
         run: brew install vulkan-loader molten-vk glfw
+
+      # GLFW needs nothing here: tools/cmake/glfw.cmake builds it on Windows.
+      - name: Install Vulkan (Windows)
+        if: runner.os == 'Windows'
+        uses: ./.github/actions/install-vulkan-sdk-windows
 
       # libvulkan-dev gives CMake's find_package(Vulkan) its headers and loader. The same packages
       # ci.yml's desktop-vulkan-smoke job installs, which is the job that proves this compiles here.
@@ -131,6 +138,7 @@ jobs:
   # and hand it to every job that publishes, or Android apps render nothing.
   # libawake-window ships in Core's awake:engine:window desktop jar, so every Core publication needs
   # it for each supported platform. A host builds only its own; the publish jobs collect them.
+  # Windows' upload carries glfw3.dll beside it (tools/cmake/glfw.cmake builds it), which the jar ships.
   window-natives:
     name: Window natives (${{ matrix.platform }})
     timeout-minutes: 30
@@ -143,6 +151,8 @@ jobs:
             platform: macos-arm64
           - runner: ubuntu-latest
             platform: linux-x86_64
+          - runner: windows-latest
+            platform: windows-x86_64
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4

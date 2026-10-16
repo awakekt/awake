@@ -13,12 +13,8 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 find_package(JNI REQUIRED)
 
-# GLFW (`brew install glfw` on macOS, `libglfw3-dev` on Linux).
-find_library(GLFW_LIBRARY NAMES glfw glfw3 PATHS /opt/homebrew/opt/glfw/lib /usr/local/opt/glfw/lib)
-find_path(GLFW_INCLUDE_DIR GLFW/glfw3.h PATHS /opt/homebrew/opt/glfw/include /usr/local/opt/glfw/include)
-if(NOT GLFW_LIBRARY OR NOT GLFW_INCLUDE_DIR)
-    message(FATAL_ERROR "GLFW not found -- install via 'brew install glfw' (macOS) or 'sudo apt-get install libglfw3-dev' (Linux)")
-endif()
+# GLFW (`brew install glfw` on macOS, `libglfw3-dev` on Linux, built here on Windows).
+include(${CMAKE_CURRENT_SOURCE_DIR}/../../../../tools/cmake/glfw.cmake)
 
 add_library(awake-window SHARED
         ../src/main/cpp/GlfwWindow_jni.cpp

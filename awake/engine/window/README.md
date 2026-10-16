@@ -24,4 +24,6 @@ creates its own surface from the window handle it is given.
 `libawake-window` is built per host with `./gradlew :awake:engine:window:buildDesktopNative` and
 ships in the desktop jar as `natives/<platform>/`. A release jar carries every supported platform;
 `verifyDesktopNatives` fails if one is missing. Needs GLFW: `brew install glfw` on macOS,
-`libglfw3-dev` on Linux.
+`libglfw3-dev` on Linux. On Windows (Visual Studio with C++, and CMake) the build fetches GLFW 3.4
+itself and ships it as `glfw3.dll` beside `awake-window.dll`; `GlfwWindow` loads it first, and
+`libawake-vulkan` shares it.

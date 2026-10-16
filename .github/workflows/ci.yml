@@ -313,6 +313,46 @@ jobs:
         shell: bash
         run: test -f "awake/asset/shader-compiler/build/generated/natives-resources/natives/${{ matrix.platform }}/${{ matrix.lib }}"
 
+  # libawake-window and libawake-vulkan on Windows: the PR-time half of build-and-publish.yml's
+  # window-natives and natives matrices, which shipped macOS and Linux alone until a Windows runner
+  # built them. Windows builds Release with the C runtime linked in, and GLFW as glfw3.dll beside
+  # libawake-window (tools/cmake/glfw.cmake); this proves that tree compiles with MSVC.
+  desktop-natives-windows:
+    name: Desktop natives (Windows)
+    needs: platform-impact
+    if: needs.platform-impact.outputs.core == 'true' || needs.platform-impact.outputs.vulkan == 'true'
+    runs-on: windows-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Setup Gradle (with cache)
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-provider: basic
+
+      - uses: ./.github/actions/install-vulkan-sdk-windows
+
+      - name: Build libawake-window and libawake-vulkan
+        run: ./gradlew :awake:engine:window:buildDesktopNative :awake:backend:vulkan:bindings:buildDesktopNative
+
+      - name: Verify the native libraries were packaged
+        shell: bash
+        run: |
+          for f in awake/engine/window/build/generated/natives-resources/natives/windows-x86_64/awake-window.dll \
+                   awake/engine/window/build/generated/natives-resources/natives/windows-x86_64/glfw3.dll \
+                   awake/backend/vulkan/bindings/build/generated/natives-resources/natives/windows-x86_64/awake-vulkan.dll; do
+            test -f "$f" || { echo "missing $f"; exit 1; }
+          done
+
   # Runner GPUs aren't available on GitHub-hosted runners, so this uses Mesa's lavapipe
   # (a real, fully-conformant software Vulkan implementation -- not a stub) to run the
   # actual vkCreateInstance/vkDestroyInstance smoke test (VulkanDesktopNativeSmokeTest)
