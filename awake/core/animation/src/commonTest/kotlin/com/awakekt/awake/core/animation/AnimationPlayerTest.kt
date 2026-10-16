@@ -87,4 +87,29 @@ class AnimationPlayerTest {
         assertEquals(5f, translationX(player, 0.5f))
         assertEquals(10f, translationX(player, 0.5f))
     }
+
+    @Test
+    fun advancingWithoutAPoseKeepsTheClockUpdateWouldHave() {
+        val player = player(clip("attack", x = 7f, duration = 2f))
+        player.play("attack", playback = AnimationPlayback.Once)
+
+        player.advance(0.5f)
+        assertEquals(0.5f, player.time)
+        assertTrue(player.isPlaying)
+
+        player.advance(2f)
+        assertTrue(player.isFinished)
+    }
+
+    @Test
+    fun aCrossfadeAdvancedWithoutAPoseEndsOnTime() {
+        val player = player(clip("idle", x = 0f), clip("run", x = 10f))
+        player.play("idle")
+        translationX(player, 0f)
+        player.crossFadeTo("run", durationSeconds = 1f)
+
+        player.advance(1f)
+
+        assertEquals(10f, translationX(player, 0f), "the fade ended while unposed")
+    }
 }

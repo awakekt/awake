@@ -52,6 +52,7 @@ public final class com/awakekt/awake/core/animation/AnimationPlayback : java/lan
 
 public final class com/awakekt/awake/core/animation/AnimationPlayer {
 	public fun <init> (Lcom/awakekt/awake/core/animation/AnimationLibrary;)V
+	public final fun advance (F)V
 	public final fun crossFadeTo (Ljava/lang/String;FLcom/awakekt/awake/core/animation/AnimationPlayback;)V
 	public static synthetic fun crossFadeTo$default (Lcom/awakekt/awake/core/animation/AnimationPlayer;Ljava/lang/String;FLcom/awakekt/awake/core/animation/AnimationPlayback;ILjava/lang/Object;)V
 	public final fun getActiveClipId ()Ljava/lang/String;

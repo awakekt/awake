@@ -17,6 +17,12 @@ import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 data class SkinnedPose(
     var jointPalette: FloatArray,
 ) {
+    /** Whether a renderer drew a mesh with this pose since [AnimationSystem] last ran. */
+    internal var drawn = false
+
+    /** Whether a renderer culled a mesh with this pose since [AnimationSystem] last ran. */
+    internal var culled = false
+
     /**
      * Extracts the translation component of the joint at [jointIndex] from the palette.
      * Writes into [out] if provided, or returns a newly allocated [Vec3f].
