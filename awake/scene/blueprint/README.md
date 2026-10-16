@@ -80,13 +80,18 @@ It asks through `BlueprintScene.loadScene`, which the host that runs `BlueprintS
 project played by `runProject`, `BlueprintCapability` sets it to the project's scene switch: the next
 scene loads while this one plays on, then replaces it at the start of a later step, and nothing of
 this scene carries across ([`awake:project:runtime`](../../project/runtime/README.md#switching-to-another-scene)).
-A scene that can't be loaded is logged and this one goes on. Where nothing switches scenes, such as
+A scene that can't be loaded is logged and this one goes on. A `scene` set on the node, not wired,
+that names no file of the project is caught sooner: `BlueprintCapability` logs a warning naming the
+graph, the node and the path as the project loads, and the project still plays. A wired path is only
+known when the node runs, so it isn't checked. Where nothing switches scenes, such as
 an editor playing the one scene it edits, `loadScene` is null and Load Scene logs a warning, once, and
 carries on to `then`, as it does for an empty `scene`. A host of its own sets it to whatever plays
 another scene for it.
 
 `LoadSceneNodeTest` checks the request and the warning. In `awake:project:blueprint`, `LoadSceneTest`
-plays a project whose menu's blueprint loads the level, and the level's own blueprint runs.
+plays a project whose menu's blueprint loads the level, and the level's own blueprint runs, and
+checks the load-time warning for a missing scene, and its silence for a scene the project has or a
+wired one.
 
 ## Verification
 

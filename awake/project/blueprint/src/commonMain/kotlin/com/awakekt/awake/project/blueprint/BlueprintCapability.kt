@@ -8,9 +8,11 @@ package com.awakekt.awake.project.blueprint
 import com.awakekt.awake.blueprint.BlueprintCompiler
 import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.io.AssetSource
+import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.nodegraph.NodeGraph
 import com.awakekt.awake.nodegraph.NodeGraphJson
+import com.awakekt.awake.project.AwakeProjectValidator
 import com.awakekt.awake.project.runtime.SceneCapability
 import com.awakekt.awake.project.runtime.SceneContent
 import com.awakekt.awake.project.runtime.SceneContentKey
@@ -20,8 +22,11 @@ import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.blueprint.BlueprintBinding
 import com.awakekt.awake.scene.blueprint.BlueprintSystem
 import com.awakekt.awake.scene.blueprint.SceneBlueprint
+import com.awakekt.awake.scene.blueprint.SceneNodes
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneNode
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 
 /**
  * A scene's `blueprint`s: the event graphs Core's blueprint runtime plays on the nodes that carry
@@ -36,7 +41,8 @@ import com.awakekt.awake.scene.document.SceneNode
  *   "capabilityClass": "com.awakekt.awake.project.blueprint.BlueprintCapability" }
  * ```
  * Every graph the scene names is read and checked before the scene runs, so a broken one refuses
- * the load instead of stopping the game later.
+ * the load instead of stopping the game later. A Load Scene whose `scene` is set on the node, not
+ * wired, and names no file of the project warns as it loads, and the scene still plays.
  */
 object BlueprintCapability : SceneCapability {
     /** The id a manifest's `plugins` entry names this capability by. */
@@ -51,6 +57,7 @@ object BlueprintCapability : SceneCapability {
         if (paths.isEmpty()) return
         // The node types a running blueprint can use, Core's and the scene's, to check each graph with.
         val nodes = BlueprintSystem(graphs = { path -> error("No graph is loaded while checking ($path)") }).nodes
+        val scenes = ProjectScenes(files)
         content[BlueprintContent.Graphs] = paths.associateWith { path ->
             val text = files.read(AssetPath(path))
                 .getOrElse { throw IllegalArgumentException("Can't read blueprint graph $path from the project", it) }
@@ -61,6 +68,7 @@ object BlueprintCapability : SceneCapability {
                 } catch (invalid: IllegalArgumentException) {
                     throw IllegalArgumentException("Blueprint graph $path can't run: ${invalid.message}", invalid)
                 }
+                warnOfMissingScenes(path, graph, scenes)
             }
         }
     }
@@ -84,7 +92,36 @@ object BlueprintCapability : SceneCapability {
 
     private fun graphPaths(node: SceneNode): List<String> =
         node.components.filterIsInstance<SceneBlueprint>().map { it.graph } + node.children.flatMap(::graphPaths)
+
+    /**
+     * Logs each Load Scene in [graph], the graph at [path], whose `scene` names a file the project
+     * doesn't have: it would load nothing when it runs. One wired from another node is only known
+     * then, so it isn't checked.
+     */
+    private suspend fun warnOfMissingScenes(path: String, graph: NodeGraph, scenes: ProjectScenes) {
+        graph.nodes.forEach { node ->
+            if (node.type != SceneNodes.LoadScene.TYPE) return@forEach
+            if (graph.edges.any { it.toNode == node.id && it.toPort == SceneNodes.LoadScene.SCENE }) return@forEach
+            val scene = (node.config[SceneNodes.LoadScene.SCENE] as? JsonPrimitive)?.contentOrNull
+            if (scene.isNullOrEmpty() || scenes.has(scene)) return@forEach
+            log.warn {
+                "Blueprint graph $path: Load Scene node '${node.id}' names $scene, which the project doesn't have, " +
+                    "so it loads nothing."
+            }
+        }
+    }
 }
+
+/** Whether the project's [files] have a scene at a path, read once per path. */
+private class ProjectScenes(private val files: AssetSource) {
+    private val found = mutableMapOf<String, Boolean>()
+
+    suspend fun has(path: String): Boolean = found.getOrPut(path) {
+        AwakeProjectValidator.isSafeProjectPath(path) && files.read(AssetPath(path)).isSuccess
+    }
+}
+
+private val log = Logger("blueprint")
 
 /** What [BlueprintCapability] reads, and what a host gives it, by [SceneContentKey]. */
 object BlueprintContent {

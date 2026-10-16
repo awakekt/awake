@@ -21,6 +21,8 @@ kotlin {
             // A capability a project opts into, so the project runtime itself knows nothing of blueprints.
             api(project(":awake:project:runtime"))
             api(project(":awake:scene:blueprint"))
+            // A Load Scene naming a scene the project doesn't have warns on the blueprint log as it loads.
+            implementation(project(":awake:core:logging"))
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
