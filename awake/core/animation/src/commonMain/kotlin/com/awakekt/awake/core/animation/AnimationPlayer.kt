@@ -178,23 +178,33 @@ class AnimationPlayer(
      * @return Current sampled and blended [AnimationPose].
      */
     fun update(deltaSeconds: Float): AnimationPose {
-        require(deltaSeconds >= 0f) { "Animation delta must be non-negative." }
-        val clipId = activeClipId ?: return currentPose
-        val clip = clip(clipId)
-        if (isPlaying) elapsedSeconds = advanceTime(clip, deltaSeconds * speed)
+        val blending = outgoingActive
+        advance(deltaSeconds)
+        val clip = activeClipId?.let(::clip) ?: return currentPose
 
         currentPose.resetToBindPose()
         currentPose.sample(clip, elapsedSeconds)
 
-        return if (!outgoingActive) {
-            currentPose
-        } else {
-            blendElapsedSeconds = (blendElapsedSeconds + deltaSeconds * speed).coerceAtMost(blendDurationSeconds)
-            val weight = blendElapsedSeconds / blendDurationSeconds
+        if (blending) {
             blendedPose.copyFrom(outgoingPose)
-            blendedPose.blend(currentPose, weight)
-            if (weight >= 1f) outgoingActive = false
-            blendedPose
+            blendedPose.blend(currentPose, blendElapsedSeconds / blendDurationSeconds)
+        }
+        return if (blending) blendedPose else currentPose
+    }
+
+    /**
+     * Advances playback and any crossfade as [update] does, without computing a pose: for a model
+     * nobody sees, whose clip must still end on time.
+     *
+     * @param deltaSeconds Elapsed time step in seconds.
+     */
+    fun advance(deltaSeconds: Float) {
+        require(deltaSeconds >= 0f) { "Animation delta must be non-negative." }
+        val clipId = activeClipId ?: return
+        if (isPlaying) elapsedSeconds = advanceTime(clip(clipId), deltaSeconds * speed)
+        if (outgoingActive) {
+            blendElapsedSeconds = (blendElapsedSeconds + deltaSeconds * speed).coerceAtMost(blendDurationSeconds)
+            if (blendElapsedSeconds / blendDurationSeconds >= 1f) outgoingActive = false
         }
     }
 

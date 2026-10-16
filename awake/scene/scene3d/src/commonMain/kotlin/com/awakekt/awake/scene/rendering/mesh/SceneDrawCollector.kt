@@ -109,6 +109,7 @@ internal class SceneDrawCollector(
                     culling,
                 )
             ) {
+                poseStore?.get(entity)?.culled = true
                 return@forEach
             }
             // An entity's mesh format decides which pipeline draws it (see Renderer
@@ -116,6 +117,7 @@ internal class SceneDrawCollector(
             // shader reads it (a skinned mesh's joint palette); every other format ignores
             // an empty array the same way it always has.
             val pose = poseStore?.get(entity)
+            pose?.drawn = true
             // The entity's own material wins; otherwise the factors its material was authored with.
             val pbr = pbrStore?.get(entity) ?: meshRenderer.defaultMaterial
             val animation = animationStore?.get(entity)
@@ -201,10 +203,12 @@ internal class SceneDrawCollector(
                     culling,
                 )
             ) {
+                poseStore?.get(entity)?.culled = true
                 return@forEach
             }
 
             val pose = poseStore?.get(entity)
+            pose?.drawn = true
             val extras = if (pose == null) {
                 EMPTY_DRAW_EXTRAS
             } else {
