@@ -22,6 +22,8 @@ import com.awakekt.awake.compose.ui.input.pointer.pointerCursor
 import com.awakekt.awake.compose.ui.layout.composeInto
 import com.awakekt.awake.compose.ui.layout.layoutTree
 import com.awakekt.awake.compose.ui.node.LayoutNode
+import com.awakekt.awake.compose.ui.platform.ComposeHost
+import com.awakekt.awake.compose.ui.platform.FrameInput
 import com.awakekt.awake.compose.ui.unit.Constraints
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.input.PointerCursor
@@ -216,6 +218,29 @@ class OffsetHitTestingTest {
 
         assertEquals(true, pressFocuses(72, 12))
         assertEquals(false, pressFocuses(12, 12), "focused from where it was")
+    }
+
+    @Test
+    fun anOffsetScrollAreaTakesTheWheelWhereItIsDrawn() {
+        fun scrolledByWheelAt(x: Int): Int {
+            val state = ScrollState()
+            val host = ComposeHost()
+            val content: context(Composer)
+            () -> Unit = {
+                Column(Modifier.offset(x = OFFSET.dp).size(100.dp).verticalScroll(state)) {
+                    repeat(5) { Spacer(Modifier.size(100.dp, 50.dp)) }
+                }
+            }
+            host.frame(FrameInput(viewportWidth = 300, viewportHeight = 300, pointerX = x, pointerY = 10), content)
+            host.frame(
+                FrameInput(viewportWidth = 300, viewportHeight = 300, pointerX = x, pointerY = 10, scrollDeltaY = -1f),
+                content,
+            )
+            return state.value
+        }
+
+        assertEquals(true, scrolledByWheelAt(OFFSET + 40) > 0, "the wheel did not reach the scroller where it is drawn")
+        assertEquals(0, scrolledByWheelAt(40), "the wheel scrolled it from where it was")
     }
 
     private companion object {
