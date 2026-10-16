@@ -22,6 +22,7 @@ import com.awakekt.awake.core.math2d.Rectangle
 import com.awakekt.awake.core.math2d.Vec2
 import com.awakekt.awake.core.text.theme.TextOutline
 import com.awakekt.awake.core.text.theme.TextStyle
+import com.awakekt.awake.core.text.unicode.TextLengthUnit
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.canvas.CanvasElementBinding.toComponent
@@ -257,6 +258,8 @@ class SceneCanvasTest {
             dropTarget = true,
             camera = "Portrait Camera",
             mask = "*",
+            maxLength = 40,
+            maxLengthUnit = TextLengthUnit.Utf8Bytes,
             pressable = true,
             font = "fonts/title.ttf",
             style = CanvasStyle(
@@ -773,6 +776,17 @@ class SceneCanvasTest {
         assertEquals(listOf("canvas_element.mask must be one character"), issues(CanvasElementKind.TextField, "**"))
         assertEquals(listOf("canvas_element.mask only masks a TextField"), issues(CanvasElementKind.Text, "*"))
         assertEquals(emptyList(), issues(CanvasElementKind.TextField, "*"))
+    }
+
+    @Test
+    fun validationRejectsANegativeMaxLengthOrOneOffATextField() {
+        fun issues(kind: CanvasElementKind, maxLength: Int, unit: TextLengthUnit = TextLengthUnit.Graphemes) =
+            SceneCanvasElement(kind = kind, maxLength = maxLength, maxLengthUnit = unit).validate("n").map { it.message }
+
+        assertEquals(listOf("canvas_element.maxLength must not be negative"), issues(CanvasElementKind.TextField, -1))
+        assertEquals(listOf("canvas_element.maxLength only limits a TextField"), issues(CanvasElementKind.Text, 10))
+        assertEquals(listOf("canvas_element.maxLength only limits a TextField"), issues(CanvasElementKind.Text, 0, TextLengthUnit.CodePoints))
+        assertEquals(emptyList(), issues(CanvasElementKind.TextField, 280, TextLengthUnit.Utf8Bytes))
     }
 }
 

@@ -5,7 +5,8 @@
  */
 package com.awakekt.awake.core.text.font
 
-import com.awakekt.awake.core.text.font.FontWeight
+import com.awakekt.awake.core.text.unicode.CodePoints
+import com.awakekt.awake.core.text.unicode.GraphemeClusters
 
 /**
  * Specifies the texture sampling mode used by the font renderer.
@@ -102,16 +103,40 @@ interface UiFont {
     /**
      * Whether this font draws [char] itself, rather than a stand-in such as `'?'`.
      *
-     * A [UiFonts.fallback] chain asks each face in turn and draws the char from the first that has it.
+     * A `Char` holds only the Basic Multilingual Plane, so this cannot be asked about an emoji or a
+     * CJK Extension B ideograph; the code point overload can, and is the one [UiFonts.fallback]
+     * resolves faces by.
      *
      * @param char The character to look up.
      * @return True when the font has its own glyph for [char].
      */
     fun hasGlyph(char: Char): Boolean = uvFor(char) != null
 
+    /**
+     * Whether this font draws the Unicode code point [codePoint] itself, rather than a stand-in.
+     *
+     * A [UiFonts.fallback] chain asks each face in turn and draws the code point from the first
+     * that has it. The default answers [hasGlyph] for a code point in the Basic Multilingual Plane
+     * and false for any other, or for a surrogate; a font whose glyphs reach past U+FFFF overrides it.
+     *
+     * @param codePoint The code point to look up, such as `0x1F600` for 😀.
+     * @return True when the font has its own glyph for [codePoint].
+     */
+    fun hasGlyph(codePoint: Int): Boolean = codePoint.toBmpCharOrNull()?.let(::hasGlyph) ?: false
+
     /** Glyph atlas entry for a requested weight. Single-face fonts fall back to [uvFor]; a
      * weighted family resolves the requested face and returns its atlas slice. */
     fun glyphFor(char: Char, weight: FontWeight): GlyphRect? = uvFor(char)
+
+    /**
+     * Glyph atlas entry for the code point [codePoint] at a requested weight, or the font's
+     * stand-in when it has no glyph of its own (see [hasGlyph]).
+     *
+     * The default looks a Basic Multilingual Plane code point up as a `Char`, and anything else as
+     * U+FFFD REPLACEMENT CHARACTER, which a font without it draws as its own stand-in.
+     */
+    fun glyphFor(codePoint: Int, weight: FontWeight): GlyphRect? =
+        glyphFor(codePoint.toBmpCharOrNull() ?: REPLACEMENT_CHARACTER, weight)
 
     /**
      * Computes the horizontal advance distance in pixels for [char] rendered at [glyphPx].
@@ -129,12 +154,76 @@ interface UiFont {
      * providers override this with measurements from a real face.
      */
     fun advanceFor(char: Char, glyphPx: Float, weight: FontWeight): Float = advanceFor(char, glyphPx)
+
+    /**
+     * Advance in pixels of the code point [codePoint] at [glyphPx] and a requested weight: the
+     * advance of the glyph [glyphFor] returns for it, stand-in included.
+     */
+    fun advanceFor(codePoint: Int, glyphPx: Float, weight: FontWeight): Float =
+        advanceFor(codePoint.toBmpCharOrNull() ?: REPLACEMENT_CHARACTER, glyphPx, weight)
 }
 
+/** U+FFFD, what a code point a `Char` cannot hold is looked up as. */
+private const val REPLACEMENT_CHARACTER = '\uFFFD'
+
+/** This code point as a `Char`, or null outside the Basic Multilingual Plane or for a surrogate. */
+private fun Int.toBmpCharOrNull(): Char? =
+    if (this in 0..0xFFFF && this !in SURROGATES) toChar() else null
+
+private val SURROGATES = 0xD800..0xDFFF
+
 /**
- * Sums per-glyph [advanceFor] to get the pen distance the string travels -- but a glyph's own
- * ink (its [GlyphRect.offsetXEm]/[GlyphRect.widthEm] quad) can extend past its own advance;
- * several packed fonts (e.g. the embedded Roboto data) declare advances a few percent narrower
+ * Walks the glyphs this font draws for one grapheme cluster, `text[start until end]`, and returns
+ * the cluster's advance in pixels at [glyphPx].
+ *
+ * [action] gets each glyph's code point and its pen offset from the cluster's start. The first code
+ * point always draws, as the font's stand-in when it has no glyph for it, and a cluster whose first
+ * code point is missing draws nothing else: an emoji sequence this font cannot draw is one stand-in,
+ * however many code points it joins. After a first code point the font has, each further one draws
+ * only if the font has it too, so a combining mark sits after its base and a joiner or variation
+ * selector the font lacks draws nothing.
+ *
+ * Measurement, painting, the caret and hit testing all step through text one cluster at a time with
+ * this, so none of them can split a cluster or disagree about its width. [start] and [end] must be
+ * cluster boundaries ([GraphemeClusters]).
+ */
+inline fun UiFont.forEachGlyphInCluster(
+    text: CharSequence,
+    start: Int,
+    end: Int,
+    glyphPx: Float,
+    weight: FontWeight = FontWeight.Normal,
+    action: (codePoint: Int, penX: Float) -> Unit,
+): Float {
+    val first = CodePoints.at(text, start)
+    action(first, 0f)
+    var pen = advanceFor(first, glyphPx, weight)
+    var index = start + CodePoints.charCount(first)
+    if (index >= end || !hasGlyph(first)) return pen
+    while (index < end) {
+        val codePoint = CodePoints.at(text, index)
+        if (hasGlyph(codePoint)) {
+            action(codePoint, pen)
+            pen += advanceFor(codePoint, glyphPx, weight)
+        }
+        index += CodePoints.charCount(codePoint)
+    }
+    return pen
+}
+
+/** The advance in pixels of the grapheme cluster `text[start until end]`; see [forEachGlyphInCluster]. */
+fun UiFont.clusterAdvance(
+    text: CharSequence,
+    start: Int,
+    end: Int,
+    glyphPx: Float,
+    weight: FontWeight = FontWeight.Normal,
+): Float = forEachGlyphInCluster(text, start, end, glyphPx, weight) { _, _ -> }
+
+/**
+ * Sums each grapheme cluster's advance ([forEachGlyphInCluster]) to get the pen distance the
+ * string travels -- but a glyph's own ink (its [GlyphRect.offsetXEm]/[GlyphRect.widthEm] quad)
+ * can extend past its own advance; several packed fonts (e.g. the embedded Roboto data) declare advances a few percent narrower
  * than the glyph's actual right edge (positive `offsetXEm + widthEm - advance`), which every
  * *interior* glyph gets away with since the next glyph's quad simply overlaps/redraws over that
  * overhang -- only the string's trailing glyph has nothing after it to hide the clip. A caller
@@ -148,16 +237,19 @@ interface UiFont {
  */
 fun UiFont.measureTextWidth(label: String, glyphPx: Float, weight: FontWeight = FontWeight.Normal): Float {
     var width = 0f
-    var lastChar: Char? = null
-    label.forEach { char ->
-        if (char != '\n') {
-            width += advanceFor(char, glyphPx, weight)
-            lastChar = char
+    var lastCodePoint = -1
+    var lastPen = 0f
+    GraphemeClusters.forEach(label) { start, end ->
+        if (label[start] != '\n' && label[end - 1] != '\n') {
+            val clusterStart = width
+            width += forEachGlyphInCluster(label, start, end, glyphPx, weight) { codePoint, penX ->
+                lastCodePoint = codePoint
+                lastPen = clusterStart + penX
+            }
         }
     }
-    val trailingChar = lastChar ?: return width
-    val glyph = glyphFor(trailingChar, weight) ?: return width
-    val lastAdvance = advanceFor(trailingChar, glyphPx, weight)
-    val lastGlyphRightEdge = (width - lastAdvance) + (glyph.offsetXEm + glyph.widthEm) * glyphPx
+    if (lastCodePoint < 0) return width
+    val glyph = glyphFor(lastCodePoint, weight) ?: return width
+    val lastGlyphRightEdge = lastPen + (glyph.offsetXEm + glyph.widthEm) * glyphPx
     return maxOf(width, lastGlyphRightEdge)
 }

@@ -111,6 +111,8 @@ internal fun TextFieldView(
 ) {
     Box(modifier) {
         element.syncTextField()
+        element.textFieldState.maxLength = element.maxLength.takeIf { it > 0 }
+        element.textFieldState.maxLengthUnit = element.maxLengthUnit
         // Read and clear once a composition: true here means this very frame's applied focus
         // request is what set it, strictly before this pass, so the Enter this same frame's
         // dispatch is about to deliver is the one that opened the field, not one meant to submit it.

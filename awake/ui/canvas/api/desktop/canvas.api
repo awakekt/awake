@@ -126,6 +126,8 @@ public final class com/awakekt/awake/ui/canvas/CanvasElement {
 	public final fun getLayout ()Lcom/awakekt/awake/ui/canvas/CanvasLayout;
 	public final fun getLinks ()Z
 	public final fun getMask ()Ljava/lang/String;
+	public final fun getMaxLength ()I
+	public final fun getMaxLengthUnit ()Lcom/awakekt/awake/core/text/unicode/TextLengthUnit;
 	public final fun getOffsetX ()F
 	public final fun getOffsetY ()F
 	public final fun getOrder ()I
@@ -166,6 +168,8 @@ public final class com/awakekt/awake/ui/canvas/CanvasElement {
 	public final fun setLayout (Lcom/awakekt/awake/ui/canvas/CanvasLayout;)V
 	public final fun setLinks (Z)V
 	public final fun setMask (Ljava/lang/String;)V
+	public final fun setMaxLength (I)V
+	public final fun setMaxLengthUnit (Lcom/awakekt/awake/core/text/unicode/TextLengthUnit;)V
 	public final fun setOffsetX (F)V
 	public final fun setOffsetY (F)V
 	public final fun setOrder (I)V

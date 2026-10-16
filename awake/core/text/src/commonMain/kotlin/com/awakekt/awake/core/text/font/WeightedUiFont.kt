@@ -12,6 +12,8 @@ package com.awakekt.awake.core.text.font
  * that same contract with one atlas for the whole family: the face atlases are stacked
  * vertically once, and each weighted glyph receives UVs in its own slice.
  */
+// UiFont's Char and code point lookups are each one short override here.
+@Suppress("TooManyFunctions")
 class WeightedUiFont(
     faceMap: Map<FontWeight, UiFont>,
 ) : UiFont {
@@ -48,9 +50,21 @@ class WeightedUiFont(
 
     override fun hasGlyph(char: Char): Boolean = baseFace.font.hasGlyph(char)
 
+    override fun hasGlyph(codePoint: Int): Boolean = baseFace.font.hasGlyph(codePoint)
+
     override fun glyphFor(char: Char, weight: FontWeight): GlyphRect? {
         val face = resolve(weight)
-        val glyph = face.font.glyphFor(char, face.weight) ?: return null
+        return face.slice(face.font.glyphFor(char, face.weight) ?: return null)
+    }
+
+    override fun glyphFor(codePoint: Int, weight: FontWeight): GlyphRect? {
+        val face = resolve(weight)
+        return face.slice(face.font.glyphFor(codePoint, face.weight) ?: return null)
+    }
+
+    /** [glyph], a glyph of this face, with its UVs moved into the face's slice of the combined atlas. */
+    private fun Face.slice(glyph: GlyphRect): GlyphRect {
+        val face = this
         val yOffset = offsetsByFace.getValue(face)
         return glyph.copy(
             u0 = glyph.u0 * face.font.atlasWidth / atlasWidth,
@@ -65,6 +79,11 @@ class WeightedUiFont(
 
     override fun advanceFor(char: Char, glyphPx: Float, weight: FontWeight): Float =
         resolve(weight).font.advanceFor(char, glyphPx)
+
+    override fun advanceFor(codePoint: Int, glyphPx: Float, weight: FontWeight): Float {
+        val face = resolve(weight)
+        return face.font.advanceFor(codePoint, glyphPx, face.weight)
+    }
 
     private fun resolve(weight: FontWeight): Face = faces.minWithOrNull(
         compareBy<Face> { kotlin.math.abs(it.weight.value - weight.value) }

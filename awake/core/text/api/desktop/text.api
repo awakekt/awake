@@ -4,6 +4,7 @@ public final class com/awakekt/awake/core/text/font/BitmapFont : com/awakekt/awa
 	public synthetic fun <init> (IIILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun advanceFor (CF)F
 	public fun advanceFor-JWAxxxI (CFI)F
+	public fun advanceFor-JWAxxxI (IFI)F
 	public fun getAscentEm ()F
 	public fun getAtlasHeight ()I
 	public fun getAtlasPixelsRgba ()[B
@@ -18,8 +19,15 @@ public final class com/awakekt/awake/core/text/font/BitmapFont : com/awakekt/awa
 	public fun getVisibleBottomEm ()F
 	public fun getVisibleTopEm ()F
 	public fun glyphFor-MFPI20o (CI)Lcom/awakekt/awake/core/text/font/GlyphRect;
+	public fun glyphFor-MFPI20o (II)Lcom/awakekt/awake/core/text/font/GlyphRect;
 	public fun hasGlyph (C)Z
+	public fun hasGlyph (I)Z
 	public fun uvFor (C)Lcom/awakekt/awake/core/text/font/GlyphRect;
+}
+
+public final class com/awakekt/awake/core/text/font/EllipsizeKt {
+	public static final fun ellipsize-yti5bmA (Lcom/awakekt/awake/core/text/font/UiFont;Ljava/lang/String;FFILjava/lang/String;)Ljava/lang/String;
+	public static synthetic fun ellipsize-yti5bmA$default (Lcom/awakekt/awake/core/text/font/UiFont;Ljava/lang/String;FFILjava/lang/String;ILjava/lang/Object;)Ljava/lang/String;
 }
 
 public final class com/awakekt/awake/core/text/font/FontWeight {
@@ -81,6 +89,7 @@ public final class com/awakekt/awake/core/text/font/MsdfFont : com/awakekt/awake
 	public synthetic fun <init> (IIFILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun advanceFor (CF)F
 	public fun advanceFor-JWAxxxI (CFI)F
+	public fun advanceFor-JWAxxxI (IFI)F
 	public fun getAscentEm ()F
 	public fun getAtlasHeight ()I
 	public fun getAtlasPixelsRgba ()[B
@@ -95,7 +104,9 @@ public final class com/awakekt/awake/core/text/font/MsdfFont : com/awakekt/awake
 	public fun getVisibleBottomEm ()F
 	public fun getVisibleTopEm ()F
 	public fun glyphFor-MFPI20o (CI)Lcom/awakekt/awake/core/text/font/GlyphRect;
+	public fun glyphFor-MFPI20o (II)Lcom/awakekt/awake/core/text/font/GlyphRect;
 	public fun hasGlyph (C)Z
+	public fun hasGlyph (I)Z
 	public fun uvFor (C)Lcom/awakekt/awake/core/text/font/GlyphRect;
 }
 
@@ -103,6 +114,7 @@ public final class com/awakekt/awake/core/text/font/PackedUiFont : com/awakekt/a
 	public static final field RGBA_CHANNELS I
 	public fun advanceFor (CF)F
 	public fun advanceFor-JWAxxxI (CFI)F
+	public fun advanceFor-JWAxxxI (IFI)F
 	public fun getAscentEm ()F
 	public fun getAtlasHeight ()I
 	public fun getAtlasPixelsRgba ()[B
@@ -117,7 +129,9 @@ public final class com/awakekt/awake/core/text/font/PackedUiFont : com/awakekt/a
 	public fun getVisibleBottomEm ()F
 	public fun getVisibleTopEm ()F
 	public fun glyphFor-MFPI20o (CI)Lcom/awakekt/awake/core/text/font/GlyphRect;
+	public fun glyphFor-MFPI20o (II)Lcom/awakekt/awake/core/text/font/GlyphRect;
 	public fun hasGlyph (C)Z
+	public fun hasGlyph (I)Z
 	public final fun inkFor (C)Lcom/awakekt/awake/core/text/font/GlyphRect;
 	public fun uvFor (C)Lcom/awakekt/awake/core/text/font/GlyphRect;
 }
@@ -130,6 +144,7 @@ public final class com/awakekt/awake/core/text/font/UiAnchorKt {
 public abstract interface class com/awakekt/awake/core/text/font/UiFont {
 	public fun advanceFor (CF)F
 	public fun advanceFor-JWAxxxI (CFI)F
+	public fun advanceFor-JWAxxxI (IFI)F
 	public fun getAscentEm ()F
 	public abstract fun getAtlasHeight ()I
 	public abstract fun getAtlasPixelsRgba ()[B
@@ -144,13 +159,16 @@ public abstract interface class com/awakekt/awake/core/text/font/UiFont {
 	public fun getVisibleBottomEm ()F
 	public fun getVisibleTopEm ()F
 	public fun glyphFor-MFPI20o (CI)Lcom/awakekt/awake/core/text/font/GlyphRect;
+	public fun glyphFor-MFPI20o (II)Lcom/awakekt/awake/core/text/font/GlyphRect;
 	public fun hasGlyph (C)Z
+	public fun hasGlyph (I)Z
 	public abstract fun uvFor (C)Lcom/awakekt/awake/core/text/font/GlyphRect;
 }
 
 public final class com/awakekt/awake/core/text/font/UiFont$DefaultImpls {
 	public static fun advanceFor (Lcom/awakekt/awake/core/text/font/UiFont;CF)F
 	public static fun advanceFor-JWAxxxI (Lcom/awakekt/awake/core/text/font/UiFont;CFI)F
+	public static fun advanceFor-JWAxxxI (Lcom/awakekt/awake/core/text/font/UiFont;IFI)F
 	public static fun getAscentEm (Lcom/awakekt/awake/core/text/font/UiFont;)F
 	public static fun getCapHeightEm (Lcom/awakekt/awake/core/text/font/UiFont;)F
 	public static fun getDescentEm (Lcom/awakekt/awake/core/text/font/UiFont;)F
@@ -159,10 +177,16 @@ public final class com/awakekt/awake/core/text/font/UiFont$DefaultImpls {
 	public static fun getVisibleBottomEm (Lcom/awakekt/awake/core/text/font/UiFont;)F
 	public static fun getVisibleTopEm (Lcom/awakekt/awake/core/text/font/UiFont;)F
 	public static fun glyphFor-MFPI20o (Lcom/awakekt/awake/core/text/font/UiFont;CI)Lcom/awakekt/awake/core/text/font/GlyphRect;
+	public static fun glyphFor-MFPI20o (Lcom/awakekt/awake/core/text/font/UiFont;II)Lcom/awakekt/awake/core/text/font/GlyphRect;
 	public static fun hasGlyph (Lcom/awakekt/awake/core/text/font/UiFont;C)Z
+	public static fun hasGlyph (Lcom/awakekt/awake/core/text/font/UiFont;I)Z
 }
 
 public final class com/awakekt/awake/core/text/font/UiFontKt {
+	public static final fun clusterAdvance-6HfLY70 (Lcom/awakekt/awake/core/text/font/UiFont;Ljava/lang/CharSequence;IIFI)F
+	public static synthetic fun clusterAdvance-6HfLY70$default (Lcom/awakekt/awake/core/text/font/UiFont;Ljava/lang/CharSequence;IIFIILjava/lang/Object;)F
+	public static final fun forEachGlyphInCluster-2Ho2ZoA (Lcom/awakekt/awake/core/text/font/UiFont;Ljava/lang/CharSequence;IIFILkotlin/jvm/functions/Function2;)F
+	public static synthetic fun forEachGlyphInCluster-2Ho2ZoA$default (Lcom/awakekt/awake/core/text/font/UiFont;Ljava/lang/CharSequence;IIFILkotlin/jvm/functions/Function2;ILjava/lang/Object;)F
 	public static final fun measureTextWidth-k5oWgnU (Lcom/awakekt/awake/core/text/font/UiFont;Ljava/lang/String;FI)F
 	public static synthetic fun measureTextWidth-k5oWgnU$default (Lcom/awakekt/awake/core/text/font/UiFont;Ljava/lang/String;FIILjava/lang/Object;)F
 }
@@ -199,6 +223,7 @@ public final class com/awakekt/awake/core/text/font/WeightedUiFont : com/awakekt
 	public fun <init> (Ljava/util/Map;)V
 	public fun advanceFor (CF)F
 	public fun advanceFor-JWAxxxI (CFI)F
+	public fun advanceFor-JWAxxxI (IFI)F
 	public fun getAscentEm ()F
 	public fun getAtlasHeight ()I
 	public fun getAtlasPixelsRgba ()[B
@@ -213,7 +238,9 @@ public final class com/awakekt/awake/core/text/font/WeightedUiFont : com/awakekt
 	public fun getVisibleBottomEm ()F
 	public fun getVisibleTopEm ()F
 	public fun glyphFor-MFPI20o (CI)Lcom/awakekt/awake/core/text/font/GlyphRect;
+	public fun glyphFor-MFPI20o (II)Lcom/awakekt/awake/core/text/font/GlyphRect;
 	public fun hasGlyph (C)Z
+	public fun hasGlyph (I)Z
 	public fun uvFor (C)Lcom/awakekt/awake/core/text/font/GlyphRect;
 }
 
@@ -316,5 +343,37 @@ public final class com/awakekt/awake/core/text/theme/TextStyle {
 
 public final class com/awakekt/awake/core/text/theme/TextStyle$Companion {
 	public final fun getDefault ()Lcom/awakekt/awake/core/text/theme/TextStyle;
+}
+
+public final class com/awakekt/awake/core/text/unicode/CodePoints {
+	public static final field INSTANCE Lcom/awakekt/awake/core/text/unicode/CodePoints;
+	public static final field SUPPLEMENTARY_MIN I
+	public final fun asString (I)Ljava/lang/String;
+	public final fun at (Ljava/lang/CharSequence;I)I
+	public final fun charCount (I)I
+	public final fun forEach (Ljava/lang/CharSequence;Lkotlin/jvm/functions/Function2;)V
+}
+
+public final class com/awakekt/awake/core/text/unicode/GraphemeClusters {
+	public static final field INSTANCE Lcom/awakekt/awake/core/text/unicode/GraphemeClusters;
+	public final fun ceilBoundary (Ljava/lang/CharSequence;I)I
+	public final fun count (Ljava/lang/CharSequence;)I
+	public final fun floorBoundary (Ljava/lang/CharSequence;I)I
+	public final fun forEach (Ljava/lang/CharSequence;Lkotlin/jvm/functions/Function2;)V
+	public final fun getUnicodeVersion ()Ljava/lang/String;
+	public final fun isBoundary (Ljava/lang/CharSequence;I)Z
+	public final fun nextBoundary (Ljava/lang/CharSequence;I)I
+	public final fun previousBoundary (Ljava/lang/CharSequence;I)I
+}
+
+public final class com/awakekt/awake/core/text/unicode/TextLengthUnit : java/lang/Enum {
+	public static final field CodePoints Lcom/awakekt/awake/core/text/unicode/TextLengthUnit;
+	public static final field Graphemes Lcom/awakekt/awake/core/text/unicode/TextLengthUnit;
+	public static final field Utf8Bytes Lcom/awakekt/awake/core/text/unicode/TextLengthUnit;
+	public final fun count (Ljava/lang/CharSequence;)I
+	public final fun fit (Ljava/lang/CharSequence;I)I
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/core/text/unicode/TextLengthUnit;
+	public static fun values ()[Lcom/awakekt/awake/core/text/unicode/TextLengthUnit;
 }
 

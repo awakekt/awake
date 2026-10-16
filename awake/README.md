@@ -18,7 +18,7 @@ Paths below are Gradle coordinates minus the `:awake:` prefix.
 | `core:graphics2d` | The CPU 2D draw vocabulary between 2D producers and renderers |
 | `core:animation` | Skeletons, skin bindings, animation clips, crossfades |
 | `core:image` | Per-platform bitmap decode, `BitmapRgba8` |
-| `core:text` | Font atlases, glyph metrics, bundled UI fonts |
+| `core:text` | Font atlases, glyph metrics, grapheme clusters, bundled UI fonts |
 | `core:input` | Pointer, key, and text input state, plus the Android IME bridges |
 | `core:audio` | `AudioClip`, `AudioPlayer`, WAV decoding, a simple synthesizer |
 | `core:host` | Host services: `FrameLoop`, `FixedTimestepLoop`, resource bytes |
