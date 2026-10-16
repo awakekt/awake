@@ -27,7 +27,8 @@ the `canvas_element` component saved with a scene and drawn by `SceneCanvas(worl
 - **`font`**: a project `.ttf` or `.otf` file, or a built-in family, `default` or `bitmap`; empty
   is the default Roboto. A host loads the file and passes it in `CanvasOverlay(fonts = …)`.
 - **`value`**: a Bar's fill from 0 to 1.
-- **`order`**: lower draws first. **`visible`** hides it.
+- **`order`**: lower draws first. Of the same order, the later in `CanvasOverlay`'s `items` draws on
+  top and takes the pointer; for a scene that is the later in the hierarchy. **`visible`** hides it.
 - **`style`**: how it looks beyond its colours, as the saved form of a Compose `Style` drawn
   through `Modifier.styleable`: fill, gradient, corner radius, border, shadow, text colour, alpha,
   `hovered` and `pressed` states for a Button, and images. `style.image` is an Image's picture, the
