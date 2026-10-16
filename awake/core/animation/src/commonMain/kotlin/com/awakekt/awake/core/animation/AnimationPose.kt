@@ -209,7 +209,6 @@ class AnimationPose(private val skeleton: Skeleton) {
         val children = bones[bone].children
         for (c in children.indices) visit(children[c], at)
     }
-
 }
 
 /**
