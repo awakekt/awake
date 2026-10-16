@@ -103,16 +103,22 @@ One person or agent owns a release from cut to downstream bump. Before cutting, 
    `repo1.maven.org/.../core/host/maven-metadata.xml` to list the version. Its **WebGPU release
    pin** job then publishes `com.awakekt.awake.backend:webgpu:<release>-SNAPSHOT` once Core is on
    repo1; wait for that job too.
-3. **Vulkan:** if anything under `awake/backend/vulkan` changed since the last `vulkan-v*` tag
-   (`scripts/vulkan-publication-impact.sh <last-vulkan-tag> vX.Y.Z` prints `true`), tag
-   `vulkan-vA.B.C` on the **same commit** and push it once Core is on Central. A Vulkan release
-   pins the Core release it was built with, and [the Core alignment BOM](#core-alignment-bom) lifts
-   those Core edges to any newer Core in a consumer's graph. So also tag a Vulkan release on that
-   commit when the Core release removes or changes a public signature in the `api/*.api` dump of a
-   module the Vulkan backend depends on, even though nothing under `awake/backend/vulkan` changed:
-   otherwise a consumer's graph runs the old Vulkan release against the changed module. Its
+3. **Vulkan:** a Vulkan release pins the Core release it was built with, and
+   [the Core alignment BOM](#core-alignment-bom) lifts those Core edges to any newer Core in a
+   consumer's graph. So a new Core release does not by itself need a new Vulkan release. It does
+   when either of two scripts reports an impact since the last `vulkan-v*` tag:
+   - `scripts/vulkan-publication-impact.sh <last-vulkan-tag> vX.Y.Z` prints `true`: Vulkan's own
+     code changed under `awake/backend/vulkan`.
+   - `scripts/vulkan-core-api-impact.sh <last-vulkan-tag> vX.Y.Z` prints a module: a Core module the
+     Vulkan family depends on (transitively, tests included) lost or changed a signature in its
+     `api/*.api` dump, so the old Vulkan binaries may no longer link against the lifted Core. Added
+     signatures do not count. It can name a module whose break Vulkan never calls; read the module's
+     dump diff and skip the release only if Vulkan uses none of it.
+
+   Then tag `vulkan-vA.B.C` on the **same commit** and push it once Core is on Central. Its
    Publish run uploads the three Vulkan modules as one Central deployment and attaches the bundle to
-   the GitHub Release, as a Core release does.
+   the GitHub Release, as a Core release does. The Core release's **Core alignment** job resolves it
+   with the latest Vulkan release and fails if any Core module stays on an older Core.
 4. **Downstream:** bump awake-studio to the new Core and Vulkan releases by hand. The three
    starter template repositories (awake-template, awake-project-template, awake-plugin-template)
    need no bump PR: their sources live in Core, under `templates/game`, `templates/project` and
@@ -199,10 +205,14 @@ nothing else in its graph asked for a newer one (#811). `com.awakekt.awake:bom` 
   lists exactly the Core modules this build publishes and Maven Local holds. For the Vulkan family,
   `-Pawake.verifyPinnedCoreVersion` also fails a variant that reaches Core without the platform at the
   pin.
-- **Checking a mixed graph.** No workflow resolves one yet. By hand: publish two fake Core versions
-  and the Vulkan family pinned to the older (`-Pawake.coreVersion`) to Maven Local, then run
-  `dependencyInsight --dependency shader-compiler-desktop` in a throwaway consumer that depends on a
-  module of the newer Core and on the Vulkan backend. It must resolve to the newer version.
+- **Checking a mixed graph.** The **Core alignment** job of a `v*` tag's Publish run
+  (`tools/core-alignment-check/check.sh <core>`) waits for the BOM on repo1, resolves
+  `core:math:<core>` with the latest Vulkan release from Central in a standalone consumer build, and
+  fails unless every Core module, `shader-compiler-desktop` included, resolves to `<core>`. It runs
+  against Central only, so it cannot undo a release and can be re-run alone. It needs a BOM:
+  `check.sh 0.12.0 0.1.28` (Core 0.12.0 has none) fails, with the modules Vulkan reaches on 0.11.0.
+  Pass `-Pcore=... -Pvulkan=... -PmavenLocal` to `./gradlew -p tools/core-alignment-check checkCoreAlignment`
+  to try fake versions published to Maven Local.
 
 ### WebGPU release pin
 
