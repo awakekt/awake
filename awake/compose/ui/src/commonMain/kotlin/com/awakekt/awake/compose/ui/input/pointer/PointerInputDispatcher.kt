@@ -53,9 +53,10 @@ class PointerInputDispatcher(
     val isOverScrollable: Boolean
         get() {
             for (i in hovered.indices) {
-                val scrollables = hovered[i].scrollables
+                val node = hovered[i]
+                val scrollables = node.scrollables
                 for (j in scrollables.indices) {
-                    if (scrollables[j].canScroll) return true
+                    if (scrollables[j].canScroll && node.linkHolds(node.scrollDepths[j], hoverX, hoverY)) return true
                 }
             }
             return false
@@ -72,6 +73,11 @@ class PointerInputDispatcher(
     // pointer walked off it, which is the bug `clickable` cancels on.
     private val hoverPath = mutableListOf<LayoutNode>()
     private val hovered = mutableListOf<LayoutNode>()
+
+    // Where the pointer was when [hovered] was found: the cursor and the scroll a hovered node
+    // answers with are judged against the box of the modifier that asks, which is not the node's own.
+    private var hoverX = 0
+    private var hoverY = 0
 
     // Reused rather than allocated per move: a synthesised event per node per frame is exactly the
     // per-frame allocation this engine exists to remove.
@@ -175,7 +181,7 @@ class PointerInputDispatcher(
         if (event.type == PointerEventType.Press && event.pointerId in captures) {
             pressOrigins[event.pointerId] = packPosition(x, y)
         }
-        updateFocus(root, event)
+        updateFocus(root, event, x, y)
         return event.isConsumed
     }
 
@@ -208,10 +214,13 @@ class PointerInputDispatcher(
      * dismissed, and a focus that only ever moved forward would leave the field editable from the
      * keyboard after the user visibly left it.
      */
-    private fun updateFocus(root: LayoutNode, event: PointerEvent) {
+    private fun updateFocus(root: LayoutNode, event: PointerEvent, x: Int, y: Int) {
         if (event.type != PointerEventType.Press) return
         for (i in path.indices.reversed()) {
-            if (focusOwner.requestFocus(root, path[i])) return
+            // A node on the path may only be held by its box, with its focus target offset away.
+            if (path[i].holdsFocusTarget(x, y)) {
+                if (focusOwner.requestFocus(root, path[i])) return
+            }
         }
         focusOwner.clearFocus()
     }
@@ -238,12 +247,16 @@ class PointerInputDispatcher(
     val hoveredCursor: PointerCursor
         get() {
             for (i in hovered.indices.reversed()) {
-                hovered[i].pointerCursor?.let { return it }
+                val node = hovered[i]
+                val cursor = node.pointerCursor
+                if (cursor != null && node.linkHolds(node.pointerCursorDepth, hoverX, hoverY)) return cursor
             }
             return PointerCursor.Default
         }
 
     private fun updateHover(root: LayoutNode, x: Int, y: Int) {
+        hoverX = x
+        hoverY = y
         hoverPath.clear()
         hitTest(hoverPath, root, x, y, searchLayers = true)
         for (i in hovered.indices) {
@@ -446,7 +459,7 @@ class PointerInputDispatcher(
      * must not make this node occlude a sibling under it that does take the point.
      */
     private fun LayoutNode.takes(x: Int, y: Int): Boolean {
-        var takes = scrollables.isNotEmpty() || focusTargets.isNotEmpty() || pointerCursor != null
+        var takes = holdsScroll(x, y) || holdsFocusTarget(x, y) || holdsCursor(x, y)
         var h = 0
         while (!takes && h < pointerInputs.size) {
             val link = pointerInputs[h]
@@ -457,6 +470,43 @@ class PointerInputDispatcher(
             h++
         }
         return takes
+    }
+
+    /**
+     * Whether ([x], [y]) is over the cursor, focus or scroll link [depth] layout links in.
+     *
+     * Where an offset moved the link out of the node's own box, it is the link's box that counts, so
+     * the node answers where it is drawn and not where it was. Where the link only sits inset in the
+     * node's box, by a padding outside it, the node's whole box counts, as it always has: a focus
+     * target or scroll area keeps its padding, and the shadcn input is focused by a press on its
+     * border. A pointer link is stricter than this, by its own box, because a click target is.
+     */
+    private fun LayoutNode.linkHolds(depth: Int, x: Int, y: Int): Boolean {
+        drawBoundsAt(depth, linkBounds)
+        val insideNode = linkBounds[0] >= 0 && linkBounds[1] >= 0 &&
+            linkBounds[0] + linkBounds[2] <= width && linkBounds[1] + linkBounds[3] <= height
+        if (insideNode) return x >= absoluteX && y >= absoluteY && x < absoluteX + width && y < absoluteY + height
+        return linkBounds.holds(x - absoluteX - linkBounds[0], y - absoluteY - linkBounds[1])
+    }
+
+    /** Whether the cursor request, if there is one, covers ([x], [y]) -- see [linkHolds]. */
+    private fun LayoutNode.holdsCursor(x: Int, y: Int): Boolean =
+        pointerCursor != null && linkHolds(pointerCursorDepth, x, y)
+
+    /** Whether any focus link covers ([x], [y]) -- see [linkHolds]. */
+    private fun LayoutNode.holdsFocusTarget(x: Int, y: Int): Boolean {
+        for (i in focusTargets.indices) {
+            if (linkHolds(focusDepths[i], x, y)) return true
+        }
+        return false
+    }
+
+    /** Whether any scroll link covers ([x], [y]) -- see [linkHolds]. */
+    private fun LayoutNode.holdsScroll(x: Int, y: Int): Boolean {
+        for (i in scrollables.indices) {
+            if (linkHolds(scrollDepths[i], x, y)) return true
+        }
+        return false
     }
 
     /** Whether this node only watches a pointer at ([x], [y]): a passive link whose own box holds it. */

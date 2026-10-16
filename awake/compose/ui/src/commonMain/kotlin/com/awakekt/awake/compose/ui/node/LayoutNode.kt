@@ -159,6 +159,11 @@ class LayoutNode(
     private val drawDepthScratch = ArrayList<Int>()
     private val pointerDepthScratch = ArrayList<Int>()
 
+    // Made on the first focus or scroll link, not per node: most nodes have neither, and a node
+    // is built per element per frame, so two lists each was a measurable share of the allocation.
+    private var focusDepthScratch: ArrayList<Int>? = null
+    private var scrollDepthScratch: ArrayList<Int>? = null
+
     // The four link lists below are the node's own scratch lists, published rather than copied.
     // Copying cost four ArrayLists per node per frame. The contract that makes it safe is the frame
     // order: they are refilled during reconcile and read during layout, paint and input dispatch,
@@ -189,6 +194,19 @@ class LayoutNode(
      * against where the offset moved it, not where the node sat before the offset.
      */
     internal var pointerDepths: IntArray = EMPTY_DEPTHS
+        private set
+
+    /**
+     * How many layout links sit outside each focus link, index-aligned with [focusTargets].
+     *
+     * Like [pointerDepths]: a focus target after an offset is under the pointer where the offset
+     * moved it, not where the node sat before.
+     */
+    internal var focusDepths: IntArray = EMPTY_DEPTHS
+        private set
+
+    /** How many layout links sit outside each scroll link, index-aligned with [scrollables]. */
+    internal var scrollDepths: IntArray = EMPTY_DEPTHS
         private set
 
     /**
@@ -230,6 +248,10 @@ class LayoutNode(
 
     /** The cursor this node asks for while hovered, or null when it does not care. */
     internal var pointerCursor: PointerCursor? = null
+
+    /** How many layout links sit outside the link that asked for [pointerCursor], as [pointerDepths] counts them. */
+    internal var pointerCursorDepth: Int = 0
+        private set
 
     /** Key handlers on this node, in chain order. Routed by focus -- see [KeyInputNode]. */
     internal var keyInputs: List<KeyInputNode> = emptyList()
@@ -373,8 +395,13 @@ class LayoutNode(
         keyInputNodes.clear()
         drawDepthScratch.clear()
         pointerDepthScratch.clear()
+        focusDepthScratch.clearIfMade()
+        scrollDepthScratch.clearIfMade()
         var data: Any? = null
         var cursorRequest: PointerCursor? = null
+        // Not a local: the fold's lambda would capture a local it assigns in a heap box, one per
+        // node per frame, which the node graph canvas's allocation ratchet counted.
+        pointerCursorDepth = 0
         var nodeZIndex = 0f
         var modifierIndex = 0
         modifier.foldIn(Unit) { _, declaredElement ->
@@ -397,10 +424,16 @@ class LayoutNode(
             }
             if (element is SemanticsModifierNode) semanticsNodes += element
             if (element is OnPlacedModifierNode) placedNodes += element
-            if (element is FocusTargetNode) focusNodes += element
+            if (element is FocusTargetNode) {
+                focusNodes += element
+                focusDepthScratch = focusDepthScratch.with(layoutModifiersOutside)
+            }
             if (element is FocusPropertiesNode) focusPropertiesNodes += element
             if (element is FocusRequestNode) focusRequestScratch += element
-            if (element is ScrollableNode) scrollNodes += element
+            if (element is ScrollableNode) {
+                scrollNodes += element
+                scrollDepthScratch = scrollDepthScratch.with(layoutModifiersOutside)
+            }
             if (element is com.awakekt.awake.compose.ui.input.nestedscroll.NestedScrollNode) {
                 element.onAttachedTo(this)
                 nestedScrollNodes += element.connection
@@ -409,6 +442,7 @@ class LayoutNode(
             if (element is KeyInputNode) keyInputNodes += element
             if (element is ZIndexModifierNode) nodeZIndex = element.modifyZIndex(nodeZIndex)
             cursorRequest = element.cursorOrKeep(cursorRequest)
+            pointerCursorDepth = element.cursorDepthOrKeep(pointerCursorDepth, layoutModifiersOutside)
             if (element is NodeAttachedModifierNode) element.onAttachedTo(this)
             if (element is ParentDataModifierNode) data = element.modifyParentData(data)
         }
@@ -424,9 +458,11 @@ class LayoutNode(
         maxPointerHitMargin = pointerNodes.maxOfOrNull { it.hitMarginPx } ?: 0
         semanticsModifiers = semanticsNodes
         focusTargets = focusNodes
+        focusDepths = focusDepthScratch.snapshotIntoOrEmpty(focusDepths)
         focusProperties = focusPropertiesNodes
         focusRequestNodes = focusRequestScratch
         scrollables = scrollNodes
+        scrollDepths = scrollDepthScratch.snapshotIntoOrEmpty(scrollDepths)
         nestedScrollConnections = nestedScrollNodes
         textInputs = textInputNodes
         pointerCursor = cursorRequest
@@ -589,6 +625,15 @@ private fun List<Int>.snapshotInto(existing: IntArray): IntArray {
     return target
 }
 
+private fun ArrayList<Int>?.clearIfMade() {
+    this?.clear()
+}
+
+private fun ArrayList<Int>?.with(depth: Int): ArrayList<Int> = (this ?: ArrayList()).also { it += depth }
+
+private fun List<Int>?.snapshotIntoOrEmpty(existing: IntArray): IntArray =
+    if (this == null) EMPTY_DEPTHS else snapshotInto(existing)
+
 /**
  * This element's cursor request, or [current] when it makes none.
  *
@@ -598,3 +643,7 @@ private fun List<Int>.snapshotInto(existing: IntArray): IntArray {
  */
 private fun Any.cursorOrKeep(current: PointerCursor?): PointerCursor? =
     if (this is PointerCursorNode) cursor else current
+
+/** The layout links outside this element's cursor request, or [current] when it makes none. */
+private fun Any.cursorDepthOrKeep(current: Int, outside: Int): Int =
+    if (this is PointerCursorNode) outside else current
