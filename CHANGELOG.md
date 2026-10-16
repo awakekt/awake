@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.1] - 2026-10-16
+
+### Fixed
+
+- **The WebGPU backend resolves its pinned wgpu4k builds again.** Sonatype removed the `io.ygdrasil` snapshots the backend pins, and a restored Gradle cache that recorded them as coming from Sonatype searched only there, so the v0.13.0 release stopped at `wasmJsPackageJson`. The build and the templates now read those builds, hosted by Awake, for `io.ygdrasil` only and leave that group off the Sonatype snapshot repos. The website guide and the README show the same two repositories, and the Maven fallback deploy checks that every pinned file is still served.
+- **A component lookup on the web no longer builds and hashes the class name.** Kotlin/Wasm hashes a `KClass` by building its qualified name anew, so every `world.get`, `has` and `family` on wasm paid a string build and a full hash. The ECS now keys component types by a token that hashes the class's pooled simple name. In a consumer pack's web build this took about 3.5 ms off each frame.
+- **A model the renderer culls is no longer posed every frame.** `AnimationSystem` sampled every animated model's clip and built its joint palette each frame, seen or not. A model culled and drawn by no renderer now only advances its clock, through the new `AnimationPlayer.advance`, and is posed again once drawn; a model in a world no renderer draws is posed as before. In a consumer pack's region of 1,245 characters this cut the web build's gameplay systems from about 15–20 ms to 8–12 ms a frame.
+- **Posing an animated model no longer allocates every frame.** `AnimationPose` keeps its bones' TRS in flat float arrays and builds the joint palette in a buffer of its own, `AnimationPose.jointPalette(skin, into)` writes the palette into a caller's array, which `AnimationSystem` now does with each model's own, a clip's duration is found once, and the player keeps its active clip. `blend` no longer writes into the skeleton's bind-pose vectors. In a consumer pack's web build this took the frame systems from about 6 ms to 3.3 ms a frame.
+- **Full garbage collections on the web no longer take seconds.** Setting a bind group through wgpu4k in a browser passed a new offsets array each call, and Kotlin/Wasm kept a WeakMap entry for each, tens of thousands a minute, which V8 marks in every full collection. The WebGPU backend now sets bind groups on the browser's pass directly. In a consumer pack's web build, full collections went from 0.9–4.4 s to under 0.3 s, and a minute's walk lost its multi-second frames.
+- **A rotated picture no longer makes the CPU wait for the GPU every frame.** A `Modifier.graphicsLayer` that only moves, scales or turns its content, such as a canvas element with `CanvasStyle.rotation`, was always rendered to an offscreen target, and on Vulkan the CPU then blocked on that pass's fence, about 4.5 ms a frame in a consumer pack with one rotated minimap arrow. When the layer has no blur, a `SourceOver` composite and only unturned textures inside its bounds, `GraphicsLayerCompositor` now draws each texture straight into the parent with the layer's transform, as Compose does for a transform-only layer. A picture at its own size, or turned a quarter turn, draws the same pixels as before; a scaled picture turned at another angle is sampled once instead of twice, so its edges can differ slightly. Layers holding anything else keep their offscreen pass.
+
 ## [0.13.0] - 2026-10-16
 
 ### Added
