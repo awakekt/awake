@@ -10,6 +10,9 @@ import com.awakekt.awake.compose.ui.platform.FrameInput
 import com.awakekt.awake.compose.ui.platform.FrameOutput
 import com.awakekt.awake.compose.ui.semantics.SemanticsNode
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.ui.canvas.CanvasElement
+import com.awakekt.awake.ui.canvas.CanvasElementKind
+import com.awakekt.awake.ui.canvas.consumeLink
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull

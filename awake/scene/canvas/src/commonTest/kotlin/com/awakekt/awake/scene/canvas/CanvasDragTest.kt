@@ -12,6 +12,9 @@ import com.awakekt.awake.core.math2d.Vec2
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.core.transform.Transform
+import com.awakekt.awake.ui.canvas.CanvasAnchor
+import com.awakekt.awake.ui.canvas.CanvasElement
+import com.awakekt.awake.ui.canvas.CanvasElementKind
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse

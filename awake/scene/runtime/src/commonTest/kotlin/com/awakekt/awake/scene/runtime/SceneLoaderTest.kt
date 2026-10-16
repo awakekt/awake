@@ -12,9 +12,6 @@ import com.awakekt.awake.render.passes.uniforms.TextureAnimation
 import com.awakekt.awake.scene.binding.fromWorld
 import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.scene.binding.renderableRequests
-import com.awakekt.awake.scene.canvas.CanvasAnchor
-import com.awakekt.awake.scene.canvas.CanvasElement
-import com.awakekt.awake.scene.canvas.CanvasElementKind
 import com.awakekt.awake.scene.canvas.SceneCanvasElement
 import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.core.transform.SceneSpinControl
@@ -38,6 +35,9 @@ import com.awakekt.awake.scene.rendering.mesh.SceneTextureAnimation
 import com.awakekt.awake.scene.rendering.mesh.SceneTextureClip
 import com.awakekt.awake.scene.rendering.mesh.SceneTextureClips
 import com.awakekt.awake.scene.rendering.mesh.TextureClips
+import com.awakekt.awake.ui.canvas.CanvasAnchor
+import com.awakekt.awake.ui.canvas.CanvasElement
+import com.awakekt.awake.ui.canvas.CanvasElementKind
 import kotlinx.coroutines.test.runTest
 import kotlin.math.PI
 import kotlin.test.Test

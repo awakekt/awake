@@ -19,10 +19,10 @@ import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.nodegraph.NodeGraph
 import com.awakekt.awake.physics.ContactPhase
-import com.awakekt.awake.scene.canvas.CanvasElement
 import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.physics.PhysicsBody
 import com.awakekt.awake.scene.physics.PhysicsSystem
+import com.awakekt.awake.ui.canvas.CanvasElement
 
 /**
  * Runs the blueprint of every entity with a [BlueprintComponent]. A fixed-phase system; register it

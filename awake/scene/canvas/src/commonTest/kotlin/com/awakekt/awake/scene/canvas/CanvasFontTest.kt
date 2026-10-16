@@ -11,6 +11,8 @@ import com.awakekt.awake.core.graphics2d.DrawCommand
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.core.text.font.UiFonts
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.ui.canvas.CanvasElement
+import com.awakekt.awake.ui.canvas.CanvasElementKind
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

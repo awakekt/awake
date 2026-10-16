@@ -5,7 +5,9 @@
  */
 package com.awakekt.awake.scene.canvas
 
+import com.awakekt.awake.ui.canvas.CanvasElement
 import com.awakekt.awake.ui.canvas.consumeLink as capabilityConsumeLink
 
 /** Forwards to `awake:ui:canvas`'s [consumeLink][com.awakekt.awake.ui.canvas.consumeLink]. */
+@Deprecated("Moved to awake:ui:canvas.", ReplaceWith("consumeLink()", "com.awakekt.awake.ui.canvas.consumeLink"))
 fun CanvasElement.consumeLink(): String? = capabilityConsumeLink()

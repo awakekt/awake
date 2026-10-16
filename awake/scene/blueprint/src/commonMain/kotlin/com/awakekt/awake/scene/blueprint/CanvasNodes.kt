@@ -17,7 +17,7 @@ import com.awakekt.awake.blueprint.PortTypes.STRING
 import com.awakekt.awake.blueprint.Step
 import com.awakekt.awake.nodegraph.NodeSpec
 import com.awakekt.awake.nodegraph.PortSpec
-import com.awakekt.awake.scene.canvas.CanvasElement
+import com.awakekt.awake.ui.canvas.CanvasElement
 
 /**
  * Nodes for game UI: a menu or a HUD reacting to its buttons and changing what it shows, on the

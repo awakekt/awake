@@ -42,7 +42,6 @@ import com.awakekt.awake.render.renderer.RenderViewport
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.scene.binding.SceneComponentBinding
-import com.awakekt.awake.scene.canvas.CanvasElement
 import com.awakekt.awake.scene.canvas.CanvasProjector
 import com.awakekt.awake.scene.canvas.CanvasViews
 import com.awakekt.awake.scene.canvas.SceneCanvas
@@ -56,6 +55,7 @@ import com.awakekt.awake.scene.rendering.camera.CameraViewport
 import com.awakekt.awake.scene.rendering.debug.DebugVisualizationSystem
 import com.awakekt.awake.scene.runtime.session.SceneSession
 import com.awakekt.awake.scene.scene2d.SpriteClipSystem
+import com.awakekt.awake.ui.canvas.CanvasElement
 import kotlin.math.roundToInt
 import kotlin.time.TimeSource
 

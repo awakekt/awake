@@ -6,6 +6,7 @@
 package com.awakekt.awake.scene.canvas
 
 import com.awakekt.awake.ecs.Entity
+import com.awakekt.awake.ui.canvas.CanvasElement
 
 /**
  * The pictures [CanvasElementKind.View] elements show. The host that draws the scene supplies it and

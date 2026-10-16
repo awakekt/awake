@@ -14,6 +14,10 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.canvas.CanvasElementBinding.toComponent
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneNode
+import com.awakekt.awake.ui.canvas.CanvasElementKind
+import com.awakekt.awake.ui.canvas.CanvasImage
+import com.awakekt.awake.ui.canvas.CanvasStateStyle
+import com.awakekt.awake.ui.canvas.CanvasStyle
 import kotlinx.coroutines.test.runTest
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream

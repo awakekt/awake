@@ -8,11 +8,11 @@ package com.awakekt.awake.project.runtime
 import com.awakekt.awake.core.input.InputActions
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
-import com.awakekt.awake.scene.canvas.CanvasElement
-import com.awakekt.awake.scene.canvas.CanvasElementKind
 import com.awakekt.awake.scene.controls.input.inputActions
 import com.awakekt.awake.scene.controls.movement.MovementActions
 import com.awakekt.awake.scene.controls.movement.steerPlayers
+import com.awakekt.awake.ui.canvas.CanvasElement
+import com.awakekt.awake.ui.canvas.CanvasElementKind
 
 /** The canvas action a Joystick steers the player with. */
 @Deprecated("The move input action", ReplaceWith("MovementActions.MOVE", "com.awakekt.awake.scene.controls.movement.MovementActions"))

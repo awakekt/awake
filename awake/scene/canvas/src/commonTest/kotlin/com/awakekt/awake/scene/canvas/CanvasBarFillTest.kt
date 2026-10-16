@@ -14,6 +14,11 @@ import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.canvas.CanvasElementBinding.toComponent
 import com.awakekt.awake.scene.canvas.CanvasElementBinding.toSceneComponent
+import com.awakekt.awake.ui.canvas.CanvasElement
+import com.awakekt.awake.ui.canvas.CanvasElementKind
+import com.awakekt.awake.ui.canvas.CanvasFillImageMode
+import com.awakekt.awake.ui.canvas.CanvasImage
+import com.awakekt.awake.ui.canvas.CanvasStyle
 import kotlinx.serialization.json.Json
 import kotlin.math.round
 import kotlin.test.Test
