@@ -131,14 +131,15 @@ dependencyResolutionManagement {
         mavenCentral()
         mavenLocal()
         maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
-        maven("https://oss.sonatype.org/content/repositories/snapshots/")
-        maven("https://s01.oss.sonatype.org/content/repositories/snapshots")
-        // wgpu4k (Phase 2.5 spike, see docs/mvp-plan.md) has no stable release yet (last tag
-        // v0.1.1, June 2025) -- only snapshots via Sonatype's current Central Portal
-        // snapshot repo (not the legacy oss.sonatype.org ones above).
-        maven("https://central.sonatype.com/repository/maven-snapshots/")
-        // The wgpu4k builds pinned in build.gradle.kts, byte for byte, for when Central's 90-day
-        // snapshot cleanup removes them (the Maven fallback workflow serves the mirror release).
+        // io.ygdrasil stays off the snapshot repos: its pinned builds are served by the mirror below, and
+        // a cached module recorded as coming from Sonatype is searched only there (awakekt/awake#826).
+        maven("https://oss.sonatype.org/content/repositories/snapshots/") { content { excludeGroup("io.ygdrasil") } }
+        maven("https://s01.oss.sonatype.org/content/repositories/snapshots") { content { excludeGroup("io.ygdrasil") } }
+        // Current Central Portal snapshot repo, not the legacy ones above.
+        maven("https://central.sonatype.com/repository/maven-snapshots/") { content { excludeGroup("io.ygdrasil") } }
+        // The wgpu4k builds pinned in build.gradle.kts, byte for byte, served by the Maven fallback
+        // workflow from the mirror-io.ygdrasil-* release. See "WebGPU release pin" in
+        // docs/release-process.md.
         maven("https://awakekt.github.io/awake/") { content { includeGroup("io.ygdrasil") } }
     }
 }

@@ -59,7 +59,8 @@ WebGPU is held out of Central releases while it builds on wgpu4k snapshots. Its 
 WebGPU build a Core release's consumers use: built from the tagged commit, it depends on Core at
 exactly the release and holds every published Core coordinate `strictly` there, so it cannot pull a
 newer Core into a web build. No published module depends on WebGPU, so the pin's version changes no
-other coordinate.
+other coordinate. Its wgpu4k (`io.ygdrasil`) builds are hosted by Awake, because Sonatype no longer
+serves them; see [the wgpu4k pins](../release-process.md#the-wgpu4k-pins-are-hosted).
 
 For development, use `0.1.0-SNAPSHOT` for the Vulkan family until its first `vulkan-vX.Y.Z` tag.
 Commits after a family release use the next patch `-SNAPSHOT`; a family tag publishes only the three

@@ -52,8 +52,9 @@ awake-vulkan = { group = "com.awakekt.awake.backend", name = "vulkan", version.r
 ```
 
 The WebGPU backend is not in Maven Central releases yet: it builds on a wgpu4k snapshot, so it is
-published only as a snapshot to `https://central.sonatype.com/repository/maven-snapshots/`. Pin it
-to your Core version with `-SNAPSHOT` appended. Every Core release after 0.8.5 publishes that build
+published only as a snapshot to `https://central.sonatype.com/repository/maven-snapshots/`, and its
+wgpu4k builds (`io.ygdrasil`) come from `https://awakekt.github.io/awake/`, which hosts the exact
+builds it was tested with. Pin it to your Core version with `-SNAPSHOT` appended. Every Core release after 0.8.5 publishes that build
 of WebGPU from the release commit, with every Core module held at the release. For 0.8.5 and
 earlier, `<core>-SNAPSHOT` is a plain `main` snapshot whose Core modules are at `<core>-SNAPSHOT`
 and are not held, so a web build that must stay on one Core needs a later release.
