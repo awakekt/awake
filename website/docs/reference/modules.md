@@ -9,7 +9,7 @@
 | Group | `com.awakekt.awake`, plus the module's parent path: `:awake:scene:runtime` publishes `com.awakekt.awake.scene:runtime`. The Vulkan bindings are the exception: `com.awakekt.awake:vulkan-kmp`. |
 | Version | Core modules share one version; the newest is `{{ awake_version }}`. Vulkan family: `{{ awake_vulkan_version }}`, built against Core `{{ awake_vulkan_core_version }}`. See [Releases and compatibility](releases.md). |
 | Catalog alias | `awake-` plus the group after `com.awakekt.awake`, then the name, joined with `-`. The accessor replaces `-` with `.`: `awake-scene-runtime` is `libs.awake.scene.runtime`. The alias is your choice; this is the convention these docs use. |
-| Published modules | 88: 85 in Core, 3 in the Vulkan family. |
+| Published modules | 89: 86 in Core, 3 in the Vulkan family. |
 | Transitive modules | Declare only the modules your code uses. Each module's published metadata brings the modules it depends on. |
 
 A catalog entry looks like this:
@@ -48,6 +48,7 @@ awake-backend-vulkan = { module = "com.awakekt.awake.backend:vulkan", version.re
 | `com.awakekt.awake.core:di` | `awake-core-di` | Dependency injection container, no reflection. |
 | `com.awakekt.awake.core:config` | `awake-core-config` | Typed environment and configuration values. |
 | `com.awakekt.awake.core:state` | `awake-core-state` | Reactive, unidirectional state management. |
+| `com.awakekt.awake.core:localization` | `awake-core-localization` | Per-locale string tables, ICU-style messages with plurals, and the active locale. |
 
 ### ECS and application
 

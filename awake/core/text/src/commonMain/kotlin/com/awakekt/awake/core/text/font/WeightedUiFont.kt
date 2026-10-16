@@ -46,6 +46,8 @@ class WeightedUiFont(
 
     override fun uvFor(char: Char): GlyphRect? = glyphFor(char, baseFace.weight)
 
+    override fun hasGlyph(char: Char): Boolean = baseFace.font.hasGlyph(char)
+
     override fun glyphFor(char: Char, weight: FontWeight): GlyphRect? {
         val face = resolve(weight)
         val glyph = face.font.glyphFor(char, face.weight) ?: return null

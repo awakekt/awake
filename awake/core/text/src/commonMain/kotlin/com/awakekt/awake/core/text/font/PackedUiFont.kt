@@ -108,6 +108,8 @@ class PackedUiFont internal constructor(
 
     override fun uvFor(char: Char): GlyphRect? = glyphsByChar[char] ?: glyphsByChar[data.fallbackChar]
 
+    override fun hasGlyph(char: Char): Boolean = char in glyphsByChar
+
     /**
      * A glyph's outline-exact ink box, in em, without the crop bleed and texel snap that
      * [uvFor]'s quad carries.
