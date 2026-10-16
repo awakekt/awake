@@ -48,7 +48,7 @@ internal class WebGpuCommandRecorder(
     override fun bindMaterial(semantic: BindingSemantic, binding: MaterialBinding) {
         val group = bindingLayout.slot(semantic)
         if (currentPipeline?.hasBindingGroup(group) != true) return
-        encoder.setBindGroup(group.toUInt(), (binding as WebGpuBindGroupHandle).bindGroup)
+        encoder.bindGroup(group.toUInt(), (binding as WebGpuBindGroupHandle).bindGroup)
     }
 
     override fun bindVertexBuffer(binding: Int, buffer: RenderBufferHandle) {

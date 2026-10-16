@@ -16,6 +16,7 @@ import com.awakekt.awake.render.passes2d.uploadUiRuns
 import com.awakekt.awake.render.renderer.UiTargetCompositeMode
 import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.webgpu.pipeline.WebGpuUiRunRecorder
+import com.awakekt.awake.webgpu.pipeline.bindGroup
 import com.awakekt.awake.webgpu.texture.OffscreenRenderTarget
 import com.awakekt.awake.webgpu.ui.DynamicMesh
 import io.ygdrasil.webgpu.GPULoadOp
@@ -135,7 +136,7 @@ internal fun Renderer.performCompositeUiTargets(
         ),
     ) {
         setPipeline(pipeline.pipeline)
-        setBindGroup(0u, pipeline.bindGroupFor(sourceTarget, destinationTarget))
+        bindGroup(0u, pipeline.bindGroupFor(sourceTarget, destinationTarget))
         draw(3u)
         statsCounter.recordDraw(3)
         end()
