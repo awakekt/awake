@@ -2556,6 +2556,10 @@ answers <code>false</code> for anything the UI owns:</p>
 </span></code></pre></div>
 <p><code>GameplayInput</code> is in <code>com.awakekt.awake.scene:controls</code>. The built-in camera and player systems
 already read input through it.</p>
+<p>A focused single-line field lets through the keys it has no use for, such as Up and Down, so a
+system reading them from <code>GameplayInput</code> still sees them, for stepping through a chat line's sent
+history, say. The scene's input actions read no key at all while a field has focus, so movement
+bound to Up doesn't also walk the player.</p>
 <h2 id="bind-actions-in-the-scene">Bind actions in the scene</h2>
 <p>A scene's <code>input_actions</code> component names its actions and what triggers each: keys, pointer buttons
 and on-screen controls. Systems then ask for an action and never for a key, so a game rebinds its
