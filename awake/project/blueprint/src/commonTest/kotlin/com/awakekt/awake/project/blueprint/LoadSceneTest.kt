@@ -9,6 +9,7 @@ import com.awakekt.awake.blueprint.BlueprintGraphKind
 import com.awakekt.awake.blueprint.CoreNodes
 import com.awakekt.awake.compose.ui.platform.InputOwnership
 import com.awakekt.awake.core.input.Input
+import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.core.logging.Log
 import com.awakekt.awake.core.logging.LogLevel
@@ -31,10 +32,13 @@ import com.awakekt.awake.render.testing.NoopRenderer
 import com.awakekt.awake.scene.authoring.scene
 import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.scene.blueprint.BlueprintComponent
+import com.awakekt.awake.scene.blueprint.SceneBlueprint
 import com.awakekt.awake.scene.blueprint.SceneNodes
 import com.awakekt.awake.scene.controls.GameplayInput
 import com.awakekt.awake.scene.core.Name
+import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneLoader
+import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -136,6 +140,73 @@ class LoadSceneTest {
         assertEquals(emptyList(), warnings)
     }
 
+    /** The missing scene is looked for, not read: no scene but the one that plays is read as the project loads. */
+    @Test
+    fun aMissingSceneIsFoundWithoutReadingIt() = runTest {
+        val files = ProjectFiles(texts(play = graph(loadScene(MISSING))))
+
+        val warnings = blueprintWarnings {
+            loadProject(files, capabilities = listOf(BlueprintCapability), hasRenderer = false).close()
+        }
+
+        assertEquals(1, warnings.size, "the missing scene is still found: $warnings")
+        assertEquals(listOf(MENU), files.reads.filter { it.endsWith(".scene.json") })
+    }
+
+    @Test
+    fun aSceneTheProjectHasIsFoundWithoutReadingIt() = runTest {
+        val files = ProjectFiles(texts())
+
+        val warnings = blueprintWarnings {
+            loadProject(files, capabilities = listOf(BlueprintCapability), hasRenderer = false).close()
+        }
+
+        assertEquals(emptyList(), warnings)
+        assertEquals(listOf(MENU), files.reads.filter { it.endsWith(".scene.json") }, "the level is not read until it plays")
+    }
+
+    /** Each scene that loads checks the graphs it names, and one the menu and a second scene share warns once. */
+    @Test
+    fun aGraphTwoScenesShareWarnsOnce() = runTest {
+        val files = ProjectFiles(texts(play = graph(loadScene(MISSING))))
+        val pause = SceneDocument(name = "pause", nodes = listOf(SceneNode(name = "Pause", components = listOf(SceneBlueprint(PLAY)))))
+
+        val warnings = blueprintWarnings {
+            val project = loadProject(files, capabilities = listOf(BlueprintCapability), hasRenderer = false)
+            loadSceneContent(pause, files, listOf(BlueprintCapability), hasRenderer = false)
+            project.close()
+        }
+
+        assertEquals(1, warnings.size, "the menu's load warned, and the pause scene's, of the same graph, did not: $warnings")
+        assertEquals(2, files.reads.count { it == PLAY }, "both scenes still read and check the graph")
+    }
+
+    @Test
+    fun aGraphThatChangedSinceItWarnedIsCheckedAgain() = runTest {
+        val texts = texts(play = graph(loadScene(MISSING))).toMutableMap()
+        val files = ProjectFiles(texts)
+
+        val warnings = blueprintWarnings {
+            loadProject(files, capabilities = listOf(BlueprintCapability), hasRenderer = false).close()
+            texts[PLAY] = graph(loadScene(ALSO_MISSING))
+            loadProject(files, capabilities = listOf(BlueprintCapability), hasRenderer = false).close()
+        }
+
+        assertEquals(2, warnings.size, "$warnings")
+        assertContains(warnings.last(), ALSO_MISSING)
+    }
+
+    @Test
+    fun anotherProjectsFilesWarnAgain() = runTest {
+        val play = graph(loadScene(MISSING))
+
+        val warnings = blueprintWarnings {
+            repeat(2) { loadProject(ProjectFiles(texts(play)), capabilities = listOf(BlueprintCapability), hasRenderer = false).close() }
+        }
+
+        assertEquals(2, warnings.size, "one for each project's files: $warnings")
+    }
+
     /** The blueprint warnings logged while [block] runs. */
     private suspend fun blueprintWarnings(block: suspend () -> Unit): List<String> {
         val warnings = ArrayList<String>()
@@ -162,14 +233,29 @@ class LoadSceneTest {
 
     /** The project, whose menu plays [play]: by default, On Start then Load Scene of the level. */
     private fun files(play: String = graph(loadScene(LEVEL))): AssetSource {
-        val texts = mapOf(
-            MANIFEST_PATH to MANIFEST,
-            MENU to MENU_SCENE,
-            LEVEL to LEVEL_SCENE,
-            PLAY to play,
-            ARRIVE to graph(GraphNode("set", "var.set.float", config = config("name" to JsonPrimitive("arrived"), "value" to JsonPrimitive(1f)))),
-        )
+        val texts = texts(play)
         return AssetSource { path -> runCatching { texts.getValue(path.value).encodeToByteArray() } }
+    }
+
+    /** The project's files' text by path, its menu playing [play] as [files] has it. */
+    private fun texts(play: String = graph(loadScene(LEVEL))): Map<String, String> = mapOf(
+        MANIFEST_PATH to MANIFEST,
+        MENU to MENU_SCENE,
+        LEVEL to LEVEL_SCENE,
+        PLAY to play,
+        ARRIVE to graph(GraphNode("set", "var.set.float", config = config("name" to JsonPrimitive("arrived"), "value" to JsonPrimitive(1f)))),
+    )
+
+    /** The project's files as [texts] holds them, found without reading, and every path read noted in [reads]. */
+    private class ProjectFiles(private val texts: Map<String, String>) : AssetSource {
+        val reads = mutableListOf<String>()
+
+        override suspend fun read(path: AssetPath): Result<ByteArray> {
+            reads += path.value
+            return runCatching { texts.getValue(path.value).encodeToByteArray() }
+        }
+
+        override suspend fun exists(path: AssetPath): Boolean = path.value in texts
     }
 
     /** On Start, then [action]. */
@@ -199,6 +285,7 @@ class LoadSceneTest {
         const val MENU = "scenes/menu.scene.json"
         const val LEVEL = "scenes/level.scene.json"
         const val MISSING = "scenes/missing.scene.json"
+        const val ALSO_MISSING = "scenes/also-missing.scene.json"
         const val PLAY = "logic/play.graph.json"
         const val ARRIVE = "logic/arrive.graph.json"
         const val MANIFEST = """{"formatVersion":1,"id":"com.example.harbor-town","name":"Harbor Town","version":"1.0.0","entryScene":"scenes/menu.scene.json"}"""

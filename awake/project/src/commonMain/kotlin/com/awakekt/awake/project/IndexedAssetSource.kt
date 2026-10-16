@@ -68,6 +68,9 @@ class IndexedAssetSource(
         readChecked(entry)
     }.onFailure { if (it is CancellationException) throw it }
 
+    /** Whether [index] lists [path]: looked up, with nothing fetched. */
+    override suspend fun exists(path: AssetPath): Boolean = path.value.removePrefix("/") in entries
+
     /**
      * Reads every one of [paths] ahead of play, so the files are cached before a scene asks for them,
      * fetching and verifying up to six at once. Paths whose files share a SHA-256 download once. As

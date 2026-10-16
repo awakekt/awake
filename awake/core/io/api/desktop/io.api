@@ -11,7 +11,12 @@ public final class com/awakekt/awake/core/io/AssetPath {
 }
 
 public abstract interface class com/awakekt/awake/core/io/AssetSource {
+	public fun exists (Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun read-gIAlu-s (Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/core/io/AssetSource$DefaultImpls {
+	public static fun exists (Lcom/awakekt/awake/core/io/AssetSource;Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class com/awakekt/awake/core/io/BinaryReader {
@@ -188,6 +193,7 @@ public final class com/awakekt/awake/core/io/FileSystem$DefaultImpls {
 
 public final class com/awakekt/awake/core/io/FileSystemAssetSource : com/awakekt/awake/core/io/AssetSource {
 	public fun <init> (Lcom/awakekt/awake/core/io/FileSystem;)V
+	public fun exists (Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun read-gIAlu-s (Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
@@ -351,6 +357,7 @@ public final class com/awakekt/awake/core/io/PlatformFileSystem_desktopKt {
 
 public final class com/awakekt/awake/core/io/ResourceAssetSource : com/awakekt/awake/core/io/AssetSource {
 	public fun <init> (Lcom/awakekt/awake/core/io/ResourceReader;)V
+	public fun exists (Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun read-gIAlu-s (Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 

@@ -27,6 +27,7 @@ import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneNode
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
+import kotlin.concurrent.Volatile
 
 /**
  * A scene's `blueprint`s: the event graphs Core's blueprint runtime plays on the nodes that carry
@@ -42,7 +43,9 @@ import kotlinx.serialization.json.contentOrNull
  * ```
  * Every graph the scene names is read and checked before the scene runs, so a broken one refuses
  * the load instead of stopping the game later. A Load Scene whose `scene` is set on the node, not
- * wired, and names no file of the project warns as it loads, and the scene still plays.
+ * wired, and names no file of the project warns as it loads, and the scene still plays. The file is
+ * looked for with [AssetSource.exists], not read, and a graph several of the project's scenes use
+ * warns as the first of them loads, not again for each.
  */
 object BlueprintCapability : SceneCapability {
     /** The id a manifest's `plugins` entry names this capability by. */
@@ -68,7 +71,7 @@ object BlueprintCapability : SceneCapability {
                 } catch (invalid: IllegalArgumentException) {
                     throw IllegalArgumentException("Blueprint graph $path can't run: ${invalid.message}", invalid)
                 }
-                warnOfMissingScenes(path, graph, scenes)
+                if (CheckedGraphs.firstCheck(files, path, text)) warnOfMissingScenes(path, graph, scenes)
             }
         }
     }
@@ -112,12 +115,40 @@ object BlueprintCapability : SceneCapability {
     }
 }
 
-/** Whether the project's [files] have a scene at a path, read once per path. */
+/** Whether the project's [files] have a scene at a path, looked for once per path, without reading it. */
 private class ProjectScenes(private val files: AssetSource) {
     private val found = mutableMapOf<String, Boolean>()
 
     suspend fun has(path: String): Boolean = found.getOrPut(path) {
-        AwakeProjectValidator.isSafeProjectPath(path) && files.read(AssetPath(path)).isSuccess
+        AwakeProjectValidator.isSafeProjectPath(path) && files.exists(AssetPath(path))
+    }
+}
+
+/**
+ * The graphs already checked for Load Scenes naming missing scenes, for the project files they were
+ * read from. Each scene a project loads runs [BlueprintCapability.load], which reads every graph it
+ * names, so a graph several of the scenes use would otherwise warn again as each of them loads. A
+ * graph whose text has changed since is checked again, and another project's files start afresh.
+ *
+ * It holds the last project's files until another project loads. Copied on write, so two projects
+ * loading at once on two threads can at worst warn twice.
+ */
+private object CheckedGraphs {
+    private class Checked(val files: AssetSource, val graphs: Set<String>)
+
+    @Volatile
+    private var checked: Checked? = null
+
+    /** Whether the graph at [path], whose text is [text], is checked for the first time for [files]; it counts as checked after. */
+    fun firstCheck(files: AssetSource, path: String, text: String): Boolean {
+        val graph = "$path#${text.hashCode()}"
+        val now = checked
+        checked = when {
+            now == null || now.files !== files -> Checked(files, setOf(graph))
+            graph in now.graphs -> return false
+            else -> Checked(files, now.graphs + graph)
+        }
+        return true
     }
 }
 
