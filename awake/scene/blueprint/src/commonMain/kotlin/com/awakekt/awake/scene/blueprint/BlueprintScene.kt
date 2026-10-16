@@ -8,6 +8,7 @@ package com.awakekt.awake.scene.blueprint
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.core.EntityNames
+import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.physics.PhysicsSystem
 
 /**
@@ -32,13 +33,26 @@ class BlueprintScene internal constructor(private val physics: PhysicsSystem?) {
     var loadScene: ((path: String) -> Unit)? = null
 
     /**
-     * Destroys [entity], freeing its physics body first so the body cannot outlive it.
+     * Destroys [entity] and every node under it, its children through [Transform] and theirs, as
+     * deleting a node in an editor does: a child left behind would be left at the scene's root,
+     * still drawn where it was. The deepest go first, and each physics body is freed before its
+     * entity so none outlives it.
      *
-     * @param entity The entity to destroy.
+     * @param entity The entity to destroy, with the nodes under it.
      */
     fun destroy(entity: Entity) {
-        physics?.destroyBody(world, entity)
-        world.destroy(entity)
+        val doomed = ArrayList<Entity>().also { it += entity }
+        var next = 0
+        while (next < doomed.size) {
+            val parent = doomed[next++]
+            world.queryEach(Transform::class) { child, transform -> if (transform.parent == parent) doomed += child }
+        }
+        for (index in doomed.indices.reversed()) {
+            val doomedEntity = doomed[index]
+            if (!world.isAlive(doomedEntity)) continue
+            physics?.destroyBody(world, doomedEntity)
+            world.destroy(doomedEntity)
+        }
     }
 
     /** Whether [world] is new to this scene. */

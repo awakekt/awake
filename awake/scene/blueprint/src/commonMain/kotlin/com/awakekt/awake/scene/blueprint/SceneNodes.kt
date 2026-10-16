@@ -89,7 +89,8 @@ object SceneNodes {
     }
 
     /**
-     * Destroys the target and its physics body. A wired target that gives no entity destroys nothing.
+     * Destroys the target with the nodes under it, and their physics bodies. A wired target that
+     * gives no entity destroys nothing.
      *
      * @param scene The blueprint scene execution bridge.
      */

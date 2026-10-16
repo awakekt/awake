@@ -21,6 +21,7 @@ import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.nodegraph.NodeGraph
 import com.awakekt.awake.scene.core.Name
+import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.animation.Animator
 import kotlinx.serialization.json.JsonPrimitive
 import kotlin.test.Test
@@ -78,6 +79,27 @@ class BlueprintSystemTest {
         assertFalse(world.isAlive(self))
         assertTrue(world.isAlive(bystander))
         assertEquals(emptyList(), warnings)
+    }
+
+    /** Destroy takes the nodes under its target too, children and theirs, and leaves its siblings. */
+    @Test
+    fun destroyTakesTheNodesUnderItsTarget() {
+        graphs["vanish"] = graph {
+            node("start", "event.start")
+            node("destroy", "entity.destroy")
+            wire("start.then", "destroy.exec")
+        }
+        val self = blueprint("vanish").also { world.add(it, Transform()) }
+        val glow = world.create().also { world.add(it, Transform().also { transform -> transform.parent = self }) }
+        val spark = world.create().also { world.add(it, Transform().also { transform -> transform.parent = glow }) }
+        val sibling = world.create().also { world.add(it, Transform()) }
+
+        step()
+
+        assertFalse(world.isAlive(self))
+        assertFalse(world.isAlive(glow), "its child")
+        assertFalse(world.isAlive(spark), "and its child's child")
+        assertTrue(world.isAlive(sibling), "but not a node beside it")
     }
 
     @Test
