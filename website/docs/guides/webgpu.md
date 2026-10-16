@@ -20,8 +20,12 @@ a canvas:
 
 | Overload | What it does |
 | --- | --- |
-| `launchWebGpuGame(canvasId = "awake-canvas", applicationFactory)` | Finds the `<canvas>` by id. Fails with "No canvas found with id '…'" when there is none. |
-| `launchWebGpuGame(canvas: HTMLCanvasElement, applicationFactory)` | Uses a canvas you already have. |
+| `launchWebGpuGame(canvasId = "awake-canvas", cursor, applicationFactory)` | Finds the `<canvas>` by id. Fails with "No canvas found with id '…'" when there is none. |
+| `launchWebGpuGame(canvas: HTMLCanvasElement, cursor, applicationFactory)` | Uses a canvas you already have. |
+
+`cursor` is optional. Pass `cursor = { runtime.cursor }`, the app runtime's request, and the canvas shows the
+pointer shape the UI asks for, as a text beam over a text field or a diagonal arrow over a corner handle.
+Without it the canvas keeps the page's cursor, as the desktop window does without its `cursor`.
 
 `applicationFactory` returns a `WebGpuEngine(appLifecycle, requestedPlan)`. Pass the same
 `RenderPlan` you give the Vulkan backend.

@@ -5,8 +5,13 @@
  */
 package com.awakekt.awake.sample.uishowcase.app
 
+import com.awakekt.awake.engine.compose.ComposeAppRuntime
+import com.awakekt.awake.engine.platform.dsl.requireService
 import com.awakekt.awake.webgpu.application.launchWebGpuGame
 
 fun main() {
-    launchWebGpuGame(applicationFactory = ::createUiShowcaseWebGpuApplication)
+    val game = uiShowcase()
+    // The browser shows no pointer shape unless the host is handed the runtime's request.
+    val runtime = game.requireService<ComposeAppRuntime>()
+    launchWebGpuGame(cursor = { runtime.cursor }) { createUiShowcaseWebGpuApplication(game) }
 }

@@ -5,7 +5,8 @@
  */
 package com.awakekt.awake.sample.composeshowcase.app
 
+import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
 import com.awakekt.awake.webgpu.application.WebGpuEngine
 
-fun createComposeShowcaseWebGpuApplication(): WebGpuEngine =
-    WebGpuEngine(appLifecycle = composeShowcase(), requestedPlan = ComposeShowcaseRenderPlan)
+fun createComposeShowcaseWebGpuApplication(game: AwakeAppLifecycle = composeShowcase()): WebGpuEngine =
+    WebGpuEngine(appLifecycle = game, requestedPlan = ComposeShowcaseRenderPlan)
