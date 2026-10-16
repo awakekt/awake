@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.engine.compose
 
+import com.awakekt.awake.compose.ui.graphics.ImageBitmap
 import com.awakekt.awake.compose.ui.graphics.drawscope.GraphicsLayerFrame
 import com.awakekt.awake.compose.ui.graphics.drawscope.GraphicsLayerPlaceholder
 import com.awakekt.awake.core.color.Color
@@ -146,6 +147,73 @@ class GraphicsLayerCompositorTest {
         assertIs<UiDrawPrimitive.Texture>(output.single())
         compositor.dispose()
         assertEquals(2, renderer.destroyedTargets)
+    }
+
+    /** On Vulkan an offscreen pass makes the CPU wait for the GPU, so a turned picture must not take one. */
+    @Test
+    fun aRotatedPictureLayerDrawsItsPictureDirectlyWithNoOffscreenPass() {
+        val renderer = RecordingCompositeRenderer()
+        val compositor = GraphicsLayerCompositor()
+        val picture = ImageBitmap(1, 1, byteArrayOf(-1, 0, 0, -1))
+        val output = compositor.composite(
+            renderer = renderer,
+            primitives = listOf(
+                UiDrawPrimitive.Texture(100f, 100f, 20f, 10f, GraphicsLayerPlaceholder(3), rotationDegrees = 90f, premultiplied = true),
+            ),
+            layers = listOf(
+                GraphicsLayerFrame(
+                    id = 3,
+                    x = 100f,
+                    y = 100f,
+                    width = 20,
+                    height = 10,
+                    alpha = 1f,
+                    primitives = listOf(
+                        // What a canvas element with no background paints under its picture.
+                        UiDrawPrimitive.Quad(0f, 0f, 20f, 10f, Color.Transparent),
+                        UiDrawPrimitive.Texture(0f, 0f, 10f, 10f, picture),
+                    ),
+                ),
+            ),
+            font = UiFonts.default(),
+            viewportWidth = 200,
+            viewportHeight = 200,
+        )
+
+        assertEquals(0, renderer.offscreenDraws)
+        assertEquals(0, renderer.createdTargets)
+        val drawn = assertIs<UiDrawPrimitive.Texture>(output.single())
+        // The picture's centre (105, 105), turned a clockwise quarter about the layer's (110, 105).
+        assertEquals(105f, drawn.x, 0.001f)
+        assertEquals(95f, drawn.y, 0.001f)
+        assertEquals(10f, drawn.w)
+        assertEquals(90f, drawn.rotationDegrees)
+        compositor.dispose()
+    }
+
+    @Test
+    fun aLayerHoldingMoreThanPicturesKeepsItsOffscreenPass() {
+        val renderer = RecordingCompositeRenderer()
+        val layer = GraphicsLayerFrame(
+            id = 4,
+            x = 0f,
+            y = 0f,
+            width = 10,
+            height = 10,
+            alpha = 1f,
+            primitives = listOf(UiDrawPrimitive.Quad(0f, 0f, 10f, 10f, Color.White)),
+        )
+        val output = GraphicsLayerCompositor().composite(
+            renderer = renderer,
+            primitives = listOf(UiDrawPrimitive.Texture(0f, 0f, 10f, 10f, GraphicsLayerPlaceholder(4), rotationDegrees = 30f, premultiplied = true)),
+            layers = listOf(layer),
+            font = UiFonts.default(),
+            viewportWidth = 80,
+            viewportHeight = 40,
+        )
+
+        assertEquals(1, renderer.offscreenDraws)
+        assertEquals(30f, assertIs<UiDrawPrimitive.Texture>(output.single()).rotationDegrees)
     }
 }
 
