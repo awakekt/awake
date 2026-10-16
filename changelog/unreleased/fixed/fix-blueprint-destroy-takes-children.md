@@ -1,1 +1,0 @@
-- **A blueprint's Destroy takes the nodes under its target.** Destroying a node now also destroys its children and theirs, deepest first, freeing each physics body, as deleting a node in an editor does. Before, the children were left at the scene's root, still drawn where they were, such as a pickup's glow left behind when the pickup was destroyed.
