@@ -206,12 +206,8 @@ tasks.register("verifyDesktopNatives") {
         check(archive.isFile) { "The final desktop publication jar was not produced: $archive" }
         val archiveEntries = ZipFile(archive).use { zip -> zip.entries().asSequence().map { it.name }.toSet() }
         val missingFromArchive = requiredNativePlatforms.filter { platform ->
-            val fileName = when {
-                platform.startsWith("macos-") -> "libawake-vulkan.dylib"
-                platform.startsWith("linux-") -> "libawake-vulkan.so"
-                else -> "libawake-vulkan"
-            }
-            "natives/$platform/$fileName" !in archiveEntries
+            // Windows has no "lib" prefix: the library is awake-vulkan.dll.
+            "natives/$platform/${platformLibraryFileName(platform, "awake-vulkan")}" !in archiveEntries
         }
         check(missingFromArchive.isEmpty()) {
             "The final desktop jar is missing native libraries for: ${missingFromArchive.joinToString(", ")}. " +
