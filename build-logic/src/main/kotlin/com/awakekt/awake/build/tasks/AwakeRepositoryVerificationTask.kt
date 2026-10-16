@@ -29,6 +29,7 @@ abstract class AwakeRepositoryVerificationTask : DefaultTask() {
         check("agent lock schema") { agentLockFailures() }.also(failures::addAll)
         check("detekt baselines") { detektBaselineFailures() }.also(failures::addAll)
         check("publication closure") { publicationClosureFailures() }.also(failures::addAll)
+        check("publication inventory tables") { inventoryFailures() }.also(failures::addAll)
         check("active UI documentation") { uiDocumentationFailures() }.also(failures::addAll)
         check("generated outputs") { generatedOutputFailures() }.also(failures::addAll)
         check("PR governance") { pullRequestGovernanceFailures() }.also(failures::addAll)
@@ -298,6 +299,43 @@ abstract class AwakeRepositoryVerificationTask : DefaultTask() {
             }
         }
         return failures.distinct()
+    }
+
+    /**
+     * The inventory tables list exactly the published modules, and their counts add up. The maven-coordinates
+     * table is checked against the build; the website module list and the counts are checked against that table.
+     */
+    private fun inventoryFailures(): List<String> {
+        val inventory = "docs/reference/maven-coordinates.md"
+        val site = "website/docs/reference/modules.md"
+        val failures = mutableListOf<String>()
+        val rows = Files.readAllLines(root.resolve(inventory)).mapNotNull {
+            Regex("^\\| `([^`]+)` \\| `(:awake[^`]*)` \\| (.+?) \\|").find(it)?.destructured
+        }
+        val tablePaths = rows.map { it.component2() }.toSet()
+        val published = project.subprojects.filter(::isPublished).map { it.path }.toSet()
+        (published - tablePaths).forEach { failures += "$inventory has no row for the published module $it" }
+        (tablePaths - published).forEach { failures += "$inventory lists $it, which is not published" }
+
+        fun familyRows(family: String) = rows.count { Regex("`$family`").containsMatchIn(it.component3()) }
+        val core = familyRows("core")
+        val vulkan = familyRows("vulkan")
+        val webgpu = familyRows("webgpu")
+        val counts = Files.readString(root.resolve(inventory))
+        listOf("Core" to core, "Vulkan" to vulkan, "WebGPU release pin" to webgpu).forEach { (family, expected) ->
+            val stated = Regex("^\\| $family \\| (\\d+) \\|", RegexOption.MULTILINE).find(counts)?.groupValues?.get(1)
+            if (stated != expected.toString()) failures += "$inventory says $family has $stated modules, its table has $expected"
+        }
+
+        val siteText = Files.readString(root.resolve(site))
+        val siteCoordinates = Regex("^\\| `(com\\.awakekt[^`]+)` \\| `awake-", RegexOption.MULTILINE)
+            .findAll(siteText).map { it.groupValues[1] }.toSet()
+        val tableCoordinates = rows.map { it.component1() }.toSet()
+        (tableCoordinates - siteCoordinates).forEach { failures += "$site has no row for $it" }
+        (siteCoordinates - tableCoordinates).forEach { failures += "$site lists $it, which is not in $inventory" }
+        val statedTotal = "Published modules | ${rows.size}: ${rows.size - vulkan} in Core, $vulkan in the Vulkan family."
+        if (statedTotal !in siteText) failures += "$site must state: $statedTotal"
+        return failures
     }
 
     private fun isPublished(candidate: Project): Boolean =

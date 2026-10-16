@@ -4,8 +4,12 @@ This page is the current Maven publication inventory. **It is maintained by hand
 that adds, removes or re-wires a published module updates its row and the family counts below. Rows
 are sorted by Gradle module path.
 
-`awakeVerify` guards two things the table depends on, but it does not write the table:
+`awakeVerify` does not write the table, but it fails when the table drifts, and it guards two other
+things it depends on:
 
+- **Inventory.** The table has a row for exactly the published Gradle modules, the family counts
+  below match its rows, and `website/docs/reference/modules.md` lists the same coordinates and
+  states the same totals.
 - **Publication closure.** Every published module's main-source `api` and `implementation` project
   dependencies must also be published.
 - **Known coordinates.** Every `com.awakekt.awake:*` coordinate mentioned in active Markdown must
@@ -32,7 +36,7 @@ no published artifact. Test-source dependencies are intentionally excluded.
 
 | Family | Published modules | Version source |
 |---|---:|---|
-| Core | 82 | Existing root `v*` tags and the shared Core release train |
+| Core | 85 | Existing root `v*` tags and the shared Core release train |
 | Vulkan | 3 | `vulkan-v*` tags; renderer, raw bindings, and Android JNI bridge move together |
 | WebGPU release pin | 1 | Each root `v*` tag publishes `:awake:backend:webgpu` as `<release>-SNAPSHOT`, Core held strictly at the release; `main` publishes it on the Core train |
 
@@ -115,6 +119,7 @@ Vulkan modules. Core `v*` releases and main snapshots do not publish or change t
 | `com.awakekt.awake.engine.render:passes` | `:awake:engine:render:passes` | `core` | `implementation` → `:awake:core:graphics2d`; `implementation` → `:awake:core:math2d`; `implementation` → `:awake:core:color`; `api` → `:awake:core:math`; `api` → `:awake:engine:render:contract` |
 | `com.awakekt.awake.engine.render:passes2d` | `:awake:engine:render:passes2d` | `core` | `api` → `:awake:engine:render:passes`; `api` → `:awake:engine:render:contract`; `api` → `:awake:core:math`; `api` → `:awake:core:graphics2d`; `implementation` → `:awake:core:color`; `implementation` → `:awake:core:geometry` |
 | `com.awakekt.awake.engine.render:testing` | `:awake:engine:render:testing` | `core` | `implementation` → `:awake:core:color`; `api` → `:awake:engine:render:contract` |
+| `com.awakekt.awake.engine:window` | `:awake:engine:window` | `core` | `api` → `:awake:engine:platform`; `api` → `:awake:core:input`; `implementation` → `:awake:core:logging`; `implementation` → `:awake:core:host` |
 | `com.awakekt.awake.kit:terrain-layers` | `:awake:kit:terrain-layers` | `core` | `api` → `:awake:terrain`; `api` → `:awake:asset:shader-pack`; `api` → `:awake:core:io`; `implementation` → `:awake:core:image` |
 | `com.awakekt.awake:navigation` | `:awake:navigation` | `core` | `implementation` → `:awake:core:math`; `implementation` → `:awake:core:color`; `api` → `:awake:ecs`; `api` → `:awake:world`; `api` → `:awake:asset:terrain`; `api` → `:awake:engine:render:contract` |
 | `com.awakekt.awake:node-graph` | `:awake:node-graph` | `core` | — |
@@ -147,6 +152,7 @@ Vulkan modules. Core `v*` releases and main snapshots do not publish or change t
 | `com.awakekt.awake.scene:worldstream` | `:awake:scene:worldstream` | `core` | `api` → `:awake:scene:world`; `api` → `:awake:scene:physics`; `api` → `:awake:scene:scene3d`; `api` → `:awake:scene:runtime`; `api` → `:awake:physics:api`; `api` → `:awake:asset:terrain`; `api` → `:awake:engine:render:contract`; `api` → `:awake:core:geometry`; `api` → `:awake:core:math`; `api` → `:awake:ecs` |
 | `com.awakekt.awake:tailwind` | `:awake:tailwind` | `core` | `implementation` → `:awake:core:math2d`; `implementation` → `:awake:core:math`; `implementation` → `:awake:core:color`; `api` → `:awake:compose:foundation` |
 | `com.awakekt.awake:terrain` | `:awake:terrain` | `core` | `api` → `:awake:asset:shaders`; `api` → `:awake:engine:render:contract` |
+| `com.awakekt.awake:tilemap` | `:awake:tilemap` | `core` | `api` → `:awake:core:geometry`; `api` → `:awake:core:math` |
 | `com.awakekt.awake.ui:canvas` | `:awake:ui:canvas` | `core` | `api` → `:awake:compose:runtime`; `api` → `:awake:compose:ui`; `api` → `:awake:core:math2d`; `api` → `:awake:core:math`; `api` → `:awake:core:text`; `api` → `:awake:core:schema`; `implementation` → `:awake:compose:foundation`; `implementation` → `:awake:core:color`; `implementation` → `:awake:core:graphics2d`; `implementation` → `:awake:core:input`; `implementation` → `:awake:core:logging` |
 | `com.awakekt.awake.ui:node-graph-canvas` | `:awake:ui:node-graph-canvas` | `core` | `api` → `:awake:node-graph`; `api` → `:awake:compose:foundation`; `implementation` → `:awake:core:color` |
 | `com.awakekt.awake.ui:shadcn` | `:awake:ui:shadcn` | `core` | `implementation` → `:awake:core:graphics2d`; `implementation` → `:awake:core:math2d`; `implementation` → `:awake:core:math`; `implementation` → `:awake:core:color`; `implementation` → `:awake:core:input`; `api` → `:awake:tailwind`; `api` → `:awake:compose:foundation` |

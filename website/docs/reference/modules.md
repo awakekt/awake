@@ -9,7 +9,7 @@
 | Group | `com.awakekt.awake`, plus the module's parent path: `:awake:scene:runtime` publishes `com.awakekt.awake.scene:runtime`. The Vulkan bindings are the exception: `com.awakekt.awake:vulkan-kmp`. |
 | Version | Core modules share one version; the newest is `{{ awake_version }}`. Vulkan family: `{{ awake_vulkan_version }}`, built against Core `{{ awake_vulkan_core_version }}`. See [Releases and compatibility](releases.md). |
 | Catalog alias | `awake-` plus the group after `com.awakekt.awake`, then the name, joined with `-`. The accessor replaces `-` with `.`: `awake-scene-runtime` is `libs.awake.scene.runtime`. The alias is your choice; this is the convention these docs use. |
-| Published modules | 82: 79 in Core, 3 in the Vulkan family. |
+| Published modules | 88: 85 in Core, 3 in the Vulkan family. |
 | Transitive modules | Declare only the modules your code uses. Each module's published metadata brings the modules it depends on. |
 
 A catalog entry looks like this:
@@ -57,6 +57,7 @@ awake-backend-vulkan = { module = "com.awakekt.awake.backend:vulkan", version.re
 | `com.awakekt.awake:particles` | `awake-particles` | Particle emitters: simulation, ground bounce, burst scheduling and instanced draw packets, with no scene needed. |
 | `com.awakekt.awake.engine:bootstrap` | `awake-engine-bootstrap` | Application and window bootstrap: `app { }`, the entry point a game calls. |
 | `com.awakekt.awake.engine:platform` | `awake-engine-platform` | Per-platform app lifecycle, windowing and surfaces behind one contract. |
+| `com.awakekt.awake.engine:window` | `awake-engine-window` | Each platform's native window and its input, behind the engine platform contract. |
 | `com.awakekt.awake.engine:compose` | `awake-engine-compose` | Hosts AwakeKt Compose inside an engine frame and paints it through the renderer. |
 
 ### Rendering
@@ -121,6 +122,7 @@ awake-backend-vulkan = { module = "com.awakekt.awake.backend:vulkan", version.re
 | Maven coordinate | Catalog alias | What it is |
 | --- | --- | --- |
 | `com.awakekt.awake:navigation` | `awake-navigation` | Heightmap-derived navigation grids, streamed navigation and path requests. |
+| `com.awakekt.awake:tilemap` | `awake-tilemap` | Finite tile grids, atlas chunk geometry and visibility, with no scene dependency. |
 | `com.awakekt.awake:world` | `awake-world` | World cells: coordinates, partition radii and the cell streaming contract, with no scene dependency. |
 | `com.awakekt.awake:ai` | `awake-ai` | Behavior tree and finite state machine primitives. |
 | `com.awakekt.awake.ai:behavior` | `awake-ai-behavior` | Starter behaviors that follow navigation paths: `patrol`, `chase`, `flee`, with no scene dependency. |
@@ -134,6 +136,7 @@ awake-backend-vulkan = { module = "com.awakekt.awake.backend:vulkan", version.re
 | --- | --- | --- |
 | `com.awakekt.awake:project` | `awake-project` | The AwakeKt project manifest format and its validation. |
 | `com.awakekt.awake.project:runtime` | `awake-project-runtime` | Plays a project without the editor: `loadProject`, `runProject`. |
+| `com.awakekt.awake.project:blueprint` | `awake-project-blueprint` | Plays a project's blueprint graphs: the capability a project names to run its scene's blueprints. |
 | `com.awakekt.awake.editor:contract` | `awake-editor-contract` | Public extension points and plugin contracts for AwakeKt Studio. |
 
 ### UI

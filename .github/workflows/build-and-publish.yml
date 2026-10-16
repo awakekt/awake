@@ -765,6 +765,35 @@ jobs:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ env.MAVEN_CENTRAL_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ env.MAVEN_CENTRAL_PASSWORD }}
 
+  # Resolves the released Core with the latest Vulkan release from Central and fails if any Core
+  # module stays on an older Core (tools/core-alignment-check). It only reads Central, so a red run
+  # leaves the release alone and can be re-run alone.
+  core-alignment:
+    name: Core alignment
+    # Up to an hour waiting for the BOM on repo1, then one resolution.
+    timeout-minutes: 75
+    if: >-
+      ${{
+        !cancelled() &&
+        startsWith(github.ref, 'refs/tags/v') &&
+        !startsWith(github.ref, 'refs/tags/vulkan-v') &&
+        needs.release.result == 'success'
+      }}
+    needs: [release]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Resolve Core ${{ github.ref_name }} with the latest Vulkan release
+        run: bash tools/core-alignment-check/check.sh "${GITHUB_REF_NAME#v}"
+
   vulkan-release:
     name: Vulkan Release
     # Room for Central to validate the deployment: the upload waits for its verdict.
