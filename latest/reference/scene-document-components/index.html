@@ -4144,6 +4144,12 @@ fades with distance from the active camera and pans with its direction. <code>Sc
 <td><code>""</code></td>
 <td>The font a <code>Text</code>'s, <code>TextField</code>'s or <code>Button</code>'s words draw in. A path ending in <code>.ttf</code> or <code>.otf</code>, any case, names a TrueType or OpenType file from the project's root, loaded once with the scene; one that cannot be read or is not a font is logged once and draws in the default font. Any other value names a built-in family: <code>default</code> (Roboto) or <code>bitmap</code> (a fixed-pitch pixel font). Empty draws in the default font. Another name, or a path with another extension, is reported. See <a href="../../guides/game-ui/#use-a-font">Game UI</a>.</td>
 </tr>
+<tr>
+<td><code>pressable</code></td>
+<td>boolean</td>
+<td><code>false</code></td>
+<td>Makes an <code>Image</code> or <code>Panel</code> take a tap as a <code>Button</code> does: <code>consumePress()</code> and <code>consumePressAt()</code> report it, and what is under the element doesn't get it. <code>false</code> leaves it watching the pointer only, so a tap passes through. A <code>Button</code> is always pressable; set on any other kind, it is reported.</td>
+</tr>
 </tbody>
 </table>
 <h2 id="character_controller"><code>character_controller</code></h2>

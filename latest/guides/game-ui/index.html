@@ -2857,6 +2857,12 @@ or a system polling <code>consumePress()</code>, sees the tap as it would withou
 <td>A <code>TextField</code>'s password mask: one character drawn for each typed one. Empty shows the text.</td>
 </tr>
 <tr>
+<td><code>pressable</code></td>
+<td>boolean</td>
+<td><code>false</code></td>
+<td>Lets an <code>Image</code> or <code>Panel</code> take a tap as a <code>Button</code> does. Without it, a tap passes through.</td>
+</tr>
+<tr>
 <td><code>textAlign</code></td>
 <td>one of the nine anchor points</td>
 <td>none</td>
@@ -2980,6 +2986,11 @@ or a system polling <code>consumePress()</code>, sees the tap as it would withou
 <td><code>consumePress()</code></td>
 <td><code>Boolean</code></td>
 <td><code>true</code> once for each tap on a <code>Button</code> since the last call.</td>
+</tr>
+<tr>
+<td><code>consumePressAt()</code></td>
+<td><code>Vec2?</code></td>
+<td>Where that tap landed, in the element's own units from its top-left, whatever the canvas's scale, and on a rotated element the point on its picture as if unturned; then takes the tap as <code>consumePress()</code> does. <code>null</code> when there is none. A map picture, as a pressable <code>Image</code>, turns it into a place.</td>
 </tr>
 <tr>
 <td><code>presses</code></td>

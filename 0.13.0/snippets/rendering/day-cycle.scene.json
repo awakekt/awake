@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "name": "sun",
+      "components": [
+        { "component": "light", "type": "Directional", "shadowDistance": 60.0 },
+        {
+          "component": "day_cycle",
+          "dayLengthSeconds": 600,
+          "time": 0.3,
+          "stops": [
+            { "time": 0.0, "horizonColor": "#0B1020", "zenithColor": "#02040A", "lightIntensity": 0.0, "ambient": 0.08 },
+            { "time": 0.25, "horizonColor": "#F2A65A", "zenithColor": "#3A4E7A", "lightColor": "#FFB070", "lightIntensity": 0.6, "ambient": 0.2 },
+            { "time": 0.5, "horizonColor": "#B8CCE0", "zenithColor": "#3361AD", "lightColor": "#FFF4E0", "lightIntensity": 1.0, "ambient": 0.3 },
+            { "time": 0.75, "horizonColor": "#F08A4B", "zenithColor": "#2E3A66", "lightColor": "#FF9A5C", "lightIntensity": 0.6, "ambient": 0.2 }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "environment",
+      "components": [ { "component": "skybox", "type": "Procedural" } ]
+    }
+  ]
+}
