@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.2] - 2026-10-16
+
+### Fixed
+
+- **Desktop games start on Windows.** `awake:engine:window` and the Vulkan bindings shipped their natives for macOS and Linux only, so a desktop game on Windows stopped at "Native library 'awake-window' is not available for 'windows-x86_64'". Releases now build both on a Windows runner and carry `awake-window.dll` and `awake-vulkan.dll`, with GLFW 3.4 as `glfw3.dll` beside the window library, which `GlfwWindow` loads first so both share one GLFW. The Windows natives link the C runtime in, so a player needs no Visual C++ redistributable, only a Vulkan driver. Building them needs Visual Studio's C++ tools, CMake and the Vulkan SDK; GLFW is fetched by the build.
+- **Up and Down in a focused single-line text field no longer walk the player.** Since 0.13.1 such a field lets Up and Down through to the game, so a chat line can step through its sent history, but the scene's input actions read them as well, and the default movement actions bind them to moving forward and back. Input actions now read no key while the UI has the keyboard (`ActionInputSource.keysWithheldFromActions`, which `GameplayInput` answers), while a system reading `GameplayInput.isDown` or `wasPressed` still sees the keys the field lets through.
+- **A canvas TextField the game clears after a send stays empty, even when the line was typed the same frame as its Enter.** `consumeSubmit()` returned the whole line, but the typing hadn't reached `text` yet, so the game's `text = ""` looked like no change and the next frame put the sent line back. Submitting now writes the line to `text`, so clearing it afterwards empties the field.
+- **A blueprint's Destroy takes the nodes under its target.** Destroying a node now also destroys its children and theirs, deepest first, freeing each physics body, as deleting a node in an editor does. Before, the children were left at the scene's root, still drawn where they were, such as a pickup's glow left behind when the pickup was destroyed.
+- **Set Text and Set Visible say when the element they name isn't there.** A node whose `name` matches no node, such as a typo or a node renamed since, still does nothing, but now warns once, as a wired target that finds no one does since 0.13.1. It also warns when the named node has no canvas element.
+
 ## [0.13.1] - 2026-10-16
 
 ### Fixed
