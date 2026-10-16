@@ -1773,6 +1773,8 @@
       
         
       
+        
+      
     
     
     
@@ -1892,6 +1894,34 @@
     
   
     shadcn components
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../localization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Localization
   
 
     
@@ -2451,15 +2481,18 @@ a canvas:</p>
 </thead>
 <tbody>
 <tr>
-<td><code>launchWebGpuGame(canvasId = "awake-canvas", applicationFactory)</code></td>
+<td><code>launchWebGpuGame(canvasId = "awake-canvas", cursor, applicationFactory)</code></td>
 <td>Finds the <code>&lt;canvas&gt;</code> by id. Fails with "No canvas found with id '…'" when there is none.</td>
 </tr>
 <tr>
-<td><code>launchWebGpuGame(canvas: HTMLCanvasElement, applicationFactory)</code></td>
+<td><code>launchWebGpuGame(canvas: HTMLCanvasElement, cursor, applicationFactory)</code></td>
 <td>Uses a canvas you already have.</td>
 </tr>
 </tbody>
 </table>
+<p><code>cursor</code> is optional. Pass <code>cursor = { runtime.cursor }</code>, the app runtime's request, and the canvas shows the
+pointer shape the UI asks for, as a text beam over a text field or a diagonal arrow over a corner handle.
+Without it the canvas keeps the page's cursor, as the desktop window does without its <code>cursor</code>.</p>
 <p><code>applicationFactory</code> returns a <code>WebGpuEngine(appLifecycle, requestedPlan)</code>. Pass the same
 <code>RenderPlan</code> you give the Vulkan backend.</p>
 <h2 id="what-happens-at-launch">What happens at launch</h2>
