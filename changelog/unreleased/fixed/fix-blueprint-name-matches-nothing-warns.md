@@ -1,0 +1,1 @@
+- **Set Text and Set Visible say when the element they name isn't there.** A node whose `name` matches no node, such as a typo or a node renamed since, still does nothing, but now warns once, as a wired target that finds no one does since 0.13.1. It also warns when the named node has no canvas element.
