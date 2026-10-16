@@ -26,6 +26,20 @@ enum class PointerCursor {
     /** Vertical resize cursor indicating vertical boundary adjustment. */
     ResizeVertical,
 
+    /**
+     * Diagonal resize cursor, top-left to bottom-right, for a top-left or bottom-right corner
+     * handle. CSS's `nwse-resize`. Where the platform has no diagonal shape (a system GLFW older
+     * than 3.4, or a cursor theme without one), the desktop host shows the [Default] arrow.
+     */
+    ResizeNorthWestSouthEast,
+
+    /**
+     * Diagonal resize cursor, top-right to bottom-left, for a top-right or bottom-left corner
+     * handle. CSS's `nesw-resize`. Falls back to the [Default] arrow as
+     * [ResizeNorthWestSouthEast] does.
+     */
+    ResizeNorthEastSouthWest,
+
     /** Pointing hand cursor typically used for interactive links and buttons. */
     Pointer,
 

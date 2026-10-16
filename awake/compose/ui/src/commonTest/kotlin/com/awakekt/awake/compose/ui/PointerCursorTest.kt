@@ -6,7 +6,10 @@
 package com.awakekt.awake.compose.ui
 
 import com.awakekt.awake.compose.foundation.layout.Box
+import com.awakekt.awake.compose.foundation.layout.Row
+import com.awakekt.awake.compose.foundation.layout.Spacer
 import com.awakekt.awake.compose.foundation.layout.size
+import com.awakekt.awake.compose.foundation.layout.width
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.ui.input.pointer.pointerCursor
 import com.awakekt.awake.compose.ui.platform.ComposeHost
@@ -64,6 +67,23 @@ class PointerCursorTest {
         }
 
         assertEquals(PointerCursor.ResizeHorizontal, cursor)
+    }
+
+    @Test
+    fun aCornerHandleRequestsItsDiagonal() {
+        // The top-left and top-right corner handles along an 80dp edge.
+        val corners = listOf(10 to PointerCursor.ResizeNorthWestSouthEast, 70 to PointerCursor.ResizeNorthEastSouthWest)
+        for ((x, expected) in corners) {
+            val cursor = hoverAt(x, 10) {
+                Row {
+                    Box(Modifier.size(20.dp).pointerCursor(PointerCursor.ResizeNorthWestSouthEast))
+                    Spacer(Modifier.width(40.dp))
+                    Box(Modifier.size(20.dp).pointerCursor(PointerCursor.ResizeNorthEastSouthWest))
+                }
+            }
+
+            assertEquals(expected, cursor, "at x=$x")
+        }
     }
 
     @Test
