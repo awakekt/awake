@@ -32,7 +32,10 @@ import com.awakekt.awake.core.input.ScrollSource
  * has focus stays legitimate. That asymmetry is deliberate -- `CameraSystem` carried the comment
  * saying so -- and it survives here rather than being tidied into one flag.
  *
- * It is also what a scene's input actions read keys and pointer buttons from, with the same rules.
+ * It is also what a scene's input actions read keys and pointer buttons from, with one difference:
+ * while [keysOwnedByUi], actions read no key at all ([keysWithheldFromActions]). The keys a focused
+ * field lets through are for a system that asks for them directly, not for movement, jump or run
+ * bound to the same keys -- Up both recalling a chat line and walking the player forward.
  *
  * @param snapshot Raw input state snapshot captured this frame.
  * @param claimed UI input ownership state for the current frame.
@@ -90,6 +93,9 @@ class GameplayInput(
      * that simply saw `isDown == false` would leave the player walking in the last direction.
      */
     val keysOwnedByUi: Boolean get() = claimed.blocksGameplayKeys
+
+    /** [keysOwnedByUi]: input actions read no key while the UI has the keyboard, even a key [isDown] lets through. */
+    override val keysWithheldFromActions: Boolean get() = claimed.blocksGameplayKeys
 
     /** True when a modal layer is open. */
     val isModalOpen: Boolean get() = claimed.isModalOpen

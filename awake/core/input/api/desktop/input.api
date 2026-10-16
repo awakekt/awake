@@ -1,8 +1,13 @@
 public abstract interface class com/awakekt/awake/core/input/ActionInputSource {
+	public fun getKeysWithheldFromActions ()Z
 	public abstract fun isDown (Lcom/awakekt/awake/core/input/Key;)Z
 	public abstract fun isDown (Lcom/awakekt/awake/core/input/PointerButton;)Z
 	public abstract fun wasPressed (Lcom/awakekt/awake/core/input/Key;)Z
 	public abstract fun wasPressed (Lcom/awakekt/awake/core/input/PointerButton;)Z
+}
+
+public final class com/awakekt/awake/core/input/ActionInputSource$DefaultImpls {
+	public static fun getKeysWithheldFromActions (Lcom/awakekt/awake/core/input/ActionInputSource;)Z
 }
 
 public final class com/awakekt/awake/core/input/ActionTrigger : java/lang/Enum {
@@ -177,6 +182,7 @@ public final class com/awakekt/awake/core/input/InputSnapshot : com/awakekt/awak
 	public final fun getKeysDown ()Ljava/util/Set;
 	public final fun getKeysPressed ()Ljava/util/Set;
 	public final fun getKeysReleased ()Ljava/util/Set;
+	public fun getKeysWithheldFromActions ()Z
 	public final fun getPointerDown ()Z
 	public final fun getPointerFromTouch ()Z
 	public final fun getPointerPressed ()Z

@@ -95,6 +95,22 @@ class InputActionsTest {
     }
 
     @Test
+    fun aSourceWithholdingKeysTriggersNoKeyBoundActionButStillItsPointerButtons() {
+        val held = setOf(Key.W, Key.Space, Key.X)
+        actions.beginFrame()
+        actions.read(Source(down = held, pressed = held, buttons = setOf(PointerButton.Primary), withholdsKeys = true))
+
+        assertEquals(0f, actions.axisY("move"), "a withheld W must not move")
+        assertFalse(actions.isActive("jump"), "a withheld Space must not jump")
+        assertFalse(actions.isActive("walk"), "a withheld X must not switch a toggle")
+        assertTrue(actions.isActive("run"), "a toggle keeps its state through a frame that reads no keys")
+        assertTrue(actions.isActive("fire"), "pointer buttons are read either way")
+
+        frame(down = held, pressed = held)
+        assertEquals(1f, actions.axisY("move"), "control: the same keys move once the source stops withholding them")
+    }
+
+    @Test
     fun anUnknownActionIsInactiveAndOtherSourcesLeaveItAlone() {
         actions.hold("missing")
         actions.press("missing")
@@ -121,10 +137,12 @@ class InputActionsTest {
         private val down: Set<Key> = emptySet(),
         private val pressed: Set<Key> = emptySet(),
         private val buttons: Set<PointerButton> = emptySet(),
+        private val withholdsKeys: Boolean = false,
     ) : ActionInputSource {
         override fun isDown(key: Key) = key in down
         override fun wasPressed(key: Key) = key in pressed
         override fun isDown(button: PointerButton) = button in buttons
         override fun wasPressed(button: PointerButton) = false
+        override val keysWithheldFromActions: Boolean get() = withholdsKeys
     }
 }

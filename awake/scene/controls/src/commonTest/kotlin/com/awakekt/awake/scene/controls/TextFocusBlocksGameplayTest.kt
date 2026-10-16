@@ -105,6 +105,27 @@ class TextFocusBlocksGameplayTest {
     }
 
     @Test
+    fun theUpAndDownASingleLineFieldLetsThroughDoNotSteerThePlayer() {
+        // A system stepping through sent lines reads Up past the field (above), but the default
+        // movement actions bind Up and Down to the move axis as well.
+        val chatLine = InputOwnership(isTextInputFocused = true, isTextInputSingleLine = true)
+        assertEquals(1f, moveZAfter(GameplayInput(snapshotWith(Key.ArrowUp), InputOwnership())), "control: Up moves the player forward")
+        assertEquals(-1f, moveZAfter(GameplayInput(snapshotWith(Key.ArrowDown), InputOwnership())), "control: Down moves the player back")
+
+        assertEquals(0f, moveZAfter(GameplayInput(snapshotWith(Key.ArrowUp), chatLine)), "Up in a chat line must not walk the player")
+        assertEquals(0f, moveZAfter(GameplayInput(snapshotWith(Key.ArrowDown), chatLine)), "Down in a chat line must not walk the player")
+        assertTrue(GameplayInput(snapshotWith(Key.ArrowUp), chatLine).wasPressed(Key.ArrowUp), "a system asking for Up still sees it")
+    }
+
+    private fun moveZAfter(input: GameplayInput): Float {
+        val world = World()
+        val subject = world.create()
+        world.add(subject, MovementControl())
+        PlayerInputSystem(inputProvider = { input }).update(world, DELTA)
+        return world.get(subject, MovementControl::class)!!.moveZ
+    }
+
+    @Test
     fun holdingWithoutUiOwnershipStillMovesThePlayer() {
         val world = World()
         val subject = world.create()

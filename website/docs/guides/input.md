@@ -56,6 +56,11 @@ answers `false` for anything the UI owns:
 `GameplayInput` is in `com.awakekt.awake.scene:controls`. The built-in camera and player systems
 already read input through it.
 
+A focused single-line field lets through the keys it has no use for, such as Up and Down, so a
+system reading them from `GameplayInput` still sees them, for stepping through a chat line's sent
+history, say. The scene's input actions read no key at all while a field has focus, so movement
+bound to Up doesn't also walk the player.
+
 ## Bind actions in the scene
 
 A scene's `input_actions` component names its actions and what triggers each: keys, pointer buttons

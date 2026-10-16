@@ -67,6 +67,14 @@ interface ActionInputSource {
 
     /** Whether pointer [button] was pressed this frame. */
     fun wasPressed(button: PointerButton): Boolean
+
+    /**
+     * Whether actions bound to keys must read no key at all this frame, though [isDown] and
+     * [wasPressed] may still answer for some. A focused text field lets keys it has no use for
+     * through to a system that asks for one, but movement bound to such a key must not walk the
+     * player while they type. Pointer buttons are read either way. False unless a source says so.
+     */
+    val keysWithheldFromActions: Boolean get() = false
 }
 
 /**
@@ -114,10 +122,14 @@ class InputActions(definitions: List<InputActionDefinition>) {
         for (state in axes) state.set(0f, 0f)
     }
 
-    /** Holds and presses the actions bound to what [source] holds and presses, and sets each axis from its keys. */
+    /**
+     * Holds and presses the actions bound to what [source] holds and presses, and sets each axis from
+     * its keys. While [ActionInputSource.keysWithheldFromActions], only pointer buttons are read.
+     */
     fun read(source: ActionInputSource) {
-        for (state in buttons) state.read(source)
-        for (state in axes) state.read(source)
+        val readKeys = !source.keysWithheldFromActions
+        for (state in buttons) state.read(source, readKeys)
+        if (readKeys) for (state in axes) state.read(source)
     }
 
     /** Holds button [action] this frame, as a held on-screen button does. */
@@ -185,10 +197,12 @@ private class ButtonState(definition: ButtonAction) {
         if (trigger == ActionTrigger.Toggle) on = !on
     }
 
-    fun read(source: ActionInputSource) {
-        for (key in keys) {
-            if (source.isDown(key)) held = true
-            if (source.wasPressed(key)) press()
+    fun read(source: ActionInputSource, readKeys: Boolean) {
+        if (readKeys) {
+            for (key in keys) {
+                if (source.isDown(key)) held = true
+                if (source.wasPressed(key)) press()
+            }
         }
         for (button in buttons) {
             if (source.isDown(button)) held = true
