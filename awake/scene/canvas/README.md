@@ -36,6 +36,13 @@ once and its elements draw in the default font. A host that draws nothing loads 
 answers a `CanvasResolver` built from it (`SceneCanvasResolver`) to `awake:ui:canvas`'s
 `CanvasOverlay`, which does the actual drawing.
 
+Elements of the same `order` draw in hierarchy order: a node before the nodes under it, and an
+earlier sibling, with everything under it, before a later one, so the later one is on top and takes
+the pointer. Siblings are in the order the world stores their `Transform`s, which is the order the
+scene saves them in and, for a loaded scene, the order its document lists them. An editor whose
+hierarchy can move siblings passes its own order as `SceneCanvas(world, siblingOrder = …)`; siblings
+it calls equal keep the world's order.
+
 ## A 3D view and following a node
 
 A `View` shows what the camera on the node its `camera` names sees; `SceneCanvas(world, views = …)`

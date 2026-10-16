@@ -134,7 +134,10 @@ class CanvasElement {
     /** Normalized fill value for progress bars (0.0 to 1.0). */
     var value: Float = 1f
 
-    /** Z-ordering layer index for overlapping elements. */
+    /**
+     * Z-ordering layer index for overlapping elements: a higher one draws over a lower one and takes
+     * the pointer from it. Of the same order, a host's own order decides, for a scene its hierarchy.
+     */
     var order: Int = 0
 
     /** Whether this element is rendered. */

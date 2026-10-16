@@ -11,6 +11,7 @@ import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.graphics.ImageBitmap
 import com.awakekt.awake.core.text.font.UiFont
+import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.ui.canvas.CanvasOverlay
@@ -18,7 +19,10 @@ import com.awakekt.awake.ui.canvas.CanvasOverlay
 context(_: Composer)
 /**
  * Draws [world]'s visible [CanvasElement]s over whatever is beneath, lowest [CanvasElement.order]
- * first. Each element is tagged `canvas-element-<entity id>` for tests and editor picking.
+ * first, and those of the same order in hierarchy order: a node before the nodes under it, and an
+ * earlier sibling, with everything under it, before a later one. Of two that overlap, the one drawn
+ * later is on top and takes the pointer. Each element is tagged `canvas-element-<entity id>` for
+ * tests and editor picking.
  * [CanvasElement.touchOnly] elements are drawn only when [showTouchControls] is true.
  *
  * An element whose entity has another element above it in the scene hierarchy is drawn inside the
@@ -44,6 +48,11 @@ context(_: Composer)
  *   runtime's own.
  * @param fonts The loaded font files elements name in [CanvasElement.font], by path, as
  *   [loadCanvasFonts] reads them. An element whose file is missing draws in the default font.
+ * @param siblingOrder How the children of one node, and the roots, are ordered, for elements of the
+ *   same order: an editor whose hierarchy lets siblings be moved passes its own order, so that what
+ *   its hierarchy lists later draws on top. Siblings it calls equal, and every sibling when it is
+ *   null, are ordered as the world stores their `Transform`s: the order [world] saves them in, and
+ *   for a loaded scene the order its document lists them.
  */
 fun SceneCanvas(
     world: World,
@@ -55,9 +64,10 @@ fun SceneCanvas(
     bindings: List<SceneComponentBinding<*, *>>? = null,
     views: CanvasViews? = null,
     fonts: Map<String, UiFont> = emptyMap(),
+    siblingOrder: Comparator<Entity>? = null,
 ) {
     CanvasOverlay(
-        world.canvasItems(),
+        world.canvasItems(siblingOrder),
         modifier,
         showTouchControls,
         images,

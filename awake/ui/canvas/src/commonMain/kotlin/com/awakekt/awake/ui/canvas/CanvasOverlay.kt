@@ -56,8 +56,9 @@ import com.awakekt.awake.core.text.theme.TextStyle
 
 context(_: Composer)
 /**
- * Draws [items] over whatever is beneath, lowest [CanvasElement.order] first. Each item is tagged
- * `canvas-element-<id>` for tests and editor picking. [CanvasElement.touchOnly] elements are drawn
+ * Draws [items] over whatever is beneath, lowest [CanvasElement.order] first, and items of the same
+ * order as [items] lists them: of two that overlap, the later is on top and takes the pointer. Each
+ * item is tagged `canvas-element-<id>` for tests and editor picking. [CanvasElement.touchOnly] elements are drawn
  * only when [showTouchControls] is true.
  *
  * An item whose [CanvasItem.parent] is in [items] is drawn inside that parent's box: anchored and

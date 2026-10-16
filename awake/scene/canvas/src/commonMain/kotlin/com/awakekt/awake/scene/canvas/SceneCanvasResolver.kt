@@ -107,19 +107,94 @@ internal class SceneCanvasResolver(
     }
 }
 
-/** One [CanvasItem] a frame for every [CanvasElement] in this world, its parent the nearest canvas element above it. */
-internal fun World.canvasItems(): List<CanvasItem> {
-    val items = ArrayList<CanvasItem>()
-    family<CanvasElement>().forEach { entity, element -> items += CanvasItem(entity.id, element, canvasParent(entity)) }
-    return items
+/**
+ * One [CanvasItem] a frame for every [CanvasElement] in this world, its parent the nearest canvas
+ * element above it, in hierarchy order: a node before the nodes under it, and an earlier sibling,
+ * with everything under it, before a later one. `CanvasOverlay` sorts by [CanvasElement.order]
+ * keeping this order among equals, so of two elements with the same order, the later in the
+ * hierarchy draws on top and takes the pointer.
+ *
+ * Siblings are ordered by [siblingOrder], and those it calls equal, or every sibling when it is
+ * null, as the world stores their [Transform]s: the order a scene saves them in, and for a loaded
+ * scene the order its document lists them. A root with no [Transform] comes after those with one.
+ */
+internal fun World.canvasItems(siblingOrder: Comparator<Entity>? = null): List<CanvasItem> {
+    val placed = ArrayList<PlacedItem>()
+    family<CanvasElement>().forEach { entity, element ->
+        val path = hierarchyPath(entity)
+        placed += PlacedItem(CanvasItem(entity.id, element, canvasParent(path)), path)
+    }
+    if (placed.size > 1) {
+        val stored = StoredOrder(this, placed)
+        val siblings = siblingOrder?.then(stored) ?: stored
+        placed.sortWith { a, b -> comparePaths(a.path, b.path, siblings) }
+    }
+    return placed.map { it.item }
 }
 
-/** The [CanvasElement] of the nearest ancestor of [entity] through [Transform] that has one, or null. */
-private fun World.canvasParent(entity: Entity): CanvasElement? {
-    var node = get<Transform>(entity)?.parent
-    while (node != null) {
-        get<CanvasElement>(node)?.let { return it }
+/** A [CanvasItem] and the path down to its entity from its root. */
+private class PlacedItem(val item: CanvasItem, val path: List<Entity>)
+
+/**
+ * Siblings in the order the world stores their [Transform]s; a node with none after those with one,
+ * by the order its [CanvasElement] was collected in, then by id. The whole order is total, so a sort
+ * by it is well defined.
+ *
+ * Where each node sits is found on the first comparison that needs it, in one pass over the world's
+ * [Transform]s that looks up only the nodes on [placed]'s paths.
+ */
+private class StoredOrder(private val world: World, private val placed: List<PlacedItem>) : Comparator<Entity> {
+    private val collected: Map<Entity, Int> by lazy {
+        HashMap<Entity, Int>().also { at -> placed.forEachIndexed { index, item -> at[item.path.last()] = index } }
+    }
+
+    private val stored: Map<Entity, Int> by lazy {
+        val wanted = HashSet<Entity>().also { nodes -> placed.forEach { nodes += it.path } }
+        val at = HashMap<Entity, Int>(wanted.size * 2)
+        var index = 0
+        world.family<Transform>().forEach { entity, _ ->
+            if (entity in wanted) at[entity] = index
+            index++
+        }
+        at
+    }
+
+    override fun compare(a: Entity, b: Entity): Int {
+        val byStorage = (stored[a] ?: Int.MAX_VALUE).compareTo(stored[b] ?: Int.MAX_VALUE)
+        if (byStorage != 0) return byStorage
+        val byCollection = (collected[a] ?: Int.MAX_VALUE).compareTo(collected[b] ?: Int.MAX_VALUE)
+        return if (byCollection != 0) byCollection else a.packed.compareTo(b.packed)
+    }
+}
+
+/**
+ * Where [a] and [b] part, the two siblings they go through there, compared by [siblings]; when one
+ * path holds the other, the shorter one, the node above, comes first.
+ */
+private fun comparePaths(a: List<Entity>, b: List<Entity>, siblings: Comparator<Entity>): Int {
+    for (index in 0 until minOf(a.size, b.size)) {
+        if (a[index] != b[index]) return siblings.compare(a[index], b[index])
+    }
+    return a.size.compareTo(b.size)
+}
+
+/**
+ * [entity] and its ancestors through [Transform], from its root down to [entity] itself. A parent
+ * link that loops back stops the walk where it would revisit a node.
+ */
+private fun World.hierarchyPath(entity: Entity): List<Entity> {
+    val path = ArrayList<Entity>()
+    var node: Entity? = entity
+    while (node != null && node !in path) {
+        path += node
         node = get<Transform>(node)?.parent
     }
+    path.reverse()
+    return path
+}
+
+/** The [CanvasElement] of the nearest ancestor on [path], an entity's [hierarchyPath], that has one, or null. */
+private fun World.canvasParent(path: List<Entity>): CanvasElement? {
+    for (index in path.size - 2 downTo 0) get<CanvasElement>(path[index])?.let { return it }
     return null
 }
