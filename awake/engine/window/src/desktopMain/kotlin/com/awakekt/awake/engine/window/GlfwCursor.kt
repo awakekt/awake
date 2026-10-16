@@ -10,13 +10,19 @@ import com.awakekt.awake.engine.window.GlfwWindow
 
 // GLFW's standard cursor shape constants (glfw3.h) -- desktop-only, mirrors GLFW_PRESS's own
 // "just the raw int this project's Kotlin side needs" style in GlfwWindowInput.kt. Old-style
-// names (matching this project's minimum GLFW version); GLFW 3.4 added synonyms
-// (GLFW_RESIZE_EW_CURSOR etc.) this project doesn't need.
+// names where GLFW 3.3 has the shape; GLFW 3.4 added synonyms (GLFW_RESIZE_EW_CURSOR etc.) this
+// project doesn't need.
 internal const val GLFW_ARROW_CURSOR = 0x00036001
 internal const val GLFW_HAND_CURSOR = 0x00036004
 internal const val GLFW_HRESIZE_CURSOR = 0x00036005
 internal const val GLFW_VRESIZE_CURSOR = 0x00036006
 internal const val GLFW_IBEAM_CURSOR = 0x00036002
+
+// The diagonals are GLFW 3.4's own. A GLFW without them (the system one macOS and Linux link may
+// be 3.3), or a cursor theme that lacks them, gives glfwCreateStandardCursor's NULL, which
+// glfwSetCursor shows as the arrow; the native side caches that NULL, so it is not asked again.
+internal const val GLFW_RESIZE_NWSE_CURSOR = 0x00036007
+internal const val GLFW_RESIZE_NESW_CURSOR = 0x00036008
 
 /** Maps [cursor] to the GLFW standard-cursor shape constant [GlfwWindow.glfwSetCursorShape]
  * expects -- pure, so it's tested without a live window (see that function's own doc comment
@@ -25,6 +31,8 @@ internal fun PointerCursor.toGlfwCursorShape(): Int = when (this) {
     PointerCursor.Default -> GLFW_ARROW_CURSOR
     PointerCursor.ResizeHorizontal -> GLFW_HRESIZE_CURSOR
     PointerCursor.ResizeVertical -> GLFW_VRESIZE_CURSOR
+    PointerCursor.ResizeNorthWestSouthEast -> GLFW_RESIZE_NWSE_CURSOR
+    PointerCursor.ResizeNorthEastSouthWest -> GLFW_RESIZE_NESW_CURSOR
     PointerCursor.Pointer -> GLFW_HAND_CURSOR
     PointerCursor.Text -> GLFW_IBEAM_CURSOR
 }

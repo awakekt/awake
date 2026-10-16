@@ -292,6 +292,8 @@ public final class com/awakekt/awake/core/input/PointerCursor : java/lang/Enum {
 	public static final field Default Lcom/awakekt/awake/core/input/PointerCursor;
 	public static final field Pointer Lcom/awakekt/awake/core/input/PointerCursor;
 	public static final field ResizeHorizontal Lcom/awakekt/awake/core/input/PointerCursor;
+	public static final field ResizeNorthEastSouthWest Lcom/awakekt/awake/core/input/PointerCursor;
+	public static final field ResizeNorthWestSouthEast Lcom/awakekt/awake/core/input/PointerCursor;
 	public static final field ResizeVertical Lcom/awakekt/awake/core/input/PointerCursor;
 	public static final field Text Lcom/awakekt/awake/core/input/PointerCursor;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
