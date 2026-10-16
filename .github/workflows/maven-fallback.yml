@@ -82,6 +82,8 @@ jobs:
             [ -e "$zip" ] || continue
             unzip -q -o "$zip" -d build/maven-fallback
           done
+          # Fails the deploy, and so keeps the live site, if the site would lose a pinned build.
+          scripts/check-ygdrasil-mirror.sh build/maven-fallback
 
       - uses: actions/upload-pages-artifact@v5
         if: steps.bundles.outputs.count != '0'

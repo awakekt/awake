@@ -20,7 +20,9 @@ pluginManagement {
 
 dependencyResolutionManagement {
     repositories {
-        maven("https://central.sonatype.com/repository/maven-snapshots/")
+        // Not io.ygdrasil: the wgpu4k builds are served by the Awake mirror below, and a cached module
+        // recorded as coming from Sonatype would be searched only there.
+        maven("https://central.sonatype.com/repository/maven-snapshots/") { mavenContent { excludeGroup("io.ygdrasil") } }
         google {
             mavenContent {
                 includeGroupAndSubgroups("androidx")

@@ -420,6 +420,11 @@ if (publishFamily == "vulkan") {
 /**
  * The io.ygdrasil builds published together on 2026-07-16, keyed by the floating version each
  * family declares. Move a family forward only together with the others it links against.
+ *
+ * Sonatype removed these builds, so they are served from the mirror-io.ygdrasil-* GitHub Release
+ * through the Maven fallback site (`io.ygdrasil` is excluded from the snapshot repos in
+ * settings.gradle.kts). A new pin needs its mirror release first: docs/release-process.md,
+ * "The wgpu4k pins are hosted".
  */
 val pinnedYgdrasilSnapshots = mapOf(
     "0.0.10-SNAPSHOT" to "0.0.10-20260716.185724-3", // webgpu-ktypes, -descriptors, -web

@@ -241,6 +241,47 @@ since the pin is a snapshot that job can be re-run. Pull requests and `main` run
 build and metadata check (CI's **WebGPU release pin** job, on a throwaway tag), so a tag is not the
 first run of it.
 
+#### The wgpu4k pins are hosted
+
+`io.ygdrasil` (wgpu4k and its type libraries) publishes only snapshots, and Sonatype removed the
+builds the backend pins (`pinnedYgdrasilSnapshots` in `build.gradle.kts`, all from 2026-07-16)
+while upstream has had no newer commit. Awake therefore hosts those exact files, which are MIT
+licensed: the `mirror-io.ygdrasil-20260716` GitHub Release holds `io-ygdrasil-20260716-maven.zip`,
+Sonatype's files and checksums at its paths (`io/ygdrasil/<module>/<version>-SNAPSHOT/<module>-<timestamped version>.*`,
+plus `LICENSE-wgpu4k.txt`). The **Maven fallback** workflow unpacks every `mirror-io.ygdrasil-*`
+release into `https://awakekt.github.io/awake/` on each deploy, so the pins survive the site's
+regeneration, and runs `scripts/check-ygdrasil-mirror.sh` on the result: a deploy that would lose a
+pinned file fails and the live site stays as it was.
+
+The builds read the mirror for `io.ygdrasil` only, and `settings.gradle.kts` excludes that group from
+the Sonatype snapshot repos. Without the exclusion, a Gradle cache that once resolved a pinned
+module from Sonatype (a restored CI cache) looks for its missing files only there, whatever other
+repositories are declared; that is how v0.13.0's **Verify what will be published** step failed.
+
+A consumer of a WebGPU pin needs the mirror too: the pin's published metadata constrains
+`io.ygdrasil` to the timestamped builds, and only the mirror holds them.
+
+```kotlin
+repositories {
+    mavenCentral()
+    maven("https://central.sonatype.com/repository/maven-snapshots/") { content { excludeGroup("io.ygdrasil") } }
+    maven("https://awakekt.github.io/awake/") { content { includeGroup("io.ygdrasil") } }
+}
+```
+
+To move a pin, for instance if upstream publishes again:
+
+1. Resolve the new builds in a scratch Gradle home and copy `io.ygdrasil` from a repository that
+   still serves them, keeping the files, checksums and paths unchanged.
+2. Attach the result as `io-ygdrasil-<date>-maven.zip` to a new `mirror-io.ygdrasil-<date>` pre-release
+   (keep the old one while released pins still name it), with the licence file in the archive.
+3. Change `pinnedYgdrasilSnapshots`, `ygdrasilModules` and the module list in
+   `scripts/check-ygdrasil-mirror.sh` together, and run the check against the unpacked archive.
+4. Run **Maven fallback** by hand, then check `scripts/check-ygdrasil-mirror.sh <url>` against the live site.
+
+Verify a change to any of this with an empty Gradle home (`GRADLE_USER_HOME=$(mktemp -d)`) and
+`./gradlew :awake:backend:webgpu:wasmJsPackageJson :awake:backend:webgpu:compileKotlinDesktop`.
+
 ### Template publishing
 
 The three starter templates (`templates/game`, `templates/project`, `templates/plugin`) live in

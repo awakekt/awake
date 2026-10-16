@@ -40,7 +40,10 @@ your code imports or otherwise uses them.
   publishes its release pin, `com.awakekt.awake.backend:webgpu:<release>-SNAPSHOT`, to Central's
   snapshot repository: built from the release's tag, with every Core module at exactly that release
   and held there by `strictly` constraints. Pair a Core release with that pin, never with the newer
-  `-SNAPSHOT` that `main` publishes, whose Core is a snapshot above the release.
+  `-SNAPSHOT` that `main` publishes, whose Core is a snapshot above the release. The pin also holds
+  the wgpu4k builds it was tested with, which Sonatype no longer serves: add
+  `maven("https://awakekt.github.io/awake/") { content { includeGroup("io.ygdrasil") } }`
+  (see [the wgpu4k pins](../release-process.md#the-wgpu4k-pins-are-hosted)).
 - A `-SNAPSHOT` is a mutable integration build, not a stable release. Central refuses a release POM
   with a snapshot dependency, a release bundle refuses a staged snapshot, and nothing guesses a
   stable replacement by deleting the suffix.

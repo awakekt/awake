@@ -22,7 +22,11 @@ Add the snapshot repository in `settings.gradle.kts`:
 dependencyResolutionManagement {
     repositories {
         mavenCentral()
-        maven("https://central.sonatype.com/repository/maven-snapshots/")
+        maven("https://central.sonatype.com/repository/maven-snapshots/") {
+            content { excludeGroup("io.ygdrasil") }
+        }
+        // The wgpu4k builds the WebGPU backend was tested with, which Sonatype no longer serves.
+        maven("https://awakekt.github.io/awake/") { content { includeGroup("io.ygdrasil") } }
     }
 }
 ```

@@ -38,8 +38,8 @@ awake-vulkan = "{{ awake_vulkan_version }}"
 | --- | --- |
 | Published as | Snapshot only. It builds on a wgpu4k snapshot, and Maven Central releases cannot depend on a snapshot. |
 | Version to use | `<Core release>-SNAPSHOT`: each Core release publishes one, built from that release, with every Core module at exactly the release and held there strictly. The newer snapshots `main` publishes are built against Core snapshots. |
-| Repository | `https://central.sonatype.com/repository/maven-snapshots/` |
-| Pinned dependencies | The published module constrains the wgpu4k and webgpu-ktypes snapshots to the builds it was tested with. |
+| Repository | `https://central.sonatype.com/repository/maven-snapshots/` for Awake, and `https://awakekt.github.io/awake/` for the `io.ygdrasil` group (wgpu4k), which Sonatype no longer serves |
+| Pinned dependencies | The published module constrains the wgpu4k and webgpu-ktypes snapshots to the builds it was tested with, hosted at the second repository. |
 
 ## Targets
 
