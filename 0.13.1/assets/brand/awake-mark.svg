@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">Awake Ember Signal mark</title>
+  <desc id="desc">The Awake geometric A and cube in an ember orange and warm gold palette.</desc>
+  <defs>
+    <radialGradient id="background" cx="36%" cy="20%" r="92%">
+      <stop offset="0" stop-color="#24202A"/>
+      <stop offset="0.56" stop-color="#15151C"/>
+      <stop offset="1" stop-color="#10131A"/>
+    </radialGradient>
+    <linearGradient id="left-beam" x1="145" y1="810" x2="512" y2="150" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FF4D2E"/>
+      <stop offset="1" stop-color="#FF9F1C"/>
+    </linearGradient>
+    <linearGradient id="right-beam" x1="512" y1="150" x2="890" y2="810" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF0B3"/>
+      <stop offset="1" stop-color="#FFD166"/>
+    </linearGradient>
+    <linearGradient id="cube-top" x1="418" y1="570" x2="606" y2="570" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFB84A"/>
+      <stop offset="1" stop-color="#FFE29A"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#background)"/>
+  <path d="M505 208 505 339 346 618 266 765 194 690 415 275Z" fill="url(#left-beam)"/>
+  <path d="M266 765 346 618 402 674Z" fill="#8A2E20"/>
+  <path d="M505 208 598 275 818 690 747 765 664 618 505 339Z" fill="url(#right-beam)"/>
+  <path d="M609 674 664 618 747 765Z" fill="#D9482B"/>
+  <path d="m505 522 89 53-89 55-87-55Z" fill="url(#cube-top)"/>
+  <path d="m418 575 87 55v96l-87-55Z" fill="#8A2E20"/>
+  <path d="m594 575-89 55v96l89-55Z" fill="#D9482B"/>
+</svg>
