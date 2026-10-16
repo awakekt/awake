@@ -7,31 +7,30 @@ package com.awakekt.awake.ecs
 
 import kotlin.reflect.KClass
 
-/** Stable component type IDs and their platform-token fast path. */
+/**
+ * Stable component type IDs, keyed by the platform token [componentTypeKeyOf] gives a class, never
+ * by the `KClass` itself: on Kotlin/Wasm a `KClass` hashes by building its qualified name anew.
+ */
 internal class ComponentTypeCatalog {
-    private val typeIds = mutableMapOf<KClass<out Any>, ComponentTypeId>()
     private val typeIdsByKey = mutableMapOf<Any, ComponentTypeId>()
     private var typesById = arrayOfNulls<KClass<out Any>>(INITIAL_CAPACITY)
 
-    val size: Int get() = typeIds.size
+    val size: Int get() = typeIdsByKey.size
 
-    fun register(type: KClass<out Any>): ComponentTypeId = typeIds.getOrPut(type) {
-        val id = typeIds.size
+    fun register(type: KClass<out Any>): ComponentTypeId = typeIdsByKey.getOrPut(componentTypeKeyOf(type)) {
+        val id = typeIdsByKey.size
         ensureCapacity(id)
-        ComponentTypeId(id).also { typeId ->
-            typesById[id] = type
-            typeIdsByKey[componentTypeKeyOf(type)] = typeId
-        }
+        typesById[id] = type
+        ComponentTypeId(id)
     }
 
-    fun typeIdOrNull(type: KClass<out Any>): ComponentTypeId? = typeIds[type]
+    fun typeIdOrNull(type: KClass<out Any>): ComponentTypeId? = typeIdsByKey[componentTypeKeyOf(type)]
 
     fun typeIdForKeyOrNull(key: Any): ComponentTypeId? = typeIdsByKey[key]
 
     fun typeAt(id: Int): KClass<out Any>? = if (id < typesById.size) typesById[id] else null
 
     fun clear() {
-        typeIds.clear()
         typeIdsByKey.clear()
         typesById.fill(null)
     }
