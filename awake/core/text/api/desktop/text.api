@@ -18,6 +18,7 @@ public final class com/awakekt/awake/core/text/font/BitmapFont : com/awakekt/awa
 	public fun getVisibleBottomEm ()F
 	public fun getVisibleTopEm ()F
 	public fun glyphFor-MFPI20o (CI)Lcom/awakekt/awake/core/text/font/GlyphRect;
+	public fun hasGlyph (C)Z
 	public fun uvFor (C)Lcom/awakekt/awake/core/text/font/GlyphRect;
 }
 
@@ -94,6 +95,7 @@ public final class com/awakekt/awake/core/text/font/MsdfFont : com/awakekt/awake
 	public fun getVisibleBottomEm ()F
 	public fun getVisibleTopEm ()F
 	public fun glyphFor-MFPI20o (CI)Lcom/awakekt/awake/core/text/font/GlyphRect;
+	public fun hasGlyph (C)Z
 	public fun uvFor (C)Lcom/awakekt/awake/core/text/font/GlyphRect;
 }
 
@@ -115,6 +117,7 @@ public final class com/awakekt/awake/core/text/font/PackedUiFont : com/awakekt/a
 	public fun getVisibleBottomEm ()F
 	public fun getVisibleTopEm ()F
 	public fun glyphFor-MFPI20o (CI)Lcom/awakekt/awake/core/text/font/GlyphRect;
+	public fun hasGlyph (C)Z
 	public final fun inkFor (C)Lcom/awakekt/awake/core/text/font/GlyphRect;
 	public fun uvFor (C)Lcom/awakekt/awake/core/text/font/GlyphRect;
 }
@@ -141,6 +144,7 @@ public abstract interface class com/awakekt/awake/core/text/font/UiFont {
 	public fun getVisibleBottomEm ()F
 	public fun getVisibleTopEm ()F
 	public fun glyphFor-MFPI20o (CI)Lcom/awakekt/awake/core/text/font/GlyphRect;
+	public fun hasGlyph (C)Z
 	public abstract fun uvFor (C)Lcom/awakekt/awake/core/text/font/GlyphRect;
 }
 
@@ -155,6 +159,7 @@ public final class com/awakekt/awake/core/text/font/UiFont$DefaultImpls {
 	public static fun getVisibleBottomEm (Lcom/awakekt/awake/core/text/font/UiFont;)F
 	public static fun getVisibleTopEm (Lcom/awakekt/awake/core/text/font/UiFont;)F
 	public static fun glyphFor-MFPI20o (Lcom/awakekt/awake/core/text/font/UiFont;CI)Lcom/awakekt/awake/core/text/font/GlyphRect;
+	public static fun hasGlyph (Lcom/awakekt/awake/core/text/font/UiFont;C)Z
 }
 
 public final class com/awakekt/awake/core/text/font/UiFontKt {
@@ -177,6 +182,7 @@ public final class com/awakekt/awake/core/text/font/UiFonts {
 	public static synthetic fun bitmap$default (Lcom/awakekt/awake/core/text/font/UiFonts;IILjava/lang/Object;)Lcom/awakekt/awake/core/text/font/UiFont;
 	public final fun default (I)Lcom/awakekt/awake/core/text/font/UiFont;
 	public static synthetic fun default$default (Lcom/awakekt/awake/core/text/font/UiFonts;IILjava/lang/Object;)Lcom/awakekt/awake/core/text/font/UiFont;
+	public final fun fallback (Lcom/awakekt/awake/core/text/font/UiFont;Ljava/util/List;)Lcom/awakekt/awake/core/text/font/UiFont;
 	public final fun family (Ljava/util/Map;)Lcom/awakekt/awake/core/text/font/UiFont;
 	public final fun load ([BLjava/lang/String;Ljava/lang/String;I)Lcom/awakekt/awake/core/text/font/UiFont;
 	public static synthetic fun load$default (Lcom/awakekt/awake/core/text/font/UiFonts;[BLjava/lang/String;Ljava/lang/String;IILjava/lang/Object;)Lcom/awakekt/awake/core/text/font/UiFont;
@@ -207,6 +213,7 @@ public final class com/awakekt/awake/core/text/font/WeightedUiFont : com/awakekt
 	public fun getVisibleBottomEm ()F
 	public fun getVisibleTopEm ()F
 	public fun glyphFor-MFPI20o (CI)Lcom/awakekt/awake/core/text/font/GlyphRect;
+	public fun hasGlyph (C)Z
 	public fun uvFor (C)Lcom/awakekt/awake/core/text/font/GlyphRect;
 }
 

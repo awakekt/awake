@@ -28,6 +28,7 @@ Paths below are Gradle coordinates minus the `:awake:` prefix.
 | `core:schema` | Property schemas and authoring annotations read from `kotlinx.serialization` descriptors |
 | `core:di` | A small dependency-injection container: modules, keys, bindings |
 | `core:state` | Reactive stores and unidirectional state contracts |
+| `core:localization` | Per-locale string tables, ICU-style messages with CLDR plurals, the active locale |
 
 ## ecs — entity storage and iteration
 

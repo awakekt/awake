@@ -78,6 +78,22 @@ object UiFonts {
     fun family(faces: Map<FontWeight, UiFont>): UiFont = WeightedUiFont(faces)
 
     /**
+     * A font that draws each char from the first of [primary] and [fallbacks] that has it, so text
+     * in a script the primary font lacks, such as Hangul or Cyrillic beside Roboto, still draws.
+     *
+     * Line metrics come from [primary]. Every face must sample the same way, as fonts made by [load]
+     * and the built-in Roboto do. The faces' atlases are combined into one, once, so build the chain
+     * when a locale's fonts load and keep it, not every frame.
+     *
+     * @param primary The font tried first, whose metrics the text lays out with.
+     * @param fallbacks The fonts tried next, in order.
+     * @return [primary] itself when there are no [fallbacks], else the chain.
+     * @throws IllegalArgumentException when a face samples differently from [primary].
+     */
+    fun fallback(primary: UiFont, fallbacks: List<UiFont>): UiFont =
+        if (fallbacks.isEmpty()) primary else FallbackUiFont(listOf(primary) + fallbacks)
+
+    /**
      * Creates a multi-channel signed distance field (MSDF) font instance.
      *
      * @param cellSize The base cell size in pixels.

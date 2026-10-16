@@ -15,6 +15,7 @@ import com.awakekt.awake.showcase.examples.EcsStressExampleDriver
 import com.awakekt.awake.showcase.examples.GltfViewerAssets
 import com.awakekt.awake.showcase.examples.InstancedCubesExampleDriver
 import com.awakekt.awake.showcase.examples.InstancedSkinnedExampleDriver
+import com.awakekt.awake.showcase.examples.LocalizationExampleDriver
 import com.awakekt.awake.showcase.examples.NavChaseExampleDriver
 import com.awakekt.awake.showcase.examples.ParticleEmitterExampleDriver
 import com.awakekt.awake.showcase.examples.RpgSprites2dExampleAssets
@@ -25,6 +26,7 @@ import com.awakekt.awake.showcase.examples.Sprites2dExampleDriver
 import com.awakekt.awake.showcase.examples.TerrainPhysicsExampleDriver
 import com.awakekt.awake.showcase.terrain.TerrainExampleAsset
 import com.awakekt.awake.showcase.ui.EcsStressControls
+import com.awakekt.awake.showcase.ui.LocalizationControls
 import com.awakekt.awake.showcase.ui.SpatialAudioControls
 import com.awakekt.awake.showcase.ui.TerrainPhysicsControls
 
@@ -184,6 +186,13 @@ val EngineShowcases = listOf(
         onDeactivated = { runtime -> SpatialAudioExampleDriver.detach(runtime.world) },
         controls = { SpatialAudioControls() },
     ),
+    EngineShowcase(
+        id = "localization",
+        title = "Localization",
+        scenePath = "assets/examples/localization.scene.json",
+        summary = "Debug-panel text from English and Filipino string tables, switched while it runs, with each language's plural rule.",
+        controls = { LocalizationControls() },
+    ),
     // Ten thousand ordinary entities by default, up to a hundred thousand from the panel. Each is
     // moved by an ECS system every frame; the renderer instances them, so the frame rate shows
     // what the per-entity work costs rather than what a draw call costs.
@@ -208,6 +217,7 @@ suspend fun preloadEngineShowcases() {
     ParticleEmitterExampleDriver.preload()
     Sprites2dExampleDriver.preload()
     RpgSprites2dExampleAssets.preload()
+    LocalizationExampleDriver.preload()
 }
 
 /** Registers the meshes and materials the showcase scene documents and drivers request. */

@@ -99,6 +99,16 @@ interface UiFont {
      */
     fun uvFor(char: Char): GlyphRect?
 
+    /**
+     * Whether this font draws [char] itself, rather than a stand-in such as `'?'`.
+     *
+     * A [UiFonts.fallback] chain asks each face in turn and draws the char from the first that has it.
+     *
+     * @param char The character to look up.
+     * @return True when the font has its own glyph for [char].
+     */
+    fun hasGlyph(char: Char): Boolean = uvFor(char) != null
+
     /** Glyph atlas entry for a requested weight. Single-face fonts fall back to [uvFor]; a
      * weighted family resolves the requested face and returns its atlas slice. */
     fun glyphFor(char: Char, weight: FontWeight): GlyphRect? = uvFor(char)

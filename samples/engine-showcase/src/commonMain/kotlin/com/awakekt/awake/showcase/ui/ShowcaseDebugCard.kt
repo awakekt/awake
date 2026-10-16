@@ -76,6 +76,8 @@ internal object ShowcaseDebugTags {
     const val STRESS_MOVING = "showcase-debug-stress-moving"
     const val AUDIO_VOLUME = "showcase-debug-audio-volume"
     const val AUDIO_MUTE = "showcase-debug-audio-mute"
+    const val LOCALE_FILIPINO = "showcase-debug-locale-filipino"
+    const val LOCALE_ITEM_COUNT = "showcase-debug-locale-item-count"
     const val PROP_SPAWN_BOX = "showcase-debug-prop-spawn-box"
     const val PROP_SPAWN_SPHERE = "showcase-debug-prop-spawn-sphere"
     const val PROP_SPAWN_WEDGE = "showcase-debug-prop-spawn-wedge"

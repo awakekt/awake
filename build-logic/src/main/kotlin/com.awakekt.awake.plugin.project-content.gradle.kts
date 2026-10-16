@@ -21,7 +21,7 @@ projectContent.manifestFile.convention(layout.projectDirectory.file("awake.proje
 projectContent.assetsLockFile.convention(layout.projectDirectory.file("assets.lock.json"))
 projectContent.indexOutputFile.convention(layout.buildDirectory.file("project.index.json"))
 projectContent.assetRoots.set(listOf("assets"))
-projectContent.indexRoots.set(listOf("assets", "scenes", "plugins"))
+projectContent.indexRoots.set(listOf("assets", "scenes", "plugins", "strings"))
 projectContent.indexRootPath.convention("/project")
 projectContent.indexBaseUrl.convention("files")
 

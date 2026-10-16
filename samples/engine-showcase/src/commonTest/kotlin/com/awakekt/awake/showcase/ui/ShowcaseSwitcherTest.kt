@@ -217,9 +217,12 @@ class ShowcaseSwitcherTest {
         repeat(30) { frame() }
         assertNotNull(frame().find(ShowcaseSwitcherTags.PANEL))
 
-        frame(pointers = listOf(PointerFrame(2, 120, 420, down = true, pressed = true)))
-        repeat(10) { step -> frame(pointers = listOf(PointerFrame(2, 120, 420 - (step + 1) * 28, down = true))) }
-        frame(pointers = listOf(PointerFrame(2, 120, 140, down = false, released = true)))
+        // Two swipes, so the menu reaches its end however many showcases it lists; it stops there.
+        for (pointer in 2L..3L) {
+            frame(pointers = listOf(PointerFrame(pointer, 120, 420, down = true, pressed = true)))
+            repeat(10) { step -> frame(pointers = listOf(PointerFrame(pointer, 120, 420 - (step + 1) * 28, down = true))) }
+            frame(pointers = listOf(PointerFrame(pointer, 120, 140, down = false, released = true)))
+        }
         val last = assertNotNull(frame().find(ShowcaseSwitcherTags.entry(EngineShowcases.last().id)))
         assertTrue(last.y >= 0 && last.y + last.height < viewportHeight, "last menu item was not scrolled into view")
         assertNull(selection.consumeRequest(), "swiping must not activate a scene")

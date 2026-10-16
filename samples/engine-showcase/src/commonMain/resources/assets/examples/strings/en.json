@@ -1,0 +1,16 @@
+{
+  "localization": {
+    "title": "Localization",
+    "language": {
+      "filipino": "Show in Filipino"
+    },
+    "items": {
+      "label": "Items in the bag"
+    },
+    "inventory": {
+      "count": "{count, plural, =0 {The bag is empty} one {# item in the bag} other {# items in the bag}}"
+    },
+    "greeting": "Welcome back, {name}!",
+    "hint": "Type '{name}' to rename your character."
+  }
+}

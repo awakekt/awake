@@ -1,0 +1,143 @@
+public final class com/awakekt/awake/core/localization/LocaleFonts {
+	public static final field Companion Lcom/awakekt/awake/core/localization/LocaleFonts$Companion;
+	public static final field DEFAULT_PATH Ljava/lang/String;
+	public fun <init> (Ljava/util/Map;)V
+	public final fun pathsFor (Lcom/awakekt/awake/core/localization/LocaleId;)Ljava/util/List;
+}
+
+public final class com/awakekt/awake/core/localization/LocaleFonts$Companion {
+	public final fun decode ([B)Lcom/awakekt/awake/core/localization/LocaleFonts;
+	public final fun getNone ()Lcom/awakekt/awake/core/localization/LocaleFonts;
+	public final fun load (Lcom/awakekt/awake/core/io/AssetSource;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun load$default (Lcom/awakekt/awake/core/localization/LocaleFonts$Companion;Lcom/awakekt/awake/core/io/AssetSource;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/core/localization/LocaleFontsKt {
+	public static final fun loadFont (Lcom/awakekt/awake/core/localization/Strings;Lcom/awakekt/awake/core/io/AssetSource;Lcom/awakekt/awake/core/localization/LocaleFonts;Lcom/awakekt/awake/core/text/font/UiFont;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun loadFont$default (Lcom/awakekt/awake/core/localization/Strings;Lcom/awakekt/awake/core/io/AssetSource;Lcom/awakekt/awake/core/localization/LocaleFonts;Lcom/awakekt/awake/core/text/font/UiFont;Ljava/lang/String;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/core/localization/LocaleId {
+	public static final field Companion Lcom/awakekt/awake/core/localization/LocaleId$Companion;
+	public synthetic fun <init> (Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFallbackChain ()Ljava/util/List;
+	public final fun getLanguage ()Ljava/lang/String;
+	public final fun getTag ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/localization/LocaleId$Companion {
+	public final fun getEnglish ()Lcom/awakekt/awake/core/localization/LocaleId;
+	public final fun of (Ljava/lang/String;)Lcom/awakekt/awake/core/localization/LocaleId;
+	public final fun parseOrNull (Ljava/lang/String;)Lcom/awakekt/awake/core/localization/LocaleId;
+}
+
+public final class com/awakekt/awake/core/localization/MessageFormat {
+	public static final field Companion Lcom/awakekt/awake/core/localization/MessageFormat$Companion;
+	public synthetic fun <init> (Ljava/lang/String;Ljava/util/List;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun format (Ljava/util/Map;Lcom/awakekt/awake/core/localization/PluralRule;Lkotlin/jvm/functions/Function1;)Ljava/lang/String;
+	public static synthetic fun format$default (Lcom/awakekt/awake/core/localization/MessageFormat;Ljava/util/Map;Lcom/awakekt/awake/core/localization/PluralRule;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Ljava/lang/String;
+	public final fun getArgumentNames ()Ljava/util/Set;
+	public final fun getPattern ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/localization/MessageFormat$Companion {
+	public final fun isPlain (Ljava/lang/String;)Z
+	public final fun parse (Ljava/lang/String;)Lcom/awakekt/awake/core/localization/MessageFormat;
+}
+
+public final class com/awakekt/awake/core/localization/MessageSyntaxException : java/lang/IllegalArgumentException {
+	public fun <init> (Ljava/lang/String;)V
+}
+
+public final class com/awakekt/awake/core/localization/PluralCategory : java/lang/Enum {
+	public static final field Companion Lcom/awakekt/awake/core/localization/PluralCategory$Companion;
+	public static final field Few Lcom/awakekt/awake/core/localization/PluralCategory;
+	public static final field Many Lcom/awakekt/awake/core/localization/PluralCategory;
+	public static final field One Lcom/awakekt/awake/core/localization/PluralCategory;
+	public static final field Other Lcom/awakekt/awake/core/localization/PluralCategory;
+	public static final field Two Lcom/awakekt/awake/core/localization/PluralCategory;
+	public static final field Zero Lcom/awakekt/awake/core/localization/PluralCategory;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getKeyword ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/core/localization/PluralCategory;
+	public static fun values ()[Lcom/awakekt/awake/core/localization/PluralCategory;
+}
+
+public final class com/awakekt/awake/core/localization/PluralCategory$Companion {
+	public final fun ofKeyword (Ljava/lang/String;)Lcom/awakekt/awake/core/localization/PluralCategory;
+}
+
+public final class com/awakekt/awake/core/localization/PluralOperands {
+	public static final field Companion Lcom/awakekt/awake/core/localization/PluralOperands$Companion;
+	public fun <init> (DJIJ)V
+	public final fun getF ()J
+	public final fun getI ()J
+	public final fun getN ()D
+	public final fun getV ()I
+	public final fun isInteger ()Z
+}
+
+public final class com/awakekt/awake/core/localization/PluralOperands$Companion {
+	public final fun of (Ljava/lang/Object;)Lcom/awakekt/awake/core/localization/PluralOperands;
+}
+
+public abstract interface class com/awakekt/awake/core/localization/PluralRule {
+	public abstract fun select (Lcom/awakekt/awake/core/localization/PluralOperands;)Lcom/awakekt/awake/core/localization/PluralCategory;
+}
+
+public final class com/awakekt/awake/core/localization/PluralRules {
+	public static final field INSTANCE Lcom/awakekt/awake/core/localization/PluralRules;
+	public final fun forLocale (Lcom/awakekt/awake/core/localization/LocaleId;)Lcom/awakekt/awake/core/localization/PluralRule;
+	public final fun getRoot ()Lcom/awakekt/awake/core/localization/PluralRule;
+}
+
+public final class com/awakekt/awake/core/localization/StringTableException : java/lang/IllegalArgumentException {
+	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public abstract interface class com/awakekt/awake/core/localization/StringTableSource {
+	public static final field Companion Lcom/awakekt/awake/core/localization/StringTableSource$Companion;
+	public static final field DEFAULT_DIRECTORY Ljava/lang/String;
+	public abstract fun load (Lcom/awakekt/awake/core/localization/LocaleId;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/core/localization/StringTableSource$Companion {
+	public static final field DEFAULT_DIRECTORY Ljava/lang/String;
+	public final fun assets (Lcom/awakekt/awake/core/io/AssetSource;Ljava/lang/String;)Lcom/awakekt/awake/core/localization/StringTableSource;
+	public static synthetic fun assets$default (Lcom/awakekt/awake/core/localization/StringTableSource$Companion;Lcom/awakekt/awake/core/io/AssetSource;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/core/localization/StringTableSource;
+	public final fun of (Ljava/util/Map;)Lcom/awakekt/awake/core/localization/StringTableSource;
+}
+
+public final class com/awakekt/awake/core/localization/StringTables {
+	public static final field INSTANCE Lcom/awakekt/awake/core/localization/StringTables;
+	public final fun decode ([BLjava/lang/String;)Ljava/util/Map;
+	public static synthetic fun decode$default (Lcom/awakekt/awake/core/localization/StringTables;[BLjava/lang/String;ILjava/lang/Object;)Ljava/util/Map;
+}
+
+public final class com/awakekt/awake/core/localization/Strings {
+	public static final field Companion Lcom/awakekt/awake/core/localization/Strings$Companion;
+	public final fun characters ()Ljava/util/Set;
+	public final fun contains (Ljava/lang/String;)Z
+	public final fun getDefaultLocale ()Lcom/awakekt/awake/core/localization/LocaleId;
+	public final fun getLocale ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun getResolvedLocales ()Ljava/util/List;
+	public final fun setLocale (Lcom/awakekt/awake/core/localization/LocaleId;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun text (Ljava/lang/String;Ljava/util/Map;)Ljava/lang/String;
+	public final fun text (Ljava/lang/String;[Lkotlin/Pair;)Ljava/lang/String;
+	public static synthetic fun text$default (Lcom/awakekt/awake/core/localization/Strings;Ljava/lang/String;Ljava/util/Map;ILjava/lang/Object;)Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/localization/Strings$Companion {
+	public final fun load (Lcom/awakekt/awake/core/localization/StringTableSource;Lcom/awakekt/awake/core/localization/LocaleId;Lcom/awakekt/awake/core/localization/LocaleId;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun load$default (Lcom/awakekt/awake/core/localization/Strings$Companion;Lcom/awakekt/awake/core/localization/StringTableSource;Lcom/awakekt/awake/core/localization/LocaleId;Lcom/awakekt/awake/core/localization/LocaleId;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/core/localization/SystemLocaleKt {
+	public static final fun systemLocale ()Lcom/awakekt/awake/core/localization/LocaleId;
+}
+

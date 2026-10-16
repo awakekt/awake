@@ -84,7 +84,7 @@ data class ProjectContentSpec(
     val manifestPath: String = "awake.project.json",
     val assetsLockPath: String = "assets.lock.json",
     val assetRoots: List<String> = listOf("assets"),
-    val indexRoots: List<String> = listOf("assets", "scenes", "plugins"),
+    val indexRoots: List<String> = listOf("assets", "scenes", "plugins", "strings"),
     val indexRootPath: String = "/project",
 )
 

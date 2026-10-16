@@ -69,6 +69,7 @@ compile; it is refused, a warning is printed, and the current shader keeps drawi
 | `rpg-sprites-2d` | RPG characters | An original ranger and thorn beast playing separate manifest-imported idle loops. |
 | `runtime-2d` | 2D runtime | An animated sprite falls onto a chunked tile floor in an orthographic viewport. Press T to edit a tile and V to cycle scaling. |
 | `spatial-audio` | Spatial audio | 3D positional audio emitters with distance attenuation and panning relative to the camera listener. |
+| `localization` | Localization | Debug-panel text from English and Filipino string tables, switched while it runs, with each language's plural rule. |
 | `ecs-stress` | ECS stress | Up to 100,000 moving entities, each with Transform and MeshRenderer components, drawn in a few instanced calls. |
 
 `EngineShowcaseReadmeTest` fails when this table and `EngineShowcases` disagree.

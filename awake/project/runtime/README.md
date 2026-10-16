@@ -90,8 +90,8 @@ the switch.
 closes the scene it leaves, the entry scene included. The manifest lists no scenes, so any scene file
 the project has can be asked for, and a build has to ship the scenes a switch names: Awake Studio's
 exports and its publish copy the whole project folder, so they all do. The project-content Gradle
-plugin's browser index covers `assets/`, `scenes/` and `plugins/` only, so keep a project's scenes
-under one of those. A host that runs the systems in a world of its own, with `sceneSystemsFor` or
+plugin's browser index covers `assets/`, `scenes/`, `plugins/` and `strings/` only, so keep a
+project's scenes under one of the first three. A host that runs the systems in a world of its own, with `sceneSystemsFor` or
 `project.sceneSystems`, has no switch unless it gives one with `SceneHostServices.withSceneSwitch`;
 without it, Load Scene only warns.
 
