@@ -16,11 +16,21 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import java.io.File
 import java.util.zip.ZipFile
 
+/** The platforms a release must carry a desktop native library for, each built by its own CI runner. */
+val REQUIRED_DESKTOP_NATIVE_PLATFORMS = listOf("macos-arm64", "linux-x86_64", "windows-x86_64")
+
 /**
- * The platforms a release must carry a desktop native library for. Windows is absent: no CI job
- * compiles the desktop C++ there, so promising it would be a guess.
+ * The desktop natives' CMake build type. Windows builds Release: a Debug MSVC library needs the
+ * debug C runtime, which only a machine with Visual Studio has.
  */
-val REQUIRED_DESKTOP_NATIVE_PLATFORMS = listOf("macos-arm64", "linux-x86_64")
+val DESKTOP_NATIVE_BUILD_TYPE: String = if (HostOs.isWindows) "Release" else "Debug"
+
+/**
+ * CMake definitions every desktop native takes. On Windows the C runtime is linked in (`/MT`), so a
+ * player's machine needs no Visual C++ redistributable.
+ */
+val DESKTOP_NATIVE_DEFINES: List<String> =
+    if (HostOs.isWindows) listOf("CMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded") else emptyList()
 
 /**
  * Builds one desktop JNI library with CMake and ships it in this module's desktop jar as
@@ -35,11 +45,14 @@ val REQUIRED_DESKTOP_NATIVE_PLATFORMS = listOf("macos-arm64", "linux-x86_64")
  * @param libName The library's base name, e.g. `awake-window` for `libawake-window.dylib`.
  * @param sourceDir The directory holding `CMakeLists.txt`.
  * @param extraInputDirs Source directories the CMake build reads outside [sourceDir].
+ * @param windowsLibraries Libraries the CMake build also makes on Windows and the jar ships beside
+ * [libName] there, such as GLFW's DLL, which Windows has no package manager to supply.
  */
 fun Project.registerDesktopNativeLibrary(
     libName: String,
     sourceDir: File,
     extraInputDirs: List<File> = emptyList(),
+    windowsLibraries: List<String> = emptyList(),
 ): TaskProvider<Exec> {
     val buildDir = layout.buildDirectory.dir("desktop-native").get().asFile
     val libDir = layout.buildDirectory.dir("desktop-native-libs")
@@ -58,17 +71,22 @@ fun Project.registerDesktopNativeLibrary(
         sourceDir = sourceDir,
         buildDir = buildDir,
         description = "Build lib$libName for this host and package it under natives/<platform>/.",
+        buildType = DESKTOP_NATIVE_BUILD_TYPE,
+        defines = DESKTOP_NATIVE_DEFINES,
         extraInputDirs = extraInputDirs,
     )
     build.configure {
         doLast {
-            val expected = HostOs.libraryFileName(libName)
-            val built = buildDir.walkTopDown().firstOrNull { it.isFile && it.name == expected }
-                ?: throw GradleException("$expected not found under $buildDir")
-            built.copyTo(File(libDir.get().asFile.also { it.mkdirs() }, built.name), overwrite = true)
-            val packaged = resourcesRoot.get().asFile.resolve("natives/${hostNativePlatform()}/${built.name}")
-            built.copyTo(packaged.also { it.parentFile.mkdirs() }, overwrite = true)
-            println("lib$libName packaged for resources: $packaged")
+            val names = listOf(libName) + if (HostOs.isWindows) windowsLibraries else emptyList()
+            for (name in names) {
+                val expected = HostOs.libraryFileName(name)
+                val built = buildDir.walkTopDown().firstOrNull { it.isFile && it.name == expected }
+                    ?: throw GradleException("$expected not found under $buildDir")
+                built.copyTo(File(libDir.get().asFile.also { it.mkdirs() }, built.name), overwrite = true)
+                val packaged = resourcesRoot.get().asFile.resolve("natives/${hostNativePlatform()}/${built.name}")
+                built.copyTo(packaged.also { it.parentFile.mkdirs() }, overwrite = true)
+                println("lib$name packaged for resources: $packaged")
+            }
         }
     }
 
@@ -81,7 +99,8 @@ fun Project.registerDesktopNativeLibrary(
             val archive = desktopJar.get().archiveFile.get().asFile
             val entries = ZipFile(archive).use { zip -> zip.entries().asSequence().map { it.name }.toSet() }
             val missing = REQUIRED_DESKTOP_NATIVE_PLATFORMS.filter { platform ->
-                "natives/$platform/${platformLibraryFileName(platform, libName)}" !in entries
+                val names = listOf(libName) + if (platform.startsWith("windows-")) windowsLibraries else emptyList()
+                names.any { "natives/$platform/${platformLibraryFileName(platform, it)}" !in entries }
             }
             check(missing.isEmpty()) {
                 "$archive is missing lib$libName for: ${missing.joinToString(", ")}. A host builds only " +

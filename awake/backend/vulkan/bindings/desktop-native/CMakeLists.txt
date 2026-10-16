@@ -62,11 +62,7 @@ endif()
 
 # GLFW (`brew install glfw`) for surface creation on a window that awake:engine:window opens
 # (VulkanWindow_jni.gen.cpp / glfwCreateWindowSurface). Both libraries link the same GLFW.
-find_library(GLFW_LIBRARY NAMES glfw glfw3 PATHS /opt/homebrew/opt/glfw/lib /usr/local/opt/glfw/lib)
-find_path(GLFW_INCLUDE_DIR GLFW/glfw3.h PATHS /opt/homebrew/opt/glfw/include /usr/local/opt/glfw/include)
-if(NOT GLFW_LIBRARY OR NOT GLFW_INCLUDE_DIR)
-    message(FATAL_ERROR "GLFW not found -- install via 'brew install glfw' (macOS) or 'sudo apt-get install libglfw3-dev' (Linux)")
-endif()
+include(${CMAKE_CURRENT_SOURCE_DIR}/../../../../../tools/cmake/glfw.cmake)
 include_directories(${GLFW_INCLUDE_DIR})
 
 add_subdirectory(../src/main/cpp/vulkan-kotlin vulkan-kotlin-desktop-build)
@@ -105,3 +101,11 @@ target_link_libraries(awake-vulkan
         vulkan_kotlin
         ${VULKAN_LINK_TARGET}
         ${GLFW_LIBRARY})
+
+# Windows: the glfw3.dll this links is the one awake:engine:window's jar ships and loads, which this
+# module's jar does not carry. Loaded later, at the first GLFW call, Windows finds it already there:
+# a window has opened by the time a surface is made on it.
+if(WIN32)
+    target_link_options(awake-vulkan PRIVATE /DELAYLOAD:glfw3.dll)
+    target_link_libraries(awake-vulkan delayimp)
+endif()

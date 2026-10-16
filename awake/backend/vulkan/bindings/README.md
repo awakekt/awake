@@ -37,13 +37,13 @@ dependencies {
 
 ## Target-Specific Setup & Capabilities
 
-### 🖥️ Desktop JVM (macOS arm64/x86_64, Linux x86_64)
+### 🖥️ Desktop JVM (macOS arm64/x86_64, Linux x86_64, Windows x86_64)
 * **Zero Runtime Configuration**: the native library for each supported platform is precompiled and
   bundled inside the desktop JAR. A host compiles only its own, so a release assembles them from one
   CI runner per platform; `verifyDesktopNatives` fails the publish if any is missing.
-* **Windows is not shipped.** No CI job has compiled the desktop C++ on it, so it is unproven rather
-  than merely untested. A Windows consumer gets a clear "not found for platform" error rather than a
-  silent failure.
+* **Windows** builds Release with the C runtime linked in, so a player needs no Visual C++
+  redistributable, and needs the Vulkan SDK to build (`VULKAN_SDK`). It delay-loads `glfw3.dll`, the
+  one `awake:engine:window` ships and loads, so both share one GLFW.
 * At runtime, `VulkanNativeLoader` extracts the library matching the current OS and architecture to
   `~/.awake/natives/<os-arch>/<fingerprint>/` and loads it. The fingerprint is a hash of the
   library's own bytes, so upgrading cannot be shadowed by a copy cached from an earlier version.

@@ -142,7 +142,15 @@ fun Project.registerCMakeLibrary(
         this.description = description
         dependsOn(configure)
         workingDir = buildDir
-        commandLine(buildList { add(NativeCMake.findCmake()); add("--build"); add(buildDir.absolutePath); addAll(buildArgs) })
+        // `--config` because a multi-config generator (Visual Studio, Xcode) ignores CMAKE_BUILD_TYPE
+        // and builds Debug; a single-config one (Makefiles, Ninja) ignores `--config`.
+        commandLine(
+            buildList {
+                add(NativeCMake.findCmake()); add("--build"); add(buildDir.absolutePath)
+                add("--config"); add(buildType)
+                addAll(buildArgs)
+            },
+        )
         // Same reasoning as configure's outputs above: rebuilding is only worth skipping once
         // the C++ sources themselves are unchanged, and the compiled artifacts land back in
         // buildDir regardless of which target this caller asked for.

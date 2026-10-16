@@ -18,6 +18,9 @@ import com.awakekt.awake.core.host.NativeLibrary
 @Suppress("TooManyFunctions")
 object GlfwWindow {
     init {
+        if (System.getProperty("os.name", "").startsWith("Windows")) {
+            NativeLibrary.load(WINDOWS_GLFW_LIBRARY, GlfwWindow::class.java)
+        }
         NativeLibrary.load(WINDOW_LIBRARY, GlfwWindow::class.java)
     }
 

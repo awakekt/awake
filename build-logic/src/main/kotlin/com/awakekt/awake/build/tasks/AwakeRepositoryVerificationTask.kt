@@ -386,7 +386,11 @@ abstract class AwakeRepositoryVerificationTask : DefaultTask() {
                 .directory(project.rootProject.projectDir).start()
             val files = changed.inputStream.bufferedReader().readText()
             changed.waitFor()
-            if (!files.lineSequence().any { it == "CHANGELOG.md" }) failures += "feat/fix PR must update CHANGELOG.md"
+            // An entry is a fragment under changelog/unreleased/ (its README), which ci.yml's Changelog
+            // job requires and releaseCut moves into CHANGELOG.md; only a release cut edits that file.
+            if (!files.lineSequence().any { CHANGELOG_FRAGMENT.matches(it) }) {
+                failures += "feat/fix PR must add a changelog fragment: changelog/unreleased/<section>/<branch-name>.md"
+            }
         }
         return failures
     }
@@ -409,5 +413,8 @@ abstract class AwakeRepositoryVerificationTask : DefaultTask() {
             "awake-pro", "com.awakekt.awake.pro.", "com.awakekt.awake.studio.", "awake-pro-core-io",
         )
         private val LEGACY_READER_TOKENS = listOf("assetBytesReader", "externalResourceReader")
+
+        /** A changelog entry's file, as changelog/unreleased/README.md names it and ci.yml's Changelog job checks. */
+        private val CHANGELOG_FRAGMENT = Regex("changelog/unreleased/(added|changed|deprecated|removed|fixed|security)/[^/]+\\.md")
     }
 }

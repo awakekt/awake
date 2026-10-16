@@ -122,10 +122,12 @@ val buildDesktopNative = registerCMakeLibrary(
     buildDir = desktopNativeBuildDir.get().asFile,
     description = "Build the desktop native library (.dylib/.so/.dll) and copy it where the " +
         "desktop JVM's System.loadLibrary(\"awake-vulkan\") can find it (-Djava.library.path).",
+    buildType = DESKTOP_NATIVE_BUILD_TYPE,
+    defines = DESKTOP_NATIVE_DEFINES,
     // desktop-native/CMakeLists.txt builds ../src/main/cpp/*.cpp -- outside its own sourceDir --
     // so that tree has to be named explicitly or a real C++ change would never invalidate the
     // cache Gradle now keeps for this task.
-    extraInputDirs = listOf(layout.projectDirectory.dir("src/main/cpp").asFile),
+    extraInputDirs = listOf(layout.projectDirectory.dir("src/main/cpp").asFile, rootProject.file("tools/cmake")),
 )
 
 // The copy is this module's own: nothing else needs its output next to a java.library.path.
@@ -170,10 +172,8 @@ val startOnFirstThread = if (HostOs.isMac) {
     emptyList()
 }
 
-// The platforms a release must carry a native library for. Windows is deliberately absent: no CI
-// job has ever compiled the desktop C++ on it, so promising it would be a guess. macOS arm64 and
-// Linux x86_64 are built by existing runners.
-val requiredNativePlatforms = listOf("macos-arm64", "linux-x86_64")
+// The platforms a release must carry a native library for, each built by its own runner.
+val requiredNativePlatforms = REQUIRED_DESKTOP_NATIVE_PLATFORMS
 val desktopJar = tasks.named<Jar>("desktopJar")
 
 // A one-platform jar is indistinguishable from a correct one until a consumer on another OS tries

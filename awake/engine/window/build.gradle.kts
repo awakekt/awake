@@ -42,10 +42,12 @@ kotlin {
 
 // libawake-window: the GLFW window and its input. Built on demand, like the Vulkan library:
 //   ./gradlew :awake:engine:window:buildDesktopNative
+// On Windows the jar ships GLFW's own DLL beside it, which GlfwWindow loads first.
 registerDesktopNativeLibrary(
     libName = "awake-window",
     sourceDir = layout.projectDirectory.dir("desktop-native").asFile,
-    extraInputDirs = listOf(layout.projectDirectory.dir("src/main/cpp").asFile),
+    extraInputDirs = listOf(layout.projectDirectory.dir("src/main/cpp").asFile, rootProject.file("tools/cmake")),
+    windowsLibraries = listOf("glfw3"),
 )
 
 mavenPublishing {

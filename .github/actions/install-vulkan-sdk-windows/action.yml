@@ -1,0 +1,38 @@
+# SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: Install the Vulkan SDK (Windows)
+description: >-
+  LunarG's Vulkan SDK at a pinned version, cached, with VULKAN_SDK set for CMake's
+  find_package(Vulkan). Windows has no package that gives the headers and vulkan-1.lib, as
+  libvulkan-dev does on Linux and vulkan-loader does on macOS.
+inputs:
+  version:
+    description: The SDK version, as LunarG's download URLs name it.
+    default: '1.4.363.0'
+runs:
+  using: composite
+  steps:
+    - name: Cache the Vulkan SDK
+      id: cache
+      uses: actions/cache@v4
+      with:
+        path: C:\VulkanSDK\${{ inputs.version }}
+        key: vulkan-sdk-windows-${{ inputs.version }}
+
+    # The installer is Qt's: --root picks the folder, and the other flags answer its prompts.
+    - name: Install the Vulkan SDK
+      if: steps.cache.outputs.cache-hit != 'true'
+      shell: pwsh
+      run: |
+        $installer = Join-Path $env:RUNNER_TEMP "vulkansdk-${{ inputs.version }}.exe"
+        Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/${{ inputs.version }}/windows/vulkansdk-windows-X64-${{ inputs.version }}.exe" -OutFile $installer
+        & $installer --root "C:\VulkanSDK\${{ inputs.version }}" --accept-licenses --default-answer --confirm-command install | Out-Host
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+    - name: Point CMake at it
+      shell: pwsh
+      run: |
+        if (-not (Test-Path "C:\VulkanSDK\${{ inputs.version }}\Lib\vulkan-1.lib")) { throw "The Vulkan SDK has no vulkan-1.lib" }
+        "VULKAN_SDK=C:\VulkanSDK\${{ inputs.version }}" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
