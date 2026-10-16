@@ -50,14 +50,14 @@ internal class WebGpuUiRunRecorder(
         if (pipeline != null && kind != UiPipelineKind.Texture) {
             encoder.setPipeline(pipeline.pipeline)
             // Glyph's group 0 is its font's -- atlas and uniforms -- bound in bindGlyphFont.
-            if (kind != UiPipelineKind.Glyph) encoder.setBindGroup(0u, pipeline.screenSizeBindGroup)
+            if (kind != UiPipelineKind.Glyph) encoder.bindGroup(0u, pipeline.screenSizeBindGroup)
         }
         return pipeline != null
     }
 
     override fun bindGlyphFont(font: UiFont): Boolean {
         val pipeline = glyph ?: return false
-        encoder.setBindGroup(0u, pipeline.fontBindGroup(font))
+        encoder.bindGroup(0u, pipeline.fontBindGroup(font))
         return true
     }
 
@@ -79,7 +79,7 @@ internal class WebGpuUiRunRecorder(
         if (!material.isSampleable) return
         val mesh = textureMeshForPrimitive(slotIndex)
         encoder.setPipeline(pipeline.pipeline)
-        encoder.setBindGroup(0u, pipeline.bindGroupFor(material))
+        encoder.bindGroup(0u, pipeline.bindGroupFor(material))
         mesh.update(primitive.vertices, primitive.indices)
         drawMesh(mesh)
     }
