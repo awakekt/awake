@@ -35,7 +35,6 @@ import com.awakekt.awake.scene.rendering.mesh.SceneDrawCollector
 import com.awakekt.awake.scene.rendering.spatial.SceneCullingCompiler
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertSame
 
 /** A model the renderer culled keeps its clock but is not posed until it is drawn again. */
 class UnseenPoseTest {
@@ -49,11 +48,10 @@ class UnseenPoseTest {
         val world = World()
         val (model, player) = model(world)
         collect(world, lookingAway)
-        val palette = pose(world, model).jointPalette
 
         AnimationSystem().update(world, delta = 0.5f)
 
-        assertSame(palette, pose(world, model).jointPalette, "not posed")
+        assertEquals(0f, pose(world, model).jointPalette[12], "not posed")
         assertEquals(0.5f, player.time)
 
         collect(world, lookingAt)

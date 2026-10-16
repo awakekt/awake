@@ -65,7 +65,9 @@ data class AnimationClip(
     val name: String?,
     val channels: List<AnimationChannel>,
 ) {
-    /** Total duration of this animation clip in seconds, determined by the latest keyframe timestamp across all channels. */
-    val duration: Float
-        get() = channels.maxOfOrNull { it.sampler.times.lastOrNull() ?: 0f } ?: 0f
+    /**
+     * Total duration of this animation clip in seconds, determined by the latest keyframe timestamp across all channels.
+     * Found once: a player reads it every frame.
+     */
+    val duration: Float = channels.maxOfOrNull { it.sampler.times.lastOrNull() ?: 0f } ?: 0f
 }

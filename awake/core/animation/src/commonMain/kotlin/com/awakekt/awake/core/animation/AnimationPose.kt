@@ -8,6 +8,7 @@ package com.awakekt.awake.core.animation
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Quat
 import com.awakekt.awake.core.math.Vec3f
+import kotlin.math.sqrt
 
 /**
  * One [skeleton]'s current working pose -- a mutable per-bone TRS buffer, seeded from bind pose.
@@ -19,12 +20,29 @@ import com.awakekt.awake.core.math.Vec3f
  * holding several `AnimationPose`s over the same [Skeleton] at once (independently-timed crowd
  * instances, or the outgoing/current pair [AnimationCrossfade] needs for blending).
  *
+ * It keeps its TRS as flat float arrays and builds the palette in a scratch buffer of its own, so
+ * posing a model every frame allocates nothing but the palette [jointPalette] returns, and nothing
+ * at all through the overload that writes into a caller's array.
+ *
  * @param skeleton Target skeleton hierarchy defining bone indices and bind poses.
  */
 class AnimationPose(private val skeleton: Skeleton) {
-    private val translation = Array(skeleton.bones.size) { skeleton.bones[it].translation }
-    private val rotation = Array(skeleton.bones.size) { skeleton.bones[it].rotation }
-    private val scale = Array(skeleton.bones.size) { skeleton.bones[it].scale }
+    private val bones = skeleton.bones
+    private val translation = FloatArray(bones.size * VEC)
+    private val rotation = FloatArray(bones.size * QUAT)
+    private val scale = FloatArray(bones.size * VEC)
+
+    /** Each bone's global transform while [jointPalette] builds, 16 column-major floats a bone. */
+    private val globals = FloatArray(bones.size * MATRIX)
+    private val reached = BooleanArray(bones.size)
+    private val local = Mat4()
+    private val localTranslation = Vec3f()
+    private val localRotation = Quat()
+    private val localScale = Vec3f()
+
+    init {
+        resetToBindPose()
+    }
 
     /**
      * Restores every channel to the skeleton's authored bind pose. Whole-clip playback calls
@@ -32,30 +50,32 @@ class AnimationPose(private val skeleton: Skeleton) {
      * preceding clip. Layered animation deliberately does not call this method.
      */
     fun resetToBindPose() {
-        for (i in translation.indices) {
-            val bone = skeleton.bones[i]
-            translation[i] = bone.translation
-            rotation[i] = bone.rotation
-            scale[i] = bone.scale
+        for (i in bones.indices) {
+            val bone = bones[i]
+            writeVec(translation, i, bone.translation)
+            writeQuat(rotation, i, bone.rotation)
+            writeVec(scale, i, bone.scale)
         }
     }
 
     /**
-     * Returns this bone's current local translation -- whatever the last [sample], [blend] or
-     * [setBoneTransform] left there, or its bind pose if nothing has written to it yet.
+     * Returns a copy of this bone's current local translation -- whatever the last [sample], [blend]
+     * or [setBoneTransform] left there, or its bind pose if nothing has written to it yet.
      *
      * @param bone Index of the bone within the skeleton.
      * @return Local translation vector for the specified bone.
      */
-    fun boneTranslation(bone: Int): Vec3f = translation[bone]
+    fun boneTranslation(bone: Int): Vec3f =
+        Vec3f(translation[bone * VEC], translation[bone * VEC + 1], translation[bone * VEC + 2])
 
     /**
-     * Returns this bone's current local rotation; see [boneTranslation].
+     * Returns a copy of this bone's current local rotation; see [boneTranslation].
      *
      * @param bone Index of the bone within the skeleton.
      * @return Local rotation quaternion for the specified bone.
      */
-    fun boneRotation(bone: Int): Quat = rotation[bone]
+    fun boneRotation(bone: Int): Quat =
+        Quat(rotation[bone * QUAT], rotation[bone * QUAT + 1], rotation[bone * QUAT + 2], rotation[bone * QUAT + 3])
 
     /**
      * Overwrites one bone's local translation and rotation, leaving its scale alone.
@@ -70,8 +90,8 @@ class AnimationPose(private val skeleton: Skeleton) {
      * @param rotation New local rotation quaternion.
      */
     fun setBoneTransform(bone: Int, translation: Vec3f, rotation: Quat) {
-        this.translation[bone] = translation
-        this.rotation[bone] = rotation
+        writeVec(this.translation, bone, translation)
+        writeQuat(this.rotation, bone, rotation)
     }
 
     /**
@@ -83,55 +103,14 @@ class AnimationPose(private val skeleton: Skeleton) {
      * @param timeSeconds Playback timestamp in seconds within the clip.
      */
     fun sample(clip: AnimationClip, timeSeconds: Float) {
-        clip.channels.forEach { channel ->
-            val value = sampleChannel(channel.sampler, timeSeconds)
+        val channels = clip.channels
+        for (c in channels.indices) {
+            val channel = channels[c]
             when (channel.property) {
-                AnimationProperty.Translation -> translation[channel.targetBone] =
-                    Vec3f(value[0], value[1], value[2])
-
-                AnimationProperty.Scale -> scale[channel.targetBone] =
-                    Vec3f(value[0], value[1], value[2])
-
-                AnimationProperty.Rotation ->
-                    rotation[channel.targetBone] = Quat(value[0], value[1], value[2], value[3])
+                AnimationProperty.Translation -> sampleInto(channel.sampler, timeSeconds, translation, channel.targetBone * VEC, VEC)
+                AnimationProperty.Scale -> sampleInto(channel.sampler, timeSeconds, scale, channel.targetBone * VEC, VEC)
+                AnimationProperty.Rotation -> sampleInto(channel.sampler, timeSeconds, rotation, channel.targetBone * QUAT, QUAT)
             }
-        }
-    }
-
-    /** Finds [timeSeconds]'s enclosing keyframe pair in [sampler] and lerps (rotation: nlerps)
-     * between them -- clamps to the first/last keyframe outside the clip's own time range. */
-    private fun sampleChannel(sampler: AnimationSampler, timeSeconds: Float): FloatArray {
-        val times = sampler.times
-        val comps = sampler.componentsPerKeyframe
-        if (times.isEmpty()) return FloatArray(comps)
-        if (timeSeconds <= times.first()) return sampler.values.copyOfRange(0, comps)
-        if (timeSeconds >= times.last()) {
-            val lastBase = (times.size - 1) * comps
-            return sampler.values.copyOfRange(lastBase, lastBase + comps)
-        }
-        var hi = 1
-        while (hi < times.size && times[hi] < timeSeconds) hi++
-        val lo = hi - 1
-        val t = (timeSeconds - times[lo]) / (times[hi] - times[lo])
-        val loBase = lo * comps
-        val hiBase = hi * comps
-        return if (comps == 4) {
-            val a = Quat(
-                sampler.values[loBase],
-                sampler.values[loBase + 1],
-                sampler.values[loBase + 2],
-                sampler.values[loBase + 3],
-            )
-            val b = Quat(
-                sampler.values[hiBase],
-                sampler.values[hiBase + 1],
-                sampler.values[hiBase + 2],
-                sampler.values[hiBase + 3],
-            )
-            val r = Quat.nlerp(a, b, t)
-            floatArrayOf(r.x, r.y, r.z, r.w)
-        } else {
-            FloatArray(comps) { i -> sampler.values[loBase + i] + (sampler.values[hiBase + i] - sampler.values[loBase + i]) * t }
         }
     }
 
@@ -143,11 +122,9 @@ class AnimationPose(private val skeleton: Skeleton) {
      * @param other Source pose whose local transforms will be copied into this pose.
      */
     fun copyFrom(other: AnimationPose) {
-        for (i in translation.indices) {
-            translation[i] = other.translation[i]
-            rotation[i] = other.rotation[i]
-            scale[i] = other.scale[i]
-        }
+        other.translation.copyInto(translation)
+        other.rotation.copyInto(rotation)
+        other.scale.copyInto(scale)
     }
 
     /**
@@ -163,9 +140,11 @@ class AnimationPose(private val skeleton: Skeleton) {
      */
     fun blend(other: AnimationPose, weight: Float) {
         for (i in translation.indices) {
-            translation[i] = translation[i].lerp(other.translation[i], weight)
-            rotation[i] = Quat.nlerp(rotation[i], other.rotation[i], weight)
-            scale[i] = scale[i].lerp(other.scale[i], weight)
+            translation[i] += (other.translation[i] - translation[i]) * weight
+            scale[i] += (other.scale[i] - scale[i]) * weight
+        }
+        for (bone in bones.indices) {
+            nlerpInPlace(rotation, bone * QUAT, other.rotation, bone * QUAT, weight)
         }
     }
 
@@ -178,37 +157,150 @@ class AnimationPose(private val skeleton: Skeleton) {
      * @param skin Mesh skin binding providing joint bone indices and inverse bind matrices.
      * @return Flattened array of column-major joint matrices for GPU vertex skinning.
      */
-    fun jointPalette(skin: Skin): FloatArray {
-        val globalTransforms = arrayOfNulls<Mat4>(skeleton.bones.size)
+    fun jointPalette(skin: Skin): FloatArray = jointPalette(skin, FloatArray(skin.joints.size * MATRIX))
 
-        fun computeGlobal(boneIndex: Int, parent: Mat4): Mat4 {
-            globalTransforms[boneIndex]?.let { return it }
-            val bone = skeleton.bones[boneIndex]
-            val local = bone.matrix ?: Mat4.fromTrs(
-                translation[boneIndex],
-                rotation[boneIndex],
-                scale[boneIndex],
-            )
-            val global = Mat4.multiplyColumnMajor(parent, local)
-            globalTransforms[boneIndex] = global
-            return global
+    /**
+     * [jointPalette] written into [into], which must hold `16 * skin.joints.size` floats: for a caller
+     * that poses the same model every frame and keeps its palette.
+     *
+     * @param skin Mesh skin binding providing joint bone indices and inverse bind matrices.
+     * @param into Array the joint matrices are written into.
+     * @return [into].
+     */
+    fun jointPalette(skin: Skin, into: FloatArray): FloatArray {
+        require(into.size >= skin.joints.size * MATRIX) { "A palette for ${skin.joints.size} joints needs ${skin.joints.size * MATRIX} floats." }
+        reached.fill(false)
+        val roots = skeleton.roots
+        for (r in roots.indices) visit(roots[r], parentAt = -1)
+        val joints = skin.joints
+        for (i in joints.indices) {
+            val bone = joints[i]
+            val inverseBind = skin.inverseBindMatrices[i].data
+            // A joint bone unreachable from any skeleton root has no global transform -- shouldn't
+            // happen for a well-formed skeleton (every joint is part of the hierarchy); identity is
+            // a harmless fallback rather than a crash if one ever is.
+            if (bone in bones.indices && reached[bone]) {
+                multiply(globals, bone * MATRIX, inverseBind, into, i * MATRIX)
+            } else {
+                inverseBind.copyInto(into, i * MATRIX)
+            }
         }
+        return into
+    }
 
-        fun visit(boneIndex: Int, parent: Mat4) {
-            val global = computeGlobal(boneIndex, parent)
-            skeleton.bones[boneIndex].children.forEach { visit(it, global) }
+    /** Writes [bone]'s global transform, its parent's at [parentAt] (-1 for none) times its local one, then its children's. */
+    private fun visit(bone: Int, parentAt: Int) {
+        if (reached[bone]) return
+        reached[bone] = true
+        val at = bone * MATRIX
+        val authored = bones[bone].matrix
+        val localData = if (authored != null) {
+            authored.data
+        } else {
+            localTranslation.set(translation[bone * VEC], translation[bone * VEC + 1], translation[bone * VEC + 2])
+            localRotation.x = rotation[bone * QUAT]
+            localRotation.y = rotation[bone * QUAT + 1]
+            localRotation.z = rotation[bone * QUAT + 2]
+            localRotation.w = rotation[bone * QUAT + 3]
+            localScale.set(scale[bone * VEC], scale[bone * VEC + 1], scale[bone * VEC + 2])
+            local.setTrs(localTranslation, localRotation, localScale).data
         }
-        skeleton.roots.forEach { visit(it, Mat4()) }
+        if (parentAt < 0) localData.copyInto(globals, at) else multiply(globals, parentAt, localData, globals, at)
+        val children = bones[bone].children
+        for (c in children.indices) visit(children[c], at)
+    }
 
-        val result = FloatArray(skin.joints.size * 16)
-        skin.joints.forEachIndexed { i, boneIndex ->
-            // A joint bone unreachable from any skeleton root would leave this null -- shouldn't
-            // happen for a well-formed skeleton (every joint is part of the hierarchy), identity
-            // is a harmless fallback rather than a crash if one ever is.
-            val global = globalTransforms[boneIndex] ?: Mat4()
-            val jointMatrix = Mat4.multiplyColumnMajor(global, skin.inverseBindMatrices[i])
-            for (component in 0 until 16) result[i * 16 + component] = jointMatrix.data[component]
+}
+
+/**
+ * Writes [sampler]'s value at [timeSeconds] -- its enclosing keyframe pair lerped, or nlerped
+ * for a four-component rotation -- as [count] floats at [at] in [out].
+ */
+private fun sampleInto(sampler: AnimationSampler, timeSeconds: Float, out: FloatArray, at: Int, count: Int) {
+    val times = sampler.times
+    val values = sampler.values
+    val comps = sampler.componentsPerKeyframe
+    when {
+        times.isEmpty() -> out.fill(0f, at, at + count)
+        timeSeconds <= times.first() -> values.copyInto(out, at, 0, count)
+        timeSeconds >= times.last() -> values.copyInto(out, at, (times.size - 1) * comps, (times.size - 1) * comps + count)
+        else -> {
+            val hi = firstKeyAtOrAfter(times, timeSeconds)
+            val lo = hi - 1
+            val t = (timeSeconds - times[lo]) / (times[hi] - times[lo])
+            if (comps == QUAT) {
+                values.copyInto(out, at, lo * comps, lo * comps + QUAT)
+                nlerpInPlace(out, at, values, hi * comps, t)
+            } else {
+                for (i in 0 until count) {
+                    val a = values[lo * comps + i]
+                    out[at + i] = a + (values[hi * comps + i] - a) * t
+                }
+            }
         }
-        return result
     }
 }
+
+private fun writeVec(out: FloatArray, bone: Int, value: Vec3f) {
+    out[bone * VEC] = value.x
+    out[bone * VEC + 1] = value.y
+    out[bone * VEC + 2] = value.z
+}
+
+private fun writeQuat(out: FloatArray, bone: Int, value: Quat) {
+    out[bone * QUAT] = value.x
+    out[bone * QUAT + 1] = value.y
+    out[bone * QUAT + 2] = value.z
+    out[bone * QUAT + 3] = value.w
+}
+
+/** The first index from 1 whose key time is at or after [time]; [time] lies strictly inside [times]. */
+private fun firstKeyAtOrAfter(times: FloatArray, time: Float): Int {
+    var low = 1
+    var high = times.size - 1
+    while (low < high) {
+        val mid = (low + high) ushr 1
+        if (times[mid] < time) low = mid + 1 else high = mid
+    }
+    return low
+}
+
+/** [Quat.nlerp] from the quaternion at [at] in [out] toward the one at [bAt] in [b], written back at [at]. */
+private fun nlerpInPlace(out: FloatArray, at: Int, b: FloatArray, bAt: Int, t: Float) {
+    val ax = out[at]
+    val ay = out[at + 1]
+    val az = out[at + 2]
+    val aw = out[at + 3]
+    val sign = if (ax * b[bAt] + ay * b[bAt + 1] + az * b[bAt + 2] + aw * b[bAt + 3] < 0f) -1f else 1f
+    val rx = ax + (sign * b[bAt] - ax) * t
+    val ry = ay + (sign * b[bAt + 1] - ay) * t
+    val rz = az + (sign * b[bAt + 2] - az) * t
+    val rw = aw + (sign * b[bAt + 3] - aw) * t
+    val length = sqrt(rx * rx + ry * ry + rz * rz + rw * rw)
+    if (length == 0f) {
+        out[at] = 0f
+        out[at + 1] = 0f
+        out[at + 2] = 0f
+        out[at + 3] = 1f
+    } else {
+        out[at] = rx / length
+        out[at + 1] = ry / length
+        out[at + 2] = rz / length
+        out[at + 3] = rw / length
+    }
+}
+
+/** The column-major product of the matrix at [aAt] in [a] and the one [b] holds, written at [outAt] in [out]. */
+private fun multiply(a: FloatArray, aAt: Int, b: FloatArray, out: FloatArray, outAt: Int) {
+    for (col in 0 until 4) {
+        for (row in 0 until 4) {
+            var sum = 0f
+            for (k in 0 until 4) sum += a[aAt + k * 4 + row] * b[col * 4 + k]
+            out[outAt + col * 4 + row] = sum
+        }
+    }
+}
+
+private const val VEC = 3
+private const val QUAT = 4
+private const val MATRIX = 16
