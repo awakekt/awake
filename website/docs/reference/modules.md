@@ -151,6 +151,12 @@ awake-backend-vulkan = { module = "com.awakekt.awake.backend:vulkan", version.re
 | `com.awakekt.awake.ui:canvas` | `awake-ui-canvas` | Screen-anchored game UI (text, panels, bars, buttons) drawn over the game, with no scene or ECS dependency. |
 | `com.awakekt.awake.ui:node-graph-canvas` | `awake-ui-node-graph-canvas` | Pan-and-zoom node graph editing surface. |
 
+### Version alignment
+
+| Maven coordinate | Catalog alias | What it is |
+| --- | --- | --- |
+| `com.awakekt.awake:bom` | `awake-bom` | The Core platform: constrains every Core module to one version. Gradle builds get it through the modules; a Maven build imports it. See [Installation](../get-started/installation.md#mixed-core-versions-line-up-on-their-own). |
+
 ### WebGPU backend
 
 | Maven coordinate | Catalog alias | What it is |

@@ -97,16 +97,20 @@ One person or agent owns a release from cut to downstream bump. Before cutting, 
 1. Branch `release-cut/vX.Y.Z` from `main`, run the cut, push the branch, open
    `chore(release): cut vX.Y.Z` with the milestone, and squash-merge it.
 2. Tag the squash commit (`git tag -a vX.Y.Z -m vX.Y.Z <sha>`) and push the tag. The tag's
-   **Publish** run stages the Core family and build-logic's plugins in one folder and uploads them
-   as one Central deployment (`scripts/central-bundle.sh`, `scripts/central-upload.sh`), which
-   publishes whole or not at all. Wait for it to succeed and for
+   **Publish** run stages the Core family, its alignment BOM and build-logic's plugins in one folder
+   and uploads them as one Central deployment (`scripts/central-bundle.sh`,
+   `scripts/central-upload.sh`), which publishes whole or not at all. Wait for it to succeed and for
    `repo1.maven.org/.../core/host/maven-metadata.xml` to list the version. Its **WebGPU release
    pin** job then publishes `com.awakekt.awake.backend:webgpu:<release>-SNAPSHOT` once Core is on
    repo1; wait for that job too.
 3. **Vulkan:** if anything under `awake/backend/vulkan` changed since the last `vulkan-v*` tag
    (`scripts/vulkan-publication-impact.sh <last-vulkan-tag> vX.Y.Z` prints `true`), tag
    `vulkan-vA.B.C` on the **same commit** and push it once Core is on Central. A Vulkan release
-   pins the Core release it was built with; pairing it with a newer Core can fail at runtime. Its
+   pins the Core release it was built with, and [the Core alignment BOM](#core-alignment-bom) lifts
+   those Core edges to any newer Core in a consumer's graph. So also tag a Vulkan release on that
+   commit when the Core release removes or changes a public signature in the `api/*.api` dump of a
+   module the Vulkan backend depends on, even though nothing under `awake/backend/vulkan` changed:
+   otherwise a consumer's graph runs the old Vulkan release against the changed module. Its
    Publish run uploads the three Vulkan modules as one Central deployment and attaches the bundle to
    the GitHub Release, as a Core release does.
 4. **Downstream:** bump awake-studio to the new Core and Vulkan releases by hand. The three
@@ -164,6 +168,41 @@ Publication-family selection skips Central preparation and automatic-release reg
 well as uploads. An excluded stable module must not register an empty release bundle during a
 Core snapshot run. A run with no selected publications succeeds without contacting Central;
 errors from selected uploads still fail the run.
+
+### Core alignment BOM
+
+A Vulkan release pins the Core release it was built with, so on its own it keeps requesting that
+release's modules whatever Core a consumer chooses. Pinning Core 0.12.0 while `vulkan-desktop:0.1.28`
+asked for `shader-compiler-desktop:0.11.0` left the consumer on the pre-fix shader compiler, because
+nothing else in its graph asked for a newer one (#811). `com.awakekt.awake:bom` closes that gap.
+
+- **What it is.** A Gradle platform and Maven BOM (`awake/bom`), published in every Core release at the
+  Core version, in the same Central deployment as the Core modules. It constrains every published
+  Core coordinate, root and per-target, to that version. The Vulkan family and the WebGPU release
+  pin are not listed: their versions are not the Core version.
+- **How it aligns.** Every published Core module, in every variant of its Gradle module metadata,
+  depends on the platform at its own version, and so does the Vulkan backend at the Core release it
+  pins (the bindings and the Android bridge reach no Core module). When a consumer's graph holds two
+  Core versions, Gradle resolves the platform to the newer and the constraints lift every Core
+  module to it, a Vulkan release's own Core edges included. Nothing to declare. A consumer who wants
+  to state the version adds `implementation(platform("com.awakekt.awake:bom:<version>"))`. The WebGPU
+  release pin does not take the platform; it holds Core `strictly`, so a newer Core fails resolution
+  there instead.
+- **Maven.** Maven does not read Gradle module metadata, so a Maven build imports the BOM in
+  `dependencyManagement` (`<type>pom</type>`, `<scope>import</scope>`), as `awake/bom/README.md` shows.
+- **Old releases.** A Vulkan or Core release published before the first BOM carries no platform edge,
+  but any newer Core in the graph brings its own, so an old Vulkan release is lifted too.
+- **Derived, not listed.** The root `build.gradle.kts` adds the edge to each module with the publish
+  convention and builds the constraints from the publications the build registers, the read
+  `verifyPublishedArtifacts` uses. `verifyPublishedArtifacts -Pawake.verifyPublishedFamily=core`
+  fails unless every dependency-declaring variant names the platform at the release, and the platform
+  lists exactly the Core modules this build publishes and Maven Local holds. For the Vulkan family,
+  `-Pawake.verifyPinnedCoreVersion` also fails a variant that reaches Core without the platform at the
+  pin.
+- **Checking a mixed graph.** No workflow resolves one yet. By hand: publish two fake Core versions
+  and the Vulkan family pinned to the older (`-Pawake.coreVersion`) to Maven Local, then run
+  `dependencyInsight --dependency shader-compiler-desktop` in a throwaway consumer that depends on a
+  module of the newer Core and on the Vulkan backend. It must resolve to the newer version.
 
 ### WebGPU release pin
 

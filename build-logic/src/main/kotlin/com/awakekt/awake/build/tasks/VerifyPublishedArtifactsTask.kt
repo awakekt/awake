@@ -21,6 +21,8 @@ import javax.xml.parsers.DocumentBuilderFactory
  *
  * With `awake.verifyPinnedCoreVersion`, it also checks that a Vulkan or WebGPU family's module
  * metadata, platform modules included, names Core at exactly that release (see [pinnedCoreViolations]).
+ * For the Core family it checks the Core platform: every module depends on it, and it lists exactly
+ * the Core modules published (see [coreBomViolations], [coreBomListingViolations]).
  */
 @DisableCachingByDefault(because = "Inspects the external Maven local repository and publication metadata")
 abstract class VerifyPublishedArtifactsTask : DefaultTask() {
@@ -56,7 +58,8 @@ abstract class VerifyPublishedArtifactsTask : DefaultTask() {
         if (directories.isEmpty()) throw GradleException("No Maven-local Awake artifacts found for $version")
 
         val pinFailures = pinnedCore?.let { core -> verifyPinnedCore(directories, version, core, family!!) }.orEmpty()
-        val failures = pinFailures + directories.flatMap { directory ->
+        val bomFailures = if (family == "core") verifyCoreBom(repository, version) else emptyList()
+        val failures = pinFailures + bomFailures + directories.flatMap { directory ->
             val pom = directory.resolve("${directory.parent.fileName}-$version.pom")
             val metadata = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(pom.toFile())
             listOf("name", "description", "url", "licenses", "developers", "scm").filter { field ->
@@ -80,6 +83,17 @@ abstract class VerifyPublishedArtifactsTask : DefaultTask() {
             return listOf("No $family module metadata for $version names a Core module")
         }
         return modules.flatMap { pinnedCoreViolations(it, core, family, publishedModules.get(), ::relative) }
+    }
+
+    /** The Core family at [version]: each module depends on the Core platform, which lists exactly the family. */
+    private fun verifyCoreBom(repository: Path, version: String): List<String> {
+        val held = heldCoordinates(repository, version)
+        val members = publishedModules.get().filter { isListedInCoreBom(it.substringAfter(':')) }.toSet()
+        val bom = LocalModuleMetadata(repository.resolve("bom").resolve(version).resolve("bom-$version.module"))
+        val modules = held.filterKeys { it in members }.values.flatMap { folder ->
+            coreBomViolations(LocalModuleMetadata(folder.resolve("${folder.parent.fileName}-$version.module")), version, ::relative)
+        }
+        return coreBomListingViolations(bom, version, members, held.keys, ::relative) + modules.distinct()
     }
 
     private fun verifyVariant(

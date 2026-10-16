@@ -5,6 +5,8 @@
  */
 
 import com.awakekt.awake.build.extension.configurePublicationFamily
+import org.gradle.api.publish.PublishingExtension
+import org.gradle.api.publish.maven.MavenPublication
 
 plugins {
     // this is necessary to avoid the plugins to be loaded multiple times
@@ -467,6 +469,36 @@ project(":awake:backend:webgpu") {
                         }
                     }
                 }
+        }
+    }
+}
+
+// The Core alignment BOM (`:awake:bom`, #811; docs/release-process.md "Core alignment BOM"). A
+// published module that reaches Core depends on the platform at its own version, and the platform
+// constrains every published Core coordinate to that version. A graph that mixes Core versions, as
+// one with a Vulkan release does since that pins the Core it was built with, resolves the platform
+// to the highest and lifts every Core module with it. The Vulkan bindings and Android bridge reach
+// no Core module, and WebGPU's release pin already holds Core `strictly`, so neither takes it.
+val bomPath = ":awake:bom"
+val coreBomExempt = vulkanFamilyProjects - ":awake:backend:vulkan" + webgpuFamilyProjects + bomPath
+allprojects {
+    if (path in coreBomExempt) return@allprojects
+    pluginManager.withPlugin("com.awakekt.awake.plugin.publish") {
+        pluginManager.withPlugin("org.jetbrains.kotlin.multiplatform") {
+            dependencies.add("commonMainApi", dependencies.platform(dependencies.project(mapOf("path" to bomPath))))
+        }
+    }
+}
+
+// The platform lists what the Core family publishes, root and platform publications alike: the read
+// `verifyPublishedArtifacts` uses for `publishedModules`, so it cannot name a module that isn't.
+gradle.projectsEvaluated {
+    val listed = allprojects.filter { it.path !in vulkanFamilyProjects + webgpuFamilyProjects + bomPath }
+    project(bomPath).dependencies.constraints {
+        listed.forEach { module ->
+            module.extensions.findByType(PublishingExtension::class.java)?.publications
+                ?.withType(MavenPublication::class.java)
+                ?.forEach { add("api", "${it.groupId}:${it.artifactId}:${it.version}") }
         }
     }
 }

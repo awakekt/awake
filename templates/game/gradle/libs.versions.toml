@@ -17,7 +17,9 @@ kotlinx-coroutines = "1.11.0"
 ktor = "3.5.2"
 logback = "1.6.3"
 material3 = "1.11.0-alpha07"
-# Core modules and Vulkan backend use independent version trains.
+# Core modules and Vulkan backend use independent version trains. Gradle lines them up on its own:
+# every Core module depends on com.awakekt.awake:bom, so the newest Core in the build lifts all of
+# them, a Vulkan release's included. To state the version, implementation(platform("com.awakekt.awake:bom:<awake>")).
 awake = "0.8.6"
 awake-vulkan = "0.1.25"
 # The WebGPU backend is not released to Maven Central while it builds on a wgpu4k snapshot; it
