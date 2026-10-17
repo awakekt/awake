@@ -42,6 +42,7 @@ internal fun bindWindowTouchInput(input: Input, canvas: HTMLCanvasElement) {
     listen("touchcancel", lifts = true)
 }
 
-// Non-passive, or the browser ignores preventDefault on touchmove and scrolls or zooms the page.
+// Non-passive, or the browser ignores preventDefault on touchmove (and, on the window, wheel) and
+// scrolls or zooms the page.
 @JsFun("(type, listener) => window.addEventListener(type, listener, { passive: false })")
-private external fun addNonPassiveListener(type: String, listener: (Event) -> Unit)
+internal external fun addNonPassiveListener(type: String, listener: (Event) -> Unit)

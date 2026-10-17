@@ -18,6 +18,10 @@ internal data class CanvasBox(val left: Double, val top: Double, val width: Doub
     fun bufferSize(density: Double): Pair<Int, Int> =
         (width * density).toInt().coerceAtLeast(1) to (height * density).toInt().coerceAtLeast(1)
 
+    /** True if the page point [clientX], [clientY] is over this box; a canvas that isn't displayed has none. */
+    fun contains(clientX: Double, clientY: Double): Boolean =
+        clientX >= left && clientX < left + width && clientY >= top && clientY < top + height
+
     /**
      * Where the page point [clientX], [clientY] lands in a [bufferWidth] by [bufferHeight] buffer
      * shown over this box: measured from the box's corner and scaled by buffer pixels per CSS pixel
