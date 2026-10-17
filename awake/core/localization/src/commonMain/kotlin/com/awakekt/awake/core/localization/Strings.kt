@@ -28,7 +28,7 @@ import kotlin.concurrent.Volatile
  * A key is looked up in the active locale's table, then in its parents' (`pt-BR`, then `pt`), then
  * in the default locale's. A key no table has shows as the key itself and is logged once; nothing
  * here throws for missing or broken text. Text is a [MessageFormat] pattern, formatted with the
- * plural rule of the locale the text came from.
+ * plural rules, ordinal rules and [NumberFormat] of the locale the text came from.
  *
  * Tables load per locale when that locale is used, so a project with many languages reads only the
  * active one and the default. A message is parsed the first time it is shown and kept.
@@ -42,6 +42,7 @@ class Strings internal constructor(
     private val source: StringTableSource,
     val defaultLocale: LocaleId,
     private val pluralRules: (LocaleId) -> PluralRule,
+    private val ordinalRules: (LocaleId) -> PluralRule,
     initialLocale: LocaleId,
 ) {
     private val switchLock = Mutex()
@@ -119,7 +120,7 @@ class Strings internal constructor(
                 current.report("$key@${table.locale}") { "Text \"$key\" in ${table.locale} is not a valid message: ${table.errors[key]}" }
                 key
             }
-            else -> message.format(arguments, table.plurals) { problem ->
+            else -> message.format(arguments, table.plurals, table.ordinals, table.numbers) { problem ->
                 current.report("$key@${table.locale}:$problem") { "Text \"$key\" in ${table.locale}: $problem." }
             }
         }
@@ -174,7 +175,7 @@ class Strings internal constructor(
         // A table that can't be read is a StringTableException, an IllegalArgumentException, as is a
         // kotlinx.serialization failure in a custom source.
         val table = try {
-            source.load(locale)?.let { Table(locale, it, pluralRules(locale)) }
+            source.load(locale)?.let { Table(locale, it, pluralRules(locale), ordinalRules(locale)) }
         } catch (e: IllegalArgumentException) {
             log.error(e) { "String table for $locale could not be read: ${e.message}" }
             null
@@ -192,7 +193,8 @@ class Strings internal constructor(
         }
     }
 
-    private class Table(val locale: LocaleId, val text: Map<String, String>, val plurals: PluralRule) {
+    private class Table(val locale: LocaleId, val text: Map<String, String>, val plurals: PluralRule, val ordinals: PluralRule) {
+        val numbers: NumberFormat = NumberFormat.forLocale(locale)
         private val parsed = HashMap<String, MessageFormat>()
         val errors = HashMap<String, String>()
 
@@ -218,6 +220,8 @@ class Strings internal constructor(
          * @param defaultLocale The locale every lookup falls back to; the tables' source language.
          * @param pluralRules The plural rule of each locale; [PluralRules.forLocale] unless a language
          *   needs one it does not cover.
+         * @param ordinalRules The ordinal rule of each locale, for `selectordinal`; [OrdinalRules.forLocale]
+         *   unless a language needs one it does not cover.
          * @return The strings, in [locale].
          */
         suspend fun load(
@@ -225,6 +229,7 @@ class Strings internal constructor(
             locale: LocaleId = systemLocale(),
             defaultLocale: LocaleId = LocaleId.English,
             pluralRules: (LocaleId) -> PluralRule = PluralRules::forLocale,
-        ): Strings = Strings(source, defaultLocale, pluralRules, locale).also { it.setLocale(locale) }
+            ordinalRules: (LocaleId) -> PluralRule = OrdinalRules::forLocale,
+        ): Strings = Strings(source, defaultLocale, pluralRules, ordinalRules, locale).also { it.setLocale(locale) }
     }
 }
