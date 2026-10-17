@@ -14,6 +14,7 @@ import com.awakekt.awake.ui.canvas.CanvasAnchor
 import com.awakekt.awake.ui.canvas.CanvasBinding
 import com.awakekt.awake.ui.canvas.CanvasButton
 import com.awakekt.awake.ui.canvas.CanvasCluster
+import com.awakekt.awake.ui.canvas.CanvasControlSkin
 import com.awakekt.awake.ui.canvas.CanvasElement
 import com.awakekt.awake.ui.canvas.CanvasElementKind
 import com.awakekt.awake.ui.canvas.CanvasFollowRules
@@ -128,6 +129,13 @@ import kotlinx.serialization.Serializable
  * @property cluster Places the element's children as a button cluster, in place of [layout]: the
  * first on a pivot (`pivotX`, `pivotY`, shares of the element) unless `primaryAtPivot` is false, and
  * the rest `radius` dp from it, from `startAngle` and `spacing` degrees apart, clockwise from the right.
+ * @property skin How this control looks, slot by slot, over the scene's `canvas_controls` theme: a
+ * Joystick's `base`, `knob`, `sprintRing` and `arrows`; an action button's `background`, `icon`,
+ * `label`, `cooldown`, `charges`, `aimCursor`, `aimRange` and `cancelZone`; a LookArea's `feedback`.
+ * Each slot has a `style`, `size`, `circle`, `frames`, `custom` content, per-state `states` and
+ * `transitionSeconds`; a colour or image path written `@name` is the theme's token.
+ * @property controlId The name a player's saved layout knows this control by, such as `move`; empty
+ * for none.
  */
 @Serializable
 @SerialName("canvas_element")
@@ -177,6 +185,8 @@ data class SceneCanvasElement(
     val enabled: Boolean = true,
     val look: CanvasLook? = null,
     val cluster: CanvasCluster? = null,
+    val skin: CanvasControlSkin? = null,
+    val controlId: String = "",
 ) : SceneComponent {
     /**
      * Validates element dimensions, font sizes, values, and hex color syntax.
@@ -228,7 +238,8 @@ data class SceneCanvasElement(
         "look only sets up a LookArea".takeIf { look != null && kind != CanvasElementKind.LookArea },
         "cluster and layout both place the children; keep one".takeIf { cluster != null && layout != null },
     ) + joystick?.problems().orEmpty().map { "joystick.$it" } + button?.problems().orEmpty().map { "button.$it" } +
-        look?.problems().orEmpty().map { "look.$it" } + cluster?.problems().orEmpty().map { "cluster.$it" }
+        look?.problems().orEmpty().map { "look.$it" } + cluster?.problems().orEmpty().map { "cluster.$it" } +
+        skin?.problems().orEmpty().map { "skin.$it" }
 
     /** What is wrong with the follow rules, and follow fields set where they do nothing. */
     private fun followProblems(): List<String> = buildList {

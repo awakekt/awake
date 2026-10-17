@@ -29,7 +29,8 @@ kotlin {
             // A canvas's touch controls show by the device last used, which callers pass in.
             api(project(":awake:core:input"))
             api(libs.kotlinx.serialization.json)
-            implementation(project(":awake:compose:foundation"))
+            // A custom slot is drawn in a BoxScope, part of the public CanvasSlotContent.
+            api(project(":awake:compose:foundation"))
             implementation(project(":awake:core:color"))
             implementation(project(":awake:core:graphics2d"))
             implementation(project(":awake:core:logging"))

@@ -21,6 +21,7 @@ import com.awakekt.awake.ui.canvas.CanvasFollowLimit
 import com.awakekt.awake.ui.canvas.CanvasInsets
 import com.awakekt.awake.ui.canvas.CanvasOverlay
 import com.awakekt.awake.ui.canvas.CanvasScaler
+import com.awakekt.awake.ui.canvas.CanvasSlotContent
 
 context(_: Composer)
 /**
@@ -76,6 +77,8 @@ context(_: Composer)
  *   default, through [canvasControls]. Null shows touch controls as [showTouchControls] says.
  * @param inputDevice The device the player last used, which `canvas_controls`' `Auto` visibility
  *   shows and hides touch controls by. `SceneAppLifecycleRuntime` passes the one it tracks.
+ * @param slotContent The composables a control's custom slot names, by name, each given the
+ *   control's live state. `SceneAppLifecycleRuntime` passes its `canvasSlotContent`.
  */
 fun SceneCanvas(
     world: World,
@@ -95,6 +98,7 @@ fun SceneCanvas(
     dpi: Float = 0f,
     controls: CanvasControls? = world.canvasControls(),
     inputDevice: InputDevice? = null,
+    slotContent: Map<String, CanvasSlotContent> = emptyMap(),
 ) {
     CanvasOverlay(
         world.canvasItems(siblingOrder),
@@ -111,5 +115,6 @@ fun SceneCanvas(
         dpi,
         controls,
         inputDevice,
+        slotContent,
     )
 }

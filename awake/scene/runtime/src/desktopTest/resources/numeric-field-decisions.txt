@@ -6,7 +6,8 @@
 #   - `undecided <component>.<property>`: its module's batch has not been done yet. This only shrinks.
 #
 # Nested properties are written with dots (`particle_emitter.spin.maxDegreesPerSecond`); a list of
-# objects with `[]` (`particle_emitter.ground.colliders[].x`).
+# objects with `[]` (`particle_emitter.ground.colliders[].x`). A `free` path may hold `*`, any run of
+# characters, for one decision that holds wherever the same type nests.
 
 free behavior_tree.seed | Any 64-bit seed is valid; it only chooses the random sequence.
 free camera.far | Relational: it must exceed camera.near, which validate() enforces; no fixed limit says that.
@@ -88,6 +89,20 @@ free canvas_element.followRules.fade.points[].at | Validated as a whole: the poi
 free canvas_element.followRules.fade.points[].value | An opacity, held to 1 above it and leaving the follower out at or below 0, so every value means something.
 free canvas_element.cluster.startAngle | Any angle in degrees is valid: negative turns the other way, and past 360 just wraps.
 free canvas_element.cluster.spacing | Any step in degrees is valid: negative fans the buttons anticlockwise.
+free canvas_element.skin.*.style.shadow.offsetX | A slot's shadow offset: left of the part is as valid as right of it.
+free canvas_element.skin.*.style.shadow.offsetY | A slot's shadow offset: above the part is as valid as below it.
+free canvas_element.skin.*.style.shadow.spread | Negative shrinks a slot's shadow inside the part, as CSS allows.
+free canvas_element.skin.*.style.textShadow.offsetX | A slot's text shadow offset: either side is as valid.
+free canvas_element.skin.*.style.textShadow.offsetY | A slot's text shadow offset: either side is as valid.
+free canvas_element.skin.*.style.rotation | Any turn in degrees is valid: negative turns the other way, and past 360 just wraps.
+free canvas_controls.theme.skin.*.style.shadow.offsetX | A slot's shadow offset: left of the part is as valid as right of it.
+free canvas_controls.theme.skin.*.style.shadow.offsetY | A slot's shadow offset: above the part is as valid as below it.
+free canvas_controls.theme.skin.*.style.shadow.spread | Negative shrinks a slot's shadow inside the part, as CSS allows.
+free canvas_controls.theme.skin.*.style.textShadow.offsetX | A slot's text shadow offset: either side is as valid.
+free canvas_controls.theme.skin.*.style.textShadow.offsetY | A slot's text shadow offset: either side is as valid.
+free canvas_controls.theme.skin.*.style.rotation | Any turn in degrees is valid: negative turns the other way, and past 360 just wraps.
+free canvas_controls.playerLayout.controls[].offsetX | A player's move: left is as valid as right.
+free canvas_controls.playerLayout.controls[].offsetY | A player's move: up is as valid as down.
 free canvas_element.button.aim.cancel.offsetX | Any screen offset is valid, as an element's own is.
 free canvas_element.button.aim.cancel.offsetY | Any screen offset is valid, as an element's own is.
 free canvas_element.joystick.curve.points[].at | Validated as a whole: the points must be finite and in order, which no per-point limit says.
