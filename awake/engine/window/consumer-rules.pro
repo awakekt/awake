@@ -2,7 +2,11 @@
 # what libawake-window reaches by name. verifyKeepRules fails when its C++ names a class no rule
 # here keeps.
 
-# The native library binds to GlfwWindow's external functions by class and method name.
+# The native library binds to GlfwWindow's and GlfwGamepad's external functions by class and
+# method name.
 -keepclasseswithmembernames class com.awakekt.awake.engine.window.GlfwWindow {
+    native <methods>;
+}
+-keepclasseswithmembernames class com.awakekt.awake.engine.window.GlfwGamepad {
     native <methods>;
 }
