@@ -88,6 +88,12 @@ public final class com/awakekt/awake/ai/behavior/FleeBehavior : com/awakekt/awak
 public final class com/awakekt/awake/ai/behavior/FleeBehavior$Companion {
 }
 
+public final class com/awakekt/awake/ai/behavior/NavFieldLineOfSight : com/awakekt/awake/ai/perception/LineOfSight {
+	public fun <init> (Lcom/awakekt/awake/navigation/grid/NavField;)V
+	public final fun getField ()Lcom/awakekt/awake/navigation/grid/NavField;
+	public fun isClear-N_Zv1Ks (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;JLcom/awakekt/awake/ecs/Entity;)Z
+}
+
 public final class com/awakekt/awake/ai/behavior/PatrolAiSystem : com/awakekt/awake/ecs/System {
 	public fun <init> (Lcom/awakekt/awake/ai/behavior/AgentPlacement;)V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
