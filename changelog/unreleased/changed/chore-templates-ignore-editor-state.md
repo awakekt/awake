@@ -1,0 +1,1 @@
+- **The starter templates git-ignore Awake Studio's editor state.** Awake Studio writes per-project editor state, such as the 2D view's camera, to `.awake-editor.json` at a project's root. The game, project and plugin templates' `.gitignore` now list it, so a project made from them doesn't commit one person's view of it.
