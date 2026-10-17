@@ -10,11 +10,13 @@ package com.awakekt.awake.scene.canvas
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.graphics.ImageBitmap
+import com.awakekt.awake.core.input.InputDevice
 import com.awakekt.awake.core.localization.Strings
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.binding.SceneComponentBinding
+import com.awakekt.awake.ui.canvas.CanvasControls
 import com.awakekt.awake.ui.canvas.CanvasFollowLimit
 import com.awakekt.awake.ui.canvas.CanvasInsets
 import com.awakekt.awake.ui.canvas.CanvasOverlay
@@ -70,6 +72,10 @@ context(_: Composer)
  *   `canvas_follow_limit`s by default, through [canvasFollowLimits].
  * @param dpi The screen's real dots per inch, for a `ConstantPhysicalSize` scaler; 0 when the host
  *   cannot tell, which takes 160 per dp. `SceneAppLifecycleRuntime` passes its platform's.
+ * @param controls What the scene's on-screen controls share: the scene's own `canvas_controls` by
+ *   default, through [canvasControls]. Null shows touch controls as [showTouchControls] says.
+ * @param inputDevice The device the player last used, which `canvas_controls`' `Auto` visibility
+ *   shows and hides touch controls by. `SceneAppLifecycleRuntime` passes the one it tracks.
  */
 fun SceneCanvas(
     world: World,
@@ -87,6 +93,8 @@ fun SceneCanvas(
     scaler: CanvasScaler? = world.canvasScaler(),
     followLimits: List<CanvasFollowLimit> = world.canvasFollowLimits(),
     dpi: Float = 0f,
+    controls: CanvasControls? = world.canvasControls(),
+    inputDevice: InputDevice? = null,
 ) {
     CanvasOverlay(
         world.canvasItems(siblingOrder),
@@ -101,5 +109,7 @@ fun SceneCanvas(
         scaler,
         followLimits,
         dpi,
+        controls,
+        inputDevice,
     )
 }

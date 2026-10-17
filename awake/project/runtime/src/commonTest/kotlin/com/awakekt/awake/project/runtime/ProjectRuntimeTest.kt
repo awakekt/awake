@@ -233,6 +233,29 @@ class ProjectRuntimeTest {
         assertTrue(rig.yaw > yaw + 0.2f, "50 dp right turns the camera right; yaw $yaw -> ${rig.yaw}")
     }
 
+    /** With `Auto` visibility, touch controls show after a touch and hide after a key, live. */
+    @Test
+    fun autoTouchControlsFollowTheDeviceLastUsed() = runTest {
+        val game = play(TOUCH_SCENE.withNode(AUTO_CONTROLS), touch = false)
+        game.frames(FRAMES)
+        val tag = "canvas-element-${game.world.named("Stick").id}"
+        fun shown() = game.runtime.uiSemantics.findTag(tag) != null
+        assertFalse(shown(), "off a touch screen, hidden until a finger lands")
+
+        game.input.setTouch(1, 400f, 300f, down = true)
+        game.input.updateSnapshot()
+        game.frames(1)
+        game.input.setTouch(1, 400f, 300f, down = false)
+        game.input.updateSnapshot()
+        game.frames(1)
+        assertTrue(shown(), "a touch shows them")
+
+        game.input.setKeyDown(Key.W, true)
+        game.input.updateSnapshot()
+        game.frames(1)
+        assertFalse(shown(), "a key hides them")
+    }
+
     /** A Button naming an action of the game's own holds that action, which the game's systems read. */
     @Test
     fun aButtonForAnActionOfTheGamesOwnHoldsIt() = runTest {
@@ -437,6 +460,8 @@ class ProjectRuntimeTest {
 
         const val LOOK_AREA = """{ "name": "Look", "components": [ { "component": "canvas_element", "kind": "LookArea", "anchor": "TopRight",
     "offsetX": 0.0, "offsetY": 0.0, "width": 400.0, "height": 600.0, "touchOnly": true } ] }"""
+
+        const val AUTO_CONTROLS = """{ "name": "Controls UI", "components": [ { "component": "canvas_controls", "touchVisibility": "Auto" } ] }"""
 
         const val FIRE_ACTION = """{ "name": "Controls", "components": [ { "component": "input_actions", "actions": [
     { "type": "button", "name": "fire", "keys": ["F"] } ] } ] }"""
