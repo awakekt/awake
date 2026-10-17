@@ -13,9 +13,11 @@ import com.awakekt.awake.render.texture.TextureAsset
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 
@@ -29,7 +31,12 @@ import kotlin.coroutines.CoroutineContext
  * file in [context], off the frame, and answers [SceneTextureLoad.Loading]: the sprite or tilemap is not
  * drawn yet. A later frame finds it loaded, and the frame uploads it and draws it from then on. A file
  * that can't be read or decoded answers [SceneTextureLoad.Failed], and what uses it is not drawn. Each
- * is read once; a texture registered by name with `texture(name) { ... }` is used instead of this.
+ * is read once until it is forgotten; a texture registered by name with `texture(name) { ... }` is used
+ * instead of this.
+ *
+ * A texture is kept until [forgetTexture] or [forgetTextures] drops it, which a host does through
+ * [SceneAssetLibrary.forgetTexture] when a file changes, so the frame also lets go of what it uploaded.
+ * The next ask reads the file again, so an edited image redraws and a failed one is tried again.
  *
  * Asked on the frame thread only. [close] it when the scene stops, which drops what is still loading.
  *
@@ -46,17 +53,36 @@ class AssetSourceTextureResolver(
 
     // Read and written on the frame thread only; loads hand their results over through [finished].
     private val textures = HashMap<String, SceneTextureLoad>()
+
+    // The load each texture still waits for. A result from any other load, one forgotten since, is dropped.
+    private val loading = HashMap<String, Job>()
     private var closed = false
 
     override fun texture(name: String): SceneTextureLoad {
         receiveFinished()
         if (name !in textures && !closed) {
             textures[name] = SceneTextureLoad.Loading
-            loads.launch { finished.trySend(Finished(name, read(name))) }
+            loading[name] = loads.launch {
+                val result = read(name)
+                finished.trySend(Finished(name, coroutineContext.job, result))
+            }
             // A context that runs the load at once, as a test's does, has finished it already.
             receiveFinished()
         }
         return textures[name] ?: SceneTextureLoad.Loading
+    }
+
+    /** Drops the texture [name], and stops reading it if it is still loading; the next ask reads it again. */
+    override fun forgetTexture(name: String) {
+        textures.remove(name)
+        loading.remove(name)?.cancel()
+    }
+
+    /** [forgetTexture] for every texture, such as when the files now hold another project. */
+    override fun forgetTextures() {
+        textures.clear()
+        loading.values.forEach { it.cancel() }
+        loading.clear()
     }
 
     /** Stops what is still loading and drops it. Asking after this starts no new load. */
@@ -70,6 +96,8 @@ class AssetSourceTextureResolver(
     private fun receiveFinished() {
         while (true) {
             val done = finished.tryReceive().getOrNull() ?: return
+            if (loading[done.name] !== done.load) continue
+            loading.remove(done.name)
             textures[done.name] = done.result.fold({ SceneTextureLoad.Loaded(it) }, { SceneTextureLoad.Failed(it) })
         }
     }
@@ -85,5 +113,5 @@ class AssetSourceTextureResolver(
         Result.failure(failure)
     }
 
-    private class Finished(val name: String, val result: Result<TextureAsset>)
+    private class Finished(val name: String, val load: Job, val result: Result<TextureAsset>)
 }

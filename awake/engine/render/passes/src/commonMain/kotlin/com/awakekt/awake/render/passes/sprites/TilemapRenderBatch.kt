@@ -6,6 +6,7 @@
 package com.awakekt.awake.render.passes.sprites
 
 import com.awakekt.awake.core.color.Color
+import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Plane
 import com.awakekt.awake.render.material.Material
@@ -30,9 +31,12 @@ import com.awakekt.awake.tilemap.TilemapGrid
  * @param columns Atlas columns.
  * @param rows Atlas rows.
  * @param pixelsPerUnit Image pixels per local world unit.
+ * @param texture The atlas's name, if it has one, for the log line that reports an atlas that does not divide.
  * @param resolveTexture Supplies decoded pixels on first collection; null while they are not
  * available, such as a file still loading or one that failed to. The layer then draws nothing, and
- * the pixels are asked for again on the next collection.
+ * the pixels are asked for again on the next collection. An atlas that does not divide into
+ * [columns] by [rows] cells of whole pixels, an authoring mistake a file-backed atlas first shows at
+ * run time, is logged once, and the layer draws nothing and asks no more until it is [destroy]ed.
  */
 class TilemapRenderBatch(
     private val renderer: Renderer,
@@ -40,6 +44,7 @@ class TilemapRenderBatch(
     private val columns: Int,
     private val rows: Int,
     private val pixelsPerUnit: Float,
+    private val texture: String? = null,
     private val resolveTexture: () -> TextureAsset?,
 ) {
     private var atlas: TilemapAtlas? = null
@@ -48,11 +53,15 @@ class TilemapRenderBatch(
     private var lastTint: Color? = null
     private var extra = FloatArray(0)
 
+    // Whether the atlas did not divide into its cells; the layer then draws nothing until it is destroyed.
+    private var undivided = false
+
     /**
      * Appends borrowed requests to [out]. Unchanged chunks reuse meshes and requests; hidden
      * chunks are not uploaded. Requests remain valid until this batch's next collection.
      */
     fun collect(model: Mat4, tint: Color, sortOrder: Int, planes: List<Plane>, out: MutableList<RenderDrawCommand>) {
+        if (undivided) return
         val sheet = atlas ?: upload() ?: return
         if (lastTint != tint) {
             extra = UniformWriter(SpriteExtraUniformLayout)
@@ -86,15 +95,30 @@ class TilemapRenderBatch(
         }
     }
 
-    /** The atlas, uploaded with its material and kept, or null when its pixels are not available yet. */
+    /**
+     * The atlas, uploaded with its material and kept, or null when its pixels are not available yet or
+     * do not divide into its cells.
+     */
     private fun upload(): TilemapAtlas? {
-        val image = resolveTexture() ?: return null
-        require(image.layerCount == 1 && !image.isCubemap) { "Tile atlas must be a single 2D image." }
+        val image = resolveTexture()?.takeIf(::fitsCells) ?: return null
         // The atlas checks the image's cells before the material is made, so a bad image leaves nothing to free.
         return TilemapAtlas(image.width, image.height, columns, rows, pixelsPerUnit).also {
             material = renderer.createMaterial(SpriteUniformLayout, texture = image.copy(filtering = TextureFiltering.Nearest))
             atlas = it
         }
+    }
+
+    /** Whether [image] divides into this layer's cells; one that does not is logged, and not asked for again. */
+    private fun fitsCells(image: TextureAsset): Boolean {
+        require(image.layerCount == 1 && !image.isCubemap) { "Tile atlas must be a single 2D image." }
+        undivided = !dividesIntoCells(image.width, image.height, columns, rows)
+        if (undivided) {
+            log.error {
+                "Tile atlas${texture?.let { " '$it'" }.orEmpty()} is ${image.width}x${image.height} pixels, which cannot be " +
+                    "divided into ${columns}x$rows equal cells. Its tilemap layer is not drawn."
+            }
+        }
+        return !undivided
     }
 
     /** Idempotent teardown, including chunks currently outside the view. */
@@ -109,6 +133,7 @@ class TilemapRenderBatch(
         material?.destroy()
         material = null
         atlas = null
+        undivided = false
     }
 
     private class CachedChunk {
@@ -117,3 +142,5 @@ class TilemapRenderBatch(
         var draw: RenderDrawCommand? = null
     }
 }
+
+private val log = Logger("sprites")

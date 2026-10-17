@@ -49,9 +49,22 @@ texture that fails to load, or that nothing registers or resolves, draws nothing
 an error. Neither throws. A resolver of your own overrides `SceneAssetResolver.texture`, answering
 `SceneTextureLoad.Loading` until it has the pixels.
 
+A texture is kept once it has loaded. When its file changes, or one that failed has been fixed, forget
+it on the frame thread, and the next frame reads it again and draws the new pixels:
+
+```kotlin
+val assets = runtime.requireAssetLibrary()
+assets.forgetTexture("art/hero.png") // this file changed
+assets.forgetTextures() // the resolvers now read another project's files
+```
+
+Forgetting destroys what the sprites and tilemaps uploaded from it, has each resolver drop what it kept
+(`SceneAssetResolver.forgetTexture`), and logs a texture that is still missing again, once.
+
 Add `spriteScenePipeline()` from the shader pack to the app's `RenderPlan.scenePipelines`. This
 selects `PositionUv`, the material bindings, alpha blending and depth-test-only behavior. The runtime renders unlit, straight-alpha quads, using nearest
-base-level texels. Sheets must divide into whole pixel cells. A cell's dimensions divided by
+base-level texels. Sheets must divide into whole pixel cells; a sprite whose sheet does not, or a
+tilemap whose atlas does not, is not drawn, and this is logged once. A cell's dimensions divided by
 `pixelsPerUnit` determine local size before the node's world transform is applied. Atlas rows run
 from the top; texture pixels use Awake's bottom-up `createBitmap(...).toRgba8Bytes()` layout.
 Flips stay inside the chosen cell. Higher `sortOrder` draws last, with ties sorted

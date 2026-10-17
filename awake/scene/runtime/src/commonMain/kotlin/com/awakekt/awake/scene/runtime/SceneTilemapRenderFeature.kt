@@ -23,7 +23,8 @@ import com.awakekt.awake.scene.scene2d.Tilemap
 internal class SceneTilemapRenderFeature(
     private val renderer: Renderer,
     private val resolveTexture: (String) -> TextureAsset?,
-) : RenderFeature3D {
+) : RenderFeature3D,
+    SceneTextureUploads {
     private val batches = mutableMapOf<Tilemap, TilemapRenderBatch>()
     private val live = mutableSetOf<Tilemap>()
     private val draws = ArrayList<RenderDrawCommand>()
@@ -35,7 +36,7 @@ internal class SceneTilemapRenderFeature(
         world.queryEach<Transform, Tilemap> { _, transform, tilemap ->
             live.add(tilemap)
             val batch = batches.getOrPut(tilemap) {
-                TilemapRenderBatch(renderer, tilemap.grid, tilemap.columns, tilemap.rows, tilemap.pixelsPerUnit) {
+                TilemapRenderBatch(renderer, tilemap.grid, tilemap.columns, tilemap.rows, tilemap.pixelsPerUnit, tilemap.texture) {
                     resolveTexture(tilemap.texture)
                 }
             }
@@ -51,6 +52,23 @@ internal class SceneTilemapRenderFeature(
             }
         }
         return RenderContribution(draws = draws)
+    }
+
+    /** Destroys the layers drawn from [name], so each is made again, asking for its texture, when it is next drawn. */
+    override fun forgetTexture(name: String) {
+        val iterator = batches.iterator()
+        while (iterator.hasNext()) {
+            val entry = iterator.next()
+            if (entry.key.texture == name) {
+                entry.value.destroy()
+                iterator.remove()
+            }
+        }
+    }
+
+    override fun forgetTextures() {
+        batches.values.forEach { it.destroy() }
+        batches.clear()
     }
 
     fun destroy() {
