@@ -33,7 +33,9 @@ import com.awakekt.awake.core.text.theme.TextStyle
  */
 context(_: Composer)
 private fun ActionButtonView(element: CanvasElement, styled: Modifier, textStyle: TextStyle, tree: CanvasTree, children: List<CanvasItem>) {
-    element.buttonPress.tick(element.button ?: CanvasButton.Default)
+    val settings = element.button ?: CanvasButton.Default
+    element.buttonPress.tick(settings)
+    element.buttonPress.runCooldown(element, settings)
     val density = LocalDensity.current
     val skin = tree.skinOf(element)?.button
     val state = element.controlState()
