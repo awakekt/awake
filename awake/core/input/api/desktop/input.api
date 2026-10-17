@@ -1,13 +1,25 @@
+public abstract interface class com/awakekt/awake/core/input/ActionBinding {
+	public static final field Companion Lcom/awakekt/awake/core/input/ActionBinding$Companion;
+}
+
+public final class com/awakekt/awake/core/input/ActionBinding$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
 public abstract interface class com/awakekt/awake/core/input/ActionInputSource {
 	public fun getKeysWithheldFromActions ()Z
+	public fun isDown (Lcom/awakekt/awake/core/input/GamepadButton;)Z
 	public abstract fun isDown (Lcom/awakekt/awake/core/input/Key;)Z
 	public abstract fun isDown (Lcom/awakekt/awake/core/input/PointerButton;)Z
+	public fun wasPressed (Lcom/awakekt/awake/core/input/GamepadButton;)Z
 	public abstract fun wasPressed (Lcom/awakekt/awake/core/input/Key;)Z
 	public abstract fun wasPressed (Lcom/awakekt/awake/core/input/PointerButton;)Z
 }
 
 public final class com/awakekt/awake/core/input/ActionInputSource$DefaultImpls {
 	public static fun getKeysWithheldFromActions (Lcom/awakekt/awake/core/input/ActionInputSource;)Z
+	public static fun isDown (Lcom/awakekt/awake/core/input/ActionInputSource;Lcom/awakekt/awake/core/input/GamepadButton;)Z
+	public static fun wasPressed (Lcom/awakekt/awake/core/input/ActionInputSource;Lcom/awakekt/awake/core/input/GamepadButton;)Z
 }
 
 public final class com/awakekt/awake/core/input/ActionTrigger : java/lang/Enum {
@@ -30,33 +42,123 @@ public final class com/awakekt/awake/core/input/AxisAction : com/awakekt/awake/c
 	public final fun copy (Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;)Lcom/awakekt/awake/core/input/AxisAction;
 	public static synthetic fun copy$default (Lcom/awakekt/awake/core/input/AxisAction;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;ILjava/lang/Object;)Lcom/awakekt/awake/core/input/AxisAction;
 	public fun equals (Ljava/lang/Object;)Z
+	public synthetic fun getBinding ()Lcom/awakekt/awake/core/input/ActionBinding;
+	public fun getBinding ()Lcom/awakekt/awake/core/input/AxisBinding;
 	public final fun getDown ()Ljava/util/Set;
 	public final fun getLeft ()Ljava/util/Set;
 	public fun getName ()Ljava/lang/String;
 	public final fun getRight ()Ljava/util/Set;
 	public final fun getUp ()Ljava/util/Set;
 	public fun hashCode ()I
+	public final fun rebound (Lcom/awakekt/awake/core/input/AxisBinding;)Lcom/awakekt/awake/core/input/AxisAction;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/input/AxisBinding : com/awakekt/awake/core/input/ActionBinding {
+	public static final field Companion Lcom/awakekt/awake/core/input/AxisBinding$Companion;
+	public fun <init> ()V
+	public fun <init> (Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;)V
+	public synthetic fun <init> (Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/Set;
+	public final fun component2 ()Ljava/util/Set;
+	public final fun component3 ()Ljava/util/Set;
+	public final fun component4 ()Ljava/util/Set;
+	public final fun copy (Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;)Lcom/awakekt/awake/core/input/AxisBinding;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/input/AxisBinding;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;ILjava/lang/Object;)Lcom/awakekt/awake/core/input/AxisBinding;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDown ()Ljava/util/Set;
+	public final fun getLeft ()Ljava/util/Set;
+	public final fun getRight ()Ljava/util/Set;
+	public final fun getUp ()Ljava/util/Set;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/core/input/AxisBinding$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/core/input/AxisBinding$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/core/input/AxisBinding;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/core/input/AxisBinding;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/core/input/AxisBinding$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/core/input/BindingDescription {
+	public fun <init> (Ljava/util/List;Lcom/awakekt/awake/core/input/InputControl;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Lcom/awakekt/awake/core/input/InputControl;
+	public final fun copy (Ljava/util/List;Lcom/awakekt/awake/core/input/InputControl;)Lcom/awakekt/awake/core/input/BindingDescription;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/input/BindingDescription;Ljava/util/List;Lcom/awakekt/awake/core/input/InputControl;ILjava/lang/Object;)Lcom/awakekt/awake/core/input/BindingDescription;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getControl ()Lcom/awakekt/awake/core/input/InputControl;
+	public final fun getModifiers ()Ljava/util/List;
+	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
 public final class com/awakekt/awake/core/input/ButtonAction : com/awakekt/awake/core/input/InputActionDefinition {
-	public fun <init> (Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Lcom/awakekt/awake/core/input/ActionTrigger;Z)V
-	public synthetic fun <init> (Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Lcom/awakekt/awake/core/input/ActionTrigger;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Lcom/awakekt/awake/core/input/ActionTrigger;ZLjava/util/Set;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Lcom/awakekt/awake/core/input/ActionTrigger;ZLjava/util/Set;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()Ljava/util/Set;
 	public final fun component3 ()Ljava/util/Set;
 	public final fun component4 ()Lcom/awakekt/awake/core/input/ActionTrigger;
 	public final fun component5 ()Z
-	public final fun copy (Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Lcom/awakekt/awake/core/input/ActionTrigger;Z)Lcom/awakekt/awake/core/input/ButtonAction;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/core/input/ButtonAction;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Lcom/awakekt/awake/core/input/ActionTrigger;ZILjava/lang/Object;)Lcom/awakekt/awake/core/input/ButtonAction;
+	public final fun component6 ()Ljava/util/Set;
+	public final fun copy (Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Lcom/awakekt/awake/core/input/ActionTrigger;ZLjava/util/Set;)Lcom/awakekt/awake/core/input/ButtonAction;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/input/ButtonAction;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Lcom/awakekt/awake/core/input/ActionTrigger;ZLjava/util/Set;ILjava/lang/Object;)Lcom/awakekt/awake/core/input/ButtonAction;
 	public fun equals (Ljava/lang/Object;)Z
+	public synthetic fun getBinding ()Lcom/awakekt/awake/core/input/ActionBinding;
+	public fun getBinding ()Lcom/awakekt/awake/core/input/ButtonBinding;
 	public final fun getButtons ()Ljava/util/Set;
+	public final fun getChords ()Ljava/util/Set;
 	public final fun getKeys ()Ljava/util/Set;
 	public fun getName ()Ljava/lang/String;
 	public final fun getStartsOn ()Z
 	public final fun getTrigger ()Lcom/awakekt/awake/core/input/ActionTrigger;
 	public fun hashCode ()I
+	public final fun rebound (Lcom/awakekt/awake/core/input/ButtonBinding;)Lcom/awakekt/awake/core/input/ButtonAction;
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/input/ButtonBinding : com/awakekt/awake/core/input/ActionBinding {
+	public static final field Companion Lcom/awakekt/awake/core/input/ButtonBinding$Companion;
+	public fun <init> ()V
+	public fun <init> (Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;)V
+	public synthetic fun <init> (Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/Set;
+	public final fun component2 ()Ljava/util/Set;
+	public final fun component3 ()Ljava/util/Set;
+	public final fun copy (Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;)Lcom/awakekt/awake/core/input/ButtonBinding;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/input/ButtonBinding;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;ILjava/lang/Object;)Lcom/awakekt/awake/core/input/ButtonBinding;
+	public final fun describe ()Ljava/util/List;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getButtons ()Ljava/util/Set;
+	public final fun getChords ()Ljava/util/Set;
+	public final fun getKeys ()Ljava/util/Set;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/core/input/ButtonBinding$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/core/input/ButtonBinding$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/core/input/ButtonBinding;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/core/input/ButtonBinding;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/core/input/ButtonBinding$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
 public final class com/awakekt/awake/core/input/ClipboardCommand : java/lang/Enum {
@@ -65,6 +167,72 @@ public final class com/awakekt/awake/core/input/ClipboardCommand : java/lang/Enu
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/core/input/ClipboardCommand;
 	public static fun values ()[Lcom/awakekt/awake/core/input/ClipboardCommand;
+}
+
+public final class com/awakekt/awake/core/input/ExtraModifiers : java/lang/Enum {
+	public static final field Allow Lcom/awakekt/awake/core/input/ExtraModifiers;
+	public static final field Block Lcom/awakekt/awake/core/input/ExtraModifiers;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/core/input/ExtraModifiers;
+	public static fun values ()[Lcom/awakekt/awake/core/input/ExtraModifiers;
+}
+
+public final class com/awakekt/awake/core/input/GamepadButton : java/lang/Enum {
+	public static final field DpadDown Lcom/awakekt/awake/core/input/GamepadButton;
+	public static final field DpadLeft Lcom/awakekt/awake/core/input/GamepadButton;
+	public static final field DpadRight Lcom/awakekt/awake/core/input/GamepadButton;
+	public static final field DpadUp Lcom/awakekt/awake/core/input/GamepadButton;
+	public static final field East Lcom/awakekt/awake/core/input/GamepadButton;
+	public static final field Home Lcom/awakekt/awake/core/input/GamepadButton;
+	public static final field LeftShoulder Lcom/awakekt/awake/core/input/GamepadButton;
+	public static final field LeftStick Lcom/awakekt/awake/core/input/GamepadButton;
+	public static final field LeftTrigger Lcom/awakekt/awake/core/input/GamepadButton;
+	public static final field North Lcom/awakekt/awake/core/input/GamepadButton;
+	public static final field RightShoulder Lcom/awakekt/awake/core/input/GamepadButton;
+	public static final field RightStick Lcom/awakekt/awake/core/input/GamepadButton;
+	public static final field RightTrigger Lcom/awakekt/awake/core/input/GamepadButton;
+	public static final field Select Lcom/awakekt/awake/core/input/GamepadButton;
+	public static final field South Lcom/awakekt/awake/core/input/GamepadButton;
+	public static final field Start Lcom/awakekt/awake/core/input/GamepadButton;
+	public static final field West Lcom/awakekt/awake/core/input/GamepadButton;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun isModifier ()Z
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/core/input/GamepadButton;
+	public static fun values ()[Lcom/awakekt/awake/core/input/GamepadButton;
+}
+
+public final class com/awakekt/awake/core/input/GamepadChord : com/awakekt/awake/core/input/InputChord {
+	public static final field Companion Lcom/awakekt/awake/core/input/GamepadChord$Companion;
+	public fun <init> (Lcom/awakekt/awake/core/input/GamepadButton;Ljava/util/Set;Lcom/awakekt/awake/core/input/ExtraModifiers;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/input/GamepadButton;Ljava/util/Set;Lcom/awakekt/awake/core/input/ExtraModifiers;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/core/input/GamepadButton;
+	public final fun component2 ()Ljava/util/Set;
+	public final fun component3 ()Lcom/awakekt/awake/core/input/ExtraModifiers;
+	public final fun copy (Lcom/awakekt/awake/core/input/GamepadButton;Ljava/util/Set;Lcom/awakekt/awake/core/input/ExtraModifiers;)Lcom/awakekt/awake/core/input/GamepadChord;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/input/GamepadChord;Lcom/awakekt/awake/core/input/GamepadButton;Ljava/util/Set;Lcom/awakekt/awake/core/input/ExtraModifiers;ILjava/lang/Object;)Lcom/awakekt/awake/core/input/GamepadChord;
+	public fun describe ()Lcom/awakekt/awake/core/input/BindingDescription;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getButton ()Lcom/awakekt/awake/core/input/GamepadButton;
+	public fun getExtraModifiers ()Lcom/awakekt/awake/core/input/ExtraModifiers;
+	public final fun getModifiers ()Ljava/util/Set;
+	public fun getSpecificity ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/core/input/GamepadChord$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/core/input/GamepadChord$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/core/input/GamepadChord;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/core/input/GamepadChord;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/core/input/GamepadChord$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
 public final class com/awakekt/awake/core/input/ImeComposition {
@@ -104,6 +272,7 @@ public final class com/awakekt/awake/core/input/Input {
 	public final fun pushTypedText (Ljava/lang/String;)V
 	public final fun setButton (Lcom/awakekt/awake/core/input/PointerButton;Z)V
 	public final fun setClipboardWrite (Ljava/lang/String;)V
+	public final fun setGamepadButton (Lcom/awakekt/awake/core/input/GamepadButton;Z)V
 	public final fun setImeComposition (Lcom/awakekt/awake/core/input/ImeComposition;)V
 	public final fun setKeyDown (Lcom/awakekt/awake/core/input/Key;Z)V
 	public final fun setPointer (ZFF)V
@@ -120,6 +289,7 @@ public final class com/awakekt/awake/core/input/Input {
 }
 
 public abstract interface class com/awakekt/awake/core/input/InputActionDefinition {
+	public abstract fun getBinding ()Lcom/awakekt/awake/core/input/ActionBinding;
 	public abstract fun getName ()Ljava/lang/String;
 }
 
@@ -127,9 +297,12 @@ public final class com/awakekt/awake/core/input/InputActions {
 	public static final field Companion Lcom/awakekt/awake/core/input/InputActions$Companion;
 	public static final field NAME_RULE Ljava/lang/String;
 	public fun <init> (Ljava/util/List;)V
+	public final fun actionsBoundTo (Lcom/awakekt/awake/core/input/InputChord;)Ljava/util/List;
 	public final fun axisX (Ljava/lang/String;)F
 	public final fun axisY (Ljava/lang/String;)F
 	public final fun beginFrame ()V
+	public final fun binding (Ljava/lang/String;)Lcom/awakekt/awake/core/input/ActionBinding;
+	public final fun bindings ()Lcom/awakekt/awake/core/input/InputBindings;
 	public final fun contains (Ljava/lang/String;)Z
 	public final fun getDefinitions ()Ljava/util/List;
 	public final fun hold (Ljava/lang/String;)V
@@ -137,6 +310,8 @@ public final class com/awakekt/awake/core/input/InputActions {
 	public final fun press (Ljava/lang/String;)V
 	public final fun push (Ljava/lang/String;FF)V
 	public final fun read (Lcom/awakekt/awake/core/input/ActionInputSource;)V
+	public final fun rebind (Ljava/lang/String;Lcom/awakekt/awake/core/input/ActionBinding;)V
+	public final fun rebindAll (Lcom/awakekt/awake/core/input/InputBindings;)Ljava/util/List;
 	public final fun wasPressed (Ljava/lang/String;)Z
 }
 
@@ -144,9 +319,85 @@ public final class com/awakekt/awake/core/input/InputActions$Companion {
 	public final fun isValidName (Ljava/lang/String;)Z
 }
 
+public final class com/awakekt/awake/core/input/InputBindings {
+	public static final field Companion Lcom/awakekt/awake/core/input/InputBindings$Companion;
+	public fun <init> ()V
+	public fun <init> (Ljava/util/Map;)V
+	public synthetic fun <init> (Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/Map;
+	public final fun copy (Ljava/util/Map;)Lcom/awakekt/awake/core/input/InputBindings;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/input/InputBindings;Ljava/util/Map;ILjava/lang/Object;)Lcom/awakekt/awake/core/input/InputBindings;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getActions ()Ljava/util/Map;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/core/input/InputBindings$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/core/input/InputBindings$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/core/input/InputBindings;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/core/input/InputBindings;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/core/input/InputBindings$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract interface class com/awakekt/awake/core/input/InputChord {
+	public static final field Companion Lcom/awakekt/awake/core/input/InputChord$Companion;
+	public abstract fun describe ()Lcom/awakekt/awake/core/input/BindingDescription;
+	public abstract fun getExtraModifiers ()Lcom/awakekt/awake/core/input/ExtraModifiers;
+	public abstract fun getSpecificity ()I
+}
+
+public final class com/awakekt/awake/core/input/InputChord$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract interface class com/awakekt/awake/core/input/InputControl {
+}
+
+public final class com/awakekt/awake/core/input/InputControl$Gamepad : com/awakekt/awake/core/input/InputControl {
+	public fun <init> (Lcom/awakekt/awake/core/input/GamepadButton;)V
+	public final fun component1 ()Lcom/awakekt/awake/core/input/GamepadButton;
+	public final fun copy (Lcom/awakekt/awake/core/input/GamepadButton;)Lcom/awakekt/awake/core/input/InputControl$Gamepad;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/input/InputControl$Gamepad;Lcom/awakekt/awake/core/input/GamepadButton;ILjava/lang/Object;)Lcom/awakekt/awake/core/input/InputControl$Gamepad;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getButton ()Lcom/awakekt/awake/core/input/GamepadButton;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/input/InputControl$Keyboard : com/awakekt/awake/core/input/InputControl {
+	public fun <init> (Lcom/awakekt/awake/core/input/Key;)V
+	public final fun component1 ()Lcom/awakekt/awake/core/input/Key;
+	public final fun copy (Lcom/awakekt/awake/core/input/Key;)Lcom/awakekt/awake/core/input/InputControl$Keyboard;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/input/InputControl$Keyboard;Lcom/awakekt/awake/core/input/Key;ILjava/lang/Object;)Lcom/awakekt/awake/core/input/InputControl$Keyboard;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getKey ()Lcom/awakekt/awake/core/input/Key;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/input/InputControl$Pointer : com/awakekt/awake/core/input/InputControl {
+	public fun <init> (Lcom/awakekt/awake/core/input/PointerButton;)V
+	public final fun component1 ()Lcom/awakekt/awake/core/input/PointerButton;
+	public final fun copy (Lcom/awakekt/awake/core/input/PointerButton;)Lcom/awakekt/awake/core/input/InputControl$Pointer;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/input/InputControl$Pointer;Lcom/awakekt/awake/core/input/PointerButton;ILjava/lang/Object;)Lcom/awakekt/awake/core/input/InputControl$Pointer;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getButton ()Lcom/awakekt/awake/core/input/PointerButton;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class com/awakekt/awake/core/input/InputSnapshot : com/awakekt/awake/core/input/ActionInputSource {
-	public fun <init> (FFZFFLjava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/lang/String;Ljava/util/List;ZZZLcom/awakekt/awake/core/input/ImeComposition;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Lcom/awakekt/awake/core/input/ScrollSource;Ljava/util/List;Ljava/util/List;Z)V
-	public synthetic fun <init> (FFZFFLjava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/lang/String;Ljava/util/List;ZZZLcom/awakekt/awake/core/input/ImeComposition;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Lcom/awakekt/awake/core/input/ScrollSource;Ljava/util/List;Ljava/util/List;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (FFZFFLjava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/lang/String;Ljava/util/List;ZZZLcom/awakekt/awake/core/input/ImeComposition;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Lcom/awakekt/awake/core/input/ScrollSource;Ljava/util/List;Ljava/util/List;ZLjava/util/Set;Ljava/util/Set;Ljava/util/Set;)V
+	public synthetic fun <init> (FFZFFLjava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/lang/String;Ljava/util/List;ZZZLcom/awakekt/awake/core/input/ImeComposition;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Lcom/awakekt/awake/core/input/ScrollSource;Ljava/util/List;Ljava/util/List;ZLjava/util/Set;Ljava/util/Set;Ljava/util/Set;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()F
 	public final fun component10 ()Ljava/util/List;
 	public final fun component11 ()Z
@@ -162,6 +413,9 @@ public final class com/awakekt/awake/core/input/InputSnapshot : com/awakekt/awak
 	public final fun component20 ()Ljava/util/List;
 	public final fun component21 ()Ljava/util/List;
 	public final fun component22 ()Z
+	public final fun component23 ()Ljava/util/Set;
+	public final fun component24 ()Ljava/util/Set;
+	public final fun component25 ()Ljava/util/Set;
 	public final fun component3 ()Z
 	public final fun component4 ()F
 	public final fun component5 ()F
@@ -169,14 +423,17 @@ public final class com/awakekt/awake/core/input/InputSnapshot : com/awakekt/awak
 	public final fun component7 ()Ljava/util/Set;
 	public final fun component8 ()Ljava/util/Set;
 	public final fun component9 ()Ljava/lang/String;
-	public final fun copy (FFZFFLjava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/lang/String;Ljava/util/List;ZZZLcom/awakekt/awake/core/input/ImeComposition;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Lcom/awakekt/awake/core/input/ScrollSource;Ljava/util/List;Ljava/util/List;Z)Lcom/awakekt/awake/core/input/InputSnapshot;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/core/input/InputSnapshot;FFZFFLjava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/lang/String;Ljava/util/List;ZZZLcom/awakekt/awake/core/input/ImeComposition;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Lcom/awakekt/awake/core/input/ScrollSource;Ljava/util/List;Ljava/util/List;ZILjava/lang/Object;)Lcom/awakekt/awake/core/input/InputSnapshot;
+	public final fun copy (FFZFFLjava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/lang/String;Ljava/util/List;ZZZLcom/awakekt/awake/core/input/ImeComposition;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Lcom/awakekt/awake/core/input/ScrollSource;Ljava/util/List;Ljava/util/List;ZLjava/util/Set;Ljava/util/Set;Ljava/util/Set;)Lcom/awakekt/awake/core/input/InputSnapshot;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/input/InputSnapshot;FFZFFLjava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/lang/String;Ljava/util/List;ZZZLcom/awakekt/awake/core/input/ImeComposition;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Lcom/awakekt/awake/core/input/ScrollSource;Ljava/util/List;Ljava/util/List;ZLjava/util/Set;Ljava/util/Set;Ljava/util/Set;ILjava/lang/Object;)Lcom/awakekt/awake/core/input/InputSnapshot;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getButtonsDown ()Ljava/util/Set;
 	public final fun getButtonsPressed ()Ljava/util/Set;
 	public final fun getButtonsReleased ()Ljava/util/Set;
 	public final fun getClipboardCommands ()Ljava/util/List;
 	public final fun getEditActions ()Ljava/util/List;
+	public final fun getGamepadButtonsDown ()Ljava/util/Set;
+	public final fun getGamepadButtonsPressed ()Ljava/util/Set;
+	public final fun getGamepadButtonsReleased ()Ljava/util/Set;
 	public final fun getImeCommit ()Ljava/lang/String;
 	public final fun getImeComposition ()Lcom/awakekt/awake/core/input/ImeComposition;
 	public final fun getKeysDown ()Ljava/util/Set;
@@ -196,11 +453,14 @@ public final class com/awakekt/awake/core/input/InputSnapshot : com/awakekt/awak
 	public final fun getTouches ()Ljava/util/List;
 	public final fun getTypedText ()Ljava/lang/String;
 	public fun hashCode ()I
+	public fun isDown (Lcom/awakekt/awake/core/input/GamepadButton;)Z
 	public fun isDown (Lcom/awakekt/awake/core/input/Key;)Z
 	public fun isDown (Lcom/awakekt/awake/core/input/PointerButton;)Z
 	public fun toString ()Ljava/lang/String;
+	public fun wasPressed (Lcom/awakekt/awake/core/input/GamepadButton;)Z
 	public fun wasPressed (Lcom/awakekt/awake/core/input/Key;)Z
 	public fun wasPressed (Lcom/awakekt/awake/core/input/PointerButton;)Z
+	public final fun wasReleased (Lcom/awakekt/awake/core/input/GamepadButton;)Z
 	public final fun wasReleased (Lcom/awakekt/awake/core/input/PointerButton;)Z
 }
 
@@ -275,6 +535,51 @@ public final class com/awakekt/awake/core/input/Key : java/lang/Enum {
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/core/input/Key;
 	public static fun values ()[Lcom/awakekt/awake/core/input/Key;
+}
+
+public final class com/awakekt/awake/core/input/KeyChord : com/awakekt/awake/core/input/InputChord {
+	public static final field Companion Lcom/awakekt/awake/core/input/KeyChord$Companion;
+	public fun <init> (Lcom/awakekt/awake/core/input/Key;Ljava/util/Set;Lcom/awakekt/awake/core/input/ExtraModifiers;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/input/Key;Ljava/util/Set;Lcom/awakekt/awake/core/input/ExtraModifiers;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/core/input/Key;
+	public final fun component2 ()Ljava/util/Set;
+	public final fun component3 ()Lcom/awakekt/awake/core/input/ExtraModifiers;
+	public final fun copy (Lcom/awakekt/awake/core/input/Key;Ljava/util/Set;Lcom/awakekt/awake/core/input/ExtraModifiers;)Lcom/awakekt/awake/core/input/KeyChord;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/input/KeyChord;Lcom/awakekt/awake/core/input/Key;Ljava/util/Set;Lcom/awakekt/awake/core/input/ExtraModifiers;ILjava/lang/Object;)Lcom/awakekt/awake/core/input/KeyChord;
+	public fun describe ()Lcom/awakekt/awake/core/input/BindingDescription;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getExtraModifiers ()Lcom/awakekt/awake/core/input/ExtraModifiers;
+	public final fun getKey ()Lcom/awakekt/awake/core/input/Key;
+	public final fun getModifiers ()Ljava/util/Set;
+	public fun getSpecificity ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/core/input/KeyChord$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/core/input/KeyChord$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/core/input/KeyChord;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/core/input/KeyChord;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/core/input/KeyChord$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/core/input/KeyModifier : java/lang/Enum {
+	public static final field Alt Lcom/awakekt/awake/core/input/KeyModifier;
+	public static final field Ctrl Lcom/awakekt/awake/core/input/KeyModifier;
+	public static final field Meta Lcom/awakekt/awake/core/input/KeyModifier;
+	public static final field Shift Lcom/awakekt/awake/core/input/KeyModifier;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getKey ()Lcom/awakekt/awake/core/input/Key;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/core/input/KeyModifier;
+	public static fun values ()[Lcom/awakekt/awake/core/input/KeyModifier;
 }
 
 public final class com/awakekt/awake/core/input/PointerButton : java/lang/Enum {

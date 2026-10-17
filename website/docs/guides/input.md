@@ -103,6 +103,56 @@ An axis is a unit vector, up and right being positive, or zero when no direction
 `GameplayInput` instead of the snapshot to leave the UI its keys. `KeybindingProfile`, which did this
 before, is deprecated.
 
+## Chords and rebinding
+
+A button action can also take chords: a key pressed while modifiers are held, such as Shift+1 or
+Ctrl+Alt+K, or a controller button pressed while a shoulder or trigger is held:
+
+```kotlin title="Kotlin"
+--8<-- "awake/scene/authoring/src/desktopTest/kotlin/com/awakekt/awake/scene/authoring/InputDocsSampleTest.kt:chords"
+```
+
+Chords on the same key resolve across every action, by three rules:
+
+- **Modifiers first.** A chord fires when its key goes down while its modifiers are held, or go down
+  in the same frame. Pressing 1 and then Shift is 1.
+- **The most specific chord wins.** Shift+1 does not also fire 1. Actions bound to the same chord all
+  fire.
+- **The winner keeps the key until it is released.** Letting go of Shift while 1 stays down ends
+  Shift+1 without starting 1.
+
+A chord's `extraModifiers` says whether other modifiers held as well stop it: `Block`, the default,
+keeps Ctrl+S from firing for Ctrl+Shift+S; `Allow` lets it. A plain key in `keys` allows them, so
+1 still fires while Ctrl is held when nothing binds Ctrl+1. An axis key is a plain key too: Ctrl+S
+bound to saving takes S from the `move` axis. Left and right modifiers are the same modifier. For a
+controller, the shoulders and triggers are the modifiers.
+
+A player's controls are data. `bindings()` takes every action's binding, `InputBindings`, which
+saves and loads with kotlinx.serialization; `rebind` and `rebindAll` change them while the game
+runs, and `actionsBoundTo` says what a new chord would clash with:
+
+```kotlin title="Kotlin"
+--8<-- "awake/scene/authoring/src/desktopTest/kotlin/com/awakekt/awake/scene/authoring/InputDocsSampleTest.kt:rebind"
+```
+
+```json title="controls.json"
+{ "actions": {
+  "slot1": { "type": "button", "keys": ["Digit1"] },
+  "slot11": { "type": "button", "chords": [
+    { "type": "key", "key": "Digit1", "modifiers": ["Ctrl"] },
+    { "type": "gamepad", "button": "South", "modifiers": ["LeftShoulder"] }
+  ] }
+} }
+```
+
+`rebindAll` skips, and returns, the names a saved file has that no action does, so an old file
+still loads. To show a binding, `ButtonBinding.describe()` gives each way to trigger it as its
+modifiers and the control pressed, for a label formatter to name in the player's language.
+
+Controller buttons are named by position: `South`, `East`, `West` and `North` for the face buttons,
+the shoulders and triggers, the sticks, the d-pad, `Select`, `Start` and `Home`. A host feeds them
+with `Input.setGamepadButton`; the built-in hosts do not read a controller yet.
+
 ## Properties
 
 `InputSnapshot`:
@@ -116,6 +166,7 @@ before, is deprecated.
 | `pointerPressed`, `pointerReleased` | boolean | A press or release happened this frame, even if both did. |
 | `buttonsDown`, `buttonsPressed`, `buttonsReleased` | set of `PointerButton` | `Primary`, `Secondary`, `Middle`, `Back`, `Forward`. `isDown(button)`, `wasPressed(button)`, `wasReleased(button)` read them. |
 | `scrollDeltaX`, `scrollDeltaY` | number | Scroll this frame. |
+| `gamepadButtonsDown`, `gamepadButtonsPressed`, `gamepadButtonsReleased` | set of `GamepadButton` | Controller buttons, for a host that reads a controller. `isDown(button)`, `wasPressed(button)`, `wasReleased(button)` read them. |
 | `scrollSource` | `Wheel` · `Trackpad` · `Unknown` | What scrolled, where the platform can tell. |
 | `typedText`, `editActions` | string, list | Text typed this frame, and editing keys such as backspace. |
 
