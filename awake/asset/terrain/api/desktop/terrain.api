@@ -69,10 +69,12 @@ public final class com/awakekt/awake/asset/terrain/HeightmapSampleEdit {
 }
 
 public final class com/awakekt/awake/asset/terrain/MutableHeightmap {
-	public fun <init> ([FIILcom/awakekt/awake/core/math/Vec3f;)V
+	public fun <init> ([FIILcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/GridOrigin;)V
+	public synthetic fun <init> ([FIILcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/GridOrigin;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun apply (Ljava/util/List;)Lcom/awakekt/awake/asset/terrain/HeightmapChange;
 	public final fun copySamples ()[F
 	public final fun getDepth ()I
+	public final fun getOrigin ()Lcom/awakekt/awake/core/math/GridOrigin;
 	public final fun getRevision ()J
 	public final fun getScale ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun getWidth ()I

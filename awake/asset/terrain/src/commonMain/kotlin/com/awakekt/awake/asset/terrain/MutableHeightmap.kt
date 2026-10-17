@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.asset.terrain
 
+import com.awakekt.awake.core.math.GridOrigin
 import com.awakekt.awake.core.math.Vec3f
 
 /**
@@ -72,6 +73,7 @@ data class HeightmapChange(
  * @property width Number of sample columns along the X axis.
  * @property depth Number of sample rows along the Z axis.
  * @param scale Spacing between adjacent samples in world units.
+ * @property origin Anchor reference defining coordinate origin placement, carried to [snapshot].
  */
 class MutableHeightmap(
     samples: FloatArray,
@@ -80,6 +82,11 @@ class MutableHeightmap(
     /** Number of sample rows along the Z axis. */
     val depth: Int,
     scale: Vec3f,
+    /**
+     * Anchor reference defining coordinate origin placement. [Heightmap.mutableCopy] passes the
+     * source's, and [snapshot] keeps it, so an edit never moves a corner-anchored map.
+     */
+    val origin: GridOrigin = GridOrigin.Centered,
 ) {
     private val ownedSamples: FloatArray
     private val ownedScale: Vec3f
@@ -147,7 +154,7 @@ class MutableHeightmap(
     }
 
     /** Returns an immutable snapshot for a consumer that needs a stable mesh or collider source. */
-    fun snapshot(): Heightmap = Heightmap(ownedSamples, width, depth, ownedScale)
+    fun snapshot(): Heightmap = Heightmap(ownedSamples, width, depth, ownedScale, origin)
 
     /** Returns an owned copy for an explicit consumer such as a physics adapter. */
     fun copySamples(): FloatArray = ownedSamples.copyOf()
