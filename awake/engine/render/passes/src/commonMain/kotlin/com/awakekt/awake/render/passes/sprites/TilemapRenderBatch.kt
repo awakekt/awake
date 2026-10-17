@@ -32,11 +32,15 @@ import com.awakekt.awake.tilemap.TilemapGrid
  * @param rows Atlas rows.
  * @param pixelsPerUnit Image pixels per local world unit.
  * @param texture The atlas's name, if it has one, for the log line that reports an atlas that does not divide.
+ * @param undivided The atlases already logged as not dividing, by [texture] name. Layers given the same
+ * one log an atlas once between them; by default each layer logs its own. An atlas without a name is
+ * logged once by each layer.
  * @param resolveTexture Supplies decoded pixels on first collection; null while they are not
  * available, such as a file still loading or one that failed to. The layer then draws nothing, and
  * the pixels are asked for again on the next collection. An atlas that does not divide into
  * [columns] by [rows] cells of whole pixels, an authoring mistake a file-backed atlas first shows at
- * run time, is logged once, and the layer draws nothing and asks no more until it is [destroy]ed.
+ * run time, is logged once for its name (see [undivided]), and the layer draws nothing and asks no
+ * more until it is [destroy]ed.
  */
 class TilemapRenderBatch(
     private val renderer: Renderer,
@@ -45,6 +49,7 @@ class TilemapRenderBatch(
     private val rows: Int,
     private val pixelsPerUnit: Float,
     private val texture: String? = null,
+    private val undivided: UndividedTextures = UndividedTextures(),
     private val resolveTexture: () -> TextureAsset?,
 ) {
     private var atlas: TilemapAtlas? = null
@@ -54,14 +59,14 @@ class TilemapRenderBatch(
     private var extra = FloatArray(0)
 
     // Whether the atlas did not divide into its cells; the layer then draws nothing until it is destroyed.
-    private var undivided = false
+    private var atlasUndivided = false
 
     /**
      * Appends borrowed requests to [out]. Unchanged chunks reuse meshes and requests; hidden
      * chunks are not uploaded. Requests remain valid until this batch's next collection.
      */
     fun collect(model: Mat4, tint: Color, sortOrder: Int, planes: List<Plane>, out: MutableList<RenderDrawCommand>) {
-        if (undivided) return
+        if (atlasUndivided) return
         val sheet = atlas ?: upload() ?: return
         if (lastTint != tint) {
             extra = UniformWriter(SpriteExtraUniformLayout)
@@ -108,17 +113,17 @@ class TilemapRenderBatch(
         }
     }
 
-    /** Whether [image] divides into this layer's cells; one that does not is logged, and not asked for again. */
+    /** Whether [image] divides into this layer's cells; one that does not is logged once for its name, and not asked for again. */
     private fun fitsCells(image: TextureAsset): Boolean {
         require(image.layerCount == 1 && !image.isCubemap) { "Tile atlas must be a single 2D image." }
-        undivided = !dividesIntoCells(image.width, image.height, columns, rows)
-        if (undivided) {
+        atlasUndivided = !dividesIntoCells(image.width, image.height, columns, rows)
+        if (atlasUndivided && (texture == null || undivided.firstReport(texture))) {
             log.error {
                 "Tile atlas${texture?.let { " '$it'" }.orEmpty()} is ${image.width}x${image.height} pixels, which cannot be " +
                     "divided into ${columns}x$rows equal cells. Its tilemap layer is not drawn."
             }
         }
-        return !undivided
+        return !atlasUndivided
     }
 
     /** Idempotent teardown, including chunks currently outside the view. */
@@ -133,7 +138,7 @@ class TilemapRenderBatch(
         material?.destroy()
         material = null
         atlas = null
-        undivided = false
+        atlasUndivided = false
     }
 
     private class CachedChunk {

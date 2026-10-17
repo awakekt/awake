@@ -664,7 +664,7 @@ A project played with `runProject` reads the image from the project's files the 
 is drawn. Until it has loaded, the sprite is not drawn; an image that can't be read draws nothing and
 is logged once. An image whose size doesn't divide into `columns` by `rows` whole-pixel cells is not
 drawn either, and is logged once. A host that changes the file has the scene's asset library
-`forgetTexture` it, and the next frame reads it again.
+`forgetTexture` it (or `requestForgetTexture` it from another thread), and the next frame reads it again.
 
 | Field | Type | Default | What it does |
 | --- | --- | --- | --- |

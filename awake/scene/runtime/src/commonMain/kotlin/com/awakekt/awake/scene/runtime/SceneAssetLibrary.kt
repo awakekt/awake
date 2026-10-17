@@ -13,6 +13,8 @@ import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.SceneRenderableRequest
+import kotlin.concurrent.atomics.AtomicReference
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
 typealias SceneMeshFactory = SceneAppLifecycleRuntime.() -> Mesh
 
@@ -67,6 +69,7 @@ data class SceneRenderableKey(
  *
  * Still no eviction of *live* assets, which would mean destroying something mid-draw.
  */
+@OptIn(ExperimentalAtomicApi::class)
 class SceneAssetLibrary(
     private val meshFactories: Map<String, SceneMeshFactory>,
     private val materialFactories: Map<String, SceneMaterialFactory>,
@@ -95,6 +98,9 @@ class SceneAssetLibrary(
 
     // What the frame uploaded from [texture], told to let go of a texture when it is forgotten.
     private val textureUploads = mutableListOf<SceneTextureUploads>()
+
+    // Forgets asked for from any thread, applied on the frame thread by [applyRequestedForgets].
+    private val requestedForgets = AtomicReference(NoForgets)
 
     /**
      * Supplies decoded image data registered under [name]; the sprite render batch caches and owns its
@@ -145,8 +151,9 @@ class SceneAssetLibrary(
      * [AssetSourceTextureResolver] reads the file again. Until the new pixels arrive, what uses it is not
      * drawn, and a texture that is still missing or failing is logged again, once.
      *
-     * Call it on the frame thread, between frames, as a system does. Forgetting a texture nothing has
-     * drawn does nothing.
+     * Call it on the frame thread, between frames, as a system does; from another thread, such as a
+     * file watcher's, call [requestForgetTexture] instead. Forgetting a texture nothing has drawn does
+     * nothing.
      *
      * @param name The texture's name, as the `sprite` or `tilemap` gives it.
      */
@@ -159,13 +166,50 @@ class SceneAssetLibrary(
 
     /**
      * [forgetTexture] for every texture: what a host calls when its resolvers now read other files,
-     * such as another project's, or when a game reloads its content.
+     * such as another project's, or when a game reloads its content. Frame thread only, as
+     * [forgetTexture] is; from another thread, call [requestForgetTextures] instead.
      */
     fun forgetTextures() {
         awaitedTextures.clear()
         failedTextures.clear()
         dynamicResolvers.forEach { it.forgetTextures() }
         textureUploads.forEach { it.forgetTextures() }
+    }
+
+    /**
+     * Asks for [forgetTexture] of [name] at the start of the next frame: what a host whose file watcher
+     * runs on its own thread calls when the file changes. Safe from any thread. The scene runtime applies
+     * it before the frame's systems and draws run; a host that runs this library's frames itself calls
+     * [applyRequestedForgets]. Asking again before then changes nothing.
+     *
+     * @param name The texture's name, as the `sprite` or `tilemap` gives it.
+     */
+    fun requestForgetTexture(name: String) {
+        while (true) {
+            val asked = requestedForgets.load()
+            if (asked.all || name in asked.names) return
+            if (requestedForgets.compareAndSet(asked, ForgetRequests(asked.names + name, all = false))) return
+        }
+    }
+
+    /** Asks for [forgetTextures] at the start of the next frame, as [requestForgetTexture] does. Safe from any thread. */
+    fun requestForgetTextures() {
+        while (true) {
+            val asked = requestedForgets.load()
+            if (asked.all) return
+            if (requestedForgets.compareAndSet(asked, ForgetRequests(emptySet(), all = true))) return
+        }
+    }
+
+    /**
+     * Forgets what [requestForgetTexture] and [requestForgetTextures] asked for since it last ran. The
+     * scene runtime calls it at the start of each frame; a host that drives this library itself calls it
+     * on its frame thread, between frames.
+     */
+    fun applyRequestedForgets() {
+        if (requestedForgets.load() === NoForgets) return
+        val asked = requestedForgets.exchange(NoForgets)
+        if (asked.all) forgetTextures() else asked.names.forEach(::forgetTexture)
     }
 
     /** Has [uploads] let go of what it made from a texture each time [forgetTexture] or [forgetTextures] forgets it. */
@@ -365,6 +409,11 @@ class SceneAssetLibrary(
         resolvedRequests.clear()
     }
 }
+
+/** Textures asked to be forgotten, by name, or all of them; replaced whole, never changed in place. */
+private class ForgetRequests(val names: Set<String>, val all: Boolean)
+
+private val NoForgets = ForgetRequests(emptySet(), all = false)
 
 /** What the frame made on the GPU from the textures [SceneAssetLibrary.texture] gave it, by name. */
 internal interface SceneTextureUploads {

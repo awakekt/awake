@@ -11,6 +11,7 @@ import com.awakekt.awake.core.math.planes
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes.sprites.TilemapRenderBatch
+import com.awakekt.awake.render.passes.sprites.UndividedTextures
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.scene.core.transform.Transform
@@ -29,6 +30,9 @@ internal class SceneTilemapRenderFeature(
     private val live = mutableSetOf<Tilemap>()
     private val draws = ArrayList<RenderDrawCommand>()
 
+    // Shared by every layer, so an atlas that doesn't divide is logged once, not once for each layer drawn from it.
+    private val undivided = UndividedTextures()
+
     override fun collect(world: World, context: RenderFeatureContext3D): RenderContribution {
         live.clear()
         draws.clear()
@@ -36,7 +40,7 @@ internal class SceneTilemapRenderFeature(
         world.queryEach<Transform, Tilemap> { _, transform, tilemap ->
             live.add(tilemap)
             val batch = batches.getOrPut(tilemap) {
-                TilemapRenderBatch(renderer, tilemap.grid, tilemap.columns, tilemap.rows, tilemap.pixelsPerUnit, tilemap.texture) {
+                TilemapRenderBatch(renderer, tilemap.grid, tilemap.columns, tilemap.rows, tilemap.pixelsPerUnit, tilemap.texture, undivided) {
                     resolveTexture(tilemap.texture)
                 }
             }
@@ -56,6 +60,7 @@ internal class SceneTilemapRenderFeature(
 
     /** Destroys the layers drawn from [name], so each is made again, asking for its texture, when it is next drawn. */
     override fun forgetTexture(name: String) {
+        undivided.forget(name)
         val iterator = batches.iterator()
         while (iterator.hasNext()) {
             val entry = iterator.next()
@@ -67,6 +72,7 @@ internal class SceneTilemapRenderFeature(
     }
 
     override fun forgetTextures() {
+        undivided.forgetAll()
         batches.values.forEach { it.destroy() }
         batches.clear()
     }
@@ -76,5 +82,6 @@ internal class SceneTilemapRenderFeature(
         batches.clear()
         draws.clear()
         live.clear()
+        undivided.forgetAll()
     }
 }

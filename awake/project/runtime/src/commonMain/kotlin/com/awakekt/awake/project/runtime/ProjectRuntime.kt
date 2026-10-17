@@ -213,7 +213,8 @@ fun LoadedProject.sceneSystems(input: () -> GameplayInput, renderer: Renderer? =
  * A texture is read once. When a host such as an editor changes an image file while the project plays,
  * it has the scene's asset library forget it, on the frame thread, and the next frame reads it again:
  * `game.requireService<SceneAppLifecycleRuntime>().requireAssetLibrary().forgetTexture(path)`, or
- * `forgetTextures()` for every one.
+ * `forgetTextures()` for every one. A file watcher on its own thread calls `requestForgetTexture(path)`
+ * or `requestForgetTextures()` instead, and the texture is forgotten at the start of the next frame.
  *
  * The scene can play another of the project's scenes: a system asks through
  * [SceneHostServices.sceneSwitch], and the app through its [SceneSwitch] service. The next scene
