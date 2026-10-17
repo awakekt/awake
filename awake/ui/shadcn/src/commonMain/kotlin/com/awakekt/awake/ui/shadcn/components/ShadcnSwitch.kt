@@ -17,12 +17,15 @@ import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.unit.Dp
 import com.awakekt.awake.compose.ui.unit.dp
+import com.awakekt.awake.ui.shadcn.theme.isCompact
+import com.awakekt.awake.ui.shadcn.theme.shadcnDensity
 import com.awakekt.awake.ui.shadcn.theme.shadcnTheme
 
 /**
  * `ShadcnSwitch`: Sliding pill switch control for binary settings.
  *
  * **Tailwind Reference**: `peer inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors`.
+ * Under `LocalShadcnDensity` `Compact` the track is 28 by 16dp.
  *
  * Use cases:
  * - Feature toggles, settings switches (e.g. Notifications, Dark Mode, 2FA).
@@ -58,14 +61,18 @@ fun ShadcnSwitch(
 ) {
     rememberGroup(ShadcnSwitchGroup) {
         val theme = shadcnTheme
+        val compact = shadcnDensity.isCompact
+        val trackWidth = if (compact) CompactTrackWidth else TrackWidth
+        val trackHeight = if (compact) CompactTrackHeight else TrackHeight
+        val thumbSize = if (compact) CompactThumbSize else ThumbSize
         val owned = remember { InteractionSource() }
         val interaction = interactionSource ?: owned
         val next = checked
 
         Canvas(
             modifier
-                .width(TrackWidth)
-                .height(TrackHeight)
+                .width(trackWidth)
+                .height(trackHeight)
                 .hoverable(interaction, enabled = enabled)
                 .clickable(interaction) { if (enabled) onCheckedChange(!checked) },
         ) {
@@ -80,7 +87,7 @@ fun ShadcnSwitch(
                 )
                 // `translate-x-[calc(100%-2px)]` when checked: the thumb travels the track's width less
                 // its own, less the 2px upstream holds back so it never sits flush with the edge.
-                val thumb = ThumbSize.value * density
+                val thumb = thumbSize.value * density
                 val travel = width - thumb - ThumbInset.value * density
                 val x = if (next) travel else 0f
                 drawRoundedRect(
@@ -107,6 +114,11 @@ private val ThumbSize: Dp = 16.dp
 
 /** The `-2px` in upstream's `calc(100%-2px)`. */
 private val ThumbInset: Dp = 2.dp
+
+/** The compact step: a `w-7 h-4` track with a `size-3.5` thumb. */
+private val CompactTrackWidth: Dp = 28.dp
+private val CompactTrackHeight: Dp = 16.dp
+private val CompactThumbSize: Dp = 14.dp
 
 /** `disabled:opacity-50`. */
 private const val DISABLED_ALPHA = 0.5f

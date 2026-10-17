@@ -23,6 +23,8 @@ import com.awakekt.awake.compose.ui.layout.LayerKind
 import com.awakekt.awake.compose.ui.unit.Dp
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.tailwind.Tw
+import com.awakekt.awake.ui.shadcn.theme.isCompact
+import com.awakekt.awake.ui.shadcn.theme.shadcnDensity
 
 /**
  * Individual item entry inside a [ShadcnCommand] search list.
@@ -43,6 +45,7 @@ data class ShadcnCommandItem(
  * `ShadcnCommand`: A command palette menu for live searching and triggering application actions.
  *
  * **Tailwind Reference**: `w-full max-w-[480px] rounded-md border bg-popover p-4 text-popover-foreground shadow-md`.
+ * Its input and item rows follow `LocalShadcnDensity`.
  *
  * Use cases:
  * - `Cmd+K` / `Ctrl+K` global command search dialog.
@@ -88,9 +91,10 @@ fun ShadcnCommand(
             }
         }
         val grouped = filteredItems.groupBy { it.category }
+        val density = shadcnDensity
 
         ShadcnCard(modifier = modifier.width(width)) {
-            Column(verticalArrangement = Arrangement.spacedBy(Tw.Spacing.s3)) {
+            Column(verticalArrangement = Arrangement.spacedBy(if (density.isCompact) Tw.Spacing.s2 else Tw.Spacing.s3)) {
                 ShadcnInput(state = searchState, placeholder = placeholder)
                 ShadcnSeparator()
 
@@ -98,7 +102,15 @@ fun ShadcnCommand(
                     shadcnMuted("No results found.")
                 } else {
                     grouped.forEach { (category, categoryItems) ->
-                        shadcnMuted(category)
+                        shadcnDensityText(
+                            category,
+                            Modifier,
+                            ShadcnTextVariant.Muted,
+                            color = null,
+                            lineHeight = density.labelLineHeight(),
+                            weight = null,
+                            size = density.labelSize(),
+                        )
                         categoryItems.forEach { item ->
                             ShadcnItem(
                                 title = item.title,

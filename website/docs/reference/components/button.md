@@ -34,7 +34,7 @@ The image is a CPU-rasterized capture from `renderButtonVariants` in the UI show
 | `label` | `String` | required (label overload) | The button text. |
 | `modifier` | `Modifier` | `Modifier` | Layout, test tag and other modifiers. |
 | `variant` | `ShadcnButtonVariant` | `Default` | Visual style. See [Variants](#variants). |
-| `size` | `ShadcnButtonSizeVariant` | `Default` | Height and padding. See [Sizes](#sizes). |
+| `size` | `ShadcnButtonSizeVariant?` | `null` | Height and padding. Left out, it is `Default`, or `Sm` under the `Compact` [density](../../guides/shadcn.md#choose-a-density). See [Sizes](#sizes). |
 | `enabled` | `Boolean` | `true` | Whether the button takes clicks. |
 | `onClick` | `() -> Unit` | `{}` | Called when a press and release both land on the button. |
 | `shape` | `Shape?` | `null` | Replaces the theme's corner shape. |

@@ -33,6 +33,8 @@ import com.awakekt.awake.compose.ui.semantics.SemanticsRole
 import com.awakekt.awake.compose.ui.semantics.semantics
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.tailwind.Tw
+import com.awakekt.awake.ui.shadcn.theme.isCompact
+import com.awakekt.awake.ui.shadcn.theme.shadcnDensity
 import com.awakekt.awake.ui.shadcn.theme.shadcnTheme
 
 /** Visual appearance of the tabs bar. */
@@ -52,12 +54,16 @@ enum class ShadcnTabsSize(
     internal val height: com.awakekt.awake.compose.ui.unit.Dp,
     internal val paddingX: com.awakekt.awake.compose.ui.unit.Dp,
     internal val textVariant: ShadcnTextVariant,
+    /** The horizontal pad of a trigger in the [ShadcnTabsVariant.Pill] and [ShadcnTabsVariant.Line] lists. */
+    internal val triggerPaddingX: com.awakekt.awake.compose.ui.unit.Dp,
+    /** The vertical pad of a [ShadcnTabsVariant.Pill] trigger, which is 7dp shorter than its list. */
+    internal val triggerPaddingY: com.awakekt.awake.compose.ui.unit.Dp,
 ) {
     /** Standard shadcn tabs sizing (`h-9` / 36dp). */
-    Default(ShadcnTabsHeight, Tw.Spacing.s3, ShadcnTextVariant.Small),
+    Default(ShadcnTabsHeight, Tw.Spacing.s3, ShadcnTextVariant.Small, Tw.Spacing.s2, Tw.Spacing.s1),
 
     /** Compact tabs sizing (28dp height with text-xs typography) suitable for toolbars and sub-headers. */
-    Sm(28.dp, Tw.Spacing.s2, ShadcnTextVariant.Xs),
+    Sm(28.dp, Tw.Spacing.s2, ShadcnTextVariant.Xs, Tw.Spacing.s1_5, Tw.Spacing.s0_5),
 }
 
 /**
@@ -70,6 +76,9 @@ enum class ShadcnTabsSize(
  *
  * The active trigger gets the background fill and source `shadow-sm` elevation.
  *
+ * [size] left out follows `LocalShadcnDensity`: `Default`, or `Sm` under `Compact`. It sizes every
+ * variant's list and triggers; a size passed here always wins.
+ *
  * Returns the selected index after this frame's input, per this repo's return-value idiom.
  */
 context(_: Composer)
@@ -78,24 +87,25 @@ fun ShadcnTabs(
     onSelectedChange: (String) -> Unit,
     modifier: Modifier = Modifier,
     variant: ShadcnTabsVariant = ShadcnTabsVariant.Pill,
-    size: ShadcnTabsSize = ShadcnTabsSize.Default,
+    size: ShadcnTabsSize? = null,
     content: ShadcnTabsScope.() -> Unit,
 ) {
     rememberGroup(ShadcnTabsGroup) {
         val items = remember(content) { ShadcnTabsScope().apply(content).items }
         val theme = shadcnTheme
+        val tabsSize = size ?: if (shadcnDensity.isCompact) ShadcnTabsSize.Sm else ShadcnTabsSize.Default
 
         key("shadcn-tabs-bar") {
             when (variant) {
                 ShadcnTabsVariant.Line -> {
                     Row(
                         modifier
-                            .height(ShadcnTabsHeight)
+                            .height(tabsSize.height)
                             .border(1.dp, theme.palette.border, sides = BorderSides(top = false, end = false, bottom = true, start = false)),
                     ) {
                         items.forEach { item ->
                             key(item.value) {
-                                ShadcnTabLineTrigger(item, selectedValue, onSelectedChange)
+                                ShadcnTabLineTrigger(item, selectedValue, onSelectedChange, tabsSize)
                             }
                         }
                     }
@@ -103,25 +113,25 @@ fun ShadcnTabs(
                 ShadcnTabsVariant.Pill -> {
                     Row(
                         modifier
-                            .height(ShadcnTabsHeight)
+                            .height(tabsSize.height)
                             .background(theme.palette.muted, theme.radii.lg)
                             .padding(ShadcnTabsListPadding),
                     ) {
                         items.forEach { item ->
                             key(item.value) {
-                                ShadcnTabTrigger(item, selectedValue, onSelectedChange)
+                                ShadcnTabTrigger(item, selectedValue, onSelectedChange, tabsSize)
                             }
                         }
                     }
                 }
                 ShadcnTabsVariant.Ghost -> {
                     Row(
-                        modifier.height(size.height),
+                        modifier.height(tabsSize.height),
                         horizontalArrangement = Arrangement.spacedByHorizontal(Tw.Spacing.s1),
                     ) {
                         items.forEach { item ->
                             key(item.value) {
-                                ShadcnTabGhostTrigger(item, selectedValue, onSelectedChange, size)
+                                ShadcnTabGhostTrigger(item, selectedValue, onSelectedChange, tabsSize)
                             }
                         }
                     }
@@ -136,6 +146,7 @@ private fun ShadcnTabTrigger(
     item: ShadcnTab,
     selectedValue: String,
     onSelectedChange: (String) -> Unit,
+    size: ShadcnTabsSize,
 ) {
     val theme = shadcnTheme
     val interaction = remember(item.value) { InteractionSource() }
@@ -145,7 +156,7 @@ private fun ShadcnTabTrigger(
             // The source trigger is `h-[calc(100%-1px)]`: a 29px control inside the
             // 36px list with its 3px list padding. The line box plus py-1 is only 28px
             // in an integer retained layout, so state the source height explicitly.
-            .height(ShadcnTabHeight)
+            .height(size.height - ShadcnTabListInset)
             .let {
                 if (active) {
                     it
@@ -158,7 +169,7 @@ private fun ShadcnTabTrigger(
             }
             .hoverable(interaction, enabled = item.enabled)
             .clickable(interaction) { if (item.enabled) onSelectedChange(item.value) }
-            .padding(horizontal = Tw.Spacing.s2, vertical = Tw.Spacing.s1)
+            .padding(horizontal = size.triggerPaddingX, vertical = size.triggerPaddingY)
             .semantics {
                 this[SemanticsProperties.Role] = SemanticsRole.Tab
                 this[SemanticsProperties.Label] = item.label
@@ -173,7 +184,7 @@ private fun ShadcnTabTrigger(
         if (body == null) {
             ShadcnText(
                 item.label,
-                variant = ShadcnTextVariant.Small,
+                variant = size.textVariant,
                 color = if (active || interaction.isHovered) {
                     theme.palette.foreground
                 } else {
@@ -191,16 +202,17 @@ private fun ShadcnTabLineTrigger(
     item: ShadcnTab,
     selectedValue: String,
     onSelectedChange: (String) -> Unit,
+    size: ShadcnTabsSize,
 ) {
     val theme = shadcnTheme
     val interaction = remember(item.value) { InteractionSource() }
     val active = item.value == selectedValue
     Box(
         Modifier
-            .height(ShadcnTabsHeight)
+            .height(size.height)
             .hoverable(interaction, enabled = item.enabled)
             .clickable(interaction) { if (item.enabled) onSelectedChange(item.value) }
-            .padding(horizontal = Tw.Spacing.s2, vertical = Tw.Spacing.s1)
+            .padding(horizontal = size.triggerPaddingX, vertical = Tw.Spacing.s1)
             .semantics {
                 this[SemanticsProperties.Role] = SemanticsRole.Tab
                 this[SemanticsProperties.Label] = item.label
@@ -222,7 +234,7 @@ private fun ShadcnTabLineTrigger(
         if (body == null) {
             ShadcnText(
                 item.label,
-                variant = ShadcnTextVariant.Small,
+                variant = size.textVariant,
                 color = if (active || interaction.isHovered) {
                     theme.palette.foreground
                 } else {
@@ -287,7 +299,11 @@ private fun ShadcnTabGhostTrigger(
     }
 }
 
-private val ShadcnTabHeight = 29.dp
+/**
+ * What the triggers' height gives up to the list: the source trigger is `h-[calc(100%-1px)]` inside a
+ * `p-[3px]` list, so 29dp in a 36dp one.
+ */
+private val ShadcnTabListInset = 7.dp
 
 /** One tab trigger declared in [ShadcnTabs]' caller-owned slot. */
 class ShadcnTab internal constructor(

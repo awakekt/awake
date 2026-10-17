@@ -20,12 +20,15 @@ import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.tailwind.Tw
+import com.awakekt.awake.ui.shadcn.theme.isCompact
+import com.awakekt.awake.ui.shadcn.theme.shadcnDensity
 import com.awakekt.awake.ui.shadcn.theme.shadcnTheme
 
 /**
  * `ShadcnItem`: A media object list item row with leading slot, title/description text stack, and trailing action slot.
  *
  * **Tailwind Reference**: `flex items-center gap-3 rounded-md border bg-card px-4 py-3 text-card-foreground shadow-sm`.
+ * Under `LocalShadcnDensity` `Compact` it is `gap-2 px-3 py-2`, with a `text-xs` description.
  *
  * Use cases:
  * - Settings rows (e.g. 2FA, Security tokens, Notifications with trailing switch/button).
@@ -64,6 +67,7 @@ fun ShadcnItem(
         () -> Unit
     )? = null,
 ) {
+    val density = shadcnDensity
     ShadcnItem(
         modifier = modifier,
         leading = leading,
@@ -71,7 +75,15 @@ fun ShadcnItem(
     ) {
         ShadcnText(title, variant = ShadcnTextVariant.Small)
         if (description != null) {
-            shadcnMuted(description)
+            shadcnDensityText(
+                description,
+                Modifier,
+                ShadcnTextVariant.Muted,
+                color = null,
+                lineHeight = density.labelLineHeight(),
+                weight = null,
+                size = density.labelSize(),
+            )
         }
     }
 }
@@ -98,13 +110,17 @@ fun ShadcnItem(
     content: context(Composer) ColumnScope.() -> Unit,
 ) {
     val theme = shadcnTheme
+    val compact = shadcnDensity.isCompact
     Row(
         modifier = modifier
             .fillMaxWidth()
             .background(theme.palette.card, theme.radii.md)
             .border(1f.dp, theme.palette.border, theme.radii.md)
-            .padding(horizontal = Tw.Spacing.s4, vertical = Tw.Spacing.s3),
-        horizontalArrangement = Arrangement.spacedByHorizontal(Tw.Spacing.s3),
+            .padding(
+                horizontal = if (compact) Tw.Spacing.s3 else Tw.Spacing.s4,
+                vertical = if (compact) Tw.Spacing.s2 else Tw.Spacing.s3,
+            ),
+        horizontalArrangement = Arrangement.spacedByHorizontal(if (compact) Tw.Spacing.s2 else Tw.Spacing.s3),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (leading != null) {
@@ -112,7 +128,7 @@ fun ShadcnItem(
         }
         Column(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(Tw.Spacing.s1),
+            verticalArrangement = Arrangement.spacedBy(if (compact) Tw.Spacing.s0_5 else Tw.Spacing.s1),
         ) {
             content()
         }

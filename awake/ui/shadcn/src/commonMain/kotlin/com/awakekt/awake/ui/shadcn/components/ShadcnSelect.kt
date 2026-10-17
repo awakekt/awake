@@ -51,6 +51,7 @@ import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.text.font.FontWeight
 import com.awakekt.awake.tailwind.Tw
+import com.awakekt.awake.ui.shadcn.theme.shadcnDensity
 import com.awakekt.awake.ui.shadcn.theme.shadcnTheme
 
 /** An option in [ShadcnSelect]. */
@@ -76,6 +77,7 @@ fun ShadcnSelect(
         val anchor = remember { PopupAnchor() }
         val keyboard = remember { SelectKeyboardState() }
         val density = LocalDensity.current
+        val itemHeight = shadcnDensity.selectItemHeight()
         Box(
             modifier.popupAnchor(anchor),
         ) {
@@ -105,12 +107,13 @@ fun ShadcnSelect(
                     kind = LayerKind.Popup,
                     dismissOnOutsideClick = true,
                     onDismissRequest = { onExpandedChange(false) },
-                    positionProvider = remember(density) {
+                    positionProvider = remember(density, itemHeight) {
                         SelectPositionProvider(
                             anchor,
                             (SelectPopupGap.value * density).toInt(),
                             selectedIndex,
                             (ShadcnSelectSurfaceInset.value * density).toInt(),
+                            itemHeight.value,
                         )
                     },
                     measurePolicy = BoxMeasurePolicy(),
@@ -134,7 +137,10 @@ fun ShadcnSelect(
     }
 }
 
-/** shadcn's select trigger: `h-9 rounded-md border border-input bg-transparent px-3 py-2 text-sm`. */
+/**
+ * shadcn's select trigger: `h-9 rounded-md border border-input bg-transparent px-3 py-2 text-sm`.
+ * Under `LocalShadcnDensity` `Compact` it is 28dp tall with `px-2`, and its rows are 28dp.
+ */
 context(_: Composer)
 fun ShadcnSelectTrigger(
     value: String?,
@@ -149,11 +155,12 @@ fun ShadcnSelectTrigger(
         val interaction = remember { InteractionSource() }
         val styleState = rememberStyleState(interaction, enabled = enabled)
         val focusRingAlpha = animateFloat(if (styleState.isFocused) 1f else 0f)
-        val box = remember(theme) { theme.selectTriggerStyle() }
+        val density = shadcnDensity
+        val box = remember(theme, density) { theme.selectTriggerStyle(density) }
 
         Row(
             modifier
-                .height(ShadcnSelectHeight)
+                .height(density.fieldHeight())
                 .hoverable(interaction, enabled = enabled)
                 .clickable(interaction) { if (enabled) onClick() }
                 .focusable(enabled = enabled, interactionSource = interaction)
@@ -189,15 +196,17 @@ private fun ShadcnSelectContent(
     id: String,
 ): Int? {
     val theme = shadcnTheme
+    val itemHeight = shadcnDensity.selectItemHeight()
+    val itemPaddingY = shadcnDensity.menuItemPaddingY()
     val state = remember { SelectContentState() }
     val clicked = state.clicked
     state.clicked = null
     val selected = selectedIndex?.takeIf { it in items.indices }
-    val overflow = items.size * ShadcnSelectItemHeight.value > ShadcnSelectBaseViewportHeight.value
+    val overflow = items.size * itemHeight.value > ShadcnSelectBaseViewportHeight.value
     // The selected item is initially aligned to the top of the visible list. Keep the state before
     // deriving the controls so each frame reflects the actual scroll edge after a button click.
     val scroll = remember(selected, items.size) {
-        ScrollState((selected ?: 0) * ShadcnSelectItemHeight.value.toInt())
+        ScrollState((selected ?: 0) * itemHeight.value.toInt())
     }
     val showScrollUp = overflow && scroll.canScrollBackward
     // The controls follow the real scroll range, not the selected index. During the first layout
@@ -239,7 +248,7 @@ private fun ShadcnSelectContent(
                     Modifier
                         .height(ShadcnSelectScrollButtonHeight)
                         .fillMaxWidth()
-                        .clickable(interaction) { scroll.scrollBy(-ShadcnSelectItemHeight.value.toInt()) }
+                        .clickable(interaction) { scroll.scrollBy(-itemHeight.value.toInt()) }
                         .semantics { this[SemanticsProperties.TestTag] = "$id.scroll-up" },
                     horizontalArrangement = Arrangement.CenterHorizontally,
                     verticalAlignment = Alignment.CenterVertically,
@@ -271,9 +280,9 @@ private fun ShadcnSelectContent(
                                 }
                                 .padding(
                                     start = Tw.Spacing.s2,
-                                    top = Tw.Spacing.s1_5,
+                                    top = itemPaddingY,
                                     end = Tw.Spacing.s2,
-                                    bottom = Tw.Spacing.s1_5,
+                                    bottom = itemPaddingY,
                                 )
                                 .semantics {
                                     this[SemanticsProperties.Role] = SemanticsRole.Button
@@ -313,7 +322,7 @@ private fun ShadcnSelectContent(
                     Modifier
                         .height(ShadcnSelectScrollButtonHeight)
                         .fillMaxWidth()
-                        .clickable(interaction) { scroll.scrollBy(ShadcnSelectItemHeight.value.toInt()) }
+                        .clickable(interaction) { scroll.scrollBy(itemHeight.value.toInt()) }
                         .semantics { this[SemanticsProperties.TestTag] = "$id.scroll-down" },
                     horizontalArrangement = Arrangement.CenterHorizontally,
                     verticalAlignment = Alignment.CenterVertically,
@@ -404,6 +413,7 @@ private class SelectPositionProvider(
     private val gap: Int,
     private val selectedIndex: Int?,
     private val contentInset: Int,
+    private val itemHeight: Float,
 ) : LayerPositionProvider {
     override fun position(
         parentX: Int,
@@ -420,9 +430,9 @@ private class SelectPositionProvider(
         // a 23dp scroll affordance before the list when a later item is selected, so account for
         // that child offset rather than opening a duplicate trigger below the field.
         val selectedRowOffset = if (selected != null && selected > 0) {
-            contentInset + ShadcnSelectScrollButtonHeight.value + ShadcnSelectItemHeight.value / 2f
+            contentInset + ShadcnSelectScrollButtonHeight.value + itemHeight / 2f
         } else {
-            contentInset + ShadcnSelectItemHeight.value / 2f
+            contentInset + itemHeight / 2f
         }
         val itemAligned = anchor.y + anchor.height / 2f - selectedRowOffset - gap
         val y = if (selected == null) {

@@ -42,6 +42,7 @@ import com.awakekt.awake.compose.ui.semantics.semantics
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.text.font.FontWeight
 import com.awakekt.awake.tailwind.Tw
+import com.awakekt.awake.ui.shadcn.theme.shadcnDensity
 import com.awakekt.awake.ui.shadcn.theme.shadcnTheme
 
 data class ShadcnComboboxItem(
@@ -132,6 +133,7 @@ private fun ShadcnComboboxContent(
     id: String,
 ): Int? {
     val theme = shadcnTheme
+    val itemPaddingY = shadcnDensity.menuItemPaddingY()
     val state = remember { ComboboxContentState() }
     val clicked = state.clicked
     state.clicked = null
@@ -191,9 +193,9 @@ private fun ShadcnComboboxContent(
                                     }
                                     .padding(
                                         start = Tw.Spacing.s2,
-                                        top = Tw.Spacing.s1_5,
+                                        top = itemPaddingY,
                                         end = Tw.Spacing.s2,
-                                        bottom = Tw.Spacing.s1_5,
+                                        bottom = itemPaddingY,
                                     )
                                     .semantics {
                                         this[SemanticsProperties.Role] = SemanticsRole.Button

@@ -9,6 +9,8 @@ import com.awakekt.awake.core.math2d.Sp
 import com.awakekt.awake.core.math2d.sp
 import com.awakekt.awake.core.text.font.FontWeight
 import com.awakekt.awake.tailwind.Tw
+import com.awakekt.awake.ui.shadcn.theme.ShadcnDensity
+import com.awakekt.awake.ui.shadcn.theme.isCompact
 
 /**
  * shadcn's typography scale.
@@ -77,3 +79,12 @@ enum class ShadcnTextVariant(
      */
     Xs(Tw.Text.xs, 16f.sp, FontWeight.Medium, muted = false),
 }
+
+/**
+ * The font size a form label, field description or radio label takes at this density: `text-xs` at
+ * [ShadcnDensity.Compact], where shadcn uses `text-sm`; null elsewhere, which keeps the variant's own.
+ */
+internal fun ShadcnDensity.labelSize(): Sp? = if (isCompact) Tw.Text.xs else null
+
+/** [labelSize]'s line box (`text-xs` is 12 over 16) for a label whose line is the variant's own, else null. */
+internal fun ShadcnDensity.labelLineHeight(): Sp? = if (isCompact) ShadcnTextVariant.Xs.lineHeight else null

@@ -8,7 +8,10 @@ package com.awakekt.awake.ui.shadcn.components
 import com.awakekt.awake.compose.foundation.style.Style
 import com.awakekt.awake.compose.ui.unit.Dp
 import com.awakekt.awake.compose.ui.unit.dp
+import com.awakekt.awake.tailwind.Tw
 import com.awakekt.awake.ui.shadcn.ShadcnThemeValues
+import com.awakekt.awake.ui.shadcn.theme.ShadcnDensity
+import com.awakekt.awake.ui.shadcn.theme.isCompact
 
 /**
  * The floating surface `popover`, `dropdown-menu` and `select`'s content all share.
@@ -35,6 +38,9 @@ internal fun ShadcnThemeValues.popoverSurfaceStyle(inset: Dp): Style = Style {
     // border-box: the border consumes layout space in CSS, so the content inset is padding + border.
     contentPadding(inset + POPOVER_BORDER_WIDTH)
 }
+
+/** A popover's or hover card's `p-4`, or `p-3` at [ShadcnDensity.Compact]. */
+internal fun ShadcnDensity.popoverPadding(): Dp = if (isCompact) Tw.Spacing.s3 else Tw.Spacing.s4
 
 /** Tailwind's bare `border` is 1px. */
 internal val POPOVER_BORDER_WIDTH: Dp = 1.dp

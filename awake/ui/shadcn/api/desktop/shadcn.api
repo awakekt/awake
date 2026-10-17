@@ -1377,6 +1377,18 @@ public final class com/awakekt/awake/ui/shadcn/theme/ShadcnComposeThemeKt {
 	public static final fun provideShadcnTheme (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/ui/shadcn/ShadcnThemeValues;Lkotlin/jvm/functions/Function1;)V
 }
 
+public final class com/awakekt/awake/ui/shadcn/theme/ShadcnDensity : java/lang/Enum {
+	public static final field Compact Lcom/awakekt/awake/ui/shadcn/theme/ShadcnDensity;
+	public static final field Default Lcom/awakekt/awake/ui/shadcn/theme/ShadcnDensity;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/ui/shadcn/theme/ShadcnDensity;
+	public static fun values ()[Lcom/awakekt/awake/ui/shadcn/theme/ShadcnDensity;
+}
+
+public final class com/awakekt/awake/ui/shadcn/theme/ShadcnDensityKt {
+	public static final fun getLocalShadcnDensity ()Lcom/awakekt/awake/compose/runtime/CompositionLocal;
+}
+
 public final class com/awakekt/awake/ui/shadcn/theme/ShadcnMetrics {
 	public synthetic fun <init> (FFFFFFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (FFFFFFFFLkotlin/jvm/internal/DefaultConstructorMarker;)V

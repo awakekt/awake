@@ -8,6 +8,7 @@ package com.awakekt.awake.ui.shadcn.components
 import com.awakekt.awake.compose.ui.unit.Dp
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.tailwind.Tw
+import com.awakekt.awake.ui.shadcn.theme.ShadcnDensity
 
 /**
  * shadcn's button sizes, carrying their own geometry.
@@ -50,4 +51,15 @@ enum class ShadcnButtonSizeVariant(
 
     /** Translates `size-10`. */
     IconLg(40.dp, Tw.Spacing.s0, square = true),
+}
+
+/**
+ * The size a button takes when its caller passes none: [ShadcnButtonSizeVariant.Default], or one
+ * step down at [ShadcnDensity.Compact]. A size passed explicitly never comes through here.
+ *
+ * Icon sizes are always passed, so they stay as written; a dense UI asks for `IconSm` or `IconXs`.
+ */
+internal fun ShadcnDensity.defaultButtonSize(): ShadcnButtonSizeVariant = when (this) {
+    ShadcnDensity.Default -> ShadcnButtonSizeVariant.Default
+    ShadcnDensity.Compact -> ShadcnButtonSizeVariant.Sm
 }

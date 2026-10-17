@@ -10,9 +10,8 @@ import com.awakekt.awake.compose.ui.unit.Dp
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.tailwind.Tw
 import com.awakekt.awake.ui.shadcn.ShadcnThemeValues
-
-/** `h-9`; this is a Tailwind scale value, not an unlabelled 36dp metric. */
-internal val ShadcnSelectHeight: Dp = Tw.Spacing.s9
+import com.awakekt.awake.ui.shadcn.theme.ShadcnDensity
+import com.awakekt.awake.ui.shadcn.theme.isCompact
 
 /** The item-aligned reference popup is 160px tall. */
 internal val ShadcnSelectOpenHeight: Dp = 160.dp
@@ -32,8 +31,14 @@ internal val ShadcnSelectScrollButtonHeight: Dp = 24.dp
 /** The visible Select viewport after the 23dp item-aligned scroll control. */
 internal val ShadcnSelectViewportHeight: Dp = 127.dp
 
-/** `py-1.5` plus the 14px small text line-height resolves to a 32dp Select row. */
-internal val ShadcnSelectItemHeight: Dp = Tw.Spacing.s8
+/**
+ * `py-1.5` plus the 14px small text line-height resolves to a 32dp Select row; `py-1` makes it 28dp
+ * at [ShadcnDensity.Compact].
+ */
+internal fun ShadcnDensity.selectItemHeight(): Dp = if (isCompact) Tw.Spacing.s7 else Tw.Spacing.s8
+
+/** A Select, Combobox or menu row's vertical padding: `py-1.5`, or `py-1` at [ShadcnDensity.Compact]. */
+internal fun ShadcnDensity.menuItemPaddingY(): Dp = if (isCompact) Tw.Spacing.s1 else Tw.Spacing.s1_5
 
 /** A compact glyph centered in the scroll button. */
 internal val ShadcnSelectScrollIconSize: Dp = Tw.Spacing.s4
@@ -45,4 +50,5 @@ internal val ShadcnSelectIndicatorSlotSize: Dp = Tw.Spacing.s6
 /** Default SelectContent has no `sideOffset`; DropdownMenuContent does. */
 internal val SelectPopupGap: Dp = 0.dp
 
-internal fun ShadcnThemeValues.selectTriggerStyle(): Style = fieldStyle(verticalPadding = Tw.Spacing.s2)
+internal fun ShadcnThemeValues.selectTriggerStyle(density: ShadcnDensity): Style =
+    fieldStyle(verticalPadding = density.selectPaddingY(), horizontalPadding = density.fieldPaddingX())

@@ -13,6 +13,8 @@ import com.awakekt.awake.compose.foundation.layout.fillMaxWidth
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.tailwind.Tw
+import com.awakekt.awake.ui.shadcn.theme.isCompact
+import com.awakekt.awake.ui.shadcn.theme.shadcnDensity
 import com.awakekt.awake.ui.shadcn.theme.shadcnTheme
 
 /**
@@ -55,18 +57,35 @@ fun ShadcnFormField(
     )? = null,
 ) {
     val theme = shadcnTheme
+    val density = shadcnDensity
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(Tw.Spacing.s1_5),
+        verticalArrangement = Arrangement.spacedBy(if (density.isCompact) Tw.Spacing.s1 else Tw.Spacing.s1_5),
     ) {
-        ShadcnText(label, variant = ShadcnTextVariant.Small)
+        shadcnDensityText(
+            label,
+            Modifier,
+            ShadcnTextVariant.Small,
+            color = null,
+            lineHeight = density.labelLineHeight(),
+            weight = null,
+            size = density.labelSize(),
+        )
         if (content != null) {
             content()
         }
         if (error != null) {
             ShadcnText(error, variant = ShadcnTextVariant.Xs, color = theme.palette.destructive)
         } else if (description != null) {
-            shadcnMuted(description)
+            shadcnDensityText(
+                description,
+                Modifier,
+                ShadcnTextVariant.Muted,
+                color = null,
+                lineHeight = density.labelLineHeight(),
+                weight = null,
+                size = density.labelSize(),
+            )
         }
     }
 }
@@ -101,7 +120,7 @@ fun ShadcnForm(
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(Tw.Spacing.s4),
+        verticalArrangement = Arrangement.spacedBy(if (shadcnDensity.isCompact) Tw.Spacing.s3 else Tw.Spacing.s4),
     ) {
         content?.let { it() }
     }
