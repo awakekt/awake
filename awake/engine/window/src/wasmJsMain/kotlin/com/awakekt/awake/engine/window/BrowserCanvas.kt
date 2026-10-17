@@ -119,12 +119,21 @@ fun bindWindowPointerInput(input: Input, canvas: HTMLCanvasElement = findCanvas(
     // Without this the browser's own context menu covers the app's.
     window.addEventListener("contextmenu") { event -> event.preventDefault() }
     bindWindowTouchInput(input, canvas)
-    window.addEventListener("wheel") { event ->
+    val wheelModifiers = WheelModifiers(input) { release -> window.requestAnimationFrame { release() } }
+    // Non-passive: a browser treats a wheel listener on the window as passive unless told otherwise,
+    // and ignores preventDefault in a passive one.
+    addNonPassiveListener("wheel") { event ->
         val wheel = event as WheelEvent
+        // A trackpad pinch is a wheel with ctrlKey set, as Ctrl+wheel is on desktop, where Ctrl is a
+        // held key beside the scroll. Forward the modifiers the same way.
+        wheelModifiers.hold(wheelModifierKeys(wheel.ctrlKey, wheel.shiftKey, wheel.altKey, wheel.metaKey))
         // Accumulate the hardware delta until the runtime snapshots it, mirroring
         // GlfwInputBridge's `input.scrollDeltaY += reader.consumeScrollDeltaY()`, in its units and sign.
         input.scrollDeltaX += domWheelToScrollDelta(wheel.deltaX, wheel.deltaMode)
         input.scrollDeltaY += domWheelToScrollDelta(wheel.deltaY, wheel.deltaMode)
+        // The canvas takes every wheel over it, or the page would scroll beneath the app and a pinch
+        // (Ctrl+wheel) would zoom the whole page.
+        if (canvas.box().contains(wheel.clientX.toDouble(), wheel.clientY.toDouble())) wheel.preventDefault()
     }
 }
 
