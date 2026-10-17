@@ -112,8 +112,11 @@ class Heightmap(
     /** Returns an owned copy for an explicit consumer such as a physics adapter. */
     fun copySamples(): FloatArray = ownedSamples.copyOf()
 
-    /** Creates an independently editable heightmap; edits never mutate this immutable asset. */
-    fun mutableCopy(): MutableHeightmap = MutableHeightmap(ownedSamples, width, depth, ownedScale)
+    /**
+     * Creates an independently editable heightmap with this map's [origin]; edits never mutate this
+     * immutable asset.
+     */
+    fun mutableCopy(): MutableHeightmap = MutableHeightmap(ownedSamples, width, depth, ownedScale, origin)
 
     /** The same samples read under a different [GridOrigin]. */
     fun withOrigin(origin: GridOrigin): Heightmap =

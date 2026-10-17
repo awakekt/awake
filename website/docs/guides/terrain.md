@@ -71,10 +71,11 @@ A `Heightmap` is centred on its entity: it spans `-halfExtentX..halfExtentX` and
 | `heightAtWorld(worldX, worldZ)` | Interpolated world height, with `scale.y` applied. `NaN` off the map. |
 | `normalAt(x, z)` | The surface normal at a sample. |
 | `toPositionNormalColorMesh(color)` / `toPositionNormalColorMesh { x, z, height -> color }` | A lit mesh, uniformly coloured or coloured per sample. |
-| `mutableCopy()` | An editable `MutableHeightmap`. |
+| `mutableCopy()` | An editable `MutableHeightmap` with the same `origin`. |
 | `RawHeightmapCodec.decode(...)` / `decodeFromBitmap(...)` | Reads raw 8- or 16-bit heights, or a greyscale image. |
 
-`Heightmap` is immutable. To sculpt, edit a copy and take a snapshot:
+`Heightmap` is immutable. To sculpt, edit a copy and take a snapshot. Both keep the map's `origin`,
+so a corner-anchored map stays where it was:
 
 ```kotlin title="Kotlin"
 --8<-- "awake/scene/authoring/src/desktopTest/kotlin/com/awakekt/awake/scene/authoring/TerrainDocsSampleTest.kt:sculpt"
