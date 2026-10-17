@@ -118,7 +118,10 @@ internal class SceneCanvasResolver(
  * null, as the world stores their [Transform]s: the order a scene saves them in, and for a loaded
  * scene the order its document lists them. A root with no [Transform] comes after those with one.
  */
-internal fun World.canvasItems(siblingOrder: Comparator<Entity>? = null): List<CanvasItem> {
+internal fun World.canvasItems(siblingOrder: Comparator<Entity>? = null): List<CanvasItem> = placedCanvasItems(siblingOrder).map { it.item }
+
+/** [canvasItems] with the path down to each one's entity from its root, the entity last. */
+internal fun World.placedCanvasItems(siblingOrder: Comparator<Entity>? = null): List<PlacedItem> {
     val placed = ArrayList<PlacedItem>()
     family<CanvasElement>().forEach { entity, element ->
         val path = hierarchyPath(entity)
@@ -129,11 +132,14 @@ internal fun World.canvasItems(siblingOrder: Comparator<Entity>? = null): List<C
         val siblings = siblingOrder?.then(stored) ?: stored
         placed.sortWith { a, b -> comparePaths(a.path, b.path, siblings) }
     }
-    return placed.map { it.item }
+    return placed
 }
 
 /** A [CanvasItem] and the path down to its entity from its root. */
-private class PlacedItem(val item: CanvasItem, val path: List<Entity>)
+internal class PlacedItem(val item: CanvasItem, val path: List<Entity>) {
+    /** The entity the item's element is on. */
+    val entity: Entity get() = path.last()
+}
 
 /**
  * Siblings in the order the world stores their [Transform]s; a node with none after those with one,

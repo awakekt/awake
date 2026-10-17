@@ -41,7 +41,9 @@ earlier sibling, with everything under it, before a later one, so the later one 
 the pointer. Siblings are in the order the world stores their `Transform`s, which is the order the
 scene saves them in and, for a loaded scene, the order its document lists them. An editor whose
 hierarchy can move siblings passes its own order as `SceneCanvas(world, siblingOrder = …)`; siblings
-it calls equal keep the world's order.
+it calls equal keep the world's order. `world.canvasDrawOrder(siblingOrder)` lists the entities in
+the order they draw, and `world.canvasElementAt(x, y, siblingOrder)` finds the one last drawn on top
+at a point in the canvas's units, as an editor's click picks it.
 
 ## Text in the player's language
 
