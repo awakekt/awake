@@ -86,6 +86,8 @@ free canvas_element.followRules.scale.points[].at | Validated as a whole: the po
 free canvas_element.followRules.scale.points[].value | A size multiplier: at or below 0 leaves the follower out, which is a valid way to hide it far away.
 free canvas_element.followRules.fade.points[].at | Validated as a whole: the points must be finite and in order, which no per-point limit says.
 free canvas_element.followRules.fade.points[].value | An opacity, held to 1 above it and leaving the follower out at or below 0, so every value means something.
+free canvas_element.cluster.startAngle | Any angle in degrees is valid: negative turns the other way, and past 360 just wraps.
+free canvas_element.cluster.spacing | Any step in degrees is valid: negative fans the buttons anticlockwise.
 free canvas_element.button.aim.cancel.offsetX | Any screen offset is valid, as an element's own is.
 free canvas_element.button.aim.cancel.offsetY | Any screen offset is valid, as an element's own is.
 free canvas_element.joystick.curve.points[].at | Validated as a whole: the points must be finite and in order, which no per-point limit says.
