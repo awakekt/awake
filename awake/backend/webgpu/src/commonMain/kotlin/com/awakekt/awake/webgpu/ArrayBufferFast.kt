@@ -22,19 +22,17 @@ import io.ygdrasil.webgpu.GPUQueue
  * `setInts` writes directly into a typed-array view over the target buffer in a single
  * per-element pass, skipping the intermediate boxed `JsArray` entirely.
  *
- * Known limit: still a per-element loop under the hood (Kotlin/Wasm-GC arrays have no linear
- * memory to bulk-copy/view from), so this halves the work rather than eliminating it. Per-draw
- * uniforms no longer come through here: `UniformUploads` stores a frame's blocks into linear memory
- * and writes from there, which a hot caller of this function could do the same way.
+ * On the web that is still a JS call per element, since a Kotlin/Wasm array lives in the GC heap
+ * where JS cannot see it. There the data is stored into wasm linear memory instead, four bytes per
+ * wasm store, and JS copies it out in one call: a texture's or a mesh's upload, a font atlas and the
+ * per-frame instance buffers then cost a store per word rather than a JS call per value.
+ * `UniformUploads` writes a frame's per-draw uniforms from linear memory the same way.
  */
-internal fun fastArrayBufferOf(data: FloatArray): ArrayBuffer =
-    ArrayBuffer.allocate((Float.SIZE_BYTES * data.size).toULong()).apply { setFloats(0uL, data) }
+internal expect fun fastArrayBufferOf(data: FloatArray): ArrayBuffer
 
-internal fun fastArrayBufferOf(data: IntArray): ArrayBuffer =
-    ArrayBuffer.allocate((Int.SIZE_BYTES * data.size).toULong()).apply { setInts(0uL, data) }
+internal expect fun fastArrayBufferOf(data: IntArray): ArrayBuffer
 
-internal fun fastArrayBufferOf(data: ByteArray): ArrayBuffer =
-    ArrayBuffer.allocate(data.size.toULong()).apply { setBytes(0uL, data) }
+internal expect fun fastArrayBufferOf(data: ByteArray): ArrayBuffer
 
 /**
  * Upload exactly the source bytes. The JVM binding's default `size` uses the destination's
