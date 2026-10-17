@@ -45,6 +45,16 @@ it calls equal keep the world's order. `world.canvasDrawOrder(siblingOrder)` lis
 the order they draw, and `world.canvasElementAt(x, y, siblingOrder)` finds the one last drawn on top
 at a point in the canvas's units, as an editor's click picks it.
 
+## Many followers
+
+`SceneCanvasResolver` reports a follower's projection through `CanvasProjector.projectFollow`, which
+`SceneAppLifecycleRuntime`'s projector answers from the camera it draws with: the point through the
+backend's clip space, the depth along the view, the distance, and for a point behind the camera the
+side it lies on. `CanvasProjector.occluded` is the occlusion hook, false unless a host answers it.
+A scene's `canvas_follow_limit`s (`SceneCanvasFollowLimit`, saved from `CanvasFollowLimit`) reach
+`SceneCanvas` through `world.canvasFollowLimits()`. `CanvasFollowerPool(world, template)` hands
+follower entities out and takes them back, hidden, so churning followers makes no entities.
+
 ## Scale and safe area
 
 A `canvas_scaler` on any node, the saved form of `awake:ui:canvas`'s `CanvasScaler`, works the

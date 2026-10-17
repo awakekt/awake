@@ -17,6 +17,7 @@ import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.ui.canvas.CanvasElement
 import com.awakekt.awake.ui.canvas.CanvasItem
+import com.awakekt.awake.ui.canvas.CanvasProjection
 import com.awakekt.awake.ui.canvas.CanvasResolver
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerializationException
@@ -52,6 +53,16 @@ internal class SceneCanvasResolver(
     override fun point(target: String, offset: Vec3f): Vec2? {
         val matrix = named[target]?.let { world.get<Transform>(it) }?.worldMatrix ?: return null
         return projector?.project(matrix.m03 + offset.x, matrix.m13 + offset.y, matrix.m23 + offset.z)
+    }
+
+    override fun project(target: String, offset: Vec3f): CanvasProjection? {
+        val matrix = named[target]?.let { world.get<Transform>(it) }?.worldMatrix ?: return null
+        return projector?.projectFollow(matrix.m03 + offset.x, matrix.m13 + offset.y, matrix.m23 + offset.z)
+    }
+
+    override fun occluded(target: String, offset: Vec3f): Boolean {
+        val matrix = named[target]?.let { world.get<Transform>(it) }?.worldMatrix ?: return false
+        return projector?.occluded(matrix.m03 + offset.x, matrix.m13 + offset.y, matrix.m23 + offset.z) == true
     }
 
     override fun bounds(target: String): Rectangle? {

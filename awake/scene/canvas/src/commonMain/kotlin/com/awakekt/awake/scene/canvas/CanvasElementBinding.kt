@@ -37,45 +37,55 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
      *
      * @return The hydrated runtime [CanvasElement].
      */
-    fun SceneCanvasElement.toComponent(): CanvasElement = CanvasElement().also {
-        it.kind = kind
-        it.anchor = anchor
-        it.offsetX = offsetX
-        it.offsetY = offsetY
-        it.width = width
-        it.height = height
-        it.text = text
-        it.textKey = textKey
-        it.textArgs = textArgs
-        it.fontSize = fontSize
-        it.color = color
-        it.background = background
-        it.value = value
-        it.order = order
-        it.visible = visible
-        it.action = action
-        it.doubleAction = doubleAction
-        it.touchOnly = touchOnly
-        it.safeArea = safeArea
-        it.style = style
-        it.textAlign = textAlign
-        it.follow = follow
-        it.followOffset = Vec3f(followOffset.x, followOffset.y, followOffset.z)
-        it.followBounds = followBounds
-        it.followOutset = followOutset
-        it.layout = layout
-        it.grow = grow
-        it.bind = bind
-        it.wheel = wheel
-        it.draggable = draggable
-        it.dropTarget = dropTarget
-        it.camera = camera
-        it.links = links
-        it.mask = mask
-        it.maxLength = maxLength
-        it.maxLengthUnit = maxLengthUnit
-        it.font = font
-        it.pressable = pressable
+    fun SceneCanvasElement.toComponent(): CanvasElement = CanvasElement().also { applyTo(it) }
+
+    /**
+     * Sets every saved option of [element] to this schema's, leaving what it reports at runtime, such
+     * as presses, as it is: what a [CanvasFollowerPool] does to an element it hands out again.
+     *
+     * @param element The live element to set.
+     */
+    fun SceneCanvasElement.applyTo(element: CanvasElement) {
+        element.kind = kind
+        element.anchor = anchor
+        element.offsetX = offsetX
+        element.offsetY = offsetY
+        element.width = width
+        element.height = height
+        element.text = text
+        element.textKey = textKey
+        element.textArgs = textArgs
+        element.fontSize = fontSize
+        element.color = color
+        element.background = background
+        element.value = value
+        element.order = order
+        element.visible = visible
+        element.action = action
+        element.doubleAction = doubleAction
+        element.touchOnly = touchOnly
+        element.safeArea = safeArea
+        element.style = style
+        element.textAlign = textAlign
+        element.follow = follow
+        element.followOffset = Vec3f(followOffset.x, followOffset.y, followOffset.z)
+        element.followBounds = followBounds
+        element.followOutset = followOutset
+        element.followRules = followRules
+        element.followArrow = followArrow
+        element.layout = layout
+        element.grow = grow
+        element.bind = bind
+        element.wheel = wheel
+        element.draggable = draggable
+        element.dropTarget = dropTarget
+        element.camera = camera
+        element.links = links
+        element.mask = mask
+        element.maxLength = maxLength
+        element.maxLengthUnit = maxLengthUnit
+        element.font = font
+        element.pressable = pressable
     }
 
     /**
@@ -109,6 +119,8 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         followOffset = SceneVec3(followOffset.x, followOffset.y, followOffset.z),
         followBounds = followBounds,
         followOutset = followOutset,
+        followRules = followRules,
+        followArrow = followArrow,
         layout = layout,
         grow = grow,
         bind = bind,

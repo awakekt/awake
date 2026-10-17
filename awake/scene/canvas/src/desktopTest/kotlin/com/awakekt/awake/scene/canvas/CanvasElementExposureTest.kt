@@ -29,7 +29,7 @@ class CanvasElementExposureTest {
     private val setFromSceneFile: Map<String, String> = listOf(
         "kind", "anchor", "offsetX", "offsetY", "width", "height", "text", "textKey", "textArgs", "fontSize", "color",
         "background", "value", "order", "visible", "action", "doubleAction", "touchOnly", "safeArea", "style",
-        "textAlign", "follow", "followOffset", "followBounds", "followOutset", "layout", "grow",
+        "textAlign", "follow", "followOffset", "followBounds", "followOutset", "followRules", "followArrow", "layout", "grow",
         "bind", "wheel", "draggable", "dropTarget", "camera", "links", "mask", "maxLength", "maxLengthUnit",
         "font", "pressable",
     ).associateWith { it }
@@ -37,6 +37,7 @@ class CanvasElementExposureTest {
     /** Options that cannot be written as data, with why. Each is set from code through the live element. */
     private val codeOnly: Map<String, String> = mapOf(
         "focused" to "a request on the keyboard's current owner, not a saved value",
+        "followScore" to "a follower's importance right now, which game code works out each frame",
     )
 
     /** [CanvasElement]'s own options: its public setters, skipping a synthetic bridge's `$`-named one. */

@@ -19,6 +19,7 @@ registers it.
 | [`camera`](#camera) | `Camera` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Cameras](../guides/cameras-and-controls.md) |
 | [`camera_rig`](#camera_rig) | `CameraRig` | `com.awakekt.awake.scene:controls` | `registerControls()` | [Cameras](../guides/cameras-and-controls.md) |
 | [`canvas_element`](#canvas_element) | `CanvasElement` | `com.awakekt.awake.scene:canvas` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md) |
+| [`canvas_follow_limit`](#canvas_follow_limit) | `CanvasFollowLimit` | `com.awakekt.awake.scene:canvas` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md#many-followers) |
 | [`canvas_scaler`](#canvas_scaler) | `CanvasScaler` | `com.awakekt.awake.scene:canvas` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md#scale-with-the-screen) |
 | [`character_controller`](#character_controller) | `CharacterController` | `com.awakekt.awake.scene:character` | `registerCharacter()` | [Character controller](../guides/character-controller.md) |
 | [`chase`](#chase) | `ChaseBehavior` | `com.awakekt.awake.scene:ai` | `registerAiBehaviors()` | [AI](../guides/ai.md) |
@@ -56,7 +57,7 @@ registers it.
 | Call | Module | Registers |
 | --- | --- | --- |
 | Built in | `com.awakekt.awake.scene:document` | `custom`, `prefab_link` |
-| `DefaultSceneComponentResolvers.install()` | `com.awakekt.awake.scene:runtime` | `ambient_light`, `camera`, `canvas_element`, `canvas_scaler`, `day_cycle`, `fog`, `keyframe_animation`, `light`, `locomotion_animation`, `mesh_renderer`, `particle_emitter`, `pbr_material`, `shader_effect`, `skybox`, `spin_control`, `static_transform`, `tag`, `terrain`, `tone_mapping`. `SceneManager` and `SceneAppLifecycleRuntime` call it for you. |
+| `DefaultSceneComponentResolvers.install()` | `com.awakekt.awake.scene:runtime` | `ambient_light`, `camera`, `canvas_element`, `canvas_follow_limit`, `canvas_scaler`, `day_cycle`, `fog`, `keyframe_animation`, `light`, `locomotion_animation`, `mesh_renderer`, `particle_emitter`, `pbr_material`, `shader_effect`, `skybox`, `spin_control`, `static_transform`, `tag`, `terrain`, `tone_mapping`. `SceneManager` and `SceneAppLifecycleRuntime` call it for you. |
 | `SceneComponentRegistry.registerControls()` | `com.awakekt.awake.scene:controls` | `movement_control`, `camera_rig`, `input_actions` |
 | `SceneComponentRegistry.registerPhysics()` | `com.awakekt.awake.scene:physics` | `physics_body` |
 | `SceneComponentRegistry.registerCharacter()` | `com.awakekt.awake.scene:character` | `character_controller` |
@@ -165,6 +166,8 @@ Screen-space UI drawn over the game. Sizes and offsets are in dp. `SceneCanvasEl
 | `follow` | string | `""` | The name of a node the element follows on screen. Its `anchor` point stands on the node's projected position, nudged inward by its offsets, and it hides when the node is behind the camera or missing. |
 | `followOffset` | vector | `{x: 0, y: 0, z: 0}` | World-space offset from the followed node, such as above its head. |
 | `followBounds` | boolean | `false` | Cover the screen rectangle of the followed node's meshes instead of standing at its point. Its children anchor to that box's edges. |
+| `followRules` | object | none | How a follower behaves with many on screen. `cullOffScreen` (`true`) leaves it out while its box is wholly off the screen; `maxDistance` (`0`, none) hides it farther than that from the camera, in world units; `occlusion` (`false`) hides it while the host reports something between the camera and the point. `group` (`""`) is the [`canvas_follow_limit`](#canvas_follow_limit) it counts against, and `priority` (`0`) ranks it there. `scale` and `fade` are curves of its size and opacity by distance: `points` of `at` (a distance) and `value`, straight between them and held past the ends; it is left out when faded or scaled to nothing. `pinToEdge` (`false`) holds it to the screen's edge, `edgeMargin` dp in, on the side its target lies while that is off screen or behind the camera, instead of hiding it. None culls it off screen and hides it behind the camera. Set on an element that follows nothing, it is reported. See [Game UI](../guides/game-ui.md#many-followers). |
+| `followArrow` | boolean | `false` | Inside a follower, this element is the arrow of one pinned to the edge: drawn only while its parent is pinned, centred on its parent's edge toward the target and turned to point there, its picture pointing right before it turns; its `style.rotation` adds to the turn. Set on an element that follows a node itself, it is reported. |
 | `followOutset` | number | `0` | With `followBounds`, how far the box reaches past the node's rectangle on each side, in dp, so corner children sit outside the node. Negative pulls it in, never below nothing. |
 | `layout` | object | none | Lay the element's children out in rows or columns instead of anchoring each: `direction` (`Row` · `RowReverse` · `Column` · `ColumnReverse`), `wrap`, `gap`, `padding`, `justify` (`Start` · `Center` · `End` · `SpaceBetween` · `SpaceAround` · `SpaceEvenly`) and `align` (`Start` · `Center` · `End` · `Stretch`). A laid-out child keeps its `width` and `height` and ignores its anchor and offsets. See [Game UI](../guides/game-ui.md#lay-out-children). |
 | `grow` | number | `0` | In a parent with a `layout`, this element's share of its line's leftover space. Not negative. |
@@ -179,6 +182,19 @@ Screen-space UI drawn over the game. Sizes and offsets are in dp. `SceneCanvasEl
 | `maxLengthUnit` | `Graphemes` · `CodePoints` · `Utf8Bytes` | `Graphemes` | What `maxLength` counts. `Graphemes` are the characters a player sees, so a family emoji is one. Count `CodePoints` or `Utf8Bytes` to match the limit a server stores a line in, so a line the field accepts is never refused or cut there. |
 | `font` | string | `""` | The font a `Text`'s, `TextField`'s or `Button`'s words draw in. A path ending in `.ttf` or `.otf`, any case, names a TrueType or OpenType file from the project's root, loaded once with the scene; one that cannot be read or is not a font is logged once and draws in the default font. Any other value names a built-in family: `default` (Roboto) or `bitmap` (a fixed-pitch pixel font). Empty draws in the default font. Another name, or a path with another extension, is reported. See [Game UI](../guides/game-ui.md#use-a-font). |
 | `pressable` | boolean | `false` | Makes an `Image` or `Panel` take a tap as a `Button` does: `consumePress()` and `consumePressAt()` report it, and what is under the element doesn't get it. `false` leaves it watching the pointer only, so a tap passes through. A `Button` is always pressable; set on any other kind, it is reported. |
+
+## `canvas_follow_limit`
+
+The most followers of one group the scene's canvas draws at once, keeping the most important: name
+plates over a crowd. A scene has one for each group it limits, each on any node. Only followers that
+would otherwise be drawn count, so one culled off screen, too far or occluded makes room for the
+next. `SceneCanvasFollowLimit`, saved from the live `CanvasFollowLimit`.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `group` | string | `""` | The `followRules.group` it limits; empty limits the followers that name none. |
+| `max` | integer | `0` | The most of them drawn at once; `0` for no limit. Not negative. |
+| `rankBy` | `Distance` · `Priority` · `Score` | `Distance` | Which are kept: the nearest to the camera; the highest `followRules.priority`, then the nearest; or the highest `followScore`, which game code sets each frame, then the nearest. |
 
 ## `canvas_scaler`
 

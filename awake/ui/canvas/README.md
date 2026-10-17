@@ -75,6 +75,23 @@ the node lands in the frame's pixels. `CanvasOverlay` moves that into its own bo
 sat in the frame when it was last placed, so a canvas drawn over part of the window lands on what
 it follows from its second frame; one filling the window does from its first.
 
+## Many followers
+
+A follower's `followRules` (`CanvasFollowRules`) are data on the element. A follower is left out
+while its box is wholly off the canvas (`cullOffScreen`) or its point is behind the camera, beyond
+`maxDistance`, or occluded (`occlusion`, asked of `CanvasResolver.occluded`). `scale` and `fade` are
+`CanvasCurve`s by distance, and `pinToEdge` holds it to the canvas's edge, `edgeMargin` in, toward a
+target off screen or behind, reporting `pinned` and `pinAngle`. A `followArrow` child points to the
+target while its follower is pinned. `CanvasOverlay(followLimits = listOf(CanvasFollowLimit(…)))`
+draws at most `max` of a `group`, ranked by distance, `priority` or the `followScore` code sets.
+
+Every follower is placed in one pass before any is composed, each projected once through
+`CanvasResolver.project`, which reports a `CanvasProjection`: the point, its view depth, its
+distance and whether it is behind the camera. A resolver that answers only `point` still works, at
+no known distance, with a point behind the camera hidden. The overlay keys each element's
+composition by the element object, so a host that keeps its elements and hides the ones not in use,
+rather than making new ones, reuses what was composed for them.
+
 ## Nesting and scale
 
 An item whose `parent` is also in the list is drawn inside it, anchored and offset within the
