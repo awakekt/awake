@@ -267,6 +267,17 @@ class CanvasElement {
     internal val lookState = CanvasLookState()
 
     /**
+     * Lets go of every pointer this element's controls hold, as when it stops being drawn mid-press:
+     * a stick lets go as a release would, and a button or look area forgets its press without
+     * reporting it, so nothing stays held while it cannot be seen.
+     */
+    internal fun dropPointers() {
+        if (stick.pointer != null) stick.release(joystick ?: CanvasJoystick.Default)
+        buttonPress.cancel(this)
+        lookState.clear()
+    }
+
+    /**
      * How far a LookArea has been swiped since the last call, in dp times its [CanvasLook.sensitivity],
      * right and down positive unless inverted, then zero.
      */

@@ -79,6 +79,7 @@ internal class CanvasTree(
     val origin: CanvasOrigin = CanvasOrigin(),
     private val fonts: Map<String, UiFont> = emptyMap(),
     private val strings: Strings? = null,
+    val controls: CanvasControls = CanvasControls.Default,
 ) {
     private val hierarchy = CanvasHierarchy(items)
 
@@ -87,7 +88,14 @@ internal class CanvasTree(
     init {
         // Cleared up front so an element not composed this frame -- hidden, or a follower with
         // nowhere to land -- reports null rather than where it last was.
-        for (item in items) item.element.screenBounds = null
+        for (item in items) {
+            val element = item.element
+            element.screenBounds = null
+            // A control hidden mid-press, by its own visibility or its parent's, lets go of its
+            // pointer, so a stick does not stay deflected while the controls are hidden.
+            val parent = item.parent
+            if (!shows(element) || parent != null && !shows(parent)) element.dropPointers()
+        }
     }
 
     fun childrenOf(element: CanvasElement): List<CanvasItem> = hierarchy.childrenOf(element)

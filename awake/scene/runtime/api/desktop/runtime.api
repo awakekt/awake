@@ -131,6 +131,7 @@ public final class com/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime : co
 	public final fun getDrawsSceneCanvas ()Z
 	public final fun getFont ()Lcom/awakekt/awake/core/text/font/UiFont;
 	public final fun getFps ()F
+	public final fun getLastInputDevice ()Lcom/awakekt/awake/core/input/InputDevice;
 	public final fun getPerfStatsEnabled ()Z
 	public final fun getRenderer ()Lcom/awakekt/awake/render/renderer/Renderer;
 	public final fun getSceneManager ()Lcom/awakekt/awake/scene/runtime/SceneManager;

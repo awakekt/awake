@@ -117,6 +117,11 @@ internal class CanvasLookState {
         count--
     }
 
+    /** Forgets every thumb, as when the area stops being drawn mid-swipe. */
+    fun clear() {
+        count = 0
+    }
+
     fun consumeLook(): Vec2 = if (lookX == 0f && lookY == 0f) NO_LOOK else Vec2(lookX, lookY).also { lookX = 0f; lookY = 0f }
 
     fun consumeZoom(): Float = zoom.also { zoom = 1f }
@@ -158,7 +163,7 @@ private class LookInputNode(var element: CanvasElement, var density: Float) :
         val x = event.x / density
         val y = event.y / density
         when (event.type) {
-            PointerEventType.Press -> if (event.isInBounds && state.press(event.pointerId, x, y, settings)) event.consume()
+            PointerEventType.Press -> if (state.press(event.pointerId, x, y, settings)) event.consume()
             PointerEventType.Move -> if (state.holds(event.pointerId)) {
                 state.move(event.pointerId, x, y, settings)
                 event.consume()
