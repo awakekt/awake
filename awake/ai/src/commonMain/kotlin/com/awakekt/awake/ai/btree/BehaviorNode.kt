@@ -23,4 +23,10 @@ interface BehaviorNode {
      * Resets the execution state of this node and any active children.
      */
     fun reset() {}
+
+    /**
+     * The nodes this one ticks, in order. A tree is walked through it to find each node's state for
+     * a snapshot, so a node with children overrides it; a leaf keeps the empty default.
+     */
+    val children: List<BehaviorNode> get() = emptyList()
 }

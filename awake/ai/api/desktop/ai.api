@@ -1,43 +1,142 @@
 public final class com/awakekt/awake/ai/AiContext {
+	public synthetic fun <init> (Lcom/awakekt/awake/ecs/World;JFLcom/awakekt/awake/ai/btree/Blackboard;Lcom/awakekt/awake/ai/AiEventSink;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/ecs/World;JFLcom/awakekt/awake/ai/btree/Blackboard;Lcom/awakekt/awake/ai/AiEventSink;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/ecs/World;JFLcom/awakekt/awake/ai/btree/Blackboard;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getBlackboard ()Lcom/awakekt/awake/ai/btree/Blackboard;
 	public final fun getDelta ()F
 	public final fun getEntity-LaMO_uA ()J
+	public final fun getEvents ()Lcom/awakekt/awake/ai/AiEventSink;
 	public final fun getWorld ()Lcom/awakekt/awake/ecs/World;
 	public final fun setBlackboard (Lcom/awakekt/awake/ai/btree/Blackboard;)V
 	public final fun setDelta (F)V
 	public final fun setEntity-H_EwOg4 (J)V
+	public final fun setEvents (Lcom/awakekt/awake/ai/AiEventSink;)V
 	public final fun setWorld (Lcom/awakekt/awake/ecs/World;)V
 	public final fun update-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JFLcom/awakekt/awake/ai/btree/Blackboard;)V
+}
+
+public final class com/awakekt/awake/ai/AiEvent {
+	public synthetic fun <init> (JLjava/lang/String;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (JLjava/lang/String;Ljava/util/Map;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-LaMO_uA ()J
+	public final fun component2-CYoQfF8 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/util/Map;
+	public final fun copy-y6rRBaY (JLjava/lang/String;Ljava/util/Map;)Lcom/awakekt/awake/ai/AiEvent;
+	public static synthetic fun copy-y6rRBaY$default (Lcom/awakekt/awake/ai/AiEvent;JLjava/lang/String;Ljava/util/Map;ILjava/lang/Object;)Lcom/awakekt/awake/ai/AiEvent;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEntity-LaMO_uA ()J
+	public final fun getEvent-CYoQfF8 ()Ljava/lang/String;
+	public final fun getPayload ()Ljava/util/Map;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/ai/AiEventId {
+	public static final field Companion Lcom/awakekt/awake/ai/AiEventId$Companion;
+	public static final synthetic fun box-impl (Ljava/lang/String;)Lcom/awakekt/awake/ai/AiEventId;
+	public static fun constructor-impl (Ljava/lang/String;)Ljava/lang/String;
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (Ljava/lang/String;Ljava/lang/Object;)Z
+	public static final fun equals-impl0 (Ljava/lang/String;Ljava/lang/String;)Z
+	public final fun getValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public static fun hashCode-impl (Ljava/lang/String;)I
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (Ljava/lang/String;)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/ai/AiEventId$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/AiEventId$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize-og_YQbw (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/String;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize-0q1LzpA (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/String;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/AiEventId$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/AiEventQueue : com/awakekt/awake/ai/AiEventSink {
+	public fun <init> ()V
+	public final fun drain ()Ljava/util/List;
+	public fun emit-y6rRBaY (JLjava/lang/String;Ljava/util/Map;)V
+	public final fun getEvents ()Ljava/util/List;
+}
+
+public abstract interface class com/awakekt/awake/ai/AiEventSink {
+	public static final field Companion Lcom/awakekt/awake/ai/AiEventSink$Companion;
+	public abstract fun emit-y6rRBaY (JLjava/lang/String;Ljava/util/Map;)V
+}
+
+public final class com/awakekt/awake/ai/AiEventSink$Companion {
+	public final fun getNone ()Lcom/awakekt/awake/ai/AiEventSink;
 }
 
 public final class com/awakekt/awake/ai/AliasesKt {
 	public static final fun behaviorTree (Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/ai/btree/BehaviorNode;
 }
 
+public abstract interface class com/awakekt/awake/ai/Snapshottable {
+	public abstract fun captureState ()Ljava/lang/Object;
+	public abstract fun getStateSerializer ()Lkotlinx/serialization/KSerializer;
+	public abstract fun restoreState (Ljava/lang/Object;)V
+}
+
 public final class com/awakekt/awake/ai/btree/ActionNode : com/awakekt/awake/ai/btree/BehaviorNode {
 	public fun <init> (Lkotlin/jvm/functions/Function1;)V
 	public final fun getAction ()Lkotlin/jvm/functions/Function1;
+	public fun getChildren ()Ljava/util/List;
 	public fun reset ()V
 	public fun tick (Lcom/awakekt/awake/ai/AiContext;)Lcom/awakekt/awake/ai/btree/BehaviorStatus;
 }
 
 public abstract interface class com/awakekt/awake/ai/btree/BehaviorNode {
+	public fun getChildren ()Ljava/util/List;
 	public fun reset ()V
 	public abstract fun tick (Lcom/awakekt/awake/ai/AiContext;)Lcom/awakekt/awake/ai/btree/BehaviorStatus;
 }
 
 public final class com/awakekt/awake/ai/btree/BehaviorNode$DefaultImpls {
+	public static fun getChildren (Lcom/awakekt/awake/ai/btree/BehaviorNode;)Ljava/util/List;
 	public static fun reset (Lcom/awakekt/awake/ai/btree/BehaviorNode;)V
 }
 
 public final class com/awakekt/awake/ai/btree/BehaviorStatus : java/lang/Enum {
+	public static final field Companion Lcom/awakekt/awake/ai/btree/BehaviorStatus$Companion;
 	public static final field FAILURE Lcom/awakekt/awake/ai/btree/BehaviorStatus;
 	public static final field RUNNING Lcom/awakekt/awake/ai/btree/BehaviorStatus;
 	public static final field SUCCESS Lcom/awakekt/awake/ai/btree/BehaviorStatus;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/ai/btree/BehaviorStatus;
 	public static fun values ()[Lcom/awakekt/awake/ai/btree/BehaviorStatus;
+}
+
+public final class com/awakekt/awake/ai/btree/BehaviorStatus$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/btree/BehaviorTree {
+	public static final field Companion Lcom/awakekt/awake/ai/btree/BehaviorTree$Companion;
+	public static final field ROOT_PATH Ljava/lang/String;
+	public final fun getNodes ()Ljava/util/List;
+	public final fun getRoot ()Lcom/awakekt/awake/ai/btree/BehaviorNode;
+	public final fun getTickCount ()J
+	public final fun pathOf (Ljava/lang/String;)Ljava/lang/String;
+	public final fun reset ()V
+	public final fun restore (Lcom/awakekt/awake/ai/btree/BehaviorTreeSnapshot;)V
+	public final fun runningPaths ()Ljava/util/List;
+	public final fun snapshot ()Lcom/awakekt/awake/ai/btree/BehaviorTreeSnapshot;
+	public final fun statusOf (Ljava/lang/String;)Lcom/awakekt/awake/ai/btree/BehaviorStatus;
+	public final fun tick (Lcom/awakekt/awake/ai/AiContext;)Lcom/awakekt/awake/ai/btree/BehaviorStatus;
+}
+
+public final class com/awakekt/awake/ai/btree/BehaviorTree$Companion {
+	public final fun of (Lcom/awakekt/awake/ai/btree/BehaviorNode;)Lcom/awakekt/awake/ai/btree/BehaviorTree;
 }
 
 public final class com/awakekt/awake/ai/btree/BehaviorTreeBuilder {
@@ -61,10 +160,13 @@ public final class com/awakekt/awake/ai/btree/BehaviorTreeBuilder {
 public final class com/awakekt/awake/ai/btree/BehaviorTreeComponent {
 	public fun <init> (Lcom/awakekt/awake/ai/btree/BehaviorNode;Lcom/awakekt/awake/ai/btree/Blackboard;Lcom/awakekt/awake/ai/btree/BehaviorStatus;Z)V
 	public synthetic fun <init> (Lcom/awakekt/awake/ai/btree/BehaviorNode;Lcom/awakekt/awake/ai/btree/Blackboard;Lcom/awakekt/awake/ai/btree/BehaviorStatus;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/ai/btree/BehaviorTree;Lcom/awakekt/awake/ai/btree/Blackboard;Lcom/awakekt/awake/ai/btree/BehaviorStatus;Z)V
+	public synthetic fun <init> (Lcom/awakekt/awake/ai/btree/BehaviorTree;Lcom/awakekt/awake/ai/btree/Blackboard;Lcom/awakekt/awake/ai/btree/BehaviorStatus;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getActiveStatus ()Lcom/awakekt/awake/ai/btree/BehaviorStatus;
 	public final fun getBlackboard ()Lcom/awakekt/awake/ai/btree/Blackboard;
 	public final fun getEnabled ()Z
 	public final fun getRoot ()Lcom/awakekt/awake/ai/btree/BehaviorNode;
+	public final fun getTree ()Lcom/awakekt/awake/ai/btree/BehaviorTree;
 	public final fun setActiveStatus (Lcom/awakekt/awake/ai/btree/BehaviorStatus;)V
 	public final fun setEnabled (Z)V
 }
@@ -76,8 +178,60 @@ public final class com/awakekt/awake/ai/btree/BehaviorTreeDslKt {
 public abstract interface annotation class com/awakekt/awake/ai/btree/BehaviorTreeDslMarker : java/lang/annotation/Annotation {
 }
 
+public final class com/awakekt/awake/ai/btree/BehaviorTreeNode {
+	public synthetic fun <init> (Ljava/lang/String;Lcom/awakekt/awake/ai/btree/BehaviorNode;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Lcom/awakekt/awake/ai/btree/BehaviorNode;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lcom/awakekt/awake/ai/btree/BehaviorNode;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4-6ZDJH6s ()Ljava/lang/String;
+	public final fun copy-2hY71K8 (Ljava/lang/String;Lcom/awakekt/awake/ai/btree/BehaviorNode;Ljava/lang/String;Ljava/lang/String;)Lcom/awakekt/awake/ai/btree/BehaviorTreeNode;
+	public static synthetic fun copy-2hY71K8$default (Lcom/awakekt/awake/ai/btree/BehaviorTreeNode;Ljava/lang/String;Lcom/awakekt/awake/ai/btree/BehaviorNode;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/ai/btree/BehaviorTreeNode;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getId ()Ljava/lang/String;
+	public final fun getKind-6ZDJH6s ()Ljava/lang/String;
+	public final fun getNode ()Lcom/awakekt/awake/ai/btree/BehaviorNode;
+	public final fun getPath ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/ai/btree/BehaviorTreeSnapshot {
+	public static final field Companion Lcom/awakekt/awake/ai/btree/BehaviorTreeSnapshot$Companion;
+	public static final field FORMAT_VERSION I
+	public fun <init> ()V
+	public fun <init> (ILjava/util/Map;)V
+	public synthetic fun <init> (ILjava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()Ljava/util/Map;
+	public final fun copy (ILjava/util/Map;)Lcom/awakekt/awake/ai/btree/BehaviorTreeSnapshot;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ai/btree/BehaviorTreeSnapshot;ILjava/util/Map;ILjava/lang/Object;)Lcom/awakekt/awake/ai/btree/BehaviorTreeSnapshot;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFormatVersion ()I
+	public final fun getNodes ()Ljava/util/Map;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/ai/btree/BehaviorTreeSnapshot$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/btree/BehaviorTreeSnapshot$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ai/btree/BehaviorTreeSnapshot;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ai/btree/BehaviorTreeSnapshot;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/btree/BehaviorTreeSnapshot$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
 public final class com/awakekt/awake/ai/btree/BehaviorTreeSystem : com/awakekt/awake/ecs/System {
 	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/ai/AiEventSink;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/ai/AiEventSink;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 
@@ -86,21 +240,312 @@ public final class com/awakekt/awake/ai/btree/Blackboard {
 	public final fun clear ()V
 	public final fun contains (Ljava/lang/String;)Z
 	public final fun get (Ljava/lang/String;)Ljava/lang/Object;
+	public final fun getKeys ()Ljava/util/Set;
 	public final fun remove (Ljava/lang/String;)Ljava/lang/Object;
+	public final fun restore (Lcom/awakekt/awake/ai/btree/BlackboardSnapshot;)V
 	public final fun set (Ljava/lang/String;Ljava/lang/Object;)V
+	public final fun setValue (Ljava/lang/String;Lcom/awakekt/awake/ai/btree/BlackboardValue;)V
+	public final fun setValues (Ljava/util/Map;)V
+	public final fun snapshot ()Lcom/awakekt/awake/ai/btree/BlackboardSnapshot;
+	public final fun value (Ljava/lang/String;)Lcom/awakekt/awake/ai/btree/BlackboardValue;
+}
+
+public final class com/awakekt/awake/ai/btree/BlackboardAddNode : com/awakekt/awake/ai/btree/BehaviorNode {
+	public fun <init> (Ljava/lang/String;Lcom/awakekt/awake/ai/btree/BlackboardValue;)V
+	public final fun getAmount ()Lcom/awakekt/awake/ai/btree/BlackboardValue;
+	public fun getChildren ()Ljava/util/List;
+	public final fun getKey ()Ljava/lang/String;
+	public fun reset ()V
+	public fun tick (Lcom/awakekt/awake/ai/AiContext;)Lcom/awakekt/awake/ai/btree/BehaviorStatus;
+}
+
+public final class com/awakekt/awake/ai/btree/BlackboardCompareNode : com/awakekt/awake/ai/btree/BehaviorNode {
+	public fun <init> (Ljava/lang/String;Lcom/awakekt/awake/ai/btree/CompareOp;Lcom/awakekt/awake/ai/btree/BlackboardValue;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Lcom/awakekt/awake/ai/btree/CompareOp;Lcom/awakekt/awake/ai/btree/BlackboardValue;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun getChildren ()Ljava/util/List;
+	public final fun getKey ()Ljava/lang/String;
+	public final fun getOp ()Lcom/awakekt/awake/ai/btree/CompareOp;
+	public final fun getOtherKey ()Ljava/lang/String;
+	public final fun getValue ()Lcom/awakekt/awake/ai/btree/BlackboardValue;
+	public fun reset ()V
+	public fun tick (Lcom/awakekt/awake/ai/AiContext;)Lcom/awakekt/awake/ai/btree/BehaviorStatus;
+}
+
+public final class com/awakekt/awake/ai/btree/BlackboardCopyNode : com/awakekt/awake/ai/btree/BehaviorNode {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public fun getChildren ()Ljava/util/List;
+	public final fun getFrom ()Ljava/lang/String;
+	public final fun getTo ()Ljava/lang/String;
+	public fun reset ()V
+	public fun tick (Lcom/awakekt/awake/ai/AiContext;)Lcom/awakekt/awake/ai/btree/BehaviorStatus;
+}
+
+public final class com/awakekt/awake/ai/btree/BlackboardHasNode : com/awakekt/awake/ai/btree/BehaviorNode {
+	public fun <init> (Ljava/lang/String;)V
+	public fun getChildren ()Ljava/util/List;
+	public final fun getKey ()Ljava/lang/String;
+	public fun reset ()V
+	public fun tick (Lcom/awakekt/awake/ai/AiContext;)Lcom/awakekt/awake/ai/btree/BehaviorStatus;
+}
+
+public final class com/awakekt/awake/ai/btree/BlackboardRemoveNode : com/awakekt/awake/ai/btree/BehaviorNode {
+	public fun <init> (Ljava/lang/String;)V
+	public fun getChildren ()Ljava/util/List;
+	public final fun getKey ()Ljava/lang/String;
+	public fun reset ()V
+	public fun tick (Lcom/awakekt/awake/ai/AiContext;)Lcom/awakekt/awake/ai/btree/BehaviorStatus;
+}
+
+public final class com/awakekt/awake/ai/btree/BlackboardSetNode : com/awakekt/awake/ai/btree/BehaviorNode {
+	public fun <init> (Ljava/lang/String;Lcom/awakekt/awake/ai/btree/BlackboardValue;)V
+	public fun getChildren ()Ljava/util/List;
+	public final fun getKey ()Ljava/lang/String;
+	public final fun getValue ()Lcom/awakekt/awake/ai/btree/BlackboardValue;
+	public fun reset ()V
+	public fun tick (Lcom/awakekt/awake/ai/AiContext;)Lcom/awakekt/awake/ai/btree/BehaviorStatus;
+}
+
+public final class com/awakekt/awake/ai/btree/BlackboardSnapshot {
+	public static final field Companion Lcom/awakekt/awake/ai/btree/BlackboardSnapshot$Companion;
+	public fun <init> ()V
+	public fun <init> (Ljava/util/Map;)V
+	public synthetic fun <init> (Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/Map;
+	public final fun copy (Ljava/util/Map;)Lcom/awakekt/awake/ai/btree/BlackboardSnapshot;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ai/btree/BlackboardSnapshot;Ljava/util/Map;ILjava/lang/Object;)Lcom/awakekt/awake/ai/btree/BlackboardSnapshot;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getValues ()Ljava/util/Map;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/ai/btree/BlackboardSnapshot$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/btree/BlackboardSnapshot$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ai/btree/BlackboardSnapshot;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ai/btree/BlackboardSnapshot;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/btree/BlackboardSnapshot$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract interface class com/awakekt/awake/ai/btree/BlackboardValue {
+	public static final field Companion Lcom/awakekt/awake/ai/btree/BlackboardValue$Companion;
+	public static final field SUPPORTED_TYPES Ljava/lang/String;
+	public abstract fun toRaw ()Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/ai/btree/BlackboardValue$BoolValue : com/awakekt/awake/ai/btree/BlackboardValue {
+	public fun <init> (Z)V
+	public final fun component1 ()Z
+	public final fun copy (Z)Lcom/awakekt/awake/ai/btree/BlackboardValue$BoolValue;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ai/btree/BlackboardValue$BoolValue;ZILjava/lang/Object;)Lcom/awakekt/awake/ai/btree/BlackboardValue$BoolValue;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getValue ()Z
+	public fun hashCode ()I
+	public fun toRaw ()Ljava/lang/Object;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/ai/btree/BlackboardValue$Companion {
+	public static final field SUPPORTED_TYPES Ljava/lang/String;
+	public final fun ofOrNull (Ljava/lang/Object;)Lcom/awakekt/awake/ai/btree/BlackboardValue;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/btree/BlackboardValue$EntityValue : com/awakekt/awake/ai/btree/BlackboardValue {
+	public synthetic fun <init> (JLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-LaMO_uA ()J
+	public final fun copy-H_EwOg4 (J)Lcom/awakekt/awake/ai/btree/BlackboardValue$EntityValue;
+	public static synthetic fun copy-H_EwOg4$default (Lcom/awakekt/awake/ai/btree/BlackboardValue$EntityValue;JILjava/lang/Object;)Lcom/awakekt/awake/ai/btree/BlackboardValue$EntityValue;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEntity-LaMO_uA ()J
+	public fun hashCode ()I
+	public fun toRaw ()Ljava/lang/Object;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/ai/btree/BlackboardValue$FloatValue : com/awakekt/awake/ai/btree/BlackboardValue {
+	public fun <init> (F)V
+	public final fun component1 ()F
+	public final fun copy (F)Lcom/awakekt/awake/ai/btree/BlackboardValue$FloatValue;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ai/btree/BlackboardValue$FloatValue;FILjava/lang/Object;)Lcom/awakekt/awake/ai/btree/BlackboardValue$FloatValue;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getValue ()F
+	public fun hashCode ()I
+	public fun toRaw ()Ljava/lang/Object;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/ai/btree/BlackboardValue$IntValue : com/awakekt/awake/ai/btree/BlackboardValue {
+	public fun <init> (I)V
+	public final fun component1 ()I
+	public final fun copy (I)Lcom/awakekt/awake/ai/btree/BlackboardValue$IntValue;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ai/btree/BlackboardValue$IntValue;IILjava/lang/Object;)Lcom/awakekt/awake/ai/btree/BlackboardValue$IntValue;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getValue ()I
+	public fun hashCode ()I
+	public fun toRaw ()Ljava/lang/Object;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/ai/btree/BlackboardValue$TextValue : com/awakekt/awake/ai/btree/BlackboardValue {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lcom/awakekt/awake/ai/btree/BlackboardValue$TextValue;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ai/btree/BlackboardValue$TextValue;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/ai/btree/BlackboardValue$TextValue;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toRaw ()Ljava/lang/Object;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/ai/btree/BlackboardValue$VectorValue : com/awakekt/awake/ai/btree/BlackboardValue {
+	public fun <init> (FFF)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun copy (FFF)Lcom/awakekt/awake/ai/btree/BlackboardValue$VectorValue;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ai/btree/BlackboardValue$VectorValue;FFFILjava/lang/Object;)Lcom/awakekt/awake/ai/btree/BlackboardValue$VectorValue;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getX ()F
+	public final fun getY ()F
+	public final fun getZ ()F
+	public fun hashCode ()I
+	public fun toRaw ()Ljava/lang/Object;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/ai/btree/BlackboardValueKt {
+	public static final fun getNumberOrNull (Lcom/awakekt/awake/ai/btree/BlackboardValue;)Ljava/lang/Float;
+	public static final fun getTypeName (Lcom/awakekt/awake/ai/btree/BlackboardValue;)Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/ai/btree/ChanceNode : com/awakekt/awake/ai/Snapshottable, com/awakekt/awake/ai/btree/BehaviorNode {
+	public static final field GOLDEN_GAMMA J
+	public static final field MIX_1 J
+	public static final field MIX_2 J
+	public static final field UNIT_STEPS D
+	public fun <init> (FJ)V
+	public fun captureState ()Lcom/awakekt/awake/ai/btree/RandomState;
+	public synthetic fun captureState ()Ljava/lang/Object;
+	public fun getChildren ()Ljava/util/List;
+	public final fun getProbability ()F
+	public fun getStateSerializer ()Lkotlinx/serialization/KSerializer;
+	public fun reset ()V
+	public fun restoreState (Lcom/awakekt/awake/ai/btree/RandomState;)V
+	public synthetic fun restoreState (Ljava/lang/Object;)V
+	public fun tick (Lcom/awakekt/awake/ai/AiContext;)Lcom/awakekt/awake/ai/btree/BehaviorStatus;
+}
+
+public final class com/awakekt/awake/ai/btree/ChildIndexState {
+	public static final field Companion Lcom/awakekt/awake/ai/btree/ChildIndexState$Companion;
+	public fun <init> (I)V
+	public final fun component1 ()I
+	public final fun copy (I)Lcom/awakekt/awake/ai/btree/ChildIndexState;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ai/btree/ChildIndexState;IILjava/lang/Object;)Lcom/awakekt/awake/ai/btree/ChildIndexState;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getIndex ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/ai/btree/ChildIndexState$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/btree/ChildIndexState$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ai/btree/ChildIndexState;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ai/btree/ChildIndexState;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/btree/ChildIndexState$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/btree/CompareOp : java/lang/Enum {
+	public static final field Companion Lcom/awakekt/awake/ai/btree/CompareOp$Companion;
+	public static final field Equal Lcom/awakekt/awake/ai/btree/CompareOp;
+	public static final field Greater Lcom/awakekt/awake/ai/btree/CompareOp;
+	public static final field GreaterOrEqual Lcom/awakekt/awake/ai/btree/CompareOp;
+	public static final field Less Lcom/awakekt/awake/ai/btree/CompareOp;
+	public static final field LessOrEqual Lcom/awakekt/awake/ai/btree/CompareOp;
+	public static final field NotEqual Lcom/awakekt/awake/ai/btree/CompareOp;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getOrdering ()Z
+	public final fun test (Lcom/awakekt/awake/ai/btree/BlackboardValue;Lcom/awakekt/awake/ai/btree/BlackboardValue;)Z
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/ai/btree/CompareOp;
+	public static fun values ()[Lcom/awakekt/awake/ai/btree/CompareOp;
+}
+
+public final class com/awakekt/awake/ai/btree/CompareOp$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
 public final class com/awakekt/awake/ai/btree/ConditionNode : com/awakekt/awake/ai/btree/BehaviorNode {
 	public fun <init> (Lkotlin/jvm/functions/Function1;)V
+	public fun getChildren ()Ljava/util/List;
 	public final fun getPredicate ()Lkotlin/jvm/functions/Function1;
 	public fun reset ()V
 	public fun tick (Lcom/awakekt/awake/ai/AiContext;)Lcom/awakekt/awake/ai/btree/BehaviorStatus;
 }
 
-public final class com/awakekt/awake/ai/btree/CooldownNode : com/awakekt/awake/ai/btree/BehaviorNode {
+public final class com/awakekt/awake/ai/btree/CooldownNode : com/awakekt/awake/ai/Snapshottable, com/awakekt/awake/ai/btree/BehaviorNode {
 	public fun <init> (Lcom/awakekt/awake/ai/btree/BehaviorNode;F)V
+	public fun captureState ()Lcom/awakekt/awake/ai/btree/TimerState;
+	public synthetic fun captureState ()Ljava/lang/Object;
 	public final fun getChild ()Lcom/awakekt/awake/ai/btree/BehaviorNode;
+	public fun getChildren ()Ljava/util/List;
 	public final fun getCooldownSeconds ()F
+	public fun getStateSerializer ()Lkotlinx/serialization/KSerializer;
+	public final fun isReady ()Z
+	public fun reset ()V
+	public fun restoreState (Lcom/awakekt/awake/ai/btree/TimerState;)V
+	public synthetic fun restoreState (Ljava/lang/Object;)V
+	public fun tick (Lcom/awakekt/awake/ai/AiContext;)Lcom/awakekt/awake/ai/btree/BehaviorStatus;
+}
+
+public final class com/awakekt/awake/ai/btree/CountState {
+	public static final field Companion Lcom/awakekt/awake/ai/btree/CountState$Companion;
+	public fun <init> (I)V
+	public final fun component1 ()I
+	public final fun copy (I)Lcom/awakekt/awake/ai/btree/CountState;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ai/btree/CountState;IILjava/lang/Object;)Lcom/awakekt/awake/ai/btree/CountState;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCount ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/ai/btree/CountState$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/btree/CountState$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ai/btree/CountState;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ai/btree/CountState;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/btree/CountState$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/btree/EmitEventNode : com/awakekt/awake/ai/btree/BehaviorNode {
+	public synthetic fun <init> (Ljava/lang/String;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/util/Map;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun getChildren ()Ljava/util/List;
+	public final fun getEvent-CYoQfF8 ()Ljava/lang/String;
+	public final fun getPayload ()Ljava/util/Map;
 	public fun reset ()V
 	public fun tick (Lcom/awakekt/awake/ai/AiContext;)Lcom/awakekt/awake/ai/btree/BehaviorStatus;
 }
@@ -108,6 +553,7 @@ public final class com/awakekt/awake/ai/btree/CooldownNode : com/awakekt/awake/a
 public final class com/awakekt/awake/ai/btree/InverterNode : com/awakekt/awake/ai/btree/BehaviorNode {
 	public fun <init> (Lcom/awakekt/awake/ai/btree/BehaviorNode;)V
 	public final fun getChild ()Lcom/awakekt/awake/ai/btree/BehaviorNode;
+	public fun getChildren ()Ljava/util/List;
 	public fun reset ()V
 	public fun tick (Lcom/awakekt/awake/ai/AiContext;)Lcom/awakekt/awake/ai/btree/BehaviorStatus;
 }
@@ -115,13 +561,14 @@ public final class com/awakekt/awake/ai/btree/InverterNode : com/awakekt/awake/a
 public final class com/awakekt/awake/ai/btree/ParallelNode : com/awakekt/awake/ai/btree/BehaviorNode {
 	public fun <init> (Ljava/util/List;Lcom/awakekt/awake/ai/btree/ParallelPolicy;)V
 	public synthetic fun <init> (Ljava/util/List;Lcom/awakekt/awake/ai/btree/ParallelPolicy;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun getChildren ()Ljava/util/List;
+	public fun getChildren ()Ljava/util/List;
 	public final fun getPolicy ()Lcom/awakekt/awake/ai/btree/ParallelPolicy;
 	public fun reset ()V
 	public fun tick (Lcom/awakekt/awake/ai/AiContext;)Lcom/awakekt/awake/ai/btree/BehaviorStatus;
 }
 
 public final class com/awakekt/awake/ai/btree/ParallelPolicy : java/lang/Enum {
+	public static final field Companion Lcom/awakekt/awake/ai/btree/ParallelPolicy$Companion;
 	public static final field REQUIRE_ALL Lcom/awakekt/awake/ai/btree/ParallelPolicy;
 	public static final field REQUIRE_ONE Lcom/awakekt/awake/ai/btree/ParallelPolicy;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
@@ -129,35 +576,1005 @@ public final class com/awakekt/awake/ai/btree/ParallelPolicy : java/lang/Enum {
 	public static fun values ()[Lcom/awakekt/awake/ai/btree/ParallelPolicy;
 }
 
-public final class com/awakekt/awake/ai/btree/RepeaterNode : com/awakekt/awake/ai/btree/BehaviorNode {
+public final class com/awakekt/awake/ai/btree/ParallelPolicy$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/btree/RandomState {
+	public static final field Companion Lcom/awakekt/awake/ai/btree/RandomState$Companion;
+	public fun <init> (J)V
+	public final fun component1 ()J
+	public final fun copy (J)Lcom/awakekt/awake/ai/btree/RandomState;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ai/btree/RandomState;JILjava/lang/Object;)Lcom/awakekt/awake/ai/btree/RandomState;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getState ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/ai/btree/RandomState$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/btree/RandomState$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ai/btree/RandomState;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ai/btree/RandomState;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/btree/RandomState$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/btree/RepeaterNode : com/awakekt/awake/ai/Snapshottable, com/awakekt/awake/ai/btree/BehaviorNode {
 	public fun <init> (Lcom/awakekt/awake/ai/btree/BehaviorNode;I)V
 	public synthetic fun <init> (Lcom/awakekt/awake/ai/btree/BehaviorNode;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun captureState ()Lcom/awakekt/awake/ai/btree/CountState;
+	public synthetic fun captureState ()Ljava/lang/Object;
 	public final fun getChild ()Lcom/awakekt/awake/ai/btree/BehaviorNode;
+	public fun getChildren ()Ljava/util/List;
 	public final fun getCount ()I
+	public fun getStateSerializer ()Lkotlinx/serialization/KSerializer;
 	public fun reset ()V
+	public fun restoreState (Lcom/awakekt/awake/ai/btree/CountState;)V
+	public synthetic fun restoreState (Ljava/lang/Object;)V
 	public fun tick (Lcom/awakekt/awake/ai/AiContext;)Lcom/awakekt/awake/ai/btree/BehaviorStatus;
 }
 
-public final class com/awakekt/awake/ai/btree/SelectorNode : com/awakekt/awake/ai/btree/BehaviorNode {
+public final class com/awakekt/awake/ai/btree/SelectorNode : com/awakekt/awake/ai/Snapshottable, com/awakekt/awake/ai/btree/BehaviorNode {
 	public fun <init> (Ljava/util/List;)V
-	public final fun getChildren ()Ljava/util/List;
+	public fun captureState ()Lcom/awakekt/awake/ai/btree/ChildIndexState;
+	public synthetic fun captureState ()Ljava/lang/Object;
+	public fun getChildren ()Ljava/util/List;
+	public fun getStateSerializer ()Lkotlinx/serialization/KSerializer;
 	public fun reset ()V
+	public fun restoreState (Lcom/awakekt/awake/ai/btree/ChildIndexState;)V
+	public synthetic fun restoreState (Ljava/lang/Object;)V
 	public fun tick (Lcom/awakekt/awake/ai/AiContext;)Lcom/awakekt/awake/ai/btree/BehaviorStatus;
 }
 
-public final class com/awakekt/awake/ai/btree/SequenceNode : com/awakekt/awake/ai/btree/BehaviorNode {
+public final class com/awakekt/awake/ai/btree/SequenceNode : com/awakekt/awake/ai/Snapshottable, com/awakekt/awake/ai/btree/BehaviorNode {
 	public fun <init> (Ljava/util/List;)V
-	public final fun getChildren ()Ljava/util/List;
+	public fun captureState ()Lcom/awakekt/awake/ai/btree/ChildIndexState;
+	public synthetic fun captureState ()Ljava/lang/Object;
+	public fun getChildren ()Ljava/util/List;
+	public fun getStateSerializer ()Lkotlinx/serialization/KSerializer;
+	public fun reset ()V
+	public fun restoreState (Lcom/awakekt/awake/ai/btree/ChildIndexState;)V
+	public synthetic fun restoreState (Ljava/lang/Object;)V
+	public fun tick (Lcom/awakekt/awake/ai/AiContext;)Lcom/awakekt/awake/ai/btree/BehaviorStatus;
+}
+
+public final class com/awakekt/awake/ai/btree/StatusNode : com/awakekt/awake/ai/btree/BehaviorNode {
+	public fun <init> (Lcom/awakekt/awake/ai/btree/BehaviorStatus;)V
+	public fun getChildren ()Ljava/util/List;
+	public final fun getStatus ()Lcom/awakekt/awake/ai/btree/BehaviorStatus;
 	public fun reset ()V
 	public fun tick (Lcom/awakekt/awake/ai/AiContext;)Lcom/awakekt/awake/ai/btree/BehaviorStatus;
 }
 
-public final class com/awakekt/awake/ai/btree/TimeoutNode : com/awakekt/awake/ai/btree/BehaviorNode {
-	public fun <init> (Lcom/awakekt/awake/ai/btree/BehaviorNode;F)V
+public final class com/awakekt/awake/ai/btree/SucceederNode : com/awakekt/awake/ai/btree/BehaviorNode {
+	public fun <init> (Lcom/awakekt/awake/ai/btree/BehaviorNode;)V
 	public final fun getChild ()Lcom/awakekt/awake/ai/btree/BehaviorNode;
+	public fun getChildren ()Ljava/util/List;
+	public fun reset ()V
+	public fun tick (Lcom/awakekt/awake/ai/AiContext;)Lcom/awakekt/awake/ai/btree/BehaviorStatus;
+}
+
+public final class com/awakekt/awake/ai/btree/TimeoutNode : com/awakekt/awake/ai/Snapshottable, com/awakekt/awake/ai/btree/BehaviorNode {
+	public fun <init> (Lcom/awakekt/awake/ai/btree/BehaviorNode;F)V
+	public fun captureState ()Lcom/awakekt/awake/ai/btree/TimerState;
+	public synthetic fun captureState ()Ljava/lang/Object;
+	public final fun getChild ()Lcom/awakekt/awake/ai/btree/BehaviorNode;
+	public fun getChildren ()Ljava/util/List;
+	public fun getStateSerializer ()Lkotlinx/serialization/KSerializer;
 	public final fun getTimeoutSeconds ()F
 	public fun reset ()V
+	public fun restoreState (Lcom/awakekt/awake/ai/btree/TimerState;)V
+	public synthetic fun restoreState (Ljava/lang/Object;)V
 	public fun tick (Lcom/awakekt/awake/ai/AiContext;)Lcom/awakekt/awake/ai/btree/BehaviorStatus;
+}
+
+public final class com/awakekt/awake/ai/btree/TimerState {
+	public static final field Companion Lcom/awakekt/awake/ai/btree/TimerState$Companion;
+	public fun <init> (F)V
+	public final fun component1 ()F
+	public final fun copy (F)Lcom/awakekt/awake/ai/btree/TimerState;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ai/btree/TimerState;FILjava/lang/Object;)Lcom/awakekt/awake/ai/btree/TimerState;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getSeconds ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/ai/btree/TimerState$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/btree/TimerState$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ai/btree/TimerState;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ai/btree/TimerState;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/btree/TimerState$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/btree/WaitNode : com/awakekt/awake/ai/Snapshottable, com/awakekt/awake/ai/btree/BehaviorNode {
+	public fun <init> (F)V
+	public fun captureState ()Lcom/awakekt/awake/ai/btree/TimerState;
+	public synthetic fun captureState ()Ljava/lang/Object;
+	public fun getChildren ()Ljava/util/List;
+	public final fun getSeconds ()F
+	public fun getStateSerializer ()Lkotlinx/serialization/KSerializer;
+	public fun reset ()V
+	public fun restoreState (Lcom/awakekt/awake/ai/btree/TimerState;)V
+	public synthetic fun restoreState (Ljava/lang/Object;)V
+	public fun tick (Lcom/awakekt/awake/ai/AiContext;)Lcom/awakekt/awake/ai/btree/BehaviorStatus;
+}
+
+public final class com/awakekt/awake/ai/definition/AddParams {
+	public static final field Companion Lcom/awakekt/awake/ai/definition/AddParams$Companion;
+	public fun <init> (Ljava/lang/String;Lcom/awakekt/awake/ai/btree/BlackboardValue;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lcom/awakekt/awake/ai/btree/BlackboardValue;
+	public final fun copy (Ljava/lang/String;Lcom/awakekt/awake/ai/btree/BlackboardValue;)Lcom/awakekt/awake/ai/definition/AddParams;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ai/definition/AddParams;Ljava/lang/String;Lcom/awakekt/awake/ai/btree/BlackboardValue;ILjava/lang/Object;)Lcom/awakekt/awake/ai/definition/AddParams;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAmount ()Lcom/awakekt/awake/ai/btree/BlackboardValue;
+	public final fun getKey ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/ai/definition/AddParams$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/definition/AddParams$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ai/definition/AddParams;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ai/definition/AddParams;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/definition/AddParams$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/definition/AiDefinitionException : java/lang/IllegalArgumentException {
+	public fun <init> (Ljava/util/List;)V
+	public final fun getProblems ()Ljava/util/List;
+}
+
+public final class com/awakekt/awake/ai/definition/AiDefinitionJson {
+	public static final field Companion Lcom/awakekt/awake/ai/definition/AiDefinitionJson$Companion;
+	public fun <init> ()V
+	public fun <init> (Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun decodeStateMachine (Ljava/lang/String;)Lcom/awakekt/awake/ai/definition/StateMachineDefinition;
+	public final fun decodeTree (Ljava/lang/String;)Lcom/awakekt/awake/ai/definition/BehaviorTreeDefinition;
+	public final fun encode (Lcom/awakekt/awake/ai/definition/BehaviorTreeDefinition;)Ljava/lang/String;
+	public final fun encode (Lcom/awakekt/awake/ai/definition/StateMachineDefinition;)Ljava/lang/String;
+	public final fun getMigrations ()Ljava/util/List;
+}
+
+public final class com/awakekt/awake/ai/definition/AiDefinitionJson$Companion {
+	public final fun getDefault ()Lcom/awakekt/awake/ai/definition/AiDefinitionJson;
+}
+
+public final class com/awakekt/awake/ai/definition/AiDefinitionProblem {
+	public fun <init> (Lcom/awakekt/awake/ai/definition/AiProblemCode;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/ai/definition/AiProblemCode;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/ai/definition/AiProblemCode;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun copy (Lcom/awakekt/awake/ai/definition/AiProblemCode;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lcom/awakekt/awake/ai/definition/AiDefinitionProblem;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ai/definition/AiDefinitionProblem;Lcom/awakekt/awake/ai/definition/AiProblemCode;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/ai/definition/AiDefinitionProblem;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCode ()Lcom/awakekt/awake/ai/definition/AiProblemCode;
+	public final fun getLocation ()Ljava/lang/String;
+	public final fun getMessage ()Ljava/lang/String;
+	public final fun getNodeId ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/ai/definition/AiDocumentType : java/lang/Enum {
+	public static final field BehaviorTree Lcom/awakekt/awake/ai/definition/AiDocumentType;
+	public static final field StateMachine Lcom/awakekt/awake/ai/definition/AiDocumentType;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/ai/definition/AiDocumentType;
+	public static fun values ()[Lcom/awakekt/awake/ai/definition/AiDocumentType;
+}
+
+public final class com/awakekt/awake/ai/definition/AiFormatMigration {
+	public fun <init> (Lcom/awakekt/awake/ai/definition/AiDocumentType;ILkotlin/jvm/functions/Function1;)V
+	public final fun getDocument ()Lcom/awakekt/awake/ai/definition/AiDocumentType;
+	public final fun getFromVersion ()I
+	public final fun getMigrate ()Lkotlin/jvm/functions/Function1;
+}
+
+public final class com/awakekt/awake/ai/definition/AiProblemCode : java/lang/Enum {
+	public static final field DUPLICATE_NODE_ID Lcom/awakekt/awake/ai/definition/AiProblemCode;
+	public static final field DUPLICATE_STATE Lcom/awakekt/awake/ai/definition/AiProblemCode;
+	public static final field INVALID_PARAMS Lcom/awakekt/awake/ai/definition/AiProblemCode;
+	public static final field INVALID_TRANSITION Lcom/awakekt/awake/ai/definition/AiProblemCode;
+	public static final field MALFORMED Lcom/awakekt/awake/ai/definition/AiProblemCode;
+	public static final field UNKNOWN_KIND Lcom/awakekt/awake/ai/definition/AiProblemCode;
+	public static final field UNKNOWN_STATE Lcom/awakekt/awake/ai/definition/AiProblemCode;
+	public static final field UNSUPPORTED_FORMAT Lcom/awakekt/awake/ai/definition/AiProblemCode;
+	public static final field WRONG_CHILD_COUNT Lcom/awakekt/awake/ai/definition/AiProblemCode;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/ai/definition/AiProblemCode;
+	public static fun values ()[Lcom/awakekt/awake/ai/definition/AiProblemCode;
+}
+
+public final class com/awakekt/awake/ai/definition/AiRegistry {
+	public fun <init> ()V
+	public fun <init> (Z)V
+	public synthetic fun <init> (ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun compileStateMachine (Lcom/awakekt/awake/ai/definition/StateMachineDefinition;)Lcom/awakekt/awake/ai/definition/CompiledStateMachine;
+	public final fun compileTree (Lcom/awakekt/awake/ai/definition/BehaviorTreeDefinition;)Lcom/awakekt/awake/ai/definition/CompiledBehaviorTree;
+	public final fun getNodeKinds ()Ljava/util/Collection;
+	public final fun getStateKinds ()Ljava/util/Collection;
+	public final fun nodeKind-YCxkTnw (Ljava/lang/String;)Lcom/awakekt/awake/ai/definition/NodeKind;
+	public final fun parameterSchema-YCxkTnw (Ljava/lang/String;)Lcom/awakekt/awake/core/schema/PropertySchema;
+	public final fun parameterSchema-rjnykiw (Ljava/lang/String;)Lcom/awakekt/awake/core/schema/PropertySchema;
+	public final fun register (Lcom/awakekt/awake/ai/definition/NodeKind;)Lcom/awakekt/awake/ai/definition/AiRegistry;
+	public final fun register (Lcom/awakekt/awake/ai/definition/StateKind;)Lcom/awakekt/awake/ai/definition/AiRegistry;
+	public final fun stateKind-rjnykiw (Ljava/lang/String;)Lcom/awakekt/awake/ai/definition/StateKind;
+}
+
+public final class com/awakekt/awake/ai/definition/AiRegistryShorthandsKt {
+	public static final fun action (Lcom/awakekt/awake/ai/definition/AiRegistry;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/ai/definition/AiRegistry;
+	public static final fun action (Lcom/awakekt/awake/ai/definition/AiRegistry;Ljava/lang/String;Lkotlinx/serialization/KSerializer;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function2;)Lcom/awakekt/awake/ai/definition/AiRegistry;
+	public static synthetic fun action$default (Lcom/awakekt/awake/ai/definition/AiRegistry;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/awakekt/awake/ai/definition/AiRegistry;
+	public static synthetic fun action$default (Lcom/awakekt/awake/ai/definition/AiRegistry;Ljava/lang/String;Lkotlinx/serialization/KSerializer;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lcom/awakekt/awake/ai/definition/AiRegistry;
+	public static final fun condition (Lcom/awakekt/awake/ai/definition/AiRegistry;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/ai/definition/AiRegistry;
+	public static final fun condition (Lcom/awakekt/awake/ai/definition/AiRegistry;Ljava/lang/String;Lkotlinx/serialization/KSerializer;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function2;)Lcom/awakekt/awake/ai/definition/AiRegistry;
+	public static synthetic fun condition$default (Lcom/awakekt/awake/ai/definition/AiRegistry;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/awakekt/awake/ai/definition/AiRegistry;
+	public static synthetic fun condition$default (Lcom/awakekt/awake/ai/definition/AiRegistry;Ljava/lang/String;Lkotlinx/serialization/KSerializer;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lcom/awakekt/awake/ai/definition/AiRegistry;
+	public static final fun state (Lcom/awakekt/awake/ai/definition/AiRegistry;Ljava/lang/String;Lkotlinx/serialization/KSerializer;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function2;)Lcom/awakekt/awake/ai/definition/AiRegistry;
+	public static synthetic fun state$default (Lcom/awakekt/awake/ai/definition/AiRegistry;Ljava/lang/String;Lkotlinx/serialization/KSerializer;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lcom/awakekt/awake/ai/definition/AiRegistry;
+	public static final fun validate (Lcom/awakekt/awake/ai/definition/AiRegistry;Lcom/awakekt/awake/ai/definition/BehaviorTreeDefinition;)Ljava/util/List;
+	public static final fun validate (Lcom/awakekt/awake/ai/definition/AiRegistry;Lcom/awakekt/awake/ai/definition/StateMachineDefinition;)Ljava/util/List;
+}
+
+public final class com/awakekt/awake/ai/definition/BehaviorTreeDefinition {
+	public static final field Companion Lcom/awakekt/awake/ai/definition/BehaviorTreeDefinition$Companion;
+	public static final field FORMAT_VERSION I
+	public fun <init> (ILjava/lang/String;Ljava/util/Map;Lcom/awakekt/awake/ai/definition/NodeDefinition;)V
+	public synthetic fun <init> (ILjava/lang/String;Ljava/util/Map;Lcom/awakekt/awake/ai/definition/NodeDefinition;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/util/Map;
+	public final fun component4 ()Lcom/awakekt/awake/ai/definition/NodeDefinition;
+	public final fun copy (ILjava/lang/String;Ljava/util/Map;Lcom/awakekt/awake/ai/definition/NodeDefinition;)Lcom/awakekt/awake/ai/definition/BehaviorTreeDefinition;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ai/definition/BehaviorTreeDefinition;ILjava/lang/String;Ljava/util/Map;Lcom/awakekt/awake/ai/definition/NodeDefinition;ILjava/lang/Object;)Lcom/awakekt/awake/ai/definition/BehaviorTreeDefinition;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBlackboard ()Ljava/util/Map;
+	public final fun getFormatVersion ()I
+	public final fun getId ()Ljava/lang/String;
+	public final fun getRoot ()Lcom/awakekt/awake/ai/definition/NodeDefinition;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/ai/definition/BehaviorTreeDefinition$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/definition/BehaviorTreeDefinition$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ai/definition/BehaviorTreeDefinition;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ai/definition/BehaviorTreeDefinition;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/definition/BehaviorTreeDefinition$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/definition/BehaviorTreeGraphKind : com/awakekt/awake/nodegraph/GraphKind {
+	public static final field CHILDREN_PORT Ljava/lang/String;
+	public static final field INSTANCE Lcom/awakekt/awake/ai/definition/BehaviorTreeGraphKind;
+	public static final field PARENT_PORT Ljava/lang/String;
+	public static final field PORT_TYPE Ljava/lang/String;
+	public fun canConnect (Lcom/awakekt/awake/nodegraph/PortSpec;Lcom/awakekt/awake/nodegraph/PortSpec;)Z
+	public fun getAllowsCycles ()Z
+	public fun getId ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/ai/definition/BehaviorTreeGraphKindKt {
+	public static final fun behaviorTreeNodeRegistry (Lcom/awakekt/awake/ai/definition/AiRegistry;)Lcom/awakekt/awake/nodegraph/NodeRegistry;
+	public static final fun toNodeDefinition (Lcom/awakekt/awake/nodegraph/NodeGraph;)Lcom/awakekt/awake/ai/definition/NodeDefinition;
+	public static final fun toNodeGraph (Lcom/awakekt/awake/ai/definition/NodeDefinition;)Lcom/awakekt/awake/nodegraph/NodeGraph;
+}
+
+public final class com/awakekt/awake/ai/definition/BuiltInNodeKinds {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/definition/BuiltInNodeKinds;
+	public final fun getAddToValue ()Lcom/awakekt/awake/ai/definition/NodeKind;
+	public final fun getChance ()Lcom/awakekt/awake/ai/definition/NodeKind;
+	public final fun getCompare ()Lcom/awakekt/awake/ai/definition/NodeKind;
+	public final fun getCooldown ()Lcom/awakekt/awake/ai/definition/NodeKind;
+	public final fun getCopyValue ()Lcom/awakekt/awake/ai/definition/NodeKind;
+	public final fun getEmit ()Lcom/awakekt/awake/ai/definition/NodeKind;
+	public final fun getHasKey ()Lcom/awakekt/awake/ai/definition/NodeKind;
+	public final fun getInverter ()Lcom/awakekt/awake/ai/definition/NodeKind;
+	public final fun getNodeKinds ()Ljava/util/List;
+	public final fun getParallel ()Lcom/awakekt/awake/ai/definition/NodeKind;
+	public final fun getPlainState ()Lcom/awakekt/awake/ai/definition/StateKind;
+	public final fun getRemoveValue ()Lcom/awakekt/awake/ai/definition/NodeKind;
+	public final fun getRepeat ()Lcom/awakekt/awake/ai/definition/NodeKind;
+	public final fun getSelector ()Lcom/awakekt/awake/ai/definition/NodeKind;
+	public final fun getSequence ()Lcom/awakekt/awake/ai/definition/NodeKind;
+	public final fun getSetValue ()Lcom/awakekt/awake/ai/definition/NodeKind;
+	public final fun getStatus ()Lcom/awakekt/awake/ai/definition/NodeKind;
+	public final fun getSucceeder ()Lcom/awakekt/awake/ai/definition/NodeKind;
+	public final fun getTimeout ()Lcom/awakekt/awake/ai/definition/NodeKind;
+	public final fun getWait ()Lcom/awakekt/awake/ai/definition/NodeKind;
+}
+
+public final class com/awakekt/awake/ai/definition/ChanceParams {
+	public static final field Companion Lcom/awakekt/awake/ai/definition/ChanceParams$Companion;
+	public fun <init> (FJ)V
+	public synthetic fun <init> (FJILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component2 ()J
+	public final fun copy (FJ)Lcom/awakekt/awake/ai/definition/ChanceParams;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ai/definition/ChanceParams;FJILjava/lang/Object;)Lcom/awakekt/awake/ai/definition/ChanceParams;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getProbability ()F
+	public final fun getSeed ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/ai/definition/ChanceParams$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/definition/ChanceParams$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ai/definition/ChanceParams;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ai/definition/ChanceParams;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/definition/ChanceParams$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/definition/ChildArity {
+	public static final field Companion Lcom/awakekt/awake/ai/definition/ChildArity$Companion;
+	public fun <init> (ILjava/lang/Integer;)V
+	public final fun accepts (I)Z
+	public final fun component1 ()I
+	public final fun component2 ()Ljava/lang/Integer;
+	public final fun copy (ILjava/lang/Integer;)Lcom/awakekt/awake/ai/definition/ChildArity;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ai/definition/ChildArity;ILjava/lang/Integer;ILjava/lang/Object;)Lcom/awakekt/awake/ai/definition/ChildArity;
+	public final fun describe ()Ljava/lang/String;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMax ()Ljava/lang/Integer;
+	public final fun getMin ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/ai/definition/ChildArity$Companion {
+	public final fun getAtLeastOne ()Lcom/awakekt/awake/ai/definition/ChildArity;
+	public final fun getNone ()Lcom/awakekt/awake/ai/definition/ChildArity;
+	public final fun getOne ()Lcom/awakekt/awake/ai/definition/ChildArity;
+}
+
+public final class com/awakekt/awake/ai/definition/CompareParams {
+	public static final field Companion Lcom/awakekt/awake/ai/definition/CompareParams$Companion;
+	public fun <init> (Ljava/lang/String;Lcom/awakekt/awake/ai/btree/CompareOp;Lcom/awakekt/awake/ai/btree/BlackboardValue;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Lcom/awakekt/awake/ai/btree/CompareOp;Lcom/awakekt/awake/ai/btree/BlackboardValue;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lcom/awakekt/awake/ai/btree/CompareOp;
+	public final fun component3 ()Lcom/awakekt/awake/ai/btree/BlackboardValue;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Lcom/awakekt/awake/ai/btree/CompareOp;Lcom/awakekt/awake/ai/btree/BlackboardValue;Ljava/lang/String;)Lcom/awakekt/awake/ai/definition/CompareParams;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ai/definition/CompareParams;Ljava/lang/String;Lcom/awakekt/awake/ai/btree/CompareOp;Lcom/awakekt/awake/ai/btree/BlackboardValue;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/ai/definition/CompareParams;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getKey ()Ljava/lang/String;
+	public final fun getOp ()Lcom/awakekt/awake/ai/btree/CompareOp;
+	public final fun getOtherKey ()Ljava/lang/String;
+	public final fun getValue ()Lcom/awakekt/awake/ai/btree/BlackboardValue;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/ai/definition/CompareParams$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/definition/CompareParams$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ai/definition/CompareParams;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ai/definition/CompareParams;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/definition/CompareParams$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/definition/CompiledBehaviorTree {
+	public final fun getDefinition ()Lcom/awakekt/awake/ai/definition/BehaviorTreeDefinition;
+	public final fun getNodeCount ()I
+	public final fun newBlackboard ()Lcom/awakekt/awake/ai/btree/Blackboard;
+	public final fun newComponent (J)Lcom/awakekt/awake/ai/btree/BehaviorTreeComponent;
+	public static synthetic fun newComponent$default (Lcom/awakekt/awake/ai/definition/CompiledBehaviorTree;JILjava/lang/Object;)Lcom/awakekt/awake/ai/btree/BehaviorTreeComponent;
+	public final fun newTree (J)Lcom/awakekt/awake/ai/btree/BehaviorTree;
+	public static synthetic fun newTree$default (Lcom/awakekt/awake/ai/definition/CompiledBehaviorTree;JILjava/lang/Object;)Lcom/awakekt/awake/ai/btree/BehaviorTree;
+}
+
+public final class com/awakekt/awake/ai/definition/CompiledStateMachine {
+	public final fun getDefinition ()Lcom/awakekt/awake/ai/definition/StateMachineDefinition;
+	public final fun newBlackboard ()Lcom/awakekt/awake/ai/btree/Blackboard;
+	public final fun newComponent (J)Lcom/awakekt/awake/ai/fsm/AiStateMachineComponent;
+	public static synthetic fun newComponent$default (Lcom/awakekt/awake/ai/definition/CompiledStateMachine;JILjava/lang/Object;)Lcom/awakekt/awake/ai/fsm/AiStateMachineComponent;
+	public final fun newStateMachine (J)Lcom/awakekt/awake/ai/fsm/AiStateMachine;
+	public static synthetic fun newStateMachine$default (Lcom/awakekt/awake/ai/definition/CompiledStateMachine;JILjava/lang/Object;)Lcom/awakekt/awake/ai/fsm/AiStateMachine;
+}
+
+public final class com/awakekt/awake/ai/definition/CompiledStateMachineKt {
+	public static final fun currentTree (Lcom/awakekt/awake/ai/fsm/AiStateMachine;)Lcom/awakekt/awake/ai/btree/BehaviorTree;
+}
+
+public final class com/awakekt/awake/ai/definition/CopyParams {
+	public static final field Companion Lcom/awakekt/awake/ai/definition/CopyParams$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lcom/awakekt/awake/ai/definition/CopyParams;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ai/definition/CopyParams;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/ai/definition/CopyParams;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFrom ()Ljava/lang/String;
+	public final fun getTo ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/ai/definition/CopyParams$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/definition/CopyParams$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ai/definition/CopyParams;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ai/definition/CopyParams;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/definition/CopyParams$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/definition/DurationParams {
+	public static final field Companion Lcom/awakekt/awake/ai/definition/DurationParams$Companion;
+	public fun <init> (F)V
+	public final fun component1 ()F
+	public final fun copy (F)Lcom/awakekt/awake/ai/definition/DurationParams;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ai/definition/DurationParams;FILjava/lang/Object;)Lcom/awakekt/awake/ai/definition/DurationParams;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getSeconds ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/ai/definition/DurationParams$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/definition/DurationParams$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ai/definition/DurationParams;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ai/definition/DurationParams;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/definition/DurationParams$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/definition/EmitParams {
+	public static final field Companion Lcom/awakekt/awake/ai/definition/EmitParams$Companion;
+	public synthetic fun <init> (Ljava/lang/String;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/util/Map;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-CYoQfF8 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/Map;
+	public final fun copy-b2p1z8Y (Ljava/lang/String;Ljava/util/Map;)Lcom/awakekt/awake/ai/definition/EmitParams;
+	public static synthetic fun copy-b2p1z8Y$default (Lcom/awakekt/awake/ai/definition/EmitParams;Ljava/lang/String;Ljava/util/Map;ILjava/lang/Object;)Lcom/awakekt/awake/ai/definition/EmitParams;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEvent-CYoQfF8 ()Ljava/lang/String;
+	public final fun getPayload ()Ljava/util/Map;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/ai/definition/EmitParams$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/definition/EmitParams$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ai/definition/EmitParams;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ai/definition/EmitParams;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/definition/EmitParams$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/definition/KeyParams {
+	public static final field Companion Lcom/awakekt/awake/ai/definition/KeyParams$Companion;
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lcom/awakekt/awake/ai/definition/KeyParams;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ai/definition/KeyParams;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/ai/definition/KeyParams;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getKey ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/ai/definition/KeyParams$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/definition/KeyParams$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ai/definition/KeyParams;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ai/definition/KeyParams;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/definition/KeyParams$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/definition/NoParams {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/definition/NoParams;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/ai/definition/NodeBuildScope {
+	public final fun getChild ()Lcom/awakekt/awake/ai/btree/BehaviorNode;
+	public final fun getChildren ()Ljava/util/List;
+	public final fun getPath ()Ljava/lang/String;
+	public final fun getSeed ()J
+}
+
+public final class com/awakekt/awake/ai/definition/NodeCategory : java/lang/Enum {
+	public static final field Action Lcom/awakekt/awake/ai/definition/NodeCategory;
+	public static final field Composite Lcom/awakekt/awake/ai/definition/NodeCategory;
+	public static final field Condition Lcom/awakekt/awake/ai/definition/NodeCategory;
+	public static final field Decorator Lcom/awakekt/awake/ai/definition/NodeCategory;
+	public final fun getDefaultChildren ()Lcom/awakekt/awake/ai/definition/ChildArity;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/ai/definition/NodeCategory;
+	public static fun values ()[Lcom/awakekt/awake/ai/definition/NodeCategory;
+}
+
+public final class com/awakekt/awake/ai/definition/NodeDefinition {
+	public static final field Companion Lcom/awakekt/awake/ai/definition/NodeDefinition$Companion;
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonObject;Ljava/util/List;Lcom/awakekt/awake/ai/definition/NodeLayout;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonObject;Ljava/util/List;Lcom/awakekt/awake/ai/definition/NodeLayout;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-5SAt50Y ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Lkotlinx/serialization/json/JsonObject;
+	public final fun component4 ()Ljava/util/List;
+	public final fun component5 ()Lcom/awakekt/awake/ai/definition/NodeLayout;
+	public final fun copy-5_iFK0s (Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonObject;Ljava/util/List;Lcom/awakekt/awake/ai/definition/NodeLayout;)Lcom/awakekt/awake/ai/definition/NodeDefinition;
+	public static synthetic fun copy-5_iFK0s$default (Lcom/awakekt/awake/ai/definition/NodeDefinition;Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonObject;Ljava/util/List;Lcom/awakekt/awake/ai/definition/NodeLayout;ILjava/lang/Object;)Lcom/awakekt/awake/ai/definition/NodeDefinition;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getChildren ()Ljava/util/List;
+	public final fun getId ()Ljava/lang/String;
+	public final fun getKind-5SAt50Y ()Ljava/lang/String;
+	public final fun getLayout ()Lcom/awakekt/awake/ai/definition/NodeLayout;
+	public final fun getParams ()Lkotlinx/serialization/json/JsonObject;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/ai/definition/NodeDefinition$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/definition/NodeDefinition$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ai/definition/NodeDefinition;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ai/definition/NodeDefinition;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/definition/NodeDefinition$Companion {
+	public final fun of (Lcom/awakekt/awake/ai/definition/NodeKind;Ljava/lang/Object;Ljava/util/List;Ljava/lang/String;)Lcom/awakekt/awake/ai/definition/NodeDefinition;
+	public static synthetic fun of$default (Lcom/awakekt/awake/ai/definition/NodeDefinition$Companion;Lcom/awakekt/awake/ai/definition/NodeKind;Ljava/lang/Object;Ljava/util/List;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/ai/definition/NodeDefinition;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract interface class com/awakekt/awake/ai/definition/NodeFactory {
+	public abstract fun create (Ljava/lang/Object;Lcom/awakekt/awake/ai/definition/NodeBuildScope;)Lcom/awakekt/awake/ai/btree/BehaviorNode;
+}
+
+public final class com/awakekt/awake/ai/definition/NodeKind {
+	public synthetic fun <init> (Ljava/lang/String;Lkotlinx/serialization/KSerializer;Lcom/awakekt/awake/ai/definition/NodeCategory;Lcom/awakekt/awake/ai/definition/ChildArity;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/ai/definition/NodeFactory;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Lkotlinx/serialization/KSerializer;Lcom/awakekt/awake/ai/definition/NodeCategory;Lcom/awakekt/awake/ai/definition/ChildArity;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/ai/definition/NodeFactory;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getCategory ()Lcom/awakekt/awake/ai/definition/NodeCategory;
+	public final fun getChildren ()Lcom/awakekt/awake/ai/definition/ChildArity;
+	public final fun getDescription ()Ljava/lang/String;
+	public final fun getDisplayName ()Ljava/lang/String;
+	public final fun getFactory ()Lcom/awakekt/awake/ai/definition/NodeFactory;
+	public final fun getId-5SAt50Y ()Ljava/lang/String;
+	public final fun getParams ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/definition/NodeKindId {
+	public static final field Companion Lcom/awakekt/awake/ai/definition/NodeKindId$Companion;
+	public static final synthetic fun box-impl (Ljava/lang/String;)Lcom/awakekt/awake/ai/definition/NodeKindId;
+	public static fun constructor-impl (Ljava/lang/String;)Ljava/lang/String;
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (Ljava/lang/String;Ljava/lang/Object;)Z
+	public static final fun equals-impl0 (Ljava/lang/String;Ljava/lang/String;)Z
+	public final fun getValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public static fun hashCode-impl (Ljava/lang/String;)I
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (Ljava/lang/String;)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/ai/definition/NodeKindId$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/definition/NodeKindId$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize-mBHRFv4 (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/String;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize-BOWE9BE (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/String;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/definition/NodeKindId$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/definition/NodeLayout {
+	public static final field Companion Lcom/awakekt/awake/ai/definition/NodeLayout$Companion;
+	public fun <init> (FF)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun copy (FF)Lcom/awakekt/awake/ai/definition/NodeLayout;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ai/definition/NodeLayout;FFILjava/lang/Object;)Lcom/awakekt/awake/ai/definition/NodeLayout;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getX ()F
+	public final fun getY ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/ai/definition/NodeLayout$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/definition/NodeLayout$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ai/definition/NodeLayout;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ai/definition/NodeLayout;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/definition/NodeLayout$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/definition/ParallelParams {
+	public static final field Companion Lcom/awakekt/awake/ai/definition/ParallelParams$Companion;
+	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/ai/btree/ParallelPolicy;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/ai/btree/ParallelPolicy;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/ai/btree/ParallelPolicy;
+	public final fun copy (Lcom/awakekt/awake/ai/btree/ParallelPolicy;)Lcom/awakekt/awake/ai/definition/ParallelParams;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ai/definition/ParallelParams;Lcom/awakekt/awake/ai/btree/ParallelPolicy;ILjava/lang/Object;)Lcom/awakekt/awake/ai/definition/ParallelParams;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPolicy ()Lcom/awakekt/awake/ai/btree/ParallelPolicy;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/ai/definition/ParallelParams$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/definition/ParallelParams$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ai/definition/ParallelParams;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ai/definition/ParallelParams;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/definition/ParallelParams$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/definition/RepeatParams {
+	public static final field Companion Lcom/awakekt/awake/ai/definition/RepeatParams$Companion;
+	public fun <init> ()V
+	public fun <init> (I)V
+	public synthetic fun <init> (IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun copy (I)Lcom/awakekt/awake/ai/definition/RepeatParams;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ai/definition/RepeatParams;IILjava/lang/Object;)Lcom/awakekt/awake/ai/definition/RepeatParams;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCount ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/ai/definition/RepeatParams$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/definition/RepeatParams$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ai/definition/RepeatParams;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ai/definition/RepeatParams;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/definition/RepeatParams$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/definition/SetParams {
+	public static final field Companion Lcom/awakekt/awake/ai/definition/SetParams$Companion;
+	public fun <init> (Ljava/lang/String;Lcom/awakekt/awake/ai/btree/BlackboardValue;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lcom/awakekt/awake/ai/btree/BlackboardValue;
+	public final fun copy (Ljava/lang/String;Lcom/awakekt/awake/ai/btree/BlackboardValue;)Lcom/awakekt/awake/ai/definition/SetParams;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ai/definition/SetParams;Ljava/lang/String;Lcom/awakekt/awake/ai/btree/BlackboardValue;ILjava/lang/Object;)Lcom/awakekt/awake/ai/definition/SetParams;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getKey ()Ljava/lang/String;
+	public final fun getValue ()Lcom/awakekt/awake/ai/btree/BlackboardValue;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/ai/definition/SetParams$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/definition/SetParams$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ai/definition/SetParams;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ai/definition/SetParams;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/definition/SetParams$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/definition/StateBuildScope {
+	public final fun getName ()Ljava/lang/String;
+	public final fun getSeed ()J
+}
+
+public final class com/awakekt/awake/ai/definition/StateDefinition {
+	public static final field Companion Lcom/awakekt/awake/ai/definition/StateDefinition$Companion;
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonObject;Ljava/util/List;Ljava/util/List;Lcom/awakekt/awake/ai/definition/NodeDefinition;ZLcom/awakekt/awake/ai/definition/NodeLayout;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonObject;Ljava/util/List;Ljava/util/List;Lcom/awakekt/awake/ai/definition/NodeDefinition;ZLcom/awakekt/awake/ai/definition/NodeLayout;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2-BBzIWKI ()Ljava/lang/String;
+	public final fun component3 ()Lkotlinx/serialization/json/JsonObject;
+	public final fun component4 ()Ljava/util/List;
+	public final fun component5 ()Ljava/util/List;
+	public final fun component6 ()Lcom/awakekt/awake/ai/definition/NodeDefinition;
+	public final fun component7 ()Z
+	public final fun component8 ()Lcom/awakekt/awake/ai/definition/NodeLayout;
+	public final fun copy-LGSCyYE (Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonObject;Ljava/util/List;Ljava/util/List;Lcom/awakekt/awake/ai/definition/NodeDefinition;ZLcom/awakekt/awake/ai/definition/NodeLayout;)Lcom/awakekt/awake/ai/definition/StateDefinition;
+	public static synthetic fun copy-LGSCyYE$default (Lcom/awakekt/awake/ai/definition/StateDefinition;Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonObject;Ljava/util/List;Ljava/util/List;Lcom/awakekt/awake/ai/definition/NodeDefinition;ZLcom/awakekt/awake/ai/definition/NodeLayout;ILjava/lang/Object;)Lcom/awakekt/awake/ai/definition/StateDefinition;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEnter ()Ljava/util/List;
+	public final fun getExit ()Ljava/util/List;
+	public final fun getKind-BBzIWKI ()Ljava/lang/String;
+	public final fun getLayout ()Lcom/awakekt/awake/ai/definition/NodeLayout;
+	public final fun getLoopTree ()Z
+	public final fun getName ()Ljava/lang/String;
+	public final fun getParams ()Lkotlinx/serialization/json/JsonObject;
+	public final fun getTree ()Lcom/awakekt/awake/ai/definition/NodeDefinition;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/ai/definition/StateDefinition$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/definition/StateDefinition$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ai/definition/StateDefinition;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ai/definition/StateDefinition;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/definition/StateDefinition$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract interface class com/awakekt/awake/ai/definition/StateFactory {
+	public abstract fun create (Ljava/lang/Object;Lcom/awakekt/awake/ai/definition/StateBuildScope;)Lcom/awakekt/awake/ai/fsm/AiState;
+}
+
+public final class com/awakekt/awake/ai/definition/StateKind {
+	public synthetic fun <init> (Ljava/lang/String;Lkotlinx/serialization/KSerializer;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/ai/definition/StateFactory;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Lkotlinx/serialization/KSerializer;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/ai/definition/StateFactory;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getDescription ()Ljava/lang/String;
+	public final fun getDisplayName ()Ljava/lang/String;
+	public final fun getFactory ()Lcom/awakekt/awake/ai/definition/StateFactory;
+	public final fun getId-BBzIWKI ()Ljava/lang/String;
+	public final fun getParams ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/definition/StateKindId {
+	public static final field Companion Lcom/awakekt/awake/ai/definition/StateKindId$Companion;
+	public static final synthetic fun box-impl (Ljava/lang/String;)Lcom/awakekt/awake/ai/definition/StateKindId;
+	public static fun constructor-impl (Ljava/lang/String;)Ljava/lang/String;
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (Ljava/lang/String;Ljava/lang/Object;)Z
+	public static final fun equals-impl0 (Ljava/lang/String;Ljava/lang/String;)Z
+	public final fun getValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public static fun hashCode-impl (Ljava/lang/String;)I
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (Ljava/lang/String;)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/ai/definition/StateKindId$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/definition/StateKindId$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize-X2aNZis (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/String;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize--wCerys (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/String;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/definition/StateKindId$Companion {
+	public final fun getPlain-BBzIWKI ()Ljava/lang/String;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/definition/StateMachineDefinition {
+	public static final field Companion Lcom/awakekt/awake/ai/definition/StateMachineDefinition$Companion;
+	public static final field FORMAT_VERSION I
+	public fun <init> (ILjava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/util/List;Ljava/util/List;)V
+	public synthetic fun <init> (ILjava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/util/List;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/util/Map;
+	public final fun component5 ()Ljava/util/List;
+	public final fun component6 ()Ljava/util/List;
+	public final fun copy (ILjava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/util/List;Ljava/util/List;)Lcom/awakekt/awake/ai/definition/StateMachineDefinition;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ai/definition/StateMachineDefinition;ILjava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/ai/definition/StateMachineDefinition;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBlackboard ()Ljava/util/Map;
+	public final fun getFormatVersion ()I
+	public final fun getId ()Ljava/lang/String;
+	public final fun getInitial ()Ljava/lang/String;
+	public final fun getStates ()Ljava/util/List;
+	public final fun getTransitions ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/ai/definition/StateMachineDefinition$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/definition/StateMachineDefinition$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ai/definition/StateMachineDefinition;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ai/definition/StateMachineDefinition;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/definition/StateMachineDefinition$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/definition/StatusParams {
+	public static final field Companion Lcom/awakekt/awake/ai/definition/StatusParams$Companion;
+	public fun <init> (Lcom/awakekt/awake/ai/btree/BehaviorStatus;)V
+	public final fun component1 ()Lcom/awakekt/awake/ai/btree/BehaviorStatus;
+	public final fun copy (Lcom/awakekt/awake/ai/btree/BehaviorStatus;)Lcom/awakekt/awake/ai/definition/StatusParams;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ai/definition/StatusParams;Lcom/awakekt/awake/ai/btree/BehaviorStatus;ILjava/lang/Object;)Lcom/awakekt/awake/ai/definition/StatusParams;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getStatus ()Lcom/awakekt/awake/ai/btree/BehaviorStatus;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/ai/definition/StatusParams$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/definition/StatusParams$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ai/definition/StatusParams;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ai/definition/StatusParams;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/definition/StatusParams$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/definition/TransitionDefinition {
+	public static final field Companion Lcom/awakekt/awake/ai/definition/TransitionDefinition$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;FLcom/awakekt/awake/ai/definition/TreeOutcome;Lcom/awakekt/awake/ai/definition/NodeDefinition;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;FLcom/awakekt/awake/ai/definition/TreeOutcome;Lcom/awakekt/awake/ai/definition/NodeDefinition;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()F
+	public final fun component4 ()Lcom/awakekt/awake/ai/definition/TreeOutcome;
+	public final fun component5 ()Lcom/awakekt/awake/ai/definition/NodeDefinition;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;FLcom/awakekt/awake/ai/definition/TreeOutcome;Lcom/awakekt/awake/ai/definition/NodeDefinition;)Lcom/awakekt/awake/ai/definition/TransitionDefinition;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ai/definition/TransitionDefinition;Ljava/lang/String;Ljava/lang/String;FLcom/awakekt/awake/ai/definition/TreeOutcome;Lcom/awakekt/awake/ai/definition/NodeDefinition;ILjava/lang/Object;)Lcom/awakekt/awake/ai/definition/TransitionDefinition;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAfter ()F
+	public final fun getCondition ()Lcom/awakekt/awake/ai/definition/NodeDefinition;
+	public final fun getFrom ()Ljava/lang/String;
+	public final fun getOnTree ()Lcom/awakekt/awake/ai/definition/TreeOutcome;
+	public final fun getTo ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/ai/definition/TransitionDefinition$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/definition/TransitionDefinition$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ai/definition/TransitionDefinition;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ai/definition/TransitionDefinition;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/definition/TransitionDefinition$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/definition/TreeOutcome : java/lang/Enum {
+	public static final field Companion Lcom/awakekt/awake/ai/definition/TreeOutcome$Companion;
+	public static final field Failure Lcom/awakekt/awake/ai/definition/TreeOutcome;
+	public static final field Finished Lcom/awakekt/awake/ai/definition/TreeOutcome;
+	public static final field Success Lcom/awakekt/awake/ai/definition/TreeOutcome;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun matches (Lcom/awakekt/awake/ai/btree/BehaviorStatus;)Z
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/ai/definition/TreeOutcome;
+	public static fun values ()[Lcom/awakekt/awake/ai/definition/TreeOutcome;
+}
+
+public final class com/awakekt/awake/ai/definition/TreeOutcome$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
 public class com/awakekt/awake/ai/fsm/AiState {
@@ -175,6 +1592,8 @@ public final class com/awakekt/awake/ai/fsm/AiStateMachine {
 	public final fun getStates ()Ljava/util/Map;
 	public final fun getTransitions ()Ljava/util/Map;
 	public final fun reset (Ljava/lang/String;Lcom/awakekt/awake/ai/AiContext;)V
+	public final fun restore (Lcom/awakekt/awake/ai/fsm/StateMachineSnapshot;)V
+	public final fun snapshot ()Lcom/awakekt/awake/ai/fsm/StateMachineSnapshot;
 	public final fun transitionTo (Ljava/lang/String;Lcom/awakekt/awake/ai/AiContext;)V
 	public final fun update (Lcom/awakekt/awake/ai/AiContext;)V
 }
@@ -190,11 +1609,53 @@ public final class com/awakekt/awake/ai/fsm/AiStateMachineComponent {
 
 public final class com/awakekt/awake/ai/fsm/AiStateMachineSystem : com/awakekt/awake/ecs/System {
 	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/ai/AiEventSink;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/ai/AiEventSink;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 
+public final class com/awakekt/awake/ai/fsm/StateMachineSnapshot {
+	public static final field Companion Lcom/awakekt/awake/ai/fsm/StateMachineSnapshot$Companion;
+	public static final field FORMAT_VERSION I
+	public fun <init> (ILjava/lang/String;FZLjava/util/Map;)V
+	public synthetic fun <init> (ILjava/lang/String;FZLjava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()F
+	public final fun component4 ()Z
+	public final fun component5 ()Ljava/util/Map;
+	public final fun copy (ILjava/lang/String;FZLjava/util/Map;)Lcom/awakekt/awake/ai/fsm/StateMachineSnapshot;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ai/fsm/StateMachineSnapshot;ILjava/lang/String;FZLjava/util/Map;ILjava/lang/Object;)Lcom/awakekt/awake/ai/fsm/StateMachineSnapshot;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCurrent ()Ljava/lang/String;
+	public final fun getEntered ()Z
+	public final fun getFormatVersion ()I
+	public final fun getStateTime ()F
+	public final fun getStates ()Ljava/util/Map;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/ai/fsm/StateMachineSnapshot$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/fsm/StateMachineSnapshot$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ai/fsm/StateMachineSnapshot;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ai/fsm/StateMachineSnapshot;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/fsm/StateMachineSnapshot$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
 public final class com/awakekt/awake/ai/fsm/StateTransition {
+	public fun <init> (Ljava/lang/String;FLkotlin/jvm/functions/Function1;)V
+	public synthetic fun <init> (Ljava/lang/String;FLkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun <init> (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+	public final fun getAfterSeconds ()F
 	public final fun getCondition ()Lkotlin/jvm/functions/Function1;
 	public final fun getTargetStateName ()Ljava/lang/String;
 }

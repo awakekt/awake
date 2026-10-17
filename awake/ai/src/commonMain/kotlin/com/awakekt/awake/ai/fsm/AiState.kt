@@ -41,9 +41,24 @@ open class AiState(
  * Directed transition between states in an [AiStateMachine].
  *
  * @property targetStateName Target state identifier to transition into when [condition] evaluates to true.
+ * @property afterSeconds How long the machine must have been in the state before [condition] is
+ *   asked; zero asks from the first tick.
  * @property condition Predicate evaluated each tick to trigger state change.
  */
 class StateTransition(
     val targetStateName: String,
+    val afterSeconds: Float = 0f,
     val condition: (AiContext) -> Boolean,
-)
+) {
+    /**
+     * A transition asked from the first tick in the state.
+     *
+     * @param targetStateName Target state identifier to transition into when [condition] evaluates to true.
+     * @param condition Predicate evaluated each tick to trigger state change.
+     */
+    constructor(targetStateName: String, condition: (AiContext) -> Boolean) : this(targetStateName, 0f, condition)
+
+    init {
+        require(afterSeconds.isFinite() && afterSeconds >= 0f) { "A transition after $afterSeconds seconds is not valid." }
+    }
+}

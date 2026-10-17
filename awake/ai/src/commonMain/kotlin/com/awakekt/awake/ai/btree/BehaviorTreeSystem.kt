@@ -6,14 +6,17 @@
 package com.awakekt.awake.ai.btree
 
 import com.awakekt.awake.ai.AiContext
+import com.awakekt.awake.ai.AiEventSink
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 
 /**
  * ECS system that evaluates active [BehaviorTreeComponent]s each frame.
+ *
+ * @param events Where the trees' emitted events go; dropped by default.
  */
-class BehaviorTreeSystem : System {
+class BehaviorTreeSystem(private val events: AiEventSink = AiEventSink.None) : System {
     // Reused tick context to ensure zero allocation per frame loop
     private val reusableContext = AiContext(
         world = World(),
@@ -30,7 +33,8 @@ class BehaviorTreeSystem : System {
             if (!btc.enabled) return@forEach
 
             reusableContext.update(world, entity, delta, btc.blackboard)
-            btc.activeStatus = btc.root.tick(reusableContext)
+            reusableContext.events = events
+            btc.activeStatus = btc.tree.tick(reusableContext)
         }
     }
 }
