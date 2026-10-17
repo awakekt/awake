@@ -1,3 +1,79 @@
+public final class com/awakekt/awake/ui/canvas/CanvasAim {
+	public static final field Companion Lcom/awakekt/awake/ui/canvas/CanvasAim$Companion;
+	public static final field DEFAULT_DEAD_ZONE F
+	public static final field DEFAULT_RADIUS F
+	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/ui/canvas/CanvasAimMode;FFLcom/awakekt/awake/ui/canvas/CanvasZone;Ljava/lang/String;Z)V
+	public synthetic fun <init> (Lcom/awakekt/awake/ui/canvas/CanvasAimMode;FFLcom/awakekt/awake/ui/canvas/CanvasZone;Ljava/lang/String;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun aim (FF)Lkotlin/Pair;
+	public final fun component1 ()Lcom/awakekt/awake/ui/canvas/CanvasAimMode;
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()Lcom/awakekt/awake/ui/canvas/CanvasZone;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Z
+	public final fun copy (Lcom/awakekt/awake/ui/canvas/CanvasAimMode;FFLcom/awakekt/awake/ui/canvas/CanvasZone;Ljava/lang/String;Z)Lcom/awakekt/awake/ui/canvas/CanvasAim;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ui/canvas/CanvasAim;Lcom/awakekt/awake/ui/canvas/CanvasAimMode;FFLcom/awakekt/awake/ui/canvas/CanvasZone;Ljava/lang/String;ZILjava/lang/Object;)Lcom/awakekt/awake/ui/canvas/CanvasAim;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAimAction ()Ljava/lang/String;
+	public final fun getCancel ()Lcom/awakekt/awake/ui/canvas/CanvasZone;
+	public final fun getDeadZone ()F
+	public final fun getLockTarget ()Z
+	public final fun getMode ()Lcom/awakekt/awake/ui/canvas/CanvasAimMode;
+	public final fun getRadius ()F
+	public final fun getReach ()F
+	public fun hashCode ()I
+	public final fun problems ()Ljava/util/List;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/ui/canvas/CanvasAim$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ui/canvas/CanvasAim$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ui/canvas/CanvasAim;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ui/canvas/CanvasAim;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ui/canvas/CanvasAim$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract interface class com/awakekt/awake/ui/canvas/CanvasAimLock {
+	public abstract fun lock (Lcom/awakekt/awake/ui/canvas/CanvasElement;FF)Lcom/awakekt/awake/ui/canvas/CanvasAimTarget;
+}
+
+public final class com/awakekt/awake/ui/canvas/CanvasAimMode : java/lang/Enum {
+	public static final field Companion Lcom/awakekt/awake/ui/canvas/CanvasAimMode$Companion;
+	public static final field Direction Lcom/awakekt/awake/ui/canvas/CanvasAimMode;
+	public static final field Ground Lcom/awakekt/awake/ui/canvas/CanvasAimMode;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/ui/canvas/CanvasAimMode;
+	public static fun values ()[Lcom/awakekt/awake/ui/canvas/CanvasAimMode;
+}
+
+public final class com/awakekt/awake/ui/canvas/CanvasAimMode$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ui/canvas/CanvasAimTarget {
+	public fun <init> (Ljava/lang/String;FF)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun copy (Ljava/lang/String;FF)Lcom/awakekt/awake/ui/canvas/CanvasAimTarget;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ui/canvas/CanvasAimTarget;Ljava/lang/String;FFILjava/lang/Object;)Lcom/awakekt/awake/ui/canvas/CanvasAimTarget;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getKey ()Ljava/lang/String;
+	public final fun getX ()F
+	public final fun getY ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class com/awakekt/awake/ui/canvas/CanvasAlign : java/lang/Enum {
 	public static final field Center Lcom/awakekt/awake/ui/canvas/CanvasAlign;
 	public static final field Companion Lcom/awakekt/awake/ui/canvas/CanvasAlign$Companion;
@@ -87,16 +163,18 @@ public final class com/awakekt/awake/ui/canvas/CanvasButton {
 	public static final field Companion Lcom/awakekt/awake/ui/canvas/CanvasButton$Companion;
 	public static final field DEFAULT_LONG_PRESS_SECONDS F
 	public fun <init> ()V
-	public fun <init> (Lcom/awakekt/awake/ui/canvas/CanvasButtonTrigger;FLjava/lang/String;Ljava/lang/String;Z)V
-	public synthetic fun <init> (Lcom/awakekt/awake/ui/canvas/CanvasButtonTrigger;FLjava/lang/String;Ljava/lang/String;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/ui/canvas/CanvasButtonTrigger;FLjava/lang/String;Ljava/lang/String;ZLcom/awakekt/awake/ui/canvas/CanvasAim;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/ui/canvas/CanvasButtonTrigger;FLjava/lang/String;Ljava/lang/String;ZLcom/awakekt/awake/ui/canvas/CanvasAim;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lcom/awakekt/awake/ui/canvas/CanvasButtonTrigger;
 	public final fun component2 ()F
 	public final fun component3 ()Ljava/lang/String;
 	public final fun component4 ()Ljava/lang/String;
 	public final fun component5 ()Z
-	public final fun copy (Lcom/awakekt/awake/ui/canvas/CanvasButtonTrigger;FLjava/lang/String;Ljava/lang/String;Z)Lcom/awakekt/awake/ui/canvas/CanvasButton;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/ui/canvas/CanvasButton;Lcom/awakekt/awake/ui/canvas/CanvasButtonTrigger;FLjava/lang/String;Ljava/lang/String;ZILjava/lang/Object;)Lcom/awakekt/awake/ui/canvas/CanvasButton;
+	public final fun component6 ()Lcom/awakekt/awake/ui/canvas/CanvasAim;
+	public final fun copy (Lcom/awakekt/awake/ui/canvas/CanvasButtonTrigger;FLjava/lang/String;Ljava/lang/String;ZLcom/awakekt/awake/ui/canvas/CanvasAim;)Lcom/awakekt/awake/ui/canvas/CanvasButton;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ui/canvas/CanvasButton;Lcom/awakekt/awake/ui/canvas/CanvasButtonTrigger;FLjava/lang/String;Ljava/lang/String;ZLcom/awakekt/awake/ui/canvas/CanvasAim;ILjava/lang/Object;)Lcom/awakekt/awake/ui/canvas/CanvasButton;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAim ()Lcom/awakekt/awake/ui/canvas/CanvasAim;
 	public final fun getBlockWhileCooling ()Z
 	public final fun getLongPressAction ()Ljava/lang/String;
 	public final fun getLongPressSeconds ()F
@@ -222,6 +300,7 @@ public final class com/awakekt/awake/ui/canvas/CanvasElement {
 	public static final field DEFAULT_WIDTH F
 	public static final field DOUBLE_CLICK_SECONDS D
 	public fun <init> ()V
+	public final fun consumeAimCancel ()Z
 	public final fun consumeDoublePress ()Z
 	public final fun consumeDown ()Z
 	public final fun consumeLongPress ()Z
@@ -233,6 +312,12 @@ public final class com/awakekt/awake/ui/canvas/CanvasElement {
 	public final fun consumeSubmit ()Ljava/lang/String;
 	public final fun consumeWheel ()F
 	public final fun getAction ()Ljava/lang/String;
+	public final fun getAimCancelling ()Z
+	public final fun getAimLock ()Lcom/awakekt/awake/ui/canvas/CanvasAimLock;
+	public final fun getAimTarget ()Ljava/lang/String;
+	public final fun getAimX ()F
+	public final fun getAimY ()F
+	public final fun getAiming ()Z
 	public final fun getAnchor ()Lcom/awakekt/awake/ui/canvas/CanvasAnchor;
 	public final fun getBackground ()Ljava/lang/String;
 	public final fun getBind ()Lcom/awakekt/awake/ui/canvas/CanvasBinding;
@@ -296,6 +381,7 @@ public final class com/awakekt/awake/ui/canvas/CanvasElement {
 	public final fun isHeld ()Z
 	public final fun isHovered ()Z
 	public final fun setAction (Ljava/lang/String;)V
+	public final fun setAimLock (Lcom/awakekt/awake/ui/canvas/CanvasAimLock;)V
 	public final fun setAnchor (Lcom/awakekt/awake/ui/canvas/CanvasAnchor;)V
 	public final fun setBackground (Ljava/lang/String;)V
 	public final fun setBind (Lcom/awakekt/awake/ui/canvas/CanvasBinding;)V
@@ -1070,6 +1156,41 @@ public final synthetic class com/awakekt/awake/ui/canvas/CanvasTextShadow$$seria
 
 public final class com/awakekt/awake/ui/canvas/CanvasTextShadow$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ui/canvas/CanvasZone {
+	public static final field DEFAULT_OFFSET_Y F
+	public static final field DEFAULT_SIZE F
+	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/ui/canvas/CanvasAnchor;FFFF)V
+	public synthetic fun <init> (Lcom/awakekt/awake/ui/canvas/CanvasAnchor;FFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/ui/canvas/CanvasAnchor;
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()F
+	public final fun copy (Lcom/awakekt/awake/ui/canvas/CanvasAnchor;FFFF)Lcom/awakekt/awake/ui/canvas/CanvasZone;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ui/canvas/CanvasZone;Lcom/awakekt/awake/ui/canvas/CanvasAnchor;FFFFILjava/lang/Object;)Lcom/awakekt/awake/ui/canvas/CanvasZone;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAnchor ()Lcom/awakekt/awake/ui/canvas/CanvasAnchor;
+	public final fun getHeight ()F
+	public final fun getOffsetX ()F
+	public final fun getOffsetY ()F
+	public final fun getWidth ()F
+	public fun hashCode ()I
+	public final fun problems ()Ljava/util/List;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/ui/canvas/CanvasZone$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ui/canvas/CanvasZone$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ui/canvas/CanvasZone;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ui/canvas/CanvasZone;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
 }
 
 public final class com/awakekt/awake/ui/canvas/PointAnchorKt {

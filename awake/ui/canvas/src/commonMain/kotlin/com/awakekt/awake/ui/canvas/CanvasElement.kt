@@ -570,6 +570,33 @@ class CanvasElement {
     /** True once each time an action button is held for its [CanvasButton.longPressSeconds], since the last call. */
     fun consumeLongPress(): Boolean = buttonPress.longPress.also { buttonPress.longPress = false }
 
+    /** Whether an action button with [CanvasButton.aim] is held and being dragged to aim right now. */
+    val aiming: Boolean get() = buttonPress.aiming(this)
+
+    /**
+     * An aimed action button's aim, from -1 to 1, up negative as on screen: while [aiming], and after
+     * a release the aim it fired with, until the next press. Zero inside the aim's dead zone.
+     */
+    val aimX: Float get() = buttonPress.aimX
+
+    /** The vertical half of [aimX]; up is negative. */
+    val aimY: Float get() = buttonPress.aimY
+
+    /** Whether an aimed action button is held over its cancel zone, so letting go now cancels. */
+    val aimCancelling: Boolean get() = buttonPress.cancelling
+
+    /** The key of the target [aimLock] locked the aim onto, or null while none is. */
+    val aimTarget: String? get() = buttonPress.target
+
+    /**
+     * Locks an aimed action button's aim onto a target while [CanvasAim.lockTarget] is set, such as
+     * the one nearest the aimed line: the game knows its targets, so it answers. Null keeps the raw aim.
+     */
+    var aimLock: CanvasAimLock? = null
+
+    /** True once each time an aimed action button is let go over its cancel zone, since the last call. */
+    fun consumeAimCancel(): Boolean = buttonPress.aimCancelled.also { buttonPress.aimCancelled = false }
+
     /** How long an action button has been held, in seconds; 0 while it is not. */
     val heldSeconds: Float get() = buttonPress.heldSeconds()
 
@@ -590,6 +617,12 @@ class CanvasElement {
      */
     var screenBounds: Rectangle? = null
         internal set
+
+    /**
+     * Where this element was last placed, kept while the next frame is composed, when [screenBounds]
+     * is cleared until it is placed again: what a guide drawn over it, such as an aim's reach, reads.
+     */
+    internal var placedBounds: Rectangle? = null
 
     internal fun press() {
         pressed = true

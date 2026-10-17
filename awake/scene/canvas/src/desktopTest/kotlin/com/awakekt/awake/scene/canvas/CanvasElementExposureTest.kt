@@ -40,6 +40,7 @@ class CanvasElementExposureTest {
         "followScore" to "a follower's importance right now, which game code works out each frame",
         "cooldown" to "how much of a cooldown is left right now, set by game code or read through bind.cooldown",
         "charges" to "how many uses are left right now, set by game code or read through bind.charges",
+        "aimLock" to "a hook into the game's own targets, which only code can answer",
     )
 
     /** [CanvasElement]'s own options: its public setters, skipping a synthetic bridge's `$`-named one. */

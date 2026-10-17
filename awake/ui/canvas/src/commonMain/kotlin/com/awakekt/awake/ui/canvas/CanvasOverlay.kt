@@ -153,7 +153,10 @@ private fun ScaledCanvas(
             // Every follower at once, before any is composed: a limit ranks them all.
             tree.planFollowers(width / uiScale, height / uiScale, canvasDensity, limits)
             // The insets are the host's dp; under the scaled density they shrink by the scale.
-            screen.Elements(tree.roots, tree, safeArea.scaledBy(1f / uiScale))
+            val inside = safeArea.scaledBy(1f / uiScale)
+            screen.Elements(tree.roots, tree, inside)
+            // Over the controls, so a drag's aim and its cancel zone are never hidden under a button.
+            screen.AimGuides(tree, inside)
             // Drawn last, so a dragged element's ghost sits above everything it is dragged over.
             Ghosts(tree)
         }
@@ -228,7 +231,7 @@ private fun BoxScope.Elements(
                 // The inset wraps the element rather than sitting in its modifier chain, so the
                 // element's own bounds (hit area, editor picking) are exactly its size.
                 val inside = if (element.safeArea) safeArea else CanvasInsets.None
-                Box(Modifier.align(element.anchor.alignment).anchorInset(element, inside)) {
+                Box(Modifier.align(element.anchor.alignment).anchorInset(element.anchor, element.offsetX, element.offsetY, inside)) {
                     CanvasElementView(element, Modifier.size(element.width.dp, element.height.dp).testTag(tag), tree, tree.childrenOf(element))
                 }
             }
@@ -265,7 +268,9 @@ internal fun CanvasElementView(
     val units = LocalCanvasDensity.current.takeIf { it > 0f } ?: density
     val origin = tree.origin
     val placed = modifier.onPlaced { x, y, w, h ->
-        element.screenBounds = Rectangle((x - origin.x) / units, (y - origin.y) / units, w / units, h / units)
+        val bounds = Rectangle((x - origin.x) / units, (y - origin.y) / units, w / units, h / units)
+        element.screenBounds = bounds
+        element.placedBounds = bounds
     }
     // Applied before styling and per-kind modifiers, so it covers every kind, Joystick included,
     // and sits outermost -- an ancestor's wheel element only sees what this one left unconsumed.
@@ -411,21 +416,19 @@ private fun JoystickView(
 private const val KNOB_FRACTION = 0.45f
 
 /**
- * Moves the element from its anchor with padding around it, not `offset`, so the element's own
- * bounds (its hit area, editor picking) stay exactly its size wherever it lands.
+ * Moves an element, or a cancel zone, ([x], [y]) dp from its [anchor] with padding around it, not
+ * `offset`, so its own bounds (its hit area, editor picking) stay exactly its size wherever it lands.
  *
  * At an edge the offset moves it inward, and a negative one is held at the edge: padding cannot
  * reach past it. On a centred axis the padding goes on one side twice over, which shifts the
  * centred box by the offset: a positive one right or down, a negative one, padded on the other
  * side, left or up.
  */
-private fun Modifier.anchorInset(element: CanvasElement, safeArea: CanvasInsets): Modifier {
-    val x = element.offsetX
-    val y = element.offsetY
-    val start = when (element.anchor.column) { 0 -> x.coerceAtLeast(0f); 1 -> 2 * x.coerceAtLeast(0f); else -> 0f }
-    val end = when (element.anchor.column) { 1 -> 2 * (-x).coerceAtLeast(0f); 2 -> x.coerceAtLeast(0f); else -> 0f }
-    val top = when (element.anchor.row) { 0 -> y.coerceAtLeast(0f); 1 -> 2 * y.coerceAtLeast(0f); else -> 0f }
-    val bottom = when (element.anchor.row) { 1 -> 2 * (-y).coerceAtLeast(0f); 2 -> y.coerceAtLeast(0f); else -> 0f }
+internal fun Modifier.anchorInset(anchor: CanvasAnchor, x: Float, y: Float, safeArea: CanvasInsets): Modifier {
+    val start = when (anchor.column) { 0 -> x.coerceAtLeast(0f); 1 -> 2 * x.coerceAtLeast(0f); else -> 0f }
+    val end = when (anchor.column) { 1 -> 2 * (-x).coerceAtLeast(0f); 2 -> x.coerceAtLeast(0f); else -> 0f }
+    val top = when (anchor.row) { 0 -> y.coerceAtLeast(0f); 1 -> 2 * y.coerceAtLeast(0f); else -> 0f }
+    val bottom = when (anchor.row) { 1 -> 2 * (-y).coerceAtLeast(0f); 2 -> y.coerceAtLeast(0f); else -> 0f }
     // The safe area pads every side, whatever the anchor: an edge element moves in from the covered
     // edge, and a centred one is centred in what is left, the safe area's own centre.
     return padding(
