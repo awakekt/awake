@@ -179,5 +179,11 @@ An element's `cluster`, a `CanvasCluster`, places its children as a button clust
 `layout`: the first on a pivot and the rest `radius` dp around it, from `startAngle` and `spacing`
 degrees apart, clockwise from the right. Keep the element big enough to hold the arc.
 
+`CanvasOverlay(controls = CanvasControls(...), inputDevice = ...)` shows touch-only elements by
+`touchVisibility`: `Auto` follows the `InputDevice` the host last saw, from core:input's
+`InputDeviceTracker`, so touch controls show after a touch and hide after a controller, a key or the
+mouse. A control hidden mid-press lets go of its pointer. `minTouchSize`, 44 dp by default, widens a
+small control's touch target.
+
 Each stick, action button and look area follows only the pointers that landed on it first, so one thumb steers while another
 presses buttons, and a second thumb landing on the stick does not take it.

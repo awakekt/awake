@@ -147,25 +147,30 @@ internal class CanvasStick(private val clock: () -> TimeSource) {
  * ignores every other pointer until that one lifts: a second thumb on a button never moves the stick,
  * and a thumb on the stick never presses a button.
  */
-internal fun Modifier.stickInput(element: CanvasElement, density: Float): Modifier = this then StickInputElement(element, density)
+internal fun Modifier.stickInput(element: CanvasElement, density: Float, margin: Int = 0): Modifier =
+    this then StickInputElement(element, density, margin)
 
 private class StickInputElement(
     private val element: CanvasElement,
     private val density: Float,
+    private val margin: Int,
 ) : ModifierNodeElement<StickInputNode>() {
-    override fun create(): StickInputNode = StickInputNode(element, density)
+    override fun create(): StickInputNode = StickInputNode(element, density, margin)
 
     override fun update(node: StickInputNode) {
         node.element = element
         node.density = density
+        node.margin = margin
     }
 
     override fun toString(): String = "stickInput()"
 }
 
-private class StickInputNode(var element: CanvasElement, var density: Float) :
+private class StickInputNode(var element: CanvasElement, var density: Float, var margin: Int) :
     Modifier.Node(),
     PointerInputNode {
+    override val hitMarginPx: Int get() = margin
+
     override fun onPointerEvent(event: PointerEvent, pass: PointerEventPass) {
         if (pass != PointerEventPass.Main) return
         val stick = element.stick
@@ -173,7 +178,8 @@ private class StickInputNode(var element: CanvasElement, var density: Float) :
         val px = event.x / density
         val py = event.y / density
         when (event.type) {
-            PointerEventType.Press -> if (event.isInBounds && stick.press(event.pointerId, px, py, element)) {
+            // A press reaches this node only on its box or its touch margin.
+            PointerEventType.Press -> if (stick.press(event.pointerId, px, py, element)) {
                 // Consumed so this node holds the pointer wherever it goes until it lifts.
                 event.consume()
             }

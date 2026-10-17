@@ -2,6 +2,23 @@ public final class com/awakekt/awake/scene/canvas/CanvasBindingKt {
 	public static final fun globalCanvasBindings ()Ljava/util/List;
 }
 
+public final class com/awakekt/awake/scene/canvas/CanvasControlsBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/canvas/CanvasControlsBinding;
+	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/canvas/SceneCanvasControls;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public synthetic fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun canResolve (Lcom/awakekt/awake/scene/document/SceneComponent;)Z
+	public fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/ui/canvas/CanvasControls;)Lcom/awakekt/awake/scene/canvas/SceneCanvasControls;
+	public synthetic fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/canvas/SceneCanvasControls;
+	public synthetic fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun getComponentClass ()Lkotlin/reflect/KClass;
+	public fun getSchemaClass ()Lkotlin/reflect/KClass;
+	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+	public final fun toComponent (Lcom/awakekt/awake/scene/canvas/SceneCanvasControls;)Lcom/awakekt/awake/ui/canvas/CanvasControls;
+	public final fun toSceneComponent (Lcom/awakekt/awake/ui/canvas/CanvasControls;)Lcom/awakekt/awake/scene/canvas/SceneCanvasControls;
+}
+
 public final class com/awakekt/awake/scene/canvas/CanvasElementBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
 	public static final field INSTANCE Lcom/awakekt/awake/scene/canvas/CanvasElementBinding;
 	public final fun applyTo (Lcom/awakekt/awake/scene/canvas/SceneCanvasElement;Lcom/awakekt/awake/ui/canvas/CanvasElement;)V
@@ -143,6 +160,44 @@ public final class com/awakekt/awake/scene/canvas/CanvasScalerBinding : com/awak
 
 public abstract interface class com/awakekt/awake/scene/canvas/CanvasViews {
 	public abstract fun texture-8mtA4i0 (Lcom/awakekt/awake/ui/canvas/CanvasElement;JII)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/scene/canvas/SceneCanvasControls : com/awakekt/awake/scene/document/SceneComponent {
+	public static final field Companion Lcom/awakekt/awake/scene/canvas/SceneCanvasControls$Companion;
+	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/ui/canvas/CanvasTouchVisibility;F)V
+	public synthetic fun <init> (Lcom/awakekt/awake/ui/canvas/CanvasTouchVisibility;FILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/ui/canvas/CanvasTouchVisibility;
+	public final fun component2 ()F
+	public final fun copy (Lcom/awakekt/awake/ui/canvas/CanvasTouchVisibility;F)Lcom/awakekt/awake/scene/canvas/SceneCanvasControls;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/canvas/SceneCanvasControls;Lcom/awakekt/awake/ui/canvas/CanvasTouchVisibility;FILjava/lang/Object;)Lcom/awakekt/awake/scene/canvas/SceneCanvasControls;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAllowsMultiplePerNode ()Z
+	public final fun getMinTouchSize ()F
+	public final fun getTouchVisibility ()Lcom/awakekt/awake/ui/canvas/CanvasTouchVisibility;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+	public fun validate (Ljava/lang/String;)Ljava/util/List;
+	public fun validate (Ljava/lang/String;Ljava/util/List;)Ljava/util/List;
+}
+
+public final synthetic class com/awakekt/awake/scene/canvas/SceneCanvasControls$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/canvas/SceneCanvasControls$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/canvas/SceneCanvasControls;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/canvas/SceneCanvasControls;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/canvas/SceneCanvasControls$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/canvas/SceneCanvasControlsKt {
+	public static final fun canvasControls (Lcom/awakekt/awake/ecs/World;)Lcom/awakekt/awake/ui/canvas/CanvasControls;
 }
 
 public final class com/awakekt/awake/scene/canvas/SceneCanvasElement : com/awakekt/awake/scene/document/SceneComponent {
@@ -346,8 +401,8 @@ public final class com/awakekt/awake/scene/canvas/SceneCanvasFollowOcclusionKt {
 }
 
 public final class com/awakekt/awake/scene/canvas/SceneCanvasKt {
-	public static final fun SceneCanvas (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/compose/ui/Modifier;ZLjava/util/Map;FLcom/awakekt/awake/scene/canvas/CanvasProjector;Ljava/util/List;Lcom/awakekt/awake/scene/canvas/CanvasViews;Ljava/util/Map;Ljava/util/Comparator;Lcom/awakekt/awake/core/localization/Strings;Lcom/awakekt/awake/ui/canvas/CanvasInsets;Lcom/awakekt/awake/ui/canvas/CanvasScaler;Ljava/util/List;F)V
-	public static synthetic fun SceneCanvas$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/compose/ui/Modifier;ZLjava/util/Map;FLcom/awakekt/awake/scene/canvas/CanvasProjector;Ljava/util/List;Lcom/awakekt/awake/scene/canvas/CanvasViews;Ljava/util/Map;Ljava/util/Comparator;Lcom/awakekt/awake/core/localization/Strings;Lcom/awakekt/awake/ui/canvas/CanvasInsets;Lcom/awakekt/awake/ui/canvas/CanvasScaler;Ljava/util/List;FILjava/lang/Object;)V
+	public static final fun SceneCanvas (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/compose/ui/Modifier;ZLjava/util/Map;FLcom/awakekt/awake/scene/canvas/CanvasProjector;Ljava/util/List;Lcom/awakekt/awake/scene/canvas/CanvasViews;Ljava/util/Map;Ljava/util/Comparator;Lcom/awakekt/awake/core/localization/Strings;Lcom/awakekt/awake/ui/canvas/CanvasInsets;Lcom/awakekt/awake/ui/canvas/CanvasScaler;Ljava/util/List;FLcom/awakekt/awake/ui/canvas/CanvasControls;Lcom/awakekt/awake/core/input/InputDevice;)V
+	public static synthetic fun SceneCanvas$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/compose/ui/Modifier;ZLjava/util/Map;FLcom/awakekt/awake/scene/canvas/CanvasProjector;Ljava/util/List;Lcom/awakekt/awake/scene/canvas/CanvasViews;Ljava/util/Map;Ljava/util/Comparator;Lcom/awakekt/awake/core/localization/Strings;Lcom/awakekt/awake/ui/canvas/CanvasInsets;Lcom/awakekt/awake/ui/canvas/CanvasScaler;Ljava/util/List;FLcom/awakekt/awake/ui/canvas/CanvasControls;Lcom/awakekt/awake/core/input/InputDevice;ILjava/lang/Object;)V
 }
 
 public final class com/awakekt/awake/scene/canvas/SceneCanvasOrderKt {

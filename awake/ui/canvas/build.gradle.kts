@@ -26,11 +26,12 @@ kotlin {
             api(project(":awake:core:text"))
             api(project(":awake:core:schema"))
             api(project(":awake:core:localization"))
+            // A canvas's touch controls show by the device last used, which callers pass in.
+            api(project(":awake:core:input"))
             api(libs.kotlinx.serialization.json)
             implementation(project(":awake:compose:foundation"))
             implementation(project(":awake:core:color"))
             implementation(project(":awake:core:graphics2d"))
-            implementation(project(":awake:core:input"))
             implementation(project(":awake:core:logging"))
         }
         commonTest.dependencies {

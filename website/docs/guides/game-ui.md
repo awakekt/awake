@@ -169,6 +169,26 @@ main button, on a pivot, and the rest on an arc around it, angles clockwise from
 Keep the element big enough to hold the arc: a child outside its parent's box is drawn but may not
 take a touch.
 
+### Show touch controls by input
+
+A scene's `canvas_controls` decides when its `touchOnly` elements show, for every control at once:
+
+```json
+{ "component": "canvas_controls", "touchVisibility": "Auto", "minTouchSize": 44 }
+```
+
+`Auto` shows them once a finger touches the screen and hides them once a controller, a key or the
+mouse is used, switching live, so one build serves a phone, a tablet with a keyboard, and a desktop
+with a controller. Until any is used it does what the host says. `Always` and `Never` override the
+host. A control hidden mid-press lets go of its pointer, so a stick never stays deflected while it
+cannot be seen. `minTouchSize` keeps small controls easy to hit: a button drawn smaller than it takes
+a touch up to that size around its centre. `SceneAppLifecycleRuntime.lastInputDevice` says which
+device the player last used.
+
+Every stick, action button and look area follows only the pointers that landed on it first, so a
+thumb steering a stick, another pressing a button and a third turning the camera never take each
+other's touches.
+
 ### Drag to aim
 
 Add `aim` to a button's settings and a drag away from it aims, then letting go fires `action` with

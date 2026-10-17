@@ -401,6 +401,28 @@ public final class com/awakekt/awake/core/input/InputControl$Pointer : com/awake
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/core/input/InputDevice : java/lang/Enum {
+	public static final field Controller Lcom/awakekt/awake/core/input/InputDevice;
+	public static final field KeyboardMouse Lcom/awakekt/awake/core/input/InputDevice;
+	public static final field Touch Lcom/awakekt/awake/core/input/InputDevice;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/core/input/InputDevice;
+	public static fun values ()[Lcom/awakekt/awake/core/input/InputDevice;
+}
+
+public final class com/awakekt/awake/core/input/InputDeviceTracker {
+	public static final field Companion Lcom/awakekt/awake/core/input/InputDeviceTracker$Companion;
+	public static final field DEFAULT_MOUSE_MOVE_SLOP F
+	public fun <init> ()V
+	public fun <init> (F)V
+	public synthetic fun <init> (FILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getLast ()Lcom/awakekt/awake/core/input/InputDevice;
+	public final fun observe (Lcom/awakekt/awake/core/input/InputSnapshot;)Lcom/awakekt/awake/core/input/InputDevice;
+}
+
+public final class com/awakekt/awake/core/input/InputDeviceTracker$Companion {
+}
+
 public final class com/awakekt/awake/core/input/InputSnapshot : com/awakekt/awake/core/input/ActionInputSource {
 	public fun <init> (FFZFFLjava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/lang/String;Ljava/util/List;ZZZLcom/awakekt/awake/core/input/ImeComposition;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Lcom/awakekt/awake/core/input/ScrollSource;Ljava/util/List;Ljava/util/List;ZLcom/awakekt/awake/core/input/PinchGesture;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;)V
 	public synthetic fun <init> (FFZFFLjava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/lang/String;Ljava/util/List;ZZZLcom/awakekt/awake/core/input/ImeComposition;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Lcom/awakekt/awake/core/input/ScrollSource;Ljava/util/List;Ljava/util/List;ZLcom/awakekt/awake/core/input/PinchGesture;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;ILkotlin/jvm/internal/DefaultConstructorMarker;)V

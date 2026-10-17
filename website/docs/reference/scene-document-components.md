@@ -19,6 +19,7 @@ registers it.
 | [`blueprint`](#blueprint) | `BlueprintComponent` | `com.awakekt.awake.scene:blueprint` | `registerBlueprints()` | — |
 | [`camera`](#camera) | `Camera` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Cameras](../guides/cameras-and-controls.md) |
 | [`camera_rig`](#camera_rig) | `CameraRig` | `com.awakekt.awake.scene:controls` | `registerControls()` | [Cameras](../guides/cameras-and-controls.md) |
+| [`canvas_controls`](#canvas_controls) | `CanvasControls` | `com.awakekt.awake.scene:canvas` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md#show-touch-controls-by-input) |
 | [`canvas_element`](#canvas_element) | `CanvasElement` | `com.awakekt.awake.scene:canvas` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md) |
 | [`canvas_follow_limit`](#canvas_follow_limit) | `CanvasFollowLimit` | `com.awakekt.awake.scene:canvas` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md#many-followers) |
 | [`canvas_follow_occlusion`](#canvas_follow_occlusion) | `CanvasFollowOcclusion` | `com.awakekt.awake.scene:canvas` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md#occlusion) |
@@ -63,7 +64,7 @@ registers it.
 | Call | Module | Registers |
 | --- | --- | --- |
 | Built in | `com.awakekt.awake.scene:document` | `custom`, `prefab_link` |
-| `DefaultSceneComponentResolvers.install()` | `com.awakekt.awake.scene:runtime` | `ambient_light`, `camera`, `canvas_element`, `canvas_follow_limit`, `canvas_follow_occlusion`, `canvas_scaler`, `day_cycle`, `fog`, `keyframe_animation`, `light`, `locomotion_animation`, `mesh_renderer`, `particle_emitter`, `pbr_material`, `shader_effect`, `skybox`, `spin_control`, `static_transform`, `tag`, `terrain`, `tone_mapping`. `SceneManager` and `SceneAppLifecycleRuntime` call it for you. |
+| `DefaultSceneComponentResolvers.install()` | `com.awakekt.awake.scene:runtime` | `ambient_light`, `camera`, `canvas_controls`, `canvas_element`, `canvas_follow_limit`, `canvas_follow_occlusion`, `canvas_scaler`, `day_cycle`, `fog`, `keyframe_animation`, `light`, `locomotion_animation`, `mesh_renderer`, `particle_emitter`, `pbr_material`, `shader_effect`, `skybox`, `spin_control`, `static_transform`, `tag`, `terrain`, `tone_mapping`. `SceneManager` and `SceneAppLifecycleRuntime` call it for you. |
 | `SceneComponentRegistry.registerControls()` | `com.awakekt.awake.scene:controls` | `movement_control`, `camera_rig`, `input_actions` |
 | `SceneComponentRegistry.registerPhysics()` | `com.awakekt.awake.scene:physics` | `physics_body` |
 | `SceneComponentRegistry.registerCharacter()` | `com.awakekt.awake.scene:character` | `character_controller` |
@@ -151,6 +152,16 @@ How a camera follows or orbits. `SceneCameraRig`.
 | `yaw` | number | `0` | Yaw in radians. |
 | `offset` | vector | `{x: 0, y: 1.8, z: 0}` | Aim point relative to the target, or the pivot when there is none. |
 | `flySpeed` | number | `10` | Speed in `FreeFly` mode. Above 0. |
+
+## `canvas_controls`
+
+What every on-screen control on the scene's canvas shares. A scene has one, on any node; without one,
+touch controls show as the host says. `SceneCanvasControls`, saved from the live `CanvasControls`.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `touchVisibility` | `Host` · `Auto` · `Always` · `Never` | `Host` | When `touchOnly` elements show. `Host` as the host says; `Auto` once a finger touches the screen, and hidden once a controller, a key or the mouse is used, switching live, as the host says until any is used; `Always`; `Never`. A control hidden mid-press lets go of its pointer. |
+| `minTouchSize` | number | `44` | The smallest a stick, action button or look area is to a thumb, in dp: one drawn smaller takes a touch up to this size around its centre. `0` takes touches only on what is drawn. Not negative. |
 
 ## `canvas_element`
 

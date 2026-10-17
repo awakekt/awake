@@ -116,6 +116,17 @@ internal class CanvasButtonPress {
         if (over && settings.trigger == CanvasButtonTrigger.Tap && !longTaken) element.press()
     }
 
+    /** Lets go of [element]'s pointer without reporting anything, as when the button stops being drawn mid-press. */
+    fun cancel(element: CanvasElement) {
+        if (pointer == null) return
+        pointer = null
+        since = null
+        cancelling = false
+        cancelBounds = null
+        if (live) element.interactions.tryEmit(Interaction.Press.Cancel(Interaction.Press.Press))
+        live = false
+    }
+
     /** How long the live press has been held, in seconds; 0 while there is none. */
     fun heldSeconds(): Float = if (live) since?.elapsedNow()?.inWholeMicroseconds?.let { it / MICROS } ?: 0f else 0f
 
@@ -139,33 +150,49 @@ internal class CanvasButtonPress {
  * until that one lifts. A press on a button that cannot be used is still taken, so it does not fall
  * through to what is under it, but reports nothing.
  */
-internal fun Modifier.buttonInput(element: CanvasElement, density: Float): Modifier = this then ButtonInputElement(element, density)
+internal fun Modifier.buttonInput(element: CanvasElement, density: Float, margin: Int = 0): Modifier =
+    this then ButtonInputElement(element, density, margin)
 
-private class ButtonInputElement(private val element: CanvasElement, private val density: Float) : ModifierNodeElement<ButtonInputNode>() {
-    override fun create(): ButtonInputNode = ButtonInputNode(element, density)
+private class ButtonInputElement(
+    private val element: CanvasElement,
+    private val density: Float,
+    private val margin: Int,
+) : ModifierNodeElement<ButtonInputNode>() {
+    override fun create(): ButtonInputNode = ButtonInputNode(element, density, margin)
 
     override fun update(node: ButtonInputNode) {
         node.element = element
         node.density = density
+        node.margin = margin
     }
 
     override fun toString(): String = "buttonInput()"
 }
 
-private class ButtonInputNode(var element: CanvasElement, var density: Float) :
+private class ButtonInputNode(var element: CanvasElement, var density: Float, var margin: Int) :
     Modifier.Node(),
     PointerInputNode {
+    override val hitMarginPx: Int get() = margin
+
+    /** Whether [event] is over the button or its touch margin. */
+    private fun over(event: PointerEvent): Boolean {
+        val right = element.width * density + margin
+        val bottom = element.height * density + margin
+        return event.isInBounds || event.x >= -margin && event.y >= -margin && event.x <= right && event.y <= bottom
+    }
+
     override fun onPointerEvent(event: PointerEvent, pass: PointerEventPass) {
         if (pass != PointerEventPass.Main) return
         val state = element.buttonPress
         when (event.type) {
-            PointerEventType.Press -> if (event.isInBounds && state.press(event.pointerId, event.x / density, event.y / density, element)) event.consume()
+            // A press reaches this node only on its box or its touch margin.
+            PointerEventType.Press -> if (state.press(event.pointerId, event.x / density, event.y / density, element)) event.consume()
             PointerEventType.Move -> if (event.pointerId == state.pointer) {
                 state.drag(element, event.x / density, event.y / density)
                 event.consume()
             }
             PointerEventType.Release -> if (event.pointerId == state.pointer) {
-                state.release(element, event.isInBounds)
+                state.release(element, over(event))
                 event.consume()
             }
             else -> Unit
