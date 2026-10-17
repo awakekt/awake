@@ -92,7 +92,7 @@ class RangeAnnotationsAreEnforcedTest {
             val empty = JsonObject(emptyMap())
             val state = JsonObject(mapOf("image" to image))
             JsonObject(
-                base + ("layout" to empty) + ("followRules" to empty) + ("joystick" to empty) + ("button" to JsonObject(mapOf("aim" to JsonObject(mapOf("cancel" to empty))))) + (
+                base + ("layout" to empty) + ("followRules" to empty) + ("joystick" to empty) + ("look" to empty) + ("cluster" to empty) + ("button" to JsonObject(mapOf("aim" to JsonObject(mapOf("cancel" to empty))))) + (
                     "style" to JsonObject(
                         mapOf(
                             "image" to image,
