@@ -63,8 +63,8 @@ public final class com/awakekt/awake/scene/binding/SceneNodeInstance {
 }
 
 public final class com/awakekt/awake/scene/binding/SceneWorldExportKt {
-	public static final fun fromWorld (Lcom/awakekt/awake/scene/document/SceneLoader;Lcom/awakekt/awake/ecs/World;Ljava/lang/String;Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/scene/document/SceneDocument;
-	public static synthetic fun fromWorld$default (Lcom/awakekt/awake/scene/document/SceneLoader;Lcom/awakekt/awake/ecs/World;Ljava/lang/String;Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneDocument;
+	public static final fun fromWorld (Lcom/awakekt/awake/scene/document/SceneLoader;Lcom/awakekt/awake/ecs/World;Ljava/lang/String;Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;Lkotlin/jvm/functions/Function1;Ljava/util/Comparator;)Lcom/awakekt/awake/scene/document/SceneDocument;
+	public static synthetic fun fromWorld$default (Lcom/awakekt/awake/scene/document/SceneLoader;Lcom/awakekt/awake/ecs/World;Ljava/lang/String;Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;Lkotlin/jvm/functions/Function1;Ljava/util/Comparator;ILjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneDocument;
 	public static final fun toSceneTransform (Lcom/awakekt/awake/scene/core/transform/Transform;)Lcom/awakekt/awake/scene/document/SceneTransform;
 	public static final fun toSceneVec3 (Lcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/scene/document/SceneVec3;
 }
