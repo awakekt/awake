@@ -8,6 +8,7 @@ package com.awakekt.awake.render.passes.sprites
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.geometry.MeshGeometry
 import com.awakekt.awake.core.geometry.VertexFormat
+import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
@@ -54,7 +55,12 @@ data class SpriteDrawInput(
  * @param resolveTexture The decoded pixels of a named sheet, asked for when a sprite using it is
  * first drawn; null while they are not available, such as a file still loading or one that failed
  * to. A sprite whose sheet is null draws nothing that frame, and the sheet is asked for again on
- * the next, so it draws from the frame its pixels arrive. Once given, a sheet is uploaded and kept.
+ * the next, so it draws from the frame its pixels arrive. Once given, a sheet is uploaded and kept
+ * until [forgetTexture] or [forgetTextures] lets go of it.
+ *
+ * A sprite whose sheet does not divide into its columns and rows of whole pixels, an authoring mistake
+ * a file-backed sheet first shows at run time, is not drawn; this is logged once for each sheet, and
+ * the other sprites go on drawing.
  */
 class SpriteRenderBatch(
     private val renderer: Renderer,
@@ -63,12 +69,24 @@ class SpriteRenderBatch(
     private var mesh: Mesh? = null
     private val sheets = mutableMapOf<String, Sheet>()
 
+    // The sheets already reported as not dividing into a sprite's cells, so each is logged once.
+    private val undivided = mutableSetOf<String>()
+
     /**
      * Draw requests retain input order; the shared pass sorts by paint order, then camera depth. A
-     * sprite whose sheet is not available yet has no request.
+     * sprite whose sheet is not available yet, or does not divide into its cells, has no request.
      */
     fun collect(inputs: List<SpriteDrawInput>): List<RenderDrawCommand> = inputs.mapNotNull { input ->
         val sheet = sheets[input.texture] ?: upload(input) ?: return@mapNotNull null
+        if (!sheet.dividesInto(input)) {
+            if (undivided.add(input.texture)) {
+                log.error {
+                    "Sprite sheet '${input.texture}' is ${sheet.width}x${sheet.height} pixels, which cannot be divided into " +
+                        "${input.columns}x${input.rows} equal cells. Sprites that use it with that grid are not drawn."
+                }
+            }
+            return@mapNotNull null
+        }
         val quad = mesh ?: renderer.createMesh(SpriteQuadGeometry).also { mesh = it }
         RenderDrawCommand(
             mesh = quad,
@@ -83,10 +101,30 @@ class SpriteRenderBatch(
     /** The sheet [input] names, uploaded and kept, or null when its pixels are not available yet. */
     private fun upload(input: SpriteDrawInput): Sheet? {
         val image = resolveTexture(input.texture) ?: return null
-        validateSheet(input, image.width, image.height)
         require(image.layerCount == 1 && !image.isCubemap) { "A sprite sheet must be a single 2D image." }
         val material = renderer.createMaterial(SpriteUniformLayout, texture = image.copy(filtering = TextureFiltering.Nearest))
         return Sheet(image.width, image.height, material).also { sheets[input.texture] = it }
+    }
+
+    /**
+     * Destroys the material uploaded from the sheet [name], so the next [collect] that draws it asks
+     * [resolveTexture] for it again: how a sheet whose file changed is drawn again. Waits for the GPU to
+     * finish with it first. A sheet that is not uploaded is only asked for again.
+     */
+    fun forgetTexture(name: String) {
+        undivided.remove(name)
+        val sheet = sheets.remove(name) ?: return
+        renderer.waitIdle()
+        sheet.material.destroy()
+    }
+
+    /** [forgetTexture] for every sheet. The shared quad is kept. */
+    fun forgetTextures() {
+        undivided.clear()
+        if (sheets.isEmpty()) return
+        renderer.waitIdle()
+        sheets.values.forEach { it.material.destroy() }
+        sheets.clear()
     }
 
     /** Idempotent teardown of the GPU mesh and material buffers owned by this batch. */
@@ -95,10 +133,21 @@ class SpriteRenderBatch(
         mesh = null
         sheets.values.forEach { it.material.destroy() }
         sheets.clear()
+        undivided.clear()
     }
 
-    private data class Sheet(val width: Int, val height: Int, val material: Material)
+    private data class Sheet(val width: Int, val height: Int, val material: Material) {
+        fun dividesInto(input: SpriteDrawInput): Boolean = dividesIntoCells(width, height, input.columns, input.rows)
+    }
 }
+
+/**
+ * Whether a [width] by [height] image divides into [columns] by [rows] cells of whole pixels. A grid
+ * that is not positive is the caller's own mistake, which the sprite and atlas checks report, so it
+ * passes here.
+ */
+internal fun dividesIntoCells(width: Int, height: Int, columns: Int, rows: Int): Boolean =
+    columns <= 0 || rows <= 0 || (width > 0 && height > 0 && width % columns == 0 && height % rows == 0)
 
 /** Unit XY quad matching Awake's bottom-up decoded pixels; frame changes require no mesh uploads. */
 val SpriteQuadGeometry = MeshGeometry(
@@ -146,3 +195,5 @@ private fun validateSheet(input: SpriteDrawInput, width: Int, height: Int) {
         "Sprite sheet ${width}x$height cannot be divided into ${input.columns}x${input.rows} equal pixel cells."
     }
 }
+
+private val log = Logger("sprites")
