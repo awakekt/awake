@@ -188,10 +188,11 @@ internal class ProjectSceneRunner(private val project: LoadedProject) : SceneSwi
         leaving.close()
     }
 
-    /** What every scene does once its entities are in: its canvas images and fonts, its camera and its skinned clips. */
+    /** What every scene does once its entities are in: its canvas images, fonts and strings, its camera and its skinned clips. */
     private fun begin() {
         runtime.canvasImages = project.content[CoreSceneContent.CanvasImages].orEmpty()
         runtime.canvasFonts = project.content[CoreSceneContent.CanvasFonts].orEmpty()
+        runtime.canvasStrings = project.strings
         activatePrimaryCamera(runtime.world)
         runtime.startSkinnedAnimations(project.models)
     }

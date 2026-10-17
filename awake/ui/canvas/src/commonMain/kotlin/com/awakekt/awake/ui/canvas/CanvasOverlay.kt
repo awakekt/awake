@@ -50,6 +50,7 @@ import com.awakekt.awake.compose.ui.semantics.testTag
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.drawPath
+import com.awakekt.awake.core.localization.Strings
 import com.awakekt.awake.core.math2d.Rectangle
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.core.text.theme.TextStyle
@@ -78,6 +79,9 @@ context(_: Composer)
  *   and a [CanvasElement.bind]'s field text. Without it, none of those three draw.
  * @param fonts The loaded font files elements name in [CanvasElement.font], by path. An element
  *   whose file is missing draws in the default font.
+ * @param strings The text a [CanvasElement.textKey] names, in the active locale; the frame after
+ *   [Strings.setLocale] switches, keyed elements show the new locale's text. Without it, a keyed
+ *   element shows its key.
  */
 fun CanvasOverlay(
     items: List<CanvasItem>,
@@ -87,9 +91,10 @@ fun CanvasOverlay(
     scale: Float = 1f,
     resolver: CanvasResolver = CanvasResolver.None,
     fonts: Map<String, UiFont> = emptyMap(),
+    strings: Strings? = null,
 ) {
     val origin = remember { CanvasOrigin() }
-    val tree = CanvasTree(items, showTouchControls, images, resolver, origin, fonts)
+    val tree = CanvasTree(items, showTouchControls, images, resolver, origin, fonts, strings)
     val uiScale = if (scale > 0f && scale.isFinite()) scale else 1f
     Box(modifier.fillMaxSize()) {
         // The box the elements are placed in, inside any padding the host's modifier adds: where it

@@ -41,6 +41,7 @@ kotlin {
             api(project(":awake:engine:platform"))
             api(project(":awake:engine:compose"))
             api(project(":awake:core:text"))
+            api(project(":awake:core:localization"))
             // The compose engine, which the overlay composes into.
             api(project(":awake:compose:ui"))
             api(project(":awake:engine:render:contract"))

@@ -8,6 +8,10 @@ package com.awakekt.awake.project.runtime
 import com.awakekt.awake.core.audio.AudioPlayer
 import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.io.AssetSource
+import com.awakekt.awake.core.localization.LocaleId
+import com.awakekt.awake.core.localization.StringTableSource
+import com.awakekt.awake.core.localization.Strings
+import com.awakekt.awake.core.localization.systemLocale
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.Entity
@@ -51,6 +55,11 @@ const val PROJECT_MANIFEST = "awake.project.json"
  * scene the same way.
  * @property physicsWorld Makes the physics world of a scene that has bodies or characters, for the
  * entry scene and for each scene a switch plays.
+ * @property strings The project's text by key, from its `strings/<locale>.json` tables, in the
+ * device's locale; null when the project has no table for the default locale, English
+ * (`strings/en.json`). Every scene it plays shows its keyed canvas text from these. A settings
+ * screen switches language with [Strings.setLocale]: only the new locale's table is read, and keyed
+ * text changes on the next frame. Game code and plugins look keys up here too.
  */
 class LoadedProject internal constructor(
     val manifest: AwakeProjectManifest,
@@ -60,6 +69,7 @@ class LoadedProject internal constructor(
     internal val files: AssetSource,
     internal val hasRenderer: Boolean = true,
     internal val physicsWorld: (suspend () -> PhysicsWorld)? = null,
+    val strings: Strings? = null,
 ) : AutoCloseable {
     /** The scene playing now, which a switch replaces on the frame thread. */
     internal var playing: ProjectScene = entry
@@ -157,8 +167,20 @@ private suspend fun loadProjectInto(
     requireRequiredPlugins(manifest, installed)
 
     if (registry == null) installProjectComponents(capabilities) else registry.registerProjectComponents(capabilities)
+    val strings = loadProjectStrings(files)
     val entry = loadProjectScene(manifest.entryScene, manifest, files, registry, installed, hasRenderer, physicsWorld)
-    return LoadedProject(manifest, entry, capabilities, registry, files, hasRenderer, physicsWorld)
+    return LoadedProject(manifest, entry, capabilities, registry, files, hasRenderer, physicsWorld, strings)
+}
+
+/**
+ * The project's `strings/` tables, in the device's locale, read through [files] as the rest of its
+ * content is; null when it has no table for the default locale. Only the active locale's table and
+ * the default's are read now, and another's when a switch asks for it.
+ */
+internal suspend fun loadProjectStrings(files: AssetSource): Strings? {
+    val defaultTable = AssetPath("${StringTableSource.DEFAULT_DIRECTORY}/${LocaleId.English.tag}.json")
+    if (!files.exists(defaultTable)) return null
+    return Strings.load(StringTableSource.assets(files), locale = systemLocale(), defaultLocale = LocaleId.English)
 }
 
 /**

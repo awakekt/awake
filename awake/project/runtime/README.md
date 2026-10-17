@@ -28,6 +28,7 @@ Core's capabilities decide what runs, each for the components it owns:
 | `movement_control`, `input_actions` | `PlayerInputSystem`: the keys and pointer buttons into the scene's input actions, which a player's `movement_control` follows (`move`, `jump`, `run`); moved by physics with `character_controller`, straight through the world without |
 | `canvas_element` with an `action` | `CanvasActionSystem`: an element naming one of the scene's input actions adds to it, so a `move` Joystick steers, a `jump` Button jumps and a `run` Button runs as the keys do |
 | `canvas_element` with a `style` image | Nothing runs: `loadProject` decodes the images, under `CoreSceneContent.CanvasImages`, and `runProject` gives them to the runtime that draws the canvas. With `hasRenderer = false` it only checks that they resolve |
+| `canvas_element` with a `textKey` | Nothing runs: `loadProject` loads the project's `strings/` tables (`LoadedProject.strings`), in the device's locale and the default, English, and `runProject` gives them to the runtime, which shows each key's text and the new locale's the frame after `setLocale`. A project with no `strings/en.json` has none, and its keys show as they are |
 | `camera_rig` | `CameraSystem` |
 | `paged_terrain` | On the fixed step, before physics: its cells streamed around the primary camera from the page index `loadProject` read, drawn as one clipmap (with terrain layers when the index names a palette), and static collision cells near the camera when it is a `collider` and the host gives a physics world. A scene streams one |
 | `terrain` | With a renderer, `TerrainContentSystem` draws it: with the surface its `surface` names, from the providers under `CoreSceneContent.TerrainSurfaces` (a project's content holds the layered-terrain kit's, `awake.terrain.layers`), or with the built-in terrain shading. Closing the scene's systems detaches it |
@@ -75,7 +76,7 @@ the switch.
   them, and whatever else joined the scene: a fallback camera, what its systems made), its meshes
   and materials are given back to the asset library, and its physics world is destroyed.
 - **What comes.** The next scene's entities, the systems its components call for (planned through the
-  same capabilities, Core's then the game's), its canvas images and its primary camera.
+  same capabilities, Core's then the game's), its canvas images and its primary camera. The project's strings stay the same across scenes, in the locale last set.
 - **What carries across.** Nothing of the scene: positions, variables, scores and spawned nodes start
   over. The app does: the renderer, the UI, the touch-controls setting, the platform's audio player,
   and a mesh both scenes draw, which stays loaded. A game that keeps something across scenes keeps it

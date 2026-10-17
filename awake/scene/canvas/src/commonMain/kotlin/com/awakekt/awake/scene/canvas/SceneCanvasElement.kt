@@ -86,6 +86,13 @@ import kotlinx.serialization.Serializable
  * at all.
  * @property maxLengthUnit What [maxLength] counts: `Graphemes`, the characters a player sees, or
  * `CodePoints` or `Utf8Bytes` to match a server's limit.
+ * @property textKey The key of a Text's or Button's words in the project's string tables,
+ * `strings/<locale>.json`, such as `hud.greeting`; empty shows [text]. The words are the key's text
+ * in the active locale, and change when it does. A key no table has shows as the key and is logged
+ * once.
+ * @property textArgs Values for [textKey]'s placeholders, by name, such as `"count": "3"`. A value
+ * the game sets at runtime comes from a field instead, through [bind]'s
+ * [textArgs][CanvasBinding.textArgs], and takes the place of the one here.
  */
 @Serializable
 @SerialName("canvas_element")
@@ -125,6 +132,8 @@ data class SceneCanvasElement(
     val pressable: Boolean = false,
     @PropertyRange(min = 0.0) val maxLength: Int = 0,
     val maxLengthUnit: TextLengthUnit = TextLengthUnit.Graphemes,
+    val textKey: String = "",
+    val textArgs: Map<String, String> = emptyMap(),
 ) : SceneComponent {
     /**
      * Validates element dimensions, font sizes, values, and hex color syntax.
@@ -158,5 +167,14 @@ data class SceneCanvasElement(
         "pressable makes an Image or a Panel pressable; a Button always is".takeIf {
             pressable && kind != CanvasElementKind.Image && kind != CanvasElementKind.Panel
         },
+        "textKey only sets a Text's or a Button's words".takeIf {
+            textKey.isNotEmpty() && kind != CanvasElementKind.Text && kind != CanvasElementKind.Button
+        },
+        "textKey and text both set the words; keep one".takeIf { textKey.isNotEmpty() && text.isNotEmpty() },
+        "textKey and bind.text both set the words; keep one".takeIf { textKey.isNotEmpty() && !bind?.text.isNullOrBlank() },
+        "textArgs fill in a textKey's text; set textKey".takeIf {
+            textKey.isEmpty() && (textArgs.isNotEmpty() || !bind?.textArgs.isNullOrEmpty())
+        },
+        "textKey must not be blank".takeIf { textKey.isNotEmpty() && textKey.isBlank() },
     )
 }

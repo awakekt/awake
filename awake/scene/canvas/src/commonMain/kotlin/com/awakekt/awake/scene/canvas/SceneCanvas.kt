@@ -10,6 +10,7 @@ package com.awakekt.awake.scene.canvas
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.graphics.ImageBitmap
+import com.awakekt.awake.core.localization.Strings
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
@@ -53,6 +54,10 @@ context(_: Composer)
  *   its hierarchy lists later draws on top. Siblings it calls equal, and every sibling when it is
  *   null, are ordered as the world stores their `Transform`s: the order [world] saves them in, and
  *   for a loaded scene the order its document lists them.
+ * @param strings The project's text by key, which an element's [CanvasElement.textKey] is looked up
+ *   in, in the active locale; a locale switch shows on the next frame. A played project's are its
+ *   `strings/` tables, which `SceneAppLifecycleRuntime` passes as its `canvasStrings`. Without it,
+ *   a keyed element shows its key.
  */
 fun SceneCanvas(
     world: World,
@@ -65,6 +70,7 @@ fun SceneCanvas(
     views: CanvasViews? = null,
     fonts: Map<String, UiFont> = emptyMap(),
     siblingOrder: Comparator<Entity>? = null,
+    strings: Strings? = null,
 ) {
     CanvasOverlay(
         world.canvasItems(siblingOrder),
@@ -74,5 +80,6 @@ fun SceneCanvas(
         scale,
         SceneCanvasResolver(world, projector, views, bindings),
         fonts,
+        strings,
     )
 }

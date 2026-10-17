@@ -39,6 +39,7 @@ public final class com/awakekt/awake/project/runtime/LoadedProject : java/lang/A
 	public fun close ()V
 	public final fun getManifest ()Lcom/awakekt/awake/project/AwakeProjectManifest;
 	public final fun getScene ()Lcom/awakekt/awake/scene/document/SceneDocument;
+	public final fun getStrings ()Lcom/awakekt/awake/core/localization/Strings;
 }
 
 public final class com/awakekt/awake/project/runtime/ProjectComponentsKt {

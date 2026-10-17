@@ -11,8 +11,9 @@
 </div>
 
 Game data, UI and plugins store keys, such as `quest.harbor.title`, never the text itself. A
-`Strings` turns a key into text in the active locale. Localization is code-only: there is no scene
-document component for it, and AwakeKt Studio has no translations view yet.
+`Strings` turns a key into text in the active locale. A scene's canvas text can show a key with no
+code, and a played project loads its tables itself; see
+[Show a key in a scene](#show-a-key-in-a-scene). AwakeKt Studio has no translations view yet.
 
 ## Write the string tables
 
@@ -104,6 +105,31 @@ for it.
 
 `systemLocale()` reads the device's language: the JVM default on desktop and Android, the first
 preferred language on iOS, and `navigator.language` in the browser.
+
+## Show a key in a scene
+
+A `canvas_element` of kind `Text` or `Button` shows a key's text with `textKey` in place of `text`.
+`textArgs` gives its placeholders values, and a `bind`'s `textArgs` reads one from a component
+field the game sets, such as a count:
+
+```json title="scenes/main.scene.json"
+{ "component": "canvas_element", "textKey": "hud.items", "textArgs": { "name": "Harbor Town" },
+  "bind": { "node": "Player", "textArgs": { "count": "inventory.count" } } }
+```
+
+`loadProject` reads `strings/` through the project's files, the way it reads scenes and assets, so
+the tables are indexed by content hash on the web like any other file. It reads the device's
+locale's table and `strings/en.json`, the default; another locale's table is read only when the game
+switches to it. `LoadedProject.strings` is that `Strings`, and every scene the project plays shows
+its keyed text from it. A settings screen switches language through it:
+
+```kotlin title="Kotlin"
+project.strings?.setLocale(LocaleId.of("ko"))
+```
+
+Keyed text changes on the next frame; the scene keeps playing. A project with no `strings/en.json`
+has no strings, and its keyed elements show their keys. A host that draws the canvas itself passes
+`SceneCanvas(world, strings = …)`. The fields are in [Game UI](game-ui.md#show-text-in-the-players-language).
 
 ## Fonts for other scripts
 

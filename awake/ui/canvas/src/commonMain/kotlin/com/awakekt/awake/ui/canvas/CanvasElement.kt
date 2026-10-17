@@ -123,6 +123,22 @@ class CanvasElement {
     /** Textual content for text displays and button labels. */
     var text: String = ""
 
+    /**
+     * The key of a Text's or Button's words in the project's string tables, such as `hud.greeting`;
+     * empty shows [text]. While it is set, the words are the key's text in the active locale of the
+     * `Strings` [CanvasOverlay] was given, with [textArgs] put into its placeholders, and they change
+     * when the locale does. A key no table has shows as the key and is logged once.
+     */
+    var textKey: String = ""
+
+    /**
+     * Values for [textKey]'s `{name}`, `plural` and `select` placeholders, by name, such as `count`
+     * to `3`; a number placeholder reads a value written as a number. A system sets them from code.
+     * A field [bind] reads into an argument, through [CanvasBinding.textArgs], takes the place of the
+     * value of the same name here.
+     */
+    var textArgs: Map<String, String> = emptyMap()
+
     /** Font size in scale-independent pixels. */
     var fontSize: Float = DEFAULT_FONT_SIZE
 
@@ -177,7 +193,10 @@ class CanvasElement {
     /** In a parent with a layout, this element's share of its line's leftover space. */
     var grow: Float = 0f
 
-    /** Game state the element shows without code; while it reads, it stands in for [value] and [text]. */
+    /**
+     * Game state the element shows without code; while it reads, it stands in for [value] and [text],
+     * and its [CanvasBinding.textArgs] for [textArgs].
+     */
     var bind: CanvasBinding? = null
 
     /**

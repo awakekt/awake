@@ -6,6 +6,8 @@
 package com.awakekt.awake.ui.canvas
 
 import com.awakekt.awake.compose.ui.graphics.ImageBitmap
+import com.awakekt.awake.core.localization.Strings
+import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math2d.Rectangle
 import com.awakekt.awake.core.math2d.Vec2
@@ -61,6 +63,7 @@ internal class CanvasTree(
     val resolver: CanvasResolver,
     val origin: CanvasOrigin = CanvasOrigin(),
     private val fonts: Map<String, UiFont> = emptyMap(),
+    private val strings: Strings? = null,
 ) {
     val roots = ArrayList<CanvasItem>()
     private val children = HashMap<CanvasElement, ArrayList<CanvasItem>>()
@@ -92,10 +95,31 @@ internal class CanvasTree(
         return if (value == null || max == null || max <= 0f) element.value else (value / max).coerceIn(0f, 1f)
     }
 
-    /** An element's words: its binding's text filled in, or its own text when it has none. */
+    /**
+     * An element's words: its key's text in the active locale, else its binding's text filled in, or
+     * its own text when it has neither.
+     */
     fun textOf(element: CanvasElement): String {
-        val bind = element.bind?.takeIf { it.text.isNotBlank() } ?: return element.text
-        return resolver.textField(bind.node, bind.text)
+        val bind = element.bind?.takeIf { it.text.isNotBlank() }
+        return when {
+            element.textKey.isNotEmpty() -> keyedText(element)
+            bind == null -> element.text
+            else -> resolver.textField(bind.node, bind.text)
+        }
+    }
+
+    /** [element]'s [CanvasElement.textKey] in the active locale, with its arguments; the key itself without [strings]. */
+    private fun keyedText(element: CanvasElement): String {
+        val strings = strings ?: return element.textKey.also(::warnNoStrings)
+        return strings.text(element.textKey, argumentsOf(element))
+    }
+
+    /** [element]'s own [CanvasElement.textArgs], with each its binding reads from a field in place of its own. */
+    private fun argumentsOf(element: CanvasElement): Map<String, Any?> {
+        val bind = element.bind?.takeIf { it.textArgs.isNotEmpty() } ?: return element.textArgs
+        val arguments = HashMap<String, Any?>(element.textArgs)
+        for ((name, path) in bind.textArgs) resolver.field(bind.node, path)?.let { arguments[name] = it }
+        return arguments
     }
 
     /**
@@ -147,4 +171,15 @@ private fun CanvasTree.placeOnPoint(element: CanvasElement, node: String, densit
     val x = (point.x - origin.x) / density - column / 2f * element.width + if (column == 2) -element.offsetX else element.offsetX
     val y = (point.y - origin.y) / density - row / 2f * element.height + if (row == 2) -element.offsetY else element.offsetY
     return Rectangle(x, y, element.width, element.height)
+}
+
+private val keyLog = Logger("ui-canvas")
+
+// The keys drawn with no strings to look them up in: as many as the scenes name, so it stays small.
+private val keysWithoutStrings = HashSet<String>()
+
+private fun warnNoStrings(key: String) {
+    if (keysWithoutStrings.add(key)) {
+        keyLog.warn { "A canvas element shows the text key '$key', but the canvas was given no strings to look it up in, so it shows the key" }
+    }
 }
