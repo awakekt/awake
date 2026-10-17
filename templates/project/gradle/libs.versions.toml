@@ -11,10 +11,12 @@ androidx-lifecycle = "2.11.0-beta01"
 androidx-testExt = "1.3.0"
 composeMultiplatform = "1.11.1"
 junit = "4.13.2"
-kotlin = "2.4.10"
+kotlin = "2.4.20"
 kotlin-wrappers = "2026.8.4"
 kotlinx-coroutines = "1.11.0"
 ktor = "3.5.2"
+# Netty 4.2.17.Final fixes CVE-2026-75595 (SNI routing in SslClientHelloHandler); Ktor 3.5.2 brings 4.2.16.
+netty = "4.2.17.Final"
 logback = "1.6.3"
 material3 = "1.11.0-alpha07"
 # Core modules and Vulkan backend use independent version trains. Gradle lines them up on its own:
@@ -49,6 +51,7 @@ kotlinx-coroutinesSwing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-s
 logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 ktor-serverCore = { module = "io.ktor:ktor-server-core-jvm", version.ref = "ktor" }
 ktor-serverNetty = { module = "io.ktor:ktor-server-netty-jvm", version.ref = "ktor" }
+netty-bom = { module = "io.netty:netty-bom", version.ref = "netty" }
 ktor-serverTestHost = { module = "io.ktor:ktor-server-test-host-jvm", version.ref = "ktor" }
 wrappers-browser = { module = "org.jetbrains.kotlin-wrappers:kotlin-browser", version.ref = "kotlin-wrappers" }
 awake-engine-bootstrap = { module = "com.awakekt.awake.engine:bootstrap", version.ref = "awake" }
