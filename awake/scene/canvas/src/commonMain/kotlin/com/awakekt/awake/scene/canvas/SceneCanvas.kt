@@ -8,6 +8,7 @@
 package com.awakekt.awake.scene.canvas
 
 import com.awakekt.awake.compose.runtime.Composer
+import com.awakekt.awake.compose.runtime.remember
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.graphics.ImageBitmap
 import com.awakekt.awake.core.localization.Strings
@@ -88,13 +89,18 @@ fun SceneCanvas(
     followLimits: List<CanvasFollowLimit> = world.canvasFollowLimits(),
     dpi: Float = 0f,
 ) {
+    // Kept from frame to frame: sorting every element and indexing every named node each frame cost
+    // more than drawing a large canvas does.
+    val order = remember(world) { CanvasItemOrder(world) }
+    val named = remember(world) { CanvasNodeNames(world) }
+    named.nextFrame()
     CanvasOverlay(
-        world.canvasItems(siblingOrder),
+        if (siblingOrder == null) order.items() else world.canvasItems(siblingOrder),
         modifier,
         showTouchControls,
         images,
         scale,
-        SceneCanvasResolver(world, projector, views, bindings),
+        SceneCanvasResolver(world, projector, views, bindings, named),
         fonts,
         strings,
         safeArea,
