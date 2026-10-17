@@ -19,6 +19,7 @@ registers it.
 | [`camera`](#camera) | `Camera` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Cameras](../guides/cameras-and-controls.md) |
 | [`camera_rig`](#camera_rig) | `CameraRig` | `com.awakekt.awake.scene:controls` | `registerControls()` | [Cameras](../guides/cameras-and-controls.md) |
 | [`canvas_element`](#canvas_element) | `CanvasElement` | `com.awakekt.awake.scene:canvas` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md) |
+| [`canvas_scaler`](#canvas_scaler) | `CanvasScaler` | `com.awakekt.awake.scene:canvas` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md#scale-with-the-screen) |
 | [`character_controller`](#character_controller) | `CharacterController` | `com.awakekt.awake.scene:character` | `registerCharacter()` | [Character controller](../guides/character-controller.md) |
 | [`chase`](#chase) | `ChaseBehavior` | `com.awakekt.awake.scene:ai` | `registerAiBehaviors()` | [AI](../guides/ai.md) |
 | [`custom`](#custom) | — | `com.awakekt.awake.scene:document` | Built in | [Scene documents](../guides/scene-documents.md) |
@@ -55,7 +56,7 @@ registers it.
 | Call | Module | Registers |
 | --- | --- | --- |
 | Built in | `com.awakekt.awake.scene:document` | `custom`, `prefab_link` |
-| `DefaultSceneComponentResolvers.install()` | `com.awakekt.awake.scene:runtime` | `ambient_light`, `camera`, `canvas_element`, `day_cycle`, `fog`, `keyframe_animation`, `light`, `locomotion_animation`, `mesh_renderer`, `particle_emitter`, `pbr_material`, `shader_effect`, `skybox`, `spin_control`, `static_transform`, `tag`, `terrain`, `tone_mapping`. `SceneManager` and `SceneAppLifecycleRuntime` call it for you. |
+| `DefaultSceneComponentResolvers.install()` | `com.awakekt.awake.scene:runtime` | `ambient_light`, `camera`, `canvas_element`, `canvas_scaler`, `day_cycle`, `fog`, `keyframe_animation`, `light`, `locomotion_animation`, `mesh_renderer`, `particle_emitter`, `pbr_material`, `shader_effect`, `skybox`, `spin_control`, `static_transform`, `tag`, `terrain`, `tone_mapping`. `SceneManager` and `SceneAppLifecycleRuntime` call it for you. |
 | `SceneComponentRegistry.registerControls()` | `com.awakekt.awake.scene:controls` | `movement_control`, `camera_rig`, `input_actions` |
 | `SceneComponentRegistry.registerPhysics()` | `com.awakekt.awake.scene:physics` | `physics_body` |
 | `SceneComponentRegistry.registerCharacter()` | `com.awakekt.awake.scene:character` | `character_controller` |
@@ -158,6 +159,7 @@ Screen-space UI drawn over the game. Sizes and offsets are in dp. `SceneCanvasEl
 | `action` | string | `""` | Name of what the element does for the game, such as `jump`. The game decides what each name means. In a played project, an element naming one of the scene's [input actions](#input_actions) adds to it, and its presses are used up: a Joystick steers an axis such as `move`, and a Button holds and presses a button such as `jump` or `run`. Any other name is left for the game to read. |
 | `doubleAction` | string | `""` | What a Button does when double-clicked: two presses within half a second. The second press also fires `action`. Like `action`, a name among the scene's input actions is pressed, and any other is left for the game to read with `consumeDoublePress()`. |
 | `touchOnly` | boolean | `false` | Draw only where touch controls are shown. |
+| `safeArea` | boolean | `true` | Keep an anchored element on the canvas itself inside the screen's safe area, clear of a notch, rounded corners, a home indicator or overscan: its anchor and offsets are measured from the safe area's edges and centre. `false` measures them from the screen's own edges, for a backdrop that reaches under a notch. An element inside another, or one that follows a node, is placed the same either way. |
 | `style` | object | `{}` | How the element looks beyond its colours, as an AwakeKt Compose `Style`: `background`, `gradient` (`start`, `end`, `horizontal`), `image`, `fillImage`, `fillImageMode`, `cornerRadius`, `borderWidth`, `borderColor`, `shadow` (`color`, `offsetX`, `offsetY`, `blur`, `spread`), `textColor`, `textShadow` (`color`, `offsetX`, `offsetY`), `textOutline` (`color`, `width`), `alpha`, `rotation`, `linkColor`, and `hovered` and `pressed` states for a Button. `image` is an `Image`'s picture, a frame, or a `Bar`'s track; `fillImage` is a `Bar`'s fill, cut at `value` or, with `fillImageMode` `Squeeze`, drawn at the filled width with both end caps kept, or with `fillImageMode` `Sweep`, revealed clockwise from 12 o'clock over the Bar's whole box, like a cooldown overlay -- `fillImage` is optional there, and the colour fill sweeps on its own. Each image is a `CanvasImage`: `path`, a region (`regionX`, `regionY`, `regionWidth`, `regionHeight`), slice insets (`sliceLeft`, `sliceTop`, `sliceRight`, `sliceBottom`), `repeatEdges`, `repeatCenter`, `tint` and `pixelated`. `rotation` turns the element's image, background and content, children included, clockwise about its own centre in degrees; hit-testing still uses the unrotated box. `linkColor` colours a Text's `[[key&#124;shown words]]` spans; unset draws them in a default blue. See [Game UI](../guides/game-ui.md#style-an-element). |
 | `textAlign` | `TopLeft` · `TopCenter` · `TopRight` · `CenterLeft` · `Center` · `CenterRight` · `BottomLeft` · `BottomCenter` · `BottomRight` | none | Where a `Text`'s or `Button`'s text sits in the element. None keeps the kind's own: top-left for a `Text`, centred for a `Button`. |
 | `follow` | string | `""` | The name of a node the element follows on screen. Its `anchor` point stands on the node's projected position, nudged inward by its offsets, and it hides when the node is behind the camera or missing. |
@@ -177,6 +179,25 @@ Screen-space UI drawn over the game. Sizes and offsets are in dp. `SceneCanvasEl
 | `maxLengthUnit` | `Graphemes` · `CodePoints` · `Utf8Bytes` | `Graphemes` | What `maxLength` counts. `Graphemes` are the characters a player sees, so a family emoji is one. Count `CodePoints` or `Utf8Bytes` to match the limit a server stores a line in, so a line the field accepts is never refused or cut there. |
 | `font` | string | `""` | The font a `Text`'s, `TextField`'s or `Button`'s words draw in. A path ending in `.ttf` or `.otf`, any case, names a TrueType or OpenType file from the project's root, loaded once with the scene; one that cannot be read or is not a font is logged once and draws in the default font. Any other value names a built-in family: `default` (Roboto) or `bitmap` (a fixed-pitch pixel font). Empty draws in the default font. Another name, or a path with another extension, is reported. See [Game UI](../guides/game-ui.md#use-a-font). |
 | `pressable` | boolean | `false` | Makes an `Image` or `Panel` take a tap as a `Button` does: `consumePress()` and `consumePressAt()` report it, and what is under the element doesn't get it. `false` leaves it watching the pointer only, so a tap passes through. A `Button` is always pressable; set on any other kind, it is reported. |
+
+## `canvas_scaler`
+
+How the scene's canvas works its scale out from the screen's size, so a HUD designed at one
+resolution fits every screen. A scene has one, on any node; without one the canvas draws at the
+scale its host passes. Every `canvas_element` size, offset, font and image is multiplied by the scale.
+`SceneCanvasScaler`, saved from the live `CanvasScaler`.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `mode` | `ScaleWithScreenSize` · `ConstantPixelSize` · `ConstantPhysicalSize` | `ScaleWithScreenSize` | Which rule works the scale out. `ScaleWithScreenSize` grows and shrinks the canvas with the screen; `ConstantPixelSize` keeps a unit a fixed number of the screen's pixels; `ConstantPhysicalSize` keeps a unit a fixed fraction of an inch. |
+| `referenceWidth` | number | `1280` | With `ScaleWithScreenSize`, the width the canvas is designed at, in units: on a screen this many dp wide, matching by width, a unit is a dp. Above 0. |
+| `referenceHeight` | number | `720` | With `ScaleWithScreenSize`, the height the canvas is designed at, in units. Above 0. |
+| `match` | number | `0.5` | With `ScaleWithScreenSize`, what the scale follows: `0` the screen's width, `1` its height, and between them a blend taken on a log scale. From 0 to 1. |
+| `pixelsPerUnit` | number | `1` | With `ConstantPixelSize`, how many of the screen's pixels one unit covers: `1` for pixel-exact art. Above 0. |
+| `referenceDpi` | number | `160` | With `ConstantPhysicalSize`, the dots per inch the canvas is designed at: a unit is 1 / `referenceDpi` of an inch. `160` makes a unit a dp. Above 0. |
+| `minScale` | number | `0` | The smallest scale the rule may give; `0` for no limit. Not negative, and not above a set `maxScale`. |
+| `maxScale` | number | `0` | The largest scale the rule may give; `0` for no limit. Not negative. |
+| `playerScale` | number | `1` | The player's own multiplier, applied after `minScale` and `maxScale`, so a settings menu can always make the UI larger or smaller. Above 0. |
 
 ## `character_controller`
 

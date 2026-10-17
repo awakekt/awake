@@ -57,6 +57,7 @@ import com.awakekt.awake.scene.rendering.debug.DebugVisualizationSystem
 import com.awakekt.awake.scene.runtime.session.SceneSession
 import com.awakekt.awake.scene.scene2d.SpriteClipSystem
 import com.awakekt.awake.ui.canvas.CanvasElement
+import com.awakekt.awake.ui.canvas.CanvasInsets
 import kotlin.math.roundToInt
 import kotlin.time.TimeSource
 
@@ -133,8 +134,18 @@ class SceneAppLifecycleRuntime internal constructor(
      */
     var canvasStrings: Strings? = null
 
-    /** The scene canvas's UI scale: 2 draws every element, its text and its images at twice the size. */
+    /**
+     * The scene canvas's UI scale: 2 draws every element, its text and its images at twice the size.
+     * A scene with a `canvas_scaler` works its scale out from the screen's size instead.
+     */
     var canvasScale: Float = 1f
+
+    /**
+     * What covers the screen's edges, in dp: a notch, rounded corners, a home indicator, overscan.
+     * The scene canvas keeps its anchored elements inside it, unless an element opts out with its
+     * `safeArea`. The host sets it from what its platform reports.
+     */
+    var canvasSafeArea: CanvasInsets = CanvasInsets.None
 
     /**
      * The scene component bindings a canvas element's `bind` reads fields through: those of the
@@ -373,6 +384,7 @@ class SceneAppLifecycleRuntime internal constructor(
                         views = canvasViews(),
                         fonts = canvasFonts,
                         strings = canvasStrings,
+                        safeArea = canvasSafeArea,
                     )
                 }
                 if (content != null) content()
