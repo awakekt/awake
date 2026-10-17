@@ -22,6 +22,7 @@ import com.awakekt.awake.compose.ui.graphics.RoundedCornerShape
 import com.awakekt.awake.compose.ui.graphics.Shape
 import com.awakekt.awake.compose.ui.unit.Dp
 import com.awakekt.awake.compose.ui.unit.dp
+import com.awakekt.awake.ui.shadcn.theme.shadcnDensity
 import com.awakekt.awake.ui.shadcn.theme.shadcnTheme
 
 /**
@@ -64,10 +65,11 @@ fun ShadcnButtonGroup(
                     val nextIsSeparator = items.getOrNull(itemIndex + 1) is ButtonGroupMember.Separator
                     val borderSides = memberBorderSides(orientation, index, buttonCount, nextIsSeparator)
                     val memberContent = member.content
+                    val memberSize = member.size ?: shadcnDensity.defaultButtonSize()
                     shadcnButtonContent(
                         modifier = modifier,
                         variant = member.variant,
-                        size = member.size,
+                        size = memberSize,
                         enabled = member.enabled,
                         onClick = member.onClick,
                         shape = shape,
@@ -77,7 +79,7 @@ fun ShadcnButtonGroup(
                         if (memberContent == null) {
                             ShadcnText(
                                 member.label,
-                                variant = member.size.text,
+                                variant = memberSize.text,
                                 color = shadcnTheme.buttonForeground(member.variant),
                             )
                         } else {
@@ -110,7 +112,7 @@ class ShadcnButtonGroupScope internal constructor() {
         label: String,
         modifier: Modifier = Modifier,
         variant: ShadcnButtonVariant = ShadcnButtonVariant.Default,
-        size: ShadcnButtonSizeVariant = ShadcnButtonSizeVariant.Default,
+        size: ShadcnButtonSizeVariant? = null,
         enabled: Boolean = true,
         onClick: () -> Unit = {},
         content: (
@@ -131,7 +133,7 @@ internal sealed interface ButtonGroupMember {
         val label: String,
         val modifier: Modifier,
         val variant: ShadcnButtonVariant,
-        val size: ShadcnButtonSizeVariant,
+        val size: ShadcnButtonSizeVariant?,
         val enabled: Boolean,
         val onClick: () -> Unit,
         val content: (

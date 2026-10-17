@@ -26,6 +26,8 @@ import com.awakekt.awake.compose.ui.semantics.SemanticsProperties
 import com.awakekt.awake.compose.ui.semantics.SemanticsRole
 import com.awakekt.awake.compose.ui.semantics.semantics
 import com.awakekt.awake.ui.shadcn.ShadcnThemeValues
+import com.awakekt.awake.ui.shadcn.theme.ShadcnDensity
+import com.awakekt.awake.ui.shadcn.theme.shadcnDensity
 import com.awakekt.awake.ui.shadcn.theme.shadcnTheme
 
 /**
@@ -49,11 +51,12 @@ fun ShadcnRadioGroup(
     val theme = shadcnTheme
     val state = remember { RadioGroupState() }
     val next = state.clicked?.also { state.clicked = null } ?: selected
-    state.prepare(theme, next, enabled)
+    val density = shadcnDensity
+    state.prepare(theme, next, enabled, density)
 
     Column(
         modifier.semantics { this[SemanticsProperties.SelectableGroup] = true },
-        verticalArrangement = Arrangement.spacedBy(ShadcnRadioGroupGap),
+        verticalArrangement = Arrangement.spacedBy(density.radioGroupGap()),
     ) {
         options.forEachIndexed { index, option ->
             ShadcnRadioItem(state, index, option)
@@ -72,11 +75,11 @@ private fun ShadcnRadioItem(
     val active = index == state.selected
     Row(
         Modifier.clickable(interaction) { if (state.enabled) state.clicked = index },
-        horizontalArrangement = Arrangement.spacedByHorizontal(ShadcnRadioLabelGap),
+        horizontalArrangement = Arrangement.spacedByHorizontal(state.density.radioLabelGap()),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        ShadcnRadioControl(state.theme, index, option, active)
-        ShadcnText(
+        ShadcnRadioControl(state.theme, state.density, index, option, active)
+        shadcnDensityText(
             option,
             Modifier
                 .semantics {
@@ -85,9 +88,12 @@ private fun ShadcnRadioItem(
                     this[SemanticsProperties.TestTag] = "parity-radio.$index.label"
                 },
             variant = ShadcnTextVariant.Small,
+            color = null,
             // `leading-none` on the label, which is what puts it on the ring's centre line
             // rather than a `text-sm` line box taller than the ring itself.
-            lineHeight = ShadcnRadioLabelLeading,
+            lineHeight = state.density.radioLabelLeading(),
+            weight = null,
+            size = state.density.labelSize(),
         )
     }
 }
@@ -95,13 +101,15 @@ private fun ShadcnRadioItem(
 context(_: Composer)
 private fun ShadcnRadioControl(
     theme: ShadcnThemeValues,
+    density: ShadcnDensity,
     index: Int,
     option: String,
     active: Boolean,
 ) {
+    val radioSize = density.radioSize()
     Box(
         Modifier
-            .size(ShadcnRadioSize)
+            .size(radioSize)
             // Match upstream's actual `border rounded-full`. The old two-disc approximation made
             // the ring depend on the page background and could read square at small sizes.
             .let {
@@ -124,12 +132,12 @@ private fun ShadcnRadioControl(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
-            Modifier.size(ShadcnRadioSize - ShadcnRadioBorderWidth * 2f),
+            Modifier.size(radioSize - ShadcnRadioBorderWidth * 2f),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (active) {
-                Box(Modifier.size(ShadcnRadioDotSize).background(theme.palette.primary, theme.radii.full))
+                Box(Modifier.size(density.radioDotSize()).background(theme.palette.primary, theme.radii.full))
             }
         }
     }
@@ -139,13 +147,15 @@ private fun ShadcnRadioControl(
 private class RadioGroupState {
     var clicked: Int? = null
     lateinit var theme: ShadcnThemeValues
+    var density: ShadcnDensity = ShadcnDensity.Default
     var selected: Int = 0
     var enabled: Boolean = true
 
-    fun prepare(nextTheme: ShadcnThemeValues, nextSelected: Int, nextEnabled: Boolean) {
+    fun prepare(nextTheme: ShadcnThemeValues, nextSelected: Int, nextEnabled: Boolean, nextDensity: ShadcnDensity) {
         theme = nextTheme
         selected = nextSelected
         enabled = nextEnabled
+        density = nextDensity
     }
 }
 

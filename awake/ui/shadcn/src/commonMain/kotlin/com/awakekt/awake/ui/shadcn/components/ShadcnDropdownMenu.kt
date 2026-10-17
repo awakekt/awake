@@ -42,6 +42,7 @@ import com.awakekt.awake.compose.ui.unit.Dp
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.tailwind.Tw
+import com.awakekt.awake.ui.shadcn.theme.shadcnDensity
 import com.awakekt.awake.ui.shadcn.theme.shadcnTheme
 
 /** Public Shadcn menu entries. */
@@ -87,6 +88,9 @@ data object ShadcnMenuSeparator : ShadcnMenuEntry
  * duplicating it would have meant two `ShadcnMenuItem`s in one package, which is what the compiler
  * caught. It gained a `destructive` flag, defaulted, so every existing caller is unaffected.
  *
+ * Under `LocalShadcnDensity` `Compact` an item is `py-1`: a 28dp row where the default is 32dp. A
+ * context menu and the menubar's menus are this same content, so they follow.
+ *
  * Returns the index clicked this frame, or null. Separators are not clickable and are skipped, so
  * the index counts entries, not items -- the caller passed the list and can index it directly.
  */
@@ -99,6 +103,7 @@ fun ShadcnDropdownMenu(
 ): Int? {
     return rememberGroup(ShadcnDropdownMenuGroup) {
         val theme = shadcnTheme
+        val itemPaddingY = shadcnDensity.menuItemPaddingY()
         val style = remember(theme) { theme.popoverSurfaceStyle(Tw.Spacing.s1) }
         val state = remember { MenuState() }
         val clicked = state.clicked
@@ -138,7 +143,7 @@ fun ShadcnDropdownMenu(
                                     )
                                 }
                             }
-                            .padding(horizontal = Tw.Spacing.s2, vertical = Tw.Spacing.s1_5)
+                            .padding(horizontal = Tw.Spacing.s2, vertical = itemPaddingY)
                             // An item is a node a screen reader can land on and a test can address.
                             // Without this the row has no semantics at all, so the menu reports as one
                             // opaque box -- which is also why the parity harness could not see the items.

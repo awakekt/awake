@@ -31,6 +31,7 @@ import com.awakekt.awake.compose.ui.graphics.Shape
 import com.awakekt.awake.compose.ui.graphics.vector.ImageVector
 import com.awakekt.awake.compose.ui.platform.LocalTextStyle
 import com.awakekt.awake.tailwind.Tw
+import com.awakekt.awake.ui.shadcn.theme.shadcnDensity
 import com.awakekt.awake.ui.shadcn.theme.shadcnTheme
 
 /**
@@ -49,7 +50,8 @@ import com.awakekt.awake.ui.shadcn.theme.shadcnTheme
  * @param label Button text label.
  * @param modifier Custom layout modifier.
  * @param variant Visual style variant (`Default`, `Destructive`, `Outline`, `Secondary`, `Ghost`, `Link`).
- * @param size Button dimensions (`Default`, `Sm`, `Lg`, `Icon`).
+ * @param size Button dimensions (`Default`, `Sm`, `Lg`, `Icon`). Left out, it follows
+ * `LocalShadcnDensity`: `Default`, or `Sm` under `Compact`. A size passed here always wins.
  * @param enabled Whether the button is interactive.
  * @param onClick Click action handler.
  * @param shape Custom corner clip shape.
@@ -62,23 +64,26 @@ fun ShadcnButton(
     label: String,
     modifier: Modifier = Modifier,
     variant: ShadcnButtonVariant = ShadcnButtonVariant.Default,
-    size: ShadcnButtonSizeVariant = ShadcnButtonSizeVariant.Default,
+    size: ShadcnButtonSizeVariant? = null,
     enabled: Boolean = true,
     onClick: () -> Unit = {},
     shape: Shape? = null,
     leadingIcon: ImageVector? = null,
-) = shadcnButtonContent(
-    modifier,
-    variant,
-    size,
-    enabled,
-    onClick,
-    shape,
-    BorderSides.All,
-    hasIcon = leadingIcon != null,
 ) {
-    if (leadingIcon != null) ShadcnIcon(leadingIcon)
-    ShadcnText(label, variant = size.text, color = shadcnTheme.buttonForeground(variant))
+    val resolved = size ?: shadcnDensity.defaultButtonSize()
+    shadcnButtonContent(
+        modifier,
+        variant,
+        resolved,
+        enabled,
+        onClick,
+        shape,
+        BorderSides.All,
+        hasIcon = leadingIcon != null,
+    ) {
+        if (leadingIcon != null) ShadcnIcon(leadingIcon)
+        ShadcnText(label, variant = resolved.text, color = shadcnTheme.buttonForeground(variant))
+    }
 }
 
 /**
@@ -92,7 +97,7 @@ context(_: Composer)
 fun ShadcnButton(
     modifier: Modifier = Modifier,
     variant: ShadcnButtonVariant = ShadcnButtonVariant.Default,
-    size: ShadcnButtonSizeVariant = ShadcnButtonSizeVariant.Default,
+    size: ShadcnButtonSizeVariant? = null,
     enabled: Boolean = true,
     onClick: () -> Unit = {},
     shape: Shape? = null,
@@ -100,7 +105,7 @@ fun ShadcnButton(
 ) = shadcnButtonContent(
     modifier,
     variant,
-    size,
+    size ?: shadcnDensity.defaultButtonSize(),
     enabled,
     onClick,
     shape,

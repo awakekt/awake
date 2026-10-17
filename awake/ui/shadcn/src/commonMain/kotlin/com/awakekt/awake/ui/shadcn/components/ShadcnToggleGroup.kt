@@ -40,6 +40,9 @@ import com.awakekt.awake.compose.ui.unit.Dp
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.tailwind.Tw
 import com.awakekt.awake.ui.shadcn.ShadcnThemeValues
+import com.awakekt.awake.ui.shadcn.theme.ShadcnDensity
+import com.awakekt.awake.ui.shadcn.theme.isCompact
+import com.awakekt.awake.ui.shadcn.theme.shadcnDensity
 import com.awakekt.awake.ui.shadcn.theme.shadcnTheme
 
 /**
@@ -61,7 +64,7 @@ fun ShadcnToggleGroup(
     orientation: ShadcnButtonGroupOrientation = ShadcnButtonGroupOrientation.Horizontal,
     selection: ShadcnToggleGroupSelection = ShadcnToggleGroupSelection.Multiple,
     variant: ShadcnToggleGroupVariant = ShadcnToggleGroupVariant.Default,
-    size: ShadcnToggleGroupSize = ShadcnToggleGroupSize.Default,
+    size: ShadcnToggleGroupSize? = null,
     spacing: Dp = 0.dp,
     content: ShadcnToggleGroupScope.() -> Unit,
 ) {
@@ -69,7 +72,7 @@ fun ShadcnToggleGroup(
         val items = remember(content) { ShadcnToggleGroupScope().apply(content).items }
         // One value rather than three parallel arguments threaded to every item: they are the group's
         // appearance and behaviour, and an item never varies one without the others.
-        val spec = ToggleGroupSpec(selection, variant, size, orientation, spacing)
+        val spec = ToggleGroupSpec(selection, variant, size ?: shadcnDensity.defaultToggleGroupSize(), orientation, spacing)
         val arrangement = Arrangement.spacedBy(spacing)
         val group = modifier.semantics {
             // What makes a strip of radios *one* choice rather than several independent ones.
@@ -112,7 +115,7 @@ fun ShadcnToggleGroup(
     modifier: Modifier = Modifier,
     orientation: ShadcnButtonGroupOrientation = ShadcnButtonGroupOrientation.Horizontal,
     variant: ShadcnToggleGroupVariant = ShadcnToggleGroupVariant.Default,
-    size: ShadcnToggleGroupSize = ShadcnToggleGroupSize.Default,
+    size: ShadcnToggleGroupSize? = null,
     spacing: Dp = 0.dp,
     content: ShadcnToggleGroupScope.() -> Unit,
 ) = ShadcnToggleGroup(
@@ -139,6 +142,13 @@ enum class ShadcnToggleGroupSize(internal val extent: Dp) {
     Default(36.dp),
     Lg(40.dp),
 }
+
+/**
+ * The size a toggle group takes when its caller passes none: [ShadcnToggleGroupSize.Default], or
+ * [ShadcnToggleGroupSize.Sm] at [ShadcnDensity.Compact].
+ */
+internal fun ShadcnDensity.defaultToggleGroupSize(): ShadcnToggleGroupSize =
+    if (isCompact) ShadcnToggleGroupSize.Sm else ShadcnToggleGroupSize.Default
 
 /** One item in a [ShadcnToggleGroup]. */
 class ShadcnToggleGroupItem internal constructor(

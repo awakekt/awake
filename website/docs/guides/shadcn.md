@@ -53,6 +53,54 @@ Every shadcn component reads the theme in scope. Wrap the UI that uses them in
 The `ShadcnTheme` object is the default theme: `Vega`, `Neutral`, `Base`, dark. Wrap it as
 `ShadcnThemeValues(ShadcnTheme)` to provide it.
 
+## Choose a density
+
+Components take shadcn's own sizes by default. A dense UI, such as an editor, can ask for the next
+size down once instead of passing a small size at every call. `LocalShadcnDensity` holds the density
+for its content; it is `ShadcnDensity.Default` when nothing provides one, so a UI that never mentions
+it is unchanged.
+
+```kotlin title="Kotlin"
+--8<-- "awake/ui/shadcn/src/desktopTest/kotlin/com/awakekt/awake/ui/shadcn/ShadcnDocsSampleTest.kt:compact-density"
+```
+
+<div class="awake-figures" markdown>
+<figure markdown>
+![A form at the Default density: 36 dp inputs, buttons and select](../assets/ui/shadcn-density-default.png)
+<figcaption><code>Default</code></figcaption>
+</figure>
+<figure markdown>
+![The same form at the Compact density: 28 dp inputs and select, 32 dp buttons, smaller labels](../assets/ui/shadcn-density-compact.png)
+<figcaption><code>Compact</code></figcaption>
+</figure>
+</div>
+
+Only size and spacing change. Colours, radii and fonts are the theme's, and the one type change is
+`text-xs` for form labels and descriptions where shadcn uses `text-sm`. A size you pass, such as
+`size = ShadcnButtonSizeVariant.Lg`, always wins over the density.
+
+| Component | `Default` | `Compact` |
+| --- | --- | --- |
+| Button, button group member | 36 dp (`Default`) | 32 dp (`Sm`) |
+| Input, input group, combobox field | 36 dp, `px-3` | 28 dp, `px-2` |
+| Textarea | at least 64 dp | at least 48 dp |
+| Select trigger | 36 dp, `px-3` | 28 dp, `px-2` |
+| Select, combobox, menu and context menu rows | 32 dp | 28 dp |
+| Checkbox | 16 dp | 14 dp |
+| Switch | 32 × 18 dp | 28 × 16 dp |
+| Radio ring, option gap | 16 dp, 12 dp | 14 dp, 8 dp |
+| Toggle | 40 dp | 32 dp |
+| Toggle group item | 36 dp (`Default`) | 32 dp (`Sm`) |
+| Tabs, every variant | 36 dp (`Default`) | 28 dp (`Sm`) |
+| Table head, cell padding | 40 dp, `p-2` | 32 dp, `px-2 py-1.5` |
+| List item row (`ShadcnItem`, command palette) | `px-4 py-3` | `px-3 py-2` |
+| Label, field label, field description | `text-sm` | `text-xs` |
+| Field, field group and field set gaps | 12, 28, 24 dp | 8, 20, 16 dp |
+| Popover and hover card padding | `p-4` | `p-3` |
+
+The icon sizes (`Icon`, `IconSm`, `IconXs`) are always passed, so they stay as written: a dense UI
+asks for `IconSm` or `IconXs` by name.
+
 ## Read theme tokens
 
 Inside `provideShadcnTheme`, `shadcnTheme` returns the theme in scope. Use its tokens instead of

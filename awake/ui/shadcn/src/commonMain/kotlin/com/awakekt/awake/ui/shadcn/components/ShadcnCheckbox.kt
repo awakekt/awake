@@ -18,12 +18,14 @@ import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.graphics.vector.rememberVectorPainter
 import com.awakekt.awake.core.math2d.Rectangle
+import com.awakekt.awake.ui.shadcn.theme.shadcnDensity
 import com.awakekt.awake.ui.shadcn.theme.shadcnTheme
 
 /**
  * `ShadcnCheckbox`: Selection toggle control for boolean choices.
  *
  * **Tailwind Reference**: `size-4 rounded-[4px] border border-primary bg-primary text-primary-foreground shadow-sm`.
+ * Under `LocalShadcnDensity` `Compact` the box is `size-3.5`.
  *
  * Use cases:
  * - Terms of service agreement, multi-selection list options, form checkboxes.
@@ -49,13 +51,14 @@ fun ShadcnCheckbox(
 ) {
     rememberGroup(ShadcnCheckboxGroup) {
         val theme = shadcnTheme
+        val boxSize = shadcnDensity.checkboxBoxSize()
         val interaction = remember { InteractionSource() }
         val checkPainter = rememberVectorPainter(ShadcnIcons.check)
         val next = checked
 
         Canvas(
             modifier
-                .size(ShadcnCheckboxBoxSize)
+                .size(boxSize)
                 .hoverable(interaction, enabled = enabled)
                 .clickable(interaction) { if (enabled) onCheckedChange(!checked) },
         ) {

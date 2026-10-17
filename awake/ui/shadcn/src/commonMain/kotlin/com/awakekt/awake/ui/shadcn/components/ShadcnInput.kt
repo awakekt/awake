@@ -22,12 +22,15 @@ import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.core.math2d.sp
 import com.awakekt.awake.core.text.theme.TextStyle
 import com.awakekt.awake.tailwind.Tw
+import com.awakekt.awake.ui.shadcn.theme.ShadcnDensity
+import com.awakekt.awake.ui.shadcn.theme.shadcnDensity
 import com.awakekt.awake.ui.shadcn.theme.shadcnTheme
 
 /**
  * `ShadcnInput`: Single-line text input control field.
  *
  * **Tailwind Reference**: `h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors`.
+ * Under `LocalShadcnDensity` `Compact` it is 28dp tall with `px-2`.
  *
  * Use cases:
  * - Search inputs, login fields, user name entries, form text inputs.
@@ -69,13 +72,16 @@ fun ShadcnInput(
         val interaction = remember { InteractionSource() }
         val styleState = rememberStyleState(interaction, enabled = enabled)
         val focusRingAlpha = animateFloat(if (styleState.isFocused) 1f else 0f)
-        val box = remember(theme, focusRingMode) {
-            theme.fieldStyle(Tw.Spacing.s1, focusRingMode)
+        val density = shadcnDensity
+        // Two keys is all `remember` takes; the ring mode and the density are both small enums, so
+        // they travel as one boxed int rather than an allocated pair.
+        val box = remember(theme, focusRingMode.ordinal * DENSITY_COUNT + density.ordinal) {
+            theme.fieldStyle(density.inputPaddingY(), focusRingMode, density.fieldPaddingX())
         }
 
         BasicTextField(
             state = state,
-            modifier = modifier.fillMaxWidth().height(ShadcnInputHeight)
+            modifier = modifier.fillMaxWidth().height(density.fieldHeight())
                 .focusRing(
                     alpha = if (focusRingMode == ShadcnFocusRingMode.DrawWithContent) focusRingAlpha else 0f,
                     width = FieldFocusRingWidth,
@@ -94,6 +100,8 @@ fun ShadcnInput(
         )
     }
 }
+
+private val DENSITY_COUNT = ShadcnDensity.entries.size
 
 /** Keys this component's `remember` slots as one group in its caller's node. */
 private object ShadcnInputGroup

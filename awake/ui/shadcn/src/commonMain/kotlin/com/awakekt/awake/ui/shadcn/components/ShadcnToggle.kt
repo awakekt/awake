@@ -27,6 +27,8 @@ import com.awakekt.awake.compose.ui.unit.Dp
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.tailwind.Tw
 import com.awakekt.awake.ui.shadcn.ShadcnThemeValues
+import com.awakekt.awake.ui.shadcn.theme.isCompact
+import com.awakekt.awake.ui.shadcn.theme.shadcnDensity
 import com.awakekt.awake.ui.shadcn.theme.shadcnTheme
 
 /**
@@ -35,6 +37,8 @@ import com.awakekt.awake.ui.shadcn.theme.shadcnTheme
  * `px-2` and no vertical pad -- the label is centred by the box's own height, not by padding. The
  * ui-core recipe had 12/10 borrowed from the button bundle, which reported a 16px content box where
  * the reference says 24, and that was this component's only parity failure.
+ *
+ * Under `LocalShadcnDensity` `Compact` the toggle is 32dp square.
  *
  * Returns the state after the click that arrived this frame, so a caller can drive it from its own
  * state without a callback.
@@ -59,6 +63,7 @@ fun ShadcnToggle(
     val owned = remember { InteractionSource() }
     val interaction = interactionSource ?: owned
     val styleState = rememberStyleState(interaction, enabled = enabled)
+    val toggleSize = if (shadcnDensity.isCompact) CompactToggleSize else ToggleSize
     val state = remember { ToggleState() }
     val next = if (state.clicked) !checked else checked
     state.clicked = false
@@ -66,7 +71,7 @@ fun ShadcnToggle(
     val style = remember(theme, next) { theme.toggleStyle(next) }
     Box(
         modifier
-            .size(ToggleSize)
+            .size(toggleSize)
             .hoverable(interaction, enabled = enabled)
             .clickable(interaction) { if (enabled) state.clicked = true }
             .styleable(styleState, style)
@@ -104,6 +109,9 @@ private class ToggleState {
 
 /** The parity capture's `size-10`; upstream's default toggle is `h-9`, sized by the caller. */
 private val ToggleSize: Dp = 40.dp
+
+/** `size-8`, the compact step. */
+private val CompactToggleSize: Dp = 32.dp
 
 /** `disabled:opacity-50`. */
 private const val DISABLED_ALPHA = 0.5f

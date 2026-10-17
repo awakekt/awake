@@ -28,6 +28,9 @@ import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.math2d.sp
 import com.awakekt.awake.core.text.theme.TextStyle
 import com.awakekt.awake.tailwind.Tw
+import com.awakekt.awake.ui.shadcn.theme.ShadcnDensity
+import com.awakekt.awake.ui.shadcn.theme.isCompact
+import com.awakekt.awake.ui.shadcn.theme.shadcnDensity
 import com.awakekt.awake.ui.shadcn.theme.shadcnTheme
 
 /**
@@ -61,12 +64,14 @@ fun ShadcnInputGroup(
         val interaction = remember { InteractionSource() }
         val styleState = rememberStyleState(interaction, enabled = enabled)
         val focusRingAlpha = animateFloat(if (styleState.isFocused) 1f else 0f)
-        val box = remember(theme, focusRingMode) {
-            theme.fieldStyle(0.dp, focusRingMode)
+        val density = shadcnDensity
+        val box = remember(theme, focusRingMode.ordinal * ShadcnDensity.entries.size + density.ordinal) {
+            theme.fieldStyle(0.dp, focusRingMode, density.fieldPaddingX())
         }
+        val edge = density.fieldPaddingX()
 
         Row(
-            modifier = modifier.fillMaxWidth().height(ShadcnInputHeight)
+            modifier = modifier.fillMaxWidth().height(density.fieldHeight())
                 .focusRing(
                     alpha = if (focusRingMode == ShadcnFocusRingMode.DrawWithContent) focusRingAlpha else 0f,
                     width = FieldFocusRingWidth,
@@ -77,7 +82,7 @@ fun ShadcnInputGroup(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (prefix != null) {
-                Box(Modifier.padding(start = Tw.Spacing.s3, end = Tw.Spacing.s1_5)) {
+                Box(Modifier.padding(start = edge, end = if (density.isCompact) Tw.Spacing.s1 else Tw.Spacing.s1_5)) {
                     prefix()
                 }
             }
@@ -85,10 +90,10 @@ fun ShadcnInputGroup(
                 state = state,
                 modifier = Modifier.weight(1f)
                     .padding(
-                        start = if (prefix == null) Tw.Spacing.s3 else 0.dp,
-                        end = if (suffix == null) Tw.Spacing.s3 else 0.dp,
-                        top = Tw.Spacing.s1,
-                        bottom = Tw.Spacing.s1,
+                        start = if (prefix == null) edge else 0.dp,
+                        end = if (suffix == null) edge else 0.dp,
+                        top = density.inputPaddingY(),
+                        bottom = density.inputPaddingY(),
                     ),
                 style = TextStyle(size = Tw.Text.sm, lineHeight = 20f.sp, color = theme.palette.foreground),
                 interactionSource = interaction,
@@ -98,7 +103,7 @@ fun ShadcnInputGroup(
                 onClick = onClick,
             )
             if (suffix != null) {
-                Box(Modifier.padding(start = Tw.Spacing.s1_5, end = Tw.Spacing.s3)) {
+                Box(Modifier.padding(start = if (density.isCompact) Tw.Spacing.s1 else Tw.Spacing.s1_5, end = edge)) {
                     suffix()
                 }
             }

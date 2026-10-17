@@ -19,6 +19,9 @@ import com.awakekt.awake.compose.ui.unit.Sp
 import com.awakekt.awake.compose.ui.unit.sp
 import com.awakekt.awake.core.text.font.FontWeight
 import com.awakekt.awake.tailwind.Tw
+import com.awakekt.awake.ui.shadcn.theme.ShadcnDensity
+import com.awakekt.awake.ui.shadcn.theme.isCompact
+import com.awakekt.awake.ui.shadcn.theme.shadcnDensity
 import com.awakekt.awake.ui.shadcn.theme.shadcnTheme
 
 /**
@@ -42,20 +45,25 @@ fun shadcnFieldLegend(
     modifier: Modifier = Modifier,
     variant: ShadcnFieldLegendVariant = ShadcnFieldLegendVariant.Legend,
 ) {
-    ShadcnText(
+    val density = shadcnDensity
+    shadcnDensityText(
         text,
         modifier,
-        variant = when (variant) {
+        when (variant) {
             ShadcnFieldLegendVariant.Legend -> ShadcnTextVariant.P
             ShadcnFieldLegendVariant.Label -> ShadcnTextVariant.Small
         },
+        color = null,
+        // Only the `label` legend drops to `text-xs`; the `legend` size is a heading and keeps its step.
+        lineHeight = if (variant == ShadcnFieldLegendVariant.Label) density.labelLineHeight() else null,
         weight = LegendWeight,
+        size = if (variant == ShadcnFieldLegendVariant.Label) density.labelSize() else null,
     )
     // `mb-3`, *on top of* the field set's own `gap-6`: upstream puts 36px between a legend and the
     // group under it and 24px between everything else. Measured in the browser at 12px margin
     // against a 24px gap -- a legend that only took the gap sat 12px too close, which reads as the
     // heading belonging to the first field rather than to the set.
-    Spacer(Modifier.height(LegendBottomMargin))
+    Spacer(Modifier.height(density.legendBottomMargin()))
 }
 
 /** Which size a [shadcnFieldLegend] takes. */
@@ -74,11 +82,15 @@ fun ShadcnFieldLabel(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
 ) {
-    ShadcnText(
+    val density = shadcnDensity
+    shadcnDensityText(
         text,
         if (enabled) modifier else modifier.alpha(DISABLED_ALPHA),
-        variant = ShadcnTextVariant.Small,
-        lineHeight = SnugLineHeight,
+        ShadcnTextVariant.Small,
+        color = null,
+        lineHeight = density.snugLineHeight(),
+        weight = null,
+        size = density.labelSize(),
     )
 }
 
@@ -93,10 +105,22 @@ fun shadcnFieldTitle(
     text: String,
     modifier: Modifier = Modifier,
 ) {
-    ShadcnText(text, modifier, variant = ShadcnTextVariant.Small, lineHeight = SnugLineHeight)
+    val density = shadcnDensity
+    shadcnDensityText(
+        text,
+        modifier,
+        ShadcnTextVariant.Small,
+        color = null,
+        lineHeight = density.snugLineHeight(),
+        weight = null,
+        size = density.labelSize(),
+    )
 }
 
-/** `FieldDescription`: `text-sm text-muted-foreground`, under the label or the control. */
+/**
+ * `FieldDescription`: `text-sm text-muted-foreground`, under the label or the control; `text-xs` at
+ * `LocalShadcnDensity` `Compact`.
+ */
 context(_: Composer)
 fun shadcnFieldDescription(
     text: String,
@@ -104,7 +128,16 @@ fun shadcnFieldDescription(
 ) {
     // `leading-normal` -- 1.5 against `text-sm`'s own 1.43. One pixel per line, and a description
     // is the part most likely to wrap to several.
-    ShadcnText(text, modifier, variant = ShadcnTextVariant.Muted, lineHeight = NormalLineHeight)
+    val density = shadcnDensity
+    shadcnDensityText(
+        text,
+        modifier,
+        ShadcnTextVariant.Muted,
+        color = null,
+        lineHeight = if (density.isCompact) CompactNormalLineHeight else NormalLineHeight,
+        weight = null,
+        size = density.labelSize(),
+    )
 }
 
 /**
@@ -125,15 +158,20 @@ fun shadcnFieldError(
     val unique = messages.filter { it.isNotBlank() }.distinct()
     if (unique.isEmpty()) return
     val theme = shadcnTheme
+    val density = shadcnDensity
     Column(modifier, verticalArrangement = Arrangement.spacedBy(Tw.Spacing.s1)) {
         unique.forEach { message ->
             // `text-sm font-normal`: the Muted variant is the one carrying `font-normal`, and the
             // explicit colour overrides its muted foreground. Reaching for `Small` gave weight 500
             // against the browser's 400 -- an error message noticeably bolder than upstream's.
-            ShadcnText(
+            shadcnDensityText(
                 message,
-                variant = ShadcnTextVariant.Muted,
+                Modifier,
+                ShadcnTextVariant.Muted,
                 color = theme.palette.destructive,
+                lineHeight = density.labelLineHeight(),
+                weight = null,
+                size = density.labelSize(),
             )
         }
     }
@@ -152,11 +190,18 @@ private val LegendWeight = FontWeight.Medium
 /** `mb-3` on the legend, added to the field set's gap rather than replacing it. */
 private val LegendBottomMargin: Dp = Tw.Spacing.s3
 
-/** `leading-snug` (1.375) against `text-sm`. */
-private val SnugLineHeight: Sp = 19.25f.sp
+/** `leading-snug` (1.375) against `text-sm`, or against `text-xs` at [ShadcnDensity.Compact]. */
+private fun ShadcnDensity.snugLineHeight(): Sp = if (isCompact) CompactSnugLineHeight else SnugLineHeight
 
-/** `leading-normal` (1.5) against `text-sm`. */
+private val SnugLineHeight: Sp = 19.25f.sp
+private val CompactSnugLineHeight: Sp = 16.5f.sp
+
+/** `leading-normal` (1.5) against `text-sm`, or against `text-xs`. */
 private val NormalLineHeight: Sp = 21f.sp
+private val CompactNormalLineHeight: Sp = 18f.sp
+
+/** `mb-3` on the legend, or `mb-2` at [ShadcnDensity.Compact]. */
+private fun ShadcnDensity.legendBottomMargin(): Dp = if (isCompact) Tw.Spacing.s2 else LegendBottomMargin
 
 /** `group-data-[disabled=true]/field:opacity-50`. */
 private const val DISABLED_ALPHA = 0.5f

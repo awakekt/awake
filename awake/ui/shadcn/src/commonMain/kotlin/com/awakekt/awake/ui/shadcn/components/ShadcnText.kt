@@ -52,6 +52,22 @@ fun ShadcnText(
      * empty state's title is `text-lg font-medium` where the `Large` variant is semibold.
      */
     weight: FontWeight? = null,
+) = shadcnDensityText(text, modifier, variant, color, lineHeight, weight, size = null)
+
+/**
+ * [ShadcnText] with the variant's font size replaced, which a density needs and upstream spells as a
+ * separate `text-*` utility. Internal: a caller picks a [ShadcnTextVariant], and the density picks
+ * the step a label or description sits at.
+ */
+context(_: Composer)
+internal fun shadcnDensityText(
+    text: String,
+    modifier: Modifier = Modifier,
+    variant: ShadcnTextVariant = ShadcnTextVariant.P,
+    color: Color? = null,
+    lineHeight: Sp? = null,
+    weight: FontWeight? = null,
+    size: Sp? = null,
 ) {
     rememberGroup(ShadcnTextGroup) {
         val theme = shadcnTheme
@@ -69,6 +85,9 @@ fun ShadcnText(
             if (lineHeight == null) base else base.copy(lineHeight = lineHeight)
         }
         val styled = remember(style, weight) { if (weight == null) style else style.copy(weight = weight) }
+        // Not remembered: only a non-default density sets it, and one copy per frame is the cost of
+        // keeping the default path's slots exactly as they were.
+        val sized = if (size == null) styled else styled.copy(size = size)
         // An explicit colour wins over the variant's; both absent leaves the ambient one.
         Text(
             text,
@@ -79,7 +98,7 @@ fun ShadcnText(
                 this[SemanticsProperties.Role] = SemanticsRole.Text
                 this[SemanticsProperties.Label] = text
             },
-            if (color != null) styled.copy(color = color) else styled,
+            if (color != null) sized.copy(color = color) else sized,
         )
     }
 }

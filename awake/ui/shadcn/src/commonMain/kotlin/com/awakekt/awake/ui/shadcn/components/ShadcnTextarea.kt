@@ -22,6 +22,8 @@ import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.math2d.sp
 import com.awakekt.awake.core.text.theme.TextStyle
 import com.awakekt.awake.tailwind.Tw
+import com.awakekt.awake.ui.shadcn.theme.isCompact
+import com.awakekt.awake.ui.shadcn.theme.shadcnDensity
 import com.awakekt.awake.ui.shadcn.theme.shadcnTheme
 
 /**
@@ -33,6 +35,8 @@ import com.awakekt.awake.ui.shadcn.theme.shadcnTheme
  *
  * Shares its box with [ShadcnInput] -- see [fieldStyle] -- since the only differences upstream are
  * the height rule and the vertical pad.
+ *
+ * Under `LocalShadcnDensity` `Compact` the box starts one line shorter: `min-h-12` with `px-2 py-1`.
  */
 context(_: Composer)
 fun ShadcnTextarea(
@@ -45,11 +49,14 @@ fun ShadcnTextarea(
         val interaction = remember { InteractionSource() }
         val styleState = rememberStyleState(interaction, enabled = enabled)
         val focusRingAlpha = animateFloat(if (styleState.isFocused) 1f else 0f)
-        val box = remember(theme) { theme.fieldStyle(verticalPadding = Tw.Spacing.s2) }
+        val density = shadcnDensity
+        val box = remember(theme, density) {
+            theme.fieldStyle(verticalPadding = density.textareaPaddingY(), horizontalPadding = density.fieldPaddingX())
+        }
 
         BasicTextField(
             state = state,
-            modifier = modifier.fillMaxWidth().heightIn(min = TextareaMinHeight)
+            modifier = modifier.fillMaxWidth().heightIn(min = if (density.isCompact) CompactTextareaMinHeight else TextareaMinHeight)
                 .focusRing(
                     alpha = focusRingAlpha,
                     width = FieldFocusRingWidth,
@@ -65,6 +72,9 @@ fun ShadcnTextarea(
 
 /** shadcn's `min-h-16`. */
 private val TextareaMinHeight: Dp = 64.dp
+
+/** `min-h-12`, the compact step. */
+private val CompactTextareaMinHeight: Dp = 48.dp
 
 /** Keys this component's `remember` slots as one group in its caller's node. */
 private object ShadcnTextareaGroup

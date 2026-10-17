@@ -25,6 +25,9 @@ import com.awakekt.awake.compose.ui.unit.Sp
 import com.awakekt.awake.compose.ui.unit.sp
 import com.awakekt.awake.core.text.font.FontWeight
 import com.awakekt.awake.tailwind.Tw
+import com.awakekt.awake.ui.shadcn.theme.ShadcnDensity
+import com.awakekt.awake.ui.shadcn.theme.isCompact
+import com.awakekt.awake.ui.shadcn.theme.shadcnDensity
 import com.awakekt.awake.ui.shadcn.theme.shadcnTheme
 
 /**
@@ -56,7 +59,7 @@ fun shadcnFieldSet(
 ) {
     Column(
         modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(FieldSetGap),
+        verticalArrangement = Arrangement.spacedBy(shadcnDensity.fieldSetGap()),
     ) { content() }
 }
 
@@ -73,7 +76,7 @@ fun shadcnFieldGroup(
 ) {
     Column(
         modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(FieldGroupGap),
+        verticalArrangement = Arrangement.spacedBy(shadcnDensity.fieldGroupGap()),
     ) { content() }
 }
 
@@ -93,10 +96,11 @@ fun shadcnField(
     content: context(Composer) ShadcnFieldScope.() -> Unit,
 ) {
     val grouped = modifier.fillMaxWidth()
+    val fieldGap = shadcnDensity.fieldGap()
     when (orientation) {
         ShadcnFieldOrientation.Vertical -> Column(
             grouped,
-            verticalArrangement = Arrangement.spacedBy(FieldGap),
+            verticalArrangement = Arrangement.spacedBy(fieldGap),
         ) {
             // Null scope: a vertical field wraps its own height, so there is no leftover main-axis
             // space for `flex-1` to claim and `fillRemaining()` is honestly a no-op.
@@ -104,7 +108,7 @@ fun shadcnField(
         }
         ShadcnFieldOrientation.Horizontal -> Row(
             grouped,
-            horizontalArrangement = Arrangement.spacedByHorizontal(FieldGap),
+            horizontalArrangement = Arrangement.spacedByHorizontal(fieldGap),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             ShadcnFieldScope(this).content()
@@ -148,7 +152,7 @@ fun shadcnFieldContent(
     modifier: Modifier = Modifier,
     content: context(Composer) () -> Unit,
 ) {
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(FieldContentGap)) { content() }
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(shadcnDensity.fieldContentGap())) { content() }
 }
 
 /**
@@ -185,17 +189,17 @@ fun shadcnFieldSeparator(
     }
 }
 
-/** `gap-6`. */
-private val FieldSetGap: Dp = Tw.Spacing.s6
+/** `gap-6`, or `gap-4` at [ShadcnDensity.Compact]. */
+private fun ShadcnDensity.fieldSetGap(): Dp = if (isCompact) Tw.Spacing.s4 else Tw.Spacing.s6
 
-/** `gap-7` -- deliberately wider than a field's own gap. */
-private val FieldGroupGap: Dp = Tw.Spacing.s7
+/** `gap-7` -- deliberately wider than a field's own gap -- or `gap-5` at [ShadcnDensity.Compact]. */
+private fun ShadcnDensity.fieldGroupGap(): Dp = if (isCompact) Tw.Spacing.s5 else Tw.Spacing.s7
 
-/** `gap-3`. */
-private val FieldGap: Dp = Tw.Spacing.s3
+/** `gap-3`, or `gap-2` at [ShadcnDensity.Compact]. */
+private fun ShadcnDensity.fieldGap(): Dp = if (isCompact) Tw.Spacing.s2 else Tw.Spacing.s3
 
-/** `gap-1.5`. */
-private val FieldContentGap: Dp = Tw.Spacing.s1_5
+/** `gap-1.5`, or `gap-1` at [ShadcnDensity.Compact]. */
+private fun ShadcnDensity.fieldContentGap(): Dp = if (isCompact) Tw.Spacing.s1 else Tw.Spacing.s1_5
 
 /** Tailwind's bare `border`. */
 private val SeparatorThickness: Dp = Dp(1f)

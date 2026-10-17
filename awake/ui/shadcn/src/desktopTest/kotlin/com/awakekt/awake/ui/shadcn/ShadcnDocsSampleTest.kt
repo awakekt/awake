@@ -14,6 +14,8 @@ import com.awakekt.awake.compose.foundation.layout.Row
 import com.awakekt.awake.compose.foundation.layout.size
 import com.awakekt.awake.compose.foundation.text.Text
 import com.awakekt.awake.compose.runtime.Composer
+import com.awakekt.awake.compose.runtime.CompositionLocalProvider
+import com.awakekt.awake.compose.runtime.provides
 import com.awakekt.awake.compose.testing.composeFrame
 import com.awakekt.awake.compose.testing.composeTestSession
 import com.awakekt.awake.compose.ui.Modifier
@@ -23,6 +25,8 @@ import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.ui.shadcn.components.ShadcnButton
 import com.awakekt.awake.ui.shadcn.components.ShadcnButtonSizeVariant
 import com.awakekt.awake.ui.shadcn.components.ShadcnButtonVariant
+import com.awakekt.awake.ui.shadcn.theme.LocalShadcnDensity
+import com.awakekt.awake.ui.shadcn.theme.ShadcnDensity
 import com.awakekt.awake.ui.shadcn.theme.provideShadcnTheme
 import com.awakekt.awake.ui.shadcn.theme.shadcnTheme
 import kotlin.test.Test
@@ -48,6 +52,27 @@ class ShadcnDocsSampleTest {
         session.click("save")
 
         assertEquals(1, saves)
+    }
+
+    @Test
+    fun aCompactDensityShrinksTheDefaultAndLeavesAnExplicitSize() {
+        val frame = composeFrame(400, 120) {
+            provideShadcnTheme(shadcnThemeValues(dark = false)) {
+                // --8<-- [start:compact-density]
+                CompositionLocalProvider(LocalShadcnDensity provides ShadcnDensity.Compact) {
+                    ShadcnButton("Apply", modifier = Modifier.testTag("compact-default")) // 32 dp, as `Sm`
+                    ShadcnButton(
+                        "Apply",
+                        modifier = Modifier.testTag("compact-explicit"),
+                        size = ShadcnButtonSizeVariant.Lg, // 40 dp: a size passed here always wins
+                    )
+                }
+                // --8<-- [end:compact-density]
+            }
+        }
+
+        assertEquals(32, frame.onNodeWithTag("compact-default").getBoundsInRoot().height)
+        assertEquals(40, frame.onNodeWithTag("compact-explicit").getBoundsInRoot().height)
     }
 
     @Test

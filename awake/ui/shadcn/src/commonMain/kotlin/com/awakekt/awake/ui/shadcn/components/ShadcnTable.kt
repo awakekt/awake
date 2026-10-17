@@ -29,6 +29,9 @@ import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.unit.Dp
 import com.awakekt.awake.core.text.font.FontWeight
 import com.awakekt.awake.tailwind.Tw
+import com.awakekt.awake.ui.shadcn.theme.ShadcnDensity
+import com.awakekt.awake.ui.shadcn.theme.isCompact
+import com.awakekt.awake.ui.shadcn.theme.shadcnDensity
 import com.awakekt.awake.ui.shadcn.theme.shadcnTheme
 
 /**
@@ -321,6 +324,7 @@ fun ShadcnTableRow(
  * `ShadcnTableHead`: Table header cell container.
  *
  * **Tailwind Reference**: `h-10 px-2 text-left align-middle font-medium text-muted-foreground`.
+ * Under `LocalShadcnDensity` `Compact` the head is `h-8`.
  *
  * @param text Header text label.
  * @param modifier Custom layout modifier.
@@ -338,7 +342,7 @@ fun RowScope.ShadcnTableHead(
 ) {
     val theme = shadcnTheme
     Box(
-        modifier.weight(weight).height(RowHeight).padding(horizontal = Tw.Spacing.s2),
+        modifier.weight(weight).height(shadcnDensity.tableHeadHeight()).padding(horizontal = Tw.Spacing.s2),
         horizontalAlignment = align.boxAlignment(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -355,6 +359,7 @@ fun RowScope.ShadcnTableHead(
  * `ShadcnTableCell`: Individual table data cell container.
  *
  * **Tailwind Reference**: `p-2 align-middle`.
+ * Under `LocalShadcnDensity` `Compact` the cell is `px-2 py-1.5`, so a row is 32dp like the head.
  *
  * @param text Data cell text label.
  * @param modifier Custom layout modifier.
@@ -373,7 +378,10 @@ fun RowScope.ShadcnTableCell(
     fontWeight: FontWeight? = null,
 ) {
     Box(
-        modifier.weight(weight).padding(Tw.Spacing.s2),
+        modifier.weight(weight).padding(
+            horizontal = Tw.Spacing.s2,
+            vertical = if (shadcnDensity.isCompact) Tw.Spacing.s1_5 else Tw.Spacing.s2,
+        ),
         horizontalAlignment = align.boxAlignment(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -417,11 +425,20 @@ fun ShadcnTableCaption(
     text: String,
     modifier: Modifier = Modifier,
 ) {
+    val density = shadcnDensity
     Box(
-        modifier.fillMaxWidth().padding(top = CaptionTopMargin),
+        modifier.fillMaxWidth().padding(top = if (density.isCompact) Tw.Spacing.s3 else CaptionTopMargin),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        ShadcnText(text, variant = ShadcnTextVariant.Muted)
+        shadcnDensityText(
+            text,
+            Modifier,
+            ShadcnTextVariant.Muted,
+            color = null,
+            lineHeight = density.labelLineHeight(),
+            weight = null,
+            size = density.labelSize(),
+        )
     }
 }
 
@@ -432,7 +449,8 @@ private fun ShadcnTableCellAlign.boxAlignment(): Alignment.Horizontal = when (th
     ShadcnTableCellAlign.End -> Alignment.End
 }
 
-private val RowHeight: Dp = Tw.Spacing.s10
+/** The head's `h-10`, or `h-8` at [ShadcnDensity.Compact]. */
+private fun ShadcnDensity.tableHeadHeight(): Dp = if (isCompact) Tw.Spacing.s8 else Tw.Spacing.s10
 private val HeadWeight = FontWeight.Medium
 private val RowBorderThickness: Dp = Dp(1f)
 private const val ROW_HOVER_ALPHA = 0.5f

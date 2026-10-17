@@ -29,6 +29,7 @@ import com.awakekt.awake.ui.shadcn.ShadcnThemeValues
 internal fun ShadcnThemeValues.fieldStyle(
     verticalPadding: Dp,
     focusRingMode: ShadcnFocusRingMode = ShadcnFocusRingMode.DrawWithContent,
+    horizontalPadding: Dp = Tw.Spacing.s3,
 ): Style = Style {
     background(
         if (config.dark) {
@@ -42,7 +43,7 @@ internal fun ShadcnThemeValues.fieldStyle(
     // Border folded into the inset: shadcn is `border-box` and Awake's border reserves no layout
     // space, so without this a field's content box is 2px wider than the reference's in each axis.
     contentPadding(
-        horizontal = Tw.Spacing.s3 + FIELD_BORDER_WIDTH,
+        horizontal = horizontalPadding + FIELD_BORDER_WIDTH,
         vertical = verticalPadding + FIELD_BORDER_WIDTH,
     )
     focused(

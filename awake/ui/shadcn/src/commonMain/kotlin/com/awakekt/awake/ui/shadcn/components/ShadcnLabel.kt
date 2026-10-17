@@ -8,6 +8,7 @@ package com.awakekt.awake.ui.shadcn.components
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.draw.alpha
+import com.awakekt.awake.ui.shadcn.theme.shadcnDensity
 import com.awakekt.awake.ui.shadcn.theme.shadcnTheme
 
 /**
@@ -16,6 +17,8 @@ import com.awakekt.awake.ui.shadcn.theme.shadcnTheme
  * Upstream's disabled styling is `peer-disabled:opacity-50` -- the label reacts to the *control's*
  * state, not its own, which is why [enabled] is a parameter here rather than something read from an
  * interaction source. A label has no interactions of its own to track.
+ *
+ * Under `LocalShadcnDensity` `Compact` it is `text-xs`.
  */
 context(_: Composer)
 fun ShadcnLabel(
@@ -24,11 +27,15 @@ fun ShadcnLabel(
     enabled: Boolean = true,
 ) {
     val theme = shadcnTheme
-    ShadcnText(
+    val density = shadcnDensity
+    shadcnDensityText(
         text,
-        modifier = if (enabled) modifier else modifier.alpha(DISABLED_ALPHA),
-        variant = ShadcnTextVariant.Small,
-        color = theme.palette.foreground,
+        if (enabled) modifier else modifier.alpha(DISABLED_ALPHA),
+        ShadcnTextVariant.Small,
+        theme.palette.foreground,
+        density.labelLineHeight(),
+        weight = null,
+        size = density.labelSize(),
     )
 }
 

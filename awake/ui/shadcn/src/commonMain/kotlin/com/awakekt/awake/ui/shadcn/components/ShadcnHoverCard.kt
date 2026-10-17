@@ -30,7 +30,7 @@ import com.awakekt.awake.compose.ui.semantics.SemanticsProperties
 import com.awakekt.awake.compose.ui.semantics.semantics
 import com.awakekt.awake.compose.ui.unit.Dp
 import com.awakekt.awake.compose.ui.unit.dp
-import com.awakekt.awake.tailwind.Tw
+import com.awakekt.awake.ui.shadcn.theme.shadcnDensity
 import com.awakekt.awake.ui.shadcn.theme.shadcnTheme
 
 /**
@@ -49,7 +49,8 @@ fun ShadcnHoverCardContent(
 ) {
     rememberGroup(ShadcnHoverCardContentGroup) {
         val theme = shadcnTheme
-        val style = remember(theme) { theme.popoverSurfaceStyle(Tw.Spacing.s4) }
+        val density = shadcnDensity
+        val style = remember(theme, density) { theme.popoverSurfaceStyle(density.popoverPadding()) }
         Box(modifier.width(width).styleable(StyleState.Default, style)) {
             val body = content
             if (body != null) {
