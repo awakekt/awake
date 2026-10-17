@@ -112,6 +112,9 @@ A running `CanvasElement` also has values that are not saved:
 | `cooldown`, `charges`, `enabled` | `Float`, `Int`, `Boolean` | An action button's cooldown left (0 to 1), uses left (below 0 for none), and whether it can be pressed. See [Action buttons](#action-buttons). |
 | `consumeDown()`, `consumeRelease()`, `consumeLongPress()`, `consumeReady()` | `Boolean` | `true` once for each time an action button went down, was let go, was held long, or became usable again. |
 | `heldSeconds` | `Float` | How long an action button has been held. |
+| `aiming`, `aimX`, `aimY`, `aimCancelling`, `aimTarget` | | An aimed button's drag: whether it is aiming, its aim (-1 to 1, up negative), whether it is over the cancel zone, and what `aimLock` locked onto. See [Drag to aim](#drag-to-aim). |
+| `consumeAimCancel()` | `Boolean` | `true` once for each aimed shot let go over its cancel zone. |
+| `aimLock` | `CanvasAimLock?` | Set from code: locks an aim onto a target the game picks. |
 | `focused` | `Boolean` | Whether a `TextField` holds the keyboard. Set it `true` to focus the field, or `false` to free it; it reads back whatever a click, Enter, Escape, or anything else taking focus away leaves it at. |
 | `consumeSubmit()` | `String?` | The submitted line once after Enter submits a `TextField` since the last call, taken from the field's live state so a character typed the same frame is included; `null` otherwise. Submitting frees its focus. Escape frees focus without submitting. An Enter that only just focused the field, in the same frame a system granted it, does not also submit it. |
 
@@ -137,6 +140,26 @@ dash needs:
   `blockWhileCooling` is `false`; `consumeReady()` is `true` once each time it becomes usable again.
 - `enabled: false`, or a `bind.enabled` field that reads false, disables it: it takes no press, keeps
   the press from what is under it, and draws in `style.disabled`, or dimmed.
+
+### Drag to aim
+
+Add `aim` to a button's settings and a drag away from it aims, then letting go fires `action` with
+that aim, wherever the thumb is:
+
+```json
+"button": { "aim": { "mode": "Ground", "radius": 120, "deadZone": 0.2, "aimAction": "aim",
+                     "cancel": { "anchor": "TopCenter", "offsetY": 24, "width": 72, "height": 72 } } }
+```
+
+- `aimX` and `aimY`, from -1 to 1 with up negative, are the drag from where the press landed as a
+  share of `radius`: a unit `Direction`, or as far out as the drag for a `Ground` target. A drag
+  inside `deadZone` is no aim, so a quick tap fires at whatever the game picks.
+- While it is dragged, `aiming` is `true` and the canvas draws the reach as a ring, a cursor at the
+  aim, and the `cancel` zone. Let go over the zone and nothing fires: `consumeAimCancel()` says so.
+- In a played project, `aimAction` names an axis action pushed with the aim, up being positive, while
+  aiming and on the frame `action` fires.
+- With `lockTarget`, the element's `aimLock`, set from code, locks the aim onto a target the game
+  picks, such as the one nearest the aimed line; `aimTarget` names it.
 
 Set `cooldown`, `charges` and `enabled` from code, or bind them to game state as above. Each action
 button follows only the pointer that landed on it first, so two thumbs hold two buttons at once.
