@@ -22,7 +22,7 @@ import com.awakekt.awake.scene.scene2d.Tilemap
 /** GPU resources are owned by the scene runtime, never by the serialized tile component. */
 internal class SceneTilemapRenderFeature(
     private val renderer: Renderer,
-    private val resolveTexture: (String) -> TextureAsset,
+    private val resolveTexture: (String) -> TextureAsset?,
 ) : RenderFeature3D {
     private val batches = mutableMapOf<Tilemap, TilemapRenderBatch>()
     private val live = mutableSetOf<Tilemap>()

@@ -49,22 +49,26 @@ data class SpriteDrawInput(
  * Reuses one quad and one material per named sheet. The caller owns this batch and calls [destroy]
  * before its renderer is destroyed. Texture uploads follow the renderer's texture ownership.
  * Geometry and UV/tint policy live here so consumers need no scene module or backend code.
+ *
+ * @param renderer Resource factory and GPU lifetime owner.
+ * @param resolveTexture The decoded pixels of a named sheet, asked for when a sprite using it is
+ * first drawn; null while they are not available, such as a file still loading or one that failed
+ * to. A sprite whose sheet is null draws nothing that frame, and the sheet is asked for again on
+ * the next, so it draws from the frame its pixels arrive. Once given, a sheet is uploaded and kept.
  */
 class SpriteRenderBatch(
     private val renderer: Renderer,
-    private val resolveTexture: (String) -> TextureAsset,
+    private val resolveTexture: (String) -> TextureAsset?,
 ) {
     private var mesh: Mesh? = null
     private val sheets = mutableMapOf<String, Sheet>()
 
-    /** Draw requests retain input order; the shared pass sorts by paint order, then camera depth. */
-    fun collect(inputs: List<SpriteDrawInput>): List<RenderDrawCommand> = inputs.map { input ->
-        val sheet = sheets.getOrPut(input.texture) {
-            val image = resolveTexture(input.texture)
-            validateSheet(input, image.width, image.height)
-            require(image.layerCount == 1 && !image.isCubemap) { "A sprite sheet must be a single 2D image." }
-            Sheet(image.width, image.height, renderer.createMaterial(SpriteUniformLayout, texture = image.copy(filtering = TextureFiltering.Nearest)))
-        }
+    /**
+     * Draw requests retain input order; the shared pass sorts by paint order, then camera depth. A
+     * sprite whose sheet is not available yet has no request.
+     */
+    fun collect(inputs: List<SpriteDrawInput>): List<RenderDrawCommand> = inputs.mapNotNull { input ->
+        val sheet = sheets[input.texture] ?: upload(input) ?: return@mapNotNull null
         val quad = mesh ?: renderer.createMesh(SpriteQuadGeometry).also { mesh = it }
         RenderDrawCommand(
             mesh = quad,
@@ -74,6 +78,15 @@ class SpriteRenderBatch(
             transparent = true,
             sortOrder = input.sortOrder,
         )
+    }
+
+    /** The sheet [input] names, uploaded and kept, or null when its pixels are not available yet. */
+    private fun upload(input: SpriteDrawInput): Sheet? {
+        val image = resolveTexture(input.texture) ?: return null
+        validateSheet(input, image.width, image.height)
+        require(image.layerCount == 1 && !image.isCubemap) { "A sprite sheet must be a single 2D image." }
+        val material = renderer.createMaterial(SpriteUniformLayout, texture = image.copy(filtering = TextureFiltering.Nearest))
+        return Sheet(image.width, image.height, material).also { sheets[input.texture] = it }
     }
 
     /** Idempotent teardown of the GPU mesh and material buffers owned by this batch. */

@@ -30,7 +30,9 @@ import com.awakekt.awake.tilemap.TilemapGrid
  * @param columns Atlas columns.
  * @param rows Atlas rows.
  * @param pixelsPerUnit Image pixels per local world unit.
- * @param resolveTexture Supplies decoded pixels on first collection.
+ * @param resolveTexture Supplies decoded pixels on first collection; null while they are not
+ * available, such as a file still loading or one that failed to. The layer then draws nothing, and
+ * the pixels are asked for again on the next collection.
  */
 class TilemapRenderBatch(
     private val renderer: Renderer,
@@ -38,7 +40,7 @@ class TilemapRenderBatch(
     private val columns: Int,
     private val rows: Int,
     private val pixelsPerUnit: Float,
-    private val resolveTexture: () -> TextureAsset,
+    private val resolveTexture: () -> TextureAsset?,
 ) {
     private var atlas: TilemapAtlas? = null
     private var material: Material? = null
@@ -51,13 +53,7 @@ class TilemapRenderBatch(
      * chunks are not uploaded. Requests remain valid until this batch's next collection.
      */
     fun collect(model: Mat4, tint: Color, sortOrder: Int, planes: List<Plane>, out: MutableList<RenderDrawCommand>) {
-        val sheet = atlas ?: resolveTexture().let { image ->
-            require(image.layerCount == 1 && !image.isCubemap) { "Tile atlas must be a single 2D image." }
-            TilemapAtlas(image.width, image.height, columns, rows, pixelsPerUnit).also {
-                material = renderer.createMaterial(SpriteUniformLayout, texture = image.copy(filtering = TextureFiltering.Nearest))
-                atlas = it
-            }
-        }
+        val sheet = atlas ?: upload() ?: return
         if (lastTint != tint) {
             extra = UniformWriter(SpriteExtraUniformLayout)
                 .put(SpriteFields.UvTransform, 1f, 1f, 0f, 0f)
@@ -87,6 +83,17 @@ class TilemapRenderBatch(
                 it.sortOrder = sortOrder
                 out.add(it)
             }
+        }
+    }
+
+    /** The atlas, uploaded with its material and kept, or null when its pixels are not available yet. */
+    private fun upload(): TilemapAtlas? {
+        val image = resolveTexture() ?: return null
+        require(image.layerCount == 1 && !image.isCubemap) { "Tile atlas must be a single 2D image." }
+        // The atlas checks the image's cells before the material is made, so a bad image leaves nothing to free.
+        return TilemapAtlas(image.width, image.height, columns, rows, pixelsPerUnit).also {
+            material = renderer.createMaterial(SpriteUniformLayout, texture = image.copy(filtering = TextureFiltering.Nearest))
+            atlas = it
         }
     }
 

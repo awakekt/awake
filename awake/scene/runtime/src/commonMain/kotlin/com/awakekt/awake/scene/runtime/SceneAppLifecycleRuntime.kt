@@ -445,9 +445,9 @@ class SceneAppLifecycleRuntime internal constructor(
 
     private val ownCanvasViews by lazy { views().forWorld(world) }
 
-    internal val spriteBatch by lazy { SpriteRenderBatch(renderer) { requireAssetLibrary().requireTexture(it) } }
+    internal val spriteBatch by lazy { SpriteRenderBatch(renderer) { requireAssetLibrary().texture(it) } }
     internal val spriteFeature by lazy { SceneSpriteRenderFeature(spriteBatch) }
-    internal val tilemapFeature by lazy { SceneTilemapRenderFeature(renderer) { requireAssetLibrary().requireTexture(it) } }
+    internal val tilemapFeature by lazy { SceneTilemapRenderFeature(renderer) { requireAssetLibrary().texture(it) } }
 
     override fun dispose() {
         if (::renderer.isInitialized) {
