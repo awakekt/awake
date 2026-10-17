@@ -11,11 +11,17 @@ class MessageSyntaxException(message: String) : IllegalArgumentException(message
 /**
  * A parsed message in the ICU MessageFormat style.
  *
- * - `{name}` puts in an argument. `{name, number}` does the same for a number.
+ * - `{name}` puts in an argument as it is.
+ * - `{name, number}` writes a number the locale's way, `1,234.5` or `1.234,5`, through [NumberFormat].
+ *   `{name, number, integer}`, `{name, number, percent}` and `{name, number, compact}` (`1.2K`; ICU's
+ *   `::compact-short` also works) pick a [NumberStyle]. Any other style writes the number as `number`
+ *   does.
  * - `{count, plural, one {# item} other {# items}}` picks a branch by the CLDR plural category
  *   of `count` in the message's language. `=0 {…}` matches an exact value first, `offset:1`
  *   subtracts from the count before the category is chosen, and `#` inside a branch is the count
- *   (after the offset).
+ *   (after the offset), written the locale's way.
+ * - `{rank, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}` does the same by the CLDR
+ *   ordinal category, through [OrdinalRules].
  * - `{gender, select, female {…} male {…} other {…}}` picks a branch by the argument's text.
  *   `plural` and `select` need an `other` branch.
  * - Branches nest, and hold their own arguments.
@@ -39,16 +45,34 @@ class MessageFormat private constructor(val pattern: String, private val parts: 
      * A missing argument, or one `plural` cannot read as a number, never throws: a missing one shows
      * as `{name}`, a plural falls back to `other`, and [onProblem] hears about it.
      *
-     * @param arguments The values by name. Numbers format with no grouping and a `.` decimal point.
+     * @param arguments The values by name. A number put in with `{name}` is written with no grouping
+     *   and a `.` decimal point; `{name, number}` and `#` write it through [numbers].
      * @param plurals The plural rule of the message's language.
+     * @param ordinals The ordinal rule of the message's language, for `selectordinal`.
+     * @param numbers How the message's language writes numbers.
      * @param onProblem Told about each missing or unreadable argument.
      * @return The text.
      */
     fun format(
         arguments: Map<String, Any?>,
         plurals: PluralRule = PluralRules.Root,
+        ordinals: PluralRule = OrdinalRules.Root,
+        numbers: NumberFormat = NumberFormat.Root,
         onProblem: (String) -> Unit = {},
-    ): String = buildString { Formatter(this, arguments, plurals, onProblem).appendParts(parts, pound = null) }
+    ): String = buildString {
+        Formatter(this, arguments, plurals, ordinals, numbers, onProblem).appendParts(parts, pound = null)
+    }
+
+    /**
+     * Formats the message with [locale]'s plural rules, ordinal rules and number format.
+     *
+     * @param arguments The values by name.
+     * @param locale The message's locale.
+     * @param onProblem Told about each missing or unreadable argument.
+     * @return The text.
+     */
+    fun format(arguments: Map<String, Any?>, locale: LocaleId, onProblem: (String) -> Unit = {}): String =
+        format(arguments, PluralRules.forLocale(locale), OrdinalRules.forLocale(locale), NumberFormat.forLocale(locale), onProblem)
 
     override fun toString(): String = pattern
 
@@ -57,6 +81,8 @@ class MessageFormat private constructor(val pattern: String, private val parts: 
         private val out: StringBuilder,
         private val arguments: Map<String, Any?>,
         private val plurals: PluralRule,
+        private val ordinals: PluralRule,
+        private val numbers: NumberFormat,
         private val onProblem: (String) -> Unit,
     ) {
         fun appendParts(parts: List<Part>, pound: String?) {
@@ -65,6 +91,7 @@ class MessageFormat private constructor(val pattern: String, private val parts: 
                     is Part.Text -> out.append(part.text)
                     is Part.Pound -> out.append(pound ?: "#")
                     is Part.Argument -> appendArgument(part)
+                    is Part.Number -> appendNumber(part)
                     is Part.Select -> appendParts(selectBranch(part), pound)
                     is Part.Plural -> appendPlural(part, pound)
                 }
@@ -78,6 +105,22 @@ class MessageFormat private constructor(val pattern: String, private val parts: 
                 out.append('{').append(part.name).append('}')
             } else {
                 out.append(formatValue(value))
+            }
+        }
+
+        private fun appendNumber(part: Part.Number) {
+            val value = arguments[part.name]
+            val number = value?.let(::numberOrNull)
+            when {
+                number != null -> out.append(numbers.format(number, part.style))
+                value == null -> {
+                    onProblem("argument \"${part.name}\" is missing")
+                    out.append('{').append(part.name).append('}')
+                }
+                else -> {
+                    onProblem("argument \"${part.name}\" is not a number")
+                    out.append(formatValue(value))
+                }
             }
         }
 
@@ -95,11 +138,12 @@ class MessageFormat private constructor(val pattern: String, private val parts: 
                 return
             }
             val shown = if (part.offset == 0.0) number else number.toDouble() - part.offset
+            val rule = if (part.ordinal) ordinals else plurals
             val branch = part.exact[number.toDouble()] ?: run {
-                val category = runCatching { plurals.select(PluralOperands.of(shown)) }.getOrDefault(PluralCategory.Other)
+                val category = runCatching { rule.select(PluralOperands.of(shown)) }.getOrDefault(PluralCategory.Other)
                 part.categories[category] ?: part.other
             }
-            appendParts(branch, formatValue(shown))
+            appendParts(branch, numbers.format(shown))
         }
     }
 
@@ -107,9 +151,11 @@ class MessageFormat private constructor(val pattern: String, private val parts: 
         class Text(val text: String) : Part
         object Pound : Part
         class Argument(val name: String) : Part
+        class Number(val name: String, val style: NumberStyle) : Part
         class Select(val name: String, val cases: Map<String, List<Part>>, val other: List<Part>) : Part
         class Plural(
             val name: String,
+            val ordinal: Boolean,
             val offset: Double,
             val exact: Map<Double, List<Part>>,
             val categories: Map<PluralCategory, List<Part>>,
@@ -124,8 +170,8 @@ class MessageFormat private constructor(val pattern: String, private val parts: 
          * @param pattern The message source.
          * @return The parsed message.
          * @throws MessageSyntaxException when the pattern breaks the syntax: an unclosed `{`, an
-         *   argument type other than `number`, `plural` or `select`, or a `plural` or `select` with
-         *   no `other` branch.
+         *   argument type other than `number`, `plural`, `selectordinal` or `select`, or a `plural`,
+         *   `selectordinal` or `select` with no `other` branch.
          */
         fun parse(pattern: String): MessageFormat = MessageFormat(pattern, Parser(pattern).parseTop())
 
@@ -152,6 +198,7 @@ class MessageFormat private constructor(val pattern: String, private val parts: 
             for (part in parts) {
                 when (part) {
                     is Part.Argument -> into += part.name
+                    is Part.Number -> into += part.name
                     is Part.Select -> {
                         into += part.name
                         part.cases.values.forEach { collectNames(it, into) }
@@ -258,26 +305,30 @@ class MessageFormat private constructor(val pattern: String, private val parts: 
             val type = scan.readIdentifier() ?: scan.fail("expected an argument type after \"$name\" at ${scan.index}")
             scan.skipSpace()
             val part = when (type) {
-                "number" -> {
-                    if (scan.peek() == ',') scan.skipStyle()
-                    Part.Argument(name)
-                }
-                "plural" -> {
-                    scan.expect(',', "after \"plural\"")
-                    parsePlural(name)
+                "number" -> Part.Number(name, if (scan.peek() == ',') numberStyle(scan.readStyle()) else NumberStyle.Decimal)
+                "plural", "selectordinal" -> {
+                    scan.expect(',', "after \"$type\"")
+                    parsePlural(name, ordinal = type == "selectordinal")
                 }
                 "select" -> {
                     scan.expect(',', "after \"select\"")
                     parseSelect(name)
                 }
-                else -> scan.fail("argument type \"$type\" is not supported; use number, plural or select")
+                else -> scan.fail("argument type \"$type\" is not supported; use number, plural, selectordinal or select")
             }
             scan.skipSpace()
             scan.expect('}', "to close argument \"$name\" opened at $start")
             return part
         }
 
-        private fun parsePlural(name: String): Part {
+        private fun numberStyle(style: String): NumberStyle = when (style) {
+            "integer" -> NumberStyle.Integer
+            "percent" -> NumberStyle.Percent
+            "compact", "::compact-short" -> NumberStyle.Compact
+            else -> NumberStyle.Decimal
+        }
+
+        private fun parsePlural(name: String, ordinal: Boolean): Part {
             scan.skipSpace()
             var offset = 0.0
             if (scan.skipPrefix("offset:")) {
@@ -299,7 +350,8 @@ class MessageFormat private constructor(val pattern: String, private val parts: 
                     if (category == PluralCategory.Other) other = branch else categories[category] = branch
                 }
             }
-            return Part.Plural(name, offset, exact, categories, other ?: scan.fail("plural \"$name\" has no 'other' branch"))
+            val kind = if (ordinal) "selectordinal" else "plural"
+            return Part.Plural(name, ordinal, offset, exact, categories, other ?: scan.fail("$kind \"$name\" has no 'other' branch"))
         }
 
         private fun parseSelect(name: String): Part {
@@ -346,8 +398,10 @@ class MessageFormat private constructor(val pattern: String, private val parts: 
             return !atEnd && source[index] != '}'
         }
 
-        /** Skips a `number` style, such as `, integer`, up to the argument's closing brace. */
-        fun skipStyle() {
+        /** Reads a `number` style, such as `, integer`, up to the argument's closing brace, trimmed. */
+        fun readStyle(): String {
+            index++ // ,
+            val start = index
             var depth = 0
             while (!atEnd && !(source[index] == '}' && depth == 0)) {
                 when (source[index]) {
@@ -356,6 +410,7 @@ class MessageFormat private constructor(val pattern: String, private val parts: 
                 }
                 index++
             }
+            return source.substring(start, index).trim()
         }
 
         fun readIdentifier(): String? {
