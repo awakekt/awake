@@ -6,6 +6,8 @@
 package com.awakekt.awake.ai.btree
 
 import com.awakekt.awake.ai.AiContext
+import com.awakekt.awake.ai.Snapshottable
+import kotlinx.serialization.KSerializer
 
 /**
  * Limits child execution to at most [timeoutSeconds].
@@ -17,8 +19,20 @@ import com.awakekt.awake.ai.AiContext
 class TimeoutNode(
     val child: BehaviorNode,
     val timeoutSeconds: Float,
-) : BehaviorNode {
+) : BehaviorNode,
+    Snapshottable<TimerState> {
     private var elapsedTime = 0f
+
+    override val children: List<BehaviorNode> = listOf(child)
+
+    override val stateSerializer: KSerializer<TimerState> get() = TimerState.serializer()
+
+    override fun captureState(): TimerState = TimerState(elapsedTime)
+
+    override fun restoreState(state: TimerState) {
+        require(state.seconds.isFinite() && state.seconds >= 0f) { "An elapsed time of ${state.seconds} seconds is not valid." }
+        elapsedTime = state.seconds
+    }
 
     override fun tick(context: AiContext): BehaviorStatus {
         elapsedTime += context.delta

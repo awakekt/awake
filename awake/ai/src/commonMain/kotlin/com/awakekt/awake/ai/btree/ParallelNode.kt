@@ -6,15 +6,20 @@
 package com.awakekt.awake.ai.btree
 
 import com.awakekt.awake.ai.AiContext
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
 /**
- * Policy defining completion requirements for a [ParallelNode].
+ * Policy defining completion requirements for a [ParallelNode]. Written in data as `all` and `one`.
  */
+@Serializable
 enum class ParallelPolicy {
     /** All children must succeed for the node to succeed. Any failure causes immediate failure. */
+    @SerialName("all")
     REQUIRE_ALL,
 
     /** At least one child must succeed for the node to succeed. Failure occurs only if all fail. */
+    @SerialName("one")
     REQUIRE_ONE,
 }
 
@@ -25,7 +30,7 @@ enum class ParallelPolicy {
  * @property policy The completion policy determining success or failure.
  */
 class ParallelNode(
-    val children: List<BehaviorNode>,
+    override val children: List<BehaviorNode>,
     val policy: ParallelPolicy = ParallelPolicy.REQUIRE_ALL,
 ) : BehaviorNode {
 

@@ -17,13 +17,26 @@ import com.awakekt.awake.ecs.World
  * @property entity The specific entity currently being ticked.
  * @property delta Elapsed seconds since the previous evaluation tick.
  * @property blackboard Entity-local key-value store for cross-node communication.
+ * @property events Where behaviours send the events they emit; drops them by default.
  */
 class AiContext(
     var world: World,
     var entity: Entity,
     var delta: Float,
     var blackboard: Blackboard,
+    var events: AiEventSink = AiEventSink.None,
 ) {
+    /**
+     * A context whose events are dropped.
+     *
+     * @param world The active ECS world containing entities and components.
+     * @param entity The specific entity currently being ticked.
+     * @param delta Elapsed seconds since the previous evaluation tick.
+     * @param blackboard Entity-local key-value store for cross-node communication.
+     */
+    constructor(world: World, entity: Entity, delta: Float, blackboard: Blackboard) :
+        this(world, entity, delta, blackboard, AiEventSink.None)
+
     /**
      * Updates this context with the latest tick arguments.
      *

@@ -6,6 +6,7 @@
 package com.awakekt.awake.ai.fsm
 
 import com.awakekt.awake.ai.AiContext
+import com.awakekt.awake.ai.AiEventSink
 import com.awakekt.awake.ai.btree.Blackboard
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.System
@@ -13,8 +14,10 @@ import com.awakekt.awake.ecs.World
 
 /**
  * ECS system that drives [AiStateMachineComponent]s each frame.
+ *
+ * @param events Where the machines' emitted events go; dropped by default.
  */
-class AiStateMachineSystem : System {
+class AiStateMachineSystem(private val events: AiEventSink = AiEventSink.None) : System {
     private val reusableContext = AiContext(
         world = World(),
         entity = Entity(0L),
@@ -30,6 +33,7 @@ class AiStateMachineSystem : System {
             if (!fsmComp.enabled) return@forEach
 
             reusableContext.update(world, entity, delta, fsmComp.blackboard)
+            reusableContext.events = events
             fsmComp.stateMachine.update(reusableContext)
         }
     }
