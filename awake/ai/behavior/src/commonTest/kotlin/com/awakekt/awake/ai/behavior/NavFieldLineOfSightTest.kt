@@ -33,10 +33,10 @@ class NavFieldLineOfSightTest {
     @Test
     fun theWallBlocksAndOpenGroundDoesNot() {
         val viewer = Entity(1L)
-        assertFalse(sight.isClear(Vec3f(1f, 1.6f, 2f), Vec3f(8f, 1f, 2f), viewer, null))
-        assertTrue(sight.isClear(Vec3f(1f, 1.6f, 7f), Vec3f(8f, 1f, 7f), viewer, null))
-        assertTrue(sight.isClear(Vec3f(1f, 0f, 1f), Vec3f(3f, 0f, 3f), viewer, null))
-        assertFalse(sight.isClear(Vec3f(1f, 0f, 1f), Vec3f(12f, 0f, 1f), viewer, null))
+        assertFalse(sight.isClear(World(), Vec3f(1f, 1.6f, 2f), Vec3f(8f, 1f, 2f), viewer, null))
+        assertTrue(sight.isClear(World(), Vec3f(1f, 1.6f, 7f), Vec3f(8f, 1f, 7f), viewer, null))
+        assertTrue(sight.isClear(World(), Vec3f(1f, 0f, 1f), Vec3f(3f, 0f, 3f), viewer, null))
+        assertFalse(sight.isClear(World(), Vec3f(1f, 0f, 1f), Vec3f(12f, 0f, 1f), viewer, null))
     }
 
     @Test

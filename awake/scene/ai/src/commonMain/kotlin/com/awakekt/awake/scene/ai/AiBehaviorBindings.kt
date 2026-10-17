@@ -23,6 +23,9 @@ import com.awakekt.awake.scene.ai.flee.FleeBinding
 import com.awakekt.awake.scene.ai.flee.SceneFlee
 import com.awakekt.awake.scene.ai.patrol.PatrolBinding
 import com.awakekt.awake.scene.ai.patrol.ScenePatrol
+import com.awakekt.awake.scene.ai.perception.FactionsBinding
+import com.awakekt.awake.scene.ai.perception.PerceivableBinding
+import com.awakekt.awake.scene.ai.perception.PerceiverBinding
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.binding.SceneComponentResolver
@@ -61,6 +64,9 @@ object AiBehaviorBindings {
         NavigationBinding,
         BehaviorTreeBinding,
         StateMachineBinding,
+        PerceiverBinding,
+        PerceivableBinding,
+        FactionsBinding,
     )
 
     /** All resolvers provided by the AI behavior module for registration. */

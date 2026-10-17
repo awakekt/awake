@@ -1,0 +1,104 @@
+{
+  "version": 1,
+  "name": "many-followers",
+  "nodes": [
+    {
+      "name": "camera",
+      "components": [
+        {
+          "component": "camera",
+          "eye": { "x": 0.0, "y": 32.0, "z": 64.0 },
+          "center": { "x": 0.0, "y": 0.0, "z": 0.0 },
+          "fovYDegrees": 50.0,
+          "near": 0.5,
+          "far": 400.0,
+          "primary": true
+        }
+      ]
+    },
+    {
+      "name": "sun",
+      "components": [
+        {
+          "component": "light",
+          "type": "Directional",
+          "direction": { "x": 0.4, "y": 1.0, "z": 0.3 },
+          "color": { "x": 1.0, "y": 0.97, "z": 0.92 },
+          "intensity": 1.0
+        }
+      ]
+    },
+    {
+      "name": "ground",
+      "transform": { "scale": { "x": 12.0, "y": 1.0, "z": 12.0 } },
+      "components": [
+        { "component": "mesh_renderer", "mesh": "ground", "material": "lit-shadow", "cullMode": "Back" },
+        { "component": "pbr_material", "metallic": 0.0, "roughness": 0.95 }
+      ]
+    },
+    {
+      "name": "limits",
+      "components": [
+        { "component": "canvas_follow_limit", "group": "plates", "max": 150, "rankBy": "Distance" },
+        { "component": "canvas_follow_limit", "group": "quest", "max": 8, "rankBy": "Priority" },
+        { "component": "canvas_follow_occlusion", "raysPerFrame": 48, "reuseFrames": 6, "layer": 0 }
+      ]
+    },
+    {
+      "name": "readout",
+      "components": [
+        {
+          "component": "canvas_element",
+          "anchor": "BottomLeft",
+          "offsetX": 16.0,
+          "offsetY": 16.0,
+          "width": 520.0,
+          "height": 64.0,
+          "fontSize": 13.0,
+          "background": "#000000B8",
+          "order": 10
+        }
+      ]
+    },
+    {
+      "name": "pillar-north",
+      "transform": { "position": { "x": 0.0, "y": 5.0, "z": -18.0 }, "scale": { "x": 4.0, "y": 10.0, "z": 4.0 } },
+      "components": [
+        { "component": "mesh_renderer", "mesh": "cube", "material": "lit-shadow" },
+        { "component": "physics_body", "shape": { "type": "box", "halfExtents": { "x": 2.0, "y": 5.0, "z": 2.0 } }, "motion": "STATIC" }
+      ]
+    },
+    {
+      "name": "pillar-far",
+      "transform": { "position": { "x": -12.0, "y": 5.0, "z": -32.0 }, "scale": { "x": 4.0, "y": 10.0, "z": 4.0 } },
+      "components": [
+        { "component": "mesh_renderer", "mesh": "cube", "material": "lit-shadow" },
+        { "component": "physics_body", "shape": { "type": "box", "halfExtents": { "x": 2.0, "y": 5.0, "z": 2.0 } }, "motion": "STATIC" }
+      ]
+    },
+    {
+      "name": "pillar-east",
+      "transform": { "position": { "x": 18.0, "y": 5.0, "z": 0.0 }, "scale": { "x": 4.0, "y": 10.0, "z": 4.0 } },
+      "components": [
+        { "component": "mesh_renderer", "mesh": "cube", "material": "lit-shadow" },
+        { "component": "physics_body", "shape": { "type": "box", "halfExtents": { "x": 2.0, "y": 5.0, "z": 2.0 } }, "motion": "STATIC" }
+      ]
+    },
+    {
+      "name": "pillar-west",
+      "transform": { "position": { "x": -18.0, "y": 5.0, "z": 0.0 }, "scale": { "x": 4.0, "y": 10.0, "z": 4.0 } },
+      "components": [
+        { "component": "mesh_renderer", "mesh": "cube", "material": "lit-shadow" },
+        { "component": "physics_body", "shape": { "type": "box", "halfExtents": { "x": 2.0, "y": 5.0, "z": 2.0 } }, "motion": "STATIC" }
+      ]
+    },
+    {
+      "name": "wall-centre",
+      "transform": { "position": { "x": 0.0, "y": 2.0, "z": -8.0 }, "scale": { "x": 24.0, "y": 4.0, "z": 1.0 } },
+      "components": [
+        { "component": "mesh_renderer", "mesh": "cube", "material": "lit-shadow" },
+        { "component": "physics_body", "shape": { "type": "box", "halfExtents": { "x": 12.0, "y": 2.0, "z": 0.5 } }, "motion": "STATIC" }
+      ]
+    }
+  ]
+}

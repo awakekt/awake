@@ -253,9 +253,25 @@ val perception = PerceptionSystem(space, factions, lineOfSight, maxSightUpdates 
 perception.hear(SoundEvent(position, loudness = 2f, source = thief))
 ```
 
-`space` tells it where entities are and which way they face. `lineOfSight` decides what blocks
-sight and muffles sound; `NavFieldLineOfSight` uses a navigation grid's blocked cells. Run it before
-the behaviour systems. It writes `perception.target`, `perception.target.position`,
+`space` tells it where entities are and which way they face; in a scene that is
+`TransformPerceptionSpace`. `lineOfSight` decides what blocks sight and muffles sound:
+`PhysicsLineOfSight` casts physics rays, seeing past the viewer's own body, and
+`NavFieldLineOfSight` uses a navigation grid's blocked cells. Run it before the behaviour systems.
+Each look reads only the entities in nearby cells, and `maxSightUpdates` and `sightBudget` cap how
+many perceivers look in a frame, by count and by time.
+
+In a scene, give agents `perceiver` and targets `perceivable`, and put the faction table in a
+`factions` component. A played project runs perception for them, seeing through the physics world
+when it has one and the navigation grid otherwise:
+
+```json title="scene nodes"
+{ "name": "Map", "components": [ { "component": "factions",
+    "relations": [ { "from": "watch", "to": "thieves", "relation": "hostile" } ] } ] },
+{ "name": "Guard", "components": [
+    { "component": "perceiver", "faction": "watch", "settings": { "sight": { "focusRange": 15 } } },
+    { "component": "behavior_tree", "asset": "ai/guard.tree.json" } ] },
+{ "name": "Thief", "components": [ { "component": "perceivable", "faction": "thieves" } ] }
+``` It writes `perception.target`, `perception.target.position`,
 `perception.sees-hostile`, `perception.hostiles` and `perception.noise.position` to the agent's
 blackboard, and trees and machines can ask `ai.perception.sees`, `ai.perception.remembers` and
 `ai.perception.heard`.

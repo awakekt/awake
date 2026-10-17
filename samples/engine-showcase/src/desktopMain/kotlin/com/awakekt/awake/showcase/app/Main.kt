@@ -24,6 +24,8 @@ fun main() {
         vsync = System.getProperty(VSYNC_PROPERTY)?.toBooleanStrictOrNull() ?: defaults.vsync,
         perfLog = System.getProperty(PERF_LOG_PROPERTY)?.toBooleanStrictOrNull() ?: defaults.perfLog,
         stressEntities = System.getProperty(ENTITIES_PROPERTY)?.toIntOrNull()?.takeIf { it > 0 } ?: defaults.stressEntities,
+        followers = System.getProperty(FOLLOWERS_PROPERTY)?.toIntOrNull()?.takeIf { it > 0 } ?: defaults.followers,
+        benchmark = System.getProperty(BENCHMARK_PROPERTY)?.toBooleanStrictOrNull() ?: defaults.benchmark,
     )
     val game = engineShowcaseApp(showcaseId, options)
     runVulkanDesktopGame(game, ::createEngineShowcaseVulkanApplication)
@@ -44,4 +46,6 @@ private const val SHOWCASE_PROPERTY = "awake.showcase"
 private const val VSYNC_PROPERTY = "awake.showcase.vsync"
 private const val PERF_LOG_PROPERTY = "awake.showcase.perfLog"
 private const val ENTITIES_PROPERTY = "awake.showcase.entities"
+private const val FOLLOWERS_PROPERTY = "awake.showcase.followers"
+private const val BENCHMARK_PROPERTY = "awake.showcase.benchmark"
 private const val DESKTOP_ICON_RESOURCE = "brand/awake-mark.png"

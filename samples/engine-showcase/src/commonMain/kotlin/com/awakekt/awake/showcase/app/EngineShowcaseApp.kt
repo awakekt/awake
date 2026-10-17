@@ -29,4 +29,7 @@ private fun WindowDsl.configureShowcaseWindow(options: ShowcaseLaunchOptions) {
     title = "Awake Engine Showcase"
     size(1600, 900)
     if (!options.vsync) presentMode = PresentMode.NoVsync
+    // A benchmark keeps its frame rate when another window takes the focus, rather than dropping to
+    // the background cap and measuring that.
+    if (options.benchmark) throttleCpuWhenNotForeground = false
 }

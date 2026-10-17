@@ -8,6 +8,7 @@ package com.awakekt.awake.ai.behavior
 import com.awakekt.awake.ai.perception.LineOfSight
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.Entity
+import com.awakekt.awake.ecs.World
 import com.awakekt.awake.navigation.grid.NavField
 import com.awakekt.awake.navigation.grid.hasLineOfSight
 
@@ -19,5 +20,6 @@ import com.awakekt.awake.navigation.grid.hasLineOfSight
  * @property field The grid.
  */
 class NavFieldLineOfSight(val field: NavField) : LineOfSight {
-    override fun isClear(from: Vec3f, to: Vec3f, viewer: Entity, target: Entity?): Boolean = field.hasLineOfSight(from, to)
+    override fun isClear(world: World, from: Vec3f, to: Vec3f, viewer: Entity, target: Entity?): Boolean =
+        field.hasLineOfSight(from, to)
 }
