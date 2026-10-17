@@ -7,12 +7,16 @@ package com.awakekt.awake.scene.canvas
 
 import com.awakekt.awake.scene.canvas.CanvasElementBinding.toComponent
 import com.awakekt.awake.scene.canvas.CanvasElementBinding.toSceneComponent
+import com.awakekt.awake.ui.canvas.CanvasAim
+import com.awakekt.awake.ui.canvas.CanvasAimMode
+import com.awakekt.awake.ui.canvas.CanvasAnchor
 import com.awakekt.awake.ui.canvas.CanvasBinding
 import com.awakekt.awake.ui.canvas.CanvasButton
 import com.awakekt.awake.ui.canvas.CanvasButtonTrigger
 import com.awakekt.awake.ui.canvas.CanvasElementKind
 import com.awakekt.awake.ui.canvas.CanvasStateStyle
 import com.awakekt.awake.ui.canvas.CanvasStyle
+import com.awakekt.awake.ui.canvas.CanvasZone
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -44,6 +48,14 @@ class CanvasActionButtonSceneTest {
                 longPressAction = "inspect",
                 releaseAction = "stop",
                 blockWhileCooling = false,
+                aim = CanvasAim(
+                    mode = CanvasAimMode.Ground,
+                    radius = 140f,
+                    deadZone = 0.1f,
+                    cancel = CanvasZone(anchor = CanvasAnchor.TopRight, offsetX = 12f, offsetY = 40f, width = 90f, height = 60f),
+                    aimAction = "aim",
+                    lockTarget = true,
+                ),
             ),
             bind = CanvasBinding("Player", cooldown = "dash.left", cooldownMax = "dash.seconds", charges = "dash.charges", enabled = "dash.ready"),
             style = CanvasStyle(disabled = CanvasStateStyle(background = "#303030", alpha = 0.5f)),

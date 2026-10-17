@@ -29,7 +29,8 @@ const val JUMP_ACTION = MovementActions.JUMP
  * `move` Joystick, a `jump` Button and a `run` Button so steer, jump and run as the keys do. A
  * Joystick pushed past its sprint threshold also holds its `joystick.sprintAction`, so one thumb can
  * both steer and run. A Button with `button` settings also presses its `longPressAction` on a long
- * press and its `releaseAction` when let go, and a disabled or cooling one does nothing.
+ * press and its `releaseAction` when let go, and a disabled or cooling one does nothing. An aimed
+ * button pushes its aim to its `aim.aimAction` while it is dragged and on the frame it fires.
  *
  * An element naming no action of the scene is left to the game, its presses unconsumed. Where the
  * controls sit and how big they are is the scene's to decide.
@@ -68,12 +69,13 @@ class CanvasActionSystem : System {
     private fun feedActionButton(element: CanvasElement, actions: InputActions): Boolean {
         val settings = element.button ?: return false
         var fed = false
+        var fired = false
         if (element.action in actions) {
             val held = element.isHeld
-            val pressed = element.consumePress()
+            fired = element.consumePress()
             if (held) actions.hold(element.action)
-            if (pressed) actions.press(element.action)
-            fed = held || pressed
+            if (fired) actions.press(element.action)
+            fed = held || fired
         }
         if (settings.longPressAction in actions && element.consumeLongPress()) {
             actions.press(settings.longPressAction)
@@ -83,7 +85,19 @@ class CanvasActionSystem : System {
             actions.press(settings.releaseAction)
             fed = true
         }
-        return fed
+        return feedAim(element, actions, fired) || fed
+    }
+
+    /**
+     * Pushes an aimed button's aim to its `aimAction` while it is dragged, and on the frame it fires,
+     * up being positive; a cancelled shot is taken so the game does not see it twice.
+     */
+    private fun feedAim(element: CanvasElement, actions: InputActions, fired: Boolean): Boolean {
+        val aim = element.button?.aim
+        if (aim == null || aim.aimAction !in actions) return false
+        val pushing = element.aiming || fired
+        if (pushing) actions.push(aim.aimAction, element.aimX, -element.aimY)
+        return pushing
     }
 
     /** Presses [element]'s double-click action when a Button was double-clicked, and returns whether it did. */

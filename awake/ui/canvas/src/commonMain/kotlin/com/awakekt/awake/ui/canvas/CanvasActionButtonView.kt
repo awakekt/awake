@@ -13,9 +13,11 @@ import com.awakekt.awake.compose.foundation.layout.Box
 import com.awakekt.awake.compose.foundation.layout.padding
 import com.awakekt.awake.compose.foundation.text.Text
 import com.awakekt.awake.compose.runtime.Composer
+import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.graphics.RoundedCornerShape
+import com.awakekt.awake.compose.ui.platform.LocalDensity
 import com.awakekt.awake.compose.ui.semantics.testTag
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.color.Color
@@ -29,7 +31,7 @@ import com.awakekt.awake.core.text.theme.TextStyle
 context(_: Composer)
 internal fun ActionButtonView(element: CanvasElement, styled: Modifier, textStyle: TextStyle, tree: CanvasTree, children: List<CanvasItem>) {
     element.buttonPress.tick(element.button ?: CanvasButton.Default)
-    Box(styled.buttonInput(element), contentAlignment = (element.textAlign ?: CanvasAnchor.Center).alignment) {
+    Box(styled.buttonInput(element, LocalDensity.current), contentAlignment = (element.textAlign ?: CanvasAnchor.Center).alignment) {
         Text(tree.textOf(element), style = textStyle)
         if (element.cooldown > 0f) SweepFill(element.cooldown, COOLDOWN_SHADE, null)
         if (element.charges >= 0) {

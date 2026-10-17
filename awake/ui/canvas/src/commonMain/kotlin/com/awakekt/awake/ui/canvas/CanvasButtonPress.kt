@@ -12,6 +12,7 @@ import com.awakekt.awake.compose.ui.input.pointer.PointerEvent
 import com.awakekt.awake.compose.ui.input.pointer.PointerEventPass
 import com.awakekt.awake.compose.ui.input.pointer.PointerEventType
 import com.awakekt.awake.compose.ui.node.PointerInputNode
+import com.awakekt.awake.core.math2d.Rectangle
 import kotlin.time.TimeMark
 
 /**
@@ -34,20 +35,65 @@ internal class CanvasButtonPress {
     var down = false
     var released = false
     var longPress = false
+    var aimCancelled = false
 
-    /** Takes [id] on [element], unless another pointer holds it: whether it did. */
-    fun press(id: Long, element: CanvasElement): Boolean {
+    private var pressX = 0f
+    private var pressY = 0f
+
+    /** The aim of the drag now held, or the last one let go, -1 to 1, up negative. */
+    var aimX = 0f
+        private set
+    var aimY = 0f
+        private set
+
+    /** Whether the drag now held is over the aim's cancel zone. */
+    var cancelling = false
+        private set
+
+    /** The key of what [CanvasElement.aimLock] locked the aim onto, or null. */
+    var target: String? = null
+        private set
+
+    /** Where the aim's cancel zone was drawn, in canvas units, while aiming; the overlay sets it. */
+    var cancelBounds: Rectangle? = null
+
+    /** Whether a live press on a button with [CanvasButton.aim] is being dragged to aim. */
+    fun aiming(element: CanvasElement): Boolean = live && element.button?.aim != null
+
+    /** Takes [id] at ([px], [py]) dp on [element], unless another pointer holds it: whether it did. */
+    fun press(id: Long, px: Float, py: Float, element: CanvasElement): Boolean {
         if (pointer != null) return false
         pointer = id
         live = element.usable
         longPressed = false
         since = element.clock.markNow()
+        pressX = px
+        pressY = py
+        aimX = 0f
+        aimY = 0f
+        target = null
+        cancelling = false
         if (live) {
             down = true
             element.interactions.tryEmit(Interaction.Press.Press)
-            if ((element.button ?: CanvasButton.Default).trigger == CanvasButtonTrigger.Down) element.press()
+            val settings = element.button ?: CanvasButton.Default
+            if (settings.trigger == CanvasButtonTrigger.Down && settings.aim == null) element.press()
         }
         return true
+    }
+
+    /** Aims [element] at the drag to ([px], [py]) dp from where the press landed, and checks the cancel zone. */
+    fun drag(element: CanvasElement, px: Float, py: Float) {
+        val aim = element.button?.aim
+        if (!live || aim == null) return
+        val (x, y) = aim.aim(px - pressX, py - pressY)
+        val locked = if (aim.lockTarget) element.aimLock?.lock(element, x, y) else null
+        aimX = locked?.x ?: x
+        aimY = locked?.y ?: y
+        target = locked?.key
+        val bounds = element.placedBounds
+        val zone = cancelBounds
+        cancelling = bounds != null && zone != null && zone.holds(bounds.x + px, bounds.y + py)
     }
 
     /** Lets go of [element]; [over] says whether the pointer is still over it, which makes a tap. */
@@ -59,6 +105,13 @@ internal class CanvasButtonPress {
         released = true
         element.interactions.tryEmit(Interaction.Press.Release(Interaction.Press.Press))
         val settings = element.button ?: CanvasButton.Default
+        if (settings.aim != null) {
+            // An aimed button fires wherever it is let go, but not over its cancel zone.
+            if (cancelling) aimCancelled = true else element.press()
+            cancelling = false
+            cancelBounds = null
+            return
+        }
         val longTaken = longPressed && settings.longPressAction.isNotEmpty()
         if (over && settings.trigger == CanvasButtonTrigger.Tap && !longTaken) element.press()
     }
@@ -76,6 +129,8 @@ internal class CanvasButtonPress {
 
     private companion object {
         const val MICROS = 1_000_000f
+
+        fun Rectangle.holds(px: Float, py: Float): Boolean = px >= x && py >= y && px < x + width && py < y + height
     }
 }
 
@@ -84,27 +139,31 @@ internal class CanvasButtonPress {
  * until that one lifts. A press on a button that cannot be used is still taken, so it does not fall
  * through to what is under it, but reports nothing.
  */
-internal fun Modifier.buttonInput(element: CanvasElement): Modifier = this then ButtonInputElement(element)
+internal fun Modifier.buttonInput(element: CanvasElement, density: Float): Modifier = this then ButtonInputElement(element, density)
 
-private class ButtonInputElement(private val element: CanvasElement) : ModifierNodeElement<ButtonInputNode>() {
-    override fun create(): ButtonInputNode = ButtonInputNode(element)
+private class ButtonInputElement(private val element: CanvasElement, private val density: Float) : ModifierNodeElement<ButtonInputNode>() {
+    override fun create(): ButtonInputNode = ButtonInputNode(element, density)
 
     override fun update(node: ButtonInputNode) {
         node.element = element
+        node.density = density
     }
 
     override fun toString(): String = "buttonInput()"
 }
 
-private class ButtonInputNode(var element: CanvasElement) :
+private class ButtonInputNode(var element: CanvasElement, var density: Float) :
     Modifier.Node(),
     PointerInputNode {
     override fun onPointerEvent(event: PointerEvent, pass: PointerEventPass) {
         if (pass != PointerEventPass.Main) return
         val state = element.buttonPress
         when (event.type) {
-            PointerEventType.Press -> if (event.isInBounds && state.press(event.pointerId, element)) event.consume()
-            PointerEventType.Move -> if (event.pointerId == state.pointer) event.consume()
+            PointerEventType.Press -> if (event.isInBounds && state.press(event.pointerId, event.x / density, event.y / density, element)) event.consume()
+            PointerEventType.Move -> if (event.pointerId == state.pointer) {
+                state.drag(element, event.x / density, event.y / density)
+                event.consume()
+            }
             PointerEventType.Release -> if (event.pointerId == state.pointer) {
                 state.release(element, event.isInBounds)
                 event.consume()

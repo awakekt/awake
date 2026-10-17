@@ -193,6 +193,29 @@ class ProjectRuntimeTest {
         game.touch(down = false, run)
     }
 
+    /** An aimed action button pushes its aim while dragged and fires its action with it when let go. */
+    @Test
+    fun anAimedButtonFiresItsActionWithTheAim() = runTest {
+        val scene = RUN_BUTTON_SCENE.replace(
+            "\"action\": \"run\",",
+            "\"action\": \"fire\", \"button\": { \"aim\": { \"radius\": 50, \"aimAction\": \"aim\" } },",
+        )
+        val game = play(scene.withNode(AIMED_FIRE), touch = true)
+        game.frames(FRAMES)
+        val actions = assertNotNull(game.world.inputActions())
+        val (x, y) = game.centreOf("Run")
+
+        game.touch(down = true, x to y)
+        game.touch(down = true, x - 100f to y)
+        game.touch(down = true, x - 100f to y)
+        assertEquals(-1f, actions.axisX("aim"), 0.01f, "dragging left aims left")
+        assertFalse(actions.wasPressed("fire"), "nothing fires while aiming")
+        game.touch(down = false, x - 100f to y)
+        game.frames(1)
+        assertTrue(actions.wasPressed("fire"), "letting go fires")
+        assertEquals(-1f, actions.axisX("aim"), 0.01f, "with the aim it was let go at")
+    }
+
     /** A Button naming an action of the game's own holds that action, which the game's systems read. */
     @Test
     fun aButtonForAnActionOfTheGamesOwnHoldsIt() = runTest {
@@ -391,6 +414,9 @@ class ProjectRuntimeTest {
 
         const val TOGGLED_RUN = """{ "name": "Controls", "components": [ { "component": "input_actions", "actions": [
     { "type": "button", "name": "run", "keys": ["Shift"], "trigger": "Toggle", "startsOn": true } ] } ] }"""
+
+        const val AIMED_FIRE = """{ "name": "Controls", "components": [ { "component": "input_actions", "actions": [
+    { "type": "button", "name": "fire", "keys": ["F"] }, { "type": "axis", "name": "aim" } ] } ] }"""
 
         const val FIRE_ACTION = """{ "name": "Controls", "components": [ { "component": "input_actions", "actions": [
     { "type": "button", "name": "fire", "keys": ["F"] } ] } ] }"""
