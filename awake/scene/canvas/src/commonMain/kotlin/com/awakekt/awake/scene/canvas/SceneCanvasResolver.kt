@@ -31,18 +31,17 @@ import kotlinx.serialization.json.JsonPrimitive
  * bounds, its views for a View's camera picture, and a node's component fields, exported once per
  * frame through its scene bindings, for [CanvasElement.bind] to read.
  *
- * The node index and a field's export are both built lazily, so a frame with no follower, View or
- * bind never walks the world or touches the binding registry.
+ * The node index, [named], is built only when something looks a node up, and kept from frame to frame
+ * by the caller; a field's export is built lazily too, so a frame with no follower, View or bind
+ * never walks the world or touches the binding registry.
  */
 internal class SceneCanvasResolver(
     private val world: World,
     private val projector: CanvasProjector?,
     private val views: CanvasViews?,
     private val bindings: List<SceneComponentBinding<*, *>>?,
+    private val named: CanvasNodeNames = CanvasNodeNames(world),
 ) : CanvasResolver {
-    private val named: Map<String, Entity> by lazy {
-        HashMap<String, Entity>().also { names -> world.family<Name>().forEach { entity, name -> names.getOrPut(name.value) { entity } } }
-    }
 
     private val byName by lazy {
         (bindings ?: globalCanvasBindings()).mapNotNull { binding -> binding.serializer?.descriptor?.serialName?.let { it to binding } }.toMap()
@@ -139,6 +138,11 @@ internal fun World.placedCanvasItems(siblingOrder: Comparator<Entity>? = null): 
         val path = hierarchyPath(entity)
         placed += PlacedItem(CanvasItem(entity.id, element, canvasParent(path)), path)
     }
+    return sortPlaced(placed, siblingOrder)
+}
+
+/** [placed], collected in the order the world stores their elements, in hierarchy order: sorted in place. */
+internal fun World.sortPlaced(placed: MutableList<PlacedItem>, siblingOrder: Comparator<Entity>?): List<PlacedItem> {
     if (placed.size > 1) {
         val stored = StoredOrder(this, placed)
         val siblings = siblingOrder?.then(stored) ?: stored
@@ -200,7 +204,7 @@ private fun comparePaths(a: List<Entity>, b: List<Entity>, siblings: Comparator<
  * [entity] and its ancestors through [Transform], from its root down to [entity] itself. A parent
  * link that loops back stops the walk where it would revisit a node.
  */
-private fun World.hierarchyPath(entity: Entity): List<Entity> {
+internal fun World.hierarchyPath(entity: Entity): List<Entity> {
     val path = ArrayList<Entity>()
     var node: Entity? = entity
     while (node != null && node !in path) {
@@ -212,7 +216,7 @@ private fun World.hierarchyPath(entity: Entity): List<Entity> {
 }
 
 /** The [CanvasElement] of the nearest ancestor on [path], an entity's [hierarchyPath], that has one, or null. */
-private fun World.canvasParent(path: List<Entity>): CanvasElement? {
+internal fun World.canvasParent(path: List<Entity>): CanvasElement? {
     for (index in path.size - 2 downTo 0) get<CanvasElement>(path[index])?.let { return it }
     return null
 }
