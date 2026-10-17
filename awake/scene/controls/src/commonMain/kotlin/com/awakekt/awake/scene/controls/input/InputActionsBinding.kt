@@ -7,9 +7,12 @@ package com.awakekt.awake.scene.controls.input
 
 import com.awakekt.awake.core.input.ActionTrigger
 import com.awakekt.awake.core.input.AxisAction
+import com.awakekt.awake.core.input.BindingDescription
 import com.awakekt.awake.core.input.ButtonAction
 import com.awakekt.awake.core.input.InputActionDefinition
 import com.awakekt.awake.core.input.InputActions
+import com.awakekt.awake.core.input.InputChord
+import com.awakekt.awake.core.input.InputControl
 import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.input.PointerButton
 import com.awakekt.awake.ecs.Entity
@@ -31,13 +34,15 @@ sealed interface SceneInputAction {
 }
 
 /**
- * An action that is on or off, triggered by any of [keys] and pointer [buttons].
+ * An action that is on or off, triggered by any of [keys], pointer [buttons] and [chords].
  *
  * @property name The name systems and canvas elements use for the action.
  * @property keys The keys that trigger it.
  * @property buttons The pointer buttons that trigger it.
  * @property trigger Whether it is active while held, for the frame it is pressed, or switched by each press.
  * @property startsOn Whether a [ActionTrigger.Toggle] starts on.
+ * @property chords Keys and controller buttons pressed with modifiers held, such as Shift+1, which
+ * resolve against the other actions as [InputChord] says. A scene written before chords has none.
  */
 @Serializable
 @SerialName("button")
@@ -47,6 +52,7 @@ data class SceneButtonAction(
     val buttons: Set<PointerButton> = emptySet(),
     val trigger: ActionTrigger = ActionTrigger.Hold,
     val startsOn: Boolean = false,
+    val chords: Set<InputChord> = emptySet(),
 ) : SceneInputAction
 
 /** A direction on two axes: [up] and [down] keys push it along y, [right] and [left] along x. */
@@ -71,7 +77,7 @@ data class SceneAxisAction(
 @SerialName("input_actions")
 data class SceneInputActions(val actions: List<SceneInputAction> = emptyList()) : SceneComponent {
     override fun validate(path: String): List<SceneValidationIssue> =
-        (actions.flatMap(::actionIssues) + duplicateNames() + keysBoundTwice()).map { SceneValidationIssue(path, it) }
+        (actions.flatMap(::actionIssues) + duplicateNames() + bindingsBoundTwice()).map { SceneValidationIssue(path, it) }
 
     /** The scene's actions, with the defaults it does not rebind. */
     fun withDefaults(): List<InputActionDefinition> {
@@ -94,14 +100,15 @@ data class SceneInputActions(val actions: List<SceneInputAction> = emptyList()) 
     private fun duplicateNames(): List<String> = actions.groupingBy { it.name }.eachCount()
         .filterValues { it > 1 }.keys.map { "input_actions names \"$it\" more than once" }
 
-    private fun keysBoundTwice(): List<String> {
-        val owners = HashMap<Key, String>()
+    /** A key, or a chord with the same modifiers, triggers one action; a plain key is the chord with none. */
+    private fun bindingsBoundTwice(): List<String> {
+        val owners = HashMap<BindingDescription, String>()
         return withDefaults().flatMap { action ->
-            action.boundKeys().mapNotNull { key ->
-                when (val other = owners.put(key, action.name)) {
+            action.boundChords().mapNotNull { chord ->
+                when (val other = owners.put(chord, action.name)) {
                     null -> null
-                    action.name -> "input_actions.${action.name} binds $key twice"
-                    else -> "input_actions binds $key to both $other and ${action.name}"
+                    action.name -> "input_actions.${action.name} binds ${chord.label()} twice"
+                    else -> "input_actions binds ${chord.label()} to both $other and ${action.name}"
                 }
             }
         }
@@ -130,12 +137,12 @@ object InputActionsBinding : SceneComponentBinding<InputActions, SceneInputActio
 }
 
 private fun SceneInputAction.toDefinition(): InputActionDefinition = when (this) {
-    is SceneButtonAction -> ButtonAction(name, keys, buttons, trigger, startsOn)
+    is SceneButtonAction -> ButtonAction(name, keys, buttons, trigger, startsOn, chords)
     is SceneAxisAction -> AxisAction(name, up, down, left, right)
 }
 
 private fun InputActionDefinition.toScene(): SceneInputAction = when (this) {
-    is ButtonAction -> SceneButtonAction(name, keys, buttons, trigger, startsOn)
+    is ButtonAction -> SceneButtonAction(name, keys, buttons, trigger, startsOn, chords)
     is AxisAction -> SceneAxisAction(name, up, down, left, right)
 }
 
@@ -143,4 +150,18 @@ private fun InputActionDefinition.toScene(): SceneInputAction = when (this) {
 private fun InputActionDefinition.boundKeys(): List<Key> = when (this) {
     is ButtonAction -> keys.toList()
     is AxisAction -> up.toList() + down + left + right
+}
+
+/** Every key and chord bound to the action, once per binding, by what is held and pressed. */
+private fun InputActionDefinition.boundChords(): List<BindingDescription> =
+    boundKeys().map { BindingDescription(emptyList(), InputControl.Keyboard(it)) } +
+        ((this as? ButtonAction)?.chords.orEmpty().map { it.describe() })
+
+/** Shift+Digit1, or a controller's LeftShoulder+South, for a validation message. */
+private fun BindingDescription.label(): String = (modifiers + control).joinToString("+") { it.name() }
+
+private fun InputControl.name(): String = when (this) {
+    is InputControl.Keyboard -> key.name
+    is InputControl.Pointer -> button.name
+    is InputControl.Gamepad -> button.name
 }
