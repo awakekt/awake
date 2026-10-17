@@ -7,15 +7,21 @@ package com.awakekt.awake.project.runtime
 
 import com.awakekt.awake.ai.behavior.ChaseAiSystem
 import com.awakekt.awake.ai.behavior.FleeAiSystem
+import com.awakekt.awake.ai.behavior.NavFieldLineOfSight
 import com.awakekt.awake.ai.behavior.PatrolAiSystem
+import com.awakekt.awake.ai.behavior.PhysicsLineOfSight
 import com.awakekt.awake.ai.behavior.registerSpatialKinds
 import com.awakekt.awake.ai.btree.BehaviorTreeSystem
 import com.awakekt.awake.ai.definition.AiDefinitionLibrary
 import com.awakekt.awake.ai.definition.AiRegistry
 import com.awakekt.awake.ai.fsm.AiStateMachineSystem
+import com.awakekt.awake.ai.perception.FactionTable
+import com.awakekt.awake.ai.perception.LineOfSight
+import com.awakekt.awake.ai.perception.PerceptionSystem
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.navigation.PathRequestSystem
+import com.awakekt.awake.navigation.grid.TileField
 import com.awakekt.awake.scene.ai.AgentIntentResetSystem
 import com.awakekt.awake.scene.ai.AiBehaviorBindings
 import com.awakekt.awake.scene.ai.MovementAgentPlacement
@@ -25,6 +31,9 @@ import com.awakekt.awake.scene.ai.definition.SceneBehaviorTree
 import com.awakekt.awake.scene.ai.definition.SceneStateMachine
 import com.awakekt.awake.scene.ai.flee.SceneFlee
 import com.awakekt.awake.scene.ai.patrol.ScenePatrol
+import com.awakekt.awake.scene.ai.perception.SceneFactions
+import com.awakekt.awake.scene.ai.perception.ScenePerceiver
+import com.awakekt.awake.scene.ai.perception.TransformPerceptionSpace
 import com.awakekt.awake.scene.character.SceneCharacterController
 import com.awakekt.awake.scene.controls.movement.MovementDriver
 import com.awakekt.awake.scene.controls.movement.SceneMovementControl
@@ -32,6 +41,7 @@ import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.navigation.SceneNavigation
+import com.awakekt.awake.scene.physics.PhysicsBody
 import kotlin.reflect.KClass
 
 /**
@@ -43,6 +53,10 @@ import kotlin.reflect.KClass
  * definition that cannot be read or compiled stops the project loading, with every problem and the
  * file it is in. The trees and machines run after their entities get them, before the route
  * behaviours, and a scene with a `navigation` component answers their routes too.
+ *
+ * A scene with a `perceiver` runs perception first, each frame, with the scene's `factions`. Sight is
+ * blocked by physics bodies when the host has physics, by the navigation grid's blocked cells when it
+ * has one, and by nothing otherwise; at most [MAX_SIGHT_UPDATES] perceivers look in a frame.
  *
  * The behaviours move agents through [MovementAgentPlacement]: an agent with a `movement_control`
  * whose driver is `Agent` is steered through it, so with a `character_controller` walls stop it, and
@@ -81,8 +95,10 @@ internal object AiCapability : SceneCapability {
         val navigation = scene.navigation()
         val behaviours = if (navigation == null) emptyList() else ROUTE_BEHAVIOURS.filter { scene.uses(it.type) }
         val definitions = scene.uses(SceneBehaviorTree::class) || scene.uses(SceneStateMachine::class)
-        if (behaviours.isEmpty() && !definitions) return
+        val perceives = scene.uses(ScenePerceiver::class)
+        if (behaviours.isEmpty() && !definitions && !perceives) return
         plan.frame("ai-intents") { AgentIntentResetSystem() }
+        if (perceives) planPerception(scene, navigation, plan)
         if (definitions) {
             plan.frame("ai-definitions") { AiDefinitionAttachSystem(it.content[AiDefinitions] ?: AiDefinitionLibrary()) }
             plan.frame("ai-trees") { BehaviorTreeSystem() }
@@ -95,6 +111,25 @@ internal object AiCapability : SceneCapability {
         }
     }
 }
+
+/** Perception over the scene's transforms and factions, seeing through physics, the grid, or nothing. */
+private fun planPerception(scene: SceneDocument, navigation: SceneNavigation?, plan: SceneSystemPlan) {
+    val factions = scene.nodes.flatMap { it.withDescendants() }.flatMap { it.components }
+        .filterIsInstance<SceneFactions>().firstOrNull()?.toTable() ?: FactionTable()
+    val grid = navigation?.toGrid()
+    plan.frame("ai-perception") { services ->
+        val physics = services.physics
+        val sight = when {
+            physics != null -> PhysicsLineOfSight(physics, bodyOf = { world, entity -> world.get<PhysicsBody>(entity)?.handle })
+            grid != null -> NavFieldLineOfSight(TileField(grid.tile))
+            else -> LineOfSight.Clear
+        }
+        PerceptionSystem(TransformPerceptionSpace, factions, sight, maxSightUpdates = MAX_SIGHT_UPDATES)
+    }
+}
+
+/** The most perceivers that look in one frame of a played scene; the rest look on the next. */
+private const val MAX_SIGHT_UPDATES = 128
 
 /** The compiled behaviour tree and state machine definitions a scene's entities name. */
 internal val AiDefinitions: SceneContentKey<AiDefinitionLibrary> = SceneContentKey("AI definitions")

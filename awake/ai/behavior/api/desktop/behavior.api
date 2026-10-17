@@ -301,7 +301,7 @@ public final class com/awakekt/awake/ai/behavior/MoveToParams$Companion {
 public final class com/awakekt/awake/ai/behavior/NavFieldLineOfSight : com/awakekt/awake/ai/perception/LineOfSight {
 	public fun <init> (Lcom/awakekt/awake/navigation/grid/NavField;)V
 	public final fun getField ()Lcom/awakekt/awake/navigation/grid/NavField;
-	public fun isClear-N_Zv1Ks (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;JLcom/awakekt/awake/ecs/Entity;)Z
+	public fun isClear-Wr-Sc-8 (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;JLcom/awakekt/awake/ecs/Entity;)Z
 }
 
 public final class com/awakekt/awake/ai/behavior/PatrolAiSystem : com/awakekt/awake/ecs/System {
@@ -360,6 +360,17 @@ public final class com/awakekt/awake/ai/behavior/PatrolStyle : java/lang/Enum {
 	public static fun values ()[Lcom/awakekt/awake/ai/behavior/PatrolStyle;
 }
 
+public final class com/awakekt/awake/ai/behavior/PhysicsLineOfSight : com/awakekt/awake/ai/perception/LineOfSight {
+	public static final field DEFAULT_END_SLACK F
+	public static final field MAX_SELF_HOPS I
+	public static final field SELF_STEP F
+	public fun <init> (Lcom/awakekt/awake/ai/behavior/RayCaster;Lkotlin/jvm/functions/Function2;F)V
+	public synthetic fun <init> (Lcom/awakekt/awake/ai/behavior/RayCaster;Lkotlin/jvm/functions/Function2;FILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/physics/PhysicsWorld;Lkotlin/jvm/functions/Function2;Lcom/awakekt/awake/physics/CollisionLayer;FILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/physics/PhysicsWorld;Lkotlin/jvm/functions/Function2;Lcom/awakekt/awake/physics/CollisionLayer;FLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun isClear-Wr-Sc-8 (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;JLcom/awakekt/awake/ecs/Entity;)Z
+}
+
 public final class com/awakekt/awake/ai/behavior/Point {
 	public static final field Companion Lcom/awakekt/awake/ai/behavior/Point$Companion;
 	public fun <init> (FFF)V
@@ -390,6 +401,10 @@ public final synthetic class com/awakekt/awake/ai/behavior/Point$$serializer : k
 
 public final class com/awakekt/awake/ai/behavior/Point$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract interface class com/awakekt/awake/ai/behavior/RayCaster {
+	public abstract fun cast (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;F)Lcom/awakekt/awake/physics/RaycastHit;
 }
 
 public abstract interface class com/awakekt/awake/ai/behavior/RouteFollower {
