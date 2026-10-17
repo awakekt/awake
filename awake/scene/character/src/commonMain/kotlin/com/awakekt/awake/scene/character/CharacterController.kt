@@ -9,6 +9,7 @@ import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.physics.BodyHandle
 import com.awakekt.awake.physics.CapsuleShape
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
@@ -83,6 +84,13 @@ class CharacterController(
 
     /** Whether it stood on walkable ground after its last move. */
     val isGrounded: Boolean get() = controller?.isGrounded ?: false
+
+    /**
+     * The character's own body in the physics world, when its config gives it one
+     * ([CharacterConfig.innerBody]) and the controller is built; null otherwise. A query that must
+     * not find the character itself, such as a ray to the label over its head, leaves it out.
+     */
+    val body: BodyHandle? get() = controller?.body
 
     /**
      * Puts the character at [position] at once, without sweeping through what lies between, and stops

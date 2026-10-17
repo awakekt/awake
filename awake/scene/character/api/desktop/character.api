@@ -1,5 +1,6 @@
 public final class com/awakekt/awake/scene/character/CharacterController {
 	public fun <init> (Lcom/awakekt/awake/scene/physics/character/CharacterConfig;FF)V
+	public final fun getBody-V_ezQ8E ()Lcom/awakekt/awake/physics/BodyHandle;
 	public final fun getConfig ()Lcom/awakekt/awake/scene/physics/character/CharacterConfig;
 	public final fun getGravity ()F
 	public final fun getJumpSpeed ()F

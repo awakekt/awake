@@ -7,6 +7,7 @@ package com.awakekt.awake.project.runtime
 
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.scene.canvas.SceneCanvasElement
+import com.awakekt.awake.scene.canvas.SceneCanvasFollowOcclusion
 import com.awakekt.awake.scene.canvas.checkCanvasImages
 import com.awakekt.awake.scene.canvas.hasCanvasImages
 import com.awakekt.awake.scene.canvas.loadCanvasFonts
@@ -78,7 +79,8 @@ internal object ControlsCapability : SceneCapability {
 /**
  * The images and font files the scene's canvas elements draw, decoded before it runs; the runtime
  * draws the canvas. A host with no renderer draws none, so it only checks that the images resolve,
- * and reads no font.
+ * and reads no font. With a physics world, followers that ask for occlusion are answered by
+ * [PhysicsCanvasOcclusion]'s rays.
  */
 internal object CanvasCapability : SceneCapability {
     override val id = "com.awakekt.awake.canvas"
@@ -89,7 +91,12 @@ internal object CanvasCapability : SceneCapability {
         if (content.hasRenderer) content[CoreSceneContent.CanvasImages] = loadCanvasImages(scene, files) else checkCanvasImages(scene, files)
     }
 
-    override fun plan(scene: SceneDocument, plan: SceneSystemPlan) = Unit
+    override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {
+        // Only a canvas that draws is ever asked; a host with no renderer leaves the rays uncast.
+        if (plan.hasPhysics && plan.hasRenderer && scene.asksForOcclusion()) {
+            plan.frame("canvas-occlusion") { PhysicsCanvasOcclusion(requireNotNull(it.physics), plan.physicsSystem(it)) }
+        }
+    }
 }
 
 /**
@@ -155,6 +162,15 @@ internal fun SceneNode.has(type: KClass<out SceneComponent>): Boolean =
     components.any { type.isInstance(it) } || children.any { it.has(type) }
 
 internal fun SceneDocument.hasCanvasActions(): Boolean = nodes.any { it.hasCanvasAction() }
+
+/**
+ * Whether the scene's canvas asks for occlusion: a follower whose rules ask, or a
+ * `canvas_follow_occlusion` for followers code adds while it runs.
+ */
+internal fun SceneDocument.asksForOcclusion(): Boolean = uses(SceneCanvasFollowOcclusion::class) || nodes.any { it.asksForOcclusion() }
+
+private fun SceneNode.asksForOcclusion(): Boolean =
+    components.any { it is SceneCanvasElement && it.followRules?.occlusion == true } || children.any { it.asksForOcclusion() }
 
 private fun SceneNode.hasCanvasAction(): Boolean =
     components.any { it is SceneCanvasElement && it.action.isNotEmpty() } || children.any { it.hasCanvasAction() }
