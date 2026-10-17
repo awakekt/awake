@@ -146,7 +146,8 @@ class SceneSystemSet internal constructor(
  * - `paged_terrain`: its cells streamed around the primary camera from the index and shared images in
  *   [SceneHostServices.content], drawn through [SceneHostServices.renderer] when it takes content
  *   features, with collision cells when it is a `collider` and [SceneHostServices.physics] is given
- * - `canvas_element`s with an action: [CanvasActionSystem], which adds them to the input actions
+ * - `canvas_element`s with an action, and look areas: [CanvasActionSystem], which adds them to the
+ *   input actions and turns the camera from a look area
  * - `patrol`, `chase` and `flee`, with a `navigation` component to route them over: the behaviours and
  *   the system that answers their route requests
  * - skinned glTF animation, always

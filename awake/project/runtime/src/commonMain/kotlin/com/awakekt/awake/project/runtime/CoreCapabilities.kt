@@ -34,6 +34,7 @@ import com.awakekt.awake.scene.physics.SceneMeshShape
 import com.awakekt.awake.scene.physics.ScenePhysicsBody
 import com.awakekt.awake.scene.rendering.animation.AnimationSystem
 import com.awakekt.awake.scene.rendering.terrain.SceneTerrain
+import com.awakekt.awake.ui.canvas.CanvasElementKind
 import kotlin.reflect.KClass
 
 /**
@@ -173,4 +174,5 @@ private fun SceneNode.asksForOcclusion(): Boolean =
     components.any { it is SceneCanvasElement && it.followRules?.occlusion == true } || children.any { it.asksForOcclusion() }
 
 private fun SceneNode.hasCanvasAction(): Boolean =
-    components.any { it is SceneCanvasElement && it.action.isNotEmpty() } || children.any { it.hasCanvasAction() }
+    components.any { it is SceneCanvasElement && (it.action.isNotEmpty() || it.kind == CanvasElementKind.LookArea) } ||
+        children.any { it.hasCanvasAction() }

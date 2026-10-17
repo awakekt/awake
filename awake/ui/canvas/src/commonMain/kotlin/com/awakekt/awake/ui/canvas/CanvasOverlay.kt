@@ -182,9 +182,14 @@ internal class CanvasOrigin {
     }
 }
 
-/** [children] inside [element]: each anchored by hand, or laid out in rows or columns by its layout. */
+/** [children] inside [element]: each anchored by hand, laid out in rows or columns by its layout, or fanned out by its cluster. */
 context(_: Composer)
 internal fun BoxScope.Children(element: CanvasElement, children: List<CanvasItem>, tree: CanvasTree) {
+    val cluster = element.cluster
+    if (cluster != null) {
+        ClusterChildren(element, cluster, children, tree)
+        return
+    }
     val layout = element.layout
     if (layout == null) {
         Elements(children, tree, owner = element)
@@ -294,14 +299,11 @@ internal fun CanvasElementView(
             BarFill(element, tree.valueOf(element), fill, tree.images)
             Children(element, children, tree)
         }
-        CanvasElementKind.Button -> if (element.button != null) {
-            ActionButtonView(element, styled, textStyle, tree, children)
-        } else {
-            PlainButtonView(element, styled, textStyle, tree, children)
-        }
+        CanvasElementKind.Button -> ButtonView(element, styled, textStyle, tree, children)
         CanvasElementKind.TextField -> TextFieldView(element, styled, textStyle, tree, children)
         CanvasElementKind.Joystick -> JoystickView(element, wheeled, back, tree, children)
         CanvasElementKind.View -> CameraView(element, styled, tree, children)
+        CanvasElementKind.LookArea -> LookAreaView(element, styled, tree, children)
     }
 }
 

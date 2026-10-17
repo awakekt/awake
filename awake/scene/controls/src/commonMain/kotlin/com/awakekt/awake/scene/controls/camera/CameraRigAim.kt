@@ -39,6 +39,23 @@ fun CameraRig.aimAt(eye: Vec3f, center: Vec3f) {
 }
 
 /**
+ * Turns the rig by [yaw] and [pitch] radians, as a look drag does: yaw positive to the right, pitch
+ * positive upward, held within the steepest it looks. A mode that does not turn that way ignores it.
+ */
+fun CameraRig.turnBy(yaw: Float, pitch: Float) {
+    if (mode.usesYaw) this.yaw += yaw
+    if (mode.usesPitch) this.pitch = (this.pitch + pitch).coerceIn(-PITCH_LIMIT, PITCH_LIMIT)
+}
+
+/**
+ * Brings the rig [factor] times closer, as fingers spreading by it do, within its distance limits;
+ * below 1 moves it away. A mode without a zoom, or a factor that is not above 0, leaves it.
+ */
+fun CameraRig.zoomBy(factor: Float) {
+    if (mode.usesZoom && factor > 0f && factor.isFinite()) distance = (distance / factor).coerceIn(minDistance, maxDistance)
+}
+
+/**
  * The steepest a rig will look, matching what `CameraSystem` clamps a drag to.
  *
  * Clamped here as well as there, because a shot authored steeper than this would otherwise sit at

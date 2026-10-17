@@ -63,7 +63,7 @@ or a system polling `consumePress()`, sees the tap as it would without the bluep
 
 | Property | Type | Default | What it does |
 | --- | --- | --- | --- |
-| `kind` | `Text` · `Panel` · `Bar` · `Button` · `TextField` · `Joystick` · `Image` · `View` | `Text` | What the element draws. |
+| `kind` | `Text` · `Panel` · `Bar` · `Button` · `TextField` · `Joystick` · `Image` · `View` · `LookArea` | `Text` | What the element draws. A `LookArea` is a region where a swipe looks and a pinch zooms. |
 | `anchor` | `TopLeft` · `TopCenter` · `TopRight` · `CenterLeft` · `Center` · `CenterRight` · `BottomLeft` · `BottomCenter` · `BottomRight` | `TopLeft` | The screen point the element is pinned to. |
 | `offsetX` | number (dp) | `16` | Moves the element inward from its anchor. From a right anchor it moves left. On a centred axis it moves right of centre, or left when negative. |
 | `offsetY` | number (dp) | `16` | Moves the element inward from its anchor. From a bottom anchor it moves up. On a centred axis it moves below centre, or above when negative. |
@@ -114,6 +114,7 @@ A running `CanvasElement` also has values that are not saved:
 | `heldSeconds` | `Float` | How long an action button has been held. |
 | `aiming`, `aimX`, `aimY`, `aimCancelling`, `aimTarget` | | An aimed button's drag: whether it is aiming, its aim (-1 to 1, up negative), whether it is over the cancel zone, and what `aimLock` locked onto. See [Drag to aim](#drag-to-aim). |
 | `consumeAimCancel()` | `Boolean` | `true` once for each aimed shot let go over its cancel zone. |
+| `consumeLook()`, `consumeZoom()` | `Vec2`, `Float` | A `LookArea`'s swipe since the last call, in dp times its sensitivity, and the factor its pinch spread by, 1 for none. |
 | `aimLock` | `CanvasAimLock?` | Set from code: locks an aim onto a target the game picks. |
 | `focused` | `Boolean` | Whether a `TextField` holds the keyboard. Set it `true` to focus the field, or `false` to free it; it reads back whatever a click, Enter, Escape, or anything else taking focus away leaves it at. |
 | `consumeSubmit()` | `String?` | The submitted line once after Enter submits a `TextField` since the last call, taken from the field's live state so a character typed the same frame is included; `null` otherwise. Submitting frees its focus. Escape frees focus without submitting. An Enter that only just focused the field, in the same frame a system granted it, does not also submit it. |
@@ -140,6 +141,33 @@ dash needs:
   `blockWhileCooling` is `false`; `consumeReady()` is `true` once each time it becomes usable again.
 - `enabled: false`, or a `bind.enabled` field that reads false, disables it: it takes no press, keeps
   the press from what is under it, and draws in `style.disabled`, or dimmed.
+
+### Look area and button cluster
+
+A `LookArea` is a region where one thumb's swipe turns the camera and two thumbs pinch to zoom, as
+the right half of the screen does in many touch games:
+
+```json
+{ "component": "canvas_element", "kind": "LookArea", "anchor": "TopRight", "offsetX": 0, "offsetY": 0,
+  "width": 400, "height": 600, "touchOnly": true,
+  "look": { "sensitivity": 1.2, "invertY": false, "pinchZoom": true, "zoomSensitivity": 1 } }
+```
+
+In a played project its swipe turns the scene's active camera rig and its pinch zooms it, unless
+`turnsCamera` is `false`; an `action` naming an axis action gets the swipe, up positive, and
+`zoomAction` gets the pinch as `ln` of its factor. From code, `consumeLook()` and `consumeZoom()` read
+them. A look area takes up to two thumbs, so a thumb on a stick or a button is never taken from it.
+
+A `cluster` places an element's children as a button cluster instead of a `layout`: the first, the
+main button, on a pivot, and the rest on an arc around it, angles clockwise from the right:
+
+```json
+{ "component": "canvas_element", "kind": "Panel", "anchor": "BottomRight", "width": 260, "height": 260,
+  "cluster": { "pivotX": 0.7, "pivotY": 0.7, "radius": 110, "startAngle": 180, "spacing": 45 } }
+```
+
+Keep the element big enough to hold the arc: a child outside its parent's box is drawn but may not
+take a touch.
 
 ### Drag to aim
 
