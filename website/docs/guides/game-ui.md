@@ -136,6 +136,8 @@ dash needs:
 - Held past `longPressSeconds`, it reports `consumeLongPress()` and presses `longPressAction`, and then
   the release is not also a tap.
 - Let go anywhere, it reports `consumeRelease()` and presses `releaseAction`.
+- `cooldownSeconds` gives the button a cooldown of its own: each time it fires, `cooldown` starts at
+  1 and runs down to 0 over that many seconds, with no code. Leave it 0 for a cooldown the game owns.
 - `cooldown`, from 1 just used to 0 ready, sweeps a shade over the button, and `charges` of 0 or more
   show in a badge. While it is cooling down with no charge left, the button takes no press unless
   `blockWhileCooling` is `false`; `consumeReady()` is `true` once each time it becomes usable again.
@@ -168,6 +170,22 @@ main button, on a pivot, and the rest on an arc around it, angles clockwise from
 
 Keep the element big enough to hold the arc: a child outside its parent's box is drawn but may not
 take a touch.
+
+### A mobile controls scene
+
+This scene is a complete touch layout for a third-person scene: a floating stick on the left that
+runs when pushed to its edge, a look area on the right half that turns the camera, and a cluster of a
+jump button and two skills with cooldowns, the second dragged to aim at the ground. Touch controls
+show once a finger touches the screen and hide once a controller or keyboard is used, all in the
+`MinimalFlat` theme with an orange accent.
+
+```json title="mobile-controls.scene.json"
+--8<-- "website/docs/snippets/ui/mobile-controls.scene.json"
+```
+
+`skill1` and `skill2` are the scene's own actions, so the game reads them with
+`actions.wasPressed("skill1")`, and the second skill's aim with `actions.axisX("aim")` and
+`actions.axisY("aim")` on the frame it fires.
 
 ### Show touch controls by input
 

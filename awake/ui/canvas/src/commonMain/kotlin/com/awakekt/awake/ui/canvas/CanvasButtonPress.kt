@@ -57,6 +57,29 @@ internal class CanvasButtonPress {
     /** Where the aim's cancel zone was drawn, in canvas units, while aiming; the overlay sets it. */
     var cancelBounds: Rectangle? = null
 
+    private var cooldownSince: TimeMark? = null
+
+    /** Fires [element]'s action, and starts its own cooldown when its settings give it one. */
+    private fun fire(element: CanvasElement) {
+        element.press()
+        if ((element.button ?: CanvasButton.Default).cooldownSeconds > 0f) {
+            cooldownSince = element.clock.markNow()
+            element.cooldown = 1f
+        }
+    }
+
+    /** Runs [element]'s own cooldown down by the time since it fired, to 0 over [CanvasButton.cooldownSeconds]. */
+    fun runCooldown(element: CanvasElement, settings: CanvasButton) {
+        val since = cooldownSince ?: return
+        val left = 1f - since.elapsedNow().inWholeMicroseconds / MICROS / settings.cooldownSeconds
+        if (left <= 0f || settings.cooldownSeconds <= 0f) {
+            cooldownSince = null
+            element.cooldown = 0f
+        } else {
+            element.cooldown = left
+        }
+    }
+
     /** Whether a live press on a button with [CanvasButton.aim] is being dragged to aim. */
     fun aiming(element: CanvasElement): Boolean = live && element.button?.aim != null
 
@@ -77,7 +100,7 @@ internal class CanvasButtonPress {
             down = true
             element.interactions.tryEmit(Interaction.Press.Press)
             val settings = element.button ?: CanvasButton.Default
-            if (settings.trigger == CanvasButtonTrigger.Down && settings.aim == null) element.press()
+            if (settings.trigger == CanvasButtonTrigger.Down && settings.aim == null) fire(element)
         }
         return true
     }
@@ -107,13 +130,13 @@ internal class CanvasButtonPress {
         val settings = element.button ?: CanvasButton.Default
         if (settings.aim != null) {
             // An aimed button fires wherever it is let go, but not over its cancel zone.
-            if (cancelling) aimCancelled = true else element.press()
+            if (cancelling) aimCancelled = true else fire(element)
             cancelling = false
             cancelBounds = null
             return
         }
         val longTaken = longPressed && settings.longPressAction.isNotEmpty()
-        if (over && settings.trigger == CanvasButtonTrigger.Tap && !longTaken) element.press()
+        if (over && settings.trigger == CanvasButtonTrigger.Tap && !longTaken) fire(element)
     }
 
     /** Lets go of [element]'s pointer without reporting anything, as when the button stops being drawn mid-press. */
