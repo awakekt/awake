@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "name": "environment",
+      "components": [
+        {
+          "component": "skybox",
+          "type": "Cubemap",
+          "cubemapPath": "sky/day.png",
+          "exposure": 1.2
+        }
+      ]
+    }
+  ]
+}

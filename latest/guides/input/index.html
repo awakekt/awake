@@ -1033,10 +1033,32 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#chords-and-rebinding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chords and rebinding
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#properties" class="md-nav__link">
     <span class="md-ellipsis">
       
         Properties
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trackpad-pinch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trackpad pinch
       
     </span>
   </a>
@@ -2449,10 +2471,32 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#chords-and-rebinding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chords and rebinding
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#properties" class="md-nav__link">
     <span class="md-ellipsis">
       
         Properties
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trackpad-pinch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trackpad pinch
       
     </span>
   </a>
@@ -2640,6 +2684,73 @@ frame's snapshot into them:</p>
 <p>An axis is a unit vector, up and right being positive, or zero when no direction key is held. Read a
 <code>GameplayInput</code> instead of the snapshot to leave the UI its keys. <code>KeybindingProfile</code>, which did this
 before, is deprecated.</p>
+<h2 id="chords-and-rebinding">Chords and rebinding</h2>
+<p>A button action can also take chords: a key pressed while modifiers are held, such as Shift+1 or
+Ctrl+Alt+K, or a controller button pressed while a shoulder or trigger is held:</p>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">actions</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">InputActions</span><span class="p">(</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">    </span><span class="n">listOf</span><span class="p">(</span>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">        </span><span class="n">ButtonAction</span><span class="p">(</span><span class="s">"slot1"</span><span class="p">,</span><span class="w"> </span><span class="n">keys</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">setOf</span><span class="p">(</span><span class="n">Key</span><span class="p">.</span><span class="na">Digit1</span><span class="p">)),</span>
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">        </span><span class="n">ButtonAction</span><span class="p">(</span>
+</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">            </span><span class="s">"slot11"</span><span class="p">,</span>
+</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">            </span><span class="n">chords</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">setOf</span><span class="p">(</span>
+</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">                </span><span class="n">KeyChord</span><span class="p">(</span><span class="n">Key</span><span class="p">.</span><span class="na">Digit1</span><span class="p">,</span><span class="w"> </span><span class="n">setOf</span><span class="p">(</span><span class="n">KeyModifier</span><span class="p">.</span><span class="na">Shift</span><span class="p">)),</span>
+</span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="w">                </span><span class="n">GamepadChord</span><span class="p">(</span><span class="n">GamepadButton</span><span class="p">.</span><span class="na">South</span><span class="p">,</span><span class="w"> </span><span class="n">setOf</span><span class="p">(</span><span class="n">GamepadButton</span><span class="p">.</span><span class="na">LeftShoulder</span><span class="p">)),</span>
+</span><span id="__span-8-9"><a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="w">            </span><span class="p">),</span>
+</span><span id="__span-8-10"><a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="w">        </span><span class="p">),</span>
+</span><span id="__span-8-11"><a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="w">    </span><span class="p">),</span>
+</span><span id="__span-8-12"><a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="p">)</span>
+</span></code></pre></div>
+<p>Chords on the same key resolve across every action, by three rules:</p>
+<ul>
+<li><strong>Modifiers first.</strong> A chord fires when its key goes down while its modifiers are held, or go down
+  in the same frame. Pressing 1 and then Shift is 1.</li>
+<li><strong>The most specific chord wins.</strong> Shift+1 does not also fire 1. Actions bound to the same chord all
+  fire.</li>
+<li><strong>The winner keeps the key until it is released.</strong> Letting go of Shift while 1 stays down ends
+  Shift+1 without starting 1.</li>
+</ul>
+<p>A chord's <code>extraModifiers</code> says whether other modifiers held as well stop it: <code>Block</code>, the default,
+keeps Ctrl+S from firing for Ctrl+Shift+S; <code>Allow</code> lets it. A plain key in <code>keys</code> allows them, so
+1 still fires while Ctrl is held when nothing binds Ctrl+1. An axis key is a plain key too: Ctrl+S
+bound to saving takes S from the <code>move</code> axis. Left and right modifiers are the same modifier. For a
+controller, the shoulders and triggers are the modifiers.</p>
+<p>A scene declares chords on a button action in its <code>input_actions</code>, under <code>chords</code>, in the same
+form; see the <a href="../../reference/scene-document-components/#chord">reference</a>.</p>
+<p>A player's controls are data. <code>bindings()</code> takes every action's binding, <code>InputBindings</code>, which
+saves and loads with kotlinx.serialization; <code>rebind</code> and <code>rebindAll</code> change them while the game
+runs, and <code>actionsBoundTo</code> says what a new chord would clash with:</p>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1">// A rebinding screen checks what a new chord clashes with, then takes it:</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="kd">val</span><span class="w"> </span><span class="nv">chord</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">KeyChord</span><span class="p">(</span><span class="n">Key</span><span class="p">.</span><span class="na">Digit1</span><span class="p">,</span><span class="w"> </span><span class="n">setOf</span><span class="p">(</span><span class="n">KeyModifier</span><span class="p">.</span><span class="na">Ctrl</span><span class="p">))</span>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">actions</span><span class="p">.</span><span class="na">actionsBoundTo</span><span class="p">(</span><span class="n">chord</span><span class="p">).</span><span class="na">isEmpty</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">    </span><span class="n">actions</span><span class="p">.</span><span class="na">rebind</span><span class="p">(</span><span class="s">"slot11"</span><span class="p">,</span><span class="w"> </span><span class="n">ButtonBinding</span><span class="p">(</span><span class="n">chords</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">setOf</span><span class="p">(</span><span class="n">chord</span><span class="p">)))</span>
+</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="p">}</span>
+</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>
+</span><span id="__span-9-7"><a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="c1">// Settings save the player's bindings as data and load them back next time:</span>
+</span><span id="__span-9-8"><a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="kd">val</span><span class="w"> </span><span class="nv">saved</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Json</span><span class="p">.</span><span class="na">encodeToString</span><span class="p">(</span><span class="n">InputBindings</span><span class="p">.</span><span class="na">serializer</span><span class="p">(),</span><span class="w"> </span><span class="n">actions</span><span class="p">.</span><span class="na">bindings</span><span class="p">())</span>
+</span><span id="__span-9-9"><a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="kd">val</span><span class="w"> </span><span class="nv">skipped</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">actions</span><span class="p">.</span><span class="na">rebindAll</span><span class="p">(</span><span class="n">Json</span><span class="p">.</span><span class="na">decodeFromString</span><span class="p">(</span><span class="n">InputBindings</span><span class="p">.</span><span class="na">serializer</span><span class="p">(),</span><span class="w"> </span><span class="n">saved</span><span class="p">))</span>
+</span></code></pre></div>
+<div class="language-json highlight"><span class="filename">controls.json</span><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="p">{</span><span class="w"> </span><span class="nt">"actions"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">  </span><span class="nt">"slot1"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"button"</span><span class="p">,</span><span class="w"> </span><span class="nt">"keys"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"Digit1"</span><span class="p">]</span><span class="w"> </span><span class="p">},</span>
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">  </span><span class="nt">"slot11"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"button"</span><span class="p">,</span><span class="w"> </span><span class="nt">"chords"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"key"</span><span class="p">,</span><span class="w"> </span><span class="nt">"key"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Digit1"</span><span class="p">,</span><span class="w"> </span><span class="nt">"modifiers"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"Ctrl"</span><span class="p">]</span><span class="w"> </span><span class="p">},</span>
+</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"gamepad"</span><span class="p">,</span><span class="w"> </span><span class="nt">"button"</span><span class="p">:</span><span class="w"> </span><span class="s2">"South"</span><span class="p">,</span><span class="w"> </span><span class="nt">"modifiers"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"LeftShoulder"</span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">  </span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-10-7"><a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+</span></code></pre></div>
+<p><code>rebindAll</code> skips, and returns, the names a saved file has that no action does, so an old file
+still loads. To show a binding, <code>ButtonBinding.describe()</code> gives each way to trigger it as its
+modifiers and the control pressed. <code>InputLabels</code> in <code>com.awakekt.awake.core:localization</code> names
+them in the player's language and their platform's style: <code>binding(description)</code> gives <code>Ctrl+K</code> or
+<code>Strg+K</code>, <code>chord(chord)</code> names one chord, and <code>bindings(action)</code> every way to trigger an action, such
+as <code>E / Shift+E</code>, with controller buttons printed by the player's <code>ControllerLayout</code>. See
+<a href="../localization/#name-keys-and-buttons">Name keys and buttons</a>.</p>
+<p>Controller buttons are named by position: <code>South</code>, <code>East</code>, <code>West</code> and <code>North</code> for the face buttons,
+the shoulders and triggers, the sticks, the d-pad, <code>Select</code>, <code>Start</code> and <code>Home</code>. A host feeds them
+with <code>Input.setGamepadButton</code>, and every built-in host does: GLFW's gamepad API on desktop, the
+Gamepad API in a browser, GameController on iOS, and a controller's key and joystick events on
+Android. One controller is read, and only one the platform maps by position; a browser lists one
+only after a button on it is pressed. <code>GameplayInput</code> passes controller buttons to the actions
+whatever the UI holds, since the UI reads no controller.</p>
 <h2 id="properties">Properties</h2>
 <p><code>InputSnapshot</code>:</p>
 <table>
@@ -2687,9 +2798,19 @@ before, is deprecated.</p>
 <td>Scroll this frame.</td>
 </tr>
 <tr>
+<td><code>gamepadButtonsDown</code>, <code>gamepadButtonsPressed</code>, <code>gamepadButtonsReleased</code></td>
+<td>set of <code>GamepadButton</code></td>
+<td>Controller buttons, for a host that reads a controller. <code>isDown(button)</code>, <code>wasPressed(button)</code>, <code>wasReleased(button)</code> read them.</td>
+</tr>
+<tr>
 <td><code>scrollSource</code></td>
 <td><code>Wheel</code> · <code>Trackpad</code> · <code>Unknown</code></td>
 <td>What scrolled, where the platform can tell.</td>
+</tr>
+<tr>
+<td><code>pinch</code></td>
+<td><code>PinchGesture</code> or <code>null</code></td>
+<td>A trackpad pinch this frame: <code>scale</code> (above 1 zooms in, steps multiply), <code>zoomDelta</code> (<code>ln(scale)</code>), and the point it zooms about, <code>focusX</code>, <code>focusY</code>.</td>
 </tr>
 <tr>
 <td><code>typedText</code>, <code>editActions</code></td>
@@ -2701,11 +2822,24 @@ before, is deprecated.</p>
 <p><code>Key</code> covers letters, digits, arrows, F1 to F5, Space, Escape, Tab, Enter, the editing keys, and
 <code>Ctrl</code>, <code>Shift</code>, <code>Alt</code> and <code>Meta</code> (left and right are the same key). A key the host does not map
 arrives as <code>Key.Unknown</code>.</p>
+<h2 id="trackpad-pinch">Trackpad pinch</h2>
+<p>A trackpad pinch arrives as <code>pinch</code>, a <code>PinchGesture</code> with the frame's <code>scale</code> and the point it
+zooms about. Two-finger scrolling stays scroll.</p>
+<ul>
+<li><strong>Browser:</strong> Chrome, Edge and Firefox send a pinch as a <code>wheel</code> with <code>ctrlKey</code>, and the page does
+  not zoom. It arrives twice: as Ctrl held with a scroll, as it always has, and as <code>pinch</code>. That
+  frame's <code>scrollDeltaY</code> is the pinch's <code>zoomDelta</code>. Safari's gesture events arrive as <code>pinch</code> only.</li>
+<li><strong>macOS desktop:</strong> the trackpad's magnify gesture arrives as <code>pinch</code> only, about the cursor.</li>
+<li><strong>Windows:</strong> a touchpad sends a pinch as Ctrl+wheel, which arrives as scroll only.</li>
+</ul>
+<p>So read the pinch or the scroll, never both. On a frame with a <code>pinch</code>, zoom by it and ignore that
+frame's scroll; on the others, Ctrl+scroll is the fallback. The built-in cameras do this.
+<code>GameplayInput.pinch</code> is <code>null</code> while the UI holds the pointer or a dialog is open.</p>
 <h2 id="how-it-works">How it works</h2>
-<p>The host writes events into <code>Input</code> between frames with <code>setKeyDown</code>, <code>setPointer</code>, <code>setButton</code> and
-the scroll fields. At the start of a frame it calls <code>updateSnapshot()</code>, which works out the pressed
-and released edges against the previous snapshot and clears the per-frame values: scroll, typed text
-and edit actions. The snapshot is then passed to the app as <code>frame.input</code> and stays unchanged for the
+<p>The host writes events into <code>Input</code> between frames with <code>setKeyDown</code>, <code>setPointer</code>, <code>setButton</code>,
+<code>addPinch</code> and the scroll fields. At the start of a frame it calls <code>updateSnapshot()</code>, which works out the pressed
+and released edges against the previous snapshot and clears the per-frame values: scroll, pinch, typed
+text and edit actions. The snapshot is then passed to the app as <code>frame.input</code> and stays unchanged for the
 whole frame.</p>
 <div class="admonition warning">
 <p class="admonition-title"><code>wasPressed</code> is per frame, not per fixed step</p>

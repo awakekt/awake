@@ -1915,6 +1915,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#many-followers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Many followers
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Many followers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#occlusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Occlusion
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#show-a-3d-view" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1933,6 +1961,45 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Scale the UI">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#scale-with-the-screen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scale with the screen
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#keep-clear-of-a-notch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keep clear of a notch
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#place-something-on-a-point" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Place something on a point
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -2648,6 +2715,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#many-followers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Many followers
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Many followers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#occlusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Occlusion
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#show-a-3d-view" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2666,6 +2761,45 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Scale the UI">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#scale-with-the-screen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scale with the screen
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#keep-clear-of-a-notch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keep clear of a notch
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#place-something-on-a-point" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Place something on a point
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -2991,6 +3125,18 @@ or a system polling <code>consumePress()</code>, sees the tap as it would withou
 <td>With <code>followBounds</code>, how far the box reaches past the node's on each side, in dp. Negative pulls it in.</td>
 </tr>
 <tr>
+<td><code>followRules</code></td>
+<td>object</td>
+<td>none</td>
+<td>Culling, ranking, scale and fade by distance, and edge pinning for a follower. See <a href="#many-followers">Many followers</a>.</td>
+</tr>
+<tr>
+<td><code>followArrow</code></td>
+<td>boolean</td>
+<td><code>false</code></td>
+<td>Inside a follower pinned to the edge, the arrow that points to its target.</td>
+</tr>
+<tr>
 <td><code>layout</code></td>
 <td>object</td>
 <td>none</td>
@@ -3061,6 +3207,12 @@ or a system polling <code>consumePress()</code>, sees the tap as it would withou
 <td>boolean</td>
 <td><code>false</code></td>
 <td>Draw the element only where touch controls are shown.</td>
+</tr>
+<tr>
+<td><code>safeArea</code></td>
+<td>boolean</td>
+<td><code>true</code></td>
+<td>Keep the element clear of a notch, rounded corners or a home indicator. See <a href="#keep-clear-of-a-notch">Keep clear of a notch</a>.</td>
 </tr>
 <tr>
 <td><code>style</code></td>
@@ -3513,6 +3665,59 @@ the character it follows. The runtime projects through the camera it draws with;
 <code>SceneCanvas</code> itself passes the runtime's, <code>canvasProjector(world)</code>, or a <code>CanvasProjector</code> of its
 own, which reports points in the window's pixels. A canvas drawn over part of the window, such as an
 editor's game view, still lands on what it follows.</p>
+<h2 id="many-followers">Many followers</h2>
+<p>A scene with a name plate over every character needs to draw only the plates that matter. An element's
+<code>followRules</code> says how its follower behaves in a crowd, and a <code>canvas_follow_limit</code> says how many of
+a group are drawn at once. Each follower is projected once a frame, and one that is left out costs no
+drawing.</p>
+<ul>
+<li><strong>Culling.</strong> A follower whose box is wholly off the screen is left out (<code>cullOffScreen</code>, on by
+  default), as is one behind the camera, judged by its depth along the camera's view so it holds on
+  every backend. <code>maxDistance</code> hides it farther than that from the camera, and <code>occlusion</code> hides it
+  while something stands between the camera and its point; see <a href="#occlusion">Occlusion</a>.</li>
+<li><strong>Priority and a cap.</strong> A <code>canvas_follow_limit</code> with a <code>max</code> keeps that many of its <code>group</code>, by
+  <code>rankBy</code>: the nearest, the highest <code>followRules.priority</code>, or the highest <code>followScore</code> game code
+  sets each frame. The rest are left out until they rank again.</li>
+<li><strong>Scale and fade.</strong> <code>scale</code> and <code>fade</code> are curves by distance: <code>points</code> of <code>at</code> and <code>value</code>, straight
+  between them. A plate can shrink to half its size at 50 metres and fade out by 80.</li>
+<li><strong>Edge pinning.</strong> With <code>pinToEdge</code>, a follower whose target is off the screen or behind the camera
+  holds to the screen's edge on the side the target lies, <code>edgeMargin</code> dp in, and its <code>pinned</code> and
+  <code>pinAngle</code> say so. A child with <code>followArrow</code> is drawn on the follower's edge toward the target,
+  turned to point there.</li>
+</ul>
+<div class="language-json highlight"><span class="filename">Quest markers that hold to the edge, at most five at once</span><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="p">[</span>
+</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Limits"</span><span class="p">,</span><span class="w"> </span><span class="nt">"components"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"canvas_follow_limit"</span><span class="p">,</span><span class="w"> </span><span class="nt">"group"</span><span class="p">:</span><span class="w"> </span><span class="s2">"quest"</span><span class="p">,</span><span class="w"> </span><span class="nt">"max"</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span><span class="w"> </span><span class="nt">"rankBy"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Priority"</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">},</span>
+</span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Marker"</span><span class="p">,</span><span class="w"> </span><span class="nt">"components"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"canvas_element"</span><span class="p">,</span><span class="w"> </span><span class="nt">"kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Image"</span><span class="p">,</span><span class="w"> </span><span class="nt">"follow"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Harbor Gate"</span><span class="p">,</span>
+</span><span id="__span-12-4"><a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">    </span><span class="nt">"anchor"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Center"</span><span class="p">,</span><span class="w"> </span><span class="nt">"offsetX"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="nt">"offsetY"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="nt">"width"</span><span class="p">:</span><span class="w"> </span><span class="mi">32</span><span class="p">,</span><span class="w"> </span><span class="nt">"height"</span><span class="p">:</span><span class="w"> </span><span class="mi">32</span><span class="p">,</span>
+</span><span id="__span-12-5"><a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">    </span><span class="nt">"followRules"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"group"</span><span class="p">:</span><span class="w"> </span><span class="s2">"quest"</span><span class="p">,</span><span class="w"> </span><span class="nt">"priority"</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="nt">"pinToEdge"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nt">"edgeMargin"</span><span class="p">:</span><span class="w"> </span><span class="mi">24</span><span class="p">,</span>
+</span><span id="__span-12-6"><a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="w">      </span><span class="nt">"fade"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"points"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"at"</span><span class="p">:</span><span class="w"> </span><span class="mi">100</span><span class="p">,</span><span class="w"> </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"at"</span><span class="p">:</span><span class="w"> </span><span class="mi">300</span><span class="p">,</span><span class="w"> </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.4</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">],</span>
+</span><span id="__span-12-7"><a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="w">    </span><span class="nt">"children"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Arrow"</span><span class="p">,</span><span class="w"> </span><span class="nt">"components"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"canvas_element"</span><span class="p">,</span><span class="w"> </span><span class="nt">"kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Image"</span><span class="p">,</span>
+</span><span id="__span-12-8"><a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="w">      </span><span class="nt">"followArrow"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nt">"width"</span><span class="p">:</span><span class="w"> </span><span class="mi">16</span><span class="p">,</span><span class="w"> </span><span class="nt">"height"</span><span class="p">:</span><span class="w"> </span><span class="mi">16</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-12-9"><a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="p">]</span>
+</span></code></pre></div>
+<p>A game that shows and hides followers often, such as damage numbers, takes them from a
+<code>CanvasFollowerPool(world, template)</code>: <code>acquire(target) { text = "-12" }</code> hands out a hidden one
+again, set back to the template, and <code>release(entity)</code> hides it for the next, so no entity is
+created or destroyed while it plays.</p>
+<h3 id="occlusion">Occlusion</h3>
+<p>A follower whose <code>followRules.occlusion</code> is <code>true</code> hides while a physics body stands between the
+camera and the point it follows: a name plate behind a wall. A played project answers it with
+physics rays, so the scene needs a physics world; the body of the node the follower follows, of a
+node above it or under it, or its character's own body hides nothing; nor does a body the camera is
+inside, such as a wall it was pushed into, which a ray cannot see past. Each followed node is cast
+for at most once every few frames, and no more than a budget of rays a frame across all of them:
+those that waited longest go first, and the rest keep their last answer. A follower is asked only
+while it is on screen and near enough.</p>
+<p>A <code>canvas_follow_occlusion</code> on any node sets the budget. Without one, a scene whose followers ask
+casts with the defaults.</p>
+<div class="language-json highlight"><span class="filename">Plates hidden by walls and terrain only, sixteen rays a frame</span><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="p">{</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Occlusion"</span><span class="p">,</span><span class="w"> </span><span class="nt">"components"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"canvas_follow_occlusion"</span><span class="p">,</span><span class="w"> </span><span class="nt">"raysPerFrame"</span><span class="p">:</span><span class="w"> </span><span class="mi">16</span><span class="p">,</span><span class="w"> </span><span class="nt">"reuseFrames"</span><span class="p">:</span><span class="w"> </span><span class="mi">6</span><span class="p">,</span><span class="w"> </span><span class="nt">"layer"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+</span></code></pre></div>
+<p><code>layer</code> is the one collision layer the rays hit: <code>0</code>, the static world's, keeps moving bodies, the
+player's own capsule among them, from hiding anything. A host that runs its own systems adds
+<code>PhysicsCanvasOcclusion(physicsWorld, physicsSystem)</code> after its physics step; one with another way
+to tell, such as a depth read-back, sets its own <code>CanvasOcclusion</code> with <code>world.setCanvasOcclusion</code>.</p>
 <h2 id="show-a-3d-view">Show a 3D view</h2>
 <p>A <code>View</code> element shows what another camera sees, such as a character turning on a select screen.
 <code>camera</code> names a node with a <code>camera</code> component; give that camera <code>primary: false</code>, or it could
@@ -3521,12 +3726,12 @@ the size of the element's box in pixels, which fills the box, opaque, inside its
 <code>style.cornerRadius</code> and under its children. The camera's own <code>eye</code>, <code>center</code> and <code>fovYDegrees</code>
 frame it. It renders the whole scene, as the main view does, so place what it looks at where the
 main camera does not see it.</p>
-<div class="language-json highlight"><span class="filename">Two nodes: a portrait camera and the window that shows it</span><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="p">[</span>
-</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Portrait Camera"</span><span class="p">,</span><span class="w"> </span><span class="nt">"components"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"camera"</span><span class="p">,</span><span class="w"> </span><span class="nt">"primary"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
-</span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">    </span><span class="nt">"eye"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"x"</span><span class="p">:</span><span class="w"> </span><span class="mi">100</span><span class="p">,</span><span class="w"> </span><span class="nt">"y"</span><span class="p">:</span><span class="w"> </span><span class="mf">1.5</span><span class="p">,</span><span class="w"> </span><span class="nt">"z"</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="nt">"center"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"x"</span><span class="p">:</span><span class="w"> </span><span class="mi">100</span><span class="p">,</span><span class="w"> </span><span class="nt">"y"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">"z"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="nt">"fovYDegrees"</span><span class="p">:</span><span class="w"> </span><span class="mi">40</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">},</span>
-</span><span id="__span-12-4"><a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Portrait"</span><span class="p">,</span><span class="w"> </span><span class="nt">"components"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"canvas_element"</span><span class="p">,</span><span class="w"> </span><span class="nt">"kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">"View"</span><span class="p">,</span><span class="w"> </span><span class="nt">"camera"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Portrait Camera"</span><span class="p">,</span>
-</span><span id="__span-12-5"><a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">    </span><span class="nt">"anchor"</span><span class="p">:</span><span class="w"> </span><span class="s2">"CenterLeft"</span><span class="p">,</span><span class="w"> </span><span class="nt">"width"</span><span class="p">:</span><span class="w"> </span><span class="mi">240</span><span class="p">,</span><span class="w"> </span><span class="nt">"height"</span><span class="p">:</span><span class="w"> </span><span class="mi">320</span><span class="p">,</span><span class="w"> </span><span class="nt">"style"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"cornerRadius"</span><span class="p">:</span><span class="w"> </span><span class="mi">8</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
-</span><span id="__span-12-6"><a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="p">]</span>
+<div class="language-json highlight"><span class="filename">Two nodes: a portrait camera and the window that shows it</span><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="p">[</span>
+</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Portrait Camera"</span><span class="p">,</span><span class="w"> </span><span class="nt">"components"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"camera"</span><span class="p">,</span><span class="w"> </span><span class="nt">"primary"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+</span><span id="__span-14-3"><a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">    </span><span class="nt">"eye"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"x"</span><span class="p">:</span><span class="w"> </span><span class="mi">100</span><span class="p">,</span><span class="w"> </span><span class="nt">"y"</span><span class="p">:</span><span class="w"> </span><span class="mf">1.5</span><span class="p">,</span><span class="w"> </span><span class="nt">"z"</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="nt">"center"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"x"</span><span class="p">:</span><span class="w"> </span><span class="mi">100</span><span class="p">,</span><span class="w"> </span><span class="nt">"y"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">"z"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="nt">"fovYDegrees"</span><span class="p">:</span><span class="w"> </span><span class="mi">40</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">},</span>
+</span><span id="__span-14-4"><a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Portrait"</span><span class="p">,</span><span class="w"> </span><span class="nt">"components"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"canvas_element"</span><span class="p">,</span><span class="w"> </span><span class="nt">"kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">"View"</span><span class="p">,</span><span class="w"> </span><span class="nt">"camera"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Portrait Camera"</span><span class="p">,</span>
+</span><span id="__span-14-5"><a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="w">    </span><span class="nt">"anchor"</span><span class="p">:</span><span class="w"> </span><span class="s2">"CenterLeft"</span><span class="p">,</span><span class="w"> </span><span class="nt">"width"</span><span class="p">:</span><span class="w"> </span><span class="mi">240</span><span class="p">,</span><span class="w"> </span><span class="nt">"height"</span><span class="p">:</span><span class="w"> </span><span class="mi">320</span><span class="p">,</span><span class="w"> </span><span class="nt">"style"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"cornerRadius"</span><span class="p">:</span><span class="w"> </span><span class="mi">8</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-14-6"><a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="p">]</span>
 </span></code></pre></div>
 <p>With no node of that name, no camera on it, or no renderer, the element draws only its style. A
 host that draws <code>SceneCanvas</code> itself passes the runtime's <code>canvasViews(world)</code> to show views: the
@@ -3536,6 +3741,36 @@ runtime renders each picture before the frame's UI and frees it once nothing dra
 element's size, offset, text and image pixels. A HUD drawn from 1x pixel art reads at 2 on a large
 screen. Every edge lands on a whole pixel at any scale, so the art stays crisp; at a fractional scale
 such as 1.5, some of its pixels are a screen pixel wider than others.</p>
+<h3 id="scale-with-the-screen">Scale with the screen</h3>
+<p>A <a href="../../reference/scene-document-components/#canvas_scaler"><code>canvas_scaler</code></a> on any node works the
+scale out from the screen's size each frame, in place of <code>canvasScale</code>. With <code>ScaleWithScreenSize</code>
+the HUD is designed at <code>referenceWidth</code> by <code>referenceHeight</code> and takes the same share of every
+screen, following its width, its height or a blend of the two by <code>match</code>. <code>ConstantPixelSize</code> keeps
+a unit <code>pixelsPerUnit</code> of the screen's pixels, for pixel art at any density, and
+<code>ConstantPhysicalSize</code> keeps it 1 / <code>referenceDpi</code> of an inch, at the screen's real dots per inch
+where the platform reports them: on Android and on a desktop monitor that reports its size. A
+browser and iOS report none, so there a unit is a dp. <code>minScale</code> and <code>maxScale</code> hold the result, and
+<code>playerScale</code>, which a settings menu sets, multiplies it after them.</p>
+<div class="language-json highlight"><span class="filename">A 1080p HUD that follows the screen&#x27;s height</span><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"canvas_scaler"</span><span class="p">,</span><span class="w"> </span><span class="nt">"referenceWidth"</span><span class="p">:</span><span class="w"> </span><span class="mi">1920</span><span class="p">,</span><span class="w"> </span><span class="nt">"referenceHeight"</span><span class="p">:</span><span class="w"> </span><span class="mi">1080</span><span class="p">,</span><span class="w"> </span><span class="nt">"match"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">"maxScale"</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="p">}</span>
+</span></code></pre></div>
+<p>A host that draws <code>CanvasOverlay</code> itself passes the same rule as <code>CanvasOverlay(items, scaler = …)</code>,
+and <code>CanvasScaler.scaleFor(width, height, density)</code> answers it for any box.</p>
+<h3 id="keep-clear-of-a-notch">Keep clear of a notch</h3>
+<p>The safe area is what covers the screen's edges, in dp: a notch or camera cutout, rounded corners,
+a status bar or home indicator drawn over the game. Each platform reports its own: Android its system
+bars and display cutout, iOS its view's safe area, and a browser its <code>env(safe-area-inset-*)</code>, which
+needs <code>viewport-fit=cover</code> in the page's viewport meta tag, as the templates have. A desktop window
+has none. An element anchored on the canvas itself is placed inside it, its anchor and offsets
+measured from the safe area's edges and centre. A backdrop that should reach under the notch sets
+<code>safeArea</code> to <code>false</code>. An element inside another is placed in its parent's box, and a follower on
+what it follows, either way.</p>
+<p>A host that knows better sets <code>SceneAppLifecycleRuntime.canvasSafeArea</code> itself, or passes
+<code>SceneCanvas(world, safeArea = …)</code>: an editor previews a device by passing that device's insets.
+<code>canvasDpi</code> likewise overrides the platform's dots per inch.</p>
+<h3 id="place-something-on-a-point">Place something on a point</h3>
+<p><code>PointAnchor(x, y, pivot = Alignment.BottomCenter)</code> is the same placement for any Compose UI: it
+puts its content's <code>pivot</code> point on a point of its box, moved by <code>offsetX</code> and <code>offsetY</code>, for a
+label or tooltip over a point the game works out itself.</p>
 <h2 id="limit-what-is-typed">Limit what is typed</h2>
 <p>Give a <code>TextField</code> a <code>maxLength</code> to stop typing, pasting and IME input there, as a chat line needs.
 It counts the characters a player sees (<code>maxLengthUnit: "Graphemes"</code>), so a family emoji, a flag or
@@ -3572,17 +3807,17 @@ element is drawn only when <code>SceneCanvas(world, showTouchControls = true)</c
 a <code>jump</code> button jumps while held and a <code>run</code> button runs, as the keys do, and a button for an action of
 your own holds and presses that action.</p>
 <p>If your app runs its own Compose host, draw the canvas yourself:</p>
-<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">host</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ComposeHost</span><span class="p">()</span>
-</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="n">host</span><span class="p">.</span><span class="na">frame</span><span class="p">(</span><span class="n">FrameInput</span><span class="p">(</span><span class="n">viewportWidth</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">800</span><span class="p">,</span><span class="w"> </span><span class="n">viewportHeight</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">600</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">SceneCanvas</span><span class="p">(</span><span class="n">world</span><span class="p">)</span><span class="w"> </span><span class="p">}</span>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">host</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ComposeHost</span><span class="p">()</span>
+</span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="n">host</span><span class="p">.</span><span class="na">frame</span><span class="p">(</span><span class="n">FrameInput</span><span class="p">(</span><span class="n">viewportWidth</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">800</span><span class="p">,</span><span class="w"> </span><span class="n">viewportHeight</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">600</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">SceneCanvas</span><span class="p">(</span><span class="n">world</span><span class="p">)</span><span class="w"> </span><span class="p">}</span>
 </span></code></pre></div>
 <p>A host that runs on <code>SceneAppLifecycleRuntime</code> but shows the game in part of its window, as an
 editor's game view does, sets <code>drawsSceneCanvas = false</code> and draws the canvas over that part in its
 <code>ui { }</code> content, with the runtime's projector and views so followers and <code>View</code>s draw. Here the game
 view shows <code>play</code>, the world an editor plays the scene in, which the runtime's render system draws in
 place of its own; leave the world out to use the runtime's own.</p>
-<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="n">Box</span><span class="p">(</span><span class="n">Modifier</span><span class="p">.</span><span class="na">padding</span><span class="p">(</span><span class="n">start</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">100.</span><span class="n">dp</span><span class="p">,</span><span class="w"> </span><span class="n">top</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">50.</span><span class="n">dp</span><span class="p">).</span><span class="na">size</span><span class="p">(</span><span class="m">400.</span><span class="n">dp</span><span class="p">,</span><span class="w"> </span><span class="m">300.</span><span class="n">dp</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">    </span><span class="n">SceneCanvas</span><span class="p">(</span><span class="n">play</span><span class="p">,</span><span class="w"> </span><span class="n">projector</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">runtime</span><span class="p">.</span><span class="na">canvasProjector</span><span class="p">(</span><span class="n">play</span><span class="p">),</span><span class="w"> </span><span class="n">views</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">runtime</span><span class="p">.</span><span class="na">canvasViews</span><span class="p">(</span><span class="n">play</span><span class="p">))</span>
-</span><span id="__span-14-3"><a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="p">}</span>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="n">Box</span><span class="p">(</span><span class="n">Modifier</span><span class="p">.</span><span class="na">padding</span><span class="p">(</span><span class="n">start</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">100.</span><span class="n">dp</span><span class="p">,</span><span class="w"> </span><span class="n">top</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">50.</span><span class="n">dp</span><span class="p">).</span><span class="na">size</span><span class="p">(</span><span class="m">400.</span><span class="n">dp</span><span class="p">,</span><span class="w"> </span><span class="m">300.</span><span class="n">dp</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-17-2"><a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="w">    </span><span class="n">SceneCanvas</span><span class="p">(</span><span class="n">play</span><span class="p">,</span><span class="w"> </span><span class="n">projector</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">runtime</span><span class="p">.</span><span class="na">canvasProjector</span><span class="p">(</span><span class="n">play</span><span class="p">),</span><span class="w"> </span><span class="n">views</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">runtime</span><span class="p">.</span><span class="na">canvasViews</span><span class="p">(</span><span class="n">play</span><span class="p">))</span>
+</span><span id="__span-17-3"><a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="p">}</span>
 </span></code></pre></div>
 <div class="admonition warning">
 <p class="admonition-title">One tap, one reader</p>

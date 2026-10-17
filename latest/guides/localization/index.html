@@ -1894,10 +1894,54 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#numbers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Numbers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#switch-the-locale" class="md-nav__link">
     <span class="md-ellipsis">
       
         Switch the locale
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#text-a-plugin-ships" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Text a plugin ships
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#show-text-in-compose-ui" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Show text in Compose UI
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#name-keys-and-buttons" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Name keys and buttons
       
     </span>
   </a>
@@ -2438,10 +2482,54 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#numbers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Numbers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#switch-the-locale" class="md-nav__link">
     <span class="md-ellipsis">
       
         Switch the locale
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#text-a-plugin-ships" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Text a plugin ships
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#show-text-in-compose-ui" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Show text in Compose UI
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#name-keys-and-buttons" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Name keys and buttons
       
     </span>
   </a>
@@ -2610,11 +2698,31 @@ as the key itself and is logged once. Nothing here throws for missing or broken 
 <tbody>
 <tr>
 <td><code>{name}</code></td>
-<td>Puts in the argument <code>name</code>. <code>{name, number}</code> does the same for a number.</td>
+<td>Puts in the argument <code>name</code> as it is: a number is not grouped.</td>
+</tr>
+<tr>
+<td><code>{n, number}</code></td>
+<td>Writes a number the locale's way: <code>1,234.5</code>, <code>1.234,5</code>, <code>1 234,5</code>.</td>
+</tr>
+<tr>
+<td><code>{n, number, integer}</code></td>
+<td>Rounds to a whole number: <code>1,235</code>.</td>
+</tr>
+<tr>
+<td><code>{n, number, percent}</code></td>
+<td>Times 100, with the locale's percent sign: <code>45%</code>, <code>45 %</code>, <code>%45</code>.</td>
+</tr>
+<tr>
+<td><code>{n, number, compact}</code></td>
+<td>Short, for a HUD: <code>1.2K</code>, <code>1,2 Mio.</code>, <code>1.2万</code>. ICU's <code>::compact-short</code> also works.</td>
 </tr>
 <tr>
 <td><code>{n, plural, one {# item} other {# items}}</code></td>
-<td>Picks a branch by the CLDR plural category of <code>n</code> in the text's language. <code>#</code> is the number.</td>
+<td>Picks a branch by the CLDR plural category of <code>n</code> in the text's language. <code>#</code> is the number, written the locale's way.</td>
+</tr>
+<tr>
+<td><code>{n, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}</code></td>
+<td>Picks a branch by the CLDR ordinal category: 1st, 2nd, 3rd, 4th, 11th, 21st.</td>
 </tr>
 <tr>
 <td><code>=0 {…}</code></td>
@@ -2690,6 +2798,69 @@ parsed, so a player name holding <code>{</code> is safe.</p>
 </table>
 <p>A language not listed counts everything as <code>other</code>; pass <code>Strings.load</code> a <code>pluralRules</code> function
 for it.</p>
+<p>Ordinals have rules of their own. English uses <code>one</code> (1st, 21st), <code>two</code> (2nd, 22nd), <code>few</code> (3rd,
+23rd) and <code>other</code> (4th, 11th–13th). Swedish uses <code>one</code> for 1st and 2nd, Italian <code>many</code> for 8, 11, 80
+and 800, French, Filipino, Malay and Vietnamese <code>one</code> for 1 only, and Ukrainian <code>few</code> for 3rd. The
+other languages above use <code>other</code> for every number. <code>Strings.load</code> takes an <code>ordinalRules</code> function
+for a language not covered.</p>
+<h2 id="numbers">Numbers</h2>
+<p><code>{n, number}</code>, its styles and a plural's <code>#</code> write numbers the way the text's language does:</p>
+<table>
+<thead>
+<tr>
+<th>Locale</th>
+<th><code>{n, number}</code> of 12345.6</th>
+<th><code>percent</code> of 0.45</th>
+<th><code>compact</code> of 1234567</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>English</td>
+<td><code>12,345.6</code></td>
+<td><code>45%</code></td>
+<td><code>1.2M</code></td>
+</tr>
+<tr>
+<td>German</td>
+<td><code>12.345,6</code></td>
+<td><code>45 %</code></td>
+<td><code>1,2 Mio.</code></td>
+</tr>
+<tr>
+<td>French</td>
+<td><code>12 345,6</code></td>
+<td><code>45 %</code></td>
+<td><code>1,2 M</code></td>
+</tr>
+<tr>
+<td>Spanish</td>
+<td><code>12.345,6</code>, but <code>1234</code></td>
+<td><code>45 %</code></td>
+<td><code>1,2 M</code></td>
+</tr>
+<tr>
+<td>Japanese</td>
+<td><code>12,345.6</code></td>
+<td><code>45%</code></td>
+<td><code>123万</code></td>
+</tr>
+<tr>
+<td>Turkish</td>
+<td><code>12.345,6</code></td>
+<td><code>%45</code></td>
+<td><code>1,2 Mn</code></td>
+</tr>
+</tbody>
+</table>
+<p>Spanish, Italian, Polish, Estonian and European Portuguese group only from five digits, so 1234 has
+no separator. Numbers round half to even, keep up to three fraction digits, and use Latin digits.
+<code>compact</code> keeps two significant digits below ten of a unit (<code>1.2K</code>) and whole numbers above (<code>12K</code>).
+A plain <code>{n}</code> stays as it is, so a year or an ID is never written <code>2,026</code>.</p>
+<p>The data is Unicode CLDR's, generated by <code>./gradlew :awake:core:localization:generateCldrNumberData</code>
+for every language the plural rules cover. Another language uses CLDR's root format, which writes <code>12,345.6</code>. Code that
+writes a number outside a message uses <code>NumberFormat.forLocale(strings.locale.value).format(n, style)</code>.
+French and Russian group with a no-break space, which the built-in font draws as a space.</p>
 <h2 id="switch-the-locale">Switch the locale</h2>
 <div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">strings</span><span class="p">.</span><span class="na">setLocale</span><span class="p">(</span><span class="n">LocaleId</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="s">"ko"</span><span class="p">))</span><span class="w"> </span><span class="c1">// loads ko.json, then switches</span>
 </span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">strings</span><span class="p">.</span><span class="na">locale</span><span class="p">.</span><span class="na">value</span><span class="w"> </span><span class="c1">// ko</span>
@@ -2700,19 +2871,117 @@ for it.</p>
 <code>strings.text(…)</code> while composing shows the new language in the next frame, with no restart.</p>
 <p><code>systemLocale()</code> reads the device's language: the JVM default on desktop and Android, the first
 preferred language on iOS, and <code>navigator.language</code> in the browser.</p>
+<h2 id="text-a-plugin-ships">Text a plugin ships</h2>
+<p>A plugin or library that shows text ships its own defaults, so it works before a game translates a
+word, and the game still has the last word. It adds its tables as a layer:</p>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1">// A plugin's own text: its English, and any translations it ships.</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="kd">val</span><span class="w"> </span><span class="nv">hudDefaults</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">StringTableSource</span><span class="p">.</span><span class="na">of</span><span class="p">(</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span><span class="n">mapOf</span><span class="p">(</span>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">        </span><span class="n">LocaleId</span><span class="p">.</span><span class="na">English</span><span class="w"> </span><span class="n">to</span><span class="w"> </span><span class="n">mapOf</span><span class="p">(</span><span class="s">"hud.hp"</span><span class="w"> </span><span class="n">to</span><span class="w"> </span><span class="s">"HP"</span><span class="p">,</span><span class="w"> </span><span class="s">"menu.start"</span><span class="w"> </span><span class="n">to</span><span class="w"> </span><span class="s">"Begin"</span><span class="p">),</span>
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">        </span><span class="n">LocaleId</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="s">"ko"</span><span class="p">)</span><span class="w"> </span><span class="n">to</span><span class="w"> </span><span class="n">mapOf</span><span class="p">(</span><span class="s">"hud.hp"</span><span class="w"> </span><span class="n">to</span><span class="w"> </span><span class="s">"체력"</span><span class="p">),</span>
+</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">    </span><span class="p">),</span>
+</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="p">)</span>
+</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="n">strings</span><span class="p">.</span><span class="na">addSource</span><span class="p">(</span><span class="n">hudDefaults</span><span class="p">,</span><span class="w"> </span><span class="n">StringLayer</span><span class="p">.</span><span class="na">Plugin</span><span class="p">)</span>
+</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="n">strings</span><span class="p">.</span><span class="na">text</span><span class="p">(</span><span class="s">"hud.hp"</span><span class="p">)</span><span class="w"> </span><span class="c1">// "HP": only the plugin has it</span>
+</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="n">strings</span><span class="p">.</span><span class="na">text</span><span class="p">(</span><span class="s">"menu.start"</span><span class="p">)</span><span class="w"> </span><span class="c1">// "Start": the game's strings/en.json overrides the plugin</span>
+</span></code></pre></div>
+<p>There are three layers, <code>StringLayer.Game</code>, <code>Plugin</code> and <code>BuiltIn</code>. The game's own tables, the ones
+given to <code>Strings.load</code>, win over a plugin's, and a plugin's win over the text Core ships. Within a
+layer, a source added later wins. Each locale's table is the layers merged key by key, so the game
+overrides one plugin key in <code>strings/en.json</code> and keeps the rest.</p>
+<p>The locale comes before the layer. A Korean player sees the plugin's Korean text before the game's
+English, because text in their language beats text in the wrong one; the game's English wins over
+the plugin's English. A game that renames a plugin's term therefore translates it into every locale
+it ships. <code>removeSource</code> takes a layer away again.</p>
+<h2 id="show-text-in-compose-ui">Show text in Compose UI</h2>
+<p><code>compose:localization</code> gives Compose UI the active table without making <code>core:localization</code> depend
+on Compose:</p>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">context</span><span class="p">(</span><span class="n">_</span><span class="p">:</span><span class="w"> </span><span class="n">Composer</span><span class="p">)</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="kd">fun</span><span class="w"> </span><span class="nf">Hud</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">    </span><span class="n">ProvideStrings</span><span class="p">(</span><span class="n">strings</span><span class="p">,</span><span class="w"> </span><span class="n">labels</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">        </span><span class="n">Text</span><span class="p">(</span><span class="n">stringResource</span><span class="p">(</span><span class="s">"hud.items"</span><span class="p">,</span><span class="w"> </span><span class="s">"n"</span><span class="w"> </span><span class="n">to</span><span class="w"> </span><span class="n">bag</span><span class="p">.</span><span class="na">count</span><span class="p">))</span>
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="p">}</span>
+</span></code></pre></div>
+<p><code>LocalStrings</code> holds the <code>Strings</code>, and <code>stringResource(key, args)</code> reads it. AwakeKt Compose
+composes every frame, so the text shows a new locale on the frame after <code>setLocale</code> returns. A
+missing key, or no <code>LocalStrings</code> at all, shows the key and is logged once.</p>
+<h2 id="name-keys-and-buttons">Name keys and buttons</h2>
+<p>Button prompts and hotkey labels name keys, mouse buttons and controller buttons in the player's
+language and in their platform's style:</p>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">labels</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">InputLabels</span><span class="p">.</span><span class="na">load</span><span class="p">(</span><span class="n">strings</span><span class="p">,</span><span class="w"> </span><span class="n">style</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ShortcutStyle</span><span class="p">.</span><span class="na">Windows</span><span class="p">)</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="kd">val</span><span class="w"> </span><span class="nv">save</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">KeyChord</span><span class="p">(</span><span class="n">Key</span><span class="p">.</span><span class="na">S</span><span class="p">,</span><span class="w"> </span><span class="n">setOf</span><span class="p">(</span><span class="n">KeyModifier</span><span class="p">.</span><span class="na">Ctrl</span><span class="p">,</span><span class="w"> </span><span class="n">KeyModifier</span><span class="p">.</span><span class="na">Shift</span><span class="p">))</span>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="n">labels</span><span class="p">.</span><span class="na">key</span><span class="p">(</span><span class="n">Key</span><span class="p">.</span><span class="na">Space</span><span class="p">)</span><span class="w"> </span><span class="c1">// "Space"</span>
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="n">labels</span><span class="p">.</span><span class="na">chord</span><span class="p">(</span><span class="n">save</span><span class="p">)</span><span class="w"> </span><span class="c1">// "Ctrl+Shift+S"</span>
+</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="n">labels</span><span class="p">.</span><span class="na">pointer</span><span class="p">(</span><span class="n">PointerButton</span><span class="p">.</span><span class="na">Secondary</span><span class="p">)</span><span class="w"> </span><span class="c1">// "Right click"</span>
+</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="n">labels</span><span class="p">.</span><span class="na">gamepad</span><span class="p">(</span><span class="n">GamepadButton</span><span class="p">.</span><span class="na">South</span><span class="p">)</span><span class="w"> </span><span class="c1">// "A"</span>
+</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="n">strings</span><span class="p">.</span><span class="na">setLocale</span><span class="p">(</span><span class="n">LocaleId</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="s">"de"</span><span class="p">))</span>
+</span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="n">labels</span><span class="p">.</span><span class="na">chord</span><span class="p">(</span><span class="n">save</span><span class="p">)</span><span class="w"> </span><span class="c1">// "Strg+Umschalt+S"</span>
+</span></code></pre></div>
+<p><code>InputLabels.load</code> adds Core's built-in names, English, German, French and Spanish, at
+<code>StringLayer.BuiltIn</code>. <code>ShortcutStyle.system()</code> picks the style: Windows writes <code>Win+Ctrl+Alt+Shift</code>,
+Linux names Meta <code>Super</code>, and Apple platforms write <code>Control+Option+Shift+Cmd</code>, with <code>Option</code> for Alt.
+<code>ShortcutStyle.primaryModifier</code> is Cmd on Apple platforms and Ctrl elsewhere, for an editor-style
+<code>KeyChord</code>. <code>ControllerLayout</code> picks what controller buttons are printed with: <code>Letters</code> (A at the
+bottom), <code>SwappedLetters</code> (B at the bottom) or <code>Shapes</code> (Cross at the bottom).</p>
+<p>The labels name what <a href="../input/">input actions</a> describe. <code>chord(chord)</code> names a <code>KeyChord</code> or a
+<code>GamepadChord</code>, <code>binding(description)</code> any <code>BindingDescription</code>, and <code>bindings(action)</code> every way to
+trigger a <code>ButtonAction</code>, keys then pointer buttons then chords: <code>E / Right click / Shift+E</code>. Modifier
+keys are written in the platform's order, controller modifiers in <code>GamepadButton</code> order: <code>LB+A</code>.</p>
+<p>A game overrides any name, or adds a language, with the same keys in its tables:</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Names</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>input.key.&lt;Key&gt;</code></td>
+<td>A key, such as <code>input.key.Space</code>. Letters, digits and F-keys default to themselves.</td>
+</tr>
+<tr>
+<td><code>input.pointer.&lt;PointerButton&gt;</code></td>
+<td>A mouse button, such as <code>input.pointer.Primary</code>.</td>
+</tr>
+<tr>
+<td><code>input.gamepad.&lt;GamepadButton&gt;</code></td>
+<td>A controller button by position, such as <code>input.gamepad.South</code>.</td>
+</tr>
+<tr>
+<td><code>&lt;key&gt;.windows</code>, <code>.linux</code>, <code>.apple</code></td>
+<td>A key's or mouse button's name on one platform, such as <code>input.key.Meta.apple</code>.</td>
+</tr>
+<tr>
+<td><code>&lt;key&gt;.letters</code>, <code>.swapped</code>, <code>.shapes</code></td>
+<td>A controller button's name in one layout.</td>
+</tr>
+<tr>
+<td><code>input.chord.separator</code></td>
+<td>Joins a chord: <code>+</code>. Set <code>input.chord.separator.apple</code> to <code>""</code> and the modifiers to <code>⌃⌥⇧⌘</code> for Apple's symbols, with a font that has them.</td>
+</tr>
+<tr>
+<td><code>input.bindings.separator</code></td>
+<td>Joins an action's bindings: <code>/</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>A platform or layout form wins over the plain key in the same locale, and the player's locale wins
+over the default's.</p>
 <h2 id="show-a-key-in-a-scene">Show a key in a scene</h2>
 <p>A <code>canvas_element</code> of kind <code>Text</code> or <code>Button</code> shows a key's text with <code>textKey</code> in place of <code>text</code>.
 <code>textArgs</code> gives its placeholders values, and a <code>bind</code>'s <code>textArgs</code> reads one from a component
 field the game sets, such as a count:</p>
-<div class="language-json highlight"><span class="filename">scenes/main.scene.json</span><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"canvas_element"</span><span class="p">,</span><span class="w"> </span><span class="nt">"textKey"</span><span class="p">:</span><span class="w"> </span><span class="s2">"hud.items"</span><span class="p">,</span><span class="w"> </span><span class="nt">"textArgs"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Harbor Town"</span><span class="w"> </span><span class="p">},</span>
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="nt">"bind"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"node"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Player"</span><span class="p">,</span><span class="w"> </span><span class="nt">"textArgs"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"count"</span><span class="p">:</span><span class="w"> </span><span class="s2">"inventory.count"</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+<div class="language-json highlight"><span class="filename">scenes/main.scene.json</span><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"canvas_element"</span><span class="p">,</span><span class="w"> </span><span class="nt">"textKey"</span><span class="p">:</span><span class="w"> </span><span class="s2">"hud.items"</span><span class="p">,</span><span class="w"> </span><span class="nt">"textArgs"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Harbor Town"</span><span class="w"> </span><span class="p">},</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span><span class="nt">"bind"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"node"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Player"</span><span class="p">,</span><span class="w"> </span><span class="nt">"textArgs"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"count"</span><span class="p">:</span><span class="w"> </span><span class="s2">"inventory.count"</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
 </span></code></pre></div>
 <p><code>loadProject</code> reads <code>strings/</code> through the project's files, the way it reads scenes and assets, so
 the tables are indexed by content hash on the web like any other file. It reads the device's
 locale's table and <code>strings/en.json</code>, the default; another locale's table is read only when the game
 switches to it. <code>LoadedProject.strings</code> is that <code>Strings</code>, and every scene the project plays shows
 its keyed text from it. A settings screen switches language through it:</p>
-<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">project</span><span class="p">.</span><span class="na">strings</span><span class="o">?.</span><span class="na">setLocale</span><span class="p">(</span><span class="n">LocaleId</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="s">"ko"</span><span class="p">))</span>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="n">project</span><span class="p">.</span><span class="na">strings</span><span class="o">?.</span><span class="na">setLocale</span><span class="p">(</span><span class="n">LocaleId</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="s">"ko"</span><span class="p">))</span>
 </span></code></pre></div>
 <p>Keyed text changes on the next frame; the scene keeps playing. A project with no <code>strings/en.json</code>
 has no strings, and its keyed elements show their keys. A host that draws the canvas itself passes
@@ -2720,17 +2989,17 @@ has no strings, and its keyed elements show their keys. A host that draws the ca
 <h2 id="fonts-for-other-scripts">Fonts for other scripts</h2>
 <p>The built-in UI font draws Latin text. A locale whose script it lacks, such as Korean or Russian,
 names fallback fonts in <code>strings/fonts.json</code>:</p>
-<div class="language-json highlight"><span class="filename">strings/fonts.json</span><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="p">{</span>
-</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span><span class="nt">"ko"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">    </span><span class="s2">"fonts/NotoSansKR-Regular.otf"</span>
-</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">  </span><span class="p">],</span>
-</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">  </span><span class="nt">"ru"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">    </span><span class="s2">"fonts/NotoSans-Regular.ttf"</span>
-</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">  </span><span class="p">]</span>
-</span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="p">}</span>
+<div class="language-json highlight"><span class="filename">strings/fonts.json</span><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="p">{</span>
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span><span class="nt">"ko"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">    </span><span class="s2">"fonts/NotoSansKR-Regular.otf"</span>
+</span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">  </span><span class="p">],</span>
+</span><span id="__span-11-5"><a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">  </span><span class="nt">"ru"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+</span><span id="__span-11-6"><a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="w">    </span><span class="s2">"fonts/NotoSans-Regular.ttf"</span>
+</span><span id="__span-11-7"><a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="w">  </span><span class="p">]</span>
+</span><span id="__span-11-8"><a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="p">}</span>
 </span></code></pre></div>
-<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">fonts</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">LocaleFonts</span><span class="p">.</span><span class="na">load</span><span class="p">(</span><span class="n">assets</span><span class="p">)</span><span class="w"> </span><span class="c1">// strings/fonts.json</span>
-</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="kd">val</span><span class="w"> </span><span class="nv">uiFont</span><span class="p">:</span><span class="w"> </span><span class="n">UiFont</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">strings</span><span class="p">.</span><span class="na">loadFont</span><span class="p">(</span><span class="n">assets</span><span class="p">,</span><span class="w"> </span><span class="n">fonts</span><span class="p">,</span><span class="w"> </span><span class="n">primary</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">UiFonts</span><span class="p">.</span><span class="na">default</span><span class="p">())</span>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">fonts</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">LocaleFonts</span><span class="p">.</span><span class="na">load</span><span class="p">(</span><span class="n">assets</span><span class="p">)</span><span class="w"> </span><span class="c1">// strings/fonts.json</span>
+</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="kd">val</span><span class="w"> </span><span class="nv">uiFont</span><span class="p">:</span><span class="w"> </span><span class="n">UiFont</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">strings</span><span class="p">.</span><span class="na">loadFont</span><span class="p">(</span><span class="n">assets</span><span class="p">,</span><span class="w"> </span><span class="n">fonts</span><span class="p">,</span><span class="w"> </span><span class="n">primary</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">UiFonts</span><span class="p">.</span><span class="na">default</span><span class="p">())</span>
 </span></code></pre></div>
 <p><code>loadFont</code> bakes each fallback font with only the chars the loaded tables use that the primary font
 lacks, and returns one font, <code>UiFonts.fallback(primary, fallbacks)</code>, that draws each char from the

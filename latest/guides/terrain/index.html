@@ -2644,7 +2644,7 @@ terrain was authored from.</p>
 </tr>
 <tr>
 <td><code>mutableCopy()</code></td>
-<td>An editable <code>MutableHeightmap</code>.</td>
+<td>An editable <code>MutableHeightmap</code> with the same <code>origin</code>.</td>
 </tr>
 <tr>
 <td><code>RawHeightmapCodec.decode(...)</code> / <code>decodeFromBitmap(...)</code></td>
@@ -2652,7 +2652,8 @@ terrain was authored from.</p>
 </tr>
 </tbody>
 </table>
-<p><code>Heightmap</code> is immutable. To sculpt, edit a copy and take a snapshot:</p>
+<p><code>Heightmap</code> is immutable. To sculpt, edit a copy and take a snapshot. Both keep the map's <code>origin</code>,
+so a corner-anchored map stays where it was:</p>
 <div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">editable</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">heightmap</span><span class="p">.</span><span class="na">mutableCopy</span><span class="p">()</span>
 </span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="kd">val</span><span class="w"> </span><span class="nv">change</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">editable</span><span class="p">.</span><span class="na">setHeightAt</span><span class="p">(</span><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">1</span><span class="p">,</span><span class="w"> </span><span class="n">z</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">2</span><span class="p">,</span><span class="w"> </span><span class="n">height</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">3f</span><span class="p">)</span><span class="w"> </span><span class="c1">// null when nothing changed</span>
 </span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="kd">val</span><span class="w"> </span><span class="nv">sculpted</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">editable</span><span class="p">.</span><span class="na">snapshot</span><span class="p">()</span><span class="w"> </span><span class="c1">// immutable again: build a mesh or collider from this</span>

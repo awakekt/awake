@@ -1647,6 +1647,28 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#trees-and-machines-from-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trees and machines from data
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#perception" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Perception
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#how-it-works" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2438,6 +2460,28 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#trees-and-machines-from-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trees and machines from data
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#perception" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Perception
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#how-it-works" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2492,7 +2536,8 @@
 <a href="../navigation/">navigation</a> and need no scene. <code>awake:scene:ai</code> puts them in scenes: the <code>patrol</code>,
 <code>chase</code> and <code>flee</code> scene components, and <code>TransformAgentPlacement</code>, which places the behaviours'
 entities by their <code>Transform</code>. <code>awake:scene:navigation</code> has the <code>navigation</code> component they route
-over. <code>awake:ai</code> has behaviour trees and finite-state machines for logic you write yourself.</p>
+over. <code>awake:ai</code> has behaviour trees and finite-state machines for logic you write yourself, in
+Kotlin or as JSON.</p>
 <h2 id="add-patrol-chase-and-flee">Add patrol, chase and flee</h2>
 <p>A guard walking a beat, a hound chasing the player and a deer running from it. Both forms below build
 the same components.</p>
@@ -2885,6 +2930,167 @@ works.</p>
 </span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="n">brain</span><span class="p">.</span><span class="na">blackboard</span><span class="o">[</span><span class="s">"alarm"</span><span class="o">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
 </span><span id="__span-6-12"><a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="n">AiStateMachineSystem</span><span class="p">().</span><span class="na">update</span><span class="p">(</span><span class="n">world</span><span class="p">,</span><span class="w"> </span><span class="m">1f</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="m">30f</span><span class="p">)</span>
 </span></code></pre></div>
+<h2 id="trees-and-machines-from-data">Trees and machines from data</h2>
+<p>A tree or a machine can also be data: a JSON document a game authors without Kotlin. Each node names
+a kind from an <code>AiRegistry</code>, with that kind's parameters.</p>
+<div class="language-json highlight"><span class="filename">vent.tree.json</span><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="p">{</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span><span class="nt">"formatVersion"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span><span class="nt">"root"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">    </span><span class="nt">"kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ai.selector"</span><span class="p">,</span>
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">    </span><span class="nt">"children"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">      </span><span class="p">{</span><span class="w"> </span><span class="nt">"kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ai.sequence"</span><span class="p">,</span><span class="w"> </span><span class="nt">"children"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">        </span><span class="p">{</span><span class="w"> </span><span class="nt">"kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ai.compare"</span><span class="p">,</span><span class="w"> </span><span class="nt">"params"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"key"</span><span class="p">:</span><span class="w"> </span><span class="s2">"heat"</span><span class="p">,</span><span class="w"> </span><span class="nt">"op"</span><span class="p">:</span><span class="w"> </span><span class="s2">"&gt;="</span><span class="p">,</span><span class="w"> </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="mf">30.0</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">},</span>
+</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">        </span><span class="p">{</span><span class="w"> </span><span class="nt">"kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ai.emit"</span><span class="p">,</span><span class="w"> </span><span class="nt">"params"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"event"</span><span class="p">:</span><span class="w"> </span><span class="s2">"vent.open"</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-7-9"><a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="w">      </span><span class="p">]</span><span class="w"> </span><span class="p">},</span>
+</span><span id="__span-7-10"><a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="w">      </span><span class="p">{</span><span class="w"> </span><span class="nt">"kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ai.wait"</span><span class="p">,</span><span class="w"> </span><span class="nt">"params"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"seconds"</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-7-11"><a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="w">    </span><span class="p">]</span>
+</span><span id="__span-7-12"><a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="w">  </span><span class="p">}</span>
+</span><span id="__span-7-13"><a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="p">}</span>
+</span></code></pre></div>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">registry</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">AiRegistry</span><span class="p">()</span><span class="w">                     </span><span class="c1">// Core's kinds, plus any you register</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="kd">val</span><span class="w"> </span><span class="nv">compiled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">registry</span><span class="p">.</span><span class="na">compileTree</span><span class="p">(</span><span class="n">AiDefinitionJson</span><span class="p">.</span><span class="na">Default</span><span class="p">.</span><span class="na">decodeTree</span><span class="p">(</span><span class="n">text</span><span class="p">))</span>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="n">world</span><span class="p">.</span><span class="na">add</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span><span class="w"> </span><span class="n">compiled</span><span class="p">.</span><span class="na">newComponent</span><span class="p">(</span><span class="n">seed</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">entity</span><span class="p">.</span><span class="na">packed</span><span class="p">))</span>
+</span></code></pre></div>
+<p><code>compileTree</code> checks the whole document and lists every problem, such as an unknown kind, a
+misspelt parameter or the wrong number of children. Register your own kinds with typed parameters
+through <code>registry.action</code>, <code>registry.condition</code> and <code>registry.state</code>. A <code>StateMachineDefinition</code> has
+states with enter, exit and tree nodes, and transitions that fire after a time, when the state's
+tree finishes, or when a condition node succeeds.</p>
+<table>
+<thead>
+<tr>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ai.sequence</code>, <code>ai.selector</code>, <code>ai.parallel</code></td>
+<td>As their DSL twins; <code>parallel</code> takes <code>policy</code>: <code>all</code> or <code>one</code>.</td>
+</tr>
+<tr>
+<td><code>ai.inverter</code>, <code>ai.succeeder</code></td>
+<td>Swap success and failure; succeed whenever the child finishes.</td>
+</tr>
+<tr>
+<td><code>ai.repeat</code>, <code>ai.cooldown</code>, <code>ai.timeout</code></td>
+<td>As their DSL twins, with <code>count</code> or <code>seconds</code>.</td>
+</tr>
+<tr>
+<td><code>ai.wait</code></td>
+<td>Runs for <code>seconds</code>, then succeeds.</td>
+</tr>
+<tr>
+<td><code>ai.compare</code></td>
+<td>Compares the value under <code>key</code> with <code>value</code> or <code>otherKey</code>, by <code>op</code>: <code>==</code>, <code>!=</code>, <code>&lt;</code>, <code>&lt;=</code>, <code>&gt;</code>, <code>&gt;=</code>.</td>
+</tr>
+<tr>
+<td><code>ai.has</code></td>
+<td>Succeeds when <code>key</code> is set.</td>
+</tr>
+<tr>
+<td><code>ai.chance</code></td>
+<td>Succeeds with <code>probability</code>, from the tree's seed.</td>
+</tr>
+<tr>
+<td><code>ai.status</code></td>
+<td>Always returns <code>status</code>.</td>
+</tr>
+<tr>
+<td><code>ai.set</code>, <code>ai.copy</code>, <code>ai.remove</code>, <code>ai.add</code></td>
+<td>Write the blackboard.</td>
+</tr>
+<tr>
+<td><code>ai.emit</code></td>
+<td>Sends <code>event</code> with a <code>payload</code> to the system's <code>AiEventSink</code>.</td>
+</tr>
+</tbody>
+</table>
+<p><code>registerSpatialKinds(placement)</code> from <code>awake:ai:behavior</code> adds kinds that move and place agents over
+the navigation grid, through the agent's <code>PathRequest</code>. A <code>target</code> is a blackboard <code>key</code> holding an
+entity or a position, such as <code>perception.target</code>, or a fixed <code>point</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ai.move-to</code></td>
+<td>Walks to <code>target</code>; succeeds within <code>arriveRadius</code>, fails when it cannot get there.</td>
+</tr>
+<tr>
+<td><code>ai.follow</code></td>
+<td>Keeps within <code>distance</code> of <code>target</code>; runs until the target is gone.</td>
+</tr>
+<tr>
+<td><code>ai.flee</code></td>
+<td>Runs from <code>from</code> until <code>safeDistance</code> away, trying other directions when blocked.</td>
+</tr>
+<tr>
+<td><code>ai.wander</code></td>
+<td>Walks to a seeded random point within <code>radius</code> of where it started, then succeeds.</td>
+</tr>
+<tr>
+<td><code>ai.face</code></td>
+<td>Turns the agent toward <code>target</code>.</td>
+</tr>
+<tr>
+<td><code>ai.distance</code></td>
+<td>Compares the ground distance to <code>target</code> with <code>distance</code>, by <code>op</code>.</td>
+</tr>
+<tr>
+<td><code>ai.in-area</code></td>
+<td>Succeeds when the agent, or <code>who</code>, is in a circle (<code>center</code>, <code>radius</code>) or a box (<code>min</code>, <code>max</code>).</td>
+</tr>
+</tbody>
+</table>
+<p>In a scene, a node names a definition file with a <code>behavior_tree</code> or <code>state_machine</code> component:</p>
+<div class="language-json highlight"><span class="filename">scene node</span><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="p">{</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Keeper"</span><span class="p">,</span><span class="w"> </span><span class="nt">"components"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"behavior_tree"</span><span class="p">,</span><span class="w"> </span><span class="nt">"asset"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ai/keeper.tree.json"</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+</span></code></pre></div>
+<p>A played project reads and checks every file its scene names when it loads, refusing one with a
+problem and saying which file and node. It runs the trees and machines with Core's kinds and the
+spatial kinds, moving agents as patrol and chase do, and routes them over the scene's <code>navigation</code>.
+Outside a project, load files into an <code>AiDefinitionLibrary</code> and run <code>AiDefinitionAttachSystem</code>.</p>
+<p>Trees, machines and blackboards snapshot to data and restore exactly, and a running tree reports
+what each node returned on the latest tick, for an editor's live view.</p>
+<h2 id="perception">Perception</h2>
+<p>A <code>Perceiver</code> sees in a focus cone and a wider peripheral cone, hears <code>SoundEvent</code>s, remembers what
+it sensed until it forgets, and regards others by a <code>FactionTable</code>. All of it is
+<code>@Serializable</code> settings:</p>
+<div class="language-json highlight"><span class="filename">sentry.perception.json</span><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="p">{</span>
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">  </span><span class="nt">"sight"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"focusRange"</span><span class="p">:</span><span class="w"> </span><span class="mi">30</span><span class="p">,</span><span class="w"> </span><span class="nt">"focusAngle"</span><span class="p">:</span><span class="w"> </span><span class="mi">40</span><span class="p">,</span><span class="w"> </span><span class="nt">"peripheralRange"</span><span class="p">:</span><span class="w"> </span><span class="mi">8</span><span class="p">,</span><span class="w"> </span><span class="nt">"peripheralAngle"</span><span class="p">:</span><span class="w"> </span><span class="mi">160</span><span class="w"> </span><span class="p">},</span>
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">  </span><span class="nt">"hearing"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"range"</span><span class="p">:</span><span class="w"> </span><span class="mi">12</span><span class="p">,</span><span class="w"> </span><span class="nt">"muffledBy"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.5</span><span class="w"> </span><span class="p">},</span>
+</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">  </span><span class="nt">"forgetAfter"</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span>
+</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">  </span><span class="nt">"updateInterval"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.25</span>
+</span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="p">}</span>
+</span></code></pre></div>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="n">world</span><span class="p">.</span><span class="na">add</span><span class="p">(</span><span class="n">guard</span><span class="p">,</span><span class="w"> </span><span class="n">Perceiver</span><span class="p">(</span><span class="n">FactionId</span><span class="p">(</span><span class="s">"watch"</span><span class="p">),</span><span class="w"> </span><span class="n">settings</span><span class="p">))</span>
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="n">world</span><span class="p">.</span><span class="na">add</span><span class="p">(</span><span class="n">thief</span><span class="p">,</span><span class="w"> </span><span class="n">Perceivable</span><span class="p">(</span><span class="n">FactionId</span><span class="p">(</span><span class="s">"thieves"</span><span class="p">)))</span>
+</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="kd">val</span><span class="w"> </span><span class="nv">perception</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PerceptionSystem</span><span class="p">(</span><span class="n">space</span><span class="p">,</span><span class="w"> </span><span class="n">factions</span><span class="p">,</span><span class="w"> </span><span class="n">lineOfSight</span><span class="p">,</span><span class="w"> </span><span class="n">maxSightUpdates</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">100</span><span class="p">)</span>
+</span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="n">perception</span><span class="p">.</span><span class="na">hear</span><span class="p">(</span><span class="n">SoundEvent</span><span class="p">(</span><span class="n">position</span><span class="p">,</span><span class="w"> </span><span class="n">loudness</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">2f</span><span class="p">,</span><span class="w"> </span><span class="n">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">thief</span><span class="p">))</span>
+</span></code></pre></div>
+<p><code>space</code> tells it where entities are and which way they face; in a scene that is
+<code>TransformPerceptionSpace</code>. <code>lineOfSight</code> decides what blocks sight and muffles sound:
+<code>PhysicsLineOfSight</code> casts physics rays, seeing past the viewer's own body, and
+<code>NavFieldLineOfSight</code> uses a navigation grid's blocked cells. Run it before the behaviour systems.
+Each look reads only the entities in nearby cells, and <code>maxSightUpdates</code> and <code>sightBudget</code> cap how
+many perceivers look in a frame, by count and by time.</p>
+<p>In a scene, give agents <code>perceiver</code> and targets <code>perceivable</code>, and put the faction table in a
+<code>factions</code> component. A played project runs perception for them, seeing through the physics world
+when it has one and the navigation grid otherwise:</p>
+<p><code>json title="scene nodes"
+{ "name": "Map", "components": [ { "component": "factions",
+    "relations": [ { "from": "watch", "to": "thieves", "relation": "hostile" } ] } ] },
+{ "name": "Guard", "components": [
+    { "component": "perceiver", "faction": "watch", "settings": { "sight": { "focusRange": 15 } } },
+    { "component": "behavior_tree", "asset": "ai/guard.tree.json" } ] },
+{ "name": "Thief", "components": [ { "component": "perceivable", "faction": "thieves" } ] }</code> It writes <code>perception.target</code>, <code>perception.target.position</code>,
+<code>perception.sees-hostile</code>, <code>perception.hostiles</code> and <code>perception.noise.position</code> to the agent's
+blackboard, and trees and machines can ask <code>ai.perception.sees</code>, <code>ai.perception.remembers</code> and
+<code>ai.perception.heard</code>.</p>
 <h2 id="how-it-works">How it works</h2>
 <p>The three behaviours share one route follower. On an interval each asks for a route to its goal: the
 next stop, the target's position, or a point away from the threat. When an answer arrives it steps
