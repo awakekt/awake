@@ -32,7 +32,7 @@ kotlin {
        minSdk = libs.versions.android.minSdk.get().toInt()
     
        compilerOptions {
-           jvmTarget = JvmTarget.JVM_11
+           jvmTarget = JvmTarget.JVM_17
        }
        androidResources {
            enable = true
@@ -69,6 +69,8 @@ kotlin {
             implementation(libs.awake.asset.shaders)
             implementation(libs.awake.asset.shader.pack)
             implementation(libs.awake.core.host)
+            implementation(libs.awake.core.localization)
+            implementation(libs.awake.compose.foundation)
             implementation(libs.awake.scene.authoring)
             // api: loadGame and createGame hand LoadedProject to every app module.
             api(libs.awake.project.runtime)

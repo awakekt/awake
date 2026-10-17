@@ -12,8 +12,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         // Reading the project happens off the main thread; the view appears once it's loaded.
         lifecycleScope.launch {
-            val project = loadGame()
-            val engine = VulkanEngine(createGame(project, touchControls = true), AwakeRenderPlan)
+            val game = loadGame()
+            val engine = VulkanEngine(createGame(game, touchControls = true), AwakeRenderPlan)
             setContentView(AwakeSurfaceView(this@MainActivity, engine))
         }
     }

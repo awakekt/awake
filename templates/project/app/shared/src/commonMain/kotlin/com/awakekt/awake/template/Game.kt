@@ -2,6 +2,9 @@ package com.awakekt.awake.template
 
 import com.awakekt.awake.core.host.readResourceBytes
 import com.awakekt.awake.core.io.AssetSource
+import com.awakekt.awake.core.localization.StringTableSource
+import com.awakekt.awake.core.localization.Strings
+import com.awakekt.awake.core.localization.systemLocale
 import com.awakekt.awake.engine.bootstrap.dsl.app
 import com.awakekt.awake.engine.bootstrap.dsl.select
 import com.awakekt.awake.engine.platform.dsl.AppWindowBackend
@@ -18,12 +21,21 @@ const val GAME_TITLE = "Awake Project"
  */
 val BundledProject = AssetSource { path -> runCatching { readResourceBytes("project/${path.value}") } }
 
-/** Reads the bundled project and its entry scene. */
-suspend fun loadGame(): LoadedProject = loadProject(BundledProject, physicsWorld = ::createJoltPhysicsWorld)
+/** What the app needs before its first frame: the project and the text its overlay shows. */
+class GameData(val project: LoadedProject, val strings: Strings)
 
-/** Creates a fresh application lifecycle that plays [project]; [touchControls] shows its on-screen controls. */
+/**
+ * Reads the bundled project and its entry scene, and its string tables (`project/strings/<tag>.json`)
+ * in the device's language, falling back to English when the project has no table for it.
+ */
+suspend fun loadGame(): GameData = GameData(
+    project = loadProject(BundledProject, physicsWorld = ::createJoltPhysicsWorld),
+    strings = Strings.load(StringTableSource.assets(BundledProject), locale = systemLocale()),
+)
+
+/** Creates a fresh application lifecycle that plays [game]; [touchControls] shows its on-screen controls. */
 fun createGame(
-    project: LoadedProject,
+    game: GameData,
     windowBackend: AppWindowBackend = AppWindowBackend.VULKAN,
     touchControls: Boolean = false,
 ): AwakeAppLifecycle = app {
@@ -32,5 +44,8 @@ fun createGame(
         size(1280, 720)
         backend.select(windowBackend)
     }
-    scene("game") { runProject(project, touchControls) }
+    scene("game") {
+        runProject(game.project, touchControls)
+        ui { Hud(game.strings) }
+    }
 }

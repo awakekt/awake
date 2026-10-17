@@ -1,0 +1,10 @@
+{
+  "hud": {
+    "title": "Welcome to your Awake project",
+    "hint": "The cube spins on its own. Add items, or switch the language.",
+    "items": "{count, plural, one {# item} other {# items}}",
+    "addItem": "Add an item",
+    "language": "Language: {language}",
+    "switchTo": "Switch to {language}"
+  }
+}
