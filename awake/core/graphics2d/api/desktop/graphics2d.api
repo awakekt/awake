@@ -451,6 +451,7 @@ public final class com/awakekt/awake/core/graphics2d/DrawShapeKt {
 }
 
 public final class com/awakekt/awake/core/graphics2d/DrawStroke {
+	public fun <init> ()V
 	public synthetic fun <init> (FLcom/awakekt/awake/core/graphics2d/StrokeCap;Lcom/awakekt/awake/core/graphics2d/StrokeJoin;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (FLcom/awakekt/awake/core/graphics2d/StrokeCap;Lcom/awakekt/awake/core/graphics2d/StrokeJoin;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1-LGk54g8 ()F

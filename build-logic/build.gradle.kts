@@ -33,8 +33,10 @@ repositories {
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:2.4.10")
-    implementation("com.android.tools.build:gradle:9.2.1")
+    // From the catalog, so the Kotlin and AGP the plugins compile against are the ones the build
+    // applies, and one edit moves both.
+    implementation(libs.kotlin.gradle.plugin)
+    implementation(libs.android.gradle.plugin)
     implementation(libs.detekt.gradle.plugin)
     implementation(libs.spotless.gradle.plugin)
     implementation(libs.dokka.gradle.plugin)
@@ -42,6 +44,10 @@ dependencies {
     implementation("com.vanniktech:gradle-maven-publish-plugin:0.37.0")
     testImplementation(gradleTestKit())
     testImplementation(kotlin("test"))
+    constraints {
+        // AGP brings jackson-core 2.12.7; see the jackson-core entry in gradle/libs.versions.toml.
+        implementation(libs.jackson.core)
+    }
 }
 
 extensions.configure<com.vanniktech.maven.publish.MavenPublishBaseExtension>("mavenPublishing") {

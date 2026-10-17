@@ -64,7 +64,7 @@ body:
     attributes:
       label: Kotlin / Compose Version
       description: Kotlin and Compose Multiplatform versions used.
-      placeholder: "e.g., Kotlin 2.4.10, Compose Multiplatform 1.11.1"
+      placeholder: "e.g., Kotlin 2.4.20, Compose Multiplatform 1.11.1"
   - type: textarea
     id: description
     attributes:

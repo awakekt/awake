@@ -14,6 +14,8 @@ dependencies {
     implementation(libs.logback)
     implementation(libs.ktor.serverCore)
     implementation(libs.ktor.serverNetty)
+    // Holds Netty at the catalog's fixed version until Ktor brings it.
+    implementation(platform(libs.netty.bom))
     testImplementation(libs.ktor.serverTestHost)
     testImplementation(libs.kotlin.testJunit)
 }
