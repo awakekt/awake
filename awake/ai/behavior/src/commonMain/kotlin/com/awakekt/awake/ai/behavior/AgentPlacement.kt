@@ -44,4 +44,11 @@ interface AgentPlacement {
     fun steer(world: World, entity: Entity, velocityX: Float, velocityZ: Float, delta: Float) {
         moveBy(world, entity, velocityX * delta, velocityZ * delta)
     }
+
+    /**
+     * Turns [entity] to face the ground-plane direction ([directionX], [directionZ]), which need not
+     * be normalised. The `ai.face` kind turns agents through this. The default does nothing, for a
+     * placement whose entities have no facing.
+     */
+    fun face(world: World, entity: Entity, directionX: Float, directionZ: Float) = Unit
 }

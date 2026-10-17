@@ -15,6 +15,7 @@ registers it.
 | --- | --- | --- | --- | --- |
 | [`ambient_light`](#ambient_light) | `AmbientLight` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Lights and shadows](../guides/lights-and-shadows.md) |
 | [`audio_source`](#audio_source) | `AudioSource` | `com.awakekt.awake.scene:audio` | `registerAudio()` | — |
+| [`behavior_tree`](#behavior_tree) | `BehaviorTreeAsset` | `com.awakekt.awake.scene:ai` | `registerAiBehaviors()` | [AI](../guides/ai.md#trees-and-machines-from-data) |
 | [`blueprint`](#blueprint) | `BlueprintComponent` | `com.awakekt.awake.scene:blueprint` | `registerBlueprints()` | — |
 | [`camera`](#camera) | `Camera` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Cameras](../guides/cameras-and-controls.md) |
 | [`camera_rig`](#camera_rig) | `CameraRig` | `com.awakekt.awake.scene:controls` | `registerControls()` | [Cameras](../guides/cameras-and-controls.md) |
@@ -44,6 +45,7 @@ registers it.
 | [`spin_control`](#spin_control) | `SpinControl` | `com.awakekt.awake.scene:scene-core` | `DefaultSceneComponentResolvers.install()` | [Scene documents](../guides/scene-documents.md) |
 | [`sprite`](#sprite) | `Sprite` | `com.awakekt.awake.scene:scene2d` | `DefaultSceneComponentResolvers.install()` | [Component map](component-map.md) |
 | [`sprite_clips`](#sprite_clips) | `SpriteClips` | `com.awakekt.awake.scene:scene2d` | `DefaultSceneComponentResolvers.install()` | [Component map](component-map.md) |
+| [`state_machine`](#state_machine) | `StateMachineAsset` | `com.awakekt.awake.scene:ai` | `registerAiBehaviors()` | [AI](../guides/ai.md#trees-and-machines-from-data) |
 | [`static_transform`](#static_transform) | `StaticTransform` | `com.awakekt.awake.scene:scene-core` | `DefaultSceneComponentResolvers.install()` | [Scene documents](../guides/scene-documents.md) |
 | [`tag`](#tag) | `Tags` | `com.awakekt.awake.scene:scene-core` | `DefaultSceneComponentResolvers.install()` | [Scene documents](../guides/scene-documents.md) |
 | [`terrain`](#terrain) | `TerrainComponent` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Terrain](../guides/terrain.md) |
@@ -93,6 +95,16 @@ fades with distance from the active camera and pans with its direction. `SceneAu
 | `maxDistance` | number | `50` | The distance a 3D sound fades out at. Above 0. |
 | `autoPlay` | boolean | `false` | Whether it starts as soon as the scene plays. |
 | `loop` | boolean | `false` | Whether it starts again when it ends. |
+
+## `behavior_tree`
+
+Runs the behaviour tree in a definition file. `SceneBehaviorTree`. A played project reads and checks the file when it loads, and gives the entity a `BehaviorTreeComponent` built from it.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `asset` | string | required | Path of the definition, a `BehaviorTreeDefinition` as JSON. Must not be blank. |
+| `seed` | integer or none | none | Seeds the tree's random nodes. None gives each entity its own. |
+| `enabled` | boolean | `true` | Whether the tree runs. |
 
 ## `blueprint`
 
@@ -677,6 +689,16 @@ drawn either, and is logged once. A host that changes the file has the scene's a
 | `flipY` | boolean | `false` | Mirrors the sprite top to bottom. |
 | `tint` | color | white | Multiplied into the image's colour and alpha. |
 | `sortOrder` | integer | `0` | A higher order draws over a lower one; a tie draws by depth from the camera. |
+## `state_machine`
+
+Runs the state machine in a definition file. `SceneStateMachine`. A played project reads and checks the file when it loads, and gives the entity an `AiStateMachineComponent` built from it.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `asset` | string | required | Path of the definition, a `StateMachineDefinition` as JSON. Must not be blank. |
+| `seed` | integer or none | none | Seeds the machine's random nodes. None gives each entity its own. |
+| `enabled` | boolean | `true` | Whether the machine runs. |
+
 ## `tilemap`
 
 A finite orthogonal atlas layer. The node's origin is its top left, with +X right and -Y down.

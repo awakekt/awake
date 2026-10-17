@@ -1,11 +1,50 @@
 public abstract interface class com/awakekt/awake/ai/behavior/AgentPlacement {
+	public fun face-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JFF)V
 	public abstract fun moveBy-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JFF)V
 	public abstract fun position-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/core/math/Vec3f;)Z
 	public fun steer-raSDhyQ (Lcom/awakekt/awake/ecs/World;JFFF)V
 }
 
 public final class com/awakekt/awake/ai/behavior/AgentPlacement$DefaultImpls {
+	public static fun face-8mtA4i0 (Lcom/awakekt/awake/ai/behavior/AgentPlacement;Lcom/awakekt/awake/ecs/World;JFF)V
 	public static fun steer-raSDhyQ (Lcom/awakekt/awake/ai/behavior/AgentPlacement;Lcom/awakekt/awake/ecs/World;JFFF)V
+}
+
+public final class com/awakekt/awake/ai/behavior/AreaParams {
+	public static final field Companion Lcom/awakekt/awake/ai/behavior/AreaParams$Companion;
+	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/ai/behavior/Point;Ljava/lang/Float;Lcom/awakekt/awake/ai/behavior/Point;Lcom/awakekt/awake/ai/behavior/Point;Lcom/awakekt/awake/ai/behavior/Target;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/ai/behavior/Point;Ljava/lang/Float;Lcom/awakekt/awake/ai/behavior/Point;Lcom/awakekt/awake/ai/behavior/Point;Lcom/awakekt/awake/ai/behavior/Target;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/ai/behavior/Point;
+	public final fun component2 ()Ljava/lang/Float;
+	public final fun component3 ()Lcom/awakekt/awake/ai/behavior/Point;
+	public final fun component4 ()Lcom/awakekt/awake/ai/behavior/Point;
+	public final fun component5 ()Lcom/awakekt/awake/ai/behavior/Target;
+	public final fun copy (Lcom/awakekt/awake/ai/behavior/Point;Ljava/lang/Float;Lcom/awakekt/awake/ai/behavior/Point;Lcom/awakekt/awake/ai/behavior/Point;Lcom/awakekt/awake/ai/behavior/Target;)Lcom/awakekt/awake/ai/behavior/AreaParams;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ai/behavior/AreaParams;Lcom/awakekt/awake/ai/behavior/Point;Ljava/lang/Float;Lcom/awakekt/awake/ai/behavior/Point;Lcom/awakekt/awake/ai/behavior/Point;Lcom/awakekt/awake/ai/behavior/Target;ILjava/lang/Object;)Lcom/awakekt/awake/ai/behavior/AreaParams;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCenter ()Lcom/awakekt/awake/ai/behavior/Point;
+	public final fun getMax ()Lcom/awakekt/awake/ai/behavior/Point;
+	public final fun getMin ()Lcom/awakekt/awake/ai/behavior/Point;
+	public final fun getRadius ()Ljava/lang/Float;
+	public final fun getWho ()Lcom/awakekt/awake/ai/behavior/Target;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/ai/behavior/AreaParams$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/behavior/AreaParams$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ai/behavior/AreaParams;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ai/behavior/AreaParams;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/behavior/AreaParams$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
 public final class com/awakekt/awake/ai/behavior/ChaseAiSystem : com/awakekt/awake/ecs/System {
@@ -39,6 +78,65 @@ public final class com/awakekt/awake/ai/behavior/ChaseBehavior : com/awakekt/awa
 }
 
 public final class com/awakekt/awake/ai/behavior/ChaseBehavior$Companion {
+}
+
+public final class com/awakekt/awake/ai/behavior/DistanceParams {
+	public static final field Companion Lcom/awakekt/awake/ai/behavior/DistanceParams$Companion;
+	public fun <init> (Lcom/awakekt/awake/ai/behavior/Target;Lcom/awakekt/awake/ai/btree/CompareOp;F)V
+	public synthetic fun <init> (Lcom/awakekt/awake/ai/behavior/Target;Lcom/awakekt/awake/ai/btree/CompareOp;FILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/ai/behavior/Target;
+	public final fun component2 ()Lcom/awakekt/awake/ai/btree/CompareOp;
+	public final fun component3 ()F
+	public final fun copy (Lcom/awakekt/awake/ai/behavior/Target;Lcom/awakekt/awake/ai/btree/CompareOp;F)Lcom/awakekt/awake/ai/behavior/DistanceParams;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ai/behavior/DistanceParams;Lcom/awakekt/awake/ai/behavior/Target;Lcom/awakekt/awake/ai/btree/CompareOp;FILjava/lang/Object;)Lcom/awakekt/awake/ai/behavior/DistanceParams;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDistance ()F
+	public final fun getOp ()Lcom/awakekt/awake/ai/btree/CompareOp;
+	public final fun getTarget ()Lcom/awakekt/awake/ai/behavior/Target;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/ai/behavior/DistanceParams$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/behavior/DistanceParams$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ai/behavior/DistanceParams;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ai/behavior/DistanceParams;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/behavior/DistanceParams$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/behavior/FaceParams {
+	public static final field Companion Lcom/awakekt/awake/ai/behavior/FaceParams$Companion;
+	public fun <init> (Lcom/awakekt/awake/ai/behavior/Target;)V
+	public final fun component1 ()Lcom/awakekt/awake/ai/behavior/Target;
+	public final fun copy (Lcom/awakekt/awake/ai/behavior/Target;)Lcom/awakekt/awake/ai/behavior/FaceParams;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ai/behavior/FaceParams;Lcom/awakekt/awake/ai/behavior/Target;ILjava/lang/Object;)Lcom/awakekt/awake/ai/behavior/FaceParams;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getTarget ()Lcom/awakekt/awake/ai/behavior/Target;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/ai/behavior/FaceParams$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/behavior/FaceParams$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ai/behavior/FaceParams;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ai/behavior/FaceParams;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/behavior/FaceParams$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
 public final class com/awakekt/awake/ai/behavior/FleeAiSystem : com/awakekt/awake/ecs/System {
@@ -88,6 +186,116 @@ public final class com/awakekt/awake/ai/behavior/FleeBehavior : com/awakekt/awak
 }
 
 public final class com/awakekt/awake/ai/behavior/FleeBehavior$Companion {
+}
+
+public final class com/awakekt/awake/ai/behavior/FleeParams {
+	public static final field Companion Lcom/awakekt/awake/ai/behavior/FleeParams$Companion;
+	public fun <init> (Lcom/awakekt/awake/ai/behavior/Target;FFFFF)V
+	public synthetic fun <init> (Lcom/awakekt/awake/ai/behavior/Target;FFFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/ai/behavior/Target;
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()F
+	public final fun component6 ()F
+	public final fun copy (Lcom/awakekt/awake/ai/behavior/Target;FFFFF)Lcom/awakekt/awake/ai/behavior/FleeParams;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ai/behavior/FleeParams;Lcom/awakekt/awake/ai/behavior/Target;FFFFFILjava/lang/Object;)Lcom/awakekt/awake/ai/behavior/FleeParams;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFleeDistance ()F
+	public final fun getFrom ()Lcom/awakekt/awake/ai/behavior/Target;
+	public final fun getRepathInterval ()F
+	public final fun getSafeDistance ()F
+	public final fun getSpeed ()F
+	public final fun getWaypointRadius ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/ai/behavior/FleeParams$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/behavior/FleeParams$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ai/behavior/FleeParams;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ai/behavior/FleeParams;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/behavior/FleeParams$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/behavior/FollowParams {
+	public static final field Companion Lcom/awakekt/awake/ai/behavior/FollowParams$Companion;
+	public fun <init> (Lcom/awakekt/awake/ai/behavior/Target;FFFF)V
+	public synthetic fun <init> (Lcom/awakekt/awake/ai/behavior/Target;FFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/ai/behavior/Target;
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()F
+	public final fun copy (Lcom/awakekt/awake/ai/behavior/Target;FFFF)Lcom/awakekt/awake/ai/behavior/FollowParams;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ai/behavior/FollowParams;Lcom/awakekt/awake/ai/behavior/Target;FFFFILjava/lang/Object;)Lcom/awakekt/awake/ai/behavior/FollowParams;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDistance ()F
+	public final fun getRepathInterval ()F
+	public final fun getSpeed ()F
+	public final fun getTarget ()Lcom/awakekt/awake/ai/behavior/Target;
+	public final fun getWaypointRadius ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/ai/behavior/FollowParams$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/behavior/FollowParams$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ai/behavior/FollowParams;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ai/behavior/FollowParams;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/behavior/FollowParams$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/behavior/MoveToParams {
+	public static final field Companion Lcom/awakekt/awake/ai/behavior/MoveToParams$Companion;
+	public fun <init> (Lcom/awakekt/awake/ai/behavior/Target;FFFF)V
+	public synthetic fun <init> (Lcom/awakekt/awake/ai/behavior/Target;FFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/ai/behavior/Target;
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()F
+	public final fun copy (Lcom/awakekt/awake/ai/behavior/Target;FFFF)Lcom/awakekt/awake/ai/behavior/MoveToParams;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ai/behavior/MoveToParams;Lcom/awakekt/awake/ai/behavior/Target;FFFFILjava/lang/Object;)Lcom/awakekt/awake/ai/behavior/MoveToParams;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getArriveRadius ()F
+	public final fun getRepathInterval ()F
+	public final fun getSpeed ()F
+	public final fun getTarget ()Lcom/awakekt/awake/ai/behavior/Target;
+	public final fun getWaypointRadius ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/ai/behavior/MoveToParams$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/behavior/MoveToParams$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ai/behavior/MoveToParams;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ai/behavior/MoveToParams;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/behavior/MoveToParams$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
 public final class com/awakekt/awake/ai/behavior/NavFieldLineOfSight : com/awakekt/awake/ai/perception/LineOfSight {
@@ -152,6 +360,38 @@ public final class com/awakekt/awake/ai/behavior/PatrolStyle : java/lang/Enum {
 	public static fun values ()[Lcom/awakekt/awake/ai/behavior/PatrolStyle;
 }
 
+public final class com/awakekt/awake/ai/behavior/Point {
+	public static final field Companion Lcom/awakekt/awake/ai/behavior/Point$Companion;
+	public fun <init> (FFF)V
+	public synthetic fun <init> (FFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun copy (FFF)Lcom/awakekt/awake/ai/behavior/Point;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ai/behavior/Point;FFFILjava/lang/Object;)Lcom/awakekt/awake/ai/behavior/Point;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getX ()F
+	public final fun getY ()F
+	public final fun getZ ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/ai/behavior/Point$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/behavior/Point$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ai/behavior/Point;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ai/behavior/Point;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/behavior/Point$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
 public abstract interface class com/awakekt/awake/ai/behavior/RouteFollower {
 	public abstract fun getPath ()Ljava/util/List;
 	public abstract fun getRepathInterval ()F
@@ -165,5 +405,131 @@ public abstract interface class com/awakekt/awake/ai/behavior/RouteFollower {
 	public abstract fun setTimeSinceRepath (F)V
 	public abstract fun setWaypointIndex (I)V
 	public abstract fun setWaypointRadius (F)V
+}
+
+public final class com/awakekt/awake/ai/behavior/RouteState {
+	public static final field Companion Lcom/awakekt/awake/ai/behavior/RouteState$Companion;
+	public fun <init> ()V
+	public fun <init> (Ljava/util/List;IFLcom/awakekt/awake/ai/behavior/Point;Lcom/awakekt/awake/ai/behavior/Point;JI)V
+	public synthetic fun <init> (Ljava/util/List;IFLcom/awakekt/awake/ai/behavior/Point;Lcom/awakekt/awake/ai/behavior/Point;JIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()I
+	public final fun component3 ()F
+	public final fun component4 ()Lcom/awakekt/awake/ai/behavior/Point;
+	public final fun component5 ()Lcom/awakekt/awake/ai/behavior/Point;
+	public final fun component6 ()J
+	public final fun component7 ()I
+	public final fun copy (Ljava/util/List;IFLcom/awakekt/awake/ai/behavior/Point;Lcom/awakekt/awake/ai/behavior/Point;JI)Lcom/awakekt/awake/ai/behavior/RouteState;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ai/behavior/RouteState;Ljava/util/List;IFLcom/awakekt/awake/ai/behavior/Point;Lcom/awakekt/awake/ai/behavior/Point;JIILjava/lang/Object;)Lcom/awakekt/awake/ai/behavior/RouteState;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAttempt ()I
+	public final fun getGoal ()Lcom/awakekt/awake/ai/behavior/Point;
+	public final fun getHome ()Lcom/awakekt/awake/ai/behavior/Point;
+	public final fun getPath ()Ljava/util/List;
+	public final fun getRandom ()J
+	public final fun getSinceRepath ()F
+	public final fun getWaypoint ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/ai/behavior/RouteState$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/behavior/RouteState$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ai/behavior/RouteState;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ai/behavior/RouteState;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/behavior/RouteState$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/behavior/SpatialNodeKinds {
+	public static final field SEED_SPREAD J
+	public fun <init> (Lcom/awakekt/awake/ai/behavior/AgentPlacement;)V
+	public final fun getDistance ()Lcom/awakekt/awake/ai/definition/NodeKind;
+	public final fun getFace ()Lcom/awakekt/awake/ai/definition/NodeKind;
+	public final fun getFlee ()Lcom/awakekt/awake/ai/definition/NodeKind;
+	public final fun getFollow ()Lcom/awakekt/awake/ai/definition/NodeKind;
+	public final fun getInArea ()Lcom/awakekt/awake/ai/definition/NodeKind;
+	public final fun getMoveTo ()Lcom/awakekt/awake/ai/definition/NodeKind;
+	public final fun getNodeKinds ()Ljava/util/List;
+	public final fun getWander ()Lcom/awakekt/awake/ai/definition/NodeKind;
+}
+
+public final class com/awakekt/awake/ai/behavior/SpatialNodeKindsKt {
+	public static final fun registerSpatialKinds (Lcom/awakekt/awake/ai/definition/AiRegistry;Lcom/awakekt/awake/ai/behavior/AgentPlacement;)Lcom/awakekt/awake/ai/definition/AiRegistry;
+}
+
+public final class com/awakekt/awake/ai/behavior/Target {
+	public static final field Companion Lcom/awakekt/awake/ai/behavior/Target$Companion;
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;Lcom/awakekt/awake/ai/behavior/Point;)V
+	public synthetic fun <init> (Ljava/lang/String;Lcom/awakekt/awake/ai/behavior/Point;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lcom/awakekt/awake/ai/behavior/Point;
+	public final fun copy (Ljava/lang/String;Lcom/awakekt/awake/ai/behavior/Point;)Lcom/awakekt/awake/ai/behavior/Target;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ai/behavior/Target;Ljava/lang/String;Lcom/awakekt/awake/ai/behavior/Point;ILjava/lang/Object;)Lcom/awakekt/awake/ai/behavior/Target;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getKey ()Ljava/lang/String;
+	public final fun getPoint ()Lcom/awakekt/awake/ai/behavior/Point;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/ai/behavior/Target$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/behavior/Target$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ai/behavior/Target;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ai/behavior/Target;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/behavior/Target$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/behavior/WanderParams {
+	public static final field Companion Lcom/awakekt/awake/ai/behavior/WanderParams$Companion;
+	public fun <init> ()V
+	public fun <init> (FFFFJ)V
+	public synthetic fun <init> (FFFFJILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()J
+	public final fun copy (FFFFJ)Lcom/awakekt/awake/ai/behavior/WanderParams;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ai/behavior/WanderParams;FFFFJILjava/lang/Object;)Lcom/awakekt/awake/ai/behavior/WanderParams;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getArriveRadius ()F
+	public final fun getRadius ()F
+	public final fun getSeed ()J
+	public final fun getSpeed ()F
+	public final fun getWaypointRadius ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/ai/behavior/WanderParams$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/behavior/WanderParams$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ai/behavior/WanderParams;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ai/behavior/WanderParams;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/behavior/WanderParams$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 

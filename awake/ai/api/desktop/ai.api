@@ -766,6 +766,20 @@ public final class com/awakekt/awake/ai/definition/AiDefinitionJson$Companion {
 	public final fun getDefault ()Lcom/awakekt/awake/ai/definition/AiDefinitionJson;
 }
 
+public final class com/awakekt/awake/ai/definition/AiDefinitionLibrary {
+	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/ai/definition/AiRegistry;Lcom/awakekt/awake/ai/definition/AiDefinitionJson;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/ai/definition/AiRegistry;Lcom/awakekt/awake/ai/definition/AiDefinitionJson;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun forget (Ljava/lang/String;)V
+	public final fun getJson ()Lcom/awakekt/awake/ai/definition/AiDefinitionJson;
+	public final fun getRegistry ()Lcom/awakekt/awake/ai/definition/AiRegistry;
+	public final fun loadStateMachine (Ljava/lang/String;Ljava/lang/String;)Lcom/awakekt/awake/ai/definition/CompiledStateMachine;
+	public final fun loadTree (Ljava/lang/String;Ljava/lang/String;)Lcom/awakekt/awake/ai/definition/CompiledBehaviorTree;
+	public final fun stateMachine (Ljava/lang/String;)Lcom/awakekt/awake/ai/definition/CompiledStateMachine;
+	public final fun tree (Ljava/lang/String;)Lcom/awakekt/awake/ai/definition/CompiledBehaviorTree;
+	public final fun version (Ljava/lang/String;)I
+}
+
 public final class com/awakekt/awake/ai/definition/AiDefinitionProblem {
 	public fun <init> (Lcom/awakekt/awake/ai/definition/AiProblemCode;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/ai/definition/AiProblemCode;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V

@@ -72,6 +72,9 @@ world.add(entity, compiled.newComponent(seed = entity.packed))  // one running t
   tree ticked on each update. A `TransitionDefinition` fires after a time in the state, when the
   state's tree has finished (`onTree`), and when its condition node succeeds; leaving out `from`
   makes it leave every other state. Transitions are asked in order and the first that fires wins.
+- **Files.** `AiDefinitionLibrary` keeps compiled definitions by asset path, so agents naming one
+  file share one compile, names the file in each problem, and bumps a version on each reload. It
+  reads text it is given; `awake:scene:ai` builds entities from it.
 - **Versions.** Each document records its `formatVersion`. `AiDefinitionJson` takes
   `AiFormatMigration`s that rewrite an older document's JSON before it is read, and refuses a newer
   one.
@@ -151,7 +154,9 @@ played scene needs to run them.
 
 - Timers count Float seconds from the deltas they are given.
 - Node states in a snapshot are JSON, so a snapshot is written as JSON.
-- Core has no movement kinds yet; a game registers its own, such as the action that moves its agents.
+- The movement kinds (`ai.move-to`, `ai.follow`, `ai.flee`, `ai.wander`, `ai.face`, `ai.distance`,
+  `ai.in-area`) are in `awake:ai:behavior`, over its `AgentPlacement` and the navigation `PathRequest`;
+  register them with `registerSpatialKinds(placement)`.
 - Sight checks every perceivable entity for each looking agent; there is no spatial index yet.
 - Core ships no `PerceptionSpace` over scene transforms and no physics `LineOfSight` yet; a host
   writes those few lines itself.

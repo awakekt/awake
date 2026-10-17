@@ -13,6 +13,12 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.navigation.PathRequest
 import com.awakekt.awake.scene.ai.chase.ChaseBinding
 import com.awakekt.awake.scene.ai.chase.SceneChase
+import com.awakekt.awake.scene.ai.definition.BehaviorTreeAsset
+import com.awakekt.awake.scene.ai.definition.BehaviorTreeBinding
+import com.awakekt.awake.scene.ai.definition.SceneBehaviorTree
+import com.awakekt.awake.scene.ai.definition.SceneStateMachine
+import com.awakekt.awake.scene.ai.definition.StateMachineAsset
+import com.awakekt.awake.scene.ai.definition.StateMachineBinding
 import com.awakekt.awake.scene.ai.flee.FleeBinding
 import com.awakekt.awake.scene.ai.flee.SceneFlee
 import com.awakekt.awake.scene.ai.patrol.PatrolBinding
@@ -41,21 +47,24 @@ object AiBehaviorBindings {
     /** Resolver binding [NavigationGrid] to [SceneNavigation]: where the behaviours may walk. */
     val NavigationResolver: SceneComponentBinding<NavigationGrid, SceneNavigation> = NavigationBinding
 
+    /** Resolver binding [BehaviorTreeAsset] to [SceneBehaviorTree]: a tree from a definition file. */
+    val BehaviorTreeResolver: SceneComponentBinding<BehaviorTreeAsset, SceneBehaviorTree> = BehaviorTreeBinding
+
+    /** Resolver binding [StateMachineAsset] to [SceneStateMachine]: a machine from a definition file. */
+    val StateMachineResolver: SceneComponentBinding<StateMachineAsset, SceneStateMachine> = StateMachineBinding
+
     /** All scene component bindings provided by the AI behavior module. */
     val bindings: List<SceneComponentBinding<*, *>> = listOf(
         PatrolBinding,
         ChaseBinding,
         FleeBinding,
         NavigationBinding,
+        BehaviorTreeBinding,
+        StateMachineBinding,
     )
 
     /** All resolvers provided by the AI behavior module for registration. */
-    val all: List<SceneComponentResolver> = listOf(
-        PatrolBinding,
-        ChaseBinding,
-        FleeBinding,
-        NavigationBinding,
-    )
+    val all: List<SceneComponentResolver> = bindings
 }
 
 /**

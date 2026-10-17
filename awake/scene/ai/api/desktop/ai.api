@@ -6,11 +6,13 @@ public final class com/awakekt/awake/scene/ai/AgentIntentResetSystem : com/awake
 public final class com/awakekt/awake/scene/ai/AiBehaviorBindings {
 	public static final field INSTANCE Lcom/awakekt/awake/scene/ai/AiBehaviorBindings;
 	public final fun getAll ()Ljava/util/List;
+	public final fun getBehaviorTreeResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
 	public final fun getBindings ()Ljava/util/List;
 	public final fun getChaseResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
 	public final fun getFleeResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
 	public final fun getNavigationResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
 	public final fun getPatrolResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
+	public final fun getStateMachineResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
 }
 
 public final class com/awakekt/awake/scene/ai/AiBehaviorBindingsKt {
@@ -19,6 +21,7 @@ public final class com/awakekt/awake/scene/ai/AiBehaviorBindingsKt {
 
 public final class com/awakekt/awake/scene/ai/MovementAgentPlacement : com/awakekt/awake/ai/behavior/AgentPlacement {
 	public static final field INSTANCE Lcom/awakekt/awake/scene/ai/MovementAgentPlacement;
+	public fun face-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JFF)V
 	public fun moveBy-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JFF)V
 	public fun position-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/core/math/Vec3f;)Z
 	public fun steer-raSDhyQ (Lcom/awakekt/awake/ecs/World;JFFF)V
@@ -26,6 +29,7 @@ public final class com/awakekt/awake/scene/ai/MovementAgentPlacement : com/awake
 
 public final class com/awakekt/awake/scene/ai/TransformAgentPlacement : com/awakekt/awake/ai/behavior/AgentPlacement {
 	public static final field INSTANCE Lcom/awakekt/awake/scene/ai/TransformAgentPlacement;
+	public fun face-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JFF)V
 	public fun moveBy-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JFF)V
 	public fun position-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/core/math/Vec3f;)Z
 	public fun steer-raSDhyQ (Lcom/awakekt/awake/ecs/World;JFFF)V
@@ -84,6 +88,137 @@ public final synthetic class com/awakekt/awake/scene/ai/chase/SceneChase$$serial
 
 public final class com/awakekt/awake/scene/ai/chase/SceneChase$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/ai/definition/AiDefinitionAttachSystem : com/awakekt/awake/ecs/System {
+	public fun <init> (Lcom/awakekt/awake/ai/definition/AiDefinitionLibrary;)V
+	public fun update (Lcom/awakekt/awake/ecs/World;F)V
+}
+
+public final class com/awakekt/awake/scene/ai/definition/BehaviorTreeAsset {
+	public fun <init> (Ljava/lang/String;Ljava/lang/Long;Z)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Long;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getAsset ()Ljava/lang/String;
+	public final fun getEnabled ()Z
+	public final fun getSeed ()Ljava/lang/Long;
+	public final fun setAsset (Ljava/lang/String;)V
+	public final fun setEnabled (Z)V
+	public final fun setSeed (Ljava/lang/Long;)V
+}
+
+public final class com/awakekt/awake/scene/ai/definition/BehaviorTreeBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/ai/definition/BehaviorTreeBinding;
+	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/ai/definition/SceneBehaviorTree;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public synthetic fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun canResolve (Lcom/awakekt/awake/scene/document/SceneComponent;)Z
+	public fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/ai/definition/BehaviorTreeAsset;)Lcom/awakekt/awake/scene/ai/definition/SceneBehaviorTree;
+	public synthetic fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/ai/definition/SceneBehaviorTree;
+	public synthetic fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun getComponentClass ()Lkotlin/reflect/KClass;
+	public fun getSchemaClass ()Lkotlin/reflect/KClass;
+	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/ai/definition/SceneAiDefinitionsKt {
+	public static final field AI_DEFINITION_ASSET Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/scene/ai/definition/SceneBehaviorTree : com/awakekt/awake/scene/document/SceneComponent {
+	public static final field Companion Lcom/awakekt/awake/scene/ai/definition/SceneBehaviorTree$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/Long;Z)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Long;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/Long;
+	public final fun component3 ()Z
+	public final fun copy (Ljava/lang/String;Ljava/lang/Long;Z)Lcom/awakekt/awake/scene/ai/definition/SceneBehaviorTree;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/ai/definition/SceneBehaviorTree;Ljava/lang/String;Ljava/lang/Long;ZILjava/lang/Object;)Lcom/awakekt/awake/scene/ai/definition/SceneBehaviorTree;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAllowsMultiplePerNode ()Z
+	public final fun getAsset ()Ljava/lang/String;
+	public final fun getEnabled ()Z
+	public final fun getSeed ()Ljava/lang/Long;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+	public fun validate (Ljava/lang/String;)Ljava/util/List;
+	public fun validate (Ljava/lang/String;Ljava/util/List;)Ljava/util/List;
+}
+
+public final synthetic class com/awakekt/awake/scene/ai/definition/SceneBehaviorTree$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/ai/definition/SceneBehaviorTree$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/ai/definition/SceneBehaviorTree;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/ai/definition/SceneBehaviorTree;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/ai/definition/SceneBehaviorTree$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/ai/definition/SceneStateMachine : com/awakekt/awake/scene/document/SceneComponent {
+	public static final field Companion Lcom/awakekt/awake/scene/ai/definition/SceneStateMachine$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/Long;Z)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Long;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/Long;
+	public final fun component3 ()Z
+	public final fun copy (Ljava/lang/String;Ljava/lang/Long;Z)Lcom/awakekt/awake/scene/ai/definition/SceneStateMachine;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/ai/definition/SceneStateMachine;Ljava/lang/String;Ljava/lang/Long;ZILjava/lang/Object;)Lcom/awakekt/awake/scene/ai/definition/SceneStateMachine;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAllowsMultiplePerNode ()Z
+	public final fun getAsset ()Ljava/lang/String;
+	public final fun getEnabled ()Z
+	public final fun getSeed ()Ljava/lang/Long;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+	public fun validate (Ljava/lang/String;)Ljava/util/List;
+	public fun validate (Ljava/lang/String;Ljava/util/List;)Ljava/util/List;
+}
+
+public final synthetic class com/awakekt/awake/scene/ai/definition/SceneStateMachine$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/ai/definition/SceneStateMachine$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/ai/definition/SceneStateMachine;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/ai/definition/SceneStateMachine;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/ai/definition/SceneStateMachine$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/ai/definition/StateMachineAsset {
+	public fun <init> (Ljava/lang/String;Ljava/lang/Long;Z)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Long;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getAsset ()Ljava/lang/String;
+	public final fun getEnabled ()Z
+	public final fun getSeed ()Ljava/lang/Long;
+	public final fun setAsset (Ljava/lang/String;)V
+	public final fun setEnabled (Z)V
+	public final fun setSeed (Ljava/lang/Long;)V
+}
+
+public final class com/awakekt/awake/scene/ai/definition/StateMachineBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/ai/definition/StateMachineBinding;
+	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/ai/definition/SceneStateMachine;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public synthetic fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun canResolve (Lcom/awakekt/awake/scene/document/SceneComponent;)Z
+	public fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/ai/definition/StateMachineAsset;)Lcom/awakekt/awake/scene/ai/definition/SceneStateMachine;
+	public synthetic fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/ai/definition/SceneStateMachine;
+	public synthetic fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun getComponentClass ()Lkotlin/reflect/KClass;
+	public fun getSchemaClass ()Lkotlin/reflect/KClass;
+	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
 }
 
 public final class com/awakekt/awake/scene/ai/flee/FleeBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
