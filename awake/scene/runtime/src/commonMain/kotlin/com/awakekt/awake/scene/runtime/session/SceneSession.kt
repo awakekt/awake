@@ -62,6 +62,8 @@ class SceneSession internal constructor(
     }
 
     internal fun advance(delta: Float, fixedUpdate: (Float) -> Unit) {
+        // Before anything this frame draws, so a texture forgotten from another thread is asked for again whole.
+        assetLibrary?.applyRequestedForgets()
         schedule.advance(world, delta, fixedUpdate)
     }
 

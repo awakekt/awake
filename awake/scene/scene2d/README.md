@@ -61,10 +61,19 @@ assets.forgetTextures() // the resolvers now read another project's files
 Forgetting destroys what the sprites and tilemaps uploaded from it, has each resolver drop what it kept
 (`SceneAssetResolver.forgetTexture`), and logs a texture that is still missing again, once.
 
+A file watcher that runs on its own thread asks instead, and the runtime forgets at the start of the
+next frame, before its systems and draws run:
+
+```kotlin
+assets.requestForgetTexture("art/hero.png") // safe from any thread
+assets.requestForgetTextures()
+```
+
 Add `spriteScenePipeline()` from the shader pack to the app's `RenderPlan.scenePipelines`. This
 selects `PositionUv`, the material bindings, alpha blending and depth-test-only behavior. The runtime renders unlit, straight-alpha quads, using nearest
 base-level texels. Sheets must divide into whole pixel cells; a sprite whose sheet does not, or a
-tilemap whose atlas does not, is not drawn, and this is logged once. A cell's dimensions divided by
+tilemap whose atlas does not, is not drawn, and this is logged once for each image, however many
+sprites or tilemap layers use it. A cell's dimensions divided by
 `pixelsPerUnit` determine local size before the node's world transform is applied. Atlas rows run
 from the top; texture pixels use Awake's bottom-up `createBitmap(...).toRgba8Bytes()` layout.
 Flips stay inside the chosen cell. Higher `sortOrder` draws last, with ties sorted

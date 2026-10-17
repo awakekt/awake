@@ -132,6 +132,57 @@ class SceneTextureForgetTest {
         assertEquals(listOf(SHEET, ATLAS), drawing.frame())
     }
 
+    @Test
+    fun anAtlasThatDoesNotDivideIsLoggedOnceHoweverManyLayersDrawIt() {
+        files.sizes = mapOf(TILES to ODD_SHEET)
+        repeat(3) { tilemap(TILES) }
+
+        repeat(3) { drawing.frame() }
+        assertEquals(1, log(SPRITES, LogLevel.Error).size, "once for the atlas, not once for each layer: ${log(SPRITES, LogLevel.Error)}")
+        assertEquals(3, files.asks[TILES], "each layer asks once, and not again")
+
+        library.forgetTexture(TILES)
+        repeat(2) { drawing.frame() }
+        assertEquals(2, log(SPRITES, LogLevel.Error).size, "an atlas still wrong after it is forgotten is logged again, once")
+    }
+
+    @Test
+    fun aRequestedForgetWaitsForTheNextFrameThenRedrawsTheNewImage() {
+        sprite(HERO, columns = 2)
+        tilemap(TILES)
+        drawing.frame()
+
+        files.sizes = mapOf(HERO to EDITED_SHEET, TILES to EDITED_ATLAS)
+        library.requestForgetTexture(HERO)
+        library.requestForgetTexture(HERO)
+        assertEquals(listOf(SHEET, ATLAS), drawing.frame(), "a request changes nothing until the frame applies it")
+        assertTrue(renderer.destroyed.isEmpty())
+
+        library.applyRequestedForgets()
+        assertEquals(listOf(EDITED_SHEET, ATLAS), drawing.frame())
+        assertEquals(mapOf(HERO to 2, TILES to 1), files.asks, "asked for again once, however often it was requested")
+
+        library.applyRequestedForgets()
+        drawing.frame()
+        assertEquals(mapOf(HERO to 2, TILES to 1), files.asks, "a request is applied once")
+    }
+
+    @Test
+    fun aRequestToForgetEveryTextureCoversTheNamedOnes() {
+        sprite(HERO, columns = 2)
+        tilemap(TILES)
+        drawing.frame()
+
+        files.sizes = mapOf(HERO to EDITED_SHEET, TILES to EDITED_ATLAS)
+        library.requestForgetTexture(HERO)
+        library.requestForgetTextures()
+        library.requestForgetTexture(TILES)
+        library.applyRequestedForgets()
+
+        assertEquals(listOf(EDITED_SHEET, EDITED_ATLAS), drawing.frame())
+        assertEquals(mapOf(HERO to 2, TILES to 2), files.asks)
+    }
+
     private fun sprite(texture: String, columns: Int = 1) {
         world.create().also {
             world.add(it, Transform())

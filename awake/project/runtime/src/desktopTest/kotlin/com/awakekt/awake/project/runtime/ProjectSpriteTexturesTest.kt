@@ -30,6 +30,7 @@ import kotlinx.coroutines.test.runTest
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import javax.imageio.ImageIO
+import kotlin.concurrent.thread
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -126,6 +127,34 @@ class ProjectSpriteTexturesTest {
         assertEquals(setOf(SHEET, ATLAS), editedButNotForgotten, "an edited file is not read until it is forgotten")
         assertEquals(setOf(EDITED_SHEET, ATLAS), after, "the sprite draws the edited image, the tilemap its own")
         assertEquals(listOf("art/hero.png", "art/hero.png"), reads.filter { it == "art/hero.png" }, "read again once, after it was forgotten")
+        assertEquals(1, renderer.destroyedTextures.count { it.width to it.height == SHEET }, "the old sheet's material is destroyed")
+        game.dispose()
+        project.close()
+    }
+
+    @Test
+    fun anImageForgottenFromAFileWatchersThreadRedrawsFromTheNextFrame() = runTest {
+        var hero = SHEET
+        val files = AssetSource { path -> if (path.value == "art/hero.png") Result.success(png(hero)) else PROJECT.read(path) }
+        val project = loadProject(files)
+        project.sceneLoads = StandardTestDispatcher(testScheduler)
+        val renderer = TexturedDraws()
+        val game = app { scene("play") { runProject(project) } }
+        game.ready(renderer)
+        game.update(FRAME, WIDTH, HEIGHT)
+        advanceUntilIdle()
+        game.update(FRAME, WIDTH, HEIGHT)
+
+        hero = EDITED_SHEET
+        val assets = game.requireService<SceneAppLifecycleRuntime>().requireAssetLibrary()
+        thread(name = "file-watcher") { assets.requestForgetTexture("art/hero.png") }.join()
+        val destroyedBeforeTheFrame = renderer.destroyedTextures.size
+        game.update(FRAME, WIDTH, HEIGHT)
+        advanceUntilIdle()
+        game.update(FRAME, WIDTH, HEIGHT)
+
+        assertEquals(0, destroyedBeforeTheFrame, "nothing is forgotten off the frame thread")
+        assertEquals(setOf(EDITED_SHEET, ATLAS), renderer.lastFrameTextures().map { it.width to it.height }.toSet())
         assertEquals(1, renderer.destroyedTextures.count { it.width to it.height == SHEET }, "the old sheet's material is destroyed")
         game.dispose()
         project.close()

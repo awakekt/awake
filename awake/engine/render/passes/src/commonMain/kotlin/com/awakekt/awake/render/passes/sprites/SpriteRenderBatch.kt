@@ -70,7 +70,7 @@ class SpriteRenderBatch(
     private val sheets = mutableMapOf<String, Sheet>()
 
     // The sheets already reported as not dividing into a sprite's cells, so each is logged once.
-    private val undivided = mutableSetOf<String>()
+    private val undivided = UndividedTextures()
 
     /**
      * Draw requests retain input order; the shared pass sorts by paint order, then camera depth. A
@@ -79,7 +79,7 @@ class SpriteRenderBatch(
     fun collect(inputs: List<SpriteDrawInput>): List<RenderDrawCommand> = inputs.mapNotNull { input ->
         val sheet = sheets[input.texture] ?: upload(input) ?: return@mapNotNull null
         if (!sheet.dividesInto(input)) {
-            if (undivided.add(input.texture)) {
+            if (undivided.firstReport(input.texture)) {
                 log.error {
                     "Sprite sheet '${input.texture}' is ${sheet.width}x${sheet.height} pixels, which cannot be divided into " +
                         "${input.columns}x${input.rows} equal cells. Sprites that use it with that grid are not drawn."
@@ -112,7 +112,7 @@ class SpriteRenderBatch(
      * finish with it first. A sheet that is not uploaded is only asked for again.
      */
     fun forgetTexture(name: String) {
-        undivided.remove(name)
+        undivided.forget(name)
         val sheet = sheets.remove(name) ?: return
         renderer.waitIdle()
         sheet.material.destroy()
@@ -120,7 +120,7 @@ class SpriteRenderBatch(
 
     /** [forgetTexture] for every sheet. The shared quad is kept. */
     fun forgetTextures() {
-        undivided.clear()
+        undivided.forgetAll()
         if (sheets.isEmpty()) return
         renderer.waitIdle()
         sheets.values.forEach { it.material.destroy() }
@@ -133,7 +133,7 @@ class SpriteRenderBatch(
         mesh = null
         sheets.values.forEach { it.material.destroy() }
         sheets.clear()
-        undivided.clear()
+        undivided.forgetAll()
     }
 
     private data class Sheet(val width: Int, val height: Int, val material: Material) {

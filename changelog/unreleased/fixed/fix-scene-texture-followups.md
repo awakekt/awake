@@ -1,0 +1,1 @@
+- **A tile atlas that doesn't divide into its cells is logged once, not once for each tilemap layer.** The scene runtime's tilemap layers share one record of the atlases already logged, as the sprite sheets do. A forgotten atlas that still doesn't divide is logged again, once.
