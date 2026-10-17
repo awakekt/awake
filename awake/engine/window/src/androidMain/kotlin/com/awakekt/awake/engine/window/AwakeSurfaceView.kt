@@ -6,6 +6,7 @@
 package com.awakekt.awake.engine.window
 
 import android.content.Context
+import android.hardware.input.InputManager
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.SurfaceHolder
@@ -19,6 +20,8 @@ import com.awakekt.awake.core.input.AndroidSoftKeyboardBridge
 import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.input.awakeClipboardText
 import com.awakekt.awake.core.input.createAwakeInputConnection
+import com.awakekt.awake.core.input.releaseGamepadButtons
+import com.awakekt.awake.core.input.syncAwakeGamepadInput
 import com.awakekt.awake.core.input.syncAwakeKeyInput
 import com.awakekt.awake.core.input.syncAwakePointerInput
 import com.awakekt.awake.core.input.syncAwakeTextShortcut
@@ -26,8 +29,8 @@ import com.awakekt.awake.engine.platform.WindowLifecycle
 import com.awakekt.awake.engine.platform.lifecycle.DisplayInsets
 
 /**
- * The Android window: a [SurfaceView] whose render thread drives [lifecycle] and whose touch, key
- * and IME events feed its input. It reports the display's density and real dots per inch, and what
+ * The Android window: a [SurfaceView] whose render thread drives [lifecycle] and whose touch, key,
+ * controller and IME events feed its input. It reports the display's density and real dots per inch, and what
  * the system bars and a display cutout cover of it as the safe area. The backend creates its swapchain from the `Surface` it receives;
  * nothing here knows about a GPU API.
  */
@@ -48,6 +51,15 @@ class AwakeSurfaceView(
     private val input: Input get() = lifecycle.input
 
     private val softKeyboardBridge by lazy { AndroidSoftKeyboardBridge(this, input) }
+
+    // A controller unplugged with a button held never sends the key-up.
+    private val controllerRemoved = object : InputManager.InputDeviceListener {
+        override fun onInputDeviceAdded(deviceId: Int) = Unit
+
+        override fun onInputDeviceRemoved(deviceId: Int) = input.releaseGamepadButtons()
+
+        override fun onInputDeviceChanged(deviceId: Int) = Unit
+    }
 
     init {
         holder.addCallback(this)
@@ -121,11 +133,18 @@ class AwakeSurfaceView(
         renderThread?.join()
         renderThread = null
         input.clearKeys()
+        input.releaseGamepadButtons()
         lifecycle.releaseSurface()
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        context.getSystemService(InputManager::class.java)?.registerInputDeviceListener(controllerRemoved, null)
     }
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
+        context.getSystemService(InputManager::class.java)?.unregisterInputDeviceListener(controllerRemoved)
         if (engineCreated) {
             lifecycle.dispose()
             engineCreated = false
@@ -134,17 +153,24 @@ class AwakeSurfaceView(
 
     override fun onTouchEvent(event: MotionEvent): Boolean = event.syncAwakePointerInput(input) || super.onTouchEvent(event)
 
+    // A controller's d-pad is its d-pad buttons and the arrow keys both, so `or` passes it to each bridge.
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean =
         event.syncAwakeTextShortcut(input) { context.awakeClipboardText() } ||
-            event.syncAwakeKeyInput(down = true, input) ||
+            event.syncAwakeGamepadInput(down = true, input) or event.syncAwakeKeyInput(down = true, input) ||
             super.onKeyDown(keyCode, event)
 
-    override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean = event.syncAwakeKeyInput(down = false, input) || super.onKeyUp(keyCode, event)
+    override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean =
+        event.syncAwakeGamepadInput(down = false, input) or event.syncAwakeKeyInput(down = false, input) ||
+            super.onKeyUp(keyCode, event)
+
+    override fun onGenericMotionEvent(event: MotionEvent): Boolean =
+        event.syncAwakeGamepadInput(input) || super.onGenericMotionEvent(event)
 
     override fun onWindowFocusChanged(hasWindowFocus: Boolean) {
         super.onWindowFocusChanged(hasWindowFocus)
         if (!hasWindowFocus) {
             input.clearKeys()
+            input.releaseGamepadButtons()
         }
     }
 

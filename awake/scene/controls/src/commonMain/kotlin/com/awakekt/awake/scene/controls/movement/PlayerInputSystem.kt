@@ -12,8 +12,8 @@ import com.awakekt.awake.scene.controls.GameplayInput
 import com.awakekt.awake.scene.controls.input.inputActions
 
 /**
- * Reads the player's keys and pointer buttons into the scene's input actions, then sets each player's
- * [MovementControl] intent from them, as [steerPlayers] says. A scene with no `input_actions` gets
+ * Reads the player's keys, pointer and controller buttons into the scene's input actions, then sets each
+ * player's [MovementControl] intent from them, as [steerPlayers] says. A scene with no `input_actions` gets
  * [MovementActions.defaults], so later systems, a game's own included, read the same actions.
  *
  * While the UI has the keys, such as while a text field is focused, no key reaches the actions: the

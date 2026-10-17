@@ -274,6 +274,7 @@ fun runBrowserCanvas(
                 val deltaSeconds = clampFrameDelta((time - lastFrameTime) / 1000.0).toFloat()
                 lastFrameTime = time
                 try {
+                    pollBrowserGamepad(input)
                     lifecycle.update(deltaSeconds)
                     textInput.sync()
                     cursor?.let { canvasCursor.show(it()) }

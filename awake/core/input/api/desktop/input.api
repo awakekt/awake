@@ -235,6 +235,11 @@ public final class com/awakekt/awake/core/input/GamepadChord$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
+public final class com/awakekt/awake/core/input/GamepadInputKt {
+	public static final fun releaseGamepadButtons (Lcom/awakekt/awake/core/input/Input;)V
+	public static final fun setGamepadButtons (Lcom/awakekt/awake/core/input/Input;Lkotlin/jvm/functions/Function1;)V
+}
+
 public final class com/awakekt/awake/core/input/ImeComposition {
 	public fun <init> (Ljava/lang/String;II)V
 	public synthetic fun <init> (Ljava/lang/String;IIILkotlin/jvm/internal/DefaultConstructorMarker;)V

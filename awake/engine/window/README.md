@@ -7,12 +7,21 @@ creates its own surface from the window handle it is given.
 ## Owns
 
 - Desktop: the GLFW window (`GlfwWindow`, in `libawake-window`), its frame loop
-  (`runDesktopWindow`), keyboard, pointer, scroll, text input, clipboard and cursor.
+  (`runDesktopWindow`), keyboard, pointer, scroll, text input, clipboard and cursor, and a
+  controller through GLFW's gamepad API (`pollGlfwGamepad`).
 - iOS: `AwakeMetalView`, a `UIView` on a `CAMetalLayer` with a `CADisplayLink` loop, touch and
-  text input.
-- Android: `AwakeSurfaceView`, a `SurfaceView` with its render thread, touch, key and IME input.
-- Browser (Web / Wasm): `runBrowserCanvas`, HTML canvas resizing, touch, pointer, wheel, keyboard, and
-  hidden `<input>` IME / clipboard text bridge (`DomTextInputBridge`).
+  text input, and a controller through GameController (`pollGameController`).
+- Android: `AwakeSurfaceView`, a `SurfaceView` with its render thread, touch, key and IME input, and
+  a controller's key and joystick events.
+- Browser (Web / Wasm): `runBrowserCanvas`, HTML canvas resizing, touch, pointer, wheel, keyboard, a
+  controller through the Gamepad API, and hidden `<input>` IME / clipboard text bridge
+  (`DomTextInputBridge`).
+
+Each reads one controller into `Input.setGamepadButton`, by button position: GLFW's gamepad
+mappings on desktop, the standard layout in a browser (one in another layout is not read, and a
+browser lists a controller only once a button on it is pressed), GameController's extended gamepad
+on iOS, and Android's `KEYCODE_BUTTON_*`, d-pad keys and hat and trigger axes. A desktop window
+reads it only while focused, and a controller that goes away releases its buttons.
 
 Each reports its display to the lifecycle: the density, the safe area in dp (Android's system
 bars and display cutout, iOS's view safe area, the browser's `env(safe-area-inset-*)`; a desktop
