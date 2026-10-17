@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.runtime
 
+import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.render.pipeline.CullMode
@@ -88,9 +89,50 @@ class SceneAssetLibrary(
     private val resolvedRequests = mutableMapOf<SceneRenderableRequest, Int>()
     private var retainedBytes = 0L
 
-    /** Supplies decoded image data; the sprite render batch caches and owns its GPU material. */
+    // The textures already reported as not drawn yet, and as failed, so each is logged once.
+    private val awaitedTextures = mutableSetOf<String>()
+    private val failedTextures = mutableSetOf<String>()
+
+    /**
+     * Supplies decoded image data registered under [name]; the sprite render batch caches and owns its
+     * GPU material. Throws when none is registered. Drawing asks [texture] instead, which also asks the
+     * resolvers and never throws.
+     */
     fun requireTexture(name: String): TextureAsset = textureFactories[name]?.invoke()
         ?: error("No scene texture named '$name' is registered.")
+
+    /**
+     * The decoded pixels of the texture a `sprite` or `tilemap` names [name], or null when they are not
+     * available yet: what the scene runtime draws sprites and tilemaps from, on each frame until it has
+     * them.
+     *
+     * A texture registered by name comes first. Otherwise the first resolver whose
+     * [SceneAssetResolver.texture] supplies [name] answers, so a host whose textures are files loaded
+     * after the scene is built, such as an editor or a project played from its files, draws them once
+     * they load. While one loads, it is logged once as not drawn yet; one that failed to load, or that
+     * nothing registers or resolves, is logged once as an error. Neither throws, and what uses it draws
+     * nothing.
+     */
+    fun texture(name: String): TextureAsset? {
+        textureFactories[name]?.let { return it() }
+        return when (val load = dynamicResolvers.firstNotNullOfOrNull { it.texture(name) }) {
+            is SceneTextureLoad.Loaded -> load.image
+            SceneTextureLoad.Loading -> {
+                if (awaitedTextures.add(name)) log.info { "Texture '$name' has not loaded yet. Not drawn yet; it draws once it has." }
+                null
+            }
+            is SceneTextureLoad.Failed -> {
+                if (failedTextures.add(name)) log.error(load.cause) { "Texture '$name' could not load: ${load.cause.message}. Not drawn." }
+                null
+            }
+            null -> {
+                if (failedTextures.add(name)) {
+                    log.error { "No scene texture named '$name' is registered or could be resolved by installed resolvers. Not drawn." }
+                }
+                null
+            }
+        }
+    }
 
     /** Builds [name] on first use and takes a reference to it; see [releaseMesh]. */
     fun requireMesh(runtime: SceneAppLifecycleRuntime, name: String): Mesh {
@@ -284,3 +326,5 @@ class SceneAssetLibrary(
         resolvedRequests.clear()
     }
 }
+
+private val log = Logger("scene-assets")

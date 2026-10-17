@@ -67,4 +67,16 @@ interface SceneAssetResolver {
      * @return The authored [PbrMaterial] factors, or `null` if unspecified.
      */
     fun materialDefaults(mesh: String, material: String): PbrMaterial? = materialDefaults(material)
+
+    /**
+     * The texture a `sprite` or `tilemap` names [name] as it stands now, or null when this resolver
+     * does not supply it. [SceneAssetLibrary.texture] asks on each frame something using it is drawn,
+     * until it is [SceneTextureLoad.Loaded], so a resolver that loads it starts on the first ask and
+     * answers [SceneTextureLoad.Loading] meanwhile; [AssetSourceTextureResolver] loads them from files.
+     * A texture registered by name with the scene's assets is used without asking.
+     *
+     * @param name The texture's name, as the `sprite` or `tilemap` gives it.
+     * @return Where the texture stands, or `null` if this resolver does not supply it.
+     */
+    fun texture(name: String): SceneTextureLoad? = null
 }

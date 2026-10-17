@@ -27,6 +27,7 @@ import com.awakekt.awake.scene.controls.camera.ActiveCamera
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.gltf.GltfAssetResolver
 import com.awakekt.awake.scene.rendering.Camera
+import com.awakekt.awake.scene.runtime.AssetSourceTextureResolver
 import kotlinx.coroutines.Dispatchers
 import kotlin.coroutines.CoroutineContext
 import kotlin.math.PI
@@ -205,8 +206,9 @@ fun LoadedProject.sceneSystems(input: () -> GameplayInput, renderer: Renderer? =
  * loaded, the systems its components call for (the ones [sceneSystemsFor] builds), and a primary
  * camera. With [touchControls], the scene's touch-only canvas controls are shown. Every speed,
  * distance and size comes from the scene; this adds no tuning of its own. A node spawned into it
- * with [spawn] draws a model the scene didn't load once that has loaded. [LoadedProject.close]
- * the project once the scene has stopped.
+ * with [spawn] draws a model the scene didn't load once that has loaded. Its `sprite`s and `tilemap`s
+ * draw their textures from the project's files: each is read the first time it is drawn, and draws
+ * from the frame it has loaded. [LoadedProject.close] the project once the scene has stopped.
  *
  * The scene can play another of the project's scenes: a system asks through
  * [SceneHostServices.sceneSwitch], and the app through its [SceneSwitch] service. The next scene
@@ -217,11 +219,14 @@ fun LoadedProject.sceneSystems(input: () -> GameplayInput, renderer: Renderer? =
  */
 fun SceneAppDsl.runProject(project: LoadedProject, touchControls: Boolean = false) {
     val scenes = ProjectSceneRunner(project)
+    // Every scene's sprite and tilemap textures, read from the project as they are first drawn.
+    val textures = AssetSourceTextureResolver(project.files, project.sceneLoads)
     // Put in as the scene populates, as a document's entities are, so they exist before any onReady runs.
     scene(project.scene.name) { scenes.start() }
     assets {
         builtInSceneAssets()
         resolver(scenes.models)
+        resolver(textures)
     }
     // Built before the scene populates, which is how the runner learns its runtime.
     fixedSystem(PROJECT_FIXED_SYSTEMS) { scenes.bind(this) }
@@ -231,7 +236,10 @@ fun SceneAppDsl.runProject(project: LoadedProject, touchControls: Boolean = fals
         showTouchControls = touchControls
         project.componentRegistry?.let { canvasBindings = it.bindings }
     }
-    onDispose { scenes.stop() }
+    onDispose {
+        scenes.stop()
+        textures.close()
+    }
 }
 
 /**

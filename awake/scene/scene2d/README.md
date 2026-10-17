@@ -23,13 +23,31 @@ implementation(project(":awake:scene:scene2d"))
 
 ## Drawing sprites
 
-Register decoded pixels under the scene component's `texture` name:
+A sprite's `texture` is a name the scene's assets resolve when the sprite is first drawn. Register
+decoded pixels under it:
 
 ```kotlin
 assets {
     texture("hero") { decodedHeroSheet }
 }
 ```
+
+Or read every texture from files as it is first drawn, so a scene whose images are project files
+needs no registration. `runProject` does this with the project's files:
+
+```kotlin
+val textures = AssetSourceTextureResolver(projectFiles) // close() it when the scene stops
+assets {
+    resolver(textures)
+}
+```
+
+The name is then a path in those files. A registered texture is used first; otherwise the first
+resolver whose `texture(name)` supplies it answers. Until a texture has loaded, what uses it is not
+drawn, and the scene logs once that it is not drawn yet; it draws from the frame it arrives. A
+texture that fails to load, or that nothing registers or resolves, draws nothing and is logged once as
+an error. Neither throws. A resolver of your own overrides `SceneAssetResolver.texture`, answering
+`SceneTextureLoad.Loading` until it has the pixels.
 
 Add `spriteScenePipeline()` from the shader pack to the app's `RenderPlan.scenePipelines`. This
 selects `PositionUv`, the material bindings, alpha blending and depth-test-only behavior. The runtime renders unlit, straight-alpha quads, using nearest
@@ -93,7 +111,7 @@ The importer supports contiguous, untrimmed grid rows with uniform timing. See t
 
 ## Tilemaps
 
-Add `tilemap` to a node and register its named texture using the same asset API as sprites.
+Add `tilemap` to a node; its `texture` resolves as a sprite's does, registered or from files.
 Include `spriteScenePipeline()` in the render plan. The standard runtime renders tile layers
 alongside sprites, with the same `sortOrder`, nearest filtering and alpha behavior.
 

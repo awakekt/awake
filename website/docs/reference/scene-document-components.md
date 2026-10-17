@@ -623,6 +623,10 @@ A flat image drawn at the node's `Transform`, with no lighting: one cell of a fr
 the cell's pixel size divided by `pixelsPerUnit`, so under an orthographic camera it keeps its size
 however the image is scaled. `SceneSprite`.
 
+A project played with `runProject` reads the image from the project's files the first time the sprite
+is drawn. Until it has loaded, the sprite is not drawn; an image that can't be read draws nothing and
+is logged once.
+
 | Field | Type | Default | What it does |
 | --- | --- | --- | --- |
 | `texture` | string | required | A project image file the sprite shows. Not blank. |
@@ -638,7 +642,7 @@ however the image is scaled. `SceneSprite`.
 
 A finite orthogonal atlas layer. The node's origin is its top left, with +X right and -Y down.
 The runtime uploads one mesh per non-empty chunk, draws visible chunks through the sprite
-pipeline, and rebuilds only edited chunks. `SceneTilemap`.
+pipeline, and rebuilds only edited chunks. Its atlas image loads as a `sprite`'s does. `SceneTilemap`.
 
 | Field | Type | Default | What it does |
 | --- | --- | --- | --- |
