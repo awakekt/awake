@@ -29,7 +29,7 @@ import com.awakekt.awake.core.text.theme.TextStyle
  * [CanvasElement.charges] in a badge at its top-right corner.
  */
 context(_: Composer)
-internal fun ActionButtonView(element: CanvasElement, styled: Modifier, textStyle: TextStyle, tree: CanvasTree, children: List<CanvasItem>) {
+private fun ActionButtonView(element: CanvasElement, styled: Modifier, textStyle: TextStyle, tree: CanvasTree, children: List<CanvasItem>) {
     element.buttonPress.tick(element.button ?: CanvasButton.Default)
     Box(styled.buttonInput(element, LocalDensity.current), contentAlignment = (element.textAlign ?: CanvasAnchor.Center).alignment) {
         Text(tree.textOf(element), style = textStyle)
@@ -46,9 +46,19 @@ internal fun ActionButtonView(element: CanvasElement, styled: Modifier, textStyl
     }
 }
 
+/** A Button: an action button when it has [CanvasElement.button] settings, and a plain one otherwise. */
+context(_: Composer)
+internal fun ButtonView(element: CanvasElement, styled: Modifier, textStyle: TextStyle, tree: CanvasTree, children: List<CanvasItem>) {
+    if (element.button != null) {
+        ActionButtonView(element, styled, textStyle, tree, children)
+    } else {
+        PlainButtonView(element, styled, textStyle, tree, children)
+    }
+}
+
 /** A Button with no [CanvasElement.button] settings: tapped when released over it. */
 context(_: Composer)
-internal fun PlainButtonView(element: CanvasElement, styled: Modifier, textStyle: TextStyle, tree: CanvasTree, children: List<CanvasItem>) {
+private fun PlainButtonView(element: CanvasElement, styled: Modifier, textStyle: TextStyle, tree: CanvasTree, children: List<CanvasItem>) {
     Box(
         styled.clickable(element.interactions) { element.press() },
         contentAlignment = (element.textAlign ?: CanvasAnchor.Center).alignment,

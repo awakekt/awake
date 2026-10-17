@@ -216,6 +216,23 @@ class ProjectRuntimeTest {
         assertEquals(-1f, actions.axisX("aim"), 0.01f, "with the aim it was let go at")
     }
 
+    /** A swipe across a look area turns the scene's camera, as a mouse drag does. */
+    @Test
+    fun aSwipeOnALookAreaTurnsTheCamera() = runTest {
+        val game = play(PHYSICS_SCENE.withNode(LOOK_AREA), touch = true)
+        game.frames(FRAMES)
+        val rig = game.world.get<com.awakekt.awake.scene.controls.camera.CameraRig>(game.world.named("Camera"))!!
+        val yaw = rig.yaw
+        val (x, y) = game.centreOf("Look")
+
+        game.touch(down = true, x to y)
+        game.touch(down = true, x + 50f to y)
+        game.touch(down = true, x + 50f to y)
+        game.touch(down = false, x + 50f to y)
+
+        assertTrue(rig.yaw > yaw + 0.2f, "50 dp right turns the camera right; yaw $yaw -> ${rig.yaw}")
+    }
+
     /** A Button naming an action of the game's own holds that action, which the game's systems read. */
     @Test
     fun aButtonForAnActionOfTheGamesOwnHoldsIt() = runTest {
@@ -417,6 +434,9 @@ class ProjectRuntimeTest {
 
         const val AIMED_FIRE = """{ "name": "Controls", "components": [ { "component": "input_actions", "actions": [
     { "type": "button", "name": "fire", "keys": ["F"] }, { "type": "axis", "name": "aim" } ] } ] }"""
+
+        const val LOOK_AREA = """{ "name": "Look", "components": [ { "component": "canvas_element", "kind": "LookArea", "anchor": "TopRight",
+    "offsetX": 0.0, "offsetY": 0.0, "width": 400.0, "height": 600.0, "touchOnly": true } ] }"""
 
         const val FIRE_ACTION = """{ "name": "Controls", "components": [ { "component": "input_actions", "actions": [
     { "type": "button", "name": "fire", "keys": ["F"] } ] } ] }"""

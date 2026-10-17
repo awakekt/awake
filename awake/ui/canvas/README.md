@@ -16,7 +16,7 @@ the `canvas_element` component saved with a scene and drawn by `SceneCanvas(worl
 
 `CanvasElement` has:
 
-- **`kind`**: `Text`, `Panel`, `Bar`, `Button`, `TextField`, `Joystick`, `Image` or `View`.
+- **`kind`**: `Text`, `Panel`, `Bar`, `Button`, `TextField`, `Joystick`, `Image`, `View` or `LookArea`.
 - **`anchor`**: one of nine screen points (`TopLeft` … `BottomRight`). The element sits against that
   point, and **`offsetX` / `offsetY`** move it inward: a right or bottom anchor moves it left or up,
   and a negative offset at an edge is held there. On a centred axis an offset moves it right or down
@@ -171,5 +171,13 @@ drag away from it aims (`aiming`, `aimX`, `aimY`), the canvas draws the reach, a
 `cancel` zone, and letting go fires with the aim, or cancels over the zone (`consumeAimCancel()`). An
 `aimLock` set from code locks the aim onto a target the game picks.
 
-Each stick and action button follows only the pointer that landed on it first, so one thumb steers while another
+A `LookArea` is a region, such as the right half of the screen, where one thumb's swipe looks and
+two thumbs pinch to zoom: `consumeLook()` reads the swipe in dp times its `look.sensitivity`, right and
+down positive unless `invertX` or `invertY`, and `consumeZoom()` the factor the pinch spread by.
+
+An element's `cluster`, a `CanvasCluster`, places its children as a button cluster instead of a
+`layout`: the first on a pivot and the rest `radius` dp around it, from `startAngle` and `spacing`
+degrees apart, clockwise from the right. Keep the element big enough to hold the arc.
+
+Each stick, action button and look area follows only the pointers that landed on it first, so one thumb steers while another
 presses buttons, and a second thumb landing on the stick does not take it.
