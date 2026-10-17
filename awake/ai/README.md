@@ -127,6 +127,11 @@ which the host supplies; run it before the behaviour systems.
 - `AiRegistry.behaviorTreeNodeRegistry()` is the vocabulary as an `awake:node-graph` registry, and
   `NodeDefinition.toNodeGraph()` and `NodeGraph.toNodeDefinition()` convert a tree to and from a graph,
   so a node-graph canvas edits trees. `NodeDefinition.layout` and `id` are kept for the editor.
+- `AiRegistry.stateMachineNodeRegistry()`, `StateMachineDefinition.toNodeGraph()` and
+  `NodeGraph.toStateMachineDefinition()` do the same for machines: one machine node (its id and
+  blackboard, wired to the initial state), a node per state typed `state/<kind>`, and a node per
+  transition, wired from the state it leaves (unwired for every state) to the state it enters. A
+  state's trees stay in its config as tree definitions, and states and transitions keep their layout.
 - `BehaviorTree.statusOf(path)` and `runningPaths()` say what each node returned on the latest tick,
   for live highlighting, and `AiStateMachine.currentTree()` gives the running state's tree.
 
@@ -150,4 +155,3 @@ played scene needs to run them.
 - Sight checks every perceivable entity for each looking agent; there is no spatial index yet.
 - Core ships no `PerceptionSpace` over scene transforms and no physics `LineOfSight` yet; a host
   writes those few lines itself.
-- A state machine has no graph conversion yet; a visual editor edits its trees.

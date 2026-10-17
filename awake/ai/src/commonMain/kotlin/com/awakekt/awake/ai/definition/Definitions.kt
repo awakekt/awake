@@ -150,6 +150,7 @@ data class StateDefinition(
  * @property after Seconds in the state before it can fire.
  * @property onTree How the state's tree must have last finished on this visit.
  * @property condition A node ticked to decide; it fires on [BehaviorStatus.SUCCESS].
+ * @property layout Where an editor draws the transition; the runtime ignores it.
  */
 @Serializable
 data class TransitionDefinition(
@@ -158,6 +159,7 @@ data class TransitionDefinition(
     val after: Float = 0f,
     val onTree: TreeOutcome? = null,
     val condition: NodeDefinition? = null,
+    val layout: NodeLayout? = null,
 )
 
 /** How a state's tree finished, for [TransitionDefinition.onTree]. */
