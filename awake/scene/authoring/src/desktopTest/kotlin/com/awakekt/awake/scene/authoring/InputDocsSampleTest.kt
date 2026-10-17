@@ -9,10 +9,16 @@ import com.awakekt.awake.compose.ui.platform.InputOwnership
 import com.awakekt.awake.core.input.ActionTrigger
 import com.awakekt.awake.core.input.AxisAction
 import com.awakekt.awake.core.input.ButtonAction
+import com.awakekt.awake.core.input.ButtonBinding
+import com.awakekt.awake.core.input.GamepadButton
+import com.awakekt.awake.core.input.GamepadChord
 import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.input.InputActions
+import com.awakekt.awake.core.input.InputBindings
 import com.awakekt.awake.core.input.InputSnapshot
 import com.awakekt.awake.core.input.Key
+import com.awakekt.awake.core.input.KeyChord
+import com.awakekt.awake.core.input.KeyModifier
 import com.awakekt.awake.core.input.PointerButton
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
@@ -27,6 +33,7 @@ import com.awakekt.awake.scene.controls.movement.registerControls
 import com.awakekt.awake.scene.document.SceneLoader
 import com.awakekt.awake.scene.runtime.DefaultSceneComponentResolvers
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -212,5 +219,45 @@ class InputDocsSampleTest {
         actions.beginFrame()
         actions.read(input.updateSnapshot())
         assertFalse(actions.isActive("jump"), "a Press lasts the frame it was pressed")
+    }
+
+    @Test
+    fun chordsAndSavedBindings() {
+        val input = Input()
+        // --8<-- [start:chords]
+        val actions = InputActions(
+            listOf(
+                ButtonAction("slot1", keys = setOf(Key.Digit1)),
+                ButtonAction(
+                    "slot11",
+                    chords = setOf(
+                        KeyChord(Key.Digit1, setOf(KeyModifier.Shift)),
+                        GamepadChord(GamepadButton.South, setOf(GamepadButton.LeftShoulder)),
+                    ),
+                ),
+            ),
+        )
+        // --8<-- [end:chords]
+        input.setKeyDown(Key.Shift, true)
+        input.setKeyDown(Key.Digit1, true)
+        actions.beginFrame()
+        actions.read(input.updateSnapshot())
+        assertTrue(actions.isActive("slot11"))
+        assertFalse(actions.isActive("slot1"), "Shift+1 does not also fire 1")
+
+        // --8<-- [start:rebind]
+        // A rebinding screen checks what a new chord clashes with, then takes it:
+        val chord = KeyChord(Key.Digit1, setOf(KeyModifier.Ctrl))
+        if (actions.actionsBoundTo(chord).isEmpty()) {
+            actions.rebind("slot11", ButtonBinding(chords = setOf(chord)))
+        }
+
+        // Settings save the player's bindings as data and load them back next time:
+        val saved = Json.encodeToString(InputBindings.serializer(), actions.bindings())
+        val skipped = actions.rebindAll(Json.decodeFromString(InputBindings.serializer(), saved))
+        // --8<-- [end:rebind]
+
+        assertEquals(emptyList(), skipped)
+        assertEquals(ButtonBinding(chords = setOf(chord)), actions.binding("slot11"))
     }
 }
