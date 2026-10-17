@@ -4025,6 +4025,18 @@ fades with distance from the active camera and pans with its direction. <code>Sc
 <td>A <code>Text</code> element's content, a <code>Button</code>'s label, or what is typed into a <code>TextField</code>: typing writes it, and a system writing it replaces the field's content, caret at the end. In a <code>Text</code> element with <code>links</code> true, a <code>[[key&amp;#124;shown words]]</code> span draws "shown words" in <code>style</code>'s <code>linkColor</code> and reports <code>key</code> once through <code>consumeLink()</code> when clicked; <code>[[</code> is reserved and has no escape. Plain text with no span draws unchanged.</td>
 </tr>
 <tr>
+<td><code>textKey</code></td>
+<td>string</td>
+<td><code>""</code></td>
+<td>A <code>Text</code>'s or <code>Button</code>'s words by key, from the project's <code>strings/&lt;locale&gt;.json</code> tables, in the active locale; they change when it does. Empty shows <code>text</code>. A key no table has shows as the key and is logged once. Set on another kind, or with <code>text</code> or <code>bind.text</code>, it is reported. See <a href="../../guides/localization/#show-a-key-in-a-scene">Localization</a>.</td>
+</tr>
+<tr>
+<td><code>textArgs</code></td>
+<td>object</td>
+<td><code>{}</code></td>
+<td>Values for <code>textKey</code>'s placeholders, by name, such as <code>{ "count": "3" }</code>. A <code>bind</code>'s <code>textArgs</code> reads one from a field instead. Set without <code>textKey</code>, it is reported.</td>
+</tr>
+<tr>
 <td><code>fontSize</code></td>
 <td>number</td>
 <td><code>18</code></td>
@@ -4130,7 +4142,7 @@ fades with distance from the active camera and pans with its direction. <code>Sc
 <td><code>bind</code></td>
 <td>object</td>
 <td>none</td>
-<td>Game state the element shows without code. <code>node</code> names a node; <code>value</code> is a <code>component.field</code> for a Bar's fill, divided by <code>max</code> (a field or a number); <code>text</code> fills each <code>{component.field}</code>, or <code>{component.field:n0}</code> with a number format, in a Text's or Button's words. See <a href="../../guides/game-ui/#show-game-state">Game UI</a>.</td>
+<td>Game state the element shows without code. <code>node</code> names a node; <code>value</code> is a <code>component.field</code> for a Bar's fill, divided by <code>max</code> (a field or a number); <code>text</code> fills each <code>{component.field}</code>, or <code>{component.field:n0}</code> with a number format, in a Text's or Button's words. <code>textArgs</code> maps a <code>textKey</code>'s argument names to <code>component.field</code>s, read each frame. See <a href="../../guides/game-ui/#show-game-state">Game UI</a>.</td>
 </tr>
 <tr>
 <td><code>wheel</code></td>
@@ -4167,6 +4179,18 @@ fades with distance from the active camera and pans with its direction. <code>Sc
 <td>string</td>
 <td><code>""</code></td>
 <td>A <code>TextField</code>'s password mask: one character, such as <code>*</code>, drawn for each typed one. <code>text</code> keeps what was typed; copy and cut yield nothing, and accessibility services and the platform keyboard treat the field as a password. Empty draws the text as typed, so clearing it at runtime shows the password. Longer than one character, or set on another kind, is reported.</td>
+</tr>
+<tr>
+<td><code>maxLength</code></td>
+<td>integer</td>
+<td><code>0</code></td>
+<td>The most a <code>TextField</code> lets the player type, counted in <code>maxLengthUnit</code>; <code>0</code> for no limit. Typing, pasting and an IME stop at the limit, and never inside a character: an emoji, a flag or a letter with its accents goes in whole or not at all. A system writing <code>text</code> is not limited. Not negative; set on another kind, it is reported.</td>
+</tr>
+<tr>
+<td><code>maxLengthUnit</code></td>
+<td><code>Graphemes</code> · <code>CodePoints</code> · <code>Utf8Bytes</code></td>
+<td><code>Graphemes</code></td>
+<td>What <code>maxLength</code> counts. <code>Graphemes</code> are the characters a player sees, so a family emoji is one. Count <code>CodePoints</code> or <code>Utf8Bytes</code> to match the limit a server stores a line in, so a line the field accepts is never refused or cut there.</td>
 </tr>
 <tr>
 <td><code>font</code></td>

@@ -1905,6 +1905,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#show-a-key-in-a-scene" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Show a key in a scene
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#fonts-for-other-scripts" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2438,6 +2449,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#show-a-key-in-a-scene" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Show a key in a scene
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#fonts-for-other-scripts" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2512,8 +2534,9 @@
 <span class="awake-badge awake-badge--ok">Web</span></p>
 </div>
 <p>Game data, UI and plugins store keys, such as <code>quest.harbor.title</code>, never the text itself. A
-<code>Strings</code> turns a key into text in the active locale. Localization is code-only: there is no scene
-document component for it, and AwakeKt Studio has no translations view yet.</p>
+<code>Strings</code> turns a key into text in the active locale. A scene's canvas text can show a key with no
+code, and a played project loads its tables itself; see
+<a href="#show-a-key-in-a-scene">Show a key in a scene</a>. AwakeKt Studio has no translations view yet.</p>
 <h2 id="write-the-string-tables">Write the string tables</h2>
 <p>A project keeps one JSON file per locale under <code>strings/</code>, named by its
 <a href="https://www.rfc-editor.org/info/bcp47">BCP 47</a> tag: <code>strings/en.json</code>, <code>strings/ko.json</code>,
@@ -2677,24 +2700,42 @@ for it.</p>
 <code>strings.text(…)</code> while composing shows the new language in the next frame, with no restart.</p>
 <p><code>systemLocale()</code> reads the device's language: the JVM default on desktop and Android, the first
 preferred language on iOS, and <code>navigator.language</code> in the browser.</p>
+<h2 id="show-a-key-in-a-scene">Show a key in a scene</h2>
+<p>A <code>canvas_element</code> of kind <code>Text</code> or <code>Button</code> shows a key's text with <code>textKey</code> in place of <code>text</code>.
+<code>textArgs</code> gives its placeholders values, and a <code>bind</code>'s <code>textArgs</code> reads one from a component
+field the game sets, such as a count:</p>
+<div class="language-json highlight"><span class="filename">scenes/main.scene.json</span><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"canvas_element"</span><span class="p">,</span><span class="w"> </span><span class="nt">"textKey"</span><span class="p">:</span><span class="w"> </span><span class="s2">"hud.items"</span><span class="p">,</span><span class="w"> </span><span class="nt">"textArgs"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Harbor Town"</span><span class="w"> </span><span class="p">},</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="nt">"bind"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"node"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Player"</span><span class="p">,</span><span class="w"> </span><span class="nt">"textArgs"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"count"</span><span class="p">:</span><span class="w"> </span><span class="s2">"inventory.count"</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+</span></code></pre></div>
+<p><code>loadProject</code> reads <code>strings/</code> through the project's files, the way it reads scenes and assets, so
+the tables are indexed by content hash on the web like any other file. It reads the device's
+locale's table and <code>strings/en.json</code>, the default; another locale's table is read only when the game
+switches to it. <code>LoadedProject.strings</code> is that <code>Strings</code>, and every scene the project plays shows
+its keyed text from it. A settings screen switches language through it:</p>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">project</span><span class="p">.</span><span class="na">strings</span><span class="o">?.</span><span class="na">setLocale</span><span class="p">(</span><span class="n">LocaleId</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="s">"ko"</span><span class="p">))</span>
+</span></code></pre></div>
+<p>Keyed text changes on the next frame; the scene keeps playing. A project with no <code>strings/en.json</code>
+has no strings, and its keyed elements show their keys. A host that draws the canvas itself passes
+<code>SceneCanvas(world, strings = …)</code>. The fields are in <a href="../game-ui/#show-text-in-the-players-language">Game UI</a>.</p>
 <h2 id="fonts-for-other-scripts">Fonts for other scripts</h2>
 <p>The built-in UI font draws Latin text. A locale whose script it lacks, such as Korean or Russian,
 names fallback fonts in <code>strings/fonts.json</code>:</p>
-<div class="language-json highlight"><span class="filename">strings/fonts.json</span><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="p">{</span>
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="nt">"ko"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span><span class="s2">"fonts/NotoSansKR-Regular.otf"</span>
-</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span><span class="p">],</span>
-</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">  </span><span class="nt">"ru"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">    </span><span class="s2">"fonts/NotoSans-Regular.ttf"</span>
-</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="w">  </span><span class="p">]</span>
-</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="p">}</span>
+<div class="language-json highlight"><span class="filename">strings/fonts.json</span><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="p">{</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span><span class="nt">"ko"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">    </span><span class="s2">"fonts/NotoSansKR-Regular.otf"</span>
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">  </span><span class="p">],</span>
+</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">  </span><span class="nt">"ru"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">    </span><span class="s2">"fonts/NotoSans-Regular.ttf"</span>
+</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">  </span><span class="p">]</span>
+</span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="p">}</span>
 </span></code></pre></div>
-<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">fonts</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">LocaleFonts</span><span class="p">.</span><span class="na">load</span><span class="p">(</span><span class="n">assets</span><span class="p">)</span><span class="w"> </span><span class="c1">// strings/fonts.json</span>
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="kd">val</span><span class="w"> </span><span class="nv">uiFont</span><span class="p">:</span><span class="w"> </span><span class="n">UiFont</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">strings</span><span class="p">.</span><span class="na">loadFont</span><span class="p">(</span><span class="n">assets</span><span class="p">,</span><span class="w"> </span><span class="n">fonts</span><span class="p">,</span><span class="w"> </span><span class="n">primary</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">UiFonts</span><span class="p">.</span><span class="na">default</span><span class="p">())</span>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">fonts</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">LocaleFonts</span><span class="p">.</span><span class="na">load</span><span class="p">(</span><span class="n">assets</span><span class="p">)</span><span class="w"> </span><span class="c1">// strings/fonts.json</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="kd">val</span><span class="w"> </span><span class="nv">uiFont</span><span class="p">:</span><span class="w"> </span><span class="n">UiFont</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">strings</span><span class="p">.</span><span class="na">loadFont</span><span class="p">(</span><span class="n">assets</span><span class="p">,</span><span class="w"> </span><span class="n">fonts</span><span class="p">,</span><span class="w"> </span><span class="n">primary</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">UiFonts</span><span class="p">.</span><span class="na">default</span><span class="p">())</span>
 </span></code></pre></div>
 <p><code>loadFont</code> bakes each fallback font with only the chars the loaded tables use that the primary font
 lacks, and returns one font, <code>UiFonts.fallback(primary, fallbacks)</code>, that draws each char from the
-first face that has it. Give it to the UI, for example as Compose's <code>LocalFont</code>.</p>
+first face that has it. Give it to the UI, for example as Compose's <code>LocalFont</code>. Chars are read as
+Unicode code points, so a font is found for a CJK Extension B ideograph or an emoji as for any other.</p>
 <div class="admonition warning">
 <p class="admonition-title">Bake fonts off the frame thread</p>
 <p>Baking takes tens of milliseconds for a hundred glyphs and seconds for thousands. Call
@@ -2704,8 +2745,10 @@ outside the tables, such as a player's name, can hold chars no table has: pass t
 </div>
 <div class="admonition warning">
 <p class="admonition-title">No shaping</p>
-<p>Text draws one <code>Char</code> at a time. Thai's combining marks and Arabic's joined letters draw as
-separate glyphs, and right-to-left layout is not supported yet.</p>
+<p>Text draws one grapheme cluster at a time, so the caret, Backspace and a cut line never split an
+emoji or a letter from its marks, but nothing is shaped: Thai's combining marks and Arabic's
+joined letters draw as separate glyphs, emoji draw as the font's missing-glyph box, and
+right-to-left layout is not supported yet.</p>
 </div>
 <h2 id="how-it-works">How it works</h2>
 <p>Tables load per locale, when that locale is used: a project with many languages reads and parses

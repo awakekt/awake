@@ -1882,6 +1882,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#show-text-in-the-players-language" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Show text in the player's language
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#lay-out-children" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1919,6 +1930,17 @@
     <span class="md-ellipsis">
       
         Scale the UI
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#limit-what-is-typed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Limit what is typed
       
     </span>
   </a>
@@ -2593,6 +2615,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#show-text-in-the-players-language" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Show text in the player's language
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#lay-out-children" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2630,6 +2663,17 @@
     <span class="md-ellipsis">
       
         Scale the UI
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#limit-what-is-typed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Limit what is typed
       
     </span>
   </a>
@@ -2869,6 +2913,18 @@ or a system polling <code>consumePress()</code>, sees the tap as it would withou
 <td>A <code>Text</code> element's content, a <code>Button</code>'s label, or what is typed into a <code>TextField</code>. Typing writes it; a system writing it replaces the field's content, caret at the end.</td>
 </tr>
 <tr>
+<td><code>textKey</code></td>
+<td>string</td>
+<td><code>""</code></td>
+<td>A <code>Text</code>'s or <code>Button</code>'s words from the project's string tables, by key, in the player's language. Use it in place of <code>text</code>. See <a href="#show-text-in-the-players-language">Show text in the player's language</a>.</td>
+</tr>
+<tr>
+<td><code>textArgs</code></td>
+<td>object</td>
+<td><code>{}</code></td>
+<td>Values for <code>textKey</code>'s placeholders, by name, such as <code>{ "count": "3" }</code>.</td>
+</tr>
+<tr>
 <td><code>fontSize</code></td>
 <td>number (sp)</td>
 <td><code>18</code></td>
@@ -2885,6 +2941,18 @@ or a system polling <code>consumePress()</code>, sees the tap as it would withou
 <td>string</td>
 <td><code>""</code></td>
 <td>A <code>TextField</code>'s password mask: one character drawn for each typed one. Empty shows the text.</td>
+</tr>
+<tr>
+<td><code>maxLength</code></td>
+<td>integer</td>
+<td><code>0</code></td>
+<td>The most a <code>TextField</code> lets the player type; <code>0</code> for no limit. See <a href="#limit-what-is-typed">Limit what is typed</a>.</td>
+</tr>
+<tr>
+<td><code>maxLengthUnit</code></td>
+<td><code>Graphemes</code> · <code>CodePoints</code> · <code>Utf8Bytes</code></td>
+<td><code>Graphemes</code></td>
+<td>What <code>maxLength</code> counts.</td>
 </tr>
 <tr>
 <td><code>pressable</code></td>
@@ -3292,6 +3360,10 @@ once its capability registers them.</p>
 <td><code>text</code></td>
 <td>The words of a <code>Text</code> or <code>Button</code>, each <code>{component.field}</code> replaced by its value. A whole number shows exactly, however large, and any other number to one decimal place. A <a href="#number-formats">format</a> after a colon, such as <code>{purse.gold:n0}</code>, sets how a number is written.</td>
 </tr>
+<tr>
+<td><code>textArgs</code></td>
+<td>A <code>textKey</code>'s arguments read from fields: each name to its <code>component.field</code>, such as <code>{ "count": "inventory.count" }</code>. See <a href="#show-text-in-the-players-language">Show text in the player's language</a>.</td>
+</tr>
 </tbody>
 </table>
 <h3 id="number-formats">Number formats</h3>
@@ -3332,18 +3404,38 @@ placeholder as written, and scene validation reports it.</p>
 element shows its own <code>value</code> and <code>text</code>, and the log says so once. A Bar does the same for a value
 that is not a finite number and for a <code>max</code> that is not above 0; a text shows such a value as it is,
 <code>NaN</code> or <code>Infinity</code>.</p>
+<h2 id="show-text-in-the-players-language">Show text in the player's language</h2>
+<p>A <code>Text</code> or <code>Button</code> with a <code>textKey</code> shows that key's text from the project's string tables,
+<code>strings/&lt;locale&gt;.json</code>, in the player's language, and changes when the game switches language,
+with no reload. A played project loads its tables itself; <a href="../localization/#show-a-key-in-a-scene">Localization</a>
+has the tables, the locale switch and the message syntax.</p>
+<div class="language-json highlight"><span class="filename">A greeting and an item count</span><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="p">[</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"canvas_element"</span><span class="p">,</span><span class="w"> </span><span class="nt">"textKey"</span><span class="p">:</span><span class="w"> </span><span class="s2">"hud.greeting"</span><span class="p">,</span><span class="w"> </span><span class="nt">"textArgs"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Harbor Town"</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">},</span>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"canvas_element"</span><span class="p">,</span><span class="w"> </span><span class="nt">"textKey"</span><span class="p">:</span><span class="w"> </span><span class="s2">"hud.items"</span><span class="p">,</span><span class="w"> </span><span class="nt">"offsetY"</span><span class="p">:</span><span class="w"> </span><span class="mi">60</span><span class="p">,</span>
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">    </span><span class="nt">"bind"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"node"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Player"</span><span class="p">,</span><span class="w"> </span><span class="nt">"textArgs"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"count"</span><span class="p">:</span><span class="w"> </span><span class="s2">"inventory.count"</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="p">]</span>
+</span></code></pre></div>
+<p><code>textArgs</code> holds values the scene fixes. A value the game sets while it runs, such as a player's
+name or a count, comes from a component field through <code>bind</code>'s <code>textArgs</code>, read each frame, and
+takes the place of a <code>textArgs</code> value of the same name; while the field reads nothing, the scene's
+own value shows. A field's value goes in as it is, so <code>{count, plural, one {# item} other {# items}}</code>
+reads a number field as a number, and a name holding <code>{</code> shows as typed. A system can also set the
+live element's <code>textKey</code> and <code>textArgs</code> from code.</p>
+<p>A key no table has shows as the key itself and is logged once. Set <code>textKey</code> or <code>text</code>, not both;
+scene validation reports an element with both, a <code>textKey</code> on a kind with no words, and <code>textArgs</code>
+with no <code>textKey</code>.</p>
 <h2 id="lay-out-children">Lay out children</h2>
 <p>A parent with a <code>layout</code> places its children itself, as a CSS flexbox does: an action bar of slots,
 a strip of buff icons that wraps, a party list. Each child keeps its <code>width</code> and <code>height</code>, ignores
 its <code>anchor</code> and offsets, and runs in its <code>order</code>. Add or remove children at run time and the rest
 move to make room.</p>
-<div class="language-json highlight"><span class="filename">An action bar of ten slots</span><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="p">{</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ActionBar"</span><span class="p">,</span><span class="w"> </span><span class="nt">"components"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"canvas_element"</span><span class="p">,</span><span class="w"> </span><span class="nt">"kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Panel"</span><span class="p">,</span>
-</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">    </span><span class="nt">"anchor"</span><span class="p">:</span><span class="w"> </span><span class="s2">"BottomCenter"</span><span class="p">,</span><span class="w"> </span><span class="nt">"offsetY"</span><span class="p">:</span><span class="w"> </span><span class="mi">12</span><span class="p">,</span><span class="w"> </span><span class="nt">"width"</span><span class="p">:</span><span class="w"> </span><span class="mi">364</span><span class="p">,</span><span class="w"> </span><span class="nt">"height"</span><span class="p">:</span><span class="w"> </span><span class="mi">40</span><span class="p">,</span>
-</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">    </span><span class="nt">"layout"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"direction"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Row"</span><span class="p">,</span><span class="w"> </span><span class="nt">"gap"</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="nt">"padding"</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="nt">"align"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Center"</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">],</span>
-</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">  </span><span class="nt">"children"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Slot1"</span><span class="p">,</span><span class="w"> </span><span class="nt">"components"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"canvas_element"</span><span class="p">,</span><span class="w"> </span><span class="nt">"kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Image"</span><span class="p">,</span><span class="w"> </span><span class="nt">"order"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
-</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">        </span><span class="nt">"width"</span><span class="p">:</span><span class="w"> </span><span class="mi">32</span><span class="p">,</span><span class="w"> </span><span class="nt">"height"</span><span class="p">:</span><span class="w"> </span><span class="mi">32</span><span class="p">,</span><span class="w"> </span><span class="nt">"style"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"image"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"path"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ui/slot.png"</span><span class="p">,</span><span class="w"> </span><span class="nt">"pixelated"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
-</span><span id="__span-9-7"><a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="w">  </span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+<div class="language-json highlight"><span class="filename">An action bar of ten slots</span><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="p">{</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ActionBar"</span><span class="p">,</span><span class="w"> </span><span class="nt">"components"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"canvas_element"</span><span class="p">,</span><span class="w"> </span><span class="nt">"kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Panel"</span><span class="p">,</span>
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">    </span><span class="nt">"anchor"</span><span class="p">:</span><span class="w"> </span><span class="s2">"BottomCenter"</span><span class="p">,</span><span class="w"> </span><span class="nt">"offsetY"</span><span class="p">:</span><span class="w"> </span><span class="mi">12</span><span class="p">,</span><span class="w"> </span><span class="nt">"width"</span><span class="p">:</span><span class="w"> </span><span class="mi">364</span><span class="p">,</span><span class="w"> </span><span class="nt">"height"</span><span class="p">:</span><span class="w"> </span><span class="mi">40</span><span class="p">,</span>
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">    </span><span class="nt">"layout"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"direction"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Row"</span><span class="p">,</span><span class="w"> </span><span class="nt">"gap"</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="nt">"padding"</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="nt">"align"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Center"</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">],</span>
+</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">  </span><span class="nt">"children"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Slot1"</span><span class="p">,</span><span class="w"> </span><span class="nt">"components"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"canvas_element"</span><span class="p">,</span><span class="w"> </span><span class="nt">"kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Image"</span><span class="p">,</span><span class="w"> </span><span class="nt">"order"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
+</span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">        </span><span class="nt">"width"</span><span class="p">:</span><span class="w"> </span><span class="mi">32</span><span class="p">,</span><span class="w"> </span><span class="nt">"height"</span><span class="p">:</span><span class="w"> </span><span class="mi">32</span><span class="p">,</span><span class="w"> </span><span class="nt">"style"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"image"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"path"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ui/slot.png"</span><span class="p">,</span><span class="w"> </span><span class="nt">"pixelated"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-10-7"><a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="w">  </span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
 </span></code></pre></div>
 <table>
 <thead>
@@ -3406,10 +3498,10 @@ screen edge; <code>followOffset</code> moves the point in the world first, such 
 head. It hides while the node is behind the camera, and when no node has that name; when several
 share it, the first is followed. Unlike at a screen edge, a negative offset moves the element outward
 from the point.</p>
-<div class="language-json highlight"><span class="filename">A name plate above a character</span><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"canvas_element"</span><span class="p">,</span><span class="w"> </span><span class="nt">"text"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Harbor Guard"</span><span class="p">,</span><span class="w"> </span><span class="nt">"follow"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Guard"</span><span class="p">,</span>
-</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">  </span><span class="nt">"followOffset"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"x"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="nt">"y"</span><span class="p">:</span><span class="w"> </span><span class="mf">2.2</span><span class="p">,</span><span class="w"> </span><span class="nt">"z"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="nt">"anchor"</span><span class="p">:</span><span class="w"> </span><span class="s2">"BottomCenter"</span><span class="p">,</span><span class="w"> </span><span class="nt">"offsetX"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="nt">"offsetY"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
-</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">  </span><span class="nt">"width"</span><span class="p">:</span><span class="w"> </span><span class="mi">120</span><span class="p">,</span><span class="w"> </span><span class="nt">"height"</span><span class="p">:</span><span class="w"> </span><span class="mi">18</span><span class="p">,</span><span class="w"> </span><span class="nt">"textAlign"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Center"</span><span class="p">,</span>
-</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">  </span><span class="nt">"style"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"textOutline"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"color"</span><span class="p">:</span><span class="w"> </span><span class="s2">"#000000"</span><span class="p">,</span><span class="w"> </span><span class="nt">"width"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+<div class="language-json highlight"><span class="filename">A name plate above a character</span><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"canvas_element"</span><span class="p">,</span><span class="w"> </span><span class="nt">"text"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Harbor Guard"</span><span class="p">,</span><span class="w"> </span><span class="nt">"follow"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Guard"</span><span class="p">,</span>
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span><span class="nt">"followOffset"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"x"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="nt">"y"</span><span class="p">:</span><span class="w"> </span><span class="mf">2.2</span><span class="p">,</span><span class="w"> </span><span class="nt">"z"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="nt">"anchor"</span><span class="p">:</span><span class="w"> </span><span class="s2">"BottomCenter"</span><span class="p">,</span><span class="w"> </span><span class="nt">"offsetX"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="nt">"offsetY"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
+</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">  </span><span class="nt">"width"</span><span class="p">:</span><span class="w"> </span><span class="mi">120</span><span class="p">,</span><span class="w"> </span><span class="nt">"height"</span><span class="p">:</span><span class="w"> </span><span class="mi">18</span><span class="p">,</span><span class="w"> </span><span class="nt">"textAlign"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Center"</span><span class="p">,</span>
+</span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">  </span><span class="nt">"style"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"textOutline"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"color"</span><span class="p">:</span><span class="w"> </span><span class="s2">"#000000"</span><span class="p">,</span><span class="w"> </span><span class="nt">"width"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
 </span></code></pre></div>
 <p>With <code>followBounds</code>, the element instead covers the screen rectangle around the node's meshes and
 everything under it, whatever its own size. Give it children anchored to its corners, and a marker
@@ -3429,12 +3521,12 @@ the size of the element's box in pixels, which fills the box, opaque, inside its
 <code>style.cornerRadius</code> and under its children. The camera's own <code>eye</code>, <code>center</code> and <code>fovYDegrees</code>
 frame it. It renders the whole scene, as the main view does, so place what it looks at where the
 main camera does not see it.</p>
-<div class="language-json highlight"><span class="filename">Two nodes: a portrait camera and the window that shows it</span><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="p">[</span>
-</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Portrait Camera"</span><span class="p">,</span><span class="w"> </span><span class="nt">"components"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"camera"</span><span class="p">,</span><span class="w"> </span><span class="nt">"primary"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
-</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">    </span><span class="nt">"eye"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"x"</span><span class="p">:</span><span class="w"> </span><span class="mi">100</span><span class="p">,</span><span class="w"> </span><span class="nt">"y"</span><span class="p">:</span><span class="w"> </span><span class="mf">1.5</span><span class="p">,</span><span class="w"> </span><span class="nt">"z"</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="nt">"center"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"x"</span><span class="p">:</span><span class="w"> </span><span class="mi">100</span><span class="p">,</span><span class="w"> </span><span class="nt">"y"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">"z"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="nt">"fovYDegrees"</span><span class="p">:</span><span class="w"> </span><span class="mi">40</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">},</span>
-</span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Portrait"</span><span class="p">,</span><span class="w"> </span><span class="nt">"components"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"canvas_element"</span><span class="p">,</span><span class="w"> </span><span class="nt">"kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">"View"</span><span class="p">,</span><span class="w"> </span><span class="nt">"camera"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Portrait Camera"</span><span class="p">,</span>
-</span><span id="__span-11-5"><a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">    </span><span class="nt">"anchor"</span><span class="p">:</span><span class="w"> </span><span class="s2">"CenterLeft"</span><span class="p">,</span><span class="w"> </span><span class="nt">"width"</span><span class="p">:</span><span class="w"> </span><span class="mi">240</span><span class="p">,</span><span class="w"> </span><span class="nt">"height"</span><span class="p">:</span><span class="w"> </span><span class="mi">320</span><span class="p">,</span><span class="w"> </span><span class="nt">"style"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"cornerRadius"</span><span class="p">:</span><span class="w"> </span><span class="mi">8</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
-</span><span id="__span-11-6"><a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="p">]</span>
+<div class="language-json highlight"><span class="filename">Two nodes: a portrait camera and the window that shows it</span><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="p">[</span>
+</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Portrait Camera"</span><span class="p">,</span><span class="w"> </span><span class="nt">"components"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"camera"</span><span class="p">,</span><span class="w"> </span><span class="nt">"primary"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+</span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">    </span><span class="nt">"eye"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"x"</span><span class="p">:</span><span class="w"> </span><span class="mi">100</span><span class="p">,</span><span class="w"> </span><span class="nt">"y"</span><span class="p">:</span><span class="w"> </span><span class="mf">1.5</span><span class="p">,</span><span class="w"> </span><span class="nt">"z"</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="nt">"center"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"x"</span><span class="p">:</span><span class="w"> </span><span class="mi">100</span><span class="p">,</span><span class="w"> </span><span class="nt">"y"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">"z"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="nt">"fovYDegrees"</span><span class="p">:</span><span class="w"> </span><span class="mi">40</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">},</span>
+</span><span id="__span-12-4"><a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Portrait"</span><span class="p">,</span><span class="w"> </span><span class="nt">"components"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"canvas_element"</span><span class="p">,</span><span class="w"> </span><span class="nt">"kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">"View"</span><span class="p">,</span><span class="w"> </span><span class="nt">"camera"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Portrait Camera"</span><span class="p">,</span>
+</span><span id="__span-12-5"><a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">    </span><span class="nt">"anchor"</span><span class="p">:</span><span class="w"> </span><span class="s2">"CenterLeft"</span><span class="p">,</span><span class="w"> </span><span class="nt">"width"</span><span class="p">:</span><span class="w"> </span><span class="mi">240</span><span class="p">,</span><span class="w"> </span><span class="nt">"height"</span><span class="p">:</span><span class="w"> </span><span class="mi">320</span><span class="p">,</span><span class="w"> </span><span class="nt">"style"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"cornerRadius"</span><span class="p">:</span><span class="w"> </span><span class="mi">8</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-12-6"><a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="p">]</span>
 </span></code></pre></div>
 <p>With no node of that name, no camera on it, or no renderer, the element draws only its style. A
 host that draws <code>SceneCanvas</code> itself passes the runtime's <code>canvasViews(world)</code> to show views: the
@@ -3444,6 +3536,16 @@ runtime renders each picture before the frame's UI and frees it once nothing dra
 element's size, offset, text and image pixels. A HUD drawn from 1x pixel art reads at 2 on a large
 screen. Every edge lands on a whole pixel at any scale, so the art stays crisp; at a fractional scale
 such as 1.5, some of its pixels are a screen pixel wider than others.</p>
+<h2 id="limit-what-is-typed">Limit what is typed</h2>
+<p>Give a <code>TextField</code> a <code>maxLength</code> to stop typing, pasting and IME input there, as a chat line needs.
+It counts the characters a player sees (<code>maxLengthUnit: "Graphemes"</code>), so a family emoji, a flag or
+a thumbs-up with a skin tone is one character, and input is cut between characters, never inside
+one. If your server limits a line by code points or by UTF-8 bytes, set <code>maxLengthUnit</code> to
+<code>CodePoints</code> or <code>Utf8Bytes</code> with the server's number, so nothing the field accepts is refused or cut
+when it arrives. A system writing <code>text</code> is not limited.</p>
+<p>The caret, the arrow keys, Backspace, Delete and selection also step a whole character at a time.
+Emoji draw as the font's missing-glyph box until colour emoji fonts are supported, one box for each
+emoji.</p>
 <h2 id="how-it-works">How it works</h2>
 <p>When a scene has any <code>canvas_element</code>, the scene runtime draws every visible element with
 <code>SceneCanvas(world)</code> each frame. It does this even when the app declares no <code>ui { }</code>. The canvas is
@@ -3470,17 +3572,17 @@ element is drawn only when <code>SceneCanvas(world, showTouchControls = true)</c
 a <code>jump</code> button jumps while held and a <code>run</code> button runs, as the keys do, and a button for an action of
 your own holds and presses that action.</p>
 <p>If your app runs its own Compose host, draw the canvas yourself:</p>
-<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">host</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ComposeHost</span><span class="p">()</span>
-</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="n">host</span><span class="p">.</span><span class="na">frame</span><span class="p">(</span><span class="n">FrameInput</span><span class="p">(</span><span class="n">viewportWidth</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">800</span><span class="p">,</span><span class="w"> </span><span class="n">viewportHeight</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">600</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">SceneCanvas</span><span class="p">(</span><span class="n">world</span><span class="p">)</span><span class="w"> </span><span class="p">}</span>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">host</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ComposeHost</span><span class="p">()</span>
+</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="n">host</span><span class="p">.</span><span class="na">frame</span><span class="p">(</span><span class="n">FrameInput</span><span class="p">(</span><span class="n">viewportWidth</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">800</span><span class="p">,</span><span class="w"> </span><span class="n">viewportHeight</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">600</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">SceneCanvas</span><span class="p">(</span><span class="n">world</span><span class="p">)</span><span class="w"> </span><span class="p">}</span>
 </span></code></pre></div>
 <p>A host that runs on <code>SceneAppLifecycleRuntime</code> but shows the game in part of its window, as an
 editor's game view does, sets <code>drawsSceneCanvas = false</code> and draws the canvas over that part in its
 <code>ui { }</code> content, with the runtime's projector and views so followers and <code>View</code>s draw. Here the game
 view shows <code>play</code>, the world an editor plays the scene in, which the runtime's render system draws in
 place of its own; leave the world out to use the runtime's own.</p>
-<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="n">Box</span><span class="p">(</span><span class="n">Modifier</span><span class="p">.</span><span class="na">padding</span><span class="p">(</span><span class="n">start</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">100.</span><span class="n">dp</span><span class="p">,</span><span class="w"> </span><span class="n">top</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">50.</span><span class="n">dp</span><span class="p">).</span><span class="na">size</span><span class="p">(</span><span class="m">400.</span><span class="n">dp</span><span class="p">,</span><span class="w"> </span><span class="m">300.</span><span class="n">dp</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">    </span><span class="n">SceneCanvas</span><span class="p">(</span><span class="n">play</span><span class="p">,</span><span class="w"> </span><span class="n">projector</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">runtime</span><span class="p">.</span><span class="na">canvasProjector</span><span class="p">(</span><span class="n">play</span><span class="p">),</span><span class="w"> </span><span class="n">views</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">runtime</span><span class="p">.</span><span class="na">canvasViews</span><span class="p">(</span><span class="n">play</span><span class="p">))</span>
-</span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="p">}</span>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="n">Box</span><span class="p">(</span><span class="n">Modifier</span><span class="p">.</span><span class="na">padding</span><span class="p">(</span><span class="n">start</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">100.</span><span class="n">dp</span><span class="p">,</span><span class="w"> </span><span class="n">top</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">50.</span><span class="n">dp</span><span class="p">).</span><span class="na">size</span><span class="p">(</span><span class="m">400.</span><span class="n">dp</span><span class="p">,</span><span class="w"> </span><span class="m">300.</span><span class="n">dp</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">    </span><span class="n">SceneCanvas</span><span class="p">(</span><span class="n">play</span><span class="p">,</span><span class="w"> </span><span class="n">projector</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">runtime</span><span class="p">.</span><span class="na">canvasProjector</span><span class="p">(</span><span class="n">play</span><span class="p">),</span><span class="w"> </span><span class="n">views</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">runtime</span><span class="p">.</span><span class="na">canvasViews</span><span class="p">(</span><span class="n">play</span><span class="p">))</span>
+</span><span id="__span-14-3"><a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="p">}</span>
 </span></code></pre></div>
 <div class="admonition warning">
 <p class="admonition-title">One tap, one reader</p>

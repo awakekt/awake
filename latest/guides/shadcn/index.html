@@ -1855,6 +1855,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#choose-a-density" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Choose a density
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#read-theme-tokens" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2383,6 +2394,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#choose-a-density" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Choose a density
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#read-theme-tokens" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2514,14 +2536,134 @@ colours.</p>
 </table>
 <p>The <code>ShadcnTheme</code> object is the default theme: <code>Vega</code>, <code>Neutral</code>, <code>Base</code>, dark. Wrap it as
 <code>ShadcnThemeValues(ShadcnTheme)</code> to provide it.</p>
+<h2 id="choose-a-density">Choose a density</h2>
+<p>Components take shadcn's own sizes by default. A dense UI, such as an editor, can ask for the next
+size down once instead of passing a small size at every call. <code>LocalShadcnDensity</code> holds the density
+for its content; it is <code>ShadcnDensity.Default</code> when nothing provides one, so a UI that never mentions
+it is unchanged.</p>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">CompositionLocalProvider</span><span class="p">(</span><span class="n">LocalShadcnDensity</span><span class="w"> </span><span class="n">provides</span><span class="w"> </span><span class="n">ShadcnDensity</span><span class="p">.</span><span class="na">Compact</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span><span class="n">ShadcnButton</span><span class="p">(</span><span class="s">"Apply"</span><span class="p">,</span><span class="w"> </span><span class="n">modifier</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Modifier</span><span class="p">.</span><span class="na">testTag</span><span class="p">(</span><span class="s">"compact-default"</span><span class="p">))</span><span class="w"> </span><span class="c1">// 32 dp, as `Sm`</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span><span class="n">ShadcnButton</span><span class="p">(</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">        </span><span class="s">"Apply"</span><span class="p">,</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">        </span><span class="n">modifier</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Modifier</span><span class="p">.</span><span class="na">testTag</span><span class="p">(</span><span class="s">"compact-explicit"</span><span class="p">),</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">        </span><span class="n">size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ShadcnButtonSizeVariant</span><span class="p">.</span><span class="na">Lg</span><span class="p">,</span><span class="w"> </span><span class="c1">// 40 dp: a size passed here always wins</span>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">    </span><span class="p">)</span>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="p">}</span>
+</span></code></pre></div>
+<div class="awake-figures">
+<figure>
+<p><img alt="A form at the Default density: 36 dp inputs, buttons and select" src="../../assets/ui/shadcn-density-default.png" /></p>
+<figcaption><code>Default</code></figcaption>
+</figure>
+<figure>
+<p><img alt="The same form at the Compact density: 28 dp inputs and select, 32 dp buttons, smaller labels" src="../../assets/ui/shadcn-density-compact.png" /></p>
+<figcaption><code>Compact</code></figcaption>
+</figure>
+</div>
+<p>Only size and spacing change. Colours, radii and fonts are the theme's, and the one type change is
+<code>text-xs</code> for form labels and descriptions where shadcn uses <code>text-sm</code>. A size you pass, such as
+<code>size = ShadcnButtonSizeVariant.Lg</code>, always wins over the density.</p>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th><code>Default</code></th>
+<th><code>Compact</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Button, button group member</td>
+<td>36 dp (<code>Default</code>)</td>
+<td>32 dp (<code>Sm</code>)</td>
+</tr>
+<tr>
+<td>Input, input group, combobox field</td>
+<td>36 dp, <code>px-3</code></td>
+<td>28 dp, <code>px-2</code></td>
+</tr>
+<tr>
+<td>Textarea</td>
+<td>at least 64 dp</td>
+<td>at least 48 dp</td>
+</tr>
+<tr>
+<td>Select trigger</td>
+<td>36 dp, <code>px-3</code></td>
+<td>28 dp, <code>px-2</code></td>
+</tr>
+<tr>
+<td>Select, combobox, menu and context menu rows</td>
+<td>32 dp</td>
+<td>28 dp</td>
+</tr>
+<tr>
+<td>Checkbox</td>
+<td>16 dp</td>
+<td>14 dp</td>
+</tr>
+<tr>
+<td>Switch</td>
+<td>32 × 18 dp</td>
+<td>28 × 16 dp</td>
+</tr>
+<tr>
+<td>Radio ring, option gap</td>
+<td>16 dp, 12 dp</td>
+<td>14 dp, 8 dp</td>
+</tr>
+<tr>
+<td>Toggle</td>
+<td>40 dp</td>
+<td>32 dp</td>
+</tr>
+<tr>
+<td>Toggle group item</td>
+<td>36 dp (<code>Default</code>)</td>
+<td>32 dp (<code>Sm</code>)</td>
+</tr>
+<tr>
+<td>Tabs, every variant</td>
+<td>36 dp (<code>Default</code>)</td>
+<td>28 dp (<code>Sm</code>)</td>
+</tr>
+<tr>
+<td>Table head, cell padding</td>
+<td>40 dp, <code>p-2</code></td>
+<td>32 dp, <code>px-2 py-1.5</code></td>
+</tr>
+<tr>
+<td>List item row (<code>ShadcnItem</code>, command palette)</td>
+<td><code>px-4 py-3</code></td>
+<td><code>px-3 py-2</code></td>
+</tr>
+<tr>
+<td>Label, field label, field description</td>
+<td><code>text-sm</code></td>
+<td><code>text-xs</code></td>
+</tr>
+<tr>
+<td>Field, field group and field set gaps</td>
+<td>12, 28, 24 dp</td>
+<td>8, 20, 16 dp</td>
+</tr>
+<tr>
+<td>Popover and hover card padding</td>
+<td><code>p-4</code></td>
+<td><code>p-3</code></td>
+</tr>
+</tbody>
+</table>
+<p>The icon sizes (<code>Icon</code>, <code>IconSm</code>, <code>IconXs</code>) are always passed, so they stay as written: a dense UI
+asks for <code>IconSm</code> or <code>IconXs</code> by name.</p>
 <h2 id="read-theme-tokens">Read theme tokens</h2>
 <p>Inside <code>provideShadcnTheme</code>, <code>shadcnTheme</code> returns the theme in scope. Use its tokens instead of
 fixed colours, so your own components follow the theme.</p>
-<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">context</span><span class="p">(</span><span class="n">_</span><span class="p">:</span><span class="w"> </span><span class="n">Composer</span><span class="p">)</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="kd">fun</span><span class="w"> </span><span class="nf">StatusDot</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span><span class="kd">val</span><span class="w"> </span><span class="nv">theme</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">shadcnTheme</span>
-</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span><span class="n">Box</span><span class="p">(</span><span class="n">Modifier</span><span class="p">.</span><span class="na">size</span><span class="p">(</span><span class="m">12.</span><span class="n">dp</span><span class="p">).</span><span class="na">background</span><span class="p">(</span><span class="n">theme</span><span class="p">.</span><span class="na">palette</span><span class="p">.</span><span class="na">primary</span><span class="p">,</span><span class="w"> </span><span class="n">theme</span><span class="p">.</span><span class="na">radii</span><span class="p">.</span><span class="na">full</span><span class="p">))</span>
-</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="p">}</span>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">context</span><span class="p">(</span><span class="n">_</span><span class="p">:</span><span class="w"> </span><span class="n">Composer</span><span class="p">)</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="kd">fun</span><span class="w"> </span><span class="nf">StatusDot</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span><span class="kd">val</span><span class="w"> </span><span class="nv">theme</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">shadcnTheme</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="n">Box</span><span class="p">(</span><span class="n">Modifier</span><span class="p">.</span><span class="na">size</span><span class="p">(</span><span class="m">12.</span><span class="n">dp</span><span class="p">).</span><span class="na">background</span><span class="p">(</span><span class="n">theme</span><span class="p">.</span><span class="na">palette</span><span class="p">.</span><span class="na">primary</span><span class="p">,</span><span class="w"> </span><span class="n">theme</span><span class="p">.</span><span class="na">radii</span><span class="p">.</span><span class="na">full</span><span class="p">))</span>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="p">}</span>
 </span></code></pre></div>
 <table>
 <thead>
