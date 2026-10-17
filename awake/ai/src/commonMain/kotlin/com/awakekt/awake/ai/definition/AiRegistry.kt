@@ -7,13 +7,14 @@ package com.awakekt.awake.ai.definition
 
 import com.awakekt.awake.ai.AiJson
 import com.awakekt.awake.ai.btree.BehaviorTree
+import com.awakekt.awake.ai.perception.PerceptionNodeKinds
 import com.awakekt.awake.core.schema.PropertySchema
 import com.awakekt.awake.core.schema.propertySchemaOf
 
 /**
  * The node and state kinds definitions may use: a kind id mapped to typed parameters and a factory.
  *
- * Core's kinds (see [BuiltInNodeKinds]) are registered unless [includeBuiltIns] is false. A game or
+ * Core's kinds (see [BuiltInNodeKinds] and [PerceptionNodeKinds]) are registered unless [includeBuiltIns] is false. A game or
  * plugin registers its own with [register], or with the shorthands [action], [condition] and
  * [state]. Registration is explicit and an id is registered once, so a palette shows exactly what a
  * project registered.
@@ -28,7 +29,10 @@ class AiRegistry(includeBuiltIns: Boolean = true) {
     private val states = LinkedHashMap<StateKindId, StateKind<*>>()
 
     init {
-        if (includeBuiltIns) BuiltInNodeKinds.registerInto(this)
+        if (includeBuiltIns) {
+            BuiltInNodeKinds.registerInto(this)
+            PerceptionNodeKinds.nodeKinds.forEach(::register)
+        }
     }
 
     /** The registered node kinds, in registration order. */

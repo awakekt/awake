@@ -164,6 +164,7 @@ public final class com/awakekt/awake/navigation/grid/NavGridPathKt {
 	public static final fun findPath (Lcom/awakekt/awake/navigation/grid/NavField;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;)Ljava/util/List;
 	public static final fun findPath (Lcom/awakekt/awake/navigation/grid/NavGridTile;IIII)Ljava/util/List;
 	public static final fun findPath (Lcom/awakekt/awake/navigation/grid/NavGridTile;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;)Ljava/util/List;
+	public static final fun hasLineOfSight (Lcom/awakekt/awake/navigation/grid/NavField;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;)Z
 	public static final fun smoothPath (Lcom/awakekt/awake/navigation/grid/NavField;Ljava/util/List;)Ljava/util/List;
 	public static final fun smoothPath (Lcom/awakekt/awake/navigation/grid/NavGridTile;Ljava/util/List;)Ljava/util/List;
 }

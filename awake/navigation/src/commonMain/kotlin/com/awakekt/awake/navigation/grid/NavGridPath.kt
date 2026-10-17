@@ -119,6 +119,22 @@ fun NavField.smoothPath(path: List<Vec3f>): List<Vec3f> {
 }
 
 /**
+ * Whether a straight line on the ground plane from [from] to [to] crosses only walkable samples, by
+ * the same rule path smoothing straightens a path by. Heights are ignored. A sense that asks whether
+ * one agent can see another over the grid asks this.
+ *
+ * @param from World position of one end.
+ * @param to World position of the other end.
+ * @return True when every sample the line touches is walkable, including both ends.
+ */
+fun NavField.hasLineOfSight(from: Vec3f, to: Vec3f): Boolean {
+    val startX = sampleAt(from.x, originX)
+    val startZ = sampleAt(from.z, originZ)
+    return isWalkable(startX, startZ) &&
+        hasLineOfSight(startX, startZ, sampleAt(to.x, originX), sampleAt(to.z, originZ))
+}
+
+/**
  * Whether the segment between two sample centres crosses only walkable samples.
  *
  * A supercover traversal, visiting every sample the segment touches rather than the one-per-column

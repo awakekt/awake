@@ -17,6 +17,8 @@ JSON that a game authors without code.
 - **Definitions (`definition/`)**: `BehaviorTreeDefinition` and `StateMachineDefinition`, the
   `AiRegistry` of node and state kinds, Core's kinds in `BuiltInNodeKinds`, `AiDefinitionJson`, and
   the `awake:node-graph` bridge an editor uses.
+- **Perception (`perception/`)**: `Perceiver`, `Perceivable`, `PerceptionSystem`, `PerceptionMemory`,
+  the `FactionTable`, the settings, and the `ai.perception.*` conditions.
 - **`AiContext`**: what a node or state is ticked with: the world, the entity, the delta, the
   blackboard, and the `AiEventSink` emitted events go to.
 
@@ -86,6 +88,38 @@ without entering it again. A node or state keeps its state through `Snapshottabl
 state class and its serializer; a game's own stateful nodes implement it too. A blackboard snapshot
 holds the `BlackboardValue` types only, and names the key of anything else it meets.
 
+## Perception
+
+Agents see, hear, remember and tell friend from foe, as a mechanism: what the factions are, and
+what an agent does about what it perceives, is the game's data.
+
+- **Sight.** `SightSettings` give a focus cone (`focusRange`, `focusAngle`) and a wider, shorter
+  peripheral cone, from `eyeHeight`. A target in a cone is seen when the `LineOfSight` between them
+  is clear. `LineOfSight` is one function, so a host answers it from what it has: Core's physics
+  raycast, `NavFieldLineOfSight` over a navigation grid (`awake:ai:behavior`), or its own geometry.
+  A `Perceivable` with `visible = false` is not seen.
+- **Hearing.** `PerceptionSystem.hear(SoundEvent)` reaches every perceiver within
+  `HearingSettings.range` times its loudness. A sound the line of sight says is blocked reaches only
+  `muffledBy` as far.
+- **Memory.** `PerceptionMemory` keeps each perceived entity's last known position, when and how it
+  was sensed, and its relation, plus the latest noise, and forgets after `forgetAfter` seconds. It
+  snapshots to data.
+- **Factions.** A `FactionTable` of `FactionRelation` rows (hostile, neutral or friendly, one-way or
+  mutual) with defaults for unnamed pairs and for a faction toward itself.
+- **Budget.** Each perceiver looks every `updateInterval` seconds, staggered across agents, and at
+  most `maxSightUpdates` look in one update; the ones left over look first next time. Hearing is
+  not budgeted. With 1,000 agents among 1,000 targets at 60 updates a second and a budget of 100
+  looks, an update costs about 0.6 ms on a desktop JVM (`PerceptionCostTest`).
+- **Into behaviour.** After each update the system writes the agent's behaviour-tree or
+  state-machine blackboard: the target (nearest hostile in sight, else the latest remembered), its
+  position, whether a hostile is in sight, how many, and the latest noise's position. The keys are
+  `PerceptionKeys`, data like the rest of `PerceptionSettings`. The registry's
+  `ai.perception.sees`, `ai.perception.remembers` and `ai.perception.heard` conditions read the
+  memory directly.
+
+`PerceptionSystem` reads where entities are and which way they face through a `PerceptionSpace`,
+which the host supplies; run it before the behaviour systems.
+
 ## Editors
 
 - `AiRegistry.parameterSchema(kind)` describes a kind's parameters (names, types, defaults, ranges,
@@ -112,6 +146,8 @@ played scene needs to run them.
 
 - Timers count Float seconds from the deltas they are given.
 - Node states in a snapshot are JSON, so a snapshot is written as JSON.
-- Core has no movement or perception kinds yet; a game registers its own, such as the action that
-  moves its agents.
+- Core has no movement kinds yet; a game registers its own, such as the action that moves its agents.
+- Sight checks every perceivable entity for each looking agent; there is no spatial index yet.
+- Core ships no `PerceptionSpace` over scene transforms and no physics `LineOfSight` yet; a host
+  writes those few lines itself.
 - A state machine has no graph conversion yet; a visual editor edits its trees.
