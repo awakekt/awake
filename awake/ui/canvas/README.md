@@ -148,3 +148,19 @@ A `Joystick` is a round pad of `width` across; dragging its knob sets `stickX` a
 taps through `consumePress()`. `action` names what an element does for the game, such as `move` or
 `jump`, and a `touchOnly` element is drawn only when `CanvasOverlay(items, showTouchControls = true)`
 says a touch screen is in use.
+
+A Joystick's `joystick` settings, a `CanvasJoystick`, shape it:
+
+- `mode`: `Fixed` keeps the pad centred in the element; `Floating` makes the element a zone, such as
+  the left half of the screen, where the pad appears under the thumb; `Dynamic` also drags the pad
+  along once the thumb goes past its reach. An untouched floating pad waits at `restX`, `restY`.
+- `radius`: the knob's reach in dp, by default half the element's shorter side when fixed.
+- `deadZone`, then `response` (`Linear`, `Quadratic`, `Cubic`) or a `curve` of points, then
+  `directions` (`Analog`, `Four`, `Eight`) turn the knob's position into `stickX` and `stickY`.
+- `snapBack` false holds the last deflection after a release.
+- `sprintThreshold` sets `sprinting`, and `consumeSprintStart()` once, while the knob is that far out;
+  a played project holds `sprintAction` then.
+- `idleAlpha`, `idleDelay` and `fadeSeconds` fade the stick while nobody touches it.
+
+Each stick follows only the pointer that landed on it first, so one thumb steers while another
+presses buttons, and a second thumb landing on the stick does not take it.

@@ -9,7 +9,6 @@ package com.awakekt.awake.ui.canvas
 
 import com.awakekt.awake.compose.foundation.background
 import com.awakekt.awake.compose.foundation.clickable
-import com.awakekt.awake.compose.foundation.gestures.draggable
 import com.awakekt.awake.compose.foundation.gestures.onWheel
 import com.awakekt.awake.compose.foundation.hoverable
 import com.awakekt.awake.compose.foundation.layout.Box
@@ -37,6 +36,7 @@ import com.awakekt.awake.compose.runtime.provides
 import com.awakekt.awake.compose.runtime.remember
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
+import com.awakekt.awake.compose.ui.draw.alpha
 import com.awakekt.awake.compose.ui.draw.clip
 import com.awakekt.awake.compose.ui.draw.drawBehind
 import com.awakekt.awake.compose.ui.draw.graphicsLayer
@@ -377,7 +377,11 @@ private fun SweepFill(value: Float, color: Color, picture: ImageFill?) {
 /** 12 o'clock, in `arcTo`'s degrees clockwise from the positive X axis. */
 private const val SWEEP_START_DEGREES = 270f
 
-/** A round pad whose knob follows a drag, up to the pad's edge, and springs back on release. */
+/**
+ * A round pad whose knob follows the pointer holding it, up to the pad's reach, and what its
+ * [CanvasElement.joystick] settings make of that: where the pad sits, and how it fades while idle.
+ * The element's box is where a thumb may land; the pad and knob are drawn inside it.
+ */
 context(_: Composer)
 private fun JoystickView(
     element: CanvasElement,
@@ -387,19 +391,20 @@ private fun JoystickView(
     children: List<CanvasItem>,
 ) {
     val density = LocalDensity.current
-    val radius = minOf(element.width, element.height) / 2f * density
-    Box(
-        modifier.clip(CircleShape).background(back)
-            .draggable(
-                onDrag = { dx, dy -> element.dragStick(dx.toFloat(), dy.toFloat(), radius) },
-                onDragStopped = element::releaseStick,
-            ),
-        contentAlignment = Alignment.Center,
-    ) {
-        val size = minOf(element.width, element.height) * KNOB_FRACTION
+    val settings = element.joystick ?: CanvasJoystick.Default
+    val stick = element.stick
+    val width = element.width
+    val height = element.height
+    val reach = settings.radiusIn(width, height)
+    val centerX = stick.padCenterX(width, height, settings)
+    val centerY = stick.padCenterY(width, height, settings)
+    val alpha = stick.alpha(settings)
+    Box(modifier.stickInput(element, density).let { if (alpha < 1f) it.alpha(alpha) else it }) {
+        Box(Modifier.offset((centerX - reach).dp, (centerY - reach).dp).size((reach * 2f).dp).clip(CircleShape).background(back))
+        val knob = reach * 2f * KNOB_FRACTION
         Box(
-            Modifier.offset((element.knobX / density).dp, (element.knobY / density).dp)
-                .size(size.dp).clip(CircleShape).background(colorOf(element.color, Color.White)),
+            Modifier.offset((centerX + stick.knobX - knob / 2f).dp, (centerY + stick.knobY - knob / 2f).dp)
+                .size(knob.dp).clip(CircleShape).background(colorOf(element.color, Color.White)),
         )
         Children(element, children, tree)
     }

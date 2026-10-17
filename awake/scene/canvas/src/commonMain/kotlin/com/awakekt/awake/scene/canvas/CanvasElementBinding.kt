@@ -86,6 +86,7 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         element.maxLengthUnit = maxLengthUnit
         element.font = font
         element.pressable = pressable
+        element.joystick = joystick
     }
 
     /**
@@ -134,5 +135,6 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         maxLengthUnit = maxLengthUnit,
         font = font,
         pressable = pressable,
+        joystick = joystick,
     )
 }

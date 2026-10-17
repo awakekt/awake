@@ -26,7 +26,7 @@ Core's capabilities decide what runs, each for the components it owns:
 | Scene component | What runs |
 |---|---|
 | `movement_control`, `input_actions` | `PlayerInputSystem`: the keys and pointer buttons into the scene's input actions, which a player's `movement_control` follows (`move`, `jump`, `run`); moved by physics with `character_controller`, straight through the world without |
-| `canvas_element` with an `action` | `CanvasActionSystem`: an element naming one of the scene's input actions adds to it, so a `move` Joystick steers, a `jump` Button jumps and a `run` Button runs as the keys do |
+| `canvas_element` with an `action` | `CanvasActionSystem`: an element naming one of the scene's input actions adds to it, and a Joystick past its `joystick.sprintThreshold` holds its `sprintAction`, so a `move` Joystick steers, a `jump` Button jumps and a `run` Button runs as the keys do |
 | `canvas_element` with a `style` image | Nothing runs: `loadProject` decodes the images, under `CoreSceneContent.CanvasImages`, and `runProject` gives them to the runtime that draws the canvas. With `hasRenderer = false` it only checks that they resolve |
 | `canvas_element` with a `textKey` | Nothing runs: `loadProject` loads the project's `strings/` tables (`LoadedProject.strings`), in the device's locale and the default, English, and `runProject` gives them to the runtime, which shows each key's text and the new locale's the frame after `setLocale`. A project with no `strings/en.json` has none, and its keys show as they are |
 | `camera_rig` | `CameraSystem` |
