@@ -54,7 +54,7 @@ internal fun breakIntoLineLayouts(
 
     val out = mutableListOf<TextLineLayout>()
     for (hardLine in hardLines) {
-        if (hardLine.text.isEmpty() || widthOf(hardLine.text) <= maxWidthPx) {
+        if (hardLine.text.isEmpty() || fits(widthOf(hardLine.text), maxWidthPx)) {
             out += hardLine
             continue
         }
@@ -67,7 +67,7 @@ internal fun breakIntoLineLayouts(
             }
             val word = text.substring(wordStart, wordEnd)
             val candidate = if (current.isEmpty()) word else "$current $word"
-            if (current.isNotEmpty() && widthOf(candidate) > maxWidthPx) {
+            if (current.isNotEmpty() && !fits(widthOf(candidate), maxWidthPx)) {
                 out += TextLineLayout(current.toString(), currentStart, wordStart - 1)
                 current = StringBuilder(word)
                 currentStart = wordStart
@@ -81,3 +81,13 @@ internal fun breakIntoLineLayouts(
     }
     return out
 }
+
+/**
+ * Whether a line of [widthPx] fits in [maxWidthPx], judged on the whole pixel the line is sized to.
+ *
+ * A measured line is rounded to the nearest pixel, and so is the intrinsic width a parent plans
+ * with. Comparing the unrounded width instead wraps the last word of a label measured at exactly
+ * its own intrinsic width whenever the line rounded down: a two-word label in a FlexBox, sized to
+ * its maximum intrinsic width, came back two lines tall.
+ */
+private fun fits(widthPx: Float, maxWidthPx: Float): Boolean = widthPx < maxWidthPx + 0.5f

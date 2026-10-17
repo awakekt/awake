@@ -85,21 +85,14 @@ class TextMeasurePolicy(
                 cached.alignmentLines,
             ) {}
         }
-        val glyphPx = glyphPixels()
+        val glyphPx = glyphPixels(density, fontScale)
         val lines = linesAt(glyphPx, wrapWidthPx)
         // Placeables are integer-pixel sized today. Quantize the complete intrinsic line once,
         // after weighted glyph advances and letter spacing have been summed, so sibling rows do
         // not accumulate a ceiling error for every label. This is the deterministic boundary
         // until the retained layout model carries fractional bounds end to end.
         val width = lines.maxOf { lineWidth(it, glyphPx) }.roundToInt()
-        val rawLineHeight = oneLineHeight(glyphPx)
-        // A compact line-height is fine for one line, but cannot be allowed to make adjacent
-        // multiline glyph quads overlap the font's own vertical metrics.
-        val safeLineHeight = if (lines.size > 1) {
-            maxOf(rawLineHeight, glyphPx * font.lineHeightEm)
-        } else {
-            rawLineHeight
-        }
+        val safeLineHeight = safeLineHeight(oneLineHeight(glyphPx), glyphPx * font.lineHeightEm, lines.size)
         val lineHeight = ceil(safeLineHeight).roundToInt()
         val height = lineHeight * lines.size
         val fontH = glyphPx * font.lineHeightEm
@@ -126,8 +119,10 @@ class TextMeasurePolicy(
      * so every label reported that it wanted no width at all, and anything sizing itself to its
      * content got nothing back. A dropdown asking for its widest item was told 0.
      */
-    override fun Density.maxIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int): Int =
-        widestLine(Float.POSITIVE_INFINITY)
+    override fun Density.maxIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int): Int {
+        val glyphPx = glyphPixels(density, fontScale)
+        return linesAt(glyphPx, Float.POSITIVE_INFINITY).maxOfOrNull { lineWidth(it, glyphPx) }?.roundToInt() ?: 0
+    }
 
     /**
      * The longest single word: below that, wrapping cannot help and a glyph would be cut.
@@ -137,17 +132,31 @@ class TextMeasurePolicy(
      * zero-width layout answers with the whole line -- the maximum, wearing the minimum's name.
      */
     override fun Density.minIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int): Int {
-        val glyphPx = glyphPixels()
+        val glyphPx = glyphPixels(density, fontScale)
         return text.split(' ', '\n', '\t')
             .maxOfOrNull { lineWidth(it, glyphPx) }
             ?.roundToInt()
             ?: 0
     }
 
-    private fun Density.widestLine(wrapAt: Float): Int {
-        val glyphPx = glyphPixels()
-        return linesAt(glyphPx, wrapAt).maxOfOrNull { lineWidth(it, glyphPx) }?.roundToInt() ?: 0
+    /**
+     * The height the text takes when wrapped at [width] -- exactly what [measure] would report
+     * there. Unbounded, it is the unwrapped height: one line per hard line.
+     *
+     * Without these a leaf inherits `max over children`, zero: every label told a planning parent
+     * it needed no height, so a FlexBox column gave each one none and a wrapping row planned its
+     * lines as if they held only the icons.
+     */
+    override fun Density.minIntrinsicHeight(measurables: List<IntrinsicMeasurable>, width: Int): Int {
+        val wrapAt = if (singleLine || width == Constraints.Infinity) Float.POSITIVE_INFINITY else width.toFloat()
+        val glyphPx = glyphPixels(density, fontScale)
+        val lineCount = linesAt(glyphPx, wrapAt).size
+        return ceil(safeLineHeight(oneLineHeight(glyphPx), glyphPx * font.lineHeightEm, lineCount)).roundToInt() * lineCount
     }
+
+    /** The same answer as [minIntrinsicHeight]: text has one height at a given width. */
+    override fun Density.maxIntrinsicHeight(measurables: List<IntrinsicMeasurable>, width: Int): Int =
+        minIntrinsicHeight(measurables, width)
 
     /** The width the last measure wrapped at, so painting reproduces the same lines. */
     internal var wrapWidthPx: Float = Float.POSITIVE_INFINITY
@@ -166,19 +175,6 @@ class TextMeasurePolicy(
      */
     private fun Density.oneLineHeight(glyphPx: Float): Float =
         style.lineHeight?.let { it.value * density * fontScale } ?: (glyphPx * font.lineHeightEm)
-
-    /**
-     * Em size in device pixels.
-     *
-     * Snapped to the atlas's own scale step: a bitmap or distance-field atlas is sampled at
-     * discrete sizes, and asking for one in between resamples and blurs. `ui-core` learned this the
-     * same way -- see `pixelPerfectTextScale`.
-     */
-    private fun Density.glyphPixels(): Float {
-        val sizeSp = style.size ?: DefaultFontSize
-        val snapped = pixelPerfectTextScale(style.scale, font.textScaleStep)
-        return (sizeSp.value * density * fontScale * snapped).coerceAtLeast(1f)
-    }
 
     /**
      * One line's advance width. A block is as wide as its longest line, never their sum.
@@ -204,12 +200,27 @@ class TextMeasurePolicy(
     internal fun runFor(density: Float, fontScale: Float): TextRun =
         cache?.runFor(this, density, fontScale, wrapWidthPx) ?: buildRun(density, fontScale)
 
+    /**
+     * Em size in device pixels.
+     *
+     * Snapped to the atlas's own scale step: a bitmap or distance-field atlas is sampled at
+     * discrete sizes, and asking for one in between resamples and blurs. `ui-core` learned this the
+     * same way -- see `pixelPerfectTextScale`.
+     */
     internal fun glyphPixels(density: Float, fontScale: Float): Float {
         val sizeSp = style.size ?: DefaultFontSize
         val snapped = pixelPerfectTextScale(style.scale, font.textScaleStep)
         return (sizeSp.value * density * fontScale * snapped).coerceAtLeast(1f)
     }
 }
+
+/**
+ * One line's box, from the style's line height and the font's own. A compact line-height is fine
+ * for one line, but cannot be allowed to make adjacent multiline glyph quads overlap the font's own
+ * vertical metrics.
+ */
+private fun safeLineHeight(styleLinePx: Float, fontLinePx: Float, lineCount: Int): Float =
+    if (lineCount > 1) maxOf(styleLinePx, fontLinePx) else styleLinePx
 
 /** A fresh run from [TextMeasurePolicy]'s inputs and its last wrap width. */
 internal fun TextMeasurePolicy.buildRun(density: Float, fontScale: Float): TextRun =
