@@ -1499,6 +1499,29 @@ public final class com/awakekt/awake/ai/definition/StateMachineDefinition$Compan
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
+public final class com/awakekt/awake/ai/definition/StateMachineGraphKind : com/awakekt/awake/nodegraph/GraphKind {
+	public static final field FROM Ljava/lang/String;
+	public static final field IN Ljava/lang/String;
+	public static final field INITIAL Ljava/lang/String;
+	public static final field INSTANCE Lcom/awakekt/awake/ai/definition/StateMachineGraphKind;
+	public static final field MACHINE_TYPE Ljava/lang/String;
+	public static final field OUT Ljava/lang/String;
+	public static final field STATE_PORT_TYPE Ljava/lang/String;
+	public static final field STATE_TYPE_PREFIX Ljava/lang/String;
+	public static final field TO Ljava/lang/String;
+	public static final field TRANSITION_PORT_TYPE Ljava/lang/String;
+	public static final field TRANSITION_TYPE Ljava/lang/String;
+	public fun canConnect (Lcom/awakekt/awake/nodegraph/PortSpec;Lcom/awakekt/awake/nodegraph/PortSpec;)Z
+	public fun getAllowsCycles ()Z
+	public fun getId ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/ai/definition/StateMachineGraphKindKt {
+	public static final fun stateMachineNodeRegistry (Lcom/awakekt/awake/ai/definition/AiRegistry;)Lcom/awakekt/awake/nodegraph/NodeRegistry;
+	public static final fun toNodeGraph (Lcom/awakekt/awake/ai/definition/StateMachineDefinition;)Lcom/awakekt/awake/nodegraph/NodeGraph;
+	public static final fun toStateMachineDefinition (Lcom/awakekt/awake/nodegraph/NodeGraph;)Lcom/awakekt/awake/ai/definition/StateMachineDefinition;
+}
+
 public final class com/awakekt/awake/ai/definition/StatusParams {
 	public static final field Companion Lcom/awakekt/awake/ai/definition/StatusParams$Companion;
 	public fun <init> (Lcom/awakekt/awake/ai/btree/BehaviorStatus;)V
@@ -1528,19 +1551,21 @@ public final class com/awakekt/awake/ai/definition/StatusParams$Companion {
 
 public final class com/awakekt/awake/ai/definition/TransitionDefinition {
 	public static final field Companion Lcom/awakekt/awake/ai/definition/TransitionDefinition$Companion;
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;FLcom/awakekt/awake/ai/definition/TreeOutcome;Lcom/awakekt/awake/ai/definition/NodeDefinition;)V
-	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;FLcom/awakekt/awake/ai/definition/TreeOutcome;Lcom/awakekt/awake/ai/definition/NodeDefinition;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;FLcom/awakekt/awake/ai/definition/TreeOutcome;Lcom/awakekt/awake/ai/definition/NodeDefinition;Lcom/awakekt/awake/ai/definition/NodeLayout;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;FLcom/awakekt/awake/ai/definition/TreeOutcome;Lcom/awakekt/awake/ai/definition/NodeDefinition;Lcom/awakekt/awake/ai/definition/NodeLayout;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()Ljava/lang/String;
 	public final fun component3 ()F
 	public final fun component4 ()Lcom/awakekt/awake/ai/definition/TreeOutcome;
 	public final fun component5 ()Lcom/awakekt/awake/ai/definition/NodeDefinition;
-	public final fun copy (Ljava/lang/String;Ljava/lang/String;FLcom/awakekt/awake/ai/definition/TreeOutcome;Lcom/awakekt/awake/ai/definition/NodeDefinition;)Lcom/awakekt/awake/ai/definition/TransitionDefinition;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/ai/definition/TransitionDefinition;Ljava/lang/String;Ljava/lang/String;FLcom/awakekt/awake/ai/definition/TreeOutcome;Lcom/awakekt/awake/ai/definition/NodeDefinition;ILjava/lang/Object;)Lcom/awakekt/awake/ai/definition/TransitionDefinition;
+	public final fun component6 ()Lcom/awakekt/awake/ai/definition/NodeLayout;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;FLcom/awakekt/awake/ai/definition/TreeOutcome;Lcom/awakekt/awake/ai/definition/NodeDefinition;Lcom/awakekt/awake/ai/definition/NodeLayout;)Lcom/awakekt/awake/ai/definition/TransitionDefinition;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ai/definition/TransitionDefinition;Ljava/lang/String;Ljava/lang/String;FLcom/awakekt/awake/ai/definition/TreeOutcome;Lcom/awakekt/awake/ai/definition/NodeDefinition;Lcom/awakekt/awake/ai/definition/NodeLayout;ILjava/lang/Object;)Lcom/awakekt/awake/ai/definition/TransitionDefinition;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAfter ()F
 	public final fun getCondition ()Lcom/awakekt/awake/ai/definition/NodeDefinition;
 	public final fun getFrom ()Ljava/lang/String;
+	public final fun getLayout ()Lcom/awakekt/awake/ai/definition/NodeLayout;
 	public final fun getOnTree ()Lcom/awakekt/awake/ai/definition/TreeOutcome;
 	public final fun getTo ()Ljava/lang/String;
 	public fun hashCode ()I
