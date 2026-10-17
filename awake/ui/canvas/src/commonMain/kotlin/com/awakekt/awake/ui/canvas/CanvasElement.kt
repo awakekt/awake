@@ -49,6 +49,14 @@ enum class CanvasElementKind {
 /**
  * The screen point a [CanvasElement] is pinned to. Its offset moves it inward from an edge, and
  * along a centred axis right or down, or left or up when negative.
+ *
+ * On a centred axis the element is placed in whole pixels of its box, the canvas or the element it
+ * is drawn in, at the canvas's density and scale. Its size, and twice its offset, are each rounded
+ * to whole pixels, halves up; the doubled offset goes before the element when positive and after it
+ * when negative. The pixels the box has to spare around the two are halved and rounded down, so an
+ * odd pixel left over goes after them, on the right or at the bottom: the element sits half a pixel
+ * left of or above the exact centre. A host that works out where a centred element lands, such as
+ * an editor catching it on a guide, rounds the same way to match where it is drawn.
  */
 @Serializable
 enum class CanvasAnchor {
@@ -103,14 +111,16 @@ class CanvasElement {
     /**
      * How far, in dp, the element moves from its anchor along the X axis: inward from a left or
      * right edge, where a negative offset is held at the edge, and right of centre on a centred
-     * axis, or left of it when negative.
+     * axis, or left of it when negative. A centred element lands on whole pixels; see [CanvasAnchor]
+     * for how it rounds.
      */
     var offsetX: Float = DEFAULT_INSET
 
     /**
      * How far, in dp, the element moves from its anchor along the Y axis: inward from a top or
      * bottom edge, where a negative offset is held at the edge, and below centre on a centred axis,
-     * or above it when negative.
+     * or above it when negative. A centred element lands on whole pixels; see [CanvasAnchor] for how
+     * it rounds.
      */
     var offsetY: Float = DEFAULT_INSET
 

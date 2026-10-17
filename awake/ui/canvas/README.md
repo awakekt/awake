@@ -21,6 +21,14 @@ the `canvas_element` component saved with a scene and drawn by `SceneCanvas(worl
   point, and **`offsetX` / `offsetY`** move it inward: a right or bottom anchor moves it left or up,
   and a negative offset at an edge is held there. On a centred axis an offset moves it right or down
   of centre, and a negative one left or up.
+
+  A centred element lands on whole pixels of its box, the canvas or the element it is drawn in. Its
+  size and twice its offset are each rounded to whole pixels, halves up, the doubled offset before
+  the element when positive and after it when negative. The box's spare pixels around the two are
+  halved and rounded down, so an odd one goes after them: in a box 101 pixels wide, a 50-pixel
+  element sits 25 pixels from the left and 26 from the right, half a pixel left of the exact
+  centre. A host that works out where a centred element lands, such as an editor catching it on a
+  guide, rounds the same way.
 - **`width` / `height`** in dp.
 - **`text`** (Text content, Button label), **`fontSize`**, **`color`** (text, or a Bar's fill) and
   **`background`**, as `#RRGGBB` or `#RRGGBBAA`.
@@ -32,6 +40,9 @@ the `canvas_element` component saved with a scene and drawn by `SceneCanvas(worl
 - **`value`**: a Bar's fill from 0 to 1.
 - **`order`**: lower draws first. Of the same order, the later in `CanvasOverlay`'s `items` draws on
   top and takes the pointer; for a scene that is the later in the hierarchy. **`visible`** hides it.
+  `canvasDrawOrder(items)` lists the items in the order they draw, and `canvasItemAt(items, x, y)`
+  finds the one last drawn on top at a point, so a host that picks from the canvas, such as an
+  editor, follows the overlay's own rule rather than a copy of it.
 - **`style`**: how it looks beyond its colours, as the saved form of a Compose `Style` drawn
   through `Modifier.styleable`: fill, gradient, corner radius, border, shadow, text colour, alpha,
   `hovered` and `pressed` states for a Button, and images. `style.image` is an Image's picture, the

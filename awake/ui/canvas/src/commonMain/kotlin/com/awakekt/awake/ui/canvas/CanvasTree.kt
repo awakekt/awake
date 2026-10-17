@@ -65,22 +65,17 @@ internal class CanvasTree(
     private val fonts: Map<String, UiFont> = emptyMap(),
     private val strings: Strings? = null,
 ) {
-    val roots = ArrayList<CanvasItem>()
-    private val children = HashMap<CanvasElement, ArrayList<CanvasItem>>()
+    private val hierarchy = CanvasHierarchy(items)
+
+    val roots: List<CanvasItem> get() = hierarchy.roots
 
     init {
-        for (item in items) {
-            // Cleared up front so an element not composed this frame -- hidden, or a follower with
-            // nowhere to land -- reports null rather than where it last was.
-            item.element.screenBounds = null
-            val parent = if (item.element.follow.isEmpty()) item.parent else null
-            (if (parent == null) roots else children.getOrPut(parent) { ArrayList() }) += item
-        }
-        roots.sortBy { it.element.order }
-        for (siblings in children.values) siblings.sortBy { it.element.order }
+        // Cleared up front so an element not composed this frame -- hidden, or a follower with
+        // nowhere to land -- reports null rather than where it last was.
+        for (item in items) item.element.screenBounds = null
     }
 
-    fun childrenOf(element: CanvasElement): List<CanvasItem> = children[element].orEmpty()
+    fun childrenOf(element: CanvasElement): List<CanvasItem> = hierarchy.childrenOf(element)
 
     fun shows(element: CanvasElement): Boolean = element.visible && (showTouchControls || !element.touchOnly)
 

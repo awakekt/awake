@@ -384,6 +384,11 @@ public final class com/awakekt/awake/ui/canvas/CanvasLayout$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
+public final class com/awakekt/awake/ui/canvas/CanvasOrderKt {
+	public static final fun canvasDrawOrder (Ljava/util/List;)Ljava/util/List;
+	public static final fun canvasItemAt (Ljava/util/List;FF)Lcom/awakekt/awake/ui/canvas/CanvasItem;
+}
+
 public final class com/awakekt/awake/ui/canvas/CanvasOverlayKt {
 	public static final fun CanvasOverlay (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/util/List;Lcom/awakekt/awake/compose/ui/Modifier;ZLjava/util/Map;FLcom/awakekt/awake/ui/canvas/CanvasResolver;Ljava/util/Map;Lcom/awakekt/awake/core/localization/Strings;)V
 	public static synthetic fun CanvasOverlay$default (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/util/List;Lcom/awakekt/awake/compose/ui/Modifier;ZLjava/util/Map;FLcom/awakekt/awake/ui/canvas/CanvasResolver;Ljava/util/Map;Lcom/awakekt/awake/core/localization/Strings;ILjava/lang/Object;)V
