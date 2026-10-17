@@ -24,6 +24,9 @@ import kotlinx.serialization.Serializable
  * @property releaseAction The input action pressed when the button is let go, wherever the thumb is.
  * @property blockWhileCooling Whether the button takes no press while it is cooling down: its
  * [CanvasElement.cooldown] above 0 with no [CanvasElement.charges] left to spend.
+ * @property cooldownSeconds A cooldown the button runs itself: each time it fires, its
+ * [CanvasElement.cooldown] starts at 1 and runs down to 0 over this many seconds. 0 leaves the
+ * cooldown to the game, set from code or [CanvasBinding.cooldown]; keep one of the two.
  * @property aim Drag to aim: while held, a drag away from the button aims, and letting go fires
  * [CanvasElement.action] with that aim, wherever the thumb is, unless it is let go in the aim's
  * cancel zone. An aimed button fires on release whatever its [trigger]. Null does not aim.
@@ -35,11 +38,13 @@ data class CanvasButton(
     val longPressAction: String = "",
     val releaseAction: String = "",
     val blockWhileCooling: Boolean = true,
+    @PropertyRange(min = 0.0) val cooldownSeconds: Float = 0f,
     val aim: CanvasAim? = null,
 ) {
     /** What is wrong with these settings, as messages naming the field; empty when nothing is. */
     fun problems(): List<String> = buildList {
         if (longPressSeconds <= 0f) add("longPressSeconds must be above 0")
+        if (cooldownSeconds < 0f) add("cooldownSeconds must not be negative")
         aim?.problems()?.forEach { add("aim.$it") }
     }
 

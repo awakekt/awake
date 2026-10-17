@@ -120,7 +120,8 @@ import kotlinx.serialization.Serializable
  * @property button How a Button acts as an on-screen action button: its `trigger` (`Tap` on
  * release, or `Down`), `longPressSeconds` and the `longPressAction` a long press presses, the
  * `releaseAction` a release presses, and whether it is held back while cooling down
- * (`blockWhileCooling`). Its cooldown and charges come from code or [bind]. Null is a plain button.
+ * (`blockWhileCooling`). Its cooldown runs itself over `cooldownSeconds` each time it fires, or comes
+ * from code or [bind], as its charges do. Null is a plain button.
  * @property enabled Whether a Button can be pressed; a disabled one takes no press and draws in its
  * style's `disabled` look. [bind]'s `enabled` field sets it each frame instead.
  * @property look How a LookArea turns a swipe into a look and a pinch into a zoom: `sensitivity`,
@@ -235,6 +236,9 @@ data class SceneCanvasElement(
     private fun controlProblems(): List<String> = listOfNotNull(
         "joystick only sets up a Joystick".takeIf { joystick != null && kind != CanvasElementKind.Joystick },
         "button only sets up a Button".takeIf { button != null && kind != CanvasElementKind.Button },
+        "button.cooldownSeconds and bind.cooldown both set the cooldown; keep one".takeIf {
+            (button?.cooldownSeconds ?: 0f) > 0f && !bind?.cooldown.isNullOrBlank()
+        },
         "look only sets up a LookArea".takeIf { look != null && kind != CanvasElementKind.LookArea },
         "cluster and layout both place the children; keep one".takeIf { cluster != null && layout != null },
     ) + joystick?.problems().orEmpty().map { "joystick.$it" } + button?.problems().orEmpty().map { "button.$it" } +
