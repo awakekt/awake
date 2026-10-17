@@ -29,6 +29,14 @@ for (mesh in document.meshes) {
 }
 ```
 
+## Untrusted input
+
+Every parse checks what a file declares against the bytes it actually has before allocating or reading: GLB chunk lengths and alignment, buffer and bufferView ranges, accessor counts, strides and offsets, sparse substitutions, index values, base64 payloads and the node hierarchy. A file that fails throws `GltfFormatException`, whose `location` names the place (`accessors[3].count`, `glb.chunks[1].length`). Pass `GltfLimits` to bound JSON size, accessor count, total decoded bytes or node depth:
+
+```kotlin
+val scene = GltfParser.parseScene(bytes, limits = GltfLimits(maxDecodedBytes = 64L shl 20))
+```
+
 ## Related Modules
 
 - [`:awake:asset:mesh-optimizer`](../mesh-optimizer/README.md) — mesh compression and LOD decimation tool.

@@ -105,7 +105,8 @@ class GltfParserTest {
             }
         """.trimIndent()
 
-        assertFailsWith<IllegalStateException> { GltfParser.parse(json) }
+        val failure = assertFailsWith<GltfFormatException> { GltfParser.parse(json) }
+        assertEquals("buffers[0].uri", failure.location)
     }
 
     @Test

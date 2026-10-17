@@ -1,21 +1,23 @@
 public final class com/awakekt/awake/asset/gltf/GltfAccessor {
 	public static final field Companion Lcom/awakekt/awake/asset/gltf/GltfAccessor$Companion;
-	public fun <init> (Ljava/lang/Integer;IIILjava/lang/String;Z)V
-	public synthetic fun <init> (Ljava/lang/Integer;IIILjava/lang/String;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/Integer;IIILjava/lang/String;ZLcom/awakekt/awake/asset/gltf/GltfAccessorSparse;)V
+	public synthetic fun <init> (Ljava/lang/Integer;IIILjava/lang/String;ZLcom/awakekt/awake/asset/gltf/GltfAccessorSparse;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/Integer;
 	public final fun component2 ()I
 	public final fun component3 ()I
 	public final fun component4 ()I
 	public final fun component5 ()Ljava/lang/String;
 	public final fun component6 ()Z
-	public final fun copy (Ljava/lang/Integer;IIILjava/lang/String;Z)Lcom/awakekt/awake/asset/gltf/GltfAccessor;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/gltf/GltfAccessor;Ljava/lang/Integer;IIILjava/lang/String;ZILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/GltfAccessor;
+	public final fun component7 ()Lcom/awakekt/awake/asset/gltf/GltfAccessorSparse;
+	public final fun copy (Ljava/lang/Integer;IIILjava/lang/String;ZLcom/awakekt/awake/asset/gltf/GltfAccessorSparse;)Lcom/awakekt/awake/asset/gltf/GltfAccessor;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/gltf/GltfAccessor;Ljava/lang/Integer;IIILjava/lang/String;ZLcom/awakekt/awake/asset/gltf/GltfAccessorSparse;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/GltfAccessor;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getBufferView ()Ljava/lang/Integer;
 	public final fun getByteOffset ()I
 	public final fun getComponentType ()I
 	public final fun getCount ()I
 	public final fun getNormalized ()Z
+	public final fun getSparse ()Lcom/awakekt/awake/asset/gltf/GltfAccessorSparse;
 	public final fun getType ()Ljava/lang/String;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
@@ -33,6 +35,99 @@ public final synthetic class com/awakekt/awake/asset/gltf/GltfAccessor$$serializ
 }
 
 public final class com/awakekt/awake/asset/gltf/GltfAccessor$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/gltf/GltfAccessorSparse {
+	public static final field Companion Lcom/awakekt/awake/asset/gltf/GltfAccessorSparse$Companion;
+	public fun <init> (ILcom/awakekt/awake/asset/gltf/GltfAccessorSparseIndices;Lcom/awakekt/awake/asset/gltf/GltfAccessorSparseValues;)V
+	public final fun component1 ()I
+	public final fun component2 ()Lcom/awakekt/awake/asset/gltf/GltfAccessorSparseIndices;
+	public final fun component3 ()Lcom/awakekt/awake/asset/gltf/GltfAccessorSparseValues;
+	public final fun copy (ILcom/awakekt/awake/asset/gltf/GltfAccessorSparseIndices;Lcom/awakekt/awake/asset/gltf/GltfAccessorSparseValues;)Lcom/awakekt/awake/asset/gltf/GltfAccessorSparse;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/gltf/GltfAccessorSparse;ILcom/awakekt/awake/asset/gltf/GltfAccessorSparseIndices;Lcom/awakekt/awake/asset/gltf/GltfAccessorSparseValues;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/GltfAccessorSparse;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCount ()I
+	public final fun getIndices ()Lcom/awakekt/awake/asset/gltf/GltfAccessorSparseIndices;
+	public final fun getValues ()Lcom/awakekt/awake/asset/gltf/GltfAccessorSparseValues;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/gltf/GltfAccessorSparse$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/gltf/GltfAccessorSparse$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/gltf/GltfAccessorSparse;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/gltf/GltfAccessorSparse;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/gltf/GltfAccessorSparse$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/gltf/GltfAccessorSparseIndices {
+	public static final field Companion Lcom/awakekt/awake/asset/gltf/GltfAccessorSparseIndices$Companion;
+	public fun <init> (III)V
+	public synthetic fun <init> (IIIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()I
+	public final fun copy (III)Lcom/awakekt/awake/asset/gltf/GltfAccessorSparseIndices;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/gltf/GltfAccessorSparseIndices;IIIILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/GltfAccessorSparseIndices;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBufferView ()I
+	public final fun getByteOffset ()I
+	public final fun getComponentType ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/gltf/GltfAccessorSparseIndices$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/gltf/GltfAccessorSparseIndices$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/gltf/GltfAccessorSparseIndices;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/gltf/GltfAccessorSparseIndices;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/gltf/GltfAccessorSparseIndices$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/gltf/GltfAccessorSparseValues {
+	public static final field Companion Lcom/awakekt/awake/asset/gltf/GltfAccessorSparseValues$Companion;
+	public fun <init> (II)V
+	public synthetic fun <init> (IIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun copy (II)Lcom/awakekt/awake/asset/gltf/GltfAccessorSparseValues;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/gltf/GltfAccessorSparseValues;IIILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/GltfAccessorSparseValues;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBufferView ()I
+	public final fun getByteOffset ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/asset/gltf/GltfAccessorSparseValues$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/gltf/GltfAccessorSparseValues$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/gltf/GltfAccessorSparseValues;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/gltf/GltfAccessorSparseValues;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/gltf/GltfAccessorSparseValues$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
@@ -285,6 +380,13 @@ public final class com/awakekt/awake/asset/gltf/GltfDocument$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
+public final class com/awakekt/awake/asset/gltf/GltfFormatException : java/lang/IllegalArgumentException {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getLocation ()Ljava/lang/String;
+	public final fun getProblem ()Ljava/lang/String;
+}
+
 public final class com/awakekt/awake/asset/gltf/GltfImage {
 	public static final field Companion Lcom/awakekt/awake/asset/gltf/GltfImage$Companion;
 	public fun <init> ()V
@@ -316,6 +418,30 @@ public final synthetic class com/awakekt/awake/asset/gltf/GltfImage$$serializer 
 
 public final class com/awakekt/awake/asset/gltf/GltfImage$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/asset/gltf/GltfLimits {
+	public static final field Companion Lcom/awakekt/awake/asset/gltf/GltfLimits$Companion;
+	public fun <init> ()V
+	public fun <init> (IIJI)V
+	public synthetic fun <init> (IIJIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()J
+	public final fun component4 ()I
+	public final fun copy (IIJI)Lcom/awakekt/awake/asset/gltf/GltfLimits;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/gltf/GltfLimits;IIJIILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/GltfLimits;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMaxAccessorCount ()I
+	public final fun getMaxDecodedBytes ()J
+	public final fun getMaxJsonBytes ()I
+	public final fun getMaxNodeDepth ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/asset/gltf/GltfLimits$Companion {
+	public final fun getDefault ()Lcom/awakekt/awake/asset/gltf/GltfLimits;
 }
 
 public final class com/awakekt/awake/asset/gltf/GltfMaterial {
@@ -490,15 +616,18 @@ public final class com/awakekt/awake/asset/gltf/GltfNode$Companion {
 
 public final class com/awakekt/awake/asset/gltf/GltfParser {
 	public static final field INSTANCE Lcom/awakekt/awake/asset/gltf/GltfParser;
-	public final fun externalUris (Ljava/lang/String;)Ljava/util/List;
-	public final fun load-0E7RQCE (Lcom/awakekt/awake/core/io/AssetPath;Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public final fun loadExternalResources-BWLJW6A (Ljava/lang/String;Lcom/awakekt/awake/core/io/AssetPath;Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public final fun parse (Ljava/lang/String;Ljava/util/Map;)Lcom/awakekt/awake/asset/gltf/GltfMesh;
-	public static synthetic fun parse$default (Lcom/awakekt/awake/asset/gltf/GltfParser;Ljava/lang/String;Ljava/util/Map;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/GltfMesh;
-	public final fun parseScene ([BLjava/util/Map;)Lcom/awakekt/awake/asset/gltf/LoadedScene;
-	public static synthetic fun parseScene$default (Lcom/awakekt/awake/asset/gltf/GltfParser;[BLjava/util/Map;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/LoadedScene;
-	public final fun parseSkinned (Ljava/lang/String;Ljava/util/Map;)Lcom/awakekt/awake/asset/gltf/LoadedSkinnedScene;
-	public static synthetic fun parseSkinned$default (Lcom/awakekt/awake/asset/gltf/GltfParser;Ljava/lang/String;Ljava/util/Map;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/LoadedSkinnedScene;
+	public final fun externalUris (Ljava/lang/String;Lcom/awakekt/awake/asset/gltf/GltfLimits;)Ljava/util/List;
+	public static synthetic fun externalUris$default (Lcom/awakekt/awake/asset/gltf/GltfParser;Ljava/lang/String;Lcom/awakekt/awake/asset/gltf/GltfLimits;ILjava/lang/Object;)Ljava/util/List;
+	public final fun load-BWLJW6A (Lcom/awakekt/awake/core/io/AssetPath;Lcom/awakekt/awake/core/io/AssetSource;Lcom/awakekt/awake/asset/gltf/GltfLimits;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun load-BWLJW6A$default (Lcom/awakekt/awake/asset/gltf/GltfParser;Lcom/awakekt/awake/core/io/AssetPath;Lcom/awakekt/awake/core/io/AssetSource;Lcom/awakekt/awake/asset/gltf/GltfLimits;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun loadExternalResources-yxL6bBk (Ljava/lang/String;Lcom/awakekt/awake/core/io/AssetPath;Lcom/awakekt/awake/core/io/AssetSource;Lcom/awakekt/awake/asset/gltf/GltfLimits;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun loadExternalResources-yxL6bBk$default (Lcom/awakekt/awake/asset/gltf/GltfParser;Ljava/lang/String;Lcom/awakekt/awake/core/io/AssetPath;Lcom/awakekt/awake/core/io/AssetSource;Lcom/awakekt/awake/asset/gltf/GltfLimits;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun parse (Ljava/lang/String;Ljava/util/Map;Lcom/awakekt/awake/asset/gltf/GltfLimits;)Lcom/awakekt/awake/asset/gltf/GltfMesh;
+	public static synthetic fun parse$default (Lcom/awakekt/awake/asset/gltf/GltfParser;Ljava/lang/String;Ljava/util/Map;Lcom/awakekt/awake/asset/gltf/GltfLimits;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/GltfMesh;
+	public final fun parseScene ([BLjava/util/Map;Lcom/awakekt/awake/asset/gltf/GltfLimits;)Lcom/awakekt/awake/asset/gltf/LoadedScene;
+	public static synthetic fun parseScene$default (Lcom/awakekt/awake/asset/gltf/GltfParser;[BLjava/util/Map;Lcom/awakekt/awake/asset/gltf/GltfLimits;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/LoadedScene;
+	public final fun parseSkinned (Ljava/lang/String;Ljava/util/Map;Lcom/awakekt/awake/asset/gltf/GltfLimits;)Lcom/awakekt/awake/asset/gltf/LoadedSkinnedScene;
+	public static synthetic fun parseSkinned$default (Lcom/awakekt/awake/asset/gltf/GltfParser;Ljava/lang/String;Ljava/util/Map;Lcom/awakekt/awake/asset/gltf/GltfLimits;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/LoadedSkinnedScene;
 }
 
 public final class com/awakekt/awake/asset/gltf/GltfPbrMetallicRoughness {
