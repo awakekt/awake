@@ -1,5 +1,6 @@
 package com.awakekt.awake.template
 
+import com.awakekt.awake.core.input.PointerCursor
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.System
@@ -7,6 +8,7 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.engine.bootstrap.dsl.app
 import com.awakekt.awake.engine.bootstrap.dsl.select
 import com.awakekt.awake.engine.platform.dsl.AppWindowBackend
+import com.awakekt.awake.engine.platform.dsl.requireService
 import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
 import com.awakekt.awake.project.runtime.LIT_SHADOW_MATERIAL
 import com.awakekt.awake.project.runtime.builtInSceneAssets
@@ -20,6 +22,7 @@ import com.awakekt.awake.scene.authoring.dsl.transform
 import com.awakekt.awake.scene.authoring.scene
 import com.awakekt.awake.scene.core.transform.SpinControl
 import com.awakekt.awake.scene.core.transform.SpinSystem
+import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 
 /** The window title. */
 const val GAME_TITLE = "Awake Game"
@@ -63,4 +66,14 @@ class SpinClock : System {
     override fun update(world: World, delta: Float) {
         world.queryEach(SpinControl::class) { _, spin -> spin.radians += spin.speed * delta }
     }
+}
+
+/**
+ * The pointer shape [game]'s UI asks for each frame, such as a text beam over a text field. The
+ * desktop window and the browser canvas show it when their host is given it as `cursor`; without it
+ * they keep the default arrow.
+ */
+fun pointerCursorOf(game: AwakeAppLifecycle): () -> PointerCursor {
+    val runtime = game.requireService<SceneAppLifecycleRuntime>()
+    return { runtime.cursor }
 }

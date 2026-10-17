@@ -1,6 +1,7 @@
 package com.awakekt.awake.template
 
 import com.awakekt.awake.core.host.readResourceBytes
+import com.awakekt.awake.core.input.PointerCursor
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.core.localization.StringTableSource
 import com.awakekt.awake.core.localization.Strings
@@ -8,9 +9,11 @@ import com.awakekt.awake.core.localization.systemLocale
 import com.awakekt.awake.engine.bootstrap.dsl.app
 import com.awakekt.awake.engine.bootstrap.dsl.select
 import com.awakekt.awake.engine.platform.dsl.AppWindowBackend
+import com.awakekt.awake.engine.platform.dsl.requireService
 import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
 import com.awakekt.awake.physics.jolt.createJoltPhysicsWorld
 import com.awakekt.awake.scene.authoring.scene
+import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 
 /** The window title. */
 const val GAME_TITLE = "Awake Project"
@@ -48,4 +51,14 @@ fun createGame(
         runProject(game.project, touchControls)
         ui { Hud(game.strings) }
     }
+}
+
+/**
+ * The pointer shape [game]'s UI asks for each frame, such as a text beam over a text field. The
+ * desktop window and the browser canvas show it when their host is given it as `cursor`; without it
+ * they keep the default arrow.
+ */
+fun pointerCursorOf(game: AwakeAppLifecycle): () -> PointerCursor {
+    val runtime = game.requireService<SceneAppLifecycleRuntime>()
+    return { runtime.cursor }
 }

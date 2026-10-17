@@ -10,6 +10,8 @@ plugins {
 dependencies {
     implementation(project(":app:shared"))
     implementation(libs.awake.backend.vulkan)
+    // PointerCursor, the type of the cursor the window shows.
+    implementation(libs.awake.engine.window)
 
     implementation(compose.desktop.currentOs)
     implementation(libs.kotlinx.coroutinesSwing)
