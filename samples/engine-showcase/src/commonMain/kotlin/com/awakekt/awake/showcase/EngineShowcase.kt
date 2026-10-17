@@ -16,6 +16,7 @@ import com.awakekt.awake.showcase.examples.GltfViewerAssets
 import com.awakekt.awake.showcase.examples.InstancedCubesExampleDriver
 import com.awakekt.awake.showcase.examples.InstancedSkinnedExampleDriver
 import com.awakekt.awake.showcase.examples.LocalizationExampleDriver
+import com.awakekt.awake.showcase.examples.ManyFollowersExampleDriver
 import com.awakekt.awake.showcase.examples.NavChaseExampleDriver
 import com.awakekt.awake.showcase.examples.ParticleEmitterExampleDriver
 import com.awakekt.awake.showcase.examples.RpgSprites2dExampleAssets
@@ -27,6 +28,7 @@ import com.awakekt.awake.showcase.examples.TerrainPhysicsExampleDriver
 import com.awakekt.awake.showcase.terrain.TerrainExampleAsset
 import com.awakekt.awake.showcase.ui.EcsStressControls
 import com.awakekt.awake.showcase.ui.LocalizationControls
+import com.awakekt.awake.showcase.ui.ManyFollowersControls
 import com.awakekt.awake.showcase.ui.SpatialAudioControls
 import com.awakekt.awake.showcase.ui.TerrainPhysicsControls
 
@@ -205,6 +207,19 @@ val EngineShowcases = listOf(
         onActivated = { _, runtime -> EcsStressExampleDriver.attach(runtime) },
         onDeactivated = { runtime -> EcsStressExampleDriver.detach(runtime.world) },
         controls = { EcsStressControls() },
+    ),
+    // Name plates over hundreds of walkers, through the canvas follower rules: the cost to watch
+    // is the UI phase. The readout shows it live, and Run benchmark logs percentiles a phone can
+    // be compared by.
+    EngineShowcase(
+        id = "many-followers",
+        title = "Many followers",
+        scenePath = "assets/examples/many-followers.scene.json",
+        summary = "Up to 1,000 name plates over walking cubes, culled, capped, faded, pinned and hidden behind walls by physics rays, with a frame-time readout and a percentile benchmark.",
+        driver = { delta -> ManyFollowersExampleDriver.advance(this, delta) },
+        onActivated = { instance, runtime -> ManyFollowersExampleDriver.attach(instance, runtime) },
+        onDeactivated = { runtime -> ManyFollowersExampleDriver.detach(runtime) },
+        controls = { ManyFollowersControls() },
     ),
 )
 

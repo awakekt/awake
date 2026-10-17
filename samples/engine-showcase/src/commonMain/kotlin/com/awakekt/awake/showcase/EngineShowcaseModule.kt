@@ -26,6 +26,7 @@ import com.awakekt.awake.scene.runtime.SceneContent
 import com.awakekt.awake.scene.runtime.defaultInfrastructureSystems
 import com.awakekt.awake.showcase.examples.CharacterExampleDriver
 import com.awakekt.awake.showcase.examples.EcsStressExampleDriver
+import com.awakekt.awake.showcase.examples.ManyFollowersExampleDriver
 import com.awakekt.awake.showcase.examples.Runtime2dExampleDriver
 import com.awakekt.awake.showcase.examples.ShowcasePhysics
 import com.awakekt.awake.showcase.examples.SpatialAudioExampleDriver
@@ -40,6 +41,7 @@ internal fun engineShowcaseModule(
 ): AppModule {
     require(EngineShowcases.any { it.id == initialShowcaseId }) { "Unknown showcase '$initialShowcaseId'." }
     EcsStressExampleDriver.preset(options.stressEntities)
+    ManyFollowersExampleDriver.preset(options.followers, options.benchmark)
     val loader = EngineShowcaseLoader()
     val selection = ShowcaseSelection(initialShowcaseId)
     val framebufferDebugger = ShowcaseFramebufferDebugger()

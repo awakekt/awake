@@ -71,6 +71,7 @@ compile; it is refused, a warning is printed, and the current shader keeps drawi
 | `spatial-audio` | Spatial audio | 3D positional audio emitters with distance attenuation and panning relative to the camera listener. |
 | `localization` | Localization | Debug-panel text from English and Filipino string tables, switched while it runs, with each language's plural rule. |
 | `ecs-stress` | ECS stress | Up to 100,000 moving entities, each with Transform and MeshRenderer components, drawn in a few instanced calls. |
+| `many-followers` | Many followers | Up to 1,000 name plates over walking cubes, culled, capped, faded, pinned and hidden behind walls by physics rays, with a frame-time readout and a percentile benchmark. |
 
 `EngineShowcaseReadmeTest` fails when this table and `EngineShowcases` disagree.
 
@@ -155,6 +156,64 @@ PERF ecs-stress renderables=50001 fps=… avg=… p99=… max=… game=… rende
 The entity count can also be changed from the debug card, and "Move entities" off measures the same
 entities standing still. `EcsStressSceneFrameTest` runs the same showcase headless and prints its
 frame times.
+
+### Many followers
+
+The `many-followers` showcase puts a name plate over each of 100 to 1,000 walking cubes, through the
+canvas follower rules. Plates are culled off screen and past 90 m. The scene's `canvas_follow_limit`
+caps them to the nearest 150, and they shrink and fade with distance (**Shrink with distance** turns the
+shrinking off). Every 25th walker has a quest
+marker that holds to the screen's edge. With **Hide behind walls** on, `PhysicsCanvasOcclusion` hides
+plates behind the pillars and the wall, within the scene's `canvas_follow_occlusion` budget of 48 rays
+a frame. One plate in 30 changes its number each frame, so text is laid out again as a game's would be.
+
+The readout at the bottom left shows the follower count, how many plates were laid out, rays cast,
+frame time with its p99, and the UI phase. **Debug → Run benchmark**, or the `benchmark` launch
+option, runs a sweep of 100, 250, 500 and 1,000 followers, each with occlusion on and then off, then 500
+with occlusion on and no shrinking. Each
+run warms up for 3 seconds, then records 10 seconds and at least 300 frames, so a fast desktop and a
+slow phone measure for as long. Each run prints one line, and the debug card lists the results:
+
+```text
+BENCH many-followers followers=500 occlusion=on scale=on laidOut=… frames=… avg=… p50=… p90=… p95=… p99=… max=… ui50=… ui95=… cpu50=… cpu95=…
+BENCH many-followers done
+```
+
+`laidOut` is the average number of name plates laid out a frame. `p50` to `max` are the frame
+times. Under vsync they sit at the display's interval while the frame keeps up. `ui50`/`ui95` are the UI phase, where followers cost, and `cpu50`/`cpu95` are game, render
+and UI together: what the frame costs whatever the display waits for. All are in milliseconds.
+
+Desktop, with vsync off so the numbers show headroom:
+
+```bash
+./gradlew :samples:engine-showcase:run -Pawake.showcase=many-followers -Pawake.showcase.benchmark=true \
+  -Pawake.showcase.vsync=false -Pawake.vulkan.validation=false
+```
+
+Browser: start `wasmJsBrowserDevelopmentRun` and open the page with
+`?showcase=many-followers&benchmark=true`. The lines are in the developer console.
+
+Android, on a device with USB debugging on. Release is minified as a game's is and signed with the
+debug key:
+
+```bash
+./gradlew :samples:engine-showcase:androidApp:installRelease
+adb shell am start -n com.awakekt.awake.showcase.android/.MainActivity --es showcase many-followers --es benchmark true
+adb logcat -s System.out | grep BENCH
+```
+
+iOS, on a device:
+
+1. Open `samples/engine-showcase/iosApp/iosApp.xcodeproj` in Xcode. Its build phase runs
+   `./gradlew :samples:engine-showcase:embedAndSignAppleFrameworkForXcode`.
+2. Under **Product → Scheme → Edit Scheme… → Run**, set **Build Configuration** to `Release`. Under
+   **Arguments → Environment Variables**, add `AWAKE_SHOWCASE=many-followers` and
+   `AWAKE_SHOWCASE_BENCHMARK=true`.
+3. Pick the device and run. The `BENCH` lines appear in Xcode's console.
+
+On either phone you can also open the showcase from the menu and tap **Debug → Run benchmark**. The
+results stay in the debug card. Keep the phone awake, with power saving off, and at room
+temperature: a hot phone slows down on its own.
 
 ## Adding a showcase
 
