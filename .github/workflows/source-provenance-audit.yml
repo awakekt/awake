@@ -15,10 +15,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.12'
 
@@ -50,7 +50,7 @@ jobs:
           pmd-bin-7.18.0/bin/pmd cpd --minimum-tokens 120 --language python --format text tools scripts skills > pmd-python-cpd.txt || true
 
       - name: Upload audit evidence
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: source-provenance-audit
           path: |

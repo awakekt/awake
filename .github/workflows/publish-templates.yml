@@ -48,7 +48,7 @@ jobs:
       webgpu: ${{ steps.resolve.outputs.webgpu }}
       ref: ${{ steps.resolve.outputs.ref }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           # Tags, to read which release (if any) the triggering Publish run was for.
           fetch-depth: 0
@@ -112,7 +112,7 @@ jobs:
             exit 1
           fi
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ needs.resolve.outputs.ref }}
 

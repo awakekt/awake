@@ -33,7 +33,7 @@ jobs:
           [[ -n "$RELEASE_TOKEN" ]] || { echo "RELEASE_TOKEN secret is not set." >&2; exit 1; }
 
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: main
           token: ${{ secrets.RELEASE_TOKEN }}
