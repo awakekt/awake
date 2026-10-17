@@ -27,6 +27,7 @@ registers it.
 | [`chase`](#chase) | `ChaseBehavior` | `com.awakekt.awake.scene:ai` | `registerAiBehaviors()` | [AI](../guides/ai.md) |
 | [`custom`](#custom) | — | `com.awakekt.awake.scene:document` | Built in | [Scene documents](../guides/scene-documents.md) |
 | [`day_cycle`](#day_cycle) | `DayCycle` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Sky and fog](../guides/sky-and-fog.md#day-and-night) |
+| [`factions`](#factions) | `Factions` | `com.awakekt.awake.scene:ai` | `registerAiBehaviors()` | [AI](../guides/ai.md#perception) |
 | [`flee`](#flee) | `FleeBehavior` | `com.awakekt.awake.scene:ai` | `registerAiBehaviors()` | [AI](../guides/ai.md) |
 | [`fog`](#fog) | `Fog` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Sky and fog](../guides/sky-and-fog.md) |
 | [`input_actions`](#input_actions) | `InputActions` | `com.awakekt.awake.scene:controls` | `registerControls()` | [Cameras and controls](../guides/cameras-and-controls.md#input-actions) |
@@ -39,6 +40,8 @@ registers it.
 | [`particle_emitter`](#particle_emitter) | `ParticleEmitterSource` | `com.awakekt.awake.scene:particles` | `DefaultSceneComponentResolvers.install()` | [Particles](../guides/particles.md) |
 | [`patrol`](#patrol) | `PatrolBehavior` | `com.awakekt.awake.scene:ai` | `registerAiBehaviors()` | [AI](../guides/ai.md) |
 | [`pbr_material`](#pbr_material) | `PbrMaterial` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Meshes and materials](../guides/meshes-and-materials.md) |
+| [`perceivable`](#perceivable) | `Perceivable` | `com.awakekt.awake.scene:ai` | `registerAiBehaviors()` | [AI](../guides/ai.md#perception) |
+| [`perceiver`](#perceiver) | `Perceiver` | `com.awakekt.awake.scene:ai` | `registerAiBehaviors()` | [AI](../guides/ai.md#perception) |
 | [`physics_body`](#physics_body) | `PhysicsBody` | `com.awakekt.awake.scene:physics` | `registerPhysics()` | [Physics](../guides/physics.md) |
 | [`prefab_link`](#prefab_link) | `PrefabLink` | `com.awakekt.awake.scene:document` | Built in | [Scene documents](../guides/scene-documents.md) |
 | [`shader_effect`](#shader_effect) | `ShaderEffectSource` | `com.awakekt.awake.scene:shader` | `DefaultSceneComponentResolvers.install()` | [Render plans and shaders](../guides/shaders.md#ship-a-shader-with-a-project) |
@@ -315,6 +318,16 @@ first across midnight. A field no stop sets keeps its authored value.
 
 The stops write the first `skybox` and `fog` in the scene. A `Cubemap` sky keeps its image. A
 rotated light node shines along its rotation and ignores the sun's direction.
+
+## `factions`
+
+Who regards whom how, for every perceiver in the scene. `SceneFactions`. A scene has at most one; with none, every faction is neutral to every other and friendly to itself.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `relations` | array of relation | `[]` | Rows of `from`, `to`, `relation` (`hostile`, `neutral` or `friendly`) and `mutual` (default `true`). Two rows may not contradict. |
+| `otherwise` | `hostile` · `neutral` · `friendly` | `neutral` | The relation between factions no row names. |
+| `sameFaction` | `hostile` · `neutral` · `friendly` | `friendly` | The relation of a faction to itself. |
 
 ## `flee`
 
@@ -612,6 +625,25 @@ Physically based material values for the entity's mesh. `ScenePbrMaterial`.
 | `alphaMode` | `Opaque` · `Masked` | `Opaque` | `Masked` discards fragments below `alphaCutoff`. |
 | `alphaCutoff` | number | `0.5` | Alpha threshold for `Masked`, 0 to 1. |
 | `litWhenAdditive` | boolean | `false` | Keeps a textured mesh drawn `additive` lit: it adds its colour as the sun, shadows, ambient and point lights shade it, not only its base and emissive colour. Fog fades it either way. |
+
+## `perceivable`
+
+Something perceivers can see and hear. `ScenePerceivable`.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `faction` | string | required | Its faction. Must not be blank. |
+| `visible` | boolean | `true` | Whether it can be seen; it can always be heard. |
+| `height` | number | `1` | How far above its position a viewer aims at it. |
+
+## `perceiver`
+
+An entity that sees, hears and remembers. `ScenePerceiver`. A played project runs perception for it before its tree or machine, writing what it perceives to their blackboard.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `faction` | string | required | Its faction, which decides how it regards what it perceives. Must not be blank. |
+| `settings` | object | Core's | How it perceives: `sight` (`focusRange` `15`, `focusAngle` `60`, `peripheralRange` `5`, `peripheralAngle` `180`, `eyeHeight` `1.6`, `lineOfSight` `true`), `hearing` (`range` `10`, `muffledBy` `0.5`), `forgetAfter` `10`, `updateInterval` `0.2`, and the blackboard `keys` it writes. |
 
 ## `physics_body`
 

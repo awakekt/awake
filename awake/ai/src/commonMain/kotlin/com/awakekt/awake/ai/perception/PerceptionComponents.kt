@@ -16,15 +16,15 @@ import com.awakekt.awake.ecs.World
  */
 fun interface LineOfSight {
     /**
-     * Whether nothing blocks the line from [from] to [to]. [viewer] and [target] are the entities at
-     * each end, when known, so a raycast can ignore their own bodies.
+     * Whether nothing blocks the line from [from] to [to] in [world]. [viewer] and [target] are the
+     * entities at each end, when known, so a raycast can ignore their own bodies.
      */
-    fun isClear(from: Vec3f, to: Vec3f, viewer: Entity, target: Entity?): Boolean
+    fun isClear(world: World, from: Vec3f, to: Vec3f, viewer: Entity, target: Entity?): Boolean
 
     /** The answer when nothing ever blocks. */
     companion object {
         /** Nothing blocks. */
-        val Clear: LineOfSight = LineOfSight { _, _, _, _ -> true }
+        val Clear: LineOfSight = LineOfSight { _, _, _, _, _ -> true }
     }
 }
 

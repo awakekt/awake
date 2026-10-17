@@ -25,6 +25,8 @@ kotlin {
             api(project(":awake:ecs"))
             // A behaviour asks for its routes through a PathRequest.
             api(project(":awake:navigation"))
+            // PhysicsLineOfSight answers perception's line of sight with a physics raycast.
+            api(project(":awake:physics:api"))
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

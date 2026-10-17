@@ -14,6 +14,9 @@ import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import kotlin.math.PI
 import kotlin.math.cos
+import kotlin.time.Duration
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 
 /**
  * Updates every [Perceiver]'s memory from what it sees and hears, and writes the result to the
@@ -21,24 +24,38 @@ import kotlin.math.cos
  * behaviour systems.
  *
  * Sight is budgeted: each perceiver looks every [PerceptionSettings.updateInterval] seconds, staggered
- * so they do not all look on one frame, and at most [maxSightUpdates] look per update. Perceivers left
- * over by the budget look first next time, so none is starved. Hearing is not budgeted: every
- * perceiver hears each sound given to [hear] on the next update.
+ * so they do not all look on one frame, at most [maxSightUpdates] look per update, and, with a
+ * [sightBudget], no more look once that much time has passed in the update (one always does).
+ * Perceivers left over by the budget look first next time, so none is starved. Hearing is not
+ * budgeted: every perceiver hears each sound given to [hear] on the next update.
+ *
+ * A look reads only the perceivable entities near enough to see: where they are is bucketed once per
+ * update into cells [indexCellSize] metres square.
  *
  * Everything is deterministic: the same world, the same updates and the same sounds give the same
- * memories.
+ * memories. A [sightBudget] is the exception, since how many look then depends on the machine.
  *
  * @param space Where entities are and which way they face.
  * @param factions Who regards whom how.
  * @param lineOfSight What blocks sight, and muffles sound.
  * @param maxSightUpdates The most perceivers that look in one update.
+ * @param sightBudget The most time looks may take in one update, or `null` for no limit.
+ * @param timeSource What measures [sightBudget].
+ * @param indexCellSize The size of the cells perceivable entities are bucketed into; 0 checks every
+ *   one on every look. About the usual sight range suits.
  */
 class PerceptionSystem(
     private val space: PerceptionSpace,
     private val factions: FactionTable = FactionTable(),
     private val lineOfSight: LineOfSight = LineOfSight.Clear,
     private val maxSightUpdates: Int = Int.MAX_VALUE,
+    private val sightBudget: Duration? = null,
+    private val timeSource: TimeSource = TimeSource.Monotonic,
+    indexCellSize: Float = DEFAULT_CELL_SIZE,
 ) : System {
+    private val index = SightIndex(indexCellSize)
+    private val candidates = IntBuffer()
+    private var budgetStart: TimeMark? = null
     private val sounds = mutableListOf<SoundEvent>()
     private var cursor = 0
     private val eye = Vec3f(0f, 0f, 0f)
@@ -48,6 +65,8 @@ class PerceptionSystem(
 
     init {
         require(maxSightUpdates > 0) { "maxSightUpdates is $maxSightUpdates; at least one perceiver must look." }
+        require(sightBudget == null || sightBudget.isPositive()) { "sightBudget is $sightBudget; it must be more than zero." }
+        require(indexCellSize.isFinite() && indexCellSize >= 0f) { "indexCellSize is $indexCellSize; it must be 0 or more." }
     }
 
     /** The perception clock: seconds of updates so far. */
@@ -66,6 +85,8 @@ class PerceptionSystem(
     override fun update(world: World, delta: Float) {
         time += delta
         sightUpdates = 0
+        index.invalidate()
+        budgetStart = sightBudget?.let { timeSource.markNow() }
         val perceivers = world.family<Perceiver>()
         val count = perceivers.size
         if (count == 0) {
@@ -98,7 +119,7 @@ class PerceptionSystem(
             perceiver.nextUpdate = time + perceiver.settings.updateInterval * (entity.id % STAGGER_STEPS) / STAGGER_STEPS
         }
         for (sound in sounds) listen(world, entity, perceiver, sound)
-        val looks = time + CLOCK_SLACK >= perceiver.nextUpdate && sightUpdates < maxSightUpdates
+        val looks = time + CLOCK_SLACK >= perceiver.nextUpdate && sightUpdates < maxSightUpdates && withinTime()
         if (looks) {
             sightUpdates++
             perceiver.nextUpdate = time + perceiver.settings.updateInterval
@@ -112,6 +133,12 @@ class PerceptionSystem(
         return looks
     }
 
+    /** Whether the time budget allows another look; the first look of an update always may. */
+    private fun withinTime(): Boolean {
+        val start = budgetStart ?: return true
+        return sightUpdates == 0 || start.elapsedNow() < sightBudget!!
+    }
+
     private fun look(world: World, viewer: Entity, perceiver: Perceiver) {
         val sight = perceiver.settings.sight
         for (remembered in perceiver.memory.entities) remembered.inSight = false
@@ -120,12 +147,17 @@ class PerceptionSystem(
         val faces = space.forward(world, viewer, facing) && facing.length3() > 0f
         if (faces) facing.normalize()
         val cone = Cone(sight, faces)
-        world.family<Perceivable>().forEach { target, perceivable ->
-            val visibleThere = target != viewer && perceivable.visible && space.position(world, target, seen)
-            val sense = if (visibleThere) senseOf(cone, perceivable) else null
-            if (sense != null && (!sight.lineOfSight || lineOfSight.isClear(eye, seen, viewer, target))) {
+        if (!index.built) index.rebuild(world, space, seen)
+        index.near(eye.x, eye.z, cone.reach, candidates)
+        for (c in 0 until candidates.size) {
+            val i = candidates[c]
+            val target = index.entity(i)
+            val perceivable = index.perceivable(i)
+            if (target == viewer || !perceivable.visible) continue
+            val sense = senseOf(cone, perceivable, index.positionOf(i, seen))
+            if (sense != null && (!sight.lineOfSight || lineOfSight.isClear(world, eye, seen, viewer, target))) {
                 perceiver.memory.remember(target).apply {
-                    space.position(world, target, lastKnownPosition)
+                    index.positionOf(i, lastKnownPosition)
                     lastSensed = time
                     relation = factions.relation(perceiver.faction, perceivable.faction)
                     this.sense = sense
@@ -143,7 +175,7 @@ class PerceptionSystem(
     }
 
     /** Which cone [seen] (a target at [perceivable]'s height) is in from [eye], or `null`. */
-    private fun senseOf(cone: Cone, perceivable: Perceivable): Sense? {
+    private fun senseOf(cone: Cone, perceivable: Perceivable, seen: Vec3f): Sense? {
         seen.y += perceivable.height
         toward.set(seen.x - eye.x, seen.y - eye.y, seen.z - eye.z)
         val distance = toward.length3()
@@ -184,7 +216,7 @@ class PerceptionSystem(
         val distance = eye.distanceTo(sound.position)
         val reach = hearing.range * sound.loudness
         return distance <= reach &&
-            (distance <= reach * hearing.muffledBy || lineOfSight.isClear(eye, sound.position, hearer, sound.source))
+            (distance <= reach * hearing.muffledBy || lineOfSight.isClear(world, eye, sound.position, hearer, sound.source))
     }
 
     private fun write(perceiver: Perceiver, board: Blackboard) {
@@ -226,6 +258,7 @@ class PerceptionSystem(
 
     private companion object {
         const val STAGGER_STEPS = 16
+        const val DEFAULT_CELL_SIZE = 16f
 
         // Float deltas summed into the clock land a hair short of a whole interval.
         const val CLOCK_SLACK = 1e-6

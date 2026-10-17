@@ -104,13 +104,19 @@ what an agent does about what it perceives, is the game's data.
 - **Hearing.** `PerceptionSystem.hear(SoundEvent)` reaches every perceiver within
   `HearingSettings.range` times its loudness. A sound the line of sight says is blocked reaches only
   `muffledBy` as far.
+- **Line of sight.** `LineOfSight.isClear(world, from, to, viewer, target)`: `NavFieldLineOfSight`
+  over a navigation grid's blocked cells, or `PhysicsLineOfSight` over a physics raycast, which sees
+  past the viewer's own body and counts the target's as reaching it (both in `awake:ai:behavior`).
 - **Memory.** `PerceptionMemory` keeps each perceived entity's last known position, when and how it
   was sensed, and its relation, plus the latest noise, and forgets after `forgetAfter` seconds. It
   snapshots to data.
 - **Factions.** A `FactionTable` of `FactionRelation` rows (hostile, neutral or friendly, one-way or
   mutual) with defaults for unnamed pairs and for a faction toward itself.
-- **Budget.** Each perceiver looks every `updateInterval` seconds, staggered across agents, and at
-  most `maxSightUpdates` look in one update; the ones left over look first next time. Hearing is
+- **Budget.** Each perceiver looks every `updateInterval` seconds, staggered across agents, at most
+  `maxSightUpdates` look in one update, and with a `sightBudget` no more look once that much time has
+  passed in it; the ones left over look first next time. A look reads only the perceivable entities in
+  the cells within its reach: positions are bucketed once per update into cells `indexCellSize`
+  metres square (16 by default; 0 checks every one). Hearing is
   not budgeted. With 1,000 agents among 1,000 targets at 60 updates a second and a budget of 100
   looks, an update costs about 0.6 ms on a desktop JVM (`PerceptionCostTest`).
 - **Into behaviour.** After each update the system writes the agent's behaviour-tree or
@@ -157,6 +163,5 @@ played scene needs to run them.
 - The movement kinds (`ai.move-to`, `ai.follow`, `ai.flee`, `ai.wander`, `ai.face`, `ai.distance`,
   `ai.in-area`) are in `awake:ai:behavior`, over its `AgentPlacement` and the navigation `PathRequest`;
   register them with `registerSpatialKinds(placement)`.
-- Sight checks every perceivable entity for each looking agent; there is no spatial index yet.
-- Core ships no `PerceptionSpace` over scene transforms and no physics `LineOfSight` yet; a host
-  writes those few lines itself.
+- A `sightBudget` makes how many perceivers look depend on the machine, so it is the one setting that
+  is not deterministic.

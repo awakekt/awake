@@ -21,6 +21,13 @@ implementation(project(":awake:scene:ai"))
   each entity's `BehaviorTreeComponent` or `AiStateMachineComponent` from an `AiDefinitionLibrary` once
   the library holds the file, and again each time it reloads it. A played project reads the files
   when it loads (`awake:project:runtime`).
+- `ScenePerceiver`, `ScenePerceivable` and `SceneFactions` (`perceiver`, `perceivable`,
+  `factions`) -- perception as scene data: a perceiver's faction and `PerceptionSettings`, a
+  perceivable's faction, visibility and height, and the scene's faction table. Their bindings attach
+  `Perceiver`, `Perceivable` and `Factions`. `TransformPerceptionSpace` is the `PerceptionSpace` for a
+  scene: an entity is where its transform says and faces its yaw. A played project runs perception
+  for a scene with a perceiver, seeing through physics when it has physics and the navigation grid
+  otherwise.
 - `TransformAgentPlacement` -- the `AgentPlacement` for a scene: an agent is where its `Transform`'s
   `position` says, moves by rewriting it, and faces a direction by setting its yaw. Pass it to `PatrolAiSystem`, `ChaseAiSystem` and
   `FleeAiSystem`.

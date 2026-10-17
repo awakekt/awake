@@ -38,7 +38,7 @@ internal class PerceptionScene : PerceptionSpace {
 
 /** A wall along x = [x] from z = [fromZ] to z = [toZ], which blocks any line crossing it. */
 internal class Wall(private val x: Float, private val fromZ: Float, private val toZ: Float) : LineOfSight {
-    override fun isClear(from: Vec3f, to: Vec3f, viewer: Entity, target: Entity?): Boolean {
+    override fun isClear(world: World, from: Vec3f, to: Vec3f, viewer: Entity, target: Entity?): Boolean {
         if ((from.x - x) * (to.x - x) > 0f || from.x == to.x) return true
         val t = (x - from.x) / (to.x - from.x)
         val z = from.z + (to.z - from.z) * t
