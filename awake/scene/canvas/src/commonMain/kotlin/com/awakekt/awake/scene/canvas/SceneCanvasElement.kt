@@ -12,6 +12,7 @@ import com.awakekt.awake.scene.document.SceneValidationIssue
 import com.awakekt.awake.scene.document.SceneVec3
 import com.awakekt.awake.ui.canvas.CanvasAnchor
 import com.awakekt.awake.ui.canvas.CanvasBinding
+import com.awakekt.awake.ui.canvas.CanvasButton
 import com.awakekt.awake.ui.canvas.CanvasElement
 import com.awakekt.awake.ui.canvas.CanvasElementKind
 import com.awakekt.awake.ui.canvas.CanvasFollowRules
@@ -113,6 +114,12 @@ import kotlinx.serialization.Serializable
  * `deadZone`, `response` or a `curve`, `directions` (`Analog`, `Four` or `Eight`), `snapBack`, a
  * `sprintThreshold` past which `sprintAction` is held, and `idleAlpha`, `idleDelay` and
  * `fadeSeconds` for fading while untouched. Null is a fixed pad with no dead zone.
+ * @property button How a Button acts as an on-screen action button: its `trigger` (`Tap` on
+ * release, or `Down`), `longPressSeconds` and the `longPressAction` a long press presses, the
+ * `releaseAction` a release presses, and whether it is held back while cooling down
+ * (`blockWhileCooling`). Its cooldown and charges come from code or [bind]. Null is a plain button.
+ * @property enabled Whether a Button can be pressed; a disabled one takes no press and draws in its
+ * style's `disabled` look. [bind]'s `enabled` field sets it each frame instead.
  */
 @Serializable
 @SerialName("canvas_element")
@@ -158,6 +165,8 @@ data class SceneCanvasElement(
     val textKey: String = "",
     val textArgs: Map<String, String> = emptyMap(),
     val joystick: CanvasJoystick? = null,
+    val button: CanvasButton? = null,
+    val enabled: Boolean = true,
 ) : SceneComponent {
     /**
      * Validates element dimensions, font sizes, values, and hex color syntax.
@@ -183,7 +192,7 @@ data class SceneCanvasElement(
     }
 
     /** Fields set where they do nothing, and what is wrong with the follow rules. */
-    private fun kindProblems(): List<String> = followProblems() + listOfNotNull(
+    private fun kindProblems(): List<String> = followProblems() + controlProblems() + listOfNotNull(
         "mask only masks a TextField".takeIf { mask.isNotEmpty() && kind != CanvasElementKind.TextField },
         "maxLength only limits a TextField".takeIf {
             (maxLength != 0 || maxLengthUnit != TextLengthUnit.Graphemes) && kind != CanvasElementKind.TextField
@@ -200,8 +209,13 @@ data class SceneCanvasElement(
             textKey.isEmpty() && (textArgs.isNotEmpty() || !bind?.textArgs.isNullOrEmpty())
         },
         "textKey must not be blank".takeIf { textKey.isNotEmpty() && textKey.isBlank() },
+    )
+
+    /** What is wrong with a control's settings, and settings put on a kind they do not set up. */
+    private fun controlProblems(): List<String> = listOfNotNull(
         "joystick only sets up a Joystick".takeIf { joystick != null && kind != CanvasElementKind.Joystick },
-    ) + joystick?.problems().orEmpty().map { "joystick.$it" }
+        "button only sets up a Button".takeIf { button != null && kind != CanvasElementKind.Button },
+    ) + joystick?.problems().orEmpty().map { "joystick.$it" } + button?.problems().orEmpty().map { "button.$it" }
 
     /** What is wrong with the follow rules, and follow fields set where they do nothing. */
     private fun followProblems(): List<String> = buildList {

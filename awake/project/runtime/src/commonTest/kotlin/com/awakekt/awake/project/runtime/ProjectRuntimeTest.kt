@@ -169,6 +169,30 @@ class ProjectRuntimeTest {
         assertFalse(control.run, "letting go walks")
     }
 
+    /** An action button that is disabled holds nothing, and one let go presses its release action. */
+    @Test
+    fun anActionButtonDisabledDoesNothingAndPressesItsReleaseActionWhenLetGo() = runTest {
+        val scene = RUN_BUTTON_SCENE.replace("\"action\": \"run\",", "\"action\": \"run\", \"button\": { \"releaseAction\": \"fire\" },")
+        val game = play(scene.withNode(FIRE_ACTION), touch = true)
+        game.frames(FRAMES)
+        val actions = assertNotNull(game.world.inputActions())
+        val button = game.world.get<com.awakekt.awake.ui.canvas.CanvasElement>(game.world.named("Run"))!!
+        val run = game.centreOf("Run")
+
+        game.touch(down = true, run)
+        game.touch(down = true, run)
+        assertTrue(actions.isActive("run"), "holding the action button holds run")
+        game.touch(down = false, run)
+        game.frames(1)
+        assertTrue(actions.wasPressed("fire"), "letting go presses the release action")
+
+        button.enabled = false
+        game.touch(down = true, run)
+        game.touch(down = true, run)
+        assertFalse(actions.isActive("run"), "a disabled button holds nothing")
+        game.touch(down = false, run)
+    }
+
     /** A Button naming an action of the game's own holds that action, which the game's systems read. */
     @Test
     fun aButtonForAnActionOfTheGamesOwnHoldsIt() = runTest {

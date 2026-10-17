@@ -283,7 +283,7 @@ class CanvasBindingTest {
         )
         assertEquals(emptyList(), SceneCanvasElement(bind = CanvasBinding("Player", value = "health.pool.reserve", max = "150")).validate("n").map { it.message })
         assertEquals(
-            listOf("canvas_element.bind.needs a value, a text or textArgs to show"),
+            listOf("canvas_element.bind.needs a value, a text, textArgs, a cooldown, charges or enabled to show"),
             SceneCanvasElement(bind = CanvasBinding("Player")).validate("nodes[0]").map { it.message },
         )
     }

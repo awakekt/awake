@@ -109,8 +109,37 @@ A running `CanvasElement` also has values that are not saved:
 | `presses` | `Int` | How many times a `Button` has been tapped since it was made. Reading it takes no tap. |
 | `isHeld` | `Boolean` | Whether a `Button` is pressed right now. |
 | `stickX`, `stickY` | `Float`, -1 to 1 | A `Joystick`'s deflection. Up is negative `stickY`, as on screen. Releasing re-centres it. |
+| `cooldown`, `charges`, `enabled` | `Float`, `Int`, `Boolean` | An action button's cooldown left (0 to 1), uses left (below 0 for none), and whether it can be pressed. See [Action buttons](#action-buttons). |
+| `consumeDown()`, `consumeRelease()`, `consumeLongPress()`, `consumeReady()` | `Boolean` | `true` once for each time an action button went down, was let go, was held long, or became usable again. |
+| `heldSeconds` | `Float` | How long an action button has been held. |
 | `focused` | `Boolean` | Whether a `TextField` holds the keyboard. Set it `true` to focus the field, or `false` to free it; it reads back whatever a click, Enter, Escape, or anything else taking focus away leaves it at. |
 | `consumeSubmit()` | `String?` | The submitted line once after Enter submits a `TextField` since the last call, taken from the field's live state so a character typed the same frame is included; `null` otherwise. Submitting frees its focus. Escape frees focus without submitting. An Enter that only just focused the field, in the same frame a system granted it, does not also submit it. |
+
+## Action buttons
+
+Give a `Button` `button` settings to make it an on-screen action button, as a skill, a reload or a
+dash needs:
+
+```json
+{ "component": "canvas_element", "kind": "Button", "anchor": "BottomRight", "width": 72, "height": 72,
+  "text": "Dash", "action": "dash", "touchOnly": true,
+  "button": { "trigger": "Down", "longPressSeconds": 0.6, "longPressAction": "dash_info", "releaseAction": "" },
+  "bind": { "node": "Player", "cooldown": "dash.left", "cooldownMax": "dash.seconds", "charges": "dash.charges" },
+  "style": { "cornerRadius": 36, "disabled": { "alpha": 0.3 } } }
+```
+
+- `trigger` fires `action` on a `Tap`, released over the button, or the moment it goes `Down`.
+- Held past `longPressSeconds`, it reports `consumeLongPress()` and presses `longPressAction`, and then
+  the release is not also a tap.
+- Let go anywhere, it reports `consumeRelease()` and presses `releaseAction`.
+- `cooldown`, from 1 just used to 0 ready, sweeps a shade over the button, and `charges` of 0 or more
+  show in a badge. While it is cooling down with no charge left, the button takes no press unless
+  `blockWhileCooling` is `false`; `consumeReady()` is `true` once each time it becomes usable again.
+- `enabled: false`, or a `bind.enabled` field that reads false, disables it: it takes no press, keeps
+  the press from what is under it, and draws in `style.disabled`, or dimmed.
+
+Set `cooldown`, `charges` and `enabled` from code, or bind them to game state as above. Each action
+button follows only the pointer that landed on it first, so two thumbs hold two buttons at once.
 
 ## Style an element
 
@@ -255,6 +284,10 @@ once its capability registers them.
 | `max` | A field, or a number such as `"100"`. Left out, `value` is already a share from 0 to 1. |
 | `text` | The words of a `Text` or `Button`, each `{component.field}` replaced by its value. A whole number shows exactly, however large, and any other number to one decimal place. A [format](#number-formats) after a colon, such as `{purse.gold:n0}`, sets how a number is written. |
 | `textArgs` | A `textKey`'s arguments read from fields: each name to its `component.field`, such as `{ "count": "inventory.count" }`. See [Show text in the player's language](#show-text-in-the-players-language). |
+| `cooldown` | An action button's cooldown left, a share from 0 (ready) to 1, or divided by `cooldownMax`, such as seconds left over seconds in all. See [Action buttons](#action-buttons). |
+| `cooldownMax` | A field, or a number, `cooldown` is a share of. |
+| `charges` | An action button's uses left, a whole number shown in a badge. |
+| `enabled` | Whether an action button can be pressed: `true` or a number above 0. |
 
 ### Number formats
 

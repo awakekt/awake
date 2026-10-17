@@ -162,5 +162,11 @@ A Joystick's `joystick` settings, a `CanvasJoystick`, shape it:
   a played project holds `sprintAction` then.
 - `idleAlpha`, `idleDelay` and `fadeSeconds` fade the stick while nobody touches it.
 
-Each stick follows only the pointer that landed on it first, so one thumb steers while another
+A Button's `button` settings, a `CanvasButton`, make it an action button: its `trigger` fires on a
+`Tap` or the moment it goes `Down`; `consumeDown()`, `consumeRelease()` and `consumeLongPress()`
+report the rest of a press, with `heldSeconds`; and its live `cooldown` (swept over it), `charges` (in
+a badge) and `enabled` hold it back, set from code or read through `bind`'s `cooldown`, `charges` and
+`enabled` fields. `consumeReady()` says when it became usable again.
+
+Each stick and action button follows only the pointer that landed on it first, so one thumb steers while another
 presses buttons, and a second thumb landing on the stick does not take it.

@@ -41,6 +41,8 @@ import kotlinx.serialization.Serializable
  * @property alpha The element's opacity, from 0 to 1, its children included.
  * @property hovered What changes while the pointer is over a Button.
  * @property pressed What changes while a Button is held, over [hovered].
+ * @property disabled What changes while a Button is not [enabled][CanvasElement.enabled], over the
+ * rest; null dims it to [DISABLED_ALPHA].
  * @property rotation Degrees clockwise to turn the element's image, background and content about
  * its own centre; null leaves it unrotated. Children turn with it. Hit-testing still uses the
  * element's unrotated layout box, the way a Compose `graphicsLayer` rotation leaves hit-testing on
@@ -65,6 +67,7 @@ data class CanvasStyle(
     @PropertyRange(min = 0.0, max = 1.0) val alpha: Float? = null,
     val hovered: CanvasStateStyle? = null,
     val pressed: CanvasStateStyle? = null,
+    val disabled: CanvasStateStyle? = null,
     val rotation: Float? = null,
     val linkColor: String? = null,
 ) {
@@ -94,17 +97,30 @@ data class CanvasStyle(
         "textOutline" to textOutline?.problems(),
         "hovered" to hovered?.problems(),
         "pressed" to pressed?.problems(),
+        "disabled" to disabled?.problems(),
     ).flatMap { (field, problems) -> problems.orEmpty().map { "$field.$it" } }
 
-    /** Writes this style, and the states [scope] is in, into a Compose style, with [images] for its pictures. */
-    internal fun applyTo(scope: StyleScope, images: Map<String, ImageBitmap>) {
+    /**
+     * Writes this style, and the states [scope] is in, into a Compose style, with [images] for its
+     * pictures; [isDisabled] adds the [disabled] look over the rest.
+     */
+    internal fun applyTo(scope: StyleScope, images: Map<String, ImageBitmap>, isDisabled: Boolean = false) {
         cornerRadius?.let { scope.cornerRadius(it.dp) }
         shadow?.let { scope.dropShadow(it.toShadow()) }
         paint(scope, images, background, gradient, image, textColor, alpha)
-        val states = listOfNotNull(hovered.takeIf { scope.state.isHovered }, pressed.takeIf { scope.state.isPressed })
+        val dimmed = if (isDisabled) disabled ?: DIMMED else null
+        val states = listOfNotNull(hovered.takeIf { scope.state.isHovered }, pressed.takeIf { scope.state.isPressed }, dimmed)
         for (state in states) paint(scope, images, state.background, state.gradient, state.image, state.textColor, state.alpha)
         val border = states.lastOrNull { it.borderColor != null }?.borderColor ?: borderColor
         if (borderWidth != null && borderWidth > 0f && border != null) scope.border(borderWidth.dp, colorOf(border, Color.Transparent))
+    }
+
+    /** Limits. */
+    companion object {
+        /** How opaque a disabled Button with no [disabled] look draws. */
+        const val DISABLED_ALPHA = 0.45f
+
+        private val DIMMED = CanvasStateStyle(alpha = DISABLED_ALPHA)
     }
 }
 
