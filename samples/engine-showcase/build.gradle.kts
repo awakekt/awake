@@ -80,6 +80,8 @@ kotlin {
             implementation(project(":awake:backend:jolt"))
             implementation(project(":awake:scene:scene-core"))
             implementation(project(":awake:scene:physics"))
+            // The many-followers showcase hides its name plates behind walls with PhysicsCanvasOcclusion.
+            implementation(project(":awake:project:runtime"))
             implementation(project(":awake:scene:scene2d"))
             implementation(project(":awake:scene:world"))
             implementation(project(":awake:ai:behavior"))
@@ -151,6 +153,8 @@ awake {
             "awake.showcase.vsync",
             "awake.showcase.perfLog",
             "awake.showcase.entities",
+            "awake.showcase.followers",
+            "awake.showcase.benchmark",
         )
     }
 
