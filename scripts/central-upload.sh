@@ -10,10 +10,11 @@
 #   scripts/central-upload.sh build/central-bundle.zip "awake check" USER_MANAGED   # validate, then drop
 #
 # AUTOMATIC publishes once the bundle validates and returns when Central starts publishing, which
-# cannot be undone. USER_MANAGED stops at validation and drops the deployment, so nothing is
-# published. A deployment that fails validation is left in place: it publishes nothing, and Central
-# support needs it kept to look into the refusal. Reads MAVEN_CENTRAL_USERNAME and
-# MAVEN_CENTRAL_PASSWORD, a Central user token.
+# cannot be undone. When Central already lists the bundle's version as published, AUTOMATIC uploads
+# nothing and succeeds, so a release job can be re-run. USER_MANAGED stops at validation and drops
+# the deployment, so nothing is published. A deployment that fails validation is left in place: it
+# publishes nothing, and Central support needs it kept to look into the refusal. Reads
+# MAVEN_CENTRAL_USERNAME and MAVEN_CENTRAL_PASSWORD, a Central user token.
 set -euo pipefail
 
 usage="usage: central-upload.sh <bundle.zip> <deployment-name> [AUTOMATIC|USER_MANAGED]"
@@ -32,8 +33,35 @@ if [[ -z "${MAVEN_CENTRAL_USERNAME:-}" || -z "${MAVEN_CENTRAL_PASSWORD:-}" ]]; t
 fi
 auth="Authorization: Bearer $(printf '%s:%s' "$MAVEN_CENTRAL_USERNAME" "$MAVEN_CENTRAL_PASSWORD" | base64 | tr -d '\n')"
 central() { curl --fail-with-body --silent --show-error --header "$auth" "$@"; }
+uri() { jq -rn --arg v "$1" '$v|@uri'; }
 
-encoded_name="$(jq -rn --arg v "$name" '$v|@uri')"
+# A re-run of a release job whose upload already went out must not send the same version again:
+# Central refuses a second deployment of a published version, and that refusal would fail the job
+# before the steps after the upload. A bundle publishes whole or not at all, so any one POM in it
+# says whether all of it is out. If Central cannot be asked, upload as before: a duplicate is
+# refused, never published twice.
+if [[ "$type" == AUTOMATIC ]]; then
+  pom="$(unzip -Z1 "$bundle" 2> /dev/null | grep -m 1 '\.pom$' || true)"
+  if [[ -n "$pom" ]]; then
+    version_dir="$(dirname "$pom")"
+    artifact_dir="$(dirname "$version_dir")"
+    group="$(dirname "$artifact_dir" | tr / .)"
+    artifact="$(basename "$artifact_dir")"
+    version="$(basename "$version_dir")"
+    component="$group:$artifact:$version"
+    query="namespace=$(uri "$group")&name=$(uri "$artifact")&version=$(uri "$version")"
+    if published="$(central --request GET "$api/published?$query")"; then
+      if [[ "$(jq -r '.published' <<< "$published" 2> /dev/null || true)" == true ]]; then
+        echo "$component is already published on Central; $bundle is not uploaded again."
+        exit 0
+      fi
+    else
+      echo "Could not ask Central whether $component is published ($published); uploading." >&2
+    fi
+  fi
+fi
+
+encoded_name="$(uri "$name")"
 if ! response="$(central --request POST --form "bundle=@$bundle" "$api/upload?name=$encoded_name&publishingType=$type")"; then
   echo "Central refused the upload: $response" >&2
   exit 1

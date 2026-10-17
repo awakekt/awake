@@ -132,7 +132,9 @@ One person or agent owns a release from cut to downstream bump. Before cutting, 
 and Maven Central never accepts the same version twice. Fix the cause on `main` and cut the
 next version; the failed number stays a gap on Central (as `rc.4`, `rc.5`, `rc.7` and `rc.10` did). A release
 Central refused is still served by the fallback repository when its bundle was built
-([releasing](reference/releasing.md#fallback-repository)).
+([releasing](reference/releasing.md#fallback-repository)). A run that is re-run anyway cannot
+send a version twice: `scripts/central-upload.sh` asks Central whether the bundle's version is
+already published and, if it is, uploads nothing and lets the GitHub release steps finish.
 
 ### Independent Vulkan family
 

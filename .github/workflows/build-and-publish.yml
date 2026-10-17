@@ -31,17 +31,47 @@ concurrency:
   group: publish-${{ github.ref }}
   cancel-in-progress: false
 
+# Every job runs build code, so the default token only reads. The two jobs that create GitHub
+# releases ask for `contents: write` themselves.
+#
+# The publish secrets are set on the one step that uses each, never on a job, so the checkout,
+# setup and build steps before it run without them. Third-party actions are pinned to a commit,
+# with the version beside it for Dependabot (.github/dependabot.yml) to move.
 permissions:
-  contents: write
+  contents: read
 
 env:
   JAVA_VERSION: '17'
 
 jobs:
+  # Runs before every other job and checks out nothing. A ref name is free text to git (`"`, `$`,
+  # `;` and `|` are all legal), and every later job builds and publishes from it, so a ref that is
+  # not one of the shapes this workflow publishes stops the run here. Steps read the ref through
+  # `env:`, never as `${{ }}` inside a script, so even an accepted name is never shell syntax.
+  ref:
+    name: Ref
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Refuse a ref this workflow does not publish from
+        env:
+          REF: ${{ github.ref }}
+        run: |
+          if [[ "$REF" =~ ^refs/heads/main$ ]] \
+            || [[ "$REF" =~ ^refs/heads/release/[0-9A-Za-z._/+-]+$ ]] \
+            || [[ "$REF" =~ ^refs/tags/v[0-9A-Za-z.+-]+$ ]] \
+            || [[ "$REF" =~ ^refs/tags/vulkan-v[0-9A-Za-z.+-]+$ ]]; then
+            echo "Publishing from $REF"
+          else
+            echo "::error::Refusing to publish from '$REF': not main, release/**, v* or vulkan-v* with [0-9A-Za-z.+-] only."
+            exit 1
+          fi
+
   # Classify the change once. Core publication remains independent from the Vulkan family, so a
   # Core-only commit can skip the native matrix while still running the Core consumer gate.
   platform-impact:
     name: Changes
+    needs: ref
     runs-on: ubuntu-latest
     outputs:
       core: ${{ steps.impact.outputs.core }}
@@ -51,7 +81,7 @@ jobs:
       docs_only: ${{ steps.impact.outputs.docs_only }}
       vulkan_publish: ${{ steps.vulkan-publish.outputs.vulkan_publish }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0
       - id: impact
@@ -91,7 +121,7 @@ jobs:
             platform: windows-x86_64
     runs-on: ${{ matrix.runner }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           # Every Gradle invocation derives the version from `git describe --tags`, including this
           # one -- the native library is packaged under it. A shallow clone fetches no tags, so
@@ -99,12 +129,12 @@ jobs:
           # which tag triggered the run.
           fetch-depth: 0
 
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
         with:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@748248ddd2a24f49513d8f472f81c3a07d4d50e1 # v4.4.4
 
       - name: Install Vulkan (macOS)
         if: runner.os == 'macOS'
@@ -127,7 +157,7 @@ jobs:
         run: ./gradlew :awake:backend:vulkan:bindings:buildDesktopNative
 
       - name: Upload ${{ matrix.platform }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: native-${{ matrix.platform }}
           path: awake/backend/vulkan/bindings/build/generated/natives-resources/natives/${{ matrix.platform }}
@@ -142,6 +172,7 @@ jobs:
   window-natives:
     name: Window natives (${{ matrix.platform }})
     timeout-minutes: 30
+    needs: ref
     if: ${{ !startsWith(github.ref, 'refs/tags/vulkan-v') }}
     strategy:
       fail-fast: false
@@ -155,12 +186,12 @@ jobs:
             platform: windows-x86_64
     runs-on: ${{ matrix.runner }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
         with:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@748248ddd2a24f49513d8f472f81c3a07d4d50e1 # v4.4.4
       - name: Install GLFW (macOS)
         if: runner.os == 'macOS'
         run: brew install glfw
@@ -172,7 +203,7 @@ jobs:
       - name: Build libawake-window
         run: ./gradlew :awake:engine:window:buildDesktopNative
       - name: Upload ${{ matrix.platform }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: window-native-${{ matrix.platform }}
           path: awake/engine/window/build/generated/natives-resources/natives/${{ matrix.platform }}
@@ -188,6 +219,7 @@ jobs:
   naga-desktop:
     name: Naga desktop (${{ matrix.platform }})
     timeout-minutes: 30
+    needs: ref
     if: ${{ !startsWith(github.ref, 'refs/tags/vulkan-v') }}
     strategy:
       fail-fast: false
@@ -201,12 +233,12 @@ jobs:
             platform: windows-x86_64
     runs-on: ${{ matrix.runner }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
         with:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@748248ddd2a24f49513d8f472f81c3a07d4d50e1 # v4.4.4
       - uses: ./.github/actions/cache-naga
         with:
           variant: desktop
@@ -214,7 +246,7 @@ jobs:
       - name: Build libawake_naga
         run: ./gradlew :awake:asset:shader-compiler:buildNagaDesktop
       - name: Upload ${{ matrix.platform }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: naga-desktop-${{ matrix.platform }}
           path: awake/asset/shader-compiler/build/generated/natives-resources/natives/${{ matrix.platform }}
@@ -223,9 +255,10 @@ jobs:
   naga-android:
     name: Naga (Android)
     timeout-minutes: 30
+    needs: ref
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Install Rust Android targets and cargo-ndk
         run: |
@@ -237,7 +270,7 @@ jobs:
         run: ANDROID_NDK_HOME="$ANDROID_NDK_LATEST_HOME" cargo ndk -t arm64-v8a -t x86_64 -o ../src/androidMain/jniLibs build --release
 
       - name: Upload naga-android
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: naga-android
           path: awake/asset/shader-compiler/src/androidMain/jniLibs
@@ -248,21 +281,22 @@ jobs:
   verify:
     name: Verify
     timeout-minutes: 30
+    needs: ref
     runs-on: macos-14
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0
           # MoltenVK and JoltC are submodules, and apiCheck pulls iOS cinterop into its task
           # graph, so without them it fails on a missing header rather than on any API change.
           submodules: recursive
 
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
         with:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@748248ddd2a24f49513d8f472f81c3a07d4d50e1 # v4.4.4
 
       # apiCheck compiles every target, including the iOS ones.
       - name: Install Vulkan (macOS)
@@ -305,7 +339,7 @@ jobs:
     timeout-minutes: 120
     runs-on: macos-14
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0
           # `publishToMavenLocal -PisMainHost=true` below builds the iOS klibs, which cinterop
@@ -313,12 +347,12 @@ jobs:
           # to link the iOS framework, so it is the last place that can afford to skip them.
           submodules: recursive
 
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
         with:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@748248ddd2a24f49513d8f472f81c3a07d4d50e1 # v4.4.4
 
       - name: Install Vulkan (macOS)
         run: brew install vulkan-loader molten-vk glfw
@@ -330,6 +364,8 @@ jobs:
       - name: Resolve both publication-family versions
         id: versions
         shell: bash
+        env:
+          VULKAN_PUBLISH: ${{ needs.platform-impact.outputs.vulkan_publish }}
         run: |
           core_version=$(./gradlew -q :awake:core:math:properties --no-configuration-cache \
             | awk '/^version:/ { print $2 }')
@@ -337,8 +373,8 @@ jobs:
             | awk '/^version:/ { print $2 }')
           echo "CORE_VERSION=$core_version" >> "$GITHUB_ENV"
           echo "VULKAN_VERSION=$vulkan_version" >> "$GITHUB_ENV"
-          echo "vulkan_publish=${{ needs.platform-impact.outputs.vulkan_publish }}" >> "$GITHUB_OUTPUT"
-          if [[ "${{ needs.platform-impact.outputs.vulkan_publish }}" != 'true' ]]; then
+          echo "vulkan_publish=$VULKAN_PUBLISH" >> "$GITHUB_OUTPUT"
+          if [[ "$VULKAN_PUBLISH" != 'true' ]]; then
             # Central's own latest release, not the nearest vulkan-v* tag: a tag can sit off main
             # (vulkan-v0.1.21) or name a release whose publish failed (vulkan-v0.1.20), and waiting
             # for one of those times the job out before Core uploads.
@@ -349,7 +385,7 @@ jobs:
 
       - name: Collect desktop natives for local publication
         if: steps.versions.outputs.vulkan_publish == 'true'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           pattern: native-*
           path: build/collected-natives/natives
@@ -362,17 +398,19 @@ jobs:
           ls -R .
 
       - name: Collect naga-android
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: naga-android
           path: awake/asset/shader-compiler/src/androidMain/jniLibs
       # Maven Local rather than the snapshot repository: this has to pass *before* anything is
       # uploaded, including the snapshot a consumer would otherwise be the first to try.
       - name: Publish this build locally
+        env:
+          VULKAN_PUBLISH: ${{ steps.versions.outputs.vulkan_publish }}
         run: |
-          if [[ "${{ steps.versions.outputs.vulkan_publish }}" == 'true' ]]; then
+          if [[ "$VULKAN_PUBLISH" == 'true' ]]; then
             ./gradlew publishToMavenLocal -PisMainHost=true \
-              -Pawake.prebuiltNatives=$PWD/build/collected-natives \
+              -Pawake.prebuiltNatives="$PWD/build/collected-natives" \
               --no-configuration-cache
           else
             # A Core-only change tests against the last published Vulkan release rather than
@@ -382,9 +420,11 @@ jobs:
           fi
 
       - name: Verify what was published
+        env:
+          VULKAN_PUBLISH: ${{ steps.versions.outputs.vulkan_publish }}
         run: |
           ./gradlew verifyPublishedArtifacts -Pawake.verifyPublishedVersion="$CORE_VERSION" -Pawake.verifyPublishedFamily=core --no-configuration-cache
-          if [[ "${{ steps.versions.outputs.vulkan_publish }}" == 'true' ]]; then
+          if [[ "$VULKAN_PUBLISH" == 'true' ]]; then
             ./gradlew verifyPublishedArtifacts -Pawake.verifyPublishedVersion="$VULKAN_VERSION" -Pawake.verifyPublishedFamily=vulkan --no-configuration-cache
           fi
 
@@ -431,23 +471,20 @@ jobs:
       }}
     needs: [verify, consumer, naga-android, naga-desktop, window-natives]
     runs-on: macos-14
-    env:
-      MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
-      MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0
           # `isMainHost=true` publishes the iOS klibs, which cinterop against MoltenVK and JoltC.
           # Both are submodules; the default checkout leaves their directories empty.
           submodules: recursive
 
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
         with:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@748248ddd2a24f49513d8f472f81c3a07d4d50e1 # v4.4.4
 
       # iOS cinterop needs the MoltenVK headers, and the iOS publications are built here too.
       - name: Install Vulkan (macOS)
@@ -457,17 +494,17 @@ jobs:
 
       - name: Refuse to publish a snapshot from a tag build
         run: |
-          case "${{ github.ref }}" in
+          case "$GITHUB_REF" in
             refs/tags/*) echo "A tag must go through the release job." && exit 1 ;;
           esac
 
       - name: Collect naga-android
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: naga-android
           path: awake/asset/shader-compiler/src/androidMain/jniLibs
       - name: Collect libawake-window
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           pattern: window-native-*
           path: build/window-natives/awake-window/natives
@@ -476,7 +513,7 @@ jobs:
           cd build/window-natives/awake-window/natives
           for d in window-native-*; do mv "$d" "${d#window-native-}"; done
       - name: Collect libawake_naga
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           pattern: naga-desktop-*
           path: build/window-natives/awake_naga/natives
@@ -500,7 +537,7 @@ jobs:
           # run's WebGPU release pin takes. Once the release is tagged, this run must not overwrite it.
           # ls-remote exits 2 when the tag does not exist; any other failure (network, auth) must not
           # read as "not tagged", or it publishes over the pin.
-          version="${{ steps.snapshot-version.outputs.version }}"
+          version="$SNAPSHOT_VERSION"
           base="${version%-SNAPSHOT}"
           set +e
           git ls-remote --exit-code --tags origin "refs/tags/v$base" > /dev/null
@@ -528,8 +565,9 @@ jobs:
           ./gradlew -p build-logic publishAllPublicationsToMavenCentralRepository \
                     --no-configuration-cache
         env:
-          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ env.MAVEN_CENTRAL_USERNAME }}
-          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ env.MAVEN_CENTRAL_PASSWORD }}
+          SNAPSHOT_VERSION: ${{ steps.snapshot-version.outputs.version }}
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
 
   vulkan-snapshot:
     name: Vulkan Snapshot
@@ -537,21 +575,18 @@ jobs:
     if: (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')) && needs.platform-impact.outputs.vulkan_publish == 'true'
     needs: [platform-impact, natives, verify, snapshot]
     runs-on: macos-14
-    env:
-      MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
-      MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0
           submodules: recursive
 
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
         with:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@748248ddd2a24f49513d8f472f81c3a07d4d50e1 # v4.4.4
 
       - name: Install Vulkan (macOS)
         run: brew install vulkan-loader molten-vk glfw
@@ -559,7 +594,7 @@ jobs:
       - uses: ./.github/actions/ios-native
 
       - name: Collect Vulkan desktop natives
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           pattern: native-*
           path: build/collected-natives/natives
@@ -572,8 +607,8 @@ jobs:
       - name: Verify and publish only the Vulkan family
         run: bash tools/publish_vulkan_family.sh snapshot "$PWD/build/collected-natives"
         env:
-          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ env.MAVEN_CENTRAL_USERNAME }}
-          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ env.MAVEN_CENTRAL_PASSWORD }}
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
 
   # Tags only. What lands here is permanent: Central does not allow a version to be replaced, so
   # every check that would be embarrassing to discover afterwards runs before the upload.
@@ -596,17 +631,11 @@ jobs:
       }}
     needs: [verify, consumer, naga-android, naga-desktop, window-natives]
     runs-on: macos-14
-    env:
-      MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
-      MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
-      # No key id: vanniktech only needs one to disambiguate a key ring holding several
-      # subkeys, and passing it blank reads as set-but-empty rather than absent.
-      SIGNING_PASSWORD: ${{ secrets.GPG_SIGNING_PASSWORD }}
-      SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
-      ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_SIGNING_KEY }}
-      ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_SIGNING_PASSWORD }}
+    # Creates the GitHub release and attaches its bundle.
+    permissions:
+      contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           # The version comes from `git describe --tags`. checkout's default shallow clone
           # fetches no tags, so describe would return a bare SHA and the build would publish
@@ -616,12 +645,12 @@ jobs:
           # JoltC, and both are submodules.
           submodules: recursive
 
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
         with:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@748248ddd2a24f49513d8f472f81c3a07d4d50e1 # v4.4.4
 
       - name: Install Vulkan (macOS)
         run: brew install vulkan-loader molten-vk glfw
@@ -635,24 +664,34 @@ jobs:
         run: |
           VERSION=$(./gradlew -q :awake:core:math:properties --no-configuration-cache \
                     | awk '/^version:/ { print $2 }')
-          echo "Releasing $VERSION from ${{ github.ref }}"
+          echo "Releasing $VERSION from $GITHUB_REF"
           case "$VERSION" in
             *-SNAPSHOT) echo "A tag build derived a snapshot version; the tag is not visible to git describe." && exit 1 ;;
           esac
-          case "${{ github.ref_name }}" in
+          case "$GITHUB_REF_NAME" in
             "v$VERSION") ;;
-            *) echo "Tag ${{ github.ref_name }} does not match derived version $VERSION." && exit 1 ;;
+            *) echo "Tag $GITHUB_REF_NAME does not match derived version $VERSION." && exit 1 ;;
           esac
+
+      # A release is cut from reviewed code: the squash commit on `main` (docs/release-process.md),
+      # or a maintenance `release/**` branch. A tag on any other commit never reaches Central.
+      - name: Refuse a tag that is not on main or a release branch
+        run: |
+          branches=$(git branch -r --contains "$GITHUB_SHA" --format='%(refname:short)')
+          if ! grep -Eq '^origin/(main|release/.+)$' <<< "$branches"; then
+            echo "::error::$GITHUB_REF_NAME tags $GITHUB_SHA, which is on neither main nor a release/ branch."
+            exit 1
+          fi
 
       # Local publication first: the same inspection a consumer's resolution would perform, run
       # while it is still free to fail. Central accepts uploads it cannot later be told to forget.
       - name: Collect naga-android
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: naga-android
           path: awake/asset/shader-compiler/src/androidMain/jniLibs
       - name: Collect libawake-window
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           pattern: window-native-*
           path: build/window-natives/awake-window/natives
@@ -661,7 +700,7 @@ jobs:
           cd build/window-natives/awake-window/natives
           for d in window-native-*; do mv "$d" "${d#window-native-}"; done
       - name: Collect libawake_naga
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           pattern: naga-desktop-*
           path: build/window-natives/awake_naga/natives
@@ -686,8 +725,15 @@ jobs:
       # Central without the plugins that build against them, and a published release cannot be
       # replaced. Where Central counts releases by deployment, it also spends one of the monthly
       # releases its publishing limits allow rather than two.
+      # The only steps that see the signing key. No key id: vanniktech only needs one to
+      # disambiguate a key ring holding several subkeys, and passing it blank reads as
+      # set-but-empty rather than absent. The local verification above runs unsigned, as the
+      # Consumer job's does.
       - name: Stage the release
         id: stage
+        env:
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_SIGNING_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_SIGNING_PASSWORD }}
         run: |
           STAGING="$PWD/build/central-staging"
           rm -rf "$STAGING"
@@ -702,8 +748,14 @@ jobs:
                     --no-configuration-cache
           scripts/central-bundle.sh "$STAGING" build/central-bundle.zip
 
+      # Safe to re-run: central-upload.sh asks Central whether the bundle's version is already
+      # published and, if it is, uploads nothing, so a re-run after a later step failed goes on to
+      # the GitHub release instead of sending the same immutable version again.
       - name: Publish to Maven Central
-        run: scripts/central-upload.sh build/central-bundle.zip "awake ${{ github.ref_name }}"
+        env:
+          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+        run: scripts/central-upload.sh build/central-bundle.zip "awake $GITHUB_REF_NAME"
 
       # The release and its bundle go on GitHub whenever the bundle was built, whatever Central
       # said: the Maven fallback workflow serves the newest two from GitHub Pages, and a release
@@ -713,12 +765,12 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if gh release view "${{ github.ref_name }}" >/dev/null 2>&1; then
-            echo "GitHub release for ${{ github.ref_name }} already exists."
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            echo "GitHub release for $GITHUB_REF_NAME already exists."
           else
-            echo "Creating GitHub release for ${{ github.ref_name }}..."
-            gh release create "${{ github.ref_name }}" \
-              --title "${{ github.ref_name }}" \
+            echo "Creating GitHub release for $GITHUB_REF_NAME..."
+            gh release create "$GITHUB_REF_NAME" \
+              --title "$GITHUB_REF_NAME" \
               --generate-notes
           fi
 
@@ -752,28 +804,25 @@ jobs:
       }}
     needs: [release]
     runs-on: ubuntu-latest
-    env:
-      MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
-      MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           # The pin's version and its Core pin both come from `git describe --tags`.
           fetch-depth: 0
 
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
         with:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@748248ddd2a24f49513d8f472f81c3a07d4d50e1 # v4.4.4
 
       # A snapshot, so unsigned, as the snapshot job uploads.
       - name: Verify and publish the WebGPU release pin
         run: bash tools/publish_webgpu_pin.sh
         env:
-          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ env.MAVEN_CENTRAL_USERNAME }}
-          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ env.MAVEN_CENTRAL_PASSWORD }}
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
 
   # Resolves the released Core with the latest Vulkan release from Central and fails if any Core
   # module stays on an older Core (tools/core-alignment-check). It only reads Central, so a red run
@@ -792,14 +841,14 @@ jobs:
     needs: [release]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
         with:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@748248ddd2a24f49513d8f472f81c3a07d4d50e1 # v4.4.4
 
       - name: Resolve Core ${{ github.ref_name }} with the latest Vulkan release
         run: bash tools/core-alignment-check/check.sh "${GITHUB_REF_NAME#v}"
@@ -811,25 +860,21 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/vulkan-v')
     needs: [natives, verify]
     runs-on: macos-14
-    env:
-      MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
-      MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
-      SIGNING_PASSWORD: ${{ secrets.GPG_SIGNING_PASSWORD }}
-      SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
-      ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_SIGNING_KEY }}
-      ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_SIGNING_PASSWORD }}
+    # Creates the GitHub release and attaches its bundle.
+    permissions:
+      contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0
           submodules: recursive
 
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
         with:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@748248ddd2a24f49513d8f472f81c3a07d4d50e1 # v4.4.4
 
       - name: Install Vulkan (macOS)
         run: brew install vulkan-loader molten-vk glfw
@@ -837,7 +882,7 @@ jobs:
       - uses: ./.github/actions/ios-native
 
       - name: Collect Vulkan desktop natives
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           pattern: native-*
           path: build/collected-natives/natives
@@ -847,13 +892,15 @@ jobs:
           cd build/collected-natives/natives
           for d in native-*; do mv "$d" "${d#native-}"; done
 
+      # Stages signed and uploads with central-upload.sh, so a re-run after Central published this
+      # version uploads nothing, as for a Core release.
       - name: Verify and publish only the Vulkan family
         run: bash tools/publish_vulkan_family.sh release "$PWD/build/collected-natives"
         env:
-          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ env.MAVEN_CENTRAL_USERNAME }}
-          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ env.MAVEN_CENTRAL_PASSWORD }}
-          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ env.SIGNING_KEY }}
-          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ env.SIGNING_PASSWORD }}
+          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_SIGNING_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_SIGNING_PASSWORD }}
 
       # As for a Core release: the release and its bundle go on GitHub whenever the bundle was
       # built, whatever Central said, so the Maven fallback can serve a release Central refused.
@@ -862,11 +909,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if gh release view "${{ github.ref_name }}" >/dev/null 2>&1; then
-            echo "GitHub Release for ${{ github.ref_name }} already exists."
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            echo "GitHub Release for $GITHUB_REF_NAME already exists."
           else
-            gh release create "${{ github.ref_name }}" \
-              --title "${{ github.ref_name }}" \
+            gh release create "$GITHUB_REF_NAME" \
+              --title "$GITHUB_REF_NAME" \
               --generate-notes
           fi
 
