@@ -33,6 +33,7 @@ public final class com/awakekt/awake/ui/material3/ScaffoldKt {
 }
 
 public final class com/awakekt/awake/ui/material3/ScaffoldPaddingValues {
+	public fun <init> ()V
 	public synthetic fun <init> (FFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (FFFFLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1-LGk54g8 ()F

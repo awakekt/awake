@@ -7,6 +7,7 @@ public final class com/awakekt/awake/ui/nodegraph/NodeGraphCanvasKt {
 
 public final class com/awakekt/awake/ui/nodegraph/NodeGraphCanvasStyle {
 	public static final field Companion Lcom/awakekt/awake/ui/nodegraph/NodeGraphCanvasStyle$Companion;
+	public fun <init> ()V
 	public synthetic fun <init> (FFFFFFFFFFFFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (FFFFFFFFFFFFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getBackground ()Lcom/awakekt/awake/core/color/Color;
