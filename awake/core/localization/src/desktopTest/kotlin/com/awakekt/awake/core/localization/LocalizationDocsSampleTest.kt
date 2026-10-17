@@ -5,6 +5,11 @@
  */
 package com.awakekt.awake.core.localization
 
+import com.awakekt.awake.core.input.GamepadButton
+import com.awakekt.awake.core.input.Key
+import com.awakekt.awake.core.input.KeyChord
+import com.awakekt.awake.core.input.KeyModifier
+import com.awakekt.awake.core.input.PointerButton
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.core.text.font.UiFonts
@@ -79,5 +84,44 @@ class LocalizationDocsSampleTest {
         // --8<-- [end:fonts]
         assertEquals(listOf("fonts/NotoSansKR-Regular.otf"), fonts.pathsFor(LocaleId.of("ko-KR")))
         assertSame(UiFonts.default(), uiFont, "English needs no fallback font")
+    }
+
+    @Test
+    fun pluginDefaultsAndInputLabels() = runTest {
+        val strings = Strings.load(StringTableSource.assets(project), locale = LocaleId.English)
+        // --8<-- [start:layers]
+        // A plugin's own text: its English, and any translations it ships.
+        val hudDefaults = StringTableSource.of(
+            mapOf(
+                LocaleId.English to mapOf("hud.hp" to "HP", "menu.start" to "Begin"),
+                LocaleId.of("ko") to mapOf("hud.hp" to "체력"),
+            ),
+        )
+        strings.addSource(hudDefaults, StringLayer.Plugin)
+        strings.text("hud.hp") // "HP": only the plugin has it
+        strings.text("menu.start") // "Start": the game's strings/en.json overrides the plugin
+        // --8<-- [end:layers]
+        assertEquals("HP", strings.text("hud.hp"))
+        assertEquals("Start", strings.text("menu.start"))
+        strings.setLocale(LocaleId.of("ko"))
+        assertEquals("체력", strings.text("hud.hp"))
+        strings.setLocale(LocaleId.English)
+
+        // --8<-- [start:input]
+        val labels = InputLabels.load(strings, style = ShortcutStyle.Windows)
+        val save = KeyChord(Key.S, setOf(KeyModifier.Ctrl, KeyModifier.Shift))
+        labels.key(Key.Space) // "Space"
+        labels.chord(save) // "Ctrl+Shift+S"
+        labels.pointer(PointerButton.Secondary) // "Right click"
+        labels.gamepad(GamepadButton.South) // "A"
+        strings.setLocale(LocaleId.of("de"))
+        labels.chord(save) // "Strg+Umschalt+S"
+        // --8<-- [end:input]
+        assertEquals("Strg+Umschalt+S", labels.chord(save))
+        strings.setLocale(LocaleId.English)
+        assertEquals("Space", labels.key(Key.Space))
+        assertEquals("Ctrl+Shift+S", labels.chord(save))
+        assertEquals("Right click", labels.pointer(PointerButton.Secondary))
+        assertEquals("A", labels.gamepad(GamepadButton.South))
     }
 }

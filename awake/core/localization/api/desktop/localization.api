@@ -1,3 +1,34 @@
+public final class com/awakekt/awake/core/localization/ControllerLayout : java/lang/Enum {
+	public static final field Letters Lcom/awakekt/awake/core/localization/ControllerLayout;
+	public static final field Shapes Lcom/awakekt/awake/core/localization/ControllerLayout;
+	public static final field SwappedLetters Lcom/awakekt/awake/core/localization/ControllerLayout;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/core/localization/ControllerLayout;
+	public static fun values ()[Lcom/awakekt/awake/core/localization/ControllerLayout;
+}
+
+public abstract interface class com/awakekt/awake/core/localization/InputLabels {
+	public static final field Companion Lcom/awakekt/awake/core/localization/InputLabels$Companion;
+	public abstract fun binding (Lcom/awakekt/awake/core/input/BindingDescription;)Ljava/lang/String;
+	public abstract fun bindings (Lcom/awakekt/awake/core/input/ButtonAction;)Ljava/lang/String;
+	public fun chord (Lcom/awakekt/awake/core/input/InputChord;)Ljava/lang/String;
+	public fun control (Lcom/awakekt/awake/core/input/InputControl;)Ljava/lang/String;
+	public abstract fun gamepad (Lcom/awakekt/awake/core/input/GamepadButton;)Ljava/lang/String;
+	public abstract fun key (Lcom/awakekt/awake/core/input/Key;)Ljava/lang/String;
+	public abstract fun pointer (Lcom/awakekt/awake/core/input/PointerButton;)Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/localization/InputLabels$Companion {
+	public final fun getDefaults ()Lcom/awakekt/awake/core/localization/StringTableSource;
+	public final fun load (Lcom/awakekt/awake/core/localization/Strings;Lcom/awakekt/awake/core/localization/ShortcutStyle;Lcom/awakekt/awake/core/localization/ControllerLayout;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun load$default (Lcom/awakekt/awake/core/localization/InputLabels$Companion;Lcom/awakekt/awake/core/localization/Strings;Lcom/awakekt/awake/core/localization/ShortcutStyle;Lcom/awakekt/awake/core/localization/ControllerLayout;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/core/localization/InputLabels$DefaultImpls {
+	public static fun chord (Lcom/awakekt/awake/core/localization/InputLabels;Lcom/awakekt/awake/core/input/InputChord;)Ljava/lang/String;
+	public static fun control (Lcom/awakekt/awake/core/localization/InputLabels;Lcom/awakekt/awake/core/input/InputControl;)Ljava/lang/String;
+}
+
 public final class com/awakekt/awake/core/localization/LocaleFonts {
 	public static final field Companion Lcom/awakekt/awake/core/localization/LocaleFonts$Companion;
 	public static final field DEFAULT_PATH Ljava/lang/String;
@@ -95,6 +126,30 @@ public final class com/awakekt/awake/core/localization/PluralRules {
 	public final fun getRoot ()Lcom/awakekt/awake/core/localization/PluralRule;
 }
 
+public final class com/awakekt/awake/core/localization/ShortcutStyle : java/lang/Enum {
+	public static final field Apple Lcom/awakekt/awake/core/localization/ShortcutStyle;
+	public static final field Companion Lcom/awakekt/awake/core/localization/ShortcutStyle$Companion;
+	public static final field Linux Lcom/awakekt/awake/core/localization/ShortcutStyle;
+	public static final field Windows Lcom/awakekt/awake/core/localization/ShortcutStyle;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getPrimaryModifier ()Lcom/awakekt/awake/core/input/KeyModifier;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/core/localization/ShortcutStyle;
+	public static fun values ()[Lcom/awakekt/awake/core/localization/ShortcutStyle;
+}
+
+public final class com/awakekt/awake/core/localization/ShortcutStyle$Companion {
+	public final fun system ()Lcom/awakekt/awake/core/localization/ShortcutStyle;
+}
+
+public final class com/awakekt/awake/core/localization/StringLayer : java/lang/Enum {
+	public static final field BuiltIn Lcom/awakekt/awake/core/localization/StringLayer;
+	public static final field Game Lcom/awakekt/awake/core/localization/StringLayer;
+	public static final field Plugin Lcom/awakekt/awake/core/localization/StringLayer;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/core/localization/StringLayer;
+	public static fun values ()[Lcom/awakekt/awake/core/localization/StringLayer;
+}
+
 public final class com/awakekt/awake/core/localization/StringTableException : java/lang/IllegalArgumentException {
 	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
 	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -121,12 +176,15 @@ public final class com/awakekt/awake/core/localization/StringTables {
 
 public final class com/awakekt/awake/core/localization/Strings {
 	public static final field Companion Lcom/awakekt/awake/core/localization/Strings$Companion;
+	public final fun addSource (Lcom/awakekt/awake/core/localization/StringTableSource;Lcom/awakekt/awake/core/localization/StringLayer;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun addSource$default (Lcom/awakekt/awake/core/localization/Strings;Lcom/awakekt/awake/core/localization/StringTableSource;Lcom/awakekt/awake/core/localization/StringLayer;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public final fun characters ()Ljava/util/Set;
 	public final fun codePoints ()Ljava/util/Set;
 	public final fun contains (Ljava/lang/String;)Z
 	public final fun getDefaultLocale ()Lcom/awakekt/awake/core/localization/LocaleId;
 	public final fun getLocale ()Lkotlinx/coroutines/flow/StateFlow;
 	public final fun getResolvedLocales ()Ljava/util/List;
+	public final fun removeSource (Lcom/awakekt/awake/core/localization/StringTableSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun setLocale (Lcom/awakekt/awake/core/localization/LocaleId;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun text (Ljava/lang/String;Ljava/util/Map;)Ljava/lang/String;
 	public final fun text (Ljava/lang/String;[Lkotlin/Pair;)Ljava/lang/String;

@@ -1,0 +1,11 @@
+public final class com/awakekt/awake/compose/localization/ComposeLocalizationKt {
+	public static final fun ProvideStrings (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/core/localization/Strings;Lcom/awakekt/awake/core/localization/InputLabels;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun ProvideStrings$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/core/localization/Strings;Lcom/awakekt/awake/core/localization/InputLabels;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static final fun getLocalInputLabels ()Lcom/awakekt/awake/compose/runtime/CompositionLocal;
+	public static final fun getLocalStrings ()Lcom/awakekt/awake/compose/runtime/CompositionLocal;
+	public static final fun inputLabels (Lcom/awakekt/awake/compose/runtime/Composer;)Lcom/awakekt/awake/core/localization/InputLabels;
+	public static final fun stringResource (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/String;)Ljava/lang/String;
+	public static final fun stringResource (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/String;Ljava/util/Map;)Ljava/lang/String;
+	public static final fun stringResource (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/String;[Lkotlin/Pair;)Ljava/lang/String;
+}
+

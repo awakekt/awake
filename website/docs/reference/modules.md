@@ -9,7 +9,7 @@
 | Group | `com.awakekt.awake`, plus the module's parent path: `:awake:scene:runtime` publishes `com.awakekt.awake.scene:runtime`. The Vulkan bindings are the exception: `com.awakekt.awake:vulkan-kmp`. |
 | Version | Core modules share one version; the newest is `{{ awake_version }}`. Vulkan family: `{{ awake_vulkan_version }}`, built against Core `{{ awake_vulkan_core_version }}`. See [Releases and compatibility](releases.md). |
 | Catalog alias | `awake-` plus the group after `com.awakekt.awake`, then the name, joined with `-`. The accessor replaces `-` with `.`: `awake-scene-runtime` is `libs.awake.scene.runtime`. The alias is your choice; this is the convention these docs use. |
-| Published modules | 89: 86 in Core, 3 in the Vulkan family. |
+| Published modules | 90: 87 in Core, 3 in the Vulkan family. |
 | Transitive modules | Declare only the modules your code uses. Each module's published metadata brings the modules it depends on. |
 
 A catalog entry looks like this:
@@ -149,6 +149,7 @@ awake-backend-vulkan = { module = "com.awakekt.awake.backend:vulkan", version.re
 | `com.awakekt.awake.compose:foundation` | `awake-compose-foundation` | Compose Foundation: `Row`, `Column`, `Box`, scrolling and layout modifiers. |
 | `com.awakekt.awake.compose:state` | `awake-compose-state` | State management integration for AwakeKt Compose. |
 | `com.awakekt.awake.compose:di` | `awake-compose-di` | Dependency injection bridge for AwakeKt Compose. |
+| `com.awakekt.awake.compose:localization` | `awake-compose-localization` | `LocalStrings`, `stringResource` and input labels for AwakeKt Compose. |
 | `com.awakekt.awake.compose:ui-testing` | `awake-compose-ui-testing` | Test helpers for AwakeKt Compose: semantics queries and a headless rasterizer. |
 | `com.awakekt.awake:tailwind` | `awake-tailwind` | Tailwind-style design tokens and modifiers for Compose Foundation. |
 | `com.awakekt.awake.ui:shadcn` | `awake-ui-shadcn` | shadcn components: themes, tokens, variants and component recipes. |

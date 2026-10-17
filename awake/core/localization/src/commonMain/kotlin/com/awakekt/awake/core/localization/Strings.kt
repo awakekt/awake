@@ -30,6 +30,12 @@ import kotlin.concurrent.Volatile
  * here throws for missing or broken text. Text is a [MessageFormat] pattern, formatted with the
  * plural rule of the locale the text came from.
  *
+ * Text comes in [StringLayer]s: the game's tables, given to [load], over defaults a plugin or library
+ * adds with [addSource], over Core's built-in text. Each locale's table is the layers merged key by
+ * key, the higher layer winning, so a game overrides one plugin key and keeps the rest. The locale
+ * comes first: a plugin's Korean text beats the game's English for a Korean player, and the game's
+ * English beats the plugin's English.
+ *
  * Tables load per locale when that locale is used, so a project with many languages reads only the
  * active one and the default. A message is parsed the first time it is shown and kept.
  *
@@ -39,15 +45,18 @@ import kotlin.concurrent.Volatile
  * @property defaultLocale The locale every lookup falls back to.
  */
 class Strings internal constructor(
-    private val source: StringTableSource,
+    source: StringTableSource,
     val defaultLocale: LocaleId,
     private val pluralRules: (LocaleId) -> PluralRule,
     initialLocale: LocaleId,
 ) {
     private val switchLock = Mutex()
 
-    /** Every table loaded so far that the current chain still uses; null marks a locale with none. */
-    private val loaded = HashMap<LocaleId, Table?>()
+    /** Every source, the one that wins first. Replaced whole, under [switchLock]. */
+    private var sources: List<Source> = listOf(Source(source, StringLayer.Game))
+
+    /** The locale whose missing table was last logged, so a reload of the same locale says it once. */
+    private var warnedMissing: LocaleId? = null
 
     @Volatile
     private var chain: Chain = Chain(initialLocale, emptyList())
@@ -72,18 +81,79 @@ class Strings internal constructor(
      * @param locale The locale to show text in.
      */
     suspend fun setLocale(locale: LocaleId) {
+        switchLock.withLock { switchTo(locale) }
+    }
+
+    /**
+     * Adds [source] as a layer of text under or over the others, and reloads the active locale's
+     * tables, so text read after this returns has it.
+     *
+     * A plugin or library adds its own default text this way, usually its English and any
+     * translations it ships, at [StringLayer.Plugin]; the game's own tables, at [StringLayer.Game],
+     * override any of its keys. Within one layer, a source added later wins. Adding a source that is
+     * already here does nothing.
+     *
+     * @param source The tables.
+     * @param layer Which layer the tables belong to.
+     */
+    suspend fun addSource(source: StringTableSource, layer: StringLayer = StringLayer.Plugin) {
         switchLock.withLock {
-            val wanted = (locale.fallbackChain + defaultLocale.fallbackChain).distinct()
-            val tables = wanted.mapNotNull { tableFor(it) }
-            if (locale.fallbackChain.none { loaded[it] != null }) {
-                log.warn { "No string table for $locale; showing ${tables.firstOrNull()?.locale ?: "keys"} instead." }
+            if (sources.none { it.source === source }) {
+                // A stable sort, so within a layer the newest source stays first.
+                sources = (listOf(Source(source, layer)) + sources).sortedBy { it.layer.ordinal }
+                switchTo(localeState.value)
             }
-            if (tables.isEmpty()) log.error { "No string table for $locale or the default locale $defaultLocale; text shows as keys." }
-            // Only the tables in use stay in memory; switching back reads the file again.
-            loaded.keys.retainAll(wanted.toSet())
-            chain = Chain(locale, tables)
-            localeState.value = locale
         }
+    }
+
+    /**
+     * Removes a source [addSource] added, or the one [load] was given, and reloads the active
+     * locale's tables without it.
+     *
+     * @param source The tables, the same instance that was added.
+     * @return Whether it was here.
+     */
+    suspend fun removeSource(source: StringTableSource): Boolean = switchLock.withLock {
+        val kept = sources.filter { it.source !== source }
+        val removed = kept.size != sources.size
+        if (removed) {
+            sources = kept
+            switchTo(localeState.value)
+        }
+        removed
+    }
+
+    /** Loads [locale]'s chain from every source and publishes it. Runs under [switchLock]. */
+    private suspend fun switchTo(locale: LocaleId) {
+        val wanted = (locale.fallbackChain + defaultLocale.fallbackChain).distinct()
+        val tables = wanted.mapNotNull { tag ->
+            // Every source's table for exactly this locale, merged key by key with the winning source's last.
+            val found = sources.mapNotNull { it.tableFor(tag) }
+            when (found.size) {
+                0 -> null
+                1 -> Table(tag, found.single(), pluralRules(tag))
+                else -> {
+                    val merged = HashMap<String, String>(found.sumOf { it.size } * 2)
+                    for (i in found.indices.reversed()) merged.putAll(found[i])
+                    Table(tag, merged, pluralRules(tag))
+                }
+            }
+        }
+        // Defaults a plugin or Core ships say nothing about whether the game itself is translated.
+        val gameLocales = wanted.filter { tag -> sources.any { it.layer == StringLayer.Game && it.loaded[tag] != null } }
+        // Said once per locale switched to, not again when a source is added or removed.
+        if (locale.fallbackChain.none { it in gameLocales } && warnedMissing != locale) {
+            log.warn { "No string table for $locale; showing ${gameLocales.firstOrNull() ?: "keys"} instead." }
+            warnedMissing = locale
+        } else if (locale != warnedMissing) {
+            warnedMissing = null
+        }
+        if (tables.isEmpty()) log.error { "No string table for $locale or the default locale $defaultLocale; text shows as keys." }
+        // Only the tables in use stay in memory; switching back reads the file again.
+        val inUse = wanted.toSet()
+        sources.forEach { it.loaded.keys.retainAll(inUse) }
+        chain = Chain(locale, tables)
+        localeState.value = locale
     }
 
     /**
@@ -108,21 +178,7 @@ class Strings internal constructor(
             current.report(key) { "No text for \"$key\" in ${current.locale} or the default locale $defaultLocale." }
             return key
         }
-        return format(current, found, key, raw, arguments)
-    }
-
-    private fun format(current: Chain, table: Table, key: String, raw: String, arguments: Map<String, Any?>): String {
-        val message = if (MessageFormat.isPlain(raw)) null else table.message(key, raw)
-        return when {
-            MessageFormat.isPlain(raw) -> raw
-            message == null -> {
-                current.report("$key@${table.locale}") { "Text \"$key\" in ${table.locale} is not a valid message: ${table.errors[key]}" }
-                key
-            }
-            else -> message.format(arguments, table.plurals) { problem ->
-                current.report("$key@${table.locale}:$problem") { "Text \"$key\" in ${table.locale}: $problem." }
-            }
-        }
+        return current.format(found, key, raw, arguments)
     }
 
     /**
@@ -139,6 +195,23 @@ class Strings internal constructor(
      * @return True when [text] would find it.
      */
     fun contains(key: String): Boolean = chain.tables.any { key in it.text }
+
+    /**
+     * The text of the first of [keys] found, trying each key in a locale's table before the next
+     * locale's, or null, unlogged, when no table has any. [InputLabels] reads a key's platform form
+     * before its plain form this way, so a parent locale's plain form never beats the player's own
+     * locale's platform form.
+     */
+    internal fun textOfFirst(keys: Array<String>): String? {
+        val current = chain
+        for (table in current.tables) {
+            for (key in keys) {
+                val raw = table.text[key] ?: continue
+                return current.format(table, key, raw, emptyMap())
+            }
+        }
+        return null
+    }
 
     /**
      * Every char the text of the active locale's tables uses, the default locale's included, so a
@@ -169,26 +242,46 @@ class Strings internal constructor(
         return codePoints
     }
 
-    private suspend fun tableFor(locale: LocaleId): Table? {
-        if (locale in loaded) return loaded[locale]
-        // A table that can't be read is a StringTableException, an IllegalArgumentException, as is a
-        // kotlinx.serialization failure in a custom source.
-        val table = try {
-            source.load(locale)?.let { Table(locale, it, pluralRules(locale)) }
-        } catch (e: IllegalArgumentException) {
-            log.error(e) { "String table for $locale could not be read: ${e.message}" }
-            null
+    /** One layer's tables, with those loaded so far that the chain still uses; null marks a locale with none. */
+    private class Source(val source: StringTableSource, val layer: StringLayer) {
+        val loaded = HashMap<LocaleId, Map<String, String>?>()
+
+        suspend fun tableFor(locale: LocaleId): Map<String, String>? {
+            if (locale in loaded) return loaded[locale]
+            // A table that can't be read is a StringTableException, an IllegalArgumentException, as is a
+            // kotlinx.serialization failure in a custom source.
+            val table = try {
+                source.load(locale)
+            } catch (e: IllegalArgumentException) {
+                log.error(e) { "String table for $locale could not be read: ${e.message}" }
+                null
+            }
+            loaded[locale] = table
+            return table
         }
-        loaded[locale] = table
-        return table
     }
 
-    /** One locale's tables, swapped in whole by [setLocale]. Each logs a problem once while it is active. */
+    /** One locale's tables, swapped in whole by [setLocale] and [addSource]. Each logs a problem once while it is active. */
     private class Chain(val locale: LocaleId, val tables: List<Table>) {
         private val reported = HashSet<String>()
 
         inline fun report(id: String, message: () -> String) {
             if (reported.add(id)) log.warn(message)
+        }
+
+        /** [raw], the text of [key] in [table], formatted with [arguments]; [key] when it can't be. */
+        fun format(table: Table, key: String, raw: String, arguments: Map<String, Any?>): String {
+            val message = if (MessageFormat.isPlain(raw)) null else table.message(key, raw)
+            return when {
+                MessageFormat.isPlain(raw) -> raw
+                message == null -> {
+                    report("$key@${table.locale}") { "Text \"$key\" in ${table.locale} is not a valid message: ${table.errors[key]}" }
+                    key
+                }
+                else -> message.format(arguments, table.plurals) { problem ->
+                    report("$key@${table.locale}:$problem") { "Text \"$key\" in ${table.locale}: $problem." }
+                }
+            }
         }
     }
 

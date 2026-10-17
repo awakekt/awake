@@ -125,6 +125,7 @@ See [docs/reference/compose-engine/](../docs/reference/compose-engine/).
 | `compose:foundation` | Basic layouts, text, and interaction building blocks |
 | `compose:state` | Bridge from `core:state` stores into composition |
 | `compose:di` | Ambient `core:di` injection through the UI tree |
+| `compose:localization` | `LocalStrings`, `stringResource` and input labels for Compose UI |
 | `compose:ui-testing` | Rasterizer, semantics queries, component frames for tests |
 
 ## ui — component families and UI tools

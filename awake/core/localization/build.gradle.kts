@@ -24,6 +24,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(project(":awake:core:io"))
+            api(project(":awake:core:input"))
             api(project(":awake:core:text"))
             api(libs.kotlinx.coroutines.core)
             implementation(project(":awake:core:logging"))
