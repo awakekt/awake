@@ -206,6 +206,46 @@ class CanvasElement {
     /** How far, in dp, a [followBounds] box reaches past the node's rectangle on each side; negative pulls it in. */
     var followOutset: Float = 0f
 
+    /**
+     * How a [follow]er behaves with many on screen: culling, ranking against a [CanvasFollowLimit],
+     * scale and fade by distance, and holding to the screen's edge. Null follows
+     * [CanvasFollowRules.Default]: culled off screen and hidden behind the camera.
+     */
+    var followRules: CanvasFollowRules? = null
+
+    /**
+     * Whether this element, inside a [follow]er, is the arrow of one held to the screen's edge: drawn
+     * only while its parent is [pinned], centred on its parent's edge toward the target and turned
+     * to point at it, its picture pointing right before it turns; its `style.rotation` adds to the
+     * turn, so art that points up takes 90.
+     */
+    var followArrow: Boolean = false
+
+    /**
+     * How important this follower is right now, set from code each frame, for a [CanvasFollowLimit]
+     * that ranks by [CanvasFollowRank.Score]: higher stays. A game scores by whatever it knows, such
+     * as threat or a quest target.
+     */
+    var followScore: Float = 0f
+
+    /** Whether this [follow]er was last drawn held to the screen's edge, its target off screen or behind the camera. */
+    var pinned: Boolean = false
+        internal set
+
+    /**
+     * While [pinned], which way the target lies from the element, in degrees clockwise from the
+     * right, as the screen has it.
+     */
+    var pinAngle: Float = 0f
+        internal set
+
+    /** A [followArrow]'s turn from its follower's [pinAngle]; [CanvasOverlay] sets it as it draws the arrow. */
+    internal var arrowAngle: Float = 0f
+
+    /** How far the followed point was from the camera last frame, in world units; 0 when the host cannot tell. */
+    var followDistance: Float = 0f
+        internal set
+
     /** How the element places its children itself; null anchors each child by hand. */
     var layout: CanvasLayout? = null
 

@@ -83,6 +83,8 @@ or a system polling `consumePress()`, sees the tap as it would without the bluep
 | `followOffset` | vector | `{x: 0, y: 0, z: 0}` | A world-space offset from the followed node. |
 | `followBounds` | boolean | `false` | Cover the followed node's screen box instead of standing at its point. |
 | `followOutset` | number | `0` | With `followBounds`, how far the box reaches past the node's on each side, in dp. Negative pulls it in. |
+| `followRules` | object | none | Culling, ranking, scale and fade by distance, and edge pinning for a follower. See [Many followers](#many-followers). |
+| `followArrow` | boolean | `false` | Inside a follower pinned to the edge, the arrow that points to its target. |
 | `layout` | object | none | Lay the children out in rows or columns. See [Lay out children](#lay-out-children). |
 | `grow` | number | `0` | In a laid-out parent, this element's share of the leftover space. |
 | `bind` | object | none | Game state the element shows without code. See [Show game state](#show-game-state). |
@@ -363,6 +365,44 @@ the character it follows. The runtime projects through the camera it draws with;
 `SceneCanvas` itself passes the runtime's, `canvasProjector(world)`, or a `CanvasProjector` of its
 own, which reports points in the window's pixels. A canvas drawn over part of the window, such as an
 editor's game view, still lands on what it follows.
+
+## Many followers
+
+A scene with a name plate over every character needs to draw only the plates that matter. An element's
+`followRules` says how its follower behaves in a crowd, and a `canvas_follow_limit` says how many of
+a group are drawn at once. Each follower is projected once a frame, and one that is left out costs no
+drawing.
+
+- **Culling.** A follower whose box is wholly off the screen is left out (`cullOffScreen`, on by
+  default), as is one behind the camera, judged by its depth along the camera's view so it holds on
+  every backend. `maxDistance` hides it farther than that from the camera, and `occlusion` hides it
+  while the host's `CanvasProjector.occluded` reports something in the way.
+- **Priority and a cap.** A `canvas_follow_limit` with a `max` keeps that many of its `group`, by
+  `rankBy`: the nearest, the highest `followRules.priority`, or the highest `followScore` game code
+  sets each frame. The rest are left out until they rank again.
+- **Scale and fade.** `scale` and `fade` are curves by distance: `points` of `at` and `value`, straight
+  between them. A plate can shrink to half its size at 50 metres and fade out by 80.
+- **Edge pinning.** With `pinToEdge`, a follower whose target is off the screen or behind the camera
+  holds to the screen's edge on the side the target lies, `edgeMargin` dp in, and its `pinned` and
+  `pinAngle` say so. A child with `followArrow` is drawn on the follower's edge toward the target,
+  turned to point there.
+
+```json title="Quest markers that hold to the edge, at most five at once"
+[
+  { "name": "Limits", "components": [ { "component": "canvas_follow_limit", "group": "quest", "max": 5, "rankBy": "Priority" } ] },
+  { "name": "Marker", "components": [ { "component": "canvas_element", "kind": "Image", "follow": "Harbor Gate",
+    "anchor": "Center", "offsetX": 0, "offsetY": 0, "width": 32, "height": 32,
+    "followRules": { "group": "quest", "priority": 2, "pinToEdge": true, "edgeMargin": 24,
+      "fade": { "points": [ { "at": 100, "value": 1 }, { "at": 300, "value": 0.4 } ] } } } ],
+    "children": [ { "name": "Arrow", "components": [ { "component": "canvas_element", "kind": "Image",
+      "followArrow": true, "width": 16, "height": 16 } ] } ] }
+]
+```
+
+A game that shows and hides followers often, such as damage numbers, takes them from a
+`CanvasFollowerPool(world, template)`: `acquire(target) { text = "-12" }` hands out a hidden one
+again, set back to the template, and `release(entity)` hides it for the next, so no entity is
+created or destroyed while it plays.
 
 ## Show a 3D view
 

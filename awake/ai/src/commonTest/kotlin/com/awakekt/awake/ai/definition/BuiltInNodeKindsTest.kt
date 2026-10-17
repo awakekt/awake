@@ -10,6 +10,7 @@ import com.awakekt.awake.ai.btree.BehaviorStatus.FAILURE
 import com.awakekt.awake.ai.btree.BehaviorStatus.RUNNING
 import com.awakekt.awake.ai.btree.BehaviorStatus.SUCCESS
 import com.awakekt.awake.ai.btree.BlackboardValue
+import com.awakekt.awake.ai.perception.PerceptionNodeKinds
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.Entity
 import kotlin.test.Test
@@ -26,7 +27,7 @@ class BuiltInNodeKindsTest {
     @Test
     fun everyBuiltInIsRegisteredWithADescription() {
         val registry = AiRegistry()
-        assertEquals(BuiltInNodeKinds.nodeKinds.map { it.id }, registry.nodeKinds.map { it.id })
+        assertEquals((BuiltInNodeKinds.nodeKinds + PerceptionNodeKinds.nodeKinds).map { it.id }, registry.nodeKinds.map { it.id })
         assertTrue(registry.nodeKinds.all { it.id.value.startsWith("ai.") && it.description.isNotBlank() })
         assertTrue(AiRegistry(includeBuiltIns = false).nodeKinds.isEmpty())
     }

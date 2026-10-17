@@ -5,9 +5,15 @@ mapping stable keys to text; game data, UI and plugins store the keys.
 
 - `Strings` looks a key up in the active locale, its parent locales and then the default locale,
   and formats it. A missing key shows as the key and is logged once; nothing throws.
-- `MessageFormat` is the ICU MessageFormat subset the text uses: `{name}`, `{n, number}`,
-  `plural` (with `=N`, `offset:` and `#`), `select`, and ICU's apostrophe quoting.
+- `MessageFormat` is the ICU MessageFormat subset the text uses: `{name}`, `{n, number}` with the
+  `integer`, `percent` and `compact` styles, `plural` (with `=N`, `offset:` and `#`), `selectordinal`,
+  `select`, and ICU's apostrophe quoting.
 - `PluralRules` holds the CLDR cardinal rules of the languages it covers; others count as `other`.
+  `OrdinalRules` holds their CLDR ordinal rules, for `selectordinal`.
+- `NumberFormat` writes numbers the locale's way: separators, minimum grouping, percent and short
+  compact forms (`1.2K`, `1,2 Mio.`, `1.2万`), from CLDR data generated for the same languages.
+  `{n, number}` and a plural's `#` use it; a plain `{n}` does not. `CldrNumberData.kt` is written by
+  `./gradlew :awake:core:localization:generateCldrNumberData` (see `cldr.gradle.kts`); never by hand.
 - `StringTableSource.assets` reads tables through a project `AssetSource`, one locale at a time,
   only when the locale is used.
 - `StringLayer` orders sources: the game's tables over a plugin's defaults over Core's built-in text.

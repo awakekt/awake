@@ -14,6 +14,7 @@ import com.awakekt.awake.ui.canvas.CanvasAnchor
 import com.awakekt.awake.ui.canvas.CanvasBinding
 import com.awakekt.awake.ui.canvas.CanvasElement
 import com.awakekt.awake.ui.canvas.CanvasElementKind
+import com.awakekt.awake.ui.canvas.CanvasFollowRules
 import com.awakekt.awake.ui.canvas.CanvasLayout
 import com.awakekt.awake.ui.canvas.CanvasStyle
 import com.awakekt.awake.ui.canvas.canvasFontProblem
@@ -59,6 +60,15 @@ import kotlinx.serialization.Serializable
  * @property followOutset How far, in dp, a [followBounds] box reaches past the node's rectangle on
  * each side, so children anchored to its corners sit outside the node, as a target marker's corner
  * pieces do. Negative pulls the box in; it never shrinks below nothing.
+ * @property followRules How a follower behaves with many on screen: whether it is culled off screen
+ * (`cullOffScreen`), beyond `maxDistance` or while `occlusion` says it is hidden; the `group` a
+ * `canvas_follow_limit` ranks it in and its `priority` there; its `scale` and `fade` by distance, as
+ * curves of `points` (`at` a distance, `value` there); and whether it holds to the screen's edge,
+ * `edgeMargin` in, while its target is off screen or behind the camera (`pinToEdge`). Null culls it
+ * off screen and hides it behind the camera.
+ * @property followArrow Whether this element, inside a follower, is the arrow of one held to the
+ * screen's edge: drawn only while its parent is pinned, on its parent's edge toward the target, and
+ * turned to point there, its picture pointing right before it turns.
  * @property layout How the element places its children itself, in rows or columns; null anchors
  * each child by hand.
  * @property grow In a parent with a [layout], this element's share of its line's leftover space.
@@ -124,6 +134,8 @@ data class SceneCanvasElement(
     val followOffset: SceneVec3 = SceneVec3(),
     val followBounds: Boolean = false,
     val followOutset: Float = 0f,
+    val followRules: CanvasFollowRules? = null,
+    val followArrow: Boolean = false,
     val layout: CanvasLayout? = null,
     @PropertyRange(min = 0.0) val grow: Float = 0f,
     val bind: CanvasBinding? = null,
@@ -163,8 +175,8 @@ data class SceneCanvasElement(
         kindProblems().forEach { add(SceneValidationIssue(path, "canvas_element.$it")) }
     }
 
-    /** Fields set on a kind they do nothing for. */
-    private fun kindProblems(): List<String> = listOfNotNull(
+    /** Fields set where they do nothing, and what is wrong with the follow rules. */
+    private fun kindProblems(): List<String> = followProblems() + listOfNotNull(
         "mask only masks a TextField".takeIf { mask.isNotEmpty() && kind != CanvasElementKind.TextField },
         "maxLength only limits a TextField".takeIf {
             (maxLength != 0 || maxLengthUnit != TextLengthUnit.Graphemes) && kind != CanvasElementKind.TextField
@@ -182,4 +194,11 @@ data class SceneCanvasElement(
         },
         "textKey must not be blank".takeIf { textKey.isNotEmpty() && textKey.isBlank() },
     )
+
+    /** What is wrong with the follow rules, and follow fields set where they do nothing. */
+    private fun followProblems(): List<String> = buildList {
+        followRules?.problems()?.forEach { add("followRules.$it") }
+        if (followRules != null && follow.isEmpty()) add("followRules only apply to an element that follows a node")
+        if (followArrow && follow.isNotEmpty()) add("followArrow only points for an element inside a follower, so it cannot follow a node itself")
+    }
 }

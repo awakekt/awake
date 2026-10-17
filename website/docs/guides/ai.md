@@ -206,6 +206,35 @@ tree finishes, or when a condition node succeeds.
 Trees, machines and blackboards snapshot to data and restore exactly, and a running tree reports
 what each node returned on the latest tick, for an editor's live view.
 
+## Perception
+
+A `Perceiver` sees in a focus cone and a wider peripheral cone, hears `SoundEvent`s, remembers what
+it sensed until it forgets, and regards others by a `FactionTable`. All of it is
+`@Serializable` settings:
+
+```json title="sentry.perception.json"
+{
+  "sight": { "focusRange": 30, "focusAngle": 40, "peripheralRange": 8, "peripheralAngle": 160 },
+  "hearing": { "range": 12, "muffledBy": 0.5 },
+  "forgetAfter": 5,
+  "updateInterval": 0.25
+}
+```
+
+```kotlin title="Kotlin"
+world.add(guard, Perceiver(FactionId("watch"), settings))
+world.add(thief, Perceivable(FactionId("thieves")))
+val perception = PerceptionSystem(space, factions, lineOfSight, maxSightUpdates = 100)
+perception.hear(SoundEvent(position, loudness = 2f, source = thief))
+```
+
+`space` tells it where entities are and which way they face. `lineOfSight` decides what blocks
+sight and muffles sound; `NavFieldLineOfSight` uses a navigation grid's blocked cells. Run it before
+the behaviour systems. It writes `perception.target`, `perception.target.position`,
+`perception.sees-hostile`, `perception.hostiles` and `perception.noise.position` to the agent's
+blackboard, and trees and machines can ask `ai.perception.sees`, `ai.perception.remembers` and
+`ai.perception.heard`.
+
 ## How it works
 
 The three behaviours share one route follower. On an interval each asks for a route to its goal: the

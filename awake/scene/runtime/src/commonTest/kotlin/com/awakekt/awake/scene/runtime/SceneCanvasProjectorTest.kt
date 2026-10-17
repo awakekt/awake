@@ -17,6 +17,7 @@ import com.awakekt.awake.scene.rendering.camera.CameraViewport
 import com.awakekt.awake.scene.rendering.mesh.MeshBounds
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -39,6 +40,45 @@ class SceneCanvasProjectorTest {
         assertTrue(right.x > centre.x, "+x is to the right")
         assertTrue(up.y < centre.y, "+y is up the screen")
         assertNull(projector.project(0f, 0f, 20f), "behind the camera")
+    }
+
+    @Test
+    fun aFollowedPointCarriesItsDepthAndDistance() {
+        val point = assertNotNull(projector.projectFollow(3f, 0f, 6f))
+        val plain = assertNotNull(projector.project(3f, 0f, 6f))
+
+        assertFalse(point.behind)
+        assertEquals(plain.x, point.x, 0.01f)
+        assertEquals(plain.y, point.y, 0.01f)
+        assertEquals(4f, point.depth, 0.001f, "along the view, from z 10 to z 6")
+        assertEquals(5f, point.distance, 0.001f, "straight from the eye: 3 across, 4 deep")
+    }
+
+    @Test
+    fun vulkanAndWebGpuPutAFollowedPointInTheSamePlace() {
+        val webGpu = SceneCanvasProjector(world, ClipSpace.WebGpu) { viewport }
+        for ((x, y) in listOf(0f to 0f, 1f to 2f, -3f to -1f)) {
+            val vulkan = assertNotNull(projector.projectFollow(x, y, 0f))
+            val other = assertNotNull(webGpu.projectFollow(x, y, 0f))
+
+            assertEquals(other.x, vulkan.x, 0.01f)
+            assertEquals(other.y, vulkan.y, 0.01f, "Vulkan's flipped Y still puts +y up the screen")
+        }
+        assertTrue(assertNotNull(projector.projectFollow(0f, 2f, 0f)).y < 300f, "+y is up")
+    }
+
+    @Test
+    fun aPointBehindTheCameraIsBehindByItsViewDepthAndLiesTheWayItIs() {
+        for (clip in listOf(ClipSpace.Vulkan, ClipSpace.WebGpu)) {
+            val behind = SceneCanvasProjector(world, clip) { viewport }
+            val right = assertNotNull(behind.projectFollow(2f, 0f, 15f))
+            val above = assertNotNull(behind.projectFollow(0f, 2f, 15f))
+
+            assertTrue(right.behind && above.behind, "$clip: z 15 is behind an eye at z 10 looking down -z")
+            assertTrue(right.depth < 0f, "$clip: by view depth")
+            assertTrue(right.x > 800f && kotlin.math.abs(right.y - 300f) < 1f, "$clip: to the camera's right lies off the right of the view")
+            assertTrue(above.y < 0f && kotlin.math.abs(above.x - 400f) < 1f, "$clip: above the camera lies off the top")
+        }
     }
 
     @Test

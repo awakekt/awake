@@ -15,6 +15,8 @@ import com.awakekt.awake.scene.canvas.CanvasProjector
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.camera.CameraViewport
 import com.awakekt.awake.scene.rendering.mesh.MeshBounds
+import com.awakekt.awake.ui.canvas.CanvasProjection
+import kotlin.math.sqrt
 
 /**
  * Projects through the camera the scene is drawn with, [viewport], so an element that follows a
@@ -26,6 +28,64 @@ internal class SceneCanvasProjector(
     private val viewport: () -> CameraViewport?,
 ) : CanvasProjector {
     override fun project(x: Float, y: Float, z: Float): Vec2? = viewport()?.projectToSurface(Vec3f(x, y, z), clipSpace)
+
+    /**
+     * In front of the near plane, where [project] puts the point, through the backend's clip space,
+     * so Vulkan's flipped Y lands where it is drawn. Behind it, by the depth along the camera's view
+     * rather than the clip `w`, the point's side of the camera in view space, right and up, sets
+     * which way from the view's centre it lies; the point given is far off the view that way.
+     *
+     * Written out in floats: it runs for every follower every frame, and allocates only its answer.
+     */
+    @Suppress("ReturnCount") // No view, a degenerate one, in front and behind each answer differently.
+    override fun projectFollow(x: Float, y: Float, z: Float): CanvasProjection? {
+        val view = viewport() ?: return null
+        val lens = view.lens
+        val toX = x - lens.eye.x
+        val toY = y - lens.eye.y
+        val toZ = z - lens.eye.z
+        val distance = sqrt(toX * toX + toY * toY + toZ * toZ)
+        var forwardX = lens.center.x - lens.eye.x
+        var forwardY = lens.center.y - lens.eye.y
+        var forwardZ = lens.center.z - lens.eye.z
+        val forwardLength = sqrt(forwardX * forwardX + forwardY * forwardY + forwardZ * forwardZ)
+        if (forwardLength < DEGENERATE) return null
+        forwardX /= forwardLength
+        forwardY /= forwardLength
+        forwardZ /= forwardLength
+        val depth = toX * forwardX + toY * forwardY + toZ * forwardZ
+        if (depth > lens.near) {
+            val point = view.projectToSurface(Vec3f(x, y, z), clipSpace) ?: return null
+            return CanvasProjection(point.x, point.y, depth, distance, behind = false)
+        }
+        // Right is forward x up, and the view's own up is right x forward.
+        val up = lens.up
+        var rightX = forwardY * up.z - forwardZ * up.y
+        var rightY = forwardZ * up.x - forwardX * up.z
+        var rightZ = forwardX * up.y - forwardY * up.x
+        val rightLength = sqrt(rightX * rightX + rightY * rightY + rightZ * rightZ)
+        if (rightLength < DEGENERATE) return null
+        rightX /= rightLength
+        rightY /= rightLength
+        rightZ /= rightLength
+        val viewUpX = rightY * forwardZ - rightZ * forwardY
+        val viewUpY = rightZ * forwardX - rightX * forwardZ
+        val viewUpZ = rightX * forwardY - rightY * forwardX
+        val across = toX * rightX + toY * rightY + toZ * rightZ
+        // The screen's y runs down, the view's up runs up.
+        val down = -(toX * viewUpX + toY * viewUpY + toZ * viewUpZ)
+        return offView(view, across, down, depth, distance)
+    }
+
+    /** Far off [view] in the screen direction ([across], [down]) from its centre; straight behind is taken as below. */
+    private fun offView(view: CameraViewport, across: Float, down: Float, depth: Float, distance: Float): CanvasProjection {
+        val layout = view.layout
+        val far = layout.width + layout.height
+        val sideways = sqrt(across * across + down * down)
+        val dx = if (sideways < DEGENERATE) 0f else across / sideways
+        val dy = if (sideways < DEGENERATE) 1f else down / sideways
+        return CanvasProjection(layout.x + layout.width / 2f + dx * far, layout.y + layout.height / 2f + dy * far, depth, distance, behind = true)
+    }
 
     override fun bounds(entity: Entity): Rectangle? {
         val box = FloatArray(BOX_FLOATS) { if (it < AXES) Float.MAX_VALUE else -Float.MAX_VALUE }
@@ -76,6 +136,7 @@ internal class SceneCanvasProjector(
     }
 
     private companion object {
+        const val DEGENERATE = 1e-6f
         const val AXES = 3
         const val BOX_FLOATS = 6
         const val CORNERS = 8

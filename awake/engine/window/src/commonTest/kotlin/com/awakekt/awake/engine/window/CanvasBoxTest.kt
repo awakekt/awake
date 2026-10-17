@@ -7,6 +7,8 @@ package com.awakekt.awake.engine.window
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 /** A browser pointer lands on the buffer pixel under it, whatever the page's CSS makes the canvas. */
 class CanvasBoxTest {
@@ -46,5 +48,22 @@ class CanvasBoxTest {
 
         assertEquals(1 to 1, hidden.bufferSize(density = 3.0))
         assertEquals(0f to 0f, hidden.bufferPoint(50.0, 50.0, bufferWidth = 1, bufferHeight = 1))
+    }
+
+    @Test
+    fun aPointOverTheBoxIsInsideAndOneBesideItIsNot() {
+        val box = CanvasBox(left = 10.0, top = 20.0, width = 100.0, height = 50.0)
+
+        assertTrue(box.contains(10.0, 20.0))
+        assertTrue(box.contains(109.0, 69.0))
+        assertFalse(box.contains(110.0, 40.0), "the right edge is outside")
+        assertFalse(box.contains(50.0, 70.0), "the bottom edge is outside")
+        assertFalse(box.contains(9.0, 40.0))
+        assertFalse(box.contains(50.0, 19.0))
+    }
+
+    @Test
+    fun aCanvasThatIsNotDisplayedHasNoPointsOverIt() {
+        assertFalse(CanvasBox(left = 0.0, top = 0.0, width = 0.0, height = 0.0).contains(0.0, 0.0))
     }
 }

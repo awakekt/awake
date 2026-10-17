@@ -51,3 +51,5 @@ mavenPublishing {
         description.set("Per-locale string tables, ICU-style messages with CLDR plurals, and the active locale")
     }
 }
+
+apply(from = "cldr.gradle.kts")
