@@ -56,6 +56,7 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         it.action = action
         it.doubleAction = doubleAction
         it.touchOnly = touchOnly
+        it.safeArea = safeArea
         it.style = style
         it.textAlign = textAlign
         it.follow = follow
@@ -101,6 +102,7 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         action = action,
         doubleAction = doubleAction,
         touchOnly = touchOnly,
+        safeArea = safeArea,
         style = style,
         textAlign = textAlign,
         follow = follow,

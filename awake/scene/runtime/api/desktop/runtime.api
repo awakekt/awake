@@ -123,6 +123,7 @@ public final class com/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime : co
 	public final fun getCanvasBindings ()Ljava/util/List;
 	public final fun getCanvasFonts ()Ljava/util/Map;
 	public final fun getCanvasImages ()Ljava/util/Map;
+	public final fun getCanvasSafeArea ()Lcom/awakekt/awake/ui/canvas/CanvasInsets;
 	public final fun getCanvasScale ()F
 	public final fun getCanvasStrings ()Lcom/awakekt/awake/core/localization/Strings;
 	public final fun getCursor ()Lcom/awakekt/awake/core/input/PointerCursor;
@@ -162,6 +163,7 @@ public final class com/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime : co
 	public final fun setCanvasBindings (Ljava/util/List;)V
 	public final fun setCanvasFonts (Ljava/util/Map;)V
 	public final fun setCanvasImages (Ljava/util/Map;)V
+	public final fun setCanvasSafeArea (Lcom/awakekt/awake/ui/canvas/CanvasInsets;)V
 	public final fun setCanvasScale (F)V
 	public final fun setCanvasStrings (Lcom/awakekt/awake/core/localization/Strings;)V
 	public final fun setDrawsSceneCanvas (Z)V

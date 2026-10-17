@@ -81,6 +81,31 @@ An item whose `parent` is also in the list is drawn inside it, anchored and offs
 parent's box, and moves and hides with it. `CanvasOverlay(items, scale = 2f)` draws everything
 twice the size, with every edge on a whole pixel.
 
+`CanvasOverlay(items, scaler = CanvasScaler(…))` works the scale out from the canvas's box each
+frame instead, measured before anything in it is composed: `ScaleWithScreenSize` from a reference
+size and a `match` between following the width and the height, `ConstantPixelSize` from pixels per
+unit, or `ConstantPhysicalSize` from the dots per inch the canvas is designed at. `minScale` and
+`maxScale` hold the result, and `playerScale` multiplies it after them. `CanvasScaler.scaleFor(width,
+height, density)` is the whole rule, for a host that wants the number itself. It is serializable;
+`awake:scene:canvas` saves it with a scene as `canvas_scaler`.
+
+## Safe area
+
+`CanvasOverlay(items, safeArea = CanvasInsets(left, top, right, bottom))` is what covers the
+canvas's edges, in the host's dp: a notch, rounded corners, a home indicator, overscan. An element
+anchored on the canvas itself is placed inside it, its anchor and offsets measured from the safe
+area's edges and centre; an element whose `safeArea` is false is placed from the canvas's own edges.
+An element inside another, and a follower, are placed as they would be without it. The insets do
+not grow with the canvas's scale. Core reads no platform's insets itself yet: the host passes what
+its platform reports, and an editor passes a device's to preview it.
+
+## Placing on a point
+
+`PointAnchor(x, y, pivot = Alignment.BottomCenter, offsetX, offsetY) { … }` is a Compose layout that
+puts its content's pivot point on a point of its box, for any UI that places a label, marker or
+tooltip over a point it works out itself. It fills the room it is given and never moves its content
+to stay inside it.
+
 ## Reacting to a button
 
 ```kotlin

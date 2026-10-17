@@ -95,6 +95,7 @@ or a system polling `consumePress()`, sees the tap as it would without the bluep
 | `action` | string | `""` | Names what the element does for the game, such as `move` or `jump`. The game decides what each name means. |
 | `doubleAction` | string | `""` | What a Button does when double-clicked, such as equipping an item; two presses within half a second. |
 | `touchOnly` | boolean | `false` | Draw the element only where touch controls are shown. |
+| `safeArea` | boolean | `true` | Keep the element clear of a notch, rounded corners or a home indicator. See [Keep clear of a notch](#keep-clear-of-a-notch). |
 | `style` | object | `{}` | How the element looks beyond its colours: shape, border, gradient, shadow, images and button states. See [Style an element](#style-an-element). |
 
 A running `CanvasElement` also has values that are not saved:
@@ -392,6 +393,38 @@ runtime renders each picture before the frame's UI and frees it once nothing dra
 element's size, offset, text and image pixels. A HUD drawn from 1x pixel art reads at 2 on a large
 screen. Every edge lands on a whole pixel at any scale, so the art stays crisp; at a fractional scale
 such as 1.5, some of its pixels are a screen pixel wider than others.
+
+### Scale with the screen
+
+A [`canvas_scaler`](../reference/scene-document-components.md#canvas_scaler) on any node works the
+scale out from the screen's size each frame, in place of `canvasScale`. With `ScaleWithScreenSize`
+the HUD is designed at `referenceWidth` by `referenceHeight` and takes the same share of every
+screen, following its width, its height or a blend of the two by `match`. `ConstantPixelSize` keeps
+a unit `pixelsPerUnit` of the screen's pixels, for pixel art at any density, and
+`ConstantPhysicalSize` keeps it 1 / `referenceDpi` of an inch. `minScale` and `maxScale` hold the
+result, and `playerScale`, which a settings menu sets, multiplies it after them.
+
+```json title="A 1080p HUD that follows the screen's height"
+{ "component": "canvas_scaler", "referenceWidth": 1920, "referenceHeight": 1080, "match": 1, "maxScale": 2 }
+```
+
+A host that draws `CanvasOverlay` itself passes the same rule as `CanvasOverlay(items, scaler = …)`,
+and `CanvasScaler.scaleFor(width, height, density)` answers it for any box.
+
+### Keep clear of a notch
+
+`SceneAppLifecycleRuntime.canvasSafeArea`, or `SceneCanvas(world, safeArea = …)`, is what covers
+the screen's edges, in dp: a notch, rounded corners, a home indicator, a TV's overscan. An element
+anchored on the canvas itself is placed inside it, its anchor and offsets measured from the safe
+area's edges and centre. A backdrop that should reach under the notch sets `safeArea` to `false`.
+An element inside another is placed in its parent's box, and a follower on what it follows, either
+way. An editor previews a device by passing that device's insets.
+
+### Place something on a point
+
+`PointAnchor(x, y, pivot = Alignment.BottomCenter)` is the same placement for any Compose UI: it
+puts its content's `pivot` point on a point of its box, moved by `offsetX` and `offsetY`, for a
+label or tooltip over a point the game works out itself.
 
 ## Limit what is typed
 
