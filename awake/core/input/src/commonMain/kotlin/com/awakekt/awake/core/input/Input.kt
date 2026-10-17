@@ -363,6 +363,9 @@ enum class ScrollSource {
  * @property touches Every finger on a touch screen this frame, including one that lifted during it.
  * @property pointerFromTouch True while the primary pointer follows a finger rather than a mouse.
  * @property pinch This frame's trackpad pinch, or `null` if there was none; see [PinchGesture].
+ * @property gamepadButtonsDown Controller buttons currently held, for a host that reads a controller.
+ * @property gamepadButtonsPressed Controller buttons pressed down during this frame.
+ * @property gamepadButtonsReleased Controller buttons released during this frame.
  *
  * It is an [ActionInputSource], so [InputActions] can read a frame straight from it.
  */
@@ -399,6 +402,12 @@ data class InputSnapshot(
     val touches: List<TouchPoint> = emptyList(),
     val pointerFromTouch: Boolean = false,
     val pinch: PinchGesture? = null,
+    /** Every controller button currently held. */
+    val gamepadButtonsDown: Set<GamepadButton> = emptySet(),
+    /** Went down this frame (in [gamepadButtonsDown] now, absent from the previous frame's). */
+    val gamepadButtonsPressed: Set<GamepadButton> = emptySet(),
+    /** Went up this frame (in the previous frame's [gamepadButtonsDown], absent now). */
+    val gamepadButtonsReleased: Set<GamepadButton> = emptySet(),
 ) : ActionInputSource {
     /** True if the specified pointer [button] is currently held down. */
     override fun isDown(button: PointerButton): Boolean = button in buttonsDown
@@ -408,6 +417,15 @@ data class InputSnapshot(
 
     /** True if the specified pointer [button] was released during this frame. */
     fun wasReleased(button: PointerButton): Boolean = button in buttonsReleased
+
+    /** True if controller [button] is currently held down. */
+    override fun isDown(button: GamepadButton): Boolean = button in gamepadButtonsDown
+
+    /** True if controller [button] was pressed down during this frame. */
+    override fun wasPressed(button: GamepadButton): Boolean = button in gamepadButtonsPressed
+
+    /** True if controller [button] was released during this frame. */
+    fun wasReleased(button: GamepadButton): Boolean = button in gamepadButtonsReleased
 
     /** True if the specified [key] is currently held down. */
     override fun isDown(key: Key): Boolean = key in keysDown
@@ -520,6 +538,9 @@ class Input {
     fun updateSnapshot(): InputSnapshot {
         val previousKeysDown = currentSnapshot.keysDown
         val previousButtonsDown = currentSnapshot.buttonsDown
+        val previousGamepadDown = currentSnapshot.gamepadButtonsDown
+        // The shared empty set on every frame without a controller button held, which is most of them.
+        val heldGamepad = if (gamepadButtonsDown.isEmpty()) emptySet() else gamepadButtonsDown.toSet()
         val heldKeys = keysDown.toSet()
         // A press and release that both land between two snapshots -- a trackpad tap, a fast or
         // automated click -- shows as held in this snapshot and released in the next. Code that
@@ -555,6 +576,9 @@ class Input {
             touches = if (fingers.isEmpty()) emptyList() else fingers.values.map(Finger::snapshot),
             pointerFromTouch = pointerFromTouch,
             pinch = if (pendingPinchScale == 1f) null else PinchGesture(pendingPinchScale, pendingPinchX, pendingPinchY),
+            gamepadButtonsDown = heldGamepad,
+            gamepadButtonsPressed = if (heldGamepad.isEmpty()) emptySet() else heldGamepad - previousGamepadDown,
+            gamepadButtonsReleased = if (previousGamepadDown.isEmpty()) emptySet() else previousGamepadDown - heldGamepad,
         )
         // A lifted finger shows in exactly one snapshot, released; the rest start the next frame clean.
         fingers.values.removeAll { !it.down }
@@ -684,6 +708,16 @@ class Input {
      */
     fun setButton(button: PointerButton, down: Boolean) {
         if (down) heldButtons.add(button) else heldButtons.remove(button)
+    }
+
+    private val gamepadButtonsDown = mutableSetOf<GamepadButton>()
+
+    /**
+     * Holds or releases one controller button, for a host that reads a controller. One controller
+     * is read: a host with several feeds the one that plays.
+     */
+    fun setGamepadButton(button: GamepadButton, down: Boolean) {
+        if (down) gamepadButtonsDown.add(button) else gamepadButtonsDown.remove(button)
     }
 
     /** Clears all held physical keys from the accumulator. */

@@ -62,9 +62,11 @@ public final class com/awakekt/awake/scene/controls/GameplayInput : com/awakekt/
 	public final fun getScrollDeltaX ()F
 	public final fun getScrollDeltaY ()F
 	public final fun getScrollSource ()Lcom/awakekt/awake/core/input/ScrollSource;
+	public fun isDown (Lcom/awakekt/awake/core/input/GamepadButton;)Z
 	public fun isDown (Lcom/awakekt/awake/core/input/Key;)Z
 	public fun isDown (Lcom/awakekt/awake/core/input/PointerButton;)Z
 	public final fun isModalOpen ()Z
+	public fun wasPressed (Lcom/awakekt/awake/core/input/GamepadButton;)Z
 	public fun wasPressed (Lcom/awakekt/awake/core/input/Key;)Z
 	public fun wasPressed (Lcom/awakekt/awake/core/input/PointerButton;)Z
 }

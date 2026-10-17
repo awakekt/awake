@@ -7,6 +7,9 @@
 local.properties
 *.local
 
+# Awake Studio's per-project editor state
+.awake-editor.json
+
 # IntelliJ IDEA / Android Studio
 .idea/
 *.iml

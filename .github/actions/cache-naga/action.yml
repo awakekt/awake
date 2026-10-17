@@ -20,7 +20,7 @@ runs:
       run: echo "version=$(rustc --version | tr ' ' '_')" >> "$GITHUB_OUTPUT"
 
     - name: Cache Cargo downloads
-      uses: actions/cache@v4
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
       with:
         path: |
           ~/.cargo/registry
@@ -30,7 +30,7 @@ runs:
           naga-cargo-${{ inputs.variant }}-${{ runner.os }}-${{ runner.arch }}-${{ steps.rust-version.outputs.version }}-
 
     - name: Cache Naga native build
-      uses: actions/cache@v4
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
       with:
         path: ${{ inputs.target-path }}
         key: naga-${{ inputs.variant }}-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.rust-version.outputs.version }}-${{ hashFiles('awake/asset/shader-compiler/rust-native/Cargo.toml', 'awake/asset/shader-compiler/rust-native/Cargo.lock', 'awake/asset/shader-compiler/rust-native/src/**') }}

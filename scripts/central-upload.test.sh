@@ -21,6 +21,9 @@ cat > bin/curl <<'EOF'
 printf '%s\n' "$*" >> "$STUB_DIR/calls.log"
 url="${!#}"
 case "$url" in
+  */published*)
+    if [[ -f "$STUB_DIR/refuse-published" ]]; then echo 'Bad Gateway' && exit 22; fi
+    if [[ -f "$STUB_DIR/published" ]]; then echo '{"published":true}'; else echo '{"published":false}'; fi ;;
   */upload*)
     if [[ -f "$STUB_DIR/refuse-upload" ]]; then echo '{"error":"Invalid token"}' && exit 22; fi
     echo '"dep-1"' ;;
@@ -82,5 +85,33 @@ if MAVEN_CENTRAL_PASSWORD='' "$script" bundle.zip "awake v0.5.0" > /dev/null 2>&
 fi
 
 if "$script" bundle.zip "awake v0.5.0" PUBLISH > /dev/null 2>&1; then fail "refuses an unknown publishing type"; else pass "refuses an unknown publishing type"; fi
+
+# A real bundle, laid out as central-bundle.sh zips a staging repository.
+mkdir -p staged/com/example/lib/1.0.0
+printf '<project/>\n' > staged/com/example/lib/1.0.0/lib-1.0.0.pom
+(cd staged && zip -qrX ../release.zip .)
+
+touch published && states PUBLISHING
+if "$script" release.zip "awake v1.0.0" > out.txt 2> err.txt; then
+  if [[ "$(calls upload)" -eq 0 ]] && grep -q 'com.example:lib:1.0.0 is already published' out.txt; then
+    pass "a published version is not uploaded again"; else fail "a published version is not uploaded again: $(cat calls.log)"; fi
+else fail "a re-run of a published version succeeds: $(cat err.txt)"; fi
+if grep -q 'published?namespace=com.example&name=lib&version=1.0.0' calls.log; then
+  pass "asks Central about the bundle's own coordinates"; else fail "asks about the bundle's coordinates: $(cat calls.log)"; fi
+rm published
+
+states PUBLISHING
+if "$script" release.zip "awake v1.0.0" > out.txt 2> err.txt && [[ "$(calls upload)" -eq 1 ]]; then
+  pass "an unpublished version is uploaded"; else fail "an unpublished version is uploaded: $(cat calls.log)"; fi
+
+touch refuse-published && states PUBLISHING
+if "$script" release.zip "awake v1.0.0" > out.txt 2> err.txt && [[ "$(calls upload)" -eq 1 ]] && grep -q 'uploading' err.txt; then
+  pass "uploads when Central cannot say whether it is published"; else fail "uploads when the check fails: $(cat err.txt)"; fi
+rm refuse-published
+
+touch published && states VALIDATED
+if "$script" release.zip check USER_MANAGED > out.txt 2> err.txt && [[ "$(calls published)" -eq 0 && "$(calls upload)" -eq 1 ]]; then
+  pass "a check does not ask whether the version is published"; else fail "a check asks nothing: $(cat calls.log)"; fi
+rm published
 
 exit "$failures"
