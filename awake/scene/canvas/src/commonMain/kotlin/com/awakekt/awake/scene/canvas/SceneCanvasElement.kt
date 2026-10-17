@@ -15,6 +15,7 @@ import com.awakekt.awake.ui.canvas.CanvasBinding
 import com.awakekt.awake.ui.canvas.CanvasElement
 import com.awakekt.awake.ui.canvas.CanvasElementKind
 import com.awakekt.awake.ui.canvas.CanvasFollowRules
+import com.awakekt.awake.ui.canvas.CanvasJoystick
 import com.awakekt.awake.ui.canvas.CanvasLayout
 import com.awakekt.awake.ui.canvas.CanvasStyle
 import com.awakekt.awake.ui.canvas.canvasFontProblem
@@ -107,6 +108,11 @@ import kotlinx.serialization.Serializable
  * @property textArgs Values for [textKey]'s placeholders, by name, such as `"count": "3"`. A value
  * the game sets at runtime comes from a field instead, through [bind]'s
  * [textArgs][CanvasBinding.textArgs], and takes the place of the one here.
+ * @property joystick How a Joystick moves and what it reports: `mode` (`Fixed`, `Floating` where the
+ * thumb lands, or `Dynamic`, dragged along past its reach), `radius`, `restX` and `restY`,
+ * `deadZone`, `response` or a `curve`, `directions` (`Analog`, `Four` or `Eight`), `snapBack`, a
+ * `sprintThreshold` past which `sprintAction` is held, and `idleAlpha`, `idleDelay` and
+ * `fadeSeconds` for fading while untouched. Null is a fixed pad with no dead zone.
  */
 @Serializable
 @SerialName("canvas_element")
@@ -151,6 +157,7 @@ data class SceneCanvasElement(
     val maxLengthUnit: TextLengthUnit = TextLengthUnit.Graphemes,
     val textKey: String = "",
     val textArgs: Map<String, String> = emptyMap(),
+    val joystick: CanvasJoystick? = null,
 ) : SceneComponent {
     /**
      * Validates element dimensions, font sizes, values, and hex color syntax.
@@ -193,7 +200,8 @@ data class SceneCanvasElement(
             textKey.isEmpty() && (textArgs.isNotEmpty() || !bind?.textArgs.isNullOrEmpty())
         },
         "textKey must not be blank".takeIf { textKey.isNotEmpty() && textKey.isBlank() },
-    )
+        "joystick only sets up a Joystick".takeIf { joystick != null && kind != CanvasElementKind.Joystick },
+    ) + joystick?.problems().orEmpty().map { "joystick.$it" }
 
     /** What is wrong with the follow rules, and follow fields set where they do nothing. */
     private fun followProblems(): List<String> = buildList {

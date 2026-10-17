@@ -148,6 +148,27 @@ class ProjectRuntimeTest {
         assertFalse(control.run, "letting go walks")
     }
 
+    /** One thumb steers and runs: a Joystick pushed past its sprint threshold holds its sprint action. */
+    @Test
+    fun aJoystickPushedPastItsSprintThresholdRuns() = runTest {
+        val game = play(TOUCH_SCENE.replace("\"action\": \"move\",", "\"action\": \"move\", \"joystick\": { \"sprintThreshold\": 0.8, \"sprintAction\": \"run\" },"), touch = true)
+        game.frames(FRAMES)
+        val control = game.world.get<MovementControl>(game.world.named("Player"))!!
+        val (x, y) = game.centreOf("Stick")
+
+        game.touch(down = true, x to y)
+        game.touch(down = true, x to y - 30f)
+        game.touch(down = true, x to y - 30f)
+        assertFalse(control.run, "half way out walks")
+        game.touch(down = true, x to y - 60f)
+        // The canvas reads the touch after the frame's systems have run, so the action follows a frame later.
+        game.touch(down = true, x to y - 60f)
+        assertTrue(control.run, "at the edge it runs")
+        game.touch(down = false, x to y - 60f)
+        game.frames(1)
+        assertFalse(control.run, "letting go walks")
+    }
+
     /** A Button naming an action of the game's own holds that action, which the game's systems read. */
     @Test
     fun aButtonForAnActionOfTheGamesOwnHoldsIt() = runTest {

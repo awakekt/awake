@@ -13,7 +13,6 @@ import com.awakekt.awake.core.math2d.Rectangle
 import com.awakekt.awake.core.math2d.Vec2
 import com.awakekt.awake.core.text.unicode.TextLengthUnit
 import kotlinx.serialization.Serializable
-import kotlin.math.sqrt
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
@@ -443,13 +442,26 @@ class CanvasElement {
         lastSyncedText = text
     }
 
+    /**
+     * How a Joystick moves and what it reports: its mode, reach, dead zone, response, directions,
+     * sprint and idle fade. Null behaves as [CanvasJoystick.Default].
+     */
+    var joystick: CanvasJoystick? = null
+
+    /** A Joystick's live state, fed by its pointer. */
+    internal val stick = CanvasStick { clock }
+
     /** A Joystick's deflection from -1 to 1 each way; up is negative [stickY], as on screen. */
-    var stickX: Float = 0f
-        private set
+    val stickX: Float get() = stick.x
 
     /** A Joystick's vertical deflection from -1 to 1; up is negative, down is positive. */
-    var stickY: Float = 0f
-        private set
+    val stickY: Float get() = stick.y
+
+    /** Whether a Joystick's knob is out past its [CanvasJoystick.sprintThreshold] right now. */
+    val sprinting: Boolean get() = stick.sprinting
+
+    /** True once each time a Joystick starts [sprinting], since the last call; game code polls it. */
+    fun consumeSprintStart(): Boolean = stick.sprintStarted.also { stick.sprintStarted = false }
 
     /**
      * True once for each tap on a Button since the last call; game code polls it.
@@ -487,8 +499,8 @@ class CanvasElement {
      */
     fun consumeDoublePress(): Boolean = doublePressed.also { doublePressed = false }
 
-    /** Whether a Button is being held down right now. */
-    val isHeld: Boolean get() = interactions.isPressed
+    /** Whether a Button is being held down, or a Joystick touched, right now. */
+    val isHeld: Boolean get() = interactions.isPressed || stick.pointer != null
 
     /** Whether the pointer is over this element right now. */
     val isHovered: Boolean get() = interactions.isHovered
@@ -518,31 +530,6 @@ class CanvasElement {
             lastPress = clock.markNow()
         }
     }
-
-    /** Moves a Joystick's knob by a drag of ([dx], [dy]) in the same units as [radius]. */
-    internal fun dragStick(dx: Float, dy: Float, radius: Float) {
-        knobX += dx
-        knobY += dy
-        val length = sqrt(knobX * knobX + knobY * knobY)
-        if (length > radius) {
-            knobX *= radius / length
-            knobY *= radius / length
-        }
-        stickX = knobX / radius
-        stickY = knobY / radius
-    }
-
-    internal fun releaseStick() {
-        knobX = 0f
-        knobY = 0f
-        stickX = 0f
-        stickY = 0f
-    }
-
-    internal var knobX: Float = 0f
-        private set
-    internal var knobY: Float = 0f
-        private set
 
     /** Default dimensions and styling metrics for canvas elements. */
     companion object {

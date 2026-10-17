@@ -534,7 +534,22 @@ the mask once for each typed character while `text` keeps what was typed, refuse
 reads as a password to accessibility services and the platform keyboard. Set `mask` back to `""` to
 show the password.
 
-A `Joystick` knob follows a drag up to the pad's edge and springs back on release. A `touchOnly`
+A `Joystick` knob follows the thumb that landed on it up to the pad's edge and springs back on
+release; another thumb on a button, or on the stick, never moves it. Its `joystick` settings make it
+`Floating`, appearing where the thumb lands in its box, or `Dynamic`, dragged along past its reach,
+and set its `radius`, a `deadZone`, a `response` or `curve`, four- or eight-way `directions`,
+`snapBack`, a `sprintThreshold` past which it holds `sprintAction`, and an idle fade (`idleAlpha`,
+`idleDelay`, `fadeSeconds`):
+
+```json
+{ "component": "canvas_element", "kind": "Joystick", "anchor": "BottomLeft", "offsetX": 0, "offsetY": 0,
+  "width": 360, "height": 300, "action": "move", "touchOnly": true,
+  "background": "#FFFFFF30", "color": "#FFFFFFA0",
+  "joystick": { "mode": "Floating", "radius": 64, "restX": 0.35, "restY": 0.6, "deadZone": 0.12,
+                "sprintThreshold": 0.9, "sprintAction": "run", "idleAlpha": 0.4, "idleDelay": 2 } }
+```
+
+A `touchOnly`
 element is drawn only when `SceneCanvas(world, showTouchControls = true)` is called, or when
 `SceneAppLifecycleRuntime.showTouchControls` is `true`. When a project is played with
 `awake:project:runtime`, an element whose `action` names one of the scene's

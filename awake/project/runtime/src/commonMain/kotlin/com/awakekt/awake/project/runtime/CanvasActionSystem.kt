@@ -26,7 +26,9 @@ const val JUMP_ACTION = MovementActions.JUMP
  * Adds the scene's canvas controls to its input actions, after the keyboard, then sets the players'
  * intent again: a Joystick deflected steers the axis action it names, up being positive, and a Button
  * holds and presses the button action it names, and presses its `doubleAction` on a double-click. A
- * `move` Joystick, a `jump` Button and a `run` Button so steer, jump and run as the keys do.
+ * `move` Joystick, a `jump` Button and a `run` Button so steer, jump and run as the keys do. A
+ * Joystick pushed past its sprint threshold also holds its `joystick.sprintAction`, so one thumb can
+ * both steer and run.
  *
  * An element naming no action of the scene is left to the game, its presses unconsumed. Where the
  * controls sit and how big they are is the scene's to decide.
@@ -39,9 +41,22 @@ class CanvasActionSystem : System {
         touched = false
         world.family<CanvasElement>().forEach { _, element ->
             if (feed(element, actions)) touched = true
+            if (feedSprint(element, actions)) touched = true
             if (feedDouble(element, actions)) touched = true
         }
         if (touched) world.steerPlayers(actions)
+    }
+
+    /**
+     * Holds a Joystick's sprint action while its knob is past its sprint threshold, pressing it on the
+     * frame it gets there, and returns whether it did.
+     */
+    private fun feedSprint(element: CanvasElement, actions: InputActions): Boolean {
+        val sprint = element.joystick?.sprintAction
+        if (element.kind != CanvasElementKind.Joystick || sprint.isNullOrEmpty() || sprint !in actions) return false
+        if (element.consumeSprintStart()) actions.press(sprint)
+        if (element.sprinting) actions.hold(sprint)
+        return element.sprinting
     }
 
     /** Presses [element]'s double-click action when a Button was double-clicked, and returns whether it did. */

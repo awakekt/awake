@@ -164,6 +164,7 @@ public final class com/awakekt/awake/ui/canvas/CanvasElement {
 	public final fun consumeDoublePress ()Z
 	public final fun consumePress ()Z
 	public final fun consumePressAt ()Lcom/awakekt/awake/core/math2d/Vec2;
+	public final fun consumeSprintStart ()Z
 	public final fun consumeSubmit ()Ljava/lang/String;
 	public final fun consumeWheel ()F
 	public final fun getAction ()Ljava/lang/String;
@@ -191,6 +192,7 @@ public final class com/awakekt/awake/ui/canvas/CanvasElement {
 	public final fun getFontSize ()F
 	public final fun getGrow ()F
 	public final fun getHeight ()F
+	public final fun getJoystick ()Lcom/awakekt/awake/ui/canvas/CanvasJoystick;
 	public final fun getKind ()Lcom/awakekt/awake/ui/canvas/CanvasElementKind;
 	public final fun getLayout ()Lcom/awakekt/awake/ui/canvas/CanvasLayout;
 	public final fun getLinks ()Z
@@ -206,6 +208,7 @@ public final class com/awakekt/awake/ui/canvas/CanvasElement {
 	public final fun getPresses ()I
 	public final fun getSafeArea ()Z
 	public final fun getScreenBounds ()Lcom/awakekt/awake/core/math2d/Rectangle;
+	public final fun getSprinting ()Z
 	public final fun getStickX ()F
 	public final fun getStickY ()F
 	public final fun getStyle ()Lcom/awakekt/awake/ui/canvas/CanvasStyle;
@@ -241,6 +244,7 @@ public final class com/awakekt/awake/ui/canvas/CanvasElement {
 	public final fun setFontSize (F)V
 	public final fun setGrow (F)V
 	public final fun setHeight (F)V
+	public final fun setJoystick (Lcom/awakekt/awake/ui/canvas/CanvasJoystick;)V
 	public final fun setKind (Lcom/awakekt/awake/ui/canvas/CanvasElementKind;)V
 	public final fun setLayout (Lcom/awakekt/awake/ui/canvas/CanvasLayout;)V
 	public final fun setLinks (Z)V
@@ -520,6 +524,81 @@ public final class com/awakekt/awake/ui/canvas/CanvasItem {
 	public final fun getParent ()Lcom/awakekt/awake/ui/canvas/CanvasElement;
 }
 
+public final class com/awakekt/awake/ui/canvas/CanvasJoystick {
+	public static final field Companion Lcom/awakekt/awake/ui/canvas/CanvasJoystick$Companion;
+	public static final field DEFAULT_FADE_SECONDS F
+	public static final field DEFAULT_ZONE_RADIUS F
+	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/ui/canvas/CanvasJoystickMode;FFFFLcom/awakekt/awake/ui/canvas/CanvasStickResponse;Lcom/awakekt/awake/ui/canvas/CanvasCurve;Lcom/awakekt/awake/ui/canvas/CanvasStickDirections;ZFLjava/lang/String;FFF)V
+	public synthetic fun <init> (Lcom/awakekt/awake/ui/canvas/CanvasJoystickMode;FFFFLcom/awakekt/awake/ui/canvas/CanvasStickResponse;Lcom/awakekt/awake/ui/canvas/CanvasCurve;Lcom/awakekt/awake/ui/canvas/CanvasStickDirections;ZFLjava/lang/String;FFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/ui/canvas/CanvasJoystickMode;
+	public final fun component10 ()F
+	public final fun component11 ()Ljava/lang/String;
+	public final fun component12 ()F
+	public final fun component13 ()F
+	public final fun component14 ()F
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()F
+	public final fun component6 ()Lcom/awakekt/awake/ui/canvas/CanvasStickResponse;
+	public final fun component7 ()Lcom/awakekt/awake/ui/canvas/CanvasCurve;
+	public final fun component8 ()Lcom/awakekt/awake/ui/canvas/CanvasStickDirections;
+	public final fun component9 ()Z
+	public final fun copy (Lcom/awakekt/awake/ui/canvas/CanvasJoystickMode;FFFFLcom/awakekt/awake/ui/canvas/CanvasStickResponse;Lcom/awakekt/awake/ui/canvas/CanvasCurve;Lcom/awakekt/awake/ui/canvas/CanvasStickDirections;ZFLjava/lang/String;FFF)Lcom/awakekt/awake/ui/canvas/CanvasJoystick;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ui/canvas/CanvasJoystick;Lcom/awakekt/awake/ui/canvas/CanvasJoystickMode;FFFFLcom/awakekt/awake/ui/canvas/CanvasStickResponse;Lcom/awakekt/awake/ui/canvas/CanvasCurve;Lcom/awakekt/awake/ui/canvas/CanvasStickDirections;ZFLjava/lang/String;FFFILjava/lang/Object;)Lcom/awakekt/awake/ui/canvas/CanvasJoystick;
+	public final fun deflection (FFF)Lkotlin/Pair;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCurve ()Lcom/awakekt/awake/ui/canvas/CanvasCurve;
+	public final fun getDeadZone ()F
+	public final fun getDirections ()Lcom/awakekt/awake/ui/canvas/CanvasStickDirections;
+	public final fun getFadeSeconds ()F
+	public final fun getIdleAlpha ()F
+	public final fun getIdleDelay ()F
+	public final fun getMode ()Lcom/awakekt/awake/ui/canvas/CanvasJoystickMode;
+	public final fun getRadius ()F
+	public final fun getResponse ()Lcom/awakekt/awake/ui/canvas/CanvasStickResponse;
+	public final fun getRestX ()F
+	public final fun getRestY ()F
+	public final fun getSnapBack ()Z
+	public final fun getSprintAction ()Ljava/lang/String;
+	public final fun getSprintThreshold ()F
+	public fun hashCode ()I
+	public final fun problems ()Ljava/util/List;
+	public final fun radiusIn (FF)F
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/ui/canvas/CanvasJoystick$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ui/canvas/CanvasJoystick$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ui/canvas/CanvasJoystick;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ui/canvas/CanvasJoystick;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ui/canvas/CanvasJoystick$Companion {
+	public final fun getDefault ()Lcom/awakekt/awake/ui/canvas/CanvasJoystick;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ui/canvas/CanvasJoystickMode : java/lang/Enum {
+	public static final field Companion Lcom/awakekt/awake/ui/canvas/CanvasJoystickMode$Companion;
+	public static final field Dynamic Lcom/awakekt/awake/ui/canvas/CanvasJoystickMode;
+	public static final field Fixed Lcom/awakekt/awake/ui/canvas/CanvasJoystickMode;
+	public static final field Floating Lcom/awakekt/awake/ui/canvas/CanvasJoystickMode;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/ui/canvas/CanvasJoystickMode;
+	public static fun values ()[Lcom/awakekt/awake/ui/canvas/CanvasJoystickMode;
+}
+
+public final class com/awakekt/awake/ui/canvas/CanvasJoystickMode$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
 public final class com/awakekt/awake/ui/canvas/CanvasJustify : java/lang/Enum {
 	public static final field Center Lcom/awakekt/awake/ui/canvas/CanvasJustify;
 	public static final field Companion Lcom/awakekt/awake/ui/canvas/CanvasJustify$Companion;
@@ -756,6 +835,31 @@ public final synthetic class com/awakekt/awake/ui/canvas/CanvasStateStyle$$seria
 }
 
 public final class com/awakekt/awake/ui/canvas/CanvasStateStyle$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ui/canvas/CanvasStickDirections : java/lang/Enum {
+	public static final field Analog Lcom/awakekt/awake/ui/canvas/CanvasStickDirections;
+	public static final field EIGHT I
+	public static final field Eight Lcom/awakekt/awake/ui/canvas/CanvasStickDirections;
+	public static final field FOUR I
+	public static final field Four Lcom/awakekt/awake/ui/canvas/CanvasStickDirections;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/ui/canvas/CanvasStickDirections;
+	public static fun values ()[Lcom/awakekt/awake/ui/canvas/CanvasStickDirections;
+}
+
+public final class com/awakekt/awake/ui/canvas/CanvasStickResponse : java/lang/Enum {
+	public static final field Companion Lcom/awakekt/awake/ui/canvas/CanvasStickResponse$Companion;
+	public static final field Cubic Lcom/awakekt/awake/ui/canvas/CanvasStickResponse;
+	public static final field Linear Lcom/awakekt/awake/ui/canvas/CanvasStickResponse;
+	public static final field Quadratic Lcom/awakekt/awake/ui/canvas/CanvasStickResponse;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/ui/canvas/CanvasStickResponse;
+	public static fun values ()[Lcom/awakekt/awake/ui/canvas/CanvasStickResponse;
+}
+
+public final class com/awakekt/awake/ui/canvas/CanvasStickResponse$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
