@@ -272,6 +272,30 @@ public final class com/awakekt/awake/physics/HingeConstraint : com/awakekt/awake
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/physics/LineOfSightRays {
+	public static final field Companion Lcom/awakekt/awake/physics/LineOfSightRays$Companion;
+	public static final field DEFAULT_RAYS_PER_FRAME I
+	public static final field DEFAULT_REUSE_FRAMES I
+	public static final field FORGET_FRAMES I
+	public synthetic fun <init> (Lcom/awakekt/awake/physics/PhysicsWorld;IILcom/awakekt/awake/physics/CollisionLayer;Lkotlin/jvm/functions/Function2;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/physics/PhysicsWorld;IILcom/awakekt/awake/physics/CollisionLayer;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun blocked (Ljava/lang/Object;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;)Z
+	public final fun clear ()V
+	public final fun forget (Ljava/lang/Object;)V
+	public final fun getOnlyLayer-YxGriTw ()Lcom/awakekt/awake/physics/CollisionLayer;
+	public final fun getRaysCast ()I
+	public final fun getRaysPerFrame ()I
+	public final fun getReuseFrames ()I
+	public final fun getSize ()I
+	public final fun nextFrame ()V
+	public final fun setOnlyLayer-TDYnX-U (Lcom/awakekt/awake/physics/CollisionLayer;)V
+	public final fun setRaysPerFrame (I)V
+	public final fun setReuseFrames (I)V
+}
+
+public final class com/awakekt/awake/physics/LineOfSightRays$Companion {
+}
+
 public final class com/awakekt/awake/physics/MeshShape : com/awakekt/awake/physics/PhysicsShape {
 	public static final field INDICES_PER_TRIANGLE I
 	public static final field VALUES_PER_VERTEX I

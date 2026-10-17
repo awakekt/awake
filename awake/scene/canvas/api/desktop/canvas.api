@@ -39,6 +39,46 @@ public final class com/awakekt/awake/scene/canvas/CanvasFollowLimitBinding : com
 	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
 }
 
+public final class com/awakekt/awake/scene/canvas/CanvasFollowOcclusion {
+	public static final field Companion Lcom/awakekt/awake/scene/canvas/CanvasFollowOcclusion$Companion;
+	public static final field DEFAULT_RAYS_PER_FRAME I
+	public static final field DEFAULT_REUSE_FRAMES I
+	public fun <init> ()V
+	public fun <init> (IILjava/lang/Integer;)V
+	public synthetic fun <init> (IILjava/lang/Integer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()Ljava/lang/Integer;
+	public final fun copy (IILjava/lang/Integer;)Lcom/awakekt/awake/scene/canvas/CanvasFollowOcclusion;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/canvas/CanvasFollowOcclusion;IILjava/lang/Integer;ILjava/lang/Object;)Lcom/awakekt/awake/scene/canvas/CanvasFollowOcclusion;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getLayer ()Ljava/lang/Integer;
+	public final fun getRaysPerFrame ()I
+	public final fun getReuseFrames ()I
+	public fun hashCode ()I
+	public final fun problems ()Ljava/util/List;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/scene/canvas/CanvasFollowOcclusion$Companion {
+	public final fun getDefault ()Lcom/awakekt/awake/scene/canvas/CanvasFollowOcclusion;
+}
+
+public final class com/awakekt/awake/scene/canvas/CanvasFollowOcclusionBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/canvas/CanvasFollowOcclusionBinding;
+	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/canvas/SceneCanvasFollowOcclusion;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public synthetic fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun canResolve (Lcom/awakekt/awake/scene/document/SceneComponent;)Z
+	public fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/canvas/CanvasFollowOcclusion;)Lcom/awakekt/awake/scene/canvas/SceneCanvasFollowOcclusion;
+	public synthetic fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/canvas/SceneCanvasFollowOcclusion;
+	public synthetic fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun getComponentClass ()Lkotlin/reflect/KClass;
+	public fun getSchemaClass ()Lkotlin/reflect/KClass;
+	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+}
+
 public final class com/awakekt/awake/scene/canvas/CanvasFollowerPool {
 	public fun <init> (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/scene/canvas/SceneCanvasElement;)V
 	public final fun acquire-s2mF4Vo (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)J
@@ -61,15 +101,26 @@ public final class com/awakekt/awake/scene/canvas/CanvasImageKt {
 	public static final fun loadCanvasImages (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
+public abstract interface class com/awakekt/awake/scene/canvas/CanvasOcclusion {
+	public abstract fun occluded-ELLNkjA (JLcom/awakekt/awake/core/math/Vec3f;FFF)Z
+}
+
+public final class com/awakekt/awake/scene/canvas/CanvasOcclusionKt {
+	public static final fun canvasOcclusion (Lcom/awakekt/awake/ecs/World;)Lcom/awakekt/awake/scene/canvas/CanvasOcclusion;
+	public static final fun setCanvasOcclusion (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/scene/canvas/CanvasOcclusion;)V
+}
+
 public abstract interface class com/awakekt/awake/scene/canvas/CanvasProjector {
 	public abstract fun bounds-H_EwOg4 (J)Lcom/awakekt/awake/core/math2d/Rectangle;
 	public fun occluded (FFF)Z
+	public fun occluded-44Irr6U (JFFF)Z
 	public abstract fun project (FFF)Lcom/awakekt/awake/core/math2d/Vec2;
 	public fun projectFollow (FFF)Lcom/awakekt/awake/ui/canvas/CanvasProjection;
 }
 
 public final class com/awakekt/awake/scene/canvas/CanvasProjector$DefaultImpls {
 	public static fun occluded (Lcom/awakekt/awake/scene/canvas/CanvasProjector;FFF)Z
+	public static fun occluded-44Irr6U (Lcom/awakekt/awake/scene/canvas/CanvasProjector;JFFF)Z
 	public static fun projectFollow (Lcom/awakekt/awake/scene/canvas/CanvasProjector;FFF)Lcom/awakekt/awake/ui/canvas/CanvasProjection;
 }
 
@@ -242,6 +293,46 @@ public final class com/awakekt/awake/scene/canvas/SceneCanvasFollowLimit$Compani
 
 public final class com/awakekt/awake/scene/canvas/SceneCanvasFollowLimitKt {
 	public static final fun canvasFollowLimits (Lcom/awakekt/awake/ecs/World;)Ljava/util/List;
+}
+
+public final class com/awakekt/awake/scene/canvas/SceneCanvasFollowOcclusion : com/awakekt/awake/scene/document/SceneComponent {
+	public static final field Companion Lcom/awakekt/awake/scene/canvas/SceneCanvasFollowOcclusion$Companion;
+	public fun <init> ()V
+	public fun <init> (IILjava/lang/Integer;)V
+	public synthetic fun <init> (IILjava/lang/Integer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()Ljava/lang/Integer;
+	public final fun copy (IILjava/lang/Integer;)Lcom/awakekt/awake/scene/canvas/SceneCanvasFollowOcclusion;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/canvas/SceneCanvasFollowOcclusion;IILjava/lang/Integer;ILjava/lang/Object;)Lcom/awakekt/awake/scene/canvas/SceneCanvasFollowOcclusion;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAllowsMultiplePerNode ()Z
+	public final fun getLayer ()Ljava/lang/Integer;
+	public final fun getRaysPerFrame ()I
+	public final fun getReuseFrames ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+	public fun validate (Ljava/lang/String;)Ljava/util/List;
+	public fun validate (Ljava/lang/String;Ljava/util/List;)Ljava/util/List;
+}
+
+public final synthetic class com/awakekt/awake/scene/canvas/SceneCanvasFollowOcclusion$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/canvas/SceneCanvasFollowOcclusion$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/canvas/SceneCanvasFollowOcclusion;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/canvas/SceneCanvasFollowOcclusion;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/canvas/SceneCanvasFollowOcclusion$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/canvas/SceneCanvasFollowOcclusionKt {
+	public static final fun canvasFollowOcclusion (Lcom/awakekt/awake/ecs/World;)Lcom/awakekt/awake/scene/canvas/CanvasFollowOcclusion;
 }
 
 public final class com/awakekt/awake/scene/canvas/SceneCanvasKt {

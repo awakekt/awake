@@ -21,6 +21,7 @@ registers it.
 | [`camera_rig`](#camera_rig) | `CameraRig` | `com.awakekt.awake.scene:controls` | `registerControls()` | [Cameras](../guides/cameras-and-controls.md) |
 | [`canvas_element`](#canvas_element) | `CanvasElement` | `com.awakekt.awake.scene:canvas` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md) |
 | [`canvas_follow_limit`](#canvas_follow_limit) | `CanvasFollowLimit` | `com.awakekt.awake.scene:canvas` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md#many-followers) |
+| [`canvas_follow_occlusion`](#canvas_follow_occlusion) | `CanvasFollowOcclusion` | `com.awakekt.awake.scene:canvas` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md#occlusion) |
 | [`canvas_scaler`](#canvas_scaler) | `CanvasScaler` | `com.awakekt.awake.scene:canvas` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md#scale-with-the-screen) |
 | [`character_controller`](#character_controller) | `CharacterController` | `com.awakekt.awake.scene:character` | `registerCharacter()` | [Character controller](../guides/character-controller.md) |
 | [`chase`](#chase) | `ChaseBehavior` | `com.awakekt.awake.scene:ai` | `registerAiBehaviors()` | [AI](../guides/ai.md) |
@@ -59,7 +60,7 @@ registers it.
 | Call | Module | Registers |
 | --- | --- | --- |
 | Built in | `com.awakekt.awake.scene:document` | `custom`, `prefab_link` |
-| `DefaultSceneComponentResolvers.install()` | `com.awakekt.awake.scene:runtime` | `ambient_light`, `camera`, `canvas_element`, `canvas_follow_limit`, `canvas_scaler`, `day_cycle`, `fog`, `keyframe_animation`, `light`, `locomotion_animation`, `mesh_renderer`, `particle_emitter`, `pbr_material`, `shader_effect`, `skybox`, `spin_control`, `static_transform`, `tag`, `terrain`, `tone_mapping`. `SceneManager` and `SceneAppLifecycleRuntime` call it for you. |
+| `DefaultSceneComponentResolvers.install()` | `com.awakekt.awake.scene:runtime` | `ambient_light`, `camera`, `canvas_element`, `canvas_follow_limit`, `canvas_follow_occlusion`, `canvas_scaler`, `day_cycle`, `fog`, `keyframe_animation`, `light`, `locomotion_animation`, `mesh_renderer`, `particle_emitter`, `pbr_material`, `shader_effect`, `skybox`, `spin_control`, `static_transform`, `tag`, `terrain`, `tone_mapping`. `SceneManager` and `SceneAppLifecycleRuntime` call it for you. |
 | `SceneComponentRegistry.registerControls()` | `com.awakekt.awake.scene:controls` | `movement_control`, `camera_rig`, `input_actions` |
 | `SceneComponentRegistry.registerPhysics()` | `com.awakekt.awake.scene:physics` | `physics_body` |
 | `SceneComponentRegistry.registerCharacter()` | `com.awakekt.awake.scene:character` | `character_controller` |
@@ -178,7 +179,7 @@ Screen-space UI drawn over the game. Sizes and offsets are in dp. `SceneCanvasEl
 | `follow` | string | `""` | The name of a node the element follows on screen. Its `anchor` point stands on the node's projected position, nudged inward by its offsets, and it hides when the node is behind the camera or missing. |
 | `followOffset` | vector | `{x: 0, y: 0, z: 0}` | World-space offset from the followed node, such as above its head. |
 | `followBounds` | boolean | `false` | Cover the screen rectangle of the followed node's meshes instead of standing at its point. Its children anchor to that box's edges. |
-| `followRules` | object | none | How a follower behaves with many on screen. `cullOffScreen` (`true`) leaves it out while its box is wholly off the screen; `maxDistance` (`0`, none) hides it farther than that from the camera, in world units; `occlusion` (`false`) hides it while the host reports something between the camera and the point. `group` (`""`) is the [`canvas_follow_limit`](#canvas_follow_limit) it counts against, and `priority` (`0`) ranks it there. `scale` and `fade` are curves of its size and opacity by distance: `points` of `at` (a distance) and `value`, straight between them and held past the ends; it is left out when faded or scaled to nothing. `pinToEdge` (`false`) holds it to the screen's edge, `edgeMargin` dp in, on the side its target lies while that is off screen or behind the camera, instead of hiding it. None culls it off screen and hides it behind the camera. Set on an element that follows nothing, it is reported. See [Game UI](../guides/game-ui.md#many-followers). |
+| `followRules` | object | none | How a follower behaves with many on screen. `cullOffScreen` (`true`) leaves it out while its box is wholly off the screen; `maxDistance` (`0`, none) hides it farther than that from the camera, in world units; `occlusion` (`false`) hides it while a physics body other than the followed node's own stands between the camera and the point, within the budget of the scene's [`canvas_follow_occlusion`](#canvas_follow_occlusion). `group` (`""`) is the [`canvas_follow_limit`](#canvas_follow_limit) it counts against, and `priority` (`0`) ranks it there. `scale` and `fade` are curves of its size and opacity by distance: `points` of `at` (a distance) and `value`, straight between them and held past the ends; it is left out when faded or scaled to nothing. `pinToEdge` (`false`) holds it to the screen's edge, `edgeMargin` dp in, on the side its target lies while that is off screen or behind the camera, instead of hiding it. None culls it off screen and hides it behind the camera. Set on an element that follows nothing, it is reported. See [Game UI](../guides/game-ui.md#many-followers). |
 | `followArrow` | boolean | `false` | Inside a follower, this element is the arrow of one pinned to the edge: drawn only while its parent is pinned, centred on its parent's edge toward the target and turned to point there, its picture pointing right before it turns; its `style.rotation` adds to the turn. Set on an element that follows a node itself, it is reported. |
 | `followOutset` | number | `0` | With `followBounds`, how far the box reaches past the node's rectangle on each side, in dp, so corner children sit outside the node. Negative pulls it in, never below nothing. |
 | `layout` | object | none | Lay the element's children out in rows or columns instead of anchoring each: `direction` (`Row` · `RowReverse` · `Column` · `ColumnReverse`), `wrap`, `gap`, `padding`, `justify` (`Start` · `Center` · `End` · `SpaceBetween` · `SpaceAround` · `SpaceEvenly`) and `align` (`Start` · `Center` · `End` · `Stretch`). A laid-out child keeps its `width` and `height` and ignores its anchor and offsets. See [Game UI](../guides/game-ui.md#lay-out-children). |
@@ -207,6 +208,20 @@ next. `SceneCanvasFollowLimit`, saved from the live `CanvasFollowLimit`.
 | `group` | string | `""` | The `followRules.group` it limits; empty limits the followers that name none. |
 | `max` | integer | `0` | The most of them drawn at once; `0` for no limit. Not negative. |
 | `rankBy` | `Distance` · `Priority` · `Score` | `Distance` | Which are kept: the nearest to the camera; the highest `followRules.priority`, then the nearest; or the highest `followScore`, which game code sets each frame, then the nearest. |
+
+## `canvas_follow_occlusion`
+
+The budget of the physics rays that hide followers whose `followRules.occlusion` asks while
+something stands between the camera and the point they follow. A scene has one, on any node; a
+scene whose followers ask casts with the defaults without one. A played project casts the rays when
+the scene has a physics world and either a follower asks or the scene has this component.
+`SceneCanvasFollowOcclusion`, saved from the live `CanvasFollowOcclusion`.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `raysPerFrame` | integer | `32` | The most rays cast a frame, across every follower. The rest keep their last answer for another frame, those that waited longest cast first. At least 1. |
+| `reuseFrames` | integer | `6` | How many frames an answer stands before its followed node is cast again. At least 1. |
+| `layer` | integer | none | The one collision layer the rays hit, such as `0`, the static world's, so walls and terrain hide followers and moving bodies do not. None hits every layer. Not negative. |
 
 ## `canvas_scaler`
 

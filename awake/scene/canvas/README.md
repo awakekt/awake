@@ -50,7 +50,12 @@ at a point in the canvas's units, as an editor's click picks it.
 `SceneCanvasResolver` reports a follower's projection through `CanvasProjector.projectFollow`, which
 `SceneAppLifecycleRuntime`'s projector answers from the camera it draws with: the point through the
 backend's clip space, the depth along the view, the distance, and for a point behind the camera the
-side it lies on. `CanvasProjector.occluded` is the occlusion hook, false unless a host answers it.
+side it lies on. `CanvasProjector.occluded(target, x, y, z)` asks the world's `CanvasOcclusion`
+(`world.setCanvasOcclusion`) from the camera's eye, with the followed node, so its own body is left
+out; without one nothing is occluded. A played project sets one that casts physics rays
+(`PhysicsCanvasOcclusion` in `awake:project:runtime`), within the budget of the scene's
+`canvas_follow_occlusion` (`SceneCanvasFollowOcclusion`, saved from `CanvasFollowOcclusion`). This
+module depends on no physics module.
 A scene's `canvas_follow_limit`s (`SceneCanvasFollowLimit`, saved from `CanvasFollowLimit`) reach
 `SceneCanvas` through `world.canvasFollowLimits()`. `CanvasFollowerPool(world, template)` hands
 follower entities out and takes them back, hidden, so churning followers makes no entities.

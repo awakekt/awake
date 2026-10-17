@@ -11,6 +11,7 @@ import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.scene.canvas.setCanvasOcclusion
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.camera.Camera
 import com.awakekt.awake.scene.rendering.camera.CameraViewport
@@ -94,6 +95,23 @@ class SceneCanvasProjectorTest {
 
         assertEquals(leftEdge, box.x, 0.5f, "from the left mesh's near edge")
         assertEquals(rightEdge, box.x + box.width, 0.5f, "to the right one's, the unrelated mesh left out")
+    }
+
+    @Test
+    fun occlusionIsTheWorldsAnswerFromTheCamerasEye() {
+        val target = world.create()
+        assertFalse(projector.occluded(target, 1f, 2f, 3f), "a world with no answer occludes nothing")
+
+        var asked: List<Any>? = null
+        world.setCanvasOcclusion { node, eye, x, y, z ->
+            asked = listOf(node, eye.x, eye.y, eye.z, x, y, z)
+            true
+        }
+        assertTrue(projector.occluded(target, 1f, 2f, 3f))
+        assertEquals(listOf<Any>(target, 0f, 0f, 10f, 1f, 2f, 3f), asked, "the followed node, the eye it is drawn from, and the point")
+
+        world.setCanvasOcclusion(null)
+        assertFalse(projector.occluded(target, 1f, 2f, 3f), "taken away, nothing is occluded again")
     }
 
     @Test

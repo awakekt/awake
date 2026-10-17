@@ -70,6 +70,51 @@ class CanvasFollowSceneTest {
     }
 
     @Test
+    fun anOccludedFollowerIsAskedAboutTheNodeItFollows() {
+        val asked = ArrayList<Entity>()
+        val walled = node("Walled", 100f)
+        val open = node("Open", 200f)
+        val occluding = object : CanvasProjector by projector {
+            override fun occluded(target: Entity, x: Float, y: Float, z: Float): Boolean {
+                asked += target
+                return target == walled
+            }
+        }
+        val rules = SceneCanvasElement(width = 10f, height = 10f, followRules = CanvasFollowRules(occlusion = true))
+        val pool = CanvasFollowerPool(world, rules)
+        val behindWall = pool.acquire("Walled")
+        val inSight = pool.acquire("Open")
+        val unasked = CanvasFollowerPool(world, SceneCanvasElement(width = 10f, height = 10f)).acquire("Walled")
+
+        val out = ComposeHost().frame(FrameInput(800, 600)) { SceneCanvas(world, projector = occluding) }
+
+        assertFalse(out.drawn(behindWall), "hidden behind what stands in front of its node")
+        assertTrue(out.drawn(inSight))
+        assertTrue(out.drawn(unasked), "a follower whose rules do not ask is never hidden")
+        assertEquals(listOf(walled, open), asked, "asked once for each follower that asks, with the node it follows")
+    }
+
+    @Test
+    fun followOcclusionRoundTripsAndIsChecked() {
+        val settings = CanvasFollowOcclusion(raysPerFrame = 16, reuseFrames = 3, layer = 0)
+        val entity = world.create()
+        val context = object : SceneResolutionContext {
+            override val world: World = this@CanvasFollowSceneTest.world
+
+            override fun deferNodeLink(targetNodeName: String, onResolved: (target: Entity) -> Unit) = Unit
+
+            override fun recordRequest(request: Any) = Unit
+        }
+        assertNull(world.canvasFollowOcclusion())
+
+        CanvasFollowOcclusionBinding.attachTyped(world, entity, CanvasFollowOcclusionBinding.export(world, entity, settings), context)
+
+        assertEquals(settings, world.canvasFollowOcclusion())
+        assertEquals(3, SceneCanvasFollowOcclusion(raysPerFrame = 0, reuseFrames = 0, layer = -1).validate("node").size)
+        assertTrue(SceneCanvasFollowOcclusion().validate("node").isEmpty())
+    }
+
+    @Test
     fun aFollowLimitRoundTripsAndIsChecked() {
         val limit = CanvasFollowLimit(group = "plates", max = 12, rankBy = CanvasFollowRank.Priority)
         val entity = world.create()

@@ -376,7 +376,7 @@ drawing.
 - **Culling.** A follower whose box is wholly off the screen is left out (`cullOffScreen`, on by
   default), as is one behind the camera, judged by its depth along the camera's view so it holds on
   every backend. `maxDistance` hides it farther than that from the camera, and `occlusion` hides it
-  while the host's `CanvasProjector.occluded` reports something in the way.
+  while something stands between the camera and its point; see [Occlusion](#occlusion).
 - **Priority and a cap.** A `canvas_follow_limit` with a `max` keeps that many of its `group`, by
   `rankBy`: the nearest, the highest `followRules.priority`, or the highest `followScore` game code
   sets each frame. The rest are left out until they rank again.
@@ -403,6 +403,31 @@ A game that shows and hides followers often, such as damage numbers, takes them 
 `CanvasFollowerPool(world, template)`: `acquire(target) { text = "-12" }` hands out a hidden one
 again, set back to the template, and `release(entity)` hides it for the next, so no entity is
 created or destroyed while it plays.
+
+### Occlusion
+
+A follower whose `followRules.occlusion` is `true` hides while a physics body stands between the
+camera and the point it follows: a name plate behind a wall. A played project answers it with
+physics rays, so the scene needs a physics world; the body of the node the follower follows, of a
+node above it or under it, or its character's own body hides nothing; nor does a body the camera is
+inside, such as a wall it was pushed into, which a ray cannot see past. Each followed node is cast
+for at most once every few frames, and no more than a budget of rays a frame across all of them:
+those that waited longest go first, and the rest keep their last answer. A follower is asked only
+while it is on screen and near enough.
+
+A `canvas_follow_occlusion` on any node sets the budget. Without one, a scene whose followers ask
+casts with the defaults.
+
+```json title="Plates hidden by walls and terrain only, sixteen rays a frame"
+{ "name": "Occlusion", "components": [
+  { "component": "canvas_follow_occlusion", "raysPerFrame": 16, "reuseFrames": 6, "layer": 0 }
+] }
+```
+
+`layer` is the one collision layer the rays hit: `0`, the static world's, keeps moving bodies, the
+player's own capsule among them, from hiding anything. A host that runs its own systems adds
+`PhysicsCanvasOcclusion(physicsWorld, physicsSystem)` after its physics step; one with another way
+to tell, such as a depth read-back, sets its own `CanvasOcclusion` with `world.setCanvasOcclusion`.
 
 ## Show a 3D view
 

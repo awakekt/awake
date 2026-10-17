@@ -12,6 +12,7 @@ import com.awakekt.awake.core.math2d.Vec2
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.canvas.CanvasProjector
+import com.awakekt.awake.scene.canvas.canvasOcclusion
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.camera.CameraViewport
 import com.awakekt.awake.scene.rendering.mesh.MeshBounds
@@ -85,6 +86,16 @@ internal class SceneCanvasProjector(
         val dx = if (sideways < DEGENERATE) 0f else across / sideways
         val dy = if (sideways < DEGENERATE) 1f else down / sideways
         return CanvasProjection(layout.x + layout.width / 2f + dx * far, layout.y + layout.height / 2f + dy * far, depth, distance, behind = true)
+    }
+
+    /**
+     * From the eye of the camera the scene is drawn with, as [world]'s [canvasOcclusion] answers;
+     * nothing is occluded in a world without one.
+     */
+    override fun occluded(target: Entity, x: Float, y: Float, z: Float): Boolean {
+        val occlusion = world.canvasOcclusion() ?: return false
+        val eye = viewport()?.lens?.eye
+        return eye != null && occlusion.occluded(target, eye, x, y, z)
     }
 
     override fun bounds(entity: Entity): Rectangle? {

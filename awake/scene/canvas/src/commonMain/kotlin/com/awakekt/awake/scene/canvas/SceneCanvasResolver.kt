@@ -61,8 +61,9 @@ internal class SceneCanvasResolver(
     }
 
     override fun occluded(target: String, offset: Vec3f): Boolean {
-        val matrix = named[target]?.let { world.get<Transform>(it) }?.worldMatrix ?: return false
-        return projector?.occluded(matrix.m03 + offset.x, matrix.m13 + offset.y, matrix.m23 + offset.z) == true
+        val node = named[target] ?: return false
+        val matrix = world.get<Transform>(node)?.worldMatrix
+        return matrix != null && projector?.occluded(node, matrix.m03 + offset.x, matrix.m13 + offset.y, matrix.m23 + offset.z) == true
     }
 
     override fun bounds(target: String): Rectangle? {

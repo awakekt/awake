@@ -47,4 +47,12 @@ interface CanvasProjector {
      * hides none.
      */
     fun occluded(x: Float, y: Float, z: Float): Boolean = false
+
+    /**
+     * Whether something stands between the camera and the world point ([x], [y], [z]), which
+     * follows [target]: [target]'s own body, around the point, hides nothing. The scene's
+     * [CanvasOcclusion] answers it where the world has one; by default it is [occluded] for the
+     * point alone.
+     */
+    fun occluded(target: Entity, x: Float, y: Float, z: Float): Boolean = occluded(x, y, z)
 }
