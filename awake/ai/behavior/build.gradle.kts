@@ -5,6 +5,7 @@
  */
 plugins {
     id("com.awakekt.awake.plugin.library")
+    alias(libs.plugins.kotlin.serialization)
     id("com.awakekt.awake.plugin.publish")
     id("com.awakekt.awake.plugin.dokka")
     id("com.awakekt.awake.plugin.detekt")
@@ -36,6 +37,6 @@ kotlin {
 mavenPublishing {
     pom {
         name.set("Awake AI Behavior")
-        description.set("Navmesh-backed starter behaviors: Chase, Flee, Patrol")
+        description.set("Navmesh-backed starter behaviors (Chase, Flee, Patrol) and the spatial behaviour-tree kinds: move to, follow, flee, wander, face, distance, area")
     }
 }

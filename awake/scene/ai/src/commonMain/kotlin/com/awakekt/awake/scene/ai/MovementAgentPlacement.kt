@@ -53,6 +53,9 @@ object MovementAgentPlacement : AgentPlacement {
         control.moveSpeed = speed
     }
 
+    override fun face(world: World, entity: Entity, directionX: Float, directionZ: Float) =
+        TransformAgentPlacement.face(world, entity, directionX, directionZ)
+
     private fun World.agentControl(entity: Entity): MovementControl? =
         get<MovementControl>(entity)?.takeIf { it.driver == MovementDriver.Agent }
 }

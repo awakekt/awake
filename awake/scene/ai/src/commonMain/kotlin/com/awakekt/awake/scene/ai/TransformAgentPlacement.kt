@@ -10,6 +10,7 @@ import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.core.transform.Transform
+import kotlin.math.atan2
 
 /**
  * Places an agent by its scene `Transform`: the wrapper's answer to "where is that entity, and how
@@ -30,5 +31,12 @@ object TransformAgentPlacement : AgentPlacement {
         val transform = world.get<Transform>(entity) ?: return
         transform.position.x += dx
         transform.position.z += dz
+    }
+
+    /** Sets the transform's yaw to face the direction; a model faces +Z at yaw 0. A zero direction is left alone. */
+    override fun face(world: World, entity: Entity, directionX: Float, directionZ: Float) {
+        if (directionX == 0f && directionZ == 0f) return
+        val transform = world.get<Transform>(entity) ?: return
+        transform.rotation.y = atan2(directionX, directionZ)
     }
 }

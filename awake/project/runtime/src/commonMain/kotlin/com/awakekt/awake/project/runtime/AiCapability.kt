@@ -8,6 +8,11 @@ package com.awakekt.awake.project.runtime
 import com.awakekt.awake.ai.behavior.ChaseAiSystem
 import com.awakekt.awake.ai.behavior.FleeAiSystem
 import com.awakekt.awake.ai.behavior.PatrolAiSystem
+import com.awakekt.awake.ai.behavior.registerSpatialKinds
+import com.awakekt.awake.ai.btree.BehaviorTreeSystem
+import com.awakekt.awake.ai.definition.AiDefinitionLibrary
+import com.awakekt.awake.ai.definition.AiRegistry
+import com.awakekt.awake.ai.fsm.AiStateMachineSystem
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.navigation.PathRequestSystem
@@ -15,6 +20,9 @@ import com.awakekt.awake.scene.ai.AgentIntentResetSystem
 import com.awakekt.awake.scene.ai.AiBehaviorBindings
 import com.awakekt.awake.scene.ai.MovementAgentPlacement
 import com.awakekt.awake.scene.ai.chase.SceneChase
+import com.awakekt.awake.scene.ai.definition.AiDefinitionAttachSystem
+import com.awakekt.awake.scene.ai.definition.SceneBehaviorTree
+import com.awakekt.awake.scene.ai.definition.SceneStateMachine
 import com.awakekt.awake.scene.ai.flee.SceneFlee
 import com.awakekt.awake.scene.ai.patrol.ScenePatrol
 import com.awakekt.awake.scene.character.SceneCharacterController
@@ -28,7 +36,13 @@ import kotlin.reflect.KClass
 
 /**
  * Patrol, chase and flee, and the system that answers their route requests, for a scene that has one
- * of the behaviours and a `navigation` component to route over.
+ * of the behaviours and a `navigation` component to route over; and the `behavior_tree` and
+ * `state_machine` components, whose definition files it reads and compiles when the scene loads.
+ *
+ * Definitions may use Core's kinds and the spatial kinds, which move agents as the behaviours do. A
+ * definition that cannot be read or compiled stops the project loading, with every problem and the
+ * file it is in. The trees and machines run after their entities get them, before the route
+ * behaviours, and a scene with a `navigation` component answers their routes too.
  *
  * The behaviours move agents through [MovementAgentPlacement]: an agent with a `movement_control`
  * whose driver is `Agent` is steered through it, so with a `character_controller` walls stop it, and
@@ -53,18 +67,39 @@ internal object AiCapability : SceneCapability {
             "${held.joinToString()}: a patrol, chase or flee agent with a character_controller needs a " +
                 "movement_control with \"driver\": \"Agent\" to steer through, or the controller holds it in place"
         }
+        val components = scene.nodes.flatMap { it.withDescendants() }.flatMap { it.components }
+        val trees = components.filterIsInstance<SceneBehaviorTree>().map { it.asset }.distinct()
+        val machines = components.filterIsInstance<SceneStateMachine>().map { it.asset }.distinct()
+        if (trees.isEmpty() && machines.isEmpty()) return
+        val library = AiDefinitionLibrary(AiRegistry().registerSpatialKinds(MovementAgentPlacement))
+        trees.forEach { library.loadTree(it, files.readText(it)) }
+        machines.forEach { library.loadStateMachine(it, files.readText(it)) }
+        content[AiDefinitions] = library
     }
 
     override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {
-        val navigation = scene.navigation() ?: return
-        val behaviours = ROUTE_BEHAVIOURS.filter { scene.uses(it.type) }
-        if (behaviours.isEmpty()) return
-        val grid = navigation.toGrid()
+        val navigation = scene.navigation()
+        val behaviours = if (navigation == null) emptyList() else ROUTE_BEHAVIOURS.filter { scene.uses(it.type) }
+        val definitions = scene.uses(SceneBehaviorTree::class) || scene.uses(SceneStateMachine::class)
+        if (behaviours.isEmpty() && !definitions) return
         plan.frame("ai-intents") { AgentIntentResetSystem() }
+        if (definitions) {
+            plan.frame("ai-definitions") { AiDefinitionAttachSystem(it.content[AiDefinitions] ?: AiDefinitionLibrary()) }
+            plan.frame("ai-trees") { BehaviorTreeSystem() }
+            plan.frame("ai-machines") { AiStateMachineSystem() }
+        }
         behaviours.forEach { behaviour -> plan.frame(behaviour.name) { behaviour.create() } }
-        plan.frame("path-requests") { PathRequestSystem(grid) }
+        if (navigation != null) {
+            val grid = navigation.toGrid()
+            plan.frame("path-requests") { PathRequestSystem(grid) }
+        }
     }
 }
+
+/** The compiled behaviour tree and state machine definitions a scene's entities name. */
+internal val AiDefinitions: SceneContentKey<AiDefinitionLibrary> = SceneContentKey("AI definitions")
+
+private fun SceneNode.withDescendants(): List<SceneNode> = listOf(this) + children.flatMap { it.withDescendants() }
 
 /** A behaviour that asks for routes: its component and the system that runs it. */
 private class RouteBehaviour(val type: KClass<out SceneComponent>, val name: String, val create: () -> System)

@@ -203,6 +203,31 @@ tree finishes, or when a condition node succeeds.
 | `ai.set`, `ai.copy`, `ai.remove`, `ai.add` | Write the blackboard. |
 | `ai.emit` | Sends `event` with a `payload` to the system's `AiEventSink`. |
 
+`registerSpatialKinds(placement)` from `awake:ai:behavior` adds kinds that move and place agents over
+the navigation grid, through the agent's `PathRequest`. A `target` is a blackboard `key` holding an
+entity or a position, such as `perception.target`, or a fixed `point`:
+
+| Kind | What it does |
+| --- | --- |
+| `ai.move-to` | Walks to `target`; succeeds within `arriveRadius`, fails when it cannot get there. |
+| `ai.follow` | Keeps within `distance` of `target`; runs until the target is gone. |
+| `ai.flee` | Runs from `from` until `safeDistance` away, trying other directions when blocked. |
+| `ai.wander` | Walks to a seeded random point within `radius` of where it started, then succeeds. |
+| `ai.face` | Turns the agent toward `target`. |
+| `ai.distance` | Compares the ground distance to `target` with `distance`, by `op`. |
+| `ai.in-area` | Succeeds when the agent, or `who`, is in a circle (`center`, `radius`) or a box (`min`, `max`). |
+
+In a scene, a node names a definition file with a `behavior_tree` or `state_machine` component:
+
+```json title="scene node"
+{ "name": "Keeper", "components": [ { "component": "behavior_tree", "asset": "ai/keeper.tree.json" } ] }
+```
+
+A played project reads and checks every file its scene names when it loads, refusing one with a
+problem and saying which file and node. It runs the trees and machines with Core's kinds and the
+spatial kinds, moving agents as patrol and chase do, and routes them over the scene's `navigation`.
+Outside a project, load files into an `AiDefinitionLibrary` and run `AiDefinitionAttachSystem`.
+
 Trees, machines and blackboards snapshot to data and restore exactly, and a running tree reports
 what each node returned on the latest tick, for an editor's live view.
 

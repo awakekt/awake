@@ -15,8 +15,14 @@ implementation(project(":awake:scene:ai"))
   `FleeBehavior` with the `PathRequest` each asks for routes through.
 - `registerAiBehaviors()` and `AiBehaviorBindings` -- registers the three, and the `navigation`
   component from `awake:scene:navigation` that the behaviours route over.
+- `SceneBehaviorTree` and `SceneStateMachine` (`behavior_tree`, `state_machine`) -- name a
+  definition file (`asset`), with an optional `seed` and `enabled`. Their bindings attach
+  `BehaviorTreeAsset` and `StateMachineAsset` and a `PathRequest`. `AiDefinitionAttachSystem` builds
+  each entity's `BehaviorTreeComponent` or `AiStateMachineComponent` from an `AiDefinitionLibrary` once
+  the library holds the file, and again each time it reloads it. A played project reads the files
+  when it loads (`awake:project:runtime`).
 - `TransformAgentPlacement` -- the `AgentPlacement` for a scene: an agent is where its `Transform`'s
-  `position` says, and moves by rewriting it. Pass it to `PatrolAiSystem`, `ChaseAiSystem` and
+  `position` says, moves by rewriting it, and faces a direction by setting its yaw. Pass it to `PatrolAiSystem`, `ChaseAiSystem` and
   `FleeAiSystem`.
 - `MovementAgentPlacement` -- the same, except that an agent whose `MovementControl` has the `Agent`
   driver is steered through that control: its world-space intent, and `moveSpeed` set to the

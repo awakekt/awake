@@ -8,6 +8,7 @@
 # Nested properties are written with dots (`particle_emitter.spin.maxDegreesPerSecond`); a list of
 # objects with `[]` (`particle_emitter.ground.colliders[].x`).
 
+free behavior_tree.seed | Any 64-bit seed is valid; it only chooses the random sequence.
 free camera.far | Relational: it must exceed camera.near, which validate() enforces; no fixed limit says that.
 free camera_rig.distance | Relational: must be between minDistance and maxDistance, enforced by validate().
 free camera_rig.maxDistance | Relational: must be at least minDistance, enforced by validate().
@@ -118,6 +119,7 @@ free skybox.horizonColorR | A colour channel: every value is accepted; nothing v
 free skybox.zenithColorB | A colour channel: every value is accepted; nothing validates it.
 free skybox.zenithColorG | A colour channel: every value is accepted; nothing validates it.
 free skybox.zenithColorR | A colour channel: every value is accepted; nothing validates it.
+free state_machine.seed | Any 64-bit seed is valid; it only chooses the random sequence.
 free terrain.surface.version | Schema version number for the surface provider payload.
 free terrain.tilingScale | Any texture tiling frequency is valid; defaults to 16.
 free texture_animation.firstFrame | Relational: must stay within columns * rows, which validate() enforces.
