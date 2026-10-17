@@ -8,6 +8,7 @@ package com.awakekt.awake.scene.controls
 import com.awakekt.awake.core.input.AxisAction
 import com.awakekt.awake.core.input.InputSnapshot
 import com.awakekt.awake.core.input.Key
+import com.awakekt.awake.core.input.PinchGesture
 import com.awakekt.awake.core.math.CameraPoseState
 import com.awakekt.awake.scene.controls.camera.CameraFlyActions
 import kotlin.test.Test
@@ -38,6 +39,22 @@ class CameraInputProcessorTest {
         assertTrue(processor.process(state, config, snap2, 0.016f))
         assertEquals(0.5f, state.yaw, 1e-4f)
         assertEquals(-0.2f, state.pitch, 1e-4f)
+    }
+
+    @Test
+    fun aPinchDividesTheDistanceByItsScaleAndIgnoresItsCtrlScroll() {
+        val processor = CameraInputProcessor()
+        val state = CameraPoseState(yaw = 0f, pitch = 0f, distance = 100f)
+        val gesture = PinchGesture(2f, 0f, 0f)
+
+        // A browser pinch: the typed pinch, and the same step as Ctrl held with its scroll.
+        val pinch = InputSnapshot(
+            pointerX = 0f, pointerY = 0f, pointerDown = false, scrollDeltaX = 0f, scrollDeltaY = gesture.zoomDelta,
+            keysDown = setOf(Key.Ctrl), keysPressed = emptySet(), keysReleased = emptySet(), typedText = "", editActions = emptyList(),
+            pinch = gesture,
+        )
+        assertTrue(processor.process(state, CameraControlConfig(), pinch, 0.016f))
+        assertEquals(50f, state.distance, 1e-3f, "spreading the fingers 2x halves the distance")
     }
 
     @Test

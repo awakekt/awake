@@ -40,6 +40,7 @@ public final class com/awakekt/awake/engine/window/GlfwTextInputBridgeKt {
 
 public final class com/awakekt/awake/engine/window/GlfwWindow {
 	public static final field INSTANCE Lcom/awakekt/awake/engine/window/GlfwWindow;
+	public final fun glfwConsumePinchScale (J)D
 	public final fun glfwConsumeScrollDeltaX (J)D
 	public final fun glfwConsumeScrollDeltaY (J)D
 	public final fun glfwConsumeScrollSource (J)I
@@ -66,6 +67,7 @@ public final class com/awakekt/awake/engine/window/GlfwWindow {
 }
 
 public abstract interface class com/awakekt/awake/engine/window/GlfwWindowInput {
+	public fun consumePinchScale ()D
 	public fun consumeScrollDeltaX ()D
 	public abstract fun consumeScrollDeltaY ()D
 	public fun consumeScrollSource ()Lcom/awakekt/awake/core/input/ScrollSource;
@@ -81,6 +83,7 @@ public abstract interface class com/awakekt/awake/engine/window/GlfwWindowInput 
 }
 
 public final class com/awakekt/awake/engine/window/GlfwWindowInput$DefaultImpls {
+	public static fun consumePinchScale (Lcom/awakekt/awake/engine/window/GlfwWindowInput;)D
 	public static fun consumeScrollDeltaX (Lcom/awakekt/awake/engine/window/GlfwWindowInput;)D
 	public static fun consumeScrollSource (Lcom/awakekt/awake/engine/window/GlfwWindowInput;)Lcom/awakekt/awake/core/input/ScrollSource;
 	public static fun getClipboardText (Lcom/awakekt/awake/engine/window/GlfwWindowInput;)Ljava/lang/String;

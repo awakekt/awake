@@ -11,6 +11,7 @@ import com.awakekt.awake.compose.ui.platform.blocksGameplayKeys
 import com.awakekt.awake.core.input.ActionInputSource
 import com.awakekt.awake.core.input.InputSnapshot
 import com.awakekt.awake.core.input.Key
+import com.awakekt.awake.core.input.PinchGesture
 import com.awakekt.awake.core.input.PointerButton
 import com.awakekt.awake.core.input.ScrollSource
 
@@ -61,6 +62,12 @@ class GameplayInput(
 
     /** What sent this frame's scroll, when the platform can tell; see [ScrollSource]. */
     val scrollSource: ScrollSource get() = snapshot.scrollSource
+
+    /**
+     * This frame's trackpad pinch, or `null` while the UI holds the pointer or a modal is open. The
+     * UI takes no pinch of its own, so a pinch over a panel still reaches the world.
+     */
+    val pinch: PinchGesture? get() = if (claimed.isCaptured || claimed.isModalOpen) null else snapshot.pinch
 
     /**
      * Whether [button] is held for the world, gated by the same capture and modal rules as [pointerDown].

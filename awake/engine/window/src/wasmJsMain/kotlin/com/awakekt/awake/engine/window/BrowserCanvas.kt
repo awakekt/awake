@@ -135,6 +135,8 @@ fun bindWindowPointerInput(input: Input, canvas: HTMLCanvasElement = findCanvas(
         // (Ctrl+wheel) would zoom the whole page.
         if (canvas.box().contains(wheel.clientX.toDouble(), wheel.clientY.toDouble())) wheel.preventDefault()
     }
+    // The same pinch again, typed: InputSnapshot.pinch, and Safari's gesture events.
+    bindWindowPinchInput(input, canvas)
 }
 
 /** Binds browser window keyboard keydown, keyup, and blur events to engine [input]. */

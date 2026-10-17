@@ -362,6 +362,7 @@ enum class ScrollSource {
  * @property clipboardCommands Copy and cut requests made during this frame, in order.
  * @property touches Every finger on a touch screen this frame, including one that lifted during it.
  * @property pointerFromTouch True while the primary pointer follows a finger rather than a mouse.
+ * @property pinch This frame's trackpad pinch, or `null` if there was none; see [PinchGesture].
  *
  * It is an [ActionInputSource], so [InputActions] can read a frame straight from it.
  */
@@ -397,6 +398,7 @@ data class InputSnapshot(
     val clipboardCommands: List<ClipboardCommand> = emptyList(),
     val touches: List<TouchPoint> = emptyList(),
     val pointerFromTouch: Boolean = false,
+    val pinch: PinchGesture? = null,
 ) : ActionInputSource {
     /** True if the specified pointer [button] is currently held down. */
     override fun isDown(button: PointerButton): Boolean = button in buttonsDown
@@ -447,6 +449,24 @@ class Input {
 
     /** Set by a bridge that can tell a trackpad from a wheel; cleared each snapshot like the deltas. */
     var scrollSource: ScrollSource = ScrollSource.Unknown
+
+    // The pinch since the last snapshot: its steps multiplied, about the latest focus. A scale of
+    // exactly 1 is no pinch, which is what keeps a snapshot's pinch null on the frames without one.
+    private var pendingPinchScale = 1f
+    private var pendingPinchX = 0f
+    private var pendingPinchY = 0f
+
+    /**
+     * Adds one step of a trackpad pinch: zoom by the factor [scale] about ([focusX], [focusY]), in the
+     * same pixels as [setPointer]. Steps that land before the next snapshot multiply into one
+     * [PinchGesture], about the latest focus. A [scale] that is not finite and positive is dropped.
+     */
+    fun addPinch(scale: Float, focusX: Float, focusY: Float) {
+        if (!scale.isFinite() || scale <= 0f) return
+        pendingPinchScale *= scale
+        pendingPinchX = focusX
+        pendingPinchY = focusY
+    }
 
     // Accumulated (OR'd), not overwritten, so a down+up pair landing within one frame
     // interval -- a fast tap, a trackpad tap, any synthetic/automation click -- still
@@ -534,6 +554,7 @@ class Input {
             clipboardCommands = pendingClipboardCommands.takeIf { it.isNotEmpty() }?.toList() ?: emptyList(),
             touches = if (fingers.isEmpty()) emptyList() else fingers.values.map(Finger::snapshot),
             pointerFromTouch = pointerFromTouch,
+            pinch = if (pendingPinchScale == 1f) null else PinchGesture(pendingPinchScale, pendingPinchX, pendingPinchY),
         )
         // A lifted finger shows in exactly one snapshot, released; the rest start the next frame clean.
         fingers.values.removeAll { !it.down }
@@ -542,6 +563,7 @@ class Input {
         scrollDeltaX = 0f
         scrollDeltaY = 0f
         scrollSource = ScrollSource.Unknown
+        pendingPinchScale = 1f
         typedText.clear()
         pendingEditActions.clear()
         pendingClipboardCommands.clear()

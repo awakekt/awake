@@ -87,11 +87,9 @@ internal fun pollGlfwInput(
         input.setKeyDown(key, reader.isKeyDown(glfwKey))
     }
 
-    input.setPointer(
-        down = reader.isMouseButtonDown(GLFW_MOUSE_BUTTON_LEFT),
-        x = reader.cursorX().toFloat() * reader.framebufferScaleX(),
-        y = reader.cursorY().toFloat() * reader.framebufferScaleY(),
-    )
+    val pointerX = reader.cursorX().toFloat() * reader.framebufferScaleX()
+    val pointerY = reader.cursorY().toFloat() * reader.framebufferScaleY()
+    input.setPointer(down = reader.isMouseButtonDown(GLFW_MOUSE_BUTTON_LEFT), x = pointerX, y = pointerY)
     // Right button drives context menus (shadcnContextMenu gates on secondaryPointerDown).
     input.setSecondaryPointer(reader.isMouseButtonDown(GLFW_MOUSE_BUTTON_RIGHT))
     // The rest carry no dedicated snapshot field and are read from `buttonsDown`. Middle is what a
@@ -106,4 +104,7 @@ internal fun pollGlfwInput(
     input.scrollDeltaY += reader.consumeScrollDeltaY().toFloat()
     // A frame polled more than once keeps what an earlier poll learned.
     reader.consumeScrollSource().takeIf { it != ScrollSource.Unknown }?.let { input.scrollSource = it }
+    // A macOS trackpad pinch zooms about the cursor, which is where AppKit reports it.
+    val pinchScale = reader.consumePinchScale()
+    if (pinchScale != 1.0) input.addPinch(pinchScale.toFloat(), pointerX, pointerY)
 }

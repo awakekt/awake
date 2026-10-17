@@ -29,6 +29,7 @@ class FakeGlfwWindowInput : GlfwWindowInput {
     var pendingScrollDeltaY = 0.0
     var pendingScrollDeltaX = 0.0
     var pendingScrollSource = ScrollSource.Unknown
+    var pendingPinchScale = 1.0
 
     override fun isKeyDown(glfwKey: Int): Boolean = glfwKey in keysDown
     override fun isMouseButtonDown(glfwButton: Int): Boolean =
@@ -53,6 +54,12 @@ class FakeGlfwWindowInput : GlfwWindowInput {
     override fun consumeScrollSource(): ScrollSource {
         val value = pendingScrollSource
         pendingScrollSource = ScrollSource.Unknown
+        return value
+    }
+
+    override fun consumePinchScale(): Double {
+        val value = pendingPinchScale
+        pendingPinchScale = 1.0
         return value
     }
 }
