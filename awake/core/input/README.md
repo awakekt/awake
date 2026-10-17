@@ -5,6 +5,10 @@ controller buttons a host writes into `Input`, the `InputSnapshot` each frame re
 actions over them. No dependency on the ECS, rendering or a window; a host maps its platform's
 events to these types once.
 
+A host that polls a controller sets every button at once with `setGamepadButtons` and lets go of
+them with `releaseGamepadButtons`. On Android, `KeyEvent.syncAwakeGamepadInput` and
+`MotionEvent.syncAwakeGamepadInput` read a controller's buttons, hat d-pad and triggers.
+
 ## Actions
 
 `InputActions` turns a frame's input into named actions, so a system asks for `"jump"` and never for
@@ -37,7 +41,8 @@ right modifiers are one `Key`, so a chord cannot tell them apart.
 is `@Serializable`. `rebind` swaps one action's binding at run time and `rebindAll` loads a saved
 set, skipping names the actions no longer have. `actionsBoundTo(chord)` finds what a new chord would
 clash with. `ButtonBinding.describe()` lists each way to trigger an action as a
-`BindingDescription`, its modifiers and its control, for a formatter to label in the player's
-language; this module holds no label text.
+`BindingDescription`, its modifiers and its control. This module holds no label text:
+`InputLabels` in `awake:core:localization` names a `BindingDescription`, a chord or an action's
+bindings in the player's language and platform style.
 
 The guide is [Input](../../../website/docs/guides/input.md).

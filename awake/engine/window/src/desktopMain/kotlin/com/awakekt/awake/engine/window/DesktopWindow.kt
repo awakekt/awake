@@ -90,6 +90,7 @@ private fun runFrames(
         DesktopFrameLoop.isWindowFocused = isFocused
         pollInput(window, game.input)
         pollGlfwTextInput(window, game.input)
+        pollGlfwGamepad(game.input, focused = isFocused)
         beforeFrame()
         val effectiveMode = game.windowConfig.effectiveFrameRateMode(isFocused)
         DesktopFrameLoop.tick(effectiveMode) { deltaTime ->

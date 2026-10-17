@@ -33,8 +33,8 @@ import platform.UIKit.UIWindow
 
 /**
  * The iOS window: a `UIView` backed by a [CAMetalLayer], driven by `CADisplayLink`, that feeds
- * touches, typed text and the standard edit actions into [input]. A backend creates its surface
- * from the layer [onCreate] receives; nothing here knows about a GPU API. [onSafeArea] hears what
+ * touches, typed text, the standard edit actions and a controller's buttons into [input]. A backend
+ * creates its surface from the layer [onCreate] receives; nothing here knows about a GPU API. [onSafeArea] hears what
  * the notch, the rounded corners and the home indicator cover of the view, in points, whenever it
  * changes.
  */
@@ -135,6 +135,7 @@ class AwakeMetalView(
             previousTimestamp = currentTimestamp
             textInputWasFocused = syncAwakeTextInputFocus(textInputWasFocused, input)
             textInputWasSecure = syncAwakeSecureTextEntry(textInputWasSecure, input)
+            pollGameController(input)
             onUpdate(deltaTime)
             // The frame just run is where a field answers a copy or cut, so write the answer now.
             input.syncClipboardWrite { UIPasteboard.generalPasteboard.string = it }

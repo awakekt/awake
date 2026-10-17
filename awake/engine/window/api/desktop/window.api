@@ -27,6 +27,11 @@ public final class com/awakekt/awake/engine/window/DesktopWindowKt {
 	public static synthetic fun runDesktopWindow$default (Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Ljava/lang/Integer;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 }
 
+public final class com/awakekt/awake/engine/window/GlfwGamepadKt {
+	public static final fun pollGlfwGamepad (Lcom/awakekt/awake/core/input/Input;Z)V
+	public static synthetic fun pollGlfwGamepad$default (Lcom/awakekt/awake/core/input/Input;ZILjava/lang/Object;)V
+}
+
 public final class com/awakekt/awake/engine/window/GlfwInputBridgeKt {
 	public static final fun getDefaultGlfwGameplayKeys ()Ljava/util/Map;
 	public static final fun pollGlfwInput (JLcom/awakekt/awake/core/input/Input;Ljava/util/Map;)V

@@ -147,11 +147,19 @@ runs, and `actionsBoundTo` says what a new chord would clash with:
 
 `rebindAll` skips, and returns, the names a saved file has that no action does, so an old file
 still loads. To show a binding, `ButtonBinding.describe()` gives each way to trigger it as its
-modifiers and the control pressed, for a label formatter to name in the player's language.
+modifiers and the control pressed. `InputLabels` in `com.awakekt.awake.core:localization` names
+them in the player's language and their platform's style: `binding(description)` gives `Ctrl+K` or
+`Strg+K`, `chord(chord)` names one chord, and `bindings(action)` every way to trigger an action, such
+as `E / Shift+E`, with controller buttons printed by the player's `ControllerLayout`. See
+[Name keys and buttons](localization.md#name-keys-and-buttons).
 
 Controller buttons are named by position: `South`, `East`, `West` and `North` for the face buttons,
 the shoulders and triggers, the sticks, the d-pad, `Select`, `Start` and `Home`. A host feeds them
-with `Input.setGamepadButton`; the built-in hosts do not read a controller yet.
+with `Input.setGamepadButton`, and every built-in host does: GLFW's gamepad API on desktop, the
+Gamepad API in a browser, GameController on iOS, and a controller's key and joystick events on
+Android. One controller is read, and only one the platform maps by position; a browser lists one
+only after a button on it is pressed. `GameplayInput` passes controller buttons to the actions
+whatever the UI holds, since the UI reads no controller.
 
 ## Properties
 

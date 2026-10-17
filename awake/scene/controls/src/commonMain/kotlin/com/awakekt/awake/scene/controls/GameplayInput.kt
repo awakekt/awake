@@ -9,6 +9,7 @@ import com.awakekt.awake.compose.ui.platform.InputOwnership
 import com.awakekt.awake.compose.ui.platform.blocksGameplayKey
 import com.awakekt.awake.compose.ui.platform.blocksGameplayKeys
 import com.awakekt.awake.core.input.ActionInputSource
+import com.awakekt.awake.core.input.GamepadButton
 import com.awakekt.awake.core.input.InputSnapshot
 import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.input.PointerButton
@@ -27,12 +28,13 @@ import com.awakekt.awake.core.input.ScrollSource
  *   the player, but a single-line field has no use for Up/Down and lets them reach a game system --
  *   a consumer pack's chat line stepping through its sent history.
  * - **Scroll** subtracts [InputOwnership.isScrollConsumed], so a scrolled panel does not also zoom.
+ * - **Controller buttons** pass through whole: the UI reads no controller, so it claims none.
  *
  * A focused text field owns the keyboard and *not* the mouse, so dragging the world while a field
  * has focus stays legitimate. That asymmetry is deliberate -- `CameraSystem` carried the comment
  * saying so -- and it survives here rather than being tidied into one flag.
  *
- * It is also what a scene's input actions read keys and pointer buttons from, with one difference:
+ * It is also what a scene's input actions read keys, pointer and controller buttons from, with one difference:
  * while [keysOwnedByUi], actions read no key at all ([keysWithheldFromActions]). The keys a focused
  * field lets through are for a system that asks for them directly, not for movement, jump or run
  * bound to the same keys -- Up both recalling a chat line and walking the player forward.
@@ -74,6 +76,12 @@ class GameplayInput(
     /** Whether [button] was pressed this frame for the world, gated like [isDown]. */
     override fun wasPressed(button: PointerButton): Boolean =
         !claimed.isCaptured && !claimed.isModalOpen && snapshot.wasPressed(button)
+
+    /** Whether controller [button] is held; the UI never takes one. */
+    override fun isDown(button: GamepadButton): Boolean = snapshot.isDown(button)
+
+    /** Whether controller [button] was pressed this frame; the UI never takes one. */
+    override fun wasPressed(button: GamepadButton): Boolean = snapshot.wasPressed(button)
 
     /** False while the UI takes [key] for itself -- a captured pointer or a modal take every key, a focused text field only the keys it uses. */
     override fun isDown(key: Key): Boolean = !claimed.blocksGameplayKey(key) && snapshot.keysDown.contains(key)
