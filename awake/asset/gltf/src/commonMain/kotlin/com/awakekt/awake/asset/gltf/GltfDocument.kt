@@ -263,6 +263,42 @@ data class GltfAccessor(
     val type: String,
     /** Whether an integer [componentType] vertex attribute packs a normalized float. */
     val normalized: Boolean = false,
+    /** Elements that replace this accessor's own, or that fill an accessor with no [bufferView]. */
+    val sparse: GltfAccessorSparse? = null,
+)
+
+/**
+ * A sparse accessor's substitutions: [count] elements, at the element positions [indices] lists, take
+ * the values [values] holds instead of the base accessor's.
+ */
+@Serializable
+data class GltfAccessorSparse(
+    /** How many elements are substituted. */
+    val count: Int,
+    /** Where the substituted element positions are stored. */
+    val indices: GltfAccessorSparseIndices,
+    /** Where the substituted element values are stored. */
+    val values: GltfAccessorSparseValues,
+)
+
+/** The strictly increasing element positions of a [GltfAccessorSparse]. */
+@Serializable
+data class GltfAccessorSparseIndices(
+    /** The bufferView holding the positions. */
+    val bufferView: Int,
+    /** The offset into that bufferView in bytes. */
+    val byteOffset: Int = 0,
+    /** `UNSIGNED_BYTE`, `UNSIGNED_SHORT` or `UNSIGNED_INT`. */
+    val componentType: Int,
+)
+
+/** The tightly packed substitute values of a [GltfAccessorSparse]. */
+@Serializable
+data class GltfAccessorSparseValues(
+    /** The bufferView holding the values. */
+    val bufferView: Int,
+    /** The offset into that bufferView in bytes. */
+    val byteOffset: Int = 0,
 )
 
 /**
