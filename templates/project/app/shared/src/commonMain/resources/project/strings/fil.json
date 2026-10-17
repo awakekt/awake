@@ -1,0 +1,10 @@
+{
+  "hud": {
+    "title": "Maligayang pagdating sa iyong Awake project",
+    "hint": "Kusang umiikot ang kubo. Magdagdag ng aytem, o palitan ang wika.",
+    "items": "{count, plural, other {# aytem}}",
+    "addItem": "Magdagdag ng aytem",
+    "language": "Wika: {language}",
+    "switchTo": "Lumipat sa {language}"
+  }
+}

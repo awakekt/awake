@@ -20,12 +20,12 @@ material3 = "1.11.0-alpha07"
 # Core modules and Vulkan backend use independent version trains. Gradle lines them up on its own:
 # every Core module depends on com.awakekt.awake:bom, so the newest Core in the build lifts all of
 # them, a Vulkan release's included. To state the version, implementation(platform("com.awakekt.awake:bom:<awake>")).
-awake = "0.8.6"
-awake-vulkan = "0.1.25"
+awake = "0.14.0"
+awake-vulkan = "0.1.32"
 # WebGPU is published only as snapshots. Pin "<awake>-SNAPSHOT": the WebGPU snapshot of the release
 # above (from Core's tag run once it publishes one, otherwise the last main build before the cut);
 # never the next patch.
-awake-webgpu = "0.8.6-SNAPSHOT"
+awake-webgpu = "0.13.3-SNAPSHOT"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -55,6 +55,8 @@ awake-engine-bootstrap = { module = "com.awakekt.awake.engine:bootstrap", versio
 awake-engine-window = { module = "com.awakekt.awake.engine:window", version.ref = "awake" }
 awake-asset-shaders = { module = "com.awakekt.awake.asset:shaders", version.ref = "awake" }
 awake-asset-shader-pack = { module = "com.awakekt.awake.asset:shader-pack", version.ref = "awake" }
+awake-core-localization = { module = "com.awakekt.awake.core:localization", version.ref = "awake" }
+awake-compose-foundation = { module = "com.awakekt.awake.compose:foundation", version.ref = "awake" }
 awake-core-host = { module = "com.awakekt.awake.core:host", version.ref = "awake" }
 awake-scene-authoring = { module = "com.awakekt.awake.scene:authoring", version.ref = "awake" }
 awake-project-runtime = { module = "com.awakekt.awake.project:runtime", version.ref = "awake" }

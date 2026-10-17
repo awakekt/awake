@@ -69,6 +69,8 @@ kotlin {
             implementation(libs.awake.asset.shaders)
             implementation(libs.awake.asset.shader.pack)
             implementation(libs.awake.core.host)
+            implementation(libs.awake.core.localization)
+            implementation(libs.awake.compose.foundation)
             implementation(libs.awake.scene.authoring)
             // api: loadGame and createGame hand LoadedProject to every app module.
             api(libs.awake.project.runtime)

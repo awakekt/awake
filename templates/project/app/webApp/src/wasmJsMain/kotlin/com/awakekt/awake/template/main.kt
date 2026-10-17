@@ -8,10 +8,10 @@ import kotlinx.coroutines.launch
 
 fun main() {
     MainScope().launch {
-        val project = loadGame()
+        val game = loadGame()
         launchWebGpuGame {
             WebGpuEngine(
-                appLifecycle = createGame(project, AppWindowBackend.WEBGPU),
+                appLifecycle = createGame(game, AppWindowBackend.WEBGPU),
                 requestedPlan = AwakeRenderPlan,
             )
         }
