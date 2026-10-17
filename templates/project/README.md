@@ -51,7 +51,7 @@ To add a locale, for example Spanish:
 1. Copy `en.json` to `strings/es.json` and translate each value. Keep the keys and any `{placeholder}`.
 2. Write plural messages in the new language's own plural forms: `{count, plural, one {# elemento} other {# elementos}}`.
    Languages that don't inflect the noun, like Filipino here, need only `other`.
-3. Add `LocaleId.of("es") to "Español"` to `Locales` in `Hud.kt`, so the button offers it.
+3. Add `LocaleId.of("es") to "EspaÃ±ol"` to `Locales` in `Hud.kt`, so the button offers it.
 
 A text in a script the built-in font lacks, such as Korean or Cyrillic, also needs a fallback font:
 see [Fonts for other scripts](https://docs.awakekt.com/guides/localization/#fonts-for-other-scripts).
