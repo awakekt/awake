@@ -70,6 +70,8 @@ or a system polling `consumePress()`, sees the tap as it would without the bluep
 | `width` | number (dp) | `200` | Element width. A joystick is a round pad of this width. |
 | `height` | number (dp) | `40` | Element height. |
 | `text` | string | `""` | A `Text` element's content, a `Button`'s label, or what is typed into a `TextField`. Typing writes it; a system writing it replaces the field's content, caret at the end. |
+| `textKey` | string | `""` | A `Text`'s or `Button`'s words from the project's string tables, by key, in the player's language. Use it in place of `text`. See [Show text in the player's language](#show-text-in-the-players-language). |
+| `textArgs` | object | `{}` | Values for `textKey`'s placeholders, by name, such as `{ "count": "3" }`. |
 | `fontSize` | number (sp) | `18` | Size of `text`. |
 | `font` | string | `""` | The font of `text`: a `.ttf` or `.otf` file from the project, or a built-in family. See [Use a font](#use-a-font). |
 | `mask` | string | `""` | A `TextField`'s password mask: one character drawn for each typed one. Empty shows the text. |
@@ -249,6 +251,7 @@ once its capability registers them.
 | `value` | A `Bar`'s fill: this field, divided by `max`. |
 | `max` | A field, or a number such as `"100"`. Left out, `value` is already a share from 0 to 1. |
 | `text` | The words of a `Text` or `Button`, each `{component.field}` replaced by its value. A whole number shows exactly, however large, and any other number to one decimal place. A [format](#number-formats) after a colon, such as `{purse.gold:n0}`, sets how a number is written. |
+| `textArgs` | A `textKey`'s arguments read from fields: each name to its `component.field`, such as `{ "count": "inventory.count" }`. See [Show text in the player's language](#show-text-in-the-players-language). |
 
 ### Number formats
 
@@ -272,6 +275,32 @@ While a binding reads nothing, because no node has the name or its component has
 element shows its own `value` and `text`, and the log says so once. A Bar does the same for a value
 that is not a finite number and for a `max` that is not above 0; a text shows such a value as it is,
 `NaN` or `Infinity`.
+
+## Show text in the player's language
+
+A `Text` or `Button` with a `textKey` shows that key's text from the project's string tables,
+`strings/<locale>.json`, in the player's language, and changes when the game switches language,
+with no reload. A played project loads its tables itself; [Localization](localization.md#show-a-key-in-a-scene)
+has the tables, the locale switch and the message syntax.
+
+```json title="A greeting and an item count"
+[
+  { "component": "canvas_element", "textKey": "hud.greeting", "textArgs": { "name": "Harbor Town" } },
+  { "component": "canvas_element", "textKey": "hud.items", "offsetY": 60,
+    "bind": { "node": "Player", "textArgs": { "count": "inventory.count" } } }
+]
+```
+
+`textArgs` holds values the scene fixes. A value the game sets while it runs, such as a player's
+name or a count, comes from a component field through `bind`'s `textArgs`, read each frame, and
+takes the place of a `textArgs` value of the same name; while the field reads nothing, the scene's
+own value shows. A field's value goes in as it is, so `{count, plural, one {# item} other {# items}}`
+reads a number field as a number, and a name holding `{` shows as typed. A system can also set the
+live element's `textKey` and `textArgs` from code.
+
+A key no table has shows as the key itself and is logged once. Set `textKey` or `text`, not both;
+scene validation reports an element with both, a `textKey` on a kind with no words, and `textArgs`
+with no `textKey`.
 
 ## Lay out children
 

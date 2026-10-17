@@ -31,6 +31,7 @@ kotlin {
             api(project(":awake:core:math"))
             implementation(project(":awake:core:math2d"))
             api(project(":awake:core:text"))
+            api(project(":awake:core:localization"))
             implementation(libs.kotlinx.serialization.json)
         }
         commonTest.dependencies {

@@ -29,6 +29,10 @@ import kotlin.math.roundToLong
  * groups its digits, `1,234,567`, `{health.current:f0}` rounds to a whole number, and
  * `{health.share:p0}` shows a fraction as a percentage; see [NumberFormat] for the full set. A format
  * leaves a field that is not a number as it is.
+ * @property textArgs Arguments of a keyed element's text, [CanvasElement.textKey], each read from a
+ * field: the argument's name to its `component.field`, such as `"name": "player.name"` or
+ * `"count": "inventory.count"`. The field's value goes in as it is, so a plural reads a number field
+ * as a number. A field that reads nothing leaves the element's own [CanvasElement.textArgs] value.
  */
 @Serializable
 data class CanvasBinding(
@@ -36,11 +40,12 @@ data class CanvasBinding(
     val value: String = "",
     val max: String = "",
     val text: String = "",
+    val textArgs: Map<String, String> = emptyMap(),
 ) {
     /** What is wrong with this binding, as messages naming the field; empty when nothing is. */
     fun problems(): List<String> = buildList {
         if (node.isBlank()) add("node must name a node")
-        if (value.isBlank() && text.isBlank()) add("needs a value or a text to show")
+        if (value.isBlank() && text.isBlank() && textArgs.isEmpty()) add("needs a value, a text or textArgs to show")
         listOf("value" to value, "max" to max).forEach { (name, path) ->
             if (path.isNotBlank() && path.toFloatOrNull() == null && !FIELD_PATH.matches(path)) {
                 add("$name \"$path\" must be component.field or a number")
@@ -51,6 +56,14 @@ data class CanvasBinding(
             if (spec.isNotEmpty() && NumberFormat.parse(spec) == null) {
                 add("text format \"$spec\" in ${placeholder.value} must be n, f or p and a digit, such as n0")
             }
+        }
+        addAll(textArgProblems())
+    }
+
+    private fun textArgProblems(): List<String> = buildList {
+        for ((name, path) in textArgs) {
+            if (name.isBlank()) add("textArgs needs a name for \"$path\"")
+            if (!FIELD_PATH.matches(path)) add("textArgs \"$name\" must be component.field, not \"$path\"")
         }
     }
 }

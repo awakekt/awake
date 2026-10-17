@@ -24,6 +24,9 @@ the `canvas_element` component saved with a scene and drawn by `SceneCanvas(worl
 - **`width` / `height`** in dp.
 - **`text`** (Text content, Button label), **`fontSize`**, **`color`** (text, or a Bar's fill) and
   **`background`**, as `#RRGGBB` or `#RRGGBBAA`.
+- **`textKey`**: a Text's or Button's words by key, looked up in the `Strings` passed as
+  `CanvasOverlay(strings = …)` in the active locale, with **`textArgs`** in its placeholders; a
+  locale switch shows on the next frame. Without strings, or for a key no table has, the key shows.
 - **`font`**: a project `.ttf` or `.otf` file, or a built-in family, `default` or `bitmap`; empty
   is the default Roboto. A host loads the file and passes it in `CanvasOverlay(fonts = …)`.
 - **`value`**: a Bar's fill from 0 to 1.

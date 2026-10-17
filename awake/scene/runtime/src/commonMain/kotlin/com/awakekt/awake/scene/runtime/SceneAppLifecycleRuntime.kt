@@ -16,6 +16,7 @@ import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.input.InputSnapshot
 import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.input.PointerCursor
+import com.awakekt.awake.core.localization.Strings
 import com.awakekt.awake.core.logging.Log
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.text.font.UiFont
@@ -125,6 +126,12 @@ class SceneAppLifecycleRuntime internal constructor(
 
     /** The loaded font files the scene's canvas elements name, by path; an element whose file is missing draws in the default font. */
     var canvasFonts: Map<String, UiFont> = emptyMap()
+
+    /**
+     * The text the scene's keyed canvas elements show, in its active locale: a played project's
+     * `strings/` tables. Null shows each element's key.
+     */
+    var canvasStrings: Strings? = null
 
     /** The scene canvas's UI scale: 2 draws every element, its text and its images at twice the size. */
     var canvasScale: Float = 1f
@@ -365,6 +372,7 @@ class SceneAppLifecycleRuntime internal constructor(
                         bindings = canvasBindings ?: globalBindings,
                         views = canvasViews(),
                         fonts = canvasFonts,
+                        strings = canvasStrings,
                     )
                 }
                 if (content != null) content()

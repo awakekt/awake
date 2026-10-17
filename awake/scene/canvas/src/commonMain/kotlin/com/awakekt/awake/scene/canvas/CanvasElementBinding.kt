@@ -45,6 +45,8 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         it.width = width
         it.height = height
         it.text = text
+        it.textKey = textKey
+        it.textArgs = textArgs
         it.fontSize = fontSize
         it.color = color
         it.background = background
@@ -88,6 +90,8 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         width = width,
         height = height,
         text = text,
+        textKey = textKey,
+        textArgs = textArgs,
         fontSize = fontSize,
         color = color,
         background = background,

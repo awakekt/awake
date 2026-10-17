@@ -25,6 +25,7 @@ kotlin {
             api(project(":awake:core:math"))
             api(project(":awake:core:text"))
             api(project(":awake:core:schema"))
+            api(project(":awake:core:localization"))
             api(libs.kotlinx.serialization.json)
             implementation(project(":awake:compose:foundation"))
             implementation(project(":awake:core:color"))

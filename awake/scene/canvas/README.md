@@ -43,6 +43,14 @@ scene saves them in and, for a loaded scene, the order its document lists them. 
 hierarchy can move siblings passes its own order as `SceneCanvas(world, siblingOrder = …)`; siblings
 it calls equal keep the world's order.
 
+## Text in the player's language
+
+An element with a `textKey` shows that key's text from the `Strings` passed as
+`SceneCanvas(world, strings = …)`, with its `textArgs` and its `bind`'s `textArgs`, which read
+fields the game sets, in its placeholders. `SceneAppLifecycleRuntime` passes its `canvasStrings`,
+which `runProject` sets to the project's `strings/` tables. `CanvasElementBinding` carries both
+fields to and from the scene file; a scene saved before them loads as literal text.
+
 ## A 3D view and following a node
 
 A `View` shows what the camera on the node its `camera` names sees; `SceneCanvas(world, views = …)`
