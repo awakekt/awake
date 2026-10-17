@@ -108,6 +108,17 @@ class SceneContent private constructor(internal val values: Map<SceneContentKey<
     operator fun <T : Any> get(key: SceneContentKey<T>): T? = values[key] as T?
 
     /**
+     * This content with what [other] holds laid over it: [other]'s value under each key it holds, and
+     * this content's under the rest. An editor lays what it holds itself, such as the documents being
+     * edited, over what [loadCoreSceneContent] read for a scene.
+     */
+    operator fun plus(other: SceneContent): SceneContent = when {
+        other.values.isEmpty() -> this
+        values.isEmpty() -> other
+        else -> SceneContent(values + other.values)
+    }
+
+    /**
      * Collects content while capabilities load it.
      *
      * @property hasRenderer Whether the host draws. A host with no renderer, such as a game server,
@@ -156,8 +167,26 @@ suspend fun loadSceneContent(
 ): SceneContent = loadContent(scene, files, installedCapabilities(capabilities), "The scene", SceneContent.Builder(emptyMap(), hasRenderer))
 
 /**
+ * Reads what Core's own capabilities need for [scene] from the project's [files]: every kind of
+ * [CoreSceneContent] the scene uses, such as its canvas images and fonts, collision meshes, particle
+ * sprites, audio clips and shader effects, and none of a game's capabilities'. [loadSceneContent] is
+ * this and a game's capabilities together.
+ *
+ * This is for a host that loads Core's content itself while a scene is edited, as an editor does,
+ * when its Play switches to another scene through a [SceneSwitch]: the editor loaded nothing for the
+ * scene switched to, and this reads all of it, including a `paged_terrain`'s, which has no public
+ * key, and any kind Core adds later. The editor lays what it holds itself over the result with
+ * [SceneContent.plus], and loads a game's capabilities on top with [loadCapabilityContent].
+ *
+ * Throws [IllegalArgumentException] for content a capability cannot load. [hasRenderer] is as for
+ * [loadSceneContent].
+ */
+suspend fun loadCoreSceneContent(scene: SceneDocument, files: AssetSource, hasRenderer: Boolean = true): SceneContent =
+    loadContent(scene, files, CORE_CAPABILITIES, "The scene", SceneContent.Builder(emptyMap(), hasRenderer))
+
+/**
  * [loaded] with what [capabilities] read for [scene] from the project's [files] added to it. Only their
- * own [SceneCapability.load] runs, none of Core's capabilities'.
+ * own [SceneCapability.load] runs, none of Core's capabilities': [loadCoreSceneContent] runs those.
  *
  * This is for a host that keeps Core's content loaded while a scene is edited, so that Play starts at
  * once, and loads a game's own capabilities when Play starts: an editor. It passes the result as

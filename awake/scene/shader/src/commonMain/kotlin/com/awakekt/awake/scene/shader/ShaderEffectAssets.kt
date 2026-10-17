@@ -29,14 +29,29 @@ import kotlinx.coroutines.CancellationException
  * @property documents Project path to the document compiled from it. A document that failed to load
  * or compile is absent, and its effects are not drawn.
  * @property textures Project path to the image decoded from it. An image that failed is absent.
+ * @property failed The documents that were read and could not be loaded or compiled, by project path,
+ * as [loadShaderEffects] records them. A path in neither [documents] nor here has not been loaded
+ * yet: a host that loads documents as they are opened, such as an editor, may still give the system
+ * one, so [ShaderEffectSystem] reports its effects as not drawn yet rather than as failed.
  */
 class ShaderEffectAssets(
     val documents: Map<String, CompiledShaderDocument> = emptyMap(),
     val textures: Map<String, TextureAsset> = emptyMap(),
+    val failed: Set<String> = emptySet(),
 ) {
     /** The images [effect] names, by the texture name its document declares, from [textures]. */
     fun texturesOf(effect: SceneShaderEffect): Map<String, TextureAsset> = buildMap {
         effect.textures.forEach { (name, path) -> textures[path]?.let { put(name, it) } }
+    }
+
+    /**
+     * These assets with [other]'s over them: each document and image [other] has in place of this
+     * one's, as an editor lays the documents it is editing over those read for a scene. A document
+     * either failed is [failed] only while neither has it.
+     */
+    operator fun plus(other: ShaderEffectAssets): ShaderEffectAssets {
+        val merged = documents + other.documents
+        return ShaderEffectAssets(merged, textures + other.textures, (failed + other.failed) - merged.keys)
     }
 
     /** The assets of a scene that has no effects. */
@@ -61,6 +76,7 @@ class ShaderEffectAssets(
 suspend fun loadShaderEffects(document: SceneDocument, assets: AssetSource): ShaderEffectAssets {
     val effects = document.nodes.flatMap { it.shaderEffects("") }
     if (effects.isEmpty()) return ShaderEffectAssets.Empty
+    val failed = HashSet<String>()
     val documents = buildMap {
         for (path in effects.map { it.effect.shader }.distinct()) {
             try {
@@ -68,8 +84,10 @@ suspend fun loadShaderEffects(document: SceneDocument, assets: AssetSource): Sha
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (rejected: ShaderDocumentException) {
+                failed += path
                 log.error { "Shader document '$path' was rejected; its effects are not drawn.\n${rejected.message}" }
             } catch (failure: Exception) {
+                failed += path
                 log.error { "Shader document '$path' could not be read: ${failure.message}; its effects are not drawn." }
             }
         }
@@ -86,7 +104,7 @@ suspend fun loadShaderEffects(document: SceneDocument, assets: AssetSource): Sha
             }
         }
     }
-    val loaded = ShaderEffectAssets(documents, textures)
+    val loaded = ShaderEffectAssets(documents, textures, failed)
     for ((node, effect) in effects) {
         val compiled = documents[effect.shader] ?: continue
         shaderEffectProblems(effect, compiled, loaded).forEach { problem ->
