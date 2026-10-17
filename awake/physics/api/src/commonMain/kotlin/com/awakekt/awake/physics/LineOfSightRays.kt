@@ -109,7 +109,7 @@ class LineOfSightRays<K : Any>(
      * Whether something solid stands on the straight line from [from] to [to], for [key]: its
      * answer from an earlier frame while that still stands or the frame's rays are spent, or a ray
      * cast now. A body the ray reaches at [to] or past it, or that is the key's [ownBody], hides
-     * nothing.
+     * nothing; nor does one [from] is inside, which a ray cannot see past.
      */
     fun blocked(key: K, from: Vec3f, to: Vec3f): Boolean {
         val sight = sights.getOrPut(key) { Sight(blocked = false, castFrame = NEVER, askedFrame = frame) }
@@ -141,8 +141,11 @@ class LineOfSightRays<K : Any>(
         val dz = to.z - from.z
         val length = sqrt(dx * dx + dy * dy + dz * dz)
         val hit = if (length < MIN_LENGTH) null else physics.raycast(from, Vec3f(dx / length, dy / length, dz / length), length, onlyLayer)
-        // A surface right at the point, such as the wall a marker is set on, does not hide it.
-        return hit != null && hit.distance < length - ARRIVAL && !ownBody(key, hit.handle)
+        // A surface right at the point, such as the wall a marker is set on, does not hide it. A hit
+        // right at the start is a body [from] is inside, such as a camera pushed into a wall or a
+        // first-person eye in its own capsule: a solid ray reports it and nothing past it, so it
+        // tells nothing about the line, and hiding every key behind it is the worse mistake.
+        return hit != null && hit.distance > ARRIVAL && hit.distance < length - ARRIVAL && !ownBody(key, hit.handle)
     }
 
     /** The defaults. */

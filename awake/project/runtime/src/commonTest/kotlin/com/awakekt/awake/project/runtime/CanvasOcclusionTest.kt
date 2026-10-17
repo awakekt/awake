@@ -75,6 +75,15 @@ class CanvasOcclusionTest {
     }
 
     @Test
+    fun aCameraInsideAWallHidesNothing() = runTest {
+        play(SCENE) { world, _ ->
+            val occlusion = assertNotNull(world.canvasOcclusion())
+            val inWall = Vec3f(5f, 1f, 0f)
+            assertFalse(occlusion.occluded(world.node("Hidden"), inWall, 10f, 1f, 0f), "a ray from inside the wall cannot tell, so the label shows")
+        }
+    }
+
+    @Test
     fun theFollowedNodesOwnBodyHidesNothing() = runTest {
         play(SCENE) { world, system ->
             val occlusion = assertNotNull(world.canvasOcclusion())

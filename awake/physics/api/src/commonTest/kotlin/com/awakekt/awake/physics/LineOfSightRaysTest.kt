@@ -59,6 +59,13 @@ class LineOfSightRaysTest {
     }
 
     @Test
+    fun anEyeInsideABodyHidesNothing() {
+        val rays = LineOfSightRays<String>(Wall())
+        rays.nextFrame()
+        assertFalse(rays.blocked("a", Vec3f(5f, 1f, 0f), behindWall), "a ray that starts in the wall cannot see past it, so it hides nothing")
+    }
+
+    @Test
     fun anAnswerIsReusedForItsFramesBeforeItIsCastAgain() {
         val wall = Wall()
         val rays = LineOfSightRays<String>(wall, reuseFrames = 3)

@@ -409,7 +409,8 @@ created or destroyed while it plays.
 A follower whose `followRules.occlusion` is `true` hides while a physics body stands between the
 camera and the point it follows: a name plate behind a wall. A played project answers it with
 physics rays, so the scene needs a physics world; the body of the node the follower follows, of a
-node above it or under it, or its character's own body hides nothing. Each followed node is cast
+node above it or under it, or its character's own body hides nothing; nor does a body the camera is
+inside, such as a wall it was pushed into, which a ray cannot see past. Each followed node is cast
 for at most once every few frames, and no more than a budget of rays a frame across all of them:
 those that waited longest go first, and the rest keep their last answer. A follower is asked only
 while it is on screen and near enough.
