@@ -89,6 +89,8 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         element.joystick = joystick
         element.button = button
         element.enabled = enabled
+        element.look = look
+        element.cluster = cluster
     }
 
     /**
@@ -140,5 +142,7 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         joystick = joystick,
         button = button,
         enabled = enabled,
+        look = look,
+        cluster = cluster,
     )
 }
