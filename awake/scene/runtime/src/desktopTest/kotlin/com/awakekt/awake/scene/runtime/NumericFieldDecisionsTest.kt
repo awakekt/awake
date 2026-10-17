@@ -19,6 +19,10 @@ import kotlin.test.assertTrue
  * `undecided` is a ledger that only shrinks: a line that no longer applies fails too, so deciding a
  * field means deleting its line. The decisions live in
  * `numeric-field-decisions.txt`.
+ *
+ * A `free` path may hold `*`, any run of characters, for one decision that holds wherever the same
+ * type nests, such as a style's shadow offset in every slot of a control skin. It must match at least
+ * one numeric property, and none it matches may be constrained.
  */
 class NumericFieldDecisionsTest {
     private class Field(val path: String, val schema: PropertySchema) {
@@ -52,9 +56,16 @@ class NumericFieldDecisionsTest {
         }
     }
 
+    /** Each `free` path as a pattern: `*` is any run of characters, the rest is literal. */
+    private val freePatterns: Map<String, Regex> by lazy {
+        free.keys.associateWith { path -> Regex(path.split('*').joinToString(".*") { Regex.escape(it) }) }
+    }
+
+    private fun isFree(path: String): Boolean = path in free || freePatterns.values.any { it.matches(path) }
+
     @Test
     fun everyNumericPropertyHasADecision() {
-        val missing = numericFields().filter { !it.constrained && it.path !in free && it.path !in undecided }.map { it.path }
+        val missing = numericFields().filter { !it.constrained && !isFree(it.path) && it.path !in undecided }.map { it.path }
 
         assertTrue(
             missing.isEmpty(),
@@ -69,7 +80,7 @@ class NumericFieldDecisionsTest {
         val fields = numericFields().associateBy { it.path }
         val stale = undecided.filter { path ->
             val field = fields[path]
-            field == null || field.constrained || path in free
+            field == null || field.constrained || isFree(path)
         }
 
         assertTrue(stale.isEmpty(), "Delete these `undecided` lines: they are decided now, or the property is gone:\n${stale.joinToString("\n")}")
@@ -79,10 +90,12 @@ class NumericFieldDecisionsTest {
     fun aFreePropertyExistsHasAReasonAndIsNotAlsoConstrained() {
         val fields = numericFields().associateBy { it.path }
         val problems = free.flatMap { (path, reason) ->
+            val pattern = freePatterns.getValue(path)
+            val matched = fields.values.filter { pattern.matches(it.path) }
             buildList {
-                if (path !in fields) add("$path: no such numeric property")
+                if (matched.isEmpty()) add("$path: no such numeric property")
                 if (reason.isBlank()) add("$path: a free property needs a reason after `|`")
-                if (fields[path]?.constrained == true) add("$path: it has a @PropertyRange, so it is not free")
+                if (matched.any { it.constrained }) add("$path: it has a @PropertyRange, so it is not free")
             }
         }
 

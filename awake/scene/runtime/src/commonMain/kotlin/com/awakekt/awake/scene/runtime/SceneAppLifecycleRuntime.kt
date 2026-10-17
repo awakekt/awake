@@ -61,6 +61,7 @@ import com.awakekt.awake.scene.runtime.session.SceneSession
 import com.awakekt.awake.scene.scene2d.SpriteClipSystem
 import com.awakekt.awake.ui.canvas.CanvasElement
 import com.awakekt.awake.ui.canvas.CanvasInsets
+import com.awakekt.awake.ui.canvas.CanvasSlotContent
 import kotlin.math.roundToInt
 import kotlin.time.TimeSource
 
@@ -128,6 +129,12 @@ class SceneAppLifecycleRuntime internal constructor(
      * [lastInputDevice].
      */
     var showTouchControls: Boolean = false
+
+    /**
+     * The composables the scene's controls' custom slots name, by name: a game's own drawing of a
+     * knob, a sweep or a badge, given the control's live state.
+     */
+    var canvasSlotContent: Map<String, CanvasSlotContent> = emptyMap()
 
     /** Which device the player last used, read from each frame's input; null until any is used. */
     val lastInputDevice: InputDevice? get() = inputDevices.last
@@ -420,6 +427,7 @@ class SceneAppLifecycleRuntime internal constructor(
                         safeArea = canvasSafeArea ?: platformSafeArea,
                         dpi = canvasDpi ?: platformDpi,
                         inputDevice = inputDevices.last,
+                        slotContent = canvasSlotContent,
                     )
                 }
                 if (content != null) content()

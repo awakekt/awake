@@ -179,6 +179,13 @@ An element's `cluster`, a `CanvasCluster`, places its children as a button clust
 `layout`: the first on a pivot and the rest `radius` dp around it, from `startAngle` and `spacing`
 degrees apart, clockwise from the right. Keep the element big enough to hold the arc.
 
+Every visual part of a control is a slot (`CanvasSlot`): a style, images (single, nine-slice, atlas,
+per state, or `frames`), or `custom` content from `CanvasOverlay(slotContent = ...)` given a
+`CanvasSlotInfo`. Each `CanvasControlState` may change a slot, faded over its `transitionSeconds`. A
+`CanvasControlTheme` on `CanvasControls.theme` fills every control's slots from a `CanvasThemePreset`
+and `@name` colour and image tokens, an element's own `skin` over it. `CanvasControls.playerLayout`
+(`CanvasPlayerLayout`) scales, moves and fades controls by their `controlId`, saved as JSON.
+
 `CanvasOverlay(controls = CanvasControls(...), inputDevice = ...)` shows touch-only elements by
 `touchVisibility`: `Auto` follows the `InputDevice` the host last saw, from core:input's
 `InputDeviceTracker`, so touch controls show after a touch and hide after a controller, a key or the

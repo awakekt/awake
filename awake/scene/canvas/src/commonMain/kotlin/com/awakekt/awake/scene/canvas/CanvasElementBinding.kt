@@ -91,6 +91,8 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         element.enabled = enabled
         element.look = look
         element.cluster = cluster
+        element.skin = skin
+        element.controlId = controlId
     }
 
     /**
@@ -144,5 +146,7 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         enabled = enabled,
         look = look,
         cluster = cluster,
+        skin = skin,
+        controlId = controlId,
     )
 }

@@ -8,8 +8,11 @@
 package com.awakekt.awake.ui.canvas
 
 import com.awakekt.awake.compose.foundation.layout.Box
+import com.awakekt.awake.compose.foundation.layout.offset
+import com.awakekt.awake.compose.foundation.layout.size
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.current
+import com.awakekt.awake.compose.runtime.key
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.ModifierNodeElement
 import com.awakekt.awake.compose.ui.input.pointer.PointerEvent
@@ -17,6 +20,7 @@ import com.awakekt.awake.compose.ui.input.pointer.PointerEventPass
 import com.awakekt.awake.compose.ui.input.pointer.PointerEventType
 import com.awakekt.awake.compose.ui.node.PointerInputNode
 import com.awakekt.awake.compose.ui.platform.LocalDensity
+import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.math2d.Vec2
 import com.awakekt.awake.core.schema.PropertyRange
 import kotlinx.serialization.Serializable
@@ -68,8 +72,12 @@ data class CanvasLook(
 /** A LookArea's live state: the thumbs on it, where each is in dp, and the look and zoom not yet read. */
 internal class CanvasLookState {
     private val ids = LongArray(2)
-    private val xs = FloatArray(2)
-    private val ys = FloatArray(2)
+
+    /** Where each of the first [count] thumbs is across the area, in dp from its left. */
+    val xs = FloatArray(2)
+
+    /** Where each of the first [count] thumbs is down the area, in dp from its top. */
+    val ys = FloatArray(2)
     var count = 0
         private set
 
@@ -180,5 +188,19 @@ private class LookInputNode(var element: CanvasElement, var density: Float) :
 /** A LookArea: its style, with up to two thumbs feeding its look and zoom, and its children over it. */
 context(_: Composer)
 internal fun LookAreaView(element: CanvasElement, styled: Modifier, tree: CanvasTree, children: List<CanvasItem>) {
-    Box(styled.lookInput(element, LocalDensity.current)) { Children(element, children, tree) }
+    val feedback = tree.skinOf(element)?.look?.feedback
+    Box(styled.lookInput(element, LocalDensity.current)) {
+        if (feedback != null) {
+            val state = element.controlState()
+            val size = feedback.size ?: FEEDBACK_SIZE
+            val thumbs = element.lookState
+            for (index in 0 until thumbs.count) {
+                val at = Modifier.offset((thumbs.xs[index] - size / 2f).dp, (thumbs.ys[index] - size / 2f).dp).size(size.dp)
+                key(index) { Slot(element, CanvasSlots.LOOK_FEEDBACK, feedback, state, at, tree.images, round = true) }
+            }
+        }
+        Children(element, children, tree)
+    }
 }
+
+private const val FEEDBACK_SIZE = 56f

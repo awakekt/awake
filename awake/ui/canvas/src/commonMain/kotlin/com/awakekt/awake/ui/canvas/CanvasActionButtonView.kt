@@ -10,7 +10,10 @@ package com.awakekt.awake.ui.canvas
 import com.awakekt.awake.compose.foundation.background
 import com.awakekt.awake.compose.foundation.clickable
 import com.awakekt.awake.compose.foundation.layout.Box
+import com.awakekt.awake.compose.foundation.layout.BoxScope
+import com.awakekt.awake.compose.foundation.layout.fillMaxSize
 import com.awakekt.awake.compose.foundation.layout.padding
+import com.awakekt.awake.compose.foundation.layout.size
 import com.awakekt.awake.compose.foundation.text.Text
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.current
@@ -31,19 +34,56 @@ import com.awakekt.awake.core.text.theme.TextStyle
 context(_: Composer)
 private fun ActionButtonView(element: CanvasElement, styled: Modifier, textStyle: TextStyle, tree: CanvasTree, children: List<CanvasItem>) {
     element.buttonPress.tick(element.button ?: CanvasButton.Default)
-    Box(styled.buttonInput(element, LocalDensity.current, tree.touchMarginPx(element, LocalDensity.current)), contentAlignment = (element.textAlign ?: CanvasAnchor.Center).alignment) {
-        Text(tree.textOf(element), style = textStyle)
-        if (element.cooldown > 0f) SweepFill(element.cooldown, COOLDOWN_SHADE, null)
-        if (element.charges >= 0) {
-            Box(
-                Modifier.align(Alignment.TopEnd).background(BADGE_BACK, RoundedCornerShape(BADGE_CORNER.dp))
-                    .padding(horizontal = BADGE_PADDING.dp).testTag("canvas-charges"),
-            ) {
-                Text(element.charges.toString(), style = textStyle)
-            }
+    val density = LocalDensity.current
+    val skin = tree.skinOf(element)?.button
+    val state = element.controlState()
+    val words = skin?.label?.let { label -> labelStyle(element, label, state, tree, textStyle) } ?: textStyle
+    Box(styled.buttonInput(element, density, tree.touchMarginPx(element, density)), contentAlignment = (element.textAlign ?: CanvasAnchor.Center).alignment) {
+        skin?.background?.let { Slot(element, CanvasSlots.BUTTON_BACKGROUND, it, state, Modifier.fillMaxSize(), tree.images) }
+        skin?.icon?.let { icon ->
+            val size = icon.size ?: (minOf(element.width, element.height) * ICON_SHARE)
+            Slot(element, CanvasSlots.BUTTON_ICON, icon, state, Modifier.align(Alignment.Center).size(size.dp), tree.images)
         }
+        if (skin?.label?.overrideFor(state)?.hidden ?: skin?.label?.hidden != true) Text(tree.textOf(element), style = words)
+        if (element.cooldown > 0f) Sweep(element, skin?.cooldown, state, tree)
+        if (element.charges >= 0) Badge(element, skin?.charges, state, tree, textStyle)
         Children(element, children, tree)
     }
+}
+
+/** The cooldown sweep: the slot's custom content or its colour and image cut to the sweep, or a plain shade. */
+context(_: Composer)
+private fun BoxScope.Sweep(element: CanvasElement, slot: CanvasSlot?, state: CanvasControlState, tree: CanvasTree) {
+    if (slot != null && slot.custom.isNotEmpty()) {
+        Slot(element, CanvasSlots.BUTTON_COOLDOWN, slot, state, Modifier.fillMaxSize(), tree.images)
+        return
+    }
+    val style = slot?.overrideFor(state)?.style?.over(slot.style) ?: slot?.style
+    SweepFill(element.cooldown, colorOf(style?.background, COOLDOWN_SHADE), style?.image?.fill(tree.images))
+}
+
+/** The charges left, in the slot's badge at the top-right corner, or a plain dark one. */
+context(_: Composer)
+private fun BoxScope.Badge(element: CanvasElement, slot: CanvasSlot?, state: CanvasControlState, tree: CanvasTree, textStyle: TextStyle) {
+    val count = element.charges.toString()
+    if (slot == null) {
+        Box(
+            Modifier.align(Alignment.TopEnd).background(BADGE_BACK, RoundedCornerShape(BADGE_CORNER.dp))
+                .padding(horizontal = BADGE_PADDING.dp).testTag("canvas-charges"),
+        ) { Text(count, style = textStyle) }
+        return
+    }
+    val placed = Modifier.align(Alignment.TopEnd).testTag("canvas-charges").let { if (slot.size != null) it.size(slot.size.dp) else it }
+    val words = labelStyle(element, slot, state, tree, textStyle)
+    Slot(element, CanvasSlots.BUTTON_CHARGES, slot, state, placed, tree.images) {
+        Text(count, Modifier.padding(horizontal = BADGE_PADDING.dp), style = words)
+    }
+}
+
+/** [textStyle] in the colour [slot]'s style, in [state], gives its text; [textStyle] itself when it gives none. */
+private fun labelStyle(element: CanvasElement, slot: CanvasSlot, state: CanvasControlState, tree: CanvasTree, textStyle: TextStyle): TextStyle {
+    val color = (slot.overrideFor(state)?.style?.textColor ?: slot.style?.textColor) ?: return textStyle
+    return element.textStyle(colorOf(color, Color.White), tree.fontOf(element))
 }
 
 /** A Button: an action button when it has [CanvasElement.button] settings, and a plain one otherwise. */
@@ -82,3 +122,4 @@ private val COOLDOWN_SHADE = Color(0f, 0f, 0f, 0.6f)
 private val BADGE_BACK = Color(0f, 0f, 0f, 0.7f)
 private const val BADGE_CORNER = 8f
 private const val BADGE_PADDING = 4f
+private const val ICON_SHARE = 0.6f

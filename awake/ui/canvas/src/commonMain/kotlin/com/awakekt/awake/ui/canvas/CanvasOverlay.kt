@@ -101,6 +101,8 @@ context(_: Composer)
  *   control is to a thumb. Null shows them as [showTouchControls] says.
  * @param inputDevice The device the player last used, for [CanvasTouchVisibility.Auto]: touch
  *   controls show after a touch and hide after a controller, a key or the mouse. Null until any is used.
+ * @param slotContent The composables a control's [CanvasSlot.custom] names, by name, each given the
+ *   control's live state; a slot naming one that is missing draws its style instead.
  */
 fun CanvasOverlay(
     items: List<CanvasItem>,
@@ -117,6 +119,7 @@ fun CanvasOverlay(
     dpi: Float = 0f,
     controls: CanvasControls? = null,
     inputDevice: InputDevice? = null,
+    slotContent: Map<String, CanvasSlotContent> = emptyMap(),
 ) {
     val origin = remember { CanvasOrigin() }
     val settings = controls ?: CanvasControls.Default
@@ -129,7 +132,9 @@ fun CanvasOverlay(
         val width = if (constraints.hasBoundedWidth) constraints.maxWidth / density else 0f
         val height = if (constraints.hasBoundedHeight) constraints.maxHeight / density else 0f
         val drawnScale = scaler?.scaleFor(width, height, density, if (dpi > 0f) dpi else density * CanvasScaler.DP_PER_INCH) ?: scale
-        ScaledCanvas(tree, origin, drawnScale, safeArea, width, height, followLimits)
+        CompositionLocalProvider(LocalCanvasSlotContent provides slotContent) {
+            ScaledCanvas(tree, origin, drawnScale, safeArea, width, height, followLimits)
+        }
     }
 }
 
@@ -242,14 +247,7 @@ private fun BoxScope.Elements(
             // An arrow is drawn only while what it sits in is held to the edge.
             element.followArrow && owner != null -> if (owner.pinned) key(element) { PinArrow(element, owner, tag, tree) }
             element.follow.isNotEmpty() -> tree.followerPlans[element]?.let { plan -> key(element) { Follower(element, plan, tag, tree) } }
-            else -> key(element) {
-                // The inset wraps the element rather than sitting in its modifier chain, so the
-                // element's own bounds (hit area, editor picking) are exactly its size.
-                val inside = if (element.safeArea) safeArea else CanvasInsets.None
-                Box(Modifier.align(element.anchor.alignment).anchorInset(element.anchor, element.offsetX, element.offsetY, inside)) {
-                    CanvasElementView(element, Modifier.size(element.width.dp, element.height.dp).testTag(tag), tree, tree.childrenOf(element))
-                }
-            }
+            else -> key(element) { AnchoredElement(element, tag, tree, safeArea) }
         }
     }
 }
@@ -391,41 +389,6 @@ internal fun SweepFill(value: Float, color: Color, picture: ImageFill?) {
 
 /** 12 o'clock, in `arcTo`'s degrees clockwise from the positive X axis. */
 private const val SWEEP_START_DEGREES = 270f
-
-/**
- * A round pad whose knob follows the pointer holding it, up to the pad's reach, and what its
- * [CanvasElement.joystick] settings make of that: where the pad sits, and how it fades while idle.
- * The element's box is where a thumb may land; the pad and knob are drawn inside it.
- */
-context(_: Composer)
-private fun JoystickView(
-    element: CanvasElement,
-    modifier: Modifier,
-    back: Color,
-    tree: CanvasTree,
-    children: List<CanvasItem>,
-) {
-    val density = LocalDensity.current
-    val settings = element.joystick ?: CanvasJoystick.Default
-    val stick = element.stick
-    val width = element.width
-    val height = element.height
-    val reach = settings.radiusIn(width, height)
-    val centerX = stick.padCenterX(width, height, settings)
-    val centerY = stick.padCenterY(width, height, settings)
-    val alpha = stick.alpha(settings)
-    Box(modifier.stickInput(element, density, tree.touchMarginPx(element, density)).let { if (alpha < 1f) it.alpha(alpha) else it }) {
-        Box(Modifier.offset((centerX - reach).dp, (centerY - reach).dp).size((reach * 2f).dp).clip(CircleShape).background(back))
-        val knob = reach * 2f * KNOB_FRACTION
-        Box(
-            Modifier.offset((centerX + stick.knobX - knob / 2f).dp, (centerY + stick.knobY - knob / 2f).dp)
-                .size(knob.dp).clip(CircleShape).background(colorOf(element.color, Color.White)),
-        )
-        Children(element, children, tree)
-    }
-}
-
-private const val KNOB_FRACTION = 0.45f
 
 /**
  * Moves an element, or a cancel zone, ([x], [y]) dp from its [anchor] with padding around it, not
