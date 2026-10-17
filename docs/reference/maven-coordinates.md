@@ -70,7 +70,7 @@ Vulkan modules. Core `v*` releases and main snapshots do not publish or change t
 
 | Coordinate | Gradle module | Release family | Direct main-source project dependencies |
 |---|---|---|---|
-| `com.awakekt.awake:ai` | `:awake:ai` | `core` | `api` → `:awake:ecs` |
+| `com.awakekt.awake:ai` | `:awake:ai` | `core` | `api` → `:awake:ecs`; `api` → `:awake:core:math`; `api` → `:awake:core:schema`; `api` → `:awake:node-graph` |
 | `com.awakekt.awake.ai:behavior` | `:awake:ai:behavior` | `core` | `api` → `:awake:ai`; `api` → `:awake:core:math`; `api` → `:awake:ecs`; `api` → `:awake:navigation` |
 | `com.awakekt.awake:blueprint` | `:awake:blueprint` | `core` | `api` → `:awake:node-graph`; `api` → `:awake:ecs` |
 | `com.awakekt.awake:bom` | `:awake:bom` | `core` | — (constraints only) |
@@ -99,6 +99,7 @@ Vulkan modules. Core `v*` releases and main snapshots do not publish or change t
 | `com.awakekt.awake.core:color` | `:awake:core:color` | `core` | — |
 | `com.awakekt.awake.core:config` | `:awake:core:config` | `core` | — |
 | `com.awakekt.awake.core:di` | `:awake:core:di` | `core` | — |
+| `com.awakekt.awake.core:expression` | `:awake:core:expression` | `core` | — |
 | `com.awakekt.awake.core:geometry` | `:awake:core:geometry` | `core` | `api` → `:awake:core:math` |
 | `com.awakekt.awake.core:graphics2d` | `:awake:core:graphics2d` | `core` | `api` → `:awake:core:math2d`; `api` → `:awake:core:color`; `api` → `:awake:core:geometry` |
 | `com.awakekt.awake.core:host` | `:awake:core:host` | `core` | — |

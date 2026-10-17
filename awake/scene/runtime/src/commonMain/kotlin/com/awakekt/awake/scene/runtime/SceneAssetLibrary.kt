@@ -93,6 +93,9 @@ class SceneAssetLibrary(
     private val awaitedTextures = mutableSetOf<String>()
     private val failedTextures = mutableSetOf<String>()
 
+    // What the frame uploaded from [texture], told to let go of a texture when it is forgotten.
+    private val textureUploads = mutableListOf<SceneTextureUploads>()
+
     /**
      * Supplies decoded image data registered under [name]; the sprite render batch caches and owns its
      * GPU material. Throws when none is registered. Drawing asks [texture] instead, which also asks the
@@ -132,6 +135,42 @@ class SceneAssetLibrary(
                 null
             }
         }
+    }
+
+    /**
+     * Forgets the texture [name], so it is loaded again: what a host calls when its file changed on
+     * disk, or failed and has since been fixed. The scene's sprites and tilemaps destroy what they
+     * uploaded from it, every resolver drops what it kept of it (see [SceneAssetResolver.forgetTexture]),
+     * and the next frame that draws it asks [texture] again: a registered factory is called again, and
+     * [AssetSourceTextureResolver] reads the file again. Until the new pixels arrive, what uses it is not
+     * drawn, and a texture that is still missing or failing is logged again, once.
+     *
+     * Call it on the frame thread, between frames, as a system does. Forgetting a texture nothing has
+     * drawn does nothing.
+     *
+     * @param name The texture's name, as the `sprite` or `tilemap` gives it.
+     */
+    fun forgetTexture(name: String) {
+        awaitedTextures.remove(name)
+        failedTextures.remove(name)
+        dynamicResolvers.forEach { it.forgetTexture(name) }
+        textureUploads.forEach { it.forgetTexture(name) }
+    }
+
+    /**
+     * [forgetTexture] for every texture: what a host calls when its resolvers now read other files,
+     * such as another project's, or when a game reloads its content.
+     */
+    fun forgetTextures() {
+        awaitedTextures.clear()
+        failedTextures.clear()
+        dynamicResolvers.forEach { it.forgetTextures() }
+        textureUploads.forEach { it.forgetTextures() }
+    }
+
+    /** Has [uploads] let go of what it made from a texture each time [forgetTexture] or [forgetTextures] forgets it. */
+    internal fun addTextureUploads(uploads: SceneTextureUploads) {
+        textureUploads += uploads
     }
 
     /** Builds [name] on first use and takes a reference to it; see [releaseMesh]. */
@@ -325,6 +364,15 @@ class SceneAssetLibrary(
         materialHolders.clear()
         resolvedRequests.clear()
     }
+}
+
+/** What the frame made on the GPU from the textures [SceneAssetLibrary.texture] gave it, by name. */
+internal interface SceneTextureUploads {
+    /** Destroys what was made from the texture [name], so the next frame asks for it again. */
+    fun forgetTexture(name: String)
+
+    /** [forgetTexture] for every texture. */
+    fun forgetTextures()
 }
 
 private val log = Logger("scene-assets")

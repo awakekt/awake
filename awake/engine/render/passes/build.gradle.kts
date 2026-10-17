@@ -45,6 +45,8 @@ kotlin {
             implementation(project(":awake:core:graphics2d"))
             implementation(project(":awake:core:math2d"))
             implementation(project(":awake:core:color"))
+            // A sprite sheet or tile atlas that does not divide into its cells is logged, not thrown.
+            implementation(project(":awake:core:logging"))
             // api, not implementation: the shared render-feature classes this module will hold
             // take contract types (DrawCall, VertexFormat, Material) in their own public
             // signatures, so both backends need them visible transitively.

@@ -14,6 +14,7 @@ import com.awakekt.awake.compose.foundation.gestures.onWheel
 import com.awakekt.awake.compose.foundation.hoverable
 import com.awakekt.awake.compose.foundation.layout.Box
 import com.awakekt.awake.compose.foundation.layout.BoxScope
+import com.awakekt.awake.compose.foundation.layout.BoxWithConstraints
 import com.awakekt.awake.compose.foundation.layout.FlexBox
 import com.awakekt.awake.compose.foundation.layout.fillMaxHeight
 import com.awakekt.awake.compose.foundation.layout.fillMaxSize
@@ -82,6 +83,14 @@ context(_: Composer)
  * @param strings The text a [CanvasElement.textKey] names, in the active locale; the frame after
  *   [Strings.setLocale] switches, keyed elements show the new locale's text. Without it, a keyed
  *   element shows its key.
+ * @param safeArea What covers the edges of the canvas's box, in dp at the host's density: a notch,
+ *   rounded corners, a home indicator, overscan. An anchored element on the canvas itself sits
+ *   inside it, its anchor and offsets measured from the safe area's edges and centre, unless its
+ *   [CanvasElement.safeArea] is false. An element inside another, and one that follows a node, is
+ *   placed as before.
+ * @param scaler Works the scale out from the box's size each frame, in place of [scale]: by a
+ *   reference resolution, a constant pixel size or a constant physical size, within limits and
+ *   times a player's multiplier. Null draws at [scale].
  */
 fun CanvasOverlay(
     items: List<CanvasItem>,
@@ -92,22 +101,41 @@ fun CanvasOverlay(
     resolver: CanvasResolver = CanvasResolver.None,
     fonts: Map<String, UiFont> = emptyMap(),
     strings: Strings? = null,
+    safeArea: CanvasInsets = CanvasInsets.None,
+    scaler: CanvasScaler? = null,
 ) {
     val origin = remember { CanvasOrigin() }
     val tree = CanvasTree(items, showTouchControls, images, resolver, origin, fonts, strings)
-    val uiScale = if (scale > 0f && scale.isFinite()) scale else 1f
     Box(modifier.fillMaxSize()) {
-        // The box the elements are placed in, inside any padding the host's modifier adds: where it
-        // sits in the frame is what a follower's projected point is moved by.
-        Box(Modifier.fillMaxSize().onPlaced { x, y, _, _ -> origin.place(x, y) }) {
-            val screen = this
-            // A denser dp scales every size, offset, font and image corner beneath it in one place. The
-            // host's text style is not the scene's: an element's text looks only as its own data says.
-            CompositionLocalProvider(LocalDensity provides LocalDensity.current * uiScale, LocalTextStyle provides TextStyle.Default) {
-                screen.Elements(tree.roots, tree)
-                // Drawn last, so a dragged element's ghost sits above everything it is dragged over.
-                Ghosts(tree)
+        if (scaler == null) {
+            ScaledCanvas(tree, origin, scale, safeArea)
+        } else {
+            // Measured before its content is composed, so the scale fits the box from the first frame.
+            BoxWithConstraints(Modifier.fillMaxSize()) {
+                val density = LocalDensity.current
+                val width = if (constraints.hasBoundedWidth) constraints.maxWidth / density else 0f
+                val height = if (constraints.hasBoundedHeight) constraints.maxHeight / density else 0f
+                ScaledCanvas(tree, origin, scaler.scaleFor(width, height, density), safeArea)
             }
+        }
+    }
+}
+
+/** [tree]'s elements in a box filling this one, drawn at [scale], with anchored roots kept inside [safeArea]. */
+context(_: Composer)
+private fun ScaledCanvas(tree: CanvasTree, origin: CanvasOrigin, scale: Float, safeArea: CanvasInsets) {
+    val uiScale = if (scale > 0f && scale.isFinite()) scale else 1f
+    // The box the elements are placed in, inside any padding the host's modifier adds: where it
+    // sits in the frame is what a follower's projected point is moved by.
+    Box(Modifier.fillMaxSize().onPlaced { x, y, _, _ -> origin.place(x, y) }) {
+        val screen = this
+        // A denser dp scales every size, offset, font and image corner beneath it in one place. The
+        // host's text style is not the scene's: an element's text looks only as its own data says.
+        CompositionLocalProvider(LocalDensity provides LocalDensity.current * uiScale, LocalTextStyle provides TextStyle.Default) {
+            // The insets are the host's dp; under the scaled density they shrink by the scale.
+            screen.Elements(tree.roots, tree, safeArea.scaledBy(1f / uiScale))
+            // Drawn last, so a dragged element's ghost sits above everything it is dragged over.
+            Ghosts(tree)
         }
     }
 }
@@ -156,9 +184,12 @@ internal fun BoxScope.Children(element: CanvasElement, children: List<CanvasItem
     }
 }
 
-/** Places [entries] in this box, each against its anchor, and their children inside them. */
+/**
+ * Places [entries] in this box, each against its anchor, and their children inside them; an anchored
+ * entry whose [CanvasElement.safeArea] is true is placed inside [safeArea].
+ */
 context(_: Composer)
-private fun BoxScope.Elements(entries: List<CanvasItem>, tree: CanvasTree) {
+private fun BoxScope.Elements(entries: List<CanvasItem>, tree: CanvasTree, safeArea: CanvasInsets = CanvasInsets.None) {
     for (item in entries) {
         val element = item.element
         if (!tree.shows(element)) continue
@@ -167,7 +198,8 @@ private fun BoxScope.Elements(entries: List<CanvasItem>, tree: CanvasTree) {
             if (element.follow.isEmpty()) {
                 // The inset wraps the element rather than sitting in its modifier chain, so the
                 // element's own bounds (hit area, editor picking) are exactly its size.
-                Box(Modifier.align(element.anchor.alignment).anchorInset(element)) {
+                val inside = if (element.safeArea) safeArea else CanvasInsets.None
+                Box(Modifier.align(element.anchor.alignment).anchorInset(element, inside)) {
                     CanvasElementView(element, Modifier.size(element.width.dp, element.height.dp).testTag(tag), tree, tree.childrenOf(element))
                 }
             } else {
@@ -351,14 +383,21 @@ private const val KNOB_FRACTION = 0.45f
  * centred box by the offset: a positive one right or down, a negative one, padded on the other
  * side, left or up.
  */
-private fun Modifier.anchorInset(element: CanvasElement): Modifier {
+private fun Modifier.anchorInset(element: CanvasElement, safeArea: CanvasInsets): Modifier {
     val x = element.offsetX
     val y = element.offsetY
     val start = when (element.anchor.column) { 0 -> x.coerceAtLeast(0f); 1 -> 2 * x.coerceAtLeast(0f); else -> 0f }
     val end = when (element.anchor.column) { 1 -> 2 * (-x).coerceAtLeast(0f); 2 -> x.coerceAtLeast(0f); else -> 0f }
     val top = when (element.anchor.row) { 0 -> y.coerceAtLeast(0f); 1 -> 2 * y.coerceAtLeast(0f); else -> 0f }
     val bottom = when (element.anchor.row) { 1 -> 2 * (-y).coerceAtLeast(0f); 2 -> y.coerceAtLeast(0f); else -> 0f }
-    return padding(start = start.dp, top = top.dp, end = end.dp, bottom = bottom.dp)
+    // The safe area pads every side, whatever the anchor: an edge element moves in from the covered
+    // edge, and a centred one is centred in what is left, the safe area's own centre.
+    return padding(
+        start = (start + safeArea.left).dp,
+        top = (top + safeArea.top).dp,
+        end = (end + safeArea.right).dp,
+        bottom = (bottom + safeArea.bottom).dp,
+    )
 }
 
 /** 0 = left, 1 = centre, 2 = right. */

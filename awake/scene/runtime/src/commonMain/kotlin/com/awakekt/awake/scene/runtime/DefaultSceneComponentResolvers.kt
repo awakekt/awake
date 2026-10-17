@@ -10,6 +10,7 @@ import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.binding.SceneComponentResolver
 import com.awakekt.awake.scene.canvas.CanvasElementBinding
+import com.awakekt.awake.scene.canvas.CanvasScalerBinding
 import com.awakekt.awake.scene.core.TagBinding
 import com.awakekt.awake.scene.core.transform.SceneSpinControl
 import com.awakekt.awake.scene.core.transform.SpinControl
@@ -109,6 +110,7 @@ object DefaultSceneComponentResolvers {
         AmbientLightBinding,
         TerrainBinding,
         CanvasElementBinding,
+        CanvasScalerBinding,
         LocomotionAnimationBinding,
         KeyframeAnimationBinding,
         DayCycleBinding,
@@ -136,6 +138,7 @@ object DefaultSceneComponentResolvers {
         AmbientLightBinding,
         TerrainBinding,
         CanvasElementBinding,
+        CanvasScalerBinding,
         LocomotionAnimationBinding,
         KeyframeAnimationBinding,
         DayCycleBinding,

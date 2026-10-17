@@ -13,7 +13,8 @@
 [navigation](navigation.md) and need no scene. `awake:scene:ai` puts them in scenes: the `patrol`,
 `chase` and `flee` scene components, and `TransformAgentPlacement`, which places the behaviours'
 entities by their `Transform`. `awake:scene:navigation` has the `navigation` component they route
-over. `awake:ai` has behaviour trees and finite-state machines for logic you write yourself.
+over. `awake:ai` has behaviour trees and finite-state machines for logic you write yourself, in
+Kotlin or as JSON.
 
 ## Add patrol, chase and flee
 
@@ -155,6 +156,55 @@ For logic with a few clear modes, use an `AiStateMachine`: named `AiState`s with
 ```kotlin title="Kotlin"
 --8<-- "awake/scene/ai/src/desktopTest/kotlin/com/awakekt/awake/scene/ai/AiDocsSampleTest.kt:state-machine"
 ```
+
+## Trees and machines from data
+
+A tree or a machine can also be data: a JSON document a game authors without Kotlin. Each node names
+a kind from an `AiRegistry`, with that kind's parameters.
+
+```json title="vent.tree.json"
+{
+  "formatVersion": 1,
+  "root": {
+    "kind": "ai.selector",
+    "children": [
+      { "kind": "ai.sequence", "children": [
+        { "kind": "ai.compare", "params": { "key": "heat", "op": ">=", "value": 30.0 } },
+        { "kind": "ai.emit", "params": { "event": "vent.open" } }
+      ] },
+      { "kind": "ai.wait", "params": { "seconds": 2 } }
+    ]
+  }
+}
+```
+
+```kotlin title="Kotlin"
+val registry = AiRegistry()                     // Core's kinds, plus any you register
+val compiled = registry.compileTree(AiDefinitionJson.Default.decodeTree(text))
+world.add(entity, compiled.newComponent(seed = entity.packed))
+```
+
+`compileTree` checks the whole document and lists every problem, such as an unknown kind, a
+misspelt parameter or the wrong number of children. Register your own kinds with typed parameters
+through `registry.action`, `registry.condition` and `registry.state`. A `StateMachineDefinition` has
+states with enter, exit and tree nodes, and transitions that fire after a time, when the state's
+tree finishes, or when a condition node succeeds.
+
+| Kind | What it does |
+| --- | --- |
+| `ai.sequence`, `ai.selector`, `ai.parallel` | As their DSL twins; `parallel` takes `policy`: `all` or `one`. |
+| `ai.inverter`, `ai.succeeder` | Swap success and failure; succeed whenever the child finishes. |
+| `ai.repeat`, `ai.cooldown`, `ai.timeout` | As their DSL twins, with `count` or `seconds`. |
+| `ai.wait` | Runs for `seconds`, then succeeds. |
+| `ai.compare` | Compares the value under `key` with `value` or `otherKey`, by `op`: `==`, `!=`, `<`, `<=`, `>`, `>=`. |
+| `ai.has` | Succeeds when `key` is set. |
+| `ai.chance` | Succeeds with `probability`, from the tree's seed. |
+| `ai.status` | Always returns `status`. |
+| `ai.set`, `ai.copy`, `ai.remove`, `ai.add` | Write the blackboard. |
+| `ai.emit` | Sends `event` with a `payload` to the system's `AiEventSink`. |
+
+Trees, machines and blackboards snapshot to data and restore exactly, and a running tree reports
+what each node returned on the latest tick, for an editor's live view.
 
 ## How it works
 

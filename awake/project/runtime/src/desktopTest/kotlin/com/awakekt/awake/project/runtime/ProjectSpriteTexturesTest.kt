@@ -11,6 +11,7 @@ import com.awakekt.awake.core.logging.LogLevel
 import com.awakekt.awake.core.logging.LogRecord
 import com.awakekt.awake.core.logging.LogSink
 import com.awakekt.awake.engine.bootstrap.dsl.app
+import com.awakekt.awake.engine.platform.dsl.requireService
 import com.awakekt.awake.render.command.GpuDrawPreparationSource
 import com.awakekt.awake.render.command.GpuDrawPreparer
 import com.awakekt.awake.render.command.GpuDrawRequest
@@ -21,6 +22,7 @@ import com.awakekt.awake.render.texture.PbrTextureSet
 import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.scene.authoring.scene
+import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -93,6 +95,42 @@ class ProjectSpriteTexturesTest {
         project.close()
     }
 
+    @Test
+    fun anImageEditedWhileTheProjectPlaysRedrawsOnceTheSceneForgetsIt() = runTest {
+        var hero = SHEET
+        val reads = mutableListOf<String>()
+        val files = AssetSource { path ->
+            if (path.value.endsWith(".png")) reads += path.value
+            if (path.value == "art/hero.png") Result.success(png(hero)) else PROJECT.read(path)
+        }
+        val project = loadProject(files)
+        project.sceneLoads = StandardTestDispatcher(testScheduler)
+        val renderer = TexturedDraws()
+        val game = app { scene("play") { runProject(project) } }
+        game.ready(renderer)
+        game.update(FRAME, WIDTH, HEIGHT)
+        advanceUntilIdle()
+        game.update(FRAME, WIDTH, HEIGHT)
+        val before = renderer.lastFrameTextures().map { it.width to it.height }.toSet()
+
+        hero = EDITED_SHEET
+        game.update(FRAME, WIDTH, HEIGHT)
+        val editedButNotForgotten = renderer.lastFrameTextures().map { it.width to it.height }.toSet()
+        game.requireService<SceneAppLifecycleRuntime>().requireAssetLibrary().forgetTexture("art/hero.png")
+        game.update(FRAME, WIDTH, HEIGHT)
+        advanceUntilIdle()
+        game.update(FRAME, WIDTH, HEIGHT)
+        val after = renderer.lastFrameTextures().map { it.width to it.height }.toSet()
+
+        assertEquals(setOf(SHEET, ATLAS), before)
+        assertEquals(setOf(SHEET, ATLAS), editedButNotForgotten, "an edited file is not read until it is forgotten")
+        assertEquals(setOf(EDITED_SHEET, ATLAS), after, "the sprite draws the edited image, the tilemap its own")
+        assertEquals(listOf("art/hero.png", "art/hero.png"), reads.filter { it == "art/hero.png" }, "read again once, after it was forgotten")
+        assertEquals(1, renderer.destroyedTextures.count { it.width to it.height == SHEET }, "the old sheet's material is destroyed")
+        game.dispose()
+        project.close()
+    }
+
     private fun log(level: LogLevel): List<String> = records.filter { it.tag == "scene-assets" && it.level == level }.map { it.message }
 
     /** Keeps the last frame's draws, and the texture of every material made with one. */
@@ -113,8 +151,17 @@ class ProjectSpriteTexturesTest {
             pending = ArrayList()
         }
 
+        /** The textures of the materials destroyed so far. */
+        val destroyedTextures = mutableListOf<TextureAsset>()
+
         override fun createMaterial(texture: TextureAsset?, renderTarget: RenderTarget?, uniformFloatCount: Int, pbrTextures: PbrTextureSet?): Material {
-            val made = object : Material by super.createMaterial(texture, renderTarget, uniformFloatCount, pbrTextures) {}
+            val material = super.createMaterial(texture, renderTarget, uniformFloatCount, pbrTextures)
+            val made = object : Material by material {
+                override fun destroy() {
+                    if (texture != null) destroyedTextures += texture
+                    material.destroy()
+                }
+            }
             if (texture != null) textures[made] = texture
             return made
         }
@@ -127,6 +174,7 @@ class ProjectSpriteTexturesTest {
         /** A two-cell sprite sheet and a two-tile atlas, in pixels. */
         val SHEET = 4 to 2
         val ATLAS = 6 to 2
+        val EDITED_SHEET = 8 to 2
 
         fun png(size: Pair<Int, Int>): ByteArray = ByteArrayOutputStream().also {
             ImageIO.write(BufferedImage(size.first, size.second, BufferedImage.TYPE_INT_ARGB), "png", it)

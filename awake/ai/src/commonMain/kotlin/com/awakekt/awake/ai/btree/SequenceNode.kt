@@ -6,6 +6,8 @@
 package com.awakekt.awake.ai.btree
 
 import com.awakekt.awake.ai.AiContext
+import com.awakekt.awake.ai.Snapshottable
+import kotlinx.serialization.KSerializer
 
 /**
  * Executes child nodes sequentially from left to right.
@@ -17,9 +19,19 @@ import com.awakekt.awake.ai.AiContext
  * @property children Ordered list of child behavior nodes evaluated in sequence.
  */
 class SequenceNode(
-    val children: List<BehaviorNode>,
-) : BehaviorNode {
+    override val children: List<BehaviorNode>,
+) : BehaviorNode,
+    Snapshottable<ChildIndexState> {
     private var currentIndex = 0
+
+    override val stateSerializer: KSerializer<ChildIndexState> get() = ChildIndexState.serializer()
+
+    override fun captureState(): ChildIndexState = ChildIndexState(currentIndex)
+
+    override fun restoreState(state: ChildIndexState) {
+        require(state.index in 0..children.size) { "Child index ${state.index} is outside 0..${children.size}." }
+        currentIndex = state.index
+    }
 
     override fun tick(context: AiContext): BehaviorStatus {
         while (currentIndex < children.size) {

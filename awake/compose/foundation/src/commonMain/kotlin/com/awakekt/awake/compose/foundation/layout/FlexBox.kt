@@ -12,6 +12,7 @@ import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.ModifierNodeElement
 import com.awakekt.awake.compose.ui.layout.AlignmentLine
 import com.awakekt.awake.compose.ui.layout.FirstBaseline
+import com.awakekt.awake.compose.ui.layout.IntrinsicMeasurable
 import com.awakekt.awake.compose.ui.layout.Layout
 import com.awakekt.awake.compose.ui.layout.Measurable
 import com.awakekt.awake.compose.ui.layout.MeasurePolicy
@@ -340,7 +341,7 @@ private class ResolvedFlexConfig : FlexBoxConfigScope {
     override val density: Float get() = activeDensity
     override val fontScale: Float get() = activeFontScale
 
-    fun resolve(scope: MeasureScope, incoming: Constraints, config: FlexBoxConfig) {
+    fun resolve(scope: Density, incoming: Constraints, config: FlexBoxConfig) {
         activeDensity = scope.density
         activeFontScale = scope.fontScale
         constraints = incoming
@@ -356,7 +357,7 @@ private class ResolvedFlexConfig : FlexBoxConfigScope {
 }
 
 private data class FlexChild(
-    val measurable: Measurable,
+    val measurable: IntrinsicMeasurable,
     val sourceIndex: Int,
     val item: FlexItemData,
     var main: Int = 0,
@@ -366,6 +367,7 @@ private data class FlexChild(
 
 private class FlexBoxMeasurePolicy(private val config: FlexBoxConfig) : MeasurePolicy {
     private val resolved = ResolvedFlexConfig()
+    private val planner = FlexLinePlanner(resolved)
 
     @Suppress("LongMethod", "CyclomaticComplexMethod", "NestedBlockDepth") // Resolving and placing one flex transaction shares all line bounds.
     override fun MeasureScope.measure(measurables: List<Measurable>, constraints: Constraints): MeasureResult {
@@ -376,23 +378,11 @@ private class FlexBoxMeasurePolicy(private val config: FlexBoxConfig) : MeasureP
         val crossLimit = if (vertical) constraints.maxWidth else constraints.maxHeight
         val mainGap = (if (vertical) resolved.rowGap else resolved.columnGap).roundToPx()
         val crossGap = (if (vertical) resolved.columnGap else resolved.rowGap).roundToPx()
-        val children = ArrayList<FlexChild>(measurables.size)
-        for (index in measurables.indices) {
-            val measurable = measurables[index]
-            val item = measurable.rowColumnParentData()?.flex ?: FlexItemData()
-            val intrinsicMain = if (vertical) measurable.maxIntrinsicHeight(crossLimit) else measurable.maxIntrinsicWidth(crossLimit)
-            val minMain = if (vertical) measurable.minIntrinsicHeight(crossLimit) else measurable.minIntrinsicWidth(crossLimit)
-            val basis = basisPx(item.basis, intrinsicMain, minMain, mainLimit)
-            val intrinsicCross = if (vertical) measurable.maxIntrinsicWidth(basis) else measurable.maxIntrinsicHeight(basis)
-            children += FlexChild(measurable, index, item, basis, intrinsicCross)
-        }
-        children.sortWith(compareBy<FlexChild> { it.item.order }.thenBy { it.sourceIndex })
-        val lines = buildLines(children, mainLimit, mainGap)
+        val lines = with(planner) { planLines(measurables, vertical, mainLimit, crossLimit, mainGap, max = true) }
         val lineCrosses = IntArray(lines.size)
         val lineMains = IntArray(lines.size)
         for (lineIndex in lines.indices) {
             val line = lines[lineIndex]
-            resolveMainSizes(line, mainLimit, mainGap, vertical)
             lineMains[lineIndex] = line.sumOf { it.main } + mainGap * (line.size - 1).coerceAtLeast(0)
             lineCrosses[lineIndex] = line.maxOfOrNull { it.crossPlan } ?: 0
         }
@@ -406,7 +396,12 @@ private class FlexBoxMeasurePolicy(private val config: FlexBoxConfig) : MeasureP
             (plannedCrossSize - plannedCross).coerceAtLeast(0),
             lines.size,
         )
-        for (lineIndex in lineCrosses.indices) lineCrosses[lineIndex] += crossDistribution.stretch
+        for (lineIndex in lineCrosses.indices) {
+            // The pixels a whole share leaves over go one each to the first lines, so stretched
+            // lines fill the box exactly instead of stopping short by the remainder.
+            val extra = if (lineIndex < crossDistribution.stretchRemainder) 1 else 0
+            lineCrosses[lineIndex] += crossDistribution.stretch + extra
+        }
         val lineBaselines = IntArray(lines.size) { AlignmentLine.Unspecified }
         for (lineIndex in lines.indices) {
             val line = lines[lineIndex]
@@ -418,7 +413,7 @@ private class FlexBoxMeasurePolicy(private val config: FlexBoxConfig) : MeasureP
                 } else {
                     Constraints.of(child.main, child.main, cross, if (cross == 0) crossLimit else cross)
                 }
-                child.placeable = child.measurable.measure(childConstraints)
+                child.placeable = measurables[child.sourceIndex].measure(childConstraints)
                 val actualCross = if (vertical) child.placeable!!.width else child.placeable!!.height
                 lineCrosses[lineIndex] = maxOf(lineCrosses[lineIndex], actualCross)
             }
@@ -448,9 +443,16 @@ private class FlexBoxMeasurePolicy(private val config: FlexBoxConfig) : MeasureP
         val width = constraints.constrainWidth(if (vertical) contentCross else contentMain)
         val height = constraints.constrainHeight(if (vertical) contentMain else contentCross)
         val mainSize = if (vertical) height else width
+        // Lines are placed by what the children measured, not by the plan. The plan only has to be
+        // right for a stretch, which is shared out before the stretched children measure.
+        val placedDistribution = if (resolved.alignContent == FlexAlignContent.Stretch) {
+            crossDistribution
+        } else {
+            distribution(resolved.alignContent, ((if (vertical) width else height) - contentCross).coerceAtLeast(0), lines.size)
+        }
 
         return layout(width, height) {
-            var crossCursor = crossDistribution.before
+            var crossCursor = placedDistribution.before
             for (lineIndex in lines.indices) {
                 val line = lines[lineIndex]
                 // Already holds its share of a stretch, added before the children were measured.
@@ -475,11 +477,49 @@ private class FlexBoxMeasurePolicy(private val config: FlexBoxConfig) : MeasureP
                     }
                     mainCursor += (if (vertical) placeable.height else placeable.width) + mainGap + mainDistribution.between
                 }
-                crossCursor += lineCross + crossGap + crossDistribution.between
+                crossCursor += lineCross + crossGap + placedDistribution.between
             }
         }
     }
 
+    /** Resolves the configuration for an intrinsic query and answers whether the main axis is vertical. */
+    private fun Density.resolveFor(constraints: Constraints): Boolean {
+        resolved.resolve(this, constraints, config)
+        return resolved.direction == FlexDirection.Column || resolved.direction == FlexDirection.ColumnReverse
+    }
+
+    override fun Density.minIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int): Int =
+        intrinsicWidth(measurables, height, max = false)
+
+    override fun Density.maxIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int): Int =
+        intrinsicWidth(measurables, height, max = true)
+
+    override fun Density.minIntrinsicHeight(measurables: List<IntrinsicMeasurable>, width: Int): Int =
+        intrinsicHeight(measurables, width, max = false)
+
+    override fun Density.maxIntrinsicHeight(measurables: List<IntrinsicMeasurable>, width: Int): Int =
+        intrinsicHeight(measurables, width, max = true)
+
+    private fun Density.intrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int, max: Boolean): Int {
+        val vertical = resolveFor(Constraints.of(0, Constraints.Infinity, 0, height))
+        return with(planner) {
+            if (vertical) intrinsicCross(measurables, true, height, max) else intrinsicMain(measurables, false, height, max)
+        }
+    }
+
+    private fun Density.intrinsicHeight(measurables: List<IntrinsicMeasurable>, width: Int, max: Boolean): Int {
+        val vertical = resolveFor(Constraints.of(0, width, 0, Constraints.Infinity))
+        return with(planner) {
+            if (vertical) intrinsicMain(measurables, true, width, max) else intrinsicCross(measurables, false, width, max)
+        }
+    }
+}
+
+/**
+ * Breaks children into lines and sizes them from their intrinsics, without measuring anything:
+ * the plan [FlexBoxMeasurePolicy] measures from and answers its own intrinsics with.
+ */
+private class FlexLinePlanner(private val resolved: ResolvedFlexConfig) {
     private fun buildLines(children: List<FlexChild>, limit: Int, gap: Int): List<List<FlexChild>> {
         if (children.isEmpty()) return emptyList()
         val lines = ArrayList<List<FlexChild>>()
@@ -534,11 +574,76 @@ private class FlexBoxMeasurePolicy(private val config: FlexBoxConfig) : MeasureP
         }
     }
 
-    override fun Density.minIntrinsicWidth(measurables: List<com.awakekt.awake.compose.ui.layout.IntrinsicMeasurable>, height: Int): Int =
-        measurables.sumOf { it.minIntrinsicWidth(height) }
+    /**
+     * Every child's main size and planned cross size, broken into lines: the one plan the measure and
+     * the intrinsics share, so a parent that asks first is told what the measure then does.
+     *
+     * The cross size is asked at the main size the child ends up with, after grow and shrink -- a
+     * label shrunk to fit its line wraps, and the line has to be planned that tall.
+     */
+    @Suppress("LongParameterList") // The axis, both limits and the gap are the whole of a plan's input.
+    fun Density.planLines(
+        measurables: List<IntrinsicMeasurable>,
+        vertical: Boolean,
+        mainLimit: Int,
+        crossLimit: Int,
+        mainGap: Int,
+        max: Boolean,
+    ): List<List<FlexChild>> {
+        val children = ArrayList<FlexChild>(measurables.size)
+        for (index in measurables.indices) {
+            val measurable = measurables[index]
+            val item = measurable.flexItem()
+            val intrinsicMain = if (vertical) measurable.maxIntrinsicHeight(crossLimit) else measurable.maxIntrinsicWidth(crossLimit)
+            val minMain = if (vertical) measurable.minIntrinsicHeight(crossLimit) else measurable.minIntrinsicWidth(crossLimit)
+            children += FlexChild(measurable, index, item, basisPx(item.basis, intrinsicMain, minMain, mainLimit))
+        }
+        children.sortWith(compareBy<FlexChild> { it.item.order }.thenBy { it.sourceIndex })
+        val lines = buildLines(children, mainLimit, mainGap)
+        for (line in lines) {
+            resolveMainSizes(line, mainLimit, mainGap, vertical)
+            for (child in line) {
+                val measurable = child.measurable
+                child.crossPlan = when {
+                    vertical && max -> measurable.maxIntrinsicWidth(child.main)
+                    vertical -> measurable.minIntrinsicWidth(child.main)
+                    max -> measurable.maxIntrinsicHeight(child.main)
+                    else -> measurable.minIntrinsicHeight(child.main)
+                }
+            }
+        }
+        return lines
+    }
 
-    override fun Density.maxIntrinsicWidth(measurables: List<com.awakekt.awake.compose.ui.layout.IntrinsicMeasurable>, height: Int): Int =
-        measurables.sumOf { it.maxIntrinsicWidth(height) }
+    /** The main-axis size of the children's line: each child's contribution and the gaps between. */
+    fun Density.intrinsicMain(measurables: List<IntrinsicMeasurable>, vertical: Boolean, cross: Int, max: Boolean): Int {
+        if (measurables.isEmpty()) return 0
+        val gap = (if (vertical) resolved.rowGap else resolved.columnGap).roundToPx()
+        var total = 0
+        var widest = 0
+        for (measurable in measurables) {
+            val item = measurable.flexItem()
+            val minMain = if (vertical) measurable.minIntrinsicHeight(cross) else measurable.minIntrinsicWidth(cross)
+            val contribution = if (max || item.shrink == 0f) {
+                val maxMain = if (vertical) measurable.maxIntrinsicHeight(cross) else measurable.maxIntrinsicWidth(cross)
+                basisPx(item.basis, maxMain, minMain, Constraints.Infinity)
+            } else {
+                minMain
+            }
+            total += contribution
+            widest = maxOf(widest, contribution)
+        }
+        // At its narrowest a wrapping box puts each child on a line of its own.
+        return if (!max && resolved.wrap != FlexWrap.NoWrap) widest else total + gap * (measurables.size - 1)
+    }
+
+    /** The cross-axis size of the lines the children break into within [main]. */
+    fun Density.intrinsicCross(measurables: List<IntrinsicMeasurable>, vertical: Boolean, main: Int, max: Boolean): Int {
+        val mainGap = (if (vertical) resolved.rowGap else resolved.columnGap).roundToPx()
+        val crossGap = (if (vertical) resolved.columnGap else resolved.rowGap).roundToPx()
+        val lines = planLines(measurables, vertical, main, Constraints.Infinity, mainGap, max)
+        return lines.sumOf { line -> line.maxOfOrNull { it.crossPlan } ?: 0 } + crossGap * (lines.size - 1).coerceAtLeast(0)
+    }
 
     private fun basisPx(basis: FlexBasis, intrinsic: Int, minimum: Int, limit: Int): Int = when (basis) {
         FlexBasis.Auto -> intrinsic
@@ -547,7 +652,9 @@ private class FlexBoxMeasurePolicy(private val config: FlexBoxConfig) : MeasureP
     }
 }
 
-private data class FlexDistribution(val before: Int, val between: Int, val stretch: Int = 0)
+private fun IntrinsicMeasurable.flexItem(): FlexItemData = (parentData as? RowColumnParentData)?.flex ?: FlexItemData()
+
+private data class FlexDistribution(val before: Int, val between: Int, val stretch: Int = 0, val stretchRemainder: Int = 0)
 
 private fun distribution(value: FlexJustifyContent, free: Int, count: Int): FlexDistribution = when (value) {
     FlexJustifyContent.Start -> FlexDistribution(0, 0)
@@ -562,7 +669,7 @@ private fun distribution(value: FlexAlignContent, free: Int, count: Int): FlexDi
     FlexAlignContent.Start -> FlexDistribution(0, 0)
     FlexAlignContent.End -> FlexDistribution(free, 0)
     FlexAlignContent.Center -> FlexDistribution(free / 2, 0)
-    FlexAlignContent.Stretch -> FlexDistribution(0, 0, if (count > 0) free / count else 0)
+    FlexAlignContent.Stretch -> if (count > 0) FlexDistribution(0, 0, free / count, free % count) else FlexDistribution(0, 0)
     FlexAlignContent.SpaceBetween -> FlexDistribution(0, if (count > 1) free / (count - 1) else 0)
     FlexAlignContent.SpaceAround -> FlexDistribution(if (count > 0) free / (count * 2) else 0, if (count > 0) free / count else 0)
 }

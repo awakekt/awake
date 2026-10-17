@@ -45,6 +45,10 @@ import kotlinx.serialization.Serializable
  * @property doubleAction What a Button does when double-clicked: two presses within
  * [CanvasElement.DOUBLE_CLICK_SECONDS]. The second press still fires [action] first.
  * @property touchOnly If true, element is displayed only when touch controls are active.
+ * @property safeArea Whether an anchored element on the canvas itself keeps inside the safe area,
+ * clear of a notch, rounded corners or a home indicator; false measures its anchor and offsets from
+ * the screen's own edges, for a backdrop that reaches under a notch. An element inside another, or
+ * one that follows a node, is placed the same either way.
  * @property style How the element looks beyond its colours: images, and their frames and fills.
  * @property textAlign Where a Text's or Button's text sits in the element; null keeps the kind's own,
  * top-left for a Text and centred for a Button.
@@ -113,6 +117,7 @@ data class SceneCanvasElement(
     val action: String = "",
     val doubleAction: String = "",
     val touchOnly: Boolean = false,
+    val safeArea: Boolean = true,
     val style: CanvasStyle = CanvasStyle(),
     val textAlign: CanvasAnchor? = null,
     val follow: String = "",

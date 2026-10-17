@@ -15,7 +15,9 @@ import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.binding.SceneComponentBinding
+import com.awakekt.awake.ui.canvas.CanvasInsets
 import com.awakekt.awake.ui.canvas.CanvasOverlay
+import com.awakekt.awake.ui.canvas.CanvasScaler
 
 context(_: Composer)
 /**
@@ -58,6 +60,11 @@ context(_: Composer)
  *   in, in the active locale; a locale switch shows on the next frame. A played project's are its
  *   `strings/` tables, which `SceneAppLifecycleRuntime` passes as its `canvasStrings`. Without it,
  *   a keyed element shows its key.
+ * @param safeArea What covers the screen's edges, in dp: a notch, rounded corners, a home
+ *   indicator, overscan. Anchored elements on the canvas itself keep inside it, unless their
+ *   [CanvasElement.safeArea] is false. An editor previewing a device passes that device's.
+ * @param scaler Works the scale out from the canvas's size, in place of [scale]: the scene's own
+ *   `canvas_scaler` by default, through [canvasScaler]. Null draws at [scale].
  */
 fun SceneCanvas(
     world: World,
@@ -71,6 +78,8 @@ fun SceneCanvas(
     fonts: Map<String, UiFont> = emptyMap(),
     siblingOrder: Comparator<Entity>? = null,
     strings: Strings? = null,
+    safeArea: CanvasInsets = CanvasInsets.None,
+    scaler: CanvasScaler? = world.canvasScaler(),
 ) {
     CanvasOverlay(
         world.canvasItems(siblingOrder),
@@ -81,5 +90,7 @@ fun SceneCanvas(
         SceneCanvasResolver(world, projector, views, bindings),
         fonts,
         strings,
+        safeArea,
+        scaler,
     )
 }

@@ -77,6 +77,8 @@ public final class com/awakekt/awake/scene/runtime/AssetSourceTextureResolver : 
 	public fun close ()V
 	public fun createMaterial (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Ljava/lang/String;)Lcom/awakekt/awake/render/material/Material;
 	public fun createMesh (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Ljava/lang/String;)Lcom/awakekt/awake/render/mesh/Mesh;
+	public fun forgetTexture (Ljava/lang/String;)V
+	public fun forgetTextures ()V
 	public fun materialDefaults (Ljava/lang/String;)Lcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;
 	public fun materialDefaults (Ljava/lang/String;Ljava/lang/String;)Lcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;
 	public fun texture (Ljava/lang/String;)Lcom/awakekt/awake/scene/runtime/SceneTextureLoad;
@@ -121,6 +123,7 @@ public final class com/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime : co
 	public final fun getCanvasBindings ()Ljava/util/List;
 	public final fun getCanvasFonts ()Ljava/util/Map;
 	public final fun getCanvasImages ()Ljava/util/Map;
+	public final fun getCanvasSafeArea ()Lcom/awakekt/awake/ui/canvas/CanvasInsets;
 	public final fun getCanvasScale ()F
 	public final fun getCanvasStrings ()Lcom/awakekt/awake/core/localization/Strings;
 	public final fun getCursor ()Lcom/awakekt/awake/core/input/PointerCursor;
@@ -160,6 +163,7 @@ public final class com/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime : co
 	public final fun setCanvasBindings (Ljava/util/List;)V
 	public final fun setCanvasFonts (Ljava/util/Map;)V
 	public final fun setCanvasImages (Ljava/util/Map;)V
+	public final fun setCanvasSafeArea (Lcom/awakekt/awake/ui/canvas/CanvasInsets;)V
 	public final fun setCanvasScale (F)V
 	public final fun setCanvasStrings (Lcom/awakekt/awake/core/localization/Strings;)V
 	public final fun setDrawsSceneCanvas (Z)V
@@ -198,6 +202,8 @@ public final class com/awakekt/awake/scene/runtime/SceneAssetLibrary {
 	public fun <init> (Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/List;JLjava/util/Map;)V
 	public synthetic fun <init> (Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/List;JLjava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun dispose ()V
+	public final fun forgetTexture (Ljava/lang/String;)V
+	public final fun forgetTextures ()V
 	public final fun isMeshRetained (Ljava/lang/String;)Z
 	public final fun materialHolderCount (Ljava/lang/String;)I
 	public final fun meshHolderCount (Ljava/lang/String;)I
@@ -218,6 +224,8 @@ public abstract interface class com/awakekt/awake/scene/runtime/SceneAssetResolv
 	public fun canResolveMesh (Ljava/lang/String;)Z
 	public fun createMaterial (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Ljava/lang/String;)Lcom/awakekt/awake/render/material/Material;
 	public fun createMesh (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Ljava/lang/String;)Lcom/awakekt/awake/render/mesh/Mesh;
+	public fun forgetTexture (Ljava/lang/String;)V
+	public fun forgetTextures ()V
 	public fun materialDefaults (Ljava/lang/String;)Lcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;
 	public fun materialDefaults (Ljava/lang/String;Ljava/lang/String;)Lcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;
 	public fun texture (Ljava/lang/String;)Lcom/awakekt/awake/scene/runtime/SceneTextureLoad;
@@ -228,6 +236,8 @@ public final class com/awakekt/awake/scene/runtime/SceneAssetResolver$DefaultImp
 	public static fun canResolveMesh (Lcom/awakekt/awake/scene/runtime/SceneAssetResolver;Ljava/lang/String;)Z
 	public static fun createMaterial (Lcom/awakekt/awake/scene/runtime/SceneAssetResolver;Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Ljava/lang/String;)Lcom/awakekt/awake/render/material/Material;
 	public static fun createMesh (Lcom/awakekt/awake/scene/runtime/SceneAssetResolver;Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Ljava/lang/String;)Lcom/awakekt/awake/render/mesh/Mesh;
+	public static fun forgetTexture (Lcom/awakekt/awake/scene/runtime/SceneAssetResolver;Ljava/lang/String;)V
+	public static fun forgetTextures (Lcom/awakekt/awake/scene/runtime/SceneAssetResolver;)V
 	public static fun materialDefaults (Lcom/awakekt/awake/scene/runtime/SceneAssetResolver;Ljava/lang/String;)Lcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;
 	public static fun materialDefaults (Lcom/awakekt/awake/scene/runtime/SceneAssetResolver;Ljava/lang/String;Ljava/lang/String;)Lcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;
 	public static fun texture (Lcom/awakekt/awake/scene/runtime/SceneAssetResolver;Ljava/lang/String;)Lcom/awakekt/awake/scene/runtime/SceneTextureLoad;

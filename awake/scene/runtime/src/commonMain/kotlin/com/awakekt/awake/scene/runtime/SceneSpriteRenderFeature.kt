@@ -13,7 +13,13 @@ import com.awakekt.awake.scene.rendering.RenderFeatureContext3D
 import com.awakekt.awake.scene.scene2d.collectSpriteDraws
 
 /** Adapts the 2D scene binding to the existing combined scene pass. */
-internal class SceneSpriteRenderFeature(private val batch: SpriteRenderBatch) : RenderFeature3D {
+internal class SceneSpriteRenderFeature(private val batch: SpriteRenderBatch) :
+    RenderFeature3D,
+    SceneTextureUploads {
     override fun collect(world: World, context: RenderFeatureContext3D): RenderContribution =
         RenderContribution(draws = batch.collect(world.collectSpriteDraws()))
+
+    override fun forgetTexture(name: String) = batch.forgetTexture(name)
+
+    override fun forgetTextures() = batch.forgetTextures()
 }

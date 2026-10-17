@@ -28,7 +28,7 @@ class CanvasElementExposureTest {
     /** Every [CanvasElement] option a scene file sets, named the same on both sides. */
     private val setFromSceneFile: Map<String, String> = listOf(
         "kind", "anchor", "offsetX", "offsetY", "width", "height", "text", "textKey", "textArgs", "fontSize", "color",
-        "background", "value", "order", "visible", "action", "doubleAction", "touchOnly", "style",
+        "background", "value", "order", "visible", "action", "doubleAction", "touchOnly", "safeArea", "style",
         "textAlign", "follow", "followOffset", "followBounds", "followOutset", "layout", "grow",
         "bind", "wheel", "draggable", "dropTarget", "camera", "links", "mask", "maxLength", "maxLengthUnit",
         "font", "pressable",

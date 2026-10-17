@@ -41,6 +41,7 @@ awake-backend-vulkan = { module = "com.awakekt.awake.backend:vulkan", version.re
 | `com.awakekt.awake.core:host` | `awake-core-host` | Host platform services: frame loop, resource bytes. |
 | `com.awakekt.awake.core:io` | `awake-core-io` | Asynchronous file, resource and byte-stream access. |
 | `com.awakekt.awake.core:schema` | `awake-core-schema` | Property schemas and authoring annotations read from serialization descriptors. |
+| `com.awakekt.awake.core:expression` | `awake-core-expression` | A safe, deterministic formula language for numbers kept in data. |
 | `com.awakekt.awake.core:text` | `awake-core-text` | Font atlases, glyph metrics, grapheme clusters and text shaping. |
 | `com.awakekt.awake.core:audio` | `awake-core-audio` | Audio playback, WAV decoding, synthesis and 3D attenuation. |
 | `com.awakekt.awake.core:animation` | `awake-core-animation` | Skeletal animation: skeletons, clips, pose sampling, crossfades. |

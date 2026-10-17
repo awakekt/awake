@@ -45,6 +45,15 @@ it calls equal keep the world's order. `world.canvasDrawOrder(siblingOrder)` lis
 the order they draw, and `world.canvasElementAt(x, y, siblingOrder)` finds the one last drawn on top
 at a point in the canvas's units, as an editor's click picks it.
 
+## Scale and safe area
+
+A `canvas_scaler` on any node, the saved form of `awake:ui:canvas`'s `CanvasScaler`, works the
+canvas's scale out from the screen's size; `SceneCanvas(world)` finds it with `world.canvasScaler()`
+and draws at it in place of its `scale`, and a scene without one draws at `scale` as before.
+`CanvasScalerBinding` loads and saves it. `SceneCanvas(world, safeArea = …)`, which
+`SceneAppLifecycleRuntime` passes from its `canvasSafeArea`, keeps anchored elements clear of a
+notch; an element's `safeArea` field opts it out.
+
 ## Text in the player's language
 
 An element with a `textKey` shows that key's text from the `Strings` passed as
