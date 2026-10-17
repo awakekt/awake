@@ -8,7 +8,6 @@
 package com.awakekt.awake.ui.canvas
 
 import com.awakekt.awake.compose.foundation.background
-import com.awakekt.awake.compose.foundation.clickable
 import com.awakekt.awake.compose.foundation.gestures.onWheel
 import com.awakekt.awake.compose.foundation.hoverable
 import com.awakekt.awake.compose.foundation.layout.Box
@@ -244,12 +243,13 @@ internal fun CanvasElementView(
     tree: CanvasTree,
     children: List<CanvasItem>,
 ) {
+    val disabled = element.readButtonState(tree)
     val fill = colorOf(element.color, Color.White)
     val back = colorOf(element.background, Color.Transparent)
     val state = rememberStyleState(element.interactions)
     val style = Style {
         background(back)
-        element.style.applyTo(this, tree.images)
+        element.style.applyTo(this, tree.images, disabled)
     }
     val textStyle = element.textStyle(resolveTextColor(state, style) ?: fill, tree.fontOf(element))
     if (LocalCanvasGhost.current) {
@@ -289,12 +289,10 @@ internal fun CanvasElementView(
             BarFill(element, tree.valueOf(element), fill, tree.images)
             Children(element, children, tree)
         }
-        CanvasElementKind.Button -> Box(
-            styled.clickable(element.interactions) { element.press() },
-            contentAlignment = (element.textAlign ?: CanvasAnchor.Center).alignment,
-        ) {
-            Text(tree.textOf(element), style = textStyle)
-            Children(element, children, tree)
+        CanvasElementKind.Button -> if (element.button != null) {
+            ActionButtonView(element, styled, textStyle, tree, children)
+        } else {
+            PlainButtonView(element, styled, textStyle, tree, children)
         }
         CanvasElementKind.TextField -> TextFieldView(element, styled, textStyle, tree, children)
         CanvasElementKind.Joystick -> JoystickView(element, wheeled, back, tree, children)
@@ -347,7 +345,7 @@ private fun BarFill(element: CanvasElement, value: Float, color: Color, images: 
  * corner, so [clipped] -- not the wedge's own shape -- is what keeps it inside the box.
  */
 context(_: Composer)
-private fun SweepFill(value: Float, color: Color, picture: ImageFill?) {
+internal fun SweepFill(value: Float, color: Color, picture: ImageFill?) {
     val amount = value.coerceIn(0f, 1f)
     if (amount <= 0f) return
     Box(

@@ -87,6 +87,8 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         element.font = font
         element.pressable = pressable
         element.joystick = joystick
+        element.button = button
+        element.enabled = enabled
     }
 
     /**
@@ -136,5 +138,7 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         font = font,
         pressable = pressable,
         joystick = joystick,
+        button = button,
+        enabled = enabled,
     )
 }

@@ -499,6 +499,80 @@ class CanvasElement {
      */
     fun consumeDoublePress(): Boolean = doublePressed.also { doublePressed = false }
 
+    /**
+     * How a Button acts as an on-screen action button: when it fires, a long press, a release, and
+     * whether a cooldown holds it back. Null is a plain button, tapped on release.
+     */
+    var button: CanvasButton? = null
+
+    /**
+     * Whether a Button can be pressed. A disabled one still takes a press, so it does not reach what
+     * is under it, but reports nothing and draws in its style's `disabled` look.
+     */
+    var enabled: Boolean = true
+        set(value) {
+            val wasUsable = usable
+            field = value
+            noteReady(wasUsable)
+        }
+
+    /**
+     * How much of an action button's cooldown is left, from 1, just used, to 0, ready; drawn as a
+     * sweep over it. Set from code, or read each frame from [CanvasBinding.cooldown].
+     */
+    var cooldown: Float = 0f
+        set(value) {
+            val wasUsable = usable
+            field = if (value.isNaN()) 0f else value.coerceIn(0f, 1f)
+            noteReady(wasUsable)
+        }
+
+    /**
+     * How many uses an action button has left, shown as a badge, such as a dash's charges or a
+     * magazine's rounds; below 0, the default, shows none. While it is above 0 the button can be
+     * used even as [cooldown] recharges the next one. Set from code, or read each frame from
+     * [CanvasBinding.charges].
+     */
+    var charges: Int = -1
+        set(value) {
+            val wasUsable = usable
+            field = value
+            noteReady(wasUsable)
+        }
+
+    /** Whether an action button is cooling down: [cooldown] above 0 and no [charges] left to spend. */
+    val coolingDown: Boolean get() = cooldown > 0f && charges <= 0
+
+    /** Whether a Button can be pressed now: [enabled], and not held back by [coolingDown]. */
+    val usable: Boolean get() = enabled && !(coolingDown && (button ?: CanvasButton.Default).blockWhileCooling)
+
+    private var becameReady = false
+
+    private fun noteReady(wasUsable: Boolean) {
+        if (!wasUsable && usable) becameReady = true
+    }
+
+    /**
+     * True once each time an action button becomes usable again, its cooldown done, a charge back
+     * or it is enabled, since the last call: what a "ready" pulse or sound waits for.
+     */
+    fun consumeReady(): Boolean = becameReady.also { becameReady = false }
+
+    /** An action button's live press. */
+    internal val buttonPress = CanvasButtonPress()
+
+    /** True once each time an action button goes down while usable, since the last call. */
+    fun consumeDown(): Boolean = buttonPress.down.also { buttonPress.down = false }
+
+    /** True once each time an action button is let go after a usable press, wherever the thumb was, since the last call. */
+    fun consumeRelease(): Boolean = buttonPress.released.also { buttonPress.released = false }
+
+    /** True once each time an action button is held for its [CanvasButton.longPressSeconds], since the last call. */
+    fun consumeLongPress(): Boolean = buttonPress.longPress.also { buttonPress.longPress = false }
+
+    /** How long an action button has been held, in seconds; 0 while it is not. */
+    val heldSeconds: Float get() = buttonPress.heldSeconds()
+
     /** Whether a Button is being held down, or a Joystick touched, right now. */
     val isHeld: Boolean get() = interactions.isPressed || stick.pointer != null
 

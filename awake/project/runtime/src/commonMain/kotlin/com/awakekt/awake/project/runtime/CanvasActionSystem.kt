@@ -28,7 +28,8 @@ const val JUMP_ACTION = MovementActions.JUMP
  * holds and presses the button action it names, and presses its `doubleAction` on a double-click. A
  * `move` Joystick, a `jump` Button and a `run` Button so steer, jump and run as the keys do. A
  * Joystick pushed past its sprint threshold also holds its `joystick.sprintAction`, so one thumb can
- * both steer and run.
+ * both steer and run. A Button with `button` settings also presses its `longPressAction` on a long
+ * press and its `releaseAction` when let go, and a disabled or cooling one does nothing.
  *
  * An element naming no action of the scene is left to the game, its presses unconsumed. Where the
  * controls sit and how big they are is the scene's to decide.
@@ -59,6 +60,32 @@ class CanvasActionSystem : System {
         return element.sprinting
     }
 
+    /**
+     * An action button: held while held, pressed when it fires, and its long-press and release
+     * actions pressed when those happen, each only when the scene declares it, so one the scene does
+     * not is left for the game to read.
+     */
+    private fun feedActionButton(element: CanvasElement, actions: InputActions): Boolean {
+        val settings = element.button ?: return false
+        var fed = false
+        if (element.action in actions) {
+            val held = element.isHeld
+            val pressed = element.consumePress()
+            if (held) actions.hold(element.action)
+            if (pressed) actions.press(element.action)
+            fed = held || pressed
+        }
+        if (settings.longPressAction in actions && element.consumeLongPress()) {
+            actions.press(settings.longPressAction)
+            fed = true
+        }
+        if (settings.releaseAction in actions && element.consumeRelease()) {
+            actions.press(settings.releaseAction)
+            fed = true
+        }
+        return fed
+    }
+
     /** Presses [element]'s double-click action when a Button was double-clicked, and returns whether it did. */
     private fun feedDouble(element: CanvasElement, actions: InputActions): Boolean {
         if (element.kind != CanvasElementKind.Button || element.doubleAction !in actions) return false
@@ -68,9 +95,15 @@ class CanvasActionSystem : System {
     }
 
     /** Adds what [element] does this frame to [actions], and returns whether it did anything. */
-    private fun feed(element: CanvasElement, actions: InputActions): Boolean {
-        if (element.action !in actions) return false
-        return when (element.kind) {
+    private fun feed(element: CanvasElement, actions: InputActions): Boolean = when {
+        element.kind == CanvasElementKind.Button && element.button != null -> feedActionButton(element, actions)
+        element.action !in actions -> false
+        else -> feedPlain(element, actions)
+    }
+
+    /** A Joystick's deflection, or a plain Button's hold and tap, added to the action it names. */
+    private fun feedPlain(element: CanvasElement, actions: InputActions): Boolean =
+        when (element.kind) {
             CanvasElementKind.Joystick -> {
                 val deflected = element.stickX != 0f || element.stickY != 0f
                 if (deflected) actions.push(element.action, element.stickX, -element.stickY)
@@ -85,5 +118,4 @@ class CanvasActionSystem : System {
             }
             else -> false
         }
-    }
 }

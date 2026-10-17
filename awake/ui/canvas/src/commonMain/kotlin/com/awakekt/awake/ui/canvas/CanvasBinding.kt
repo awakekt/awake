@@ -33,6 +33,15 @@ import kotlin.math.roundToLong
  * field: the argument's name to its `component.field`, such as `"name": "player.name"` or
  * `"count": "inventory.count"`. The field's value goes in as it is, so a plural reads a number field
  * as a number. A field that reads nothing leaves the element's own [CanvasElement.textArgs] value.
+ * @property cooldown An action button's [CanvasElement.cooldown]: this field, a share from 0, ready,
+ * to 1, just used, such as `dash.cooldown`; divided by [cooldownMax] when that is set, so a field of
+ * seconds left works too.
+ * @property cooldownMax The field, or a plain number, [cooldown] is a share of, such as
+ * `dash.cooldownSeconds`; empty when [cooldown] is already a share.
+ * @property charges An action button's [CanvasElement.charges]: this field, a whole number of uses
+ * left, such as `weapon.rounds`.
+ * @property enabled An action button's [CanvasElement.enabled]: this field, true or a number above 0
+ * for enabled, such as `skills.slot1Ready`.
  */
 @Serializable
 data class CanvasBinding(
@@ -41,12 +50,18 @@ data class CanvasBinding(
     val max: String = "",
     val text: String = "",
     val textArgs: Map<String, String> = emptyMap(),
+    val cooldown: String = "",
+    val cooldownMax: String = "",
+    val charges: String = "",
+    val enabled: String = "",
 ) {
     /** What is wrong with this binding, as messages naming the field; empty when nothing is. */
     fun problems(): List<String> = buildList {
         if (node.isBlank()) add("node must name a node")
-        if (value.isBlank() && text.isBlank() && textArgs.isEmpty()) add("needs a value, a text or textArgs to show")
-        listOf("value" to value, "max" to max).forEach { (name, path) ->
+        if (listOf(value, text, cooldown, charges, enabled).all { it.isBlank() } && textArgs.isEmpty()) {
+            add("needs a value, a text, textArgs, a cooldown, charges or enabled to show")
+        }
+        listOf("value" to value, "max" to max, "cooldownMax" to cooldownMax).forEach { (name, path) ->
             if (path.isNotBlank() && path.toFloatOrNull() == null && !FIELD_PATH.matches(path)) {
                 add("$name \"$path\" must be component.field or a number")
             }
@@ -58,6 +73,9 @@ data class CanvasBinding(
             }
         }
         addAll(textArgProblems())
+        listOf("cooldown" to cooldown, "charges" to charges, "enabled" to enabled).forEach { (name, path) ->
+            if (path.isNotBlank() && !FIELD_PATH.matches(path)) add("$name \"$path\" must be component.field")
+        }
     }
 
     private fun textArgProblems(): List<String> = buildList {

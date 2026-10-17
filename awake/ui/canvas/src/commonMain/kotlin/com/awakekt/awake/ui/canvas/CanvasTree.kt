@@ -112,6 +112,23 @@ internal class CanvasTree(
      * An element's words: its key's text in the active locale, else its binding's text filled in, or
      * its own text when it has neither.
      */
+
+    /**
+     * Writes an action button's bound [CanvasBinding.cooldown], [CanvasBinding.charges] and
+     * [CanvasBinding.enabled] into [element], so game code and the runtime read the same live values
+     * a system setting them would have. A field that reads nothing leaves the element as it is.
+     */
+    fun readButtonState(element: CanvasElement) {
+        val bind = element.bind ?: return
+        if (bind.cooldown.isNotBlank()) {
+            val left = resolver.numberField(bind.node, bind.cooldown)
+            val max = if (bind.cooldownMax.isBlank()) 1f else resolver.numberField(bind.node, bind.cooldownMax)
+            if (left != null && max != null && max > 0f) element.cooldown = left / max
+        }
+        if (bind.charges.isNotBlank()) resolver.numberField(bind.node, bind.charges)?.let { element.charges = it.toInt() }
+        if (bind.enabled.isNotBlank()) resolver.numberField(bind.node, bind.enabled)?.let { element.enabled = it > 0f }
+    }
+
     fun textOf(element: CanvasElement): String {
         val bind = element.bind?.takeIf { it.text.isNotBlank() }
         return when {
