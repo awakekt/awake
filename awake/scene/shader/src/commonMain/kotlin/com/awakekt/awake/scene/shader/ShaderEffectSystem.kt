@@ -36,7 +36,11 @@ import kotlinx.coroutines.launch
  *   so is every effect whose document or images are new objects in a new [assets].
  * - **Failures.** An attach that fails keeps the effect that was drawing, if there was one, as the sky
  *   does. An effect that does not match its document ([shaderEffectProblems]) is logged and hidden,
- *   and one whose document did not load is never drawn. None of these stops the frame.
+ *   and one whose document failed to load ([ShaderEffectAssets.failed]) is never drawn. None of these
+ *   stops the frame.
+ * - **Documents still to come.** An effect whose document [assets] neither holds nor lists as failed
+ *   is logged once as not drawn yet, and draws once a new [assets] holds its document, as an editor's
+ *   does when it has opened it.
  * - **The clock.** A frame context has no clock to read, so each effect keeps its own: the seconds
  *   since this system first saw it, carried across a re-attach.
  *
@@ -186,10 +190,24 @@ class ShaderEffectSystem(
         }
     }
 
-    /** The document [entry] draws, or null, logged, when it did not load or the effect does not match it. */
+    /**
+     * The document [entry] draws, or null, logged, when it failed to load or the effect does not match
+     * it. One [assets] has not loaded yet is logged once, as not drawn yet.
+     */
     private fun drawableDocument(entry: Tracked): CompiledShaderDocument? {
         val settings = entry.source.settings
         val compiled = assets.documents[settings.shader]
+        if (compiled == null && settings.shader !in assets.failed) {
+            if (entry.awaiting != settings.shader) {
+                entry.awaiting = settings.shader
+                log.info {
+                    "shader_effect on entity ${entry.entity}, '${settings.shader}': no document for it has been loaded yet" +
+                        if (entry.shown != null) ". It keeps drawing as it was until one is." else ". Not drawn yet; it draws once one is."
+                }
+            }
+            return null
+        }
+        entry.awaiting = null
         val problems = compiled?.let { shaderEffectProblems(settings, it, assets) } ?: listOf("the document did not load")
         if (problems.isNotEmpty()) {
             log.error {
@@ -230,6 +248,9 @@ class ShaderEffectSystem(
         var shown: Shown? = null
         var blocked = false
         var timeSeconds = 0f
+
+        /** The document this effect was last reported waiting for, so the wait is logged once. */
+        var awaiting: String? = null
 
         fun release() {
             job?.cancel()

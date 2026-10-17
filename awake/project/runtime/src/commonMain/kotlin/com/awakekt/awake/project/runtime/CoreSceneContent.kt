@@ -19,9 +19,11 @@ import com.awakekt.awake.terrain.TerrainSurfaceProvider
  * The content Core's capabilities read from [SceneHostServices.content]. [loadSceneContent] fills it
  * for a project. A host that already holds this content passes its own instead, built with
  * [SceneContent.build]: an editor's Play does, since it loaded the content as the scene was edited and
- * keeps a scene running when one file in it is broken.
+ * keeps a scene running when one file in it is broken. For a scene its Play switches to, which it
+ * loaded nothing for, it reads every kind with [loadCoreSceneContent] and lays its own over them
+ * with [SceneContent.plus].
  *
- * A `paged_terrain`'s content is not here: only [loadSceneContent] reads it.
+ * A `paged_terrain`'s content is not here: only [loadSceneContent] and [loadCoreSceneContent] read it.
  */
 object CoreSceneContent {
     /**
