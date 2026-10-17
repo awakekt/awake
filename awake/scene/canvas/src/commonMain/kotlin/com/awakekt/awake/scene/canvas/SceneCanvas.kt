@@ -15,6 +15,7 @@ import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.binding.SceneComponentBinding
+import com.awakekt.awake.ui.canvas.CanvasFollowLimit
 import com.awakekt.awake.ui.canvas.CanvasInsets
 import com.awakekt.awake.ui.canvas.CanvasOverlay
 import com.awakekt.awake.ui.canvas.CanvasScaler
@@ -65,6 +66,8 @@ context(_: Composer)
  *   [CanvasElement.safeArea] is false. An editor previewing a device passes that device's.
  * @param scaler Works the scale out from the canvas's size, in place of [scale]: the scene's own
  *   `canvas_scaler` by default, through [canvasScaler]. Null draws at [scale].
+ * @param followLimits The most followers of each group drawn at once: the scene's own
+ *   `canvas_follow_limit`s by default, through [canvasFollowLimits].
  */
 fun SceneCanvas(
     world: World,
@@ -80,6 +83,7 @@ fun SceneCanvas(
     strings: Strings? = null,
     safeArea: CanvasInsets = CanvasInsets.None,
     scaler: CanvasScaler? = world.canvasScaler(),
+    followLimits: List<CanvasFollowLimit> = world.canvasFollowLimits(),
 ) {
     CanvasOverlay(
         world.canvasItems(siblingOrder),
@@ -92,5 +96,6 @@ fun SceneCanvas(
         strings,
         safeArea,
         scaler,
+        followLimits,
     )
 }

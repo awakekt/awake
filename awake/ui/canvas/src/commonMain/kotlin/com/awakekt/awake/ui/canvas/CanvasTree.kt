@@ -38,6 +38,21 @@ interface CanvasResolver {
     /** The frame rectangle the followed node named [target] covers. */
     fun bounds(target: String): Rectangle? = null
 
+    /**
+     * The followed node named [target]'s point, offset by [offset] in world space, with how far it is
+     * from the camera and whether it is behind it, for [CanvasFollowRules]' culling, ranking, curves
+     * and edge pinning. By default it is [point], at no known distance, and never behind: a point
+     * behind the camera is one [point] gives no answer for.
+     */
+    fun project(target: String, offset: Vec3f): CanvasProjection? = point(target, offset)?.let { CanvasProjection(it.x, it.y) }
+
+    /**
+     * Whether something stands between the camera and the followed node named [target]'s point,
+     * offset by [offset]: asked only for an element whose [CanvasFollowRules.occlusion] is set, and
+     * only while the point is on screen. False, the default, hides none.
+     */
+    fun occluded(target: String, offset: Vec3f): Boolean = false
+
     /** A View's camera picture: what the camera named [camera] sees, at [width] by [height] pixels. */
     fun texture(element: CanvasElement, camera: String, width: Int, height: Int): Any? = null
 
@@ -76,6 +91,9 @@ internal class CanvasTree(
     }
 
     fun childrenOf(element: CanvasElement): List<CanvasItem> = hierarchy.childrenOf(element)
+
+    /** Where each follower drawn this frame goes, as [planFollowers] last worked it out; one not in it is not drawn. */
+    internal val followerPlans = HashMap<CanvasElement, FollowerPlan>()
 
     fun shows(element: CanvasElement): Boolean = element.visible && (showTouchControls || !element.touchOnly)
 
@@ -133,39 +151,6 @@ internal class CanvasTree(
         }
         return found
     }
-}
-
-/**
- * Where a following [element] goes in the canvas, in dp at [density] pixels each: on its node's
- * screen box grown by its outset, or with its anchor point on the node's screen point, nudged inward
- * by its offsets. The resolver reports the frame's pixels, so the canvas's own corner in the frame
- * comes off first. Null hides it: no resolver answer, no such node, or the node behind the camera.
- */
-internal fun CanvasTree.placeFollower(element: CanvasElement, density: Float): Rectangle? {
-    val node = element.follow
-    val box = if (element.followBounds) resolver.bounds(node) else null
-    return if (box != null) {
-        Rectangle((box.x - origin.x) / density, (box.y - origin.y) / density, box.width / density, box.height / density).outset(element.followOutset)
-    } else {
-        placeOnPoint(element, node, density)
-    }
-}
-
-/** This rectangle grown by [by] on each side, or shrunk for a negative [by], about its centre and never below nothing. */
-private fun Rectangle.outset(by: Float): Rectangle {
-    val grownWidth = (width + 2 * by).coerceAtLeast(0f)
-    val grownHeight = (height + 2 * by).coerceAtLeast(0f)
-    return Rectangle(x + (width - grownWidth) / 2, y + (height - grownHeight) / 2, grownWidth, grownHeight)
-}
-
-/** [element] with its anchor point on [node]'s screen point, or null when the node is behind the camera. */
-private fun CanvasTree.placeOnPoint(element: CanvasElement, node: String, density: Float): Rectangle? {
-    val point = resolver.point(node, element.followOffset) ?: return null
-    val column = element.anchor.column
-    val row = element.anchor.row
-    val x = (point.x - origin.x) / density - column / 2f * element.width + if (column == 2) -element.offsetX else element.offsetX
-    val y = (point.y - origin.y) / density - row / 2f * element.height + if (row == 2) -element.offsetY else element.offsetY
-    return Rectangle(x, y, element.width, element.height)
 }
 
 private val keyLog = Logger("ui-canvas")

@@ -78,6 +78,11 @@ free canvas_element.style.shadow.offsetY | An offset: above the element is as va
 free canvas_element.style.shadow.spread | Negative shrinks the shadow inside the element, as CSS allows.
 free canvas_element.style.textShadow.offsetX | An offset: left of the text is as valid as right of it.
 free canvas_element.style.textShadow.offsetY | An offset: above the text is as valid as below it.
+free canvas_element.followRules.priority | Any rank is valid: a limit keeps the higher, and negative ranks below the default 0.
+free canvas_element.followRules.scale.points[].at | Validated as a whole: the points must be finite and in order, which no per-point limit says.
+free canvas_element.followRules.scale.points[].value | A size multiplier: at or below 0 leaves the follower out, which is a valid way to hide it far away.
+free canvas_element.followRules.fade.points[].at | Validated as a whole: the points must be finite and in order, which no per-point limit says.
+free canvas_element.followRules.fade.points[].value | An opacity, held to 1 above it and leaving the follower out at or below 0, so every value means something.
 free fog.colorB | A colour channel: every value is accepted; nothing validates it.
 free fog.colorG | A colour channel: every value is accepted; nothing validates it.
 free fog.colorR | A colour channel: every value is accepted; nothing validates it.
