@@ -11,7 +11,6 @@ public final class com/awakekt/awake/project/runtime/BuiltInSceneAssetsKt {
 }
 
 public final class com/awakekt/awake/project/runtime/CanvasActionSystem : com/awakekt/awake/ecs/System {
-	public static final field LOOK_RADIANS_PER_DP F
 	public fun <init> ()V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }

@@ -161,9 +161,7 @@ class CanvasActionSystem : System {
             }
             else -> false
         }
-
-    private companion object {
-        /** How far a dp of look swipe turns the camera, in radians: a thumb across a phone is about a half turn. */
-        const val LOOK_RADIANS_PER_DP = 0.008f
-    }
 }
+
+/** How far a dp of look swipe turns the camera, in radians: a thumb across a phone is about a half turn. */
+private const val LOOK_RADIANS_PER_DP = 0.008f
