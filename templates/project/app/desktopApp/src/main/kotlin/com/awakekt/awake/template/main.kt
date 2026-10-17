@@ -4,6 +4,7 @@ import com.awakekt.awake.vulkan.application.runVulkanDesktopGame
 import kotlinx.coroutines.runBlocking
 
 fun main() {
-    val game = runBlocking { loadGame() }
-    runVulkanDesktopGame(createGame(game), AwakeRenderPlan)
+    val game = createGame(runBlocking { loadGame() })
+    // The window shows the pointer shape the UI asks for only when it is handed the request.
+    runVulkanDesktopGame(game, AwakeRenderPlan, cursor = pointerCursorOf(game))
 }
