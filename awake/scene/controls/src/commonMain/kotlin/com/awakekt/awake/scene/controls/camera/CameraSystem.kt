@@ -118,8 +118,11 @@ class CameraSystem(
         }
         if (config.mode.usesZoom && inViewport) {
             val step = gesturePolicy.zoomSensitivity + config.distance * gesturePolicy.zoomProportion
-            config.distance = (config.distance - input.scrollDeltaY * step)
-                .coerceIn(config.minDistance, config.maxDistance)
+            // A pinch is already a factor: spreading the fingers 1.5x brings the camera 1.5x closer.
+            // Its frame's scroll is the same pinch again as Ctrl+wheel, so that is not added too.
+            val pinch = input.pinch
+            val zoomed = if (pinch != null) config.distance / pinch.scale else config.distance - input.scrollDeltaY * step
+            config.distance = zoomed.coerceIn(config.minDistance, config.maxDistance)
         }
     }
 

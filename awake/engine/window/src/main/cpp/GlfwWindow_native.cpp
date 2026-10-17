@@ -21,6 +21,9 @@
 // GlfwWindow_native_macos.mm: GLFW does not say whether a scroll came from a trackpad.
 extern "C" void awake_macos_watch_scroll_precision(void);
 extern "C" int awake_macos_last_scroll_precise(void);
+// ...nor report a trackpad pinch at all.
+extern "C" void awake_macos_watch_magnify(void);
+extern "C" double awake_macos_consume_magnify(void);
 #endif
 
 // Matches Kotlin's ScrollSource ordinals: 0 unknown, 1 wheel, 2 trackpad.
@@ -48,6 +51,7 @@ extern "C" void awake_window_set_scroll_callback(JNIEnv* env, jlong window) {
     (void)env;
 #if defined(__APPLE__)
     awake_macos_watch_scroll_precision();
+    awake_macos_watch_magnify();
 #endif
     glfwSetScrollCallback(reinterpret_cast<GLFWwindow*>(window), awake_glfwScrollCallback);
 }
@@ -74,6 +78,18 @@ extern "C" jint awake_window_consume_scroll_source(JNIEnv* env, jlong window) {
     int source = g_scrollSource;
     g_scrollSource = SCROLL_SOURCE_UNKNOWN;
     return static_cast<jint>(source);
+}
+
+// A trackpad pinch's scale factor since the last call, then reset; 1 for none. Only macOS reports a
+// pinch this way: a Windows touchpad sends one as Ctrl+wheel, which arrives as scroll.
+extern "C" jdouble awake_window_consume_pinch_scale(JNIEnv* env, jlong window) {
+    (void)env;
+    (void)window;
+#if defined(__APPLE__)
+    return static_cast<jdouble>(awake_macos_consume_magnify());
+#else
+    return 1.0;
+#endif
 }
 
 // --- Clipboard ---------------------------------------------------------------------------------

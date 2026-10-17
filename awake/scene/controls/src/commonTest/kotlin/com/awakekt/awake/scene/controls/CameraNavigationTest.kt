@@ -10,6 +10,7 @@ import com.awakekt.awake.core.input.AxisAction
 import com.awakekt.awake.core.input.ButtonAction
 import com.awakekt.awake.core.input.InputSnapshot
 import com.awakekt.awake.core.input.Key
+import com.awakekt.awake.core.input.PinchGesture
 import com.awakekt.awake.core.input.PointerButton
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
@@ -121,6 +122,34 @@ class CameraNavigationTest {
         editor { IDLE.copy(scrollDeltaY = 1f) }.update(world, 1f)
 
         assertEquals(89.5f, rig.distance, TOLERANCE, "One notch zooms 0.5 plus a tenth of the distance.")
+    }
+
+    @Test
+    fun aPinchZoomsByItsScaleAndNotAlsoByItsCtrlScroll() {
+        val world = World()
+        val camera = world.spawnCamera(CameraMode.ThirdPerson, distance = 100f)
+        val rig = requireNotNull(world.get(camera, CameraRig::class))
+        // What a browser pinch is: the typed pinch, and the same step as Ctrl held with its scroll.
+        val pinch = PinchGesture(1.25f, 0f, 0f)
+
+        editor { IDLE.copy(pinch = pinch, scrollDeltaY = pinch.zoomDelta, keysDown = setOf(Key.Ctrl)) }.update(world, 1f)
+
+        assertEquals(80f, rig.distance, TOLERANCE, "Spreading the fingers 1.25x brings the camera 1.25x closer, once.")
+    }
+
+    @Test
+    fun aPinchWhileAModalIsOpenDoesNotZoom() {
+        val world = World()
+        val camera = world.spawnCamera(CameraMode.ThirdPerson, distance = 100f)
+        val rig = requireNotNull(world.get(camera, CameraRig::class))
+
+        CameraSystem(
+            inputProvider = { GameplayInput(IDLE.copy(pinch = PinchGesture(2f, 0f, 0f)), InputOwnership(isModalOpen = true)) },
+            viewportBounds = { null },
+            gesturePolicy = CameraGesturePolicy.Editor,
+        ).update(world, 1f)
+
+        assertEquals(100f, rig.distance, TOLERANCE)
     }
 
     @Test

@@ -15,8 +15,9 @@ import com.awakekt.awake.scene.controls.camera.CameraFlyInput
 /**
  * Stateful processor bridging [InputSnapshot] events into [CameraPoseState] updates.
  *
- * Supports LMB orbit, RMB drag zoom, MMB / Shift+LMB screen pan, scroll wheel, keyboard flight by
- * [CameraControlConfig.flyActions], and PageUp/PageDown keys with zero boilerplate for callers.
+ * Supports LMB orbit, RMB drag zoom, MMB / Shift+LMB screen pan, scroll wheel, trackpad pinch,
+ * keyboard flight by [CameraControlConfig.flyActions], and PageUp/PageDown keys with zero
+ * boilerplate for callers.
  */
 class CameraInputProcessor {
     private var lastPointerX = 0f
@@ -69,15 +70,21 @@ class CameraInputProcessor {
 
         // 3. Zoom Modalities:
         if (config.allowZoom) {
-            // a) Mouse Scroll Wheel
+            // a) Mouse Scroll Wheel, unless the frame has a pinch: its scroll is that pinch again, as Ctrl+wheel.
+            val pinch = input.pinch
             val scrollDelta = if (config.invertScroll) -input.scrollDeltaY else input.scrollDeltaY
-            if (scrollDelta != 0f) {
+            if (pinch == null && scrollDelta != 0f) {
                 if (CameraMathUtils.applyZoom(poseState, scrollDelta, config.zoomRate, config.minDistance, config.maxDistance)) {
                     changed = true
                 }
             }
 
-            // b) Secondary Pointer Drag (RMB Drag up/down)
+            // b) Trackpad pinch, whose zoomDelta is ln(scale): at rate 1 the distance divides by the scale.
+            if (pinch != null && CameraMathUtils.applyZoom(poseState, pinch.zoomDelta, rate = 1f, config.minDistance, config.maxDistance)) {
+                changed = true
+            }
+
+            // c) Secondary Pointer Drag (RMB Drag up/down)
             if (isSecondary && dy != 0f) {
                 val rmbDelta = -dy * 0.02f
                 if (CameraMathUtils.applyZoom(poseState, rmbDelta, config.zoomRate, config.minDistance, config.maxDistance)) {
@@ -85,7 +92,7 @@ class CameraInputProcessor {
                 }
             }
 
-            // c) Keyboard PageUp / PageDown
+            // d) Keyboard PageUp / PageDown
             if (Key.PageUp in input.keysDown) {
                 if (CameraMathUtils.applyZoom(poseState, 1.5f * delta * 60f, rate = 0.02f, config.minDistance, config.maxDistance)) {
                     changed = true

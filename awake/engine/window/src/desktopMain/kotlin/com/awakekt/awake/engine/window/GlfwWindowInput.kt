@@ -19,6 +19,7 @@ internal const val GLFW_FOCUSED = 0x00020001
  * can't be faked this way -- this only covers the keycode/repeat/shift translation, not
  * whether the OS actually delivers key events to the window in the first place.
  */
+@Suppress("TooManyFunctions") // One per thing a frame reads from the window; splitting it splits the fake.
 interface GlfwWindowInput {
     /** Returns `true` if the given [glfwKey] is currently held down. */
     fun isKeyDown(glfwKey: Int): Boolean
@@ -47,6 +48,9 @@ interface GlfwWindowInput {
     /** What sent the scroll since the last poll; [ScrollSource.Unknown] where the platform cannot tell. */
     fun consumeScrollSource(): ScrollSource = ScrollSource.Unknown
 
+    /** A trackpad pinch's scale factor since the last poll; 1 for none, or a reader with no pinch. */
+    fun consumePinchScale(): Double = 1.0
+
     /** Returns `true` if the window currently has OS input focus. */
     fun isFocused(): Boolean = true
 
@@ -59,6 +63,7 @@ interface GlfwWindowInput {
         set(@Suppress("UNUSED_PARAMETER") value) = Unit
 }
 
+@Suppress("TooManyFunctions") // One per GlfwWindowInput member; the count is the interface's.
 private class RealGlfwWindowInput(private val window: Long) : GlfwWindowInput {
     override fun isKeyDown(glfwKey: Int): Boolean = GlfwWindow.glfwGetKey(window, glfwKey) == GLFW_PRESS
     override fun isMouseButtonDown(glfwButton: Int): Boolean = GlfwWindow.glfwGetMouseButton(window, glfwButton) == GLFW_PRESS
@@ -68,6 +73,7 @@ private class RealGlfwWindowInput(private val window: Long) : GlfwWindowInput {
     override fun consumeScrollDeltaX(): Double = GlfwWindow.glfwConsumeScrollDeltaX(window)
     override fun consumeScrollSource(): ScrollSource =
         ScrollSource.entries.getOrElse(GlfwWindow.glfwConsumeScrollSource(window)) { ScrollSource.Unknown }
+    override fun consumePinchScale(): Double = GlfwWindow.glfwConsumePinchScale(window)
     override fun isFocused(): Boolean = GlfwWindow.glfwGetWindowAttrib(window, GLFW_FOCUSED) != 0
     override var clipboardText: String?
         get() = GlfwWindow.glfwGetClipboardString(window)

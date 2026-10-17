@@ -258,6 +258,7 @@ public final class com/awakekt/awake/core/input/ImeComposition {
 
 public final class com/awakekt/awake/core/input/Input {
 	public fun <init> ()V
+	public final fun addPinch (FFF)V
 	public final fun clearKeys ()V
 	public final fun commitImeText (Ljava/lang/String;)V
 	public final fun getClipboardWrite ()Ljava/lang/String;
@@ -401,8 +402,8 @@ public final class com/awakekt/awake/core/input/InputControl$Pointer : com/awake
 }
 
 public final class com/awakekt/awake/core/input/InputSnapshot : com/awakekt/awake/core/input/ActionInputSource {
-	public fun <init> (FFZFFLjava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/lang/String;Ljava/util/List;ZZZLcom/awakekt/awake/core/input/ImeComposition;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Lcom/awakekt/awake/core/input/ScrollSource;Ljava/util/List;Ljava/util/List;ZLjava/util/Set;Ljava/util/Set;Ljava/util/Set;)V
-	public synthetic fun <init> (FFZFFLjava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/lang/String;Ljava/util/List;ZZZLcom/awakekt/awake/core/input/ImeComposition;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Lcom/awakekt/awake/core/input/ScrollSource;Ljava/util/List;Ljava/util/List;ZLjava/util/Set;Ljava/util/Set;Ljava/util/Set;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (FFZFFLjava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/lang/String;Ljava/util/List;ZZZLcom/awakekt/awake/core/input/ImeComposition;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Lcom/awakekt/awake/core/input/ScrollSource;Ljava/util/List;Ljava/util/List;ZLcom/awakekt/awake/core/input/PinchGesture;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;)V
+	public synthetic fun <init> (FFZFFLjava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/lang/String;Ljava/util/List;ZZZLcom/awakekt/awake/core/input/ImeComposition;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Lcom/awakekt/awake/core/input/ScrollSource;Ljava/util/List;Ljava/util/List;ZLcom/awakekt/awake/core/input/PinchGesture;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()F
 	public final fun component10 ()Ljava/util/List;
 	public final fun component11 ()Z
@@ -418,9 +419,10 @@ public final class com/awakekt/awake/core/input/InputSnapshot : com/awakekt/awak
 	public final fun component20 ()Ljava/util/List;
 	public final fun component21 ()Ljava/util/List;
 	public final fun component22 ()Z
-	public final fun component23 ()Ljava/util/Set;
+	public final fun component23 ()Lcom/awakekt/awake/core/input/PinchGesture;
 	public final fun component24 ()Ljava/util/Set;
 	public final fun component25 ()Ljava/util/Set;
+	public final fun component26 ()Ljava/util/Set;
 	public final fun component3 ()Z
 	public final fun component4 ()F
 	public final fun component5 ()F
@@ -428,8 +430,8 @@ public final class com/awakekt/awake/core/input/InputSnapshot : com/awakekt/awak
 	public final fun component7 ()Ljava/util/Set;
 	public final fun component8 ()Ljava/util/Set;
 	public final fun component9 ()Ljava/lang/String;
-	public final fun copy (FFZFFLjava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/lang/String;Ljava/util/List;ZZZLcom/awakekt/awake/core/input/ImeComposition;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Lcom/awakekt/awake/core/input/ScrollSource;Ljava/util/List;Ljava/util/List;ZLjava/util/Set;Ljava/util/Set;Ljava/util/Set;)Lcom/awakekt/awake/core/input/InputSnapshot;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/core/input/InputSnapshot;FFZFFLjava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/lang/String;Ljava/util/List;ZZZLcom/awakekt/awake/core/input/ImeComposition;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Lcom/awakekt/awake/core/input/ScrollSource;Ljava/util/List;Ljava/util/List;ZLjava/util/Set;Ljava/util/Set;Ljava/util/Set;ILjava/lang/Object;)Lcom/awakekt/awake/core/input/InputSnapshot;
+	public final fun copy (FFZFFLjava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/lang/String;Ljava/util/List;ZZZLcom/awakekt/awake/core/input/ImeComposition;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Lcom/awakekt/awake/core/input/ScrollSource;Ljava/util/List;Ljava/util/List;ZLcom/awakekt/awake/core/input/PinchGesture;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;)Lcom/awakekt/awake/core/input/InputSnapshot;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/input/InputSnapshot;FFZFFLjava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/lang/String;Ljava/util/List;ZZZLcom/awakekt/awake/core/input/ImeComposition;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Lcom/awakekt/awake/core/input/ScrollSource;Ljava/util/List;Ljava/util/List;ZLcom/awakekt/awake/core/input/PinchGesture;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;ILjava/lang/Object;)Lcom/awakekt/awake/core/input/InputSnapshot;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getButtonsDown ()Ljava/util/Set;
 	public final fun getButtonsPressed ()Ljava/util/Set;
@@ -445,6 +447,7 @@ public final class com/awakekt/awake/core/input/InputSnapshot : com/awakekt/awak
 	public final fun getKeysPressed ()Ljava/util/Set;
 	public final fun getKeysReleased ()Ljava/util/Set;
 	public fun getKeysWithheldFromActions ()Z
+	public final fun getPinch ()Lcom/awakekt/awake/core/input/PinchGesture;
 	public final fun getPointerDown ()Z
 	public final fun getPointerFromTouch ()Z
 	public final fun getPointerPressed ()Z
@@ -585,6 +588,22 @@ public final class com/awakekt/awake/core/input/KeyModifier : java/lang/Enum {
 	public final fun getKey ()Lcom/awakekt/awake/core/input/Key;
 	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/core/input/KeyModifier;
 	public static fun values ()[Lcom/awakekt/awake/core/input/KeyModifier;
+}
+
+public final class com/awakekt/awake/core/input/PinchGesture {
+	public fun <init> (FFF)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun copy (FFF)Lcom/awakekt/awake/core/input/PinchGesture;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/input/PinchGesture;FFFILjava/lang/Object;)Lcom/awakekt/awake/core/input/PinchGesture;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFocusX ()F
+	public final fun getFocusY ()F
+	public final fun getScale ()F
+	public final fun getZoomDelta ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class com/awakekt/awake/core/input/PointerButton : java/lang/Enum {

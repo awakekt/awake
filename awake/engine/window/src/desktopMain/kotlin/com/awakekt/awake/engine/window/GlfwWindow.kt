@@ -96,6 +96,12 @@ object GlfwWindow {
      */
     external fun glfwConsumeScrollSource(window: Long): Int
 
+    /**
+     * A trackpad pinch's scale factor since the last call, then reset to 1: above 1 the fingers
+     * spread. Only macOS reports one (its magnify gesture); elsewhere this is always 1.
+     */
+    external fun glfwConsumePinchScale(window: Long): Double
+
     /** Sets the system cursor icon on [window] to standard cursor [shape]. */
     external fun glfwSetCursorShape(window: Long, shape: Int)
 

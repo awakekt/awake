@@ -55,6 +55,7 @@ public final class com/awakekt/awake/scene/controls/GameplayInput : com/awakekt/
 	public fun <init> (Lcom/awakekt/awake/core/input/InputSnapshot;Lcom/awakekt/awake/compose/ui/platform/InputOwnership;)V
 	public final fun getKeysOwnedByUi ()Z
 	public fun getKeysWithheldFromActions ()Z
+	public final fun getPinch ()Lcom/awakekt/awake/core/input/PinchGesture;
 	public final fun getPointerDown ()Z
 	public final fun getPointerX ()F
 	public final fun getPointerY ()F

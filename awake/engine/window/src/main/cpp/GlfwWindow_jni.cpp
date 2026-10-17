@@ -24,6 +24,7 @@ extern "C" void awake_window_set_scroll_callback(JNIEnv* env, jlong window);
 extern "C" jdouble awake_window_consume_scroll_delta_y(JNIEnv* env, jlong window);
 extern "C" jdouble awake_window_consume_scroll_delta_x(JNIEnv* env, jlong window);
 extern "C" jint awake_window_consume_scroll_source(JNIEnv* env, jlong window);
+extern "C" jdouble awake_window_consume_pinch_scale(JNIEnv* env, jlong window);
 extern "C" jstring awake_window_get_clipboard_string(JNIEnv* env, jlong window);
 extern "C" void awake_window_set_clipboard_string(JNIEnv* env, jlong window, jstring text);
 
@@ -407,6 +408,24 @@ Java_com_awakekt_awake_engine_window_GlfwWindow_glfwConsumeScrollSource(
     }
 
     return awake_window_consume_scroll_source(env, window);
+}
+
+
+extern "C" JNIEXPORT jdouble JNICALL
+Java_com_awakekt_awake_engine_window_GlfwWindow_glfwConsumePinchScale(
+        JNIEnv* env,
+        jclass clazz,
+        jlong window) {
+    // --- Marshalling ---
+    void* window_ptr = reinterpret_cast<void*>(window);
+
+    // --- Error handling ---
+    if (!window_ptr) {
+        throw_illegal_state(env, "glfwConsumePinchScale: window not initialized");
+        return 1.0;
+    }
+
+    return awake_window_consume_pinch_scale(env, window);
 }
 
 

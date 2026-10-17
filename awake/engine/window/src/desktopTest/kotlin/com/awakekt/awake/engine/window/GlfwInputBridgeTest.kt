@@ -11,6 +11,8 @@ import com.awakekt.awake.core.input.ScrollSource
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 private const val GLFW_KEY_W = 87
@@ -82,6 +84,30 @@ class GlfwInputBridgeTest {
         assertEquals(2.25f, input.scrollDeltaX, "a trackpad's sideways swipe must reach Input.scrollDeltaX, once")
         assertEquals(0.5f, input.scrollDeltaY)
         assertEquals(2.25f, input.updateSnapshot().scrollDeltaX, "and the frame's snapshot")
+    }
+
+    @Test
+    fun aMacTrackpadPinchReachesTheSnapshotAboutTheCursorAndIsNotAScroll() {
+        val input = Input()
+        val reader = FakeGlfwWindowInput().apply {
+            cursorXValue = 100.0
+            cursorYValue = 50.0
+            scaleX = 2f
+            scaleY = 2f
+            pendingPinchScale = 1.1
+        }
+
+        pollGlfwInput(reader, input)
+        reader.pendingPinchScale = 1.2
+        pollGlfwInput(reader, input)
+        pollGlfwInput(reader, input)
+
+        val snapshot = input.updateSnapshot()
+        val pinch = assertNotNull(snapshot.pinch)
+        assertEquals(1.32f, pinch.scale, 1e-5f, "the steps of the polls in one frame multiply")
+        assertEquals(200f to 100f, pinch.focusX to pinch.focusY, "about the cursor, in framebuffer pixels")
+        assertEquals(0f, snapshot.scrollDeltaY)
+        assertNull(input.updateSnapshot().pinch, "and it lasts one frame")
     }
 
     @Test

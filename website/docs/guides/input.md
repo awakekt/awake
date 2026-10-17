@@ -179,18 +179,34 @@ whatever the UI holds, since the UI reads no controller.
 | `scrollDeltaX`, `scrollDeltaY` | number | Scroll this frame. |
 | `gamepadButtonsDown`, `gamepadButtonsPressed`, `gamepadButtonsReleased` | set of `GamepadButton` | Controller buttons, for a host that reads a controller. `isDown(button)`, `wasPressed(button)`, `wasReleased(button)` read them. |
 | `scrollSource` | `Wheel` · `Trackpad` · `Unknown` | What scrolled, where the platform can tell. |
+| `pinch` | `PinchGesture` or `null` | A trackpad pinch this frame: `scale` (above 1 zooms in, steps multiply), `zoomDelta` (`ln(scale)`), and the point it zooms about, `focusX`, `focusY`. |
 | `typedText`, `editActions` | string, list | Text typed this frame, and editing keys such as backspace. |
 
 `Key` covers letters, digits, arrows, F1 to F5, Space, Escape, Tab, Enter, the editing keys, and
 `Ctrl`, `Shift`, `Alt` and `Meta` (left and right are the same key). A key the host does not map
 arrives as `Key.Unknown`.
 
+## Trackpad pinch
+
+A trackpad pinch arrives as `pinch`, a `PinchGesture` with the frame's `scale` and the point it
+zooms about. Two-finger scrolling stays scroll.
+
+- **Browser:** Chrome, Edge and Firefox send a pinch as a `wheel` with `ctrlKey`, and the page does
+  not zoom. It arrives twice: as Ctrl held with a scroll, as it always has, and as `pinch`. That
+  frame's `scrollDeltaY` is the pinch's `zoomDelta`. Safari's gesture events arrive as `pinch` only.
+- **macOS desktop:** the trackpad's magnify gesture arrives as `pinch` only, about the cursor.
+- **Windows:** a touchpad sends a pinch as Ctrl+wheel, which arrives as scroll only.
+
+So read the pinch or the scroll, never both. On a frame with a `pinch`, zoom by it and ignore that
+frame's scroll; on the others, Ctrl+scroll is the fallback. The built-in cameras do this.
+`GameplayInput.pinch` is `null` while the UI holds the pointer or a dialog is open.
+
 ## How it works
 
-The host writes events into `Input` between frames with `setKeyDown`, `setPointer`, `setButton` and
-the scroll fields. At the start of a frame it calls `updateSnapshot()`, which works out the pressed
-and released edges against the previous snapshot and clears the per-frame values: scroll, typed text
-and edit actions. The snapshot is then passed to the app as `frame.input` and stays unchanged for the
+The host writes events into `Input` between frames with `setKeyDown`, `setPointer`, `setButton`,
+`addPinch` and the scroll fields. At the start of a frame it calls `updateSnapshot()`, which works out the pressed
+and released edges against the previous snapshot and clears the per-frame values: scroll, pinch, typed
+text and edit actions. The snapshot is then passed to the app as `frame.input` and stays unchanged for the
 whole frame.
 
 !!! warning "`wasPressed` is per frame, not per fixed step"
