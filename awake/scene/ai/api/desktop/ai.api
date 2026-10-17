@@ -476,6 +476,37 @@ public final class com/awakekt/awake/scene/ai/perception/SceneFactions$Companion
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
+public final class com/awakekt/awake/scene/ai/perception/SceneHearing {
+	public static final field Companion Lcom/awakekt/awake/scene/ai/perception/SceneHearing$Companion;
+	public fun <init> ()V
+	public fun <init> (FF)V
+	public synthetic fun <init> (FFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun copy (FF)Lcom/awakekt/awake/scene/ai/perception/SceneHearing;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/ai/perception/SceneHearing;FFILjava/lang/Object;)Lcom/awakekt/awake/scene/ai/perception/SceneHearing;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMuffledBy ()F
+	public final fun getRange ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/scene/ai/perception/SceneHearing$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/ai/perception/SceneHearing$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/ai/perception/SceneHearing;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/ai/perception/SceneHearing;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/ai/perception/SceneHearing$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
 public final class com/awakekt/awake/scene/ai/perception/ScenePerceivable : com/awakekt/awake/scene/document/SceneComponent {
 	public static final field Companion Lcom/awakekt/awake/scene/ai/perception/ScenePerceivable$Companion;
 	public fun <init> (Ljava/lang/String;ZF)V
@@ -513,16 +544,16 @@ public final class com/awakekt/awake/scene/ai/perception/ScenePerceivable$Compan
 
 public final class com/awakekt/awake/scene/ai/perception/ScenePerceiver : com/awakekt/awake/scene/document/SceneComponent {
 	public static final field Companion Lcom/awakekt/awake/scene/ai/perception/ScenePerceiver$Companion;
-	public fun <init> (Ljava/lang/String;Lcom/awakekt/awake/ai/perception/PerceptionSettings;)V
-	public synthetic fun <init> (Ljava/lang/String;Lcom/awakekt/awake/ai/perception/PerceptionSettings;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;Lcom/awakekt/awake/scene/ai/perception/ScenePerceptionSettings;)V
+	public synthetic fun <init> (Ljava/lang/String;Lcom/awakekt/awake/scene/ai/perception/ScenePerceptionSettings;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
-	public final fun component2 ()Lcom/awakekt/awake/ai/perception/PerceptionSettings;
-	public final fun copy (Ljava/lang/String;Lcom/awakekt/awake/ai/perception/PerceptionSettings;)Lcom/awakekt/awake/scene/ai/perception/ScenePerceiver;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/ai/perception/ScenePerceiver;Ljava/lang/String;Lcom/awakekt/awake/ai/perception/PerceptionSettings;ILjava/lang/Object;)Lcom/awakekt/awake/scene/ai/perception/ScenePerceiver;
+	public final fun component2 ()Lcom/awakekt/awake/scene/ai/perception/ScenePerceptionSettings;
+	public final fun copy (Ljava/lang/String;Lcom/awakekt/awake/scene/ai/perception/ScenePerceptionSettings;)Lcom/awakekt/awake/scene/ai/perception/ScenePerceiver;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/ai/perception/ScenePerceiver;Ljava/lang/String;Lcom/awakekt/awake/scene/ai/perception/ScenePerceptionSettings;ILjava/lang/Object;)Lcom/awakekt/awake/scene/ai/perception/ScenePerceiver;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getAllowsMultiplePerNode ()Z
 	public final fun getFaction ()Ljava/lang/String;
-	public final fun getSettings ()Lcom/awakekt/awake/ai/perception/PerceptionSettings;
+	public final fun getSettings ()Lcom/awakekt/awake/scene/ai/perception/ScenePerceptionSettings;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 	public fun validate (Ljava/lang/String;)Ljava/util/List;
@@ -541,6 +572,84 @@ public final synthetic class com/awakekt/awake/scene/ai/perception/ScenePerceive
 }
 
 public final class com/awakekt/awake/scene/ai/perception/ScenePerceiver$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/ai/perception/ScenePerceptionSettings {
+	public static final field Companion Lcom/awakekt/awake/scene/ai/perception/ScenePerceptionSettings$Companion;
+	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/scene/ai/perception/SceneSight;Lcom/awakekt/awake/scene/ai/perception/SceneHearing;FFLcom/awakekt/awake/ai/perception/PerceptionKeys;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/scene/ai/perception/SceneSight;Lcom/awakekt/awake/scene/ai/perception/SceneHearing;FFLcom/awakekt/awake/ai/perception/PerceptionKeys;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/scene/ai/perception/SceneSight;
+	public final fun component2 ()Lcom/awakekt/awake/scene/ai/perception/SceneHearing;
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()Lcom/awakekt/awake/ai/perception/PerceptionKeys;
+	public final fun copy (Lcom/awakekt/awake/scene/ai/perception/SceneSight;Lcom/awakekt/awake/scene/ai/perception/SceneHearing;FFLcom/awakekt/awake/ai/perception/PerceptionKeys;)Lcom/awakekt/awake/scene/ai/perception/ScenePerceptionSettings;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/ai/perception/ScenePerceptionSettings;Lcom/awakekt/awake/scene/ai/perception/SceneSight;Lcom/awakekt/awake/scene/ai/perception/SceneHearing;FFLcom/awakekt/awake/ai/perception/PerceptionKeys;ILjava/lang/Object;)Lcom/awakekt/awake/scene/ai/perception/ScenePerceptionSettings;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getForgetAfter ()F
+	public final fun getHearing ()Lcom/awakekt/awake/scene/ai/perception/SceneHearing;
+	public final fun getKeys ()Lcom/awakekt/awake/ai/perception/PerceptionKeys;
+	public final fun getSight ()Lcom/awakekt/awake/scene/ai/perception/SceneSight;
+	public final fun getUpdateInterval ()F
+	public fun hashCode ()I
+	public final fun toSettings ()Lcom/awakekt/awake/ai/perception/PerceptionSettings;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/scene/ai/perception/ScenePerceptionSettings$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/ai/perception/ScenePerceptionSettings$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/ai/perception/ScenePerceptionSettings;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/ai/perception/ScenePerceptionSettings;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/ai/perception/ScenePerceptionSettings$Companion {
+	public final fun of (Lcom/awakekt/awake/ai/perception/PerceptionSettings;)Lcom/awakekt/awake/scene/ai/perception/ScenePerceptionSettings;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/ai/perception/SceneSight {
+	public static final field Companion Lcom/awakekt/awake/scene/ai/perception/SceneSight$Companion;
+	public fun <init> ()V
+	public fun <init> (FFFFFZ)V
+	public synthetic fun <init> (FFFFFZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()F
+	public final fun component6 ()Z
+	public final fun copy (FFFFFZ)Lcom/awakekt/awake/scene/ai/perception/SceneSight;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/ai/perception/SceneSight;FFFFFZILjava/lang/Object;)Lcom/awakekt/awake/scene/ai/perception/SceneSight;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEyeHeight ()F
+	public final fun getFocusAngle ()F
+	public final fun getFocusRange ()F
+	public final fun getLineOfSight ()Z
+	public final fun getPeripheralAngle ()F
+	public final fun getPeripheralRange ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/scene/ai/perception/SceneSight$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/ai/perception/SceneSight$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/ai/perception/SceneSight;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/ai/perception/SceneSight;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/ai/perception/SceneSight$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 

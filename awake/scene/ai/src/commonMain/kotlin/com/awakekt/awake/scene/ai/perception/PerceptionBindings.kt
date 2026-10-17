@@ -21,11 +21,11 @@ object PerceiverBinding : SceneComponentBinding<Perceiver, ScenePerceiver> {
     override val serializer = ScenePerceiver.serializer()
 
     override fun attachTyped(world: World, entity: Entity, component: ScenePerceiver, context: SceneResolutionContext) {
-        world.add(entity, Perceiver(FactionId(component.faction), component.settings))
+        world.add(entity, Perceiver(FactionId(component.faction), component.settings.toSettings()))
     }
 
     override fun export(world: World, entity: Entity, component: Perceiver): ScenePerceiver =
-        ScenePerceiver(component.faction.value, component.settings)
+        ScenePerceiver(component.faction.value, ScenePerceptionSettings.of(component.settings))
 }
 
 /** Binds [ScenePerceivable] to [Perceivable]. */

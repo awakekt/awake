@@ -107,6 +107,7 @@ class RangeAnnotationsAreEnforcedTest {
             )
         },
         "sprite_clips" to { base -> JsonObject(base + ("clips" to JsonObject(mapOf("idle" to JsonObject(emptyMap()))))) },
+        "perceiver" to { base -> JsonObject(base + ("faction" to JsonPrimitive("watch"))) },
     )
 
     @Test

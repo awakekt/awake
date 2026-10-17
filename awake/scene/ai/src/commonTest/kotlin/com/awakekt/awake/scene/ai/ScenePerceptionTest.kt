@@ -8,16 +8,16 @@ package com.awakekt.awake.scene.ai
 import com.awakekt.awake.ai.perception.FactionId
 import com.awakekt.awake.ai.perception.Perceivable
 import com.awakekt.awake.ai.perception.Perceiver
-import com.awakekt.awake.ai.perception.PerceptionSettings
 import com.awakekt.awake.ai.perception.PerceptionSystem
 import com.awakekt.awake.ai.perception.Relation
-import com.awakekt.awake.ai.perception.SightSettings
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.scene.ai.perception.Factions
 import com.awakekt.awake.scene.ai.perception.SceneFactionRelation
 import com.awakekt.awake.scene.ai.perception.SceneFactions
 import com.awakekt.awake.scene.ai.perception.ScenePerceivable
 import com.awakekt.awake.scene.ai.perception.ScenePerceiver
+import com.awakekt.awake.scene.ai.perception.ScenePerceptionSettings
+import com.awakekt.awake.scene.ai.perception.SceneSight
 import com.awakekt.awake.scene.ai.perception.TransformPerceptionSpace
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.binding.fromWorld
@@ -47,7 +47,7 @@ class ScenePerceptionTest {
             SceneNode(
                 name = "Guard",
                 transform = SceneTransform(rotation = SceneVec3(0f, (PI / 2).toFloat(), 0f)),
-                components = listOf(ScenePerceiver("watch", PerceptionSettings(sight = SightSettings(focusRange = 12f), updateInterval = 0f))),
+                components = listOf(ScenePerceiver("watch", ScenePerceptionSettings(sight = SceneSight(focusRange = 12f), updateInterval = 0f))),
             ),
             SceneNode(
                 name = "Thief",
