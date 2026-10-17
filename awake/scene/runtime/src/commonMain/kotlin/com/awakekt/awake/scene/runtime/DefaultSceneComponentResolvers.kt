@@ -9,6 +9,7 @@ import com.awakekt.awake.scene.binding.PrefabLinkBinding
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.binding.SceneComponentResolver
+import com.awakekt.awake.scene.canvas.CanvasControlsBinding
 import com.awakekt.awake.scene.canvas.CanvasElementBinding
 import com.awakekt.awake.scene.canvas.CanvasFollowLimitBinding
 import com.awakekt.awake.scene.canvas.CanvasFollowOcclusionBinding
@@ -113,6 +114,7 @@ object DefaultSceneComponentResolvers {
         TerrainBinding,
         CanvasElementBinding,
         CanvasScalerBinding,
+        CanvasControlsBinding,
         CanvasFollowLimitBinding,
         CanvasFollowOcclusionBinding,
         LocomotionAnimationBinding,
@@ -143,6 +145,7 @@ object DefaultSceneComponentResolvers {
         TerrainBinding,
         CanvasElementBinding,
         CanvasScalerBinding,
+        CanvasControlsBinding,
         CanvasFollowLimitBinding,
         CanvasFollowOcclusionBinding,
         LocomotionAnimationBinding,

@@ -51,6 +51,7 @@ import com.awakekt.awake.compose.ui.semantics.testTag
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.drawPath
+import com.awakekt.awake.core.input.InputDevice
 import com.awakekt.awake.core.localization.Strings
 import com.awakekt.awake.core.math2d.Rectangle
 import com.awakekt.awake.core.text.font.UiFont
@@ -95,6 +96,11 @@ context(_: Composer)
  *   the most important; a group with no limit draws every follower its rules leave in.
  * @param dpi The screen's real dots per inch, for a [scaler] in [CanvasScaleMode.ConstantPhysicalSize];
  *   0, when the host cannot tell, takes 160 per dp, the density's own definition.
+ * @param controls What the canvas's on-screen controls share: when touch-only elements show, by
+ *   [CanvasControls.touchVisibility] from [showTouchControls] and [inputDevice], and the smallest a
+ *   control is to a thumb. Null shows them as [showTouchControls] says.
+ * @param inputDevice The device the player last used, for [CanvasTouchVisibility.Auto]: touch
+ *   controls show after a touch and hide after a controller, a key or the mouse. Null until any is used.
  */
 fun CanvasOverlay(
     items: List<CanvasItem>,
@@ -109,9 +115,13 @@ fun CanvasOverlay(
     scaler: CanvasScaler? = null,
     followLimits: List<CanvasFollowLimit> = emptyList(),
     dpi: Float = 0f,
+    controls: CanvasControls? = null,
+    inputDevice: InputDevice? = null,
 ) {
     val origin = remember { CanvasOrigin() }
-    val tree = CanvasTree(items, showTouchControls, images, resolver, origin, fonts, strings)
+    val settings = controls ?: CanvasControls.Default
+    val touch = settings.touchVisibility.shows(showTouchControls, inputDevice)
+    val tree = CanvasTree(items, touch, images, resolver, origin, fonts, strings, settings)
     // Measured before its content is composed, so the scale fits the box, and followers are culled
     // and pinned against it, from the first frame.
     BoxWithConstraints(modifier.fillMaxSize()) {
@@ -404,7 +414,7 @@ private fun JoystickView(
     val centerX = stick.padCenterX(width, height, settings)
     val centerY = stick.padCenterY(width, height, settings)
     val alpha = stick.alpha(settings)
-    Box(modifier.stickInput(element, density).let { if (alpha < 1f) it.alpha(alpha) else it }) {
+    Box(modifier.stickInput(element, density, tree.touchMarginPx(element, density)).let { if (alpha < 1f) it.alpha(alpha) else it }) {
         Box(Modifier.offset((centerX - reach).dp, (centerY - reach).dp).size((reach * 2f).dp).clip(CircleShape).background(back))
         val knob = reach * 2f * KNOB_FRACTION
         Box(

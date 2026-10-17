@@ -31,7 +31,7 @@ import com.awakekt.awake.core.text.theme.TextStyle
 context(_: Composer)
 private fun ActionButtonView(element: CanvasElement, styled: Modifier, textStyle: TextStyle, tree: CanvasTree, children: List<CanvasItem>) {
     element.buttonPress.tick(element.button ?: CanvasButton.Default)
-    Box(styled.buttonInput(element, LocalDensity.current), contentAlignment = (element.textAlign ?: CanvasAnchor.Center).alignment) {
+    Box(styled.buttonInput(element, LocalDensity.current, tree.touchMarginPx(element, LocalDensity.current)), contentAlignment = (element.textAlign ?: CanvasAnchor.Center).alignment) {
         Text(tree.textOf(element), style = textStyle)
         if (element.cooldown > 0f) SweepFill(element.cooldown, COOLDOWN_SHADE, null)
         if (element.charges >= 0) {
