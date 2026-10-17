@@ -14,6 +14,13 @@ creates its own surface from the window handle it is given.
 - Browser (Web / Wasm): `runBrowserCanvas`, HTML canvas resizing, touch, pointer, wheel, keyboard, and
   hidden `<input>` IME / clipboard text bridge (`DomTextInputBridge`).
 
+Each reports its display to the lifecycle: the density, the safe area in dp (Android's system
+bars and display cutout, iOS's view safe area, the browser's `env(safe-area-inset-*)`; a desktop
+window has none), and the real dots per inch where the platform can tell (Android's display
+metrics, and on desktop the monitor the window is on, from its video mode and the physical size it
+reports, checked about once a second so a window dragged to another monitor follows). A browser and
+iOS report no dots per inch.
+
 ## Does not own
 
 - Surface or swapchain creation, which belong to each backend.

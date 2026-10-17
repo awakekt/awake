@@ -245,8 +245,8 @@ public final class com/awakekt/awake/scene/canvas/SceneCanvasFollowLimitKt {
 }
 
 public final class com/awakekt/awake/scene/canvas/SceneCanvasKt {
-	public static final fun SceneCanvas (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/compose/ui/Modifier;ZLjava/util/Map;FLcom/awakekt/awake/scene/canvas/CanvasProjector;Ljava/util/List;Lcom/awakekt/awake/scene/canvas/CanvasViews;Ljava/util/Map;Ljava/util/Comparator;Lcom/awakekt/awake/core/localization/Strings;Lcom/awakekt/awake/ui/canvas/CanvasInsets;Lcom/awakekt/awake/ui/canvas/CanvasScaler;Ljava/util/List;)V
-	public static synthetic fun SceneCanvas$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/compose/ui/Modifier;ZLjava/util/Map;FLcom/awakekt/awake/scene/canvas/CanvasProjector;Ljava/util/List;Lcom/awakekt/awake/scene/canvas/CanvasViews;Ljava/util/Map;Ljava/util/Comparator;Lcom/awakekt/awake/core/localization/Strings;Lcom/awakekt/awake/ui/canvas/CanvasInsets;Lcom/awakekt/awake/ui/canvas/CanvasScaler;Ljava/util/List;ILjava/lang/Object;)V
+	public static final fun SceneCanvas (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/compose/ui/Modifier;ZLjava/util/Map;FLcom/awakekt/awake/scene/canvas/CanvasProjector;Ljava/util/List;Lcom/awakekt/awake/scene/canvas/CanvasViews;Ljava/util/Map;Ljava/util/Comparator;Lcom/awakekt/awake/core/localization/Strings;Lcom/awakekt/awake/ui/canvas/CanvasInsets;Lcom/awakekt/awake/ui/canvas/CanvasScaler;Ljava/util/List;F)V
+	public static synthetic fun SceneCanvas$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/compose/ui/Modifier;ZLjava/util/Map;FLcom/awakekt/awake/scene/canvas/CanvasProjector;Ljava/util/List;Lcom/awakekt/awake/scene/canvas/CanvasViews;Ljava/util/Map;Ljava/util/Comparator;Lcom/awakekt/awake/core/localization/Strings;Lcom/awakekt/awake/ui/canvas/CanvasInsets;Lcom/awakekt/awake/ui/canvas/CanvasScaler;Ljava/util/List;FILjava/lang/Object;)V
 }
 
 public final class com/awakekt/awake/scene/canvas/SceneCanvasOrderKt {

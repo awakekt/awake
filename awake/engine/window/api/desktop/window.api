@@ -23,8 +23,8 @@ public final class com/awakekt/awake/engine/window/DesktopRunLimits$Companion {
 }
 
 public final class com/awakekt/awake/engine/window/DesktopWindowKt {
-	public static final fun runDesktopWindow (Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Ljava/lang/Integer;)V
-	public static synthetic fun runDesktopWindow$default (Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Ljava/lang/Integer;ILjava/lang/Object;)V
+	public static final fun runDesktopWindow (Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Ljava/lang/Integer;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun runDesktopWindow$default (Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Ljava/lang/Integer;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 }
 
 public final class com/awakekt/awake/engine/window/GlfwInputBridgeKt {
@@ -53,6 +53,7 @@ public final class com/awakekt/awake/engine/window/GlfwWindow {
 	public final fun glfwGetKey (JI)I
 	public final fun glfwGetMouseButton (JI)I
 	public final fun glfwGetWindowAttrib (JI)I
+	public final fun glfwGetWindowDpi (J)F
 	public final fun glfwGetWindowHeight (J)I
 	public final fun glfwGetWindowWidth (J)I
 	public final fun glfwInit ()Z

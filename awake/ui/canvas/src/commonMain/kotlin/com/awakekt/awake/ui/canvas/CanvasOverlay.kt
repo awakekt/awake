@@ -94,6 +94,8 @@ context(_: Composer)
  *   times a player's multiplier. Null draws at [scale].
  * @param followLimits The most followers of each [CanvasFollowRules.group] drawn at once, keeping
  *   the most important; a group with no limit draws every follower its rules leave in.
+ * @param dpi The screen's real dots per inch, for a [scaler] in [CanvasScaleMode.ConstantPhysicalSize];
+ *   0, when the host cannot tell, takes 160 per dp, the density's own definition.
  */
 fun CanvasOverlay(
     items: List<CanvasItem>,
@@ -107,6 +109,7 @@ fun CanvasOverlay(
     safeArea: CanvasInsets = CanvasInsets.None,
     scaler: CanvasScaler? = null,
     followLimits: List<CanvasFollowLimit> = emptyList(),
+    dpi: Float = 0f,
 ) {
     val origin = remember { CanvasOrigin() }
     val tree = CanvasTree(items, showTouchControls, images, resolver, origin, fonts, strings)
@@ -116,7 +119,7 @@ fun CanvasOverlay(
         val density = LocalDensity.current
         val width = if (constraints.hasBoundedWidth) constraints.maxWidth / density else 0f
         val height = if (constraints.hasBoundedHeight) constraints.maxHeight / density else 0f
-        val drawnScale = scaler?.scaleFor(width, height, density) ?: scale
+        val drawnScale = scaler?.scaleFor(width, height, density, if (dpi > 0f) dpi else density * CanvasScaler.DP_PER_INCH) ?: scale
         ScaledCanvas(tree, origin, drawnScale, safeArea, width, height, followLimits)
     }
 }

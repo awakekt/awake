@@ -30,6 +30,7 @@ import com.awakekt.awake.engine.platform.core.FrameStats
 import com.awakekt.awake.engine.platform.dsl.AppServiceLookup
 import com.awakekt.awake.engine.platform.lifecycle.AppFrame
 import com.awakekt.awake.engine.platform.lifecycle.AppLifecycle
+import com.awakekt.awake.engine.platform.lifecycle.DisplayInsets
 import com.awakekt.awake.render.capture.FramebufferAttachment
 import com.awakekt.awake.render.capture.FramebufferAttachmentData
 import com.awakekt.awake.render.command.GpuDrawPreparationSource
@@ -143,9 +144,23 @@ class SceneAppLifecycleRuntime internal constructor(
     /**
      * What covers the screen's edges, in dp: a notch, rounded corners, a home indicator, overscan.
      * The scene canvas keeps its anchored elements inside it, unless an element opts out with its
-     * `safeArea`. The host sets it from what its platform reports.
+     * `safeArea`. Null, the default, uses what the platform reports each frame, as
+     * [AppFrame.safeArea]; a host that knows better, such as an editor previewing a device, sets its
+     * own.
      */
-    var canvasSafeArea: CanvasInsets = CanvasInsets.None
+    var canvasSafeArea: CanvasInsets? = null
+
+    /**
+     * The screen's real dots per inch, for a `canvas_scaler` in `ConstantPhysicalSize`. Null, the
+     * default, uses what the platform reports each frame, as [AppFrame.dpi], and 160 per dp where it
+     * cannot tell; a host that knows the screen set its own.
+     */
+    var canvasDpi: Float? = null
+
+    // What the platform reported with the last frame, for the canvas to fall back on.
+    private var reportedSafeArea: DisplayInsets = DisplayInsets.None
+    private var platformSafeArea: CanvasInsets = CanvasInsets.None
+    private var platformDpi: Float = 0f
 
     /**
      * The scene component bindings a canvas element's `bind` reads fields through: those of the
@@ -294,6 +309,12 @@ class SceneAppLifecycleRuntime internal constructor(
             // `uiHost` was constructed -- see ComposeHost.density's own doc comment for why this is
             // a live per-frame assignment rather than a constructor argument.
             uiHost.density = frame.density
+            // Converted only when it changes, which is rarely: a rotation or a bar showing.
+            if (frame.safeArea !== reportedSafeArea) {
+                reportedSafeArea = frame.safeArea
+                platformSafeArea = frame.safeArea.toCanvasInsets()
+            }
+            platformDpi = frame.dpi
             timePhase({ uiBuildMs = it }) {
                 buildUiFrame(snapshot, delta, viewportWidth, viewportHeight)
             }.also { builtFrame ->
@@ -384,7 +405,8 @@ class SceneAppLifecycleRuntime internal constructor(
                         views = canvasViews(),
                         fonts = canvasFonts,
                         strings = canvasStrings,
-                        safeArea = canvasSafeArea,
+                        safeArea = canvasSafeArea ?: platformSafeArea,
+                        dpi = canvasDpi ?: platformDpi,
                     )
                 }
                 if (content != null) content()
@@ -723,3 +745,7 @@ fun SceneAppLifecycleRuntime.defaultInfrastructureSystems(
 
 /** Stands in for `spec.ui` when only the scene's canvas elements need a UI frame. */
 private val SceneCanvasOnly: SceneContent = {}
+
+/** These insets as the canvas's, the same dp from each edge. */
+private fun DisplayInsets.toCanvasInsets(): CanvasInsets =
+    if (this == DisplayInsets.None) CanvasInsets.None else CanvasInsets(left, top, right, bottom)

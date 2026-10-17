@@ -465,3 +465,56 @@ Java_com_awakekt_awake_engine_window_GlfwWindow_glfwGetWindowAttrib(
     return static_cast<jint>(glfwGetWindowAttrib(reinterpret_cast<GLFWwindow*>(window_ptr), static_cast<int>(attrib)));
 }
 
+
+// The monitor a windowed window's centre is on, or the primary one when none holds it.
+static GLFWmonitor* monitor_under(GLFWwindow* window) {
+    int x = 0, y = 0, width = 0, height = 0;
+    glfwGetWindowPos(window, &x, &y);
+    glfwGetWindowSize(window, &width, &height);
+    const int centre_x = x + width / 2;
+    const int centre_y = y + height / 2;
+    int count = 0;
+    GLFWmonitor** monitors = glfwGetMonitors(&count);
+    for (int i = 0; i < count; i++) {
+        int left = 0, top = 0;
+        glfwGetMonitorPos(monitors[i], &left, &top);
+        const GLFWvidmode* mode = glfwGetVideoMode(monitors[i]);
+        if (mode && centre_x >= left && centre_x < left + mode->width && centre_y >= top && centre_y < top + mode->height) {
+            return monitors[i];
+        }
+    }
+    return glfwGetPrimaryMonitor();
+}
+
+
+extern "C" JNIEXPORT jfloat JNICALL
+Java_com_awakekt_awake_engine_window_GlfwWindow_glfwGetWindowDpi(
+        JNIEnv* env,
+        jclass clazz,
+        jlong window) {
+    // --- Marshalling ---
+    auto* handle = reinterpret_cast<GLFWwindow*>(window);
+
+    // --- Error handling ---
+    if (!handle) {
+        throw_illegal_state(env, "glfwGetWindowDpi: window not initialized");
+        return 0;
+    }
+
+    GLFWmonitor* monitor = glfwGetWindowMonitor(handle);
+    if (!monitor) monitor = monitor_under(handle);
+    if (!monitor) return 0;
+    int width_mm = 0, height_mm = 0;
+    glfwGetMonitorPhysicalSize(monitor, &width_mm, &height_mm);
+    const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+    if (!mode || width_mm <= 0) return 0;
+    double pixels = mode->width;
+#ifdef __APPLE__
+    // macOS gives the mode in points; its content scale makes them the panel's pixels.
+    float scale_x = 1.0f, scale_y = 1.0f;
+    glfwGetMonitorContentScale(monitor, &scale_x, &scale_y);
+    pixels *= scale_x;
+#endif
+    return static_cast<jfloat>(pixels * 25.4 / width_mm);
+}
+

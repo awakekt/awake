@@ -22,6 +22,11 @@ import com.awakekt.awake.core.input.InputSnapshot
  * @property viewportHeight Framebuffer height in physical pixels.
  * @property input Input state snapshot captured for this frame.
  * @property density Physical pixels per dp-equivalent display unit.
+ * @property safeArea What covers the window's edges, in dp, as its platform reports it: a notch,
+ *   rounded corners, system bars drawn over the game. [DisplayInsets.None] where nothing does or the
+ *   host cannot tell.
+ * @property dpi The screen's real dots per inch, physical pixels to a physical inch, where the
+ *   platform can tell; 0 where it cannot, for a reader to fall back on 160 per dp.
  */
 data class AppFrame(
     val delta: Float,
@@ -29,4 +34,6 @@ data class AppFrame(
     val viewportHeight: Float,
     val input: InputSnapshot,
     val density: Float = 1f,
+    val safeArea: DisplayInsets = DisplayInsets.None,
+    val dpi: Float = 0f,
 )

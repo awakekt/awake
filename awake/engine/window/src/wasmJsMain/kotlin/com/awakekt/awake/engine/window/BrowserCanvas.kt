@@ -233,11 +233,13 @@ fun runBrowserCanvas(
     val initialSize = currentCanvasSize(canvas)
     syncCanvasSize(canvas, initialSize.first, initialSize.second)
     lifecycle.setDensity(currentWindowDensity().toFloat())
+    lifecycle.setSafeArea(currentSafeArea(canvas))
 
     window.addEventListener("resize") {
         val (width, height) = currentCanvasSize(canvas)
         syncCanvasSize(canvas, width, height)
         lifecycle.setDensity(currentWindowDensity().toFloat())
+        lifecycle.setSafeArea(currentSafeArea(canvas))
         onResize(width, height)
         lifecycle.resize(x = 0, y = 0, width = width, height = height)
     }

@@ -101,4 +101,12 @@ object GlfwWindow {
 
     /** Returns the value of window attribute [attrib] for [window]. */
     external fun glfwGetWindowAttrib(window: Long, attrib: Int): Int
+
+    /**
+     * The real dots per inch of the monitor [window] is on, physical pixels to a physical inch: the
+     * monitor it is full screen on, or the one under its centre, from the monitor's video mode and
+     * the physical size it reports. 0 when the monitor reports no size, as a projector or a virtual
+     * display may.
+     */
+    external fun glfwGetWindowDpi(window: Long): Float
 }

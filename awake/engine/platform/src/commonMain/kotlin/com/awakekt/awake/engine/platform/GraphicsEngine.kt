@@ -10,6 +10,7 @@ import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.engine.platform.config.WindowConfig
 import com.awakekt.awake.engine.platform.lifecycle.AppFrame
 import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
+import com.awakekt.awake.engine.platform.lifecycle.DisplayInsets
 import com.awakekt.awake.render.renderer.LineSegment
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.texture.TextureAsset
@@ -60,6 +61,11 @@ abstract class GraphicsEngine(
     private var density: () -> Float = { 1f }
     private var hostDensity: Float? = null
 
+    // Written by a platform's UI thread, read by the frame's thread.
+    @Volatile private var hostSafeArea: DisplayInsets = DisplayInsets.None
+
+    @Volatile private var hostDpi: Float = 0f
+
     /** The current swapchain's width/height aspect ratio -- for a subclass computing a
      * [com.awakekt.awake.core.math.Frustum]'s corners to visualize via
      * [drawDebugLines]. */
@@ -103,6 +109,8 @@ abstract class GraphicsEngine(
                 viewportHeight = height,
                 input = input.updateSnapshot(),
                 density = hostDensity ?: density(),
+                safeArea = hostSafeArea,
+                dpi = hostDpi,
             ),
         )
     }
@@ -139,6 +147,14 @@ abstract class GraphicsEngine(
 
     final override fun setDensity(density: Float) {
         hostDensity = density.takeIf { it > 0f }
+    }
+
+    final override fun setSafeArea(insets: DisplayInsets) {
+        hostSafeArea = insets.clamped()
+    }
+
+    final override fun setDpi(dpi: Float) {
+        hostDpi = if (dpi > 0f && dpi.isFinite()) dpi else 0f
     }
 
     final override fun dispose() {

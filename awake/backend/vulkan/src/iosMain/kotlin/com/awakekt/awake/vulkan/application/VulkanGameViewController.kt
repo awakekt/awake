@@ -12,7 +12,7 @@ import platform.UIKit.UIScreen
 import platform.UIKit.UIViewController
 
 /**
- * Wraps a [VulkanEngine] in a plain UIKit view controller.
+ * Wraps a [VulkanEngine] in a plain UIKit view controller, passing the view's safe area on to it.
  */
 fun makeVulkanGameViewController(
     application: VulkanEngine,
@@ -26,6 +26,7 @@ fun makeVulkanGameViewController(
         onResize = { width, height -> application.resize(0, 0, width, height) },
         onPause = { application.pause() },
         onResume = { application.resume() },
+        onSafeArea = { insets -> application.setSafeArea(insets) },
     )
     return controller
 }

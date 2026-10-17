@@ -583,8 +583,8 @@ public final class com/awakekt/awake/ui/canvas/CanvasOrderKt {
 }
 
 public final class com/awakekt/awake/ui/canvas/CanvasOverlayKt {
-	public static final fun CanvasOverlay (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/util/List;Lcom/awakekt/awake/compose/ui/Modifier;ZLjava/util/Map;FLcom/awakekt/awake/ui/canvas/CanvasResolver;Ljava/util/Map;Lcom/awakekt/awake/core/localization/Strings;Lcom/awakekt/awake/ui/canvas/CanvasInsets;Lcom/awakekt/awake/ui/canvas/CanvasScaler;Ljava/util/List;)V
-	public static synthetic fun CanvasOverlay$default (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/util/List;Lcom/awakekt/awake/compose/ui/Modifier;ZLjava/util/Map;FLcom/awakekt/awake/ui/canvas/CanvasResolver;Ljava/util/Map;Lcom/awakekt/awake/core/localization/Strings;Lcom/awakekt/awake/ui/canvas/CanvasInsets;Lcom/awakekt/awake/ui/canvas/CanvasScaler;Ljava/util/List;ILjava/lang/Object;)V
+	public static final fun CanvasOverlay (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/util/List;Lcom/awakekt/awake/compose/ui/Modifier;ZLjava/util/Map;FLcom/awakekt/awake/ui/canvas/CanvasResolver;Ljava/util/Map;Lcom/awakekt/awake/core/localization/Strings;Lcom/awakekt/awake/ui/canvas/CanvasInsets;Lcom/awakekt/awake/ui/canvas/CanvasScaler;Ljava/util/List;F)V
+	public static synthetic fun CanvasOverlay$default (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/util/List;Lcom/awakekt/awake/compose/ui/Modifier;ZLjava/util/Map;FLcom/awakekt/awake/ui/canvas/CanvasResolver;Ljava/util/Map;Lcom/awakekt/awake/core/localization/Strings;Lcom/awakekt/awake/ui/canvas/CanvasInsets;Lcom/awakekt/awake/ui/canvas/CanvasScaler;Ljava/util/List;FILjava/lang/Object;)V
 }
 
 public final class com/awakekt/awake/ui/canvas/CanvasProjection {
