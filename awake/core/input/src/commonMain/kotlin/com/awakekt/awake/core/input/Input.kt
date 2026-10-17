@@ -486,6 +486,12 @@ class Input {
         pendingPinchY = focusY
     }
 
+    /** The pinch since the last snapshot, or `null` for none, and starts the next frame without one. */
+    private fun takePinch(): PinchGesture? {
+        if (pendingPinchScale == 1f) return null
+        return PinchGesture(pendingPinchScale, pendingPinchX, pendingPinchY).also { pendingPinchScale = 1f }
+    }
+
     // Accumulated (OR'd), not overwritten, so a down+up pair landing within one frame
     // interval -- a fast tap, a trackpad tap, any synthetic/automation click -- still
     // latches both edges instead of the second event silently erasing the first. Cleared
@@ -575,7 +581,7 @@ class Input {
             clipboardCommands = pendingClipboardCommands.takeIf { it.isNotEmpty() }?.toList() ?: emptyList(),
             touches = if (fingers.isEmpty()) emptyList() else fingers.values.map(Finger::snapshot),
             pointerFromTouch = pointerFromTouch,
-            pinch = if (pendingPinchScale == 1f) null else PinchGesture(pendingPinchScale, pendingPinchX, pendingPinchY),
+            pinch = takePinch(),
             gamepadButtonsDown = heldGamepad,
             gamepadButtonsPressed = if (heldGamepad.isEmpty()) emptySet() else heldGamepad - previousGamepadDown,
             gamepadButtonsReleased = if (previousGamepadDown.isEmpty()) emptySet() else previousGamepadDown - heldGamepad,
@@ -587,7 +593,6 @@ class Input {
         scrollDeltaX = 0f
         scrollDeltaY = 0f
         scrollSource = ScrollSource.Unknown
-        pendingPinchScale = 1f
         typedText.clear()
         pendingEditActions.clear()
         pendingClipboardCommands.clear()
