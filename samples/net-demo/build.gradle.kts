@@ -54,6 +54,8 @@ kotlin {
         named("desktopMain").dependencies {
             implementation(libs.ktor.server.core)
             implementation(libs.ktor.server.netty)
+            // Netty 4.2.17.Final or later; see the netty entry in gradle/libs.versions.toml.
+            implementation(project.dependencies.platform(libs.netty.bom))
             implementation(libs.ktor.server.websockets)
             implementation(libs.ktor.client.cio)
             implementation(libs.ktor.network.tls.certificates)

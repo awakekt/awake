@@ -64,7 +64,7 @@ Values the engine is built with.
 
 | Item | Value | Source |
 | --- | --- | --- |
-| Kotlin | `2.4.10` | `gradle/libs.versions.toml` |
+| Kotlin | `2.4.20` | `gradle/libs.versions.toml` |
 | JVM toolchain | 17 (`backend:webgpu`: 25) | `jvmToolchain(...)` |
 | Android `minSdk` | 33 | `gradle.properties` |
 | Android `compileSdk` | 35 | `gradle.properties` |

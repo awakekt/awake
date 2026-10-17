@@ -12,7 +12,7 @@ import org.gradle.api.artifacts.result.ResolvedDependencyResult
 //   ./gradlew -p tools/core-alignment-check checkCoreAlignment -Pcore=<core> -Pvulkan=<vulkan>
 // Add -PmavenLocal to resolve from Maven Local before Central.
 plugins {
-    kotlin("jvm") version "2.4.10"
+    kotlin("jvm") version "2.4.20"
 }
 
 val core = providers.gradleProperty("core").get()

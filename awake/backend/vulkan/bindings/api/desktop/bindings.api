@@ -2583,6 +2583,7 @@ public final class com/awakekt/awake/vulkan/models/VkClearColorValue$Int32 : com
 }
 
 public final class com/awakekt/awake/vulkan/models/VkClearColorValue$UInt32 : com/awakekt/awake/vulkan/models/VkClearColorValue {
+	public fun <init> ()V
 	public synthetic fun <init> ([IILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> ([ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getValues--hP7Qyg ()[I
@@ -3028,6 +3029,7 @@ public final class com/awakekt/awake/vulkan/models/info/VkCommandBufferBeginInfo
 }
 
 public final class com/awakekt/awake/vulkan/models/info/VkCommandBufferInheritanceInfo {
+	public fun <init> ()V
 	public synthetic fun <init> (Lcom/awakekt/awake/vulkan/enums/VkStructureType;Ljava/lang/Object;JIJZIIILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/vulkan/enums/VkStructureType;Ljava/lang/Object;JIJZIILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lcom/awakekt/awake/vulkan/enums/VkStructureType;

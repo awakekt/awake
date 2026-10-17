@@ -127,6 +127,9 @@ keeps Ctrl+S from firing for Ctrl+Shift+S; `Allow` lets it. A plain key in `keys
 bound to saving takes S from the `move` axis. Left and right modifiers are the same modifier. For a
 controller, the shoulders and triggers are the modifiers.
 
+A scene declares chords on a button action in its `input_actions`, under `chords`, in the same
+form; see the [reference](../reference/scene-document-components.md#chord).
+
 A player's controls are data. `bindings()` takes every action's binding, `InputBindings`, which
 saves and loads with kotlinx.serialization; `rebind` and `rebindAll` change them while the game
 runs, and `actionsBoundTo` says what a new chord would clash with:

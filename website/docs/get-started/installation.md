@@ -4,7 +4,7 @@
 
 ## Before you start
 
-- **Kotlin 2.4.10** with the Kotlin Multiplatform Gradle plugin. AwakeKt is built with this version.
+- **Kotlin 2.4.20** with the Kotlin Multiplatform Gradle plugin. AwakeKt is built with this version.
 - **JDK 17 or newer** for the desktop target.
 - **Vulkan and GLFW on the desktop.** The Vulkan backend's jar carries AwakeKt's native library for
   macOS (arm64 and x86_64) and Linux (x86_64). That library links against the system Vulkan loader

@@ -327,7 +327,7 @@ on any node; only the first in a scene is used. `SceneInputActions`.
 
 | Field | Type | Default | What it does |
 | --- | --- | --- | --- |
-| `actions` | array of [input actions](#input-action) | `[]` | The scene's own actions and the defaults it rebinds. Each name is letters, digits, `_`, `.` and `-`, starting with a letter, digit or `_`, and is used once. A key triggers one action, counting the defaults the scene keeps. |
+| `actions` | array of [input actions](#input-action) | `[]` | The scene's own actions and the defaults it rebinds. Each name is letters, digits, `_`, `.` and `-`, starting with a letter, digit or `_`, and is used once. A key, or a chord, triggers one action, counting the defaults the scene keeps. |
 
 ### Input action
 
@@ -335,7 +335,7 @@ An entry of `actions`, named by its `type` key.
 
 | `type` | Fields | Defaults |
 | --- | --- | --- |
-| `button` | `name` (string), `keys` (array of key names), `buttons` (array of `Primary` · `Secondary` · `Middle` · `Back` · `Forward`), `trigger` (`Hold` · `Press` · `Toggle`), `startsOn` (boolean) | required, `[]`, `[]`, `Hold`, `false` |
+| `button` | `name` (string), `keys` (array of key names), `buttons` (array of `Primary` · `Secondary` · `Middle` · `Back` · `Forward`), `trigger` (`Hold` · `Press` · `Toggle`), `startsOn` (boolean), `chords` (array of [chords](#chord)) | required, `[]`, `[]`, `Hold`, `false`, `[]` |
 | `axis` | `name` (string), `up`, `down`, `left`, `right` (arrays of key names) | required, `[]` each |
 
 A button's `trigger` says when it is active: `Hold` while one of its keys or pointer buttons is held,
@@ -349,6 +349,29 @@ is an axis, and `jump` and `run` are buttons.
 { "component": "input_actions", "actions": [
   { "type": "button", "name": "run", "keys": ["X"], "trigger": "Toggle", "startsOn": true },
   { "type": "button", "name": "interact", "keys": ["E"], "trigger": "Press" }
+] }
+```
+
+### Chord
+
+An entry of a button's `chords`: a key or controller button pressed while modifiers are held, named
+by its `type` key. The most specific chord held when its key goes down takes the key, so Ctrl+1 does
+not also fire an action bound to 1; see [Chords and rebinding](../guides/input.md#chords-and-rebinding).
+
+| `type` | Fields | Defaults |
+| --- | --- | --- |
+| `key` | `key` (key name), `modifiers` (array of `Ctrl` · `Alt` · `Shift` · `Meta`), `extraModifiers` (`Block` · `Allow`) | required, `[]`, `Block` |
+| `gamepad` | `button` (`South` · `East` · `West` · `North`, the shoulders and triggers, the sticks, the d-pad, `Select`, `Start`, `Home`), `modifiers` (array of controller buttons), `extraModifiers` (`Block` · `Allow`) | required, `[]`, `Block` |
+
+`extraModifiers` says whether a modifier the chord does not name, held as well, stops it: `Block`
+keeps Ctrl+S from firing for Ctrl+Shift+S. A chord binds one action, as a key does, and a chord with
+no modifiers is the plain key. A chord whose key is `Unknown` or one of its own modifiers does not
+load. Exporting a scene keeps the chords a player rebound while it ran.
+
+```json title="Ctrl+1 or a shoulder held with the bottom face button uses the second hotbar's first slot"
+{ "type": "button", "name": "slot11", "trigger": "Press", "chords": [
+  { "type": "key", "key": "Digit1", "modifiers": ["Ctrl"] },
+  { "type": "gamepad", "button": "South", "modifiers": ["LeftShoulder"] }
 ] }
 ```
 

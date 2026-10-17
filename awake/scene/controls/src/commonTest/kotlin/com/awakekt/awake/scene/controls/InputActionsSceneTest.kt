@@ -7,8 +7,14 @@ package com.awakekt.awake.scene.controls
 
 import com.awakekt.awake.compose.ui.platform.InputOwnership
 import com.awakekt.awake.core.input.ActionTrigger
+import com.awakekt.awake.core.input.ButtonBinding
+import com.awakekt.awake.core.input.ExtraModifiers
+import com.awakekt.awake.core.input.GamepadButton
+import com.awakekt.awake.core.input.GamepadChord
 import com.awakekt.awake.core.input.InputSnapshot
 import com.awakekt.awake.core.input.Key
+import com.awakekt.awake.core.input.KeyChord
+import com.awakekt.awake.core.input.KeyModifier
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.binding.fromWorld
@@ -20,7 +26,9 @@ import com.awakekt.awake.scene.controls.input.inputActions
 import com.awakekt.awake.scene.controls.movement.MovementControl
 import com.awakekt.awake.scene.controls.movement.PlayerInputSystem
 import com.awakekt.awake.scene.controls.movement.registerControls
+import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneLoader
+import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.runtime.DefaultSceneComponentResolvers
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -190,6 +198,117 @@ class InputActionsSceneTest {
             .nodes.flatMap { it.components }.filterIsInstance<SceneInputActions>()
 
         assertEquals(listOf(authored), exported)
+    }
+
+    @Test
+    fun aSceneBindsAChordThatTakesItsKeyFromAPlainOne() {
+        val (world, _) = player(
+            """{ "component": "input_actions", "actions": [
+                { "type": "button", "name": "slot1", "keys": ["Digit1"], "trigger": "Press" },
+                { "type": "button", "name": "slot11", "trigger": "Press",
+                  "chords": [ { "type": "key", "key": "Digit1", "modifiers": ["Ctrl"] } ] }
+            ] }""",
+        )
+        val actions = assertNotNull(world.inputActions())
+
+        frame(world, down = setOf(Key.Ctrl, Key.Digit1), pressed = setOf(Key.Ctrl, Key.Digit1))
+        assertTrue(actions.isActive("slot11"))
+        assertFalse(actions.isActive("slot1"), "Ctrl+1 does not also fire 1")
+        frame(world, down = setOf(Key.Digit1), pressed = setOf(Key.Digit1))
+        assertTrue(actions.isActive("slot1"))
+        assertFalse(actions.isActive("slot11"))
+    }
+
+    @Test
+    fun aChordBoundTwiceIsRefusedLikeAKey() {
+        val ctrl1 = KeyChord(Key.Digit1, setOf(KeyModifier.Ctrl))
+        fun issues(vararg actions: SceneButtonAction) = SceneInputActions(actions.toList()).validate("p").map { it.message }
+
+        assertEquals(
+            listOf("input_actions binds Ctrl+Digit1 to both slot1 and slot2"),
+            issues(SceneButtonAction("slot1", chords = setOf(ctrl1)), SceneButtonAction("slot2", chords = setOf(ctrl1))),
+        )
+        assertEquals(
+            listOf("input_actions binds Space to both jump and dash"),
+            issues(SceneButtonAction("dash", chords = setOf(KeyChord(Key.Space)))),
+            "a chord with no modifiers is the plain key",
+        )
+        assertEquals(
+            listOf("input_actions.slot1 binds Ctrl+Digit1 twice"),
+            issues(SceneButtonAction("slot1", chords = setOf(ctrl1, ctrl1.copy(extraModifiers = ExtraModifiers.Allow)))),
+        )
+        assertEquals(
+            listOf("input_actions binds LeftShoulder+South to both a and b"),
+            issues(
+                SceneButtonAction("a", chords = setOf(GamepadChord(GamepadButton.South, setOf(GamepadButton.LeftShoulder)))),
+                SceneButtonAction("b", chords = setOf(GamepadChord(GamepadButton.South, setOf(GamepadButton.LeftShoulder)))),
+            ),
+        )
+        assertEquals(
+            emptyList(),
+            issues(
+                SceneButtonAction("slot1", keys = setOf(Key.Digit1), chords = setOf(GamepadChord(GamepadButton.South))),
+                SceneButtonAction("slot11", chords = setOf(ctrl1, KeyChord(Key.Space, setOf(KeyModifier.Ctrl)))),
+            ),
+            "a chord is free of the plain key it adds modifiers to",
+        )
+    }
+
+    @Test
+    fun exportingKeepsTheChordsAPlayerReboundAtRunTime() {
+        val (world, _) = player(
+            """{ "component": "input_actions", "actions": [ { "type": "button", "name": "interact", "keys": ["E"] } ] }""",
+        )
+        val actions = assertNotNull(world.inputActions())
+        val ctrlE = KeyChord(Key.E, setOf(KeyModifier.Ctrl))
+        val padJump = GamepadChord(GamepadButton.South)
+        actions.rebind("interact", ButtonBinding(chords = setOf(ctrlE)))
+        actions.rebind("jump", ButtonBinding(keys = setOf(Key.Space), chords = setOf(padJump)))
+
+        val exported = SceneLoader.fromWorld(world, name = "x", componentRegistry = registry)
+            .nodes.flatMap { it.components }.filterIsInstance<SceneInputActions>().single()
+
+        assertEquals(
+            listOf(
+                SceneButtonAction("jump", keys = setOf(Key.Space), chords = setOf(padJump)),
+                SceneButtonAction("interact", chords = setOf(ctrlE)),
+            ),
+            exported.actions.sortedBy { it.name != "jump" },
+            "a rebound default is the scene's own, so it is kept",
+        )
+    }
+
+    @Test
+    fun chordsRoundTripThroughTheSceneJson() {
+        val actions = SceneInputActions(
+            listOf(
+                SceneButtonAction(
+                    "slot11",
+                    trigger = ActionTrigger.Press,
+                    chords = setOf(
+                        KeyChord(Key.Digit1, setOf(KeyModifier.Ctrl, KeyModifier.Shift), ExtraModifiers.Allow),
+                        GamepadChord(GamepadButton.South, setOf(GamepadButton.LeftShoulder)),
+                    ),
+                ),
+            ),
+        )
+        val document = SceneDocument(name = "x", nodes = listOf(SceneNode(name = "Controls", components = listOf(actions))))
+
+        val text = SceneLoader.encode(document)
+
+        assertTrue("\"type\":\"gamepad\"" in text, text)
+        assertEquals(document, SceneLoader.decode(text))
+    }
+
+    @Test
+    fun aSceneWrittenBeforeChordsReadsWithNone() {
+        val text = """{ "version": 1, "name": "x", "nodes": [ { "name": "Controls", "components": [
+            { "component": "input_actions", "actions": [ { "type": "button", "name": "interact", "keys": ["E"] } ] }
+        ] } ] }"""
+
+        val decoded = SceneLoader.decode(text).nodes.single().components.single()
+
+        assertEquals(SceneInputActions(listOf(SceneButtonAction("interact", keys = setOf(Key.E)))), decoded)
     }
 
     private fun player(
