@@ -43,6 +43,12 @@ enum class CanvasElementKind {
 
     /** What a camera sees: the scene from the camera on the node [CanvasElement.camera] names, under the element's children. */
     View,
+
+    /**
+     * A region where a swipe looks and a pinch zooms, such as the right half of the screen, read
+     * through [CanvasElement.consumeLook] and [CanvasElement.consumeZoom] as its [CanvasElement.look] says.
+     */
+    LookArea,
 }
 
 /**
@@ -247,6 +253,30 @@ class CanvasElement {
 
     /** How the element places its children itself; null anchors each child by hand. */
     var layout: CanvasLayout? = null
+
+    /**
+     * Places the element's children as a button cluster, the first on a pivot and the rest on an arc
+     * around it; it takes the place of [layout]. Null places them as [layout] says.
+     */
+    var cluster: CanvasCluster? = null
+
+    /** How a LookArea turns a swipe into a look and a pinch into a zoom; null behaves as [CanvasLook.Default]. */
+    var look: CanvasLook? = null
+
+    /** A LookArea's live thumbs, look and zoom. */
+    internal val lookState = CanvasLookState()
+
+    /**
+     * How far a LookArea has been swiped since the last call, in dp times its [CanvasLook.sensitivity],
+     * right and down positive unless inverted, then zero.
+     */
+    fun consumeLook(): Vec2 = lookState.consumeLook()
+
+    /**
+     * The factor a LookArea's pinch has spread by since the last call, above 1 to zoom in and 1 when
+     * there was none, then 1.
+     */
+    fun consumeZoom(): Float = lookState.consumeZoom()
 
     /** In a parent with a layout, this element's share of its line's leftover space. */
     var grow: Float = 0f

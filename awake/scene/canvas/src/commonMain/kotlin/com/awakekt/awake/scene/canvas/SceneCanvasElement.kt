@@ -13,11 +13,13 @@ import com.awakekt.awake.scene.document.SceneVec3
 import com.awakekt.awake.ui.canvas.CanvasAnchor
 import com.awakekt.awake.ui.canvas.CanvasBinding
 import com.awakekt.awake.ui.canvas.CanvasButton
+import com.awakekt.awake.ui.canvas.CanvasCluster
 import com.awakekt.awake.ui.canvas.CanvasElement
 import com.awakekt.awake.ui.canvas.CanvasElementKind
 import com.awakekt.awake.ui.canvas.CanvasFollowRules
 import com.awakekt.awake.ui.canvas.CanvasJoystick
 import com.awakekt.awake.ui.canvas.CanvasLayout
+import com.awakekt.awake.ui.canvas.CanvasLook
 import com.awakekt.awake.ui.canvas.CanvasStyle
 import com.awakekt.awake.ui.canvas.canvasFontProblem
 import com.awakekt.awake.ui.canvas.isCanvasColor
@@ -120,6 +122,12 @@ import kotlinx.serialization.Serializable
  * (`blockWhileCooling`). Its cooldown and charges come from code or [bind]. Null is a plain button.
  * @property enabled Whether a Button can be pressed; a disabled one takes no press and draws in its
  * style's `disabled` look. [bind]'s `enabled` field sets it each frame instead.
+ * @property look How a LookArea turns a swipe into a look and a pinch into a zoom: `sensitivity`,
+ * `invertX`, `invertY`, `pinchZoom`, `zoomSensitivity`, whether it `turnsCamera` in a played project,
+ * and the axis `zoomAction` its pinch is pushed to. Null uses the defaults.
+ * @property cluster Places the element's children as a button cluster, in place of [layout]: the
+ * first on a pivot (`pivotX`, `pivotY`, shares of the element) unless `primaryAtPivot` is false, and
+ * the rest `radius` dp from it, from `startAngle` and `spacing` degrees apart, clockwise from the right.
  */
 @Serializable
 @SerialName("canvas_element")
@@ -167,6 +175,8 @@ data class SceneCanvasElement(
     val joystick: CanvasJoystick? = null,
     val button: CanvasButton? = null,
     val enabled: Boolean = true,
+    val look: CanvasLook? = null,
+    val cluster: CanvasCluster? = null,
 ) : SceneComponent {
     /**
      * Validates element dimensions, font sizes, values, and hex color syntax.
@@ -215,7 +225,10 @@ data class SceneCanvasElement(
     private fun controlProblems(): List<String> = listOfNotNull(
         "joystick only sets up a Joystick".takeIf { joystick != null && kind != CanvasElementKind.Joystick },
         "button only sets up a Button".takeIf { button != null && kind != CanvasElementKind.Button },
-    ) + joystick?.problems().orEmpty().map { "joystick.$it" } + button?.problems().orEmpty().map { "button.$it" }
+        "look only sets up a LookArea".takeIf { look != null && kind != CanvasElementKind.LookArea },
+        "cluster and layout both place the children; keep one".takeIf { cluster != null && layout != null },
+    ) + joystick?.problems().orEmpty().map { "joystick.$it" } + button?.problems().orEmpty().map { "button.$it" } +
+        look?.problems().orEmpty().map { "look.$it" } + cluster?.problems().orEmpty().map { "cluster.$it" }
 
     /** What is wrong with the follow rules, and follow fields set where they do nothing. */
     private fun followProblems(): List<String> = buildList {

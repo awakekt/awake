@@ -208,6 +208,8 @@ public final class com/awakekt/awake/scene/controls/camera/CameraRig$Companion {
 
 public final class com/awakekt/awake/scene/controls/camera/CameraRigAimKt {
 	public static final fun aimAt (Lcom/awakekt/awake/scene/controls/camera/CameraRig;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;)V
+	public static final fun turnBy (Lcom/awakekt/awake/scene/controls/camera/CameraRig;FF)V
+	public static final fun zoomBy (Lcom/awakekt/awake/scene/controls/camera/CameraRig;F)V
 }
 
 public final class com/awakekt/awake/scene/controls/camera/CameraRigBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
