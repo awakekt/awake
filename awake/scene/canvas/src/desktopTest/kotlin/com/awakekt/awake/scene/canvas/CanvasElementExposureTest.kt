@@ -31,7 +31,7 @@ class CanvasElementExposureTest {
         "background", "value", "order", "visible", "action", "doubleAction", "touchOnly", "safeArea", "style",
         "textAlign", "follow", "followOffset", "followBounds", "followOutset", "followRules", "followArrow", "layout", "grow",
         "bind", "wheel", "draggable", "dropTarget", "camera", "links", "mask", "maxLength", "maxLengthUnit",
-        "font", "pressable", "joystick", "button", "enabled", "look", "cluster",
+        "font", "pressable", "joystick", "button", "enabled", "look", "cluster", "skin", "controlId",
     ).associateWith { it }
 
     /** Options that cannot be written as data, with why. Each is set from code through the live element. */
@@ -41,6 +41,7 @@ class CanvasElementExposureTest {
         "cooldown" to "how much of a cooldown is left right now, set by game code or read through bind.cooldown",
         "charges" to "how many uses are left right now, set by game code or read through bind.charges",
         "aimLock" to "a hook into the game's own targets, which only code can answer",
+        "previewState" to "an editor's preview of one state, never saved with the scene",
     )
 
     /** [CanvasElement]'s own options: its public setters, skipping a synthetic bridge's `$`-named one. */

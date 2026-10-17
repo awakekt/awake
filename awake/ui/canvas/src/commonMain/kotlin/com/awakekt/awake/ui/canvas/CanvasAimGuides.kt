@@ -41,12 +41,21 @@ internal fun BoxScope.AimGuides(tree: CanvasTree, safeArea: CanvasInsets) {
             val centerX = bounds.x + bounds.width / 2f
             val centerY = bounds.y + bounds.height / 2f
             val reach = aim.reach
-            Box(Modifier.offset((centerX - reach).dp, (centerY - reach).dp).size((reach * 2f).dp).clip(CircleShape).background(RANGE).testTag("canvas-aim-range"))
-            val cursorX = centerX + element.aimX * reach - CURSOR_SIZE / 2f
-            val cursorY = centerY + element.aimY * reach - CURSOR_SIZE / 2f
-            val cursorColor = if (element.aimCancelling) CANCELLING else CURSOR
-            Box(Modifier.offset(cursorX.dp, cursorY.dp).size(CURSOR_SIZE.dp).clip(CircleShape).background(cursorColor).testTag("canvas-aim-cursor"))
-            aim.cancel?.let { zone -> CancelZone(element, zone, tree.origin, safeArea) }
+            val skin = tree.skinOf(element)?.button
+            val state = element.controlState()
+            val ring = Modifier.offset((centerX - reach).dp, (centerY - reach).dp).size((reach * 2f).dp).testTag("canvas-aim-range")
+            val range = skin?.aimRange
+            if (range != null) Slot(element, CanvasSlots.BUTTON_AIM_RANGE, range, state, ring, tree.images, round = true) else Box(ring.clip(CircleShape).background(RANGE))
+            val cursorSlot = skin?.aimCursor
+            val cursor = cursorSlot?.size ?: CURSOR_SIZE
+            val point = Modifier.offset((centerX + element.aimX * reach - cursor / 2f).dp, (centerY + element.aimY * reach - cursor / 2f).dp)
+                .size(cursor.dp).testTag("canvas-aim-cursor")
+            if (cursorSlot != null) {
+                Slot(element, CanvasSlots.BUTTON_AIM_CURSOR, cursorSlot, state, point, tree.images, round = true)
+            } else {
+                Box(point.clip(CircleShape).background(if (element.aimCancelling) CANCELLING else CURSOR))
+            }
+            aim.cancel?.let { zone -> CancelZone(element, zone, tree, safeArea) }
         }
     }
 }
@@ -56,16 +65,20 @@ private fun CanvasElement.shownAim(tree: CanvasTree): CanvasAim? = button?.aim?.
 
 /** [zone] against the canvas, its placed box written to [element]'s press as the cancel bounds. */
 context(_: Composer)
-private fun BoxScope.CancelZone(element: CanvasElement, zone: CanvasZone, origin: CanvasOrigin, safeArea: CanvasInsets) {
+private fun BoxScope.CancelZone(element: CanvasElement, zone: CanvasZone, tree: CanvasTree, safeArea: CanvasInsets) {
+    val slot = tree.skinOf(element)?.button?.cancelZone
     val units = LocalDensity.current
-    val color = if (element.aimCancelling) CANCELLING else CANCEL_ZONE
+    val origin = tree.origin
     Box(Modifier.align(zone.anchor.alignment).anchorInset(zone.anchor, zone.offsetX, zone.offsetY, safeArea)) {
-        Box(
-            Modifier.size(zone.width.dp, zone.height.dp).background(color).testTag("canvas-aim-cancel")
-                .onPlaced { x, y, w, h ->
-                    element.buttonPress.cancelBounds = Rectangle((x - origin.x) / units, (y - origin.y) / units, w / units, h / units)
-                },
-        )
+        val placed = Modifier.size(zone.width.dp, zone.height.dp).testTag("canvas-aim-cancel")
+            .onPlaced { x, y, w, h ->
+                element.buttonPress.cancelBounds = Rectangle((x - origin.x) / units, (y - origin.y) / units, w / units, h / units)
+            }
+        if (slot != null) {
+            Slot(element, CanvasSlots.BUTTON_CANCEL_ZONE, slot, element.controlState(), placed, tree.images)
+        } else {
+            Box(placed.background(if (element.aimCancelling) CANCELLING else CANCEL_ZONE))
+        }
     }
 }
 
