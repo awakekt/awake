@@ -24,7 +24,13 @@ import com.awakekt.awake.scene.document.SceneVec3
  * @param world Active ECS world containing live scene entities.
  * @param name Optional scene title to set on the exported document.
  * @param componentRegistry Registry containing component bindings to export.
- * @param extraComponents Optional callback exporting custom components for an entity.
+ * @param extraComponents Optional callback exporting custom components for an entity. It is called
+ *   for a node before its children, in the order the document lists the nodes.
+ * @param siblingOrder How the children of one node, and the roots, are ordered in the document: an
+ *   editor whose hierarchy lets siblings be moved passes its own order, so that a save writes them as
+ *   its hierarchy lists them. Siblings it calls equal, and every sibling when it is null, are written
+ *   in the order the world stores their [Transform]s. `SceneCanvas` takes the same order, so the
+ *   canvas element a save writes later is the one drawn on top.
  * @return The exported [SceneDocument].
  */
 fun SceneLoader.fromWorld(
@@ -32,6 +38,7 @@ fun SceneLoader.fromWorld(
     name: String? = null,
     componentRegistry: SceneComponentRegistry = SceneComponentRegistry(),
     extraComponents: ((Entity) -> List<SceneComponent>)? = null,
+    siblingOrder: Comparator<Entity>? = null,
 ): SceneDocument {
     val transforms = linkedMapOf<Entity, Transform>()
     world.queryEach(Transform::class) { entity, transform -> transforms[entity] = transform }
@@ -47,6 +54,8 @@ fun SceneLoader.fromWorld(
     transforms.forEach { (entity, transform) ->
         childrenByParent.getOrPut(transform.parent) { mutableListOf() }.add(entity)
     }
+    // A stable sort, so siblings the order calls equal keep the order the world stores them in.
+    if (siblingOrder != null) childrenByParent.values.forEach { it.sortWith(siblingOrder) }
 
     val visiting = mutableSetOf<Entity>()
     val exported = mutableSetOf<Entity>()
