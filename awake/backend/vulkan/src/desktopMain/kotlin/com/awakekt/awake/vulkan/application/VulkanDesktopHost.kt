@@ -130,6 +130,7 @@ fun runVulkanDesktopGame(
         },
         cursor = cursor,
         frames = limits.frames,
+        onDpi = application::setDpi,
     )
     // A limited run is a check: frames played by an engine that never started prove nothing.
     if (limits.frames != null) check(started) { notStarted(application) }

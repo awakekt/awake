@@ -113,8 +113,12 @@ canvas's edges, in the host's dp: a notch, rounded corners, a home indicator, ov
 anchored on the canvas itself is placed inside it, its anchor and offsets measured from the safe
 area's edges and centre; an element whose `safeArea` is false is placed from the canvas's own edges.
 An element inside another, and a follower, are placed as they would be without it. The insets do
-not grow with the canvas's scale. Core reads no platform's insets itself yet: the host passes what
-its platform reports, and an editor passes a device's to preview it.
+not grow with the canvas's scale. A played scene gets them from its platform through
+`awake:scene:runtime`; a host drawing the overlay itself passes its own, and an editor passes a
+device's to preview it.
+
+`CanvasOverlay(dpi = …)` is the screen's real dots per inch, for a `ConstantPhysicalSize` scaler; 0,
+the default, takes 160 per dp.
 
 ## Placing on a point
 

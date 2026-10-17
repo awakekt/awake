@@ -7,6 +7,7 @@ package com.awakekt.awake.engine.platform
 
 import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.engine.platform.config.WindowConfig
+import com.awakekt.awake.engine.platform.lifecycle.DisplayInsets
 
 /**
  * The window/surface shell a backend drives, plus the subsystems a game reaches through it.
@@ -21,6 +22,7 @@ import com.awakekt.awake.engine.platform.config.WindowConfig
  * `Renderer` handed to `AppLifecycle.ready`, and fps/frame-time live on `FrameStats`. Nothing
  * is left for such a property to hold.
  */
+@Suppress("TooManyFunctions") // One call per thing a host drives or reports; each host makes only those it can.
 interface WindowLifecycle {
     /** Input event accumulator driving this window session. */
     val input: Input
@@ -74,4 +76,22 @@ interface WindowLifecycle {
      * @param density Physical pixels per dp display density.
      */
     fun setDensity(density: Float) = Unit
+
+    /**
+     * Sets what covers the window's edges, in dp, as the platform reports it: a notch or cutout,
+     * rounded corners, system bars drawn over the game. Each frame after carries it as
+     * [com.awakekt.awake.engine.platform.lifecycle.AppFrame.safeArea].
+     *
+     * @param insets The covered edges, in dp from each.
+     */
+    fun setSafeArea(insets: DisplayInsets) = Unit
+
+    /**
+     * Sets the screen's real dots per inch, physical pixels to a physical inch, from a platform that
+     * can tell. Each frame after carries it as
+     * [com.awakekt.awake.engine.platform.lifecycle.AppFrame.dpi]; 0 or less leaves it unknown.
+     *
+     * @param dpi The screen's physical pixels per inch.
+     */
+    fun setDpi(dpi: Float) = Unit
 }

@@ -7,6 +7,7 @@ package com.awakekt.awake.engine.window
 
 import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.logging.Logger
+import com.awakekt.awake.engine.platform.lifecycle.DisplayInsets
 import kotlinx.cinterop.COpaquePointer
 import kotlinx.cinterop.CValue
 import kotlinx.cinterop.ExperimentalForeignApi
@@ -33,7 +34,9 @@ import platform.UIKit.UIWindow
 /**
  * The iOS window: a `UIView` backed by a [CAMetalLayer], driven by `CADisplayLink`, that feeds
  * touches, typed text and the standard edit actions into [input]. A backend creates its surface
- * from the layer [onCreate] receives; nothing here knows about a GPU API.
+ * from the layer [onCreate] receives; nothing here knows about a GPU API. [onSafeArea] hears what
+ * the notch, the rounded corners and the home indicator cover of the view, in points, whenever it
+ * changes.
  */
 @OptIn(ExperimentalForeignApi::class)
 // UIKit overrides and one callback per lifecycle event; neither splits usefully.
@@ -46,6 +49,7 @@ class AwakeMetalView(
     private val onResize: (width: Int, height: Int) -> Unit,
     private val onPause: () -> Unit,
     private val onResume: () -> Unit,
+    private val onSafeArea: (insets: DisplayInsets) -> Unit = {},
 ) : UIView(frame),
     UIKeyInputProtocol {
 
@@ -94,6 +98,7 @@ class AwakeMetalView(
         }
         metalLayer.transform = platform.QuartzCore.CATransform3DMakeScale(1.0, -1.0, 1.0)
         metalLayer.drawableSize = CGSizeMake(width, height)
+        reportSafeArea()
 
         if (!created) {
             created = true
@@ -105,6 +110,16 @@ class AwakeMetalView(
         } else {
             onResize(width.toInt(), height.toInt())
         }
+    }
+
+    override fun safeAreaInsetsDidChange() {
+        super.safeAreaInsetsDidChange()
+        reportSafeArea()
+    }
+
+    /** UIKit's safe area of this view: already in points, which are dp. */
+    private fun reportSafeArea() {
+        onSafeArea(safeAreaInsets.useContents { DisplayInsets(left.toFloat(), top.toFloat(), right.toFloat(), bottom.toFloat()) })
     }
 
     @ObjCAction

@@ -441,8 +441,10 @@ scale out from the screen's size each frame, in place of `canvasScale`. With `Sc
 the HUD is designed at `referenceWidth` by `referenceHeight` and takes the same share of every
 screen, following its width, its height or a blend of the two by `match`. `ConstantPixelSize` keeps
 a unit `pixelsPerUnit` of the screen's pixels, for pixel art at any density, and
-`ConstantPhysicalSize` keeps it 1 / `referenceDpi` of an inch. `minScale` and `maxScale` hold the
-result, and `playerScale`, which a settings menu sets, multiplies it after them.
+`ConstantPhysicalSize` keeps it 1 / `referenceDpi` of an inch, at the screen's real dots per inch
+where the platform reports them: on Android and on a desktop monitor that reports its size. A
+browser and iOS report none, so there a unit is a dp. `minScale` and `maxScale` hold the result, and
+`playerScale`, which a settings menu sets, multiplies it after them.
 
 ```json title="A 1080p HUD that follows the screen's height"
 { "component": "canvas_scaler", "referenceWidth": 1920, "referenceHeight": 1080, "match": 1, "maxScale": 2 }
@@ -453,12 +455,18 @@ and `CanvasScaler.scaleFor(width, height, density)` answers it for any box.
 
 ### Keep clear of a notch
 
-`SceneAppLifecycleRuntime.canvasSafeArea`, or `SceneCanvas(world, safeArea = …)`, is what covers
-the screen's edges, in dp: a notch, rounded corners, a home indicator, a TV's overscan. An element
-anchored on the canvas itself is placed inside it, its anchor and offsets measured from the safe
-area's edges and centre. A backdrop that should reach under the notch sets `safeArea` to `false`.
-An element inside another is placed in its parent's box, and a follower on what it follows, either
-way. An editor previews a device by passing that device's insets.
+The safe area is what covers the screen's edges, in dp: a notch or camera cutout, rounded corners,
+a status bar or home indicator drawn over the game. Each platform reports its own: Android its system
+bars and display cutout, iOS its view's safe area, and a browser its `env(safe-area-inset-*)`, which
+needs `viewport-fit=cover` in the page's viewport meta tag, as the templates have. A desktop window
+has none. An element anchored on the canvas itself is placed inside it, its anchor and offsets
+measured from the safe area's edges and centre. A backdrop that should reach under the notch sets
+`safeArea` to `false`. An element inside another is placed in its parent's box, and a follower on
+what it follows, either way.
+
+A host that knows better sets `SceneAppLifecycleRuntime.canvasSafeArea` itself, or passes
+`SceneCanvas(world, safeArea = …)`: an editor previews a device by passing that device's insets.
+`canvasDpi` likewise overrides the platform's dots per inch.
 
 ### Place something on a point
 

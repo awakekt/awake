@@ -30,6 +30,8 @@ private const val GLFW_NO_API = 0
  * @param cursor The pointer shape the UI asks for this frame, or `null` to leave it alone.
  * @param frames How many frames to run before ending the loop as if the window had closed, such as
  * a smoke check's [DesktopRunLimits.frames]; null runs until the window closes.
+ * @param onDpi Hears the real dots per inch of the monitor the window is on, after [onCreate] and
+ * whenever the window moves to a monitor that differs; 0 when the monitor reports no size.
  */
 @Suppress("LongParameterList")
 fun runDesktopWindow(
@@ -42,6 +44,7 @@ fun runDesktopWindow(
     afterLoop: () -> Unit = {},
     cursor: (() -> PointerCursor)? = null,
     frames: Int? = null,
+    onDpi: (dpi: Float) -> Unit = {},
 ) {
     require(frames == null || frames > 0) { "A run lasts at least one frame; was $frames." }
     check(GlfwWindow.glfwInit()) { "glfwInit failed" }
@@ -58,7 +61,8 @@ fun runDesktopWindow(
     try {
         try {
             onCreate(window)
-            runFrames(window, game, onFrame, pollInput, beforeFrame, cursor, frames)
+            val dpi = MonitorDpi(window, onDpi)
+            runFrames(window, game, onFrame, pollInput, beforeFrame = { dpi.check(); beforeFrame() }, cursor, frames)
         } finally {
             afterLoop()
             onDispose()
@@ -93,5 +97,37 @@ private fun runFrames(
             played++
         }
         cursor?.let { applyUiCursor(window, it()) }
+    }
+}
+
+/**
+ * Reports the dots per inch of the monitor [window] is on to [onDpi] when it changes: at once, then
+ * every [CHECK_EVERY] frames, as a window dragged to another monitor needs. A window library built
+ * before it could tell reports nothing.
+ */
+private class MonitorDpi(private val window: Long, private val onDpi: (Float) -> Unit) {
+    private var frames = 0
+    private var reported = Float.NaN
+
+    init {
+        check(force = true)
+    }
+
+    fun check(force: Boolean = false) {
+        if (!force && ++frames % CHECK_EVERY != 0) return
+        val dpi = try {
+            GlfwWindow.glfwGetWindowDpi(window)
+        } catch (_: UnsatisfiedLinkError) {
+            0f
+        }
+        if (dpi != reported) {
+            reported = dpi
+            onDpi(dpi)
+        }
+    }
+
+    private companion object {
+        /** About a second at 60 frames a second: soon enough after a drag, and a negligible cost. */
+        const val CHECK_EVERY = 60
     }
 }

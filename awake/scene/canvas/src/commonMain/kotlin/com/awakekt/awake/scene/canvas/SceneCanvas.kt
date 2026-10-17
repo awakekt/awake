@@ -68,6 +68,8 @@ context(_: Composer)
  *   `canvas_scaler` by default, through [canvasScaler]. Null draws at [scale].
  * @param followLimits The most followers of each group drawn at once: the scene's own
  *   `canvas_follow_limit`s by default, through [canvasFollowLimits].
+ * @param dpi The screen's real dots per inch, for a `ConstantPhysicalSize` scaler; 0 when the host
+ *   cannot tell, which takes 160 per dp. `SceneAppLifecycleRuntime` passes its platform's.
  */
 fun SceneCanvas(
     world: World,
@@ -84,6 +86,7 @@ fun SceneCanvas(
     safeArea: CanvasInsets = CanvasInsets.None,
     scaler: CanvasScaler? = world.canvasScaler(),
     followLimits: List<CanvasFollowLimit> = world.canvasFollowLimits(),
+    dpi: Float = 0f,
 ) {
     CanvasOverlay(
         world.canvasItems(siblingOrder),
@@ -97,5 +100,6 @@ fun SceneCanvas(
         safeArea,
         scaler,
         followLimits,
+        dpi,
     )
 }

@@ -10,6 +10,7 @@ import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.SurfaceHolder
 import android.view.SurfaceView
+import android.view.WindowInsets
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
 import com.awakekt.awake.core.host.AndroidFrameLoop
@@ -22,10 +23,12 @@ import com.awakekt.awake.core.input.syncAwakeKeyInput
 import com.awakekt.awake.core.input.syncAwakePointerInput
 import com.awakekt.awake.core.input.syncAwakeTextShortcut
 import com.awakekt.awake.engine.platform.WindowLifecycle
+import com.awakekt.awake.engine.platform.lifecycle.DisplayInsets
 
 /**
  * The Android window: a [SurfaceView] whose render thread drives [lifecycle] and whose touch, key
- * and IME events feed its input. The backend creates its swapchain from the `Surface` it receives;
+ * and IME events feed its input. It reports the display's density and real dots per inch, and what
+ * the system bars and a display cutout cover of it as the safe area. The backend creates its swapchain from the `Surface` it receives;
  * nothing here knows about a GPU API.
  */
 @Suppress("TooManyFunctions") // One override per WindowLifecycle / SurfaceHolder callback.
@@ -84,8 +87,33 @@ class AwakeSurfaceView(
 
     override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
         // Read here, not once: a fold or a DeX move changes the density without a new view.
-        lifecycle.setDensity(resources.displayMetrics.density)
+        val metrics = resources.displayMetrics
+        lifecycle.setDensity(metrics.density)
+        lifecycle.setDpi((metrics.xdpi + metrics.ydpi) / 2f)
+        rootWindowInsets?.let(::reportSafeArea)
         lifecycle.resize(0, 0, width, height)
+    }
+
+    override fun onApplyWindowInsets(insets: WindowInsets): WindowInsets {
+        reportSafeArea(insets)
+        return super.onApplyWindowInsets(insets)
+    }
+
+    /**
+     * What the window's system bars and display cutout cover of this view, in dp: the window's
+     * insets less how far this view already sits inside them, so a view the app has laid out clear of
+     * a bar reports nothing there.
+     */
+    private fun reportSafeArea(insets: WindowInsets) {
+        val covered = insets.getInsets(WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout())
+        val at = IntArray(2).also(::getLocationInWindow)
+        val window = rootView
+        val density = resources.displayMetrics.density
+        val left = (covered.left - at[0]).coerceAtLeast(0)
+        val top = (covered.top - at[1]).coerceAtLeast(0)
+        val right = (covered.right - (window.width - at[0] - width)).coerceAtLeast(0)
+        val bottom = (covered.bottom - (window.height - at[1] - height)).coerceAtLeast(0)
+        lifecycle.setSafeArea(DisplayInsets(left / density, top / density, right / density, bottom / density))
     }
 
     override fun surfaceDestroyed(holder: SurfaceHolder) {
