@@ -31,6 +31,8 @@ Split out of `awake:core` as they grew independent test surfaces and target-spec
   `AnimationPose`, crossfade blending).
 - [`awake:core:schema`](schema/README.md) — property schemas and authoring annotations read from
   `kotlinx.serialization` descriptors, for editors, reference docs and JSON Schema export.
+- [`awake:core:expression`](expression/README.md) — a safe, deterministic formula language for numbers
+  kept in data: parsed once, checked against declared variables, evaluated without allocating.
 
 ## Proposed future modules
 

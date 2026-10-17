@@ -29,6 +29,7 @@ Paths below are Gradle coordinates minus the `:awake:` prefix.
 | `core:di` | A small dependency-injection container: modules, keys, bindings |
 | `core:state` | Reactive stores and unidirectional state contracts |
 | `core:localization` | Per-locale string tables, ICU-style messages with CLDR plurals, the active locale |
+| `core:expression` | A safe, deterministic formula language for numbers kept in data |
 
 ## ecs — entity storage and iteration
 
