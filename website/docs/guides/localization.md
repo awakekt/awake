@@ -140,6 +140,79 @@ French and Russian group with a no-break space, which the built-in font draws as
 `systemLocale()` reads the device's language: the JVM default on desktop and Android, the first
 preferred language on iOS, and `navigator.language` in the browser.
 
+## Text a plugin ships
+
+A plugin or library that shows text ships its own defaults, so it works before a game translates a
+word, and the game still has the last word. It adds its tables as a layer:
+
+```kotlin title="Kotlin"
+--8<-- "awake/core/localization/src/desktopTest/kotlin/com/awakekt/awake/core/localization/LocalizationDocsSampleTest.kt:layers"
+```
+
+There are three layers, `StringLayer.Game`, `Plugin` and `BuiltIn`. The game's own tables, the ones
+given to `Strings.load`, win over a plugin's, and a plugin's win over the text Core ships. Within a
+layer, a source added later wins. Each locale's table is the layers merged key by key, so the game
+overrides one plugin key in `strings/en.json` and keeps the rest.
+
+The locale comes before the layer. A Korean player sees the plugin's Korean text before the game's
+English, because text in their language beats text in the wrong one; the game's English wins over
+the plugin's English. A game that renames a plugin's term therefore translates it into every locale
+it ships. `removeSource` takes a layer away again.
+
+## Show text in Compose UI
+
+`compose:localization` gives Compose UI the active table without making `core:localization` depend
+on Compose:
+
+```kotlin title="Kotlin"
+context(_: Composer)
+fun Hud() {
+    ProvideStrings(strings, labels) {
+        Text(stringResource("hud.items", "n" to bag.count))
+    }
+}
+```
+
+`LocalStrings` holds the `Strings`, and `stringResource(key, args)` reads it. AwakeKt Compose
+composes every frame, so the text shows a new locale on the frame after `setLocale` returns. A
+missing key, or no `LocalStrings` at all, shows the key and is logged once.
+
+## Name keys and buttons
+
+Button prompts and hotkey labels name keys, mouse buttons and controller buttons in the player's
+language and in their platform's style:
+
+```kotlin title="Kotlin"
+--8<-- "awake/core/localization/src/desktopTest/kotlin/com/awakekt/awake/core/localization/LocalizationDocsSampleTest.kt:input"
+```
+
+`InputLabels.load` adds Core's built-in names, English, German, French and Spanish, at
+`StringLayer.BuiltIn`. `ShortcutStyle.system()` picks the style: Windows writes `Win+Ctrl+Alt+Shift`,
+Linux names Meta `Super`, and Apple platforms write `Control+Option+Shift+Cmd`, with `Option` for Alt.
+`ShortcutStyle.primaryModifier` is Cmd on Apple platforms and Ctrl elsewhere, for an editor-style
+`KeyChord`. `ControllerLayout` picks what controller buttons are printed with: `Letters` (A at the
+bottom), `SwappedLetters` (B at the bottom) or `Shapes` (Cross at the bottom).
+
+The labels name what [input actions](input.md) describe. `chord(chord)` names a `KeyChord` or a
+`GamepadChord`, `binding(description)` any `BindingDescription`, and `bindings(action)` every way to
+trigger a `ButtonAction`, keys then pointer buttons then chords: `E / Right click / Shift+E`. Modifier
+keys are written in the platform's order, controller modifiers in `GamepadButton` order: `LB+A`.
+
+A game overrides any name, or adds a language, with the same keys in its tables:
+
+| Key | Names |
+| --- | --- |
+| `input.key.<Key>` | A key, such as `input.key.Space`. Letters, digits and F-keys default to themselves. |
+| `input.pointer.<PointerButton>` | A mouse button, such as `input.pointer.Primary`. |
+| `input.gamepad.<GamepadButton>` | A controller button by position, such as `input.gamepad.South`. |
+| `<key>.windows`, `.linux`, `.apple` | A key's or mouse button's name on one platform, such as `input.key.Meta.apple`. |
+| `<key>.letters`, `.swapped`, `.shapes` | A controller button's name in one layout. |
+| `input.chord.separator` | Joins a chord: `+`. Set `input.chord.separator.apple` to `""` and the modifiers to `⌃⌥⇧⌘` for Apple's symbols, with a font that has them. |
+| `input.bindings.separator` | Joins an action's bindings: ` / `. |
+
+A platform or layout form wins over the plain key in the same locale, and the player's locale wins
+over the default's.
+
 ## Show a key in a scene
 
 A `canvas_element` of kind `Text` or `Button` shows a key's text with `textKey` in place of `text`.

@@ -62,6 +62,25 @@ fun interface StringTableSource {
     }
 }
 
+/**
+ * Whose text a [StringTableSource] holds, which decides whose wins when two have the same key in the
+ * same locale: the game's over a plugin's, and a plugin's over Core's.
+ *
+ * A [Strings] merges its sources one locale at a time, so a key a layer lacks comes from the layer
+ * under it, and a locale a layer lacks comes from that locale's other layers before any parent or
+ * default locale. See [Strings.addSource].
+ */
+enum class StringLayer {
+    /** The game's own tables, such as its `strings/` folder: the final text. */
+    Game,
+
+    /** Default text a plugin or library ships for its own keys, for a game to override. */
+    Plugin,
+
+    /** Text Core itself ships, such as the names of keys and buttons [InputLabels] shows. */
+    BuiltIn,
+}
+
 /** Reads and writes the string table file format. */
 object StringTables {
     private val json = Json { isLenient = false }

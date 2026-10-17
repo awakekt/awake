@@ -213,9 +213,10 @@ jobs:
           ./gradlew :awake:core:text:desktopTest
           ./gradlew :awake:compose:ui-testing:desktopTest --tests com.awakekt.awake.compose.testing.LoadedFontRasterTest
 
-      # String tables, ICU-style messages, CLDR plural rules, locale fallback and the locale font hook.
+      # String tables and their layers, ICU-style messages, CLDR plural rules, locale fallback, input
+      # labels, the locale font hook, and the Compose glue that reads them.
       - name: Localization tests
-        run: ./gradlew :awake:core:localization:desktopTest
+        run: ./gradlew :awake:core:localization:desktopTest :awake:compose:localization:desktopTest
 
       # Includes typed-query allocation probes and family lifecycle tests; compiling them alone
       # cannot catch per-frame allocations or stale wrappers after World.clear().
