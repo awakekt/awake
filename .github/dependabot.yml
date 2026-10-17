@@ -1,0 +1,17 @@
+# Moves the commit-pinned GitHub Actions forward. The publish workflow and the composite actions it
+# runs pin each third-party action to a full commit SHA with its version in a comment; Dependabot
+# updates both together, one grouped PR a week. Gradle dependencies stay with the version catalog.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directories:
+      - /
+      - /.github/actions/*
+    schedule:
+      interval: weekly
+    groups:
+      github-actions:
+        patterns:
+          - '*'
+    commit-message:
+      prefix: ci
