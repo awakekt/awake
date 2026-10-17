@@ -10,6 +10,7 @@ import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.core.text.font.UiFonts
+import com.awakekt.awake.core.text.unicode.CodePoints
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -102,8 +103,9 @@ private val fontLog = Logger("Strings")
  * this off the frame thread when the locale changes, keep the result, and hand it to the UI, for
  * example as Compose's `LocalFont`. A font file that cannot be read or baked is logged and skipped.
  *
- * Text is drawn a `Char` at a time, without shaping: a script whose letters join or stack, such as
- * Thai's combining marks or Arabic, draws its letters but not their joined forms.
+ * Chars are read as code points, so a font is found for an emoji or a CJK Extension B ideograph as for
+ * any other char. Text is drawn a grapheme cluster at a time, without shaping: a script whose letters
+ * join or stack, such as Thai's combining marks or Arabic, draws its letters but not their joined forms.
  *
  * @param assets Where the font files are read from.
  * @param fonts Each locale's font files.
@@ -119,9 +121,9 @@ suspend fun Strings.loadFont(
 ): UiFont {
     val paths = fonts.pathsFor(locale.value)
     if (paths.isEmpty()) return primary
-    var missing = (characters() + extraChars.asIterable())
-        .filter { !it.isWhitespace() && !it.isISOControl() && !primary.hasGlyph(it) }
-        .toSet()
+    val wanted = codePoints().toMutableSet()
+    CodePoints.forEach(extraChars) { _, codePoint -> wanted += codePoint }
+    var missing: Set<Int> = wanted.filterTo(HashSet()) { !it.isBlankOrControl() && !primary.hasGlyph(it) }
     val fallbacks = mutableListOf<UiFont>()
     for (path in paths) {
         if (missing.isNotEmpty()) {
@@ -133,13 +135,13 @@ suspend fun Strings.loadFont(
         }
     }
     if (missing.isNotEmpty()) {
-        fontLog.warn { "No font for ${locale.value} draws ${missing.size} chars of its text, such as '${missing.first()}'." }
+        fontLog.warn { "No font for ${locale.value} draws ${missing.size} chars of its text, such as '${CodePoints.asString(missing.first())}'." }
     }
     return UiFonts.fallback(primary, fallbacks)
 }
 
 /** [path] baked with the chars of [missing] it has, or null, logged, when it can't be read or has none of them. */
-private suspend fun Strings.loadFallbackFont(assets: AssetSource, path: String, missing: Set<Char>, cellSize: Int): UiFont? {
+private suspend fun Strings.loadFallbackFont(assets: AssetSource, path: String, missing: Set<Int>, cellSize: Int): UiFont? {
     val font = assets.read(AssetPath(path)).fold(
         onSuccess = { bytes -> bakeFont(bytes, path, missing, cellSize) },
         onFailure = { e ->
@@ -147,16 +149,20 @@ private suspend fun Strings.loadFallbackFont(assets: AssetSource, path: String, 
             null
         },
     )
-    if (font != null && missing.none(font::hasGlyph)) {
+    if (font != null && missing.none { font.hasGlyph(it) }) {
         fontLog.warn { "Font $path for ${locale.value} draws none of the chars its text needs; it is not used." }
         return null
     }
     return font
 }
 
-private fun Strings.bakeFont(bytes: ByteArray, path: String, chars: Set<Char>, cellSize: Int): UiFont? = try {
-    UiFonts.load(bytes, path, chars = chars.joinToString(""), cellSize = cellSize)
+private fun Strings.bakeFont(bytes: ByteArray, path: String, codePoints: Set<Int>, cellSize: Int): UiFont? = try {
+    UiFonts.load(bytes, path, chars = codePoints.joinToString("") { CodePoints.asString(it) }, cellSize = cellSize)
 } catch (e: IllegalArgumentException) {
     fontLog.error(e) { "Font $path for ${locale.value} could not be baked: ${e.message}" }
     null
 }
+
+/** Whitespace or a control character, which no font is baked for. Neither occurs past U+FFFF. */
+private fun Int.isBlankOrControl(): Boolean =
+    this < CodePoints.SUPPLEMENTARY_MIN && toChar().let { it.isWhitespace() || it.isISOControl() }

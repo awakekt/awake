@@ -73,6 +73,8 @@ or a system polling `consumePress()`, sees the tap as it would without the bluep
 | `fontSize` | number (sp) | `18` | Size of `text`. |
 | `font` | string | `""` | The font of `text`: a `.ttf` or `.otf` file from the project, or a built-in family. See [Use a font](#use-a-font). |
 | `mask` | string | `""` | A `TextField`'s password mask: one character drawn for each typed one. Empty shows the text. |
+| `maxLength` | integer | `0` | The most a `TextField` lets the player type; `0` for no limit. See [Limit what is typed](#limit-what-is-typed). |
+| `maxLengthUnit` | `Graphemes` · `CodePoints` · `Utf8Bytes` | `Graphemes` | What `maxLength` counts. |
 | `pressable` | boolean | `false` | Lets an `Image` or `Panel` take a tap as a `Button` does. Without it, a tap passes through. |
 | `textAlign` | one of the nine anchor points | none | Where the text sits in the element. None keeps a `Text` at its top-left and a `Button`'s label centred. |
 | `follow` | string | `""` | A node to follow on screen. See [Follow a node](#follow-a-node). |
@@ -361,6 +363,19 @@ runtime renders each picture before the frame's UI and frees it once nothing dra
 element's size, offset, text and image pixels. A HUD drawn from 1x pixel art reads at 2 on a large
 screen. Every edge lands on a whole pixel at any scale, so the art stays crisp; at a fractional scale
 such as 1.5, some of its pixels are a screen pixel wider than others.
+
+## Limit what is typed
+
+Give a `TextField` a `maxLength` to stop typing, pasting and IME input there, as a chat line needs.
+It counts the characters a player sees (`maxLengthUnit: "Graphemes"`), so a family emoji, a flag or
+a thumbs-up with a skin tone is one character, and input is cut between characters, never inside
+one. If your server limits a line by code points or by UTF-8 bytes, set `maxLengthUnit` to
+`CodePoints` or `Utf8Bytes` with the server's number, so nothing the field accepts is refused or cut
+when it arrives. A system writing `text` is not limited.
+
+The caret, the arrow keys, Backspace, Delete and selection also step a whole character at a time.
+Emoji draw as the font's missing-glyph box until colour emoji fonts are supported, one box for each
+emoji.
 
 ## How it works
 

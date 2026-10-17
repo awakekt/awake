@@ -120,7 +120,8 @@ names fallback fonts in `strings/fonts.json`:
 
 `loadFont` bakes each fallback font with only the chars the loaded tables use that the primary font
 lacks, and returns one font, `UiFonts.fallback(primary, fallbacks)`, that draws each char from the
-first face that has it. Give it to the UI, for example as Compose's `LocalFont`.
+first face that has it. Give it to the UI, for example as Compose's `LocalFont`. Chars are read as
+Unicode code points, so a font is found for a CJK Extension B ideograph or an emoji as for any other.
 
 !!! warning "Bake fonts off the frame thread"
     Baking takes tens of milliseconds for a hundred glyphs and seconds for thousands. Call
@@ -129,8 +130,10 @@ first face that has it. Give it to the UI, for example as Compose's `LocalFont`.
     `extraChars`.
 
 !!! warning "No shaping"
-    Text draws one `Char` at a time. Thai's combining marks and Arabic's joined letters draw as
-    separate glyphs, and right-to-left layout is not supported yet.
+    Text draws one grapheme cluster at a time, so the caret, Backspace and a cut line never split an
+    emoji or a letter from its marks, but nothing is shaped: Thai's combining marks and Arabic's
+    joined letters draw as separate glyphs, emoji draw as the font's missing-glyph box, and
+    right-to-left layout is not supported yet.
 
 ## How it works
 

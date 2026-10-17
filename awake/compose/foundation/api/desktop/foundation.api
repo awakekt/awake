@@ -737,6 +737,8 @@ public final class com/awakekt/awake/compose/foundation/text/TextFieldState {
 	public final fun getCursor ()I
 	public final fun getHasComposition ()Z
 	public final fun getHasSelection ()Z
+	public final fun getMaxLength ()Ljava/lang/Integer;
+	public final fun getMaxLengthUnit ()Lcom/awakekt/awake/core/text/unicode/TextLengthUnit;
 	public final fun getSelectedText ()Ljava/lang/String;
 	public final fun getSelectionAnchor ()I
 	public final fun getSelectionEnd ()I
@@ -747,6 +749,8 @@ public final class com/awakekt/awake/compose/foundation/text/TextFieldState {
 	public final fun select (II)V
 	public final fun selectAll ()V
 	public final fun setComposition (Lcom/awakekt/awake/core/input/ImeComposition;)V
+	public final fun setMaxLength (Ljava/lang/Integer;)V
+	public final fun setMaxLengthUnit (Lcom/awakekt/awake/core/text/unicode/TextLengthUnit;)V
 	public final fun setText (Ljava/lang/String;I)V
 	public static synthetic fun setText$default (Lcom/awakekt/awake/compose/foundation/text/TextFieldState;Ljava/lang/String;IILjava/lang/Object;)V
 	public fun toString ()Ljava/lang/String;

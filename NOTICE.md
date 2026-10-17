@@ -59,3 +59,12 @@ This project includes third-party software components and compiled binaries unde
 * **License**: SIL Open Font License, Version 1.1 (https://openfontlicense.org). The atlases are a modified version of the font, so they are under the same license.
 * **Version**: 3.015
 * **Location**: `tools/fonts-tooling/samples/` (the variable font), `awake/ui/font-atlas-generator/fonts/` (the static faces), `tools/shadcn/reference-app/public/fonts/`, and the atlases in `awake/core/text/` with their license in `src/commonMain/resources/fonts/` (license retained verbatim in each)
+
+---
+
+### Unicode Character Database
+* **Description**: Grapheme cluster break properties (`GraphemeBreakProperty.txt`, `emoji-data.txt`'s Extended_Pictographic and `DerivedCoreProperties.txt`'s Indic_Conjunct_Break), which the `:awake:core:text:generateGraphemeBreakTable` task turns into the table `awake:core:text` ships, and Unicode's `GraphemeBreakTest.txt`, copied unchanged for its tests.
+* **Copyright**: Copyright (c) 1991-2026 Unicode, Inc.
+* **License**: Unicode License v3 (https://www.unicode.org/license.txt), retained in `LICENSES/Unicode-3.0.txt`
+* **Version**: 18.0.0
+* **Location**: `awake/core/text/src/commonMain/kotlin/com/awakekt/awake/core/text/unicode/GraphemeBreakTable.kt` and `awake/core/text/src/commonTest/resources/unicode/` (license retained verbatim there)

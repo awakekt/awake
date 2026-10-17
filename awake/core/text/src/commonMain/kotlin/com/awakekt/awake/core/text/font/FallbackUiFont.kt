@@ -6,7 +6,10 @@
 package com.awakekt.awake.core.text.font
 
 /**
- * A chain of fonts that draws each char from the first face that has it, made by [UiFonts.fallback].
+ * A chain of fonts that draws each code point from the first face that has it, made by [UiFonts.fallback].
+ *
+ * Faces are asked by code point, not `Char`, so a face that draws emoji or CJK Extension B
+ * ideographs is found for them too.
  *
  * Like [WeightedUiFont], the faces' atlases are stacked into one texture once, and each glyph gets
  * UVs in its own face's slice, so a line mixing scripts still draws from one atlas.
@@ -44,14 +47,18 @@ internal class FallbackUiFont(private val faces: List<UiFont>) : UiFont {
     override val descentEm: Float = primary.descentEm
     override val capHeightEm: Float = primary.capHeightEm
 
-    override fun uvFor(char: Char): GlyphRect? = glyphFor(char, FontWeight.Normal)
+    override fun uvFor(char: Char): GlyphRect? = glyphFor(char.code, FontWeight.Normal)
 
-    override fun hasGlyph(char: Char): Boolean = faces.any { it.hasGlyph(char) }
+    override fun hasGlyph(char: Char): Boolean = hasGlyph(char.code)
 
-    override fun glyphFor(char: Char, weight: FontWeight): GlyphRect? {
-        val index = faceIndex(char)
+    override fun hasGlyph(codePoint: Int): Boolean = faces.any { it.hasGlyph(codePoint) }
+
+    override fun glyphFor(char: Char, weight: FontWeight): GlyphRect? = glyphFor(char.code, weight)
+
+    override fun glyphFor(codePoint: Int, weight: FontWeight): GlyphRect? {
+        val index = faceIndex(codePoint)
         val face = faces[index]
-        val glyph = face.glyphFor(char, weight) ?: return null
+        val glyph = face.glyphFor(codePoint, weight) ?: return null
         val yOffset = offsets[index]
         return glyph.copy(
             u0 = glyph.u0 * face.atlasWidth / atlasWidth,
@@ -61,15 +68,17 @@ internal class FallbackUiFont(private val faces: List<UiFont>) : UiFont {
         )
     }
 
-    override fun advanceFor(char: Char, glyphPx: Float): Float = faces[faceIndex(char)].advanceFor(char, glyphPx)
+    override fun advanceFor(char: Char, glyphPx: Float): Float = faces[faceIndex(char.code)].advanceFor(char, glyphPx)
 
-    override fun advanceFor(char: Char, glyphPx: Float, weight: FontWeight): Float =
-        faces[faceIndex(char)].advanceFor(char, glyphPx, weight)
+    override fun advanceFor(char: Char, glyphPx: Float, weight: FontWeight): Float = advanceFor(char.code, glyphPx, weight)
 
-    /** The first face that has [char], or the primary face, which draws its own stand-in. */
-    private fun faceIndex(char: Char): Int {
+    override fun advanceFor(codePoint: Int, glyphPx: Float, weight: FontWeight): Float =
+        faces[faceIndex(codePoint)].advanceFor(codePoint, glyphPx, weight)
+
+    /** The first face that has [codePoint], or the primary face, which draws its own stand-in. */
+    private fun faceIndex(codePoint: Int): Int {
         for (index in faces.indices) {
-            if (faces[index].hasGlyph(char)) return index
+            if (faces[index].hasGlyph(codePoint)) return index
         }
         return 0
     }

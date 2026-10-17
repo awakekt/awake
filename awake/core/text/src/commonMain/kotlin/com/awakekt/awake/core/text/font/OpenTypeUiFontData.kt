@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.core.text.font
 
+import com.awakekt.awake.core.text.unicode.CodePoints
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.max
@@ -50,25 +51,29 @@ internal class OpenTypeUiFontData private constructor(
     companion object {
         /**
          * Reads [bytes] and bakes the glyphs of [chars] that the font has, plus [FALLBACK_CHAR],
-         * which every other char falls back to. The font's `.notdef` stands in for a font with no
+         * which every other char falls back to. [chars] is read by code point, so a surrogate pair
+         * such as a CJK Extension B ideograph is one glyph. The font's `.notdef` stands in for a font with no
          * fallback glyph of its own. [name] only labels errors and the data.
          *
          * @throws IllegalArgumentException when [bytes] are not a font this reads, naming the table at fault.
          */
         fun load(bytes: ByteArray, name: String, chars: String): OpenTypeUiFontData {
             val font = OpenTypeFont(bytes, name)
-            val picked = LinkedHashMap<Char, Int>()
-            for (char in chars) {
-                val glyph = font.glyphFor(char.code)
-                if (glyph != 0) picked.getOrPut(char) { glyph }
+            val picked = LinkedHashMap<Int, Int>()
+            var index = 0
+            while (index < chars.length) {
+                val codePoint = CodePoints.at(chars, index)
+                val glyph = font.glyphFor(codePoint)
+                if (glyph != 0) picked.getOrPut(codePoint) { glyph }
+                index += CodePoints.charCount(codePoint)
             }
-            if (FALLBACK_CHAR !in picked) picked[FALLBACK_CHAR] = font.glyphFor(FALLBACK_CHAR.code)
-            val glyphs = picked.map { (char, glyph) -> FontGlyph(char, font, glyph) }
+            if (FALLBACK_CHAR.code !in picked) picked[FALLBACK_CHAR.code] = font.glyphFor(FALLBACK_CHAR.code)
+            val glyphs = picked.map { (codePoint, glyph) -> FontGlyph(codePoint, font, glyph) }
             val layout = GlyphLayout(font, glyphs)
             require(layout.atlasWidth <= MAX_ATLAS_SIZE && layout.atlasHeight <= MAX_ATLAS_SIZE) {
                 "$name: ${glyphs.size} glyphs need a ${layout.atlasWidth}x${layout.atlasHeight} atlas, over $MAX_ATLAS_SIZE"
             }
-            return OpenTypeUiFontData(name, glyphs.joinToString("") { it.char.toString() }, layout, layout.bakeAtlas(glyphs, name))
+            return OpenTypeUiFontData(name, glyphOrderOf(glyphs), layout, layout.bakeAtlas(glyphs, name))
         }
     }
 }
@@ -96,8 +101,13 @@ private const val MAX_ATLAS_SIZE = 8192
 /** The distance an atlas texel can hold, either side of the outline: half of [DISTANCE_FIELD_RANGE_PX]. */
 private const val FIELD_REACH = DISTANCE_FIELD_RANGE_PX / 2.0
 
-/** One char's glyph: its outline and its outline-exact box, both in font units, y up. */
-private class FontGlyph(val char: Char, font: OpenTypeFont, glyph: Int) {
+/** The code points of [glyphs] as one string, a surrogate pair for each past U+FFFF. */
+private fun glyphOrderOf(glyphs: List<FontGlyph>): String = buildString {
+    for (glyph in glyphs) append(CodePoints.asString(glyph.codePoint))
+}
+
+/** One code point's glyph: its outline and its outline-exact box, both in font units, y up. */
+private class FontGlyph(val codePoint: Int, font: OpenTypeFont, glyph: Int) {
     val outline: List<OutlineSegment> = font.outline(glyph)
     val advance: Int = font.advance(glyph)
 
@@ -140,7 +150,7 @@ private class GlyphLayout(private val font: OpenTypeFont, glyphs: List<FontGlyph
             inked.map(pick).let { if (largest) it.maxOrNull() else it.minOrNull() } ?: 0f
         // The sample rect's bleed plus one texel, so bilinear sampling at a rect's edge reads its own cell.
         val edge = CROP_BLEED + 1f
-        val maxAdvancePx = glyphs.indices.filter { glyphs[it].char != ' ' }.maxOfOrNull { advancesEm[it] * TEXELS_PER_EM } ?: 0f
+        val maxAdvancePx = glyphs.indices.filter { glyphs[it].codePoint != ' '.code }.maxOfOrNull { advancesEm[it] * TEXELS_PER_EM } ?: 0f
         originX = max(PADDING, ceil(edge - extreme({ inkMetricsEm[it * 4] * TEXELS_PER_EM }, largest = false)).toInt())
         originY = max(PADDING, ceil(edge - extreme({ inkMetricsEm[it * 4 + 1] * TEXELS_PER_EM }, largest = false)).toInt())
         val inkRight = extreme({ (inkMetricsEm[it * 4] + inkMetricsEm[it * 4 + 2]) * TEXELS_PER_EM }, largest = true)

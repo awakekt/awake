@@ -6,6 +6,7 @@
 package com.awakekt.awake.scene.canvas
 
 import com.awakekt.awake.core.schema.PropertyRange
+import com.awakekt.awake.core.text.unicode.TextLengthUnit
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneValidationIssue
 import com.awakekt.awake.scene.document.SceneVec3
@@ -80,6 +81,11 @@ import kotlinx.serialization.Serializable
  * @property pressable Whether an Image or Panel takes a tap as a Button does: reported through
  * [CanvasElement.consumePress] and [CanvasElement.consumePressAt], and kept from what is under it.
  * False leaves it watching the pointer only. A Button is always pressable.
+ * @property maxLength The most a TextField lets the player type, counted in [maxLengthUnit]; 0 for
+ * no limit. Input stops at the limit and never inside a character, so an emoji goes in whole or not
+ * at all.
+ * @property maxLengthUnit What [maxLength] counts: `Graphemes`, the characters a player sees, or
+ * `CodePoints` or `Utf8Bytes` to match a server's limit.
  */
 @Serializable
 @SerialName("canvas_element")
@@ -117,6 +123,8 @@ data class SceneCanvasElement(
     val mask: String = "",
     val font: String = "",
     val pressable: Boolean = false,
+    @PropertyRange(min = 0.0) val maxLength: Int = 0,
+    val maxLengthUnit: TextLengthUnit = TextLengthUnit.Graphemes,
 ) : SceneComponent {
     /**
      * Validates element dimensions, font sizes, values, and hex color syntax.
@@ -136,6 +144,7 @@ data class SceneCanvasElement(
         if (grow < 0f) add(SceneValidationIssue(path, "canvas_element.grow must not be negative"))
         bind?.problems()?.forEach { add(SceneValidationIssue(path, "canvas_element.bind.$it")) }
         if (mask.length > 1) add(SceneValidationIssue(path, "canvas_element.mask must be one character"))
+        if (maxLength < 0) add(SceneValidationIssue(path, "canvas_element.maxLength must not be negative"))
         canvasFontProblem(font)?.let { add(SceneValidationIssue(path, "canvas_element.$it")) }
         kindProblems().forEach { add(SceneValidationIssue(path, "canvas_element.$it")) }
     }
@@ -143,6 +152,9 @@ data class SceneCanvasElement(
     /** Fields set on a kind they do nothing for. */
     private fun kindProblems(): List<String> = listOfNotNull(
         "mask only masks a TextField".takeIf { mask.isNotEmpty() && kind != CanvasElementKind.TextField },
+        "maxLength only limits a TextField".takeIf {
+            (maxLength != 0 || maxLengthUnit != TextLengthUnit.Graphemes) && kind != CanvasElementKind.TextField
+        },
         "pressable makes an Image or a Panel pressable; a Button always is".takeIf {
             pressable && kind != CanvasElementKind.Image && kind != CanvasElementKind.Panel
         },

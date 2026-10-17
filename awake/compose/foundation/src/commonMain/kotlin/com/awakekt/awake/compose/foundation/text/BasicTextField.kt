@@ -36,6 +36,7 @@ import com.awakekt.awake.core.input.ImeComposition
 import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.input.TextEditAction
 import com.awakekt.awake.core.text.theme.TextStyle
+import com.awakekt.awake.core.text.unicode.GraphemeClusters
 import kotlin.math.roundToInt
 
 // PascalCase composables: Compose's own convention. See 11-refinements.md rule 1.
@@ -79,10 +80,10 @@ context(_: Composer)
  *
  * A non-null [mask] makes it a password field, the shape of Compose's `PasswordVisualTransformation`
  * and of `<input type=password>`. [state] keeps the real text; only what is drawn changes, one
- * [mask] per character, IME pre-edit included. One-for-one keeps every index the same in both
- * strings, so the caret, the selection and a click's hit-test land on the masked glyphs with no
- * offset mapping. Characters are UTF-16 units, the unit [TextFieldState] edits in, so a character
- * outside the Basic Multilingual Plane draws two masks. A masked field is single-line, since a
+ * [mask] per character, IME pre-edit included. A character is a grapheme cluster, the unit
+ * [TextFieldState] edits in, so an emoji draws one mask however many `Char`s it takes. The masked
+ * string keeps every index the same as the real one, so the caret, the selection and a click's
+ * hit-test land on the masked glyphs with no offset mapping. A masked field is single-line, since a
  * line break would be a visible mask the user cannot tell from any other. While it holds focus the
  * frame asks the platform for a password keyboard (`PlatformEffects.passwordKeyboard`), a copy or
  * cut through `ComposeHost` returns nothing, and its semantics carry
@@ -231,16 +232,32 @@ private fun fieldText(
 }
 
 /**
- * One [mask] per character of [text], so every index into one is the same index into the other.
- * Characters in `revealStart until revealEnd` are kept in clear.
+ * One [mask] per grapheme cluster of [text], with every index into one the same index into the
+ * other. Clusters that overlap `revealStart until revealEnd` are kept in clear.
+ *
+ * A cluster of several `Char`s becomes the mask followed by [MASK_FILLER]s, which join it into one
+ * cluster that draws as the mask alone, so the run sees as many clusters, at the same indices, as
+ * the real text has.
  */
 internal fun maskedText(text: String, mask: Char, revealStart: Int = 0, revealEnd: Int = 0): String {
     if (text.isEmpty()) return text
     val chars = CharArray(text.length)
-    chars.fill(mask)
-    for (i in revealStart.coerceAtLeast(0) until revealEnd.coerceAtMost(text.length)) chars[i] = text[i]
+    GraphemeClusters.forEach(text) { start, end ->
+        if (start < revealEnd && end > revealStart) {
+            for (i in start until end) chars[i] = text[i]
+        } else {
+            chars[start] = mask
+            for (i in start + 1 until end) chars[i] = MASK_FILLER
+        }
+    }
     return chars.concatToString()
 }
+
+/**
+ * U+034F COMBINING GRAPHEME JOINER: it extends the cluster before it and draws nothing. Not ZWJ,
+ * which would join two masks that are themselves pictographs into one cluster.
+ */
+private const val MASK_FILLER = '\u034F'
 
 /**
  * The character a masked field shows in clear right after it is typed.
@@ -257,10 +274,9 @@ internal class LastTypedReveal {
     var end = 0
         private set
 
-    /** Reveals what was just inserted before the caret if it is one character, else hides. */
+    /** Reveals what was just inserted before the caret if it is one character (grapheme cluster), else hides. */
     fun record(state: TextFieldState, inserted: String, now: Float) {
-        val oneCharacter = inserted.length == 1 ||
-            (inserted.length == 2 && inserted[0].isHighSurrogate() && inserted[1].isLowSurrogate())
+        val oneCharacter = GraphemeClusters.count(inserted) == 1
         if (!oneCharacter || state.hasComposition || state.cursor < inserted.length) {
             clear()
             return

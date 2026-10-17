@@ -6,6 +6,7 @@
 package com.awakekt.awake.core.localization
 
 import com.awakekt.awake.core.logging.Logger
+import com.awakekt.awake.core.text.unicode.CodePoints
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -151,6 +152,21 @@ class Strings internal constructor(
             for (text in table.text.values) text.forEach { chars += it }
         }
         return chars
+    }
+
+    /**
+     * Every Unicode code point the text of the active locale's tables uses, the default locale's
+     * included. Unlike [characters], an emoji or a CJK Extension B ideograph is one code point here
+     * rather than two halves of a surrogate pair, so a font can be found and baked for it.
+     *
+     * @return The code points.
+     */
+    fun codePoints(): Set<Int> {
+        val codePoints = HashSet<Int>()
+        for (table in chain.tables) {
+            for (text in table.text.values) CodePoints.forEach(text) { _, codePoint -> codePoints += codePoint }
+        }
+        return codePoints
     }
 
     private suspend fun tableFor(locale: LocaleId): Table? {

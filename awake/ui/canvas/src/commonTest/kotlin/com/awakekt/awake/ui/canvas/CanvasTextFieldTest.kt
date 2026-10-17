@@ -15,6 +15,7 @@ import com.awakekt.awake.compose.ui.semantics.SemanticsProperties
 import com.awakekt.awake.core.graphics2d.DrawCommand
 import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.input.TextEditAction
+import com.awakekt.awake.core.text.unicode.TextLengthUnit
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -76,6 +77,28 @@ class CanvasTextFieldTest {
         frame() // ...and reaches `text` the next time the element composes.
 
         assertEquals("hi", field.text)
+    }
+
+    @Test
+    fun maxLengthStopsTypingWithoutSplittingAnEmoji() {
+        val family = "\uD83D\uDC68\u200D\uD83D\uDC69\u200D\uD83D\uDC67"
+        val flag = "\uD83C\uDDF5\uD83C\uDDED"
+        val field = textField { maxLength = 3 }
+        field.focus()
+
+        frame(typedText = "a$family$flag!")
+        frame()
+        assertEquals("a$family$flag", field.text)
+
+        frame(editActions = listOf(TextEditAction.Backspace))
+        frame()
+        assertEquals("a$family", field.text, "one backspace takes the whole flag")
+
+        field.maxLengthUnit = TextLengthUnit.Utf8Bytes
+        field.maxLength = 20
+        frame(typedText = flag)
+        frame()
+        assertEquals("a$family", field.text, "the family's 18 bytes leave no room for the flag's 8")
     }
 
     @Test

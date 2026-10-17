@@ -8,7 +8,10 @@ package com.awakekt.awake.compose.foundation.text
 import com.awakekt.awake.compose.ui.graphics.drawscope.DrawScope
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.text.font.UiFont
+import com.awakekt.awake.core.text.font.clusterAdvance
+import com.awakekt.awake.core.text.font.forEachGlyphInCluster
 import com.awakekt.awake.core.text.theme.TextStyle
+import com.awakekt.awake.core.text.unicode.GraphemeClusters
 
 /**
  * Where each character sits in a run, in device pixels.
@@ -16,6 +19,10 @@ import com.awakekt.awake.core.text.theme.TextStyle
  * Shared by painting and by the caret: a text field whose caret is positioned by different arithmetic
  * than its glyphs drifts by a pixel per character, and the drift only shows up at the end of a long
  * line where nobody is looking.
+ *
+ * A character is a grapheme cluster ([GraphemeClusters]): the run measures, paints, places the caret
+ * and hit-tests one cluster at a time, so a flag or a ZWJ emoji is one character to all four, and
+ * letter spacing falls between clusters, never inside one.
  */
 internal class TextRun(
     private val text: String,
@@ -29,9 +36,7 @@ internal class TextRun(
 
     /** The visual lines this run occupies, with their source ranges. */
     private val lineLayouts: List<TextLineLayout> = breakIntoLineLayouts(text, wrapWidthPx) { line ->
-        var total = 0f
-        for (i in line.indices) total += font.advanceFor(line[i], glyphPx, style.weight) + letterSpacing
-        total
+        widthBetween(line, 0, line.length)
     }
 
     /** The line advance, widened for multiline text when a compact authored box cannot contain the font. */
@@ -47,13 +52,7 @@ internal class TextRun(
     internal val lines: List<String> = lineLayouts.map(TextLineLayout::text)
 
     /** Left edge of the character at [index], or the run's end when [index] is its length. */
-    fun offsetAt(index: Int): Float {
-        var x = 0f
-        for (i in 0 until index.coerceIn(0, text.length)) {
-            x += font.advanceFor(text[i], glyphPx, style.weight) + letterSpacing
-        }
-        return x
-    }
+    fun offsetAt(index: Int): Float = widthBetween(text, 0, index.coerceIn(0, text.length))
 
     /** The line box the caret occupies, including soft wrapping. */
     fun caretPositionAt(index: Int): TextCaretPosition {
@@ -61,7 +60,7 @@ internal class TextRun(
         val lineIndex = lineLayouts.indexOfFirst { bounded <= it.endExclusive }
             .let { if (it >= 0) it else lineLayouts.lastIndex }
         val line = lineLayouts[lineIndex]
-        val x = offsetWithin(text.substring(line.start, bounded.coerceIn(line.start, line.endExclusive)))
+        val x = widthBetween(text, line.start, bounded.coerceIn(line.start, line.endExclusive))
         return TextCaretPosition(x, lineIndex * lineHeightPx)
     }
 
@@ -69,7 +68,7 @@ internal class TextRun(
     fun offsetAtLine(index: Int): Float = caretPositionAt(index).x
 
     /**
-     * The character boundary nearest ([x], [y]).
+     * The cluster boundary nearest ([x], [y]), so a click never lands inside a character.
      *
      * Hit testing uses the same visual lines as painting: choosing against the original, unwrapped
      * string makes every click below the first soft-wrapped line resolve to a first-line index.
@@ -78,13 +77,18 @@ internal class TextRun(
         val lineIndex = (y / lineHeightPx).toInt().coerceIn(0, lineLayouts.lastIndex)
         val line = lineLayouts[lineIndex]
         var best = line.start
-        var bestDistance = Float.MAX_VALUE
-        for (i in line.start..line.endExclusive) {
-            val distance = kotlin.math.abs(offsetWithin(text.substring(line.start, i)) - x)
+        var bestDistance = kotlin.math.abs(x)
+        var pen = 0f
+        var start = line.start
+        while (start < line.endExclusive) {
+            val end = GraphemeClusters.nextBoundary(text, start).coerceAtMost(line.endExclusive)
+            pen += font.clusterAdvance(text, start, end, glyphPx, style.weight) + letterSpacing
+            val distance = kotlin.math.abs(pen - x)
             if (distance < bestDistance) {
                 bestDistance = distance
-                best = i
+                best = end
             }
+            start = end
         }
         return best
     }
@@ -99,8 +103,8 @@ internal class TextRun(
             val segmentStart = maxOf(selectionStart, line.start)
             val segmentEnd = minOf(selectionEnd, line.endExclusive)
             if (segmentStart < segmentEnd) {
-                val x = offsetWithin(text.substring(line.start, segmentStart))
-                val right = offsetWithin(text.substring(line.start, segmentEnd))
+                val x = widthBetween(text, line.start, segmentStart)
+                val right = widthBetween(text, line.start, segmentEnd)
                 block(x, lineIndex * lineHeightPx, right - x, lineHeightPx)
             }
         }
@@ -130,29 +134,44 @@ internal class TextRun(
 
     private fun paintLine(line: String, scope: DrawScope, color: Color, offsetX: Float, y: Float) {
         var x = offsetX
-        for (i in line.indices) {
-            val uv = font.glyphFor(line[i], style.weight)
-            if (uv != null) {
-                scope.drawGlyph(
-                    x = x + uv.offsetXEm * glyphPx,
-                    y = y + uv.offsetYEm * glyphPx,
-                    width = uv.widthEm * glyphPx,
-                    height = uv.heightEm * glyphPx,
-                    u0 = uv.u0,
-                    v0 = uv.v0,
-                    u1 = uv.u1,
-                    v1 = uv.v1,
-                    color = color,
-                    font = font,
-                )
-            }
-            x += font.advanceFor(line[i], glyphPx, style.weight) + letterSpacing
+        var start = 0
+        while (start < line.length) {
+            val end = GraphemeClusters.nextBoundary(line, start)
+            val clusterX = x
+            x += font.forEachGlyphInCluster(line, start, end, glyphPx, style.weight) { codePoint, penX ->
+                val uv = font.glyphFor(codePoint, style.weight)
+                if (uv != null) {
+                    scope.drawGlyph(
+                        x = clusterX + penX + uv.offsetXEm * glyphPx,
+                        y = y + uv.offsetYEm * glyphPx,
+                        width = uv.widthEm * glyphPx,
+                        height = uv.heightEm * glyphPx,
+                        u0 = uv.u0,
+                        v0 = uv.v0,
+                        u1 = uv.u1,
+                        v1 = uv.v1,
+                        color = color,
+                        font = font,
+                    )
+                }
+            } + letterSpacing
+            start = end
         }
     }
 
-    private fun offsetWithin(value: String): Float {
+    /**
+     * The pen distance of `value[start until end]`, whole clusters only: one that [end] falls inside
+     * is left out. [start] is a cluster boundary, as a line's start is.
+     */
+    private fun widthBetween(value: String, start: Int, end: Int): Float {
         var x = 0f
-        for (character in value) x += font.advanceFor(character, glyphPx, style.weight) + letterSpacing
+        var clusterStart = start
+        while (clusterStart < end) {
+            val clusterEnd = GraphemeClusters.nextBoundary(value, clusterStart)
+            if (clusterEnd > end) break
+            x += font.clusterAdvance(value, clusterStart, clusterEnd, glyphPx, style.weight) + letterSpacing
+            clusterStart = clusterEnd
+        }
         return x
     }
 }

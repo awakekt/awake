@@ -17,8 +17,10 @@ import com.awakekt.awake.compose.ui.platform.DefaultFontSize
 import com.awakekt.awake.compose.ui.unit.Constraints
 import com.awakekt.awake.compose.ui.unit.Density
 import com.awakekt.awake.core.text.font.UiFont
+import com.awakekt.awake.core.text.font.clusterAdvance
 import com.awakekt.awake.core.text.scope.pixelPerfectTextScale
 import com.awakekt.awake.core.text.theme.TextStyle
+import com.awakekt.awake.core.text.unicode.GraphemeClusters
 import kotlin.math.ceil
 import kotlin.math.roundToInt
 
@@ -178,16 +180,23 @@ class TextMeasurePolicy(
         return (sizeSp.value * density * fontScale * snapped).coerceAtLeast(1f)
     }
 
-    /** One line's advance width. A block is as wide as its longest line, never their sum. */
+    /**
+     * One line's advance width. A block is as wide as its longest line, never their sum.
+     *
+     * Summed a grapheme cluster at a time, as `TextRun` paints: a ZWJ emoji is one character, not
+     * the eight `Char`s it is stored in.
+     */
     private fun Density.lineWidth(line: String, glyphPx: Float): Float {
         if (line.isEmpty()) return 0f
         var total = 0f
-        for (i in line.indices) {
-            total += font.advanceFor(line[i], glyphPx, style.weight)
+        var clusters = 0
+        GraphemeClusters.forEach(line) { start, end ->
+            total += font.clusterAdvance(line, start, end, glyphPx, style.weight)
+            clusters++
         }
-        // Letter spacing sits between glyphs, not after the last one -- the same off-by-one that
+        // Letter spacing sits between characters, not after the last one -- the same off-by-one that
         // puts a phantom gap on the trailing edge of a centred label.
-        val gaps = (line.length - 1).coerceAtLeast(0)
+        val gaps = (clusters - 1).coerceAtLeast(0)
         return total + style.letterSpacing.value * density * gaps
     }
 

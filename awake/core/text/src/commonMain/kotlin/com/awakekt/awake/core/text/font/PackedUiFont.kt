@@ -7,6 +7,7 @@
 
 package com.awakekt.awake.core.text.font
 
+import com.awakekt.awake.core.text.unicode.CodePoints
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
@@ -36,6 +37,8 @@ internal interface PackedUiFontData {
 
     /** Raw atlas bytes, [atlasChannels] per texel, row-major from the top-left, as base64. */
     val encodedAtlasBase64: String
+
+    /** The code points the atlas holds, in the order of the per-glyph arrays; a surrogate pair is one. */
     val glyphOrder: String
     val uvBoundsPx: IntArray
 
@@ -62,6 +65,8 @@ internal interface PackedUiFontData {
  * @param data The underlying packed font data.
  * @property cellSize The base cell size in pixels for this font instance.
  */
+// UiFont's Char and code point lookups are each one short override here.
+@Suppress("TooManyFunctions")
 class PackedUiFont internal constructor(
     private val data: PackedUiFontData,
     override val cellSize: Int = data.baseCellSize,
@@ -96,19 +101,26 @@ class PackedUiFont internal constructor(
      */
     private val baselineEm: Float by lazy {
         BASELINE_REFERENCE_GLYPHS.firstNotNullOfOrNull { char ->
-            inkByChar[char]?.takeIf { it.heightEm > 0f }?.let { it.offsetYEm + it.heightEm }
+            inkByCode[char.code]?.takeIf { it.heightEm > 0f }?.let { it.offsetYEm + it.heightEm }
         } ?: visibleBottomEm
     }
 
-    private val glyphsByChar: Map<Char, GlyphRect> by lazy(::decodeGlyphRects)
-    private val inkByChar: Map<Char, InkBounds> by lazy(::decodeInkBounds)
-    private val advancesByChar: Map<Char, Float> by lazy(::decodeAdvances)
+    // Keyed by code point, so a font loaded with characters past U+FFFF finds them.
+    private val glyphsByCode: Map<Int, GlyphRect> by lazy(::decodeGlyphRects)
+    private val inkByCode: Map<Int, InkBounds> by lazy(::decodeInkBounds)
+    private val advancesByCode: Map<Int, Float> by lazy(::decodeAdvances)
+    private val fallbackCode: Int = data.fallbackChar.code
 
     override val lineHeightEm: Float get() = data.lineHeightEm
 
-    override fun uvFor(char: Char): GlyphRect? = glyphsByChar[char] ?: glyphsByChar[data.fallbackChar]
+    override fun uvFor(char: Char): GlyphRect? = glyphFor(char.code, FontWeight.Normal)
 
-    override fun hasGlyph(char: Char): Boolean = char in glyphsByChar
+    override fun hasGlyph(char: Char): Boolean = char.code in glyphsByCode
+
+    override fun hasGlyph(codePoint: Int): Boolean = codePoint in glyphsByCode
+
+    override fun glyphFor(codePoint: Int, weight: FontWeight): GlyphRect? =
+        glyphsByCode[codePoint] ?: glyphsByCode[fallbackCode]
 
     /**
      * A glyph's outline-exact ink box, in em, without the crop bleed and texel snap that
@@ -122,7 +134,7 @@ class PackedUiFont internal constructor(
      * than against the padded quad.
      */
     fun inkFor(char: Char): GlyphRect? =
-        (inkByChar[char] ?: inkByChar[data.fallbackChar])?.let { ink ->
+        (inkByCode[char.code] ?: inkByCode[fallbackCode])?.let { ink ->
             GlyphRect(
                 u0 = 0f,
                 v0 = 0f,
@@ -153,12 +165,14 @@ class PackedUiFont internal constructor(
      * overhang-sized) amount, which varies per glyph because ink width varies per glyph. That
      * variable inflation was the actual root cause of the reported uneven letter spacing.
      */
-    override fun advanceFor(char: Char, glyphPx: Float): Float {
-        val advanceEm = advancesByChar[char] ?: advancesByChar[data.fallbackChar] ?: 1f
+    override fun advanceFor(char: Char, glyphPx: Float): Float = advanceFor(char.code, glyphPx, FontWeight.Normal)
+
+    override fun advanceFor(codePoint: Int, glyphPx: Float, weight: FontWeight): Float {
+        val advanceEm = advancesByCode[codePoint] ?: advancesByCode[fallbackCode] ?: 1f
         // Clamp against the INK right edge, not the render quad's: the quad carries the crop
         // bleed, and clamping to it would inflate spacing by a bleed-sized, per-glyph amount --
         // the exact variable-inflation failure described above.
-        val ink = inkByChar[char] ?: inkByChar[data.fallbackChar]
+        val ink = inkByCode[codePoint] ?: inkByCode[fallbackCode]
         val rightEdgeEm = if (ink != null) ink.offsetXEm + ink.widthEm else 0f
         return glyphPx * maxOf(advanceEm, rightEdgeEm)
     }
@@ -183,12 +197,12 @@ class PackedUiFont internal constructor(
         return rgba
     }
 
-    private fun decodeGlyphRects(): Map<Char, GlyphRect> {
-        val result = LinkedHashMap<Char, GlyphRect>(data.glyphOrder.length)
+    private fun decodeGlyphRects(): Map<Int, GlyphRect> {
+        val result = LinkedHashMap<Int, GlyphRect>(data.glyphOrder.length)
         var uvIndex = 0
         var metricIndex = 0
-        data.glyphOrder.forEach { char ->
-            result[char] = GlyphRect(
+        forEachGlyphCode { _, code ->
+            result[code] = GlyphRect(
                 u0 = data.uvBoundsPx[uvIndex].toFloat() / atlasWidth,
                 v0 = data.uvBoundsPx[uvIndex + 1].toFloat() / atlasHeight,
                 u1 = data.uvBoundsPx[uvIndex + 2].toFloat() / atlasWidth,
@@ -204,11 +218,11 @@ class PackedUiFont internal constructor(
         return result
     }
 
-    private fun decodeInkBounds(): Map<Char, InkBounds> {
-        val result = LinkedHashMap<Char, InkBounds>(data.glyphOrder.length)
+    private fun decodeInkBounds(): Map<Int, InkBounds> {
+        val result = LinkedHashMap<Int, InkBounds>(data.glyphOrder.length)
         var metricIndex = 0
-        data.glyphOrder.forEach { char ->
-            result[char] = InkBounds(
+        forEachGlyphCode { _, code ->
+            result[code] = InkBounds(
                 offsetXEm = data.inkMetricsEm[metricIndex],
                 offsetYEm = data.inkMetricsEm[metricIndex + 1],
                 widthEm = data.inkMetricsEm[metricIndex + 2],
@@ -219,12 +233,24 @@ class PackedUiFont internal constructor(
         return result
     }
 
-    private fun decodeAdvances(): Map<Char, Float> {
-        val result = LinkedHashMap<Char, Float>(data.glyphOrder.length)
-        data.glyphOrder.forEachIndexed { index, char ->
-            result[char] = data.advancesEm[index]
+    private fun decodeAdvances(): Map<Int, Float> {
+        val result = LinkedHashMap<Int, Float>(data.glyphOrder.length)
+        forEachGlyphCode { glyph, code ->
+            result[code] = data.advancesEm[glyph]
         }
         return result
+    }
+
+    /** Calls [action] with each glyph's index into the per-glyph arrays and its code point. */
+    private inline fun forEachGlyphCode(action: (glyph: Int, code: Int) -> Unit) {
+        val order = data.glyphOrder
+        var index = 0
+        var glyph = 0
+        while (index < order.length) {
+            val code = CodePoints.at(order, index)
+            action(glyph++, code)
+            index += CodePoints.charCount(code)
+        }
     }
 
     /** Outline-exact ink rect, pen/line-top relative in em -- the measurement-facing twin of
@@ -241,14 +267,14 @@ class PackedUiFont internal constructor(
      * the render quad: the quad carries crop bleed and would overstate the metric. */
     private fun measureCapHeightEm(): Float =
         BASELINE_REFERENCE_GLYPHS.firstNotNullOfOrNull { char ->
-            inkByChar[char]?.heightEm?.takeIf { it > 0f }
+            inkByCode[char.code]?.heightEm?.takeIf { it > 0f }
         } ?: super.capHeightEm
 
     private fun computeVisibleBand(): Pair<Float, Float> {
         var metricIndex = 0
         var top = Float.POSITIVE_INFINITY
         var bottom = Float.NEGATIVE_INFINITY
-        repeat(data.glyphOrder.length) {
+        forEachGlyphCode { _, _ ->
             val offsetYEm = data.inkMetricsEm[metricIndex + 1]
             val heightEm = data.inkMetricsEm[metricIndex + 3]
             if (heightEm > 0f) {

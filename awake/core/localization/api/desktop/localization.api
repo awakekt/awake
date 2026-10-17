@@ -122,6 +122,7 @@ public final class com/awakekt/awake/core/localization/StringTables {
 public final class com/awakekt/awake/core/localization/Strings {
 	public static final field Companion Lcom/awakekt/awake/core/localization/Strings$Companion;
 	public final fun characters ()Ljava/util/Set;
+	public final fun codePoints ()Ljava/util/Set;
 	public final fun contains (Ljava/lang/String;)Z
 	public final fun getDefaultLocale ()Lcom/awakekt/awake/core/localization/LocaleId;
 	public final fun getLocale ()Lkotlinx/coroutines/flow/StateFlow;

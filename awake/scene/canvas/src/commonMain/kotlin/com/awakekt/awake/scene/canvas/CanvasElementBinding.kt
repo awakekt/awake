@@ -69,6 +69,8 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         it.camera = camera
         it.links = links
         it.mask = mask
+        it.maxLength = maxLength
+        it.maxLengthUnit = maxLengthUnit
         it.font = font
         it.pressable = pressable
     }
@@ -110,6 +112,8 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         camera = camera,
         links = links,
         mask = mask,
+        maxLength = maxLength,
+        maxLengthUnit = maxLengthUnit,
         font = font,
         pressable = pressable,
     )

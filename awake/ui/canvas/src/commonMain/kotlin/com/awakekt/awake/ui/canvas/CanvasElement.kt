@@ -11,6 +11,7 @@ import com.awakekt.awake.compose.ui.focus.FocusRequester
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math2d.Rectangle
 import com.awakekt.awake.core.math2d.Vec2
+import com.awakekt.awake.core.text.unicode.TextLengthUnit
 import kotlinx.serialization.Serializable
 import kotlin.math.sqrt
 import kotlin.time.Duration.Companion.seconds
@@ -204,6 +205,22 @@ class CanvasElement {
      * accessibility service and the platform keyboard. Clearing it shows the password.
      */
     var mask: String = ""
+
+    /**
+     * The most a TextField lets the player type, counted in [maxLengthUnit]; 0, the default, for no
+     * limit.
+     *
+     * Typing, pasting and an IME stop at the limit, and never inside a character: an emoji or a flag
+     * goes in whole or not at all. A system writing [text] is not limited.
+     */
+    var maxLength: Int = 0
+
+    /**
+     * What a TextField's [maxLength] counts: the characters a player sees, by default, or code points
+     * or UTF-8 bytes to match the limit a server keeps, so a line the field accepts is never refused
+     * or cut there.
+     */
+    var maxLengthUnit: TextLengthUnit = TextLengthUnit.Graphemes
 
     /**
      * The font a Text's, TextField's or Button's words draw in: a project `.ttf` or `.otf` file

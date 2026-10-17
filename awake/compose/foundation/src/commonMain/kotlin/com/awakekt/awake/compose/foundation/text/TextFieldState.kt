@@ -9,6 +9,8 @@ import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.remember
 import com.awakekt.awake.core.input.ImeComposition
 import com.awakekt.awake.core.input.TextEditAction
+import com.awakekt.awake.core.text.unicode.GraphemeClusters
+import com.awakekt.awake.core.text.unicode.TextLengthUnit
 
 /**
  * The text in a field and where the caret sits in it.
@@ -25,18 +27,47 @@ import com.awakekt.awake.core.input.TextEditAction
  * An earlier revision counter mirrored into `mutableStateOf` existed only because the text *was*
  * captured at composition, which left the glyphs stale until something unrelated re-ran the
  * composable. Fixing the phase removed the need for it.
+ *
+ * Edits step by grapheme cluster ([GraphemeClusters]), what a reader sees as one character: an
+ * arrow key moves over a whole flag or ZWJ emoji, Backspace and Delete remove one whole, and the
+ * caret and both ends of the selection only ever sit between clusters. A caret given inside a
+ * cluster moves back to the cluster's start, and a selection widens to whole clusters. Indices are
+ * still `Char` indices into [text].
  */
 class TextFieldState(text: String = "", cursor: Int = text.length) {
     /** The committed text, excluding any in-progress IME composition. */
     var text: String = text
         private set
 
-    /** Character index the caret sits before. Always within `0..text.length`. */
-    var cursor: Int = cursor.coerceIn(0, text.length)
+    /** Character index the caret sits before: a cluster boundary within `0..text.length`. */
+    var cursor: Int = GraphemeClusters.floorBoundary(text, cursor)
         private set
 
+    /**
+     * The most [text] that typing, pasting or an IME commit may leave, counted in [maxLengthUnit];
+     * null, the default, for no limit.
+     *
+     * Input over the limit is cut at the last cluster that fits and the rest dropped, the way a
+     * browser's `maxlength` treats a paste, so a flag or an emoji sequence is let in whole or not at
+     * all. A character that joins the cluster before it, such as a skin tone after a thumbs-up, adds
+     * no grapheme and is let in at the limit. [setText] is not limited: text a program sets is its
+     * own to check.
+     */
+    var maxLength: Int? = null
+        set(value) {
+            require(value == null || value >= 0) { "maxLength must not be negative, was $value" }
+            field = value
+        }
+
+    /**
+     * What [maxLength] counts: grapheme clusters by default, the characters a person sees. Count
+     * [TextLengthUnit.CodePoints] or [TextLengthUnit.Utf8Bytes] instead to match a server that
+     * stores a line in a fixed number of either, so nothing the field accepts is refused there.
+     */
+    var maxLengthUnit: TextLengthUnit = TextLengthUnit.Graphemes
+
     /** Fixed end of the current selection; equals [cursor] when the selection is collapsed. */
-    var selectionAnchor: Int = cursor
+    var selectionAnchor: Int = this.cursor
         private set
 
     /** The lower end of the selection, whichever of [selectionAnchor] and [cursor] comes first. */
@@ -51,8 +82,8 @@ class TextFieldState(text: String = "", cursor: Int = text.length) {
     /** The selected part of [text], empty when nothing is selected. */
     val selectedText: String get() = text.substring(selectionStart, selectionEnd)
 
-    private var compositionRangeStart = cursor
-    private var compositionRangeEnd = cursor
+    private var compositionRangeStart = this.cursor
+    private var compositionRangeEnd = this.cursor
     private var compositionText = ""
     private var compositionSelectionStart = 0
     private var compositionSelectionEnd = 0
@@ -89,44 +120,78 @@ class TextFieldState(text: String = "", cursor: Int = text.length) {
 
     /**
      * Replaces the whole [text] with [newText] and puts a collapsed caret at [newCursor], clamped to
-     * the new text.
+     * the new text and moved back to a cluster boundary.
      *
-     * Any in-progress IME composition is discarded.
+     * Any in-progress IME composition is discarded. [maxLength] does not apply.
      */
     fun setText(newText: String, newCursor: Int = newText.length) {
         text = newText
-        cursor = newCursor.coerceIn(0, newText.length)
+        cursor = GraphemeClusters.floorBoundary(newText, newCursor)
         selectionAnchor = cursor
         preferredColumn = null
         clearComposition()
     }
 
     /**
-     * Collapses the selection to a caret at [index], clamped to the text.
+     * Collapses the selection to a caret at [index], clamped to the text and moved back to a cluster
+     * boundary.
      *
      * Any in-progress IME composition is discarded.
      */
     fun moveCursorTo(index: Int) {
         clearComposition()
-        cursor = index.coerceIn(0, text.length)
-        selectionAnchor = cursor
-        preferredColumn = null
-    }
-
-    /** Inserts at the caret and leaves the caret after what was inserted. */
-    fun insert(inserted: String) {
-        commitComposition()
-        if (inserted.isEmpty()) return
-        text = text.substring(0, selectionStart) + inserted + text.substring(selectionEnd)
-        cursor = selectionStart + inserted.length
+        cursor = GraphemeClusters.floorBoundary(text, index)
         selectionAnchor = cursor
         preferredColumn = null
     }
 
     /**
+     * Inserts at the caret, replacing the selection, and leaves the caret after what was inserted.
+     * Only as much as [maxLength] allows goes in.
+     */
+    fun insert(inserted: String) {
+        commitComposition()
+        replace(selectionStart, selectionEnd, inserted)
+    }
+
+    /**
+     * Puts as much of [inserted] as [maxLength] allows in place of `text[start until end]`, caret
+     * after it. Inserting nothing over a selection still deletes it, as typing over a selection at
+     * the limit does.
+     */
+    private fun replace(start: Int, end: Int, inserted: String) {
+        val before = text.substring(0, start)
+        val after = text.substring(end)
+        val kept = inserted.substring(0, allowedLength(before, inserted, after))
+        if (kept.isEmpty() && start == end) return
+        text = before + kept + after
+        cursor = GraphemeClusters.floorBoundary(text, start + kept.length)
+        selectionAnchor = cursor
+        preferredColumn = null
+    }
+
+    /** How many `Char`s of [inserted] fit between [before] and [after]: whole clusters only. */
+    private fun allowedLength(before: String, inserted: String, after: String): Int {
+        val limit = maxLength ?: return inserted.length
+        val unit = maxLengthUnit
+        fun fits(end: Int) = unit.count(before + inserted.substring(0, end) + after) <= limit
+        // Counted alone first, then checked in place: a cluster can join its neighbours and count
+        // for less there, or, rarely, split one and count for more.
+        var end = unit.fit(inserted, (limit - unit.count(before + after)).coerceAtLeast(0))
+        while (end < inserted.length) {
+            val next = GraphemeClusters.nextBoundary(inserted, end)
+            if (!fits(next)) break
+            end = next
+        }
+        while (end > 0 && !fits(end)) end = GraphemeClusters.previousBoundary(inserted, end)
+        return end
+    }
+
+    /**
      * Applies a key-driven edit or caret move, committing any IME composition first.
      *
-     * Backspace and Delete remove the selection if there is one, otherwise a single character.
+     * Backspace and Delete remove the selection if there is one, otherwise one whole grapheme
+     * cluster; the arrow keys step over one.
      * [TextEditAction.Enter] is ignored here: `BasicTextField` reads it itself, to call its own
      * `onSubmit` in a single-line field or insert a newline in a multi-line one.
      */
@@ -138,8 +203,9 @@ class TextFieldState(text: String = "", cursor: Int = text.length) {
             TextEditAction.Backspace -> if (deleteSelection()) {
                 Unit
             } else if (cursor > 0) {
-                text = text.substring(0, cursor - 1) + text.substring(cursor)
-                cursor--
+                val start = GraphemeClusters.previousBoundary(text, cursor)
+                text = text.substring(0, start) + text.substring(cursor)
+                cursor = start
                 selectionAnchor = cursor
                 preferredColumn = null
             }
@@ -147,20 +213,20 @@ class TextFieldState(text: String = "", cursor: Int = text.length) {
             TextEditAction.Delete -> if (deleteSelection()) {
                 Unit
             } else if (cursor < text.length) {
-                text = text.substring(0, cursor) + text.substring(cursor + 1)
+                text = text.substring(0, cursor) + text.substring(GraphemeClusters.nextBoundary(text, cursor))
                 preferredColumn = null
             }
             TextEditAction.ArrowLeft -> if (hasSelection) {
                 moveCursorTo(selectionStart)
             } else if (cursor > 0) {
-                cursor--
+                cursor = GraphemeClusters.previousBoundary(text, cursor)
                 selectionAnchor = cursor
                 preferredColumn = null
             }
             TextEditAction.ArrowRight -> if (hasSelection) {
                 moveCursorTo(selectionEnd)
             } else if (cursor < text.length) {
-                cursor++
+                cursor = GraphemeClusters.nextBoundary(text, cursor)
                 selectionAnchor = cursor
                 preferredColumn = null
             }
@@ -184,15 +250,17 @@ class TextFieldState(text: String = "", cursor: Int = text.length) {
     }
 
     /**
-     * Selects from [anchor] to [focus], both clamped to the text.
+     * Selects from [anchor] to [focus], both clamped to the text and widened to cluster boundaries,
+     * so a selection never holds part of a character.
      *
      * The caret ends at [focus] and [anchor] stays fixed, so the selection can run in either
      * direction. Any in-progress IME composition is discarded.
      */
     fun select(anchor: Int, focus: Int) {
         clearComposition()
-        selectionAnchor = anchor.coerceIn(0, text.length)
-        cursor = focus.coerceIn(0, text.length)
+        val forward = anchor <= focus
+        selectionAnchor = if (forward) GraphemeClusters.floorBoundary(text, anchor) else GraphemeClusters.ceilBoundary(text, anchor)
+        cursor = if (forward) GraphemeClusters.ceilBoundary(text, focus) else GraphemeClusters.floorBoundary(text, focus)
         preferredColumn = null
     }
 
@@ -210,17 +278,19 @@ class TextFieldState(text: String = "", cursor: Int = text.length) {
         compositionSelectionEnd = composition.selectionEnd.coerceIn(0, composition.text.length)
     }
 
-    /** Finalizes [committed] over the range captured when composition began. */
+    /**
+     * Finalizes [committed] over the range captured when composition began, as much of it as
+     * [maxLength] allows. The pre-edit itself is shown whole while it is being composed.
+     */
     fun commitComposition(committed: String = compositionText) {
         if (!hasComposition) {
             if (committed.isNotEmpty()) insert(committed)
             return
         }
-        text = text.substring(0, compositionRangeStart) + committed + text.substring(compositionRangeEnd)
-        cursor = compositionRangeStart + committed.length
-        selectionAnchor = cursor
-        preferredColumn = null
+        val start = compositionRangeStart
+        val end = compositionRangeEnd
         clearComposition()
+        replace(start, end, committed)
     }
 
     /** Drops the in-progress IME pre-edit text without committing it into [text]. */
@@ -258,7 +328,7 @@ class TextFieldState(text: String = "", cursor: Int = text.length) {
             val targetEnd = lineEnd(targetStart)
             targetStart + column.coerceAtMost(targetEnd - targetStart)
         }
-        cursor = target
+        cursor = GraphemeClusters.floorBoundary(text, target)
         selectionAnchor = cursor
     }
 
