@@ -19,6 +19,8 @@ import com.awakekt.awake.ai.AiContext
 class InverterNode(
     val child: BehaviorNode,
 ) : BehaviorNode {
+    override val children: List<BehaviorNode> = listOf(child)
+
     override fun tick(context: AiContext): BehaviorStatus =
         when (child.tick(context)) {
             BehaviorStatus.SUCCESS -> BehaviorStatus.FAILURE

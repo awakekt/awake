@@ -210,6 +210,11 @@ fun LoadedProject.sceneSystems(input: () -> GameplayInput, renderer: Renderer? =
  * draw their textures from the project's files: each is read the first time it is drawn, and draws
  * from the frame it has loaded. [LoadedProject.close] the project once the scene has stopped.
  *
+ * A texture is read once. When a host such as an editor changes an image file while the project plays,
+ * it has the scene's asset library forget it, on the frame thread, and the next frame reads it again:
+ * `game.requireService<SceneAppLifecycleRuntime>().requireAssetLibrary().forgetTexture(path)`, or
+ * `forgetTextures()` for every one.
+ *
  * The scene can play another of the project's scenes: a system asks through
  * [SceneHostServices.sceneSwitch], and the app through its [SceneSwitch] service. The next scene
  * loads off the frame thread while this one plays on, and takes its place at the start of the next

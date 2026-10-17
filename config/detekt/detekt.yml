@@ -109,6 +109,7 @@ comments:
       - '**/awake/scene/scene-core/**'
       - '**/awake/core/logging/**'
       - '**/awake/core/schema/**'
+      - '**/awake/core/expression/**'
       - '**/awake/core/host/**'
       - '**/awake/core/input/**'
       - '**/awake/core/math2d/**'

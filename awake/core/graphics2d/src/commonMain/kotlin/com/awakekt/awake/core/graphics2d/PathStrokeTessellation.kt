@@ -81,6 +81,7 @@ fun DrawPath.strokeToFillPath(stroke: DrawStroke): DrawPath {
     }
 
     contours.forEach { contour ->
+        val points = withoutZeroLengthSegments(contour.points)
         // A contour that ends where it began is a loop, whether or not it said `Z`. It has to be
         // stroked as one: the open path emits a single ring that walks the outer boundary and then
         // the inner boundary the *same way round*, so under NonZero the windings add instead of
@@ -88,11 +89,14 @@ fun DrawPath.strokeToFillPath(stroke: DrawStroke): DrawPath {
         //
         // The caps a truly open path would get at that point are dropped, which is the correct
         // picture here: a cap drawn on top of the join it coincides with is invisible.
-        val loops = contour.points.size > 2 && unitDir(contour.points.last(), contour.points.first()) == null
+        val loops = points.size > 2 && nearlySame(points.last(), points.first())
         if (contour.closed || loops) {
-            val left = offsetClosedRing(contour.points, halfWidth, stroke.join)
-            val right = offsetClosedRing(contour.points, -halfWidth, stroke.join)
-            if (strokeFillsLoop(contour.points, halfWidth)) {
+            // The closing segment back to the first point is implicit, so a last point that is the
+            // first one again would only add a zero-length segment.
+            val ring = if (points.size > 1 && nearlySame(points.last(), points.first())) points.dropLast(1) else points
+            val left = offsetClosedRing(ring, halfWidth, stroke.join)
+            val right = offsetClosedRing(ring, -halfWidth, stroke.join)
+            if (strokeFillsLoop(ring, halfWidth)) {
                 // Which side is outside depends on the loop's winding: keep the larger ring.
                 emitRing(if (abs(ringArea(left)) >= abs(ringArea(right))) left else right)
             } else {
@@ -100,7 +104,7 @@ fun DrawPath.strokeToFillPath(stroke: DrawStroke): DrawPath {
                 emitRing(right.asReversed())
             }
         } else {
-            emitRing(offsetOpenRing(contour.points, halfWidth, stroke))
+            emitRing(offsetOpenRing(points, halfWidth, stroke))
         }
     }
     return DrawPath(fillRule = FillRule.NonZero, commands = commands)
@@ -113,6 +117,32 @@ fun DrawPath.strokeToFillPath(stroke: DrawStroke): DrawPath {
  * @return A [DrawPath] representing the closed boundary outline of the stroke.
  */
 fun DrawPath.strokeToSvgFillPath(stroke: DrawStroke): DrawPath = strokeToFillPath(stroke)
+
+/**
+ * Points closer together than this are one point to the stroker.
+ *
+ * A full arc ends a float's rounding away from where it began -- `sin(2 pi)` is not zero in
+ * single precision -- so closing it, or a shape's `lineTo` onto the end of its own arc, adds a
+ * segment a few millionths of a pixel long. Its direction is rounding noise: offsetting it turns
+ * the stroke's inner edge back on itself, the hole stops being a hole, and the whole disc fills.
+ * A thousandth of a pixel is far below anything visible and far above that noise.
+ */
+private const val ZERO_LENGTH_SEGMENT_PX = 1e-3f
+
+private fun nearlySame(a: DrawPoint, b: DrawPoint): Boolean = hypot(b.x - a.x, b.y - a.y) <= ZERO_LENGTH_SEGMENT_PX
+
+/**
+ * The contour with every zero-length segment merged into its neighbours, so each remaining segment
+ * has a real direction and the joins either side meet as if the segment were never there.
+ */
+private fun withoutZeroLengthSegments(points: List<DrawPoint>): List<DrawPoint> {
+    if (points.size < 2) return points
+    val kept = ArrayList<DrawPoint>(points.size)
+    for (point in points) {
+        if (kept.isEmpty() || !nearlySame(kept.last(), point)) kept += point
+    }
+    return kept
+}
 
 internal fun unitDir(a: DrawPoint, b: DrawPoint): DrawPoint? {
     val dx = b.x - a.x

@@ -71,7 +71,7 @@ interface SceneAssetResolver {
     /**
      * The texture a `sprite` or `tilemap` names [name] as it stands now, or null when this resolver
      * does not supply it. [SceneAssetLibrary.texture] asks on each frame something using it is drawn,
-     * until it is [SceneTextureLoad.Loaded], so a resolver that loads it starts on the first ask and
+     * until it is [SceneTextureLoad.Loaded], and again once it is forgotten (see [forgetTexture]), so a resolver that loads it starts on the first ask and
      * answers [SceneTextureLoad.Loading] meanwhile; [AssetSourceTextureResolver] loads them from files.
      * A texture registered by name with the scene's assets is used without asking.
      *
@@ -79,4 +79,16 @@ interface SceneAssetResolver {
      * @return Where the texture stands, or `null` if this resolver does not supply it.
      */
     fun texture(name: String): SceneTextureLoad? = null
+
+    /**
+     * Drops what this resolver keeps of the texture [name], loaded, loading or failed, so the next
+     * [texture] ask for it loads it again from what its files hold then. [SceneAssetLibrary.forgetTexture]
+     * calls it; a resolver that keeps no textures does nothing.
+     *
+     * @param name The texture's name, as the `sprite` or `tilemap` gives it.
+     */
+    fun forgetTexture(name: String) {}
+
+    /** [forgetTexture] for every texture this resolver keeps. [SceneAssetLibrary.forgetTextures] calls it. */
+    fun forgetTextures() {}
 }

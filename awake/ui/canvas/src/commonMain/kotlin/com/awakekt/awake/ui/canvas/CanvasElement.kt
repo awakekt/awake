@@ -179,6 +179,15 @@ class CanvasElement {
     /** If true, element is displayed only when touch controls are active. */
     var touchOnly: Boolean = false
 
+    /**
+     * Whether an anchored element on the canvas itself keeps inside the safe area [CanvasOverlay] is
+     * given, clear of a notch, rounded corners or a home indicator: its anchor and offsets are then
+     * measured from the safe area's edges. False measures them from the canvas's own edges, for a
+     * backdrop that should reach under a notch. An element inside another, or one that follows a
+     * node, is placed the same either way.
+     */
+    var safeArea: Boolean = true
+
     /** How the element looks beyond its colours: images, and their frames and fills. */
     var style: CanvasStyle = CanvasStyle()
 

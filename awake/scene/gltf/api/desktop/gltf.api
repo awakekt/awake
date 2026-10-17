@@ -8,6 +8,8 @@ public final class com/awakekt/awake/scene/gltf/GltfAssetResolver : com/awakekt/
 	public fun createMaterial (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Ljava/lang/String;)Lcom/awakekt/awake/render/material/Material;
 	public fun createMesh (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Ljava/lang/String;)Lcom/awakekt/awake/render/mesh/Mesh;
 	public final fun forget (Ljava/lang/String;)V
+	public fun forgetTexture (Ljava/lang/String;)V
+	public fun forgetTextures ()V
 	public final fun getLoadedScene (Ljava/lang/String;)Lcom/awakekt/awake/asset/gltf/LoadedSkinnedScene;
 	public final fun isPreloaded (Ljava/lang/String;)Z
 	public fun materialDefaults (Ljava/lang/String;)Lcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;
