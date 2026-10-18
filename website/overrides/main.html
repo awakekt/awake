@@ -1,0 +1,24 @@
+{#-
+  SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+  SPDX-License-Identifier: Apache-2.0
+
+  Open Graph and Twitter card tags for every docs page. Material already writes the title, the
+  description (hooks.py fills in each page's from its lede) and the canonical link.
+-#}
+{% extends "base.html" %}
+
+{% block extrahead %}
+  {% set page_title = (page.meta.title if page and page.meta and page.meta.title) or (page.title ~ " - " ~ config.site_name if page and page.title and not page.is_homepage else config.site_name) %}
+  {% set page_description = (page.meta.description if page and page.meta and page.meta.description) or config.site_description %}
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="{{ config.site_name }}">
+  <meta property="og:title" content="{{ page_title }}">
+  <meta property="og:description" content="{{ page_description }}">
+  {% if page and page.canonical_url %}<meta property="og:url" content="{{ page.canonical_url }}">{% endif %}
+  <meta property="og:image" content="https://awakekt.com/brand/awake-mark.png">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="{{ page_title }}">
+  <meta name="twitter:description" content="{{ page_description }}">
+  <meta name="twitter:image" content="https://awakekt.com/brand/awake-mark.png">
+  <link rel="alternate" type="text/markdown" href="https://awakekt.com/llms.txt" title="llms.txt">
+{% endblock %}
