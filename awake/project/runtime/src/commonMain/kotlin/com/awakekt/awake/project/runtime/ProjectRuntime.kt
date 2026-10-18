@@ -39,7 +39,7 @@ const val PROJECT_MANIFEST = "awake.project.json"
  * A project read from its files, ready to [runProject]: its manifest and the scene it plays, with that
  * scene's loaded models, what its capabilities loaded, and a physics world when the scene has bodies or
  * characters. It plays its entry scene until a [SceneSwitch] request has [runProject] play another of
- * its scenes.
+ * its scenes, or a host without a frame loop moves it to another with [switchTo].
  *
  * It owns the playing scene's physics world, whose native memory nothing else frees: [close] it once
  * the scene that plays it has stopped. A switch closes the scene it leaves, the entry scene included.
@@ -75,9 +75,16 @@ class LoadedProject internal constructor(
     /** The scene playing now, which a switch replaces on the frame thread. */
     internal var playing: ProjectScene = entry
 
+    /** Whether [runProject] plays this project, whose runner then switches its scenes on the frame thread. */
+    internal var played = false
+
+    /** Whether [close] has run: a closed project moves to no other scene. */
+    internal var closed = false
+        private set
+
     /**
      * The document of the scene playing now: the entry scene, until a [SceneSwitch] request has
-     * [runProject] play another.
+     * [runProject] play another or [switchTo] moves the project to another.
      */
     val scene: SceneDocument get() = playing.document
 
@@ -100,7 +107,10 @@ class LoadedProject internal constructor(
      * Destroys the playing scene's physics world, if it has one, and stops loading models for spawned
      * nodes. Closing twice is harmless.
      */
-    override fun close() = playing.close()
+    override fun close() {
+        closed = true
+        playing.close()
+    }
 }
 
 /**
@@ -199,6 +209,38 @@ fun LoadedProject.sceneSystems(input: () -> GameplayInput, renderer: Renderer? =
         SceneHostServices(input, renderer, physics, content)
     }
     return sceneSystemsFor(scene, audio?.let(drawn::withAudio) ?: drawn, capabilities)
+}
+
+/**
+ * Moves this project to its scene at [path], relative to the project root, such as
+ * `scenes/level-2.scene.json`: for a host without a frame loop, such as a test, a game server or a
+ * project check, that plays a scene other than the entry scene, or each of a project's scenes in turn.
+ * The scene loads as [loadProject] loads the entry scene, with the registry, capabilities,
+ * `hasRenderer` and physics world factory the project was loaded with: decoded and checked, its models
+ * and its capabilities' content read, and a physics world made when it has bodies or characters. Then
+ * the scene it leaves is closed and its physics world destroyed, as a [SceneSwitch] closes it, and
+ * [LoadedProject.scene] is the new one. Moving to the scene playing reads it again from its file.
+ *
+ * Close the [SceneSystemSet] built for the scene it leaves, and take that scene's entities out of the
+ * host's world, first: they use the physics world this destroys. A project moved here and then played
+ * with [runProject] starts at the scene it was moved to; once [runProject] plays it, it moves through
+ * its [SceneSwitch] instead, on the frame thread.
+ *
+ * Throws [IllegalArgumentException] for a path that leaves the project or names no file, and for
+ * everything [loadProject] refuses in a scene; the scene playing then plays on, untouched. Throws
+ * [IllegalStateException] once the project is closed or [runProject] plays it.
+ */
+suspend fun LoadedProject.switchTo(path: String) {
+    check(!closed) { "The project is closed; load it again to play $path" }
+    check(!played) { "runProject plays this project; ask its SceneSwitch for $path instead" }
+    val next = loadScene(path)
+    if (closed) {
+        next.close()
+        error("The project closed while $path loaded")
+    }
+    val leaving = playing
+    playing = next
+    leaving.close()
 }
 
 /**

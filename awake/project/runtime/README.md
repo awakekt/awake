@@ -96,6 +96,25 @@ project's scenes under one of the first three. A host that runs the systems in a
 `project.sceneSystems`, has no switch unless it gives one with `SceneHostServices.withSceneSwitch`;
 without it, Load Scene only warns.
 
+A host with no frame loop, such as a test, a server or a project check, moves the project itself:
+`project.switchTo("scenes/level-2.scene.json")` loads that scene as `loadProject` loads the entry
+scene, with the project's registry, capabilities and physics world factory, then closes the scene it
+leaves. Close the systems and entities of the scene it leaves first. A path that leaves the project,
+names no file or can't be loaded throws `IllegalArgumentException`, and the scene playing stays. A
+project moved this way and then played with `runProject` starts at the scene it was moved to; once
+`runProject` plays it, `switchTo` throws, and the project moves through its `SceneSwitch`.
+
+```kotlin
+val registry = SceneComponentRegistry.scoped()
+val project = loadProject(files, registry, capabilities, hasRenderer = false, physicsWorld = ::createJoltPhysicsWorld)
+for (path in scenes) {
+    project.switchTo(path)
+    val world = World().also { project.scene.instantiate(it, registry) }
+    project.sceneSystems(input).use { systems -> systems.fixed.forEach { it.update(world, 1f / 60f) } }
+}
+project.close()
+```
+
 ## Playing a scene in a world of your own
 
 An editor that plays the scene it is editing, in an isolated world, wants the same systems without

@@ -89,6 +89,10 @@ internal class ProjectSceneRunner(private val project: LoadedProject) : SceneSwi
     private val input: () -> GameplayInput = { runtime.gameplayInput() }
     private val spawner: (SceneNode) -> SpawnedNode = { node -> runtime.spawn(project, node) }
 
+    init {
+        project.played = true
+    }
+
     /** Runs in [runtime]'s schedule: what its fixed-step system factory calls, before the scene populates. */
     fun bind(runtime: SceneAppLifecycleRuntime): InterpolatedSystem {
         this.runtime = runtime
