@@ -152,6 +152,7 @@ public final class com/awakekt/awake/core/expression/FormulaProblem {
 
 public final class com/awakekt/awake/core/expression/FormulaProblemKind : java/lang/Enum {
 	public static final field ArgumentCount Lcom/awakekt/awake/core/expression/FormulaProblemKind;
+	public static final field RandomUnavailable Lcom/awakekt/awake/core/expression/FormulaProblemKind;
 	public static final field Syntax Lcom/awakekt/awake/core/expression/FormulaProblemKind;
 	public static final field TooDeep Lcom/awakekt/awake/core/expression/FormulaProblemKind;
 	public static final field TooLarge Lcom/awakekt/awake/core/expression/FormulaProblemKind;
@@ -186,12 +187,92 @@ public final class com/awakekt/awake/core/expression/FormulaSerializer : kotlinx
 	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
 }
 
+public final class com/awakekt/awake/core/expression/FormulaSet {
+	public synthetic fun <init> (Ljava/util/List;Ljava/util/List;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun condition (Ljava/lang/String;)Lcom/awakekt/awake/core/expression/CompiledCondition;
+	public final fun formula (Ljava/lang/String;)Lcom/awakekt/awake/core/expression/CompiledFormula;
+	public final fun get (Lcom/awakekt/awake/core/expression/FormulaSlot;)Lcom/awakekt/awake/core/expression/CompiledExpression;
+	public final fun getExpressions ()Ljava/util/Map;
+	public final fun getSlots ()Ljava/util/List;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/expression/FormulaSet$Builder {
+	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/core/expression/FormulaOptions;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/expression/FormulaOptions;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun build ()Lcom/awakekt/awake/core/expression/FormulaSet;
+	public final fun compile ()Lcom/awakekt/awake/core/expression/FormulaSetResult;
+	public final fun condition (Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/core/expression/FormulaVariables;ZLcom/awakekt/awake/core/expression/FormulaOptions;)Lcom/awakekt/awake/core/expression/FormulaSlot;
+	public static synthetic fun condition$default (Lcom/awakekt/awake/core/expression/FormulaSet$Builder;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/core/expression/FormulaVariables;ZLcom/awakekt/awake/core/expression/FormulaOptions;ILjava/lang/Object;)Lcom/awakekt/awake/core/expression/FormulaSlot;
+	public final fun formula (Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/core/expression/FormulaVariables;ZLcom/awakekt/awake/core/expression/FormulaOptions;)Lcom/awakekt/awake/core/expression/FormulaSlot;
+	public static synthetic fun formula$default (Lcom/awakekt/awake/core/expression/FormulaSet$Builder;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/core/expression/FormulaVariables;ZLcom/awakekt/awake/core/expression/FormulaOptions;ILjava/lang/Object;)Lcom/awakekt/awake/core/expression/FormulaSlot;
+	public final fun getOptions ()Lcom/awakekt/awake/core/expression/FormulaOptions;
+}
+
+public final class com/awakekt/awake/core/expression/FormulaSetException : java/lang/IllegalArgumentException {
+	public fun <init> (Ljava/util/List;)V
+	public final fun getProblems ()Ljava/util/List;
+}
+
+public final class com/awakekt/awake/core/expression/FormulaSetKt {
+	public static final fun formulaSet (Lcom/awakekt/awake/core/expression/FormulaOptions;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/core/expression/FormulaSet;
+	public static synthetic fun formulaSet$default (Lcom/awakekt/awake/core/expression/FormulaOptions;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/awakekt/awake/core/expression/FormulaSet;
+}
+
+public final class com/awakekt/awake/core/expression/FormulaSetProblem {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/core/expression/FormulaProblem;)V
+	public final fun getColumn ()I
+	public final fun getEnd ()I
+	public final fun getKind ()Lcom/awakekt/awake/core/expression/FormulaProblemKind;
+	public final fun getLine ()I
+	public final fun getMessage ()Ljava/lang/String;
+	public final fun getPath ()Ljava/lang/String;
+	public final fun getProblem ()Lcom/awakekt/awake/core/expression/FormulaProblem;
+	public final fun getSource ()Ljava/lang/String;
+	public final fun getStart ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class com/awakekt/awake/core/expression/FormulaSetResult {
+	public abstract fun getOrThrow ()Lcom/awakekt/awake/core/expression/FormulaSet;
+	public abstract fun getProblems ()Ljava/util/List;
+}
+
+public final class com/awakekt/awake/core/expression/FormulaSetResult$Compiled : com/awakekt/awake/core/expression/FormulaSetResult {
+	public fun <init> (Lcom/awakekt/awake/core/expression/FormulaSet;)V
+	public fun getOrThrow ()Lcom/awakekt/awake/core/expression/FormulaSet;
+	public fun getProblems ()Ljava/util/List;
+	public final fun getSet ()Lcom/awakekt/awake/core/expression/FormulaSet;
+}
+
+public final class com/awakekt/awake/core/expression/FormulaSetResult$Invalid : com/awakekt/awake/core/expression/FormulaSetResult {
+	public fun <init> (Ljava/util/List;)V
+	public fun getOrThrow ()Lcom/awakekt/awake/core/expression/FormulaSet;
+	public fun getProblems ()Ljava/util/List;
+}
+
+public final class com/awakekt/awake/core/expression/FormulaSlot {
+	public final fun getOptions ()Lcom/awakekt/awake/core/expression/FormulaOptions;
+	public final fun getPath ()Ljava/lang/String;
+	public final fun getRandom ()Z
+	public final fun getSource ()Ljava/lang/String;
+	public final fun getType ()Lcom/awakekt/awake/core/expression/FormulaType;
+	public final fun getVariables ()Lcom/awakekt/awake/core/expression/FormulaVariables;
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class com/awakekt/awake/core/expression/FormulaType : java/lang/Enum {
 	public static final field Boolean Lcom/awakekt/awake/core/expression/FormulaType;
+	public static final field Companion Lcom/awakekt/awake/core/expression/FormulaType$Companion;
 	public static final field Number Lcom/awakekt/awake/core/expression/FormulaType;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/core/expression/FormulaType;
 	public static fun values ()[Lcom/awakekt/awake/core/expression/FormulaType;
+}
+
+public final class com/awakekt/awake/core/expression/FormulaType$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
 public final class com/awakekt/awake/core/expression/FormulaVariable {
@@ -199,6 +280,33 @@ public final class com/awakekt/awake/core/expression/FormulaVariable {
 	public final fun getName ()Ljava/lang/String;
 	public final fun getType ()Lcom/awakekt/awake/core/expression/FormulaType;
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/expression/FormulaVariableDeclaration {
+	public static final field Companion Lcom/awakekt/awake/core/expression/FormulaVariableDeclaration$Companion;
+	public fun <init> (Ljava/lang/String;Lcom/awakekt/awake/core/expression/FormulaType;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Lcom/awakekt/awake/core/expression/FormulaType;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDescription ()Ljava/lang/String;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getType ()Lcom/awakekt/awake/core/expression/FormulaType;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/core/expression/FormulaVariableDeclaration$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/core/expression/FormulaVariableDeclaration$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/core/expression/FormulaVariableDeclaration;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/core/expression/FormulaVariableDeclaration;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/core/expression/FormulaVariableDeclaration$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
 public final class com/awakekt/awake/core/expression/FormulaVariables {
@@ -217,13 +325,19 @@ public final class com/awakekt/awake/core/expression/FormulaVariables {
 public final class com/awakekt/awake/core/expression/FormulaVariables$Builder {
 	public final fun boolean (Ljava/lang/String;Ljava/lang/String;)V
 	public static synthetic fun boolean$default (Lcom/awakekt/awake/core/expression/FormulaVariables$Builder;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)V
+	public final fun declare (Lcom/awakekt/awake/core/expression/FormulaVariableDeclaration;Ljava/lang/String;)V
+	public final fun declare (Ljava/lang/Iterable;Ljava/lang/String;)V
+	public static synthetic fun declare$default (Lcom/awakekt/awake/core/expression/FormulaVariables$Builder;Lcom/awakekt/awake/core/expression/FormulaVariableDeclaration;Ljava/lang/String;ILjava/lang/Object;)V
+	public static synthetic fun declare$default (Lcom/awakekt/awake/core/expression/FormulaVariables$Builder;Ljava/lang/Iterable;Ljava/lang/String;ILjava/lang/Object;)V
 	public final fun number (Ljava/lang/String;Ljava/lang/String;)V
 	public static synthetic fun number$default (Lcom/awakekt/awake/core/expression/FormulaVariables$Builder;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)V
 }
 
 public final class com/awakekt/awake/core/expression/FormulaVariables$Companion {
 	public final fun getEmpty ()Lcom/awakekt/awake/core/expression/FormulaVariables;
+	public final fun isValidName (Ljava/lang/String;)Z
 	public final fun numbers ([Ljava/lang/String;)Lcom/awakekt/awake/core/expression/FormulaVariables;
+	public final fun validateName (Ljava/lang/String;)Ljava/lang/String;
 }
 
 public final class com/awakekt/awake/core/expression/FormulaVariablesKt {

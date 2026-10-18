@@ -5,12 +5,18 @@
  */
 package com.awakekt.awake.core.expression
 
-/** The type of a value in a formula. */
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
+/** The type of a value in a formula. In data it is written `"number"` or `"boolean"`. */
+@Serializable
 enum class FormulaType {
     /** A finite floating-point number. */
+    @SerialName("number")
     Number,
 
     /** `true` or `false`. */
+    @SerialName("boolean")
     Boolean,
     ;
 
@@ -43,7 +49,9 @@ class FormulaVariable internal constructor(
  * formula that names anything else is rejected when it is compiled.
  *
  * A name is letters, digits and `_`, not starting with a digit, with `.` between parts (`attacker.level`).
- * It must not be a keyword: `and`, `or`, `not`, `if`, `true`, `false`.
+ * It must not be a keyword: `and`, `or`, `not`, `if`, `true`, `false`. [isValidName] and [validateName]
+ * check a name a game gives in its data, and [Builder.declare] adds the variables a game declares there
+ * with [FormulaVariableDeclaration].
  *
  * Two declarations with the same names and types in the same order are equal, and a formula compiled
  * against one accepts [FormulaInputs] made from the other.
@@ -102,6 +110,42 @@ class FormulaVariables private constructor(declarations: List<Declaration>) {
         fun boolean(name: String, description: String = "") {
             declarations += Declaration(name, FormulaType.Boolean, description)
         }
+
+        /**
+         * Declares the variable [declaration] describes, called [prefix] followed by its name: with a prefix
+         * of `attacker.`, a declaration named `str` becomes `attacker.str`.
+         *
+         * @throws IllegalArgumentException when [prefix] is neither empty nor a valid name followed by `.`.
+         */
+        fun declare(declaration: FormulaVariableDeclaration, prefix: String = "") {
+            requireValidPrefix(prefix)
+            declarations += Declaration(prefix + declaration.name, declaration.type, declaration.description)
+        }
+
+        /**
+         * Declares every variable in [declarations], in order, each called [prefix] followed by its name. A
+         * game lists its stats once in data and a plugin declares them for each side that has them:
+         *
+         * ```kotlin
+         * val damage = formulaVariables {
+         *     declare(game.stats, prefix = "attacker.")
+         *     declare(game.stats, prefix = "target.")
+         * }
+         * ```
+         *
+         * @throws IllegalArgumentException when [prefix] is neither empty nor a valid name followed by `.`.
+         */
+        fun declare(declarations: Iterable<FormulaVariableDeclaration>, prefix: String = "") {
+            requireValidPrefix(prefix)
+            for (declaration in declarations) declare(declaration, prefix)
+        }
+
+        private fun requireValidPrefix(prefix: String) {
+            if (prefix.isEmpty()) return
+            require(prefix.endsWith('.')) { "The prefix '$prefix' must end with '.', as in 'attacker.'" }
+            val reason = validateName(prefix.dropLast(1))
+            require(reason == null) { "The prefix '$prefix' is not a valid name followed by '.': $reason" }
+        }
     }
 
     internal class Declaration(val name: String, val type: FormulaType, val description: String)
@@ -122,20 +166,42 @@ class FormulaVariables private constructor(declarations: List<Declaration>) {
         internal fun of(declarations: List<Declaration>): FormulaVariables {
             val seen = HashSet<String>()
             for (declaration in declarations) {
-                require(isValidName(declaration.name)) {
-                    "'${declaration.name}' is not a valid formula variable name: use letters, digits and _, " +
-                        "not starting with a digit, with . between parts"
-                }
-                require(declaration.name !in Keywords) { "'${declaration.name}' is a formula keyword" }
+                val reason = validateName(declaration.name)
+                require(reason == null) { reason.orEmpty() }
                 require(seen.add(declaration.name)) { "Formula variable '${declaration.name}' is declared twice" }
             }
             return FormulaVariables(declarations)
         }
 
-        private fun isValidName(name: String): Boolean =
-            name.isNotEmpty() && name.split('.').all { part ->
-                part.isNotEmpty() && isNameStart(part[0]) && part.all(::isNamePart)
+        /**
+         * Whether [name] may name a variable: letters, digits and `_`, not starting with a digit, with `.`
+         * between parts, and not a keyword. A plugin checks a name a game gives in its data with it.
+         */
+        fun isValidName(name: String): Boolean = validateName(name) == null
+
+        /**
+         * Why [name] may not name a variable, as a sentence for a person, or null when it may: it is empty,
+         * has an empty part between dots, starts a part with a digit, has a character other than letters,
+         * digits, `_` and `.`, or is a keyword (`and`, `or`, `not`, `if`, `true`, `false`).
+         *
+         * A function's name, such as `max`, is not a keyword: a formula tells a call from a variable by the
+         * parenthesis after it.
+         */
+        @Suppress("ReturnCount") // One reason per rule.
+        fun validateName(name: String): String? {
+            if (name.isEmpty()) return "A formula variable name cannot be empty"
+            if (name in Keywords) return "'$name' is a formula keyword and cannot name a variable"
+            val bad = name.firstOrNull { it != '.' && !isNamePart(it) }
+            if (bad != null) {
+                return "'$name' has '$bad', which a formula variable name cannot contain: use letters, digits " +
+                    "and _, with . between parts"
             }
+            for (part in name.split('.')) {
+                if (part.isEmpty()) return "'$name' has an empty part: put . only between parts, as in 'attacker.level'"
+                if (!isNameStart(part[0])) return "'$name' has a part starting with a digit, '$part'"
+            }
+            return null
+        }
     }
 }
 
