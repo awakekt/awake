@@ -372,7 +372,8 @@ private fun GPUDevice.uploadFont(font: UiFont): UiRenderPipeline.FontBinding {
             addressModeW = GPUAddressMode.ClampToEdge,
             magFilter = GPUFilterMode.Linear,
             minFilter = GPUFilterMode.Linear,
-            mipmapFilter = GPUMipmapFilterMode.Linear,
+            // One level is uploaded; Nearest keeps a future mip chain from blending distances.
+            mipmapFilter = GPUMipmapFilterMode.Nearest,
         ),
     )
     return UiRenderPipeline.FontBinding(

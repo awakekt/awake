@@ -69,12 +69,14 @@ class RendererHeadlessUiGlyphBaselineTest {
             val pixels = runBlocking { renderer.readPixels(target) }
 
             val baselineFile = baselineOutputFile()
-            if (!baselineFile.exists()) {
+            // A missing baseline is recorded, and `-DAWAKE_RECORD_SNAPSHOTS=true` re-records one: only
+            // after stating what should change and why.
+            if (!baselineFile.exists() || System.getProperty("AWAKE_RECORD_SNAPSHOTS") != null) {
                 baselineFile.parentFile.mkdirs()
                 baselineFile.writeBytes(pixels.data)
                 assertTrue(
                     false,
-                    "Recorded missing UI glyph baseline to ${baselineFile.absolutePath}. Review and rerun the test.",
+                    "Recorded UI glyph baseline to ${baselineFile.absolutePath}. Review and rerun the test.",
                 )
             }
 
