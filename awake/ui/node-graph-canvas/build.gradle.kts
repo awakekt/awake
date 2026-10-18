@@ -42,6 +42,10 @@ mavenPublishing {
 // Forward -DAWAKE_RECORD_SNAPSHOTS=true to the test JVM, which records visual baselines.
 tasks.named<Test>("desktopTest") {
     System.getProperty("AWAKE_RECORD_SNAPSHOTS")?.let { systemProperty("AWAKE_RECORD_SNAPSHOTS", it) }
+    // NodeGraphCanvasFrameProbe counts every byte a frame allocates. With escape analysis on, the
+    // count moved by up to 38 KB/frame between JVMs on the same commit, depending on what C2
+    // happened to scalar-replace (#945). It changes no result the other tests here check.
+    jvmArgs("-XX:-DoEscapeAnalysis")
     testLogging {
         // Preserve the measured windows and ceiling in CI logs, including the assertion message.
         showStandardStreams = true
