@@ -59,10 +59,23 @@ class RangeAnnotationsAreEnforcedTest {
         } else {
             steps.first()
         }
-        if (steps.size == 1) return JsonObject(root + (head to value))
-        val inner = root[head] as? JsonObject
-            ?: error("`$head` has no default object to set `${steps.drop(1).joinToString(".")}` inside; give this test a seed")
-        return JsonObject(root + (head to withValue(inner, steps.drop(1), value)))
+        val list = root[head] as? JsonArray
+        val child: JsonElement = when {
+            steps.size == 1 -> value
+            // A list's element path uses [] too; a seed supplies its first element.
+            list != null && steps[1] == "[]" -> {
+                val first = list.firstOrNull() ?: error("A range inside an empty list needs a seeded element: ${steps.joinToString(".")}")
+                val updated = if (steps.size == 2) value else withValue(first as JsonObject, steps.drop(2), value)
+                JsonArray(listOf(updated) + list.drop(1))
+            }
+            else -> withValue(
+                root[head] as? JsonObject
+                    ?: error("`$head` has no default object to set `${steps.drop(1).joinToString(".")}` inside; give this test a seed"),
+                steps.drop(1),
+                value,
+            )
+        }
+        return JsonObject(root + (head to child))
     }
 
     private fun issuesFor(component: String, fields: JsonObject): Set<String> {
@@ -92,7 +105,7 @@ class RangeAnnotationsAreEnforcedTest {
             val empty = JsonObject(emptyMap())
             val state = JsonObject(mapOf("image" to image))
             JsonObject(
-                base + ("layout" to empty) + ("followRules" to empty) + ("joystick" to empty) + ("look" to empty) + ("cluster" to empty) + ("button" to JsonObject(mapOf("aim" to JsonObject(mapOf("cancel" to empty))))) + (
+                base + ("layout" to empty) + ("followRules" to empty) + ("joystick" to empty) + ("look" to empty) + ("cluster" to empty) + ("button" to JsonObject(mapOf("aim" to JsonObject(mapOf("cancel" to empty))))) + ("skin" to fullSkin()) + (
                     "style" to JsonObject(
                         mapOf(
                             "image" to image,
@@ -108,8 +121,51 @@ class RangeAnnotationsAreEnforcedTest {
             )
         },
         "sprite_clips" to { base -> JsonObject(base + ("clips" to JsonObject(mapOf("idle" to JsonObject(emptyMap()))))) },
+        "canvas_controls" to { base ->
+            val image = JsonObject(mapOf("path" to JsonPrimitive("frame.png")))
+            val theme = JsonObject(mapOf("images" to JsonObject(mapOf("pad" to image)), "skin" to fullSkin()))
+            val layout = JsonObject(mapOf("controls" to JsonObject(mapOf("move" to JsonObject(emptyMap())))))
+            JsonObject(base + ("theme" to theme) + ("playerLayout" to layout))
+        },
         "perceiver" to { base -> JsonObject(base + ("faction" to JsonPrimitive("watch"))) },
     )
+
+    /** A style with every object that holds a ranged number, so each can be set out of range. */
+    private fun fullStyle(): JsonObject {
+        val image = JsonObject(mapOf("path" to JsonPrimitive("frame.png")))
+        val empty = JsonObject(emptyMap())
+        val state = JsonObject(mapOf("image" to image))
+        return JsonObject(
+            mapOf(
+                "image" to image,
+                "fillImage" to image,
+                "shadow" to empty,
+                "textOutline" to empty,
+                "hovered" to state,
+                "pressed" to state,
+                "disabled" to state,
+            ),
+        )
+    }
+
+    /** A control slot with its style, frames and one state, each full. */
+    private fun fullSlot(): JsonObject {
+        val frames = JsonObject(mapOf("images" to JsonArray(listOf(JsonObject(mapOf("path" to JsonPrimitive("frame.png")))))))
+        val state = JsonObject(mapOf("style" to fullStyle(), "frames" to frames))
+        return JsonObject(mapOf("style" to fullStyle(), "frames" to frames, "states" to JsonObject(mapOf("Pressed" to state))))
+    }
+
+    /** A control skin with every slot full. */
+    private fun fullSkin(): JsonObject {
+        fun slots(vararg names: String) = JsonObject(names.associateWith { fullSlot() })
+        return JsonObject(
+            mapOf(
+                "joystick" to slots("base", "knob", "sprintRing", "arrows"),
+                "button" to slots("background", "icon", "label", "cooldown", "charges", "aimCursor", "aimRange", "cancelZone"),
+                "look" to slots("feedback"),
+            ),
+        )
+    }
 
     @Test
     fun everyRangeRejectsAValueJustOutsideIt() {

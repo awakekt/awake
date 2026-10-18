@@ -189,6 +189,51 @@ Every stick, action button and look area follows only the pointers that landed o
 thumb steering a stick, another pressing a button and a third turning the camera never take each
 other's touches.
 
+### Theme the controls
+
+The kit owns how a control behaves, never how it looks. Every visual part is a slot: a stick's
+`base`, `knob`, `sprintRing` and `arrows`; a button's `background`, `icon`, `label`, `cooldown`,
+`charges`, `aimCursor`, `aimRange` and `cancelZone`; a look area's `feedback`. A scene's
+`canvas_controls.theme` fills them for every control at once, and an element's own `skin` fills
+them for that one:
+
+```json
+{ "component": "canvas_controls", "touchVisibility": "Auto",
+  "theme": {
+    "preset": "Glass",
+    "colors": { "accent": "#FFB347" },
+    "skin": {
+      "button": {
+        "icon": { "size": 40, "style": { "image": { "path": "@dash" } } },
+        "background": { "circle": true, "transitionSeconds": 0.15,
+          "states": { "Pressed": { "scale": 0.92 }, "Ready": { "scale": 1.15 },
+                      "Disabled": { "alpha": 0.35 } } } } },
+    "images": { "dash": { "path": "ui/dash.png" } } } }
+```
+
+- **A style** is the same `style` an element has: colour, gradient, corner radius, border, shadow,
+  opacity, and `circle` for a round part.
+- **Images** are its `image`, a single picture, a nine-slice frame or an atlas region, a different
+  one in any state, or `frames` played as a sprite animation.
+- **Custom content** is `custom`, the name of a composable the host registered with
+  `SceneAppLifecycleRuntime.canvasSlotContent` (or `CanvasOverlay(slotContent = ...)`), drawn in the
+  slot's box and given the control and its state.
+
+States drive the look: `Idle`, `Pressed`, `Held`, `Disabled`, `CoolingDown`, `Ready` (a short pulse
+when a button is usable again), `Aiming` and `Cancelling`. Each state may change a slot's `style`,
+`scale`, `alpha`, `frames` or `hidden`, faded in over `transitionSeconds`; a state a slot does not
+change falls back to a broader one. `colors` and `images` are tokens a slot writes as `@name`, so
+changing one restyles every control, and a game can ship a light, a dark and a high-contrast theme
+and switch between them by setting `CanvasControls.theme`. The built-in presets, `MinimalFlat`,
+`Glass` and `Textured`, are plain data to start from; `Textured` names `controls/pad.png`,
+`controls/knob.png`, `controls/button.png` and `controls/button-pressed.png`, which a project
+provides or replaces through `images`. An editor previews one state with `previewState`.
+
+Players can scale, move and fade the controls too. Give each control a `controlId`, and set
+`CanvasControls.playerLayout`: every touch control's `scale` and `opacity`, and each control's own
+`offsetX`, `offsetY`, `scale` and `opacity`. `CanvasPlayerLayout.toJson()` and `fromJson()` save and
+load it, and `moved(id, dx, dy)` follows a drag on a settings screen.
+
 ### Drag to aim
 
 Add `aim` to a button's settings and a drag away from it aims, then letting go fires `action` with

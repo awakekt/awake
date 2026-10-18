@@ -590,7 +590,51 @@ class CanvasElement {
     private var becameReady = false
 
     private fun noteReady(wasUsable: Boolean) {
-        if (!wasUsable && usable) becameReady = true
+        if (!wasUsable && usable) {
+            becameReady = true
+            readySince = clock.markNow()
+        }
+    }
+
+    /** When the button last became usable again, for its [CanvasControlState.Ready] pulse. */
+    internal var readySince: TimeMark? = null
+
+    /**
+     * How this control looks, slot by slot, over its canvas's [CanvasControls.theme]: a Joystick's
+     * pad and knob, an action button's background, icon, label, sweep, badge and aim guides, a
+     * LookArea's feedback. Null takes the theme's, or the control's plain look without one.
+     */
+    var skin: CanvasControlSkin? = null
+
+    /**
+     * The name a player's saved layout knows this control by, such as `move` or `skill-1`, for
+     * [CanvasPlayerLayout.controls] to move, scale and fade it; empty for none.
+     */
+    var controlId: String = ""
+
+    /**
+     * Draws every slot of this control in this state, as an editor's preview of each state does;
+     * null draws the state it is really in.
+     */
+    var previewState: CanvasControlState? = null
+
+    /** Each slot's fade between states, by slot name. */
+    internal val slotTransitions = HashMap<String, SlotTransition>()
+
+    private var skinTheme: CanvasControlTheme? = null
+    private var skinOwn: CanvasControlSkin? = null
+    private var skinResolved: CanvasControlSkin? = null
+    private var skinReady = false
+
+    /** This control's [skin] over [theme], worked out again only when either changes. */
+    internal fun resolvedSkin(theme: CanvasControlTheme?): CanvasControlSkin? {
+        if (!skinReady || skinTheme !== theme || skinOwn !== skin) {
+            skinResolved = theme.resolve(skin)
+            skinTheme = theme
+            skinOwn = skin
+            skinReady = true
+        }
+        return skinResolved
     }
 
     /**
