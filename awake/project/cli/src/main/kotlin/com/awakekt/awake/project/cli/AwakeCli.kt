@@ -66,7 +66,7 @@ class AwakeCli(
 
     private fun validate(arguments: CliArguments): Int {
         val project = ProjectScenes(projectRoot(arguments.words.getOrNull(1) ?: arguments.value("project")))
-        val report = ProjectCheck(project).run()
+        val report = ProjectCheck(project, arguments.value("code")?.let(::classpath)).run()
         if (arguments.flag("json")) {
             out.appendLine(PRETTY_JSON.encodeToString(JsonObject.serializer(), report.toJson()))
         } else {
@@ -138,6 +138,16 @@ class AwakeCli(
         return OK
     }
 
+    /**
+     * The class folders and jars [given] names, split as the platform splits a class path, each from where
+     * `awake` runs. A class path may name a folder a build never wrote, as a JVM's does, but not only those.
+     */
+    private fun classpath(given: String): List<File> {
+        val entries = given.split(File.pathSeparatorChar).filter(String::isNotBlank).map(workingDir::resolve)
+        if (entries.none(File::exists)) throw UsageException("--code names no class folder or jar that exists: $given")
+        return entries.filter(File::exists)
+    }
+
     /** [given], or the nearest directory up from where `awake` runs that holds a project manifest. */
     private fun projectRoot(given: String?): File {
         if (given != null) {
@@ -161,7 +171,8 @@ class AwakeCli(
         val HELP = """
             |awake: validate an Awake project, and read and edit its scenes.
             |
-            |  awake validate [project]                       Check the manifest and every scene.
+            |  awake validate [project]                       Check the manifest, the asset lock and every scene.
+            |  awake validate [project] --code <classpath>    Also open every scene with the project's own code.
             |  awake scene list                               List the project's scenes.
             |  awake scene show <scene>                       Print a scene's nodes and components.
             |  awake scene set <scene> <node> <c.field=value> Set a component field, or transform.… or name.
@@ -178,6 +189,9 @@ class AwakeCli(
             |  --project <dir>  The project (default: the nearest folder up holding awake.project.json).
             |  --json           Output for a program to read.
             |  --dry-run        Report what an edit would change without writing it.
+            |  --code <classpath>  The project's built code, class folders and jars split by the platform's
+            |                   path separator: each plugin's capabilityClass loads from it, and every scene
+            |                   is instantiated, run a step, saved and reopened with it.
             |  --width, --height <pixels>  The render's size (default 1280 by 720).
             |  --frames <n>     How many frames to play before the picture (default 1).
             |  --backend vulkan|webgpu     The GPU backend (default Vulkan; WebGPU on Windows).

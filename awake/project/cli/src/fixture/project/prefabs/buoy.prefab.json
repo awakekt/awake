@@ -1,0 +1,5 @@
+{
+  "guid": "3d1f6a52-9b0e-4c1a-8f6e-2b7c5a9d0e41",
+  "name": "Buoy",
+  "root": { "name": "Buoy", "components": [ { "component": "harbor_signal", "signal": "data/harbor.signal" } ] }
+}

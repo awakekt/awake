@@ -115,6 +115,12 @@ for (path in scenes) {
 project.close()
 ```
 
+`checkProjectOpens(files, scenes, capabilities, physicsWorld)` is built on this. It opens each of a
+project's scenes with its capabilities, as an editor does: decoded, prefabs expanded, instantiated,
+switched to, systems run for a step, and saved and reopened. It returns a typed `ProjectOpenIssue` for
+each problem, with its file and node path. `awake validate --code` runs it with the project's own built
+code; see the [CLI](../cli/README.md#validating-with-the-projects-code).
+
 ## Playing a scene in a world of your own
 
 An editor that plays the scene it is editing, in an isolated world, wants the same systems without

@@ -14,7 +14,8 @@ awake/project/cli/build/install/awake/bin/awake validate path/to/project
 
 | Command | What it does |
 |---|---|
-| `awake validate [project]` | Checks the manifest, the entry scene, and every scene: decode errors, validation errors, components nothing installed provides (a warning) and tags the manifest's `tags` list leaves out (a warning) |
+| `awake validate [project]` | Checks the manifest, the engine version it needs, the entry scene, the asset lock's pins (each asset's size and SHA-256), and every scene: decode errors, validation errors, components nothing installed provides (a warning) and tags the manifest's `tags` list leaves out (a warning) |
+| `awake validate [project] --code <classpath>` | Also opens the project with its own built code, as an editor does: see [Validating with the project's code](#validating-with-the-projects-code) |
 | `awake scene list` | The project's scenes, with their names and node counts |
 | `awake scene show <scene>` | A scene's nodes and components |
 | `awake scene set <scene> <node> <c.field=value>` | Sets a component's field, or `transform.…` or `name` on the node |
@@ -89,4 +90,34 @@ library prints goes to stderr, so stdout carries only MCP's messages.
 command line is wrong.
 
 A game's own components are kept as data: `awake` links Core's scene components, not the game's code,
-so it can't check their fields. `validate` names them as warnings.
+so it can't check their fields. `validate` names them as warnings, unless it is given the game's code.
+
+## Validating with the project's code
+
+`awake validate --code <classpath>` is the CI step for "this project still opens in the editor", for a
+project with capabilities of its own. `<classpath>` holds the project's built code, class folders and
+jars split by the platform's path separator (`:`, or `;` on Windows); entries a build never wrote are
+skipped. With it, `validate` also:
+
+- loads each `plugins[].capabilityClass` from that code, in a class loader of its own whose parent holds
+  Core, and checks it is a `SceneCapability` (a Kotlin `object`, or a class with a public constructor
+  that takes nothing) with the plugin's `id`;
+- opens every scene with those capabilities through `checkProjectOpens` in `awake:project:runtime`:
+  decoded with the project's own registry, its prefabs expanded, every component known (one no
+  capability registers is an error at its node), instantiated, loaded with its content and a physics
+  world by `LoadedProject.switchTo`, and its systems run for one fixed step and one frame;
+- saves each scene and prefab, reopens it and compares, and saves it again, which must write the same
+  text;
+- moves back to the entry scene and closes the project: every physics world it made must be destroyed,
+  and no capability's component may have reached the process-wide scene serializers;
+- warns when the project's code stays loaded once the check has closed it, which means something outside
+  the project holds one of its classes, as a process-wide registry or a thread can.
+
+```bash
+./gradlew :game:jar
+awake validate path/to/project --code game/build/libs/game.jar
+```
+
+Each problem is reported with its file, its node path and a code (`capability_class`, `project_load`,
+`unknown_component`, `scene_load`, `scene_systems`, `round_trip`, `global_serializer`, `leak`), and
+any error exits 1. Without `--code`, `validate` runs none of the project's code.
