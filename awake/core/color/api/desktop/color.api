@@ -34,3 +34,8 @@ public final class com/awakekt/awake/core/color/Color$Companion {
 	public final fun getWhite ()Lcom/awakekt/awake/core/color/Color;
 }
 
+public final class com/awakekt/awake/core/color/ColorHexKt {
+	public static final fun toHex (Lcom/awakekt/awake/core/color/Color;)Ljava/lang/String;
+	public static final fun toHex (Lcom/awakekt/awake/core/color/Color;Z)Ljava/lang/String;
+}
+

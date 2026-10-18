@@ -700,6 +700,14 @@ class CanvasElement {
     var controlId: String = ""
 
     /**
+     * The stable id code finds this element by, such as `health-bar`; empty for none. Unlike its
+     * node's name it stays the same when the node is renamed, and every instance of a prefab repeats
+     * it, so code looks it up under one instance's root rather than across the whole canvas. Letters,
+     * digits, `_`, `.` and `-`, starting with a letter, digit or `_`.
+     */
+    var elementId: String = ""
+
+    /**
      * Draws every slot of this control in this state, as an editor's preview of each state does;
      * null draws the state it is really in.
      */

@@ -152,6 +152,10 @@ import kotlinx.serialization.Serializable
  * @property stepper A Stepper's number: its starting `value`, `min`, `max`, `step`, the `decimals` it
  * shows, and the `repeatDelay` and `repeatInterval` of a held button, in seconds. [bind]'s `value`
  * field sets the number each frame instead. Null steps 0 to 100 in ones.
+ * @property elementId The stable id code finds this element by, such as `health-bar`; empty for none.
+ * It survives a rename of the node and repeats in every instance of a prefab, so code finds it under
+ * one instance's root with `World.findCanvasElement`, or in a prefab with `SceneNode.findCanvasNode`.
+ * Letters, digits, `_`, `.` and `-`, starting with a letter, digit or `_`; unique within one prefab.
  */
 @Serializable
 @SerialName("canvas_element")
@@ -206,6 +210,7 @@ data class SceneCanvasElement(
     val bar: CanvasBar? = null,
     val sweep: CanvasSweep? = null,
     val stepper: CanvasStepper? = null,
+    val elementId: String = "",
 ) : SceneComponent {
     /**
      * Validates element dimensions, font sizes, values, and hex color syntax.
@@ -231,7 +236,7 @@ data class SceneCanvasElement(
     }
 
     /** Fields set where they do nothing, and what is wrong with the follow rules. */
-    private fun kindProblems(): List<String> = followProblems() + controlProblems() + listOfNotNull(
+    private fun kindProblems(): List<String> = followProblems() + controlProblems() + idProblems() + listOfNotNull(
         "mask only masks a TextField".takeIf { mask.isNotEmpty() && kind != CanvasElementKind.TextField },
         "maxLength only limits a TextField".takeIf {
             (maxLength != 0 || maxLengthUnit != TextLengthUnit.Graphemes) && kind != CanvasElementKind.TextField
@@ -248,6 +253,11 @@ data class SceneCanvasElement(
             textKey.isEmpty() && (textArgs.isNotEmpty() || !bind?.textArgs.isNullOrEmpty())
         },
         "textKey must not be blank".takeIf { textKey.isNotEmpty() && textKey.isBlank() },
+    )
+
+    /** What is wrong with the element's id. */
+    private fun idProblems(): List<String> = listOfNotNull(
+        "elementId \"$elementId\" $ELEMENT_ID_RULE".takeIf { elementId.isNotEmpty() && !isCanvasElementId(elementId) },
     )
 
     /** What is wrong with a control's settings, and settings put on a kind they do not set up. */

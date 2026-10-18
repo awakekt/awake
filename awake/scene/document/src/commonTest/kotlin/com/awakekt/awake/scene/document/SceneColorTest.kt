@@ -61,6 +61,15 @@ class SceneColorTest {
     @Test
     fun convertsToHex() {
         val color = SceneColor(1f, 0.5f, 0f, 1f)
-        assertEquals("#FF7F00", color.toHex())
+        assertEquals("#FF8000", color.toHex(), "a half rounds to the nearest step, as an editor writes it")
+        assertEquals("#FF800080", color.copy(a = 0.5f).toHex())
+        assertEquals("#FF8000FF", color.toHex(includeAlpha = true))
+    }
+
+    @Test
+    fun hexReadsBackToTheSameText() {
+        listOf("#7F7F7F", "#01020380", "#A0B1C2D3").forEach { hex ->
+            assertEquals(hex, SceneColor.fromHex(hex).toHex())
+        }
     }
 }
