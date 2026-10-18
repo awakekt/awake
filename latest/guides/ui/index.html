@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Guides and reference for AwakeKt Engine, the Kotlin Multiplatform engine for 2D and 3D apps.">
+        <meta name="description" content="AwakeKt Compose is AwakeKt's own retained UI engine with a Compose-shaped Kotlin API. Use it for menus, overlays and tools that share the frame with your game.">
       
       
       
@@ -61,6 +61,20 @@
 
     
     
+  
+  
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="AwakeKt Docs">
+  <meta property="og:title" content="UI with AwakeKt Compose - AwakeKt Docs">
+  <meta property="og:description" content="AwakeKt Compose is AwakeKt's own retained UI engine with a Compose-shaped Kotlin API. Use it for menus, overlays and tools that share the frame with your game.">
+  <meta property="og:url" content="https://docs.awakekt.com/latest/guides/ui/">
+  <meta property="og:image" content="https://awakekt.com/brand/awake-mark.png">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="UI with AwakeKt Compose - AwakeKt Docs">
+  <meta name="twitter:description" content="AwakeKt Compose is AwakeKt's own retained UI engine with a Compose-shaped Kotlin API. Use it for menus, overlays and tools that share the frame with your game.">
+  <meta name="twitter:image" content="https://awakekt.com/brand/awake-mark.png">
+  <link rel="alternate" type="text/markdown" href="https://awakekt.com/llms.txt" title="llms.txt">
+
   </head>
   
   
@@ -2654,11 +2668,12 @@ reads; pass <code>null</code> for a decorative image.</p>
 icon of a sheet, call <code>drawImage(bitmap, …, srcX, srcY, srcWidth, srcHeight)</code> from a draw modifier.</p>
 <h3 id="frames-and-gauges">Frames and gauges</h3>
 <p><code>Modifier.background(ImageFill(…))</code> fills a node of any size from one image cut into nine. The four
-<code>slice</code> insets, in the image's pixels, mark the corners, which keep their size at one dp per pixel.
-The edges stretch along their length, or repeat at that size with <code>repeatEdges</code>; the centre
-stretches, or repeats both ways with <code>repeatCenter</code>. Slice only the left and right for a three-part
-strip such as a gauge, and pass <code>srcX</code>, <code>srcY</code>, <code>srcWidth</code> and <code>srcHeight</code> to cut the frame from a
-sheet. A node too small for its corners shrinks them together.</p>
+<code>slice</code> insets, in the image's pixels, mark the corners, which keep their size at one dp per pixel,
+or per <code>pixelsPerDp</code> pixels for art drawn at 2x or 3x. The edges stretch along their length, or
+repeat at that size with <code>repeatEdges</code>; the centre stretches, repeats both ways with
+<code>repeatCenter</code>, or is left out with <code>hollow</code>. Slice only the left and right for a three-part strip
+such as a gauge, and pass <code>srcX</code>, <code>srcY</code>, <code>srcWidth</code> and <code>srcHeight</code> to cut the frame from a sheet.
+A node too small for its corners shrinks them together.</p>
 <div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="cm">/** A window drawn from a 48 x 48 frame: its 16-pixel corners kept, its edges and centre tiled. */</span>
 </span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">context</span><span class="p">(</span><span class="n">_</span><span class="p">:</span><span class="w"> </span><span class="n">Composer</span><span class="p">)</span>
 </span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="kd">fun</span><span class="w"> </span><span class="nf">FramedPanel</span><span class="p">(</span><span class="n">frame</span><span class="p">:</span><span class="w"> </span><span class="n">ImageBitmap</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
@@ -2667,7 +2682,8 @@ sheet. A node too small for its corners shrinks them together.</p>
 </span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="p">}</span>
 </span></code></pre></div>
 <p>From a draw modifier, <code>drawImageFill(fill, x, y, width, height)</code> draws the same fill into part of the
-node.</p>
+node. <code>drawImageFillBar(fill, value, direction)</code> draws it as a bar's fill, from the edge
+<code>direction</code> names: both end caps stay whole at every value above 0, and only the middle grows.</p>
 <h3 id="gradients-and-styles">Gradients and styles</h3>
 <p><code>Modifier.background(brush, shape)</code> fills a node with a <code>Brush</code>: <code>Brush.vertical(top, bottom)</code>,
 <code>Brush.horizontal(start, end)</code>, or one colour per corner with <code>Brush.linearGradient</code>. Inside a
@@ -2778,6 +2794,9 @@ pointer is captured, a text field has focus, or a scroll was consumed. In a scen
 
 
 
+
+  
+  
 
 
 

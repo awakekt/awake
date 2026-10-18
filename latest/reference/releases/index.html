@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Guides and reference for AwakeKt Engine, the Kotlin Multiplatform engine for 2D and 3D apps.">
+        <meta name="description" content="Which versions go together, which targets each module runs on, and what a build needs. AwakeKt Engine is alpha: the API and the published module set can change between releases.">
       
       
       
@@ -61,6 +61,20 @@
 
     
     
+  
+  
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="AwakeKt Docs">
+  <meta property="og:title" content="Releases and compatibility - AwakeKt Docs">
+  <meta property="og:description" content="Which versions go together, which targets each module runs on, and what a build needs. AwakeKt Engine is alpha: the API and the published module set can change between releases.">
+  <meta property="og:url" content="https://docs.awakekt.com/latest/reference/releases/">
+  <meta property="og:image" content="https://awakekt.com/brand/awake-mark.png">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Releases and compatibility - AwakeKt Docs">
+  <meta name="twitter:description" content="Which versions go together, which targets each module runs on, and what a build needs. AwakeKt Engine is alpha: the API and the published module set can change between releases.">
+  <meta name="twitter:image" content="https://awakekt.com/brand/awake-mark.png">
+  <link rel="alternate" type="text/markdown" href="https://awakekt.com/llms.txt" title="llms.txt">
+
   </head>
   
   
@@ -2483,19 +2497,19 @@
 <tbody>
 <tr>
 <td>Core</td>
-<td><code>0.16.0</code> (this documentation version)</td>
+<td><code>0.17.0</code> (this documentation version)</td>
 <td><code>v*</code></td>
 <td>Every published module except the Vulkan family. All share one version.</td>
 </tr>
 <tr>
 <td>Vulkan</td>
-<td><code>0.1.32</code>, built against Core <code>0.14.0</code></td>
+<td><code>0.1.33</code>, built against Core <code>0.16.0</code></td>
 <td><code>vulkan-v*</code></td>
 <td><code>com.awakekt.awake.backend:vulkan</code>, <code>com.awakekt.awake:vulkan-kmp</code>, <code>com.awakekt.awake:vulkan-kmp-android-native</code></td>
 </tr>
 <tr>
 <td>WebGPU</td>
-<td><code>0.16.0-SNAPSHOT</code>, built from Core <code>0.16.0</code></td>
+<td><code>0.17.0-SNAPSHOT</code>, built from Core <code>0.17.0</code></td>
 <td>none; each Core <code>v*</code> tag publishes it</td>
 <td><code>com.awakekt.awake.backend:webgpu</code></td>
 </tr>
@@ -2503,8 +2517,8 @@
 </table>
 <p>The install snippets pair the Vulkan release with the Core release it was built against:</p>
 <div class="language-toml highlight"><span class="filename">gradle/libs.versions.toml</span><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">[versions]</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">awake</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"0.14.0"</span>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">awake-vulkan</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"0.1.32"</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">awake</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"0.16.0"</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">awake-vulkan</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"0.1.33"</span>
 </span></code></pre></div>
 <h2 id="core-and-vulkan-pairing">Core and Vulkan pairing</h2>
 <table>
@@ -2521,7 +2535,7 @@
 </tr>
 <tr>
 <td>The newest of each is not always a pair</td>
-<td>A Core release can be newer than every Vulkan release. Core <code>0.16.0</code> pairs with Vulkan only once a Vulkan release names it.</td>
+<td>A Core release can be newer than every Vulkan release. Core <code>0.17.0</code> pairs with Vulkan only once a Vulkan release names it.</td>
 </tr>
 <tr>
 <td>Check a pair</td>
@@ -2714,6 +2728,9 @@
 
 
 
+
+  
+  
 
 
 

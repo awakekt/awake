@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Guides and reference for AwakeKt Engine, the Kotlin Multiplatform engine for 2D and 3D apps.">
+        <meta name="description" content="Every component id a scene document can hold, with each field's type and default. A test fails when a registered component or field has no row here.">
       
       
       
@@ -61,6 +61,20 @@
 
     
     
+  
+  
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="AwakeKt Docs">
+  <meta property="og:title" content="Scene document components - AwakeKt Docs">
+  <meta property="og:description" content="Every component id a scene document can hold, with each field's type and default. A test fails when a registered component or field has no row here.">
+  <meta property="og:url" content="https://docs.awakekt.com/latest/reference/scene-document-components/">
+  <meta property="og:image" content="https://awakekt.com/brand/awake-mark.png">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Scene document components - AwakeKt Docs">
+  <meta name="twitter:description" content="Every component id a scene document can hold, with each field's type and default. A test fails when a registered component or field has no row here.">
+  <meta name="twitter:image" content="https://awakekt.com/brand/awake-mark.png">
+  <link rel="alternate" type="text/markdown" href="https://awakekt.com/llms.txt" title="llms.txt">
+
   </head>
   
   
@@ -2076,6 +2090,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#canvas_controls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        canvas_controls
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#canvas_element" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3011,6 +3036,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#canvas_controls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        canvas_controls
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#canvas_element" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3635,6 +3671,13 @@ registers it.</p>
 <td><a href="../../guides/cameras-and-controls/">Cameras</a></td>
 </tr>
 <tr>
+<td><a href="#canvas_controls"><code>canvas_controls</code></a></td>
+<td><code>CanvasControls</code></td>
+<td><code>com.awakekt.awake.scene:canvas</code></td>
+<td><code>DefaultSceneComponentResolvers.install()</code></td>
+<td><a href="../../guides/game-ui/#show-touch-controls-by-input">Game UI</a></td>
+</tr>
+<tr>
 <td><a href="#canvas_element"><code>canvas_element</code></a></td>
 <td><code>CanvasElement</code></td>
 <td><code>com.awakekt.awake.scene:canvas</code></td>
@@ -3920,7 +3963,7 @@ registers it.</p>
 <tr>
 <td><code>DefaultSceneComponentResolvers.install()</code></td>
 <td><code>com.awakekt.awake.scene:runtime</code></td>
-<td><code>ambient_light</code>, <code>camera</code>, <code>canvas_element</code>, <code>canvas_follow_limit</code>, <code>canvas_follow_occlusion</code>, <code>canvas_scaler</code>, <code>day_cycle</code>, <code>fog</code>, <code>keyframe_animation</code>, <code>light</code>, <code>locomotion_animation</code>, <code>mesh_renderer</code>, <code>particle_emitter</code>, <code>pbr_material</code>, <code>shader_effect</code>, <code>skybox</code>, <code>spin_control</code>, <code>static_transform</code>, <code>tag</code>, <code>terrain</code>, <code>tone_mapping</code>. <code>SceneManager</code> and <code>SceneAppLifecycleRuntime</code> call it for you.</td>
+<td><code>ambient_light</code>, <code>camera</code>, <code>canvas_controls</code>, <code>canvas_element</code>, <code>canvas_follow_limit</code>, <code>canvas_follow_occlusion</code>, <code>canvas_scaler</code>, <code>day_cycle</code>, <code>fog</code>, <code>keyframe_animation</code>, <code>light</code>, <code>locomotion_animation</code>, <code>mesh_renderer</code>, <code>particle_emitter</code>, <code>pbr_material</code>, <code>shader_effect</code>, <code>skybox</code>, <code>spin_control</code>, <code>static_transform</code>, <code>tag</code>, <code>terrain</code>, <code>tone_mapping</code>. <code>SceneManager</code> and <code>SceneAppLifecycleRuntime</code> call it for you.</td>
 </tr>
 <tr>
 <td><code>SceneComponentRegistry.registerControls()</code></td>
@@ -4256,6 +4299,45 @@ fades with distance from the active camera and pans with its direction. <code>Sc
 </tr>
 </tbody>
 </table>
+<h2 id="canvas_controls"><code>canvas_controls</code></h2>
+<p>What every on-screen control on the scene's canvas shares. A scene has one, on any node; without one,
+touch controls show as the host says. <code>SceneCanvasControls</code>, saved from the live <code>CanvasControls</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>touchVisibility</code></td>
+<td><code>Host</code> · <code>Auto</code> · <code>Always</code> · <code>Never</code></td>
+<td><code>Host</code></td>
+<td>When <code>touchOnly</code> elements show. <code>Host</code> as the host says; <code>Auto</code> once a finger touches the screen, and hidden once a controller, a key or the mouse is used, switching live, as the host says until any is used; <code>Always</code>; <code>Never</code>. A control hidden mid-press lets go of its pointer.</td>
+</tr>
+<tr>
+<td><code>theme</code></td>
+<td>object</td>
+<td>none</td>
+<td>How every control looks, slot by slot. <code>preset</code> (<code>MinimalFlat</code> · <code>Glass</code> · <code>Textured</code> · <code>None</code>) is the built-in look it starts from; <code>colors</code> and <code>images</code> are tokens, by name, a slot writes as <code>@name</code> in a colour or an image <code>path</code>, over the preset's own; <code>skin</code> sets slots over the preset's: <code>joystick</code> (<code>base</code>, <code>knob</code>, <code>sprintRing</code>, <code>arrows</code>), <code>button</code> (<code>background</code>, <code>icon</code>, <code>label</code>, <code>cooldown</code>, <code>charges</code>, <code>aimCursor</code>, <code>aimRange</code>, <code>cancelZone</code>) and <code>look</code> (<code>feedback</code>). A slot is a <code>style</code> (as <code>canvas_element.style</code>), a <code>size</code>, <code>circle</code>, <code>frames</code> (<code>images</code>, <code>fps</code>, <code>loop</code>), <code>custom</code> (a composable the host registered by that name), <code>hidden</code>, <code>transitionSeconds</code>, and <code>states</code> by <code>Idle</code> · <code>Pressed</code> · <code>Held</code> · <code>Disabled</code> · <code>CoolingDown</code> · <code>Ready</code> · <code>Aiming</code> · <code>Cancelling</code>, each changing its <code>style</code>, <code>scale</code>, <code>alpha</code>, <code>frames</code> or <code>hidden</code>. A token neither the theme nor its preset has is reported. None draws each control plainly from its own colours. See <a href="../../guides/game-ui/#theme-the-controls">Game UI</a>.</td>
+</tr>
+<tr>
+<td><code>playerLayout</code></td>
+<td>object</td>
+<td><code>{}</code></td>
+<td>The layout the scene starts with, before a player's saved one replaces it: every touch control's <code>scale</code> (<code>1</code>) and <code>opacity</code> (<code>1</code>), and <code>controls</code>, each control's own <code>offsetX</code>, <code>offsetY</code> (dp, right and down), <code>scale</code> and <code>opacity</code> by its <code>controlId</code>.</td>
+</tr>
+<tr>
+<td><code>minTouchSize</code></td>
+<td>number</td>
+<td><code>44</code></td>
+<td>The smallest a stick, action button or look area is to a thumb, in dp: one drawn smaller takes a touch up to this size around its centre. <code>0</code> takes touches only on what is drawn. Not negative.</td>
+</tr>
+</tbody>
+</table>
 <h2 id="canvas_element"><code>canvas_element</code></h2>
 <p>Screen-space UI drawn over the game. Sizes and offsets are in dp. <code>SceneCanvasElement</code>.</p>
 <table>
@@ -4270,9 +4352,9 @@ fades with distance from the active camera and pans with its direction. <code>Sc
 <tbody>
 <tr>
 <td><code>kind</code></td>
-<td><code>Text</code> · <code>Panel</code> · <code>Bar</code> · <code>Button</code> · <code>TextField</code> · <code>Joystick</code> · <code>Image</code> · <code>View</code></td>
+<td><code>Text</code> · <code>Panel</code> · <code>Bar</code> · <code>Button</code> · <code>TextField</code> · <code>Joystick</code> · <code>Image</code> · <code>View</code> · <code>LookArea</code> · <code>Sweep</code> · <code>Stepper</code></td>
 <td><code>Text</code></td>
-<td>What the element is. A <code>View</code> shows what a camera sees.</td>
+<td>What the element is. A <code>View</code> shows what a camera sees; a <code>LookArea</code> is a region where a swipe looks and a pinch zooms; a <code>Sweep</code> fills its <code>value</code> of a turn; a <code>Stepper</code> holds a number between minus and plus buttons.</td>
 </tr>
 <tr>
 <td><code>anchor</code></td>
@@ -4386,7 +4468,7 @@ fades with distance from the active camera and pans with its direction. <code>Sc
 <td><code>style</code></td>
 <td>object</td>
 <td><code>{}</code></td>
-<td>How the element looks beyond its colours, as an AwakeKt Compose <code>Style</code>: <code>background</code>, <code>gradient</code> (<code>start</code>, <code>end</code>, <code>horizontal</code>), <code>image</code>, <code>fillImage</code>, <code>fillImageMode</code>, <code>cornerRadius</code>, <code>borderWidth</code>, <code>borderColor</code>, <code>shadow</code> (<code>color</code>, <code>offsetX</code>, <code>offsetY</code>, <code>blur</code>, <code>spread</code>), <code>textColor</code>, <code>textShadow</code> (<code>color</code>, <code>offsetX</code>, <code>offsetY</code>), <code>textOutline</code> (<code>color</code>, <code>width</code>), <code>alpha</code>, <code>rotation</code>, <code>linkColor</code>, and <code>hovered</code> and <code>pressed</code> states for a Button. <code>image</code> is an <code>Image</code>'s picture, a frame, or a <code>Bar</code>'s track; <code>fillImage</code> is a <code>Bar</code>'s fill, cut at <code>value</code> or, with <code>fillImageMode</code> <code>Squeeze</code>, drawn at the filled width with both end caps kept, or with <code>fillImageMode</code> <code>Sweep</code>, revealed clockwise from 12 o'clock over the Bar's whole box, like a cooldown overlay -- <code>fillImage</code> is optional there, and the colour fill sweeps on its own. Each image is a <code>CanvasImage</code>: <code>path</code>, a region (<code>regionX</code>, <code>regionY</code>, <code>regionWidth</code>, <code>regionHeight</code>), slice insets (<code>sliceLeft</code>, <code>sliceTop</code>, <code>sliceRight</code>, <code>sliceBottom</code>), <code>repeatEdges</code>, <code>repeatCenter</code>, <code>tint</code> and <code>pixelated</code>. <code>rotation</code> turns the element's image, background and content, children included, clockwise about its own centre in degrees; hit-testing still uses the unrotated box. <code>linkColor</code> colours a Text's <code>[[key&amp;#124;shown words]]</code> spans; unset draws them in a default blue. See <a href="../../guides/game-ui/#style-an-element">Game UI</a>.</td>
+<td>How the element looks beyond its colours, as an AwakeKt Compose <code>Style</code>: <code>background</code>, <code>gradient</code> (<code>start</code>, <code>end</code>, <code>horizontal</code>), <code>image</code>, <code>fillImage</code>, <code>fillImageMode</code>, <code>cornerRadius</code>, <code>borderWidth</code>, <code>borderColor</code>, <code>shadow</code> (<code>color</code>, <code>offsetX</code>, <code>offsetY</code>, <code>blur</code>, <code>spread</code>), <code>textColor</code>, <code>textShadow</code> (<code>color</code>, <code>offsetX</code>, <code>offsetY</code>), <code>textOutline</code> (<code>color</code>, <code>width</code>), <code>alpha</code>, <code>rotation</code>, <code>linkColor</code>, and <code>hovered</code>, <code>pressed</code> and <code>disabled</code> states for a Button. <code>image</code> is an <code>Image</code>'s picture, a frame, or a <code>Bar</code>'s track; <code>fillImage</code> is a <code>Bar</code>'s fill, cut at <code>value</code> or, with <code>fillImageMode</code> <code>Squeeze</code>, drawn at the filled width with both end caps kept, or with <code>fillImageMode</code> <code>Sweep</code>, revealed clockwise from 12 o'clock over the Bar's whole box, like a cooldown overlay -- <code>fillImage</code> is optional there, and the colour fill sweeps on its own. Each image is a <code>CanvasImage</code>: <code>path</code>, a region (<code>regionX</code>, <code>regionY</code>, <code>regionWidth</code>, <code>regionHeight</code>), slice insets (<code>sliceLeft</code>, <code>sliceTop</code>, <code>sliceRight</code>, <code>sliceBottom</code>), <code>repeatEdges</code>, <code>repeatCenter</code>, <code>tint</code> and <code>pixelated</code>. <code>rotation</code> turns the element's image, background and content, children included, clockwise about its own centre in degrees; hit-testing still uses the unrotated box. <code>linkColor</code> colours a Text's <code>[[key&amp;#124;shown words]]</code> spans; unset draws them in a default blue. See <a href="../../guides/game-ui/#style-an-element">Game UI</a>.</td>
 </tr>
 <tr>
 <td><code>textAlign</code></td>
@@ -4446,7 +4528,7 @@ fades with distance from the active camera and pans with its direction. <code>Sc
 <td><code>bind</code></td>
 <td>object</td>
 <td>none</td>
-<td>Game state the element shows without code. <code>node</code> names a node; <code>value</code> is a <code>component.field</code> for a Bar's fill, divided by <code>max</code> (a field or a number); <code>text</code> fills each <code>{component.field}</code>, or <code>{component.field:n0}</code> with a number format, in a Text's or Button's words. <code>textArgs</code> maps a <code>textKey</code>'s argument names to <code>component.field</code>s, read each frame. See <a href="../../guides/game-ui/#show-game-state">Game UI</a>.</td>
+<td>Game state the element shows without code. <code>node</code> names a node; <code>value</code> is a <code>component.field</code> for a Bar's fill, divided by <code>max</code> (a field or a number); <code>text</code> fills each <code>{component.field}</code>, or <code>{component.field:n0}</code> with a number format, in a Text's or Button's words. <code>textArgs</code> maps a <code>textKey</code>'s argument names to <code>component.field</code>s, read each frame. For an action <code>button</code>, <code>cooldown</code> (divided by <code>cooldownMax</code>, a field or a number), <code>charges</code> and <code>enabled</code> read its live cooldown, uses left and whether it can be pressed. See <a href="../../guides/game-ui/#show-game-state">Game UI</a>.</td>
 </tr>
 <tr>
 <td><code>wheel</code></td>
@@ -4507,6 +4589,72 @@ fades with distance from the active camera and pans with its direction. <code>Sc
 <td>boolean</td>
 <td><code>false</code></td>
 <td>Makes an <code>Image</code> or <code>Panel</code> take a tap as a <code>Button</code> does: <code>consumePress()</code> and <code>consumePressAt()</code> report it, and what is under the element doesn't get it. <code>false</code> leaves it watching the pointer only, so a tap passes through. A <code>Button</code> is always pressable; set on any other kind, it is reported.</td>
+</tr>
+<tr>
+<td><code>button</code></td>
+<td>object</td>
+<td>none</td>
+<td>Makes a <code>Button</code> an action button. <code>trigger</code> (<code>Tap</code>): fire <code>action</code> on a <code>Tap</code> released over it, or the moment it goes <code>Down</code>. Held <code>longPressSeconds</code> (<code>0.5</code>), it presses <code>longPressAction</code>, and the release is then not a tap. Let go anywhere, it presses <code>releaseAction</code>. Its live <code>cooldown</code> sweeps a shade over it and its <code>charges</code> show in a badge, set from code or <code>bind</code>; while cooling with no charge left it takes no press unless <code>blockWhileCooling</code> (<code>true</code>) is <code>false</code>. <code>cooldownSeconds</code> (<code>0</code>) gives it a cooldown of its own, run from 1 to 0 over that many seconds each time it fires; set with <code>bind.cooldown</code>, it is reported. <code>aim</code> makes it drag to aim and fire on release, wherever the thumb is: <code>mode</code> (<code>Direction</code> · <code>Ground</code>), <code>radius</code> (<code>0</code>, 120 dp), <code>deadZone</code> (<code>0.2</code>), a <code>cancel</code> zone (<code>anchor</code>, <code>offsetX</code>, <code>offsetY</code>, <code>width</code>, <code>height</code>) where letting go cancels, the axis <code>aimAction</code> pushed with the aim, and <code>lockTarget</code>, which asks the element's code-set <code>aimLock</code> for a target. Each action button follows only the pointer that landed on it first. Set on another kind, it is reported. See <a href="../../guides/game-ui/#action-buttons">Game UI</a>.</td>
+</tr>
+<tr>
+<td><code>enabled</code></td>
+<td>boolean</td>
+<td><code>true</code></td>
+<td>Whether a <code>Button</code> can be pressed. A disabled one takes no press, keeps it from what is under it, and draws in <code>style.disabled</code>, or dimmed. A <code>bind.enabled</code> field sets it each frame instead.</td>
+</tr>
+<tr>
+<td><code>look</code></td>
+<td>object</td>
+<td>none</td>
+<td>How a <code>LookArea</code> turns a swipe into a look and a pinch into a zoom: <code>sensitivity</code> (<code>1</code>), <code>invertX</code>, <code>invertY</code>, <code>pinchZoom</code> (<code>true</code>), <code>zoomSensitivity</code> (<code>1</code>), <code>turnsCamera</code> (<code>true</code>), which turns and zooms the active camera rig in a played project, and the axis <code>zoomAction</code> the pinch is pushed to as <code>ln</code> of its factor. The element's <code>action</code> names an axis action the swipe is pushed to. Set on another kind, it is reported.</td>
+</tr>
+<tr>
+<td><code>cluster</code></td>
+<td>object</td>
+<td>none</td>
+<td>Places the element's children as a button cluster instead of a <code>layout</code>: the first on a pivot (<code>pivotX</code>, <code>pivotY</code>, <code>1</code>, shares of the element) unless <code>primaryAtPivot</code> is <code>false</code>, and the rest <code>radius</code> (<code>96</code>) dp from it, from <code>startAngle</code> (<code>180</code>) and <code>spacing</code> (<code>45</code>) degrees apart, clockwise from the right. Set with <code>layout</code>, it is reported.</td>
+</tr>
+<tr>
+<td><code>skin</code></td>
+<td>object</td>
+<td>none</td>
+<td>How this control looks, slot by slot, over the scene's <code>canvas_controls</code> theme: the same <code>joystick</code>, <code>button</code> and <code>look</code> slots as a theme's <code>skin</code>. A colour or image path written <code>@name</code> is the theme's token.</td>
+</tr>
+<tr>
+<td><code>controlId</code></td>
+<td>string</td>
+<td><code>""</code></td>
+<td>The name a player's saved layout knows this control by, such as <code>move</code>, so <code>canvas_controls.playerLayout.controls</code> can move, scale and fade it.</td>
+</tr>
+<tr>
+<td><code>elementId</code></td>
+<td>string</td>
+<td><code>""</code></td>
+<td>The stable id code finds this element by, such as <code>health-bar</code>: it survives a rename and repeats in each instance of a prefab, so code looks it up under one instance's root with <code>World.findCanvasElement</code>. Letters, digits, <code>_</code>, <code>.</code> and <code>-</code>, starting with a letter, digit or <code>_</code>; unique within a prefab. See <a href="../../guides/game-ui/#build-a-prefab-in-code">Game UI</a>.</td>
+</tr>
+<tr>
+<td><code>bar</code></td>
+<td>object</td>
+<td>none</td>
+<td>How a <code>Bar</code> draws as a progress bar: <code>direction</code> (<code>LeftToRight</code> · <code>RightToLeft</code> · <code>BottomToTop</code> · <code>TopToBottom</code> · <code>Radial</code>), a radial ring's <code>thickness</code>, a <code>track</code> colour, a <code>trailColor</code> fill that trails a drop by <code>trailDelay</code> seconds (<code>0.5</code>) and drains at <code>trailSpeed</code> (<code>1.5</code>), <code>segments</code> blocks <code>segmentGap</code> (<code>2</code>) dp apart, <code>ticks</code> in <code>tickColor</code>, and a <code>label</code>. Set on another kind, it is reported. See <a href="../../guides/game-ui/#gauges-and-steppers">Game UI</a>.</td>
+</tr>
+<tr>
+<td><code>sweep</code></td>
+<td>object</td>
+<td>none</td>
+<td>How a <code>Sweep</code> fills its <code>value</code> of a turn: <code>startAngle</code> degrees clockwise from 12 o'clock, <code>clockwise</code> (<code>true</code>), a <code>mask</code> (<code>Box</code> · <code>Circle</code> · <code>Pill</code> · <code>CutCorner</code>), a ring <code>thickness</code> (<code>0</code> for a pie) and a <code>track</code> colour. Set on another kind, it is reported.</td>
+</tr>
+<tr>
+<td><code>stepper</code></td>
+<td>object</td>
+<td>none</td>
+<td>A <code>Stepper</code>'s number: the <code>value</code> it starts at, <code>min</code> (<code>0</code>), <code>max</code> (<code>100</code>), <code>step</code> (<code>1</code>), <code>decimals</code> (<code>0</code>), and a held button's <code>repeatDelay</code> (<code>0.4</code>) and <code>repeatInterval</code> (<code>0.08</code>) in seconds. <code>bind.value</code> sets the number each frame instead. Set on another kind, it is reported.</td>
+</tr>
+<tr>
+<td><code>joystick</code></td>
+<td>object</td>
+<td>none</td>
+<td>How a <code>Joystick</code> moves and what it reports. <code>mode</code> (<code>Fixed</code>): <code>Fixed</code> centres the pad in the element; <code>Floating</code> makes the element a zone where the pad appears under the thumb, waiting at <code>restX</code>, <code>restY</code> (<code>0.5</code>, shares of the zone) while untouched; <code>Dynamic</code> also drags the pad along past its reach. <code>radius</code> (<code>0</code>) is the knob's reach in dp: half the element's shorter side when fixed, 60 otherwise. <code>deadZone</code> (<code>0</code>, below 1) reports nothing near the centre and stretches the rest back to full; <code>response</code> (<code>Linear</code> · <code>Quadratic</code> · <code>Cubic</code>) or a <code>curve</code> of <code>points</code> (<code>at</code> a deflection, <code>value</code> out) shapes it; <code>directions</code> (<code>Analog</code> · <code>Four</code> · <code>Eight</code>) snaps it. <code>snapBack</code> (<code>true</code>) centres it on release. Past <code>sprintThreshold</code> (<code>0</code>, never) of its reach it is <code>sprinting</code>, and in a played project holds the input action <code>sprintAction</code>. <code>idleAlpha</code> (<code>1</code>), <code>idleDelay</code> (<code>0</code> s) and <code>fadeSeconds</code> (<code>0.25</code>) fade it while untouched. Each stick follows only the pointer that landed on it first. Set on another kind, it is reported.</td>
 </tr>
 </tbody>
 </table>
@@ -6266,7 +6414,19 @@ drawn either, and is logged once. A host that changes the file has the scene's a
 <td><code>sortOrder</code></td>
 <td>integer</td>
 <td><code>0</code></td>
-<td>A higher order draws over a lower one; a tie draws by depth from the camera.</td>
+<td>Within its <code>sortingLayer</code>, a higher order draws over a lower one; a tie draws by depth from the camera.</td>
+</tr>
+<tr>
+<td><code>pivot</code></td>
+<td>object (<code>x</code>, <code>y</code>)</td>
+<td><code>{"x": 0.5, "y": 0.5}</code></td>
+<td>The point of the frame placed at the node, which the sprite turns and scales about, as a fraction of the frame from its bottom left: the default is its centre, <code>{"x": 0.5, "y": 0}</code> the middle of its bottom edge. It holds for every frame, and a flipped sprite mirrors about it. Finite; outside 0 to 1 places it outside the frame.</td>
+</tr>
+<tr>
+<td><code>sortingLayer</code></td>
+<td>string</td>
+<td><code>"Default"</code></td>
+<td>The project's sorting layer it draws on: a later layer in the manifest's <code>sortingLayers</code> draws over an earlier one whatever their <code>sortOrder</code>. A name the list leaves out draws on <code>Default</code>, and is a warning when the project loads. Not blank.</td>
 </tr>
 <tr>
 <td>## <code>state_machine</code></td>
@@ -6379,14 +6539,21 @@ pipeline, and rebuilds only edited chunks. Its atlas image loads as a <code>spri
 <td><code>sortOrder</code></td>
 <td>integer</td>
 <td><code>0</code></td>
-<td>Higher order draws after lower-order tilemaps and sprites.</td>
+<td>Within its <code>sortingLayer</code>, higher order draws after lower-order tilemaps and sprites.</td>
+</tr>
+<tr>
+<td><code>sortingLayer</code></td>
+<td>string</td>
+<td><code>"Default"</code></td>
+<td>The project's sorting layer it draws on, shared with sprites. Not blank.</td>
 </tr>
 </tbody>
 </table>
 <h2 id="sprite_clips"><code>sprite_clips</code></h2>
 <p>Named animation runs for the <code>sprite</code> on the same node. Sheet dimensions come from that sprite;
 every run must fit its atlas. <code>SceneSpriteClips</code>.</p>
-<p>The standard scene runtime advances <code>SpriteClipSystem</code> before rendering. A custom host runs it once
+<p>The standard scene runtime advances <code>SpriteClipSystem</code> before rendering, and <code>sceneSystemsFor</code> includes it
+for a scene with <code>sprite_clips</code>, so an editor's Play advances them. A custom host runs it once
 per simulation frame. <code>SpriteClips.play("hit")</code> changes the run; repeated requests preserve time
 unless <code>restart = true</code>. <code>speed = 0</code> pauses this entity, and <code>isFinished</code> reports one-shot completion.
 An empty library leaves the sprite's manually selected frame alone. Export saves the selected clip
@@ -6769,6 +6936,9 @@ now showing, so an entity should not also carry a <code>texture_animation</code>
 
 
 
+
+  
+  
 
 
 
