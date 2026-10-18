@@ -51,7 +51,6 @@ class TextPixelSnapTest {
     private fun glyphs(density: Float = 1f, content: context(com.awakekt.awake.compose.runtime.Composer) () -> Unit): List<UiDrawPrimitive.Glyph> =
         ComposeHost(density = density).frame(FrameInput(400, 200), content).primitives.filterIsInstance<UiDrawPrimitive.Glyph>()
 
-
     /**
      * A 17.5sp line box around 12sp text puts the unsnapped baseline at 12.85 and the second line's
      * at 30.35: both quads sat on a fraction of a pixel. Measured on the unsnapped code before this
