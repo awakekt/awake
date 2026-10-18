@@ -94,6 +94,7 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         element.cluster = cluster
         element.skin = skin
         element.controlId = controlId
+        element.elementId = elementId
         element.bar = bar
         element.sweep = sweep
         // Puts the live number at the saved value too.
@@ -153,6 +154,7 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         cluster = cluster,
         skin = skin,
         controlId = controlId,
+        elementId = elementId,
         bar = bar,
         sweep = sweep,
         // The live number is saved as where the stepper starts.

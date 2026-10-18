@@ -6,6 +6,7 @@
 package com.awakekt.awake.scene.document
 
 import com.awakekt.awake.core.color.Color
+import com.awakekt.awake.core.color.toHex
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -45,19 +46,14 @@ data class SceneColor(
     val a: Float = 1f,
 ) {
     /**
-     * Converts this color to an 8-character hex string `"#RRGGBBAA"`.
+     * This color as hex text, written as [Color.toHex] writes it: each channel clamped and rounded to
+     * the nearest of 256 steps, in upper case.
      *
-     * @param includeAlpha Whether to include the alpha channel in the resulting hex string.
+     * @param includeAlpha Whether to write the alpha byte, `#RRGGBBAA`, or drop it, `#RRGGBB`. By
+     * default it is written unless the colour is opaque, as a canvas element saves a colour.
      * @return Uppercase hex formatted string representing this color.
      */
-    fun toHex(includeAlpha: Boolean = a < 1f): String {
-        val ri = (r.coerceIn(0f, 1f) * 255f).toInt().toString(16).padStart(2, '0')
-        val gi = (g.coerceIn(0f, 1f) * 255f).toInt().toString(16).padStart(2, '0')
-        val bi = (b.coerceIn(0f, 1f) * 255f).toInt().toString(16).padStart(2, '0')
-        if (!includeAlpha) return "#$ri$gi$bi".uppercase()
-        val ai = (a.coerceIn(0f, 1f) * 255f).toInt().toString(16).padStart(2, '0')
-        return "#$ri$gi$bi$ai".uppercase()
-    }
+    fun toHex(includeAlpha: Boolean = toColor().toHex().length > OPAQUE_HEX_LENGTH): String = toColor().toHex(includeAlpha)
 
     /** Predefined constant colors and parsing helpers for [SceneColor]. */
     companion object {
@@ -213,3 +209,5 @@ object SceneColorSerializer : KSerializer<SceneColor> {
         return SceneColor(r, g, b, a)
     }
 }
+
+private const val OPAQUE_HEX_LENGTH = 7

@@ -641,6 +641,7 @@ public final class com/awakekt/awake/ui/canvas/CanvasElement {
 	public final fun getDropTarget ()Z
 	public final fun getDropped ()Lcom/awakekt/awake/ui/canvas/CanvasElement;
 	public final fun getDroppedOutside ()Lcom/awakekt/awake/core/math2d/Vec2;
+	public final fun getElementId ()Ljava/lang/String;
 	public final fun getEnabled ()Z
 	public final fun getFocused ()Z
 	public final fun getFollow ()Ljava/lang/String;
@@ -710,6 +711,7 @@ public final class com/awakekt/awake/ui/canvas/CanvasElement {
 	public final fun setDoubleAction (Ljava/lang/String;)V
 	public final fun setDraggable (Z)V
 	public final fun setDropTarget (Z)V
+	public final fun setElementId (Ljava/lang/String;)V
 	public final fun setEnabled (Z)V
 	public final fun setFocused (Z)V
 	public final fun setFollow (Ljava/lang/String;)V

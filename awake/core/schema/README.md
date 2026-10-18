@@ -61,6 +61,24 @@ Reading is deterministic: the same descriptor and options give an equal schema, 
 declaration order. `SchemaOptions.maxDepth` (12 by default) bounds nesting, which also stops a type
 that contains itself.
 
+## Saving typed sizes and colours
+
+`DpSerializer` and `SpSerializer` write a `Dp` or an `Sp` as its number, and `ColorHexSerializer` writes
+a `Color` as `Color.toHex()` does, `#RRGGBB` when opaque and `#RRGGBBAA` otherwise, the form a canvas
+element saves. A theme keeps typed fields in its API and still saves as plain data:
+
+```kotlin
+@Serializable
+data class Theme(
+    @Serializable(with = DpSerializer::class) val gap: Dp = 8.dp,
+    @Serializable(with = ColorHexSerializer::class) val accent: Color = Color.White,
+)
+```
+
+Their descriptors are primitives, so a schema reads a `Dp` field as a float and a `Color` field as
+text; map the colour's serial name, `com.awakekt.awake.core.color.Color`, to `PropertyKind.Color`
+through `SchemaOptions.semanticTypes` for a colour picker.
+
 ## Limits
 
 - Only the type's own `@Serializable` shape is read. A polymorphic property has no children.

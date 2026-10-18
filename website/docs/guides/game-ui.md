@@ -809,6 +809,57 @@ Each drawn element carries the test tag `canvas-element-<entity id>` in the UI's
 `SceneAppLifecycleRuntime.uiSemantics` holds the last frame's tree, so a test can find an element
 and check where it was placed.
 
+## Build a prefab in code
+
+A plugin or a game that ships ready-made UI, such as a unit frame or an action bar, builds it as a
+prefab of `canvas_element` nodes with `canvasPrefab`. Each element kind has its function (`text`,
+`panel`, `bar`, `button`, `textField`, `joystick`, `image`, `view`, `lookArea`, `sweep`, `stepper`),
+and each `canvas_element` field is a setting of the same name. Sizes and offsets are `Dp`, a font size
+is `Sp` and colours are `Color`s; settings that are objects of their own, such as `style`, `layout`,
+`bind`, `bar`, `sweep` or `button`, take their `awake:ui:canvas` type.
+
+```kotlin title="Kotlin"
+--8<-- "awake/scene/runtime/src/commonTest/kotlin/com/awakekt/awake/scene/runtime/CanvasPrefabRoundTripTest.kt:canvas-prefab"
+```
+
+`canvasPrefab` validates what it builds and throws a `SceneValidationException` listing each problem,
+such as a field set on a kind it does nothing for, two nodes of one name, or two elements of one
+`elementId`. `CanvasPrefabs.problems(prefab)` checks a prefab without throwing.
+
+`CanvasPrefabs.toJson(prefab)` writes the file an editor saves: every field written and colours as
+hex, `#RRGGBB` when opaque and `#RRGGBBAA` otherwise, as `Color.toHex()` writes them. Opened in the
+editor and saved, it comes back unchanged, so keep the `guid` the same from one build to the next and
+the file diffs cleanly. `CanvasPrefabs.fromJson` reads one back.
+
+### Find an element by id
+
+Give each element code needs an `elementId`, the `id` of its function. Code finds it under one placed
+copy's root, the entity its `prefab_link` node made, rather than by name: a name changes when someone
+renames the node, and every copy of the prefab repeats it.
+
+```kotlin title="Kotlin"
+--8<-- "awake/scene/runtime/src/commonTest/kotlin/com/awakekt/awake/scene/runtime/CanvasPrefabRoundTripTest.kt:find-by-id"
+```
+
+`findCanvasElement` looks at every canvas element in the world, so look up once, when the prefab is
+placed, and keep the entity. A host that draws a prefab without a world finds the node in the prefab
+itself with `prefab.findCanvasNode("slot-1")`.
+
+### Save typed sizes and colours
+
+A theme or a layout of your own can keep `Dp`, `Sp` and `Color` fields and still save as data:
+`DpSerializer` and `SpSerializer` from `awake:core:schema` write a number, and `ColorHexSerializer`
+writes the same hex a canvas element saves.
+
+```kotlin title="Kotlin"
+@Serializable
+data class FrameTheme(
+    @Serializable(with = DpSerializer::class) val gap: Dp = 4.dp,
+    @Serializable(with = SpSerializer::class) val fontSize: Sp = 12.sp,
+    @Serializable(with = ColorHexSerializer::class) val accent: Color = Color.White,
+)
+```
+
 ## See also
 
 - [UI with AwakeKt Compose](ui.md) for menus and tools written in Kotlin.

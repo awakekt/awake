@@ -21,6 +21,9 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(libs.kotlinx.serialization.json)
+            // Both are dependency-free value types, read and written by the serializers here.
+            api(project(":awake:core:math2d"))
+            api(project(":awake:core:color"))
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
