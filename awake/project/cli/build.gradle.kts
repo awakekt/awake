@@ -56,7 +56,8 @@ dependencies {
 
 // A small project with a capability of its own, for `awake validate --code`. Its code builds apart from
 // the tests and is on none of their class paths, so the check loads it in a class loader of its own, as
-// it loads a game's.
+// it loads a game's. Its scenes are `.awakescene` files: the repository's scene-schema test checks every
+// `.scene.json` against Core's components, and these use the project's own.
 val fixture: SourceSet = sourceSets.create("fixture")
 
 dependencies {

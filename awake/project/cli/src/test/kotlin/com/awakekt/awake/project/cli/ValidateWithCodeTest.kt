@@ -37,7 +37,7 @@ class ValidateWithCodeTest {
         val run = awake("validate")
 
         assertEquals(0, run.code, run.all)
-        assertContains(run.out, "warning  scenes/harbor.scene.json  Lamp:  harbor_signal is a component nothing installed provides")
+        assertContains(run.out, "warning  scenes/harbor.awakescene  Lamp:  harbor_signal is a component nothing installed provides")
     }
 
     @Test
@@ -76,7 +76,7 @@ class ValidateWithCodeTest {
         val finding = findings("--code", code).single()
 
         assertEquals(1, run.code, run.all)
-        assertEquals(Seen("unknown_component", "scenes/pier.scene.json", "Mooring/Buoy", finding.message), finding)
+        assertEquals(Seen("unknown_component", "scenes/pier.awakescene", "Mooring/Buoy", finding.message), finding)
         assertContains(finding.message, "harbor_bell")
     }
 
@@ -86,7 +86,7 @@ class ValidateWithCodeTest {
 
         val finding = findings("--code", code).single()
 
-        assertEquals("scene_load" to "scenes/pier.scene.json", finding.code to finding.file)
+        assertEquals("scene_load" to "scenes/pier.awakescene", finding.code to finding.file)
         assertContains(finding.message, "Can't read the signal data/missing.signal")
     }
 

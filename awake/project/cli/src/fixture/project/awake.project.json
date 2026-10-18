@@ -4,7 +4,7 @@
   "name": "Harbor Town",
   "version": "1.0.0",
   "minEngineVersion": "0.1.0",
-  "entryScene": "scenes/harbor.scene.json",
+  "entryScene": "scenes/harbor.awakescene",
   "plugins": [
     { "id": "com.example.harbor-town.signal", "capabilityClass": "com.example.harbortown.HarborSignalCapability", "required": true }
   ]

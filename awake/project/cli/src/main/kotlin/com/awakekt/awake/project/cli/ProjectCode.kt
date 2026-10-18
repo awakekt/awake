@@ -20,7 +20,7 @@ import java.net.URLClassLoader
  */
 internal class ProjectCode(private val classpath: List<File>) : AutoCloseable {
     private var loader: URLClassLoader? = URLClassLoader(
-        "awake-project-code",
+        "project-code",
         classpath.map { it.toURI().toURL() }.toTypedArray(),
         SceneCapability::class.java.classLoader,
     )
