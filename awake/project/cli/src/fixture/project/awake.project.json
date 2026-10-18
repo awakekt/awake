@@ -3,7 +3,7 @@
   "id": "com.example.harbor-town",
   "name": "Harbor Town",
   "version": "1.0.0",
-  "minEngineVersion": "0.1.0",
+  "minEngineVersion": "0.0.1",
   "entryScene": "scenes/harbor.awakescene",
   "plugins": [
     { "id": "com.example.harbor-town.signal", "capabilityClass": "com.example.harbortown.HarborSignalCapability", "required": true }

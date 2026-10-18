@@ -93,7 +93,7 @@ class ValidateWithCodeTest {
     @Test
     fun anAssetThatNoLongerMatchesItsPinAndATooOldEngineAreErrors() {
         root.resolve("data/harbor.signal").writeText("pong")
-        edit("awake.project.json") { it.replace("\"0.1.0\"", "\"999.0.0\"") }
+        edit("awake.project.json") { it.replace("\"0.0.1\"", "\"999.0.0\"") }
 
         // The project's component, warned of as one nothing installed provides, has no code.
         val findings = findings().filter { it.code != null }
