@@ -6,6 +6,7 @@
 package com.awakekt.awake.render.renderer
 
 import com.awakekt.awake.core.color.Color
+import com.awakekt.awake.core.graphics2d.BackdropBlurQuality
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.render.capture.FramebufferAttachment
@@ -70,6 +71,19 @@ interface Renderer : GpuDevice {
      * that backend's `Renderer`/`Mesh` for why the derived-index-buffer approach was chosen
      * over a barycentric-coordinate fragment shader. */
     var wireframe: Boolean
+
+    /**
+     * How much this renderer spends on [UiDrawPrimitive.BackdropBlur]: the frosted glass behind UI
+     * panels. A renderer starts at [recommendedBackdropBlurQuality] for its device, so a software
+     * rasterizer fills every panel with its fallback tint, and an app sets this to override that,
+     * for example from a graphics-settings menu. It applies from the next [drawUi].
+     *
+     * A renderer that cannot sample what it has drawn keeps this at [BackdropBlurQuality.Off]
+     * whatever is set; the default here is such a renderer.
+     */
+    var backdropBlurQuality: BackdropBlurQuality
+        get() = BackdropBlurQuality.Off
+        set(@Suppress("UNUSED_PARAMETER") value) = Unit
 
     /**
      * Executes rendering from pre-packed GPU pass input.

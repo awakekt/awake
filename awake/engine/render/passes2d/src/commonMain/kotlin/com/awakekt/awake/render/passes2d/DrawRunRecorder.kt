@@ -42,6 +42,22 @@ interface DrawRunRecorder<in M> {
      * Uploads and draws one textured primitive.
      */
     fun drawTexturePrimitive(primitive: TexturedDrawRun, slotIndex: Int)
+
+    /**
+     * Blurs what has been drawn into this pass's target so far: ends the pass, runs every pass of
+     * [blur] into the reduced-resolution levels, and resumes the pass over the same target with
+     * everything drawn kept. The [DrawPipelineKind.BackdropComposite] pipeline bound afterwards
+     * samples this blur's output level.
+     *
+     * The resumed pass has nothing bound and no scissor the caller can rely on; the shared feature
+     * binds and clips again before its next draw.
+     *
+     * @param blur The blur, with its passes uploaded.
+     * @param more Whether another blur follows in this pass, so the target is broken off again.
+     * @return false when the blur cannot run on this target now, with the pass left as it was;
+     * the panels sharing it are then not drawn. A recorder without backdrop blur returns false.
+     */
+    fun blurBackdrop(blur: BackdropBlurRecording<M>, more: Boolean): Boolean = false
 }
 
 typealias UiRunRecorder<M> = DrawRunRecorder<M>

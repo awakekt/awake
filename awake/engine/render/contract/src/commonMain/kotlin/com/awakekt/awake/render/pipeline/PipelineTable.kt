@@ -70,6 +70,10 @@ data class UiShaderSet<T>(
     val roundedQuad: T,
     /** The two-sampler full-target pass used by destination-colour layer composites. */
     val targetComposite: T? = null,
+    /** The backdrop blur's downsample and upsample pass; without it no backdrop is blurred. */
+    val backdropBlur: T? = null,
+    /** The frosted-glass composite that draws a blurred backdrop into its shape. */
+    val backdropComposite: T? = null,
 )
 
 /**

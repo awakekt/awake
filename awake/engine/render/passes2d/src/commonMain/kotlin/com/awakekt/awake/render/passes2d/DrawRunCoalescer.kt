@@ -23,6 +23,7 @@ import com.awakekt.awake.core.graphics2d.convexClipContour
 import com.awakekt.awake.core.graphics2d.strokeToFillPath
 import com.awakekt.awake.core.graphics2d.tessellateFillAa
 import com.awakekt.awake.core.graphics2d.toPath
+import com.awakekt.awake.core.graphics2d.transform
 import com.awakekt.awake.core.graphics2d.writeGlyphVertex
 import com.awakekt.awake.core.graphics2d.writeRoundedQuadVertex
 import com.awakekt.awake.core.graphics2d.writeVertex
@@ -32,6 +33,7 @@ import com.awakekt.awake.core.math2d.contains
 import com.awakekt.awake.core.math2d.intersect
 import com.awakekt.awake.core.text.font.UiFont
 import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -107,17 +109,21 @@ object DrawRunCoalescer {
      * @param maxQuadsPerRun Mesh capacity, in quads. A span longer than this splits into
      * several runs -- still contiguous and still in order, just backed by more than one mesh.
      * @param retained Optional renderer-owned cache for unchanged spans outside path clips.
+     * @param backdrop The target the UI is drawn into and the renderer's backdrop blur quality,
+     * or null when it blurs nothing: every [DrawCommand.BackdropBlur] then gets its fallback.
      */
     @Suppress("LongMethod", "CyclomaticComplexMethod", "NestedBlockDepth")
     fun coalesce(
         primitives: List<DrawCommand>,
         maxQuadsPerRun: Int = 1024,
         retained: RetainedDrawRunCache? = null,
+        backdrop: BackdropBlurTarget? = null,
     ): List<StagedDrawRun> {
         val runs = mutableListOf<StagedDrawRun>()
         val activePathClips = ArrayList<DrawPath>()
         val clipKindStack = ArrayDeque<ClipKind>()
         val safeInteriorRectStack = ArrayDeque<Rectangle?>()
+        var grouping: BackdropGrouping? = null
 
         var index = 0
         while (index < primitives.size) {
@@ -127,6 +133,17 @@ object DrawRunCoalescer {
             while (index < primitives.size && continuesSpan(first, primitives[index])) index += 1
             val slice = primitives.subList(runStart, index)
             val safeInteriorRect = safeInteriorRectStack.lastOrNull()
+            if (first is DrawCommand.BackdropBlur) {
+                if (grouping == null && backdrop != null) grouping = BackdropGrouping(backdrop)
+                @Suppress("UNCHECKED_CAST")
+                stageBackdrops(slice as List<DrawCommand.BackdropBlur>, grouping, runs, activePathClips, safeInteriorRect, maxQuadsPerRun)
+                continue
+            }
+            // A panel may share the blur of one drawn before it only while nothing painted since
+            // covers what it reads, so everything painted while a blur is open is watched.
+            if (grouping != null && grouping.watching) {
+                for (sliceIndex in slice.indices) grouping.painted(slice[sliceIndex])
+            }
             // Rect clips only affect the scissor command. Path clips change generated geometry,
             // so include their active context in the retained-span key. Clip commands themselves
             // update state and must always be replayed in emission order.
@@ -353,6 +370,9 @@ object DrawRunCoalescer {
                         chunkStart = chunkEnd
                     }
                 }
+                // Staged above, before the cache, since which blur a panel samples depends on
+                // everything drawn before it, not on the span alone.
+                is DrawCommand.BackdropBlur -> Unit
             }
             if (cacheable) {
                 retained.store(
@@ -364,7 +384,106 @@ object DrawRunCoalescer {
                 )
             }
         }
+        grouping?.finish()
         return runs
+    }
+
+    /**
+     * Stages each panel of [panels] as glass sampling the blur [grouping] places it in, or as its
+     * fallback colour where there is none.
+     */
+    @Suppress("LongParameterList")
+    private fun stageBackdrops(
+        panels: List<DrawCommand.BackdropBlur>,
+        grouping: BackdropGrouping?,
+        runs: MutableList<StagedDrawRun>,
+        activePathClips: List<DrawPath>,
+        safeInteriorRect: Rectangle?,
+        maxQuadsPerRun: Int,
+    ) {
+        for (panelIndex in panels.indices) {
+            val panel = panels[panelIndex]
+            val left = panel.placedLeft()
+            val top = panel.placedTop()
+            val right = panel.placedRight()
+            val bottom = panel.placedBottom()
+            if (right <= left || bottom <= top || panel.alpha <= 0f) continue
+            val work = grouping?.place(left, top, right, bottom, panel.blurRadius)
+            if (work == null) {
+                val fallback = panel.fallback.withAlpha(panel.fallback.a * panel.alpha.coerceAtMost(1f))
+                if (fallback.a > 0f) {
+                    stageBackdropShape(panel, left, top, right, bottom, activePathClips, safeInteriorRect, fallback, runs, maxQuadsPerRun)
+                }
+            } else {
+                val glass = BackdropGlass(panel.alpha.coerceAtMost(1f), panel.saturation, panel.noise, work, leads = !work.led)
+                work.led = true
+                if (panel.path == null && activePathClips.isEmpty()) {
+                    runs += backdropQuadRun(left, top, right, bottom, panel.placedCornerRadius(), panel.smoothing, panel.tint, glass)
+                } else {
+                    runs += backdropMeshRun(backdropShapeMesh(panel, left, top, right, bottom, activePathClips, safeInteriorRect, WHITE_COLOR), panel.tint, glass)
+                }
+            }
+            grouping?.painted(left, top, right, bottom)
+        }
+    }
+
+    /** The fallback: [color] filling the panel's shape, through the rounded quad when it is one. */
+    @Suppress("LongParameterList")
+    private fun stageBackdropShape(
+        panel: DrawCommand.BackdropBlur,
+        left: Float,
+        top: Float,
+        right: Float,
+        bottom: Float,
+        activePathClips: List<DrawPath>,
+        safeInteriorRect: Rectangle?,
+        color: Color,
+        runs: MutableList<StagedDrawRun>,
+        maxQuadsPerRun: Int,
+    ) {
+        if (panel.path == null && activePathClips.isEmpty()) {
+            runs += buildRoundedQuadRun(
+                listOf(DrawCommand.RoundedQuad(left, top, right - left, bottom - top, color, panel.placedCornerRadius(), panel.smoothing)),
+            )
+        } else {
+            val mesh = backdropShapeMesh(panel, left, top, right, bottom, activePathClips, safeInteriorRect, color)
+            chunkColoredVertexTriangleMeshes(runs, listOf(mesh), maxQuadsPerRun)
+        }
+    }
+
+    /** The panel's shape tessellated with an antialiased fringe in [color], clipped like any other fill. */
+    @Suppress("LongParameterList")
+    private fun backdropShapeMesh(
+        panel: DrawCommand.BackdropBlur,
+        left: Float,
+        top: Float,
+        right: Float,
+        bottom: Float,
+        activePathClips: List<DrawPath>,
+        safeInteriorRect: Rectangle?,
+        color: Color,
+    ): ColoredTriangleMesh {
+        val path = panel.path
+        val transform = panel.transform
+        val mesh = if (path == null) {
+            localRoundedRectMesh(panel.placedCornerRadius(), right - left, bottom - top).placedAt(left, top, color)
+        } else if (transform == null) {
+            path.tessellateFillAa(color)
+        } else {
+            path.transform(
+                scaleX = transform.scaleX,
+                scaleY = transform.scaleY,
+                translateX = transform.pivotX - transform.pivotX * transform.scaleX,
+                translateY = transform.pivotY - transform.pivotY * transform.scaleY,
+            ).tessellateFillAa(color)
+        }
+        val inside = canSkipExactClip(safeInteriorRect, left, top, right - left, bottom - top)
+        return if (inside || activePathClips.isEmpty()) mesh else exactClipColored(mesh, activePathClips)
+    }
+
+    private fun DrawCommand.BackdropBlur.placedCornerRadius(): Float {
+        val scale = transform?.let { minOf(abs(it.scaleX), abs(it.scaleY)) } ?: 1f
+        return cornerRadius * scale
     }
 
     /** Whether [next] joins [first]'s span: the same primitive type, and for glyphs the same font. */

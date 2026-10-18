@@ -25,6 +25,8 @@ class SharedRenderFeature2D {
     ) {
         val bound = BoundState(recorder)
         var textureSlotIndex = 0
+        var blursLeft = countBlurs(runs)
+        var backdropReady = false
         var runIndex = 0
         while (runIndex < runs.size) {
             when (val run = runs[runIndex]) {
@@ -37,9 +39,29 @@ class SharedRenderFeature2D {
                     // Each texture binds its own pipeline.
                     bound.forgetPipeline()
                 }
+                is DrawRun.BackdropRun -> {
+                    val blur = run.blur
+                    if (blur != null) {
+                        blursLeft -= 1
+                        backdropReady = recorder.blurBackdrop(blur, more = blursLeft > 0)
+                        // The pass was broken off and resumed: nothing is bound and the scissor is lost.
+                        if (backdropReady) bound.resume(surfaceWidth, surfaceHeight)
+                    }
+                    // A panel sharing a blur that could not run has nothing behind it to show.
+                    if (backdropReady) bound.draw(DrawPipelineKind.BackdropComposite, run.mesh)
+                }
             }
             runIndex += 1
         }
+    }
+
+    private fun <M> countBlurs(runs: List<DrawRun<M>>): Int {
+        var count = 0
+        for (index in runs.indices) {
+            val run = runs[index]
+            if (run is DrawRun.BackdropRun && run.blur != null) count += 1
+        }
+        return count
     }
 
     private fun <M> recordTextureRun(
@@ -72,6 +94,7 @@ private class BoundState<M>(private val recorder: DrawRunRecorder<M>) {
     // A clamped rect packs to non-negative values, so -1 never matches and the first clip is set.
     private var scissorOrigin = -1L
     private var scissorSize = -1L
+    private var lastClip: Rectangle? = null
 
     fun draw(next: DrawPipelineKind, mesh: M) {
         if (bind(next)) recorder.drawMesh(mesh)
@@ -98,6 +121,7 @@ private class BoundState<M>(private val recorder: DrawRunRecorder<M>) {
     }
 
     fun clip(rect: Rectangle, surfaceWidth: Int, surfaceHeight: Int) {
+        lastClip = rect
         val x = rect.x.toInt().coerceIn(0, surfaceWidth)
         val y = rect.y.toInt().coerceIn(0, surfaceHeight)
         val width = rect.width.toInt().coerceAtLeast(0).coerceAtMost(surfaceWidth - x)
@@ -115,6 +139,19 @@ private class BoundState<M>(private val recorder: DrawRunRecorder<M>) {
     fun forgetPipeline() {
         kind = null
         font = null
+    }
+
+    /** After the pass was broken off: bind everything again and restore the clip in force. */
+    fun resume(surfaceWidth: Int, surfaceHeight: Int) {
+        forgetPipeline()
+        scissorOrigin = -1L
+        scissorSize = -1L
+        val clip = lastClip
+        if (clip != null) {
+            clip(clip, surfaceWidth, surfaceHeight)
+        } else {
+            recorder.setScissor(0, 0, surfaceWidth, surfaceHeight)
+        }
     }
 
     private companion object {

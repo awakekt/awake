@@ -26,6 +26,12 @@ enum class UiPipelineVariant {
 
     /** Offscreen render target compositing pipeline. */
     TargetComposite,
+
+    /** One downsample or upsample pass of a backdrop blur, into a reduced-resolution level. */
+    BackdropBlur,
+
+    /** Frosted glass: a blurred backdrop drawn into a shape, tinted and saturated. */
+    BackdropComposite,
 }
 
 /**

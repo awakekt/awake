@@ -36,6 +36,12 @@ object EngineShaderSets {
     /** Shader set for compositing offscreen UI targets onto the frame backbuffer. */
     val UiTargetComposite = aslShaderSet(UiTargetCompositeShader)
 
+    /** Shader set for one downsample or upsample pass of a backdrop blur. */
+    val UiBackdropBlur = aslShaderSet(UiBackdropBlurShader)
+
+    /** Shader set for drawing a blurred backdrop into a frosted-glass shape. */
+    val UiBackdropComposite = aslShaderSet(UiBackdropCompositeShader)
+
     /** Shader set for 3D debug wireframe line rendering. */
     val DebugLine = aslShaderSet(DebugLineShader)
 }
@@ -56,4 +62,6 @@ suspend fun <T> uiShaderSet(load: suspend (ShaderSet) -> T): UiShaderSet<T> = Ui
     texture = load(EngineShaderSets.UiTexture),
     roundedQuad = load(EngineShaderSets.UiRoundedQuad),
     targetComposite = load(EngineShaderSets.UiTargetComposite),
+    backdropBlur = load(EngineShaderSets.UiBackdropBlur),
+    backdropComposite = load(EngineShaderSets.UiBackdropComposite),
 )

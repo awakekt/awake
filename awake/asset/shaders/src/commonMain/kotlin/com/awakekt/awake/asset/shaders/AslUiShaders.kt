@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.asset.shaders
 
+import com.awakekt.awake.asset.shaderdsl.AslExpr
 import com.awakekt.awake.asset.shaderdsl.AslShaderDefinition
 import com.awakekt.awake.asset.shaderdsl.a
 import com.awakekt.awake.asset.shaderdsl.abs
@@ -14,6 +15,7 @@ import com.awakekt.awake.asset.shaderdsl.clamp
 import com.awakekt.awake.asset.shaderdsl.div
 import com.awakekt.awake.asset.shaderdsl.dot
 import com.awakekt.awake.asset.shaderdsl.eq
+import com.awakekt.awake.asset.shaderdsl.fract
 import com.awakekt.awake.asset.shaderdsl.fullScreenTriangleCorner
 import com.awakekt.awake.asset.shaderdsl.fwidth
 import com.awakekt.awake.asset.shaderdsl.g
@@ -32,20 +34,24 @@ import com.awakekt.awake.asset.shaderdsl.rgb
 import com.awakekt.awake.asset.shaderdsl.sampler
 import com.awakekt.awake.asset.shaderdsl.select
 import com.awakekt.awake.asset.shaderdsl.shader
+import com.awakekt.awake.asset.shaderdsl.sin
 import com.awakekt.awake.asset.shaderdsl.smoothstep
 import com.awakekt.awake.asset.shaderdsl.step
 import com.awakekt.awake.asset.shaderdsl.texture2d
 import com.awakekt.awake.asset.shaderdsl.textureDimensions
 import com.awakekt.awake.asset.shaderdsl.textureSample
+import com.awakekt.awake.asset.shaderdsl.textureSampleLevel
 import com.awakekt.awake.asset.shaderdsl.times
 import com.awakekt.awake.asset.shaderdsl.toF32
 import com.awakekt.awake.asset.shaderdsl.unaryMinus
 import com.awakekt.awake.asset.shaderdsl.vec2
 import com.awakekt.awake.asset.shaderdsl.vec3
 import com.awakekt.awake.asset.shaderdsl.vec4
+import com.awakekt.awake.asset.shaderdsl.w
 import com.awakekt.awake.asset.shaderdsl.x
 import com.awakekt.awake.asset.shaderdsl.xy
 import com.awakekt.awake.asset.shaderdsl.y
+import com.awakekt.awake.asset.shaderdsl.z
 import com.awakekt.awake.asset.shaderdsl.zw
 import com.awakekt.awake.core.geometry.GpuDataShape
 
@@ -226,6 +232,130 @@ val UiTargetCompositeShader: AslShaderDefinition = shader("ui_target_composite")
                 source.a * destination.a * blend,
         )
         colorOutput(vec4(rgb, alpha))
+    }
+}
+
+/**
+ * ASL definition for one pass of the backdrop blur, a dual-filter (Kawase) down- or upsample.
+ *
+ * It draws a full-screen triangle into a level, scissored to the texels the blur needs, and reads
+ * the level above or below it. Each output texel's centre is its `@builtin(position)`; a downsample
+ * reads the source at twice that, an upsample at half. The taps and weights are
+ * `DualKawaseBlur`'s, which `BackdropBlurReference` runs on the CPU: a downsample weighs the centre
+ * 4/8 and the four diagonals at the tap offset 1/8 each; an upsample weighs the four axis taps at
+ * twice the offset 1/12 and the four diagonals 2/12. Every tap is clamped to texel centres inside
+ * the pass's source rectangle so nothing outside the blurred region leaks in.
+ */
+val UiBackdropBlurShader: AslShaderDefinition = shader("ui_backdrop_blur") {
+    val source by texture2d(group = 0, binding = 0)
+    val sourceSampler by sampler(group = 0, binding = 1)
+
+    val out = varyings("VertexOutput")
+    val clampRect by out.varying(GpuDataShape.Vec4, location = 0)
+    val pass by out.varying(GpuDataShape.Vec4, location = 1)
+
+    vertex {
+        val inCorner by input(GpuDataShape.Vec2, location = 0)
+        val inClamp by input(GpuDataShape.Vec4, location = 1)
+        val inPass by input(GpuDataShape.Vec4, location = 2)
+        out.position set vec4(inCorner, 0f.lit, 1f.lit)
+        clampRect set inClamp
+        pass set inPass
+    }
+
+    fragment {
+        val texel = let("texel", position().xy)
+        val sourceSizeU = let("sourceSizeU", textureDimensions(source))
+        val sourceSize = let("sourceSize", vec2(toF32(sourceSizeU.x), toF32(sourceSizeU.y)))
+        val upsample = let("upsample", pass.y gt 0.5f.lit)
+        val offset = let("offset", pass.x)
+        val centre = let("centre", select(texel * 2f.lit, texel * 0.5f.lit, upsample))
+        val low = let("low", clampRect.xy + 0.5f.lit)
+        val high = let("high", clampRect.zw - 0.5f.lit)
+        val centreWeight = let("centreWeight", select(0.5f.lit, 0f.lit, upsample))
+        val diagonalWeight = let("diagonalWeight", select(0.125f.lit, 2f.lit / 12f.lit, upsample))
+        val axisWeight = let("axisWeight", select(0f.lit, 1f.lit / 12f.lit, upsample))
+        val sum = variable("sum", vec4(0f.lit))
+
+        fun tap(dx: AslExpr, dy: AslExpr, weight: AslExpr) {
+            val at = clamp(centre + vec2(dx, dy), low, high) / sourceSize
+            assign(sum, sum + textureSampleLevel(source, sourceSampler, at, 0f.lit) * weight)
+        }
+
+        val wide = let("wide", offset * 2f.lit)
+        tap(0f.lit, 0f.lit, centreWeight)
+        tap(-offset, -offset, diagonalWeight)
+        tap(offset, -offset, diagonalWeight)
+        tap(-offset, offset, diagonalWeight)
+        tap(offset, offset, diagonalWeight)
+        tap(wide, 0f.lit, axisWeight)
+        tap(-wide, 0f.lit, axisWeight)
+        tap(0f.lit, wide, axisWeight)
+        tap(0f.lit, -wide, axisWeight)
+        colorOutput(sum)
+    }
+}
+
+/**
+ * ASL definition for frosted glass: a blurred backdrop drawn into a rounded rectangle or a
+ * tessellated shape, saturated, tinted and grained.
+ *
+ * The shape's edge is the rounded quad's signed distance, multiplied by the vertex coverage a
+ * tessellated outline brings. The blurred level is read at this pixel's own position scaled to the
+ * level, so the glass shows exactly what lies behind it.
+ */
+val UiBackdropCompositeShader: AslShaderDefinition = shader("ui_backdrop_composite") {
+    val uniforms = uniformBlock("Uniforms", group = 0, binding = 0)
+    val screenToNdc by uniforms.field(GpuDataShape.Vec4)
+    val blurred by texture2d(group = 0, binding = 1)
+    val blurredSampler by sampler(group = 0, binding = 2)
+
+    val out = varyings("VertexOutput")
+    val localPos by out.varying(GpuDataShape.Vec2, location = 0)
+    val halfSize by out.varying(GpuDataShape.Vec2, location = 1)
+    val radius by out.varying(GpuDataShape.Float, location = 2)
+    val smoothing by out.varying(GpuDataShape.Float, location = 3)
+    val tint by out.varying(GpuDataShape.Vec4, location = 4)
+    val glass by out.varying(GpuDataShape.Vec4, location = 5)
+
+    vertex {
+        val inPos by input(GpuDataShape.Vec2, location = 0)
+        val inLocalPos by input(GpuDataShape.Vec2, location = 1)
+        val inHalfSize by input(GpuDataShape.Vec2, location = 2)
+        val inRadius by input(GpuDataShape.Float, location = 3)
+        val inSmoothing by input(GpuDataShape.Float, location = 4)
+        val inTint by input(GpuDataShape.Vec4, location = 5)
+        val inGlass by input(GpuDataShape.Vec4, location = 6)
+
+        out.position set vec4(inPos * screenToNdc.xy + screenToNdc.zw, 0f.lit, 1f.lit)
+        localPos set inLocalPos
+        halfSize set inHalfSize
+        radius set inRadius
+        smoothing set inSmoothing
+        tint set inTint
+        glass set inGlass
+    }
+
+    fragment {
+        val q = let("q", abs(localPos) - halfSize + radius)
+        val pExp = let("pExp", 2f.lit + 4f.lit * smoothing)
+        val roundedDistance = let("roundedDistance", pow(pow(q.x, pExp) + pow(q.y, pExp), 1f.lit / pExp) - radius)
+        val boxDistance = let("boxDistance", length(max(q, vec2(0f.lit, 0f.lit))) + min(max(q.x, q.y), 0f.lit) - radius)
+        val distance = variable("distance", boxDistance)
+        iff((smoothing gt 0f.lit) and (q.x gt 0f.lit) and (q.y gt 0f.lit)) { assign(distance, roundedDistance) }
+        val aa = let("aa", max(fwidth(distance), 0.5f.lit))
+        val coverage = let("coverage", (1f.lit - smoothstep(-aa, aa, distance)) * glass.x)
+
+        val pixel = let("pixel", position().xy)
+        val levelSizeU = let("levelSizeU", textureDimensions(blurred))
+        val levelSize = let("levelSize", vec2(toF32(levelSizeU.x), toF32(levelSizeU.y)))
+        val backdrop = let("backdrop", textureSampleLevel(blurred, blurredSampler, pixel * glass.w / levelSize, 0f.lit).rgb)
+        val luma = let("luma", dot(backdrop, vec3(0.2126f.lit, 0.7152f.lit, 0.0722f.lit)))
+        val saturated = let("saturated", mix(vec3(luma), backdrop, glass.y))
+        val tinted = let("tinted", mix(saturated, tint.rgb, tint.a))
+        val grain = let("grain", fract(sin(dot(pixel, vec2(12.9898f.lit, 78.233f.lit))) * 43758.547f.lit) - 0.5f.lit)
+        val rgb = let("rgb", clamp(tinted + vec3(grain * glass.z * 0.1f.lit), vec3(0f.lit), vec3(1f.lit)))
+        colorOutput(vec4(rgb, coverage))
     }
 }
 

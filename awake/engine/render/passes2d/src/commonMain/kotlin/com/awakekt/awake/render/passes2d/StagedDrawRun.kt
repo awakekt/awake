@@ -53,6 +53,16 @@ sealed class StagedDrawRun {
      * @property rect The clip rectangle.
      */
     class ClipRun(val rect: Rectangle) : StagedDrawRun()
+
+    /**
+     * One frosted-glass panel: its [com.awakekt.awake.core.geometry.VertexFormats2D.BackdropComposite]
+     * geometry, and, for the first panel of a blur, the [blur] to run before drawing it.
+     *
+     * @property vertices The interleaved vertex data.
+     * @property indices The index data.
+     * @property blur The blur this panel runs first, or null when it samples the one before it.
+     */
+    class BackdropRun(val vertices: FloatArray, val indices: IntArray, val blur: BackdropBlurWork?) : StagedDrawRun()
 }
 
 /** Alias for [StagedDrawRun]. */
@@ -123,7 +133,25 @@ sealed class DrawRun<out M> {
      * @property rect The clip rectangle.
      */
     class ClipRun(val rect: Rectangle) : DrawRun<Nothing>()
+
+    /**
+     * One frosted-glass panel.
+     *
+     * @param M The backend's own mesh handle type.
+     * @property mesh The panel's composite geometry.
+     * @property blur The blur to run before it, or null when it samples the previous blur.
+     */
+    class BackdropRun<M>(val mesh: M, val blur: BackdropBlurRecording<M>?) : DrawRun<M>()
 }
+
+/**
+ * A [BackdropBlurWork] with each pass's triangle uploaded.
+ *
+ * @param M The backend's own mesh handle type.
+ * @property work The blur.
+ * @property passMeshes One mesh per entry of [BackdropBlurWork.passes], in the same order.
+ */
+class BackdropBlurRecording<out M>(val work: BackdropBlurWork, val passMeshes: List<M>)
 
 /** Alias for [DrawRun]. */
 typealias UiRun<M> = DrawRun<M>
@@ -148,6 +176,10 @@ val StagedDrawRun.pipelineDescriptor: UiPipelineDescriptor?
         is StagedDrawRun.TextureRun -> UiPipelineDescriptor(
             variant = UiPipelineKind.Texture.pipelineVariant,
             vertexFormat = UiPipelineKind.Texture.vertexFormat,
+        )
+        is StagedDrawRun.BackdropRun -> UiPipelineDescriptor(
+            variant = UiPipelineKind.BackdropComposite.pipelineVariant,
+            vertexFormat = UiPipelineKind.BackdropComposite.vertexFormat,
         )
         is StagedDrawRun.ClipRun -> null
     }

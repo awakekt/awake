@@ -42,6 +42,38 @@ object VertexFormats2D {
         ),
     )
 
+    /**
+     * Frosted-glass composite: pos (vec2) + localPos (vec2) + halfSize (vec2) + radius (float) +
+     * smoothing (float) + tint (vec4) + glass (vec4: coverage, saturation, noise, level scale) =
+     * 16 floats (64 bytes). The first five match [RoundedQuad], so the glass's edge is the same
+     * signed-distance rounded rectangle.
+     */
+    val BackdropComposite = VertexFormat(
+        listOf(
+            VertexAttribute(VertexSemantic.Position, GpuDataShape.Vec2, location = 0),
+            VertexAttribute(VertexSemantic.LocalPosition, GpuDataShape.Vec2, location = 1),
+            VertexAttribute(VertexSemantic.Size, GpuDataShape.Vec2, location = 2),
+            VertexAttribute(VertexSemantic.Radius, GpuDataShape.Float, location = 3),
+            VertexAttribute(VertexSemantic.Smoothing, GpuDataShape.Float, location = 4),
+            VertexAttribute(VertexSemantic.Color, GpuDataShape.Vec4, location = 5),
+            VertexAttribute(VertexSemantic.Custom, GpuDataShape.Vec4, location = 6),
+        ),
+    )
+
+    /**
+     * One backdrop blur pass, the three corners of a full-screen triangle: NDC corner (vec2) +
+     * source clamp (vec4: left, top, right, bottom in source texels) + pass (vec4: tap offset, 1
+     * for an upsample, unused, unused) = 10 floats (40 bytes). The corner is in the vertex rather
+     * than derived from `vertex_index`, so every pass of a frame draws from one buffer.
+     */
+    val BackdropBlurPass = VertexFormat(
+        listOf(
+            VertexAttribute(VertexSemantic.Position, GpuDataShape.Vec2, location = 0),
+            VertexAttribute(VertexSemantic.Size, GpuDataShape.Vec4, location = 1),
+            VertexAttribute(VertexSemantic.Custom, GpuDataShape.Vec4, location = 2),
+        ),
+    )
+
     /** Colored quad layout float count. */
     const val FLOATS_PER_VERTEX = 10
 

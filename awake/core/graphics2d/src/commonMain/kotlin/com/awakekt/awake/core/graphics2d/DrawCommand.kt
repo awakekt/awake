@@ -353,6 +353,53 @@ sealed class DrawCommand {
     ) : UiDrawPrimitive()
 
     /**
+     * Frosted glass: what is already painted behind this shape, blurred, desaturated or saturated,
+     * tinted and given light noise, then drawn inside the shape.
+     *
+     * The shape is the rectangle at [x], [y], [w], [h] with [cornerRadius] (and [smoothing]), or
+     * [path] when it is set; either way the result is clipped to it with an antialiased edge.
+     * "Behind" is everything drawn earlier into the same target: the 3D scene and the UI under
+     * this element, including another blurred panel.
+     *
+     * A renderer that cannot sample its target, or whose [BackdropBlurQuality] is
+     * [BackdropBlurQuality.Off], or that already ran its per-frame number of blurs, fills the
+     * shape with [fallback] instead.
+     *
+     * @property x Left position in screen-space pixels.
+     * @property y Top position in screen-space pixels.
+     * @property w Width in pixels.
+     * @property h Height in pixels.
+     * @property blurRadius The blur's Gaussian standard deviation in pixels, as CSS `blur()`.
+     * @property tint Mixed over the blurred backdrop by its alpha.
+     * @property saturation 1 keeps the backdrop's colours, 0 makes it grey, above 1 strengthens them.
+     * @property noise Strength of the grain added to break up banding, from 0 to 1.
+     * @property cornerRadius Uniform corner radius in pixels, when [path] is null.
+     * @property smoothing Corner curvature smoothing between 0 (circular) and 1 (squircle).
+     * @property path The shape's outline, or null for the (rounded) rectangle.
+     * @property alpha Opacity of the whole effect, from 0 to 1.
+     * @property fallback What fills the shape when the backdrop is not blurred.
+     * @property tokenId Optional design system token identifier.
+     * @property transform Optional scale about a pivot, applied to the shape before it is drawn.
+     */
+    data class BackdropBlur(
+        val x: Float,
+        val y: Float,
+        val w: Float,
+        val h: Float,
+        val blurRadius: Float,
+        val tint: Color = Color.Transparent,
+        val saturation: Float = 1f,
+        val noise: Float = 0f,
+        val cornerRadius: Float = 0f,
+        val smoothing: Float = 0f,
+        val path: DrawPath? = null,
+        val alpha: Float = 1f,
+        val fallback: Color = backdropFallbackColor(tint),
+        val tokenId: String? = null,
+        val transform: DrawTransform? = null,
+    ) : UiDrawPrimitive()
+
+    /**
      * Path-based clip sibling of [ClipPush].
      *
      * @property path Vector path defining the clipping region.
@@ -393,6 +440,7 @@ sealed class UiDrawPrimitive : DrawCommand() {
     typealias Mesh = DrawCommand.Mesh
     typealias Texture = DrawCommand.Texture
     typealias ShadowQuad = DrawCommand.ShadowQuad
+    typealias BackdropBlur = DrawCommand.BackdropBlur
     typealias ClipPathPush = DrawCommand.ClipPathPush
     typealias ClipPush = DrawCommand.ClipPush
     typealias ClipPop = DrawCommand.ClipPop
@@ -436,6 +484,7 @@ fun <T : DrawCommand> T.scaledByAlpha(factor: Float): T {
                 bottomLeft = gradient.bottomLeft.withAlpha(gradient.bottomLeft.a * factor),
             ),
         )
+        is DrawCommand.BackdropBlur -> copy(alpha = alpha * factor)
         is DrawCommand.Texture, is DrawCommand.ClipPathPush,
         is DrawCommand.ClipPush, is DrawCommand.ClipPop,
         -> this
@@ -458,6 +507,7 @@ fun <T : DrawCommand> T.withTransform(transform: DrawTransform?): T {
         is DrawCommand.RoundedQuad -> copy(transform = transform)
         is DrawCommand.Glyph -> copy(transform = transform)
         is DrawCommand.Texture -> copy(transform = transform)
+        is DrawCommand.BackdropBlur -> copy(transform = transform)
         else -> this
     }
     return res as T
@@ -480,6 +530,12 @@ fun UiDrawPrimitive.translatedBy(dx: Float, dy: Float): UiDrawPrimitive = when (
     is UiDrawPrimitive.Mesh -> copy(offsetX = offsetX + dx, offsetY = offsetY + dy)
     is UiDrawPrimitive.Texture -> copy(x = x + dx, y = y + dy, transform = transform?.translatedBy(dx, dy))
     is UiDrawPrimitive.ShadowQuad -> copy(x = x + dx, y = y + dy)
+    is UiDrawPrimitive.BackdropBlur -> copy(
+        x = x + dx,
+        y = y + dy,
+        path = path?.transform(translateX = dx, translateY = dy),
+        transform = transform?.translatedBy(dx, dy),
+    )
     is UiDrawPrimitive.ClipPathPush -> copy(
         path = path.transform(translateX = dx, translateY = dy),
         boundsRect = boundsRect.translatedBy(dx, dy),

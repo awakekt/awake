@@ -10,7 +10,7 @@ import com.awakekt.awake.core.geometry.VertexFormats2D
 import com.awakekt.awake.render.pipeline.UiPipelineVariant
 
 /**
- * The four flavors of 2D draw primitive pipeline, and the vertex layout each one draws through.
+ * The flavors of 2D draw primitive pipeline, and the vertex layout each one draws through.
  */
 enum class DrawPipelineKind(
     /** Vertex layout format consumed by this pipeline. */
@@ -29,6 +29,9 @@ enum class DrawPipelineKind(
 
     /** Rounded rectangle pipeline with corner radius and antialiasing. */
     RoundedQuad(VertexFormats2D.RoundedQuad, UiPipelineVariant.RoundedQuad),
+
+    /** Frosted glass: the blurred backdrop drawn into a panel's shape. */
+    BackdropComposite(VertexFormats2D.BackdropComposite, UiPipelineVariant.BackdropComposite),
     ;
 
     /** Derived from the format, never hand-counted. */

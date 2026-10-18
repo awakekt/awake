@@ -21,6 +21,14 @@ interface DrawMeshUploader<M> {
 
     /** Builds or updates a backend mesh for text glyph primitives in [runIndex]. */
     fun glyphMesh(runIndex: Int, vertices: FloatArray, indices: IntArray): M
+
+    /**
+     * Builds or updates a backend mesh for the frosted-glass panel [runIndex] or, when
+     * [blurPass] is true, for blur pass [runIndex] of the frame. Null when this backend draws no
+     * backdrop blur, which drops the panels (their staging already chose the fallback when the
+     * renderer's quality is off).
+     */
+    fun backdropMesh(runIndex: Int, vertices: FloatArray, indices: IntArray, blurPass: Boolean): M? = null
 }
 
 typealias UiMeshUploader<M> = DrawMeshUploader<M>
@@ -44,6 +52,9 @@ fun <M> uploadDrawRuns(
     var quadRunCount = 0
     var roundedQuadRunCount = 0
     var glyphRunCount = 0
+    var backdropRunCount = 0
+    var blurPassCount = 0
+    var blurMissing = false
     var index = 0
     while (index < staged.size) {
         when (val run = staged[index]) {
@@ -71,6 +82,22 @@ fun <M> uploadDrawRuns(
             is StagedDrawRun.TextureRun -> runs += DrawRun.TextureRun(run.primitives)
 
             is StagedDrawRun.ClipRun -> runs += DrawRun.ClipRun(run.rect)
+
+            is StagedDrawRun.BackdropRun -> {
+                val work = run.blur
+                var recording: BackdropBlurRecording<M>? = null
+                if (work != null) {
+                    val passMeshes = ArrayList<M>(work.passes.size)
+                    for (pass in work.passes) {
+                        passMeshes += uploader.backdropMesh(blurPassCount++, pass.vertices, pass.indices, blurPass = true) ?: break
+                    }
+                    if (passMeshes.size == work.passes.size) recording = BackdropBlurRecording(work, passMeshes)
+                    // The panels sharing a blur that never runs have nothing to sample.
+                    blurMissing = recording == null
+                }
+                val mesh = if (blurMissing) null else uploader.backdropMesh(backdropRunCount++, run.vertices, run.indices, blurPass = false)
+                if (mesh != null) runs += DrawRun.BackdropRun(mesh, recording)
+            }
         }
         index += 1
     }

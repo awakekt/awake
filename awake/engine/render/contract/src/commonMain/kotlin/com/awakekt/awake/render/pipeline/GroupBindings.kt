@@ -224,5 +224,22 @@ data class GroupBindings(
                 ResourceBinding(4, ResourceKind.UniformBuffer, setOf(ShaderStage.Fragment)),
             ),
         )
+
+        /** A backdrop blur pass: the level it reads and its sampler. Its parameters ride the vertices. */
+        val UiBackdropBlur = GroupBindings(
+            listOf(
+                ResourceBinding(0, ResourceKind.SampledTexture, setOf(ShaderStage.Fragment)),
+                ResourceBinding(1, ResourceKind.Sampler, setOf(ShaderStage.Fragment)),
+            ),
+        )
+
+        /** The frosted-glass composite: the UI block, the blurred level and its sampler. */
+        val UiBackdropComposite = GroupBindings(
+            listOf(
+                ResourceBinding(0, ResourceKind.UniformBuffer, setOf(ShaderStage.Vertex, ShaderStage.Fragment)),
+                ResourceBinding(1, ResourceKind.SampledTexture, setOf(ShaderStage.Fragment)),
+                ResourceBinding(2, ResourceKind.Sampler, setOf(ShaderStage.Fragment)),
+            ),
+        )
     }
 }
