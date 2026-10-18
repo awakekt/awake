@@ -78,6 +78,13 @@ const val AWAKE_ARTIFACT_GROUP: String = "com.awakekt.awake"
  * @property plugins List of declared plugin references.
  * @property tags The tags the project's scenes use, which editors offer as choices. Optional: when set,
  *   [ProjectContentValidator.unlistedTagIssues] warns about a scene tag it does not name.
+ * @property sortingLayers The named sorting layers the project's sprites and tilemaps draw on, back to
+ *   front: everything on a later layer draws over everything on an earlier one, and each one's sort
+ *   order orders it within its layer. [DEFAULT_SORTING_LAYER] is where a sprite is unless it names
+ *   another, and where the rest of the scene's transparent draws are; naming it places it among the
+ *   others, and a list that leaves it out has it first. Optional: with none, everything draws by its
+ *   sort order alone, and [ProjectContentValidator.unlistedSortingLayerIssues] warns about a layer a
+ *   scene names that the list does not.
  */
 @Serializable
 data class AwakeProjectManifest(
@@ -93,7 +100,11 @@ data class AwakeProjectManifest(
     val assetRoots: List<String> = listOf("assets"),
     val plugins: List<AwakeProjectPluginReference> = emptyList(),
     val tags: List<String> = emptyList(),
+    val sortingLayers: List<String> = emptyList(),
 )
+
+/** The sorting layer a sprite or tilemap draws on unless it names another; see [AwakeProjectManifest.sortingLayers]. */
+const val DEFAULT_SORTING_LAYER: String = "Default"
 
 /**
  * A content pin in the canonical asset lock file.
@@ -261,6 +272,16 @@ internal fun projectManifestIssueDetails(manifest: AwakeProjectManifest): List<P
     addAll(assetRootIssues(manifest.assetRoots))
     addAll(pluginIssues(manifest.plugins))
     addAll(tagIssues(manifest.tags))
+    addAll(sortingLayerIssues(manifest.sortingLayers))
+}
+
+private fun sortingLayerIssues(layers: List<String>): List<ProjectContentIssue> = buildList {
+    if (layers.distinct().size != layers.size) {
+        add(ProjectContentIssue(ProjectIssueCode.INVALID_MANIFEST, "sortingLayers must not contain duplicates"))
+    }
+    layers.forEachIndexed { index, layer ->
+        if (layer.isBlank()) add(ProjectContentIssue(ProjectIssueCode.INVALID_MANIFEST, "sortingLayers[$index] must name a layer"))
+    }
 }
 
 private fun tagIssues(tags: List<String>): List<ProjectContentIssue> = buildList {

@@ -58,11 +58,13 @@ import com.awakekt.awake.scene.rendering.RenderSystem3D
 import com.awakekt.awake.scene.rendering.camera.CameraViewport
 import com.awakekt.awake.scene.rendering.debug.DebugVisualizationSystem
 import com.awakekt.awake.scene.runtime.session.SceneSession
+import com.awakekt.awake.scene.scene2d.SortingLayers
 import com.awakekt.awake.scene.scene2d.SpriteClipSystem
 import com.awakekt.awake.ui.canvas.CanvasElement
 import com.awakekt.awake.ui.canvas.CanvasInsets
 import com.awakekt.awake.ui.canvas.CanvasSlotContent
 import kotlin.math.roundToInt
+import kotlin.reflect.KClass
 import kotlin.time.TimeSource
 
 /**
@@ -146,6 +148,13 @@ class SceneAppLifecycleRuntime internal constructor(
 
     /** The loaded font files the scene's canvas elements name, by path; an element whose file is missing draws in the default font. */
     var canvasFonts: Map<String, UiFont> = emptyMap()
+
+    /**
+     * The project's sorting layers, which place the `sortingLayer` each sprite and tilemap names: a
+     * played project's manifest `sortingLayers`. With none, they all draw on
+     * [SortingLayers.DEFAULT], by their sort order alone. Read every frame, by every world drawn.
+     */
+    var sortingLayers: SortingLayers = SortingLayers.None
 
     /**
      * The text the scene's keyed canvas elements show, in its active locale: a played project's
@@ -493,6 +502,14 @@ class SceneAppLifecycleRuntime internal constructor(
 
     private fun renderedCameraViewport(): CameraViewport? = session.schedule.renderSystem?.cameraViewport
 
+    /**
+     * Whether the app's infrastructure systems, the ones [SceneAppSpec.infrastructureSystemsFactory]
+     * made, include one of [type], as [defaultInfrastructureSystems] includes a [SpriteClipSystem]. A
+     * host that adds a scene's own systems to this world leaves out the ones the infrastructure already
+     * runs, so nothing runs twice a frame. False until the scene is ready to populate.
+     */
+    fun hasInfrastructureSystem(type: KClass<out System>): Boolean = session.schedule.runsInfrastructure(type)
+
     // Every world's View pictures, made by the first canvas that asks for one.
     private var viewStore: SceneCanvasViews? = null
 
@@ -501,8 +518,10 @@ class SceneAppLifecycleRuntime internal constructor(
     private val ownCanvasViews by lazy { views().forWorld(world) }
 
     internal val spriteBatch by lazy { SpriteRenderBatch(renderer) { requireAssetLibrary().texture(it) } }
-    internal val spriteFeature by lazy { SceneSpriteRenderFeature(spriteBatch).also(::forgetsTextures) }
-    internal val tilemapFeature by lazy { SceneTilemapRenderFeature(renderer) { requireAssetLibrary().texture(it) }.also(::forgetsTextures) }
+    internal val spriteFeature by lazy { SceneSpriteRenderFeature(spriteBatch) { sortingLayers }.also(::forgetsTextures) }
+    internal val tilemapFeature by lazy {
+        SceneTilemapRenderFeature(renderer, { requireAssetLibrary().texture(it) }, layers = { sortingLayers }).also(::forgetsTextures)
+    }
 
     // A texture the library forgets is uploaded again from what it gives next.
     private fun forgetsTextures(uploads: SceneTextureUploads) {

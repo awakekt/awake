@@ -51,6 +51,12 @@ enum class ProjectIssueCode(val value: String) {
 
     /** A scene uses a tag the manifest's `tags` list does not name, often a typo. A warning. */
     UNLISTED_TAG("unlisted_tag"),
+
+    /**
+     * A scene's sprite or tilemap names a sorting layer the manifest's `sortingLayers` list does not, so
+     * it draws on the default layer: often a typo. A warning.
+     */
+    UNLISTED_SORTING_LAYER("unlisted_sorting_layer"),
 }
 
 /**
@@ -166,6 +172,29 @@ object ProjectContentValidator {
             ProjectContentIssue(
                 code = ProjectIssueCode.UNLISTED_TAG,
                 message = "tag \"$tag\" is not in the project's tags list",
+                path = path,
+                severity = ProjectIssueSeverity.WARNING,
+            )
+        }
+    }
+
+    /**
+     * A warning for each of [layers], the sorting layers the sprites and tilemaps of the scene at [path]
+     * name, that the manifest's `sortingLayers` list does not: such a one draws on the default layer.
+     * The default layer, [DEFAULT_SORTING_LAYER], is always known. A manifest with no list opts out and
+     * gets none.
+     */
+    fun unlistedSortingLayerIssues(
+        manifest: AwakeProjectManifest,
+        layers: Collection<String>,
+        path: String? = null,
+    ): List<ProjectContentIssue> {
+        if (manifest.sortingLayers.isEmpty()) return emptyList()
+        val listed = manifest.sortingLayers.toSet() + DEFAULT_SORTING_LAYER
+        return layers.distinct().filterNot { it in listed }.map { layer ->
+            ProjectContentIssue(
+                code = ProjectIssueCode.UNLISTED_SORTING_LAYER,
+                message = "sorting layer \"$layer\" is not in the project's sortingLayers list, so it draws on \"$DEFAULT_SORTING_LAYER\"",
                 path = path,
                 severity = ProjectIssueSeverity.WARNING,
             )

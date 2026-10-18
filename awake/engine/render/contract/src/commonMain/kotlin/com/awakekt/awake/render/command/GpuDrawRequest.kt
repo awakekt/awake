@@ -66,7 +66,7 @@ data class GpuDrawRequest(
     /** With [transparent], adds its colour to what is behind it rather than covering it: glows,
      * fire, light shafts. */
     var additive: Boolean = false,
-    /** Transparent draws with higher orders blend after lower orders; ties use camera depth. */
+    /** Transparent draws with higher orders blend after lower orders within a [sortLayer]; ties use camera depth. */
     var sortOrder: Int = 0,
     /**
      * The layer of the frame's mask pass this draw is also drawn into, depth only and from the
@@ -74,6 +74,12 @@ data class GpuDrawRequest(
      * business of whatever samples it.
      */
     var maskLayer: Int = NO_MASK_LAYER,
+    /**
+     * The transparent paint layer, ordered before [sortOrder]: a transparent draw on a higher layer
+     * blends after every one on a lower layer, whatever their orders. 0, the default, is the layer
+     * every draw is on until something places it, such as a sprite's named sorting layer.
+     */
+    var sortLayer: Int = 0,
 ) {
     /**
      * Mutates this request in place so a pool can reuse the instance without allocating.
@@ -101,6 +107,7 @@ data class GpuDrawRequest(
         additive: Boolean = false,
         sortOrder: Int = 0,
         maskLayer: Int = NO_MASK_LAYER,
+        sortLayer: Int = 0,
     ): GpuDrawRequest {
         this.mesh = mesh
         this.material = material
@@ -121,6 +128,7 @@ data class GpuDrawRequest(
         this.additive = additive
         this.sortOrder = sortOrder
         this.maskLayer = maskLayer
+        this.sortLayer = sortLayer
         return this
     }
 }

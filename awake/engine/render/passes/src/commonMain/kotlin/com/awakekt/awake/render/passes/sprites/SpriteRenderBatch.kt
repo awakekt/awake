@@ -42,9 +42,22 @@ data class SpriteDrawInput(
     val flipY: Boolean = false,
     /** Straight-alpha RGBA multiplier. */
     val tint: Color = Color.White,
-    /** Transparent paint order; higher values draw last. */
+    /** Transparent paint order within [sortLayer]; higher values draw last. */
     val sortOrder: Int = 0,
+    /**
+     * The point of the cell placed at [model]'s origin, which it turns and scales about, as a fraction
+     * of the cell from its left edge: 0.5 is the centre. Before any flip: a flipped sprite mirrors
+     * about it.
+     */
+    val pivotX: Float = DEFAULT_SPRITE_PIVOT,
+    /** As [pivotX], from the cell's bottom edge. */
+    val pivotY: Float = DEFAULT_SPRITE_PIVOT,
+    /** Transparent paint layer, ordered before [sortOrder]; higher layers draw last. */
+    val sortLayer: Int = 0,
 )
+
+/** A sprite's pivot when it names none: the middle of its cell. */
+const val DEFAULT_SPRITE_PIVOT: Float = 0.5f
 
 /**
  * Reuses one quad and one material per named sheet. The caller owns this batch and calls [destroy]
@@ -95,6 +108,7 @@ class SpriteRenderBatch(
             extraUniformFloats = spriteUniforms(input, sheet.width, sheet.height),
             transparent = true,
             sortOrder = input.sortOrder,
+            sortLayer = input.sortLayer,
         )
     }
 
@@ -161,10 +175,18 @@ val SpriteQuadGeometry = MeshGeometry(
     format = VertexFormat.PositionUv,
 )
 
-/** Applies cell dimensions in local space without changing the caller's transform. */
+/**
+ * Applies cell dimensions in local space without changing the caller's transform, and moves the unit
+ * quad so its pivot sits at the transform's origin. A flip mirrors the pivot with the image, so a
+ * flipped sprite stays on the same point.
+ */
 fun spriteModel(input: SpriteDrawInput, width: Int, height: Int): Mat4 {
     validateSheet(input, width, height)
-    return input.model.scale(width.toFloat() / input.columns / input.pixelsPerUnit, height.toFloat() / input.rows / input.pixelsPerUnit, 1f)
+    val pivotX = if (input.flipX) 1f - input.pivotX else input.pivotX
+    val pivotY = if (input.flipY) 1f - input.pivotY else input.pivotY
+    return input.model
+        .scale(width.toFloat() / input.columns / input.pixelsPerUnit, height.toFloat() / input.rows / input.pixelsPerUnit, 1f)
+        .translate(DEFAULT_SPRITE_PIVOT - pivotX, DEFAULT_SPRITE_PIVOT - pivotY, 0f)
 }
 
 /** Packs an explicit atlas cell and its tint using the shader's canonical fields. */
@@ -191,6 +213,7 @@ private fun validateSheet(input: SpriteDrawInput, width: Int, height: Int) {
     val cells = input.columns.toLong() * input.rows
     require(cells <= Int.MAX_VALUE && input.frame.toLong() in 0 until cells) { "Sprite frame is outside its sheet." }
     require(input.pixelsPerUnit.isFinite() && input.pixelsPerUnit > 0f) { "Sprite pixelsPerUnit must be finite and positive." }
+    require(input.pivotX.isFinite() && input.pivotY.isFinite()) { "Sprite pivot must be finite." }
     require(width > 0 && height > 0 && width % input.columns == 0 && height % input.rows == 0) {
         "Sprite sheet ${width}x$height cannot be divided into ${input.columns}x${input.rows} equal pixel cells."
     }

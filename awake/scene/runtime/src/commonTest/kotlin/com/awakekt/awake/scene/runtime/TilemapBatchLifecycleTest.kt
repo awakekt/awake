@@ -86,7 +86,7 @@ class TilemapBatchLifecycleTest {
     @Test
     fun removingTheComponentReleasesItsGpuResources() {
         val renderer = CountingRenderer()
-        val feature = SceneTilemapRenderFeature(renderer) { TextureAsset(ByteArray(4), 1, 1) }
+        val feature = SceneTilemapRenderFeature(renderer, { TextureAsset(ByteArray(4), 1, 1) })
         val world = World()
         val entity = world.create()
         world.add(entity, Transform())

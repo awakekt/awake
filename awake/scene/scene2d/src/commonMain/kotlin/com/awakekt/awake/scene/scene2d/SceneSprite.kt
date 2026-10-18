@@ -9,6 +9,7 @@ import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.scene.document.SceneColor
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneValidationIssue
+import com.awakekt.awake.scene.document.SceneVec2
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -17,6 +18,9 @@ import kotlinx.serialization.Serializable
 
 /** Image pixels per scene unit when a sprite does not say: 100 pixels to a unit. */
 private const val DEFAULT_PIXELS_PER_UNIT = 100f
+
+/** The middle of a frame, as a fraction of it: where a sprite's pivot is unless it says. */
+private const val CENTRE = 0.5f
 
 /**
  * A flat image drawn at the node's `Transform`: one cell of a [columns] x [rows] frame sheet, with no
@@ -31,8 +35,15 @@ private const val DEFAULT_PIXELS_PER_UNIT = 100f
  * @property flipX Mirrors the sprite left to right.
  * @property flipY Mirrors the sprite top to bottom.
  * @property tint Multiplied into the image's colour and alpha.
- * @property sortOrder Sprites with a higher order draw over those with a lower one; a tie draws by
- * depth from the camera.
+ * @property sortOrder Within its [sortingLayer], sprites with a higher order draw over those with a
+ * lower one; a tie draws by depth from the camera.
+ * @property pivot The point of the frame placed at the node's position, which the sprite turns and
+ * scales about: a fraction of the frame from its bottom left, so (0.5, 0.5), the default, is its
+ * centre and (0.5, 0) the middle of its bottom edge. It holds for every frame of the sheet, and a
+ * flipped sprite mirrors about it. A value outside 0 to 1 places it outside the frame.
+ * @property sortingLayer The project's sorting layer the sprite draws on, by name: a later layer
+ * draws over an earlier one whatever their [sortOrder]. A name the project does not list draws on
+ * [SortingLayers.DEFAULT].
  */
 @Serializable
 @SerialName("sprite")
@@ -46,6 +57,8 @@ data class SceneSprite(
     val flipY: Boolean = false,
     val tint: SceneColor = SceneColor(),
     val sortOrder: Int = 0,
+    val pivot: SceneVec2 = SceneVec2(CENTRE, CENTRE),
+    val sortingLayer: String = SortingLayers.DEFAULT,
 ) : SceneComponent {
     /** Cells in the sheet; 0 when [columns] or [rows] is not valid. */
     val cellCount: Int get() = if (columns >= 1 && rows >= 1 && columns.toLong() * rows <= Int.MAX_VALUE) columns * rows else 0
@@ -64,5 +77,7 @@ data class SceneSprite(
             add("frame must stay within the sheet's $cellCount cells: it is $frame")
         }
         if (pixelsPerUnit <= 0f || !pixelsPerUnit.isFinite()) add("pixelsPerUnit must be finite and above 0")
+        if (!pivot.x.isFinite() || !pivot.y.isFinite()) add("pivot must be finite")
+        if (sortingLayer.isBlank()) add("sortingLayer must name a layer")
     }
 }

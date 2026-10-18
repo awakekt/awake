@@ -40,6 +40,9 @@ class Tilemap(settings: SceneTilemap) {
     /** Paint order, shared with sprites. */
     var sortOrder: Int = settings.sortOrder
 
+    /** The project's sorting layer this layer draws on, by name, shared with sprites. */
+    var sortingLayer: String = settings.sortingLayer
+
     /** Changes a tile after checking that its frame belongs to this layer's atlas. */
     fun setTile(x: Int, y: Int, frame: Int) {
         require(frame >= -1 && frame.toLong() < columns.toLong() * rows) { "Tile frame is outside the atlas." }
@@ -48,7 +51,7 @@ class Tilemap(settings: SceneTilemap) {
 
     internal fun toScene() = SceneTilemap(
         texture, grid.width, grid.height, grid.copyTiles().toList(), columns, rows, pixelsPerUnit,
-        grid.chunkSize, tint, sortOrder,
+        grid.chunkSize, tint, sortOrder, sortingLayer,
     )
 }
 

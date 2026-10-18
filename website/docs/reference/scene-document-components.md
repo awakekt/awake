@@ -778,7 +778,9 @@ drawn either, and is logged once. A host that changes the file has the scene's a
 | `flipX` | boolean | `false` | Mirrors the sprite left to right. |
 | `flipY` | boolean | `false` | Mirrors the sprite top to bottom. |
 | `tint` | color | white | Multiplied into the image's colour and alpha. |
-| `sortOrder` | integer | `0` | A higher order draws over a lower one; a tie draws by depth from the camera. |
+| `sortOrder` | integer | `0` | Within its `sortingLayer`, a higher order draws over a lower one; a tie draws by depth from the camera. |
+| `pivot` | object (`x`, `y`) | `{"x": 0.5, "y": 0.5}` | The point of the frame placed at the node, which the sprite turns and scales about, as a fraction of the frame from its bottom left: the default is its centre, `{"x": 0.5, "y": 0}` the middle of its bottom edge. It holds for every frame, and a flipped sprite mirrors about it. Finite; outside 0 to 1 places it outside the frame. |
+| `sortingLayer` | string | `"Default"` | The project's sorting layer it draws on: a later layer in the manifest's `sortingLayers` draws over an earlier one whatever their `sortOrder`. A name the list leaves out draws on `Default`, and is a warning when the project loads. Not blank. |
 ## `state_machine`
 
 Runs the state machine in a definition file. `SceneStateMachine`. A played project reads and checks the file when it loads, and gives the entity an `AiStateMachineComponent` built from it.
@@ -806,14 +808,16 @@ pipeline, and rebuilds only edited chunks. Its atlas image loads as a `sprite`'s
 | `pixelsPerUnit` | number | `100` | Pixels per local world unit. Finite and above 0. |
 | `chunkSize` | integer | `16` | Cells per chunk edge. At least 1; edge chunks may be smaller. |
 | `tint` | color | white | Whole-layer straight-alpha multiplier. |
-| `sortOrder` | integer | `0` | Higher order draws after lower-order tilemaps and sprites. |
+| `sortOrder` | integer | `0` | Within its `sortingLayer`, higher order draws after lower-order tilemaps and sprites. |
+| `sortingLayer` | string | `"Default"` | The project's sorting layer it draws on, shared with sprites. Not blank. |
 
 ## `sprite_clips`
 
 Named animation runs for the `sprite` on the same node. Sheet dimensions come from that sprite;
 every run must fit its atlas. `SceneSpriteClips`.
 
-The standard scene runtime advances `SpriteClipSystem` before rendering. A custom host runs it once
+The standard scene runtime advances `SpriteClipSystem` before rendering, and `sceneSystemsFor` includes it
+for a scene with `sprite_clips`, so an editor's Play advances them. A custom host runs it once
 per simulation frame. `SpriteClips.play("hit")` changes the run; repeated requests preserve time
 unless `restart = true`. `speed = 0` pauses this entity, and `isFinished` reports one-shot completion.
 An empty library leaves the sprite's manually selected frame alone. Export saves the selected clip

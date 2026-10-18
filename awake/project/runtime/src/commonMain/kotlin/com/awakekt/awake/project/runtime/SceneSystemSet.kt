@@ -139,6 +139,10 @@ class SceneSystemSet internal constructor(
  * - `spinControl`: spinning
  * - `locomotion_animation` and `keyframe_animation`: their clips and looping tracks
  * - `texture_clips`: the sprite sheet's clips, stepped on the scene's clock
+ * - `sprite_clips`: [com.awakekt.awake.scene.scene2d.SpriteClipSystem], which steps each sprite's clip
+ *   on the scene's clock and shows its frame. `runProject` leaves it out when the app's infrastructure
+ *   already runs one over the same world, as `defaultInfrastructureSystems` does, so a clip is not
+ *   advanced twice a frame
  * - `particle_emitter`: its emitters, with the sprites in [SceneHostServices.content]
  * - `shader_effect`: its documents, drawn through [SceneHostServices.renderer] when it takes content
  *   features
@@ -161,11 +165,20 @@ fun sceneSystemsFor(
     scene: SceneDocument,
     services: SceneHostServices,
     capabilities: List<SceneCapability> = emptyList(),
+): SceneSystemSet = sceneSystemsFor(scene, services, capabilities, hostRuns = emptySet())
+
+/** [sceneSystemsFor], leaving out the systems named in [hostRuns], which the host already runs over the same world. */
+internal fun sceneSystemsFor(
+    scene: SceneDocument,
+    services: SceneHostServices,
+    capabilities: List<SceneCapability>,
+    hostRuns: Set<String>,
 ): SceneSystemSet {
     val fixed = mutableListOf<System>()
     val frame = mutableListOf<System>()
     val releasing = SystemReleases()
-    sceneSystemSpecsFor(scene, hasPhysics = services.physics != null, capabilities, hasRenderer = services.hasRenderer).forEach { spec ->
+    val specs = sceneSystemSpecsFor(scene, hasPhysics = services.physics != null, capabilities, hasRenderer = services.hasRenderer)
+    specs.filterNot { it.name in hostRuns }.forEach { spec ->
         val system = releasing.keep(spec.create(services))
         when (spec.phase) {
             SceneSystemPhase.Fixed -> fixed += system

@@ -105,12 +105,49 @@ class ProjectContentTest {
         assertEquals(emptyList(), AwakeProjectValidator.decodeManifest(older).tags)
     }
 
-    private fun manifest(tags: List<String> = emptyList()) = AwakeProjectManifest(
+    @Test
+    fun theSortingLayersListMustNameEachLayerOnce() {
+        assertEquals(emptyList(), ProjectContentValidator.manifestIssueDetails(manifest(sortingLayers = listOf("Background", "Default"))))
+
+        val issues = ProjectContentValidator.manifestIssueDetails(manifest(sortingLayers = listOf("Background", "Background", " ")))
+
+        assertEquals(listOf("sortingLayers must not contain duplicates", "sortingLayers[2] must name a layer"), issues.map { it.message })
+        assertTrue(issues.all { it.code == ProjectIssueCode.INVALID_MANIFEST })
+    }
+
+    @Test
+    fun aSortingLayerTheListDoesNotNameIsAWarningButTheDefaultLayerIsAlwaysKnown() {
+        val issues = ProjectContentValidator.unlistedSortingLayerIssues(
+            manifest(sortingLayers = listOf("Background", "Foreground")),
+            layers = listOf("Background", DEFAULT_SORTING_LAYER, "Forground", "Forground"),
+            path = "scenes/main.scene.json",
+        )
+
+        val issue = issues.single()
+        assertEquals(ProjectIssueCode.UNLISTED_SORTING_LAYER, issue.code)
+        assertEquals(ProjectIssueSeverity.WARNING, issue.severity)
+        assertEquals("scenes/main.scene.json", issue.path)
+        assertTrue("\"Forground\"" in issue.message, issue.message)
+        assertEquals(emptyList(), ProjectContentValidator.unlistedSortingLayerIssues(manifest(), layers = listOf("Anything")))
+    }
+
+    @Test
+    fun aManifestWithSortingLayersRoundTripsAndOneWithoutStillDecodes() {
+        val layered = manifest(sortingLayers = listOf("Background", "Default", "Foreground"))
+
+        assertEquals(layered, AwakeProjectValidator.decodeManifest(AwakeProjectValidator.encodeManifest(layered)))
+        val older = """{"formatVersion":1,"id":"com.example.harbor-town","name":"Harbor Town","version":"1.0.0","entryScene":"scenes/main.scene.json"}"""
+        assertEquals(emptyList(), AwakeProjectValidator.decodeManifest(older).sortingLayers)
+        assertFalse("sortingLayers" in AwakeProjectValidator.encodeManifest(manifest()), "a project without layers saves as before")
+    }
+
+    private fun manifest(tags: List<String> = emptyList(), sortingLayers: List<String> = emptyList()) = AwakeProjectManifest(
         id = "com.example.harbor-town",
         name = "Harbor Town",
         version = "1.0.0",
         entryScene = "scenes/main.scene.json",
         tags = tags,
+        sortingLayers = sortingLayers,
     )
 
     @Test

@@ -34,4 +34,5 @@ fun PreparedDraw.toGpuResolvedDraw(): GpuResolvedDraw = GpuResolvedDraw(
     sceneDepthBinding = sceneDepthBinding,
     instanceColorBuffer = instanceColorBuffer,
     instanceFrameBuffer = instanceFrameBuffer,
+    sortLayer = sortLayer,
 )

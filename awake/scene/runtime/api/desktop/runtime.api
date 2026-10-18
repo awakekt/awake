@@ -139,12 +139,14 @@ public final class com/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime : co
 	public final fun getSceneName ()Ljava/lang/String;
 	public final fun getSession ()Lcom/awakekt/awake/scene/runtime/session/SceneSession;
 	public final fun getShowTouchControls ()Z
+	public final fun getSortingLayers ()Lcom/awakekt/awake/scene/scene2d/SortingLayers;
 	public final fun getSpec ()Lcom/awakekt/awake/scene/runtime/SceneAppSpec;
 	public final fun getUiHost ()Lcom/awakekt/awake/compose/ui/platform/ComposeHost;
 	public final fun getUiOwnership ()Lcom/awakekt/awake/compose/ui/platform/InputOwnership;
 	public final fun getUiPrimitives ()Ljava/util/List;
 	public final fun getUiSemantics ()Ljava/util/List;
 	public final fun getWorld ()Lcom/awakekt/awake/ecs/World;
+	public final fun hasInfrastructureSystem (Lkotlin/reflect/KClass;)Z
 	public final fun initialize (Lcom/awakekt/awake/engine/platform/dsl/AppServiceLookup;)V
 	public fun pause ()V
 	public final fun phaseStats ()Lcom/awakekt/awake/scene/runtime/ScenePhaseStats;
@@ -174,6 +176,7 @@ public final class com/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime : co
 	public final fun setDrawsSceneCanvas (Z)V
 	public final fun setPerfStatsEnabled (Z)V
 	public final fun setShowTouchControls (Z)V
+	public final fun setSortingLayers (Lcom/awakekt/awake/scene/scene2d/SortingLayers;)V
 	public final fun setUiOwnership (Lcom/awakekt/awake/compose/ui/platform/InputOwnership;)V
 	public final fun stageUi (Ljava/util/List;)V
 	public final fun system (Lcom/awakekt/awake/scene/runtime/SceneSystemHandle;)Lcom/awakekt/awake/ecs/System;

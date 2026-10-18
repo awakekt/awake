@@ -29,6 +29,8 @@ import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import com.awakekt.awake.scene.runtime.SceneAssetResolver
 import com.awakekt.awake.scene.runtime.SpawnedNode
 import com.awakekt.awake.scene.runtime.attachRenderableComponents
+import com.awakekt.awake.scene.scene2d.SortingLayers
+import com.awakekt.awake.scene.scene2d.SpriteClipSystem
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -64,6 +66,9 @@ internal class ProjectSceneRunner(private val project: LoadedProject) : SceneSwi
     val frameSystems: System = FrameSystems()
 
     private lateinit var runtime: SceneAppLifecycleRuntime
+
+    // The manifest's, checked when the project loaded, so each layer is named once.
+    private val sortingLayers = SortingLayers(project.manifest.sortingLayers)
     private var systems: SceneSystemSet? = null
     private var instance: Scene? = null
 
@@ -93,7 +98,7 @@ internal class ProjectSceneRunner(private val project: LoadedProject) : SceneSwi
     /** Plays the project's entry scene, as the runtime's scene populates. */
     fun start() {
         val scene = project.playing
-        systems = sceneSystemsFor(scene.document, services(scene), project.capabilities)
+        systems = systemsFor(scene)
         instance = runtime.instantiate(scene, project.componentRegistry)
         begin()
     }
@@ -154,7 +159,7 @@ internal class ProjectSceneRunner(private val project: LoadedProject) : SceneSwi
         var nextSystems: SceneSystemSet? = null
         var nextInstance: Scene? = null
         try {
-            nextSystems = sceneSystemsFor(next.document, services(next), project.capabilities)
+            nextSystems = systemsFor(next)
             nextInstance = runtime.instantiate(next, project.componentRegistry)
         } catch (failure: Exception) {
             nextSystems?.close()
@@ -193,8 +198,19 @@ internal class ProjectSceneRunner(private val project: LoadedProject) : SceneSwi
         runtime.canvasImages = project.content[CoreSceneContent.CanvasImages].orEmpty()
         runtime.canvasFonts = project.content[CoreSceneContent.CanvasFonts].orEmpty()
         runtime.canvasStrings = project.strings
+        runtime.sortingLayers = sortingLayers
         activatePrimaryCamera(runtime.world)
         runtime.startSkinnedAnimations(project.models)
+    }
+
+    /**
+     * The systems [scene] runs in the app's world, less what the app's infrastructure already runs over
+     * it: `defaultInfrastructureSystems` advances sprite clips, and a second clip system would advance
+     * them twice a frame.
+     */
+    private fun systemsFor(scene: ProjectScene): SceneSystemSet {
+        val hostRuns = if (runtime.hasInfrastructureSystem(SpriteClipSystem::class)) setOf(SPRITE_CLIPS_SYSTEM) else emptySet()
+        return sceneSystemsFor(scene.document, services(scene), project.capabilities, hostRuns)
     }
 
     private fun services(scene: ProjectScene): SceneHostServices {

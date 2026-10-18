@@ -63,9 +63,17 @@ class TilemapRenderBatch(
 
     /**
      * Appends borrowed requests to [out]. Unchanged chunks reuse meshes and requests; hidden
-     * chunks are not uploaded. Requests remain valid until this batch's next collection.
+     * chunks are not uploaded. Requests remain valid until this batch's next collection. [sortOrder]
+     * orders the layer's chunks among other transparent draws within their [sortLayer].
      */
-    fun collect(model: Mat4, tint: Color, sortOrder: Int, planes: List<Plane>, out: MutableList<RenderDrawCommand>) {
+    fun collect(
+        model: Mat4,
+        tint: Color,
+        sortOrder: Int,
+        planes: List<Plane>,
+        out: MutableList<RenderDrawCommand>,
+        sortLayer: Int = 0,
+    ) {
         if (atlasUndivided) return
         val sheet = atlas ?: upload() ?: return
         if (lastTint != tint) {
@@ -95,6 +103,7 @@ class TilemapRenderBatch(
                 it.model = model
                 it.extraUniformFloats = extra
                 it.sortOrder = sortOrder
+                it.sortLayer = sortLayer
                 out.add(it)
             }
         }

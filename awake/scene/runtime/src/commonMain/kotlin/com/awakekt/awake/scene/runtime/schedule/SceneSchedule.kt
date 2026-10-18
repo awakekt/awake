@@ -14,6 +14,7 @@ import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import com.awakekt.awake.scene.runtime.SceneAppSpec
 import com.awakekt.awake.scene.runtime.SceneSystemHandle
 import com.awakekt.awake.scene.runtime.SceneSystemPhase
+import kotlin.reflect.KClass
 import kotlin.time.TimeSource
 
 /**
@@ -111,6 +112,10 @@ class SceneSchedule internal constructor(
     internal fun system(name: String): System =
         registeredSystems.entries.firstOrNull { it.key.name == name }?.value
             ?: error("System $name not found")
+
+    /** Whether the infrastructure has a system of [type]; false before [initialize]. */
+    internal fun runsInfrastructure(type: KClass<out System>): Boolean =
+        ::infrastructureSystems.isInitialized && infrastructureSystems.any { type.isInstance(it) }
 
     /** The infrastructure's scene renderer, or null before [initialize] or when it has none. */
     internal val renderSystem: RenderSystem3D?
