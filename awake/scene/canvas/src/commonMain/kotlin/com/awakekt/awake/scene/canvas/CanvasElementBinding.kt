@@ -12,6 +12,7 @@ import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneResolutionContext
 import com.awakekt.awake.scene.document.SceneVec3
 import com.awakekt.awake.ui.canvas.CanvasElement
+import com.awakekt.awake.ui.canvas.CanvasStepper
 import kotlin.reflect.KClass
 
 // Where a scene file's `canvas_element` becomes the live [CanvasElement]'s settings, and back. It is
@@ -93,6 +94,10 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         element.cluster = cluster
         element.skin = skin
         element.controlId = controlId
+        element.bar = bar
+        element.sweep = sweep
+        // Puts the live number at the saved value too.
+        element.stepper = stepper
     }
 
     /**
@@ -148,5 +153,9 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         cluster = cluster,
         skin = skin,
         controlId = controlId,
+        bar = bar,
+        sweep = sweep,
+        // The live number is saved as where the stepper starts.
+        stepper = if (stepper != null || number != CanvasStepper.Default.value) (stepper ?: CanvasStepper.Default).copy(value = number) else null,
     )
 }

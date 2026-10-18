@@ -17,14 +17,19 @@ import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.ui.canvas.CanvasAlign
 import com.awakekt.awake.ui.canvas.CanvasAnchor
+import com.awakekt.awake.ui.canvas.CanvasBar
+import com.awakekt.awake.ui.canvas.CanvasBarDirection
 import com.awakekt.awake.ui.canvas.CanvasElement
 import com.awakekt.awake.ui.canvas.CanvasElementKind
 import com.awakekt.awake.ui.canvas.CanvasFillImageMode
 import com.awakekt.awake.ui.canvas.CanvasGradient
 import com.awakekt.awake.ui.canvas.CanvasImage
 import com.awakekt.awake.ui.canvas.CanvasLayout
+import com.awakekt.awake.ui.canvas.CanvasMask
 import com.awakekt.awake.ui.canvas.CanvasShadow
+import com.awakekt.awake.ui.canvas.CanvasStepper
 import com.awakekt.awake.ui.canvas.CanvasStyle
+import com.awakekt.awake.ui.canvas.CanvasSweep
 import com.awakekt.awake.ui.canvas.CanvasTextOutline
 import com.awakekt.awake.ui.canvas.CanvasTextShadow
 import java.io.File
@@ -264,6 +269,52 @@ class SceneCanvasBaselineTest {
 
         val output = ComposeHost().frame(FrameInput(224, 112)) { SceneCanvas(world, images = mapOf("frame.png" to FRAME)) }
         output.primitives.assertMatchesBaseline("scene-canvas-sweep-rotation-links", 224, 112, font = UiFonts.default(), layers = output.graphicsLayers)
+    }
+
+    /**
+     * Each new gauge: sweeps as a ring, cut to a circle and turning the other way; bars up, right to
+     * left, segmented, ticked and labelled, and around as a ring; and a stepper.
+     */
+    @Test
+    fun sweepsProgressBarsAndAStepper() {
+        val world = World()
+        fun element(configure: CanvasElement.() -> Unit) = world.create().also { world.add(it, CanvasElement().apply(configure)) }
+        element { kind = CanvasElementKind.Panel; offsetX = 0f; offsetY = 0f; width = 304f; height = 124f; background = "#18181B"; order = -1 }
+        element {
+            kind = CanvasElementKind.Sweep; offsetX = 16f; offsetY = 16f; width = 40f; height = 40f; value = 0.65f; color = "#3E63DD"
+            sweep = CanvasSweep(thickness = 6f, track = "#FFFFFF30")
+        }
+        element {
+            kind = CanvasElementKind.Sweep; offsetX = 64f; offsetY = 16f; width = 40f; height = 40f; value = 0.3f; color = "#E5484D"
+            background = "#30A46C"; sweep = CanvasSweep(mask = CanvasMask.Circle, startAngle = 90f, clockwise = false)
+        }
+        element {
+            kind = CanvasElementKind.Bar; offsetX = 120f; offsetY = 16f; width = 14f; height = 80f; value = 0.4f; color = "#30A46C"
+            bar = CanvasBar(direction = CanvasBarDirection.BottomToTop, track = "#FFFFFF20", trailColor = "#E5484D")
+        }
+        element {
+            kind = CanvasElementKind.Bar; offsetX = 150f; offsetY = 16f; width = 140f; height = 18f; value = 0.6f; color = "#3E63DD"
+            fontSize = 12f; bar = CanvasBar(direction = CanvasBarDirection.RightToLeft, track = "#FFFFFF20", label = true)
+        }
+        element {
+            kind = CanvasElementKind.Bar; offsetX = 150f; offsetY = 42f; width = 140f; height = 10f; value = 0.5f; color = "#F5D90A"
+            bar = CanvasBar(segments = 5, track = "#FFFFFF20")
+        }
+        element {
+            kind = CanvasElementKind.Bar; offsetX = 150f; offsetY = 60f; width = 140f; height = 10f; value = 0.7f; color = "#30A46C"
+            bar = CanvasBar(ticks = 4, track = "#FFFFFF20", tickColor = "#000000")
+        }
+        element {
+            kind = CanvasElementKind.Bar; offsetX = 16f; offsetY = 64f; width = 48f; height = 48f; value = 0.75f; color = "#3E63DD"
+            fontSize = 11f; bar = CanvasBar(direction = CanvasBarDirection.Radial, thickness = 5f, track = "#FFFFFF20", label = true)
+        }
+        element {
+            kind = CanvasElementKind.Stepper; offsetX = 150f; offsetY = 80f; width = 120f; height = 28f; fontSize = 14f
+            background = "#2B2B2B"; stepper = CanvasStepper(value = 2.5f, max = 10f, step = 0.5f, decimals = 1)
+        }
+
+        ComposeHost().frame(FrameInput(304, 124)) { SceneCanvas(world) }
+            .primitives.assertMatchesBaseline("scene-canvas-gauges", 304, 124, font = UiFonts.default())
     }
 
     private companion object {

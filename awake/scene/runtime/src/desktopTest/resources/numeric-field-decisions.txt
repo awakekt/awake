@@ -91,6 +91,10 @@ free canvas_element.followRules.fade.points[].at | Validated as a whole: the poi
 free canvas_element.followRules.fade.points[].value | An opacity, held to 1 above it and leaving the follower out at or below 0, so every value means something.
 free canvas_element.cluster.startAngle | Any angle in degrees is valid: negative turns the other way, and past 360 just wraps.
 free canvas_element.cluster.spacing | Any step in degrees is valid: negative fans the buttons anticlockwise.
+free canvas_element.sweep.startAngle | Any angle in degrees is valid: negative starts counter-clockwise of 12 o'clock, and past 360 wraps.
+free canvas_element.stepper.value | Relational: between min and max, enforced by validate().
+free canvas_element.stepper.min | Relational: at most max, enforced by validate(); any number, negative too, is a valid bound.
+free canvas_element.stepper.max | Relational: at least min, enforced by validate().
 free canvas_element.skin.*.style.shadow.offsetX | A slot's shadow offset: left of the part is as valid as right of it.
 free canvas_element.skin.*.style.shadow.offsetY | A slot's shadow offset: above the part is as valid as below it.
 free canvas_element.skin.*.style.shadow.spread | Negative shrinks a slot's shadow inside the part, as CSS allows.
