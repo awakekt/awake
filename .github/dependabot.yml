@@ -1,6 +1,11 @@
-# Moves the commit-pinned GitHub Actions forward. The publish workflow and the composite actions it
-# runs pin each third-party action to a full commit SHA with its version in a comment; Dependabot
-# updates both together, one grouped PR a week. Gradle dependencies stay with the version catalog.
+# Moves the commit-pinned GitHub Actions forward. Every workflow and composite action pins each
+# third-party action to a full commit SHA with its version in a `# vX.Y.Z` comment, and Dependabot
+# keeps that form: it rewrites the SHA and the comment together. CI's "Actions are pinned to a commit"
+# step fails a `uses:` that isn't pinned this way, so nothing falls back to a mutable tag.
+#
+# Minor and patch updates come as one grouped PR a week. A major version comes as its own PR, so its
+# breaking changes are read on their own instead of riding along with routine bumps.
+# Gradle dependencies stay with the version catalog.
 version: 2
 updates:
   - package-ecosystem: github-actions
@@ -13,5 +18,8 @@ updates:
       github-actions:
         patterns:
           - '*'
+        update-types:
+          - minor
+          - patch
     commit-message:
       prefix: ci
