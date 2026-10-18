@@ -1,1 +1,0 @@
-- `SceneColor.toHex()` rounds each channel to the nearest 8-bit step, as `Color.toHex()` and the editor do, instead of rounding down, so hex text reads back to the same text: a half now writes `80`, not `7F` (#889).
