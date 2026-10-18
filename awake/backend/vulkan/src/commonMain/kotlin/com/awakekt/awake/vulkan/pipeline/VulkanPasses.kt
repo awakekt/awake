@@ -11,6 +11,7 @@ import com.awakekt.awake.render.command.MaterialBinding
 import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.command.PreparedDraw
 import com.awakekt.awake.render.passes.LinePass
+import com.awakekt.awake.render.passes2d.BackdropBlurRecording
 import com.awakekt.awake.render.passes2d.TexturedPrimitiveRun
 import com.awakekt.awake.render.passes2d.UiPass
 import com.awakekt.awake.render.passes2d.UiPipelineKind
@@ -20,11 +21,16 @@ import com.awakekt.awake.render.renderer.RenderStatsCounter
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.debug.LineMesh
 import com.awakekt.awake.vulkan.debug.LineRenderPipeline
+import com.awakekt.awake.vulkan.enums.VkSubpassContents
 import com.awakekt.awake.vulkan.material.Material
 import com.awakekt.awake.vulkan.models.VkExtent2D
 import com.awakekt.awake.vulkan.models.VkOffset2D
 import com.awakekt.awake.vulkan.models.VkRect2D
+import com.awakekt.awake.vulkan.models.VkViewport
+import com.awakekt.awake.vulkan.models.info.VkRenderPassBeginInfo
+import com.awakekt.awake.vulkan.ui.BackdropBlurResources
 import com.awakekt.awake.vulkan.ui.DynamicMesh
+import com.awakekt.awake.vulkan.ui.UiRenderPipeline
 
 /**
  * Vulkan's implementations of the three scene-pass ports. Each is a plain translation into this
@@ -91,6 +97,9 @@ internal class VulkanUiRunRecorder(
     private val pipelines: UiPipelineSet,
     private val textureMeshForPrimitive: (Int) -> DynamicMesh,
 ) : UiRunRecorder<DynamicMesh> {
+    private var outputLevel = 0
+    private var blurPassSlot = 0
+    private var compositeSlot = 0
 
     override fun bindPipeline(kind: UiPipelineKind): Boolean {
         val pipeline = when (kind) {
@@ -101,6 +110,7 @@ internal class VulkanUiRunRecorder(
             // Requiring the straight-alpha default here dropped a run holding only premultiplied
             // render-target textures.
             UiPipelineKind.Texture -> pipelines.textures.values.firstOrNull()
+            UiPipelineKind.BackdropComposite -> return bindBackdropComposite()
         }
         // Texture binds nothing up front: bindMaterial rebinds the pipeline per primitive,
         // since each one also needs its own descriptor set bound at the same point.
@@ -144,4 +154,86 @@ internal class VulkanUiRunRecorder(
         mesh.bind(frameIndex, commandBuffer)
         mesh.draw(frameIndex, commandBuffer, stats)
     }
+
+    /**
+     * Ends the UI pass, samples its target through every pass of [blur] into the levels, and
+     * begins the pass again over the same framebuffer with its colour loaded: the continuing render
+     * pass while [more] blurs follow, the target's own final pass after the last one.
+     */
+    override fun blurBackdrop(blur: BackdropBlurRecording<DynamicMesh>, more: Boolean): Boolean {
+        val target = pipelines.backdrop ?: return false
+        val work = blur.work
+        if (work.width != target.width || work.height != target.height || !target.resources.fits(work.width, work.height)) return false
+        Vulkan.vkCmdEndRenderPass(commandBuffer)
+        target.toShaderRead(commandBuffer)
+        for (index in work.passes.indices) {
+            val pass = work.passes[index]
+            target.resources.recordPass(
+                commandBuffer,
+                frameIndex,
+                blurPassSlot++,
+                pass,
+                target.resources.sourceView(pass.sourceLevel, target.view),
+                blur.passMeshes[index],
+                stats,
+            )
+        }
+        target.toAttachment(commandBuffer)
+        val extent = VkExtent2D(target.width, target.height)
+        Vulkan.vkCmdBeginRenderPass(
+            commandBuffer,
+            VkRenderPassBeginInfo(
+                renderPass = if (more) target.continuePass else target.finalPass,
+                framebuffer = target.framebuffer,
+                renderArea = VkRect2D(extent = extent),
+            ),
+            VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE,
+        )
+        Vulkan.vkCmdSetViewport(commandBuffer, 0, arrayOf(VkViewport(width = target.width.toFloat(), height = target.height.toFloat())))
+        outputLevel = work.blur.outputLevel
+        return true
+    }
+
+    private fun bindBackdropComposite(): Boolean {
+        val target = pipelines.backdrop ?: return false
+        if (outputLevel == 0) return false
+        target.composite.bindMaterial(
+            commandBuffer,
+            frameIndex,
+            compositeSlot++,
+            target.resources.sampler,
+            target.resources.levelView(outputLevel),
+        )
+        return true
+    }
 }
+
+/**
+ * The target a UI pass draws into, as a backdrop blur needs it: to end the pass, sample [view],
+ * and begin it again over [framebuffer] with what was drawn kept.
+ *
+ * @property resources The levels, blur pipeline and sampler.
+ * @property composite The glass pipeline, built for this target's render pass.
+ * @property view The target's colour view, which the first downsample reads.
+ * @property width The target's width.
+ * @property height The target's height.
+ * @property framebuffer The framebuffer the pass draws through.
+ * @property continuePass Resumes the pass when another blur follows.
+ * @property finalPass Resumes the pass after the frame's last blur, ending in the layout the
+ * target's own pass leaves it in.
+ * @property toShaderRead Moves the target from attachment to sampled layout, after the pass ends.
+ * @property toAttachment Moves it back before the pass resumes.
+ */
+@Suppress("LongParameterList")
+internal class VulkanBackdropTarget(
+    val resources: BackdropBlurResources,
+    val composite: UiRenderPipeline,
+    val view: Long,
+    val width: Int,
+    val height: Int,
+    val framebuffer: Long,
+    val continuePass: Long,
+    val finalPass: Long,
+    val toShaderRead: (Long) -> Unit,
+    val toAttachment: (Long) -> Unit,
+)

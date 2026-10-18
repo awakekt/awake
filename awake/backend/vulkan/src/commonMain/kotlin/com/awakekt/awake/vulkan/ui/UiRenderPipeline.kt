@@ -124,8 +124,14 @@ class UiRenderPipeline(
             com.awakekt.awake.render.pipeline.UiPipelineVariant.Glyph -> UiPipelineKind.Glyph
             com.awakekt.awake.render.pipeline.UiPipelineVariant.Texture -> UiPipelineKind.Texture
             com.awakekt.awake.render.pipeline.UiPipelineVariant.TargetComposite -> UiPipelineKind.Quad
+            com.awakekt.awake.render.pipeline.UiPipelineVariant.BackdropComposite -> UiPipelineKind.BackdropComposite
+            // Drawn into a reduced-resolution level by BackdropBlurResources, not in a UI pass.
+            com.awakekt.awake.render.pipeline.UiPipelineVariant.BackdropBlur -> error("A backdrop blur pass is not a UI pipeline.")
         },
-        hasTexture = descriptor.variant == com.awakekt.awake.render.pipeline.UiPipelineVariant.Texture || descriptor.variant == com.awakekt.awake.render.pipeline.UiPipelineVariant.Glyph,
+        // The glass samples its blurred level through the textured layout: UI block, image, sampler.
+        hasTexture = descriptor.variant == com.awakekt.awake.render.pipeline.UiPipelineVariant.Texture ||
+            descriptor.variant == com.awakekt.awake.render.pipeline.UiPipelineVariant.Glyph ||
+            descriptor.variant == com.awakekt.awake.render.pipeline.UiPipelineVariant.BackdropComposite,
         externalRenderPass = externalRenderPass,
         framesInFlight = framesInFlight,
         blendMode = descriptor.blendMode,

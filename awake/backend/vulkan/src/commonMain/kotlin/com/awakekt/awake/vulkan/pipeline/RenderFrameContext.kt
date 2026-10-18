@@ -60,4 +60,6 @@ internal class UiPipelineSet(
     val textures: Map<TextureCompositeMode, UiRenderPipeline>,
     val roundedQuad: UiRenderPipeline?,
     val fontAtlases: Map<UiFont, Texture>,
+    /** The target as a backdrop blur needs it, or null when this frame blurs nothing. */
+    val backdrop: VulkanBackdropTarget? = null,
 )
