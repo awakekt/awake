@@ -13,6 +13,8 @@ import com.awakekt.awake.build.extension.useNagaShaderCompiler
 // or `installDist` for an `awake` script in build/install/awake/bin.
 plugins {
     alias(libs.plugins.kotlin.jvm)
+    // The fixture project's own capability has a component, whose schema is @Serializable.
+    alias(libs.plugins.kotlin.serialization)
     application
     id("com.awakekt.awake.plugin.dokka")
     id("com.awakekt.awake.plugin.detekt")
@@ -52,10 +54,34 @@ dependencies {
     testImplementation(kotlin("test"))
 }
 
+// A small project with a capability of its own, for `awake validate --code`. Its code builds apart from
+// the tests and is on none of their class paths, so the check loads it in a class loader of its own, as
+// it loads a game's.
+val fixture: SourceSet = sourceSets.create("fixture")
+
+dependencies {
+    "fixtureCompileOnly"(project(":awake:project:runtime"))
+    "fixtureCompileOnly"(project(":awake:scene:binding"))
+    "fixtureCompileOnly"(project(":awake:scene:document"))
+    "fixtureCompileOnly"(project(":awake:ecs"))
+    "fixtureCompileOnly"(project(":awake:core:io"))
+    "fixtureCompileOnly"(libs.kotlinx.serialization.json)
+}
+
+val fixtureCode = fixture.output.classesDirs
+val fixtureProject = layout.projectDirectory.dir("src/fixture/project")
+
 // The GPU-free commands' tests run anywhere; `renderTest` needs a GPU (or Mesa's lavapipe) and, for
 // WebGPU, a display, so it runs where the render parity suite does.
 tasks.test {
     filter { excludeTestsMatching("*RenderTest") }
+    inputs.files(fixtureCode).withPropertyName("fixtureCode")
+    inputs.dir(fixtureProject).withPropertyName("fixtureProject")
+    val code = fixtureCode
+    val projectDir = fixtureProject
+    jvmArgumentProviders += CommandLineArgumentProvider {
+        listOf("-Dawake.fixture.code=${code.asPath}", "-Dawake.fixture.project=${projectDir.asFile.absolutePath}")
+    }
 }
 
 val desktopNativeLibDir = project(":awake:backend:vulkan:bindings").layout.buildDirectory.dir("desktop-native-libs")

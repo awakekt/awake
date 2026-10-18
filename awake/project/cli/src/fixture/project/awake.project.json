@@ -1,0 +1,11 @@
+{
+  "formatVersion": 1,
+  "id": "com.example.harbor-town",
+  "name": "Harbor Town",
+  "version": "1.0.0",
+  "minEngineVersion": "0.1.0",
+  "entryScene": "scenes/harbor.scene.json",
+  "plugins": [
+    { "id": "com.example.harbor-town.signal", "capabilityClass": "com.example.harbortown.HarborSignalCapability", "required": true }
+  ]
+}

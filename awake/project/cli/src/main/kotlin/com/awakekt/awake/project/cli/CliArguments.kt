@@ -31,7 +31,7 @@ internal class CliArguments private constructor(
 
     companion object {
         private val FLAGS = setOf("json", "dry-run", "help")
-        private val VALUED = setOf("project", "parent", "output", "width", "height", "frames", "backend", "view", "camera")
+        private val VALUED = setOf("project", "parent", "output", "width", "height", "frames", "backend", "view", "camera", "code")
 
         /** Splits [args] into words and options, refusing an option it doesn't know. */
         fun parse(args: List<String>): CliArguments {

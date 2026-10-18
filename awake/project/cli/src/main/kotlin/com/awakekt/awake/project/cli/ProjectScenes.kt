@@ -6,6 +6,7 @@
 package com.awakekt.awake.project.cli
 
 import com.awakekt.awake.project.runtime.PROJECT_MANIFEST
+import com.awakekt.awake.project.runtime.SceneCapability
 import com.awakekt.awake.project.runtime.registerProjectComponents
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.document.SceneDocument
@@ -21,13 +22,15 @@ import java.nio.file.StandardCopyOption
 /**
  * A project's files and the scene codec for them: Core's scene components, registered as a played
  * project registers them, with a component nothing installed provides kept as data. A game's own
- * components are such data here, since `awake` doesn't link the game's code.
+ * components are such data here, unless `awake validate --code` loaded the game's code and passes
+ * its [capabilities].
  *
  * @property root The project's root directory, where [PROJECT_MANIFEST] lives.
+ * @param capabilities The game's own capabilities, whose components decode as their own types too.
  */
-internal class ProjectScenes(val root: File) {
+internal class ProjectScenes(val root: File, capabilities: List<SceneCapability> = emptyList()) {
     val json: Json by lazy {
-        SceneComponentRegistry.scoped().registerProjectComponents().sceneJson(keepUnknownComponents = true)
+        SceneComponentRegistry.scoped().registerProjectComponents(capabilities).sceneJson(keepUnknownComponents = true)
     }
 
     /** The manifest's file, which may not exist. */
