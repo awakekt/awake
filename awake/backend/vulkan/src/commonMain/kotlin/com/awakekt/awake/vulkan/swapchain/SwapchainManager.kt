@@ -82,6 +82,14 @@ class SwapchainManager(
      */
     var imageViews: List<Long> = emptyList()
 
+    /** The images [imageViews] view, in the same order. */
+    var images: List<Long> = emptyList()
+        private set
+
+    /** Whether the images can be sampled, which a backdrop blur needs. */
+    var sampleable: Boolean = false
+        private set
+
     /**
      * Format of the swapchain images; `VK_FORMAT_UNDEFINED` until [create] or a headless creation
      * has run.
@@ -188,12 +196,16 @@ class SwapchainManager(
                 throw Exception("No valid compositeAlpha found")
             }
 
-        val imageUsage =
+        val colorUsage =
             if (capabilities.supportedUsageFlags has VkImageUsageFlagBits.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT) {
                 VkImageUsageFlagBits.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT.value
             } else {
                 throw Exception("No valid usage flags found")
             }
+        // A backdrop blur samples what the UI pass has drawn so far; a surface that cannot be
+        // sampled keeps every frosted panel on its fallback tint.
+        sampleable = capabilities.supportedUsageFlags has VkImageUsageFlagBits.VK_IMAGE_USAGE_SAMPLED_BIT
+        val imageUsage = if (sampleable) colorUsage or VkImageUsageFlagBits.VK_IMAGE_USAGE_SAMPLED_BIT.value else colorUsage
 
         val createInfo = VkSwapchainCreateInfoKHR(
             surface = surface,
@@ -264,10 +276,13 @@ class SwapchainManager(
                     height = height,
                     format = format.value,
                     usage = VkImageUsageFlagBits2.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT or
-                        VkImageUsageFlagBits2.VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+                        VkImageUsageFlagBits2.VK_IMAGE_USAGE_TRANSFER_SRC_BIT or
+                        VkImageUsageFlagBits2.VK_IMAGE_USAGE_SAMPLED_BIT,
                 ),
             )
         }
+        images = headlessImages.toList()
+        sampleable = true
         headlessImageMemory = LongArray(HEADLESS_IMAGE_COUNT) { index ->
             val requirements = VulkanImages.vkGetImageMemoryRequirements(device, headlessImages[index])
             val memory = VulkanBuffers.vkAllocateMemory(
@@ -328,6 +343,7 @@ class SwapchainManager(
 
     private fun createImageViews() {
         val swapChainImages = Vulkan.vkGetSwapchainImagesKHR(device, swapChain)
+        images = swapChainImages.toList()
         imageViews = swapChainImages.map { swapChainImage ->
             val createInfo = VkImageViewCreateInfo(
                 image = swapChainImage,
@@ -413,6 +429,7 @@ class SwapchainManager(
         headlessImages = LongArray(0)
         headlessImageMemory = LongArray(0)
         imageViews = emptyList()
+        images = emptyList()
         // Headless owns no swapchain, and its device need not load the entry point at all.
         if (swapChain != 0L) Vulkan.vkDestroySwapchainKHR(device, swapChain)
         swapChain = 0

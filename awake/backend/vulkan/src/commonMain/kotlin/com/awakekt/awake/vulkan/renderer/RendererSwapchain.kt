@@ -249,4 +249,8 @@ internal fun Renderer.rebuildSwapchainResources() {
         swapchainManager.extent.width.toFloat(),
         swapchainManager.extent.height.toFloat(),
     )
+    uiBackdropCompositePipeline?.writeScreenSize(
+        swapchainManager.extent.width.toFloat(),
+        swapchainManager.extent.height.toFloat(),
+    )
 }

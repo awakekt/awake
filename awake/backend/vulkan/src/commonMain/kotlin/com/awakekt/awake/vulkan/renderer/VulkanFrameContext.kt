@@ -29,6 +29,8 @@ internal class VulkanFrameContext(
     private val renderer: Renderer,
     override val commandBuffer: Long,
     override val frameIndex: Int,
+    /** The swapchain image this frame draws into, or -1 for a pass that draws into none. */
+    private val acquiredImageIndex: Int = -1,
     override val groupedDrawCalls: Map<out PipelineHandle, List<PreparedDraw>>,
     override val transparentDrawCalls: List<PreparedDraw> = emptyList(),
     override val primaryPipeline: RenderPipeline,
@@ -56,6 +58,7 @@ internal class VulkanFrameContext(
             textures = renderer.uiTextureRenderPipelines,
             roundedQuad = renderer.uiRoundedQuadRenderPipeline,
             fontAtlases = renderer.fontAtlases,
+            backdrop = renderer.swapchainBackdropPass(acquiredImageIndex),
         )
     }
 

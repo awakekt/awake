@@ -8,8 +8,10 @@ package com.awakekt.awake.vulkan.renderer
 import com.awakekt.awake.core.graphics2d.TextureCompositeMode
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.text.font.UiFont
+import com.awakekt.awake.render.passes2d.BackdropBlurTarget
 import com.awakekt.awake.render.passes2d.DrawRun
 import com.awakekt.awake.render.passes2d.SharedUiRenderFeature
+import com.awakekt.awake.render.passes2d.StagedDrawRun
 import com.awakekt.awake.render.passes2d.UiMeshUploader
 import com.awakekt.awake.render.passes2d.UiRunCoalescer
 import com.awakekt.awake.render.passes2d.uploadUiRuns
@@ -37,20 +39,25 @@ import com.awakekt.awake.vulkan.ui.DynamicMesh
  * [font] samples the glyphs that carry no font of their own; every font a glyph run samples has its
  * atlas uploaded here, once, so recording only binds it.
  */
-internal fun Renderer.performDrawUi(primitives: List<UiDrawPrimitive>, font: UiFont?) {
+internal fun Renderer.performDrawUi(
+    primitives: List<UiDrawPrimitive>,
+    font: UiFont?,
+    backdrop: BackdropBlurTarget? = swapchainBackdropTarget(),
+) {
     waitForCurrentFrameResourceSlot()
-    uiRuns = uploadUiRuns(
-        UiRunCoalescer.coalesce(primitives, Renderer.MAX_UI_QUADS, uiRunCache),
-        VulkanUiMeshUploader(this, swapchainManager.currentFrame),
-        defaultFont = font,
-    )
+    val staged = UiRunCoalescer.coalesce(primitives, Renderer.MAX_UI_QUADS, uiRunCache, backdrop)
+    uiBlurCount = staged.count { it is StagedDrawRun.BackdropRun && it.blur != null }
+    // Before uploading, so a level rebuilt for a new size never replaces one a staged run names.
+    if (uiBlurCount > 0 && backdrop != null) ensureBackdropResources(backdrop.width, backdrop.height)
+    uiRuns = uploadUiRuns(staged, VulkanUiMeshUploader(this, swapchainManager.currentFrame), defaultFont = font)
     val hasGlyphs = ensureGlyphRunAtlases()
     if (swapchainManager.imageViews.isNotEmpty()) {
         ensureUiQuadPipeline()
         if (hasGlyphs) ensureGlyphPipeline()
         primitives.filterIsInstance<UiDrawPrimitive.Texture>().map { TextureCompositeMode(it.blendMode, it.premultiplied) }.distinct()
             .forEach(::ensureTextureQuadPipeline)
-        if (primitives.any { it is UiDrawPrimitive.RoundedQuad || it is UiDrawPrimitive.ShadowQuad }) ensureRoundedQuadPipeline()
+        if (staged.any { it is StagedDrawRun.RoundedQuadRun }) ensureRoundedQuadPipeline()
+        if (uiBlurCount > 0) ensureSwapchainBackdropPipeline()
     }
 }
 
@@ -86,14 +93,14 @@ internal fun Renderer.dropStagedUiSampling(target: OffscreenRenderTarget) {
  */
 fun Renderer.renderUiToTexture(target: RenderTarget, primitives: List<UiDrawPrimitive>, font: UiFont?) {
     val offscreen = target as OffscreenRenderTarget
-    performDrawUi(primitives, font)
+    performDrawUi(primitives, font, BackdropBlurTarget(backdropBlurQuality, offscreen.width, offscreen.height))
     val frameIndex = swapchainManager.currentFrame
 
     ensureOffscreenQuadPipeline()
     if (ensureGlyphRunAtlases()) ensureOffscreenGlyphPipeline()
     primitives.filterIsInstance<UiDrawPrimitive.Texture>().map { TextureCompositeMode(it.blendMode, it.premultiplied) }.distinct()
         .forEach(::ensureOffscreenTexturePipeline)
-    if (primitives.any { it is UiDrawPrimitive.RoundedQuad || it is UiDrawPrimitive.ShadowQuad }) ensureOffscreenRoundedQuadPipeline()
+    if (uiRuns.any { it is DrawRun.RoundedQuadRun }) ensureOffscreenRoundedQuadPipeline()
 
     val pipelines = UiPipelineSet(
         quad = requireNotNull(offscreenQuadRenderPipeline),
@@ -101,9 +108,11 @@ fun Renderer.renderUiToTexture(target: RenderTarget, primitives: List<UiDrawPrim
         textures = offscreenTextureRenderPipelines,
         roundedQuad = offscreenRoundedQuadRenderPipeline,
         fontAtlases = fontAtlases,
+        backdrop = if (uiBlurCount > 0) offscreenBackdropTarget(offscreen) else null,
     )
     pipelines.quad.writeScreenSize(offscreen.width.toFloat(), offscreen.height.toFloat())
     pipelines.roundedQuad?.writeScreenSize(offscreen.width.toFloat(), offscreen.height.toFloat())
+    pipelines.backdrop?.composite?.writeScreenSize(offscreen.width.toFloat(), offscreen.height.toFloat())
     pipelines.glyph?.writeScreenSize(offscreen.width.toFloat(), offscreen.height.toFloat())
     pipelines.textures.values.forEach {
         it.writeScreenSize(offscreen.width.toFloat(), offscreen.height.toFloat())
@@ -252,4 +261,9 @@ private class VulkanUiMeshUploader(
 
     override fun glyphMesh(runIndex: Int, vertices: FloatArray, indices: IntArray): DynamicMesh =
         renderer.glyphMeshForRun(runIndex).also { it.update(frameIndex, vertices, indices) }
+
+    override fun backdropMesh(runIndex: Int, vertices: FloatArray, indices: IntArray, blurPass: Boolean): DynamicMesh {
+        val mesh = if (blurPass) renderer.backdropPassMeshForRun(runIndex) else renderer.backdropMeshForRun(runIndex)
+        return mesh.also { it.update(frameIndex, vertices, indices) }
+    }
 }

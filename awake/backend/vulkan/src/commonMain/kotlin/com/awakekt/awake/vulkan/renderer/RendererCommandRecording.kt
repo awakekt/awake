@@ -64,6 +64,7 @@ internal fun Renderer.recordCommandBuffer(
         renderer = this,
         commandBuffer = commandBuffer,
         frameIndex = frameIndex,
+        acquiredImageIndex = acquiredImageIndex,
         groupedDrawCalls = sorted.opaqueByPipeline,
         transparentDrawCalls = sorted.transparent,
         primaryPipeline = pipelineFor(renderPipeline.vertexFormat) ?: renderPipeline,
@@ -91,7 +92,7 @@ internal fun Renderer.recordCommandBuffer(
         Vulkan.vkCmdBeginRenderPass(
             commandBuffer,
             VkRenderPassBeginInfo(
-                renderPass = uiPipeline.renderPass,
+                renderPass = uiPassBeginRenderPass(uiPipeline.renderPass),
                 framebuffer = uiFramebuffers[acquiredImageIndex],
                 renderArea = VkRect2D(extent = swapchainManager.extent),
             ),
@@ -159,6 +160,7 @@ internal fun Renderer.recordResolvedCommandBuffer(
         renderer = this,
         commandBuffer = commandBuffer,
         frameIndex = frameIndex,
+        acquiredImageIndex = acquiredImageIndex,
         groupedDrawCalls = sorted.opaqueByPipeline,
         transparentDrawCalls = sorted.transparent,
         primaryPipeline = pipelineFor(renderPipeline.vertexFormat) ?: renderPipeline,
@@ -189,7 +191,7 @@ internal fun Renderer.recordResolvedCommandBuffer(
         Vulkan.vkCmdBeginRenderPass(
             commandBuffer,
             VkRenderPassBeginInfo(
-                renderPass = uiPipeline.renderPass,
+                renderPass = uiPassBeginRenderPass(uiPipeline.renderPass),
                 framebuffer = uiFramebuffers[acquiredImageIndex],
                 renderArea = VkRect2D(extent = swapchainManager.extent),
             ),

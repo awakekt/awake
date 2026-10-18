@@ -11,6 +11,7 @@ import com.awakekt.awake.asset.shaders.ContentFeatureSource
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.geometry.MeshGeometry
 import com.awakekt.awake.core.geometry.VertexFormat
+import com.awakekt.awake.core.graphics2d.BackdropBlurQuality
 import com.awakekt.awake.core.graphics2d.TextureCompositeMode
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.math.ClipSpace
@@ -43,6 +44,7 @@ import com.awakekt.awake.render.renderer.LineSegment
 import com.awakekt.awake.render.renderer.RenderFrameStats
 import com.awakekt.awake.render.renderer.RenderStatsCounter
 import com.awakekt.awake.render.renderer.UiTargetCompositeMode
+import com.awakekt.awake.render.renderer.recommendedBackdropBlurQuality
 import com.awakekt.awake.render.texture.PbrTextureSet
 import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.render.texture.TextureAsset
@@ -69,6 +71,7 @@ import com.awakekt.awake.vulkan.swapchain.SwapchainManager
 import com.awakekt.awake.vulkan.texture.DepthTarget
 import com.awakekt.awake.vulkan.texture.OffscreenRenderTarget
 import com.awakekt.awake.vulkan.texture.Texture
+import com.awakekt.awake.vulkan.ui.BackdropBlurResources
 import com.awakekt.awake.vulkan.ui.DynamicMesh
 import com.awakekt.awake.vulkan.ui.UiRenderPipeline
 import com.awakekt.awake.render.material.Material as RenderMaterial
@@ -206,6 +209,11 @@ class Renderer internal constructor(
     /** See this class's own `wireframePipelinesByFormat` constructor parameter doc comment. */
     override var wireframe: Boolean = false
 
+    /** Starts at what the device class recommends; Off whenever the backdrop shaders are missing. */
+    override var backdropBlurQuality: BackdropBlurQuality =
+        recommendedBackdropBlurQuality(graphicsDevice.deviceClass)
+        get() = if (uiBackdropBlurShaders == null || uiBackdropCompositeShaders == null) BackdropBlurQuality.Off else field
+
     /** Applied to the 3D pass only (viewport + scissor + projection aspect); the UI pass keeps
      * the full swapchain extent. See the interface's own doc comment. */
     /** Real storage overriding the interface's no-op default -- see the interface's own doc
@@ -244,6 +252,18 @@ class Renderer internal constructor(
     internal val uiTextureShaders: ShaderPair = uiShaderPairs.texture
     internal val uiRoundedQuadShaders: ShaderPair = uiShaderPairs.roundedQuad
     internal val uiTargetCompositeShaders: ShaderPair? = uiShaderPairs.targetComposite
+    internal val uiBackdropBlurShaders: ShaderPair? = uiShaderPairs.backdropBlur
+    internal val uiBackdropCompositeShaders: ShaderPair? = uiShaderPairs.backdropComposite
+
+    // Built on the first frame that blurs a backdrop; see ensureBackdropResources().
+    internal var backdropResources: BackdropBlurResources? = null
+    internal var uiBackdropCompositePipeline: UiRenderPipeline? = null
+    internal var offscreenBackdropCompositePipeline: UiRenderPipeline? = null
+    internal var uiContinueRenderPass: Long = 0
+    internal var offscreenContinueRenderPass: Long = 0
+
+    /** How many blurs the staged UI runs; a frame with any begins its UI pass resumable. */
+    internal var uiBlurCount: Int = 0
 
     /** Every 3D pipeline this renderer can draw with, keyed by the [VertexFormat] it expects
      * -- packet preparation resolves each draw command against this table via
@@ -348,6 +368,8 @@ class Renderer internal constructor(
     internal fun roundedQuadMeshForRun(index: Int): DynamicMesh = bufferPools.roundedQuadMeshForRun(index)
     internal fun glyphMeshForRun(index: Int): DynamicMesh = bufferPools.glyphMeshForRun(index)
     internal fun textureMeshForPrimitive(index: Int): DynamicMesh = bufferPools.textureMeshForPrimitive(index)
+    internal fun backdropMeshForRun(index: Int): DynamicMesh = bufferPools.backdropMeshForRun(index)
+    internal fun backdropPassMeshForRun(index: Int): DynamicMesh = bufferPools.backdropPassMeshForRun(index)
     internal fun instanceBufferForRun(index: Int): InstanceBuffer = bufferPools.instanceBufferForRun(index)
     internal fun skinnedInstanceBufferForRun(index: Int): SkinnedInstanceBuffer = bufferPools.skinnedInstanceBufferForRun(index)
     internal fun alphaInstanceBufferForRun(index: Int): AlphaInstanceBuffer = bufferPools.alphaInstanceBufferForRun(index)
@@ -567,6 +589,7 @@ class Renderer internal constructor(
         uiTextureRenderPipelines.values.forEach { it.destroy() }
         uiTargetCompositePipeline?.destroy()
         uiRoundedQuadRenderPipeline?.destroy()
+        destroyBackdropResources()
         textureResources.destroy()
         createdRenderTargets.toList().forEach { it.destroy() }
         createdRenderTargets.clear()

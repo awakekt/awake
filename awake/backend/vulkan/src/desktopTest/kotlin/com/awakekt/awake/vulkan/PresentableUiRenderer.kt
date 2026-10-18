@@ -49,7 +49,7 @@ internal fun withPresentableUiRenderer(size: Int, framesInFlight: Int, block: (R
             graphicsDevice = device,
             swapchainManager = swapchain,
             pipelines = PipelineTable(primary = pipeline, primaryFormat = VertexFormat.PositionNormalColor),
-            uiShaderPairs = runBlocking { defaultUiShaderPairs() },
+            uiShaderPairs = runBlocking { backdropUiShaderPairs() },
             transferContext = transfer,
             renderFeatures = listOf(UiRenderFeature(VulkanUiPass())),
             maxFramesInFlight = framesInFlight,

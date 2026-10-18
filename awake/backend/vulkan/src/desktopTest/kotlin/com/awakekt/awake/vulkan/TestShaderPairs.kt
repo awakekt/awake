@@ -28,6 +28,8 @@ private val SHIPPED_SETS = mapOf(
     "ui_texture" to EngineShaderSets.UiTexture,
     "ui_rounded_quad" to EngineShaderSets.UiRoundedQuad,
     "ui_target_composite" to EngineShaderSets.UiTargetComposite,
+    "ui_backdrop_blur" to EngineShaderSets.UiBackdropBlur,
+    "ui_backdrop_composite" to EngineShaderSets.UiBackdropComposite,
     "debug_line" to EngineShaderSets.DebugLine,
     "triangle" to PackShaderSets.Triangle,
     "lit_shadow" to PackShaderSets.LitShadow,
@@ -80,4 +82,10 @@ suspend fun defaultUiShaderPairs(): UiShaderPairs = UiShaderPairs(
     glyph = packShaderPair("ui_glyph"),
     texture = packShaderPair("ui_texture"),
     roundedQuad = packShaderPair("ui_rounded_quad"),
+)
+
+/** [defaultUiShaderPairs] plus the backdrop blur's two shaders, for a fixture that draws glass. */
+suspend fun backdropUiShaderPairs(): UiShaderPairs = defaultUiShaderPairs().copy(
+    backdropBlur = packShaderPair("ui_backdrop_blur"),
+    backdropComposite = packShaderPair("ui_backdrop_composite"),
 )

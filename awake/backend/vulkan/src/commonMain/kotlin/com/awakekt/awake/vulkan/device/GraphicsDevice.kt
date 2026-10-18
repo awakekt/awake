@@ -7,6 +7,7 @@ package com.awakekt.awake.vulkan.device
 
 import com.awakekt.awake.core.config.EnvSource
 import com.awakekt.awake.core.config.defaultPlatformEnvSource
+import com.awakekt.awake.render.renderer.GpuDeviceClass
 import com.awakekt.awake.vulkan.Version
 import com.awakekt.awake.vulkan.Version.Companion.vkVersion
 import com.awakekt.awake.vulkan.Vulkan
@@ -80,6 +81,10 @@ class GraphicsDevice {
     internal var timestampPeriodNs: Float = 0f
         private set
     internal var timestampValidBits: Int = 0
+        private set
+
+    /** What kind of GPU [physicalDevice] is, from its reported type and vendor. */
+    internal var deviceClass: GpuDeviceClass = GpuDeviceClass.Unknown
         private set
 
     /** Whether the logical device loaded `VK_KHR_swapchain`, which headless devices do only if offered. */
@@ -250,7 +255,9 @@ class GraphicsDevice {
 
     private fun createLogicalDevice(indices: QueueFamilyIndices) {
         val graphicsFamily = indices.graphicsFamily!!
-        timestampPeriodNs = Vulkan.vkGetPhysicalDeviceProperties(physicalDevice).limits.timestampPeriod
+        val properties = Vulkan.vkGetPhysicalDeviceProperties(physicalDevice)
+        timestampPeriodNs = properties.limits.timestampPeriod
+        deviceClass = gpuDeviceClass(properties.deviceType, properties.vendorID)
         timestampValidBits = Vulkan.vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice)
             .getOrNull(graphicsFamily)?.timestampValidBits?.toInt() ?: 0
         // to avoid duplicate queue family index use set

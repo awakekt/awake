@@ -252,7 +252,7 @@ val UiBackdropBlurShader: AslShaderDefinition = shader("ui_backdrop_blur") {
 
     val out = varyings("VertexOutput")
     val clampRect by out.varying(GpuDataShape.Vec4, location = 0)
-    val pass by out.varying(GpuDataShape.Vec4, location = 1)
+    val blurPass by out.varying(GpuDataShape.Vec4, location = 1)
 
     vertex {
         val inCorner by input(GpuDataShape.Vec2, location = 0)
@@ -260,15 +260,15 @@ val UiBackdropBlurShader: AslShaderDefinition = shader("ui_backdrop_blur") {
         val inPass by input(GpuDataShape.Vec4, location = 2)
         out.position set vec4(inCorner, 0f.lit, 1f.lit)
         clampRect set inClamp
-        pass set inPass
+        blurPass set inPass
     }
 
     fragment {
         val texel = let("texel", position().xy)
         val sourceSizeU = let("sourceSizeU", textureDimensions(source))
         val sourceSize = let("sourceSize", vec2(toF32(sourceSizeU.x), toF32(sourceSizeU.y)))
-        val upsample = let("upsample", pass.y gt 0.5f.lit)
-        val offset = let("offset", pass.x)
+        val upsample = let("upsample", blurPass.y gt 0.5f.lit)
+        val offset = let("offset", blurPass.x)
         val centre = let("centre", select(texel * 2f.lit, texel * 0.5f.lit, upsample))
         val low = let("low", clampRect.xy + 0.5f.lit)
         val high = let("high", clampRect.zw - 0.5f.lit)

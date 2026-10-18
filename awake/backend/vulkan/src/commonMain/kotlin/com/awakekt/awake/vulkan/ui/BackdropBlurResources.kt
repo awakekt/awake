@@ -149,25 +149,30 @@ internal class BackdropBlurResources(
     private var levelsHeight = 0
 
     /**
-     * Makes sure every level a blur of a [width] by [height] backdrop can reach exists at that
-     * size. Rebuilding waits for the device to go idle, which happens only when the size changes.
+     * Makes sure every level a blur of a [width] by [height] backdrop can reach exists and is at
+     * least that size. Levels only grow: the shaders address them in texels and read their size
+     * from the texture, so a larger level serves a smaller backdrop, and a window and an offscreen
+     * layer of different sizes do not rebuild them every frame. Growing waits for the device to go
+     * idle.
      */
     fun ensureLevels(width: Int, height: Int) {
-        if (width == levelsWidth && height == levelsHeight && levels.isNotEmpty()) return
+        if (fits(width, height)) return
+        val grownWidth = maxOf(width, levelsWidth)
+        val grownHeight = maxOf(height, levelsHeight)
         if (levels.isNotEmpty()) {
             VulkanBuffers.vkDeviceWaitIdle(device)
             destroyLevels()
         }
         levels = arrayOfNulls(MAX_LEVEL + 1)
         for (level in 1..MAX_LEVEL) {
-            levels[level] = createLevel(DualKawaseBlur.levelSize(width, level), DualKawaseBlur.levelSize(height, level))
+            levels[level] = createLevel(DualKawaseBlur.levelSize(grownWidth, level), DualKawaseBlur.levelSize(grownHeight, level))
         }
-        levelsWidth = width
-        levelsHeight = height
+        levelsWidth = grownWidth
+        levelsHeight = grownHeight
     }
 
-    /** Whether the levels were built for a [width] by [height] backdrop. */
-    fun fits(width: Int, height: Int): Boolean = levels.isNotEmpty() && width == levelsWidth && height == levelsHeight
+    /** Whether the levels can hold a blur of a [width] by [height] backdrop. */
+    fun fits(width: Int, height: Int): Boolean = levels.isNotEmpty() && width <= levelsWidth && height <= levelsHeight
 
     /** The view of [level], from 1, for a composite to sample. */
     fun levelView(level: Int): Long = requireNotNull(levels[level]).view
@@ -501,22 +506,35 @@ internal class BackdropBlurResources(
                             },
                         ),
                     ),
-                    pDependencies = arrayOf(
-                        VkSubpassDependency(
-                            srcSubpass = VK_SUBPASS_EXTERNAL,
-                            dstSubpass = 0,
-                            srcStageMask = VkPipelineStageFlagBits.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT.value or
-                                VkPipelineStageFlagBits.VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT.value,
-                            srcAccessMask = VkAccessFlagBits.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT.value,
-                            dstStageMask = VkPipelineStageFlagBits.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT.value or
-                                VkPipelineStageFlagBits.VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT.value,
-                            dstAccessMask = VkAccessFlagBits.VK_ACCESS_COLOR_ATTACHMENT_READ_BIT.value or
-                                VkAccessFlagBits.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT.value or
-                                VkAccessFlagBits.VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT.value,
-                        ),
-                    ),
+                    // Render pass compatibility covers the dependencies too, so these repeat the
+                    // continued pass's own: the UI pass's, or the scene pass's when there is depth.
+                    // The barrier that returns the target from sampling orders the blur's reads.
+                    pDependencies = arrayOf(if (depth == null) uiPassDependency() else scenePassDependency()),
                 ),
             )
         }
+
+        private fun uiPassDependency() = VkSubpassDependency(
+            srcSubpass = VK_SUBPASS_EXTERNAL,
+            dstSubpass = 0,
+            srcStageMask = VkPipelineStageFlagBits.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT.value,
+            srcAccessMask = VkAccessFlagBits.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT.value,
+            dstStageMask = VkPipelineStageFlagBits.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT.value,
+            dstAccessMask = VkAccessFlagBits.VK_ACCESS_COLOR_ATTACHMENT_READ_BIT.value or
+                VkAccessFlagBits.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT.value,
+        )
+
+        private fun scenePassDependency() = VkSubpassDependency(
+            srcSubpass = VK_SUBPASS_EXTERNAL,
+            dstSubpass = 0,
+            srcStageMask = VkPipelineStageFlagBits.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT.value or
+                VkPipelineStageFlagBits.VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT.value,
+            srcAccessMask = 0,
+            dstStageMask = VkPipelineStageFlagBits.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT.value or
+                VkPipelineStageFlagBits.VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT.value,
+            dstAccessMask = VkAccessFlagBits.VK_ACCESS_COLOR_ATTACHMENT_READ_BIT.value or
+                VkAccessFlagBits.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT.value or
+                VkAccessFlagBits.VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT.value,
+        )
     }
 }
