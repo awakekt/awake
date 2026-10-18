@@ -166,7 +166,8 @@ A Button's `button` settings, a `CanvasButton`, make it an action button: its `t
 `Tap` or the moment it goes `Down`; `consumeDown()`, `consumeRelease()` and `consumeLongPress()`
 report the rest of a press, with `heldSeconds`; and its live `cooldown` (swept over it), `charges` (in
 a badge) and `enabled` hold it back, set from code or read through `bind`'s `cooldown`, `charges` and
-`enabled` fields. `consumeReady()` says when it became usable again. With `aim` (a `CanvasAim`), a
+`enabled` fields, or run by the button itself over its `cooldownSeconds`. `consumeReady()` says when
+it became usable again. With `aim` (a `CanvasAim`), a
 drag away from it aims (`aiming`, `aimX`, `aimY`), the canvas draws the reach, a cursor and the
 `cancel` zone, and letting go fires with the aim, or cancels over the zone (`consumeAimCancel()`). An
 `aimLock` set from code locks the aim onto a target the game picks.
