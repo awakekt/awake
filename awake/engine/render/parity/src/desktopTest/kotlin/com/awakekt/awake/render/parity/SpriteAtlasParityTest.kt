@@ -123,6 +123,52 @@ class SpriteAtlasParityTest {
         }
     }
 
+    @Test
+    fun aHigherLayerCoversALowerOneAndThePivotPlacesTheSpriteOnBothBackends() {
+        HeadlessUiBackend.entries.forEach { backend ->
+            openHeadlessScene(backend, SIZE).use { session ->
+                val renderer = session.renderer
+                val batch = SpriteRenderBatch(renderer) { TextureAsset(byteArrayOf(-1, -1, -1, -1), 1, 1) }
+                val target = renderer.createRenderTarget(SIZE, SIZE)
+                fun render(inputs: List<SpriteDrawInput>, name: String): ByteArray {
+                    renderer.renderToTexture(
+                        target,
+                        ScenePassCompiler.compile(
+                            lens = lens(),
+                            drawCalls = batch.collect(inputs),
+                            clipSpace = renderer.clipSpace,
+                            aspect = 1f,
+                            drawPreparer = (renderer as GpuDrawPreparationSource).gpuDrawPreparer,
+                        ),
+                    )
+                    val image = runBlocking { renderer.readPixels(target) }
+                    PixelMap(SIZE, SIZE, image.data).writePng(File("build/reports/render-captures/sprite-$backend-$name.png"))
+                    return image.data.copyOf()
+                }
+                try {
+                    // Near and high in its order, but on the default layer: the far red sprite on the layer above covers it.
+                    val green = SpriteDrawInput("white", Mat4().translate(0f, 0f, 1f), pixelsPerUnit = 1f, tint = Color(0f, 1f, 0f, 1f), sortOrder = 5)
+                    val red = SpriteDrawInput("white", Mat4(), pixelsPerUnit = 1f, tint = Color(1f, 0f, 0f, 1f), sortOrder = -5, sortLayer = 1)
+                    assertRgb(backend, render(listOf(red, green), "layered"), 32, 32, listOf(255, 0, 0))
+                    assertRgb(backend, render(listOf(red.copy(sortLayer = 0), green), "unlayered"), 32, 32, listOf(0, 255, 0))
+
+                    // A one-unit square: centred it covers the middle half of the view, pivoted at its
+                    // bottom left it fills the top-right quarter.
+                    val backdrop = render(emptyList(), "backdrop")
+                    val centred = render(listOf(green), "pivot-centre")
+                    val cornered = render(listOf(green.copy(pivotX = 0f, pivotY = 0f)), "pivot-bottom-left")
+                    assertRgb(backend, centred, 24, 40, listOf(0, 255, 0))
+                    assertEquals(rgb(backdrop, 56, 8), rgb(centred, 56, 8), "$backend: a centred sprite leaves the top-right corner")
+                    assertRgb(backend, cornered, 56, 8, listOf(0, 255, 0))
+                    assertEquals(rgb(backdrop, 24, 40), rgb(cornered, 24, 40), "$backend: a sprite pivoted at its corner leaves the view's middle-left")
+                } finally {
+                    target.destroy()
+                    batch.destroy()
+                }
+            }
+        }
+    }
+
     private fun assertRgb(backend: HeadlessUiBackend, pixels: ByteArray, x: Int, y: Int, expected: List<Int>) {
         val actual = rgb(pixels, x, y)
         assertTrue(expected.zip(actual).all { (e, a) -> kotlin.math.abs(e - a) <= 2 }, "$backend at ($x,$y): expected $expected, got $actual")

@@ -10,8 +10,9 @@ implementation(project(":awake:scene:scene2d"))
 
 ## What is in it
 
-- `SceneSprite` -- the document's `sprite` component: one cell of a frame sheet, its size, flips, tint
-  and draw order. Its field names are the file format.
+- `SceneSprite` -- the document's `sprite` component: one cell of a frame sheet, its size, pivot, flips, tint
+  and draw order and layer. Its field names are the file format.
+- `SortingLayers` -- a project's named sorting layers, back to front, ranked around `Default`.
 - `Sprite` and `SpriteBinding` -- the live component on an entity, and the binding that attaches the
   schema and exports it back as it is then. A game sets `sprite.frame`, `flipX` and the rest.
 - `World.collectSpriteDraws()` -- maps `Transform` and `Sprite` into the portable atlas renderer in
@@ -76,7 +77,11 @@ tilemap whose atlas does not, is not drawn, and this is logged once for each ima
 sprites or tilemap layers use it. A cell's dimensions divided by
 `pixelsPerUnit` determine local size before the node's world transform is applied. Atlas rows run
 from the top; texture pixels use Awake's bottom-up `createBitmap(...).toRgba8Bytes()` layout.
-Flips stay inside the chosen cell. Higher `sortOrder` draws last, with ties sorted
+Flips stay inside the chosen cell. A sprite's `pivot`, a fraction of its cell from the bottom left and
+its centre by default, is the point placed at the node's position; the node's rotation and scale turn
+and scale the sprite about it, and a flipped sprite mirrors about it. A later `sortingLayer` draws over an
+earlier one, in the order `SortingLayers` gives them (`SceneAppLifecycleRuntime.sortingLayers`, which
+`runProject` sets from the manifest's `sortingLayers`). Within a layer, higher `sortOrder` draws last, with ties sorted
 back to front by camera distance. Sprites do not write scene/shadow depth, so empty margins preserve
 what is behind them. Opaque scene geometry still depth-tests against sprites.
 
@@ -100,7 +105,8 @@ count from the top left across rows.
 }
 ```
 
-The standard runtime advances clips before rendering while its realtime provider is active. Custom ECS hosts run `SpriteClipSystem` once
+The standard runtime advances clips before rendering while its realtime provider is active, and
+`sceneSystemsFor` adds `SpriteClipSystem` for a scene with `sprite_clips`. Custom ECS hosts run `SpriteClipSystem` once
 per simulation frame before extracting sprite draws. A game selects a run with
 `world.get<SpriteClips>(entity)?.play("hit")`; asking for the active run preserves time unless
 `restart = true`. Set `speed = 0f` to pause, and read `isFinished` for one-shot completion. An empty
@@ -135,7 +141,7 @@ The importer supports contiguous, untrimmed grid rows with uniform timing. See t
 
 Add `tilemap` to a node; its `texture` resolves as a sprite's does, registered or from files.
 Include `spriteScenePipeline()` in the render plan. The standard runtime renders tile layers
-alongside sprites, with the same `sortOrder`, nearest filtering and alpha behavior.
+alongside sprites, with the same `sortingLayer` and `sortOrder`, nearest filtering and alpha behavior.
 
 ```json
 {

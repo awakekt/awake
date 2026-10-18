@@ -24,7 +24,9 @@ import kotlinx.serialization.Serializable
  * @property pixelsPerUnit Pixels per local world unit.
  * @property chunkSize Cells per chunk edge.
  * @property tint Whole-layer straight-alpha multiplier.
- * @property sortOrder Transparent paint order shared with sprites.
+ * @property sortOrder Transparent paint order shared with sprites, within its [sortingLayer].
+ * @property sortingLayer The project's sorting layer the layer draws on, by name, shared with sprites. A
+ * name the project does not list draws on [SortingLayers.DEFAULT].
  */
 @Serializable
 @SerialName("tilemap")
@@ -39,17 +41,22 @@ data class SceneTilemap(
     @PropertyRange(min = 1.0) val chunkSize: Int = 16,
     val tint: SceneColor = SceneColor(),
     val sortOrder: Int = 0,
+    val sortingLayer: String = SortingLayers.DEFAULT,
 ) : SceneComponent {
-    override fun validate(path: String): List<SceneValidationIssue> = buildList {
-        fun issue(message: String) {
-            add(SceneValidationIssue(path, "tilemap.$message"))
-        }
-        if (texture.isBlank()) issue("texture must name an image")
-        if (width <= 0 || height <= 0 || width.toLong() * height != tiles.size.toLong()) issue("dimensions must match tiles")
+    override fun validate(path: String): List<SceneValidationIssue> =
+        (gridProblems() + drawProblems()).map { SceneValidationIssue(path, "tilemap.$it") }
+
+    private fun gridProblems(): List<String> = buildList {
+        if (width <= 0 || height <= 0 || width.toLong() * height != tiles.size.toLong()) add("dimensions must match tiles")
         val frames = columns.toLong() * rows
-        if (columns <= 0 || rows <= 0 || frames > Int.MAX_VALUE) issue("atlas dimensions must be positive and fit in an Int")
-        if (tiles.any { it < -1 || it >= frames }) issue("tiles must be -1 or a frame inside the atlas")
-        if (!pixelsPerUnit.isFinite() || pixelsPerUnit <= 0f) issue("pixelsPerUnit must be finite and positive")
-        if (chunkSize <= 0) issue("chunkSize must be positive")
+        if (columns <= 0 || rows <= 0 || frames > Int.MAX_VALUE) add("atlas dimensions must be positive and fit in an Int")
+        if (tiles.any { it < -1 || it >= frames }) add("tiles must be -1 or a frame inside the atlas")
+        if (chunkSize <= 0) add("chunkSize must be positive")
+    }
+
+    private fun drawProblems(): List<String> = buildList {
+        if (texture.isBlank()) add("texture must name an image")
+        if (!pixelsPerUnit.isFinite() || pixelsPerUnit <= 0f) add("pixelsPerUnit must be finite and positive")
+        if (sortingLayer.isBlank()) add("sortingLayer must name a layer")
     }
 }

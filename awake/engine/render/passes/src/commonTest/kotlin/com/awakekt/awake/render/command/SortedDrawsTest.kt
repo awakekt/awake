@@ -45,6 +45,7 @@ class SortedDrawsTest {
         override val transparent: Boolean = false,
         override val depthSortKey: Float = 0f,
         override val sortOrder: Int = 0,
+        override val sortLayer: Int = 0,
         override val batchKey: Int = 0,
         val label: String = "",
     ) : PreparedDraw {
@@ -63,6 +64,23 @@ class SortedDrawsTest {
         )
         assertEquals(listOf("low far", "low near", "high"), sortForRecording(draws).transparent.map { it.label })
         assertEquals(1, draws.first().toGpuResolvedDraw().sortOrder)
+    }
+
+    @Test
+    fun aHigherLayerDrawsLastWhateverItsOrderAndSurvivesPacketConversion() {
+        val draws = listOf(
+            Draw(PipelineA, transparent = true, sortLayer = 1, sortOrder = -100, depthSortKey = 100f, label = "foreground"),
+            Draw(PipelineA, transparent = true, sortLayer = 0, sortOrder = 2, depthSortKey = 1f, label = "default high"),
+            Draw(PipelineB, transparent = true, sortLayer = -1, sortOrder = 50, depthSortKey = 1f, label = "background"),
+            Draw(PipelineA, transparent = true, sortLayer = 0, sortOrder = 2, depthSortKey = 10f, label = "default high far"),
+            Draw(PipelineB, transparent = true, sortLayer = 0, sortOrder = -3, depthSortKey = 1f, label = "default low"),
+        )
+
+        assertEquals(
+            listOf("background", "default low", "default high far", "default high", "foreground"),
+            sortForRecording(draws).transparent.map { it.label },
+        )
+        assertEquals(1, draws.first().toGpuResolvedDraw().sortLayer)
     }
 
     @Test

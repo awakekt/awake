@@ -10,6 +10,7 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneResolutionContext
 import com.awakekt.awake.scene.document.SceneColor
+import com.awakekt.awake.scene.document.SceneVec2
 import kotlin.reflect.KClass
 
 /**
@@ -40,8 +41,18 @@ class Sprite(settings: SceneSprite) {
     /** Multiplied into the image's colour and alpha. */
     var tint: SceneColor = settings.tint
 
-    /** A higher order draws over a lower one. */
+    /** Within its [sortingLayer], a higher order draws over a lower one. */
     var sortOrder: Int = settings.sortOrder
+
+    /** The point of the frame at the entity's position, which it turns and scales about, from its bottom left. */
+    var pivot: SceneVec2 = settings.pivot.also(::requireFinitePivot)
+        set(value) {
+            requireFinitePivot(value)
+            field = value
+        }
+
+    /** The project's sorting layer the sprite draws on, by name. */
+    var sortingLayer: String = settings.sortingLayer
 
     /** Cells in the sheet. */
     val cellCount: Int = settings.cellCount
@@ -68,8 +79,13 @@ class Sprite(settings: SceneSprite) {
         flipY = flipY,
         tint = tint,
         sortOrder = sortOrder,
+        pivot = pivot,
+        sortingLayer = sortingLayer,
     )
 }
+
+private fun requireFinitePivot(pivot: SceneVec2) =
+    require(pivot.x.isFinite() && pivot.y.isFinite()) { "Sprite pivot (${pivot.x}, ${pivot.y}) must be finite." }
 
 /** Loads [SceneSprite] as the entity's [Sprite], and exports it back as it is then. */
 object SpriteBinding : SceneComponentBinding<Sprite, SceneSprite> {

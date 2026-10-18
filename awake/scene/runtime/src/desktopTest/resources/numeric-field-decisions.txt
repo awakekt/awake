@@ -60,6 +60,8 @@ free shader_effect.parameters[][] | A parameter's numbers are the shader documen
 free spin_control.radians | The initial angle: every angle is valid, and the editor hides it because a system writes it at run time.
 free sprite.frame | Relational: must stay within columns * rows, which validate() enforces; no fixed limit says that.
 free sprite.sortOrder | Signed 2D layer index: negative and positive values are valid draw orders.
+free sprite.pivot.x | A fraction of the frame: values outside 0 to 1 place the pivot outside it, which is valid; validate() requires only a finite value.
+free sprite.pivot.y | A fraction of the frame: values outside 0 to 1 place the pivot outside it, which is valid; validate() requires only a finite value.
 
 free sprite.tint.r | A colour channel: every value is accepted; nothing validates it.
 free sprite.tint.g | A colour channel: every value is accepted; nothing validates it.

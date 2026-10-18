@@ -18,12 +18,14 @@ import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.RenderContribution
 import com.awakekt.awake.scene.rendering.RenderFeature3D
 import com.awakekt.awake.scene.rendering.RenderFeatureContext3D
+import com.awakekt.awake.scene.scene2d.SortingLayers
 import com.awakekt.awake.scene.scene2d.Tilemap
 
-/** GPU resources are owned by the scene runtime, never by the serialized tile component. */
+/** GPU resources are owned by the scene runtime, never by the serialized tile component. Layers are placed by the project's [layers]. */
 internal class SceneTilemapRenderFeature(
     private val renderer: Renderer,
     private val resolveTexture: (String) -> TextureAsset?,
+    private val layers: () -> SortingLayers = { SortingLayers.None },
 ) : RenderFeature3D,
     SceneTextureUploads {
     private val batches = mutableMapOf<Tilemap, TilemapRenderBatch>()
@@ -37,6 +39,7 @@ internal class SceneTilemapRenderFeature(
         live.clear()
         draws.clear()
         val planes = Frustum.planes(context.camera.lens, context.viewportAspect)
+        val sorting = layers()
         world.queryEach<Transform, Tilemap> { _, transform, tilemap ->
             live.add(tilemap)
             val batch = batches.getOrPut(tilemap) {
@@ -45,7 +48,14 @@ internal class SceneTilemapRenderFeature(
                 }
             }
             val tint = tilemap.tint
-            batch.collect(transform.worldMatrix, Color(tint.r, tint.g, tint.b, tint.a), tilemap.sortOrder, planes, draws)
+            batch.collect(
+                transform.worldMatrix,
+                Color(tint.r, tint.g, tint.b, tint.a),
+                tilemap.sortOrder,
+                planes,
+                draws,
+                sorting.rank(tilemap.sortingLayer),
+            )
         }
         val iterator = batches.iterator()
         while (iterator.hasNext()) {

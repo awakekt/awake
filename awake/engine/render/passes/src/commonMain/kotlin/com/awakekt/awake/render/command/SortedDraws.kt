@@ -40,11 +40,16 @@ fun <P : PreparedDraw> sortForRecording(draws: List<P>): SortedDraws<P> {
         opaqueByPipeline = opaque
             .groupBy { it.pipeline }
             .mapValues { (_, group) -> group.sortedBy { it.batchKey } },
-        // Descending, so the comparator is negated rather than the list reversed -- reversed()
-        // would allocate a second list every frame.
-        transparent = transparent.sortedWith(compareBy<P> { it.sortOrder }.thenByDescending { it.depthSortKey }),
+        transparent = transparent.sortedWith(TransparentOrder),
     )
 }
+
+/**
+ * Paint layer, then paint order within it, then farthest first. Depth is descending in the comparator
+ * rather than the list reversed, which would allocate a second list every frame.
+ */
+private val TransparentOrder: Comparator<PreparedDraw> =
+    compareBy<PreparedDraw> { it.sortLayer }.thenBy { it.sortOrder }.thenByDescending { it.depthSortKey }
 
 /** Flattened list of all prepared draws in this sorted set. */
 val <P : PreparedDraw> SortedDraws<P>.allDraws: List<P>

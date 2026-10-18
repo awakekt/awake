@@ -86,6 +86,7 @@ internal suspend fun loadProjectScene(
 ): ProjectScene {
     val scene = decodeScene(path, files, registry)
     warnUnlistedTags(manifest, scene, path)
+    warnUnlistedSortingLayers(manifest, scene, path)
     val models = GltfAssetResolver().apply { setAssetSource(files) }
     if (hasRenderer) {
         scene.nodes.flatMap { it.meshNames() }

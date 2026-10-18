@@ -162,6 +162,7 @@ internal fun VulkanRenderer.prepareGpuDraw(
             frameInstanceBuffer = frames,
             depthSortKey = cmd.depthSortKey(cameraPosition),
             sortOrder = cmd.sortOrder,
+            sortLayer = cmd.sortLayer,
         )
     }
     // An edge pipeline rasterizes the triangle indices as lines, so the mesh draws as it is.
@@ -190,6 +191,7 @@ internal fun VulkanRenderer.prepareGpuDraw(
         materialBinding = binding,
         depthSortKey = cmd.depthSortKey(cameraPosition),
         sortOrder = cmd.sortOrder,
+        sortLayer = cmd.sortLayer,
     )
 }
 
@@ -254,6 +256,7 @@ internal data class PreparedDrawCall(
      * sort comparator. Last in the list on purpose: one construction site below is positional. */
     override val depthSortKey: Float = 0f,
     override val sortOrder: Int = 0,
+    override val sortLayer: Int = 0,
 ) : PreparedDraw {
     override val transparent: Boolean get() = isTransparent
     override val vertexFormat: VertexFormat get() = mesh.format

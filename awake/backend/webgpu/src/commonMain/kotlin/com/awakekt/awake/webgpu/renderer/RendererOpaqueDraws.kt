@@ -129,6 +129,7 @@ internal fun Renderer.prepareGpuDraw(
             },
         depthSortKey = cmd.depthSortKey(cameraEye),
         sortOrder = cmd.sortOrder,
+        sortLayer = cmd.sortLayer,
         batchKey = cmd.batchKey(),
     )
 }
@@ -271,6 +272,7 @@ private fun Renderer.prepareInstancedGpuDraw(
         transparent = isTransparent,
         depthSortKey = cmd.depthSortKey(cameraEye),
         sortOrder = cmd.sortOrder,
+        sortLayer = cmd.sortLayer,
         batchKey = cmd.batchKey(),
         vertexFormat = mesh.format,
     )
@@ -303,5 +305,6 @@ internal class WebGpuPreparedDraw(
     override val transparent: Boolean = false,
     override val depthSortKey: Float = 0f,
     override val sortOrder: Int = 0,
+    override val sortLayer: Int = 0,
     override val batchKey: Int = 0,
 ) : PreparedDraw

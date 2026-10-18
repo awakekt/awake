@@ -10,8 +10,12 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.passes.sprites.SpriteDrawInput
 import com.awakekt.awake.scene.core.transform.Transform
 
-/** Maps live scene components to the renderer-independent atlas capability. */
-fun World.collectSpriteDraws(): List<SpriteDrawInput> = buildList {
+/**
+ * Maps live scene components to the renderer-independent atlas capability. Each sprite's
+ * [Sprite.sortingLayer] is placed by [layers], the project's; with none, every sprite is on
+ * [SortingLayers.DEFAULT] and draws by its sort order alone.
+ */
+fun World.collectSpriteDraws(layers: SortingLayers = SortingLayers.None): List<SpriteDrawInput> = buildList {
     queryEach<Transform, Sprite> { _, transform, sprite ->
         add(
             SpriteDrawInput(
@@ -25,6 +29,9 @@ fun World.collectSpriteDraws(): List<SpriteDrawInput> = buildList {
                 flipY = sprite.flipY,
                 tint = Color(sprite.tint.r, sprite.tint.g, sprite.tint.b, sprite.tint.a),
                 sortOrder = sprite.sortOrder,
+                pivotX = sprite.pivot.x,
+                pivotY = sprite.pivot.y,
+                sortLayer = layers.rank(sprite.sortingLayer),
             ),
         )
     }

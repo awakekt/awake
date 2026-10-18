@@ -25,8 +25,13 @@ import com.awakekt.awake.scene.rendering.light.DayCycleSystem
 import com.awakekt.awake.scene.rendering.light.SceneDayCycle
 import com.awakekt.awake.scene.rendering.mesh.SceneTextureClips
 import com.awakekt.awake.scene.rendering.mesh.TextureClipSystem
+import com.awakekt.awake.scene.scene2d.SceneSpriteClips
+import com.awakekt.awake.scene.scene2d.SpriteClipSystem
 
-/** Spin, locomotion, keyframes and sprite-sheet clips, for the scenes that have them. */
+/** The name of the system that advances a scene's `sprite_clips` in its schedule. */
+internal const val SPRITE_CLIPS_SYSTEM = "sprite-clips"
+
+/** Spin, locomotion, keyframes, sprite-sheet clips and sprite clips, for the scenes that have them. */
 internal object MotionCapability : SceneCapability {
     override val id = "com.awakekt.awake.motion"
 
@@ -38,6 +43,7 @@ internal object MotionCapability : SceneCapability {
         if (scene.uses(SceneLocomotionAnimation::class)) plan.frame("locomotion") { LocomotionAnimationSystem() }
         if (scene.uses(SceneKeyframeAnimation::class)) plan.frame("keyframes") { KeyframeAnimationSystem() }
         if (scene.uses(SceneTextureClips::class)) plan.frame("texture-clips") { TextureClipSystem() }
+        if (scene.uses(SceneSpriteClips::class)) plan.frame(SPRITE_CLIPS_SYSTEM) { SpriteClipSystem() }
     }
 }
 
