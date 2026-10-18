@@ -44,6 +44,7 @@ import com.awakekt.awake.compose.ui.graphics.ImageBitmap
 import com.awakekt.awake.compose.ui.graphics.ImageFill
 import com.awakekt.awake.compose.ui.graphics.RoundedCornerShape
 import com.awakekt.awake.compose.ui.graphics.drawImageFill
+import com.awakekt.awake.compose.ui.graphics.drawImageFillBar
 import com.awakekt.awake.compose.ui.layout.onPlaced
 import com.awakekt.awake.compose.ui.platform.LocalDensity
 import com.awakekt.awake.compose.ui.platform.LocalTextStyle
@@ -334,7 +335,8 @@ private fun Modifier.rotated(degrees: Float?): Modifier =
 /**
  * A Bar's fill, [value] of its width: [color], or its fill image. The image is laid out at the bar's
  * full width and cut at the value, so a gauge's end and pattern stay where they are, or with
- * [CanvasFillImageMode.Squeeze] drawn at the filled width, keeping both end caps, or with
+ * [CanvasFillImageMode.Squeeze] drawn at the filled width, keeping both end caps, with
+ * [CanvasFillImageMode.Capped] drawn with both caps whole at every value, or with
  * [CanvasFillImageMode.Sweep] revealed clockwise from 12 o'clock over the Bar's whole box.
  */
 context(_: Composer)
@@ -347,6 +349,8 @@ private fun BarFill(element: CanvasElement, value: Float, color: Color, images: 
     val filled = Modifier.fillMaxHeight().fillMaxWidth(value.coerceIn(0f, 1f))
     if (picture == null) {
         Box(filled.background(color, RoundedCornerShape((element.style.cornerRadius ?: 0f).dp)))
+    } else if (element.style.fillImageMode == CanvasFillImageMode.Capped) {
+        Box(Modifier.fillMaxSize().drawBehind { drawImageFillBar(picture, value) })
     } else if (element.style.fillImageMode == CanvasFillImageMode.Squeeze) {
         Box(filled.drawBehind { drawImageFill(picture) })
     } else {

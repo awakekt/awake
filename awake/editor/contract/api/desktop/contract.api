@@ -227,9 +227,38 @@ public final class com/awakekt/awake/editor/core/plugin/FloatingCardProvider$Def
 	public static fun getKind (Lcom/awakekt/awake/editor/core/plugin/FloatingCardProvider;)Lcom/awakekt/awake/editor/core/plugin/EditorProviderKind;
 }
 
+public final class com/awakekt/awake/editor/core/plugin/ImageSlices {
+	public fun <init> ()V
+	public fun <init> (IIIIIIII)V
+	public synthetic fun <init> (IIIIIIIIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()I
+	public final fun component4 ()I
+	public final fun component5 ()I
+	public final fun component6 ()I
+	public final fun component7 ()I
+	public final fun component8 ()I
+	public final fun copy (IIIIIIII)Lcom/awakekt/awake/editor/core/plugin/ImageSlices;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/editor/core/plugin/ImageSlices;IIIIIIIIILjava/lang/Object;)Lcom/awakekt/awake/editor/core/plugin/ImageSlices;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBottom ()I
+	public final fun getHeight ()I
+	public final fun getLeft ()I
+	public final fun getRight ()I
+	public final fun getTop ()I
+	public final fun getWidth ()I
+	public final fun getX ()I
+	public final fun getY ()I
+	public fun hashCode ()I
+	public final fun keptInside (II)Lcom/awakekt/awake/editor/core/plugin/ImageSlices;
+	public fun toString ()Ljava/lang/String;
+}
+
 public abstract interface class com/awakekt/awake/editor/core/plugin/InspectorFieldScope {
 	public fun choices (Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Lkotlin/jvm/functions/Function1;)V
 	public fun color (Ljava/lang/String;Lcom/awakekt/awake/core/color/Color;Lkotlin/jvm/functions/Function1;)V
+	public fun imageSlices (Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/editor/core/plugin/ImageSlices;Lkotlin/jvm/functions/Function1;)V
 	public fun integer (Ljava/lang/String;IIIILkotlin/jvm/functions/Function1;)V
 	public fun integer (Ljava/lang/String;ILkotlin/jvm/functions/Function1;)V
 	public static synthetic fun integer$default (Lcom/awakekt/awake/editor/core/plugin/InspectorFieldScope;Ljava/lang/String;IIIILkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
@@ -251,6 +280,7 @@ public abstract interface class com/awakekt/awake/editor/core/plugin/InspectorFi
 public final class com/awakekt/awake/editor/core/plugin/InspectorFieldScope$DefaultImpls {
 	public static fun choices (Lcom/awakekt/awake/editor/core/plugin/InspectorFieldScope;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Lkotlin/jvm/functions/Function1;)V
 	public static fun color (Lcom/awakekt/awake/editor/core/plugin/InspectorFieldScope;Ljava/lang/String;Lcom/awakekt/awake/core/color/Color;Lkotlin/jvm/functions/Function1;)V
+	public static fun imageSlices (Lcom/awakekt/awake/editor/core/plugin/InspectorFieldScope;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/editor/core/plugin/ImageSlices;Lkotlin/jvm/functions/Function1;)V
 	public static fun integer (Lcom/awakekt/awake/editor/core/plugin/InspectorFieldScope;Ljava/lang/String;IIIILkotlin/jvm/functions/Function1;)V
 	public static fun integer (Lcom/awakekt/awake/editor/core/plugin/InspectorFieldScope;Ljava/lang/String;ILkotlin/jvm/functions/Function1;)V
 	public static synthetic fun integer$default (Lcom/awakekt/awake/editor/core/plugin/InspectorFieldScope;Ljava/lang/String;IIIILkotlin/jvm/functions/Function1;ILjava/lang/Object;)V

@@ -124,6 +124,48 @@ class CanvasBarFillTest {
     }
 
     @Test
+    fun cappedKeepsBothCapsWholeAtEveryValue() {
+        // Caps of 3 each and a green middle: at every value the fill is both caps and its share of the other 94.
+        val image = CanvasImage("gauge.png", sliceLeft = 3, sliceRight = 3)
+        for (percent in listOf(1, 4, 30, 50, 99, 100)) {
+            val row = row(barWorld(percent / 100f, CanvasFillImageMode.Capped, image), mapOf("gauge.png" to WIDE_CAPS))
+            val length = 6 + round(percent / 100f * 94).toInt()
+
+            assertEquals(List(3) { RED }, row.subList(0, 3), "$percent%: the left cap is whole")
+            assertEquals(List(3) { BLUE }, row.subList(length - 3, length), "$percent%: the right cap is whole and ends the fill")
+            assertTrue(row.subList(length, 100).all { it == BACKGROUND }, "$percent%: the track shows past it")
+        }
+        assertTrue(primitives(barWorld(0f, CanvasFillImageMode.Capped, image), mapOf("gauge.png" to WIDE_CAPS)).none { it is UiDrawPrimitive.Texture })
+    }
+
+    @Test
+    fun cappedIsSavedByName() {
+        val capped = CanvasStyle(fillImage = CanvasImage("gauge.png"), fillImageMode = CanvasFillImageMode.Capped)
+
+        assertEquals(capped, SceneCanvasElement(style = capped).toComponent().toSceneComponent().style)
+        assertEquals(CanvasFillImageMode.Capped, Json.decodeFromString(CanvasStyle.serializer(), """{"fillImageMode":"Capped"}""").fillImageMode)
+    }
+
+    @Test
+    fun anImageSavedBeforeHighDensityAndHollowFramesReadsAsBefore() {
+        val old = Json.decodeFromString(CanvasImage.serializer(), """{"path":"ui/window.png","sliceLeft":8,"repeatEdges":true}""")
+
+        assertEquals(1f, old.pixelsPerDp)
+        assertFalse(old.hollow)
+        val written = Json.encodeToString(CanvasImage.serializer(), old)
+        assertFalse("pixelsPerDp" in written || "hollow" in written, "the defaults are not written, so old files stay as they were")
+        val sharp = CanvasImage("ui/window.png", pixelsPerDp = 2f, hollow = true)
+        assertEquals(sharp, Json.decodeFromString(CanvasImage.serializer(), Json.encodeToString(CanvasImage.serializer(), sharp)))
+    }
+
+    @Test
+    fun aPixelsPerDpOfZeroIsAProblemAndDrawsAtOne() {
+        val element = SceneCanvasElement(kind = CanvasElementKind.Panel, style = CanvasStyle(image = CanvasImage("gauge.png", pixelsPerDp = 0f)))
+
+        assertTrue(element.validate("e").any { "pixelsPerDp" in it.message })
+    }
+
+    @Test
     fun anEmptyBarDrawsNoFill() {
         val world = barWorld(0f, CanvasFillImageMode.Squeeze)
 

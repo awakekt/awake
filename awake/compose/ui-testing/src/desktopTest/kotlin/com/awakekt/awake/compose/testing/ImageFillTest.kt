@@ -13,8 +13,11 @@ import com.awakekt.awake.compose.foundation.layout.Row
 import com.awakekt.awake.compose.foundation.layout.padding
 import com.awakekt.awake.compose.foundation.layout.size
 import com.awakekt.awake.compose.ui.Modifier
+import com.awakekt.awake.compose.ui.draw.drawBehind
+import com.awakekt.awake.compose.ui.graphics.FillDirection
 import com.awakekt.awake.compose.ui.graphics.ImageBitmap
 import com.awakekt.awake.compose.ui.graphics.ImageFill
+import com.awakekt.awake.compose.ui.graphics.drawImageFillBar
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.FilterQuality
@@ -109,6 +112,76 @@ class ImageFillTest {
     }
 
     @Test
+    fun artAtFewerPixelsPerDpDrawsLargerAndKeepsItsPitch() {
+        // Half a pixel per dp: each source pixel is two on screen, the corners 4 and the stripes 2 wide.
+        val fill = ImageFill(FRAME, sliceLeft = 2, sliceTop = 2, sliceRight = 2, sliceBottom = 2, repeatEdges = true, pixelsPerDp = 0.5f, filterQuality = FilterQuality.None)
+        val pixels = draw(fill, 24, 24)
+
+        for (i in 0..3) assertEquals(RED, pixels[i][i], "the corner is 4 wide, at ($i, $i)")
+        assertEquals(List(16) { if (it / 2 % 2 == 0) BLACK else WHITE }, pixels[0].subList(4, 20), "the top edge repeats every 2")
+        assertEquals(GREEN, pixels[0][20])
+    }
+
+    @Test
+    fun highDensityArtKeepsItsCornersAtTheirSizeInDp() {
+        // Two pixels per dp: the 2-pixel corners are 1 dp, so the edge starts at the second pixel.
+        val fill = ImageFill(FRAME, sliceLeft = 2, sliceTop = 2, sliceRight = 2, sliceBottom = 2, pixelsPerDp = 2f, filterQuality = FilterQuality.None)
+        val pixels = draw(fill, 20, 20)
+
+        assertEquals(RED, pixels[0][0])
+        assertTrue(pixels[0][1] == BLACK || pixels[0][1] == WHITE, "the edge starts after a 1-dp corner")
+        assertEquals(GREEN, pixels[0][19])
+        assertEquals(YELLOW, pixels[19][19])
+        assertFailsWith<IllegalArgumentException> { ImageFill(FRAME, pixelsPerDp = 0f) }
+        assertFailsWith<IllegalArgumentException> { ImageFill(FRAME, pixelsPerDp = Float.NaN) }
+    }
+
+    @Test
+    fun aHollowFrameLeavesItsCentreOut() {
+        val hollow = ImageFill(FRAME, sliceLeft = 2, sliceTop = 2, sliceRight = 2, sliceBottom = 2, hollow = true)
+        val frame = composeFrame(20, 20) { Box(Modifier.size(20.dp).background(hollow)) }
+        val pixels = draw(hollow, 20, 20)
+
+        assertEquals(8, frame.primitives.filterIsInstance<UiDrawPrimitive.Texture>().size, "four corners and four edges")
+        assertEquals(RED, pixels[0][0])
+        assertTrue(pixels.subList(2, 18).all { row -> row.subList(2, 18).none { it == CYAN || it == MAGENTA } }, "no centre")
+    }
+
+    @Test
+    fun aBarKeepsBothCapsWholeAtEveryValue() {
+        for (percent in listOf(1, 5, 25, 50, 99, 100)) {
+            val value = percent / 100f
+            val row = drawBar(value, FillDirection.LeftToRight, 30, 4)[2]
+            val length = 4 + kotlin.math.round(value * 26).toInt()
+
+            assertEquals(listOf(RED, RED), row.subList(0, 2), "$percent%: the left cap")
+            assertEquals(listOf(GREEN, GREEN), row.subList(length - 2, length), "$percent%: the right cap ends the fill")
+            assertTrue(row.subList(length, 30).all { it == TRACK }, "$percent%: the rest shows the track")
+        }
+        assertTrue(drawBar(0f, FillDirection.LeftToRight, 30, 4).all { row -> row.all { it == TRACK } }, "0 draws nothing")
+    }
+
+    @Test
+    fun aBarFillsFromTheEdgeItsDirectionNames() {
+        val leftward = drawBar(0.5f, FillDirection.RightToLeft, 30, 4)[2]
+        assertEquals(listOf(GREEN, GREEN), leftward.subList(28, 30), "the right cap sits at the right edge")
+        assertEquals(listOf(RED, RED), leftward.subList(13, 15), "and the left one at the value")
+        assertEquals(TRACK, leftward[12])
+
+        val upward = drawBar(0.5f, FillDirection.BottomToTop, 4, 30, vertical = true).map { it[2] }
+        assertEquals(listOf(GREEN, GREEN), upward.subList(28, 30), "the bottom cap sits at the bottom")
+        assertEquals(listOf(RED, RED), upward.subList(13, 15), "the top cap at the value")
+        assertEquals(TRACK, upward[12])
+    }
+
+    @Test
+    fun aBarShorterThanItsCapsSqueezesThem() {
+        val row = drawBar(1f, FillDirection.LeftToRight, 2, 4)[2]
+
+        assertEquals(listOf(RED, GREEN), row)
+    }
+
+    @Test
     fun framesTilesAndStripsMatchTheirBaseline() {
         val frame = { repeat: Boolean -> ImageFill(WINDOW, sliceLeft = 8, sliceTop = 8, sliceRight = 8, sliceBottom = 8, repeatEdges = repeat, repeatCenter = repeat, filterQuality = FilterQuality.None) }
         val strip = ImageFill(WINDOW, srcY = 8, srcHeight = 8, sliceLeft = 8, sliceRight = 8, filterQuality = FilterQuality.None)
@@ -125,15 +198,52 @@ class ImageFillTest {
         }.assertMatchesBaseline("image-fill", 424, 104)
     }
 
+    @Test
+    fun hollowHighDensityFramesAndCappedBarsMatchTheirBaseline() {
+        val hollow = ImageFill(WINDOW, sliceLeft = 8, sliceTop = 8, sliceRight = 8, sliceBottom = 8, hollow = true, filterQuality = FilterQuality.None)
+        val sharp = ImageFill(WINDOW, sliceLeft = 8, sliceTop = 8, sliceRight = 8, sliceBottom = 8, repeatEdges = true, pixelsPerDp = 2f, filterQuality = FilterQuality.None)
+        val strip = ImageFill(WINDOW, srcY = 8, srcHeight = 8, sliceLeft = 8, sliceRight = 8, filterQuality = FilterQuality.None)
+        val column = ImageFill(WINDOW, srcX = 8, srcWidth = 8, sliceTop = 8, sliceBottom = 8, filterQuality = FilterQuality.None)
+        val track = Color(0.05f, 0.05f, 0.08f, 1f)
+
+        composeFrame(424, 104) {
+            Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedByHorizontal(16.dp)) {
+                Box(Modifier.size(96.dp, 72.dp).background(Color(0.2f, 0.5f, 0.3f, 1f)).background(hollow))
+                Box(Modifier.size(96.dp, 72.dp).background(sharp))
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    for (value in listOf(0.02f, 0.5f, 1f)) {
+                        Box(Modifier.size(120.dp, 16.dp).background(track).drawBehind { drawImageFillBar(strip, value) })
+                    }
+                }
+                Box(Modifier.size(16.dp, 72.dp).background(track).drawBehind { drawImageFillBar(column, 0.3f, FillDirection.BottomToTop) })
+            }
+        }.assertMatchesBaseline("image-fill-hollow-dpi-bars", 424, 104)
+    }
+
+    /** A [width] x [height] bar of [BAR] filled to [value] from [direction]'s edge over [TRACK], as rows of 0xRRGGBB. */
+    private fun drawBar(value: Float, direction: FillDirection, width: Int, height: Int, vertical: Boolean = false): List<List<Int>> {
+        val fill = if (vertical) {
+            ImageFill(BAR_DOWN, sliceTop = 2, sliceBottom = 2, filterQuality = FilterQuality.None)
+        } else {
+            ImageFill(BAR, sliceLeft = 2, sliceRight = 2, filterQuality = FilterQuality.None)
+        }
+        val frame = composeFrame(width, height) {
+            Box(Modifier.size(width.dp, height.dp).drawBehind { drawImageFillBar(fill, value, direction) })
+        }
+        return rows(frame.primitives.rasterize(width, height, Color.Black), width, height)
+    }
+
     /** [fill] drawn at [width] x [height] dp, as rows of 0xRRGGBB. */
     private fun draw(fill: ImageFill, width: Int, height: Int): List<List<Int>> {
         val frame = composeFrame(width, height) { Box(Modifier.size(width.dp, height.dp).background(fill)) }
-        val pixels = frame.primitives.rasterize(width, height)
-        return List(height) { y ->
-            List(width) { x ->
-                val offset = (y * width + x) * 4
-                ((pixels[offset].toInt() and 0xFF) shl 16) or ((pixels[offset + 1].toInt() and 0xFF) shl 8) or (pixels[offset + 2].toInt() and 0xFF)
-            }
+        return rows(frame.primitives.rasterize(width, height), width, height)
+    }
+
+    /** Tightly packed RGBA [pixels], [width] x [height], as rows of 0xRRGGBB. */
+    private fun rows(pixels: ByteArray, width: Int, height: Int): List<List<Int>> = List(height) { y ->
+        List(width) { x ->
+            val offset = (y * width + x) * 4
+            ((pixels[offset].toInt() and 0xFF) shl 16) or ((pixels[offset + 1].toInt() and 0xFF) shl 8) or (pixels[offset + 2].toInt() and 0xFF)
         }
     }
 
@@ -160,6 +270,13 @@ class ImageFillTest {
         const val WHITE = 0xFFFFFF
         const val CYAN = 0x00FFFF
         const val MAGENTA = 0xFF00FF
+        const val TRACK = 0x000000
+
+        /** 6 x 1: red caps of 2 on the left, green of 2 on the right, cyan between. */
+        val BAR = ImageBitmap(6, 1, rgba(listOf(listOf(RED, RED, CYAN, CYAN, GREEN, GREEN))))
+
+        /** [BAR] stood on end: red at the top, green at the bottom. */
+        val BAR_DOWN = ImageBitmap(1, 6, rgba(listOf(RED, RED, CYAN, CYAN, GREEN, GREEN).map { listOf(it) }))
 
         /**
          * 6 x 6 with 2-pixel corners: red, green, blue, yellow. Every edge is striped one pixel black,

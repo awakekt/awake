@@ -18,11 +18,12 @@ import kotlinx.serialization.Serializable
  * [sliceRight] and [sliceBottom], all in the image's pixels. A region size of 0 reaches the image's
  * right or bottom edge.
  *
- * The corners keep their size, one dp per image pixel. The edges stretch along their length, or
- * repeat at that size when [repeatEdges]; the centre stretches, or repeats both ways when
- * [repeatCenter]. With no slices the whole region stretches, and slicing only the left and right
- * makes a three-part strip. Colour is multiplied by [tint], `#RRGGBB` or `#RRGGBBAA`, and a
- * [pixelated] image keeps its pixels sharp when it is scaled.
+ * The corners keep their size, one dp per [pixelsPerDp] image pixels: 1 for art drawn at one pixel
+ * per dp, 2 for art drawn at twice that. The edges stretch along their length, or repeat at that
+ * size when [repeatEdges]; the centre stretches, repeats both ways when [repeatCenter], or is left
+ * out when [hollow], so a frame shows what is behind it. With no slices the whole region stretches,
+ * and slicing only the left and right makes a three-part strip. Colour is multiplied by [tint],
+ * `#RRGGBB` or `#RRGGBBAA`, and a [pixelated] image keeps its pixels sharp when it is scaled.
  */
 @Serializable
 data class CanvasImage(
@@ -39,6 +40,8 @@ data class CanvasImage(
     val repeatCenter: Boolean = false,
     val tint: String = "#FFFFFF",
     val pixelated: Boolean = false,
+    @PropertyRange(min = 0.0, exclusiveMin = true) val pixelsPerDp: Float = 1f,
+    val hollow: Boolean = false,
 ) {
     /** What is wrong with this image, as messages naming the field; empty when nothing is. */
     internal fun problems(): List<String> = buildList {
@@ -48,6 +51,7 @@ data class CanvasImage(
         if (regionWidth > 0 && sliceLeft + sliceRight > regionWidth) add("left and right slices must fit in regionWidth")
         if (regionHeight > 0 && sliceTop + sliceBottom > regionHeight) add("top and bottom slices must fit in regionHeight")
         if (!isCanvasColor(tint)) add("tint \"$tint\" must be #RRGGBB or #RRGGBBAA")
+        if (!(pixelsPerDp > 0f && pixelsPerDp.isFinite())) add("pixelsPerDp must be above 0")
     }
 
     /**
@@ -65,6 +69,8 @@ data class CanvasImage(
                 repeatEdges, repeatCenter,
                 tint = if (isCanvasColor(tint)) Color.fromHex(tint) else Color.White,
                 filterQuality = if (pixelated) FilterQuality.None else FilterQuality.Low,
+                pixelsPerDp = if (pixelsPerDp > 0f && pixelsPerDp.isFinite()) pixelsPerDp else 1f,
+                hollow = hollow,
             )
         } else {
             null
