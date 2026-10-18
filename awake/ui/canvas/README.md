@@ -37,7 +37,15 @@ the `canvas_element` component saved with a scene and drawn by `SceneCanvas(worl
   locale switch shows on the next frame. Without strings, or for a key no table has, the key shows.
 - **`font`**: a project `.ttf` or `.otf` file, or a built-in family, `default` or `bitmap`; empty
   is the default Roboto. A host loads the file and passes it in `CanvasOverlay(fonts = …)`.
-- **`value`**: a Bar's fill from 0 to 1.
+- **`value`**: a Bar's or a Sweep's fill from 0 to 1.
+- **`bar`**, **`sweep`**, **`stepper`**: a Bar as a progress bar (`CanvasBar`: up, down, right to
+  left or radial, a trailing fill, segments, ticks and a label), a Sweep's pie or ring
+  (`CanvasSweep`: start angle, direction, mask, ring and track; an action button's cooldown is the
+  same drawing), and a Stepper's number (`CanvasStepper`: range, step, decimals and how a held
+  button repeats). A Stepper's live `number` changes by a press, a hold, its keys or `stepBy`, and
+  `consumeChange()` reports it. The trail, the sweep's geometry and the stepping are shared with
+  `ui:shadcn`'s `ShadcnProgressBar`, `ShadcnRadialSweep` and `ShadcnNumberStepper`, through
+  `TrailingValue`, `sweepPath` and `NumberStepping`.
 - **`order`**: lower draws first. Of the same order, the later in `CanvasOverlay`'s `items` draws on
   top and takes the pointer; for a scene that is the later in the hierarchy. **`visible`** hides it.
   `canvasDrawOrder(items)` lists the items in the order they draw, and `canvasItemAt(items, x, y)`

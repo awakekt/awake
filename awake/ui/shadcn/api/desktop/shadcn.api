@@ -689,6 +689,8 @@ public final class com/awakekt/awake/ui/shadcn/components/ShadcnIcons {
 	public final fun getChevronUp ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
 	public final fun getChevronsUpDown ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
 	public final fun getGalleryVerticalEnd ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getMinus ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getPlus ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
 	public final fun getSave ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
 	public final fun getX ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
 	public final fun setCamera (Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;)V
@@ -698,6 +700,8 @@ public final class com/awakekt/awake/ui/shadcn/components/ShadcnIcons {
 	public final fun setChevronUp (Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;)V
 	public final fun setChevronsUpDown (Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;)V
 	public final fun setGalleryVerticalEnd (Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;)V
+	public final fun setMinus (Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;)V
+	public final fun setPlus (Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;)V
 	public final fun setSave (Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;)V
 	public final fun setX (Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;)V
 }
@@ -787,6 +791,11 @@ public final class com/awakekt/awake/ui/shadcn/components/ShadcnNavigationMenuKt
 	public static synthetic fun ShadcnNavigationMenuTrigger$default (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;Lcom/awakekt/awake/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 }
 
+public final class com/awakekt/awake/ui/shadcn/components/ShadcnNumberStepperKt {
+	public static final fun ShadcnNumberStepper (Lcom/awakekt/awake/compose/runtime/Composer;FLcom/awakekt/awake/compose/ui/Modifier;FFFIZLkotlin/jvm/functions/Function1;)V
+	public static synthetic fun ShadcnNumberStepper$default (Lcom/awakekt/awake/compose/runtime/Composer;FLcom/awakekt/awake/compose/ui/Modifier;FFFIZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+}
+
 public final class com/awakekt/awake/ui/shadcn/components/ShadcnPaginationKt {
 	public static final fun ShadcnPagination (Lcom/awakekt/awake/compose/runtime/Composer;IILkotlin/jvm/functions/Function1;Lcom/awakekt/awake/compose/ui/Modifier;)V
 	public static synthetic fun ShadcnPagination$default (Lcom/awakekt/awake/compose/runtime/Composer;IILkotlin/jvm/functions/Function1;Lcom/awakekt/awake/compose/ui/Modifier;ILjava/lang/Object;)V
@@ -840,9 +849,28 @@ public final class com/awakekt/awake/ui/shadcn/components/ShadcnPopoverKt {
 	public static synthetic fun ShadcnPopover-gpgzfFs$default (Lcom/awakekt/awake/compose/runtime/Composer;ZLkotlin/jvm/functions/Function1;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/ui/Modifier;FLjava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
 }
 
+public final class com/awakekt/awake/ui/shadcn/components/ShadcnProgressBarKt {
+	public static final fun ShadcnProgressBar-suoApow (Lcom/awakekt/awake/compose/runtime/Composer;FLcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/ui/shadcn/components/ShadcnProgressOrientation;FLjava/lang/Float;IILjava/lang/String;Lcom/awakekt/awake/compose/ui/graphics/ImageFill;Lcom/awakekt/awake/compose/ui/graphics/ImageFill;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;)V
+	public static synthetic fun ShadcnProgressBar-suoApow$default (Lcom/awakekt/awake/compose/runtime/Composer;FLcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/ui/shadcn/components/ShadcnProgressOrientation;FLjava/lang/Float;IILjava/lang/String;Lcom/awakekt/awake/compose/ui/graphics/ImageFill;Lcom/awakekt/awake/compose/ui/graphics/ImageFill;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;ILjava/lang/Object;)V
+}
+
 public final class com/awakekt/awake/ui/shadcn/components/ShadcnProgressKt {
 	public static final fun ShadcnProgress-gf2g5r8 (Lcom/awakekt/awake/compose/runtime/Composer;FLcom/awakekt/awake/compose/ui/Modifier;F)V
 	public static synthetic fun ShadcnProgress-gf2g5r8$default (Lcom/awakekt/awake/compose/runtime/Composer;FLcom/awakekt/awake/compose/ui/Modifier;FILjava/lang/Object;)V
+}
+
+public final class com/awakekt/awake/ui/shadcn/components/ShadcnProgressOrientation : java/lang/Enum {
+	public static final field Horizontal Lcom/awakekt/awake/ui/shadcn/components/ShadcnProgressOrientation;
+	public static final field Radial Lcom/awakekt/awake/ui/shadcn/components/ShadcnProgressOrientation;
+	public static final field Vertical Lcom/awakekt/awake/ui/shadcn/components/ShadcnProgressOrientation;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/ui/shadcn/components/ShadcnProgressOrientation;
+	public static fun values ()[Lcom/awakekt/awake/ui/shadcn/components/ShadcnProgressOrientation;
+}
+
+public final class com/awakekt/awake/ui/shadcn/components/ShadcnRadialSweepKt {
+	public static final fun ShadcnRadialSweep-GR6UN6M (Lcom/awakekt/awake/compose/runtime/Composer;FLcom/awakekt/awake/compose/ui/Modifier;FFZLcom/awakekt/awake/core/graphics2d/DrawShape;FLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/compose/ui/graphics/ImageFill;)V
+	public static synthetic fun ShadcnRadialSweep-GR6UN6M$default (Lcom/awakekt/awake/compose/runtime/Composer;FLcom/awakekt/awake/compose/ui/Modifier;FFZLcom/awakekt/awake/core/graphics2d/DrawShape;FLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/compose/ui/graphics/ImageFill;ILjava/lang/Object;)V
 }
 
 public final class com/awakekt/awake/ui/shadcn/components/ShadcnRadioGroupKt {

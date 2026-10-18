@@ -51,7 +51,6 @@ import com.awakekt.awake.compose.ui.platform.LocalTextStyle
 import com.awakekt.awake.compose.ui.semantics.testTag
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.color.Color
-import com.awakekt.awake.core.graphics2d.drawPath
 import com.awakekt.awake.core.input.InputDevice
 import com.awakekt.awake.core.localization.Strings
 import com.awakekt.awake.core.math2d.Rectangle
@@ -304,10 +303,7 @@ internal fun CanvasElementView(
             Children(element, children, tree)
         }
         CanvasElementKind.Panel, CanvasElementKind.Image -> Box(styled.pressableTap(element)) { Children(element, children, tree) }
-        CanvasElementKind.Bar -> Box(styled) {
-            BarFill(element, tree.valueOf(element), fill, tree.images)
-            Children(element, children, tree)
-        }
+        CanvasElementKind.Bar, CanvasElementKind.Sweep, CanvasElementKind.Stepper -> GaugeView(element, styled, textStyle, tree, children)
         CanvasElementKind.Button -> ButtonView(element, styled, textStyle, tree, children)
         CanvasElementKind.TextField -> TextFieldView(element, styled, textStyle, tree, children)
         CanvasElementKind.Joystick -> JoystickView(element, wheeled, back, tree, children)
@@ -340,7 +336,7 @@ private fun Modifier.rotated(degrees: Float?): Modifier =
  * [CanvasFillImageMode.Sweep] revealed clockwise from 12 o'clock over the Bar's whole box.
  */
 context(_: Composer)
-private fun BarFill(element: CanvasElement, value: Float, color: Color, images: Map<String, ImageBitmap>) {
+internal fun BarFill(element: CanvasElement, value: Float, color: Color, images: Map<String, ImageBitmap>) {
     val picture = element.style.fillImage?.fill(images)
     if (element.style.fillImageMode == CanvasFillImageMode.Sweep) {
         SweepFill(value, color, picture)
@@ -357,42 +353,6 @@ private fun BarFill(element: CanvasElement, value: Float, color: Color, images: 
         Box(filled.drawBehind { clipped { drawImageFill(picture, width = element.width * density) } })
     }
 }
-
-/**
- * [value]'s share of a full turn, as a wedge clockwise from 12 o'clock over the Bar's whole box:
- * [color], or [picture] cut to the same wedge. The wedge's radius reaches past the box's farthest
- * corner, so [clipped] -- not the wedge's own shape -- is what keeps it inside the box.
- */
-context(_: Composer)
-internal fun SweepFill(value: Float, color: Color, picture: ImageFill?) {
-    val amount = value.coerceIn(0f, 1f)
-    if (amount <= 0f) return
-    Box(
-        Modifier.fillMaxSize().drawBehind {
-            // A full turn needs no wedge: its start and end would be the same point, and asking the
-            // arc tessellator to close exactly back onto it leaves a hairline, float-precision gap.
-            if (amount >= 1f) {
-                if (picture == null) drawRect(color = color) else drawImageFill(picture)
-                return@drawBehind
-            }
-            val centerX = width / 2f
-            val centerY = height / 2f
-            val radius = kotlin.math.hypot(width.toFloat(), height.toFloat())
-            val wedge = drawPath {
-                moveTo(centerX, centerY)
-                lineTo(centerX, centerY - radius)
-                arcTo(centerX - radius, centerY - radius, centerX + radius, centerY + radius, SWEEP_START_DEGREES, amount * 360f)
-                close()
-            }
-            clipped {
-                if (picture == null) drawPath(wedge, color) else clippedPath(wedge) { drawImageFill(picture) }
-            }
-        },
-    )
-}
-
-/** 12 o'clock, in `arcTo`'s degrees clockwise from the positive X axis. */
-private const val SWEEP_START_DEGREES = 270f
 
 /**
  * Moves an element, or a cancel zone, ([x], [y]) dp from its [anchor] with padding around it, not

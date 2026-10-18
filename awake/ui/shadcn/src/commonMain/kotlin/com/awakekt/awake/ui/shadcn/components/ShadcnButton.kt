@@ -111,7 +111,7 @@ fun ShadcnButton(
     shape,
     BorderSides.All,
     hasIcon = false,
-    content,
+    content = content,
 )
 
 context(_: Composer)
@@ -124,11 +124,14 @@ internal fun shadcnButtonContent(
     shape: Shape?,
     borderSides: BorderSides,
     hasIcon: Boolean,
+    pressSource: InteractionSource? = null,
     content: context(Composer) () -> Unit,
 ) {
     rememberGroup(ShadcnButtonGroup) {
         val theme = shadcnTheme
-        val interaction = remember { InteractionSource() }
+        // A caller that watches the press, such as a stepper repeating while it is held, passes its own.
+        val own = remember { InteractionSource() }
+        val interaction = pressSource ?: own
         val state = rememberStyleState(interaction, enabled = enabled)
         val style = remember(theme, variant) { theme.shadcnButtonStyle(variant) }
 

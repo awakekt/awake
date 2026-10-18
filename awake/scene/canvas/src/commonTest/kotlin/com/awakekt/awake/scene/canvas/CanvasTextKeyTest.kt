@@ -234,7 +234,7 @@ class CanvasTextKeyTest {
 
         assertEquals(emptyList(), issues(SceneCanvasElement(textKey = "hud.items", textArgs = mapOf("count" to "2"))))
         assertEquals(emptyList(), issues(SceneCanvasElement(kind = CanvasElementKind.Button, textKey = "menu.start")))
-        assertEquals(listOf("canvas_element.textKey only sets a Text's or a Button's words"), issues(SceneCanvasElement(kind = CanvasElementKind.Panel, textKey = "menu.start")))
+        assertEquals(listOf("canvas_element.textKey only sets a Text's or a Button's words, or a Bar's label"), issues(SceneCanvasElement(kind = CanvasElementKind.Panel, textKey = "menu.start")))
         assertEquals(listOf("canvas_element.textKey and text both set the words; keep one"), issues(SceneCanvasElement(text = "Start", textKey = "menu.start")))
         assertEquals(
             listOf("canvas_element.textKey and bind.text both set the words; keep one"),

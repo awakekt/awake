@@ -288,9 +288,6 @@ private fun paint(
     alpha?.let { scope.alpha(it.coerceIn(0f, 1f)) }
 }
 
-private fun colourProblems(vararg colours: Pair<String, String?>): List<String> =
-    colours.mapNotNull { (name, value) -> if (value != null && !isCanvasColor(value)) "$name \"$value\" must be #RRGGBB or #RRGGBBAA" else null }
-
 // A colour typed wrong in the editor falls back instead of taking the whole frame down.
 internal fun colorOf(hex: String?, fallback: Color): Color =
     if (hex != null && isCanvasColor(hex)) Color.fromHex(hex) else fallback

@@ -5,9 +5,13 @@
  */
 package com.awakekt.awake.ui.canvas
 
+import com.awakekt.awake.compose.foundation.animation.TrailingValue
 import com.awakekt.awake.compose.foundation.interaction.InteractionSource
 import com.awakekt.awake.compose.foundation.text.TextFieldState
 import com.awakekt.awake.compose.ui.focus.FocusRequester
+import com.awakekt.awake.core.input.GamepadButton
+import com.awakekt.awake.core.input.HeldStep
+import com.awakekt.awake.core.input.NumberStepping
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math2d.Rectangle
 import com.awakekt.awake.core.math2d.Vec2
@@ -26,7 +30,10 @@ enum class CanvasElementKind {
     /** Static filled background panel or container. */
     Panel,
 
-    /** Horizontal progress or status bar. */
+    /**
+     * A progress bar filled to [CanvasElement.value]: across from the left, or as its
+     * [CanvasElement.bar] says, up, down, around as a ring, segmented, trailed or labelled.
+     */
     Bar,
 
     /** Interactive clickable button. */
@@ -49,6 +56,18 @@ enum class CanvasElementKind {
      * through [CanvasElement.consumeLook] and [CanvasElement.consumeZoom] as its [CanvasElement.look] says.
      */
     LookArea,
+
+    /**
+     * A radial sweep: a pie or ring filled to [CanvasElement.value] of a full turn, as its
+     * [CanvasElement.sweep] says, for a cooldown, a timer or a charge.
+     */
+    Sweep,
+
+    /**
+     * A number with minus and plus buttons, [CanvasElement.number], stepped as its
+     * [CanvasElement.stepper] says by a press, a held button, the keyboard or [CanvasElement.stepBy].
+     */
+    Stepper,
 }
 
 /**
@@ -482,6 +501,74 @@ class CanvasElement {
         }
         lastSyncedText = text
     }
+
+    /** How a Bar draws as a progress bar: its direction, trail, segments, ticks and label; null fills across from the left. */
+    var bar: CanvasBar? = null
+
+    /** A Bar's trailing fill, advanced each frame it is drawn. */
+    internal val trail = TrailingValue(value)
+
+    /** Whether [trail] has been put on the value it first drew at, so a bar does not trail in from full. */
+    internal var trailStarted = false
+
+    /** How a Sweep turns: its start, direction, mask, ring and track; null is [CanvasSweep.Default]. */
+    var sweep: CanvasSweep? = null
+
+    /**
+     * A Stepper's range, step and repeat, and the number it starts at; null is
+     * [CanvasStepper.Default]. Setting it puts [number] at its value.
+     */
+    var stepper: CanvasStepper? = null
+        set(value) {
+            field = value
+            number = (value ?: CanvasStepper.Default).value
+        }
+
+    /**
+     * A Stepper's number right now: where its [stepper] starts it, then moved by the player, by
+     * [stepBy], or each frame by its binding's `value` field.
+     */
+    var number: Float = 0f
+
+    private var numberChanged = false
+
+    /**
+     * Moves a Stepper's number [steps] steps, held to its range, as a press of a button does: what a
+     * game calls for a key or a controller's pad of its own. Returns whether the number moved.
+     */
+    fun stepBy(steps: Int): Boolean {
+        val settings = stepper ?: CanvasStepper.Default
+        val next = NumberStepping.stepped(number, steps, settings.min, settings.max, settings.step)
+        if (steps == 0 || next == number) return false
+        number = next
+        numberChanged = true
+        return true
+    }
+
+    /** Puts a Stepper's number on [target], held to its range, as Home and End do; returns whether it moved. */
+    internal fun stepTo(target: Float): Boolean {
+        val settings = stepper ?: CanvasStepper.Default
+        val next = NumberStepping.clamp(target, settings.min, settings.max)
+        if (next == number) return false
+        number = next
+        numberChanged = true
+        return true
+    }
+
+    /** Moves a Stepper's number as a controller's [button] does: the pad up or right one step, the shoulders ten. */
+    fun stepBy(button: GamepadButton): Boolean = stepBy(NumberStepping.stepsOf(button))
+
+    /**
+     * True once each time the player, or [stepBy], has changed a Stepper's [number] since the last
+     * call; game code polls it and reads [number], as it polls [consumePress].
+     */
+    fun consumeChange(): Boolean = numberChanged.also { numberChanged = false }
+
+    /** A Stepper's two buttons: their presses, and how long each has been held. */
+    internal val minusPress = InteractionSource()
+    internal val plusPress = InteractionSource()
+    internal val minusHold = HeldStep()
+    internal val plusHold = HeldStep()
 
     /**
      * How a Joystick moves and what it reports: its mode, reach, dead zone, response, directions,
