@@ -90,6 +90,89 @@ Invalid formula 'max(1, atk * 2 - defence)': 1:18: unknown variable 'defence'; d
 
 `FormulaConditionSerializer` does the same for conditions.
 
+## A definition's formulas, and variables a game declares
+
+A plugin's definition usually holds several formulas, each with its own variables, and some of those
+variables come from the game: a combat formula reads `attacker.<stat>` for every stat the game names in its
+data. A game declares them with `FormulaVariableDeclaration`, a `name`, a `type` (`"number"`, the default,
+or `"boolean"`) and an optional `description`:
+
+```json
+{
+  "stats": [
+    { "name": "str", "description": "Strength: adds to damage" },
+    { "name": "dex", "description": "Dexterity: adds to reach and speed" },
+    { "name": "crit", "description": "Chance of a critical hit, 0 to 1" }
+  ],
+  "attackRange": "1.5 + attacker.dex * 0.01",
+  "swingMillis": "max(400, 1200 - attacker.dex * 8)",
+  "chances": { "miss": "clamp(0.05 + (target.dex - attacker.dex) / 200, 0, 0.5)" },
+  "damage": "max(1, attacker.str * 2 - target.str) * if(random() < attacker.crit, 2, 1)",
+  "threat": "damage * 1.5 + attacker.str"
+}
+```
+
+The plugin declares the game's stats under each prefix it evaluates them for, then compiles every slot of
+the definition together with a `FormulaSet.Builder`. Each slot has a path, its source, its variables and
+whether the plugin gives it a random source:
+
+```kotlin
+@Serializable
+class CombatRules(
+    val stats: List<FormulaVariableDeclaration>,
+    val attackRange: String,
+    val swingMillis: String,
+    val chances: Chances,
+    val damage: String,
+    val threat: String,
+) {
+    @Serializable
+    class Chances(val miss: String)
+}
+
+class Combat(rules: CombatRules) {
+    val sides = formulaVariables {
+        declare(rules.stats, prefix = "attacker.")
+        declare(rules.stats, prefix = "target.")
+    }
+    val hit = formulaVariables {
+        declare(rules.stats, prefix = "attacker.")
+        number("damage", "The damage the hit dealt")
+    }
+
+    private val slots = FormulaSet.Builder()
+    val attackRange = slots.formula("attackRange", rules.attackRange, sides)
+    val swingMillis = slots.formula("swingMillis", rules.swingMillis, sides)
+    val miss = slots.formula("chances.miss", rules.chances.miss, sides)
+    val damage = slots.formula("damage", rules.damage, sides, random = true) // the plugin rolls for it
+    val threat = slots.formula("threat", rules.threat, hit)
+    val formulas = slots.build()
+}
+
+combat.formulas[combat.damage].evaluate(inputs)
+```
+
+`build` fails once, listing every problem of every slot with where it is, rather than stopping at the first.
+A slot without a random source rejects `random()` when it is compiled, not when it runs:
+
+```text
+Invalid formulas:
+- attackRange: '1.5 + attacker.dx * 0.01': 1:7: unknown variable 'attacker.dx'; did you mean 'attacker.dex'?
+- chances.miss: '0.05 + random() / 10': 1:8: random() cannot be used here: nothing gives this formula a random source
+- threat: 'damage * 1.5 +': 1:15: the formula ends early; expected a value
+```
+
+`compile` gives the same without throwing: `FormulaSetResult.Compiled` with the set, or
+`FormulaSetResult.Invalid` with every `FormulaSetProblem`, each carrying the slot's path and source and
+the problem's kind, message and position, for an editor to underline both the slot and the formula. A
+condition slot is added with `condition`, and `formulaSet { ... }` builds a set in one expression when the
+slot handles are not needed; `formula(path)` and `condition(path)` then find a slot's result by path.
+
+A bad stat name fails the load with its reason, the one `FormulaVariables.validateName` gives: an empty
+name, a keyword (`and`, `or`, `not`, `if`, `true`, `false`) or a character other than letters, digits, `_`
+and `.` between parts. `FormulaVariables.isValidName` is the same check as a yes or no. A function's name,
+such as `max`, may name a variable, since a call is told apart by its parenthesis.
+
 ## Errors and editors
 
 `Formula.check` and `FormulaCondition.check` return every problem without throwing, each with a kind, a
