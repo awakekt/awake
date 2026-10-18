@@ -13,8 +13,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: write        # publishes images to the render-evidence branch
-  pull-requests: write   # keeps the evidence comment up to date
+  contents: read
 
 env:
   JAVA_VERSION: '17'
@@ -24,22 +23,28 @@ jobs:
     name: Render evidence
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    permissions:
+      contents: write        # publishes images to the render-evidence branch
+      pull-requests: write   # keeps the evidence comment up to date
     env:
       BASE_SHA: ${{ github.event.pull_request.base.sha }}
       HEAD_SHA: ${{ github.event.pull_request.head.sha }}
       PR: ${{ github.event.pull_request.number }}
+      HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
+          # The head's build runs next; the write token stays off disk until the publish step.
+          persist-credentials: false
 
       - name: Decide whether this PR can change a render
         id: scope
         run: |
           if [[ -z "$PR" ]]; then echo "render=false" >> "$GITHUB_OUTPUT"; exit 0; fi
-          if [[ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]]; then
+          if [[ "$HEAD_REPO" != "$GITHUB_REPOSITORY" ]]; then
             echo "::notice::Fork PRs cannot publish evidence images; skipping."
             echo "render=false" >> "$GITHUB_OUTPUT"; exit 0
           fi
@@ -67,14 +72,14 @@ jobs:
 
       - name: Setup JDK
         if: steps.scope.outputs.render == 'true'
-        uses: actions/setup-java@v6
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
 
       - name: Setup Gradle (with cache)
         if: steps.scope.outputs.render == 'true'
-        uses: gradle/actions/setup-gradle@v6
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
         with:
           cache-provider: basic
 
@@ -111,7 +116,7 @@ jobs:
       # The comparison needs it on every render run; the original SVG capture also uses it.
       - name: Setup Python
         if: steps.scope.outputs.render == 'true'
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.12'
 
@@ -164,7 +169,13 @@ jobs:
 
       - name: Publish images
         if: steps.scope.outputs.render == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
+          basic="$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          echo "::add-mask::$basic"
+          export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=http.https://github.com/.extraheader
+          export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $basic"
           dest="pr-$PR/$HEAD_SHA"
           publish="$RUNNER_TEMP/publish"
           if git ls-remote --exit-code --heads origin render-evidence >/dev/null; then
@@ -185,7 +196,7 @@ jobs:
           git add "$dest"
           git commit -q -m "Render evidence for #$PR at ${HEAD_SHA:0:9}"
           # Other PRs publish to the same branch; rebase onto theirs and retry.
-          for attempt in 1 2 3 4 5; do
+          for _ in 1 2 3 4 5; do
             git push origin render-evidence && exit 0
             git pull -q --rebase origin render-evidence
           done
@@ -198,9 +209,9 @@ jobs:
           EVIDENCE_FOCUS: ${{ steps.scope.outputs.scenes == 'false' && 'icons' || 'all' }}
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
-          prefix="https://raw.githubusercontent.com/${{ github.repository }}/render-evidence/pr-$PR/$HEAD_SHA"
-          python tools/shadcn/render_evidence.py comment "$RUNNER_TEMP/compare" "$prefix" "$HEAD_SHA" "${{ github.repository }}" "$EVIDENCE_FOCUS" > "$RUNNER_TEMP/comment.md"
-          existing="$(gh api "repos/${{ github.repository }}/issues/$PR/comments" --paginate \
+          prefix="https://raw.githubusercontent.com/$GITHUB_REPOSITORY/render-evidence/pr-$PR/$HEAD_SHA"
+          python tools/shadcn/render_evidence.py comment "$RUNNER_TEMP/compare" "$prefix" "$HEAD_SHA" "$GITHUB_REPOSITORY" "$EVIDENCE_FOCUS" > "$RUNNER_TEMP/comment.md"
+          existing="$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments" --paginate \
             --jq '[.[] | select(.body | startswith("<!-- render-evidence -->")) | .id] | first // empty')"
           if [[ ! -s "$RUNNER_TEMP/comment.md" && "$PR_TITLE" =~ ^fix(\(.*\))?!?: ]]; then
             # A fix that moves no captured pixel was most likely never captured; say so rather
@@ -215,17 +226,17 @@ jobs:
             # No render changed. Drop an earlier comment that a later push made stale.
             echo "::notice::No render changed; no evidence comment."
             if [[ -n "$existing" ]]; then
-              gh api --method DELETE "repos/${{ github.repository }}/issues/comments/$existing"
+              gh api --method DELETE "repos/$GITHUB_REPOSITORY/issues/comments/$existing"
             fi
           elif [[ -n "$existing" ]]; then
-            gh api --method PATCH "repos/${{ github.repository }}/issues/comments/$existing" -F body=@"$RUNNER_TEMP/comment.md" >/dev/null
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$existing" -F body=@"$RUNNER_TEMP/comment.md" >/dev/null
           else
             gh pr comment "$PR" --body-file "$RUNNER_TEMP/comment.md"
           fi
 
       - name: Upload captures
         if: steps.scope.outputs.render == 'true'
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: render-evidence-pr${{ github.event.pull_request.number }}
           path: |

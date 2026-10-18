@@ -1,0 +1,53 @@
+# Awake Engine
+
+> Awake Engine (AwakeKt) is a code-first Kotlin Multiplatform engine for interactive 2D and 3D apps and games. You write scenes, systems and UI in Kotlin; Awake renders with Vulkan (desktop, Android, iOS through MoltenVK) and WebGPU (web), simulates with Jolt physics, and ships a retained, Compose-shaped UI runtime. It is open source under the Apache License 2.0 and published to Maven Central. It is early alpha software: APIs and published modules can change between releases.
+
+Awake Engine is the free, code-first core. Awake Studio is a separate visual editor built on it; the engine never depends on Studio.
+
+## Docs
+
+- [Installation](https://docs.awakekt.com/latest/get-started/installation/): Gradle setup, Maven coordinates and versions for each target
+- [Your first window](https://docs.awakekt.com/latest/get-started/first-window/): the `app { }` entry point and the desktop host
+- [Your first scene](https://docs.awakekt.com/latest/get-started/first-scene/): entities, components and systems with the scene DSL
+- [Load a scene document](https://docs.awakekt.com/latest/get-started/load-a-scene-document/): load a `*.scene.json` document at runtime
+- [Run in the browser](https://docs.awakekt.com/latest/get-started/run-in-the-browser/): Kotlin/Wasm and WebGPU
+- [ECS guide](https://docs.awakekt.com/latest/guides/ecs/): the sparse-set entity component system
+- [Scene documents](https://docs.awakekt.com/latest/guides/scene-documents/): the scene file format and how scenes are saved and loaded
+- [Physics](https://docs.awakekt.com/latest/guides/physics/): rigid bodies, shapes and the Jolt backend
+- [Game UI](https://docs.awakekt.com/latest/guides/game-ui/): in-game UI built on the retained UI runtime
+- [Vulkan backend](https://docs.awakekt.com/latest/guides/vulkan/) and [WebGPU backend](https://docs.awakekt.com/latest/guides/webgpu/): the rendering backends
+
+## Reference
+
+- [Modules](https://docs.awakekt.com/latest/reference/modules/): every published module and what it is for
+- [Scene document schema](https://docs.awakekt.com/latest/reference/scene-document-schema/): the scene JSON schema
+- [Component map](https://docs.awakekt.com/latest/reference/component-map/): the ECS components the engine ships
+- [Render hardware interface](https://docs.awakekt.com/latest/reference/rhi/): the backend-neutral rendering contract
+- [Releases and compatibility](https://docs.awakekt.com/latest/reference/releases/): versions, platforms and compatibility
+- [Glossary](https://docs.awakekt.com/latest/reference/glossary/)
+
+## Samples
+
+- [Live samples](https://demo.awakekt.com/): a WebGPU scene showcase and the Awake UI component gallery, running in the browser
+- [Engine showcase source](https://github.com/awakekt/awake/tree/main/samples/engine-showcase): the complete working example
+
+## Releases and packages
+
+- [GitHub releases](https://github.com/awakekt/awake/releases): release notes for each version
+- [Changelog](https://github.com/awakekt/awake/blob/main/CHANGELOG.md)
+- [Maven Central](https://central.sonatype.com/namespace/com.awakekt.awake.engine): artifacts are published under the group IDs `com.awakekt.awake.engine` (for example `bootstrap`), `com.awakekt.awake.asset` (for example `shaders`) and `com.awakekt.awake.backend` (`vulkan`)
+- [Source repository](https://github.com/awakekt/awake): Kotlin sources, module guide and architecture notes
+
+## License
+
+- [Apache License 2.0](https://github.com/awakekt/awake/blob/main/LICENSE.md): the engine is free to use, including commercially
+- [Trademark notice](https://github.com/awakekt/awake/blob/main/TRADEMARKS.md): the AwakeKt and Awake names and the Ember Signal mark
+- [Brand guidelines](https://awakekt.com/brand/)
+
+## Related: Awake Studio
+
+- [Awake Studio](https://studio.awakekt.com/): the visual editor for Awake Engine, with 2D and 3D scene editing, game UI, node-based logic and shader graphs without code, and publishing games that play in the browser; a separate product with a free plan
+- [Open in the browser](https://studio.awakekt.com/web/)
+- [Download](https://studio.awakekt.com/download/)
+- [User guide](https://studio.awakekt.com/docs/)
+- [Pricing](https://studio.awakekt.com/pricing/)

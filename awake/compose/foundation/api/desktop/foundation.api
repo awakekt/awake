@@ -125,6 +125,23 @@ public final class com/awakekt/awake/compose/foundation/animation/ShimmerModifie
 	public static synthetic fun shimmer$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/core/color/Color;FILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
 }
 
+public final class com/awakekt/awake/compose/foundation/animation/TrailingValue {
+	public fun <init> ()V
+	public fun <init> (F)V
+	public synthetic fun <init> (FILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun advance (FFFF)F
+	public static synthetic fun advance$default (Lcom/awakekt/awake/compose/foundation/animation/TrailingValue;FFFFILjava/lang/Object;)F
+	public final fun getValue ()F
+	public final fun snapTo (F)V
+}
+
+public final class com/awakekt/awake/compose/foundation/animation/TrailingValueKt {
+	public static final field DEFAULT_TRAIL_DRAIN_PER_SECOND F
+	public static final field DEFAULT_TRAIL_HOLD_SECONDS F
+	public static final fun animateTrailing (Lcom/awakekt/awake/compose/runtime/Composer;FFF)F
+	public static synthetic fun animateTrailing$default (Lcom/awakekt/awake/compose/runtime/Composer;FFFILjava/lang/Object;)F
+}
+
 public final class com/awakekt/awake/compose/foundation/gestures/DraggableKt {
 	public static final fun dragAfterThreshold (Lcom/awakekt/awake/compose/ui/Modifier;ILkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;)Lcom/awakekt/awake/compose/ui/Modifier;
 	public static synthetic fun dragAfterThreshold$default (Lcom/awakekt/awake/compose/ui/Modifier;ILkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;

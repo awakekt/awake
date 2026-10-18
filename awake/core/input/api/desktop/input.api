@@ -240,6 +240,12 @@ public final class com/awakekt/awake/core/input/GamepadInputKt {
 	public static final fun setGamepadButtons (Lcom/awakekt/awake/core/input/Input;Lkotlin/jvm/functions/Function1;)V
 }
 
+public final class com/awakekt/awake/core/input/HeldStep {
+	public fun <init> ()V
+	public final fun advance (ZFFF)I
+	public static synthetic fun advance$default (Lcom/awakekt/awake/core/input/HeldStep;ZFFFILjava/lang/Object;)I
+}
+
 public final class com/awakekt/awake/core/input/ImeComposition {
 	public fun <init> (Ljava/lang/String;II)V
 	public synthetic fun <init> (Ljava/lang/String;IIILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -610,6 +616,23 @@ public final class com/awakekt/awake/core/input/KeyModifier : java/lang/Enum {
 	public final fun getKey ()Lcom/awakekt/awake/core/input/Key;
 	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/core/input/KeyModifier;
 	public static fun values ()[Lcom/awakekt/awake/core/input/KeyModifier;
+}
+
+public final class com/awakekt/awake/core/input/NumberStepping {
+	public static final field INSTANCE Lcom/awakekt/awake/core/input/NumberStepping;
+	public static final field MAX_DECIMALS I
+	public static final field PAGE_STEPS I
+	public static final field REPEAT_DELAY_SECONDS F
+	public static final field REPEAT_INTERVAL_SECONDS F
+	public final fun boundOf (Lcom/awakekt/awake/core/input/Key;)I
+	public final fun clamp (FFF)F
+	public final fun format (FI)Ljava/lang/String;
+	public static synthetic fun format$default (Lcom/awakekt/awake/core/input/NumberStepping;FIILjava/lang/Object;)Ljava/lang/String;
+	public final fun repeatsAfter (FFF)I
+	public static synthetic fun repeatsAfter$default (Lcom/awakekt/awake/core/input/NumberStepping;FFFILjava/lang/Object;)I
+	public final fun stepped (FIFFF)F
+	public final fun stepsOf (Lcom/awakekt/awake/core/input/GamepadButton;)I
+	public final fun stepsOf (Lcom/awakekt/awake/core/input/Key;)I
 }
 
 public final class com/awakekt/awake/core/input/PinchGesture {

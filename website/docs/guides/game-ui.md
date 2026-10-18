@@ -419,7 +419,7 @@ once its capability registers them.
 | Field | What it does |
 | --- | --- |
 | `node` | The name of the node whose components are read. |
-| `value` | A `Bar`'s fill: this field, divided by `max`. |
+| `value` | A `Bar`'s or `Sweep`'s fill: this field, divided by `max`. A `Stepper`'s number: the field as it is. |
 | `max` | A field, or a number such as `"100"`. Left out, `value` is already a share from 0 to 1. |
 | `text` | The words of a `Text` or `Button`, each `{component.field}` replaced by its value. A whole number shows exactly, however large, and any other number to one decimal place. A [format](#number-formats) after a colon, such as `{purse.gold:n0}`, sets how a number is written. |
 | `textArgs` | A `textKey`'s arguments read from fields: each name to its `component.field`, such as `{ "count": "inventory.count" }`. See [Show text in the player's language](#show-text-in-the-players-language). |
@@ -427,6 +427,52 @@ once its capability registers them.
 | `cooldownMax` | A field, or a number, `cooldown` is a share of. |
 | `charges` | An action button's uses left, a whole number shown in a badge. |
 | `enabled` | Whether an action button can be pressed: `true` or a number above 0. |
+
+### Gauges and steppers
+
+A `Bar` is a progress bar. With no `bar` settings it fills across from the left, as it always has.
+Its `bar` settings make it fill another way, trail a drop, split into blocks, or show its value:
+
+```json title="A health bar that shows damage just taken, and a stamina bar in pips"
+[
+  { "component": "canvas_element", "kind": "Bar", "width": 160, "height": 16, "color": "#30A46C",
+    "fontSize": 12, "bind": { "node": "Player", "value": "health.current", "max": "health.max",
+                              "text": "{health.current}/{health.max}" },
+    "bar": { "track": "#FFFFFF20", "trailColor": "#E5484D", "label": true } },
+  { "component": "canvas_element", "kind": "Bar", "width": 160, "height": 8, "color": "#F5D90A",
+    "bind": { "node": "Player", "value": "stamina.current", "max": "stamina.max" },
+    "bar": { "segments": 5 } }
+]
+```
+
+| `bar` field | Default | What it does |
+| --- | --- | --- |
+| `direction` | `LeftToRight` | `LeftToRight`, `RightToLeft`, `BottomToTop`, `TopToBottom`, or `Radial`, around the element's centre clockwise from 12 o'clock. |
+| `thickness` | `0` | A radial bar's ring width in dp; 0 fills a pie. |
+| `track` | none | The colour of the part not yet filled, in the bar's shape. |
+| `trailColor` | none | A second fill behind the first, in this colour. When the value drops it holds for `trailDelay` seconds (`0.5`), then drains at `trailSpeed` (`1.5`) of the bar a second; a rise moves it at once. |
+| `segments`, `segmentGap` | `0`, `2` | The bar as this many blocks, `segmentGap` dp apart, filled in turn. |
+| `ticks`, `tickColor` | `0`, `#00000080` | Marks dividing the bar into this many equal parts. |
+| `label` | `false` | Shows the bar's text, `textKey` or `bind.text` centred on it, or else its value as a percentage, in white or the style's `textColor`. |
+
+A `fillImage` still fills a bar that has settings, from the edge its `direction` names. With
+`style.fillImageMode` `Capped`, its end caps stay whole at every value.
+
+A `Sweep` fills its `value` of a full turn, for a cooldown, a timer or a charge. It draws in its
+`color`, or its `style.fillImage` cut to the sweep, over its `background`. Its `sweep` settings say
+how: `startAngle` in degrees clockwise from 12 o'clock (`0`), `clockwise` (`true`), a `mask` the pie
+is cut to (`Box`, rounded by the style's `cornerRadius`, `Circle`, `Pill` or `CutCorner`), a ring
+`thickness` in dp (`0` for a pie), and a `track` colour for what is not yet swept. An action
+button's cooldown draws the same sweep.
+
+A `Stepper` holds a number between minus and plus buttons, such as a quantity to buy. Its `stepper`
+settings give the `value` it starts at, `min`, `max` (`0`, `100`), `step` (`1`), the `decimals` it
+shows, and how a held button repeats: after `repeatDelay` seconds (`0.4`), every `repeatInterval`
+(`0.08`). A click on it gives it the keyboard: Up and Down, or Left and Right, step it, Page Up and
+Page Down take ten steps, and Home and End jump to `min` and `max`. Game code polls
+`consumeChange()` and reads `number`, and calls `stepBy(button)` with a controller's button, so the
+pad steps it too. A bound `bind.value` sets the number from a field every frame, so the game writes
+the player's change back to the field.
 
 ### Number formats
 
@@ -762,6 +808,57 @@ place of its own; leave the world out to use the runtime's own.
 Each drawn element carries the test tag `canvas-element-<entity id>` in the UI's semantics tree.
 `SceneAppLifecycleRuntime.uiSemantics` holds the last frame's tree, so a test can find an element
 and check where it was placed.
+
+## Build a prefab in code
+
+A plugin or a game that ships ready-made UI, such as a unit frame or an action bar, builds it as a
+prefab of `canvas_element` nodes with `canvasPrefab`. Each element kind has its function (`text`,
+`panel`, `bar`, `button`, `textField`, `joystick`, `image`, `view`, `lookArea`, `sweep`, `stepper`),
+and each `canvas_element` field is a setting of the same name. Sizes and offsets are `Dp`, a font size
+is `Sp` and colours are `Color`s; settings that are objects of their own, such as `style`, `layout`,
+`bind`, `bar`, `sweep` or `button`, take their `awake:ui:canvas` type.
+
+```kotlin title="Kotlin"
+--8<-- "awake/scene/runtime/src/commonTest/kotlin/com/awakekt/awake/scene/runtime/CanvasPrefabRoundTripTest.kt:canvas-prefab"
+```
+
+`canvasPrefab` validates what it builds and throws a `SceneValidationException` listing each problem,
+such as a field set on a kind it does nothing for, two nodes of one name, or two elements of one
+`elementId`. `CanvasPrefabs.problems(prefab)` checks a prefab without throwing.
+
+`CanvasPrefabs.toJson(prefab)` writes the file an editor saves: every field written and colours as
+hex, `#RRGGBB` when opaque and `#RRGGBBAA` otherwise, as `Color.toHex()` writes them. Opened in the
+editor and saved, it comes back unchanged, so keep the `guid` the same from one build to the next and
+the file diffs cleanly. `CanvasPrefabs.fromJson` reads one back.
+
+### Find an element by id
+
+Give each element code needs an `elementId`, the `id` of its function. Code finds it under one placed
+copy's root, the entity its `prefab_link` node made, rather than by name: a name changes when someone
+renames the node, and every copy of the prefab repeats it.
+
+```kotlin title="Kotlin"
+--8<-- "awake/scene/runtime/src/commonTest/kotlin/com/awakekt/awake/scene/runtime/CanvasPrefabRoundTripTest.kt:find-by-id"
+```
+
+`findCanvasElement` looks at every canvas element in the world, so look up once, when the prefab is
+placed, and keep the entity. A host that draws a prefab without a world finds the node in the prefab
+itself with `prefab.findCanvasNode("slot-1")`.
+
+### Save typed sizes and colours
+
+A theme or a layout of your own can keep `Dp`, `Sp` and `Color` fields and still save as data:
+`DpSerializer` and `SpSerializer` from `awake:core:schema` write a number, and `ColorHexSerializer`
+writes the same hex a canvas element saves.
+
+```kotlin title="Kotlin"
+@Serializable
+data class FrameTheme(
+    @Serializable(with = DpSerializer::class) val gap: Dp = 4.dp,
+    @Serializable(with = SpSerializer::class) val fontSize: Sp = 12.sp,
+    @Serializable(with = ColorHexSerializer::class) val accent: Color = Color.White,
+)
+```
 
 ## See also
 

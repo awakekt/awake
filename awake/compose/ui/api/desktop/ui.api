@@ -112,6 +112,7 @@ public abstract interface class com/awakekt/awake/compose/ui/draw/ContentDrawSco
 
 public final class com/awakekt/awake/compose/ui/draw/ContentDrawScope$DefaultImpls {
 	public static fun getLayoutDirection (Lcom/awakekt/awake/compose/ui/draw/ContentDrawScope;)Lcom/awakekt/awake/compose/ui/unit/LayoutDirection;
+	public static fun isDevicePixelAligned (Lcom/awakekt/awake/compose/ui/draw/ContentDrawScope;)Z
 }
 
 public final class com/awakekt/awake/compose/ui/draw/DrawModifiersKt {
@@ -526,6 +527,7 @@ public abstract interface class com/awakekt/awake/compose/ui/graphics/drawscope/
 	public abstract fun getHeight ()I
 	public fun getLayoutDirection ()Lcom/awakekt/awake/compose/ui/unit/LayoutDirection;
 	public abstract fun getWidth ()I
+	public fun isDevicePixelAligned ()Z
 	public abstract fun withAlpha (FLkotlin/jvm/functions/Function0;)V
 	public abstract fun withScale (FFLkotlin/jvm/functions/Function0;)V
 }
@@ -539,6 +541,7 @@ public final class com/awakekt/awake/compose/ui/graphics/drawscope/DrawScope$Def
 	public static synthetic fun drawShadow$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;FFFFLcom/awakekt/awake/core/color/Color;FFFFFLcom/awakekt/awake/core/graphics2d/LinearGradient;ILjava/lang/Object;)V
 	public static synthetic fun drawTexture$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;Ljava/lang/Object;FFFFLcom/awakekt/awake/core/graphics2d/TextureRegion;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;ZILjava/lang/Object;)V
 	public static fun getLayoutDirection (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;)Lcom/awakekt/awake/compose/ui/unit/LayoutDirection;
+	public static fun isDevicePixelAligned (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;)Z
 }
 
 public final class com/awakekt/awake/compose/ui/graphics/drawscope/DrawScopeKt {

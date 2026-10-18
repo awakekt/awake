@@ -7,6 +7,24 @@ public final synthetic class com/awakekt/awake/core/schema/AssetReference$Impl :
 	public final synthetic fun kind ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/core/schema/ColorHexSerializer : kotlinx/serialization/KSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/core/schema/ColorHexSerializer;
+	public fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/core/color/Color;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/core/color/Color;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+}
+
+public final class com/awakekt/awake/core/schema/DpSerializer : kotlinx/serialization/KSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/core/schema/DpSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public fun deserialize-ggnb7VQ (Lkotlinx/serialization/encoding/Decoder;)F
+	public fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun serialize-HmGnkO4 (Lkotlinx/serialization/encoding/Encoder;F)V
+}
+
 public final class com/awakekt/awake/core/schema/JsonSchemaExportKt {
 	public static final fun toJsonSchema (Lcom/awakekt/awake/core/schema/PropertySchema;Lcom/awakekt/awake/core/schema/JsonSchemaExportOptions;)Lkotlinx/serialization/json/JsonObject;
 	public static synthetic fun toJsonSchema$default (Lcom/awakekt/awake/core/schema/PropertySchema;Lcom/awakekt/awake/core/schema/JsonSchemaExportOptions;ILjava/lang/Object;)Lkotlinx/serialization/json/JsonObject;
@@ -253,5 +271,14 @@ public final class com/awakekt/awake/core/schema/SliderHint {
 	public final fun getStep ()D
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/schema/SpSerializer : kotlinx/serialization/KSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/core/schema/SpSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public fun deserialize-8UoY8NY (Lkotlinx/serialization/encoding/Decoder;)F
+	public fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun serialize-hXpxhLA (Lkotlinx/serialization/encoding/Encoder;F)V
 }
 

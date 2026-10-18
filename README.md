@@ -2,7 +2,7 @@
 <p align="center">A code-first Kotlin Multiplatform engine for building interactive 2D and 3D applications.</p>
 
 <p align="center">
-  <a href="https://github.com/awakekt/awake/releases/tag/v0.1.0-alpha.7"><img src="https://img.shields.io/badge/Release-v0.1.0--alpha.7-blue.svg" alt="Release v0.1.0-alpha.7"></a>
+  <a href="https://github.com/awakekt/awake/releases"><img src="https://img.shields.io/github/v/release/awakekt/awake?filter=v*&label=Release" alt="Latest Awake Core release"></a>
   <a href="https://github.com/awakekt/awake/actions/workflows/build-and-publish.yml"><img src="https://github.com/awakekt/awake/actions/workflows/build-and-publish.yml/badge.svg" alt="Build and publish"></a>
   <a href="https://kotlinlang.org"><img src="https://img.shields.io/badge/Kotlin-2.4.20-blue.svg?logo=kotlin" alt="Kotlin"></a>
   <a href="https://opensource.org/licenses/Apache-2.0"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="Apache 2.0 license"></a>
@@ -22,6 +22,18 @@ game or tool code across desktop, mobile, and the web.
 - **Multiple backends** — Vulkan for native targets and WebGPU for the web.
 - **Native UI runtime** — build retained UI with Awake's own UI and Shadcn component modules.
 
+## Awake Studio
+
+[Awake Studio](https://studio.awakekt.com/) is the visual editor for Awake Engine. It edits 2D and
+3D scenes, game UI, node-based logic and shader graphs without code, and publishes games that play
+in the browser. [Open it in the browser](https://studio.awakekt.com/web/),
+[download it](https://studio.awakekt.com/download/), or read the
+[user guide](https://studio.awakekt.com/docs/).
+
+Studio is a separate product built on Awake. This repository stays code-first and free under
+Apache-2.0: you never need Studio to use the engine, and the scene documents it saves are plain
+files the engine loads.
+
 ## Try the examples
 
 Clone the repository and run the engine showcase:
@@ -37,13 +49,13 @@ commands.
 ## Install
 
 Awake artifacts are published to Maven Central. Core modules share one version (latest
-`0.1.0-alpha.7`); the Vulkan backend has its own release train (latest `0.1.0`, built against Core
-`0.1.0-alpha.7`). Add only the modules your application uses to `gradle/libs.versions.toml`:
+`0.16.0`); the Vulkan backend has its own release train (latest `0.1.33`, built against Core
+`0.16.0`). Add only the modules your application uses to `gradle/libs.versions.toml`:
 
 ```toml
 [versions]
-awake = "0.1.0-alpha.7"
-awake-vulkan = "0.1.0"
+awake = "0.16.0"
+awake-vulkan = "0.1.33"
 
 [libraries]
 awake-bootstrap = { group = "com.awakekt.awake.engine", name = "bootstrap", version.ref = "awake" }
@@ -128,12 +140,14 @@ the version you are using.
 
 ## Documentation
 
+- [Online documentation](https://docs.awakekt.com/) and [live samples](https://demo.awakekt.com/)
 - [Getting started](website/docs/getting-started.md)
 - [Documentation index](docs/README.md)
 - [Module guide](awake/README.md)
 - [Release process](docs/release-process.md)
 - [Architecture decisions and references](docs/reference/)
 - [AwakeKt brand system](docs/reference/brand-system.md)
+- [`llms.txt`](https://awakekt.com/llms.txt), a plain-text index of the docs for AI tools
 
 ## Contributing
 

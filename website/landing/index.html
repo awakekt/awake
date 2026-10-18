@@ -11,6 +11,71 @@
   <title>AwakeKt Engine: a Kotlin Multiplatform engine for 2D and 3D apps</title>
   <meta name="description" content="A code-first Kotlin Multiplatform engine: scenes, Vulkan and WebGPU rendering, Jolt physics, and retained UI for desktop, Android, iOS, and the web.">
   <link rel="canonical" href="https://awakekt.com/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="AwakeKt">
+  <meta property="og:title" content="AwakeKt Engine: a Kotlin Multiplatform engine for 2D and 3D apps">
+  <meta property="og:description" content="A code-first Kotlin Multiplatform engine: scenes, Vulkan and WebGPU rendering, Jolt physics, and retained UI for desktop, Android, iOS, and the web.">
+  <meta property="og:url" content="https://awakekt.com/">
+  <meta property="og:image" content="https://awakekt.com/brand/awake-mark.png">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="AwakeKt Engine: a Kotlin Multiplatform engine for 2D and 3D apps">
+  <meta name="twitter:description" content="A code-first Kotlin Multiplatform engine: scenes, Vulkan and WebGPU rendering, Jolt physics, and retained UI for desktop, Android, iOS, and the web.">
+  <meta name="twitter:image" content="https://awakekt.com/brand/awake-mark.png">
+  <link rel="alternate" type="text/markdown" href="https://awakekt.com/llms.txt" title="llms.txt">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://awakekt.com/#organization",
+        "name": "AwakeKt",
+        "url": "https://awakekt.com/",
+        "logo": "https://awakekt.com/brand/awake-mark.png",
+        "sameAs": [
+          "https://github.com/awakekt",
+          "https://github.com/awakekt/awake"
+        ]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://awakekt.com/#website",
+        "name": "AwakeKt Engine",
+        "url": "https://awakekt.com/",
+        "description": "A code-first Kotlin Multiplatform engine for 2D and 3D apps.",
+        "inLanguage": "en",
+        "publisher": { "@id": "https://awakekt.com/#organization" }
+      },
+      {
+        "@type": "SoftwareSourceCode",
+        "@id": "https://awakekt.com/#source",
+        "name": "Awake Engine",
+        "description": "A code-first Kotlin Multiplatform engine: scenes, Vulkan and WebGPU rendering, Jolt physics, and retained UI for desktop, Android, iOS, and the web.",
+        "codeRepository": "https://github.com/awakekt/awake",
+        "programmingLanguage": { "@type": "ComputerLanguage", "name": "Kotlin" },
+        "license": "https://www.apache.org/licenses/LICENSE-2.0",
+        "runtimePlatform": ["JVM", "Android", "iOS", "WebAssembly"],
+        "targetProduct": { "@id": "https://awakekt.com/#software" },
+        "author": { "@id": "https://awakekt.com/#organization" }
+      },
+      {
+        "@type": "SoftwareApplication",
+        "@id": "https://awakekt.com/#software",
+        "name": "Awake Engine",
+        "applicationCategory": "DeveloperApplication",
+        "applicationSubCategory": "Game engine",
+        "operatingSystem": "Linux, macOS, Android, iOS, Web",
+        "url": "https://awakekt.com/",
+        "downloadUrl": "https://central.sonatype.com/namespace/com.awakekt.awake.engine",
+        "softwareHelp": "https://docs.awakekt.com/",
+        "license": "https://www.apache.org/licenses/LICENSE-2.0",
+        "isAccessibleForFree": true,
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "publisher": { "@id": "https://awakekt.com/#organization" }
+      }
+    ]
+  }
+  </script>
   <link rel="icon" href="awake-mark.svg" type="image/svg+xml">
   <script>
     // Light by default; apply a saved choice before first paint.
@@ -405,9 +470,9 @@
         <span>AwakeKt Engine</span>
       </a>
       <nav class="nav" aria-label="Primary">
-        <span class="version">v0.1.0-alpha.7</span>
         <a class="nav-docs" href="https://docs.awakekt.com/">Docs</a>
         <a href="https://demo.awakekt.com/">Samples</a>
+        <a href="https://studio.awakekt.com/">Studio</a>
         <a href="https://github.com/awakekt/awake">GitHub</a>
         <button class="theme-toggle" type="button" aria-label="Switch to light theme">
           <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5Z"/></svg>
@@ -525,8 +590,8 @@
         <figure class="code" aria-label="Gradle version catalog">
           <div class="code-bar"><span>libs.versions.toml</span><button class="copy" type="button" data-copy="toml">Copy</button></div>
 <pre><code id="toml"><span class="tok-k">[versions]</span>
-awake = <span class="tok-s">"0.1.0-alpha.7"</span>
-awake-vulkan = <span class="tok-s">"0.1.0"</span>
+awake = <span class="tok-s">"0.16.0"</span>
+awake-vulkan = <span class="tok-s">"0.1.33"</span>
 
 <span class="tok-k">[libraries]</span>
 awake-bootstrap = { group = <span class="tok-s">"com.awakekt.awake.engine"</span>, name = <span class="tok-s">"bootstrap"</span>, version.ref = <span class="tok-s">"awake"</span> }
@@ -553,7 +618,9 @@ awake-vulkan = { group = <span class="tok-s">"com.awakekt.awake.backend"</span>,
       <span>AwakeKt Engine is available under the Apache License 2.0.</span>
       <nav aria-label="Footer">
         <a href="https://docs.awakekt.com/">Docs</a>
+        <a href="https://studio.awakekt.com/">Studio</a>
         <a href="https://github.com/awakekt/awake">GitHub</a>
+        <a href="llms.txt">llms.txt</a>
         <a href="brand/">Brand</a>
         <a href="https://github.com/awakekt/awake/blob/main/TRADEMARKS.md">Trademarks</a>
       </nav>

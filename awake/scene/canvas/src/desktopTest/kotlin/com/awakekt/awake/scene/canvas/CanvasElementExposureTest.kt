@@ -32,6 +32,7 @@ class CanvasElementExposureTest {
         "textAlign", "follow", "followOffset", "followBounds", "followOutset", "followRules", "followArrow", "layout", "grow",
         "bind", "wheel", "draggable", "dropTarget", "camera", "links", "mask", "maxLength", "maxLengthUnit",
         "font", "pressable", "joystick", "button", "enabled", "look", "cluster", "skin", "controlId",
+        "bar", "sweep", "stepper", "elementId",
     ).associateWith { it }
 
     /** Options that cannot be written as data, with why. Each is set from code through the live element. */
@@ -42,6 +43,7 @@ class CanvasElementExposureTest {
         "charges" to "how many uses are left right now, set by game code or read through bind.charges",
         "aimLock" to "a hook into the game's own targets, which only code can answer",
         "previewState" to "an editor's preview of one state, never saved with the scene",
+        "number" to "a Stepper's number right now, saved as its stepper.value, set by the player, game code or bind.value",
     )
 
     /** [CanvasElement]'s own options: its public setters, skipping a synthetic bridge's `$`-named one. */

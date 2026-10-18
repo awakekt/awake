@@ -20,10 +20,13 @@ import com.awakekt.awake.nodegraph.NodeGraph
 import com.awakekt.awake.nodegraph.NodeRegistry
 import com.awakekt.awake.nodegraph.NodeSpec
 import com.awakekt.awake.nodegraph.PortSpec
+import com.sun.management.HotSpotDiagnosticMXBean
 import com.sun.management.ThreadMXBean
 import java.lang.management.ManagementFactory
+import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
@@ -33,6 +36,10 @@ import kotlin.test.assertTrue
  *
  * Two views, because culling decides what a frame costs: every node on screen at zoom 0.25 is the
  * worst case, and zoom 1 over the same graph is what an editor usually shows.
+ *
+ * Each view warms up, keeps going until two windows agree, then takes seven windows and fails only
+ * when every one of them is over the ceiling. It runs with escape analysis off, so the count is the
+ * code's and not the JIT's: see the ceilings.
  *
  * Desktop-only: `currentThreadAllocatedBytes` has no wasm or Native equivalent.
  */
@@ -77,35 +84,55 @@ class NodeGraphCanvasFrameProbe {
     }
 
     private fun probe(label: String, viewport: NodeGraphViewport, ceiling: Long, extraBytesPerFrame: Int = 0) {
+        assertFalse(escapeAnalysisEnabled(), ESCAPE_ANALYSIS_REQUIRED)
         val root = LayoutNode(ColumnMeasurePolicy())
         var primitives = 0
         repeat(WARMUP_FRAMES) { primitives = frame(root, viewport) }
 
-        // One early window can straddle JIT compilation. Take a fixed set, never retry until green.
-        // Read the counters before constructing result objects or formatting the diagnostics.
-        val samples = List(MEASUREMENT_WINDOWS) {
-            val bytesBefore = allocatedBytes()
-            val start = System.nanoTime()
-            repeat(MEASURED_FRAMES) {
-                frame(root, viewport)
-                if (extraBytesPerFrame > 0) allocationSink = ByteArray(extraBytesPerFrame)
-            }
-            val bytes = allocatedBytes() - bytesBefore
-            val elapsed = System.nanoTime() - start
-            Measurement(bytes / MEASURED_FRAMES, elapsed)
+        // Keep warming until two windows in a row agree, so no measured window straddles a
+        // compilation. Bounded, and never a retry: the windows below are taken exactly once.
+        var settleWindows = 1
+        var previous = window(root, viewport, extraBytesPerFrame).bytesPerFrame
+        var settled = false
+        while (!settled && settleWindows < MAX_SETTLE_WINDOWS) {
+            val next = window(root, viewport, extraBytesPerFrame).bytesPerFrame
+            settleWindows++
+            settled = abs(next - previous) <= SETTLED_BYTES_PER_FRAME
+            previous = next
         }
+
+        val samples = List(MEASUREMENT_WINDOWS) { window(root, viewport, extraBytesPerFrame) }
         allocationSink = null
         val windows = samples.map { it.bytesPerFrame }
-        val median = windows.sorted()[MEASUREMENT_WINDOWS / 2]
+        val sorted = windows.sorted()
+        val lowest = sorted.first()
+        val noiseBand = sorted.last() - lowest
         val totalMillis = samples.sumOf { it.elapsedNanos } / 1_000_000.0
         val measuredFrames = MEASUREMENT_WINDOWS * MEASURED_FRAMES
-        val report = "NodeGraphCanvasFrameProbe [$label]: median=$median B/frame, ceiling=$ceiling B/frame, " +
-            "windows=$windows; $primitives primitives; total ${"%.3f".format(totalMillis)} ms over " +
+        val report = "NodeGraphCanvasFrameProbe [$label]: min=$lowest B/frame, " +
+            "median=${sorted[MEASUREMENT_WINDOWS / 2]} B/frame, max=${sorted.last()} B/frame, " +
+            "noise band=$noiseBand B/frame, ceiling=$ceiling B/frame, windows=$windows; " +
+            "$primitives primitives; total ${"%.3f".format(totalMillis)} ms over " +
             "$measuredFrames measured frames ($MEASUREMENT_WINDOWS x $MEASURED_FRAMES), " +
-            "${"%.3f".format(totalMillis / measuredFrames)} ms/frame; warm-up=$WARMUP_FRAMES; " +
+            "${"%.3f".format(totalMillis / measuredFrames)} ms/frame; warm-up=$WARMUP_FRAMES frames + " +
+            "$settleWindows settle windows (settled=$settled); escape analysis off; " +
             "JVM=${System.getProperty("java.runtime.version")}"
         println(report)
-        assertTrue(median < ceiling, "Allocation ratchet exceeded: $report")
+        // A per-frame allocation is paid in every window, so it lifts the lowest one too.
+        assertTrue(lowest < ceiling, "Allocation ratchet exceeded in every window: $report")
+    }
+
+    /** One window of [MEASURED_FRAMES] frames. The counters are read before anything is built from them. */
+    private fun window(root: LayoutNode, viewport: NodeGraphViewport, extraBytesPerFrame: Int): Measurement {
+        val bytesBefore = allocatedBytes()
+        val start = System.nanoTime()
+        repeat(MEASURED_FRAMES) {
+            frame(root, viewport)
+            if (extraBytesPerFrame > 0) allocationSink = ByteArray(extraBytesPerFrame)
+        }
+        val bytes = allocatedBytes() - bytesBefore
+        val elapsed = System.nanoTime() - start
+        return Measurement(bytes / MEASURED_FRAMES, elapsed)
     }
 
     private fun frame(root: LayoutNode, viewport: NodeGraphViewport): Int {
@@ -118,6 +145,12 @@ class NodeGraphCanvasFrameProbe {
 
     private fun allocatedBytes(): Long = allocationCounter.currentThreadAllocatedBytes
 
+    private fun escapeAnalysisEnabled(): Boolean = ManagementFactory
+        .getPlatformMXBean(HotSpotDiagnosticMXBean::class.java)
+        .getVMOption("DoEscapeAnalysis")
+        .value
+        .toBoolean()
+
     private data class Measurement(val bytesPerFrame: Long, val elapsedNanos: Long)
 
     private companion object {
@@ -127,18 +160,27 @@ class NodeGraphCanvasFrameProbe {
         const val FRAME_HEIGHT = 800
         const val WARMUP_FRAMES = 2_000
         const val MEASURED_FRAMES = 300
-        const val MEASUREMENT_WINDOWS = 5
+        const val MEASUREMENT_WINDOWS = 7
+        const val MAX_SETTLE_WINDOWS = 10
+        const val SETTLED_BYTES_PER_FRAME = 256L
 
-        // Keep the original ceilings; the median rejects sustained regressions while tolerating
-        // isolated warm-up/compilation windows. These are ratchets, lowered as fixes land.
-        // First measured 2026-09-27 at 343 KB (all visible) and 451 KB (editor view) per frame. The
-        // editor view fell to 257-267 KB once unchanged Text stopped re-shaping every frame; the
-        // all-visible view, which composes almost no text below labelMinZoom, stayed at 334-359 KB.
+        const val ESCAPE_ANALYSIS_REQUIRED = "NodeGraphCanvasFrameProbe needs -XX:-DoEscapeAnalysis, which " +
+            "the module's desktopTest task passes. Run it through Gradle: with escape analysis on, the count " +
+            "depends on what the JIT happened to scalar-replace in this JVM, not on the code (#945)."
+
+        // These count every byte the frame asks for. The test JVM runs with escape analysis off
+        // (build.gradle.kts), because with it on the count depended on which per-node temporaries C2
+        // happened to scalar-replace in that JVM: the same commit read 346,920, 366,152 or 385,384
+        // B/frame (all visible) and 214,384 to 265,856 (editor view) across CI runs, while every window
+        // inside one run agreed to the byte (#945). With it off, ten local runs and every window in
+        // them read 606,856 and 521,552 exactly. That is also closer to what the frame costs where
+        // allocation hurts, on ART and Kotlin/Native, which have no C2 to remove the temporaries.
         //
-        // The canvas's own share is small: idle wires redraw retained meshes, and below
-        // labelMinZoom the port labels are not composed at all. What remains is mostly the engine's
-        // per-node work, chiefly one primitive per glyph.
-        const val ALL_VISIBLE_CEILING = 380_000L
-        const val EDITOR_VIEW_CEILING = 295_000L
+        // Ratchets, lowered as fixes land; each sits about 2% above the last measurement.
+        // The bytes are mostly the engine's per-node work, chiefly one primitive per glyph. The
+        // canvas's own share is small: idle wires redraw retained meshes, and below labelMinZoom the
+        // port labels are not composed at all.
+        const val ALL_VISIBLE_CEILING = 620_000L
+        const val EDITOR_VIEW_CEILING = 532_000L
     }
 }

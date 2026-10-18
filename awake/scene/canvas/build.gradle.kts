@@ -29,7 +29,8 @@ kotlin {
             api(project(":awake:core:io"))
             implementation(project(":awake:core:logging"))
             api(project(":awake:core:math"))
-            implementation(project(":awake:core:math2d"))
+            api(project(":awake:core:math2d"))
+            api(project(":awake:core:color"))
             api(project(":awake:core:text"))
             api(project(":awake:core:localization"))
             implementation(libs.kotlinx.serialization.json)
@@ -39,7 +40,6 @@ kotlin {
             implementation(libs.kotlinx.coroutines.test)
             implementation(project(":awake:compose:ui-testing"))
             implementation(project(":awake:compose:foundation"))
-            implementation(project(":awake:core:color"))
         }
     }
 }

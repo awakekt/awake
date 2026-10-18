@@ -25,6 +25,7 @@ import com.awakekt.awake.core.math2d.Dp
 import com.awakekt.awake.core.math2d.Rectangle
 import com.awakekt.awake.core.math2d.intersect
 import com.awakekt.awake.core.text.font.UiFont
+import kotlin.math.floor
 
 /** Private bridge for scopes that can preserve geometry the caller guarantees is immutable. */
 internal interface RetainedMeshDrawScope {
@@ -51,6 +52,18 @@ interface DrawScope {
     /** The node's layout direction. Defaults to left to right for scopes that do not track one. */
     val layoutDirection: com.awakekt.awake.compose.ui.unit.LayoutDirection
         get() = com.awakekt.awake.compose.ui.unit.LayoutDirection.Ltr
+
+    /**
+     * Whether a whole node-local pixel lands on a whole device pixel, so a caller that wants crisp
+     * edges may round a position it is about to draw at.
+     *
+     * Node origins are whole pixels, so this is false only inside [withScale] (or any other
+     * transform that is not a whole-pixel translation): there a rounded position would move in
+     * steps while the scale animates, and the position should stay fractional so the motion is
+     * smooth. Text reads it to put each line's start and baseline on the pixel grid.
+     */
+    val isDevicePixelAligned: Boolean
+        get() = true
 
     /** Fills a rectangle with [color]. Position and size are node-local pixels; the default is the whole node. */
     fun drawRect(
@@ -343,6 +356,9 @@ internal class PaintScope :
     override var layoutDirection: com.awakekt.awake.compose.ui.unit.LayoutDirection =
         com.awakekt.awake.compose.ui.unit.LayoutDirection.Ltr
         private set
+
+    override val isDevicePixelAligned: Boolean
+        get() = transform.isWholePixelTranslation
 
     private var alpha = 1f
 
@@ -834,6 +850,10 @@ private class DrawTransformState {
 
     private var translateX = 0f
     private var translateY = 0f
+
+    /** True when the transform only moves things by whole pixels, so nothing is resampled. */
+    val isWholePixelTranslation: Boolean
+        get() = scaleX == 1f && scaleY == 1f && translateX == floor(translateX) && translateY == floor(translateY)
 
     fun reset() {
         scaleX = 1f

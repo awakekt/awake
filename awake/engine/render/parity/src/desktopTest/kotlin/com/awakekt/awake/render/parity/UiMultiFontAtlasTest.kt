@@ -155,8 +155,14 @@ class UiMultiFontAtlasTest {
                 null
             }
             !file.exists() -> "${file.path} does not exist -- record it with -DAWAKE_RECORD_SNAPSHOTS=true"
-            else -> mismatch(name, pixels, file, if (backend == HeadlessUiBackend.WebGpu) WEBGPU_EDGE_TOLERANCE else CHANNEL_TOLERANCE)
+            else -> mismatch(name, pixels, file, baselineTolerance(name, backend))
         }
+    }
+
+    private fun baselineTolerance(name: String, backend: HeadlessUiBackend): Int = when {
+        backend == HeadlessUiBackend.WebGpu -> WEBGPU_EDGE_TOLERANCE
+        name.endsWith("one-atlas-${backend.name.lowercase()}") -> WRONG_ATLAS_TOLERANCE
+        else -> CHANNEL_TOLERANCE
     }
 
     private fun mismatch(name: String, pixels: ByteArray, baseline: File, tolerance: Int): String? {
@@ -206,6 +212,15 @@ class UiMultiFontAtlasTest {
          * and on Vulkan (CI's lavapipe); a wrong atlas or a reordered draw moves whole glyphs.
          */
         const val WEBGPU_EDGE_TOLERANCE = 24
+
+        /**
+         * The wrong-atlas control frame's baseline tolerance on Vulkan. Its glyph quads sample an atlas
+         * that doesn't hold their glyphs, so edge texels land on whatever ink sits next to them, and
+         * drivers resolve those few texels a few levels apart (Linux lavapipe and a desktop GPU: 2 px,
+         * 8 levels). The frame's own check is what rejects it; a renderer regression moves whole
+         * glyphs, over 1,400 px.
+         */
+        const val WRONG_ATLAS_TOLERANCE = 12
         const val FAILURE_DIR = "build/test-failures/UiMultiFontAtlasTest"
 
         val firstFont: UiFont = checkNotNull(TWO_FONT_LINES.first().first().font)

@@ -33,6 +33,9 @@ enum class FormulaProblemKind {
 
     /** A part that does not depend on the inputs has no finite answer, under [UndefinedMath.Error]. */
     Undefined,
+
+    /** It calls `random()` where nothing supplies a random source; see [FormulaSet.Builder.formula]. */
+    RandomUnavailable,
 }
 
 /**
@@ -69,12 +72,17 @@ class FormulaException(
 ) : IllegalArgumentException(describe(source, problems)) {
     private companion object {
         fun describe(source: String, problems: List<FormulaProblem>): String =
-            "Invalid formula '${source.take(PREVIEW_LENGTH)}${if (source.length > PREVIEW_LENGTH) "..." else ""}': " +
-                problems.joinToString("; ")
+            "Invalid formula '${preview(source)}': " + problems.joinToString("; ")
 
-        const val PREVIEW_LENGTH = 80
+        const val PREVIEW_LENGTH = SOURCE_PREVIEW_LENGTH
     }
 }
+
+private const val SOURCE_PREVIEW_LENGTH = 80
+
+/** [source] for a message: its first 80 characters, and `...` when there are more. */
+internal fun preview(source: String): String =
+    source.take(SOURCE_PREVIEW_LENGTH) + if (source.length > SOURCE_PREVIEW_LENGTH) "..." else ""
 
 /**
  * Thrown while a formula is evaluated: under [UndefinedMath.Error] when an operation has no finite answer,

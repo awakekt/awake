@@ -17,13 +17,15 @@ internal class Compilation(
 /**
  * Parses [source], resolves its names against [variables], checks its types and arities, and folds every
  * part that does not depend on the inputs into a constant. It reports every problem it can find rather
- * than stopping at the first, except that a syntax error stops it.
+ * than stopping at the first, except that a syntax error stops it. Without [allowRandom], a call to `random()`
+ * is a problem too.
  */
 @Suppress("TooManyFunctions") // One bind per syntax node, plus the checks they share.
 internal class Compiler(
     private val source: String,
     private val variables: FormulaVariables,
     private val options: FormulaOptions,
+    private val allowRandom: Boolean = true,
 ) {
     private val problems = ArrayList<FormulaProblem>()
     private val used = LinkedHashSet<FormulaVariable>()
@@ -175,6 +177,7 @@ internal class Compiler(
             problem(FormulaProblemKind.UnknownFunction, message, ast.start, ast.nameEnd)
             return Typed.Invalid
         }
+        if (function == FormulaFunction.Random && !allowRandom) return randomUnavailable(ast)
         if (!function.accepts(arguments.size)) {
             problem(
                 FormulaProblemKind.ArgumentCount,
@@ -214,6 +217,11 @@ internal class Compiler(
             FormulaFunction.If -> error("if is bound by bindIf")
         }
         return fold(node, arguments.all { it.isConstant })
+    }
+
+    private fun randomUnavailable(ast: Ast.Call): Typed {
+        problem(FormulaProblemKind.RandomUnavailable, "random() cannot be used here: nothing gives this formula a random source", ast)
+        return Typed.Invalid
     }
 
     @Suppress("ReturnCount") // A number, a true-or-false value, or a mismatch.

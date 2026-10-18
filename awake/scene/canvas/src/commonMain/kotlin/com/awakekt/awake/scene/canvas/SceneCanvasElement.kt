@@ -11,6 +11,7 @@ import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneValidationIssue
 import com.awakekt.awake.scene.document.SceneVec3
 import com.awakekt.awake.ui.canvas.CanvasAnchor
+import com.awakekt.awake.ui.canvas.CanvasBar
 import com.awakekt.awake.ui.canvas.CanvasBinding
 import com.awakekt.awake.ui.canvas.CanvasButton
 import com.awakekt.awake.ui.canvas.CanvasCluster
@@ -21,7 +22,9 @@ import com.awakekt.awake.ui.canvas.CanvasFollowRules
 import com.awakekt.awake.ui.canvas.CanvasJoystick
 import com.awakekt.awake.ui.canvas.CanvasLayout
 import com.awakekt.awake.ui.canvas.CanvasLook
+import com.awakekt.awake.ui.canvas.CanvasStepper
 import com.awakekt.awake.ui.canvas.CanvasStyle
+import com.awakekt.awake.ui.canvas.CanvasSweep
 import com.awakekt.awake.ui.canvas.canvasFontProblem
 import com.awakekt.awake.ui.canvas.isCanvasColor
 import kotlinx.serialization.SerialName
@@ -137,6 +140,22 @@ import kotlinx.serialization.Serializable
  * `transitionSeconds`; a colour or image path written `@name` is the theme's token.
  * @property controlId The name a player's saved layout knows this control by, such as `move`; empty
  * for none.
+ * @property bar How a Bar draws as a progress bar: its `direction` (`LeftToRight`, `RightToLeft`,
+ * `BottomToTop`, `TopToBottom`, or `Radial` around its centre, a ring `thickness` dp wide or a pie),
+ * a `track` colour, a `trailColor` fill that trails a drop by `trailDelay` seconds and drains at
+ * `trailSpeed` a second, `segments` blocks `segmentGap` dp apart, `ticks` in `tickColor`, and whether
+ * it shows a `label`, its text or else its value as a percentage. Null fills across from the left.
+ * @property sweep How a Sweep fills its value of a full turn: from `startAngle` degrees clockwise from
+ * 12 o'clock, `clockwise` or not, cut to a `mask` (`Box`, rounded by the style's `cornerRadius`,
+ * `Circle`, `Pill` or `CutCorner`), as a ring `thickness` dp wide or a pie, over a `track` colour.
+ * Null is a pie clockwise from 12 o'clock, cut to the box.
+ * @property stepper A Stepper's number: its starting `value`, `min`, `max`, `step`, the `decimals` it
+ * shows, and the `repeatDelay` and `repeatInterval` of a held button, in seconds. [bind]'s `value`
+ * field sets the number each frame instead. Null steps 0 to 100 in ones.
+ * @property elementId The stable id code finds this element by, such as `health-bar`; empty for none.
+ * It survives a rename of the node and repeats in every instance of a prefab, so code finds it under
+ * one instance's root with `World.findCanvasElement`, or in a prefab with `SceneNode.findCanvasNode`.
+ * Letters, digits, `_`, `.` and `-`, starting with a letter, digit or `_`; unique within one prefab.
  */
 @Serializable
 @SerialName("canvas_element")
@@ -188,6 +207,10 @@ data class SceneCanvasElement(
     val cluster: CanvasCluster? = null,
     val skin: CanvasControlSkin? = null,
     val controlId: String = "",
+    val bar: CanvasBar? = null,
+    val sweep: CanvasSweep? = null,
+    val stepper: CanvasStepper? = null,
+    val elementId: String = "",
 ) : SceneComponent {
     /**
      * Validates element dimensions, font sizes, values, and hex color syntax.
@@ -213,7 +236,7 @@ data class SceneCanvasElement(
     }
 
     /** Fields set where they do nothing, and what is wrong with the follow rules. */
-    private fun kindProblems(): List<String> = followProblems() + controlProblems() + listOfNotNull(
+    private fun kindProblems(): List<String> = followProblems() + controlProblems() + idProblems() + listOfNotNull(
         "mask only masks a TextField".takeIf { mask.isNotEmpty() && kind != CanvasElementKind.TextField },
         "maxLength only limits a TextField".takeIf {
             (maxLength != 0 || maxLengthUnit != TextLengthUnit.Graphemes) && kind != CanvasElementKind.TextField
@@ -221,8 +244,8 @@ data class SceneCanvasElement(
         "pressable makes an Image or a Panel pressable; a Button always is".takeIf {
             pressable && kind != CanvasElementKind.Image && kind != CanvasElementKind.Panel
         },
-        "textKey only sets a Text's or a Button's words".takeIf {
-            textKey.isNotEmpty() && kind != CanvasElementKind.Text && kind != CanvasElementKind.Button
+        "textKey only sets a Text's or a Button's words, or a Bar's label".takeIf {
+            textKey.isNotEmpty() && kind != CanvasElementKind.Text && kind != CanvasElementKind.Button && kind != CanvasElementKind.Bar
         },
         "textKey and text both set the words; keep one".takeIf { textKey.isNotEmpty() && text.isNotEmpty() },
         "textKey and bind.text both set the words; keep one".takeIf { textKey.isNotEmpty() && !bind?.text.isNullOrBlank() },
@@ -230,6 +253,11 @@ data class SceneCanvasElement(
             textKey.isEmpty() && (textArgs.isNotEmpty() || !bind?.textArgs.isNullOrEmpty())
         },
         "textKey must not be blank".takeIf { textKey.isNotEmpty() && textKey.isBlank() },
+    )
+
+    /** What is wrong with the element's id. */
+    private fun idProblems(): List<String> = listOfNotNull(
+        "elementId \"$elementId\" $ELEMENT_ID_RULE".takeIf { elementId.isNotEmpty() && !isCanvasElementId(elementId) },
     )
 
     /** What is wrong with a control's settings, and settings put on a kind they do not set up. */
@@ -241,9 +269,13 @@ data class SceneCanvasElement(
         },
         "look only sets up a LookArea".takeIf { look != null && kind != CanvasElementKind.LookArea },
         "cluster and layout both place the children; keep one".takeIf { cluster != null && layout != null },
+        "bar only sets up a Bar".takeIf { bar != null && kind != CanvasElementKind.Bar },
+        "sweep only sets up a Sweep".takeIf { sweep != null && kind != CanvasElementKind.Sweep },
+        "stepper only sets up a Stepper".takeIf { stepper != null && kind != CanvasElementKind.Stepper },
     ) + joystick?.problems().orEmpty().map { "joystick.$it" } + button?.problems().orEmpty().map { "button.$it" } +
         look?.problems().orEmpty().map { "look.$it" } + cluster?.problems().orEmpty().map { "cluster.$it" } +
-        skin?.problems().orEmpty().map { "skin.$it" }
+        skin?.problems().orEmpty().map { "skin.$it" } + bar?.problems().orEmpty().map { "bar.$it" } +
+        sweep?.problems().orEmpty().map { "sweep.$it" } + stepper?.problems().orEmpty().map { "stepper.$it" }
 
     /** What is wrong with the follow rules, and follow fields set where they do nothing. */
     private fun followProblems(): List<String> = buildList {

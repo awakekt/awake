@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "name": "pier",
+  "nodes": [
+    { "name": "Crate", "transform": { "position": { "x": 0.0, "y": 4.0, "z": 0.0 } },
+      "components": [ { "component": "physics_body", "shape": { "type": "box", "halfExtents": { "x": 0.5, "y": 0.5, "z": 0.5 } }, "motion": "DYNAMIC" } ] },
+    { "name": "Mooring", "components": [ { "component": "prefab_link", "path": "prefabs/buoy.prefab.json" } ] }
+  ]
+}

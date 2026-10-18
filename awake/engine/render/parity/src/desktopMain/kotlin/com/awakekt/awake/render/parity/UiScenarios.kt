@@ -128,6 +128,19 @@ val TWO_FONTS_SCENARIO: UiScenario = UiScenario(
     size = TEXT_SCENARIO_SIZE,
 )
 
+/**
+ * Two lines of the small text a panel is made of, at 11 and 12 pixels. A distance-field atlas read
+ * through a mip chain eroded their stems to grey; at its base level the stems are solid.
+ */
+val SMALL_TEXT_SCENARIO: UiScenario = UiScenario(
+    name = "small-text",
+    font = UiFonts.default(),
+    primitives = textLine("Mesh Terrain Texture", UiFonts.default(), SMALL_TEXT_PX, TEXT_LEFT, top = 12f, color = Color(1f, 1f, 1f, 1f)) +
+        textLine("Mesh Terrain Texture", UiFonts.default(), SMALL_TEXT_PX + 1f, TEXT_LEFT, top = 44f, color = Color(1f, 1f, 1f, 1f)),
+    size = TEXT_SCENARIO_SIZE,
+)
+
+private const val SMALL_TEXT_PX = 11f
 private const val TEXT_GLYPH_PX = 32f
 private const val TEXT_LEFT = 8f
 
@@ -156,4 +169,5 @@ val UI_PARITY_SCENARIOS: List<UiScenario> = listOf(
     glyph('O', FontWeight.Normal, UiFonts.default()),
     glyph('O', FontWeight.Bold, UiFonts.default()),
     TWO_FONTS_SCENARIO,
+    SMALL_TEXT_SCENARIO,
 )

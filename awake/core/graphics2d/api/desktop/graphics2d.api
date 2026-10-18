@@ -738,6 +738,11 @@ public final class com/awakekt/awake/core/graphics2d/StrokeJoin : java/lang/Enum
 	public static fun values ()[Lcom/awakekt/awake/core/graphics2d/StrokeJoin;
 }
 
+public final class com/awakekt/awake/core/graphics2d/SweepPathKt {
+	public static final fun sweepPath (Lcom/awakekt/awake/core/math2d/Rectangle;FFZF)Lcom/awakekt/awake/core/graphics2d/DrawPath;
+	public static synthetic fun sweepPath$default (Lcom/awakekt/awake/core/math2d/Rectangle;FFZFILjava/lang/Object;)Lcom/awakekt/awake/core/graphics2d/DrawPath;
+}
+
 public final class com/awakekt/awake/core/graphics2d/TextureCompositeMode {
 	public fun <init> (Lcom/awakekt/awake/core/graphics2d/BlendMode;Z)V
 	public final fun component1 ()Lcom/awakekt/awake/core/graphics2d/BlendMode;

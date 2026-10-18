@@ -12,7 +12,7 @@ on:
         type: string
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: pages
@@ -23,14 +23,18 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: write   # mike pushes the built site to gh-pages
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          # The write token stays off disk while pip and mkdocs run; only the publish step pushes.
+          persist-credentials: false
 
       - name: Setup Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.12'
 
@@ -83,7 +87,12 @@ jobs:
           AWAKE_DOCS_VULKAN_CORE_VERSION: ${{ steps.docs-version.outputs.vulkan_core }}
           DOCS_VERSION: ${{ steps.docs-version.outputs.version }}
           DOCS_ALIAS: ${{ steps.docs-version.outputs.alias }}
+          GH_TOKEN: ${{ github.token }}
         run: |
+          basic="$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          echo "::add-mask::$basic"
+          export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=http.https://github.com/.extraheader
+          export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $basic"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           mike deploy "$DOCS_VERSION" "$DOCS_ALIAS" --update-aliases --alias-type copy --push
@@ -100,15 +109,17 @@ jobs:
           # mike writes only version directories and a redirect at the root. Without a root 404.html,
           # Pages treats the site as a single-page app and answers every unknown path with that
           # redirect and a 200, so add the current version's 404 page (its links are absolute),
-          # robots.txt, and redirects for unversioned links.
+          # robots.txt, llms.txt, and redirects for unversioned links.
           cp website/docs-root/robots.txt website/docs-root/_redirects "$RUNNER_TEMP/awake-docs-site/"
+          # The same llms.txt as awakekt.com, so AI tools find it at the docs root too.
+          cp website/landing/llms.txt "$RUNNER_TEMP/awake-docs-site/"
           cp "$RUNNER_TEMP/awake-docs-site/latest/404.html" "$RUNNER_TEMP/awake-docs-site/404.html"
 
       - name: Deploy to Cloudflare Pages
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        uses: cloudflare/wrangler-action@v4
+        uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4.1.3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
