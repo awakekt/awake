@@ -193,6 +193,28 @@ interface InspectorFieldScope {
     fun color(label: String, value: Color, write: (Color) -> Unit) =
         vector(label, Vec3f(value.r, value.g, value.b)) { write(Color(it.x, it.y, it.z, value.a)) }
 
+    /**
+     * A picture's region and the nine-slice cut of it, edited on the picture: [image] names it, a
+     * project path the host loads, and [value] is in its pixels. The host draws the picture with the
+     * region's box and the four slice guides over it, and a drag of one writes it through [write], on
+     * whole pixels and [kept inside][ImageSlices.keptInside] the picture, as one undo step.
+     *
+     * By default the eight numbers are whole-number fields of their own, so a host that cannot draw
+     * a picture still edits them.
+     */
+    fun imageSlices(label: String, image: String, value: ImageSlices, write: (ImageSlices) -> Unit) {
+        section(label) {
+            integer("Region X", value.x) { write(value.copy(x = it)) }
+            integer("Region Y", value.y) { write(value.copy(y = it)) }
+            integer("Region Width", value.width) { write(value.copy(width = it)) }
+            integer("Region Height", value.height) { write(value.copy(height = it)) }
+            integer("Slice Left", value.left) { write(value.copy(left = it)) }
+            integer("Slice Top", value.top) { write(value.copy(top = it)) }
+            integer("Slice Right", value.right) { write(value.copy(right = it)) }
+            integer("Slice Bottom", value.bottom) { write(value.copy(bottom = it)) }
+        }
+    }
+
     /** A read-only informational field that cannot be edited. */
     fun readOnly(label: String, value: String) =
         text(label, value) {}

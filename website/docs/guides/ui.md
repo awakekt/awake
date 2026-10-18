@@ -70,18 +70,20 @@ icon of a sheet, call `drawImage(bitmap, …, srcX, srcY, srcWidth, srcHeight)` 
 ### Frames and gauges
 
 `Modifier.background(ImageFill(…))` fills a node of any size from one image cut into nine. The four
-`slice` insets, in the image's pixels, mark the corners, which keep their size at one dp per pixel.
-The edges stretch along their length, or repeat at that size with `repeatEdges`; the centre
-stretches, or repeats both ways with `repeatCenter`. Slice only the left and right for a three-part
-strip such as a gauge, and pass `srcX`, `srcY`, `srcWidth` and `srcHeight` to cut the frame from a
-sheet. A node too small for its corners shrinks them together.
+`slice` insets, in the image's pixels, mark the corners, which keep their size at one dp per pixel,
+or per `pixelsPerDp` pixels for art drawn at 2x or 3x. The edges stretch along their length, or
+repeat at that size with `repeatEdges`; the centre stretches, repeats both ways with
+`repeatCenter`, or is left out with `hollow`. Slice only the left and right for a three-part strip
+such as a gauge, and pass `srcX`, `srcY`, `srcWidth` and `srcHeight` to cut the frame from a sheet.
+A node too small for its corners shrinks them together.
 
 ```kotlin title="Kotlin"
 --8<-- "awake/compose/ui-testing/src/desktopTest/kotlin/com/awakekt/awake/compose/testing/ComposeDocsSampleTest.kt:image-fill"
 ```
 
 From a draw modifier, `drawImageFill(fill, x, y, width, height)` draws the same fill into part of the
-node.
+node. `drawImageFillBar(fill, value, direction)` draws it as a bar's fill, from the edge
+`direction` names: both end caps stay whole at every value above 0, and only the middle grows.
 
 ### Gradients and styles
 

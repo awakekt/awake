@@ -276,6 +276,17 @@ public final class com/awakekt/awake/compose/ui/graphics/CornerSize$Px : com/awa
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/compose/ui/graphics/FillDirection : java/lang/Enum {
+	public static final field BottomToTop Lcom/awakekt/awake/compose/ui/graphics/FillDirection;
+	public static final field LeftToRight Lcom/awakekt/awake/compose/ui/graphics/FillDirection;
+	public static final field RightToLeft Lcom/awakekt/awake/compose/ui/graphics/FillDirection;
+	public static final field TopToBottom Lcom/awakekt/awake/compose/ui/graphics/FillDirection;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getVertical ()Z
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/compose/ui/graphics/FillDirection;
+	public static fun values ()[Lcom/awakekt/awake/compose/ui/graphics/FillDirection;
+}
+
 public final class com/awakekt/awake/compose/ui/graphics/ImageBitmap {
 	public static final field BYTES_PER_PIXEL I
 	public static final field Companion Lcom/awakekt/awake/compose/ui/graphics/ImageBitmap$Companion;
@@ -297,13 +308,15 @@ public final class com/awakekt/awake/compose/ui/graphics/ImageBitmapKt {
 }
 
 public final class com/awakekt/awake/compose/ui/graphics/ImageFill {
-	public fun <init> (Lcom/awakekt/awake/compose/ui/graphics/ImageBitmap;IIIIIIIIZZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;)V
-	public synthetic fun <init> (Lcom/awakekt/awake/compose/ui/graphics/ImageBitmap;IIIIIIIIZZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/compose/ui/graphics/ImageBitmap;IIIIIIIIZZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;FZ)V
+	public synthetic fun <init> (Lcom/awakekt/awake/compose/ui/graphics/ImageBitmap;IIIIIIIIZZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;FZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lcom/awakekt/awake/compose/ui/graphics/ImageBitmap;
 	public final fun component10 ()Z
 	public final fun component11 ()Z
 	public final fun component12 ()Lcom/awakekt/awake/core/color/Color;
 	public final fun component13 ()Lcom/awakekt/awake/core/graphics2d/FilterQuality;
+	public final fun component14 ()F
+	public final fun component15 ()Z
 	public final fun component2 ()I
 	public final fun component3 ()I
 	public final fun component4 ()I
@@ -312,11 +325,13 @@ public final class com/awakekt/awake/compose/ui/graphics/ImageFill {
 	public final fun component7 ()I
 	public final fun component8 ()I
 	public final fun component9 ()I
-	public final fun copy (Lcom/awakekt/awake/compose/ui/graphics/ImageBitmap;IIIIIIIIZZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;)Lcom/awakekt/awake/compose/ui/graphics/ImageFill;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/compose/ui/graphics/ImageFill;Lcom/awakekt/awake/compose/ui/graphics/ImageBitmap;IIIIIIIIZZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/graphics/ImageFill;
+	public final fun copy (Lcom/awakekt/awake/compose/ui/graphics/ImageBitmap;IIIIIIIIZZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;FZ)Lcom/awakekt/awake/compose/ui/graphics/ImageFill;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/compose/ui/graphics/ImageFill;Lcom/awakekt/awake/compose/ui/graphics/ImageBitmap;IIIIIIIIZZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/graphics2d/FilterQuality;FZILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/graphics/ImageFill;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getFilterQuality ()Lcom/awakekt/awake/core/graphics2d/FilterQuality;
+	public final fun getHollow ()Z
 	public final fun getImage ()Lcom/awakekt/awake/compose/ui/graphics/ImageBitmap;
+	public final fun getPixelsPerDp ()F
 	public final fun getRepeatCenter ()Z
 	public final fun getRepeatEdges ()Z
 	public final fun getSliceBottom ()I
@@ -335,6 +350,8 @@ public final class com/awakekt/awake/compose/ui/graphics/ImageFill {
 public final class com/awakekt/awake/compose/ui/graphics/ImageFillKt {
 	public static final fun drawImageFill (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;Lcom/awakekt/awake/compose/ui/graphics/ImageFill;FFFF)V
 	public static synthetic fun drawImageFill$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;Lcom/awakekt/awake/compose/ui/graphics/ImageFill;FFFFILjava/lang/Object;)V
+	public static final fun drawImageFillBar (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;Lcom/awakekt/awake/compose/ui/graphics/ImageFill;FLcom/awakekt/awake/compose/ui/graphics/FillDirection;FFFF)V
+	public static synthetic fun drawImageFillBar$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;Lcom/awakekt/awake/compose/ui/graphics/ImageFill;FLcom/awakekt/awake/compose/ui/graphics/FillDirection;FFFFILjava/lang/Object;)V
 }
 
 public final class com/awakekt/awake/compose/ui/graphics/PaintOutput {
