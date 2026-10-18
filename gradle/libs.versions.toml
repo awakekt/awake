@@ -33,9 +33,11 @@ jolt-jni = "6.1.1"
 snaploader = "1.1.1-stable"
 oshi-core = "7.4.0"
 # Desktop-only Ktor WebSocket debug-control channel for sample-hello-cube (see
-# docs/MVP_PLAN.md's debug-control-channel decision log entry) -- 3.5.1 is the latest stable
-# release compatible with this repo's Kotlin (Ktor 3.x requires Kotlin 2.0+).
-ktor = "3.5.1"
+# docs/MVP_PLAN.md's debug-control-channel decision log entry). 3.5.2 at least: 3.5.1 brings
+# kotlinx-io 0.9.0, whose wasm Node helper reads a bare `import.meta` that Kotlin 2.4.20's webpack
+# leaves in samples:net-demo's classic-script bundle, so the page and its browser tests fail to load.
+# kotlinx-io 0.9.1 (Ktor 3.5.2) no longer reads it.
+ktor = "3.5.2"
 # Raises the Netty that ktor-server-netty brings to samples:net-demo past CVE-2026-75595 (an SNI
 # routing bypass in SslClientHelloHandler, fixed in 4.2.17.Final) until a Ktor patch release pulls it.
 netty = "4.2.17.Final"
