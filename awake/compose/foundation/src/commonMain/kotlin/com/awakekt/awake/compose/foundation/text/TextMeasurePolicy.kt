@@ -206,11 +206,16 @@ class TextMeasurePolicy(
      * Snapped to the atlas's own scale step: a bitmap or distance-field atlas is sampled at
      * discrete sizes, and asking for one in between resamples and blurs. `ui-core` learned this the
      * same way -- see `pixelPerfectTextScale`.
+     *
+     * Then rounded to a whole device pixel. At 125% or 150% display scaling `13.sp` is 16.25 or
+     * 19.5 pixels, and an em that is a fraction of a pixel puts every stem on a different sub-pixel
+     * phase, so the same letter renders with a different weight in each place it appears. Measuring
+     * and painting both come through here, so a run's width and its glyphs agree on the rounded size.
      */
     internal fun glyphPixels(density: Float, fontScale: Float): Float {
         val sizeSp = style.size ?: DefaultFontSize
         val snapped = pixelPerfectTextScale(style.scale, font.textScaleStep)
-        return (sizeSp.value * density * fontScale * snapped).coerceAtLeast(1f)
+        return (sizeSp.value * density * fontScale * snapped).roundToInt().coerceAtLeast(1).toFloat()
     }
 }
 

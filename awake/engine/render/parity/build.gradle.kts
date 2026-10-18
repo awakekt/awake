@@ -58,6 +58,10 @@ kotlin {
                 implementation(project(":awake:scene:scene2d"))
                 // Scene UI styles, drawn on both backends.
                 implementation(project(":awake:scene:canvas"))
+                // Text a screen draws, rendered on both backends at a given display scale.
+                implementation(project(":awake:compose:foundation"))
+                implementation(project(":awake:compose:ui"))
+                implementation(project(":awake:compose:runtime"))
                 // The layered terrain surface, drawn with a bake.
                 implementation(project(":awake:kit:terrain-layers"))
             }
