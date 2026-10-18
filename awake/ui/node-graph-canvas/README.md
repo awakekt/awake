@@ -58,14 +58,17 @@ it is the engine's per-node work (text measured and glyph primitives emitted eve
 canvas's own share is small: idle wires redraw retained meshes, off-screen nodes are not composed,
 and zoomed-out labels are not composed.
 
-The desktop JDK 17 probe warms up for 2,000 frames, then compares the median of five 300-frame
-allocation windows with the existing limits (380,000 bytes for all nodes visible; 295,000 for
-the editor view). It measures a fixed number of windows so a sustained regression fails rather
-than being retried until it passes. An allocation control deliberately adds a retained byte
-array every measured frame and verifies that the same check rejects it.
+The desktop JDK 17 probe runs with escape analysis off (`-XX:-DoEscapeAnalysis`, set on the
+module's `desktopTest` task), so it counts every byte a frame asks for. With escape analysis on,
+the count depended on which temporaries the JIT happened to remove in that JVM, and the same
+commit read anywhere from 346,920 to 385,384 bytes per frame between CI runs (#945). It warms up
+for 2,000 frames, keeps warming until two 300-frame windows agree, then takes seven windows and
+fails only when every one is over its limit (620,000 bytes for all nodes visible; 532,000 for the
+editor view). It never retries until green. An allocation control deliberately adds a retained
+byte array every measured frame and verifies that the same check rejects it.
 
-Each probe prints every window, the median and ceiling, total measured time and frame count,
-and JVM version. CI logs include this output and upload the XML and HTML test reports as
+Each probe prints every window, their minimum, median, maximum and spread, the ceiling, total
+measured time and frame count, and JVM version. CI logs include this output and upload the XML and HTML test reports as
 `node-graph-test-results`, including on failure. Timing is diagnostic; the assertion checks
 allocated bytes, not elapsed time.
 
