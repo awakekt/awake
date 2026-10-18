@@ -12,6 +12,7 @@ import com.awakekt.awake.core.text.font.clusterAdvance
 import com.awakekt.awake.core.text.font.forEachGlyphInCluster
 import com.awakekt.awake.core.text.theme.TextStyle
 import com.awakekt.awake.core.text.unicode.GraphemeClusters
+import kotlin.math.floor
 
 /**
  * Where each character sits in a run, in device pixels.
@@ -124,13 +125,29 @@ internal class TextRun(
     }
 
     fun paint(scope: DrawScope, color: Color, offsetX: Float = 0f, offsetY: Float = 0f) {
+        // A distance-field glyph is antialiased by its coverage at the pixel it lands on, so a stem
+        // that straddles two pixel columns is two grey columns instead of one solid one. Whole
+        // device pixels are what the line's start and baseline snap to; the advances inside the
+        // line stay fractional so letter spacing is not disturbed. A scaled scope keeps fractional
+        // positions, or text under an animated scale would move in one-pixel steps.
+        val snap = scope.isDevicePixelAligned
+        val originX = if (snap) wholePixel(offsetX) else offsetX
+        val ascentPx = font.ascentEm * glyphPx
         var y = offsetY
         // Indexed: this runs for every text node every frame, and a List iterator is an allocation.
         for (i in lineLayouts.indices) {
-            paintLine(lineLayouts[i].text, scope, color, offsetX, y + lineTopPaddingPx)
+            var top = y + lineTopPaddingPx
+            if (snap) {
+                val baseline = top + ascentPx
+                top += wholePixel(baseline) - baseline
+            }
+            paintLine(lineLayouts[i].text, scope, color, originX, top)
             y += lineHeightPx
         }
     }
+
+    /** [value] rounded half up to a whole pixel. */
+    private fun wholePixel(value: Float): Float = floor(value + 0.5f)
 
     private fun paintLine(line: String, scope: DrawScope, color: Color, offsetX: Float, y: Float) {
         var x = offsetX
