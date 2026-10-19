@@ -93,6 +93,54 @@ public abstract class com/awakekt/awake/compose/ui/ModifierNodeElement : com/awa
 	public abstract fun update (Lcom/awakekt/awake/compose/ui/Modifier$Node;)V
 }
 
+public final class com/awakekt/awake/compose/ui/draw/BackdropGlassStyle {
+	public static final field Companion Lcom/awakekt/awake/compose/ui/draw/BackdropGlassStyle$Companion;
+	public fun <init> ()V
+	public synthetic fun <init> (FLcom/awakekt/awake/core/color/Color;FFLcom/awakekt/awake/core/color/Color;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (FLcom/awakekt/awake/core/color/Color;FFLcom/awakekt/awake/core/color/Color;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-LGk54g8 ()F
+	public final fun component2 ()Lcom/awakekt/awake/core/color/Color;
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()Lcom/awakekt/awake/core/color/Color;
+	public final fun copy-YKsVkzk (FLcom/awakekt/awake/core/color/Color;FFLcom/awakekt/awake/core/color/Color;)Lcom/awakekt/awake/compose/ui/draw/BackdropGlassStyle;
+	public static synthetic fun copy-YKsVkzk$default (Lcom/awakekt/awake/compose/ui/draw/BackdropGlassStyle;FLcom/awakekt/awake/core/color/Color;FFLcom/awakekt/awake/core/color/Color;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/draw/BackdropGlassStyle;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBlurRadius-LGk54g8 ()F
+	public final fun getFallback ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getNoise ()F
+	public final fun getSaturation ()F
+	public final fun getTint ()Lcom/awakekt/awake/core/color/Color;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/compose/ui/draw/BackdropGlassStyle$Companion {
+	public final fun getRegular ()Lcom/awakekt/awake/compose/ui/draw/BackdropGlassStyle;
+	public final fun getThick ()Lcom/awakekt/awake/compose/ui/draw/BackdropGlassStyle;
+	public final fun getThin ()Lcom/awakekt/awake/compose/ui/draw/BackdropGlassStyle;
+	public final fun getUltraThick ()Lcom/awakekt/awake/compose/ui/draw/BackdropGlassStyle;
+	public final fun getUltraThin ()Lcom/awakekt/awake/compose/ui/draw/BackdropGlassStyle;
+}
+
+public final class com/awakekt/awake/compose/ui/draw/BackdropKt {
+	public static final fun backdropEffect (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/ui/draw/BackdropSourceState;Lcom/awakekt/awake/compose/ui/draw/BackdropGlassStyle;Lcom/awakekt/awake/compose/ui/graphics/Shape;Z)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static synthetic fun backdropEffect$default (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/ui/draw/BackdropSourceState;Lcom/awakekt/awake/compose/ui/draw/BackdropGlassStyle;Lcom/awakekt/awake/compose/ui/graphics/Shape;ZILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static final fun backdropSource (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/ui/draw/BackdropSourceState;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static final fun rememberBackdropSourceState (Lcom/awakekt/awake/compose/runtime/Composer;Z)Lcom/awakekt/awake/compose/ui/draw/BackdropSourceState;
+	public static synthetic fun rememberBackdropSourceState$default (Lcom/awakekt/awake/compose/runtime/Composer;ZILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/draw/BackdropSourceState;
+}
+
+public final class com/awakekt/awake/compose/ui/draw/BackdropSourceState {
+	public fun <init> ()V
+	public fun <init> (Z)V
+	public synthetic fun <init> (ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getBounds ()Lcom/awakekt/awake/core/math2d/Rectangle;
+	public final fun getEnabled ()Z
+	public final fun isPlaced ()Z
+	public final fun setEnabled (Z)V
+}
+
 public final class com/awakekt/awake/compose/ui/draw/BlurKt {
 	public static final fun blur-E4U11nk (Lcom/awakekt/awake/compose/ui/Modifier;FFLcom/awakekt/awake/compose/ui/graphics/Shape;)Lcom/awakekt/awake/compose/ui/Modifier;
 	public static synthetic fun blur-E4U11nk$default (Lcom/awakekt/awake/compose/ui/Modifier;FFLcom/awakekt/awake/compose/ui/draw/BlurredEdgeTreatment;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
@@ -624,6 +672,8 @@ public abstract interface class com/awakekt/awake/compose/ui/graphics/drawscope/
 	public static synthetic fun clipped$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;FLkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
 	public abstract fun clippedPath (Lcom/awakekt/awake/core/graphics2d/DrawPath;Lcom/awakekt/awake/core/math2d/Rectangle;Lkotlin/jvm/functions/Function0;)V
 	public static synthetic fun clippedPath$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;Lcom/awakekt/awake/core/graphics2d/DrawPath;Lcom/awakekt/awake/core/math2d/Rectangle;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
+	public abstract fun drawBackdropBlur (FFFFFLcom/awakekt/awake/core/color/Color;FFFFLcom/awakekt/awake/core/graphics2d/DrawPath;Lcom/awakekt/awake/core/color/Color;)V
+	public static synthetic fun drawBackdropBlur$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;FFFFFLcom/awakekt/awake/core/color/Color;FFFFLcom/awakekt/awake/core/graphics2d/DrawPath;Lcom/awakekt/awake/core/color/Color;ILjava/lang/Object;)V
 	public abstract fun drawGlyph (FFFFFFFFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/text/font/UiFont;)V
 	public static synthetic fun drawGlyph$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;FFFFFFFFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/text/font/UiFont;ILjava/lang/Object;)V
 	public abstract fun drawMesh (Lcom/awakekt/awake/core/graphics2d/ColoredTriangleMesh;)V
@@ -650,6 +700,7 @@ public abstract interface class com/awakekt/awake/compose/ui/graphics/drawscope/
 public final class com/awakekt/awake/compose/ui/graphics/drawscope/DrawScope$DefaultImpls {
 	public static synthetic fun clipped$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;FLkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
 	public static synthetic fun clippedPath$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;Lcom/awakekt/awake/core/graphics2d/DrawPath;Lcom/awakekt/awake/core/math2d/Rectangle;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
+	public static synthetic fun drawBackdropBlur$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;FFFFFLcom/awakekt/awake/core/color/Color;FFFFLcom/awakekt/awake/core/graphics2d/DrawPath;Lcom/awakekt/awake/core/color/Color;ILjava/lang/Object;)V
 	public static synthetic fun drawGlyph$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;FFFFFFFFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/text/font/UiFont;ILjava/lang/Object;)V
 	public static synthetic fun drawRect$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;FFFFLcom/awakekt/awake/core/color/Color;ILjava/lang/Object;)V
 	public static synthetic fun drawRoundedRect$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;FFFFLcom/awakekt/awake/core/color/Color;FILjava/lang/Object;)V

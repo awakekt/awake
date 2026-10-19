@@ -10,7 +10,12 @@ import com.awakekt.awake.compose.foundation.border
 import com.awakekt.awake.compose.foundation.layout.padding
 import com.awakekt.awake.compose.foundation.layout.size
 import com.awakekt.awake.compose.runtime.Composer
+import com.awakekt.awake.compose.ui.draw.BackdropGlassStyle
+import com.awakekt.awake.compose.ui.draw.BackdropSourceState
 import com.awakekt.awake.compose.ui.draw.BlurredEdgeTreatment
+import com.awakekt.awake.compose.ui.draw.alpha
+import com.awakekt.awake.compose.ui.draw.backdropEffect
+import com.awakekt.awake.compose.ui.draw.backdropSource
 import com.awakekt.awake.compose.ui.draw.blur
 import com.awakekt.awake.compose.ui.draw.clip
 import com.awakekt.awake.compose.ui.draw.clipToBounds
@@ -43,6 +48,8 @@ import com.awakekt.awake.core.math2d.Size2D
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 private object PaintedType
@@ -557,5 +564,127 @@ class PaintTest {
     @Test
     fun anEmptyTreePaintsNothing() {
         assertEquals(emptyList(), paintOf { })
+    }
+
+    @Test
+    fun backdropSourceAndEffectEmitsBackdropBlurPrimitive() {
+        val source = BackdropSourceState()
+        val primitives = paintOf {
+            painted(Modifier.size(100.dp).backdropSource(source))
+            painted(Modifier.size(40.dp).backdropEffect(source, BackdropGlassStyle.Regular))
+        }
+
+        assertTrue(source.isPlaced)
+        assertEquals(Rectangle(0f, 0f, 100f, 100f), source.bounds)
+
+        val blur = primitives.filterIsInstance<UiDrawPrimitive.BackdropBlur>().single()
+        assertEquals(0f, blur.x)
+        assertEquals(0f, blur.y)
+        assertEquals(40f, blur.w)
+        assertEquals(40f, blur.h)
+        assertEquals(16f, blur.blurRadius)
+        assertEquals(BackdropGlassStyle.Regular.tint, blur.tint)
+        assertEquals(1f, blur.saturation)
+        assertEquals(0f, blur.noise)
+        assertEquals(0f, blur.cornerRadius)
+        assertNull(blur.path)
+    }
+
+    @Test
+    fun backdropEffectWithRoundedCornerShapeEmitsCornerRadius() {
+        val source = BackdropSourceState()
+        val primitives = paintOf {
+            painted(Modifier.size(50.dp).backdropSource(source))
+            painted(
+                Modifier.size(30.dp).backdropEffect(
+                    source = source,
+                    style = BackdropGlassStyle.Thin,
+                    shape = RoundedCornerShape(8.dp),
+                ),
+            )
+        }
+
+        val blur = primitives.filterIsInstance<UiDrawPrimitive.BackdropBlur>().single()
+        assertEquals(30f, blur.w)
+        assertEquals(30f, blur.h)
+        assertEquals(12f, blur.blurRadius)
+        assertEquals(8f, blur.cornerRadius)
+        assertNull(blur.path)
+        assertEquals(BackdropGlassStyle.Thin.tint, blur.tint)
+    }
+
+    @Test
+    fun backdropEffectWithGenericOutlineEmitsPath() {
+        val source = BackdropSourceState()
+        val shape = RoundedCornerShape(topStart = 8.dp, bottomEnd = 4.dp)
+        val primitives = paintOf {
+            painted(Modifier.size(50.dp).backdropSource(source))
+            painted(
+                Modifier.size(30.dp).backdropEffect(
+                    source = source,
+                    style = BackdropGlassStyle.Thick,
+                    shape = shape,
+                ),
+            )
+        }
+
+        val blur = primitives.filterIsInstance<UiDrawPrimitive.BackdropBlur>().single()
+        assertEquals(30f, blur.w)
+        assertEquals(30f, blur.h)
+        assertEquals(24f, blur.blurRadius)
+        assertEquals(0f, blur.cornerRadius)
+        assertNotNull(blur.path)
+        assertEquals(BackdropGlassStyle.Thick.tint, blur.tint)
+    }
+
+    @Test
+    fun backdropEffectWhenDisabledEmitsFallbackWhenProvided() {
+        val source = BackdropSourceState(enabled = false)
+        val customFallback = Color(0.2f, 0.2f, 0.2f, 0.8f)
+        val style = BackdropGlassStyle.UltraThick.copy(fallback = customFallback)
+        val primitives = paintOf {
+            painted(Modifier.size(50.dp).backdropSource(source))
+            painted(
+                Modifier.size(30.dp).backdropEffect(
+                    source = source,
+                    style = style,
+                ),
+            )
+        }
+
+        val blur = primitives.filterIsInstance<UiDrawPrimitive.BackdropBlur>().single()
+        assertEquals(0f, blur.blurRadius)
+        assertEquals(customFallback, blur.fallback)
+    }
+
+    @Test
+    fun backdropGlassPresetsHaveIncreasingBlurRadiiAndTints() {
+        val presets = listOf(
+            BackdropGlassStyle.UltraThin,
+            BackdropGlassStyle.Thin,
+            BackdropGlassStyle.Regular,
+            BackdropGlassStyle.Thick,
+            BackdropGlassStyle.UltraThick,
+        )
+        for (i in 0 until presets.size - 1) {
+            assertTrue(presets[i].blurRadius < presets[i + 1].blurRadius)
+            assertTrue(presets[i].tint.a < presets[i + 1].tint.a)
+        }
+    }
+
+    @Test
+    fun backdropBlurUnderAlphaDimsItsWholeEffect() {
+        val source = BackdropSourceState()
+        val primitives = paintOf {
+            painted(Modifier.size(100.dp).backdropSource(source))
+            painted(
+                Modifier.size(40.dp)
+                    .alpha(0.5f)
+                    .backdropEffect(source, BackdropGlassStyle.Regular),
+            )
+        }
+
+        val blur = primitives.filterIsInstance<UiDrawPrimitive.BackdropBlur>().single()
+        assertEquals(0.5f, blur.alpha)
     }
 }

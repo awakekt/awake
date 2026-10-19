@@ -11,7 +11,7 @@ missing on purpose or missing as work.
 
 ## Have
 
-`alpha` · `background` · `blur` · `border` · `clickable` · `clip` · `draggable` · `drawBehind` ·
+`alpha` · `backdropEffect` · `backdropSource` · `background` · `blur` · `border` · `clickable` · `clip` · `draggable` · `drawBehind` ·
 `dropShadow` ·
 `fillMaxHeight` · `fillMaxSize` · `fillMaxWidth` · `focusRequester` · `focusable` · `height` ·
 `hoverable` · `onFocusChanged` · `onPlaced` · `padding` · `semantics` · `size` · `testTag` ·
@@ -28,7 +28,7 @@ Added 2026-08-23: `offset` · `aspectRatio` · `widthIn` · `heightIn` · `sizeI
 The core `Modifier` chain also provides Compose's `foldIn`, `foldOut`, `any`, and `all` operations.
 
 Awake-only: `styleable` — see `04-styling-theme.md`. Convergent with Compose's own experimental
-`foundation.style`, not an invention.
+`foundation.style`, not an invention. Ecosystem-aligned: `backdropSource` / `backdropEffect` with `BackdropGlassStyle` presets (Haze standard) — see D40.
 
 ## Missing, ordered by what unblocks work
 
