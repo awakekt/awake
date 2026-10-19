@@ -20,6 +20,7 @@ import com.awakekt.awake.core.graphics2d.FilterQuality
 import com.awakekt.awake.core.graphics2d.TextureRegion
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.graphics2d.UiLinearGradient
+import com.awakekt.awake.core.graphics2d.backdropFallbackColor
 import com.awakekt.awake.core.graphics2d.bounds
 import com.awakekt.awake.core.graphics2d.transform
 import com.awakekt.awake.core.graphics2d.translatedBy
@@ -230,6 +231,41 @@ interface DrawScope {
         tint: Color = Color.White,
         filterQuality: FilterQuality = FilterQuality.Low,
         premultiplied: Boolean = false,
+    )
+
+    /**
+     * Draws a backdrop frosted-glass blur beneath this node's layout bounds.
+     *
+     * Coordinates are node-local. Applications should prefer `Modifier.backdropEffect`, whose
+     * shape and density-aware parameters follow Compose's public API.
+     *
+     * @param x Node-local X coordinate.
+     * @param y Node-local Y coordinate.
+     * @param width Width in pixels.
+     * @param height Height in pixels.
+     * @param blurRadius Blur radius in pixels.
+     * @param tint Translucent overlay tint color.
+     * @param saturation Saturation boost multiplier.
+     * @param noise Noise intensity between 0 and 1.
+     * @param cornerRadius Uniform corner radius in pixels (when [path] is null).
+     * @param smoothing Corner curvature smoothing factor between 0 (circular) and 1 (squircle).
+     * @param path Outline path, or null for rectangle / rounded rectangle.
+     * @param fallback Optional fallback color when blur cannot be executed.
+     */
+    @Suppress("LongParameterList")
+    fun drawBackdropBlur(
+        x: Float = 0f,
+        y: Float = 0f,
+        width: Float = this.width.toFloat(),
+        height: Float = this.height.toFloat(),
+        blurRadius: Float,
+        tint: Color = Color.Transparent,
+        saturation: Float = 1f,
+        noise: Float = 0f,
+        cornerRadius: Float = 0f,
+        smoothing: Float = 0f,
+        path: DrawPath? = null,
+        fallback: Color? = null,
     )
 
     /**
@@ -705,6 +741,51 @@ internal class PaintScope :
     }
 
     @Suppress("LongParameterList")
+    override fun drawBackdropBlur(
+        x: Float,
+        y: Float,
+        width: Float,
+        height: Float,
+        blurRadius: Float,
+        tint: Color,
+        saturation: Float,
+        noise: Float,
+        cornerRadius: Float,
+        smoothing: Float,
+        path: DrawPath?,
+        fallback: Color?,
+    ) {
+        val px = transform.mapX(originX + x)
+        val py = transform.mapY(originY + y)
+        val pw = width * transform.scaleX
+        val ph = height * transform.scaleY
+        if (isFullyOutsideActiveClip(px, py, pw, ph)) return
+        val scalarScale = minOf(transform.scaleX, transform.scaleY)
+        val placedPath = path?.transform(
+            scaleX = transform.scaleX,
+            scaleY = transform.scaleY,
+            translateX = px,
+            translateY = py,
+        )
+        val resolvedFallback = fallback ?: backdropFallbackColor(tint)
+        output += UiDrawPrimitive.BackdropBlur(
+            x = px,
+            y = py,
+            w = pw,
+            h = ph,
+            blurRadius = blurRadius * scalarScale,
+            tint = tint,
+            saturation = saturation,
+            noise = noise,
+            cornerRadius = cornerRadius * scalarScale,
+            smoothing = smoothing,
+            path = placedPath,
+            alpha = alpha,
+            fallback = resolvedFallback,
+        )
+    }
+
+    @Suppress("LongParameterList")
     override fun drawGlyph(
         x: Float,
         y: Float,
@@ -860,6 +941,7 @@ private fun UiDrawPrimitive.dimmedBy(alpha: Float): UiDrawPrimitive = when (this
     is UiDrawPrimitive.ShadowQuad -> copy(color = color.dimmedBy(alpha))
     is UiDrawPrimitive.GradientQuad -> copy(gradient = gradient.dimmedBy(alpha))
     is UiDrawPrimitive.Mesh -> copy(alpha = this.alpha * alpha)
+    is UiDrawPrimitive.BackdropBlur -> copy(alpha = this.alpha * alpha)
     else -> this
 }
 

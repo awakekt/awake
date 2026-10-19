@@ -182,6 +182,23 @@ class TextPixelSnapTest {
             filterQuality: FilterQuality,
             premultiplied: Boolean,
         ) = unused()
+
+        @Suppress("LongParameterList")
+        override fun drawBackdropBlur(
+            x: Float,
+            y: Float,
+            width: Float,
+            height: Float,
+            blurRadius: Float,
+            tint: Color,
+            saturation: Float,
+            noise: Float,
+            cornerRadius: Float,
+            smoothing: Float,
+            path: DrawPath?,
+            fallback: Color?,
+        ) = unused()
+
         override fun emit(primitive: UiDrawPrimitive) = unused()
 
         private fun unused(): Nothing = error("TextRun draws glyphs only")
