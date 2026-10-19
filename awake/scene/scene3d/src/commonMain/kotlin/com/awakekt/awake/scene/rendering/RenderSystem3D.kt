@@ -7,6 +7,7 @@ package com.awakekt.awake.scene.rendering
 
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.VirtualViewport
+import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.command.GpuDrawPreparationSource
@@ -131,7 +132,7 @@ class RenderSystem3D(
         elapsedTimeSeconds += delta.coerceAtLeast(0f)
         RenderDiagnostics.surfaceAspect = renderer.surfaceAspect
         val renderWorld = renderWorldProvider(world)
-        val camera = primaryCamera(renderWorld) ?: run {
+        val (cameraEntity, camera) = primaryCameraWithEntity(renderWorld) ?: run {
             cameraViewport.clear()
             // No scene camera -- e.g. a UI-only sample with an empty World (see ui-showcase's
             // GameModule). There is nothing 3D to draw, but the swapchain must still be
@@ -160,7 +161,7 @@ class RenderSystem3D(
         val plannedFrame = if (isDirty) {
             recordCameraState(camera, currentViewport, currentAspect)
             lastFramePlanned = true
-            planFrame(renderWorld, camera, currentViewport, currentAspect).also {
+            planFrame(renderWorld, cameraEntity, camera, currentViewport, currentAspect).also {
                 lastPlannedFrame = it
             }
         } else {
@@ -192,11 +193,35 @@ class RenderSystem3D(
         }
     }
 
-    private fun planFrame(world: World, camera: Camera, viewport: RenderViewport?, aspect: Float): SceneRenderPlanner3D.PlannedFrame =
+    private fun planFrame(
+        world: World,
+        cameraEntity: Entity,
+        camera: Camera,
+        viewport: RenderViewport?,
+        aspect: Float,
+    ): SceneRenderPlanner3D.PlannedFrame =
         if (camera.viewport == null) {
-            planner.plan(world, camera, elapsedTimeSeconds, viewport?.aspect ?: aspect, viewport)
+            planner.plan(
+                world = world,
+                camera = camera,
+                elapsedTimeSeconds = elapsedTimeSeconds,
+                aspect = viewport?.aspect ?: aspect,
+                viewport = viewport,
+                cameraEntity = cameraEntity,
+                targetWidth = renderer.surfaceWidth,
+                targetHeight = renderer.surfaceHeight,
+            )
         } else {
-            planner.plan(world, cameraViewport.camera, elapsedTimeSeconds, cameraViewport.aspect, cameraViewport.viewport)
+            planner.plan(
+                world = world,
+                camera = cameraViewport.camera,
+                elapsedTimeSeconds = elapsedTimeSeconds,
+                aspect = cameraViewport.aspect,
+                viewport = cameraViewport.viewport,
+                cameraEntity = cameraEntity,
+                targetWidth = renderer.surfaceWidth,
+                targetHeight = renderer.surfaceHeight,
+            )
         }
 
     private fun isViewDirty(camera: Camera, viewport: RenderViewport?, surfaceAspect: Float): Boolean =

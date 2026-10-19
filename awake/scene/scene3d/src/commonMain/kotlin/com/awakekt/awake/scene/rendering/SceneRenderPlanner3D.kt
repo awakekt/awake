@@ -48,6 +48,9 @@ internal class SceneRenderPlanner3D(
         elapsedTimeSeconds: Float,
         aspect: Float,
         viewport: RenderViewport?,
+        cameraEntity: com.awakekt.awake.ecs.Entity? = null,
+        targetWidth: Int = 0,
+        targetHeight: Int = 0,
     ): PlannedFrame {
         drawCalls.clear()
         val geometryFrame = geometryFeature.begin(world, camera, elapsedTimeSeconds, aspect)
@@ -56,6 +59,22 @@ internal class SceneRenderPlanner3D(
         drawCalls += contributions.particleDraws
         drawCalls += geometryFeature.finish(world, geometryFrame, camera)
         drawCalls += contributions.authoredDraws
+
+        val postProcessing = cameraEntity?.let { world.get<com.awakekt.awake.scene.rendering.postprocessing.PostProcessing>(it) }
+        val hasPostEffects = postProcessing != null && postProcessing.enabled && postProcessing.effects.isNotEmpty()
+        val hasDimensions = targetWidth > 0 && targetHeight > 0
+        val postPassChain = if (hasPostEffects && hasDimensions) {
+            com.awakekt.awake.render.effects.PostProcessingStack.buildChain(
+                effects = postProcessing.effects,
+                targetContext = com.awakekt.awake.render.imagepass.ImagePassTargetContext(
+                    width = targetWidth,
+                    height = targetHeight,
+                    clipSpace = rendererClipSpace,
+                ),
+            )
+        } else {
+            com.awakekt.awake.render.imagepass.ImagePassChain.Empty
+        }
 
         drawPreparer.rejected = 0
         val passInput = ScenePassCompiler.compile(
@@ -68,6 +87,7 @@ internal class SceneRenderPlanner3D(
             viewport = viewport,
             drawPreparer = drawPreparer,
             maskLayers = world.outlineMaskLayers(),
+            postPassChain = postPassChain,
         )
         return PlannedFrame(
             passInput = passInput,

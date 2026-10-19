@@ -96,6 +96,27 @@ class SceneDisplayTransformTest {
         assertTrue(abs(hue(reinhard) - hue(amber)) > 3f, "the control: Reinhard moves this hue, ${hue(reinhard)}")
     }
 
+    @Test
+    fun linearTransformLeavesRadianceUncompressedAndUnencoded() {
+        val linearProbe = shader("probe_linear") {
+            val uniforms = uniformBlock("Uniforms", group = 0, binding = 0)
+            val exposure by uniforms.field(GpuDataShape.Vec4)
+            val transform = sceneDisplayTransform(linear = true)
+            fragment {
+                val radiance by input(GpuDataShape.Vec3, location = 0)
+                colorOutput(vec4(transform.display(radiance, exposure.x), 1f.lit))
+            }
+        }
+        val radiance = floatArrayOf(2.5f, 5.0f, 0.5f)
+        val out = AslEvaluator.evalFragment(
+            linearProbe,
+            mapOf("radiance" to radiance, "uniforms.exposure" to floatArrayOf(2f, 0f, 0f, 0f)),
+        ).copyOf(3)
+        assertEquals(5.0f, out[0])
+        assertEquals(10.0f, out[1])
+        assertEquals(1.0f, out[2])
+    }
+
     private fun display(radiance: FloatArray, exposure: Float): FloatArray = AslEvaluator.evalFragment(
         probe,
         mapOf("radiance" to radiance, "uniforms.exposure" to floatArrayOf(exposure, 0f, 0f, 0f)),

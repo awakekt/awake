@@ -7,6 +7,7 @@ package com.awakekt.awake.render.command
 
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.render.imagepass.ImagePassChain
 import com.awakekt.awake.render.renderer.RenderViewport
 
 /**
@@ -31,6 +32,8 @@ data class GpuPassInput(
     val resolvedTransparentDraws: List<GpuResolvedDraw> = emptyList(),
     /** Any sub-passes executing after the primary scene pass (e.g. bloom, tone-mapping, color grading). */
     val postPasses: List<GpuSubPass> = emptyList(),
+    /** Fully resolved 2D image pass chain for camera post-processing (bloom, tone-mapping, grade, FXAA). */
+    val postPassChain: ImagePassChain = ImagePassChain.Empty,
     /** Pre-packed uniform bytes (lighting, fog, shadow matrices) as raw floats. */
     val passUniforms: FloatArray,
     /** Generic feature policy for this pass; defaults preserve the historical renderer behavior. */

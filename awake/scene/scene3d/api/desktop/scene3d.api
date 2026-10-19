@@ -1520,6 +1520,226 @@ public final class com/awakekt/awake/scene/rendering/outline/OutlinedKt {
 	public static final fun outline-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLjava/lang/Integer;)V
 }
 
+public final class com/awakekt/awake/scene/rendering/postprocessing/PostProcessing {
+	public fun <init> ()V
+	public fun <init> (ZLjava/util/List;)V
+	public synthetic fun <init> (ZLjava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Z
+	public final fun component2 ()Ljava/util/List;
+	public final fun copy (ZLjava/util/List;)Lcom/awakekt/awake/scene/rendering/postprocessing/PostProcessing;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/postprocessing/PostProcessing;ZLjava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/postprocessing/PostProcessing;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEffects ()Ljava/util/List;
+	public final fun getEnabled ()Z
+	public fun hashCode ()I
+	public final fun setEffects (Ljava/util/List;)V
+	public final fun setEnabled (Z)V
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/scene/rendering/postprocessing/PostProcessingBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/rendering/postprocessing/PostProcessingBinding;
+	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public synthetic fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/rendering/postprocessing/ScenePostProcessing;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun canResolve (Lcom/awakekt/awake/scene/document/SceneComponent;)Z
+	public fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/rendering/postprocessing/PostProcessing;)Lcom/awakekt/awake/scene/rendering/postprocessing/ScenePostProcessing;
+	public synthetic fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public synthetic fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/rendering/postprocessing/ScenePostProcessing;
+	public fun getComponentClass ()Lkotlin/reflect/KClass;
+	public fun getSchemaClass ()Lkotlin/reflect/KClass;
+	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/rendering/postprocessing/SceneBloomEffect : com/awakekt/awake/scene/rendering/postprocessing/ScenePostEffect {
+	public static final field Companion Lcom/awakekt/awake/scene/rendering/postprocessing/SceneBloomEffect$Companion;
+	public fun <init> ()V
+	public fun <init> (ZFFFF)V
+	public synthetic fun <init> (ZFFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Z
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()F
+	public final fun copy (ZFFFF)Lcom/awakekt/awake/scene/rendering/postprocessing/SceneBloomEffect;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/postprocessing/SceneBloomEffect;ZFFFFILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/postprocessing/SceneBloomEffect;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getEnabled ()Z
+	public final fun getIntensity ()F
+	public final fun getKnee ()F
+	public final fun getRadius ()F
+	public final fun getThreshold ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/scene/rendering/postprocessing/SceneBloomEffect$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/rendering/postprocessing/SceneBloomEffect$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/rendering/postprocessing/SceneBloomEffect;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/rendering/postprocessing/SceneBloomEffect;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/rendering/postprocessing/SceneBloomEffect$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/rendering/postprocessing/SceneCustomPostEffect : com/awakekt/awake/scene/rendering/postprocessing/ScenePostEffect {
+	public static final field Companion Lcom/awakekt/awake/scene/rendering/postprocessing/SceneCustomPostEffect$Companion;
+	public fun <init> (ZLjava/lang/String;Ljava/util/List;)V
+	public synthetic fun <init> (ZLjava/lang/String;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Z
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/util/List;
+	public final fun copy (ZLjava/lang/String;Ljava/util/List;)Lcom/awakekt/awake/scene/rendering/postprocessing/SceneCustomPostEffect;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/postprocessing/SceneCustomPostEffect;ZLjava/lang/String;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/postprocessing/SceneCustomPostEffect;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getEnabled ()Z
+	public final fun getParameters ()Ljava/util/List;
+	public final fun getShaderId ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/scene/rendering/postprocessing/SceneCustomPostEffect$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/rendering/postprocessing/SceneCustomPostEffect$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/rendering/postprocessing/SceneCustomPostEffect;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/rendering/postprocessing/SceneCustomPostEffect;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/rendering/postprocessing/SceneCustomPostEffect$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/rendering/postprocessing/SceneFxaaEffect : com/awakekt/awake/scene/rendering/postprocessing/ScenePostEffect {
+	public static final field Companion Lcom/awakekt/awake/scene/rendering/postprocessing/SceneFxaaEffect$Companion;
+	public fun <init> ()V
+	public fun <init> (ZLcom/awakekt/awake/render/pipeline/EffectQuality;)V
+	public synthetic fun <init> (ZLcom/awakekt/awake/render/pipeline/EffectQuality;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Z
+	public final fun component2 ()Lcom/awakekt/awake/render/pipeline/EffectQuality;
+	public final fun copy (ZLcom/awakekt/awake/render/pipeline/EffectQuality;)Lcom/awakekt/awake/scene/rendering/postprocessing/SceneFxaaEffect;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/postprocessing/SceneFxaaEffect;ZLcom/awakekt/awake/render/pipeline/EffectQuality;ILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/postprocessing/SceneFxaaEffect;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getEnabled ()Z
+	public final fun getQuality ()Lcom/awakekt/awake/render/pipeline/EffectQuality;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/scene/rendering/postprocessing/SceneFxaaEffect$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/rendering/postprocessing/SceneFxaaEffect$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/rendering/postprocessing/SceneFxaaEffect;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/rendering/postprocessing/SceneFxaaEffect;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/rendering/postprocessing/SceneFxaaEffect$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract interface class com/awakekt/awake/scene/rendering/postprocessing/ScenePostEffect {
+	public static final field Companion Lcom/awakekt/awake/scene/rendering/postprocessing/ScenePostEffect$Companion;
+	public abstract fun getEnabled ()Z
+}
+
+public final class com/awakekt/awake/scene/rendering/postprocessing/ScenePostEffect$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/rendering/postprocessing/ScenePostProcessing : com/awakekt/awake/scene/document/SceneComponent {
+	public static final field Companion Lcom/awakekt/awake/scene/rendering/postprocessing/ScenePostProcessing$Companion;
+	public fun <init> ()V
+	public fun <init> (ZLjava/util/List;)V
+	public synthetic fun <init> (ZLjava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Z
+	public final fun component2 ()Ljava/util/List;
+	public final fun copy (ZLjava/util/List;)Lcom/awakekt/awake/scene/rendering/postprocessing/ScenePostProcessing;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/postprocessing/ScenePostProcessing;ZLjava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/postprocessing/ScenePostProcessing;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAllowsMultiplePerNode ()Z
+	public final fun getEffects ()Ljava/util/List;
+	public final fun getEnabled ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+	public fun validate (Ljava/lang/String;)Ljava/util/List;
+	public fun validate (Ljava/lang/String;Ljava/util/List;)Ljava/util/List;
+}
+
+public final synthetic class com/awakekt/awake/scene/rendering/postprocessing/ScenePostProcessing$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/rendering/postprocessing/ScenePostProcessing$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/rendering/postprocessing/ScenePostProcessing;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/rendering/postprocessing/ScenePostProcessing;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/rendering/postprocessing/ScenePostProcessing$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/rendering/postprocessing/SceneToneMappingGradeEffect : com/awakekt/awake/scene/rendering/postprocessing/ScenePostEffect {
+	public static final field Companion Lcom/awakekt/awake/scene/rendering/postprocessing/SceneToneMappingGradeEffect$Companion;
+	public fun <init> ()V
+	public fun <init> (ZFFFFFLjava/util/List;Ljava/util/List;Ljava/util/List;)V
+	public synthetic fun <init> (ZFFFFFLjava/util/List;Ljava/util/List;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Z
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()F
+	public final fun component6 ()F
+	public final fun component7 ()Ljava/util/List;
+	public final fun component8 ()Ljava/util/List;
+	public final fun component9 ()Ljava/util/List;
+	public final fun copy (ZFFFFFLjava/util/List;Ljava/util/List;Ljava/util/List;)Lcom/awakekt/awake/scene/rendering/postprocessing/SceneToneMappingGradeEffect;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/postprocessing/SceneToneMappingGradeEffect;ZFFFFFLjava/util/List;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/postprocessing/SceneToneMappingGradeEffect;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getContrast ()F
+	public fun getEnabled ()Z
+	public final fun getExposure ()F
+	public final fun getGain ()Ljava/util/List;
+	public final fun getGamma ()Ljava/util/List;
+	public final fun getLift ()Ljava/util/List;
+	public final fun getSaturation ()F
+	public final fun getWhiteBalanceTemperature ()F
+	public final fun getWhiteBalanceTint ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/scene/rendering/postprocessing/SceneToneMappingGradeEffect$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/rendering/postprocessing/SceneToneMappingGradeEffect$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/rendering/postprocessing/SceneToneMappingGradeEffect;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/rendering/postprocessing/SceneToneMappingGradeEffect;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/rendering/postprocessing/SceneToneMappingGradeEffect$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
 public final class com/awakekt/awake/scene/rendering/sky/CubemapStripKt {
 	public static final fun decodeCubemapStrip ([BLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }

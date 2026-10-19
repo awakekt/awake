@@ -32,6 +32,7 @@ kotlin {
             api(project(":awake:scene:binding"))
             api(project(":awake:engine:render:contract"))
             api(project(":awake:engine:render:passes"))
+            api(project(":awake:engine:render:effects"))
             api(project(":awake:asset:terrain"))
             // The terrain surface seam: SceneTerrain stores a TerrainSurfaceReference and
             // TerrainContentSystem resolves it through TerrainSurfaceProviders.
