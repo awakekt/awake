@@ -34,6 +34,42 @@ class GlfwInputBridgeTest {
         assertFalse(input.isKeyDown(Key.W), "releasing the GLFW key must clear Input.isKeyDown next poll")
     }
 
+    /** A window's hotkey, a skill slot's digit, Enter: every Key a game binds reaches it, not only movement. */
+    @Test
+    fun everyKeyMapsFromItsGlfwKeyAndAPressShowsInTheSnapshot() {
+        val mapped = DefaultGlfwGameplayKeys.values.toSet()
+        assertEquals(Key.entries.toSet() - Key.Unknown, mapped, "every Key but Unknown has a GLFW key")
+
+        val input = Input()
+        val reader = FakeGlfwWindowInput()
+        input.updateSnapshot()
+        for ((glfwKey, key) in mapOf(73 to Key.I, 78 to Key.N, 49 to Key.Digit1, 257 to Key.Enter, 335 to Key.Enter, 258 to Key.Tab)) {
+            reader.keysDown += glfwKey
+            pollGlfwInput(reader, input)
+            assertTrue(input.updateSnapshot().wasPressed(key), "GLFW key $glfwKey presses $key")
+            reader.keysDown -= glfwKey
+            pollGlfwInput(reader, input)
+            input.updateSnapshot()
+        }
+    }
+
+    /** Shift has a key on each side; letting one go while the other is held keeps Shift down. */
+    @Test
+    fun aKeyOnBothSidesIsDownWhileEitherIs() {
+        val input = Input()
+        val reader = FakeGlfwWindowInput().apply { keysDown += 340; keysDown += 344 }
+        pollGlfwInput(reader, input)
+        assertTrue(input.isKeyDown(Key.Shift))
+        reader.keysDown -= 340
+        pollGlfwInput(reader, input)
+        assertTrue(input.isKeyDown(Key.Shift), "the right Shift still holds it")
+        reader.keysDown -= 344
+        reader.keysDown += 341
+        pollGlfwInput(reader, input)
+        assertFalse(input.isKeyDown(Key.Shift))
+        assertTrue(input.isKeyDown(Key.Ctrl), "the left Ctrl")
+    }
+
     @Test
     fun pointerScalesByFramebufferRatio() {
         val input = Input()
