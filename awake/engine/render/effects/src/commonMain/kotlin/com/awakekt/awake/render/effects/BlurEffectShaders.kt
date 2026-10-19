@@ -212,7 +212,7 @@ object BlurEffectShaders {
             val tinted = let("tinted", mix(saturated, tint.rgb, tint.a))
             val grain = let("grain", fract(sin(dot(pixel, vec2(12.9898f.lit, 78.233f.lit))) * 43758.547f.lit) - 0.5f.lit)
             val rgb = let("rgb", clamp(tinted + vec3(grain * glass.z * 0.1f.lit), vec3(0f.lit), vec3(1f.lit)))
-            colorOutput(vec4(rgb, coverage))
+            colorOutput(vec4(rgb * coverage, coverage))
         }
     }
 
