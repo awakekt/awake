@@ -1,0 +1,250 @@
+public abstract interface class com/awakekt/awake/net/server/codec/MessageCodec {
+	public abstract fun decode ([B)Ljava/lang/Object;
+	public abstract fun encode (Ljava/lang/Object;)[B
+}
+
+public final class com/awakekt/awake/net/server/feature/FeatureKt {
+	public static final fun gameFeature (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/net/server/feature/GameFeature;
+}
+
+public final class com/awakekt/awake/net/server/feature/FeatureScope {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun build ()Lcom/awakekt/awake/net/server/feature/GameFeature;
+	public final fun getId ()Ljava/lang/String;
+	public final fun on (Lkotlin/reflect/KClass;Lkotlin/jvm/functions/Function2;)V
+	public final fun onJoin (Lkotlin/jvm/functions/Function1;)V
+	public final fun onLeave (Lkotlin/jvm/functions/Function1;)V
+	public final fun onTick (Lcom/awakekt/awake/net/server/feature/FeatureTickListener;)V
+	public final fun ownState (Lkotlin/jvm/functions/Function1;)V
+}
+
+public abstract interface class com/awakekt/awake/net/server/feature/FeatureTickListener {
+	public abstract fun onTick (F)V
+}
+
+public final class com/awakekt/awake/net/server/feature/Features {
+	public fun <init> ()V
+	public fun <init> (Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getSize ()I
+	public final fun handles (Ljava/lang/Object;)Z
+	public final fun install (Ljava/util/Collection;)Lcom/awakekt/awake/net/server/feature/Features;
+	public final fun install ([Lcom/awakekt/awake/net/server/feature/GameFeature;)Lcom/awakekt/awake/net/server/feature/Features;
+	public final fun joined (Ljava/lang/Object;)V
+	public final fun left (Ljava/lang/Object;)V
+	public final fun ownState (Ljava/lang/Object;)V
+	public final fun route (Ljava/lang/Object;Ljava/lang/Object;)Z
+	public final fun ticked (F)V
+}
+
+public abstract interface class com/awakekt/awake/net/server/feature/GameFeature {
+	public abstract fun getId ()Ljava/lang/String;
+	public fun onJoin (Ljava/lang/Object;)V
+	public fun onLeave (Ljava/lang/Object;)V
+	public fun onTick (F)V
+	public fun ownState (Ljava/lang/Object;)V
+	public abstract fun router ()Lcom/awakekt/awake/net/server/feature/MessageRouter;
+}
+
+public final class com/awakekt/awake/net/server/feature/GameFeature$DefaultImpls {
+	public static fun onJoin (Lcom/awakekt/awake/net/server/feature/GameFeature;Ljava/lang/Object;)V
+	public static fun onLeave (Lcom/awakekt/awake/net/server/feature/GameFeature;Ljava/lang/Object;)V
+	public static fun onTick (Lcom/awakekt/awake/net/server/feature/GameFeature;F)V
+	public static fun ownState (Lcom/awakekt/awake/net/server/feature/GameFeature;Ljava/lang/Object;)V
+}
+
+public final class com/awakekt/awake/net/server/feature/MessageRouter {
+	public static final field Companion Lcom/awakekt/awake/net/server/feature/MessageRouter$Companion;
+	public synthetic fun <init> (Ljava/util/Map;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getHandledTypes ()Ljava/util/Set;
+	public final fun handles (Ljava/lang/Object;)Z
+	public final fun handles (Lkotlin/reflect/KClass;)Z
+	public final fun route (Ljava/lang/Object;Ljava/lang/Object;)Z
+}
+
+public final class com/awakekt/awake/net/server/feature/MessageRouter$Companion {
+	public final fun empty ()Lcom/awakekt/awake/net/server/feature/MessageRouter;
+	public final fun from (Ljava/util/Map;)Lcom/awakekt/awake/net/server/feature/MessageRouter;
+}
+
+public abstract interface class com/awakekt/awake/net/server/host/HostPlayer {
+	public abstract fun getSession ()Lcom/awakekt/awake/net/TransportSession;
+}
+
+public final class com/awakekt/awake/net/server/host/ServerHost : java/lang/AutoCloseable {
+	public fun <init> (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/net/server/codec/MessageCodec;Lcom/awakekt/awake/net/server/phase/Authenticator;Lcom/awakekt/awake/net/server/phase/PrePlayHandler;Lcom/awakekt/awake/net/server/feature/Features;Lcom/awakekt/awake/net/server/save/SaveScheduler;Lcom/awakekt/awake/net/server/host/ServerHostConfig;Lkotlinx/coroutines/CoroutineDispatcher;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/net/server/codec/MessageCodec;Lcom/awakekt/awake/net/server/phase/Authenticator;Lcom/awakekt/awake/net/server/phase/PrePlayHandler;Lcom/awakekt/awake/net/server/feature/Features;Lcom/awakekt/awake/net/server/save/SaveScheduler;Lcom/awakekt/awake/net/server/host/ServerHostConfig;Lkotlinx/coroutines/CoroutineDispatcher;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun close ()V
+	public final fun drainCommands ()V
+	public final fun getAuthenticator ()Lcom/awakekt/awake/net/server/phase/Authenticator;
+	public final fun getCodec ()Lcom/awakekt/awake/net/server/codec/MessageCodec;
+	public final fun getConfig ()Lcom/awakekt/awake/net/server/host/ServerHostConfig;
+	public final fun getDroppedInputsCount ()J
+	public final fun getFeatures ()Lcom/awakekt/awake/net/server/feature/Features;
+	public final fun getOnlineCount ()I
+	public final fun getPrePlayHandler ()Lcom/awakekt/awake/net/server/phase/PrePlayHandler;
+	public final fun getSaveScheduler ()Lcom/awakekt/awake/net/server/save/SaveScheduler;
+	public final fun getTick ()J
+	public final fun getTickDispatcher ()Lkotlinx/coroutines/CoroutineDispatcher;
+	public final fun getTickTimeNanos ()J
+	public final fun getWorld ()Lcom/awakekt/awake/ecs/World;
+	public final fun healthy ()Z
+	public final fun join (Lcom/awakekt/awake/net/server/host/HostPlayer;)V
+	public final fun leave (Lcom/awakekt/awake/net/server/host/HostPlayer;)V
+	public final fun serve (Lcom/awakekt/awake/net/TransportSession;)Lkotlinx/coroutines/Job;
+	public final fun start ()Lkotlinx/coroutines/Job;
+	public final fun step (F)V
+	public final fun submit (Lcom/awakekt/awake/net/server/host/HostPlayer;Ljava/lang/Object;)Z
+}
+
+public final class com/awakekt/awake/net/server/host/ServerHostConfig {
+	public fun <init> ()V
+	public fun <init> (IIIJ)V
+	public synthetic fun <init> (IIIJILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()I
+	public final fun component4 ()J
+	public final fun copy (IIIJ)Lcom/awakekt/awake/net/server/host/ServerHostConfig;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/net/server/host/ServerHostConfig;IIIJILjava/lang/Object;)Lcom/awakekt/awake/net/server/host/ServerHostConfig;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getInboxCapacity ()I
+	public final fun getMaxInputsPerTick ()I
+	public final fun getStalledNanos ()J
+	public final fun getTicksPerSecond ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/net/server/ktor/GameServerHostConfig {
+	public fun <init> ()V
+	public final fun getHost ()Lcom/awakekt/awake/net/server/host/ServerHost;
+	public final fun getTransport ()Lcom/awakekt/awake/net/TransportServer;
+	public final fun setHost (Lcom/awakekt/awake/net/server/host/ServerHost;)V
+	public final fun setTransport (Lcom/awakekt/awake/net/TransportServer;)V
+}
+
+public final class com/awakekt/awake/net/server/ktor/GameServerHostPluginKt {
+	public static final fun gameServerHost (Lio/ktor/server/application/Application;)Lcom/awakekt/awake/net/server/host/ServerHost;
+	public static final fun getGameServerHost ()Lio/ktor/server/application/ApplicationPlugin;
+	public static final fun getGameServerHostKey ()Lio/ktor/util/AttributeKey;
+}
+
+public final class com/awakekt/awake/net/server/ktor/GameTransportConfig {
+	public fun <init> ()V
+	public final fun getInboxCapacity ()I
+	public final fun getMaxFrameSize ()J
+	public final fun getOutboundCapacity ()I
+	public final fun getPath ()Ljava/lang/String;
+	public final fun getPingPeriod-UwyO8pc ()J
+	public final fun getPort ()I
+	public final fun getTimeout-UwyO8pc ()J
+	public final fun setInboxCapacity (I)V
+	public final fun setMaxFrameSize (J)V
+	public final fun setOutboundCapacity (I)V
+	public final fun setPath (Ljava/lang/String;)V
+	public final fun setPingPeriod-LRDsOJo (J)V
+	public final fun setPort (I)V
+	public final fun setTimeout-LRDsOJo (J)V
+}
+
+public final class com/awakekt/awake/net/server/ktor/GameTransportKt {
+	public static final fun getGameTransport ()Lio/ktor/server/application/ApplicationPlugin;
+	public static final fun getGameTransport (Lio/ktor/server/application/Application;)Lcom/awakekt/awake/net/TransportServer;
+	public static final fun getGameTransportKey ()Lio/ktor/util/AttributeKey;
+}
+
+public final class com/awakekt/awake/net/server/ktor/KtorGameTransport : com/awakekt/awake/net/TransportServer {
+	public fun getPort ()I
+	public fun sessions ()Lkotlinx/coroutines/channels/ReceiveChannel;
+	public fun stop (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public abstract interface class com/awakekt/awake/net/server/phase/AuthResult {
+}
+
+public final class com/awakekt/awake/net/server/phase/AuthResult$Denied : com/awakekt/awake/net/server/phase/AuthResult {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lcom/awakekt/awake/net/server/phase/AuthResult$Denied;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/net/server/phase/AuthResult$Denied;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/net/server/phase/AuthResult$Denied;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getReason ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/net/server/phase/AuthResult$Success : com/awakekt/awake/net/server/phase/AuthResult {
+	public fun <init> (Ljava/lang/Object;)V
+	public final fun component1 ()Ljava/lang/Object;
+	public final fun copy (Ljava/lang/Object;)Lcom/awakekt/awake/net/server/phase/AuthResult$Success;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/net/server/phase/AuthResult$Success;Ljava/lang/Object;ILjava/lang/Object;)Lcom/awakekt/awake/net/server/phase/AuthResult$Success;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPlayer ()Ljava/lang/Object;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class com/awakekt/awake/net/server/phase/Authenticator {
+	public abstract fun authenticate (Lcom/awakekt/awake/net/TransportSession;Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public abstract interface class com/awakekt/awake/net/server/phase/PrePlayHandler {
+	public abstract fun handlePrePlay (Ljava/lang/Object;Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public abstract interface class com/awakekt/awake/net/server/phase/PrePlayResult {
+}
+
+public final class com/awakekt/awake/net/server/phase/PrePlayResult$EnterPlay : com/awakekt/awake/net/server/phase/PrePlayResult {
+	public static final field INSTANCE Lcom/awakekt/awake/net/server/phase/PrePlayResult$EnterPlay;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/net/server/phase/PrePlayResult$Refused : com/awakekt/awake/net/server/phase/PrePlayResult {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lcom/awakekt/awake/net/server/phase/PrePlayResult$Refused;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/net/server/phase/PrePlayResult$Refused;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/net/server/phase/PrePlayResult$Refused;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getReason ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/net/server/phase/PrePlayResult$StayInPrePlay : com/awakekt/awake/net/server/phase/PrePlayResult {
+	public static final field INSTANCE Lcom/awakekt/awake/net/server/phase/PrePlayResult$StayInPrePlay;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/net/server/phase/SessionPhase : java/lang/Enum {
+	public static final field Accept Lcom/awakekt/awake/net/server/phase/SessionPhase;
+	public static final field Authenticating Lcom/awakekt/awake/net/server/phase/SessionPhase;
+	public static final field Closed Lcom/awakekt/awake/net/server/phase/SessionPhase;
+	public static final field Playing Lcom/awakekt/awake/net/server/phase/SessionPhase;
+	public static final field PrePlay Lcom/awakekt/awake/net/server/phase/SessionPhase;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/net/server/phase/SessionPhase;
+	public static fun values ()[Lcom/awakekt/awake/net/server/phase/SessionPhase;
+}
+
+public abstract interface class com/awakekt/awake/net/server/save/Savable {
+	public abstract fun getSaveKey ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/net/server/save/SaveScheduler : java/lang/AutoCloseable {
+	public fun <init> (Lkotlinx/coroutines/CoroutineDispatcher;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;)V
+	public synthetic fun <init> (Lkotlinx/coroutines/CoroutineDispatcher;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun close ()V
+	public final fun flush (J)Z
+	public static synthetic fun flush$default (Lcom/awakekt/awake/net/server/save/SaveScheduler;JILjava/lang/Object;)Z
+	public final fun save (Ljava/util/Collection;Lkotlin/jvm/functions/Function1;)V
+	public final fun save ([Lcom/awakekt/awake/net/server/save/Savable;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun save$default (Lcom/awakekt/awake/net/server/save/SaveScheduler;Ljava/util/Collection;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static synthetic fun save$default (Lcom/awakekt/awake/net/server/save/SaveScheduler;[Lcom/awakekt/awake/net/server/save/Savable;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+}
+

@@ -36,7 +36,7 @@ no published artifact. Test-source dependencies are intentionally excluded.
 
 | Family | Published modules | Version source |
 |---|---:|---|
-| Core | 89 | Existing root `v*` tags and the shared Core release train |
+| Core | 90 | Existing root `v*` tags and the shared Core release train |
 | Vulkan | 3 | `vulkan-v*` tags; renderer, raw bindings, and Android JNI bridge move together |
 | WebGPU release pin | 1 | Each root `v*` tag publishes `:awake:backend:webgpu` as `<release>-SNAPSHOT`, Core held strictly at the release; `main` publishes it on the Core train |
 
@@ -130,6 +130,7 @@ Vulkan modules. Core `v*` releases and main snapshots do not publish or change t
 | `com.awakekt.awake:node-graph` | `:awake:node-graph` | `core` | — |
 | `com.awakekt.awake:particles` | `:awake:particles` | `core` | `api` → `:awake:core:math`; `api` → `:awake:ecs`; `api` → `:awake:engine:render:contract`; `api` → `:awake:engine:render:passes` |
 | `com.awakekt.awake.net:api` | `:awake:net:api` | `core` | — |
+| `com.awakekt.awake.net:server-ktor` | `:awake:net:server-ktor` | `core` | `api` → `:awake:net:api`; `api` → `:awake:ecs` |
 | `com.awakekt.awake.physics:api` | `:awake:physics:api` | `core` | `implementation` → `:awake:core:math`; `implementation` → `:awake:core:geometry` |
 | `com.awakekt.awake.physics:ragdoll` | `:awake:physics:ragdoll` | `core` | `api` → `:awake:physics:api`; `api` → `:awake:core:animation`; `api` → `:awake:core:math` |
 | `com.awakekt.awake:project` | `:awake:project` | `core` | — |
