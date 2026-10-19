@@ -14,6 +14,7 @@ import com.awakekt.awake.core.geometry.GpuDataShape
 import kotlin.math.abs
 import kotlin.math.pow
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
@@ -94,6 +95,34 @@ class SceneDisplayTransformTest {
 
         assertTrue(abs(hue(shown) - hue(amber)) < 0.5f, "hue ${hue(amber)} became ${hue(shown)}")
         assertTrue(abs(hue(reinhard) - hue(amber)) > 3f, "the control: Reinhard moves this hue, ${hue(reinhard)}")
+    }
+
+    @Test
+    fun linearTransformLeavesRadianceUncompressedAndUnencoded() {
+        val linearProbe = shader("probe_linear") {
+            val uniforms = uniformBlock("Uniforms", group = 0, binding = 0)
+            val exposure by uniforms.field(GpuDataShape.Vec4)
+            val out = varyings("VertexOutput")
+            val radiance by out.varying(GpuDataShape.Vec3, location = 0)
+            vertex {
+                val inPosition by input(GpuDataShape.Vec3, location = 0)
+                val inRadiance by input(GpuDataShape.Vec3, location = 1)
+                out.position set vec4(inPosition, 1f.lit)
+                radiance set inRadiance
+            }
+            val transform = sceneDisplayTransform(linear = true)
+            fragment {
+                colorOutput(vec4(transform.display(radiance, exposure.x), 1f.lit))
+            }
+        }
+        val radiance = floatArrayOf(2.5f, 5.0f, 0.5f)
+        val out = AslEvaluator.evalFragment(
+            linearProbe,
+            mapOf("radiance" to radiance, "uniforms.exposure" to floatArrayOf(2f, 0f, 0f, 0f)),
+        ).copyOf(3)
+        assertEquals(5.0f, out[0])
+        assertEquals(10.0f, out[1])
+        assertEquals(1.0f, out[2])
     }
 
     private fun display(radiance: FloatArray, exposure: Float): FloatArray = AslEvaluator.evalFragment(

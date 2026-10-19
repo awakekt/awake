@@ -25,6 +25,15 @@ internal fun primaryCamera(world: World): Camera? {
     return null
 }
 
+internal fun primaryCameraWithEntity(world: World): Pair<com.awakekt.awake.ecs.Entity, Camera>? {
+    world.family<Camera>().forEach { entity, camera ->
+        if (camera.isPrimary) {
+            return entity to camera
+        }
+    }
+    return null
+}
+
 /** Deliberately wider than real viewports for CPU-side culling only. Projection and cascade fitting
  * use the live viewport aspect; using this margin there would lower shadow-map resolution and leave
  * the shadow debugger showing volumes the renderer does not sample. */

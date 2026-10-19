@@ -44,6 +44,7 @@ registers it.
 | [`perceivable`](#perceivable) | `Perceivable` | `com.awakekt.awake.scene:ai` | `registerAiBehaviors()` | [AI](../guides/ai.md#perception) |
 | [`perceiver`](#perceiver) | `Perceiver` | `com.awakekt.awake.scene:ai` | `registerAiBehaviors()` | [AI](../guides/ai.md#perception) |
 | [`physics_body`](#physics_body) | `PhysicsBody` | `com.awakekt.awake.scene:physics` | `registerPhysics()` | [Physics](../guides/physics.md) |
+| [`post_processing`](#post_processing) | `PostProcessing` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Lights and shadows](../guides/lights-and-shadows.md) |
 | [`prefab_link`](#prefab_link) | `PrefabLink` | `com.awakekt.awake.scene:document` | Built in | [Scene documents](../guides/scene-documents.md) |
 | [`shader_effect`](#shader_effect) | `ShaderEffectSource` | `com.awakekt.awake.scene:shader` | `DefaultSceneComponentResolvers.install()` | [Render plans and shaders](../guides/shaders.md#ship-a-shader-with-a-project) |
 | [`skybox`](#skybox) | `Skybox` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Sky and fog](../guides/sky-and-fog.md) |
@@ -704,6 +705,15 @@ baked into the triangles. Only `STATIC` bodies that are not sensors can use it, 
 `convex_hull` shrink-wraps the model's vertices into a convex volume with node scale baked in.
 Because it encloses volume, it supports any `motion` (`STATIC`, `KINEMATIC`, or `DYNAMIC`) and can be a `sensor`.
 Like `mesh`, it uses `MeshColliderSystem` to build the body from models loaded through `loadCollisionMeshes`.
+
+## `post_processing`
+
+Configures the post-processing effects chain applied to the camera's rendered view. `ScenePostProcessing`.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `enabled` | boolean | `true` | Whether post-processing is enabled for this camera. |
+| `effects` | array | `[]` | Ordered list of post-processing effect specifications. |
 
 ## `prefab_link`
 

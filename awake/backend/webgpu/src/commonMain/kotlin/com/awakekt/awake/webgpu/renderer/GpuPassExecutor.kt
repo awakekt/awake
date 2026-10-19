@@ -60,7 +60,7 @@ internal class RendererGpuPassExecutor(
             )
             // Nothing on a frame with nothing masked; the overlay reading it draws nothing either.
             maskPass?.recordCommands(encoder, input.maskPasses, input.environment)
-            encoder.beginRenderPass(
+            val scenePass = encoder.beginRenderPass(
                 RenderPassDescriptor(
                     colorAttachments = listOf(
                         RenderPassColorAttachment(
@@ -77,26 +77,44 @@ internal class RendererGpuPassExecutor(
                         depthStoreOp = GPUStoreOp.Store,
                     ),
                 ),
-            ) {
-                sceneRect?.let { rect ->
-                    setViewport(rect.x, rect.y, rect.width, rect.height, 0f, 1f)
-                    setScissorRect(rect.x.toUInt(), rect.y.toUInt(), rect.width.toUInt(), rect.height.toUInt())
-                }
-                recordPassFeatures(
-                    renderFeatures,
-                    RenderPassSlot.Scene,
-                    sceneContext(
-                        this,
-                        sorted,
-                        primary.pipeline,
-                        input.viewProjection,
-                        input.cameraEye,
-                        SurfaceSize(renderingContext.width.toInt(), renderingContext.height.toInt()),
-                        input.environment,
-                        input,
-                    ),
+            )
+            sceneRect?.let { rect ->
+                scenePass.setViewport(rect.x, rect.y, rect.width, rect.height, 0f, 1f)
+                scenePass.setScissorRect(rect.x.toUInt(), rect.y.toUInt(), rect.width.toUInt(), rect.height.toUInt())
+            }
+            recordPassFeatures(
+                renderFeatures,
+                RenderPassSlot.Scene,
+                sceneContext(
+                    scenePass,
+                    sorted,
+                    primary.pipeline,
+                    input.viewProjection,
+                    input.cameraEye,
+                    SurfaceSize(renderingContext.width.toInt(), renderingContext.height.toInt()),
+                    input.environment,
+                    input,
+                ),
+            )
+            if (!input.postPassChain.isEmpty) {
+                val parentTarget = com.awakekt.awake.webgpu.pipeline.WebGpuImagePassParentTarget(
+                    colorTexture = colorTexture,
+                    colorView = colorView,
+                    colorFormat = swapchainManager.imageFormatWebGpu,
+                    width = renderingContext.width.toInt(),
+                    height = renderingContext.height.toInt(),
+                    isOffscreen = false,
+                    sampleable = true,
                 )
-                end()
+                imagePassExecutor.executeImagePass(
+                    commandEncoder = encoder,
+                    currentPassEncoder = scenePass,
+                    parentTarget = parentTarget,
+                    chain = input.postPassChain,
+                    stats = statsCounter,
+                ).end()
+            } else {
+                scenePass.end()
             }
             recordPostPasses(encoder, input.postPasses)
             recordUiOverlay(
@@ -143,7 +161,7 @@ internal class RendererGpuPassExecutor(
             ),
         )
         renderer.maskPass?.recordCommands(encoder, input.maskPasses, input.environment)
-        encoder.beginRenderPass(
+        val scenePass = encoder.beginRenderPass(
             RenderPassDescriptor(
                 colorAttachments = listOf(
                     RenderPassColorAttachment(
@@ -160,29 +178,47 @@ internal class RendererGpuPassExecutor(
                     depthStoreOp = GPUStoreOp.Store,
                 ),
             ),
-        ) {
-            sceneRect?.let { rect ->
-                setViewport(rect.x, rect.y, rect.width, rect.height, 0f, 1f)
-                setScissorRect(rect.x.toUInt(), rect.y.toUInt(), rect.width.toUInt(), rect.height.toUInt())
-            }
-            recordPassFeatures(
-                renderer.renderFeatures,
-                RenderPassSlot.Scene,
-                WebGpuFrameContext(
-                    renderer = renderer,
-                    encoder = this,
-                    groupedDrawCalls = sorted.opaqueByPipeline,
-                    transparentDrawCalls = sorted.transparent,
-                    primaryPipeline = primary.pipeline,
-                    viewProjection = input.viewProjection,
-                    cameraEye = input.cameraEye,
-                    environment = input.environment,
-                    surfaceWidth = offscreen.width,
-                    surfaceHeight = offscreen.height,
-                    passInput = input,
-                ),
+        )
+        sceneRect?.let { rect ->
+            scenePass.setViewport(rect.x, rect.y, rect.width, rect.height, 0f, 1f)
+            scenePass.setScissorRect(rect.x.toUInt(), rect.y.toUInt(), rect.width.toUInt(), rect.height.toUInt())
+        }
+        recordPassFeatures(
+            renderer.renderFeatures,
+            RenderPassSlot.Scene,
+            WebGpuFrameContext(
+                renderer = renderer,
+                encoder = scenePass,
+                groupedDrawCalls = sorted.opaqueByPipeline,
+                transparentDrawCalls = sorted.transparent,
+                primaryPipeline = primary.pipeline,
+                viewProjection = input.viewProjection,
+                cameraEye = input.cameraEye,
+                environment = input.environment,
+                surfaceWidth = offscreen.width,
+                surfaceHeight = offscreen.height,
+                passInput = input,
+            ),
+        )
+        if (!input.postPassChain.isEmpty) {
+            val parentTarget = com.awakekt.awake.webgpu.pipeline.WebGpuImagePassParentTarget(
+                colorTexture = offscreen.colorTexture,
+                colorView = offscreen.colorView,
+                colorFormat = offscreen.colorFormat,
+                width = offscreen.width,
+                height = offscreen.height,
+                isOffscreen = true,
+                sampleable = true,
             )
-            end()
+            renderer.imagePassExecutor.executeImagePass(
+                commandEncoder = encoder,
+                currentPassEncoder = scenePass,
+                parentTarget = parentTarget,
+                chain = input.postPassChain,
+                stats = renderer.statsCounter,
+            ).end()
+        } else {
+            scenePass.end()
         }
         recordPostPasses(encoder, input.postPasses)
         renderer.submitRenderCommands(encoder)

@@ -73,5 +73,9 @@ object ImagePassShaderRegistry {
         register(ImageEffectShaders.TintSpec)
         register(BlurEffectShaders.BlurPassSpec)
         register(BlurEffectShaders.BlurCompositeSpec)
+        register(PostProcessingShaders.ToneMappingGradeSpec)
+        register(PostProcessingShaders.ToneMappingGradeBloomSpec)
+        register(PostProcessingShaders.BloomBrightPassSpec)
+        register(PostProcessingShaders.FxaaSpec)
     }
 }

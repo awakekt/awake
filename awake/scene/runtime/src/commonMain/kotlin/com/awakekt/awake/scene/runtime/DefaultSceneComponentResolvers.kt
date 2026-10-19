@@ -42,6 +42,9 @@ import com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.ScenePbrMaterial
 import com.awakekt.awake.scene.rendering.mesh.TextureAnimationBinding
 import com.awakekt.awake.scene.rendering.mesh.TextureClipsBinding
+import com.awakekt.awake.scene.rendering.postprocessing.PostProcessing
+import com.awakekt.awake.scene.rendering.postprocessing.PostProcessingBinding
+import com.awakekt.awake.scene.rendering.postprocessing.ScenePostProcessing
 import com.awakekt.awake.scene.rendering.sky.SceneSkybox
 import com.awakekt.awake.scene.rendering.sky.SkyboxBinding
 import com.awakekt.awake.scene.rendering.terrain.SceneTerrain
@@ -89,6 +92,9 @@ object DefaultSceneComponentResolvers {
     /** Binding resolver for [SceneToneMapping] documents and [ToneMapping] ECS components. */
     val ToneMappingResolver: SceneComponentBinding<ToneMapping, SceneToneMapping> = ToneMappingBinding
 
+    /** Binding resolver for [ScenePostProcessing] documents and [PostProcessing] ECS components. */
+    val PostProcessingResolver: SceneComponentBinding<PostProcessing, ScenePostProcessing> = PostProcessingBinding
+
     /** Binding resolver for [SceneAmbientLight] documents and [AmbientLight] ECS components. */
     val AmbientLightResolver: SceneComponentBinding<AmbientLight, SceneAmbientLight> = AmbientLightBinding
 
@@ -110,6 +116,7 @@ object DefaultSceneComponentResolvers {
         SkyboxBinding,
         FogBinding,
         ToneMappingBinding,
+        PostProcessingBinding,
         AmbientLightBinding,
         TerrainBinding,
         CanvasElementBinding,
@@ -141,6 +148,7 @@ object DefaultSceneComponentResolvers {
         SkyboxBinding,
         FogBinding,
         ToneMappingBinding,
+        PostProcessingBinding,
         AmbientLightBinding,
         TerrainBinding,
         CanvasElementBinding,

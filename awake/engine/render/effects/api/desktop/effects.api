@@ -38,6 +38,27 @@ public final class com/awakekt/awake/render/effects/BackdropRegion$Companion {
 	public final fun around (FFFFIII)Lcom/awakekt/awake/render/effects/BackdropRegion;
 }
 
+public final class com/awakekt/awake/render/effects/BloomEffect : com/awakekt/awake/render/effects/PostProcessingEffect {
+	public fun <init> ()V
+	public fun <init> (FFFFZ)V
+	public synthetic fun <init> (FFFFZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()Z
+	public final fun copy (FFFFZ)Lcom/awakekt/awake/render/effects/BloomEffect;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/render/effects/BloomEffect;FFFFZILjava/lang/Object;)Lcom/awakekt/awake/render/effects/BloomEffect;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getEnabled ()Z
+	public final fun getIntensity ()F
+	public final fun getKnee ()F
+	public final fun getRadius ()F
+	public final fun getThreshold ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class com/awakekt/awake/render/effects/BlurChain {
 	public static final field Companion Lcom/awakekt/awake/render/effects/BlurChain$Companion;
 	public static final field MAX_OFFSET F
@@ -92,6 +113,37 @@ public final class com/awakekt/awake/render/effects/BlurredBackdrop {
 	public final fun sample (II[F)V
 }
 
+public final class com/awakekt/awake/render/effects/CustomPostEffect : com/awakekt/awake/render/effects/PostProcessingEffect {
+	public fun <init> (Ljava/lang/String;[FZ)V
+	public synthetic fun <init> (Ljava/lang/String;[FZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()[F
+	public final fun component3 ()Z
+	public final fun copy (Ljava/lang/String;[FZ)Lcom/awakekt/awake/render/effects/CustomPostEffect;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/render/effects/CustomPostEffect;Ljava/lang/String;[FZILjava/lang/Object;)Lcom/awakekt/awake/render/effects/CustomPostEffect;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getEnabled ()Z
+	public final fun getShaderId ()Ljava/lang/String;
+	public final fun getUniforms ()[F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/render/effects/FxaaEffect : com/awakekt/awake/render/effects/PostProcessingEffect {
+	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/render/pipeline/EffectQuality;Z)V
+	public synthetic fun <init> (Lcom/awakekt/awake/render/pipeline/EffectQuality;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/render/pipeline/EffectQuality;
+	public final fun component2 ()Z
+	public final fun copy (Lcom/awakekt/awake/render/pipeline/EffectQuality;Z)Lcom/awakekt/awake/render/effects/FxaaEffect;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/render/effects/FxaaEffect;Lcom/awakekt/awake/render/pipeline/EffectQuality;ZILjava/lang/Object;)Lcom/awakekt/awake/render/effects/FxaaEffect;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getEnabled ()Z
+	public final fun getQuality ()Lcom/awakekt/awake/render/pipeline/EffectQuality;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class com/awakekt/awake/render/effects/ImageEffectShaders {
 	public static final field COPY_SHADER_ID Ljava/lang/String;
 	public static final field INSTANCE Lcom/awakekt/awake/render/effects/ImageEffectShaders;
@@ -132,6 +184,52 @@ public final class com/awakekt/awake/render/effects/LayerBlurEffect {
 	public final fun levelTargetId (I)Ljava/lang/String;
 }
 
+public abstract interface class com/awakekt/awake/render/effects/PostProcessingEffect {
+	public abstract fun getEnabled ()Z
+}
+
+public final class com/awakekt/awake/render/effects/PostProcessingShaders {
+	public static final field BLOOM_BRIGHT_PASS_SHADER_ID Ljava/lang/String;
+	public static final field FXAA_SHADER_ID Ljava/lang/String;
+	public static final field INSTANCE Lcom/awakekt/awake/render/effects/PostProcessingShaders;
+	public static final field TONE_MAPPING_GRADE_BLOOM_SHADER_ID Ljava/lang/String;
+	public static final field TONE_MAPPING_GRADE_SHADER_ID Ljava/lang/String;
+	public final fun getBloomBrightPassShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public final fun getBloomBrightPassSpec ()Lcom/awakekt/awake/render/imagepass/ImagePassShaderSpec;
+	public final fun getBloomBrightPassUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
+	public final fun getBloomParamsField ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun getExposureAndContrastField ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun getFxaaParamsField ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun getFxaaShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public final fun getFxaaSpec ()Lcom/awakekt/awake/render/imagepass/ImagePassShaderSpec;
+	public final fun getFxaaUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
+	public final fun getGainField ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun getGammaField ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun getLiftField ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun getToneMappingGradeBloomShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public final fun getToneMappingGradeBloomSpec ()Lcom/awakekt/awake/render/imagepass/ImagePassShaderSpec;
+	public final fun getToneMappingGradeShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public final fun getToneMappingGradeSpec ()Lcom/awakekt/awake/render/imagepass/ImagePassShaderSpec;
+	public final fun getToneMappingGradeUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
+	public final fun getWhiteBalanceField ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun packBloomBrightPassUniforms (FF)[F
+	public final fun packFxaaUniforms (III)[F
+	public static synthetic fun packFxaaUniforms$default (Lcom/awakekt/awake/render/effects/PostProcessingShaders;IIIILjava/lang/Object;)[F
+	public final fun packToneMappingGradeUniforms (FFFFFF[F[F[F)[F
+	public static synthetic fun packToneMappingGradeUniforms$default (Lcom/awakekt/awake/render/effects/PostProcessingShaders;FFFFFF[F[F[FILjava/lang/Object;)[F
+}
+
+public final class com/awakekt/awake/render/effects/PostProcessingStack {
+	public static final field INSTANCE Lcom/awakekt/awake/render/effects/PostProcessingStack;
+	public static final field TRANSIENT_BLOOM_BRIGHT_ID Ljava/lang/String;
+	public static final field TRANSIENT_LDR_SCENE_ID Ljava/lang/String;
+	public final fun buildChain (Ljava/util/List;Lcom/awakekt/awake/render/imagepass/ImagePassTargetContext;)Lcom/awakekt/awake/render/imagepass/ImagePassChain;
+	public final fun evaluateBloomBrightPassReference ([FFF)[F
+	public final fun evaluateToneMappingGradeReference ([FFFF[F[F[FFF[FF)[F
+	public static synthetic fun evaluateToneMappingGradeReference$default (Lcom/awakekt/awake/render/effects/PostProcessingStack;[FFFF[F[F[FFF[FFILjava/lang/Object;)[F
+	public final fun levelTargetId (I)Ljava/lang/String;
+}
+
 public final class com/awakekt/awake/render/effects/TintImageEffect {
 	public static final field INSTANCE Lcom/awakekt/awake/render/effects/TintImageEffect;
 	public static final field TRANSIENT_TARGET_ID Ljava/lang/String;
@@ -151,6 +249,35 @@ public final class com/awakekt/awake/render/effects/TintImageEffect$QualityProfi
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getEnabled ()Z
 	public final fun getScaleDivisor ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/render/effects/ToneMappingGradeEffect : com/awakekt/awake/render/effects/PostProcessingEffect {
+	public fun <init> ()V
+	public fun <init> (FFF[F[F[FFFZ)V
+	public synthetic fun <init> (FFF[F[F[FFFZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()[F
+	public final fun component5 ()[F
+	public final fun component6 ()[F
+	public final fun component7 ()F
+	public final fun component8 ()F
+	public final fun component9 ()Z
+	public final fun copy (FFF[F[F[FFFZ)Lcom/awakekt/awake/render/effects/ToneMappingGradeEffect;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/render/effects/ToneMappingGradeEffect;FFF[F[F[FFFZILjava/lang/Object;)Lcom/awakekt/awake/render/effects/ToneMappingGradeEffect;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getContrast ()F
+	public fun getEnabled ()Z
+	public final fun getExposure ()F
+	public final fun getGain ()[F
+	public final fun getGamma ()[F
+	public final fun getLift ()[F
+	public final fun getSaturation ()F
+	public final fun getWhiteBalanceTemperature ()F
+	public final fun getWhiteBalanceTint ()F
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }

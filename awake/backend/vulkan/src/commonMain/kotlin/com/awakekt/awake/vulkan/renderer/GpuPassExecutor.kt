@@ -111,7 +111,7 @@ private fun Renderer.recordToTexture(target: RenderTarget, input: GpuPassInput):
             ),
         )
         Vulkan.vkCmdEndRenderPass(commandBuffer)
-        recordPostPasses(commandBuffer, input.postPasses)
+        recordPostPassesToTexture(commandBuffer, offscreen, input)
         offscreen.transitionToShaderReadOnly(commandBuffer)
     }
 }

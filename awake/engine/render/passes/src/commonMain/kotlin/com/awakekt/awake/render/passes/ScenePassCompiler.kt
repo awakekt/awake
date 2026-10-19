@@ -45,6 +45,8 @@ object ScenePassCompiler {
      * @param maskLayers The mask pass's layers, by index: each one's uniforms, which its sub-pass
      *   carries to whatever samples the layer. A draw whose [RenderDrawCommand.maskLayer] names one
      *   is also drawn into it; a layer no draw names has no sub-pass.
+     * @param postPassChain Image-pass chain run over the finished scene colour, such as a camera's
+     *   post-processing stack; [ImagePassChain.Empty] runs nothing.
      * @return Prepared [GpuPassInput] containing subpasses and uniform blocks ready for recording.
      */
     fun compile(
@@ -57,6 +59,7 @@ object ScenePassCompiler {
         viewport: RenderViewport? = null,
         drawPreparer: GpuDrawPreparer? = null,
         maskLayers: List<FloatArray> = emptyList(),
+        postPassChain: com.awakekt.awake.render.imagepass.ImagePassChain = com.awakekt.awake.render.imagepass.ImagePassChain.Empty,
     ): GpuPassInput {
         val viewProjection = lens.viewProjectionMatrix(aspect, clipSpace)
         val cameraForward = lens.forwardDirection()
@@ -111,6 +114,7 @@ object ScenePassCompiler {
             shadowCascadeData = shadowCascadeData,
             resolvedEdgeDraws = edges,
             maskPasses = masked.subPasses(viewProjection),
+            postPassChain = postPassChain,
         )
     }
 }

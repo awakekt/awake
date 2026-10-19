@@ -237,11 +237,12 @@ public final class com/awakekt/awake/asset/shaderpack/SceneDisplayTransform {
 	public final fun display (Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;)Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun displayReferred (Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;)Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun encoded (Lcom/awakekt/awake/asset/shaderdsl/AslExpr;)Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public final fun isLinear ()Z
 }
 
 public final class com/awakekt/awake/asset/shaderpack/SceneDisplayTransformKt {
-	public static final fun sceneDisplayTransform (Lcom/awakekt/awake/asset/shaderdsl/AslShaderBuilder;Z)Lcom/awakekt/awake/asset/shaderpack/SceneDisplayTransform;
-	public static synthetic fun sceneDisplayTransform$default (Lcom/awakekt/awake/asset/shaderdsl/AslShaderBuilder;ZILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderpack/SceneDisplayTransform;
+	public static final fun sceneDisplayTransform (Lcom/awakekt/awake/asset/shaderdsl/AslShaderBuilder;ZZ)Lcom/awakekt/awake/asset/shaderpack/SceneDisplayTransform;
+	public static synthetic fun sceneDisplayTransform$default (Lcom/awakekt/awake/asset/shaderdsl/AslShaderBuilder;ZZILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderpack/SceneDisplayTransform;
 }
 
 public final class com/awakekt/awake/asset/shaderpack/ShadowMapViewContentFeatureKt {
