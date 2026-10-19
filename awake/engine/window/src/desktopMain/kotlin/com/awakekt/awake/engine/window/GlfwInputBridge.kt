@@ -49,10 +49,15 @@ private const val GLFW_MOUSE_BUTTON_5 = 4
  * either is ([pollGlfwInput]), and the keypad's Enter is [Key.Enter].
  */
 val DefaultGlfwGameplayKeys: Map<Int, Key> = linkedMapOf<Int, Key>().apply {
-    // GLFW numbers the letters and digits by their ASCII codes.
-    ('A'..'Z').forEach { letter -> put(GLFW_KEY_A + (letter - 'A'), Key.valueOf(letter.toString())) }
-    (0..9).forEach { digit -> put(GLFW_KEY_0 + digit, Key.valueOf("Digit$digit")) }
-    (1..12).forEach { n -> put(GLFW_KEY_F1 + n - 1, Key.valueOf("F$n")) }
+    for (letter in 'A'..'Z') {
+        put(GLFW_KEY_A + (letter - 'A'), Key.valueOf(letter.toString()))
+    }
+    for (digit in 0..9) {
+        put(GLFW_KEY_0 + digit, Key.valueOf("Digit$digit"))
+    }
+    for (n in 1..12) {
+        put(GLFW_KEY_F1 + n - 1, Key.valueOf("F$n"))
+    }
     put(GLFW_KEY_UP, Key.ArrowUp)
     put(GLFW_KEY_DOWN, Key.ArrowDown)
     put(GLFW_KEY_LEFT, Key.ArrowLeft)
