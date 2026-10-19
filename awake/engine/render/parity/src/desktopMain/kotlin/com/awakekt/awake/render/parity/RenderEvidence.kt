@@ -5,14 +5,21 @@
  */
 package com.awakekt.awake.render.parity
 
+import com.awakekt.awake.asset.shaderpack.LitShadowUniformLayout
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.math.Mat4
+import com.awakekt.awake.render.effects.BloomEffect
+import com.awakekt.awake.render.effects.FxaaEffect
+import com.awakekt.awake.render.effects.PostProcessingStack
 import com.awakekt.awake.render.effects.TintImageEffect
+import com.awakekt.awake.render.effects.ToneMappingGradeEffect
 import com.awakekt.awake.render.imagepass.ImagePassRect
+import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes.uniforms.RenderDebugView
 import com.awakekt.awake.render.pipeline.EffectQuality
 import com.awakekt.awake.render.renderer.Renderer
+import com.awakekt.awake.render.renderer.createMaterial
 import kotlinx.coroutines.runBlocking
 import java.awt.image.BufferedImage
 import java.io.File
@@ -57,6 +64,7 @@ fun main(args: Array<String>) {
         write("scene-facing-sprite-spin-45", "The same sprite spun 45 degrees: the quad turns in its own plane", EVIDENCE_SIZE, renderer.renderFacingSpriteFromTheSide(size = EVIDENCE_SIZE, rotation = (PI / 4).toFloat()))
         writeSkinnedEvidence(renderer, ::write)
         writeShaderEffectEvidence(renderer, ::write)
+        writePostProcessingEvidence(renderer, ::write)
         write("scene-terrain-cliff-self-shadow", "Clipmap plateau coarser than its heightmap, sun on its cliff: top, rim and face stay lit", EVIDENCE_SIZE, renderer.renderTerrainCliffScene(size = EVIDENCE_SIZE))
         STUDIO_YAWS.withIndex().filter { it.index % EVIDENCE_YAW_STEP == 0 }.forEach { (index, yaw) ->
             write(
@@ -209,6 +217,58 @@ private fun writeBackdropBlurEvidence(renderer: Renderer, write: (String, String
             pixels,
         )
     } finally {
+        target.destroy()
+    }
+}
+
+/** A lit 3D scene with bloom, tone-mapping and FXAA post-processing stack applied. */
+private fun writePostProcessingEvidence(renderer: Renderer, write: (String, String, Int, ByteArray) -> Unit) {
+    renderer.effectQuality = EffectQuality.High
+    val size = EVIDENCE_SIZE
+    val target = renderer.createRenderTarget(size, size)
+    val ground = renderer.createMesh(plane(GROUND_HALF, y = 0f))
+    val caster = renderer.createMesh(plane(CASTER_HALF, y = CASTER_Y, r = 2.5f, g = 1.8f, b = 0.5f))
+    val material = renderer.createMaterial(LitShadowUniformLayout)
+    try {
+        val context = renderer.imagePassTargetContext(target)
+        val chain = PostProcessingStack.buildChain(
+            effects = listOf(
+                BloomEffect(
+                    threshold = 0.5f,
+                    knee = 0.5f,
+                    intensity = 1.0f,
+                    radius = 16.0f,
+                ),
+                ToneMappingGradeEffect(
+                    exposure = 1.0f,
+                    contrast = 1.1f,
+                    saturation = 1.2f,
+                ),
+                FxaaEffect(
+                    quality = EffectQuality.Medium,
+                ),
+            ),
+            targetContext = context,
+        )
+        val input = renderer.compileShadowScene(
+            listOf(
+                RenderDrawCommand(ground, material),
+                RenderDrawCommand(caster, material),
+            ),
+        ).copy(postPassChain = chain)
+
+        renderer.renderToTexture(target, input)
+        val pixels = runBlocking { renderer.readPixels(target) }.data
+        write(
+            "scene-post-processing-stack",
+            "Post-processing stack: bloom, tone-mapping with contrast/saturation grade, and FXAA",
+            size,
+            pixels,
+        )
+    } finally {
+        ground.destroy()
+        caster.destroy()
+        material.destroy()
         target.destroy()
     }
 }
