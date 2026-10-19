@@ -14,6 +14,7 @@ import com.awakekt.awake.core.geometry.GpuDataShape
 import kotlin.math.abs
 import kotlin.math.pow
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
@@ -101,9 +102,16 @@ class SceneDisplayTransformTest {
         val linearProbe = shader("probe_linear") {
             val uniforms = uniformBlock("Uniforms", group = 0, binding = 0)
             val exposure by uniforms.field(GpuDataShape.Vec4)
+            val out = varyings("VertexOutput")
+            val radiance by out.varying(GpuDataShape.Vec3, location = 0)
+            vertex {
+                val inPosition by input(GpuDataShape.Vec3, location = 0)
+                val inRadiance by input(GpuDataShape.Vec3, location = 1)
+                out.position set vec4(inPosition, 1f.lit)
+                radiance set inRadiance
+            }
             val transform = sceneDisplayTransform(linear = true)
             fragment {
-                val radiance by input(GpuDataShape.Vec3, location = 0)
                 colorOutput(vec4(transform.display(radiance, exposure.x), 1f.lit))
             }
         }
