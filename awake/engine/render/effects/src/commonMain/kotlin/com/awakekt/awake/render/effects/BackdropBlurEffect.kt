@@ -5,7 +5,9 @@
  */
 package com.awakekt.awake.render.effects
 
-import com.awakekt.awake.core.color.Color
+import com.awakekt.awake.core.graphics2d.BlendMode
+import com.awakekt.awake.core.graphics2d.backdropFallbackColor
+import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.render.imagepass.ImagePassAddressMode
 import com.awakekt.awake.render.imagepass.ImagePassChain
 import com.awakekt.awake.render.imagepass.ImagePassDestination
@@ -19,16 +21,6 @@ import com.awakekt.awake.render.imagepass.ImagePassTargetFormat
 import com.awakekt.awake.render.imagepass.ImagePassTargetSpec
 import com.awakekt.awake.render.imagepass.ImagePassTextureBinding
 
-/** The fallback alpha for a fully transparent tint; an opaque tint stays opaque. */
-private const val FALLBACK_MIN_ALPHA = 0.6f
-
-/**
- * Computes the fallback color used when a blur cannot be executed (e.g. quality is Off or
- * hardware cannot snapshot the destination).
- */
-fun backdropFallbackColor(tint: Color): Color =
-    tint.withAlpha(FALLBACK_MIN_ALPHA + (1f - FALLBACK_MIN_ALPHA) * tint.a)
-
 /**
  * Helper for building dual-filter (Kawase) backdrop blur [ImagePassChain]s.
  */
@@ -38,6 +30,44 @@ object BackdropBlurEffect {
 
     /** Transient target identifier prefix for blur levels. */
     fun levelTargetId(level: Int): String = "blur_level_$level"
+
+    /**
+     * Builds an [ImagePassStep] executing the frosted glass composite shader over [vertices] and
+     * [indices], sampling [blurredSource] (typically the transient target at [BlurChain.outputLevel])
+     * and writing into the resumed [ImagePassDestination.ActiveTarget].
+     */
+    fun buildCompositeStep(
+        blurredSource: ImagePassSource,
+        vertices: FloatArray,
+        indices: ShortArray,
+        width: Int,
+        height: Int,
+        clipSpace: ClipSpace,
+    ): ImagePassStep {
+        val linearClampSampler = ImagePassSamplerSpec(
+            filter = ImagePassFilterMode.Linear,
+            addressMode = ImagePassAddressMode.ClampToEdge,
+        )
+        val uniforms = BlurEffectShaders.packCompositeUniforms(width, height, clipSpace)
+        return ImagePassStep(
+            shader = ImagePassShaderRegistry.require(BlurEffectShaders.BLUR_COMPOSITE_SHADER_ID),
+            inputs = listOf(
+                ImagePassTextureBinding(
+                    binding = 1,
+                    source = blurredSource,
+                    sampler = linearClampSampler,
+                ),
+            ),
+            destination = ImagePassDestination.ActiveTarget(
+                blendMode = BlendMode.SourceOver,
+                isPremultiplied = true,
+                blendEnabled = true,
+            ),
+            uniformData = uniforms,
+            quadVertices = vertices,
+            quadIndices = indices,
+        )
+    }
 
     /**
      * Builds an [ImagePassChain] executing the downsampling and upsampling passes for [blur]

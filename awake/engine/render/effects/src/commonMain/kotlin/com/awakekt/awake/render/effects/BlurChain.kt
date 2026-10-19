@@ -202,6 +202,9 @@ data class BlurChain(
             return (low + high) / 2f
         }
 
+        /** Maximum number of distinct blur operations allowed per frame at [quality]. */
+        fun maxBlursPerFrame(quality: EffectQuality): Int = qualityLimits(quality).maxBlursPerFrame
+
         private fun qualityLimits(quality: EffectQuality): QualityLimits = when (quality) {
             EffectQuality.Off -> QualityLimits(maxIterations = 0, outputLevel = 0, maxBlursPerFrame = 0)
             EffectQuality.Low -> QualityLimits(maxIterations = 4, outputLevel = 2, maxBlursPerFrame = 2)

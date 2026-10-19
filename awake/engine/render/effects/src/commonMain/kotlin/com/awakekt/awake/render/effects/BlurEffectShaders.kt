@@ -50,10 +50,12 @@ import com.awakekt.awake.core.geometry.GpuDataShape
 import com.awakekt.awake.core.geometry.VertexAttribute
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.geometry.VertexSemantic
+import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.render.imagepass.ImagePassShaderSpec
 import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.renderer.UniformField
 import com.awakekt.awake.render.renderer.UniformLayout
+import com.awakekt.awake.render.renderer.UniformWriter
 
 /**
  * Vertex format for dual-filter downsample/upsample passes (stride = 10 floats):
@@ -230,5 +232,18 @@ object BlurEffectShaders {
             vertexFormat = BlurCompositeVertexFormat,
             uniformLayout = CompositeUniformLayout,
         )
+    }
+
+    /**
+     * Packs [CompositeUniformLayout] with [screenToNdc] parameters computed from target dimensions and [clipSpace].
+     */
+    fun packCompositeUniforms(width: Int, height: Int, clipSpace: ClipSpace): FloatArray {
+        val sx = 2f / width.coerceAtLeast(1)
+        val sy = if (clipSpace.flipY) 2f / height.coerceAtLeast(1) else -2f / height.coerceAtLeast(1)
+        val ox = -1f
+        val oy = if (clipSpace.flipY) -1f else 1f
+        return UniformWriter(CompositeUniformLayout)
+            .put(ScreenToNdcField, sx, sy, ox, oy)
+            .build()
     }
 }
