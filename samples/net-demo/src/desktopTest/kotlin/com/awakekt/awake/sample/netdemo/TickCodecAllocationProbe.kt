@@ -94,10 +94,14 @@ class TickCodecAllocationProbe {
 
     private fun warmUp() {
         val source = sourceBuffer()
+        val hostile = forgedCountPacket()
+        val into = SnapshotBuffer()
         repeat(WARM_UP_ROUNDS) {
             TickCodec.encodeSnapshot(writer, tick = it.toLong(), players = source)
             reader.reset(packet)
             sink += if (TickCodec.decodeSnapshot(reader, decoded)) decoded.count else 0
+            reader.reset(hostile)
+            sink += if (TickCodec.decodeSnapshot(reader, into)) 1 else 0
         }
     }
 

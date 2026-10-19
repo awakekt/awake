@@ -90,6 +90,7 @@ class AudioDocsSampleTest {
         // --8<-- [end:wav]
         assertEquals(1, assertNotNull(footstep).channels)
         assertEquals(44100, footstep.sampleRate)
+        assertEquals(16, footstep.bitsPerSample)
         assertEquals(441 * 2, footstep.pcmBytes.size)
     }
 

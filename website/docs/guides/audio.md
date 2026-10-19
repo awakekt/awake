@@ -20,12 +20,6 @@ An `AudioClip` is uncompressed PCM in memory. Decode one from WAV bytes, however
 --8<-- "awake/scene/authoring/src/desktopTest/kotlin/com/awakekt/awake/scene/authoring/AudioDocsSampleTest.kt:wav"
 ```
 
-!!! warning "Check `bitsPerSample` on decoded clips"
-    `WavDecoder` currently reads `bitsPerSample` two bytes past where the WAV format stores it. With
-    a 16-bit file whose format chunk is 16 bytes, the channels, sample rate and PCM bytes come out
-    right but `bitsPerSample`, and so `durationSeconds`, do not. Until that is fixed, copy the
-    clip with the value you know: `clip.copy(bitsPerSample = 16)`.
-
 Or synthesise one:
 
 ```kotlin title="Kotlin"

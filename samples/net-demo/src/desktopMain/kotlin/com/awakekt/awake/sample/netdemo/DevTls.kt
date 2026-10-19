@@ -46,7 +46,9 @@ object DevTls {
                     this.password = password
                     // Must cover every host the demo is reached by, or the handshake fails on
                     // name mismatch rather than on trust.
-                    domains = listOf("127.0.0.1", "0.0.0.0", "localhost")
+                    val localHost = runCatching { java.net.InetAddress.getLocalHost().hostName }.getOrNull()
+                    val loopbackCanonical = runCatching { java.net.InetAddress.getByName("127.0.0.1").canonicalHostName }.getOrNull()
+                    domains = listOfNotNull("127.0.0.1", "0.0.0.0", "localhost", localHost, loopbackCanonical).distinct()
                 }
             }.saveToFile(keyStoreFile, password)
         }
