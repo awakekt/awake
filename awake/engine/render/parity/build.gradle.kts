@@ -34,6 +34,7 @@ kotlin {
                 api(project(":awake:backend:webgpu"))
                 implementation(project(":awake:engine:render:passes"))
                 implementation(project(":awake:engine:render:passes2d"))
+                implementation(project(":awake:engine:render:effects"))
                 implementation(project(":awake:engine:render:testing"))
                 implementation(project(":awake:asset:shaders"))
                 implementation(project(":awake:asset:shader-pack"))
