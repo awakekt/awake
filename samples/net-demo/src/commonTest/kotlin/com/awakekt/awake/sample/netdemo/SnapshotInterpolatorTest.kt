@@ -86,6 +86,23 @@ class SnapshotInterpolatorTest {
         assertTrue(abs(sampled.x[0] - 15f) < EPSILON, "expected 15f, got ${sampled.x[0]}")
     }
 
+    @Test
+    fun `60 fps sampling advances continuously without freezing or clamping to zero`() {
+        val interpolator = SnapshotInterpolator(delaySeconds = 0.1f)
+        interpolator.accept(snapshotAt(tick = 1, x = 0f), receivedAtSeconds = 0.00f)
+        interpolator.accept(snapshotAt(tick = 2, x = 10f), receivedAtSeconds = 0.05f)
+        interpolator.accept(snapshotAt(tick = 3, x = 20f), receivedAtSeconds = 0.10f)
+        interpolator.accept(snapshotAt(tick = 4, x = 30f), receivedAtSeconds = 0.15f)
+
+        // Sample at 60 FPS (~16.67ms intervals) between now = 0.10s and now = 0.15s (target 0.00s to 0.05s)
+        val p0 = interpolator.sample(0.100f).x[0] // target 0.000s -> 0.00f
+        val p1 = interpolator.sample(0.117f).x[0] // target 0.017s -> ~3.40f
+        val p2 = interpolator.sample(0.133f).x[0] // target 0.033s -> ~6.60f
+        val p3 = interpolator.sample(0.150f).x[0] // target 0.050s -> 10.00f
+
+        assertTrue(p0 < p1 && p1 < p2 && p2 < p3, "each 60 FPS frame must advance smoothly: $p0 < $p1 < $p2 < $p3")
+    }
+
     private fun snapshotAt(tick: Long, x: Float) = SnapshotBuffer().apply {
         reset(tick, 0)
         add(netId = 1, x = x, y = 0f)
