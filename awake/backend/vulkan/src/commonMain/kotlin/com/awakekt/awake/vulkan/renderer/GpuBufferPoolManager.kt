@@ -35,6 +35,9 @@ internal class GpuBufferPoolManager(
     private val uiTextureMeshPool = GpuResourcePool {
         DynamicMesh(graphicsDevice, Renderer.MAX_UI_QUADS, DynamicMesh.GLYPH_FLOATS_PER_VERTEX, maxFramesInFlight)
     }
+    private val imagePassMeshPool = GpuResourcePool {
+        DynamicMesh(graphicsDevice, 1, DynamicMesh.IMAGE_PASS_FLOATS_PER_VERTEX, maxFramesInFlight)
+    }
 
     // +1 frame over the swapchain's own count -- see InstanceBuffer's doc comment.
     private val instanceBufferPool = GpuResourcePool {
@@ -60,7 +63,7 @@ internal class GpuBufferPoolManager(
     val uiMeshGrowthCount: Int
         get() {
             var total = 0
-            listOf(uiQuadMeshPool, uiGlyphMeshPool, uiRoundedQuadMeshPool, uiTextureMeshPool)
+            listOf(uiQuadMeshPool, uiGlyphMeshPool, uiRoundedQuadMeshPool, uiTextureMeshPool, imagePassMeshPool)
                 .forEach { pool -> pool.forEach { total += it.growthCount } }
             return total
         }
@@ -73,6 +76,8 @@ internal class GpuBufferPoolManager(
      * would otherwise overwrite geometry an earlier, not-yet-submitted draw still points at. */
     fun textureMeshForPrimitive(index: Int): DynamicMesh = uiTextureMeshPool[index]
 
+    fun imagePassMeshForStep(index: Int): DynamicMesh = imagePassMeshPool[index]
+
     fun instanceBufferForRun(index: Int): InstanceBuffer = instanceBufferPool[index]
     fun skinnedInstanceBufferForRun(index: Int): SkinnedInstanceBuffer = skinnedInstanceBufferPool[index]
     fun alphaInstanceBufferForRun(index: Int): AlphaInstanceBuffer = alphaInstanceBufferPool[index]
@@ -83,6 +88,7 @@ internal class GpuBufferPoolManager(
         uiGlyphMeshPool.forEach { it.destroy() }
         uiRoundedQuadMeshPool.forEach { it.destroy() }
         uiTextureMeshPool.forEach { it.destroy() }
+        imagePassMeshPool.forEach { it.destroy() }
         instanceBufferPool.forEach { it.destroy() }
         skinnedInstanceBufferPool.forEach { it.destroy() }
         alphaInstanceBufferPool.forEach { it.destroy() }

@@ -56,6 +56,10 @@ interface GpuDevice {
      * genuinely unavoidable difference between the two APIs' coordinate systems. */
     val clipSpace: ClipSpace
 
+    /** Coarse hardware classification used to choose a default [EffectQuality] tier. */
+    val deviceClass: GpuDeviceClass
+        get() = GpuDeviceClass.Unknown
+
     /** Uploads [geometry] as a GPU mesh. The caller owns the result and destroys it. */
     fun createMesh(geometry: MeshGeometry): Mesh
 

@@ -18,6 +18,7 @@ internal fun findRenderRuntimeReferenceViolations(
     forbiddenSimpleNames: Collection<String>,
     forbiddenQualifiedNames: Collection<String>,
     forbiddenQualifiedPrefixes: Collection<String> = emptyList(),
+    forbiddenContentVocabulary: Collection<String> = emptyList(),
 ): List<String> =
     buildList {
         lines.forEachIndexed { index, line ->
@@ -26,20 +27,37 @@ internal fun findRenderRuntimeReferenceViolations(
             val lineNumber = index + 1
             if (trimmed.startsWith("import ")) {
                 val imported = trimmed.removePrefix("import ").substringBefore(" as ").trim()
-                if (imported.substringAfterLast('.') in forbiddenSimpleNames) {
-                    add("$lineNumber: imports ${imported.substringAfterLast('.')}")
-                } else if (imported.endsWith(".*") && forbiddenQualifiedPrefixes.any { prefix ->
+                val simpleName = imported.substringAfterLast('.')
+                val matchedVocabulary = forbiddenContentVocabulary.firstOrNull { word ->
+                    simpleName != "*" && simpleName.contains(word, ignoreCase = true)
+                }
+                when {
+                    simpleName in forbiddenSimpleNames ->
+                        add("$lineNumber: imports $simpleName")
+                    matchedVocabulary != null ->
+                        add("$lineNumber: imports $simpleName ($matchedVocabulary)")
+                    forbiddenQualifiedPrefixes.any { prefix ->
                         imported.removeSuffix("*").startsWith(prefix)
-                    }) {
-                    add("$lineNumber: imports forbidden render-runtime package")
+                    } ->
+                        add("$lineNumber: imports forbidden render-runtime package")
                 }
                 return@forEachIndexed
             }
 
             val alias = TYPE_ALIAS.find(trimmed)?.groupValues?.get(1)
+            val aliasSimpleName = alias?.substringAfterLast('.')
+            val aliasVocabulary = if (aliasSimpleName != null) {
+                forbiddenContentVocabulary.firstOrNull { word ->
+                    aliasSimpleName.contains(word, ignoreCase = true)
+                }
+            } else {
+                null
+            }
             when {
-                alias != null && alias.substringAfterLast('.') in forbiddenSimpleNames ->
-                    add("$lineNumber: aliases ${alias.substringAfterLast('.')}")
+                aliasSimpleName != null && aliasSimpleName in forbiddenSimpleNames ->
+                    add("$lineNumber: aliases $aliasSimpleName")
+                aliasSimpleName != null && aliasVocabulary != null ->
+                    add("$lineNumber: aliases $aliasSimpleName ($aliasVocabulary)")
                 forbiddenQualifiedNames.any { qualified -> trimmed.contains(qualified) } ||
                     forbiddenQualifiedPrefixes.any { prefix -> trimmed.contains(prefix) } ->
                     add("$lineNumber: references render-runtime vocabulary directly")

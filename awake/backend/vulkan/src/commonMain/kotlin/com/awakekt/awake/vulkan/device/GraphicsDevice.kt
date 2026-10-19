@@ -7,6 +7,7 @@ package com.awakekt.awake.vulkan.device
 
 import com.awakekt.awake.core.config.EnvSource
 import com.awakekt.awake.core.config.defaultPlatformEnvSource
+import com.awakekt.awake.render.pipeline.GpuDeviceClass
 import com.awakekt.awake.vulkan.Version
 import com.awakekt.awake.vulkan.Version.Companion.vkVersion
 import com.awakekt.awake.vulkan.Vulkan
@@ -245,8 +246,13 @@ class GraphicsDevice {
                     }
                 } ?: throw Exception("Cannot find suitable gpu!")
             physicalDevice = gpu.physicalDevice
+            deviceClass = Vulkan.vkGetPhysicalDeviceProperties(physicalDevice).deviceType.toGpuDeviceClass()
         }
     }
+
+    /** Coarse hardware classification reported by the picked `VkPhysicalDevice`. */
+    var deviceClass: GpuDeviceClass = GpuDeviceClass.Unknown
+        private set
 
     private fun createLogicalDevice(indices: QueueFamilyIndices) {
         val graphicsFamily = indices.graphicsFamily!!

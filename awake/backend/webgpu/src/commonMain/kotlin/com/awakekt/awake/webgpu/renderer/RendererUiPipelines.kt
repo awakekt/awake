@@ -69,6 +69,20 @@ internal fun Renderer.ensureRoundedQuadPipeline() {
     )
 }
 
+internal fun Renderer.ensureImagePassTexture(asset: com.awakekt.awake.render.texture.TextureAsset): com.awakekt.awake.webgpu.texture.Texture =
+    imagePassTextures.getOrPut(asset) {
+        com.awakekt.awake.webgpu.texture.Texture(
+            graphicsDevice = graphicsDevice,
+            runOneTimeCommands = {},
+            data = asset.data,
+            width = asset.width,
+            height = asset.height,
+            layerCount = asset.layerCount,
+            isCubemap = asset.isCubemap,
+            filtering = com.awakekt.awake.render.texture.TextureFiltering.BaseLevelLinear,
+        ).let(textureResources::register)
+    }
+
 private fun uiPipelineDescriptor(
     kind: UiPipelineKind,
     blendMode: BlendMode = BlendMode.SourceOver,

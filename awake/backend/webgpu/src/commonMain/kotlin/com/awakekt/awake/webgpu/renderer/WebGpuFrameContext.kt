@@ -13,16 +13,19 @@ import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.command.MaterialBinding
 import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.command.PreparedDraw
+import com.awakekt.awake.render.imagepass.ImagePassChain
 import com.awakekt.awake.render.passes2d.UiRun
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.renderer.RenderStatsCounter
 import com.awakekt.awake.webgpu.debug.LineMesh
 import com.awakekt.awake.webgpu.pipeline.WebGpuCommandRecorder
+import com.awakekt.awake.webgpu.pipeline.WebGpuImagePassParentTarget
 import com.awakekt.awake.webgpu.pipeline.WebGpuPipelineHandle
 import com.awakekt.awake.webgpu.pipeline.WebGpuRenderFrameContext
 import com.awakekt.awake.webgpu.pipeline.WebGpuUiPipelineSet
 import com.awakekt.awake.webgpu.pipeline.hasBindingGroup
 import com.awakekt.awake.webgpu.ui.DynamicMesh
+import io.ygdrasil.webgpu.GPUCommandEncoder
 import io.ygdrasil.webgpu.GPURenderPassEncoder
 
 /**
@@ -33,7 +36,7 @@ import io.ygdrasil.webgpu.GPURenderPassEncoder
 @Suppress("LongParameterList")
 internal class WebGpuFrameContext(
     private val renderer: Renderer,
-    override val encoder: GPURenderPassEncoder,
+    override var encoder: GPURenderPassEncoder,
     override val groupedDrawCalls: Map<out PipelineHandle, List<PreparedDraw>>,
     override val transparentDrawCalls: List<PreparedDraw> = emptyList(),
     override val primaryPipeline: PipelineHandle,
@@ -43,6 +46,8 @@ internal class WebGpuFrameContext(
     override val surfaceWidth: Int,
     override val surfaceHeight: Int,
     override val passInput: GpuPassInput? = null,
+    private val commandEncoder: GPUCommandEncoder? = null,
+    private val parentTarget: WebGpuImagePassParentTarget? = null,
 ) : WebGpuRenderFrameContext {
 
     /** Single-buffered on this backend; the ports still take it because Vulkan's resources are
@@ -97,4 +102,19 @@ internal class WebGpuFrameContext(
 
     override fun textureMeshForPrimitive(index: Int): DynamicMesh =
         renderer.textureMeshForPrimitive(index)
+
+    override fun executeImagePass(chain: ImagePassChain): GPURenderPassEncoder {
+        val cmdEncoder = commandEncoder
+        val target = parentTarget
+        if (cmdEncoder != null && target != null) {
+            encoder = renderer.imagePassExecutor.executeImagePass(
+                commandEncoder = cmdEncoder,
+                currentPassEncoder = encoder,
+                parentTarget = target,
+                chain = chain,
+                stats = renderer.statsCounter,
+            )
+        }
+        return encoder
+    }
 }

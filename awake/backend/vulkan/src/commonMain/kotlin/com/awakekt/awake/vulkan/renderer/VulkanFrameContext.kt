@@ -12,8 +12,10 @@ import com.awakekt.awake.render.command.GpuEnvironmentState
 import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.command.PreparedDraw
+import com.awakekt.awake.render.imagepass.ImagePassChain
 import com.awakekt.awake.vulkan.pipeline.RenderPipeline
 import com.awakekt.awake.vulkan.pipeline.UiPipelineSet
+import com.awakekt.awake.vulkan.pipeline.VulkanImagePassParentTarget
 import com.awakekt.awake.vulkan.pipeline.VulkanRenderFrameContext
 
 /**
@@ -36,6 +38,7 @@ internal class VulkanFrameContext(
     override val cameraEye: Vec3f,
     override val environment: GpuEnvironmentState = GpuEnvironmentState.Default,
     override val passInput: GpuPassInput? = null,
+    private val acquiredImageIndex: Int = 0,
 ) : VulkanRenderFrameContext {
     override val lineMesh get() = renderer.lineMesh
     override val stats get() = renderer.statsCounter
@@ -60,4 +63,34 @@ internal class VulkanFrameContext(
     }
 
     override fun textureMeshForPrimitive(index: Int) = renderer.textureMeshForPrimitive(index)
+
+    @Suppress("ReturnCount")
+    override fun executeImagePass(chain: ImagePassChain, hasMoreImagePasses: Boolean) {
+        val uiPipeline = renderer.uiRenderPipeline ?: return
+        val swapchain = renderer.swapchainManager
+        val framebuffer = renderer.uiFramebuffers.getOrNull(acquiredImageIndex) ?: return
+        val colorImage = swapchain.images.getOrNull(acquiredImageIndex) ?: return
+        val colorImageView = swapchain.imageViews.getOrNull(acquiredImageIndex) ?: return
+
+        val parentTarget = VulkanImagePassParentTarget(
+            framebuffer = framebuffer,
+            colorImage = colorImage,
+            colorImageView = colorImageView,
+            colorFormat = swapchain.imageFormat,
+            width = surfaceWidth,
+            height = surfaceHeight,
+            isOffscreen = false,
+            finalRenderPass = uiPipeline.renderPass,
+            sampleable = swapchain.sampleable,
+        )
+
+        renderer.imagePassExecutor.executeImagePass(
+            commandBuffer = commandBuffer,
+            frameIndex = frameIndex,
+            parentTarget = parentTarget,
+            chain = chain,
+            hasMoreImagePasses = hasMoreImagePasses,
+            stats = stats,
+        )
+    }
 }

@@ -52,6 +52,7 @@ kotlin {
             // signatures, so both backends need them visible transitively.
             api(project(":awake:core:math"))
             api(project(":awake:engine:render:contract"))
+            implementation(project(":awake:engine:render:effects"))
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

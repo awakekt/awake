@@ -58,6 +58,7 @@ class SwapchainManager(
     private var depthTextureHandle: io.ygdrasil.webgpu.GPUTexture? = null
     private var configuredWidth = 0u
     private var configuredHeight = 0u
+    internal var onSurfaceResize: (() -> Unit)? = null
 
     private val renderingContext get() = graphicsDevice.wgpuContext.renderingContext
 
@@ -100,6 +101,7 @@ class SwapchainManager(
         val height = renderingContext.height
         if (width == configuredWidth && height == configuredHeight && depthTextureView != null) return
 
+        val resized = configuredWidth != 0u || configuredHeight != 0u
         depthTextureHandle?.close()
         depthTextureHandle = graphicsDevice.wgpuContext.device.createTexture(
             TextureDescriptor(
@@ -111,5 +113,8 @@ class SwapchainManager(
         depthTextureView = depthTextureHandle?.createView(TextureViewDescriptor())
         configuredWidth = width
         configuredHeight = height
+        if (resized) {
+            onSurfaceResize?.invoke()
+        }
     }
 }

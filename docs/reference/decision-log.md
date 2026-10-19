@@ -1768,3 +1768,14 @@ add a sixth file to the ledger without a plan entry.
 Scene-carried game UI is `canvas_element` data that Studio edits and the project runtime loads
 without code; shadcn stays the editor's toolkit and a Kotlin game's `ui { }`. Game UI grows as
 layout, style, logic and binding layers, binding first, only as games need it.
+
+### D40 — Image effects are authored once on generic image passes (`:awake:engine:render:effects` → `ImagePassChain`)
+**DECIDED (2026-10-19).** Full record:
+[decisions/D40-image-effects-on-image-passes.md](../architecture/decisions/D40-image-effects-on-image-passes.md).
+
+Multi-pass 2D and post-processing effects live in `:awake:engine:render:effects` and lower into a
+backend-neutral `ImagePassChain` (`:awake:engine:render:contract`). Each backend implements one
+generic image-pass executor (`VulkanImagePassExecutor`, `WebGpuImagePassExecutor`) with pooled
+transient targets and mid-pass snapshot/resume; neither `render:contract` nor either backend names
+any specific effect (`verifyBackendLayering` and `verifyRenderContractBoundary`).
+

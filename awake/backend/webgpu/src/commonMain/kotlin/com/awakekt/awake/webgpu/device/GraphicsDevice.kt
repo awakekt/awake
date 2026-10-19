@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.webgpu.device
 
+import com.awakekt.awake.render.pipeline.GpuDeviceClass
 import com.awakekt.awake.webgpu.WebGpuHandles
 import io.ygdrasil.webgpu.WGPUContext
 
@@ -63,6 +64,12 @@ class GraphicsDevice {
      * queue.
      */
     var presentQueue: Long = 0
+
+    /**
+     * Hardware classification of the active adapter. Defaults to [GpuDeviceClass.Unknown] on WebGPU
+     * when adapter info is not exposed synchronously.
+     */
+    var deviceClass: GpuDeviceClass = GpuDeviceClass.Unknown
 
     internal lateinit var wgpuContext: WGPUContext
         private set

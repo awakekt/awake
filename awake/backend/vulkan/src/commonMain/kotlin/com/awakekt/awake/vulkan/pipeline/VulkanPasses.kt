@@ -10,6 +10,7 @@ import com.awakekt.awake.render.command.BufferHandle
 import com.awakekt.awake.render.command.MaterialBinding
 import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.command.PreparedDraw
+import com.awakekt.awake.render.imagepass.ImagePassChain
 import com.awakekt.awake.render.passes.LinePass
 import com.awakekt.awake.render.passes2d.TexturedPrimitiveRun
 import com.awakekt.awake.render.passes2d.UiPass
@@ -58,6 +59,7 @@ internal class VulkanUiPass : UiPass<DynamicMesh, VulkanRenderFrameContext> {
             stats = context.stats,
             pipelines = pipelines,
             textureMeshForPrimitive = context::textureMeshForPrimitive,
+            onExecuteImagePass = context::executeImagePass,
         )
     }
 }
@@ -90,6 +92,7 @@ internal class VulkanUiRunRecorder(
     private val stats: RenderStatsCounter,
     private val pipelines: UiPipelineSet,
     private val textureMeshForPrimitive: (Int) -> DynamicMesh,
+    private val onExecuteImagePass: ((ImagePassChain, Boolean) -> Unit)? = null,
 ) : UiRunRecorder<DynamicMesh> {
 
     override fun bindPipeline(kind: UiPipelineKind): Boolean {
@@ -143,5 +146,9 @@ internal class VulkanUiRunRecorder(
         mesh.update(frameIndex, primitive.vertices, primitive.indices)
         mesh.bind(frameIndex, commandBuffer)
         mesh.draw(frameIndex, commandBuffer, stats)
+    }
+
+    override fun executeImagePass(chain: ImagePassChain, hasMoreImagePasses: Boolean) {
+        onExecuteImagePass?.invoke(chain, hasMoreImagePasses)
     }
 }

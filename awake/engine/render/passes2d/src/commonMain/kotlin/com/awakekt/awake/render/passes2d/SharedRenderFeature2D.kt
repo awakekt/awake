@@ -24,6 +24,8 @@ class SharedRenderFeature2D {
         recorder: DrawRunRecorder<M>,
     ) {
         val bound = BoundState(recorder)
+        val totalImagePasses = runs.count { it is DrawRun.ImagePassRun }
+        var executedImagePasses = 0
         var textureSlotIndex = 0
         var runIndex = 0
         while (runIndex < runs.size) {
@@ -36,6 +38,15 @@ class SharedRenderFeature2D {
                     textureSlotIndex = recordTextureRun(run, textureSlotIndex, recorder)
                     // Each texture binds its own pipeline.
                     bound.forgetPipeline()
+                }
+                is DrawRun.ImagePassRun -> {
+                    executedImagePasses += 1
+                    recorder.executeImagePass(
+                        chain = run.chain,
+                        hasMoreImagePasses = executedImagePasses < totalImagePasses,
+                    )
+                    // Image passes interrupt and resume the render pass, so pipeline and scissor must rebind.
+                    bound.forgetAll()
                 }
             }
             runIndex += 1
@@ -115,6 +126,13 @@ private class BoundState<M>(private val recorder: DrawRunRecorder<M>) {
     fun forgetPipeline() {
         kind = null
         font = null
+    }
+
+    fun forgetAll() {
+        kind = null
+        font = null
+        scissorOrigin = -1L
+        scissorSize = -1L
     }
 
     private companion object {

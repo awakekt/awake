@@ -473,4 +473,44 @@ class DrawRunCoalescerTest {
         stroke = DrawStroke(width = 2f.dp),
         color = Color(1f, 1f, 1f, 1f),
     )
+
+    @Test
+    fun imagePassPlacementSplitsQuadBatchInPaintOrderAndFallsBackWhenUnsupported() {
+        val context = com.awakekt.awake.render.imagepass.ImagePassTargetContext(
+            width = 100,
+            height = 100,
+            clipSpace = com.awakekt.awake.core.math.ClipSpace.Vulkan,
+            snapshotSupported = true,
+            effectQuality = com.awakekt.awake.render.pipeline.EffectQuality.High,
+        )
+        val placement = com.awakekt.awake.render.effects.TintImageEffect.placement(
+            primitiveIndex = 1,
+            bounds = com.awakekt.awake.render.imagepass.ImagePassRect(10f, 10f, 40f, 40f),
+            tintColor = Color(0f, 1f, 0f, 1f),
+            strength = 0.5f,
+            targetContext = context,
+        )
+        val primitives = listOf(
+            DrawCommand.Quad(0f, 0f, 100f, 100f, Color(1f, 0f, 0f, 1f)),
+            DrawCommand.Quad(20f, 20f, 20f, 20f, Color(0f, 0f, 1f, 1f)),
+        )
+
+        val runs = DrawRunCoalescer.coalesce(
+            primitives = primitives,
+            imagePasses = listOf(placement),
+            snapshotSupported = true,
+        )
+        assertEquals(3, runs.size)
+        assertTrue(runs[0] is StagedDrawRun.QuadRun)
+        assertTrue(runs[1] is StagedDrawRun.ImagePassRun)
+        assertTrue(runs[2] is StagedDrawRun.QuadRun)
+
+        val fallbackRuns = DrawRunCoalescer.coalesce(
+            primitives = primitives,
+            imagePasses = listOf(placement),
+            snapshotSupported = false,
+        )
+        assertEquals(3, fallbackRuns.size)
+        assertTrue(fallbackRuns.all { it is StagedDrawRun.QuadRun })
+    }
 }

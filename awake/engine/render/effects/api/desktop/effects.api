@@ -1,0 +1,56 @@
+public final class com/awakekt/awake/render/effects/ImageEffectShaders {
+	public static final field COPY_SHADER_ID Ljava/lang/String;
+	public static final field INSTANCE Lcom/awakekt/awake/render/effects/ImageEffectShaders;
+	public static final field TINT_SHADER_ID Ljava/lang/String;
+	public final fun getCopyShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public final fun getCopySpec ()Lcom/awakekt/awake/render/imagepass/ImagePassShaderSpec;
+	public final fun getCopyUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
+	public final fun getTintColorField ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun getTintShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public final fun getTintSpec ()Lcom/awakekt/awake/render/imagepass/ImagePassShaderSpec;
+	public final fun getTintUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
+	public final fun getUvBoundsField ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun packCopyUniforms (FFFF)[F
+	public final fun packTintUniforms (FFFFLcom/awakekt/awake/core/color/Color;F)[F
+}
+
+public final class com/awakekt/awake/render/effects/ImageEffectShadersKt {
+	public static final fun buildImagePassQuadVertices (Lcom/awakekt/awake/render/imagepass/ImagePassRect;IILcom/awakekt/awake/core/math/ClipSpace;FFFF)[F
+	public static synthetic fun buildImagePassQuadVertices$default (Lcom/awakekt/awake/render/imagepass/ImagePassRect;IILcom/awakekt/awake/core/math/ClipSpace;FFFFILjava/lang/Object;)[F
+	public static final fun getImageEffectVertexFormat ()Lcom/awakekt/awake/core/geometry/VertexFormat;
+	public static final fun getImagePassQuadIndices ()[S
+}
+
+public final class com/awakekt/awake/render/effects/ImagePassShaderRegistry {
+	public static final field INSTANCE Lcom/awakekt/awake/render/effects/ImagePassShaderRegistry;
+	public final fun all ()Ljava/util/List;
+	public final fun get (Ljava/lang/String;)Lcom/awakekt/awake/render/imagepass/ImagePassShaderSpec;
+	public final fun register (Lcom/awakekt/awake/render/imagepass/ImagePassShaderSpec;)Lcom/awakekt/awake/render/imagepass/ImagePassShaderSpec;
+	public final fun registerAsl (Ljava/lang/String;Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;Lcom/awakekt/awake/core/geometry/VertexFormat;Lcom/awakekt/awake/render/renderer/UniformLayout;)Lcom/awakekt/awake/render/imagepass/ImagePassShaderSpec;
+	public static synthetic fun registerAsl$default (Lcom/awakekt/awake/render/effects/ImagePassShaderRegistry;Ljava/lang/String;Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;Lcom/awakekt/awake/core/geometry/VertexFormat;Lcom/awakekt/awake/render/renderer/UniformLayout;ILjava/lang/Object;)Lcom/awakekt/awake/render/imagepass/ImagePassShaderSpec;
+	public final fun require (Ljava/lang/String;)Lcom/awakekt/awake/render/imagepass/ImagePassShaderSpec;
+}
+
+public final class com/awakekt/awake/render/effects/TintImageEffect {
+	public static final field INSTANCE Lcom/awakekt/awake/render/effects/TintImageEffect;
+	public static final field TRANSIENT_TARGET_ID Ljava/lang/String;
+	public final fun applyReference (Lcom/awakekt/awake/render/texture/TextureAsset;Lcom/awakekt/awake/render/imagepass/ImagePassRect;Lcom/awakekt/awake/core/color/Color;F)Lcom/awakekt/awake/render/texture/TextureAsset;
+	public final fun buildChain (Lcom/awakekt/awake/render/imagepass/ImagePassRect;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/render/imagepass/ImagePassTargetContext;)Lcom/awakekt/awake/render/imagepass/ImagePassChain;
+	public final fun fallbackPrimitive (Lcom/awakekt/awake/render/imagepass/ImagePassRect;Lcom/awakekt/awake/core/color/Color;F)Lcom/awakekt/awake/core/graphics2d/DrawCommand$Quad;
+	public final fun placement (ILcom/awakekt/awake/render/imagepass/ImagePassRect;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/render/imagepass/ImagePassTargetContext;)Lcom/awakekt/awake/render/imagepass/ImagePassPlacement;
+	public final fun profileFor (Lcom/awakekt/awake/render/pipeline/EffectQuality;)Lcom/awakekt/awake/render/effects/TintImageEffect$QualityProfile;
+}
+
+public final class com/awakekt/awake/render/effects/TintImageEffect$QualityProfile {
+	public fun <init> (ZI)V
+	public final fun component1 ()Z
+	public final fun component2 ()I
+	public final fun copy (ZI)Lcom/awakekt/awake/render/effects/TintImageEffect$QualityProfile;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/render/effects/TintImageEffect$QualityProfile;ZIILjava/lang/Object;)Lcom/awakekt/awake/render/effects/TintImageEffect$QualityProfile;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEnabled ()Z
+	public final fun getScaleDivisor ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+

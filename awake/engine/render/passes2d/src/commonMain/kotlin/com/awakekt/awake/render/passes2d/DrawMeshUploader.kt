@@ -71,6 +71,8 @@ fun <M> uploadDrawRuns(
             is StagedDrawRun.TextureRun -> runs += DrawRun.TextureRun(run.primitives)
 
             is StagedDrawRun.ClipRun -> runs += DrawRun.ClipRun(run.rect)
+
+            is StagedDrawRun.ImagePassRun -> runs += DrawRun.ImagePassRun(run.chain)
         }
         index += 1
     }

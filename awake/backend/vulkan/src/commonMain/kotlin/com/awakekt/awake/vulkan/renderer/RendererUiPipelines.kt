@@ -13,6 +13,7 @@ import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.render.passes2d.UiPipelineKind
 import com.awakekt.awake.render.pipeline.UiPipelineDescriptor
 import com.awakekt.awake.render.pipeline.UiPipelineVariant
+import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.render.texture.TextureFiltering
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.models.info.VkFilter
@@ -101,6 +102,16 @@ internal fun Renderer.ensureFontAtlas(font: UiFont): Texture = fontAtlases.getOr
         // The atlas is a distance field: a box-filtered mip averages the distances, erodes thin
         // stems, and the sampler's implicit LOD (log2(32 texels per em / px)) reads mip 1-2 at UI sizes.
         filtering = TextureFiltering.BaseLevelLinear,
+    ).let(textureResources::register)
+}
+
+internal fun Renderer.ensureImagePassTexture(asset: TextureAsset): Texture = imagePassTextures.getOrPut(asset) {
+    Texture(
+        graphicsDevice,
+        transferContext::runOneTimeCommands,
+        asset.data,
+        asset.width,
+        asset.height,
     ).let(textureResources::register)
 }
 

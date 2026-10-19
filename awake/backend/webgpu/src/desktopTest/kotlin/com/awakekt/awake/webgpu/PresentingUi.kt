@@ -24,7 +24,7 @@ internal fun withPresentingUi(block: (WebGpuRenderer, frame: () -> Unit) -> Unit
             SurfaceConfiguration(
                 device = context.device,
                 format = context.renderingContext.textureFormat,
-                usage = GPUTextureUsage.RenderAttachment,
+                usage = GPUTextureUsage.RenderAttachment or GPUTextureUsage.CopySrc,
                 alphaMode = CompositeAlphaMode.Opaque,
             ),
         )

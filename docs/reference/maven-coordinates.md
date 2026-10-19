@@ -36,7 +36,7 @@ no published artifact. Test-source dependencies are intentionally excluded.
 
 | Family | Published modules | Version source |
 |---|---:|---|
-| Core | 88 | Existing root `v*` tags and the shared Core release train |
+| Core | 89 | Existing root `v*` tags and the shared Core release train |
 | Vulkan | 3 | `vulkan-v*` tags; renderer, raw bindings, and Android JNI bridge move together |
 | WebGPU release pin | 1 | Each root `v*` tag publishes `:awake:backend:webgpu` as `<release>-SNAPSHOT`, Core held strictly at the release; `main` publishes it on the Core train |
 
@@ -120,8 +120,9 @@ Vulkan modules. Core `v*` releases and main snapshots do not publish or change t
 | `com.awakekt.awake.engine:compose` | `:awake:engine:compose` | `core` | `api` → `:awake:engine:platform`; `api` → `:awake:compose:ui`; `api` → `:awake:core:text` |
 | `com.awakekt.awake.engine:platform` | `:awake:engine:platform` | `core` | `implementation` → `:awake:core:math2d`; `implementation` → `:awake:core:math`; `api` → `:awake:core:host`; `implementation` → `:awake:core:image`; `implementation` → `:awake:core:input`; `implementation` → `:awake:core:logging`; `api` → `:awake:engine:render:contract` |
 | `com.awakekt.awake.engine.render:contract` | `:awake:engine:render:contract` | `core` | `api` → `:awake:core:graphics2d`; `api` → `:awake:core:text`; `implementation` → `:awake:core:color`; `implementation` → `:awake:core:math`; `api` → `:awake:core:geometry` |
-| `com.awakekt.awake.engine.render:passes` | `:awake:engine:render:passes` | `core` | `implementation` → `:awake:core:graphics2d`; `implementation` → `:awake:core:math2d`; `implementation` → `:awake:core:color`; `api` → `:awake:core:math`; `api` → `:awake:engine:render:contract` |
-| `com.awakekt.awake.engine.render:passes2d` | `:awake:engine:render:passes2d` | `core` | `api` → `:awake:engine:render:passes`; `api` → `:awake:engine:render:contract`; `api` → `:awake:core:math`; `api` → `:awake:core:graphics2d`; `implementation` → `:awake:core:color`; `implementation` → `:awake:core:geometry` |
+| `com.awakekt.awake.engine.render:effects` | `:awake:engine:render:effects` | `core` | `api` → `:awake:engine:render:contract`; `api` → `:awake:core:color`; `api` → `:awake:core:geometry`; `api` → `:awake:core:graphics2d`; `api` → `:awake:core:math`; `implementation` → `:awake:asset:shader-dsl` |
+| `com.awakekt.awake.engine.render:passes` | `:awake:engine:render:passes` | `core` | `implementation` → `:awake:core:graphics2d`; `implementation` → `:awake:core:math2d`; `implementation` → `:awake:core:color`; `api` → `:awake:core:math`; `api` → `:awake:engine:render:contract`; `implementation` → `:awake:engine:render:effects` |
+| `com.awakekt.awake.engine.render:passes2d` | `:awake:engine:render:passes2d` | `core` | `api` → `:awake:engine:render:passes`; `api` → `:awake:engine:render:contract`; `api` → `:awake:core:math`; `api` → `:awake:core:graphics2d`; `implementation` → `:awake:engine:render:effects`; `implementation` → `:awake:core:color`; `implementation` → `:awake:core:geometry` |
 | `com.awakekt.awake.engine.render:testing` | `:awake:engine:render:testing` | `core` | `implementation` → `:awake:core:color`; `api` → `:awake:engine:render:contract` |
 | `com.awakekt.awake.engine:window` | `:awake:engine:window` | `core` | `api` → `:awake:engine:platform`; `api` → `:awake:core:input`; `implementation` → `:awake:core:logging`; `implementation` → `:awake:core:host` |
 | `com.awakekt.awake.kit:terrain-layers` | `:awake:kit:terrain-layers` | `core` | `api` → `:awake:terrain`; `api` → `:awake:asset:shader-pack`; `api` → `:awake:core:io`; `implementation` → `:awake:core:image` |
