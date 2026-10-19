@@ -11,58 +11,77 @@ import com.awakekt.awake.core.input.PointerButton
 import com.awakekt.awake.core.input.ScrollSource
 
 private const val GLFW_KEY_SPACE = 32
+private const val GLFW_KEY_0 = 48
+private const val GLFW_KEY_A = 65
 private const val GLFW_KEY_ESCAPE = 256
-private const val GLFW_KEY_F1 = 290
-private const val GLFW_KEY_F2 = 291
-private const val GLFW_KEY_F3 = 292
-private const val GLFW_KEY_F4 = 293
-private const val GLFW_KEY_F5 = 294
-private const val GLFW_KEY_F6 = 295
-private const val GLFW_KEY_F7 = 296
-private const val GLFW_KEY_F8 = 297
-private const val GLFW_KEY_F9 = 298
-private const val GLFW_KEY_F10 = 299
-private const val GLFW_KEY_F11 = 300
-private const val GLFW_KEY_F12 = 301
+private const val GLFW_KEY_ENTER = 257
+private const val GLFW_KEY_TAB = 258
+private const val GLFW_KEY_BACKSPACE = 259
+private const val GLFW_KEY_DELETE = 261
 private const val GLFW_KEY_RIGHT = 262
 private const val GLFW_KEY_LEFT = 263
 private const val GLFW_KEY_DOWN = 264
 private const val GLFW_KEY_UP = 265
-private const val GLFW_KEY_A = 65
-private const val GLFW_KEY_D = 68
-private const val GLFW_KEY_S = 83
-private const val GLFW_KEY_W = 87
+private const val GLFW_KEY_PAGE_UP = 266
+private const val GLFW_KEY_PAGE_DOWN = 267
+private const val GLFW_KEY_HOME = 268
+private const val GLFW_KEY_END = 269
+private const val GLFW_KEY_F1 = 290
+private const val GLFW_KEY_KP_ENTER = 335
+private const val GLFW_KEY_LEFT_SHIFT = 340
+private const val GLFW_KEY_LEFT_CONTROL = 341
+private const val GLFW_KEY_LEFT_ALT = 342
+private const val GLFW_KEY_LEFT_SUPER = 343
+private const val GLFW_KEY_RIGHT_SHIFT = 344
+private const val GLFW_KEY_RIGHT_CONTROL = 345
+private const val GLFW_KEY_RIGHT_ALT = 346
+private const val GLFW_KEY_RIGHT_SUPER = 347
 private const val GLFW_MOUSE_BUTTON_LEFT = 0
 private const val GLFW_MOUSE_BUTTON_RIGHT = 1
 private const val GLFW_MOUSE_BUTTON_MIDDLE = 2
 private const val GLFW_MOUSE_BUTTON_4 = 3
 private const val GLFW_MOUSE_BUTTON_5 = 4
 
-/** Default mapping of GLFW key codes to Awake [Key] values for desktop gameplay and navigation. */
-val DefaultGlfwGameplayKeys: Map<Int, Key> = linkedMapOf(
-    GLFW_KEY_W to Key.W,
-    GLFW_KEY_A to Key.A,
-    GLFW_KEY_S to Key.S,
-    GLFW_KEY_D to Key.D,
-    GLFW_KEY_UP to Key.ArrowUp,
-    GLFW_KEY_DOWN to Key.ArrowDown,
-    GLFW_KEY_LEFT to Key.ArrowLeft,
-    GLFW_KEY_RIGHT to Key.ArrowRight,
-    GLFW_KEY_SPACE to Key.Space,
-    GLFW_KEY_ESCAPE to Key.Escape,
-    GLFW_KEY_F1 to Key.F1,
-    GLFW_KEY_F2 to Key.F2,
-    GLFW_KEY_F3 to Key.F3,
-    GLFW_KEY_F4 to Key.F4,
-    GLFW_KEY_F5 to Key.F5,
-    GLFW_KEY_F6 to Key.F6,
-    GLFW_KEY_F7 to Key.F7,
-    GLFW_KEY_F8 to Key.F8,
-    GLFW_KEY_F9 to Key.F9,
-    GLFW_KEY_F10 to Key.F10,
-    GLFW_KEY_F11 to Key.F11,
-    GLFW_KEY_F12 to Key.F12,
-)
+/**
+ * Default mapping of GLFW key codes to Awake [Key] values: every [Key] but [Key.Unknown], so a game
+ * reads any key it binds, a window's hotkey or a skill slot's digit as much as W/A/S/D. Shift,
+ * Ctrl, Alt and Meta have a key on each side; both map to the one [Key], which is down while
+ * either is ([pollGlfwInput]), and the keypad's Enter is [Key.Enter].
+ */
+val DefaultGlfwGameplayKeys: Map<Int, Key> = linkedMapOf<Int, Key>().apply {
+    for (letter in 'A'..'Z') {
+        put(GLFW_KEY_A + (letter - 'A'), Key.valueOf(letter.toString()))
+    }
+    for (digit in 0..9) {
+        put(GLFW_KEY_0 + digit, Key.valueOf("Digit$digit"))
+    }
+    for (n in 1..12) {
+        put(GLFW_KEY_F1 + n - 1, Key.valueOf("F$n"))
+    }
+    put(GLFW_KEY_UP, Key.ArrowUp)
+    put(GLFW_KEY_DOWN, Key.ArrowDown)
+    put(GLFW_KEY_LEFT, Key.ArrowLeft)
+    put(GLFW_KEY_RIGHT, Key.ArrowRight)
+    put(GLFW_KEY_SPACE, Key.Space)
+    put(GLFW_KEY_ESCAPE, Key.Escape)
+    put(GLFW_KEY_ENTER, Key.Enter)
+    put(GLFW_KEY_KP_ENTER, Key.Enter)
+    put(GLFW_KEY_TAB, Key.Tab)
+    put(GLFW_KEY_BACKSPACE, Key.Backspace)
+    put(GLFW_KEY_DELETE, Key.Delete)
+    put(GLFW_KEY_HOME, Key.Home)
+    put(GLFW_KEY_END, Key.End)
+    put(GLFW_KEY_PAGE_UP, Key.PageUp)
+    put(GLFW_KEY_PAGE_DOWN, Key.PageDown)
+    put(GLFW_KEY_LEFT_SHIFT, Key.Shift)
+    put(GLFW_KEY_RIGHT_SHIFT, Key.Shift)
+    put(GLFW_KEY_LEFT_CONTROL, Key.Ctrl)
+    put(GLFW_KEY_RIGHT_CONTROL, Key.Ctrl)
+    put(GLFW_KEY_LEFT_ALT, Key.Alt)
+    put(GLFW_KEY_RIGHT_ALT, Key.Alt)
+    put(GLFW_KEY_LEFT_SUPER, Key.Meta)
+    put(GLFW_KEY_RIGHT_SUPER, Key.Meta)
+}
 
 /**
  * Polls a GLFW window's keyboard, pointer, and wheel state into Awake's shared [Input].
@@ -83,8 +102,12 @@ internal fun pollGlfwInput(
     input: Input,
     keys: Map<Int, Key> = DefaultGlfwGameplayKeys,
 ) {
+    // A Key two GLFW keys map to (a left and a right Shift) is down while either is: clear every
+    // Key, then set those any of their keys holds, so the second key's state can't overwrite the
+    // first's. Two passes over the map, so a frame allocates nothing for it.
+    keys.forEach { (_, key) -> input.setKeyDown(key, false) }
     keys.forEach { (glfwKey, key) ->
-        input.setKeyDown(key, reader.isKeyDown(glfwKey))
+        if (reader.isKeyDown(glfwKey)) input.setKeyDown(key, true)
     }
 
     val pointerX = reader.cursorX().toFloat() * reader.framebufferScaleX()
