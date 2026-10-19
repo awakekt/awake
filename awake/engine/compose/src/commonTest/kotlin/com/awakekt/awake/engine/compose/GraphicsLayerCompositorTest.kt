@@ -13,6 +13,10 @@ import com.awakekt.awake.core.graphics2d.BlendMode
 import com.awakekt.awake.core.graphics2d.DrawPath
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.text.font.UiFonts
+import com.awakekt.awake.render.imagepass.ImagePassDestination
+import com.awakekt.awake.render.imagepass.ImagePassPlacement
+import com.awakekt.awake.render.imagepass.ImagePassSource
+import com.awakekt.awake.render.pipeline.EffectQuality
 import com.awakekt.awake.render.renderer.UiTargetCompositeMode
 import com.awakekt.awake.render.testing.NoopRenderer
 import com.awakekt.awake.render.texture.RenderTarget
@@ -215,6 +219,78 @@ class GraphicsLayerCompositorTest {
         assertEquals(1, renderer.offscreenDraws)
         assertEquals(30f, assertIs<UiDrawPrimitive.Texture>(output.single()).rotationDegrees)
     }
+
+    @Test
+    fun layerBlurExecutesImagePassChainDownToLevelZero() {
+        val renderer = RecordingCompositeRenderer()
+        val compositor = GraphicsLayerCompositor()
+        val layer = GraphicsLayerFrame(
+            id = 5,
+            x = 10f,
+            y = 10f,
+            width = 30,
+            height = 30,
+            alpha = 1f,
+            blurRadiusX = 4f,
+            blurRadiusY = 4f,
+            effectInsetX = 4,
+            effectInsetY = 4,
+            primitives = listOf(UiDrawPrimitive.Quad(0f, 0f, 30f, 30f, Color.White)),
+        )
+        val output = compositor.composite(
+            renderer = renderer,
+            primitives = listOf(UiDrawPrimitive.Texture(6f, 6f, 38f, 38f, GraphicsLayerPlaceholder(5), premultiplied = true)),
+            layers = listOf(layer),
+            font = UiFonts.default(),
+            viewportWidth = 100,
+            viewportHeight = 100,
+        )
+
+        assertEquals(2, renderer.createdTargets)
+        assertEquals(2, renderer.offscreenDraws)
+        assertIs<UiDrawPrimitive.Texture>(output.single())
+        assertEquals(1, renderer.recordedImagePasses.size)
+        val placement = renderer.recordedImagePasses.single().single()
+        val chain = placement.chain
+        assertIs<ImagePassSource.RenderTargetColor>(chain.steps.first().inputs.first().source)
+        assertIs<ImagePassDestination.ActiveTarget>(chain.steps.last().destination)
+        compositor.dispose()
+        assertEquals(2, renderer.destroyedTargets)
+    }
+
+    @Test
+    fun layerBlurWithOffQualityFallsBackWithoutAllocatingBlurTarget() {
+        val renderer = RecordingCompositeRenderer().apply { effectQuality = EffectQuality.Off }
+        val compositor = GraphicsLayerCompositor()
+        val layer = GraphicsLayerFrame(
+            id = 6,
+            x = 10f,
+            y = 10f,
+            width = 20,
+            height = 20,
+            alpha = 1f,
+            blurRadiusX = 5f,
+            blurRadiusY = 5f,
+            effectInsetX = 5,
+            effectInsetY = 5,
+            primitives = listOf(UiDrawPrimitive.Quad(0f, 0f, 20f, 20f, Color.White)),
+        )
+        val output = compositor.composite(
+            renderer = renderer,
+            primitives = listOf(UiDrawPrimitive.Texture(5f, 5f, 30f, 30f, GraphicsLayerPlaceholder(6), premultiplied = true)),
+            layers = listOf(layer),
+            font = UiFonts.default(),
+            viewportWidth = 100,
+            viewportHeight = 100,
+        )
+
+        assertEquals(1, renderer.createdTargets)
+        assertEquals(1, renderer.offscreenDraws)
+        assertEquals(0, renderer.recordedImagePasses.size)
+        assertIs<UiDrawPrimitive.Texture>(output.single())
+        compositor.dispose()
+        assertEquals(1, renderer.destroyedTargets)
+    }
 }
 
 private class RecordingCompositeRenderer : NoopRenderer() {
@@ -222,6 +298,7 @@ private class RecordingCompositeRenderer : NoopRenderer() {
     var offscreenDraws = 0
     var destroyedTargets = 0
     val composites = mutableListOf<UiTargetCompositeMode>()
+    val recordedImagePasses = mutableListOf<List<ImagePassPlacement>>()
 
     override fun createRenderTarget(width: Int, height: Int): RenderTarget {
         createdTargets += 1
@@ -234,8 +311,22 @@ private class RecordingCompositeRenderer : NoopRenderer() {
         }
     }
 
-    override fun drawUiToTexture(target: RenderTarget, primitives: List<UiDrawPrimitive>, font: com.awakekt.awake.core.text.font.UiFont?) {
+    override fun drawUiToTexture(
+        target: RenderTarget,
+        primitives: List<UiDrawPrimitive>,
+        font: com.awakekt.awake.core.text.font.UiFont?,
+    ) {
         offscreenDraws += 1
+    }
+
+    override fun drawUiToTexture(
+        target: RenderTarget,
+        primitives: List<UiDrawPrimitive>,
+        font: com.awakekt.awake.core.text.font.UiFont?,
+        imagePasses: List<ImagePassPlacement>,
+    ) {
+        offscreenDraws += 1
+        recordedImagePasses += imagePasses
     }
 
     override fun compositeUiTargets(

@@ -63,6 +63,8 @@ public final class com/awakekt/awake/render/effects/BlurChain {
 
 public final class com/awakekt/awake/render/effects/BlurChain$Companion {
 	public final fun forRadius (FLcom/awakekt/awake/render/pipeline/EffectQuality;)Lcom/awakekt/awake/render/effects/BlurChain;
+	public final fun forRadius (FLcom/awakekt/awake/render/pipeline/EffectQuality;Ljava/lang/Integer;)Lcom/awakekt/awake/render/effects/BlurChain;
+	public static synthetic fun forRadius$default (Lcom/awakekt/awake/render/effects/BlurChain$Companion;FLcom/awakekt/awake/render/pipeline/EffectQuality;Ljava/lang/Integer;ILjava/lang/Object;)Lcom/awakekt/awake/render/effects/BlurChain;
 	public final fun levelScale (I)F
 	public final fun levelSize (II)I
 	public final fun maxBlursPerFrame (Lcom/awakekt/awake/render/pipeline/EffectQuality;)I
@@ -121,6 +123,13 @@ public final class com/awakekt/awake/render/effects/ImagePassShaderRegistry {
 	public final fun registerAsl (Ljava/lang/String;Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;Lcom/awakekt/awake/core/geometry/VertexFormat;Lcom/awakekt/awake/render/renderer/UniformLayout;)Lcom/awakekt/awake/render/imagepass/ImagePassShaderSpec;
 	public static synthetic fun registerAsl$default (Lcom/awakekt/awake/render/effects/ImagePassShaderRegistry;Ljava/lang/String;Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;Lcom/awakekt/awake/core/geometry/VertexFormat;Lcom/awakekt/awake/render/renderer/UniformLayout;ILjava/lang/Object;)Lcom/awakekt/awake/render/imagepass/ImagePassShaderSpec;
 	public final fun require (Ljava/lang/String;)Lcom/awakekt/awake/render/imagepass/ImagePassShaderSpec;
+}
+
+public final class com/awakekt/awake/render/effects/LayerBlurEffect {
+	public static final field INSTANCE Lcom/awakekt/awake/render/effects/LayerBlurEffect;
+	public final fun buildChain (Lcom/awakekt/awake/render/imagepass/ImagePassSource;Lcom/awakekt/awake/render/effects/BlurChain;IILcom/awakekt/awake/render/imagepass/ImagePassDestination;)Lcom/awakekt/awake/render/imagepass/ImagePassChain;
+	public static synthetic fun buildChain$default (Lcom/awakekt/awake/render/effects/LayerBlurEffect;Lcom/awakekt/awake/render/imagepass/ImagePassSource;Lcom/awakekt/awake/render/effects/BlurChain;IILcom/awakekt/awake/render/imagepass/ImagePassDestination;ILjava/lang/Object;)Lcom/awakekt/awake/render/imagepass/ImagePassChain;
+	public final fun levelTargetId (I)Ljava/lang/String;
 }
 
 public final class com/awakekt/awake/render/effects/TintImageEffect {

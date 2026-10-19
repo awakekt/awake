@@ -9,6 +9,7 @@ import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.ModifierNodeElement
 import com.awakekt.awake.compose.ui.graphics.BlendMode
 import com.awakekt.awake.compose.ui.graphics.Brush
+import com.awakekt.awake.compose.ui.graphics.GraphicsLayerScope
 import com.awakekt.awake.compose.ui.graphics.RectangleShape
 import com.awakekt.awake.compose.ui.graphics.RenderEffect
 import com.awakekt.awake.compose.ui.graphics.Shape
@@ -120,6 +121,15 @@ fun Modifier.graphicsLayer(
     shadowElevation = shadowElevation,
     shape = shape,
 )
+
+/**
+ * Renders this node's content into an isolated texture configured by [block].
+ *
+ * Inside [block], density-aware conversions like `radius.toPx()` can be used to configure
+ * effects and layer transforms.
+ */
+fun Modifier.graphicsLayer(block: GraphicsLayerScope.() -> Unit): Modifier =
+    this then GraphicsLayerBlockElement(block)
 
 private class DrawBehindElement(
     private val onDraw: DrawScope.() -> Unit,
@@ -315,6 +325,79 @@ private class GraphicsLayerNode :
     override fun toString(): String = "graphicsLayer(alpha=$alpha, scaleX=$scaleX, scaleY=$scaleY, rotation=$rotationDegrees, blendMode=$blendMode, renderEffect=$renderEffect)"
 }
 
+private class GraphicsLayerBlockElement(
+    private val block: GraphicsLayerScope.() -> Unit,
+) : ModifierNodeElement<GraphicsLayerBlockNode>() {
+    override fun create(): GraphicsLayerBlockNode = GraphicsLayerBlockNode(block)
+    override fun update(node: GraphicsLayerBlockNode) {
+        node.block = block
+    }
+    override fun toString(): String = "graphicsLayer(block)"
+}
+
+private class GraphicsLayerBlockNode(
+    var block: GraphicsLayerScope.() -> Unit,
+) : Modifier.Node(),
+    DrawModifierNode {
+    private val scope = ReusableGraphicsLayerScope()
+
+    override fun DrawScope.draw(drawContent: () -> Unit) {
+        scope.reset(density)
+        scope.block()
+        val drawBlock: () -> Unit = if (scope.clip) {
+            { clipToOutline(scope.shape, drawContent) }
+        } else {
+            drawContent
+        }
+        (this as LayerDrawScope).drawLayer(
+            scope.alpha,
+            scope.scaleX,
+            scope.scaleY,
+            scope.translationX,
+            scope.translationY,
+            scope.rotationDegrees,
+            scope.blendMode,
+            scope.renderEffect,
+            scope.shadowElevation,
+            scope.shape,
+            drawBlock,
+        )
+    }
+
+    override fun toString(): String = "graphicsLayer(block)"
+}
+
+private class ReusableGraphicsLayerScope : GraphicsLayerScope {
+    override var density: Float = 1f
+    override val fontScale: Float = 1f
+    override var scaleX: Float = 1f
+    override var scaleY: Float = 1f
+    override var translationX: Float = 0f
+    override var translationY: Float = 0f
+    override var rotationDegrees: Float = 0f
+    override var alpha: Float = 1f
+    override var blendMode: BlendMode = BlendMode.SourceOver
+    override var renderEffect: RenderEffect? = null
+    override var shadowElevation: Dp = 0.dp
+    override var shape: Shape = RectangleShape
+    override var clip: Boolean = false
+
+    fun reset(density: Float) {
+        this.density = density
+        scaleX = 1f
+        scaleY = 1f
+        translationX = 0f
+        translationY = 0f
+        rotationDegrees = 0f
+        alpha = 1f
+        blendMode = BlendMode.SourceOver
+        renderEffect = null
+        shadowElevation = 0.dp
+        shape = RectangleShape
+        clip = false
+    }
+}
+
 private object ClipElement : ModifierNodeElement<ClipNode>() {
     override fun create(): ClipNode = ClipNode()
     override fun update(node: ClipNode) = Unit
@@ -346,32 +429,36 @@ private class ShapeClipNode :
     DrawModifierNode {
     lateinit var shape: Shape
     override fun DrawScope.draw(drawContent: () -> Unit) {
-        when (val outline = shape.createOutline(Size2D(width.toFloat(), height.toFloat()), density, layoutDirection)) {
-            is ShapeOutline.Rectangle -> clipped { drawContent() }
-            is ShapeOutline.Rounded -> {
-                val b = outline.bounds
-                val r = outline.radius
-                // Inset-by-radius on every side always lands inside a uniform-radius rounded
-                // rect: at that inset, a corner's straight edges pass through the arc's own
-                // center, and every other point is past the curved region entirely. Lets the
-                // vast majority of content (everything but what's actually near a corner) skip
-                // real polygon clipping -- see `clippedPath`'s doc for why that matters.
-                val safeInterior = if (b.width > 2 * r && b.height > 2 * r) {
-                    com.awakekt.awake.core.math2d.Rectangle(b.x + r, b.y + r, b.width - 2 * r, b.height - 2 * r)
-                } else {
-                    null
-                }
-                clippedPath(
-                    com.awakekt.awake.core.graphics2d.DrawShape.RoundedRectangle(r.dp).toPath(b),
-                    safeInterior,
-                ) { drawContent() }
-            }
-            is ShapeOutline.RoundedCorners -> clippedPath(outline.path) { drawContent() }
-            is ShapeOutline.Generic -> clippedPath(outline.path) { drawContent() }
-        }
+        clipToOutline(shape, drawContent)
     }
 
     override fun toString(): String = "clip($shape)"
+}
+
+internal fun DrawScope.clipToOutline(shape: Shape, drawContent: () -> Unit) {
+    when (val outline = shape.createOutline(Size2D(width.toFloat(), height.toFloat()), density, layoutDirection)) {
+        is ShapeOutline.Rectangle -> clipped { drawContent() }
+        is ShapeOutline.Rounded -> {
+            val b = outline.bounds
+            val r = outline.radius
+            // Inset-by-radius on every side always lands inside a uniform-radius rounded
+            // rect: at that inset, a corner's straight edges pass through the arc's own
+            // center, and every other point is past the curved region entirely. Lets the
+            // vast majority of content (everything but what's actually near a corner) skip
+            // real polygon clipping -- see `clippedPath`'s doc for why that matters.
+            val safeInterior = if (b.width > 2 * r && b.height > 2 * r) {
+                com.awakekt.awake.core.math2d.Rectangle(b.x + r, b.y + r, b.width - 2 * r, b.height - 2 * r)
+            } else {
+                null
+            }
+            clippedPath(
+                com.awakekt.awake.core.graphics2d.DrawShape.RoundedRectangle(r.dp).toPath(b),
+                safeInterior,
+            ) { drawContent() }
+        }
+        is ShapeOutline.RoundedCorners -> clippedPath(outline.path) { drawContent() }
+        is ShapeOutline.Generic -> clippedPath(outline.path) { drawContent() }
+    }
 }
 
 /**

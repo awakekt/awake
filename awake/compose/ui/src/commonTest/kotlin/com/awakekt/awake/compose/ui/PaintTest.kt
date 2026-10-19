@@ -10,16 +10,20 @@ import com.awakekt.awake.compose.foundation.border
 import com.awakekt.awake.compose.foundation.layout.padding
 import com.awakekt.awake.compose.foundation.layout.size
 import com.awakekt.awake.compose.runtime.Composer
+import com.awakekt.awake.compose.ui.draw.BlurredEdgeTreatment
+import com.awakekt.awake.compose.ui.draw.blur
 import com.awakekt.awake.compose.ui.draw.clip
 import com.awakekt.awake.compose.ui.draw.clipToBounds
 import com.awakekt.awake.compose.ui.draw.graphicsLayer
 import com.awakekt.awake.compose.ui.graphics.BlendMode
+import com.awakekt.awake.compose.ui.graphics.BlurEffect
 import com.awakekt.awake.compose.ui.graphics.CircleShape
 import com.awakekt.awake.compose.ui.graphics.Painter
 import com.awakekt.awake.compose.ui.graphics.RectangleShape
 import com.awakekt.awake.compose.ui.graphics.RenderEffect
 import com.awakekt.awake.compose.ui.graphics.RoundedCornerShape
 import com.awakekt.awake.compose.ui.graphics.ShapeOutline
+import com.awakekt.awake.compose.ui.graphics.TileMode
 import com.awakekt.awake.compose.ui.layout.Layer
 import com.awakekt.awake.compose.ui.layout.LayerKind
 import com.awakekt.awake.compose.ui.layout.Layout
@@ -212,6 +216,71 @@ class PaintTest {
         assertEquals(-5f, texture.y)
         assertEquals(26f, texture.w)
         assertEquals(30f, texture.h)
+    }
+
+    @Test
+    fun modifierBlurWithRectangleEdgeTreatmentClipsAndUsesClampTileMode() {
+        val root = LayoutNode(passthrough)
+        composeInto(root) {
+            painted(Modifier.size(20.dp).blur(4.dp, BlurredEdgeTreatment.Rectangle).background(red))
+        }
+        root.layoutTree(Constraints.of(0, 200, 0, 200))
+
+        val output = Painter().paintOutput(root)
+        val layer = output.layers.single()
+        val texture = output.primitives.filterIsInstance<UiDrawPrimitive.Texture>().single()
+        assertEquals(4f, layer.blurRadiusX)
+        assertEquals(4f, layer.blurRadiusY)
+        assertEquals(TileMode.Clamp, layer.tileMode)
+        assertEquals(0, layer.effectInsetX)
+        assertEquals(0, layer.effectInsetY)
+        assertEquals(0f, texture.x)
+        assertEquals(0f, texture.y)
+        assertEquals(20f, texture.w)
+        assertEquals(20f, texture.h)
+    }
+
+    @Test
+    fun modifierBlurWithUnboundedEdgeTreatmentUsesDecalTileModeAndExpands() {
+        val root = LayoutNode(passthrough)
+        composeInto(root) {
+            painted(Modifier.size(20.dp).blur(4.dp, BlurredEdgeTreatment.Unbounded).background(red))
+        }
+        root.layoutTree(Constraints.of(0, 200, 0, 200))
+
+        val output = Painter().paintOutput(root)
+        val layer = output.layers.single()
+        val texture = output.primitives.filterIsInstance<UiDrawPrimitive.Texture>().single()
+        assertEquals(4f, layer.blurRadiusX)
+        assertEquals(4f, layer.blurRadiusY)
+        assertEquals(TileMode.Decal, layer.tileMode)
+        assertEquals(4, layer.effectInsetX)
+        assertEquals(4, layer.effectInsetY)
+        assertEquals(-4f, texture.x)
+        assertEquals(-4f, texture.y)
+        assertEquals(28f, texture.w)
+        assertEquals(28f, texture.h)
+    }
+
+    @Test
+    fun modifierBlurWithNonPositiveRadiiReturnsSameModifier() {
+        val original = Modifier.size(20.dp)
+        val blurred = original.blur(0.dp)
+        assertEquals(original, blurred)
+    }
+
+    @Test
+    fun renderEffectFactoriesCreateExpectedInstances() {
+        val blur = RenderEffect.createBlurEffect(12f, 16f, TileMode.Mirror)
+        assertEquals(12f, blur.radiusX)
+        assertEquals(16f, blur.radiusY)
+        assertEquals(TileMode.Mirror, blur.edgeTreatment)
+        assertTrue(blur.isSupported())
+
+        val offset = RenderEffect.createOffsetEffect(5f, -10f)
+        assertEquals(5f, offset.offsetX)
+        assertEquals(-10f, offset.offsetY)
+        assertTrue(offset.isSupported())
     }
 
     @Test

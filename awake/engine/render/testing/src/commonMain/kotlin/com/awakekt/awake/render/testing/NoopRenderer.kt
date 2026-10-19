@@ -11,8 +11,10 @@ import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.render.command.GpuPassInput
+import com.awakekt.awake.render.imagepass.ImagePassPlacement
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
+import com.awakekt.awake.render.pipeline.EffectQuality
 import com.awakekt.awake.render.renderer.LineSegment
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.texture.PbrTextureSet
@@ -25,10 +27,12 @@ import com.awakekt.awake.render.texture.TextureAsset
  * it wants to observe (e.g. record the generic packet handed to [draw]) without restating the rest
  * of the contract.
  */
+@Suppress("TooManyFunctions")
 open class NoopRenderer : Renderer {
     override val clipSpace: ClipSpace = ClipSpace.WebGpu
     override var clearColor: Color = Color.Black
     override var wireframe: Boolean = false
+    override var effectQuality: EffectQuality = EffectQuality.High
 
     override fun createMesh(geometry: MeshGeometry): Mesh = object : Mesh {
         override val format = geometry.format
@@ -60,6 +64,19 @@ open class NoopRenderer : Renderer {
         TextureAsset(ByteArray(target.width * target.height * 4), target.width, target.height)
 
     override fun drawUi(primitives: List<UiDrawPrimitive>, font: UiFont?) = Unit
+
+    override fun drawUiToTexture(
+        target: RenderTarget,
+        primitives: List<UiDrawPrimitive>,
+        font: UiFont?,
+    ) = Unit
+
+    override fun drawUiToTexture(
+        target: RenderTarget,
+        primitives: List<UiDrawPrimitive>,
+        font: UiFont?,
+        imagePasses: List<ImagePassPlacement>,
+    ) = Unit
 
     override fun drawDebugLines(lines: List<LineSegment>) = Unit
 

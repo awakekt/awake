@@ -55,9 +55,11 @@ resource lifetime are structurally tested; Vulkan and desktop wgpu-native each c
 both modes. The readback normalizes the backend's BGRA attachment bytes to the renderer contract's
 RGBA order.
 
-`RenderEffect.blur(radius)` and `RenderEffect.blur(radiusX, radiusY)` use a cached second target
-and a nine-tap binomial texture pass. The compositor reserves transparent target padding equal to
-the requested pixel radius and composites the expanded texture without changing layout measurement.
+`Modifier.blur(radius)` and `RenderEffect.createBlurEffect(radiusX, radiusY, edgeTreatment)`
+use dual-filter (Kawase) `ImagePassChain` passes via `LayerBlurEffect`. Decal edge treatment
+reserves transparent target padding equal to the requested pixel radius and composites the
+expanded texture without changing layout measurement, while clamped edge treatment samples within
+layout bounds.
 
 Still not provided:
 
