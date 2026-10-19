@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.webgpu.renderer
 
+import com.awakekt.awake.core.geometry.VertexFormats2D
 import com.awakekt.awake.render.command.MaterialBinding
 import com.awakekt.awake.render.passes.GpuResourcePool
 import com.awakekt.awake.render.passes.uniforms.MaterialUniformLayouts
@@ -48,6 +49,12 @@ internal class GpuBufferPoolManager(
     private val uiTextureMeshPool = GpuResourcePool {
         DynamicMesh(graphicsDevice, Renderer.MAX_UI_QUADS, DynamicMesh.GLYPH_FLOATS_PER_VERTEX)
     }
+    private val uiBackdropMeshPool = GpuResourcePool {
+        DynamicMesh(graphicsDevice, 1, VertexFormats2D.BackdropComposite.strideFloats)
+    }
+    private val uiBackdropPassMeshPool = GpuResourcePool {
+        DynamicMesh(graphicsDevice, 1, VertexFormats2D.BackdropBlurPass.strideFloats)
+    }
 
     private val instanceBufferPool = GpuResourcePool { InstanceBuffer(graphicsDevice) }
     private val skinnedInstanceBufferPool = GpuResourcePool { SkinnedInstanceBuffer(graphicsDevice) }
@@ -70,6 +77,12 @@ internal class GpuBufferPoolManager(
      * queue-scheduled rather than interleaved with encoding, so a run's later primitive writing a
      * shared mesh would land before an earlier, already-encoded draw reads it. */
     fun textureMeshForPrimitive(index: Int): DynamicMesh = uiTextureMeshPool[index]
+
+    /** One mesh per frosted-glass panel staged this frame. */
+    fun backdropMeshForRun(index: Int): DynamicMesh = uiBackdropMeshPool[index]
+
+    /** One mesh per blur pass staged this frame: a single triangle each. */
+    fun backdropPassMeshForRun(index: Int): DynamicMesh = uiBackdropPassMeshPool[index]
 
     fun instanceBufferForRun(index: Int): InstanceBuffer = instanceBufferPool[index]
     fun skinnedInstanceBufferForRun(index: Int): SkinnedInstanceBuffer = skinnedInstanceBufferPool[index]
@@ -167,6 +180,8 @@ internal class GpuBufferPoolManager(
         uiGlyphMeshPool.forEach { it.destroy() }
         uiRoundedQuadMeshPool.forEach { it.destroy() }
         uiTextureMeshPool.forEach { it.destroy() }
+        uiBackdropMeshPool.forEach { it.destroy() }
+        uiBackdropPassMeshPool.forEach { it.destroy() }
         instanceBufferPool.forEach { it.destroy() }
         skinnedInstanceBufferPool.forEach { it.destroy() }
         alphaInstanceBufferPool.forEach { it.destroy() }

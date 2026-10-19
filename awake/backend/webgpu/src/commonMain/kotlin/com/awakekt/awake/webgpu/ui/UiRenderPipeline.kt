@@ -92,6 +92,9 @@ class UiRenderPipeline(
             com.awakekt.awake.render.pipeline.UiPipelineVariant.Glyph -> UiPipelineKind.Glyph
             com.awakekt.awake.render.pipeline.UiPipelineVariant.Texture -> UiPipelineKind.Texture
             com.awakekt.awake.render.pipeline.UiPipelineVariant.TargetComposite -> UiPipelineKind.Texture
+            com.awakekt.awake.render.pipeline.UiPipelineVariant.BackdropComposite -> UiPipelineKind.BackdropComposite
+            // Drawn into a reduced-resolution level by BackdropBlurResources, not in a UI pass.
+            com.awakekt.awake.render.pipeline.UiPipelineVariant.BackdropBlur -> error("A backdrop blur pass is not a UI pipeline.")
         },
         blendMode = descriptor.blendMode,
         premultiplied = descriptor.isPremultiplied,
@@ -178,6 +181,7 @@ class UiRenderPipeline(
             0 to when (kind) {
                 UiPipelineKind.Glyph, UiPipelineKind.Texture -> GroupBindings.TexturedMaterial
                 UiPipelineKind.Quad, UiPipelineKind.RoundedQuad -> GroupBindings.UniformOnlyMaterial
+                UiPipelineKind.BackdropComposite -> GroupBindings.UiBackdropComposite
             },
         )
         try {
@@ -238,6 +242,7 @@ class UiRenderPipeline(
         val old = pipeline
         pipeline = newPipeline
         materialBindGroups.clear()
+        levelBindGroups.clear()
         fontBindings.values.forEach { it.bindGroup = null }
         recreateBindGroup()
         return old
@@ -308,11 +313,38 @@ class UiRenderPipeline(
         }
     }
 
+    private val levelBindGroups = HashMap<GPUTextureView, GPUBindGroup>()
+
+    /**
+     * The glass pipeline's group 0 over the blurred [view]: the UI block, the level and [sampler].
+     * Cached by view; a level the blur rebuilt is a new view, and its predecessor's entry is
+     * dropped when [forgetLevels] runs.
+     */
+    fun levelBindGroup(view: GPUTextureView, sampler: GPUSampler): GPUBindGroup {
+        check(kind == UiPipelineKind.BackdropComposite) { "levelBindGroup requires a backdrop composite UiRenderPipeline." }
+        return levelBindGroups.getOrPut(view) {
+            device.createBindGroup(
+                BindGroupDescriptor(
+                    layout = pipeline.getBindGroupLayout(0u),
+                    entries = listOf(
+                        BindGroupEntry(binding = 0u, resource = BufferBinding(buffer = screenSizeBuffer)),
+                        BindGroupEntry(binding = 1u, resource = view),
+                        BindGroupEntry(binding = 2u, resource = sampler),
+                    ),
+                ),
+            )
+        }
+    }
+
+    /** Drops every [levelBindGroup], after the levels they sample were rebuilt. */
+    fun forgetLevels() = levelBindGroups.clear()
+
     /**
      * Drops the cached per-material bind groups and closes every font's atlas and uniform buffer and
      * the screen-size uniform buffer.
      */
     fun destroy() {
+        levelBindGroups.clear()
         materialBindGroups.clear()
         fontBindings.values.forEach {
             it.texture.close()

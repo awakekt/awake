@@ -126,6 +126,9 @@ class Renderer internal constructor(
         get() = requireNotNull(uiShaderSources.targetComposite) {
             "Sampled UI target composition requires the ui_target_composite shader."
         }
+    // Backdrop blur is not wired into this backend's UI pass yet: backdropBlurQuality keeps the
+    // interface's Off, so every frosted panel draws its fallback tint. BackdropBlurResources and
+    // WebGpuBackdropTarget hold the pass for the follow-up (#879).
 
     // WebGPU's NDC has +Y up -- confirmed by this module's own ui_quad.wgsl comment
     // ("pixel-space is Y-down, NDC is Y-up") -- so unlike Vulkan (+Y down NDC) no flip is
@@ -251,6 +254,8 @@ class Renderer internal constructor(
     internal fun quadMeshForRun(index: Int): DynamicMesh = bufferPools.quadMeshForRun(index)
     internal fun glyphMeshForRun(index: Int): DynamicMesh = bufferPools.glyphMeshForRun(index)
     internal fun roundedQuadMeshForRun(index: Int): DynamicMesh = bufferPools.roundedQuadMeshForRun(index)
+    internal fun backdropMeshForRun(index: Int): DynamicMesh = bufferPools.backdropMeshForRun(index)
+    internal fun backdropPassMeshForRun(index: Int): DynamicMesh = bufferPools.backdropPassMeshForRun(index)
 
     internal val lineMesh = LineMesh(graphicsDevice, MAX_DEBUG_LINES)
 

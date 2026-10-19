@@ -33,7 +33,10 @@ internal fun Renderer.performDrawUi(primitives: List<UiDrawPrimitive>, font: UiF
     ensureUiQuadPipeline()
     primitives.filterIsInstance<UiDrawPrimitive.Texture>().map { TextureCompositeMode(it.blendMode, it.premultiplied) }.distinct()
         .forEach(::ensureTextureQuadPipeline)
-    if (primitives.any { it is UiDrawPrimitive.RoundedQuad || it is UiDrawPrimitive.ShadowQuad }) ensureRoundedQuadPipeline()
+    // A frosted panel falls back to a rounded quad of its tint.
+    if (primitives.any { it is UiDrawPrimitive.RoundedQuad || it is UiDrawPrimitive.ShadowQuad || it is UiDrawPrimitive.BackdropBlur }) {
+        ensureRoundedQuadPipeline()
+    }
 
     uiRuns = uploadUiRuns(
         UiRunCoalescer.coalesce(primitives, Renderer.MAX_UI_QUADS, uiRunCache),
