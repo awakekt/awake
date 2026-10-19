@@ -80,6 +80,7 @@ fun main(args: Array<String>) {
             write("ui-${scenario.name}", "UI pipeline: ${scenario.name}", scenario.size, renderer.render(scenario))
         }
         writeImagePassEvidence(renderer, ::write)
+        writeBackdropBlurEvidence(renderer, ::write)
     }
     File(out, "captions.tsv").writeText(captions.toString())
 }
@@ -171,6 +172,39 @@ private fun writeImagePassEvidence(renderer: Renderer, write: (String, String, I
         write(
             "scene-image-pass-tint",
             "Image pass pipeline: tint effect applied to subregion with mid-pass resume",
+            size,
+            pixels,
+        )
+    } finally {
+        target.destroy()
+    }
+}
+
+/** A UI scene with a frosted glass backdrop blur panel blurring blue and red background quads. */
+private fun writeBackdropBlurEvidence(renderer: Renderer, write: (String, String, Int, ByteArray) -> Unit) {
+    renderer.effectQuality = EffectQuality.High
+    val size = EVIDENCE_SIZE
+    val target = renderer.createRenderTarget(size, size)
+    try {
+        val primitives = listOf(
+            UiDrawPrimitive.Quad(0f, 0f, size * 0.5f, size.toFloat(), Color(0.1f, 0.3f, 0.8f, 1f)),
+            UiDrawPrimitive.Quad(size * 0.5f, 0f, size * 0.5f, size.toFloat(), Color(0.85f, 0.2f, 0.2f, 1f)),
+            UiDrawPrimitive.BackdropBlur(
+                x = size * 0.2f,
+                y = size * 0.2f,
+                w = size * 0.6f,
+                h = size * 0.6f,
+                blurRadius = 16f,
+                cornerRadius = 20f,
+                tint = Color(1f, 1f, 1f, 0.15f),
+                saturation = 1.2f,
+            ),
+        )
+        renderer.drawUiToTexture(target = target, primitives = primitives)
+        val pixels = runBlocking { renderer.readPixels(target) }.data
+        write(
+            "ui-backdrop-blur",
+            "UI backdrop blur: frosted glass panel blurring background quads",
             size,
             pixels,
         )

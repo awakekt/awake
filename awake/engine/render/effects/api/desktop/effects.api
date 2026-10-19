@@ -1,3 +1,95 @@
+public final class com/awakekt/awake/render/effects/BackdropBlurEffect {
+	public static final field INSTANCE Lcom/awakekt/awake/render/effects/BackdropBlurEffect;
+	public final fun buildBlurChain (Lcom/awakekt/awake/render/effects/BlurChain;Lcom/awakekt/awake/render/effects/BackdropRegion;Lcom/awakekt/awake/render/imagepass/ImagePassTargetContext;Lcom/awakekt/awake/render/imagepass/ImagePassSource;)Lcom/awakekt/awake/render/imagepass/ImagePassChain;
+	public static synthetic fun buildBlurChain$default (Lcom/awakekt/awake/render/effects/BackdropBlurEffect;Lcom/awakekt/awake/render/effects/BlurChain;Lcom/awakekt/awake/render/effects/BackdropRegion;Lcom/awakekt/awake/render/imagepass/ImagePassTargetContext;Lcom/awakekt/awake/render/imagepass/ImagePassSource;ILjava/lang/Object;)Lcom/awakekt/awake/render/imagepass/ImagePassChain;
+	public final fun buildCompositeStep (Lcom/awakekt/awake/render/imagepass/ImagePassSource;[F[SIILcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/render/imagepass/ImagePassStep;
+	public final fun getQUAD_INDICES ()[S
+	public final fun levelTargetId (I)Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/render/effects/BackdropBlurReference {
+	public static final field INSTANCE Lcom/awakekt/awake/render/effects/BackdropBlurReference;
+	public final fun blur ([FIILcom/awakekt/awake/render/effects/BackdropRegion;Lcom/awakekt/awake/render/effects/BlurChain;)Lcom/awakekt/awake/render/effects/BlurredBackdrop;
+}
+
+public final class com/awakekt/awake/render/effects/BackdropRegion {
+	public static final field Companion Lcom/awakekt/awake/render/effects/BackdropRegion$Companion;
+	public fun <init> (IIII)V
+	public final fun atLevel (III)Lcom/awakekt/awake/render/effects/BackdropRegion;
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()I
+	public final fun component4 ()I
+	public final fun copy (IIII)Lcom/awakekt/awake/render/effects/BackdropRegion;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/render/effects/BackdropRegion;IIIIILjava/lang/Object;)Lcom/awakekt/awake/render/effects/BackdropRegion;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBottom ()I
+	public final fun getHeight ()I
+	public final fun getLeft ()I
+	public final fun getRight ()I
+	public final fun getTop ()I
+	public final fun getWidth ()I
+	public fun hashCode ()I
+	public final fun isEmpty ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/render/effects/BackdropRegion$Companion {
+	public final fun around (FFFFIII)Lcom/awakekt/awake/render/effects/BackdropRegion;
+}
+
+public final class com/awakekt/awake/render/effects/BlurChain {
+	public static final field Companion Lcom/awakekt/awake/render/effects/BlurChain$Companion;
+	public static final field MAX_OFFSET F
+	public static final field MIN_OFFSET F
+	public static final field PREFERRED_MAX_OFFSET F
+	public fun <init> (IFI)V
+	public final fun component1 ()I
+	public final fun component2 ()F
+	public final fun component3 ()I
+	public final fun copy (IFI)Lcom/awakekt/awake/render/effects/BlurChain;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/render/effects/BlurChain;IFIILjava/lang/Object;)Lcom/awakekt/awake/render/effects/BlurChain;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getExtent ()I
+	public final fun getIterations ()I
+	public final fun getOffset ()F
+	public final fun getOutputLevel ()I
+	public final fun getPassCount ()I
+	public final fun getSigma ()F
+	public final fun getUpPasses ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/render/effects/BlurChain$Companion {
+	public final fun forRadius (FLcom/awakekt/awake/render/pipeline/EffectQuality;)Lcom/awakekt/awake/render/effects/BlurChain;
+	public final fun levelScale (I)F
+	public final fun levelSize (II)I
+	public final fun maxBlursPerFrame (Lcom/awakekt/awake/render/pipeline/EffectQuality;)I
+}
+
+public final class com/awakekt/awake/render/effects/BlurEffectShaders {
+	public static final field BLUR_COMPOSITE_SHADER_ID Ljava/lang/String;
+	public static final field BLUR_PASS_SHADER_ID Ljava/lang/String;
+	public static final field INSTANCE Lcom/awakekt/awake/render/effects/BlurEffectShaders;
+	public final fun getBlurCompositeShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public final fun getBlurCompositeSpec ()Lcom/awakekt/awake/render/imagepass/ImagePassShaderSpec;
+	public final fun getBlurPassShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public final fun getBlurPassSpec ()Lcom/awakekt/awake/render/imagepass/ImagePassShaderSpec;
+	public final fun getCompositeUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
+	public final fun getScreenToNdcField ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun packCompositeUniforms (IILcom/awakekt/awake/core/math/ClipSpace;)[F
+}
+
+public final class com/awakekt/awake/render/effects/BlurEffectShadersKt {
+	public static final fun getBlurCompositeVertexFormat ()Lcom/awakekt/awake/core/geometry/VertexFormat;
+	public static final fun getBlurPassVertexFormat ()Lcom/awakekt/awake/core/geometry/VertexFormat;
+}
+
+public final class com/awakekt/awake/render/effects/BlurredBackdrop {
+	public final fun sample (II[F)V
+}
+
 public final class com/awakekt/awake/render/effects/ImageEffectShaders {
 	public static final field COPY_SHADER_ID Ljava/lang/String;
 	public static final field INSTANCE Lcom/awakekt/awake/render/effects/ImageEffectShaders;

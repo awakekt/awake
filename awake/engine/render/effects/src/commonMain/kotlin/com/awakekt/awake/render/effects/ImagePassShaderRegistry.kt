@@ -71,5 +71,7 @@ object ImagePassShaderRegistry {
     private fun registerBuiltInEffectShaders() {
         register(ImageEffectShaders.CopySpec)
         register(ImageEffectShaders.TintSpec)
+        register(BlurEffectShaders.BlurPassSpec)
+        register(BlurEffectShaders.BlurCompositeSpec)
     }
 }
