@@ -106,6 +106,7 @@ include(":awake:backend:vulkan:generator")
 include(":awake:physics:api")
 include(":awake:physics:ragdoll")
 include(":awake:net:api")
+include(":awake:net:server-ktor")
 include(":awake:backend:jolt")
 include(":awake:bom")
 // Samples: illustrative, and free to be thrown away and rewritten.
