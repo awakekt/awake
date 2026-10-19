@@ -302,6 +302,9 @@ class DynamicMesh(
          * transform(vec4) -- see `ui_rounded_quad.vert`. */
         const val ROUNDED_QUAD_FLOATS_PER_VERTEX = com.awakekt.awake.core.geometry.VertexFormats2D.ROUNDED_QUAD_FLOATS_PER_VERTEX
 
+        /** Floats per vertex of an image-pass quad: NDC position (`vec2`) + UV (`vec2`). */
+        const val IMAGE_PASS_FLOATS_PER_VERTEX = 4
+
         /** Vertices emitted for one quad: 4, one per corner. */
         const val VERTICES_PER_QUAD = com.awakekt.awake.core.geometry.VertexFormats2D.VERTICES_PER_QUAD
 

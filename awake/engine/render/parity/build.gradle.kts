@@ -34,6 +34,7 @@ kotlin {
                 api(project(":awake:backend:webgpu"))
                 implementation(project(":awake:engine:render:passes"))
                 implementation(project(":awake:engine:render:passes2d"))
+                implementation(project(":awake:engine:render:effects"))
                 implementation(project(":awake:engine:render:testing"))
                 implementation(project(":awake:asset:shaders"))
                 implementation(project(":awake:asset:shader-pack"))
@@ -64,6 +65,8 @@ kotlin {
                 implementation(project(":awake:compose:runtime"))
                 // The layered terrain surface, drawn with a bake.
                 implementation(project(":awake:kit:terrain-layers"))
+                // Shared image-pass effects rendered on both backends for parity verification.
+                implementation(project(":awake:engine:render:effects"))
             }
         }
     }

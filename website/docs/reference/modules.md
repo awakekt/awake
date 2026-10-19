@@ -9,7 +9,7 @@
 | Group | `com.awakekt.awake`, plus the module's parent path: `:awake:scene:runtime` publishes `com.awakekt.awake.scene:runtime`. The Vulkan bindings are the exception: `com.awakekt.awake:vulkan-kmp`. |
 | Version | Core modules share one version; the newest is `{{ awake_version }}`. Vulkan family: `{{ awake_vulkan_version }}`, built against Core `{{ awake_vulkan_core_version }}`. See [Releases and compatibility](releases.md). |
 | Catalog alias | `awake-` plus the group after `com.awakekt.awake`, then the name, joined with `-`. The accessor replaces `-` with `.`: `awake-scene-runtime` is `libs.awake.scene.runtime`. The alias is your choice; this is the convention these docs use. |
-| Published modules | 91: 88 in Core, 3 in the Vulkan family. |
+| Published modules | 92: 89 in Core, 3 in the Vulkan family. |
 | Transitive modules | Declare only the modules your code uses. Each module's published metadata brings the modules it depends on. |
 
 A catalog entry looks like this:
@@ -67,6 +67,7 @@ awake-backend-vulkan = { module = "com.awakekt.awake.backend:vulkan", version.re
 | Maven coordinate | Catalog alias | What it is |
 | --- | --- | --- |
 | `com.awakekt.awake.engine.render:contract` | `awake-engine-render-contract` | The render hardware interface: `GpuDevice`, `Renderer`, `Mesh`, `Material`, `RenderTarget`. See [Render hardware interface](rhi.md). |
+| `com.awakekt.awake.engine.render:effects` | `awake-engine-render-effects` | Shared GPU image effects lowered to backend-neutral `ImagePassChain` packets. |
 | `com.awakekt.awake.engine.render:passes` | `awake-engine-render-passes` | Render features and pipelines: shadow, opaque, transparent, skybox and content passes. |
 | `com.awakekt.awake.engine.render:passes2d` | `awake-engine-render-passes2d` | Backend-neutral 2D pass logic: run coalescing, mesh upload, command recording. |
 | `com.awakekt.awake.engine.render:testing` | `awake-engine-render-testing` | Headless render sessions, pixel baselines and frame capture for tests. |

@@ -7,6 +7,7 @@ package com.awakekt.awake.webgpu.pipeline
 
 import com.awakekt.awake.core.graphics2d.TextureCompositeMode
 import com.awakekt.awake.core.text.font.UiFont
+import com.awakekt.awake.render.imagepass.ImagePassChain
 import com.awakekt.awake.render.passes2d.TexturedPrimitiveRun
 import com.awakekt.awake.render.passes2d.UiPipelineKind
 import com.awakekt.awake.render.passes2d.UiRunRecorder
@@ -27,12 +28,13 @@ import io.ygdrasil.webgpu.GPURenderPassEncoder
  */
 @Suppress("LongParameterList")
 internal class WebGpuUiRunRecorder(
-    private val encoder: GPURenderPassEncoder,
+    private var encoder: GPURenderPassEncoder,
     private val quad: UiRenderPipeline,
     private val roundedQuad: UiRenderPipeline?,
     private val glyph: UiRenderPipeline?,
     private val textures: Map<TextureCompositeMode, UiRenderPipeline>,
     private val textureMeshForPrimitive: (Int) -> DynamicMesh,
+    private val executeImagePass: (ImagePassChain) -> GPURenderPassEncoder = { encoder },
     private val stats: RenderStatsCounter,
 ) : UiRunRecorder<DynamicMesh> {
 
@@ -82,5 +84,9 @@ internal class WebGpuUiRunRecorder(
         encoder.bindGroup(0u, pipeline.bindGroupFor(material))
         mesh.update(primitive.vertices, primitive.indices)
         drawMesh(mesh)
+    }
+
+    override fun executeImagePass(chain: ImagePassChain, hasMoreImagePasses: Boolean) {
+        encoder = executeImagePass.invoke(chain)
     }
 }

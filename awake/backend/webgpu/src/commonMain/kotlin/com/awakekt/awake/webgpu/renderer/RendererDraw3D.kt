@@ -12,6 +12,8 @@ import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.passes.debug.lineSegmentVertices
 import com.awakekt.awake.render.renderer.LineSegment
+import com.awakekt.awake.webgpu.pipeline.WebGpuImagePassParentTarget
+import io.ygdrasil.webgpu.GPUCommandEncoder
 import io.ygdrasil.webgpu.GPURenderPassEncoder
 
 /** 3D lowering helpers used by [RendererGpuPassExecutor]. The packet entrypoint is executor-owned;
@@ -24,7 +26,7 @@ import io.ygdrasil.webgpu.GPURenderPassEncoder
  * inside the `beginRenderPass` that made it. */
 @Suppress("LongParameterList")
 internal fun Renderer.sceneContext(
-    encoder: io.ygdrasil.webgpu.GPURenderPassEncoder,
+    encoder: GPURenderPassEncoder,
     opaqueDraws: com.awakekt.awake.render.command.SortedDraws<out com.awakekt.awake.render.command.PreparedDraw>,
     primaryPipeline: PipelineHandle,
     viewProjection: Mat4,
@@ -32,6 +34,8 @@ internal fun Renderer.sceneContext(
     surface: SurfaceSize,
     environment: GpuEnvironmentState = GpuEnvironmentState.Default,
     passInput: GpuPassInput? = null,
+    commandEncoder: GPUCommandEncoder? = null,
+    parentTarget: WebGpuImagePassParentTarget? = null,
 ): WebGpuFrameContext = WebGpuFrameContext(
     renderer = this,
     encoder = encoder,
@@ -44,6 +48,8 @@ internal fun Renderer.sceneContext(
     surfaceWidth = surface.width,
     surfaceHeight = surface.height,
     passInput = passInput,
+    commandEncoder = commandEncoder,
+    parentTarget = parentTarget,
 )
 
 /** What a pass is drawing into, so [sceneContext] takes one argument for it rather than two. */

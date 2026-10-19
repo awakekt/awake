@@ -11,7 +11,11 @@ import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.render.capture.FramebufferAttachment
 import com.awakekt.awake.render.capture.FramebufferAttachmentData
 import com.awakekt.awake.render.command.GpuPassInput
+import com.awakekt.awake.render.imagepass.ImagePassPlacement
+import com.awakekt.awake.render.imagepass.ImagePassTargetContext
+import com.awakekt.awake.render.pipeline.EffectQuality
 import com.awakekt.awake.render.pipeline.GpuDevice
+import com.awakekt.awake.render.pipeline.recommendedEffectQuality
 import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.render.texture.TextureAsset
 
@@ -70,6 +74,29 @@ interface Renderer : GpuDevice {
      * that backend's `Renderer`/`Mesh` for why the derived-index-buffer approach was chosen
      * over a barycentric-coordinate fragment shader. */
     var wireframe: Boolean
+
+    /**
+     * Quality tier for multi-pass image effects rendered by this [Renderer].
+     *
+     * Defaults to [GpuDevice.deviceClass]'s [recommendedEffectQuality] and can be overridden at
+     * runtime by application settings or deterministic tests.
+     */
+    var effectQuality: EffectQuality
+        get() = deviceClass.recommendedEffectQuality()
+        set(_) {}
+
+    /**
+     * Returns the [ImagePassTargetContext] describing [target] (or the active swapchain surface
+     * when [target] is `null`) so shared effect builders can lower to an `ImagePassChain`.
+     */
+    fun imagePassTargetContext(target: RenderTarget? = null): ImagePassTargetContext =
+        ImagePassTargetContext(
+            width = target?.width ?: surfaceWidth,
+            height = target?.height ?: surfaceHeight,
+            clipSpace = clipSpace,
+            snapshotSupported = true,
+            effectQuality = effectQuality,
+        )
 
     /**
      * Executes rendering from pre-packed GPU pass input.
@@ -163,6 +190,18 @@ interface Renderer : GpuDevice {
     fun drawUi(primitives: List<UiDrawPrimitive>, font: UiFont? = null)
 
     /**
+     * Stages this frame's UI overlay together with ordered [imagePasses] that snapshot and
+     * process the target mid-stream before resuming UI drawing with `loadOp = LOAD`.
+     */
+    fun drawUi(
+        primitives: List<UiDrawPrimitive>,
+        font: UiFont? = null,
+        imagePasses: List<ImagePassPlacement>,
+    ) {
+        drawUi(primitives, font)
+    }
+
+    /**
      * Blocks until this frame's slot of per-frame GPU resources is free for the CPU to rewrite.
      *
      * A backend that keeps frames in flight has to do this before overwriting a host-visible
@@ -185,6 +224,19 @@ interface Renderer : GpuDevice {
         font: UiFont? = null,
     ) {
         error("This renderer does not support UI rendering to a RenderTarget.")
+    }
+
+    /**
+     * Renders UI and ordered [imagePasses] into an offscreen [target], snapshotting [target] mid-pass
+     * and resuming with `loadOp = LOAD` after each [ImagePassPlacement].
+     */
+    fun drawUiToTexture(
+        target: RenderTarget,
+        primitives: List<UiDrawPrimitive>,
+        font: UiFont? = null,
+        imagePasses: List<ImagePassPlacement>,
+    ) {
+        drawUiToTexture(target, primitives, font)
     }
 
     /**

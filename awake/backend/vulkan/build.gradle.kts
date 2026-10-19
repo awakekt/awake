@@ -108,6 +108,9 @@ kotlin {
             // Test-only: the layered terrain surface's pixel tests need a real device, and this
             // module is where headless renderers are built. The kit never reaches the backend.
             implementation(project(":awake:kit:terrain-layers"))
+            // Test-only: headless image-pass pixel and pooling tests exercise shared effects
+            // through the generic ImagePassChain contract.
+            implementation(project(":awake:engine:render:effects"))
         }
     }
 }

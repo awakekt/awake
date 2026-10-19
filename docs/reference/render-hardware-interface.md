@@ -214,6 +214,8 @@ handles. The verifier makes a regression a build failure.
 | `LineSegment` | Geometry for `drawDebugLines` — feeds a hardware capability, not content |
 | `ShadowsEnabled` flag | App-facing toggle the backend only reads — does not require knowing what a shadow is |
 | `GpuDebugView` | Numbers the backend forwards to shared uniform packing and features — it never branches on them; `RenderDebugView` in `render:passes` owns what each code means |
+| `GpuDeviceClass`, `EffectQuality`, `recommendedEffectQuality` | Hardware adapter tier and quality budget enum — hardware capability classification |
+| `ImagePassChain`, `ImagePassStep`, `ImagePassTargetSpec`, `ImagePassSource`, `ImagePassDestination`, `ImagePassShaderProgram`, `ImagePassPlacement`, `ImagePassTargetContext` | Generic multi-step offscreen/in-pass execution packet — names transient targets, texture bindings, uniform floats, and scissor rects, never a specific effect (D40) |
 
 ### Scene / content vocabulary — must NOT live in `render:contract` ❌
 
@@ -443,3 +445,44 @@ trade-offs, not a further refactor.
 
 So the honest framing: **abstraction buys ~44%; the remaining 56% is a strategic choice about
 how many backends to own.**
+
+## Adding an image effect
+
+Multi-pass 2D and post-processing effects (backdrop blur, layer blur, bloom, colour grading,
+tonemapping, vignette) live in `:awake:engine:render:effects` and lower into a generic
+`ImagePassChain` (`:awake:engine:render:contract`, see [D40](../architecture/decisions/D40-image-effects-on-image-passes.md)).
+Adding a new image effect requires **one shared file in `:awake:engine:render:effects` and zero
+backend edits**:
+
+1. **Author the ASL shader and uniform layout in `:awake:engine:render:effects`.**
+   - Declare a `ShaderProgram` using the Kotlin ASL DSL (`shader("my_effect") { ... }`) with vertex
+     format `VertexFormat.PositionColorUv` and group 0 bindings (`binding 0` for the uniform buffer
+     when needed, `binding 1`+ for texture/sampler pairs).
+   - Define its `UniformLayout` (`UniformFields`) and pack uniforms with `UniformWriter`.
+   - Register the compiled `ImagePassShaderProgram` with `ImagePassShaderRegistry.register(...)`.
+2. **Map `EffectQuality` to a quality profile.**
+   - Resolve `EffectQuality.Off`, `Low`, `Medium`, and `High` to the effect's downscale divisor,
+     iteration count, or `Off` fallback primitives.
+   - Return `ImagePassChain.Empty` when `effectQuality == EffectQuality.Off` or when the effect
+     strength/radius is zero, and supply `fallbackPrimitives` on `ImagePassPlacement` when an
+     inexpensive single-draw fallback applies.
+3. **Build the `ImagePassChain`.**
+   - Declare any intermediate textures as `ImagePassTargetSpec` entries (keyed by logical `id`,
+     `scaleDivisor`, and `ImagePassTargetFormat`). Both backends pool and reuse these targets across
+     frames and rebuild them only when dimensions or format change.
+   - Emit ordered `ImagePassStep` entries reading from `ImagePassSource.DestinationSnapshot` or
+     `ImagePassSource.TransientTarget(id)` and writing to `ImagePassDestination.TransientTarget(id)`
+     or `ImagePassDestination.ActiveTarget(scissorRect = ...)`.
+   - Build clip-space quad vertices via `buildImagePassQuadVertices(...)` using
+     `targetContext.clipSpace` so Vulkan and WebGPU share identical UV and NDC conventions.
+4. **Provide a CPU reference and test both levels.**
+   - Add a pure-CPU reference function on the effect for fast `commonTest` unit tests in
+     `:awake:engine:render:effects`.
+   - Add a headless pixel/parity test in `:awake:engine:render:parity` (or backend `desktopTest`)
+     comparing GPU output against the CPU reference and across Vulkan and WebGPU.
+5. **Respect the layering guard.**
+   - Never add effect-named types, properties, or imports (`Blur`, `Backdrop`, `Kawase`, `Bloom`,
+     `Glass`, `Tonemap`, `Grade`, `Fxaa`, or `com.awakekt.awake.render.effects.*`) to
+     `:awake:engine:render:contract`, `:awake:backend:vulkan`, or `:awake:backend:webgpu`.
+     `verifyBackendLayering` and `verifyRenderContractBoundary` enforce this on `./gradlew check`.
+

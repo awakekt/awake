@@ -85,6 +85,7 @@ public final class com/awakekt/awake/vulkan/device/GraphicsDevice {
 	public final fun destroy ()V
 	public final fun getDebugUtilsMessenger ()J
 	public final fun getDevice ()J
+	public final fun getDeviceClass ()Lcom/awakekt/awake/render/pipeline/GpuDeviceClass;
 	public final fun getGraphicsQueue ()J
 	public final fun getInstance ()J
 	public final fun getPhysicalDevice ()J
@@ -338,21 +339,27 @@ public final class com/awakekt/awake/vulkan/renderer/Renderer : com/awakekt/awak
 	public fun draw (Lcom/awakekt/awake/render/command/GpuPassInput;)V
 	public fun drawDebugLines (Ljava/util/List;)V
 	public fun drawUi (Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;)V
+	public fun drawUi (Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;Ljava/util/List;)V
 	public fun drawUiToTexture (Lcom/awakekt/awake/render/texture/RenderTarget;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;)V
+	public fun drawUiToTexture (Lcom/awakekt/awake/render/texture/RenderTarget;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;Ljava/util/List;)V
 	public fun getClearColor ()Lcom/awakekt/awake/core/color/Color;
 	public fun getClipSpace ()Lcom/awakekt/awake/core/math/ClipSpace;
+	public fun getDeviceClass ()Lcom/awakekt/awake/render/pipeline/GpuDeviceClass;
+	public fun getEffectQuality ()Lcom/awakekt/awake/render/pipeline/EffectQuality;
 	public fun getFrameStats ()Lcom/awakekt/awake/render/renderer/RenderFrameStats;
 	public fun getGpuDrawPreparer ()Lcom/awakekt/awake/render/command/GpuDrawPreparer;
 	public fun getSurfaceAspect ()F
 	public fun getSurfaceHeight ()I
 	public fun getSurfaceWidth ()I
 	public fun getWireframe ()Z
+	public fun imagePassTargetContext (Lcom/awakekt/awake/render/texture/RenderTarget;)Lcom/awakekt/awake/render/imagepass/ImagePassTargetContext;
 	public fun presentWithoutScene ()V
 	public fun readFramebufferAttachment (Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/capture/FramebufferAttachment;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun readPixels (Lcom/awakekt/awake/render/texture/RenderTarget;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun readPresentedPixels (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun renderToTexture (Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/command/GpuPassInput;)V
 	public fun setClearColor (Lcom/awakekt/awake/core/color/Color;)V
+	public fun setEffectQuality (Lcom/awakekt/awake/render/pipeline/EffectQuality;)V
 	public fun setWireframe (Z)V
 	public fun submitToTexture (Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/command/GpuPassInput;)V
 	public fun waitIdle ()V
@@ -363,7 +370,8 @@ public final class com/awakekt/awake/vulkan/renderer/Renderer$Companion {
 
 public final class com/awakekt/awake/vulkan/renderer/RendererDrawUiKt {
 	public static final fun renderUiGlyphsToTexture (Lcom/awakekt/awake/vulkan/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;)V
-	public static final fun renderUiToTexture (Lcom/awakekt/awake/vulkan/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;)V
+	public static final fun renderUiToTexture (Lcom/awakekt/awake/vulkan/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;Ljava/util/List;)V
+	public static synthetic fun renderUiToTexture$default (Lcom/awakekt/awake/vulkan/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;Ljava/util/List;ILjava/lang/Object;)V
 }
 
 public final class com/awakekt/awake/vulkan/renderer/RendererOffscreenKt {
@@ -394,9 +402,11 @@ public final class com/awakekt/awake/vulkan/swapchain/SwapchainManager {
 	public final fun getImageAvailableSemaphores ()[J
 	public final fun getImageFormat ()Lcom/awakekt/awake/vulkan/enums/VkFormat;
 	public final fun getImageViews ()Ljava/util/List;
+	public final fun getImages ()Ljava/util/List;
 	public final fun getInFlightFences ()[J
 	public final fun getMaxFramesInFlight ()I
 	public final fun getRenderFinishedSemaphores ()[J
+	public final fun getSampleable ()Z
 	public final fun getSelectedPresentMode ()Lcom/awakekt/awake/vulkan/enums/VkPresentModeKHR;
 	public final fun getSurfaceChangedSinceBuild ()Z
 	public final fun getSurfaceResized ()Z
@@ -407,7 +417,9 @@ public final class com/awakekt/awake/vulkan/swapchain/SwapchainManager {
 	public final fun setExtent (Lcom/awakekt/awake/vulkan/models/VkExtent2D;)V
 	public final fun setImageFormat (Lcom/awakekt/awake/vulkan/enums/VkFormat;)V
 	public final fun setImageViews (Ljava/util/List;)V
+	public final fun setImages (Ljava/util/List;)V
 	public final fun setRenderFinishedSemaphores ([J)V
+	public final fun setSampleable (Z)V
 	public final fun setSurfaceResized (Z)V
 	public final fun setSwapChain (J)V
 }
@@ -478,6 +490,7 @@ public final class com/awakekt/awake/vulkan/ui/DynamicMesh {
 	public static final field Companion Lcom/awakekt/awake/vulkan/ui/DynamicMesh$Companion;
 	public static final field FLOATS_PER_VERTEX I
 	public static final field GLYPH_FLOATS_PER_VERTEX I
+	public static final field IMAGE_PASS_FLOATS_PER_VERTEX I
 	public static final field INDICES_PER_QUAD I
 	public static final field ROUNDED_QUAD_FLOATS_PER_VERTEX I
 	public static final field VERTICES_PER_QUAD I

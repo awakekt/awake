@@ -6,6 +6,7 @@
 package com.awakekt.awake.webgpu.pipeline
 
 import com.awakekt.awake.core.graphics2d.TextureCompositeMode
+import com.awakekt.awake.render.imagepass.ImagePassChain
 import com.awakekt.awake.render.passes.RenderFrameContext
 import com.awakekt.awake.render.passes2d.UiRun
 import com.awakekt.awake.render.renderer.RenderStatsCounter
@@ -42,6 +43,9 @@ internal interface WebGpuRenderFrameContext : RenderFrameContext {
     /** Stateful pooled `DynamicMesh` allocator, one per textured primitive -- see
      * `GpuBufferPoolManager.textureMeshForPrimitive` for the contract this preserves. */
     fun textureMeshForPrimitive(index: Int): DynamicMesh
+
+    /** Interrupts the active UI render pass, executes [chain], and returns the resumed pass encoder. */
+    fun executeImagePass(chain: ImagePassChain): GPURenderPassEncoder
 }
 
 /** The lazily built UI pipelines, snapshotted for one feature call -- mirrors Vulkan's

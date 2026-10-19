@@ -31,6 +31,7 @@ import com.awakekt.awake.core.math2d.Rectangle
 import com.awakekt.awake.core.math2d.contains
 import com.awakekt.awake.core.math2d.intersect
 import com.awakekt.awake.core.text.font.UiFont
+import com.awakekt.awake.render.imagepass.ImagePassPlacement
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -107,24 +108,56 @@ object DrawRunCoalescer {
      * @param maxQuadsPerRun Mesh capacity, in quads. A span longer than this splits into
      * several runs -- still contiguous and still in order, just backed by more than one mesh.
      * @param retained Optional renderer-owned cache for unchanged spans outside path clips.
+     * @param imagePasses Optional ordered GPU image-pass chains interleaved at their primitive indices.
+     * @param snapshotSupported Whether the destination surface supports mid-pass snapshot sampling.
      */
     @Suppress("LongMethod", "CyclomaticComplexMethod", "NestedBlockDepth")
     fun coalesce(
         primitives: List<DrawCommand>,
         maxQuadsPerRun: Int = 1024,
         retained: RetainedDrawRunCache? = null,
+        imagePasses: List<ImagePassPlacement> = emptyList(),
+        snapshotSupported: Boolean = true,
     ): List<StagedDrawRun> {
         val runs = mutableListOf<StagedDrawRun>()
         val activePathClips = ArrayList<DrawPath>()
         val clipKindStack = ArrayDeque<ClipKind>()
         val safeInteriorRectStack = ArrayDeque<Rectangle?>()
+        val sortedPlacements = if (imagePasses.size <= 1) {
+            imagePasses
+        } else {
+            imagePasses.sortedBy { it.primitiveIndex.coerceIn(0, primitives.size) }
+        }
+        var placementCursor = 0
+
+        fun emitPlacementsAt(targetIndex: Int) {
+            while (placementCursor < sortedPlacements.size) {
+                val placement = sortedPlacements[placementCursor]
+                val clampedIndex = placement.primitiveIndex.coerceIn(0, primitives.size)
+                if (clampedIndex != targetIndex) break
+                placementCursor += 1
+                val canExecuteChain = !placement.chain.isEmpty &&
+                    (!placement.chain.requiresDestinationSnapshot || snapshotSupported)
+                if (canExecuteChain) {
+                    runs += StagedDrawRun.ImagePassRun(placement.chain)
+                } else if (placement.fallbackPrimitives.isNotEmpty()) {
+                    runs += coalesce(placement.fallbackPrimitives, maxQuadsPerRun, null)
+                }
+            }
+        }
 
         var index = 0
         while (index < primitives.size) {
+            emitPlacementsAt(index)
+            val nextBoundary = if (placementCursor < sortedPlacements.size) {
+                sortedPlacements[placementCursor].primitiveIndex.coerceIn(0, primitives.size)
+            } else {
+                primitives.size
+            }
             val runStart = index
             val first = primitives[runStart]
             index += 1
-            while (index < primitives.size && continuesSpan(first, primitives[index])) index += 1
+            while (index < nextBoundary && continuesSpan(first, primitives[index])) index += 1
             val slice = primitives.subList(runStart, index)
             val safeInteriorRect = safeInteriorRectStack.lastOrNull()
             // Rect clips only affect the scissor command. Path clips change generated geometry,
@@ -364,6 +397,7 @@ object DrawRunCoalescer {
                 )
             }
         }
+        emitPlacementsAt(primitives.size)
         return runs
     }
 

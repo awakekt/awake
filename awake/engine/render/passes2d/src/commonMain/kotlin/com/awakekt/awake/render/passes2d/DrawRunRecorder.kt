@@ -6,6 +6,7 @@
 package com.awakekt.awake.render.passes2d
 
 import com.awakekt.awake.core.text.font.UiFont
+import com.awakekt.awake.render.imagepass.ImagePassChain
 
 /**
  * The backend hooks [com.awakekt.awake.render.passes2d.SharedRenderFeature2D] needs:
@@ -42,6 +43,15 @@ interface DrawRunRecorder<in M> {
      * Uploads and draws one textured primitive.
      */
     fun drawTexturePrimitive(primitive: TexturedDrawRun, slotIndex: Int)
+
+    /**
+     * Interrupts the active 2D render pass, executes [chain] against the current destination, and
+     * resumes the 2D render pass with `loadOp = LOAD`.
+     *
+     * @param chain The multi-step image-pass chain to execute.
+     * @param hasMoreImagePasses True when another [DrawRun.ImagePassRun] follows later in the same pass.
+     */
+    fun executeImagePass(chain: ImagePassChain, hasMoreImagePasses: Boolean) = Unit
 }
 
 typealias UiRunRecorder<M> = DrawRunRecorder<M>

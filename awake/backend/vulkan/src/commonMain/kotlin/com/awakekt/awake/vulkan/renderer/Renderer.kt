@@ -25,6 +25,7 @@ import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.command.GpuShadowCascadeData
 import com.awakekt.awake.render.command.GpuSubPass
 import com.awakekt.awake.render.command.PreparedDraw
+import com.awakekt.awake.render.imagepass.ImagePassPlacement
 import com.awakekt.awake.render.passes.RenderFeature
 import com.awakekt.awake.render.passes.RenderPassSlot
 import com.awakekt.awake.render.passes.SharedOpaqueRenderFeature
@@ -35,9 +36,12 @@ import com.awakekt.awake.render.passes2d.UiRun
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.pipeline.CullMode
+import com.awakekt.awake.render.pipeline.EffectQuality
 import com.awakekt.awake.render.pipeline.GpuCapability
 import com.awakekt.awake.render.pipeline.GpuCapabilityKind
+import com.awakekt.awake.render.pipeline.GpuDeviceClass
 import com.awakekt.awake.render.pipeline.ShaderReplacement
+import com.awakekt.awake.render.pipeline.recommendedEffectQuality
 import com.awakekt.awake.render.pipeline.resolve
 import com.awakekt.awake.render.renderer.LineSegment
 import com.awakekt.awake.render.renderer.RenderFrameStats
@@ -64,6 +68,7 @@ import com.awakekt.awake.vulkan.pipeline.RenderPipeline
 import com.awakekt.awake.vulkan.pipeline.ShaderPair
 import com.awakekt.awake.vulkan.pipeline.UiShaderPairs
 import com.awakekt.awake.vulkan.pipeline.VulkanCommandRecorder
+import com.awakekt.awake.vulkan.pipeline.VulkanImagePassExecutor
 import com.awakekt.awake.vulkan.pipeline.VulkanRenderFrameContext
 import com.awakekt.awake.vulkan.swapchain.SwapchainManager
 import com.awakekt.awake.vulkan.texture.DepthTarget
@@ -206,11 +211,6 @@ class Renderer internal constructor(
     /** See this class's own `wireframePipelinesByFormat` constructor parameter doc comment. */
     override var wireframe: Boolean = false
 
-    /** Applied to the 3D pass only (viewport + scissor + projection aspect); the UI pass keeps
-     * the full swapchain extent. See the interface's own doc comment. */
-    /** Real storage overriding the interface's no-op default -- see the interface's own doc
-     * comment. */
-
     /** [clearColor] converted to this backend's clear-value type -- read fresh every render
      * pass (not cached), so a [clearColor] mutation takes effect on the very next frame. */
     internal val clearColorValue: VkClearColorValue
@@ -222,6 +222,11 @@ class Renderer internal constructor(
 
     internal val graphicsDevice = graphicsDevice
     internal val swapchainManager = swapchainManager
+
+    override val deviceClass: GpuDeviceClass
+        get() = graphicsDevice.deviceClass
+
+    override var effectQuality: EffectQuality = graphicsDevice.deviceClass.recommendedEffectQuality()
     internal val renderPipeline = pipelines.primary
 
     /** Binding ABI used for the first scene bind before a feature selects its own pipeline. */
@@ -315,6 +320,9 @@ class Renderer internal constructor(
     /** Every font's uploaded atlas, by identity -- see [ensureFontAtlas]. Released with [textureResources]. */
     internal val fontAtlases = HashMap<UiFont, Texture>()
 
+    /** Uploaded textures referenced by [com.awakekt.awake.render.imagepass.ImagePassSource.Texture]. */
+    internal val imagePassTextures = HashMap<TextureAsset, Texture>()
+
     // Offscreen counterparts of uiRenderPipeline/uiRoundedQuadRenderPipeline, bound to
     // renderPipeline.renderPass instead of the swapchain UI pass -- used by
     // renderUiToTexture()'s headless capture path, which has no swapchain UI pipeline to reuse.
@@ -337,6 +345,13 @@ class Renderer internal constructor(
     internal val createdRenderTargets = mutableListOf<OffscreenRenderTarget>()
 
     internal val bufferPools = GpuBufferPoolManager(graphicsDevice, maxFramesInFlight)
+
+    internal val imagePassExecutor = VulkanImagePassExecutor(
+        graphicsDevice = graphicsDevice,
+        maxFramesInFlight = maxFramesInFlight,
+        meshProvider = bufferPools::imagePassMeshForStep,
+        textureProvider = ::ensureImagePassTexture,
+    )
 
     /** This frame's runs, in paint order -- staged by `drawUi`, consumed by `recordCommandBuffer`. */
     internal var uiRuns: List<UiRun<DynamicMesh>> = emptyList()
@@ -406,11 +421,24 @@ class Renderer internal constructor(
     override fun drawUi(primitives: List<UiDrawPrimitive>, font: UiFont?) =
         performDrawUi(primitives, font)
 
+    override fun drawUi(
+        primitives: List<UiDrawPrimitive>,
+        font: UiFont?,
+        imagePasses: List<ImagePassPlacement>,
+    ) = performDrawUi(primitives, font, imagePasses)
+
     /** The fence [performDrawUi] waits on anyway, hoisted so a caller can time it as itself. */
     override fun awaitFrameResources() = waitForCurrentFrameResourceSlot()
 
     override fun drawUiToTexture(target: RenderTarget, primitives: List<UiDrawPrimitive>, font: UiFont?) =
         renderUiToTexture(target, primitives, font)
+
+    override fun drawUiToTexture(
+        target: RenderTarget,
+        primitives: List<UiDrawPrimitive>,
+        font: UiFont?,
+        imagePasses: List<ImagePassPlacement>,
+    ) = renderUiToTexture(target, primitives, font, imagePasses)
 
     override fun compositeUiTargets(
         destination: RenderTarget,
@@ -567,6 +595,8 @@ class Renderer internal constructor(
         uiTextureRenderPipelines.values.forEach { it.destroy() }
         uiTargetCompositePipeline?.destroy()
         uiRoundedQuadRenderPipeline?.destroy()
+        imagePassExecutor.destroy()
+        imagePassTextures.clear()
         textureResources.destroy()
         createdRenderTargets.toList().forEach { it.destroy() }
         createdRenderTargets.clear()

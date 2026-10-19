@@ -196,6 +196,9 @@ class DynamicMesh(
          * color (vec4) + transform (vec4) -- see `ui_rounded_quad.wgsl`'s input layout. */
         const val ROUNDED_QUAD_FLOATS_PER_VERTEX = VertexFormats2D.ROUNDED_QUAD_FLOATS_PER_VERTEX
 
+        /** pos (vec2) + uv (vec2) -- 4 floats per vertex for image-pass quad steps. */
+        const val IMAGE_PASS_FLOATS_PER_VERTEX = 4
+
         /** Vertices emitted for one quad: 4, one per corner. */
         const val VERTICES_PER_QUAD = VertexFormats2D.VERTICES_PER_QUAD
 

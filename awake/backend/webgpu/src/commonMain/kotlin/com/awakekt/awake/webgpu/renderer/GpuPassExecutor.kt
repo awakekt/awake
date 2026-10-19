@@ -47,7 +47,8 @@ internal class RendererGpuPassExecutor(
                 0,
                 com.awakekt.awake.webgpu.texture.TextureUploads(graphicsDevice),
             )
-            val colorView = renderingContext.getCurrentTexture().createView()
+            val colorTexture = renderingContext.getCurrentTexture()
+            val colorView = colorTexture.createView()
             depthPrePass?.recordCommands(encoder, input.prePasses, input.environment)
             sceneDepthPass?.recordCommands(
                 encoder,
@@ -100,6 +101,7 @@ internal class RendererGpuPassExecutor(
             recordPostPasses(encoder, input.postPasses)
             recordUiOverlay(
                 encoder,
+                colorTexture,
                 colorView,
                 sorted,
                 primary.pipeline,
@@ -187,8 +189,10 @@ internal class RendererGpuPassExecutor(
     }
 
     /** Records the UI overlay owned by this executor after the scene pass. */
+    @Suppress("LongParameterList")
     internal fun recordUiOverlay(
         encoder: io.ygdrasil.webgpu.GPUCommandEncoder,
+        colorTexture: io.ygdrasil.webgpu.GPUTexture,
         colorView: io.ygdrasil.webgpu.GPUTextureView,
         opaqueDraws: com.awakekt.awake.render.command.SortedDraws<out com.awakekt.awake.render.command.PreparedDraw>,
         primaryPipeline: com.awakekt.awake.render.command.PipelineHandle,
@@ -200,19 +204,16 @@ internal class RendererGpuPassExecutor(
         val quadPipeline = renderer.uiRenderPipeline
         if (quadPipeline == null || renderer.uiRuns.isEmpty()) return
 
-        quadPipeline.writeScreenSize(renderingContext.width.toFloat(), renderingContext.height.toFloat())
-        renderer.uiGlyphRenderPipeline?.writeScreenSize(
-            renderingContext.width.toFloat(),
-            renderingContext.height.toFloat(),
-        )
+        val width = renderingContext.width.toInt()
+        val height = renderingContext.height.toInt()
+        quadPipeline.writeScreenSize(width.toFloat(), height.toFloat())
+        renderer.uiGlyphRenderPipeline?.writeScreenSize(width.toFloat(), height.toFloat())
         renderer.uiTextureRenderPipelines.values.forEach {
-            it.writeScreenSize(renderingContext.width.toFloat(), renderingContext.height.toFloat())
+            it.writeScreenSize(width.toFloat(), height.toFloat())
         }
-        renderer.uiRoundedQuadRenderPipeline?.writeScreenSize(
-            renderingContext.width.toFloat(),
-            renderingContext.height.toFloat(),
-        )
-        encoder.beginRenderPass(
+        renderer.uiRoundedQuadRenderPipeline?.writeScreenSize(width.toFloat(), height.toFloat())
+        renderer.imagePassExecutor.beginPass()
+        val initialPass = encoder.beginRenderPass(
             RenderPassDescriptor(
                 colorAttachments = listOf(
                     RenderPassColorAttachment(
@@ -222,21 +223,31 @@ internal class RendererGpuPassExecutor(
                     ),
                 ),
             ),
-        ) {
-            recordPassFeatures(
-                renderer.renderFeatures,
-                RenderPassSlot.Ui,
-                renderer.sceneContext(
-                    this,
-                    opaqueDraws,
-                    primaryPipeline,
-                    viewProjection,
-                    cameraEye,
-                    SurfaceSize(renderingContext.width.toInt(), renderingContext.height.toInt()),
-                ),
-            )
-            end()
-        }
+        )
+        val context = renderer.sceneContext(
+            encoder = initialPass,
+            opaqueDraws = opaqueDraws,
+            primaryPipeline = primaryPipeline,
+            viewProjection = viewProjection,
+            cameraEye = cameraEye,
+            surface = SurfaceSize(width, height),
+            commandEncoder = encoder,
+            parentTarget = com.awakekt.awake.webgpu.pipeline.WebGpuImagePassParentTarget(
+                colorTexture = colorTexture,
+                colorView = colorView,
+                colorFormat = renderer.swapchainManager.imageFormatWebGpu,
+                width = width,
+                height = height,
+                isOffscreen = false,
+                sampleable = true,
+            ),
+        )
+        recordPassFeatures(
+            renderer.renderFeatures,
+            RenderPassSlot.Ui,
+            context,
+        )
+        context.encoder.end()
     }
 }
 

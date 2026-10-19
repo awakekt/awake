@@ -22,6 +22,12 @@ class SharedRenderFeature2DTest {
         override fun drawMesh(mesh: String) { calls += "draw $mesh" }
         override fun setScissor(x: Int, y: Int, width: Int, height: Int) { calls += "scissor $x,$y ${width}x$height" }
         override fun drawTexturePrimitive(primitive: TexturedDrawRun, slotIndex: Int) { calls += "texture $slotIndex" }
+        override fun executeImagePass(
+            chain: com.awakekt.awake.render.imagepass.ImagePassChain,
+            hasMoreImagePasses: Boolean,
+        ) {
+            calls += "imagePass more=$hasMoreImagePasses"
+        }
     }
 
     /** Runs split by clips keep their pipeline, and a clip repeating the current rect is not set again. */
@@ -95,5 +101,33 @@ class SharedRenderFeature2DTest {
         val withoutDefault = uploadDrawRuns(staged, uploader).map { it as DrawRun.GlyphRun }
         assertEquals(listOf("glyph0"), withoutDefault.map { it.mesh })
         assertEquals(listOf<UiFont>(bitmap), withoutDefault.map { it.font })
+    }
+
+    @Test
+    fun imagePassRunInterruptsPassAndForcesSubsequentPipelineAndScissorToRebind() {
+        val clip = Rectangle(0f, 0f, 100f, 50f)
+        val runs = listOf(
+            DrawRun.ClipRun(clip),
+            DrawRun.QuadRun("before"),
+            DrawRun.ImagePassRun(com.awakekt.awake.render.imagepass.ImagePassChain.Empty),
+            DrawRun.ClipRun(clip),
+            DrawRun.QuadRun("after"),
+        )
+        val recording = Recording()
+
+        SharedRenderFeature2D().recordCommands(runs, surfaceWidth = 200, surfaceHeight = 200, recorder = recording)
+
+        assertEquals(
+            listOf(
+                "scissor 0,0 100x50",
+                "pipeline Quad",
+                "draw before",
+                "imagePass more=false",
+                "scissor 0,0 100x50",
+                "pipeline Quad",
+                "draw after",
+            ),
+            recording.calls,
+        )
     }
 }

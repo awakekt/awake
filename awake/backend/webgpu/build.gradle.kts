@@ -135,6 +135,7 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation(project(":awake:engine:compose"))
+            implementation(project(":awake:engine:render:effects"))
         }
         // The desktop TEST target reads the same .wgsl this backend ships to wasm -- UI and
         // debug-line shaders the Renderer's constructor requires. Pointed at the one existing

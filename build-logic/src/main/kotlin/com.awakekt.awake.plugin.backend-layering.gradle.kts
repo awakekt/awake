@@ -63,6 +63,26 @@ val forbiddenBackendQualifiedReferences = listOf(
 val forbiddenBackendQualifiedPrefixes = listOf(
     "com.awakekt.awake.scene.",
     "com.awakekt.awake.ecs.",
+    "com.awakekt.awake.render.effects.",
+)
+
+/**
+ * Image-effect words that neither `render:contract` nor a GPU backend may declare or import.
+ *
+ * Effects (`Blur`, `Kawase`, `Bloom`, `Tonemap`, `Fxaa`, ...) live above the RHI in
+ * `awake:engine:render:effects` and lower to generic `ImagePassChain` steps (D40).
+ */
+val effectContentVocabulary = listOf(
+    "Blur",
+    "Backdrop",
+    "Kawase",
+    "Bloom",
+    "Glass",
+    "Tonemap",
+    "ToneMap",
+    "Grade",
+    "Grading",
+    "Fxaa",
 )
 
 /**
@@ -87,7 +107,23 @@ val backendContentVocabulary = listOf(
     "Decal",
     "Billboard",
     "Occlusion",
-)
+) + effectContentVocabulary
+
+/**
+ * Content vocabulary forbidden in `awake:engine:render:contract`.
+ *
+ * Includes every image-effect word in [effectContentVocabulary] plus scene content words that have
+ * already been extracted from the contract.
+ */
+val contractContentVocabulary = listOf(
+    "Skybox",
+    "Fog",
+    "Terrain",
+    "Water",
+    "Decal",
+    "Billboard",
+    "Occlusion",
+) + effectContentVocabulary
 
 /**
  * Tracked import exemptions. The list is intentionally empty: source lowering now hands backends
@@ -117,7 +153,7 @@ val contentExemptBackendFiles = emptyList<String>()
 
 val verifyBackendLayering = tasks.register<VerifyBackendLayeringTask>("verifyBackendLayering") {
     group = "awake verification"
-    description = "Reject scene vocabulary and content concepts (skybox, shadow, ...) inside a GPU backend."
+    description = "Reject scene vocabulary, image effects, and content concepts inside the RHI contract and GPU backends."
     modulePath.set(project.path)
     sourceFiles.from(
         fileTree("src") {
@@ -129,7 +165,14 @@ val verifyBackendLayering = tasks.register<VerifyBackendLayeringTask>("verifyBac
     forbiddenQualifiedReferences.set(forbiddenBackendQualifiedReferences)
     forbiddenQualifiedPrefixes.set(forbiddenBackendQualifiedPrefixes)
     exemptFiles.set(exemptBackendFiles)
-    forbiddenContentVocabulary.set(backendContentVocabulary)
+    forbiddenContentVocabulary.set(
+        if (project.path == ":awake:engine:render:contract") {
+            contractContentVocabulary
+        } else {
+            backendContentVocabulary
+        },
+    )
+    forbiddenEffectVocabulary.set(effectContentVocabulary)
     contentExemptFiles.set(contentExemptBackendFiles)
 }
 

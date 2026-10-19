@@ -18,6 +18,19 @@ class BackendLayeringChecksTest {
     private val forbiddenQualifiedPrefixes = setOf(
         "com.awakekt.awake.scene.",
         "com.awakekt.awake.ecs.",
+        "com.awakekt.awake.render.effects.",
+    )
+    private val forbiddenContentVocabulary = setOf(
+        "Blur",
+        "Backdrop",
+        "Kawase",
+        "Bloom",
+        "Glass",
+        "Tonemap",
+        "ToneMap",
+        "Grade",
+        "Grading",
+        "Fxaa",
     )
 
     @Test
@@ -31,6 +44,7 @@ class BackendLayeringChecksTest {
             forbiddenSimpleNames = forbiddenSimpleNames,
             forbiddenQualifiedNames = forbiddenQualifiedNames,
             forbiddenQualifiedPrefixes = forbiddenQualifiedPrefixes,
+            forbiddenContentVocabulary = forbiddenContentVocabulary,
         )
 
         assertEquals(
@@ -53,6 +67,7 @@ class BackendLayeringChecksTest {
             forbiddenSimpleNames = forbiddenSimpleNames,
             forbiddenQualifiedNames = forbiddenQualifiedNames,
             forbiddenQualifiedPrefixes = forbiddenQualifiedPrefixes,
+            forbiddenContentVocabulary = forbiddenContentVocabulary,
         )
 
         assertEquals(emptyList(), violations)
@@ -68,12 +83,41 @@ class BackendLayeringChecksTest {
             forbiddenSimpleNames = forbiddenSimpleNames,
             forbiddenQualifiedNames = forbiddenQualifiedNames,
             forbiddenQualifiedPrefixes = forbiddenQualifiedPrefixes,
+            forbiddenContentVocabulary = forbiddenContentVocabulary,
         )
 
         assertEquals(
             listOf(
                 "1: imports forbidden render-runtime package",
                 "2: references render-runtime vocabulary directly",
+            ),
+            violations,
+        )
+    }
+
+    @Test
+    fun detectsEffectPackageAndEffectVocabularyImports() {
+        val violations = findRenderRuntimeReferenceViolations(
+            lines = listOf(
+                "import com.awakekt.awake.render.effects.TintImageEffect",
+                "import com.awakekt.awake.render.effects.*",
+                "import com.awakekt.awake.custom.KawaseStep",
+                "typealias LocalBloom = com.awakekt.awake.custom.BloomConfig",
+                "val fx = com.awakekt.awake.render.effects.TintImageEffect",
+            ),
+            forbiddenSimpleNames = forbiddenSimpleNames,
+            forbiddenQualifiedNames = forbiddenQualifiedNames,
+            forbiddenQualifiedPrefixes = forbiddenQualifiedPrefixes,
+            forbiddenContentVocabulary = forbiddenContentVocabulary,
+        )
+
+        assertEquals(
+            listOf(
+                "1: imports forbidden render-runtime package",
+                "2: imports forbidden render-runtime package",
+                "3: imports KawaseStep (Kawase)",
+                "4: aliases BloomConfig (Bloom)",
+                "5: references render-runtime vocabulary directly",
             ),
             violations,
         )

@@ -5,9 +5,15 @@
  */
 package com.awakekt.awake.render.parity
 
+import com.awakekt.awake.core.color.Color
+import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.math.Mat4
+import com.awakekt.awake.render.effects.TintImageEffect
+import com.awakekt.awake.render.imagepass.ImagePassRect
 import com.awakekt.awake.render.passes.uniforms.RenderDebugView
+import com.awakekt.awake.render.pipeline.EffectQuality
 import com.awakekt.awake.render.renderer.Renderer
+import kotlinx.coroutines.runBlocking
 import java.awt.image.BufferedImage
 import java.io.File
 import javax.imageio.ImageIO
@@ -73,6 +79,7 @@ fun main(args: Array<String>) {
         UI_PARITY_SCENARIOS.forEach { scenario ->
             write("ui-${scenario.name}", "UI pipeline: ${scenario.name}", scenario.size, renderer.render(scenario))
         }
+        writeImagePassEvidence(renderer, ::write)
     }
     File(out, "captions.tsv").writeText(captions.toString())
 }
@@ -134,4 +141,40 @@ private fun writeShaderEffectEvidence(renderer: Renderer, write: (String, String
         EVIDENCE_SIZE,
         renderer.renderShaderEffectScene(listOf(sky, shaderEffectDocument("plane")), view = ShaderEffectView.Above, size = EVIDENCE_SIZE),
     )
+}
+
+/** A UI scene with a tint image effect executing mid-pass and resuming to draw over it. */
+private fun writeImagePassEvidence(renderer: Renderer, write: (String, String, Int, ByteArray) -> Unit) {
+    renderer.effectQuality = EffectQuality.High
+    val size = EVIDENCE_SIZE
+    val target = renderer.createRenderTarget(size, size)
+    try {
+        val context = renderer.imagePassTargetContext(target)
+        val bounds = ImagePassRect(size * 0.25f, size * 0.25f, size * 0.5f, size * 0.5f)
+        val placement = TintImageEffect.placement(
+            primitiveIndex = 1,
+            bounds = bounds,
+            tintColor = Color(1f, 0.2f, 0.8f, 1f),
+            strength = 0.85f,
+            targetContext = context,
+        )
+        val primitives = listOf(
+            UiDrawPrimitive.Quad(0f, 0f, size.toFloat(), size.toFloat(), Color(0.12f, 0.14f, 0.22f, 1f)),
+            UiDrawPrimitive.Quad(size * 0.35f, size * 0.35f, size * 0.3f, size * 0.3f, Color(0.2f, 0.85f, 0.65f, 1f)),
+        )
+        renderer.drawUiToTexture(
+            target = target,
+            primitives = primitives,
+            imagePasses = listOf(placement),
+        )
+        val pixels = runBlocking { renderer.readPixels(target) }.data
+        write(
+            "scene-image-pass-tint",
+            "Image pass pipeline: tint effect applied to subregion with mid-pass resume",
+            size,
+            pixels,
+        )
+    } finally {
+        target.destroy()
+    }
 }

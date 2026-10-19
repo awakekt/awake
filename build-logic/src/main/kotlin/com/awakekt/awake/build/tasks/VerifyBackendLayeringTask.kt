@@ -64,6 +64,14 @@ abstract class VerifyBackendLayeringTask : DefaultTask() {
     abstract val forbiddenContentVocabulary: ListProperty<String>
 
     /**
+     * Effect words (`Blur`, `Backdrop`, `Kawase`, `Bloom`, `Glass`, `Tonemap`, `Grade`, `Fxaa`)
+     * that must not appear in imports, aliases, or declarations inside `render:contract` or a
+     * GPU backend.
+     */
+    @get:Input
+    abstract val forbiddenEffectVocabulary: ListProperty<String>
+
+    /**
      * Path suffixes (invariant separators) still allowed to reference [forbiddenImports] -- a
      * tracked-debt ledger, not an opt-out. This includes imports, qualified references and
      * aliases, so an alias cannot hide a scene dependency from the gate.
@@ -94,6 +102,7 @@ abstract class VerifyBackendLayeringTask : DefaultTask() {
         val forbiddenPrefixes = forbiddenQualifiedPrefixes.get()
         val exempt = exemptFiles.get()
         val vocabulary = forbiddenContentVocabulary.get()
+        val effectVocabulary = forbiddenEffectVocabulary.getOrElse(emptyList())
         val contentExempt = contentExemptFiles.get()
         val importViolations = mutableListOf<String>()
         val contentViolations = mutableListOf<String>()
@@ -106,10 +115,11 @@ abstract class VerifyBackendLayeringTask : DefaultTask() {
             val lines = file.readLines()
             if (!importExempt) {
                 findRenderRuntimeReferenceViolations(
-                    lines,
-                    forbidden,
-                    forbiddenQualified,
-                    forbiddenPrefixes,
+                    lines = lines,
+                    forbiddenSimpleNames = forbidden,
+                    forbiddenQualifiedNames = forbiddenQualified,
+                    forbiddenQualifiedPrefixes = forbiddenPrefixes,
+                    forbiddenContentVocabulary = effectVocabulary,
                 ).forEach { violation ->
                     importViolations += "${file.name}:$violation"
                 }

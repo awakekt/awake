@@ -28,6 +28,7 @@ kotlin {
 
             api(project(":awake:core:graphics2d"))
 
+            implementation(project(":awake:engine:render:effects"))
             implementation(project(":awake:core:color"))
             implementation(project(":awake:core:geometry"))
         }

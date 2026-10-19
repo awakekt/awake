@@ -174,6 +174,7 @@ val verifyRenderContractBoundary = tasks.register("verifyRenderContractBoundary"
     doLast {
         val forbiddenImports = listOf(
             "import com.awakekt.awake.render.passes.",
+            "import com.awakekt.awake.render.effects.",
             "import com.awakekt.awake.scene.",
             "import com.awakekt.awake.ecs.",
         )

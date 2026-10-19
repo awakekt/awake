@@ -9,6 +9,7 @@ import com.awakekt.awake.core.graphics2d.TextureCompositeMode
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.command.PreparedDraw
+import com.awakekt.awake.render.imagepass.ImagePassChain
 import com.awakekt.awake.render.passes.RenderFrameContext
 import com.awakekt.awake.render.passes2d.UiRun
 import com.awakekt.awake.render.renderer.RenderStatsCounter
@@ -48,6 +49,9 @@ internal interface VulkanRenderFrameContext : RenderFrameContext {
     /** Stateful pooled `DynamicMesh` allocator -- see `Renderer.textureMeshForPrimitive`'s own
      * doc comment for the pooling contract this preserves. */
     fun textureMeshForPrimitive(index: Int): DynamicMesh
+
+    /** Interrupts the active 2D render pass, executes [chain], and resumes the 2D render pass. */
+    fun executeImagePass(chain: ImagePassChain, hasMoreImagePasses: Boolean) = Unit
 }
 
 /** The lazily built UI pipelines, snapshotted for one feature call. [quad] is non-null by

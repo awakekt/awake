@@ -8,6 +8,7 @@ package com.awakekt.awake.vulkan.renderer
 import com.awakekt.awake.core.graphics2d.TextureCompositeMode
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.text.font.UiFont
+import com.awakekt.awake.render.imagepass.ImagePassPlacement
 import com.awakekt.awake.render.passes2d.DrawRun
 import com.awakekt.awake.render.passes2d.SharedUiRenderFeature
 import com.awakekt.awake.render.passes2d.UiMeshUploader
@@ -24,6 +25,7 @@ import com.awakekt.awake.vulkan.models.VkRect2D
 import com.awakekt.awake.vulkan.models.VkViewport
 import com.awakekt.awake.vulkan.models.info.VkRenderPassBeginInfo
 import com.awakekt.awake.vulkan.pipeline.UiPipelineSet
+import com.awakekt.awake.vulkan.pipeline.VulkanImagePassParentTarget
 import com.awakekt.awake.vulkan.pipeline.VulkanUiRunRecorder
 import com.awakekt.awake.vulkan.texture.OffscreenRenderTarget
 import com.awakekt.awake.vulkan.ui.DynamicMesh
@@ -37,20 +39,43 @@ import com.awakekt.awake.vulkan.ui.DynamicMesh
  * [font] samples the glyphs that carry no font of their own; every font a glyph run samples has its
  * atlas uploaded here, once, so recording only binds it.
  */
-internal fun Renderer.performDrawUi(primitives: List<UiDrawPrimitive>, font: UiFont?) {
+internal fun Renderer.performDrawUi(
+    primitives: List<UiDrawPrimitive>,
+    font: UiFont?,
+    imagePasses: List<ImagePassPlacement> = emptyList(),
+    snapshotSupportedOverride: Boolean? = null,
+) {
     waitForCurrentFrameResourceSlot()
+    val snapshotSupported = snapshotSupportedOverride
+        ?: (swapchainManager.imageViews.isEmpty() || swapchainManager.sampleable)
+    val staged = UiRunCoalescer.coalesce(
+        primitives = primitives,
+        maxQuadsPerRun = Renderer.MAX_UI_QUADS,
+        retained = uiRunCache,
+        imagePasses = imagePasses,
+        snapshotSupported = snapshotSupported,
+    )
     uiRuns = uploadUiRuns(
-        UiRunCoalescer.coalesce(primitives, Renderer.MAX_UI_QUADS, uiRunCache),
-        VulkanUiMeshUploader(this, swapchainManager.currentFrame),
+        staged = staged,
+        uploader = VulkanUiMeshUploader(this, swapchainManager.currentFrame),
         defaultFont = font,
     )
     val hasGlyphs = ensureGlyphRunAtlases()
     if (swapchainManager.imageViews.isNotEmpty()) {
         ensureUiQuadPipeline()
         if (hasGlyphs) ensureGlyphPipeline()
-        primitives.filterIsInstance<UiDrawPrimitive.Texture>().map { TextureCompositeMode(it.blendMode, it.premultiplied) }.distinct()
+        val effectivePrimitives = if (imagePasses.isEmpty()) {
+            primitives
+        } else {
+            primitives + imagePasses.flatMap { it.fallbackPrimitives }
+        }
+        effectivePrimitives.filterIsInstance<UiDrawPrimitive.Texture>()
+            .map { TextureCompositeMode(it.blendMode, it.premultiplied) }
+            .distinct()
             .forEach(::ensureTextureQuadPipeline)
-        if (primitives.any { it is UiDrawPrimitive.RoundedQuad || it is UiDrawPrimitive.ShadowQuad }) ensureRoundedQuadPipeline()
+        if (effectivePrimitives.any { it is UiDrawPrimitive.RoundedQuad || it is UiDrawPrimitive.ShadowQuad }) {
+            ensureRoundedQuadPipeline()
+        }
     }
 }
 
@@ -84,16 +109,31 @@ internal fun Renderer.dropStagedUiSampling(target: OffscreenRenderTarget) {
  * Headless/offscreen test hook: renders a full frame's worth of [UiDrawPrimitive]s into [target],
  * through the same shared, paint-order-preserving UI pass the swapchain uses.
  */
-fun Renderer.renderUiToTexture(target: RenderTarget, primitives: List<UiDrawPrimitive>, font: UiFont?) {
+@Suppress("LongMethod")
+fun Renderer.renderUiToTexture(
+    target: RenderTarget,
+    primitives: List<UiDrawPrimitive>,
+    font: UiFont?,
+    imagePasses: List<ImagePassPlacement> = emptyList(),
+) {
     val offscreen = target as OffscreenRenderTarget
-    performDrawUi(primitives, font)
+    performDrawUi(primitives, font, imagePasses, snapshotSupportedOverride = true)
     val frameIndex = swapchainManager.currentFrame
 
     ensureOffscreenQuadPipeline()
     if (ensureGlyphRunAtlases()) ensureOffscreenGlyphPipeline()
-    primitives.filterIsInstance<UiDrawPrimitive.Texture>().map { TextureCompositeMode(it.blendMode, it.premultiplied) }.distinct()
+    val effectivePrimitives = if (imagePasses.isEmpty()) {
+        primitives
+    } else {
+        primitives + imagePasses.flatMap { it.fallbackPrimitives }
+    }
+    effectivePrimitives.filterIsInstance<UiDrawPrimitive.Texture>()
+        .map { TextureCompositeMode(it.blendMode, it.premultiplied) }
+        .distinct()
         .forEach(::ensureOffscreenTexturePipeline)
-    if (primitives.any { it is UiDrawPrimitive.RoundedQuad || it is UiDrawPrimitive.ShadowQuad }) ensureOffscreenRoundedQuadPipeline()
+    if (effectivePrimitives.any { it is UiDrawPrimitive.RoundedQuad || it is UiDrawPrimitive.ShadowQuad }) {
+        ensureOffscreenRoundedQuadPipeline()
+    }
 
     val pipelines = UiPipelineSet(
         quad = requireNotNull(offscreenQuadRenderPipeline),
@@ -109,7 +149,20 @@ fun Renderer.renderUiToTexture(target: RenderTarget, primitives: List<UiDrawPrim
         it.writeScreenSize(offscreen.width.toFloat(), offscreen.height.toFloat())
     }
 
+    val parentTarget = VulkanImagePassParentTarget(
+        framebuffer = offscreen.framebuffer,
+        colorImage = offscreen.colorImage,
+        colorImageView = offscreen.colorImageView,
+        colorFormat = swapchainManager.imageFormat,
+        width = offscreen.width,
+        height = offscreen.height,
+        isOffscreen = true,
+        finalRenderPass = renderPipeline.renderPass,
+        sampleable = true,
+    )
+
     runOffscreenCommands { commandBuffer ->
+        imagePassExecutor.beginFrame(frameIndex)
         offscreen.prepareForColorAttachment(commandBuffer)
         val renderPassInfo = VkRenderPassBeginInfo(
             renderPass = renderPipeline.renderPass,
@@ -129,7 +182,23 @@ fun Renderer.renderUiToTexture(target: RenderTarget, primitives: List<UiDrawPrim
             runs = uiRuns,
             surfaceWidth = offscreen.width,
             surfaceHeight = offscreen.height,
-            recorder = VulkanUiRunRecorder(commandBuffer, frameIndex, statsCounter, pipelines, ::textureMeshForPrimitive),
+            recorder = VulkanUiRunRecorder(
+                commandBuffer = commandBuffer,
+                frameIndex = frameIndex,
+                stats = statsCounter,
+                pipelines = pipelines,
+                textureMeshForPrimitive = ::textureMeshForPrimitive,
+                onExecuteImagePass = { chain, hasMoreImagePasses ->
+                    imagePassExecutor.executeImagePass(
+                        commandBuffer = commandBuffer,
+                        frameIndex = frameIndex,
+                        parentTarget = parentTarget,
+                        chain = chain,
+                        hasMoreImagePasses = hasMoreImagePasses,
+                        stats = statsCounter,
+                    )
+                },
+            ),
         )
 
         Vulkan.vkCmdEndRenderPass(commandBuffer)

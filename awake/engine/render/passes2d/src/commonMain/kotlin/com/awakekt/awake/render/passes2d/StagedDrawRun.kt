@@ -9,6 +9,7 @@ import com.awakekt.awake.core.graphics2d.BlendMode
 import com.awakekt.awake.core.graphics2d.TextureCompositeMode
 import com.awakekt.awake.core.math2d.Rectangle
 import com.awakekt.awake.core.text.font.UiFont
+import com.awakekt.awake.render.imagepass.ImagePassChain
 import com.awakekt.awake.render.pipeline.UiPipelineDescriptor
 
 /**
@@ -53,6 +54,13 @@ sealed class StagedDrawRun {
      * @property rect The clip rectangle.
      */
     class ClipRun(val rect: Rectangle) : StagedDrawRun()
+
+    /**
+     * Multi-step GPU image-pass chain executed in emission order.
+     *
+     * @property chain The lowered image-pass chain.
+     */
+    class ImagePassRun(val chain: ImagePassChain) : StagedDrawRun()
 }
 
 /** Alias for [StagedDrawRun]. */
@@ -123,6 +131,13 @@ sealed class DrawRun<out M> {
      * @property rect The clip rectangle.
      */
     class ClipRun(val rect: Rectangle) : DrawRun<Nothing>()
+
+    /**
+     * A multi-step GPU image-pass chain run.
+     *
+     * @property chain The lowered image-pass chain.
+     */
+    class ImagePassRun(val chain: ImagePassChain) : DrawRun<Nothing>()
 }
 
 /** Alias for [DrawRun]. */
@@ -149,7 +164,9 @@ val StagedDrawRun.pipelineDescriptor: UiPipelineDescriptor?
             variant = UiPipelineKind.Texture.pipelineVariant,
             vertexFormat = UiPipelineKind.Texture.vertexFormat,
         )
-        is StagedDrawRun.ClipRun -> null
+        is StagedDrawRun.ClipRun,
+        is StagedDrawRun.ImagePassRun,
+        -> null
     }
 
 /**

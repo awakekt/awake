@@ -22,10 +22,14 @@ import com.awakekt.awake.render.command.GpuDrawPreparer
 import com.awakekt.awake.render.command.GpuEnvironmentState
 import com.awakekt.awake.render.command.GpuPassExecutor
 import com.awakekt.awake.render.command.GpuPassInput
+import com.awakekt.awake.render.imagepass.ImagePassPlacement
 import com.awakekt.awake.render.passes.RenderFeature
 import com.awakekt.awake.render.passes.debug.DebugLineLayout
 import com.awakekt.awake.render.passes2d.RetainedDrawRunCache
 import com.awakekt.awake.render.passes2d.UiRun
+import com.awakekt.awake.render.pipeline.EffectQuality
+import com.awakekt.awake.render.pipeline.GpuDeviceClass
+import com.awakekt.awake.render.pipeline.recommendedEffectQuality
 import com.awakekt.awake.render.renderer.LineSegment
 import com.awakekt.awake.render.renderer.RenderFrameStats
 import com.awakekt.awake.render.renderer.RenderStatsCounter
@@ -43,6 +47,7 @@ import com.awakekt.awake.webgpu.mesh.InstanceBuffer
 import com.awakekt.awake.webgpu.mesh.SkinnedInstanceBuffer
 import com.awakekt.awake.webgpu.pipeline.DepthPrePassFeature
 import com.awakekt.awake.webgpu.pipeline.RenderPipeline
+import com.awakekt.awake.webgpu.pipeline.WebGpuImagePassExecutor
 import com.awakekt.awake.webgpu.pipeline.WebGpuRenderFrameContext
 import com.awakekt.awake.webgpu.swapchain.SwapchainManager
 import com.awakekt.awake.webgpu.texture.DepthTarget
@@ -159,12 +164,6 @@ class Renderer internal constructor(
     internal val statsCounter = RenderStatsCounter()
     internal val gpuFrameTimer = GpuFrameTimer.createOrNull(graphicsDevice.wgpuContext.device)
 
-    init {
-        depthPrePass?.stats = statsCounter
-        sceneDepthPass?.stats = statsCounter
-        maskPass?.stats = statsCounter
-    }
-
     override val frameStats: RenderFrameStats?
         get() = statsCounter.latest
 
@@ -191,9 +190,6 @@ class Renderer internal constructor(
      * carry a per-vertex barycentric attribute. */
     override var wireframe: Boolean = false
 
-    /** Real storage overriding the interface's no-op default -- see the interface's own doc
-     * comment. */
-
     /** [clearColor] converted to this backend's clear-value type -- see the Vulkan `Renderer`'s
      * own `clearColorValue` for why this is a fresh-read `get()`, not a cached field. */
     internal val clearColorValue: GpuColor
@@ -206,12 +202,33 @@ class Renderer internal constructor(
     internal val graphicsDevice = graphicsDevice
     internal val swapchainManager = swapchainManager
 
+    override val deviceClass: GpuDeviceClass
+        get() = graphicsDevice.deviceClass
+
+    override var effectQuality: EffectQuality = graphicsDevice.deviceClass.recommendedEffectQuality()
+
     /** Stateless; the one implementation of "record all opaque draws, grouped by pipeline",
      * shared verbatim with the Vulkan backend through [WebGpuCommandRecorder]. */
 
     /** Stateless; the one implementation of procedural skybox drawing, shared verbatim across backends. */
 
     internal val bufferPools = GpuBufferPoolManager(graphicsDevice)
+
+    /** Uploaded textures referenced by [com.awakekt.awake.render.imagepass.ImagePassSource.Texture]. */
+    internal val imagePassTextures = HashMap<TextureAsset, Texture>()
+
+    internal val imagePassExecutor = WebGpuImagePassExecutor(
+        graphicsDevice = graphicsDevice,
+        meshProvider = bufferPools::imagePassMeshForStep,
+        textureProvider = ::ensureImagePassTexture,
+    )
+
+    init {
+        depthPrePass?.stats = statsCounter
+        sceneDepthPass?.stats = statsCounter
+        maskPass?.stats = statsCounter
+        swapchainManager.onSurfaceResize = { imagePassExecutor.releaseTransientTargets() }
+    }
 
     /** This frame's per-draw uniform blocks, written before the frame records -- see [UniformUploads]. */
     internal val uniformUploads = UniformUploads()
@@ -280,8 +297,21 @@ class Renderer internal constructor(
      * without the member call winning resolution and recursing into itself. */
     override fun drawUi(primitives: List<UiDrawPrimitive>, font: UiFont?) = performDrawUi(primitives, font)
 
+    override fun drawUi(
+        primitives: List<UiDrawPrimitive>,
+        font: UiFont?,
+        imagePasses: List<ImagePassPlacement>,
+    ) = performDrawUi(primitives, font, imagePasses)
+
     override fun drawUiToTexture(target: RenderTarget, primitives: List<UiDrawPrimitive>, font: UiFont?) =
         performDrawUiToTexture(target, primitives, font)
+
+    override fun drawUiToTexture(
+        target: RenderTarget,
+        primitives: List<UiDrawPrimitive>,
+        font: UiFont?,
+        imagePasses: List<ImagePassPlacement>,
+    ) = performDrawUiToTexture(target, primitives, font, imagePasses)
 
     override fun compositeUiTargets(
         destination: RenderTarget,
@@ -303,6 +333,7 @@ class Renderer internal constructor(
     override fun destroy() {
         gpuFrameTimer?.destroy()
         uiRunCache.clear()
+        imagePassExecutor.destroy()
         bufferPools.destroy()
         uiRenderPipeline?.destroy()
         uiGlyphRenderPipeline?.destroy()
@@ -310,6 +341,7 @@ class Renderer internal constructor(
         uiTargetCompositePipelines.values.forEach(UiTargetCompositePipeline::destroy)
         uiTargetCompositePipelines.clear()
         uiRoundedQuadRenderPipeline?.destroy()
+        imagePassTextures.clear()
         textureResources.destroy()
         createdRenderTargets.toList().forEach { it.destroy() }
         createdRenderTargets.clear()

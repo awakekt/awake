@@ -77,10 +77,22 @@ class SwapchainManager(
     var extent: VkExtent2D = VkExtent2D()
 
     /**
+     * One `VkImage` handle per swapchain image, or per stand-in image of a headless presentable
+     * manager, indexed by the acquired image index. Empty before [create] and after [destroy].
+     */
+    var images: List<Long> = emptyList()
+
+    /**
      * One colour view per swapchain image, or per stand-in image of a headless presentable manager,
      * indexed by the acquired image index. Empty before [create] and after [destroy].
      */
     var imageViews: List<Long> = emptyList()
+
+    /**
+     * Whether the swapchain (or headless stand-in) images were created with
+     * `VK_IMAGE_USAGE_SAMPLED_BIT` and can be sampled mid-frame by an image-pass snapshot.
+     */
+    var sampleable: Boolean = true
 
     /**
      * Format of the swapchain images; `VK_FORMAT_UNDEFINED` until [create] or a headless creation
@@ -160,6 +172,7 @@ class SwapchainManager(
      * @throws Exception If the surface offers no usable composite alpha mode or colour-attachment
      * usage.
      */
+    @Suppress("LongMethod")
     fun create() {
         val (capabilities, formats, presentModes) = querySwapChainSupport(physicalDevice, surface)
         val (format, colorSpace) = chooseSwapSurfaceFormat(formats)
@@ -188,9 +201,12 @@ class SwapchainManager(
                 throw Exception("No valid compositeAlpha found")
             }
 
+        val canSampleSwapchain =
+            capabilities.supportedUsageFlags has VkImageUsageFlagBits.VK_IMAGE_USAGE_SAMPLED_BIT
         val imageUsage =
             if (capabilities.supportedUsageFlags has VkImageUsageFlagBits.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT) {
-                VkImageUsageFlagBits.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT.value
+                VkImageUsageFlagBits.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT.value or
+                    if (canSampleSwapchain) VkImageUsageFlagBits.VK_IMAGE_USAGE_SAMPLED_BIT.value else 0
             } else {
                 throw Exception("No valid usage flags found")
             }
@@ -212,6 +228,7 @@ class SwapchainManager(
             oldSwapchain = swapChain,
         )
         imageFormat = format
+        sampleable = canSampleSwapchain
         swapChain = Vulkan.vkCreateSwapchainKHR(device, createInfo)
         extent = chosenExtent
         builtTransform = capabilities.currentTransform
@@ -256,6 +273,7 @@ class SwapchainManager(
         }
         imageFormat = format
         extent = VkExtent2D(width, height)
+        sampleable = true
         headlessImages = LongArray(HEADLESS_IMAGE_COUNT) {
             VulkanImages.vkCreateImage(
                 device,
@@ -264,10 +282,12 @@ class SwapchainManager(
                     height = height,
                     format = format.value,
                     usage = VkImageUsageFlagBits2.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT or
+                        VkImageUsageFlagBits2.VK_IMAGE_USAGE_SAMPLED_BIT or
                         VkImageUsageFlagBits2.VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
                 ),
             )
         }
+        images = headlessImages.toList()
         headlessImageMemory = LongArray(HEADLESS_IMAGE_COUNT) { index ->
             val requirements = VulkanImages.vkGetImageMemoryRequirements(device, headlessImages[index])
             val memory = VulkanBuffers.vkAllocateMemory(
@@ -322,12 +342,15 @@ class SwapchainManager(
     fun createHeadless(width: Int, height: Int, format: VkFormat = VkFormat.VK_FORMAT_R8G8B8A8_UNORM) {
         imageFormat = format
         extent = VkExtent2D(width, height)
+        images = emptyList()
+        sampleable = true
         imagesInFlight = LongArray(imageViews.size)
         renderFinishedSemaphores = LongArray(0)
     }
 
     private fun createImageViews() {
         val swapChainImages = Vulkan.vkGetSwapchainImagesKHR(device, swapChain)
+        images = swapChainImages.toList()
         imageViews = swapChainImages.map { swapChainImage ->
             val createInfo = VkImageViewCreateInfo(
                 image = swapChainImage,
@@ -412,7 +435,9 @@ class SwapchainManager(
         headlessImageMemory.forEach { VulkanBuffers.vkFreeMemory(device, it) }
         headlessImages = LongArray(0)
         headlessImageMemory = LongArray(0)
+        images = emptyList()
         imageViews = emptyList()
+        sampleable = false
         // Headless owns no swapchain, and its device need not load the entry point at all.
         if (swapChain != 0L) Vulkan.vkDestroySwapchainKHR(device, swapChain)
         swapChain = 0

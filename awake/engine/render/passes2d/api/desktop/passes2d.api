@@ -43,6 +43,11 @@ public final class com/awakekt/awake/render/passes2d/DrawRun$GlyphRun : com/awak
 	public final fun getMesh ()Ljava/lang/Object;
 }
 
+public final class com/awakekt/awake/render/passes2d/DrawRun$ImagePassRun : com/awakekt/awake/render/passes2d/DrawRun {
+	public fun <init> (Lcom/awakekt/awake/render/imagepass/ImagePassChain;)V
+	public final fun getChain ()Lcom/awakekt/awake/render/imagepass/ImagePassChain;
+}
+
 public final class com/awakekt/awake/render/passes2d/DrawRun$QuadRun : com/awakekt/awake/render/passes2d/DrawRun {
 	public fun <init> (Ljava/lang/Object;)V
 	public final fun getMesh ()Ljava/lang/Object;
@@ -72,9 +77,9 @@ public final class com/awakekt/awake/render/passes2d/DrawRunCoalescer {
 	public final fun canSkipExactClip (Lcom/awakekt/awake/core/math2d/Rectangle;FFFF)Z
 	public final fun canSkipExactClip (Lcom/awakekt/awake/core/math2d/Rectangle;Lcom/awakekt/awake/core/math2d/Rectangle;)Z
 	public final fun coalesce (Ljava/util/List;I)Ljava/util/List;
-	public final fun coalesce (Ljava/util/List;ILcom/awakekt/awake/render/passes2d/RetainedDrawRunCache;)Ljava/util/List;
+	public final fun coalesce (Ljava/util/List;ILcom/awakekt/awake/render/passes2d/RetainedDrawRunCache;Ljava/util/List;Z)Ljava/util/List;
 	public static synthetic fun coalesce$default (Lcom/awakekt/awake/render/passes2d/DrawRunCoalescer;Ljava/util/List;IILjava/lang/Object;)Ljava/util/List;
-	public static synthetic fun coalesce$default (Lcom/awakekt/awake/render/passes2d/DrawRunCoalescer;Ljava/util/List;ILcom/awakekt/awake/render/passes2d/RetainedDrawRunCache;ILjava/lang/Object;)Ljava/util/List;
+	public static synthetic fun coalesce$default (Lcom/awakekt/awake/render/passes2d/DrawRunCoalescer;Ljava/util/List;ILcom/awakekt/awake/render/passes2d/RetainedDrawRunCache;Ljava/util/List;ZILjava/lang/Object;)Ljava/util/List;
 	public final fun exactClip (Lcom/awakekt/awake/core/graphics2d/TexturedTriangleMesh;Ljava/util/List;)Lcom/awakekt/awake/core/graphics2d/TexturedTriangleMesh;
 	public final fun exactClip (Lcom/awakekt/awake/core/graphics2d/TriangleMesh;Ljava/util/List;)Lcom/awakekt/awake/core/graphics2d/TriangleMesh;
 	public final fun exactClipColored (Lcom/awakekt/awake/core/graphics2d/ColoredTriangleMesh;Ljava/util/List;)Lcom/awakekt/awake/core/graphics2d/ColoredTriangleMesh;
@@ -89,7 +94,12 @@ public abstract interface class com/awakekt/awake/render/passes2d/DrawRunRecorde
 	public abstract fun bindPipeline (Lcom/awakekt/awake/render/passes2d/DrawPipelineKind;)Z
 	public abstract fun drawMesh (Ljava/lang/Object;)V
 	public abstract fun drawTexturePrimitive (Lcom/awakekt/awake/render/passes2d/TexturedDrawRun;I)V
+	public fun executeImagePass (Lcom/awakekt/awake/render/imagepass/ImagePassChain;Z)V
 	public abstract fun setScissor (IIII)V
+}
+
+public final class com/awakekt/awake/render/passes2d/DrawRunRecorder$DefaultImpls {
+	public static fun executeImagePass (Lcom/awakekt/awake/render/passes2d/DrawRunRecorder;Lcom/awakekt/awake/render/imagepass/ImagePassChain;Z)V
 }
 
 public final class com/awakekt/awake/render/passes2d/RenderFeature2D : com/awakekt/awake/render/passes/RenderFeature {
@@ -135,6 +145,11 @@ public final class com/awakekt/awake/render/passes2d/StagedDrawRun$GlyphRun : co
 	public final fun getFont ()Lcom/awakekt/awake/core/text/font/UiFont;
 	public final fun getIndices ()[I
 	public final fun getVertices ()[F
+}
+
+public final class com/awakekt/awake/render/passes2d/StagedDrawRun$ImagePassRun : com/awakekt/awake/render/passes2d/StagedDrawRun {
+	public fun <init> (Lcom/awakekt/awake/render/imagepass/ImagePassChain;)V
+	public final fun getChain ()Lcom/awakekt/awake/render/imagepass/ImagePassChain;
 }
 
 public final class com/awakekt/awake/render/passes2d/StagedDrawRun$QuadRun : com/awakekt/awake/render/passes2d/StagedDrawRun {

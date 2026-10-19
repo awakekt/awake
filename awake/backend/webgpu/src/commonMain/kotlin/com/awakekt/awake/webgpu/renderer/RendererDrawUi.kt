@@ -8,6 +8,7 @@ package com.awakekt.awake.webgpu.renderer
 import com.awakekt.awake.core.graphics2d.TextureCompositeMode
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.text.font.UiFont
+import com.awakekt.awake.render.imagepass.ImagePassPlacement
 import com.awakekt.awake.render.passes2d.DrawRun
 import com.awakekt.awake.render.passes2d.SharedUiRenderFeature
 import com.awakekt.awake.render.passes2d.UiMeshUploader
@@ -15,6 +16,7 @@ import com.awakekt.awake.render.passes2d.UiRunCoalescer
 import com.awakekt.awake.render.passes2d.uploadUiRuns
 import com.awakekt.awake.render.renderer.UiTargetCompositeMode
 import com.awakekt.awake.render.texture.RenderTarget
+import com.awakekt.awake.webgpu.pipeline.WebGpuImagePassParentTarget
 import com.awakekt.awake.webgpu.pipeline.WebGpuUiRunRecorder
 import com.awakekt.awake.webgpu.pipeline.bindGroup
 import com.awakekt.awake.webgpu.texture.OffscreenRenderTarget
@@ -29,14 +31,29 @@ import io.ygdrasil.webgpu.beginRenderPass
  * UI primitive staging for the WebGPU backend. [font] samples the glyphs that carry no font of
  * their own; the glyph pipeline uploads each font's atlas the first time it binds it.
  */
-internal fun Renderer.performDrawUi(primitives: List<UiDrawPrimitive>, font: UiFont?) {
+internal fun Renderer.performDrawUi(
+    primitives: List<UiDrawPrimitive>,
+    font: UiFont?,
+    imagePasses: List<ImagePassPlacement> = emptyList(),
+) {
     ensureUiQuadPipeline()
-    primitives.filterIsInstance<UiDrawPrimitive.Texture>().map { TextureCompositeMode(it.blendMode, it.premultiplied) }.distinct()
+    val allPrimitives = if (imagePasses.isEmpty()) {
+        primitives
+    } else {
+        primitives + imagePasses.flatMap { it.fallbackPrimitives }
+    }
+    allPrimitives.filterIsInstance<UiDrawPrimitive.Texture>().map { TextureCompositeMode(it.blendMode, it.premultiplied) }.distinct()
         .forEach(::ensureTextureQuadPipeline)
-    if (primitives.any { it is UiDrawPrimitive.RoundedQuad || it is UiDrawPrimitive.ShadowQuad }) ensureRoundedQuadPipeline()
+    if (allPrimitives.any { it is UiDrawPrimitive.RoundedQuad || it is UiDrawPrimitive.ShadowQuad }) ensureRoundedQuadPipeline()
 
     uiRuns = uploadUiRuns(
-        UiRunCoalescer.coalesce(primitives, Renderer.MAX_UI_QUADS, uiRunCache),
+        UiRunCoalescer.coalesce(
+            primitives = primitives,
+            maxQuadsPerRun = Renderer.MAX_UI_QUADS,
+            retained = uiRunCache,
+            imagePasses = imagePasses,
+            snapshotSupported = true,
+        ),
         WebGpuUiMeshUploader(this),
         defaultFont = font,
     )
@@ -49,9 +66,15 @@ internal fun Renderer.performDrawUi(primitives: List<UiDrawPrimitive>, font: UiF
 }
 
 /** Executes the shared, paint-order-preserving UI pass against an offscreen attachment. */
-internal fun Renderer.performDrawUiToTexture(target: RenderTarget, primitives: List<UiDrawPrimitive>, font: UiFont?) {
+@Suppress("LongMethod")
+internal fun Renderer.performDrawUiToTexture(
+    target: RenderTarget,
+    primitives: List<UiDrawPrimitive>,
+    font: UiFont?,
+    imagePasses: List<ImagePassPlacement> = emptyList(),
+) {
     val offscreen = target as OffscreenRenderTarget
-    performDrawUi(primitives, font)
+    performDrawUi(primitives, font, imagePasses)
     val quad = requireNotNull(uiRenderPipeline)
     quad.writeScreenSize(offscreen.width.toFloat(), offscreen.height.toFloat())
     uiGlyphRenderPipeline?.writeScreenSize(offscreen.width.toFloat(), offscreen.height.toFloat())
@@ -59,8 +82,9 @@ internal fun Renderer.performDrawUiToTexture(target: RenderTarget, primitives: L
         it.writeScreenSize(offscreen.width.toFloat(), offscreen.height.toFloat())
     }
     uiRoundedQuadRenderPipeline?.writeScreenSize(offscreen.width.toFloat(), offscreen.height.toFloat())
+    imagePassExecutor.beginPass()
     val encoder = createRenderEncoder()
-    encoder.beginRenderPass(
+    var activePass = encoder.beginRenderPass(
         RenderPassDescriptor(
             colorAttachments = listOf(
                 RenderPassColorAttachment(
@@ -73,23 +97,41 @@ internal fun Renderer.performDrawUiToTexture(target: RenderTarget, primitives: L
                 ),
             ),
         ),
-    ) {
-        SharedUiRenderFeature().recordCommands(
-            runs = uiRuns,
-            surfaceWidth = offscreen.width,
-            surfaceHeight = offscreen.height,
-            recorder = WebGpuUiRunRecorder(
-                encoder = this,
-                quad = quad,
-                roundedQuad = uiRoundedQuadRenderPipeline,
-                glyph = uiGlyphRenderPipeline,
-                textures = uiTextureRenderPipelines,
-                textureMeshForPrimitive = ::textureMeshForPrimitive,
-                stats = statsCounter,
-            ),
-        )
-        end()
-    }
+    )
+    val parentTarget = WebGpuImagePassParentTarget(
+        colorTexture = offscreen.colorTexture,
+        colorView = offscreen.colorView,
+        colorFormat = offscreen.colorFormat,
+        width = offscreen.width,
+        height = offscreen.height,
+        isOffscreen = true,
+        sampleable = true,
+    )
+    SharedUiRenderFeature().recordCommands(
+        runs = uiRuns,
+        surfaceWidth = offscreen.width,
+        surfaceHeight = offscreen.height,
+        recorder = WebGpuUiRunRecorder(
+            encoder = activePass,
+            quad = quad,
+            roundedQuad = uiRoundedQuadRenderPipeline,
+            glyph = uiGlyphRenderPipeline,
+            textures = uiTextureRenderPipelines,
+            textureMeshForPrimitive = ::textureMeshForPrimitive,
+            executeImagePass = { chain ->
+                activePass = imagePassExecutor.executeImagePass(
+                    commandEncoder = encoder,
+                    currentPassEncoder = activePass,
+                    parentTarget = parentTarget,
+                    chain = chain,
+                    stats = statsCounter,
+                )
+                activePass
+            },
+            stats = statsCounter,
+        ),
+    )
+    activePass.end()
     submitRenderCommands(encoder)
 }
 

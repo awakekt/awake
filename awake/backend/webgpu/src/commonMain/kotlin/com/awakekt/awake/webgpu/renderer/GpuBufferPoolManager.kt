@@ -48,6 +48,9 @@ internal class GpuBufferPoolManager(
     private val uiTextureMeshPool = GpuResourcePool {
         DynamicMesh(graphicsDevice, Renderer.MAX_UI_QUADS, DynamicMesh.GLYPH_FLOATS_PER_VERTEX)
     }
+    private val imagePassMeshPool = GpuResourcePool {
+        DynamicMesh(graphicsDevice, 1, DynamicMesh.IMAGE_PASS_FLOATS_PER_VERTEX)
+    }
 
     private val instanceBufferPool = GpuResourcePool { InstanceBuffer(graphicsDevice) }
     private val skinnedInstanceBufferPool = GpuResourcePool { SkinnedInstanceBuffer(graphicsDevice) }
@@ -70,6 +73,9 @@ internal class GpuBufferPoolManager(
      * queue-scheduled rather than interleaved with encoding, so a run's later primitive writing a
      * shared mesh would land before an earlier, already-encoded draw reads it. */
     fun textureMeshForPrimitive(index: Int): DynamicMesh = uiTextureMeshPool[index]
+
+    /** Pooled 1-quad dynamic mesh for an image-pass step at [index] within a frame. */
+    fun imagePassMeshForStep(index: Int): DynamicMesh = imagePassMeshPool[index]
 
     fun instanceBufferForRun(index: Int): InstanceBuffer = instanceBufferPool[index]
     fun skinnedInstanceBufferForRun(index: Int): SkinnedInstanceBuffer = skinnedInstanceBufferPool[index]
@@ -167,6 +173,7 @@ internal class GpuBufferPoolManager(
         uiGlyphMeshPool.forEach { it.destroy() }
         uiRoundedQuadMeshPool.forEach { it.destroy() }
         uiTextureMeshPool.forEach { it.destroy() }
+        imagePassMeshPool.forEach { it.destroy() }
         instanceBufferPool.forEach { it.destroy() }
         skinnedInstanceBufferPool.forEach { it.destroy() }
         alphaInstanceBufferPool.forEach { it.destroy() }
