@@ -1,0 +1,1 @@
+- **Frustum culling drops degenerate planes safely instead of throwing.** `Frustum.planes` and `Frustum.intersects` now gracefully return empty planes / false when aspect ratio is `NaN` or non-positive (such as during window minimization or initial window creation), and silently ignore degenerate normal vectors rather than throwing `IllegalArgumentException` in `Plane.through`.

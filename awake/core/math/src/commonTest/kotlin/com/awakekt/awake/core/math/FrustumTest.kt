@@ -183,6 +183,14 @@ class FrustumTest {
     }
 
     @Test
+    fun planesReturnsEmptyListWhenAspectIsNanOrNonPositive() {
+        val camera = identityViewCamera()
+        assertEquals(emptyList(), Frustum.planes(camera, aspect = Float.NaN))
+        assertEquals(emptyList(), Frustum.planes(camera, aspect = 0f))
+        assertEquals(emptyList(), Frustum.planes(camera, aspect = -1f))
+    }
+
+    @Test
     fun containsSphereRadiusRescuesAPointStraddlingAPlane() {
         val planes = Frustum.planes(identityViewCamera(), aspect = 1f)
         // Near plane at z = -1; a point just past it (z = -0.9, outside) is rescued by a radius
