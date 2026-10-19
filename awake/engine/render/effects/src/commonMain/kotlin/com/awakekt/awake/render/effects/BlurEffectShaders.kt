@@ -58,7 +58,8 @@ import com.awakekt.awake.render.renderer.UniformLayout
 import com.awakekt.awake.render.renderer.UniformWriter
 
 /**
- * Vertex format for dual-filter downsample/upsample passes (stride = 10 floats):
+ * Vertex format for dual-filter downsample/upsample passes (stride = 10 floats).
+ *
  * - position (vec2)
  * - clampRect (vec4: minX, minY, maxX, maxY)
  * - blurPass (vec4: offset, isUpsample, unused, unused)
@@ -72,7 +73,8 @@ val BlurPassVertexFormat: VertexFormat = VertexFormat(
 )
 
 /**
- * Vertex format for frosted glass composite passes (stride = 16 floats):
+ * Vertex format for frosted glass composite passes (stride = 16 floats).
+ *
  * - pos (vec2)
  * - localPos (vec2)
  * - halfSize (vec2)

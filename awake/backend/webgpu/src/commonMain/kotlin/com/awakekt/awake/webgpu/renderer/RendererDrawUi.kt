@@ -35,6 +35,7 @@ internal fun Renderer.performDrawUi(
     primitives: List<UiDrawPrimitive>,
     font: UiFont?,
     imagePasses: List<ImagePassPlacement> = emptyList(),
+    target: RenderTarget? = null,
 ) {
     ensureUiQuadPipeline()
     val allPrimitives = if (imagePasses.isEmpty()) {
@@ -44,8 +45,6 @@ internal fun Renderer.performDrawUi(
     }
     allPrimitives.filterIsInstance<UiDrawPrimitive.Texture>().map { TextureCompositeMode(it.blendMode, it.premultiplied) }.distinct()
         .forEach(::ensureTextureQuadPipeline)
-    if (allPrimitives.any { it is UiDrawPrimitive.RoundedQuad || it is UiDrawPrimitive.ShadowQuad }) ensureRoundedQuadPipeline()
-
     uiRuns = uploadUiRuns(
         UiRunCoalescer.coalesce(
             primitives = primitives,
@@ -53,10 +52,16 @@ internal fun Renderer.performDrawUi(
             retained = uiRunCache,
             imagePasses = imagePasses,
             snapshotSupported = true,
+            targetContext = imagePassTargetContext(target),
         ),
         WebGpuUiMeshUploader(this),
         defaultFont = font,
     )
+    if (allPrimitives.any { it is UiDrawPrimitive.RoundedQuad || it is UiDrawPrimitive.ShadowQuad } ||
+        uiRuns.any { it is DrawRun.RoundedQuadRun }
+    ) {
+        ensureRoundedQuadPipeline()
+    }
     for (index in uiRuns.indices) {
         if (uiRuns[index] is DrawRun.GlyphRun) {
             ensureGlyphPipeline()
@@ -74,7 +79,7 @@ internal fun Renderer.performDrawUiToTexture(
     imagePasses: List<ImagePassPlacement> = emptyList(),
 ) {
     val offscreen = target as OffscreenRenderTarget
-    performDrawUi(primitives, font, imagePasses)
+    performDrawUi(primitives, font, imagePasses, target = offscreen)
     val quad = requireNotNull(uiRenderPipeline)
     quad.writeScreenSize(offscreen.width.toFloat(), offscreen.height.toFloat())
     uiGlyphRenderPipeline?.writeScreenSize(offscreen.width.toFloat(), offscreen.height.toFloat())

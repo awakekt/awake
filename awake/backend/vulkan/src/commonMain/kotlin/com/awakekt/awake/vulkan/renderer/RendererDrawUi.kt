@@ -44,6 +44,7 @@ internal fun Renderer.performDrawUi(
     font: UiFont?,
     imagePasses: List<ImagePassPlacement> = emptyList(),
     snapshotSupportedOverride: Boolean? = null,
+    target: RenderTarget? = null,
 ) {
     waitForCurrentFrameResourceSlot()
     val snapshotSupported = snapshotSupportedOverride
@@ -54,6 +55,7 @@ internal fun Renderer.performDrawUi(
         retained = uiRunCache,
         imagePasses = imagePasses,
         snapshotSupported = snapshotSupported,
+        targetContext = imagePassTargetContext(target),
     )
     uiRuns = uploadUiRuns(
         staged = staged,
@@ -73,7 +75,9 @@ internal fun Renderer.performDrawUi(
             .map { TextureCompositeMode(it.blendMode, it.premultiplied) }
             .distinct()
             .forEach(::ensureTextureQuadPipeline)
-        if (effectivePrimitives.any { it is UiDrawPrimitive.RoundedQuad || it is UiDrawPrimitive.ShadowQuad }) {
+        if (effectivePrimitives.any { it is UiDrawPrimitive.RoundedQuad || it is UiDrawPrimitive.ShadowQuad } ||
+            uiRuns.any { it is DrawRun.RoundedQuadRun }
+        ) {
             ensureRoundedQuadPipeline()
         }
     }
@@ -117,7 +121,7 @@ fun Renderer.renderUiToTexture(
     imagePasses: List<ImagePassPlacement> = emptyList(),
 ) {
     val offscreen = target as OffscreenRenderTarget
-    performDrawUi(primitives, font, imagePasses, snapshotSupportedOverride = true)
+    performDrawUi(primitives, font, imagePasses, snapshotSupportedOverride = true, target = offscreen)
     val frameIndex = swapchainManager.currentFrame
 
     ensureOffscreenQuadPipeline()
@@ -131,7 +135,9 @@ fun Renderer.renderUiToTexture(
         .map { TextureCompositeMode(it.blendMode, it.premultiplied) }
         .distinct()
         .forEach(::ensureOffscreenTexturePipeline)
-    if (effectivePrimitives.any { it is UiDrawPrimitive.RoundedQuad || it is UiDrawPrimitive.ShadowQuad }) {
+    if (effectivePrimitives.any { it is UiDrawPrimitive.RoundedQuad || it is UiDrawPrimitive.ShadowQuad } ||
+        uiRuns.any { it is DrawRun.RoundedQuadRun }
+    ) {
         ensureOffscreenRoundedQuadPipeline()
     }
 

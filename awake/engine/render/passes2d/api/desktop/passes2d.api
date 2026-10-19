@@ -1,3 +1,10 @@
+public final class com/awakekt/awake/render/passes2d/BackdropBlurWork {
+	public final fun getBlur ()Lcom/awakekt/awake/render/effects/BlurChain;
+	public final fun getHeight ()I
+	public final fun getRegion ()Lcom/awakekt/awake/render/effects/BackdropRegion;
+	public final fun getWidth ()I
+}
+
 public abstract interface class com/awakekt/awake/render/passes2d/DrawMeshUploader {
 	public abstract fun glyphMesh (I[F[I)Ljava/lang/Object;
 	public abstract fun quadMesh (I[F[I)Ljava/lang/Object;
@@ -77,9 +84,13 @@ public final class com/awakekt/awake/render/passes2d/DrawRunCoalescer {
 	public final fun canSkipExactClip (Lcom/awakekt/awake/core/math2d/Rectangle;FFFF)Z
 	public final fun canSkipExactClip (Lcom/awakekt/awake/core/math2d/Rectangle;Lcom/awakekt/awake/core/math2d/Rectangle;)Z
 	public final fun coalesce (Ljava/util/List;I)Ljava/util/List;
+	public final fun coalesce (Ljava/util/List;ILcom/awakekt/awake/render/passes2d/RetainedDrawRunCache;Lcom/awakekt/awake/render/imagepass/ImagePassTargetContext;)Ljava/util/List;
 	public final fun coalesce (Ljava/util/List;ILcom/awakekt/awake/render/passes2d/RetainedDrawRunCache;Ljava/util/List;Z)Ljava/util/List;
+	public final fun coalesce (Ljava/util/List;ILcom/awakekt/awake/render/passes2d/RetainedDrawRunCache;Ljava/util/List;ZLcom/awakekt/awake/render/imagepass/ImagePassTargetContext;)Ljava/util/List;
 	public static synthetic fun coalesce$default (Lcom/awakekt/awake/render/passes2d/DrawRunCoalescer;Ljava/util/List;IILjava/lang/Object;)Ljava/util/List;
+	public static synthetic fun coalesce$default (Lcom/awakekt/awake/render/passes2d/DrawRunCoalescer;Ljava/util/List;ILcom/awakekt/awake/render/passes2d/RetainedDrawRunCache;Lcom/awakekt/awake/render/imagepass/ImagePassTargetContext;ILjava/lang/Object;)Ljava/util/List;
 	public static synthetic fun coalesce$default (Lcom/awakekt/awake/render/passes2d/DrawRunCoalescer;Ljava/util/List;ILcom/awakekt/awake/render/passes2d/RetainedDrawRunCache;Ljava/util/List;ZILjava/lang/Object;)Ljava/util/List;
+	public static synthetic fun coalesce$default (Lcom/awakekt/awake/render/passes2d/DrawRunCoalescer;Ljava/util/List;ILcom/awakekt/awake/render/passes2d/RetainedDrawRunCache;Ljava/util/List;ZLcom/awakekt/awake/render/imagepass/ImagePassTargetContext;ILjava/lang/Object;)Ljava/util/List;
 	public final fun exactClip (Lcom/awakekt/awake/core/graphics2d/TexturedTriangleMesh;Ljava/util/List;)Lcom/awakekt/awake/core/graphics2d/TexturedTriangleMesh;
 	public final fun exactClip (Lcom/awakekt/awake/core/graphics2d/TriangleMesh;Ljava/util/List;)Lcom/awakekt/awake/core/graphics2d/TriangleMesh;
 	public final fun exactClipColored (Lcom/awakekt/awake/core/graphics2d/ColoredTriangleMesh;Ljava/util/List;)Lcom/awakekt/awake/core/graphics2d/ColoredTriangleMesh;

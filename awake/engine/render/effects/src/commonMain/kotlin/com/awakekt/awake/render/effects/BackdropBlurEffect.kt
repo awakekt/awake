@@ -36,6 +36,7 @@ object BackdropBlurEffect {
      * [indices], sampling [blurredSource] (typically the transient target at [BlurChain.outputLevel])
      * and writing into the resumed [ImagePassDestination.ActiveTarget].
      */
+    @Suppress("LongParameterList")
     fun buildCompositeStep(
         blurredSource: ImagePassSource,
         vertices: FloatArray,
@@ -75,6 +76,7 @@ object BackdropBlurEffect {
      *
      * The final blurred result is left in transient target [levelTargetId] for [BlurChain.outputLevel].
      */
+    @Suppress("LongMethod")
     fun buildBlurChain(
         blur: BlurChain,
         region: BackdropRegion,

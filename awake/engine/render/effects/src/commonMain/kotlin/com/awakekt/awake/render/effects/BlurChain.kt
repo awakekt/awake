@@ -54,6 +54,7 @@ data class BackdropRegion(
          * Computes the bounding region around a shape with bounds [x], [y], [w], [h] grown by
          * [extent] on all sides and clamped to the backdrop of size [width] by [height].
          */
+        @Suppress("LongParameterList")
         fun around(
             x: Float,
             y: Float,
@@ -113,6 +114,7 @@ data class BlurChain(
             return ceil(reach + levelScale(outputLevel)).toInt()
         }
 
+    @Suppress("TooManyFunctions", "ReturnCount")
     companion object {
         const val MIN_OFFSET: Float = 0.5f
         const val PREFERRED_MAX_OFFSET: Float = 2.0f

@@ -23,6 +23,7 @@ import com.awakekt.awake.core.graphics2d.convexClipContour
 import com.awakekt.awake.core.graphics2d.strokeToFillPath
 import com.awakekt.awake.core.graphics2d.tessellateFillAa
 import com.awakekt.awake.core.graphics2d.toPath
+import com.awakekt.awake.core.graphics2d.transform
 import com.awakekt.awake.core.graphics2d.writeGlyphVertex
 import com.awakekt.awake.core.graphics2d.writeRoundedQuadVertex
 import com.awakekt.awake.core.graphics2d.writeVertex
@@ -31,8 +32,17 @@ import com.awakekt.awake.core.math2d.Rectangle
 import com.awakekt.awake.core.math2d.contains
 import com.awakekt.awake.core.math2d.intersect
 import com.awakekt.awake.core.text.font.UiFont
+import com.awakekt.awake.render.effects.BackdropBlurEffect
+import com.awakekt.awake.render.effects.BlurChain
+import com.awakekt.awake.render.imagepass.ImagePassChain
 import com.awakekt.awake.render.imagepass.ImagePassPlacement
+import com.awakekt.awake.render.imagepass.ImagePassRect
+import com.awakekt.awake.render.imagepass.ImagePassSource
+import com.awakekt.awake.render.imagepass.ImagePassTargetContext
+import com.awakekt.awake.render.imagepass.ImagePassTargetFormat
+import com.awakekt.awake.render.imagepass.ImagePassTargetSpec
 import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -101,6 +111,39 @@ object DrawRunCoalescer {
         maxQuadsPerRun: Int = 1024,
     ): List<StagedDrawRun> = coalesce(primitives, maxQuadsPerRun, null)
 
+    /** Coalesces [primitives] using [backdrop] target context for backdrop blur staging. */
+    fun coalesce(
+        primitives: List<DrawCommand>,
+        maxQuadsPerRun: Int = 1024,
+        retained: RetainedDrawRunCache? = null,
+        backdrop: ImagePassTargetContext?,
+    ): List<StagedDrawRun> = coalesce(
+        primitives = primitives,
+        maxQuadsPerRun = maxQuadsPerRun,
+        retained = retained,
+        imagePasses = emptyList(),
+        snapshotSupported = backdrop?.snapshotSupported ?: true,
+        targetContext = backdrop,
+    )
+
+    /**
+     * Walks [primitives] in paint order and coalesces them into [StagedDrawRun] instances without target context.
+     */
+    fun coalesce(
+        primitives: List<DrawCommand>,
+        maxQuadsPerRun: Int = 1024,
+        retained: RetainedDrawRunCache? = null,
+        imagePasses: List<ImagePassPlacement> = emptyList(),
+        snapshotSupported: Boolean = true,
+    ): List<StagedDrawRun> = coalesce(
+        primitives = primitives,
+        maxQuadsPerRun = maxQuadsPerRun,
+        retained = retained,
+        imagePasses = imagePasses,
+        snapshotSupported = snapshotSupported,
+        targetContext = null,
+    )
+
     /**
      * Walks [primitives] in paint order and coalesces them into [StagedDrawRun] instances.
      *
@@ -110,19 +153,31 @@ object DrawRunCoalescer {
      * @param retained Optional renderer-owned cache for unchanged spans outside path clips.
      * @param imagePasses Optional ordered GPU image-pass chains interleaved at their primitive indices.
      * @param snapshotSupported Whether the destination surface supports mid-pass snapshot sampling.
+     * @param targetContext Target dimensions and quality context used to lower backdrop blurs.
      */
-    @Suppress("LongMethod", "CyclomaticComplexMethod", "NestedBlockDepth")
+    @Suppress("LongMethod", "CyclomaticComplexMethod", "NestedBlockDepth", "LoopWithTooManyJumpStatements")
     fun coalesce(
         primitives: List<DrawCommand>,
         maxQuadsPerRun: Int = 1024,
         retained: RetainedDrawRunCache? = null,
         imagePasses: List<ImagePassPlacement> = emptyList(),
         snapshotSupported: Boolean = true,
+        targetContext: ImagePassTargetContext? = null,
     ): List<StagedDrawRun> {
         val runs = mutableListOf<StagedDrawRun>()
         val activePathClips = ArrayList<DrawPath>()
         val clipKindStack = ArrayDeque<ClipKind>()
         val safeInteriorRectStack = ArrayDeque<Rectangle?>()
+        val effectiveContext = if (snapshotSupported) {
+            targetContext
+        } else {
+            targetContext?.copy(snapshotSupported = false)
+        }
+        val blurWorks = if (effectiveContext != null && primitives.any { it is DrawCommand.BackdropBlur }) {
+            BackdropGrouping.analyze(primitives, effectiveContext)
+        } else {
+            null
+        }
         val sortedPlacements = if (imagePasses.size <= 1) {
             imagePasses
         } else {
@@ -160,13 +215,30 @@ object DrawRunCoalescer {
             while (index < nextBoundary && continuesSpan(first, primitives[index])) index += 1
             val slice = primitives.subList(runStart, index)
             val safeInteriorRect = safeInteriorRectStack.lastOrNull()
+
+            if (first is DrawCommand.BackdropBlur) {
+                @Suppress("UNCHECKED_CAST")
+                stageBackdrops(
+                    panels = slice as List<DrawCommand.BackdropBlur>,
+                    startIndex = runStart,
+                    blurWorks = blurWorks,
+                    targetContext = effectiveContext,
+                    runs = runs,
+                    activePathClips = activePathClips,
+                    safeInteriorRect = safeInteriorRect,
+                    maxQuadsPerRun = maxQuadsPerRun,
+                )
+                continue
+            }
+
             // Rect clips only affect the scissor command. Path clips change generated geometry,
             // so include their active context in the retained-span key. Clip commands themselves
             // update state and must always be replayed in emission order.
             val cacheable = retained != null &&
                 first !is DrawCommand.ClipPathPush &&
                 first !is DrawCommand.ClipPush &&
-                first !is DrawCommand.ClipPop
+                first !is DrawCommand.ClipPop &&
+                first !is DrawCommand.BackdropBlur
             if (cacheable) {
                 retained.find(slice, maxQuadsPerRun, activePathClips, safeInteriorRect)?.let { cached ->
                     runs.addAll(cached)
@@ -386,6 +458,7 @@ object DrawRunCoalescer {
                         chunkStart = chunkEnd
                     }
                 }
+                is DrawCommand.BackdropBlur -> Unit
             }
             if (cacheable) {
                 retained.store(
@@ -399,6 +472,154 @@ object DrawRunCoalescer {
         }
         emitPlacementsAt(primitives.size)
         return runs
+    }
+
+    /**
+     * Stages each panel of [panels] as an [ImagePassChain] sampling the blur [blurWorks] placed it in,
+     * or as its fallback colour where blur is unavailable or exceeded.
+     */
+    @Suppress("LongParameterList", "LongMethod")
+    private fun stageBackdrops(
+        panels: List<DrawCommand.BackdropBlur>,
+        startIndex: Int,
+        blurWorks: Array<BackdropBlurWork?>?,
+        targetContext: ImagePassTargetContext?,
+        runs: MutableList<StagedDrawRun>,
+        activePathClips: List<DrawPath>,
+        safeInteriorRect: Rectangle?,
+        maxQuadsPerRun: Int,
+    ) {
+        for (panelIndex in panels.indices) {
+            val panel = panels[panelIndex]
+            val left = panel.placedLeft()
+            val top = panel.placedTop()
+            val right = panel.placedRight()
+            val bottom = panel.placedBottom()
+            if (right <= left || bottom <= top || panel.alpha <= 0f) continue
+            val work = blurWorks?.getOrNull(startIndex + panelIndex)
+            if (work == null || targetContext == null) {
+                val fallback = panel.fallback.withAlpha(panel.fallback.a * panel.alpha.coerceAtMost(1f))
+                if (fallback.a > 0f) {
+                    stageBackdropShape(panel, left, top, right, bottom, activePathClips, safeInteriorRect, fallback, runs, maxQuadsPerRun)
+                }
+            } else {
+                val leads = !work.led
+                work.led = true
+                val glass = BackdropGlass(panel.alpha.coerceAtMost(1f), panel.saturation, panel.noise, work, leads = leads)
+                val (vertices, indices) = if (panel.path == null && activePathClips.isEmpty()) {
+                    backdropQuadVertices(left, top, right, bottom, panel.placedCornerRadius(), panel.smoothing, panel.tint, glass)
+                } else {
+                    val shapeMesh = backdropShapeMesh(panel, left, top, right, bottom, activePathClips, safeInteriorRect, WHITE_COLOR)
+                    backdropMeshVertices(shapeMesh, panel.tint, glass)
+                }
+                val compositeStep = BackdropBlurEffect.buildCompositeStep(
+                    blurredSource = ImagePassSource.TransientTarget(BackdropBlurEffect.levelTargetId(work.blur.outputLevel)),
+                    vertices = vertices,
+                    indices = indices,
+                    width = targetContext.width,
+                    height = targetContext.height,
+                    clipSpace = targetContext.clipSpace,
+                )
+                val chain = if (leads) {
+                    val blurChain = BackdropBlurEffect.buildBlurChain(work.blur, work.region, targetContext)
+                    ImagePassChain(
+                        sourceBounds = blurChain.sourceBounds,
+                        transientTargets = blurChain.transientTargets,
+                        steps = blurChain.steps + compositeStep,
+                    )
+                } else {
+                    val outputLevelW = BlurChain.levelSize(targetContext.width, work.blur.outputLevel)
+                    val outputLevelH = BlurChain.levelSize(targetContext.height, work.blur.outputLevel)
+                    ImagePassChain(
+                        sourceBounds = ImagePassRect(
+                            work.region.left.toFloat(),
+                            work.region.top.toFloat(),
+                            work.region.width.toFloat(),
+                            work.region.height.toFloat(),
+                        ),
+                        transientTargets = listOf(
+                            ImagePassTargetSpec(
+                                id = BackdropBlurEffect.levelTargetId(work.blur.outputLevel),
+                                width = outputLevelW,
+                                height = outputLevelH,
+                                format = ImagePassTargetFormat.Rgba8Unorm,
+                            ),
+                        ),
+                        steps = listOf(compositeStep),
+                    )
+                }
+                runs += StagedDrawRun.ImagePassRun(chain)
+            }
+        }
+    }
+
+    /** The fallback: [color] filling the panel's shape, through the rounded quad when it is one. */
+    @Suppress("LongParameterList")
+    private fun stageBackdropShape(
+        panel: DrawCommand.BackdropBlur,
+        left: Float,
+        top: Float,
+        right: Float,
+        bottom: Float,
+        activePathClips: List<DrawPath>,
+        safeInteriorRect: Rectangle?,
+        color: Color,
+        runs: MutableList<StagedDrawRun>,
+        maxQuadsPerRun: Int,
+    ) {
+        if (panel.path == null && activePathClips.isEmpty()) {
+            runs += buildRoundedQuadRun(
+                listOf(
+                    DrawCommand.RoundedQuad(
+                        left,
+                        top,
+                        right - left,
+                        bottom - top,
+                        color,
+                        panel.placedCornerRadius(),
+                        panel.smoothing,
+                    ),
+                ),
+            )
+        } else {
+            val mesh = backdropShapeMesh(panel, left, top, right, bottom, activePathClips, safeInteriorRect, color)
+            chunkColoredVertexTriangleMeshes(runs, listOf(mesh), maxQuadsPerRun)
+        }
+    }
+
+    /** The panel's shape tessellated with an antialiased fringe in [color], clipped like any other fill. */
+    @Suppress("LongParameterList")
+    private fun backdropShapeMesh(
+        panel: DrawCommand.BackdropBlur,
+        left: Float,
+        top: Float,
+        right: Float,
+        bottom: Float,
+        activePathClips: List<DrawPath>,
+        safeInteriorRect: Rectangle?,
+        color: Color,
+    ): ColoredTriangleMesh {
+        val path = panel.path
+        val transform = panel.transform
+        val mesh = if (path == null) {
+            localRoundedRectMesh(panel.placedCornerRadius(), right - left, bottom - top).placedAt(left, top, color)
+        } else if (transform == null) {
+            path.tessellateFillAa(color)
+        } else {
+            path.transform(
+                scaleX = transform.scaleX,
+                scaleY = transform.scaleY,
+                translateX = transform.pivotX - transform.pivotX * transform.scaleX,
+                translateY = transform.pivotY - transform.pivotY * transform.scaleY,
+            ).tessellateFillAa(color)
+        }
+        val inside = canSkipExactClip(safeInteriorRect, left, top, right - left, bottom - top)
+        return if (inside || activePathClips.isEmpty()) mesh else exactClipColored(mesh, activePathClips)
+    }
+
+    private fun DrawCommand.BackdropBlur.placedCornerRadius(): Float {
+        val scale = transform?.let { minOf(abs(it.scaleX), abs(it.scaleY)) } ?: 1f
+        return cornerRadius * scale
     }
 
     /** Whether [next] joins [first]'s span: the same primitive type, and for glyphs the same font. */

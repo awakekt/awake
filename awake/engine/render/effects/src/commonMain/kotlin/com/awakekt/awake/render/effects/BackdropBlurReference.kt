@@ -20,6 +20,10 @@ object BackdropBlurReference {
      * Blurs [region] of a [width] by [height] backdrop with [blur].
      *
      * @param pixels Full-resolution backdrop pixels, RGBA floats (4 floats per pixel).
+     * @param width Width of the backdrop in pixels.
+     * @param height Height of the backdrop in pixels.
+     * @param region Pixel-aligned region to blur.
+     * @param blur Dual-filter Kawase blur configuration.
      * @return The blurred backdrop result wrapper.
      */
     fun blur(

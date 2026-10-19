@@ -597,6 +597,35 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
                 if (gradient == null) fillRect(x, y, w, h, primitive.color) else fillGradientRect(x, y, w, h, gradient)
             }
 
+            is UiDrawPrimitive.BackdropBlur -> {
+                val effectiveColor = if (primitive.fallback.a > 0f) {
+                    primitive.fallback.withAlpha(primitive.fallback.a * primitive.alpha.coerceAtMost(1f))
+                } else {
+                    primitive.tint.withAlpha(primitive.tint.a * primitive.alpha.coerceAtMost(1f))
+                }
+                if (effectiveColor.a > 0f) {
+                    val path = primitive.path
+                    if (path != null) {
+                        fillColoredTriangleMesh(path.tessellateFillAa(effectiveColor))
+                    } else {
+                        withScaledRect(
+                            primitive.x,
+                            primitive.y,
+                            primitive.w,
+                            primitive.h,
+                            primitive.transform,
+                        ) { x, y, w, h ->
+                            val scale = min(primitive.transform?.scaleX ?: 1f, primitive.transform?.scaleY ?: 1f)
+                            if (primitive.cornerRadius > 0f) {
+                                fillRoundedQuad(x, y, w, h, primitive.cornerRadius * scale, primitive.smoothing, effectiveColor)
+                            } else {
+                                fillRect(x, y, w, h, effectiveColor)
+                            }
+                        }
+                    }
+                }
+            }
+
             is UiDrawPrimitive.ClipPathPush -> {
                 clipStack.addLast(
                     ClipSnapshot(
