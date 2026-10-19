@@ -15,6 +15,10 @@ import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.graphics2d.requiresDestinationSampling
 import com.awakekt.awake.core.graphics2d.translatedBy
 import com.awakekt.awake.core.text.font.UiFont
+import com.awakekt.awake.render.effects.BlurChain
+import com.awakekt.awake.render.effects.LayerBlurEffect
+import com.awakekt.awake.render.imagepass.ImagePassPlacement
+import com.awakekt.awake.render.imagepass.ImagePassSource
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.renderer.UiTargetCompositeMode
@@ -151,32 +155,36 @@ class GraphicsLayerCompositor {
         var blurMaterial: Material? = null,
     ) {
         fun blur(renderer: Renderer, radiusX: Float, radiusY: Float): Material {
-            val target = blurTarget ?: renderer.createRenderTarget(this.target.width, this.target.height).also {
-                blurTarget = it
-                blurMaterial = renderer.createMaterial(renderTarget = it)
+            val radius = maxOf(radiusX, radiusY)
+            val blur = BlurChain.forRadius(radius, renderer.effectQuality, targetOutputLevel = 0) ?: return material
+            val currentBlurTarget = blurTarget
+            val target = if (currentBlurTarget != null &&
+                currentBlurTarget.width == this.target.width &&
+                currentBlurTarget.height == this.target.height
+            ) {
+                currentBlurTarget
+            } else {
+                blurMaterial?.destroy()
+                currentBlurTarget?.destroy()
+                renderer.createRenderTarget(this.target.width, this.target.height).also {
+                    blurTarget = it
+                    blurMaterial = renderer.createMaterial(renderTarget = it)
+                }
             }
-            renderer.drawUiToTexture(target, blurPrimitives(radiusX, radiusY), font = null)
-            return requireNotNull(blurMaterial)
-        }
-
-        private fun blurPrimitives(radiusX: Float, radiusY: Float): List<UiDrawPrimitive> {
-            val offsets = listOf(
-                Triple(-radiusX, -radiusY, 1f / 16f), Triple(0f, -radiusY, 2f / 16f), Triple(radiusX, -radiusY, 1f / 16f),
-                Triple(-radiusX, 0f, 2f / 16f), Triple(0f, 0f, 4f / 16f), Triple(radiusX, 0f, 2f / 16f),
-                Triple(-radiusX, radiusY, 1f / 16f), Triple(0f, radiusY, 2f / 16f), Triple(radiusX, radiusY, 1f / 16f),
+            val chain = LayerBlurEffect.buildChain(
+                source = ImagePassSource.RenderTargetColor(this.target),
+                blur = blur,
+                width = this.target.width,
+                height = this.target.height,
             )
-            return offsets.map { (x, y, weight) ->
-                UiDrawPrimitive.Texture(
-                    x = x,
-                    y = y,
-                    w = target.width.toFloat(),
-                    h = target.height.toFloat(),
-                    material = material,
-                    alpha = weight,
-                    blendMode = BlendMode.Plus,
-                    premultiplied = true,
-                )
-            }
+            val placement = ImagePassPlacement(primitiveIndex = 0, chain = chain)
+            renderer.drawUiToTexture(
+                target = target,
+                primitives = emptyList(),
+                font = null,
+                imagePasses = listOf(placement),
+            )
+            return requireNotNull(blurMaterial)
         }
 
         fun destroy() {

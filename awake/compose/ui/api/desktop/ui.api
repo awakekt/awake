@@ -93,6 +93,33 @@ public abstract class com/awakekt/awake/compose/ui/ModifierNodeElement : com/awa
 	public abstract fun update (Lcom/awakekt/awake/compose/ui/Modifier$Node;)V
 }
 
+public final class com/awakekt/awake/compose/ui/draw/BlurKt {
+	public static final fun blur-E4U11nk (Lcom/awakekt/awake/compose/ui/Modifier;FFLcom/awakekt/awake/compose/ui/graphics/Shape;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static synthetic fun blur-E4U11nk$default (Lcom/awakekt/awake/compose/ui/Modifier;FFLcom/awakekt/awake/compose/ui/draw/BlurredEdgeTreatment;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static final fun blur-oG-8Wdc (Lcom/awakekt/awake/compose/ui/Modifier;FLcom/awakekt/awake/compose/ui/graphics/Shape;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static synthetic fun blur-oG-8Wdc$default (Lcom/awakekt/awake/compose/ui/Modifier;FLcom/awakekt/awake/compose/ui/draw/BlurredEdgeTreatment;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
+}
+
+public final class com/awakekt/awake/compose/ui/draw/BlurredEdgeTreatment {
+	public static final field Companion Lcom/awakekt/awake/compose/ui/draw/BlurredEdgeTreatment$Companion;
+	public static final synthetic fun box-impl (Lcom/awakekt/awake/compose/ui/graphics/Shape;)Lcom/awakekt/awake/compose/ui/draw/BlurredEdgeTreatment;
+	public static fun constructor-impl (Lcom/awakekt/awake/compose/ui/graphics/Shape;)Lcom/awakekt/awake/compose/ui/graphics/Shape;
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (Lcom/awakekt/awake/compose/ui/graphics/Shape;Ljava/lang/Object;)Z
+	public static final fun equals-impl0 (Lcom/awakekt/awake/compose/ui/graphics/Shape;Lcom/awakekt/awake/compose/ui/graphics/Shape;)Z
+	public final fun getShape ()Lcom/awakekt/awake/compose/ui/graphics/Shape;
+	public fun hashCode ()I
+	public static fun hashCode-impl (Lcom/awakekt/awake/compose/ui/graphics/Shape;)I
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (Lcom/awakekt/awake/compose/ui/graphics/Shape;)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()Lcom/awakekt/awake/compose/ui/graphics/Shape;
+}
+
+public final class com/awakekt/awake/compose/ui/draw/BlurredEdgeTreatment$Companion {
+	public final fun getRectangle-RNDj0Fk ()Lcom/awakekt/awake/compose/ui/graphics/Shape;
+	public final fun getUnbounded-RNDj0Fk ()Lcom/awakekt/awake/compose/ui/graphics/Shape;
+}
+
 public final class com/awakekt/awake/compose/ui/draw/CacheDrawScope : com/awakekt/awake/compose/ui/unit/Density {
 	public fun getDensity ()F
 	public fun getFontScale ()F
@@ -122,6 +149,7 @@ public final class com/awakekt/awake/compose/ui/draw/DrawModifiersKt {
 	public static final fun drawBehind (Lcom/awakekt/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/compose/ui/Modifier;
 	public static final fun drawWithContent (Lcom/awakekt/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/compose/ui/Modifier;
 	public static final fun dropShadow (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/ui/graphics/Shape;Lcom/awakekt/awake/compose/ui/graphics/shadow/Shadow;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static final fun graphicsLayer (Lcom/awakekt/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/compose/ui/Modifier;
 	public static final fun graphicsLayer-qYl7Bcw (Lcom/awakekt/awake/compose/ui/Modifier;FFFFFFLcom/awakekt/awake/core/graphics2d/BlendMode;Lcom/awakekt/awake/compose/ui/graphics/RenderEffect;FLcom/awakekt/awake/compose/ui/graphics/Shape;)Lcom/awakekt/awake/compose/ui/Modifier;
 	public static synthetic fun graphicsLayer-qYl7Bcw$default (Lcom/awakekt/awake/compose/ui/Modifier;FFFFFFLcom/awakekt/awake/core/graphics2d/BlendMode;Lcom/awakekt/awake/compose/ui/graphics/RenderEffect;FLcom/awakekt/awake/compose/ui/graphics/Shape;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
 	public static final fun scale (Lcom/awakekt/awake/compose/ui/Modifier;F)Lcom/awakekt/awake/compose/ui/Modifier;
@@ -195,6 +223,19 @@ public final class com/awakekt/awake/compose/ui/focus/FocusRequesterKt {
 	public static final fun focusTarget (Lcom/awakekt/awake/compose/ui/Modifier;Z)Lcom/awakekt/awake/compose/ui/Modifier;
 	public static synthetic fun focusTarget$default (Lcom/awakekt/awake/compose/ui/Modifier;ZILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
 	public static final fun onFocusChanged (Lcom/awakekt/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/compose/ui/Modifier;
+}
+
+public final class com/awakekt/awake/compose/ui/graphics/BlurEffect : com/awakekt/awake/compose/ui/graphics/RenderEffect {
+	public synthetic fun <init> (FFILcom/awakekt/awake/compose/ui/graphics/RenderEffect;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (FFILcom/awakekt/awake/compose/ui/graphics/RenderEffect;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEdgeTreatment-q43A81Y ()I
+	public final fun getInputEffect ()Lcom/awakekt/awake/compose/ui/graphics/RenderEffect;
+	public final fun getRadiusX ()F
+	public final fun getRadiusY ()F
+	public fun hashCode ()I
+	public fun isSupported ()Z
+	public fun toString ()Ljava/lang/String;
 }
 
 public abstract interface class com/awakekt/awake/compose/ui/graphics/Brush {
@@ -288,6 +329,38 @@ public final class com/awakekt/awake/compose/ui/graphics/FillDirection : java/la
 	public static fun values ()[Lcom/awakekt/awake/compose/ui/graphics/FillDirection;
 }
 
+public abstract interface class com/awakekt/awake/compose/ui/graphics/GraphicsLayerScope : com/awakekt/awake/compose/ui/unit/Density {
+	public abstract fun getAlpha ()F
+	public abstract fun getBlendMode ()Lcom/awakekt/awake/core/graphics2d/BlendMode;
+	public abstract fun getClip ()Z
+	public abstract fun getRenderEffect ()Lcom/awakekt/awake/compose/ui/graphics/RenderEffect;
+	public abstract fun getRotationDegrees ()F
+	public abstract fun getScaleX ()F
+	public abstract fun getScaleY ()F
+	public abstract fun getShadowElevation-LGk54g8 ()F
+	public abstract fun getShape ()Lcom/awakekt/awake/compose/ui/graphics/Shape;
+	public abstract fun getTranslationX ()F
+	public abstract fun getTranslationY ()F
+	public abstract fun setAlpha (F)V
+	public abstract fun setBlendMode (Lcom/awakekt/awake/core/graphics2d/BlendMode;)V
+	public abstract fun setClip (Z)V
+	public abstract fun setRenderEffect (Lcom/awakekt/awake/compose/ui/graphics/RenderEffect;)V
+	public abstract fun setRotationDegrees (F)V
+	public abstract fun setScaleX (F)V
+	public abstract fun setScaleY (F)V
+	public abstract fun setShadowElevation-Jha-xPg (F)V
+	public abstract fun setShape (Lcom/awakekt/awake/compose/ui/graphics/Shape;)V
+	public abstract fun setTranslationX (F)V
+	public abstract fun setTranslationY (F)V
+}
+
+public final class com/awakekt/awake/compose/ui/graphics/GraphicsLayerScope$DefaultImpls {
+	public static fun roundToPx-Jha-xPg (Lcom/awakekt/awake/compose/ui/graphics/GraphicsLayerScope;F)I
+	public static fun toDp-ggnb7VQ (Lcom/awakekt/awake/compose/ui/graphics/GraphicsLayerScope;F)F
+	public static fun toDp-ggnb7VQ (Lcom/awakekt/awake/compose/ui/graphics/GraphicsLayerScope;I)F
+	public static fun toPx-Jha-xPg (Lcom/awakekt/awake/compose/ui/graphics/GraphicsLayerScope;F)F
+}
+
 public final class com/awakekt/awake/compose/ui/graphics/ImageBitmap {
 	public static final field BYTES_PER_PIXEL I
 	public static final field Companion Lcom/awakekt/awake/compose/ui/graphics/ImageBitmap$Companion;
@@ -355,6 +428,18 @@ public final class com/awakekt/awake/compose/ui/graphics/ImageFillKt {
 	public static synthetic fun drawImageFillBar$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;Lcom/awakekt/awake/compose/ui/graphics/ImageFill;FLcom/awakekt/awake/compose/ui/graphics/FillDirection;FFFFILjava/lang/Object;)V
 }
 
+public final class com/awakekt/awake/compose/ui/graphics/OffsetEffect : com/awakekt/awake/compose/ui/graphics/RenderEffect {
+	public fun <init> (FFLcom/awakekt/awake/compose/ui/graphics/RenderEffect;)V
+	public synthetic fun <init> (FFLcom/awakekt/awake/compose/ui/graphics/RenderEffect;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getInputEffect ()Lcom/awakekt/awake/compose/ui/graphics/RenderEffect;
+	public final fun getOffsetX ()F
+	public final fun getOffsetY ()F
+	public fun hashCode ()I
+	public fun isSupported ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class com/awakekt/awake/compose/ui/graphics/PaintOutput {
 	public fun <init> (Ljava/util/List;Ljava/util/List;)V
 	public final fun component1 ()Ljava/util/List;
@@ -384,6 +469,7 @@ public final class com/awakekt/awake/compose/ui/graphics/RectangleShape : com/aw
 
 public abstract interface class com/awakekt/awake/compose/ui/graphics/RenderEffect {
 	public static final field Companion Lcom/awakekt/awake/compose/ui/graphics/RenderEffect$Companion;
+	public fun isSupported ()Z
 }
 
 public final class com/awakekt/awake/compose/ui/graphics/RenderEffect$Blur : com/awakekt/awake/compose/ui/graphics/RenderEffect {
@@ -396,12 +482,20 @@ public final class com/awakekt/awake/compose/ui/graphics/RenderEffect$Blur : com
 	public final fun getRadiusX-LGk54g8 ()F
 	public final fun getRadiusY-LGk54g8 ()F
 	public fun hashCode ()I
+	public fun isSupported ()Z
 	public fun toString ()Ljava/lang/String;
 }
 
 public final class com/awakekt/awake/compose/ui/graphics/RenderEffect$Companion {
 	public final fun blur-6gMdd8Y (FF)Lcom/awakekt/awake/compose/ui/graphics/RenderEffect$Blur;
 	public final fun blur-Jha-xPg (F)Lcom/awakekt/awake/compose/ui/graphics/RenderEffect$Blur;
+	public final fun createBlurEffect-7TNmU2M (FFI)Lcom/awakekt/awake/compose/ui/graphics/BlurEffect;
+	public static synthetic fun createBlurEffect-7TNmU2M$default (Lcom/awakekt/awake/compose/ui/graphics/RenderEffect$Companion;FFIILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/graphics/BlurEffect;
+	public final fun createOffsetEffect (FF)Lcom/awakekt/awake/compose/ui/graphics/OffsetEffect;
+}
+
+public final class com/awakekt/awake/compose/ui/graphics/RenderEffect$DefaultImpls {
+	public static fun isSupported (Lcom/awakekt/awake/compose/ui/graphics/RenderEffect;)Z
 }
 
 public final class com/awakekt/awake/compose/ui/graphics/RoundedCornerShape : com/awakekt/awake/compose/ui/graphics/Shape {
@@ -504,6 +598,27 @@ public final class com/awakekt/awake/compose/ui/graphics/ShapeOutline$RoundedCor
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/compose/ui/graphics/TileMode {
+	public static final field Companion Lcom/awakekt/awake/compose/ui/graphics/TileMode$Companion;
+	public static final synthetic fun box-impl (I)Lcom/awakekt/awake/compose/ui/graphics/TileMode;
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (ILjava/lang/Object;)Z
+	public static final fun equals-impl0 (II)Z
+	public final fun getValue ()I
+	public fun hashCode ()I
+	public static fun hashCode-impl (I)I
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (I)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()I
+}
+
+public final class com/awakekt/awake/compose/ui/graphics/TileMode$Companion {
+	public final fun getClamp-q43A81Y ()I
+	public final fun getDecal-q43A81Y ()I
+	public final fun getMirror-q43A81Y ()I
+	public final fun getRepeated-q43A81Y ()I
+}
+
 public abstract interface class com/awakekt/awake/compose/ui/graphics/drawscope/DrawScope {
 	public abstract fun clipped (FLkotlin/jvm/functions/Function0;)V
 	public static synthetic fun clipped$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;FLkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
@@ -549,12 +664,14 @@ public final class com/awakekt/awake/compose/ui/graphics/drawscope/DrawScopeKt {
 }
 
 public final class com/awakekt/awake/compose/ui/graphics/drawscope/GraphicsLayerFrame {
-	public fun <init> (IFFIIFFFIIFLjava/util/List;)V
-	public synthetic fun <init> (IFFIIFFFIIFLjava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (IFFIIFFFIIFLjava/util/List;Lcom/awakekt/awake/compose/ui/graphics/RenderEffect;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (IFFIIFFFIIFLjava/util/List;Lcom/awakekt/awake/compose/ui/graphics/RenderEffect;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()I
 	public final fun component10 ()I
 	public final fun component11 ()F
 	public final fun component12 ()Ljava/util/List;
+	public final fun component13 ()Lcom/awakekt/awake/compose/ui/graphics/RenderEffect;
+	public final fun component14-q43A81Y ()I
 	public final fun component2 ()F
 	public final fun component3 ()F
 	public final fun component4 ()I
@@ -563,8 +680,8 @@ public final class com/awakekt/awake/compose/ui/graphics/drawscope/GraphicsLayer
 	public final fun component7 ()F
 	public final fun component8 ()F
 	public final fun component9 ()I
-	public final fun copy (IFFIIFFFIIFLjava/util/List;)Lcom/awakekt/awake/compose/ui/graphics/drawscope/GraphicsLayerFrame;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/GraphicsLayerFrame;IFFIIFFFIIFLjava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/graphics/drawscope/GraphicsLayerFrame;
+	public final fun copy-k4moB8s (IFFIIFFFIIFLjava/util/List;Lcom/awakekt/awake/compose/ui/graphics/RenderEffect;I)Lcom/awakekt/awake/compose/ui/graphics/drawscope/GraphicsLayerFrame;
+	public static synthetic fun copy-k4moB8s$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/GraphicsLayerFrame;IFFIIFFFIIFLjava/util/List;Lcom/awakekt/awake/compose/ui/graphics/RenderEffect;IILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/graphics/drawscope/GraphicsLayerFrame;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAlpha ()F
 	public final fun getBlurRadiusX ()F
@@ -574,7 +691,9 @@ public final class com/awakekt/awake/compose/ui/graphics/drawscope/GraphicsLayer
 	public final fun getHeight ()I
 	public final fun getId ()I
 	public final fun getPrimitives ()Ljava/util/List;
+	public final fun getRenderEffect ()Lcom/awakekt/awake/compose/ui/graphics/RenderEffect;
 	public final fun getShadowElevation ()F
+	public final fun getTileMode-q43A81Y ()I
 	public final fun getWidth ()I
 	public final fun getX ()F
 	public final fun getY ()F

@@ -21,6 +21,7 @@ kotlin {
             api(project(":awake:engine:platform"))
             api(project(":awake:compose:ui"))
             api(project(":awake:core:text"))
+            implementation(project(":awake:engine:render:effects"))
         }
         commonTest.dependencies {
             implementation(project(":awake:engine:render:testing"))

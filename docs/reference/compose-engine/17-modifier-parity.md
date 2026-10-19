@@ -11,7 +11,7 @@ missing on purpose or missing as work.
 
 ## Have
 
-`alpha` · `background` · `border` · `clickable` · `clip` · `draggable` · `drawBehind` ·
+`alpha` · `background` · `blur` · `border` · `clickable` · `clip` · `draggable` · `drawBehind` ·
 `dropShadow` ·
 `fillMaxHeight` · `fillMaxSize` · `fillMaxWidth` · `focusRequester` · `focusable` · `height` ·
 `hoverable` · `onFocusChanged` · `onPlaced` · `padding` · `semantics` · `size` · `testTag` ·

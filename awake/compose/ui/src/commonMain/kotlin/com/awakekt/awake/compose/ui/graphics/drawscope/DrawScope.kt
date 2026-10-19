@@ -5,9 +5,11 @@
  */
 package com.awakekt.awake.compose.ui.graphics.drawscope
 
+import com.awakekt.awake.compose.ui.graphics.BlurEffect
 import com.awakekt.awake.compose.ui.graphics.RenderEffect
 import com.awakekt.awake.compose.ui.graphics.Shape
 import com.awakekt.awake.compose.ui.graphics.ShapeOutline
+import com.awakekt.awake.compose.ui.graphics.TileMode
 import com.awakekt.awake.compose.ui.node.LayoutNode
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.BlendMode
@@ -269,6 +271,8 @@ fun DrawScope.drawRetainedMesh(mesh: ColoredTriangleMesh, retentionKey: Any) {
  * @property effectInsetY Transparent pixels reserved above and below the content for expanding effects.
  * @property shadowElevation Elevation shadow size in pixels, or 0 for none.
  * @property primitives What the layer paints, positioned relative to its top-left corner.
+ * @property renderEffect Optional effect applied to the layer texture.
+ * @property tileMode Strategy used when sampling outside layer bounds.
  */
 data class GraphicsLayerFrame(
     val id: Int,
@@ -283,6 +287,8 @@ data class GraphicsLayerFrame(
     val effectInsetY: Int = 0,
     val shadowElevation: Float = 0f,
     val primitives: List<UiDrawPrimitive>,
+    val renderEffect: RenderEffect? = null,
+    val tileMode: TileMode = TileMode.Clamp,
 )
 
 /**
@@ -377,6 +383,7 @@ internal class PaintScope :
         transform.reset()
     }
 
+    @Suppress("DEPRECATION", "LongMethod")
     override fun drawLayer(
         alpha: Float,
         scaleX: Float,
@@ -396,11 +403,28 @@ internal class PaintScope :
         val layerWidth = width
         val layerHeight = height
         val layerAlpha = (this.alpha * alpha).coerceIn(0f, 1f)
-        val blur = renderEffect as? RenderEffect.Blur
-        val blurRadiusX = (blur?.radiusX?.value ?: 0f) * density
-        val blurRadiusY = (blur?.radiusY?.value ?: 0f) * density
-        val effectInsetX = kotlin.math.ceil(blurRadiusX).toInt()
-        val effectInsetY = kotlin.math.ceil(blurRadiusY).toInt()
+        val blurRadiusX: Float
+        val blurRadiusY: Float
+        val layerTileMode: TileMode
+        when (renderEffect) {
+            is BlurEffect -> {
+                blurRadiusX = renderEffect.radiusX
+                blurRadiusY = renderEffect.radiusY
+                layerTileMode = renderEffect.edgeTreatment
+            }
+            is RenderEffect.Blur -> {
+                blurRadiusX = renderEffect.radiusX.value * density
+                blurRadiusY = renderEffect.radiusY.value * density
+                layerTileMode = TileMode.Decal
+            }
+            else -> {
+                blurRadiusX = 0f
+                blurRadiusY = 0f
+                layerTileMode = TileMode.Clamp
+            }
+        }
+        val effectInsetX = if (layerTileMode == TileMode.Decal) kotlin.math.ceil(blurRadiusX).toInt() else 0
+        val effectInsetY = if (layerTileMode == TileMode.Decal) kotlin.math.ceil(blurRadiusY).toInt() else 0
         val elevation = shadowElevation.value.coerceAtLeast(0f) * density
         val outline = shape.createOutline(
             com.awakekt.awake.core.math2d.Size2D(layerWidth.toFloat(), layerHeight.toFloat()),
@@ -440,6 +464,8 @@ internal class PaintScope :
             effectInsetY = effectInsetY,
             shadowElevation = elevation,
             primitives = layerOutput.map { it.translatedBy(-layerX, -layerY) },
+            renderEffect = renderEffect,
+            tileMode = layerTileMode,
         )
         if (elevation > 0f) {
             if (outline is ShapeOutline.Generic || outline is ShapeOutline.RoundedCorners) {
@@ -513,6 +539,8 @@ internal class PaintScope :
             effectInsetX = inset,
             effectInsetY = inset,
             primitives = listOf(UiDrawPrimitive.FilledPath(path, color.dimmedBy(alpha))),
+            renderEffect = RenderEffect.createBlurEffect(blurRadius, blurRadius, TileMode.Decal),
+            tileMode = TileMode.Decal,
         )
         output += UiDrawPrimitive.Texture(
             x = transform.mapX(originX + x) - inset * transform.scaleX + offsetX * transform.scaleX,

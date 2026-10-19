@@ -81,7 +81,7 @@ data class BackdropRegion(
  *
  * @property iterations Number of halvings from level 0 (at least 1).
  * @property offset Tap distance in source pixels.
- * @property outputLevel Level sampled by the composite pass (1 to [iterations]).
+ * @property outputLevel Level sampled by the composite pass, or 0 for full resolution (0 to [iterations]).
  */
 data class BlurChain(
     val iterations: Int,
@@ -90,7 +90,7 @@ data class BlurChain(
 ) {
     init {
         require(iterations >= 1) { "A dual-filter blur halves at least once." }
-        require(outputLevel in 1..iterations) { "Output level must be between 1 and $iterations." }
+        require(outputLevel in 0..iterations) { "Output level must be between 0 and $iterations." }
     }
 
     /** Number of upsampling passes: from deepest level back up to [outputLevel]. */
@@ -129,20 +129,32 @@ data class BlurChain(
          *
          * Returns `null` if [quality] is [EffectQuality.Off] or [radius] is non-positive.
          */
-        fun forRadius(radius: Float, quality: EffectQuality): BlurChain? {
+        fun forRadius(radius: Float, quality: EffectQuality): BlurChain? =
+            forRadius(radius, quality, targetOutputLevel = null)
+
+        /**
+         * Resolves the optimal [BlurChain] for a requested standard deviation [radius] at [quality]
+         * and optional [targetOutputLevel] (or quality tier default when `null`).
+         */
+        fun forRadius(
+            radius: Float,
+            quality: EffectQuality,
+            targetOutputLevel: Int? = null,
+        ): BlurChain? {
             if (quality == EffectQuality.Off || radius <= 0f) return null
             val limits = qualityLimits(quality)
             val targetVariance = radius * radius
             for (iterations in 1..limits.maxIterations) {
-                val output = min(limits.outputLevel, iterations)
+                val output = targetOutputLevel ?: min(limits.outputLevel, iterations)
                 val last = iterations == limits.maxIterations
-                val next = min(limits.outputLevel, iterations + 1)
+                val next = targetOutputLevel ?: min(limits.outputLevel, iterations + 1)
                 val gap = !last && variance(iterations + 1, MIN_OFFSET, next) > targetVariance
                 val maxOffset = if (last || gap) MAX_OFFSET else PREFERRED_MAX_OFFSET
                 if (variance(iterations, maxOffset, output) < targetVariance && !last) continue
                 return BlurChain(iterations, solveOffset(iterations, output, targetVariance, maxOffset), output)
             }
-            return BlurChain(limits.maxIterations, MAX_OFFSET, min(limits.outputLevel, limits.maxIterations))
+            val finalOutput = targetOutputLevel ?: min(limits.outputLevel, limits.maxIterations)
+            return BlurChain(limits.maxIterations, MAX_OFFSET, finalOutput)
         }
 
         /** How many full-resolution pixels one texel of [level] covers along an axis (`2^level`). */
@@ -159,7 +171,11 @@ data class BlurChain(
             var total = 0f
             for (level in 1..iterations) total += downVariance(offset) * square(levelScale(level - 1))
             for (level in outputLevel until iterations) total += upVariance(offset) * square(levelScale(level + 1))
-            return total + compositeVariance(outputLevel) * square(levelScale(outputLevel))
+            return if (outputLevel == 0) {
+                total
+            } else {
+                total + compositeVariance(outputLevel) * square(levelScale(outputLevel))
+            }
         }
 
         private fun downVariance(offset: Float): Float {
