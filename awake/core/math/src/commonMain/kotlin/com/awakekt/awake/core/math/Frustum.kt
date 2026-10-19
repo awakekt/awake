@@ -86,6 +86,7 @@ fun Frustum.intersects(camera: Lens, aspect: Float, box: Aabb): Boolean = Frustu
  * per test. Degenerate planes (collinear corners) are silently dropped, same conservative "can't
  * tell, don't cull" bias [intersects] already had. */
 fun Frustum.planes(camera: Lens, aspect: Float): List<Plane> {
+    if (aspect.isNaN() || aspect <= 0f) return emptyList()
     val corners = corners(camera, aspect)
     val near = corners.take(NEAR_CORNER_COUNT)
     val far = corners.drop(NEAR_CORNER_COUNT)
@@ -152,7 +153,8 @@ private fun planeThrough(
     c: com.awakekt.awake.core.math.Vec3f,
 ): Plane? {
     val normal = (b - a).cross(c - a)
-    if (normal.length3() < DEGENERATE_NORMAL) return null
+    val len = normal.length3()
+    if (len.isNaN() || len < DEGENERATE_NORMAL) return null
     return Plane.through(a, normal)
 }
 
