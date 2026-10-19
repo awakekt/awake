@@ -64,10 +64,19 @@ fun main() {
             }
         }
 
-        client.receiveLoop {
-            status.textContent = GridView.status(it.snapshot)
-            grid.textContent = GridView.render(it.interpolated(), self)
+        val renderJob = launch {
+            val renderPeriodMillis = 16L
+            while (true) {
+                status.textContent = GridView.status(client.snapshot)
+                grid.textContent = GridView.render(client.interpolated(), self)
+                delay(renderPeriodMillis)
+            }
         }
+
+        client.receiveLoop {
+            // SnapshotBuffer is updated on incoming packets; renderJob samples at 60 Hz.
+        }
+        renderJob.cancel()
         status.textContent = "disconnected"
     }
 }

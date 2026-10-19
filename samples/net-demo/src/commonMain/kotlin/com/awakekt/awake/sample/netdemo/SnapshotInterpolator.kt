@@ -20,27 +20,36 @@ package com.awakekt.awake.sample.netdemo
 class SnapshotInterpolator(
     private val delaySeconds: Float = DEFAULT_DELAY_SECONDS,
 ) {
-    private val previous = SnapshotBuffer()
-    private val latest = SnapshotBuffer()
-    private var previousTime = -1f
-    private var latestTime = -1f
+    private val history = Array(HISTORY_CAPACITY) { SnapshotBuffer() }
+    private val historyTimes = FloatArray(HISTORY_CAPACITY) { -1f }
+    private var historyCount = 0
 
     /** Reusable output; overwritten in place so rendering a frame allocates nothing. */
     val output: SnapshotBuffer = SnapshotBuffer()
 
-    var hasBothEnds: Boolean = false
-        private set
+    val hasBothEnds: Boolean
+        get() = historyCount >= 2
 
     /** Feeds a decoded snapshot, stamped with the client's own receive time. */
     fun accept(snapshot: SnapshotBuffer, receivedAtSeconds: Float) {
         // An out-of-order or duplicate snapshot must not become the newer end, or the
         // interpolation runs backwards. Over UDP this is the common case, not the rare one.
-        if (latestTime >= 0f && snapshot.tick <= latest.tick) return
-        previous.copyFrom(latest)
-        previousTime = latestTime
-        latest.copyFrom(snapshot)
-        latestTime = receivedAtSeconds
-        hasBothEnds = previousTime >= 0f
+        if (historyCount > 0 && snapshot.tick <= history[historyCount - 1].tick) return
+
+        if (historyCount < HISTORY_CAPACITY) {
+            history[historyCount].copyFrom(snapshot)
+            historyTimes[historyCount] = receivedAtSeconds
+            historyCount += 1
+        } else {
+            val oldest = history[0]
+            for (i in 0 until HISTORY_CAPACITY - 1) {
+                history[i] = history[i + 1]
+                historyTimes[i] = historyTimes[i + 1]
+            }
+            oldest.copyFrom(snapshot)
+            history[HISTORY_CAPACITY - 1] = oldest
+            historyTimes[HISTORY_CAPACITY - 1] = receivedAtSeconds
+        }
     }
 
     /**
@@ -49,26 +58,59 @@ class SnapshotInterpolator(
      */
     fun sample(nowSeconds: Float): SnapshotBuffer {
         if (!hasBothEnds) {
-            output.copyFrom(latest)
+            if (historyCount > 0) {
+                output.copyFrom(history[historyCount - 1])
+            }
             return output
         }
-        val target = nowSeconds - delaySeconds
-        val span = latestTime - previousTime
-        val alpha = if (span <= 0f) 1f else ((target - previousTime) / span).coerceIn(0f, 1f)
 
-        output.reset(latest.tick, latest.count)
-        for (index in 0 until latest.count) {
-            val netId = latest.netIds[index]
+        val target = nowSeconds - delaySeconds
+        val newestIndex = historyCount - 1
+        val oldestTime = historyTimes[0]
+        val newestTime = historyTimes[newestIndex]
+
+        val before: SnapshotBuffer
+        val after: SnapshotBuffer
+        val alpha: Float
+
+        when {
+            target <= oldestTime -> {
+                before = history[0]
+                after = history[1]
+                alpha = 0f
+            }
+
+            target >= newestTime -> {
+                before = history[newestIndex - 1]
+                after = history[newestIndex]
+                alpha = 1f
+            }
+
+            else -> {
+                var index = 0
+                while (index < newestIndex - 1 && historyTimes[index + 1] <= target) {
+                    index += 1
+                }
+                before = history[index]
+                after = history[index + 1]
+                val span = historyTimes[index + 1] - historyTimes[index]
+                alpha = if (span <= 0f) 1f else ((target - historyTimes[index]) / span).coerceIn(0f, 1f)
+            }
+        }
+
+        output.reset(after.tick, after.count)
+        for (index in 0 until after.count) {
+            val netId = after.netIds[index]
             output.netIds[index] = netId
-            val before = previous.indexOf(netId)
-            if (before < 0) {
+            val beforeIndex = before.indexOf(netId)
+            if (beforeIndex < 0) {
                 // An entity that only exists in the newer snapshot has nothing to come from.
                 // Snapping it in is correct; inventing a start position would be a guess.
-                output.x[index] = latest.x[index]
-                output.y[index] = latest.y[index]
+                output.x[index] = after.x[index]
+                output.y[index] = after.y[index]
             } else {
-                output.x[index] = lerp(previous.x[before], latest.x[index], alpha)
-                output.y[index] = lerp(previous.y[before], latest.y[index], alpha)
+                output.x[index] = lerp(before.x[beforeIndex], after.x[index], alpha)
+                output.y[index] = lerp(before.y[beforeIndex], after.y[index], alpha)
             }
         }
         return output
@@ -81,3 +123,5 @@ class SnapshotInterpolator(
         const val DEFAULT_DELAY_SECONDS = 0.1f
     }
 }
+
+private const val HISTORY_CAPACITY = 16

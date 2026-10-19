@@ -65,10 +65,19 @@ private fun runClient(port: Int, name: String, secure: Boolean): Unit = runBlock
         }
     }
 
-    client.receiveLoop {
-        // ANSI home + clear, so the grid animates in place instead of scrolling away.
-        print("[H[2J ${GridView.status(it.snapshot)}\n${GridView.render(it.interpolated(), self)}\n")
+    val renderJob = launch {
+        val renderPeriodMillis = 16L
+        while (true) {
+            // ANSI home + clear, so the grid animates in place instead of scrolling away.
+            print("[H[2J ${GridView.status(client.snapshot)}\n${GridView.render(client.interpolated(), self)}\n")
+            delay(renderPeriodMillis)
+        }
     }
+
+    client.receiveLoop {
+        // SnapshotBuffer is updated on incoming packets; renderJob samples at 60 Hz.
+    }
+    renderJob.cancel()
 }
 
 private const val HALF_TURN = 3.14159f

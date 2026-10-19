@@ -60,7 +60,7 @@ object WavDecoder {
                     val audioFormat = reader.readShortLe()
                     channels = reader.readShortLe()
                     sampleRate = reader.readIntLe()
-                    reader.skip(8)
+                    reader.skip(6)
                     bitsPerSample = reader.readShortLe()
                     if (audioFormat != 1 || channels <= 0 || sampleRate <= 0 || bitsPerSample <= 0) return null
                 }

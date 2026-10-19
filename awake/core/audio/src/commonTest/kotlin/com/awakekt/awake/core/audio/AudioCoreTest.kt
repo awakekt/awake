@@ -81,4 +81,36 @@ class AudioCoreTest {
         player.stopMusic()
         player.dispose()
     }
+
+    @Test
+    fun wavDecoderCorrectlyParsesBitsPerSampleAndDuration() {
+        val samples = 441
+        val sampleRate = 44100
+        val channels = 1
+        val dataSize = samples * channels * 2
+        val bytes = ByteArray(44 + dataSize)
+        fun ascii(at: Int, text: String) = text.forEachIndexed { i, c -> bytes[at + i] = c.code.toByte() }
+        fun int(at: Int, value: Int, size: Int) = repeat(size) { bytes[at + it] = (value shr (8 * it)).toByte() }
+
+        ascii(0, "RIFF")
+        int(4, 36 + dataSize, 4)
+        ascii(8, "WAVE")
+        ascii(12, "fmt ")
+        int(16, 16, 4)
+        int(20, 1, 2)
+        int(22, channels, 2)
+        int(24, sampleRate, 4)
+        int(28, sampleRate * channels * 2, 4)
+        int(32, channels * 2, 2)
+        int(34, 16, 2)
+        ascii(36, "data")
+        int(40, dataSize, 4)
+
+        val clip = assertNotNull(WavDecoder.decode("wav_test", "Wav Test", bytes))
+        assertEquals(16, clip.bitsPerSample)
+        assertEquals(channels, clip.channels)
+        assertEquals(sampleRate, clip.sampleRate)
+        assertEquals(dataSize, clip.pcmBytes.size)
+        assertTrue(clip.durationSeconds in 0.009f..0.011f)
+    }
 }

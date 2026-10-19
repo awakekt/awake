@@ -19,6 +19,7 @@ local.properties
 !.agents/skills.lock.toml
 .artifacts/
 .codex/
+.gemini/
 .DS_Store
 build/
 !build-logic/src/**

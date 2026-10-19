@@ -70,6 +70,22 @@ class SnapshotInterpolatorTest {
         assertTrue(abs(sampled.x[newcomer] - 4f) < EPSILON, "newcomer was interpolated from nothing")
     }
 
+    @Test
+    fun `smoothly interpolates across multiple snapshots with two tick delay`() {
+        val interpolator = SnapshotInterpolator(delaySeconds = 0.1f)
+        // 20 Hz ticks arrive every 50ms (0.05s)
+        interpolator.accept(snapshotAt(tick = 1, x = 0f), receivedAtSeconds = 0.00f)
+        interpolator.accept(snapshotAt(tick = 2, x = 10f), receivedAtSeconds = 0.05f)
+        interpolator.accept(snapshotAt(tick = 3, x = 20f), receivedAtSeconds = 0.10f)
+        interpolator.accept(snapshotAt(tick = 4, x = 30f), receivedAtSeconds = 0.15f)
+
+        // At nowSeconds = 0.175s, target = 0.175 - 0.10 = 0.075s.
+        // 0.075s falls exactly midway between tick 2 (0.05s, x=10) and tick 3 (0.10s, x=20).
+        val sampled = interpolator.sample(nowSeconds = 0.175f)
+        assertEquals(1, sampled.count)
+        assertTrue(abs(sampled.x[0] - 15f) < EPSILON, "expected 15f, got ${sampled.x[0]}")
+    }
+
     private fun snapshotAt(tick: Long, x: Float) = SnapshotBuffer().apply {
         reset(tick, 0)
         add(netId = 1, x = x, y = 0f)
