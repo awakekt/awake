@@ -795,6 +795,8 @@ public final class com/awakekt/awake/render/pipeline/GroupBindings$Companion {
 	public final fun getParticleMaterial ()Lcom/awakekt/awake/render/pipeline/GroupBindings;
 	public final fun getStandardMaterial ()Lcom/awakekt/awake/render/pipeline/GroupBindings;
 	public final fun getTexturedMaterial ()Lcom/awakekt/awake/render/pipeline/GroupBindings;
+	public final fun getUiBackdropBlur ()Lcom/awakekt/awake/render/pipeline/GroupBindings;
+	public final fun getUiBackdropComposite ()Lcom/awakekt/awake/render/pipeline/GroupBindings;
 	public final fun getUiTargetComposite ()Lcom/awakekt/awake/render/pipeline/GroupBindings;
 	public final fun getUniformOnlyMaterial ()Lcom/awakekt/awake/render/pipeline/GroupBindings;
 }
@@ -1292,6 +1294,8 @@ public final class com/awakekt/awake/render/pipeline/UiPipelineDescriptor {
 }
 
 public final class com/awakekt/awake/render/pipeline/UiPipelineVariant : java/lang/Enum {
+	public static final field BackdropBlur Lcom/awakekt/awake/render/pipeline/UiPipelineVariant;
+	public static final field BackdropComposite Lcom/awakekt/awake/render/pipeline/UiPipelineVariant;
 	public static final field Glyph Lcom/awakekt/awake/render/pipeline/UiPipelineVariant;
 	public static final field Quad Lcom/awakekt/awake/render/pipeline/UiPipelineVariant;
 	public static final field RoundedQuad Lcom/awakekt/awake/render/pipeline/UiPipelineVariant;
@@ -1303,16 +1307,20 @@ public final class com/awakekt/awake/render/pipeline/UiPipelineVariant : java/la
 }
 
 public final class com/awakekt/awake/render/pipeline/UiShaderSet {
-	public fun <init> (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V
-	public synthetic fun <init> (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V
+	public synthetic fun <init> (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/Object;
 	public final fun component2 ()Ljava/lang/Object;
 	public final fun component3 ()Ljava/lang/Object;
 	public final fun component4 ()Ljava/lang/Object;
 	public final fun component5 ()Ljava/lang/Object;
-	public final fun copy (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Lcom/awakekt/awake/render/pipeline/UiShaderSet;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/render/pipeline/UiShaderSet;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;ILjava/lang/Object;)Lcom/awakekt/awake/render/pipeline/UiShaderSet;
+	public final fun component6 ()Ljava/lang/Object;
+	public final fun component7 ()Ljava/lang/Object;
+	public final fun copy (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Lcom/awakekt/awake/render/pipeline/UiShaderSet;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/render/pipeline/UiShaderSet;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;ILjava/lang/Object;)Lcom/awakekt/awake/render/pipeline/UiShaderSet;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBackdropBlur ()Ljava/lang/Object;
+	public final fun getBackdropComposite ()Ljava/lang/Object;
 	public final fun getGlyph ()Ljava/lang/Object;
 	public final fun getQuad ()Ljava/lang/Object;
 	public final fun getRoundedQuad ()Ljava/lang/Object;
@@ -1320,6 +1328,21 @@ public final class com/awakekt/awake/render/pipeline/UiShaderSet {
 	public final fun getTexture ()Ljava/lang/Object;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/render/renderer/GpuDeviceClass : java/lang/Enum {
+	public static final field Discrete Lcom/awakekt/awake/render/renderer/GpuDeviceClass;
+	public static final field Integrated Lcom/awakekt/awake/render/renderer/GpuDeviceClass;
+	public static final field Mobile Lcom/awakekt/awake/render/renderer/GpuDeviceClass;
+	public static final field Software Lcom/awakekt/awake/render/renderer/GpuDeviceClass;
+	public static final field Unknown Lcom/awakekt/awake/render/renderer/GpuDeviceClass;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/render/renderer/GpuDeviceClass;
+	public static fun values ()[Lcom/awakekt/awake/render/renderer/GpuDeviceClass;
+}
+
+public final class com/awakekt/awake/render/renderer/GpuDeviceClassKt {
+	public static final fun recommendedBackdropBlurQuality (Lcom/awakekt/awake/render/renderer/GpuDeviceClass;)Lcom/awakekt/awake/core/graphics2d/BackdropBlurQuality;
 }
 
 public final class com/awakekt/awake/render/renderer/GpuFrameTimeCounter {
@@ -1401,6 +1424,7 @@ public abstract interface class com/awakekt/awake/render/renderer/Renderer : com
 	public static synthetic fun drawUi$default (Lcom/awakekt/awake/render/renderer/Renderer;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;ILjava/lang/Object;)V
 	public fun drawUiToTexture (Lcom/awakekt/awake/render/texture/RenderTarget;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;)V
 	public static synthetic fun drawUiToTexture$default (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;ILjava/lang/Object;)V
+	public fun getBackdropBlurQuality ()Lcom/awakekt/awake/core/graphics2d/BackdropBlurQuality;
 	public abstract fun getClearColor ()Lcom/awakekt/awake/core/color/Color;
 	public fun getFrameStats ()Lcom/awakekt/awake/render/renderer/RenderFrameStats;
 	public fun getSurfaceAspect ()F
@@ -1412,6 +1436,7 @@ public abstract interface class com/awakekt/awake/render/renderer/Renderer : com
 	public abstract fun readPixels (Lcom/awakekt/awake/render/texture/RenderTarget;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun readPresentedPixels (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun renderToTexture (Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/command/GpuPassInput;)V
+	public fun setBackdropBlurQuality (Lcom/awakekt/awake/core/graphics2d/BackdropBlurQuality;)V
 	public abstract fun setClearColor (Lcom/awakekt/awake/core/color/Color;)V
 	public abstract fun setWireframe (Z)V
 	public fun submitToTexture (Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/command/GpuPassInput;)V
@@ -1425,6 +1450,7 @@ public final class com/awakekt/awake/render/renderer/Renderer$DefaultImpls {
 	public static synthetic fun drawUi$default (Lcom/awakekt/awake/render/renderer/Renderer;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;ILjava/lang/Object;)V
 	public static fun drawUiToTexture (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;)V
 	public static synthetic fun drawUiToTexture$default (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;ILjava/lang/Object;)V
+	public static fun getBackdropBlurQuality (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/core/graphics2d/BackdropBlurQuality;
 	public static fun getFrameStats (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/render/renderer/RenderFrameStats;
 	public static fun getSurfaceAspect (Lcom/awakekt/awake/render/renderer/Renderer;)F
 	public static fun getSurfaceHeight (Lcom/awakekt/awake/render/renderer/Renderer;)I
@@ -1433,6 +1459,7 @@ public final class com/awakekt/awake/render/renderer/Renderer$DefaultImpls {
 	public static fun readFramebufferAttachment (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/capture/FramebufferAttachment;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static fun readPresentedPixels (Lcom/awakekt/awake/render/renderer/Renderer;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static fun renderToTexture (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/command/GpuPassInput;)V
+	public static fun setBackdropBlurQuality (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/core/graphics2d/BackdropBlurQuality;)V
 	public static fun submitToTexture (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/command/GpuPassInput;)V
 	public static fun waitIdle (Lcom/awakekt/awake/render/renderer/Renderer;)V
 }

@@ -339,6 +339,7 @@ public final class com/awakekt/awake/vulkan/renderer/Renderer : com/awakekt/awak
 	public fun drawDebugLines (Ljava/util/List;)V
 	public fun drawUi (Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;)V
 	public fun drawUiToTexture (Lcom/awakekt/awake/render/texture/RenderTarget;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;)V
+	public fun getBackdropBlurQuality ()Lcom/awakekt/awake/core/graphics2d/BackdropBlurQuality;
 	public fun getClearColor ()Lcom/awakekt/awake/core/color/Color;
 	public fun getClipSpace ()Lcom/awakekt/awake/core/math/ClipSpace;
 	public fun getFrameStats ()Lcom/awakekt/awake/render/renderer/RenderFrameStats;
@@ -352,6 +353,7 @@ public final class com/awakekt/awake/vulkan/renderer/Renderer : com/awakekt/awak
 	public fun readPixels (Lcom/awakekt/awake/render/texture/RenderTarget;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun readPresentedPixels (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun renderToTexture (Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/command/GpuPassInput;)V
+	public fun setBackdropBlurQuality (Lcom/awakekt/awake/core/graphics2d/BackdropBlurQuality;)V
 	public fun setClearColor (Lcom/awakekt/awake/core/color/Color;)V
 	public fun setWireframe (Z)V
 	public fun submitToTexture (Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/command/GpuPassInput;)V
@@ -394,9 +396,11 @@ public final class com/awakekt/awake/vulkan/swapchain/SwapchainManager {
 	public final fun getImageAvailableSemaphores ()[J
 	public final fun getImageFormat ()Lcom/awakekt/awake/vulkan/enums/VkFormat;
 	public final fun getImageViews ()Ljava/util/List;
+	public final fun getImages ()Ljava/util/List;
 	public final fun getInFlightFences ()[J
 	public final fun getMaxFramesInFlight ()I
 	public final fun getRenderFinishedSemaphores ()[J
+	public final fun getSampleable ()Z
 	public final fun getSelectedPresentMode ()Lcom/awakekt/awake/vulkan/enums/VkPresentModeKHR;
 	public final fun getSurfaceChangedSinceBuild ()Z
 	public final fun getSurfaceResized ()Z

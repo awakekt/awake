@@ -222,6 +222,8 @@ public final class com/awakekt/awake/core/geometry/VertexFormats2D {
 	public static final field INSTANCE Lcom/awakekt/awake/core/geometry/VertexFormats2D;
 	public static final field ROUNDED_QUAD_FLOATS_PER_VERTEX I
 	public static final field VERTICES_PER_QUAD I
+	public final fun getBackdropBlurPass ()Lcom/awakekt/awake/core/geometry/VertexFormat;
+	public final fun getBackdropComposite ()Lcom/awakekt/awake/core/geometry/VertexFormat;
 	public final fun getGlyph ()Lcom/awakekt/awake/core/geometry/VertexFormat;
 	public final fun getQuad ()Lcom/awakekt/awake/core/geometry/VertexFormat;
 	public final fun getRoundedQuad ()Lcom/awakekt/awake/core/geometry/VertexFormat;

@@ -556,6 +556,20 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
 
             is UiDrawPrimitive.Mesh -> fillColoredTriangleMesh(primitive.placedMesh())
 
+            // Rasterized as a renderer at BackdropBlurQuality.Off draws it: the fallback tint.
+            is UiDrawPrimitive.BackdropBlur -> {
+                val fill = primitive.fallback.withAlpha(primitive.fallback.a * primitive.alpha.coerceIn(0f, 1f))
+                val path = primitive.path
+                if (path != null) {
+                    fillColoredTriangleMesh(path.tessellateFillAa(fill))
+                } else {
+                    withScaledRect(primitive.x, primitive.y, primitive.w, primitive.h, primitive.transform) { x, y, w, h ->
+                        val scale = min(primitive.transform?.scaleX ?: 1f, primitive.transform?.scaleY ?: 1f)
+                        fillRoundedQuad(x, y, w, h, primitive.cornerRadius * scale, primitive.smoothing, fill)
+                    }
+                }
+            }
+
             is UiDrawPrimitive.Glyph -> {
                 withScaledRect(
                     primitive.x,

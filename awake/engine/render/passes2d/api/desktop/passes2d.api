@@ -1,7 +1,50 @@
+public final class com/awakekt/awake/render/passes2d/BackdropBlurPass {
+	public final fun getIndices ()[I
+	public final fun getSourceLevel ()I
+	public final fun getTarget ()Lcom/awakekt/awake/core/graphics2d/BackdropRegion;
+	public final fun getTargetLevel ()I
+	public final fun getVertices ()[F
+	public final fun isUpsample ()Z
+}
+
+public final class com/awakekt/awake/render/passes2d/BackdropBlurRecording {
+	public fun <init> (Lcom/awakekt/awake/render/passes2d/BackdropBlurWork;Ljava/util/List;)V
+	public final fun getPassMeshes ()Ljava/util/List;
+	public final fun getWork ()Lcom/awakekt/awake/render/passes2d/BackdropBlurWork;
+}
+
+public final class com/awakekt/awake/render/passes2d/BackdropBlurTarget {
+	public fun <init> (Lcom/awakekt/awake/core/graphics2d/BackdropBlurQuality;II)V
+	public final fun component1 ()Lcom/awakekt/awake/core/graphics2d/BackdropBlurQuality;
+	public final fun component2 ()I
+	public final fun component3 ()I
+	public final fun copy (Lcom/awakekt/awake/core/graphics2d/BackdropBlurQuality;II)Lcom/awakekt/awake/render/passes2d/BackdropBlurTarget;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/render/passes2d/BackdropBlurTarget;Lcom/awakekt/awake/core/graphics2d/BackdropBlurQuality;IIILjava/lang/Object;)Lcom/awakekt/awake/render/passes2d/BackdropBlurTarget;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getHeight ()I
+	public final fun getQuality ()Lcom/awakekt/awake/core/graphics2d/BackdropBlurQuality;
+	public final fun getWidth ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/render/passes2d/BackdropBlurWork {
+	public final fun getBlur ()Lcom/awakekt/awake/core/graphics2d/DualKawaseBlur;
+	public final fun getHeight ()I
+	public final fun getPasses ()Ljava/util/List;
+	public final fun getRegion ()Lcom/awakekt/awake/core/graphics2d/BackdropRegion;
+	public final fun getWidth ()I
+}
+
 public abstract interface class com/awakekt/awake/render/passes2d/DrawMeshUploader {
+	public fun backdropMesh (I[F[IZ)Ljava/lang/Object;
 	public abstract fun glyphMesh (I[F[I)Ljava/lang/Object;
 	public abstract fun quadMesh (I[F[I)Ljava/lang/Object;
 	public abstract fun roundedQuadMesh (I[F[I)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/render/passes2d/DrawMeshUploader$DefaultImpls {
+	public static fun backdropMesh (Lcom/awakekt/awake/render/passes2d/DrawMeshUploader;I[F[IZ)Ljava/lang/Object;
 }
 
 public final class com/awakekt/awake/render/passes2d/DrawMeshUploaderKt {
@@ -17,6 +60,7 @@ public abstract interface class com/awakekt/awake/render/passes2d/DrawPass {
 }
 
 public final class com/awakekt/awake/render/passes2d/DrawPipelineKind : java/lang/Enum {
+	public static final field BackdropComposite Lcom/awakekt/awake/render/passes2d/DrawPipelineKind;
 	public static final field Glyph Lcom/awakekt/awake/render/passes2d/DrawPipelineKind;
 	public static final field Quad Lcom/awakekt/awake/render/passes2d/DrawPipelineKind;
 	public static final field RoundedQuad Lcom/awakekt/awake/render/passes2d/DrawPipelineKind;
@@ -30,6 +74,12 @@ public final class com/awakekt/awake/render/passes2d/DrawPipelineKind : java/lan
 }
 
 public abstract class com/awakekt/awake/render/passes2d/DrawRun {
+}
+
+public final class com/awakekt/awake/render/passes2d/DrawRun$BackdropRun : com/awakekt/awake/render/passes2d/DrawRun {
+	public fun <init> (Ljava/lang/Object;Lcom/awakekt/awake/render/passes2d/BackdropBlurRecording;)V
+	public final fun getBlur ()Lcom/awakekt/awake/render/passes2d/BackdropBlurRecording;
+	public final fun getMesh ()Ljava/lang/Object;
 }
 
 public final class com/awakekt/awake/render/passes2d/DrawRun$ClipRun : com/awakekt/awake/render/passes2d/DrawRun {
@@ -72,9 +122,9 @@ public final class com/awakekt/awake/render/passes2d/DrawRunCoalescer {
 	public final fun canSkipExactClip (Lcom/awakekt/awake/core/math2d/Rectangle;FFFF)Z
 	public final fun canSkipExactClip (Lcom/awakekt/awake/core/math2d/Rectangle;Lcom/awakekt/awake/core/math2d/Rectangle;)Z
 	public final fun coalesce (Ljava/util/List;I)Ljava/util/List;
-	public final fun coalesce (Ljava/util/List;ILcom/awakekt/awake/render/passes2d/RetainedDrawRunCache;)Ljava/util/List;
+	public final fun coalesce (Ljava/util/List;ILcom/awakekt/awake/render/passes2d/RetainedDrawRunCache;Lcom/awakekt/awake/render/passes2d/BackdropBlurTarget;)Ljava/util/List;
 	public static synthetic fun coalesce$default (Lcom/awakekt/awake/render/passes2d/DrawRunCoalescer;Ljava/util/List;IILjava/lang/Object;)Ljava/util/List;
-	public static synthetic fun coalesce$default (Lcom/awakekt/awake/render/passes2d/DrawRunCoalescer;Ljava/util/List;ILcom/awakekt/awake/render/passes2d/RetainedDrawRunCache;ILjava/lang/Object;)Ljava/util/List;
+	public static synthetic fun coalesce$default (Lcom/awakekt/awake/render/passes2d/DrawRunCoalescer;Ljava/util/List;ILcom/awakekt/awake/render/passes2d/RetainedDrawRunCache;Lcom/awakekt/awake/render/passes2d/BackdropBlurTarget;ILjava/lang/Object;)Ljava/util/List;
 	public final fun exactClip (Lcom/awakekt/awake/core/graphics2d/TexturedTriangleMesh;Ljava/util/List;)Lcom/awakekt/awake/core/graphics2d/TexturedTriangleMesh;
 	public final fun exactClip (Lcom/awakekt/awake/core/graphics2d/TriangleMesh;Ljava/util/List;)Lcom/awakekt/awake/core/graphics2d/TriangleMesh;
 	public final fun exactClipColored (Lcom/awakekt/awake/core/graphics2d/ColoredTriangleMesh;Ljava/util/List;)Lcom/awakekt/awake/core/graphics2d/ColoredTriangleMesh;
@@ -87,9 +137,14 @@ public final class com/awakekt/awake/render/passes2d/DrawRunCoalescer {
 public abstract interface class com/awakekt/awake/render/passes2d/DrawRunRecorder {
 	public abstract fun bindGlyphFont (Lcom/awakekt/awake/core/text/font/UiFont;)Z
 	public abstract fun bindPipeline (Lcom/awakekt/awake/render/passes2d/DrawPipelineKind;)Z
+	public fun blurBackdrop (Lcom/awakekt/awake/render/passes2d/BackdropBlurRecording;Z)Z
 	public abstract fun drawMesh (Ljava/lang/Object;)V
 	public abstract fun drawTexturePrimitive (Lcom/awakekt/awake/render/passes2d/TexturedDrawRun;I)V
 	public abstract fun setScissor (IIII)V
+}
+
+public final class com/awakekt/awake/render/passes2d/DrawRunRecorder$DefaultImpls {
+	public static fun blurBackdrop (Lcom/awakekt/awake/render/passes2d/DrawRunRecorder;Lcom/awakekt/awake/render/passes2d/BackdropBlurRecording;Z)Z
 }
 
 public final class com/awakekt/awake/render/passes2d/RenderFeature2D : com/awakekt/awake/render/passes/RenderFeature {
@@ -122,6 +177,13 @@ public final class com/awakekt/awake/render/passes2d/SharedRenderFeature2D {
 }
 
 public abstract class com/awakekt/awake/render/passes2d/StagedDrawRun {
+}
+
+public final class com/awakekt/awake/render/passes2d/StagedDrawRun$BackdropRun : com/awakekt/awake/render/passes2d/StagedDrawRun {
+	public fun <init> ([F[ILcom/awakekt/awake/render/passes2d/BackdropBlurWork;)V
+	public final fun getBlur ()Lcom/awakekt/awake/render/passes2d/BackdropBlurWork;
+	public final fun getIndices ()[I
+	public final fun getVertices ()[F
 }
 
 public final class com/awakekt/awake/render/passes2d/StagedDrawRun$ClipRun : com/awakekt/awake/render/passes2d/StagedDrawRun {

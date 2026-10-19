@@ -3,6 +3,8 @@ public final class com/awakekt/awake/asset/shaders/AslDebugLineShaderKt {
 }
 
 public final class com/awakekt/awake/asset/shaders/AslUiShadersKt {
+	public static final fun getUiBackdropBlurShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun getUiBackdropCompositeShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 	public static final fun getUiGlyphShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 	public static final fun getUiQuadShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 	public static final fun getUiRoundedQuadShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
@@ -66,6 +68,8 @@ public final class com/awakekt/awake/asset/shaders/ContentUpload {
 public final class com/awakekt/awake/asset/shaders/EngineShaderSets {
 	public static final field INSTANCE Lcom/awakekt/awake/asset/shaders/EngineShaderSets;
 	public final fun getDebugLine ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getUiBackdropBlur ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getUiBackdropComposite ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getUiGlyph ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getUiQuad ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getUiRoundedQuad ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
