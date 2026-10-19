@@ -89,7 +89,7 @@ object TintImageEffect {
     }
 
     private fun canExecute(
-        profile: TintProfile,
+        profile: QualityProfile,
         targetContext: ImagePassTargetContext,
         clampedStrength: Float,
     ): Boolean =
@@ -101,7 +101,7 @@ object TintImageEffect {
 
     private fun createChain(
         clampedBounds: ImagePassRect,
-        profile: TintProfile,
+        profile: QualityProfile,
         tintColor: Color,
         clampedStrength: Float,
         targetContext: ImagePassTargetContext,
@@ -207,10 +207,7 @@ object TintImageEffect {
             blendEnabled = false,
         ),
         uniformData = ImageEffectShaders.packTintUniforms(
-            minU = 0f,
-            minV = 0f,
-            maxU = 1f,
-            maxV = 1f,
+            uvBounds = ImagePassRect(0f, 0f, 1f, 1f),
             tintColor = tintColor,
             strength = clampedStrength,
         ),

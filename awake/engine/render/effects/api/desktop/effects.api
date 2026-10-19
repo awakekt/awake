@@ -11,7 +11,7 @@ public final class com/awakekt/awake/render/effects/ImageEffectShaders {
 	public final fun getTintUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 	public final fun getUvBoundsField ()Lcom/awakekt/awake/render/renderer/UniformField;
 	public final fun packCopyUniforms (FFFF)[F
-	public final fun packTintUniforms (FFFFLcom/awakekt/awake/core/color/Color;F)[F
+	public final fun packTintUniforms (Lcom/awakekt/awake/render/imagepass/ImagePassRect;Lcom/awakekt/awake/core/color/Color;F)[F
 }
 
 public final class com/awakekt/awake/render/effects/ImageEffectShadersKt {
