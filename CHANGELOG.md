@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.19.0] - 2026-10-20
+
+### Added
+
+- **Post-processing stack on image passes (`PostProcessingStack`) and per-camera ECS wiring.** Added a backend-neutral post-processing chain for tone-mapping (Reinhard, ACES, AgX, neutral with exposure, contrast, saturation, and colour tint grading), bloom with multi-pass downsampling/upsampling, FXAA 3.11, and custom effect shaders. Extended `SceneDisplayTransform` with `isLinear` for HDR scene colour pass-through, bound camera-attached `PostProcessing` components in `awake:scene:scene3d` to `ImagePassChain` execution in Vulkan and WebGPU, and documented the `post_processing` scene schema component (#958).
+
+### Fixed
+
+- **Multiple follow limits and canvas components on a single scene node are rejected, and showcase plates limit is enforced.** `SceneCanvasFollowLimit`, `SceneCanvasFollowOcclusion`, `SceneCanvasScaler`, `SceneCanvasControls`, and `SceneCanvasElement` now enforce `allowsMultiplePerNode = false`, allowing `SceneValidator` to flag duplicate components on a node that would otherwise overwrite ECS store values. In `many-followers.scene.json`, `"plates"` and `"quest"` limits now live on separate nodes (`limits-plates` and `limits-quest`), restoring the 150-plate cap and eliminating uncapped follower layouts (#924).
+
 ## [0.18.0] - 2026-10-20
 
 ### Added
