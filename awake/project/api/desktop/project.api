@@ -232,6 +232,14 @@ public abstract interface class com/awakekt/awake/project/ContentCache {
 	public abstract fun put (Ljava/lang/String;[BLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
+public final class com/awakekt/awake/project/FileSystemContentCache : com/awakekt/awake/project/ContentCache {
+	public fun <init> (Lcom/awakekt/awake/core/io/FileSystem;Ljava/lang/String;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/io/FileSystem;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun get (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun put (Ljava/lang/String;[BLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun retainOnly (Lcom/awakekt/awake/project/ProjectIndex;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
 public final class com/awakekt/awake/project/IndexedAssetSource : com/awakekt/awake/core/io/AssetSource {
 	public fun <init> (Lcom/awakekt/awake/project/ProjectIndex;Lkotlin/jvm/functions/Function2;Lcom/awakekt/awake/project/ContentCache;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/project/ProjectIndex;Lkotlin/jvm/functions/Function2;Lcom/awakekt/awake/project/ContentCache;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
