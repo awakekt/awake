@@ -37,11 +37,16 @@
       ]
     },
     {
-      "name": "limits",
+      "name": "limits-plates",
       "components": [
         { "component": "canvas_follow_limit", "group": "plates", "max": 150, "rankBy": "Distance" },
-        { "component": "canvas_follow_limit", "group": "quest", "max": 8, "rankBy": "Priority" },
         { "component": "canvas_follow_occlusion", "raysPerFrame": 48, "reuseFrames": 6, "layer": 0 }
+      ]
+    },
+    {
+      "name": "limits-quest",
+      "components": [
+        { "component": "canvas_follow_limit", "group": "quest", "max": 8, "rankBy": "Priority" }
       ]
     },
     {

@@ -19,6 +19,9 @@ import com.awakekt.awake.scene.canvas.CanvasElementBinding.toComponent
 import com.awakekt.awake.scene.canvas.CanvasElementBinding.toSceneComponent
 import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.core.transform.Transform
+import com.awakekt.awake.scene.document.SceneDocument
+import com.awakekt.awake.scene.document.SceneNode
+import com.awakekt.awake.scene.document.SceneValidator
 import com.awakekt.awake.ui.canvas.CanvasCurve
 import com.awakekt.awake.ui.canvas.CanvasCurvePoint
 import com.awakekt.awake.ui.canvas.CanvasElement
@@ -194,6 +197,73 @@ class CanvasFollowSceneTest {
 
         pool.clear()
         assertEquals(0, world.family<CanvasElement>().size)
+    }
+
+    @Test
+    fun multipleFollowLimitsOnSameNodeAreFlaggedBySceneValidator() {
+        val document = SceneDocument(
+            nodes = listOf(
+                SceneNode(
+                    name = "limits",
+                    components = listOf(
+                        SceneCanvasFollowLimit(group = "plates", max = 150),
+                        SceneCanvasFollowLimit(group = "quest", max = 8),
+                    ),
+                ),
+            ),
+        )
+        val issues = SceneValidator.validate(document)
+        assertTrue(issues.any { "node declares 2 SceneCanvasFollowLimit instances, expected at most 1" in it.message })
+    }
+
+    @Test
+    fun multipleFollowOcclusionsOnSameNodeAreFlaggedBySceneValidator() {
+        val document = SceneDocument(
+            nodes = listOf(
+                SceneNode(
+                    name = "occlusion",
+                    components = listOf(
+                        SceneCanvasFollowOcclusion(raysPerFrame = 16),
+                        SceneCanvasFollowOcclusion(raysPerFrame = 32),
+                    ),
+                ),
+            ),
+        )
+        val issues = SceneValidator.validate(document)
+        assertTrue(issues.any { "node declares 2 SceneCanvasFollowOcclusion instances, expected at most 1" in it.message })
+    }
+
+    @Test
+    fun separateNodesWithFollowLimitsAreLoadedAndThinnedIndependently() {
+        val plateLimit = CanvasFollowLimit(group = "plates", max = 2, rankBy = CanvasFollowRank.Distance)
+        val questLimit = CanvasFollowLimit(group = "quest", max = 1, rankBy = CanvasFollowRank.Distance)
+        val nodePlates = world.create()
+        val nodeQuest = world.create()
+        world.add(nodePlates, plateLimit)
+        world.add(nodeQuest, questLimit)
+
+        assertEquals(listOf(plateLimit, questLimit), world.canvasFollowLimits())
+
+        val poolPlates = CanvasFollowerPool(world, SceneCanvasElement(width = 10f, height = 10f, followRules = CanvasFollowRules(group = "plates")))
+        val poolQuest = CanvasFollowerPool(world, SceneCanvasElement(width = 10f, height = 10f, followRules = CanvasFollowRules(group = "quest")))
+
+        val plate1 = node("P1", 100f).let { poolPlates.acquire("P1") }
+        val plate2 = node("P2", 200f).let { poolPlates.acquire("P2") }
+        val plate3 = node("P3", 300f).let { poolPlates.acquire("P3") }
+
+        val quest1 = node("Q1", 150f).let { poolQuest.acquire("Q1") }
+        val quest2 = node("Q2", 250f).let { poolQuest.acquire("Q2") }
+
+        val out = frame()
+
+        // Plate limit is 2 -> P1, P2 drawn; P3 dropped
+        assertTrue(out.drawn(plate1))
+        assertTrue(out.drawn(plate2))
+        assertFalse(out.drawn(plate3))
+
+        // Quest limit is 1 -> Q1 drawn; Q2 dropped
+        assertTrue(out.drawn(quest1))
+        assertFalse(out.drawn(quest2))
     }
 }
 

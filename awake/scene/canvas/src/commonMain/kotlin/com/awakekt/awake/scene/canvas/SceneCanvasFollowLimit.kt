@@ -34,6 +34,8 @@ data class SceneCanvasFollowLimit(
     @PropertyRange(min = 0.0) val max: Int = 0,
     val rankBy: CanvasFollowRank = CanvasFollowRank.Distance,
 ) : SceneComponent {
+    override val allowsMultiplePerNode: Boolean get() = false
+
     override fun validate(path: String): List<SceneValidationIssue> =
         CanvasFollowLimit(group, max, rankBy).problems().map { SceneValidationIssue(path, "canvas_follow_limit.$it") }
 }

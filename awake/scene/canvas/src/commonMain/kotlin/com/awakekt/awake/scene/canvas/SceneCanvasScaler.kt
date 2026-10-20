@@ -49,6 +49,8 @@ data class SceneCanvasScaler(
     @PropertyRange(min = 0.0) val maxScale: Float = 0f,
     @PropertyRange(min = 0.0, exclusiveMin = true) val playerScale: Float = 1f,
 ) : SceneComponent {
+    override val allowsMultiplePerNode: Boolean get() = false
+
     override fun validate(path: String): List<SceneValidationIssue> =
         CanvasScalerBinding.run { toComponent() }.problems().map { SceneValidationIssue(path, "canvas_scaler.$it") }
 }
