@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "name": "environment",
+      "components": [
+        {
+          "component": "skybox",
+          "type": "Procedural",
+          "horizonColor": "#F2C9A0",
+          "zenithColor": "#3A5F9E"
+        },
+        {
+          "component": "fog",
+          "density": 0.02,
+          "color": "#C8D2DC"
+        }
+      ]
+    }
+  ]
+}

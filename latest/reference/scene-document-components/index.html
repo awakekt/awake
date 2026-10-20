@@ -2444,6 +2444,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#post_processing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        post_processing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#prefab_link" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3390,6 +3401,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#post_processing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        post_processing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#prefab_link" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3844,6 +3866,13 @@ registers it.</p>
 <td><code>com.awakekt.awake.scene:physics</code></td>
 <td><code>registerPhysics()</code></td>
 <td><a href="../../guides/physics/">Physics</a></td>
+</tr>
+<tr>
+<td><a href="#post_processing"><code>post_processing</code></a></td>
+<td><code>PostProcessing</code></td>
+<td><code>com.awakekt.awake.scene:scene3d</code></td>
+<td><code>DefaultSceneComponentResolvers.install()</code></td>
+<td><a href="../../guides/lights-and-shadows/">Lights and shadows</a></td>
 </tr>
 <tr>
 <td><a href="#prefab_link"><code>prefab_link</code></a></td>
@@ -6165,6 +6194,32 @@ baked into the triangles. Only <code>STATIC</code> bodies that are not sensors c
 <p><code>convex_hull</code> shrink-wraps the model's vertices into a convex volume with node scale baked in.
 Because it encloses volume, it supports any <code>motion</code> (<code>STATIC</code>, <code>KINEMATIC</code>, or <code>DYNAMIC</code>) and can be a <code>sensor</code>.
 Like <code>mesh</code>, it uses <code>MeshColliderSystem</code> to build the body from models loaded through <code>loadCollisionMeshes</code>.</p>
+<h2 id="post_processing"><code>post_processing</code></h2>
+<p>Configures the post-processing effects chain applied to the camera's rendered view. <code>ScenePostProcessing</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>enabled</code></td>
+<td>boolean</td>
+<td><code>true</code></td>
+<td>Whether post-processing is enabled for this camera.</td>
+</tr>
+<tr>
+<td><code>effects</code></td>
+<td>array</td>
+<td><code>[]</code></td>
+<td>Ordered list of post-processing effect specifications.</td>
+</tr>
+</tbody>
+</table>
 <h2 id="prefab_link"><code>prefab_link</code></h2>
 <p>Places a prefab file at this node. <code>SceneDocument.withPrefabs</code> (which <code>loadProject</code> runs)
 puts the prefab's root under the node, so the node's transform places it and its own components add
