@@ -71,6 +71,8 @@ data class SceneCanvasFollowOcclusion(
     @PropertyRange(min = 1.0) val reuseFrames: Int = CanvasFollowOcclusion.DEFAULT_REUSE_FRAMES,
     @PropertyRange(min = 0.0) val layer: Int? = null,
 ) : SceneComponent {
+    override val allowsMultiplePerNode: Boolean get() = false
+
     override fun validate(path: String): List<SceneValidationIssue> =
         CanvasFollowOcclusion(raysPerFrame, reuseFrames, layer).problems().map { SceneValidationIssue(path, "canvas_follow_occlusion.$it") }
 }

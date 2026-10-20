@@ -212,6 +212,8 @@ data class SceneCanvasElement(
     val stepper: CanvasStepper? = null,
     val elementId: String = "",
 ) : SceneComponent {
+    override val allowsMultiplePerNode: Boolean get() = false
+
     /**
      * Validates element dimensions, font sizes, values, and hex color syntax.
      *

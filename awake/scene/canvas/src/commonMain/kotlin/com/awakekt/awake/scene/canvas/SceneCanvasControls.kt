@@ -43,6 +43,8 @@ data class SceneCanvasControls(
     val theme: CanvasControlTheme? = null,
     val playerLayout: CanvasPlayerLayout = CanvasPlayerLayout(),
 ) : SceneComponent {
+    override val allowsMultiplePerNode: Boolean get() = false
+
     override fun validate(path: String): List<SceneValidationIssue> =
         CanvasControlsBinding.run { toComponent() }.problems().map { SceneValidationIssue(path, "canvas_controls.$it") }
 }
