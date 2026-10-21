@@ -1,0 +1,1 @@
+- Request deepest contact points in Jolt shape casts so stationary initial overlaps report finite separating normals instead of propagating NaN into character motion.

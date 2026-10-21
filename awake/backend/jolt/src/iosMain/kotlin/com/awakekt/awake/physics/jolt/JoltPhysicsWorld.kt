@@ -1199,6 +1199,8 @@ class JoltPhysicsWorld(
             start.col3.write(from)
             args.ShapeCast.Direction.write(Vec3f(to.x - from.x, to.y - from.y, to.z - from.z))
             JPC_ShapeCastSettings_default(args.Settings.ptr)
+            // Keep an initial overlap's separating normal defined, including zero-length sweeps.
+            args.Settings.ReturnDeepestPoint = true
             args.Collector = collector
             filters.layerFilter?.let { args.ObjectLayerFilter = it }
             filters.bodyFilter?.let { args.BodyFilter = it }

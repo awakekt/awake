@@ -230,6 +230,8 @@ internal suspend fun joltHeapBytesInUse(): Long = joltHeapInUse(JoltModule.get()
         };
         // One filter per layer a query has asked for, made the first time it does.
         const oneLayer = new Map();
+        // A stationary initial overlap otherwise has no separating axis to normalize.
+        query.castSettings.mReturnDeepestPoint = true;
         world.query = query;
         world.oneLayer = oneLayer;
         world.layerFilter = (onlyLayer) => {

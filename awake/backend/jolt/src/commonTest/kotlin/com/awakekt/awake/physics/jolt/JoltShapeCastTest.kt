@@ -54,6 +54,29 @@ class JoltShapeCastTest {
         MotionType.STATIC,
     )
 
+    /** Without deepest-contact queries, this stationary overlap returns a (NaN, NaN, NaN) normal. */
+    @Test
+    fun aStationaryOverlappingCapsuleHasAFiniteSeparatingNormal() = runTest {
+        world { world ->
+            // Ten synthetic intersecting triangles; no imported asset or consumer fixture is needed.
+            val random = kotlin.random.Random(104)
+            val vertices = FloatArray(90) { random.nextFloat() * 4f - 2f }
+            val surface = world.createBody(
+                MeshShape(vertices, IntArray(30) { it }),
+                Vec3f(),
+                Quat.IDENTITY,
+                MotionType.STATIC,
+            )
+            val capsule = CapsuleShape(halfHeight = 0.5f, radius = 0.3f)
+            val point = Vec3f(0.2f, 0.8f, 0.4f)
+            val hit = assertNotNull(world.shapeCast(capsule, point, point))
+            assertEquals(surface, hit.handle)
+            assertEquals(0f, hit.fraction)
+            assertTrue(hit.normal.x.isFinite() && hit.normal.y.isFinite() && hit.normal.z.isFinite(), "overlap normal: ${hit.normal}")
+            assertEquals(1f, hit.normal.length3(), 0.0001f, "a normal must remain usable for sliding")
+        }
+    }
+
     @Test
     fun sweepingASphereIntoAWallReportsWhereAlongTheSweepItStopped() = runTest {
         world { world ->
