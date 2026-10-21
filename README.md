@@ -138,6 +138,28 @@ WebGPU. Backend and platform availability is still expanding during the alpha re
 and [release notes](https://github.com/awakekt/awake/releases) as the compatibility reference for
 the version you are using.
 
+## Application security
+
+Applications that store credentials or handle sensitive data can evaluate these optional tools:
+
+| Library | Use |
+|---|---|
+| [KSafe](https://github.com/ioannisa/KSafe) | Encrypted key/value persistence for credentials and session tokens, with platform-specific key protection. Keep storage behind an application-owned interface and inject it where needed. |
+| [Sekret](https://github.com/DatL4g/Sekret) | Application Gradle/compiler tooling for masking annotated properties in generated `toString()` methods and obfuscating embedded strings. |
+
+Check KSafe's [effective protection level and JVM fallback behavior](https://github.com/ioannisa/KSafe/blob/main/docs/JVM_PROTECTION.md):
+software key storage is not equivalent to an OS-backed vault. Applications requiring OS-backed
+protection should enforce that policy explicitly.
+
+Sekret's [logging protection](https://github.com/DatL4g/Sekret/blob/master/Logging.md) covers generated
+`toString()` output; direct property logging and serialization still need application controls.
+Its [string obfuscation is reversible](https://github.com/DatL4g/Sekret/blob/master/Secrets.md), so
+keep server credentials on the server rather than embedding them in a distributed application.
+
+Neither library is bundled with or integration-tested against Awake. Verify target-platform,
+Kotlin/compiler and release-packaging compatibility before adoption; both remain optional
+application dependencies.
+
 ## Documentation
 
 - [Online documentation](https://docs.awakekt.com/) and [live samples](https://demo.awakekt.com/)
