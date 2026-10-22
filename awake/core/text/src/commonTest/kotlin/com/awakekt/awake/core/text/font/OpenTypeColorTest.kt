@@ -145,4 +145,48 @@ class OpenTypeColorTest {
         assertNull(uvs.findGlyph(0x2764, 0xFE0E))
         assertNull(uvs.findGlyph(0x1234, 0xFE0F))
     }
+
+    @Test
+    fun cbdtCblcTableExtractsFormat17PngBytes() {
+        val cblcBytes = ByteArray(80)
+        cblcBytes[4] = 0; cblcBytes[5] = 0; cblcBytes[6] = 0; cblcBytes[7] = 1 // numSizes = 1
+        cblcBytes[8] = 0; cblcBytes[9] = 0; cblcBytes[10] = 0; cblcBytes[11] = 56 // indexSubtableListOffset = 56
+        cblcBytes[12] = 0; cblcBytes[13] = 0; cblcBytes[14] = 0; cblcBytes[15] = 24 // indexSubtableListSize = 24
+        cblcBytes[16] = 0; cblcBytes[17] = 0; cblcBytes[18] = 0; cblcBytes[19] = 1 // numberOfIndexSubtables = 1
+        cblcBytes[48] = 0; cblcBytes[49] = 10 // startGlyphIndex = 10
+        cblcBytes[50] = 0; cblcBytes[51] = 10 // endGlyphIndex = 10
+
+        // IndexSubtableRecord at 56
+        cblcBytes[56] = 0; cblcBytes[57] = 10
+        cblcBytes[58] = 0; cblcBytes[59] = 10
+        cblcBytes[60] = 0; cblcBytes[61] = 0; cblcBytes[62] = 0; cblcBytes[63] = 8 // subtable at 56 + 8 = 64
+
+        // IndexSubtable format 1 at 64
+        cblcBytes[64] = 0; cblcBytes[65] = 1 // indexFormat = 1
+        cblcBytes[66] = 0; cblcBytes[67] = 17 // imageFormat = 17
+        cblcBytes[68] = 0; cblcBytes[69] = 0; cblcBytes[70] = 0; cblcBytes[71] = 0 // imageDataOffset = 0
+        cblcBytes[72] = 0; cblcBytes[73] = 0; cblcBytes[74] = 0; cblcBytes[75] = 0 // sbitOffset[0] = 0
+        cblcBytes[76] = 0; cblcBytes[77] = 0; cblcBytes[78] = 0; cblcBytes[79] = 17 // sbitOffset[1] = 17
+
+        val cbdtBytes = ByteArray(17)
+        // 5 bytes metrics (0..4)
+        // 4 bytes dataLen (5..8)
+        cbdtBytes[5] = 0; cbdtBytes[6] = 0; cbdtBytes[7] = 0; cbdtBytes[8] = 8
+        // 8 bytes PNG signature (9..16)
+        val sig = byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A)
+        sig.copyInto(cbdtBytes, 9)
+
+        val cblcTable = FontTable(cblcBytes, 0, cblcBytes.size, "CBLC")
+        val cbdtTable = FontTable(cbdtBytes, 0, cbdtBytes.size, "CBDT")
+        val table = CbdtCblcTable(cblcTable, cbdtTable)
+
+        assertNull(table.pngBytes(5))
+        val png = table.pngBytes(10)
+        assertNotNull(png)
+        assertEquals(8, png.size)
+        assertEquals(0x89.toByte(), png[0])
+        assertEquals('P'.code.toByte(), png[1])
+        assertEquals('N'.code.toByte(), png[2])
+        assertEquals('G'.code.toByte(), png[3])
+    }
 }

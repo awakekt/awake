@@ -107,8 +107,10 @@ internal class SbixTable(private val table: FontTable, private val glyphCount: I
     }
 }
 
+private const val PNG_MAGIC = 0x89504E47.toInt()
+
 /**
- * Parses the OpenType CBLC and CBDT tables used by Google Noto Color Emoji bitmap flavor.
+ * Parses the OpenType CBLC and CBDT tables used by color bitmap emoji fonts.
  */
 internal class CbdtCblcTable(private val cblc: FontTable, private val cbdt: FontTable) {
     @Suppress("ReturnCount")
@@ -147,23 +149,48 @@ internal class CbdtCblcTable(private val cblc: FontTable, private val cbdt: Font
         val indexFormat = cblc.u16(subTableOffset)
         val imageFormat = cblc.u16(subTableOffset + 2)
         val imageDataOffset = cblc.u32(subTableOffset + 4)
-        val offset = when (indexFormat) {
-            1 -> cblc.u32(subTableOffset + 8 + indexInSubTable * 4)
-            3 -> cblc.u16(subTableOffset + 8 + indexInSubTable * 2)
-            else -> return null
-        }
-        val nextOffset = when (indexFormat) {
-            1 -> cblc.u32(subTableOffset + 8 + (indexInSubTable + 1) * 4)
-            3 -> cblc.u16(subTableOffset + 8 + (indexInSubTable + 1) * 2)
-            else -> return null
-        }
+        val offset = readGlyphOffset(subTableOffset, indexFormat, indexInSubTable) ?: return null
+        val nextOffset = readGlyphOffset(subTableOffset, indexFormat, indexInSubTable + 1) ?: return null
         val length = nextOffset - offset
-        // Format 17 has 5 bytes SmallGlyphMetrics followed by PNG bytes
-        if (imageFormat == 17 && length > 5) {
-            return cbdt.bytes(imageDataOffset + offset + 5, length - 5)
+        if (length <= 8) return null
+        val dataStart = imageDataOffset + offset
+        if (dataStart + length > cbdt.length) return null
+
+        val headerLen = detectPngHeaderOffset(imageFormat, dataStart, length) ?: return null
+        return cbdt.bytes(dataStart + headerLen, length - headerLen)
+    }
+
+    private fun readGlyphOffset(subTableOffset: Int, indexFormat: Int, index: Int): Int? = when (indexFormat) {
+        1 -> cblc.u32(subTableOffset + 8 + index * 4)
+        3 -> cblc.u16(subTableOffset + 8 + index * 2)
+        else -> null
+    }
+
+    private fun detectPngHeaderOffset(imageFormat: Int, dataStart: Int, length: Int): Int? {
+        val expectedOffset = when (imageFormat) {
+            17 -> 9
+            18 -> 12
+            19 -> 4
+            else -> -1
+        }
+        if (expectedOffset >= 0 && length > expectedOffset + 4 && isPngAt(dataStart + expectedOffset)) {
+            return expectedOffset
+        }
+        return findPngHeaderOffset(dataStart, length)
+    }
+
+    private fun findPngHeaderOffset(dataStart: Int, length: Int): Int? {
+        val searchLimit = minOf(32, length - 4)
+        for (p in 0 until searchLimit) {
+            if (isPngAt(dataStart + p)) {
+                return p
+            }
         }
         return null
     }
+
+    private fun isPngAt(offset: Int): Boolean =
+        offset + 4 <= cbdt.length && cbdt.u32(offset) == PNG_MAGIC
 }
 
 /**
