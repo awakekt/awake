@@ -145,8 +145,9 @@ class TextPixelSnapTest {
             v1: Float,
             color: Color,
             font: UiFont?,
+            page: Int,
         ) {
-            glyphs += UiDrawPrimitive.Glyph(x, y, width, height, u0, v0, u1, v1, color, font = font)
+            glyphs += UiDrawPrimitive.Glyph(x, y, width, height, u0, v0, u1, v1, color, font = font, page = page)
         }
 
         override fun drawRect(x: Float, y: Float, width: Float, height: Float, color: Color) = unused()

@@ -66,4 +66,91 @@ class FallbackUiFontTest {
         val primary = UiFonts.trueSans()
         assertSame(primary, UiFonts.fallback(primary, emptyList()))
     }
+
+    @Test
+    fun pageSplittingWhenAtlasExceedsMaxHeight() {
+        val font1 = StubUiFont(atlasHeight = 60, charCodes = setOf('A'.code))
+        val font2 = StubUiFont(atlasHeight = 50, charCodes = setOf('B'.code))
+        val chain = UiFonts.fallback(font1, listOf(font2), maxAtlasHeight = 100)
+
+        assertEquals(2, chain.atlasPages.size)
+        val page0 = chain.atlasPages[0]
+        val page1 = chain.atlasPages[1]
+        assertEquals(60, page0.atlasHeight)
+        assertEquals(50, page1.atlasHeight)
+
+        val glyphA = assertNotNull(chain.glyphFor('A', FontWeight.Normal))
+        assertEquals(0, glyphA.page)
+        assertSame(page0, chain.fontFor('A'.code, FontWeight.Normal))
+
+        val glyphB = assertNotNull(chain.glyphFor('B', FontWeight.Normal))
+        assertEquals(1, glyphB.page)
+        assertSame(page1, chain.fontFor('B'.code, FontWeight.Normal))
+
+        assertSame(page0, chain.pageFont(0))
+        assertSame(page1, chain.pageFont(1))
+        assertSame(chain, chain.pageFont(99))
+    }
+
+    @Test
+    fun fallbackChainOver8192PxSplitsAcrossPages() {
+        val font1 = StubUiFont(atlasHeight = 5000, charCodes = setOf('A'.code))
+        val font2 = StubUiFont(atlasHeight = 4000, charCodes = setOf('B'.code))
+        // 5000 + 4000 = 9000 > default maxAtlasHeight (8192)
+        val chain = UiFonts.fallback(font1, listOf(font2))
+
+        assertEquals(2, chain.atlasPages.size)
+        val page0 = chain.atlasPages[0]
+        val page1 = chain.atlasPages[1]
+        assertEquals(5000, page0.atlasHeight)
+        assertEquals(4000, page1.atlasHeight)
+        assertTrue(page0.atlasHeight <= UiFonts.DEFAULT_MAX_ATLAS_HEIGHT)
+        assertTrue(page1.atlasHeight <= UiFonts.DEFAULT_MAX_ATLAS_HEIGHT)
+
+        val glyphA = assertNotNull(chain.glyphFor('A', FontWeight.Normal))
+        assertEquals(0, glyphA.page)
+        assertEquals(0f, glyphA.v0)
+        assertEquals(1f, glyphA.v1)
+
+        val glyphB = assertNotNull(chain.glyphFor('B', FontWeight.Normal))
+        assertEquals(1, glyphB.page)
+        assertEquals(0f, glyphB.v0)
+        assertEquals(1f, glyphB.v1)
+    }
+
+    @Test
+    fun disparateSamplingModeFacesRemainDistinctPages() {
+        val font1 = StubUiFont(atlasHeight = 50, charCodes = setOf('A'.code))
+        val fontColor = StubUiFont(
+            atlasHeight = 30,
+            charCodes = setOf(0x1F600),
+            samplingMode = UiFontSamplingMode.ColorRgba,
+        )
+        val chain = UiFonts.fallback(font1, listOf(fontColor))
+        assertEquals(2, chain.atlasPages.size)
+        assertSame(chain, chain.atlasPages[0])
+        assertSame(fontColor, chain.atlasPages[1])
+        assertSame(chain, chain.fontFor('A'.code, FontWeight.Normal))
+        assertSame(fontColor, chain.fontFor(0x1F600, FontWeight.Normal))
+    }
+}
+
+private class StubUiFont(
+    override val atlasWidth: Int = 100,
+    override val atlasHeight: Int = 50,
+    private val charCodes: Set<Int> = emptySet(),
+    override val samplingMode: UiFontSamplingMode = UiFontSamplingMode.DistanceField,
+) : UiFont {
+    override val cellSize: Int = 12
+    override val textScaleStep: Float = 1f
+    override val atlasPixelsRgba: ByteArray = ByteArray(atlasWidth * atlasHeight * 4)
+
+    override fun uvFor(char: Char): GlyphRect? =
+        if (char.code in charCodes) GlyphRect(0f, 0f, 1f, 1f) else null
+
+    override fun hasGlyph(codePoint: Int): Boolean = codePoint in charCodes
+    override fun hasGlyph(char: Char): Boolean = char.code in charCodes
+    override fun glyphFor(char: Char, weight: FontWeight): GlyphRect? = uvFor(char)
+    override fun glyphFor(codePoint: Int, weight: FontWeight): GlyphRect? =
+        if (codePoint in charCodes) GlyphRect(0f, 0f, 1f, 1f) else null
 }

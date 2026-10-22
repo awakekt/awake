@@ -33,6 +33,7 @@ enum class UiFontSamplingMode {
  * @property offsetYEm Vertical offset in em units from the baseline origin to the glyph quad top edge.
  * @property widthEm Width of the glyph quad in em units.
  * @property heightEm Height of the glyph quad in em units.
+ * @property page The zero-based atlas page index within [UiFont.atlasPages] that contains this glyph.
  */
 data class GlyphRect(
     val u0: Float,
@@ -43,6 +44,7 @@ data class GlyphRect(
     val offsetYEm: Float = 0f,
     val widthEm: Float = 1f,
     val heightEm: Float = 1f,
+    val page: Int = 0,
 )
 
 /**
@@ -168,11 +170,25 @@ interface UiFont {
     /**
      * Resolves the underlying [UiFont] that provides the atlas for [codePoint] at [weight].
      *
-     * Single-face fonts and families sharing an atlas return 	his.
+     * Single-face fonts and families sharing an atlas return this.
      * A fallback chain containing faces with disparate sampling modes (such as colour emoji)
      * returns the specific face that owns the glyph.
      */
     fun fontFor(codePoint: Int, weight: FontWeight = FontWeight.Normal): UiFont = this
+
+    /**
+     * The texture atlas pages that back this font.
+     *
+     * Single-face fonts and families sharing one texture report a single-item list with `this`.
+     * A fallback chain whose combined atlas exceeds the max texture size (8192 px)
+     * splits across multiple pages, where each page exposes its slice of the atlas.
+     */
+    val atlasPages: List<UiFont> get() = listOf(this)
+
+    /**
+     * Resolves the page [UiFont] for [pageIndex], or this font if invalid or single-paged.
+     */
+    fun pageFont(pageIndex: Int): UiFont = atlasPages.getOrElse(pageIndex) { this }
 }
 
 /** U+FFFD, what a code point a `Char` cannot hold is looked up as. */

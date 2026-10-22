@@ -8,6 +8,7 @@ public final class com/awakekt/awake/core/text/font/BitmapFont : com/awakekt/awa
 	public fun fontFor-MFPI20o (II)Lcom/awakekt/awake/core/text/font/UiFont;
 	public fun getAscentEm ()F
 	public fun getAtlasHeight ()I
+	public fun getAtlasPages ()Ljava/util/List;
 	public fun getAtlasPixelsRgba ()[B
 	public fun getAtlasWidth ()I
 	public fun getCapHeightEm ()F
@@ -23,6 +24,7 @@ public final class com/awakekt/awake/core/text/font/BitmapFont : com/awakekt/awa
 	public fun glyphFor-MFPI20o (II)Lcom/awakekt/awake/core/text/font/GlyphRect;
 	public fun hasGlyph (C)Z
 	public fun hasGlyph (I)Z
+	public fun pageFont (I)Lcom/awakekt/awake/core/text/font/UiFont;
 	public fun uvFor (C)Lcom/awakekt/awake/core/text/font/GlyphRect;
 }
 
@@ -59,8 +61,8 @@ public final class com/awakekt/awake/core/text/font/FontWeight$Companion {
 }
 
 public final class com/awakekt/awake/core/text/font/GlyphRect {
-	public fun <init> (FFFFFFFF)V
-	public synthetic fun <init> (FFFFFFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (FFFFFFFFI)V
+	public synthetic fun <init> (FFFFFFFFIILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()F
 	public final fun component2 ()F
 	public final fun component3 ()F
@@ -69,12 +71,14 @@ public final class com/awakekt/awake/core/text/font/GlyphRect {
 	public final fun component6 ()F
 	public final fun component7 ()F
 	public final fun component8 ()F
-	public final fun copy (FFFFFFFF)Lcom/awakekt/awake/core/text/font/GlyphRect;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/core/text/font/GlyphRect;FFFFFFFFILjava/lang/Object;)Lcom/awakekt/awake/core/text/font/GlyphRect;
+	public final fun component9 ()I
+	public final fun copy (FFFFFFFFI)Lcom/awakekt/awake/core/text/font/GlyphRect;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/text/font/GlyphRect;FFFFFFFFIILjava/lang/Object;)Lcom/awakekt/awake/core/text/font/GlyphRect;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getHeightEm ()F
 	public final fun getOffsetXEm ()F
 	public final fun getOffsetYEm ()F
+	public final fun getPage ()I
 	public final fun getU0 ()F
 	public final fun getU1 ()F
 	public final fun getV0 ()F
@@ -94,6 +98,7 @@ public final class com/awakekt/awake/core/text/font/MsdfFont : com/awakekt/awake
 	public fun fontFor-MFPI20o (II)Lcom/awakekt/awake/core/text/font/UiFont;
 	public fun getAscentEm ()F
 	public fun getAtlasHeight ()I
+	public fun getAtlasPages ()Ljava/util/List;
 	public fun getAtlasPixelsRgba ()[B
 	public fun getAtlasWidth ()I
 	public fun getCapHeightEm ()F
@@ -109,6 +114,7 @@ public final class com/awakekt/awake/core/text/font/MsdfFont : com/awakekt/awake
 	public fun glyphFor-MFPI20o (II)Lcom/awakekt/awake/core/text/font/GlyphRect;
 	public fun hasGlyph (C)Z
 	public fun hasGlyph (I)Z
+	public fun pageFont (I)Lcom/awakekt/awake/core/text/font/UiFont;
 	public fun uvFor (C)Lcom/awakekt/awake/core/text/font/GlyphRect;
 }
 
@@ -120,6 +126,7 @@ public final class com/awakekt/awake/core/text/font/PackedUiFont : com/awakekt/a
 	public fun fontFor-MFPI20o (II)Lcom/awakekt/awake/core/text/font/UiFont;
 	public fun getAscentEm ()F
 	public fun getAtlasHeight ()I
+	public fun getAtlasPages ()Ljava/util/List;
 	public fun getAtlasPixelsRgba ()[B
 	public fun getAtlasWidth ()I
 	public fun getCapHeightEm ()F
@@ -136,6 +143,7 @@ public final class com/awakekt/awake/core/text/font/PackedUiFont : com/awakekt/a
 	public fun hasGlyph (C)Z
 	public fun hasGlyph (I)Z
 	public final fun inkFor (C)Lcom/awakekt/awake/core/text/font/GlyphRect;
+	public fun pageFont (I)Lcom/awakekt/awake/core/text/font/UiFont;
 	public fun uvFor (C)Lcom/awakekt/awake/core/text/font/GlyphRect;
 }
 
@@ -152,6 +160,7 @@ public abstract interface class com/awakekt/awake/core/text/font/UiFont {
 	public static synthetic fun fontFor-MFPI20o$default (Lcom/awakekt/awake/core/text/font/UiFont;IIILjava/lang/Object;)Lcom/awakekt/awake/core/text/font/UiFont;
 	public fun getAscentEm ()F
 	public abstract fun getAtlasHeight ()I
+	public fun getAtlasPages ()Ljava/util/List;
 	public abstract fun getAtlasPixelsRgba ()[B
 	public abstract fun getAtlasWidth ()I
 	public fun getCapHeightEm ()F
@@ -167,6 +176,7 @@ public abstract interface class com/awakekt/awake/core/text/font/UiFont {
 	public fun glyphFor-MFPI20o (II)Lcom/awakekt/awake/core/text/font/GlyphRect;
 	public fun hasGlyph (C)Z
 	public fun hasGlyph (I)Z
+	public fun pageFont (I)Lcom/awakekt/awake/core/text/font/UiFont;
 	public abstract fun uvFor (C)Lcom/awakekt/awake/core/text/font/GlyphRect;
 }
 
@@ -177,6 +187,7 @@ public final class com/awakekt/awake/core/text/font/UiFont$DefaultImpls {
 	public static fun fontFor-MFPI20o (Lcom/awakekt/awake/core/text/font/UiFont;II)Lcom/awakekt/awake/core/text/font/UiFont;
 	public static synthetic fun fontFor-MFPI20o$default (Lcom/awakekt/awake/core/text/font/UiFont;IIILjava/lang/Object;)Lcom/awakekt/awake/core/text/font/UiFont;
 	public static fun getAscentEm (Lcom/awakekt/awake/core/text/font/UiFont;)F
+	public static fun getAtlasPages (Lcom/awakekt/awake/core/text/font/UiFont;)Ljava/util/List;
 	public static fun getCapHeightEm (Lcom/awakekt/awake/core/text/font/UiFont;)F
 	public static fun getDescentEm (Lcom/awakekt/awake/core/text/font/UiFont;)F
 	public static fun getDistanceFieldRangePx (Lcom/awakekt/awake/core/text/font/UiFont;)F
@@ -187,6 +198,7 @@ public final class com/awakekt/awake/core/text/font/UiFont$DefaultImpls {
 	public static fun glyphFor-MFPI20o (Lcom/awakekt/awake/core/text/font/UiFont;II)Lcom/awakekt/awake/core/text/font/GlyphRect;
 	public static fun hasGlyph (Lcom/awakekt/awake/core/text/font/UiFont;C)Z
 	public static fun hasGlyph (Lcom/awakekt/awake/core/text/font/UiFont;I)Z
+	public static fun pageFont (Lcom/awakekt/awake/core/text/font/UiFont;I)Lcom/awakekt/awake/core/text/font/UiFont;
 }
 
 public final class com/awakekt/awake/core/text/font/UiFontKt {
@@ -210,12 +222,14 @@ public final class com/awakekt/awake/core/text/font/UiFontSamplingMode : java/la
 public final class com/awakekt/awake/core/text/font/UiFonts {
 	public static final field DEFAULT_CHARS Ljava/lang/String;
 	public static final field DEFAULT_EMOJIS Ljava/lang/String;
+	public static final field DEFAULT_MAX_ATLAS_HEIGHT I
 	public static final field INSTANCE Lcom/awakekt/awake/core/text/font/UiFonts;
 	public final fun bitmap (I)Lcom/awakekt/awake/core/text/font/UiFont;
 	public static synthetic fun bitmap$default (Lcom/awakekt/awake/core/text/font/UiFonts;IILjava/lang/Object;)Lcom/awakekt/awake/core/text/font/UiFont;
 	public final fun default (I)Lcom/awakekt/awake/core/text/font/UiFont;
 	public static synthetic fun default$default (Lcom/awakekt/awake/core/text/font/UiFonts;IILjava/lang/Object;)Lcom/awakekt/awake/core/text/font/UiFont;
 	public final fun fallback (Lcom/awakekt/awake/core/text/font/UiFont;Ljava/util/List;)Lcom/awakekt/awake/core/text/font/UiFont;
+	public final fun fallback (Lcom/awakekt/awake/core/text/font/UiFont;Ljava/util/List;I)Lcom/awakekt/awake/core/text/font/UiFont;
 	public final fun family (Ljava/util/Map;)Lcom/awakekt/awake/core/text/font/UiFont;
 	public final fun load ([BLjava/lang/String;Ljava/lang/String;I)Lcom/awakekt/awake/core/text/font/UiFont;
 	public static synthetic fun load$default (Lcom/awakekt/awake/core/text/font/UiFonts;[BLjava/lang/String;Ljava/lang/String;IILjava/lang/Object;)Lcom/awakekt/awake/core/text/font/UiFont;
@@ -240,6 +254,7 @@ public final class com/awakekt/awake/core/text/font/WeightedUiFont : com/awakekt
 	public fun fontFor-MFPI20o (II)Lcom/awakekt/awake/core/text/font/UiFont;
 	public fun getAscentEm ()F
 	public fun getAtlasHeight ()I
+	public fun getAtlasPages ()Ljava/util/List;
 	public fun getAtlasPixelsRgba ()[B
 	public fun getAtlasWidth ()I
 	public fun getCapHeightEm ()F
@@ -255,6 +270,7 @@ public final class com/awakekt/awake/core/text/font/WeightedUiFont : com/awakekt
 	public fun glyphFor-MFPI20o (II)Lcom/awakekt/awake/core/text/font/GlyphRect;
 	public fun hasGlyph (C)Z
 	public fun hasGlyph (I)Z
+	public fun pageFont (I)Lcom/awakekt/awake/core/text/font/UiFont;
 	public fun uvFor (C)Lcom/awakekt/awake/core/text/font/GlyphRect;
 }
 

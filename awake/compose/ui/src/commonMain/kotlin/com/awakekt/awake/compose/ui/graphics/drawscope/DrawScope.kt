@@ -166,6 +166,7 @@ interface DrawScope {
         v1: Float,
         color: Color,
         font: UiFont? = null,
+        page: Int = 0,
     )
 
     /**
@@ -797,13 +798,14 @@ internal class PaintScope :
         v1: Float,
         color: Color,
         font: UiFont?,
+        page: Int,
     ) {
         val px = transform.mapX(originX + x)
         val py = transform.mapY(originY + y)
         val pw = width * transform.scaleX
         val ph = height * transform.scaleY
         if (isFullyOutsideActiveClip(px, py, pw, ph)) return
-        output += UiDrawPrimitive.Glyph(px, py, pw, ph, u0, v0, u1, v1, color.dimmedBy(alpha), font = font)
+        output += UiDrawPrimitive.Glyph(px, py, pw, ph, u0, v0, u1, v1, color.dimmedBy(alpha), font = font, page = page)
     }
 
     override fun clipped(inset: Float, block: () -> Unit) {

@@ -44,6 +44,39 @@ class DrawRunCoalescerTest {
         assertEquals(16f, runs[1].vertices[0], "the bitmap run holds the third glyph")
     }
 
+    @Test
+    fun mixedScriptLineDrawCallsMeasuredBeforeAndAfter() {
+        val page0 = UiFonts.default()
+        val page1 = UiFonts.bitmap()
+        fun glyph(x: Float, font: UiFont?) = DrawCommand.Glyph(x, 0f, 8f, 8f, 0f, 0f, 1f, 1f, Color.White, font = font)
+
+        // Before (alternating fonts): A, B, A, B, A, B -> 6 runs
+        val alternatingPrimitives = listOf(
+            glyph(0f, page0),
+            glyph(8f, page1),
+            glyph(16f, page0),
+            glyph(24f, page1),
+            glyph(32f, page0),
+            glyph(40f, page1),
+        )
+        val beforeRuns = DrawRunCoalescer.coalesce(alternatingPrimitives)
+        assertEquals(6, beforeRuns.size)
+
+        // After (batched by page/font): A, A, A, B, B, B -> 2 runs
+        val batchedPrimitives = listOf(
+            glyph(0f, page0),
+            glyph(16f, page0),
+            glyph(32f, page0),
+            glyph(8f, page1),
+            glyph(24f, page1),
+            glyph(40f, page1),
+        )
+        val afterRuns = DrawRunCoalescer.coalesce(batchedPrimitives)
+        assertEquals(2, afterRuns.size)
+        assertSame(page0, (afterRuns[0] as StagedDrawRun.GlyphRun).font)
+        assertSame(page1, (afterRuns[1] as StagedDrawRun.GlyphRun).font)
+    }
+
     /** The exact-clip path stages glyph runs too; they must name their font the same way. */
     @Test
     fun aPathClippedGlyphRunKeepsItsFont() {
