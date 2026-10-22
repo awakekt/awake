@@ -17,11 +17,39 @@ package com.awakekt.awake.compose.foundation.text
  * inherits. Real line breaking wants a Unicode break iterator; this covers the Latin text the
  * component set is written in and says so rather than pretending to more.
  */
+@Suppress("LongParameterList")
+internal fun breakIntoLines(
+    text: String,
+    maxWidthPx: Float,
+    softWrap: Boolean = true,
+    maxLines: Int = Int.MAX_VALUE,
+    overflow: TextOverflow = TextOverflow.Clip,
+    ellipsize: ((text: String, maxWidthPx: Float, alwaysEllipsize: Boolean) -> String)? = null,
+    widthOf: (String) -> Float,
+): List<String> = breakIntoLineLayouts(
+    text = text,
+    maxWidthPx = maxWidthPx,
+    softWrap = softWrap,
+    maxLines = maxLines,
+    overflow = overflow,
+    ellipsize = ellipsize,
+    widthOf = widthOf,
+).map(TextLineLayout::text)
+
+/** Overload for callers specifying only maxWidthPx and widthOf. */
 internal fun breakIntoLines(
     text: String,
     maxWidthPx: Float,
     widthOf: (String) -> Float,
-): List<String> = breakIntoLineLayouts(text, maxWidthPx, widthOf).map(TextLineLayout::text)
+): List<String> = breakIntoLines(
+    text = text,
+    maxWidthPx = maxWidthPx,
+    softWrap = true,
+    maxLines = Int.MAX_VALUE,
+    overflow = TextOverflow.Clip,
+    ellipsize = null,
+    widthOf = widthOf,
+)
 
 /** One painted visual line and the matching source range, excluding a trailing line break. */
 internal data class TextLineLayout(
@@ -30,18 +58,67 @@ internal data class TextLineLayout(
     val endExclusive: Int,
 )
 
+/** Overload for callers specifying only maxWidthPx and widthOf. */
+internal fun breakIntoLineLayouts(
+    text: String,
+    maxWidthPx: Float,
+    widthOf: (String) -> Float,
+): List<TextLineLayout> = breakIntoLineLayouts(
+    text = text,
+    maxWidthPx = maxWidthPx,
+    softWrap = true,
+    maxLines = Int.MAX_VALUE,
+    overflow = TextOverflow.Clip,
+    ellipsize = null,
+    widthOf = widthOf,
+)
+
 /**
  * Splits text exactly as [breakIntoLines] does while retaining where each visual line came from.
  *
  * Caret placement, hit testing and painting must all use this one result. Reconstructing ranges by
  * searching the rendered line text fails as soon as two words repeat or a hard line is empty.
  */
+@Suppress("LongParameterList")
 internal fun breakIntoLineLayouts(
     text: String,
     maxWidthPx: Float,
+    softWrap: Boolean = true,
+    maxLines: Int = Int.MAX_VALUE,
+    overflow: TextOverflow = TextOverflow.Clip,
+    ellipsize: ((text: String, maxWidthPx: Float, alwaysEllipsize: Boolean) -> String)? = null,
     widthOf: (String) -> Float,
 ): List<TextLineLayout> {
-    val hardLines = buildList {
+    val breaker = TextBreaker(text, maxWidthPx, maxLines, overflow, ellipsize, widthOf)
+    return breaker.breakLines(softWrap)
+}
+
+@Suppress("LongParameterList")
+private class TextBreaker(
+    private val text: String,
+    private val maxWidthPx: Float,
+    maxLines: Int,
+    private val overflow: TextOverflow,
+    private val ellipsize: ((String, Float, Boolean) -> String)?,
+    private val widthOf: (String) -> Float,
+) {
+    private val limit: Int = maxLines.coerceAtLeast(1)
+    private val isBounded: Boolean = maxWidthPx > 0f && maxWidthPx != Float.POSITIVE_INFINITY
+
+    fun breakLines(softWrap: Boolean): List<TextLineLayout> {
+        val hardLines = splitHardLines()
+        if (!softWrap || !isBounded) {
+            return breakUnwrapped(hardLines)
+        }
+        val out = mutableListOf<TextLineLayout>()
+        for (i in hardLines.indices) {
+            if (out.size >= limit) break
+            processWrappedHardLine(hardLines[i], i == hardLines.lastIndex, out)
+        }
+        return out
+    }
+
+    private fun splitHardLines(): List<TextLineLayout> = buildList {
         var start = 0
         while (true) {
             val end = text.indexOf('\n', start).let { if (it < 0) text.length else it }
@@ -50,24 +127,61 @@ internal fun breakIntoLineLayouts(
             start = end + 1
         }
     }
-    if (maxWidthPx <= 0f || maxWidthPx == Float.POSITIVE_INFINITY) return hardLines
 
-    val out = mutableListOf<TextLineLayout>()
-    for (hardLine in hardLines) {
-        if (hardLine.text.isEmpty() || fits(widthOf(hardLine.text), maxWidthPx)) {
-            out += hardLine
-            continue
+    private fun breakUnwrapped(hardLines: List<TextLineLayout>): List<TextLineLayout> {
+        val count = minOf(hardLines.size, limit)
+        val out = ArrayList<TextLineLayout>(count)
+        for (i in 0 until count) {
+            val line = hardLines[i]
+            val isLast = i == limit - 1
+            val hasMore = isLast && hardLines.size > limit
+            val exceeds = isBounded && !fits(widthOf(line.text), maxWidthPx)
+            val lineText = if (shouldEllipsize(hasMore, exceeds)) {
+                applyEllipsis(line.text, hasMore)
+            } else {
+                line.text
+            }
+            out.add(TextLineLayout(lineText, line.start, line.endExclusive))
         }
+        return out
+    }
+
+    private fun processWrappedHardLine(
+        hardLine: TextLineLayout,
+        isLastHardLine: Boolean,
+        out: MutableList<TextLineLayout>,
+    ) {
+        if (hardLine.text.isEmpty() || fits(widthOf(hardLine.text), maxWidthPx)) {
+            val isLast = out.size == limit - 1
+            val hasMore = isLast && !isLastHardLine
+            val lineText = if (shouldEllipsize(hasMore, false)) {
+                applyEllipsis(hardLine.text, true)
+            } else {
+                hardLine.text
+            }
+            out += TextLineLayout(lineText, hardLine.start, hardLine.endExclusive)
+            return
+        }
+        wrapWordsIntoLines(hardLine, isLastHardLine, out)
+    }
+
+    private fun wrapWordsIntoLines(
+        hardLine: TextLineLayout,
+        isLastHardLine: Boolean,
+        out: MutableList<TextLineLayout>,
+    ) {
         var current = StringBuilder()
         var currentStart = hardLine.start
         var wordStart = hardLine.start
         while (wordStart <= hardLine.endExclusive) {
-            val wordEnd = text.indexOf(' ', wordStart).let { found ->
-                if (found < 0 || found > hardLine.endExclusive) hardLine.endExclusive else found
-            }
+            val wordEnd = nextSpace(wordStart, hardLine.endExclusive)
             val word = text.substring(wordStart, wordEnd)
             val candidate = if (current.isEmpty()) word else "$current $word"
             if (current.isNotEmpty() && !fits(widthOf(candidate), maxWidthPx)) {
+                if (out.size == limit - 1) {
+                    out += makeFinalEllipsizedLine(hardLine, currentStart, wordEnd, isLastHardLine)
+                    return
+                }
                 out += TextLineLayout(current.toString(), currentStart, wordStart - 1)
                 current = StringBuilder(word)
                 currentStart = wordStart
@@ -77,17 +191,57 @@ internal fun breakIntoLineLayouts(
             if (wordEnd == hardLine.endExclusive) break
             wordStart = wordEnd + 1
         }
-        out += TextLineLayout(current.toString(), currentStart, hardLine.endExclusive)
+        emitRemainingWrapped(current.toString(), currentStart, hardLine.endExclusive, isLastHardLine, out)
     }
-    return out
+
+    private fun nextSpace(start: Int, endExclusive: Int): Int {
+        val found = text.indexOf(' ', start)
+        return if (found < 0 || found > endExclusive) endExclusive else found
+    }
+
+    private fun makeFinalEllipsizedLine(
+        hardLine: TextLineLayout,
+        currentStart: Int,
+        wordEnd: Int,
+        isLastHardLine: Boolean,
+    ): TextLineLayout {
+        val remaining = text.substring(currentStart, hardLine.endExclusive)
+        val hasMore = !isLastHardLine || wordEnd < hardLine.endExclusive || !fits(widthOf(remaining), maxWidthPx)
+        val lineText = if (shouldEllipsize(hasMore, false)) {
+            applyEllipsis(remaining, hasMore)
+        } else {
+            remaining
+        }
+        return TextLineLayout(lineText, currentStart, hardLine.endExclusive)
+    }
+
+    private fun emitRemainingWrapped(
+        currentText: String,
+        currentStart: Int,
+        endExclusive: Int,
+        isLastHardLine: Boolean,
+        out: MutableList<TextLineLayout>,
+    ) {
+        if (currentText.isEmpty() || out.size >= limit) return
+        val isLast = out.size == limit - 1
+        val hasMore = isLast && !isLastHardLine
+        val exceeds = !fits(widthOf(currentText), maxWidthPx)
+        val lineText = if (shouldEllipsize(hasMore, exceeds)) {
+            applyEllipsis(currentText, hasMore)
+        } else {
+            currentText
+        }
+        out += TextLineLayout(lineText, currentStart, endExclusive)
+    }
+
+    private fun shouldEllipsize(hasMore: Boolean, exceeds: Boolean): Boolean =
+        overflow == TextOverflow.Ellipsis && ellipsize != null && (hasMore || exceeds)
+
+    private fun applyEllipsis(text: String, hasMore: Boolean): String =
+        ellipsize?.invoke(text, maxWidthPx, hasMore) ?: text
 }
 
 /**
  * Whether a line of [widthPx] fits in [maxWidthPx], judged on the whole pixel the line is sized to.
- *
- * A measured line is rounded to the nearest pixel, and so is the intrinsic width a parent plans
- * with. Comparing the unrounded width instead wraps the last word of a label measured at exactly
- * its own intrinsic width whenever the line rounded down: a two-word label in a FlexBox, sized to
- * its maximum intrinsic width, came back two lines tall.
  */
 private fun fits(widthPx: Float, maxWidthPx: Float): Boolean = widthPx < maxWidthPx + 0.5f

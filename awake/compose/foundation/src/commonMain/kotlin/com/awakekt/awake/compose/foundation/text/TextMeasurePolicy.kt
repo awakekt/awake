@@ -18,6 +18,7 @@ import com.awakekt.awake.compose.ui.unit.Constraints
 import com.awakekt.awake.compose.ui.unit.Density
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.core.text.font.clusterAdvance
+import com.awakekt.awake.core.text.font.ellipsize
 import com.awakekt.awake.core.text.scope.pixelPerfectTextScale
 import com.awakekt.awake.core.text.theme.TextStyle
 import com.awakekt.awake.core.text.unicode.GraphemeClusters
@@ -38,12 +39,22 @@ class TextMeasurePolicy(
     private val source: () -> String,
     internal val style: TextStyle,
     internal val font: UiFont,
-    private val singleLine: Boolean = false,
+    internal val singleLine: Boolean = false,
+    internal val overflow: TextOverflow = TextOverflow.Clip,
+    internal val softWrap: Boolean = true,
+    internal val maxLines: Int = Int.MAX_VALUE,
 ) : MeasurePolicy {
 
     /** Text that never changes for the life of this policy, which is one pass for [Text]. */
-    constructor(text: String, style: TextStyle, font: UiFont, singleLine: Boolean = false) :
-        this({ text }, style, font, singleLine)
+    constructor(
+        text: String,
+        style: TextStyle,
+        font: UiFont,
+        singleLine: Boolean = false,
+        overflow: TextOverflow = TextOverflow.Clip,
+        softWrap: Boolean = true,
+        maxLines: Int = Int.MAX_VALUE,
+    ) : this({ text }, style, font, singleLine, overflow, softWrap, maxLines)
 
     /**
      * Read here rather than captured at composition, so an editable field's content reaches the
@@ -163,7 +174,22 @@ class TextMeasurePolicy(
         private set
 
     private fun Density.linesAt(glyphPx: Float, maxWidthPx: Float): List<String> =
-        breakIntoLines(text, maxWidthPx) { lineWidth(it, glyphPx) }
+        breakIntoLines(
+            text = text,
+            maxWidthPx = maxWidthPx,
+            softWrap = softWrap && !singleLine,
+            maxLines = if (singleLine) 1 else maxLines,
+            overflow = overflow,
+            ellipsize = { str, maxW, always ->
+                font.ellipsize(
+                    text = str,
+                    maxWidthPx = maxW,
+                    glyphPx = glyphPx,
+                    weight = style.weight,
+                    alwaysEllipsize = always,
+                )
+            },
+        ) { lineWidth(it, glyphPx) }
 
     /**
      * The line box, authored where the style says so and intrinsic otherwise.
@@ -229,4 +255,15 @@ private fun safeLineHeight(styleLinePx: Float, fontLinePx: Float, lineCount: Int
 
 /** A fresh run from [TextMeasurePolicy]'s inputs and its last wrap width. */
 internal fun TextMeasurePolicy.buildRun(density: Float, fontScale: Float): TextRun =
-    TextRun(text, style, font, glyphPixels(density, fontScale), density, wrapWidthPx)
+    TextRun(
+        text = text,
+        style = style,
+        font = font,
+        glyphPx = glyphPixels(density, fontScale),
+        density = density,
+        wrapWidthPx = wrapWidthPx,
+        singleLine = singleLine,
+        overflow = overflow,
+        softWrap = softWrap,
+        maxLines = maxLines,
+    )

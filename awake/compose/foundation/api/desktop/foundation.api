@@ -779,19 +779,27 @@ public final class com/awakekt/awake/compose/foundation/text/TextFieldStateKt {
 }
 
 public final class com/awakekt/awake/compose/foundation/text/TextKt {
-	public static final fun Text (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/String;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/core/text/theme/TextStyle;)V
-	public static synthetic fun Text$default (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/String;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/core/text/theme/TextStyle;ILjava/lang/Object;)V
+	public static final fun Text (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/String;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/core/text/theme/TextStyle;Lcom/awakekt/awake/compose/foundation/text/TextOverflow;ZI)V
+	public static synthetic fun Text$default (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/String;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/core/text/theme/TextStyle;Lcom/awakekt/awake/compose/foundation/text/TextOverflow;ZIILjava/lang/Object;)V
 }
 
 public final class com/awakekt/awake/compose/foundation/text/TextMeasurePolicy : com/awakekt/awake/compose/ui/layout/MeasurePolicy {
-	public fun <init> (Ljava/lang/String;Lcom/awakekt/awake/core/text/theme/TextStyle;Lcom/awakekt/awake/core/text/font/UiFont;Z)V
-	public synthetic fun <init> (Ljava/lang/String;Lcom/awakekt/awake/core/text/theme/TextStyle;Lcom/awakekt/awake/core/text/font/UiFont;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun <init> (Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/core/text/theme/TextStyle;Lcom/awakekt/awake/core/text/font/UiFont;Z)V
-	public synthetic fun <init> (Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/core/text/theme/TextStyle;Lcom/awakekt/awake/core/text/font/UiFont;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;Lcom/awakekt/awake/core/text/theme/TextStyle;Lcom/awakekt/awake/core/text/font/UiFont;ZLcom/awakekt/awake/compose/foundation/text/TextOverflow;ZI)V
+	public synthetic fun <init> (Ljava/lang/String;Lcom/awakekt/awake/core/text/theme/TextStyle;Lcom/awakekt/awake/core/text/font/UiFont;ZLcom/awakekt/awake/compose/foundation/text/TextOverflow;ZIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/core/text/theme/TextStyle;Lcom/awakekt/awake/core/text/font/UiFont;ZLcom/awakekt/awake/compose/foundation/text/TextOverflow;ZI)V
+	public synthetic fun <init> (Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/core/text/theme/TextStyle;Lcom/awakekt/awake/core/text/font/UiFont;ZLcom/awakekt/awake/compose/foundation/text/TextOverflow;ZIILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun maxIntrinsicHeight (Lcom/awakekt/awake/compose/ui/unit/Density;Ljava/util/List;I)I
 	public fun maxIntrinsicWidth (Lcom/awakekt/awake/compose/ui/unit/Density;Ljava/util/List;I)I
 	public fun measure-D7wS3wE (Lcom/awakekt/awake/compose/ui/layout/MeasureScope;Ljava/util/List;J)Lcom/awakekt/awake/compose/ui/layout/MeasureResult;
 	public fun minIntrinsicHeight (Lcom/awakekt/awake/compose/ui/unit/Density;Ljava/util/List;I)I
 	public fun minIntrinsicWidth (Lcom/awakekt/awake/compose/ui/unit/Density;Ljava/util/List;I)I
+}
+
+public final class com/awakekt/awake/compose/foundation/text/TextOverflow : java/lang/Enum {
+	public static final field Clip Lcom/awakekt/awake/compose/foundation/text/TextOverflow;
+	public static final field Ellipsis Lcom/awakekt/awake/compose/foundation/text/TextOverflow;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/compose/foundation/text/TextOverflow;
+	public static fun values ()[Lcom/awakekt/awake/compose/foundation/text/TextOverflow;
 }
 

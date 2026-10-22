@@ -9,6 +9,7 @@ import com.awakekt.awake.compose.ui.graphics.drawscope.DrawScope
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.core.text.font.clusterAdvance
+import com.awakekt.awake.core.text.font.ellipsize
 import com.awakekt.awake.core.text.font.forEachGlyphInCluster
 import com.awakekt.awake.core.text.theme.TextStyle
 import com.awakekt.awake.core.text.unicode.GraphemeClusters
@@ -32,11 +33,30 @@ internal class TextRun(
     private val glyphPx: Float,
     private val density: Float,
     private val wrapWidthPx: Float = Float.POSITIVE_INFINITY,
+    private val singleLine: Boolean = false,
+    private val overflow: TextOverflow = TextOverflow.Clip,
+    private val softWrap: Boolean = true,
+    private val maxLines: Int = Int.MAX_VALUE,
 ) {
     private val letterSpacing = style.letterSpacing.value * density
 
     /** The visual lines this run occupies, with their source ranges. */
-    private val lineLayouts: List<TextLineLayout> = breakIntoLineLayouts(text, wrapWidthPx) { line ->
+    private val lineLayouts: List<TextLineLayout> = breakIntoLineLayouts(
+        text = text,
+        maxWidthPx = wrapWidthPx,
+        softWrap = softWrap && !singleLine,
+        maxLines = if (singleLine) 1 else maxLines,
+        overflow = overflow,
+        ellipsize = { str, maxW, always ->
+            font.ellipsize(
+                text = str,
+                maxWidthPx = maxW,
+                glyphPx = glyphPx,
+                weight = style.weight,
+                alwaysEllipsize = always,
+            )
+        },
+    ) { line ->
         widthBetween(line, 0, line.length)
     }
 
@@ -168,7 +188,7 @@ internal class TextRun(
                         u1 = uv.u1,
                         v1 = uv.v1,
                         color = color,
-                        font = font,
+                        font = font.fontFor(codePoint, style.weight),
                     )
                 }
             } + letterSpacing

@@ -95,7 +95,7 @@ internal class GlyphField(outline: List<OutlineSegment>, penX: Double, baseline:
 }
 
 /** A line or cubic in atlas texels, with what the field asks of it: crossings for winding, and the nearest point. */
-private class FieldCurve(private val p: DoubleArray, private val isLine: Boolean) {
+internal class FieldCurve(internal val p: DoubleArray, internal val isLine: Boolean) {
     private val minX = min(min(p[0], p[2]), min(p[4], p[6]))
     private val maxX = max(max(p[0], p[2]), max(p[4], p[6]))
     private val minY = min(min(p[1], p[3]), min(p[5], p[7]))

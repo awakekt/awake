@@ -44,10 +44,20 @@ fun Text(
     text: String,
     modifier: Modifier = Modifier,
     style: TextStyle = TextStyle.Default,
+    overflow: TextOverflow = TextOverflow.Clip,
+    softWrap: Boolean = true,
+    maxLines: Int = Int.MAX_VALUE,
 ) {
     val resolved = LocalTextStyle.current then style
     val font = resolved.resolveFont(LocalFont.current)
-    val policy = TextMeasurePolicy(text, resolved, font)
+    val policy = TextMeasurePolicy(
+        text = text,
+        style = resolved,
+        font = font,
+        overflow = overflow,
+        softWrap = softWrap,
+        maxLines = maxLines,
+    )
     Layout(
         nodeType = TextNodeType,
         modifier = modifier.then(TextPaintElement(policy, resolved.color ?: DefaultTextColor)),

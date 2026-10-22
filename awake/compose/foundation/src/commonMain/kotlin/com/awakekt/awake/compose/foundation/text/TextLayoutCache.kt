@@ -22,6 +22,10 @@ internal class TextLayoutCache {
     private var text: String? = null
     private var style: TextStyle? = null
     private var font: UiFont? = null
+    private var singleLine = false
+    private var overflow: TextOverflow = TextOverflow.Clip
+    private var softWrap = true
+    private var maxLines = Int.MAX_VALUE
     private var density = Float.NaN
     private var fontScale = Float.NaN
     private var wrapWidthPx = Float.NaN
@@ -54,6 +58,10 @@ internal class TextLayoutCache {
         text = policy.text
         style = policy.style
         font = policy.font
+        singleLine = policy.singleLine
+        overflow = policy.overflow
+        softWrap = policy.softWrap
+        maxLines = policy.maxLines
         this.density = density
         this.fontScale = fontScale
         this.wrapWidthPx = wrapWidthPx
@@ -75,5 +83,11 @@ internal class TextLayoutCache {
 
     /** Same characters, style and font as the stored measurement. */
     private fun shapes(policy: TextMeasurePolicy): Boolean =
-        policy.font === font && policy.style == style && policy.text == text
+        policy.font === font &&
+            policy.style == style &&
+            policy.text == text &&
+            policy.singleLine == singleLine &&
+            policy.overflow == overflow &&
+            policy.softWrap == softWrap &&
+            policy.maxLines == maxLines
 }

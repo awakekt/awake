@@ -5,6 +5,7 @@ public final class com/awakekt/awake/core/text/font/BitmapFont : com/awakekt/awa
 	public fun advanceFor (CF)F
 	public fun advanceFor-JWAxxxI (CFI)F
 	public fun advanceFor-JWAxxxI (IFI)F
+	public fun fontFor-MFPI20o (II)Lcom/awakekt/awake/core/text/font/UiFont;
 	public fun getAscentEm ()F
 	public fun getAtlasHeight ()I
 	public fun getAtlasPixelsRgba ()[B
@@ -26,8 +27,8 @@ public final class com/awakekt/awake/core/text/font/BitmapFont : com/awakekt/awa
 }
 
 public final class com/awakekt/awake/core/text/font/EllipsizeKt {
-	public static final fun ellipsize-yti5bmA (Lcom/awakekt/awake/core/text/font/UiFont;Ljava/lang/String;FFILjava/lang/String;)Ljava/lang/String;
-	public static synthetic fun ellipsize-yti5bmA$default (Lcom/awakekt/awake/core/text/font/UiFont;Ljava/lang/String;FFILjava/lang/String;ILjava/lang/Object;)Ljava/lang/String;
+	public static final fun ellipsize-W1_nTWY (Lcom/awakekt/awake/core/text/font/UiFont;Ljava/lang/String;FFILjava/lang/String;Z)Ljava/lang/String;
+	public static synthetic fun ellipsize-W1_nTWY$default (Lcom/awakekt/awake/core/text/font/UiFont;Ljava/lang/String;FFILjava/lang/String;ZILjava/lang/Object;)Ljava/lang/String;
 }
 
 public final class com/awakekt/awake/core/text/font/FontWeight {
@@ -90,6 +91,7 @@ public final class com/awakekt/awake/core/text/font/MsdfFont : com/awakekt/awake
 	public fun advanceFor (CF)F
 	public fun advanceFor-JWAxxxI (CFI)F
 	public fun advanceFor-JWAxxxI (IFI)F
+	public fun fontFor-MFPI20o (II)Lcom/awakekt/awake/core/text/font/UiFont;
 	public fun getAscentEm ()F
 	public fun getAtlasHeight ()I
 	public fun getAtlasPixelsRgba ()[B
@@ -115,6 +117,7 @@ public final class com/awakekt/awake/core/text/font/PackedUiFont : com/awakekt/a
 	public fun advanceFor (CF)F
 	public fun advanceFor-JWAxxxI (CFI)F
 	public fun advanceFor-JWAxxxI (IFI)F
+	public fun fontFor-MFPI20o (II)Lcom/awakekt/awake/core/text/font/UiFont;
 	public fun getAscentEm ()F
 	public fun getAtlasHeight ()I
 	public fun getAtlasPixelsRgba ()[B
@@ -145,6 +148,8 @@ public abstract interface class com/awakekt/awake/core/text/font/UiFont {
 	public fun advanceFor (CF)F
 	public fun advanceFor-JWAxxxI (CFI)F
 	public fun advanceFor-JWAxxxI (IFI)F
+	public fun fontFor-MFPI20o (II)Lcom/awakekt/awake/core/text/font/UiFont;
+	public static synthetic fun fontFor-MFPI20o$default (Lcom/awakekt/awake/core/text/font/UiFont;IIILjava/lang/Object;)Lcom/awakekt/awake/core/text/font/UiFont;
 	public fun getAscentEm ()F
 	public abstract fun getAtlasHeight ()I
 	public abstract fun getAtlasPixelsRgba ()[B
@@ -169,6 +174,8 @@ public final class com/awakekt/awake/core/text/font/UiFont$DefaultImpls {
 	public static fun advanceFor (Lcom/awakekt/awake/core/text/font/UiFont;CF)F
 	public static fun advanceFor-JWAxxxI (Lcom/awakekt/awake/core/text/font/UiFont;CFI)F
 	public static fun advanceFor-JWAxxxI (Lcom/awakekt/awake/core/text/font/UiFont;IFI)F
+	public static fun fontFor-MFPI20o (Lcom/awakekt/awake/core/text/font/UiFont;II)Lcom/awakekt/awake/core/text/font/UiFont;
+	public static synthetic fun fontFor-MFPI20o$default (Lcom/awakekt/awake/core/text/font/UiFont;IIILjava/lang/Object;)Lcom/awakekt/awake/core/text/font/UiFont;
 	public static fun getAscentEm (Lcom/awakekt/awake/core/text/font/UiFont;)F
 	public static fun getCapHeightEm (Lcom/awakekt/awake/core/text/font/UiFont;)F
 	public static fun getDescentEm (Lcom/awakekt/awake/core/text/font/UiFont;)F
@@ -192,6 +199,7 @@ public final class com/awakekt/awake/core/text/font/UiFontKt {
 }
 
 public final class com/awakekt/awake/core/text/font/UiFontSamplingMode : java/lang/Enum {
+	public static final field ColorRgba Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;
 	public static final field CoverageAlpha Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;
 	public static final field DistanceField Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
@@ -201,6 +209,7 @@ public final class com/awakekt/awake/core/text/font/UiFontSamplingMode : java/la
 
 public final class com/awakekt/awake/core/text/font/UiFonts {
 	public static final field DEFAULT_CHARS Ljava/lang/String;
+	public static final field DEFAULT_EMOJIS Ljava/lang/String;
 	public static final field INSTANCE Lcom/awakekt/awake/core/text/font/UiFonts;
 	public final fun bitmap (I)Lcom/awakekt/awake/core/text/font/UiFont;
 	public static synthetic fun bitmap$default (Lcom/awakekt/awake/core/text/font/UiFonts;IILjava/lang/Object;)Lcom/awakekt/awake/core/text/font/UiFont;
@@ -210,8 +219,12 @@ public final class com/awakekt/awake/core/text/font/UiFonts {
 	public final fun family (Ljava/util/Map;)Lcom/awakekt/awake/core/text/font/UiFont;
 	public final fun load ([BLjava/lang/String;Ljava/lang/String;I)Lcom/awakekt/awake/core/text/font/UiFont;
 	public static synthetic fun load$default (Lcom/awakekt/awake/core/text/font/UiFonts;[BLjava/lang/String;Ljava/lang/String;IILjava/lang/Object;)Lcom/awakekt/awake/core/text/font/UiFont;
+	public final fun loadColorFont ([BLjava/lang/String;Ljava/lang/String;I)Lcom/awakekt/awake/core/text/font/UiFont;
+	public static synthetic fun loadColorFont$default (Lcom/awakekt/awake/core/text/font/UiFonts;[BLjava/lang/String;Ljava/lang/String;IILjava/lang/Object;)Lcom/awakekt/awake/core/text/font/UiFont;
 	public final fun msdf (I)Lcom/awakekt/awake/core/text/font/UiFont;
 	public static synthetic fun msdf$default (Lcom/awakekt/awake/core/text/font/UiFonts;IILjava/lang/Object;)Lcom/awakekt/awake/core/text/font/UiFont;
+	public final fun platformEmoji (ILjava/lang/String;)Lcom/awakekt/awake/core/text/font/UiFont;
+	public static synthetic fun platformEmoji$default (Lcom/awakekt/awake/core/text/font/UiFonts;ILjava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/core/text/font/UiFont;
 	public final fun trueSans (I)Lcom/awakekt/awake/core/text/font/UiFont;
 	public static synthetic fun trueSans$default (Lcom/awakekt/awake/core/text/font/UiFonts;IILjava/lang/Object;)Lcom/awakekt/awake/core/text/font/UiFont;
 	public final fun weightedSans (I)Lcom/awakekt/awake/core/text/font/UiFont;
@@ -224,6 +237,7 @@ public final class com/awakekt/awake/core/text/font/WeightedUiFont : com/awakekt
 	public fun advanceFor (CF)F
 	public fun advanceFor-JWAxxxI (CFI)F
 	public fun advanceFor-JWAxxxI (IFI)F
+	public fun fontFor-MFPI20o (II)Lcom/awakekt/awake/core/text/font/UiFont;
 	public fun getAscentEm ()F
 	public fun getAtlasHeight ()I
 	public fun getAtlasPixelsRgba ()[B
