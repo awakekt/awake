@@ -387,7 +387,8 @@ private fun flatten(shape: PhysicsShape, unsupported: String): FlatShape = when 
         }
         const settings = new jolt.ConvexHullShapeSettings();
         settings.mPoints = points;
-        const shape = settings.Create().Get();
+        const shapeResult = settings.Create();
+        const shape = shapeResult.Get();
         const motionType = motionTypeCode === 0
             ? jolt.EMotionType_Static
             : (motionTypeCode === 1 ? jolt.EMotionType_Kinematic : jolt.EMotionType_Dynamic);
@@ -402,6 +403,7 @@ private fun flatten(shape: PhysicsShape, unsupported: String): FlatShape = when 
         jolt.destroy(bodyCreationSettings);
         jolt.destroy(rotation);
         jolt.destroy(position);
+        jolt.destroy(shapeResult);
         jolt.destroy(settings);
         jolt.destroy(points);
         const activation = isStatic ? jolt.EActivation_DontActivate : jolt.EActivation_Activate;
@@ -456,7 +458,8 @@ private external fun joltCreateHullBody(
             setCorner(tri, 2, indices[t * 3 + 2] * 3);
         }
         const settings = new jolt.MeshShapeSettings(triangles);
-        const shape = settings.Create().Get();
+        const shapeResult = settings.Create();
+        const shape = shapeResult.Get();
         const position = new jolt.RVec3(px, py, pz);
         const rotation = new jolt.Quat(qx, qy, qz, qw);
         const bodyCreationSettings = new jolt.BodyCreationSettings(
@@ -466,6 +469,7 @@ private external fun joltCreateHullBody(
         jolt.destroy(bodyCreationSettings);
         jolt.destroy(rotation);
         jolt.destroy(position);
+        jolt.destroy(shapeResult);
         jolt.destroy(settings);
         jolt.destroy(triangles);
         world.bodyInterface.AddBody(body.GetID(), jolt.EActivation_DontActivate);
@@ -521,7 +525,8 @@ private external fun jsArrayPush(arr: JsAny, value: Double)
         const scale = new jolt.Vec3(sx, sy, sz);
         settings.mOffset = offset;
         settings.mScale = scale;
-        const shape = settings.Create().Get();
+        const shapeResult = settings.Create();
+        const shape = shapeResult.Get();
         const position = new jolt.RVec3(px, py, pz);
         const rotation = new jolt.Quat(0, 0, 0, 1);
         const bodyCreationSettings = new jolt.BodyCreationSettings(
@@ -533,6 +538,7 @@ private external fun jsArrayPush(arr: JsAny, value: Double)
         jolt.destroy(position);
         jolt.destroy(scale);
         jolt.destroy(offset);
+        jolt.destroy(shapeResult);
         jolt.destroy(settings);
         jolt.destroy(heights);
         world.bodyInterface.AddBody(body.GetID(), jolt.EActivation_DontActivate);
