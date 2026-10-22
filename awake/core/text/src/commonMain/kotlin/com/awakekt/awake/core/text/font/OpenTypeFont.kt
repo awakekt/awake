@@ -42,8 +42,31 @@ internal class OpenTypeFont(bytes: ByteArray, private val name: String) {
         outlines = outlineReader(head)
     }
 
+    val cpal: CpalTable? by lazy { tables["CPAL"]?.let(::CpalTable) }
+    val colr: ColrTable? by lazy { tables["COLR"]?.let(::ColrTable) }
+    val sbix: SbixTable? by lazy { tables["sbix"]?.let { SbixTable(it, glyphCount) } }
+    val cbdt: CbdtCblcTable? by lazy {
+        val cblc = tables["CBLC"]
+        val cbdt = tables["CBDT"]
+        if (cblc != null && cbdt != null) CbdtCblcTable(cblc, cbdt) else null
+    }
+    val variationSequences: UnicodeVariationSequences? by lazy {
+        tables["cmap"]?.let(::UnicodeVariationSequences)
+    }
+
+    fun hasTable(tag: String): Boolean = tag in tables
+    fun tableOrNull(tag: String): FontTable? = tables[tag]
+
     /** The glyph [code] maps to, or 0 (`.notdef`) when the font has none. */
-    fun glyphFor(code: Int): Int = glyphForCode(code).takeIf { it in 1 until glyphCount } ?: 0
+    fun glyphFor(code: Int, variationSelector: Int = 0): Int {
+        if (variationSelector != 0) {
+            val vsGlyph = variationSequences?.findGlyph(code, variationSelector)
+            if (vsGlyph != null && vsGlyph > 0) {
+                return vsGlyph.takeIf { it in 1 until glyphCount } ?: 0
+            }
+        }
+        return glyphForCode(code).takeIf { it in 1 until glyphCount } ?: 0
+    }
 
     /** The advance of [glyph], in font units. */
     fun advance(glyph: Int): Int = horizontalMetrics.u16(4 * minOf(glyph, horizontalMetricCount - 1))
@@ -61,6 +84,7 @@ internal class OpenTypeFont(bytes: ByteArray, private val name: String) {
             glyf != null -> TrueTypeOutlines(glyf, table("loca"), head.s16(HEAD_LOCA_FORMAT) != 0, glyphCount)::outline
             cff != null -> CffOutlines(cff, glyphCount)::outline
             "CFF2" in tables -> table("CFF2").fail("holds variable outlines, which are not supported")
+            "sbix" in tables || "CBDT" in tables -> { _, _ -> }
             else -> throw IllegalArgumentException("$name has no 'glyf' or 'CFF ' table")
         }
     }
@@ -99,6 +123,16 @@ internal class FontTable(
     /** Reads an unsigned 32-bit value; one over [Int.MAX_VALUE] comes back negative and fails the next bounds check. */
     fun u32(at: Int): Int = (u16(at) shl 16) or u16(at + 2)
 
+    fun u24(at: Int): Int {
+        need(at, 3)
+        return (u16(at) shl 8) or u8(at + 2)
+    }
+
+    fun bytes(at: Int, count: Int): ByteArray {
+        need(at, count)
+        return bytes.copyOfRange(start + at, start + at + count)
+    }
+
     /** [count] bytes from [at], as a table of their own that reports with the same label. */
     fun slice(at: Int, count: Int): FontTable {
         need(at, count)
@@ -116,22 +150,31 @@ internal class FontTable(
     }
 }
 
-private fun readTableDirectory(bytes: ByteArray, name: String): Map<String, FontTable> {
+private fun readTableDirectory(bytes: ByteArray, name: String, fontIndex: Int = 0): Map<String, FontTable> {
     val header = FontTable(bytes, 0, bytes.size, "$name: the font header")
-    val problem = when (header.u32(0)) {
+    val isCollection = header.u32(0) == COLLECTION
+    val startOffset = if (isCollection) {
+        val numFonts = header.u32(8)
+        require(fontIndex in 0 until numFonts) { "$name: collection font index $fontIndex out of range ($numFonts fonts)" }
+        header.u32(12 + fontIndex * 4)
+    } else {
+        0
+    }
+    val fontHeader = FontTable(bytes, startOffset, bytes.size - startOffset, "$name: font header")
+    val magic = fontHeader.u32(0)
+    val problem = when (magic) {
         TRUETYPE, APPLE_TRUETYPE, OPENTYPE_CFF -> null
-        COLLECTION -> "is a font collection; load one font from it"
         WOFF, WOFF2 -> "is a WOFF file; load the TrueType or OpenType font"
         else -> "is not a TrueType or OpenType font"
     }
     require(problem == null) { "$name $problem" }
-    val count = header.u16(TABLE_COUNT)
+    val count = fontHeader.u16(TABLE_COUNT)
     return buildMap {
         repeat(count) { index ->
             val record = DIRECTORY_SIZE + index * RECORD_SIZE
-            val tag = header.u32(record).let { raw -> CharArray(4) { (raw ushr (24 - 8 * it) and 0xFF).toChar() }.concatToString() }
-            val offset = header.u32(record + RECORD_OFFSET)
-            val length = header.u32(record + RECORD_LENGTH)
+            val tag = fontHeader.u32(record).let { raw -> CharArray(4) { (raw ushr (24 - 8 * it) and 0xFF).toChar() }.concatToString() }
+            val offset = fontHeader.u32(record + RECORD_OFFSET)
+            val length = fontHeader.u32(record + RECORD_LENGTH)
             require(offset >= 0 && length >= 0 && offset <= bytes.size - length) { "$name: '$tag' table lies outside the file" }
             put(tag, FontTable(bytes, offset, length, "$name: '$tag' table"))
         }

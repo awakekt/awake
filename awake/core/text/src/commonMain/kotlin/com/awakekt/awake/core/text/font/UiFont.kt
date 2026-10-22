@@ -17,6 +17,9 @@ enum class UiFontSamplingMode {
 
     /** Multi-channel or signed distance field sampling for sharp rendering across scales. */
     DistanceField,
+
+    /** Full-colour RGBA sampling for colour emoji and pre-rendered graphic glyphs. */
+    ColorRgba,
 }
 
 /**
@@ -161,6 +164,15 @@ interface UiFont {
      */
     fun advanceFor(codePoint: Int, glyphPx: Float, weight: FontWeight): Float =
         advanceFor(codePoint.toBmpCharOrNull() ?: REPLACEMENT_CHARACTER, glyphPx, weight)
+
+    /**
+     * Resolves the underlying [UiFont] that provides the atlas for [codePoint] at [weight].
+     *
+     * Single-face fonts and families sharing an atlas return 	his.
+     * A fallback chain containing faces with disparate sampling modes (such as colour emoji)
+     * returns the specific face that owns the glyph.
+     */
+    fun fontFor(codePoint: Int, weight: FontWeight = FontWeight.Normal): UiFont = this
 }
 
 /** U+FFFD, what a code point a `Char` cannot hold is looked up as. */

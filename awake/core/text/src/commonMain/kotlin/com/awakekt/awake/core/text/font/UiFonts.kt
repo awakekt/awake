@@ -81,14 +81,13 @@ object UiFonts {
      * A font that draws each char from the first of [primary] and [fallbacks] that has it, so text
      * in a script the primary font lacks, such as Hangul or Cyrillic beside Roboto, still draws.
      *
-     * Line metrics come from [primary]. Every face must sample the same way, as fonts made by [load]
-     * and the built-in Roboto do. The faces' atlases are combined into one, once, so build the chain
-     * when a locale's fonts load and keep it, not every frame.
+     * Line metrics come from [primary]. Faces sharing [primary]'s sampling mode combine their atlases
+     * into one; faces with disparate sampling modes (e.g. colour emoji) remain distinct and draw via
+     * multi-font batching. Build the chain once when fonts load and keep it, not every frame.
      *
      * @param primary The font tried first, whose metrics the text lays out with.
      * @param fallbacks The fonts tried next, in order.
      * @return [primary] itself when there are no [fallbacks], else the chain.
-     * @throws IllegalArgumentException when a face samples differently from [primary].
      */
     fun fallback(primary: UiFont, fallbacks: List<UiFont>): UiFont =
         if (fallbacks.isEmpty()) primary else FallbackUiFont(listOf(primary) + fallbacks)
@@ -104,6 +103,44 @@ object UiFonts {
     /** The chars [load] bakes when a caller names none: the built-in atlas's own set, printable ASCII plus • · … – — × −. */
     const val DEFAULT_CHARS: String =
         " !\"#\$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~•·…–—×−"
+
+    /**
+     * Standard curated emoji set baked by [platformEmoji] and [loadColorFont] when no specific emojis are named.
+     */
+    const val DEFAULT_EMOJIS: String =
+        "😀😃😄😁😆😅🤣😂🙂🙃😉😊😇🥰😍🤩😘😗😚😋😛😜🤪😝🤑🤗🤭🤫🤔🤐🤨😐😑😶😏😒🙄😬🤥😌😔😪🤤😴" +
+            "😷🤒🤕🤢🤮🤧🥵🥶🥴😵🤯🤠🥳🥸😎🤓🧐😕😟🙁☹️😮😯😲😳🥺😦😧😨😰😥😢😭😱😖😣😞😓😩😫🥱😤😡" +
+            "😠🤬😈👿💀☠️💩🤡👙👪👻👽👾🤖👋🤚🖐️✋🖖🤏✌️🤞🤟🤘🤙👈👉👆🖕👇☝️👍👎✊👊🤛🤜👏🙌👐🤲🤝🙏" +
+            "❤️🧡💛💚💙💜🖤🤍🤎💔❣️💕💞💓💗💖💘💝⭐🌟✨⚡🔥💥🎉🎊🏆🥇🥈🥉🎯🚀💡📌📍📎✏️🔍🔒🔔📢💬💭💯✔️❌⚠️ℹ️⛔🛑"
+
+    /**
+     * Loads a TrueType, OpenType, or TrueType Collection font file containing colour glyphs (COLRv0/CPAL,
+     * CBDT/CBLC, or sbix) and bakes [emojis] into an RGBA atlas.
+     *
+     * @param bytes The font file bytes.
+     * @param name Names the font in error messages.
+     * @param emojis The emojis to bake into the atlas.
+     * @param cellSize The base cell size in pixels.
+     * @return A [UiFont] sampled in [UiFontSamplingMode.ColorRgba].
+     */
+    fun loadColorFont(
+        bytes: ByteArray,
+        name: String,
+        emojis: String = DEFAULT_EMOJIS,
+        cellSize: Int = 16,
+    ): UiFont = PackedUiFont(ColorUiFontData.load(bytes, name, emojis, cellSize), cellSize = cellSize)
+
+    /**
+     * Loads the host platform's system colour emoji font if available, baking [emojis] into an RGBA atlas.
+     *
+     * @param cellSize The base cell size in pixels.
+     * @param emojis The emojis to bake into the atlas.
+     * @return A [UiFont] sampled in [UiFontSamplingMode.ColorRgba], or null if no system emoji font is available.
+     */
+    fun platformEmoji(cellSize: Int = 16, emojis: String = DEFAULT_EMOJIS): UiFont? {
+        val bytes = readPlatformEmojiFontBytes() ?: return null
+        return runCatching { loadColorFont(bytes, "PlatformEmoji", emojis, cellSize) }.getOrNull()
+    }
 
     /**
      * Loads a TrueType (`.ttf`) or OpenType (`.otf`) font from its file's bytes and bakes [chars] into a

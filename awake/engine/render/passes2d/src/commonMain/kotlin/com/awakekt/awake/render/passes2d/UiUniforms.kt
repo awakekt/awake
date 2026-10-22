@@ -48,4 +48,13 @@ fun uiUniformFloats(screenToNdc: Vec4, fontInfo: Vec4 = Vec4(0f, 0f, 0f, 0f)): F
  * texture itself, so two fonts differ only in these lanes and share one pipeline.
  */
 fun uiFontInfo(info: UiFontSamplingInfo): Vec4 =
-    Vec4(if (info.mode == UiFontSamplingMode.DistanceField) 1f else 0f, info.distanceFieldRangePx, 0f, 0f)
+    Vec4(
+        when (info.mode) {
+            UiFontSamplingMode.CoverageAlpha -> 0f
+            UiFontSamplingMode.DistanceField -> 1f
+            UiFontSamplingMode.ColorRgba -> 2f
+        },
+        info.distanceFieldRangePx,
+        0f,
+        0f,
+    )

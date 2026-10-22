@@ -258,7 +258,9 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
 
     fun sampleGlyphAlpha(font: UiFont, glyph: UiDrawPrimitive.Glyph, u: Float, v: Float): Int {
         val coverage = when (font.samplingMode) {
-            UiFontSamplingMode.CoverageAlpha -> sampleAtlasChannel(font, u, v, 3)
+            UiFontSamplingMode.CoverageAlpha,
+            UiFontSamplingMode.ColorRgba,
+            -> sampleAtlasChannel(font, u, v, 3)
             UiFontSamplingMode.DistanceField -> {
                 val signedDistance = median3(
                     sampleAtlasChannel(font, u, v, 0),
@@ -372,7 +374,65 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
         }
     }
 
+    fun drawColorGlyph(glyph: UiDrawPrimitive.Glyph, font: UiFont) {
+        val x0 = max(glyph.x, clipX0).toInt().coerceIn(0, width)
+        val y0 = max(glyph.y, clipY0).toInt().coerceIn(0, height)
+        val x1 = min(glyph.x + glyph.w, clipX1).toInt().coerceIn(0, width)
+        val y1 = min(glyph.y + glyph.h, clipY1).toInt().coerceIn(0, height)
+        val sourceTexelsX = (glyph.u1 - glyph.u0) * font.atlasWidth
+        val sourceTexelsY = (glyph.v1 - glyph.v0) * font.atlasHeight
+        val samplesX = glyphSampleCount(sourceTexelsX, glyph.w)
+        val samplesY = glyphSampleCount(sourceTexelsY, glyph.h)
+        val sampleCount = (samplesX * samplesY).toFloat()
+
+        var py = y0
+        while (py < y1) {
+            var px = x0
+            while (px < x1) {
+                if (!passesPathClips(px + 0.5f, py + 0.5f)) {
+                    px += 1
+                    continue
+                }
+                var rSum = 0f
+                var gSum = 0f
+                var bSum = 0f
+                var aSum = 0f
+                for (sy in 0 until samplesY) {
+                    for (sx in 0 until samplesX) {
+                        val sampleX = px + (sx + 0.5f) / samplesX
+                        val sampleY = py + (sy + 0.5f) / samplesY
+                        val u = ((sampleX - glyph.x) / glyph.w).coerceIn(0f, 0.9999f)
+                        val v = ((sampleY - glyph.y) / glyph.h).coerceIn(0f, 0.9999f)
+                        val su = glyph.u0 + (glyph.u1 - glyph.u0) * u
+                        val sv = glyph.v0 + (glyph.v1 - glyph.v0) * v
+                        rSum += sampleAtlasChannel(font, su, sv, 0)
+                        gSum += sampleAtlasChannel(font, su, sv, 1)
+                        bSum += sampleAtlasChannel(font, su, sv, 2)
+                        aSum += sampleAtlasChannel(font, su, sv, 3)
+                    }
+                }
+                val alpha = (aSum / sampleCount) * glyph.color.a
+                if (alpha > 0f) {
+                    pixelMap.blend(
+                        px,
+                        py,
+                        (rSum / sampleCount) * 255f,
+                        (gSum / sampleCount) * 255f,
+                        (bSum / sampleCount) * 255f,
+                        alpha,
+                    )
+                }
+                px += 1
+            }
+            py += 1
+        }
+    }
+
     fun drawGlyph(glyph: UiDrawPrimitive.Glyph, font: UiFont) {
+        if (font.samplingMode == UiFontSamplingMode.ColorRgba) {
+            drawColorGlyph(glyph, font)
+            return
+        }
         val x0 = max(glyph.x, clipX0).toInt().coerceIn(0, width)
         val y0 = max(glyph.y, clipY0).toInt().coerceIn(0, height)
         val x1 = min(glyph.x + glyph.w, clipX1).toInt().coerceIn(0, width)

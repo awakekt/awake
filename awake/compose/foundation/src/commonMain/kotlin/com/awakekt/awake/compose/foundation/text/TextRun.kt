@@ -188,7 +188,7 @@ internal class TextRun(
                         u1 = uv.u1,
                         v1 = uv.v1,
                         color = color,
-                        font = font,
+                        font = font.fontFor(codePoint, style.weight),
                     )
                 }
             } + letterSpacing

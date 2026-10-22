@@ -171,10 +171,14 @@ val UiGlyphShader: AslShaderDefinition = shader("ui_glyph") {
             "correctedCoverage",
             pow(coverage, 1f.lit / 1.45f.lit),
         )
-        iff(fontInfo.x gt 0.5f.lit) {
+        iff(fontInfo.x gt 0.5f.lit and (fontInfo.x lt 1.5f.lit)) {
             assign(glyphAlpha, correctedCoverage)
         }
-        colorOutput(vec4(color.rgb, color.a * glyphAlpha))
+        val outColor = variable("outColor", vec4(color.rgb, color.a * glyphAlpha))
+        iff(fontInfo.x gt 1.5f.lit) {
+            assign(outColor, vec4(atlas.rgb, atlas.a * color.a))
+        }
+        colorOutput(outColor)
     }
 }
 

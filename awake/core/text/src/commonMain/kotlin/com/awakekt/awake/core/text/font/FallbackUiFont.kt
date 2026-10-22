@@ -11,24 +11,19 @@ package com.awakekt.awake.core.text.font
  * Faces are asked by code point, not `Char`, so a face that draws emoji or CJK Extension B
  * ideographs is found for them too.
  *
- * Like [WeightedUiFont], the faces' atlases are stacked into one texture once, and each glyph gets
- * UVs in its own face's slice, so a line mixing scripts still draws from one atlas.
+ * Faces that share the primary face's sampling mode are stacked into one atlas texture so a line mixing
+ * scripts still draws from one atlas in a single batch. Faces with disparate sampling modes (e.g.
+ * full-colour emoji beside distance-field text) remain distinct and are resolved via [fontFor]
+ * so each draws with its appropriate shader and texture atlas.
  */
+@Suppress("TooManyFunctions")
 internal class FallbackUiFont(private val faces: List<UiFont>) : UiFont {
     private val primary: UiFont = faces.first()
-
-    init {
-        faces.forEach {
-            require(it.samplingMode == primary.samplingMode) {
-                "A fallback font samples as ${it.samplingMode}, but the primary font samples as ${primary.samplingMode}."
-            }
-        }
-    }
-
-    private val offsets: IntArray = IntArray(faces.size).also { out ->
+    private val stackedFaces: List<UiFont> = faces.filter { it.samplingMode == primary.samplingMode }
+    private val stackedOffsets: Map<UiFont, Int> = buildMap {
         var y = 0
-        faces.forEachIndexed { index, face ->
-            out[index] = y
+        stackedFaces.forEach { face ->
+            put(face, y)
             y += face.atlasHeight
         }
     }
@@ -36,8 +31,8 @@ internal class FallbackUiFont(private val faces: List<UiFont>) : UiFont {
     override val samplingMode: UiFontSamplingMode = primary.samplingMode
     override val cellSize: Int = primary.cellSize
     override val textScaleStep: Float = primary.textScaleStep
-    override val atlasWidth: Int = faces.maxOf { it.atlasWidth }
-    override val atlasHeight: Int = faces.sumOf { it.atlasHeight }
+    override val atlasWidth: Int = stackedFaces.maxOf { it.atlasWidth }
+    override val atlasHeight: Int = stackedFaces.sumOf { it.atlasHeight }
     override val atlasPixelsRgba: ByteArray by lazy(::combineAtlases)
     override val lineHeightEm: Float = primary.lineHeightEm
     override val distanceFieldRangePx: Float = primary.distanceFieldRangePx
@@ -58,14 +53,24 @@ internal class FallbackUiFont(private val faces: List<UiFont>) : UiFont {
     override fun glyphFor(codePoint: Int, weight: FontWeight): GlyphRect? {
         val index = faceIndex(codePoint)
         val face = faces[index]
-        val glyph = face.glyphFor(codePoint, weight) ?: return null
-        val yOffset = offsets[index]
-        return glyph.copy(
-            u0 = glyph.u0 * face.atlasWidth / atlasWidth,
-            u1 = glyph.u1 * face.atlasWidth / atlasWidth,
-            v0 = (glyph.v0 * face.atlasHeight + yOffset) / atlasHeight,
-            v1 = (glyph.v1 * face.atlasHeight + yOffset) / atlasHeight,
-        )
+        val glyph = face.glyphFor(codePoint, weight)
+        return when {
+            glyph == null || face.samplingMode != primary.samplingMode -> glyph
+            else -> {
+                val yOffset = stackedOffsets[face] ?: 0
+                glyph.copy(
+                    u0 = glyph.u0 * face.atlasWidth / atlasWidth,
+                    u1 = glyph.u1 * face.atlasWidth / atlasWidth,
+                    v0 = (glyph.v0 * face.atlasHeight + yOffset) / atlasHeight,
+                    v1 = (glyph.v1 * face.atlasHeight + yOffset) / atlasHeight,
+                )
+            }
+        }
+    }
+
+    override fun fontFor(codePoint: Int, weight: FontWeight): UiFont {
+        val face = faces[faceIndex(codePoint)]
+        return if (face.samplingMode == primary.samplingMode) this else face.fontFor(codePoint, weight)
     }
 
     override fun advanceFor(char: Char, glyphPx: Float): Float = faces[faceIndex(char.code)].advanceFor(char, glyphPx)
@@ -85,13 +90,14 @@ internal class FallbackUiFont(private val faces: List<UiFont>) : UiFont {
 
     private fun combineAtlases(): ByteArray {
         val result = ByteArray(atlasWidth * atlasHeight * RGBA_CHANNELS)
-        faces.forEachIndexed { index, face ->
+        stackedFaces.forEach { face ->
+            val yOffset = stackedOffsets[face] ?: 0
             val source = face.atlasPixelsRgba
             val rowBytes = face.atlasWidth * RGBA_CHANNELS
             repeat(face.atlasHeight) { row ->
                 source.copyInto(
                     destination = result,
-                    destinationOffset = ((offsets[index] + row) * atlasWidth) * RGBA_CHANNELS,
+                    destinationOffset = ((yOffset + row) * atlasWidth) * RGBA_CHANNELS,
                     startIndex = row * rowBytes,
                     endIndex = (row + 1) * rowBytes,
                 )
