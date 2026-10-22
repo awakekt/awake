@@ -101,8 +101,10 @@ internal class GpuFrameTimer private constructor(private val device: GPUDevice) 
     }
 
     fun destroy() {
-        scope.cancel()
+        // Close buffers before cancelling scope so wgpu4k terminates any in-flight mapAsync
+        // via buffer closure rather than calling wgpuBufferUnmap on a still-pending buffer.
         resources.forEach(Resources::close)
+        scope.cancel()
         resources.clear()
         available.clear()
         pending.clear()
