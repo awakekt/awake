@@ -27,6 +27,9 @@ import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.compose.ui.unit.sp
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.text.font.FontWeight
+import com.awakekt.awake.core.text.font.GlyphRect
+import com.awakekt.awake.core.text.font.UiFont
+import com.awakekt.awake.core.text.font.UiFontSamplingMode
 import com.awakekt.awake.core.text.font.UiFonts
 import com.awakekt.awake.core.text.theme.TextStyle
 import kotlin.test.Test
@@ -352,4 +355,55 @@ class TextPaintingTest {
 
         assertTrue(glyphs.single().x >= 12f, "the padding was ignored when painting")
     }
+
+    @Test
+    fun mixedScriptLineBatchesGlyphsByAtlasPage() {
+        val face1 = StubUiFont(atlasHeight = 60, charCodes = setOf('A'.code, 'C'.code, 'E'.code))
+        val face2 = StubUiFont(atlasHeight = 50, charCodes = setOf('B'.code, 'D'.code, 'F'.code))
+        val fallback = UiFonts.fallback(face1, listOf(face2), maxAtlasHeight = 100)
+
+        assertEquals(2, fallback.atlasPages.size)
+        val page0 = fallback.atlasPages[0]
+        val page1 = fallback.atlasPages[1]
+
+        val glyphs = glyphsOf {
+            Text("ABCDEF", style = TextStyle(font = fallback))
+        }
+
+        assertEquals(6, glyphs.size)
+        // Glyphs for Page 0 are emitted consecutively, then glyphs for Page 1
+        assertSame(page0, glyphs[0].font)
+        assertSame(page0, glyphs[1].font)
+        assertSame(page0, glyphs[2].font)
+        assertSame(page1, glyphs[3].font)
+        assertSame(page1, glyphs[4].font)
+        assertSame(page1, glyphs[5].font)
+
+        assertEquals(0, glyphs[0].page)
+        assertEquals(0, glyphs[1].page)
+        assertEquals(0, glyphs[2].page)
+        assertEquals(1, glyphs[3].page)
+        assertEquals(1, glyphs[4].page)
+        assertEquals(1, glyphs[5].page)
+    }
+}
+
+private class StubUiFont(
+    override val atlasWidth: Int = 100,
+    override val atlasHeight: Int = 50,
+    private val charCodes: Set<Int> = emptySet(),
+    override val samplingMode: UiFontSamplingMode = UiFontSamplingMode.DistanceField,
+) : UiFont {
+    override val cellSize: Int = 12
+    override val textScaleStep: Float = 1f
+    override val atlasPixelsRgba: ByteArray = ByteArray(atlasWidth * atlasHeight * 4)
+
+    override fun uvFor(char: Char): GlyphRect? =
+        if (char.code in charCodes) GlyphRect(0f, 0f, 1f, 1f) else null
+
+    override fun hasGlyph(codePoint: Int): Boolean = codePoint in charCodes
+    override fun hasGlyph(char: Char): Boolean = char.code in charCodes
+    override fun glyphFor(char: Char, weight: FontWeight): GlyphRect? = uvFor(char)
+    override fun glyphFor(codePoint: Int, weight: FontWeight): GlyphRect? =
+        if (codePoint in charCodes) GlyphRect(0f, 0f, 1f, 1f) else null
 }

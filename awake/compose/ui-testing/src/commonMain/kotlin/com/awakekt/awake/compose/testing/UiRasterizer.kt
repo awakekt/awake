@@ -625,7 +625,7 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
                     primitive.transform,
                 ) { x, y, w, h ->
                     val scaledGlyph = if (primitive.transform == null) primitive else primitive.copy(x = x, y = y, w = w, h = h)
-                    val glyphFont = primitive.font ?: font
+                    val glyphFont = (primitive.font ?: font)?.pageFont(primitive.page)
                     if (glyphFont != null) drawGlyph(scaledGlyph, glyphFont) else fillRect(x, y, w, h, MissingFontColor)
                 }
             }

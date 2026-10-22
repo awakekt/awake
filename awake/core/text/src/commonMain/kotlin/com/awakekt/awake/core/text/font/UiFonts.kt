@@ -8,6 +8,7 @@ package com.awakekt.awake.core.text.font
 /**
  * Factory and registry providing pre-configured standard UI font instances and families.
  */
+@Suppress("TooManyFunctions")
 object UiFonts {
     // Memoized: a renderer uploads one atlas per UiFont instance and keeps it, keyed by
     // identity, on the assumption that independent callers asking for "the default font" get
@@ -77,6 +78,9 @@ object UiFonts {
      */
     fun family(faces: Map<FontWeight, UiFont>): UiFont = WeightedUiFont(faces)
 
+    /** Default maximum pixel height of a single font atlas page texture before splitting into multiple pages. */
+    const val DEFAULT_MAX_ATLAS_HEIGHT: Int = 8192
+
     /**
      * A font that draws each char from the first of [primary] and [fallbacks] that has it, so text
      * in a script the primary font lacks, such as Hangul or Cyrillic beside Roboto, still draws.
@@ -90,7 +94,19 @@ object UiFonts {
      * @return [primary] itself when there are no [fallbacks], else the chain.
      */
     fun fallback(primary: UiFont, fallbacks: List<UiFont>): UiFont =
-        if (fallbacks.isEmpty()) primary else FallbackUiFont(listOf(primary) + fallbacks)
+        fallback(primary, fallbacks, DEFAULT_MAX_ATLAS_HEIGHT)
+
+    /**
+     * A font that draws each char from the first of [primary] and [fallbacks] that has it, splitting
+     * faces across multiple atlas pages when their combined height exceeds [maxAtlasHeight].
+     *
+     * @param primary The font tried first, whose metrics the text lays out with.
+     * @param fallbacks The fonts tried next, in order.
+     * @param maxAtlasHeight Maximum height in pixels of a single atlas page (default 8192).
+     * @return [primary] itself when there are no [fallbacks], else the chain.
+     */
+    fun fallback(primary: UiFont, fallbacks: List<UiFont>, maxAtlasHeight: Int): UiFont =
+        if (fallbacks.isEmpty()) primary else FallbackUiFont(listOf(primary) + fallbacks, maxAtlasHeight)
 
     /**
      * Creates a multi-channel signed distance field (MSDF) font instance.

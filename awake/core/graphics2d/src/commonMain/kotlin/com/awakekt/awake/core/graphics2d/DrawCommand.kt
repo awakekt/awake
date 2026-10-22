@@ -159,6 +159,7 @@ sealed class DrawCommand {
      * @property font The font whose atlas the UVs index, compared by identity, or null for the font
      * the frame is drawn with (`Renderer.drawUi`'s). A renderer splits a glyph batch wherever this
      * changes, so glyphs of several fonts draw in one frame in paint order.
+     * @property page The zero-based atlas page index within the font.
      */
     data class Glyph(
         val x: Float,
@@ -173,6 +174,7 @@ sealed class DrawCommand {
         val tokenId: String? = null,
         val transform: DrawTransform? = null,
         val font: UiFont? = null,
+        val page: Int = 0,
     ) : UiDrawPrimitive()
 
     /**

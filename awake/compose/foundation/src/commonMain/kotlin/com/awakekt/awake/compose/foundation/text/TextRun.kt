@@ -153,43 +153,60 @@ internal class TextRun(
         val snap = scope.isDevicePixelAligned
         val originX = if (snap) wholePixel(offsetX) else offsetX
         val ascentPx = font.ascentEm * glyphPx
-        var y = offsetY
-        // Indexed: this runs for every text node every frame, and a List iterator is an allocation.
-        for (i in lineLayouts.indices) {
-            var top = y + lineTopPaddingPx
-            if (snap) {
-                val baseline = top + ascentPx
-                top += wholePixel(baseline) - baseline
+        val pages = font.atlasPages
+        val pageCount = pages.size
+        val passes = if (pageCount <= 1) 1 else pageCount
+        for (p in 0 until passes) {
+            val targetPage = if (pageCount <= 1) null else pages[p]
+            var y = offsetY
+            // Indexed: this runs for every text node every frame, and a List iterator is an allocation.
+            for (i in lineLayouts.indices) {
+                var top = y + lineTopPaddingPx
+                if (snap) {
+                    val baseline = top + ascentPx
+                    top += wholePixel(baseline) - baseline
+                }
+                paintLine(lineLayouts[i].text, scope, color, originX, top, targetPage)
+                y += lineHeightPx
             }
-            paintLine(lineLayouts[i].text, scope, color, originX, top)
-            y += lineHeightPx
         }
     }
 
     /** [value] rounded half up to a whole pixel. */
     private fun wholePixel(value: Float): Float = floor(value + 0.5f)
 
-    private fun paintLine(line: String, scope: DrawScope, color: Color, offsetX: Float, y: Float) {
+    private fun paintLine(
+        line: String,
+        scope: DrawScope,
+        color: Color,
+        offsetX: Float,
+        y: Float,
+        targetPage: UiFont? = null,
+    ) {
         var x = offsetX
         var start = 0
         while (start < line.length) {
             val end = GraphemeClusters.nextBoundary(line, start)
             val clusterX = x
             x += font.forEachGlyphInCluster(line, start, end, glyphPx, style.weight) { codePoint, penX ->
-                val uv = font.glyphFor(codePoint, style.weight)
-                if (uv != null) {
-                    scope.drawGlyph(
-                        x = clusterX + penX + uv.offsetXEm * glyphPx,
-                        y = y + uv.offsetYEm * glyphPx,
-                        width = uv.widthEm * glyphPx,
-                        height = uv.heightEm * glyphPx,
-                        u0 = uv.u0,
-                        v0 = uv.v0,
-                        u1 = uv.u1,
-                        v1 = uv.v1,
-                        color = color,
-                        font = font.fontFor(codePoint, style.weight),
-                    )
+                val glyphFont = font.fontFor(codePoint, style.weight)
+                if (targetPage == null || glyphFont === targetPage) {
+                    val uv = font.glyphFor(codePoint, style.weight)
+                    if (uv != null) {
+                        scope.drawGlyph(
+                            x = clusterX + penX + uv.offsetXEm * glyphPx,
+                            y = y + uv.offsetYEm * glyphPx,
+                            width = uv.widthEm * glyphPx,
+                            height = uv.heightEm * glyphPx,
+                            u0 = uv.u0,
+                            v0 = uv.v0,
+                            u1 = uv.u1,
+                            v1 = uv.v1,
+                            color = color,
+                            font = glyphFont,
+                            page = uv.page,
+                        )
+                    }
                 }
             } + letterSpacing
             start = end
