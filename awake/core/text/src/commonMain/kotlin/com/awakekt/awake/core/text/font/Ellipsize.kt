@@ -22,6 +22,7 @@ import com.awakekt.awake.core.text.unicode.GraphemeClusters
  * @param glyphPx The font size in pixels.
  * @param weight The face to measure with.
  * @param ellipsis What marks the cut: U+2026 HORIZONTAL ELLIPSIS unless told otherwise.
+ * @param alwaysEllipsize When true, append [ellipsis] (and trim [text] if necessary) even if [text] fits within [maxWidthPx].
  */
 fun UiFont.ellipsize(
     text: String,
@@ -29,8 +30,9 @@ fun UiFont.ellipsize(
     glyphPx: Float,
     weight: FontWeight = FontWeight.Normal,
     ellipsis: String = "\u2026",
+    alwaysEllipsize: Boolean = false,
 ): String {
-    if (measureTextWidth(text, glyphPx, weight) <= maxWidthPx) return text
+    if (!alwaysEllipsize && measureTextWidth(text, glyphPx, weight) <= maxWidthPx) return text
     val ellipsisWidth = measureTextWidth(ellipsis, glyphPx, weight)
     return if (ellipsisWidth > maxWidthPx) {
         ""

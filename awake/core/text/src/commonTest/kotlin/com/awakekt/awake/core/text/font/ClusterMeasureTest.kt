@@ -65,6 +65,11 @@ class ClusterMeasureTest {
         assertEquals("Ha...", font.ellipsize("Harbor Town", font.measureTextWidth("Ha...", glyphPx) + 0.01f, glyphPx, ellipsis = "..."))
     }
 
+    @Test
+    fun ellipsizeWithAlwaysEllipsizeAppendsEllipsisEvenWhenTextFits() {
+        assertEquals("Harbor\u2026", font.ellipsize("Harbor", 1000f, glyphPx, alwaysEllipsize = true))
+    }
+
     private companion object {
         const val FAMILY = "\uD83D\uDC68\u200D\uD83D\uDC69\u200D\uD83D\uDC67"
         const val THUMBS_UP_MEDIUM = "\uD83D\uDC4D\uD83C\uDFFD"

@@ -12,6 +12,7 @@ import com.awakekt.awake.compose.foundation.layout.padding
 import com.awakekt.awake.compose.foundation.layout.width
 import com.awakekt.awake.compose.foundation.text.Text
 import com.awakekt.awake.compose.foundation.text.TextMeasurePolicy
+import com.awakekt.awake.compose.foundation.text.TextOverflow
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.CompositionLocalProvider
 import com.awakekt.awake.compose.ui.Modifier
@@ -151,6 +152,85 @@ class TextTest {
 
         assertEquals(policy, node.measurePolicy, "no re-entry replaced the policy mid-pass")
         assertTrue(node.width > 0)
+    }
+
+    @Test
+    fun textWithMaxLinesOneAndEllipsisCutsWithEllipsis() {
+        val root = LayoutNode(BoxMeasurePolicy())
+        composeInto(root) {
+            Text(
+                "The quick brown fox jumps over the lazy dog",
+                Modifier.width(60.dp),
+                overflow = TextOverflow.Ellipsis,
+                maxLines = 1,
+            )
+        }
+        root.layoutTree(Constraints.of(0, 400, 0, 400))
+        val policy = root.children[0].measurePolicy as TextMeasurePolicy
+        val lines = policy.runFor(1f, 1f).lines
+        assertEquals(1, lines.size)
+        assertTrue(lines[0].endsWith("\u2026"), "line must end with ellipsis: ${lines[0]}")
+    }
+
+    @Test
+    fun textWithMaxLinesTwoAndEllipsisCutsSecondLineWithEllipsis() {
+        val root = LayoutNode(BoxMeasurePolicy())
+        composeInto(root) {
+            Text(
+                "The quick brown fox jumps over the lazy dog and runs across the field",
+                Modifier.width(60.dp),
+                overflow = TextOverflow.Ellipsis,
+                maxLines = 2,
+            )
+        }
+        root.layoutTree(Constraints.of(0, 400, 0, 400))
+        val policy = root.children[0].measurePolicy as TextMeasurePolicy
+        val lines = policy.runFor(1f, 1f).lines
+        assertEquals(2, lines.size)
+        assertTrue(lines[1].endsWith("\u2026"), "second line must end with ellipsis: ${lines[1]}")
+    }
+
+    @Test
+    fun textWithSoftWrapFalseAndEllipsisCutsUnwrappedLine() {
+        val root = LayoutNode(BoxMeasurePolicy())
+        composeInto(root) {
+            Text(
+                "The quick brown fox jumps over the lazy dog",
+                Modifier.width(50.dp),
+                softWrap = false,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        root.layoutTree(Constraints.of(0, 400, 0, 400))
+        val policy = root.children[0].measurePolicy as TextMeasurePolicy
+        val lines = policy.runFor(1f, 1f).lines
+        assertEquals(1, lines.size)
+        assertTrue(lines[0].endsWith("\u2026"), "line must end with ellipsis: ${lines[0]}")
+    }
+
+    @Test
+    fun textEllipsisNeverSplitsGraphemeCluster() {
+        val family = "\uD83D\uDC68\u200D\uD83D\uDC69\u200D\uD83D\uDC67"
+        val root = LayoutNode(BoxMeasurePolicy())
+        composeInto(root) {
+            Text(
+                "Hi $family and friends",
+                Modifier.width(35.dp),
+                overflow = TextOverflow.Ellipsis,
+                maxLines = 1,
+            )
+        }
+        root.layoutTree(Constraints.of(0, 400, 0, 400))
+        val policy = root.children[0].measurePolicy as TextMeasurePolicy
+        val lines = policy.runFor(1f, 1f).lines
+        assertEquals(1, lines.size)
+        val line = lines[0]
+        assertTrue(line.endsWith("\u2026"))
+        val content = line.removeSuffix("\u2026")
+        assertTrue(
+            content == "Hi" || content == "Hi $family",
+            "cluster was split into partial code points: $content",
+        )
     }
 }
 

@@ -26,8 +26,8 @@ public final class com/awakekt/awake/core/text/font/BitmapFont : com/awakekt/awa
 }
 
 public final class com/awakekt/awake/core/text/font/EllipsizeKt {
-	public static final fun ellipsize-yti5bmA (Lcom/awakekt/awake/core/text/font/UiFont;Ljava/lang/String;FFILjava/lang/String;)Ljava/lang/String;
-	public static synthetic fun ellipsize-yti5bmA$default (Lcom/awakekt/awake/core/text/font/UiFont;Ljava/lang/String;FFILjava/lang/String;ILjava/lang/Object;)Ljava/lang/String;
+	public static final fun ellipsize-W1_nTWY (Lcom/awakekt/awake/core/text/font/UiFont;Ljava/lang/String;FFILjava/lang/String;Z)Ljava/lang/String;
+	public static synthetic fun ellipsize-W1_nTWY$default (Lcom/awakekt/awake/core/text/font/UiFont;Ljava/lang/String;FFILjava/lang/String;ZILjava/lang/Object;)Ljava/lang/String;
 }
 
 public final class com/awakekt/awake/core/text/font/FontWeight {
