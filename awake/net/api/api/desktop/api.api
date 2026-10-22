@@ -60,6 +60,7 @@ public final class com/awakekt/awake/net/DeliveryChannel : java/lang/Enum {
 }
 
 public final class com/awakekt/awake/net/NetId {
+	public static final field Companion Lcom/awakekt/awake/net/NetId$Companion;
 	public static final synthetic fun box-impl (J)Lcom/awakekt/awake/net/NetId;
 	public static fun constructor-impl (J)J
 	public fun equals (Ljava/lang/Object;)Z
@@ -71,6 +72,21 @@ public final class com/awakekt/awake/net/NetId {
 	public fun toString ()Ljava/lang/String;
 	public static fun toString-impl (J)Ljava/lang/String;
 	public final synthetic fun unbox-impl ()J
+}
+
+public final synthetic class com/awakekt/awake/net/NetId$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/net/NetId$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize-z_0PGiU (Lkotlinx/serialization/encoding/Decoder;)J
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize-3Mx35h0 (Lkotlinx/serialization/encoding/Encoder;J)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/net/NetId$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
 public abstract interface class com/awakekt/awake/net/NetViolation {
@@ -148,6 +164,113 @@ public final class com/awakekt/awake/net/NetViolationKt {
 	public static final fun kind (Lcom/awakekt/awake/net/NetViolation;)Ljava/lang/String;
 }
 
+public abstract interface annotation class com/awakekt/awake/net/PacketCollectionSize : java/lang/annotation/Annotation {
+	public abstract fun fixed ()Z
+	public abstract fun max ()I
+	public abstract fun min ()I
+}
+
+public final synthetic class com/awakekt/awake/net/PacketCollectionSize$Impl : com/awakekt/awake/net/PacketCollectionSize {
+	public fun <init> (IIZ)V
+	public synthetic fun <init> (IIZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final synthetic fun fixed ()Z
+	public final synthetic fun max ()I
+	public final synthetic fun min ()I
+}
+
+public abstract interface annotation class com/awakekt/awake/net/PacketEmptyNull : java/lang/annotation/Annotation {
+}
+
+public final synthetic class com/awakekt/awake/net/PacketEmptyNull$Impl : com/awakekt/awake/net/PacketEmptyNull {
+	public fun <init> ()V
+}
+
+public final class com/awakekt/awake/net/PacketFormat : kotlinx/serialization/BinaryFormat {
+	public static final field Companion Lcom/awakekt/awake/net/PacketFormat$Companion;
+	public fun <init> ()V
+	public fun <init> (Lkotlinx/serialization/modules/SerializersModule;II)V
+	public synthetic fun <init> (Lkotlinx/serialization/modules/SerializersModule;IIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun decodeFromByteArray (Lkotlinx/serialization/DeserializationStrategy;[B)Ljava/lang/Object;
+	public final fun decodeFromReader (Lcom/awakekt/awake/net/PacketReader;Lkotlinx/serialization/DeserializationStrategy;)Ljava/lang/Object;
+	public final fun decodeOrNull (Lkotlinx/serialization/DeserializationStrategy;[B)Ljava/lang/Object;
+	public fun encodeToByteArray (Lkotlinx/serialization/SerializationStrategy;Ljava/lang/Object;)[B
+	public final fun encodeToWriter (Lcom/awakekt/awake/net/PacketWriter;Lkotlinx/serialization/SerializationStrategy;Ljava/lang/Object;)V
+	public final fun getDefaultMaxCollectionSize ()I
+	public final fun getDefaultMaxStringBytes ()I
+	public fun getSerializersModule ()Lkotlinx/serialization/modules/SerializersModule;
+}
+
+public final class com/awakekt/awake/net/PacketFormat$Companion {
+	public final fun getDefault ()Lcom/awakekt/awake/net/PacketFormat;
+}
+
+public abstract interface annotation class com/awakekt/awake/net/PacketIntRange : java/lang/annotation/Annotation {
+	public abstract fun bitMask ()I
+	public abstract fun byteWire ()Z
+	public abstract fun clampOnEncode ()Z
+	public abstract fun max ()I
+	public abstract fun min ()I
+}
+
+public final synthetic class com/awakekt/awake/net/PacketIntRange$Impl : com/awakekt/awake/net/PacketIntRange {
+	public fun <init> (IIZZI)V
+	public synthetic fun <init> (IIZZIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final synthetic fun bitMask ()I
+	public final synthetic fun byteWire ()Z
+	public final synthetic fun clampOnEncode ()Z
+	public final synthetic fun max ()I
+	public final synthetic fun min ()I
+}
+
+public abstract interface annotation class com/awakekt/awake/net/PacketLongRange : java/lang/annotation/Annotation {
+	public abstract fun clampOnEncode ()Z
+	public abstract fun max ()J
+	public abstract fun min ()J
+}
+
+public final synthetic class com/awakekt/awake/net/PacketLongRange$Impl : com/awakekt/awake/net/PacketLongRange {
+	public fun <init> (JJZ)V
+	public synthetic fun <init> (JJZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final synthetic fun clampOnEncode ()Z
+	public final synthetic fun max ()J
+	public final synthetic fun min ()J
+}
+
+public abstract interface annotation class com/awakekt/awake/net/PacketMaxBytes : java/lang/annotation/Annotation {
+	public abstract fun max ()I
+	public abstract fun nonBlank ()Z
+	public abstract fun nonEmpty ()Z
+}
+
+public final synthetic class com/awakekt/awake/net/PacketMaxBytes$Impl : com/awakekt/awake/net/PacketMaxBytes {
+	public fun <init> (IZZ)V
+	public synthetic fun <init> (IZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final synthetic fun max ()I
+	public final synthetic fun nonBlank ()Z
+	public final synthetic fun nonEmpty ()Z
+}
+
+public abstract interface annotation class com/awakekt/awake/net/PacketMillis : java/lang/annotation/Annotation {
+	public abstract fun unsigned ()Z
+}
+
+public final synthetic class com/awakekt/awake/net/PacketMillis$Impl : com/awakekt/awake/net/PacketMillis {
+	public fun <init> (Z)V
+	public synthetic fun <init> (ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final synthetic fun unsigned ()Z
+}
+
+public final class com/awakekt/awake/net/PacketOpcodeRegistry {
+	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/net/PacketFormat;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/net/PacketFormat;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun decode (ILcom/awakekt/awake/net/PacketReader;)Ljava/lang/Object;
+	public final fun encode (Lcom/awakekt/awake/net/PacketWriter;Ljava/lang/Object;)Z
+	public final fun getFormat ()Lcom/awakekt/awake/net/PacketFormat;
+	public final fun register (ILkotlin/reflect/KClass;Lkotlinx/serialization/KSerializer;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun register$default (Lcom/awakekt/awake/net/PacketOpcodeRegistry;ILkotlin/reflect/KClass;Lkotlinx/serialization/KSerializer;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+}
+
 public final class com/awakekt/awake/net/PacketReader {
 	public static final field BYTE_MASK I
 	public static final field CONTINUATION_BIT I
@@ -183,7 +306,15 @@ public final class com/awakekt/awake/net/PacketWriter {
 	public final fun writeZigZagInt (I)V
 }
 
+public abstract interface annotation class com/awakekt/awake/net/PacketZeroNullNetId : java/lang/annotation/Annotation {
+}
+
+public final synthetic class com/awakekt/awake/net/PacketZeroNullNetId$Impl : com/awakekt/awake/net/PacketZeroNullNetId {
+	public fun <init> ()V
+}
+
 public final class com/awakekt/awake/net/SessionId {
+	public static final field Companion Lcom/awakekt/awake/net/SessionId$Companion;
 	public static final synthetic fun box-impl (J)Lcom/awakekt/awake/net/SessionId;
 	public static fun constructor-impl (J)J
 	public fun equals (Ljava/lang/Object;)Z
@@ -195,6 +326,21 @@ public final class com/awakekt/awake/net/SessionId {
 	public fun toString ()Ljava/lang/String;
 	public static fun toString-impl (J)Ljava/lang/String;
 	public final synthetic fun unbox-impl ()J
+}
+
+public final synthetic class com/awakekt/awake/net/SessionId$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/net/SessionId$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun deserialize-BuovSxU (Lkotlinx/serialization/encoding/Decoder;)J
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public final fun serialize-rEnwP2E (Lkotlinx/serialization/encoding/Encoder;J)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/net/SessionId$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
 public abstract interface class com/awakekt/awake/net/Transport {

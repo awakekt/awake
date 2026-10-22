@@ -5,6 +5,7 @@
  */
 plugins {
     id("com.awakekt.awake.plugin.library")
+    alias(libs.plugins.kotlin.serialization)
     id("com.awakekt.awake.plugin.publish")
     id("com.awakekt.awake.plugin.dokka")
     id("com.awakekt.awake.plugin.detekt")
@@ -22,6 +23,7 @@ kotlin {
     // -- that is the whole point of the split.
     sourceSets {
         commonMain.dependencies {
+            api(libs.kotlinx.serialization.core)
             implementation(libs.kotlinx.coroutines.core)
         }
         commonTest.dependencies {
