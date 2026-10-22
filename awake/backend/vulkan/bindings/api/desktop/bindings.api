@@ -35,9 +35,11 @@ public abstract interface annotation class com/awakekt/awake/vulkan/JniNative : 
 public abstract interface annotation class com/awakekt/awake/vulkan/NativeSurfaceWindow : java/lang/annotation/Annotation {
 }
 
-public final class com/awakekt/awake/vulkan/Version {
+public final class com/awakekt/awake/vulkan/Version : java/lang/Comparable {
 	public static final field Companion Lcom/awakekt/awake/vulkan/Version$Companion;
 	public fun <init> (III)V
+	public fun compareTo (Lcom/awakekt/awake/vulkan/Version;)I
+	public synthetic fun compareTo (Ljava/lang/Object;)I
 	public final fun component1 ()I
 	public final fun component2 ()I
 	public final fun component3 ()I
@@ -52,6 +54,7 @@ public final class com/awakekt/awake/vulkan/Version {
 }
 
 public final class com/awakekt/awake/vulkan/Version$Companion {
+	public final fun fromVkVersion (I)Lcom/awakekt/awake/vulkan/Version;
 	public final fun getVkVersion (Lcom/awakekt/awake/vulkan/Version;)I
 }
 

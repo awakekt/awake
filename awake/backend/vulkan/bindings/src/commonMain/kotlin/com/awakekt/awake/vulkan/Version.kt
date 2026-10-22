@@ -15,9 +15,24 @@ package com.awakekt.awake.vulkan
  * @property minor The minor version, from 0 to 63.
  * @property patch The patch version, from 0 to 4095.
  */
-data class Version(val major: Int, val minor: Int, val patch: Int) {
+data class Version(val major: Int, val minor: Int, val patch: Int) : Comparable<Version> {
+    override fun compareTo(other: Version): Int =
+        compareValuesBy(this, other, { it.major }, { it.minor }, { it.patch })
+
     /** Holds the [vkVersion] packing extension. */
     companion object {
+
+        /**
+         * Unpacks a 32-bit Vulkan packed integer version into a [Version].
+         *
+         * @param packed The 32-bit integer packed as `VK_MAKE_VERSION`.
+         * @return The unpacked [Version].
+         */
+        fun fromVkVersion(packed: Int): Version = Version(
+            major = (packed ushr 22) and 0x7F,
+            minor = (packed ushr 12) and 0x3FF,
+            patch = packed and 0xFFF,
+        )
 
         /**
          * This version packed the way `VK_MAKE_VERSION` does: major in bits 22 and up, minor in

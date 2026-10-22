@@ -53,6 +53,7 @@ import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.commands.TransferContext
 import com.awakekt.awake.vulkan.debug.LineMesh
+import com.awakekt.awake.vulkan.device.DeviceCapabilities
 import com.awakekt.awake.vulkan.device.GraphicsDevice
 import com.awakekt.awake.vulkan.gen.VulkanBuffers
 import com.awakekt.awake.vulkan.gen.VulkanDescriptors
@@ -225,6 +226,10 @@ class Renderer internal constructor(
 
     override val deviceClass: GpuDeviceClass
         get() = graphicsDevice.deviceClass
+
+    /** Hardware capabilities, negotiated Vulkan version, and enabled features for this device. */
+    val capabilities: DeviceCapabilities
+        get() = graphicsDevice.capabilities
 
     override var effectQuality: EffectQuality = graphicsDevice.deviceClass.recommendedEffectQuality()
     internal val renderPipeline = pipelines.primary

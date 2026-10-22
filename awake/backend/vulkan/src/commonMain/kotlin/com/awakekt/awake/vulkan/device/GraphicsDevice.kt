@@ -23,6 +23,7 @@ import com.awakekt.awake.vulkan.models.info.VkInstanceCreateInfo
 import com.awakekt.awake.vulkan.models.info.debug.DebugUtilsFormattedCallback
 import com.awakekt.awake.vulkan.models.info.debug.VkDebugUtilsMessengerCreateInfoEXT
 import com.awakekt.awake.vulkan.models.physicaldevice.VkPhysicalDevice
+import com.awakekt.awake.vulkan.models.physicaldevice.VkPhysicalDeviceProperties
 import com.awakekt.awake.vulkan.utils.QueueFamilyIndices
 import com.awakekt.awake.vulkan.utils.VkResultException
 import com.awakekt.awake.vulkan.utils.findQueueFamilies
@@ -50,6 +51,18 @@ class GraphicsDevice {
 
     /** The instance extensions [createInstance] enabled. */
     private var instanceExtensions: Set<String> = emptySet()
+
+    /**
+     * The negotiated Vulkan instance API version requested during [create] or [createHeadless].
+     */
+    var instanceVersion: Version = Version(1, 0, 0)
+        private set
+
+    /**
+     * Hardware capabilities, supported API versions, and feature paths for this device.
+     */
+    var capabilities: DeviceCapabilities = DeviceCapabilities.Uninitialized
+        private set
 
     /**
      * The `VkSurfaceKHR` presented to. It stays 0 for a headless device, and after [replaceSurface]
@@ -161,11 +174,6 @@ class GraphicsDevice {
     }
 
     private fun createInstance(layerProperties: List<String>, includeGlfwExtensions: Boolean): Long {
-        val appInfo = VkApplicationInfo(
-            pApplicationName = "Awake Vulkan - Application",
-            pEngineName = "Awake Vulkan - Engine",
-            apiVersion = Version(1, 3, 0).vkVersion,
-        )
         val layerExtProps = layerProperties.map { layer ->
             getAppExtProps(layer)
         }.flatten()
@@ -186,13 +194,43 @@ class GraphicsDevice {
         val extProperties = (baseExtProperties + glfwExtensions + portabilityExtension).distinct()
 
         instanceExtensions = extProperties.toSet()
-        val createInfo = VkInstanceCreateInfo(
-            flags = instanceFlags,
-            pApplicationInfo = arrayOf(appInfo),
-            ppEnabledLayerNames = layerProperties.toTypedArray(),
-            ppEnabledExtensionNames = extProperties.toTypedArray(),
+
+        val candidateVersions = listOf(
+            Version(1, 4, 0),
+            Version(1, 3, 0),
+            Version(1, 2, 0),
+            Version(1, 1, 0),
+            Version(1, 0, 0),
         )
-        return Vulkan.vkCreateInstance(createInfo)
+
+        var lastError: VkResultException? = null
+        for (candidate in candidateVersions) {
+            val appInfo = VkApplicationInfo(
+                pApplicationName = "Awake Vulkan - Application",
+                pEngineName = "Awake Vulkan - Engine",
+                apiVersion = candidate.vkVersion,
+            )
+            val createInfo = VkInstanceCreateInfo(
+                flags = instanceFlags,
+                pApplicationInfo = arrayOf(appInfo),
+                ppEnabledLayerNames = layerProperties.toTypedArray(),
+                ppEnabledExtensionNames = extProperties.toTypedArray(),
+            )
+            try {
+                val created = Vulkan.vkCreateInstance(createInfo)
+                instanceVersion = candidate
+                return created
+            } catch (e: VkResultException) {
+                if (e.result == VkResult.VK_ERROR_INCOMPATIBLE_DRIVER && candidate > Version(1, 0, 0)) {
+                    lastError = e
+                    continue
+                }
+                throw e
+            }
+        }
+        val err = lastError
+        if (err != null) throw err
+        error("Failed to create Vulkan instance")
     }
 
     private fun setupDebugMessenger() {
@@ -246,7 +284,8 @@ class GraphicsDevice {
                     }
                 } ?: throw Exception("Cannot find suitable gpu!")
             physicalDevice = gpu.physicalDevice
-            deviceClass = Vulkan.vkGetPhysicalDeviceProperties(physicalDevice).deviceType.toGpuDeviceClass()
+            val properties = Vulkan.vkGetPhysicalDeviceProperties(physicalDevice)
+            deviceClass = properties.deviceType.toGpuDeviceClass()
         }
     }
 
@@ -256,7 +295,8 @@ class GraphicsDevice {
 
     private fun createLogicalDevice(indices: QueueFamilyIndices) {
         val graphicsFamily = indices.graphicsFamily!!
-        timestampPeriodNs = Vulkan.vkGetPhysicalDeviceProperties(physicalDevice).limits.timestampPeriod
+        val physicalDeviceProperties = Vulkan.vkGetPhysicalDeviceProperties(physicalDevice)
+        timestampPeriodNs = physicalDeviceProperties.limits.timestampPeriod
         timestampValidBits = Vulkan.vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice)
             .getOrNull(graphicsFamily)?.timestampValidBits?.toInt() ?: 0
         // to avoid duplicate queue family index use set
@@ -313,6 +353,15 @@ class GraphicsDevice {
 
         graphicsQueue = Vulkan.vkGetDeviceQueue(device, indices.graphicsFamily!!, 0)
         presentQueue = Vulkan.vkGetDeviceQueue(device, indices.presentFamily!!, 0)
+
+        val deviceApiVersion = Version.fromVkVersion(physicalDeviceProperties.apiVersion)
+        capabilities = deriveDeviceCapabilities(
+            deviceApiVersion = deviceApiVersion,
+            properties = physicalDeviceProperties,
+            deviceClass = deviceClass,
+            availableDeviceExtensions = availableDeviceExtensions,
+            enabledExtensions = requiredDeviceExtensions.toSet(),
+        )
     }
 
     /**
@@ -327,6 +376,8 @@ class GraphicsDevice {
         if (device != 0L) Vulkan.vkDestroyDevice(device)
         if (debugUtilsMessenger != 0L) Vulkan.vkDestroyDebugUtilsMessengerEXT(instance, debugUtilsMessenger)
         if (instance != 0L) Vulkan.vkDestroyInstance(instance)
+        capabilities = DeviceCapabilities.Uninitialized
+        instanceVersion = Version(1, 0, 0)
         if (failOnValidationError && validationErrors.isNotEmpty()) {
             error(
                 "Vulkan validation errors were reported:\n" +
@@ -334,14 +385,87 @@ class GraphicsDevice {
             )
         }
     }
-
-    private fun VkDebugUtilsMessageSeverityFlagBitsEXT.isValidationError(): Boolean =
-        this == VkDebugUtilsMessageSeverityFlagBitsEXT.VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT
 }
 
-private const val SWAPCHAIN_EXTENSION = "VK_KHR_swapchain"
+private fun deriveDeviceCapabilities(
+    deviceApiVersion: Version,
+    properties: VkPhysicalDeviceProperties,
+    deviceClass: GpuDeviceClass,
+    availableDeviceExtensions: Set<String>,
+    enabledExtensions: Set<String>,
+): DeviceCapabilities {
+    val v12 = Version(1, 2, 0)
+    val v13 = Version(1, 3, 0)
+    val v14 = Version(1, 4, 0)
 
+    return DeviceCapabilities(
+        apiVersion = deviceApiVersion,
+        driverVersion = properties.driverVersion,
+        deviceName = properties.deviceName.toNullTerminatedString(),
+        deviceClass = deviceClass,
+        dynamicRendering = supportsCapability(deviceApiVersion, v13, DYNAMIC_RENDERING_EXTENSION, availableDeviceExtensions),
+        synchronization2 = supportsCapability(deviceApiVersion, v13, SYNCHRONIZATION_2_EXTENSION, availableDeviceExtensions),
+        timelineSemaphores = supportsCapability(deviceApiVersion, v12, TIMELINE_SEMAPHORE_EXTENSION, availableDeviceExtensions),
+        extendedDynamicState = supportsCapability(deviceApiVersion, v13, EXTENDED_DYNAMIC_STATE_EXTENSION, availableDeviceExtensions),
+        extendedDynamicState2 = supportsCapability(deviceApiVersion, v13, EXTENDED_DYNAMIC_STATE_2_EXTENSION, availableDeviceExtensions),
+        descriptorIndexing = supportsCapability(deviceApiVersion, v12, DESCRIPTOR_INDEXING_EXTENSION, availableDeviceExtensions),
+        bufferDeviceAddress = supportsCapability(deviceApiVersion, v12, BUFFER_DEVICE_ADDRESS_EXTENSION, availableDeviceExtensions),
+        drawIndirectCount = supportsCapability(deviceApiVersion, v12, DRAW_INDIRECT_COUNT_EXTENSION, availableDeviceExtensions),
+        pipelineCreationCacheControl = supportsCapability(
+            deviceApiVersion,
+            v13,
+            PIPELINE_CREATION_CACHE_CONTROL_EXTENSION,
+            availableDeviceExtensions,
+        ),
+        pushDescriptors = supportsCapability(deviceApiVersion, v14, PUSH_DESCRIPTOR_EXTENSION, availableDeviceExtensions),
+        dynamicRenderingLocalRead = supportsCapability(
+            deviceApiVersion,
+            v14,
+            DYNAMIC_RENDERING_LOCAL_READ_EXTENSION,
+            availableDeviceExtensions,
+        ),
+        maintenance4 = supportsCapability(deviceApiVersion, v13, MAINTENANCE_4_EXTENSION, availableDeviceExtensions),
+        maintenance5 = supportsCapability(deviceApiVersion, v14, MAINTENANCE_5_EXTENSION, availableDeviceExtensions),
+        maintenance6 = supportsCapability(deviceApiVersion, v14, MAINTENANCE_6_EXTENSION, availableDeviceExtensions),
+        scalarBlockLayout = supportsCapability(deviceApiVersion, v12, SCALAR_BLOCK_LAYOUT_EXTENSION, availableDeviceExtensions),
+        hostImageCopy = HOST_IMAGE_COPY_EXTENSION in availableDeviceExtensions,
+        lineRasterization = deviceApiVersion >= v14 ||
+            LINE_RASTERIZATION_KHR_EXTENSION in availableDeviceExtensions ||
+            LINE_RASTERIZATION_EXT_EXTENSION in availableDeviceExtensions,
+        enabledExtensions = enabledExtensions,
+    )
+}
+
+private fun supportsCapability(
+    apiVersion: Version,
+    minVersion: Version,
+    extension: String,
+    availableExtensions: Set<String>,
+): Boolean = apiVersion >= minVersion || extension in availableExtensions
+
+private fun VkDebugUtilsMessageSeverityFlagBitsEXT.isValidationError(): Boolean =
+    this == VkDebugUtilsMessageSeverityFlagBitsEXT.VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT
+
+private const val SWAPCHAIN_EXTENSION = "VK_KHR_swapchain"
 private const val DEBUG_UTILS_EXTENSION = "VK_EXT_debug_utils"
+private const val DYNAMIC_RENDERING_EXTENSION = "VK_KHR_dynamic_rendering"
+private const val SYNCHRONIZATION_2_EXTENSION = "VK_KHR_synchronization2"
+private const val TIMELINE_SEMAPHORE_EXTENSION = "VK_KHR_timeline_semaphore"
+private const val EXTENDED_DYNAMIC_STATE_EXTENSION = "VK_EXT_extended_dynamic_state"
+private const val EXTENDED_DYNAMIC_STATE_2_EXTENSION = "VK_EXT_extended_dynamic_state2"
+private const val DESCRIPTOR_INDEXING_EXTENSION = "VK_EXT_descriptor_indexing"
+private const val BUFFER_DEVICE_ADDRESS_EXTENSION = "VK_KHR_buffer_device_address"
+private const val DRAW_INDIRECT_COUNT_EXTENSION = "VK_KHR_draw_indirect_count"
+private const val PIPELINE_CREATION_CACHE_CONTROL_EXTENSION = "VK_EXT_pipeline_creation_cache_control"
+private const val PUSH_DESCRIPTOR_EXTENSION = "VK_KHR_push_descriptor"
+private const val DYNAMIC_RENDERING_LOCAL_READ_EXTENSION = "VK_KHR_dynamic_rendering_local_read"
+private const val MAINTENANCE_4_EXTENSION = "VK_KHR_maintenance4"
+private const val MAINTENANCE_5_EXTENSION = "VK_KHR_maintenance5"
+private const val MAINTENANCE_6_EXTENSION = "VK_KHR_maintenance6"
+private const val SCALAR_BLOCK_LAYOUT_EXTENSION = "VK_EXT_scalar_block_layout"
+private const val HOST_IMAGE_COPY_EXTENSION = "VK_EXT_host_image_copy"
+private const val LINE_RASTERIZATION_KHR_EXTENSION = "VK_KHR_line_rasterization"
+private const val LINE_RASTERIZATION_EXT_EXTENSION = "VK_EXT_line_rasterization"
 
 /** The Khronos validation layer, the only instance layer this engine asks for. */
 internal const val VALIDATION_LAYER = "VK_LAYER_KHRONOS_validation"
@@ -370,3 +494,27 @@ internal const val VALIDATION_PROPERTY = "awake.vulkan.validation"
  */
 internal fun selectInstanceLayers(installed: List<String>, validation: Boolean): List<String> =
     if (validation) installed.filter { it == VALIDATION_LAYER } else emptyList()
+
+private fun CharArray.toNullTerminatedString(): String {
+    val bytes = ByteArray(size * 2)
+    var byteCount = 0
+    var terminated = false
+    var i = 0
+    while (i < size && !terminated) {
+        val c = this[i].code
+        val b1 = (c and 0xFF).toByte()
+        if (b1 == 0.toByte()) {
+            terminated = true
+        } else {
+            bytes[byteCount++] = b1
+            val b2 = ((c ushr 8) and 0xFF).toByte()
+            if (b2 == 0.toByte()) {
+                terminated = true
+            } else {
+                bytes[byteCount++] = b2
+            }
+        }
+        i++
+    }
+    return bytes.decodeToString(0, byteCount)
+}

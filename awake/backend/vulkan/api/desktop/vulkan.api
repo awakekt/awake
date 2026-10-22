@@ -78,16 +78,77 @@ public final class com/awakekt/awake/vulkan/debug/LineRenderPipeline : com/awake
 	public final fun writeMvp ([F)V
 }
 
+public final class com/awakekt/awake/vulkan/device/DeviceCapabilities {
+	public static final field Companion Lcom/awakekt/awake/vulkan/device/DeviceCapabilities$Companion;
+	public fun <init> (Lcom/awakekt/awake/vulkan/Version;ILjava/lang/String;Lcom/awakekt/awake/render/pipeline/GpuDeviceClass;ZZZZZZZZZZZZZZZZZLjava/util/Set;)V
+	public final fun component1 ()Lcom/awakekt/awake/vulkan/Version;
+	public final fun component10 ()Z
+	public final fun component11 ()Z
+	public final fun component12 ()Z
+	public final fun component13 ()Z
+	public final fun component14 ()Z
+	public final fun component15 ()Z
+	public final fun component16 ()Z
+	public final fun component17 ()Z
+	public final fun component18 ()Z
+	public final fun component19 ()Z
+	public final fun component2 ()I
+	public final fun component20 ()Z
+	public final fun component21 ()Z
+	public final fun component22 ()Ljava/util/Set;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Lcom/awakekt/awake/render/pipeline/GpuDeviceClass;
+	public final fun component5 ()Z
+	public final fun component6 ()Z
+	public final fun component7 ()Z
+	public final fun component8 ()Z
+	public final fun component9 ()Z
+	public final fun copy (Lcom/awakekt/awake/vulkan/Version;ILjava/lang/String;Lcom/awakekt/awake/render/pipeline/GpuDeviceClass;ZZZZZZZZZZZZZZZZZLjava/util/Set;)Lcom/awakekt/awake/vulkan/device/DeviceCapabilities;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/vulkan/device/DeviceCapabilities;Lcom/awakekt/awake/vulkan/Version;ILjava/lang/String;Lcom/awakekt/awake/render/pipeline/GpuDeviceClass;ZZZZZZZZZZZZZZZZZLjava/util/Set;ILjava/lang/Object;)Lcom/awakekt/awake/vulkan/device/DeviceCapabilities;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getApiVersion ()Lcom/awakekt/awake/vulkan/Version;
+	public final fun getBufferDeviceAddress ()Z
+	public final fun getDescriptorIndexing ()Z
+	public final fun getDeviceClass ()Lcom/awakekt/awake/render/pipeline/GpuDeviceClass;
+	public final fun getDeviceName ()Ljava/lang/String;
+	public final fun getDrawIndirectCount ()Z
+	public final fun getDriverVersion ()I
+	public final fun getDynamicRendering ()Z
+	public final fun getDynamicRenderingLocalRead ()Z
+	public final fun getEnabledExtensions ()Ljava/util/Set;
+	public final fun getExtendedDynamicState ()Z
+	public final fun getExtendedDynamicState2 ()Z
+	public final fun getHostImageCopy ()Z
+	public final fun getLineRasterization ()Z
+	public final fun getMaintenance4 ()Z
+	public final fun getMaintenance5 ()Z
+	public final fun getMaintenance6 ()Z
+	public final fun getPipelineCreationCacheControl ()Z
+	public final fun getPushDescriptors ()Z
+	public final fun getScalarBlockLayout ()Z
+	public final fun getSynchronization2 ()Z
+	public final fun getTimelineSemaphores ()Z
+	public fun hashCode ()I
+	public final fun isVulkan13OrHigher ()Z
+	public final fun isVulkan14OrHigher ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/vulkan/device/DeviceCapabilities$Companion {
+}
+
 public final class com/awakekt/awake/vulkan/device/GraphicsDevice {
 	public fun <init> ()V
 	public final fun create (Ljava/lang/Object;)V
 	public final fun createHeadless ()V
 	public final fun destroy ()V
+	public final fun getCapabilities ()Lcom/awakekt/awake/vulkan/device/DeviceCapabilities;
 	public final fun getDebugUtilsMessenger ()J
 	public final fun getDevice ()J
 	public final fun getDeviceClass ()Lcom/awakekt/awake/render/pipeline/GpuDeviceClass;
 	public final fun getGraphicsQueue ()J
 	public final fun getInstance ()J
+	public final fun getInstanceVersion ()Lcom/awakekt/awake/vulkan/Version;
 	public final fun getPhysicalDevice ()J
 	public final fun getPresentQueue ()J
 	public final fun getSurface ()J
@@ -342,6 +403,7 @@ public final class com/awakekt/awake/vulkan/renderer/Renderer : com/awakekt/awak
 	public fun drawUi (Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;Ljava/util/List;)V
 	public fun drawUiToTexture (Lcom/awakekt/awake/render/texture/RenderTarget;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;)V
 	public fun drawUiToTexture (Lcom/awakekt/awake/render/texture/RenderTarget;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;Ljava/util/List;)V
+	public final fun getCapabilities ()Lcom/awakekt/awake/vulkan/device/DeviceCapabilities;
 	public fun getClearColor ()Lcom/awakekt/awake/core/color/Color;
 	public fun getClipSpace ()Lcom/awakekt/awake/core/math/ClipSpace;
 	public fun getDeviceClass ()Lcom/awakekt/awake/render/pipeline/GpuDeviceClass;
