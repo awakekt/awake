@@ -316,22 +316,28 @@ Cost of that swap: a Gradle plugin, generated code, and a 0.x dependency with pr
 and breaking releases. Worth it for a live lobby UI, not worth it for "list rooms, join one".
 Either way it stays on the control plane — kRPC never touches the tick path.
 
-## Wire format: three channels, three formats
+## Wire format: pick per channel
 
-Do not pick one. Pick per channel — this is the single highest-leverage decision.
+Do not pick one. Pick per channel — this is the single highest-leverage decision (see
+[`awake/net/README.md`](../../awake/net/README.md) for the full architectural scoreboard):
 
 - **Handshake / lobby / debug → JSON.** kotlinx-serialization JSON. Readable in browser
   devtools, versionable, ~never hot. Keep it.
-- **Control plane (non-tick: spawn manifests, config, chat) → kotlinx ProtoBuf.** Compact and
-  schema-ish. Note it is `@ExperimentalSerializationApi`, its polymorphic encoding writes a
-  **string** `serialName` discriminator per message, and reported decode performance is at
-  best JSON-parity with allocation-heavy hotspots. Fine off the tick path, wrong on it.
-- **Per-tick snapshots + input → hand-rolled binary.** One-byte opcode dispatch, quantized
-  floats (position to cm, quaternion smallest-three at 10 bits/component), bitmask for
-  changed fields, delta against last-acked baseline. No general format does quantization or
-  delta, and those two are where the bytes actually are. Implement as a plain writer over a
-  reusable `kotlinx-io` `Buffer` (or a pooled `ByteArray` + cursor); a custom `BinaryFormat`
-  is an option but the reflection-free hand path is smaller and allocation-free.
+- **Evolving / persisted / cross-service data → kotlinx ProtoBuf.** Compact and schema-evolving
+  via `@ProtoNumber` field tags (useful for persisted blobs, replays, or rolling cross-service
+  upgrades). Note it is `@ExperimentalSerializationApi`, its polymorphic encoding writes a
+  **string** `serialName` discriminator per message, and it does not enforce per-field
+  pre-allocation string/collection caps on untrusted sockets.
+- **Standard game packets (chat, guild, party, trade, quests, skills) → `PacketFormat` +
+  `PacketOpcodeRegistry` (`:awake:net:api`).** Compile-time `kotlinx.serialization` `BinaryFormat`
+  over `PacketWriter`/`PacketReader` with `@SerialInfo` bounds and quantization annotations
+  (`@PacketMaxBytes`, `@PacketCollectionSize`, `@PacketIntRange`, `@PacketLongRange`,
+  `@PacketMillis`, `@PacketEmptyNull`, `@PacketZeroNullNetId`). Zero manual `write*`/`read*`
+  boilerplate, zero field-tag overhead, and pre-allocation DoS bounds checking.
+- **Per-tick snapshots + input → direct `PacketWriter` / `PacketReader` bit-packed binary.**
+  One-byte opcode dispatch, quantized floats, bitmask for changed fields, delta against
+  last-acked baseline. Coexists on the exact same `PacketWriter` and `PacketReader` as
+  `PacketOpcodeRegistry`.
 
 Cross-check before committing: benchmark one representative snapshot with
 `:awake:ecs:benchmark`'s kotlinx-benchmark setup, measuring **allocation rate** alongside
