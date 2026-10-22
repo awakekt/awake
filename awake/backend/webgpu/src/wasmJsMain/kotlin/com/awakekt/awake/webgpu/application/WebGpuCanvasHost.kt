@@ -7,10 +7,12 @@
 
 package com.awakekt.awake.webgpu.application
 
+import com.awakekt.awake.asset.shaders.RenderPlan
 import com.awakekt.awake.core.input.PointerCursor
 import com.awakekt.awake.core.logging.Log
 import com.awakekt.awake.core.logging.LogLevel
 import com.awakekt.awake.core.logging.PrintLogSink
+import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
 import com.awakekt.awake.engine.window.findCanvas
 import com.awakekt.awake.engine.window.runBrowserCanvas
 import com.awakekt.awake.webgpu.device.createCanvasGpuContext
@@ -20,6 +22,51 @@ import io.ygdrasil.webgpu.GPUUncapturedErrorCallback
 import io.ygdrasil.webgpu.SurfaceConfiguration
 import io.ygdrasil.webgpu.WGPUContext
 import web.html.HTMLCanvasElement
+
+/**
+ * Starts [game] on the `<canvas>` with [canvasId], drawn by a [WebGpuEngine] built from [plan].
+ *
+ * This is the browser counterpart to `runVulkanDesktopGame(game, plan)`: the app provides its
+ * [AwakeAppLifecycle] and shared [RenderPlan], and the host constructs [WebGpuEngine] after the
+ * WebGPU capability check.
+ *
+ * @param game The application lifecycle to run.
+ * @param plan The shared render plan to narrow for WebGPU and build pipelines from.
+ * @param canvasId The id of the canvas element to render into.
+ * @param cursor The pointer shape the UI asks for this frame, or `null` to leave the canvas's cursor
+ * alone.
+ */
+fun launchWebGpuGame(
+    game: AwakeAppLifecycle,
+    plan: RenderPlan,
+    canvasId: String = "awake-canvas",
+    cursor: (() -> PointerCursor)? = null,
+) {
+    launchWebGpuGame(canvasId = canvasId, cursor = cursor) {
+        WebGpuEngine(appLifecycle = game, requestedPlan = plan)
+    }
+}
+
+/**
+ * Starts [game] on [canvas], an already-located canvas element, drawn by a [WebGpuEngine] built
+ * from [plan].
+ *
+ * @param game The application lifecycle to run.
+ * @param plan The shared render plan to narrow for WebGPU and build pipelines from.
+ * @param canvas The canvas element to render into and to size the surface from.
+ * @param cursor The pointer shape the UI asks for this frame, or `null` to leave the canvas's cursor
+ * alone.
+ */
+fun launchWebGpuGame(
+    game: AwakeAppLifecycle,
+    plan: RenderPlan,
+    canvas: HTMLCanvasElement,
+    cursor: (() -> PointerCursor)? = null,
+) {
+    launchWebGpuGame(canvas = canvas, cursor = cursor) {
+        WebGpuEngine(appLifecycle = game, requestedPlan = plan)
+    }
+}
 
 /**
  * Reusable WebGPU canvas host for authored games.

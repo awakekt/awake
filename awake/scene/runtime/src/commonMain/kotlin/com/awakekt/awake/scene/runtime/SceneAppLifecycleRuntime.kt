@@ -32,6 +32,7 @@ import com.awakekt.awake.engine.platform.core.FrameStats
 import com.awakekt.awake.engine.platform.dsl.AppServiceLookup
 import com.awakekt.awake.engine.platform.lifecycle.AppFrame
 import com.awakekt.awake.engine.platform.lifecycle.AppLifecycle
+import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
 import com.awakekt.awake.engine.platform.lifecycle.DisplayInsets
 import com.awakekt.awake.render.capture.FramebufferAttachment
 import com.awakekt.awake.render.capture.FramebufferAttachmentData
@@ -782,6 +783,20 @@ fun SceneAppLifecycleRuntime.defaultInfrastructureSystems(
         ),
         DebugVisualizationSystem(renderer, viewportProvider),
     )
+
+/**
+ * Returns a provider for the pointer shape [game]'s UI asks for each frame, such as a text beam
+ * over a text field or a resize arrow over a handle, for a desktop or browser host's `cursor`
+ * parameter.
+ *
+ * Reads from the installed [SceneAppLifecycleRuntime], [SceneRouterRuntime], or
+ * [ComposeAppRuntime]. Throws [IllegalStateException] when [game] installs none of them.
+ */
+fun pointerCursorOf(game: AwakeAppLifecycle): () -> PointerCursor =
+    game.service(SceneAppLifecycleRuntime::class)?.let { runtime -> { runtime.cursor } }
+        ?: game.service(SceneRouterRuntime::class)?.let { router -> { router.cursor } }
+        ?: game.service(ComposeAppRuntime::class)?.let { compose -> { compose.cursor } }
+        ?: error("No SceneAppLifecycleRuntime, SceneRouterRuntime, or ComposeAppRuntime is registered in this app.")
 
 /** Stands in for `spec.ui` when only the scene's canvas elements need a UI frame. */
 private val SceneCanvasOnly: SceneContent = {}

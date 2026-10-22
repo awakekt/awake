@@ -10,6 +10,7 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.geometry.MeshGeometry
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
+import com.awakekt.awake.core.input.PointerCursor
 import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.engine.bootstrap.dsl.app
@@ -26,6 +27,7 @@ import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.scene.authoring.dsl.cameraEntity
 import com.awakekt.awake.scene.runtime.SceneRouterRuntime
+import com.awakekt.awake.scene.runtime.pointerCursorOf
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -92,6 +94,29 @@ class SceneRouterDslTest {
 
         assertEquals("overview", game.requireService<SceneRouterRuntime>().activeSceneLabel)
         assertTrue(renderer.lastUiPrimitives.any { it is UiDrawPrimitive.Glyph })
+    }
+
+    @Test
+    fun pointerCursorOfResolvesSingleSceneAndRoutedSceneAppsBeforeAndAfterReady() = runTest {
+        val singleScene = app {
+            scene("single") {
+                cameraEntity("camera")
+            }
+        }
+        val singleCursor = pointerCursorOf(singleScene)
+        assertEquals(PointerCursor.Default, singleCursor())
+
+        val routed = app {
+            scenes {
+                route("login") { cameraEntity("camera") }
+                route("world") { cameraEntity("camera") }
+            }
+        }
+        val routedCursor = pointerCursorOf(routed)
+        assertEquals(PointerCursor.Default, routedCursor(), "before ready(), routed cursor defaults safely")
+
+        routed.ready(RouterRecordingRenderer())
+        assertEquals(PointerCursor.Default, routedCursor())
     }
 }
 

@@ -15,7 +15,6 @@ import com.awakekt.awake.showcase.docs.firstScene
 import kotlin.test.Test
 import kotlin.test.assertEquals
 // --8<-- [start:imports]
-import com.awakekt.awake.webgpu.application.WebGpuEngine
 import com.awakekt.awake.webgpu.application.launchWebGpuGame
 // --8<-- [end:imports]
 
@@ -26,9 +25,7 @@ import com.awakekt.awake.webgpu.application.launchWebGpuGame
 @Suppress("unused")
 private object BrowserEntryPoint {
     // --8<-- [start:main]
-    fun main() = launchWebGpuGame {
-        WebGpuEngine(appLifecycle = firstScene(), requestedPlan = GameRenderPlan)
-    }
+    fun main() = launchWebGpuGame(firstScene(), GameRenderPlan)
     // --8<-- [end:main]
 }
 
