@@ -7,6 +7,7 @@ package com.awakekt.awake.net
 
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.serialization.Serializable
 import kotlin.jvm.JvmInline
 
 /**
@@ -81,6 +82,7 @@ sealed interface ConnectionState {
  *
  * @property value Raw 64-bit integer identifier.
  */
+@Serializable
 @JvmInline
 value class SessionId(val value: Long)
 
@@ -89,6 +91,7 @@ value class SessionId(val value: Long)
  *
  * @property value Raw 64-bit entity network identifier.
  */
+@Serializable
 @JvmInline
 value class NetId(val value: Long)
 

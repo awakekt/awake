@@ -215,6 +215,7 @@ internal suspend fun joltHeapBytesInUse(): Long = joltHeapInUse(JoltModule.get()
             point: new jolt.RVec3(0, 0, 0),
             vector: new jolt.Vec3(0, 0, 0),
             halfExtent: new jolt.Vec3(0, 0, 0),
+            corner: new jolt.Float3(0, 0, 0),
             ray: new jolt.RRayCast(),
             castSettings: new jolt.ShapeCastSettings(),
             raySettings: new jolt.RayCastSettings(),
@@ -378,14 +379,16 @@ private fun flatten(shape: PhysicsShape, unsupported: String): FlatShape = when 
     (world, pts, px, py, pz, qw, qx, qy, qz, motionTypeCode, isStatic, layerIndex, isSensor, plane2d) => {
         const jolt = world.jolt;
         const points = new jolt.ArrayVec3();
+        points.reserve(pts.length / 3);
+        const point = world.query.vector;
         for (let i = 0; i < pts.length; i += 3) {
-            const point = new jolt.Vec3(pts[i], pts[i + 1], pts[i + 2]);
+            point.Set(pts[i], pts[i + 1], pts[i + 2]);
             points.push_back(point);
-            jolt.destroy(point);
         }
         const settings = new jolt.ConvexHullShapeSettings();
         settings.mPoints = points;
-        const shape = settings.Create().Get();
+        const shapeResult = settings.Create();
+        const shape = shapeResult.Get();
         const motionType = motionTypeCode === 0
             ? jolt.EMotionType_Static
             : (motionTypeCode === 1 ? jolt.EMotionType_Kinematic : jolt.EMotionType_Dynamic);
@@ -400,6 +403,7 @@ private fun flatten(shape: PhysicsShape, unsupported: String): FlatShape = when 
         jolt.destroy(bodyCreationSettings);
         jolt.destroy(rotation);
         jolt.destroy(position);
+        jolt.destroy(shapeResult);
         jolt.destroy(settings);
         jolt.destroy(points);
         const activation = isStatic ? jolt.EActivation_DontActivate : jolt.EActivation_Activate;
@@ -440,10 +444,12 @@ private external fun joltCreateHullBody(
         const triangles = new jolt.TriangleList();
         const count = indices.length / 3;
         triangles.resize(count);
+        const corner = world.query.corner;
         const setCorner = (tri, slot, i) => {
-            const corner = new jolt.Float3(verts[i], verts[i + 1], verts[i + 2]);
+            corner.x = verts[i];
+            corner.y = verts[i + 1];
+            corner.z = verts[i + 2];
             tri.set_mV(slot, corner);
-            jolt.destroy(corner);
         };
         for (let t = 0; t < count; t++) {
             const tri = triangles.at(t);
@@ -452,7 +458,8 @@ private external fun joltCreateHullBody(
             setCorner(tri, 2, indices[t * 3 + 2] * 3);
         }
         const settings = new jolt.MeshShapeSettings(triangles);
-        const shape = settings.Create().Get();
+        const shapeResult = settings.Create();
+        const shape = shapeResult.Get();
         const position = new jolt.RVec3(px, py, pz);
         const rotation = new jolt.Quat(qx, qy, qz, qw);
         const bodyCreationSettings = new jolt.BodyCreationSettings(
@@ -462,6 +469,7 @@ private external fun joltCreateHullBody(
         jolt.destroy(bodyCreationSettings);
         jolt.destroy(rotation);
         jolt.destroy(position);
+        jolt.destroy(shapeResult);
         jolt.destroy(settings);
         jolt.destroy(triangles);
         world.bodyInterface.AddBody(body.GetID(), jolt.EActivation_DontActivate);
@@ -517,7 +525,8 @@ private external fun jsArrayPush(arr: JsAny, value: Double)
         const scale = new jolt.Vec3(sx, sy, sz);
         settings.mOffset = offset;
         settings.mScale = scale;
-        const shape = settings.Create().Get();
+        const shapeResult = settings.Create();
+        const shape = shapeResult.Get();
         const position = new jolt.RVec3(px, py, pz);
         const rotation = new jolt.Quat(0, 0, 0, 1);
         const bodyCreationSettings = new jolt.BodyCreationSettings(
@@ -529,6 +538,7 @@ private external fun jsArrayPush(arr: JsAny, value: Double)
         jolt.destroy(position);
         jolt.destroy(scale);
         jolt.destroy(offset);
+        jolt.destroy(shapeResult);
         jolt.destroy(settings);
         jolt.destroy(heights);
         world.bodyInterface.AddBody(body.GetID(), jolt.EActivation_DontActivate);
