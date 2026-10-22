@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.runtime
 
+import com.awakekt.awake.core.input.PointerCursor
 import com.awakekt.awake.engine.platform.dsl.AppServiceLookup
 import com.awakekt.awake.engine.platform.dsl.AppSpecBuilder
 import com.awakekt.awake.engine.platform.lifecycle.AppFrame
@@ -117,6 +118,13 @@ class SceneRouterRuntime internal constructor(
      */
     val sceneRuntime: SceneAppLifecycleRuntime
         get() = checkNotNull(currentRuntime) { "Scene router is not ready yet." }
+
+    /**
+     * The pointer shape the active scene's UI asks for this frame, or [PointerCursor.Default] before
+     * the first scene is ready.
+     */
+    val cursor: PointerCursor
+        get() = currentRuntime?.cursor ?: PointerCursor.Default
 
     override suspend fun ready(renderer: Renderer) {
         this.renderer = renderer

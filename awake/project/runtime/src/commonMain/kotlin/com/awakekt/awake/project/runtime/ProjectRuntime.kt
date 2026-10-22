@@ -8,17 +8,13 @@ package com.awakekt.awake.project.runtime
 import com.awakekt.awake.core.audio.AudioPlayer
 import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.io.AssetSource
-import com.awakekt.awake.core.localization.LocaleId
-import com.awakekt.awake.core.localization.StringTableSource
 import com.awakekt.awake.core.localization.Strings
-import com.awakekt.awake.core.localization.systemLocale
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.project.AwakeProjectManifest
-import com.awakekt.awake.project.AwakeProjectValidator
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.scene.authoring.SceneAppDsl
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
@@ -148,6 +144,20 @@ suspend fun loadProject(
 ): LoadedProject = loadProjectInto(null, files, capabilities, hasRenderer, physicsWorld)
 
 /**
+ * [loadProject] starting at [entryScene], a scene path relative to the project root, instead of
+ * [AwakeProjectManifest.entryScene]. For a game that opens at a login or menu scene while the
+ * manifest's entry scene is the main world, or a server or test that loads one named scene without
+ * loading the manifest's entry scene first.
+ */
+suspend fun loadProject(
+    files: AssetSource,
+    entryScene: String,
+    capabilities: List<SceneCapability> = emptyList(),
+    hasRenderer: Boolean = true,
+    physicsWorld: (suspend () -> PhysicsWorld)? = null,
+): LoadedProject = loadProjectInto(null, files, capabilities, hasRenderer, physicsWorld, entryScene)
+
+/**
  * [loadProject] into [componentRegistry] instead of the process-wide registry: Core's scene components
  * and [capabilities]' are registered into it, the scene and its prefabs decode with its
  * [SceneComponentRegistry.sceneJson], and [runProject] attaches the scene's components with it.
@@ -164,35 +174,18 @@ suspend fun loadProject(
     physicsWorld: (suspend () -> PhysicsWorld)? = null,
 ): LoadedProject = loadProjectInto(componentRegistry, files, capabilities, hasRenderer, physicsWorld)
 
-private suspend fun loadProjectInto(
-    registry: SceneComponentRegistry?,
-    files: AssetSource,
-    capabilities: List<SceneCapability>,
-    hasRenderer: Boolean,
-    physicsWorld: (suspend () -> PhysicsWorld)?,
-): LoadedProject {
-    val manifest = AwakeProjectValidator.decodeManifest(files.readText(PROJECT_MANIFEST))
-    val issues = AwakeProjectValidator.manifestIssues(manifest)
-    require(issues.isEmpty()) { "$PROJECT_MANIFEST is invalid: ${issues.joinToString("; ")}" }
-    val installed = installedCapabilities(capabilities)
-    requireRequiredPlugins(manifest, installed)
-
-    if (registry == null) installProjectComponents(capabilities) else registry.registerProjectComponents(capabilities)
-    val strings = loadProjectStrings(files)
-    val entry = loadProjectScene(manifest.entryScene, manifest, files, registry, installed, hasRenderer, physicsWorld)
-    return LoadedProject(manifest, entry, capabilities, registry, files, hasRenderer, physicsWorld, strings)
-}
-
 /**
- * The project's `strings/` tables, in the device's locale, read through [files] as the rest of its
- * content is; null when it has no table for the default locale. Only the active locale's table and
- * the default's are read now, and another's when a switch asks for it.
+ * [loadProject] into [componentRegistry], starting at [entryScene] instead of
+ * [AwakeProjectManifest.entryScene].
  */
-internal suspend fun loadProjectStrings(files: AssetSource): Strings? {
-    val defaultTable = AssetPath("${StringTableSource.DEFAULT_DIRECTORY}/${LocaleId.English.tag}.json")
-    if (!files.exists(defaultTable)) return null
-    return Strings.load(StringTableSource.assets(files), locale = systemLocale(), defaultLocale = LocaleId.English)
-}
+suspend fun loadProject(
+    files: AssetSource,
+    entryScene: String,
+    componentRegistry: SceneComponentRegistry,
+    capabilities: List<SceneCapability> = emptyList(),
+    hasRenderer: Boolean = true,
+    physicsWorld: (suspend () -> PhysicsWorld)? = null,
+): LoadedProject = loadProjectInto(componentRegistry, files, capabilities, hasRenderer, physicsWorld, entryScene)
 
 /**
  * The systems this project's scene runs, as [sceneSystemsFor] builds them with the project's own

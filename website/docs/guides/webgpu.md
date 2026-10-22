@@ -20,8 +20,10 @@ a canvas:
 
 | Overload | What it does |
 | --- | --- |
-| `launchWebGpuGame(canvasId = "awake-canvas", cursor, applicationFactory)` | Finds the `<canvas>` by id. Fails with "No canvas found with id '…'" when there is none. |
-| `launchWebGpuGame(canvas: HTMLCanvasElement, cursor, applicationFactory)` | Uses a canvas you already have. |
+| `launchWebGpuGame(game, plan, canvasId = "awake-canvas", cursor)` | The usual case: finds the `<canvas>` by id and builds a `WebGpuEngine` from your plan. |
+| `launchWebGpuGame(game, plan, canvas: HTMLCanvasElement, cursor)` | Uses a canvas you already have and builds a `WebGpuEngine` from your plan. |
+| `launchWebGpuGame(canvasId = "awake-canvas", cursor, applicationFactory)` | Finds the `<canvas>` by id when you construct a custom `WebGpuEngine` subclass yourself. |
+| `launchWebGpuGame(canvas: HTMLCanvasElement, cursor, applicationFactory)` | Uses a canvas you already have with your own `WebGpuEngine` factory. |
 
 `cursor` is optional. Pass `cursor = { runtime.cursor }`, the app runtime's request, and the canvas shows the
 pointer shape the UI asks for, as a text beam over a text field or a diagonal arrow over a corner handle.

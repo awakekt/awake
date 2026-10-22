@@ -109,6 +109,30 @@ class ProjectSwitchToTest {
         played.close()
     }
 
+    @Test
+    fun loadProjectCanStartAtANamedSceneWithoutLoadingTheManifestsEntryScene() = runTest {
+        val beacons = LevelSignalCapability()
+        val worlds = mutableListOf<CountedWorld>()
+        val registry = SceneComponentRegistry.scoped()
+        val project = loadProject(files(), LEVEL, registry, listOf(beacons)) {
+            CountedWorld(createJoltPhysicsWorld()).also { worlds += it }
+        }
+
+        assertEquals("level", project.scene.name)
+        assertEquals(1, worlds.size, "only the chosen scene's physics world was created")
+        assertEquals("ping", project.content[BEACON_SIGNAL])
+        project.close()
+        assertEquals(1, worlds.single().destroyed)
+
+        for (path in listOf(OUTSIDE, "/$LEVEL", "scenes\\level.scene.json", "scenes/./level.scene.json", "")) {
+            assertFailsWith<IllegalArgumentException>("'$path' is refused") {
+                loadProject(files(), path, SceneComponentRegistry.scoped(), listOf(LevelSignalCapability())) {
+                    createJoltPhysicsWorld()
+                }
+            }
+        }
+    }
+
     private fun World.positionOf(name: String) = buildList {
         queryEach(Name::class) { entity, value -> if (value.value == name) add(get<Transform>(entity)!!.position) }
     }.single()

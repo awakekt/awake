@@ -5,7 +5,12 @@
  */
 package com.awakekt.awake.project.runtime
 
+import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.io.AssetSource
+import com.awakekt.awake.core.localization.LocaleId
+import com.awakekt.awake.core.localization.StringTableSource
+import com.awakekt.awake.core.localization.Strings
+import com.awakekt.awake.core.localization.systemLocale
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.project.AwakeProjectManifest
@@ -60,6 +65,41 @@ internal class ProjectScene(
         physics?.destroy()
         spawnedModels.close()
     }
+}
+
+@Suppress("LongParameterList")
+internal suspend fun loadProjectInto(
+    registry: SceneComponentRegistry?,
+    files: AssetSource,
+    capabilities: List<SceneCapability>,
+    hasRenderer: Boolean,
+    physicsWorld: (suspend () -> PhysicsWorld)?,
+    entryScene: String? = null,
+): LoadedProject {
+    val manifest = AwakeProjectValidator.decodeManifest(files.readText(PROJECT_MANIFEST))
+    val issues = AwakeProjectValidator.manifestIssues(manifest)
+    require(issues.isEmpty()) { "$PROJECT_MANIFEST is invalid: ${issues.joinToString("; ")}" }
+    val scenePath = entryScene?.also {
+        require(AwakeProjectValidator.isSafeProjectPath(it)) { "'$it' is not a project-relative path" }
+    } ?: manifest.entryScene
+    val installed = installedCapabilities(capabilities)
+    requireRequiredPlugins(manifest, installed)
+
+    if (registry == null) installProjectComponents(capabilities) else registry.registerProjectComponents(capabilities)
+    val strings = loadProjectStrings(files)
+    val entry = loadProjectScene(scenePath, manifest, files, registry, installed, hasRenderer, physicsWorld)
+    return LoadedProject(manifest, entry, capabilities, registry, files, hasRenderer, physicsWorld, strings)
+}
+
+/**
+ * The project's `strings/` tables, in the device's locale, read through [files] as the rest of its
+ * content is; null when it has no table for the default locale. Only the active locale's table and
+ * the default's are read now, and another's when a switch asks for it.
+ */
+internal suspend fun loadProjectStrings(files: AssetSource): Strings? {
+    val defaultTable = AssetPath("${StringTableSource.DEFAULT_DIRECTORY}/${LocaleId.English.tag}.json")
+    if (!files.exists(defaultTable)) return null
+    return Strings.load(StringTableSource.assets(files), locale = systemLocale(), defaultLocale = LocaleId.English)
 }
 
 /**

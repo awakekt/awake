@@ -189,6 +189,7 @@ public final class com/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime : co
 public final class com/awakekt/awake/scene/runtime/SceneAppLifecycleRuntimeKt {
 	public static final fun defaultInfrastructureSystems (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;)Ljava/util/List;
 	public static synthetic fun defaultInfrastructureSystems$default (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Ljava/util/List;
+	public static final fun pointerCursorOf (Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;)Lkotlin/jvm/functions/Function0;
 }
 
 public final class com/awakekt/awake/scene/runtime/SceneAppSpec : com/awakekt/awake/engine/platform/core/AppModule {
@@ -380,6 +381,7 @@ public final class com/awakekt/awake/scene/runtime/SceneRouterRuntime : com/awak
 	public fun dispose ()V
 	public final fun getActiveSceneId ()Ljava/lang/String;
 	public final fun getActiveSceneLabel ()Ljava/lang/String;
+	public final fun getCursor ()Lcom/awakekt/awake/core/input/PointerCursor;
 	public final fun getSceneRuntime ()Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;
 	public final fun getScenes ()Ljava/util/List;
 	public fun pause ()V
