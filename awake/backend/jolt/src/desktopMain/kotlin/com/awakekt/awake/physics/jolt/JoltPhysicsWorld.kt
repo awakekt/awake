@@ -274,7 +274,10 @@ class JoltPhysicsWorld(
     private val queryDirection = com.github.stephengold.joltjni.Vec3()
     private val unitScale = com.github.stephengold.joltjni.Vec3(1f, 1f, 1f)
     private val noBaseOffset = RVec3(0.0, 0.0, 0.0)
-    private val shapeCastSettings = ShapeCastSettings()
+
+    // Initial overlaps (including stationary casts) need EPA's separating axis, not a zero axis
+    // that becomes NaN when normalized. Ordinary non-overlapping sweeps keep the same path.
+    private val shapeCastSettings = ShapeCastSettings().apply { setReturnDeepestPoint(true) }
     private val rayCastSettings = RayCastSettings()
     private val closestRayHit = ClosestHitCastRayCollector()
     private val allRayHits = AllHitCastRayCollector()
