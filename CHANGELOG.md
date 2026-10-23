@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.21.0] - 2026-10-23
+
+### Added
+
+- **Synchronous frame-loop MVI stores, `IndexedAssetSource.open`, canvas UI widgets (`CanvasScrollBar`, `CanvasSpriteSheet`, `consumeSecondaryPress`, `World.canvasElements`), animation/audio cues (`crossedTimelineMarker`, `FocusAudioPlayer`, `AudioCueQueue`), and 2D spatial/streaming utilities (`SpatialHashGrid2D`, `BudgetedCellNodeSpawner`).** `:awake:core:state` makes `DefaultReducerStore` effect emissions non-allocating on the frame thread (`trySend` / `tryEmit`) and adds `MutableEffectStore<S, E>`. `:awake:project` adds `IndexedAssetSource.open` and `ContentCache.retainOnly` for one-step remote/bundled pack initialization and cache pruning. `:awake:ui:canvas` and `:awake:scene:canvas` add `CanvasElement.consumeSecondaryPress()`, `CanvasScrollBar`, `CanvasSpriteSheet`, horizontal button/checkbox strip helpers, and `World.canvasElements(prefix)`. `:awake:core:animation`, `:awake:core:audio`, and `:awake:scene:audio` add `crossedTimelineMarker`, `FocusAudioPlayer`, and `AudioCueQueue`. `:awake:core:math` and `:awake:scene:world` add `SpatialHashGrid2D` and `BudgetedCellNodeSpawner`.
+
+### Fixed
+
+- Generate browser filesystem metadata serializers and preserve Kotlin Long metadata across the JavaScript BigInt/JSON bridge so creating and reopening IndexedDB-backed projects succeeds; exercise file and metadata persistence in browser CI.
+- Resolve Naga's Cargo executable from CARGO_HOME and PATH instead of assuming a home-directory installation, including the Windows executable name and path separator.
+
 ## [0.20.0] - 2026-10-23
 
 ### Added
