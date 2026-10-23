@@ -1,0 +1,1 @@
+- Generate browser filesystem metadata serializers and preserve Kotlin Long metadata across the JavaScript BigInt/JSON bridge so creating and reopening IndexedDB-backed projects succeeds; exercise file and metadata persistence in browser CI.
