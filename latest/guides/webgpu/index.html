@@ -2495,12 +2495,20 @@ a canvas:</p>
 </thead>
 <tbody>
 <tr>
+<td><code>launchWebGpuGame(game, plan, canvasId = "awake-canvas", cursor)</code></td>
+<td>The usual case: finds the <code>&lt;canvas&gt;</code> by id and builds a <code>WebGpuEngine</code> from your plan.</td>
+</tr>
+<tr>
+<td><code>launchWebGpuGame(game, plan, canvas: HTMLCanvasElement, cursor)</code></td>
+<td>Uses a canvas you already have and builds a <code>WebGpuEngine</code> from your plan.</td>
+</tr>
+<tr>
 <td><code>launchWebGpuGame(canvasId = "awake-canvas", cursor, applicationFactory)</code></td>
-<td>Finds the <code>&lt;canvas&gt;</code> by id. Fails with "No canvas found with id '…'" when there is none.</td>
+<td>Finds the <code>&lt;canvas&gt;</code> by id when you construct a custom <code>WebGpuEngine</code> subclass yourself.</td>
 </tr>
 <tr>
 <td><code>launchWebGpuGame(canvas: HTMLCanvasElement, cursor, applicationFactory)</code></td>
-<td>Uses a canvas you already have.</td>
+<td>Uses a canvas you already have with your own <code>WebGpuEngine</code> factory.</td>
 </tr>
 </tbody>
 </table>
