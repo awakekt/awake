@@ -1,0 +1,2 @@
+- Generate browser filesystem metadata serializers and preserve Kotlin Long metadata across the JavaScript BigInt/JSON bridge so creating and reopening IndexedDB-backed projects succeeds; exercise file and metadata persistence in browser CI.
+- Resolve Naga's Cargo executable from CARGO_HOME and PATH instead of assuming a home-directory installation, including the Windows executable name and path separator.

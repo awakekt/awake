@@ -10,6 +10,7 @@ package com.awakekt.awake.core.io
 
 import kotlinx.coroutines.await
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import kotlin.io.encoding.Base64
 import kotlin.js.JsAny
@@ -183,7 +184,7 @@ private class IndexedDbFileSystem(
     private suspend fun ensureLoaded() {
         if (loaded) return
         val encoded = jsIndexedDbList(namespace).await<JsAny?>()?.toString().orEmpty()
-        Json.decodeFromString<List<StoredMetadataRecord>>(encoded).forEach { record ->
+        Json.decodeFromString(ListSerializer(StoredMetadataRecord.serializer()), encoded).forEach { record ->
             val path = FilePath.of(record.path)
             val stored = StoredMetadata(FileKind.valueOf(record.kind), record.sizeBytes, record.modifiedAtEpochMs)
             metadata[path] = stored
@@ -358,7 +359,11 @@ private fun remap(from: FilePath, to: FilePath, path: FilePath): FilePath {
       if (item) {
         if (item.value.namespace === namespace) records.push(item.value);
         item.continue();
-      } else resolve(JSON.stringify(records.map(({path, kind, sizeBytes, modifiedAtEpochMs}) => ({path, kind, sizeBytes, modifiedAtEpochMs}))));
+      } else {
+        const metadata = records.map(({path, kind, sizeBytes, modifiedAtEpochMs}) => ({path, kind, sizeBytes, modifiedAtEpochMs}));
+        // Kotlin Long reaches JavaScript as BigInt. Decimal strings preserve its full range for the Long serializer.
+        resolve(JSON.stringify(metadata, (_, value) => typeof value === 'bigint' ? value.toString() : value));
+      }
     };
   };
 })

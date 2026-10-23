@@ -23,7 +23,19 @@ plugins {
 }
 
 val rustDir = layout.projectDirectory.dir("rust-native")
-val cargoBin = providers.systemProperty("user.home").map { "$it/.cargo/bin/cargo" }
+val cargoHome = providers.environmentVariable("CARGO_HOME")
+    .orElse(providers.systemProperty("user.home").map { "$it/.cargo" })
+val cargoPath = providers.environmentVariable("PATH").map {
+    "${cargoHome.get()}/bin${File.pathSeparator}$it"
+}
+val cargoBin = cargoPath.map { path ->
+    val executable = if (HostOs.isWindows) "cargo.exe" else "cargo"
+    path.split(File.pathSeparator).asSequence()
+        .map { File(it, executable) }
+        .firstOrNull { it.isFile }
+        ?.absolutePath
+        ?: throw GradleException("Cargo was not found in CARGO_HOME/bin or PATH. Install a Rust toolchain before building Naga.")
+}
 
 // Inputs/outputs declared so Gradle itself can skip re-invoking cargo when nothing changed --
 // without them every task here is an unconditional Exec, same gap NativeCMake.kt had for the
@@ -38,8 +50,8 @@ fun registerCargoTask(
     group = "awake native"
     this.description = description
     workingDir = rustDir.asFile
-    // PATH must carry ~/.cargo/bin for rustup's toolchain shims (and cargo-ndk).
-    environment("PATH", "${System.getProperty("user.home")}/.cargo/bin:" + System.getenv("PATH"))
+    // Hosted runners may install Rust outside ~/.cargo. Keep the selected toolchain and cargo-ndk visible.
+    environment("PATH", cargoPath.get())
     commandLine(cargoBin.get(), *cargoArgs)
     inputs.dir(rustDir.dir("src")).withPropertyName("rustSource").withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(rustDir.file("Cargo.toml")).withPropertyName("cargoManifest")
