@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.20.0] - 2026-10-23
+
+### Added
+
+- **FileSystemContentCache for multiplatform asset streaming.** Added `FileSystemContentCache` to `:awake:project`, implementing `ContentCache` over Awake's portable `FileSystem` abstraction. It provides persistent, two-character hex-sharded disk caching with optional project namespacing and index-based garbage collection (`retainOnly`) across Desktop, Android, and iOS.
+- **Compile-time `PacketFormat` and `PacketOpcodeRegistry` for zero-boilerplate binary packets (`:awake:net:api`).** Added a `kotlinx.serialization` `BinaryFormat` (`PacketFormat`) and opcode dispatch table (`PacketOpcodeRegistry`) backed directly by `PacketWriter` and `PacketReader`, along with `@SerialInfo` bounds and quantization annotations (`@PacketMaxBytes`, `@PacketCollectionSize`, `@PacketIntRange`, `@PacketLongRange`, `@PacketMillis`, `@PacketEmptyNull`, `@PacketZeroNullNetId`). Standard `@Serializable` network packet messages now require zero manual `write*`/`read*` boilerplate while preserving tagless varint/zigzag wire compatibility and pre-allocation DoS bounds validation.
+- **Direct `launchWebGpuGame(game, plan)` overloads, `loadProject(files, entryScene = ...)`, and `pointerCursorOf(game)`.** `launchWebGpuGame` in `:awake:backend:webgpu` now accepts `(game: AwakeAppLifecycle, plan: RenderPlan, canvasId, cursor)` and `(game, plan, canvas, cursor)`, matching `runVulkanDesktopGame(game, plan)` on desktop so browser entry points no longer construct `WebGpuEngine` manually. `loadProject` in `:awake:project:runtime` adds overloads taking `entryScene: String` so multi-scene games, servers, and tests can start at a named project scene without loading `manifest.entryScene` first or rewriting `awake.project.json` in an `AssetSource` wrapper. `:awake:scene:runtime` adds `SceneRouterRuntime.cursor` and `pointerCursorOf(game: AwakeAppLifecycle)` to resolve the active UI pointer cursor across single-scene, routed-scene, and Compose app runtimes.
+- **Text atlas pages for fallback fonts taller than 8192 px.** Fallback fonts whose stacked faces exceed the maximum atlas texture height (8192 px) are partitioned into multiple atlas pages, recording the page index on each glyph quad. Text painting batches glyph emissions by atlas page across runs, minimizing render pass draw calls so mixed-script and multi-page text lines coalesce into single draw calls per page.
+- **Colour emoji fonts and multi-font fallback with grapheme clusters.** Added OpenType colour emoji font support across `COLRv0`/`CPAL` vector layers and `CBDT`/`CBLC` and `sbix` bitmap tables via pure Kotlin PNG decoding and a `ColorRgba` glyph sampling mode. `UiFonts.fallback` and `TextRun` split mixed text and emoji code points across font faces while preserving grapheme clusters, rendering untinted full-colour emoji alongside tinted distance-field text.
+- **Vulkan 1.4 API negotiation and device capabilities discovery.** Vulkan initialization queries and negotiates supported instance API versions from 1.4 down to 1.0 gracefully with driver-level fallback, and extracts modern device capabilities into a new structured, inspectable `DeviceCapabilities` model on `GraphicsDevice` and `Renderer` (covering dynamic rendering, synchronization2, timeline semaphores, descriptor indexing, push descriptors, and maintenance features).
+
+### Fixed
+
+- Request deepest contact points in Jolt shape casts so stationary initial overlaps report finite separating normals instead of propagating NaN into character motion.
+
 ## [0.19.0] - 2026-10-20
 
 ### Added
