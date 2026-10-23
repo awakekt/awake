@@ -1,1 +1,0 @@
-- **FileSystemContentCache for multiplatform asset streaming.** Added `FileSystemContentCache` to `:awake:project`, implementing `ContentCache` over Awake's portable `FileSystem` abstraction. It provides persistent, two-character hex-sharded disk caching with optional project namespacing and index-based garbage collection (`retainOnly`) across Desktop, Android, and iOS.
