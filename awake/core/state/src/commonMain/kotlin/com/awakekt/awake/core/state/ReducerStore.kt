@@ -8,10 +8,9 @@ package com.awakekt.awake.core.state
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.receiveAsFlow
 
 /**
  * Functional reducer signature for unidirectional state transitions.
@@ -74,6 +73,67 @@ interface ReducerStore<S, in I, out E> : Store<S> {
 }
 
 /**
+ * Base store for synchronous MVI/UDF state holders that mutate [state] and emit one-shot [E]
+ * effects without launching coroutines on the frame thread.
+ *
+ * Subclasses expose domain-specific `dispatch` or action methods that call [updateState] and
+ * [emitEffect], while game loops drain queued effects synchronously once per frame via
+ * [drainEffects].
+ *
+ * @param S The state type.
+ * @param E The one-shot effect type.
+ * @param initialState The initial state value.
+ * @param scope Coroutine scope governing derived state projections.
+ */
+open class MutableEffectStore<S, E>(
+    initialState: S,
+    scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
+) : MutableStore<S>(initialState, scope) {
+
+    private val effectChannel = Channel<E>(Channel.UNLIMITED)
+    private val flowChannel = Channel<E>(Channel.UNLIMITED)
+
+    /** Observable stream of one-shot effects for asynchronous or UI collectors. */
+    val effects: Flow<E> = flowChannel.receiveAsFlow()
+
+    /**
+     * Atomically updates the current state using [transform].
+     *
+     * @param transform Pure function computing the next state from the current state.
+     */
+    protected fun updateState(transform: (S) -> S) {
+        update(transform)
+    }
+
+    /**
+     * Synchronously enqueues a one-shot [effect] for [drainEffects] and emits it to [effects]
+     * without launching a coroutine.
+     *
+     * @param effect The one-shot side effect to emit.
+     */
+    protected fun emitEffect(effect: E) {
+        effectChannel.trySend(effect)
+        flowChannel.trySend(effect)
+    }
+
+    /**
+     * Synchronously drains all pending effects in FIFO order.
+     *
+     * @return The list of effects queued since the previous drain, or [emptyList] if none.
+     */
+    fun drainEffects(): List<E> {
+        val first = effectChannel.tryReceive().getOrNull() ?: return emptyList()
+        val drained = ArrayList<E>()
+        drained.add(first)
+        while (true) {
+            val next = effectChannel.tryReceive().getOrNull() ?: break
+            drained.add(next)
+        }
+        return drained
+    }
+}
+
+/**
  * Production implementation of [ReducerStore].
  *
  * @param S The state type.
@@ -90,11 +150,9 @@ open class DefaultReducerStore<S, in I, out E>(
 ) : MutableStore<S>(initialState, scope),
     ReducerStore<S, I, E> {
 
-    private val effectQueue = ArrayDeque<E>()
-    private val queueLock = PlatformLock()
-
-    private val _effects = MutableSharedFlow<E>(extraBufferCapacity = 64)
-    override val effects: Flow<E> = _effects.asSharedFlow()
+    private val effectChannel = Channel<E>(Channel.UNLIMITED)
+    private val flowChannel = Channel<E>(Channel.UNLIMITED)
+    override val effects: Flow<E> = flowChannel.receiveAsFlow()
 
     override fun dispatch(intent: I) {
         var effectToEmit: E? = null
@@ -105,25 +163,20 @@ open class DefaultReducerStore<S, in I, out E>(
         }
 
         effectToEmit?.let { eff ->
-            queueLock.withLock {
-                effectQueue.addLast(eff)
-            }
-            coroutineScope.launch {
-                _effects.emit(eff)
-            }
+            effectChannel.trySend(eff)
+            flowChannel.trySend(eff)
         }
     }
 
-    override fun drainEffects(): List<E> = queueLock.withLock {
-        if (effectQueue.isEmpty()) {
-            emptyList()
-        } else {
-            val drained = ArrayList<E>(effectQueue.size)
-            while (effectQueue.isNotEmpty()) {
-                drained.add(effectQueue.removeFirst())
-            }
-            drained
+    override fun drainEffects(): List<E> {
+        val first = effectChannel.tryReceive().getOrNull() ?: return emptyList()
+        val drained = ArrayList<E>()
+        drained.add(first)
+        while (true) {
+            val next = effectChannel.tryReceive().getOrNull() ?: break
+            drained.add(next)
         }
+        return drained
     }
 }
 

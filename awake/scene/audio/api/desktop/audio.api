@@ -1,3 +1,20 @@
+public final class com/awakekt/awake/scene/audio/AudioCueQueue {
+	public fun <init> ()V
+	public final fun emit (Ljava/lang/String;FFF)V
+	public static synthetic fun emit$default (Lcom/awakekt/awake/scene/audio/AudioCueQueue;Ljava/lang/String;FFFILjava/lang/Object;)V
+	public final fun emitDistinct (Lcom/awakekt/awake/scene/audio/OneShotAudioCue;)V
+	public final fun getActiveHoldSound ()Lcom/awakekt/awake/core/audio/SoundHandle;
+	public final fun getPending ()Lkotlin/collections/ArrayDeque;
+	public final fun setActiveHoldSound (Lcom/awakekt/awake/core/audio/SoundHandle;)V
+	public final fun stopHoldSound ()V
+}
+
+public final class com/awakekt/awake/scene/audio/AudioCueQueueKt {
+	public static final fun emitAudioCue-Agittbg (Lcom/awakekt/awake/ecs/World;JLjava/lang/String;FFF)V
+	public static synthetic fun emitAudioCue-Agittbg$default (Lcom/awakekt/awake/ecs/World;JLjava/lang/String;FFFILjava/lang/Object;)V
+	public static final fun ensureAudioCueQueue-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/audio/AudioCueQueue;
+}
+
 public final class com/awakekt/awake/scene/audio/AudioListener {
 	public fun <init> ()V
 }
@@ -54,6 +71,24 @@ public final class com/awakekt/awake/scene/audio/AudioSystem : com/awakekt/awake
 	public fun <init> (Lcom/awakekt/awake/core/audio/AudioPlayer;Ljava/util/Map;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/core/audio/AudioPlayer;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
+}
+
+public final class com/awakekt/awake/scene/audio/OneShotAudioCue {
+	public fun <init> (Ljava/lang/String;FFF)V
+	public synthetic fun <init> (Ljava/lang/String;FFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun copy (Ljava/lang/String;FFF)Lcom/awakekt/awake/scene/audio/OneShotAudioCue;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/audio/OneShotAudioCue;Ljava/lang/String;FFFILjava/lang/Object;)Lcom/awakekt/awake/scene/audio/OneShotAudioCue;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMaxDistance ()F
+	public final fun getPath ()Ljava/lang/String;
+	public final fun getPitch ()F
+	public final fun getVolume ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class com/awakekt/awake/scene/audio/SceneAudioSource : com/awakekt/awake/scene/document/SceneComponent {

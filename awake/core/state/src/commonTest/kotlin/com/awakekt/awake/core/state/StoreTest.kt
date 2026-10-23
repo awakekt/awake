@@ -110,4 +110,29 @@ class StoreTest {
         val effect = store.effects.first()
         assertEquals("Test 42", (effect as CounterEffect.ShowAlert).message)
     }
+
+    private class SampleEffectStore : MutableEffectStore<CounterState, CounterEffect>(CounterState()) {
+        fun add(delta: Int) {
+            updateState { it.copy(count = it.count + delta) }
+        }
+
+        fun notifyCount() {
+            emitEffect(CounterEffect.ShowAlert("Count: ${value.count}"))
+        }
+    }
+
+    @Test
+    fun mutableEffectStoreUpdatesStateAndDrainsEffectsSynchronously() = runTest {
+        val store = SampleEffectStore()
+        assertEquals(0, store.value.count)
+        assertTrue(store.drainEffects().isEmpty())
+
+        store.add(7)
+        store.notifyCount()
+        assertEquals(7, store.value.count)
+
+        val effects = store.drainEffects()
+        assertEquals(listOf(CounterEffect.ShowAlert("Count: 7")), effects)
+        assertTrue(store.drainEffects().isEmpty(), "Effects are drained once")
+    }
 }

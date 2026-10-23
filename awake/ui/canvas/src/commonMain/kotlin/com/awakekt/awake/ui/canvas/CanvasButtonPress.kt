@@ -218,6 +218,10 @@ private class ButtonInputNode(var element: CanvasElement, var density: Float, va
                 state.release(element, over(event))
                 event.consume()
             }
+            PointerEventType.SecondaryPress -> if (!event.isConsumed && over(event)) {
+                element.secondaryPress()
+                event.consume()
+            }
             else -> Unit
         }
     }

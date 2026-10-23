@@ -72,6 +72,26 @@ public final class com/awakekt/awake/core/audio/AudioPlayerFactory {
 	public final fun setProvider (Lkotlin/jvm/functions/Function0;)V
 }
 
+public final class com/awakekt/awake/core/audio/FocusAudioPlayer : com/awakekt/awake/core/audio/AudioPlayer {
+	public fun <init> (Lcom/awakekt/awake/core/audio/AudioPlayer;Lkotlin/jvm/functions/Function0;)V
+	public fun <init> (Lcom/awakekt/awake/core/audio/AudioPlayer;Z)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/audio/AudioPlayer;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun dispose ()V
+	public final fun getFocused ()Z
+	public fun getMasterVolume ()F
+	public fun getMusicVolume ()F
+	public fun getSfxVolume ()F
+	public fun playMusic (Lcom/awakekt/awake/core/audio/AudioClip;FZ)V
+	public fun playSound (Lcom/awakekt/awake/core/audio/AudioClip;FFZ)Lcom/awakekt/awake/core/audio/SoundHandle;
+	public fun playSound3D (Lcom/awakekt/awake/core/audio/AudioClip;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FZ)Lcom/awakekt/awake/core/audio/SoundHandle;
+	public final fun setFocused (Z)V
+	public fun setMasterVolume (F)V
+	public fun setMusicVolume (F)V
+	public fun setSfxVolume (F)V
+	public fun stopMusic ()V
+	public final fun syncFocus ()V
+}
+
 public final class com/awakekt/awake/core/audio/JvmAudioPlayer : com/awakekt/awake/core/audio/AudioPlayer {
 	public fun <init> ()V
 	public fun dispose ()V

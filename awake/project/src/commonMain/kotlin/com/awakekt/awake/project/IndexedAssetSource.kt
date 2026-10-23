@@ -11,6 +11,7 @@ import com.awakekt.awake.core.io.Sha256
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
@@ -35,6 +36,15 @@ interface ContentCache {
 
     /** Stores [bytes] under [sha256], which [IndexedAssetSource] has already checked them against. */
     suspend fun put(sha256: String, bytes: ByteArray)
+
+    /**
+     * Deletes cached files that [index] does not list, such as files an earlier release used and
+     * this one does not.
+     *
+     * @param index The project index whose files should be retained.
+     * @return The number of deleted files; 0 when the cache does not prune or storage is unavailable.
+     */
+    suspend fun retainOnly(index: ProjectIndex): Int = 0
 }
 
 /**
@@ -122,4 +132,41 @@ class IndexedAssetSource(
 
     private fun matches(bytes: ByteArray, entry: ProjectIndexEntry): Boolean =
         bytes.size.toLong() == entry.sizeBytes && Sha256.digestHex(bytes) == entry.sha256.lowercase()
+
+    /** Factory and default path constants for [IndexedAssetSource]. */
+    companion object {
+        /** Default project-relative path for the published transport index JSON. */
+        const val DEFAULT_INDEX_PATH = "project.index.json"
+
+        private val indexJson = Json { ignoreUnknownKeys = true }
+
+        /**
+         * Fetches and decodes the [ProjectIndex] at [indexPath] via [fetch], optionally prunes
+         * stale entries from [cache] when [retainCachedOnly] is `true`, and returns a ready
+         * [IndexedAssetSource].
+         *
+         * @param indexPath Project-relative path to the transport index JSON.
+         * @param fetch Transport loader resolving an [AssetPath] (or entry URL) to its raw bytes.
+         * @param cache Optional content-addressed cache for verified files.
+         * @param retainCachedOnly Whether to prune cached entries not listed in the loaded index.
+         * @return A validated [IndexedAssetSource] backed by the fetched index and [cache].
+         */
+        suspend fun open(
+            indexPath: AssetPath = AssetPath(DEFAULT_INDEX_PATH),
+            fetch: suspend (AssetPath) -> ByteArray,
+            cache: ContentCache? = null,
+            retainCachedOnly: Boolean = true,
+        ): IndexedAssetSource {
+            val rawIndex = fetch(indexPath).decodeToString()
+            val decodedIndex = indexJson.decodeFromString(ProjectIndex.serializer(), rawIndex)
+            if (retainCachedOnly) {
+                cache?.retainOnly(decodedIndex)
+            }
+            return IndexedAssetSource(
+                index = decodedIndex,
+                fetch = { url -> fetch(AssetPath(url)) },
+                cache = cache,
+            )
+        }
+    }
 }

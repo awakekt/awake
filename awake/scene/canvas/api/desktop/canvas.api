@@ -315,6 +315,11 @@ public abstract interface class com/awakekt/awake/scene/canvas/CanvasViews {
 	public abstract fun texture-8mtA4i0 (Lcom/awakekt/awake/ui/canvas/CanvasElement;JII)Ljava/lang/Object;
 }
 
+public final class com/awakekt/awake/scene/canvas/SceneCanvasCacheKt {
+	public static final fun canvasElements (Lcom/awakekt/awake/ecs/World;Ljava/lang/String;)Ljava/util/Map;
+	public static synthetic fun canvasElements$default (Lcom/awakekt/awake/ecs/World;Ljava/lang/String;ILjava/lang/Object;)Ljava/util/Map;
+}
+
 public final class com/awakekt/awake/scene/canvas/SceneCanvasControls : com/awakekt/awake/scene/document/SceneComponent {
 	public static final field Companion Lcom/awakekt/awake/scene/canvas/SceneCanvasControls$Companion;
 	public fun <init> ()V

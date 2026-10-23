@@ -1,3 +1,22 @@
+public final class com/awakekt/awake/scene/world/BudgetedCellNodeSpawner : java/lang/AutoCloseable {
+	public static final field Companion Lcom/awakekt/awake/scene/world/BudgetedCellNodeSpawner$Companion;
+	public static final field DEFAULT_NODES_PER_FRAME I
+	public fun <init> (ILkotlin/jvm/functions/Function1;)V
+	public synthetic fun <init> (ILkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun clear ()V
+	public fun close ()V
+	public final fun enqueueCell (Lcom/awakekt/awake/world/WorldCellCoord;Lcom/awakekt/awake/scene/document/SceneNode;Ljava/util/List;)V
+	public static synthetic fun enqueueCell$default (Lcom/awakekt/awake/scene/world/BudgetedCellNodeSpawner;Lcom/awakekt/awake/world/WorldCellCoord;Lcom/awakekt/awake/scene/document/SceneNode;Ljava/util/List;ILjava/lang/Object;)V
+	public final fun getNodesPerFrame ()I
+	public final fun getPendingDespawnBatches ()I
+	public final fun getPendingSpawnCount ()I
+	public final fun step ()V
+	public final fun unloadCell (Lcom/awakekt/awake/world/WorldCellCoord;)V
+}
+
+public final class com/awakekt/awake/scene/world/BudgetedCellNodeSpawner$Companion {
+}
+
 public final class com/awakekt/awake/scene/world/FloatingOriginSystem : com/awakekt/awake/ecs/System {
 	public fun <init> ()V
 	public fun <init> (FFLjava/util/List;)V
@@ -15,6 +34,10 @@ public final class com/awakekt/awake/scene/world/FloatingOriginSystemKt {
 
 public abstract interface class com/awakekt/awake/scene/world/OriginShiftListener {
 	public abstract fun onOriginShift (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/scene/world/WorldOrigin;)V
+}
+
+public abstract interface class com/awakekt/awake/scene/world/SpawnedNode {
+	public abstract fun despawn ()V
 }
 
 public final class com/awakekt/awake/scene/world/StreamObserver : com/awakekt/awake/ecs/EcsTag {

@@ -230,6 +230,11 @@ public final class com/awakekt/awake/project/AwakeProjectValidator {
 public abstract interface class com/awakekt/awake/project/ContentCache {
 	public abstract fun get (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun put (Ljava/lang/String;[BLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun retainOnly (Lcom/awakekt/awake/project/ProjectIndex;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/project/ContentCache$DefaultImpls {
+	public static fun retainOnly (Lcom/awakekt/awake/project/ContentCache;Lcom/awakekt/awake/project/ProjectIndex;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class com/awakekt/awake/project/FileSystemContentCache : com/awakekt/awake/project/ContentCache {
@@ -237,16 +242,23 @@ public final class com/awakekt/awake/project/FileSystemContentCache : com/awakek
 	public synthetic fun <init> (Lcom/awakekt/awake/core/io/FileSystem;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun get (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun put (Ljava/lang/String;[BLkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public final fun retainOnly (Lcom/awakekt/awake/project/ProjectIndex;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun retainOnly (Lcom/awakekt/awake/project/ProjectIndex;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class com/awakekt/awake/project/IndexedAssetSource : com/awakekt/awake/core/io/AssetSource {
+	public static final field Companion Lcom/awakekt/awake/project/IndexedAssetSource$Companion;
+	public static final field DEFAULT_INDEX_PATH Ljava/lang/String;
 	public fun <init> (Lcom/awakekt/awake/project/ProjectIndex;Lkotlin/jvm/functions/Function2;Lcom/awakekt/awake/project/ContentCache;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/project/ProjectIndex;Lkotlin/jvm/functions/Function2;Lcom/awakekt/awake/project/ContentCache;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun exists (Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun prefetch (Ljava/util/List;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static synthetic fun prefetch$default (Lcom/awakekt/awake/project/IndexedAssetSource;Ljava/util/List;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public fun read-gIAlu-s (Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/project/IndexedAssetSource$Companion {
+	public final fun open (Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/jvm/functions/Function2;Lcom/awakekt/awake/project/ContentCache;ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun open$default (Lcom/awakekt/awake/project/IndexedAssetSource$Companion;Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/jvm/functions/Function2;Lcom/awakekt/awake/project/ContentCache;ZLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 }
 
 public final class com/awakekt/awake/project/LockVerifiedAssetSource : com/awakekt/awake/core/io/AssetSource {

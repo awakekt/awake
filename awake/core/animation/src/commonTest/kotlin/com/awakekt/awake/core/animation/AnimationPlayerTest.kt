@@ -112,4 +112,15 @@ class AnimationPlayerTest {
 
         assertEquals(10f, translationX(player, 0f), "the fade ended while unposed")
     }
+
+    @Test
+    fun crossedTimelineMarkerDetectsForwardAndLoopingWrapCrossings() {
+        assertTrue(crossedTimelineMarker(prevTime = 0.2f, currTime = 0.6f, duration = 1f, looping = false, markerNormalized = 0.5f))
+        assertFalse(crossedTimelineMarker(prevTime = 0.6f, currTime = 0.8f, duration = 1f, looping = false, markerNormalized = 0.5f))
+        assertFalse(crossedTimelineMarker(prevTime = 0.8f, currTime = 0.2f, duration = 1f, looping = false, markerNormalized = 0.9f))
+        assertTrue(crossedTimelineMarker(prevTime = 0.8f, currTime = 0.2f, duration = 1f, looping = true, markerNormalized = 0.9f))
+        assertTrue(crossedTimelineMarker(prevTime = 0.8f, currTime = 0.2f, duration = 1f, looping = true, markerNormalized = 0.1f))
+        assertFalse(crossedTimelineMarker(prevTime = 0.8f, currTime = 0.2f, duration = 1f, looping = true, markerNormalized = 0.5f))
+        assertFalse(crossedTimelineMarker(prevTime = 0f, currTime = 1f, duration = 0f, looping = false, markerNormalized = 0.5f))
+    }
 }
