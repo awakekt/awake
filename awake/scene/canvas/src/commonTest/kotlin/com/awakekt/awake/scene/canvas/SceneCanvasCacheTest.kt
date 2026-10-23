@@ -116,6 +116,23 @@ class SceneCanvasCacheTest {
         assertEquals(made, names["Slime"])
     }
 
+    @Test
+    fun canvasElementsFiltersByPrefix() {
+        val shopRoot = element().also { world.add(it, Name("shop")) }
+        val shopClose = element(shopRoot).also { world.add(it, Name("shop close")) }
+        val inventoryRoot = element().also { world.add(it, Name("inventory")) }
+        named("unnamed-prop")
+
+        val shopElements = world.canvasElements("shop")
+        assertEquals(setOf("shop", "shop close"), shopElements.keys)
+        assertSame(world.get<CanvasElement>(shopRoot), shopElements["shop"])
+        assertSame(world.get<CanvasElement>(shopClose), shopElements["shop close"])
+
+        val allElements = world.canvasElements()
+        assertEquals(setOf("shop", "shop close", "inventory"), allElements.keys)
+        assertSame(world.get<CanvasElement>(inventoryRoot), allElements["inventory"])
+    }
+
     private fun named(name: String): Entity = node().also { world.add(it, Name(name)) }
 
     /** Whether [node] is [other] or above it; a loop counts as above, so a move never makes one. */

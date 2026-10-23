@@ -120,4 +120,45 @@ class AudioSystemTest {
         kotlin.test.assertEquals(-1f, updatedPan, 0.01f)
         kotlin.test.assertTrue(updatedVolume > 0f)
     }
+
+    @Test
+    fun audioCueQueueEmitsAndDrainsOneShotAndStopsHoldSound() {
+        val world = World()
+        val played = mutableListOf<String>()
+        val player = object : NoOpAudioPlayer() {
+            override fun playSound(
+                clip: AudioClip,
+                volume: Float,
+                pan: Float,
+                loop: Boolean,
+            ): com.awakekt.awake.core.audio.SoundHandle? {
+                played += clip.id
+                return super.playSound(clip, volume, pan, loop)
+            }
+        }
+        val strikeClip = AudioClip(id = "sfx/strike.wav", name = "Strike", pcmBytes = ByteArray(64))
+        val system = AudioSystem(player, clips = mapOf("sfx/strike.wav" to strikeClip))
+
+        val actor = world.create()
+        world.emitAudioCue(actor, "sfx/strike.wav", volume = 0.8f)
+        val queue = world.ensureAudioCueQueue(actor)
+        queue.emitDistinct(OneShotAudioCue("sfx/strike.wav", volume = 0.8f))
+        kotlin.test.assertEquals(1, queue.pending.size, "emitDistinct prevents duplicate pending cue")
+
+        var holdStopped = false
+        queue.activeHoldSound = object : com.awakekt.awake.core.audio.SoundHandle {
+            override var isPlaying: Boolean = true
+            override fun stop() {
+                isPlaying = false
+                holdStopped = true
+            }
+        }
+        queue.stopHoldSound()
+        kotlin.test.assertTrue(holdStopped)
+        kotlin.test.assertNull(queue.activeHoldSound)
+
+        system.update(world, 1f / 60f)
+        kotlin.test.assertEquals(listOf("sfx/strike.wav"), played)
+        kotlin.test.assertTrue(queue.pending.isEmpty())
+    }
 }

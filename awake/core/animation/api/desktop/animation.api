@@ -73,6 +73,10 @@ public final class com/awakekt/awake/core/animation/AnimationPlayer {
 	public final fun update (F)Lcom/awakekt/awake/core/animation/AnimationPose;
 }
 
+public final class com/awakekt/awake/core/animation/AnimationPlayerKt {
+	public static final fun crossedTimelineMarker (FFFZF)Z
+}
+
 public final class com/awakekt/awake/core/animation/AnimationPose {
 	public fun <init> (Lcom/awakekt/awake/core/animation/Skeleton;)V
 	public final fun blend (Lcom/awakekt/awake/core/animation/AnimationPose;F)V

@@ -432,6 +432,10 @@ class CanvasElement {
     private var doublePressed = false
     private var lastPress: TimeMark? = null
 
+    /** Whether a Button or pressable element was right-clicked since the last [consumeSecondaryPress]. */
+    var secondaryPressed: Boolean = false
+        private set
+
     /** What times presses; a test swaps it for a `TestTimeSource`. */
     internal var clock: TimeSource = TimeSource.Monotonic
     internal val interactions = InteractionSource()
@@ -628,6 +632,14 @@ class CanvasElement {
     fun consumeDoublePress(): Boolean = doublePressed.also { doublePressed = false }
 
     /**
+     * True once for each secondary (right-button) press on a Button or pressable element since the
+     * last call; game code polls it, as [consumePress] polls a primary tap.
+     *
+     * @return True if a secondary press event was registered and unconsumed.
+     */
+    fun consumeSecondaryPress(): Boolean = secondaryPressed.also { secondaryPressed = false }
+
+    /**
      * How a Button acts as an on-screen action button: when it fires, a long press, a release, and
      * whether a cooldown holds it back. Null is a plain button, tapped on release.
      */
@@ -816,6 +828,11 @@ class CanvasElement {
         } else {
             lastPress = clock.markNow()
         }
+    }
+
+    internal fun secondaryPress() {
+        if (!usable) return
+        secondaryPressed = true
     }
 
     /** Default dimensions and styling metrics for canvas elements. */

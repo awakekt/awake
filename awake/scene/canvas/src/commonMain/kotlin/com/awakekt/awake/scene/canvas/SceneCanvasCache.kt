@@ -175,3 +175,18 @@ internal class CanvasItemOrder(private val world: World) {
         return null
     }
 }
+
+/**
+ * Returns a map of live [CanvasElement]s keyed by their entity [Name.value], filtered to names
+ * starting with [prefix] (or all named canvas elements when [prefix] is empty).
+ *
+ * @param prefix Optional name prefix filter (for example, a window's root name).
+ * @return A map from entity name to its [CanvasElement].
+ */
+fun World.canvasElements(prefix: String = ""): Map<String, CanvasElement> = buildMap {
+    family<Name, CanvasElement>().forEach { _, name, element ->
+        if (prefix.isEmpty() || name.value.startsWith(prefix)) {
+            put(name.value, element)
+        }
+    }
+}

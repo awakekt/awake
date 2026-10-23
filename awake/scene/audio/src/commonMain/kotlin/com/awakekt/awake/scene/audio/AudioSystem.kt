@@ -47,7 +47,10 @@ class AudioSystem(
         } ?: Vec3f.RIGHT
 
         val listener = AudioListenerContext(pos = listenerPos, right = listenerRight)
-        if (clips.isNotEmpty()) swapInClips(world)
+        if (clips.isNotEmpty()) {
+            swapInClips(world)
+            drainCueQueues(world, listener)
+        }
 
         world.family<AudioSource>().forEach { entity, source ->
             updateSource(world, entity, source, listener)
@@ -133,6 +136,28 @@ class AudioSystem(
             world.add(entity, source.copy(clip = clips.getValue(source.clip.id)))
         }
         waiting.clear()
+    }
+
+    private fun drainCueQueues(world: World, listener: AudioListenerContext) {
+        world.family<AudioCueQueue>().forEach { entity, queue ->
+            while (queue.pending.isNotEmpty()) {
+                val cue = queue.pending.removeFirst()
+                val clip = clips[cue.path] ?: continue
+                if (cue.maxDistance > 0f) {
+                    val emitterPos = world.get<Transform>(entity)?.position ?: Vec3f.ZERO
+                    audioPlayer.playSound3D(
+                        clip = clip,
+                        emitterPos = emitterPos,
+                        listenerPos = listener.pos,
+                        listenerRight = listener.right,
+                        maxDistance = cue.maxDistance,
+                        loop = false,
+                    )
+                } else {
+                    audioPlayer.playSound(clip = clip, volume = cue.volume, loop = false)
+                }
+            }
+        }
     }
 
     private fun AudioSource.canAutoPlay(): Boolean =

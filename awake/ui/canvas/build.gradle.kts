@@ -31,7 +31,7 @@ kotlin {
             api(libs.kotlinx.serialization.json)
             // A custom slot is drawn in a BoxScope, part of the public CanvasSlotContent.
             api(project(":awake:compose:foundation"))
-            implementation(project(":awake:core:color"))
+            api(project(":awake:core:color"))
             implementation(project(":awake:core:graphics2d"))
             implementation(project(":awake:core:logging"))
         }

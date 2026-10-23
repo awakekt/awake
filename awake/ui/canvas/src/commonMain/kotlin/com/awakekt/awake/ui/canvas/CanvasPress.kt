@@ -77,7 +77,12 @@ private class PressPointNode(var element: CanvasElement, var density: Float) :
     override val blocksHitTest: Boolean get() = false
 
     override fun onPointerEvent(event: PointerEvent, pass: PointerEventPass) {
-        if (pass != PointerEventPass.Main || event.type != PointerEventType.Press || !event.isInBounds) return
-        element.pressStart = elementPoint(element, event.x, event.y, density)
+        if (pass != PointerEventPass.Main || !event.isInBounds) return
+        if (event.type == PointerEventType.Press) {
+            element.pressStart = elementPoint(element, event.x, event.y, density)
+        } else if (event.type == PointerEventType.SecondaryPress && !event.isConsumed) {
+            element.secondaryPress()
+            event.consume()
+        }
     }
 }

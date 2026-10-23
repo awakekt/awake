@@ -238,3 +238,33 @@ class AnimationPlayer(
             "Unknown animation clip '$id'. Available clips: ${library.clips.keys.sorted().joinToString()}."
         }
 }
+
+/**
+ * Evaluates whether an animation clip's playback cursor crossed [markerNormalized] (`[0.0, 1.0]`)
+ * between [prevTime] and [currTime] over a clip of length [duration] seconds.
+ *
+ * Handles variable frame rates, playback speed multipliers, and [looping] wrap-arounds
+ * (`currTime < prevTime`) without detached timers.
+ *
+ * @param prevTime Clip playback time in seconds on the previous frame.
+ * @param currTime Clip playback time in seconds on the current frame.
+ * @param duration Total clip duration in seconds.
+ * @param looping Whether the clip wraps around upon reaching [duration].
+ * @param markerNormalized Normalized marker position in `[0.0, 1.0]` along the clip duration.
+ * @return `true` if the playback cursor crossed the marker during this step, `false` otherwise.
+ */
+fun crossedTimelineMarker(
+    prevTime: Float,
+    currTime: Float,
+    duration: Float,
+    looping: Boolean,
+    markerNormalized: Float,
+): Boolean {
+    if (duration <= 0f || markerNormalized !in 0f..1f) return false
+    val markerTime = duration * markerNormalized
+    return if (!looping || currTime >= prevTime) {
+        prevTime < markerTime && currTime >= markerTime
+    } else {
+        prevTime < markerTime || currTime >= markerTime
+    }
+}

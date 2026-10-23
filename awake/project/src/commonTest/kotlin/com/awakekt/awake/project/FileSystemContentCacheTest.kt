@@ -10,6 +10,7 @@ import com.awakekt.awake.core.io.FilePath
 import com.awakekt.awake.core.io.InMemoryFileSystem
 import com.awakekt.awake.core.io.Sha256
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -118,5 +119,40 @@ class FileSystemContentCacheTest {
         assertContentEquals(model, firstRead)
         assertContentEquals(model, secondRead)
         assertEquals(1, networkFetches, "The second read must come from the FileSystemContentCache")
+    }
+
+    @Test
+    fun openDecodesIndexAndPrunesStaleCacheEntries() = runTest {
+        val fs = InMemoryFileSystem()
+        val cache = FileSystemContentCache(fs)
+        cache.put(textureHash, texture)
+
+        val index = ProjectIndex(
+            files = listOf(
+                ProjectIndexEntry(
+                    path = "assets/crate.glb",
+                    sizeBytes = model.size.toLong(),
+                    sha256 = modelHash,
+                    url = "files/crate.glb",
+                ),
+            ),
+        )
+        val indexBytes = Json.encodeToString(ProjectIndex.serializer(), index).encodeToByteArray()
+
+        val source = IndexedAssetSource.open(
+            fetch = { path ->
+                when (path.value) {
+                    IndexedAssetSource.DEFAULT_INDEX_PATH -> indexBytes
+                    "files/crate.glb" -> model
+                    else -> error("Unexpected path: $path")
+                }
+            },
+            cache = cache,
+            retainCachedOnly = true,
+        )
+
+        assertNull(cache.get(textureHash), "Stale cache entry should be pruned on open")
+        assertContentEquals(model, source.read(AssetPath("assets/crate.glb")).getOrThrow())
+        assertContentEquals(model, cache.get(modelHash))
     }
 }
