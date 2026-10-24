@@ -44,8 +44,11 @@ public final class com/awakekt/awake/scene/rendering/RenderSystem3D : com/awakek
 	public final fun getLastFramePlanned ()Z
 	public final fun getLastFrustumCulledCount ()I
 	public final fun getLastOccludedCount ()I
+	public final fun getLastShadowOnlyCount ()I
+	public final fun getMinShadowCasterRatio ()F
 	public final fun planCapture (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/scene/rendering/camera/Camera;F)Lcom/awakekt/awake/render/command/GpuPassInput;
 	public final fun planCapture (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/scene/rendering/camera/Camera;II)Lcom/awakekt/awake/render/command/GpuPassInput;
+	public final fun setMinShadowCasterRatio (F)V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 
@@ -1939,6 +1942,7 @@ public final class com/awakekt/awake/scene/rendering/spatial/SpatialGrid {
 	public final fun queryAabb (Lcom/awakekt/awake/core/math/Aabb;Ljava/util/Collection;)Ljava/util/Collection;
 	public final fun queryFrustum (Lcom/awakekt/awake/core/math/Lens;FLjava/util/Collection;)Ljava/util/Collection;
 	public final fun queryRange (Lcom/awakekt/awake/core/math/Vec3f;FLjava/util/Collection;)Ljava/util/Collection;
+	public final fun queryShadowCasters (Lcom/awakekt/awake/render/passes/ShadowCasterVolume;Ljava/util/Collection;)Ljava/util/Collection;
 	public final fun remove (I)V
 }
 

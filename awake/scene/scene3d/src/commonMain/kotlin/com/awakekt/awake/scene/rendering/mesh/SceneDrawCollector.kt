@@ -31,6 +31,7 @@ import com.awakekt.awake.scene.rendering.animation.ModularCharacterComponent
 import com.awakekt.awake.scene.rendering.animation.SkinnedPose
 import com.awakekt.awake.scene.rendering.camera.Camera
 import com.awakekt.awake.scene.rendering.outline.Outlined
+import com.awakekt.awake.scene.rendering.spatial.CullVerdict
 import com.awakekt.awake.scene.rendering.spatial.FrameCulling
 import com.awakekt.awake.scene.rendering.spatial.SceneCullingCompiler
 import kotlin.math.sqrt
@@ -101,14 +102,14 @@ internal class SceneDrawCollector(
             // for free.
             // A billboard turns with the camera, so its authored bounds do not describe it.
             val bounds = if (meshRenderer.billboard) null else boundsStore?.get(entity)
-            if (bounds != null &&
-                !cullingCompiler.passesCulling(
-                    entity.id,
-                    transform,
-                    bounds,
-                    culling,
-                )
-            ) {
+            // A transparent mesh never casts (the shadow pass keeps only opaque draws), so the
+            // camera alone decides it.
+            val verdict = if (bounds == null) {
+                CullVerdict.Visible
+            } else {
+                cullingCompiler.classify(entity.id, transform, bounds, culling, castsShadows = !meshRenderer.transparent)
+            }
+            if (verdict == CullVerdict.Culled) {
                 poseStore?.get(entity)?.culled = true
                 return@forEach
             }
@@ -116,6 +117,9 @@ internal class SceneDrawCollector(
             // .pipelinesByFormat) -- extraUniformFloats only matters for a format whose
             // shader reads it (a skinned mesh's joint palette); every other format ignores
             // an empty array the same way it always has.
+            //
+            // Drawn for shadows alone still counts as drawn: the shadow shows the pose, so it has
+            // to be the current one.
             val pose = poseStore?.get(entity)
             pose?.drawn = true
             // The entity's own material wins; otherwise the factors its material was authored with.
@@ -155,6 +159,7 @@ internal class SceneDrawCollector(
                     alphaCutoff = pbr?.alphaCutoff ?: 0.5f,
                     transparent = meshRenderer.transparent,
                     additive = meshRenderer.additive,
+                    shadowsOnly = verdict == CullVerdict.ShadowOnly,
                     worldBounds = bounds?.writeWorldBounds(transform, beforeAabbs.obtain()),
                     maskLayer = outlineStore?.get(entity)?.set ?: NO_MASK_LAYER,
                 ),
@@ -195,14 +200,8 @@ internal class SceneDrawCollector(
         resolution.modularFamily.forEach { entity, transform, modularCharacter ->
             if (!modularCharacter.isVisible) return@forEach
             val bounds = boundsStore?.get(entity)
-            if (bounds != null &&
-                !cullingCompiler.passesCulling(
-                    entity.id,
-                    transform,
-                    bounds,
-                    culling,
-                )
-            ) {
+            val verdict = if (bounds == null) CullVerdict.Visible else cullingCompiler.classify(entity.id, transform, bounds, culling)
+            if (verdict == CullVerdict.Culled) {
                 poseStore?.get(entity)?.culled = true
                 return@forEach
             }
@@ -227,6 +226,7 @@ internal class SceneDrawCollector(
                         model = transform.worldMatrix,
                         extraUniformFloats = extras,
                         timeSeconds = elapsedTimeSeconds,
+                        shadowsOnly = verdict == CullVerdict.ShadowOnly,
                         worldBounds = bounds?.writeWorldBounds(transform, beforeAabbs.obtain()),
                         maskLayer = outlineStore?.get(entity)?.set ?: NO_MASK_LAYER,
                     ),
@@ -260,21 +260,14 @@ internal class SceneDrawCollector(
             val level = lodGroup.selectLevel(distance)
 
             val bounds = boundsStore?.get(entity)
-            if (bounds != null &&
-                !cullingCompiler.passesCulling(
-                    entity.id,
-                    transform,
-                    bounds,
-                    culling,
-                )
-            ) {
-                return@forEach
-            }
+            val verdict = if (bounds == null) CullVerdict.Visible else cullingCompiler.classify(entity.id, transform, bounds, culling)
+            if (verdict == CullVerdict.Culled) return@forEach
             drawCalls.add(
                 afterCommands.obtainCommand(
                     mesh = level.mesh,
                     material = level.material,
                     model = transform.worldMatrix,
+                    shadowsOnly = verdict == CullVerdict.ShadowOnly,
                     worldBounds = bounds?.writeWorldBounds(transform, afterAabbs.obtain()),
                 ),
             )

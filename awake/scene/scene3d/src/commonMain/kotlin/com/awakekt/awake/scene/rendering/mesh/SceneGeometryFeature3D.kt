@@ -8,6 +8,7 @@ package com.awakekt.awake.scene.rendering.mesh
 import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.passes.RenderDrawCommand
+import com.awakekt.awake.render.passes.ShadowCasterVolume
 import com.awakekt.awake.scene.rendering.camera.Camera
 import com.awakekt.awake.scene.rendering.spatial.FrameCulling
 import com.awakekt.awake.scene.rendering.spatial.SceneCullingCompiler
@@ -23,9 +24,27 @@ internal class SceneGeometryFeature3D(clipSpace: ClipSpace) {
 
     val lastOccludedCount: Int get() = cullingCompiler.lastOccludedCount
     val lastFrustumCulledCount: Int get() = cullingCompiler.lastFrustumCulledCount
+    val lastShadowOnlyCount: Int get() = cullingCompiler.lastShadowOnlyCount
 
-    fun begin(world: World, camera: Camera, elapsedTimeSeconds: Float, aspect: Float): Frame {
-        val culling = cullingCompiler.prepare(world, camera, aspect)
+    /** See [SceneCullingCompiler.minShadowCasterRatio]. */
+    var minShadowCasterRatio: Float
+        get() = cullingCompiler.minShadowCasterRatio
+        set(value) {
+            cullingCompiler.minShadowCasterRatio = value
+        }
+
+    /**
+     * Starts a frame. [shadows] is what the frame's shadow maps cover: a mesh the camera culls is
+     * still drawn into them when it lies inside, and null draws nothing for shadows alone.
+     */
+    fun begin(
+        world: World,
+        camera: Camera,
+        elapsedTimeSeconds: Float,
+        aspect: Float,
+        shadows: ShadowCasterVolume? = null,
+    ): Frame {
+        val culling = cullingCompiler.prepare(world, camera, aspect, shadows)
         return Frame(
             culling = culling,
             beforeParticles = drawCollector.collectBeforeParticles(world, culling, elapsedTimeSeconds),
