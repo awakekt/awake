@@ -359,8 +359,13 @@ public abstract interface class com/awakekt/awake/net/TransportServer {
 public abstract interface class com/awakekt/awake/net/TransportSession {
 	public abstract fun close (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun getId-H4EDovs ()J
+	public fun getPrincipal ()Ljava/lang/String;
 	public abstract fun incoming ()Lkotlinx/coroutines/channels/ReceiveChannel;
 	public abstract fun send (Lcom/awakekt/awake/net/DeliveryChannel;[BLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/net/TransportSession$DefaultImpls {
+	public static fun getPrincipal (Lcom/awakekt/awake/net/TransportSession;)Ljava/lang/String;
 }
 
 public abstract interface class com/awakekt/awake/net/ViolationSink {

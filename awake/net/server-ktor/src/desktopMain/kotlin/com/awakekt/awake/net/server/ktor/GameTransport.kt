@@ -10,6 +10,7 @@ import com.awakekt.awake.net.SessionId
 import com.awakekt.awake.net.TransportServer
 import com.awakekt.awake.net.TransportSession
 import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.ApplicationPlugin
 import io.ktor.server.application.ApplicationStopping
 import io.ktor.server.application.createApplicationPlugin
@@ -64,6 +65,16 @@ class GameTransportConfig {
 
     /** Port assigned or queried (used when reporting [TransportServer.port]). */
     var port: Int = 0
+
+    /**
+     * Resolves [TransportSession.principal] from the accepted upgrade request, once per
+     * connection, before the session is handed to [TransportServer.sessions] (default: none).
+     *
+     * Read only what an earlier step already verified, typically a value a route-scoped plugin
+     * put in [ApplicationCall.attributes] after checking the request; never trust raw headers or
+     * query parameters here. Throwing refuses the connection.
+     */
+    var principal: (ApplicationCall) -> String? = { null }
 }
 
 /**
@@ -81,10 +92,11 @@ class KtorGameTransport internal constructor(
 
     override fun sessions(): ReceiveChannel<TransportSession> = accepted
 
-    internal suspend fun onConnect(socket: WebSocketSession) {
+    internal suspend fun onConnect(socket: WebSocketSession, principal: String? = null) {
         val id = SessionId(nextSessionId.getAndIncrement())
         val session = KtorTransportSession(
             id = id,
+            principal = principal,
             socket = socket,
             inboxCapacity = config.inboxCapacity,
             outboundCapacity = config.outboundCapacity,
@@ -124,7 +136,7 @@ val GameTransport: ApplicationPlugin<GameTransportConfig> =
 
         application.routing {
             webSocket(cfg.path) {
-                transport.onConnect(this)
+                transport.onConnect(this, cfg.principal(call))
             }
         }
 
@@ -142,6 +154,7 @@ val Application.gameTransport: TransportServer
 
 internal class KtorTransportSession(
     override val id: SessionId,
+    override val principal: String?,
     private val socket: WebSocketSession,
     inboxCapacity: Int,
     outboundCapacity: Int,
