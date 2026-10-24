@@ -6,11 +6,15 @@
 package com.awakekt.awake.scene.rendering.benchmark
 
 import com.awakekt.awake.core.math.Aabb
+import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.core.math.Frustum
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math.intersects
 import com.awakekt.awake.core.math.planes
+import com.awakekt.awake.render.passes.ShadowCasterVolume
+import com.awakekt.awake.render.passes.uniforms.SceneLight
+import com.awakekt.awake.render.passes.uniforms.shadowCascadeUniforms
 import com.awakekt.awake.scene.rendering.spatial.SpatialGrid
 import kotlinx.benchmark.Benchmark
 import kotlinx.benchmark.BenchmarkMode
@@ -38,6 +42,12 @@ import org.openjdk.jmh.annotations.Warmup
  *
  * [indexMaintenance] is the other half of the trade: keeping the grid current costs a pass over
  * the entities too, so a number for culling alone would be a half-truth.
+ *
+ * The caster benchmarks are the second query a shadowed frame makes: which entities can shadow
+ * what the camera sees, whether or not it sees them. [castersEveryEntityTested] tests every
+ * entity against the cascades' volume; [castersIndexedQuery] asks the grid, under the same
+ * mid-height sun, and [castersIndexedQueryLowSun] under a sun near the horizon, whose volume
+ * reaches furthest across the ground.
  */
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.AverageTime)
@@ -50,6 +60,9 @@ open class SpatialCullingBenchmarks {
     private lateinit var bounds: List<Aabb>
     private lateinit var grid: SpatialGrid
     private val visible = ArrayList<Int>(EXPECTED_VISIBLE)
+    private val casters = ArrayList<Int>(EXPECTED_VISIBLE)
+    private val sunVolume = ShadowCasterVolume()
+    private val lowSunVolume = ShadowCasterVolume()
 
     private val lens = Lens(
         eye = Vec3f(0f, 30f, 0f),
@@ -73,6 +86,14 @@ open class SpatialCullingBenchmarks {
         }
         grid = SpatialGrid(cellSize = CELL_SIZE)
         bounds.forEachIndexed { id, box -> grid.insert(id, box) }
+        fitCascades(sunVolume, SceneLight(direction = Vec3f(0.4f, 1f, 0.3f), color = Vec3f(1f, 1f, 1f)))
+        fitCascades(lowSunVolume, SceneLight(direction = Vec3f(1f, 0.2f, 0.3f), color = Vec3f(1f, 1f, 1f)))
+    }
+
+    /** The cascades a frame fits for [light] and this camera, out to the default shadow distance. */
+    private fun fitCascades(volume: ShadowCasterVolume, light: SceneLight) {
+        volume.clear()
+        shadowCascadeUniforms(light, lens, ASPECT, ClipSpace.WebGpu).viewProjections.forEach(volume::addCascade)
     }
 
     /** One `Frustum.intersects` per entity -- and one plane rebuild inside each, which is what
@@ -117,6 +138,32 @@ open class SpatialCullingBenchmarks {
     fun indexMaintenance(): Int {
         bounds.forEachIndexed { id, box -> grid.insert(id, box) }
         return grid.size
+    }
+
+    /** Every entity against the cascades' caster volume: what a frame without an index pays. */
+    @Benchmark
+    fun castersEveryEntityTested(): Int {
+        var casting = 0
+        for (box in bounds) {
+            if (sunVolume.admits(box)) casting += 1
+        }
+        return casting
+    }
+
+    /** The same casters, through the grid. */
+    @Benchmark
+    fun castersIndexedQuery(): Int {
+        casters.clear()
+        grid.queryShadowCasters(sunVolume, casters)
+        return casters.size
+    }
+
+    /** The grid's caster query under a sun near the horizon, the widest volume a frame asks about. */
+    @Benchmark
+    fun castersIndexedQueryLowSun(): Int {
+        casters.clear()
+        grid.queryShadowCasters(lowSunVolume, casters)
+        return casters.size
     }
 
     private companion object {
