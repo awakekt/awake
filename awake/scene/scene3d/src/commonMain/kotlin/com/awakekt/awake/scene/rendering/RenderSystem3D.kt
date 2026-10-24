@@ -102,6 +102,27 @@ class RenderSystem3D(
     /** Number of entities rejected by the camera frustum during the previous extraction. */
     val lastFrustumCulledCount: Int get() = planner.lastFrustumCulledCount
 
+    /**
+     * Number of entities the camera rejected during the previous extraction that were still drawn
+     * into the shadow maps, because they could shadow something it sees.
+     */
+    val lastShadowOnlyCount: Int get() = planner.lastShadowOnlyCount
+
+    /**
+     * The smallest an entity the camera does not see can be and still be drawn into the shadow
+     * maps, as its bounds' radius over its distance from the camera eye. A cost control for scenes
+     * with many small props just off screen, whose shadows would cover a few texels each.
+     *
+     * 0, the default, draws every caster that can reach a shadow map. Entities the camera sees
+     * always cast, whatever their size.
+     */
+    var minShadowCasterRatio: Float
+        get() = planner.minShadowCasterRatio
+        set(value) {
+            require(value >= 0f && value.isFinite()) { "minShadowCasterRatio must be finite and >= 0, was $value" }
+            planner.minShadowCasterRatio = value
+        }
+
     /** Whether the previous frame triggered a full scene plan or reused a clean frame. */
     var lastFramePlanned: Boolean = false
         private set

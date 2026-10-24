@@ -279,6 +279,20 @@ public final class com/awakekt/awake/render/passes/ShadowCascadesMathKt {
 	public static synthetic fun cascadeSplitDistances$default (FFIFILjava/lang/Object;)[F
 }
 
+public final class com/awakekt/awake/render/passes/ShadowCasterVolume {
+	public fun <init> ()V
+	public final fun addCascade (Lcom/awakekt/awake/core/math/Mat4;)V
+	public final fun addPointShadow (Lcom/awakekt/awake/core/math/Vec3f;F)V
+	public final fun admits (FFFFFF)Z
+	public final fun admits (Lcom/awakekt/awake/core/math/Aabb;)Z
+	public final fun bounds (Lcom/awakekt/awake/core/math/Aabb;Lcom/awakekt/awake/core/math/Aabb;)Z
+	public final fun clear ()Lcom/awakekt/awake/render/passes/ShadowCasterVolume;
+	public final fun getCascadeCount ()I
+	public final fun getPointShadowCount ()I
+	public final fun isEmpty ()Z
+	public final fun set (Lcom/awakekt/awake/render/passes/uniforms/SceneLight;Lcom/awakekt/awake/render/passes/uniforms/EnvironmentUniforms;)Lcom/awakekt/awake/render/passes/ShadowCasterVolume;
+}
+
 public final class com/awakekt/awake/render/passes/SharedOpaqueRenderFeature {
 	public static final field INSTANCE_COLOR_BINDING I
 	public static final field INSTANCE_FRAME_BINDING I

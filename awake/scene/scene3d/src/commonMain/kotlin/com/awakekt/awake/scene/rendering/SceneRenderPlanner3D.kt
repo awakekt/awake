@@ -14,6 +14,7 @@ import com.awakekt.awake.render.command.GpuDrawRequest
 import com.awakekt.awake.render.command.GpuResolvedDraw
 import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes.ScenePassCompiler
+import com.awakekt.awake.render.passes.ShadowCasterVolume
 import com.awakekt.awake.render.renderer.RenderViewport
 import com.awakekt.awake.scene.rendering.outline.outlineMaskLayers
 
@@ -37,9 +38,18 @@ internal class SceneRenderPlanner3D(
     private val geometryFeature = SceneGeometryFeature3D(rendererClipSpace)
     private val featureCollector = SceneFeatureCollector3D(rendererClipSpace, features)
     private val drawCalls = ArrayList<RenderDrawCommand>()
+    private val shadowCasters = ShadowCasterVolume()
 
     val lastFrustumCulledCount: Int get() = geometryFeature.lastFrustumCulledCount
     val lastOccludedCount: Int get() = geometryFeature.lastOccludedCount
+    val lastShadowOnlyCount: Int get() = geometryFeature.lastShadowOnlyCount
+
+    /** See `RenderSystem3D.minShadowCasterRatio`. */
+    var minShadowCasterRatio: Float
+        get() = geometryFeature.minShadowCasterRatio
+        set(value) {
+            geometryFeature.minShadowCasterRatio = value
+        }
 
     /** Plans [camera]'s view at [aspect], into [viewport] when it fills only part of the target. */
     fun plan(
@@ -53,9 +63,12 @@ internal class SceneRenderPlanner3D(
         targetHeight: Int = 0,
     ): PlannedFrame {
         drawCalls.clear()
-        val geometryFrame = geometryFeature.begin(world, camera, elapsedTimeSeconds, aspect)
-        drawCalls += geometryFrame.beforeParticles
+        // Features first, though their draws go after the opaque geometry: the light they settle
+        // decides which meshes the camera culls are still drawn into the shadow maps.
         val contributions = featureCollector.collect(world, camera, elapsedTimeSeconds, aspect)
+        shadowCasters.set(contributions.light, contributions.environment)
+        val geometryFrame = geometryFeature.begin(world, camera, elapsedTimeSeconds, aspect, shadowCasters)
+        drawCalls += geometryFrame.beforeParticles
         drawCalls += contributions.particleDraws
         drawCalls += geometryFeature.finish(world, geometryFrame, camera)
         drawCalls += contributions.authoredDraws
