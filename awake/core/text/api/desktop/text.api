@@ -16,6 +16,9 @@ public final class com/awakekt/awake/core/text/font/BitmapFont : com/awakekt/awa
 	public fun getDescentEm ()F
 	public fun getDistanceFieldRangePx ()F
 	public fun getLineHeightEm ()F
+	public fun getLinearCoverage ()Z
+	public fun getPixelGlyphMaxSize ()I
+	public fun getPixelGlyphs ()Lcom/awakekt/awake/core/text/font/PixelGlyphs;
 	public fun getSamplingMode ()Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;
 	public fun getTextScaleStep ()F
 	public fun getVisibleBottomEm ()F
@@ -106,6 +109,9 @@ public final class com/awakekt/awake/core/text/font/MsdfFont : com/awakekt/awake
 	public fun getDescentEm ()F
 	public fun getDistanceFieldRangePx ()F
 	public fun getLineHeightEm ()F
+	public fun getLinearCoverage ()Z
+	public fun getPixelGlyphMaxSize ()I
+	public fun getPixelGlyphs ()Lcom/awakekt/awake/core/text/font/PixelGlyphs;
 	public fun getSamplingMode ()Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;
 	public fun getTextScaleStep ()F
 	public fun getVisibleBottomEm ()F
@@ -134,6 +140,9 @@ public final class com/awakekt/awake/core/text/font/PackedUiFont : com/awakekt/a
 	public fun getDescentEm ()F
 	public fun getDistanceFieldRangePx ()F
 	public fun getLineHeightEm ()F
+	public fun getLinearCoverage ()Z
+	public fun getPixelGlyphMaxSize ()I
+	public fun getPixelGlyphs ()Lcom/awakekt/awake/core/text/font/PixelGlyphs;
 	public fun getSamplingMode ()Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;
 	public fun getTextScaleStep ()F
 	public fun getVisibleBottomEm ()F
@@ -147,12 +156,42 @@ public final class com/awakekt/awake/core/text/font/PackedUiFont : com/awakekt/a
 	public fun uvFor (C)Lcom/awakekt/awake/core/text/font/GlyphRect;
 }
 
+public final class com/awakekt/awake/core/text/font/PixelGlyph {
+	public final fun getAnchorX ()F
+	public final fun getAtlas ()Lcom/awakekt/awake/core/text/font/UiFont;
+	public final fun getBaselineEm ()F
+	public final fun getHeight ()I
+	public final fun getLeft ()I
+	public final fun getTop ()I
+	public final fun getU0 ()F
+	public final fun getU1 ()F
+	public final fun getV0 ()F
+	public final fun getV1 ()F
+	public final fun getWidth ()I
+}
+
+public final class com/awakekt/awake/core/text/font/PixelGlyphMaxSizeKt {
+	public static final fun withPixelGlyphMaxSize (Lcom/awakekt/awake/core/text/font/UiFont;I)Lcom/awakekt/awake/core/text/font/UiFont;
+}
+
+public abstract interface class com/awakekt/awake/core/text/font/PixelGlyphs {
+	public static final field Companion Lcom/awakekt/awake/core/text/font/PixelGlyphs$Companion;
+	public static final field MAX_PIXEL_SIZE I
+	public abstract fun glyph-XuG0dTc (III)Lcom/awakekt/awake/core/text/font/PixelGlyph;
+}
+
+public final class com/awakekt/awake/core/text/font/PixelGlyphs$Companion {
+	public static final field MAX_PIXEL_SIZE I
+}
+
 public final class com/awakekt/awake/core/text/font/UiAnchorKt {
 	public static final fun textBlockHeight (Lcom/awakekt/awake/core/text/font/UiFont;IFF)F
 	public static synthetic fun textBlockHeight$default (Lcom/awakekt/awake/core/text/font/UiFont;IFFILjava/lang/Object;)F
 }
 
 public abstract interface class com/awakekt/awake/core/text/font/UiFont {
+	public static final field Companion Lcom/awakekt/awake/core/text/font/UiFont$Companion;
+	public static final field DEFAULT_PIXEL_GLYPH_MAX_SIZE I
 	public fun advanceFor (CF)F
 	public fun advanceFor-JWAxxxI (CFI)F
 	public fun advanceFor-JWAxxxI (IFI)F
@@ -168,6 +207,9 @@ public abstract interface class com/awakekt/awake/core/text/font/UiFont {
 	public fun getDescentEm ()F
 	public fun getDistanceFieldRangePx ()F
 	public fun getLineHeightEm ()F
+	public fun getLinearCoverage ()Z
+	public fun getPixelGlyphMaxSize ()I
+	public fun getPixelGlyphs ()Lcom/awakekt/awake/core/text/font/PixelGlyphs;
 	public abstract fun getSamplingMode ()Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;
 	public abstract fun getTextScaleStep ()F
 	public fun getVisibleBottomEm ()F
@@ -178,6 +220,10 @@ public abstract interface class com/awakekt/awake/core/text/font/UiFont {
 	public fun hasGlyph (I)Z
 	public fun pageFont (I)Lcom/awakekt/awake/core/text/font/UiFont;
 	public abstract fun uvFor (C)Lcom/awakekt/awake/core/text/font/GlyphRect;
+}
+
+public final class com/awakekt/awake/core/text/font/UiFont$Companion {
+	public static final field DEFAULT_PIXEL_GLYPH_MAX_SIZE I
 }
 
 public final class com/awakekt/awake/core/text/font/UiFont$DefaultImpls {
@@ -192,6 +238,9 @@ public final class com/awakekt/awake/core/text/font/UiFont$DefaultImpls {
 	public static fun getDescentEm (Lcom/awakekt/awake/core/text/font/UiFont;)F
 	public static fun getDistanceFieldRangePx (Lcom/awakekt/awake/core/text/font/UiFont;)F
 	public static fun getLineHeightEm (Lcom/awakekt/awake/core/text/font/UiFont;)F
+	public static fun getLinearCoverage (Lcom/awakekt/awake/core/text/font/UiFont;)Z
+	public static fun getPixelGlyphMaxSize (Lcom/awakekt/awake/core/text/font/UiFont;)I
+	public static fun getPixelGlyphs (Lcom/awakekt/awake/core/text/font/UiFont;)Lcom/awakekt/awake/core/text/font/PixelGlyphs;
 	public static fun getVisibleBottomEm (Lcom/awakekt/awake/core/text/font/UiFont;)F
 	public static fun getVisibleTopEm (Lcom/awakekt/awake/core/text/font/UiFont;)F
 	public static fun glyphFor-MFPI20o (Lcom/awakekt/awake/core/text/font/UiFont;CI)Lcom/awakekt/awake/core/text/font/GlyphRect;
@@ -262,6 +311,9 @@ public final class com/awakekt/awake/core/text/font/WeightedUiFont : com/awakekt
 	public fun getDescentEm ()F
 	public fun getDistanceFieldRangePx ()F
 	public fun getLineHeightEm ()F
+	public fun getLinearCoverage ()Z
+	public fun getPixelGlyphMaxSize ()I
+	public fun getPixelGlyphs ()Lcom/awakekt/awake/core/text/font/PixelGlyphs;
 	public fun getSamplingMode ()Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;
 	public fun getTextScaleStep ()F
 	public fun getVisibleBottomEm ()F

@@ -41,7 +41,7 @@ class OpenTypeUiFontTest {
     @Test
     fun everyRobotoFaceLaysOutAsTheGeneratorDid() = runTest {
         faces.forEach { (file, baked) ->
-            val loaded = OpenTypeUiFontData.load(readResourceBytes(file), file, UiFonts.DEFAULT_CHARS)
+            val loaded = OpenTypeUiFontData.load(readResourceBytes(file), file, UiFonts.DEFAULT_CHARS, DistanceFieldBake.GENERATOR)
             assertEquals(baked.glyphOrder, loaded.glyphOrder, file)
             assertEquals(baked.atlasWidth to baked.atlasHeight, loaded.atlasWidth to loaded.atlasHeight, file)
             assertEquals(baked.lineHeightEm, loaded.lineHeightEm, file)
@@ -78,7 +78,7 @@ class OpenTypeUiFontTest {
      */
     @Test
     fun fieldMatchesMsdfgenTrueDistance() = runTest {
-        val loaded = OpenTypeUiFontData.load(readResourceBytes("Roboto-Regular.ttf"), "Regular", UiFonts.DEFAULT_CHARS)
+        val loaded = OpenTypeUiFontData.load(readResourceBytes("Roboto-Regular.ttf"), "Regular", UiFonts.DEFAULT_CHARS, DistanceFieldBake.GENERATOR)
         val mine = loaded.atlasBytes()
         val theirs = RobotoRegularUiFontData.atlasBytes()
         var close = 0
@@ -94,7 +94,7 @@ class OpenTypeUiFontTest {
     /** Roboto's 'H' is two stems and a bar that overlaps both; a field built per contour draws a seam where they meet. */
     @Test
     fun overlappingContoursLeaveNoSeam() = runTest {
-        val loaded = OpenTypeUiFontData.load(readResourceBytes("Roboto-Regular.ttf"), "Regular", UiFonts.DEFAULT_CHARS)
+        val loaded = OpenTypeUiFontData.load(readResourceBytes("Roboto-Regular.ttf"), "Regular", UiFonts.DEFAULT_CHARS, DistanceFieldBake.GENERATOR)
         val atlas = loaded.atlasBytes()
         val cell = loaded.glyphOrder.indexOf('H')
         val cellX = cell % 16 * (loaded.atlasWidth / 16)
@@ -107,10 +107,47 @@ class OpenTypeUiFontTest {
     /** A hash of the Regular atlas, pinned so every target that runs this proves it bakes the same bytes. */
     @Test
     fun everyTargetBakesTheSameBytes() = runTest {
-        val loaded = OpenTypeUiFontData.load(readResourceBytes("Roboto-Regular.ttf"), "Regular", UiFonts.DEFAULT_CHARS)
+        val loaded = OpenTypeUiFontData.load(readResourceBytes("Roboto-Regular.ttf"), "Regular", UiFonts.DEFAULT_CHARS, DistanceFieldBake.GENERATOR)
         var hash = FNV_OFFSET
         loaded.atlasBytes().forEach { hash = (hash xor (it.toLong() and 0xFF)) * FNV_PRIME }
         assertEquals(REGULAR_ATLAS_HASH, hash)
+    }
+
+    /** [UiFonts.load]'s own resolution, pinned the same way: 64 texels per em with an 8-texel range. */
+    @Test
+    fun everyTargetBakesTheSameRuntimeBytes() = runTest {
+        val loaded = OpenTypeUiFontData.load(readResourceBytes("Roboto-Regular.ttf"), "Regular", UiFonts.DEFAULT_CHARS)
+        assertEquals(64, loaded.bake.texelsPerEm)
+        assertEquals(8f, loaded.distanceFieldRangePx)
+        var hash = FNV_OFFSET
+        loaded.atlasBytes().forEach { hash = (hash xor (it.toLong() and 0xFF)) * FNV_PRIME }
+        assertEquals(REGULAR_RUNTIME_ATLAS_HASH, hash)
+    }
+
+    /**
+     * Twice the texels per em measures the same glyphs: the ink, the advances and the line are the
+     * outline's, whatever the resolution, and a quad moves by at most one generator texel.
+     */
+    @Test
+    fun runtimeBakeMeasuresAsTheGeneratorLayoutDoes() = runTest {
+        val bytes = readResourceBytes("Roboto-Regular.ttf")
+        val coarse = OpenTypeUiFontData.load(bytes, "Regular", UiFonts.DEFAULT_CHARS, DistanceFieldBake.GENERATOR)
+        val fine = OpenTypeUiFontData.load(bytes, "Regular", UiFonts.DEFAULT_CHARS)
+        assertEquals(coarse.lineHeightEm, fine.lineHeightEm)
+        assertContentEquals(coarse.inkMetricsEm, fine.inkMetricsEm)
+        assertContentEquals(coarse.advancesEm, fine.advancesEm)
+        // The quad is the ink plus the bleed, snapped out to whole texels: a generator texel either way.
+        assertWithin(coarse.quadMetricsEm, fine.quadMetricsEm, 1f / 32 + 1e-6f, "quads")
+    }
+
+    /** A glyph set too large for the requested resolution's atlas bakes coarser rather than failing to load. */
+    @Test
+    fun aGlyphSetTooLargeForItsAtlasBakesCoarser() = runTest {
+        val bytes = readResourceBytes("fonts/roboto-subset.ttf")
+        assertEquals(64, OpenTypeUiFontData.load(bytes, "ttf", FIXTURE_CHARS).bake.texelsPerEm)
+        // At 4096 texels per em even eight glyphs need an atlas over 8192 pixels wide.
+        val oversized = DistanceFieldBake(4096, 8)
+        assertEquals(48, OpenTypeUiFontData.load(bytes, "ttf", FIXTURE_CHARS, oversized).bake.texelsPerEm)
     }
 
     @Test
@@ -191,7 +228,10 @@ class OpenTypeUiFontTest {
 
     /**
      * Corrupt bytes anywhere in a font may still read, but never fail any other way than [IllegalArgumentException].
-     * Most rounds read every glyph's outline; every tenth bakes the atlas too, which is what takes the time.
+     * Most rounds read every glyph's outline; every tenth bakes the atlas too, which is what takes the time. The
+     * bake here is at the generator's resolution, which parsing does not depend on: at [UiFonts.load]'s four times
+     * the texels, eighty bakes passed the browser test runner's two-second limit on a CI runner. The next test
+     * covers the runtime resolution and the pixel glyphs.
      */
     @Test
     fun corruptFontsFailOnlyWithIllegalArgument() = runTest {
@@ -203,12 +243,33 @@ class OpenTypeUiFontTest {
                 repeat(1 + round % 4) { bytes[random.nextInt(bytes.size)] = random.nextInt(256).toByte() }
                 val failure = runCatching {
                     if (round % 10 == 0) {
-                        UiFonts.load(bytes, file, chars = FIXTURE_CHARS)
+                        OpenTypeUiFontData.load(bytes, file, FIXTURE_CHARS, DistanceFieldBake.GENERATOR)
                     } else {
                         val font = OpenTypeFont(bytes, file)
                         FIXTURE_CHARS.forEach { font.advance(font.glyphFor(it.code)) }
                         repeat(font.glyphCount) { font.outline(it) }
                     }
+                }.exceptionOrNull()
+                assertTrue(failure == null || failure is IllegalArgumentException, "$file mutation $round threw $failure")
+            }
+        }
+    }
+
+    /**
+     * The same, through [UiFonts.load] at its own resolution, and through the exact-size glyphs of every font that
+     * still loads: corrupt outlines rasterize, or fail with [IllegalArgumentException], and nothing else.
+     */
+    @Test
+    fun corruptFontsBakeAndRasterizeOrFailOnlyWithIllegalArgument() = runTest {
+        val random = kotlin.random.Random(2773)
+        for (file in listOf("fonts/roboto-subset.ttf", "fonts/roboto-subset.otf")) {
+            val original = readResourceBytes(file)
+            repeat(CORRUPT_RUNTIME_ROUNDS) { round ->
+                val bytes = original.copyOf()
+                repeat(1 + round % 4) { bytes[random.nextInt(bytes.size)] = random.nextInt(256).toByte() }
+                val failure = runCatching {
+                    val glyphs = UiFonts.load(bytes, file, chars = FIXTURE_CHARS).pixelGlyphs
+                    FIXTURE_CHARS.forEach { glyphs?.glyph(it.code, FontWeight.Normal, 12) }
                 }.exceptionOrNull()
                 assertTrue(failure == null || failure is IllegalArgumentException, "$file mutation $round threw $failure")
             }
@@ -244,8 +305,12 @@ class OpenTypeUiFontTest {
         /** The CFF fixture writes coordinates in 16.16 fixed point: 1/65536 of a font unit. */
         const val CFF_TOLERANCE_EM = 1e-6f
         const val FIXTURE_CHARS = " Hg.:?Ä■"
+
+        /** Corrupt fonts baked at the runtime resolution, per fixture: few, as each bake is the expensive part. */
+        const val CORRUPT_RUNTIME_ROUNDS = 12
         const val FNV_OFFSET = -0x340d631b7bdddcdbL
         const val FNV_PRIME = 0x100000001b3L
         const val REGULAR_ATLAS_HASH = 4211560484354822813L
+        const val REGULAR_RUNTIME_ATLAS_HASH = 7093501371065988845L
     }
 }

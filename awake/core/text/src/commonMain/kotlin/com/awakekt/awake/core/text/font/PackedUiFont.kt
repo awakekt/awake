@@ -57,6 +57,9 @@ internal interface PackedUiFontData {
 
     /** The atlas bytes [encodedAtlasBase64] holds. A font baked at run time hands its bytes over instead. */
     fun atlasBytes(): ByteArray = Base64.Default.decode(encodedAtlasBase64.filterNot(Char::isWhitespace))
+
+    /** The outlines the atlas was drawn from, for [PackedUiFont.pixelGlyphs]; null when they were not kept. */
+    fun outlineFont(): OpenTypeFont? = null
 }
 
 /**
@@ -64,12 +67,14 @@ internal interface PackedUiFontData {
  *
  * @param data The underlying packed font data.
  * @property cellSize The base cell size in pixels for this font instance.
+ * @param outlines The outlines the atlas was drawn from, read on first use for [pixelGlyphs].
  */
 // UiFont's Char and code point lookups are each one short override here.
 @Suppress("TooManyFunctions")
 class PackedUiFont internal constructor(
     private val data: PackedUiFontData,
     override val cellSize: Int = data.baseCellSize,
+    outlines: () -> OpenTypeFont? = data::outlineFont,
 ) : UiFont {
     override val samplingMode: UiFontSamplingMode = data.samplingMode
     override val textScaleStep: Float = data.textScaleStep
@@ -89,6 +94,19 @@ class PackedUiFont internal constructor(
     override val descentEm: Float by lazy { visibleBottomEm - baselineEm }
 
     override val capHeightEm: Float by lazy { measureCapHeightEm() }
+
+    /**
+     * Glyphs rasterized from the outlines this atlas was drawn from, at exact pixel sizes; null for an
+     * atlas whose outlines were not kept, such as a colour emoji atlas. The outlines are read on first
+     * use, and each size's glyphs are rasterized the first time it is drawn.
+     */
+    override val pixelGlyphs: PixelGlyphs? by lazy {
+        outlines()?.let { font ->
+            val codes = ArrayList<Int>(data.advancesEm.size)
+            forEachGlyphCode { _, code -> codes += code }
+            OutlinePixelGlyphs(font, codes.toIntArray(), data.fallbackChar.code, ascentEm)
+        }
+    }
 
     /**
      * Baseline position, read off a flat-bottomed capital rather than assumed.

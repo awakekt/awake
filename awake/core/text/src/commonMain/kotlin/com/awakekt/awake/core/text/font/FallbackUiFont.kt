@@ -46,6 +46,19 @@ internal class FallbackUiFont(
     override val descentEm: Float = primary.descentEm
     override val capHeightEm: Float = primary.capHeightEm
 
+    /**
+     * Each code point's glyph from the face that draws it, the face [glyphFor] picks; null unless the
+     * primary face has outlines. A face without outlines, such as colour emoji, answers null for its own
+     * code points, and those draw from its atlas.
+     */
+    override val pixelGlyphs: PixelGlyphs? by lazy {
+        if (primary.pixelGlyphs == null) {
+            null
+        } else {
+            PixelGlyphs { codePoint, weight, pixelSize -> faces[faceIndex(codePoint)].pixelGlyphs?.glyph(codePoint, weight, pixelSize) }
+        }
+    }
+
     override val atlasPages: List<UiFont> =
         if (pages.size == 1) listOf(this) + disparateFaces else pages + disparateFaces
 
