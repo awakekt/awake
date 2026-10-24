@@ -138,6 +138,7 @@ public final class com/awakekt/awake/net/server/ktor/GameTransportConfig {
 	public final fun getPath ()Ljava/lang/String;
 	public final fun getPingPeriod-UwyO8pc ()J
 	public final fun getPort ()I
+	public final fun getPrincipal ()Lkotlin/jvm/functions/Function1;
 	public final fun getTimeout-UwyO8pc ()J
 	public final fun setInboxCapacity (I)V
 	public final fun setMaxFrameSize (J)V
@@ -145,6 +146,7 @@ public final class com/awakekt/awake/net/server/ktor/GameTransportConfig {
 	public final fun setPath (Ljava/lang/String;)V
 	public final fun setPingPeriod-LRDsOJo (J)V
 	public final fun setPort (I)V
+	public final fun setPrincipal (Lkotlin/jvm/functions/Function1;)V
 	public final fun setTimeout-LRDsOJo (J)V
 }
 

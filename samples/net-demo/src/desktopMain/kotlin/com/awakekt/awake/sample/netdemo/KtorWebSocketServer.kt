@@ -10,6 +10,7 @@ import com.awakekt.awake.net.SessionId
 import com.awakekt.awake.net.TransportServer
 import com.awakekt.awake.net.TransportSession
 import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.install
 import io.ktor.server.engine.EmbeddedServer
 import io.ktor.server.engine.applicationEnvironment
@@ -52,6 +53,11 @@ class KtorWebSocketServer(
     requestedPort: Int = 0,
     private val path: String = "/net",
     private val secure: Boolean = false,
+    /**
+     * Resolves each session's [TransportSession.principal] from its accepted upgrade request.
+     * Read only a value an earlier step already verified; the default attaches none.
+     */
+    private val principalOf: (ApplicationCall) -> String? = { null },
 ) : TransportServer {
     override val port: Int = if (requestedPort != 0) requestedPort else freePort()
 
@@ -94,7 +100,11 @@ class KtorWebSocketServer(
         install(WebSockets)
         routing {
             webSocket(path) {
-                val session = WebSocketTransportSession(SessionId(nextSessionId.getAndIncrement()), this)
+                val session = WebSocketTransportSession(
+                    id = SessionId(nextSessionId.getAndIncrement()),
+                    principal = principalOf(call),
+                    socket = this,
+                )
                 accepted.send(session)
                 session.pump()
             }
@@ -126,6 +136,7 @@ class KtorWebSocketServer(
  */
 private class WebSocketTransportSession(
     override val id: SessionId,
+    override val principal: String?,
     private val socket: WebSocketSession,
 ) : TransportSession {
     // Drop oldest, never suspend: a slow tick loop must not backpressure the socket into

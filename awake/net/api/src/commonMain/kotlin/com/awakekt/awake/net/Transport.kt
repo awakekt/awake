@@ -117,6 +117,18 @@ interface TransportSession {
     val id: SessionId
 
     /**
+     * Opaque identity of the peer, verified and attached by whatever accepted the connection
+     * (for example a check on the upgrade request that ran before the session existed), or
+     * `null` when nothing established one. Fixed for the session's lifetime.
+     *
+     * The transport only carries the value: it never verifies, parses or interprets it, and what
+     * it names (a user, a device, a service) is the consuming project's policy. Trust it only as
+     * far as you trust the component that set it; a packet received *on* the session can never
+     * change it. Defaults to `null`, so existing implementations keep compiling unchanged.
+     */
+    val principal: String? get() = null
+
+    /**
      * Sends a packet to this session through the specified delivery channel.
      *
      * @param channel Delivery reliability guarantee requested for this packet.
