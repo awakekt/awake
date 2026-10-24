@@ -379,6 +379,10 @@ Awake reads, such as a collection or a WOFF file, is logged once, and its elemen
 default font. A host with no renderer reads no font. If your app runs its own Compose host, pass the
 fonts yourself: `SceneCanvas(world, fonts = loadCanvasFonts(scene, files))`.
 
+Text up to 24 pixels, after the canvas scaler and the display density, draws from glyphs rasterized
+at exactly that size, so small labels stay sharp; larger text draws from a distance field. `bitmap`
+keeps its pixel-art look at every size. See [Draw crisp text](ui.md#draw-crisp-text).
+
 ## Put elements inside others
 
 An element whose node sits below another element's node in the scene is drawn inside that element.

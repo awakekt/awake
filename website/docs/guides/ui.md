@@ -103,6 +103,61 @@ asynchronously, so decode outside the UI and show the result on a later frame. T
 each bitmap to the GPU the first frame it appears and keeps it, so reuse a decoded bitmap instead of
 decoding the same file again.
 
+## Draw crisp text
+
+`Text` sizes its glyphs in device pixels: `sp` times the display density and any canvas scale, rounded
+to a whole pixel. So 12 sp on a 150% display is 18 physical pixels, not a stretched 12. Which path draws
+the text depends on that size.
+
+| Text | Drawn from |
+|---|---|
+| 24 device pixels or smaller, on the pixel grid | Glyphs rasterized from the font's outlines at exactly that size, drawn 1:1 |
+| Larger than 24 pixels | The font's distance-field atlas |
+| Under `Modifier.scale` or another scaling transform | The distance-field atlas, so it scales smoothly |
+| In `UiFonts.bitmap()` | Its own pixel-art atlas, at every size |
+
+The exact-size glyphs put a one-pixel stem on one solid pixel column, and the x-height and cap height
+on whole pixels. Their coverage blends with gamma 1.8, corrected for the text colour, after a mild
+contrast boost, so dark text on a light background and light text on a dark one keep the same weight.
+The default Roboto family and any font from `UiFonts.load` have them. Each size is rasterized the first
+time it is drawn, in about a millisecond, and kept.
+
+### The reference small text is held to
+
+The weight of small text is checked against a reference we control, not against Awake's own earlier
+output. `tools/fonts-tooling/reference_render.py` renders the same labels with FreeType, pinned to
+2.13.2 through `freetype-py` 2.5.1 in `requirements-reference.txt`, with these settings:
+
+| Setting | Value | Why |
+|---|---|---|
+| Hinting | Light (`FT_LOAD_TARGET_LIGHT`) | Snaps horizontal edges and the x-height to the grid, leaves shapes and advances alone |
+| Stem darkening | On | Keeps thin strokes from fading once blending stops thickening them |
+| Anti-aliasing | 8-bit grayscale coverage | The quantity Awake's exact-size glyphs hold too |
+| Blending | Gamma 1.8 | The gamma FreeType documents for light hinting with stem darkening, and the classic text gamma |
+
+The PNGs live in `awake/compose/ui-testing/src/desktopTest/resources/text-reference/`, and
+`TextReferenceMetricsTest` compares Awake's rendering with them per case: stem width, ink mass, the
+darkness of curves and diagonals against stems, the share of faint ink pixels, and the mean pixel
+difference. The PNGs change only when someone deliberately reruns the generator:
+
+```
+python3 -m pip install -r tools/fonts-tooling/requirements-reference.txt
+python3 tools/fonts-tooling/reference_render.py
+```
+
+To see any component baseline beside FreeType's glyphs, write glyph packs with
+`reference_render.py --glyph-pack <dir>` and run the snapshot tests with
+`AWAKE_TEXT_REFERENCE_GLYPHS=<dir>`; each baseline is also written, in FreeType's glyphs, to
+`build/reports/text-reference/`.
+
+To move the limit, or to draw a font from its distance field at every size, wrap it once and keep it:
+
+```kotlin title="Kotlin"
+val headings = UiFonts.default().withPixelGlyphMaxSize(16) // exact-size glyphs up to 16 px
+val uniform = UiFonts.default().withPixelGlyphMaxSize(0)   // the distance field at every size
+Text("Inventory", style = TextStyle(font = uniform))
+```
+
 ## Put UI on the screen
 
 An app has one Compose host. Pick the form that matches your app.
