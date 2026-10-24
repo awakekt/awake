@@ -80,8 +80,8 @@ public final class com/awakekt/awake/sample/netdemo/KtorWebSocketServer : com/aw
 	public static final field GRACE_MILLIS J
 	public static final field TIMEOUT_MILLIS J
 	public fun <init> ()V
-	public fun <init> (ILjava/lang/String;Z)V
-	public synthetic fun <init> (ILjava/lang/String;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (ILjava/lang/String;ZLkotlin/jvm/functions/Function1;)V
+	public synthetic fun <init> (ILjava/lang/String;ZLkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun getPort ()I
 	public fun sessions ()Lkotlinx/coroutines/channels/ReceiveChannel;
 	public final fun start ()V
