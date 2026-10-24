@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.22.0] - 2026-10-24
+
+### Added
+
+- **A transport session can carry the identity its server verified.** `TransportSession.principal` is an opaque, nullable string attached by whatever accepted the connection, so the host reading `TransportServer.sessions()` can tell which verified peer each session belongs to. It defaults to `null`, so existing implementations compile unchanged. The Ktor `GameTransport` plugin sets it at accept time through the new `GameTransportConfig.principal` resolver, which reads the upgrade request (for example a value an earlier route plugin stored in `call.attributes` after verifying it).
+
 ## [0.21.0] - 2026-10-23
 
 ### Added
