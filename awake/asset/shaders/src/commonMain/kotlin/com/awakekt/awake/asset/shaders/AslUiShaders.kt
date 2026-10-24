@@ -46,6 +46,7 @@ import com.awakekt.awake.asset.shaderdsl.vec4
 import com.awakekt.awake.asset.shaderdsl.x
 import com.awakekt.awake.asset.shaderdsl.xy
 import com.awakekt.awake.asset.shaderdsl.y
+import com.awakekt.awake.asset.shaderdsl.z
 import com.awakekt.awake.asset.shaderdsl.zw
 import com.awakekt.awake.core.geometry.GpuDataShape
 
@@ -150,6 +151,35 @@ val UiGlyphShader: AslShaderDefinition = shader("ui_glyph") {
         val glyphAlpha = variable("glyphAlpha", atlas.a)
         iff(fontInfo.x lt 0.5f.lit) {
             assign(glyphAlpha, atlas.a)
+        }
+        // Exact-size coverage glyphs (fontInfo.z = 1) hold the area each pixel covers, and blending that
+        // straight into a non-linear target thickens dark text on a light ground and thins light text on
+        // a dark one. With no access to the ground, the coverage is blended with gamma 1.8 as if the ground
+        // were the opposite of the text, which is exact for black on white and white on black; mid tones
+        // blend. The coverage first gets DirectWrite's enhanced contrast (k = 1). Gamma 1.8 and the
+        // contrast are tuned against FreeType's light hinting with stem darkening (TextReferenceMetricsTest).
+        // `UiRasterizer.linearCoverageAlpha` is the CPU copy of this block.
+        iff(fontInfo.x lt 0.5f.lit and (fontInfo.z gt 0.5f.lit)) {
+            val textLinear = let(
+                "textLinear",
+                dot(
+                    pow(max(color.rgb, vec3(0f.lit, 0f.lit, 0f.lit)), vec3(1.8f.lit, 1.8f.lit, 1.8f.lit)),
+                    vec3(0.2126f.lit, 0.7152f.lit, 0.0722f.lit),
+                ),
+            )
+            val textEncoded = let("textEncoded", pow(textLinear, 1f.lit / 1.8f.lit))
+            val lightText = let("lightText", smoothstep(0.4f.lit, 0.6f.lit, textEncoded))
+            val boosted = let("boosted", atlas.a * 2f.lit / (atlas.a + 1f.lit))
+            val onDark = let(
+                "onDark",
+                pow(textLinear * boosted, 1f.lit / 1.8f.lit) / max(textEncoded, 0.0001f.lit),
+            )
+            val onLight = let(
+                "onLight",
+                (1f.lit - pow(max(1f.lit - boosted * (1f.lit - textLinear), 0f.lit), 1f.lit / 1.8f.lit)) /
+                    max(1f.lit - textEncoded, 0.0001f.lit),
+            )
+            assign(glyphAlpha, clamp(mix(onLight, onDark, lightText), 0f.lit, 1f.lit))
         }
         val atlasSizeU = let("atlasSizeU", textureDimensions(fontAtlas))
         val atlasSize = let(

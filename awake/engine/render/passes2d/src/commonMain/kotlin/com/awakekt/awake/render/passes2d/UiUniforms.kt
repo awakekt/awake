@@ -43,9 +43,10 @@ fun uiUniformFloats(screenToNdc: Vec4, fontInfo: Vec4 = Vec4(0f, 0f, 0f, 0f)): F
         .build()
 
 /**
- * The glyph shader's `fontInfo` for one font: x is 1 for a distance-field atlas and 0 for coverage
- * alpha, y is the distance-field range in atlas texels. The shader reads the atlas size from the
- * texture itself, so two fonts differ only in these lanes and share one pipeline.
+ * The glyph shader's `fontInfo` for one font: x is 1 for a distance-field atlas, 0 for coverage alpha
+ * and 2 for colour; y is the distance-field range in atlas texels; z is 1 when coverage is exact pixel
+ * area to blend in linear light ([UiFontSamplingInfo.linearCoverage]). The shader reads the atlas size
+ * from the texture itself, so two fonts differ only in these lanes and share one pipeline.
  */
 fun uiFontInfo(info: UiFontSamplingInfo): Vec4 =
     Vec4(
@@ -55,6 +56,6 @@ fun uiFontInfo(info: UiFontSamplingInfo): Vec4 =
             UiFontSamplingMode.ColorRgba -> 2f
         },
         info.distanceFieldRangePx,
-        0f,
+        if (info.linearCoverage) 1f else 0f,
         0f,
     )

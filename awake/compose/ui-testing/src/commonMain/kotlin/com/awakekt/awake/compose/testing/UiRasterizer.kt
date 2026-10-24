@@ -31,9 +31,49 @@ private const val GLYPH_GAMMA = 1.45f
 private const val MIN_TEXEL_WIDTH = 1e-4f
 private val MissingFontColor = Color(1f, 0f, 1f, 1f)
 
-/** Supersamples every source-texel footprint without allowing pathological work per pixel. */
+/**
+ * The glyph shader's gamma-correct blending of exact pixel coverage, for a [UiFont.linearCoverage] atlas:
+ * the alpha that, blended in the target's own encoding, gives what blending [coverage] with gamma
+ * [TEXT_GAMMA] over a ground opposite to [text] would. Exact for white on black and black on white; mid
+ * tones blend. The coverage first gets DirectWrite's enhanced contrast (k = 1).
+ *
+ * Tuned against the FreeType reference in `text-reference/` (`TextReferenceMetricsTest`): gamma 1.8 is the
+ * blending FreeType documents for its light hinting and stem darkening, and the contrast stands in for
+ * that darkening, so curves and diagonals keep the reference's weight beside stems on whole pixels. Full
+ * sRGB gamma (2.2) left dark-on-light curves 15% lighter than the reference. The CPU copy of the
+ * `fontInfo.z` block in `AslUiShaders.UiGlyphShader`.
+ */
+internal fun linearCoverageAlpha(coverage: Float, text: Color): Float {
+    val textLinear = 0.2126f * text.r.coerceAtLeast(0f).pow(TEXT_GAMMA) +
+        0.7152f * text.g.coerceAtLeast(0f).pow(TEXT_GAMMA) +
+        0.0722f * text.b.coerceAtLeast(0f).pow(TEXT_GAMMA)
+    val textEncoded = textLinear.pow(1f / TEXT_GAMMA)
+    val t = ((textEncoded - 0.4f) / 0.2f).coerceIn(0f, 1f)
+    val lightText = t * t * (3f - 2f * t)
+    val boosted = coverage * (TEXT_CONTRAST + 1f) / (coverage * TEXT_CONTRAST + 1f)
+    val onDark = (textLinear * boosted).pow(1f / TEXT_GAMMA) / max(textEncoded, 0.0001f)
+    val onLight = (1f - (1f - boosted * (1f - textLinear)).coerceAtLeast(0f).pow(1f / TEXT_GAMMA)) / max(1f - textEncoded, 0.0001f)
+    return (onLight + (onDark - onLight) * lightText).coerceIn(0f, 1f)
+}
+
+/** The gamma exact-size coverage blends with; the shader's literal 1.8. */
+private const val TEXT_GAMMA = 1.8f
+
+/** DirectWrite's enhanced contrast, applied to the coverage before blending; the shader's literal 1. */
+private const val TEXT_CONTRAST = 1f
+
+/**
+ * Supersamples every source-texel footprint without allowing pathological work per pixel.
+ *
+ * A footprint a rounding error over a whole number of texels counts as that number: an exact-size glyph
+ * drawn 1:1 has UVs that give 1.0000001 texels a pixel, and two samples there would straddle texel
+ * centres and blur the glyph it was rasterized to keep sharp.
+ */
 internal fun glyphSampleCount(sourceTexels: Float, screenPixels: Float): Int =
-    ceil(sourceTexels / screenPixels.coerceAtLeast(1f)).toInt().coerceIn(1, 6)
+    ceil(sourceTexels / screenPixels.coerceAtLeast(1f) - FOOTPRINT_ROUNDING).toInt().coerceIn(1, 6)
+
+/** How far over a whole number of texels a footprint may be and still count as that number. */
+private const val FOOTPRINT_ROUNDING = 1e-3f
 
 /** The straight-alpha colour [image] samples at fraction ([u], [v]) of [region], tinted and scaled by [alpha]. */
 @Suppress("LongParameterList")
@@ -272,6 +312,9 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
                 val screenPxRange = max(0.5f * font.distanceFieldRangePx * screenPxPerTexel, 1f)
                 (screenPxRange * (signedDistance - 0.5f) + 0.5f).coerceIn(0f, 1f)
             }
+        }
+        if (font.samplingMode == UiFontSamplingMode.CoverageAlpha && font.linearCoverage) {
+            return (linearCoverageAlpha(coverage, glyph.color) * 255f).toInt().coerceIn(0, 255)
         }
         val gamma = if (font.samplingMode == UiFontSamplingMode.CoverageAlpha) 1f else GLYPH_GAMMA
         return (coverage.pow(1f / gamma) * 255f).toInt().coerceIn(0, 255)

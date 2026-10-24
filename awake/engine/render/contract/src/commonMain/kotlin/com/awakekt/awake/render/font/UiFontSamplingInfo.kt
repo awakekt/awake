@@ -16,6 +16,8 @@ import com.awakekt.awake.core.text.font.UiFontSamplingMode
  * @property distanceFieldRangePx Distance field search range in pixels for SDF edge transitions.
  * @property atlasWidth Width of the backing font glyph texture atlas in pixels.
  * @property atlasHeight Height of the backing font glyph texture atlas in pixels.
+ * @property linearCoverage Whether coverage alpha is exact pixel area to blend in linear light (see
+ *   [UiFont.linearCoverage]).
  */
 data class UiFontSamplingInfo(
     /** Sampling algorithm mode (e.g. Bitmap or Signed Distance Field). */
@@ -26,6 +28,8 @@ data class UiFontSamplingInfo(
     val atlasWidth: Int,
     /** Height of the backing font glyph texture atlas in pixels. */
     val atlasHeight: Int,
+    /** Whether coverage alpha is exact pixel area to blend in linear light. */
+    val linearCoverage: Boolean = false,
 )
 
 /**
@@ -37,4 +41,5 @@ val UiFont.samplingInfo: UiFontSamplingInfo
         distanceFieldRangePx = distanceFieldRangePx,
         atlasWidth = atlasWidth,
         atlasHeight = atlasHeight,
+        linearCoverage = linearCoverage,
     )
