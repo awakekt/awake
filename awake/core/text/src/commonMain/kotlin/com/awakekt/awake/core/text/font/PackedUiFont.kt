@@ -63,6 +63,12 @@ internal interface PackedUiFontData {
 
     /** The font file's line box, for [UiFont.lineAscentEm] and its siblings; null to derive it from the atlas. */
     fun lineMetrics(): FontLineMetrics? = null
+
+    /**
+     * The atlas glyphs' pair kerning, already read; null to read it from [outlineFont] on first use, or to
+     * have none when there are no outlines either.
+     */
+    fun kerning(): KerningPairs? = null
 }
 
 /**
@@ -71,7 +77,8 @@ internal interface PackedUiFontData {
  * @param data The underlying packed font data.
  * @property cellSize The base cell size in pixels for this font instance.
  * @param lineMetrics The font file's line box; null derives it from [ascentEm] and [lineHeightEm].
- * @param outlines The outlines the atlas was drawn from, read on first use for [pixelGlyphs].
+ * @param outlines The outlines the atlas was drawn from, read on first use for [pixelGlyphs], and for the
+ *   pair kerning [kerningFor] reads when [data] does not already carry it.
  */
 // UiFont's Char and code point lookups are each one short override here.
 @Suppress("TooManyFunctions")
@@ -133,6 +140,22 @@ class PackedUiFont internal constructor(
     private val inkByCode: Map<Int, InkBounds> by lazy(::decodeInkBounds)
     private val advancesByCode: Map<Int, Float> by lazy(::decodeAdvances)
     private val fallbackCode: Int = data.fallbackChar.code
+
+    /**
+     * The pairs [kerningFor] reads: the data's own, or those of the outlines the atlas was drawn from among
+     * its code points, read on first use. The built-in Roboto's outlines carry its `GPOS` kerning
+     * (`tools/fonts-tooling/subset_roboto_outlines.py`).
+     */
+    private val kerningPairs: KerningPairs by lazy {
+        data.kerning() ?: outlines()?.let { font ->
+            val codes = ArrayList<Int>(data.advancesEm.size)
+            forEachGlyphCode { _, code -> codes += code }
+            KerningPairs.read(font, codes.toIntArray())
+        } ?: KerningPairs.EMPTY
+    }
+
+    /** How many pairs of this font's code points it kerns. */
+    internal val kerningPairCount: Int get() = kerningPairs.size
 
     override val lineHeightEm: Float get() = data.lineHeightEm
     override val lineAscentEm: Float get() = lineMetrics?.ascentEm ?: ascentEm
@@ -202,6 +225,9 @@ class PackedUiFont internal constructor(
         val rightEdgeEm = if (ink != null) ink.offsetXEm + ink.widthEm else 0f
         return glyphPx * maxOf(advanceEm, rightEdgeEm)
     }
+
+    override fun kerningFor(left: Int, right: Int, glyphPx: Float, weight: FontWeight): Float =
+        glyphPx * kerningPairs.em(left, right)
 
     private fun decodeAtlasPixels(): ByteArray {
         val decoded = data.atlasBytes()

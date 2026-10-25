@@ -13,9 +13,11 @@ result against the committed atlases.
 
 Small text does not draw from these atlases: up to 24 device pixels it draws glyphs rasterized from the
 outlines at the exact size (`UiFont.pixelGlyphs`). Those outlines ship separately, as each weight
-subset to the atlas's characters, about 9.7 KB a face, written by
-`tools/fonts-tooling/subset_roboto_outlines.py` into `RobotoUiFontOutlineData.kt`. Run it after changing
-the faces in `fonts/` or the atlas's glyph set, beside this generator.
+subset to the atlas's characters, about 12.3 KB a face, written by
+`tools/fonts-tooling/subset_roboto_outlines.py` into `RobotoUiFontOutlineData.kt`. The subset keeps the
+face's `GPOS` `kern` feature as well, about 2.6 KB of it, which is where every size of the built-in
+Roboto takes its pair kerning from (#1022). Run it after changing the faces in `fonts/` or the atlas's
+glyph set, beside this generator.
 
 Roboto is licensed under the SIL Open Font License 1.1, not Apache-2.0. An atlas is the font in
 another format, which that license counts as a modified version of the font, so the atlases stay

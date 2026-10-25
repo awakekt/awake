@@ -50,6 +50,8 @@ data class GlyphRect(
 /**
  * Represents a typeface and rasterized glyph atlas used for UI text rendering.
  */
+// Each lookup is one short function with a default, by Char and by code point, and layout asks for each.
+@Suppress("TooManyFunctions")
 interface UiFont {
     /** The sampling strategy required when rendering this font's atlas. */
     val samplingMode: UiFontSamplingMode
@@ -213,6 +215,17 @@ interface UiFont {
         advanceFor(codePoint.toBmpCharOrNull() ?: REPLACEMENT_CHARACTER, glyphPx, weight)
 
     /**
+     * The font's pair kerning between the code points [left] and [right], drawn one after the other at
+     * [glyphPx] in [weight]: what to add to the pen after [left]'s advance, in pixels, usually negative.
+     *
+     * A font read from a file kerns from its `GPOS` `kern` feature or its `kern` table, among the
+     * characters it was loaded with; the built-in Roboto family carries its own pairs. The default, for a
+     * font with no kerning, is 0. Layout asks through [kerningBefore], once per adjacent pair of grapheme
+     * clusters, so this must not allocate.
+     */
+    fun kerningFor(left: Int, right: Int, glyphPx: Float, weight: FontWeight = FontWeight.Normal): Float = 0f
+
+    /**
      * Resolves the underlying [UiFont] that provides the atlas for [codePoint] at [weight].
      *
      * Single-face fonts and families sharing an atlas return this.
@@ -295,6 +308,25 @@ inline fun UiFont.forEachGlyphInCluster(
     return pen
 }
 
+/**
+ * The pair kerning, in pixels at [glyphPx], that moves the grapheme cluster starting at [start] after the
+ * one starting at [previousStart]: [UiFont.kerningFor] between the two clusters' first code points. 0 when
+ * [previousStart] is negative, which is how a caller with nothing before the cluster, or with kerning
+ * turned off, asks.
+ *
+ * Kerning falls between clusters, never inside one, and between their first code points, so a combining
+ * mark does not stop a letter from kerning with the next, as a shaper skips marks when it kerns.
+ * Measurement, painting, the caret, hit testing and line breaking all add it before a cluster's
+ * [forEachGlyphInCluster] pen, so a kerned box, its glyphs and its caret agree.
+ */
+fun UiFont.kerningBefore(
+    text: CharSequence,
+    previousStart: Int,
+    start: Int,
+    glyphPx: Float,
+    weight: FontWeight = FontWeight.Normal,
+): Float = if (previousStart < 0) 0f else kerningFor(CodePoints.at(text, previousStart), CodePoints.at(text, start), glyphPx, weight)
+
 /** The advance in pixels of the grapheme cluster `text[start until end]`; see [forEachGlyphInCluster]. */
 fun UiFont.clusterAdvance(
     text: CharSequence,
@@ -314,26 +346,39 @@ fun UiFont.clusterAdvance(
  * that boxes text exactly to this width (see `shadcnLabel`) would otherwise clip that last
  * glyph's overhanging pixels. Widen the result to also cover the last glyph's real right edge.
  *
+ * Adjacent clusters are kerned ([kerningBefore]).
+ *
  * @param label The text string to measure.
  * @param glyphPx The target font height in pixels.
  * @param weight The font weight face to use for measuring.
  * @return The total visual layout width in pixels.
  */
-fun UiFont.measureTextWidth(label: String, glyphPx: Float, weight: FontWeight = FontWeight.Normal): Float {
+fun UiFont.measureTextWidth(label: String, glyphPx: Float, weight: FontWeight = FontWeight.Normal): Float =
+    measureTextWidth(label, glyphPx, weight, kerning = true)
+
+/**
+ * [measureTextWidth], kerning adjacent clusters only when [kerning] is true, as a style that turns kerning
+ * off lays its text out.
+ */
+fun UiFont.measureTextWidth(label: String, glyphPx: Float, weight: FontWeight, kerning: Boolean): Float {
     var width = 0f
     var lastCodePoint = -1
     var lastPen = 0f
+    var previous = -1
     GraphemeClusters.forEach(label) { start, end ->
         if (label[start] != '\n' && label[end - 1] != '\n') {
+            width += kerningBefore(label, previous, start, glyphPx, weight)
             val clusterStart = width
             width += forEachGlyphInCluster(label, start, end, glyphPx, weight) { codePoint, penX ->
                 lastCodePoint = codePoint
                 lastPen = clusterStart + penX
             }
+            if (kerning) previous = start
+        } else {
+            previous = -1
         }
     }
-    if (lastCodePoint < 0) return width
-    val glyph = glyphFor(lastCodePoint, weight) ?: return width
-    val lastGlyphRightEdge = lastPen + (glyph.offsetXEm + glyph.widthEm) * glyphPx
+    val glyph = if (lastCodePoint < 0) null else glyphFor(lastCodePoint, weight)
+    val lastGlyphRightEdge = if (glyph == null) width else lastPen + (glyph.offsetXEm + glyph.widthEm) * glyphPx
     return maxOf(width, lastGlyphRightEdge)
 }

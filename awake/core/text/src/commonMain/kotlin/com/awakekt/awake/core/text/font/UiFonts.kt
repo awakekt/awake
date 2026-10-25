@@ -167,7 +167,10 @@ object UiFonts {
      * distance-field atlas like the built-in Roboto's, so it draws through the same glyph shader.
      *
      * The glyph set is fixed here: a char outside [chars], or one the font lacks, draws as `'?'`.
-     * Kerning is not applied, as it is not for the built-in fonts. Every target bakes the same bytes from
+     * The font's pair kerning among [chars] is read here as well, from the `kern` feature of its `GPOS`
+     * table or else its `kern` table ([UiFont.kerningFor]), and text kerns by it unless its
+     * [TextStyle.kerning][com.awakekt.awake.core.text.theme.TextStyle.kerning] is false, as the
+     * built-in Roboto does. Every target bakes the same bytes from
      * the same file. The atlas is baked at 64 texels per em with an 8-texel range, so large text keeps its
      * corners and thin strokes; a glyph set too large for that to fit an 8192-pixel atlas is baked coarser.
      * The baking happens in this call, none per frame: the default set takes about 70 milliseconds on

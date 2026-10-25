@@ -102,6 +102,12 @@ internal class FallbackUiFont(
     override fun advanceFor(codePoint: Int, glyphPx: Float, weight: FontWeight): Float =
         faces[faceIndex(codePoint)].advanceFor(codePoint, glyphPx, weight)
 
+    /** The kerning of the face that draws both code points; none between glyphs drawn from different faces. */
+    override fun kerningFor(left: Int, right: Int, glyphPx: Float, weight: FontWeight): Float {
+        val face = faceIndex(left)
+        return if (face == faceIndex(right)) faces[face].kerningFor(left, right, glyphPx, weight) else 0f
+    }
+
     /** The first face that has [codePoint], or the primary face, which draws its own stand-in. */
     private fun faceIndex(codePoint: Int): Int {
         for (index in faces.indices) {

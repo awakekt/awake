@@ -100,6 +100,11 @@ class WeightedUiFont(
         return face.font.advanceFor(codePoint, glyphPx, face.weight)
     }
 
+    override fun kerningFor(left: Int, right: Int, glyphPx: Float, weight: FontWeight): Float {
+        val face = resolve(weight)
+        return face.font.kerningFor(left, right, glyphPx, face.weight)
+    }
+
     /**
      * The face closest to [weight], the heavier of two equally close: Compose's resolution. A plain loop,
      * not a comparator, because every glyph of every frame comes through here.

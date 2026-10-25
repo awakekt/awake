@@ -12,6 +12,7 @@ import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.core.text.font.clusterAdvance
 import com.awakekt.awake.core.text.font.ellipsize
 import com.awakekt.awake.core.text.font.forEachGlyphInCluster
+import com.awakekt.awake.core.text.font.kerningBefore
 import com.awakekt.awake.core.text.theme.TextStyle
 import com.awakekt.awake.core.text.unicode.GraphemeClusters
 import kotlin.math.floor
@@ -25,7 +26,10 @@ import kotlin.math.floor
  *
  * A character is a grapheme cluster ([GraphemeClusters]): the run measures, paints, places the caret
  * and hit-tests one cluster at a time, so a flag or a ZWJ emoji is one character to all four, and
- * letter spacing falls between clusters, never inside one.
+ * letter spacing falls between clusters, never inside one. So does the font's pair kerning
+ * ([kerningBefore]), unless the style turns it off: every walk below adds it between a cluster and the
+ * next on the same line, so a kerned glyph, the box around it and the caret beside it agree. A caret
+ * between two kerned clusters sits where the second one's pen starts, as a browser puts it.
  */
 // Measuring, the caret, hit testing and two paint paths share one layout here, so they cannot disagree.
 @Suppress("TooManyFunctions")
@@ -44,6 +48,9 @@ internal class TextRun(
 ) {
     private val letterSpacing = style.letterSpacing.value * density
 
+    /** Whether adjacent clusters kern: unless the style turns it off, as a browser's `font-kerning: auto`. */
+    private val kerning = style.kerning != false
+
     /** The visual lines this run occupies, with their source ranges. */
     private val lineLayouts: List<TextLineLayout> = breakIntoLineLayouts(
         text = text,
@@ -58,6 +65,7 @@ internal class TextRun(
                 glyphPx = glyphPx,
                 weight = style.weight,
                 alwaysEllipsize = always,
+                kerning = kerning,
             )
         },
     ) { line ->
@@ -84,8 +92,8 @@ internal class TextRun(
     /** The lines this run occupies, hard breaks and soft wraps alike. */
     internal val lines: List<String> = lineLayouts.map(TextLineLayout::text)
 
-    /** Left edge of the character at [index], or the run's end when [index] is its length. */
-    fun offsetAt(index: Int): Float = widthBetween(text, 0, index.coerceIn(0, text.length))
+    /** Left edge of the character at [index], kerned to the one before it, or the run's end when [index] is its length. */
+    fun offsetAt(index: Int): Float = widthBetween(text, 0, index.coerceIn(0, text.length), text.length)
 
     /** The line box the caret occupies, including soft wrapping. */
     fun caretPositionAt(index: Int): TextCaretPosition {
@@ -93,7 +101,7 @@ internal class TextRun(
         val lineIndex = lineLayouts.indexOfFirst { bounded <= it.endExclusive }
             .let { if (it >= 0) it else lineLayouts.lastIndex }
         val line = lineLayouts[lineIndex]
-        val x = widthBetween(text, line.start, bounded.coerceIn(line.start, line.endExclusive))
+        val x = widthBetween(text, line.start, bounded.coerceIn(line.start, line.endExclusive), line.endExclusive)
         return TextCaretPosition(x, lineIndex * lineHeightPx)
     }
 
@@ -115,7 +123,9 @@ internal class TextRun(
         var start = line.start
         while (start < line.endExclusive) {
             val end = GraphemeClusters.nextBoundary(text, start).coerceAtMost(line.endExclusive)
-            pen += font.clusterAdvance(text, start, end, glyphPx, style.weight) + letterSpacing
+            // The boundary after this cluster is where the next one's kerned pen starts, as the caret puts it.
+            pen += font.clusterAdvance(text, start, end, glyphPx, style.weight) + letterSpacing +
+                kerningAfter(text, start, end, line.endExclusive)
             val distance = kotlin.math.abs(pen - x)
             if (distance < bestDistance) {
                 bestDistance = distance
@@ -136,8 +146,8 @@ internal class TextRun(
             val segmentStart = maxOf(selectionStart, line.start)
             val segmentEnd = minOf(selectionEnd, line.endExclusive)
             if (segmentStart < segmentEnd) {
-                val x = widthBetween(text, line.start, segmentStart)
-                val right = widthBetween(text, line.start, segmentEnd)
+                val x = widthBetween(text, line.start, segmentStart, line.endExclusive)
+                val right = widthBetween(text, line.start, segmentEnd, line.endExclusive)
                 block(x, lineIndex * lineHeightPx, right - x, lineHeightPx)
             }
         }
@@ -209,8 +219,12 @@ internal class TextRun(
         val size = glyphPx.toInt()
         var x = offsetX
         var start = 0
+        var previous = -1
         while (start < line.length) {
             val end = GraphemeClusters.nextBoundary(line, start)
+            // Kerning moves the pen before each glyph is snapped to its whole pixel, so a stem stays on one.
+            x += font.kerningBefore(line, previous, start, glyphPx, style.weight)
+            if (kerning) previous = start
             val clusterX = x
             x += font.forEachGlyphInCluster(line, start, end, glyphPx, style.weight) { codePoint, penX ->
                 val glyph = pixels.glyph(codePoint, style.weight, size)
@@ -258,8 +272,11 @@ internal class TextRun(
     ) {
         var x = offsetX
         var start = 0
+        var previous = -1
         while (start < line.length) {
             val end = GraphemeClusters.nextBoundary(line, start)
+            x += font.kerningBefore(line, previous, start, glyphPx, style.weight)
+            if (kerning) previous = start
             val clusterX = x
             x += font.forEachGlyphInCluster(line, start, end, glyphPx, style.weight) { codePoint, penX ->
                 val glyphFont = font.fontFor(codePoint, style.weight)
@@ -288,19 +305,26 @@ internal class TextRun(
 
     /**
      * The pen distance of `value[start until end]`, whole clusters only: one that [end] falls inside
-     * is left out. [start] is a cluster boundary, as a line's start is.
+     * is left out. [start] is a cluster boundary, as a line's start is, and nothing kerns with the
+     * cluster there. Each cluster kerns with the next one before [lineEnd], the last included: a caret
+     * at [end] sits where the next cluster's pen starts, and a line measured to its end has nothing after it.
      */
-    private fun widthBetween(value: String, start: Int, end: Int): Float {
+    private fun widthBetween(value: String, start: Int, end: Int, lineEnd: Int = end): Float {
         var x = 0f
         var clusterStart = start
         while (clusterStart < end) {
             val clusterEnd = GraphemeClusters.nextBoundary(value, clusterStart)
             if (clusterEnd > end) break
-            x += font.clusterAdvance(value, clusterStart, clusterEnd, glyphPx, style.weight) + letterSpacing
+            x += font.clusterAdvance(value, clusterStart, clusterEnd, glyphPx, style.weight) + letterSpacing +
+                kerningAfter(value, clusterStart, clusterEnd, lineEnd)
             clusterStart = clusterEnd
         }
         return x
     }
+
+    /** The kerning between the cluster at [start] and the one at [next], or 0 when [next] is not before [lineEnd]. */
+    private fun kerningAfter(value: String, start: Int, next: Int, lineEnd: Int): Float =
+        if (kerning && next < lineEnd) font.kerningBefore(value, start, next, glyphPx, style.weight) else 0f
 }
 
 internal data class TextCaretPosition(val x: Float, val y: Float)
