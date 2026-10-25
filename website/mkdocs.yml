@@ -93,6 +93,8 @@ nav:
           - Terrain: guides/terrain.md
           - Large worlds: guides/large-worlds.md
           - Audio: guides/audio.md
+      - Content:
+          - Protected content: guides/protected-content.md
       - UI:
           - Game UI: guides/game-ui.md
           - UI with AwakeKt Compose: guides/ui.md

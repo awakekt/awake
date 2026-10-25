@@ -237,6 +237,32 @@ public final class com/awakekt/awake/project/ContentCache$DefaultImpls {
 	public static fun retainOnly (Lcom/awakekt/awake/project/ContentCache;Lcom/awakekt/awake/project/ProjectIndex;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
+public final class com/awakekt/awake/project/ContentFetchException : java/lang/IllegalStateException {
+	public fun <init> (Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/String;Ljava/lang/Throwable;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/String;Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getStatus ()Ljava/lang/Integer;
+	public final fun getUrl ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/project/ContentRequest {
+	public fun <init> (Ljava/lang/String;Ljava/util/Map;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getHeaders ()Ljava/util/Map;
+	public final fun getUrl ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/project/ContentResponse {
+	public fun <init> (I[B)V
+	public final fun getBody ()[B
+	public final fun getStatus ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class com/awakekt/awake/project/ContentTransport {
+	public abstract fun send (Lcom/awakekt/awake/project/ContentRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
 public final class com/awakekt/awake/project/FileSystemContentCache : com/awakekt/awake/project/ContentCache {
 	public fun <init> (Lcom/awakekt/awake/core/io/FileSystem;Ljava/lang/String;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/core/io/FileSystem;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -257,7 +283,9 @@ public final class com/awakekt/awake/project/IndexedAssetSource : com/awakekt/aw
 }
 
 public final class com/awakekt/awake/project/IndexedAssetSource$Companion {
+	public final fun open (Lcom/awakekt/awake/core/io/AssetPath;Lcom/awakekt/awake/project/TokenAuthorizedFetch;Lcom/awakekt/awake/project/ContentCache;ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun open (Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/jvm/functions/Function2;Lcom/awakekt/awake/project/ContentCache;ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun open$default (Lcom/awakekt/awake/project/IndexedAssetSource$Companion;Lcom/awakekt/awake/core/io/AssetPath;Lcom/awakekt/awake/project/TokenAuthorizedFetch;Lcom/awakekt/awake/project/ContentCache;ZLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public static synthetic fun open$default (Lcom/awakekt/awake/project/IndexedAssetSource$Companion;Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/jvm/functions/Function2;Lcom/awakekt/awake/project/ContentCache;ZLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 }
 
@@ -438,5 +466,51 @@ public final class com/awakekt/awake/project/ProjectIssueSeverity : java/lang/En
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/project/ProjectIssueSeverity;
 	public static fun values ()[Lcom/awakekt/awake/project/ProjectIssueSeverity;
+}
+
+public final class com/awakekt/awake/project/ReadToken {
+	public synthetic fun <init> (Ljava/lang/String;JLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getExpiresIn-UwyO8pc ()J
+	public final fun getValue ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class com/awakekt/awake/project/ReadTokenPlacement {
+}
+
+public final class com/awakekt/awake/project/ReadTokenPlacement$AuthorizationHeader : com/awakekt/awake/project/ReadTokenPlacement {
+	public static final field INSTANCE Lcom/awakekt/awake/project/ReadTokenPlacement$AuthorizationHeader;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/project/ReadTokenPlacement$QueryParameter : com/awakekt/awake/project/ReadTokenPlacement {
+	public static final field Companion Lcom/awakekt/awake/project/ReadTokenPlacement$QueryParameter$Companion;
+	public static final field DEFAULT_NAME Ljava/lang/String;
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lcom/awakekt/awake/project/ReadTokenPlacement$QueryParameter;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/project/ReadTokenPlacement$QueryParameter;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/project/ReadTokenPlacement$QueryParameter;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getName ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/project/ReadTokenPlacement$QueryParameter$Companion {
+}
+
+public final class com/awakekt/awake/project/TokenAuthorizedFetch {
+	public static final field Companion Lcom/awakekt/awake/project/TokenAuthorizedFetch$Companion;
+	public synthetic fun <init> (Lcom/awakekt/awake/project/ContentTransport;Lcom/awakekt/awake/project/ReadTokenPlacement;JLkotlin/time/TimeSource;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/project/ContentTransport;Lcom/awakekt/awake/project/ReadTokenPlacement;JLkotlin/time/TimeSource;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun fetch (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/project/TokenAuthorizedFetch$Companion {
+	public final fun getDEFAULT_REFRESH_AHEAD-UwyO8pc ()J
 }
 
