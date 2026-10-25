@@ -1,0 +1,1 @@
+- Prevent movement turning from hanging on non-finite or very large yaw; ignore invalid direction, speed and frame-time inputs.

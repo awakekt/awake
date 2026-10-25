@@ -13,7 +13,7 @@ import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.sign
 
-private const val TWO_PI = (2 * PI).toFloat()
+private const val TWO_PI = 2 * PI
 
 /** What sets a [MovementControl]'s intent, and so which way its axes point. */
 @Serializable
@@ -98,6 +98,8 @@ class MovementControl : Poolable {
     /**
      * Turns [transform] toward world direction ([worldX], [worldZ]) by at most [turnSpeed] times
      * [delta] radians, the short way round. A model faces +Z at yaw 0, glTF's forward.
+     * Non-finite inputs and non-positive time/speed leave the rotation unchanged. Finite yaw
+     * is reduced modulo a full turn before stepping, even when its magnitude is very large.
      *
      * @param transform Transform component whose yaw orientation is updated.
      * @param worldX Target direction X component in world space.
@@ -105,12 +107,20 @@ class MovementControl : Poolable {
      * @param delta Frame time delta in seconds.
      */
     fun turnToward(transform: Transform, worldX: Float, worldZ: Float, delta: Float) {
-        if (turnSpeed <= 0f || (worldX == 0f && worldZ == 0f)) return
+        val yaw = transform.rotation.y
+        if (!yaw.isFinite() || !worldX.isFinite() || !worldZ.isFinite()) return
+        val validSpeed = turnSpeed.isFinite() && turnSpeed > 0f
+        val validTime = delta.isFinite() && delta > 0f
+        val noDirection = worldX == 0f && worldZ == 0f
+        if (!validSpeed || !validTime || noDirection) return
         val target = atan2(worldX, worldZ)
-        var difference = target - transform.rotation.y
-        while (difference > PI) difference -= TWO_PI
-        while (difference < -PI) difference += TWO_PI
-        val step = turnSpeed * delta
-        transform.rotation.y = if (abs(difference) <= step) target else transform.rotation.y + sign(difference) * step
+        // Repeated subtraction can never reduce Infinity, or even a large finite Float whose
+        // spacing exceeds 2*pi. Remainder is bounded; Double also keeps speed*time from overflowing.
+        val current = yaw.toDouble() % TWO_PI
+        var difference = (target.toDouble() - current) % TWO_PI
+        if (difference > PI) difference -= TWO_PI
+        if (difference < -PI) difference += TWO_PI
+        val step = turnSpeed.toDouble() * delta
+        transform.rotation.y = if (abs(difference) <= step) target else (current + sign(difference) * step).toFloat()
     }
 }
