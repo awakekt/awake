@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.23.0] - 2026-10-25
+
+### Added
+
+- **Crisp small UI text.** Text of 24 device pixels or less (after display density and canvas scale) now draws from glyphs rasterized from the font's outlines at exactly that size and drawn 1:1, instead of from the distance field, whose anti-aliased edge made 11–14 px strokes two or three grey pixels wide. Light hinting puts a glyph's main stem on a whole pixel and the x-height and cap height on whole rows, so a one-pixel stem is one solid column, and the coverage blends with gamma 1.8 after a mild contrast boost, so light-on-dark and dark-on-light text keep the same weight. That blending is tuned against a pinned FreeType 2.13.2 reference (light hinting, stem darkening, gamma 1.8) rendered by `tools/fonts-tooling/reference_render.py`; `TextReferenceMetricsTest` holds stem width, ink mass, curve-to-stem darkness and the share of faint pixels to it. Each font and size is rasterized once, on first draw, into its own atlas page (about 1 ms). The built-in Roboto family carries its outlines as a 9.7 KB subset per weight (`tools/fonts-tooling/subset_roboto_outlines.py`); fonts from `UiFonts.load` keep theirs. Larger or scaled text, and `UiFonts.bitmap()`, draw as before. `UiFont.withPixelGlyphMaxSize(n)` moves the limit, and `0` draws a font from its distance field at every size. `UiFonts.load` now bakes its distance field at 64 texels per em with an 8-texel range (was 32 and 2), stepping down for glyph sets too large for an 8192 px atlas. Per-frame text allocation in `TextFrameProbe` fell from 153 KB to 52 KB, because the weighted Roboto family no longer copies a glyph rect or builds a comparator for each glyph it draws.
+
+### Fixed
+
+- **Shadows no longer vanish when their caster leaves the camera's view.** Scene culling ran one test per mesh, the camera's frustum (or the spatial index's camera query) plus occlusion, so the shadow pass only ever saw meshes the camera saw: a tree just off screen lost its shadow on the visible ground, and shadows popped as the camera turned. A mesh the camera rejects is now still drawn into the shadow maps, as a `shadowsOnly` draw, when it lies inside a cascade's light-space box extended toward the light or inside a shadowed point light's range. Camera occlusion never drops a caster. Transparent meshes and scenes without shadows draw exactly as before, and a skinned mesh drawn only for its shadow keeps a current pose. The test is the new `ShadowCasterVolume`, shared with the shadow pass's own per-cascade culling; with a `SpatialIndex` it is one `SpatialGrid.queryShadowCasters` call per frame. `RenderSystem3D.minShadowCasterRatio` optionally skips small off-screen casters, and `RenderSystem3D.lastShadowOnlyCount` reports how many were drawn for shadows alone (#994).
+
 ## [0.22.0] - 2026-10-24
 
 ### Added
