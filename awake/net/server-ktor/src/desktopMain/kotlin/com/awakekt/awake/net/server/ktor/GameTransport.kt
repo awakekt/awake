@@ -6,6 +6,7 @@
 package com.awakekt.awake.net.server.ktor
 
 import com.awakekt.awake.net.DeliveryChannel
+import com.awakekt.awake.net.InboundDropMetrics
 import com.awakekt.awake.net.SessionId
 import com.awakekt.awake.net.TransportServer
 import com.awakekt.awake.net.TransportSession
@@ -173,9 +174,17 @@ internal class KtorTransportSession(
     writerDispatcher: CoroutineDispatcher = Dispatchers.Default,
     private val closeTimeout: Duration = 1.seconds,
     private val logger: Logger = transportLogger,
-) : TransportSession {
+) : TransportSession,
+    InboundDropMetrics {
 
-    private val inbox = Channel<ByteArray>(inboxCapacity, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private val discardedInbound = AtomicLong(0)
+    override val droppedInbound: Long get() = discardedInbound.get()
+
+    private val inbox = Channel<ByteArray>(
+        inboxCapacity,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST,
+        onUndeliveredElement = { discardedInbound.incrementAndGet() },
+    )
     private val outbox = Channel<ByteArray>(outboundCapacity, onBufferOverflow = BufferOverflow.SUSPEND)
     private val scope = CoroutineScope(SupervisorJob() + writerDispatcher)
     private val closing = AtomicBoolean(false)
