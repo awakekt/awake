@@ -45,6 +45,9 @@ internal class FallbackUiFont(
     override val ascentEm: Float = primary.ascentEm
     override val descentEm: Float = primary.descentEm
     override val capHeightEm: Float = primary.capHeightEm
+    override val lineAscentEm: Float = primary.lineAscentEm
+    override val lineDescentEm: Float = primary.lineDescentEm
+    override val lineGapEm: Float = primary.lineGapEm
 
     /**
      * Each code point's glyph from the face that draws it, the face [glyphFor] picks; null unless the
@@ -200,6 +203,9 @@ internal class FallbackAtlasPage(
     override val ascentEm: Float = primary.ascentEm
     override val descentEm: Float = primary.descentEm
     override val capHeightEm: Float = primary.capHeightEm
+    override val lineAscentEm: Float = primary.lineAscentEm
+    override val lineDescentEm: Float = primary.lineDescentEm
+    override val lineGapEm: Float = primary.lineGapEm
 
     override fun uvFor(char: Char): GlyphRect? = glyphFor(char.code, FontWeight.Normal)
 

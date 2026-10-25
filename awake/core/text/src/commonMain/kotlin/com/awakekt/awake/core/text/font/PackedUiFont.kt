@@ -60,6 +60,9 @@ internal interface PackedUiFontData {
 
     /** The outlines the atlas was drawn from, for [PackedUiFont.pixelGlyphs]; null when they were not kept. */
     fun outlineFont(): OpenTypeFont? = null
+
+    /** The font file's line box, for [UiFont.lineAscentEm] and its siblings; null to derive it from the atlas. */
+    fun lineMetrics(): FontLineMetrics? = null
 }
 
 /**
@@ -67,6 +70,7 @@ internal interface PackedUiFontData {
  *
  * @param data The underlying packed font data.
  * @property cellSize The base cell size in pixels for this font instance.
+ * @param lineMetrics The font file's line box; null derives it from [ascentEm] and [lineHeightEm].
  * @param outlines The outlines the atlas was drawn from, read on first use for [pixelGlyphs].
  */
 // UiFont's Char and code point lookups are each one short override here.
@@ -74,6 +78,7 @@ internal interface PackedUiFontData {
 class PackedUiFont internal constructor(
     private val data: PackedUiFontData,
     override val cellSize: Int = data.baseCellSize,
+    private val lineMetrics: FontLineMetrics? = data.lineMetrics(),
     outlines: () -> OpenTypeFont? = data::outlineFont,
 ) : UiFont {
     override val samplingMode: UiFontSamplingMode = data.samplingMode
@@ -130,6 +135,9 @@ class PackedUiFont internal constructor(
     private val fallbackCode: Int = data.fallbackChar.code
 
     override val lineHeightEm: Float get() = data.lineHeightEm
+    override val lineAscentEm: Float get() = lineMetrics?.ascentEm ?: ascentEm
+    override val lineDescentEm: Float get() = lineMetrics?.descentEm ?: (lineHeightEm - ascentEm)
+    override val lineGapEm: Float get() = lineMetrics?.gapEm ?: 0f
 
     override fun uvFor(char: Char): GlyphRect? = glyphFor(char.code, FontWeight.Normal)
 

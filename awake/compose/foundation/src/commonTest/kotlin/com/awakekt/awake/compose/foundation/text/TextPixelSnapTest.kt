@@ -57,9 +57,10 @@ class TextPixelSnapTest {
         ComposeHost(density = density).frame(FrameInput(400, 200), content).primitives.filterIsInstance<UiDrawPrimitive.Glyph>()
 
     /**
-     * A 17.5sp line box around 12sp text puts the unsnapped baseline at 12.85 and the second line's
-     * at 30.35: both quads sat on a fraction of a pixel. Measured on the unsnapped code before this
-     * change: baselines 12.8516 and 30.3516.
+     * A 17.5sp line box around 12sp text put the unsnapped baseline at 12.85 and the second line's
+     * at 30.35: both quads sat on a fraction of a pixel (measured before #956: 12.8516 and 30.3516).
+     * The line box is whole pixels now (#1024): 12 px Roboto is 11 + 3 px of ascent and descent, the
+     * 3.5 px of leading puts floor(1.75) = 1 px above, and the advance rounds 17.5 to 18.
      */
     @Test
     fun everyLineSitsOnAWholeBaseline() {
@@ -69,13 +70,14 @@ class TextPixelSnapTest {
 
         assertEquals(2, quads.size)
         quads.forEach { assertEquals(floor(baselineOf(it, 12f) + 0.5f), baselineOf(it, 12f), 1e-3f, "baseline ${baselineOf(it, 12f)}") }
-        assertEquals(13f, baselineOf(quads[0], 12f), 1e-3f)
+        assertEquals(12f, baselineOf(quads[0], 12f), 1e-3f)
         assertEquals(30f, baselineOf(quads[1], 12f), 1e-3f)
     }
 
     /**
-     * Under a 1.5x scale the same text keeps its fractional position: 1.5 * 12.8516 - 4.5 = 14.78,
-     * so the baseline moves smoothly while the scale animates instead of in whole-pixel steps.
+     * Under a 1.5x scale about the 18 px box's centre the same text keeps its fractional position:
+     * 1.5 * 12 - 4.5 = 13.5, so the baseline moves smoothly while the scale animates instead of in
+     * whole-pixel steps.
      */
     @Test
     fun scaledTextKeepsItsSubpixelPosition() {
@@ -84,7 +86,7 @@ class TextPixelSnapTest {
         }
 
         val baseline = baselineOf(quads.single(), 12f, scale = 1.5f)
-        assertEquals(14.777f, baseline, 5e-3f)
+        assertEquals(13.5f, baseline, 5e-3f)
         assertTrue(abs(baseline - baseline.let { floor(it + 0.5f) }) > 0.1f, "a scaled baseline must stay fractional, was $baseline")
     }
 

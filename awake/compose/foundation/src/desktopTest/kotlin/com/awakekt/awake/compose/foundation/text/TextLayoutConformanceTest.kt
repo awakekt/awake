@@ -10,7 +10,6 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.text.font.FontWeight
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.core.text.font.UiFonts
-import com.awakekt.awake.core.text.font.withPixelGlyphMaxSize
 import com.awakekt.awake.core.text.theme.TextStyle
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
@@ -22,6 +21,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import java.io.File
 import java.security.MessageDigest
 import kotlin.math.abs
+import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -45,11 +45,10 @@ class TextLayoutConformanceTest {
         val loaded = fonts.mapValues { (id, spec) -> loadFont(id, spec) }
         for (spec in cases) {
             val id = spec.string("id")
-            val fontSpec = fonts.getValue(spec.string("font"))
             val actual = measure(spec, loaded.getValue(spec.string("font")))
             val expected = references.getValue(id)
             val wrapControl = expected["roundedFit"]?.jsonObject
-            compare(spec, fontSpec, actual, expected.getValue("reference").jsonObject, wrapControl ?: expected.getValue("unfeatured").jsonObject)
+            compare(spec, actual, expected.getValue("reference").jsonObject, wrapControl ?: expected.getValue("unfeatured").jsonObject)
         }
         writeReport()
         val failures = results.filter { it.status == "FAIL" }
@@ -59,12 +58,15 @@ class TextLayoutConformanceTest {
 
     @Test
     fun knownGapsDoNotPermitUnrelatedDrift() {
-        assertEquals("PASS", classify(10.2, 10.0, 10.2, 1022))
-        assertEquals("XFAIL #1022", classify(12.0, 10.0, 12.0, 1022))
-        assertEquals("FAIL", classify(13.0, 10.0, 12.0, 1022))
+        assertEquals("PASS", classify(10.2, 10.0, 10.2, xfail(1022)))
+        assertEquals("XFAIL #1022", classify(12.0, 10.0, 12.0, xfail(1022)))
+        assertEquals("FAIL", classify(13.0, 10.0, 12.0, xfail(1022)))
         assertEquals("FAIL", classify(12.0, 10.0, 12.0, null))
-        assertEquals("PASS", classify(10.0, 10.0, 12.0, 1024))
-        assertEquals("FAIL", classify(Double.NaN, 10.0, 12.0, 1024))
+        assertEquals("FAIL", classify(Double.NaN, 10.0, 12.0, xfail(1022)))
+        // Line 2 of a 17.5 px browser line: Core's whole 18 px advance puts it at 36, the browser at 35.
+        assertEquals("SNAP", classify(36.0, 35.0, 2 * 18.0, WHOLE_PIXEL_ADVANCE, controlTolerance = 0.02))
+        assertEquals("FAIL", classify(37.0, 35.0, 2 * 18.0, WHOLE_PIXEL_ADVANCE, controlTolerance = 0.02))
+        assertEquals("FAIL", classify(36.05, 35.0, 2 * 18.0, WHOLE_PIXEL_ADVANCE, controlTolerance = 0.02))
     }
 
     private fun loadFont(id: String, spec: JsonObject): UiFont {
@@ -72,7 +74,7 @@ class TextLayoutConformanceTest {
         val bytes = resource(name)
         val sha = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
         assertEquals(spec.string("sha256"), sha, "Font $id changed; regenerate deliberately")
-        return (if (id == "roboto") UiFonts.default() else UiFonts.load(bytes, name)).withPixelGlyphMaxSize(0)
+        return if (id == "roboto") UiFonts.default() else UiFonts.load(bytes, name)
     }
 
     private fun measure(spec: JsonObject, font: UiFont): Layout {
@@ -108,24 +110,24 @@ class TextLayoutConformanceTest {
         return Layout(run.lineHeightPx.toDouble(), lines)
     }
 
-    private fun compare(spec: JsonObject, font: JsonObject, actual: Layout, reference: JsonObject, control: JsonObject) {
+    private fun compare(spec: JsonObject, actual: Layout, reference: JsonObject, control: JsonObject) {
         val id = spec.string("id")
         val featureIssue = when {
-            spec.string("kerning") != "none" -> 1022
-            spec.string("numeric") != "normal" -> 1023
-            spec.optionalNumber("wrapWidthPx") != null -> 1021
+            spec.string("kerning") != "none" -> xfail(1022)
+            spec.string("numeric") != "normal" -> xfail(1023)
+            spec.optionalNumber("wrapWidthPx") != null -> xfail(1021)
             else -> null
         }
         metric(id, "advance", actual.lines.maxOf { it.advance }, reference.number("advance"), control.number("advance"), featureIssue)
         metric(id, "lineCount", actual.lines.size.toDouble(), reference.number("lineCount"), control.number("lineCount"), featureIssue, tolerance = 0.0)
-        // #1024's documented pre-fix behavior, bounded independently by the source TTF hhea metrics.
-        // This is only an expected-failure signature. The browser is always the first comparison.
-        val size = spec.number("sizePx")
-        val natural = (font.number("ascender") - font.number("descender")) / font.number("unitsPerEm") * size
-        val requested = spec.optionalNumber("lineHeightPx") ?: natural
-        val legacyHeight = if (actual.lines.size > 1) maxOf(natural, requested) else requested
-        val legacyAscent = font.number("ascender") / font.number("unitsPerEm") * size + maxOf(0.0, (legacyHeight - natural) / 2)
-        metric(id, "lineHeight", actual.height, reference.number("lineHeight"), legacyHeight, 1024, controlTolerance = 0.02)
+        // Core advances every line by a whole device pixel (TextLineBox), where the browser advances by
+        // a fractional line height at a fractional density or an authored fractional line height. The
+        // control is the browser's own first baseline on the pixel grid (half down, as Core rounds it),
+        // advanced by its own line height rounded to a whole pixel: a bounded signature of that rule,
+        // never a replacement golden.
+        val wholeAdvance = wholePixel(reference.number("lineHeight"))
+        val firstBaseline = ceil(reference.array("lines").first().number("baseline") - 0.5)
+        metric(id, "lineHeight", actual.height, reference.number("lineHeight"), null, null)
         val expectedLines = reference.array("lines")
         val controlLines = control.array("lines")
         val referenceGlyphs = expectedLines.flatMap { it.array("glyphs") }.associateBy { it.number("index").toInt() }
@@ -136,9 +138,9 @@ class TextLayoutConformanceTest {
             metric(id, "$prefix.start", line.start.toDouble(), expected.measuredNumber("start"), unfeatured?.number("start"), featureIssue, tolerance = 0.0)
             metric(id, "$prefix.end", line.end.toDouble(), expected.measuredNumber("end"), unfeatured?.number("end"), featureIssue, tolerance = 0.0)
             metric(id, "$prefix.advance", line.advance, expected.measuredNumber("advance"), unfeatured?.number("advance"), featureIssue)
-            metric(id, "$prefix.baseline", line.baseline, expected.measuredNumber("baseline"), floor(legacyAscent + index * legacyHeight + 0.5), 1024, controlTolerance = 0.02)
-            metric(id, "$prefix.top", line.top, expected.measuredNumber("top"), index * legacyHeight, 1024, controlTolerance = 0.02)
-            metric(id, "$prefix.height", actual.height, expected.measuredNumber("height"), legacyHeight, 1024, controlTolerance = 0.02)
+            metric(id, "$prefix.baseline", line.baseline, expected.measuredNumber("baseline"), firstBaseline + index * wholeAdvance, WHOLE_PIXEL_ADVANCE, controlTolerance = 0.02)
+            metric(id, "$prefix.top", line.top, expected.measuredNumber("top"), index * wholeAdvance, WHOLE_PIXEL_ADVANCE, controlTolerance = 0.02)
+            metric(id, "$prefix.height", actual.height, expected.measuredNumber("height"), null, null)
             val controlGlyphs = unfeatured?.array("glyphs")?.associateBy { it.number("index").toInt() }.orEmpty()
             for ((offset, x) in line.origins.withIndex()) {
                 val source = line.start + offset
@@ -150,15 +152,19 @@ class TextLayoutConformanceTest {
 
     // Each report column describes the browser oracle or its bounded, issue-owned gap signature.
     @Suppress("LongParameterList")
-    private fun metric(id: String, name: String, actual: Double, expected: Double, control: Double?, issue: Int?, tolerance: Double = 0.5, controlTolerance: Double = 0.1) {
-        results += Metric(id, name, actual, expected, classify(actual, expected, control, issue, tolerance, controlTolerance))
+    private fun metric(id: String, name: String, actual: Double, expected: Double, control: Double?, gap: String?, tolerance: Double = 0.5, controlTolerance: Double = 0.1) {
+        results += Metric(id, name, actual, expected, classify(actual, expected, control, gap, tolerance, controlTolerance))
     }
 
-    private fun classify(actual: Double, expected: Double, control: Double?, issue: Int?, tolerance: Double = 0.5, controlTolerance: Double = 0.1): String = when {
+    /** PASS within [tolerance] of the browser, else [gap] when [control] explains the deviation, else FAIL. */
+    private fun classify(actual: Double, expected: Double, control: Double?, gap: String?, tolerance: Double = 0.5, controlTolerance: Double = 0.1): String = when {
         abs(actual - expected) <= tolerance -> "PASS"
-        issue != null && control != null && abs(actual - control) <= controlTolerance -> "XFAIL #$issue"
+        gap != null && control != null && abs(actual - control) <= controlTolerance -> gap
         else -> "FAIL"
     }
+
+    private fun xfail(issue: Int): String = "XFAIL #$issue"
+    private fun wholePixel(value: Double): Double = floor(value + 0.5)
 
     private fun writeReport() {
         val directory = File(checkNotNull(System.getProperty("awake.layout.report"))).also { it.mkdirs() }
@@ -175,6 +181,11 @@ class TextLayoutConformanceTest {
     private fun JsonObject?.measuredNumber(key: String): Double = this?.number(key) ?: Double.NaN
     private fun JsonObject.optionalNumber(key: String): Double? = getValue(key).takeUnless { it == JsonNull }?.jsonPrimitive?.double
     private fun JsonObject.array(key: String): List<JsonObject> = getValue(key).jsonArray.map { it.jsonObject }
+
+    private companion object {
+        /** A deviation fully explained by Core's whole-device-pixel line advance; see the layout README. */
+        const val WHOLE_PIXEL_ADVANCE = "SNAP"
+    }
 
     private data class Layout(val height: Double, val lines: List<Line>)
     private data class Line(val start: Int, val end: Int, val advance: Double, val baseline: Double, val top: Double, val origins: List<Double>)
