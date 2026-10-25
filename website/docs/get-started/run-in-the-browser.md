@@ -101,6 +101,10 @@ download fails, the browser has no WebGPU, or the engine fails to start, it show
 of leaving a black canvas. `data-product` is the name shown after "AwakeKt" on the screen; leave it
 out to show only "AwakeKt".
 
+For a game rather than an AwakeKt product, set `data-mode="game"` and `data-title="Your Game"`: the
+screen turns neutral monochrome, so it suits any art direction, shows your game's title, and keeps a
+small "Made with AwakeKt" line. Add `data-attribution="none"` to drop that line.
+
 ## Run it
 
 ```bash

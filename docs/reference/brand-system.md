@@ -36,6 +36,7 @@ The Engine Showcase owns the runtime copies that platform hosts consume:
 | [`AppIcon.appiconset`](../../samples/engine-showcase/iosApp/iosApp/Assets.xcassets/AppIcon.appiconset/Contents.json) | iOS AppIcon size catalog |
 | [`index.html`](../../samples/engine-showcase/src/wasmJsMain/resources/index.html) | Web SVG favicon reference |
 | [`awake-glyph.svg`](../../website/landing/brand/awake-glyph.svg) | The glyph: field-free, light-surface stops by default and the original stops under a dark colour scheme |
+| [`awake-mark-monochrome.svg`](../../website/landing/brand/awake-mark-monochrome.svg) | Tonal monochrome glyph (`currentColor` with four facet opacities): single-colour UI, creator game loaders, and `Made with AwakeKt` attribution |
 
 ### Name lockups
 
@@ -96,11 +97,38 @@ do not set the name in another typeface or redraw it. Elsewhere, product names a
 text in the UI's own licensed type system, which must not be presented as a new official wordmark. The
 normal text separator is one space: `AwakeKt Studio` and `AwakeKt Engine`.
 
+- Use `AwakeKt` for the organization, trademark, and umbrella brand (`awakekt.com`, `@awakekt`, `Made with AwakeKt`).
 - Use `AwakeKt Studio` for the commercial authoring application.
 - Use `AwakeKt Engine` for the public engine platform.
+- Use `AwakeKt Cloud` when introducing the cloud service externally.
 - Use `AwakeKt Engine Showcase` for the sample app's visible label.
+- Inside an interface already identified as AwakeKt (menus, sidebars, dialogs, billing cards, status bars), use short role labels such as `Studio`, `Studio Pro`, `Cloud`, `Return to Studio` and `Download Studio`, rather than repeating `AwakeKt` on every control or writing bare `Awake` as a product name.
+- Keep lowercase `awake` for technical identifiers: package names (`com.awakekt.awake.*`), file names (`awake.project.json`, `.awakeplugin`), CLI and Gradle tasks, and architecture terms (`Awake Core`). Never use customer-facing `Awake Studio` or `Awake Engine`.
 - At icon sizes, remove every label and use the mark alone.
 - Do not add a slogan, framework claim, or implementation-language claim to the mark.
+
+## Tonal monochrome glyph and loading screens
+
+A flat 100%-solid silhouette merges the isometric cube's three faces and the A-ribbon's folds into a
+single featureless polygon. [`awake-mark-monochrome.svg`](../../website/landing/brand/awake-mark-monochrome.svg)
+preserves the 3D geometry in any single foreground colour (`currentColor`) using four luminance-matched
+`fill-opacity` tiers:
+
+| Facet | `fill-opacity` |
+| --- | --- |
+| Right A-beam, Cube top | `1.00` |
+| Left A-beam | `0.78` |
+| Right ribbon fold, Cube right | `0.58` |
+| Left ribbon fold, Cube left | `0.38` |
+
+Loading screens split by ownership so AwakeKt's ember-and-gold palette never clashes with a creator's
+own art direction:
+
+| Surface | Mark and loader treatment |
+| --- | --- |
+| First-party AwakeKt apps (`AwakeKt Studio`, `AwakeKt Engine Showcase`) | Full-colour Ember Signal glyph (`awake-glyph.svg`) with `AwakeKt <Product>` and the ember-to-gold progress bar (`data-product="..."` in `awake-loader.js`). |
+| Creator games: Community / Cloud play (`Export Web App`, `studio.awakekt.com/play/<id>`) | Neutral monochrome surface (`#0B0D12` dark / `#F6F6F7` light), monochrome progress bar, game title, and the tonal monochrome glyph beside `Made with AwakeKt` (`data-mode="game"` in `awake-loader.js`). |
+| Creator games: Studio Pro (`Export Web App` with Studio Pro) | Same neutral monochrome game loader with `Made with AwakeKt` attribution omitted (`data-mode="game" data-attribution="none"`). |
 
 ## Platform rules
 
@@ -110,7 +138,7 @@ normal text separator is one space: `AwakeKt Studio` and `AwakeKt Engine`.
 | iOS | Full-bleed 1024px source; allow the system to apply corner masking. |
 | Desktop | Use the 1024px PNG for taskbar/Dock identity; do not add text to the OS icon. |
 | Web | Use the SVG mark as the favicon; do not create a wordmark favicon. |
-| In-app splash, About, headers, loading screens, and documentation | Use the glyph, alongside ordinary product text at a readable size, with the stops for the surface it sits on. |
+| In-app splash, About, headers, loading screens, and documentation | First-party AwakeKt products use the full-colour glyph with the stops for the surface it sits on; creator game loaders use the tonal monochrome glyph on a neutral monochrome surface. |
 
 ## Provenance record
 
