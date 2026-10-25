@@ -117,21 +117,45 @@ class KinematicCharacterController(
         position,
     )
 
+    /** Current character position, shared with the underlying capability. */
     val position: Vec3f get() = controller.position
+
+    /** The optional inner kinematic body owned by this character. */
     val body: BodyHandle? get() = controller.body
+
+    /** Whether the most recent move found walkable ground. */
     val isGrounded: Boolean get() = controller.isGrounded
+
+    /** Normal of the current ground contact. */
     val groundNormal: Vec3f get() = controller.groundNormal
+
+    /** Body supporting this character, or null when airborne. */
     val groundBody: BodyHandle? get() = controller.groundBody
+
+    /** Velocity of the body supporting this character. */
     val groundVelocity: Vec3f get() = controller.groundVelocity
+
+    /** Whether the crouched capsule is currently in use. */
     val isCrouching: Boolean get() = controller.isCrouching
+
+    /** Caller-owned response to valid contacts encountered while moving. */
     var onContact: ((body: BodyHandle, normal: Vec3f) -> Unit)?
         get() = controller.onContact
         set(value) { controller.onContact = value }
 
+    /** Shrinks the capsule while keeping its feet in place. */
     fun crouch() = controller.crouch()
+
+    /** Attempts to stand; false means headroom was blocked or the contact was invalid. */
     fun standUp(): Boolean = controller.standUp()
+
+    /** Places the character immediately and clears its ground state. */
     fun teleport(to: Vec3f) = controller.teleport(to)
+
+    /** Destroys the optional inner body. */
     fun dispose() = controller.dispose()
+
+    /** Moves through physics; an invalid contact blocks this move and is logged. */
     fun move(motion: Vec3f, deltaTime: Float = DEFAULT_SYNC_DELTA) = controller.move(motion, deltaTime)
 
     private companion object {

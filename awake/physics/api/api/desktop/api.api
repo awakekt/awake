@@ -272,6 +272,10 @@ public final class com/awakekt/awake/physics/HingeConstraint : com/awakekt/awake
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/physics/InvalidShapeCastResultException : java/lang/IllegalArgumentException {
+	public fun <init> (Ljava/lang/String;)V
+}
+
 public final class com/awakekt/awake/physics/LineOfSightRays {
 	public static final field Companion Lcom/awakekt/awake/physics/LineOfSightRays$Companion;
 	public static final field DEFAULT_RAYS_PER_FRAME I

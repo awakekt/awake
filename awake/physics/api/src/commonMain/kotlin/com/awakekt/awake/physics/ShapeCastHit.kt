@@ -37,11 +37,14 @@ data class ShapeCastHit(
     val fraction: Float,
 ) {
     init {
-        require(point.hasFiniteComponents()) { "ShapeCastHit point must be finite: $point" }
-        require(normal.hasFiniteComponents()) { "ShapeCastHit normal must be finite: $normal" }
-        require(normal.x != 0f || normal.y != 0f || normal.z != 0f) { "ShapeCastHit normal must be nonzero: $normal" }
-        require(fraction.isFinite() && fraction in 0f..1f) { "ShapeCastHit fraction must be finite and in [0, 1]: $fraction" }
+        if (!point.hasFiniteComponents()) throw InvalidShapeCastResultException("ShapeCastHit point must be finite: $point")
+        if (!normal.hasFiniteComponents()) throw InvalidShapeCastResultException("ShapeCastHit normal must be finite: $normal")
+        if (normal.x == 0f && normal.y == 0f && normal.z == 0f) throw InvalidShapeCastResultException("ShapeCastHit normal must be nonzero: $normal")
+        if (!fraction.isFinite() || fraction !in 0f..1f) throw InvalidShapeCastResultException("ShapeCastHit fraction must be finite and in [0, 1]: $fraction")
     }
 }
 
 private fun Vec3f.hasFiniteComponents(): Boolean = x.isFinite() && y.isFinite() && z.isFinite()
+
+/** A backend contact violated the query contract; callers may block the affected operation. */
+class InvalidShapeCastResultException(message: String) : IllegalArgumentException(message)

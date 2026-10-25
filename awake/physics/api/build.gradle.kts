@@ -36,13 +36,11 @@ kotlin {
         namespace = "com.awakekt.awake.physics"
     }
 
-    // No platform-specific code at all in this module (mirrors awake:engine:render-api's own
-    // module-restructuring rationale, see docs/mvp-plan.md) -- every declaration here is a
-    // plain interface/data class, implemented per-platform-binding by each physics backend
-    // module (awake-backend-jolt today; JoltC/JoltPhysics.js backends deferred to a later
-    // slice, see that decision log entry).
+    // Portable contracts and backend-independent physics utilities, including character motion.
+    // No scene, native binding, renderer or window dependency belongs in this capability module.
     sourceSets {
         commonMain.dependencies {
+            implementation(project(":awake:core:logging"))
             // BodyTransform/RaycastHit/PhysicsWorld all take/return Vec3 (portable math).
             implementation(project(":awake:core:math"))
             // For gridTriangleIndices alone: a heightfield expressed as triangles has to be wound

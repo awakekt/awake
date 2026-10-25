@@ -5,12 +5,15 @@
  */
 package com.awakekt.awake.physics.character
 
+import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.core.math.Quat
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.physics.BodyHandle
 import com.awakekt.awake.physics.CapsuleShape
+import com.awakekt.awake.physics.InvalidShapeCastResultException
 import com.awakekt.awake.physics.MotionType
 import com.awakekt.awake.physics.PhysicsWorld
+import com.awakekt.awake.physics.ShapeCastHit
 import kotlin.math.cos
 import kotlin.math.max
 import kotlin.math.sqrt
@@ -222,6 +225,10 @@ class KinematicCharacterController(
     private val remaining = Vec3f()
     private val target = Vec3f()
     private val scratch = Vec3f()
+    private val safePosition = Vec3f(0f, 0f, 0f)
+    private val queryFrom = Vec3f(0f, 0f, 0f)
+    private var reportedInvalidContact = false
+    private val logger = Logger("PhysicsCharacter")
 
     // Where a step-up probe started, so a failed one can be undone rather than half-applied.
     private val savedPosition = Vec3f()
@@ -256,11 +263,18 @@ class KinematicCharacterController(
      * Holding crouch is therefore the caller's job: try this every frame while the key is up, and
      * the character stands the moment it walks out from under something.
      */
-    fun standUp(): Boolean {
+    fun standUp(): Boolean = try {
+        tryStandUp()
+    } catch (failure: InvalidShapeCastResultException) {
+        reportInvalidContact(failure)
+        false
+    }
+
+    private fun tryStandUp(): Boolean {
         if (!isCrouching) return true
         target.set(position)
         target.y += crouchDrop * 2f
-        val blocked = world.shapeCast(activeShape, position, target, ignore = body) != null
+        val blocked = cast() != null
         if (!blocked) {
             activeShape = config.shape
             position.y += crouchDrop
@@ -320,6 +334,37 @@ class KinematicCharacterController(
      * Known limit: ground destroyed under a character that stands still holds it up until it moves.
      */
     fun move(motion: Vec3f, deltaTime: Float = DEFAULT_SYNC_DELTA) {
+        safePosition.set(position)
+        try {
+            moveChecked(motion, deltaTime)
+            reportedInvalidContact = false
+        } catch (failure: InvalidShapeCastResultException) {
+            // No inner-body synchronization has happened yet. Drop the displacement for this
+            // character, clear uncertain ground, and allow the caller to keep stepping others.
+            position.set(safePosition)
+            remaining.set(0f, 0f, 0f)
+            isGrounded = false
+            groundBody = null
+            groundNormal.set(0f, 1f, 0f)
+            groundVelocity.set(0f, 0f, 0f)
+            leftGround = false
+            reportInvalidContact(failure)
+        }
+    }
+
+    private fun reportInvalidContact(failure: InvalidShapeCastResultException) {
+        if (!reportedInvalidContact) {
+            reportedInvalidContact = true
+            logger.error(failure) { "Blocked character contact from=$queryFrom to=$target: ${failure.message}" }
+        }
+    }
+
+    private fun cast(): ShapeCastHit? {
+        queryFrom.set(position)
+        return world.shapeCast(activeShape, position, target, ignore = body)
+    }
+
+    private fun moveChecked(motion: Vec3f, deltaTime: Float) {
         if (standsStill(motion)) {
             syncBody(deltaTime)
             return
@@ -331,7 +376,7 @@ class KinematicCharacterController(
         while (blocked && iterations < config.maxSlideIterations && remaining.length3() > MIN_MOTION) {
             target.set(position).add(remaining)
 
-            val hit = world.shapeCast(activeShape, position, target, ignore = body)
+            val hit = cast()
             if (hit == null) {
                 position.set(target)
                 blocked = false
@@ -434,7 +479,7 @@ class KinematicCharacterController(
         val reach = config.stepHeight + config.stepDownDistance
         target.set(position)
         target.y -= reach
-        val landing = world.shapeCast(activeShape, position, target, ignore = body)
+        val landing = cast()
         if (landing == null || landing.normal.y < config.minWalkableNormalY) return false
 
         position.y -= reach * landing.fraction
@@ -455,7 +500,7 @@ class KinematicCharacterController(
         if (config.stepDownDistance <= 0f) return
         target.set(position)
         target.y -= config.stepDownDistance
-        val hit = world.shapeCast(activeShape, position, target, ignore = body)
+        val hit = cast()
         if (hit != null && hit.normal.y >= config.minWalkableNormalY) {
             position.y -= config.stepDownDistance * hit.fraction
             position.y += config.skinWidth
@@ -473,7 +518,7 @@ class KinematicCharacterController(
      */
     private fun sweepBy(x: Float, y: Float, z: Float): Float {
         target.set(position.x + x, position.y + y, position.z + z)
-        val hit = world.shapeCast(activeShape, position, target, ignore = body)
+        val hit = cast()
         val distance = sqrt(x * x + y * y + z * z)
         if (hit == null) {
             position.set(target)
@@ -524,7 +569,7 @@ class KinematicCharacterController(
     private fun updateGroundState(ascending: Boolean, risingSpeed: Float) {
         target.set(position)
         target.y -= config.groundProbeDistance
-        val hit = world.shapeCast(activeShape, position, target, ignore = body)
+        val hit = cast()
         val velocity = hit?.let { world.getLinearVelocity(it.handle) }
         // Rising faster than the ground is leaving it -- a jump, not a ride on a lift. The probe
         // still reaches the floor for the first steps of a jump, and calling that grounded would
