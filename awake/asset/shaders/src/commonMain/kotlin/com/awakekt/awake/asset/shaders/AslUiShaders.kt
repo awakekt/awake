@@ -186,6 +186,9 @@ val UiGlyphShader: AslShaderDefinition = shader("ui_glyph") {
             "atlasSize",
             vec2(toF32(atlasSizeU.x), toF32(atlasSizeU.y)),
         )
+        // Distance-field coverage. `UiRasterizer.distanceFieldScreenPxRange` and `distanceFieldCoverage`
+        // are the CPU copy of this block, checked against it by DistanceFieldGlyphShaderTwinTest, which
+        // supplies `atlas`, `atlasSizeU` and `screenTexSize` by name: rename them there too.
         val unitRange = let("unitRange", vec2(fontInfo.y) / atlasSize)
         val screenTexSize = let("screenTexSize", vec2(1f.lit, 1f.lit) / fwidth(uv))
         val screenPxRange = let("screenPxRange", max(0.5f.lit * dot(unitRange, screenTexSize), 1f.lit))

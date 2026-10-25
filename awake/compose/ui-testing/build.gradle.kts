@@ -35,6 +35,9 @@ kotlin {
             dependencies {
                 implementation(kotlin("test"))
                 implementation(project(":awake:core:host"))
+                // The glyph shader's ASL definition and its CPU evaluator: the raster's
+                // distance-field coverage is checked against the shader's own math.
+                implementation(project(":awake:asset:shaders"))
                 implementation(libs.kotlinx.coroutines.test)
             }
         }
