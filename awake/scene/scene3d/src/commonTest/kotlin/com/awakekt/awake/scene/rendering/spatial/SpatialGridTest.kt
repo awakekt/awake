@@ -11,6 +11,7 @@ import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math.intersects
 import com.awakekt.awake.core.math.squaredDistanceTo
+import com.awakekt.awake.render.passes.ShadowCasterVolume
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -130,6 +131,53 @@ class SpatialGridTest {
         val high = grid.queryAabb(Aabb(Vec3f(0f, 150f, 0f), Vec3f(1f, 160f, 1f)), mutableListOf())
 
         assertEquals(listOf(1), high.toList())
+    }
+
+    @Test
+    fun anEntityThatRisesWithinItsColumnIsStillSeenByTheFrustumQuery() {
+        // A camera looking level at y = 55 sees roughly y 50..60 where the entity stands: the
+        // ground it started on is out of view, its new height is in it.
+        val grid = SpatialGrid(cellSize = 32f)
+        grid.insert(1, Aabb(Vec3f(-1f, 0f, -1f), Vec3f(1f, 2f, 1f)))
+        val lens = Lens(eye = Vec3f(0f, 55f, 100f), center = Vec3f(0f, 55f, 0f), fovYRadians = 0.1f, near = 1f, far = 200f)
+        assertTrue(grid.queryFrustum(lens, ASPECT, mutableListOf()).isEmpty(), "On the ground it is out of view.")
+
+        // Same footprint, so the same columns: only its height changed.
+        val risen = Aabb(Vec3f(-1f, 54f, -1f), Vec3f(1f, 56f, 1f))
+        grid.insert(1, risen)
+
+        assertTrue(Frustum.intersects(lens, ASPECT, risen), "The test scene must put the risen entity in view.")
+        assertEquals(listOf(1), grid.queryFrustum(lens, ASPECT, mutableListOf()).toList(), "Culled while in view: its column's height is stale.")
+    }
+
+    @Test
+    fun anEntityThatRisesWithinItsColumnIsStillACaster() {
+        // A shadowed point light whose cube spans y 45..55 above the entity's column.
+        val grid = SpatialGrid(cellSize = 32f)
+        grid.insert(1, Aabb(Vec3f(-1f, 0f, -1f), Vec3f(1f, 2f, 1f)))
+        val volume = ShadowCasterVolume().apply { addPointShadow(Vec3f(0f, 50f, 0f), range = 5f) }
+        assertTrue(grid.queryShadowCasters(volume, mutableListOf()).isEmpty(), "On the ground it is out of the light's reach.")
+
+        val risen = Aabb(Vec3f(-1f, 49f, -1f), Vec3f(1f, 51f, 1f))
+        grid.insert(1, risen)
+
+        assertTrue(volume.admits(risen), "The test scene must put the risen entity in the light's reach.")
+        assertEquals(listOf(1), grid.queryShadowCasters(volume, mutableListOf()).toList(), "Dropped as a caster: its column's height is stale.")
+    }
+
+    @Test
+    fun aBoxMovedInPlaceAndInsertedAgainIsStillSeen() {
+        // A caller reusing one box: the grid must not compare the box with itself to spot a move.
+        val grid = SpatialGrid(cellSize = 32f)
+        val box = Aabb(Vec3f(-1f, 0f, -1f), Vec3f(1f, 2f, 1f))
+        grid.insert(1, box)
+        box.min.set(-1f, 54f, -1f)
+        box.max.set(1f, 56f, 1f)
+
+        grid.insert(1, box)
+
+        val lens = Lens(eye = Vec3f(0f, 55f, 100f), center = Vec3f(0f, 55f, 0f), fovYRadians = 0.1f, near = 1f, far = 200f)
+        assertEquals(listOf(1), grid.queryFrustum(lens, ASPECT, mutableListOf()).toList())
     }
 
     private fun scatter(random: Random, count: Int, extent: Float): Map<Int, Aabb> =

@@ -67,8 +67,10 @@ class SpatialGrid(val cellSize: Float = DEFAULT_SPATIAL_CELL_SIZE) {
      * [columnHeights] is: a query that reaches without limit, such as [queryShadowCasters], needs
      * a bound, and one that over-includes after a removal only costs a few empty columns.
      *
-     * Across the ground it is whole columns, grown only when an entity enters a new span, so the
-     * common case -- an entity that stayed in its columns -- pays two comparisons for its height.
+     * Across the ground it is whole columns, grown only when an entity enters a new span. Its
+     * height grows with the columns' heights, only when an entity moves past the range it was
+     * folded in at, so the common case -- an entity that stayed where it was -- pays two
+     * comparisons for both.
      */
     private var contentMinColumnX = Int.MAX_VALUE
     private var contentMinColumnZ = Int.MAX_VALUE
@@ -97,23 +99,30 @@ class SpatialGrid(val cellSize: Float = DEFAULT_SPATIAL_CELL_SIZE) {
         val minZ = columnIndexOf(cellSize, bounds.min.z)
         val maxX = columnIndexOf(cellSize, bounds.max.x)
         val maxZ = columnIndexOf(cellSize, bounds.max.z)
-        if (bounds.min.y < contentMinY) contentMinY = bounds.min.y
-        if (bounds.max.y > contentMaxY) contentMaxY = bounds.max.y
         val existing = entries[entityId]
-        if (existing != null) {
-            // Same span means the same lists: rewriting them would be identical work with a
-            // window where the entity is in neither, and a moving entity usually stays put.
-            if (existing.spans(minX, minZ, maxX, maxZ)) {
-                existing.bounds = bounds
-                return
+        // Same span means the same lists: rewriting them would be identical work with a window
+        // where the entity is in neither, and a moving entity usually stays put.
+        if (existing != null && existing.spans(minX, minZ, maxX, maxZ)) {
+            existing.bounds = bounds
+            // Its columns' heights already cover the range it was folded in at, so only a move
+            // past that range -- rising, sinking, growing -- has anything to widen. Skipping it
+            // would leave a risen entity above its column's box, and a query that sees only its
+            // new height would skip the column and cull it while in view.
+            if (bounds.min.y < existing.foldedMinY || bounds.max.y > existing.foldedMaxY) {
+                if (bounds.min.y < contentMinY) contentMinY = bounds.min.y
+                if (bounds.max.y > contentMaxY) contentMaxY = bounds.max.y
+                existing.widenHeights(bounds, columnHeights)
             }
-            detach(entityId, existing)
+            return
         }
+        if (existing != null) detach(entityId, existing)
         entries[entityId] = Entry(bounds, minX, minZ, maxX, maxZ)
         if (minX < contentMinColumnX) contentMinColumnX = minX
         if (minZ < contentMinColumnZ) contentMinColumnZ = minZ
         if (maxX > contentMaxColumnX) contentMaxColumnX = maxX
         if (maxZ > contentMaxColumnZ) contentMaxColumnZ = maxZ
+        if (bounds.min.y < contentMinY) contentMinY = bounds.min.y
+        if (bounds.max.y > contentMaxY) contentMaxY = bounds.max.y
         forEachColumn(minX, minZ, maxX, maxZ) { key ->
             columns.getOrPut(key) { ArrayList(INITIAL_COLUMN_CAPACITY) }.add(entityId)
             val height = columnHeights.getOrPut(key) { floatArrayOf(bounds.min.y, bounds.max.y) }
@@ -320,6 +329,14 @@ class SpatialGrid(val cellSize: Float = DEFAULT_SPATIAL_CELL_SIZE) {
         return into
     }
 
+    /**
+     * One indexed id: its current bounds, the column span it occupies, and the height range
+     * already folded into those columns' heights and the content extent.
+     *
+     * The folded range is copied out of the bounds rather than read back from them: a caller may
+     * pass the same box again after changing it in place, and comparing a box with itself would
+     * never see the move.
+     */
     private class Entry(
         var bounds: Aabb,
         val minX: Int,
@@ -327,8 +344,22 @@ class SpatialGrid(val cellSize: Float = DEFAULT_SPATIAL_CELL_SIZE) {
         val maxX: Int,
         val maxZ: Int,
     ) {
+        var foldedMinY: Float = bounds.min.y
+        var foldedMaxY: Float = bounds.max.y
+
         fun spans(minX: Int, minZ: Int, maxX: Int, maxZ: Int): Boolean =
             this.minX == minX && this.minZ == minZ && this.maxX == maxX && this.maxZ == maxZ
+
+        /** Folds [moved] into the folded range and into [heights] for every column of the span. */
+        fun widenHeights(moved: Aabb, heights: Map<Long, FloatArray>) {
+            foldedMinY = min(foldedMinY, moved.min.y)
+            foldedMaxY = max(foldedMaxY, moved.max.y)
+            forEachColumn(minX, minZ, maxX, maxZ) { key ->
+                val height = heights[key] ?: return@forEachColumn
+                height[0] = min(height[0], foldedMinY)
+                height[1] = max(height[1], foldedMaxY)
+            }
+        }
     }
 
     private companion object {
