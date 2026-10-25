@@ -1,0 +1,1 @@
+- Add a pinned Chromium text-layout measurement corpus and CPU conformance tests for advances, glyph origins, wrapping, baselines and line boxes, with tracked expected failures for existing kerning, numeric-feature and line-metric gaps.

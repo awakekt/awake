@@ -1,0 +1,184 @@
+/*
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+package com.awakekt.awake.compose.foundation.text
+
+import com.awakekt.awake.compose.ui.unit.sp
+import com.awakekt.awake.core.color.Color
+import com.awakekt.awake.core.text.font.FontWeight
+import com.awakekt.awake.core.text.font.UiFont
+import com.awakekt.awake.core.text.font.UiFonts
+import com.awakekt.awake.core.text.font.withPixelGlyphMaxSize
+import com.awakekt.awake.core.text.theme.TextStyle
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.double
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import java.io.File
+import java.security.MessageDigest
+import kotlin.math.abs
+import kotlin.math.floor
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
+
+/** Runs the production CPU layout/paint path against an independently captured browser corpus. */
+class TextLayoutConformanceTest {
+    private val results = mutableListOf<Metric>()
+
+    @Test
+    fun chromiumLayoutConformance() {
+        val corpus = document("corpus.json")
+        val golden = document("text-layout/chromium.json")
+        assertEquals(1, corpus.number("schema").toInt())
+        val cases = corpus.array("cases")
+        val references = golden.array("cases").associateBy { it.string("id") }
+        assertEquals(cases.map { it.string("id") }.toSet(), references.keys, "Corpus/reference case IDs")
+        assertEquals(cases.size, references.size, "Duplicate case IDs")
+        val fonts = corpus.array("fonts").associateBy { it.string("id") }
+        assertEquals(corpus["fonts"], golden.getValue("provenance").jsonObject["fonts"])
+        val loaded = fonts.mapValues { (id, spec) -> loadFont(id, spec) }
+        for (spec in cases) {
+            val id = spec.string("id")
+            val fontSpec = fonts.getValue(spec.string("font"))
+            val actual = measure(spec, loaded.getValue(spec.string("font")))
+            val expected = references.getValue(id)
+            val wrapControl = expected["roundedFit"]?.jsonObject
+            compare(spec, fontSpec, actual, expected.getValue("reference").jsonObject, wrapControl ?: expected.getValue("unfeatured").jsonObject)
+        }
+        writeReport()
+        val failures = results.filter { it.status == "FAIL" }
+        assertTrue(failures.isEmpty(), failures.joinToString("\n", "Unexpected browser deviations:\n") { it.csv() })
+        assertTrue(results.any { it.status == "PASS" }, "The suite must exercise conforming metrics")
+    }
+
+    @Test
+    fun knownGapsDoNotPermitUnrelatedDrift() {
+        assertEquals("PASS", classify(10.2, 10.0, 10.2, 1022))
+        assertEquals("XFAIL #1022", classify(12.0, 10.0, 12.0, 1022))
+        assertEquals("FAIL", classify(13.0, 10.0, 12.0, 1022))
+        assertEquals("FAIL", classify(12.0, 10.0, 12.0, null))
+        assertEquals("PASS", classify(10.0, 10.0, 12.0, 1024))
+        assertEquals("FAIL", classify(Double.NaN, 10.0, 12.0, 1024))
+    }
+
+    private fun loadFont(id: String, spec: JsonObject): UiFont {
+        val name = spec.string("path").substringAfterLast('/')
+        val bytes = resource(name)
+        val sha = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
+        assertEquals(spec.string("sha256"), sha, "Font $id changed; regenerate deliberately")
+        return (if (id == "roboto") UiFonts.default() else UiFonts.load(bytes, name)).withPixelGlyphMaxSize(0)
+    }
+
+    private fun measure(spec: JsonObject, font: UiFont): Layout {
+        val size = spec.number("sizePx").toFloat()
+        val density = spec.number("density").toFloat()
+        val style = TextStyle(font = font, size = (size / density).sp, lineHeight = spec.optionalNumber("lineHeightPx")?.let { (it.toFloat() / density).sp })
+        val text = spec.string("text")
+        val run = TextRun(text, style, font, size, density, wrapWidthPx = spec.optionalNumber("wrapWidthPx")?.toFloat() ?: Float.POSITIVE_INFINITY)
+        val scope = LayoutRecordingScope()
+        run.paint(scope, Color(1f, 1f, 1f, 1f))
+        val quads = scope.glyphs.iterator()
+        var cursor = 0
+        val lines = run.lines.map { line ->
+            val start = text.indexOf(line, cursor)
+            check(start >= cursor && line.isNotEmpty()) { "Unsupported source range in ${spec.string("id")}" }
+            cursor = start + line.length
+            var baseline: Double? = null
+            val origins = line.mapIndexed { index, char ->
+                val uv = font.glyphFor(char.code, FontWeight.Normal)
+                val x = if (uv == null) {
+                    run.offsetAtLine(start + index).toDouble()
+                } else {
+                    check(quads.hasNext()) { "Missing painted glyph $char" }
+                    val quad = quads.next()
+                    if (baseline == null) baseline = (quad.y - uv.offsetYEm * size + font.ascentEm * size).toDouble()
+                    (quad.x - uv.offsetXEm * size).toDouble()
+                }
+                x
+            }
+            Line(start, cursor, run.offsetAtLine(cursor).toDouble(), checkNotNull(baseline), run.caretPositionAt(start).y.toDouble(), origins)
+        }
+        check(!quads.hasNext()) { "Unaccounted painted glyphs" }
+        return Layout(run.lineHeightPx.toDouble(), lines)
+    }
+
+    private fun compare(spec: JsonObject, font: JsonObject, actual: Layout, reference: JsonObject, control: JsonObject) {
+        val id = spec.string("id")
+        val featureIssue = when {
+            spec.string("kerning") != "none" -> 1022
+            spec.string("numeric") != "normal" -> 1023
+            spec.optionalNumber("wrapWidthPx") != null -> 1021
+            else -> null
+        }
+        metric(id, "advance", actual.lines.maxOf { it.advance }, reference.number("advance"), control.number("advance"), featureIssue)
+        metric(id, "lineCount", actual.lines.size.toDouble(), reference.number("lineCount"), control.number("lineCount"), featureIssue, tolerance = 0.0)
+        // #1024's documented pre-fix behavior, bounded independently by the source TTF hhea metrics.
+        // This is only an expected-failure signature. The browser is always the first comparison.
+        val size = spec.number("sizePx")
+        val natural = (font.number("ascender") - font.number("descender")) / font.number("unitsPerEm") * size
+        val requested = spec.optionalNumber("lineHeightPx") ?: natural
+        val legacyHeight = if (actual.lines.size > 1) maxOf(natural, requested) else requested
+        val legacyAscent = font.number("ascender") / font.number("unitsPerEm") * size + maxOf(0.0, (legacyHeight - natural) / 2)
+        metric(id, "lineHeight", actual.height, reference.number("lineHeight"), legacyHeight, 1024, controlTolerance = 0.02)
+        val expectedLines = reference.array("lines")
+        val controlLines = control.array("lines")
+        val referenceGlyphs = expectedLines.flatMap { it.array("glyphs") }.associateBy { it.number("index").toInt() }
+        for ((index, line) in actual.lines.withIndex()) {
+            val expected = expectedLines.getOrNull(index)
+            val unfeatured = controlLines.getOrNull(index)
+            val prefix = "line[$index]"
+            metric(id, "$prefix.start", line.start.toDouble(), expected.measuredNumber("start"), unfeatured?.number("start"), featureIssue, tolerance = 0.0)
+            metric(id, "$prefix.end", line.end.toDouble(), expected.measuredNumber("end"), unfeatured?.number("end"), featureIssue, tolerance = 0.0)
+            metric(id, "$prefix.advance", line.advance, expected.measuredNumber("advance"), unfeatured?.number("advance"), featureIssue)
+            metric(id, "$prefix.baseline", line.baseline, expected.measuredNumber("baseline"), floor(legacyAscent + index * legacyHeight + 0.5), 1024, controlTolerance = 0.02)
+            metric(id, "$prefix.top", line.top, expected.measuredNumber("top"), index * legacyHeight, 1024, controlTolerance = 0.02)
+            metric(id, "$prefix.height", actual.height, expected.measuredNumber("height"), legacyHeight, 1024, controlTolerance = 0.02)
+            val controlGlyphs = unfeatured?.array("glyphs")?.associateBy { it.number("index").toInt() }.orEmpty()
+            for ((offset, x) in line.origins.withIndex()) {
+                val source = line.start + offset
+                val target = referenceGlyphs[source]
+                metric(id, "$prefix.glyph[$source].x", x, target.measuredNumber("x"), controlGlyphs[source]?.number("x"), featureIssue)
+            }
+        }
+    }
+
+    // Each report column describes the browser oracle or its bounded, issue-owned gap signature.
+    @Suppress("LongParameterList")
+    private fun metric(id: String, name: String, actual: Double, expected: Double, control: Double?, issue: Int?, tolerance: Double = 0.5, controlTolerance: Double = 0.1) {
+        results += Metric(id, name, actual, expected, classify(actual, expected, control, issue, tolerance, controlTolerance))
+    }
+
+    private fun classify(actual: Double, expected: Double, control: Double?, issue: Int?, tolerance: Double = 0.5, controlTolerance: Double = 0.1): String = when {
+        abs(actual - expected) <= tolerance -> "PASS"
+        issue != null && control != null && abs(actual - control) <= controlTolerance -> "XFAIL #$issue"
+        else -> "FAIL"
+    }
+
+    private fun writeReport() {
+        val directory = File(checkNotNull(System.getProperty("awake.layout.report"))).also { it.mkdirs() }
+        File(directory, "metrics.csv").writeText("case,metric,awake,chromium,delta,status\n" + results.joinToString("\n") { it.csv() } + "\n")
+        val summary = results.groupingBy { it.status }.eachCount().toSortedMap()
+        File(directory, "summary.txt").writeText(summary.entries.joinToString("\n") { "${it.key}: ${it.value}" } + "\n")
+        println("Chromium layout conformance: $summary; report: $directory")
+    }
+
+    private fun resource(path: String): ByteArray = checkNotNull(javaClass.classLoader.getResourceAsStream(path)) { "Missing resource $path" }.use { it.readBytes() }
+    private fun document(path: String): JsonObject = Json.parseToJsonElement(resource(path).decodeToString()).jsonObject
+    private fun JsonObject.string(key: String): String = getValue(key).jsonPrimitive.content
+    private fun JsonObject.number(key: String): Double = getValue(key).jsonPrimitive.double
+    private fun JsonObject?.measuredNumber(key: String): Double = this?.number(key) ?: Double.NaN
+    private fun JsonObject.optionalNumber(key: String): Double? = getValue(key).takeUnless { it == JsonNull }?.jsonPrimitive?.double
+    private fun JsonObject.array(key: String): List<JsonObject> = getValue(key).jsonArray.map { it.jsonObject }
+
+    private data class Layout(val height: Double, val lines: List<Line>)
+    private data class Line(val start: Int, val end: Int, val advance: Double, val baseline: Double, val top: Double, val origins: List<Double>)
+    private data class Metric(val case: String, val name: String, val actual: Double, val expected: Double, val status: String) {
+        fun csv(): String = "$case,$name,$actual,$expected,${actual - expected},$status"
+    }
+}

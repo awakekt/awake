@@ -229,6 +229,20 @@ jobs:
           ./gradlew :awake:core:text:desktopTest
           ./gradlew :awake:compose:ui-testing:desktopTest --tests com.awakekt.awake.compose.testing.LoadedFontRasterTest
 
+      # Committed browser measurements; CI needs neither Chromium nor Playwright.
+      - name: CPU text layout conformance
+        run: |
+          python3 tools/fonts-tooling/reference_layout.py --verify-inputs
+          ./gradlew :awake:compose:foundation:desktopTest --tests com.awakekt.awake.compose.foundation.text.TextLayoutConformanceTest
+
+      - name: Upload text layout deviations
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: text-layout-conformance
+          path: awake/compose/foundation/build/reports/text-layout-conformance/
+          if-no-files-found: ignore
+
       # String tables and their layers, ICU-style messages, CLDR plural rules, locale fallback, input
       # labels, the locale font hook, and the Compose glue that reads them.
       - name: Localization tests
