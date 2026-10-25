@@ -40,7 +40,11 @@ import kotlin.time.TimeSource
  */
 class TextFrameProbe {
     private val painter = Painter()
-    private val labels = List(ROWS * CELLS_PER_ROW) { "Label ${it + 1}" }
+    private val plainLabels = List(ROWS * CELLS_PER_ROW) { "Label ${it + 1}" }
+
+    /** Labels whose every capital pair kerns in Roboto (#1022): WA, AV, To and Ty. */
+    private val kernedLabels = List(ROWS * CELLS_PER_ROW) { "WAVE To Ty ${it + 1}" }
+    private var labels = plainLabels
     private var style: TextStyle? = null
 
     /** The default: labels this small draw exact-size pixel glyphs. */
@@ -54,8 +58,19 @@ class TextFrameProbe {
     @Test
     fun unchangedDistanceFieldTextPerFrame() = probe("distance field", TextStyle(font = UiFonts.default().withPixelGlyphMaxSize(0)))
 
-    private fun probe(path: String, style: TextStyle?) {
+    /**
+     * Labels full of kerned pairs, kerned and not: the cost of a kerning lookup per adjacent pair, set side
+     * by side in one JVM, where a comparison across runs would mostly measure the machine.
+     */
+    @Test
+    fun unchangedKernedTextPerFrame() {
+        probe("kerned pairs", style = null, labels = kernedLabels)
+        probe("kerned pairs, kerning off", TextStyle(kerning = false), labels = kernedLabels)
+    }
+
+    private fun probe(path: String, style: TextStyle?, labels: List<String> = plainLabels) {
         this.style = style
+        this.labels = labels
         val root = LayoutNode(ColumnMeasurePolicy())
         repeat(WARMUP_FRAMES) { frame(root) }
 

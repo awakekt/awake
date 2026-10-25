@@ -87,7 +87,9 @@ class TextReferenceMetricsTest {
     private fun render(font: UiFont?, size: Int, text: Color, ground: Color): BufferedImage {
         val height = (size * 1.6f).toInt() + 8
         val primitives = ComposeHost().frame(FrameInput(WIDTH, height)) {
-            Text(LABEL, style = TextStyle(color = text, size = size.sp, font = font))
+            // The reference pens each glyph at Awake's unkerned advance (reference_render.py), and this
+            // compares weight, not layout: kerning off keeps every glyph over its reference twin (#1022).
+            Text(LABEL, style = TextStyle(color = text, size = size.sp, font = font, kerning = false))
         }.primitives
         return primitives.rasterizeToPixelMap(WIDTH, height, background = ground, font = UiFonts.default()).toBufferedImage()
     }

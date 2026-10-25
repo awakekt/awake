@@ -51,11 +51,16 @@ internal class OpenTypeUiFontData private constructor(
     override val inkMetricsEm: FloatArray get() = layout.inkMetricsEm
     override val advancesEm: FloatArray get() = layout.advancesEm
 
+    /** The pairs the font kerns among the baked glyphs, read as the data is made, so a corrupt table fails the load. */
+    private val kerning: KerningPairs = KerningPairs.read(font, codePointsOf(glyphOrder))
+
     override fun atlasBytes(): ByteArray = atlas
 
     override fun outlineFont(): OpenTypeFont = font
 
     override fun lineMetrics(): FontLineMetrics = font.lineMetrics
+
+    override fun kerning(): KerningPairs = kerning
 
     companion object {
         /**
@@ -63,6 +68,9 @@ internal class OpenTypeUiFontData private constructor(
          * which every other char falls back to. [chars] is read by code point, so a surrogate pair
          * such as a CJK Extension B ideograph is one glyph. The font's `.notdef` stands in for a font with no
          * fallback glyph of its own. [name] only labels errors and the data.
+         *
+         * The pairs the font kerns among the baked glyphs are read here too ([KerningPairs.read]), so a
+         * corrupt kerning table fails the load rather than the first layout.
          *
          * The atlas is baked at [bake]. A glyph set whose atlas would pass [MAX_ATLAS_SIZE], or a finer bake
          * whose atlas would pass [MAX_FINE_ATLAS_TEXELS] or whose work would pass [MAX_BAKE_WORK], steps down
@@ -175,6 +183,13 @@ private const val MAX_ATLAS_SIZE = 8192
 /** The code points of [glyphs] as one string, a surrogate pair for each past U+FFFF. */
 private fun glyphOrderOf(glyphs: List<FontGlyph>): String = buildString {
     for (glyph in glyphs) append(CodePoints.asString(glyph.codePoint))
+}
+
+/** The code points of [text], a surrogate pair as one. */
+private fun codePointsOf(text: String): IntArray {
+    val codes = ArrayList<Int>(text.length)
+    CodePoints.forEach(text) { _, code -> codes += code }
+    return codes.toIntArray()
 }
 
 /** One code point's glyph: its outline and its outline-exact box, both in font units, y up. */

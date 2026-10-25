@@ -19,6 +19,7 @@ import com.awakekt.awake.compose.ui.unit.Density
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.core.text.font.clusterAdvance
 import com.awakekt.awake.core.text.font.ellipsize
+import com.awakekt.awake.core.text.font.kerningBefore
 import com.awakekt.awake.core.text.scope.pixelPerfectTextScale
 import com.awakekt.awake.core.text.theme.TextStyle
 import com.awakekt.awake.core.text.unicode.GraphemeClusters
@@ -189,6 +190,7 @@ class TextMeasurePolicy(
                     glyphPx = glyphPx,
                     weight = style.weight,
                     alwaysEllipsize = always,
+                    kerning = style.kerning != false,
                 )
             },
         ) { lineWidth(it, glyphPx) }
@@ -208,14 +210,18 @@ class TextMeasurePolicy(
      * One line's advance width. A block is as wide as its longest line, never their sum.
      *
      * Summed a grapheme cluster at a time, as `TextRun` paints: a ZWJ emoji is one character, not
-     * the eight `Char`s it is stored in.
+     * the eight `Char`s it is stored in. Adjacent clusters kern as `TextRun` kerns them.
      */
     private fun Density.lineWidth(line: String, glyphPx: Float): Float {
         if (line.isEmpty()) return 0f
+        val kerning = style.kerning != false
         var total = 0f
         var clusters = 0
+        var previous = -1
         GraphemeClusters.forEach(line) { start, end ->
+            total += font.kerningBefore(line, previous, start, glyphPx, style.weight)
             total += font.clusterAdvance(line, start, end, glyphPx, style.weight)
+            if (kerning) previous = start
             clusters++
         }
         // Letter spacing sits between characters, not after the last one -- the same off-by-one that
