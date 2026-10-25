@@ -25,6 +25,8 @@ kotlin {
             implementation(libs.cryptography.core)
             // Registers each target's platform provider: JDK (desktop, Android), Apple, WebCrypto.
             implementation(libs.cryptography.provider.optimal)
+            // Lifts cryptography-kotlin's kotlinx-io 0.9.0, whose wasm helper breaks browser bundles.
+            implementation(libs.kotlinx.io.core)
         }
         wasmJsMain.dependencies {
             // Promise.await and typed arrays for the browser's asynchronous DecompressionStream.
