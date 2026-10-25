@@ -80,6 +80,7 @@ import com.github.stephengold.joltjni.Vec3
 import com.github.stephengold.joltjni.enumerate.EActivation
 import com.github.stephengold.joltjni.enumerate.EAllowedDofs
 import com.github.stephengold.joltjni.enumerate.EAxis
+import com.github.stephengold.joltjni.enumerate.EBackFaceMode
 import com.github.stephengold.joltjni.enumerate.EBodyType
 import com.github.stephengold.joltjni.enumerate.EConstraintSpace
 import com.github.stephengold.joltjni.enumerate.EMotionQuality
@@ -277,8 +278,13 @@ class JoltPhysicsWorld(
     private val unitScale = com.github.stephengold.joltjni.Vec3(1f, 1f, 1f)
     private val noBaseOffset = RVec3(0.0, 0.0, 0.0)
 
-    // Initial overlaps need a separating axis even when the cast has no travel.
-    private val shapeCastSettings = ShapeCastSettings().apply { setReturnDeepestPoint(true) }
+    // Initial overlaps need a separating axis even when the cast has no travel. Triangle back
+    // faces block as well (#1030): a sweep let through a one-sided mesh from behind leaves the
+    // shape inside it, where every later sweep reports a hit at fraction 0.
+    private val shapeCastSettings = ShapeCastSettings().apply {
+        setReturnDeepestPoint(true)
+        setBackFaceModeTriangles(EBackFaceMode.CollideWithBackFaces)
+    }
     private val rayCastSettings = RayCastSettings()
     private val closestRayHit = ClosestHitCastRayCollector()
     private val allRayHits = AllHitCastRayCollector()

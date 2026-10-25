@@ -68,6 +68,7 @@ import platform.joltc.JPC_ACTIVATION_ACTIVATE
 import platform.joltc.JPC_ACTIVATION_DONT_ACTIVATE
 import platform.joltc.JPC_Activation
 import platform.joltc.JPC_AllowedDOFs
+import platform.joltc.JPC_BACK_FACE_MODE_COLLIDE
 import platform.joltc.JPC_BodyCreationSettings
 import platform.joltc.JPC_BodyCreationSettings_default
 import platform.joltc.JPC_BodyFilterFns
@@ -1200,6 +1201,9 @@ class JoltPhysicsWorld(
             JPC_ShapeCastSettings_default(args.Settings.ptr)
             // Keep an initial overlap's separating normal defined, including zero-length sweeps.
             args.Settings.ReturnDeepestPoint = true
+            // Triangle back faces block as well (#1030): a sweep let through a one-sided mesh from
+            // behind leaves the shape inside it, where every later sweep hits at fraction 0.
+            args.Settings.BackFaceModeTriangles = JPC_BACK_FACE_MODE_COLLIDE
             args.Collector = collector
             filters.layerFilter?.let { args.ObjectLayerFilter = it }
             filters.bodyFilter?.let { args.BodyFilter = it }

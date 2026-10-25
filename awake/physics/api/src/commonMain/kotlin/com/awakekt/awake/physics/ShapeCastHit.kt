@@ -26,7 +26,8 @@ import com.awakekt.awake.core.math.Vec3f
  * must preserve these invariants after construction.
  *
  * @property handle The body that was struck by the swept shape.
- * @property point World-space position where contact occurred.
+ * @property point World-space position where contact occurred. For a sweep that starts overlapping
+ *   (fraction 0), the struck surface's point deepest inside the swept shape.
  * @property normal Surface normal pointing away from the struck body at [point].
  * @property fraction Normalized distance along the sweep vector in range `[0, 1]`.
  */

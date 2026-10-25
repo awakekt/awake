@@ -14,6 +14,7 @@ import com.awakekt.awake.physics.InvalidShapeCastResultException
 import com.awakekt.awake.physics.MotionType
 import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.physics.ShapeCastHit
+import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.max
 import kotlin.math.sqrt
@@ -152,14 +153,20 @@ class KinematicCharacterController(
     }
         private set
 
-    /** Whether the last [move] ended on ground flat enough to stand on. */
+    /**
+     * Whether the last [move] ended on ground flat enough to stand on, or wedged between two faces
+     * too steep to stand on that hold it up together, such as the bottom of a V.
+     */
     var isGrounded: Boolean = false
         private set
 
     /** Whether the last [move] rose off the ground faster than the ground itself moves. */
     private var leftGround = false
 
-    /** The surface [isGrounded] refers to; meaningless when not grounded. */
+    /**
+     * The surface [isGrounded] refers to; meaningless when not grounded. In a V, the combined normal
+     * of its two faces.
+     */
     val groundNormal: Vec3f = Vec3f(0f, 1f, 0f)
 
     /**
@@ -236,6 +243,11 @@ class KinematicCharacterController(
 
     /** The horizontal heading of a step probe, so its extra reach can be taken back after. */
     private val stepDirection = Vec3f()
+
+    // Ground support: the steep face a probe found, and the normal the character stands on --
+    // the ground's own, or the combined normal of the two steep faces of a V it is wedged in.
+    private val steepNormal = Vec3f(0f, 1f, 0f)
+    private val supportNormal = Vec3f(0f, 1f, 0f)
 
     /**
      * Shrinks to the crouched capsule, keeping the feet where they are.
@@ -328,6 +340,10 @@ class KinematicCharacterController(
      * a wall at an angle keeps moving along the wall rather than stopping dead. Motion is only
      * ever removed, never added, so sliding cannot accelerate the character.
      *
+     * A character found already inside something, by a sweep or the ground probe starting out
+     * overlapping it, is moved out along that contact by the overlap depth -- at most once per move,
+     * and never further than its own size -- and the sweep or probe runs again from there.
+     *
      * A character that stands still makes no sweep at all: grounded, asked to move less than a sweep is
      * worth, on a body the simulation isn't moving, it keeps the ground state it has. A ground body that
      * starts to move, such as a lift setting off, is active, and the probe runs again from that step.
@@ -373,6 +389,7 @@ class KinematicCharacterController(
         remaining.set(motion)
         var iterations = 0
         var blocked = true
+        var depenetrated = false
         while (blocked && iterations < config.maxSlideIterations && remaining.length3() > MIN_MOTION) {
             target.set(position).add(remaining)
 
@@ -381,23 +398,36 @@ class KinematicCharacterController(
                 position.set(target)
                 blocked = false
             } else {
-                // Try to walk over it before deciding to slide along it. Only from the ground:
-                // stepping in mid-air is climbing, and only over walls, since a walkable slope is
-                // something to walk up rather than step onto.
-                val stepped = wasGrounded &&
-                    hit.normal.y < config.minWalkableNormalY &&
-                    tryStepUp()
-                if (!stepped) {
-                    slideAlong(hit.normal, hit.fraction)
-                    onContact?.invoke(hit.handle, hit.normal)
-                }
+                // Inside it rather than arriving at it: out first, then the same motion is swept
+                // again from clear space. Once per move, so contacts that keep reporting an
+                // overlap cannot carry the character further than its own size in one step.
+                val pushedOut = !depenetrated && depenetrate(hit)
+                if (pushedOut) depenetrated = true else stepOrSlide(hit, wasGrounded)
                 iterations++
             }
         }
         val risingSpeed = if (deltaTime > 0f) motion.y / deltaTime else 0f
-        updateGroundState(ascending = motion.y > MIN_MOTION, risingSpeed = risingSpeed)
+        updateGroundState(
+            ascending = motion.y > MIN_MOTION,
+            risingSpeed = risingSpeed,
+            mayDepenetrate = !depenetrated,
+        )
         if (wasGrounded && !isGrounded && !leftGround) snapDownToGround()
         syncBody(deltaTime)
+    }
+
+    /** What a contact the character arrives at does to the move: stepped over, or slid along. */
+    private fun stepOrSlide(hit: ShapeCastHit, wasGrounded: Boolean) {
+        // Try to walk over it before deciding to slide along it. Only from the ground: stepping in
+        // mid-air is climbing, and only over walls, since a walkable slope is something to walk up
+        // rather than step onto.
+        val stepped = wasGrounded &&
+            hit.normal.y < config.minWalkableNormalY &&
+            tryStepUp()
+        if (!stepped) {
+            slideAlong(hit.normal, hit.fraction)
+            onContact?.invoke(hit.handle, hit.normal)
+        }
     }
 
     /** Whether [motion] leaves a grounded character on still ground where it stands; see [move]. */
@@ -532,6 +562,60 @@ class KinematicCharacterController(
         return travelled
     }
 
+    /**
+     * Moves the character out of a surface a sweep found it already inside, and reports whether it
+     * did.
+     *
+     * A sweep that starts overlapping something reports it at fraction 0, and sliding cannot undo
+     * that: it advances by nothing and holds off by the skin width, which leaves the capsule inside.
+     * On a zero-thickness triangle the deepest-penetration normal can also flip between sweeps, so
+     * the character rocks in place with its motion removed -- held up, never grounded, for good
+     * (#1030). So a real overlap is resolved in one push along the contact normal, by its depth and
+     * the skin width, whichever way that normal faces the motion.
+     *
+     * A resting contact, no deeper than the skin width, is left to [slideAlong] as before, so this
+     * never replaces the blocking a contact in the way provides. The push is not swept: it is
+     * bounded by the capsule's own size (see [overlapDepth]), and the sweep that follows starts
+     * from where it ends.
+     */
+    private fun depenetrate(hit: ShapeCastHit): Boolean {
+        val depth = if (hit.fraction <= 0f) overlapDepth(hit) else 0f
+        val overlapping = depth > config.skinWidth
+        if (overlapping) {
+            val normal = hit.normal
+            val scale = (depth + config.skinWidth) / normal.length3()
+            position.set(
+                position.x + normal.x * scale,
+                position.y + normal.y * scale,
+                position.z + normal.z * scale,
+            )
+        }
+        return overlapping
+    }
+
+    /**
+     * How far [hit] reaches into the capsule along its normal, or zero when it is not inside it.
+     *
+     * For a sweep that starts overlapping, [ShapeCastHit.point] is the struck surface's point
+     * deepest inside the capsule, so the capsule clears the surface once its trailing side, against
+     * the normal, has moved past that point. A point beyond the capsule's whole extent along the
+     * normal is not inside it at all, and that is also the cap on the push: never more than the
+     * capsule's own size.
+     */
+    private fun overlapDepth(hit: ShapeCastHit): Float {
+        val normal = hit.normal
+        val point = hit.point
+        val length = normal.length3()
+        val towardPoint = (point.x - position.x) * normal.x +
+            (point.y - position.y) * normal.y +
+            (point.z - position.z) * normal.z
+        val reach = towardPoint / length
+        // Half the capsule's extent along the normal: the radius, plus the cylinder's projection.
+        val halfExtent = activeShape.halfHeight * abs(normal.y) / length + activeShape.radius
+        val depth = reach + halfExtent
+        return if (depth <= 2f * halfExtent) depth else 0f
+    }
+
     /** Advances to a contact at [fraction] and turns what is left of the motion along [normal]. */
     private fun slideAlong(normal: Vec3f, fraction: Float) {
         // Advance to the contact, then hold off the surface by the skin width: a sweep that
@@ -566,19 +650,21 @@ class KinematicCharacterController(
      * the exception: a jump is still within the probe's reach for its first frames, and settling
      * onto ground it has not left yet would cancel it.
      */
-    private fun updateGroundState(ascending: Boolean, risingSpeed: Float) {
-        target.set(position)
-        target.y -= config.groundProbeDistance
-        val hit = cast()
+    private fun updateGroundState(ascending: Boolean, risingSpeed: Float, mayDepenetrate: Boolean) {
+        var hit = probeGround()
+        // Found inside the ground rather than above it -- spawned there, or handed no motion to
+        // sweep. Out first, or the overlap reads as standing and a still character never moves
+        // again; then the probe runs from clear space.
+        if (mayDepenetrate && hit != null && depenetrate(hit)) hit = probeGround()
         val velocity = hit?.let { world.getLinearVelocity(it.handle) }
         // Rising faster than the ground is leaving it -- a jump, not a ride on a lift. The probe
         // still reaches the floor for the first steps of a jump, and calling that grounded would
         // let the next step snap the character back down.
         leftGround = ascending && risingSpeed > (velocity?.y ?: 0f) + LEAVE_GROUND_SPEED
-        val walkable = hit != null && !leftGround && hit.normal.y >= config.minWalkableNormalY
+        val walkable = hit != null && !leftGround && isSupportedBy(hit)
         isGrounded = walkable
         if (hit != null && velocity != null && walkable) {
-            groundNormal.set(hit.normal)
+            groundNormal.set(supportNormal)
             groundBody = hit.handle
             groundVelocity.set(velocity.x, velocity.y, velocity.z)
             if (!ascending) {
@@ -590,6 +676,66 @@ class KinematicCharacterController(
             groundBody = null
             groundVelocity.set(0f, 0f, 0f)
         }
+    }
+
+    /** Sweeps straight down by the probe distance, without moving. */
+    private fun probeGround(): ShapeCastHit? {
+        target.set(position)
+        target.y -= config.groundProbeDistance
+        return cast()
+    }
+
+    /**
+     * Whether the ground probe's [hit] holds the character up, leaving the normal it stands on in
+     * [supportNormal].
+     *
+     * Walkable ground does on its own. A face too steep to stand on does only when the character is
+     * wedged against a second steep face leaning the other way -- the bottom of a V -- and the two
+     * together push up at least as steeply as walkable ground would. One probe sees only one of
+     * them, and without this a capsule resting on both sides of a gully is blocked by each, never
+     * grounded, and cannot jump out (#1030).
+     */
+    private fun isSupportedBy(hit: ShapeCastHit): Boolean {
+        supportNormal.set(hit.normal)
+        if (hit.normal.y >= config.minWalkableNormalY) return true
+        steepNormal.set(hit.normal).normalize()
+        return isWedgedAgainstSteepNormal()
+    }
+
+    /**
+     * Looks downhill along the steep face in [steepNormal] for the face on the other side of a V.
+     *
+     * Downhill is gravity with the part into the face removed: the way the character would slide.
+     * A second probe of the same reach along it finds the other face only when the character is
+     * already resting against it, so a lone steep slope, where it would slide on, never counts.
+     * One extra sweep, and only while the probe finds ground too steep to stand on.
+     */
+    private fun isWedgedAgainstSteepNormal(): Boolean {
+        val upright = steepNormal.y
+        // |downhill| before normalizing: for a unit normal, the horizontal share of it.
+        val downhill = sqrt(1f - upright * upright)
+        val other = if (upright > 0f && downhill > MIN_MOTION) {
+            val reach = config.groundProbeDistance / downhill
+            target.set(
+                position.x + steepNormal.x * upright * reach,
+                position.y - downhill * config.groundProbeDistance,
+                position.z + steepNormal.z * upright * reach,
+            )
+            cast()
+        } else {
+            null
+        }
+        return other != null && leansAgainstSteepNormal(other.normal)
+    }
+
+    /** Whether [other] leans the opposite way to [steepNormal] and holds the character up with it. */
+    private fun leansAgainstSteepNormal(other: Vec3f): Boolean {
+        supportNormal.set(other).normalize()
+        val opposing = supportNormal.y > 0f &&
+            steepNormal.x * supportNormal.x + steepNormal.z * supportNormal.z < 0f
+        if (!opposing) return false
+        supportNormal.add(steepNormal).normalize()
+        return supportNormal.y >= config.minWalkableNormalY
     }
 
     private companion object {
