@@ -50,6 +50,8 @@ data class LodGroup(
      * than one per level.
      */
     val hysteresis: Float = DEFAULT_LOD_HYSTERESIS,
+    /** Draws whichever level is showing into the shadow maps, as [MeshRenderer.castsShadows] does for one mesh. */
+    val castsShadows: Boolean = true,
 ) {
     init {
         require(levels.isNotEmpty()) { "LodGroup needs at least one LodLevel." }

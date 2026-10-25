@@ -25,6 +25,9 @@ import kotlinx.serialization.json.JsonNames
  *   [ScenePbrMaterial.litWhenAdditive]. See [MeshRenderer.additive].
  * @property billboard Turns the mesh to face the camera every frame, keeping its position and
  *   scale: a glow or flare authored as a flat quad. See [MeshRenderer.billboard].
+ * @property castsShadows Draws the mesh into the shadow maps, in view or off screen. False for a
+ *   decal, a ground card or distant filler. A document without the field casts, as every mesh did
+ *   before it existed. See [MeshRenderer.castsShadows].
  */
 @Serializable
 @SerialName("mesh_renderer")
@@ -37,6 +40,7 @@ data class SceneMeshRenderer(
     val transparent: Boolean = false,
     val additive: Boolean = false,
     val billboard: Boolean = false,
+    val castsShadows: Boolean = true,
 ) : SceneComponent {
     /** GPU face culling mode enumeration. */
     enum class CullMode {

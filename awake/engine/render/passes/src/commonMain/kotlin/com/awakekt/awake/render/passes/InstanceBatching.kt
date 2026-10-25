@@ -131,6 +131,7 @@ private fun RenderDrawCommand.instancesWith(other: RenderDrawCommand): Boolean =
         alphaMode == other.alphaMode &&
         alphaCutoff == other.alphaCutoff &&
         shadowsOnly == other.shadowsOnly &&
+        castsShadows == other.castsShadows &&
         maskLayer == other.maskLayer &&
         cullMode == other.cullMode
 

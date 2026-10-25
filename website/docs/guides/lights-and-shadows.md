@@ -222,6 +222,11 @@ casts shadows into six cube faces, one per direction.
     Keep it as short as your camera needs. Shadow detail near the camera grows as the distance
     shrinks, because the same shadow map covers less of the world.
 
+!!! tip "Keep a mesh out of the shadow maps"
+    Set `castsShadows` to `false` on a `mesh_renderer` (or on an `LodGroup` or
+    `ModularCharacterComponent` in Kotlin) for a decal, a ground card or distant filler. The mesh
+    still draws and still receives shadows; it just shades nothing, in view or off screen.
+
 !!! warning "A far caster casts no shadow"
     A caster more than `shadowDistance` from the camera casts nothing, even onto a mesh right under
     it. That is the light's range, not a rendering bug.

@@ -80,6 +80,12 @@ data class GpuDrawRequest(
      * every draw is on until something places it, such as a sprite's named sorting layer.
      */
     var sortLayer: Int = 0,
+    /**
+     * Drawn into the shadow maps as well as the scene. False keeps the draw out of every shadow
+     * pass while the scene still draws it: a decal, a ground card, distant filler. A [shadowsOnly]
+     * draw that does not cast draws nowhere. Only an opaque draw casts either way.
+     */
+    var castsShadows: Boolean = true,
 ) {
     /**
      * Mutates this request in place so a pool can reuse the instance without allocating.
@@ -108,6 +114,7 @@ data class GpuDrawRequest(
         sortOrder: Int = 0,
         maskLayer: Int = NO_MASK_LAYER,
         sortLayer: Int = 0,
+        castsShadows: Boolean = true,
     ): GpuDrawRequest {
         this.mesh = mesh
         this.material = material
@@ -129,6 +136,7 @@ data class GpuDrawRequest(
         this.sortOrder = sortOrder
         this.maskLayer = maskLayer
         this.sortLayer = sortLayer
+        this.castsShadows = castsShadows
         return this
     }
 }

@@ -516,6 +516,7 @@ Draws a mesh with a material. Names are looked up in the scene's asset library. 
 | `transparent` | boolean | `false` | Draw in the transparent pass, blended and sorted back to front. |
 | `additive` | boolean | `false` | With `transparent`, add its colour to what is behind it: glows and fire. A textured mesh draws unlit then, adding only its base and emissive colour, so black texels add nothing, unless its `pbr_material` sets `litWhenAdditive`. |
 | `billboard` | boolean | `false` | Face the camera every frame, keeping the entity's position and scale. The mesh's +Z turns toward the eye. A billboard is not culled. |
+| `castsShadows` | boolean | `true` | Draw the mesh into the shadow maps, whether the camera sees it or not. `false` for a decal, a ground card or distant filler; the mesh still draws and still receives shadows. A `transparent` mesh never casts. |
 
 ## `movement_control`
 

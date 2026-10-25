@@ -31,8 +31,9 @@ import kotlin.math.min
  * precision, in proportion to how far the plane moves, and only on frames where a caster reaches
  * past it.
  *
- * A caster counts when it is opaque, has [GpuDrawRequest.worldBounds], and those bounds lie at
- * least partly inside the cascade's side and far planes. One without bounds cannot be measured
+ * A caster counts when it is opaque, casts ([GpuDrawRequest.castsShadows]), has
+ * [GpuDrawRequest.worldBounds], and those bounds lie at least partly inside the cascade's side and
+ * far planes. One without bounds cannot be measured
  * and leaves the plane where it is. A cascade whose matrix is not orthographic is returned as it
  * was.
  *
@@ -69,14 +70,14 @@ internal fun GpuShadowCascadeData.reachingCasters(
 }
 
 /**
- * The smallest clip-space depth under [viewProjection] of any opaque, bounded caster that the
- * casting [planes] admit, or [floor] when none reaches below it.
+ * The smallest clip-space depth under [viewProjection] of any opaque, bounded caster that casts and
+ * that the casting [planes] admit, or [floor] when none reaches below it.
  */
 private fun List<GpuDrawRequest>.lowestDepthIn(viewProjection: Mat4, planes: FloatArray, floor: Float): Float {
     var lowest = floor
     for (index in indices) {
         val caster = this[index]
-        val box = caster.worldBounds.takeUnless { caster.transparent } ?: continue
+        val box = caster.worldBounds.takeUnless { caster.transparent || !caster.castsShadows } ?: continue
         if (planes.admitsBox(0, box.min.x, box.min.y, box.min.z, box.max.x, box.max.y, box.max.z)) {
             val depth = viewProjection.lowestDepth(box)
             if (depth.isFinite()) lowest = min(lowest, depth)

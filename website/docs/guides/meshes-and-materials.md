@@ -106,6 +106,7 @@ Both boxes are in the entity's local space, before its transform.
 | `cullMode` | `None` · `Back` · `Front` | `None` | Which triangle faces to skip. `Back` suits a solid, correctly wound mesh. |
 | `transparent` | boolean | `false` | Draws in the transparent pass: blended by the material's alpha, sorted back to front, no depth write. |
 | `additive` | boolean | `false` | With `transparent`, adds its colour to what is behind it instead of covering it: glows, fire, light shafts. A textured mesh then draws unlit, so its black texels add nothing. |
+| `castsShadows` | boolean | `true` | Draws the mesh into the shadow maps, in view or off screen. `false` for a decal, a ground card, a small prop or distant filler; the mesh still draws and still receives shadows. A `transparent` mesh never casts. |
 
 The ECS `MeshRenderer` also has `visible` (default `true`; `false` skips the draw) and
 `vertexAnimation`, a shader-defined vertex effect that is off at zero. Neither is saved in a scene
@@ -177,7 +178,7 @@ Kotlin-only components:
 | Component | Fields | What it does |
 | --- | --- | --- |
 | `InstancedMeshRenderer` | `mesh`, `material`, `transforms: List<Mat4>` | Draws `mesh` once per matrix, in one draw call. |
-| `LodGroup` | `levels: List<LodLevel>`, `hysteresis = 0.1` | Picks one level per frame by camera distance. |
+| `LodGroup` | `levels: List<LodLevel>`, `hysteresis = 0.1`, `castsShadows = true` | Picks one level per frame by camera distance. `castsShadows` works as on `mesh_renderer`. |
 | `LodLevel` | `mesh`, `material`, `maxDistance` | Draws while the entity is at most `maxDistance` away. |
 | `MeshBounds` | `localBounds: Aabb` | Lets the entity be frustum-culled. |
 | `Occluder` | `localBounds: Aabb` | Hides `MeshBounds` entities it fully covers on screen. |

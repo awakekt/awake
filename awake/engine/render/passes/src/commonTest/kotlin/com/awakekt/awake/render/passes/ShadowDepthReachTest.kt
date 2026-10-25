@@ -83,8 +83,11 @@ class ShadowDepthReachTest {
         val transparent = request(boundsAround(toLight * 50f)).apply { this.transparent = true }
         val unbounded = request(null)
         val beside = request(boundsAround(toLight * 50f + toLight.cross(Vec3f(0f, 1f, 0f)).normalized() * 40f))
+        val notCasting = request(boundsAround(toLight * 50f)).apply { castsShadows = false }
 
-        assertSame(cascades, cascades.reachingCasters(listOf(inRange, transparent, unbounded, beside), ClipSpace.WebGpu))
+        assertSame(cascades, cascades.reachingCasters(listOf(inRange, transparent, unbounded, beside, notCasting), ClipSpace.WebGpu))
+        // Control: the same box casting does move the plane.
+        assertNotSame(cascades, cascades.reachingCasters(listOf(request(boundsAround(toLight * 50f))), ClipSpace.WebGpu))
     }
 
     @Test
