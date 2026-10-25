@@ -37,5 +37,6 @@ openssl rsa -in private.pem -pubout -out public.pem
 ```
 
 Give `public.pem` to hosts that need to verify your plugin (a host checks it with
-`com.awakekt.awake.editor.core.plugin.PluginArchiveVerifier`). Without a signing key set,
+`com.awakekt.awake.pluginarchive.PluginArchiveVerifier` or `PluginTrust` from
+`com.awakekt.awake:plugin-archive`). Without a signing key set,
 `awakePlugin` still packages the archive, unsigned, and logs that it did.

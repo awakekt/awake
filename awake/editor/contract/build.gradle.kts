@@ -28,6 +28,8 @@ kotlin {
             api(project(":awake:compose:ui"))
             api(project(":awake:core:schema"))
             api(project(":awake:ecs"))
+            // Plugin manifests, archives and their trust formats; re-exported for the deprecated aliases.
+            api(project(":awake:plugin-archive"))
             implementation(project(":awake:core:io"))
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.bignum)

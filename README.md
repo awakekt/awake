@@ -118,7 +118,7 @@ setup. The [engine showcase](samples/engine-showcase/README.md) is the complete 
 | Content | `asset:gltf`, `asset:shaders`, `asset:shader-pack`, `asset:shader-document`, `asset:terrain`, `terrain`, `kit:terrain-layers` | Models, textures, shaders, and terrain |
 | Physics | `physics:api`, `backend:jolt` | Physics contracts and Jolt integration |
 | UI | `compose:runtime`, `compose:ui`, `compose:foundation`, `ui:shadcn` | Retained Compose-shaped UI and shadcn components |
-| Projects | `project`, `node-graph`, `editor:contract` | Project manifests, node graphs, editor plugin contracts |
+| Projects | `project`, `node-graph`, `editor:contract`, `plugin-archive` | Project manifests, node graphs, editor plugin contracts, plugin packaging and trust |
 
 You do not need every module. Start with the smallest runtime for your target, then add scene,
 rendering, physics, asset, or UI modules as your application grows. The [module guide](awake/README.md)
