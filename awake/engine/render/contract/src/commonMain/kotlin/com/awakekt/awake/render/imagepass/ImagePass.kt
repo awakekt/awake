@@ -361,6 +361,25 @@ data class ImagePassChain(
 }
 
 /**
+ * What the colour already in an image-pass target holds, so an effect knows whether it still has
+ * to be tone mapped and encoded for display.
+ */
+enum class ImagePassColorEncoding {
+    /**
+     * Display-ready colour: the shaders that drew it already applied exposure, a tone curve and
+     * the gamma encode. Every lit scene shader writes this, so it is what a scene camera's target
+     * holds.
+     */
+    DisplayReferred,
+
+    /**
+     * Scene-referred linear radiance, possibly above 1, that a tone-mapping step must still turn
+     * into display colour. Only a target drawn by shaders that skip the display transform holds it.
+     */
+    LinearHdr,
+}
+
+/**
  * Target properties used when lowering an effect into an [ImagePassChain].
  *
  * @property width Framebuffer width in pixels.
@@ -368,6 +387,7 @@ data class ImagePassChain(
  * @property clipSpace Coordinate system conventions for NDC.
  * @property snapshotSupported True when target supports destination snapshots.
  * @property effectQuality Active effect quality tier.
+ * @property colorEncoding What the target's colour holds when the chain snapshots it.
  */
 data class ImagePassTargetContext(
     val width: Int,
@@ -375,6 +395,7 @@ data class ImagePassTargetContext(
     val clipSpace: ClipSpace,
     val snapshotSupported: Boolean = true,
     val effectQuality: EffectQuality = EffectQuality.High,
+    val colorEncoding: ImagePassColorEncoding = ImagePassColorEncoding.DisplayReferred,
 )
 
 /**

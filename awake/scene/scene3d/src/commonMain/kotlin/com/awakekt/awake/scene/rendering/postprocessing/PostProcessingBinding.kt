@@ -59,6 +59,7 @@ object PostProcessingBinding : SceneComponentBinding<PostProcessing, ScenePostPr
             lift = schema.lift.toFloatArray(),
             gamma = schema.gamma.toFloatArray(),
             gain = schema.gain.toFloatArray(),
+            mode = schema.mode,
         )
         is SceneBloomEffect -> BloomEffect(
             enabled = schema.enabled,
@@ -89,6 +90,7 @@ object PostProcessingBinding : SceneComponentBinding<PostProcessing, ScenePostPr
             lift = runtime.lift.toList(),
             gamma = runtime.gamma.toList(),
             gain = runtime.gain.toList(),
+            mode = runtime.mode,
         )
         is BloomEffect -> SceneBloomEffect(
             enabled = runtime.enabled,

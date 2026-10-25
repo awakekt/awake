@@ -83,6 +83,9 @@ internal class SceneRenderPlanner3D(
                     width = targetWidth,
                     height = targetHeight,
                     clipSpace = rendererClipSpace,
+                    // Every lit shader applies exposure, the tone curve and the encode itself, so
+                    // the camera's colour is display-ready; ScenePostProcessing.validate relies on it.
+                    colorEncoding = com.awakekt.awake.render.imagepass.ImagePassColorEncoding.DisplayReferred,
                 ),
             )
         } else {

@@ -65,6 +65,7 @@ fun main(args: Array<String>) {
         writeSkinnedEvidence(renderer, ::write)
         writeShaderEffectEvidence(renderer, ::write)
         writePostProcessingEvidence(renderer, ::write)
+        writeFxaaOnlyEvidence(renderer, ::write)
         write("scene-terrain-cliff-self-shadow", "Clipmap plateau coarser than its heightmap, sun on its cliff: top, rim and face stay lit", EVIDENCE_SIZE, renderer.renderTerrainCliffScene(size = EVIDENCE_SIZE))
         STUDIO_YAWS.withIndex().filter { it.index % EVIDENCE_YAW_STEP == 0 }.forEach { (index, yaw) ->
             write(
@@ -217,6 +218,33 @@ private fun writeBackdropBlurEvidence(renderer: Renderer, write: (String, String
             pixels,
         )
     } finally {
+        target.destroy()
+    }
+}
+
+/**
+ * The shadow scene through a post-processing stack holding FXAA alone: it may only smooth edges.
+ * The lit shaders already wrote display-ready colour, which FXAA once re-tone-mapped (#1007).
+ */
+private fun writeFxaaOnlyEvidence(renderer: Renderer, write: (String, String, Int, ByteArray) -> Unit) {
+    renderer.effectQuality = EffectQuality.High
+    val size = EVIDENCE_SIZE
+    val target = renderer.createRenderTarget(size, size)
+    val ground = renderer.createMesh(plane(GROUND_HALF, y = 0f))
+    val caster = renderer.createMesh(plane(CASTER_HALF, y = CASTER_Y, r = 1f, g = 0f, b = 0f))
+    val material = renderer.createMaterial(LitShadowUniformLayout)
+    try {
+        val chain = PostProcessingStack.buildChain(listOf(FxaaEffect()), renderer.imagePassTargetContext(target))
+        val input = renderer.compileShadowScene(
+            listOf(RenderDrawCommand(ground, material), RenderDrawCommand(caster, material)),
+        ).copy(postPassChain = chain)
+        renderer.renderToTexture(target, input)
+        val pixels = runBlocking { renderer.readPixels(target) }.data
+        write("scene-post-fxaa-only", "Post-processing stack with FXAA alone: edges smoothed, colours as scene-shadow", size, pixels)
+    } finally {
+        ground.destroy()
+        caster.destroy()
+        material.destroy()
         target.destroy()
     }
 }
