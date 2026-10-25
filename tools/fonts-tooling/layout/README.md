@@ -73,9 +73,11 @@ covered separately by the existing FreeType reference suite (#993).
 ```
 
 The test calls production `TextRun` layout and painting, records glyph quads on the
-CPU, and recovers their origins/baselines from the face's bearing metrics. It holds
-fonts to their distance-field path to measure layout independently of exact-size
-raster rounding. Source ranges/wrap points and line count must match exactly;
+CPU, and recovers their origins/baselines from the face's bearing metrics. It paints
+into a scope that is not device-pixel aligned, so every size draws from the distance
+field and layout is measured independently of exact-size raster rounding, while the
+fonts keep their production pixel-glyph limit, which the line box reads (#1024: a
+size drawn from the field gets room for its antialiased fringe). Source ranges/wrap points and line count must match exactly;
 advances, glyph origins, baselines and line-box coordinates allow 0.5 device pixels.
 Every metric reports the actual value, reference, signed deviation and status.
 `NaN` in a reference/deviation means that metric has no browser counterpart, for
@@ -105,7 +107,7 @@ density cases (17.5 px at 1.25) and the fractional tight and tall line heights
 (8.8 and 17.6 px for 11 px text) produce, so its gaps alternate once snapped while Core's stay equal.
 The difference grows by under half a pixel a line. A later line's top or baseline
 is `SNAP` only when it equals the browser's own first baseline rounded to a whole
-pixel plus the line index times the browser's line height rounded to a whole
+pixel (half down, as Core rounds a baseline) plus the line index times the browser's line height rounded to a whole
 pixel, within 0.02 px; the first line, the line height and the line-box height are
 held to the browser's 0.5 px.
 

@@ -10,7 +10,6 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.text.font.FontWeight
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.core.text.font.UiFonts
-import com.awakekt.awake.core.text.font.withPixelGlyphMaxSize
 import com.awakekt.awake.core.text.theme.TextStyle
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
@@ -22,6 +21,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import java.io.File
 import java.security.MessageDigest
 import kotlin.math.abs
+import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -74,7 +74,7 @@ class TextLayoutConformanceTest {
         val bytes = resource(name)
         val sha = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
         assertEquals(spec.string("sha256"), sha, "Font $id changed; regenerate deliberately")
-        return (if (id == "roboto") UiFonts.default() else UiFonts.load(bytes, name)).withPixelGlyphMaxSize(0)
+        return if (id == "roboto") UiFonts.default() else UiFonts.load(bytes, name)
     }
 
     private fun measure(spec: JsonObject, font: UiFont): Layout {
@@ -122,10 +122,11 @@ class TextLayoutConformanceTest {
         metric(id, "lineCount", actual.lines.size.toDouble(), reference.number("lineCount"), control.number("lineCount"), featureIssue, tolerance = 0.0)
         // Core advances every line by a whole device pixel (TextLineBox), where the browser advances by
         // a fractional line height at a fractional density or an authored fractional line height. The
-        // control is the browser's own first baseline on the pixel grid, advanced by its own line height
-        // rounded to a whole pixel: a bounded signature of that rule, never a replacement golden.
+        // control is the browser's own first baseline on the pixel grid (half down, as Core rounds it),
+        // advanced by its own line height rounded to a whole pixel: a bounded signature of that rule,
+        // never a replacement golden.
         val wholeAdvance = wholePixel(reference.number("lineHeight"))
-        val firstBaseline = wholePixel(reference.array("lines").first().number("baseline"))
+        val firstBaseline = ceil(reference.array("lines").first().number("baseline") - 0.5)
         metric(id, "lineHeight", actual.height, reference.number("lineHeight"), null, null)
         val expectedLines = reference.array("lines")
         val controlLines = control.array("lines")

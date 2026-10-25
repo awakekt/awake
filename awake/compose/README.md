@@ -46,7 +46,8 @@ Standard UI layout primitives, text, styling, and gestures.
   Line boxes follow CSS `line-height`: `normal` is the font's line ascent and descent each rounded to a
   whole pixel, an authored `TextStyle.lineHeight` (tighter or looser) applies to every line with its
   leading split above and below, and every line advances by the same whole number of device pixels
-  (`TextLineBox`, checked against Chromium in `tools/fonts-tooling/layout`).
+  (`TextLineBox`, checked against Chromium in `tools/fonts-tooling/layout`). The font's own line box
+  also grows by whole pixels where it would otherwise end inside the font's deepest descender.
 - **Styling**: `Modifier.styleable`, `background`, `border` (with partial edge support), `clip`, `alpha`, and state rules (`hovered`, `pressed`, `focused`, `disabled`, `selected`, `checked`).
 - **Gestures & Scrolling**: `clickable`, `draggable`, `scrollable`, `verticalScroll`, `horizontalScroll`, `transformable`, and `nestedScroll`.
 

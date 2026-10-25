@@ -17,13 +17,20 @@ import com.awakekt.awake.core.graphics2d.UiLinearGradient
 import com.awakekt.awake.core.math2d.Rectangle
 import com.awakekt.awake.core.text.font.UiFont
 
-/** Records CPU glyph placement; unexpected drawing fails the layout-only test. */
+/**
+ * Records CPU glyph placement; unexpected drawing fails the layout-only test.
+ *
+ * Not device-pixel aligned, so a run draws every size from the distance field, whose quads carry the
+ * face's exact bearings, rather than exact-size pixel glyphs rounded to whole pixels. The test paints at
+ * the origin, where alignment moves nothing, and the font keeps its production pixel-glyph limit, which
+ * the line box reads.
+ */
 internal class LayoutRecordingScope : DrawScope {
     val glyphs = mutableListOf<UiDrawPrimitive.Glyph>()
     override val width = 100
     override val height = 40
     override val density = 1f
-    override val isDevicePixelAligned = true
+    override val isDevicePixelAligned = false
 
     override fun drawGlyph(
         x: Float,

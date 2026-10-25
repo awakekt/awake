@@ -16,7 +16,6 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.text.font.FontWeight
 import com.awakekt.awake.core.text.font.UiFonts
-import com.awakekt.awake.core.text.font.withPixelGlyphMaxSize
 import com.awakekt.awake.core.text.theme.TextStyle
 import kotlin.math.floor
 import kotlin.test.Test
@@ -29,8 +28,8 @@ import kotlin.test.assertEquals
 class TextLineHeightTest {
     private val white = Color(1f, 1f, 1f, 1f)
 
-    /** The default family held to its distance field, so every glyph is one quad with the face's metrics. */
-    private val font = UiFonts.default().withPixelGlyphMaxSize(0)
+    /** The default family as an app gets it: exact-size pixel glyphs up to 24 px, the distance field above. */
+    private val font = UiFonts.default()
 
     /**
      * Chrome on Windows lays Roboto out at 13, 14, 17 and 22 px for 11, 12, 14 and 18 px text, with the
@@ -43,7 +42,7 @@ class TextLineHeightTest {
         for ((size, line) in expected) {
             val output = frame(density = 1f) { Text("Hg", Modifier.testTag("text"), style = style(size.toFloat())) }
             assertEquals(line.first, output.textBox().height, "$size px line height")
-            assertEquals(line.second.toFloat(), baselines(output).single(), 1e-3f, "$size px baseline")
+            assertEquals(line.second.toFloat(), baselines(output, size).single(), 1e-3f, "$size px baseline")
         }
     }
 
@@ -58,7 +57,7 @@ class TextLineHeightTest {
         for (density in listOf(1.25f, 1.5f)) {
             for (size in 9..24) {
                 val output = frame(density) { Text(tenLines, Modifier.testTag("text"), style = style(size.toFloat())) }
-                val baselines = baselines(output)
+                val baselines = baselines(output, floor(size * density + 0.5f).toInt())
                 val case = "${size}sp at $density"
                 assertEquals(10, baselines.size, case)
                 val gap = baselines[1] - baselines[0]
@@ -85,7 +84,7 @@ class TextLineHeightTest {
         }
 
         assertEquals(30, output.textBox().height)
-        assertEquals(listOf(9f, 19f, 29f), baselines(output))
+        assertEquals(listOf(9f, 19f, 29f), baselines(output, 14))
     }
 
     /** A looser one centres the glyphs: (24 - 17) / 2 floors to 3 px above, so the baseline is 13 + 3. */
@@ -96,7 +95,7 @@ class TextLineHeightTest {
         }
 
         assertEquals(48, output.textBox().height)
-        assertEquals(listOf(16f, 40f), baselines(output))
+        assertEquals(listOf(16f, 40f), baselines(output, 14))
     }
 
     private fun style(size: Float) = TextStyle(font = font, color = white, size = size.sp)
@@ -106,14 +105,22 @@ class TextLineHeightTest {
 
     private fun FrameOutput.textBox() = semantics.single { it.testTag == "text" }
 
-    /** The baseline each `H` was drawn on, recovered from its quad and the face's metrics. */
-    private fun baselines(output: FrameOutput): List<Float> {
+    /**
+     * The baseline each `H` of [glyphPx] px was drawn on, recovered from its quad: an exact-size pixel
+     * glyph's bitmap top is a whole number of pixels from the baseline, and a distance-field quad sits at
+     * the face's metrics.
+     */
+    private fun baselines(output: FrameOutput, glyphPx: Int): List<Float> {
         val glyphs = output.primitives.filterIsInstance<UiDrawPrimitive.Glyph>()
+        val pixel = font.pixelGlyphs?.glyph('H'.code, FontWeight.Normal, glyphPx)
         return glyphs.filterIndexed { index, _ -> index % 2 == 0 }.map { glyph ->
-            val face = checkNotNull(glyph.font)
-            val rect = checkNotNull(face.glyphFor('H'.code, FontWeight.Normal))
-            val glyphPx = glyph.h / rect.heightEm
-            glyph.y - rect.offsetYEm * glyphPx + face.ascentEm * glyphPx
+            if (pixel != null && glyph.font === pixel.atlas) {
+                glyph.y - pixel.top
+            } else {
+                val face = checkNotNull(glyph.font)
+                val rect = checkNotNull(face.glyphFor('H'.code, FontWeight.Normal))
+                glyph.y - rect.offsetYEm * glyphPx + face.ascentEm * glyphPx
+            }
         }
     }
 }
