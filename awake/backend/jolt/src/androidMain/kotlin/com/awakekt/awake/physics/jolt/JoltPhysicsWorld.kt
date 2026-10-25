@@ -215,6 +215,8 @@ class JoltPhysicsWorld(
     gravity: Vec3f = Vec3f(0f, -9.81f, 0f),
     override val layers: CollisionLayers = CollisionLayers.Default,
 ) : PhysicsWorld {
+    private val shapeCastContacts = ShapeCastContactDecoder()
+
     // Companion object init always runs before any instance member -- the only ordering
     // guarantee strong enough to load the native lib before tempAllocator's native constructor
     // call (confirmed via UnsatisfiedLinkError when this lived in an instance init instead).
@@ -626,12 +628,15 @@ class JoltPhysicsWorld(
             // a caller slides along -- negating and normalizing here rather than making every call
             // site rediscover that.
             val axis = hit.penetrationAxis
-            val inverseLength = 1f / sqrt(axis.x * axis.x + axis.y * axis.y + axis.z * axis.z)
-            ShapeCastHit(
+            shapeCastContacts.decode(
                 handle = BodyHandle(hit.bodyId2.toLong()),
                 point = Vec3f(contact.x, contact.y, contact.z),
-                normal = Vec3f(-axis.x * inverseLength, -axis.y * inverseLength, -axis.z * inverseLength),
+                axisX = axis.x,
+                axisY = axis.y,
+                axisZ = axis.z,
                 fraction = hit.fraction,
+                from = from,
+                to = to,
             )
         }
     }

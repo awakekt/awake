@@ -37,6 +37,38 @@ import kotlin.test.assertTrue
  */
 class JoltShapeCastTest {
 
+    @Test
+    fun finiteMovingAndStationaryQueriesAcrossSyntheticMeshStayUsable() = runTest {
+        world { world ->
+            val random = kotlin.random.Random(104)
+            val vertices = FloatArray(90) { random.nextFloat() * 4f - 2f }
+            world.createBody(MeshShape(vertices, IntArray(30) { it }), Vec3f(), Quat.IDENTITY, MotionType.STATIC)
+            world.addWall()
+            val capsule = CapsuleShape(halfHeight = 0.5f, radius = 0.3f)
+            var hits = 0
+            repeat(100) { actor ->
+                repeat(64) { step ->
+                    val from = Vec3f(random.nextFloat() * 8f - 4f, random.nextFloat() * 3f, random.nextFloat() * 4f - 2f)
+                    val to = if (step % 4 == 0) {
+                        Vec3f(from.x, from.y, from.z)
+                    } else {
+                        Vec3f(from.x + 0.15f, from.y - 0.1f, from.z + 0.05f)
+                    }
+                    val hit = world.shapeCast(capsule, from, to)
+                    if (hit != null) {
+                        hits++
+                        val context = "actor=$actor step=$step from=$from to=$to hit=$hit"
+                        assertTrue(hit.normal.x.isFinite() && hit.normal.y.isFinite() && hit.normal.z.isFinite(), context)
+                        assertTrue(hit.point.x.isFinite() && hit.point.y.isFinite() && hit.point.z.isFinite(), context)
+                        assertTrue(hit.fraction.isFinite() && hit.fraction in 0f..1f, context)
+                        assertEquals(1f, hit.normal.length3(), 0.001f, context)
+                    }
+                }
+            }
+            assertTrue(hits > 0, "The stress fixture must actually exercise contacts")
+        }
+    }
+
     private suspend fun world(block: suspend (PhysicsWorld) -> Unit) {
         val world = createJoltPhysicsWorld(gravity = Vec3f(0f, 0f, 0f))
         try {

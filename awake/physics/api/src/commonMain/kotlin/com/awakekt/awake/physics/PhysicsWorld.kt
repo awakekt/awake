@@ -246,6 +246,10 @@ interface PhysicsWorld {
      * matching filter in JoltPhysics.js takes one layer too, and jolt-jni's mask-capable
      * `DefaultObjectLayerFilter` has a package-private constructor. A caller that needs "anything
      * except my own layer" still has no way to say so -- see docs/plans/physics-open-world.md.
+     *
+     * A returned [ShapeCastHit] must have a finite point, finite nonzero normal and a finite
+     * fraction in `[0, 1]`. Its constructor rejects a malformed result with
+     * [IllegalArgumentException]; implementations must not turn an invalid contact into a miss.
      */
     fun shapeCast(
         shape: PhysicsShape,
