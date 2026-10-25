@@ -20,6 +20,8 @@ private const val KEY_V = 86
 private const val KEY_X = 88
 private const val KEY_LEFT_CONTROL = 341
 private const val KEY_LEFT_SUPER = 343
+private const val KEY_LEFT_ALT = 342
+private const val KEY_RIGHT_ALT = 346
 
 class GlfwClipboardShortcutTest {
 
@@ -101,5 +103,23 @@ class GlfwClipboardShortcutTest {
         press(FakeGlfwWindowInput(), input, KEY_LEFT_CONTROL, KEY_S)
 
         assertEquals("", input.updateSnapshot().typedText)
+    }
+
+    @Test
+    fun ctrlAltIsAltGrAndTakesNoShortcut() {
+        val input = Input()
+        val reader = FakeGlfwWindowInput().apply { clipboardText = "clipboard" }
+
+        // Windows reports AltGr as Ctrl plus Right Alt; the character it types comes from the platform.
+        reader.pendingTypedText = "@"
+        press(reader, input, KEY_LEFT_CONTROL, KEY_RIGHT_ALT, KEY_C)
+        press(reader, input, KEY_LEFT_CONTROL, KEY_LEFT_ALT, KEY_V)
+        press(reader, input, KEY_LEFT_CONTROL, KEY_RIGHT_ALT, KEY_X)
+        press(reader, input, KEY_LEFT_CONTROL, KEY_RIGHT_ALT, KEY_A)
+        val snapshot = input.updateSnapshot()
+
+        assertEquals(emptyList(), snapshot.clipboardCommands, "Ctrl+Alt+C or X copied or cut")
+        assertEquals(emptyList(), snapshot.editActions, "Ctrl+Alt+A selected all")
+        assertEquals("@", snapshot.typedText, "Ctrl+Alt+V pasted, or the AltGr character was lost")
     }
 }

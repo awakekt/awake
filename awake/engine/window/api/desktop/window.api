@@ -49,6 +49,7 @@ public final class com/awakekt/awake/engine/window/GlfwWindow {
 	public final fun glfwConsumeScrollDeltaX (J)D
 	public final fun glfwConsumeScrollDeltaY (J)D
 	public final fun glfwConsumeScrollSource (J)I
+	public final fun glfwConsumeTypedText (J)Ljava/lang/String;
 	public final fun glfwCreateWindow (IILjava/lang/String;)J
 	public final fun glfwDestroyWindow (J)V
 	public final fun glfwFocusWindow (J)V
@@ -64,6 +65,7 @@ public final class com/awakekt/awake/engine/window/GlfwWindow {
 	public final fun glfwGetWindowWidth (J)I
 	public final fun glfwInit ()Z
 	public final fun glfwPollEvents ()V
+	public final fun glfwSetCharCallback (J)V
 	public final fun glfwSetClipboardString (JLjava/lang/String;)V
 	public final fun glfwSetCursorShape (JI)V
 	public final fun glfwSetScrollCallback (J)V
@@ -77,6 +79,7 @@ public abstract interface class com/awakekt/awake/engine/window/GlfwWindowInput 
 	public fun consumeScrollDeltaX ()D
 	public abstract fun consumeScrollDeltaY ()D
 	public fun consumeScrollSource ()Lcom/awakekt/awake/core/input/ScrollSource;
+	public fun consumeTypedText ()Ljava/lang/String;
 	public abstract fun cursorX ()D
 	public abstract fun cursorY ()D
 	public abstract fun framebufferScaleX ()F
@@ -92,6 +95,7 @@ public final class com/awakekt/awake/engine/window/GlfwWindowInput$DefaultImpls 
 	public static fun consumePinchScale (Lcom/awakekt/awake/engine/window/GlfwWindowInput;)D
 	public static fun consumeScrollDeltaX (Lcom/awakekt/awake/engine/window/GlfwWindowInput;)D
 	public static fun consumeScrollSource (Lcom/awakekt/awake/engine/window/GlfwWindowInput;)Lcom/awakekt/awake/core/input/ScrollSource;
+	public static fun consumeTypedText (Lcom/awakekt/awake/engine/window/GlfwWindowInput;)Ljava/lang/String;
 	public static fun getClipboardText (Lcom/awakekt/awake/engine/window/GlfwWindowInput;)Ljava/lang/String;
 	public static fun isFocused (Lcom/awakekt/awake/engine/window/GlfwWindowInput;)Z
 	public static fun setClipboardText (Lcom/awakekt/awake/engine/window/GlfwWindowInput;Ljava/lang/String;)V

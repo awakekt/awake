@@ -87,6 +87,17 @@ object GlfwWindow {
     /** Vertical scroll since the last call, then reset to 0. */
     external fun glfwConsumeScrollDeltaY(window: Long): Double
 
+    /**
+     * Starts queueing the characters typed into [window] for [glfwConsumeTypedText]: GLFW's
+     * character callback, with the keyboard layout, Shift, Caps Lock, AltGr and dead keys already
+     * applied by the platform. Call once, after [glfwCreateWindow]; [glfwConsumeTypedText] sets it
+     * on a window it has not been set on.
+     */
+    external fun glfwSetCharCallback(window: Long)
+
+    /** The text typed into [window] since the last call, then cleared; `null` when there is none. */
+    external fun glfwConsumeTypedText(window: Long): String?
+
     /** Horizontal scroll since the last call, then reset to 0. */
     external fun glfwConsumeScrollDeltaX(window: Long): Double
 
