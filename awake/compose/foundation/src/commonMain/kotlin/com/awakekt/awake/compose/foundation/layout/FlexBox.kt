@@ -520,7 +520,7 @@ private class FlexBoxMeasurePolicy(private val config: FlexBoxConfig) : MeasureP
  * the plan [FlexBoxMeasurePolicy] measures from and answers its own intrinsics with.
  */
 private class FlexLinePlanner(private val resolved: ResolvedFlexConfig) {
-    private fun buildLines(children: List<FlexChild>, limit: Int, gap: Int): List<List<FlexChild>> {
+    private fun Density.buildLines(children: List<FlexChild>, limit: Int, gap: Int): List<List<FlexChild>> {
         if (children.isEmpty()) return emptyList()
         val lines = ArrayList<List<FlexChild>>()
         if (resolved.wrap == FlexWrap.NoWrap || limit == Constraints.Infinity) {
@@ -530,7 +530,7 @@ private class FlexLinePlanner(private val resolved: ResolvedFlexConfig) {
             var used = 0
             for (child in children) {
                 val needed = child.main + if (current.isEmpty()) 0 else gap
-                if (current.isNotEmpty() && used + needed > limit) {
+                if (current.isNotEmpty() && used + needed > limit + roundingSlack(current.size + 1)) {
                     lines += current
                     current = ArrayList()
                     used = 0
@@ -542,6 +542,17 @@ private class FlexLinePlanner(private val resolved: ResolvedFlexConfig) {
         }
         return if (resolved.wrap == FlexWrap.WrapReverse) lines.asReversed() else lines
     }
+
+    /**
+     * How many pixels a line of [count] children may run past its limit and still fit. At a density
+     * that is not whole, each child, each gap and the box itself round to whole pixels on their own,
+     * so a line authored to fill the box exactly can come out over it: by up to half a pixel for each
+     * of the `count` children, `count - 1` gaps and the box, `count` pixels in all. Only the wrap
+     * decision takes the slack: a child that can shrink gives the overrun back, and one held at a
+     * fixed size keeps its whole pixels. A whole density rounds whole-dp sizes exactly, so it gives
+     * none, and a line over by more than this still wraps.
+     */
+    private fun Density.roundingSlack(count: Int): Int = if (density % 1f == 0f) 0 else count
 
     private fun resolveMainSizes(line: List<FlexChild>, limit: Int, gap: Int, vertical: Boolean) {
         if (limit == Constraints.Infinity) return

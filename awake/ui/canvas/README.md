@@ -115,6 +115,13 @@ unit, or `ConstantPhysicalSize` from the dots per inch the canvas is designed at
 height, density)` is the whole rule, for a host that wants the number itself. It is serializable;
 `awake:scene:canvas` saves it with a scene as `canvas_scaler`.
 
+A wrapping `layout` decides what fits a line from the sizes as authored. When the pixels per unit
+(the host's density times the scale) are not whole, each child, each gap and the box round to whole
+pixels on their own, so a row sized to exactly its children and gaps can come out a few pixels
+over; up to one pixel per child on the line counts as fitting. The children still draw on whole
+pixels, and a row over by more than that wraps. At a whole number of pixels per unit, whole-unit
+sizes do not round, so nothing is allowed.
+
 ## Safe area
 
 `CanvasOverlay(items, safeArea = CanvasInsets(left, top, right, bottom))` is what covers the
