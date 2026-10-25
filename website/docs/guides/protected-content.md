@@ -4,6 +4,7 @@
 
 <div class="awake-badges" markdown>
 <span class="awake-badge">module: <code>com.awakekt.awake:project</code></span>
+<span class="awake-badge">module: <code>com.awakekt.awake.project:runtime</code></span>
 <span class="awake-badge">Desktop · Android · iOS · Web</span>
 </div>
 
@@ -97,6 +98,39 @@ query the URL already has, and before any fragment).
 !!! tip "Keep retries and resumes in the transport"
     `TokenAuthorizedFetch` retries only a refused token. Network retries, timeouts and resumed
     downloads belong to your HTTP client, behind the transport.
+
+## Play a protected project after sign-in
+
+A routed app declares its routes before it starts, but a protected project can be read only once the
+player has signed in. Give its route the project as a loader with `projectRoute`, from
+`com.awakekt.awake.project:runtime`: the router runs the loader the first time the route is entered,
+off the frame thread, and shows the route's loading scene until the project arrives.
+
+```kotlin title="Kotlin"
+--8<-- "awake/project/runtime/src/commonTest/kotlin/com/awakekt/awake/project/runtime/ProtectedProjectRouteDocsSampleTest.kt:route"
+```
+
+When sign-in succeeds, complete what the loader waits for and enter the route:
+
+```kotlin title="Kotlin"
+--8<-- "awake/project/runtime/src/commonTest/kotlin/com/awakekt/awake/project/runtime/ProtectedProjectRouteDocsSampleTest.kt:signed-in"
+```
+
+Entering the route before the player has signed in is fine too: the loading scene plays until the
+loader returns. To start reading the project before the player enters the route, call
+`router.preload("harbor-town")` as sign-in succeeds; entering it once it has loaded plays it at once.
+
+| When | What happens |
+| --- | --- |
+| The route is entered before the project has loaded | `activeSceneId` names the route, its loading scene plays, and `routeStatus` is `Loading`. The project's scene takes its place at the start of the first frame after the loader returns. |
+| The route is entered after it has loaded | The project plays at once, with no loading frame. |
+| The loader throws, for instance when the token is refused | The route stays on its loading scene with `routeStatus` `Failed(cause)`, and the failure is logged. Entering the route again with `switchTo` runs the loader again. |
+| The player leaves while it loads | The load goes on, and the project waits, unplayed, for the next entry; the router never switches to the route on its own. Stopping the app cancels the load and closes a project that loaded but never played. |
+| The player leaves the route after it played | Its scene stops and the project is closed, physics world included, because a project plays once. Entering again runs the loader again; the files it read come from the `ContentCache`. |
+
+A route whose scene is not a project uses `deferredRoute(id) { ... }`, from `awake:scene:authoring`,
+which returns a `sceneApp { }` instead. It keeps what it loaded for later entries unless it is given
+`keepLoaded = false`. Routes declared with `route` load before the app starts, as they always have.
 
 ## See also
 

@@ -57,6 +57,8 @@ kotlin {
             implementation(libs.kotlinx.coroutines.test)
             implementation(project(":awake:engine:render:testing"))
             implementation(project(":awake:backend:jolt"))
+            // The docs sample's loading scene shows its text with the foundation Text.
+            implementation(project(":awake:compose:foundation"))
         }
     }
 }
