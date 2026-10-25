@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.24.0] - 2026-10-25
+
+### Added
+
+- Expose optional inbound packet-loss telemetry for transport sessions; Ktor counts undelivered queue packets while retaining its drop-oldest policy.
+
+### Fixed
+
+- **FXAA no longer shifts the colours of a scene.** `PostProcessingStack.buildChain` inserted a default `ToneMappingGradeEffect` whenever the list named none, so a camera with FXAA alone re-applied the PBR Neutral curve and the gamma 2.2 encode to colour the lit shaders had already tone mapped and encoded: measured on the headless shadow scene, pixels away from edges moved by up to 61/255 on Vulkan and 50/255 on WebGPU. The chain now follows the new `ImagePassTargetContext.colorEncoding`: a `DisplayReferred` target, the default and what every scene camera renders, gets no tone-mapping step, and FXAA reads a copy of the frame and takes luma from its colour, so only edges change (within 1/255 elsewhere, on both backends). A `LinearHdr` target still gets the default curve. `ToneMappingGradeEffect` has a `mode`: `PbrNeutral`, the default and unchanged, or `Passthrough`, which grades without the curve or the encode and is what bloom composites in when no tone mapping is listed. A listed tone-mapping effect renders exactly as before. `ScenePostProcessing.validate` now refuses an enabled `tone_mapping_grade` in `PbrNeutral` mode, which would encode the frame twice, and a second enabled `tone_mapping_grade`; a scene document using one must set `"mode": "Passthrough"` or drop it. The Lights and shadows guide lists the valid combinations (#1007).
+- Prevent movement turning and character yaw interpolation from hanging on non-finite or very large yaw; ignore invalid movement inputs and blend fractions.
+- **A tall caster far toward a low sun keeps its shadow.** A cascade's depth range reaches only about 1.5 slice radii toward the light, so a caster the shadow caster volume admitted from farther away, such as a tower or cliff in front of a low sun, was clipped by the rasterizer at the cascade's near plane and its shadow went missing from the near cascades. The directional shadow depth pass now clamps depth where the device can: Vulkan sets `depthClampEnable` when the device has the `depthClamp` feature, and WebGPU in the browser requests `depth-clip-control` and sets `unclippedDepth`, so such a caster is flattened onto the near plane, which is exact for everything the cascade shades. Where clamping is unavailable, including desktop WebGPU (the binding does not pass `unclippedDepth` through yet), `ScenePassCompiler` pulls each cascade's near plane back to the opaque casters it draws, from their world bounds, each frame, and rescales the receiver depth scale to match; only the depth range changes, so the map's footprint and texel snapping stay put. A backend says which it does through the new `GpuDrawPreparer.clampsShadowDepth`. Existing shadow scenes render pixel for pixel as before on both backends (#998).
+- Recover degenerate Jolt cast normals, tolerate tiny fraction rounding errors, and block malformed character moves without stopping other characters; retain the scene character API over a scene-independent physics capability.
+- **An entity that rises within its spatial-index column is no longer culled while in view.** `SpatialGrid.insert` kept an entity's column lists when it stayed in the same columns, but it also skipped those columns' height bounds, so an entity that moved up or down without crossing a column boundary sat outside its column's box. `queryFrustum` and `queryShadowCasters` skip a column by its box, so the entity was culled from the scene, or dropped from the shadow maps, while it was visible. Each entry now remembers the height range already folded into its columns: a move within it still costs two comparisons, and a move past it widens the columns' heights and the indexed content's extent (#1000).
+- Drain accepted Ktor transport packets before normal close, with bounded shutdown and immediate outbound-overflow cleanup.
+
 ## [0.23.0] - 2026-10-25
 
 ### Added

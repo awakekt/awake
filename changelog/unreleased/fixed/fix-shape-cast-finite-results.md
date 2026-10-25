@@ -1,1 +1,0 @@
-- Recover degenerate Jolt cast normals, tolerate tiny fraction rounding errors, and block malformed character moves without stopping other characters; retain the scene character API over a scene-independent physics capability.

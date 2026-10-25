@@ -1,1 +1,0 @@
-- Drain accepted Ktor transport packets before normal close, with bounded shutdown and immediate outbound-overflow cleanup.
