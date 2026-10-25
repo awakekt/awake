@@ -20,14 +20,21 @@ import io.ktor.server.routing.routing
 import io.ktor.server.websocket.WebSockets
 import io.ktor.server.websocket.webSocket
 import io.ktor.util.AttributeKey
+import io.ktor.util.logging.KtorSimpleLogger
+import io.ktor.util.logging.Logger
 import io.ktor.websocket.CloseReason
 import io.ktor.websocket.Frame
 import io.ktor.websocket.WebSocketSession
 import io.ktor.websocket.close
 import io.ktor.websocket.readBytes
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
@@ -35,11 +42,15 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.takeWhile
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
+
+private val transportLogger = KtorSimpleLogger("com.awakekt.awake.net.server.ktor.GameTransport")
 
 /**
  * Configuration for [GameTransport].
@@ -159,20 +170,36 @@ internal class KtorTransportSession(
     inboxCapacity: Int,
     outboundCapacity: Int,
     private val maxFrameSize: Long,
+    writerDispatcher: CoroutineDispatcher = Dispatchers.Default,
+    private val closeTimeout: Duration = 1.seconds,
+    private val logger: Logger = transportLogger,
 ) : TransportSession {
 
     private val inbox = Channel<ByteArray>(inboxCapacity, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     private val outbox = Channel<ByteArray>(outboundCapacity, onBufferOverflow = BufferOverflow.SUSPEND)
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val scope = CoroutineScope(SupervisorJob() + writerDispatcher)
+    private val closing = AtomicBoolean(false)
+    private val closed = CompletableDeferred<Unit>()
 
-    init {
-        scope.launch {
-            try {
-                for (packet in outbox) {
-                    socket.send(Frame.Binary(fin = true, data = packet))
-                }
-            } finally {
+    // Observe deferred failures as well as closing the transport in finally.
+    private val writer = scope.async {
+        try {
+            for (packet in outbox) {
+                socket.send(Frame.Binary(fin = true, data = packet))
+            }
+        } finally {
+            inbox.close()
+            outbox.close()
+            val flushed = withTimeoutOrNull(closeTimeout) {
                 socket.close(CloseReason(CloseReason.Codes.NORMAL, "Outbox closed"))
+                true
+            } == true
+            if (!flushed) socket.cancel()
+        }
+    }.also { task ->
+        task.invokeOnCompletion { failure ->
+            if (failure != null && failure !is CancellationException) {
+                logger.warn("Transport session $id writer failed", failure)
             }
         }
     }
@@ -192,19 +219,42 @@ internal class KtorTransportSession(
 
     override suspend fun send(channel: DeliveryChannel, packet: ByteArray) {
         val sent = outbox.trySend(packet)
-        if (sent.isFailure) {
+        if (sent.isFailure && !sent.isClosed) {
             // Outbound buffer full: slow client is terminated rather than unbounded buffering
-            socket.close(CloseReason(CloseReason.Codes.TRY_AGAIN_LATER, "Client send buffer overflow"))
-            close()
+            finish(drain = false)
         }
     }
 
     override fun incoming(): ReceiveChannel<ByteArray> = inbox
 
-    override suspend fun close() {
-        inbox.close()
-        outbox.close()
-        scope.cancel()
-        socket.close()
+    /**
+     * Drain accepted packets in order, then let the writer enqueue and flush the close frame.
+     * The one-second deadline covers the drain and flush together. It is not peer acknowledgement;
+     * peer failure, timeout and outbound overflow may discard packets.
+     */
+    override suspend fun close() = finish(drain = true)
+
+    private suspend fun finish(drain: Boolean) = withContext(NonCancellable) {
+        if (closing.compareAndSet(false, true)) {
+            try {
+                inbox.close()
+                outbox.close()
+                val flushed = withTimeoutOrNull(closeTimeout) {
+                    if (drain) {
+                        writer.join()
+                    } else {
+                        writer.cancel()
+                        socket.close(CloseReason(CloseReason.Codes.TRY_AGAIN_LATER, "Client send buffer overflow"))
+                    }
+                    true
+                } == true
+                if (!flushed) socket.cancel()
+            } finally {
+                scope.cancel()
+                closed.complete(Unit)
+            }
+        } else {
+            closed.await()
+        }
     }
 }

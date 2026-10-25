@@ -16,10 +16,12 @@ import com.awakekt.awake.net.server.phase.AuthResult
 import com.awakekt.awake.net.server.phase.Authenticator
 import com.awakekt.awake.net.server.phase.PrePlayHandler
 import com.awakekt.awake.net.server.phase.PrePlayResult
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import java.lang.management.ManagementFactory
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -72,12 +74,20 @@ class GameServerHostTest {
         }
     }
 
+    private suspend fun stepUntil(host: ServerHost<Player, Message>, condition: () -> Boolean) = withTimeout(2_000) {
+        while (!condition()) {
+            host.step(0.033f)
+            delay(1)
+        }
+    }
+
     @Test
     fun sessionTransitionsThroughAuthPrePlayAndPlayPhases() = runBlocking {
         val world = World()
         val moves = mutableListOf<Pair<String, Message.Move>>()
         var joined = 0
         var left = 0
+        val authenticated = CompletableDeferred<Unit>()
 
         val movementFeature = gameFeature<Player, Message>("movement") {
             onJoin { joined++ }
@@ -89,6 +99,7 @@ class GameServerHostTest {
 
         val authenticator = Authenticator<Player, Message> { session, msg ->
             if (msg is Message.Auth && msg.name != "banned") {
+                authenticated.complete(Unit)
                 AuthResult.Success(Player(session, msg.name))
             } else {
                 AuthResult.Denied("Rejected")
@@ -117,21 +128,19 @@ class GameServerHostTest {
 
         // 1. Send auth
         session.inbox.send("auth:Alice".encodeToByteArray())
-        delay(20)
+        withTimeout(2_000) { authenticated.await() }
         host.step(0.033f)
         assertEquals(0, host.onlineCount) // In PrePlay, not yet active play
 
         // 2. Send pre-play selection
         session.inbox.send("select:1".encodeToByteArray())
-        delay(20)
-        host.step(0.033f)
+        stepUntil(host) { joined == 1 }
         assertEquals(1, host.onlineCount)
         assertEquals(1, joined)
 
         // 3. Send movement in Play phase
         session.inbox.send("move:10.5:20.0".encodeToByteArray())
-        delay(20)
-        host.step(0.033f)
+        stepUntil(host) { moves.isNotEmpty() }
         assertEquals(1, moves.size)
         assertEquals("Alice", moves[0].first)
         assertEquals(10.5f, moves[0].second.x)

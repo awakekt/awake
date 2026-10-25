@@ -35,6 +35,7 @@ kotlin {
             dependencies {
                 implementation(libs.ktor.server.test.host)
                 implementation(libs.ktor.client.websockets)
+                implementation(libs.kotlinx.coroutines.test)
             }
         }
     }

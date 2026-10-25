@@ -26,11 +26,34 @@ import io.ktor.server.testing.testApplication
 import io.ktor.websocket.Frame
 import io.ktor.websocket.readBytes
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withTimeout
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class KtorIntegrationTest {
+
+    @Test
+    fun peerReceivesEveryAcceptedPacketWhenServerClosesImmediately() = testApplication {
+        lateinit var transport: TransportServer
+        application {
+            install(GameTransport) { path = "/final-packets" }
+            transport = gameTransport
+        }
+        val client = createClient { install(WebSockets) }
+        client.webSocket("/final-packets") {
+            withTimeout(5_000) {
+                val session = transport.sessions().receive()
+                repeat(32) { session.send(DeliveryChannel.Reliable, "final:$it".encodeToByteArray()) }
+                session.close()
+                val received = mutableListOf<String>()
+                for (frame in incoming) {
+                    if (frame is Frame.Binary) received += frame.readBytes().decodeToString()
+                }
+                assertEquals((0 until 32).map { "final:$it" }, received)
+            }
+        }
+    }
 
     private data class Player(override val session: TransportSession, val name: String) : HostPlayer
 
