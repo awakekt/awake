@@ -715,6 +715,31 @@ Configures the post-processing effects chain applied to the camera's rendered vi
 | `enabled` | boolean | `true` | Whether post-processing is enabled for this camera. |
 | `effects` | array | `[]` | Ordered list of post-processing effect specifications. |
 
+Each effect is an object whose `type` names it. The camera's colour is already tone mapped and
+encoded by the lit shaders, so a `tone_mapping_grade` must use `"mode": "Passthrough"`: a scene
+with an enabled `PbrNeutral` one, or with two enabled `tone_mapping_grade` effects, fails
+validation. The [Lights and shadows guide](../guides/lights-and-shadows.md#add-post-processing)
+lists the valid combinations.
+
+`tone_mapping_grade`, one grading pass:
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `enabled` | boolean | `true` | Whether the pass runs. |
+| `mode` | `PbrNeutral` · `Passthrough` | `PbrNeutral` | `Passthrough` grades only. `PbrNeutral` then applies the PBR Neutral curve and the gamma 2.2 encode, which a scene camera's colour already has, so a scene refuses it. |
+| `exposure` | number | `1` | Multiplies the colour before grading. Finite and above 0. |
+| `contrast` | number | `1` | Contrast around mid-grey 0.18. Finite and at least 0. |
+| `saturation` | number | `1` | 0 is grey, 1 as drawn. Finite and at least 0. |
+| `whiteBalanceTemperature` | number | `0` | Cool (-1) to warm (1). |
+| `whiteBalanceTint` | number | `0` | Green (-1) to magenta (1). |
+| `lift` | array | `[0, 0, 0]` | Added to the shadows, per channel. |
+| `gamma` | array | `[1, 1, 1]` | Midtone exponent, per channel. |
+| `gain` | array | `[1, 1, 1]` | Highlight multiplier, per channel. |
+
+`bloom`: `enabled`, `intensity` (`0.5`), `threshold` (`1`), `knee` (`0.5`, 0 to 1) and `radius`
+(`8`, in pixels). `fxaa`: `enabled` and `quality` (`Off` · `Low` · `Medium` · `High`, default `High`).
+`custom`: `enabled`, `shaderId` (a registered image-pass shader) and `parameters` (its floats).
+
 ## `prefab_link`
 
 Places a prefab file at this node. `SceneDocument.withPrefabs` (which `loadProject` runs)

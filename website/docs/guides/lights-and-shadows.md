@@ -126,6 +126,47 @@ Raise the sun's `ambient` to lift those areas.
     `ambientLight()`, and Studio's **Ambient Light** slider edits it. It loads and saves, but no
     render system reads it. Use the sun's `ambient` field to change the ambient level.
 
+## Add post-processing
+
+A camera's `post_processing` component runs an ordered list of effects over what the camera drew,
+before the UI is drawn on top. The colour it reads is already display-ready: every lit shader
+applies the exposure, the PBR Neutral curve and the gamma encode itself. So the stack has no
+tone-mapping step of its own, and each effect works on that colour as it is.
+
+=== "Scene document"
+
+    ```json title="post-processing.scene.json"
+    --8<-- "website/docs/snippets/rendering/post-processing.scene.json"
+    ```
+
+=== "Scene DSL"
+
+    ```kotlin title="Kotlin"
+    --8<-- "awake/scene/authoring/src/desktopTest/kotlin/com/awakekt/awake/scene/authoring/LightingDocsSampleTest.kt:post-processing-dsl"
+    ```
+
+=== "Studio"
+
+    Studio has no field for post-processing. Set it in the scene document.
+
+Which combinations a scene camera accepts:
+
+| Effects | What runs |
+| --- | --- |
+| `fxaa` alone | A copy of the frame, then FXAA. Only edges change; away from them colours match the frame without the stack within 1/255. |
+| `tone_mapping_grade` with `"mode": "Passthrough"` | Grading only: exposure, white balance, lift, gamma, gain, contrast and saturation, with no curve and no encode. At its defaults it changes nothing. |
+| `bloom` | Bright pass and blur, then the glow added to the frame in a passthrough step. The frame's colour is at most 1, so lower `threshold` below its default of 1. |
+| Any of these, then `fxaa` | FXAA reads the result of the step before it. |
+| `tone_mapping_grade` with `"mode": "PbrNeutral"`, the default | Refused when the scene loads: it would apply the curve and the encode a second time and wash out the whole frame. Use the `tone_mapping` component's `exposure` for brightness. |
+| Two enabled `tone_mapping_grade` effects | Refused when the scene loads. |
+
+`PbrNeutral` exists for colour that has not been tone mapped yet: a chain built in code with
+`PostProcessingStack.buildChain` over a target whose `ImagePassTargetContext.colorEncoding` is
+`LinearHdr`. Such a target gets a `PbrNeutral` step even when the list names none, so FXAA reads
+display colour. No built-in scene path renders linear colour yet. A chain built in code over a
+`DisplayReferred` target, the default, follows the rules in the table, though nothing refuses a
+`PbrNeutral` effect listed there.
+
 ## Properties
 
 `light`:
@@ -161,6 +202,9 @@ parameter. Attach a `Light` with `with(Light(...))` to set them, as the ambient 
 | Property | Type | Default | What it does |
 | --- | --- | --- | --- |
 | `exposure` | number | `1` | Multiplies the lit scene before tone mapping. Finite and above 0. |
+
+`post_processing` and each effect's fields are listed in the
+[scene document components reference](../reference/scene-document-components.md#post_processing).
 
 ## How it works
 
