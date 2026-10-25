@@ -36,12 +36,15 @@ data class CharacterSlot(
  * @property slots Map of equipped character slots keyed by slot name.
  * @property isVisible Master visibility toggle for the entire modular character.
  * @property skeleton Optional shared skeleton used to resolve named socket attachments.
+ * @property castsShadows Draws every visible slot into the shadow maps, in view or off screen, as
+ *   `MeshRenderer.castsShadows` does for one mesh.
  */
 data class ModularCharacterComponent(
     val skin: Skin,
     val slots: Map<String, CharacterSlot> = LinkedHashMap(),
     var isVisible: Boolean = true,
     val skeleton: Skeleton? = null,
+    val castsShadows: Boolean = true,
 ) {
     /**
      * [slots] in map order as a list, so the per-frame draw loop can walk it by index: iterating a

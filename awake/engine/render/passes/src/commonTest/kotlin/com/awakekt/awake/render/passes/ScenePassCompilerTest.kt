@@ -22,6 +22,7 @@ import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.render.passes.uniforms.EnvironmentUniforms
+import com.awakekt.awake.render.passes.uniforms.PointShadowLight
 import com.awakekt.awake.render.passes.uniforms.SceneLight
 import com.awakekt.awake.render.renderer.RenderViewport
 import kotlin.test.Test
@@ -101,6 +102,55 @@ class ScenePassCompilerTest {
         assertEquals(listOf(visible), input.resolvedOpaqueDraws)
         assertTrue(input.prePasses.isNotEmpty())
         input.prePasses.forEach { pass -> assertEquals(listOf(visible, shadowOnly), pass.resolvedDraws) }
+    }
+
+    /**
+     * A draw that does not cast reaches the scene but no shadow pass, and a shadow-only draw that
+     * does not cast reaches neither; the casting draws beside them are unaffected.
+     */
+    @Test
+    fun aDrawThatDoesNotCastIsLeftOutOfEveryShadowPass() {
+        val mesh = object : Mesh {
+            override val format = VertexFormat.PositionNormalColor
+            override val sizeBytes = 0L
+            override fun destroy() = Unit
+        }
+        val material = object : Material {
+            override fun updateUniformBuffer(uniformFloats: FloatArray) = Unit
+            override fun destroy() = Unit
+        }
+        val drawsBySource = HashMap<Int, GpuResolvedDraw>()
+        val input = ScenePassCompiler.compile(
+            lens = Lens(eye = Vec3f(0f, 1f, 2f), center = Vec3f.ZERO, fovYRadians = 1f, near = 0.1f, far = 10f),
+            drawCalls = listOf(
+                RenderDrawCommand(mesh, material),
+                RenderDrawCommand(mesh, material, castsShadows = false),
+                RenderDrawCommand(mesh, material, shadowsOnly = true),
+                RenderDrawCommand(mesh, material, shadowsOnly = true, castsShadows = false),
+            ),
+            light = SceneLight(
+                direction = Vec3f(0f, -1f, 0f),
+                color = Vec3f(1f, 1f, 1f),
+                viewProjection = Mat4(),
+                pointShadows = listOf(PointShadowLight(baseLayer = 1, viewProjections = List(6) { Mat4() })),
+            ),
+            clipSpace = ClipSpace.Vulkan,
+            aspect = 1f,
+            drawPreparer = GpuDrawPreparer { _, sourceIndex, _ ->
+                GpuResolvedDraw(
+                    pipeline = object : PipelineHandle {},
+                    materialBinding = object : MaterialBinding {},
+                    vertexBuffer = object : BufferHandle {},
+                    indexBuffer = null,
+                    elementCount = 3,
+                ).also { drawsBySource[sourceIndex] = it }
+            },
+        )
+
+        val (casting, notCasting, shadowOnly) = listOf(0, 1, 2).map(drawsBySource::getValue)
+        assertEquals(setOf(casting, notCasting), input.resolvedOpaqueDraws.toSet(), "The scene still draws the mesh that does not cast.")
+        assertTrue(input.prePasses.size > 1, "Cascade and point-shadow passes both, or this covers only one kind.")
+        input.prePasses.forEach { pass -> assertEquals(listOf(casting, shadowOnly), pass.resolvedDraws) }
     }
 
     /**

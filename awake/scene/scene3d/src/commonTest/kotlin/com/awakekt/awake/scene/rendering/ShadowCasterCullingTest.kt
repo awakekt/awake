@@ -40,8 +40,12 @@ import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.animation.AnimationSystem
 import com.awakekt.awake.scene.rendering.animation.Animator
+import com.awakekt.awake.scene.rendering.animation.CharacterSlot
+import com.awakekt.awake.scene.rendering.animation.ModularCharacterComponent
 import com.awakekt.awake.scene.rendering.animation.SkinnedPose
 import com.awakekt.awake.scene.rendering.light.Light
+import com.awakekt.awake.scene.rendering.mesh.LodGroup
+import com.awakekt.awake.scene.rendering.mesh.LodLevel
 import com.awakekt.awake.scene.rendering.mesh.MeshBounds
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 import com.awakekt.awake.scene.rendering.spatial.Occluder
@@ -164,6 +168,54 @@ class ShadowCasterCullingTest {
         assertEquals(listOf(false), renderer.drawsOf(world, inView).map { it.shadowsOnly })
     }
 
+    @Test
+    fun aMeshThatDoesNotCastIsDrawnButNeverCasts() {
+        val world = worldWithCamera(light = Light(direction = Vec3f(0f, 1f, 0f)))
+        val inView = world.spawnProp(x = 0f, y = 1f, z = 0f, castsShadows = false)
+        val behind = world.spawnProp(x = 0f, y = 1f, z = 12f, castsShadows = false)
+        val behindCasting = world.spawnProp(x = 0f, y = 1f, z = 12f)
+        val renderer = RecordingRenderer()
+        val system = RenderSystem3D(renderer)
+
+        system.update(world, DELTA)
+
+        assertEquals(
+            listOf(Casting(shadowsOnly = false, castsShadows = false)),
+            renderer.drawsOf(world, inView).map(RecordedDraw::casting),
+            "In view it draws as before, flagged so the shadow passes leave it out.",
+        )
+        assertEquals(emptyList(), renderer.drawsOf(world, behind), "Off screen it has nothing left to draw.")
+        assertEquals(
+            listOf(Casting(shadowsOnly = true, castsShadows = true)),
+            renderer.drawsOf(world, behindCasting).map(RecordedDraw::casting),
+            "The same mesh casting, in the same place, is a shadow-only draw: the control for the line above.",
+        )
+        assertEquals(1, system.lastShadowOnlyCount)
+    }
+
+    @Test
+    fun lodGroupsAndModularCharactersThatDoNotCastAreNeverShadowOnly() {
+        val world = worldWithCamera(light = Light(direction = Vec3f(0f, 1f, 0f)))
+        val lods = listOf(true, false).associateWith { casts ->
+            listOf(0f, 12f).map { z -> world.spawnLod(z, casts) }
+        }
+        val characters = listOf(true, false).associateWith { casts ->
+            listOf(0f, 12f).map { z -> world.spawnModularCharacter(z, casts) }
+        }
+        val renderer = RecordingRenderer()
+
+        RenderSystem3D(renderer).update(world, DELTA)
+
+        for (meshes in listOf(lods, characters)) {
+            val (castingInView, castingBehind) = meshes.getValue(true)
+            val (silentInView, silentBehind) = meshes.getValue(false)
+            assertEquals(listOf(Casting(shadowsOnly = false, castsShadows = true)), renderer.drawsOfMesh(castingInView).map(RecordedDraw::casting))
+            assertEquals(listOf(Casting(shadowsOnly = true, castsShadows = true)), renderer.drawsOfMesh(castingBehind).map(RecordedDraw::casting))
+            assertEquals(listOf(Casting(shadowsOnly = false, castsShadows = false)), renderer.drawsOfMesh(silentInView).map(RecordedDraw::casting))
+            assertEquals(emptyList(), renderer.drawsOfMesh(silentBehind), "Off screen and not casting, it draws nothing.")
+        }
+    }
+
     private data class Recorded(val model: List<Float>, val shadowsOnly: Boolean)
 
     private fun render(layout: List<Pair<Float, Float>>, light: Light?, useIndex: Boolean = false): List<Recorded> {
@@ -185,10 +237,32 @@ class ShadowCasterCullingTest {
         return world
     }
 
-    private fun World.spawnProp(x: Float, y: Float, z: Float): Entity = create().also { entity ->
+    private fun World.spawnProp(x: Float, y: Float, z: Float, castsShadows: Boolean = true): Entity = create().also { entity ->
         add(entity, Transform(worldMatrix = Mat4().translate(x, y, z)))
-        add(entity, MeshRenderer(FakeMesh(VertexFormat.PositionNormalColor), FakeMaterial))
+        add(entity, MeshRenderer(FakeMesh(VertexFormat.PositionNormalColor), FakeMaterial, castsShadows = castsShadows))
         add(entity, MeshBounds(Aabb(Vec3f(-1f, -1f, -1f), Vec3f(1f, 1f, 1f))))
+    }
+
+    /** A one-level [LodGroup] at (0, 1, [z]); returns its mesh, which is how its draws are found. */
+    private fun World.spawnLod(z: Float, castsShadows: Boolean): Mesh {
+        val mesh = FakeMesh(VertexFormat.PositionNormalColor)
+        val entity = create()
+        add(entity, Transform(worldMatrix = Mat4().translate(0f, 1f, z)))
+        add(entity, LodGroup(listOf(LodLevel(mesh, FakeMaterial, maxDistance = 1_000f)), castsShadows = castsShadows))
+        add(entity, MeshBounds(Aabb(Vec3f(-1f, -1f, -1f), Vec3f(1f, 1f, 1f))))
+        return mesh
+    }
+
+    /** A one-slot [ModularCharacterComponent] at (0, 1, [z]); returns its slot's mesh. */
+    private fun World.spawnModularCharacter(z: Float, castsShadows: Boolean): Mesh {
+        val mesh = FakeMesh(VertexFormat.PositionNormalColor)
+        val character = ModularCharacterComponent(Skin(joints = listOf(0), inverseBindMatrices = listOf(Mat4())), castsShadows = castsShadows)
+        character.setSlot(CharacterSlot("body", mesh, FakeMaterial))
+        val entity = create()
+        add(entity, Transform(worldMatrix = Mat4().translate(0f, 1f, z)))
+        add(entity, character)
+        add(entity, MeshBounds(Aabb(Vec3f(-1f, -1f, -1f), Vec3f(1f, 1f, 1f))))
+        return mesh
     }
 
     private fun World.spawnOccluder(z: Float) {
@@ -223,10 +297,11 @@ class ShadowCasterCullingTest {
     }
 
     /** The draws the last frame made for [entity], found by its own mesh. */
-    private fun RecordingRenderer.drawsOf(world: World, entity: Entity): List<RecordedDraw> {
-        val mesh = requireNotNull(world.get<MeshRenderer>(entity)).mesh
-        return draws.filter { it.mesh === mesh }
-    }
+    private fun RecordingRenderer.drawsOf(world: World, entity: Entity): List<RecordedDraw> =
+        drawsOfMesh(requireNotNull(world.get<MeshRenderer>(entity)).mesh)
+
+    /** The draws the last frame made of [mesh]. */
+    private fun RecordingRenderer.drawsOfMesh(mesh: Mesh): List<RecordedDraw> = draws.filter { it.mesh === mesh }
 
     private class FakeMesh(override val format: VertexFormat) : Mesh {
         override val sizeBytes: Long = 0
@@ -238,7 +313,12 @@ class ShadowCasterCullingTest {
         override fun destroy() = Unit
     }
 
-    private class RecordedDraw(val mesh: Any, val model: List<Float>, val shadowsOnly: Boolean)
+    private class RecordedDraw(val mesh: Any, val model: List<Float>, val shadowsOnly: Boolean, val castsShadows: Boolean) {
+        val casting: Casting get() = Casting(shadowsOnly, castsShadows)
+    }
+
+    /** How a draw reaches the shadow passes: as a shadow-only draw, and whether it casts at all. */
+    private data class Casting(val shadowsOnly: Boolean, val castsShadows: Boolean)
 
     private class RecordingRenderer :
         Renderer,
@@ -247,7 +327,7 @@ class ShadowCasterCullingTest {
         var draws: List<RecordedDraw> = emptyList()
         private var current = ArrayList<RecordedDraw>()
         override val gpuDrawPreparer = GpuDrawPreparer { request, _, _ ->
-            current += RecordedDraw(request.mesh, request.model.data.toList(), request.shadowsOnly)
+            current += RecordedDraw(request.mesh, request.model.data.toList(), request.shadowsOnly, request.castsShadows)
             null
         }
         override val clipSpace: ClipSpace = ClipSpace.WebGpu

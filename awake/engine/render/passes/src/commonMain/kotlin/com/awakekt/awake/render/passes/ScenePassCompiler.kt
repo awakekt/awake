@@ -74,7 +74,8 @@ object ScenePassCompiler {
         val gpuEnvironment = environment.toGpuState(viewDepthRange = lens.far)
 
         // One preparation pass in source order, so every draw keeps its own source index; the
-        // shadow-only ones are then kept out of the scene and handed to the shadow passes.
+        // shadow-only ones are then kept out of the scene and handed to the shadow passes. A draw
+        // that does not cast stays out of the shadow passes, whichever way it was drawn.
         val shadowOnly = ArrayList<Caster>()
         val masked = MaskedDraws(maskLayers)
         var edges = emptyList<GpuResolvedDraw>()
@@ -93,17 +94,17 @@ object ScenePassCompiler {
             val visible = ArrayList<Caster>(requests.size)
             requests.forEachIndexed { index, request ->
                 val draw = preparer.prepare(request, index, context) ?: return@forEachIndexed
-                val caster = Caster(draw, request.worldBounds)
+                val caster = Caster(draw, request.worldBounds, request.castsShadows)
                 when {
                     !request.shadowsOnly -> visible += caster.also { masked.add(request.maskLayer, draw) }
-                    !draw.transparent -> shadowOnly += caster
+                    !draw.transparent && request.castsShadows -> shadowOnly += caster
                 }
             }
             if (environment.wireframe) edges = preparer.prepareEdges(requests, context)
             sortForRecording(visible)
         }
-        val opaqueCasters = resolved?.opaqueByPipeline?.values?.flatten().orEmpty()
-        val casters = if (shadowOnly.isEmpty()) opaqueCasters else opaqueCasters + shadowOnly
+        val opaque = resolved?.opaqueByPipeline?.values?.flatten().orEmpty()
+        val casters = opaque.castingWith(shadowOnly)
 
         return GpuPassInput(
             prePasses = shadowPrePasses(shadowViewProjections, casters.takeIf { resolved != null }, light, environment),
@@ -112,7 +113,7 @@ object ScenePassCompiler {
             viewport = viewport,
             passUniforms = packedPassUniforms,
             environment = gpuEnvironment,
-            resolvedOpaqueDraws = opaqueCasters.map { it.draw },
+            resolvedOpaqueDraws = opaque.map { it.draw },
             resolvedTransparentDraws = resolved?.transparent?.map { it.draw }.orEmpty(),
             resolvedPath = resolved != null,
             cameraForward = cameraForward,
@@ -172,8 +173,20 @@ private fun SceneLight.pointShadowPrePasses(draws: List<Caster>): List<GpuSubPas
         }
     }
 
-/** A prepared draw and the world bounds its request carried, kept together through sorting. */
-private class Caster(val draw: GpuResolvedDraw, val bounds: Aabb?) : PreparedDraw by draw
+/**
+ * A prepared draw, the world bounds its request carried and whether that request casts, kept
+ * together through sorting.
+ */
+private class Caster(val draw: GpuResolvedDraw, val bounds: Aabb?, val casts: Boolean) : PreparedDraw by draw
+
+/**
+ * What the shadow passes draw: the scene's opaque draws that cast, in recording order, then the
+ * shadow-only ones. The same list, not a copy, when every opaque draw casts and none is shadow-only.
+ */
+private fun List<Caster>.castingWith(shadowOnly: List<Caster>): List<Caster> {
+    val casting = if (all { it.casts }) this else filter { it.casts }
+    return if (shadowOnly.isEmpty()) casting else casting + shadowOnly
+}
 
 /**
  * The casters that can write a texel of the depth map [viewProjection] renders.

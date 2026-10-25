@@ -44,7 +44,7 @@ internal class FrameCulling(
 
 /** What one entity's culling decided: drawn, drawn into the shadow maps only, or not drawn. */
 internal enum class CullVerdict {
-    /** In the camera's view and not occluded: a scene draw, which also casts. */
+    /** In the camera's view and not occluded: a scene draw, which also casts unless its component opts out. */
     Visible,
 
     /** Out of the camera's view or occluded, but able to shadow what it sees: a shadow-only draw. */
