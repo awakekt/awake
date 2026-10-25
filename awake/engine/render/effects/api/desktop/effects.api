@@ -223,6 +223,7 @@ public final class com/awakekt/awake/render/effects/PostProcessingStack {
 	public static final field INSTANCE Lcom/awakekt/awake/render/effects/PostProcessingStack;
 	public static final field TRANSIENT_BLOOM_BRIGHT_ID Ljava/lang/String;
 	public static final field TRANSIENT_LDR_SCENE_ID Ljava/lang/String;
+	public static final field TRANSIENT_SCENE_COPY_ID Ljava/lang/String;
 	public final fun buildChain (Ljava/util/List;Lcom/awakekt/awake/render/imagepass/ImagePassTargetContext;)Lcom/awakekt/awake/render/imagepass/ImagePassChain;
 	public final fun evaluateBloomBrightPassReference ([FFF)[F
 	public final fun evaluateToneMappingGradeReference ([FFFF[F[F[FFF[FFLcom/awakekt/awake/render/effects/ToneMappingMode;)[F
