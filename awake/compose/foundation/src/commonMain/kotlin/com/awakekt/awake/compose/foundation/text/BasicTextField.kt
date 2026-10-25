@@ -162,7 +162,7 @@ fun BasicTextField(
                 .clickable { }
                 .drawBehind {
                     val paintColor = color()
-                    val run = policy.runFor(density, 1f)
+                    val run = policy.runFor(density, policy.measuredFontScale)
                     val textOffsetY = if (oneLine) ((height - run.lineHeightPx) / 2f).coerceAtLeast(0f) else 0f
                     val caret = TextRunOf(state, policy, density).position()
                     val focused = source.isFocused
@@ -329,7 +329,7 @@ private class TextRunOf(
     private val density: Float,
 ) {
     fun position(): CaretPosition {
-        val run = policy.runFor(density, 1f)
+        val run = policy.runFor(density, policy.measuredFontScale)
         val position = run.caretPositionAt(state.displayedCursor)
         return CaretPosition(position.x, position.y)
     }
@@ -422,7 +422,7 @@ private class TextFieldInputNode :
 
     override fun onPointerEvent(event: PointerEvent, pass: PointerEventPass) {
         if (pass != PointerEventPass.Main || event.isConsumed) return
-        val index = policy.runFor(density, 1f).indexAt(
+        val index = policy.runFor(density, policy.measuredFontScale).indexAt(
             x = (event.x + if (singleLine) horizontalOffset.value else 0).toFloat(),
             y = event.y.toFloat(),
         )

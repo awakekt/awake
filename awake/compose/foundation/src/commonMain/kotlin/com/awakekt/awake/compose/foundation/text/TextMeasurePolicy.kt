@@ -87,6 +87,7 @@ class TextMeasurePolicy(
         } else {
             constraints.maxWidth.toFloat()
         }
+        measuredFontScale = fontScale
         val cached = cache
         if (cached != null && cached.hasMeasurement(this@TextMeasurePolicy, density, fontScale, wrapWidthPx)) {
             return layout(
@@ -168,6 +169,10 @@ class TextMeasurePolicy(
 
     /** The width the last measure wrapped at, so painting reproduces the same lines. */
     internal var wrapWidthPx: Float = Float.POSITIVE_INFINITY
+        private set
+
+    /** The font scale the last measure sized the glyphs at, so painting draws them at the same size. */
+    internal var measuredFontScale: Float = 1f
         private set
 
     private fun Density.linesAt(glyphPx: Float, maxWidthPx: Float): List<String> =
