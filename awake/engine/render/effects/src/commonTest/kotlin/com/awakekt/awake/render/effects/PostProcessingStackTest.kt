@@ -49,21 +49,49 @@ class PostProcessingStackTest {
         assertTrue(chainZero.isEmpty)
     }
 
+    /** A last tone-mapping step draws into the target, so it reads a copy of it, never the target itself (#1010). */
     @Test
-    fun buildChainToneMappingOnlyWritesDirectlyToActiveTarget() {
+    fun buildChainToneMappingOnlyReadsACopyOfTheTarget() {
         val chain = PostProcessingStack.buildChain(
             listOf(ToneMappingGradeEffect(exposure = 1.2f, contrast = 1.1f)),
             targetContext,
         )
         assertFalse(chain.isEmpty)
-        assertEquals(0, chain.transientTargets.size)
-        assertEquals(1, chain.steps.size)
+        val copyTarget = chain.transientTargets.single()
+        assertEquals(PostProcessingStack.TRANSIENT_SCENE_COPY_ID, copyTarget.id)
+        assertEquals(ImagePassTargetFormat.DestinationMatch, copyTarget.format, "a copy of an HDR target must stay HDR")
+        assertEquals(listOf(ImageEffectShaders.COPY_SHADER_ID, PostProcessingShaders.TONE_MAPPING_GRADE_SHADER_ID), chain.steps.map { it.shader.id })
 
-        val step = chain.steps[0]
-        assertEquals(PostProcessingShaders.TONE_MAPPING_GRADE_SHADER_ID, step.shader.id)
+        val copy = chain.steps[0]
+        assertEquals(ImagePassSource.DestinationSnapshot, copy.inputs.single().source)
+        assertEquals(ImagePassDestination.TransientTarget(PostProcessingStack.TRANSIENT_SCENE_COPY_ID), copy.destination)
+        val step = chain.steps[1]
         assertTrue(step.destination is ImagePassDestination.ActiveTarget)
-        assertEquals(1, step.inputs.size)
-        assertEquals(ImagePassSource.DestinationSnapshot, step.inputs[0].source)
+        assertEquals(ImagePassSource.TransientTarget(PostProcessingStack.TRANSIENT_SCENE_COPY_ID), step.inputs.single().source)
+    }
+
+    /** No built chain samples the target while drawing into it: a backend may snapshot in place (#1010). */
+    @Test
+    fun noStepReadsTheSnapshotWhileWritingTheActiveTarget() {
+        val stacks = listOf(
+            listOf(ToneMappingGradeEffect()),
+            listOf(BloomEffect(intensity = 0.5f, radius = 8f)),
+            listOf(ToneMappingGradeEffect(), BloomEffect(intensity = 0.5f, radius = 8f)),
+            listOf(FxaaEffect()),
+            listOf(ToneMappingGradeEffect(), FxaaEffect()),
+            listOf(ToneMappingGradeEffect(), BloomEffect(intensity = 0.5f, radius = 8f), FxaaEffect()),
+        )
+        val contexts = listOf(targetContext, targetContext.copy(colorEncoding = ImagePassColorEncoding.LinearHdr))
+        for (context in contexts) {
+            for (effects in stacks) {
+                val chain = PostProcessingStack.buildChain(effects, context)
+                val offending = chain.steps.filter { step ->
+                    step.destination is ImagePassDestination.ActiveTarget &&
+                        step.inputs.any { it.source == ImagePassSource.DestinationSnapshot }
+                }
+                assertTrue(offending.isEmpty(), "$effects on ${context.colorEncoding}: ${offending.map { it.shader.id }}")
+            }
+        }
     }
 
     @Test
@@ -92,7 +120,7 @@ class PostProcessingStackTest {
         assertEquals(PostProcessingShaders.TONE_MAPPING_GRADE_BLOOM_SHADER_ID, lastStep.shader.id)
         assertTrue(lastStep.destination is ImagePassDestination.ActiveTarget)
         assertEquals(2, lastStep.inputs.size)
-        assertEquals(ImagePassSource.DestinationSnapshot, lastStep.inputs[0].source)
+        assertEquals(ImagePassSource.TransientTarget(PostProcessingStack.TRANSIENT_SCENE_COPY_ID), lastStep.inputs[0].source)
         assertTrue(lastStep.inputs[1].source is ImagePassSource.TransientTarget)
     }
 

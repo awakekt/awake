@@ -31,6 +31,12 @@ object PostProcessingStack {
     const val TRANSIENT_BLOOM_BRIGHT_ID: String = "bloom_bright"
     const val TRANSIENT_LDR_SCENE_ID: String = "ldr_scene_color"
 
+    /**
+     * A copy of the target's colour that a final tone-mapping step reads, so it never samples the
+     * target it draws into (#1010).
+     */
+    const val TRANSIENT_SCENE_COPY_ID: String = "scene_color_copy"
+
     fun levelTargetId(level: Int): String = "bloom_level_$level"
 
     /**
@@ -199,14 +205,31 @@ object PostProcessingStack {
                 format = if (toneMapping != null) ImagePassTargetFormat.Rgba8Unorm else ImagePassTargetFormat.DestinationMatch,
             )
         }
+        // A last tone-mapping step draws into the active target, so it reads a copy of the target's
+        // colour rather than the snapshot: a tone-only stack, and bloom's Passthrough composite.
+        val toneReadsCopy = toneMapping != null && !hasSubsequentSteps
+        if (toneReadsCopy) {
+            targets += ImagePassTargetSpec(
+                id = TRANSIENT_SCENE_COPY_ID,
+                width = targetContext.width,
+                height = targetContext.height,
+                format = ImagePassTargetFormat.DestinationMatch,
+            )
+            steps += copyTargetStep(targetContext, linearSampler, TRANSIENT_SCENE_COPY_ID)
+        }
         if (toneMapping == null) {
-            steps += copyTargetStep(targetContext, linearSampler)
+            steps += copyTargetStep(targetContext, linearSampler, TRANSIENT_LDR_SCENE_ID)
         } else {
             steps += toneMappingStep(
                 toneMapping = toneMapping,
                 bloomIntensity = if (finalBloomTargetId != null) bloom?.intensity ?: 0f else 0f,
                 bloomTargetId = finalBloomTargetId,
                 toLdrTarget = hasSubsequentSteps,
+                source = if (toneReadsCopy) {
+                    ImagePassSource.TransientTarget(TRANSIENT_SCENE_COPY_ID)
+                } else {
+                    ImagePassSource.DestinationSnapshot
+                },
                 targetContext = targetContext,
                 sampler = linearSampler,
             )
@@ -271,14 +294,18 @@ object PostProcessingStack {
         )
     }
 
-    /** Copies the target's colour, as the scene drew it, into [TRANSIENT_LDR_SCENE_ID]. */
-    private fun copyTargetStep(targetContext: ImagePassTargetContext, sampler: ImagePassSamplerSpec): ImagePassStep =
+    /** Copies the target's colour, as the scene drew it, into the transient target [destinationId]. */
+    private fun copyTargetStep(
+        targetContext: ImagePassTargetContext,
+        sampler: ImagePassSamplerSpec,
+        destinationId: String,
+    ): ImagePassStep =
         ImagePassStep(
             shader = ImagePassShaderRegistry.require(ImageEffectShaders.COPY_SHADER_ID),
             inputs = listOf(
                 ImagePassTextureBinding(binding = 1, source = ImagePassSource.DestinationSnapshot, sampler = sampler),
             ),
-            destination = ImagePassDestination.TransientTarget(TRANSIENT_LDR_SCENE_ID),
+            destination = ImagePassDestination.TransientTarget(destinationId),
             uniformData = ImageEffectShaders.packCopyUniforms(0f, 0f, 1f, 1f),
             quadVertices = buildImagePassQuadVertices(
                 rect = ImagePassRect(0f, 0f, targetContext.width.toFloat(), targetContext.height.toFloat()),
@@ -290,13 +317,14 @@ object PostProcessingStack {
             clearDestination = true,
         )
 
-    /** The tone-mapping and grading step: reads the target's colour, plus bloom when there is some. */
+    /** The tone-mapping and grading step: reads [source], the target's colour, plus bloom when there is some. */
     @Suppress("LongParameterList")
     private fun toneMappingStep(
         toneMapping: ToneMappingGradeEffect,
         bloomIntensity: Float,
         bloomTargetId: String?,
         toLdrTarget: Boolean,
+        source: ImagePassSource,
         targetContext: ImagePassTargetContext,
         sampler: ImagePassSamplerSpec,
     ): ImagePassStep {
@@ -315,7 +343,7 @@ object PostProcessingStack {
         val toneMapInputs = mutableListOf<ImagePassTextureBinding>()
         toneMapInputs += ImagePassTextureBinding(
             binding = 1,
-            source = ImagePassSource.DestinationSnapshot,
+            source = source,
             sampler = sampler,
         )
         if (bloomTargetId != null) {
