@@ -20,6 +20,7 @@ import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.core.text.font.UiFontSamplingMode
 import com.awakekt.awake.render.capture.PixelMap
 import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.cos
 import kotlin.math.hypot
@@ -28,9 +29,51 @@ import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.sin
 
-private const val GLYPH_GAMMA = 1.45f
-private const val MIN_TEXEL_WIDTH = 1e-4f
 private val MissingFontColor = Color(1f, 0f, 1f, 1f)
+
+/** The gamma the glyph shader corrects distance-field coverage with; the shader's literal 1.45. */
+private const val DISTANCE_FIELD_GAMMA = 1.45f
+
+/** The smallest uv span a glyph quad counts as, so a degenerate one cannot divide by zero. */
+private const val MIN_UV_SPAN = 1e-6f
+
+/**
+ * The glyph shader's screen-pixel range for a distance-field glyph: how many screen pixels the
+ * atlas's [rangeTexels]-texel distance spread covers, at least 1. The CPU copy of `unitRange`,
+ * `screenTexSize` and `screenPxRange` in `AslUiShaders.UiGlyphShader`.
+ *
+ * The shader takes `0.5 * dot(range / atlasSize, 1 / fwidth(uv))`: the mean of the horizontal
+ * and vertical texel-to-pixel scales, times the range. For the axis-aligned quad a glyph is,
+ * `fwidth(uv)` is the quad's uv span over its on-screen size, which is what this is given.
+ * Taking half the horizontal scale alone, as the raster did before, halved the range and drew
+ * every distance-field edge twice as wide as the GPU (#1057).
+ */
+@Suppress("LongParameterList")
+internal fun distanceFieldScreenPxRange(
+    rangeTexels: Float,
+    atlasWidth: Int,
+    atlasHeight: Int,
+    uvWidth: Float,
+    uvHeight: Float,
+    screenWidth: Float,
+    screenHeight: Float,
+): Float {
+    val screenTexWidth = screenWidth / max(abs(uvWidth), MIN_UV_SPAN)
+    val screenTexHeight = screenHeight / max(abs(uvHeight), MIN_UV_SPAN)
+    return max(0.5f * (rangeTexels / atlasWidth * screenTexWidth + rangeTexels / atlasHeight * screenTexHeight), 1f)
+}
+
+/**
+ * The glyph shader's distance-field coverage for one bilinear atlas sample ([r], [g], [b]): the
+ * median of the three channels, mapped through [screenPxRange] to a one-pixel ramp centred on the
+ * 0.5 edge, then gamma-corrected by [DISTANCE_FIELD_GAMMA]. The CPU copy of `signedDistance`,
+ * `coverage` and `correctedCoverage` in `AslUiShaders.UiGlyphShader`.
+ */
+internal fun distanceFieldCoverage(r: Float, g: Float, b: Float, screenPxRange: Float): Float {
+    val signedDistance = max(min(r, g), min(max(r, g), b))
+    val coverage = (screenPxRange * (signedDistance - 0.5f) + 0.5f).coerceIn(0f, 1f)
+    return coverage.pow(1f / DISTANCE_FIELD_GAMMA)
+}
 
 /**
  * The glyph shader's gamma-correct blending of exact pixel coverage, for a [UiFont.linearCoverage] atlas:
@@ -302,30 +345,13 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
         return t * t * (3f - 2f * t)
     }
 
-    fun median3(a: Float, b: Float, c: Float): Float = max(min(a, b), min(max(a, b), c))
-
+    /** A coverage-alpha atlas's alpha at ([u], [v]), 0-255; distance-field glyphs take [drawDistanceFieldGlyph]. */
     fun sampleGlyphAlpha(font: UiFont, glyph: UiDrawPrimitive.Glyph, u: Float, v: Float): Int {
-        val coverage = when (font.samplingMode) {
-            UiFontSamplingMode.CoverageAlpha,
-            UiFontSamplingMode.ColorRgba,
-            -> sampleAtlasChannel(font, u, v, 3)
-            UiFontSamplingMode.DistanceField -> {
-                val signedDistance = median3(
-                    sampleAtlasChannel(font, u, v, 0),
-                    sampleAtlasChannel(font, u, v, 1),
-                    sampleAtlasChannel(font, u, v, 2),
-                )
-                val texelWidth = max(MIN_TEXEL_WIDTH, (glyph.u1 - glyph.u0) * font.atlasWidth)
-                val screenPxPerTexel = glyph.w / texelWidth
-                val screenPxRange = max(0.5f * font.distanceFieldRangePx * screenPxPerTexel, 1f)
-                (screenPxRange * (signedDistance - 0.5f) + 0.5f).coerceIn(0f, 1f)
-            }
-        }
-        if (font.samplingMode == UiFontSamplingMode.CoverageAlpha && font.linearCoverage) {
+        val coverage = sampleAtlasChannel(font, u, v, 3)
+        if (font.linearCoverage) {
             return (linearCoverageAlpha(coverage, glyph.color) * 255f).toInt().coerceIn(0, 255)
         }
-        val gamma = if (font.samplingMode == UiFontSamplingMode.CoverageAlpha) 1f else GLYPH_GAMMA
-        return (coverage.pow(1f / gamma) * 255f).toInt().coerceIn(0, 255)
+        return (coverage * 255f).toInt().coerceIn(0, 255)
     }
 
     fun fillGradientRect(
@@ -479,9 +505,64 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
         }
     }
 
+    /**
+     * A distance-field glyph, drawn the way `AslUiShaders.UiGlyphShader` draws it: one bilinear,
+     * clamp-to-edge atlas sample at each covered pixel's centre (the pixels whose centres the quad
+     * covers, as the GPU rasterizes it), [distanceFieldCoverage] at [distanceFieldScreenPxRange],
+     * and the tint's alpha times that coverage, kept in float until the blend.
+     *
+     * No supersampling: the shader takes one sample a pixel, and a distance field needs none to
+     * stay sharp. Averaging several coverage samples a pixel, as the coverage-atlas path does,
+     * blurred every distance-field glyph drawn smaller than its atlas cell, which no backend does.
+     */
+    fun drawDistanceFieldGlyph(glyph: UiDrawPrimitive.Glyph, font: UiFont) {
+        val uvWidth = glyph.u1 - glyph.u0
+        val uvHeight = glyph.v1 - glyph.v0
+        val screenPxRange = distanceFieldScreenPxRange(
+            font.distanceFieldRangePx,
+            font.atlasWidth,
+            font.atlasHeight,
+            uvWidth,
+            uvHeight,
+            glyph.w,
+            glyph.h,
+        )
+        val x0 = max(ceil(glyph.x - 0.5f).toInt(), clipX0.toInt()).coerceIn(0, width)
+        val y0 = max(ceil(glyph.y - 0.5f).toInt(), clipY0.toInt()).coerceIn(0, height)
+        val x1 = min(ceil(glyph.x + glyph.w - 0.5f).toInt(), clipX1.toInt()).coerceIn(0, width)
+        val y1 = min(ceil(glyph.y + glyph.h - 0.5f).toInt(), clipY1.toInt()).coerceIn(0, height)
+        val r = glyph.color.r * 255f
+        val g = glyph.color.g * 255f
+        val b = glyph.color.b * 255f
+        val tintAlpha = glyph.color.a
+        var py = y0
+        while (py < y1) {
+            val v = glyph.v0 + (py + 0.5f - glyph.y) / glyph.h * uvHeight
+            var px = x0
+            while (px < x1) {
+                if (passesPathClips(px + 0.5f, py + 0.5f)) {
+                    val u = glyph.u0 + (px + 0.5f - glyph.x) / glyph.w * uvWidth
+                    val coverage = distanceFieldCoverage(
+                        sampleAtlasChannel(font, u, v, 0),
+                        sampleAtlasChannel(font, u, v, 1),
+                        sampleAtlasChannel(font, u, v, 2),
+                        screenPxRange,
+                    )
+                    pixelMap.blend(px, py, r, g, b, coverage * tintAlpha)
+                }
+                px += 1
+            }
+            py += 1
+        }
+    }
+
     fun drawGlyph(glyph: UiDrawPrimitive.Glyph, font: UiFont) {
         if (font.samplingMode == UiFontSamplingMode.ColorRgba) {
             drawColorGlyph(glyph, font)
+            return
+        }
+        if (font.samplingMode == UiFontSamplingMode.DistanceField) {
+            drawDistanceFieldGlyph(glyph, font)
             return
         }
         val x0 = max(glyph.x, clipX0).toInt().coerceIn(0, width)

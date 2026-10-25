@@ -28,6 +28,9 @@ internal object AslContinueSignal : RuntimeException()
 class AslEvaluator private constructor(
     private val definition: AslShaderDefinition,
 ) {
+    /** `let` values supplied instead of evaluated; see [traceFragment]'s `letOverrides`. */
+    private var letOverrides: Map<String, FloatArray> = emptyMap()
+
     /**
      * Evaluates an ASL expression on the CPU against the provided variable environment.
      *
@@ -101,7 +104,7 @@ class AslEvaluator private constructor(
 
     private fun executeOne(statement: AslStatement, env: MutableMap<String, FloatArray>) {
         when (statement) {
-            is AslLet -> env[statement.name] = eval(statement.value, env)
+            is AslLet -> env[statement.name] = letOverrides[statement.name] ?: eval(statement.value, env)
             is AslVar -> env[statement.name] = eval(statement.value, env)
             is AslSet -> env[statement.name] = eval(statement.value, env)
             is AslAssign -> env[statement.target.name] = eval(statement.value, env)
@@ -152,8 +155,21 @@ class AslEvaluator private constructor(
 
         /** [evalFragment] plus every top-level `let` in declaration order -- a debugger's
          * variable view for one pixel, no GPU capture tool involved. */
-        fun traceFragment(definition: AslShaderDefinition, inputs: Map<String, FloatArray>): AslFragmentTrace {
+        fun traceFragment(definition: AslShaderDefinition, inputs: Map<String, FloatArray>): AslFragmentTrace =
+            traceFragment(definition, inputs, emptyMap())
+
+        /**
+         * [traceFragment] with each `let` named in [letOverrides] taking that value instead of
+         * evaluating its expression: the way to probe the math around a texture read, a texture's
+         * size or a derivative, which the evaluator cannot compute. Every other `let` still runs.
+         */
+        fun traceFragment(
+            definition: AslShaderDefinition,
+            inputs: Map<String, FloatArray>,
+            letOverrides: Map<String, FloatArray>,
+        ): AslFragmentTrace {
             val evaluator = AslEvaluator(definition)
+            evaluator.letOverrides = letOverrides
             val env = HashMap<String, FloatArray>()
             definition.consts.forEach { env[it.name] = evaluator.eval(it.value, env) }
             env.putAll(inputs)

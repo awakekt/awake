@@ -25,6 +25,9 @@ import com.awakekt.awake.core.text.font.UiFont
  * @property font The typeface to measure and draw with, or null to inherit `LocalFont`.
  *   Compared by whatever equality the [UiFont] instance itself provides -- identity unless a
  *   font overrides it -- which matches the atlas cache a renderer keys on the same instance.
+ * @property kerning Whether the font's pair kerning moves adjacent characters, such as the `A` and `V`
+ *   of "AV", closer or apart; null to inherit. Kerning applies unless a style sets this to false, as a
+ *   browser's `font-kerning: auto` does, and measuring, painting, the caret and hit testing all follow it.
  */
 data class TextStyle(
     val color: Color? = null,
@@ -36,6 +39,7 @@ data class TextStyle(
     val shadow: TextShadow? = null,
     val outline: TextOutline? = null,
     val font: UiFont? = null,
+    val kerning: Boolean? = null,
 ) {
     /**
      * Default text style constants.
@@ -66,6 +70,7 @@ data class TextStyle(
             other.shadow ?: shadow,
             other.outline ?: outline,
             other.font ?: font,
+            other.kerning ?: kerning,
         )
     }
 
@@ -73,13 +78,15 @@ data class TextStyle(
     private fun inheritsNothingFrom(base: TextStyle): Boolean =
         (color != null || base.color == null) && (size != null || base.size == null) &&
             (lineHeight != null || base.lineHeight == null) && (shadow != null || base.shadow == null) &&
-            (outline != null || base.outline == null) && (font != null || base.font == null)
+            (outline != null || base.outline == null) && (font != null || base.font == null) &&
+            (kerning != null || base.kerning == null)
 
     /** Whether merging this over [base] gives [base]: every field it sets, [base] already has. */
     private fun changesNothingIn(base: TextStyle): Boolean =
         sameOrUnset(color, base.color) && sameOrUnset(size, base.size) && sameOrUnset(lineHeight, base.lineHeight) &&
             sameOrUnset(shadow, base.shadow) && sameOrUnset(outline, base.outline) && sameOrUnset(font, base.font) &&
-            scale == base.scale && weight == base.weight && letterSpacing == base.letterSpacing
+            sameOrUnset(kerning, base.kerning) && scale == base.scale && weight == base.weight &&
+            letterSpacing == base.letterSpacing
 }
 
 private fun <T> sameOrUnset(value: T?, base: T?): Boolean = value == null || value == base

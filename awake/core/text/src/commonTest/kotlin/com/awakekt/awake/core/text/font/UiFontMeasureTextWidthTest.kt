@@ -20,11 +20,12 @@ class UiFontMeasureTextWidthTest {
     private val font = UiFonts.trueSans()
     private val glyphPx = 24f
 
-    /** Ground truth: the pixel position where the trailing glyph's ink actually ends. */
+    /** Ground truth: the pixel position where the trailing glyph's ink actually ends, after pair kerning. */
     private fun trueRightEdgePx(label: String): Float {
         var penX = 0f
         var rightEdge = 0f
-        label.forEach { char ->
+        label.forEachIndexed { index, char ->
+            if (index > 0) penX += font.kerningFor(label[index - 1].code, char.code, glyphPx)
             val glyph = font.uvFor(char)
             if (glyph != null) {
                 rightEdge = penX + (glyph.offsetXEm + glyph.widthEm) * glyphPx

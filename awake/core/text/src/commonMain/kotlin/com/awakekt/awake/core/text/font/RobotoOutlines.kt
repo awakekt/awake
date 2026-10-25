@@ -11,8 +11,8 @@ import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
 /**
- * The outlines of the built-in Roboto's atlas glyphs, one face per weight, read from
- * [RobotoUiFontOutlineData] the first time a face's [PackedUiFont.pixelGlyphs] are asked for.
+ * The outlines and pair kerning of the built-in Roboto's atlas glyphs, one face per weight, read from
+ * [RobotoUiFontOutlineData] the first time a face's [PackedUiFont.pixelGlyphs] or kerning are asked for.
  *
  * Shared by every [PackedUiFont] of a weight, whatever its cell size, so a face is decoded once.
  */

@@ -58,11 +58,11 @@ class TextLayoutConformanceTest {
 
     @Test
     fun knownGapsDoNotPermitUnrelatedDrift() {
-        assertEquals("PASS", classify(10.2, 10.0, 10.2, xfail(1022)))
-        assertEquals("XFAIL #1022", classify(12.0, 10.0, 12.0, xfail(1022)))
-        assertEquals("FAIL", classify(13.0, 10.0, 12.0, xfail(1022)))
+        assertEquals("PASS", classify(10.2, 10.0, 10.2, xfail(1023)))
+        assertEquals("XFAIL #1023", classify(12.0, 10.0, 12.0, xfail(1023)))
+        assertEquals("FAIL", classify(13.0, 10.0, 12.0, xfail(1023)))
         assertEquals("FAIL", classify(12.0, 10.0, 12.0, null))
-        assertEquals("FAIL", classify(Double.NaN, 10.0, 12.0, xfail(1022)))
+        assertEquals("FAIL", classify(Double.NaN, 10.0, 12.0, xfail(1023)))
         // Line 2 of a 17.5 px browser line: Core's whole 18 px advance puts it at 36, the browser at 35.
         assertEquals("SNAP", classify(36.0, 35.0, 2 * 18.0, WHOLE_PIXEL_ADVANCE, controlTolerance = 0.02))
         assertEquals("FAIL", classify(37.0, 35.0, 2 * 18.0, WHOLE_PIXEL_ADVANCE, controlTolerance = 0.02))
@@ -80,7 +80,18 @@ class TextLayoutConformanceTest {
     private fun measure(spec: JsonObject, font: UiFont): Layout {
         val size = spec.number("sizePx").toFloat()
         val density = spec.number("density").toFloat()
-        val style = TextStyle(font = font, size = (size / density).sp, lineHeight = spec.optionalNumber("lineHeightPx")?.let { (it.toFloat() / density).sp })
+        // The browser's `font-kerning`: `normal` kerns, as Core does by default, and `none` turns it off.
+        val kerning = when (val value = spec.string("kerning")) {
+            "normal" -> true
+            "none" -> false
+            else -> error("Unsupported font-kerning '$value' in ${spec.string("id")}")
+        }
+        val style = TextStyle(
+            font = font,
+            size = (size / density).sp,
+            lineHeight = spec.optionalNumber("lineHeightPx")?.let { (it.toFloat() / density).sp },
+            kerning = kerning,
+        )
         val text = spec.string("text")
         val run = TextRun(text, style, font, size, density, wrapWidthPx = spec.optionalNumber("wrapWidthPx")?.toFloat() ?: Float.POSITIVE_INFINITY)
         val scope = LayoutRecordingScope()
@@ -112,8 +123,9 @@ class TextLayoutConformanceTest {
 
     private fun compare(spec: JsonObject, actual: Layout, reference: JsonObject, control: JsonObject) {
         val id = spec.string("id")
+        // Kerning (#1022) is implemented and wired through `kerning` above, so a kerned case is held to the
+        // browser with no expected-failure signature of its own.
         val featureIssue = when {
-            spec.string("kerning") != "none" -> xfail(1022)
             spec.string("numeric") != "normal" -> xfail(1023)
             spec.optionalNumber("wrapWidthPx") != null -> xfail(1021)
             else -> null

@@ -73,7 +73,9 @@ covered separately by the existing FreeType reference suite (#993).
 ```
 
 The test calls production `TextRun` layout and painting, records glyph quads on the
-CPU, and recovers their origins/baselines from the face's bearing metrics. It paints
+CPU, and recovers their origins/baselines from the face's bearing metrics. A case's
+`kerning` reaches the run as `TextStyle.kerning`: `normal` kerns, as Core does by
+default (#1022), and `none` turns it off, as the browser's `font-kerning: none` does. It paints
 into a scope that is not device-pixel aligned, so every size draws from the distance
 field and layout is measured independently of exact-size raster rounding, while the
 fonts keep their production pixel-glyph limit, which the line box reads (#1024: a
@@ -88,9 +90,6 @@ The browser is always the first comparison. A passing metric is `PASS`, includin
 a previously failing metric fixed by later work. Other deviations can be `XFAIL`
 only when they match one of these narrow pre-fix signatures:
 
-- [#1022](https://github.com/awakekt/awake/issues/1022): a kerning-enabled case
-  instead matches the independently captured browser control with kerning disabled
-  (within 0.1 px, and exact wrap indices/count).
 - [#1023](https://github.com/awakekt/awake/issues/1023): a requested numeric feature
   instead matches the independently captured browser control using normal digits
   (within 0.1 px). Already-tabular default digits may pass without that feature API.
