@@ -233,6 +233,9 @@ internal suspend fun joltHeapBytesInUse(): Long = joltHeapInUse(JoltModule.get()
         const oneLayer = new Map();
         // A stationary initial overlap otherwise has no separating axis to normalize.
         query.castSettings.mReturnDeepestPoint = true;
+        // Triangle back faces block as well (#1030): a sweep let through a one-sided mesh from
+        // behind leaves the shape inside it, where every later sweep hits at fraction 0.
+        query.castSettings.mBackFaceModeTriangles = jolt.EBackFaceMode_CollideWithBackFaces;
         world.query = query;
         world.oneLayer = oneLayer;
         world.layerFilter = (onlyLayer) => {

@@ -328,6 +328,24 @@ class JoltShapeCastTest {
     }
 
     @Test
+    fun aSweepIsStoppedByATriangleMeshFromBehindToo() = runTest {
+        world { world ->
+            // The quad faces up, so this sweep meets its back face. Let through, a capsule ends up
+            // inside the surface, and a character there is held for good (#1030).
+            val roof = world.createBody(quadMesh(), Vec3f(0f, 2f, 0f), Quat.IDENTITY, MotionType.STATIC)
+
+            val hit = assertNotNull(
+                world.shapeCast(SphereShape(0.5f), Vec3f(0.3f, 0f, 0.2f), Vec3f(0.3f, 4f, 0.2f)),
+            )
+
+            assertEquals(roof, hit.handle)
+            // The sphere's top meets y = 2 when its centre is at 1.5: 1.5 of a 4-unit sweep.
+            assertTrue(abs(hit.fraction - 0.375f) < 0.01f, "expected fraction ~0.375, got ${hit.fraction}")
+            assertTrue(hit.normal.y < -0.99f, "a surface met from below faces back down, got ${hit.normal}")
+        }
+    }
+
+    @Test
     fun aMeshCannotBeDynamic() = runTest {
         world { world ->
             // A surface has no inside, so it has no mass and nothing to simulate.

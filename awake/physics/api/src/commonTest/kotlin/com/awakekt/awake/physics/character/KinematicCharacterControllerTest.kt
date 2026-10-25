@@ -40,8 +40,18 @@ import kotlin.test.assertTrue
  */
 class KinematicCharacterControllerTest {
 
-    /** A plane the character can stand on, angled by giving it a normal. */
-    private class Surface(val normal: Vec3f, val fraction: Float, val handle: BodyHandle)
+    /**
+     * A plane the character can stand on, angled by giving it a normal.
+     *
+     * [point] is where the contact is. Left null, it is where a capsule merely touching the plane
+     * would meet it -- so the controller sees a resting contact, not an overlap to push out of.
+     */
+    private class Surface(
+        val normal: Vec3f,
+        val fraction: Float,
+        val handle: BodyHandle,
+        val point: Vec3f? = null,
+    )
 
     private class StubWorld : PhysicsWorld {
         /** Consulted per sweep; return `null` for a clear path. */
@@ -63,7 +73,29 @@ class KinematicCharacterControllerTest {
             sweeps += Vec3f(from.x, from.y, from.z) to Vec3f(to.x, to.y, to.z)
             sweptShapes += shape
             val surface = onSweep(from, to) ?: return null
-            return ShapeCastHit(surface.handle, Vec3f(0f, 0f, 0f), surface.normal, surface.fraction)
+            val point = surface.point ?: touchingPoint(shape, from, to, surface)
+            return ShapeCastHit(surface.handle, point, surface.normal, surface.fraction)
+        }
+
+        /**
+         * The capsule's own point furthest against the normal, where the sweep reaches the plane.
+         * A malformed normal or fraction gets the origin instead, so the hit's own validation is
+         * what reports it.
+         */
+        private fun touchingPoint(shape: PhysicsShape, from: Vec3f, to: Vec3f, surface: Surface): Vec3f {
+            val normal = surface.normal
+            val length = normal.length3()
+            val usable = length > 0f && length.isFinite() && surface.fraction in 0f..1f
+            if (!usable) return Vec3f(0f, 0f, 0f)
+            val capsule = shape as? CapsuleShape
+            val extent = if (capsule == null) 0f else capsule.halfHeight * abs(normal.y) / length + capsule.radius
+            val t = surface.fraction
+            val back = extent / length
+            return Vec3f(
+                from.x + (to.x - from.x) * t - normal.x * back,
+                from.y + (to.y - from.y) * t - normal.y * back,
+                from.z + (to.z - from.z) * t - normal.z * back,
+            )
         }
 
         override fun createBody(
@@ -707,5 +739,203 @@ class KinematicCharacterControllerTest {
 
         assertTrue(character.standUp())
         assertEquals(0, world.sweeps.size, "no headroom check is needed to stay standing")
+    }
+
+    // --- overlaps and wedges (#1030) ----------------------------------------------------------
+
+    private companion object {
+        const val FALL_STEP = 1f / 60f
+        const val FALL_GRAVITY = -14f
+        const val JUMP_SPEED = 6f
+
+        /** Half the small capsule's height: its reach either side of a level surface. */
+        const val SMALL_HALF_EXTENT = 0.8f
+    }
+
+    /** The capsule from the report: radius 0.3, half-height 0.5. */
+    private val smallConfig = CharacterConfig(shape = CapsuleShape(halfHeight = 0.5f, radius = 0.3f))
+
+    /** A caller integrating gravity and jumping, which the controller deliberately does not. */
+    private class Faller(val character: KinematicCharacterController) {
+        private var verticalVelocity = 0f
+
+        fun step() {
+            verticalVelocity = if (character.isGrounded) 0f else verticalVelocity + FALL_GRAVITY * FALL_STEP
+            character.move(Vec3f(0f, verticalVelocity * FALL_STEP, 0f), FALL_STEP)
+        }
+
+        fun jump() {
+            verticalVelocity = JUMP_SPEED
+            character.move(Vec3f(0f, verticalVelocity * FALL_STEP, 0f), FALL_STEP)
+        }
+    }
+
+    /**
+     * A zero-thickness sheet at y = [height], swept the way the backend now sweeps a one-sided
+     * mesh: either face stops a sweep, and a sweep that starts inside it reports fraction 0 with
+     * the deepest point on the sheet. [overlapNormalY] chooses that contact's normal per query,
+     * because which way it faces is exactly what the report found to flip.
+     */
+    private fun sheetWorld(height: Float, overlapNormalY: (query: Int) -> Float): StubWorld =
+        StubWorld().apply {
+            var queries = 0
+            onSweep = { from, to ->
+                queries++
+                val above = from.y >= height
+                val gap = abs(from.y - height) - SMALL_HALF_EXTENT
+                val closing = if (above) from.y - to.y else to.y - from.y
+                when {
+                    gap < 0f -> Surface(
+                        Vec3f(0f, overlapNormalY(queries), 0f),
+                        0f,
+                        BodyHandle(30L),
+                        point = Vec3f(from.x, height, from.z),
+                    )
+                    closing > 0f && gap <= closing ->
+                        Surface(Vec3f(0f, if (above) 1f else -1f, 0f), gap / closing, BodyHandle(30L))
+                    else -> null
+                }
+            }
+        }
+
+    @Test
+    fun aCapsuleStartingInsideAOneSidedSurfaceGetsOutWithinAFewSteps() {
+        val sheetY = 1.64f
+        val overlapNormals = listOf<Pair<String, (Int) -> Float>>(
+            "flipping every query" to { query: Int -> if (query % 2 == 1) 1f else -1f },
+            "down, the shorter way out" to { _: Int -> -1f },
+            "up, the face normal" to { _: Int -> 1f },
+        )
+        for ((label, overlapNormalY) in overlapNormals) {
+            // The head through the sheet from below, as a jump into a one-sided roof left it.
+            val character = KinematicCharacterController(sheetWorld(sheetY, overlapNormalY), smallConfig, Vec3f(0f, 1.3f, 0f))
+            val faller = Faller(character)
+
+            repeat(3) { faller.step() }
+
+            // Before, this rocked in place or crept out a skin width per step: held for good.
+            val clearance = abs(character.position.y - sheetY) - SMALL_HALF_EXTENT
+            assertTrue(clearance >= -1e-4f, "$label: still inside the sheet at y=${character.position.y}")
+        }
+    }
+
+    @Test
+    fun anOverlapFoundByTheGroundProbeIsNotTakenForGround() {
+        // Asked to move nowhere, the only sweep is the ground probe, and it starts inside the sheet
+        // with the face normal up: walkable, so this used to stand there, inside, for good.
+        val character = KinematicCharacterController(sheetWorld(1.64f) { 1f }, smallConfig, Vec3f(0f, 1.3f, 0f))
+
+        repeat(3) { character.move(Vec3f(0f, 0f, 0f)) }
+
+        val clearance = abs(character.position.y - 1.64f) - SMALL_HALF_EXTENT
+        assertTrue(clearance >= -1e-4f, "still inside the sheet at y=${character.position.y}")
+        assertTrue(character.isGrounded, "out on top of the sheet, it stands on it")
+    }
+
+    @Test
+    fun anOverlapIsPushedOutOncePerMoveAndNeverFurtherThanTheCapsule() {
+        val world = StubWorld().apply {
+            // Always as deep inside as a capsule can be, wherever it goes: only the limits stop it.
+            onSweep = { from, _ ->
+                Surface(Vec3f(0f, 1f, 0f), 0f, BodyHandle(5L), point = Vec3f(from.x, from.y + 0.79f, from.z))
+            }
+        }
+        val character = KinematicCharacterController(world, smallConfig)
+
+        character.move(Vec3f(0.1f, 0f, 0f))
+
+        // One push of 1.59 plus the skin width, then a skin width per remaining slide and for the
+        // ground settle. A push on every iteration would be four times as far.
+        val y = character.position.y
+        assertTrue(y > 1.5f, "the overlap must be pushed out of, y=$y")
+        assertTrue(y < 2f * SMALL_HALF_EXTENT + 6f * smallConfig.skinWidth, "pushed more than once, y=$y")
+    }
+
+    @Test
+    fun aContactPointOutsideTheCapsuleIsNotAnOverlap() {
+        val world = StubWorld().apply {
+            // Further along the normal than the capsule reaches, so nothing of it is inside.
+            onSweep = { from, _ ->
+                Surface(Vec3f(0f, 1f, 0f), 0f, BodyHandle(5L), point = Vec3f(from.x, from.y + 1f, from.z))
+            }
+        }
+        val character = KinematicCharacterController(world, smallConfig)
+
+        character.move(Vec3f(0.1f, 0f, 0f))
+
+        // Only the skin widths sliding and settling add, as for any resting contact.
+        assertTrue(character.position.y < 0.2f, "y=${character.position.y}")
+    }
+
+    /**
+     * Two faces meeting at the origin in a V along z, each 60 degrees -- past the 45-degree limit,
+     * so neither is ground on its own. Solid below each plane; a sweep reports the first face it
+     * reaches with the contact on that face, and one that starts inside a face reports it at
+     * fraction 0.
+     */
+    private fun vWorld(): StubWorld = StubWorld().apply {
+        val faces = listOf(
+            BodyHandle(21L) to Vec3f(0.8660254f, 0.5f, 0f),
+            BodyHandle(22L) to Vec3f(-0.8660254f, 0.5f, 0f),
+        )
+        onSweep = { from, to ->
+            var nearest: Surface? = null
+            for ((handle, normal) in faces) {
+                val gap = normal.dot(from) - (0.5f * normal.y + 0.3f)
+                val closing = -(normal.x * (to.x - from.x) + normal.y * (to.y - from.y) + normal.z * (to.z - from.z))
+                val fraction = when {
+                    gap < 0f -> 0f
+                    closing > 0f && gap <= closing -> gap / closing
+                    else -> null
+                }
+                if (fraction != null && (nearest == null || fraction < nearest.fraction)) {
+                    val centre = Vec3f(
+                        from.x + (to.x - from.x) * fraction,
+                        from.y + (to.y - from.y) * fraction,
+                        from.z + (to.z - from.z) * fraction,
+                    )
+                    val onFace = normal.dot(centre)
+                    val point = Vec3f(centre.x - normal.x * onFace, centre.y - normal.y * onFace, centre.z - normal.z * onFace)
+                    nearest = Surface(normal, fraction, handle, point)
+                }
+            }
+            nearest
+        }
+    }
+
+    @Test
+    fun aCapsuleRestingInAVBetweenTwoSteepFacesIsGroundedAndCanJump() {
+        val character = KinematicCharacterController(vWorld(), smallConfig, Vec3f(0.05f, 2f, 0f))
+        val faller = Faller(character)
+
+        var steps = 0
+        while (!character.isGrounded && steps < 120) {
+            faller.step()
+            steps++
+        }
+
+        // Before, each probe saw one face, too steep to stand on: blocked by both, never grounded.
+        assertTrue(character.isGrounded, "expected the V to hold the character up, y=${character.position.y}")
+        assertTrue(character.groundNormal.y > 0.99f, "the two faces together push straight up: ${character.groundNormal}")
+        val restingY = character.position.y
+        repeat(10) { faller.step() }
+        assertTrue(character.isGrounded, "at rest in the V, it stays grounded")
+
+        faller.jump()
+
+        assertFalse(character.isGrounded, "a jump leaves the V")
+        assertTrue(character.position.y > restingY + 0.05f, "expected to rise out of the V, y=${character.position.y}")
+    }
+
+    @Test
+    fun aLoneSteepSlopeIsStillNotGroundWhenTheDownhillProbeFindsOnlyItself() {
+        // The downhill probe meets the same face again, leaning the same way: no V, no support.
+        val world = groundOnly(Vec3f(0.866f, 0.5f, 0f))
+        val character = controller(world)
+
+        character.move(Vec3f(0f, 0f, 0f))
+
+        assertFalse(character.isGrounded)
+        assertEquals(2, world.sweeps.size, "the ground probe plus one downhill probe")
     }
 }

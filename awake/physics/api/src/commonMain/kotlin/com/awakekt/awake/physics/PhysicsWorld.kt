@@ -227,6 +227,11 @@ interface PhysicsWorld {
      * sphere, both symmetric about the sweep, so one would be a parameter every call site passes
      * an identity to. A box sweep can add it.
      *
+     * **A triangle surface blocks a sweep from either side.** A [MeshShape] or [HeightFieldShape]
+     * is one-sided to the simulation, but a sweep asks what would stop you, and one let through a
+     * surface from behind ends inside it -- where every later sweep reports a hit at fraction 0
+     * and a character can never leave. Raycasts are unaffected.
+     *
      * **A sensor is never reported by a cast.** It is not solid, so it is not an answer to "what
      * would block me" -- and reporting one would turn every trigger volume into an invisible wall
      * the player walks into. [overlapShape] is the query that does see them, which is the whole
