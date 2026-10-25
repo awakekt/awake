@@ -75,8 +75,10 @@ fun ShadcnSidebar(
             modifier
                 .fillMaxHeight()
                 .background(theme.palette.sidebar)
-                .padding(SidebarPadding)
-                .clipToBounds(),
+                // Before the padding: CSS `overflow` clips at the padding box, so ink that spills
+                // past a child's box into the panel's `p-2` (a leading `j`'s tail) is kept.
+                .clipToBounds()
+                .padding(SidebarPadding),
             verticalArrangement = Arrangement.spacedBy(Tw.Spacing.s2),
         ) {
             CompositionLocalProvider(
