@@ -28,16 +28,17 @@ class ProtectedContentDocsSampleTest {
     private inner class GameHttpClient {
         val sent = mutableListOf<Pair<String, Map<String, String>>>()
 
-        suspend fun get(url: String, headers: Map<String, String>): Pair<Int, ByteArray> {
+        /** Answers the status, the body and the response headers. */
+        suspend fun get(url: String, headers: Map<String, String>): Triple<Int, ByteArray, Map<String, String>> {
             sent += url to headers
             val authorized = headers["Authorization"] == "Bearer player-token" || url.endsWith("access_token=player-token")
             val body = when (url.substringBefore('?')) {
                 "https://content.example.com/release/project.index.json" ->
                     Json.encodeToString(ProjectIndex.serializer(), index).encodeToByteArray()
                 "https://content.example.com/release/files/assets/crate.glb" -> model
-                else -> return 404 to ByteArray(0)
+                else -> return Triple(404, ByteArray(0), emptyMap())
             }
-            return if (authorized) 200 to body else 401 to ByteArray(0)
+            return if (authorized) Triple(200, body, emptyMap()) else Triple(401, ByteArray(0), emptyMap())
         }
     }
 
@@ -62,9 +63,10 @@ class ProtectedContentDocsSampleTest {
         // --8<-- [start:transport]
         val baseUrl = "https://content.example.com/release/"
         val transport = ContentTransport { request ->
-            // Resolve the index's relative URLs, send the headers, and answer every status, 401 included.
-            val (status, body) = httpClient.get(baseUrl + request.url, request.headers)
-            ContentResponse(status, body)
+            // Resolve the index's relative URLs, send the headers, and answer every status, 401 and 429
+            // included, with the response headers, so a 429's Retry-After is honoured.
+            val (status, body, headers) = httpClient.get(baseUrl + request.url, request.headers)
+            ContentResponse(status, body, headers)
         }
         // --8<-- [end:transport]
 
