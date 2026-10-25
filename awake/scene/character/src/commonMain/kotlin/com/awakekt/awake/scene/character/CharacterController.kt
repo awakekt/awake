@@ -126,18 +126,29 @@ class CharacterController(
         stepped = true
     }
 
-    /** Shows the pose [alpha] of the way from the previous step to the newest, the yaw turning the short way. */
+    /**
+     * Shows the pose [alpha] of the way between steps, the yaw turning the short way.
+     * Invalid blend fractions leave the pose alone; non-finite stepped yaw leaves rendered yaw
+     * alone while position still blends. Finite yaw is reduced by whole turns before blending.
+     */
     internal fun blendInto(transform: Transform, alpha: Float) {
-        if (!stepped) return
+        val validBlend = stepped && alpha.isFinite() && alpha in 0f..1f
+        if (!validBlend) return
         transform.position.set(
             previousPosition.x + (currentPosition.x - previousPosition.x) * alpha,
             previousPosition.y + (currentPosition.y - previousPosition.y) * alpha,
             previousPosition.z + (currentPosition.z - previousPosition.z) * alpha,
         )
-        var turn = currentYaw - previousYaw
-        while (turn > PI) turn -= TWO_PI
-        while (turn < -PI) turn += TWO_PI
-        blendedYaw = previousYaw + turn * alpha
+        if (!currentYaw.isFinite() || !previousYaw.isFinite()) {
+            blendedYaw = Float.NaN
+            return
+        }
+        val previous = previousYaw.toDouble() % TWO_PI
+        val current = currentYaw.toDouble() % TWO_PI
+        var turn = (current - previous) % TWO_PI
+        if (turn > PI) turn -= TWO_PI
+        if (turn < -PI) turn += TWO_PI
+        blendedYaw = (previous + turn * alpha).toFloat()
         transform.rotation.y = blendedYaw
     }
 }
@@ -186,4 +197,4 @@ private const val DEFAULT_HALF_HEIGHT = 0.5f
 private const val DEFAULT_GRAVITY = -9.81f
 private val DEFAULTS = CharacterConfig(CapsuleShape(DEFAULT_HALF_HEIGHT, DEFAULT_RADIUS))
 
-private const val TWO_PI = (2 * PI).toFloat()
+private const val TWO_PI = 2 * PI
