@@ -146,3 +146,20 @@ interface TransportSession {
     /** Closes this session and terminates the client connection. */
     suspend fun close()
 }
+
+/** Optional telemetry for a session whose receive queue can discard packets. */
+interface InboundDropMetrics {
+    /**
+     * Cumulative packets discarded by the inbound queue, including overflow and cancelled
+     * receive handoffs. This is actual loss, not queue occupancy or proof of an abusive peer.
+     * Reading does not reset it; the count remains available after close.
+     */
+    val droppedInbound: Long
+}
+
+/**
+ * Actual inbound queue discards, or null when this transport does not report them.
+ * An optional capability keeps existing [TransportSession] implementations binary-compatible.
+ */
+val TransportSession.droppedInbound: Long?
+    get() = (this as? InboundDropMetrics)?.droppedInbound

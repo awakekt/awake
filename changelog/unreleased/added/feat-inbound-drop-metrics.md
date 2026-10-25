@@ -1,0 +1,1 @@
+- Expose optional inbound packet-loss telemetry for transport sessions; Ktor counts undelivered queue packets while retaining its drop-oldest policy.

@@ -59,6 +59,10 @@ public final class com/awakekt/awake/net/DeliveryChannel : java/lang/Enum {
 	public static fun values ()[Lcom/awakekt/awake/net/DeliveryChannel;
 }
 
+public abstract interface class com/awakekt/awake/net/InboundDropMetrics {
+	public abstract fun getDroppedInbound ()J
+}
+
 public final class com/awakekt/awake/net/NetId {
 	public static final field Companion Lcom/awakekt/awake/net/NetId$Companion;
 	public static final synthetic fun box-impl (J)Lcom/awakekt/awake/net/NetId;
@@ -348,6 +352,10 @@ public abstract interface class com/awakekt/awake/net/Transport {
 	public abstract fun getState ()Lkotlinx/coroutines/flow/StateFlow;
 	public abstract fun incoming ()Lkotlinx/coroutines/channels/ReceiveChannel;
 	public abstract fun send (Lcom/awakekt/awake/net/DeliveryChannel;[BLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/net/TransportKt {
+	public static final fun getDroppedInbound (Lcom/awakekt/awake/net/TransportSession;)Ljava/lang/Long;
 }
 
 public abstract interface class com/awakekt/awake/net/TransportServer {

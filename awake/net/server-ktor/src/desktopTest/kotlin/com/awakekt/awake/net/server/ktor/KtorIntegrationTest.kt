@@ -9,6 +9,7 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.net.DeliveryChannel
 import com.awakekt.awake.net.TransportServer
 import com.awakekt.awake.net.TransportSession
+import com.awakekt.awake.net.droppedInbound
 import com.awakekt.awake.net.server.codec.MessageCodec
 import com.awakekt.awake.net.server.feature.Features
 import com.awakekt.awake.net.server.feature.gameFeature
@@ -32,6 +33,30 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class KtorIntegrationTest {
+
+    @Test
+    fun peerBurstReportsActualInboundDropsAndRetainsTheNewestPackets() = testApplication {
+        lateinit var transport: TransportServer
+        application {
+            install(GameTransport) {
+                path = "/inbound-drops"
+                inboxCapacity = 2
+            }
+            transport = gameTransport
+        }
+        val client = createClient { install(WebSockets) }
+        client.webSocket("/inbound-drops") {
+            withTimeout(5_000) {
+                val session = transport.sessions().receive()
+                repeat(5) { send(Frame.Binary(true, "packet:$it".encodeToByteArray())) }
+                while (session.droppedInbound != 3L) delay(1)
+                assertEquals("packet:3", session.incoming().receive().decodeToString())
+                assertEquals("packet:4", session.incoming().receive().decodeToString())
+                session.close()
+                assertEquals(3L, session.droppedInbound)
+            }
+        }
+    }
 
     @Test
     fun peerReceivesEveryAcceptedPacketWhenServerClosesImmediately() = testApplication {
