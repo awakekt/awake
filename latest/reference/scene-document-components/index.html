@@ -6220,6 +6220,87 @@ Like <code>mesh</code>, it uses <code>MeshColliderSystem</code> to build the bod
 </tr>
 </tbody>
 </table>
+<p>Each effect is an object whose <code>type</code> names it. The camera's colour is already tone mapped and
+encoded by the lit shaders, so a <code>tone_mapping_grade</code> must use <code>"mode": "Passthrough"</code>: a scene
+with an enabled <code>PbrNeutral</code> one, or with two enabled <code>tone_mapping_grade</code> effects, fails
+validation. The <a href="../../guides/lights-and-shadows/#add-post-processing">Lights and shadows guide</a>
+lists the valid combinations.</p>
+<p><code>tone_mapping_grade</code>, one grading pass:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>enabled</code></td>
+<td>boolean</td>
+<td><code>true</code></td>
+<td>Whether the pass runs.</td>
+</tr>
+<tr>
+<td><code>mode</code></td>
+<td><code>PbrNeutral</code> · <code>Passthrough</code></td>
+<td><code>PbrNeutral</code></td>
+<td><code>Passthrough</code> grades only. <code>PbrNeutral</code> then applies the PBR Neutral curve and the gamma 2.2 encode, which a scene camera's colour already has, so a scene refuses it.</td>
+</tr>
+<tr>
+<td><code>exposure</code></td>
+<td>number</td>
+<td><code>1</code></td>
+<td>Multiplies the colour before grading. Finite and above 0.</td>
+</tr>
+<tr>
+<td><code>contrast</code></td>
+<td>number</td>
+<td><code>1</code></td>
+<td>Contrast around mid-grey 0.18. Finite and at least 0.</td>
+</tr>
+<tr>
+<td><code>saturation</code></td>
+<td>number</td>
+<td><code>1</code></td>
+<td>0 is grey, 1 as drawn. Finite and at least 0.</td>
+</tr>
+<tr>
+<td><code>whiteBalanceTemperature</code></td>
+<td>number</td>
+<td><code>0</code></td>
+<td>Cool (-1) to warm (1).</td>
+</tr>
+<tr>
+<td><code>whiteBalanceTint</code></td>
+<td>number</td>
+<td><code>0</code></td>
+<td>Green (-1) to magenta (1).</td>
+</tr>
+<tr>
+<td><code>lift</code></td>
+<td>array</td>
+<td><code>[0, 0, 0]</code></td>
+<td>Added to the shadows, per channel.</td>
+</tr>
+<tr>
+<td><code>gamma</code></td>
+<td>array</td>
+<td><code>[1, 1, 1]</code></td>
+<td>Midtone exponent, per channel.</td>
+</tr>
+<tr>
+<td><code>gain</code></td>
+<td>array</td>
+<td><code>[1, 1, 1]</code></td>
+<td>Highlight multiplier, per channel.</td>
+</tr>
+</tbody>
+</table>
+<p><code>bloom</code>: <code>enabled</code>, <code>intensity</code> (<code>0.5</code>), <code>threshold</code> (<code>1</code>), <code>knee</code> (<code>0.5</code>, 0 to 1) and <code>radius</code>
+(<code>8</code>, in pixels). <code>fxaa</code>: <code>enabled</code> and <code>quality</code> (<code>Off</code> · <code>Low</code> · <code>Medium</code> · <code>High</code>, default <code>High</code>).
+<code>custom</code>: <code>enabled</code>, <code>shaderId</code> (a registered image-pass shader) and <code>parameters</code> (its floats).</p>
 <h2 id="prefab_link"><code>prefab_link</code></h2>
 <p>Places a prefab file at this node. <code>SceneDocument.withPrefabs</code> (which <code>loadProject</code> runs)
 puts the prefab's root under the node, so the node's transform places it and its own components add

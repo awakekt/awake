@@ -1177,6 +1177,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#add-post-processing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Add post-processing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#properties" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2452,6 +2463,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#add-post-processing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Add post-processing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#properties" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2718,6 +2740,99 @@ Raise the sun's <code>ambient</code> to lift those areas.</p>
 <code>ambientLight()</code>, and Studio's <strong>Ambient Light</strong> slider edits it. It loads and saves, but no
 render system reads it. Use the sun's <code>ambient</code> field to change the ambient level.</p>
 </div>
+<h2 id="add-post-processing">Add post-processing</h2>
+<p>A camera's <code>post_processing</code> component runs an ordered list of effects over what the camera drew,
+before the UI is drawn on top. The colour it reads is already display-ready: every lit shader
+applies the exposure, the PBR Neutral curve and the gamma encode itself. So the stack has no
+tone-mapping step of its own, and each effect works on that colour as it is.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="5:3"><input checked="checked" id="__tabbed_5_1" name="__tabbed_5" type="radio" /><input id="__tabbed_5_2" name="__tabbed_5" type="radio" /><input id="__tabbed_5_3" name="__tabbed_5" type="radio" /><div class="tabbed-labels"><label for="__tabbed_5_1">Scene document</label><label for="__tabbed_5_2">Scene DSL</label><label for="__tabbed_5_3">Studio</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="language-json highlight"><span class="filename">post-processing.scene.json</span><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="p">{</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span><span class="nt">"version"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span><span class="nt">"nodes"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">    </span><span class="p">{</span>
+</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">      </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"camera"</span><span class="p">,</span>
+</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">      </span><span class="nt">"components"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">        </span><span class="p">{</span>
+</span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="w">          </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"camera"</span><span class="p">,</span>
+</span><span id="__span-8-9"><a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="w">          </span><span class="nt">"eye"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"x"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="nt">"y"</span><span class="p">:</span><span class="w"> </span><span class="mf">1.5</span><span class="p">,</span><span class="w"> </span><span class="nt">"z"</span><span class="p">:</span><span class="w"> </span><span class="mf">4.0</span><span class="w"> </span><span class="p">},</span>
+</span><span id="__span-8-10"><a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="w">          </span><span class="nt">"center"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"x"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="nt">"y"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.5</span><span class="p">,</span><span class="w"> </span><span class="nt">"z"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.0</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-8-11"><a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="w">        </span><span class="p">},</span>
+</span><span id="__span-8-12"><a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="w">        </span><span class="p">{</span>
+</span><span id="__span-8-13"><a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="w">          </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"post_processing"</span><span class="p">,</span>
+</span><span id="__span-8-14"><a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="w">          </span><span class="nt">"effects"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+</span><span id="__span-8-15"><a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a><span class="w">            </span><span class="p">{</span><span class="w"> </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"tone_mapping_grade"</span><span class="p">,</span><span class="w"> </span><span class="nt">"mode"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Passthrough"</span><span class="p">,</span><span class="w"> </span><span class="nt">"saturation"</span><span class="p">:</span><span class="w"> </span><span class="mf">1.1</span><span class="w"> </span><span class="p">},</span>
+</span><span id="__span-8-16"><a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a><span class="w">            </span><span class="p">{</span><span class="w"> </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fxaa"</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-8-17"><a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a><span class="w">          </span><span class="p">]</span>
+</span><span id="__span-8-18"><a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a><span class="w">        </span><span class="p">}</span>
+</span><span id="__span-8-19"><a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a><span class="w">      </span><span class="p">]</span>
+</span><span id="__span-8-20"><a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-8-21"><a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a><span class="w">  </span><span class="p">]</span>
+</span><span id="__span-8-22"><a id="__codelineno-8-22" name="__codelineno-8-22" href="#__codelineno-8-22"></a><span class="p">}</span>
+</span></code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="n">world</span><span class="p">.</span><span class="na">scene</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">    </span><span class="n">entity</span><span class="p">(</span><span class="s">"camera"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">        </span><span class="n">with</span><span class="p">(</span>
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">            </span><span class="n">PostProcessing</span><span class="p">(</span>
+</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">                </span><span class="n">effects</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">listOf</span><span class="p">(</span>
+</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">                    </span><span class="n">ToneMappingGradeEffect</span><span class="p">(</span><span class="n">saturation</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">1.1f</span><span class="p">,</span><span class="w"> </span><span class="n">mode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ToneMappingMode</span><span class="p">.</span><span class="na">Passthrough</span><span class="p">),</span>
+</span><span id="__span-9-7"><a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="w">                    </span><span class="n">FxaaEffect</span><span class="p">(),</span>
+</span><span id="__span-9-8"><a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="w">                </span><span class="p">),</span>
+</span><span id="__span-9-9"><a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="w">            </span><span class="p">),</span>
+</span><span id="__span-9-10"><a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="w">        </span><span class="p">)</span>
+</span><span id="__span-9-11"><a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-9-12"><a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="p">}</span>
+</span></code></pre></div>
+</div>
+<div class="tabbed-block">
+<p>Studio has no field for post-processing. Set it in the scene document.</p>
+</div>
+</div>
+</div>
+<p>Which combinations a scene camera accepts:</p>
+<table>
+<thead>
+<tr>
+<th>Effects</th>
+<th>What runs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>fxaa</code> alone</td>
+<td>A copy of the frame, then FXAA. Only edges change; away from them colours match the frame without the stack within 1/255.</td>
+</tr>
+<tr>
+<td><code>tone_mapping_grade</code> with <code>"mode": "Passthrough"</code></td>
+<td>Grading only: exposure, white balance, lift, gamma, gain, contrast and saturation, with no curve and no encode. At its defaults it changes nothing.</td>
+</tr>
+<tr>
+<td><code>bloom</code></td>
+<td>Bright pass and blur, then the glow added to the frame in a passthrough step. The frame's colour is at most 1, so lower <code>threshold</code> below its default of 1.</td>
+</tr>
+<tr>
+<td>Any of these, then <code>fxaa</code></td>
+<td>FXAA reads the result of the step before it.</td>
+</tr>
+<tr>
+<td><code>tone_mapping_grade</code> with <code>"mode": "PbrNeutral"</code>, the default</td>
+<td>Refused when the scene loads: it would apply the curve and the encode a second time and wash out the whole frame. Use the <code>tone_mapping</code> component's <code>exposure</code> for brightness.</td>
+</tr>
+<tr>
+<td>Two enabled <code>tone_mapping_grade</code> effects</td>
+<td>Refused when the scene loads.</td>
+</tr>
+</tbody>
+</table>
+<p><code>PbrNeutral</code> exists for colour that has not been tone mapped yet: a chain built in code with
+<code>PostProcessingStack.buildChain</code> over a target whose <code>ImagePassTargetContext.colorEncoding</code> is
+<code>LinearHdr</code>. Such a target gets a <code>PbrNeutral</code> step even when the list names none, so FXAA reads
+display colour. No built-in scene path renders linear colour yet. A chain built in code over a
+<code>DisplayReferred</code> target, the default, follows the rules in the table, though nothing refuses a
+<code>PbrNeutral</code> effect listed there.</p>
 <h2 id="properties">Properties</h2>
 <p><code>light</code>:</p>
 <table>
@@ -2830,6 +2945,8 @@ parameter. Attach a <code>Light</code> with <code>with(Light(...))</code> to set
 </tr>
 </tbody>
 </table>
+<p><code>post_processing</code> and each effect's fields are listed in the
+<a href="../../reference/scene-document-components/#post_processing">scene document components reference</a>.</p>
 <h2 id="how-it-works">How it works</h2>
 <p>The renderer uses the first directional light it finds. With none, it falls back to a fixed default
 sun, unless the scene has point lights, in which case they light it alone.</p>

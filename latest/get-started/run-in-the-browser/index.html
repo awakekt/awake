@@ -2461,7 +2461,7 @@ include it. Each Core release publishes a WebGPU snapshot built from it instead.
 <p>Add the backend to the catalog at your Core version with <code>-SNAPSHOT</code> appended, the WebGPU build of
 that Core release:</p>
 <div class="language-toml highlight"><span class="filename">gradle/libs.versions.toml</span><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">[libraries]</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">awake-backend-webgpu</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">module</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"com.awakekt.awake.backend:webgpu"</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"0.23.0-SNAPSHOT"</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">awake-backend-webgpu</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">module</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"com.awakekt.awake.backend:webgpu"</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"0.24.0-SNAPSHOT"</span><span class="w"> </span><span class="p">}</span>
 </span></code></pre></div>
 <p>Then add a browser target and the dependency:</p>
 <div class="language-kotlin highlight"><span class="filename">build.gradle.kts</span><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">kotlin</span><span class="w"> </span><span class="p">{</span>
@@ -2482,9 +2482,9 @@ that Core release:</p>
 more setup.</p>
 <div class="admonition warning">
 <p class="admonition-title">Keep WebGPU on your Core release</p>
-<p><code>0.23.0-SNAPSHOT</code> depends on every Core module at exactly <code>0.23.0</code> and
+<p><code>0.24.0-SNAPSHOT</code> depends on every Core module at exactly <code>0.24.0</code> and
 holds them there, so a build that also asks for a newer Core fails to resolve rather than mixing
-two, and an older Core in the build is moved up to <code>0.23.0</code>. Do not take the newest
+two, and an older Core in the build is moved up to <code>0.24.0</code>. Do not take the newest
 <code>-SNAPSHOT</code> in the snapshot repository instead: that one is built from <code>main</code> after the release,
 and it moves the <code>wasmJs</code> target onto Core snapshots.</p>
 </div>
