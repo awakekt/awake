@@ -39,8 +39,12 @@ kotlin {
             implementation(libs.kotlinx.coroutines.test)
             implementation(kotlin("test"))
         }
-        desktopTest.dependencies {
-            implementation(project(":awake:compose:ui-testing"))
+        desktopTest {
+            // The Roboto TTF ShadcnSidebarGlyphClipTest loads at run time.
+            resources.srcDir(rootProject.layout.projectDirectory.dir("awake/ui/font-atlas-generator/fonts"))
+            dependencies {
+                implementation(project(":awake:compose:ui-testing"))
+            }
         }
     }
 }

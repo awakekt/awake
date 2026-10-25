@@ -117,6 +117,22 @@ interface DrawScope {
     fun clipped(inset: Float = 0f, block: () -> Unit)
 
     /**
+     * Clips everything drawn inside [block] to this box grown by a margin on each side, each side
+     * stopping at the node's own bounds: the growth reaches only into what a layout modifier such as
+     * `padding` placed between this box and the node's edge, never past it.
+     *
+     * CSS's `overflow-clip-margin`, for content whose ink spills past the box it is laid out in -- an
+     * accent or a leading `j`'s tail past a text box -- where clipping at the box itself would cut it.
+     * A margin of [Float.POSITIVE_INFINITY] clips that side at the node's own bounds; 0 clips it at
+     * this box, as a side whose content scrolls past it should be.
+     *
+     * A scope that does not know its node's bounds clips at this box, as [clipped] does.
+     */
+    fun clippedWithMargin(left: Float, top: Float, right: Float, bottom: Float, block: () -> Unit) {
+        clipped(block = block)
+    }
+
+    /**
      * Dims everything drawn inside [block] by [alpha], multiplying with any enclosing dim.
      *
      * A CPU-side field multiply on each primitive's colour, which is what the render backends
@@ -304,8 +320,9 @@ fun DrawScope.drawRetainedMesh(mesh: ColoredTriangleMesh, retentionKey: Any) {
  * @property alpha Opacity applied when the layer is composited, from 0 to 1.
  * @property blurRadiusX Horizontal blur radius in pixels, or 0 for none.
  * @property blurRadiusY Vertical blur radius in pixels, or 0 for none.
- * @property effectInsetX Transparent pixels reserved left and right of the content for expanding effects.
- * @property effectInsetY Transparent pixels reserved above and below the content for expanding effects.
+ * @property effectInsetX Pixels reserved left and right of the node's box, for expanding effects and for
+ *   content that paints past the node (a glyph's ink past its text box), whichever reaches further.
+ * @property effectInsetY Pixels reserved above and below the node's box, as [effectInsetX] is beside it.
  * @property shadowElevation Elevation shadow size in pixels, or 0 for none.
  * @property primitives What the layer paints, positioned relative to its top-left corner.
  * @property renderEffect Optional effect applied to the layer texture.
@@ -387,6 +404,12 @@ internal class PaintScope :
     private var originX = 0f
     private var originY = 0f
 
+    // The whole node the current draw link belongs to, in tree space: where clippedWithMargin stops.
+    private var nodeX = 0f
+    private var nodeY = 0f
+    private var nodeWidth = 0f
+    private var nodeHeight = 0f
+
     override var width: Int = 0
         private set
 
@@ -460,8 +483,8 @@ internal class PaintScope :
                 layerTileMode = TileMode.Clamp
             }
         }
-        val effectInsetX = if (layerTileMode == TileMode.Decal) kotlin.math.ceil(blurRadiusX).toInt() else 0
-        val effectInsetY = if (layerTileMode == TileMode.Decal) kotlin.math.ceil(blurRadiusY).toInt() else 0
+        val blurInsetX = if (layerTileMode == TileMode.Decal) kotlin.math.ceil(blurRadiusX).toInt() else 0
+        val blurInsetY = if (layerTileMode == TileMode.Decal) kotlin.math.ceil(blurRadiusY).toInt() else 0
         val elevation = shadowElevation.value.coerceAtLeast(0f) * density
         val outline = shape.createOutline(
             com.awakekt.awake.core.math2d.Size2D(layerWidth.toFloat(), layerHeight.toFloat()),
@@ -488,6 +511,19 @@ internal class PaintScope :
             this.alpha = enclosingAlpha
             output = parentOutput
         }
+        // The target grows to what the content paints, not just the node: Compose's graphicsLayer
+        // does not clip, and a target the node's size cut every glyph whose ink passes its text box
+        // as soon as a fade or a press scale started. Grown evenly on both sides, so the composite's
+        // centre, which rotation and scale turn about, stays the node's. A clamped blur keeps its
+        // edge at the node, as its tile mode says.
+        measureOverflow(
+            layerOutput,
+            Rectangle(layerX, layerY, layerWidth.toFloat(), layerHeight.toFloat()),
+            renderEffect,
+            layerTileMode,
+        )
+        val effectInsetX = maxOf(blurInsetX, overflowInset(maxOf(overflow.left, overflow.right), layerWidth))
+        val effectInsetY = maxOf(blurInsetY, overflowInset(maxOf(overflow.top, overflow.bottom), layerHeight))
         layers += GraphicsLayerFrame(
             id = layerId,
             x = layerX,
@@ -549,6 +585,28 @@ internal class PaintScope :
             premultiplied = true,
         )
     }
+
+    // Reused for every layer: what its content paints past its node.
+    private val overflow = ContentOverflow()
+
+    /**
+     * Measures what [content] paints past the layer's [box] into [overflow]. A clamped blur
+     * ([renderEffect] with [tileMode] other than decal) keeps its edge at the node, and measures nothing.
+     */
+    private fun measureOverflow(content: List<UiDrawPrimitive>, box: Rectangle, renderEffect: RenderEffect?, tileMode: TileMode) {
+        if (renderEffect == null || tileMode == TileMode.Decal) {
+            overflow.measure(content, box.x, box.y, box.width, box.height)
+        } else {
+            overflow.reset()
+        }
+    }
+
+    /**
+     * Whole pixels to reserve either side of a [size]-pixel layer for content painted [reach] past it,
+     * never so many that the target passes [MAX_LAYER_TARGET_SIZE].
+     */
+    private fun overflowInset(reach: Float, size: Int): Int =
+        kotlin.math.ceil(reach).toInt().coerceIn(0, ((MAX_LAYER_TARGET_SIZE - size) / 2).coerceAtLeast(0))
 
     override fun drawPathShadow(
         path: DrawPath,
@@ -644,6 +702,10 @@ internal class PaintScope :
      */
     fun enter(node: LayoutNode, depth: Int) {
         node.drawBoundsAt(depth, bounds)
+        nodeX = node.absoluteX.toFloat()
+        nodeY = node.absoluteY.toFloat()
+        nodeWidth = node.width.toFloat()
+        nodeHeight = node.height.toFloat()
         originX = (node.absoluteX + bounds[0]).toFloat()
         originY = (node.absoluteY + bounds[1]).toFloat()
         width = bounds[2]
@@ -809,11 +871,30 @@ internal class PaintScope :
     }
 
     override fun clipped(inset: Float, block: () -> Unit) {
+        clipTo(
+            originX + inset,
+            originY + inset,
+            (width - inset * 2).coerceAtLeast(0f),
+            (height - inset * 2).coerceAtLeast(0f),
+            block,
+        )
+    }
+
+    override fun clippedWithMargin(left: Float, top: Float, right: Float, bottom: Float, block: () -> Unit) {
+        val x0 = originX - left.coerceIn(0f, (originX - nodeX).coerceAtLeast(0f))
+        val y0 = originY - top.coerceIn(0f, (originY - nodeY).coerceAtLeast(0f))
+        val x1 = originX + width + right.coerceIn(0f, (nodeX + nodeWidth - originX - width).coerceAtLeast(0f))
+        val y1 = originY + height + bottom.coerceIn(0f, (nodeY + nodeHeight - originY - height).coerceAtLeast(0f))
+        clipTo(x0, y0, x1 - x0, y1 - y0, block)
+    }
+
+    /** Clips [block] to a tree-space rect, before this scope's transform maps it. */
+    private fun clipTo(x: Float, y: Float, w: Float, h: Float, block: () -> Unit) {
         val rect = Rectangle(
-            transform.mapX(originX + inset),
-            transform.mapY(originY + inset),
-            ((width - inset * 2).coerceAtLeast(0f)) * transform.scaleX,
-            ((height - inset * 2).coerceAtLeast(0f)) * transform.scaleY,
+            transform.mapX(x),
+            transform.mapY(y),
+            w * transform.scaleX,
+            h * transform.scaleY,
         )
         val previous = clipStack.lastOrNull() ?: fullClip
         val effective = rect.intersect(previous)
@@ -1000,3 +1081,9 @@ private class DrawTransformState {
         }
     }
 }
+
+/**
+ * The largest side a layer's render target grows to for overflowing content: WebGPU's default texture
+ * size limit, the smallest a backend here guarantees.
+ */
+private const val MAX_LAYER_TARGET_SIZE = 8192

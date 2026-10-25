@@ -18,6 +18,7 @@ import com.awakekt.awake.compose.runtime.rememberGroup
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.ModifierNodeElement
 import com.awakekt.awake.compose.ui.draw.drawBehind
+import com.awakekt.awake.compose.ui.graphics.drawscope.DrawScope
 import com.awakekt.awake.compose.ui.input.pointer.PointerEvent
 import com.awakekt.awake.compose.ui.input.pointer.PointerEventPass
 import com.awakekt.awake.compose.ui.input.pointer.PointerEventType
@@ -160,13 +161,13 @@ fun BasicTextField(
                 )
                 .clickable { }
                 .drawBehind {
-                    clipped {
-                        val paintColor = color()
-                        val run = policy.runFor(density, 1f)
-                        val textOffsetY = if (oneLine) ((height - run.lineHeightPx) / 2f).coerceAtLeast(0f) else 0f
-                        val caret = TextRunOf(state, policy, density).position()
-                        val focused = source.isFocused
-                        val textOffsetX = if (oneLine) horizontalOffset.followCaret(caret.x, focused, run, policy, width) else 0f
+                    val paintColor = color()
+                    val run = policy.runFor(density, policy.measuredFontScale)
+                    val textOffsetY = if (oneLine) ((height - run.lineHeightPx) / 2f).coerceAtLeast(0f) else 0f
+                    val caret = TextRunOf(state, policy, density).position()
+                    val focused = source.isFocused
+                    val textOffsetX = if (oneLine) horizontalOffset.followCaret(caret.x, focused, run, policy, width) else 0f
+                    clipFieldText(horizontalOffset.takeIf { oneLine }) {
                         run.forEachSelectionSegment(state.displayedSelectionStart, state.displayedSelectionEnd) { x, y, width, height ->
                             drawRect(
                                 x = x + textOffsetX,
@@ -191,6 +192,24 @@ fun BasicTextField(
             measurePolicy = policy,
         )
     }
+}
+
+/**
+ * Clips a field's text at its padding box, as CSS clips a field's content, not at the line box: a
+ * glyph's ink reaches past its advance and its line (an accent, a leading `j`'s tail), and a clip at
+ * the text's own box cut it. A side a single line is scrolled past ([scroll], null for a multi-line
+ * field) keeps the tight clip, so a scrolled-away character never shows in the padding.
+ */
+private fun DrawScope.clipFieldText(scroll: ScrollState?, block: () -> Unit) {
+    val scrolledLeft = scroll != null && scroll.value > 0
+    val scrolledRight = scroll != null && scroll.value < scroll.maxValue
+    clippedWithMargin(
+        left = if (scrolledLeft) 0f else Float.POSITIVE_INFINITY,
+        top = Float.POSITIVE_INFINITY,
+        right = if (scrolledRight) 0f else Float.POSITIVE_INFINITY,
+        bottom = Float.POSITIVE_INFINITY,
+        block = block,
+    )
 }
 
 /**
@@ -310,7 +329,7 @@ private class TextRunOf(
     private val density: Float,
 ) {
     fun position(): CaretPosition {
-        val run = policy.runFor(density, 1f)
+        val run = policy.runFor(density, policy.measuredFontScale)
         val position = run.caretPositionAt(state.displayedCursor)
         return CaretPosition(position.x, position.y)
     }
@@ -403,7 +422,7 @@ private class TextFieldInputNode :
 
     override fun onPointerEvent(event: PointerEvent, pass: PointerEventPass) {
         if (pass != PointerEventPass.Main || event.isConsumed) return
-        val index = policy.runFor(density, 1f).indexAt(
+        val index = policy.runFor(density, policy.measuredFontScale).indexAt(
             x = (event.x + if (singleLine) horizontalOffset.value else 0).toFloat(),
             y = event.y.toFloat(),
         )

@@ -179,8 +179,10 @@ class OpenTypeUiFontTest {
         assertEquals(coarse.lineHeightEm, fine.lineHeightEm)
         assertContentEquals(coarse.inkMetricsEm, fine.inkMetricsEm)
         assertContentEquals(coarse.advancesEm, fine.advancesEm)
-        // The quad is the ink plus the bleed, snapped out to whole texels: a generator texel either way.
-        assertWithin(coarse.quadMetricsEm, fine.quadMetricsEm, 1f / 32 + 1e-6f, "quads")
+        // The quad is the ink plus the bleed, snapped out to whole texels: a generator texel either way, and
+        // the fine bake's wider bleed, which reaches past its field so the fringe fades out inside the quad.
+        val bleedEm = fine.bake.cropBleed.toFloat() / fine.bake.texelsPerEm
+        assertWithin(coarse.quadMetricsEm, fine.quadMetricsEm, 1f / 32 + bleedEm + 1e-6f, "quads")
     }
 
     /** A glyph set too large for the requested resolution's atlas bakes coarser rather than failing to load. */
@@ -361,6 +363,6 @@ class OpenTypeUiFontTest {
         const val FNV_OFFSET = -0x340d631b7bdddcdbL
         const val FNV_PRIME = 0x100000001b3L
         const val REGULAR_ATLAS_HASH = 4211560484354822813L
-        const val REGULAR_RUNTIME_ATLAS_HASH = 7093501371065988845L
+        const val REGULAR_RUNTIME_ATLAS_HASH = 8316666516124158061L
     }
 }

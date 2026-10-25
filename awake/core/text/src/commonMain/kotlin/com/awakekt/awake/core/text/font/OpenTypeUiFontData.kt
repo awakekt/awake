@@ -117,8 +117,14 @@ internal class OpenTypeUiFontData private constructor(
  * above 1). Texels per em is a multiple of [GENERATOR]'s 32.
  */
 internal class DistanceFieldBake(val texelsPerEm: Int, val rangeTexels: Int) {
-    /** The texels a glyph's sample rect reaches past its ink: one per 32 texels per em, half a pixel or more wherever the field draws. */
-    val cropBleed: Int get() = maxOf(1, texelsPerEm / GENERATOR_texelsPerEm)
+    /**
+     * The texels a glyph's sample rect reaches past its ink. The generator's resolution keeps the generator's one
+     * texel, so its cells stay the built-in atlas's. A finer bake reaches one texel past the field's whole
+     * [fieldReach], so a quad's edge samples a field already at zero and its antialiased fringe fades out inside
+     * the quad: a rect of one texel per 32 texels per em cut the fringe of a glyph drawn small at a hard edge.
+     */
+    val cropBleed: Int
+        get() = if (texelsPerEm <= GENERATOR_texelsPerEm) 1 else maxOf(texelsPerEm / GENERATOR_texelsPerEm, rangeTexels / 2 + 1)
 
     /** The distance an atlas texel holds, either side of the outline: half of [rangeTexels]. */
     val fieldReach: Double get() = rangeTexels / 2.0

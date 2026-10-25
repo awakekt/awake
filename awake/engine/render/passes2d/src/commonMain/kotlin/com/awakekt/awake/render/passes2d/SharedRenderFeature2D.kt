@@ -7,6 +7,7 @@ package com.awakekt.awake.render.passes2d
 
 import com.awakekt.awake.core.math2d.Rectangle
 import com.awakekt.awake.core.text.font.UiFont
+import kotlin.math.ceil
 
 /**
  * Backend-neutral command recording engine for 2D draw runs.
@@ -108,11 +109,16 @@ private class BoundState<M>(private val recorder: DrawRunRecorder<M>) {
         return usable
     }
 
+    /**
+     * Scissors to the pixels whose centres [rect] contains, the rasterizer's own rule, each edge rounded
+     * on its own: truncating the origin and the size separately dropped up to two columns at a
+     * fractional clip's far edge, where a scaled text field's last glyph lands.
+     */
     fun clip(rect: Rectangle, surfaceWidth: Int, surfaceHeight: Int) {
-        val x = rect.x.toInt().coerceIn(0, surfaceWidth)
-        val y = rect.y.toInt().coerceIn(0, surfaceHeight)
-        val width = rect.width.toInt().coerceAtLeast(0).coerceAtMost(surfaceWidth - x)
-        val height = rect.height.toInt().coerceAtLeast(0).coerceAtMost(surfaceHeight - y)
+        val x = firstCovered(rect.x).coerceIn(0, surfaceWidth)
+        val y = firstCovered(rect.y).coerceIn(0, surfaceHeight)
+        val width = (firstCovered(rect.x + rect.width) - x).coerceIn(0, surfaceWidth - x)
+        val height = (firstCovered(rect.y + rect.height) - y).coerceIn(0, surfaceHeight - y)
         val origin = pack(x, y)
         val size = pack(width, height)
         if (origin == scissorOrigin && size == scissorSize) return
@@ -120,6 +126,9 @@ private class BoundState<M>(private val recorder: DrawRunRecorder<M>) {
         scissorOrigin = origin
         scissorSize = size
     }
+
+    /** The first pixel whose centre lies at or past [edge]; a centre on the edge counts as covered. */
+    private fun firstCovered(edge: Float): Int = ceil(edge - HALF_PIXEL).toInt()
 
     private fun pack(a: Int, b: Int): Long = (a.toLong() shl Int.SIZE_BITS) or (b.toLong() and LOW_BITS)
 
@@ -137,6 +146,7 @@ private class BoundState<M>(private val recorder: DrawRunRecorder<M>) {
 
     private companion object {
         const val LOW_BITS = 0xFFFFFFFFL
+        const val HALF_PIXEL = 0.5f
     }
 }
 
