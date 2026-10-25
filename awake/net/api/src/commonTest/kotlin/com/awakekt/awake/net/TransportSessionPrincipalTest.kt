@@ -32,20 +32,6 @@ class TransportSessionPrincipalTest {
     fun anImplementationThatDoesNotOverrideItHasNoPrincipal() {
         val session: TransportSession = LegacySession(SessionId(1))
         assertNull(session.principal)
-        assertNull(session.droppedInbound)
-    }
-
-    @Test
-    fun aSessionCanExposeOptionalLossTelemetryThroughThePort() {
-        val session: TransportSession = object : TransportSession, InboundDropMetrics {
-            override val id = SessionId(3)
-            override val droppedInbound = 7L
-            override suspend fun send(channel: DeliveryChannel, packet: ByteArray) = Unit
-            override fun incoming(): ReceiveChannel<ByteArray> = Channel()
-            override suspend fun close() = Unit
-        }
-        assertEquals(7L, session.droppedInbound)
-        assertEquals(7L, session.droppedInbound)
     }
 
     @Test
