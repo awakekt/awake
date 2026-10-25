@@ -7,15 +7,9 @@ package com.awakekt.awake.project
 
 import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.io.AssetSource
-import com.awakekt.awake.core.io.Sha256
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -51,12 +45,6 @@ interface ContentCache {
      */
     suspend fun retainOnly(index: ProjectIndex): Int = 0
 }
-
-/**
- * How many bytes of bundle members [IndexedAssetSource] keeps in memory, with no [ContentCache], for
- * reads still to come. Its KDoc spells the number out, so change both together.
- */
-internal const val STAGED_MEMBER_BUDGET_BYTES: Long = 64L * 1024 * 1024
 
 /**
  * Reads a published project's files as [index] lists them: each through [fetch], checked against the
@@ -97,20 +85,13 @@ class IndexedAssetSource(
     private val rangeFetch: (suspend (url: String, offset: Long, length: Long) -> ByteArray)? = null,
 ) : AssetSource {
     private val entries: Map<String, ProjectIndexEntry>
-    private val bundles: Map<String, ProjectIndexBundle>
-    private val membersOf: Map<String, List<ProjectIndexEntry>>
-
-    private val lock = Mutex()
-    private val bundlesInFlight = mutableMapOf<String, CompletableDeferred<Map<String, ByteArray>>>()
-    private val staged = LinkedHashMap<String, ByteArray>()
-    private var stagedBytes = 0L
+    private val members: BundleMembers
 
     init {
         val issues = ProjectContentValidator.indexIssueDetails(index)
         require(issues.isEmpty()) { "The project index is invalid: ${issues.joinToString("; ") { it.message }}" }
         entries = index.files.associateBy { it.key }
-        bundles = index.bundles.associateBy { it.sha256 }
-        membersOf = index.files.filter { it.bundle != null }.groupBy { it.bundle!! }
+        members = BundleMembers(index, fetch, cache, rangeFetch)
     }
 
     override suspend fun read(path: AssetPath): Result<ByteArray> = runCatching {
@@ -166,7 +147,7 @@ class IndexedAssetSource(
         val first = download.files.first()
         when {
             !download.isBundle -> readChecked(first.entry, first.label)
-            cache == null || download.files.any { cached(it.entry) == null } -> loadBundle(bundles.getValue(first.entry.bundle!!))
+            cache == null || download.files.any { cached(it.entry) == null } -> members.load(first.entry.bundle!!)
         }
     }
 
@@ -175,128 +156,21 @@ class IndexedAssetSource(
         return entries[index.pathIds?.idOf(relative) ?: relative]
     }
 
-    private suspend fun readChecked(entry: ProjectIndexEntry, label: String): ByteArray {
-        // Hashing every cached file again on every visit is what the cache exists to avoid.
-        cached(entry)?.let { return it }
-        if (entry.bundle != null) return readMember(entry, label)
-        val bytes = fetch(entry.url)
-        check(matches(bytes, entry)) { mismatch(label, entry) }
-        cache?.put(entry.sha256, bytes)
-        return bytes
-    }
+    // Hashing every cached file again on every visit is what the cache exists to avoid.
+    private suspend fun readChecked(entry: ProjectIndexEntry, label: String): ByteArray =
+        cached(entry) ?: if (entry.bundle != null) members.read(entry, label) else readLoose(entry, label)
+
+    private suspend fun readLoose(entry: ProjectIndexEntry, label: String): ByteArray =
+        checked(entry, label, fetch(entry.url)).also { cache?.put(entry.sha256, it) }
 
     private suspend fun cached(entry: ProjectIndexEntry): ByteArray? =
         cache?.get(entry.sha256)?.takeIf { it.size.toLong() == entry.sizeBytes }
-
-    private suspend fun readMember(entry: ProjectIndexEntry, label: String): ByteArray {
-        takeStaged(entry)?.let { return it }
-        val bundle = bundles.getValue(entry.bundle!!)
-        val range = rangeFetch
-        if (range != null) {
-            val bytes = range(bundle.url, entry.offset!!, entry.sizeBytes)
-            check(matches(bytes, entry)) { mismatch(label, entry) }
-            cache?.put(entry.sha256, bytes)
-            return bytes
-        }
-        val members = loadBundle(bundle)
-        // This read takes its member; the staged copy is for reads still to come.
-        takeStaged(entry)
-        return members.getValue(entry.sha256)
-    }
-
-    /** [bundle]'s checked members by SHA-256, fetched once however many reads ask at the same time. */
-    private suspend fun loadBundle(bundle: ProjectIndexBundle): Map<String, ByteArray> {
-        while (true) {
-            var leader = false
-            val pending = lock.withLock {
-                bundlesInFlight.getOrPut(bundle.sha256) { CompletableDeferred<Map<String, ByteArray>>().also { leader = true } }
-            }
-            if (!leader) {
-                try {
-                    return pending.await()
-                } catch (_: LeaderCancelled) {
-                    // The read fetching it was cancelled, not this one: fetch it afresh.
-                    continue
-                }
-            }
-            try {
-                val members = fetchBundle(bundle)
-                keep(bundle, members)
-                pending.complete(members)
-                return members
-            } catch (failure: Throwable) {
-                pending.completeExceptionally(if (failure is CancellationException) LeaderCancelled() else failure)
-                throw failure
-            } finally {
-                withContext(NonCancellable) { lock.withLock { bundlesInFlight.remove(bundle.sha256) } }
-            }
-        }
-    }
-
-    private suspend fun fetchBundle(bundle: ProjectIndexBundle): Map<String, ByteArray> {
-        val bytes = fetch(bundle.url)
-        val verified = HashMap<String, ByteArray>()
-        val damaged = membersOf.getValue(bundle.sha256).mapNotNull { member ->
-            val start = member.offset!!
-            val end = start + member.sizeBytes
-            val slice = if (end <= bytes.size) bytes.copyOfRange(start.toInt(), end.toInt()) else null
-            if (slice != null && Sha256.digestHex(slice) == member.sha256) {
-                verified[member.sha256] = slice
-                null
-            } else {
-                member.key
-            }
-        }
-        val whole = bytes.size.toLong() == bundle.sizeBytes && Sha256.digestHex(bytes) == bundle.sha256
-        check(whole && damaged.isEmpty()) {
-            val what = if (damaged.isEmpty()) "its header or table of contents" else "damaged members: ${damaged.joinToString(", ")}"
-            "${bundle.url} doesn't match the project index (expected ${bundle.sizeBytes} bytes with SHA-256 ${bundle.sha256}): $what"
-        }
-        return verified
-    }
-
-    /** Puts [members] in [cache], or with none, keeps each of [bundle]'s files in memory for the read still to come. */
-    private suspend fun keep(bundle: ProjectIndexBundle, members: Map<String, ByteArray>) {
-        val cache = cache
-        if (cache != null) {
-            members.forEach { (sha256, bytes) -> cache.put(sha256, bytes) }
-            return
-        }
-        lock.withLock {
-            // By key, not SHA-256: two files with the same bytes are two reads to come.
-            membersOf.getValue(bundle.sha256).forEach { member ->
-                if (member.key !in staged) {
-                    val bytes = members.getValue(member.sha256)
-                    staged[member.key] = bytes
-                    stagedBytes += bytes.size
-                }
-            }
-            while (stagedBytes > STAGED_MEMBER_BUDGET_BYTES && staged.isNotEmpty()) {
-                val oldest = staged.keys.first()
-                stagedBytes -= staged.remove(oldest)!!.size
-            }
-        }
-    }
-
-    private suspend fun takeStaged(entry: ProjectIndexEntry): ByteArray? {
-        if (cache != null) return null
-        return lock.withLock { staged.remove(entry.key)?.also { stagedBytes -= it.size } }
-    }
-
-    private fun matches(bytes: ByteArray, entry: ProjectIndexEntry): Boolean =
-        bytes.size.toLong() == entry.sizeBytes && Sha256.digestHex(bytes) == entry.sha256
-
-    private fun mismatch(label: String, entry: ProjectIndexEntry): String =
-        "$label doesn't match the project index: expected ${entry.sizeBytes} bytes with SHA-256 ${entry.sha256}"
 
     /** One path [prefetch] was asked for: its entry, and the path as asked, for messages. */
     private class Requested(val entry: ProjectIndexEntry, val label: String)
 
     /** Files [prefetch] gets in one download: one loose content, or one bundle's chosen members. */
     private class Download(val files: List<Requested>, val isBundle: Boolean)
-
-    /** The read fetching a bundle was cancelled; the reads waiting on it fetch it again. */
-    private class LeaderCancelled : Exception("The read fetching this bundle was cancelled")
 
     /** Factory and default path constants for [IndexedAssetSource]. */
     companion object {

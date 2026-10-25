@@ -99,15 +99,16 @@ class TokenAuthorizedFetch(
         val end = offset + length
         val response = authorized(url, mapOf(RANGE_HEADER to "bytes=$offset-${end - 1}"))
         val body = response.body
-        return when {
-            response.status == PARTIAL_CONTENT && body.size.toLong() == length -> body
-            response.status == PARTIAL_CONTENT ->
-                throw ContentFetchException(url, response.status, "$url answered ${body.size} bytes for a $length-byte range")
-            response.status == OK && body.size >= end -> body.copyOfRange(offset.toInt(), end.toInt())
-            response.status == OK ->
-                throw ContentFetchException(url, response.status, "$url answered ${body.size} bytes, too few to hold bytes $offset to ${end - 1}")
+        val range = when (response.status) {
+            PARTIAL_CONTENT -> body.takeIf { it.size.toLong() == length }
+            OK -> if (body.size >= end) body.copyOfRange(offset.toInt(), end.toInt()) else null
             else -> throw ContentFetchException(url, response.status, "$url answered HTTP ${response.status}")
         }
+        return range ?: throw ContentFetchException(
+            url,
+            response.status,
+            "$url answered ${body.size} bytes with HTTP ${response.status}, which don't hold bytes $offset to ${end - 1}",
+        )
     }
 
     /** Sends [url] with [headers] and the token, refreshing it and sending again once if it is refused. */

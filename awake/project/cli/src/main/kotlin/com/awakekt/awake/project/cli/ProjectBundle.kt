@@ -11,12 +11,12 @@ import com.awakekt.awake.project.IndexedAssetSource
 import com.awakekt.awake.project.ProjectIndex
 import com.awakekt.awake.project.ProjectPathIds
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import java.io.File
+import java.io.IOException
 
 /**
  * `awake bundle`: packs the files a loose project index lists, read from [projectRoot], into content
@@ -35,15 +35,12 @@ internal class ProjectBundle(private val projectRoot: File, private val output: 
      * answers what it wrote.
      */
     fun run(indexFile: File, writer: ContentBundleWriter): Report {
-        val loose = try {
-            INDEX_JSON.decodeFromString(ProjectIndex.serializer(), indexFile.readText())
-        } catch (failure: SerializationException) {
-            throw CommandFailure("${indexFile.path} isn't a project index: ${failure.message}", failure)
-        }
+        val loose = runCatching { INDEX_JSON.decodeFromString(ProjectIndex.serializer(), indexFile.readText()) }
+            .getOrElse { throw CommandFailure("${indexFile.path} isn't a project index: ${it.message}", it) }
         var bundles = 0
         var written = 0
         var bytes = 0L
-        val bundled = try {
+        val bundled = runCatching {
             runBlocking {
                 writer.write(loose, { entry -> projectRoot.resolve(entry.path).readBytes() }) { bundle ->
                     bundles++
@@ -57,12 +54,9 @@ internal class ProjectBundle(private val projectRoot: File, private val output: 
                     }
                 }
             }
-        } catch (failure: IllegalArgumentException) {
-            throw CommandFailure(failure.message.orEmpty(), failure)
-        } catch (failure: IllegalStateException) {
-            throw CommandFailure(failure.message.orEmpty(), failure)
-        } catch (failure: java.io.IOException) {
-            throw CommandFailure("can't read a project file: ${failure.message}", failure)
+        }.getOrElse { failure ->
+            val reason = if (failure is IOException) "can't read a project file: ${failure.message}" else failure.message.orEmpty()
+            throw CommandFailure(reason, failure)
         }
         val indexOut = output.resolve(IndexedAssetSource.DEFAULT_INDEX_PATH)
         indexOut.parentFile.mkdirs()
