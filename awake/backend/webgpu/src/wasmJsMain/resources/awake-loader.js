@@ -10,14 +10,32 @@
  *   <script src="awake-loader.js" data-product="Studio"></script>
  *   <script src="studio.js"></script>
  *
+ * First-party AwakeKt products (`data-product="Studio"` or `"Engine Showcase"`) show the full-colour
+ * Ember Signal glyph and ember-to-gold bar. Creator games (`data-mode="game"` or `?play=` in the URL)
+ * show a neutral monochrome surface and progress bar so the loader never clashes with a game's own
+ * palette, plus the tonal monochrome Ember Signal glyph with `Made with AwakeKt` unless disabled via
+ * `data-attribution="none"` (Studio Pro).
+ *
  * It needs nothing from the app. Download progress is the .wasm response's bytes; later stages
  * come from the WebGPU calls the engine makes while it starts; the first frame drawn to the canvas
  * dismisses it. An engine startup error, or a browser without WebGPU, shows a message instead.
  */
 (() => {
-  const product = document.currentScript?.dataset.product ?? "";
-  // The Ember Signal glyph without its field; its gold stops follow the scheme through --glyph-*.
-  const MARK = `<svg class="mark" viewBox="166 146 680 680" aria-hidden="true"><defs><linearGradient id="awake-glyph-left" x1="145" y1="810" x2="512" y2="150" gradientUnits="userSpaceOnUse"><stop stop-color="#FF4D2E"/><stop offset="1" stop-color="#FF9F1C"/></linearGradient><linearGradient id="awake-glyph-right" x1="512" y1="150" x2="890" y2="810" gradientUnits="userSpaceOnUse"><stop offset="0" style="stop-color: var(--glyph-r0)"/><stop offset="1" style="stop-color: var(--glyph-r1)"/></linearGradient><linearGradient id="awake-glyph-top" x1="418" y1="570" x2="606" y2="570" gradientUnits="userSpaceOnUse"><stop offset="0" style="stop-color: var(--glyph-t0)"/><stop offset="1" style="stop-color: var(--glyph-t1)"/></linearGradient></defs><path d="M505 208 505 339 346 618 266 765 194 690 415 275Z" fill="url(#awake-glyph-left)"/><path d="M266 765 346 618 402 674Z" fill="#8A2E20"/><path d="M505 208 598 275 818 690 747 765 664 618 505 339Z" fill="url(#awake-glyph-right)"/><path d="M609 674 664 618 747 765Z" fill="#D9482B"/><path d="m505 522 89 53-89 55-87-55Z" fill="url(#awake-glyph-top)"/><path d="m418 575 87 55v96l-87-55Z" fill="#8A2E20"/><path d="m594 575-89 55v96l89-55Z" fill="#D9482B"/></svg>`;
+  const script = document.currentScript;
+  const product = script?.dataset.product ?? "";
+  const playing = new URLSearchParams(location.search).has("play");
+  const gameMode = script?.dataset.mode === "game" || playing;
+  const showAttribution = script?.dataset.attribution !== "none";
+  const escapeHtml = (value) =>
+    value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  const explicitTitle = (script?.dataset.title ?? "").trim();
+  const docTitle = playing ? "" : (document.title ?? "").trim();
+  const gameTitle = explicitTitle || (/^Awake(Kt)?\b/i.test(docTitle) ? "" : docTitle);
+
+  // First-party Ember Signal glyph without its field; its gold stops follow the scheme through --glyph-*.
+  const COLOR_MARK = `<svg class="mark" viewBox="166 146 680 680" aria-hidden="true"><defs><linearGradient id="awake-glyph-left" x1="145" y1="810" x2="512" y2="150" gradientUnits="userSpaceOnUse"><stop stop-color="#FF4D2E"/><stop offset="1" stop-color="#FF9F1C"/></linearGradient><linearGradient id="awake-glyph-right" x1="512" y1="150" x2="890" y2="810" gradientUnits="userSpaceOnUse"><stop offset="0" style="stop-color: var(--glyph-r0)"/><stop offset="1" style="stop-color: var(--glyph-r1)"/></linearGradient><linearGradient id="awake-glyph-top" x1="418" y1="570" x2="606" y2="570" gradientUnits="userSpaceOnUse"><stop offset="0" style="stop-color: var(--glyph-t0)"/><stop offset="1" style="stop-color: var(--glyph-t1)"/></linearGradient></defs><path d="M505 208 505 339 346 618 266 765 194 690 415 275Z" fill="url(#awake-glyph-left)"/><path d="M266 765 346 618 402 674Z" fill="#8A2E20"/><path d="M505 208 598 275 818 690 747 765 664 618 505 339Z" fill="url(#awake-glyph-right)"/><path d="M609 674 664 618 747 765Z" fill="#D9482B"/><path d="m505 522 89 53-89 55-87-55Z" fill="url(#awake-glyph-top)"/><path d="m418 575 87 55v96l-87-55Z" fill="#8A2E20"/><path d="m594 575-89 55v96l89-55Z" fill="#D9482B"/></svg>`;
+  // Tonal monochrome Ember Signal glyph for creator game loaders (`currentColor` with 4 facet opacities).
+  const MONO_MARK = `<svg class="mono-mark" viewBox="166 146 680 680" aria-hidden="true"><path d="M505 208 505 339 346 618 266 765 194 690 415 275Z" fill="currentColor" fill-opacity="0.78"/><path d="M266 765 346 618 402 674Z" fill="currentColor" fill-opacity="0.38"/><path d="M505 208 598 275 818 690 747 765 664 618 505 339Z" fill="currentColor"/><path d="M609 674 664 618 747 765Z" fill="currentColor" fill-opacity="0.58"/><path d="m505 522 89 53-89 55-87-55Z" fill="currentColor"/><path d="m418 575 87 55v96l-87-55Z" fill="currentColor" fill-opacity="0.38"/><path d="m594 575-89 55v96l89-55Z" fill="currentColor" fill-opacity="0.58"/></svg>`;
   // Share of the bar each stage owns, in order.
   const DOWNLOAD = 60, GPU = 10, SHADERS = 25;
 
@@ -36,6 +54,12 @@
         --glyph-r0: #F7BE3A; --glyph-r1: #E8920E; --glyph-t0: #F29A2E; --glyph-t1: #F7BF48;
         --glow: rgba(232, 146, 14, 0.10); --glow-peak: rgba(232, 146, 14, 0.22); }
     }
+    #awake-loader.game { --bg: #0B0D12; --text: #ECEAE6; --muted: #9E9BA6; --faint: #6E6B76;
+      --track: rgba(236, 234, 230, 0.12); }
+    @media (prefers-color-scheme: light) {
+      #awake-loader.game { --bg: #F6F6F7; --text: #16161C; --muted: #524E59; --faint: #706C78;
+        --track: rgba(22, 22, 28, 0.12); }
+    }
     #awake-loader.done { opacity: 0; pointer-events: none; }
     #awake-loader .box { width: min(320px, 80vw); display: flex; flex-direction: column; align-items: center; }
     #awake-loader svg.mark { width: 88px; height: 88px; filter: drop-shadow(0 8px 20px var(--glow));
@@ -48,12 +72,24 @@
     #awake-loader .bar { height: 100%; border-radius: inherit; transform-origin: left; transform: scaleX(0);
       background: linear-gradient(90deg, #FF4D2E, #FF9F1C 60%, #FFD166);
       transition: transform 280ms cubic-bezier(0.23, 1, 0.32, 1); }
+    #awake-loader.game .name { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -0.015em; text-align: center; }
+    #awake-loader.game .track { height: 3px; margin-top: 22px; }
+    #awake-loader.game .bar { background: var(--text); }
+    #awake-loader.game .box svg.mono-mark { width: 64px; height: 64px; color: var(--text); }
+    #awake-loader.game .made-with { margin: 16px 0 0; font-size: 14px; color: var(--muted); letter-spacing: 0.01em; }
+    #awake-loader.game .made-with strong { font-weight: 600; color: var(--text); }
+    #awake-loader.game .attribution { position: fixed; bottom: max(24px, env(safe-area-inset-bottom, 24px));
+      left: 50%; transform: translateX(-50%); display: inline-flex; align-items: center; gap: 8px;
+      font-size: 12.5px; letter-spacing: 0.01em; color: var(--muted); white-space: nowrap; }
+    #awake-loader.game .attribution svg.mono-mark { width: 18px; height: 18px; color: var(--text); flex: none; }
+    #awake-loader.game .attribution strong { font-weight: 600; color: var(--text); }
     #awake-loader .status { display: flex; justify-content: space-between; width: 100%; margin-top: 10px;
       font-size: 13px; color: var(--faint); font-variant-numeric: tabular-nums; }
     #awake-loader .step { color: var(--muted); }
     #awake-loader .error { display: none; margin: 16px 0 0; font-size: 13px; color: var(--error); text-align: center; }
     #awake-loader.failed .error { display: block; }
     #awake-loader.failed .bar { background: #D9482B; }
+    #awake-loader.game.failed .bar { background: var(--error); }
     @media (prefers-reduced-motion: reduce) {
       #awake-loader, #awake-loader .bar { transition: none; }
       #awake-loader svg.mark { animation: none; }
@@ -61,15 +97,28 @@
 
   const root = document.createElement("div");
   root.id = "awake-loader";
+  if (gameMode) root.className = "game";
   root.setAttribute("role", "progressbar");
-  root.setAttribute("aria-label", `Loading AwakeKt ${product}`.trim());
+  root.setAttribute("aria-label", gameMode ? (gameTitle ? `Loading ${gameTitle}` : "Loading game") : `Loading AwakeKt ${product}`.trim());
   root.setAttribute("aria-valuemin", "0");
   root.setAttribute("aria-valuemax", "100");
-  root.innerHTML = `<div class="box">${MARK}
-      <p class="name">AwakeKt${product ? ` <span>${product}</span>` : ""}</p>
+  if (gameMode) {
+    const centerBrand = !gameTitle && showAttribution ? `${MONO_MARK}<p class="made-with">Made with <strong>AwakeKt</strong></p>` : "";
+    const heading = gameTitle ? `<p class="name">${escapeHtml(gameTitle)}</p>` : "";
+    const footer = gameTitle && showAttribution
+      ? `<div class="attribution">${MONO_MARK}<span>Made with <strong>AwakeKt</strong></span></div>`
+      : "";
+    root.innerHTML = `<div class="box">${centerBrand}${heading}
+      <div class="track"><div class="bar"></div></div>
+      <div class="status"><span class="step">Starting…</span><span class="pct">0%</span></div>
+      <p class="error" role="alert"></p></div>${footer}`;
+  } else {
+    root.innerHTML = `<div class="box">${COLOR_MARK}
+      <p class="name">AwakeKt${product ? ` <span>${escapeHtml(product)}</span>` : ""}</p>
       <div class="track"><div class="bar"></div></div>
       <div class="status"><span class="step">Starting…</span><span class="pct">0%</span></div>
       <p class="error" role="alert"></p></div>`;
+  }
   const mount = () => { document.head.append(style); document.body.append(root); };
   document.body ? mount() : document.addEventListener("DOMContentLoaded", mount, { once: true });
 
