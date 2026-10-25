@@ -221,7 +221,7 @@ class IndexedAssetSource(
             }
             try {
                 val members = fetchBundle(bundle)
-                keep(members)
+                keep(bundle, members)
                 pending.complete(members)
                 return members
             } catch (failure: Throwable) {
@@ -255,17 +255,19 @@ class IndexedAssetSource(
         return verified
     }
 
-    /** Puts [members] in [cache], or with none, keeps them in memory for the reads still to come. */
-    private suspend fun keep(members: Map<String, ByteArray>) {
+    /** Puts [members] in [cache], or with none, keeps each of [bundle]'s files in memory for the read still to come. */
+    private suspend fun keep(bundle: ProjectIndexBundle, members: Map<String, ByteArray>) {
         val cache = cache
         if (cache != null) {
             members.forEach { (sha256, bytes) -> cache.put(sha256, bytes) }
             return
         }
         lock.withLock {
-            members.forEach { (sha256, bytes) ->
-                if (sha256 !in staged) {
-                    staged[sha256] = bytes
+            // By key, not SHA-256: two files with the same bytes are two reads to come.
+            membersOf.getValue(bundle.sha256).forEach { member ->
+                if (member.key !in staged) {
+                    val bytes = members.getValue(member.sha256)
+                    staged[member.key] = bytes
                     stagedBytes += bytes.size
                 }
             }
@@ -278,7 +280,7 @@ class IndexedAssetSource(
 
     private suspend fun takeStaged(entry: ProjectIndexEntry): ByteArray? {
         if (cache != null) return null
-        return lock.withLock { staged.remove(entry.sha256)?.also { stagedBytes -= it.size } }
+        return lock.withLock { staged.remove(entry.key)?.also { stagedBytes -= it.size } }
     }
 
     private fun matches(bytes: ByteArray, entry: ProjectIndexEntry): Boolean =
