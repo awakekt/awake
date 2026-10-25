@@ -22,7 +22,6 @@ import com.awakekt.awake.core.text.font.ellipsize
 import com.awakekt.awake.core.text.scope.pixelPerfectTextScale
 import com.awakekt.awake.core.text.theme.TextStyle
 import com.awakekt.awake.core.text.unicode.GraphemeClusters
-import kotlin.math.ceil
 import kotlin.math.roundToInt
 
 /**
@@ -103,12 +102,10 @@ class TextMeasurePolicy(
         // not accumulate a ceiling error for every label. This is the deterministic boundary
         // until the retained layout model carries fractional bounds end to end.
         val width = lines.maxOf { lineWidth(it, glyphPx) }.roundToInt()
-        val safeLineHeight = safeLineHeight(oneLineHeight(glyphPx), glyphPx * font.lineHeightEm, lines.size)
-        val lineHeight = ceil(safeLineHeight).roundToInt()
+        // Whole pixels both, from the rule painting uses, so the box is exactly the lines it paints.
+        val lineHeight = TextLineBox.advancePx(font, glyphPx, density, authoredLineHeight()).roundToInt()
         val height = lineHeight * lines.size
-        val fontH = glyphPx * font.lineHeightEm
-        val topPad = ((safeLineHeight - fontH) / 2f).coerceAtLeast(0f)
-        val firstBaseline = (topPad + glyphPx * font.ascentEm).roundToInt()
+        val firstBaseline = TextLineBox.baselinePx(font, glyphPx, density, authoredLineHeight()).roundToInt()
         val lastBaseline = firstBaseline + lineHeight * (lines.size - 1).coerceAtLeast(0)
         val alignmentLines = mapOf<AlignmentLine, Int>(
             FirstBaseline to firstBaseline,
@@ -162,7 +159,7 @@ class TextMeasurePolicy(
         val wrapAt = if (singleLine || width == Constraints.Infinity) Float.POSITIVE_INFINITY else width.toFloat()
         val glyphPx = glyphPixels(density, fontScale)
         val lineCount = linesAt(glyphPx, wrapAt).size
-        return ceil(safeLineHeight(oneLineHeight(glyphPx), glyphPx * font.lineHeightEm, lineCount)).roundToInt() * lineCount
+        return TextLineBox.advancePx(font, glyphPx, density, authoredLineHeight()).roundToInt() * lineCount
     }
 
     /** The same answer as [minIntrinsicHeight]: text has one height at a given width. */
@@ -192,15 +189,15 @@ class TextMeasurePolicy(
         ) { lineWidth(it, glyphPx) }
 
     /**
-     * The line box, authored where the style says so and intrinsic otherwise.
+     * The authored line height in device pixels, or null for the font's own; [TextLineBox] turns either
+     * into the line box.
      *
      * A CSS text scale is a *pair*: `text-sm` is `font-size: 14px; line-height: 20px`, and a design
      * system that carries only the first has no way to reproduce the second. Ignoring
      * [TextStyle.lineHeight] here made every ported recipe short by the difference -- a dropdown item
      * measured 29px against shadcn's 32 because the font's own metrics put the line at 17.
      */
-    private fun Density.oneLineHeight(glyphPx: Float): Float =
-        style.lineHeight?.let { it.value * density * fontScale } ?: (glyphPx * font.lineHeightEm)
+    private fun Density.authoredLineHeight(): Float? = style.lineHeight?.let { it.value * density * fontScale }
 
     /**
      * One line's advance width. A block is as wide as its longest line, never their sum.
@@ -245,14 +242,6 @@ class TextMeasurePolicy(
     }
 }
 
-/**
- * One line's box, from the style's line height and the font's own. A compact line-height is fine
- * for one line, but cannot be allowed to make adjacent multiline glyph quads overlap the font's own
- * vertical metrics.
- */
-private fun safeLineHeight(styleLinePx: Float, fontLinePx: Float, lineCount: Int): Float =
-    if (lineCount > 1) maxOf(styleLinePx, fontLinePx) else styleLinePx
-
 /** A fresh run from [TextMeasurePolicy]'s inputs and its last wrap width. */
 internal fun TextMeasurePolicy.buildRun(density: Float, fontScale: Float): TextRun =
     TextRun(
@@ -266,4 +255,5 @@ internal fun TextMeasurePolicy.buildRun(density: Float, fontScale: Float): TextR
         overflow = overflow,
         softWrap = softWrap,
         maxLines = maxLines,
+        fontScale = fontScale,
     )

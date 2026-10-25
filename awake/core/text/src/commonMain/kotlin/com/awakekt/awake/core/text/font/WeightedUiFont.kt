@@ -45,6 +45,9 @@ class WeightedUiFont(
     override val ascentEm: Float = baseFace.font.ascentEm
     override val descentEm: Float = baseFace.font.descentEm
     override val capHeightEm: Float = baseFace.font.capHeightEm
+    override val lineAscentEm: Float = baseFace.font.lineAscentEm
+    override val lineDescentEm: Float = baseFace.font.lineDescentEm
+    override val lineGapEm: Float = baseFace.font.lineGapEm
 
     /** Each weight's glyphs from its own face's outlines; null unless every face has outlines. */
     override val pixelGlyphs: PixelGlyphs? by lazy {

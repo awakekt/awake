@@ -92,14 +92,22 @@ only when they match one of these narrow pre-fix signatures:
 - [#1023](https://github.com/awakekt/awake/issues/1023): a requested numeric feature
   instead matches the independently captured browser control using normal digits
   (within 0.1 px). Already-tabular default digits may pass without that feature API.
-- [#1024](https://github.com/awakekt/awake/issues/1024): vertical placement matches
-  the documented legacy signature derived from the source TTF's raw ascender and
-  descender: natural height, multiline minimum height, positive half-leading and
-  independently rounded baselines. The signature tolerance is only 0.02 px.
 - [#1021](https://github.com/awakekt/awake/issues/1021): the half-pixel wrap-fit
   follow-up on that tracker owns Core's existing `width < limit + 0.5` behavior.
   A separate browser control with only the wrap width enlarged by 0.5 device px
   must match the changed horizontal metrics (0.1 px) and exact source ranges/count.
+
+One deviation is deliberate rather than a gap, and reports as `SNAP`. Core lays
+every line out with the same whole-device-pixel advance (`TextLineBox`, #1024):
+the browser's line height rounded to a whole pixel, with the first baseline on the
+pixel grid. Chromium instead advances by a fractional line height, which the
+density cases (17.5 px at 1.25) and the fractional tight and tall line heights
+(8.8 and 17.6 px for 11 px text) produce, so its gaps alternate once snapped while Core's stay equal.
+The difference grows by under half a pixel a line. A later line's top or baseline
+is `SNAP` only when it equals the browser's own first baseline rounded to a whole
+pixel plus the line index times the browser's line height rounded to a whole
+pixel, within 0.02 px; the first line, the line height and the line-box height are
+held to the browser's 0.5 px.
 
 These signatures are expected-failure classifiers, **not replacement goldens**.
 Unrelated drift fails. The policy test includes negative probes proving that a

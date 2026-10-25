@@ -55,6 +55,8 @@ internal class OpenTypeUiFontData private constructor(
 
     override fun outlineFont(): OpenTypeFont = font
 
+    override fun lineMetrics(): FontLineMetrics = font.lineMetrics
+
     companion object {
         /**
          * Reads [bytes] and bakes the glyphs of [chars] that the font has, plus [FALLBACK_CHAR],
