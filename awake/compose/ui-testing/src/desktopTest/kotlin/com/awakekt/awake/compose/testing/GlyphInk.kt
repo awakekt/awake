@@ -59,9 +59,13 @@ internal object GlyphInk {
     fun cases(): List<Case> {
         val fonts = listOf(BUILT_IN to UiFonts.default(), "loaded TTF" to loadedRoboto)
         val cases = ArrayList<Case>()
-        for ((name, font) in fonts) for (size in listOf(14, 96)) for (density in listOf(1f, 1.5f)) {
-            cases += Case(name, font, size, density, tight = false)
-            cases += Case(name, font, size, density, tight = true)
+        for ((name, font) in fonts) {
+            for (size in listOf(14, 96)) {
+                for (density in listOf(1f, 1.5f)) {
+                    cases += Case(name, font, size, density, tight = false)
+                    cases += Case(name, font, size, density, tight = true)
+                }
+            }
         }
         return cases
     }
