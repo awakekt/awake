@@ -10,7 +10,7 @@ import com.awakekt.awake.core.input.ScrollSource
 private const val GLFW_MOUSE_BUTTON_RIGHT = 1
 
 /** Fake [GlfwWindowInput] for desktopTest -- lets a test set "these keys are down this frame"
- * and assert the resulting [com.awakekt.awake.core.input.Input] calls, without a
+ * or "this text was typed" and assert the resulting [com.awakekt.awake.core.input.Input] calls, without a
  * live GLFW window. */
 class FakeGlfwWindowInput : GlfwWindowInput {
     val keysDown = mutableSetOf<Int>()
@@ -30,6 +30,9 @@ class FakeGlfwWindowInput : GlfwWindowInput {
     var pendingScrollDeltaX = 0.0
     var pendingScrollSource = ScrollSource.Unknown
     var pendingPinchScale = 1.0
+
+    /** What the platform typed since the last poll, as GLFW's character callback reports it. */
+    var pendingTypedText = ""
 
     override fun isKeyDown(glfwKey: Int): Boolean = glfwKey in keysDown
     override fun isMouseButtonDown(glfwButton: Int): Boolean =
@@ -60,6 +63,12 @@ class FakeGlfwWindowInput : GlfwWindowInput {
     override fun consumePinchScale(): Double {
         val value = pendingPinchScale
         pendingPinchScale = 1.0
+        return value
+    }
+
+    override fun consumeTypedText(): String {
+        val value = pendingTypedText
+        pendingTypedText = ""
         return value
     }
 }

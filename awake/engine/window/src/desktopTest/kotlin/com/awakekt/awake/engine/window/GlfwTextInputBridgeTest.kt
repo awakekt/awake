@@ -22,7 +22,8 @@ private const val GLFW_KEY_UP = 265
 // read it from a test, so this asserts the observable cadence, not the constant.
 private const val REPEAT_INITIAL_DELAY_SECONDS = 0.5
 
-/** [Input] is a per-session instance now (no longer a global object) -- each test
+/** Typed text comes from the platform's character callback through [GlfwWindowInput.consumeTypedText];
+ * the key map only drives edit keys and shortcuts. [Input] is a per-session instance now (no longer a global object) -- each test
  * constructs its own and reads it back via [Input.updateSnapshot], which drains the typed
  * text/edit action buffers the same way the old static `consumeTypedText`/`consumeEditActions`
  * did. */
@@ -39,60 +40,78 @@ class GlfwTextInputBridgeTest {
     }
 
     @Test
-    fun keyPressFiresExactlyOnceOnTheRisingEdge() {
+    fun typedTextReachesTheInputOnce() {
         val input = Input()
-        val reader = FakeGlfwWindowInput().apply { keysDown += GLFW_KEY_A }
+        val reader = FakeGlfwWindowInput().apply { pendingTypedText = "name@example.com" }
         pollGlfwTextInput(reader, input, deltaSeconds = 0.0)
-        assertEquals("a", input.updateSnapshot().typedText, "the first frame a key is down must insert exactly one character")
+        assertEquals("name@example.com", input.updateSnapshot().typedText, "an email address must type as the platform sent it")
 
-        pollGlfwTextInput(reader, input, deltaSeconds = 0.05)
-        assertEquals("", input.updateSnapshot().typedText, "holding the key without crossing the repeat threshold must not insert again")
+        pollGlfwTextInput(reader, input, deltaSeconds = 0.0)
+        assertEquals("", input.updateSnapshot().typedText, "typed text must be drained, not typed again next frame")
     }
 
     @Test
-    fun holdingPastTheInitialDelayRepeats() {
+    fun shiftedSymbolsAltGrAndOtherLayoutsTypeWhatThePlatformSent() {
         val input = Input()
-        val reader = FakeGlfwWindowInput().apply { keysDown += GLFW_KEY_A }
+        // US Shift symbols, a German AltGr+Q, a French AZERTY row and a dead-key accent, an emoji.
+        val typed = "!@#\$%^&*()_+{}|:\"<>?~ @ azerty é 😀"
+        val reader = FakeGlfwWindowInput().apply {
+            pendingTypedText = typed
+            keysDown += GLFW_KEY_LEFT_SHIFT
+        }
         pollGlfwTextInput(reader, input, deltaSeconds = 0.0)
-        input.updateSnapshot()
-
-        pollGlfwTextInput(reader, input, deltaSeconds = REPEAT_INITIAL_DELAY_SECONDS)
-        assertEquals("a", input.updateSnapshot().typedText, "holding past the initial repeat delay must fire another insert")
+        assertEquals(typed, input.updateSnapshot().typedText)
     }
 
     @Test
-    fun releasingResetsTheRepeatCadence() {
+    fun aHeldLetterKeyTypesNothingWithoutACharacter() {
         val input = Input()
-        val reader = FakeGlfwWindowInput().apply { keysDown += GLFW_KEY_A }
-        pollGlfwTextInput(reader, input, deltaSeconds = 0.0)
-        input.updateSnapshot()
-
-        reader.keysDown -= GLFW_KEY_A
-        pollGlfwTextInput(reader, input, deltaSeconds = 1.0)
-        assertEquals("", input.updateSnapshot().typedText, "releasing the key must stop insertion even after a long delta")
-
-        reader.keysDown += GLFW_KEY_A
-        pollGlfwTextInput(reader, input, deltaSeconds = 0.0)
-        assertEquals("a", input.updateSnapshot().typedText, "pressing again after a release must fire a fresh rising edge, not resume mid-repeat")
-    }
-
-    @Test
-    fun shiftUppercasesLetters() {
-        val input = Input()
+        // The key map no longer types: a key with no character from the platform (as on a layout
+        // where that position is a dead key) adds nothing, shifted or not.
         val reader = FakeGlfwWindowInput().apply {
             keysDown += GLFW_KEY_A
             keysDown += GLFW_KEY_LEFT_SHIFT
         }
         pollGlfwTextInput(reader, input, deltaSeconds = 0.0)
-        assertEquals("A", input.updateSnapshot().typedText, "shift held must uppercase the inserted letter")
+        assertEquals("", input.updateSnapshot().typedText)
     }
 
     @Test
-    fun editKeyPushesEditAction() {
+    fun editKeyFiresExactlyOnceOnTheRisingEdge() {
         val input = Input()
         val reader = FakeGlfwWindowInput().apply { keysDown += GLFW_KEY_BACKSPACE }
         pollGlfwTextInput(reader, input, deltaSeconds = 0.0)
-        assertEquals(listOf(TextEditAction.Backspace), input.updateSnapshot().editActions, "a held edit key must push its TextEditAction on the rising edge")
+        assertEquals(listOf(TextEditAction.Backspace), input.updateSnapshot().editActions, "the first frame a key is down must fire exactly once")
+
+        pollGlfwTextInput(reader, input, deltaSeconds = 0.05)
+        assertEquals(emptyList(), input.updateSnapshot().editActions, "holding the key without crossing the repeat threshold must not fire again")
+    }
+
+    @Test
+    fun holdingPastTheInitialDelayRepeats() {
+        val input = Input()
+        val reader = FakeGlfwWindowInput().apply { keysDown += GLFW_KEY_BACKSPACE }
+        pollGlfwTextInput(reader, input, deltaSeconds = 0.0)
+        input.updateSnapshot()
+
+        pollGlfwTextInput(reader, input, deltaSeconds = REPEAT_INITIAL_DELAY_SECONDS)
+        assertEquals(listOf(TextEditAction.Backspace), input.updateSnapshot().editActions, "holding past the initial repeat delay must fire again")
+    }
+
+    @Test
+    fun releasingResetsTheRepeatCadence() {
+        val input = Input()
+        val reader = FakeGlfwWindowInput().apply { keysDown += GLFW_KEY_BACKSPACE }
+        pollGlfwTextInput(reader, input, deltaSeconds = 0.0)
+        input.updateSnapshot()
+
+        reader.keysDown -= GLFW_KEY_BACKSPACE
+        pollGlfwTextInput(reader, input, deltaSeconds = 1.0)
+        assertEquals(emptyList(), input.updateSnapshot().editActions, "releasing the key must stop it even after a long delta")
+
+        reader.keysDown += GLFW_KEY_BACKSPACE
+        pollGlfwTextInput(reader, input, deltaSeconds = 0.0)
+        assertEquals(listOf(TextEditAction.Backspace), input.updateSnapshot().editActions, "pressing again after a release must fire a fresh rising edge, not resume mid-repeat")
     }
 
     @Test
