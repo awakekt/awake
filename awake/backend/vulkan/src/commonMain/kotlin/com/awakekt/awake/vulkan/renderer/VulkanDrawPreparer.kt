@@ -43,6 +43,9 @@ internal class VulkanDrawPreparer(
 
     override fun canInstance(format: VertexFormat, cullMode: CullMode): Boolean = renderer.pipelines.canInstance(format, cullMode)
 
+    /** The shadow depth pipelines enable `depthClampEnable` exactly when the device has the feature. */
+    override val clampsShadowDepth: Boolean get() = renderer.graphicsDevice.depthClamp
+
     override fun prepare(
         request: GpuDrawRequest,
         sourceIndex: Int,

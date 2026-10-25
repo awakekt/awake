@@ -7,6 +7,7 @@ package com.awakekt.awake.webgpu.device
 
 import com.awakekt.awake.render.pipeline.GpuDeviceClass
 import com.awakekt.awake.webgpu.WebGpuHandles
+import io.ygdrasil.webgpu.GPUFeatureName
 import io.ygdrasil.webgpu.WGPUContext
 
 /**
@@ -73,6 +74,15 @@ class GraphicsDevice {
 
     internal lateinit var wgpuContext: WGPUContext
         private set
+
+    /**
+     * Whether a render pipeline's `unclippedDepth` takes effect on this device: it was granted
+     * `depth-clip-control`, and this platform's binding passes the flag through. The shadow depth
+     * pass sets it when true, so a caster in front of a cascade's near plane is clamped onto it
+     * instead of clipped away.
+     */
+    internal val unclippedDepth: Boolean
+        get() = UNCLIPPED_DEPTH_REACHES_PIPELINES && GPUFeatureName.DepthClipControl in wgpuContext.device.features
 
     /**
      * Adopts a pre-resolved WebGPU context as this device and registers its device in

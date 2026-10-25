@@ -99,6 +99,14 @@ fun interface GpuDrawPreparer {
 
     /** [canInstance] for copies drawn with [cullMode]; only unculled copies unless a backend says more. */
     fun canInstance(format: VertexFormat, cullMode: CullMode): Boolean = cullMode == CullMode.None && canInstance(format)
+
+    /**
+     * Whether this backend's directional shadow depth pass clamps depth rather than clipping at
+     * a cascade's near plane, so a caster in front of that plane is flattened onto it and still
+     * casts. False, the default, has the scene compiler pull each cascade's near plane back to
+     * the casters it draws instead, at some cost in depth precision.
+     */
+    val clampsShadowDepth: Boolean get() = false
 }
 
 /** Composition capability exposed by a backend bootstrap to scene/render-pipeline code. */

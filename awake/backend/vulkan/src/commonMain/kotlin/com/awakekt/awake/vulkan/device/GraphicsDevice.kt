@@ -293,6 +293,13 @@ class GraphicsDevice {
     var deviceClass: GpuDeviceClass = GpuDeviceClass.Unknown
         private set
 
+    /**
+     * Whether the device enabled `depthClamp`, so the shadow depth pass can clamp a caster in
+     * front of a cascade's near plane onto it instead of clipping it away.
+     */
+    internal var depthClamp: Boolean = false
+        private set
+
     private fun createLogicalDevice(indices: QueueFamilyIndices) {
         val graphicsFamily = indices.graphicsFamily!!
         val physicalDeviceProperties = Vulkan.vkGetPhysicalDeviceProperties(physicalDevice)
@@ -313,6 +320,8 @@ class GraphicsDevice {
         }
 
         val features = Vulkan.vkGetPhysicalDeviceFeatures(physicalDevice)
+        // Every supported feature is enabled below, so supported here means usable.
+        depthClamp = features.depthClamp
         val availableDeviceExtensions =
             Vulkan.vkEnumerateDeviceExtensionProperties(physicalDevice)
                 .map { it.extensionName }
