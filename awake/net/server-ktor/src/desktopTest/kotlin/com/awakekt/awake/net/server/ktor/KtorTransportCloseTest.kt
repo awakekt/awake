@@ -7,6 +7,8 @@ package com.awakekt.awake.net.server.ktor
 
 import com.awakekt.awake.net.DeliveryChannel
 import com.awakekt.awake.net.SessionId
+import io.ktor.util.logging.KtorSimpleLogger
+import io.ktor.util.logging.Logger
 import io.ktor.websocket.CloseReason
 import io.ktor.websocket.Frame
 import io.ktor.websocket.WebSocketExtension
@@ -14,6 +16,7 @@ import io.ktor.websocket.WebSocketSession
 import io.ktor.websocket.readBytes
 import io.ktor.websocket.readReason
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
@@ -33,6 +36,13 @@ import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class KtorTransportCloseTest {
+    private class RecordingLogger : Logger by KtorSimpleLogger("transport-close-test") {
+        val failures = mutableListOf<Throwable>()
+        override fun warn(message: String?, cause: Throwable?) {
+            if (cause != null) failures += cause
+        }
+    }
+
     private class Socket : WebSocketSession {
         override val coroutineContext = SupervisorJob()
         override var masking = false
@@ -66,7 +76,7 @@ class KtorTransportCloseTest {
         override fun terminate() = Unit
     }
 
-    private fun TestScope.session(socket: Socket, capacity: Int = 32) = KtorTransportSession(
+    private fun TestScope.session(socket: Socket, capacity: Int = 32, logger: Logger = RecordingLogger()) = KtorTransportSession(
         id = SessionId(1),
         principal = null,
         socket = socket,
@@ -75,6 +85,7 @@ class KtorTransportCloseTest {
         maxFrameSize = 1024,
         writerDispatcher = StandardTestDispatcher(testScheduler),
         closeTimeout = 100.milliseconds,
+        logger = logger,
     )
 
     @Test
@@ -130,13 +141,16 @@ class KtorTransportCloseTest {
     @Test
     fun writerFailureStillClosesAndReleasesRepeatedClose() = runTest {
         val socket = Socket().apply { failSend = true }
-        val session = session(socket)
+        val logger = RecordingLogger()
+        val session = session(socket, logger = logger)
         session.send(DeliveryChannel.Reliable, "final".encodeToByteArray())
         runCurrent()
         session.close()
         session.close()
         assertEquals(listOf("close:1000", "flush"), socket.events)
         assertTrue(session.incoming().receiveCatching().isClosed)
+        assertEquals(1, logger.failures.size)
+        assertEquals("Synthetic write failure", logger.failures.single().message)
     }
 
     @Test
@@ -147,5 +161,24 @@ class KtorTransportCloseTest {
         session.send(DeliveryChannel.Reliable, "overflow".encodeToByteArray())
         session.close()
         assertEquals(listOf("close:${CloseReason.Codes.TRY_AGAIN_LATER.code}", "flush"), socket.events)
+    }
+
+    @Test
+    fun sendOnOverflowWaitsOnlyUntilTheCloseDeadline() = runTest {
+        val socket = Socket().apply { blockedFlush = CompletableDeferred() }
+        val logger = RecordingLogger()
+        val session = session(socket, capacity = 1, logger = logger)
+        session.send(DeliveryChannel.Reliable, "queued".encodeToByteArray())
+        val overflowingSend = launch(start = CoroutineStart.UNDISPATCHED) {
+            session.send(DeliveryChannel.Reliable, "overflow".encodeToByteArray())
+        }
+        runCurrent()
+        assertFalse(overflowingSend.isCompleted)
+        advanceTimeBy(100)
+        runCurrent()
+        assertTrue(overflowingSend.isCompleted)
+        assertFalse(socket.isActive)
+        session.close()
+        assertTrue(logger.failures.isEmpty())
     }
 }

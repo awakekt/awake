@@ -14,4 +14,9 @@ overflow can discard packets. Overflow remains an abort with a `TRY_AGAIN_LATER`
 than a promise to drain an overloaded connection. Incoming queue overflow behavior is unchanged.
 Neither a completed close nor a WebSocket flush is an acknowledgement by the peer application.
 
+When the outbound queue is full, `send()` initiates that abort and can suspend for up to the
+one-second close deadline while sending/flushing the close frame. A server tick that calls it
+must account for this bounded I/O wait. Writer failures are logged with the session identifier
+and exception at writer completion; cancellation during shutdown is not logged as a failure.
+
 This ordering describes the Ktor server transport, not every implementation of the transport port.

@@ -20,11 +20,14 @@ import io.ktor.server.routing.routing
 import io.ktor.server.websocket.WebSockets
 import io.ktor.server.websocket.webSocket
 import io.ktor.util.AttributeKey
+import io.ktor.util.logging.KtorSimpleLogger
+import io.ktor.util.logging.Logger
 import io.ktor.websocket.CloseReason
 import io.ktor.websocket.Frame
 import io.ktor.websocket.WebSocketSession
 import io.ktor.websocket.close
 import io.ktor.websocket.readBytes
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -46,6 +49,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
+
+private val transportLogger = KtorSimpleLogger("com.awakekt.awake.net.server.ktor.GameTransport")
 
 /**
  * Configuration for [GameTransport].
@@ -167,6 +172,7 @@ internal class KtorTransportSession(
     private val maxFrameSize: Long,
     writerDispatcher: CoroutineDispatcher = Dispatchers.Default,
     private val closeTimeout: Duration = 1.seconds,
+    private val logger: Logger = transportLogger,
 ) : TransportSession {
 
     private val inbox = Channel<ByteArray>(inboxCapacity, onBufferOverflow = BufferOverflow.DROP_OLDEST)
@@ -175,7 +181,7 @@ internal class KtorTransportSession(
     private val closing = AtomicBoolean(false)
     private val closed = CompletableDeferred<Unit>()
 
-    // async keeps send failures local while finally closes the transport.
+    // Observe deferred failures as well as closing the transport in finally.
     private val writer = scope.async {
         try {
             for (packet in outbox) {
@@ -189,6 +195,12 @@ internal class KtorTransportSession(
                 true
             } == true
             if (!flushed) socket.cancel()
+        }
+    }.also { task ->
+        task.invokeOnCompletion { failure ->
+            if (failure != null && failure !is CancellationException) {
+                logger.warn("Transport session $id writer failed", failure)
+            }
         }
     }
 
