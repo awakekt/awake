@@ -52,7 +52,9 @@ interface ContentCache {
  * `url`, checked against the entry's size and SHA-256 before a parser sees it, and kept in [cache].
  *
  * [fetch] is the host's: it resolves a relative `url` against wherever the index came from, sends any
- * sign-in, retries and resumes, so Core carries no HTTP library. [prefetch] calls it for several files
+ * sign-in, retries and resumes, so Core carries no HTTP library. For content that needs a short-lived
+ * read token, pass a [TokenAuthorizedFetch]'s `fetch`, which attaches, refreshes and retries the token;
+ * the token never reaches [cache], which stays keyed by SHA-256. [prefetch] calls it for several files
  * at once. A file from the network that doesn't match its entry fails the read and names the path. A
  * copy from [cache] is one this source checked before storing it, so only its size is checked again;
  * a copy of the wrong size is fetched again.
@@ -168,5 +170,24 @@ class IndexedAssetSource(
                 cache = cache,
             )
         }
+
+        /**
+         * Like the other [open], reading the index at [indexPath] and then every file through
+         * [fetch], so the index request carries the read token too.
+         *
+         * @param indexPath Project-relative path to the transport index JSON, which [fetch]'s
+         * transport resolves like any entry URL.
+         * @param fetch The token-attaching fetch for the index and every file.
+         * @param cache Optional content-addressed cache for verified files; it never sees the token.
+         * @param retainCachedOnly Whether to prune cached entries not listed in the loaded index.
+         * @return A validated [IndexedAssetSource] backed by the fetched index and [cache].
+         * @throws ContentFetchException when the index can't be read; see [TokenAuthorizedFetch.fetch].
+         */
+        suspend fun open(
+            indexPath: AssetPath = AssetPath(DEFAULT_INDEX_PATH),
+            fetch: TokenAuthorizedFetch,
+            cache: ContentCache? = null,
+            retainCachedOnly: Boolean = true,
+        ): IndexedAssetSource = open(indexPath, { path -> fetch.fetch(path.value) }, cache, retainCachedOnly)
     }
 }
