@@ -61,6 +61,32 @@ fun List<UiDrawPrimitive>.assertMatchesBaseline(
     background: Color = OpaqueBackground,
     font: UiFont? = null,
     layers: List<GraphicsLayerFrame> = emptyList(),
+) = matchBaseline(name, width, height, background, font, layers, grayscale = false)
+
+/**
+ * [assertMatchesBaseline], recording the baseline as an 8-bit grey PNG: about half the size of RGBA
+ * for a large sheet of dark text on white, which matters for a baseline every text change re-records.
+ * Recording fails unless every pixel is opaque and neutral. The comparison is the same exact one: the
+ * grey baseline is read back as the RGBA it stands for.
+ */
+fun List<UiDrawPrimitive>.assertMatchesGrayscaleBaseline(
+    name: String,
+    width: Int,
+    height: Int,
+    background: Color = OpaqueBackground,
+    font: UiFont? = null,
+) = matchBaseline(name, width, height, background, font, emptyList(), grayscale = true)
+
+// One parameter past detekt's limit, the switch between the two public entry points above.
+@Suppress("LongParameterList")
+private fun List<UiDrawPrimitive>.matchBaseline(
+    name: String,
+    width: Int,
+    height: Int,
+    background: Color,
+    font: UiFont?,
+    layers: List<GraphicsLayerFrame>,
+    grayscale: Boolean,
 ) {
     val actual = rasterizeToPixelMap(width, height, background, font, layers)
     TextReferenceComposite.writeIfRequested(this, name) { kept -> kept.rasterizeToPixelMap(width, height, background, font, layers) }
@@ -68,8 +94,8 @@ fun List<UiDrawPrimitive>.assertMatchesBaseline(
 
     if (System.getProperty(RECORD_PROPERTY) != null) {
         baselineFile.parentFile?.mkdirs()
-        ImageIO.write(actual.toBufferedImage(), "PNG", baselineFile)
-        println("RECORDED baseline $name (${width}x$height)")
+        if (grayscale) writeSmallestPng(actual.toGrayImage(name), baselineFile) else ImageIO.write(actual.toBufferedImage(), "PNG", baselineFile)
+        println("RECORDED baseline $name (${width}x$height${if (grayscale) ", grey" else ""})")
         return
     }
 
@@ -106,7 +132,7 @@ private val OpaqueBackground = Color(1f, 1f, 1f, 1f)
 
 /** Read from the classpath so the comparison survives being run from outside the module directory. */
 private fun readBaseline(name: String): BufferedImage? =
-    object {}.javaClass.getResourceAsStream("/baselines/components/$name.png")?.use(ImageIO::read)
+    object {}.javaClass.getResourceAsStream("/baselines/components/$name.png")?.use(ImageIO::read)?.let(::expandGray)
 
 /** RGBA8, the layout [com.awakekt.awake.render.capture.PixelMap] already packs. */
 private fun BufferedImage.toRgbaBytes(): ByteArray {
