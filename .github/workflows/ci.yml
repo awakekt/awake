@@ -580,10 +580,11 @@ jobs:
       - name: Font loading browser tests
         run: ./gradlew :awake:core:text:wasmJsBrowserTest
 
-      # Code that only runs in a browser: copying a fetched response into a ByteArray, and the
-      # IndexedDB content cache, including a store that's full or blocked. Desktop tests can't reach it.
+      # Code that only runs in a browser: copying a fetched response into a ByteArray, the
+      # IndexedDB content cache, including a store that's full or blocked, and the `fetch()` content
+      # transport's real request. Desktop tests can't reach it.
       - name: Project loading browser tests
-        run: ./gradlew :awake:core:io:wasmJsBrowserTest :awake:core:host:wasmJsBrowserTest :awake:project:wasmJsBrowserTest
+        run: ./gradlew :awake:core:io:wasmJsBrowserTest :awake:core:host:wasmJsBrowserTest :awake:project:wasmJsBrowserTest :awake:project:transport-browser:wasmJsBrowserTest
 
       # The only bundle that pulls in Ktor's JS client and kotlinx-io's Node helpers. A toolchain
       # bump once left a bare `import.meta` in it that no build caught, and the page stopped loading.

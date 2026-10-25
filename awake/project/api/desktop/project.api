@@ -328,8 +328,11 @@ public final class com/awakekt/awake/project/ContentRequest {
 
 public final class com/awakekt/awake/project/ContentResponse {
 	public fun <init> (I[B)V
+	public fun <init> (I[BLjava/util/Map;)V
 	public final fun getBody ()[B
+	public final fun getHeaders ()Ljava/util/Map;
 	public final fun getStatus ()I
+	public final fun header (Ljava/lang/String;)Ljava/lang/String;
 	public fun toString ()Ljava/lang/String;
 }
 
@@ -620,6 +623,25 @@ public final class com/awakekt/awake/project/ProjectPathIds$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
+public final class com/awakekt/awake/project/RateLimitBackoff {
+	public static final field Companion Lcom/awakekt/awake/project/RateLimitBackoff$Companion;
+	public static final field DEFAULT_MAX_ATTEMPTS I
+	public fun <init> ()V
+	public synthetic fun <init> (IJJJLkotlin/time/Clock;Lkotlin/random/Random;Lkotlin/jvm/functions/Function2;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (IJJJLkotlin/time/Clock;Lkotlin/random/Random;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getInitialDelay-UwyO8pc ()J
+	public final fun getMaxAttempts ()I
+	public final fun getMaxDelay-UwyO8pc ()J
+	public final fun getMaxTotalWait-UwyO8pc ()J
+}
+
+public final class com/awakekt/awake/project/RateLimitBackoff$Companion {
+	public final fun getDEFAULT_INITIAL_DELAY-UwyO8pc ()J
+	public final fun getDEFAULT_MAX_DELAY-UwyO8pc ()J
+	public final fun getDEFAULT_MAX_TOTAL_WAIT-UwyO8pc ()J
+	public final fun getNone ()Lcom/awakekt/awake/project/RateLimitBackoff;
+}
+
 public final class com/awakekt/awake/project/ReadToken {
 	public synthetic fun <init> (Ljava/lang/String;JLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getExpiresIn-UwyO8pc ()J
@@ -657,8 +679,8 @@ public final class com/awakekt/awake/project/ReadTokenPlacement$QueryParameter$C
 
 public final class com/awakekt/awake/project/TokenAuthorizedFetch {
 	public static final field Companion Lcom/awakekt/awake/project/TokenAuthorizedFetch$Companion;
-	public synthetic fun <init> (Lcom/awakekt/awake/project/ContentTransport;Lcom/awakekt/awake/project/ReadTokenPlacement;JLkotlin/time/TimeSource;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public synthetic fun <init> (Lcom/awakekt/awake/project/ContentTransport;Lcom/awakekt/awake/project/ReadTokenPlacement;JLkotlin/time/TimeSource;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/project/ContentTransport;Lcom/awakekt/awake/project/ReadTokenPlacement;JLkotlin/time/TimeSource;Lcom/awakekt/awake/project/RateLimitBackoff;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/project/ContentTransport;Lcom/awakekt/awake/project/ReadTokenPlacement;JLkotlin/time/TimeSource;Lcom/awakekt/awake/project/RateLimitBackoff;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun fetch (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun fetchRange (Ljava/lang/String;JJLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
