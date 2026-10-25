@@ -63,6 +63,8 @@ class ContentResponse(
  *
  * @property url The address as the caller passed it to [TokenAuthorizedFetch.fetch].
  * @property status The HTTP status that ended the request, or null when none arrived.
+ * @param message What went wrong, naming [url].
+ * @param cause The failure underneath, when there is one and it doesn't quote the token.
  */
 class ContentFetchException(
     val url: String,

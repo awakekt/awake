@@ -41,7 +41,9 @@ import kotlin.time.TimeSource
  * @param refreshAhead How long before the token expires to ask for the next one. Not negative.
  * @param timeSource The clock that measures a token's lifetime; monotonic, so a change to the
  * device's wall clock doesn't expire a token early or keep one late.
- * @param tokenProvider Answers a current read token. Called once per refresh, never twice at once.
+ * @param tokenProvider Answers a current read token. Called once per refresh, never twice at once,
+ * while requests wait on it, so it must not call [fetch] itself. What it throws fails the requests
+ * waiting on it as a [ContentFetchException]; the next request asks again.
  */
 class TokenAuthorizedFetch(
     private val transport: ContentTransport,

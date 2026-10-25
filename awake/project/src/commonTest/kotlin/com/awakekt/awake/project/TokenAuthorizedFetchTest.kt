@@ -378,9 +378,12 @@ class TokenAuthorizedFetchTest {
         override suspend fun send(request: ContentRequest): ContentResponse {
             requests += request
             if (latency > Duration.ZERO) delay(latency)
-            if (tokenOf(request) !in accepting) return ContentResponse(refusal, ByteArray(0))
-            val file = files[request.url.substringBefore('?')] ?: return ContentResponse(404, ByteArray(0))
-            return ContentResponse(200, file)
+            val file = files[request.url.substringBefore('?')]
+            return when {
+                tokenOf(request) !in accepting -> ContentResponse(refusal, ByteArray(0))
+                file == null -> ContentResponse(404, ByteArray(0))
+                else -> ContentResponse(200, file)
+            }
         }
     }
 
