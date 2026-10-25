@@ -32,8 +32,9 @@ import kotlin.time.TimeSource
  * reaches a [ContentCache]: [IndexedAssetSource] keys and stores files by their SHA-256 and checked
  * bytes, so a new token, or a new release, finds the files it already has.
  *
- * Pass [fetch] as [IndexedAssetSource]'s `fetch`, or this whole object to
- * [IndexedAssetSource.Companion.open], which reads the index through it too.
+ * Pass [fetch] as [IndexedAssetSource]'s `fetch` (and [fetchRange] as its `rangeFetch`, to read one
+ * content bundle member at a time), or this whole object to [IndexedAssetSource.Companion.open], which
+ * reads the index through it too.
  *
  * @param transport The host's HTTP client, behind [ContentTransport].
  * @param placement Where the token goes: an `Authorization: Bearer` header, the default, or a query
@@ -75,11 +76,47 @@ class TokenAuthorizedFetch(
      * @throws ContentFetchException for any other status, a second refusal, a failed [tokenProvider],
      * or a [transport] failure; its message names [url] and never the token.
      */
-    suspend fun fetch(url: String): ByteArray {
+    suspend fun fetch(url: String): ByteArray = bodyOf(url, authorized(url, emptyMap()))
+
+    /**
+     * Reads [length] bytes from [offset] of the file at [url], with the read token attached as
+     * [fetch] attaches it, through an HTTP `Range` request: what [IndexedAssetSource] uses to read one
+     * member of a content bundle without the whole bundle.
+     *
+     * A 206 answer must hold exactly the range. A 200 answer, from a server that ignores ranges or a
+     * [transport] that can't send headers, holds the whole file, and the range is cut from it.
+     *
+     * @param url The address to read, as [transport] resolves it; never holding a token itself.
+     * @param offset The first byte to read. Not negative.
+     * @param length How many bytes to read. Not negative; zero reads nothing and sends no request.
+     * @return The [length] bytes from [offset].
+     * @throws ContentFetchException for any status but 206 or 200, an answer of the wrong size, or
+     * whatever [fetch] throws for.
+     */
+    suspend fun fetchRange(url: String, offset: Long, length: Long): ByteArray {
+        require(offset >= 0 && length >= 0) { "A range needs a non-negative offset and length: $offset, $length" }
+        if (length == 0L) return ByteArray(0)
+        val end = offset + length
+        val response = authorized(url, mapOf(RANGE_HEADER to "bytes=$offset-${end - 1}"))
+        val body = response.body
+        val range = when (response.status) {
+            PARTIAL_CONTENT -> body.takeIf { it.size.toLong() == length }
+            OK -> if (body.size >= end) body.copyOfRange(offset.toInt(), end.toInt()) else null
+            else -> throw ContentFetchException(url, response.status, "$url answered HTTP ${response.status}")
+        }
+        return range ?: throw ContentFetchException(
+            url,
+            response.status,
+            "$url answered ${body.size} bytes with HTTP ${response.status}, which don't hold bytes $offset to ${end - 1}",
+        )
+    }
+
+    /** Sends [url] with [headers] and the token, refreshing it and sending again once if it is refused. */
+    private suspend fun authorized(url: String, headers: Map<String, String>): ContentResponse {
         val token = currentToken(url, refused = null)
-        val response = send(url, token)
-        if (response.status !in REFUSED_STATUSES) return bodyOf(url, response)
-        val retried = send(url, currentToken(url, refused = token))
+        val response = send(url, token, headers)
+        if (response.status !in REFUSED_STATUSES) return response
+        val retried = send(url, currentToken(url, refused = token), headers)
         if (retried.status in REFUSED_STATUSES) {
             throw ContentFetchException(
                 url,
@@ -88,7 +125,7 @@ class TokenAuthorizedFetch(
                     "so the token provider's tokens don't grant access to it",
             )
         }
-        return bodyOf(url, retried)
+        return retried
     }
 
     private suspend fun currentToken(url: String, refused: ReadToken?): ReadToken {
@@ -122,12 +159,12 @@ class TokenAuthorizedFetch(
         return outcome
     }
 
-    private suspend fun send(url: String, token: ReadToken): ContentResponse {
+    private suspend fun send(url: String, token: ReadToken, headers: Map<String, String>): ContentResponse {
         val request = when (placement) {
             ReadTokenPlacement.AuthorizationHeader ->
-                ContentRequest(url, mapOf(AUTHORIZATION_HEADER to "Bearer ${token.value}"))
+                ContentRequest(url, headers + (AUTHORIZATION_HEADER to "Bearer ${token.value}"))
             is ReadTokenPlacement.QueryParameter ->
-                ContentRequest(withQueryParameter(url, placement.name, token.value))
+                ContentRequest(withQueryParameter(url, placement.name, token.value), headers)
         }
         val outcome = runCatching { transport.send(request) }
         val failure = outcome.exceptionOrNull() ?: return outcome.getOrThrow()
@@ -160,6 +197,9 @@ class TokenAuthorizedFetch(
         val DEFAULT_REFRESH_AHEAD: Duration = 60.seconds
 
         private const val AUTHORIZATION_HEADER = "Authorization"
+        private const val RANGE_HEADER = "Range"
+        private const val OK = 200
+        private const val PARTIAL_CONTENT = 206
         private const val REDACTED = "<redacted>"
         private const val MAX_CAUSES_DESCRIBED = 8
         private val SUCCESS_STATUSES = 200..299

@@ -24,6 +24,7 @@ awake/project/cli/build/install/awake/bin/awake validate path/to/project
 | `awake scene add-component <scene> <node> <type> [fields-json]` | Adds a component, with the fields given set on it |
 | `awake scene remove-component <scene> <node> <type>` | Removes the node's component of that type |
 | `awake render <scene> [--output <png>]` | Plays the scene headless and saves what its primary camera sees |
+| `awake bundle <index> --output <dir>` | Packs the files a loose project index lists into content bundles under `<dir>/bundles`, named by SHA-256, and writes the bundled index to `<dir>/project.index.json`: see [Content bundles](../../../website/docs/guides/content-bundles.md) |
 | `awake mcp` | Serves these commands to an AI agent over the Model Context Protocol, on stdin and stdout |
 
 `<scene>` is a path from the project root, or a name under `scenes/`. `<node>` is a path of node

@@ -95,6 +95,7 @@ nav:
           - Audio: guides/audio.md
       - Content:
           - Protected content: guides/protected-content.md
+          - Content bundles: guides/content-bundles.md
       - UI:
           - Game UI: guides/game-ui.md
           - UI with AwakeKt Compose: guides/ui.md
