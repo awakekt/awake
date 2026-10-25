@@ -5,15 +5,11 @@
  */
 package com.awakekt.awake.scene.physics.character
 
-import com.awakekt.awake.core.math.Quat
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.physics.BodyHandle
 import com.awakekt.awake.physics.CapsuleShape
-import com.awakekt.awake.physics.MotionType
 import com.awakekt.awake.physics.PhysicsWorld
 import kotlin.math.cos
-import kotlin.math.max
-import kotlin.math.sqrt
 
 /**
  * How a character is shaped and what it is willing to walk on.
@@ -97,470 +93,50 @@ data class CharacterConfig(
 }
 
 /**
- * Moves a character through the world by sweeping and sliding, without handing it to the solver.
- *
- * This is Awake's own controller rather than a binding to Jolt's `CharacterVirtual`
- * ([D29](../../../../../../../../../docs/decisions/D29-physics-own-engine-exit-criteria.md)):
- * collide-and-slide is sweep, project, repeat, and it needs exactly one thing from a backend --
- * [PhysicsWorld.shapeCast]. Written once here, it behaves identically on all four backends and
- * is testable against a stub world, where a binding would have been three implementations with
- * three sets of quirks.
- *
- * Kinematic means the simulation never pushes this character: it goes where [move] puts it. That
- * is what makes character motion predictable, and it is why gravity is the caller's business --
- * this class integrates nothing. A caller accumulates its own vertical velocity, hands the whole
- * displacement to [move], and reads [isGrounded] to decide whether to keep accumulating.
- *
- * Kerbs and stairs are handled by stepping rather than by sliding: a swept capsule meets a riser
- * as a vertical wall, so [CharacterConfig.stepHeight] and [CharacterConfig.stepDownDistance] are
- * what separate walking up a staircase from standing at the bottom of one.
- *
- * A moving platform is carried through [groundVelocity], which a caller adds to the displacement
- * it asks for. Crouching is the remaining gap.
+ * Compatibility adapter for the scene-independent physics character capability.
+ * Existing scene packages, constructors and properties are retained for callers.
  */
-@Suppress("TooManyFunctions") // Move, crouch, stand, teleport: the surface a character needs.
 class KinematicCharacterController(
-    private val world: PhysicsWorld,
-    private val config: CharacterConfig,
+    world: PhysicsWorld,
+    config: CharacterConfig,
     position: Vec3f = Vec3f(0f, 0f, 0f),
 ) {
-    /** Where the character is now. Mutated in place by [move] rather than replaced. */
-    val position: Vec3f = Vec3f(position.x, position.y, position.z)
+    private val controller = com.awakekt.awake.physics.character.KinematicCharacterController(
+        world,
+        com.awakekt.awake.physics.character.CharacterConfig(
+            shape = config.shape,
+            slopeLimitRadians = config.slopeLimitRadians,
+            skinWidth = config.skinWidth,
+            maxSlideIterations = config.maxSlideIterations,
+            groundProbeDistance = config.groundProbeDistance,
+            stepHeight = config.stepHeight,
+            stepDownDistance = config.stepDownDistance,
+            crouchHalfHeight = config.crouchHalfHeight,
+            innerBody = config.innerBody,
+        ),
+        position,
+    )
 
-    /**
-     * The character's own body, when [CharacterConfig.innerBody] asked for one.
-     *
-     * Kinematic, so it pushes and is not pushed, and excluded from every sweep this controller
-     * makes -- a body at the character's own position is nearer than anything else, so a sweep
-     * that could see it would stop dead on the first frame.
-     *
-     * **Whoever builds this controller owns destroying it**, through [dispose]. Nothing else will:
-     * the body outlives the controller in the `PhysicsWorld`, invisible and unreachable.
-     */
-    var body: BodyHandle? = if (config.innerBody) {
-        world.createBody(
-            config.shape,
-            this.position,
-            Quat.IDENTITY,
-            MotionType.KINEMATIC,
-        )
-    } else {
-        null
-    }
-        private set
+    val position: Vec3f get() = controller.position
+    val body: BodyHandle? get() = controller.body
+    val isGrounded: Boolean get() = controller.isGrounded
+    val groundNormal: Vec3f get() = controller.groundNormal
+    val groundBody: BodyHandle? get() = controller.groundBody
+    val groundVelocity: Vec3f get() = controller.groundVelocity
+    val isCrouching: Boolean get() = controller.isCrouching
+    var onContact: ((body: BodyHandle, normal: Vec3f) -> Unit)?
+        get() = controller.onContact
+        set(value) { controller.onContact = value }
 
-    /** Whether the last [move] ended on ground flat enough to stand on. */
-    var isGrounded: Boolean = false
-        private set
-
-    /** Whether the last [move] rose off the ground faster than the ground itself moves. */
-    private var leftGround = false
-
-    /** The surface [isGrounded] refers to; meaningless when not grounded. */
-    val groundNormal: Vec3f = Vec3f(0f, 1f, 0f)
-
-    /**
-     * The body underfoot, or `null`. A caller reads its velocity through
-     * [PhysicsWorld.getLinearVelocity] to ride a moving platform.
-     */
-    var groundBody: BodyHandle? = null
-        private set
-
-    /**
-     * How fast the ground underfoot is moving, in world units per second. Zero when airborne or
-     * standing on something static.
-     *
-     * Reported rather than applied, for the same reason gravity is: [move] only ever removes
-     * motion from what it was handed, and a controller that quietly added some would break the
-     * one guarantee that makes it predictable. A caller carries a character along by adding this
-     * to the displacement it asks for -- which is also where it decides whether a lift should drag
-     * someone who is walking against it.
-     *
-     * Known limit: `getLinearVelocity` allocates a vector per call, so this costs one per grounded
-     * character per step. Removing it needs an in-place read on four backends, which is worth
-     * doing when a profile says so and not before.
-     */
-    val groundVelocity: Vec3f = Vec3f(0f, 0f, 0f)
-
-    /**
-     * Called for each body the character is stopped by during a [move], with the contact normal.
-     *
-     * Reported rather than acted on. Whether walking into a crate should shove it, how hard, and
-     * whether that crate is even the kind of thing that moves are all game rules, and a kinematic
-     * controller that guessed at them would be applying impulses to terrain. The caller knows
-     * which bodies are dynamic; this only knows what it hit.
-     *
-     * The normal points out of the surface, back toward the character, so a caller pushing a body
-     * away from itself pushes along its negation.
-     */
-    var onContact: ((body: BodyHandle, normal: Vec3f) -> Unit)? = null
-
-    /** Whether the character is currently the shorter shape. */
-    var isCrouching: Boolean = false
-        private set
-
-    /** The capsule being swept right now -- the standing one, or the crouched one. */
-    private var activeShape: CapsuleShape = config.shape
-
-    /** The crouched capsule, built once: same radius, shorter cylinder. */
-    private val crouchedShape: CapsuleShape? = config.crouchHalfHeight?.let {
-        CapsuleShape(halfHeight = it, radius = config.shape.radius)
-    }
-
-    /**
-     * How much lower the crouched capsule's centre sits, with its feet in the same place.
-     *
-     * A capsule's origin is its centre, so shrinking it without moving it leaves the character
-     * hovering by half the difference. Feet stay planted instead, which is what a crouch looks
-     * like.
-     */
-    private val crouchDrop: Float =
-        config.crouchHalfHeight?.let { config.shape.halfHeight - it } ?: 0f
-
-    // Scratch, reused every call: move() runs per character per fixed step forever, and these
-    // would otherwise be garbage at exactly the rate the game is played.
-    private val remaining = Vec3f()
-    private val target = Vec3f()
-    private val scratch = Vec3f()
-
-    // Where a step-up probe started, so a failed one can be undone rather than half-applied.
-    private val savedPosition = Vec3f()
-    private val savedRemaining = Vec3f()
-
-    /** The horizontal heading of a step probe, so its extra reach can be taken back after. */
-    private val stepDirection = Vec3f()
-
-    /**
-     * Shrinks to the crouched capsule, keeping the feet where they are.
-     *
-     * Always allowed: there is no such thing as being too cramped to crouch. Does nothing if the
-     * character is already crouching, or if [CharacterConfig.crouchHalfHeight] was never set.
-     */
-    fun crouch() {
-        val crouched = crouchedShape ?: return
-        if (isCrouching) return
-        activeShape = crouched
-        position.y -= crouchDrop
-        isCrouching = true
-    }
-
-    /**
-     * Stands back up, if there is room, and reports whether it happened.
-     *
-     * The headroom test is a sweep of the crouched capsule straight up by twice the height it
-     * would gain: that puts the swept shape's top exactly where the standing capsule's top would
-     * be, so anything in the way is something the character's head would occupy. A caller that
-     * ignores the answer and stands anyway puts the capsule inside the ceiling, which is the one
-     * state a swept character cannot recover from.
-     *
-     * Holding crouch is therefore the caller's job: try this every frame while the key is up, and
-     * the character stands the moment it walks out from under something.
-     */
-    fun standUp(): Boolean {
-        if (!isCrouching) return true
-        target.set(position)
-        target.y += crouchDrop * 2f
-        val blocked = world.shapeCast(activeShape, position, target, ignore = body) != null
-        if (!blocked) {
-            activeShape = config.shape
-            position.y += crouchDrop
-            isCrouching = false
-        }
-        return !blocked
-    }
-
-    /** Places the character without sweeping. For spawning, not for movement. */
-    fun teleport(to: Vec3f) {
-        position.set(to)
-        isGrounded = false
-        groundBody = null
-        groundVelocity.set(0f, 0f, 0f)
-        // Rebuilt rather than driven there. `moveKinematic` derives a velocity from the distance
-        // and the step, so carrying a body across a respawn would send it through the level at
-        // whatever speed that implies, shoving everything on the way.
-        body?.let { existing ->
-            world.destroyBody(existing)
-            body = world.createBody(config.shape, position, Quat.IDENTITY, MotionType.KINEMATIC)
-        }
-    }
-
-    /**
-     * Destroys the character's own body, if it has one.
-     *
-     * Nothing else does. A controller dropped without this leaves a kinematic body standing where
-     * the character was, still solid and still tripping every trigger it overlaps.
-     */
-    fun dispose() {
-        body?.let(world::destroyBody)
-    }
-
-    /**
-     * Carries the inner body along to where the character now is.
-     *
-     * `moveKinematic` rather than a position write, so Jolt derives the velocity needed to arrive
-     * and solves contacts with the body genuinely moving -- which is what lets it push a crate
-     * instead of teleporting through it. A zero delta is a teleport, and is what [teleport] wants.
-     */
-    private fun syncBody(deltaTime: Float) {
-        val handle = body ?: return
-        world.moveKinematic(handle, position, Quat.IDENTITY, deltaTime)
-    }
-
-    /**
-     * Sweeps [motion] and slides along whatever stops it, then refreshes the ground state.
-     *
-     * Each iteration sweeps what is left of the motion, advances to the first contact, and turns
-     * the rest of the motion along the surface instead of into it -- so a character walking into
-     * a wall at an angle keeps moving along the wall rather than stopping dead. Motion is only
-     * ever removed, never added, so sliding cannot accelerate the character.
-     *
-     * A character that stands still makes no sweep at all: grounded, asked to move less than a sweep is
-     * worth, on a body the simulation isn't moving, it keeps the ground state it has. A ground body that
-     * starts to move, such as a lift setting off, is active, and the probe runs again from that step.
-     * Known limit: ground destroyed under a character that stands still holds it up until it moves.
-     */
-    fun move(motion: Vec3f, deltaTime: Float = DEFAULT_SYNC_DELTA) {
-        if (standsStill(motion)) {
-            syncBody(deltaTime)
-            return
-        }
-        val wasGrounded = isGrounded
-        remaining.set(motion)
-        var iterations = 0
-        var blocked = true
-        while (blocked && iterations < config.maxSlideIterations && remaining.length3() > MIN_MOTION) {
-            target.set(position).add(remaining)
-
-            val hit = world.shapeCast(activeShape, position, target, ignore = body)
-            if (hit == null) {
-                position.set(target)
-                blocked = false
-            } else {
-                // Try to walk over it before deciding to slide along it. Only from the ground:
-                // stepping in mid-air is climbing, and only over walls, since a walkable slope is
-                // something to walk up rather than step onto.
-                val stepped = wasGrounded &&
-                    hit.normal.y < config.minWalkableNormalY &&
-                    tryStepUp()
-                if (!stepped) {
-                    slideAlong(hit.normal, hit.fraction)
-                    onContact?.invoke(hit.handle, hit.normal)
-                }
-                iterations++
-            }
-        }
-        val risingSpeed = if (deltaTime > 0f) motion.y / deltaTime else 0f
-        updateGroundState(ascending = motion.y > MIN_MOTION, risingSpeed = risingSpeed)
-        if (wasGrounded && !isGrounded && !leftGround) snapDownToGround()
-        syncBody(deltaTime)
-    }
-
-    /** Whether [motion] leaves a grounded character on still ground where it stands; see [move]. */
-    private fun standsStill(motion: Vec3f): Boolean {
-        val ground = groundBody ?: return false
-        return isGrounded && motion.length3() <= MIN_MOTION && !world.isActive(ground)
-    }
-
-    /**
-     * Attempts the up-forward-down probe that turns a kerb into a step.
-     *
-     * A swept capsule meets a stair riser as a vertical wall and slides along it, which is why a
-     * character without this catches on every kerb in the world. The probe lifts by at most
-     * [CharacterConfig.stepHeight], moves what is left of the motion at that height, and looks
-     * back down for something walkable to land on.
-     *
-     * Returns `false` and leaves [position] and the remaining motion untouched if any part of
-     * that fails, so the caller can fall back to sliding. Restoring rather than half-applying is
-     * the point: a partial step leaves the character floating at riser height.
-     */
-    private fun tryStepUp(): Boolean {
-        if (config.stepHeight <= 0f) return false
-        savedPosition.set(position)
-        savedRemaining.set(remaining)
-
-        val rise = sweepBy(0f, config.stepHeight, 0f)
-        val stepped = rise > MIN_MOTION && stepForwardAndDown()
-        if (!stepped) {
-            position.set(savedPosition)
-            remaining.set(savedRemaining)
-        }
-        return stepped
-    }
-
-    /** The horizontal half of [tryStepUp], then the search for a surface to land on. */
-    private fun stepForwardAndDown(): Boolean {
-        // Horizontal only: the vertical part of the motion is what the rise just did, and
-        // carrying it along would drive the character back into the step it is clearing.
-        scratch.set(remaining.x, 0f, remaining.z)
-        val requested = scratch.length3()
-        if (requested <= MIN_MOTION) return false
-        return probeStepLanding(requested)
-    }
-
-    /** The forward-and-down half of a step, once there is a horizontal distance worth probing. */
-    private fun probeStepLanding(requested: Float): Boolean {
-        stepDirection.set(scratch).normalize()
-
-        // Probe further than asked when the request is small. A capsule that has only just passed
-        // a step's edge is resting on its own rounded shoulder, and the downward sweep there
-        // reports the edge's diagonal normal rather than the step's top face -- so the landing is
-        // rejected and a character walking slowly stalls against a step it can plainly climb. A
-        // radius forward is where the underside is flat enough to land on.
-        val probeDistance = max(requested, activeShape.radius)
-        val advanced = sweepBy(
-            stepDirection.x * probeDistance,
-            0f,
-            stepDirection.z * probeDistance,
-        )
-        if (advanced <= MIN_MOTION || !landOnStep()) return false
-
-        // The extra was for looking, not for moving: give it back, or a slow walk turns into a
-        // lurch every time it meets a step.
-        val overshoot = advanced - requested
-        if (overshoot > 0f) {
-            position.x -= stepDirection.x * overshoot
-            position.z -= stepDirection.z * overshoot
-        }
-        return true
-    }
-
-    /**
-     * Looks below a raised character for something walkable and settles onto it.
-     *
-     * The reach is the climb plus the step-down distance, so landing lower than the rise counts:
-     * that is the far side of a stair, not a failed step.
-     */
-    private fun landOnStep(): Boolean {
-        val reach = config.stepHeight + config.stepDownDistance
-        target.set(position)
-        target.y -= reach
-        val landing = world.shapeCast(activeShape, position, target, ignore = body)
-        if (landing == null || landing.normal.y < config.minWalkableNormalY) return false
-
-        position.y -= reach * landing.fraction
-        position.y += config.skinWidth
-        remaining.set(0f, 0f, 0f)
-        return true
-    }
-
-    /**
-     * Follows ground the character has just walked off the edge of.
-     *
-     * Only when it was grounded before the move and is not after: without this, every downhill
-     * step is a frame of falling, which stutters the camera and breaks anything that asks whether
-     * the character is on the ground. A move that rose off the ground faster than the ground moves
-     * is a jump, and is never pulled back down.
-     */
-    private fun snapDownToGround() {
-        if (config.stepDownDistance <= 0f) return
-        target.set(position)
-        target.y -= config.stepDownDistance
-        val hit = world.shapeCast(activeShape, position, target, ignore = body)
-        if (hit != null && hit.normal.y >= config.minWalkableNormalY) {
-            position.y -= config.stepDownDistance * hit.fraction
-            position.y += config.skinWidth
-            isGrounded = true
-            groundNormal.set(hit.normal)
-            groundBody = hit.handle
-            val velocity = world.getLinearVelocity(hit.handle)
-            groundVelocity.set(velocity.x, velocity.y, velocity.z)
-        }
-    }
-
-    /**
-     * Sweeps [position] by the given offset, stopping at the first contact, and returns how far it
-     * actually got.
-     */
-    private fun sweepBy(x: Float, y: Float, z: Float): Float {
-        target.set(position.x + x, position.y + y, position.z + z)
-        val hit = world.shapeCast(activeShape, position, target, ignore = body)
-        val distance = sqrt(x * x + y * y + z * z)
-        if (hit == null) {
-            position.set(target)
-            return distance
-        }
-        val travelled = (distance * hit.fraction - config.skinWidth).coerceAtLeast(0f)
-        if (travelled > 0f && distance > 0f) {
-            val scale = travelled / distance
-            position.set(position.x + x * scale, position.y + y * scale, position.z + z * scale)
-        }
-        return travelled
-    }
-
-    /** Advances to a contact at [fraction] and turns what is left of the motion along [normal]. */
-    private fun slideAlong(normal: Vec3f, fraction: Float) {
-        // Advance to the contact, then hold off the surface by the skin width: a sweep that
-        // starts exactly touching reports a zero-distance hit and the character never moves
-        // again.
-        scratch.set(remaining).scale(fraction)
-        position.add(scratch)
-        scratch.set(normal).scale(config.skinWidth)
-        position.add(scratch)
-
-        remaining.scale(1f - fraction)
-        // Project what is left onto the contact plane. Only the component going INTO the surface
-        // is removed; a normal the motion is already moving away from must not add anything back.
-        val into = remaining.dot(normal)
-        if (into < 0f) {
-            scratch.set(normal).scale(into)
-            remaining.sub(scratch)
-        }
-    }
-
-    /**
-     * Looks straight down for something to stand on.
-     *
-     * A separate probe rather than a flag set during [move], because standing still on a slope is
-     * as much a ground state as walking into it, and a character that only learns about the floor
-     * by colliding with it does not know it is grounded until it falls.
-     *
-     * Finding ground also settles onto it, unless [ascending]. The probe reaches further than a
-     * character falls in one step, so it reports ground from up to its own length above the
-     * surface -- and since being grounded is exactly what stops a caller accumulating gravity, a
-     * character that is never pulled the rest of the way down hovers there for good. Ascending is
-     * the exception: a jump is still within the probe's reach for its first frames, and settling
-     * onto ground it has not left yet would cancel it.
-     */
-    private fun updateGroundState(ascending: Boolean, risingSpeed: Float) {
-        target.set(position)
-        target.y -= config.groundProbeDistance
-        val hit = world.shapeCast(activeShape, position, target, ignore = body)
-        val velocity = hit?.let { world.getLinearVelocity(it.handle) }
-        // Rising faster than the ground is leaving it -- a jump, not a ride on a lift. The probe
-        // still reaches the floor for the first steps of a jump, and calling that grounded would
-        // let the next step snap the character back down.
-        leftGround = ascending && risingSpeed > (velocity?.y ?: 0f) + LEAVE_GROUND_SPEED
-        val walkable = hit != null && !leftGround && hit.normal.y >= config.minWalkableNormalY
-        isGrounded = walkable
-        if (hit != null && velocity != null && walkable) {
-            groundNormal.set(hit.normal)
-            groundBody = hit.handle
-            groundVelocity.set(velocity.x, velocity.y, velocity.z)
-            if (!ascending) {
-                position.y -= config.groundProbeDistance * hit.fraction
-                position.y += config.skinWidth
-            }
-        } else {
-            groundNormal.set(0f, 1f, 0f)
-            groundBody = null
-            groundVelocity.set(0f, 0f, 0f)
-        }
-    }
+    fun crouch() = controller.crouch()
+    fun standUp(): Boolean = controller.standUp()
+    fun teleport(to: Vec3f) = controller.teleport(to)
+    fun dispose() = controller.dispose()
+    fun move(motion: Vec3f, deltaTime: Float = DEFAULT_SYNC_DELTA) = controller.move(motion, deltaTime)
 
     private companion object {
-        /** Below this a move is not worth a sweep; it is also what stops the loop on a wedge. */
         const val MIN_MOTION = 1e-5f
-
-        /**
-         * The step [move] assumes when it is not told one.
-         *
-         * Only the inner body reads it -- a controller without one ignores `deltaTime` entirely,
-         * which is why this has a default rather than forcing every existing caller to pass a
-         * value it would not use. A caller on a fixed step should pass its own.
-         */
         const val DEFAULT_SYNC_DELTA = 1f / 60f
-
-        /** Rising this much faster than the ground, in m/s, counts as leaving it. */
         const val LEAVE_GROUND_SPEED = 0.01f
     }
 }
