@@ -1,0 +1,1 @@
+- Reject malformed shape-cast contact values at construction so non-finite normals or fractions cannot silently poison character movement.

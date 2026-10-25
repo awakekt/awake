@@ -23,6 +23,7 @@ import com.awakekt.awake.physics.ShapeCastHit
 import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -140,6 +141,66 @@ class KinematicCharacterControllerTest {
 
     private fun controller(world: PhysicsWorld) =
         KinematicCharacterController(world, config, Vec3f(0f, 0f, 0f))
+
+    @Test
+    fun malformedSweepResultsAreRejectedBeforeCorruptingFinitePosition() {
+        val results = listOf(
+            Surface(Vec3f(Float.NaN, 1f, 0f), 0.5f, BodyHandle(7)),
+            Surface(Vec3f(0f, Float.POSITIVE_INFINITY, 0f), 0.5f, BodyHandle(7)),
+            Surface(Vec3f(0f, 1f, 0f), Float.NaN, BodyHandle(7)),
+            Surface(Vec3f(0f, 1f, 0f), Float.POSITIVE_INFINITY, BodyHandle(7)),
+            Surface(Vec3f(0f, 0f, 0f), 0.5f, BodyHandle(7)),
+            Surface(Vec3f(0f, 1f, 0f), -0.1f, BodyHandle(7)),
+            Surface(Vec3f(0f, 1f, 0f), 1.1f, BodyHandle(7)),
+        )
+        for (result in results) {
+            val world = StubWorld().apply { onSweep = { _, _ -> result } }
+            val character = controller(world)
+            assertFailsWith<IllegalArgumentException> { character.move(Vec3f(0.1f, -0.1f, 0f)) }
+            assertTrue(
+                character.position.x.isFinite() && character.position.y.isFinite() && character.position.z.isFinite(),
+                "normal=${result.normal}, fraction=${result.fraction}, position=${character.position}",
+            )
+        }
+    }
+
+    @Test
+    fun invalidHitsInGroundStepLandingSnapAndHeadroomStayDiagnostic() {
+        // The shared result constructor runs at all six controller query sites, including paths
+        // reached after part of a move. A failed move is diagnostic, not an atomic rollback.
+        for (invalidAt in 1..4) {
+            val world = groundOnly(Vec3f(0f, 1f, 0f))
+            val character = controller(world)
+            character.move(Vec3f(0f, 0f, 0f))
+            var query = 0
+            world.onSweep = { _, _ ->
+                query++
+                when {
+                    query == invalidAt -> Surface(Vec3f(Float.NaN, 1f, 0f), 0.5f, BodyHandle(7))
+                    query == 1 -> Surface(Vec3f(-1f, 0f, 0f), 0f, BodyHandle(7))
+                    else -> null
+                }
+            }
+            assertFailsWith<IllegalArgumentException> { character.move(Vec3f(0.1f, 0f, 0f)) }
+            assertTrue(character.position.x.isFinite() && character.position.y.isFinite() && character.position.z.isFinite())
+        }
+        val world = StubWorld().apply { onSweep = { _, _ -> Surface(Vec3f(0f, 1f, 0f), Float.NaN, BodyHandle(7)) } }
+        val character = KinematicCharacterController(world, config.copy(crouchHalfHeight = 0.4f))
+        assertFailsWith<IllegalArgumentException> { character.move(Vec3f(0f, 0f, 0f)) }
+        character.crouch()
+        assertFailsWith<IllegalArgumentException> { character.standUp() }
+        assertTrue(character.position.y.isFinite())
+        val snapWorld = groundOnly(Vec3f(0f, 1f, 0f))
+        val snapping = controller(snapWorld)
+        snapping.move(Vec3f(0f, 0f, 0f))
+        var query = 0
+        snapWorld.onSweep = { _, _ ->
+            query++
+            if (query == 3) Surface(Vec3f(0f, 1f, 0f), Float.NaN, BodyHandle(7)) else null
+        }
+        assertFailsWith<IllegalArgumentException> { snapping.move(Vec3f(0.1f, 0f, 0f)) }
+        assertTrue(snapping.position.x.isFinite() && snapping.position.y.isFinite())
+    }
 
     /** Ground is the last sweep of a move; anything before it is the motion itself. */
     private fun groundOnly(normal: Vec3f, handle: BodyHandle = BodyHandle(7L)): StubWorld =

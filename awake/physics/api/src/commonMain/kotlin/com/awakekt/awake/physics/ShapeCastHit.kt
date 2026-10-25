@@ -20,6 +20,11 @@ import com.awakekt.awake.core.math.Vec3f
  * actually multiplies by, and it stays meaningful for a zero-length sweep where a distance
  * would not.
  *
+ * Construction rejects a non-finite point/normal, a zero normal, or a fraction outside `[0, 1]`.
+ * A malformed backend result must fail before a caller uses it to advance a position. It is not
+ * a clear path, and no fallback contact direction is invented. Vectors remain mutable; their owner
+ * must preserve these invariants after construction.
+ *
  * @property handle The body that was struck by the swept shape.
  * @property point World-space position where contact occurred.
  * @property normal Surface normal pointing away from the struck body at [point].
@@ -30,4 +35,13 @@ data class ShapeCastHit(
     val point: Vec3f,
     val normal: Vec3f,
     val fraction: Float,
-)
+) {
+    init {
+        require(point.hasFiniteComponents()) { "ShapeCastHit point must be finite: $point" }
+        require(normal.hasFiniteComponents()) { "ShapeCastHit normal must be finite: $normal" }
+        require(normal.x != 0f || normal.y != 0f || normal.z != 0f) { "ShapeCastHit normal must be nonzero: $normal" }
+        require(fraction.isFinite() && fraction in 0f..1f) { "ShapeCastHit fraction must be finite and in [0, 1]: $fraction" }
+    }
+}
+
+private fun Vec3f.hasFiniteComponents(): Boolean = x.isFinite() && y.isFinite() && z.isFinite()
