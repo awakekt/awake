@@ -72,6 +72,49 @@ class OpenTypeUiFontTest {
     }
 
     /**
+     * The built-in faces' line box is what each Roboto file's `OS/2` table says, as a loaded copy reads
+     * it: `usWinAscent` 1946 and `usWinDescent` 512, which is what Chrome on Windows lays Roboto out with.
+     */
+    @Test
+    fun theBuiltInLineBoxIsEachFilesWinMetrics() = runTest {
+        faces.keys.forEach { file ->
+            val read = OpenTypeFont(readResourceBytes(file), file).lineMetrics
+            assertEquals(RobotoLineMetrics.ascentEm, read.ascentEm, file)
+            assertEquals(RobotoLineMetrics.descentEm, read.descentEm, file)
+            assertEquals(RobotoLineMetrics.gapEm, read.gapEm, file)
+        }
+        val loaded = UiFonts.load(readResourceBytes("Roboto-Regular.ttf"), "Roboto-Regular.ttf")
+        for (font in listOf(loaded, UiFonts.trueSans(), UiFonts.weightedSans(), UiFonts.default())) {
+            assertEquals(1946f / 2048f, font.lineAscentEm, "$font ascent")
+            assertEquals(512f / 2048f, font.lineDescentEm, "$font descent")
+            assertEquals(0f, font.lineGapEm, "$font gap")
+        }
+    }
+
+    /** A font that sets USE_TYPO_METRICS is read from its typographic line instead: Roboto's is 1536, 512 and 102. */
+    @Test
+    fun useTypoMetricsReadsTheTypographicLine() = runTest {
+        val bytes = readResourceBytes("Roboto-Regular.ttf")
+        val os2 = tableOffset(bytes, "OS/2")
+        bytes[os2 + 63] = (bytes[os2 + 63].toInt() or 0x80).toByte()
+        val read = OpenTypeFont(bytes, "typo").lineMetrics
+        assertEquals(1536f / 2048f, read.ascentEm)
+        assertEquals(512f / 2048f, read.descentEm)
+        assertEquals(102f / 2048f, read.gapEm)
+    }
+
+    /** Without an `OS/2` table the `hhea` line is all there is. */
+    @Test
+    fun aFontWithoutOs2UsesItsHheaLine() = runTest {
+        val bytes = readResourceBytes("Roboto-Regular.ttf")
+        renameTable(bytes, "OS/2", "OSX2")
+        val read = OpenTypeFont(bytes, "no OS/2").lineMetrics
+        assertEquals(1900f / 2048f, read.ascentEm)
+        assertEquals(500f / 2048f, read.descentEm)
+        assertEquals(0f, read.gapEm)
+    }
+
+    /**
      * The generator's A channel is msdfgen's true signed distance, the same quantity the loader writes.
      * They part only where Roboto's contours overlap, and there msdfgen's A dips towards the edge value
      * inside the glyph (its RGB, which the shader draws, does not).
@@ -288,6 +331,13 @@ class OpenTypeUiFontTest {
             val record = 12 + 16 * index
             if ((0..3).all { bytes[record + it] == from[it].code.toByte() }) to.forEachIndexed { at, c -> bytes[record + at] = c.code.toByte() }
         }
+    }
+
+    private fun tableOffset(bytes: ByteArray, tag: String): Int {
+        fun u16(at: Int) = (bytes[at].toInt() and 0xFF) shl 8 or (bytes[at + 1].toInt() and 0xFF)
+        val count = u16(4)
+        val record = (0 until count).map { 12 + 16 * it }.single { record -> (0..3).all { bytes[record + it] == tag[it].code.toByte() } }
+        return u16(record + 8) shl 16 or u16(record + 10)
     }
 
     private fun assertWithin(expected: FloatArray, actual: FloatArray, tolerance: Float, what: String) {

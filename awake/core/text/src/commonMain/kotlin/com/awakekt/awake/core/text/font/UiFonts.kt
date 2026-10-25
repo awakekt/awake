@@ -49,7 +49,7 @@ object UiFonts {
      * @return The cached packed sans-serif [UiFont] instance at the requested cell size.
      */
     fun trueSans(cellSize: Int = 12): UiFont = trueSansCache.getOrPut(cellSize) {
-        PackedUiFont(RobotoRegularUiFontData, cellSize = cellSize) { RobotoOutlines.regular }
+        PackedUiFont(RobotoRegularUiFontData, cellSize = cellSize, lineMetrics = RobotoLineMetrics) { RobotoOutlines.regular }
     }
 
     /**
@@ -61,13 +61,13 @@ object UiFonts {
     fun weightedSans(cellSize: Int = 12): UiFont =
         WeightedUiFont(
             mapOf(
-                FontWeight.Thin to PackedUiFont(RobotoThinUiFontData, cellSize = cellSize) { RobotoOutlines.thin },
-                FontWeight.Light to PackedUiFont(RobotoLightUiFontData, cellSize = cellSize) { RobotoOutlines.light },
-                FontWeight.Normal to PackedUiFont(RobotoRegularUiFontData, cellSize = cellSize) { RobotoOutlines.regular },
-                FontWeight.Medium to PackedUiFont(RobotoMediumUiFontData, cellSize = cellSize) { RobotoOutlines.medium },
-                FontWeight.SemiBold to PackedUiFont(RobotoSemiBoldUiFontData, cellSize = cellSize) { RobotoOutlines.semiBold },
-                FontWeight.Bold to PackedUiFont(RobotoBoldUiFontData, cellSize = cellSize) { RobotoOutlines.bold },
-                FontWeight.Black to PackedUiFont(RobotoBlackUiFontData, cellSize = cellSize) { RobotoOutlines.black },
+                FontWeight.Thin to PackedUiFont(RobotoThinUiFontData, cellSize = cellSize, lineMetrics = RobotoLineMetrics) { RobotoOutlines.thin },
+                FontWeight.Light to PackedUiFont(RobotoLightUiFontData, cellSize = cellSize, lineMetrics = RobotoLineMetrics) { RobotoOutlines.light },
+                FontWeight.Normal to PackedUiFont(RobotoRegularUiFontData, cellSize = cellSize, lineMetrics = RobotoLineMetrics) { RobotoOutlines.regular },
+                FontWeight.Medium to PackedUiFont(RobotoMediumUiFontData, cellSize = cellSize, lineMetrics = RobotoLineMetrics) { RobotoOutlines.medium },
+                FontWeight.SemiBold to PackedUiFont(RobotoSemiBoldUiFontData, cellSize = cellSize, lineMetrics = RobotoLineMetrics) { RobotoOutlines.semiBold },
+                FontWeight.Bold to PackedUiFont(RobotoBoldUiFontData, cellSize = cellSize, lineMetrics = RobotoLineMetrics) { RobotoOutlines.bold },
+                FontWeight.Black to PackedUiFont(RobotoBlackUiFontData, cellSize = cellSize, lineMetrics = RobotoLineMetrics) { RobotoOutlines.black },
             ),
         )
 

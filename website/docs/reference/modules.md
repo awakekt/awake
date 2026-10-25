@@ -9,7 +9,7 @@
 | Group | `com.awakekt.awake`, plus the module's parent path: `:awake:scene:runtime` publishes `com.awakekt.awake.scene:runtime`. The Vulkan bindings are the exception: `com.awakekt.awake:vulkan-kmp`. |
 | Version | Core modules share one version; the newest is `{{ awake_version }}`. Vulkan family: `{{ awake_vulkan_version }}`, built against Core `{{ awake_vulkan_core_version }}`. See [Releases and compatibility](releases.md). |
 | Catalog alias | `awake-` plus the group after `com.awakekt.awake`, then the name, joined with `-`. The accessor replaces `-` with `.`: `awake-scene-runtime` is `libs.awake.scene.runtime`. The alias is your choice; this is the convention these docs use. |
-| Published modules | 94: 91 in Core, 3 in the Vulkan family. |
+| Published modules | 96: 93 in Core, 3 in the Vulkan family. |
 | Transitive modules | Declare only the modules your code uses. Each module's published metadata brings the modules it depends on. |
 
 A catalog entry looks like this:
@@ -141,6 +141,8 @@ awake-backend-vulkan = { module = "com.awakekt.awake.backend:vulkan", version.re
 | `com.awakekt.awake:project` | `awake-project` | The AwakeKt project manifest format and its validation. |
 | `com.awakekt.awake.project:runtime` | `awake-project-runtime` | Plays a project without the editor: `loadProject`, `runProject`. |
 | `com.awakekt.awake.project:blueprint` | `awake-project-blueprint` | Plays a project's blueprint graphs: the capability a project names to run its scene's blueprints. |
+| `com.awakekt.awake.project:transport-ktor` | `awake-project-transport-ktor` | A `ContentTransport` over your Ktor `HttpClient`, for protected content on desktop, Android and iOS. |
+| `com.awakekt.awake.project:transport-browser` | `awake-project-transport-browser` | A `ContentTransport` over the browser's `fetch()`, for protected content on the web, with no HTTP library. |
 | `com.awakekt.awake.editor:contract` | `awake-editor-contract` | Public extension points and plugin contracts for AwakeKt Studio. |
 | `com.awakekt.awake:plugin-archive` | `awake-plugin-archive` | How a plugin is described, packaged and trusted: `plugin.json`, the `.awakeplugin` archive, signature checks, signed publisher key and revocation lists, and `plugins.lock.json`. |
 

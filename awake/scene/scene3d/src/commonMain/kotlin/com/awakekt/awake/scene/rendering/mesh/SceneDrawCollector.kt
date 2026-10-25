@@ -102,12 +102,13 @@ internal class SceneDrawCollector(
             // for free.
             // A billboard turns with the camera, so its authored bounds do not describe it.
             val bounds = if (meshRenderer.billboard) null else boundsStore?.get(entity)
-            // A transparent mesh never casts (the shadow pass keeps only opaque draws), so the
-            // camera alone decides it.
+            // A transparent mesh never casts (the shadow pass keeps only opaque draws), and nor
+            // does one that opted out, so the camera alone decides either.
+            val casts = meshRenderer.castsShadows && !meshRenderer.transparent
             val verdict = if (bounds == null) {
                 CullVerdict.Visible
             } else {
-                cullingCompiler.classify(entity.id, transform, bounds, culling, castsShadows = !meshRenderer.transparent)
+                cullingCompiler.classify(entity.id, transform, bounds, culling, castsShadows = casts)
             }
             if (verdict == CullVerdict.Culled) {
                 poseStore?.get(entity)?.culled = true
@@ -162,6 +163,7 @@ internal class SceneDrawCollector(
                     shadowsOnly = verdict == CullVerdict.ShadowOnly,
                     worldBounds = bounds?.writeWorldBounds(transform, beforeAabbs.obtain()),
                     maskLayer = outlineStore?.get(entity)?.set ?: NO_MASK_LAYER,
+                    castsShadows = casts,
                 ),
             )
         }
@@ -200,7 +202,12 @@ internal class SceneDrawCollector(
         resolution.modularFamily.forEach { entity, transform, modularCharacter ->
             if (!modularCharacter.isVisible) return@forEach
             val bounds = boundsStore?.get(entity)
-            val verdict = if (bounds == null) CullVerdict.Visible else cullingCompiler.classify(entity.id, transform, bounds, culling)
+            val casts = modularCharacter.castsShadows
+            val verdict = if (bounds == null) {
+                CullVerdict.Visible
+            } else {
+                cullingCompiler.classify(entity.id, transform, bounds, culling, castsShadows = casts)
+            }
             if (verdict == CullVerdict.Culled) {
                 poseStore?.get(entity)?.culled = true
                 return@forEach
@@ -229,6 +236,7 @@ internal class SceneDrawCollector(
                         shadowsOnly = verdict == CullVerdict.ShadowOnly,
                         worldBounds = bounds?.writeWorldBounds(transform, beforeAabbs.obtain()),
                         maskLayer = outlineStore?.get(entity)?.set ?: NO_MASK_LAYER,
+                        castsShadows = casts,
                     ),
                 )
             }
@@ -260,7 +268,12 @@ internal class SceneDrawCollector(
             val level = lodGroup.selectLevel(distance)
 
             val bounds = boundsStore?.get(entity)
-            val verdict = if (bounds == null) CullVerdict.Visible else cullingCompiler.classify(entity.id, transform, bounds, culling)
+            val casts = lodGroup.castsShadows
+            val verdict = if (bounds == null) {
+                CullVerdict.Visible
+            } else {
+                cullingCompiler.classify(entity.id, transform, bounds, culling, castsShadows = casts)
+            }
             if (verdict == CullVerdict.Culled) return@forEach
             drawCalls.add(
                 afterCommands.obtainCommand(
@@ -269,6 +282,7 @@ internal class SceneDrawCollector(
                     model = transform.worldMatrix,
                     shadowsOnly = verdict == CullVerdict.ShadowOnly,
                     worldBounds = bounds?.writeWorldBounds(transform, afterAabbs.obtain()),
+                    castsShadows = casts,
                 ),
             )
         }
@@ -319,6 +333,7 @@ internal class SceneDrawCollector(
         worldBounds: Aabb? = null,
         additive: Boolean = false,
         maskLayer: Int = NO_MASK_LAYER,
+        castsShadows: Boolean = true,
     ): RenderDrawCommand = obtain().set(
         mesh = mesh,
         material = material,
@@ -338,6 +353,7 @@ internal class SceneDrawCollector(
         worldBounds = worldBounds,
         additive = additive,
         maskLayer = maskLayer,
+        castsShadows = castsShadows,
     )
 }
 

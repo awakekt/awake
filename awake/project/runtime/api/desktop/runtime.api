@@ -96,6 +96,11 @@ public final class com/awakekt/awake/project/runtime/ProjectRenderPlanKt {
 	public static final fun getProjectRenderPlan ()Lcom/awakekt/awake/asset/shaders/RenderPlan;
 }
 
+public final class com/awakekt/awake/project/runtime/ProjectRouteKt {
+	public static final fun projectRoute (Lcom/awakekt/awake/scene/authoring/SceneFlowDsl;Ljava/lang/String;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun projectRoute$default (Lcom/awakekt/awake/scene/authoring/SceneFlowDsl;Ljava/lang/String;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;Lkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+}
+
 public final class com/awakekt/awake/project/runtime/ProjectRuntimeKt {
 	public static final field PROJECT_MANIFEST Ljava/lang/String;
 	public static final fun activatePrimaryCamera (Lcom/awakekt/awake/ecs/World;)V

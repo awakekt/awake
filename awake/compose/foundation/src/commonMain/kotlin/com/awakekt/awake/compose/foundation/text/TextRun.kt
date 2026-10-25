@@ -40,6 +40,7 @@ internal class TextRun(
     private val overflow: TextOverflow = TextOverflow.Clip,
     private val softWrap: Boolean = true,
     private val maxLines: Int = Int.MAX_VALUE,
+    private val fontScale: Float = 1f,
 ) {
     private val letterSpacing = style.letterSpacing.value * density
 
@@ -63,14 +64,22 @@ internal class TextRun(
         widthBetween(line, 0, line.length)
     }
 
-    /** The line advance, widened for multiline text when a compact authored box cannot contain the font. */
-    internal val lineHeightPx: Float = maxOf(
-        style.lineHeight?.let { it.value * density } ?: (glyphPx * font.lineHeightEm),
-        if (lineLayouts.size > 1) glyphPx * font.lineHeightEm else 0f,
-    )
+    private val authoredLineHeightPx: Float? = style.lineHeight?.let { it.value * density * fontScale }
 
-    private val lineTopPaddingPx: Float =
-        ((lineHeightPx - glyphPx * font.lineHeightEm) / 2f).coerceAtLeast(0f)
+    /**
+     * The distance from each line's top to the next, a whole number of device pixels and the same for
+     * every line: the authored line height, tighter or looser than the font's, or the font's own.
+     * See [TextLineBox].
+     */
+    internal val lineHeightPx: Float = TextLineBox.advancePx(font, glyphPx, density, authoredLineHeightPx)
+
+    /**
+     * How far below its line's top the em box the glyph metrics are measured from begins: the whole-pixel
+     * baseline offset less the font's [UiFont.ascentEm]. Negative when a tight line height lifts the
+     * glyphs above the line box.
+     */
+    private val glyphTopPx: Float =
+        TextLineBox.baselinePx(font, glyphPx, density, authoredLineHeightPx) - font.ascentEm * glyphPx
 
     /** The lines this run occupies, hard breaks and soft wraps alike. */
     internal val lines: List<String> = lineLayouts.map(TextLineLayout::text)
@@ -163,15 +172,15 @@ internal class TextRun(
         // positions, or text under an animated scale would move in one-pixel steps.
         val snap = scope.isDevicePixelAligned
         val originX = if (snap) wholePixel(offsetX) else offsetX
-        val ascentPx = font.ascentEm * glyphPx
+        // The line advance and the baseline offset are whole pixels, so snapping the run's top once puts
+        // every line's baseline on the grid, each the same distance below the last.
+        val originY = (if (snap) wholePixel(offsetY) else offsetY) + glyphTopPx
         // Small text on the pixel grid draws exact-size coverage glyphs 1:1. Anything scaled draws from
         // the distance field, which is what scales.
         val pixels = if (snap) pixelGlyphs else null
         if (pixels != null) {
-            var y = offsetY
             for (i in lineLayouts.indices) {
-                paintPixelLine(lineLayouts[i].text, scope, color, originX, y + lineTopPaddingPx)
-                y += lineHeightPx
+                paintPixelLine(lineLayouts[i].text, scope, color, originX, originY + i * lineHeightPx)
             }
             return
         }
@@ -180,16 +189,9 @@ internal class TextRun(
         val passes = if (pageCount <= 1) 1 else pageCount
         for (p in 0 until passes) {
             val targetPage = if (pageCount <= 1) null else pages[p]
-            var y = offsetY
             // Indexed: this runs for every text node every frame, and a List iterator is an allocation.
             for (i in lineLayouts.indices) {
-                var top = y + lineTopPaddingPx
-                if (snap) {
-                    val baseline = top + ascentPx
-                    top += wholePixel(baseline) - baseline
-                }
-                paintLine(lineLayouts[i].text, scope, color, originX, top, targetPage)
-                y += lineHeightPx
+                paintLine(lineLayouts[i].text, scope, color, originX, originY + i * lineHeightPx, targetPage)
             }
         }
     }

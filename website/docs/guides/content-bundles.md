@@ -127,7 +127,10 @@ which sends `Range: bytes=<first>-<last>` alongside the token.
 Each `read` of a member then costs one request for just its bytes, while `prefetch` still downloads
 whole bundles. Use it for content streamed one file at a time from large bundles, and prefetch what a
 scene needs up front. A server that ignores the range answers the whole bundle, and the member is cut
-from it.
+from it. Both ready-made transports, `KtorContentTransport` and `BrowserContentTransport`, send the
+`Range` header; from a browser to another origin, the content server must allow it, as
+[Protected content](protected-content.md#the-browser-and-cors) lists. A range request answered 429
+waits and is sent again like any other.
 
 ## Properties
 

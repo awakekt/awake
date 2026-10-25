@@ -98,6 +98,26 @@ interface UiFont {
         get() = 0.7f
 
     /**
+     * The line box's height above the baseline, in em: the ascent a browser's `line-height: normal`
+     * starts from, which can differ from the glyph metrics' [ascentEm]. A font read from a file
+     * reports it as DirectWrite does (`OS/2` `usWinAscent`, or `sTypoAscender` when the font sets
+     * USE_TYPO_METRICS). Defaults to [ascentEm].
+     */
+    val lineAscentEm: Float
+        get() = ascentEm
+
+    /**
+     * The line box's depth below the baseline, in em, read as [lineAscentEm] is (`usWinDescent` or
+     * `sTypoDescender`). Defaults to [lineHeightEm] less [ascentEm].
+     */
+    val lineDescentEm: Float
+        get() = lineHeightEm - ascentEm
+
+    /** The space the font asks for between one line box and the next, in em; part of `line-height: normal`. */
+    val lineGapEm: Float
+        get() = 0f
+
+    /**
      * Whether this atlas's alpha is the exact area of each pixel a glyph covers, to be blended in linear
      * light: a renderer then corrects the coverage for the text colour, so dark text on a light ground
      * and light text on a dark one keep the same weight. False for coverage that is already shaped, such

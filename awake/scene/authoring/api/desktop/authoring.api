@@ -42,7 +42,10 @@ public final class com/awakekt/awake/scene/authoring/SceneAssetsDsl {
 }
 
 public final class com/awakekt/awake/scene/authoring/SceneFlowDsl {
+	public final fun deferredRoute (Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ZLkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun deferredRoute$default (Lcom/awakekt/awake/scene/authoring/SceneFlowDsl;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ZLkotlin/coroutines/CoroutineContext;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 	public final fun initial (Ljava/lang/String;)V
+	public final fun route (Lcom/awakekt/awake/scene/runtime/SceneRouteEntry;)V
 	public final fun route (Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/scene/runtime/SceneAppSpec;)V
 	public final fun route (Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
 	public static synthetic fun route$default (Lcom/awakekt/awake/scene/authoring/SceneFlowDsl;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/scene/runtime/SceneAppSpec;ILjava/lang/Object;)V

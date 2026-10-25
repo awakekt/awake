@@ -15,6 +15,9 @@ public final class com/awakekt/awake/core/text/font/BitmapFont : com/awakekt/awa
 	public fun getCellSize ()I
 	public fun getDescentEm ()F
 	public fun getDistanceFieldRangePx ()F
+	public fun getLineAscentEm ()F
+	public fun getLineDescentEm ()F
+	public fun getLineGapEm ()F
 	public fun getLineHeightEm ()F
 	public fun getLinearCoverage ()Z
 	public fun getPixelGlyphMaxSize ()I
@@ -108,6 +111,9 @@ public final class com/awakekt/awake/core/text/font/MsdfFont : com/awakekt/awake
 	public fun getCellSize ()I
 	public fun getDescentEm ()F
 	public fun getDistanceFieldRangePx ()F
+	public fun getLineAscentEm ()F
+	public fun getLineDescentEm ()F
+	public fun getLineGapEm ()F
 	public fun getLineHeightEm ()F
 	public fun getLinearCoverage ()Z
 	public fun getPixelGlyphMaxSize ()I
@@ -139,6 +145,9 @@ public final class com/awakekt/awake/core/text/font/PackedUiFont : com/awakekt/a
 	public fun getCellSize ()I
 	public fun getDescentEm ()F
 	public fun getDistanceFieldRangePx ()F
+	public fun getLineAscentEm ()F
+	public fun getLineDescentEm ()F
+	public fun getLineGapEm ()F
 	public fun getLineHeightEm ()F
 	public fun getLinearCoverage ()Z
 	public fun getPixelGlyphMaxSize ()I
@@ -206,6 +215,9 @@ public abstract interface class com/awakekt/awake/core/text/font/UiFont {
 	public abstract fun getCellSize ()I
 	public fun getDescentEm ()F
 	public fun getDistanceFieldRangePx ()F
+	public fun getLineAscentEm ()F
+	public fun getLineDescentEm ()F
+	public fun getLineGapEm ()F
 	public fun getLineHeightEm ()F
 	public fun getLinearCoverage ()Z
 	public fun getPixelGlyphMaxSize ()I
@@ -237,6 +249,9 @@ public final class com/awakekt/awake/core/text/font/UiFont$DefaultImpls {
 	public static fun getCapHeightEm (Lcom/awakekt/awake/core/text/font/UiFont;)F
 	public static fun getDescentEm (Lcom/awakekt/awake/core/text/font/UiFont;)F
 	public static fun getDistanceFieldRangePx (Lcom/awakekt/awake/core/text/font/UiFont;)F
+	public static fun getLineAscentEm (Lcom/awakekt/awake/core/text/font/UiFont;)F
+	public static fun getLineDescentEm (Lcom/awakekt/awake/core/text/font/UiFont;)F
+	public static fun getLineGapEm (Lcom/awakekt/awake/core/text/font/UiFont;)F
 	public static fun getLineHeightEm (Lcom/awakekt/awake/core/text/font/UiFont;)F
 	public static fun getLinearCoverage (Lcom/awakekt/awake/core/text/font/UiFont;)Z
 	public static fun getPixelGlyphMaxSize (Lcom/awakekt/awake/core/text/font/UiFont;)I
@@ -310,6 +325,9 @@ public final class com/awakekt/awake/core/text/font/WeightedUiFont : com/awakekt
 	public fun getCellSize ()I
 	public fun getDescentEm ()F
 	public fun getDistanceFieldRangePx ()F
+	public fun getLineAscentEm ()F
+	public fun getLineDescentEm ()F
+	public fun getLineGapEm ()F
 	public fun getLineHeightEm ()F
 	public fun getLinearCoverage ()Z
 	public fun getPixelGlyphMaxSize ()I
