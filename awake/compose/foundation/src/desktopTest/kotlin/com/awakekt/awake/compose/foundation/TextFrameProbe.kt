@@ -19,6 +19,10 @@ import com.awakekt.awake.compose.ui.layout.layoutTree
 import com.awakekt.awake.compose.ui.node.LayoutNode
 import com.awakekt.awake.compose.ui.unit.Constraints
 import com.awakekt.awake.compose.ui.unit.dp
+import com.awakekt.awake.core.text.font.UiFont
+import com.awakekt.awake.core.text.font.UiFonts
+import com.awakekt.awake.core.text.font.withPixelGlyphMaxSize
+import com.awakekt.awake.core.text.theme.TextStyle
 import com.sun.management.ThreadMXBean
 import java.lang.management.ManagementFactory
 import kotlin.test.Test
@@ -37,9 +41,21 @@ import kotlin.time.TimeSource
 class TextFrameProbe {
     private val painter = Painter()
     private val labels = List(ROWS * CELLS_PER_ROW) { "Label ${it + 1}" }
+    private var style: TextStyle? = null
 
+    /** The default: labels this small draw exact-size pixel glyphs. */
     @Test
-    fun unchangedTextPerFrame() {
+    fun unchangedTextPerFrame() = probe("pixel glyphs", style = null)
+
+    /**
+     * The same labels held to the distance field, the path larger or scaled text takes: the two paths
+     * are set side by side, since a label switches between them when it crosses the size limit.
+     */
+    @Test
+    fun unchangedDistanceFieldTextPerFrame() = probe("distance field", TextStyle(font = UiFonts.default().withPixelGlyphMaxSize(0)))
+
+    private fun probe(path: String, style: TextStyle?) {
+        this.style = style
         val root = LayoutNode(ColumnMeasurePolicy())
         repeat(WARMUP_FRAMES) { frame(root) }
 
@@ -59,7 +75,7 @@ class TextFrameProbe {
             paint += measure { painter.paint(root) }
         }
         println(
-            "TextFrameProbe: $perFrame B/frame, ${"%.3f".format(msPerFrame)} ms/frame for ${labels.size} labels " +
+            "TextFrameProbe ($path): $perFrame B/frame, ${"%.3f".format(msPerFrame)} ms/frame for ${labels.size} labels " +
                 "(reconcile ${reconcile / PHASE_SAMPLES}, layout ${layout / PHASE_SAMPLES}, " +
                 "paint ${paint / PHASE_SAMPLES}); total ${elapsed.inWholeMilliseconds} ms over $MEASURED_FRAMES frames",
         )
@@ -79,7 +95,9 @@ class TextFrameProbe {
             Row(rowModifier) {
                 repeat(CELLS_PER_ROW) { cell ->
                     val cellModifier = remember { Modifier.width(CELL_WIDTH.dp) }
-                    Text(labels[row * CELLS_PER_ROW + cell], cellModifier)
+                    val label = labels[row * CELLS_PER_ROW + cell]
+                    val style = style
+                    if (style == null) Text(label, cellModifier) else Text(label, cellModifier, style = style)
                 }
             }
         }
@@ -112,6 +130,10 @@ class TextFrameProbe {
         // Run alone the figure is exact and repeats. Inside the full desktopTest JVM it has also read
         // 151,345, because escape analysis depends on how earlier tests left the JIT. The ceiling
         // sits above that, still far below the 293 KB a regression back to per-frame re-shaping gives.
-        const val CEILING_BYTES_PER_FRAME = 165_000L
+        //
+        // About 52,000 (pixel glyphs) and 55,000 (distance field) run alone once the weighted family stopped
+        // copying a GlyphRect and building a comparator for every glyph it resolves (#993); the distance-field
+        // case has read 81,979 inside the full desktopTest JVM, so the ceiling sits above that.
+        const val CEILING_BYTES_PER_FRAME = 100_000L
     }
 }

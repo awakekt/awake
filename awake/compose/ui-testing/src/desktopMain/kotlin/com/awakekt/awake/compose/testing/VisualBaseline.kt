@@ -63,6 +63,7 @@ fun List<UiDrawPrimitive>.assertMatchesBaseline(
     layers: List<GraphicsLayerFrame> = emptyList(),
 ) {
     val actual = rasterizeToPixelMap(width, height, background, font, layers)
+    TextReferenceComposite.writeIfRequested(this, name) { kept -> kept.rasterizeToPixelMap(width, height, background, font, layers) }
     val baselineFile = File("$BASELINE_ROOT/$name.png")
 
     if (System.getProperty(RECORD_PROPERTY) != null) {

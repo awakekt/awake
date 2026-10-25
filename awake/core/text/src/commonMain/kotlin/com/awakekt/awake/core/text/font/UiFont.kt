@@ -98,6 +98,31 @@ interface UiFont {
         get() = 0.7f
 
     /**
+     * Whether this atlas's alpha is the exact area of each pixel a glyph covers, to be blended in linear
+     * light: a renderer then corrects the coverage for the text colour, so dark text on a light ground
+     * and light text on a dark one keep the same weight. False for coverage that is already shaped, such
+     * as [UiFonts.bitmap]'s, which draws as it always has.
+     */
+    val linearCoverage: Boolean
+        get() = false
+
+    /**
+     * Glyphs rasterized from this font's outlines at exact pixel sizes, which a renderer draws 1:1 for
+     * text up to [pixelGlyphMaxSize] device pixels; null when the font has no outlines to rasterize, as
+     * [UiFonts.bitmap] has none, and every size draws from [atlasPixelsRgba].
+     */
+    val pixelGlyphs: PixelGlyphs?
+        get() = null
+
+    /**
+     * The largest size, in device pixels after display density and any canvas scale, that draws from
+     * [pixelGlyphs]; larger text draws from the distance field. [DEFAULT_PIXEL_GLYPH_MAX_SIZE] unless set
+     * with [withPixelGlyphMaxSize]; 0 draws every size from the distance field.
+     */
+    val pixelGlyphMaxSize: Int
+        get() = DEFAULT_PIXEL_GLYPH_MAX_SIZE
+
+    /**
      * Resolves the atlas UV bounding rectangle and layout offsets for [char].
      *
      * @param char The character to look up.
@@ -189,6 +214,17 @@ interface UiFont {
      * Resolves the page [UiFont] for [pageIndex], or this font if invalid or single-paged.
      */
     fun pageFont(pageIndex: Int): UiFont = atlasPages.getOrElse(pageIndex) { this }
+
+    /** Defaults shared by every font. */
+    companion object {
+        /**
+         * The largest text, in device pixels, that draws from [pixelGlyphs] unless a font says otherwise.
+         *
+         * Below it a distance field's anti-aliased edge is a large share of a stroke; above it the field's
+         * edge is a pixel or less and it scales freely.
+         */
+        const val DEFAULT_PIXEL_GLYPH_MAX_SIZE: Int = 24
+    }
 }
 
 /** U+FFFD, what a code point a `Char` cannot hold is looked up as. */

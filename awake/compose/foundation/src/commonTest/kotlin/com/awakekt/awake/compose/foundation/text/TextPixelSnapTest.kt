@@ -23,11 +23,13 @@ import com.awakekt.awake.core.math2d.Rectangle
 import com.awakekt.awake.core.text.font.FontWeight
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.core.text.font.UiFonts
+import com.awakekt.awake.core.text.font.withPixelGlyphMaxSize
 import com.awakekt.awake.core.text.theme.TextStyle
 import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 /**
@@ -40,6 +42,9 @@ import kotlin.test.assertTrue
  */
 class TextPixelSnapTest {
     private val white = Color(1f, 1f, 1f, 1f)
+
+    /** The default family held to its distance field, which these cases measure; small text otherwise draws pixel glyphs. */
+    private val fieldFont = UiFonts.default().withPixelGlyphMaxSize(0)
 
     /** The baseline a `H` quad was placed on, recovered from the quad and the font's own metrics. */
     private fun baselineOf(glyph: UiDrawPrimitive.Glyph, glyphPx: Float, scale: Float = 1f): Float {
@@ -59,7 +64,7 @@ class TextPixelSnapTest {
     @Test
     fun everyLineSitsOnAWholeBaseline() {
         val quads = glyphs {
-            Text("H\nH", style = TextStyle(color = white, size = 12.sp, lineHeight = 17.5f.sp))
+            Text("H\nH", style = TextStyle(font = fieldFont, color = white, size = 12.sp, lineHeight = 17.5f.sp))
         }
 
         assertEquals(2, quads.size)
@@ -75,7 +80,7 @@ class TextPixelSnapTest {
     @Test
     fun scaledTextKeepsItsSubpixelPosition() {
         val quads = glyphs {
-            Text("H", modifier = Modifier.scale(1.5f), style = TextStyle(color = white, size = 12.sp, lineHeight = 17.5f.sp))
+            Text("H", modifier = Modifier.scale(1.5f), style = TextStyle(font = fieldFont, color = white, size = 12.sp, lineHeight = 17.5f.sp))
         }
 
         val baseline = baselineOf(quads.single(), 12f, scale = 1.5f)
@@ -100,7 +105,7 @@ class TextPixelSnapTest {
     @Test
     fun paintedGlyphsUseTheSameRoundedEmAsMeasurement() {
         val quads = glyphs(density = 1.25f) {
-            Text("H", style = TextStyle(color = white, size = 13.sp))
+            Text("H", style = TextStyle(font = fieldFont, color = white, size = 13.sp))
         }
 
         val font = checkNotNull(quads.single().font)
@@ -114,7 +119,7 @@ class TextPixelSnapTest {
      */
     @Test
     fun aRunStartsOnAWholePixelUnlessTheScopeScales() {
-        val font = UiFonts.trueSans()
+        val font = UiFonts.trueSans().withPixelGlyphMaxSize(0)
         val run = TextRun("l", TextStyle.Default, font, glyphPx = 12f, density = 1f)
         val rect = checkNotNull(font.glyphFor('l'.code, FontWeight.Normal))
         val bearing = rect.offsetXEm * 12f
@@ -124,6 +129,29 @@ class TextPixelSnapTest {
 
         assertEquals(5f + bearing, aligned.glyphs.single().x, 1e-4f)
         assertEquals(4.5f + bearing, scaled.glyphs.single().x, 1e-4f)
+    }
+
+    /**
+     * Exact-size glyphs draw 1:1 on whole pixels from any fractional start, with their stem rounded rather
+     * than their pen; a scope that scales draws the same run from the distance field instead.
+     */
+    @Test
+    fun pixelGlyphsDrawOnWholePixelsAndAScaledScopeDrawsTheField() {
+        val font = UiFonts.trueSans()
+        val run = TextRun("Hl", TextStyle.Default, font, glyphPx = 12f, density = 1f)
+        val glyphs = checkNotNull(font.pixelGlyphs)
+
+        val aligned = RecordingScope(aligned = true).also { run.paint(it, white, offsetX = 4.3f, offsetY = 0.4f) }
+        val scaled = RecordingScope(aligned = false).also { run.paint(it, white, offsetX = 4.3f, offsetY = 0.4f) }
+
+        assertEquals(2, aligned.glyphs.size)
+        for (glyph in aligned.glyphs) {
+            listOf(glyph.x, glyph.y, glyph.w, glyph.h).forEach { assertEquals(floor(it), it, "pixel glyph quad $glyph") }
+        }
+        val h = checkNotNull(glyphs.glyph('H'.code, FontWeight.Normal, 12))
+        assertEquals(floor(4f + h.anchorX + 0.5f) + h.left, aligned.glyphs[0].x)
+        assertSame(h.atlas, aligned.glyphs[0].font)
+        assertTrue(scaled.glyphs.all { it.font === font }, "a scaled scope drew ${scaled.glyphs.map { it.font }}")
     }
 
     /** Records the glyph quads a run draws; nothing else is used. */

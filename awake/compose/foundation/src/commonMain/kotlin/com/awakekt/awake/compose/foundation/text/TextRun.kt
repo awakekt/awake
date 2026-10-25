@@ -7,6 +7,7 @@ package com.awakekt.awake.compose.foundation.text
 
 import com.awakekt.awake.compose.ui.graphics.drawscope.DrawScope
 import com.awakekt.awake.core.color.Color
+import com.awakekt.awake.core.text.font.PixelGlyphs
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.core.text.font.clusterAdvance
 import com.awakekt.awake.core.text.font.ellipsize
@@ -26,6 +27,8 @@ import kotlin.math.floor
  * and hit-tests one cluster at a time, so a flag or a ZWJ emoji is one character to all four, and
  * letter spacing falls between clusters, never inside one.
  */
+// Measuring, the caret, hit testing and two paint paths share one layout here, so they cannot disagree.
+@Suppress("TooManyFunctions")
 internal class TextRun(
     private val text: String,
     private val style: TextStyle,
@@ -144,6 +147,14 @@ internal class TextRun(
         paint(scope, color, offsetX, offsetY)
     }
 
+    /**
+     * The font's exact-size glyphs, when this run draws from them: its size is a whole number of device
+     * pixels no larger than the font's [UiFont.pixelGlyphMaxSize]. Read once, as the run is laid out.
+     */
+    private val pixelGlyphs: PixelGlyphs? = font.pixelGlyphs?.takeIf {
+        glyphPx == floor(glyphPx) && glyphPx >= 1f && glyphPx <= font.pixelGlyphMaxSize
+    }
+
     fun paint(scope: DrawScope, color: Color, offsetX: Float = 0f, offsetY: Float = 0f) {
         // A distance-field glyph is antialiased by its coverage at the pixel it lands on, so a stem
         // that straddles two pixel columns is two grey columns instead of one solid one. Whole
@@ -153,6 +164,17 @@ internal class TextRun(
         val snap = scope.isDevicePixelAligned
         val originX = if (snap) wholePixel(offsetX) else offsetX
         val ascentPx = font.ascentEm * glyphPx
+        // Small text on the pixel grid draws exact-size coverage glyphs 1:1. Anything scaled draws from
+        // the distance field, which is what scales.
+        val pixels = if (snap) pixelGlyphs else null
+        if (pixels != null) {
+            var y = offsetY
+            for (i in lineLayouts.indices) {
+                paintPixelLine(lineLayouts[i].text, scope, color, originX, y + lineTopPaddingPx)
+                y += lineHeightPx
+            }
+            return
+        }
         val pages = font.atlasPages
         val pageCount = pages.size
         val passes = if (pageCount <= 1) 1 else pageCount
@@ -174,6 +196,55 @@ internal class TextRun(
 
     /** [value] rounded half up to a whole pixel. */
     private fun wholePixel(value: Float): Float = floor(value + 0.5f)
+
+    /**
+     * [paintLine] for exact-size glyphs: the same pen positions, each glyph rounded to a whole pixel at
+     * its stem, on the baseline of its own face rounded to a whole pixel. A code point a face has no
+     * pixel glyph for, such as a colour emoji, draws from its atlas as [paintLine] would.
+     */
+    private fun paintPixelLine(line: String, scope: DrawScope, color: Color, offsetX: Float, lineTop: Float) {
+        val pixels = pixelGlyphs ?: return
+        val size = glyphPx.toInt()
+        var x = offsetX
+        var start = 0
+        while (start < line.length) {
+            val end = GraphemeClusters.nextBoundary(line, start)
+            val clusterX = x
+            x += font.forEachGlyphInCluster(line, start, end, glyphPx, style.weight) { codePoint, penX ->
+                val glyph = pixels.glyph(codePoint, style.weight, size)
+                val uv = if (glyph == null) font.glyphFor(codePoint, style.weight) else null
+                if (uv != null) {
+                    scope.drawGlyph(
+                        x = clusterX + penX + uv.offsetXEm * glyphPx,
+                        y = lineTop + uv.offsetYEm * glyphPx,
+                        width = uv.widthEm * glyphPx,
+                        height = uv.heightEm * glyphPx,
+                        u0 = uv.u0,
+                        v0 = uv.v0,
+                        u1 = uv.u1,
+                        v1 = uv.v1,
+                        color = color,
+                        font = font.fontFor(codePoint, style.weight),
+                        page = uv.page,
+                    )
+                } else if (glyph != null && glyph.width > 0) {
+                    scope.drawGlyph(
+                        x = wholePixel(clusterX + penX + glyph.anchorX) + glyph.left,
+                        y = wholePixel(lineTop + glyph.baselineEm * glyphPx) + glyph.top,
+                        width = glyph.width.toFloat(),
+                        height = glyph.height.toFloat(),
+                        u0 = glyph.u0,
+                        v0 = glyph.v0,
+                        u1 = glyph.u1,
+                        v1 = glyph.v1,
+                        color = color,
+                        font = glyph.atlas,
+                    )
+                }
+            } + letterSpacing
+            start = end
+        }
+    }
 
     private fun paintLine(
         line: String,

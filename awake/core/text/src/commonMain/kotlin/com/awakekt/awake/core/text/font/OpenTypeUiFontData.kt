@@ -15,7 +15,9 @@ import kotlin.math.sqrt
 /**
  * A distance-field atlas baked from a TrueType or OpenType file at run time, in the layout and
  * encoding `:awake:ui:font-atlas-generator` gives the built-in Roboto, so [PackedUiFont] and the
- * glyph shader read it unchanged.
+ * glyph shader read it unchanged. The generator's grid is 32 texels per em with a 2-texel range
+ * ([DistanceFieldBake.GENERATOR]); a project font is baked finer, at [DistanceFieldBake.RUNTIME], on
+ * the same layout rules scaled up. The file's outlines are kept for [PackedUiFont.pixelGlyphs].
  *
  * The generator stores msdfgen's MTSDF: a multi-channel distance in RGB and a true signed distance
  * in A. This stores one exact signed distance in all four channels. The shader draws the median of
@@ -30,8 +32,11 @@ internal class OpenTypeUiFontData private constructor(
     override val glyphOrder: String,
     private val layout: GlyphLayout,
     private val atlas: ByteArray,
+    private val font: OpenTypeFont,
+    /** The resolution the atlas was baked at. */
+    val bake: DistanceFieldBake,
 ) : PackedUiFontData {
-    override val lineHeightEm: Float = (layout.ascentPx + layout.descentPx) / OVERSAMPLE / LOGICAL_CELL
+    override val lineHeightEm: Float = (layout.ascentPx + layout.descentPx) / bake.texelsPerEm
     override val atlasWidth: Int get() = layout.atlasWidth
     override val atlasHeight: Int get() = layout.atlasHeight
     override val baseCellSize: Int = LOGICAL_CELL
@@ -39,7 +44,7 @@ internal class OpenTypeUiFontData private constructor(
     override val samplingMode: UiFontSamplingMode = UiFontSamplingMode.DistanceField
     override val fallbackChar: Char = FALLBACK_CHAR
     override val atlasChannels: Int = RGBA
-    override val distanceFieldRangePx: Float = DISTANCE_FIELD_RANGE_PX.toFloat()
+    override val distanceFieldRangePx: Float = bake.rangeTexels.toFloat()
     override val encodedAtlasBase64: String = ""
     override val uvBoundsPx: IntArray get() = layout.uvBoundsPx
     override val quadMetricsEm: FloatArray get() = layout.quadMetricsEm
@@ -48,6 +53,8 @@ internal class OpenTypeUiFontData private constructor(
 
     override fun atlasBytes(): ByteArray = atlas
 
+    override fun outlineFont(): OpenTypeFont = font
+
     companion object {
         /**
          * Reads [bytes] and bakes the glyphs of [chars] that the font has, plus [FALLBACK_CHAR],
@@ -55,9 +62,20 @@ internal class OpenTypeUiFontData private constructor(
          * such as a CJK Extension B ideograph is one glyph. The font's `.notdef` stands in for a font with no
          * fallback glyph of its own. [name] only labels errors and the data.
          *
+         * The atlas is baked at [bake]. A glyph set whose atlas would pass [MAX_ATLAS_SIZE], or a finer bake
+         * whose atlas would pass [MAX_FINE_ATLAS_TEXELS] or whose work would pass [MAX_BAKE_WORK], steps down
+         * through [DistanceFieldBake.FALLBACKS]. A finer resolution never accepts a font, or costs more time or
+         * memory, than the generator's resolution would, so a font that loaded at 32 texels per em still loads,
+         * and a corrupt one fails the same way.
+         *
          * @throws IllegalArgumentException when [bytes] are not a font this reads, naming the table at fault.
          */
-        fun load(bytes: ByteArray, name: String, chars: String): OpenTypeUiFontData {
+        fun load(
+            bytes: ByteArray,
+            name: String,
+            chars: String,
+            bake: DistanceFieldBake = DistanceFieldBake.RUNTIME,
+        ): OpenTypeUiFontData {
             val font = OpenTypeFont(bytes, name)
             val picked = LinkedHashMap<Int, Int>()
             var index = 0
@@ -69,37 +87,82 @@ internal class OpenTypeUiFontData private constructor(
             }
             if (FALLBACK_CHAR.code !in picked) picked[FALLBACK_CHAR.code] = font.glyphFor(FALLBACK_CHAR.code)
             val glyphs = picked.map { (codePoint, glyph) -> FontGlyph(codePoint, font, glyph) }
-            val layout = GlyphLayout(font, glyphs)
-            require(layout.atlasWidth <= MAX_ATLAS_SIZE && layout.atlasHeight <= MAX_ATLAS_SIZE) {
+            val candidates = listOf(bake) + DistanceFieldBake.FALLBACKS.filter { it.texelsPerEm < bake.texelsPerEm }
+            var chosen = candidates.last()
+            var layout = GlyphLayout(font, glyphs, chosen)
+            for (candidate in candidates.dropLast(1)) {
+                val trial = GlyphLayout(font, glyphs, candidate)
+                if (trial.affordable(glyphs)) {
+                    chosen = candidate
+                    layout = trial
+                    break
+                }
+            }
+            require(layout.fits()) {
                 "$name: ${glyphs.size} glyphs need a ${layout.atlasWidth}x${layout.atlasHeight} atlas, over $MAX_ATLAS_SIZE"
             }
-            return OpenTypeUiFontData(name, glyphOrderOf(glyphs), layout, layout.bakeAtlas(glyphs, name))
+            return OpenTypeUiFontData(name, glyphOrderOf(glyphs), layout, layout.bakeAtlas(glyphs, name), font, chosen)
         }
+    }
+}
+
+/**
+ * The resolution a distance-field atlas is baked at: [texelsPerEm] atlas texels to the em, and a field that
+ * reaches [rangeTexels] / 2 texels either side of the outline.
+ *
+ * More texels per em keep thin strokes and corners at large sizes; a wider range keeps the shader's edge
+ * one screen pixel wide when the atlas is drawn smaller than it was baked (its `screenPxRange` stays
+ * above 1). Texels per em is a multiple of [GENERATOR]'s 32.
+ */
+internal class DistanceFieldBake(val texelsPerEm: Int, val rangeTexels: Int) {
+    /** The texels a glyph's sample rect reaches past its ink: one per 32 texels per em, half a pixel or more wherever the field draws. */
+    val cropBleed: Int get() = maxOf(1, texelsPerEm / GENERATOR_texelsPerEm)
+
+    /** The distance an atlas texel holds, either side of the outline: half of [rangeTexels]. */
+    val fieldReach: Double get() = rangeTexels / 2.0
+
+    companion object {
+        private const val GENERATOR_texelsPerEm = 32
+
+        /**
+         * What `:awake:ui:font-atlas-generator` bakes the built-in Roboto at: its `LOGICAL_CELL` 16 times
+         * `OVERSAMPLE` 2, and `-pxrange 2`. A change there is a change here.
+         */
+        val GENERATOR = DistanceFieldBake(GENERATOR_texelsPerEm, 2)
+
+        /** What [UiFonts.load] bakes a project font at: 64 texels per em and an 8-texel range. */
+        val RUNTIME = DistanceFieldBake(64, 8)
+
+        /** The resolutions a glyph set too large for its atlas steps down through, largest first. */
+        val FALLBACKS = listOf(DistanceFieldBake(48, 6), GENERATOR)
     }
 }
 
 // The generator's constants (`awake/ui/font-atlas-generator` Main.kt); a change there is a change here.
 private const val LOGICAL_CELL = 16
-private const val OVERSAMPLE = 2
-private const val TEXELS_PER_EM = LOGICAL_CELL * OVERSAMPLE
 private const val PADDING = 6
 private const val COLUMNS = 16
-private const val CROP_BLEED = 1
 private const val BLANK_GLYPH_DIVISOR = 4
-private const val DISTANCE_FIELD_RANGE_PX = 2
 private const val TEXT_SCALE_STEP = 0.25f
 private const val FALLBACK_CHAR = '?'
 private const val RGBA = 4
 private const val BYTE_MAX = 255.0
 
-/** Texels baked times their glyph's segments: about 400 times the built-in set's 1.2 million, or seconds of work. */
+/**
+ * Texels baked times their glyph's segments: about 400 times the built-in set's 1.2 million at 32 texels per
+ * em, or seconds of work. A finer bake that would pass it steps down rather than taking longer.
+ */
 private const val MAX_BAKE_WORK = 500_000_000L
+
+/**
+ * The most texels a finer-than-generator atlas may have, 64 MB of RGBA. A finer bake that would pass it steps
+ * down, so a large glyph set (or a corrupt font's huge glyphs) costs no more memory than the generator's
+ * resolution allows for it.
+ */
+private const val MAX_FINE_ATLAS_TEXELS = 4096L * 4096L
 
 /** WebGPU's default texture size limit, the smallest a backend here guarantees. */
 private const val MAX_ATLAS_SIZE = 8192
-
-/** The distance an atlas texel can hold, either side of the outline: half of [DISTANCE_FIELD_RANGE_PX]. */
-private const val FIELD_REACH = DISTANCE_FIELD_RANGE_PX / 2.0
 
 /** The code points of [glyphs] as one string, a surrogate pair for each past U+FFFF. */
 private fun glyphOrderOf(glyphs: List<FontGlyph>): String = buildString {
@@ -121,10 +184,12 @@ private class FontGlyph(val codePoint: Int, font: OpenTypeFont, glyph: Int) {
  * padding (a script font's swash, say) widens every cell rather than being cut off; no built-in
  * face does.
  */
-private class GlyphLayout(private val font: OpenTypeFont, glyphs: List<FontGlyph>) {
+private class GlyphLayout(private val font: OpenTypeFont, glyphs: List<FontGlyph>, private val bake: DistanceFieldBake) {
+    private val texelsPerEm = bake.texelsPerEm
+    private val cropBleed = bake.cropBleed
     private val unitsPerEm = font.unitsPerEm.toDouble()
-    val ascentPx: Float = TEXELS_PER_EM.toFloat() * font.ascender / font.unitsPerEm
-    val descentPx: Float = TEXELS_PER_EM.toFloat() * -font.descender / font.unitsPerEm
+    val ascentPx: Float = texelsPerEm.toFloat() * font.ascender / font.unitsPerEm
+    val descentPx: Float = texelsPerEm.toFloat() * -font.descender / font.unitsPerEm
     val inkMetricsEm = FloatArray(glyphs.size * 4)
     val advancesEm = FloatArray(glyphs.size) { glyphs[it].advance / unitsPerEm.toFloat() }
     private val originX: Int
@@ -149,18 +214,41 @@ private class GlyphLayout(private val font: OpenTypeFont, glyphs: List<FontGlyph
         fun extreme(pick: (Int) -> Float, largest: Boolean): Float =
             inked.map(pick).let { if (largest) it.maxOrNull() else it.minOrNull() } ?: 0f
         // The sample rect's bleed plus one texel, so bilinear sampling at a rect's edge reads its own cell.
-        val edge = CROP_BLEED + 1f
-        val maxAdvancePx = glyphs.indices.filter { glyphs[it].codePoint != ' '.code }.maxOfOrNull { advancesEm[it] * TEXELS_PER_EM } ?: 0f
-        originX = max(PADDING, ceil(edge - extreme({ inkMetricsEm[it * 4] * TEXELS_PER_EM }, largest = false)).toInt())
-        originY = max(PADDING, ceil(edge - extreme({ inkMetricsEm[it * 4 + 1] * TEXELS_PER_EM }, largest = false)).toInt())
-        val inkRight = extreme({ (inkMetricsEm[it * 4] + inkMetricsEm[it * 4 + 2]) * TEXELS_PER_EM }, largest = true)
-        val inkBottom = extreme({ (inkMetricsEm[it * 4 + 1] + inkMetricsEm[it * 4 + 3]) * TEXELS_PER_EM }, largest = true)
+        val edge = cropBleed + 1f
+        val maxAdvancePx = glyphs.indices.filter { glyphs[it].codePoint != ' '.code }.maxOfOrNull { advancesEm[it] * texelsPerEm } ?: 0f
+        originX = max(PADDING, ceil(edge - extreme({ inkMetricsEm[it * 4] * texelsPerEm }, largest = false)).toInt())
+        originY = max(PADDING, ceil(edge - extreme({ inkMetricsEm[it * 4 + 1] * texelsPerEm }, largest = false)).toInt())
+        val inkRight = extreme({ (inkMetricsEm[it * 4] + inkMetricsEm[it * 4 + 2]) * texelsPerEm }, largest = true)
+        val inkBottom = extreme({ (inkMetricsEm[it * 4 + 1] + inkMetricsEm[it * 4 + 3]) * texelsPerEm }, largest = true)
         cellWidth = originX + max(ceil(maxAdvancePx.toDouble()).toInt() + PADDING, ceil(inkRight + edge).toInt())
         cellHeight = originY + max(ceil((ascentPx + descentPx).toDouble()).toInt() + PADDING, ceil(inkBottom + edge).toInt())
         columns = max(min(glyphs.size, COLUMNS), ceil(sqrt(glyphs.size.toDouble())).toInt())
         atlasWidth = cellWidth * columns
         atlasHeight = cellHeight * ((glyphs.size + columns - 1) / columns)
         glyphs.indices.forEach(::place)
+    }
+
+    /**
+     * Whether the atlas fits the smallest texture size every backend supports. The cell is checked on its own
+     * first: a corrupt font's extreme coordinates can overflow the cell times the columns into a size that
+     * looks small, or negative.
+     */
+    fun fits(): Boolean =
+        cellWidth in 1..MAX_ATLAS_SIZE && cellHeight in 1..MAX_ATLAS_SIZE &&
+            atlasWidth in 1..MAX_ATLAS_SIZE && atlasHeight in 1..MAX_ATLAS_SIZE
+
+    /** Whether this finer-than-generator bake fits, and stays within the generator's memory and time budgets. */
+    fun affordable(glyphs: List<FontGlyph>): Boolean =
+        fits() && atlasWidth.toLong() * atlasHeight <= MAX_FINE_ATLAS_TEXELS && regionsAndWork(glyphs).second <= MAX_BAKE_WORK
+
+    /** Each glyph's baked region, and the texels baked times each glyph's segments: what the bake costs. */
+    private fun regionsAndWork(glyphs: List<FontGlyph>): Pair<List<IntArray?>, Long> {
+        val scale = texelsPerEm / unitsPerEm
+        val regions = glyphs.mapIndexed { index, glyph -> glyph.bounds?.let { region(index, it, scale) } }
+        val work = glyphs.indices.sumOf { index ->
+            regions[index]?.let { max(0, it[2] - it[0]).toLong() * max(0, it[3] - it[1]) * glyphs[index].outline.size } ?: 0L
+        }
+        return regions to work
     }
 
     private fun cellX(index: Int): Int = index % columns * cellWidth
@@ -175,18 +263,18 @@ private class GlyphLayout(private val font: OpenTypeFont, glyphs: List<FontGlyph
         val lineTop = cellY + originY
         val at = index * 4
         if (inkMetricsEm[at + 2] <= 0f || inkMetricsEm[at + 3] <= 0f) {
-            val placeholder = max(1, TEXELS_PER_EM / BLANK_GLYPH_DIVISOR)
+            val placeholder = max(1, texelsPerEm / BLANK_GLYPH_DIVISOR)
             intArrayOf(penX, lineTop, penX + placeholder, lineTop + placeholder).copyInto(uvBoundsPx, at)
             return
         }
-        val rawLeft = penX + inkMetricsEm[at] * TEXELS_PER_EM
-        val rawTop = lineTop + inkMetricsEm[at + 1] * TEXELS_PER_EM
-        val left = max(cellX, floor(rawLeft - CROP_BLEED).toInt())
-        val top = max(cellY, floor(rawTop - CROP_BLEED).toInt())
-        val right = min(cellX + cellWidth, ceil(rawLeft + inkMetricsEm[at + 2] * TEXELS_PER_EM + CROP_BLEED).toInt())
-        val bottom = min(cellY + cellHeight, ceil(rawTop + inkMetricsEm[at + 3] * TEXELS_PER_EM + CROP_BLEED).toInt())
+        val rawLeft = penX + inkMetricsEm[at] * texelsPerEm
+        val rawTop = lineTop + inkMetricsEm[at + 1] * texelsPerEm
+        val left = max(cellX, floor(rawLeft - cropBleed).toInt())
+        val top = max(cellY, floor(rawTop - cropBleed).toInt())
+        val right = min(cellX + cellWidth, ceil(rawLeft + inkMetricsEm[at + 2] * texelsPerEm + cropBleed).toInt())
+        val bottom = min(cellY + cellHeight, ceil(rawTop + inkMetricsEm[at + 3] * texelsPerEm + cropBleed).toInt())
         intArrayOf(left, top, right, bottom).copyInto(uvBoundsPx, at)
-        val scale = TEXELS_PER_EM.toFloat()
+        val scale = texelsPerEm.toFloat()
         floatArrayOf((left - penX) / scale, (top - lineTop) / scale, (right - left) / scale, (bottom - top) / scale)
             .copyInto(quadMetricsEm, at)
     }
@@ -198,16 +286,13 @@ private class GlyphLayout(private val font: OpenTypeFont, glyphs: List<FontGlyph
      * detailed is refused up front rather than left to run for minutes.
      */
     fun bakeAtlas(glyphs: List<FontGlyph>, name: String): ByteArray {
-        val scale = TEXELS_PER_EM / unitsPerEm
-        val regions = glyphs.mapIndexed { index, glyph -> glyph.bounds?.let { region(index, it, scale) } }
-        val work = glyphs.indices.sumOf { index ->
-            regions[index]?.let { max(0, it[2] - it[0]).toLong() * max(0, it[3] - it[1]) * glyphs[index].outline.size } ?: 0L
-        }
+        val scale = texelsPerEm / unitsPerEm
+        val (regions, work) = regionsAndWork(glyphs)
         require(work <= MAX_BAKE_WORK) { "$name: its glyphs are too large or too detailed to bake ($work texel-segments)" }
         val atlas = ByteArray(atlasWidth * atlasHeight * RGBA)
         glyphs.forEachIndexed { index, glyph ->
             val region = regions[index] ?: return@forEachIndexed
-            val field = GlyphField(glyph.outline, penX(index), baseline(index), scale)
+            val field = GlyphField(glyph.outline, penX(index), baseline(index), scale, bake.fieldReach)
             for (y in region[1] until region[3]) {
                 for (x in region[0] until region[2]) {
                     val value = ceil(BYTE_MAX * field.value(x + 0.5, y + 0.5) - 0.5).toInt().coerceIn(0, BYTE_MAX.toInt()).toByte()
@@ -220,11 +305,11 @@ private class GlyphLayout(private val font: OpenTypeFont, glyphs: List<FontGlyph
 
     private fun penX(index: Int): Double = (cellX(index) + originX).toDouble()
 
-    private fun baseline(index: Int): Double = cellY(index) + originY + TEXELS_PER_EM * (font.ascender / unitsPerEm)
+    private fun baseline(index: Int): Double = cellY(index) + originY + texelsPerEm * (font.ascender / unitsPerEm)
 
     /** The texels whose value can differ from plain outside: the ink box and the field's reach around it, within the cell. */
     private fun region(index: Int, bounds: DoubleArray, scale: Double): IntArray {
-        val reach = FIELD_REACH + 1
+        val reach = bake.fieldReach + 1
         return intArrayOf(
             max(cellX(index), floor(penX(index) + bounds[0] * scale - reach).toInt()),
             max(cellY(index), floor(baseline(index) - bounds[3] * scale - reach).toInt()),

@@ -572,18 +572,20 @@ public final class com/awakekt/awake/render/command/PreparedDrawResolutionKt {
 }
 
 public final class com/awakekt/awake/render/font/UiFontSamplingInfo {
-	public fun <init> (Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;FII)V
-	public synthetic fun <init> (Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;FIIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;FIIZ)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;FIIZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;
 	public final fun component2 ()F
 	public final fun component3 ()I
 	public final fun component4 ()I
-	public final fun copy (Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;FII)Lcom/awakekt/awake/render/font/UiFontSamplingInfo;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/render/font/UiFontSamplingInfo;Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;FIIILjava/lang/Object;)Lcom/awakekt/awake/render/font/UiFontSamplingInfo;
+	public final fun component5 ()Z
+	public final fun copy (Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;FIIZ)Lcom/awakekt/awake/render/font/UiFontSamplingInfo;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/render/font/UiFontSamplingInfo;Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;FIIZILjava/lang/Object;)Lcom/awakekt/awake/render/font/UiFontSamplingInfo;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAtlasHeight ()I
 	public final fun getAtlasWidth ()I
 	public final fun getDistanceFieldRangePx ()F
+	public final fun getLinearCoverage ()Z
 	public final fun getMode ()Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;

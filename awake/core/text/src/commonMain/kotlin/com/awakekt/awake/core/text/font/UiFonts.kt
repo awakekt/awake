@@ -23,6 +23,10 @@ object UiFonts {
     /**
      * Stable bundled atlas used by all targets unless a caller explicitly supplies another font.
      *
+     * Text up to [UiFont.DEFAULT_PIXEL_GLYPH_MAX_SIZE] device pixels draws from glyphs rasterized at its
+     * exact size ([UiFont.pixelGlyphs]); larger or scaled text draws from the distance-field atlas. Use
+     * [withPixelGlyphMaxSize] to move the limit, or 0 to draw every size from the atlas.
+     *
      * @param cellSize The base cell size in pixels for the requested font.
      * @return The cached default font instance at the requested cell size.
      */
@@ -45,7 +49,7 @@ object UiFonts {
      * @return The cached packed sans-serif [UiFont] instance at the requested cell size.
      */
     fun trueSans(cellSize: Int = 12): UiFont = trueSansCache.getOrPut(cellSize) {
-        PackedUiFont(RobotoRegularUiFontData, cellSize = cellSize)
+        PackedUiFont(RobotoRegularUiFontData, cellSize = cellSize) { RobotoOutlines.regular }
     }
 
     /**
@@ -57,13 +61,13 @@ object UiFonts {
     fun weightedSans(cellSize: Int = 12): UiFont =
         WeightedUiFont(
             mapOf(
-                FontWeight.Thin to PackedUiFont(RobotoThinUiFontData, cellSize = cellSize),
-                FontWeight.Light to PackedUiFont(RobotoLightUiFontData, cellSize = cellSize),
-                FontWeight.Normal to PackedUiFont(RobotoRegularUiFontData, cellSize = cellSize),
-                FontWeight.Medium to PackedUiFont(RobotoMediumUiFontData, cellSize = cellSize),
-                FontWeight.SemiBold to PackedUiFont(RobotoSemiBoldUiFontData, cellSize = cellSize),
-                FontWeight.Bold to PackedUiFont(RobotoBoldUiFontData, cellSize = cellSize),
-                FontWeight.Black to PackedUiFont(RobotoBlackUiFontData, cellSize = cellSize),
+                FontWeight.Thin to PackedUiFont(RobotoThinUiFontData, cellSize = cellSize) { RobotoOutlines.thin },
+                FontWeight.Light to PackedUiFont(RobotoLightUiFontData, cellSize = cellSize) { RobotoOutlines.light },
+                FontWeight.Normal to PackedUiFont(RobotoRegularUiFontData, cellSize = cellSize) { RobotoOutlines.regular },
+                FontWeight.Medium to PackedUiFont(RobotoMediumUiFontData, cellSize = cellSize) { RobotoOutlines.medium },
+                FontWeight.SemiBold to PackedUiFont(RobotoSemiBoldUiFontData, cellSize = cellSize) { RobotoOutlines.semiBold },
+                FontWeight.Bold to PackedUiFont(RobotoBoldUiFontData, cellSize = cellSize) { RobotoOutlines.bold },
+                FontWeight.Black to PackedUiFont(RobotoBlackUiFontData, cellSize = cellSize) { RobotoOutlines.black },
             ),
         )
 
@@ -164,8 +168,12 @@ object UiFonts {
      *
      * The glyph set is fixed here: a char outside [chars], or one the font lacks, draws as `'?'`.
      * Kerning is not applied, as it is not for the built-in fonts. Every target bakes the same bytes from
-     * the same file. All the work happens in this call, none per frame: the default set takes tens of
-     * milliseconds on desktop, so load a font while a scene loads, not during one.
+     * the same file. The atlas is baked at 64 texels per em with an 8-texel range, so large text keeps its
+     * corners and thin strokes; a glyph set too large for that to fit an 8192-pixel atlas is baked coarser.
+     * The baking happens in this call, none per frame: the default set takes about 70 milliseconds on
+     * desktop, so load a font while a scene loads, not during one. Text up to
+     * [UiFont.DEFAULT_PIXEL_GLYPH_MAX_SIZE] device pixels draws from glyphs rasterized from the font's
+     * outlines at its exact size, each size the first time it is drawn ([UiFont.pixelGlyphs]).
      *
      * @param bytes The font file.
      * @param name Names the font in error messages.

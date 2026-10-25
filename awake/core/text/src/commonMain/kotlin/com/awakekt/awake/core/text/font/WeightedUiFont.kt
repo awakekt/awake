@@ -46,6 +46,18 @@ class WeightedUiFont(
     override val descentEm: Float = baseFace.font.descentEm
     override val capHeightEm: Float = baseFace.font.capHeightEm
 
+    /** Each weight's glyphs from its own face's outlines; null unless every face has outlines. */
+    override val pixelGlyphs: PixelGlyphs? by lazy {
+        if (faces.all { it.font.pixelGlyphs != null }) {
+            PixelGlyphs { codePoint, weight, pixelSize ->
+                val face = resolve(weight)
+                face.font.pixelGlyphs?.glyph(codePoint, face.weight, pixelSize)
+            }
+        } else {
+            null
+        }
+    }
+
     override fun uvFor(char: Char): GlyphRect? = glyphFor(char, baseFace.weight)
 
     override fun hasGlyph(char: Char): Boolean = baseFace.font.hasGlyph(char)
@@ -85,10 +97,24 @@ class WeightedUiFont(
         return face.font.advanceFor(codePoint, glyphPx, face.weight)
     }
 
-    private fun resolve(weight: FontWeight): Face = faces.minWithOrNull(
-        compareBy<Face> { kotlin.math.abs(it.weight.value - weight.value) }
-            .thenBy { if (it.weight.value >= weight.value) 0 else 1 },
-    ) ?: baseFace
+    /**
+     * The face closest to [weight], the heavier of two equally close: Compose's resolution. A plain loop,
+     * not a comparator, because every glyph of every frame comes through here.
+     */
+    private fun resolve(weight: FontWeight): Face {
+        var best = baseFace
+        var bestRank = Int.MAX_VALUE
+        for (index in faces.indices) {
+            val face = faces[index]
+            // Twice the distance, plus one for a lighter face: equally close, the heavier ranks first.
+            val rank = 2 * kotlin.math.abs(face.weight.value - weight.value) + if (face.weight.value < weight.value) 1 else 0
+            if (rank < bestRank) {
+                best = face
+                bestRank = rank
+            }
+        }
+        return best
+    }
 
     private fun combineAtlases(): ByteArray {
         val result = ByteArray(atlasWidth * atlasHeight * RGBA_CHANNELS)

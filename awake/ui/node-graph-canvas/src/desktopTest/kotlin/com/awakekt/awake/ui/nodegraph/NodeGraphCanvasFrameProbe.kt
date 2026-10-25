@@ -179,8 +179,9 @@ class NodeGraphCanvasFrameProbe {
         // Ratchets, lowered as fixes land; each sits about 2% above the last measurement.
         // The bytes are mostly the engine's per-node work, chiefly one primitive per glyph. The
         // canvas's own share is small: idle wires redraw retained meshes, and below labelMinZoom the
-        // port labels are not composed at all.
+        // port labels are not composed at all. The editor view read 527,600 until the weighted font stopped
+        // allocating per glyph it resolves (#993), then 341,624.
         const val ALL_VISIBLE_CEILING = 620_000L
-        const val EDITOR_VIEW_CEILING = 532_000L
+        const val EDITOR_VIEW_CEILING = 349_000L
     }
 }

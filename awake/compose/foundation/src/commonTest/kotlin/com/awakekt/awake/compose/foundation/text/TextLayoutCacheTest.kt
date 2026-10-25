@@ -54,7 +54,7 @@ class TextLayoutCacheTest {
         val long = frame()
         assertTrue(long.width > short.width, "$long should be wider than $short")
         assertEquals(fresh("Hello there", style), long)
-        assertEquals("Hello there".length, long.glyphs, "one glyph per character, spaces included")
+        assertEquals("Hello there".count { it != ' ' }, long.glyphs, "one glyph per inked character; a space draws nothing")
     }
 
     @Test
