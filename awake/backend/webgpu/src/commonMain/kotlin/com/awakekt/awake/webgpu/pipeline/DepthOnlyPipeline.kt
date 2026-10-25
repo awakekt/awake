@@ -271,6 +271,11 @@ class DepthOnlyPipeline(
                         FrontFace.CounterClockwise -> GPUFrontFace.CCW
                         FrontFace.Clockwise -> GPUFrontFace.CW
                     },
+                    // The light-space pass clamps depth where the device can, as Vulkan's twin
+                    // does with depthClampEnable: a caster in front of a cascade's near plane is
+                    // flattened onto it instead of clipped. Elsewhere the scene compiler pulls the
+                    // near plane back instead (`GpuDrawPreparer.clampsShadowDepth`).
+                    unclippedDepth = hasCascadeBlock && shadowBias && graphicsDevice.unclippedDepth,
                 ),
                 // Bias only the cascade (light-space) pass -- same reasoning and constants as
                 // Vulkan's twin: the scene-depth pass feeds depth_fog, which reads raw depth.

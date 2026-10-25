@@ -258,8 +258,13 @@ class DepthOnlyPipeline(
             )
             // Bias only the cascade (light-space) pass: the scene-depth pass feeds depth_fog,
             // which reads raw depth, and a biased fog plane reads as the whole world shifted.
+            // The light-space pass also clamps depth where the device can: a caster between the
+            // light and a cascade's near plane is flattened onto that plane instead of clipped, so
+            // it still shades what the cascade holds. Without the feature the scene compiler pulls
+            // the near plane back to the casters instead (`GpuDrawPreparer.clampsShadowDepth`).
             val rasterizationInfo = arrayOf(
                 VkPipelineRasterizationStateCreateInfo(
+                    depthClampEnable = cascadeCount > 0 && shadowBias && graphicsDevice.depthClamp,
                     cullMode = VkCullModeFlagBits.VK_CULL_MODE_NONE.value,
                     frontFace = when (frontFace) {
                         FrontFace.CounterClockwise -> VkFrontFace.VK_FRONT_FACE_COUNTER_CLOCKWISE

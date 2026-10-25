@@ -63,7 +63,12 @@ object ScenePassCompiler {
     ): GpuPassInput {
         val viewProjection = lens.viewProjectionMatrix(aspect, clipSpace)
         val cameraForward = lens.forwardDirection()
-        val shadowCascadeData = shadowCascadeData(light, environment)
+        // A backend that clamps shadow depth flattens a caster in front of a cascade's near plane
+        // onto it; for one that clips there, the plane moves back to the casters instead. Before
+        // preparation, because prepared draws carry the cascade matrices their receivers sample.
+        val shadowCascadeData = shadowCascadeData(light, environment)?.let { cascades ->
+            if (drawPreparer?.clampsShadowDepth == true) cascades else cascades.reachingCasters(drawCalls, clipSpace)
+        }
         val shadowViewProjections = shadowCascadeData?.viewProjections.orEmpty()
         val packedPassUniforms = sceneLightUniforms(light ?: DEFAULT_SCENE_LIGHT, lens.eye).packed
         val gpuEnvironment = environment.toGpuState(viewDepthRange = lens.far)
