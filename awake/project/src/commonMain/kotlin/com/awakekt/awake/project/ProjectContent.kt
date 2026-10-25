@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.project
 
+import com.awakekt.awake.core.io.Sha256
 import kotlinx.serialization.Serializable
 
 /** Severity of a project-content diagnostic. */
@@ -95,34 +96,111 @@ data class ProjectContentSpec(
 )
 
 /**
- * Metadata-only browser transport index. Asset bytes are fetched from [files] URLs on demand.
+ * Metadata-only transport index: what a published project holds, and where each file's bytes are.
+ * Asset bytes are fetched on demand, from a loose file's `url` or from inside a content bundle.
  *
- * @property formatVersion Transport index format version (must be 2).
+ * [formatVersion] 2 lists loose files only, each at its own `url`. [formatVersion] 3, which
+ * [ContentBundleWriter] writes, adds [bundles]: an entry may then name a bundle and its offset in it
+ * instead of a `url`, and with [pathIds] set, entries carry opaque ids instead of readable paths. An
+ * engine that predates a version refuses it rather than misreading it.
+ *
+ * @property formatVersion Transport index format version: [LOOSE_FORMAT_VERSION] or [BUNDLED_FORMAT_VERSION].
  * @property rootPath Base URI mount path for indexed files.
  * @property files List of indexed file entries.
+ * @property bundles The content bundles that [files] entries point into; empty in a loose index.
+ * @property pathIds How each entry's opaque id is derived from its path, or null when entries carry paths.
  */
 @Serializable
 data class ProjectIndex(
-    val formatVersion: Int = 2,
+    val formatVersion: Int = LOOSE_FORMAT_VERSION,
     val rootPath: String = "/project",
     val files: List<ProjectIndexEntry> = emptyList(),
-)
+    val bundles: List<ProjectIndexBundle> = emptyList(),
+    val pathIds: ProjectPathIds? = null,
+) {
+    /** The index format versions this engine reads. */
+    companion object {
+        /** An index of loose files, each at its own `url`. */
+        const val LOOSE_FORMAT_VERSION: Int = 2
+
+        /** An index whose entries may point into content bundles and may carry opaque ids. */
+        const val BUNDLED_FORMAT_VERSION: Int = 3
+    }
+}
 
 /**
  * One project-relative file in a [ProjectIndex].
  *
- * @property path Project-relative path of the file.
+ * A loose file has a [url] and no [bundle]. A bundle member has a [bundle] and an [offset] instead,
+ * and its bytes are the [sizeBytes] bytes at [offset] in that bundle. In an index with
+ * [ProjectIndex.pathIds], [id] replaces [path], which is then empty.
+ *
+ * @property path Project-relative path of the file; empty when [id] stands in for it.
  * @property sizeBytes Size of the file in bytes.
  * @property sha256 Lowercase hex-encoded SHA-256 digest of the file contents.
- * @property url Resolvable URL from which the file payload can be fetched.
+ * @property url Resolvable URL from which a loose file's payload can be fetched; empty for a bundle member.
+ * @property id The opaque id [ProjectPathIds.idOf] derives from the path, or null when [path] is given.
+ * @property bundle The SHA-256 of the [ProjectIndexBundle] holding this file, or null for a loose file.
+ * @property offset Where this file's bytes start in [bundle], from the bundle's first byte; null for a loose file.
  */
 @Serializable
 data class ProjectIndexEntry(
-    val path: String,
+    val path: String = "",
     val sizeBytes: Long,
     val sha256: String,
+    val url: String = "",
+    val id: String? = null,
+    val bundle: String? = null,
+    val offset: Long? = null,
+) {
+    /** What the index looks this file up by: its [id] when it has one, otherwise its [path]. */
+    val key: String get() = id ?: path
+}
+
+/**
+ * One content bundle a [ProjectIndex] lists: an archive of many files in the [ContentBundleFormat],
+ * stored and fetched by its own SHA-256 like any other content.
+ *
+ * @property sha256 Lowercase hex-encoded SHA-256 digest of the whole bundle, which entries name it by.
+ * @property sizeBytes Size of the whole bundle in bytes.
+ * @property url Resolvable URL from which the bundle can be fetched.
+ */
+@Serializable
+data class ProjectIndexBundle(
+    val sha256: String,
+    val sizeBytes: Long,
     val url: String,
 )
+
+/**
+ * How a [ProjectIndex] with opaque ids derives each entry's id from its path, so the published index
+ * and its bundles list no readable paths while a game still asks for files by path.
+ *
+ * An id is the first 32 hex digits of the SHA-256 of [salt], a line feed, and the path's UTF-8 bytes.
+ * The salt is published with the index, so ids hide the file list from a reader of the index; they
+ * don't stop someone who guesses a path from confirming it.
+ *
+ * @property salt Mixed into every id, so the same path gets different ids in different projects;
+ * a project's id, for example. Not blank.
+ * @property scheme The derivation's name; [SCHEME] is the only one.
+ */
+@Serializable
+data class ProjectPathIds(
+    val salt: String,
+    val scheme: String = SCHEME,
+) {
+    /** The opaque id of [path]: 32 lowercase hex digits. */
+    fun idOf(path: String): String = Sha256.digestHex("$salt\n${path.removePrefix("/")}").substring(0, ID_LENGTH)
+
+    /** The supported id schemes. */
+    companion object {
+        /** The first 128 bits of a salted SHA-256, as lowercase hex. */
+        const val SCHEME: String = "sha256-128"
+
+        /** How many hex digits an id has. */
+        const val ID_LENGTH: Int = 32
+    }
+}
 
 /**
  * Result shape shared by project-content tooling and CI integrations.
@@ -205,45 +283,12 @@ object ProjectContentValidator {
     fun isUnderAssetRoot(path: String, assetRoots: List<String>): Boolean =
         assetRoots.any { root -> path == root || path.startsWith("$root/") }
 
-    /** Validates [index] structure and returns detailed diagnostic issues. */
-    fun indexIssueDetails(index: ProjectIndex): List<ProjectContentIssue> = buildList {
-        if (index.formatVersion != 2) {
-            add(ProjectContentIssue(ProjectIssueCode.INDEX_INVALID, "formatVersion must be 2"))
-        }
-        if (index.rootPath.isBlank()) {
-            add(ProjectContentIssue(ProjectIssueCode.INDEX_INVALID, "rootPath must not be blank"))
-        }
-        val paths = mutableSetOf<String>()
-        index.files.forEachIndexed { index, entry ->
-            if (!AwakeProjectValidator.isSafeProjectPath(entry.path)) {
-                add(
-                    ProjectContentIssue(
-                        code = ProjectIssueCode.UNSAFE_PATH,
-                        message = "files[$index].path must be a safe project-relative path",
-                        path = entry.path,
-                    ),
-                )
-            }
-            if (!paths.add(entry.path)) {
-                add(
-                    ProjectContentIssue(
-                        code = ProjectIssueCode.DUPLICATE_INDEX_PATH,
-                        message = "duplicate indexed path: ${entry.path}",
-                        path = entry.path,
-                    ),
-                )
-            }
-            if (entry.sizeBytes < 0) {
-                add(ProjectContentIssue(ProjectIssueCode.INDEX_INVALID, "files[$index].sizeBytes must not be negative"))
-            }
-            if (!isSha256Digest(entry.sha256)) {
-                add(ProjectContentIssue(ProjectIssueCode.INDEX_INVALID, "files[$index].sha256 must be a lowercase SHA-256 digest"))
-            }
-            if (entry.url.isBlank()) {
-                add(ProjectContentIssue(ProjectIssueCode.INDEX_INVALID, "files[$index].url must not be blank"))
-            }
-        }
-    }
+    /**
+     * Validates [index] structure and returns detailed diagnostic issues: its format version, each
+     * entry's path or id, size, SHA-256 and location, and, in a [ProjectIndex.BUNDLED_FORMAT_VERSION]
+     * index, that each bundle member lies inside a listed bundle.
+     */
+    fun indexIssueDetails(index: ProjectIndex): List<ProjectContentIssue> = projectIndexIssueDetails(index)
 
     /** Validates [index] structure and returns error message strings. */
     fun indexIssues(index: ProjectIndex): List<String> =
