@@ -25,7 +25,18 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
         }
+        named("desktopTest") {
+            resources.srcDir(rootProject.file("tools/fonts-tooling/layout"))
+            resources.srcDir(rootProject.file("awake/ui/font-atlas-generator/fonts"))
+            dependencies {
+                implementation(libs.kotlinx.serialization.json)
+            }
+        }
     }
+}
+
+tasks.named<Test>("desktopTest") {
+    systemProperty("awake.layout.report", layout.buildDirectory.dir("reports/text-layout-conformance").get().asFile.absolutePath)
 }
 
 mavenPublishing {
