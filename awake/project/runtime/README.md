@@ -121,6 +121,33 @@ switched to, systems run for a step, and saved and reopened. It returns a typed 
 each problem, with its file and node path. `awake validate --code` runs it with the project's own built
 code; see the [CLI](../cli/README.md#validating-with-the-projects-code).
 
+## Routing to a project loaded after the app starts
+
+A routed app (`app { scenes { ... } }`) declares its routes before it starts. A project that can only be
+read later, such as protected content read with a token the player gets by signing in, is given to its
+route as a loader with `projectRoute`:
+
+```kotlin
+val signedIn = CompletableDeferred<AssetSource>() // the sign-in scene completes it
+app {
+    scenes {
+        route("sign-in") { /* the game's sign-in screen */ }
+        projectRoute("world", loading = { ui { Text("Loading...") } }) {
+            loadProject(signedIn.await(), physicsWorld = ::createJoltPhysicsWorld)
+        }
+    }
+}
+```
+
+The router (`DeferredSceneRoute` in `awake:scene:runtime`) runs the loader off the frame thread the
+first time the route is entered, or when `SceneRouterRuntime.preload` asks, and plays the `loading`
+scene until it returns; `routeStatus` reports `Loading`, `Loaded` or `Failed(cause)`. A loader that
+throws leaves the route on its loading scene, and entering the route again loads again. A load the
+player leaves keeps going and waits, unplayed, for the next entry; the router never switches back on its
+own. Because a project plays once, the route owns it: leaving the route closes the project, the next
+entry calls the loader again, and the app stopping closes one that loaded and never played. See
+[Protected content](../../../website/docs/guides/protected-content.md#play-a-protected-project-after-sign-in).
+
 ## Playing a scene in a world of your own
 
 An editor that plays the scene it is editing, in an isolated world, wants the same systems without
