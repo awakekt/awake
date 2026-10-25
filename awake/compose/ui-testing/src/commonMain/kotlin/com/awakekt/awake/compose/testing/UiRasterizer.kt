@@ -15,6 +15,7 @@ import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.graphics2d.containsPoint
 import com.awakekt.awake.core.graphics2d.tessellateFillAa
 import com.awakekt.awake.core.graphics2d.tessellateStrokeAa
+import com.awakekt.awake.core.graphics2d.translatedBy
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.core.text.font.UiFontSamplingMode
 import com.awakekt.awake.render.capture.PixelMap
@@ -117,10 +118,17 @@ private fun DrawPoint.isWithin(w: Float, h: Float): Boolean {
 private fun resolveLayerImages(layers: List<GraphicsLayerFrame>, font: UiFont?): Map<Int, ImageBitmap> {
     if (layers.isEmpty()) return emptyMap()
     return layers.associate { layer ->
-        val layerWidth = layer.width.coerceAtLeast(1)
-        val layerHeight = layer.height.coerceAtLeast(1)
+        // The target the GPU compositor allocates: the node's box with the layer's insets on each side,
+        // which its composite quad covers, and the content moved in by them.
+        val layerWidth = (layer.width + layer.effectInsetX * 2).coerceAtLeast(1)
+        val layerHeight = (layer.height + layer.effectInsetY * 2).coerceAtLeast(1)
+        val content = if (layer.effectInsetX == 0 && layer.effectInsetY == 0) {
+            layer.primitives
+        } else {
+            layer.primitives.map { it.translatedBy(layer.effectInsetX.toFloat(), layer.effectInsetY.toFloat()) }
+        }
         // Not recursed with layers again: a layer's own content does not nest another layer here.
-        val flattened = layer.primitives.rasterizeToPixelMap(layerWidth, layerHeight, Color(0f, 0f, 0f, 0f), font)
+        val flattened = content.rasterizeToPixelMap(layerWidth, layerHeight, Color(0f, 0f, 0f, 0f), font)
         layer.id to ImageBitmap(layerWidth, layerHeight, flattened.pixels)
     }
 }

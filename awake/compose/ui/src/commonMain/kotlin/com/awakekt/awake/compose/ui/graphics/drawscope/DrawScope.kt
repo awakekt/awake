@@ -320,8 +320,9 @@ fun DrawScope.drawRetainedMesh(mesh: ColoredTriangleMesh, retentionKey: Any) {
  * @property alpha Opacity applied when the layer is composited, from 0 to 1.
  * @property blurRadiusX Horizontal blur radius in pixels, or 0 for none.
  * @property blurRadiusY Vertical blur radius in pixels, or 0 for none.
- * @property effectInsetX Transparent pixels reserved left and right of the content for expanding effects.
- * @property effectInsetY Transparent pixels reserved above and below the content for expanding effects.
+ * @property effectInsetX Pixels reserved left and right of the node's box, for expanding effects and for
+ *   content that paints past the node (a glyph's ink past its text box), whichever reaches further.
+ * @property effectInsetY Pixels reserved above and below the node's box, as [effectInsetX] is beside it.
  * @property shadowElevation Elevation shadow size in pixels, or 0 for none.
  * @property primitives What the layer paints, positioned relative to its top-left corner.
  * @property renderEffect Optional effect applied to the layer texture.
@@ -482,8 +483,8 @@ internal class PaintScope :
                 layerTileMode = TileMode.Clamp
             }
         }
-        val effectInsetX = if (layerTileMode == TileMode.Decal) kotlin.math.ceil(blurRadiusX).toInt() else 0
-        val effectInsetY = if (layerTileMode == TileMode.Decal) kotlin.math.ceil(blurRadiusY).toInt() else 0
+        val blurInsetX = if (layerTileMode == TileMode.Decal) kotlin.math.ceil(blurRadiusX).toInt() else 0
+        val blurInsetY = if (layerTileMode == TileMode.Decal) kotlin.math.ceil(blurRadiusY).toInt() else 0
         val elevation = shadowElevation.value.coerceAtLeast(0f) * density
         val outline = shape.createOutline(
             com.awakekt.awake.core.math2d.Size2D(layerWidth.toFloat(), layerHeight.toFloat()),
@@ -510,6 +511,19 @@ internal class PaintScope :
             this.alpha = enclosingAlpha
             output = parentOutput
         }
+        // The target grows to what the content paints, not just the node: Compose's graphicsLayer
+        // does not clip, and a target the node's size cut every glyph whose ink passes its text box
+        // as soon as a fade or a press scale started. Grown evenly on both sides, so the composite's
+        // centre, which rotation and scale turn about, stays the node's. A clamped blur keeps its
+        // edge at the node, as its tile mode says.
+        measureOverflow(
+            layerOutput,
+            Rectangle(layerX, layerY, layerWidth.toFloat(), layerHeight.toFloat()),
+            renderEffect,
+            layerTileMode,
+        )
+        val effectInsetX = maxOf(blurInsetX, overflowInset(maxOf(overflow.left, overflow.right), layerWidth))
+        val effectInsetY = maxOf(blurInsetY, overflowInset(maxOf(overflow.top, overflow.bottom), layerHeight))
         layers += GraphicsLayerFrame(
             id = layerId,
             x = layerX,
@@ -571,6 +585,28 @@ internal class PaintScope :
             premultiplied = true,
         )
     }
+
+    // Reused for every layer: what its content paints past its node.
+    private val overflow = ContentOverflow()
+
+    /**
+     * Measures what [content] paints past the layer's [box] into [overflow]. A clamped blur
+     * ([renderEffect] with [tileMode] other than decal) keeps its edge at the node, and measures nothing.
+     */
+    private fun measureOverflow(content: List<UiDrawPrimitive>, box: Rectangle, renderEffect: RenderEffect?, tileMode: TileMode) {
+        if (renderEffect == null || tileMode == TileMode.Decal) {
+            overflow.measure(content, box.x, box.y, box.width, box.height)
+        } else {
+            overflow.reset()
+        }
+    }
+
+    /**
+     * Whole pixels to reserve either side of a [size]-pixel layer for content painted [reach] past it,
+     * never so many that the target passes [MAX_LAYER_TARGET_SIZE].
+     */
+    private fun overflowInset(reach: Float, size: Int): Int =
+        kotlin.math.ceil(reach).toInt().coerceIn(0, ((MAX_LAYER_TARGET_SIZE - size) / 2).coerceAtLeast(0))
 
     override fun drawPathShadow(
         path: DrawPath,
@@ -1045,3 +1081,9 @@ private class DrawTransformState {
         }
     }
 }
+
+/**
+ * The largest side a layer's render target grows to for overflowing content: WebGPU's default texture
+ * size limit, the smallest a backend here guarantees.
+ */
+private const val MAX_LAYER_TARGET_SIZE = 8192
