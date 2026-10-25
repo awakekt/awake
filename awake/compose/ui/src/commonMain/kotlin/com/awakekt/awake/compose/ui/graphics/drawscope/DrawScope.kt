@@ -117,6 +117,22 @@ interface DrawScope {
     fun clipped(inset: Float = 0f, block: () -> Unit)
 
     /**
+     * Clips everything drawn inside [block] to this box grown by a margin on each side, each side
+     * stopping at the node's own bounds: the growth reaches only into what a layout modifier such as
+     * `padding` placed between this box and the node's edge, never past it.
+     *
+     * CSS's `overflow-clip-margin`, for content whose ink spills past the box it is laid out in -- an
+     * accent or a leading `j`'s tail past a text box -- where clipping at the box itself would cut it.
+     * A margin of [Float.POSITIVE_INFINITY] clips that side at the node's own bounds; 0 clips it at
+     * this box, as a side whose content scrolls past it should be.
+     *
+     * A scope that does not know its node's bounds clips at this box, as [clipped] does.
+     */
+    fun clippedWithMargin(left: Float, top: Float, right: Float, bottom: Float, block: () -> Unit) {
+        clipped(block = block)
+    }
+
+    /**
      * Dims everything drawn inside [block] by [alpha], multiplying with any enclosing dim.
      *
      * A CPU-side field multiply on each primitive's colour, which is what the render backends
@@ -387,6 +403,12 @@ internal class PaintScope :
     private var originX = 0f
     private var originY = 0f
 
+    // The whole node the current draw link belongs to, in tree space: where clippedWithMargin stops.
+    private var nodeX = 0f
+    private var nodeY = 0f
+    private var nodeWidth = 0f
+    private var nodeHeight = 0f
+
     override var width: Int = 0
         private set
 
@@ -644,6 +666,10 @@ internal class PaintScope :
      */
     fun enter(node: LayoutNode, depth: Int) {
         node.drawBoundsAt(depth, bounds)
+        nodeX = node.absoluteX.toFloat()
+        nodeY = node.absoluteY.toFloat()
+        nodeWidth = node.width.toFloat()
+        nodeHeight = node.height.toFloat()
         originX = (node.absoluteX + bounds[0]).toFloat()
         originY = (node.absoluteY + bounds[1]).toFloat()
         width = bounds[2]
@@ -809,11 +835,30 @@ internal class PaintScope :
     }
 
     override fun clipped(inset: Float, block: () -> Unit) {
+        clipTo(
+            originX + inset,
+            originY + inset,
+            (width - inset * 2).coerceAtLeast(0f),
+            (height - inset * 2).coerceAtLeast(0f),
+            block,
+        )
+    }
+
+    override fun clippedWithMargin(left: Float, top: Float, right: Float, bottom: Float, block: () -> Unit) {
+        val x0 = originX - left.coerceIn(0f, (originX - nodeX).coerceAtLeast(0f))
+        val y0 = originY - top.coerceIn(0f, (originY - nodeY).coerceAtLeast(0f))
+        val x1 = originX + width + right.coerceIn(0f, (nodeX + nodeWidth - originX - width).coerceAtLeast(0f))
+        val y1 = originY + height + bottom.coerceIn(0f, (nodeY + nodeHeight - originY - height).coerceAtLeast(0f))
+        clipTo(x0, y0, x1 - x0, y1 - y0, block)
+    }
+
+    /** Clips [block] to a tree-space rect, before this scope's transform maps it. */
+    private fun clipTo(x: Float, y: Float, w: Float, h: Float, block: () -> Unit) {
         val rect = Rectangle(
-            transform.mapX(originX + inset),
-            transform.mapY(originY + inset),
-            ((width - inset * 2).coerceAtLeast(0f)) * transform.scaleX,
-            ((height - inset * 2).coerceAtLeast(0f)) * transform.scaleY,
+            transform.mapX(x),
+            transform.mapY(y),
+            w * transform.scaleX,
+            h * transform.scaleY,
         )
         val previous = clipStack.lastOrNull() ?: fullClip
         val effective = rect.intersect(previous)
