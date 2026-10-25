@@ -1891,6 +1891,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#draw-crisp-text" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Draw crisp text
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Draw crisp text">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-reference-small-text-is-held-to" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The reference small text is held to
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#put-ui-on-the-screen" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2508,6 +2536,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#draw-crisp-text" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Draw crisp text
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Draw crisp text">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-reference-small-text-is-held-to" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The reference small text is held to
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#put-ui-on-the-screen" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2698,29 +2754,115 @@ style and looks only as its own data says.</p>
 asynchronously, so decode outside the UI and show the result on a later frame. The engine uploads
 each bitmap to the GPU the first frame it appears and keeps it, so reuse a decoded bitmap instead of
 decoding the same file again.</p>
+<h2 id="draw-crisp-text">Draw crisp text</h2>
+<p><code>Text</code> sizes its glyphs in device pixels: <code>sp</code> times the display density and any canvas scale, rounded
+to a whole pixel. So 12 sp on a 150% display is 18 physical pixels, not a stretched 12. Which path draws
+the text depends on that size.</p>
+<table>
+<thead>
+<tr>
+<th>Text</th>
+<th>Drawn from</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>24 device pixels or smaller, on the pixel grid</td>
+<td>Glyphs rasterized from the font's outlines at exactly that size, drawn 1:1</td>
+</tr>
+<tr>
+<td>Larger than 24 pixels</td>
+<td>The font's distance-field atlas</td>
+</tr>
+<tr>
+<td>Under <code>Modifier.scale</code> or another scaling transform</td>
+<td>The distance-field atlas, so it scales smoothly</td>
+</tr>
+<tr>
+<td>In <code>UiFonts.bitmap()</code></td>
+<td>Its own pixel-art atlas, at every size</td>
+</tr>
+</tbody>
+</table>
+<p>The exact-size glyphs put a one-pixel stem on one solid pixel column, and the x-height and cap height
+on whole pixels. Their coverage blends with gamma 1.8, corrected for the text colour, after a mild
+contrast boost, so dark text on a light background and light text on a dark one keep the same weight.
+The default Roboto family and any font from <code>UiFonts.load</code> have them. Each size is rasterized the first
+time it is drawn, in about a millisecond, and kept.</p>
+<h3 id="the-reference-small-text-is-held-to">The reference small text is held to</h3>
+<p>The weight of small text is checked against a reference we control, not against Awake's own earlier
+output. <code>tools/fonts-tooling/reference_render.py</code> renders the same labels with FreeType, pinned to
+2.13.2 through <code>freetype-py</code> 2.5.1 in <code>requirements-reference.txt</code>, with these settings:</p>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Value</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Hinting</td>
+<td>Light (<code>FT_LOAD_TARGET_LIGHT</code>)</td>
+<td>Snaps horizontal edges and the x-height to the grid, leaves shapes and advances alone</td>
+</tr>
+<tr>
+<td>Stem darkening</td>
+<td>On</td>
+<td>Keeps thin strokes from fading once blending stops thickening them</td>
+</tr>
+<tr>
+<td>Anti-aliasing</td>
+<td>8-bit grayscale coverage</td>
+<td>The quantity Awake's exact-size glyphs hold too</td>
+</tr>
+<tr>
+<td>Blending</td>
+<td>Gamma 1.8</td>
+<td>The gamma FreeType documents for light hinting with stem darkening, and the classic text gamma</td>
+</tr>
+</tbody>
+</table>
+<p>The PNGs live in <code>awake/compose/ui-testing/src/desktopTest/resources/text-reference/</code>, and
+<code>TextReferenceMetricsTest</code> compares Awake's rendering with them per case: stem width, ink mass, the
+darkness of curves and diagonals against stems, the share of faint ink pixels, and the mean pixel
+difference. The PNGs change only when someone deliberately reruns the generator:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>python3 -m pip install -r tools/fonts-tooling/requirements-reference.txt
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>python3 tools/fonts-tooling/reference_render.py
+</span></code></pre></div>
+<p>To see any component baseline beside FreeType's glyphs, write glyph packs with
+<code>reference_render.py --glyph-pack &lt;dir&gt;</code> and run the snapshot tests with
+<code>AWAKE_TEXT_REFERENCE_GLYPHS=&lt;dir&gt;</code>; each baseline is also written, in FreeType's glyphs, to
+<code>build/reports/text-reference/</code>.</p>
+<p>To move the limit, or to draw a font from its distance field at every size, wrap it once and keep it:</p>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">headings</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">UiFonts</span><span class="p">.</span><span class="na">default</span><span class="p">().</span><span class="na">withPixelGlyphMaxSize</span><span class="p">(</span><span class="m">16</span><span class="p">)</span><span class="w"> </span><span class="c1">// exact-size glyphs up to 16 px</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="kd">val</span><span class="w"> </span><span class="nv">uniform</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">UiFonts</span><span class="p">.</span><span class="na">default</span><span class="p">().</span><span class="na">withPixelGlyphMaxSize</span><span class="p">(</span><span class="m">0</span><span class="p">)</span><span class="w">   </span><span class="c1">// the distance field at every size</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">Text</span><span class="p">(</span><span class="s">"Inventory"</span><span class="p">,</span><span class="w"> </span><span class="n">style</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TextStyle</span><span class="p">(</span><span class="n">font</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">uniform</span><span class="p">))</span>
+</span></code></pre></div>
 <h2 id="put-ui-on-the-screen">Put UI on the screen</h2>
 <p>An app has one Compose host. Pick the form that matches your app.</p>
 <p>A UI-only app, with no scene:</p>
-<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">game</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">app</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">    </span><span class="n">module</span><span class="p">(</span><span class="n">composeAppModule</span><span class="p">(</span><span class="n">content</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">Text</span><span class="p">(</span><span class="s">"Hello from AwakeKt"</span><span class="p">)</span><span class="w"> </span><span class="p">}))</span>
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="p">}</span>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">game</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">app</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">    </span><span class="n">module</span><span class="p">(</span><span class="n">composeAppModule</span><span class="p">(</span><span class="n">content</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">Text</span><span class="p">(</span><span class="s">"Hello from AwakeKt"</span><span class="p">)</span><span class="w"> </span><span class="p">}))</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="p">}</span>
 </span></code></pre></div>
 <p>UI that belongs to one scene, drawn over it:</p>
-<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">game</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">app</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">    </span><span class="n">scene</span><span class="p">(</span><span class="s">"level"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">        </span><span class="n">cameraEntity</span><span class="p">(</span><span class="s">"camera"</span><span class="p">)</span>
-</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">        </span><span class="n">ui</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">Text</span><span class="p">(</span><span class="s">"Score 0"</span><span class="p">)</span><span class="w"> </span><span class="p">}</span>
-</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">    </span><span class="p">}</span>
-</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="p">}</span>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">game</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">app</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">    </span><span class="n">scene</span><span class="p">(</span><span class="s">"level"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">        </span><span class="n">cameraEntity</span><span class="p">(</span><span class="s">"camera"</span><span class="p">)</span>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">        </span><span class="n">ui</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">Text</span><span class="p">(</span><span class="s">"Score 0"</span><span class="p">)</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="p">}</span>
 </span></code></pre></div>
 <p>UI that belongs to the whole app, drawn over whichever scene runs. Install
 <code>sceneComposeAppModule</code> before the scene:</p>
-<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">game</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">app</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">    </span><span class="n">module</span><span class="p">(</span><span class="n">sceneComposeAppModule</span><span class="p">(</span><span class="n">content</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">Text</span><span class="p">(</span><span class="s">"Paused"</span><span class="p">)</span><span class="w"> </span><span class="p">}))</span>
-</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span><span class="n">scene</span><span class="p">(</span><span class="s">"level"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">        </span><span class="n">cameraEntity</span><span class="p">(</span><span class="s">"camera"</span><span class="p">)</span>
-</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">    </span><span class="p">}</span>
-</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="p">}</span>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">game</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">app</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">    </span><span class="n">module</span><span class="p">(</span><span class="n">sceneComposeAppModule</span><span class="p">(</span><span class="n">content</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">Text</span><span class="p">(</span><span class="s">"Paused"</span><span class="p">)</span><span class="w"> </span><span class="p">}))</span>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">    </span><span class="n">scene</span><span class="p">(</span><span class="s">"level"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">        </span><span class="n">cameraEntity</span><span class="p">(</span><span class="s">"camera"</span><span class="p">)</span>
+</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="p">}</span>
 </span></code></pre></div>
 <p><code>composeAppModule</code> comes from <code>awake:engine:compose</code>. <code>sceneComposeAppModule</code> and the scene's
 <code>ui { }</code> come with the scene modules.</p>
@@ -2732,17 +2874,17 @@ that already declares <code>ui { }</code> also throws.</p>
 <h2 id="test-ui-without-a-window">Test UI without a window</h2>
 <p><code>composeFrame</code> builds, measures, places and paints one frame, then lets you find nodes by test tag
 and check their bounds. No GPU or window is needed.</p>
-<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">frame</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">composeFrame</span><span class="p">(</span><span class="n">width</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">320</span><span class="p">,</span><span class="w"> </span><span class="n">height</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">200</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">PlayerCard</span><span class="p">(</span><span class="s">"Harbor Town"</span><span class="p">)</span><span class="w"> </span><span class="p">}</span>
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
-</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="n">frame</span><span class="p">.</span><span class="na">onNodeWithTag</span><span class="p">(</span><span class="s">"avatar"</span><span class="p">).</span><span class="na">assertBoundsInRoot</span><span class="p">(</span><span class="n">ComposeTestBounds</span><span class="p">(</span><span class="n">left</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">16</span><span class="p">,</span><span class="w"> </span><span class="n">top</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">16</span><span class="p">,</span><span class="w"> </span><span class="n">width</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">40</span><span class="p">,</span><span class="w"> </span><span class="n">height</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">40</span><span class="p">))</span>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">frame</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">composeFrame</span><span class="p">(</span><span class="n">width</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">320</span><span class="p">,</span><span class="w"> </span><span class="n">height</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">200</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">PlayerCard</span><span class="p">(</span><span class="s">"Harbor Town"</span><span class="p">)</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="n">frame</span><span class="p">.</span><span class="na">onNodeWithTag</span><span class="p">(</span><span class="s">"avatar"</span><span class="p">).</span><span class="na">assertBoundsInRoot</span><span class="p">(</span><span class="n">ComposeTestBounds</span><span class="p">(</span><span class="n">left</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">16</span><span class="p">,</span><span class="w"> </span><span class="n">top</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">16</span><span class="p">,</span><span class="w"> </span><span class="n">width</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">40</span><span class="p">,</span><span class="w"> </span><span class="n">height</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">40</span><span class="p">))</span>
 </span></code></pre></div>
 <p>A frame is a snapshot. To test input, use <code>composeTestSession</code>: it keeps the UI between frames, and
 <code>click(tag)</code> presses and releases on a node, then returns the next frame.</p>
-<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">session</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">composeTestSession</span><span class="p">(</span><span class="n">width</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">320</span><span class="p">,</span><span class="w"> </span><span class="n">height</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">120</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">CounterScreen</span><span class="p">()</span><span class="w"> </span><span class="p">}</span>
-</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="n">session</span><span class="p">.</span><span class="na">frame</span><span class="p">().</span><span class="na">onAllNodes</span><span class="p">(</span><span class="n">hasTestTag</span><span class="p">(</span><span class="s">"reset"</span><span class="p">)).</span><span class="na">assertCountEquals</span><span class="p">(</span><span class="m">0</span><span class="p">)</span>
-</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
-</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="n">session</span><span class="p">.</span><span class="na">click</span><span class="p">(</span><span class="s">"increment"</span><span class="p">).</span><span class="na">onNodeWithTag</span><span class="p">(</span><span class="s">"reset"</span><span class="p">).</span><span class="na">assertExists</span><span class="p">()</span>
-</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="n">session</span><span class="p">.</span><span class="na">click</span><span class="p">(</span><span class="s">"reset"</span><span class="p">).</span><span class="na">onAllNodes</span><span class="p">(</span><span class="n">hasTestTag</span><span class="p">(</span><span class="s">"reset"</span><span class="p">)).</span><span class="na">assertCountEquals</span><span class="p">(</span><span class="m">0</span><span class="p">)</span>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">session</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">composeTestSession</span><span class="p">(</span><span class="n">width</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">320</span><span class="p">,</span><span class="w"> </span><span class="n">height</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">120</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">CounterScreen</span><span class="p">()</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="n">session</span><span class="p">.</span><span class="na">frame</span><span class="p">().</span><span class="na">onAllNodes</span><span class="p">(</span><span class="n">hasTestTag</span><span class="p">(</span><span class="s">"reset"</span><span class="p">)).</span><span class="na">assertCountEquals</span><span class="p">(</span><span class="m">0</span><span class="p">)</span>
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
+</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="n">session</span><span class="p">.</span><span class="na">click</span><span class="p">(</span><span class="s">"increment"</span><span class="p">).</span><span class="na">onNodeWithTag</span><span class="p">(</span><span class="s">"reset"</span><span class="p">).</span><span class="na">assertExists</span><span class="p">()</span>
+</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="n">session</span><span class="p">.</span><span class="na">click</span><span class="p">(</span><span class="s">"reset"</span><span class="p">).</span><span class="na">onAllNodes</span><span class="p">(</span><span class="n">hasTestTag</span><span class="p">(</span><span class="s">"reset"</span><span class="p">)).</span><span class="na">assertCountEquals</span><span class="p">(</span><span class="m">0</span><span class="p">)</span>
 </span></code></pre></div>
 <p>A session also has <code>hover(tag)</code>, <code>clickAt(x, y)</code> and <code>pressKey(key)</code>. <code>frame.printToString()</code> prints
 the semantics tree and a count of what was painted, which is the quickest way to see why a check

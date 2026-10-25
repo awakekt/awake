@@ -4072,6 +4072,9 @@ a built-in family: <code>default</code> is Roboto, and <code>bitmap</code> is a 
 Awake reads, such as a collection or a WOFF file, is logged once, and its elements draw in the
 default font. A host with no renderer reads no font. If your app runs its own Compose host, pass the
 fonts yourself: <code>SceneCanvas(world, fonts = loadCanvasFonts(scene, files))</code>.</p>
+<p>Text up to 24 pixels, after the canvas scaler and the display density, draws from glyphs rasterized
+at exactly that size, so small labels stay sharp; larger text draws from a distance field. <code>bitmap</code>
+keeps its pixel-art look at every size. See <a href="../ui/#draw-crisp-text">Draw crisp text</a>.</p>
 <h2 id="put-elements-inside-others">Put elements inside others</h2>
 <p>An element whose node sits below another element's node in the scene is drawn inside that element.
 Its <code>anchor</code> and offsets place it against the parent's box instead of the screen, and it draws over
