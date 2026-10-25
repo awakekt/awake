@@ -6,10 +6,13 @@
 package com.awakekt.awake.render.effects
 
 import com.awakekt.awake.core.math.ClipSpace
+import com.awakekt.awake.render.imagepass.ImagePassColorEncoding
 import com.awakekt.awake.render.imagepass.ImagePassDestination
 import com.awakekt.awake.render.imagepass.ImagePassSource
 import com.awakekt.awake.render.imagepass.ImagePassTargetContext
+import com.awakekt.awake.render.imagepass.ImagePassTargetFormat
 import com.awakekt.awake.render.pipeline.EffectQuality
+import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -123,6 +126,99 @@ class PostProcessingStackTest {
         val fxaaInput = fxaaStep.inputs[0].source as ImagePassSource.TransientTarget
         assertEquals(PostProcessingStack.TRANSIENT_LDR_SCENE_ID, fxaaInput.id)
     }
+
+    /**
+     * FXAA alone on display-referred colour (#1007): no tone-mapping step. A copy step moves the
+     * target's colour, unchanged and in its own format, into the LDR target, and FXAA reads that
+     * with luma from rgb. The old chain inserted a default PBR Neutral step here, which re-encoded
+     * the whole frame.
+     */
+    @Test
+    fun fxaaAloneOnDisplayReferredColourReadsTheTargetWithNoToneMappingStep() {
+        val chain = PostProcessingStack.buildChain(listOf(FxaaEffect()), targetContext)
+
+        assertEquals(listOf(ImageEffectShaders.COPY_SHADER_ID, PostProcessingShaders.FXAA_SHADER_ID), chain.steps.map { it.shader.id })
+        val ldr = chain.transientTargets.single()
+        assertEquals(PostProcessingStack.TRANSIENT_LDR_SCENE_ID, ldr.id)
+        assertEquals(ImagePassTargetFormat.DestinationMatch, ldr.format)
+
+        val copy = chain.steps.first()
+        assertEquals(ImagePassSource.DestinationSnapshot, copy.inputs.single().source)
+        assertEquals(ImagePassDestination.TransientTarget(PostProcessingStack.TRANSIENT_LDR_SCENE_ID), copy.destination)
+
+        val fxaa = chain.steps.last()
+        assertEquals(ImagePassSource.TransientTarget(PostProcessingStack.TRANSIENT_LDR_SCENE_ID), fxaa.inputs.single().source)
+        assertTrue(fxaa.destination is ImagePassDestination.ActiveTarget)
+        assertEquals(0f, fxaaLumaInAlpha(fxaa.uniformData), "luma must come from rgb: the target's alpha is coverage")
+    }
+
+    /** A linear HDR target is not displayable yet, so FXAA still gets the default curve before it. */
+    @Test
+    fun fxaaAloneOnLinearHdrColourStillGetsTheDefaultToneMappingStep() {
+        val chain = PostProcessingStack.buildChain(
+            listOf(FxaaEffect()),
+            targetContext.copy(colorEncoding = ImagePassColorEncoding.LinearHdr),
+        )
+
+        assertEquals(2, chain.steps.size)
+        val toneMap = chain.steps.first()
+        assertEquals(PostProcessingShaders.TONE_MAPPING_GRADE_SHADER_ID, toneMap.shader.id)
+        assertEquals(1f, curveFlag(toneMap.uniformData), "the default step applies the PBR Neutral curve")
+        val fxaa = chain.steps.last()
+        assertEquals(ImagePassSource.TransientTarget(PostProcessingStack.TRANSIENT_LDR_SCENE_ID), fxaa.inputs.single().source)
+        assertEquals(1f, fxaaLumaInAlpha(fxaa.uniformData), "the tone-mapping step writes luma into alpha")
+    }
+
+    /** A listed tone-mapping effect runs as listed, whatever the target holds: the explicit choice is kept. */
+    @Test
+    fun aListedToneMappingEffectRunsInItsOwnModeOnAnyTarget() {
+        val curve = PostProcessingStack.buildChain(listOf(ToneMappingGradeEffect(), FxaaEffect()), targetContext)
+        assertEquals(1f, curveFlag(curve.steps.first().uniformData))
+        assertEquals(1f, fxaaLumaInAlpha(curve.steps.last().uniformData))
+
+        val passthrough = PostProcessingStack.buildChain(
+            listOf(ToneMappingGradeEffect(mode = ToneMappingMode.Passthrough, saturation = 1.2f), FxaaEffect()),
+            targetContext,
+        )
+        assertEquals(PostProcessingShaders.TONE_MAPPING_GRADE_SHADER_ID, passthrough.steps.first().shader.id)
+        assertEquals(0f, curveFlag(passthrough.steps.first().uniformData))
+        assertEquals(1f, fxaaLumaInAlpha(passthrough.steps.last().uniformData))
+    }
+
+    /** Bloom composites in the tone-mapping step; on display-referred colour that step is a passthrough. */
+    @Test
+    fun bloomOnDisplayReferredColourCompositesInAPassthroughStep() {
+        val chain = PostProcessingStack.buildChain(listOf(BloomEffect(intensity = 0.5f, radius = 8f)), targetContext)
+
+        val composite = chain.steps.last()
+        assertEquals(PostProcessingShaders.TONE_MAPPING_GRADE_BLOOM_SHADER_ID, composite.shader.id)
+        assertEquals(0f, curveFlag(composite.uniformData), "bloom must not bring the curve with it")
+        assertTrue(composite.destination is ImagePassDestination.ActiveTarget)
+    }
+
+    /** Nothing left to run once bloom has no intensity and nothing else is listed. */
+    @Test
+    fun aStackWithNoRunnableStepIsEmptyOnDisplayReferredColour() {
+        assertTrue(PostProcessingStack.buildChain(listOf(BloomEffect(intensity = 0f)), targetContext).isEmpty)
+        assertTrue(PostProcessingStack.buildChain(listOf(FxaaEffect(quality = EffectQuality.Off)), targetContext).isEmpty)
+    }
+
+    /** Passthrough grading at its defaults returns its input: no curve and no encode. */
+    @Test
+    fun passthroughReferenceLeavesColourUnchangedAtDefaults() {
+        val input = floatArrayOf(0.05f, 0.5f, 0.9f)
+        val result = PostProcessingStack.evaluateToneMappingGradeReference(input, mode = ToneMappingMode.Passthrough)
+        for (channel in 0 until 3) assertEquals(input[channel], result[channel], 1e-6f)
+
+        val curve = PostProcessingStack.evaluateToneMappingGradeReference(input)
+        assertTrue(abs(curve[2] - input[2]) > 0.01f, "the PBR Neutral reference must still move a bright channel")
+    }
+
+    private fun curveFlag(uniforms: FloatArray): Float =
+        uniforms[PostProcessingShaders.ToneMappingGradeUniformLayout.offsetOf(PostProcessingShaders.WhiteBalanceField) + 2]
+
+    private fun fxaaLumaInAlpha(uniforms: FloatArray): Float =
+        uniforms[PostProcessingShaders.FxaaUniformLayout.offsetOf(PostProcessingShaders.FxaaParamsField) + 3]
 
     @Test
     fun evaluateBloomBrightPassReferenceSoftKnee() {

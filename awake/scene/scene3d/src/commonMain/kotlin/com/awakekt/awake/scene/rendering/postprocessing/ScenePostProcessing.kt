@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.rendering.postprocessing
 
+import com.awakekt.awake.render.effects.ToneMappingMode
 import com.awakekt.awake.render.pipeline.EffectQuality
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneValidationIssue
@@ -21,7 +22,12 @@ sealed interface ScenePostEffect {
 }
 
 /**
- * Single-pass tone-mapping and color grading stage using Khronos PBR Neutral tone curve.
+ * Single-pass colour grading stage, followed by the Khronos PBR Neutral tone curve and the gamma
+ * 2.2 encode unless [mode] is [ToneMappingMode.Passthrough].
+ *
+ * A scene camera's colour is already display-ready: every lit shader applies exposure, the curve
+ * and the encode itself. In a scene, use [ToneMappingMode.Passthrough] to grade it;
+ * [ScenePostProcessing.validate] rejects [ToneMappingMode.PbrNeutral], which would encode it twice.
  */
 @Serializable
 @SerialName("tone_mapping_grade")
@@ -44,6 +50,8 @@ data class SceneToneMappingGradeEffect(
     val gamma: List<Float> = listOf(1f, 1f, 1f),
     /** RGB highlight gain adjustments. */
     val gain: List<Float> = listOf(1f, 1f, 1f),
+    /** Whether the tone curve and gamma encode follow grading. */
+    val mode: ToneMappingMode = ToneMappingMode.PbrNeutral,
 ) : ScenePostEffect
 
 /**
@@ -114,6 +122,41 @@ data class ScenePostProcessing(
                 is SceneCustomPostEffect -> addAll(validateCustom(index, effect, path))
                 is SceneFxaaEffect -> Unit
             }
+        }
+        addAll(validateEncoding(path))
+    }
+
+    /**
+     * Rejects a stack that would tone map and encode colour twice.
+     *
+     * A scene camera renders display-referred colour: every lit shader already applies exposure,
+     * the PBR Neutral curve and the gamma 2.2 encode, and the stack reads that colour back. A
+     * `PbrNeutral` step applies both again, lifting and washing out the whole frame. A second
+     * enabled tone-mapping step would be ignored, and reads as if it applied too.
+     */
+    private fun validateEncoding(path: String): List<SceneValidationIssue> = buildList {
+        val toneMapping = effects.withIndex().filter { (_, effect) -> effect is SceneToneMappingGradeEffect && effect.enabled }
+        toneMapping.forEach { (index, effect) ->
+            if ((effect as SceneToneMappingGradeEffect).mode == ToneMappingMode.PbrNeutral) {
+                add(
+                    SceneValidationIssue(
+                        "$path.effects[$index]",
+                        "tone_mapping_grade with mode PbrNeutral would encode the frame twice: the camera's colour " +
+                            "is already tone mapped and gamma encoded by the scene's lit shaders. Set \"mode\": " +
+                            "\"Passthrough\" to grade without the curve, or remove the effect; use the tone_mapping " +
+                            "component's exposure for brightness",
+                    ),
+                )
+            }
+        }
+        toneMapping.drop(1).forEach { (index, _) ->
+            add(
+                SceneValidationIssue(
+                    "$path.effects[$index]",
+                    "only one tone_mapping_grade may be enabled; this one would be ignored, and applying it as well " +
+                        "would grade and encode the frame a second time",
+                ),
+            )
         }
     }
 

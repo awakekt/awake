@@ -16,13 +16,30 @@ sealed interface PostProcessingEffect {
 }
 
 /**
+ * What a [ToneMappingGradeEffect] does after grading.
+ */
+enum class ToneMappingMode {
+    /**
+     * The Khronos PBR Neutral curve, then the gamma 2.2 encode: for scene-referred linear colour
+     * ([com.awakekt.awake.render.imagepass.ImagePassColorEncoding.LinearHdr]). On display-ready
+     * colour it applies both a second time.
+     */
+    PbrNeutral,
+
+    /**
+     * No curve and no encode: grading (and a bloom composite) only, on colour that is already
+     * display-ready. At the default grading parameters it leaves colour unchanged.
+     */
+    Passthrough,
+}
+
+/**
  * Tone-mapping and color grading stage.
  * - Exposure scaling
  * - White balance (temperature and tint)
  * - Lift / Gamma / Gain shadow, midtone, and highlight controls
  * - Contrast and saturation adjustments
- * - Khronos PBR Neutral tone curve
- * - sRGB / Gamma 2.2 encode
+ * - Khronos PBR Neutral tone curve and gamma 2.2 encode, unless [mode] is [ToneMappingMode.Passthrough]
  *
  * @property exposure Radiance multiplier, must be > 0.
  * @property whiteBalanceTemperature Cool (-1) to warm (+1) temperature shift.
@@ -33,6 +50,7 @@ sealed interface PostProcessingEffect {
  * @property contrast Contrast curve slope centered at mid-gray 0.18.
  * @property saturation Colorfulness scale (0 = monochrome, 1 = authored, >1 = vibrant).
  * @property enabled Whether tone mapping and grading is active.
+ * @property mode Whether the curve and encode follow grading; see [ToneMappingMode].
  */
 data class ToneMappingGradeEffect(
     val exposure: Float = 1.0f,
@@ -44,6 +62,7 @@ data class ToneMappingGradeEffect(
     val contrast: Float = 1.0f,
     val saturation: Float = 1.0f,
     override val enabled: Boolean = true,
+    val mode: ToneMappingMode = ToneMappingMode.PbrNeutral,
 ) : PostProcessingEffect {
     init {
         require(exposure > 0f) { "exposure must be > 0, was $exposure." }
@@ -65,7 +84,8 @@ data class ToneMappingGradeEffect(
             gain.contentEquals(other.gain) &&
             contrast == other.contrast &&
             saturation == other.saturation &&
-            enabled == other.enabled
+            enabled == other.enabled &&
+            mode == other.mode
     }
 
     override fun hashCode(): Int {
@@ -78,6 +98,7 @@ data class ToneMappingGradeEffect(
         result = 31 * result + contrast.hashCode()
         result = 31 * result + saturation.hashCode()
         result = 31 * result + enabled.hashCode()
+        result = 31 * result + mode.hashCode()
         return result
     }
 }
@@ -86,7 +107,9 @@ data class ToneMappingGradeEffect(
  * Bloom bright-glow stage.
  * - Bright-pass threshold with soft knee
  * - Multi-scale dual-filter (Kawase) downsample/upsample chain
- * - Additive composite into linear HDR scene radiance during tone-mapping
+ * - Additive composite into the scene colour in the tone-mapping step, which is a
+ *   [ToneMappingMode.Passthrough] step when the chain lists no tone mapping and the target holds
+ *   display-referred colour
  *
  * @property intensity Multiplier applied to upsampled bloom before adding to scene radiance.
  * @property threshold Minimum radiance required to trigger bloom.
@@ -110,8 +133,10 @@ data class BloomEffect(
 }
 
 /**
- * Fast Approximate Anti-Aliasing (FXAA 3.11) stage:
- * Runs post tone-mapping on display-referred LDR color.
+ * Fast Approximate Anti-Aliasing (FXAA 3.11) stage, on display-referred LDR color.
+ *
+ * It reads whatever display colour the chain has: a tone-mapping step's output when the chain has
+ * one, otherwise the target's own colour as the scene drew it. It adds no tone-mapping step.
  *
  * @property quality Anti-aliasing quality preset.
  * @property enabled Whether FXAA is active.
