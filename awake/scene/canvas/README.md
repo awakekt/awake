@@ -38,9 +38,9 @@ mapping covers every option of a `CanvasElement`.
 
 ## Prefabs in code
 
-`canvasPrefab(guid, name) { ... }` builds a `ScenePrefab` of `canvas_element` nodes, which load as the
-canvas components, a typed setting
-for each field and a function for each kind, and validates it; `CanvasPrefabs.toJson` writes the file
+`canvasPrefab(guid, name) { ... }` builds a `ScenePrefab` of canvas element nodes, with a typed setting
+for each field and a function for each kind, saves each element as its canvas components, and
+validates it, reporting a setting its kind does not use; `CanvasPrefabs.toJson` writes the file
 an editor saves, which loads and saves back unchanged. `CanvasPrefabBuilderCoverageTest` fails when a
 `canvas_element` field has no builder setting. An element's `elementId` is the stable id code finds it
 by: `World.findCanvasElement(root, id)` under one placed copy, `ScenePrefab.findCanvasNode(id)` in the

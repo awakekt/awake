@@ -226,6 +226,14 @@ internal fun SceneComponent.isCanvasWidget(): Boolean = when (this) {
     else -> false
 }
 
+/** Whether this is the saved form of a canvas element component, or the older single `canvas_element`. */
+internal fun SceneComponent.isCanvasElementPart(): Boolean = isCanvasWidget() || when (this) {
+    is SceneCanvasElement, is SceneCanvasRect, is SceneCanvasText, is SceneCanvasAppearance, is SceneCanvasLayout, is SceneCanvasCluster,
+    is SceneCanvasBind, is SceneCanvasFollow, is SceneCanvasFollowArrow, is SceneCanvasInput, is SceneCanvasTooltip,
+    -> true
+    else -> false
+}
+
 private fun valueProblem(value: Float): List<String> = listOfNotNull("value must be between 0 and 1".takeIf { value !in 0f..1f })
 
 /** [problems], each under [name], and one more when [peers] hold a second widget, which no element can be. */

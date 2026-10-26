@@ -83,6 +83,28 @@ below are the older `canvas_element`'s, which still loads: each becomes the comp
 and a scene saves the components. `World.syncCanvasElements()` brings an entity's components and its
 `CanvasElement` in step; `SceneCanvas` calls it every frame.
 
+### Migrating from `canvas_element`
+
+Nothing has to change for a scene or prefab saved before the split: it loads, draws and behaves as
+it did, and the next save writes it as components. To move code and tools over:
+
+- **Files.** `SceneDocument.withCanvasComponents()` and `ScenePrefab.withCanvasComponents()` rewrite a
+  file in the current form; `SceneNode.canvasElementView()` reads a node in either form as the single
+  record a tool written for `canvas_element` expects. A field a kind never used, such as a Panel's
+  `text` or a Bar's `camera`, has no component to go in and is dropped.
+- **Code that builds prefabs.** `canvasPrefab { … }` and its `text`, `panel`, `bar`, `button` and other
+  kind functions are unchanged and now save the component set. A setting the element's kind does not
+  use is reported, `sweep does nothing on a Panel, so it is not saved`, instead of being saved where
+  it did nothing.
+- **Code that reads elements.** `world.get<CanvasElement>(entity)` and its properties work as before.
+  To read by role, query the components instead: `world.family<CanvasButtonWidget, CanvasPointerState>()`
+  for every button and what the player did to it, `world.get<CanvasText>(entity)` for one element's
+  words. Typed parts expose theirs, such as a bar part's `widget` and a text part's `words`. Add,
+  replace or remove a component on the entity, or through `CanvasElement.set`; `SceneCanvas` brings the
+  two in step each frame, and `World.syncCanvasElements()` does it at once.
+- **Kind.** An element's `kind` follows from its components. Setting it on a `CanvasElement` gives it
+  that kind's widget; on an entity, add the widget component.
+
 ## Properties
 
 | Property | Type | Default | What it does |
