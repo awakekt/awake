@@ -85,6 +85,9 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         element.mask = mask
         element.maxLength = maxLength
         element.maxLengthUnit = maxLengthUnit
+        element.placeholder = placeholder
+        element.padding = padding
+        element.tooltip = tooltip
         element.font = font
         element.pressable = pressable
         element.joystick = joystick
@@ -145,6 +148,9 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         mask = mask,
         maxLength = maxLength,
         maxLengthUnit = maxLengthUnit,
+        placeholder = placeholder,
+        padding = padding,
+        tooltip = tooltip,
         font = font,
         pressable = pressable,
         joystick = joystick,

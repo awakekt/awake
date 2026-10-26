@@ -122,9 +122,10 @@ fun CanvasOverlay(
     slotContent: Map<String, CanvasSlotContent> = emptyMap(),
 ) {
     val origin = remember { CanvasOrigin() }
+    val tooltips = remember { CanvasTooltips() }
     val settings = controls ?: CanvasControls.Default
     val touch = settings.touchVisibility.shows(showTouchControls, inputDevice)
-    val tree = CanvasTree(items, touch, images, resolver, origin, fonts, strings, settings)
+    val tree = CanvasTree(items, touch, images, resolver, origin, fonts, strings, settings, tooltips)
     // Measured before its content is composed, so the scale fits the box, and followers are culled
     // and pinned against it, from the first frame.
     BoxWithConstraints(modifier.fillMaxSize()) {
@@ -174,6 +175,8 @@ private fun ScaledCanvas(
             screen.AimGuides(tree, inside)
             // Drawn last, so a dragged element's ghost sits above everything it is dragged over.
             Ghosts(tree)
+            // Last of all, so nothing it hangs over hides it.
+            Tooltip(tree)
         }
     }
 }
@@ -294,6 +297,7 @@ internal fun CanvasElementView(
     val hovered = wheeled.rotated(element.drawnRotation).styleable(state, style)
         .hoverable(element.interactions, blocksHitTest = element.takesTaps)
         .pressPoint(element, density)
+        .tooltipPointer(element, tree.tooltips, units)
     // Ahead of a Button's own `clickable` below, so a real drag's release never also reaches it;
     // a press that stays under the threshold leaves the release for `clickable` to turn into a click.
     val styled = element.draggedModifier(hovered, tree, density)

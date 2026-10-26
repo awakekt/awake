@@ -80,6 +80,7 @@ internal class CanvasTree(
     private val fonts: Map<String, UiFont> = emptyMap(),
     private val strings: Strings? = null,
     val controls: CanvasControls = CanvasControls.Default,
+    val tooltips: CanvasTooltips = CanvasTooltips(),
 ) {
     private val hierarchy = CanvasHierarchy(items)
 
@@ -140,16 +141,16 @@ internal class CanvasTree(
     fun textOf(element: CanvasElement): String {
         val bind = element.bind?.takeIf { it.text.isNotBlank() }
         return when {
-            element.textKey.isNotEmpty() -> keyedText(element)
+            element.textKey.isNotEmpty() -> keyedText(element.textKey, element)
             bind == null -> element.text
             else -> resolver.textField(bind.node, bind.text)
         }
     }
 
-    /** [element]'s [CanvasElement.textKey] in the active locale, with its arguments; the key itself without [strings]. */
-    private fun keyedText(element: CanvasElement): String {
-        val strings = strings ?: return element.textKey.also(::warnNoStrings)
-        return strings.text(element.textKey, argumentsOf(element))
+    /** [key] in the active locale, with [element]'s arguments; the key itself without [strings]. */
+    internal fun keyedText(key: String, element: CanvasElement): String {
+        val strings = strings ?: return key.also(::warnNoStrings)
+        return strings.text(key, argumentsOf(element))
     }
 
     /** [element]'s own [CanvasElement.textArgs], with each its binding reads from a field in place of its own. */

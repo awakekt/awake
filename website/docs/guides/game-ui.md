@@ -77,6 +77,9 @@ or a system polling `consumePress()`, sees the tap as it would without the bluep
 | `mask` | string | `""` | A `TextField`'s password mask: one character drawn for each typed one. Empty shows the text. |
 | `maxLength` | integer | `0` | The most a `TextField` lets the player type; `0` for no limit. See [Limit what is typed](#limit-what-is-typed). |
 | `maxLengthUnit` | `Graphemes` · `CodePoints` · `Utf8Bytes` | `Graphemes` | What `maxLength` counts. |
+| `placeholder` | string | `""` | A `TextField`'s hint while it is empty and unfocused: a key in the string tables, drawn muted. See [Pad a field and hint at it](#pad-a-field-and-hint-at-it). |
+| `padding` | object | `{ "horizontal": 12, "vertical": 0 }` | The space between a `TextField`'s edge and its text, in dp. |
+| `tooltip` | string | `""` | A hint any element shows near the pointer after half a second over it: a key in the string tables. |
 | `pressable` | boolean | `false` | Lets an `Image` or `Panel` take a tap as a `Button` does. Without it, a tap passes through. |
 | `textAlign` | one of the nine anchor points | none | Where the text sits in the element. None keeps a `Text` at its top-left and a `Button`'s label centred. |
 | `follow` | string | `""` | A node to follow on screen. See [Follow a node](#follow-a-node). |
@@ -733,6 +736,29 @@ when it arrives. A system writing `text` is not limited.
 The caret, the arrow keys, Backspace, Delete and selection also step a whole character at a time.
 Emoji draw as the font's missing-glyph box until colour emoji fonts are supported, one box for each
 emoji.
+
+## Pad a field and hint at it
+
+A `TextField` keeps its text 12 dp in from its edge, as shadcn's input does, so typed text never
+starts on the border. Set `padding` to change it: `{ "horizontal": 8 }`. The caret, a selection and
+the scrolling of a long line all work inside the padding, and the field clips its text at its own
+edge, so the tail of a leading `j` and the ring of an `Å` are not cut. Leave `vertical` at `0` unless
+the field is taller than its line: the line is centred in the field, and vertical padding takes room
+from it.
+
+Give a field a `placeholder`, a key in the string tables, to show a hint while it is empty and does
+not hold the keyboard. It draws in the field's text colour at half strength, and gives way to the
+caret as soon as the field is focused.
+
+Give any element a `tooltip`, also a key, to show a hint near the pointer once it has been over the
+element for half a second. The hint stays inside the canvas, opening to the pointer's left or above
+it at an edge, and goes when the pointer leaves the element or presses it. `textArgs` fill in the
+placeholders of both keys.
+
+```json
+{ "component": "canvas_element", "kind": "TextField", "width": 240, "height": 32,
+  "placeholder": "chat.hint", "padding": { "horizontal": 10 }, "tooltip": "chat.tip" }
+```
 
 ## How it works
 
