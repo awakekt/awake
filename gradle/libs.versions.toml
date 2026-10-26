@@ -49,6 +49,10 @@ jackson-core = "2.18.11"
 # Tw.kt object from a vendored static scale, same manual-invoke shape as
 # awake:backend:vulkan:generator.
 kotlinpoet = "2.3.0"
+# Scene component binding generation (awake:scene:binding:processor). KSP2 releases no longer track
+# the Kotlin version; kctfork, which compiles the processor's test sources, pins both.
+ksp = "2.3.12"
+kctfork = "0.14.0"
 junit = "4.13.2"
 junit-version = "1.3.0"
 espresso-core = "3.7.0"
@@ -70,6 +74,10 @@ kotlinx-io = "0.9.1"
 
 [libraries]
 kotlinpoet = { module = "com.squareup:kotlinpoet", version.ref = "kotlinpoet" }
+kotlinpoet-ksp = { module = "com.squareup:kotlinpoet-ksp", version.ref = "kotlinpoet" }
+ksp-api = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "ksp" }
+ksp-gradle-plugin = { module = "com.google.devtools.ksp:symbol-processing-gradle-plugin", version.ref = "ksp" }
+kctfork-ksp = { module = "dev.zacsweers.kctfork:ksp", version.ref = "kctfork" }
 kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 android-gradle-plugin = { module = "com.android.tools.build:gradle", version.ref = "agp" }
 jackson-core = { module = "com.fasterxml.jackson.core:jackson-core", version.ref = "jackson-core" }

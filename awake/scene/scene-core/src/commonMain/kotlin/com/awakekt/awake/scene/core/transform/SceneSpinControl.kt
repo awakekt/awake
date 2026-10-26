@@ -7,19 +7,22 @@ package com.awakekt.awake.scene.core.transform
 
 import com.awakekt.awake.core.schema.PropertyHidden
 import com.awakekt.awake.core.schema.PropertyRange
+import com.awakekt.awake.scene.binding.SceneBinding
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneValidationIssue
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * Serializable continuous spin rotation control component.
+ * Serializable continuous spin rotation control component, bound to [SpinControl] by the generated
+ * `SpinControlBinding`.
  *
  * @property radians Initial rotation angle in radians.
  * @property speed Rotation speed multiplier.
  */
 @Serializable
 @SerialName("spin_control")
+@SceneBinding(SpinControl::class)
 data class SceneSpinControl(
     @PropertyHidden val radians: Float = 0f,
     @PropertyRange(min = 0.0) val speed: Float = 1f,

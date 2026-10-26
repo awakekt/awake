@@ -322,23 +322,28 @@ class PackedUiFont internal constructor(
             inkByCode[char.code]?.heightEm?.takeIf { it > 0f }
         } ?: super.capHeightEm
 
-    private fun computeVisibleBand(): Pair<Float, Float> {
-        var metricIndex = 0
+    /**
+     * The ink band of the atlas's glyphs, without the Latin-1 Supplement and Latin Extended-A letters and signs.
+     * Their accents, cedillas, commas below (Ģ, ļ) and § reach past the line box a font is laid out in, by
+     * design, and counting them would grow the deepest descender [descentEm] reports, and with it the line
+     * `TextLineBox` keeps the ink inside of, by a pixel at sizes such as 12, 16 and 17 for every line of text
+     * a font with the wider set draws. A font with no glyph outside them is measured by all of them.
+     */
+    private fun computeVisibleBand(): Pair<Float, Float> =
+        visibleBand(skipLatinMarks = true) ?: visibleBand(skipLatinMarks = false) ?: (0f to 1f)
+
+    private fun visibleBand(skipLatinMarks: Boolean): Pair<Float, Float>? {
         var top = Float.POSITIVE_INFINITY
         var bottom = Float.NEGATIVE_INFINITY
-        forEachGlyphCode { _, _ ->
-            val offsetYEm = data.inkMetricsEm[metricIndex + 1]
-            val heightEm = data.inkMetricsEm[metricIndex + 3]
-            if (heightEm > 0f) {
+        forEachGlyphCode { glyph, code ->
+            val offsetYEm = data.inkMetricsEm[glyph * 4 + 1]
+            val heightEm = data.inkMetricsEm[glyph * 4 + 3]
+            if (heightEm > 0f && !(skipLatinMarks && code in LATIN_SUPPLEMENT_FIRST..LATIN_EXTENDED_A_LAST)) {
                 top = minOf(top, offsetYEm)
                 bottom = maxOf(bottom, offsetYEm + heightEm)
             }
-            metricIndex += 4
         }
-        if (!top.isFinite() || !bottom.isFinite() || bottom <= top) {
-            return 0f to 1f
-        }
-        return top to bottom
+        return if (top.isFinite() && bottom.isFinite() && bottom > top) top to bottom else null
     }
 
     private companion object {
@@ -348,3 +353,7 @@ class PackedUiFont internal constructor(
         const val RGBA_CHANNELS = 4
     }
 }
+
+/** U+00A0 to U+017F: Latin-1 Supplement and Latin Extended-A, which [PackedUiFont]'s ink band leaves out. */
+private const val LATIN_SUPPLEMENT_FIRST = 0x00A0
+private const val LATIN_EXTENDED_A_LAST = 0x017F

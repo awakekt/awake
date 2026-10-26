@@ -118,7 +118,7 @@ class PixelGlyph internal constructor(
  * The face's glyphs are numbered in [codePoints] order and rasterized in blocks of [BLOCK_SIZE]: a size's
  * block is one atlas page, built the first time any of its glyphs is asked for, with every subpixel variant
  * of every glyph in it: a renderer draws a run from one page, and a page is uploaded once, so it cannot
- * grow later. A face with a few hundred glyphs is one or two pages a size; a large CJK face builds only the
+ * grow later. A face with a few hundred glyphs is a few pages a size; a large CJK face builds only the
  * blocks its text uses.
  *
  * @param outlines The face's outlines, read once a glyph at a time and kept.
@@ -220,8 +220,13 @@ internal class OutlinePixelGlyphs(
     )
 
     companion object {
-        /** Glyphs per atlas page. */
-        const val BLOCK_SIZE: Int = 128
+        /**
+         * Glyphs per atlas page: the 102 of printable ASCII and • · … – — × −, the built-in font's first glyphs. They
+         * stay one page of their own, as they were before the accented letters followed them (#1058), so text in
+         * ASCII rasterizes and samples exactly the glyphs it did, and builds the other pages only when it draws an
+         * accent.
+         */
+        const val BLOCK_SIZE: Int = 102
 
         /** Positions across a pixel each glyph is rasterized at. */
         const val SUBPIXEL_STEPS: Int = 4

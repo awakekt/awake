@@ -38,12 +38,12 @@ class ShadcnSidebarGlyphClipTest {
 
     private val loadedRoboto: UiFont by lazy {
         val bytes = requireNotNull(javaClass.getResourceAsStream("/Roboto-Regular.ttf")).use { it.readBytes() }
-        UiFonts.load(bytes, "Roboto-Regular.ttf", UiFonts.DEFAULT_CHARS + "Å")
+        UiFonts.load(bytes, "Roboto-Regular.ttf")
     }
 
     @Test
     fun theSidebarKeepsInkThatSpillsIntoItsPadding() {
-        val fonts = listOf(Triple("built-in", UiFonts.default(), "jump"), Triple("loaded TTF", loadedRoboto, "jÅump"))
+        val fonts = listOf(Triple("built-in", UiFonts.default(), "jÅump"), Triple("loaded TTF", loadedRoboto, "jÅump"))
         val failures = fonts.flatMap { (fontName, font, text) ->
             listOf(14, 96).flatMap { size ->
                 listOf(1f, 1.5f).mapNotNull { density ->

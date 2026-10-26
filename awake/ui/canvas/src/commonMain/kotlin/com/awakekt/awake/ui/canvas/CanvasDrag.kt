@@ -88,7 +88,7 @@ internal fun GhostElementView(element: CanvasElement, styled: Modifier, textStyl
     val words = if (element.kind in WORDED) tree.textOf(element) else ""
     val align = element.textAlign ?: if (element.kind == CanvasElementKind.Button) CanvasAnchor.Center else CanvasAnchor.TopLeft
     Box(styled, contentAlignment = align.alignment) {
-        if (words.isNotEmpty()) CanvasText(element, words, textStyle)
+        if (words.isNotEmpty()) CanvasWords(element, words, textStyle)
         Children(element, children, tree)
     }
 }

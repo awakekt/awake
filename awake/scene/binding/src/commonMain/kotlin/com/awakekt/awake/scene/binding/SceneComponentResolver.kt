@@ -149,6 +149,15 @@ class SceneComponentRegistry private constructor(
             }
         }
 
+        /**
+         * Registers every binding of [module] globally, as [registerGlobal] does one binding.
+         *
+         * @param module The scene component module to register globally.
+         */
+        fun registerGlobal(module: SceneComponentModule) {
+            module.bindings.forEach { registerGlobal(it) }
+        }
+
         // Safe: the binding's schemaClass and serializer were paired by `register()` which
         // constrains them to the same S, so both casts to KClass<SceneComponent> are consistent.
         @Suppress("UNCHECKED_CAST")
@@ -220,6 +229,17 @@ class SceneComponentRegistry private constructor(
         if (binding !in registeredResolvers) {
             registeredResolvers += binding
         }
+        return this
+    }
+
+    /**
+     * Registers every binding of [module], as [register] does one binding.
+     *
+     * @param module The scene component module to register with this registry instance.
+     * @return This registry instance for chaining.
+     */
+    fun register(module: SceneComponentModule): SceneComponentRegistry {
+        module.bindings.forEach { register(it) }
         return this
     }
 

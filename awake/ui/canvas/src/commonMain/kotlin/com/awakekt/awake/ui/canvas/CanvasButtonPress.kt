@@ -83,11 +83,17 @@ internal class CanvasButtonPress {
     /** Whether a live press on a button with [CanvasButton.aim] is being dragged to aim. */
     fun aiming(element: CanvasElement): Boolean = live && element.button?.aim != null
 
+    /** Whether the live press went down on a button with [CanvasButton.aim], as its settings were then. */
+    val aimingPress: Boolean get() = live && aimed
+
+    private var aimed = false
+
     /** Takes [id] at ([px], [py]) dp on [element], unless another pointer holds it: whether it did. */
     fun press(id: Long, px: Float, py: Float, element: CanvasElement): Boolean {
         if (pointer != null) return false
         pointer = id
         live = element.usable
+        aimed = element.button?.aim != null
         longPressed = false
         since = element.clock.markNow()
         pressX = px

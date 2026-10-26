@@ -12,6 +12,31 @@ the `canvas_element` component saved with a scene and drawn by `SceneCanvas(worl
 
 [resolver]: src/commonMain/kotlin/com/awakekt/awake/ui/canvas/CanvasTree.kt
 
+## Components
+
+An element is made of focused components, one of each type, which `CanvasElement` holds together:
+
+| Component | What it holds |
+|---|---|
+| `CanvasRect` (always) | anchor, offsets, size, order, visibility, touch-only, safe area, grow, element and control ids; the `screenBounds` it was drawn at |
+| `CanvasText` | the words: text or key and arguments, font, size, alignment, links |
+| `CanvasAppearance` | colour, background, `CanvasStyle` and a control's skin |
+| `CanvasLayout` or `CanvasCluster` | how it places its children |
+| `CanvasBinding` | game state it shows without code |
+| `CanvasFollow`, `CanvasFollowArrow` | the node it follows, and the arrow of a follower pinned to the edge |
+| `CanvasInput`, `CanvasTooltip` | pressable, draggable, drop target, wheel; a hover hint |
+| one `CanvasWidget` | `CanvasButtonWidget`, `CanvasBarWidget`, `CanvasSweepWidget`, `CanvasStepperWidget`, `CanvasJoystickWidget`, `CanvasTextFieldWidget`, `CanvasViewWidget`, `CanvasLookAreaWidget` or `CanvasImageWidget`: its own values and its `settings` |
+| `CanvasPointerState` (always) | what the player is doing to it right now: taps, hover, drag and drop, wheel, links, focus, stick, look and aim. Runtime only, never saved |
+
+Set one with `element.set(component)` and read it with `element.get<CanvasText>()`. The element's
+`kind` follows from its components: its widget's, else `Text` when it has words, else `Panel`.
+Setting `kind` gives it that kind's widget.
+
+The flat properties described below, such as `width`, `text` or `value`, read and write those
+components. Each reads its default while its component is absent. Writing another value adds the
+component, but never adds a widget to an element that has a different one, and never gives a Panel
+words, so an option set on the wrong kind still does nothing.
+
 ## An element
 
 `CanvasElement` has:

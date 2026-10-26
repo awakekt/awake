@@ -19,18 +19,20 @@ import kotlin.test.assertTrue
  *
  * Expected values are in font units (Roboto has 2048 to the em) and come from the font tools, not from this
  * reader: fontTools 4.67 reading the `GPOS` and `kern` tables, and HarfBuzz 15.0 (uharfbuzz 0.57) shaping
- * each pair with and without kerning. The two agree on every one of the 10,404 pairs of the atlas's
- * characters, for every weight; the pair counts below are theirs.
+ * each pair with and without kerning. The two agree on every one of the 114,921 pairs of the atlas's 339
+ * characters, for every weight, but 14 that end in U+00AD SOFT HYPHEN, which HarfBuzz treats as a default-ignorable
+ * code point and draws as nothing, so kerns none of them; the font's own tables kern those, as this reader does.
+ * The pair counts below are fontTools'.
  */
 class KerningTest {
     private val weights = listOf(
-        Face("Roboto-Thin.ttf", FontWeight.Thin, RobotoThinUiFontData, 459) { RobotoOutlines.thin },
-        Face("Roboto-Light.ttf", FontWeight.Light, RobotoLightUiFontData, 459) { RobotoOutlines.light },
-        Face("Roboto-Regular.ttf", FontWeight.Normal, RobotoRegularUiFontData, 459) { RobotoOutlines.regular },
-        Face("Roboto-Medium.ttf", FontWeight.Medium, RobotoMediumUiFontData, 462) { RobotoOutlines.medium },
-        Face("Roboto-SemiBold.ttf", FontWeight.SemiBold, RobotoSemiBoldUiFontData, 462) { RobotoOutlines.semiBold },
-        Face("Roboto-Bold.ttf", FontWeight.Bold, RobotoBoldUiFontData, 462) { RobotoOutlines.bold },
-        Face("Roboto-Black.ttf", FontWeight.Black, RobotoBlackUiFontData, 459) { RobotoOutlines.black },
+        Face("Roboto-Thin.ttf", FontWeight.Thin, RobotoThinUiFontData, 6957) { RobotoOutlines.thin },
+        Face("Roboto-Light.ttf", FontWeight.Light, RobotoLightUiFontData, 6957) { RobotoOutlines.light },
+        Face("Roboto-Regular.ttf", FontWeight.Normal, RobotoRegularUiFontData, 6957) { RobotoOutlines.regular },
+        Face("Roboto-Medium.ttf", FontWeight.Medium, RobotoMediumUiFontData, 7038) { RobotoOutlines.medium },
+        Face("Roboto-SemiBold.ttf", FontWeight.SemiBold, RobotoSemiBoldUiFontData, 7038) { RobotoOutlines.semiBold },
+        Face("Roboto-Bold.ttf", FontWeight.Bold, RobotoBoldUiFontData, 7038) { RobotoOutlines.bold },
+        Face("Roboto-Black.ttf", FontWeight.Black, RobotoBlackUiFontData, 7019) { RobotoOutlines.black },
     )
 
     /**
@@ -44,11 +46,14 @@ class KerningTest {
             "AV" to -87, "VA" to -75, "AT" to -129, "To" to -99, "Ty" to -72, "Yo" to -65, "WA" to -43,
             "LT" to -275, "P." to -324, " T" to -40, "Fa" to -34, "//" to -224, ".\"" to -170, "''" to -107,
             "HH" to 0, "rr" to 0,
+            // Accented letters kern as their bases do, and have pairs of their own (#1058).
+            "ÁV" to -87, "VÁ" to -75, "TÓ" to -28, "Yö" to -65, "PÅ" to -138, "Té" to -99, "Ťo" to -99, "ÇT" to -29, "ŁT" to 0,
         ),
         FontWeight.Bold to mapOf(
             "AV" to -80, "VA" to -75, "AT" to -123, "To" to -173, "Ty" to -79, "Yo" to -65, "WA" to -43,
             "LT" to -228, "P." to -378, " T" to -54, "Fa" to -34, "//" to -240, ".\"" to -248, "''" to -60,
             "HH" to 0, "rr" to 0,
+            "ÁV" to -80, "VÁ" to -75, "TÓ" to -28, "Yö" to -65, "PÅ" to -165, "Té" to -92, "Ťo" to -173, "ÇT" to -29, "ŁT" to 0,
         ),
     )
 

@@ -25,7 +25,7 @@ class GraphicsLayerGlyphClipTest {
     @Test
     fun aLayerAroundTextKeepsTheInkPastTheTextBox() {
         val failures = GlyphInk.cases().mapNotNull { case ->
-            val text = if (case.isBuiltIn) "Hgjpqy|Wolf" else "ÅHgjpqy|Wolf"
+            val text = "ÅHgjpqy|Wolf"
             val lost = lostToALayer(text, case)
             if (lost > 0) "$case '$text': the layer cut $lost pixels of ink" else null
         }

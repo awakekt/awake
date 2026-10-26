@@ -24,6 +24,51 @@ public final class com/awakekt/awake/scene/binding/PrefabLinkBinding : com/awake
 	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
 }
 
+public abstract interface annotation class com/awakekt/awake/scene/binding/RegisteredBinding : java/lang/annotation/Annotation {
+}
+
+public abstract interface annotation class com/awakekt/awake/scene/binding/RuntimeOnly : java/lang/annotation/Annotation {
+}
+
+public abstract interface annotation class com/awakekt/awake/scene/binding/SavedAs : java/lang/annotation/Annotation {
+	public abstract fun name ()Ljava/lang/String;
+	public abstract fun property ()Ljava/lang/String;
+}
+
+public abstract interface annotation class com/awakekt/awake/scene/binding/SavedOnly : java/lang/annotation/Annotation {
+}
+
+public abstract interface annotation class com/awakekt/awake/scene/binding/SceneBinding : java/lang/annotation/Annotation {
+	public abstract fun component ()Ljava/lang/Class;
+	public abstract fun converters ()[Ljava/lang/Class;
+	public abstract fun hooks ()Ljava/lang/Class;
+	public abstract fun name ()Ljava/lang/String;
+	public abstract fun renamed ()[Lcom/awakekt/awake/scene/binding/SavedAs;
+	public abstract fun runtimeOnly ()[Ljava/lang/String;
+}
+
+public abstract interface class com/awakekt/awake/scene/binding/SceneBindingHooks {
+	public fun afterAttach-raSDhyQ (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Ljava/lang/Object;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun afterCopyToLive (Lcom/awakekt/awake/scene/document/SceneComponent;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun afterCopyToSaved (Ljava/lang/Object;Lcom/awakekt/awake/scene/document/SceneComponent;)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun beforeExport-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLjava/lang/Object;Lcom/awakekt/awake/scene/document/SceneComponent;)Lcom/awakekt/awake/scene/document/SceneComponent;
+}
+
+public final class com/awakekt/awake/scene/binding/SceneBindingHooks$DefaultImpls {
+	public static fun afterAttach-raSDhyQ (Lcom/awakekt/awake/scene/binding/SceneBindingHooks;Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Ljava/lang/Object;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public static fun afterCopyToLive (Lcom/awakekt/awake/scene/binding/SceneBindingHooks;Lcom/awakekt/awake/scene/document/SceneComponent;Ljava/lang/Object;)Ljava/lang/Object;
+	public static fun afterCopyToSaved (Lcom/awakekt/awake/scene/binding/SceneBindingHooks;Ljava/lang/Object;Lcom/awakekt/awake/scene/document/SceneComponent;)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public static fun beforeExport-8mtA4i0 (Lcom/awakekt/awake/scene/binding/SceneBindingHooks;Lcom/awakekt/awake/ecs/World;JLjava/lang/Object;Lcom/awakekt/awake/scene/document/SceneComponent;)Lcom/awakekt/awake/scene/document/SceneComponent;
+}
+
+public final class com/awakekt/awake/scene/binding/SceneColorConverter : com/awakekt/awake/scene/binding/SceneValueConverter {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/binding/SceneColorConverter;
+	public fun toLive (Lcom/awakekt/awake/scene/document/SceneColor;)Lcom/awakekt/awake/core/color/Color;
+	public synthetic fun toLive (Ljava/lang/Object;)Ljava/lang/Object;
+	public fun toSaved (Lcom/awakekt/awake/core/color/Color;)Lcom/awakekt/awake/scene/document/SceneColor;
+	public synthetic fun toSaved (Ljava/lang/Object;)Ljava/lang/Object;
+}
+
 public abstract interface class com/awakekt/awake/scene/binding/SceneComponentBinding : com/awakekt/awake/scene/binding/SceneComponentResolver {
 	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
 	public abstract fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
@@ -42,6 +87,11 @@ public final class com/awakekt/awake/scene/binding/SceneComponentBinding$Default
 	public static fun getSerializer (Lcom/awakekt/awake/scene/binding/SceneComponentBinding;)Lkotlinx/serialization/KSerializer;
 }
 
+public abstract interface class com/awakekt/awake/scene/binding/SceneComponentModule {
+	public abstract fun getBindings ()Ljava/util/List;
+	public abstract fun getSerializersModule ()Lkotlinx/serialization/modules/SerializersModule;
+}
+
 public final class com/awakekt/awake/scene/binding/SceneComponentRegistry {
 	public static final field Companion Lcom/awakekt/awake/scene/binding/SceneComponentRegistry$Companion;
 	public fun <init> ()V
@@ -53,6 +103,7 @@ public final class com/awakekt/awake/scene/binding/SceneComponentRegistry {
 	public final fun getBindings ()Ljava/util/List;
 	public final fun getResolvers ()Ljava/util/List;
 	public final fun register (Lcom/awakekt/awake/scene/binding/SceneComponentBinding;)Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;
+	public final fun register (Lcom/awakekt/awake/scene/binding/SceneComponentModule;)Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;
 	public final fun register (Lcom/awakekt/awake/scene/binding/SceneComponentResolver;)Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;
 	public final fun resolve-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)Z
 	public final fun sceneJson ()Lkotlinx/serialization/json/Json;
@@ -61,6 +112,7 @@ public final class com/awakekt/awake/scene/binding/SceneComponentRegistry {
 
 public final class com/awakekt/awake/scene/binding/SceneComponentRegistry$Companion {
 	public final fun registerGlobal (Lcom/awakekt/awake/scene/binding/SceneComponentBinding;)V
+	public final fun registerGlobal (Lcom/awakekt/awake/scene/binding/SceneComponentModule;)V
 	public final fun registerGlobal (Lcom/awakekt/awake/scene/binding/SceneComponentResolver;)V
 	public final fun scoped (Ljava/util/List;Ljava/util/List;)Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;
 	public static synthetic fun scoped$default (Lcom/awakekt/awake/scene/binding/SceneComponentRegistry$Companion;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;
@@ -81,5 +133,14 @@ public final class com/awakekt/awake/scene/binding/SceneUnknownComponents : com/
 	public fun <init> ()V
 	public final fun getComponents ()Ljava/util/List;
 	public fun reset ()V
+}
+
+public abstract interface class com/awakekt/awake/scene/binding/SceneValueConverter {
+	public abstract fun toLive (Ljava/lang/Object;)Ljava/lang/Object;
+	public abstract fun toSaved (Ljava/lang/Object;)Ljava/lang/Object;
+}
+
+public abstract interface annotation class com/awakekt/awake/scene/binding/UnboundSceneComponent : java/lang/annotation/Annotation {
+	public abstract fun reason ()Ljava/lang/String;
 }
 
