@@ -14,6 +14,7 @@ import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.scene.canvas.CanvasPrefabs
 import com.awakekt.awake.scene.canvas.canvasPrefab
 import com.awakekt.awake.scene.canvas.findCanvasElement
+import com.awakekt.awake.scene.canvas.withCanvasComponents
 import com.awakekt.awake.scene.core.EntityNames
 import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.document.SceneDocument
@@ -77,8 +78,12 @@ class CanvasPrefabRoundTripTest {
         document.instantiate(world = world)
         val saved = ScenePrefab(guid = actionBar.guid, name = actionBar.name, root = SceneLoader.fromWorld(world).nodes.single())
 
-        assertEquals(actionBar, saved)
-        assertEquals(CanvasPrefabs.toJson(actionBar), CanvasPrefabs.toJson(saved), "the file an editor saves is the file code wrote")
+        // The builder writes the older canvas_element; a world saves the components it is now.
+        val current = actionBar.withCanvasComponents()
+        assertEquals(current, saved)
+        assertEquals(CanvasPrefabs.toJson(current), CanvasPrefabs.toJson(saved), "the file an editor saves is the file code wrote, in the current form")
+        val again = World().also { SceneDocument(nodes = listOf(saved.root)).instantiate(world = it) }
+        assertEquals(saved.root, SceneLoader.fromWorld(again).nodes.single(), "a prefab saved in the current form loads and saves back unchanged")
     }
 
     @Test

@@ -8,6 +8,8 @@ package com.awakekt.awake.scene.canvas
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ui.canvas.CanvasElement
 import com.awakekt.awake.ui.canvas.CanvasElementKind
+import com.awakekt.awake.ui.canvas.CanvasPointerState
+import com.awakekt.awake.ui.canvas.CanvasRect
 
 /**
  * A typed handle to one element of a canvas prefab: the [id] a prefab saves it under, which
@@ -15,7 +17,8 @@ import com.awakekt.awake.ui.canvas.CanvasElementKind
  * copy, the live [CanvasElement] code writes through.
  *
  * Each element kind has its own handle, such as [CanvasImagePart] or [CanvasBarPart], that exposes
- * only the fields that kind uses; the fields every kind has are here. A handle comes from a
+ * only the fields that kind uses, and the components that make it that kind, such as a Bar's
+ * [CanvasBarPart.widget]; the fields and components every kind has are here. A handle comes from a
  * [CanvasParts] declaration, which composes its id, and is resolved with the rest of it, once, when
  * the prefab is placed. Reading or writing a field then touches the cached element only: no lookup
  * and no string is built, so a binder can write every frame.
@@ -48,6 +51,12 @@ sealed class CanvasPart(val id: String, val kind: CanvasElementKind) {
             check(bound != null) { notResolved() }
             return Entity(boundEntity)
         }
+
+    /** Where the element sits and how big it is: its [CanvasRect] component. */
+    val rect: CanvasRect get() = element.rect
+
+    /** What the player is doing to the element right now: its [CanvasPointerState] component. */
+    val pointer: CanvasPointerState get() = element.pointer
 
     /** Whether the element is drawn; see [CanvasElement.visible]. */
     var visible: Boolean

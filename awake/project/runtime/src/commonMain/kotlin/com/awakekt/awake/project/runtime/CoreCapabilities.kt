@@ -6,8 +6,12 @@
 package com.awakekt.awake.project.runtime
 
 import com.awakekt.awake.core.io.AssetSource
+import com.awakekt.awake.scene.canvas.SceneCanvasButton
 import com.awakekt.awake.scene.canvas.SceneCanvasElement
+import com.awakekt.awake.scene.canvas.SceneCanvasFollow
 import com.awakekt.awake.scene.canvas.SceneCanvasFollowOcclusion
+import com.awakekt.awake.scene.canvas.SceneCanvasJoystick
+import com.awakekt.awake.scene.canvas.SceneCanvasLookArea
 import com.awakekt.awake.scene.canvas.checkCanvasImages
 import com.awakekt.awake.scene.canvas.hasCanvasImages
 import com.awakekt.awake.scene.canvas.loadCanvasFonts
@@ -170,9 +174,16 @@ internal fun SceneDocument.hasCanvasActions(): Boolean = nodes.any { it.hasCanva
  */
 internal fun SceneDocument.asksForOcclusion(): Boolean = uses(SceneCanvasFollowOcclusion::class) || nodes.any { it.asksForOcclusion() }
 
-private fun SceneNode.asksForOcclusion(): Boolean =
-    components.any { it is SceneCanvasElement && it.followRules?.occlusion == true } || children.any { it.asksForOcclusion() }
+private fun SceneNode.asksForOcclusion(): Boolean = components.any {
+    it is SceneCanvasElement && it.followRules?.occlusion == true || it is SceneCanvasFollow && it.rules?.occlusion == true
+} || children.any { it.asksForOcclusion() }
 
-private fun SceneNode.hasCanvasAction(): Boolean =
-    components.any { it is SceneCanvasElement && (it.action.isNotEmpty() || it.kind == CanvasElementKind.LookArea) } ||
-        children.any { it.hasCanvasAction() }
+private fun SceneNode.hasCanvasAction(): Boolean = components.any {
+    when (it) {
+        is SceneCanvasElement -> it.action.isNotEmpty() || it.kind == CanvasElementKind.LookArea
+        is SceneCanvasButton -> it.action.isNotEmpty()
+        is SceneCanvasJoystick -> it.action.isNotEmpty()
+        is SceneCanvasLookArea -> true
+        else -> false
+    }
+} || children.any { it.hasCanvasAction() }

@@ -10,10 +10,10 @@ import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.binding.SceneComponentResolver
 import com.awakekt.awake.scene.canvas.CanvasControlsBinding
-import com.awakekt.awake.scene.canvas.CanvasElementBinding
 import com.awakekt.awake.scene.canvas.CanvasFollowLimitBinding
 import com.awakekt.awake.scene.canvas.CanvasFollowOcclusionBinding
 import com.awakekt.awake.scene.canvas.CanvasScalerBinding
+import com.awakekt.awake.scene.canvas.canvasElementBindings
 import com.awakekt.awake.scene.core.TagBinding
 import com.awakekt.awake.scene.core.transform.SceneSpinControl
 import com.awakekt.awake.scene.core.transform.SpinControl
@@ -119,7 +119,7 @@ object DefaultSceneComponentResolvers {
         PostProcessingBinding,
         AmbientLightBinding,
         TerrainBinding,
-        CanvasElementBinding,
+    ) + canvasElementBindings + listOf(
         CanvasScalerBinding,
         CanvasControlsBinding,
         CanvasFollowLimitBinding,
@@ -151,7 +151,7 @@ object DefaultSceneComponentResolvers {
         PostProcessingBinding,
         AmbientLightBinding,
         TerrainBinding,
-        CanvasElementBinding,
+    ) + canvasElementBindings + listOf(
         CanvasScalerBinding,
         CanvasControlsBinding,
         CanvasFollowLimitBinding,
