@@ -20,9 +20,11 @@ trust registry looks up a signing key by.
 
 ## Signing the archive
 
-`awakePlugin` signs the archive's contents with an RSA private key read from the
-`AWAKE_PLUGIN_SIGNING_KEY` environment variable (PEM or base64 PKCS#8), or the
-`awake.plugin.signingKey` Gradle property for local testing. Never put the key in the repository.
+`awakePlugin` packages the archive, and `signAwakePlugin`, which runs right after it, signs it with
+an RSA private key read from the `AWAKE_PLUGIN_SIGNING_KEY` environment variable (PEM or base64
+PKCS#8), or the `awake.plugin.signingKey` Gradle property for local testing. Never put the key in
+the repository. The signer is Core's own `PluginArchiveSigner` from `com.awakekt.awake:plugin-archive`,
+run in a separate JVM; it is a build tool here and not bundled with the plugin.
 
 ```
 export AWAKE_PLUGIN_SIGNING_KEY="$(cat path/to/private-key.pem)"

@@ -141,6 +141,18 @@ public final class com/awakekt/awake/pluginarchive/PluginArchiveReader {
 	public final fun read ([BLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
+public final class com/awakekt/awake/pluginarchive/PluginArchiveSigner {
+	public static final field INSTANCE Lcom/awakekt/awake/pluginarchive/PluginArchiveSigner;
+	public final fun signature (Ljava/util/List;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun signedEntries (Ljava/util/List;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/pluginarchive/PluginArchiveSignerMain {
+	public static final field PLUGIN_SIGNING_KEY_ENVIRONMENT_VARIABLE Ljava/lang/String;
+	public static final fun main ([Ljava/lang/String;)V
+	public static final fun sign (Lcom/awakekt/awake/pluginarchive/PluginArchiveSigner;[BLjava/lang/String;)[B
+}
+
 public abstract class com/awakekt/awake/pluginarchive/PluginArchiveVerification {
 }
 

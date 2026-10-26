@@ -36,7 +36,7 @@ internal suspend fun checkRsaSha256(payload: ByteArray, signature: ByteArray, pu
     catchingNonCancellation {
         val key = CryptographyProvider.Default.get(RSA.PKCS1)
             .publicKeyDecoder(SHA256)
-            .decodeFromByteArray(RSA.PublicKey.Format.DER, publicKeyDer(publicKey))
+            .decodeFromByteArray(RSA.PublicKey.Format.DER, pemOrBase64Der(publicKey))
         when {
             modulusBits(key) < MIN_RSA_MODULUS_BITS -> RsaCheck.Invalid("RSA key is shorter than $MIN_RSA_MODULUS_BITS bits.")
             key.signatureVerifier().tryVerifySignature(payload, signature) -> RsaCheck.Valid
@@ -44,12 +44,12 @@ internal suspend fun checkRsaSha256(payload: ByteArray, signature: ByteArray, pu
         }
     }.getOrElse { RsaCheck.Invalid("Could not verify the signature: ${it.message}") }
 
-/** Strips PEM armour, if any, and decodes the base64 body to DER. */
-internal fun publicKeyDer(publicKey: String): ByteArray {
-    val body = publicKey.lineSequence()
+/** Strips PEM armour, if any, and decodes the base64 body of a public or private key to DER. */
+internal fun pemOrBase64Der(key: String): ByteArray {
+    val body = key.lineSequence()
         .filterNot { it.isBlank() || it.trimStart().startsWith("-----") }
         .joinToString("") { it.trim() }
-    require(body.isNotEmpty()) { "The public key is empty." }
+    require(body.isNotEmpty()) { "The key is empty." }
     return Base64.decode(body)
 }
 

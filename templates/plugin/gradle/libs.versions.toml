@@ -7,6 +7,8 @@ awake = "0.8.6"
 awake-editor-contract = { module = "com.awakekt.awake.editor:contract", version.ref = "awake" }
 awake-ui-shadcn = { module = "com.awakekt.awake.ui:shadcn", version.ref = "awake" }
 awake-scene-core = { module = "com.awakekt.awake.scene:scene-core", version.ref = "awake" }
+# Signs the .awakeplugin archive; used by the build, not bundled with the plugin.
+awake-plugin-archive = { module = "com.awakekt.awake:plugin-archive", version.ref = "awake" }
 
 [plugins]
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
