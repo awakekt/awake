@@ -47,8 +47,7 @@ class TextLayoutConformanceTest {
             val id = spec.string("id")
             val actual = measure(spec, loaded.getValue(spec.string("font")))
             val expected = references.getValue(id)
-            val wrapControl = expected["roundedFit"]?.jsonObject
-            compare(spec, actual, expected.getValue("reference").jsonObject, wrapControl ?: expected.getValue("unfeatured").jsonObject)
+            compare(spec, actual, expected.getValue("reference").jsonObject, expected.getValue("unfeatured").jsonObject)
         }
         writeReport()
         val failures = results.filter { it.status == "FAIL" }
@@ -123,13 +122,9 @@ class TextLayoutConformanceTest {
 
     private fun compare(spec: JsonObject, actual: Layout, reference: JsonObject, control: JsonObject) {
         val id = spec.string("id")
-        // Kerning (#1022) is implemented and wired through `kerning` above, so a kerned case is held to the
-        // browser with no expected-failure signature of its own.
-        val featureIssue = when {
-            spec.string("numeric") != "normal" -> xfail(1023)
-            spec.optionalNumber("wrapWidthPx") != null -> xfail(1021)
-            else -> null
-        }
+        // Kerning (#1022) and the wrap-fit bound (#1021) are implemented, so a kerned or wrapped case is held
+        // to the browser with no expected-failure signature of its own.
+        val featureIssue = if (spec.string("numeric") != "normal") xfail(1023) else null
         metric(id, "advance", actual.lines.maxOf { it.advance }, reference.number("advance"), control.number("advance"), featureIssue)
         metric(id, "lineCount", actual.lines.size.toDouble(), reference.number("lineCount"), control.number("lineCount"), featureIssue, tolerance = 0.0)
         // Core advances every line by a whole device pixel (TextLineBox), where the browser advances by

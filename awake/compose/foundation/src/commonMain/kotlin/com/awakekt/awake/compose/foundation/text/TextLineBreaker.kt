@@ -5,6 +5,9 @@
  */
 package com.awakekt.awake.compose.foundation.text
 
+import kotlin.math.ceil
+import kotlin.math.floor
+
 /**
  * Splits a run into the lines it actually occupies.
  *
@@ -135,7 +138,7 @@ private class TextBreaker(
             val line = hardLines[i]
             val isLast = i == limit - 1
             val hasMore = isLast && hardLines.size > limit
-            val exceeds = isBounded && !fits(widthOf(line.text), maxWidthPx)
+            val exceeds = isBounded && !fitsAsSized(widthOf(line.text), maxWidthPx)
             val lineText = if (shouldEllipsize(hasMore, exceeds)) {
                 applyEllipsis(line.text, hasMore)
             } else {
@@ -151,7 +154,7 @@ private class TextBreaker(
         isLastHardLine: Boolean,
         out: MutableList<TextLineLayout>,
     ) {
-        if (hardLine.text.isEmpty() || fits(widthOf(hardLine.text), maxWidthPx)) {
+        if (hardLine.text.isEmpty() || fitsAsSized(widthOf(hardLine.text), maxWidthPx)) {
             val isLast = out.size == limit - 1
             val hasMore = isLast && !isLastHardLine
             val lineText = if (shouldEllipsize(hasMore, false)) {
@@ -242,6 +245,40 @@ private class TextBreaker(
 }
 
 /**
- * Whether a line of [widthPx] fits in [maxWidthPx], judged on the whole pixel the line is sized to.
+ * Whether a line that wrapping made, one of the several a hard line breaks into, fits in [maxWidthPx], as
+ * Chromium's line breaker decides it.
+ *
+ * A line fits when its width, snapped up to a `LayoutUnit` (1/64 px), is no wider than the available
+ * width snapped down to one. There is no allowance past the limit: a line 110.3 px wide does not fit in
+ * 110 px, and a browser wraps it there (#1021).
  */
-private fun fits(widthPx: Float, maxWidthPx: Float): Boolean = widthPx < maxWidthPx + 0.5f
+private fun fits(widthPx: Float, maxWidthPx: Float): Boolean =
+    ceil(widthPx * LAYOUT_UNITS_PER_PX) <= floor(maxWidthPx * LAYOUT_UNITS_PER_PX)
+
+/**
+ * Whether a whole hard line of [widthPx] fits in [maxWidthPx], judged on the whole pixel it is sized to.
+ *
+ * Placeables are whole pixels, so a box sized to a line (see [lineBoxWidthPx]) is the line's width rounded
+ * to the nearest pixel, up to half a pixel narrower than the line. Where a browser's box is as fractional
+ * as its text, this one is not, and text laid out at its own measured width must stay on the one line it
+ * measured. Only a line nothing has wrapped is judged this way: wrapping a paragraph is the browser's rule.
+ */
+private fun fitsAsSized(widthPx: Float, maxWidthPx: Float): Boolean = widthPx < maxWidthPx + 0.5f
+
+/**
+ * The width of the box that holds a line of [widthPx]: the nearest whole pixel for a whole hard line, which
+ * [fitsAsSized] admits at that width, and the next whole pixel up for a line wrapping made, which [fits]
+ * admits only if it is no wider than the box. Either way, text laid out at the width it measured to keeps
+ * its lines.
+ */
+internal fun lineBoxWidthPx(widthPx: Float, wholeHardLine: Boolean): Int =
+    if (wholeHardLine) floor(widthPx + 0.5f).toInt() else ceil(widthPx).toInt()
+
+/** The width of the box that holds this line of [source], measured by [widthOf] (see [lineBoxWidthPx]). */
+internal fun TextLineLayout.boxWidthPx(source: String, widthOf: (String) -> Float): Int {
+    val whole = (start == 0 || source[start - 1] == '\n') && (endExclusive == source.length || source[endExclusive] == '\n')
+    return lineBoxWidthPx(widthOf(text), whole)
+}
+
+/** Chromium's `LayoutUnit` is a fixed-point number with six fractional bits. */
+private const val LAYOUT_UNITS_PER_PX = 64f

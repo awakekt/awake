@@ -75,7 +75,9 @@ covered separately by the existing FreeType reference suite (#993).
 The test calls production `TextRun` layout and painting, records glyph quads on the
 CPU, and recovers their origins/baselines from the face's bearing metrics. A case's
 `kerning` reaches the run as `TextStyle.kerning`: `normal` kerns, as Core does by
-default (#1022), and `none` turns it off, as the browser's `font-kerning: none` does. It paints
+default (#1022), and `none` turns it off, as the browser's `font-kerning: none` does. A soft-wrapped
+case's `wrapWidthPx` is the run's wrap width, and a line wrapping makes fits when it is no wider than that,
+as the browser fits it, with no half-pixel allowance (#1021). It paints
 into a scope that is not device-pixel aligned, so every size draws from the distance
 field and layout is measured independently of exact-size raster rounding, while the
 fonts keep their production pixel-glyph limit, which the line box reads (#1024: a
@@ -93,10 +95,6 @@ only when they match one of these narrow pre-fix signatures:
 - [#1023](https://github.com/awakekt/awake/issues/1023): a requested numeric feature
   instead matches the independently captured browser control using normal digits
   (within 0.1 px). Already-tabular default digits may pass without that feature API.
-- [#1021](https://github.com/awakekt/awake/issues/1021): the half-pixel wrap-fit
-  follow-up on that tracker owns Core's existing `width < limit + 0.5` behavior.
-  A separate browser control with only the wrap width enlarged by 0.5 device px
-  must match the changed horizontal metrics (0.1 px) and exact source ranges/count.
 
 One deviation is deliberate rather than a gap, and reports as `SNAP`. Core lays
 every line out with the same whole-device-pixel advance (`TextLineBox`, #1024):
@@ -115,3 +113,13 @@ Unrelated drift fails. The policy test includes negative probes proving that a
 tracked issue cannot excuse arbitrary values. Feature implementation work should
 wire the relevant style option into this test adapter, without changing Chromium
 measurements or weakening tolerances.
+
+The capture also records a `roundedFit` control for the soft-wrapped case, the browser laid out with the wrap
+width enlarged by 0.5 device px. It was the expected-failure signature of the half-pixel wrap-fit allowance
+Core used to have (#1021) and nothing reads it now; it stays in the reference until the next deliberate
+regeneration drops it with the generator's capture of it.
+
+One rounding survives, outside this oracle's wrapped lines: a whole hard line is still judged on the whole
+pixel a `Text` box is sized to (the line's width rounded to the nearest pixel), because the box is whole
+pixels where the browser's is fractional. Lines wrapping makes, and the boxes that hold them, follow the
+browser (`TextWrapFitTest`).
