@@ -116,6 +116,7 @@ jobs:
         run: |
           python -m pip install --quiet 'pillow==12.3.0'
           python tools/shadcn/test_render_evidence.py
+          python tools/fonts-tooling/text-evidence/test_text_evidence.py
 
   build:
     name: Build (JVM/Native)

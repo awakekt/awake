@@ -135,3 +135,38 @@ tasks.register<JavaExec>("captureRenderEvidence") {
             .get(),
     )
 }
+
+// >>> text-clip-evidence
+// Renders the text-clipping cases (a field, a layer, a sidebar, a font scale, a canvas) with and
+// without their clips on the CPU rasterizer, and counts the ink the clips take away:
+//   ./gradlew :awake:engine:render:parity:captureTextClipEvidence -Pevidence.dir=<dir>
+// tools/fonts-tooling/text-evidence turns a base and a head capture into before/after sheets. The
+// markers let its run_local.sh lay this block, with src/desktopTest/.../textclip, over an older
+// checkout that predates it. Everything here is desktopTest-scoped: nothing reaches a published
+// module. It draws on the CPU, so it needs neither the Vulkan natives nor a display.
+kotlin.sourceSets.getByName("desktopTest").dependencies {
+    implementation(project(":awake:compose:ui-testing"))
+    implementation(project(":awake:ui:canvas"))
+    implementation(project(":awake:ui:shadcn"))
+}
+
+tasks.register<JavaExec>("captureTextClipEvidence") {
+    group = "awake reports"
+    description = "Render the text-clipping cases to PNGs with lost-ink counts (CPU raster, no GPU)."
+    val desktop = kotlin.targets.getByName("desktop").compilations
+    val desktopMain = desktop.getByName("main")
+    val desktopTest = desktop.getByName("test")
+    dependsOn(desktopTest.compileAllTaskName)
+    classpath = files(desktopTest.output.allOutputs, desktopMain.output.allOutputs, desktopTest.runtimeDependencyFiles)
+    mainClass.set("com.awakekt.awake.render.parity.textclip.TextClipEvidenceKt")
+    javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(25)) })
+    val fonts = rootProject.layout.projectDirectory.dir("awake/ui/font-atlas-generator/fonts")
+    inputs.dir(fonts).withPropertyName("fonts").withPathSensitivity(PathSensitivity.RELATIVE)
+    args(
+        providers.gradleProperty("evidence.dir")
+            .orElse(layout.buildDirectory.dir("reports/text-clip-evidence").map { it.asFile.absolutePath })
+            .get(),
+        fonts.asFile.absolutePath,
+    )
+}
+// <<< text-clip-evidence

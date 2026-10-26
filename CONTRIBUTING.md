@@ -51,7 +51,7 @@ Every AwakeKt task belongs to one group, so Gradle lists them with their descrip
 | `awake verification` | `awakeVerify` and the boundary checks that `check` runs. |
 | `awake codegen` | Shader, icon, asset-lock and project-index generators. |
 | `awake native` | Native library builds and their checks (naga, Vulkan JNI, GLFW). |
-| `awake reports` | `captureRenderEvidence`, the pixel-baseline and UI preview reports, `developerDocs`. |
+| `awake reports` | `captureRenderEvidence`, `captureTextClipEvidence`, the pixel-baseline and UI preview reports, `developerDocs`. |
 | `awake tools` | One-off utilities such as `decimate` and `previewShader`. |
 
 The ones you run most:
@@ -62,6 +62,7 @@ The ones you run most:
 | `./gradlew detekt` | Lint only; the pre-push hook runs it on the modules a push changes. |
 | `./gradlew desktopApiDump` | After changing public API, so the pre-push `desktopApiCheck` passes. |
 | `./gradlew :awake:engine:render:parity:captureRenderEvidence` | Render screenshots for a PR that changes rendering. |
+| `./gradlew :awake:engine:render:parity:captureTextClipEvidence` | Text-clipping cases with lost-ink counts for a PR that changes text, fonts, clips or layers; `tools/fonts-tooling/text-evidence/run_local.sh <base-ref>` makes the before/after sheets. |
 | `./gradlew releaseCut -Prelease.channel=<channel>` | Cut a release; see [the release process](docs/release-process.md). |
 
 CI runs on GitHub-hosted runners only. AwakeKt Studio, which has its own repository, can switch
