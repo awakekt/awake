@@ -162,7 +162,8 @@ internal class LineBuffer {
 
 /**
  * Cuts [outline] (font units, y up) into lines in pixels (y down) for [CoverageRasterizer]: x is
- * `x * scale + shiftX`, y is `-mapY(y * scale)` with [mapY] the vertical hinting (identity for none).
+ * `x * scale + shiftX`, moved by [snap] when there is one, y is `-mapY(y * scale)` with [mapY] the
+ * vertical hinting (identity for none).
  *
  * A cubic is cut into `n` equal steps of its parameter. Its distance from the chord of a step is at most
  * 3/4 of its control polygon's largest second difference over n squared, so n is chosen to keep that
@@ -174,17 +175,19 @@ internal fun flattenOutline(
     shiftX: Double,
     mapY: (Double) -> Double,
     into: LineBuffer,
+    snap: StemSnap? = null,
 ) {
     into.clear()
+    val mover = LineMover(into, shiftX, snap)
     for (index in outline.indices) {
         val segment = outline[index]
         val p = segment.points
-        val startX = p[0] * scale + shiftX
+        val startX = p[0] * scale
         val startY = -mapY(p[1] * scale)
-        val endX = p[6] * scale + shiftX
+        val endX = p[6] * scale
         val endY = -mapY(p[7] * scale)
         if (segment.isLine) {
-            into.add(startX, startY, endX, endY)
+            mover.add(startX, startY, endX, endY)
             continue
         }
         val ddx = max(abs(p[0] - 2 * p[2] + p[4]), abs(p[2] - 2 * p[4] + p[6])) * scale
@@ -194,13 +197,41 @@ internal fun flattenOutline(
         var previousY = startY
         for (step in 1 until steps) {
             val t = step.toDouble() / steps
-            val x = cubicAt(t, p[0], p[2], p[4], p[6]) * scale + shiftX
+            val x = cubicAt(t, p[0], p[2], p[4], p[6]) * scale
             val y = -mapY(cubicAt(t, p[1], p[3], p[5], p[7]) * scale)
-            into.add(previousX, previousY, x, y)
+            mover.add(previousX, previousY, x, y)
             previousX = x
             previousY = y
         }
-        into.add(previousX, previousY, endX, endY)
+        mover.add(previousX, previousY, endX, endY)
+    }
+}
+
+/**
+ * Adds lines to [into] with each x moved by [snap] and then by [shiftX]. A line that crosses one of
+ * [snap]'s knots is added as the pieces either side of it, each straight in the moved outline as the
+ * original was.
+ */
+private class LineMover(private val into: LineBuffer, private val shiftX: Double, private val snap: StemSnap?) {
+    /** Adds the line from ([x0], [y0]) to ([x1], [y1]) moved. */
+    fun add(x0: Double, y0: Double, x1: Double, y1: Double) {
+        if (snap == null) {
+            into.add(x0 + shiftX, y0, x1 + shiftX, y1)
+            return
+        }
+        val knots = snap.knots
+        var fromX = x0
+        var fromY = y0
+        // Knots ascend; walk them in the line's own direction.
+        for (step in knots.indices) {
+            val knot = if (x1 >= x0) knots[step] else knots[knots.size - 1 - step]
+            if (knot <= min(x0, x1) || knot >= max(x0, x1)) continue
+            val y = y0 + (knot - x0) / (x1 - x0) * (y1 - y0)
+            into.add(snap.apply(fromX) + shiftX, fromY, snap.apply(knot) + shiftX, y)
+            fromX = knot
+            fromY = y
+        }
+        into.add(snap.apply(fromX) + shiftX, fromY, snap.apply(x1) + shiftX, y1)
     }
 }
 

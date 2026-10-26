@@ -23,6 +23,7 @@ import com.awakekt.awake.core.math2d.Rectangle
 import com.awakekt.awake.core.text.font.FontWeight
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.core.text.font.UiFonts
+import com.awakekt.awake.core.text.font.clusterAdvance
 import com.awakekt.awake.core.text.font.withPixelGlyphMaxSize
 import com.awakekt.awake.core.text.theme.TextStyle
 import kotlin.math.abs
@@ -134,8 +135,8 @@ class TextPixelSnapTest {
     }
 
     /**
-     * Exact-size glyphs draw 1:1 on whole pixels from any fractional start, with their stem rounded rather
-     * than their pen; a scope that scales draws the same run from the distance field instead.
+     * Exact-size glyphs draw 1:1 on whole pixels from any fractional start, the glyph for the subpixel step
+     * nearest the pen; a scope that scales draws the same run from the distance field instead.
      */
     @Test
     fun pixelGlyphsDrawOnWholePixelsAndAScaledScopeDrawsTheField() {
@@ -150,10 +151,42 @@ class TextPixelSnapTest {
         for (glyph in aligned.glyphs) {
             listOf(glyph.x, glyph.y, glyph.w, glyph.h).forEach { assertEquals(floor(it), it, "pixel glyph quad $glyph") }
         }
+        // The line starts on the whole pixel nearest 4.3, so the 'H' has its pen on it: step 0.
         val h = checkNotNull(glyphs.glyph('H'.code, FontWeight.Normal, 12))
-        assertEquals(floor(4f + h.anchorX + 0.5f) + h.left, aligned.glyphs[0].x)
+        assertEquals(4f + h.left, aligned.glyphs[0].x)
         assertSame(h.atlas, aligned.glyphs[0].font)
         assertTrue(scaled.glyphs.all { it.font === font }, "a scaled scope drew ${scaled.glyphs.map { it.font }}")
+    }
+
+    /**
+     * A run of pixel glyphs draws each one's variant for the nearest quarter of a pixel to its pen: the
+     * 'l' after an 'H' is at the pen the 'H''s advance puts it at, and its quad is that step's bitmap
+     * at that step's whole pixel.
+     */
+    @Test
+    fun eachGlyphDrawsTheVariantNearestItsPen() {
+        val font = UiFonts.trueSans()
+        val glyphs = checkNotNull(font.pixelGlyphs)
+        val text = "0123456789"
+        val drawn = RecordingScope(aligned = true).also { TextRun(text, TextStyle.Default, font, glyphPx = 12f, density = 1f).paint(it, white) }
+
+        assertEquals(text.length, drawn.glyphs.size)
+        var pen = 0f
+        var variants = 0
+        for (index in text.indices) {
+            val first = checkNotNull(glyphs.glyph(text[index].code, FontWeight.Normal, 12))
+            val steps = first.subpixelSteps
+            val step = floor(pen * steps + 0.5f)
+            val whole = floor(step / steps)
+            val expected = checkNotNull(glyphs.glyph(text[index].code, FontWeight.Normal, 12, (step - whole * steps).toInt()))
+            val quad = drawn.glyphs[index]
+            assertEquals(whole + expected.left, quad.x, "'${text[index]}' at pen $pen")
+            assertEquals(expected.u0, quad.u0, "'${text[index]}' at pen $pen")
+            assertSame(expected.atlas, quad.font)
+            if (expected !== first) variants++
+            pen += font.clusterAdvance(text, index, index + 1, 12f)
+        }
+        assertTrue(variants >= 5, "only $variants of ${text.length} digits drew a variant other than the whole-pixel one")
     }
 
     /** Records the glyph quads a run draws; nothing else is used. */

@@ -148,7 +148,10 @@ class PixelGlyphsTest {
         assertNotNull(UiFonts.fallback(default, listOf(UiFonts.bitmap())).pixelGlyphs)
     }
 
-    /** A page's bytes, pinned so every target that runs this proves it rasterizes the same glyphs. */
+    /**
+     * A page's bytes, pinned so every target that runs this proves it rasterizes the same glyphs: the page
+     * holds every subpixel variant of the block's glyphs, with their stems and bars snapped (#1005).
+     */
     @Test
     fun everyTargetRasterizesTheSameBytes() {
         val page = UiFonts.trueSans().pixelGlyphs!!.glyph('H'.code, FontWeight.Normal, 12)!!.atlas
@@ -209,6 +212,6 @@ class PixelGlyphsTest {
         const val FAINT = 12
         const val FNV_OFFSET = -0x340d631b7bdddcdbL
         const val FNV_PRIME = 0x100000001b3L
-        const val REGULAR_12PX_PAGE_HASH = -3514475784191782169L
+        const val REGULAR_12PX_PAGE_HASH = -6162144221325625282L
     }
 }

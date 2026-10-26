@@ -52,9 +52,13 @@ class WeightedUiFont(
     /** Each weight's glyphs from its own face's outlines; null unless every face has outlines. */
     override val pixelGlyphs: PixelGlyphs? by lazy {
         if (faces.all { it.font.pixelGlyphs != null }) {
-            PixelGlyphs { codePoint, weight, pixelSize ->
-                val face = resolve(weight)
-                face.font.pixelGlyphs?.glyph(codePoint, face.weight, pixelSize)
+            object : PixelGlyphs {
+                override fun glyph(codePoint: Int, weight: FontWeight, pixelSize: Int): PixelGlyph? = glyph(codePoint, weight, pixelSize, 0)
+
+                override fun glyph(codePoint: Int, weight: FontWeight, pixelSize: Int, subpixel: Int): PixelGlyph? {
+                    val face = resolve(weight)
+                    return face.font.pixelGlyphs?.glyph(codePoint, face.weight, pixelSize, subpixel)
+                }
             }
         } else {
             null
