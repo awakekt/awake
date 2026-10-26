@@ -235,7 +235,7 @@ class SceneCanvasTest {
     }
 
     @Test
-    fun savedFormRoundTripsEveryField() {
+    fun savedFormRoundTripsEveryFieldOfItsKind() {
         val saved = SceneCanvasElement(
             kind = CanvasElementKind.Bar,
             anchor = CanvasAnchor.BottomCenter,
@@ -278,7 +278,12 @@ class SceneCanvasTest {
             ),
         )
 
-        assertEquals(saved, saved.toComponent().toSceneComponent())
+        // A Bar keeps every field a Bar has; another widget's fields, here a Button's, a View's and a
+        // TextField's, had no effect on it and are not kept.
+        val kept = saved.copy(doubleAction = "", camera = "", mask = "", maxLength = 0, maxLengthUnit = TextLengthUnit.Graphemes)
+        assertEquals(kept, saved.toComponent().toSceneComponent())
+        val field = SceneCanvasElement(kind = CanvasElementKind.TextField, mask = "*", maxLength = 40, maxLengthUnit = TextLengthUnit.Utf8Bytes, text = "typed")
+        assertEquals(field, field.toComponent().toSceneComponent())
     }
 
     @Test
