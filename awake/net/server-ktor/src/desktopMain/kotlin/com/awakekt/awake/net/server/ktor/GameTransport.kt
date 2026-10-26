@@ -7,6 +7,7 @@ package com.awakekt.awake.net.server.ktor
 
 import com.awakekt.awake.net.DeliveryChannel
 import com.awakekt.awake.net.InboundDropMetrics
+import com.awakekt.awake.net.SessionCloseReason
 import com.awakekt.awake.net.SessionId
 import com.awakekt.awake.net.TransportServer
 import com.awakekt.awake.net.TransportSession
@@ -48,6 +49,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -169,7 +171,7 @@ internal class KtorTransportSession(
     override val principal: String?,
     private val socket: WebSocketSession,
     inboxCapacity: Int,
-    outboundCapacity: Int,
+    private val outboundCapacity: Int,
     private val maxFrameSize: Long,
     writerDispatcher: CoroutineDispatcher = Dispatchers.Default,
     private val closeTimeout: Duration = 1.seconds,
@@ -188,6 +190,8 @@ internal class KtorTransportSession(
     private val outbox = Channel<ByteArray>(outboundCapacity, onBufferOverflow = BufferOverflow.SUSPEND)
     private val scope = CoroutineScope(SupervisorJob() + writerDispatcher)
     private val closing = AtomicBoolean(false)
+    private val reason = AtomicReference<SessionCloseReason?>(null)
+    override val closeReason: SessionCloseReason? get() = reason.get()
     private val closed = CompletableDeferred<Unit>()
 
     // Observe deferred failures as well as closing the transport in finally.
@@ -197,6 +201,8 @@ internal class KtorTransportSession(
                 socket.send(Frame.Binary(fin = true, data = packet))
             }
         } finally {
+            // A writer that ends on its own (a failed write) means the peer is gone.
+            reason.compareAndSet(null, SessionCloseReason.PeerClosed)
             inbox.close()
             outbox.close()
             val flushed = withTimeoutOrNull(closeTimeout) {
@@ -222,7 +228,7 @@ internal class KtorTransportSession(
                     inbox.send(packet)
                 }
         } finally {
-            close()
+            finish(drain = true, SessionCloseReason.PeerClosed)
         }
     }
 
@@ -230,7 +236,7 @@ internal class KtorTransportSession(
         val sent = outbox.trySend(packet)
         if (sent.isFailure && !sent.isClosed) {
             // Outbound buffer full: slow client is terminated rather than unbounded buffering
-            finish(drain = false)
+            finish(drain = false, SessionCloseReason.OutboundOverflow)
         }
     }
 
@@ -241,11 +247,16 @@ internal class KtorTransportSession(
      * The one-second deadline covers the drain and flush together. It is not peer acknowledgement;
      * peer failure, timeout and outbound overflow may discard packets.
      */
-    override suspend fun close() = finish(drain = true)
+    override suspend fun close() = finish(drain = true, SessionCloseReason.ServerClosed)
 
-    private suspend fun finish(drain: Boolean) = withContext(NonCancellable) {
+    private suspend fun finish(drain: Boolean, cause: SessionCloseReason) = withContext(NonCancellable) {
         if (closing.compareAndSet(false, true)) {
             try {
+                // Record the cause before the inbox closes, so the host reads it on seeing the close.
+                reason.compareAndSet(null, cause)
+                if (cause == SessionCloseReason.OutboundOverflow) {
+                    logger.warn("Transport session $id closed: outbound queue overflow (capacity $outboundCapacity)")
+                }
                 inbox.close()
                 outbox.close()
                 val flushed = withTimeoutOrNull(closeTimeout) {

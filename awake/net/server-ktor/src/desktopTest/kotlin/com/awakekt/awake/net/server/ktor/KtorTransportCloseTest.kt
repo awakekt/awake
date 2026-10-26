@@ -6,6 +6,7 @@
 package com.awakekt.awake.net.server.ktor
 
 import com.awakekt.awake.net.DeliveryChannel
+import com.awakekt.awake.net.SessionCloseReason
 import com.awakekt.awake.net.SessionId
 import io.ktor.util.logging.KtorSimpleLogger
 import io.ktor.util.logging.Logger
@@ -31,6 +32,7 @@ import java.io.IOException
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -38,8 +40,12 @@ import kotlin.time.Duration.Companion.milliseconds
 class KtorTransportCloseTest {
     private class RecordingLogger : Logger by KtorSimpleLogger("transport-close-test") {
         val failures = mutableListOf<Throwable>()
+        val warnings = mutableListOf<String>()
+        override fun warn(message: String) {
+            warnings += message
+        }
         override fun warn(message: String?, cause: Throwable?) {
-            if (cause != null) failures += cause
+            if (cause != null) failures += cause else warnings += message.orEmpty()
         }
     }
 
@@ -161,6 +167,54 @@ class KtorTransportCloseTest {
         session.send(DeliveryChannel.Reliable, "overflow".encodeToByteArray())
         session.close()
         assertEquals(listOf("close:${CloseReason.Codes.TRY_AGAIN_LATER.code}", "flush"), socket.events)
+    }
+
+    @Test
+    fun outboundOverflowIsLoggedOnceWithTheSessionAndCapacityAndCloseCode() = runTest {
+        val socket = Socket()
+        val logger = RecordingLogger()
+        val session = session(socket, capacity = 2, logger = logger)
+        repeat(2) { session.send(DeliveryChannel.Reliable, "queued:$it".encodeToByteArray()) }
+        // Every send past the full queue overflows; only the first one closes the session.
+        repeat(3) { session.send(DeliveryChannel.Reliable, "overflow:$it".encodeToByteArray()) }
+        session.close()
+        assertEquals(1, logger.warnings.size)
+        val warning = logger.warnings.single()
+        assertTrue("${SessionId(1)}" in warning, warning)
+        assertTrue("capacity 2" in warning, warning)
+        assertEquals(listOf("close:${CloseReason.Codes.TRY_AGAIN_LATER.code}", "flush"), socket.events)
+    }
+
+    @Test
+    fun outboundOverflowIsReportedAsTheCloseReasonBeforeIncomingCloses() = runTest {
+        val session = session(Socket(), capacity = 1)
+        assertNull(session.closeReason)
+        session.send(DeliveryChannel.Reliable, "queued".encodeToByteArray())
+        session.send(DeliveryChannel.Reliable, "overflow".encodeToByteArray())
+        // The host learns of the close through incoming(); the cause must already be readable.
+        assertTrue(session.incoming().receiveCatching().isClosed)
+        assertEquals(SessionCloseReason.OutboundOverflow, session.closeReason)
+        session.close()
+        assertEquals(SessionCloseReason.OutboundOverflow, session.closeReason)
+    }
+
+    @Test
+    fun aHostCloseReportsServerClosedAndTheFirstReasonWins() = runTest {
+        val session = session(Socket())
+        session.close()
+        assertEquals(SessionCloseReason.ServerClosed, session.closeReason)
+        session.send(DeliveryChannel.Reliable, "late".encodeToByteArray())
+        assertEquals(SessionCloseReason.ServerClosed, session.closeReason)
+    }
+
+    @Test
+    fun aPeerThatEndsTheConnectionReportsPeerClosed() = runTest {
+        val socket = Socket()
+        val session = session(socket)
+        socket.incoming.close()
+        session.pump()
+        assertTrue(session.incoming().receiveCatching().isClosed)
+        assertEquals(SessionCloseReason.PeerClosed, session.closeReason)
     }
 
     @Test
