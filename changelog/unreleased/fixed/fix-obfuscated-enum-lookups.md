@@ -1,1 +1,0 @@
-- An obfuscated desktop release no longer crashes at startup: the GLFW key map and canvas layout map their enums case by case instead of looking them up by name, which a shrunk build breaks (#1091).
