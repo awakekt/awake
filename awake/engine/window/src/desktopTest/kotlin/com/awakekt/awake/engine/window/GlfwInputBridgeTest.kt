@@ -53,6 +53,17 @@ class GlfwInputBridgeTest {
         }
     }
 
+    /** GLFW numbers A–Z, 0–9 and F1–F12 consecutively; each maps to the Key of the same name, in order. */
+    @Test
+    fun lettersDigitsAndFunctionKeysMapInGlfwOrder() {
+        val expected = ('A'..'Z').mapIndexed { i, c -> 65 + i to c.toString() } +
+            (0..9).map { 48 + it to "Digit$it" } +
+            (1..12).map { 289 + it to "F$it" }
+        for ((glfwKey, name) in expected) {
+            assertEquals(name, DefaultGlfwGameplayKeys[glfwKey]?.name, "GLFW key $glfwKey")
+        }
+    }
+
     /** Shift has a key on each side; letting one go while the other is held keeps Shift down. */
     @Test
     fun aKeyOnBothSidesIsDownWhileEitherIs() {

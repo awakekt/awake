@@ -42,6 +42,19 @@ private const val GLFW_MOUSE_BUTTON_MIDDLE = 2
 private const val GLFW_MOUSE_BUTTON_4 = 3
 private const val GLFW_MOUSE_BUTTON_5 = 4
 
+// GLFW numbers A–Z, 0–9 and F1–F12 consecutively, in these orders.
+private val LetterKeys = listOf(
+    Key.A, Key.B, Key.C, Key.D, Key.E, Key.F, Key.G, Key.H, Key.I, Key.J, Key.K, Key.L, Key.M,
+    Key.N, Key.O, Key.P, Key.Q, Key.R, Key.S, Key.T, Key.U, Key.V, Key.W, Key.X, Key.Y, Key.Z,
+)
+private val DigitKeys = listOf(
+    Key.Digit0, Key.Digit1, Key.Digit2, Key.Digit3, Key.Digit4,
+    Key.Digit5, Key.Digit6, Key.Digit7, Key.Digit8, Key.Digit9,
+)
+private val FunctionKeys = listOf(
+    Key.F1, Key.F2, Key.F3, Key.F4, Key.F5, Key.F6, Key.F7, Key.F8, Key.F9, Key.F10, Key.F11, Key.F12,
+)
+
 /**
  * Default mapping of GLFW key codes to Awake [Key] values: every [Key] but [Key.Unknown], so a game
  * reads any key it binds, a window's hotkey or a skill slot's digit as much as W/A/S/D. Shift,
@@ -49,15 +62,11 @@ private const val GLFW_MOUSE_BUTTON_5 = 4
  * either is ([pollGlfwInput]), and the keypad's Enter is [Key.Enter].
  */
 val DefaultGlfwGameplayKeys: Map<Int, Key> = linkedMapOf<Int, Key>().apply {
-    for (letter in 'A'..'Z') {
-        put(GLFW_KEY_A + (letter - 'A'), Key.valueOf(letter.toString()))
-    }
-    for (digit in 0..9) {
-        put(GLFW_KEY_0 + digit, Key.valueOf("Digit$digit"))
-    }
-    for (n in 1..12) {
-        put(GLFW_KEY_F1 + n - 1, Key.valueOf("F$n"))
-    }
+    // Listed rather than looked up by name: a shrunk desktop release can rename or unbox Key, and
+    // Key.valueOf then fails while this map initializes.
+    LetterKeys.forEachIndexed { i, key -> put(GLFW_KEY_A + i, key) }
+    DigitKeys.forEachIndexed { i, key -> put(GLFW_KEY_0 + i, key) }
+    FunctionKeys.forEachIndexed { i, key -> put(GLFW_KEY_F1 + i, key) }
     put(GLFW_KEY_UP, Key.ArrowUp)
     put(GLFW_KEY_DOWN, Key.ArrowDown)
     put(GLFW_KEY_LEFT, Key.ArrowLeft)
