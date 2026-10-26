@@ -39,7 +39,8 @@ class AslUiShadersTest {
         assertTrue(wgsl.contains("fontInfo"), "Should contain the live fontInfo uniform")
         assertTrue(wgsl.contains("textureDimensions"), "Should read the atlas dimensions")
         assertTrue(wgsl.contains("fwidth"), "Should use derivative-based glyph range")
-        assertTrue(wgsl.contains("correctedCoverage"), "Should preserve gamma correction")
+        assertTrue(wgsl.contains("fieldCoverage"), "Should derive coverage from the distance field")
+        assertTrue(wgsl.contains("groundLuma") && wgsl.contains("ruled"), "Should shape coverage with the text coverage rule")
     }
 
     @Test

@@ -7,6 +7,7 @@ package com.awakekt.awake.compose.testing
 
 import com.awakekt.awake.asset.shaderdsl.AslEvaluator
 import com.awakekt.awake.asset.shaders.UiGlyphShader
+import com.awakekt.awake.core.color.Color
 import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertTrue
@@ -19,11 +20,13 @@ import kotlin.test.assertTrue
  * The evaluator cannot sample a texture, read its size or take a derivative, so those three `let`s
  * are supplied: the atlas sample, the atlas size, and `screenTexSize = 1 / fwidth(uv)`, which for
  * the axis-aligned quad a glyph is equals its on-screen size over its uv span. Everything after
- * them -- the range, the median, the ramp, the gamma and the tint's alpha -- is the shader's.
+ * them -- the range, the median, the ramp, the text coverage rule and the tint's alpha -- is the
+ * shader's; `TextCoverageRuleTwinTest` holds the rule itself across text colours.
  *
  * Negative control: with the range the raster used before (half the range times the horizontal
  * scale alone) the first footprint off the clamp, one screen pixel a texel, already fails: the
- * shader gives alpha 0.264 for the (0.3, 0.35, 0.4) sample and that range 0.388.
+ * shader gives alpha 0.264 for the (0.3, 0.35, 0.4) sample and that range 0.388 (measured in #1057,
+ * under the gamma-1.45 curve the distance field had before the text coverage rule).
  */
 class DistanceFieldGlyphShaderTwinTest {
     @Test
@@ -40,7 +43,8 @@ class DistanceFieldGlyphShaderTwinTest {
                     footprint.screenWidth,
                     footprint.screenHeight,
                 )
-                val raster = distanceFieldCoverage(sample[0], sample[1], sample[2], screenPxRange) * TINT_ALPHA
+                val coverage = distanceFieldCoverage(sample[0], sample[1], sample[2], screenPxRange)
+                val raster = textCoverageAlpha(coverage, TEXT) * TINT_ALPHA
                 assertTrue(
                     abs(shader - raster) < TOLERANCE,
                     "sample ${sample.toList()} at $footprint: shader $shader, raster $raster",
@@ -54,7 +58,7 @@ class DistanceFieldGlyphShaderTwinTest {
             UiGlyphShader,
             inputs = mapOf(
                 "uv" to floatArrayOf(0.5f, 0.5f),
-                "color" to floatArrayOf(0.07f, 0.07f, 0.07f, TINT_ALPHA),
+                "color" to floatArrayOf(TEXT.r, TEXT.g, TEXT.b, TINT_ALPHA),
                 "uniforms.screenToNdc" to floatArrayOf(0f, 0f, 0f, 0f),
                 // x = 1: a distance-field atlas; y: its range in atlas texels.
                 "uniforms.fontInfo" to floatArrayOf(1f, RANGE_TEXELS, 0f, 0f),
@@ -79,6 +83,7 @@ class DistanceFieldGlyphShaderTwinTest {
         const val ATLAS_HEIGHT = 350
         const val RANGE_TEXELS = 2f
         const val TINT_ALPHA = 0.8f
+        val TEXT = Color(0.07f, 0.07f, 0.07f, 1f)
         const val TOLERANCE = 1e-5f
 
         /** 20 by 26 atlas texels drawn at 0.5x, 1x, 1.5x, 3x and 4.5x, plus a non-uniform one. */

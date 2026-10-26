@@ -95,7 +95,8 @@ draws an `ImageFill` over it, and `dropShadow(shadow)` casts a shadow in the sty
 
 `TextStyle(shadow = TextShadow(color, offsetX, offsetY), outline = TextOutline(color, width))` draws a
 hard shadow and an outline under a `Text` or a `BasicTextField`'s text, in dp; both merge over an
-inherited style like its colour and size do. A scene's `canvas_element` text ignores the host's text
+inherited style like its colour and size do. Each is drawn as text in its own colour, so the
+[text coverage rule](#how-coverage-becomes-colour) shapes its edges by that colour. A scene's `canvas_element` text ignores the host's text
 style and looks only as its own data says.
 
 To load a PNG or JPEG, call `decodeImageBitmap(bytes)`. It suspends, because the browser decodes
@@ -117,16 +118,80 @@ the text depends on that size.
 | In `UiFonts.bitmap()` | Its own pixel-art atlas, at every size |
 
 The exact-size glyphs put a one-pixel stem on one solid pixel column, and the x-height and cap height
-on whole pixels. Their coverage blends with gamma 1.8, corrected for the text colour, after a mild
-contrast boost, so dark text on a light background and light text on a dark one keep the same weight.
-The default Roboto family and any font from `UiFonts.load` have them. Each size is rasterized the first
-time it is drawn, in about a millisecond, and kept.
+on whole pixels. The default Roboto family and any font from `UiFonts.load` have them. Each size is
+rasterized the first time it is drawn, in about a millisecond, and kept.
+
+### How coverage becomes colour
+
+Both paths give each pixel a coverage: the share of the pixel the glyph's outline covers. Exact-size
+glyphs store it; the distance field gives it as a one-pixel ramp across the outline. One rule, the
+**text coverage rule**, turns that coverage into the alpha the pixel is blended with. It is the same on
+both paths, on Vulkan, on WebGPU and in the CPU raster the snapshot tests use, so text does not change
+weight when it crosses the 24-pixel limit or starts to scale.
+
+The rule is Skia's mask gamma with the constants Chromium uses for grayscale text on Linux:
+
+1. Take the text colour's luma: its channels raised to the power 1.2, weighted 0.2126, 0.7152 and
+   0.0722, and the sum raised back by 1 / 1.2.
+2. Assume the ground is the opposite of the text: ground luma = 1 − text luma. The shader cannot see
+   what is behind the text.
+3. Boost the coverage `c` with a contrast of 0.2 times the ground's linear luma: `c + (1 − c) × k × c`.
+   Dark text on a light ground gains a little, and light text on a dark ground gains nothing.
+4. Mix text and ground by that coverage in light linearised with gamma 1.2. Then take the alpha that
+   gives the same colour when the GPU blends in the target's own encoding.
+
+| Constant | Value | Where |
+|---|---|---|
+| Gamma | 1.2 | `TEXT_GAMMA` in `AslUiShaders.UiGlyphShader`; `UiRasterizer.textCoverageAlpha` copies it |
+| Contrast | 0.2 | `TEXT_CONTRAST`, likewise |
+| Luma weights | 0.2126, 0.7152, 0.0722 | Rec. 709 |
+
+At half coverage, near-black text on white draws with alpha 0.50 and near-white text on near-black with
+0.55. The exact-size glyphs used to blend with gamma 1.8 and a contrast of 1 in both polarities, which
+gave 0.49 and 0.80, so light text looked bolder than dark. The distance field used `pow(c, 1 / 1.45)`,
+which gave 0.62 for both.
+
+`TextPolarityWeightTest` holds the rule to Chromium. Chromium draws the same label in the same Roboto
+face, dark on light and light on dark, at every size from 9 to 48 px. The references are written by
+`tools/fonts-tooling/chromium_polarity_reference.cjs`. Awake's ink is within 6% of Chromium's at every
+size in both polarities, 0.94 to 1.04 of it. The light-on-dark to dark-on-light ink ratio is within 5%
+of Chromium's own. Ink means the summed darkness of the text's pixels, measured toward the text colour.
+From 24 px pixel glyphs to 25 px distance field, the ink per em changes by under 2% and stem darkness
+by under 3.5%. Before the rule, light-on-dark small text held 1.16 to 1.29 times Chromium's ink, and
+crossing the limit moved ink by 9 to 10% in each polarity.
+
+The rule does no stem darkening. Chromium does none, and the sizes it was measured at are within the
+tolerance without it.
+
+#### Text colour and custom shaders
+
+- **The colour picks the curve.** The rule reads only the text colour, never the ground. Dark text gets
+  a slightly heavier edge and light text a slightly lighter one than plain coverage would give. Text on
+  a ground close to its own luma, such as grey on grey, is drawn as if the ground were the opposite of
+  the text, as Chromium draws it. A saturated colour counts by its luma: pure red's is about 0.28, so red
+  text is treated as dark text, wherever it is drawn.
+- **Mid-grey text** has a luma of 0.5 and its assumed ground is itself, so it draws with the boosted
+  coverage as it is.
+- **The colour's alpha** multiplies the rule's alpha afterwards. Faded text keeps the shape of its
+  edges and only gets lighter.
+- **Layers and opacity.** The rule applies when a glyph is drawn, including into a `graphicsLayer`. A
+  layer composited later gives the same pixels as drawing straight onto the ground.
+- **A shader document** (`shader_effect`) draws as a pass of its own. It never changes how text is
+  drawn: text it covers, or that covers it, has already been drawn with the rule. An image pass that
+  post-processes the frame sees text after the rule as well.
+- **A glyph shader of your own.** A renderer built with its own `UiShaderSet.glyph` must apply the
+  rule itself, or its text will not match the CPU raster or the other backend. Start from
+  `UiGlyphShader` in `awake:asset:shaders`. Its `fontInfo` uniform says which atlases take the rule:
+  `x = 1` for a distance field, and `x = 0` with `z = 1` for exact-size coverage. A bitmap font such
+  as `UiFonts.bitmap()` (`z = 0`) and colour glyphs (`x = 2`) draw their alpha unchanged.
 
 ### The reference small text is held to
 
-The weight of small text is checked against a reference we control, not against Awake's own earlier
-output. `tools/fonts-tooling/reference_render.py` renders the same labels with FreeType, pinned to
-2.13.2 through `freetype-py` 2.5.1 in `requirements-reference.txt`, with these settings:
+The weight of small text is checked against references we control, not against Awake's own earlier
+output. Both polarities are held to Chromium, as above. The shapes of small dark-on-light text are
+also held to FreeType. `tools/fonts-tooling/reference_render.py` renders the same labels with
+FreeType, pinned to 2.13.2 through `freetype-py` 2.5.1 in `requirements-reference.txt`, with these
+settings:
 
 | Setting | Value | Why |
 |---|---|---|
@@ -138,7 +203,9 @@ output. `tools/fonts-tooling/reference_render.py` renders the same labels with F
 The PNGs live in `awake/compose/ui-testing/src/desktopTest/resources/text-reference/`, and
 `TextReferenceMetricsTest` compares Awake's rendering with them per case: stem width, ink mass, the
 darkness of curves and diagonals against stems, the share of faint ink pixels, and the mean pixel
-difference. The PNGs change only when someone deliberately reruns the generator:
+difference. It asserts the dark-on-light cases and only reports the light-on-dark ones. The reference
+composites light text with gamma 1.8, which gives it about 1.4 times the ink of dark text, where
+Chromium gives about 1.1 times. The PNGs change only when someone deliberately reruns the generator:
 
 ```
 python3 -m pip install -r tools/fonts-tooling/requirements-reference.txt

@@ -35,9 +35,11 @@ import kotlin.test.Test
  * change to how text draws re-records these and the Render Evidence comment shows its before and after
  * (#1055).
  *
- * Each sheet holds the whole set at 12, 24 and 48 sp, top to bottom, in neutral greys on white, recorded
- * as an 8-bit grey PNG to keep a baseline every text change re-records small. The glyphs alone in Regular,
- * Bold and Black at device scale 1, and in Regular at 1.5; the layout boxes in Regular at 1 and 1.5. Within a size the glyphs fill rows of 17 in [BuiltInGlyphs.specimen]
+ * Each sheet holds the whole set at 12, 24 and 48 sp, top to bottom, in neutral greys, recorded as an 8-bit
+ * grey PNG to keep a baseline every text change re-records small. The glyphs alone, near-black on white, in
+ * Regular, Bold and Black at device scale 1, and in Regular at 1.5; the same glyphs white on near-black, the
+ * HUD case, in Regular and Bold at 1 and Regular at 1.5 (#1064); the layout boxes in Regular at 1 and 1.5.
+ * Within a size the glyphs fill rows of 17 in [BuiltInGlyphs.specimen]
  * order: `UiFonts.DEFAULT_CHARS`, then anything else the font draws. With today's 102 glyphs that is 6 rows:
  * space to '0', then '1' to 'A', 'B' to 'R', 'S' to 'c', 'd' to 't', and 'u' to '−'. A glyph sits in the
  * same column and row at every size and in every sheet, so a one-glyph change is one cell of the diff, and
@@ -45,11 +47,13 @@ import kotlin.test.Test
  * rows as needed, with no change to this test.
  *
  * The sizes take both paths text draws by: whole sizes up to 24 device pixels draw pixel glyphs (12 and
- * 24 at scale 1, 18 at 1.5), larger ones the distance field (48 at scale 1, 36 and 72 at 1.5). This CPU
- * raster draws distance-field text softer and greyer than Vulkan does (#1057), so those rows look soft
- * here until that is fixed and they are re-recorded.
+ * 24 at scale 1, 18 at 1.5), larger ones the distance field (48 at scale 1, 36 and 72 at 1.5). Both draw
+ * with the one text coverage rule (#1003), so a weight change between the 24 and 48 rows is the font's,
+ * not the path's; how much ink each polarity holds is measured against Chromium by
+ * `TextPolarityWeightTest`, not here.
  *
  * - `glyph-specimen-<weight>-<scale>x`: the glyphs alone.
+ * - `glyph-specimen-<weight>-<scale>x-light-on-dark`: the glyphs alone, white on near-black.
  * - `glyph-boxes-regular-<scale>x`: the same grid with each glyph's layout box, the `Text` node's own
  *   bounds, tinted and framed beneath the ink. Ink outside the tint is ink a clip or layer the size of
  *   the text's box cuts (#1053).
@@ -76,27 +80,42 @@ class GlyphSpecimenBaselineTest {
     @Test
     fun regularBoxesAtScale15() = assertSheet(Sheet.Boxes, FontWeight.Normal, 1.5f)
 
+    @Test
+    fun regularLightOnDarkAtScale1() = assertSheet(Sheet.Specimen, FontWeight.Normal, 1f, Polarity.LightOnDark)
+
+    @Test
+    fun boldLightOnDarkAtScale1() = assertSheet(Sheet.Specimen, FontWeight.Bold, 1f, Polarity.LightOnDark)
+
+    @Test
+    fun regularLightOnDarkAtScale15() = assertSheet(Sheet.Specimen, FontWeight.Normal, 1.5f, Polarity.LightOnDark)
+
     private enum class Sheet(val prefix: String) { Specimen("glyph-specimen"), Boxes("glyph-boxes") }
 
-    private fun assertSheet(sheet: Sheet, weight: FontWeight, scale: Float) {
+    /** The sheet's greys: near-black ink on white cells, or the same greys the other way round (#1064). */
+    private enum class Polarity(val suffix: String, val ground: Color, val cell: Color, val ink: Color) {
+        DarkOnLight("", Color(0.78f, 0.78f, 0.78f, 1f), Color(1f, 1f, 1f, 1f), Color(0.09f, 0.09f, 0.09f, 1f)),
+        LightOnDark("-light-on-dark", Color(0.3f, 0.3f, 0.3f, 1f), Color(0.09f, 0.09f, 0.09f, 1f), Color(1f, 1f, 1f, 1f)),
+    }
+
+    private fun assertSheet(sheet: Sheet, weight: FontWeight, scale: Float, polarity: Polarity = Polarity.DarkOnLight) {
         val widthDp = SIZES.maxOf { cellWidth(it) * COLUMNS } + 2 * MARGIN
         val heightDp = SIZES.sumOf { cellHeight(it) * rows } + GAP * (SIZES.size - 1) + 2 * MARGIN
         val width = (widthDp * scale).roundToInt()
         val height = (heightDp * scale).roundToInt()
         val primitives = ComposeHost(density = scale).frame(FrameInput(width, height)) {
             Column(Modifier.padding(MARGIN.dp), verticalArrangement = Arrangement.spacedBy(GAP.dp)) {
-                for (size in SIZES) Grid(sheet, weight, size)
+                for (size in SIZES) Grid(sheet, weight, size, polarity)
             }
         }.primitives
-        val name = "${sheet.prefix}-${weightName(weight)}-${if (scale == 1f) "1" else scale.toString()}x"
-        primitives.assertMatchesGrayscaleBaseline(name, width, height, background = GROUND)
+        val name = "${sheet.prefix}-${weightName(weight)}-${if (scale == 1f) "1" else scale.toString()}x${polarity.suffix}"
+        primitives.assertMatchesGrayscaleBaseline(name, width, height, background = polarity.ground)
     }
 
     context(_: Composer)
-    private fun Grid(sheet: Sheet, weight: FontWeight, size: Int) {
-        val style = TextStyle(color = INK, size = size.sp, weight = weight, font = UiFonts.default())
+    private fun Grid(sheet: Sheet, weight: FontWeight, size: Int, polarity: Polarity) {
+        val style = TextStyle(color = polarity.ink, size = size.sp, weight = weight, font = UiFonts.default())
         val inset = cellInset(size).dp
-        Column(Modifier.background(CELL)) {
+        Column(Modifier.background(polarity.cell)) {
             for (row in 0 until rows) {
                 Row {
                     for (column in 0 until COLUMNS) {
@@ -153,10 +172,7 @@ class GlyphSpecimenBaselineTest {
         /** Between one size's grid and the next, in dp. */
         const val GAP = 8
 
-        // Neutral greys only: the sheets are recorded as 8-bit grey PNGs, which a coloured pixel would fail.
-        val GROUND = Color(0.78f, 0.78f, 0.78f, 1f)
-        val CELL = Color(1f, 1f, 1f, 1f)
-        val INK = Color(0.09f, 0.09f, 0.09f, 1f)
+        // Neutral greys only (Polarity's too): the sheets are recorded as 8-bit grey PNGs, which a coloured pixel would fail.
         val BOX_TINT = Color(0.88f, 0.88f, 0.88f, 1f)
         val BOX_OUTLINE = Color(0.55f, 0.55f, 0.55f, 1f)
     }

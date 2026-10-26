@@ -17,7 +17,8 @@ import kotlin.math.sqrt
  * A distance field is built for text that scales. At 11 to 14 pixels its anti-aliased edge is about as
  * wide as a stroke, so a stem draws as two or three grey pixels. These glyphs are the area each pixel of
  * the outline covers, computed at the size the text is drawn at, so a one-pixel stem is one solid pixel
- * when it lands on the grid, and they draw with linear-light blending ([UiFont.linearCoverage]).
+ * when it lands on the grid, and they draw with the text coverage rule the distance field draws with
+ * ([UiFont.linearCoverage]), so text keeps its weight across [UiFont.pixelGlyphMaxSize].
  *
  * A text renderer asks for them when [UiFont.pixelGlyphs] is not null, its size in device pixels is a
  * whole number no larger than [UiFont.pixelGlyphMaxSize], and the line's origin and baseline sit on
