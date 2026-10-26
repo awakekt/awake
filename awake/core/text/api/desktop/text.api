@@ -171,6 +171,7 @@ public final class com/awakekt/awake/core/text/font/PackedUiFont : com/awakekt/a
 }
 
 public final class com/awakekt/awake/core/text/font/PixelGlyph {
+	public final fun getAnchorX ()F
 	public final fun getAtlas ()Lcom/awakekt/awake/core/text/font/UiFont;
 	public final fun getBaselineEm ()F
 	public final fun getHeight ()I

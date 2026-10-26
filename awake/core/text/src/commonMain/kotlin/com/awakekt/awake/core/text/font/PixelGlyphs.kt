@@ -97,7 +97,20 @@ class PixelGlyph internal constructor(
     val v0: Float,
     val u1: Float,
     val v1: Float,
-)
+) {
+    /**
+     * Where the glyph's main stem starts, measured from the pen, in the whole-pixel placement
+     * `round(penX + anchorX) + left` that variants replaced: always 0, which is right for variant 0, the
+     * glyph a pen on a whole pixel draws, with its stem already on the grid. A renderer that still reads it
+     * keeps working, drawing variant 0 at the rounded pen.
+     */
+    @Deprecated(
+        message = "The subpixel variants replace it: pick the variant for the pen's fraction, see subpixelSteps. " +
+            "It is always 0 and will be removed in a later minor.",
+        replaceWith = ReplaceWith("0f"),
+    )
+    val anchorX: Float get() = 0f
+}
 
 /**
  * [PixelGlyphs] for one face, from the outlines of [outlines].
