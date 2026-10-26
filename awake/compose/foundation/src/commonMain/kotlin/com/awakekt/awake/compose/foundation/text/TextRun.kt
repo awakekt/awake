@@ -39,6 +39,7 @@ internal class TextRun(
     private val font: UiFont,
     private val glyphPx: Float,
     private val density: Float,
+    private val emDp: Float = glyphPx / density,
     private val wrapWidthPx: Float = Float.POSITIVE_INFINITY,
     private val singleLine: Boolean = false,
     private val overflow: TextOverflow = TextOverflow.Clip,
@@ -79,7 +80,7 @@ internal class TextRun(
      * every line: the authored line height, tighter or looser than the font's, or the font's own.
      * See [TextLineBox].
      */
-    internal val lineHeightPx: Float = TextLineBox.advancePx(font, glyphPx, density, authoredLineHeightPx)
+    internal val lineHeightPx: Float = TextLineBox.advancePx(font, emDp, glyphPx, density, authoredLineHeightPx)
 
     /**
      * How far below its line's top the em box the glyph metrics are measured from begins: the whole-pixel
@@ -87,7 +88,7 @@ internal class TextRun(
      * glyphs above the line box.
      */
     private val glyphTopPx: Float =
-        TextLineBox.baselinePx(font, glyphPx, density, authoredLineHeightPx) - font.ascentEm * glyphPx
+        TextLineBox.baselinePx(font, emDp, density, authoredLineHeightPx) - font.ascentEm * glyphPx
 
     /** The lines this run occupies, hard breaks and soft wraps alike. */
     internal val lines: List<String> = lineLayouts.map(TextLineLayout::text)

@@ -105,9 +105,10 @@ class TextMeasurePolicy(
         // until the retained layout model carries fractional bounds end to end.
         val width = lines.maxOf { lineWidth(it, glyphPx) }.roundToInt()
         // Whole pixels both, from the rule painting uses, so the box is exactly the lines it paints.
-        val lineHeight = TextLineBox.advancePx(font, glyphPx, density, authoredLineHeight()).roundToInt()
+        val em = emDp(fontScale)
+        val lineHeight = TextLineBox.advancePx(font, em, glyphPx, density, authoredLineHeight()).roundToInt()
         val height = lineHeight * lines.size
-        val firstBaseline = TextLineBox.baselinePx(font, glyphPx, density, authoredLineHeight()).roundToInt()
+        val firstBaseline = TextLineBox.baselinePx(font, em, density, authoredLineHeight()).roundToInt()
         val lastBaseline = firstBaseline + lineHeight * (lines.size - 1).coerceAtLeast(0)
         val alignmentLines = mapOf<AlignmentLine, Int>(
             FirstBaseline to firstBaseline,
@@ -161,7 +162,7 @@ class TextMeasurePolicy(
         val wrapAt = if (singleLine || width == Constraints.Infinity) Float.POSITIVE_INFINITY else width.toFloat()
         val glyphPx = glyphPixels(density, fontScale)
         val lineCount = linesAt(glyphPx, wrapAt).size
-        return TextLineBox.advancePx(font, glyphPx, density, authoredLineHeight()).roundToInt() * lineCount
+        return TextLineBox.advancePx(font, emDp(fontScale), glyphPx, density, authoredLineHeight()).roundToInt() * lineCount
     }
 
     /** The same answer as [minIntrinsicHeight]: text has one height at a given width. */
@@ -253,6 +254,18 @@ class TextMeasurePolicy(
     }
 }
 
+/**
+ * The authored em in density-independent pixels: size times font scale times the atlas-snapped text
+ * scale, before it is rounded to device pixels as [TextMeasurePolicy.glyphPixels] does. [TextLineBox]
+ * builds the line from this, so a fractional density does not stretch the line by the rounding of the
+ * drawn size.
+ */
+internal fun TextMeasurePolicy.emDp(fontScale: Float): Float {
+    val sizeSp = style.size ?: DefaultFontSize
+    val snapped = pixelPerfectTextScale(style.scale, font.textScaleStep)
+    return sizeSp.value * fontScale * snapped
+}
+
 /** A fresh run from [TextMeasurePolicy]'s inputs and its last wrap width. */
 internal fun TextMeasurePolicy.buildRun(density: Float, fontScale: Float): TextRun =
     TextRun(
@@ -260,6 +273,7 @@ internal fun TextMeasurePolicy.buildRun(density: Float, fontScale: Float): TextR
         style = style,
         font = font,
         glyphPx = glyphPixels(density, fontScale),
+        emDp = emDp(fontScale),
         density = density,
         wrapWidthPx = wrapWidthPx,
         singleLine = singleLine,

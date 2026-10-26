@@ -17,7 +17,9 @@ import kotlin.math.floor
  * The rule is CSS's, as the pinned Chromium oracle measures it (`tools/fonts-tooling/layout`):
  *
  * 1. The font's line ascent, descent and gap ([UiFont.lineAscentEm] and its siblings) are each
- *    rounded to a whole density-independent pixel, as a browser rounds them to whole CSS pixels. Their
+ *    rounded to a whole density-independent pixel, as a browser rounds them to whole CSS pixels, from
+ *    the authored em (size times font scale) and not from the glyph size drawn, which is rounded to
+ *    whole device pixels and at 125% is 14.4 dp for a 14 dp em. Their
  *    sum is `line-height: normal`: Roboto at 14 px is 13 + 4 = 17, not its exact 16.8. The metrics are
  *    the ones DirectWrite reads, as Chromium on Windows (the oracle's platform) does; a browser on
  *    macOS or Linux reads the `hhea` line instead, 16 px for the same text.
@@ -36,7 +38,8 @@ import kotlin.math.floor
  *    descent can fall short of the font's deepest descender once scaled to device pixels (9 sp at a
  *    0.75 density), and a glyph drawn from the distance field, as everything above the exact-size
  *    pixel-glyph limit is, antialiases up to [FIELD_FRINGE_PX] past its outline (24 sp at 125%). Where
- *    either reaches below the box, the advance grows by the whole pixels it needs. At density 1 it
+ *    either reaches below the box, the advance grows by the whole pixels it needs; this is the one rule
+ *    that reads the drawn glyph size. At density 1 it
  *    does not apply to the oracle's 11 to 18 px, whose box stays the browser's; field-drawn text such
  *    as 28 or 48 px gets a pixel more than Chromium gives it. An authored line height is the author's
  *    box and is never grown.
@@ -45,19 +48,20 @@ internal object TextLineBox {
 
     /**
      * The distance from one line's top to the next, in whole device pixels, never less than one, for
-     * text drawn from [font] at [glyphPx] device pixels on a [density] display. [lineHeightPx] is an
-     * authored line height in device pixels, or null for the font's own.
+     * text drawn from [font] on a [density] display. [emDp] is the authored em in density-independent
+     * pixels, which rules 1 to 3 round from; [glyphPx] is the em as drawn, rounded to whole device
+     * pixels, which only rule 4's ink check reads. [lineHeightPx] is an authored line height in device
+     * pixels, or null for the font's own.
      */
-    fun advancePx(font: UiFont, glyphPx: Float, density: Float, lineHeightPx: Float?): Float {
+    fun advancePx(font: UiFont, emDp: Float, glyphPx: Float, density: Float, lineHeightPx: Float?): Float {
         if (lineHeightPx != null) return wholePixel(lineHeightPx).coerceAtLeast(1f)
-        val normalPx = wholePixel(normalLineDp(font, glyphPx / density) * density)
-        val inkBottomPx = baselinePx(font, glyphPx, density, null) + inkDescentPx(font, glyphPx)
+        val normalPx = wholePixel(normalLineDp(font, emDp) * density)
+        val inkBottomPx = baselinePx(font, emDp, density, null) + inkDescentPx(font, glyphPx)
         return maxOf(normalPx, inkBottomPx, 1f)
     }
 
-    /** The first line's baseline below its top, in whole device pixels; see [advancePx] for [lineHeightPx]. */
-    fun baselinePx(font: UiFont, glyphPx: Float, density: Float, lineHeightPx: Float?): Float {
-        val emDp = glyphPx / density
+    /** The first line's baseline below its top, in whole device pixels; see [advancePx] for the parameters. */
+    fun baselinePx(font: UiFont, emDp: Float, density: Float, lineHeightPx: Float?): Float {
         val ascentDp = wholePixel(font.lineAscentEm * emDp)
         val contentDp = ascentDp + wholePixel(font.lineDescentEm * emDp)
         val lineDp = lineHeightPx?.let { it / density } ?: normalLineDp(font, emDp)

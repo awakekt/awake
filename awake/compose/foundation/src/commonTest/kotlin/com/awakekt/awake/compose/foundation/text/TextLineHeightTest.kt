@@ -72,6 +72,24 @@ class TextLineHeightTest {
     }
 
     /**
+     * The line box is built from the authored em, not the glyph size rounded to whole device pixels (#1072).
+     * 14 sp at 125% draws an 18 px glyph, whose em is 14.4 dp: rounded from that, ascent 14 and descent 4
+     * made an 18 dp line, 23 px. The authored 14 dp em gives 13 + 4 = 17 dp, 21.25 px, so 21. The ink check
+     * does not ask for more: the 18 px pixel glyphs end 4 px below the baseline, inside the 21 px line.
+     * Densities whose glyph size is already whole (1, 1.5, 2) are unchanged: 17, 26 (25.5) and 34.
+     */
+    @Test
+    fun theLineAdvanceFollowsTheAuthoredEmAtFractionalDensities() {
+        val expected = mapOf(1f to 17, 1.25f to 21, 1.5f to 26, 2f to 34)
+        for ((density, pitch) in expected) {
+            val output = frame(density) { Text("Hg\nHg\nHg", Modifier.testTag("text"), style = style(14f)) }
+            assertEquals(pitch * 3, output.textBox().height, "14 sp at $density: three lines")
+            val baselines = baselines(output, floor(14 * density + 0.5f).toInt())
+            assertEquals(listOf(pitch.toFloat(), pitch.toFloat()), baselines.zipWithNext { a, b -> b - a }, "14 sp at $density: pitch")
+        }
+    }
+
+    /**
      * A line height tighter than the font's applies to every line, as CSS applies it. The half-leading
      * is negative, so the glyphs reach outside their 10 px boxes: 14 px Roboto is 17 px of ascent and
      * descent, the half above is floor(-3.5) = -4 px, and the baseline sits at 13 - 4 = 9, where
