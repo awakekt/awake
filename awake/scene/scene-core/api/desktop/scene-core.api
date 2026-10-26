@@ -18,6 +18,12 @@ public final class com/awakekt/awake/scene/core/Name : com/awakekt/awake/ecs/Poo
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/scene/core/SceneCoreSceneComponents : com/awakekt/awake/scene/binding/SceneComponentModule {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/core/SceneCoreSceneComponents;
+	public fun getBindings ()Ljava/util/List;
+	public fun getSerializersModule ()Lkotlinx/serialization/modules/SerializersModule;
+}
+
 public final class com/awakekt/awake/scene/core/SceneTag : com/awakekt/awake/scene/document/SceneComponent {
 	public static final field Companion Lcom/awakekt/awake/scene/core/SceneTag$Companion;
 	public fun <init> ()V
@@ -63,6 +69,8 @@ public final class com/awakekt/awake/scene/core/TagBinding : com/awakekt/awake/s
 	public fun getComponentClass ()Lkotlin/reflect/KClass;
 	public fun getSchemaClass ()Lkotlin/reflect/KClass;
 	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+	public final fun toComponent (Lcom/awakekt/awake/scene/core/SceneTag;)Lcom/awakekt/awake/ecs/Tags;
+	public final fun toSceneComponent (Lcom/awakekt/awake/ecs/Tags;)Lcom/awakekt/awake/scene/core/SceneTag;
 }
 
 public final class com/awakekt/awake/scene/core/motion/GroundContact {
@@ -169,6 +177,8 @@ public final class com/awakekt/awake/scene/core/transform/StaticTransformBinding
 	public fun getComponentClass ()Lkotlin/reflect/KClass;
 	public fun getSchemaClass ()Lkotlin/reflect/KClass;
 	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+	public final fun toComponent (Lcom/awakekt/awake/scene/core/transform/SceneStaticTransform;)Lcom/awakekt/awake/scene/core/transform/StaticTransform;
+	public final fun toSceneComponent (Lcom/awakekt/awake/scene/core/transform/StaticTransform;)Lcom/awakekt/awake/scene/core/transform/SceneStaticTransform;
 }
 
 public final class com/awakekt/awake/scene/core/transform/Transform : com/awakekt/awake/ecs/Poolable {

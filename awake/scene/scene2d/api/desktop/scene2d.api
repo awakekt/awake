@@ -1,3 +1,9 @@
+public final class com/awakekt/awake/scene/scene2d/Scene2dSceneComponents : com/awakekt/awake/scene/binding/SceneComponentModule {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/scene2d/Scene2dSceneComponents;
+	public fun getBindings ()Ljava/util/List;
+	public fun getSerializersModule ()Lkotlinx/serialization/modules/SerializersModule;
+}
+
 public final class com/awakekt/awake/scene/scene2d/SceneSprite : com/awakekt/awake/scene/document/SceneComponent {
 	public static final field Companion Lcom/awakekt/awake/scene/scene2d/SceneSprite$Companion;
 	public fun <init> (Ljava/lang/String;IIIFZZLcom/awakekt/awake/scene/document/SceneColor;ILcom/awakekt/awake/scene/document/SceneVec2;Ljava/lang/String;)V

@@ -84,3 +84,9 @@ public final class com/awakekt/awake/scene/shader/ShaderEffectSystem : com/awake
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 
+public final class com/awakekt/awake/scene/shader/ShaderSceneComponents : com/awakekt/awake/scene/binding/SceneComponentModule {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/shader/ShaderSceneComponents;
+	public fun getBindings ()Ljava/util/List;
+	public fun getSerializersModule ()Lkotlinx/serialization/modules/SerializersModule;
+}
+

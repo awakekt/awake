@@ -11,6 +11,7 @@ import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.passes.uniforms.TextureAnimation
+import com.awakekt.awake.scene.binding.RegisteredBinding
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneResolutionContext
 import com.awakekt.awake.scene.document.SceneComponent
@@ -169,6 +170,7 @@ class TextureClips(val sheet: SceneTextureClips) {
 }
 
 /** Loads [SceneTextureClips] as the entity's [TextureClips], showing the first cell of its first clip until the system steps it. */
+@RegisteredBinding
 object TextureClipsBinding : SceneComponentBinding<TextureClips, SceneTextureClips> {
     override val componentClass: KClass<TextureClips> = TextureClips::class
     override val schemaClass: KClass<SceneTextureClips> = SceneTextureClips::class

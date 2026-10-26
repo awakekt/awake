@@ -109,9 +109,10 @@ class SceneLoaderTest {
                 SceneNode(
                     name = "parent",
                     transform = SceneTransform(position = SceneVec3(1f, 2f, 3f)),
+                    // Scene core's components come before the 3D module's, as DefaultSceneComponentResolvers.modules lists them.
                     components = listOf(
-                        ScenePbrMaterial(metallic = 0.25f, roughness = 0.4f),
                         SceneSpinControl(radians = 1.5f, speed = 2f),
+                        ScenePbrMaterial(metallic = 0.25f, roughness = 0.4f),
                     ),
                     children = listOf(
                         SceneNode(
