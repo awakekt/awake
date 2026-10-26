@@ -22,14 +22,30 @@ import com.awakekt.awake.render.texture.TextureFiltering
  */
 internal class ImageTextures {
     // One texture per image and filter: an image drawn crisp in one place and smooth in another
-    // samples two textures, since the filter is part of a texture's sampler.
-    private val materials = HashMap<Pair<ImageBitmap, FilterQuality>, Material>()
+    // samples two textures, since the filter is part of a texture's sampler. So is the mip chain:
+    // a smooth image drawn both with and without its mips is uploaded twice.
+    private val materials = HashMap<Triple<ImageBitmap, FilterQuality, Boolean>, Material>()
 
-    fun materialFor(renderer: Renderer, image: ImageBitmap, filterQuality: FilterQuality = FilterQuality.Low): Material =
-        materials.getOrPut(image to filterQuality) {
-            val filtering = if (filterQuality == FilterQuality.None) TextureFiltering.Nearest else TextureFiltering.Linear
+    /**
+     * The material that samples [image] with [filterQuality]. [baseLevelOnly] leaves a smooth
+     * image without its mip chain, sampling only its full-size level the way a render target is
+     * sampled; a crisp image has no mips either way.
+     */
+    fun materialFor(
+        renderer: Renderer,
+        image: ImageBitmap,
+        filterQuality: FilterQuality = FilterQuality.Low,
+        baseLevelOnly: Boolean = false,
+    ): Material {
+        val filtering = when {
+            filterQuality == FilterQuality.None -> TextureFiltering.Nearest
+            baseLevelOnly -> TextureFiltering.BaseLevelLinear
+            else -> TextureFiltering.Linear
+        }
+        return materials.getOrPut(Triple(image, filterQuality, filtering == TextureFiltering.BaseLevelLinear)) {
             renderer.createMaterial(texture = TextureAsset(image.pixels, image.width, image.height, filtering = filtering))
         }
+    }
 
     fun dispose() {
         materials.values.forEach(Material::destroy)

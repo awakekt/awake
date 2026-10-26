@@ -125,12 +125,28 @@ class GraphicsLayerCompositor {
         flatMap { primitive ->
             if (primitive !is UiDrawPrimitive.Texture) return@flatMap listOf(primitive)
             when (val slot = primitive.material) {
-                is GraphicsLayerPlaceholder -> flat[slot.id]?.drawnDirectly(primitive)?.resolve(renderer, materials, flat)
+                is GraphicsLayerPlaceholder -> flat[slot.id]?.drawnDirectly(primitive) { directMaterial(renderer, it) }
                     ?: listOf(primitive.copy(material = materials.getValue(slot.id)))
                 is ImageBitmap -> listOf(primitive.copy(material = images.materialFor(renderer, slot, primitive.filterQuality)))
                 else -> listOf(primitive)
             }
         }
+
+    /**
+     * What [picture], drawn straight into the parent, samples. The offscreen pass it replaces
+     * samples the layer's target, which has one level, so a picture the layer holds at no less
+     * than its image's size samples the image's full-size level only. Its mip chain would leave
+     * the colour to how the driver estimates the level of detail, which a turn makes inexact: at
+     * 30 degrees Vulkan allows any estimate from -0.21 to +0.45 where the true level is 0, and on
+     * lavapipe a level of 0.0145 (the picture drawn 1% small) already blends in enough of the
+     * half-size level to change four channels by one (#1016). A picture the layer shrinks keeps
+     * its mips, which the offscreen pass would have sampled too.
+     */
+    private fun directMaterial(renderer: Renderer, picture: UiDrawPrimitive.Texture): Any {
+        val image = picture.material as? ImageBitmap ?: return picture.material
+        val shrunk = picture.w < image.width || picture.h < image.height
+        return images.materialFor(renderer, image, picture.filterQuality, baseLevelOnly = !shrunk)
+    }
 
     /**
      * The [layers] that skip their offscreen pass, by id: those [drawnDirectly] can draw straight
@@ -295,9 +311,12 @@ class GraphicsLayerCompositor {
  * offset, the way Compose draws a transform-only `graphicsLayer` without an offscreen buffer; null
  * when only an offscreen pass draws it the same. That holds while the layer has no effect and only
  * [drawsAsIs] textures, and, under a layer alpha, only one, since alpha applied per texture differs
- * from alpha applied once where two overlap.
+ * from alpha applied once where two overlap. [material] gives what each picture samples.
  */
-private fun GraphicsLayerFrame.drawnDirectly(composite: UiDrawPrimitive.Texture): List<UiDrawPrimitive>? {
+private fun GraphicsLayerFrame.drawnDirectly(
+    composite: UiDrawPrimitive.Texture,
+    material: (UiDrawPrimitive.Texture) -> Any = { it.material },
+): List<UiDrawPrimitive>? {
     val noEffect = maxOf(blurRadiusX, blurRadiusY) == 0f && effectInsetX == 0 && effectInsetY == 0
     val plainComposite = composite.blendMode == BlendMode.SourceOver && composite.region == TextureRegion.Whole && composite.tint == Color.White
     // An element's transparent background quad paints nothing.
@@ -320,6 +339,7 @@ private fun GraphicsLayerFrame.drawnDirectly(composite: UiDrawPrimitive.Texture)
         val dx = composite.x + (picture.x + picture.w / 2f) * scaleX - centerX
         val dy = composite.y + (picture.y + picture.h / 2f) * scaleY - centerY
         picture.copy(
+            material = material(picture),
             x = centerX + dx * cosine - dy * sine - w / 2f,
             y = centerY + dx * sine + dy * cosine - h / 2f,
             w = w,

@@ -16,10 +16,14 @@ import com.awakekt.awake.core.text.font.UiFonts
 import com.awakekt.awake.render.imagepass.ImagePassDestination
 import com.awakekt.awake.render.imagepass.ImagePassPlacement
 import com.awakekt.awake.render.imagepass.ImagePassSource
+import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.pipeline.EffectQuality
 import com.awakekt.awake.render.renderer.UiTargetCompositeMode
 import com.awakekt.awake.render.testing.NoopRenderer
+import com.awakekt.awake.render.texture.PbrTextureSet
 import com.awakekt.awake.render.texture.RenderTarget
+import com.awakekt.awake.render.texture.TextureAsset
+import com.awakekt.awake.render.texture.TextureFiltering
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -195,6 +199,47 @@ class GraphicsLayerCompositorTest {
         compositor.dispose()
     }
 
+    /**
+     * A layer's target has one level, so a picture drawn in its place samples its image's base
+     * level, whatever level of detail the driver estimates for the turn (#1016). A picture the
+     * layer shrinks keeps its mips, as does an image drawn outside any layer.
+     */
+    @Test
+    fun aPictureDrawnInPlaceOfItsLayerSamplesTheBaseLevelUnlessTheLayerShrinksIt() {
+        val image = ImageBitmap(4, 2, ByteArray(4 * 2 * 4) { -1 })
+        fun filteringFor(pictureWidth: Float, pictureHeight: Float): List<TextureFiltering?> {
+            val renderer = RecordingCompositeRenderer()
+            val compositor = GraphicsLayerCompositor()
+            compositor.composite(
+                renderer = renderer,
+                primitives = listOf(
+                    UiDrawPrimitive.Texture(10f, 10f, 4f, 2f, GraphicsLayerPlaceholder(7), rotationDegrees = 30f, premultiplied = true),
+                    UiDrawPrimitive.Texture(30f, 30f, 4f, 2f, image),
+                ),
+                layers = listOf(
+                    GraphicsLayerFrame(
+                        id = 7,
+                        x = 10f,
+                        y = 10f,
+                        width = 4,
+                        height = 2,
+                        alpha = 1f,
+                        primitives = listOf(UiDrawPrimitive.Texture(0f, 0f, pictureWidth, pictureHeight, image)),
+                    ),
+                ),
+                font = UiFonts.default(),
+                viewportWidth = 64,
+                viewportHeight = 64,
+            )
+            assertEquals(0, renderer.offscreenDraws)
+            compositor.dispose()
+            return renderer.textureFiltering
+        }
+
+        assertEquals(listOf(TextureFiltering.BaseLevelLinear, TextureFiltering.Linear), filteringFor(4f, 2f))
+        assertEquals(listOf(TextureFiltering.Linear), filteringFor(2f, 1f))
+    }
+
     @Test
     fun aLayerHoldingMoreThanPicturesKeepsItsOffscreenPass() {
         val renderer = RecordingCompositeRenderer()
@@ -299,6 +344,17 @@ private class RecordingCompositeRenderer : NoopRenderer() {
     var destroyedTargets = 0
     val composites = mutableListOf<UiTargetCompositeMode>()
     val recordedImagePasses = mutableListOf<List<ImagePassPlacement>>()
+    val textureFiltering = mutableListOf<TextureFiltering?>()
+
+    override fun createMaterial(
+        texture: TextureAsset?,
+        renderTarget: RenderTarget?,
+        uniformFloatCount: Int,
+        pbrTextures: PbrTextureSet?,
+    ): Material {
+        if (texture != null) textureFiltering += texture.filtering
+        return super.createMaterial(texture, renderTarget, uniformFloatCount, pbrTextures)
+    }
 
     override fun createRenderTarget(width: Int, height: Int): RenderTarget {
         createdTargets += 1
