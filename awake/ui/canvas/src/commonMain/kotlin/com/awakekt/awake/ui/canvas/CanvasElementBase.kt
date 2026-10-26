@@ -13,6 +13,7 @@ import kotlin.reflect.KClass
  * the split are in [CanvasElementFields], [CanvasElementFollowFields] and
  * [CanvasElementWidgetFields], split only to keep each file short.
  */
+@Suppress("TooManyFunctions") // A small helper for each component the flat properties add.
 sealed class CanvasElementBase {
     /** Where the element sits and how big it is. */
     var rect: CanvasRect = CanvasRect()
@@ -63,6 +64,7 @@ sealed class CanvasElementBase {
      *
      * @throws IllegalArgumentException when [component] is not a canvas element component.
      */
+    @Suppress("CyclomaticComplexMethod") // One branch for each component type.
     fun set(component: Any) {
         when (component) {
             is CanvasRect -> rect = component

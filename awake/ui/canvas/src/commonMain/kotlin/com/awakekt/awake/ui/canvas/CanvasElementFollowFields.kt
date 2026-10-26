@@ -80,7 +80,11 @@ sealed class CanvasElementFollowFields : CanvasElementFields() {
     var followArrow: Boolean
         get() = arrowPart != null
         set(value) {
-            if (value && arrowPart == null) set(CanvasFollowArrow()) else if (!value && arrowPart != null) remove(CanvasFollowArrow::class)
+            if (value && arrowPart == null) {
+                set(CanvasFollowArrow())
+            } else if (!value && arrowPart != null) {
+                remove(CanvasFollowArrow::class)
+            }
         }
 
     internal var arrowAngle: Float
