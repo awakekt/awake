@@ -70,6 +70,9 @@ Android, ProGuard on desktop, and an optimized, minified build on the web.
 - **Keep rules:** Awake's libraries bring the rules for what their native code finds by name. If
   your app finds a class by name, keep it in `app/androidApp/proguard-rules.pro` and
   `app/desktopApp/proguard-rules.pro`.
+- **Libraries are not pre-shrunk:** Awake publishes plain libraries, and these release builds do the
+  shrinking and obfuscating. See
+  [Release builds and optimization](https://docs.awakekt.com/guides/release-builds/).
 - **Signing:** the Android release is signed with the debug key so that it installs as it is. Sign
   it with your own key before you publish.
 

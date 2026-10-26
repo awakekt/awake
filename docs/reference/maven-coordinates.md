@@ -29,6 +29,11 @@ to bring in their internal dependencies; consumers should not copy the entire cl
 version catalog. `api` edges expose dependency types on the published compile API. `implementation`
 edges remain required runtime dependencies but are not part of the consumer-facing compile API.
 
+Published artifacts are plain libraries with a sources jar and an empty documentation jar: AwakeKt
+does not minify or obfuscate them. A consumer's release build does, with the consumer keep rules some
+modules ship. [Release builds and optimization](../../website/docs/guides/release-builds.md) lists
+each artifact type and the checks.
+
 A CI closure failure means a published POM or Gradle module file would name an Awake project that has
 no published artifact. Test-source dependencies are intentionally excluded.
 
