@@ -7,6 +7,8 @@ package com.awakekt.awake.render.parity
 
 import com.awakekt.awake.compose.testing.rasterize
 import com.awakekt.awake.core.color.Color
+import com.awakekt.awake.core.graphics2d.LinearGradient
+import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.render.renderer.Renderer
 import java.awt.image.BufferedImage
 import java.io.File
@@ -33,6 +35,7 @@ class RoundClipParityTest {
             withHeadlessUi(backend) { renderer ->
                 verifyCircles(renderer, backend)
                 for (gradient in listOf(false, true)) verifyShadow(renderer, backend, gradient)
+                verifyGradientFills(renderer, backend)
             }
         }
     }
@@ -68,16 +71,45 @@ class RoundClipParityTest {
         assertEquals(0, alpha(cpu, 96, 18, 18), "CPU round shadow corner")
         assertEquals(0, alpha(gpu, 96, 18, 18), "$backend round shadow corner")
         assertEquals(255, alpha(gpu, 96, 48, 48), "$backend round shadow center")
+        compareCoverageAndColor(scenario.name, gpu, cpu, backend)
+    }
+
+    private fun verifyGradientFills(renderer: Renderer, backend: HeadlessUiBackend) {
+        // DrawScope also emits ShadowQuad for gradient fills, including radius=0 and blur=0.
+        for (radius in listOf(0f, 10f)) {
+            val color = Color(0.9f, 0.28f, 0.3f, 0.6f)
+            val end = Color(1f, 0.7f, 0.14f, 0.6f)
+            val scenario = UiScenario(
+                name = "gradient-fill-$radius",
+                font = null,
+                size = 160,
+                primitives = listOf(
+                    UiDrawPrimitive.ShadowQuad(
+                        16f, 16f, 120f, 40f, radius,
+                        0f, 0f, 0f, 0f, color, gradient = LinearGradient(color, end, end, color),
+                    ),
+                ),
+            )
+            val gpu = renderer.render(scenario)
+            val cpu = scenario.primitives.rasterize(scenario.size, scenario.size, Color.Transparent)
+            write(scenario, backend.name, gpu)
+            write(scenario, "CPU", cpu)
+            assertEquals(153, alpha(gpu, scenario.size, 76, 36), "$backend gradient fill interior opacity")
+            compareCoverageAndColor(scenario.name, gpu, cpu, backend)
+        }
+    }
+
+    private fun compareCoverageAndColor(name: String, gpu: ByteArray, cpu: ByteArray, backend: HeadlessUiBackend) {
         val maxAlphaDiff = gpu.indices.step(4).maxOf { abs(channel(gpu, it + 3) - channel(cpu, it + 3)) }
-        assertTrue(maxAlphaDiff <= 1, "$backend versus CPU shadow alpha: $maxAlphaDiff, gradient=$gradient")
+        assertTrue(maxAlphaDiff <= 1, "$backend versus CPU $name alpha: $maxAlphaDiff")
         // GPU readback is premultiplied; PixelMap stores straight colour. Compare in one space.
         val maxColorDiff = gpu.indices.step(4).maxOf { offset ->
             (0..2).maxOf { c ->
                 abs(channel(gpu, offset + c) - (channel(cpu, offset + c) * channel(cpu, offset + 3) / 255f).roundToInt())
             }
         }
-        assertTrue(maxColorDiff <= 2, "$backend versus CPU shadow colour: $maxColorDiff, gradient=$gradient")
-        println("$backend shadow gradient=$gradient: max alpha difference=$maxAlphaDiff; premultiplied colour=$maxColorDiff")
+        assertTrue(maxColorDiff <= 2, "$backend versus CPU $name colour: $maxColorDiff")
+        println("$backend $name: max alpha difference=$maxAlphaDiff; premultiplied colour=$maxColorDiff")
     }
 
     private fun channel(pixels: ByteArray, offset: Int): Int = pixels[offset].toInt() and 255
