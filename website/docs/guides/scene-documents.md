@@ -121,6 +121,10 @@ owns the component, and must be registered before a document that uses them is d
 | `SceneComponentRegistry.registerGlobal(binding)` | any | that binding's id, for every load |
 | `loadProject(files, capabilities = …)` | `project:runtime` | each [scene capability](scene-capabilities.md)'s ids, for that project |
 
+A scene module's own components are listed in the registry the build generates for it, such as
+`SceneCoreSceneComponents`; register one with `registry.register(module)`. [Scene components](scene-components.md)
+shows how to add a component to one.
+
 A registry you build is passed to `instantiate`. Inside an app, where `scene(document)` uses the
 global registry, register with `registerGlobal`; [Cameras and controls](cameras-and-controls.md)
 shows both.

@@ -8,6 +8,7 @@ package com.awakekt.awake.scene.rendering.sky
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.scene.binding.RegisteredBinding
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneResolutionContext
 import com.awakekt.awake.scene.document.SceneColor
@@ -17,6 +18,7 @@ import kotlin.reflect.KClass
 /**
  * Binding definition connecting [SceneSkybox] descriptors to ECS [Skybox] components.
  */
+@RegisteredBinding
 object SkyboxBinding : SceneComponentBinding<Skybox, SceneSkybox> {
     override val componentClass: KClass<Skybox> = Skybox::class
     override val schemaClass: KClass<SceneSkybox> = SceneSkybox::class

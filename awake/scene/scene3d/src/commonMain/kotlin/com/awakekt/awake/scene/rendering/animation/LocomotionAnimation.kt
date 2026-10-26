@@ -10,6 +10,7 @@ import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.scene.binding.RegisteredBinding
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneResolutionContext
 import com.awakekt.awake.scene.core.motion.GroundContact
@@ -185,6 +186,7 @@ class LocomotionAnimation(val clips: SceneLocomotionAnimation) {
 /**
  * Binding definition connecting [SceneLocomotionAnimation] descriptors to ECS [LocomotionAnimation] components.
  */
+@RegisteredBinding
 object LocomotionAnimationBinding : SceneComponentBinding<LocomotionAnimation, SceneLocomotionAnimation> {
     override val componentClass: KClass<LocomotionAnimation> = LocomotionAnimation::class
     override val schemaClass: KClass<SceneLocomotionAnimation> = SceneLocomotionAnimation::class

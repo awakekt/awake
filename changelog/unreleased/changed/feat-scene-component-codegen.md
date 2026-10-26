@@ -1,0 +1,1 @@
+- **`DefaultSceneComponentResolvers` composes module registries.** Its `bindings` are its new `modules` (scene core, 3D, particles, 2D, shader effects) followed by the canvas bindings, so a node saved by `fromWorld` may list its components in a different order than before; each component saves the same, and loading is unaffected (#1089).

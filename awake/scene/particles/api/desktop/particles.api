@@ -28,6 +28,12 @@ public final class com/awakekt/awake/scene/particles/ParticleSpritesKt {
 	public static final fun loadParticleSprites (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
+public final class com/awakekt/awake/scene/particles/ParticlesSceneComponents : com/awakekt/awake/scene/binding/SceneComponentModule {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/particles/ParticlesSceneComponents;
+	public fun getBindings ()Ljava/util/List;
+	public fun getSerializersModule ()Lkotlinx/serialization/modules/SerializersModule;
+}
+
 public final class com/awakekt/awake/scene/particles/SceneParticleAlphaCurve {
 	public static final field Companion Lcom/awakekt/awake/scene/particles/SceneParticleAlphaCurve$Companion;
 	public fun <init> ()V
