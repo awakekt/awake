@@ -15,13 +15,16 @@ import com.squareup.kotlinpoet.joinToCode
 // The expressions a generated binding is built from.
 
 /** [field]'s value read from [source], converted to the live side's type when [toLive] and to the saved side's otherwise. */
-internal fun value(field: FieldPlan, source: CodeBlock, toLive: Boolean, enums: List<Conversion.EnumByName>): CodeBlock {
-    val function = when (val conversion = field.conversion) {
+internal fun value(field: FieldPlan, source: CodeBlock, toLive: Boolean, enums: List<Conversion.EnumByName>): CodeBlock = value(field.conversion, field.nullable, source, toLive, enums)
+
+/** [source] converted in the selected direction, with the same null/enum/converter rules for fields and whole values. */
+internal fun value(conversion: Conversion, nullable: Boolean, source: CodeBlock, toLive: Boolean, enums: List<Conversion.EnumByName>): CodeBlock {
+    val function = when (conversion) {
         Conversion.Direct -> return CodeBlock.of("%L", source)
         is Conversion.Converted -> CodeBlock.of("%T.%L", conversion.converter, if (toLive) "toLive" else "toSaved")
         is Conversion.EnumByName -> CodeBlock.of("%L%L", if (toLive) "liveEnum" else "savedEnum", enums.indexOf(conversion))
     }
-    return if (field.nullable) CodeBlock.of("%L?.let { %L(it) }", source, function) else CodeBlock.of("%L(%L)", function, source)
+    return if (nullable) CodeBlock.of("%L?.let { %L(it) }", source, function) else CodeBlock.of("%L(%L)", function, source)
 }
 
 /** `val [name] = [type](...)`, one argument a line once there are several. */

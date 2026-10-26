@@ -53,6 +53,7 @@ A binding that is mostly copies and a little logic adds converters and hooks. `f
 | Marker | Goes on | What it does |
 | --- | --- | --- |
 | `@SceneBinding(component)` | the schema | Generates `<Component>Binding`, or `name`, in the schema's package |
+| `@SceneBinding(component, whole = "value")` | the schema | Loads the whole live value from that property and saves it back under the same property |
 | `@RuntimeOnly` | a live property | Never saved; it keeps its constructor default on load |
 | `@SceneBinding(runtimeOnly = [...])` | the schema | The same, for a live component the module can't annotate |
 | `@SavedAs("name")` | a live property | Saves it under another schema property |
@@ -71,6 +72,25 @@ other pair needs a converter. The build fails, naming the field, when:
 - the two types differ and no converter matches, or one side is nullable and the other is not;
 - a live constructor parameter that is not saved has no default;
 - a scene component in the module has no binding, or a public binding object isn't `@RegisteredBinding`.
+
+## Whole-value components
+
+A saved form may wrap the live component instead of repeating its fields:
+
+```kotlin
+@Serializable
+@SerialName("canvas_layout")
+@SceneBinding(CanvasLayout::class, whole = "layout")
+data class SceneCanvasLayout(val layout: CanvasLayout = CanvasLayout()) : SceneComponent
+```
+
+The generated `toComponent()` returns `saved.layout`; `toSceneComponent()` builds
+`SceneCanvasLayout(layout = live)`. No live constructor or property setters are needed. The named
+property must be a readable constructor property with the live component's non-null type, or a type
+converted to it by a listed `SceneValueConverter`. Every other schema constructor parameter must have
+a default, which export uses; copy hooks can read or adjust those fields. `@SavedOnly` cannot mark
+the whole property, and `runtimeOnly`/`renamed` cannot be combined with `whole`. The live value's own
+serialization determines its nested saved fields. Omit `whole` to keep the field-copy behavior.
 
 ## Hooks
 

@@ -45,6 +45,7 @@ public abstract interface annotation class com/awakekt/awake/scene/binding/Scene
 	public abstract fun name ()Ljava/lang/String;
 	public abstract fun renamed ()[Lcom/awakekt/awake/scene/binding/SavedAs;
 	public abstract fun runtimeOnly ()[Ljava/lang/String;
+	public abstract fun whole ()Ljava/lang/String;
 }
 
 public abstract interface class com/awakekt/awake/scene/binding/SceneBindingHooks {

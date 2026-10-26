@@ -1,0 +1,1 @@
+- Generate bindings for live components saved under one schema field with `@SceneBinding(whole = "...")`, including converters, hooks and compile-time validation; migrate the canvas layout, cluster and data bindings without changing their saved JSON.

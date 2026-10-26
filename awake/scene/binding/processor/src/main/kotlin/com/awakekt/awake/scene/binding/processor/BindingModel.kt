@@ -34,7 +34,13 @@ internal data class LiveShape(
 )
 
 /** A primary constructor property of the schema. */
-internal data class SavedProperty(val name: String, val type: FieldType, val hasDefault: Boolean, val savedOnly: Boolean)
+internal data class SavedProperty(
+    val name: String,
+    val type: FieldType,
+    val hasDefault: Boolean,
+    val savedOnly: Boolean,
+    val readable: Boolean,
+)
 
 /** The scene schema; [properties] is null for an `object`. */
 internal data class SavedShape(val className: ClassName, val properties: List<SavedProperty>?, val serializable: Boolean)
@@ -54,6 +60,7 @@ internal data class BindingRequest(
     val live: LiveShape,
     val converters: List<Converter>,
     val hooks: Hooks?,
+    val whole: String = "",
 )
 
 /** How one saved field becomes its live field and back. */
@@ -68,9 +75,12 @@ internal sealed interface Conversion {
 /** One field pair; [viaConstructor] when the live side is written through its constructor. */
 internal data class FieldPlan(val saved: String, val live: String, val nullable: Boolean, val conversion: Conversion, val viaConstructor: Boolean)
 
-/** A request whose every field is paired, ready to write. */
-internal data class BindingPlan(val request: BindingRequest, val fields: List<FieldPlan>) {
-    val isObjectPair: Boolean get() = request.live.parameters == null
+/** A whole live component stored under one saved property. */
+internal data class WholePlan(val saved: String, val conversion: Conversion)
+
+/** A request whose fields or whole value are paired, ready to write. */
+internal data class BindingPlan(val request: BindingRequest, val fields: List<FieldPlan>, val whole: WholePlan? = null) {
+    val isObjectPair: Boolean get() = whole == null && request.live.parameters == null
 }
 
 /** A binding the module's registry lists, and the schema it binds when that schema is `@Serializable`. */

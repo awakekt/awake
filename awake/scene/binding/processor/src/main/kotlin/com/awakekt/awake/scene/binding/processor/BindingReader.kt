@@ -24,6 +24,10 @@ internal fun readBinding(schema: KSClassDeclaration, annotation: KSAnnotation): 
     val component = (annotation.argument("component") as KSType).declaration as KSClassDeclaration
     val runtimeOnly = annotation.stringList("runtimeOnly")
     val renamed = annotation.annotationList("renamed").associate { it.string("property") to it.string("name") }
+    val whole = annotation.string("whole")
+    if (whole.isNotEmpty() && (runtimeOnly.isNotEmpty() || renamed.isNotEmpty())) {
+        errors += "whole cannot be combined with runtimeOnly or renamed: it preserves the live value as one saved property"
+    }
     val live = readLive(component, runtimeOnly.toSet(), renamed)
     val liveNames = live.properties.map { it.name }.toSet()
     (runtimeOnly + renamed.keys).filterNot { it in liveNames }.forEach {
@@ -43,7 +47,7 @@ internal fun readBinding(schema: KSClassDeclaration, annotation: KSAnnotation): 
         Hooks(declaration.toClassName(), declaration.getDeclaredFunctions().map { it.simpleName.asString() }.toSet())
     }
     val name = annotation.string("name").ifEmpty { "${component.simpleName.asString()}Binding" }
-    val request = BindingRequest(ClassName(schema.packageName.asString(), name), readSaved(schema), live, converters, hooks)
+    val request = BindingRequest(ClassName(schema.packageName.asString(), name), readSaved(schema), live, converters, hooks, whole)
     return if (errors.isEmpty()) Result.success(request) else Result.failure(BindingErrors(errors))
 }
 
@@ -97,6 +101,9 @@ private fun readSaved(schema: KSClassDeclaration): SavedShape {
             type = fieldType(parameter.type.resolve()),
             hasDefault = parameter.hasDefault,
             savedOnly = parameter.hasAnnotation(Names.SAVED_ONLY) || properties[name]?.hasAnnotation(Names.SAVED_ONLY) == true,
+            readable = (parameter.isVal || parameter.isVar) && properties[name]?.let {
+                it.modifiers.none { modifier -> modifier == Modifier.PRIVATE || modifier == Modifier.PROTECTED }
+            } == true,
         )
     }
     return SavedShape(schema.toClassName(), saved, serializable)

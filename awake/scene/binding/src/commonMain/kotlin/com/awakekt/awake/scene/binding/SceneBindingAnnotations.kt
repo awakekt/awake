@@ -23,6 +23,12 @@ import kotlin.reflect.KClass
  * - equal types are copied as they are, enums with the same constants are mapped by name, and any other
  *   pair needs one of [converters].
  *
+ * With [whole], the schema wraps the live value in that constructor property instead. Loading unwraps
+ * it and saving wraps it, optionally through [converters]; the live value is not constructed or copied
+ * field by field. The named property must be readable and match the non-null live type, and every
+ * other schema constructor parameter must have a default (used on export). Field-level [runtimeOnly]
+ * and [renamed] options cannot be combined with [whole]. Hooks still run around both conversions.
+ *
  * The binding is an `object` named [name], `<Component>Binding` by default, in the schema's package. It
  * exposes `S.toComponent()` and `C.toSceneComponent()`, uses the schema's `serializer()`, and is listed in
  * the module's generated [SceneComponentModule]. A binding whose conversion needs logic adds [hooks];
@@ -37,6 +43,7 @@ import kotlin.reflect.KClass
  *   annotate with [RuntimeOnly].
  * @property renamed Live properties saved under another name, for a live component the module can't
  *   annotate with [SavedAs]; each gives the live [SavedAs.property].
+ * @property whole The schema constructor property containing the whole live value; empty for field copying.
  */
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.BINARY)
@@ -47,6 +54,7 @@ annotation class SceneBinding(
     val hooks: KClass<out SceneBindingHooks<*, *>> = SceneBindingHooks::class,
     val runtimeOnly: Array<String> = [],
     val renamed: Array<SavedAs> = [],
+    val whole: String = "",
 )
 
 /**

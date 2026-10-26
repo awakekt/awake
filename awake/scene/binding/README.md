@@ -47,6 +47,13 @@ binding, or a public hand-written binding not marked `@RegisteredBinding` fails 
 (`afterCopyToLive`, `afterCopyToSaved`, `afterAttach`, `beforeExport`) cover the bindings that are mostly
 copies. The guide is [Scene components](../../../website/docs/guides/scene-components.md).
 
+For a schema wrapping a live value under one constructor property, use
+`@SceneBinding(CanvasLayout::class, whole = "layout")`. Loading unwraps `saved.layout` and exporting
+constructs `SceneCanvasLayout(layout = live)`, using the same converters and hooks as field copies.
+The named property must be readable and have the live type (or a listed converter); every other
+schema constructor parameter needs a default, which export uses. This preserves the value itself
+instead of constructing and copying its fields. `runtimeOnly` and `renamed` apply only to field copies.
+
 Keep a binding hand-written, and mark it `@RegisteredBinding`, when it resolves asset references, links
 entities through `SceneResolutionContext`, creates native objects, or reshapes a format.
 

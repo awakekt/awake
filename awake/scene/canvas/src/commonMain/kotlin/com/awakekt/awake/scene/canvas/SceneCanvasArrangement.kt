@@ -31,6 +31,7 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 @SerialName("canvas_layout")
+@SceneBinding(CanvasLayout::class, whole = "layout")
 data class SceneCanvasLayout(val layout: CanvasLayout = CanvasLayout()) : SceneComponent {
     override val allowsMultiplePerNode: Boolean get() = false
 
@@ -50,6 +51,7 @@ data class SceneCanvasLayout(val layout: CanvasLayout = CanvasLayout()) : SceneC
  */
 @Serializable
 @SerialName("canvas_cluster")
+@SceneBinding(CanvasCluster::class, whole = "cluster")
 data class SceneCanvasCluster(val cluster: CanvasCluster = CanvasCluster()) : SceneComponent {
     override val allowsMultiplePerNode: Boolean get() = false
 
@@ -65,6 +67,7 @@ data class SceneCanvasCluster(val cluster: CanvasCluster = CanvasCluster()) : Sc
  */
 @Serializable
 @SerialName("canvas_bind")
+@SceneBinding(CanvasBinding::class, name = "CanvasBindBinding", whole = "bind")
 data class SceneCanvasBind(val bind: CanvasBinding) : SceneComponent {
     override val allowsMultiplePerNode: Boolean get() = false
 

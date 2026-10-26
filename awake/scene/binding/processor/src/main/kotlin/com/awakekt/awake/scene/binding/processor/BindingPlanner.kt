@@ -17,6 +17,7 @@ private class Planner(private val request: BindingRequest) {
     private val paired = mutableSetOf<String>()
 
     fun plan(): Result<BindingPlan> {
+        if (request.whole.isNotEmpty()) return planWhole()
         val saved = request.saved.properties
         val parameters = request.live.parameters
         val fields = if (saved == null || parameters == null) {
@@ -29,6 +30,36 @@ private class Planner(private val request: BindingRequest) {
             }
         }
         return if (errors.isEmpty()) Result.success(BindingPlan(request, fields)) else Result.failure(BindingErrors(errors))
+    }
+
+    private fun planWhole(): Result<BindingPlan> {
+        val properties = request.saved.properties.orEmpty()
+        val property = properties.firstOrNull { it.name == request.whole }
+        val mapping = when {
+            property == null -> {
+                errors += "$savedName has no constructor property ${request.whole} named by whole"
+                null
+            }
+            !property.readable -> {
+                errors += "$savedName.${property.name} named by whole must be a readable constructor property"
+                null
+            }
+            property.savedOnly -> {
+                errors += "$savedName.${property.name} named by whole cannot be @SavedOnly"
+                null
+            }
+            else -> conversion(property.type, FieldType(request.live.className), request.converters)
+                .onFailure { errors += "$savedName.${property.name} and whole $liveName: ${it.message}" }
+                .getOrNull()
+        }
+        properties.filter { it.name != request.whole && !it.hasDefault }.forEach {
+            errors += "$savedName.${it.name} is outside whole, so it needs a default"
+        }
+        return if (errors.isEmpty() && property != null && mapping != null) {
+            Result.success(BindingPlan(request, emptyList(), WholePlan(property.name, mapping)))
+        } else {
+            Result.failure(BindingErrors(errors))
+        }
     }
 
     private fun pairLiveProperties(saved: List<SavedProperty>, parameters: List<LiveParameter>): List<FieldPlan> {
