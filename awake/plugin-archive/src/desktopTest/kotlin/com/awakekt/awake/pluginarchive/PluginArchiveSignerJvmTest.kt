@@ -18,7 +18,8 @@ import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
-class PluginArchiveSignerTest {
+/** The desktop JVM wrapper: whole-archive signing, and agreement with `java.security`'s own `SHA256withRSA`. */
+class PluginArchiveSignerJvmTest {
     private val keyPair: KeyPair = KeyPairGenerator.getInstance("RSA").apply { initialize(2048) }.genKeyPair()
     private val privatePem = pem("PRIVATE KEY", keyPair.private.encoded)
     private val publicPem = pem("PUBLIC KEY", keyPair.public.encoded)
@@ -65,7 +66,6 @@ class PluginArchiveSignerTest {
 
         // PKCS#1 v1.5 signatures are deterministic, so the two must be byte-identical.
         assertContentEquals(expected, PluginArchiveSigner.signature(entries, privatePem))
-        assertContentEquals(expected, PluginArchiveSigner.signature(entries, privatePem.lines().filterNot { it.startsWith("-----") }.joinToString("")))
     }
 
     @Test

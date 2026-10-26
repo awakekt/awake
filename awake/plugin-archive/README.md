@@ -9,7 +9,7 @@ It depends on no editor, UI, scene or GPU module, so a played project can read `
 |---|---|
 | `PluginManifest`, `PluginDependency` | `plugin.json`. |
 | `PluginArchive`, `PluginArchiveReader`, `PluginArchiveException` | The `.awakeplugin` zip: `plugin.json`, the payload, and `signature.sig`. At most 4096 entries and 64 MiB unpacked, safe unique relative paths, stored or deflated entries only. |
-| `PluginArchiveDigest`, `PluginArchiveVerifier`, `PluginArchiveVerification` | The canonical archive digest and the publisher's signature over it. |
+| `PluginArchiveDigest`, `PluginArchiveVerifier`, `PluginArchiveVerification`, `PluginArchiveSigner` | The canonical archive digest, and making and checking the publisher's signature over it. |
 | `AwakeRootSignature`, `RootSignedDocument` | The root key's signature domains and the check of documents it signs. |
 | `PublisherKeys`, `PublisherKeyList`, `SignedPublisherKeyList` | The versioned list of publishers' public keys. |
 | `RevokedPluginVersion`, `PluginRevocationList`, `SignedPluginRevocationList` | The versioned list of revoked plugin versions. |
@@ -21,7 +21,7 @@ It depends on no editor, UI, scene or GPU module, so a played project can read `
 - **Archive signature.** `signature.sig` holds the raw RSASSA-PKCS1-v1_5 / SHA-256 (`SHA256withRSA`)
   signature over `"awake-plugin-archive-v1\n" + hex(canonicalDigest)`. The digest is SHA-256 over
   every entry except `signature.sig`, sorted by name, each name and content prefixed by its 4-byte
-  big-endian length. `PluginArchiveSigner` writes it (desktop JVM, below).
+  big-endian length. `PluginArchiveSigner` writes it (below).
 - **Root-signed documents.** `{"document": "<exact JSON string>", "signature": "<base64>"}`. The
   signature covers `"<domain tag>\n" + document`, tags `awake-publisher-key-list-v1` and
   `awake-plugin-revocation-list-v1`, so a signature for one kind of document never verifies as
@@ -55,16 +55,21 @@ val result = withContext(Dispatchers.Default) {
   completion handler, through the Objective-C export.
 - **wasmJs:** call from a coroutine (`MainScope().launch { ... }`). The browser has no blocking form.
 
-## Signing on the JVM
+## Signing
 
-`PluginArchiveSigner` (desktop JVM only, blocking) is the publisher side: `signature(entries, key)`
-returns the `signature.sig` bytes, and `sign(archiveBytes, key)` returns the archive with that entry
-added, after the same checks `PluginArchiveReader` applies. The key is the publisher's RSA private
-key as PKCS#8, PEM or bare base64 DER (`openssl genpkey`). A build runs it in its own JVM:
+`PluginArchiveSigner` is the publisher side, common to every target: `suspend signature(entries, key)`
+returns the `signature.sig` bytes and `suspend signedEntries(entries, key)` adds them, replacing any
+old signature. The key is the publisher's RSA private key as PKCS#8, PEM or bare base64 DER
+(`openssl genpkey`). Signing keys belong on a publisher's machine or a signing service, never in a
+shipped app.
+
+On the desktop JVM, the blocking `PluginArchiveSigner.sign(archiveBytes, key)` rewrites a whole
+archive after the same checks `PluginArchiveReader` applies, and `PluginArchiveSignerMain` signs a
+file from a build, in its own JVM:
 
 ```
 AWAKE_PLUGIN_SIGNING_KEY="$(cat private.pem)" java -cp <plugin-archive-desktop and its dependencies> \
-  com.awakekt.awake.pluginarchive.PluginArchiveSigner build/plugin.awakeplugin
+  com.awakekt.awake.pluginarchive.PluginArchiveSignerMain build/plugin.awakeplugin
 ```
 
 `templates/plugin`'s `signAwakePlugin` task does exactly this after `awakePlugin`.

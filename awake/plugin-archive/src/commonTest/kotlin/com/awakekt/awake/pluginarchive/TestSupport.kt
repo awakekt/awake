@@ -12,22 +12,25 @@ import dev.whyoleg.cryptography.algorithms.SHA256
 import kotlin.io.encoding.Base64
 
 /** An RSA key pair generated at test time on the target's own provider, signing as `SHA256withRSA`. */
-internal class TestSigner private constructor(private val keyPair: RSA.PKCS1.KeyPair, val publicKeyPem: String) {
+internal class TestSigner private constructor(
+    private val keyPair: RSA.PKCS1.KeyPair,
+    val publicKeyPem: String,
+    val privateKeyPem: String,
+) {
     suspend fun sign(payload: ByteArray): ByteArray = keyPair.privateKey.signatureGenerator().generateSignature(payload)
 
     suspend fun signBase64(payload: ByteArray): String = Base64.encode(sign(payload))
 
-    /** [entries] plus the `signature.sig` entry a packaging task would add. */
-    suspend fun signArchive(entries: List<PluginArchiveEntry>): List<PluginArchiveEntry> {
-        val payload = PluginArchiveDigest.signingPayload(PluginArchiveDigest.canonicalDigest(entries))
-        return entries + PluginArchiveEntry(PLUGIN_ARCHIVE_SIGNATURE_ENTRY_NAME, sign(payload))
-    }
+    /** [entries] plus the `signature.sig` entry a packaging task would add, made by [PluginArchiveSigner]. */
+    suspend fun signArchive(entries: List<PluginArchiveEntry>): List<PluginArchiveEntry> =
+        PluginArchiveSigner.signedEntries(entries, privateKeyPem)
 
     companion object {
         suspend fun generate(bits: Int = 2048): TestSigner {
             val keyPair = CryptographyProvider.Default.get(RSA.PKCS1).keyPairGenerator(bits.bits, SHA256).generateKey()
-            val pem = keyPair.publicKey.encodeToByteArray(RSA.PublicKey.Format.PEM).decodeToString()
-            return TestSigner(keyPair, pem)
+            val publicPem = keyPair.publicKey.encodeToByteArray(RSA.PublicKey.Format.PEM).decodeToString()
+            val privatePem = keyPair.privateKey.encodeToByteArray(RSA.PrivateKey.Format.PEM).decodeToString()
+            return TestSigner(keyPair, publicPem, privatePem)
         }
     }
 }

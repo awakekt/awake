@@ -76,7 +76,7 @@ val signAwakePlugin by tasks.registering(JavaExec::class) {
     val key = signingKey
     onlyIf("a signing key is set") { key.map { it.isNotBlank() }.getOrElse(false) }
     classpath = awakePluginSigner
-    mainClass = "com.awakekt.awake.pluginarchive.PluginArchiveSigner"
+    mainClass = "com.awakekt.awake.pluginarchive.PluginArchiveSignerMain"
     javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(17) }
     argumentProviders.add(CommandLineArgumentProvider { listOf(archive.get().asFile.absolutePath) })
     // Through the environment, not the command line, so the key never shows in a process list.
