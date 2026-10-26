@@ -120,10 +120,11 @@ interface UiFont {
         get() = 0f
 
     /**
-     * Whether this atlas's alpha is the exact area of each pixel a glyph covers, to be blended in linear
-     * light: a renderer then corrects the coverage for the text colour, so dark text on a light ground
-     * and light text on a dark one keep the same weight. False for coverage that is already shaped, such
-     * as [UiFonts.bitmap]'s, which draws as it always has.
+     * Whether this atlas's alpha is the exact area of each pixel a glyph covers: a renderer then shapes
+     * it with the text coverage rule, which depends on the text colour, as it shapes every distance
+     * field's coverage, so dark text on a light ground and light text on a dark one keep the same weight
+     * at every size. False for coverage that is already shaped, such as [UiFonts.bitmap]'s, which draws
+     * as it is.
      */
     val linearCoverage: Boolean
         get() = false

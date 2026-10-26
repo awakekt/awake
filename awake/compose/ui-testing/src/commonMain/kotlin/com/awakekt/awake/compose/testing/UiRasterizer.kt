@@ -31,9 +31,6 @@ import kotlin.math.sin
 
 private val MissingFontColor = Color(1f, 0f, 1f, 1f)
 
-/** The gamma the glyph shader corrects distance-field coverage with; the shader's literal 1.45. */
-private const val DISTANCE_FIELD_GAMMA = 1.45f
-
 /** The smallest uv span a glyph quad counts as, so a degenerate one cannot divide by zero. */
 private const val MIN_UV_SPAN = 1e-6f
 
@@ -66,45 +63,61 @@ internal fun distanceFieldScreenPxRange(
 /**
  * The glyph shader's distance-field coverage for one bilinear atlas sample ([r], [g], [b]): the
  * median of the three channels, mapped through [screenPxRange] to a one-pixel ramp centred on the
- * 0.5 edge, then gamma-corrected by [DISTANCE_FIELD_GAMMA]. The CPU copy of `signedDistance`,
- * `coverage` and `correctedCoverage` in `AslUiShaders.UiGlyphShader`.
+ * 0.5 edge, the share of the pixel a straight outline covers. The CPU copy of `signedDistance` and
+ * `fieldCoverage` in `AslUiShaders.UiGlyphShader`; [textCoverageAlpha] then shapes it, as it shapes
+ * an exact-size glyph's coverage.
  */
 internal fun distanceFieldCoverage(r: Float, g: Float, b: Float, screenPxRange: Float): Float {
     val signedDistance = max(min(r, g), min(max(r, g), b))
-    val coverage = (screenPxRange * (signedDistance - 0.5f) + 0.5f).coerceIn(0f, 1f)
-    return coverage.pow(1f / DISTANCE_FIELD_GAMMA)
+    return (screenPxRange * (signedDistance - 0.5f) + 0.5f).coerceIn(0f, 1f)
 }
 
 /**
- * The glyph shader's gamma-correct blending of exact pixel coverage, for a [UiFont.linearCoverage] atlas:
- * the alpha that, blended in the target's own encoding, gives what blending [coverage] with gamma
- * [TEXT_GAMMA] over a ground opposite to [text] would. Exact for white on black and black on white; mid
- * tones blend. The coverage first gets DirectWrite's enhanced contrast (k = 1).
+ * The text coverage rule: the alpha a glyph pixel draws with, for [coverage], the share of the pixel the
+ * outline covers, in [text]'s colour. One rule for exact-size pixel glyphs and the distance field, so text
+ * keeps its weight across the pixel-glyph limit, and the same rule on every backend. It is Skia's mask
+ * gamma with the constants Chromium sets on Linux, [TEXT_GAMMA] and [TEXT_CONTRAST]:
  *
- * Tuned against the FreeType reference in `text-reference/` (`TextReferenceMetricsTest`): gamma 1.8 is the
- * blending FreeType documents for its light hinting and stem darkening, and the contrast stands in for
- * that darkening, so curves and diagonals keep the reference's weight beside stems on whole pixels. Full
- * sRGB gamma (2.2) left dark-on-light curves 15% lighter than the reference. The CPU copy of the
- * `fontInfo.z` block in `AslUiShaders.UiGlyphShader`.
+ * 1. the text's luma, from its colour linearised with [TEXT_GAMMA];
+ * 2. the ground taken to be the text's inverse, `1 - luma`: the rule cannot see the real ground;
+ * 3. the coverage boosted by [TEXT_CONTRAST] times the ground's linear luma, `c + (1 - c) * k * c`, so dark
+ *    text on a light ground gains a little and light text on a dark ground none;
+ * 4. text and ground mixed by that coverage in light linearised with [TEXT_GAMMA], and the alpha returned
+ *    that gives the same colour when blended in the target's own encoding.
+ *
+ * Mid-grey text, whose assumed ground is itself, takes the boosted coverage. Measured against Chromium in
+ * both polarities by `TextPolarityWeightTest`. The CPU copy of the rule in `AslUiShaders.UiGlyphShader`,
+ * held to it by `TextCoverageRuleTwinTest`.
  */
-internal fun linearCoverageAlpha(coverage: Float, text: Color): Float {
-    val textLinear = 0.2126f * text.r.coerceAtLeast(0f).pow(TEXT_GAMMA) +
+internal fun textCoverageAlpha(coverage: Float, text: Color): Float = TextCoverageRule(text).alpha(coverage)
+
+/** [textCoverageAlpha] for one text colour, its colour-only terms worked out once for every pixel of a glyph. */
+internal class TextCoverageRule(text: Color) {
+    private val textLinear = 0.2126f * text.r.coerceAtLeast(0f).pow(TEXT_GAMMA) +
         0.7152f * text.g.coerceAtLeast(0f).pow(TEXT_GAMMA) +
         0.0722f * text.b.coerceAtLeast(0f).pow(TEXT_GAMMA)
-    val textEncoded = textLinear.pow(1f / TEXT_GAMMA)
-    val t = ((textEncoded - 0.4f) / 0.2f).coerceIn(0f, 1f)
-    val lightText = t * t * (3f - 2f * t)
-    val boosted = coverage * (TEXT_CONTRAST + 1f) / (coverage * TEXT_CONTRAST + 1f)
-    val onDark = (textLinear * boosted).pow(1f / TEXT_GAMMA) / max(textEncoded, 0.0001f)
-    val onLight = (1f - (1f - boosted * (1f - textLinear)).coerceAtLeast(0f).pow(1f / TEXT_GAMMA)) / max(1f - textEncoded, 0.0001f)
-    return (onLight + (onDark - onLight) * lightText).coerceIn(0f, 1f)
+    private val textLuma = textLinear.pow(1f / TEXT_GAMMA)
+    private val groundLuma = 1f - textLuma
+    private val groundLinear = groundLuma.pow(TEXT_GAMMA)
+    private val sameLuma = abs(textLuma - groundLuma) < TEXT_SAME_LUMA
+
+    /** The alpha [coverage] draws with. */
+    fun alpha(coverage: Float): Float {
+        val contrasted = coverage + (1f - coverage) * TEXT_CONTRAST * groundLinear * coverage
+        if (sameLuma) return contrasted
+        val mixed = (textLinear * contrasted + groundLinear * (1f - contrasted)).coerceIn(0f, 1f).pow(1f / TEXT_GAMMA)
+        return ((mixed - groundLuma) / (textLuma - groundLuma)).coerceIn(0f, 1f)
+    }
 }
 
-/** The gamma exact-size coverage blends with; the shader's literal 1.8. */
-private const val TEXT_GAMMA = 1.8f
+/** The gamma the text coverage rule mixes in; the shader's `TEXT_GAMMA`, 1.2. */
+private const val TEXT_GAMMA = 1.2f
 
-/** DirectWrite's enhanced contrast, applied to the coverage before blending; the shader's literal 1. */
-private const val TEXT_CONTRAST = 1f
+/** The text coverage rule's contrast over a white ground; the shader's `TEXT_CONTRAST`, 0.2. */
+private const val TEXT_CONTRAST = 0.2f
+
+/** How close the text's luma and its assumed ground's may be before the rule keeps the boosted coverage; the shader's 1/256. */
+private const val TEXT_SAME_LUMA = 1f / 256f
 
 /**
  * Supersamples every source-texel footprint without allowing pathological work per pixel.
@@ -345,11 +358,14 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
         return t * t * (3f - 2f * t)
     }
 
-    /** A coverage-alpha atlas's alpha at ([u], [v]), 0-255; distance-field glyphs take [drawDistanceFieldGlyph]. */
-    fun sampleGlyphAlpha(font: UiFont, glyph: UiDrawPrimitive.Glyph, u: Float, v: Float): Int {
+    /**
+     * A coverage-alpha atlas's alpha at ([u], [v]), 0-255, shaped by [rule] when it has one; distance-field
+     * glyphs take [drawDistanceFieldGlyph].
+     */
+    fun sampleGlyphAlpha(font: UiFont, rule: TextCoverageRule?, u: Float, v: Float): Int {
         val coverage = sampleAtlasChannel(font, u, v, 3)
-        if (font.linearCoverage) {
-            return (linearCoverageAlpha(coverage, glyph.color) * 255f).toInt().coerceIn(0, 255)
+        if (rule != null) {
+            return (rule.alpha(coverage) * 255f).toInt().coerceIn(0, 255)
         }
         return (coverage * 255f).toInt().coerceIn(0, 255)
     }
@@ -509,7 +525,7 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
      * A distance-field glyph, drawn the way `AslUiShaders.UiGlyphShader` draws it: one bilinear,
      * clamp-to-edge atlas sample at each covered pixel's centre (the pixels whose centres the quad
      * covers, as the GPU rasterizes it), [distanceFieldCoverage] at [distanceFieldScreenPxRange],
-     * and the tint's alpha times that coverage, kept in float until the blend.
+     * shaped by [textCoverageAlpha], and the tint's alpha times that, kept in float until the blend.
      *
      * No supersampling: the shader takes one sample a pixel, and a distance field needs none to
      * stay sharp. Averaging several coverage samples a pixel, as the coverage-atlas path does,
@@ -535,6 +551,7 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
         val g = glyph.color.g * 255f
         val b = glyph.color.b * 255f
         val tintAlpha = glyph.color.a
+        val rule = TextCoverageRule(glyph.color)
         var py = y0
         while (py < y1) {
             val v = glyph.v0 + (py + 0.5f - glyph.y) / glyph.h * uvHeight
@@ -548,7 +565,7 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
                         sampleAtlasChannel(font, u, v, 2),
                         screenPxRange,
                     )
-                    pixelMap.blend(px, py, r, g, b, coverage * tintAlpha)
+                    pixelMap.blend(px, py, r, g, b, rule.alpha(coverage) * tintAlpha)
                 }
                 px += 1
             }
@@ -573,6 +590,8 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
         val g = (glyph.color[1] * 255).toInt().coerceIn(0, 255)
         val b = (glyph.color[2] * 255).toInt().coerceIn(0, 255)
         val tintAlpha = (glyph.color.a * 255).toInt().coerceIn(0, 255)
+        // Exact coverage takes the text coverage rule; coverage already shaped, as a bitmap font's, draws as it is.
+        val rule = if (font.linearCoverage) TextCoverageRule(glyph.color) else null
 
         val sourceTexelsX = (glyph.u1 - glyph.u0) * font.atlasWidth
         val sourceTexelsY = (glyph.v1 - glyph.v0) * font.atlasHeight
@@ -599,7 +618,7 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
                         val v = ((sampleY - glyph.y) / glyph.h).coerceIn(0f, 0.9999f)
                         alphaSum += sampleGlyphAlpha(
                             font,
-                            glyph,
+                            rule,
                             glyph.u0 + (glyph.u1 - glyph.u0) * u,
                             glyph.v0 + (glyph.v1 - glyph.v0) * v,
                         )

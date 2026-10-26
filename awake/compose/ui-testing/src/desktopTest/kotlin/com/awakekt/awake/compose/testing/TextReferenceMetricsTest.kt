@@ -50,6 +50,13 @@ import kotlin.test.assertTrue
  * encoding, as a reader sees it. Exact-size glyphs put stems on whole pixels and FreeType's light hinting
  * does not, so stems are compared by width, not pixel by pixel. The first exact-size glyphs failed the
  * curve and faint-share bounds: their curves and diagonals blended too light beside solid stems.
+ *
+ * Only the dark-on-light cases are asserted; the light-on-dark ones are measured and written to the table.
+ * The reference composites FreeType's coverage with gamma 1.8, which in light on dark draws about 1.4 times
+ * the ink it does in dark on light, where Chromium draws about 1.1 times. Awake's text coverage rule follows
+ * Chromium so the two polarities weigh alike (#1064), which leaves light-on-dark text 16 to 24% under this
+ * reference's ink; `TextPolarityWeightTest` holds both polarities to Chromium instead. Dark on light, where
+ * the two references agree, still checks the shapes: stems, curves and faint ink.
  */
 class TextReferenceMetricsTest {
     private val projectFont: UiFont by lazy {
@@ -77,7 +84,9 @@ class TextReferenceMetricsTest {
                     val difference = meanAbsoluteDifference(awake, reference)
                     table.append("$name,awake,${mine.csv()},${"%.2f".format(difference)}\n")
                     table.append("$name,reference,${theirs.csv()},0\n")
-                    failures += mine.problems(theirs, difference).map { "$name: $it" }
+                    // Light on dark is written to the table but held to Chromium instead; see the class doc.
+                    val asserted = caseName == "dark-on-light"
+                    failures += mine.problems(theirs, difference).takeIf { asserted }.orEmpty().map { "$name: $it" }
                 }
             }
         }
@@ -211,7 +220,14 @@ class TextReferenceMetricsTest {
         const val FAINT = 0.3
 
         const val STEM_WIDTH_TOLERANCE = 0.45
-        const val INK_MASS_TOLERANCE = 0.15
+
+        /**
+         * How far a case's ink may be from the reference's. 0.15 until the text coverage rule (#1003): with
+         * subpixel variants (#1099), 11 px Roboto dark on light holds 327.6 against the reference's 286.9
+         * (+14.2%) under the gamma-1.8 rule and 330.7 (+15.3%) under the coverage rule. That case is 1.045 of
+         * Chromium's ink (`TextPolarityWeightTest`), where this reference holds about 0.91 of it at 11 px.
+         */
+        const val INK_MASS_TOLERANCE = 0.16
         const val CURVE_TOLERANCE = 0.04
 
         /**
