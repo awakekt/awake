@@ -65,13 +65,17 @@ class CanvasCrispTextTest {
         for ((index, size) in sizes.withIndex()) {
             val drawn = glyphs.subList(index * 4, index * 4 + 4)
             val px = (size * 1.4125f).roundToInt()
-            val expected = assertNotNull(font.pixelGlyphs?.glyph('H'.code, FontWeight.Normal, px), "no $px px glyph")
+            val pixelGlyphs = assertNotNull(font.pixelGlyphs)
+            val expected = assertNotNull(pixelGlyphs.glyph('H'.code, FontWeight.Normal, px), "no $px px glyph")
+            // Each H is drawn as the subpixel variant nearest its pen, and a variant can be a pixel wider.
+            val variantSizes = (0 until expected.subpixelSteps).mapNotNull { step ->
+                pixelGlyphs.glyph('H'.code, FontWeight.Normal, px, step)?.let { it.width.toFloat() to it.height.toFloat() }
+            }.toSet()
 
             for (glyph in drawn) {
                 assertEquals(UiFontSamplingMode.CoverageAlpha, glyph.font?.samplingMode, "${size}sp is $px px: a pixel glyph")
                 assertTrue(glyph.onWholePixels(), "${size}sp glyph at ${glyph.x}, ${glyph.y} ${glyph.w}x${glyph.h}")
-                assertEquals(expected.width.toFloat(), glyph.w, "${size}sp is drawn at $px px")
-                assertEquals(expected.height.toFloat(), glyph.h, "${size}sp is drawn at $px px")
+                assertTrue(glyph.w to glyph.h in variantSizes, "${size}sp is drawn at $px px: ${glyph.w}x${glyph.h} against $variantSizes")
             }
         }
     }
