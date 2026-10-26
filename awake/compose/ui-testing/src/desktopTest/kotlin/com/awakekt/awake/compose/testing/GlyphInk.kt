@@ -31,13 +31,9 @@ internal object GlyphInk {
     /** A pixel counts as lost when the change takes this much of its ink away, out of 255. */
     private const val LOST_INK_THRESHOLD = 8
 
-    /** Roboto Regular read from its TTF at run time, with the accented capitals the bundled atlas lacks. */
+    /** Roboto Regular read from its TTF at run time, with the default chars: accented capitals and all. */
     val loadedRoboto: UiFont by lazy {
-        UiFonts.load(
-            runBlocking { readResourceBytes("Roboto-Regular.ttf") },
-            "Roboto-Regular.ttf",
-            chars = UiFonts.DEFAULT_CHARS + "ÅÉÑÇÿ",
-        )
+        UiFonts.load(runBlocking { readResourceBytes("Roboto-Regular.ttf") }, "Roboto-Regular.ttf")
     }
 
     /**
@@ -45,8 +41,6 @@ internal object GlyphInk {
      * own line height or, [tight], one em (`leading-none`).
      */
     data class Case(val fontName: String, val font: UiFont, val size: Int, val density: Float, val tight: Boolean) {
-        val isBuiltIn: Boolean get() = fontName == BUILT_IN
-
         /** Black [size] sp text in [font]. */
         val style: TextStyle get() = TextStyle(color = black, size = size.sp, font = font, lineHeight = if (tight) size.sp else null)
 

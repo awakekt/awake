@@ -376,8 +376,9 @@ a built-in family: `default` is Roboto, and `bitmap` is a fixed-pitch pixel font
 { "component": "canvas_element", "text": "Harbor Town", "fontSize": 32, "font": "fonts/title.ttf" }
 ```
 
-`loadProject` loads each file once, while the scene loads, with the glyphs of printable ASCII and
-`• · … – — × −`; any other character draws as `?`. A file that cannot be read, or is not a font
+`loadProject` loads each file once, while the scene loads, with the glyphs of `UiFonts.DEFAULT_CHARS`:
+printable ASCII, the accented letters of Western and Central European text (Latin-1 Supplement and
+Latin Extended-A) and signs such as `€ ™ “ ”`; any other character draws as `?`. A file that cannot be read, or is not a font
 Awake reads, such as a collection or a WOFF file, is logged once, and its elements draw in the
 default font. A host with no renderer reads no font. If your app runs its own Compose host, pass the
 fonts yourself: `SceneCanvas(world, fonts = loadCanvasFonts(scene, files))`.

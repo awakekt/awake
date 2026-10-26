@@ -8,6 +8,7 @@ package com.awakekt.awake.core.text.font
 import com.awakekt.awake.core.host.readResourceBytes
 import kotlinx.coroutines.test.runTest
 import kotlin.math.abs
+import kotlin.math.roundToInt
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -18,8 +19,10 @@ import kotlin.test.assertTrue
  *
  * The generator measured each glyph through FreeType at 16 px, which holds a coordinate to 1/64 px,
  * so its ink boxes sit up to 3/2048 em from the outline's exact extent; the loader measures the
- * outline itself. The line, the cells and the atlas size come from the font's own integers and match
- * exactly.
+ * outline itself. The line and the advances come from the font's own integers and match exactly. Where a glyph
+ * sits in the atlas follows from its sample rect, which that 1/64 px can tip a texel wider or narrower, so a
+ * loaded atlas is held to the generator's glyph by glyph, from each glyph's pen origin ([penOf]), and the
+ * generator's own tiles are held to [ShelfPacking].
  */
 class OpenTypeUiFontTest {
 
@@ -43,13 +46,42 @@ class OpenTypeUiFontTest {
         faces.forEach { (file, baked) ->
             val loaded = OpenTypeUiFontData.load(readResourceBytes(file), file, UiFonts.DEFAULT_CHARS, DistanceFieldBake.GENERATOR)
             assertEquals(baked.glyphOrder, loaded.glyphOrder, file)
-            assertEquals(baked.atlasWidth to baked.atlasHeight, loaded.atlasWidth to loaded.atlasHeight, file)
             assertEquals(baked.lineHeightEm, loaded.lineHeightEm, file)
-            // A sample rect snaps the ink box outwards to whole texels, so the 1/1024 em can tip one edge by a texel.
-            assertTrue(baked.uvBoundsPx.indices.all { abs(baked.uvBoundsPx[it] - loaded.uvBoundsPx[it]) <= 1 }, "$file sample rects")
+            // A sample rect snaps the ink box outwards to whole texels, so the 1/1024 em can tip one edge by a texel,
+            // and the tiles around the rects, packed in shelves, then fill an atlas a few texels taller or shorter.
+            val want = baked.uvBoundsPx
+            val got = loaded.uvBoundsPx
+            for (glyph in baked.glyphOrder.indices) {
+                val label = "$file U+${baked.glyphOrder[glyph].code.toString(16)}"
+                assertTrue(abs((want[glyph * 4 + 2] - want[glyph * 4]) - (got[glyph * 4 + 2] - got[glyph * 4])) <= 1, "$label sample rect width")
+                assertTrue(abs((want[glyph * 4 + 3] - want[glyph * 4 + 1]) - (got[glyph * 4 + 3] - got[glyph * 4 + 1])) <= 1, "$label sample rect height")
+            }
+            val bakedArea = baked.atlasWidth.toLong() * baked.atlasHeight
+            val loadedArea = loaded.atlasWidth.toLong() * loaded.atlasHeight
+            assertTrue(abs(bakedArea - loadedArea) <= bakedArea / 20, "$file atlas ${baked.atlasWidth}x${baked.atlasHeight} against ${loaded.atlasWidth}x${loaded.atlasHeight}")
             assertWithin(baked.quadMetricsEm, loaded.quadMetricsEm, 1f / 32 + 1e-6f, "$file quads")
             assertWithin(baked.advancesEm, loaded.advancesEm, ADVANCE_TOLERANCE_EM, "$file advances")
             assertWithin(baked.inkMetricsEm, loaded.inkMetricsEm, INK_TOLERANCE_EM, "$file ink")
+        }
+    }
+
+    /**
+     * The generator's atlases are packed as [ShelfPacking] packs: given each glyph's sample rect and the tile margin
+     * around it, the same atlas size and the same place for every tile. This holds the two implementations of the
+     * algorithm, the generator's and this module's, to one another on the real glyphs of every weight.
+     */
+    @Test
+    fun everyBakedAtlasIsPackedByShelfPacking() {
+        faces.forEach { (file, baked) ->
+            val glyphs = baked.glyphOrder.length
+            val widths = IntArray(glyphs) { baked.uvBoundsPx[it * 4 + 2] - baked.uvBoundsPx[it * 4] + 2 * TILE_MARGIN }
+            val heights = IntArray(glyphs) { baked.uvBoundsPx[it * 4 + 3] - baked.uvBoundsPx[it * 4 + 1] + 2 * TILE_MARGIN }
+            val packing = ShelfPacking.pack(widths, heights)
+            assertEquals(baked.atlasWidth to baked.atlasHeight, packing.width to packing.height, file)
+            for (glyph in 0 until glyphs) {
+                assertEquals(baked.uvBoundsPx[glyph * 4] - TILE_MARGIN, packing.xs[glyph], "$file tile $glyph x")
+                assertEquals(baked.uvBoundsPx[glyph * 4 + 1] - TILE_MARGIN, packing.ys[glyph], "$file tile $glyph y")
+            }
         }
     }
 
@@ -123,15 +155,42 @@ class OpenTypeUiFontTest {
     fun fieldMatchesMsdfgenTrueDistance() = runTest {
         val loaded = OpenTypeUiFontData.load(readResourceBytes("Roboto-Regular.ttf"), "Regular", UiFonts.DEFAULT_CHARS, DistanceFieldBake.GENERATOR)
         val mine = loaded.atlasBytes()
-        val theirs = RobotoRegularUiFontData.atlasBytes()
-        var close = 0
+        val baked = RobotoRegularUiFontData
+        val theirs = baked.atlasBytes()
         for (texel in 0 until mine.size / 4) {
             val value = mine[texel * 4 + 3]
             assertTrue(mine[texel * 4] == value && mine[texel * 4 + 1] == value && mine[texel * 4 + 2] == value, "texel $texel channels differ")
-            if (abs((value.toInt() and 0xFF) - (theirs[texel * 4 + 3].toInt() and 0xFF)) <= 2) close++
         }
-        val share = close.toDouble() / (mine.size / 4)
-        assertTrue(share >= 0.997, "only ${share * 100}% of texels within 2/255 of msdfgen's true distance")
+        // Each glyph's sample rect, in both atlases, from its pen origin: the rects are the same to a texel, and
+        // the atlases place their glyphs differently.
+        var compared = 0
+        var close = 0
+        for (glyph in loaded.glyphOrder.indices) {
+            if (loaded.inkMetricsEm[glyph * 4 + 3] <= 0f) continue
+            val (loadedX, loadedY) = penOf(loaded, glyph)
+            val (bakedX, bakedY) = penOf(baked, glyph)
+            val left = maxOf(loaded.uvBoundsPx[glyph * 4] - loadedX, baked.uvBoundsPx[glyph * 4] - bakedX)
+            val top = maxOf(loaded.uvBoundsPx[glyph * 4 + 1] - loadedY, baked.uvBoundsPx[glyph * 4 + 1] - bakedY)
+            val right = minOf(loaded.uvBoundsPx[glyph * 4 + 2] - loadedX, baked.uvBoundsPx[glyph * 4 + 2] - bakedX)
+            val bottom = minOf(loaded.uvBoundsPx[glyph * 4 + 3] - loadedY, baked.uvBoundsPx[glyph * 4 + 3] - bakedY)
+            for (y in top until bottom) {
+                for (x in left until right) {
+                    val ours = mine[((loadedY + y) * loaded.atlasWidth + loadedX + x) * 4 + 3].toInt() and 0xFF
+                    val theirsHere = theirs[((bakedY + y) * baked.atlasWidth + bakedX + x) * 4 + 3].toInt() and 0xFF
+                    compared++
+                    if (abs(ours - theirsHere) <= 2) close++
+                }
+            }
+        }
+        val share = close.toDouble() / compared
+        assertTrue(share >= 0.99, "only ${share * 100}% of $compared texels within 2/255 of msdfgen's true distance")
+    }
+
+    /** Where [glyph]'s pen origin sits in [data]'s atlas: its sample rect's corner less the rect's offset from the pen, a whole number of texels. */
+    private fun penOf(data: PackedUiFontData, glyph: Int): Pair<Int, Int> {
+        val texelsPerEm = 32
+        return (data.uvBoundsPx[glyph * 4] - (data.quadMetricsEm[glyph * 4] * texelsPerEm).roundToInt()) to
+            (data.uvBoundsPx[glyph * 4 + 1] - (data.quadMetricsEm[glyph * 4 + 1] * texelsPerEm).roundToInt())
     }
 
     /** Roboto's 'H' is two stems and a bar that overlaps both; a field built per contour draws a seam where they meet. */
@@ -139,11 +198,9 @@ class OpenTypeUiFontTest {
     fun overlappingContoursLeaveNoSeam() = runTest {
         val loaded = OpenTypeUiFontData.load(readResourceBytes("Roboto-Regular.ttf"), "Regular", UiFonts.DEFAULT_CHARS, DistanceFieldBake.GENERATOR)
         val atlas = loaded.atlasBytes()
-        val cell = loaded.glyphOrder.indexOf('H')
-        val cellX = cell % 16 * (loaded.atlasWidth / 16)
-        val cellY = cell / 16 * (loaded.atlasHeight / 7)
-        // The bar spans cell rows 22.7 to 25.2 and joins the stems at columns 11.7 and 23.1.
-        val bar = (cellX + 9 until cellX + 26).map { x -> atlas[((cellY + 24) * loaded.atlasWidth + x) * 4].toInt() and 0xFF }
+        val (penX, lineTop) = penOf(loaded, loaded.glyphOrder.indexOf('H'))
+        // The bar spans rows 16.7 to 19.2 below the line top and joins the stems at columns 5.7 and 17.1 from the pen.
+        val bar = (penX + 3 until penX + 20).map { x -> atlas[((lineTop + 18) * loaded.atlasWidth + x) * 4].toInt() and 0xFF }
         assertTrue(bar.all { it >= 200 }, "the bar's middle row dips towards the edge: $bar")
     }
 
@@ -360,9 +417,12 @@ class OpenTypeUiFontTest {
 
         /** Corrupt fonts baked at the runtime resolution, per fixture: few, as each bake is the expensive part. */
         const val CORRUPT_RUNTIME_ROUNDS = 12
+
+        /** The texels around a sample rect that are its tile: `TILE_MARGIN` in the generator and in OpenTypeUiFontData. */
+        const val TILE_MARGIN = 2
         const val FNV_OFFSET = -0x340d631b7bdddcdbL
         const val FNV_PRIME = 0x100000001b3L
-        const val REGULAR_ATLAS_HASH = 4211560484354822813L
-        const val REGULAR_RUNTIME_ATLAS_HASH = 8316666516124158061L
+        const val REGULAR_ATLAS_HASH = -5243408221002115739L
+        const val REGULAR_RUNTIME_ATLAS_HASH = -9071938812117638035L
     }
 }

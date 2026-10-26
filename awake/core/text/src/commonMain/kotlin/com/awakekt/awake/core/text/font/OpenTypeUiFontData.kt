@@ -10,7 +10,6 @@ import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.math.sqrt
 
 /**
  * A distance-field atlas baked from a TrueType or OpenType file at run time, in the layout and
@@ -127,7 +126,7 @@ internal class OpenTypeUiFontData private constructor(
 internal class DistanceFieldBake(val texelsPerEm: Int, val rangeTexels: Int) {
     /**
      * The texels a glyph's sample rect reaches past its ink. The generator's resolution keeps the generator's one
-     * texel, so its cells stay the built-in atlas's. A finer bake reaches one texel past the field's whole
+     * texel, so its tiles stay the built-in atlas's. A finer bake reaches one texel past the field's whole
      * [fieldReach], so a quad's edge samples a field already at zero and its antialiased fringe fades out inside
      * the quad: a rect of one texel per 32 texels per em cut the fringe of a glyph drawn small at a hard edge.
      */
@@ -156,8 +155,7 @@ internal class DistanceFieldBake(val texelsPerEm: Int, val rangeTexels: Int) {
 
 // The generator's constants (`awake/ui/font-atlas-generator` Main.kt); a change there is a change here.
 private const val LOGICAL_CELL = 16
-private const val PADDING = 6
-private const val COLUMNS = 16
+private const val TILE_MARGIN = 2
 private const val BLANK_GLYPH_DIVISOR = 4
 private const val TEXT_SCALE_STEP = 0.25f
 private const val FALLBACK_CHAR = '?'
@@ -203,9 +201,9 @@ private class FontGlyph(val codePoint: Int, font: OpenTypeFont, glyph: Int) {
 
 /**
  * Where each glyph sits in the atlas and what it measures, computed as the generator computes it:
- * same cells, same sample rects, same em values. A glyph whose ink reaches past the generator's
- * padding (a script font's swash, say) widens every cell rather than being cut off; no built-in
- * face does.
+ * same sample rects, same em values, same tiles packed in the same shelves ([ShelfPacking]). A glyph's tile
+ * is its sample rect and [TILE_MARGIN] texels around it, so a glyph whose ink reaches far (a script font's
+ * swash, say) widens only its own tile rather than being cut off, and an atlas holds the ink and little else.
  */
 private class GlyphLayout(private val font: OpenTypeFont, glyphs: List<FontGlyph>, private val bake: DistanceFieldBake) {
     private val texelsPerEm = bake.texelsPerEm
@@ -215,11 +213,16 @@ private class GlyphLayout(private val font: OpenTypeFont, glyphs: List<FontGlyph
     val descentPx: Float = texelsPerEm.toFloat() * -font.descender / font.unitsPerEm
     val inkMetricsEm = FloatArray(glyphs.size * 4)
     val advancesEm = FloatArray(glyphs.size) { glyphs[it].advance / unitsPerEm.toFloat() }
-    private val originX: Int
-    private val originY: Int
-    private val cellWidth: Int
-    private val cellHeight: Int
-    private val columns: Int
+
+    /** Each glyph's sample rect (left, top, right, bottom) in whole texels from its pen origin and line top. */
+    private val rects = IntArray(glyphs.size * 4)
+
+    /** Whether every tile, and all of them together, could be an atlas at all. */
+    private val tilesFit: Boolean
+    private val tileXs: IntArray
+    private val tileYs: IntArray
+    private val tileWidths = IntArray(glyphs.size)
+    private val tileHeights = IntArray(glyphs.size)
     val atlasWidth: Int
     val atlasHeight: Int
     val uvBoundsPx = IntArray(glyphs.size * 4)
@@ -233,32 +236,40 @@ private class GlyphLayout(private val font: OpenTypeFont, glyphs: List<FontGlyph
             inkMetricsEm[index * 4 + 2] = ((bounds[2] - bounds[0]) / unitsPerEm).toFloat()
             inkMetricsEm[index * 4 + 3] = ((bounds[3] - bounds[1]) / unitsPerEm).toFloat()
         }
-        val inked = glyphs.indices.filter { glyphs[it].bounds != null }
-        fun extreme(pick: (Int) -> Float, largest: Boolean): Float =
-            inked.map(pick).let { if (largest) it.maxOrNull() else it.minOrNull() } ?: 0f
-        // The sample rect's bleed plus one texel, so bilinear sampling at a rect's edge reads its own cell.
-        val edge = cropBleed + 1f
-        val maxAdvancePx = glyphs.indices.filter { glyphs[it].codePoint != ' '.code }.maxOfOrNull { advancesEm[it] * texelsPerEm } ?: 0f
-        originX = max(PADDING, ceil(edge - extreme({ inkMetricsEm[it * 4] * texelsPerEm }, largest = false)).toInt())
-        originY = max(PADDING, ceil(edge - extreme({ inkMetricsEm[it * 4 + 1] * texelsPerEm }, largest = false)).toInt())
-        val inkRight = extreme({ (inkMetricsEm[it * 4] + inkMetricsEm[it * 4 + 2]) * texelsPerEm }, largest = true)
-        val inkBottom = extreme({ (inkMetricsEm[it * 4 + 1] + inkMetricsEm[it * 4 + 3]) * texelsPerEm }, largest = true)
-        cellWidth = originX + max(ceil(maxAdvancePx.toDouble()).toInt() + PADDING, ceil(inkRight + edge).toInt())
-        cellHeight = originY + max(ceil((ascentPx + descentPx).toDouble()).toInt() + PADDING, ceil(inkBottom + edge).toInt())
-        columns = max(min(glyphs.size, COLUMNS), ceil(sqrt(glyphs.size.toDouble())).toInt())
-        atlasWidth = cellWidth * columns
-        atlasHeight = cellHeight * ((glyphs.size + columns - 1) / columns)
+        glyphs.indices.forEach(::sampleRect)
+        // A corrupt font's extreme coordinates can overflow a tile's size into one that looks small, or
+        // negative, so each is checked on its own, as a Long, before they are added up or packed.
+        val widths = LongArray(glyphs.size) { rects[it * 4 + 2].toLong() - rects[it * 4] + 2 * TILE_MARGIN }
+        val heights = LongArray(glyphs.size) { rects[it * 4 + 3].toLong() - rects[it * 4 + 1] + 2 * TILE_MARGIN }
+        tilesFit = glyphs.isEmpty() || (
+            widths.all { it in 1..MAX_ATLAS_SIZE } && heights.all { it in 1..MAX_ATLAS_SIZE } &&
+                widths.indices.sumOf { widths[it] * heights[it] } <= MAX_ATLAS_SIZE.toLong() * MAX_ATLAS_SIZE
+            )
+        if (tilesFit) {
+            widths.forEachIndexed { index, width -> tileWidths[index] = width.toInt() }
+            heights.forEachIndexed { index, height -> tileHeights[index] = height.toInt() }
+            val packing = ShelfPacking.pack(tileWidths, tileHeights)
+            tileXs = packing.xs
+            tileYs = packing.ys
+            atlasWidth = packing.width
+            atlasHeight = packing.height
+        } else {
+            // No atlas to make: say how large one would need to be at least, for the error that names it.
+            tileXs = IntArray(glyphs.size)
+            tileYs = IntArray(glyphs.size)
+            val widest = widths.maxOrNull() ?: 0L
+            atlasWidth = widest.coerceIn(0L, Int.MAX_VALUE.toLong()).toInt()
+            val area = widths.indices.sumOf { widths[it].coerceAtLeast(0L) * heights[it].coerceAtLeast(0L) }
+            atlasHeight = (area / widest.coerceAtLeast(1L)).coerceIn(0L, Int.MAX_VALUE.toLong()).toInt()
+        }
         glyphs.indices.forEach(::place)
     }
 
     /**
-     * Whether the atlas fits the smallest texture size every backend supports. The cell is checked on its own
-     * first: a corrupt font's extreme coordinates can overflow the cell times the columns into a size that
-     * looks small, or negative.
+     * Whether the atlas fits the smallest texture size every backend supports. The tiles are checked on
+     * their own first, as the packing is not made for a set that cannot fit.
      */
-    fun fits(): Boolean =
-        cellWidth in 1..MAX_ATLAS_SIZE && cellHeight in 1..MAX_ATLAS_SIZE &&
-            atlasWidth in 1..MAX_ATLAS_SIZE && atlasHeight in 1..MAX_ATLAS_SIZE
+    fun fits(): Boolean = tilesFit && atlasWidth in 1..MAX_ATLAS_SIZE && atlasHeight in 1..MAX_ATLAS_SIZE
 
     /** Whether this finer-than-generator bake fits, and stays within the generator's memory and time budgets. */
     fun affordable(glyphs: List<FontGlyph>): Boolean =
@@ -274,36 +285,41 @@ private class GlyphLayout(private val font: OpenTypeFont, glyphs: List<FontGlyph
         return regions to work
     }
 
-    private fun cellX(index: Int): Int = index % columns * cellWidth
-
-    private fun cellY(index: Int): Int = index / columns * cellHeight
-
-    /** The generator's `sampleRect` and the quad derived from it. */
-    private fun place(index: Int) {
-        val cellX = cellX(index)
-        val cellY = cellY(index)
-        val penX = cellX + originX
-        val lineTop = cellY + originY
+    /** The generator's `sampleRect`: the ink box plus the bleed, snapped out to whole texels, from the pen and line top. */
+    private fun sampleRect(index: Int) {
         val at = index * 4
         if (inkMetricsEm[at + 2] <= 0f || inkMetricsEm[at + 3] <= 0f) {
             val placeholder = max(1, texelsPerEm / BLANK_GLYPH_DIVISOR)
-            intArrayOf(penX, lineTop, penX + placeholder, lineTop + placeholder).copyInto(uvBoundsPx, at)
+            intArrayOf(0, 0, placeholder, placeholder).copyInto(rects, at)
             return
         }
-        val rawLeft = penX + inkMetricsEm[at] * texelsPerEm
-        val rawTop = lineTop + inkMetricsEm[at + 1] * texelsPerEm
-        val left = max(cellX, floor(rawLeft - cropBleed).toInt())
-        val top = max(cellY, floor(rawTop - cropBleed).toInt())
-        val right = min(cellX + cellWidth, ceil(rawLeft + inkMetricsEm[at + 2] * texelsPerEm + cropBleed).toInt())
-        val bottom = min(cellY + cellHeight, ceil(rawTop + inkMetricsEm[at + 3] * texelsPerEm + cropBleed).toInt())
-        intArrayOf(left, top, right, bottom).copyInto(uvBoundsPx, at)
+        val rawLeft = inkMetricsEm[at] * texelsPerEm
+        val rawTop = inkMetricsEm[at + 1] * texelsPerEm
+        intArrayOf(
+            floor(rawLeft - cropBleed).toInt(),
+            floor(rawTop - cropBleed).toInt(),
+            ceil(rawLeft + inkMetricsEm[at + 2] * texelsPerEm + cropBleed).toInt(),
+            ceil(rawTop + inkMetricsEm[at + 3] * texelsPerEm + cropBleed).toInt(),
+        ).copyInto(rects, at)
+    }
+
+    /** The generator's UV rect in the atlas, and the quad derived from the sample rect. */
+    private fun place(index: Int) {
+        val at = index * 4
+        val left = rects[at]
+        val top = rects[at + 1]
+        val right = rects[at + 2]
+        val bottom = rects[at + 3]
+        val x = tileXs[index] + TILE_MARGIN
+        val y = tileYs[index] + TILE_MARGIN
+        intArrayOf(x, y, x + (right - left), y + (bottom - top)).copyInto(uvBoundsPx, at)
+        if (inkMetricsEm[at + 2] <= 0f || inkMetricsEm[at + 3] <= 0f) return
         val scale = texelsPerEm.toFloat()
-        floatArrayOf((left - penX) / scale, (top - lineTop) / scale, (right - left) / scale, (bottom - top) / scale)
-            .copyInto(quadMetricsEm, at)
+        floatArrayOf(left / scale, top / scale, (right - left) / scale, (bottom - top) / scale).copyInto(quadMetricsEm, at)
     }
 
     /**
-     * Every glyph's field in its cell, RGBA with the same distance in each channel; texels far outside stay 0.
+     * Every glyph's field in its tile, RGBA with the same distance in each channel; texels far outside stay 0.
      *
      * A texel's cost grows with its glyph's segment count, so a file whose glyphs are huge or absurdly
      * detailed is refused up front rather than left to run for minutes.
@@ -326,18 +342,20 @@ private class GlyphLayout(private val font: OpenTypeFont, glyphs: List<FontGlyph
         return atlas
     }
 
-    private fun penX(index: Int): Double = (cellX(index) + originX).toDouble()
+    private fun penX(index: Int): Double = (tileXs[index] + TILE_MARGIN - rects[index * 4]).toDouble()
 
-    private fun baseline(index: Int): Double = cellY(index) + originY + texelsPerEm * (font.ascender / unitsPerEm)
+    private fun lineTop(index: Int): Int = tileYs[index] + TILE_MARGIN - rects[index * 4 + 1]
 
-    /** The texels whose value can differ from plain outside: the ink box and the field's reach around it, within the cell. */
+    private fun baseline(index: Int): Double = lineTop(index) + texelsPerEm * (font.ascender / unitsPerEm)
+
+    /** The texels whose value can differ from plain outside: the ink box and the field's reach around it, within the tile. */
     private fun region(index: Int, bounds: DoubleArray, scale: Double): IntArray {
         val reach = bake.fieldReach + 1
         return intArrayOf(
-            max(cellX(index), floor(penX(index) + bounds[0] * scale - reach).toInt()),
-            max(cellY(index), floor(baseline(index) - bounds[3] * scale - reach).toInt()),
-            min(cellX(index) + cellWidth, ceil(penX(index) + bounds[2] * scale + reach).toInt()),
-            min(cellY(index) + cellHeight, ceil(baseline(index) - bounds[1] * scale + reach).toInt()),
+            max(tileXs[index], floor(penX(index) + bounds[0] * scale - reach).toInt()),
+            max(tileYs[index], floor(baseline(index) - bounds[3] * scale - reach).toInt()),
+            min(tileXs[index] + tileWidths[index], ceil(penX(index) + bounds[2] * scale + reach).toInt()),
+            min(tileYs[index] + tileHeights[index], ceil(baseline(index) - bounds[1] * scale + reach).toInt()),
         )
     }
 }
