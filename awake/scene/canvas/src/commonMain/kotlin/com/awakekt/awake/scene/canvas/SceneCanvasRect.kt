@@ -6,6 +6,7 @@
 package com.awakekt.awake.scene.canvas
 
 import com.awakekt.awake.core.schema.PropertyRange
+import com.awakekt.awake.scene.binding.SceneBinding
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneValidationIssue
 import com.awakekt.awake.ui.canvas.CanvasAnchor
@@ -44,6 +45,7 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 @SerialName("canvas_rect")
+@SceneBinding(CanvasRect::class, runtimeOnly = ["screenBounds"])
 data class SceneCanvasRect(
     val anchor: CanvasAnchor = CanvasAnchor.TopLeft,
     val offsetX: Float = CanvasRect.DEFAULT_INSET,
@@ -85,6 +87,7 @@ data class SceneCanvasRect(
  */
 @Serializable
 @SerialName("canvas_text")
+@SceneBinding(CanvasText::class)
 data class SceneCanvasText(
     val text: String = "",
     val textKey: String = "",
@@ -125,6 +128,7 @@ data class SceneCanvasText(
  */
 @Serializable
 @SerialName("canvas_appearance")
+@SceneBinding(CanvasAppearance::class, runtimeOnly = ["previewState"])
 data class SceneCanvasAppearance(
     val color: String = CanvasAppearance.DEFAULT_COLOR,
     val background: String = CanvasAppearance.DEFAULT_BACKGROUND,

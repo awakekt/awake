@@ -7,6 +7,7 @@ package com.awakekt.awake.scene.canvas
 
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.scene.binding.RegisteredBinding
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneResolutionContext
 import com.awakekt.awake.scene.document.SceneComponent
@@ -26,7 +27,12 @@ import kotlin.reflect.KClass
 // to the same element. Nothing is saved in this form any more: each component's binding saves it.
 // `CanvasElementExposureTest` checks this mapping covers every option of a CanvasElement.
 
-/** Reads the older single `canvas_element` scene component, as the canvas components it is now. */
+/**
+ * Reads the older single `canvas_element` scene component, as the canvas components it is now. It
+ * reshapes the saved data rather than copying fields, so it is written by hand and listed in
+ * CanvasSceneComponents with `@RegisteredBinding`.
+ */
+@RegisteredBinding
 object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasElement> {
     override val componentClass: KClass<CanvasElement> = CanvasElement::class
     override val schemaClass: KClass<SceneCanvasElement> = SceneCanvasElement::class
@@ -132,24 +138,24 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
  */
 @Suppress("CyclomaticComplexMethod") // One branch for each component.
 internal fun SceneComponent.toCanvasPart(): Any = when (this) {
-    is SceneCanvasRect -> toComponent()
-    is SceneCanvasText -> toComponent()
-    is SceneCanvasAppearance -> toComponent()
+    is SceneCanvasRect -> CanvasRectBinding.run { toComponent() }
+    is SceneCanvasText -> CanvasTextBinding.run { toComponent() }
+    is SceneCanvasAppearance -> CanvasAppearanceBinding.run { toComponent() }
     is SceneCanvasLayout -> layout
     is SceneCanvasCluster -> cluster
     is SceneCanvasBind -> bind
-    is SceneCanvasFollow -> toComponent()
-    is SceneCanvasFollowArrow -> CanvasFollowArrow()
-    is SceneCanvasInput -> toComponent()
-    is SceneCanvasTooltip -> toComponent()
-    is SceneCanvasButton -> toComponent()
-    is SceneCanvasBar -> toComponent()
-    is SceneCanvasSweep -> toComponent()
-    is SceneCanvasStepper -> toComponent()
-    is SceneCanvasJoystick -> toComponent()
-    is SceneCanvasLookArea -> toComponent()
-    is SceneCanvasTextField -> toComponent()
-    is SceneCanvasView -> CanvasViewWidget().also { it.camera = camera }
-    is SceneCanvasImage -> CanvasImageWidget()
+    is SceneCanvasFollow -> CanvasFollowBinding.run { toComponent() }
+    is SceneCanvasFollowArrow -> CanvasFollowArrowBinding.run { toComponent() }
+    is SceneCanvasInput -> CanvasInputBinding.run { toComponent() }
+    is SceneCanvasTooltip -> CanvasTooltipBinding.run { toComponent() }
+    is SceneCanvasButton -> CanvasButtonBinding.run { toComponent() }
+    is SceneCanvasBar -> CanvasBarBinding.run { toComponent() }
+    is SceneCanvasSweep -> CanvasSweepBinding.run { toComponent() }
+    is SceneCanvasStepper -> CanvasStepperBinding.run { toComponent() }
+    is SceneCanvasJoystick -> CanvasJoystickBinding.run { toComponent() }
+    is SceneCanvasLookArea -> CanvasLookAreaBinding.run { toComponent() }
+    is SceneCanvasTextField -> CanvasTextFieldBinding.run { toComponent() }
+    is SceneCanvasView -> CanvasViewBinding.run { toComponent() }
+    is SceneCanvasImage -> CanvasImageBinding.run { toComponent() }
     else -> throw IllegalArgumentException("${this::class.simpleName} is not a canvas element component")
 }

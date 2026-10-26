@@ -6,10 +6,8 @@
 package com.awakekt.awake.scene.canvas
 
 import com.awakekt.awake.core.schema.PropertyRange
-import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
-import com.awakekt.awake.scene.binding.SceneComponentBinding
-import com.awakekt.awake.scene.binding.SceneResolutionContext
+import com.awakekt.awake.scene.binding.SceneBinding
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneValidationIssue
 import com.awakekt.awake.ui.canvas.CanvasControlTheme
@@ -18,7 +16,6 @@ import com.awakekt.awake.ui.canvas.CanvasPlayerLayout
 import com.awakekt.awake.ui.canvas.CanvasTouchVisibility
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlin.reflect.KClass
 
 /**
  * The saved form of [CanvasControls]: what every on-screen control on the scene's canvas shares. A
@@ -37,6 +34,7 @@ import kotlin.reflect.KClass
  */
 @Serializable
 @SerialName("canvas_controls")
+@SceneBinding(CanvasControls::class)
 data class SceneCanvasControls(
     val touchVisibility: CanvasTouchVisibility = CanvasTouchVisibility.Host,
     @PropertyRange(min = 0.0) val minTouchSize: Float = CanvasControls.DEFAULT_MIN_TOUCH_SIZE,
@@ -47,27 +45,6 @@ data class SceneCanvasControls(
 
     override fun validate(path: String): List<SceneValidationIssue> =
         CanvasControlsBinding.run { toComponent() }.problems().map { SceneValidationIssue(path, "canvas_controls.$it") }
-}
-
-/** Loads and saves [CanvasControls] as the `canvas_controls` scene component. */
-object CanvasControlsBinding : SceneComponentBinding<CanvasControls, SceneCanvasControls> {
-    override val componentClass: KClass<CanvasControls> = CanvasControls::class
-    override val schemaClass: KClass<SceneCanvasControls> = SceneCanvasControls::class
-    override val serializer = SceneCanvasControls.serializer()
-
-    override fun attachTyped(world: World, entity: Entity, component: SceneCanvasControls, context: SceneResolutionContext) {
-        world.add(entity, component.toComponent())
-    }
-
-    override fun export(world: World, entity: Entity, component: CanvasControls): SceneCanvasControls = component.toSceneComponent()
-
-    /** These saved settings as the live [CanvasControls]. */
-    fun SceneCanvasControls.toComponent(): CanvasControls =
-        CanvasControls(touchVisibility = touchVisibility, minTouchSize = minTouchSize, theme = theme, playerLayout = playerLayout)
-
-    /** These live [CanvasControls] in their saved form. */
-    fun CanvasControls.toSceneComponent(): SceneCanvasControls =
-        SceneCanvasControls(touchVisibility = touchVisibility, minTouchSize = minTouchSize, theme = theme, playerLayout = playerLayout)
 }
 
 /** The scene's [CanvasControls]: the first on any node, or null when it has none. */

@@ -11,6 +11,8 @@ public final class com/awakekt/awake/scene/canvas/CanvasAppearanceBinding : com/
 	public fun getComponentClass ()Lkotlin/reflect/KClass;
 	public fun getSchemaClass ()Lkotlin/reflect/KClass;
 	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+	public final fun toComponent (Lcom/awakekt/awake/scene/canvas/SceneCanvasAppearance;)Lcom/awakekt/awake/ui/canvas/CanvasAppearance;
+	public final fun toSceneComponent (Lcom/awakekt/awake/ui/canvas/CanvasAppearance;)Lcom/awakekt/awake/scene/canvas/SceneCanvasAppearance;
 }
 
 public final class com/awakekt/awake/scene/canvas/CanvasBarBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
@@ -26,6 +28,8 @@ public final class com/awakekt/awake/scene/canvas/CanvasBarBinding : com/awakekt
 	public fun getComponentClass ()Lkotlin/reflect/KClass;
 	public fun getSchemaClass ()Lkotlin/reflect/KClass;
 	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+	public final fun toComponent (Lcom/awakekt/awake/scene/canvas/SceneCanvasBar;)Lcom/awakekt/awake/ui/canvas/CanvasBarWidget;
+	public final fun toSceneComponent (Lcom/awakekt/awake/ui/canvas/CanvasBarWidget;)Lcom/awakekt/awake/scene/canvas/SceneCanvasBar;
 }
 
 public final class com/awakekt/awake/scene/canvas/CanvasBarPart : com/awakekt/awake/scene/canvas/CanvasPart {
@@ -68,6 +72,8 @@ public final class com/awakekt/awake/scene/canvas/CanvasButtonBinding : com/awak
 	public fun getComponentClass ()Lkotlin/reflect/KClass;
 	public fun getSchemaClass ()Lkotlin/reflect/KClass;
 	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+	public final fun toComponent (Lcom/awakekt/awake/scene/canvas/SceneCanvasButton;)Lcom/awakekt/awake/ui/canvas/CanvasButtonWidget;
+	public final fun toSceneComponent (Lcom/awakekt/awake/ui/canvas/CanvasButtonWidget;)Lcom/awakekt/awake/scene/canvas/SceneCanvasButton;
 }
 
 public final class com/awakekt/awake/scene/canvas/CanvasButtonPart : com/awakekt/awake/scene/canvas/CanvasPart {
@@ -299,6 +305,8 @@ public final class com/awakekt/awake/scene/canvas/CanvasFollowArrowBinding : com
 	public fun getComponentClass ()Lkotlin/reflect/KClass;
 	public fun getSchemaClass ()Lkotlin/reflect/KClass;
 	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+	public final fun toComponent (Lcom/awakekt/awake/scene/canvas/SceneCanvasFollowArrow;)Lcom/awakekt/awake/ui/canvas/CanvasFollowArrow;
+	public final fun toSceneComponent (Lcom/awakekt/awake/ui/canvas/CanvasFollowArrow;)Lcom/awakekt/awake/scene/canvas/SceneCanvasFollowArrow;
 }
 
 public final class com/awakekt/awake/scene/canvas/CanvasFollowBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
@@ -314,6 +322,8 @@ public final class com/awakekt/awake/scene/canvas/CanvasFollowBinding : com/awak
 	public fun getComponentClass ()Lkotlin/reflect/KClass;
 	public fun getSchemaClass ()Lkotlin/reflect/KClass;
 	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+	public final fun toComponent (Lcom/awakekt/awake/scene/canvas/SceneCanvasFollow;)Lcom/awakekt/awake/ui/canvas/CanvasFollow;
+	public final fun toSceneComponent (Lcom/awakekt/awake/ui/canvas/CanvasFollow;)Lcom/awakekt/awake/scene/canvas/SceneCanvasFollow;
 }
 
 public final class com/awakekt/awake/scene/canvas/CanvasFollowLimitBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
@@ -329,6 +339,8 @@ public final class com/awakekt/awake/scene/canvas/CanvasFollowLimitBinding : com
 	public fun getComponentClass ()Lkotlin/reflect/KClass;
 	public fun getSchemaClass ()Lkotlin/reflect/KClass;
 	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+	public final fun toComponent (Lcom/awakekt/awake/scene/canvas/SceneCanvasFollowLimit;)Lcom/awakekt/awake/ui/canvas/CanvasFollowLimit;
+	public final fun toSceneComponent (Lcom/awakekt/awake/ui/canvas/CanvasFollowLimit;)Lcom/awakekt/awake/scene/canvas/SceneCanvasFollowLimit;
 }
 
 public final class com/awakekt/awake/scene/canvas/CanvasFollowOcclusion {
@@ -369,6 +381,8 @@ public final class com/awakekt/awake/scene/canvas/CanvasFollowOcclusionBinding :
 	public fun getComponentClass ()Lkotlin/reflect/KClass;
 	public fun getSchemaClass ()Lkotlin/reflect/KClass;
 	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+	public final fun toComponent (Lcom/awakekt/awake/scene/canvas/SceneCanvasFollowOcclusion;)Lcom/awakekt/awake/scene/canvas/CanvasFollowOcclusion;
+	public final fun toSceneComponent (Lcom/awakekt/awake/scene/canvas/CanvasFollowOcclusion;)Lcom/awakekt/awake/scene/canvas/SceneCanvasFollowOcclusion;
 }
 
 public final class com/awakekt/awake/scene/canvas/CanvasFollowerPool {
@@ -400,6 +414,8 @@ public final class com/awakekt/awake/scene/canvas/CanvasImageBinding : com/awake
 	public fun getComponentClass ()Lkotlin/reflect/KClass;
 	public fun getSchemaClass ()Lkotlin/reflect/KClass;
 	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+	public final fun toComponent (Lcom/awakekt/awake/scene/canvas/SceneCanvasImage;)Lcom/awakekt/awake/ui/canvas/CanvasImageWidget;
+	public final fun toSceneComponent (Lcom/awakekt/awake/ui/canvas/CanvasImageWidget;)Lcom/awakekt/awake/scene/canvas/SceneCanvasImage;
 }
 
 public final class com/awakekt/awake/scene/canvas/CanvasImageKt {
@@ -430,6 +446,8 @@ public final class com/awakekt/awake/scene/canvas/CanvasInputBinding : com/awake
 	public fun getComponentClass ()Lkotlin/reflect/KClass;
 	public fun getSchemaClass ()Lkotlin/reflect/KClass;
 	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+	public final fun toComponent (Lcom/awakekt/awake/scene/canvas/SceneCanvasInput;)Lcom/awakekt/awake/ui/canvas/CanvasInput;
+	public final fun toSceneComponent (Lcom/awakekt/awake/ui/canvas/CanvasInput;)Lcom/awakekt/awake/scene/canvas/SceneCanvasInput;
 }
 
 public final class com/awakekt/awake/scene/canvas/CanvasJoystickBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
@@ -445,6 +463,8 @@ public final class com/awakekt/awake/scene/canvas/CanvasJoystickBinding : com/aw
 	public fun getComponentClass ()Lkotlin/reflect/KClass;
 	public fun getSchemaClass ()Lkotlin/reflect/KClass;
 	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+	public final fun toComponent (Lcom/awakekt/awake/scene/canvas/SceneCanvasJoystick;)Lcom/awakekt/awake/ui/canvas/CanvasJoystickWidget;
+	public final fun toSceneComponent (Lcom/awakekt/awake/ui/canvas/CanvasJoystickWidget;)Lcom/awakekt/awake/scene/canvas/SceneCanvasJoystick;
 }
 
 public final class com/awakekt/awake/scene/canvas/CanvasJoystickPart : com/awakekt/awake/scene/canvas/CanvasPart {
@@ -491,6 +511,8 @@ public final class com/awakekt/awake/scene/canvas/CanvasLookAreaBinding : com/aw
 	public fun getComponentClass ()Lkotlin/reflect/KClass;
 	public fun getSchemaClass ()Lkotlin/reflect/KClass;
 	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+	public final fun toComponent (Lcom/awakekt/awake/scene/canvas/SceneCanvasLookArea;)Lcom/awakekt/awake/ui/canvas/CanvasLookAreaWidget;
+	public final fun toSceneComponent (Lcom/awakekt/awake/ui/canvas/CanvasLookAreaWidget;)Lcom/awakekt/awake/scene/canvas/SceneCanvasLookArea;
 }
 
 public final class com/awakekt/awake/scene/canvas/CanvasLookAreaPart : com/awakekt/awake/scene/canvas/CanvasPart {
@@ -679,6 +701,8 @@ public final class com/awakekt/awake/scene/canvas/CanvasRectBinding : com/awakek
 	public fun getComponentClass ()Lkotlin/reflect/KClass;
 	public fun getSchemaClass ()Lkotlin/reflect/KClass;
 	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+	public final fun toComponent (Lcom/awakekt/awake/scene/canvas/SceneCanvasRect;)Lcom/awakekt/awake/ui/canvas/CanvasRect;
+	public final fun toSceneComponent (Lcom/awakekt/awake/ui/canvas/CanvasRect;)Lcom/awakekt/awake/scene/canvas/SceneCanvasRect;
 }
 
 public final class com/awakekt/awake/scene/canvas/CanvasScalerBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
@@ -698,6 +722,12 @@ public final class com/awakekt/awake/scene/canvas/CanvasScalerBinding : com/awak
 	public final fun toSceneComponent (Lcom/awakekt/awake/ui/canvas/CanvasScaler;)Lcom/awakekt/awake/scene/canvas/SceneCanvasScaler;
 }
 
+public final class com/awakekt/awake/scene/canvas/CanvasSceneComponents : com/awakekt/awake/scene/binding/SceneComponentModule {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/canvas/CanvasSceneComponents;
+	public fun getBindings ()Ljava/util/List;
+	public fun getSerializersModule ()Lkotlinx/serialization/modules/SerializersModule;
+}
+
 public final class com/awakekt/awake/scene/canvas/CanvasStepperBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
 	public static final field INSTANCE Lcom/awakekt/awake/scene/canvas/CanvasStepperBinding;
 	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
@@ -711,6 +741,8 @@ public final class com/awakekt/awake/scene/canvas/CanvasStepperBinding : com/awa
 	public fun getComponentClass ()Lkotlin/reflect/KClass;
 	public fun getSchemaClass ()Lkotlin/reflect/KClass;
 	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+	public final fun toComponent (Lcom/awakekt/awake/scene/canvas/SceneCanvasStepper;)Lcom/awakekt/awake/ui/canvas/CanvasStepperWidget;
+	public final fun toSceneComponent (Lcom/awakekt/awake/ui/canvas/CanvasStepperWidget;)Lcom/awakekt/awake/scene/canvas/SceneCanvasStepper;
 }
 
 public final class com/awakekt/awake/scene/canvas/CanvasStepperPart : com/awakekt/awake/scene/canvas/CanvasPart {
@@ -734,6 +766,8 @@ public final class com/awakekt/awake/scene/canvas/CanvasSweepBinding : com/awake
 	public fun getComponentClass ()Lkotlin/reflect/KClass;
 	public fun getSchemaClass ()Lkotlin/reflect/KClass;
 	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+	public final fun toComponent (Lcom/awakekt/awake/scene/canvas/SceneCanvasSweep;)Lcom/awakekt/awake/ui/canvas/CanvasSweepWidget;
+	public final fun toSceneComponent (Lcom/awakekt/awake/ui/canvas/CanvasSweepWidget;)Lcom/awakekt/awake/scene/canvas/SceneCanvasSweep;
 }
 
 public final class com/awakekt/awake/scene/canvas/CanvasSweepPart : com/awakekt/awake/scene/canvas/CanvasPart {
@@ -757,6 +791,8 @@ public final class com/awakekt/awake/scene/canvas/CanvasTextBinding : com/awakek
 	public fun getComponentClass ()Lkotlin/reflect/KClass;
 	public fun getSchemaClass ()Lkotlin/reflect/KClass;
 	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+	public final fun toComponent (Lcom/awakekt/awake/scene/canvas/SceneCanvasText;)Lcom/awakekt/awake/ui/canvas/CanvasText;
+	public final fun toSceneComponent (Lcom/awakekt/awake/ui/canvas/CanvasText;)Lcom/awakekt/awake/scene/canvas/SceneCanvasText;
 }
 
 public final class com/awakekt/awake/scene/canvas/CanvasTextFieldBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
@@ -772,6 +808,8 @@ public final class com/awakekt/awake/scene/canvas/CanvasTextFieldBinding : com/a
 	public fun getComponentClass ()Lkotlin/reflect/KClass;
 	public fun getSchemaClass ()Lkotlin/reflect/KClass;
 	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+	public final fun toComponent (Lcom/awakekt/awake/scene/canvas/SceneCanvasTextField;)Lcom/awakekt/awake/ui/canvas/CanvasTextFieldWidget;
+	public final fun toSceneComponent (Lcom/awakekt/awake/ui/canvas/CanvasTextFieldWidget;)Lcom/awakekt/awake/scene/canvas/SceneCanvasTextField;
 }
 
 public final class com/awakekt/awake/scene/canvas/CanvasTextFieldPart : com/awakekt/awake/scene/canvas/CanvasPart {
@@ -814,6 +852,8 @@ public final class com/awakekt/awake/scene/canvas/CanvasTooltipBinding : com/awa
 	public fun getComponentClass ()Lkotlin/reflect/KClass;
 	public fun getSchemaClass ()Lkotlin/reflect/KClass;
 	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+	public final fun toComponent (Lcom/awakekt/awake/scene/canvas/SceneCanvasTooltip;)Lcom/awakekt/awake/ui/canvas/CanvasTooltip;
+	public final fun toSceneComponent (Lcom/awakekt/awake/ui/canvas/CanvasTooltip;)Lcom/awakekt/awake/scene/canvas/SceneCanvasTooltip;
 }
 
 public final class com/awakekt/awake/scene/canvas/CanvasViewBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
@@ -829,6 +869,8 @@ public final class com/awakekt/awake/scene/canvas/CanvasViewBinding : com/awakek
 	public fun getComponentClass ()Lkotlin/reflect/KClass;
 	public fun getSchemaClass ()Lkotlin/reflect/KClass;
 	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+	public final fun toComponent (Lcom/awakekt/awake/scene/canvas/SceneCanvasView;)Lcom/awakekt/awake/ui/canvas/CanvasViewWidget;
+	public final fun toSceneComponent (Lcom/awakekt/awake/ui/canvas/CanvasViewWidget;)Lcom/awakekt/awake/scene/canvas/SceneCanvasView;
 }
 
 public final class com/awakekt/awake/scene/canvas/CanvasViewPart : com/awakekt/awake/scene/canvas/CanvasPart {
@@ -839,10 +881,6 @@ public final class com/awakekt/awake/scene/canvas/CanvasViewPart : com/awakekt/a
 
 public abstract interface class com/awakekt/awake/scene/canvas/CanvasViews {
 	public abstract fun texture-8mtA4i0 (Lcom/awakekt/awake/ui/canvas/CanvasElement;JII)Ljava/lang/Object;
-}
-
-public final class com/awakekt/awake/scene/canvas/CanvasWidgetBindingsKt {
-	public static final fun getCanvasElementBindings ()Ljava/util/List;
 }
 
 public abstract class com/awakekt/awake/scene/canvas/CanvasWidgetParts : com/awakekt/awake/scene/canvas/CanvasParts {

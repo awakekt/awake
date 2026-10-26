@@ -38,8 +38,8 @@ fun SceneCanvasElement.toCanvasComponents(): List<SceneComponent> = buildList {
     widgetOrNull()?.let(::add)
 }.sortedBy { savedOrder[it::class] }
 
-/** Where a node lists each canvas component when saved: the order the canvas bindings export them in. */
-private val savedOrder: Map<KClass<*>, Int> by lazy { canvasElementBindings.withIndex().associate { (index, binding) -> binding.schemaClass to index } }
+/** Where a node lists each canvas component when saved: the order the canvas registry exports them in. */
+private val savedOrder: Map<KClass<*>, Int> by lazy { CanvasSceneComponents.bindings.withIndex().associate { (index, binding) -> binding.schemaClass to index } }
 
 /** This element's words: always for the kinds that show them, never for a Panel, and for the rest when it sets any. */
 private fun SceneCanvasElement.wordsOrNull(): SceneCanvasText? {

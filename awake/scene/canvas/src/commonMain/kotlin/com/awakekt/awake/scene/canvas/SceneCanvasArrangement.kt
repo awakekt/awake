@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.canvas
 
+import com.awakekt.awake.scene.binding.SceneBinding
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneValidationIssue
 import com.awakekt.awake.scene.document.SceneVec3
@@ -89,6 +90,7 @@ data class SceneCanvasBind(val bind: CanvasBinding) : SceneComponent {
  */
 @Serializable
 @SerialName("canvas_follow")
+@SceneBinding(CanvasFollow::class, converters = [CanvasVec3Converter::class], runtimeOnly = ["score", "pinned", "pinAngle", "distance"])
 data class SceneCanvasFollow(
     val node: String = "",
     val offset: SceneVec3 = SceneVec3(),
@@ -114,6 +116,7 @@ data class SceneCanvasFollow(
  */
 @Serializable
 @SerialName("canvas_follow_arrow")
+@SceneBinding(CanvasFollowArrow::class)
 class SceneCanvasFollowArrow : SceneComponent {
     override val allowsMultiplePerNode: Boolean get() = false
 
@@ -135,6 +138,7 @@ class SceneCanvasFollowArrow : SceneComponent {
  */
 @Serializable
 @SerialName("canvas_input")
+@SceneBinding(CanvasInput::class)
 data class SceneCanvasInput(
     val pressable: Boolean = false,
     val draggable: Boolean = false,
@@ -159,6 +163,7 @@ data class SceneCanvasInput(
  */
 @Serializable
 @SerialName("canvas_tooltip")
+@SceneBinding(CanvasTooltip::class)
 data class SceneCanvasTooltip(
     val text: String = "",
     val textArgs: Map<String, String> = emptyMap(),

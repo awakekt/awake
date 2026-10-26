@@ -17,8 +17,8 @@ import com.awakekt.awake.scene.document.SceneNode
 // tests, which cannot reach `awake:scene:runtime`: each node an entity under its parent, its
 // components attached through the canvas bindings, and saved back through them.
 
-/** The canvas bindings, the older `canvas_element`'s included. */
-internal val canvasRegistry: SceneComponentRegistry = SceneComponentRegistry(bindings = canvasElementBindings)
+/** The canvas module's bindings, the older `canvas_element`'s included. */
+internal val canvasRegistry: SceneComponentRegistry = SceneComponentRegistry(bindings = CanvasSceneComponents.bindings)
 
 /** A world holding [nodes] and everything under them, each node's entity named after it. */
 internal fun loadCanvas(nodes: List<SceneNode>): World = World().also { world -> nodes.forEach { world.load(it, parent = null) } }

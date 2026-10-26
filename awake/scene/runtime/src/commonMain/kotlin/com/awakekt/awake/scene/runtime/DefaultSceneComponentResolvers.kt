@@ -10,11 +10,7 @@ import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneComponentModule
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.binding.SceneComponentResolver
-import com.awakekt.awake.scene.canvas.CanvasControlsBinding
-import com.awakekt.awake.scene.canvas.CanvasFollowLimitBinding
-import com.awakekt.awake.scene.canvas.CanvasFollowOcclusionBinding
-import com.awakekt.awake.scene.canvas.CanvasScalerBinding
-import com.awakekt.awake.scene.canvas.canvasElementBindings
+import com.awakekt.awake.scene.canvas.CanvasSceneComponents
 import com.awakekt.awake.scene.core.SceneCoreSceneComponents
 import com.awakekt.awake.scene.core.transform.SceneSpinControl
 import com.awakekt.awake.scene.core.transform.SpinControl
@@ -109,18 +105,11 @@ object DefaultSceneComponentResolvers {
         ParticlesSceneComponents,
         Scene2dSceneComponents,
         ShaderSceneComponents,
+        CanvasSceneComponents,
     )
 
-    // Listed by hand until the canvas element split (#1088) lands and scene:canvas adopts @SceneBinding.
-    private val canvasBindings: List<SceneComponentBinding<*, *>> = canvasElementBindings + listOf(
-        CanvasScalerBinding,
-        CanvasControlsBinding,
-        CanvasFollowLimitBinding,
-        CanvasFollowOcclusionBinding,
-    )
-
-    /** Every standard two-way [SceneComponentBinding]: those of [modules], then the canvas bindings. */
-    val bindings: List<SceneComponentBinding<*, *>> = modules.flatMap { it.bindings } + canvasBindings
+    /** Every standard two-way [SceneComponentBinding]: those of [modules], in their order. */
+    val bindings: List<SceneComponentBinding<*, *>> = modules.flatMap { it.bindings }
 
     /** Every built-in [SceneComponentResolver]: [bindings] and the prefab link resolver. */
     val all: List<SceneComponentResolver> = bindings + PrefabLinkBinding

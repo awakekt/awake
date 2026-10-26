@@ -25,7 +25,7 @@ object CanvasPrefabs {
      * know as data, so a prefab with another module's components reads and writes back whole.
      */
     val json: Json = Json(
-        SceneSerializers.createJson(canvasElementBindings.associate { it.schemaClass to checkNotNull(it.serializer) }, keepUnknownComponents = true),
+        SceneSerializers.createJson(CanvasSceneComponents.bindings.associate { it.schemaClass to checkNotNull(it.serializer) }, keepUnknownComponents = true),
     ) { prettyPrint = true }
 
     /**

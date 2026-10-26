@@ -12,6 +12,8 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.binding.fromWorld
 import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.scene.canvas.CanvasPrefabs
+import com.awakekt.awake.scene.canvas.SceneCanvasTooltip
+import com.awakekt.awake.scene.canvas.canvasElements
 import com.awakekt.awake.scene.canvas.canvasPrefab
 import com.awakekt.awake.scene.canvas.findCanvasElement
 import com.awakekt.awake.scene.canvas.withCanvasComponents
@@ -84,6 +86,18 @@ class CanvasPrefabRoundTripTest {
         assertEquals(CanvasPrefabs.toJson(current), CanvasPrefabs.toJson(saved), "the file an editor saves is the file code wrote, in the current form")
         val again = World().also { SceneDocument(nodes = listOf(saved.root)).instantiate(world = it) }
         assertEquals(saved.root, SceneLoader.fromWorld(again).nodes.single(), "a prefab saved in the current form loads and saves back unchanged")
+    }
+
+    @Test
+    fun aChangeMadeThroughTheElementIsSavedWithoutWaitingForAFrame() {
+        val world = World()
+        SceneDocument(nodes = listOf(actionBar.root)).instantiate(world = world)
+        val energy = world.canvasElements().getValue("Energy")
+
+        energy.tooltip = "Energy"
+        val saved = SceneLoader.fromWorld(world).nodes.single().children.single { it.name == "Energy" }
+
+        assertEquals(SceneCanvasTooltip("Energy"), saved.components.filterIsInstance<SceneCanvasTooltip>().single())
     }
 
     @Test

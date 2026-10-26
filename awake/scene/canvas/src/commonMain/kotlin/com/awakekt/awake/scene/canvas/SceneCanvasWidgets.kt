@@ -7,15 +7,25 @@ package com.awakekt.awake.scene.canvas
 
 import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.core.text.unicode.TextLengthUnit
+import com.awakekt.awake.scene.binding.SceneBinding
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneValidationIssue
 import com.awakekt.awake.ui.canvas.CanvasBar
+import com.awakekt.awake.ui.canvas.CanvasBarWidget
 import com.awakekt.awake.ui.canvas.CanvasButton
+import com.awakekt.awake.ui.canvas.CanvasButtonWidget
+import com.awakekt.awake.ui.canvas.CanvasImageWidget
 import com.awakekt.awake.ui.canvas.CanvasJoystick
+import com.awakekt.awake.ui.canvas.CanvasJoystickWidget
 import com.awakekt.awake.ui.canvas.CanvasLook
+import com.awakekt.awake.ui.canvas.CanvasLookAreaWidget
 import com.awakekt.awake.ui.canvas.CanvasPadding
 import com.awakekt.awake.ui.canvas.CanvasStepper
+import com.awakekt.awake.ui.canvas.CanvasStepperWidget
 import com.awakekt.awake.ui.canvas.CanvasSweep
+import com.awakekt.awake.ui.canvas.CanvasSweepWidget
+import com.awakekt.awake.ui.canvas.CanvasTextFieldWidget
+import com.awakekt.awake.ui.canvas.CanvasViewWidget
 import com.awakekt.awake.ui.canvas.CanvasWidget
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -35,6 +45,7 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 @SerialName("canvas_button")
+@SceneBinding(CanvasButtonWidget::class, name = "CanvasButtonBinding", runtimeOnly = ["kind", "cooldown", "charges", "aimLock", "coolingDown", "usable"])
 data class SceneCanvasButton(
     val action: String = "",
     val doubleAction: String = "",
@@ -57,6 +68,7 @@ data class SceneCanvasButton(
  */
 @Serializable
 @SerialName("canvas_bar")
+@SceneBinding(CanvasBarWidget::class, name = "CanvasBarBinding", runtimeOnly = ["kind"])
 data class SceneCanvasBar(
     @PropertyRange(min = 0.0, max = 1.0) val value: Float = 1f,
     val settings: CanvasBar? = null,
@@ -77,6 +89,7 @@ data class SceneCanvasBar(
  */
 @Serializable
 @SerialName("canvas_sweep")
+@SceneBinding(CanvasSweepWidget::class, name = "CanvasSweepBinding", runtimeOnly = ["kind"])
 data class SceneCanvasSweep(
     @PropertyRange(min = 0.0, max = 1.0) val value: Float = 1f,
     val settings: CanvasSweep? = null,
@@ -97,6 +110,7 @@ data class SceneCanvasSweep(
  */
 @Serializable
 @SerialName("canvas_stepper")
+@SceneBinding(CanvasStepperWidget::class, name = "CanvasStepperBinding", hooks = CanvasStepperStart::class, runtimeOnly = ["kind", "number"])
 data class SceneCanvasStepper(val settings: CanvasStepper? = null) : SceneComponent {
     override val allowsMultiplePerNode: Boolean get() = false
 
@@ -115,6 +129,7 @@ data class SceneCanvasStepper(val settings: CanvasStepper? = null) : SceneCompon
  */
 @Serializable
 @SerialName("canvas_joystick")
+@SceneBinding(CanvasJoystickWidget::class, name = "CanvasJoystickBinding", runtimeOnly = ["kind"])
 data class SceneCanvasJoystick(
     val action: String = "",
     val settings: CanvasJoystick? = null,
@@ -135,6 +150,7 @@ data class SceneCanvasJoystick(
  */
 @Serializable
 @SerialName("canvas_look_area")
+@SceneBinding(CanvasLookAreaWidget::class, name = "CanvasLookAreaBinding", runtimeOnly = ["kind"])
 data class SceneCanvasLookArea(
     val action: String = "",
     val settings: CanvasLook? = null,
@@ -159,6 +175,7 @@ data class SceneCanvasLookArea(
  */
 @Serializable
 @SerialName("canvas_text_field")
+@SceneBinding(CanvasTextFieldWidget::class, name = "CanvasTextFieldBinding", runtimeOnly = ["kind"])
 data class SceneCanvasTextField(
     val mask: String = "",
     @PropertyRange(min = 0.0) val maxLength: Int = 0,
@@ -187,6 +204,7 @@ data class SceneCanvasTextField(
  */
 @Serializable
 @SerialName("canvas_view")
+@SceneBinding(CanvasViewWidget::class, name = "CanvasViewBinding", runtimeOnly = ["kind"])
 data class SceneCanvasView(val camera: String = "") : SceneComponent {
     override val allowsMultiplePerNode: Boolean get() = false
 
@@ -202,6 +220,7 @@ data class SceneCanvasView(val camera: String = "") : SceneComponent {
  */
 @Serializable
 @SerialName("canvas_image")
+@SceneBinding(CanvasImageWidget::class, name = "CanvasImageBinding", runtimeOnly = ["kind"])
 class SceneCanvasImage : SceneComponent {
     override val allowsMultiplePerNode: Boolean get() = false
 
