@@ -52,6 +52,12 @@ public final class com/awakekt/awake/scene/rendering/RenderSystem3D : com/awakek
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 
+public final class com/awakekt/awake/scene/rendering/Scene3dSceneComponents : com/awakekt/awake/scene/binding/SceneComponentModule {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/rendering/Scene3dSceneComponents;
+	public fun getBindings ()Ljava/util/List;
+	public fun getSerializersModule ()Lkotlinx/serialization/modules/SerializersModule;
+}
+
 public final class com/awakekt/awake/scene/rendering/SceneMathExtensionsKt {
 	public static final fun toSceneVec3 (Lcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/scene/document/SceneVec3;
 	public static final fun toVec3 (Lcom/awakekt/awake/scene/document/SceneVec3;)Lcom/awakekt/awake/core/math/Vec3f;
@@ -2186,5 +2192,7 @@ public final class com/awakekt/awake/scene/rendering/tonemapping/ToneMappingBind
 	public fun getComponentClass ()Lkotlin/reflect/KClass;
 	public fun getSchemaClass ()Lkotlin/reflect/KClass;
 	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+	public final fun toComponent (Lcom/awakekt/awake/scene/rendering/tonemapping/SceneToneMapping;)Lcom/awakekt/awake/scene/rendering/tonemapping/ToneMapping;
+	public final fun toSceneComponent (Lcom/awakekt/awake/scene/rendering/tonemapping/ToneMapping;)Lcom/awakekt/awake/scene/rendering/tonemapping/SceneToneMapping;
 }
 

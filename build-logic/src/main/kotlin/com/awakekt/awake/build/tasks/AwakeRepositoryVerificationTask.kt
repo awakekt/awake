@@ -290,6 +290,8 @@ abstract class AwakeRepositoryVerificationTask : DefaultTask() {
         project.subprojects.forEach { source ->
             source.configurations.forEach { configuration ->
                 if (!configuration.name.contains("Main") && !configuration.name.contains("Implementation")) return@forEach
+                // A KSP processor (kspCommonMainMetadata) runs at build time and is in no published POM.
+                if (configuration.name.startsWith("ksp")) return@forEach
                 configuration.dependencies.withType(ProjectDependency::class.java).forEach { dependency ->
                     val target = dependency.path
                     if (source.path in published && target !in published) {

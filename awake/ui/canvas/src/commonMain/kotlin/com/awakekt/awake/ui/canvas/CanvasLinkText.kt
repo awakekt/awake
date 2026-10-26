@@ -41,7 +41,7 @@ private val DefaultLinkColor = Color.fromHex("#3B82F6")
  * starts a new line, as one run's would. Plain text with no spans draws as a single run.
  */
 context(_: Composer)
-internal fun CanvasText(element: CanvasElement, text: String, style: TextStyle) {
+internal fun CanvasWords(element: CanvasElement, text: String, style: TextStyle) {
     if (!element.links) {
         Text(text, style = style)
         return
@@ -151,5 +151,35 @@ internal fun TextFieldView(
             onSubmit = { if (!justFocused) element.submit() },
         )
         Children(element, children, tree)
+    }
+}
+
+/** A run of a Text element's words, plain or a clickable `[[key|shown words]]` span. */
+internal sealed class CanvasTextSpan {
+    /** Words drawn in the Text's own colour. */
+    data class Plain(val text: String) : CanvasTextSpan()
+
+    /** Words drawn in the link colour; a click on them reports [key] through [CanvasElement.consumeLink]. */
+    data class Link(val key: String, val text: String) : CanvasTextSpan()
+}
+
+/** `[[key|shown words]]`, key and words each everything but `|` and `]]`. */
+private val LINK_SPAN = Regex("""\[\[([^|\]]+)\|([^]]+)]]""")
+
+/**
+ * Splits [text] on `[[key|shown words]]` spans. Text with none comes back as its one [CanvasTextSpan.Plain].
+ *
+ * `[[` is reserved: there is no escape for a literal `[[` in plain text.
+ */
+internal fun parseCanvasTextSpans(text: String): List<CanvasTextSpan> {
+    if ("[[" !in text) return listOf(CanvasTextSpan.Plain(text))
+    return buildList {
+        var last = 0
+        for (match in LINK_SPAN.findAll(text)) {
+            if (match.range.first > last) add(CanvasTextSpan.Plain(text.substring(last, match.range.first)))
+            add(CanvasTextSpan.Link(match.groupValues[1], match.groupValues[2]))
+            last = match.range.last + 1
+        }
+        if (last < text.length) add(CanvasTextSpan.Plain(text.substring(last)))
     }
 }

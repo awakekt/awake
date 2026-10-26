@@ -37,10 +37,12 @@ import kotlin.test.assertTrue
  * need not match; it does depend on how coverage turns into colour, which is the rule under test
  * (`UiRasterizer.textCoverageAlpha`, the glyph shader's twin).
  *
- * Measured with the rule, gamma 1.2 and contrast 0.2: every size from 0.94 to 1.04 of Chromium's ink in
- * both polarities (lightest: light on dark at 9 and 10 px, 0.943); light-on-dark over dark-on-light
- * within 5% of Chromium's own balance; and across the 24 px limit, ink per em moves by at most 1.5% and
- * stem darkness per em by at most 3.3%.
+ * Measured with the rule, gamma 1.2 and contrast 0.2, and pixel glyphs in subpixel variants (#1099):
+ * every size from 0.947 to 1.045 of Chromium's ink in both polarities (lightest: light on dark at 16 px;
+ * heaviest: dark on light at 11 px); light-on-dark over dark-on-light within 5.9% of Chromium's own
+ * balance (closest to the bound: 10 px, 0.941); and across the 24 px limit, ink per em moves by at most
+ * 1.8% and stem darkness per em by at most 3.2%. Before the subpixel variants these were 0.943 to 1.042,
+ * 5.5%, 1.5% and 3.3%.
  *
  * Negative controls, measured with the rules this one replaced (exact-size glyphs blended with gamma
  * 1.8 and contrast 1 for both polarities, the distance field with `pow(coverage, 1 / 1.45)`): light-on-

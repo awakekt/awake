@@ -7,6 +7,7 @@ package com.awakekt.awake.scene.rendering.mesh
 
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.scene.binding.RegisteredBinding
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneResolutionContext
 import kotlin.reflect.KClass
@@ -25,6 +26,7 @@ data class SceneRenderableRequest(
 /**
  * Binding definition connecting [SceneMeshRenderer] descriptors to ECS [MeshRenderer] components.
  */
+@RegisteredBinding
 object MeshRendererBinding : SceneComponentBinding<MeshRenderer, SceneMeshRenderer> {
     override val componentClass: KClass<MeshRenderer> = MeshRenderer::class
     override val schemaClass: KClass<SceneMeshRenderer> = SceneMeshRenderer::class

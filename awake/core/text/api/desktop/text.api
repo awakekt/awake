@@ -176,6 +176,7 @@ public final class com/awakekt/awake/core/text/font/PixelGlyph {
 	public final fun getBaselineEm ()F
 	public final fun getHeight ()I
 	public final fun getLeft ()I
+	public final fun getSubpixelSteps ()I
 	public final fun getTop ()I
 	public final fun getU0 ()F
 	public final fun getU1 ()F
@@ -192,10 +193,15 @@ public abstract interface class com/awakekt/awake/core/text/font/PixelGlyphs {
 	public static final field Companion Lcom/awakekt/awake/core/text/font/PixelGlyphs$Companion;
 	public static final field MAX_PIXEL_SIZE I
 	public abstract fun glyph-XuG0dTc (III)Lcom/awakekt/awake/core/text/font/PixelGlyph;
+	public fun glyph-cPY3_7E (IIII)Lcom/awakekt/awake/core/text/font/PixelGlyph;
 }
 
 public final class com/awakekt/awake/core/text/font/PixelGlyphs$Companion {
 	public static final field MAX_PIXEL_SIZE I
+}
+
+public final class com/awakekt/awake/core/text/font/PixelGlyphs$DefaultImpls {
+	public static fun glyph-cPY3_7E (Lcom/awakekt/awake/core/text/font/PixelGlyphs;IIII)Lcom/awakekt/awake/core/text/font/PixelGlyph;
 }
 
 public final class com/awakekt/awake/core/text/font/UiAnchorKt {

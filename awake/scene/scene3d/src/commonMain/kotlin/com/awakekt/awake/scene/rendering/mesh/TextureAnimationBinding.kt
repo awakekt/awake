@@ -9,6 +9,7 @@ import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.passes.uniforms.TextureAnimation
+import com.awakekt.awake.scene.binding.RegisteredBinding
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneResolutionContext
 import com.awakekt.awake.scene.document.SceneComponent
@@ -65,6 +66,7 @@ data class SceneTextureAnimation(
 }
 
 /** Loads [SceneTextureAnimation] as the entity's [TextureAnimation], which the draw collector reads beside its [PbrMaterial]. */
+@RegisteredBinding
 object TextureAnimationBinding : SceneComponentBinding<TextureAnimation, SceneTextureAnimation> {
     override val componentClass: KClass<TextureAnimation> = TextureAnimation::class
     override val schemaClass: KClass<SceneTextureAnimation> = SceneTextureAnimation::class

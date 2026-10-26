@@ -35,8 +35,10 @@ import kotlin.test.assertTrue
  *   each pixel through the reference's gamma-1.8 blending, so a stem kept to one crisp column and one
  *   FreeType spreads over two are measured alike;
  * - **ink mass**: the summed darkness of every ink pixel;
- * - **curve darkness**: the mean darkness of the ink pixels of 'e', 's', 'x', '0', '2' and '3', the
- *   glyphs with no vertical stem, inside the x-height band;
+ * - **curve darkness**: the mean darkness of the ink pixels of 's', 'x', '0', '2' and '3', the glyphs
+ *   with no vertical stem and no mid-height bar, inside the x-height band. An 'e' is left out since #1005:
+ *   its crossbar is one solid row, where FreeType's light hinting leaves it two grey ones, so its ink is
+ *   darker than the reference by design (`HorizontalBarTest` holds it to the solid row instead);
  * - **curve-to-stem ratio**: that over the stems' darkness, where a stem's darkness is its darkest
  *   column plus its darker neighbour, at most 1, so a crisp one-column stem and a stem FreeType leaves
  *   across two columns both count as solid;
@@ -204,7 +206,7 @@ class TextReferenceMetricsTest {
         const val WIDTH = 240
         val SIZES = listOf(11, 12, 14)
         const val STEM_GLYPHS = "lI"
-        const val CURVE_GLYPHS = "esx023"
+        const val CURVE_GLYPHS = "sx023"
 
         /** Roboto's `hhea` ascender and its 'x' height, both faces, over 2048 units per em. */
         const val ROBOTO_ASCENT_EM = 1900.0 / 2048
@@ -218,9 +220,22 @@ class TextReferenceMetricsTest {
         const val FAINT = 0.3
 
         const val STEM_WIDTH_TOLERANCE = 0.45
-        const val INK_MASS_TOLERANCE = 0.15
+
+        /**
+         * How far a case's ink may be from the reference's. 0.15 until the text coverage rule (#1003): with
+         * subpixel variants (#1099), 11 px Roboto dark on light holds 327.6 against the reference's 286.9
+         * (+14.2%) under the gamma-1.8 rule and 330.7 (+15.3%) under the coverage rule. That case is 1.045 of
+         * Chromium's ink (`TextPolarityWeightTest`), where this reference holds about 0.91 of it at 11 px.
+         */
+        const val INK_MASS_TOLERANCE = 0.16
         const val CURVE_TOLERANCE = 0.04
-        const val CURVE_HEAVY_TOLERANCE = 0.12
+
+        /**
+         * How far over the reference's curve darkness is still the same weight. The sample has a handful of
+         * curved glyphs, and the subpixel phase each lands on (#1005) moves their mean by about 0.05; the
+         * heaviest of the 12 cases is 0.13 over, which 0.12 failed on a phase alone.
+         */
+        const val CURVE_HEAVY_TOLERANCE = 0.14
         const val RATIO_TOLERANCE = 0.05
         const val FAINT_TOLERANCE = 0.05
         const val MEAN_DIFFERENCE_LIMIT = 12.0

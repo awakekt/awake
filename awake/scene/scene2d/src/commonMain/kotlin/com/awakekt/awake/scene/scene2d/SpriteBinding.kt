@@ -7,6 +7,7 @@ package com.awakekt.awake.scene.scene2d
 
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.scene.binding.RegisteredBinding
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneResolutionContext
 import com.awakekt.awake.scene.document.SceneColor
@@ -88,6 +89,7 @@ private fun requireFinitePivot(pivot: SceneVec2) =
     require(pivot.x.isFinite() && pivot.y.isFinite()) { "Sprite pivot (${pivot.x}, ${pivot.y}) must be finite." }
 
 /** Loads [SceneSprite] as the entity's [Sprite], and exports it back as it is then. */
+@RegisteredBinding
 object SpriteBinding : SceneComponentBinding<Sprite, SceneSprite> {
     override val componentClass: KClass<Sprite> = Sprite::class
     override val schemaClass: KClass<SceneSprite> = SceneSprite::class

@@ -7,6 +7,7 @@ package com.awakekt.awake.scene.shader
 
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.scene.binding.RegisteredBinding
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneResolutionContext
 import kotlin.reflect.KClass
@@ -23,6 +24,7 @@ import kotlin.reflect.KClass
 class ShaderEffectSource(val settings: SceneShaderEffect)
 
 /** Loads [SceneShaderEffect] as the entity's [ShaderEffectSource], and exports it back unchanged. */
+@RegisteredBinding
 object ShaderEffectBinding : SceneComponentBinding<ShaderEffectSource, SceneShaderEffect> {
     override val componentClass: KClass<ShaderEffectSource> = ShaderEffectSource::class
     override val schemaClass: KClass<SceneShaderEffect> = SceneShaderEffect::class

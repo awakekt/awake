@@ -211,8 +211,9 @@ internal class TextRun(
     private fun wholePixel(value: Float): Float = floor(value + 0.5f)
 
     /**
-     * [paintLine] for exact-size glyphs: the same pen positions, each glyph rounded to a whole pixel at
-     * its stem, on the baseline of its own face rounded to a whole pixel. A code point a face has no
+     * [paintLine] for exact-size glyphs: the same pen positions, each glyph the variant for the nearest
+     * quarter of a pixel of its pen, with its stem on the pixel grid, on the baseline of its own face rounded
+     * to a whole pixel. A code point a face has no
      * pixel glyph for, such as a colour emoji, draws from its atlas as [paintLine] would.
      */
     private fun paintPixelLine(line: String, scope: DrawScope, color: Color, offsetX: Float, lineTop: Float) {
@@ -223,7 +224,7 @@ internal class TextRun(
         var previous = -1
         while (start < line.length) {
             val end = GraphemeClusters.nextBoundary(line, start)
-            // Kerning moves the pen before each glyph is snapped to its whole pixel, so a stem stays on one.
+            // Kerning moves the pen before the subpixel step is chosen, so a kerned pair is spaced as measured.
             x += font.kerningBefore(line, previous, start, glyphPx, style.weight)
             if (kerning) previous = start
             val clusterX = x
@@ -245,17 +246,28 @@ internal class TextRun(
                         page = uv.page,
                     )
                 } else if (glyph != null && glyph.width > 0) {
+                    // The pen lands on the nearest of the glyph's subpixel steps, and that step's glyph has its
+                    // stem on the pixel grid, so the gaps in a run follow layout and the stems stay crisp.
+                    val steps = glyph.subpixelSteps
+                    val pen = clusterX + penX
+                    var drawn = glyph
+                    var wholeX = wholePixel(pen)
+                    if (steps > 1) {
+                        val step = floor(pen * steps + 0.5f)
+                        wholeX = floor(step / steps)
+                        drawn = pixels.glyph(codePoint, style.weight, size, (step - wholeX * steps).toInt()) ?: glyph
+                    }
                     scope.drawGlyph(
-                        x = wholePixel(clusterX + penX + glyph.anchorX) + glyph.left,
-                        y = wholePixel(lineTop + glyph.baselineEm * glyphPx) + glyph.top,
-                        width = glyph.width.toFloat(),
-                        height = glyph.height.toFloat(),
-                        u0 = glyph.u0,
-                        v0 = glyph.v0,
-                        u1 = glyph.u1,
-                        v1 = glyph.v1,
+                        x = wholeX + drawn.left,
+                        y = wholePixel(lineTop + drawn.baselineEm * glyphPx) + drawn.top,
+                        width = drawn.width.toFloat(),
+                        height = drawn.height.toFloat(),
+                        u0 = drawn.u0,
+                        v0 = drawn.v0,
+                        u1 = drawn.u1,
+                        v1 = drawn.v1,
                         color = color,
-                        font = glyph.atlas,
+                        font = drawn.atlas,
                     )
                 }
             } + letterSpacing

@@ -117,9 +117,12 @@ the text depends on that size.
 | Under `Modifier.scale` or another scaling transform | The distance-field atlas, so it scales smoothly |
 | In `UiFonts.bitmap()` | Its own pixel-art atlas, at every size |
 
-The exact-size glyphs put a one-pixel stem on one solid pixel column, and the x-height and cap height
-on whole pixels. The default Roboto family and any font from `UiFonts.load` have them. Each size is
-rasterized the first time it is drawn, in about a millisecond, and kept.
+The exact-size glyphs put a one-pixel stem on one solid pixel column, the x-height and cap height
+on whole pixels, and the crossbar of an `e` or the bar of an `H`, `A` or `F` on one solid pixel row.
+Each glyph comes in four subpixel variants, and a glyph is drawn as the variant nearest its pen's
+fraction of a pixel, with its stem still on the grid, so the gaps in a run follow layout instead of
+jumping by up to a pixel between letters. The default Roboto family and any font from `UiFonts.load`
+have them. Each size is rasterized the first time it is drawn, in about ten milliseconds, and kept.
 
 ### How coverage becomes colour
 
@@ -154,7 +157,7 @@ which gave 0.62 for both.
 `TextPolarityWeightTest` holds the rule to Chromium. Chromium draws the same label in the same Roboto
 face, dark on light and light on dark, at every size from 9 to 48 px. The references are written by
 `tools/fonts-tooling/chromium_polarity_reference.cjs`. Awake's ink is within 6% of Chromium's at every
-size in both polarities, 0.94 to 1.04 of it. The light-on-dark to dark-on-light ink ratio is within 5%
+size in both polarities, 0.95 to 1.05 of it. The light-on-dark to dark-on-light ink ratio is within 6%
 of Chromium's own. Ink means the summed darkness of the text's pixels, measured toward the text colour.
 From 24 px pixel glyphs to 25 px distance field, the ink per em changes by under 2% and stem darkness
 by under 3.5%. Before the rule, light-on-dark small text held 1.16 to 1.29 times Chromium's ink, and
