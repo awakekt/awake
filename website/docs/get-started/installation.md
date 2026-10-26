@@ -106,6 +106,9 @@ An Android release shrunk by R8 (`isMinifyEnabled = true`) needs no keep rules o
 The Jolt and Vulkan backends and the shader compiler ship consumer rules in their Android artifacts,
 which keep the classes, fields and methods their native code finds by name.
 
+The libraries are published unshrunk and unobfuscated; your release build does that. See
+[Release builds and optimization](../guides/release-builds.md) for each artifact type and the checks.
+
 ## Next
 
 [Your first window](first-window.md) opens a window with the app DSL and the Vulkan backend.

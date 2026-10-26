@@ -8,6 +8,7 @@ package com.awakekt.awake.scene.particles
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.particles.ParticleEmitter
+import com.awakekt.awake.scene.binding.RegisteredBinding
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneResolutionContext
 import kotlin.reflect.KClass
@@ -20,6 +21,7 @@ import kotlin.reflect.KClass
 class ParticleEmitterSource(val settings: SceneParticleEmitter)
 
 /** Loads [SceneParticleEmitter] as the entity's [ParticleEmitterSource], and exports it back unchanged. */
+@RegisteredBinding
 object ParticleEmitterBinding : SceneComponentBinding<ParticleEmitterSource, SceneParticleEmitter> {
     override val componentClass: KClass<ParticleEmitterSource> = ParticleEmitterSource::class
     override val schemaClass: KClass<SceneParticleEmitter> = SceneParticleEmitter::class

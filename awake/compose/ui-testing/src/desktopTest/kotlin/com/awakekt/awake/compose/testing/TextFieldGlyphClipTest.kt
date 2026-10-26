@@ -29,7 +29,7 @@ class TextFieldGlyphClipTest {
     @Test
     fun aFieldsClipKeepsTheInkItsPaddingHasRoomFor() {
         val failures = GlyphInk.cases().flatMap { case ->
-            val texts = if (case.isBuiltIn) listOf("jump", "gjpqy|Wolf") else listOf("Åjump", "ÉÑÇÿ gjpqy|Wolf")
+            val texts = listOf("Åjump", "ÉÑÇÿ gjpqy|Wolf")
             texts.mapNotNull { text -> lostToTheFieldsClip(text, case).takeIf { it > 0 }?.let { "$case '$text': cut $it pixels of ink" } }
         }
         assertTrue(failures.isEmpty(), failures.joinToString("\n"))

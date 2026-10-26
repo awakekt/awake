@@ -92,7 +92,9 @@ fun ScenePrefab.findCanvasNode(elementId: String): SceneNode? = root.findCanvasN
  * `Unit Frame 2`, keeps its own elements apart under its own root.
  *
  * It looks at every canvas element in the world, so look up once, when the prefab is placed, and
- * keep the entity rather than calling it every frame.
+ * keep the entity rather than calling it every frame. Code that builds the prefab and binds it
+ * declares its elements as [CanvasParts] instead, and [resolve]s them once into typed handles; this
+ * string lookup stays for tools and data-only lookups.
  *
  * @param root The placed prefab's root entity: the one its `prefab_link` node, or its root node, made.
  * @param elementId The element's [CanvasElement.elementId].
@@ -108,7 +110,7 @@ fun World.findCanvasElement(root: Entity, elementId: String): Entity? {
 }
 
 /** Whether [entity] is [root] or has it as a [Transform] ancestor; a parent chain that loops is neither. */
-private fun World.isAtOrUnder(entity: Entity, root: Entity): Boolean {
+internal fun World.isAtOrUnder(entity: Entity, root: Entity): Boolean {
     var current: Entity? = entity
     var steps = 0
     while (current != null && steps++ <= MAX_DEPTH) {

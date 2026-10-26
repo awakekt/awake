@@ -46,9 +46,15 @@ class CanvasElementExposureTest {
         "number" to "a Stepper's number right now, saved as its stepper.value, set by the player, game code or bind.value",
     )
 
-    /** [CanvasElement]'s own options: its public setters, skipping a synthetic bridge's `$`-named one. */
-    private fun options(): Set<String> = CanvasElement::class.java.declaredMethods
-        .filter { Modifier.isPublic(it.modifiers) && it.name.startsWith("set") && '$' !in it.name }
+    /**
+     * [CanvasElement]'s own options: its public property setters, its own and those of the bases its
+     * flat properties are split across, skipping a synthetic bridge's `$`-named one and [CanvasElement.set],
+     * which sets a whole component.
+     */
+    private fun options(): Set<String> = generateSequence<Class<*>>(CanvasElement::class.java) { it.superclass }
+        .takeWhile { it != Any::class.java }
+        .flatMap { it.declaredMethods.asSequence() }
+        .filter { Modifier.isPublic(it.modifiers) && it.name.startsWith("set") && it.name != "set" && '$' !in it.name }
         .map { it.name.removePrefix("set").replaceFirstChar(Char::lowercase) }
         .toSet()
 

@@ -26,10 +26,12 @@ import kotlin.test.fail
  *   `src/desktopTest/resources/glyph-coverage/built-in-font.txt`, re-recorded with
  *   `-DAWAKE_RECORD_SNAPSHOTS=true` together with the specimen baselines when the set changes.
  *
- * On f79bb9dd1 the set is U+0020–U+007E (printable ASCII), U+00B7 ·, U+00D7 ×, U+2013 –, U+2014 —,
- * U+2022 •, U+2026 … and U+2212 −: 102 code points, the same in all three weights. It lacks every
- * accented or other non-ASCII letter (É, Å, Ñ, ç, ß), curly quotes, every currency sign but $, ©, ®, °, ±,
- * the no-break space, arrows, Greek, Cyrillic and U+FFFD; those draw as '?'.
+ * Since #1058 the set is U+0020–U+007E (printable ASCII), U+00A0–U+017F (Latin-1 Supplement and Latin Extended-A),
+ * U+2013–U+2014, U+2018–U+201A, U+201C–U+201E, U+2020–U+2022, U+2026, U+2030, U+2032–U+2033, U+2039–U+203A,
+ * U+20AC, U+2122 and U+2212: 339 code points, the same in all three weights. Before it, on f79bb9dd1, it was
+ * the 102 of printable ASCII, U+00B7, U+00D7, U+2013, U+2014, U+2022, U+2026 and U+2212, and every accented
+ * letter, curly quote and currency sign but $ drew as '?'. It still lacks Greek, Cyrillic, Vietnamese's stacked
+ * accents, arrows, most symbols and U+FFFD; those draw as '?'.
  *
  * Negative control, recorded on f79bb9dd1: with '~' replaced by U+00A0 in `RobotoBoldUiFontData.glyphOrder`,
  * [everyDeclaredGlyphDrawsInEveryWeight] failed with "Bold no longer draws U+007E at 12 px; it draws it as

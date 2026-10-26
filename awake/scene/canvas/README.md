@@ -26,6 +26,14 @@ an editor saves, which loads and saves back unchanged. `CanvasPrefabBuilderCover
 by: `World.findCanvasElement(root, id)` under one placed copy, `ScenePrefab.findCanvasNode(id)` in the
 prefab.
 
+Code that both builds a prefab and binds it declares its elements once as typed handles instead:
+a `CanvasWidgetParts` with a part per element (`CanvasImagePart`, `CanvasBarPart`, ...), groups and
+`list`s of parts for repeated ones, and ids composed from the declaration (`bar.slot-3.icon`) or
+pinned to one a prefab already saves. The builder's functions take the handles and write the same
+string ids, so the saved prefab is unchanged; `resolve(world, root)` binds one placed copy in a single
+pass over the world, or throws `CanvasPartResolutionException` naming each missing part, and each
+handle then writes only its kind's fields on the cached element.
+
 ## Drawing
 
 `SceneAppLifecycleRuntime` draws every visible element with `SceneCanvas(world)` whenever the scene

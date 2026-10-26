@@ -41,7 +41,8 @@ import kotlin.js.toJsString
  *   it, and `Range` for bundle members read alone: `Access-Control-Allow-Headers: Authorization,
  *   Range`. `Access-Control-Max-Age` lets the browser reuse that answer.
  * - `Retry-After` reaches the transport only when the server lists it in
- *   `Access-Control-Expose-Headers`; without it a 429 backs off exponentially instead.
+ *   `Access-Control-Expose-Headers`; without it a 429 backs off exponentially instead, and a 503
+ *   fails at once.
  * - No cookies are sent cross-origin (`credentials: same-origin`), so the read token is the only
  *   credential.
  *

@@ -83,7 +83,7 @@ internal class TextClipCases(private val fontsDir: File) {
     private val theme = ShadcnThemeValues(ShadcnTheme)
 
     private val roboto: UiFont by lazy {
-        UiFonts.load(File(fontsDir, FONT_FILE).readBytes(), FONT_FILE, UiFonts.DEFAULT_CHARS + EXTRA_CHARS)
+        UiFonts.load(File(fontsDir, FONT_FILE).readBytes(), FONT_FILE)
     }
 
     fun all(): List<TextClipCase> = fieldCases() + layerCases() + sidebarCases() + fontScaleCases() + sdfCases() + canvasCases()
@@ -114,58 +114,64 @@ internal class TextClipCases(private val fontsDir: File) {
     // ---------------------------------------------------------------- BasicTextField
 
     private fun fieldCases() = buildList {
+        // The loaded font's cases keep their ids. The built-in font's are new: it drew '?' for Å until #1058.
         for ((text, tag) in listOf("Åjump" to "A", "jump" to "j")) {
             for (size in listOf(14, 96)) {
                 for (density in listOf(1f, 1.5f)) {
-                    add(
-                        TextClipCase(
-                            "field-$tag-${size}sp-d${num(density)}",
-                            FIELD,
-                            "\"$text\" $size sp, density ${num(density)}",
-                            "loaded Roboto TTF, singleLine, padded 16+ dp around the field",
-                            Outline.Clips,
-                        ) {
-                            val pad = max(FIELD_MIN_PAD, size / 2)
-                            val w = px((size * text.length + 2 * pad + FIELD_MARGIN).toFloat(), density)
-                            val h = px((size * 2 + 2 * pad + FIELD_MARGIN).toFloat(), density)
-                            val style = TextStyle(color = black, size = size.sp, font = roboto)
-                            val prims = frame(density, 1f, w, h) {
-                                Box(Modifier.padding(FIELD_OUTER.dp)) {
-                                    BasicTextField(TextFieldState(text, cursor = 0), Modifier.padding(pad.dp), style = style, singleLine = true)
-                                }
-                            }.primitives
-                            Captured(paint(prims, w, h), paint(withoutClips(prims), w, h), clips = clipRects(prims))
-                        },
-                    )
+                    add(fieldCase("field-$tag-${size}sp-d${num(density)}", text, size, density, roboto))
+                    if (tag == "A") add(fieldCase("field-builtin-$tag-${size}sp-d${num(density)}", text, size, density, UiFonts.default()))
                 }
             }
         }
     }
 
+    private fun fieldCase(id: String, text: String, size: Int, density: Float, font: UiFont) =
+        TextClipCase(
+            id,
+            FIELD,
+            "\"$text\" $size sp, density ${num(density)}${if (font === roboto) "" else ", built-in"}",
+            "${if (font === roboto) "loaded Roboto TTF" else "built-in font"}, singleLine, padded 16+ dp around the field",
+            Outline.Clips,
+        ) {
+            val pad = max(FIELD_MIN_PAD, size / 2)
+            val w = px((size * text.length + 2 * pad + FIELD_MARGIN).toFloat(), density)
+            val h = px((size * 2 + 2 * pad + FIELD_MARGIN).toFloat(), density)
+            val style = TextStyle(color = black, size = size.sp, font = font)
+            val prims = frame(density, 1f, w, h) {
+                Box(Modifier.padding(FIELD_OUTER.dp)) {
+                    BasicTextField(TextFieldState(text, cursor = 0), Modifier.padding(pad.dp), style = style, singleLine = true)
+                }
+            }.primitives
+            Captured(paint(prims, w, h), paint(withoutClips(prims), w, h), clips = clipRects(prims))
+        }
+
     // ---------------------------------------------------------------- graphicsLayer
 
     private fun layerCases() = buildList {
-        for (tight in listOf(false, true)) {
-            for (size in listOf(18, 32)) {
-                val line = if (tight) "tight" else "normal"
-                add(
-                    TextClipCase(
-                        "layer-${size}sp-$line",
-                        LAYER,
-                        "\"$LAYER_TEXT\" $size sp, $line line",
-                        if (tight) "lineHeight = 1 em" else "the font's own line height",
-                        Outline.Layers,
-                    ) {
-                        val style = TextStyle(color = black, size = size.sp, lineHeight = if (tight) size.sp else null)
-                        val w = size * LAYER_W_EM + LAYER_MARGIN
-                        val h = size * 3 + LAYER_MARGIN
-                        val plain = frame(1f, 1f, w, h) { Box(Modifier.padding(LAYER_PAD.dp)) { Box { Text(LAYER_TEXT, style = style) } } }
-                        val layered = frame(1f, 1f, w, h) {
-                            Box(Modifier.padding(LAYER_PAD.dp)) { Box(Modifier.graphicsLayer(alpha = ALMOST_OPAQUE)) { Text(LAYER_TEXT, style = style) } }
-                        }
-                        Captured(paint(layered.primitives, w, h, layered.graphicsLayers), paint(plain.primitives, w, h), layers = layerRects(layered.graphicsLayers))
-                    },
-                )
+        // The built-in font's accented capitals are new cases: it drew '?' for them until #1058.
+        for ((prefix, layerText) in listOf("layer" to LAYER_TEXT, "layer-accent" to ACCENT_TEXT)) {
+            for (tight in listOf(false, true)) {
+                for (size in listOf(18, 32)) {
+                    val line = if (tight) "tight" else "normal"
+                    add(
+                        TextClipCase(
+                            "$prefix-${size}sp-$line",
+                            LAYER,
+                            "\"$layerText\" $size sp, $line line",
+                            if (tight) "lineHeight = 1 em" else "the font's own line height",
+                            Outline.Layers,
+                        ) {
+                            val style = TextStyle(color = black, size = size.sp, lineHeight = if (tight) size.sp else null)
+                            val w = size * LAYER_W_EM + LAYER_MARGIN
+                            val h = size * 3 + LAYER_MARGIN
+                            val plain = frame(1f, 1f, w, h) { Box(Modifier.padding(LAYER_PAD.dp)) { Box { Text(layerText, style = style) } } }
+                            val layered = frame(1f, 1f, w, h) {
+                                Box(Modifier.padding(LAYER_PAD.dp)) { Box(Modifier.graphicsLayer(alpha = ALMOST_OPAQUE)) { Text(layerText, style = style) } }
+                            }
+                            Captured(paint(layered.primitives, w, h, layered.graphicsLayers), paint(plain.primitives, w, h), layers = layerRects(layered.graphicsLayers))
+                        },
+                    )
+                }
             }
         }
     }
@@ -248,10 +254,10 @@ internal class TextClipCases(private val fontsDir: File) {
 
     private fun sdfCases() = buildList {
         for (size in listOf(28, 32, 40, 48)) {
-            for (ch in "Wof&Qg") {
+            for (ch in "Wof&QgÅ") {
                 add(
                     TextClipCase(
-                        "sdf-${if (ch == '&') "amp" else ch.toString()}-${size}sp",
+                        "sdf-${when (ch) { '&' -> "amp"; 'Å' -> "Aring"; else -> ch.toString() }}-${size}sp",
                         SDF,
                         "\"$ch\" $size sp",
                         "ink on the glyph quad's outer ring; one glyph a frame",
@@ -387,9 +393,9 @@ internal class TextClipCases(private val fontsDir: File) {
         val SDF = CaseGroup("sdf", "Distance-field edge of a loaded font")
         val CANVAS = CaseGroup("canvas", "Game canvas: Text, TextField and a follower faded by distance")
         const val FONT_FILE = "Roboto-Regular.ttf"
-        const val EXTRA_CHARS = "ÅÉÑÇÿ"
         const val ALMOST_OPAQUE = 0.999f
         const val LAYER_TEXT = "Hgjpqy|Wolf"
+        const val ACCENT_TEXT = "ÅÉÑÇŁŠŽőű"
         const val PARAGRAPH = "The quick brown fox jumps over the lazy dog again and again"
 
         const val FIELD_MIN_PAD = 16

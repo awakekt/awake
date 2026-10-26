@@ -276,6 +276,16 @@ jobs:
           :awake:scene:shader:desktopTest
           :awake:asset:shader-compiler:desktopTest
 
+      # The @SceneBinding processor's compile tests (a missing field, a type with no converter or a
+      # scene component with no binding must fail the build) and the golden documents the generated
+      # bindings must save byte for byte.
+      - name: Scene binding processor and generated binding tests
+        run: >-
+          ./gradlew
+          :awake:scene:binding:processor:test
+          :awake:scene:binding:desktopTest
+          :awake:scene:scene-core:desktopTest
+
       - name: Every wasmJs source set compiles
         run: ./gradlew compileKotlinWasmJs compileTestKotlinWasmJs
 

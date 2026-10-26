@@ -53,7 +53,7 @@ class CanvasTextFieldGlyphClipTest {
 
     private fun cases(): List<Case> {
         val fonts = listOf(
-            Triple("built-in", UiFonts.default(), listOf("jump")),
+            Triple("built-in", UiFonts.default(), listOf("jump", "Åjump")),
             Triple("loaded TTF", loadedRoboto, listOf("jump", "Åjump")),
         )
         return fonts.flatMap { (name, font, texts) ->

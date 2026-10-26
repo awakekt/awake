@@ -1,1 +1,0 @@
-- Stop character sweeps at the back faces of one-sided meshes, push a character found inside a surface back out instead of holding it there, and count a capsule wedged between two steep faces as grounded so it can jump out.

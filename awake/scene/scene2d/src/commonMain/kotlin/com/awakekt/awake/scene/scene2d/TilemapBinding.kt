@@ -7,6 +7,7 @@ package com.awakekt.awake.scene.scene2d
 
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.scene.binding.RegisteredBinding
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneResolutionContext
 import com.awakekt.awake.scene.document.SceneColor
@@ -56,6 +57,7 @@ class Tilemap(settings: SceneTilemap) {
 }
 
 /** Attaches tile data to an entity and exports its current edits. */
+@RegisteredBinding
 object TilemapBinding : SceneComponentBinding<Tilemap, SceneTilemap> {
     override val componentClass: KClass<Tilemap> = Tilemap::class
     override val schemaClass: KClass<SceneTilemap> = SceneTilemap::class

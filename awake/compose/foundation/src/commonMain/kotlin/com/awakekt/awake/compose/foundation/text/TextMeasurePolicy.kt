@@ -98,18 +98,19 @@ class TextMeasurePolicy(
             ) {}
         }
         val glyphPx = glyphPixels(density, fontScale)
-        val lines = linesAt(glyphPx, wrapWidthPx)
+        val layouts = layoutsAt(glyphPx, wrapWidthPx)
+        val lines = layouts.size
         // Placeables are integer-pixel sized today. Quantize the complete intrinsic line once,
         // after weighted glyph advances and letter spacing have been summed, so sibling rows do
         // not accumulate a ceiling error for every label. This is the deterministic boundary
         // until the retained layout model carries fractional bounds end to end.
-        val width = lines.maxOf { lineWidth(it, glyphPx) }.roundToInt()
+        val width = layouts.maxOf { it.boxWidthPx(text) { line -> lineWidth(line, glyphPx) } }
         // Whole pixels both, from the rule painting uses, so the box is exactly the lines it paints.
         val em = emDp(fontScale)
         val lineHeight = TextLineBox.advancePx(font, em, glyphPx, density, authoredLineHeight()).roundToInt()
-        val height = lineHeight * lines.size
+        val height = lineHeight * lines
         val firstBaseline = TextLineBox.baselinePx(font, em, density, authoredLineHeight()).roundToInt()
-        val lastBaseline = firstBaseline + lineHeight * (lines.size - 1).coerceAtLeast(0)
+        val lastBaseline = firstBaseline + lineHeight * (lines - 1).coerceAtLeast(0)
         val alignmentLines = mapOf<AlignmentLine, Int>(
             FirstBaseline to firstBaseline,
             LastBaseline to lastBaseline,
@@ -132,7 +133,7 @@ class TextMeasurePolicy(
      */
     override fun Density.maxIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int): Int {
         val glyphPx = glyphPixels(density, fontScale)
-        return linesAt(glyphPx, Float.POSITIVE_INFINITY).maxOfOrNull { lineWidth(it, glyphPx) }?.roundToInt() ?: 0
+        return layoutsAt(glyphPx, Float.POSITIVE_INFINITY).maxOfOrNull { it.boxWidthPx(text) { line -> lineWidth(line, glyphPx) } } ?: 0
     }
 
     /**
@@ -161,7 +162,7 @@ class TextMeasurePolicy(
     override fun Density.minIntrinsicHeight(measurables: List<IntrinsicMeasurable>, width: Int): Int {
         val wrapAt = if (singleLine || width == Constraints.Infinity) Float.POSITIVE_INFINITY else width.toFloat()
         val glyphPx = glyphPixels(density, fontScale)
-        val lineCount = linesAt(glyphPx, wrapAt).size
+        val lineCount = layoutsAt(glyphPx, wrapAt).size
         return TextLineBox.advancePx(font, emDp(fontScale), glyphPx, density, authoredLineHeight()).roundToInt() * lineCount
     }
 
@@ -177,8 +178,8 @@ class TextMeasurePolicy(
     internal var measuredFontScale: Float = 1f
         private set
 
-    private fun Density.linesAt(glyphPx: Float, maxWidthPx: Float): List<String> =
-        breakIntoLines(
+    private fun Density.layoutsAt(glyphPx: Float, maxWidthPx: Float): List<TextLineLayout> =
+        breakIntoLineLayouts(
             text = text,
             maxWidthPx = maxWidthPx,
             softWrap = softWrap && !singleLine,

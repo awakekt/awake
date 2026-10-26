@@ -63,8 +63,8 @@ class ProtectedContentDocsSampleTest {
         // --8<-- [start:transport]
         val baseUrl = "https://content.example.com/release/"
         val transport = ContentTransport { request ->
-            // Resolve the index's relative URLs, send the headers, and answer every status, 401 and 429
-            // included, with the response headers, so a 429's Retry-After is honoured.
+            // Resolve the index's relative URLs, send the headers, and answer every status, 401, 429
+            // and 503 included, with the response headers, so their Retry-After is honoured.
             val (status, body, headers) = httpClient.get(baseUrl + request.url, request.headers)
             ContentResponse(status, body, headers)
         }

@@ -8,6 +8,7 @@ package com.awakekt.awake.scene.rendering.camera
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.scene.binding.RegisteredBinding
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneResolutionContext
 import com.awakekt.awake.scene.rendering.toSceneVec3
@@ -18,6 +19,7 @@ import kotlin.reflect.KClass
 /**
  * Binding definition connecting [SceneCamera] descriptors to ECS [Camera] components.
  */
+@RegisteredBinding
 object CameraBinding : SceneComponentBinding<Camera, SceneCamera> {
     override val componentClass: KClass<Camera> = Camera::class
     override val schemaClass: KClass<SceneCamera> = SceneCamera::class

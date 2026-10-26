@@ -68,6 +68,7 @@ nav:
           - Scene documents: guides/scene-documents.md
           - Scene DSL: guides/scene-dsl.md
           - Scene capabilities: guides/scene-capabilities.md
+          - Scene components: guides/scene-components.md
           - ECS: guides/ecs.md
           - App lifecycle: guides/app-lifecycle.md
           - Cameras and controls: guides/cameras-and-controls.md
@@ -101,6 +102,8 @@ nav:
           - UI with AwakeKt Compose: guides/ui.md
           - shadcn components: guides/shadcn.md
           - Localization: guides/localization.md
+      - Ship:
+          - Release builds and optimization: guides/release-builds.md
   - Reference:
       - Scene document schema: reference/scene-document-schema.md
       - Scene document components: reference/scene-document-components.md

@@ -12,6 +12,7 @@ import com.awakekt.awake.render.effects.CustomPostEffect
 import com.awakekt.awake.render.effects.FxaaEffect
 import com.awakekt.awake.render.effects.PostProcessingEffect
 import com.awakekt.awake.render.effects.ToneMappingGradeEffect
+import com.awakekt.awake.scene.binding.RegisteredBinding
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneResolutionContext
 import kotlin.reflect.KClass
@@ -19,6 +20,7 @@ import kotlin.reflect.KClass
 /**
  * Two-way binding between [ScenePostProcessing] schema descriptors and ECS [PostProcessing] components.
  */
+@RegisteredBinding
 object PostProcessingBinding : SceneComponentBinding<PostProcessing, ScenePostProcessing> {
     override val componentClass: KClass<PostProcessing> = PostProcessing::class
     override val schemaClass: KClass<ScenePostProcessing> = ScenePostProcessing::class

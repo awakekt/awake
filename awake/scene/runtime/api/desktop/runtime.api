@@ -93,6 +93,7 @@ public final class com/awakekt/awake/scene/runtime/DefaultSceneComponentResolver
 	public final fun getFogResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
 	public final fun getLightResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
 	public final fun getMeshRendererResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
+	public final fun getModules ()Ljava/util/List;
 	public final fun getPbrMaterialResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
 	public final fun getPostProcessingResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
 	public final fun getPrefabLinkResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentResolver;

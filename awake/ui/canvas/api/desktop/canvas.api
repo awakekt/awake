@@ -109,6 +109,26 @@ public final class com/awakekt/awake/ui/canvas/CanvasAnchor$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
+public final class com/awakekt/awake/ui/canvas/CanvasAppearance {
+	public static final field Companion Lcom/awakekt/awake/ui/canvas/CanvasAppearance$Companion;
+	public static final field DEFAULT_BACKGROUND Ljava/lang/String;
+	public static final field DEFAULT_COLOR Ljava/lang/String;
+	public fun <init> ()V
+	public final fun getBackground ()Ljava/lang/String;
+	public final fun getColor ()Ljava/lang/String;
+	public final fun getPreviewState ()Lcom/awakekt/awake/ui/canvas/CanvasControlState;
+	public final fun getSkin ()Lcom/awakekt/awake/ui/canvas/CanvasControlSkin;
+	public final fun getStyle ()Lcom/awakekt/awake/ui/canvas/CanvasStyle;
+	public final fun setBackground (Ljava/lang/String;)V
+	public final fun setColor (Ljava/lang/String;)V
+	public final fun setPreviewState (Lcom/awakekt/awake/ui/canvas/CanvasControlState;)V
+	public final fun setSkin (Lcom/awakekt/awake/ui/canvas/CanvasControlSkin;)V
+	public final fun setStyle (Lcom/awakekt/awake/ui/canvas/CanvasStyle;)V
+}
+
+public final class com/awakekt/awake/ui/canvas/CanvasAppearance$Companion {
+}
+
 public final class com/awakekt/awake/ui/canvas/CanvasBar {
 	public static final field Companion Lcom/awakekt/awake/ui/canvas/CanvasBar$Companion;
 	public static final field DEFAULT_SEGMENT_GAP F
@@ -176,6 +196,15 @@ public final class com/awakekt/awake/ui/canvas/CanvasBarDirection : java/lang/En
 
 public final class com/awakekt/awake/ui/canvas/CanvasBarDirection$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ui/canvas/CanvasBarWidget : com/awakekt/awake/ui/canvas/CanvasWidget {
+	public fun <init> ()V
+	public fun getKind ()Lcom/awakekt/awake/ui/canvas/CanvasElementKind;
+	public final fun getSettings ()Lcom/awakekt/awake/ui/canvas/CanvasBar;
+	public final fun getValue ()F
+	public final fun setSettings (Lcom/awakekt/awake/ui/canvas/CanvasBar;)V
+	public final fun setValue (F)V
 }
 
 public final class com/awakekt/awake/ui/canvas/CanvasBinding {
@@ -326,6 +355,28 @@ public final class com/awakekt/awake/ui/canvas/CanvasButtonTrigger : java/lang/E
 
 public final class com/awakekt/awake/ui/canvas/CanvasButtonTrigger$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ui/canvas/CanvasButtonWidget : com/awakekt/awake/ui/canvas/CanvasWidget {
+	public fun <init> ()V
+	public final fun consumeReady ()Z
+	public final fun getAction ()Ljava/lang/String;
+	public final fun getAimLock ()Lcom/awakekt/awake/ui/canvas/CanvasAimLock;
+	public final fun getCharges ()I
+	public final fun getCooldown ()F
+	public final fun getCoolingDown ()Z
+	public final fun getDoubleAction ()Ljava/lang/String;
+	public final fun getEnabled ()Z
+	public fun getKind ()Lcom/awakekt/awake/ui/canvas/CanvasElementKind;
+	public final fun getSettings ()Lcom/awakekt/awake/ui/canvas/CanvasButton;
+	public final fun getUsable ()Z
+	public final fun setAction (Ljava/lang/String;)V
+	public final fun setAimLock (Lcom/awakekt/awake/ui/canvas/CanvasAimLock;)V
+	public final fun setCharges (I)V
+	public final fun setCooldown (F)V
+	public final fun setDoubleAction (Ljava/lang/String;)V
+	public final fun setEnabled (Z)V
+	public final fun setSettings (Lcom/awakekt/awake/ui/canvas/CanvasButton;)V
 }
 
 public final class com/awakekt/awake/ui/canvas/CanvasCluster {
@@ -594,7 +645,7 @@ public final class com/awakekt/awake/ui/canvas/CanvasDirection$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class com/awakekt/awake/ui/canvas/CanvasElement {
+public final class com/awakekt/awake/ui/canvas/CanvasElement : com/awakekt/awake/ui/canvas/CanvasElementWidgetFields {
 	public static final field Companion Lcom/awakekt/awake/ui/canvas/CanvasElement$Companion;
 	public static final field DEFAULT_FONT_SIZE F
 	public static final field DEFAULT_HEIGHT F
@@ -604,48 +655,115 @@ public final class com/awakekt/awake/ui/canvas/CanvasElement {
 	public static final field TOOLTIP_DELAY_SECONDS F
 	public fun <init> ()V
 	public final fun consumeAimCancel ()Z
-	public final fun consumeChange ()Z
 	public final fun consumeDoublePress ()Z
 	public final fun consumeDown ()Z
 	public final fun consumeLongPress ()Z
 	public final fun consumeLook ()Lcom/awakekt/awake/core/math2d/Vec2;
 	public final fun consumePress ()Z
 	public final fun consumePressAt ()Lcom/awakekt/awake/core/math2d/Vec2;
-	public final fun consumeReady ()Z
 	public final fun consumeRelease ()Z
 	public final fun consumeSecondaryPress ()Z
 	public final fun consumeSprintStart ()Z
 	public final fun consumeSubmit ()Ljava/lang/String;
 	public final fun consumeWheel ()F
 	public final fun consumeZoom ()F
-	public final fun getAction ()Ljava/lang/String;
 	public final fun getAimCancelling ()Z
-	public final fun getAimLock ()Lcom/awakekt/awake/ui/canvas/CanvasAimLock;
 	public final fun getAimTarget ()Ljava/lang/String;
 	public final fun getAimX ()F
 	public final fun getAimY ()F
 	public final fun getAiming ()Z
-	public final fun getAnchor ()Lcom/awakekt/awake/ui/canvas/CanvasAnchor;
-	public final fun getBackground ()Ljava/lang/String;
-	public final fun getBar ()Lcom/awakekt/awake/ui/canvas/CanvasBar;
-	public final fun getBind ()Lcom/awakekt/awake/ui/canvas/CanvasBinding;
-	public final fun getButton ()Lcom/awakekt/awake/ui/canvas/CanvasButton;
-	public final fun getCamera ()Ljava/lang/String;
-	public final fun getCharges ()I
-	public final fun getCluster ()Lcom/awakekt/awake/ui/canvas/CanvasCluster;
-	public final fun getColor ()Ljava/lang/String;
-	public final fun getControlId ()Ljava/lang/String;
-	public final fun getCooldown ()F
-	public final fun getCoolingDown ()Z
-	public final fun getDoubleAction ()Ljava/lang/String;
-	public final fun getDraggable ()Z
 	public final fun getDragging ()Z
-	public final fun getDropTarget ()Z
 	public final fun getDropped ()Lcom/awakekt/awake/ui/canvas/CanvasElement;
 	public final fun getDroppedOutside ()Lcom/awakekt/awake/core/math2d/Vec2;
-	public final fun getElementId ()Ljava/lang/String;
-	public final fun getEnabled ()Z
 	public final fun getFocused ()Z
+	public final fun getHeldSeconds ()F
+	public final fun getPresses ()I
+	public final fun getSecondaryPressed ()Z
+	public final fun getSprinting ()Z
+	public final fun getStickX ()F
+	public final fun getStickY ()F
+	public final fun isHeld ()Z
+	public final fun isHovered ()Z
+	public final fun setFocused (Z)V
+}
+
+public final class com/awakekt/awake/ui/canvas/CanvasElement$Companion {
+}
+
+public abstract class com/awakekt/awake/ui/canvas/CanvasElementBase {
+	public final fun components ()Ljava/util/List;
+	public final fun get (Lkotlin/reflect/KClass;)Ljava/lang/Object;
+	public final fun getBind ()Lcom/awakekt/awake/ui/canvas/CanvasBinding;
+	public final fun getCluster ()Lcom/awakekt/awake/ui/canvas/CanvasCluster;
+	public final fun getComponentsVersion ()I
+	public final fun getKind ()Lcom/awakekt/awake/ui/canvas/CanvasElementKind;
+	public final fun getLayout ()Lcom/awakekt/awake/ui/canvas/CanvasLayout;
+	public final fun getPointer ()Lcom/awakekt/awake/ui/canvas/CanvasPointerState;
+	public final fun getRect ()Lcom/awakekt/awake/ui/canvas/CanvasRect;
+	public final fun getWidget ()Lcom/awakekt/awake/ui/canvas/CanvasWidget;
+	public final fun remove (Lkotlin/reflect/KClass;)Ljava/lang/Object;
+	public final fun set (Ljava/lang/Object;)V
+	public final fun setBind (Lcom/awakekt/awake/ui/canvas/CanvasBinding;)V
+	public final fun setCluster (Lcom/awakekt/awake/ui/canvas/CanvasCluster;)V
+	public final fun setKind (Lcom/awakekt/awake/ui/canvas/CanvasElementKind;)V
+	public final fun setLayout (Lcom/awakekt/awake/ui/canvas/CanvasLayout;)V
+}
+
+public abstract class com/awakekt/awake/ui/canvas/CanvasElementFields : com/awakekt/awake/ui/canvas/CanvasElementBase {
+	public final fun getAnchor ()Lcom/awakekt/awake/ui/canvas/CanvasAnchor;
+	public final fun getBackground ()Ljava/lang/String;
+	public final fun getColor ()Ljava/lang/String;
+	public final fun getControlId ()Ljava/lang/String;
+	public final fun getElementId ()Ljava/lang/String;
+	public final fun getFont ()Ljava/lang/String;
+	public final fun getFontSize ()F
+	public final fun getGrow ()F
+	public final fun getHeight ()F
+	public final fun getLinks ()Z
+	public final fun getOffsetX ()F
+	public final fun getOffsetY ()F
+	public final fun getOrder ()I
+	public final fun getPreviewState ()Lcom/awakekt/awake/ui/canvas/CanvasControlState;
+	public final fun getSafeArea ()Z
+	public final fun getScreenBounds ()Lcom/awakekt/awake/core/math2d/Rectangle;
+	public final fun getSkin ()Lcom/awakekt/awake/ui/canvas/CanvasControlSkin;
+	public final fun getStyle ()Lcom/awakekt/awake/ui/canvas/CanvasStyle;
+	public final fun getText ()Ljava/lang/String;
+	public final fun getTextAlign ()Lcom/awakekt/awake/ui/canvas/CanvasAnchor;
+	public final fun getTextArgs ()Ljava/util/Map;
+	public final fun getTextKey ()Ljava/lang/String;
+	public final fun getTouchOnly ()Z
+	public final fun getVisible ()Z
+	public final fun getWidth ()F
+	public final fun setAnchor (Lcom/awakekt/awake/ui/canvas/CanvasAnchor;)V
+	public final fun setBackground (Ljava/lang/String;)V
+	public final fun setColor (Ljava/lang/String;)V
+	public final fun setControlId (Ljava/lang/String;)V
+	public final fun setElementId (Ljava/lang/String;)V
+	public final fun setFont (Ljava/lang/String;)V
+	public final fun setFontSize (F)V
+	public final fun setGrow (F)V
+	public final fun setHeight (F)V
+	public final fun setLinks (Z)V
+	public final fun setOffsetX (F)V
+	public final fun setOffsetY (F)V
+	public final fun setOrder (I)V
+	public final fun setPreviewState (Lcom/awakekt/awake/ui/canvas/CanvasControlState;)V
+	public final fun setSafeArea (Z)V
+	public final fun setSkin (Lcom/awakekt/awake/ui/canvas/CanvasControlSkin;)V
+	public final fun setStyle (Lcom/awakekt/awake/ui/canvas/CanvasStyle;)V
+	public final fun setText (Ljava/lang/String;)V
+	public final fun setTextAlign (Lcom/awakekt/awake/ui/canvas/CanvasAnchor;)V
+	public final fun setTextArgs (Ljava/util/Map;)V
+	public final fun setTextKey (Ljava/lang/String;)V
+	public final fun setTouchOnly (Z)V
+	public final fun setVisible (Z)V
+	public final fun setWidth (F)V
+}
+
+public abstract class com/awakekt/awake/ui/canvas/CanvasElementFollowFields : com/awakekt/awake/ui/canvas/CanvasElementFields {
+	public final fun getDraggable ()Z
+	public final fun getDropTarget ()Z
 	public final fun getFollow ()Ljava/lang/String;
 	public final fun getFollowArrow ()Z
 	public final fun getFollowBounds ()Z
@@ -654,72 +772,13 @@ public final class com/awakekt/awake/ui/canvas/CanvasElement {
 	public final fun getFollowOutset ()F
 	public final fun getFollowRules ()Lcom/awakekt/awake/ui/canvas/CanvasFollowRules;
 	public final fun getFollowScore ()F
-	public final fun getFont ()Ljava/lang/String;
-	public final fun getFontSize ()F
-	public final fun getGrow ()F
-	public final fun getHeight ()F
-	public final fun getHeldSeconds ()F
-	public final fun getJoystick ()Lcom/awakekt/awake/ui/canvas/CanvasJoystick;
-	public final fun getKind ()Lcom/awakekt/awake/ui/canvas/CanvasElementKind;
-	public final fun getLayout ()Lcom/awakekt/awake/ui/canvas/CanvasLayout;
-	public final fun getLinks ()Z
-	public final fun getLook ()Lcom/awakekt/awake/ui/canvas/CanvasLook;
-	public final fun getMask ()Ljava/lang/String;
-	public final fun getMaxLength ()I
-	public final fun getMaxLengthUnit ()Lcom/awakekt/awake/core/text/unicode/TextLengthUnit;
-	public final fun getNumber ()F
-	public final fun getOffsetX ()F
-	public final fun getOffsetY ()F
-	public final fun getOrder ()I
-	public final fun getPadding ()Lcom/awakekt/awake/ui/canvas/CanvasPadding;
 	public final fun getPinAngle ()F
 	public final fun getPinned ()Z
-	public final fun getPlaceholder ()Ljava/lang/String;
 	public final fun getPressable ()Z
-	public final fun getPresses ()I
-	public final fun getPreviewState ()Lcom/awakekt/awake/ui/canvas/CanvasControlState;
-	public final fun getSafeArea ()Z
-	public final fun getScreenBounds ()Lcom/awakekt/awake/core/math2d/Rectangle;
-	public final fun getSecondaryPressed ()Z
-	public final fun getSkin ()Lcom/awakekt/awake/ui/canvas/CanvasControlSkin;
-	public final fun getSprinting ()Z
-	public final fun getStepper ()Lcom/awakekt/awake/ui/canvas/CanvasStepper;
-	public final fun getStickX ()F
-	public final fun getStickY ()F
-	public final fun getStyle ()Lcom/awakekt/awake/ui/canvas/CanvasStyle;
-	public final fun getSweep ()Lcom/awakekt/awake/ui/canvas/CanvasSweep;
-	public final fun getText ()Ljava/lang/String;
-	public final fun getTextAlign ()Lcom/awakekt/awake/ui/canvas/CanvasAnchor;
-	public final fun getTextArgs ()Ljava/util/Map;
-	public final fun getTextKey ()Ljava/lang/String;
 	public final fun getTooltip ()Ljava/lang/String;
-	public final fun getTouchOnly ()Z
-	public final fun getUsable ()Z
-	public final fun getValue ()F
-	public final fun getVisible ()Z
 	public final fun getWheel ()Z
-	public final fun getWidth ()F
-	public final fun isHeld ()Z
-	public final fun isHovered ()Z
-	public final fun setAction (Ljava/lang/String;)V
-	public final fun setAimLock (Lcom/awakekt/awake/ui/canvas/CanvasAimLock;)V
-	public final fun setAnchor (Lcom/awakekt/awake/ui/canvas/CanvasAnchor;)V
-	public final fun setBackground (Ljava/lang/String;)V
-	public final fun setBar (Lcom/awakekt/awake/ui/canvas/CanvasBar;)V
-	public final fun setBind (Lcom/awakekt/awake/ui/canvas/CanvasBinding;)V
-	public final fun setButton (Lcom/awakekt/awake/ui/canvas/CanvasButton;)V
-	public final fun setCamera (Ljava/lang/String;)V
-	public final fun setCharges (I)V
-	public final fun setCluster (Lcom/awakekt/awake/ui/canvas/CanvasCluster;)V
-	public final fun setColor (Ljava/lang/String;)V
-	public final fun setControlId (Ljava/lang/String;)V
-	public final fun setCooldown (F)V
-	public final fun setDoubleAction (Ljava/lang/String;)V
 	public final fun setDraggable (Z)V
 	public final fun setDropTarget (Z)V
-	public final fun setElementId (Ljava/lang/String;)V
-	public final fun setEnabled (Z)V
-	public final fun setFocused (Z)V
 	public final fun setFollow (Ljava/lang/String;)V
 	public final fun setFollowArrow (Z)V
 	public final fun setFollowBounds (Z)V
@@ -727,46 +786,9 @@ public final class com/awakekt/awake/ui/canvas/CanvasElement {
 	public final fun setFollowOutset (F)V
 	public final fun setFollowRules (Lcom/awakekt/awake/ui/canvas/CanvasFollowRules;)V
 	public final fun setFollowScore (F)V
-	public final fun setFont (Ljava/lang/String;)V
-	public final fun setFontSize (F)V
-	public final fun setGrow (F)V
-	public final fun setHeight (F)V
-	public final fun setJoystick (Lcom/awakekt/awake/ui/canvas/CanvasJoystick;)V
-	public final fun setKind (Lcom/awakekt/awake/ui/canvas/CanvasElementKind;)V
-	public final fun setLayout (Lcom/awakekt/awake/ui/canvas/CanvasLayout;)V
-	public final fun setLinks (Z)V
-	public final fun setLook (Lcom/awakekt/awake/ui/canvas/CanvasLook;)V
-	public final fun setMask (Ljava/lang/String;)V
-	public final fun setMaxLength (I)V
-	public final fun setMaxLengthUnit (Lcom/awakekt/awake/core/text/unicode/TextLengthUnit;)V
-	public final fun setNumber (F)V
-	public final fun setOffsetX (F)V
-	public final fun setOffsetY (F)V
-	public final fun setOrder (I)V
-	public final fun setPadding (Lcom/awakekt/awake/ui/canvas/CanvasPadding;)V
-	public final fun setPlaceholder (Ljava/lang/String;)V
 	public final fun setPressable (Z)V
-	public final fun setPreviewState (Lcom/awakekt/awake/ui/canvas/CanvasControlState;)V
-	public final fun setSafeArea (Z)V
-	public final fun setSkin (Lcom/awakekt/awake/ui/canvas/CanvasControlSkin;)V
-	public final fun setStepper (Lcom/awakekt/awake/ui/canvas/CanvasStepper;)V
-	public final fun setStyle (Lcom/awakekt/awake/ui/canvas/CanvasStyle;)V
-	public final fun setSweep (Lcom/awakekt/awake/ui/canvas/CanvasSweep;)V
-	public final fun setText (Ljava/lang/String;)V
-	public final fun setTextAlign (Lcom/awakekt/awake/ui/canvas/CanvasAnchor;)V
-	public final fun setTextArgs (Ljava/util/Map;)V
-	public final fun setTextKey (Ljava/lang/String;)V
 	public final fun setTooltip (Ljava/lang/String;)V
-	public final fun setTouchOnly (Z)V
-	public final fun setValue (F)V
-	public final fun setVisible (Z)V
 	public final fun setWheel (Z)V
-	public final fun setWidth (F)V
-	public final fun stepBy (I)Z
-	public final fun stepBy (Lcom/awakekt/awake/core/input/GamepadButton;)Z
-}
-
-public final class com/awakekt/awake/ui/canvas/CanvasElement$Companion {
 }
 
 public final class com/awakekt/awake/ui/canvas/CanvasElementKind : java/lang/Enum {
@@ -795,6 +817,55 @@ public final class com/awakekt/awake/ui/canvas/CanvasElementKt {
 	public static final fun consumeLink (Lcom/awakekt/awake/ui/canvas/CanvasElement;)Ljava/lang/String;
 }
 
+public abstract class com/awakekt/awake/ui/canvas/CanvasElementWidgetFields : com/awakekt/awake/ui/canvas/CanvasElementFollowFields {
+	public final fun consumeChange ()Z
+	public final fun consumeReady ()Z
+	public final fun getAction ()Ljava/lang/String;
+	public final fun getAimLock ()Lcom/awakekt/awake/ui/canvas/CanvasAimLock;
+	public final fun getBar ()Lcom/awakekt/awake/ui/canvas/CanvasBar;
+	public final fun getButton ()Lcom/awakekt/awake/ui/canvas/CanvasButton;
+	public final fun getCamera ()Ljava/lang/String;
+	public final fun getCharges ()I
+	public final fun getCooldown ()F
+	public final fun getCoolingDown ()Z
+	public final fun getDoubleAction ()Ljava/lang/String;
+	public final fun getEnabled ()Z
+	public final fun getJoystick ()Lcom/awakekt/awake/ui/canvas/CanvasJoystick;
+	public final fun getLook ()Lcom/awakekt/awake/ui/canvas/CanvasLook;
+	public final fun getMask ()Ljava/lang/String;
+	public final fun getMaxLength ()I
+	public final fun getMaxLengthUnit ()Lcom/awakekt/awake/core/text/unicode/TextLengthUnit;
+	public final fun getNumber ()F
+	public final fun getPadding ()Lcom/awakekt/awake/ui/canvas/CanvasPadding;
+	public final fun getPlaceholder ()Ljava/lang/String;
+	public final fun getStepper ()Lcom/awakekt/awake/ui/canvas/CanvasStepper;
+	public final fun getSweep ()Lcom/awakekt/awake/ui/canvas/CanvasSweep;
+	public final fun getUsable ()Z
+	public final fun getValue ()F
+	public final fun setAction (Ljava/lang/String;)V
+	public final fun setAimLock (Lcom/awakekt/awake/ui/canvas/CanvasAimLock;)V
+	public final fun setBar (Lcom/awakekt/awake/ui/canvas/CanvasBar;)V
+	public final fun setButton (Lcom/awakekt/awake/ui/canvas/CanvasButton;)V
+	public final fun setCamera (Ljava/lang/String;)V
+	public final fun setCharges (I)V
+	public final fun setCooldown (F)V
+	public final fun setDoubleAction (Ljava/lang/String;)V
+	public final fun setEnabled (Z)V
+	public final fun setJoystick (Lcom/awakekt/awake/ui/canvas/CanvasJoystick;)V
+	public final fun setLook (Lcom/awakekt/awake/ui/canvas/CanvasLook;)V
+	public final fun setMask (Ljava/lang/String;)V
+	public final fun setMaxLength (I)V
+	public final fun setMaxLengthUnit (Lcom/awakekt/awake/core/text/unicode/TextLengthUnit;)V
+	public final fun setNumber (F)V
+	public final fun setPadding (Lcom/awakekt/awake/ui/canvas/CanvasPadding;)V
+	public final fun setPlaceholder (Ljava/lang/String;)V
+	public final fun setStepper (Lcom/awakekt/awake/ui/canvas/CanvasStepper;)V
+	public final fun setSweep (Lcom/awakekt/awake/ui/canvas/CanvasSweep;)V
+	public final fun setValue (F)V
+	public final fun stepBy (I)Z
+	public final fun stepBy (Lcom/awakekt/awake/core/input/GamepadButton;)Z
+}
+
 public final class com/awakekt/awake/ui/canvas/CanvasFillImageMode : java/lang/Enum {
 	public static final field Capped Lcom/awakekt/awake/ui/canvas/CanvasFillImageMode;
 	public static final field Companion Lcom/awakekt/awake/ui/canvas/CanvasFillImageMode$Companion;
@@ -808,6 +879,29 @@ public final class com/awakekt/awake/ui/canvas/CanvasFillImageMode : java/lang/E
 
 public final class com/awakekt/awake/ui/canvas/CanvasFillImageMode$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ui/canvas/CanvasFollow {
+	public fun <init> ()V
+	public final fun getBounds ()Z
+	public final fun getDistance ()F
+	public final fun getNode ()Ljava/lang/String;
+	public final fun getOffset ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getOutset ()F
+	public final fun getPinAngle ()F
+	public final fun getPinned ()Z
+	public final fun getRules ()Lcom/awakekt/awake/ui/canvas/CanvasFollowRules;
+	public final fun getScore ()F
+	public final fun setBounds (Z)V
+	public final fun setNode (Ljava/lang/String;)V
+	public final fun setOffset (Lcom/awakekt/awake/core/math/Vec3f;)V
+	public final fun setOutset (F)V
+	public final fun setRules (Lcom/awakekt/awake/ui/canvas/CanvasFollowRules;)V
+	public final fun setScore (F)V
+}
+
+public final class com/awakekt/awake/ui/canvas/CanvasFollowArrow {
+	public fun <init> ()V
 }
 
 public final class com/awakekt/awake/ui/canvas/CanvasFollowLimit {
@@ -1028,6 +1122,23 @@ public final class com/awakekt/awake/ui/canvas/CanvasImage$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
+public final class com/awakekt/awake/ui/canvas/CanvasImageWidget : com/awakekt/awake/ui/canvas/CanvasWidget {
+	public fun <init> ()V
+	public fun getKind ()Lcom/awakekt/awake/ui/canvas/CanvasElementKind;
+}
+
+public final class com/awakekt/awake/ui/canvas/CanvasInput {
+	public fun <init> ()V
+	public final fun getDraggable ()Z
+	public final fun getDropTarget ()Z
+	public final fun getPressable ()Z
+	public final fun getWheel ()Z
+	public final fun setDraggable (Z)V
+	public final fun setDropTarget (Z)V
+	public final fun setPressable (Z)V
+	public final fun setWheel (Z)V
+}
+
 public final class com/awakekt/awake/ui/canvas/CanvasInsets {
 	public static final field Companion Lcom/awakekt/awake/ui/canvas/CanvasInsets$Companion;
 	public fun <init> ()V
@@ -1170,6 +1281,15 @@ public final class com/awakekt/awake/ui/canvas/CanvasJoystickSkin$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
+public final class com/awakekt/awake/ui/canvas/CanvasJoystickWidget : com/awakekt/awake/ui/canvas/CanvasWidget {
+	public fun <init> ()V
+	public final fun getAction ()Ljava/lang/String;
+	public fun getKind ()Lcom/awakekt/awake/ui/canvas/CanvasElementKind;
+	public final fun getSettings ()Lcom/awakekt/awake/ui/canvas/CanvasJoystick;
+	public final fun setAction (Ljava/lang/String;)V
+	public final fun setSettings (Lcom/awakekt/awake/ui/canvas/CanvasJoystick;)V
+}
+
 public final class com/awakekt/awake/ui/canvas/CanvasJustify : java/lang/Enum {
 	public static final field Center Lcom/awakekt/awake/ui/canvas/CanvasJustify;
 	public static final field Companion Lcom/awakekt/awake/ui/canvas/CanvasJustify$Companion;
@@ -1268,6 +1388,15 @@ public final synthetic class com/awakekt/awake/ui/canvas/CanvasLook$$serializer 
 public final class com/awakekt/awake/ui/canvas/CanvasLook$Companion {
 	public final fun getDefault ()Lcom/awakekt/awake/ui/canvas/CanvasLook;
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ui/canvas/CanvasLookAreaWidget : com/awakekt/awake/ui/canvas/CanvasWidget {
+	public fun <init> ()V
+	public final fun getAction ()Ljava/lang/String;
+	public fun getKind ()Lcom/awakekt/awake/ui/canvas/CanvasElementKind;
+	public final fun getSettings ()Lcom/awakekt/awake/ui/canvas/CanvasLook;
+	public final fun setAction (Ljava/lang/String;)V
+	public final fun setSettings (Lcom/awakekt/awake/ui/canvas/CanvasLook;)V
 }
 
 public final class com/awakekt/awake/ui/canvas/CanvasLookSkin {
@@ -1396,6 +1525,42 @@ public final class com/awakekt/awake/ui/canvas/CanvasPlayerLayout$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
+public final class com/awakekt/awake/ui/canvas/CanvasPointerState {
+	public fun <init> ()V
+	public final fun consumeAimCancel ()Z
+	public final fun consumeDoublePress ()Z
+	public final fun consumeDown ()Z
+	public final fun consumeLink ()Ljava/lang/String;
+	public final fun consumeLongPress ()Z
+	public final fun consumeLook ()Lcom/awakekt/awake/core/math2d/Vec2;
+	public final fun consumePress ()Z
+	public final fun consumePressAt ()Lcom/awakekt/awake/core/math2d/Vec2;
+	public final fun consumeRelease ()Z
+	public final fun consumeSecondaryPress ()Z
+	public final fun consumeSprintStart ()Z
+	public final fun consumeSubmit ()Ljava/lang/String;
+	public final fun consumeWheel ()F
+	public final fun consumeZoom ()F
+	public final fun getAimCancelling ()Z
+	public final fun getAimTarget ()Ljava/lang/String;
+	public final fun getAimX ()F
+	public final fun getAimY ()F
+	public final fun getAiming ()Z
+	public final fun getDragging ()Z
+	public final fun getDropped ()Lcom/awakekt/awake/ui/canvas/CanvasElement;
+	public final fun getDroppedOutside ()Lcom/awakekt/awake/core/math2d/Vec2;
+	public final fun getFocused ()Z
+	public final fun getHeldSeconds ()F
+	public final fun getPresses ()I
+	public final fun getSecondaryPressed ()Z
+	public final fun getSprinting ()Z
+	public final fun getStickX ()F
+	public final fun getStickY ()F
+	public final fun isHeld ()Z
+	public final fun isHovered ()Z
+	public final fun setFocused (Z)V
+}
+
 public final class com/awakekt/awake/ui/canvas/CanvasProjection {
 	public fun <init> (FFFFZ)V
 	public synthetic fun <init> (FFFFZILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -1404,6 +1569,42 @@ public final class com/awakekt/awake/ui/canvas/CanvasProjection {
 	public final fun getDistance ()F
 	public final fun getX ()F
 	public final fun getY ()F
+}
+
+public final class com/awakekt/awake/ui/canvas/CanvasRect {
+	public static final field Companion Lcom/awakekt/awake/ui/canvas/CanvasRect$Companion;
+	public static final field DEFAULT_HEIGHT F
+	public static final field DEFAULT_INSET F
+	public static final field DEFAULT_WIDTH F
+	public fun <init> ()V
+	public final fun getAnchor ()Lcom/awakekt/awake/ui/canvas/CanvasAnchor;
+	public final fun getControlId ()Ljava/lang/String;
+	public final fun getElementId ()Ljava/lang/String;
+	public final fun getGrow ()F
+	public final fun getHeight ()F
+	public final fun getOffsetX ()F
+	public final fun getOffsetY ()F
+	public final fun getOrder ()I
+	public final fun getSafeArea ()Z
+	public final fun getScreenBounds ()Lcom/awakekt/awake/core/math2d/Rectangle;
+	public final fun getTouchOnly ()Z
+	public final fun getVisible ()Z
+	public final fun getWidth ()F
+	public final fun setAnchor (Lcom/awakekt/awake/ui/canvas/CanvasAnchor;)V
+	public final fun setControlId (Ljava/lang/String;)V
+	public final fun setElementId (Ljava/lang/String;)V
+	public final fun setGrow (F)V
+	public final fun setHeight (F)V
+	public final fun setOffsetX (F)V
+	public final fun setOffsetY (F)V
+	public final fun setOrder (I)V
+	public final fun setSafeArea (Z)V
+	public final fun setTouchOnly (Z)V
+	public final fun setVisible (Z)V
+	public final fun setWidth (F)V
+}
+
+public final class com/awakekt/awake/ui/canvas/CanvasRect$Companion {
 }
 
 public abstract interface class com/awakekt/awake/ui/canvas/CanvasResolver {
@@ -1776,6 +1977,18 @@ public final class com/awakekt/awake/ui/canvas/CanvasStepper$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
+public final class com/awakekt/awake/ui/canvas/CanvasStepperWidget : com/awakekt/awake/ui/canvas/CanvasWidget {
+	public fun <init> ()V
+	public final fun consumeChange ()Z
+	public fun getKind ()Lcom/awakekt/awake/ui/canvas/CanvasElementKind;
+	public final fun getNumber ()F
+	public final fun getSettings ()Lcom/awakekt/awake/ui/canvas/CanvasStepper;
+	public final fun setNumber (F)V
+	public final fun setSettings (Lcom/awakekt/awake/ui/canvas/CanvasStepper;)V
+	public final fun stepBy (I)Z
+	public final fun stepBy (Lcom/awakekt/awake/core/input/GamepadButton;)Z
+}
+
 public final class com/awakekt/awake/ui/canvas/CanvasStickDirections : java/lang/Enum {
 	public static final field Analog Lcom/awakekt/awake/ui/canvas/CanvasStickDirections;
 	public static final field EIGHT I
@@ -1909,6 +2122,53 @@ public final class com/awakekt/awake/ui/canvas/CanvasSweep$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
+public final class com/awakekt/awake/ui/canvas/CanvasSweepWidget : com/awakekt/awake/ui/canvas/CanvasWidget {
+	public fun <init> ()V
+	public fun getKind ()Lcom/awakekt/awake/ui/canvas/CanvasElementKind;
+	public final fun getSettings ()Lcom/awakekt/awake/ui/canvas/CanvasSweep;
+	public final fun getValue ()F
+	public final fun setSettings (Lcom/awakekt/awake/ui/canvas/CanvasSweep;)V
+	public final fun setValue (F)V
+}
+
+public final class com/awakekt/awake/ui/canvas/CanvasText {
+	public static final field Companion Lcom/awakekt/awake/ui/canvas/CanvasText$Companion;
+	public static final field DEFAULT_FONT_SIZE F
+	public fun <init> ()V
+	public final fun getFont ()Ljava/lang/String;
+	public final fun getFontSize ()F
+	public final fun getLinks ()Z
+	public final fun getText ()Ljava/lang/String;
+	public final fun getTextAlign ()Lcom/awakekt/awake/ui/canvas/CanvasAnchor;
+	public final fun getTextArgs ()Ljava/util/Map;
+	public final fun getTextKey ()Ljava/lang/String;
+	public final fun setFont (Ljava/lang/String;)V
+	public final fun setFontSize (F)V
+	public final fun setLinks (Z)V
+	public final fun setText (Ljava/lang/String;)V
+	public final fun setTextAlign (Lcom/awakekt/awake/ui/canvas/CanvasAnchor;)V
+	public final fun setTextArgs (Ljava/util/Map;)V
+	public final fun setTextKey (Ljava/lang/String;)V
+}
+
+public final class com/awakekt/awake/ui/canvas/CanvasText$Companion {
+}
+
+public final class com/awakekt/awake/ui/canvas/CanvasTextFieldWidget : com/awakekt/awake/ui/canvas/CanvasWidget {
+	public fun <init> ()V
+	public fun getKind ()Lcom/awakekt/awake/ui/canvas/CanvasElementKind;
+	public final fun getMask ()Ljava/lang/String;
+	public final fun getMaxLength ()I
+	public final fun getMaxLengthUnit ()Lcom/awakekt/awake/core/text/unicode/TextLengthUnit;
+	public final fun getPadding ()Lcom/awakekt/awake/ui/canvas/CanvasPadding;
+	public final fun getPlaceholder ()Ljava/lang/String;
+	public final fun setMask (Ljava/lang/String;)V
+	public final fun setMaxLength (I)V
+	public final fun setMaxLengthUnit (Lcom/awakekt/awake/core/text/unicode/TextLengthUnit;)V
+	public final fun setPadding (Lcom/awakekt/awake/ui/canvas/CanvasPadding;)V
+	public final fun setPlaceholder (Ljava/lang/String;)V
+}
+
 public final class com/awakekt/awake/ui/canvas/CanvasTextOutline {
 	public static final field Companion Lcom/awakekt/awake/ui/canvas/CanvasTextOutline$Companion;
 	public fun <init> ()V
@@ -1995,6 +2255,14 @@ public final class com/awakekt/awake/ui/canvas/CanvasThemePresets {
 	public final fun skin (Lcom/awakekt/awake/ui/canvas/CanvasThemePreset;)Lcom/awakekt/awake/ui/canvas/CanvasControlSkin;
 }
 
+public final class com/awakekt/awake/ui/canvas/CanvasTooltip {
+	public fun <init> ()V
+	public final fun getText ()Ljava/lang/String;
+	public final fun getTextArgs ()Ljava/util/Map;
+	public final fun setText (Ljava/lang/String;)V
+	public final fun setTextArgs (Ljava/util/Map;)V
+}
+
 public final class com/awakekt/awake/ui/canvas/CanvasTouchVisibility : java/lang/Enum {
 	public static final field Always Lcom/awakekt/awake/ui/canvas/CanvasTouchVisibility;
 	public static final field Auto Lcom/awakekt/awake/ui/canvas/CanvasTouchVisibility;
@@ -2009,6 +2277,17 @@ public final class com/awakekt/awake/ui/canvas/CanvasTouchVisibility : java/lang
 
 public final class com/awakekt/awake/ui/canvas/CanvasTouchVisibility$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ui/canvas/CanvasViewWidget : com/awakekt/awake/ui/canvas/CanvasWidget {
+	public fun <init> ()V
+	public final fun getCamera ()Ljava/lang/String;
+	public fun getKind ()Lcom/awakekt/awake/ui/canvas/CanvasElementKind;
+	public final fun setCamera (Ljava/lang/String;)V
+}
+
+public abstract interface class com/awakekt/awake/ui/canvas/CanvasWidget {
+	public abstract fun getKind ()Lcom/awakekt/awake/ui/canvas/CanvasElementKind;
 }
 
 public final class com/awakekt/awake/ui/canvas/CanvasZone {
