@@ -129,8 +129,8 @@ whole bundles. Use it for content streamed one file at a time from large bundles
 scene needs up front. A server that ignores the range answers the whole bundle, and the member is cut
 from it. Both ready-made transports, `KtorContentTransport` and `BrowserContentTransport`, send the
 `Range` header; from a browser to another origin, the content server must allow it, as
-[Protected content](protected-content.md#the-browser-and-cors) lists. A range request answered 429
-waits and is sent again like any other.
+[Protected content](protected-content.md#the-browser-and-cors) lists. A range request answered 429,
+or 503 with `Retry-After`, waits and is sent again like any other.
 
 ## Properties
 

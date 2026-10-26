@@ -13,7 +13,7 @@
 against the index's size and SHA-256, and keeps it in a `ContentCache`. It sends requests through a
 fetch the host supplies, so `com.awakekt.awake:project` carries no HTTP library. When the content
 server wants a read token on every request, use a `TokenAuthorizedFetch`: your game supplies the
-token, and the engine attaches it, refreshes it, retries with it, and waits out a 429.
+token, and the engine attaches it, refreshes it, retries with it, and waits out a 429 or a 503 with `Retry-After`.
 
 ## Wire a token provider
 
@@ -44,9 +44,9 @@ In the browser, the transport calls `fetch()` itself:
 against it the way a browser resolves a link. Without it, the Ktor transport sends each URL as it
 comes (for a client with its own `defaultRequest` URL) and the browser resolves it against the page.
 
-To adapt another client, answer every status, 401, 403 and 429 included, instead of throwing: that
-is how a refused token is told apart from a missing file. Pass the response headers too, so a 429's
-`Retry-After` is honoured.
+To adapt another client, answer every status, 401, 403, 429 and 503 included, instead of throwing: that
+is how a refused token is told apart from a missing file. Pass the response headers too, so the `Retry-After` of a 429 or
+503 is honoured.
 
 ```kotlin title="Kotlin"
 --8<-- "awake/project/src/commonTest/kotlin/com/awakekt/awake/project/ProtectedContentDocsSampleTest.kt:transport"
@@ -103,7 +103,7 @@ the game. A browser reports a request it refused for CORS exactly as it does a n
 | --- | --- | --- |
 | `Access-Control-Allow-Origin` | the game's origin | Without it, every request fails before a status arrives. |
 | `Access-Control-Allow-Headers` | `Authorization, Range` | `Authorization` makes the browser send a preflight `OPTIONS` first; `Range` is for a bundle member read alone. |
-| `Access-Control-Expose-Headers` | `Retry-After` | Otherwise the browser hides it, and a 429 backs off exponentially instead. |
+| `Access-Control-Expose-Headers` | `Retry-After` | Otherwise the browser hides it: a 429 backs off exponentially instead, and a 503 fails at once. |
 | `Access-Control-Max-Age` | e.g. `600` | Lets the browser reuse a preflight answer instead of sending one per file. |
 
 No cookies are sent cross-origin (`credentials: same-origin`), so the read token is the only
@@ -111,21 +111,26 @@ credential. With `QueryParameter` there is no preflight, at the cost of the toke
 
 ## Rate limits
 
-A server that answers **429 Too Many Requests** is waited out and the request sent again, as
-`RateLimitBackoff` says:
+A server that answers **429 Too Many Requests**, or **503 Service Unavailable with a `Retry-After`**,
+is waited out and the request sent again, as `RateLimitBackoff` says (RFC 9110 lets a 503 say, with
+`Retry-After`, how long the service stays unavailable):
 
 - **`Retry-After` first.** The wait is exactly what the header says: a number of seconds, or an HTTP
   date (`Wed, 21 Oct 2026 07:28:00 GMT`, or either obsolete form). A date already past sends again
   at once.
-- **Otherwise exponential, with jitter.** With no `Retry-After`, or one that doesn't parse, the
-  first retry waits up to `initialDelay`, each later one up to twice the one before, never more than
-  `maxDelay`. Each wait is drawn from between half and all of that, so players refused together
-  don't all come back together.
-- **Bounded.** A request is sent at most `maxAttempts` times while it is answered 429, and one fetch
-  waits at most `maxTotalWait` in all. A wait that would go past that isn't started: the fetch fails
-  at once with a `ContentFetchException` whose `status` is 429 and whose message says why it stopped.
-- **Only 429, only reads.** No other status is retried, 503 included. Every content request is a
-  `GET`, so sending it again changes nothing on the server.
+- **Otherwise exponential, with jitter.** A 429 with no `Retry-After`, or one that doesn't parse,
+  waits up to `initialDelay` before the first retry, each later one up to twice the one before, never
+  more than `maxDelay`. Each wait is drawn from between half and all of that, so players refused
+  together don't all come back together.
+- **Bounded.** A request is sent at most `maxAttempts` times while it is answered 429 or 503 with
+  `Retry-After`, and one fetch waits at most `maxTotalWait` in all. A wait that would go past that
+  isn't started: the fetch fails at once with a `ContentFetchException` whose `status` is 429 or 503
+  and whose message says why it stopped.
+- **A 503 only with `Retry-After`.** A 503 without the header, or with one that doesn't parse, says
+  nothing about when to come back and is not retried: the fetch fails at once with a
+  `ContentFetchException` whose `status` is 503. There is no exponential fallback for a 503.
+- **Only 429 and 503, only reads.** No other status is retried. Every content request is a `GET`,
+  so sending it again changes nothing on the server.
 - **Never blocking.** A wait suspends, so it is safe on the frame thread, and cancelling the fetch
   cancels it. After a wait, the token is checked again and refreshed if the wait brought it close to
   expiring.
@@ -138,7 +143,7 @@ Tune it, or turn it off with `RateLimitBackoff.None`:
 
 | Property | Type | Default | What it does |
 | --- | --- | --- | --- |
-| `maxAttempts` | `Int` | 4 | Sends of one request while it is answered 429, the first included. 1 never retries. |
+| `maxAttempts` | `Int` | 4 | Sends of one request while it is answered 429 or 503 with `Retry-After`, the first included. 1 never retries. |
 | `maxTotalWait` | `Duration` | 30 seconds | The longest one fetch waits in all. |
 | `initialDelay` | `Duration` | 1 second | The longest first wait when the server sends no `Retry-After`. |
 | `maxDelay` | `Duration` | 8 seconds | The longest any one wait grows to when the server sends no `Retry-After`. |
@@ -158,7 +163,7 @@ Tune it, or turn it off with `RateLimitBackoff.None`:
 | `placement` | `ReadTokenPlacement` | `AuthorizationHeader` | `Authorization: Bearer <token>`, or `QueryParameter(name)`, by default `access_token`. |
 | `refreshAhead` | `Duration` | 60 seconds | How long before expiry the next token is asked for. A token shorter-lived than twice this is replaced at half its lifetime. |
 | `timeSource` | `TimeSource` | `TimeSource.Monotonic` | Measures a token's lifetime, unaffected by changes to the device clock. |
-| `rateLimitBackoff` | `RateLimitBackoff` | `RateLimitBackoff()` | How a 429 is waited out; see [Rate limits](#rate-limits). |
+| `rateLimitBackoff` | `RateLimitBackoff` | `RateLimitBackoff()` | How a 429, or a 503 with `Retry-After`, is waited out; see [Rate limits](#rate-limits). |
 | `tokenProvider` | `suspend () -> ReadToken` | required | Answers a current token. |
 
 `ReadToken(value, expiresIn)` takes the token and how long it stays valid from now: an OAuth
@@ -171,8 +176,8 @@ Tune it, or turn it off with `RateLimitBackoff.None`:
 - **One retry on refusal.** A 401 or 403 gets a fresh token and the request is sent once more. A
   second refusal throws `ContentFetchException` with that status and a message saying the fresh
   token was refused too.
-- **A 429 waits.** See [Rate limits](#rate-limits). Any other status but 2xx throws at once, with no
-  retry.
+- **A 429 waits, and so does a 503 with `Retry-After`.** See [Rate limits](#rate-limits). Any other
+  status but 2xx, a 503 without `Retry-After` included, throws at once, with no retry.
 - **One refresh for many requests.** `prefetch` reads up to six files at once. When they need a new
   token at the same moment, or are all refused, they wait on a single call to the provider and share
   its token. If that call fails, the requests waiting on it fail with it, and the next request asks
@@ -186,7 +191,7 @@ Tune it, or turn it off with `RateLimitBackoff.None`:
   print without it, so logging one is safe.
 
 !!! tip "Keep network retries and resumes in the transport"
-    `TokenAuthorizedFetch` retries only a refused token and a 429. Network retries, timeouts and
+    `TokenAuthorizedFetch` retries only a refused token, a 429 and a 503 with `Retry-After`. Network retries, timeouts and
     resumed downloads belong to your HTTP client, behind the transport.
 
 ## Play a protected project after sign-in

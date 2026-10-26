@@ -25,7 +25,10 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 import kotlin.time.TestTimeSource
 
-/** A 429 is waited out as `Retry-After` says, or with a bounded, jittered exponential delay. */
+/**
+ * A 429, or a 503 with `Retry-After`, is waited out as `Retry-After` says (a 429 without it, with a
+ * bounded, jittered exponential delay).
+ */
 @OptIn(ExperimentalCoroutinesApi::class) // advanceTimeBy, runCurrent, currentTime
 class RateLimitBackoffTest {
     private val model = ByteArray(16) { it.toByte() }
@@ -109,6 +112,114 @@ class RateLimitBackoffTest {
         assertEquals(emptyList(), waits)
         assertTrue("2m" in failure.message.orEmpty() && "30s" in failure.message.orEmpty(), failure.message)
         assertTrue(failure.message.orEmpty().startsWith("files/a.glb was answered HTTP 429"), failure.message)
+    }
+
+    @Test
+    fun a503RetryAfterInSecondsIsWaitedExactlyBeforeTheRequestIsSentAgain() = runTest {
+        val server = RateLimitedServer(listOf(503 to "3", 200 to null))
+        val waits = mutableListOf<Duration>()
+
+        val bytes = fetchThrough(server, backoff(waits)).fetch("files/a.glb")
+
+        assertContentEquals(model, bytes)
+        assertEquals(listOf(3.seconds), waits)
+        assertEquals(2, server.requests.size)
+    }
+
+    @Test
+    fun a503RetryAfterHttpDateIsMeasuredAgainstTheClock() = runTest {
+        val server = RateLimitedServer(listOf(503 to "Sun, 06 Nov 1994 08:49:42 GMT", 200 to null))
+        val waits = mutableListOf<Duration>()
+
+        fetchThrough(server, backoff(waits)).fetch("files/a.glb")
+
+        assertEquals(listOf(5.seconds), waits)
+    }
+
+    @Test
+    fun a503WithoutRetryAfterFailsAtOnceAsItAlwaysDid() = runTest {
+        val server = RateLimitedServer(listOf(503 to null, 200 to null))
+        val waits = mutableListOf<Duration>()
+
+        val failure = assertFailsWith<ContentFetchException> { fetchThrough(server, backoff(waits)).fetch("files/a.glb") }
+
+        assertEquals(503, failure.status)
+        assertEquals("files/a.glb answered HTTP 503", failure.message)
+        assertEquals(1, server.requests.size)
+        assertEquals(emptyList(), waits)
+    }
+
+    @Test
+    fun a503WithARetryAfterThatDoesNotParseIsNotRetried() = runTest {
+        val server = RateLimitedServer(listOf(503 to "soon", 200 to null))
+        val waits = mutableListOf<Duration>()
+
+        val failure = assertFailsWith<ContentFetchException> { fetchThrough(server, backoff(waits)).fetch("files/a.glb") }
+
+        assertEquals(503, failure.status)
+        assertEquals(1, server.requests.size)
+        assertEquals(emptyList(), waits, "unlike a 429, there is no exponential fallback")
+    }
+
+    @Test
+    fun a503RetryAfterLongerThanTheBudgetIsNotStartedAndFailsAtOnceWith503() = runTest {
+        val server = RateLimitedServer(listOf(503 to "120", 200 to null))
+        val waits = mutableListOf<Duration>()
+
+        val failure = assertFailsWith<ContentFetchException> { fetchThrough(server, backoff(waits)).fetch("files/a.glb") }
+
+        assertEquals(503, failure.status)
+        assertEquals(1, server.requests.size)
+        assertEquals(emptyList(), waits)
+        assertTrue("2m" in failure.message.orEmpty() && "30s" in failure.message.orEmpty(), failure.message)
+        assertTrue(failure.message.orEmpty().startsWith("files/a.glb was answered HTTP 503 Service Unavailable"), failure.message)
+    }
+
+    @Test
+    fun a503WithRetryAfterStopsAtTheAttemptLimit() = runTest {
+        val server = RateLimitedServer(List(10) { 503 to "1" })
+        val waits = mutableListOf<Duration>()
+
+        val failure = assertFailsWith<ContentFetchException> { fetchThrough(server, backoff(waits, maxAttempts = 3)).fetch("files/a.glb") }
+
+        assertEquals(503, failure.status)
+        assertEquals(3, server.requests.size)
+        assertEquals(listOf(1.seconds, 1.seconds), waits)
+    }
+
+    @Test
+    fun a429And503ShareOneAttemptLimitAndOneBudget() = runTest {
+        val server = RateLimitedServer(listOf(429 to "2", 503 to "2", 429 to "2", 200 to null))
+        val waits = mutableListOf<Duration>()
+
+        val failure = assertFailsWith<ContentFetchException> {
+            fetchThrough(server, backoff(waits, maxAttempts = 5, maxTotalWait = 5.seconds)).fetch("files/a.glb")
+        }
+
+        assertEquals(429, failure.status)
+        assertEquals(listOf(2.seconds, 2.seconds), waits, "2 s more would take the fetch past its 5 s")
+        assertEquals(3, server.requests.size)
+    }
+
+    @Test
+    fun noneReportsTheFirst503WithRetryAfter() = runTest {
+        val server = RateLimitedServer(listOf(503 to "1", 200 to null))
+
+        val failure = assertFailsWith<ContentFetchException> { fetchThrough(server, RateLimitBackoff.None).fetch("files/a.glb") }
+
+        assertEquals(503, failure.status)
+        assertEquals(1, server.requests.size)
+    }
+
+    @Test
+    fun aRangeReadAnswered503WithRetryAfterIsPacedTheSameWay() = runTest {
+        val server = RateLimitedServer(listOf(503 to "1", 206 to null))
+        val waits = mutableListOf<Duration>()
+
+        val bytes = fetchThrough(server, backoff(waits)).fetchRange("bundles/a.awkb", 0, model.size.toLong())
+
+        assertContentEquals(model, bytes)
+        assertEquals(listOf(1.seconds), waits)
     }
 
     @Test

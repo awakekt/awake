@@ -24,10 +24,11 @@ import io.ktor.client.statement.bodyAsBytes
  * token, and the `Range` header of a content bundle member read alone. Every status comes back as a
  * [ContentResponse], with the body and the response headers (`Retry-After` among them), and none is
  * thrown, even from a client built with `expectSuccess = true`: [TokenAuthorizedFetch] reads 401 and
- * 403 to refresh the token, and 429 to back off as its `RateLimitBackoff` says.
+ * 403 to refresh the token, and 429, or 503 with `Retry-After`, to back off as its `RateLimitBackoff`
+ * says.
  *
  * The client is the host's: it picks the engine, and sets timeouts (`HttpTimeout`), proxies and
- * logging. Don't make Ktor's `HttpRequestRetry` retry a 429 too, or each wait is taken twice; network
+ * logging. Don't make Ktor's `HttpRequestRetry` retry a 429, or a 503 with `Retry-After`, too, or each wait is taken twice; network
  * failures are its to retry. A failure that reaches this transport, such as a refused connection or a
  * timeout, is thrown as Ktor throws it, and [TokenAuthorizedFetch] reports it as a
  * `ContentFetchException` with no status, the token taken out of its message. Cancelling the fetch

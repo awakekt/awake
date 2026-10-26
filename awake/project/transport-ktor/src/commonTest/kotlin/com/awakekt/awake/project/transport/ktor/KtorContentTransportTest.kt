@@ -41,7 +41,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
-/** The Ktor transport puts each header where it belongs, answers every status, and lets a 429 back off. */
+/** The Ktor transport puts each header where it belongs, answers every status, and lets a 429, or a 503 with Retry-After, back off. */
 class KtorContentTransportTest {
     private val base = "https://content.example.com/release/"
     private val model = ByteArray(64) { it.toByte() }
@@ -169,6 +169,53 @@ class KtorContentTransportTest {
     }
 
     @Test
+    fun a503WaitsAsRetryAfterSaysInSecondsThenSucceeds() = runTest {
+        val server = Server(rateLimited(times = 1, retryAfter = "2", status = HttpStatusCode.ServiceUnavailable))
+        val waits = mutableListOf<Duration>()
+
+        assertContentEquals(model, fetchThrough(server, backoff(waits)).fetch("files/assets/crate.glb"))
+
+        assertEquals(listOf(2.seconds), waits)
+        assertEquals(2, server.requests.size)
+    }
+
+    @Test
+    fun a503WaitsAsAnHttpDateRetryAfterSays() = runTest {
+        val server = Server(rateLimited(times = 1, retryAfter = "Wed, 21 Oct 2026 07:28:07 GMT", status = HttpStatusCode.ServiceUnavailable))
+        val waits = mutableListOf<Duration>()
+
+        fetchThrough(server, backoff(waits)).fetch("files/assets/crate.glb")
+
+        assertEquals(listOf(7.seconds), waits)
+    }
+
+    @Test
+    fun a503RetryAfterBeyondTheBudgetFailsAtOnceWith503() = runTest {
+        val server = Server(rateLimited(times = 1, retryAfter = "3600", status = HttpStatusCode.ServiceUnavailable))
+        val waits = mutableListOf<Duration>()
+
+        val failure = assertFailsWith<ContentFetchException> { fetchThrough(server, backoff(waits)).fetch("files/assets/crate.glb") }
+
+        assertEquals(503, failure.status)
+        assertEquals(1, server.requests.size)
+        assertEquals(emptyList(), waits)
+        assertTrue("HTTP 503 Service Unavailable" in failure.message.orEmpty(), failure.message)
+    }
+
+    @Test
+    fun a503WithoutRetryAfterFailsAtOnceAsBefore() = runTest {
+        val server = Server(rateLimited(times = 10, retryAfter = null, status = HttpStatusCode.ServiceUnavailable))
+        val waits = mutableListOf<Duration>()
+
+        val failure = assertFailsWith<ContentFetchException> { fetchThrough(server, backoff(waits)).fetch("files/assets/crate.glb") }
+
+        assertEquals(503, failure.status)
+        assertEquals("files/assets/crate.glb answered HTTP 503", failure.message)
+        assertEquals(1, server.requests.size)
+        assertEquals(emptyList(), waits)
+    }
+
+    @Test
     fun responseHeadersComeBackWithRepeatsJoined() = runTest {
         val server = Server {
             respond(model, HttpStatusCode.OK, headersOf("Vary" to listOf("Accept", "Authorization"), "Retry-After" to listOf("5")))
@@ -200,11 +247,15 @@ class KtorContentTransportTest {
         assertFailsWith<IllegalArgumentException> { KtorContentTransport(HttpClient(MockEngine { respond(ByteArray(0)) }), "release/") }
     }
 
-    private fun rateLimited(times: Int, retryAfter: String?): suspend MockRequestHandleScope.(HttpRequestData) -> HttpResponseData {
+    private fun rateLimited(
+        times: Int,
+        retryAfter: String?,
+        status: HttpStatusCode = HttpStatusCode.TooManyRequests,
+    ): suspend MockRequestHandleScope.(HttpRequestData) -> HttpResponseData {
         var answered = 0
         return {
             if (answered++ < times) {
-                respond(ByteArray(0), HttpStatusCode.TooManyRequests, retryAfter?.let { headersOf(HttpHeaders.RetryAfter, it) } ?: headersOf())
+                respond(ByteArray(0), status, retryAfter?.let { headersOf(HttpHeaders.RetryAfter, it) } ?: headersOf())
             } else {
                 respond(model, HttpStatusCode.OK)
             }

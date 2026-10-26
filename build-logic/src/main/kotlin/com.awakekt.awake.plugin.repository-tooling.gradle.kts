@@ -35,10 +35,13 @@ val verifyCapabilityLayering = tasks.register<VerifyCapabilityLayeringTask>("ver
 
 val verifyHeadlessRuntime = tasks.register<VerifyHeadlessRuntimeTask>("verifyHeadlessRuntime") {
     group = "awake verification"
-    description = "Reject a GPU backend or window module on the path of a project played with no renderer."
+    description = "Reject a GPU backend, window or content transport module on the path of a project played with no renderer."
     // What a game server or CI runner loads to play a project; the host passes backends in.
     modules.set(listOf(":awake:project", ":awake:project:runtime"))
-    forbiddenModulePrefixes.set(listOf(":awake:backend", ":awake:engine:window"))
+    forbiddenModulePrefixes.set(listOf(":awake:backend", ":awake:engine:window", ":awake:project:transport"))
+    // The ready-made content transports (transport-ktor, transport-browser) and any later sibling: the host
+    // builds its own HTTP client and hands the transport to TokenAuthorizedFetch.
+    forbiddenModuleNamePrefixes.set(listOf(":awake:project:transport-"))
 }
 
 val verifyKeepRules = tasks.register<VerifyKeepRulesTask>("verifyKeepRules") {
