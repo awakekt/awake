@@ -875,6 +875,67 @@ renames the node, and every copy of the prefab repeats it.
 placed, and keep the entity. A host that draws a prefab without a world finds the node in the prefab
 itself with `prefab.findCanvasNode("slot-1")`.
 
+### Bind elements with typed handles
+
+Code that builds a prefab and then updates it, such as a widget a plugin ships, declares its
+elements once as typed handles instead of repeating string ids in the builder and the binder. A
+`CanvasWidgetParts` is the widget; each kind's function (`text`, `image`, `bar`, `sweep`, `button`
+and the rest) declares a part of that kind, and `list` repeats a group of parts, such as a bar's
+slots. The id of each part is composed from the declaration: `icon` in the fourth slot of `bar` is
+`bar.slot-3.icon`. A function given no name declares the group's own element, whose id is the
+group's.
+
+```kotlin title="Kotlin"
+--8<-- "awake/scene/canvas/src/commonTest/kotlin/com/awakekt/awake/scene/canvas/CanvasPartsFixture.kt:canvas-parts"
+```
+
+The prefab builder takes the handles where it takes a name and an id. Each element gets the part's
+id and kind, and is named after its id unless you pass a `name`. The saved prefab holds plain string
+ids, so an editor, a theme, a saved layout or an override sees the same file as before.
+
+```kotlin title="Kotlin"
+--8<-- "awake/scene/canvas/src/commonTest/kotlin/com/awakekt/awake/scene/canvas/CanvasPartsFixture.kt:canvas-parts-build"
+```
+
+To bind a placed copy, make one instance of the declaration for it and `resolve` it against the
+copy's root. That walks the world once, binds every part, and throws a
+`CanvasPartResolutionException` naming each part that is missing or of another kind, so a typo or a
+part renamed on one side fails when the prefab is placed, not silently on every frame after it. Each
+handle then exposes only its kind's fields, such as an image part's `image` or a bar's `value`, and
+writes them on the cached element: no lookup and no string is built, so a binder can write every
+frame. Read a list by index, `for (i in slots.indices)`, in code that runs each frame.
+
+```kotlin title="Kotlin"
+--8<-- "awake/scene/canvas/src/commonTest/kotlin/com/awakekt/awake/scene/canvas/CanvasPartResolutionTest.kt:canvas-parts-bind"
+```
+
+Resolve again after a reload places a new copy. `parts.slots.resolve(world, root)` binds one list on
+its own, and `part.element` reaches a field no typed handle exposes. `findCanvasElement(root, id)`
+stays for tools and data-only lookups.
+
+#### Migrate from string ids
+
+Code that concatenated ids by hand built the same prefab:
+
+```kotlin title="Kotlin"
+--8<-- "awake/scene/canvas/src/commonTest/kotlin/com/awakekt/awake/scene/canvas/CanvasPartsFixture.kt:canvas-parts-strings"
+```
+
+Declare the parts so the derived ids are the ones the prefab already saves, and the file does not
+change; `CanvasPartsTest` checks that these two builds are equal. Where an id was not built from the
+structure, such as `slot-1-cooldown`, keep it with `pinnedId`, and use the item's `index` for a
+repeated part:
+
+```kotlin title="Kotlin"
+class SlotParts(scope: CanvasPartScope) : CanvasParts(scope) {
+    val cooldown = sweep("cooldown", pinnedId = "slot-${scope.index + 1}-cooldown")
+}
+```
+
+Then replace each `world.findCanvasElement(root, "...")` and `world.get<CanvasElement>(...)` in the
+binder with one `resolve` when the prefab is placed and the handles' fields after it, and delete the
+names file the ids were kept in.
+
 ### Save typed sizes and colours
 
 A theme or a layout of your own can keep `Dp`, `Sp` and `Color` fields and still save as data:
