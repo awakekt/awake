@@ -27,10 +27,12 @@ import kotlin.time.TimeSource
  * such as [IndexedAssetSource.prefetch]'s, share one refresh: one call to [tokenProvider], whose token,
  * or failure, every waiting request gets.
  *
- * A request answered 429 Too Many Requests is waited out and sent again as [rateLimitBackoff] says:
- * for as long as the response's `Retry-After` asks, or with a jittered exponential delay when it says
- * nothing, a bounded number of times and for a bounded total wait, after which the 429 fails the fetch
- * as a [ContentFetchException] with status 429. Each wait suspends; none blocks a thread.
+ * A request answered 429 Too Many Requests, or 503 Service Unavailable with a `Retry-After`, is waited
+ * out and sent again as [rateLimitBackoff] says: for as long as the response's `Retry-After` asks, or
+ * for a 429 that says nothing, with a jittered exponential delay, a bounded number of times and for a
+ * bounded total wait, after which the answer fails the fetch as a [ContentFetchException] with
+ * status 429 or 503. A 503 without `Retry-After` fails the fetch at once with status 503. Each wait
+ * suspends; none blocks a thread.
  *
  * The token reaches only the requests [transport] sends. It is never part of an exception message
  * (a transport failure that quotes it is reported with the token taken out), never logged, and never
@@ -47,8 +49,8 @@ import kotlin.time.TimeSource
  * @param refreshAhead How long before the token expires to ask for the next one. Not negative.
  * @param timeSource The clock that measures a token's lifetime; monotonic, so a change to the
  * device's wall clock doesn't expire a token early or keep one late.
- * @param rateLimitBackoff How a 429 answer is waited out and retried; [RateLimitBackoff.None] fails
- * the fetch at the first 429.
+ * @param rateLimitBackoff How a 429 answer, or a 503 with `Retry-After`, is waited out and retried;
+ * [RateLimitBackoff.None] fails the fetch at the first one.
  * @param tokenProvider Answers a current read token. Called once per refresh, never twice at once,
  * while requests wait on it, so it must not call [fetch] itself. What it throws fails the requests
  * waiting on it as a [ContentFetchException]; the next request asks again.
@@ -63,7 +65,7 @@ class TokenAuthorizedFetch(
 ) {
     private class HeldToken(val token: ReadToken, val refreshAt: TimeMark)
 
-    /** One fetch's 429 answers and the time spent waiting them out, across its sends. */
+    /** One fetch's 429 and 503 answers and the time spent waiting them out, across its sends. */
     private class RateLimitTally {
         var answered = 0
         var waited = Duration.ZERO
@@ -143,9 +145,9 @@ class TokenAuthorizedFetch(
     }
 
     /**
-     * Sends [url] with the current token, past a [refused] one, waiting out each 429 as
-     * [rateLimitBackoff] says and sending again with the token checked anew. Answers the token last
-     * sent and the response that wasn't a 429.
+     * Sends [url] with the current token, past a [refused] one, waiting out each 429, and each 503 with
+     * a `Retry-After`, as [rateLimitBackoff] says and sending again with the token checked anew.
+     * Answers the token last sent and the response that wasn't one of those.
      */
     private suspend fun sendPaced(
         url: String,
@@ -156,13 +158,14 @@ class TokenAuthorizedFetch(
         var token = currentToken(url, refused)
         while (true) {
             val response = send(url, token, headers)
-            if (response.status != TOO_MANY_REQUESTS) return token to response
+            val retryAfter = response.header(RETRY_AFTER_HEADER)
+            if (!rateLimitBackoff.backsOffOn(response.status, retryAfter)) return token to response
             tally.answered++
-            when (val step = rateLimitBackoff.next(tally.answered, response.header(RETRY_AFTER_HEADER), tally.waited)) {
+            when (val step = rateLimitBackoff.next(tally.answered, retryAfter, tally.waited)) {
                 is RateLimitStep.Stop -> throw ContentFetchException(
                     url,
-                    TOO_MANY_REQUESTS,
-                    "$url was answered HTTP 429 Too Many Requests and not sent again: ${step.reason}",
+                    response.status,
+                    "$url was answered HTTP ${response.status} ${reasonPhrase(response.status)} and not sent again: ${step.reason}",
                 )
                 is RateLimitStep.Wait -> {
                     rateLimitBackoff.pause(step.duration)
@@ -173,6 +176,9 @@ class TokenAuthorizedFetch(
             token = currentToken(url, refused)
         }
     }
+
+    private fun reasonPhrase(status: Int): String =
+        if (status == RateLimitBackoff.SERVICE_UNAVAILABLE) "Service Unavailable" else "Too Many Requests"
 
     private suspend fun currentToken(url: String, refused: ReadToken?): ReadToken {
         val refreshesOnArrival = refreshes
@@ -245,7 +251,6 @@ class TokenAuthorizedFetch(
         private const val AUTHORIZATION_HEADER = "Authorization"
         private const val RANGE_HEADER = "Range"
         private const val RETRY_AFTER_HEADER = "Retry-After"
-        private const val TOO_MANY_REQUESTS = 429
         private const val OK = 200
         private const val PARTIAL_CONTENT = 206
         private const val REDACTED = "<redacted>"
