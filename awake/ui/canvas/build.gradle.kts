@@ -40,6 +40,11 @@ kotlin {
             implementation(libs.kotlinx.coroutines.test)
             implementation(project(":awake:compose:ui-testing"))
         }
+        desktopTest.dependencies {
+            // The snapshot cases read pixels back from the software raster (PixelMap) to measure
+            // the width of scaled pixel art.
+            implementation(project(":awake:engine:render:contract"))
+        }
     }
 }
 

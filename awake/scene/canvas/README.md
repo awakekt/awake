@@ -109,9 +109,9 @@ follower entities out and takes them back, hidden, so churning followers makes n
 A `canvas_scaler` on any node, the saved form of `awake:ui:canvas`'s `CanvasScaler`, works the
 canvas's scale out from the screen's size; `SceneCanvas(world)` finds it with `world.canvasScaler()`
 and draws at it in place of its `scale`, and a scene without one draws at `scale` as before.
-`CanvasScalerBinding` loads and saves it. `SceneCanvas(world, safeArea = …, dpi = …)` keeps
-anchored elements clear of a notch, which an element's `safeArea` field opts out of, and gives a
-`ConstantPhysicalSize` scaler the screen's real dots per inch. `SceneAppLifecycleRuntime` passes
+`CanvasScalerBinding` loads and saves it, with its `snap` (`None`, `WholeStep`, `HalfStep`).
+`SceneCanvas(world, safeArea = …, dpi = …)` keeps anchored elements clear of a notch, which an
+element's `safeArea` field opts out of, and gives a `ConstantPhysicalSize` scaler the screen's real dots per inch. `SceneAppLifecycleRuntime` passes
 what its platform reports with each frame, `AppFrame.safeArea` and `AppFrame.dpi`, unless a host
 sets `canvasSafeArea` or `canvasDpi` itself.
 

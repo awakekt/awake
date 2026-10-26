@@ -81,7 +81,7 @@ private val SAVED: Map<String, String> = mapOf(
     "text_field" to """{"mask":"*","maxLength":8,"maxLengthUnit":"CodePoints","placeholder":"Name","padding":{"horizontal":2.0,"vertical":1.0}}""",
     "view" to """{"camera":"Cam"}""",
     "image" to """{}""",
-    "scaler" to """{"mode":"ConstantPixelSize","referenceWidth":640.0,"referenceHeight":360.0,"match":0.5,"pixelsPerUnit":2.0,"referenceDpi":192.0,"minScale":0.5,"maxScale":4.0,"playerScale":1.5}""",
+    "scaler" to """{"mode":"ConstantPixelSize","referenceWidth":640.0,"referenceHeight":360.0,"match":0.5,"pixelsPerUnit":2.0,"referenceDpi":192.0,"minScale":0.5,"maxScale":4.0,"playerScale":1.5,"snap":"None"}""",
     "controls" to """{"touchVisibility":"Always","minTouchSize":48.0,"theme":{"preset":"MinimalFlat","colors":{},"images":{},"skin":{}},"playerLayout":{"scale":1.5,"opacity":1.0,"controls":{}}}""",
     "follow_limit" to """{"group":"enemies","max":4,"rankBy":"Priority"}""",
     "follow_occlusion" to """{"raysPerFrame":8,"reuseFrames":3,"layer":0}""",

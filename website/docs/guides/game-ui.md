@@ -408,7 +408,8 @@ default font. A host with no renderer reads no font. If your app runs its own Co
 fonts yourself: `SceneCanvas(world, fonts = loadCanvasFonts(scene, files))`.
 
 Text up to 24 pixels, after the canvas scaler and the display density, draws from glyphs rasterized
-at exactly that size, so small labels stay sharp; larger text draws from a distance field. `bitmap`
+at exactly that size, so small labels stay sharp at a fractional scale too, where the size is rounded
+to a whole pixel; larger text draws from a distance field. `bitmap`
 keeps its pixel-art look at every size. See [Draw crisp text](ui.md#draw-crisp-text).
 
 ## Put elements inside others
@@ -720,6 +721,17 @@ a unit `pixelsPerUnit` of the screen's pixels, for pixel art at any density, and
 where the platform reports them: on Android and on a desktop monitor that reports its size. A
 browser and iOS report none, so there a unit is a dp. `minScale` and `maxScale` hold the result, and
 `playerScale`, which a settings menu sets, multiplies it after them.
+
+A screen rarely gives a round scale: a 1017 dp tall window against the default 720 reference gives
+1.4125. Text does not need one. Each text element's size is rounded to whole device pixels after the
+scale and the density, so text up to 24 pixels draws from exact-size glyphs at any scale (13 at 1.4125
+is an 18 pixel glyph, a 2% difference), and layout boxes keep the size the scale gives them. Pixel art
+is what a fractional scale hurts: some of its pixels come out a screen pixel wider than others. `snap`
+rounds the scale to the nearest whole number (`WholeStep`) or half (`HalfStep`) before the limits, so
+the art is a clean multiple. The trade-off is layout size. The canvas is laid out at the rounded
+scale, so every size and offset moves by up to half a step in proportion: `HalfStep` draws 1.4125 at
+1.5, 6% larger, and `WholeStep` at 1, 29% smaller. Use `snap` for a pixel-art HUD, with `HalfStep` or
+`WholeStep` as the layout can bear, and leave it `None` for a HUD of vector art and text.
 
 ```json title="A 1080p HUD that follows the screen's height"
 { "component": "canvas_scaler", "referenceWidth": 1920, "referenceHeight": 1080, "match": 1, "maxScale": 2 }

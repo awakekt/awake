@@ -18,6 +18,7 @@ import com.awakekt.awake.scene.canvas.CanvasScalerBinding.toSceneComponent
 import com.awakekt.awake.ui.canvas.CanvasElement
 import com.awakekt.awake.ui.canvas.CanvasInsets
 import com.awakekt.awake.ui.canvas.CanvasScaleMode
+import com.awakekt.awake.ui.canvas.CanvasScaleSnap
 import com.awakekt.awake.ui.canvas.CanvasScaler
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
@@ -64,9 +65,32 @@ class CanvasScalerSceneTest {
 
     @Test
     fun aScalerRoundTripsThroughItsSceneComponent() {
-        val scaler = CanvasScaler(CanvasScaleMode.ConstantPhysicalSize, 1920f, 1080f, 1f, 2f, 96f, 0.5f, 3f, 1.25f)
+        val scaler = CanvasScaler(CanvasScaleMode.ConstantPhysicalSize, 1920f, 1080f, 1f, 2f, 96f, 0.5f, 3f, 1.25f, CanvasScaleSnap.HalfStep)
 
         assertEquals(scaler, scaler.toSceneComponent().toComponent())
+    }
+
+    @Test
+    fun aSnapRoundTripsThroughSceneJson() {
+        val json = Json { encodeDefaults = false }
+        val saved = CanvasScaler(snap = CanvasScaleSnap.WholeStep).toSceneComponent()
+
+        val text = json.encodeToString(SceneCanvasScaler.serializer(), saved)
+
+        assertEquals("""{"snap":"WholeStep"}""", text)
+        assertEquals(CanvasScaleSnap.WholeStep, json.decodeFromString(SceneCanvasScaler.serializer(), text).toComponent().snap)
+        assertEquals(CanvasScaleSnap.None, json.decodeFromString(SceneCanvasScaler.serializer(), "{}").toComponent().snap, "a scene saved before snap")
+    }
+
+    @Test
+    fun aSceneCanvasDrawsAtItsScenesSnappedScale() {
+        // 1808 by 1017 against the default reference is 1.4125; a half step draws the 100 unit box at 150.
+        world.add(world.create(), SceneCanvasScaler(snap = CanvasScaleSnap.HalfStep).toComponent())
+        val entity = world.create().also { world.add(it, CanvasElement().apply { offsetX = 0f; offsetY = 0f; width = 100f; height = 40f }) }
+
+        val out = ComposeHost().frame(FrameInput(1808, 1017)) { SceneCanvas(world) }
+
+        assertEquals(150, assertNotNull(out.node(entity)).width)
     }
 
     @Test
