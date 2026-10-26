@@ -83,6 +83,20 @@ class CanvasElementComponentsTest {
     }
 
     @Test
+    fun aWidgetSetWholeKeepsItsOwnActionAndFill() {
+        val element = CanvasElement().apply {
+            kind = CanvasElementKind.Button
+            action = "jump"
+        }
+        element.set(CanvasJoystickWidget().apply { action = "move" })
+        element.set(CanvasBarWidget().apply { value = 0.3f })
+
+        assertEquals(0.3f, element.value)
+        element.set(CanvasJoystickWidget().apply { action = "steer" })
+        assertEquals("steer", element.action)
+    }
+
+    @Test
     fun aFlatPropertyReadsItsDefaultWithoutItsComponentAndAddsItOnlyForAnotherValue() {
         val element = CanvasElement()
 

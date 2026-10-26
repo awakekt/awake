@@ -78,7 +78,7 @@ sealed class CanvasElementBase {
             is CanvasFollowArrow -> arrowPart = component
             is CanvasInput -> inputPart = component
             is CanvasTooltip -> tooltipPart = component
-            is CanvasWidget -> install(component)
+            is CanvasWidget -> install(component, carries = false)
             else -> throw IllegalArgumentException("${component::class.simpleName} is not a canvas element component")
         }
         componentsVersion++
@@ -113,10 +113,14 @@ sealed class CanvasElementBase {
         rect, pointer, textPart, appearancePart, layout, cluster, bind, followPart, arrowPart, inputPart, tooltipPart, widget,
     )
 
-    internal fun install(next: CanvasWidget) {
+    /**
+     * Makes [next] the element's widget. A widget the element made itself, for a new [kind] or a
+     * flat property, [carries] the fill or action the one before it had; one set whole keeps its own.
+     */
+    internal fun install(next: CanvasWidget, carries: Boolean = true) {
         val previous = widget
         if (next is CanvasButtonWidget) next.clock = pointer.clock
-        carryShared(previous, next)
+        if (carries) carryShared(previous, next) else looseShared(previous)
         widget = next
     }
 
