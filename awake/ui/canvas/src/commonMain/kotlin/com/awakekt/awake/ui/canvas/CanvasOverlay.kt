@@ -303,7 +303,7 @@ internal fun CanvasElementView(
     val styled = element.draggedModifier(hovered, tree, density)
     when (element.kind) {
         CanvasElementKind.Text -> Box(styled, contentAlignment = (element.textAlign ?: CanvasAnchor.TopLeft).alignment) {
-            CanvasText(element, tree.textOf(element), textStyle)
+            CanvasWords(element, tree.textOf(element), textStyle)
             Children(element, children, tree)
         }
         CanvasElementKind.Panel, CanvasElementKind.Image -> Box(styled.pressableTap(element)) { Children(element, children, tree) }
