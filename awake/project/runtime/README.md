@@ -198,10 +198,13 @@ decoded: a sheet of 2048 by 1856 pixels takes 15 MB of memory and a decode, whic
 on a picture nothing draws. Such a project, if it is played by `runProject` after
 all, draws its canvas without those images.
 
-The runtime brings no display with it. `awake:project` and `awake:project:runtime` reach no GPU
-backend and no window module (`:awake:backend:*`, `:awake:engine:window`): the host picks the backends
-a project draws and simulates with and passes them in, as it passes the physics world. `awakeVerify`
-runs `verifyHeadlessRuntime`, which fails a change that puts one on that path, naming the chain.
+The runtime brings no display and no HTTP stack with it. `awake:project` and `awake:project:runtime`
+reach no GPU backend, no window module and no content transport module (`:awake:backend:*`,
+`:awake:engine:window`, `:awake:project:transport-*`): the host picks the backends a project draws and
+simulates with and passes them in, as it passes the physics world, and builds the HTTP client behind
+its `ContentTransport` (the ready-made `transport-ktor` and `transport-browser` modules are opt-in).
+`awakeVerify` runs `verifyHeadlessRuntime`, which fails a change that puts one on that path, naming
+the chain.
 
 ## Loading more than one project
 

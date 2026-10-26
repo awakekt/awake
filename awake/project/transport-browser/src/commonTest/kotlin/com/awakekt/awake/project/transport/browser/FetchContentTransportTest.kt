@@ -19,8 +19,10 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Instant
 
 /**
  * The browser transport's mapping, run on every target: what `fetch()` is asked to send, and what
@@ -127,6 +129,56 @@ class FetchContentTransportTest {
         assertEquals(RateLimitBackoff.DEFAULT_MAX_ATTEMPTS, browser.calls.size)
         assertEquals(RateLimitBackoff.DEFAULT_MAX_ATTEMPTS - 1, waits.size)
         assertTrue(waits.all { it <= RateLimitBackoff.DEFAULT_MAX_DELAY }, "$waits")
+    }
+
+    @Test
+    fun a503WithRetryAfterInSecondsIsWaitedOut() = runTest {
+        var answered = 0
+        val browser = FakeBrowser {
+            if (answered++ == 0) FetchOutcome.Answered(503, listOf("retry-after", "6"), ByteArray(0)) else FetchOutcome.Answered(200, emptyList(), model)
+        }
+        val waits = mutableListOf<Duration>()
+
+        assertContentEquals(model, fetchThrough(browser, RateLimitBackoff(delay = { waits += it })).fetch("files/assets/crate.glb"))
+
+        assertEquals(listOf(6.seconds), waits)
+        assertEquals(2, browser.calls.size)
+    }
+
+    @Test
+    fun a503WithRetryAfterAsAnHttpDateIsMeasuredAgainstTheClock() = runTest {
+        var answered = 0
+        val browser = FakeBrowser {
+            if (answered++ == 0) {
+                FetchOutcome.Answered(503, listOf("retry-after", "Sun, 06 Nov 1994 08:49:42 GMT"), ByteArray(0))
+            } else {
+                FetchOutcome.Answered(200, emptyList(), model)
+            }
+        }
+        val waits = mutableListOf<Duration>()
+        val clock = object : Clock {
+            // 1994-11-06T08:49:37Z, RFC 9110's example date.
+            override fun now(): Instant = Instant.fromEpochSeconds(784_111_777)
+        }
+
+        fetchThrough(browser, RateLimitBackoff(clock = clock, delay = { waits += it })).fetch("files/assets/crate.glb")
+
+        assertEquals(listOf(5.seconds), waits)
+    }
+
+    @Test
+    fun a503WithoutAnExposedRetryAfterFailsAtOnceAsBefore() = runTest {
+        val browser = FakeBrowser { FetchOutcome.Answered(503, listOf("content-length", "0"), ByteArray(0)) }
+        val waits = mutableListOf<Duration>()
+
+        val failure = assertFailsWith<ContentFetchException> {
+            fetchThrough(browser, RateLimitBackoff(delay = { waits += it })).fetch("files/assets/crate.glb")
+        }
+
+        assertEquals(503, failure.status)
+        assertEquals("files/assets/crate.glb answered HTTP 503", failure.message)
+        assertEquals(1, browser.calls.size)
+        assertEquals(emptyList(), waits)
     }
 
     @Test

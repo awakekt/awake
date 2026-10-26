@@ -10,10 +10,10 @@ package com.awakekt.awake.project
  * [ContentRequest.url] with every one of [ContentRequest.headers] and answers the HTTP status and
  * body, so Core carries no HTTP library.
  *
- * A transport answers every status it gets, 401, 403 and 429 included, rather than throwing for them:
- * [TokenAuthorizedFetch] reads the status to tell a rejected token from a missing file, and a 429's
- * `Retry-After` header, which the transport answers in [ContentResponse.headers], to know how long to
- * wait before sending again (see [RateLimitBackoff]). Every request is a `GET`, so sending one again
+ * A transport answers every status it gets, 401, 403, 429 and 503 included, rather than throwing for
+ * them: [TokenAuthorizedFetch] reads the status to tell a rejected token from a missing file, and the
+ * `Retry-After` header of a 429 or 503, which the transport answers in [ContentResponse.headers], to
+ * know how long to wait before sending again (see [RateLimitBackoff]). Every request is a `GET`, so sending one again
  * is always safe. A transport resolves a relative `url` against wherever the index came from, and
  * keeps any network retries and resumes of its own. A host whose client can't send headers, such as
  * one that loads through a URL alone, ignores [ContentRequest.headers] and pairs with
@@ -48,12 +48,14 @@ class ContentRequest(
 /**
  * What a [ContentTransport] got back for one [ContentRequest].
  *
- * @property status The HTTP status: 2xx is success, 401 and 403 mean the token was refused, and 429
- * that the server asks for fewer requests.
+ * @property status The HTTP status: 2xx is success, 401 and 403 mean the token was refused, 429
+ * that the server asks for fewer requests, and 503 with a `Retry-After` that it is unavailable for
+ * a while.
  * @property body The response body; for a success, the file's bytes.
  * @property headers The response's headers, as many as the transport can read, with a header that
  * came more than once joined by `", "`. [TokenAuthorizedFetch] reads only `Retry-After`; a transport
- * that answers none still works, and a 429 then waits as [RateLimitBackoff] says for a missing one.
+ * that answers none still works: a 429 then waits as [RateLimitBackoff] says for a missing one, and
+ * a 503 fails the fetch, as it does without a `Retry-After`.
  */
 class ContentResponse(
     val status: Int,
@@ -73,7 +75,8 @@ class ContentResponse(
 
 /**
  * A content request [TokenAuthorizedFetch] could not complete: an HTTP status other than success, a
- * token still refused after one refresh, a 429 still answered when [RateLimitBackoff] stops waiting, a
+ * token still refused after one refresh, a 429 (or 503 with `Retry-After`) still answered when
+ * [RateLimitBackoff] stops waiting, a 503 without `Retry-After`, a
  * token provider that failed, or a transport failure.
  *
  * Its message names [url] as the caller passed it, before any token was added, and never holds the
