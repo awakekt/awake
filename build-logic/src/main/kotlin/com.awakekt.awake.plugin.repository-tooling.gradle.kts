@@ -73,6 +73,7 @@ tasks.register<AwakeRepositoryVerificationTask>("awakeVerify") {
     group = "awake verification"
     description = "Run Awake's repository, documentation, publication, and ownership gates."
     dependsOn(verifyCapabilityLayering, verifyHeadlessRuntime, verifyKeepRules)
+    dependsOn(gradle.includedBuild("build-logic").task(":verifyAwakePluginPublications"))
 }
 
 val verifyPublishedArtifacts = tasks.register<VerifyPublishedArtifactsTask>("verifyPublishedArtifacts") {

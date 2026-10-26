@@ -6,9 +6,18 @@
 // The KSP processor behind @SceneBinding: a build tool that scene modules run through the
 // com.awakekt.awake.plugin.scene-components plugin, never a runtime dependency.
 plugins {
+    `java-library`
     alias(libs.plugins.kotlin.jvm)
+    id("com.awakekt.awake.plugin.publish")
     id("com.awakekt.awake.plugin.detekt")
     id("com.awakekt.awake.plugin.spotless")
+}
+
+mavenPublishing {
+    pom {
+        name.set("Awake Scene Binding Processor")
+        description.set("KSP processor generating Awake scene component bindings and module registries")
+    }
 }
 
 kotlin {

@@ -1,0 +1,1 @@
+- Publish the scene binding KSP processor and `com.awakekt.awake.plugin.scene-components` Gradle plugin so external game and package modules can generate bindings and registries with the same SDK version.

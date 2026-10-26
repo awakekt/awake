@@ -12,6 +12,9 @@ on:
     paths:
       - templates/**
       - tools/check_template_consumer.sh
+      - tools/check_scene_components_consumer.sh
+      - tools/scene-components-consumer/**
+      - awake/scene/binding/**
       - .github/workflows/templates.yml
       - 'awake/**/api/**'
       - gradle/libs.versions.toml
@@ -71,6 +74,7 @@ jobs:
         run: |
           ./gradlew :awake:engine:window:buildDesktopNative :awake:backend:vulkan:bindings:buildDesktopNative --no-configuration-cache
           ./gradlew publishToMavenLocal -Pawake.version="$LOCAL_VERSION" --no-configuration-cache
+          ./gradlew -p build-logic publishToMavenLocal -Pawake.version="$LOCAL_VERSION" --no-configuration-cache
 
       - name: Build the templates against it
         env:
@@ -80,3 +84,39 @@ jobs:
           tools/check_template_consumer.sh templates/game "$RUNNER_TEMP/game"
           tools/check_template_consumer.sh templates/project "$RUNNER_TEMP/project"
           tools/check_template_consumer.sh templates/plugin "$RUNNER_TEMP/plugin"
+          tools/check_scene_components_consumer.sh "$RUNNER_TEMP/scene-components"
+
+  scene-components-native:
+    name: Scene component consumer (native)
+    runs-on: macos-14
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Setup JDK
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Setup Gradle (with cache)
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+
+      # This consumer only needs the binding runtime and its pure-Kotlin dependency closure.
+      # It reaches no renderer, native interop, window or content transport backend.
+      - name: Publish the scene binding toolchain locally
+        run: |
+          version=$(./gradlew -q :awake:core:math:properties --no-configuration-cache | awk '$1 == "version:" { print $2 }')
+          local_version="${version%-SNAPSHOT}-scene-components"
+          echo "TEMPLATE_CORE_VERSION=$local_version" >> "$GITHUB_ENV"
+          modules=(core:math2d core:math core:color core:logging core:host core:io core:schema ecs scene:document scene:binding scene:binding:processor bom)
+          tasks=()
+          for module in "${modules[@]}"; do tasks+=(":awake:$module:publishToMavenLocal"); done
+          ./gradlew "${tasks[@]}" -Pawake.version="$local_version" --no-configuration-cache --max-workers=2
+          ./gradlew -p build-logic publishToMavenLocal -Pawake.version="$local_version" --no-configuration-cache --max-workers=2
+
+      - name: Test the external consumer on every target
+        run: tools/check_scene_components_consumer.sh "$RUNNER_TEMP/scene-components-native"

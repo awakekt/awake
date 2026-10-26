@@ -12,6 +12,27 @@ else at run time.
 
 Produces `plugin/build/awakeplugin/<group>-<version>.awakeplugin`.
 
+## Adding scene components
+
+When a plugin also defines runtime scene components, it can generate their bindings instead of writing
+them by hand. Add these to the existing module's plugins and dependencies, using a Core release that
+includes the published scene-components processor:
+
+```kotlin
+plugins {
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.awake.scene.components)
+}
+awakeSceneComponents { registry.set("com.yourstudio.weather.WeatherSceneComponents") }
+kotlin.sourceSets.commonMain.dependencies { implementation(libs.awake.scene.binding) }
+```
+
+Annotate the serializable schema with `@SceneBinding(LiveComponent::class)`. The generated
+`WeatherSceneComponents.bindings` belongs in the host's scene capability registration; generation
+does not register it globally. The processor is a build dependency and is not bundled into the plugin
+archive. Its version defaults to the build plugin's SDK release, not this plugin project's own version.
+The template's desktop and Wasm targets provide the shared metadata compilation the processor uses.
+
 ## Publisher identity
 
 Set `plugin.json`'s `id` and `publisher` to your own reverse-domain ids (e.g. `com.yourstudio`)

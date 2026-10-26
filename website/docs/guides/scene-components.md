@@ -18,17 +18,27 @@ one side and forgotten on the other is a build error rather than data lost on sa
 
 ## Add a scene component
 
-Apply the plugin to the scene module and name the module's registry:
+Outside Core, apply the published plugin at the same version as your Core SDK and name the registry.
+Resolve plugins from Maven Central and the Gradle Plugin Portal in `pluginManagement.repositories`;
+include Google's repository for the Android build tools used by Awake's build plugins.
 
 ```kotlin title="build.gradle.kts"
 plugins {
-    id("com.awakekt.awake.plugin.scene-components")
+    id("com.awakekt.awake.plugin.scene-components") version "<version>"
 }
 
 awakeSceneComponents {
     registry.set("com.awakekt.awake.scene.core.SceneCoreSceneComponents")
 }
 ```
+
+The module must already apply Kotlin Multiplatform. Add `com.awakekt.awake.scene:binding:<version>` to
+`commonMain` for the annotations and runtime contracts, and apply Kotlin serialization for serializable
+schemas. Configure at least two targets so Kotlin creates the shared metadata compilation. The plugin
+runs KSP once on `commonMain`, then every target compiles that generated source.
+It resolves `com.awakekt.awake.scene.binding:processor` at the plugin's own release version, independent
+of your project's version. `awakeSceneComponents.processorVersion.set("<version>")` explicitly overrides
+that selection for a locally published SDK. Inside Core, the same plugin uses its processor project.
 
 Then annotate the schema with the live component it saves. This is the `tag` component, whose live
 `Tags` names its property `names`:
