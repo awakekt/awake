@@ -57,11 +57,13 @@ fun canvasItemAt(items: List<CanvasItem>, x: Float, y: Float): CanvasItem? {
 internal class CanvasHierarchy(items: List<CanvasItem>) {
     val roots = ArrayList<CanvasItem>()
     private val children = HashMap<CanvasElement, ArrayList<CanvasItem>>()
+    private val parents = HashMap<CanvasElement, CanvasElement>()
 
     init {
         for (item in items) {
             val parent = if (item.element.follow.isEmpty()) item.parent else null
             (if (parent == null) roots else children.getOrPut(parent) { ArrayList() }) += item
+            if (parent != null) parents[item.element] = parent
         }
         // Stable sorts, so elements of the same order keep the order the host listed them in.
         roots.sortBy { it.element.order }
@@ -69,4 +71,7 @@ internal class CanvasHierarchy(items: List<CanvasItem>) {
     }
 
     fun childrenOf(element: CanvasElement): List<CanvasItem> = children[element].orEmpty()
+
+    /** The element [element] is drawn inside, or null for a root, a follower among them. */
+    fun parentOf(element: CanvasElement): CanvasElement? = parents[element]
 }

@@ -82,7 +82,7 @@ internal class CanvasTree(
     val controls: CanvasControls = CanvasControls.Default,
     val tooltips: CanvasTooltips = CanvasTooltips(),
 ) {
-    private val hierarchy = CanvasHierarchy(items)
+    internal val hierarchy = CanvasHierarchy(items)
 
     val roots: List<CanvasItem> get() = hierarchy.roots
 

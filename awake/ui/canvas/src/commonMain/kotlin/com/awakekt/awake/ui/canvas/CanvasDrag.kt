@@ -82,11 +82,11 @@ internal fun Ghosts(tree: CanvasTree) {
     }
 }
 
-/** [element] in a ghost: its box, its words where its kind has them, and its children. */
+/** [element] in a ghost: its box, its words where it shows them, and its children. */
 context(_: Composer)
 internal fun GhostElementView(element: CanvasElement, styled: Modifier, textStyle: TextStyle, tree: CanvasTree, children: List<CanvasItem>) {
-    val words = if (element.kind in WORDED) tree.textOf(element) else ""
-    val align = element.textAlign ?: if (element.kind == CanvasElementKind.Button) CanvasAnchor.Center else CanvasAnchor.TopLeft
+    val words = if (element.showsWords) tree.textOf(element) else ""
+    val align = element.textAlign ?: if (element.widget is CanvasButtonWidget) CanvasAnchor.Center else CanvasAnchor.TopLeft
     Box(styled, contentAlignment = align.alignment) {
         if (words.isNotEmpty()) CanvasWords(element, words, textStyle)
         Children(element, children, tree)
@@ -94,4 +94,3 @@ internal fun GhostElementView(element: CanvasElement, styled: Modifier, textStyl
 }
 
 private const val GHOST_ALPHA = 0.6f
-private val WORDED = setOf(CanvasElementKind.Text, CanvasElementKind.Button, CanvasElementKind.TextField)

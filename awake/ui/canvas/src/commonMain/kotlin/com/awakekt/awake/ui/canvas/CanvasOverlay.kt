@@ -301,19 +301,7 @@ internal fun CanvasElementView(
     // Ahead of a Button's own `clickable` below, so a real drag's release never also reaches it;
     // a press that stays under the threshold leaves the release for `clickable` to turn into a click.
     val styled = element.draggedModifier(hovered, tree, density)
-    when (element.kind) {
-        CanvasElementKind.Text -> Box(styled, contentAlignment = (element.textAlign ?: CanvasAnchor.TopLeft).alignment) {
-            CanvasWords(element, tree.textOf(element), textStyle)
-            Children(element, children, tree)
-        }
-        CanvasElementKind.Panel, CanvasElementKind.Image -> Box(styled.pressableTap(element)) { Children(element, children, tree) }
-        CanvasElementKind.Bar, CanvasElementKind.Sweep, CanvasElementKind.Stepper -> GaugeView(element, styled, textStyle, tree, children)
-        CanvasElementKind.Button -> ButtonView(element, styled, textStyle, tree, children)
-        CanvasElementKind.TextField -> TextFieldView(element, styled, textStyle, tree, children)
-        CanvasElementKind.Joystick -> JoystickView(element, wheeled, back, tree, children)
-        CanvasElementKind.View -> CameraView(element, styled, tree, children)
-        CanvasElementKind.LookArea -> LookAreaView(element, styled, tree, children)
-    }
+    ElementContent(element, styled, wheeled, back, textStyle, tree, children)
 }
 
 /** The canvas's pixels per dp, under the canvas's own scale but not a follower's; 0 outside a canvas. */

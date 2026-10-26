@@ -91,7 +91,7 @@ internal fun CanvasTree.touchMarginPx(element: CanvasElement, density: Float): I
  * the first that holds of disabled, cancelling, aiming, held, pressed, cooling down, ready and idle.
  */
 internal fun CanvasElement.controlState(): CanvasControlState = previewState ?: when {
-    kind == CanvasElementKind.Button && !enabled -> CanvasControlState.Disabled
+    (widget as? CanvasButtonWidget)?.enabled == false -> CanvasControlState.Disabled
     aimCancelling -> CanvasControlState.Cancelling
     aiming -> CanvasControlState.Aiming
     buttonPress.longPressed && isHeld -> CanvasControlState.Held

@@ -29,15 +29,13 @@ import com.awakekt.awake.core.text.theme.TextStyle
 import kotlin.math.min
 import kotlin.math.roundToInt
 
-/** A Bar, a Sweep or a Stepper, each drawn by its own view. */
+/** A Bar: drawn as its settings say when it has them, else filled across from the left by [BarFill]. */
 context(_: Composer)
-internal fun GaugeView(element: CanvasElement, styled: Modifier, textStyle: TextStyle, tree: CanvasTree, children: List<CanvasItem>) {
-    val bar = element.bar
-    when {
-        element.kind == CanvasElementKind.Sweep -> SweepView(element, styled, tree, children)
-        element.kind == CanvasElementKind.Stepper -> StepperView(element, styled, textStyle, tree, children)
-        bar != null -> ProgressBarView(element, styled, textStyle, tree, children)
-        else -> Box(styled) {
+internal fun BarView(element: CanvasElement, styled: Modifier, textStyle: TextStyle, tree: CanvasTree, children: List<CanvasItem>) {
+    if (element.bar != null) {
+        ProgressBarView(element, styled, textStyle, tree, children)
+    } else {
+        Box(styled) {
             BarFill(element, tree.valueOf(element), colorOf(element.color, Color.White), tree.images)
             Children(element, children, tree)
         }
