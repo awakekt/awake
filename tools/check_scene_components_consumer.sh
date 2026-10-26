@@ -21,11 +21,12 @@ if [[ -n "${ANDROID_HOME:-}" ]]; then
   printf 'sdk.dir=%s\n' "${ANDROID_HOME//\\//}" > "$CHECKOUT/local.properties"
 fi
 TASKS=(checkProcessorCoordinate desktopTest wasmJsBrowserTest compileAndroidMain)
-ARGS=()
+# Bash 3 (the macOS runner's /bin/bash) treats an empty array as unset under nounset.
+ARGS=(--no-daemon --max-workers=2 --no-configuration-cache)
 if [[ -n "${AWAKE_SCENE_COMPONENTS_MAVEN_LOCAL:-}" ]]; then
   ARGS+=("-Dmaven.repo.local=$AWAKE_SCENE_COMPONENTS_MAVEN_LOCAL")
 fi
 if [[ "$(uname -s)" == Darwin ]]; then
   TASKS+=(compileKotlinIosArm64 compileKotlinIosSimulatorArm64)
 fi
-"$ENGINE_ROOT/gradlew" -p "$CHECKOUT" "${TASKS[@]}" "${ARGS[@]}" --no-daemon --max-workers=2 --no-configuration-cache
+"$ENGINE_ROOT/gradlew" -p "$CHECKOUT" "${TASKS[@]}" "${ARGS[@]}"
