@@ -6,7 +6,6 @@
 package com.awakekt.awake.core.text.font
 
 import com.awakekt.awake.core.host.readResourceBytes
-import kotlinx.coroutines.test.runTest
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -23,7 +22,7 @@ import kotlin.test.assertTrue
  */
 class DistanceFieldCellEdgeTest {
     @Test
-    fun aLoadedFontsFringeFadesOutInsideEachGlyphsRect() = runTest {
+    fun aLoadedFontsFringeFadesOutInsideEachGlyphsRect() = fontTest("loaded font fringe") {
         val font = UiFonts.load(readResourceBytes("Roboto-Regular.ttf"), "Roboto-Regular.ttf") as PackedUiFont
         val chars = UiFonts.DEFAULT_CHARS
         val failures = listOf(12, 16, 18, 25, 32, 48, 96).mapNotNull { size ->
@@ -31,7 +30,7 @@ class DistanceFieldCellEdgeTest {
             val char = chars.first { edgeCoverage(font, it, size) == worst }
             if (worst > 0f) "${size}px: coverage ${(worst * 1000).roundToInt() / 1000f} at the edge of '$char'" else null
         }
-        assertTrue(failures.isEmpty(), failures.joinToString("\n"))
+        assertTrue(failures.isEmpty(), failures.joinToString("\n", "Expected zero edge coverage; measured:\n"))
     }
 
     /**

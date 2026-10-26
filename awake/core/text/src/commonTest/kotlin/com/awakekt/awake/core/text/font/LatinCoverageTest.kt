@@ -108,14 +108,14 @@ class LatinCoverageTest {
 
     /** Adding the Latin sets must not move the descent every line of text keeps its ink inside of (Ģ and § hang below Roboto's descenders). */
     @Test
-    fun theWiderSetDoesNotMoveTheInkBand() = runTest {
+    fun theWiderSetDoesNotMoveTheInkBand() = fontTest("wide versus ASCII ink band") {
         val bytes = readResourceBytes("Roboto-Regular.ttf")
         val wide = UiFonts.load(bytes, "Roboto-Regular.ttf") as PackedUiFont
         val ascii = UiFonts.load(bytes, "Roboto-Regular.ttf", UiFonts.ASCII_CHARS) as PackedUiFont
-        assertEquals(ascii.descentEm, wide.descentEm)
-        assertEquals(ascii.visibleTopEm, wide.visibleTopEm)
-        assertEquals(ascii.visibleBottomEm, wide.visibleBottomEm)
-        assertEquals(0.22949207f, (UiFonts.trueSans() as PackedUiFont).descentEm)
+        assertEquals(ascii.descentEm, wide.descentEm, "descentEm: ASCII versus default glyph set")
+        assertEquals(ascii.visibleTopEm, wide.visibleTopEm, "visibleTopEm: ASCII versus default glyph set")
+        assertEquals(ascii.visibleBottomEm, wide.visibleBottomEm, "visibleBottomEm: ASCII versus default glyph set")
+        assertEquals(0.22949207f, (UiFonts.trueSans() as PackedUiFont).descentEm, "built-in descentEm")
     }
 
     private fun assertDrawsEveryDefaultChar(font: UiFont, weight: FontWeight, label: String) {

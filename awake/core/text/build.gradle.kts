@@ -3,6 +3,9 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+import org.gradle.api.tasks.testing.AbstractTestTask
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+
 plugins {
     id("com.awakekt.awake.plugin.library")
     id("com.awakekt.awake.plugin.publish")
@@ -38,6 +41,14 @@ kotlin {
 
 awakeTestResources {
     roots.from(layout.projectDirectory.dir("src/commonTest/resources"), generatorFonts)
+}
+
+// Preserve the console assertion details as well as the browser adapter's shortened Error.
+tasks.withType<AbstractTestTask>().matching { it.name == "wasmJsBrowserTest" }.configureEach {
+    testLogging {
+        exceptionFormat = TestExceptionFormat.FULL
+        showStandardStreams = true
+    }
 }
 
 // Run by hand to move to a new Unicode version; both outputs are checked in. -PucdDirectory=<dir>

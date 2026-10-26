@@ -1,0 +1,1 @@
+- Preserve browser font-test assertion details and measured metric labels when the runner reports a bare error; retain the font-baking time budget without retries or relaxed font tolerances.
