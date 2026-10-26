@@ -5,107 +5,70 @@
  */
 package com.awakekt.awake.scene.canvas
 
-import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.scene.binding.RegisteredBinding
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneResolutionContext
+import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneVec3
 import com.awakekt.awake.ui.canvas.CanvasElement
+import com.awakekt.awake.ui.canvas.CanvasFollowArrow
+import com.awakekt.awake.ui.canvas.CanvasImageWidget
+import com.awakekt.awake.ui.canvas.CanvasPointerState
+import com.awakekt.awake.ui.canvas.CanvasRect
 import com.awakekt.awake.ui.canvas.CanvasStepper
+import com.awakekt.awake.ui.canvas.CanvasViewWidget
+import com.awakekt.awake.ui.canvas.CanvasWidget
 import kotlin.reflect.KClass
 
-// Where a scene file's `canvas_element` becomes the live [CanvasElement]'s settings, and back. It is
-// the only place the two meet, so a capability option added to either side is wrong until it is
-// handled here: `CanvasElementExposureTest` fails when a [CanvasElement] option is neither set from
-// this mapping nor listed there as set from code only.
+// Where a scene file's older `canvas_element` is read: it becomes the component set that draws it
+// the same way, each component loaded as its own binding loads it, so a scene saved either way loads
+// to the same element. Nothing is saved in this form any more: each component's binding saves it.
+// `CanvasElementExposureTest` checks this mapping covers every option of a CanvasElement.
 
-/** Loads and saves [CanvasElement]s as `canvas_element` scene components. */
+/**
+ * Reads the older single `canvas_element` scene component, as the canvas components it is now. It
+ * reshapes the saved data rather than copying fields, so it is written by hand and listed in
+ * CanvasSceneComponents with `@RegisteredBinding`.
+ */
+@RegisteredBinding
 object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasElement> {
     override val componentClass: KClass<CanvasElement> = CanvasElement::class
     override val schemaClass: KClass<SceneCanvasElement> = SceneCanvasElement::class
     override val serializer = SceneCanvasElement.serializer()
 
     override fun attachTyped(world: World, entity: Entity, component: SceneCanvasElement, context: SceneResolutionContext) {
-        world.add(entity, component.toComponent())
+        for (part in component.toCanvasComponents()) world.attachCanvasComponent(entity, part.toCanvasPart())
     }
 
-    override fun export(world: World, entity: Entity, component: CanvasElement): SceneCanvasElement =
-        component.toSceneComponent()
+    /** Never saves a `canvas_element`: each of the element's components saves itself. */
+    override fun export(world: World, entity: Entity, component: CanvasElement): SceneCanvasElement? = null
 
     /**
-     * Converts this schema document representation to a runtime ECS [CanvasElement] component.
+     * Converts this schema document representation to a runtime [CanvasElement].
      *
-     * @return The hydrated runtime [CanvasElement].
+     * @return A new element made of this element's components.
      */
-    fun SceneCanvasElement.toComponent(): CanvasElement = CanvasElement().also { applyTo(it) }
+    fun SceneCanvasElement.toComponent(): CanvasElement = emptyCanvasElement().also { applyTo(it) }
 
     /**
-     * Sets every saved option of [element] to this schema's, leaving what it reports at runtime, such
-     * as presses, as it is: what a [CanvasFollowerPool] does to an element it hands out again.
+     * Sets every saved component of [element] to this schema's, in place of the ones it had, leaving
+     * what it reports at runtime, its [CanvasPointerState], as it is: what a [CanvasFollowerPool] does
+     * to an element it hands out again.
      *
      * @param element The live element to set.
      */
     fun SceneCanvasElement.applyTo(element: CanvasElement) {
-        element.kind = kind
-        element.anchor = anchor
-        element.offsetX = offsetX
-        element.offsetY = offsetY
-        element.width = width
-        element.height = height
-        element.text = text
-        element.textKey = textKey
-        element.textArgs = textArgs
-        element.fontSize = fontSize
-        element.color = color
-        element.background = background
-        element.value = value
-        element.order = order
-        element.visible = visible
-        element.action = action
-        element.doubleAction = doubleAction
-        element.touchOnly = touchOnly
-        element.safeArea = safeArea
-        element.style = style
-        element.textAlign = textAlign
-        element.follow = follow
-        element.followOffset = Vec3f(followOffset.x, followOffset.y, followOffset.z)
-        element.followBounds = followBounds
-        element.followOutset = followOutset
-        element.followRules = followRules
-        element.followArrow = followArrow
-        element.layout = layout
-        element.grow = grow
-        element.bind = bind
-        element.wheel = wheel
-        element.draggable = draggable
-        element.dropTarget = dropTarget
-        element.camera = camera
-        element.links = links
-        element.mask = mask
-        element.maxLength = maxLength
-        element.maxLengthUnit = maxLengthUnit
-        element.placeholder = placeholder
-        element.padding = padding
-        element.tooltip = tooltip
-        element.font = font
-        element.pressable = pressable
-        element.joystick = joystick
-        element.button = button
-        element.enabled = enabled
-        element.look = look
-        element.cluster = cluster
-        element.skin = skin
-        element.controlId = controlId
-        element.elementId = elementId
-        element.bar = bar
-        element.sweep = sweep
-        // Puts the live number at the saved value too.
-        element.stepper = stepper
+        for (part in element.components()) {
+            if (part !is CanvasRect && part !is CanvasPointerState) element.remove(if (part is CanvasWidget) CanvasWidget::class else part::class)
+        }
+        for (part in toCanvasComponents()) element.set(part.toCanvasPart())
     }
 
     /**
-     * Serializes this runtime ECS [CanvasElement] component to a scene document [SceneCanvasElement].
+     * The older `canvas_element` form of this live element, for a tool written for it: its kind and
+     * every option its components set.
      *
      * @return The serializable [SceneCanvasElement] representation.
      */
@@ -166,4 +129,33 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         // The live number is saved as where the stepper starts.
         stepper = if (stepper != null || number != CanvasStepper.Default.value) (stepper ?: CanvasStepper.Default).copy(value = number) else null,
     )
+}
+
+/**
+ * The live component this saved canvas component loads as, by the mapping its binding uses.
+ *
+ * @throws IllegalArgumentException when it is not a canvas element component.
+ */
+@Suppress("CyclomaticComplexMethod") // One branch for each component.
+internal fun SceneComponent.toCanvasPart(): Any = when (this) {
+    is SceneCanvasRect -> CanvasRectBinding.run { toComponent() }
+    is SceneCanvasText -> CanvasTextBinding.run { toComponent() }
+    is SceneCanvasAppearance -> CanvasAppearanceBinding.run { toComponent() }
+    is SceneCanvasLayout -> layout
+    is SceneCanvasCluster -> cluster
+    is SceneCanvasBind -> bind
+    is SceneCanvasFollow -> CanvasFollowBinding.run { toComponent() }
+    is SceneCanvasFollowArrow -> CanvasFollowArrowBinding.run { toComponent() }
+    is SceneCanvasInput -> CanvasInputBinding.run { toComponent() }
+    is SceneCanvasTooltip -> CanvasTooltipBinding.run { toComponent() }
+    is SceneCanvasButton -> CanvasButtonBinding.run { toComponent() }
+    is SceneCanvasBar -> CanvasBarBinding.run { toComponent() }
+    is SceneCanvasSweep -> CanvasSweepBinding.run { toComponent() }
+    is SceneCanvasStepper -> CanvasStepperBinding.run { toComponent() }
+    is SceneCanvasJoystick -> CanvasJoystickBinding.run { toComponent() }
+    is SceneCanvasLookArea -> CanvasLookAreaBinding.run { toComponent() }
+    is SceneCanvasTextField -> CanvasTextFieldBinding.run { toComponent() }
+    is SceneCanvasView -> CanvasViewBinding.run { toComponent() }
+    is SceneCanvasImage -> CanvasImageBinding.run { toComponent() }
+    else -> throw IllegalArgumentException("${this::class.simpleName} is not a canvas element component")
 }

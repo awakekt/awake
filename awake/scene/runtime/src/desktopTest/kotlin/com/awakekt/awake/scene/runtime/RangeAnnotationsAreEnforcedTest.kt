@@ -120,6 +120,15 @@ class RangeAnnotationsAreEnforcedTest {
                     ),
             )
         },
+        "canvas_appearance" to { base -> JsonObject(base + ("style" to fullStyle()) + ("skin" to fullSkin())) },
+        "canvas_follow" to { base -> JsonObject(base + ("node" to JsonPrimitive("Player")) + ("rules" to JsonObject(emptyMap()))) },
+        "canvas_bind" to { base -> JsonObject(base + ("bind" to JsonObject(mapOf("node" to JsonPrimitive("Player"), "value" to JsonPrimitive("health.current"))))) },
+        "canvas_button" to { base -> JsonObject(base + ("settings" to JsonObject(mapOf("aim" to JsonObject(mapOf("cancel" to JsonObject(emptyMap()))))))) },
+        "canvas_bar" to { base -> JsonObject(base + ("settings" to JsonObject(emptyMap()))) },
+        "canvas_sweep" to { base -> JsonObject(base + ("settings" to JsonObject(emptyMap()))) },
+        "canvas_stepper" to { base -> JsonObject(base + ("settings" to JsonObject(emptyMap()))) },
+        "canvas_joystick" to { base -> JsonObject(base + ("settings" to JsonObject(emptyMap()))) },
+        "canvas_look_area" to { base -> JsonObject(base + ("settings" to JsonObject(emptyMap()))) },
         "sprite_clips" to { base -> JsonObject(base + ("clips" to JsonObject(mapOf("idle" to JsonObject(emptyMap()))))) },
         "canvas_controls" to { base ->
             val image = JsonObject(mapOf("path" to JsonPrimitive("frame.png")))
@@ -232,6 +241,12 @@ class RangeAnnotationsAreEnforcedTest {
             "canvas_element.style.textOutline.width",
             "canvas_element.layout.gap",
             "canvas_element.grow",
+            "canvas_rect.width",
+            "canvas_rect.grow",
+            "canvas_text.fontSize",
+            "canvas_bar.value",
+            "canvas_appearance.style.cornerRadius",
+            "canvas_layout.layout.gap",
             "pbr_material.metallic",
             "pbr_material.roughness",
             "pbr_material.alphaCutoff",

@@ -59,6 +59,30 @@ On Button Pressed (name: Play) -> Set Text (name: Title, text: Loading) -> Set V
 The project needs the blueprint capability. A blueprint takes no tap from the button: its `action`,
 or a system polling `consumePress()`, sees the tap as it would without the blueprint.
 
+## Canvas components
+
+A canvas element is saved as a set of focused components on its node, one for each concern, and
+the ECS holds each as a component of its own, so a system can query "every text" or "every button"
+directly:
+
+| Component | Live type | What it holds |
+| --- | --- | --- |
+| `canvas_rect` | `CanvasRect` | Where it sits and how big it is. A node with one is a canvas element. |
+| `canvas_text` | `CanvasText` | Its words: text or key and args, font, size, alignment, links. |
+| `canvas_appearance` | `CanvasAppearance` | Its colours, `style` and control `skin`. |
+| `canvas_layout`, `canvas_cluster` | `CanvasLayout`, `CanvasCluster` | How it places its children. |
+| `canvas_bind` | `CanvasBinding` | Game state it shows without code. |
+| `canvas_follow`, `canvas_follow_arrow` | `CanvasFollow`, `CanvasFollowArrow` | The node it follows; the arrow of a follower pinned to the edge. |
+| `canvas_input`, `canvas_tooltip` | `CanvasInput`, `CanvasTooltip` | Pressable, draggable, drop target, wheel; a hover hint. |
+| one widget | `CanvasButtonWidget`, `CanvasBarWidget`, ... | `canvas_button`, `canvas_bar`, `canvas_sweep`, `canvas_stepper`, `canvas_joystick`, `canvas_look_area`, `canvas_text_field`, `canvas_view` or `canvas_image`: what the element is, with its own values and `settings`. |
+
+What the player is doing to an element right now, its taps, hover, drag and drop, focus, stick and
+aim, is a `CanvasPointerState` component, which is never saved. The element's `kind` follows from
+its components: its widget's, else `Text` when it has a `canvas_text`, else `Panel`. The properties
+below are the older `canvas_element`'s, which still loads: each becomes the component that holds it,
+and a scene saves the components. `World.syncCanvasElements()` brings an entity's components and its
+`CanvasElement` in step; `SceneCanvas` calls it every frame.
+
 ## Properties
 
 | Property | Type | Default | What it does |
