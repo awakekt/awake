@@ -14,7 +14,6 @@ import java.awt.image.BufferedImage
 import java.io.File
 import javax.imageio.ImageIO
 import kotlin.math.abs
-import kotlin.math.pow
 import kotlin.math.tan
 import kotlin.test.Test
 import kotlin.test.assertTrue
@@ -101,7 +100,7 @@ class SceneDebugViewParityTest {
     private fun render(backend: HeadlessUiBackend, view: RenderDebugView, shadowsEnabled: Boolean = true): Frame {
         val pixels = session(backend).renderer.renderDebugViewScene(view, shadowsEnabled)
         write(backend, view, shadowsEnabled, pixels)
-        return Frame(pixels, backend)
+        return Frame(pixels)
     }
 
     /**
@@ -125,12 +124,9 @@ class SceneDebugViewParityTest {
         }
     }
 
-    private class Frame(private val pixels: ByteArray, private val backend: HeadlessUiBackend) {
-        /** The shader's output value: WebGPU's target is sRGB, so its stored bytes are decoded. */
-        fun channel(x: Int, y: Int, c: Int): Float {
-            val stored = pixels[(y * SCENE_SIZE + x) * 4 + c].toInt() and 0xFF
-            return if (backend == HeadlessUiBackend.WebGpu) SRGB_TO_LINEAR[stored] else stored.toFloat()
-        }
+    private class Frame(private val pixels: ByteArray) {
+        /** The shader's output value: both backends' targets are UNORM, so the stored byte (#1011). */
+        fun channel(x: Int, y: Int, c: Int): Float = (pixels[(y * SCENE_SIZE + x) * 4 + c].toInt() and 0xFF).toFloat()
 
         fun grey(x: Int, y: Int) = (channel(x, y, 0) + channel(x, y, 1) + channel(x, y, 2)) / 3f
 
@@ -228,11 +224,5 @@ class SceneDebugViewParityTest {
             Vec3f(0.3f, 0.45f, 1f),
             Vec3f(1f, 1f, 0.3f),
         )
-
-        val SRGB_TO_LINEAR = FloatArray(256) { srgb ->
-            val c = srgb / 255.0
-            val lin = if (c <= 0.04045) c / 12.92 else ((c + 0.055) / 1.055).pow(2.4)
-            (lin * 255.0).toFloat()
-        }
     }
 }

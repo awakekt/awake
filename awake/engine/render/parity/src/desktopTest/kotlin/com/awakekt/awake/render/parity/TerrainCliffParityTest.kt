@@ -67,8 +67,7 @@ class TerrainCliffParityTest {
 
     /**
      * Pixels clearly below the lit level and above the clear colour. The lit level is the commonest
-     * brightness, measured per capture: the two backends store colour differently, and WebGPU's
-     * sRGB target lifts the shade to about two thirds of the lit level.
+     * brightness, measured per capture, so the count holds whatever shade the ground is lit to.
      */
     private fun ByteArray.shadedPixels(): Int {
         val pixels = (0 until SCENE_SIZE * SCENE_SIZE).map { luminanceAt(it % SCENE_SIZE, it / SCENE_SIZE) }

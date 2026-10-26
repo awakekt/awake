@@ -37,6 +37,14 @@ import kotlin.test.assertTrue
  * fix: Vulkan max shift 61/255, mean 21.1, 9 461 pixels off by more than 1/255; WebGPU max 50/255,
  * mean 11.3, 9 461 pixels. After: 0/255 on both, while FXAA still changes 135 edge pixels on
  * Vulkan and 129 on WebGPU.
+ *
+ * A tone-mapping step matches the CPU reference twin within 1/255 on both backends (#1011).
+ * WebGPU's used to differ from it by 16/255 with FXAA after it and 17/255 without (17/255 on
+ * macOS too): its headless target took the surface's first format, `BGRA8UnormSrgb`, so the GPU
+ * encoded every already display-encoded output a second time and decoded it again on sampling.
+ * The bytes read back were the sRGB encode of the twin's result for the sRGB decode of the plain
+ * frame, which matched within 1/255. With the UNORM counterpart, as on Vulkan: 0/255 on both, and
+ * the tone-mapping control above shifts WebGPU's frame exactly as Vulkan's, max 61/255, mean 21.6.
  */
 class PostProcessingFxaaParityTest {
 
@@ -69,13 +77,15 @@ class PostProcessingFxaaParityTest {
      * The explicit combination renders as before: a listed [ToneMappingGradeEffect] still applies
      * the curve and the encode to whatever the target holds. This is also the negative control for
      * the test above: the same measurement on the same scene reports the shift (max 61/255 on
-     * Vulkan, 50/255 on WebGPU) when a tone-mapping step is present.
+     * both backends; 50/255 on WebGPU while its target was sRGB) when a tone-mapping step is
+     * present.
      *
-     * On Vulkan the result matches the CPU reference twin within 1/255. WebGPU's differs from it by
-     * up to 17/255, before and after this change, so only Vulkan is held to the twin.
+     * Both backends match the CPU reference twin within 1/255 (#1011); the class comment has the
+     * measurements.
      */
     @Test
     fun anExplicitToneMappingStepStillAppliesTheCurveOnBothBackends() {
+        val failures = mutableListOf<String>()
         BACKEND_ORDER.forEach { backend ->
             openHeadlessScene(backend).use { session ->
                 val renderer = session.renderer
@@ -93,11 +103,39 @@ class PostProcessingFxaaParityTest {
                     referenceDifference(plain, graded, pixel)
                 }
                 println("Tone mapping + FXAA, $backend: worst difference from the reference twin $worst/255")
-                if (backend == HeadlessUiBackend.Vulkan) {
-                    assertTrue(worst <= REFERENCE_TOLERANCE, "$backend: tone mapping drifted from its reference by $worst/255")
-                }
+                if (worst > REFERENCE_TOLERANCE) failures += "$backend: tone mapping drifted from its reference by $worst/255"
             }
         }
+        assertTrue(failures.isEmpty(), failures.joinToString("\n"))
+    }
+
+    /**
+     * A tone-mapping step with nothing after it draws into the target, so it reads a copy of the
+     * target held in a transient that takes the target's own format (#1010): one more place an
+     * sRGB format would decode and encode again. It must match the CPU twin within 1/255 on both
+     * backends too (#1011); the class comment has the measurements.
+     */
+    @Test
+    fun aToneMappingStepAloneMatchesTheCpuTwinOnBothBackends() {
+        val failures = mutableListOf<String>()
+        BACKEND_ORDER.forEach { backend ->
+            openHeadlessScene(backend).use { session ->
+                val renderer = session.renderer
+                renderer.effectQuality = EffectQuality.High
+                val plain = renderer.renderLdrScene(effects = null)
+                val graded = renderer.renderLdrScene(listOf(ToneMappingGradeEffect()))
+                    .also { write(backend, it, "post-tonemap-only") }
+
+                val everywhere = BooleanArray(SCENE_SIZE * SCENE_SIZE)
+                val shift = shiftAwayFromEdges(plain, graded, everywhere)
+                assertTrue(shift.maxShift > MIN_CONTROL_SHIFT, "$backend: the curve did not run: $shift")
+
+                val worst = (0 until SCENE_SIZE * SCENE_SIZE).maxOf { pixel -> referenceDifference(plain, graded, pixel) }
+                println("Tone mapping alone, $backend: worst difference from the reference twin $worst/255")
+                if (worst > REFERENCE_TOLERANCE) failures += "$backend: tone mapping drifted from its reference by $worst/255"
+            }
+        }
+        assertTrue(failures.isEmpty(), failures.joinToString("\n"))
     }
 
     /** How far [graded]'s [pixel] lies from the CPU twin's tone mapping of [plain]'s, in 8-bit steps. */
@@ -226,7 +264,7 @@ class PostProcessingFxaaParityTest {
         /** The curve and encode move the lit ground by tens of steps; less means they did not run. */
         const val MIN_CONTROL_SHIFT = 10
 
-        /** GPU and CPU evaluate pow and the curve in different float orders. */
-        const val REFERENCE_TOLERANCE = 2
+        /** GPU and CPU evaluate pow and the curve in different float orders: one 8-bit step. */
+        const val REFERENCE_TOLERANCE = 1
     }
 }

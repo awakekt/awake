@@ -172,11 +172,11 @@ class WebGpuHeadlessPixelTest {
             val sourceOverPixel = runBlocking { renderer.readPixels(sourceOver) }.data.pixelAt(SIZE / 2, SIZE / 2)
             val plusPixel = runBlocking { renderer.readPixels(plus) }.data.pixelAt(SIZE / 2, SIZE / 2)
             assertTrue(
-                sourceOverPixel.red in HALF_SRGB_RANGE && sourceOverPixel.green <= FAINT && sourceOverPixel.blue in HALF_SRGB_RANGE,
+                sourceOverPixel.red in HALF_RANGE && sourceOverPixel.green <= FAINT && sourceOverPixel.blue in HALF_RANGE,
                 "source-over should be purple, but was $sourceOverPixel",
             )
             assertTrue(
-                plusPixel.red in HALF_SRGB_RANGE && plusPixel.green <= FAINT && plusPixel.blue >= 253,
+                plusPixel.red in HALF_RANGE && plusPixel.green <= FAINT && plusPixel.blue >= 253,
                 "plus should add red without dimming blue, but was $plusPixel",
             )
         } finally {
@@ -468,9 +468,9 @@ class WebGpuHeadlessPixelTest {
         const val STRONG = 128
         const val FAINT = 24
 
-        // The headless attachment uses BGRA8UnormSrgb. A linear 0.5 channel reads back as 188
-        // after sRGB encoding, with a small tolerance for the GPU's float-to-8-bit rounding.
-        val HALF_SRGB_RANGE = 185..191
+        // The attachment is UNORM, as on Vulkan, so a 0.5 channel reads back as 127 or 128. It used
+        // to be the surface's BGRA8UnormSrgb, which encoded it again to 188 (#1011).
+        val HALF_RANGE = 126..129
     }
 }
 

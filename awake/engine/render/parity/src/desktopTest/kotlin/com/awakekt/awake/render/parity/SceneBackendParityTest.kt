@@ -21,7 +21,6 @@ import java.io.File
 import javax.imageio.ImageIO
 import kotlin.math.PI
 import kotlin.math.abs
-import kotlin.math.pow
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -240,8 +239,7 @@ class SceneBackendParityTest {
                 texture = TextureAsset(ByteArray(2 * 2 * 4) { if (it % 4 == 3) -1 else MID_GREY.toByte() }, 2, 2),
                 sunDirection = Vec3f(0f, -1f, 0f),
             )
-            val red = pixels[(SCENE_SIZE / 2 * SCENE_SIZE + SCENE_SIZE / 2) * 4].toInt() and 0xFF
-            val shade = if (backend == HeadlessUiBackend.WebGpu) SRGB_TO_LINEAR[red] else red
+            val shade = pixels[(SCENE_SIZE / 2 * SCENE_SIZE + SCENE_SIZE / 2) * 4].toInt() and 0xFF
             assertTrue(kotlin.math.abs(shade - AMBIENT_SHADE) <= SHADE_TOLERANCE, "$backend ambient shade $shade, expected about $AMBIENT_SHADE")
         }
     }
@@ -255,8 +253,7 @@ class SceneBackendParityTest {
                 sunDirection = Vec3f(0f, -1f, 0f),
                 ambient = 0.5f,
             )
-            val red = pixels[(SCENE_SIZE / 2 * SCENE_SIZE + SCENE_SIZE / 2) * 4].toInt() and 0xFF
-            val shade = if (backend == HeadlessUiBackend.WebGpu) SRGB_TO_LINEAR[red] else red
+            val shade = pixels[(SCENE_SIZE / 2 * SCENE_SIZE + SCENE_SIZE / 2) * 4].toInt() and 0xFF
             assertTrue(kotlin.math.abs(shade - HALF_AMBIENT_SHADE) <= SHADE_TOLERANCE, "$backend shade $shade under ambient 0.5, expected about $HALF_AMBIENT_SHADE")
         }
     }
@@ -307,7 +304,7 @@ class SceneBackendParityTest {
                     shadowsEnabled = false,
                 ),
             )
-            redSum(backend, clear) to redSum(backend, fogged)
+            redSum(clear) to redSum(fogged)
         }
 
         changes.forEach { (backend, sums) ->
@@ -686,10 +683,9 @@ class SceneBackendParityTest {
      * mirroring the map's V axis moves the shadow along world Z, toward or away from the camera,
      * which a left/right reading cannot see. Both axes, or the test only covers half the bug.
      *
-     * The lit level is measured per capture rather than fixed, because the two backends store
-     * colour differently -- Vulkan's offscreen target is UNORM and WebGPU's takes its sRGB format
-     * from the surface -- so the same ground reads 116 on one and 180 on the other. The shadow is
-     * the same 581 pixels either way; only the numbers written into them differ.
+     * The lit level is measured per capture rather than fixed, so the shadow is found whatever
+     * the ground's shade. While WebGPU's target took the surface's sRGB format, the same ground
+     * read 116 on Vulkan and 180 on WebGPU; both targets are UNORM now (#1011).
      */
     /** [below] maps the ground's lit level to the level a shadowed pixel falls below. */
 
@@ -741,12 +737,9 @@ class SceneBackendParityTest {
         return channels.max() - channels.min() <= GREY_SPREAD
     }
 
-    private fun redSum(backend: HeadlessUiBackend, pixels: ByteArray): Int = pixels.asSequence()
+    private fun redSum(pixels: ByteArray): Int = pixels.asSequence()
         .filterIndexed { index, _ -> index % 4 == 0 }
-        .sumOf { byte ->
-            val v = byte.toInt() and 0xFF
-            if (backend == HeadlessUiBackend.WebGpu) SRGB_TO_LINEAR[v] else v
-        }
+        .sumOf { byte -> byte.toInt() and 0xFF }
 
     private fun write(backend: HeadlessUiBackend, pixels: ByteArray, name: String = "shadow-scene") {
         val image = BufferedImage(SCENE_SIZE, SCENE_SIZE, BufferedImage.TYPE_INT_ARGB)
@@ -864,11 +857,5 @@ class SceneBackendParityTest {
         const val FOG_REMAINING_FRACTION = 0.85f
         const val MIN_FOGGED_RED_SUM = 10_000
         const val RED_SUM_TOLERANCE = 35_000
-
-        private val SRGB_TO_LINEAR = IntArray(256) { srgb ->
-            val c = srgb / 255.0
-            val lin = if (c <= 0.04045) c / 12.92 else ((c + 0.055) / 1.055).pow(2.4)
-            (lin * 255.0 + 0.5).toInt().coerceIn(0, 255)
-        }
     }
 }

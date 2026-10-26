@@ -51,8 +51,8 @@ import kotlin.test.assertTrue
  * WebGPU cannot clamp (see `ShadowDepthReach.kt`), so the cascade's near plane is pulled back to
  * the tower, and reads 0.67 (132/196). The shade is the ambient alone on both, the same 59 and
  * 132 the off-screen caster test reads under its box; the PNGs show a dark band from the left edge
- * to x -1. Vulkan's offscreen target is UNORM and WebGPU's is sRGB, which is why the ratios
- * differ; see [SceneBackendParityTest].
+ * to x -1. The ratios differed because WebGPU's target was then sRGB; with both targets UNORM
+ * (#1011), WebGPU reads 0.42 (59/141) like Vulkan.
  *
  * Captures land in `build/reports/render-parity` whether the test passes or fails.
  */

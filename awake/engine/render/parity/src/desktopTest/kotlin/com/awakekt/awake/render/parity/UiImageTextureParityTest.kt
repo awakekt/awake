@@ -41,9 +41,8 @@ class UiImageTextureParityTest {
             }
             fun rgb(x: Int, y: Int): List<Int> = (0 until 3).map { frame[(y * SIZE + x) * 4 + it].toInt() and 0xFF }
 
-            // Linear filtering of a 2px image stretched 32x mixes a little of the neighbour in, and
-            // WebGPU stores the target sRGB-encoded, which lifts that near black; so check which
-            // channels are on and which are off rather than exact values.
+            // Linear filtering of a 2px image stretched 32x mixes a little of the neighbour in, so
+            // check which channels are on and which are off rather than exact values.
             fun near(expected: List<Int>, actual: List<Int>) =
                 expected.zip(actual).all { (e, a) -> if (e == 255) a >= ON else a <= OFF }
             listOf(

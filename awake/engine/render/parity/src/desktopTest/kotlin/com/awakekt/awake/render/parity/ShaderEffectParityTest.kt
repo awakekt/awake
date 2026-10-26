@@ -17,8 +17,8 @@ import kotlin.test.assertTrue
 /**
  * A project's shader documents draw the same on Vulkan and WebGPU.
  *
- * The checks are structural, not pixel-exact, because WebGPU's target is sRGB: the colours are pure
- * channels, which both targets store alike, and each check compares where a colour is, not its value.
+ * The checks are structural, not pixel-exact: the colours are pure channels, and each check
+ * compares where a colour is, not its value.
  */
 class ShaderEffectParityTest {
     private val sky = shaderEffectDocument("sky")

@@ -102,9 +102,10 @@ class SceneSelfShadowParityTest {
          *   and let the receiver constants drop to 1.5/2/offset 1.
          *
          * The old "WebGPU runs higher than Vulkan here" note was an artifact of the metric, not
-         * the rendering: Vulkan's offscreen target is UNORM and WebGPU's is sRGB, so the same
-         * waffle clears the count's delta threshold on one backend and not the other. Compare
-         * the PNGs before believing a backend gap in these counts.
+         * the rendering: WebGPU's offscreen target was then sRGB and Vulkan's UNORM (both are
+         * UNORM since #1011), so the same waffle cleared the count's delta threshold on one
+         * backend and not the other. Compare the PNGs before believing a backend gap in these
+         * counts.
          */
         const val MAX_SELF_SHADOWED = 4
     }
