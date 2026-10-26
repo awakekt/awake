@@ -6,15 +6,12 @@
 package com.awakekt.awake.scene.canvas
 
 import com.awakekt.awake.core.schema.PropertyRange
-import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
-import com.awakekt.awake.scene.binding.SceneComponentBinding
-import com.awakekt.awake.scene.binding.SceneResolutionContext
+import com.awakekt.awake.scene.binding.SceneBinding
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneValidationIssue
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlin.reflect.KClass
 
 /**
  * How a scene answers occlusion for the followers whose `followRules.occlusion` asks: by a physics
@@ -66,6 +63,7 @@ data class CanvasFollowOcclusion(
  */
 @Serializable
 @SerialName("canvas_follow_occlusion")
+@SceneBinding(CanvasFollowOcclusion::class)
 data class SceneCanvasFollowOcclusion(
     @PropertyRange(min = 1.0) val raysPerFrame: Int = CanvasFollowOcclusion.DEFAULT_RAYS_PER_FRAME,
     @PropertyRange(min = 1.0) val reuseFrames: Int = CanvasFollowOcclusion.DEFAULT_REUSE_FRAMES,
@@ -75,20 +73,6 @@ data class SceneCanvasFollowOcclusion(
 
     override fun validate(path: String): List<SceneValidationIssue> =
         CanvasFollowOcclusion(raysPerFrame, reuseFrames, layer).problems().map { SceneValidationIssue(path, "canvas_follow_occlusion.$it") }
-}
-
-/** Loads and saves a [CanvasFollowOcclusion] as the `canvas_follow_occlusion` scene component. */
-object CanvasFollowOcclusionBinding : SceneComponentBinding<CanvasFollowOcclusion, SceneCanvasFollowOcclusion> {
-    override val componentClass: KClass<CanvasFollowOcclusion> = CanvasFollowOcclusion::class
-    override val schemaClass: KClass<SceneCanvasFollowOcclusion> = SceneCanvasFollowOcclusion::class
-    override val serializer = SceneCanvasFollowOcclusion.serializer()
-
-    override fun attachTyped(world: World, entity: Entity, component: SceneCanvasFollowOcclusion, context: SceneResolutionContext) {
-        world.add(entity, CanvasFollowOcclusion(component.raysPerFrame, component.reuseFrames, component.layer))
-    }
-
-    override fun export(world: World, entity: Entity, component: CanvasFollowOcclusion): SceneCanvasFollowOcclusion =
-        SceneCanvasFollowOcclusion(component.raysPerFrame, component.reuseFrames, component.layer)
 }
 
 /** The scene's [CanvasFollowOcclusion], from the first node that has one, or null when none does. */

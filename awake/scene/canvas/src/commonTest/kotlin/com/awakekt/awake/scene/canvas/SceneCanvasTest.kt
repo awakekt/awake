@@ -278,9 +278,9 @@ class SceneCanvasTest {
             ),
         )
 
-        // A Bar keeps every field a Bar has; another widget's fields, here a Button's, a View's and a
-        // TextField's, had no effect on it and are not kept.
-        val kept = saved.copy(doubleAction = "", camera = "", mask = "", maxLength = 0, maxLengthUnit = TextLengthUnit.Graphemes)
+        // A Bar keeps every field a Bar has; another widget's fields, here a Button's action and
+        // double action, a View's camera and a TextField's limits, had no effect on it and are not kept.
+        val kept = saved.copy(action = "", doubleAction = "", camera = "", mask = "", maxLength = 0, maxLengthUnit = TextLengthUnit.Graphemes)
         assertEquals(kept, saved.toComponent().toSceneComponent())
         val field = SceneCanvasElement(kind = CanvasElementKind.TextField, mask = "*", maxLength = 40, maxLengthUnit = TextLengthUnit.Utf8Bytes, text = "typed")
         assertEquals(field, field.toComponent().toSceneComponent())

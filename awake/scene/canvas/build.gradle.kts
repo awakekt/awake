@@ -10,6 +10,7 @@ plugins {
     id("com.awakekt.awake.plugin.dokka")
     id("com.awakekt.awake.plugin.detekt")
     id("com.awakekt.awake.plugin.spotless")
+    id("com.awakekt.awake.plugin.scene-components")
 }
 
 kotlin {
@@ -44,10 +45,14 @@ kotlin {
     }
 }
 
+awakeSceneComponents {
+    registry.set("com.awakekt.awake.scene.canvas.CanvasSceneComponents")
+}
+
 mavenPublishing {
     pom {
         name.set("Awake Scene Canvas")
-        description.set("The canvas_element scene component: the schema, validation and World binding for awake:ui:canvas")
+        description.set("The canvas scene components: the schemas, validation and World bindings for awake:ui:canvas")
     }
 }
 

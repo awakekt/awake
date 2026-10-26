@@ -184,6 +184,7 @@ internal class CanvasItemOrder(private val world: World) {
  * @return A map from entity name to its [CanvasElement].
  */
 fun World.canvasElements(prefix: String = ""): Map<String, CanvasElement> = buildMap {
+    syncCanvasElements()
     family<Name, CanvasElement>().forEach { _, name, element ->
         if (prefix.isEmpty() || name.value.startsWith(prefix)) {
             put(name.value, element)

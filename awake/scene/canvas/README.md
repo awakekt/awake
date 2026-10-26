@@ -1,7 +1,8 @@
 # `awake:scene:canvas`
 
-The `canvas_element` scene component: the schema and validation for `awake:ui:canvas`'s
-`CanvasElement`, so a HUD can be authored in a scene document, saved with it, and edited in Awake
+The canvas element scene components: the schemas and validation for `awake:ui:canvas`'s canvas
+components (`canvas_rect`, `canvas_text`, `canvas_appearance`, a widget such as `canvas_button`, and
+the rest), so a HUD can be authored in a scene document, saved with it, and edited in Awake
 Studio's Scene view like anything else. It works like Unity's in-scene Canvas or Godot's `Control`
 nodes: each element is a component on a scene entity.
 
@@ -12,14 +13,40 @@ itself have no scene or ECS dependency and live in `awake:ui:canvas`; see its RE
 
 ## The mapping
 
-`CanvasElementBinding` loads a scene's `canvas_element` as a live `CanvasElement` component, and
-exports it back; `CanvasElementBinding.kt` is the one place a `SceneCanvasElement` field and a
-`CanvasElement` option meet, and `CanvasElementExposureTest` fails when a `CanvasElement` option is
-neither carried across there nor listed as set from code only.
+Each canvas component has its saved form and a binding that copies its fields both ways, generated
+from the `@SceneBinding` on the saved form: `CanvasRectBinding` loads a `canvas_rect` as a `CanvasRect`,
+`CanvasButtonBinding` a `canvas_button` as a `CanvasButtonWidget`, and so on. The bindings of
+`canvas_layout`, `canvas_cluster` and `canvas_bind`, which save a value whole, and of the older
+`canvas_element` are written by hand and marked `@RegisteredBinding`. The module's generated
+`CanvasSceneComponents` lists them all, in binding-name order, which is also the order a node lists its
+canvas components when saved; `DefaultSceneComponentResolvers` registers it. `CanvasBindingGoldenTest`
+holds what each binding saves, recorded before they were generated. `CanvasComponentExposureTest`
+fails when a component option is neither a field of its saved form nor listed as set from code only.
+`CanvasPointerState`, what the player is doing to an element, has no saved form.
+
+A canvas entity holds each component, and a `CanvasElement` made of the same instances, which is what
+the overlay draws. `World.syncCanvasElements()`, which `SceneCanvas` calls each frame, keeps the two
+in step: a component added, replaced or removed on the entity reaches the element, and one changed
+through the element reaches the entity. A node loaded in the current form becomes an element at the
+next sync; `canvasElements`, `findCanvasElement` and part resolution sync first, and a world export
+(`SceneLoader.fromWorld`) syncs before it saves. An entity given a `CanvasRect` becomes an element; one whose
+`CanvasRect` is removed is one no more. `World.addCanvasElement` and `removeCanvasElement` do either at once.
+
+### The older `canvas_element`
+
+Scenes and prefabs saved before the split hold one `canvas_element` for each element. `CanvasElementBinding`
+still reads it, as the component set `SceneCanvasElement.toCanvasComponents()` gives, each attached
+through its own binding, so it loads and draws as before; `CanvasSavedFormBaselineTest` holds one
+baseline for a HUD in both forms and as a world that loaded it saves it back. A world never saves a
+`canvas_element`. `SceneDocument.withCanvasComponents()` and `ScenePrefab.withCanvasComponents()`
+rewrite a file in the current form, and `SceneNode.canvasElementView()` reads a node in either form
+as the single record a tool written for it expects. `CanvasElementExposureTest` still checks the older
+mapping covers every option of a `CanvasElement`.
 
 ## Prefabs in code
 
-`canvasPrefab(guid, name) { ... }` builds a `ScenePrefab` of `canvas_element` nodes, a typed setting
+`canvasPrefab(guid, name) { ... }` builds a `ScenePrefab` of `canvas_element` nodes, which load as the
+canvas components, a typed setting
 for each field and a function for each kind, and validates it; `CanvasPrefabs.toJson` writes the file
 an editor saves, which loads and saves back unchanged. `CanvasPrefabBuilderCoverageTest` fails when a
 `canvas_element` field has no builder setting. An element's `elementId` is the stable id code finds it

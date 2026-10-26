@@ -22,6 +22,12 @@ class DefaultSceneComponentResolversTest {
         "CanvasFollowLimitBinding", "CanvasFollowOcclusionBinding", "LocomotionAnimationBinding", "KeyframeAnimationBinding",
         "DayCycleBinding", "ParticleEmitterBinding", "TextureAnimationBinding", "TextureClipsBinding", "SpriteBinding",
         "TilemapBinding", "SpriteClipsBinding", "ShaderEffectBinding",
+    ) + setOf(
+        // One for each component a canvas element is made of (#1088).
+        "CanvasRectBinding", "CanvasTextBinding", "CanvasAppearanceBinding", "CanvasLayoutBinding", "CanvasClusterBinding",
+        "CanvasBindBinding", "CanvasFollowBinding", "CanvasFollowArrowBinding", "CanvasInputBinding", "CanvasTooltipBinding",
+        "CanvasButtonBinding", "CanvasBarBinding", "CanvasSweepBinding", "CanvasStepperBinding", "CanvasJoystickBinding",
+        "CanvasLookAreaBinding", "CanvasTextFieldBinding", "CanvasViewBinding", "CanvasImageBinding",
     )
 
     @Test
