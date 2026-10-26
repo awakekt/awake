@@ -6,17 +6,14 @@
 package com.awakekt.awake.scene.canvas
 
 import com.awakekt.awake.core.schema.PropertyRange
-import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
-import com.awakekt.awake.scene.binding.SceneComponentBinding
-import com.awakekt.awake.scene.binding.SceneResolutionContext
+import com.awakekt.awake.scene.binding.SceneBinding
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneValidationIssue
 import com.awakekt.awake.ui.canvas.CanvasFollowLimit
 import com.awakekt.awake.ui.canvas.CanvasFollowRank
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlin.reflect.KClass
 
 /**
  * The saved form of a [CanvasFollowLimit]: the most followers of one group the scene's canvas draws
@@ -29,6 +26,7 @@ import kotlin.reflect.KClass
  */
 @Serializable
 @SerialName("canvas_follow_limit")
+@SceneBinding(CanvasFollowLimit::class)
 data class SceneCanvasFollowLimit(
     val group: String = "",
     @PropertyRange(min = 0.0) val max: Int = 0,
@@ -38,20 +36,6 @@ data class SceneCanvasFollowLimit(
 
     override fun validate(path: String): List<SceneValidationIssue> =
         CanvasFollowLimit(group, max, rankBy).problems().map { SceneValidationIssue(path, "canvas_follow_limit.$it") }
-}
-
-/** Loads and saves a [CanvasFollowLimit] as the `canvas_follow_limit` scene component. */
-object CanvasFollowLimitBinding : SceneComponentBinding<CanvasFollowLimit, SceneCanvasFollowLimit> {
-    override val componentClass: KClass<CanvasFollowLimit> = CanvasFollowLimit::class
-    override val schemaClass: KClass<SceneCanvasFollowLimit> = SceneCanvasFollowLimit::class
-    override val serializer = SceneCanvasFollowLimit.serializer()
-
-    override fun attachTyped(world: World, entity: Entity, component: SceneCanvasFollowLimit, context: SceneResolutionContext) {
-        world.add(entity, CanvasFollowLimit(component.group, component.max, component.rankBy))
-    }
-
-    override fun export(world: World, entity: Entity, component: CanvasFollowLimit): SceneCanvasFollowLimit =
-        SceneCanvasFollowLimit(component.group, component.max, component.rankBy)
 }
 
 /** Every [CanvasFollowLimit] on this world's nodes, in the order the world stores them. */

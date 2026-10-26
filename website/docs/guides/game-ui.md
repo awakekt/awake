@@ -59,6 +59,30 @@ On Button Pressed (name: Play) -> Set Text (name: Title, text: Loading) -> Set V
 The project needs the blueprint capability. A blueprint takes no tap from the button: its `action`,
 or a system polling `consumePress()`, sees the tap as it would without the blueprint.
 
+## Canvas components
+
+A canvas element is saved as a set of focused components on its node, one for each concern, and
+the ECS holds each as a component of its own, so a system can query "every text" or "every button"
+directly:
+
+| Component | Live type | What it holds |
+| --- | --- | --- |
+| `canvas_rect` | `CanvasRect` | Where it sits and how big it is. A node with one is a canvas element. |
+| `canvas_text` | `CanvasText` | Its words: text or key and args, font, size, alignment, links. |
+| `canvas_appearance` | `CanvasAppearance` | Its colours, `style` and control `skin`. |
+| `canvas_layout`, `canvas_cluster` | `CanvasLayout`, `CanvasCluster` | How it places its children. |
+| `canvas_bind` | `CanvasBinding` | Game state it shows without code. |
+| `canvas_follow`, `canvas_follow_arrow` | `CanvasFollow`, `CanvasFollowArrow` | The node it follows; the arrow of a follower pinned to the edge. |
+| `canvas_input`, `canvas_tooltip` | `CanvasInput`, `CanvasTooltip` | Pressable, draggable, drop target, wheel; a hover hint. |
+| one widget | `CanvasButtonWidget`, `CanvasBarWidget`, ... | `canvas_button`, `canvas_bar`, `canvas_sweep`, `canvas_stepper`, `canvas_joystick`, `canvas_look_area`, `canvas_text_field`, `canvas_view` or `canvas_image`: what the element is, with its own values and `settings`. |
+
+What the player is doing to an element right now, its taps, hover, drag and drop, focus, stick and
+aim, is a `CanvasPointerState` component, which is never saved. The element's `kind` follows from
+its components: its widget's, else `Text` when it has a `canvas_text`, else `Panel`. The properties
+below are the older `canvas_element`'s, which still loads: each becomes the component that holds it,
+and a scene saves the components. `World.syncCanvasElements()` brings an entity's components and its
+`CanvasElement` in step; `SceneCanvas` calls it every frame.
+
 ## Properties
 
 | Property | Type | Default | What it does |
@@ -384,7 +408,8 @@ default font. A host with no renderer reads no font. If your app runs its own Co
 fonts yourself: `SceneCanvas(world, fonts = loadCanvasFonts(scene, files))`.
 
 Text up to 24 pixels, after the canvas scaler and the display density, draws from glyphs rasterized
-at exactly that size, so small labels stay sharp; larger text draws from a distance field. `bitmap`
+at exactly that size, so small labels stay sharp at a fractional scale too, where the size is rounded
+to a whole pixel; larger text draws from a distance field. `bitmap`
 keeps its pixel-art look at every size. See [Draw crisp text](ui.md#draw-crisp-text).
 
 ## Put elements inside others
@@ -696,6 +721,17 @@ a unit `pixelsPerUnit` of the screen's pixels, for pixel art at any density, and
 where the platform reports them: on Android and on a desktop monitor that reports its size. A
 browser and iOS report none, so there a unit is a dp. `minScale` and `maxScale` hold the result, and
 `playerScale`, which a settings menu sets, multiplies it after them.
+
+A screen rarely gives a round scale: a 1017 dp tall window against the default 720 reference gives
+1.4125. Text does not need one. Each text element's size is rounded to whole device pixels after the
+scale and the density, so text up to 24 pixels draws from exact-size glyphs at any scale (13 at 1.4125
+is an 18 pixel glyph, a 2% difference), and layout boxes keep the size the scale gives them. Pixel art
+is what a fractional scale hurts: some of its pixels come out a screen pixel wider than others. `snap`
+rounds the scale to the nearest whole number (`WholeStep`) or half (`HalfStep`) before the limits, so
+the art is a clean multiple. The trade-off is layout size. The canvas is laid out at the rounded
+scale, so every size and offset moves by up to half a step in proportion: `HalfStep` draws 1.4125 at
+1.5, 6% larger, and `WholeStep` at 1, 29% smaller. Use `snap` for a pixel-art HUD, with `HalfStep` or
+`WholeStep` as the layout can bear, and leave it `None` for a HUD of vector art and text.
 
 ```json title="A 1080p HUD that follows the screen's height"
 { "component": "canvas_scaler", "referenceWidth": 1920, "referenceHeight": 1080, "match": 1, "maxScale": 2 }

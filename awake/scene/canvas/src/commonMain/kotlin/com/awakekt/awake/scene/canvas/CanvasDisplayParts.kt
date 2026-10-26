@@ -7,16 +7,25 @@ package com.awakekt.awake.scene.canvas
 
 import com.awakekt.awake.ui.canvas.CanvasAnchor
 import com.awakekt.awake.ui.canvas.CanvasBar
+import com.awakekt.awake.ui.canvas.CanvasBarWidget
 import com.awakekt.awake.ui.canvas.CanvasElement
 import com.awakekt.awake.ui.canvas.CanvasElementKind
 import com.awakekt.awake.ui.canvas.CanvasImage
+import com.awakekt.awake.ui.canvas.CanvasImageWidget
 import com.awakekt.awake.ui.canvas.CanvasSweep
+import com.awakekt.awake.ui.canvas.CanvasSweepWidget
+import com.awakekt.awake.ui.canvas.CanvasText
+import com.awakekt.awake.ui.canvas.CanvasViewWidget
+import com.awakekt.awake.ui.canvas.get
 
 // The handles of the element kinds that show something: words, a box, a picture, a camera's view
 // and a fill. The controls a player works are in CanvasControlParts.kt.
 
 /** A [CanvasElementKind.Text] element: words, typed in or from a string table. */
 class CanvasTextPart internal constructor(id: String) : CanvasPart(id, CanvasElementKind.Text) {
+    /** The [CanvasText] component: the words, their key, font and size. */
+    val words: CanvasText get() = checkNotNull(element.get<CanvasText>()) { "canvas part \"$id\" has no CanvasText" }
+
     /** The words shown while [textKey] is empty; see [CanvasElement.text]. */
     var text: String
         get() = element.text
@@ -75,6 +84,9 @@ class CanvasPanelPart internal constructor(id: String) : CanvasPart(id, CanvasEl
 
 /** A [CanvasElementKind.Image] element: a picture, its style's image. */
 class CanvasImagePart internal constructor(id: String) : CanvasPart(id, CanvasElementKind.Image) {
+    /** The [CanvasImageWidget] component that makes the element a picture. */
+    val widget: CanvasImageWidget get() = checkNotNull(element.widget as? CanvasImageWidget) { "canvas part \"$id\" has no CanvasImageWidget" }
+
     /**
      * The picture shown, its style's [image][com.awakekt.awake.ui.canvas.CanvasStyle.image]. Writing
      * the picture already shown changes nothing, so a binder can write it every frame.
@@ -99,6 +111,9 @@ class CanvasImagePart internal constructor(id: String) : CanvasPart(id, CanvasEl
 
 /** A [CanvasElementKind.View] element: what a camera sees. */
 class CanvasViewPart internal constructor(id: String) : CanvasPart(id, CanvasElementKind.View) {
+    /** The [CanvasViewWidget] component: the camera it shows. */
+    val widget: CanvasViewWidget get() = checkNotNull(element.widget as? CanvasViewWidget) { "canvas part \"$id\" has no CanvasViewWidget" }
+
     /** The name of the node whose camera the view shows; see [CanvasElement.camera]. */
     var camera: String
         get() = element.camera
@@ -109,6 +124,9 @@ class CanvasViewPart internal constructor(id: String) : CanvasPart(id, CanvasEle
 
 /** A [CanvasElementKind.Bar] element: a progress bar. */
 class CanvasBarPart internal constructor(id: String) : CanvasPart(id, CanvasElementKind.Bar) {
+    /** The [CanvasBarWidget] component: the fill and its settings. */
+    val widget: CanvasBarWidget get() = checkNotNull(element.widget as? CanvasBarWidget) { "canvas part \"$id\" has no CanvasBarWidget" }
+
     /** The fill, from 0 to 1; see [CanvasElement.value]. */
     var value: Float
         get() = element.value
@@ -126,6 +144,9 @@ class CanvasBarPart internal constructor(id: String) : CanvasPart(id, CanvasElem
 
 /** A [CanvasElementKind.Sweep] element: a radial fill, such as a cooldown. */
 class CanvasSweepPart internal constructor(id: String) : CanvasPart(id, CanvasElementKind.Sweep) {
+    /** The [CanvasSweepWidget] component: the fill and its settings. */
+    val widget: CanvasSweepWidget get() = checkNotNull(element.widget as? CanvasSweepWidget) { "canvas part \"$id\" has no CanvasSweepWidget" }
+
     /** The share of a full turn filled, from 0 to 1; see [CanvasElement.value]. */
     var value: Float
         get() = element.value

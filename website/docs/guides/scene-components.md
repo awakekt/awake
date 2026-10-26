@@ -107,10 +107,6 @@ the registry is generated rather than discovered. A generated binding is an ordi
 `SceneComponentBinding` `object`, and uses the schema's `serializer()`, so registering it also registers
 the component id for decoding.
 
-!!! warning "Canvas components are still hand-written"
-    `scene:canvas` adopts the annotation after its element component is split into focused components.
-    Until then `DefaultSceneComponentResolvers` lists the canvas bindings by hand.
-
 ## See also
 
 - [Scene documents](scene-documents.md) for loading, saving and registries.

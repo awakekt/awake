@@ -8,6 +8,7 @@ package com.awakekt.awake.scene.binding
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.scene.canvas.syncCanvasElements
 import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.document.SceneComponent
@@ -19,7 +20,9 @@ import com.awakekt.awake.scene.document.SceneVec3
 
 /**
  * Exports a live active ECS [world] into a serializable [SceneDocument]. An entity with a
- * [PrefabLink] exports as its link: the prefab's entities under it are not written.
+ * [PrefabLink] exports as its link: the prefab's entities under it are not written. A canvas element
+ * code changed through its `CanvasElement` this frame saves as it draws: its components are brought
+ * in step with it first.
  *
  * @param world Active ECS world containing live scene entities.
  * @param name Optional scene title to set on the exported document.
@@ -40,6 +43,7 @@ fun SceneLoader.fromWorld(
     extraComponents: ((Entity) -> List<SceneComponent>)? = null,
     siblingOrder: Comparator<Entity>? = null,
 ): SceneDocument {
+    world.syncCanvasElements()
     val transforms = linkedMapOf<Entity, Transform>()
     world.queryEach(Transform::class) { entity, transform -> transforms[entity] = transform }
 

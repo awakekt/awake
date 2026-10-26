@@ -19,11 +19,30 @@ registers it.
 | [`blueprint`](#blueprint) | `BlueprintComponent` | `com.awakekt.awake.scene:blueprint` | `registerBlueprints()` | — |
 | [`camera`](#camera) | `Camera` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Cameras](../guides/cameras-and-controls.md) |
 | [`camera_rig`](#camera_rig) | `CameraRig` | `com.awakekt.awake.scene:controls` | `registerControls()` | [Cameras](../guides/cameras-and-controls.md) |
+| [`canvas_appearance`](#canvas_appearance) | `CanvasAppearance` | `com.awakekt.awake.scene:canvas` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md#canvas-components) |
+| [`canvas_bar`](#canvas_bar) | `CanvasBarWidget` | `com.awakekt.awake.scene:canvas` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md#canvas-components) |
+| [`canvas_bind`](#canvas_bind) | `CanvasBinding` | `com.awakekt.awake.scene:canvas` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md#canvas-components) |
+| [`canvas_button`](#canvas_button) | `CanvasButtonWidget` | `com.awakekt.awake.scene:canvas` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md#canvas-components) |
+| [`canvas_cluster`](#canvas_cluster) | `CanvasCluster` | `com.awakekt.awake.scene:canvas` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md#canvas-components) |
 | [`canvas_controls`](#canvas_controls) | `CanvasControls` | `com.awakekt.awake.scene:canvas` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md#show-touch-controls-by-input) |
 | [`canvas_element`](#canvas_element) | `CanvasElement` | `com.awakekt.awake.scene:canvas` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md) |
+| [`canvas_follow`](#canvas_follow) | `CanvasFollow` | `com.awakekt.awake.scene:canvas` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md#canvas-components) |
+| [`canvas_follow_arrow`](#canvas_follow_arrow) | `CanvasFollowArrow` | `com.awakekt.awake.scene:canvas` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md#canvas-components) |
 | [`canvas_follow_limit`](#canvas_follow_limit) | `CanvasFollowLimit` | `com.awakekt.awake.scene:canvas` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md#many-followers) |
 | [`canvas_follow_occlusion`](#canvas_follow_occlusion) | `CanvasFollowOcclusion` | `com.awakekt.awake.scene:canvas` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md#occlusion) |
+| [`canvas_image`](#canvas_image) | `CanvasImageWidget` | `com.awakekt.awake.scene:canvas` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md#canvas-components) |
+| [`canvas_input`](#canvas_input) | `CanvasInput` | `com.awakekt.awake.scene:canvas` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md#canvas-components) |
+| [`canvas_joystick`](#canvas_joystick) | `CanvasJoystickWidget` | `com.awakekt.awake.scene:canvas` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md#canvas-components) |
+| [`canvas_layout`](#canvas_layout) | `CanvasLayout` | `com.awakekt.awake.scene:canvas` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md#canvas-components) |
+| [`canvas_look_area`](#canvas_look_area) | `CanvasLookAreaWidget` | `com.awakekt.awake.scene:canvas` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md#canvas-components) |
+| [`canvas_rect`](#canvas_rect) | `CanvasRect` | `com.awakekt.awake.scene:canvas` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md#canvas-components) |
 | [`canvas_scaler`](#canvas_scaler) | `CanvasScaler` | `com.awakekt.awake.scene:canvas` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md#scale-with-the-screen) |
+| [`canvas_stepper`](#canvas_stepper) | `CanvasStepperWidget` | `com.awakekt.awake.scene:canvas` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md#canvas-components) |
+| [`canvas_sweep`](#canvas_sweep) | `CanvasSweepWidget` | `com.awakekt.awake.scene:canvas` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md#canvas-components) |
+| [`canvas_text`](#canvas_text) | `CanvasText` | `com.awakekt.awake.scene:canvas` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md#canvas-components) |
+| [`canvas_text_field`](#canvas_text_field) | `CanvasTextFieldWidget` | `com.awakekt.awake.scene:canvas` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md#canvas-components) |
+| [`canvas_tooltip`](#canvas_tooltip) | `CanvasTooltip` | `com.awakekt.awake.scene:canvas` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md#canvas-components) |
+| [`canvas_view`](#canvas_view) | `CanvasViewWidget` | `com.awakekt.awake.scene:canvas` | `DefaultSceneComponentResolvers.install()` | [Game UI](../guides/game-ui.md#canvas-components) |
 | [`character_controller`](#character_controller) | `CharacterController` | `com.awakekt.awake.scene:character` | `registerCharacter()` | [Character controller](../guides/character-controller.md) |
 | [`chase`](#chase) | `ChaseBehavior` | `com.awakekt.awake.scene:ai` | `registerAiBehaviors()` | [AI](../guides/ai.md) |
 | [`custom`](#custom) | — | `com.awakekt.awake.scene:document` | Built in | [Scene documents](../guides/scene-documents.md) |
@@ -65,7 +84,7 @@ registers it.
 | Call | Module | Registers |
 | --- | --- | --- |
 | Built in | `com.awakekt.awake.scene:document` | `custom`, `prefab_link` |
-| `DefaultSceneComponentResolvers.install()` | `com.awakekt.awake.scene:runtime` | `ambient_light`, `camera`, `canvas_controls`, `canvas_element`, `canvas_follow_limit`, `canvas_follow_occlusion`, `canvas_scaler`, `day_cycle`, `fog`, `keyframe_animation`, `light`, `locomotion_animation`, `mesh_renderer`, `particle_emitter`, `pbr_material`, `shader_effect`, `skybox`, `spin_control`, `static_transform`, `tag`, `terrain`, `tone_mapping`. `SceneManager` and `SceneAppLifecycleRuntime` call it for you. |
+| `DefaultSceneComponentResolvers.install()` | `com.awakekt.awake.scene:runtime` | `ambient_light`, `camera`, `canvas_appearance`, `canvas_bar`, `canvas_bind`, `canvas_button`, `canvas_cluster`, `canvas_controls`, `canvas_element`, `canvas_follow`, `canvas_follow_arrow`, `canvas_follow_limit`, `canvas_follow_occlusion`, `canvas_image`, `canvas_input`, `canvas_joystick`, `canvas_layout`, `canvas_look_area`, `canvas_rect`, `canvas_scaler`, `canvas_stepper`, `canvas_sweep`, `canvas_text`, `canvas_text_field`, `canvas_tooltip`, `canvas_view`, `day_cycle`, `fog`, `keyframe_animation`, `light`, `locomotion_animation`, `mesh_renderer`, `particle_emitter`, `pbr_material`, `shader_effect`, `skybox`, `spin_control`, `static_transform`, `tag`, `terrain`, `tone_mapping`. `SceneManager` and `SceneAppLifecycleRuntime` call it for you. |
 | `SceneComponentRegistry.registerControls()` | `com.awakekt.awake.scene:controls` | `movement_control`, `camera_rig`, `input_actions` |
 | `SceneComponentRegistry.registerPhysics()` | `com.awakekt.awake.scene:physics` | `physics_body` |
 | `SceneComponentRegistry.registerCharacter()` | `com.awakekt.awake.scene:character` | `character_controller` |
@@ -168,7 +187,7 @@ touch controls show as the host says. `SceneCanvasControls`, saved from the live
 
 ## `canvas_element`
 
-Screen-space UI drawn over the game. Sizes and offsets are in dp. `SceneCanvasElement`.
+The older, single form of a canvas element, read so scenes and prefabs saved before the split load unchanged: it loads as the canvas components below, `canvas_rect` and the rest, that draw it the same way, and a scene saves those, never this. A field its kind never used, such as a Panel's `text`, is dropped. Sizes and offsets are in dp. `SceneCanvasElement`.
 
 | Field | Type | Default | What it does |
 | --- | --- | --- | --- |
@@ -227,6 +246,189 @@ Screen-space UI drawn over the game. Sizes and offsets are in dp. `SceneCanvasEl
 | `stepper` | object | none | A `Stepper`'s number: the `value` it starts at, `min` (`0`), `max` (`100`), `step` (`1`), `decimals` (`0`), and a held button's `repeatDelay` (`0.4`) and `repeatInterval` (`0.08`) in seconds. `bind.value` sets the number each frame instead. Set on another kind, it is reported. |
 | `joystick` | object | none | How a `Joystick` moves and what it reports. `mode` (`Fixed`): `Fixed` centres the pad in the element; `Floating` makes the element a zone where the pad appears under the thumb, waiting at `restX`, `restY` (`0.5`, shares of the zone) while untouched; `Dynamic` also drags the pad along past its reach. `radius` (`0`) is the knob's reach in dp: half the element's shorter side when fixed, 60 otherwise. `deadZone` (`0`, below 1) reports nothing near the centre and stretches the rest back to full; `response` (`Linear` · `Quadratic` · `Cubic`) or a `curve` of `points` (`at` a deflection, `value` out) shapes it; `directions` (`Analog` · `Four` · `Eight`) snaps it. `snapBack` (`true`) centres it on release. Past `sprintThreshold` (`0`, never) of its reach it is `sprinting`, and in a played project holds the input action `sprintAction`. `idleAlpha` (`1`), `idleDelay` (`0` s) and `fadeSeconds` (`0.25`) fade it while untouched. Each stick follows only the pointer that landed on it first. Set on another kind, it is reported. |
 
+## `canvas_appearance`
+
+How a canvas element looks beyond its words: its colours, style and skin. An element without one draws white content on nothing. `SceneCanvasAppearance`.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `color` | string | `"#FFFFFF"` | Foreground colour, `#RRGGBB` or `#RRGGBBAA`: a Text's words, a Bar's or a Sweep's fill, a Joystick's knob. |
+| `background` | string | `"#00000000"` | Background colour, `#RRGGBB` or `#RRGGBBAA`. |
+| `style` | object | `{}` | Images, frames, fills, borders, corners, shadow, text shadow and outline, alpha, rotation, link colour, and `hovered`, `pressed` and `disabled` looks, as `canvas_element.style` describes. |
+| `skin` | object | none | How this control looks, slot by slot, over the scene's `canvas_controls` theme, as `canvas_element.skin` describes. |
+
+## `canvas_bar`
+
+A progress bar: the element's widget. `SceneCanvasBar`.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `value` | number | `1` | The fill, from 0 to 1. A `canvas_bind` `value` field reads it each frame instead. |
+| `settings` | object | none | Its `direction`, `track`, trail, `segments`, `ticks` and `label`, as `canvas_element.bar` describes. None fills across from the left. |
+
+## `canvas_bind`
+
+Game state a canvas element shows without code, read from a node's fields. `SceneCanvasBind`.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `bind` | object | required | The `node` and the fields read: `value` and `max`, `text`, `textArgs`, `cooldown` and `cooldownMax`, `charges` and `enabled`, as `canvas_element.bind` describes. |
+
+## `canvas_button`
+
+A button: the element's widget, an action button when it has `settings`. `SceneCanvasButton`.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `action` | string | `""` | What it does for the game when pressed, such as `jump`. |
+| `doubleAction` | string | `""` | What it does when double-clicked. |
+| `settings` | object | none | Its trigger, long press, release, aim and cooldown, as `canvas_element.button` describes. None is a plain button, tapped on release. |
+| `enabled` | boolean | `true` | Whether it can be pressed. A `canvas_bind` `enabled` field sets it each frame instead. |
+
+## `canvas_cluster`
+
+Places the element's children as a button cluster. Set with `canvas_layout`, it is reported. `SceneCanvasCluster`.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `cluster` | object | `{}` | The pivot, `radius`, `startAngle`, `spacing` and `primaryAtPivot`, as `canvas_element.cluster` describes. |
+
+## `canvas_follow`
+
+A canvas element that follows a node on screen. `SceneCanvasFollow`.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `node` | string | `""` | The name of the node followed. Blank is reported. |
+| `offset` | vector | `{x: 0, y: 0, z: 0}` | World-space offset from the node, such as above its head. |
+| `bounds` | boolean | `false` | Cover the screen rectangle of the node's meshes instead of standing at its point. |
+| `outset` | number | `0` | With `bounds`, how far the box reaches past the node's rectangle on each side, in dp. Negative pulls it in. |
+| `rules` | object | none | How a follower behaves with many on screen, as `canvas_element.followRules` describes. |
+
+## `canvas_follow_arrow`
+
+Inside a follower, marks this element as the arrow of one pinned to the edge, as `canvas_element.followArrow` describes. It has no fields. `SceneCanvasFollowArrow`.
+
+## `canvas_image`
+
+A picture: the element's widget, drawing its `canvas_appearance` style image. It has no fields. `SceneCanvasImage`.
+
+## `canvas_input`
+
+How a canvas element takes the pointer beyond what its widget does. `SceneCanvasInput`.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `pressable` | boolean | `false` | Makes an Image or a Panel take a tap as a Button does. Set beside another widget, it is reported. |
+| `draggable` | boolean | `false` | Can be picked up and dragged, as `canvas_element.draggable` describes. |
+| `dropTarget` | boolean | `false` | Receives a dragged element released over it. |
+| `wheel` | boolean | `false` | Take the mouse wheel while the pointer is over the element or its children. |
+
+## `canvas_joystick`
+
+An on-screen stick: the element's widget. `SceneCanvasJoystick`.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `action` | string | `""` | The axis action it steers, such as `move`. |
+| `settings` | object | none | Its mode, reach, dead zone, response, directions, sprint and idle fade, as `canvas_element.joystick` describes. |
+
+## `canvas_layout`
+
+Lays the element's children out in rows or columns. `SceneCanvasLayout`.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `layout` | object | `{}` | `direction`, `wrap`, `gap`, `padding`, `justify` and `align`, as `canvas_element.layout` describes. |
+
+## `canvas_look_area`
+
+A region where a swipe looks and a pinch zooms: the element's widget. `SceneCanvasLookArea`.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `action` | string | `""` | The axis action the swipe is pushed to. |
+| `settings` | object | none | Its sensitivity, inversion, pinch zoom, `turnsCamera` and `zoomAction`, as `canvas_element.look` describes. |
+
+## `canvas_rect`
+
+Where a canvas element sits and how big it is. A node with one is a canvas element: drawn by `SceneCanvas`, and found by its `elementId`. Sizes and offsets are in dp. `SceneCanvasRect`.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `anchor` | `TopLeft` · `TopCenter` · `TopRight` · `CenterLeft` · `Center` · `CenterRight` · `BottomLeft` · `BottomCenter` · `BottomRight` | `TopLeft` | Screen point, or the parent's, the element is placed from. |
+| `offsetX` | number | `16` | Horizontal offset from the anchor, as `canvas_element.offsetX` describes. |
+| `offsetY` | number | `16` | Vertical offset from the anchor, as `canvas_element.offsetY` describes. |
+| `width` | number | `200` | Width. Not negative. |
+| `height` | number | `40` | Height. Not negative. |
+| `order` | integer | `0` | Draw order. Lowest draws first. |
+| `visible` | boolean | `true` | Whether the element is drawn. |
+| `touchOnly` | boolean | `false` | Draw only where touch controls are shown. |
+| `safeArea` | boolean | `true` | Keep an anchored element on the canvas itself inside the screen's safe area. |
+| `grow` | number | `0` | In a parent with a `canvas_layout`, this element's share of its line's leftover space. Not negative. |
+| `elementId` | string | `""` | The stable id code finds this element by, as `canvas_element.elementId` describes. |
+| `controlId` | string | `""` | The name a player's saved layout knows this control by. |
+
+## `canvas_stepper`
+
+A number with minus and plus buttons: the element's widget. `SceneCanvasStepper`.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `settings` | object | none | The `value` it starts at, `min`, `max`, `step`, `decimals` and repeat, as `canvas_element.stepper` describes. The live number is saved as `value`. |
+
+## `canvas_sweep`
+
+A radial fill, such as a cooldown: the element's widget. `SceneCanvasSweep`.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `value` | number | `1` | The share of a full turn filled, from 0 to 1. |
+| `settings` | object | none | Its start, direction, mask, ring and track, as `canvas_element.sweep` describes. |
+
+## `canvas_text`
+
+A canvas element's words. Without a widget beside it, the element is a Text. `SceneCanvasText`.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `text` | string | `""` | A Text's content, a Button's label, or what is typed into a TextField, as `canvas_element.text` describes. |
+| `textKey` | string | `""` | The words by key, from the project's string tables. Set with `text` or `canvas_bind.bind.text`, it is reported. |
+| `textArgs` | object | `{}` | Values for `textKey`'s, or a TextField's placeholder's, placeholders, by name. |
+| `fontSize` | number | `18` | Text size. Above 0. |
+| `font` | string | `""` | The font the words draw in, as `canvas_element.font` describes. |
+| `textAlign` | `TopLeft` · `TopCenter` · `TopRight` · `CenterLeft` · `Center` · `CenterRight` · `BottomLeft` · `BottomCenter` · `BottomRight` | none | Where the words sit. None keeps the widget's own: top-left for a Text, centred for a Button. |
+| `links` | boolean | `true` | Whether `[[key&#124;shown words]]` spans draw as links. |
+
+## `canvas_text_field`
+
+A line the player types into: the element's widget. What is typed is its `canvas_text` `text`. `SceneCanvasTextField`.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `mask` | string | `""` | A password mask: one character drawn for each typed one. |
+| `maxLength` | integer | `0` | The most the player may type, in `maxLengthUnit`; `0` for no limit. Not negative. |
+| `maxLengthUnit` | `Graphemes` · `CodePoints` · `Utf8Bytes` | `Graphemes` | What `maxLength` counts. |
+| `placeholder` | string | `""` | The hint shown while the field is empty and does not hold the keyboard, as a key. |
+| `padding` | object | `{ "horizontal": 12, "vertical": 0 }` | The space between the field's edge and its text, in dp. |
+
+## `canvas_tooltip`
+
+A short hint shown near the pointer after it rests on the element. `SceneCanvasTooltip`.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `text` | string | `""` | The hint's key in the string tables. Blank is reported. |
+| `textArgs` | object | `{}` | Values for the hint's placeholders when the element has no `canvas_text`. |
+
+## `canvas_view`
+
+What a camera sees: the element's widget. `SceneCanvasView`.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `camera` | string | `""` | The name of a node with a `camera`, as `canvas_element.camera` describes. |
+
 ## `canvas_follow_limit`
 
 The most followers of one group the scene's canvas draws at once, keeping the most important: name
@@ -272,6 +474,7 @@ scale its host passes. Every `canvas_element` size, offset, font and image is mu
 | `minScale` | number | `0` | The smallest scale the rule may give; `0` for no limit. Not negative, and not above a set `maxScale`. |
 | `maxScale` | number | `0` | The largest scale the rule may give; `0` for no limit. Not negative. |
 | `playerScale` | number | `1` | The player's own multiplier, applied after `minScale` and `maxScale`, so a settings menu can always make the UI larger or smaller. Above 0. |
+| `snap` | `None` · `WholeStep` · `HalfStep` | `None` | Rounds the scale the rule gives to the nearest whole number or half before `minScale` and `maxScale` hold it, so pixel art lands on a whole number of screen pixels per art pixel. The layout is drawn at the rounded scale, so every size and offset moves by up to half a step in proportion: a 1.4125 scale draws at 1.5 with `HalfStep`, 6% larger, and at 1 with `WholeStep`, 29% smaller. A scale under one step is left as it is. Text needs no snapping; see [Scale with the screen](../guides/game-ui.md#scale-with-the-screen). |
 
 ## `character_controller`
 
