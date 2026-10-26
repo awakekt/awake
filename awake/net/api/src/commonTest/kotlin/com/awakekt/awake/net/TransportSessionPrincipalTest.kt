@@ -35,6 +35,12 @@ class TransportSessionPrincipalTest {
     }
 
     @Test
+    fun anImplementationThatDoesNotOverrideItReportsNoCloseReason() {
+        val session: TransportSession = LegacySession(SessionId(1))
+        assertNull(session.closeReason)
+    }
+
+    @Test
     fun aPrincipalAttachedAtAcceptTimeIsReadableThroughTheInterface() {
         val session: TransportSession = AttachedSession(SessionId(2), principal = "peer-7")
         assertEquals("peer-7", session.principal)

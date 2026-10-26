@@ -317,6 +317,15 @@ public final synthetic class com/awakekt/awake/net/PacketZeroNullNetId$Impl : co
 	public fun <init> ()V
 }
 
+public final class com/awakekt/awake/net/SessionCloseReason : java/lang/Enum {
+	public static final field OutboundOverflow Lcom/awakekt/awake/net/SessionCloseReason;
+	public static final field PeerClosed Lcom/awakekt/awake/net/SessionCloseReason;
+	public static final field ServerClosed Lcom/awakekt/awake/net/SessionCloseReason;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/net/SessionCloseReason;
+	public static fun values ()[Lcom/awakekt/awake/net/SessionCloseReason;
+}
+
 public final class com/awakekt/awake/net/SessionId {
 	public static final field Companion Lcom/awakekt/awake/net/SessionId$Companion;
 	public static final synthetic fun box-impl (J)Lcom/awakekt/awake/net/SessionId;
@@ -366,6 +375,7 @@ public abstract interface class com/awakekt/awake/net/TransportServer {
 
 public abstract interface class com/awakekt/awake/net/TransportSession {
 	public abstract fun close (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun getCloseReason ()Lcom/awakekt/awake/net/SessionCloseReason;
 	public abstract fun getId-H4EDovs ()J
 	public fun getPrincipal ()Ljava/lang/String;
 	public abstract fun incoming ()Lkotlinx/coroutines/channels/ReceiveChannel;
@@ -373,6 +383,7 @@ public abstract interface class com/awakekt/awake/net/TransportSession {
 }
 
 public final class com/awakekt/awake/net/TransportSession$DefaultImpls {
+	public static fun getCloseReason (Lcom/awakekt/awake/net/TransportSession;)Lcom/awakekt/awake/net/SessionCloseReason;
 	public static fun getPrincipal (Lcom/awakekt/awake/net/TransportSession;)Ljava/lang/String;
 }
 
