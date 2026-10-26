@@ -36,7 +36,7 @@ kotlin {
 }
 
 // Reserved entry name for the publisher's signature; excluded from the digest it covers. Must
-// match com.awakekt.awake.editor.core.plugin.PLUGIN_ARCHIVE_SIGNATURE_ENTRY_NAME.
+// match com.awakekt.awake.pluginarchive.PLUGIN_ARCHIVE_SIGNATURE_ENTRY_NAME.
 val pluginSignatureEntryName = "signature.sig"
 
 // A .awakeplugin is a zip: plugin.json at the root and the plugin's classes under lib/.
@@ -76,9 +76,10 @@ val awakePlugin by tasks.registering(Zip::class) {
 /**
  * Rewrites [archive] with a `signature.sig` entry covering every other entry's canonical digest,
  * signed with the publisher's RSA private key (PEM or base64 PKCS#8). Mirrors
- * `com.awakekt.awake.editor.core.plugin.PluginArchiveDigest` and `PluginArchiveVerifier`: this
- * module has no dependency on that published artifact, so the algorithm is kept in sync by the
- * pinned test vectors both sides share rather than shared code.
+ * `com.awakekt.awake.pluginarchive.PluginArchiveDigest` and `PluginArchiveVerifier`
+ * (`com.awakekt.awake:plugin-archive`): a build script cannot call that library's suspending API
+ * without coroutines on its classpath, so the algorithm is kept in sync by the pinned digest in
+ * `PluginArchiveVerifierTest` rather than shared code.
  */
 fun signPluginArchive(archive: File, pemOrBase64PrivateKey: String, signatureEntryName: String) {
     val entries = ZipFile(archive).use { zip ->

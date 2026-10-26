@@ -1,0 +1,578 @@
+public final class com/awakekt/awake/pluginarchive/AwakePluginsLock {
+	public static final field Companion Lcom/awakekt/awake/pluginarchive/AwakePluginsLock$Companion;
+	public static final field FILE_NAME Ljava/lang/String;
+	public static final field FORMAT_VERSION I
+	public fun <init> ()V
+	public fun <init> (ILjava/util/List;)V
+	public synthetic fun <init> (ILjava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()Ljava/util/List;
+	public final fun copy (ILjava/util/List;)Lcom/awakekt/awake/pluginarchive/AwakePluginsLock;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/pluginarchive/AwakePluginsLock;ILjava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/pluginarchive/AwakePluginsLock;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPlugins ()Ljava/util/List;
+	public final fun getVersion ()I
+	public fun hashCode ()I
+	public final fun plugin (Ljava/lang/String;)Lcom/awakekt/awake/pluginarchive/LockedPlugin;
+	public final fun runtimeModules ()Ljava/util/List;
+	public final fun toJson ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+	public final fun with (Lcom/awakekt/awake/pluginarchive/LockedPlugin;)Lcom/awakekt/awake/pluginarchive/AwakePluginsLock;
+	public final fun without (Ljava/lang/String;)Lcom/awakekt/awake/pluginarchive/AwakePluginsLock;
+}
+
+public final synthetic class com/awakekt/awake/pluginarchive/AwakePluginsLock$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/pluginarchive/AwakePluginsLock$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/pluginarchive/AwakePluginsLock;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/pluginarchive/AwakePluginsLock;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/pluginarchive/AwakePluginsLock$Companion {
+	public final fun fromJson (Ljava/lang/String;)Lcom/awakekt/awake/pluginarchive/AwakePluginsLock;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/pluginarchive/AwakeRootSignature {
+	public static final field INSTANCE Lcom/awakekt/awake/pluginarchive/AwakeRootSignature;
+	public final fun isValid (Lcom/awakekt/awake/pluginarchive/AwakeRootSignature$Domain;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun signingPayload (Lcom/awakekt/awake/pluginarchive/AwakeRootSignature$Domain;Ljava/lang/String;)[B
+}
+
+public final class com/awakekt/awake/pluginarchive/AwakeRootSignature$Domain : java/lang/Enum {
+	public static final field PluginArchive Lcom/awakekt/awake/pluginarchive/AwakeRootSignature$Domain;
+	public static final field PluginRevocationList Lcom/awakekt/awake/pluginarchive/AwakeRootSignature$Domain;
+	public static final field PublisherKeyList Lcom/awakekt/awake/pluginarchive/AwakeRootSignature$Domain;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getTag ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/pluginarchive/AwakeRootSignature$Domain;
+	public static fun values ()[Lcom/awakekt/awake/pluginarchive/AwakeRootSignature$Domain;
+}
+
+public final class com/awakekt/awake/pluginarchive/LockedPlugin {
+	public static final field Companion Lcom/awakekt/awake/pluginarchive/LockedPlugin$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;)Lcom/awakekt/awake/pluginarchive/LockedPlugin;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/pluginarchive/LockedPlugin;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/pluginarchive/LockedPlugin;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDigest ()Ljava/lang/String;
+	public final fun getId ()Ljava/lang/String;
+	public final fun getPublisher ()Ljava/lang/String;
+	public final fun getRuntime ()Ljava/util/List;
+	public final fun getVersion ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/pluginarchive/LockedPlugin$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/pluginarchive/LockedPlugin$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/pluginarchive/LockedPlugin;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/pluginarchive/LockedPlugin;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/pluginarchive/LockedPlugin$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/pluginarchive/PluginArchive {
+	public static final field Companion Lcom/awakekt/awake/pluginarchive/PluginArchive$Companion;
+	public static final field MAX_ENTRIES I
+	public static final field MAX_ENTRY_PATH_LENGTH I
+	public static final field MAX_UNPACKED_BYTES J
+	public synthetic fun <init> (Lcom/awakekt/awake/pluginarchive/PluginManifest;Ljava/util/List;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun entry (Ljava/lang/String;)Lcom/awakekt/awake/pluginarchive/PluginArchiveEntry;
+	public final fun getEntries ()Ljava/util/List;
+	public final fun getManifest ()Lcom/awakekt/awake/pluginarchive/PluginManifest;
+	public final fun getPayload ()Ljava/util/List;
+	public final fun getSignature ()[B
+}
+
+public final class com/awakekt/awake/pluginarchive/PluginArchive$Companion {
+	public final fun fromEntries (Ljava/util/List;)Lcom/awakekt/awake/pluginarchive/PluginArchive;
+	public final fun isSafeEntryPath (Ljava/lang/String;)Z
+}
+
+public final class com/awakekt/awake/pluginarchive/PluginArchiveDigest {
+	public static final field INSTANCE Lcom/awakekt/awake/pluginarchive/PluginArchiveDigest;
+	public final fun canonicalDigest (Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun signingPayload ([B)[B
+}
+
+public final class com/awakekt/awake/pluginarchive/PluginArchiveDigestKt {
+	public static final field PLUGIN_ARCHIVE_MANIFEST_ENTRY_NAME Ljava/lang/String;
+	public static final field PLUGIN_ARCHIVE_SIGNATURE_ENTRY_NAME Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/pluginarchive/PluginArchiveEntry {
+	public fun <init> (Ljava/lang/String;[B)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()[B
+	public final fun copy (Ljava/lang/String;[B)Lcom/awakekt/awake/pluginarchive/PluginArchiveEntry;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/pluginarchive/PluginArchiveEntry;Ljava/lang/String;[BILjava/lang/Object;)Lcom/awakekt/awake/pluginarchive/PluginArchiveEntry;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getContent ()[B
+	public final fun getName ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/pluginarchive/PluginArchiveException : java/lang/Exception {
+	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public final class com/awakekt/awake/pluginarchive/PluginArchiveReader {
+	public static final field INSTANCE Lcom/awakekt/awake/pluginarchive/PluginArchiveReader;
+	public final fun read ([BLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public abstract class com/awakekt/awake/pluginarchive/PluginArchiveVerification {
+}
+
+public final class com/awakekt/awake/pluginarchive/PluginArchiveVerification$Unsigned : com/awakekt/awake/pluginarchive/PluginArchiveVerification {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lcom/awakekt/awake/pluginarchive/PluginArchiveVerification$Unsigned;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/pluginarchive/PluginArchiveVerification$Unsigned;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/pluginarchive/PluginArchiveVerification$Unsigned;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getReason ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/pluginarchive/PluginArchiveVerification$Unverified : com/awakekt/awake/pluginarchive/PluginArchiveVerification {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lcom/awakekt/awake/pluginarchive/PluginArchiveVerification$Unverified;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/pluginarchive/PluginArchiveVerification$Unverified;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/pluginarchive/PluginArchiveVerification$Unverified;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getReason ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/pluginarchive/PluginArchiveVerification$Verified : com/awakekt/awake/pluginarchive/PluginArchiveVerification {
+	public static final field INSTANCE Lcom/awakekt/awake/pluginarchive/PluginArchiveVerification$Verified;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/pluginarchive/PluginArchiveVerifier {
+	public static final field INSTANCE Lcom/awakekt/awake/pluginarchive/PluginArchiveVerifier;
+	public final fun verify (Ljava/util/List;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/pluginarchive/PluginDependency {
+	public static final field Companion Lcom/awakekt/awake/pluginarchive/PluginDependency$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Z)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Z
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Z)Lcom/awakekt/awake/pluginarchive/PluginDependency;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/pluginarchive/PluginDependency;Ljava/lang/String;Ljava/lang/String;ZILjava/lang/Object;)Lcom/awakekt/awake/pluginarchive/PluginDependency;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getId ()Ljava/lang/String;
+	public final fun getOptional ()Z
+	public final fun getVersion ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/pluginarchive/PluginDependency$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/pluginarchive/PluginDependency$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/pluginarchive/PluginDependency;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/pluginarchive/PluginDependency;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/pluginarchive/PluginDependency$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/pluginarchive/PluginManifest {
+	public static final field Companion Lcom/awakekt/awake/pluginarchive/PluginManifest$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;Ljava/util/List;Ljava/lang/Integer;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;Ljava/util/List;Ljava/lang/Integer;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component10 ()Ljava/util/List;
+	public final fun component11 ()Ljava/lang/Integer;
+	public final fun component12 ()Ljava/util/List;
+	public final fun component13 ()Ljava/lang/String;
+	public final fun component14 ()Ljava/lang/String;
+	public final fun component15 ()Ljava/util/List;
+	public final fun component16 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun component8 ()I
+	public final fun component9 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;Ljava/util/List;Ljava/lang/Integer;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;)Lcom/awakekt/awake/pluginarchive/PluginManifest;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/pluginarchive/PluginManifest;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;Ljava/util/List;Ljava/lang/Integer;Ljava/util/List;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/pluginarchive/PluginManifest;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAuthor ()Ljava/lang/String;
+	public final fun getCategory ()Ljava/lang/String;
+	public final fun getDependencies ()Ljava/util/List;
+	public final fun getDescription ()Ljava/lang/String;
+	public final fun getDocumentationUrl ()Ljava/lang/String;
+	public final fun getEntrypointClass ()Ljava/lang/String;
+	public final fun getId ()Ljava/lang/String;
+	public final fun getMinEngineVersion ()Ljava/lang/String;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getPublisher ()Ljava/lang/String;
+	public final fun getRequiredApiVersion ()I
+	public final fun getRequiredLicense ()Ljava/lang/String;
+	public final fun getSupportedPlatforms ()Ljava/util/List;
+	public final fun getTags ()Ljava/util/List;
+	public final fun getTargetJvmVersion ()Ljava/lang/Integer;
+	public final fun getVersion ()Ljava/lang/String;
+	public fun hashCode ()I
+	public final fun toJson ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/pluginarchive/PluginManifest$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/pluginarchive/PluginManifest$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/pluginarchive/PluginManifest;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/pluginarchive/PluginManifest;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/pluginarchive/PluginManifest$Companion {
+	public final fun fromJson (Ljava/lang/String;)Lcom/awakekt/awake/pluginarchive/PluginManifest;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/pluginarchive/PluginRevocationList {
+	public static final field Companion Lcom/awakekt/awake/pluginarchive/PluginRevocationList$Companion;
+	public fun <init> (JLjava/util/List;)V
+	public synthetic fun <init> (JLjava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()J
+	public final fun component2 ()Ljava/util/List;
+	public final fun copy (JLjava/util/List;)Lcom/awakekt/awake/pluginarchive/PluginRevocationList;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/pluginarchive/PluginRevocationList;JLjava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/pluginarchive/PluginRevocationList;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getRevoked ()Ljava/util/List;
+	public final fun getVersion ()J
+	public fun hashCode ()I
+	public final fun isNewerThan (Lcom/awakekt/awake/pluginarchive/PluginRevocationList;)Z
+	public final fun revocationOf (Ljava/lang/String;Ljava/lang/String;)Lcom/awakekt/awake/pluginarchive/RevokedPluginVersion;
+	public final fun toJson ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/pluginarchive/PluginRevocationList$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/pluginarchive/PluginRevocationList$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/pluginarchive/PluginRevocationList;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/pluginarchive/PluginRevocationList;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/pluginarchive/PluginRevocationList$Companion {
+	public final fun fromJson (Ljava/lang/String;)Lcom/awakekt/awake/pluginarchive/PluginRevocationList;
+	public final fun getEMPTY ()Lcom/awakekt/awake/pluginarchive/PluginRevocationList;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/pluginarchive/PluginRuntimeModule {
+	public static final field Companion Lcom/awakekt/awake/pluginarchive/PluginRuntimeModule$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lcom/awakekt/awake/pluginarchive/PluginRuntimeModule;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/pluginarchive/PluginRuntimeModule;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/pluginarchive/PluginRuntimeModule;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getArtifact ()Ljava/lang/String;
+	public final fun getCoordinates ()Ljava/lang/String;
+	public final fun getGroup ()Ljava/lang/String;
+	public final fun getVersion ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/pluginarchive/PluginRuntimeModule$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/pluginarchive/PluginRuntimeModule$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/pluginarchive/PluginRuntimeModule;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/pluginarchive/PluginRuntimeModule;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/pluginarchive/PluginRuntimeModule$Companion {
+	public final fun parse (Ljava/lang/String;)Lcom/awakekt/awake/pluginarchive/PluginRuntimeModule;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/pluginarchive/PluginTrust {
+	public static final field INSTANCE Lcom/awakekt/awake/pluginarchive/PluginTrust;
+	public final fun verify (Lcom/awakekt/awake/pluginarchive/PluginArchive;Lcom/awakekt/awake/pluginarchive/PublisherKeyList;Lcom/awakekt/awake/pluginarchive/PluginRevocationList;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun verify$default (Lcom/awakekt/awake/pluginarchive/PluginTrust;Lcom/awakekt/awake/pluginarchive/PluginArchive;Lcom/awakekt/awake/pluginarchive/PublisherKeyList;Lcom/awakekt/awake/pluginarchive/PluginRevocationList;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public abstract class com/awakekt/awake/pluginarchive/PluginVerificationResult {
+}
+
+public final class com/awakekt/awake/pluginarchive/PluginVerificationResult$BadSignature : com/awakekt/awake/pluginarchive/PluginVerificationResult {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lcom/awakekt/awake/pluginarchive/PluginVerificationResult$BadSignature;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/pluginarchive/PluginVerificationResult$BadSignature;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/pluginarchive/PluginVerificationResult$BadSignature;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getReason ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/pluginarchive/PluginVerificationResult$Revoked : com/awakekt/awake/pluginarchive/PluginVerificationResult {
+	public fun <init> (Lcom/awakekt/awake/pluginarchive/RevokedPluginVersion;)V
+	public final fun component1 ()Lcom/awakekt/awake/pluginarchive/RevokedPluginVersion;
+	public final fun copy (Lcom/awakekt/awake/pluginarchive/RevokedPluginVersion;)Lcom/awakekt/awake/pluginarchive/PluginVerificationResult$Revoked;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/pluginarchive/PluginVerificationResult$Revoked;Lcom/awakekt/awake/pluginarchive/RevokedPluginVersion;ILjava/lang/Object;)Lcom/awakekt/awake/pluginarchive/PluginVerificationResult$Revoked;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getRevocation ()Lcom/awakekt/awake/pluginarchive/RevokedPluginVersion;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/pluginarchive/PluginVerificationResult$Unsigned : com/awakekt/awake/pluginarchive/PluginVerificationResult {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lcom/awakekt/awake/pluginarchive/PluginVerificationResult$Unsigned;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/pluginarchive/PluginVerificationResult$Unsigned;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/pluginarchive/PluginVerificationResult$Unsigned;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getReason ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/pluginarchive/PluginVerificationResult$VerifiedByPublisher : com/awakekt/awake/pluginarchive/PluginVerificationResult {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lcom/awakekt/awake/pluginarchive/PluginVerificationResult$VerifiedByPublisher;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/pluginarchive/PluginVerificationResult$VerifiedByPublisher;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/pluginarchive/PluginVerificationResult$VerifiedByPublisher;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPublisherId ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/pluginarchive/PublisherKeyList {
+	public static final field Companion Lcom/awakekt/awake/pluginarchive/PublisherKeyList$Companion;
+	public fun <init> (JLjava/util/List;)V
+	public synthetic fun <init> (JLjava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()J
+	public final fun component2 ()Ljava/util/List;
+	public final fun copy (JLjava/util/List;)Lcom/awakekt/awake/pluginarchive/PublisherKeyList;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/pluginarchive/PublisherKeyList;JLjava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/pluginarchive/PublisherKeyList;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPublishers ()Ljava/util/List;
+	public final fun getVersion ()J
+	public fun hashCode ()I
+	public final fun isNewerThan (Lcom/awakekt/awake/pluginarchive/PublisherKeyList;)Z
+	public final fun keysFor (Ljava/lang/String;)Ljava/util/List;
+	public final fun toJson ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/pluginarchive/PublisherKeyList$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/pluginarchive/PublisherKeyList$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/pluginarchive/PublisherKeyList;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/pluginarchive/PublisherKeyList;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/pluginarchive/PublisherKeyList$Companion {
+	public final fun fromJson (Ljava/lang/String;)Lcom/awakekt/awake/pluginarchive/PublisherKeyList;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/pluginarchive/PublisherKeys {
+	public static final field Companion Lcom/awakekt/awake/pluginarchive/PublisherKeys$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/util/List;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Ljava/util/List;)Lcom/awakekt/awake/pluginarchive/PublisherKeys;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/pluginarchive/PublisherKeys;Ljava/lang/String;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/pluginarchive/PublisherKeys;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getId ()Ljava/lang/String;
+	public final fun getKeys ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/pluginarchive/PublisherKeys$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/pluginarchive/PublisherKeys$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/pluginarchive/PublisherKeys;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/pluginarchive/PublisherKeys;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/pluginarchive/PublisherKeys$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/pluginarchive/RevokedPluginVersion {
+	public static final field Companion Lcom/awakekt/awake/pluginarchive/RevokedPluginVersion$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lcom/awakekt/awake/pluginarchive/RevokedPluginVersion;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/pluginarchive/RevokedPluginVersion;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/pluginarchive/RevokedPluginVersion;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getId ()Ljava/lang/String;
+	public final fun getReason ()Ljava/lang/String;
+	public final fun getRevokedAt ()Ljava/lang/String;
+	public final fun getVersion ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/pluginarchive/RevokedPluginVersion$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/pluginarchive/RevokedPluginVersion$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/pluginarchive/RevokedPluginVersion;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/pluginarchive/RevokedPluginVersion;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/pluginarchive/RevokedPluginVersion$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract class com/awakekt/awake/pluginarchive/RootSignedDocument {
+}
+
+public final class com/awakekt/awake/pluginarchive/RootSignedDocument$Rejected : com/awakekt/awake/pluginarchive/RootSignedDocument {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lcom/awakekt/awake/pluginarchive/RootSignedDocument$Rejected;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/pluginarchive/RootSignedDocument$Rejected;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/pluginarchive/RootSignedDocument$Rejected;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getReason ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/pluginarchive/RootSignedDocument$Verified : com/awakekt/awake/pluginarchive/RootSignedDocument {
+	public fun <init> (Ljava/lang/Object;)V
+	public final fun component1 ()Ljava/lang/Object;
+	public final fun copy (Ljava/lang/Object;)Lcom/awakekt/awake/pluginarchive/RootSignedDocument$Verified;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/pluginarchive/RootSignedDocument$Verified;Ljava/lang/Object;ILjava/lang/Object;)Lcom/awakekt/awake/pluginarchive/RootSignedDocument$Verified;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getValue ()Ljava/lang/Object;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/pluginarchive/SignedPluginRevocationList {
+	public static final field Companion Lcom/awakekt/awake/pluginarchive/SignedPluginRevocationList$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lcom/awakekt/awake/pluginarchive/SignedPluginRevocationList;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/pluginarchive/SignedPluginRevocationList;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/pluginarchive/SignedPluginRevocationList;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDocument ()Ljava/lang/String;
+	public final fun getSignature ()Ljava/lang/String;
+	public fun hashCode ()I
+	public final fun toJson ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+	public final fun verify (Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final synthetic class com/awakekt/awake/pluginarchive/SignedPluginRevocationList$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/pluginarchive/SignedPluginRevocationList$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/pluginarchive/SignedPluginRevocationList;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/pluginarchive/SignedPluginRevocationList;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/pluginarchive/SignedPluginRevocationList$Companion {
+	public final fun fromJson (Ljava/lang/String;)Lcom/awakekt/awake/pluginarchive/SignedPluginRevocationList;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/pluginarchive/SignedPublisherKeyList {
+	public static final field Companion Lcom/awakekt/awake/pluginarchive/SignedPublisherKeyList$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lcom/awakekt/awake/pluginarchive/SignedPublisherKeyList;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/pluginarchive/SignedPublisherKeyList;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/pluginarchive/SignedPublisherKeyList;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDocument ()Ljava/lang/String;
+	public final fun getSignature ()Ljava/lang/String;
+	public fun hashCode ()I
+	public final fun toJson ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+	public final fun verify (Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final synthetic class com/awakekt/awake/pluginarchive/SignedPublisherKeyList$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/pluginarchive/SignedPublisherKeyList$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/pluginarchive/SignedPublisherKeyList;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/pluginarchive/SignedPublisherKeyList;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/pluginarchive/SignedPublisherKeyList$Companion {
+	public final fun fromJson (Ljava/lang/String;)Lcom/awakekt/awake/pluginarchive/SignedPublisherKeyList;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+

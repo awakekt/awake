@@ -55,11 +55,18 @@ espresso-core = "3.7.0"
 androidx-test-runner = "1.7.0"
 appcompat = "1.7.1"
 material = "1.10.0"
-# Pure-Kotlin Multiplatform arbitrary-precision arithmetic -- the only dependency
-# :awake:editor:contract's RSA signature verifier (PluginArchiveVerifier) needs: modular
-# exponentiation for the public-key operation. No JVM/Android-only java.security here, so the
-# same verifier code runs on wasmJs and iOS too.
+# Pure-Kotlin Multiplatform arbitrary-precision arithmetic, used only by :awake:editor:contract's
+# deprecated blocking PluginArchiveVerifier forward. :awake:plugin-archive replaced it with
+# cryptography-kotlin; drop this once that forward is removed.
 bignum = "0.3.10"
+# cryptography-kotlin (Apache-2.0): :awake:plugin-archive's SHA-256 and RSA signature checks, through
+# each platform's own provider -- the JDK on desktop and Android, Security/CommonCrypto on iOS and
+# WebCrypto in the browser. Pinned exactly; "optimal" picks that provider per target.
+cryptography = "0.6.0"
+# cryptography-kotlin 0.6.0 brings kotlinx-io 0.9.0, whose wasm `getRequire` reads a bare
+# `import.meta` that breaks :awake:plugin-archive's Karma bundle (same failure as Ktor 3.5.1 above).
+# :awake:plugin-archive depends on 0.9.1 directly to lift it, for itself and its consumers.
+kotlinx-io = "0.9.1"
 
 [libraries]
 kotlinpoet = { module = "com.squareup:kotlinpoet", version.ref = "kotlinpoet" }
@@ -153,6 +160,9 @@ androidx-test-runner = { group = "androidx.test", name = "runner", version.ref =
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 bignum = { module = "com.ionspin.kotlin:bignum", version.ref = "bignum" }
+kotlinx-io-core = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version.ref = "kotlinx-io" }
+cryptography-core = { module = "dev.whyoleg.cryptography:cryptography-core", version.ref = "cryptography" }
+cryptography-provider-optimal = { module = "dev.whyoleg.cryptography:cryptography-provider-optimal", version.ref = "cryptography" }
 
 [plugins]
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }

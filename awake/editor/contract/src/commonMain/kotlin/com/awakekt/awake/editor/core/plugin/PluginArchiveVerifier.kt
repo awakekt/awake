@@ -3,6 +3,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+@file:Suppress("DEPRECATION")
+
 package com.awakekt.awake.editor.core.plugin
 
 import com.awakekt.awake.core.io.Sha256
@@ -11,13 +13,20 @@ import com.ionspin.kotlin.bignum.integer.Sign
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
-/** Result of checking a `.awakeplugin` archive's signature against a publisher's public key. */
+/**
+ * The result type of the deprecated [PluginArchiveVerifier], kept as its own class for one release:
+ * Kotlin cannot reach `Verified`, `Unsigned` and `Unverified` through a typealias.
+ */
+@Deprecated(
+    "Moved to com.awakekt.awake.pluginarchive (com.awakekt.awake:plugin-archive).",
+    ReplaceWith("PluginArchiveVerification", "com.awakekt.awake.pluginarchive.PluginArchiveVerification"),
+)
 sealed class PluginArchiveVerification {
-    /** The archive's [PLUGIN_ARCHIVE_SIGNATURE_ENTRY_NAME] matches its contents under the given key. */
+    /** The archive's signature entry matches its contents under the given key. */
     data object Verified : PluginArchiveVerification()
 
     /**
-     * No [PLUGIN_ARCHIVE_SIGNATURE_ENTRY_NAME] entry: the archive was packaged without a signing key.
+     * No signature entry: the archive was packaged without a signing key.
      *
      * @property reason Human-readable explanation, for logs and host UI.
      */
@@ -32,19 +41,21 @@ sealed class PluginArchiveVerification {
 }
 
 /**
- * Checks a `.awakeplugin` archive's RSA/SHA-256 (PKCS#1 v1.5) signature in pure Kotlin, so it runs
- * identically on every Awake target (JVM, Android, wasmJs, iOS) with no platform crypto provider.
- * `templates/plugin`'s packaging task signs [PluginArchiveDigest]'s canonical digest the same way,
- * using `java.security`'s `SHA256withRSA` on the publisher's machine; the public key here is that
- * key pair's public half, an X.509 `SubjectPublicKeyInfo` in PEM or base64 DER (what
- * `openssl rsa -pubout` writes). A host maps a plugin's [PluginManifest.publisher] to this key.
+ * The blocking, pure-Kotlin verifier this module used to own, kept for one release so existing
+ * callers compile. `com.awakekt.awake.pluginarchive.PluginArchiveVerifier` replaces it: same
+ * signatures and results, checked by each platform's own crypto provider, with a `suspend` verify
+ * because the browser's WebCrypto is asynchronous.
  */
+@Deprecated(
+    "Moved to com.awakekt.awake.pluginarchive (com.awakekt.awake:plugin-archive), where verify suspends.",
+    ReplaceWith("PluginArchiveVerifier", "com.awakekt.awake.pluginarchive.PluginArchiveVerifier"),
+)
 object PluginArchiveVerifier {
     /** Checks [archiveEntries] (one of which should be `signature.sig`) against [publicKeyPem]. */
     fun verify(archiveEntries: List<PluginArchiveEntry>, publicKeyPem: String): PluginArchiveVerification {
-        val signatureEntry = archiveEntries.find { it.name == PLUGIN_ARCHIVE_SIGNATURE_ENTRY_NAME }
+        val signatureEntry = archiveEntries.find { it.name == SIGNATURE_ENTRY }
             ?: return PluginArchiveVerification.Unsigned(
-                "Archive carries no $PLUGIN_ARCHIVE_SIGNATURE_ENTRY_NAME entry.",
+                "Archive carries no $SIGNATURE_ENTRY entry.",
             )
 
         return runCatching { checkRsaSignature(archiveEntries, signatureEntry.content, publicKeyPem) }
@@ -53,6 +64,8 @@ object PluginArchiveVerifier {
             }
     }
 }
+
+private const val SIGNATURE_ENTRY = com.awakekt.awake.pluginarchive.PLUGIN_ARCHIVE_SIGNATURE_ENTRY_NAME
 
 /** The actual PKCS#1 v1.5 check; separated so [PluginArchiveVerifier.verify] stays low-branching. */
 private fun checkRsaSignature(

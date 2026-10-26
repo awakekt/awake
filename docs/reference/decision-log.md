@@ -1779,3 +1779,11 @@ generic image-pass executor (`VulkanImagePassExecutor`, `WebGpuImagePassExecutor
 transient targets and mid-pass snapshot/resume; neither `render:contract` nor either backend names
 any specific effect (`verifyBackendLayering` and `verifyRenderContractBoundary`).
 
+### D41 — Plugin trust formats live in Core (`:awake:plugin-archive`)
+**DECIDED (2026-10-25).** Full record:
+[decisions/D41-plugin-trust-formats.md](../architecture/decisions/D41-plugin-trust-formats.md).
+
+Plugin manifests, the `.awakeplugin` archive, its signature checks, root-signed publisher key and
+revocation lists, and `plugins.lock.json` are one public Core module, verified on every target
+through each platform's crypto provider. Install, resolution, catalogue and trust policy stay with
+the host. Amends D35, which had put signatures on the Studio side.

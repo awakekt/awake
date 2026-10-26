@@ -211,6 +211,11 @@ jobs:
       - name: Jolt desktop physics and project runtime tests
         run: ./gradlew :awake:backend:jolt:desktopTest :awake:scene:physics:desktopTest :awake:project:runtime:desktopTest
 
+      # Plugin manifests, archives and their signature checks on the JDK provider, desktop and
+      # Android host, plus the editor contract's deprecated forwards to them.
+      - name: Plugin archive and editor contract tests
+        run: ./gradlew :awake:plugin-archive:desktopTest :awake:plugin-archive:testAndroidHostTest :awake:editor:contract:desktopTest
+
       # Scene document loading, export and the component reference page. The reference test fails
       # when a registered component or field has no row; it drifted while nothing ran it.
       - name: Sprite metadata, animation and scene runtime tests
@@ -534,6 +539,10 @@ jobs:
       - name: ECS and sprite iOS simulator tests
         run: ./gradlew :awake:ecs:iosSimulatorArm64Test :awake:asset:sprite:iosSimulatorArm64Test :awake:scene:scene2d:iosSimulatorArm64Test
 
+      # Signature checks through Apple's Security framework and archive inflation through zlib.
+      - name: Plugin archive iOS simulator tests
+        run: ./gradlew :awake:plugin-archive:iosSimulatorArm64Test
+
       - name: Upload iOS physics test reports
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -585,6 +594,11 @@ jobs:
       # transport's real request. Desktop tests can't reach it.
       - name: Project loading browser tests
         run: ./gradlew :awake:core:io:wasmJsBrowserTest :awake:core:host:wasmJsBrowserTest :awake:project:wasmJsBrowserTest :awake:project:transport-browser:wasmJsBrowserTest
+
+      # Plugin signature checks through WebCrypto and archive inflation through DecompressionStream,
+      # both asynchronous and both browser-only.
+      - name: Plugin archive browser tests
+        run: ./gradlew :awake:plugin-archive:wasmJsBrowserTest
 
       # The only bundle that pulls in Ktor's JS client and kotlinx-io's Node helpers. A toolchain
       # bump once left a bare `import.meta` in it that no build caught, and the page stopped loading.

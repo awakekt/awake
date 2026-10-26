@@ -117,6 +117,13 @@ runs:
             ios=true
           fi
 
+          # Each target verifies plugin signatures with its own crypto provider and inflates
+          # archives with its own deflate, so every one runs the module's tests.
+          if [[ "$path" =~ ^awake/plugin-archive/ ]]; then
+            ios=true
+            web=true
+          fi
+
           # The graphics job also runs wgpu-native pixel tests over Mesa's Vulkan adapter.
           if [[ "$path" =~ ^(awake/backend/vulkan/|awake/backend/webgpu/|awake/engine/render/|awake/asset/shader-compiler/|awake/asset/shader-pack/|awake/asset/shaders/) ]]; then
             vulkan=true

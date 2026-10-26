@@ -3,6 +3,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+@file:Suppress("DEPRECATION")
+
 package com.awakekt.awake.editor.core.plugin
 
 import kotlin.io.encoding.Base64

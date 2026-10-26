@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package com.awakekt.awake.editor.core.plugin
+package com.awakekt.awake.pluginarchive
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
