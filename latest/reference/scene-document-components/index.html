@@ -632,6 +632,8 @@
       
         
       
+        
+      
     
     
     
@@ -1926,6 +1928,98 @@
     
   
     Localization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_6" id="__nav_3_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ship
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Ship
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/release-builds/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release builds and optimization
   
 
     
@@ -4732,6 +4826,24 @@ touch controls show as the host says. <code>SceneCanvasControls</code>, saved fr
 <td>What <code>maxLength</code> counts. <code>Graphemes</code> are the characters a player sees, so a family emoji is one. Count <code>CodePoints</code> or <code>Utf8Bytes</code> to match the limit a server stores a line in, so a line the field accepts is never refused or cut there.</td>
 </tr>
 <tr>
+<td><code>placeholder</code></td>
+<td>string</td>
+<td><code>""</code></td>
+<td>The hint a <code>TextField</code> shows while it is empty and does not hold the keyboard, as a key in the project's string tables, such as <code>chat.hint</code>, in the field's text colour at half strength. <code>textArgs</code> fill in its placeholders. A key no table has shows as the key. Set on another kind, it is reported.</td>
+</tr>
+<tr>
+<td><code>padding</code></td>
+<td>object</td>
+<td><code>{ "horizontal": 12, "vertical": 0 }</code></td>
+<td>The space between a <code>TextField</code>'s edge and its text, in dp. The default is shadcn's input <code>px-3</code>. Caret placement, selection and scrolling work inside it, and the field clips its text at its edge, so a leading <code>j</code>'s tail and an <code>Å</code>'s ring keep their ink. Vertical padding takes room from the centred line, so a field only as tall as its line should keep it <code>0</code>. Negative or set on another kind, it is reported.</td>
+</tr>
+<tr>
+<td><code>tooltip</code></td>
+<td>string</td>
+<td><code>""</code></td>
+<td>A hint for any element, as a key in the string tables. It shows near the pointer after the pointer has been over the element for half a second, stays inside the canvas, and goes when the pointer leaves or presses the element. <code>textArgs</code> fill in its placeholders.</td>
+</tr>
+<tr>
 <td><code>font</code></td>
 <td>string</td>
 <td><code>""</code></td>
@@ -5646,6 +5758,12 @@ stops, so <code>airborneAbove</code> must exceed the vertical speed of running u
 <td>boolean</td>
 <td><code>false</code></td>
 <td>Face the camera every frame, keeping the entity's position and scale. The mesh's +Z turns toward the eye. A billboard is not culled.</td>
+</tr>
+<tr>
+<td><code>castsShadows</code></td>
+<td>boolean</td>
+<td><code>true</code></td>
+<td>Draw the mesh into the shadow maps, whether the camera sees it or not. <code>false</code> for a decal, a ground card or distant filler; the mesh still draws and still receives shadows. A <code>transparent</code> mesh never casts.</td>
 </tr>
 </tbody>
 </table>

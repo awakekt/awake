@@ -636,6 +636,8 @@
       
         
       
+        
+      
     
     
     
@@ -2117,6 +2119,101 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_6" id="__nav_3_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ship
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Ship
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../release-builds/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release builds and optimization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -2811,7 +2908,10 @@ which sends <code>Range: bytes=&lt;first&gt;-&lt;last&gt;</code> alongside the t
 <p>Each <code>read</code> of a member then costs one request for just its bytes, while <code>prefetch</code> still downloads
 whole bundles. Use it for content streamed one file at a time from large bundles, and prefetch what a
 scene needs up front. A server that ignores the range answers the whole bundle, and the member is cut
-from it.</p>
+from it. Both ready-made transports, <code>KtorContentTransport</code> and <code>BrowserContentTransport</code>, send the
+<code>Range</code> header; from a browser to another origin, the content server must allow it, as
+<a href="../protected-content/#the-browser-and-cors">Protected content</a> lists. A range request answered 429,
+or 503 with <code>Retry-After</code>, waits and is sent again like any other.</p>
 <h2 id="properties">Properties</h2>
 <table>
 <thead>

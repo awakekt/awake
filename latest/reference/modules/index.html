@@ -632,6 +632,8 @@
       
         
       
+        
+      
     
     
     
@@ -1947,6 +1949,98 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_6" id="__nav_3_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ship
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Ship
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/release-builds/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release builds and optimization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -2854,7 +2948,7 @@
 </tr>
 <tr>
 <td>Version</td>
-<td>Core modules share one version; the newest is <code>0.25.0</code>. Vulkan family: <code>0.1.36</code>, built against Core <code>0.20.0</code>. See <a href="../releases/">Releases and compatibility</a>.</td>
+<td>Core modules share one version; the newest is <code>0.26.0</code>. Vulkan family: <code>0.1.36</code>, built against Core <code>0.20.0</code>. See <a href="../releases/">Releases and compatibility</a>.</td>
 </tr>
 <tr>
 <td>Catalog alias</td>
@@ -2862,7 +2956,7 @@
 </tr>
 <tr>
 <td>Published modules</td>
-<td>93: 90 in Core, 3 in the Vulkan family.</td>
+<td>96: 93 in Core, 3 in the Vulkan family.</td>
 </tr>
 <tr>
 <td>Transitive modules</td>
@@ -3355,9 +3449,24 @@
 <td>Plays a project's blueprint graphs: the capability a project names to run its scene's blueprints.</td>
 </tr>
 <tr>
+<td><code>com.awakekt.awake.project:transport-ktor</code></td>
+<td><code>awake-project-transport-ktor</code></td>
+<td>A <code>ContentTransport</code> over your Ktor <code>HttpClient</code>, for protected content on desktop, Android and iOS.</td>
+</tr>
+<tr>
+<td><code>com.awakekt.awake.project:transport-browser</code></td>
+<td><code>awake-project-transport-browser</code></td>
+<td>A <code>ContentTransport</code> over the browser's <code>fetch()</code>, for protected content on the web, with no HTTP library.</td>
+</tr>
+<tr>
 <td><code>com.awakekt.awake.editor:contract</code></td>
 <td><code>awake-editor-contract</code></td>
 <td>Public extension points and plugin contracts for AwakeKt Studio.</td>
+</tr>
+<tr>
+<td><code>com.awakekt.awake:plugin-archive</code></td>
+<td><code>awake-plugin-archive</code></td>
+<td>How a plugin is described, packaged and trusted: <code>plugin.json</code>, the <code>.awakeplugin</code> archive, signature checks, signed publisher key and revocation lists, and <code>plugins.lock.json</code>.</td>
 </tr>
 </tbody>
 </table>
@@ -3503,7 +3612,7 @@
 <tr>
 <td>Core</td>
 <td>Every module above except the Vulkan family</td>
-<td><code>0.25.0</code></td>
+<td><code>0.26.0</code></td>
 <td>One version for all. Tagged <code>v*</code>.</td>
 </tr>
 <tr>

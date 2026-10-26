@@ -636,6 +636,8 @@
       
         
       
+        
+      
     
     
     
@@ -2117,6 +2119,101 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_6" id="__nav_3_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ship
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Ship
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../release-builds/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release builds and optimization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -3086,6 +3183,12 @@ casts shadows into six cube faces, one per direction.</p>
 <p class="admonition-title">Choosing a shadow distance</p>
 <p>Keep it as short as your camera needs. Shadow detail near the camera grows as the distance
 shrinks, because the same shadow map covers less of the world.</p>
+</div>
+<div class="admonition tip">
+<p class="admonition-title">Keep a mesh out of the shadow maps</p>
+<p>Set <code>castsShadows</code> to <code>false</code> on a <code>mesh_renderer</code> (or on an <code>LodGroup</code> or
+<code>ModularCharacterComponent</code> in Kotlin) for a decal, a ground card or distant filler. The mesh
+still draws and still receives shadows; it just shades nothing, in view or off screen.</p>
 </div>
 <div class="admonition warning">
 <p class="admonition-title">A far caster casts no shadow</p>

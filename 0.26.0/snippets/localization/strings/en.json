@@ -1,0 +1,14 @@
+{
+  "menu": {
+    "start": "Start",
+    "settings": "Settings"
+  },
+  "quest": {
+    "harbor": {
+      "title": "The lost lantern",
+      "objective": "{found, plural, =0 {Find the lanterns} one {# of {total} lanterns found} other {# of {total} lanterns found}}"
+    }
+  },
+  "greeting": "Welcome back, {name}!",
+  "party": "{count, plural, offset:1 =0 {You travel alone} =1 {You travel with {friend}} one {You travel with {friend} and # other} other {You travel with {friend} and # others}}"
+}

@@ -636,6 +636,8 @@
       
         
       
+        
+      
     
     
     
@@ -2117,6 +2119,101 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_6" id="__nav_3_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ship
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Ship
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../release-builds/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release builds and optimization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -2832,6 +2929,12 @@ entity's distance from the camera. An entity carries an <code>LodGroup</code> in
 <td><code>false</code></td>
 <td>With <code>transparent</code>, adds its colour to what is behind it instead of covering it: glows, fire, light shafts. A textured mesh then draws unlit, so its black texels add nothing.</td>
 </tr>
+<tr>
+<td><code>castsShadows</code></td>
+<td>boolean</td>
+<td><code>true</code></td>
+<td>Draws the mesh into the shadow maps, in view or off screen. <code>false</code> for a decal, a ground card, a small prop or distant filler; the mesh still draws and still receives shadows. A <code>transparent</code> mesh never casts.</td>
+</tr>
 </tbody>
 </table>
 <p>The ECS <code>MeshRenderer</code> also has <code>visible</code> (default <code>true</code>; <code>false</code> skips the draw) and
@@ -2946,8 +3049,8 @@ left out, the first listed plays. Give an entity <code>texture_clips</code> or <
 </tr>
 <tr>
 <td><code>LodGroup</code></td>
-<td><code>levels: List&lt;LodLevel&gt;</code>, <code>hysteresis = 0.1</code></td>
-<td>Picks one level per frame by camera distance.</td>
+<td><code>levels: List&lt;LodLevel&gt;</code>, <code>hysteresis = 0.1</code>, <code>castsShadows = true</code></td>
+<td>Picks one level per frame by camera distance. <code>castsShadows</code> works as on <code>mesh_renderer</code>.</td>
 </tr>
 <tr>
 <td><code>LodLevel</code></td>

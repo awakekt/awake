@@ -767,6 +767,8 @@
       
         
       
+        
+      
     
     
     
@@ -2082,6 +2084,98 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_6" id="__nav_3_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ship
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Ship
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/release-builds/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release builds and optimization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -2702,7 +2796,7 @@ all of them on that version.</p>
 Core release. The catalog above pairs Vulkan <code>0.1.36</code> with the Core release it
 was built against, <code>0.20.0</code>. Keep that pair for a desktop app. A
 newer Core next to an older Vulkan release is a combination nobody has tested.</p>
-<p>The newest Core release is <code>0.25.0</code>. When it is newer than the pair, an app that runs
+<p>The newest Core release is <code>0.26.0</code>. When it is newer than the pair, an app that runs
 only in the browser can use it; a desktop app waits for a Vulkan release built on it. See
 <a href="../../reference/releases/">Releases and compatibility</a>.</p>
 <h3 id="mixed-core-versions-line-up-on-their-own">Mixed Core versions line up on their own</h3>
@@ -2724,6 +2818,8 @@ reaches you even when the Vulkan release behind it is older.</p>
 <p>An Android release shrunk by R8 (<code>isMinifyEnabled = true</code>) needs no keep rules of its own for Awake.
 The Jolt and Vulkan backends and the shader compiler ship consumer rules in their Android artifacts,
 which keep the classes, fields and methods their native code finds by name.</p>
+<p>The libraries are published unshrunk and unobfuscated; your release build does that. See
+<a href="../../guides/release-builds/">Release builds and optimization</a> for each artifact type and the checks.</p>
 <h2 id="next">Next</h2>
 <p><a href="../first-window/">Your first window</a> opens a window with the app DSL and the Vulkan backend.</p>
 

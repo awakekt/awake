@@ -636,6 +636,8 @@
       
         
       
+        
+      
     
     
     
@@ -2239,6 +2241,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#pad-a-field-and-hint-at-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pad a field and hint at it
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#how-it-works" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2280,6 +2293,34 @@
       
     </span>
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bind-elements-with-typed-handles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bind elements with typed handles
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Bind elements with typed handles">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#migrate-from-string-ids" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migrate from string ids
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -2390,6 +2431,101 @@
     
   
     Localization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_6" id="__nav_3_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ship
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Ship
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../release-builds/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release builds and optimization
   
 
     
@@ -3161,6 +3297,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#pad-a-field-and-hint-at-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pad a field and hint at it
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#how-it-works" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3202,6 +3349,34 @@
       
     </span>
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bind-elements-with-typed-handles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bind elements with typed handles
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Bind elements with typed handles">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#migrate-from-string-ids" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migrate from string ids
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -3472,6 +3647,24 @@ or a system polling <code>consumePress()</code>, sees the tap as it would withou
 <td><code>Graphemes</code> · <code>CodePoints</code> · <code>Utf8Bytes</code></td>
 <td><code>Graphemes</code></td>
 <td>What <code>maxLength</code> counts.</td>
+</tr>
+<tr>
+<td><code>placeholder</code></td>
+<td>string</td>
+<td><code>""</code></td>
+<td>A <code>TextField</code>'s hint while it is empty and unfocused: a key in the string tables, drawn muted. See <a href="#pad-a-field-and-hint-at-it">Pad a field and hint at it</a>.</td>
+</tr>
+<tr>
+<td><code>padding</code></td>
+<td>object</td>
+<td><code>{ "horizontal": 12, "vertical": 0 }</code></td>
+<td>The space between a <code>TextField</code>'s edge and its text, in dp.</td>
+</tr>
+<tr>
+<td><code>tooltip</code></td>
+<td>string</td>
+<td><code>""</code></td>
+<td>A hint any element shows near the pointer after half a second over it: a key in the string tables.</td>
 </tr>
 <tr>
 <td><code>pressable</code></td>
@@ -4194,8 +4387,9 @@ ending in <code>.ttf</code> or <code>.otf</code> is a TrueType or OpenType file 
 a built-in family: <code>default</code> is Roboto, and <code>bitmap</code> is a fixed-pitch pixel font.</p>
 <div class="language-json highlight"><span class="filename">A title in the project&#x27;s own font</span><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"canvas_element"</span><span class="p">,</span><span class="w"> </span><span class="nt">"text"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Harbor Town"</span><span class="p">,</span><span class="w"> </span><span class="nt">"fontSize"</span><span class="p">:</span><span class="w"> </span><span class="mi">32</span><span class="p">,</span><span class="w"> </span><span class="nt">"font"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fonts/title.ttf"</span><span class="w"> </span><span class="p">}</span>
 </span></code></pre></div>
-<p><code>loadProject</code> loads each file once, while the scene loads, with the glyphs of printable ASCII and
-<code>• · … – — × −</code>; any other character draws as <code>?</code>. A file that cannot be read, or is not a font
+<p><code>loadProject</code> loads each file once, while the scene loads, with the glyphs of <code>UiFonts.DEFAULT_CHARS</code>:
+printable ASCII, the accented letters of Western and Central European text (Latin-1 Supplement and
+Latin Extended-A) and signs such as <code>€ ™ “ ”</code>; any other character draws as <code>?</code>. A file that cannot be read, or is not a font
 Awake reads, such as a collection or a WOFF file, is logged once, and its elements draw in the
 default font. A host with no renderer reads no font. If your app runs its own Compose host, pass the
 fonts yourself: <code>SceneCanvas(world, fonts = loadCanvasFonts(scene, files))</code>.</p>
@@ -4614,6 +4808,23 @@ when it arrives. A system writing <code>text</code> is not limited.</p>
 <p>The caret, the arrow keys, Backspace, Delete and selection also step a whole character at a time.
 Emoji draw as the font's missing-glyph box until colour emoji fonts are supported, one box for each
 emoji.</p>
+<h2 id="pad-a-field-and-hint-at-it">Pad a field and hint at it</h2>
+<p>A <code>TextField</code> keeps its text 12 dp in from its edge, as shadcn's input does, so typed text never
+starts on the border. Set <code>padding</code> to change it: <code>{ "horizontal": 8 }</code>. The caret, a selection and
+the scrolling of a long line all work inside the padding, and the field clips its text at its own
+edge, so the tail of a leading <code>j</code> and the ring of an <code>Å</code> are not cut. Leave <code>vertical</code> at <code>0</code> unless
+the field is taller than its line: the line is centred in the field, and vertical padding takes room
+from it.</p>
+<p>Give a field a <code>placeholder</code>, a key in the string tables, to show a hint while it is empty and does
+not hold the keyboard. It draws in the field's text colour at half strength, and gives way to the
+caret as soon as the field is focused.</p>
+<p>Give any element a <code>tooltip</code>, also a key, to show a hint near the pointer once it has been over the
+element for half a second. The hint stays inside the canvas, opening to the pointer's left or above
+it at an edge, and goes when the pointer leaves the element or presses it. <code>textArgs</code> fill in the
+placeholders of both keys.</p>
+<div class="language-json highlight"><pre><span></span><code><span id="__span-24-1"><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"canvas_element"</span><span class="p">,</span><span class="w"> </span><span class="nt">"kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">"TextField"</span><span class="p">,</span><span class="w"> </span><span class="nt">"width"</span><span class="p">:</span><span class="w"> </span><span class="mi">240</span><span class="p">,</span><span class="w"> </span><span class="nt">"height"</span><span class="p">:</span><span class="w"> </span><span class="mi">32</span><span class="p">,</span>
+</span><span id="__span-24-2"><a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="w">  </span><span class="nt">"placeholder"</span><span class="p">:</span><span class="w"> </span><span class="s2">"chat.hint"</span><span class="p">,</span><span class="w"> </span><span class="nt">"padding"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"horizontal"</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="nt">"tooltip"</span><span class="p">:</span><span class="w"> </span><span class="s2">"chat.tip"</span><span class="w"> </span><span class="p">}</span>
+</span></code></pre></div>
 <h2 id="how-it-works">How it works</h2>
 <p>When a scene has any <code>canvas_element</code>, the scene runtime draws every visible element with
 <code>SceneCanvas(world)</code> each frame. It does this even when the app declares no <code>ui { }</code>. The canvas is
@@ -4638,11 +4849,11 @@ release; another thumb on a button, or on the stick, never moves it. Its <code>j
 and set its <code>radius</code>, a <code>deadZone</code>, a <code>response</code> or <code>curve</code>, four- or eight-way <code>directions</code>,
 <code>snapBack</code>, a <code>sprintThreshold</code> past which it holds <code>sprintAction</code>, and an idle fade (<code>idleAlpha</code>,
 <code>idleDelay</code>, <code>fadeSeconds</code>):</p>
-<div class="language-json highlight"><pre><span></span><code><span id="__span-24-1"><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"canvas_element"</span><span class="p">,</span><span class="w"> </span><span class="nt">"kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Joystick"</span><span class="p">,</span><span class="w"> </span><span class="nt">"anchor"</span><span class="p">:</span><span class="w"> </span><span class="s2">"BottomLeft"</span><span class="p">,</span><span class="w"> </span><span class="nt">"offsetX"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="nt">"offsetY"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
-</span><span id="__span-24-2"><a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="w">  </span><span class="nt">"width"</span><span class="p">:</span><span class="w"> </span><span class="mi">360</span><span class="p">,</span><span class="w"> </span><span class="nt">"height"</span><span class="p">:</span><span class="w"> </span><span class="mi">300</span><span class="p">,</span><span class="w"> </span><span class="nt">"action"</span><span class="p">:</span><span class="w"> </span><span class="s2">"move"</span><span class="p">,</span><span class="w"> </span><span class="nt">"touchOnly"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
-</span><span id="__span-24-3"><a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="w">  </span><span class="nt">"background"</span><span class="p">:</span><span class="w"> </span><span class="s2">"#FFFFFF30"</span><span class="p">,</span><span class="w"> </span><span class="nt">"color"</span><span class="p">:</span><span class="w"> </span><span class="s2">"#FFFFFFA0"</span><span class="p">,</span>
-</span><span id="__span-24-4"><a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="w">  </span><span class="nt">"joystick"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"mode"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Floating"</span><span class="p">,</span><span class="w"> </span><span class="nt">"radius"</span><span class="p">:</span><span class="w"> </span><span class="mi">64</span><span class="p">,</span><span class="w"> </span><span class="nt">"restX"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.35</span><span class="p">,</span><span class="w"> </span><span class="nt">"restY"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.6</span><span class="p">,</span><span class="w"> </span><span class="nt">"deadZone"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.12</span><span class="p">,</span>
-</span><span id="__span-24-5"><a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a><span class="w">                </span><span class="nt">"sprintThreshold"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.9</span><span class="p">,</span><span class="w"> </span><span class="nt">"sprintAction"</span><span class="p">:</span><span class="w"> </span><span class="s2">"run"</span><span class="p">,</span><span class="w"> </span><span class="nt">"idleAlpha"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.4</span><span class="p">,</span><span class="w"> </span><span class="nt">"idleDelay"</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+<div class="language-json highlight"><pre><span></span><code><span id="__span-25-1"><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"canvas_element"</span><span class="p">,</span><span class="w"> </span><span class="nt">"kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Joystick"</span><span class="p">,</span><span class="w"> </span><span class="nt">"anchor"</span><span class="p">:</span><span class="w"> </span><span class="s2">"BottomLeft"</span><span class="p">,</span><span class="w"> </span><span class="nt">"offsetX"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="nt">"offsetY"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
+</span><span id="__span-25-2"><a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="w">  </span><span class="nt">"width"</span><span class="p">:</span><span class="w"> </span><span class="mi">360</span><span class="p">,</span><span class="w"> </span><span class="nt">"height"</span><span class="p">:</span><span class="w"> </span><span class="mi">300</span><span class="p">,</span><span class="w"> </span><span class="nt">"action"</span><span class="p">:</span><span class="w"> </span><span class="s2">"move"</span><span class="p">,</span><span class="w"> </span><span class="nt">"touchOnly"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+</span><span id="__span-25-3"><a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a><span class="w">  </span><span class="nt">"background"</span><span class="p">:</span><span class="w"> </span><span class="s2">"#FFFFFF30"</span><span class="p">,</span><span class="w"> </span><span class="nt">"color"</span><span class="p">:</span><span class="w"> </span><span class="s2">"#FFFFFFA0"</span><span class="p">,</span>
+</span><span id="__span-25-4"><a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="w">  </span><span class="nt">"joystick"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"mode"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Floating"</span><span class="p">,</span><span class="w"> </span><span class="nt">"radius"</span><span class="p">:</span><span class="w"> </span><span class="mi">64</span><span class="p">,</span><span class="w"> </span><span class="nt">"restX"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.35</span><span class="p">,</span><span class="w"> </span><span class="nt">"restY"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.6</span><span class="p">,</span><span class="w"> </span><span class="nt">"deadZone"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.12</span><span class="p">,</span>
+</span><span id="__span-25-5"><a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a><span class="w">                </span><span class="nt">"sprintThreshold"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.9</span><span class="p">,</span><span class="w"> </span><span class="nt">"sprintAction"</span><span class="p">:</span><span class="w"> </span><span class="s2">"run"</span><span class="p">,</span><span class="w"> </span><span class="nt">"idleAlpha"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.4</span><span class="p">,</span><span class="w"> </span><span class="nt">"idleDelay"</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
 </span></code></pre></div>
 <p>A <code>touchOnly</code>
 element is drawn only when <code>SceneCanvas(world, showTouchControls = true)</code> is called, or when
@@ -4652,17 +4863,17 @@ element is drawn only when <code>SceneCanvas(world, showTouchControls = true)</c
 a <code>jump</code> button jumps while held and a <code>run</code> button runs, as the keys do, and a button for an action of
 your own holds and presses that action.</p>
 <p>If your app runs its own Compose host, draw the canvas yourself:</p>
-<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-25-1"><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">host</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ComposeHost</span><span class="p">()</span>
-</span><span id="__span-25-2"><a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="n">host</span><span class="p">.</span><span class="na">frame</span><span class="p">(</span><span class="n">FrameInput</span><span class="p">(</span><span class="n">viewportWidth</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">800</span><span class="p">,</span><span class="w"> </span><span class="n">viewportHeight</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">600</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">SceneCanvas</span><span class="p">(</span><span class="n">world</span><span class="p">)</span><span class="w"> </span><span class="p">}</span>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-26-1"><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">host</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ComposeHost</span><span class="p">()</span>
+</span><span id="__span-26-2"><a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a><span class="n">host</span><span class="p">.</span><span class="na">frame</span><span class="p">(</span><span class="n">FrameInput</span><span class="p">(</span><span class="n">viewportWidth</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">800</span><span class="p">,</span><span class="w"> </span><span class="n">viewportHeight</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">600</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">SceneCanvas</span><span class="p">(</span><span class="n">world</span><span class="p">)</span><span class="w"> </span><span class="p">}</span>
 </span></code></pre></div>
 <p>A host that runs on <code>SceneAppLifecycleRuntime</code> but shows the game in part of its window, as an
 editor's game view does, sets <code>drawsSceneCanvas = false</code> and draws the canvas over that part in its
 <code>ui { }</code> content, with the runtime's projector and views so followers and <code>View</code>s draw. Here the game
 view shows <code>play</code>, the world an editor plays the scene in, which the runtime's render system draws in
 place of its own; leave the world out to use the runtime's own.</p>
-<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-26-1"><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="n">Box</span><span class="p">(</span><span class="n">Modifier</span><span class="p">.</span><span class="na">padding</span><span class="p">(</span><span class="n">start</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">100.</span><span class="n">dp</span><span class="p">,</span><span class="w"> </span><span class="n">top</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">50.</span><span class="n">dp</span><span class="p">).</span><span class="na">size</span><span class="p">(</span><span class="m">400.</span><span class="n">dp</span><span class="p">,</span><span class="w"> </span><span class="m">300.</span><span class="n">dp</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-26-2"><a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a><span class="w">    </span><span class="n">SceneCanvas</span><span class="p">(</span><span class="n">play</span><span class="p">,</span><span class="w"> </span><span class="n">projector</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">runtime</span><span class="p">.</span><span class="na">canvasProjector</span><span class="p">(</span><span class="n">play</span><span class="p">),</span><span class="w"> </span><span class="n">views</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">runtime</span><span class="p">.</span><span class="na">canvasViews</span><span class="p">(</span><span class="n">play</span><span class="p">))</span>
-</span><span id="__span-26-3"><a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a><span class="p">}</span>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-27-1"><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="n">Box</span><span class="p">(</span><span class="n">Modifier</span><span class="p">.</span><span class="na">padding</span><span class="p">(</span><span class="n">start</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">100.</span><span class="n">dp</span><span class="p">,</span><span class="w"> </span><span class="n">top</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">50.</span><span class="n">dp</span><span class="p">).</span><span class="na">size</span><span class="p">(</span><span class="m">400.</span><span class="n">dp</span><span class="p">,</span><span class="w"> </span><span class="m">300.</span><span class="n">dp</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-27-2"><a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a><span class="w">    </span><span class="n">SceneCanvas</span><span class="p">(</span><span class="n">play</span><span class="p">,</span><span class="w"> </span><span class="n">projector</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">runtime</span><span class="p">.</span><span class="na">canvasProjector</span><span class="p">(</span><span class="n">play</span><span class="p">),</span><span class="w"> </span><span class="n">views</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">runtime</span><span class="p">.</span><span class="na">canvasViews</span><span class="p">(</span><span class="n">play</span><span class="p">))</span>
+</span><span id="__span-27-3"><a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a><span class="p">}</span>
 </span></code></pre></div>
 <div class="admonition warning">
 <p class="admonition-title">One tap, one reader</p>
@@ -4689,25 +4900,25 @@ prefab of <code>canvas_element</code> nodes with <code>canvasPrefab</code>. Each
 and each <code>canvas_element</code> field is a setting of the same name. Sizes and offsets are <code>Dp</code>, a font size
 is <code>Sp</code> and colours are <code>Color</code>s; settings that are objects of their own, such as <code>style</code>, <code>layout</code>,
 <code>bind</code>, <code>bar</code>, <code>sweep</code> or <code>button</code>, take their <code>awake:ui:canvas</code> type.</p>
-<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-27-1"><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="kd">private</span><span class="w"> </span><span class="kd">val</span><span class="w"> </span><span class="nv">actionBar</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">canvasPrefab</span><span class="p">(</span><span class="n">guid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"c0ffee00-0000-4000-8000-000000000002"</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"Action Bar"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-27-2"><a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a><span class="w">    </span><span class="n">anchor</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CanvasAnchor</span><span class="p">.</span><span class="na">BottomCenter</span>
-</span><span id="__span-27-3"><a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a><span class="w">    </span><span class="n">size</span><span class="p">(</span><span class="m">320.</span><span class="n">dp</span><span class="p">,</span><span class="w"> </span><span class="m">64.</span><span class="n">dp</span><span class="p">)</span>
-</span><span id="__span-27-4"><a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a><span class="w">    </span><span class="n">background</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Color</span><span class="p">(</span><span class="m">0.1f</span><span class="p">,</span><span class="w"> </span><span class="m">0.1f</span><span class="p">,</span><span class="w"> </span><span class="m">0.1f</span><span class="p">,</span><span class="w"> </span><span class="m">0.75f</span><span class="p">)</span>
-</span><span id="__span-27-5"><a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a><span class="w">    </span><span class="n">layout</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CanvasLayout</span><span class="p">(</span><span class="n">direction</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CanvasDirection</span><span class="p">.</span><span class="na">Row</span><span class="p">,</span><span class="w"> </span><span class="n">gap</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">4f</span><span class="p">,</span><span class="w"> </span><span class="n">padding</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">4f</span><span class="p">)</span>
-</span><span id="__span-27-6"><a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a><span class="w">    </span><span class="n">button</span><span class="p">(</span><span class="s">"Slot 1"</span><span class="p">,</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"slot-1"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-27-7"><a id="__codelineno-27-7" name="__codelineno-27-7" href="#__codelineno-27-7"></a><span class="w">        </span><span class="n">size</span><span class="p">(</span><span class="m">56.</span><span class="n">dp</span><span class="p">,</span><span class="w"> </span><span class="m">56.</span><span class="n">dp</span><span class="p">)</span>
-</span><span id="__span-27-8"><a id="__codelineno-27-8" name="__codelineno-27-8" href="#__codelineno-27-8"></a><span class="w">        </span><span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"slot.1"</span>
-</span><span id="__span-27-9"><a id="__codelineno-27-9" name="__codelineno-27-9" href="#__codelineno-27-9"></a><span class="w">        </span><span class="n">textKey</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"hud.slot.1"</span>
-</span><span id="__span-27-10"><a id="__codelineno-27-10" name="__codelineno-27-10" href="#__codelineno-27-10"></a><span class="w">        </span><span class="n">fontSize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">12.</span><span class="n">sp</span>
-</span><span id="__span-27-11"><a id="__codelineno-27-11" name="__codelineno-27-11" href="#__codelineno-27-11"></a><span class="w">        </span><span class="n">button</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CanvasButton</span><span class="p">(</span><span class="n">cooldownSeconds</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">1.5f</span><span class="p">)</span>
-</span><span id="__span-27-12"><a id="__codelineno-27-12" name="__codelineno-27-12" href="#__codelineno-27-12"></a><span class="w">        </span><span class="n">sweep</span><span class="p">(</span><span class="s">"Cooldown"</span><span class="p">,</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"slot-1-cooldown"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">sweep</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CanvasSweep</span><span class="p">(</span><span class="n">track</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"#00000060"</span><span class="p">)</span><span class="w"> </span><span class="p">}</span>
-</span><span id="__span-27-13"><a id="__codelineno-27-13" name="__codelineno-27-13" href="#__codelineno-27-13"></a><span class="w">    </span><span class="p">}</span>
-</span><span id="__span-27-14"><a id="__codelineno-27-14" name="__codelineno-27-14" href="#__codelineno-27-14"></a><span class="w">    </span><span class="n">bar</span><span class="p">(</span><span class="s">"Energy"</span><span class="p">,</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"energy"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-27-15"><a id="__codelineno-27-15" name="__codelineno-27-15" href="#__codelineno-27-15"></a><span class="w">        </span><span class="n">size</span><span class="p">(</span><span class="m">120.</span><span class="n">dp</span><span class="p">,</span><span class="w"> </span><span class="m">8.</span><span class="n">dp</span><span class="p">)</span>
-</span><span id="__span-27-16"><a id="__codelineno-27-16" name="__codelineno-27-16" href="#__codelineno-27-16"></a><span class="w">        </span><span class="n">bind</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CanvasBinding</span><span class="p">(</span><span class="n">node</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"Player"</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"energy.current"</span><span class="p">,</span><span class="w"> </span><span class="n">max</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"energy.max"</span><span class="p">)</span>
-</span><span id="__span-27-17"><a id="__codelineno-27-17" name="__codelineno-27-17" href="#__codelineno-27-17"></a><span class="w">        </span><span class="n">bar</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CanvasBar</span><span class="p">(</span><span class="n">ticks</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">4</span><span class="p">)</span>
-</span><span id="__span-27-18"><a id="__codelineno-27-18" name="__codelineno-27-18" href="#__codelineno-27-18"></a><span class="w">    </span><span class="p">}</span>
-</span><span id="__span-27-19"><a id="__codelineno-27-19" name="__codelineno-27-19" href="#__codelineno-27-19"></a><span class="p">}</span>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-28-1"><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="kd">private</span><span class="w"> </span><span class="kd">val</span><span class="w"> </span><span class="nv">actionBar</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">canvasPrefab</span><span class="p">(</span><span class="n">guid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"c0ffee00-0000-4000-8000-000000000002"</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"Action Bar"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-28-2"><a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a><span class="w">    </span><span class="n">anchor</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CanvasAnchor</span><span class="p">.</span><span class="na">BottomCenter</span>
+</span><span id="__span-28-3"><a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a><span class="w">    </span><span class="n">size</span><span class="p">(</span><span class="m">320.</span><span class="n">dp</span><span class="p">,</span><span class="w"> </span><span class="m">64.</span><span class="n">dp</span><span class="p">)</span>
+</span><span id="__span-28-4"><a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a><span class="w">    </span><span class="n">background</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Color</span><span class="p">(</span><span class="m">0.1f</span><span class="p">,</span><span class="w"> </span><span class="m">0.1f</span><span class="p">,</span><span class="w"> </span><span class="m">0.1f</span><span class="p">,</span><span class="w"> </span><span class="m">0.75f</span><span class="p">)</span>
+</span><span id="__span-28-5"><a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a><span class="w">    </span><span class="n">layout</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CanvasLayout</span><span class="p">(</span><span class="n">direction</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CanvasDirection</span><span class="p">.</span><span class="na">Row</span><span class="p">,</span><span class="w"> </span><span class="n">gap</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">4f</span><span class="p">,</span><span class="w"> </span><span class="n">padding</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">4f</span><span class="p">)</span>
+</span><span id="__span-28-6"><a id="__codelineno-28-6" name="__codelineno-28-6" href="#__codelineno-28-6"></a><span class="w">    </span><span class="n">button</span><span class="p">(</span><span class="s">"Slot 1"</span><span class="p">,</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"slot-1"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-28-7"><a id="__codelineno-28-7" name="__codelineno-28-7" href="#__codelineno-28-7"></a><span class="w">        </span><span class="n">size</span><span class="p">(</span><span class="m">56.</span><span class="n">dp</span><span class="p">,</span><span class="w"> </span><span class="m">56.</span><span class="n">dp</span><span class="p">)</span>
+</span><span id="__span-28-8"><a id="__codelineno-28-8" name="__codelineno-28-8" href="#__codelineno-28-8"></a><span class="w">        </span><span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"slot.1"</span>
+</span><span id="__span-28-9"><a id="__codelineno-28-9" name="__codelineno-28-9" href="#__codelineno-28-9"></a><span class="w">        </span><span class="n">textKey</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"hud.slot.1"</span>
+</span><span id="__span-28-10"><a id="__codelineno-28-10" name="__codelineno-28-10" href="#__codelineno-28-10"></a><span class="w">        </span><span class="n">fontSize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">12.</span><span class="n">sp</span>
+</span><span id="__span-28-11"><a id="__codelineno-28-11" name="__codelineno-28-11" href="#__codelineno-28-11"></a><span class="w">        </span><span class="n">button</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CanvasButton</span><span class="p">(</span><span class="n">cooldownSeconds</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">1.5f</span><span class="p">)</span>
+</span><span id="__span-28-12"><a id="__codelineno-28-12" name="__codelineno-28-12" href="#__codelineno-28-12"></a><span class="w">        </span><span class="n">sweep</span><span class="p">(</span><span class="s">"Cooldown"</span><span class="p">,</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"slot-1-cooldown"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">sweep</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CanvasSweep</span><span class="p">(</span><span class="n">track</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"#00000060"</span><span class="p">)</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-28-13"><a id="__codelineno-28-13" name="__codelineno-28-13" href="#__codelineno-28-13"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-28-14"><a id="__codelineno-28-14" name="__codelineno-28-14" href="#__codelineno-28-14"></a><span class="w">    </span><span class="n">bar</span><span class="p">(</span><span class="s">"Energy"</span><span class="p">,</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"energy"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-28-15"><a id="__codelineno-28-15" name="__codelineno-28-15" href="#__codelineno-28-15"></a><span class="w">        </span><span class="n">size</span><span class="p">(</span><span class="m">120.</span><span class="n">dp</span><span class="p">,</span><span class="w"> </span><span class="m">8.</span><span class="n">dp</span><span class="p">)</span>
+</span><span id="__span-28-16"><a id="__codelineno-28-16" name="__codelineno-28-16" href="#__codelineno-28-16"></a><span class="w">        </span><span class="n">bind</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CanvasBinding</span><span class="p">(</span><span class="n">node</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"Player"</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"energy.current"</span><span class="p">,</span><span class="w"> </span><span class="n">max</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"energy.max"</span><span class="p">)</span>
+</span><span id="__span-28-17"><a id="__codelineno-28-17" name="__codelineno-28-17" href="#__codelineno-28-17"></a><span class="w">        </span><span class="n">bar</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CanvasBar</span><span class="p">(</span><span class="n">ticks</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">4</span><span class="p">)</span>
+</span><span id="__span-28-18"><a id="__codelineno-28-18" name="__codelineno-28-18" href="#__codelineno-28-18"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-28-19"><a id="__codelineno-28-19" name="__codelineno-28-19" href="#__codelineno-28-19"></a><span class="p">}</span>
 </span></code></pre></div>
 <p><code>canvasPrefab</code> validates what it builds and throws a <code>SceneValidationException</code> listing each problem,
 such as a field set on a kind it does nothing for, two nodes of one name, or two elements of one
@@ -4720,22 +4931,118 @@ the file diffs cleanly. <code>CanvasPrefabs.fromJson</code> reads one back.</p>
 <p>Give each element code needs an <code>elementId</code>, the <code>id</code> of its function. Code finds it under one placed
 copy's root, the entity its <code>prefab_link</code> node made, rather than by name: a name changes when someone
 renames the node, and every copy of the prefab repeats it.</p>
-<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-28-1"><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">leftSlot</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">assertNotNull</span><span class="p">(</span><span class="n">world</span><span class="p">.</span><span class="na">findCanvasElement</span><span class="p">(</span><span class="n">left</span><span class="p">,</span><span class="w"> </span><span class="s">"slot-1"</span><span class="p">))</span>
-</span><span id="__span-28-2"><a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a><span class="kd">val</span><span class="w"> </span><span class="nv">rightSlot</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">assertNotNull</span><span class="p">(</span><span class="n">world</span><span class="p">.</span><span class="na">findCanvasElement</span><span class="p">(</span><span class="n">right</span><span class="p">,</span><span class="w"> </span><span class="s">"slot-1"</span><span class="p">))</span>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-29-1"><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">leftSlot</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">assertNotNull</span><span class="p">(</span><span class="n">world</span><span class="p">.</span><span class="na">findCanvasElement</span><span class="p">(</span><span class="n">left</span><span class="p">,</span><span class="w"> </span><span class="s">"slot-1"</span><span class="p">))</span>
+</span><span id="__span-29-2"><a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a><span class="kd">val</span><span class="w"> </span><span class="nv">rightSlot</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">assertNotNull</span><span class="p">(</span><span class="n">world</span><span class="p">.</span><span class="na">findCanvasElement</span><span class="p">(</span><span class="n">right</span><span class="p">,</span><span class="w"> </span><span class="s">"slot-1"</span><span class="p">))</span>
 </span></code></pre></div>
 <p><code>findCanvasElement</code> looks at every canvas element in the world, so look up once, when the prefab is
 placed, and keep the entity. A host that draws a prefab without a world finds the node in the prefab
 itself with <code>prefab.findCanvasNode("slot-1")</code>.</p>
+<h3 id="bind-elements-with-typed-handles">Bind elements with typed handles</h3>
+<p>Code that builds a prefab and then updates it, such as a widget a plugin ships, declares its
+elements once as typed handles instead of repeating string ids in the builder and the binder. A
+<code>CanvasWidgetParts</code> is the widget; each kind's function (<code>text</code>, <code>image</code>, <code>bar</code>, <code>sweep</code>, <code>button</code>
+and the rest) declares a part of that kind, and <code>list</code> repeats a group of parts, such as a bar's
+slots. The id of each part is composed from the declaration: <code>icon</code> in the fourth slot of <code>bar</code> is
+<code>bar.slot-3.icon</code>. A function given no name declares the group's own element, whose id is the
+group's.</p>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-30-1"><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a><span class="cm">/** One slot of [ActionBarParts]: the button itself, its icon, its cooldown and its count. */</span>
+</span><span id="__span-30-2"><a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a><span class="kd">internal</span><span class="w"> </span><span class="kd">class</span><span class="w"> </span><span class="nc">SlotParts</span><span class="p">(</span><span class="n">scope</span><span class="p">:</span><span class="w"> </span><span class="n">CanvasPartScope</span><span class="p">)</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">CanvasParts</span><span class="p">(</span><span class="n">scope</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-30-3"><a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a><span class="w">    </span><span class="kd">val</span><span class="w"> </span><span class="nv">button</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">button</span><span class="p">()</span>
+</span><span id="__span-30-4"><a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a><span class="w">    </span><span class="kd">val</span><span class="w"> </span><span class="nv">icon</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">image</span><span class="p">(</span><span class="s">"icon"</span><span class="p">)</span>
+</span><span id="__span-30-5"><a id="__codelineno-30-5" name="__codelineno-30-5" href="#__codelineno-30-5"></a><span class="w">    </span><span class="kd">val</span><span class="w"> </span><span class="nv">cooldown</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sweep</span><span class="p">(</span><span class="s">"cooldown"</span><span class="p">)</span>
+</span><span id="__span-30-6"><a id="__codelineno-30-6" name="__codelineno-30-6" href="#__codelineno-30-6"></a><span class="w">    </span><span class="kd">val</span><span class="w"> </span><span class="nv">count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">text</span><span class="p">(</span><span class="s">"count"</span><span class="p">)</span>
+</span><span id="__span-30-7"><a id="__codelineno-30-7" name="__codelineno-30-7" href="#__codelineno-30-7"></a><span class="p">}</span>
+</span><span id="__span-30-8"><a id="__codelineno-30-8" name="__codelineno-30-8" href="#__codelineno-30-8"></a>
+</span><span id="__span-30-9"><a id="__codelineno-30-9" name="__codelineno-30-9" href="#__codelineno-30-9"></a><span class="cm">/** A generic action bar: a frame, a title, an energy meter and [slotCount] slots. */</span>
+</span><span id="__span-30-10"><a id="__codelineno-30-10" name="__codelineno-30-10" href="#__codelineno-30-10"></a><span class="kd">internal</span><span class="w"> </span><span class="kd">class</span><span class="w"> </span><span class="nc">ActionBarParts</span><span class="p">(</span><span class="n">slotCount</span><span class="p">:</span><span class="w"> </span><span class="kt">Int</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">SLOT_COUNT</span><span class="p">)</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">CanvasWidgetParts</span><span class="p">(</span><span class="s">"bar"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-30-11"><a id="__codelineno-30-11" name="__codelineno-30-11" href="#__codelineno-30-11"></a><span class="w">    </span><span class="kd">val</span><span class="w"> </span><span class="nv">frame</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">panel</span><span class="p">()</span>
+</span><span id="__span-30-12"><a id="__codelineno-30-12" name="__codelineno-30-12" href="#__codelineno-30-12"></a><span class="w">    </span><span class="kd">val</span><span class="w"> </span><span class="nv">title</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">text</span><span class="p">(</span><span class="s">"title"</span><span class="p">)</span>
+</span><span id="__span-30-13"><a id="__codelineno-30-13" name="__codelineno-30-13" href="#__codelineno-30-13"></a><span class="w">    </span><span class="kd">val</span><span class="w"> </span><span class="nv">energy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">bar</span><span class="p">(</span><span class="s">"energy"</span><span class="p">)</span>
+</span><span id="__span-30-14"><a id="__codelineno-30-14" name="__codelineno-30-14" href="#__codelineno-30-14"></a><span class="w">    </span><span class="kd">val</span><span class="w"> </span><span class="nv">slots</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">list</span><span class="p">(</span><span class="s">"slot"</span><span class="p">,</span><span class="w"> </span><span class="n">slotCount</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">SlotParts</span><span class="p">(</span><span class="nb">it</span><span class="p">)</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-30-15"><a id="__codelineno-30-15" name="__codelineno-30-15" href="#__codelineno-30-15"></a><span class="p">}</span>
+</span></code></pre></div>
+<p>The prefab builder takes the handles where it takes a name and an id. Each element gets the part's
+id and kind, and is named after its id unless you pass a <code>name</code>. The saved prefab holds plain string
+ids, so an editor, a theme, a saved layout or an override sees the same file as before.</p>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-31-1"><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a><span class="cm">/** The action bar built from [ActionBarParts]' handles. */</span>
+</span><span id="__span-31-2"><a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a><span class="kd">internal</span><span class="w"> </span><span class="kd">fun</span><span class="w"> </span><span class="nf">actionBarFromParts</span><span class="p">(</span><span class="n">parts</span><span class="p">:</span><span class="w"> </span><span class="n">ActionBarParts</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ActionBarParts</span><span class="p">()):</span><span class="w"> </span><span class="n">ScenePrefab</span><span class="w"> </span><span class="o">=</span>
+</span><span id="__span-31-3"><a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a><span class="w">    </span><span class="n">canvasPrefab</span><span class="p">(</span><span class="n">guid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">BAR_GUID</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"Action Bar"</span><span class="p">,</span><span class="w"> </span><span class="n">root</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">parts</span><span class="p">.</span><span class="na">frame</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-31-4"><a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a><span class="w">        </span><span class="n">layout</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CanvasLayout</span><span class="p">(</span><span class="n">direction</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CanvasDirection</span><span class="p">.</span><span class="na">Row</span><span class="p">,</span><span class="w"> </span><span class="n">gap</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">4f</span><span class="p">)</span>
+</span><span id="__span-31-5"><a id="__codelineno-31-5" name="__codelineno-31-5" href="#__codelineno-31-5"></a><span class="w">        </span><span class="n">text</span><span class="p">(</span><span class="n">parts</span><span class="p">.</span><span class="na">title</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"Title"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">textKey</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"hud.bar.title"</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-31-6"><a id="__codelineno-31-6" name="__codelineno-31-6" href="#__codelineno-31-6"></a><span class="w">        </span><span class="n">bar</span><span class="p">(</span><span class="n">parts</span><span class="p">.</span><span class="na">energy</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"Energy"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">size</span><span class="p">(</span><span class="m">120.</span><span class="n">dp</span><span class="p">,</span><span class="w"> </span><span class="m">8.</span><span class="n">dp</span><span class="p">)</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-31-7"><a id="__codelineno-31-7" name="__codelineno-31-7" href="#__codelineno-31-7"></a><span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="n">slot</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">parts</span><span class="p">.</span><span class="na">slots</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-31-8"><a id="__codelineno-31-8" name="__codelineno-31-8" href="#__codelineno-31-8"></a><span class="w">            </span><span class="n">button</span><span class="p">(</span><span class="n">slot</span><span class="p">.</span><span class="na">button</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"Slot </span><span class="si">${</span><span class="n">slot</span><span class="p">.</span><span class="na">index</span><span class="si">}</span><span class="s">"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-31-9"><a id="__codelineno-31-9" name="__codelineno-31-9" href="#__codelineno-31-9"></a><span class="w">                </span><span class="n">size</span><span class="p">(</span><span class="m">40.</span><span class="n">dp</span><span class="p">,</span><span class="w"> </span><span class="m">40.</span><span class="n">dp</span><span class="p">)</span>
+</span><span id="__span-31-10"><a id="__codelineno-31-10" name="__codelineno-31-10" href="#__codelineno-31-10"></a><span class="w">                </span><span class="n">button</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CanvasButton</span><span class="p">(</span><span class="n">cooldownSeconds</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">2f</span><span class="p">)</span>
+</span><span id="__span-31-11"><a id="__codelineno-31-11" name="__codelineno-31-11" href="#__codelineno-31-11"></a><span class="w">                </span><span class="n">image</span><span class="p">(</span><span class="n">slot</span><span class="p">.</span><span class="na">icon</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">size</span><span class="p">(</span><span class="m">32.</span><span class="n">dp</span><span class="p">,</span><span class="w"> </span><span class="m">32.</span><span class="n">dp</span><span class="p">)</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-31-12"><a id="__codelineno-31-12" name="__codelineno-31-12" href="#__codelineno-31-12"></a><span class="w">                </span><span class="n">sweep</span><span class="p">(</span><span class="n">slot</span><span class="p">.</span><span class="na">cooldown</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">sweep</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CanvasSweep</span><span class="p">(</span><span class="n">track</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"#00000060"</span><span class="p">)</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-31-13"><a id="__codelineno-31-13" name="__codelineno-31-13" href="#__codelineno-31-13"></a><span class="w">                </span><span class="n">text</span><span class="p">(</span><span class="n">slot</span><span class="p">.</span><span class="na">count</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">fontSize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">10.</span><span class="n">sp</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-31-14"><a id="__codelineno-31-14" name="__codelineno-31-14" href="#__codelineno-31-14"></a><span class="w">            </span><span class="p">}</span>
+</span><span id="__span-31-15"><a id="__codelineno-31-15" name="__codelineno-31-15" href="#__codelineno-31-15"></a><span class="w">        </span><span class="p">}</span>
+</span><span id="__span-31-16"><a id="__codelineno-31-16" name="__codelineno-31-16" href="#__codelineno-31-16"></a><span class="w">    </span><span class="p">}</span>
+</span></code></pre></div>
+<p>To bind a placed copy, make one instance of the declaration for it and <code>resolve</code> it against the
+copy's root. That walks the world once, binds every part, and throws a
+<code>CanvasPartResolutionException</code> naming each part that is missing or of another kind, so a typo or a
+part renamed on one side fails when the prefab is placed, not silently on every frame after it. Each
+handle then exposes only its kind's fields, such as an image part's <code>image</code> or a bar's <code>value</code>, and
+writes them on the cached element: no lookup and no string is built, so a binder can write every
+frame. Read a list by index, <code>for (i in slots.indices)</code>, in code that runs each frame.</p>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-32-1"><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">bar</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ActionBarParts</span><span class="p">().</span><span class="na">resolve</span><span class="p">(</span><span class="n">world</span><span class="p">,</span><span class="w"> </span><span class="n">root</span><span class="p">)</span><span class="w"> </span><span class="c1">// once, when the prefab is placed</span>
+</span><span id="__span-32-2"><a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a><span class="c1">// Then, each frame: typed fields on cached elements, no lookups.</span>
+</span><span id="__span-32-3"><a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a><span class="n">bar</span><span class="p">.</span><span class="na">title</span><span class="p">.</span><span class="na">text</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"Ready"</span>
+</span><span id="__span-32-4"><a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a><span class="n">bar</span><span class="p">.</span><span class="na">title</span><span class="p">.</span><span class="na">textArgs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mapOf</span><span class="p">(</span><span class="s">"count"</span><span class="w"> </span><span class="n">to</span><span class="w"> </span><span class="s">"3"</span><span class="p">)</span>
+</span><span id="__span-32-5"><a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a><span class="n">bar</span><span class="p">.</span><span class="na">energy</span><span class="p">.</span><span class="na">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">0.25f</span>
+</span><span id="__span-32-6"><a id="__codelineno-32-6" name="__codelineno-32-6" href="#__codelineno-32-6"></a><span class="n">bar</span><span class="p">.</span><span class="na">slots</span><span class="o">[</span><span class="m">1</span><span class="o">]</span><span class="p">.</span><span class="na">icon</span><span class="p">.</span><span class="na">image</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">icon</span>
+</span><span id="__span-32-7"><a id="__codelineno-32-7" name="__codelineno-32-7" href="#__codelineno-32-7"></a><span class="n">bar</span><span class="p">.</span><span class="na">slots</span><span class="o">[</span><span class="m">1</span><span class="o">]</span><span class="p">.</span><span class="na">cooldown</span><span class="p">.</span><span class="na">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">0.4f</span>
+</span><span id="__span-32-8"><a id="__codelineno-32-8" name="__codelineno-32-8" href="#__codelineno-32-8"></a><span class="n">bar</span><span class="p">.</span><span class="na">slots</span><span class="o">[</span><span class="m">1</span><span class="o">]</span><span class="p">.</span><span class="na">count</span><span class="p">.</span><span class="na">text</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"12"</span>
+</span><span id="__span-32-9"><a id="__codelineno-32-9" name="__codelineno-32-9" href="#__codelineno-32-9"></a><span class="n">bar</span><span class="p">.</span><span class="na">slots</span><span class="o">[</span><span class="m">1</span><span class="o">]</span><span class="p">.</span><span class="na">button</span><span class="p">.</span><span class="na">charges</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">2</span>
+</span><span id="__span-32-10"><a id="__codelineno-32-10" name="__codelineno-32-10" href="#__codelineno-32-10"></a><span class="n">bar</span><span class="p">.</span><span class="na">slots</span><span class="o">[</span><span class="m">2</span><span class="o">]</span><span class="p">.</span><span class="na">button</span><span class="p">.</span><span class="na">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+</span><span id="__span-32-11"><a id="__codelineno-32-11" name="__codelineno-32-11" href="#__codelineno-32-11"></a><span class="n">bar</span><span class="p">.</span><span class="na">slots</span><span class="o">[</span><span class="m">2</span><span class="o">]</span><span class="p">.</span><span class="na">icon</span><span class="p">.</span><span class="na">visible</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+</span></code></pre></div>
+<p>Resolve again after a reload places a new copy. <code>parts.slots.resolve(world, root)</code> binds one list on
+its own, and <code>part.element</code> reaches a field no typed handle exposes. <code>findCanvasElement(root, id)</code>
+stays for tools and data-only lookups.</p>
+<h4 id="migrate-from-string-ids">Migrate from string ids</h4>
+<p>Code that concatenated ids by hand built the same prefab:</p>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-33-1"><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a><span class="cm">/** The same action bar, as code wrote it before handles: every id and name concatenated by hand. */</span>
+</span><span id="__span-33-2"><a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a><span class="kd">internal</span><span class="w"> </span><span class="kd">fun</span><span class="w"> </span><span class="nf">actionBarFromStrings</span><span class="p">():</span><span class="w"> </span><span class="n">ScenePrefab</span><span class="w"> </span><span class="o">=</span>
+</span><span id="__span-33-3"><a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a><span class="w">    </span><span class="n">canvasPrefab</span><span class="p">(</span><span class="n">guid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">BAR_GUID</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"Action Bar"</span><span class="p">,</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"bar"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-33-4"><a id="__codelineno-33-4" name="__codelineno-33-4" href="#__codelineno-33-4"></a><span class="w">        </span><span class="n">layout</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CanvasLayout</span><span class="p">(</span><span class="n">direction</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CanvasDirection</span><span class="p">.</span><span class="na">Row</span><span class="p">,</span><span class="w"> </span><span class="n">gap</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">4f</span><span class="p">)</span>
+</span><span id="__span-33-5"><a id="__codelineno-33-5" name="__codelineno-33-5" href="#__codelineno-33-5"></a><span class="w">        </span><span class="n">text</span><span class="p">(</span><span class="s">"Title"</span><span class="p">,</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"bar.title"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">textKey</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"hud.bar.title"</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-33-6"><a id="__codelineno-33-6" name="__codelineno-33-6" href="#__codelineno-33-6"></a><span class="w">        </span><span class="n">bar</span><span class="p">(</span><span class="s">"Energy"</span><span class="p">,</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"bar.energy"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">size</span><span class="p">(</span><span class="m">120.</span><span class="n">dp</span><span class="p">,</span><span class="w"> </span><span class="m">8.</span><span class="n">dp</span><span class="p">)</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-33-7"><a id="__codelineno-33-7" name="__codelineno-33-7" href="#__codelineno-33-7"></a><span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="n">until</span><span class="w"> </span><span class="n">SLOT_COUNT</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-33-8"><a id="__codelineno-33-8" name="__codelineno-33-8" href="#__codelineno-33-8"></a><span class="w">            </span><span class="n">button</span><span class="p">(</span><span class="s">"Slot </span><span class="si">$</span><span class="n">i</span><span class="s">"</span><span class="p">,</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"bar.slot-</span><span class="si">$</span><span class="n">i</span><span class="s">"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-33-9"><a id="__codelineno-33-9" name="__codelineno-33-9" href="#__codelineno-33-9"></a><span class="w">                </span><span class="n">size</span><span class="p">(</span><span class="m">40.</span><span class="n">dp</span><span class="p">,</span><span class="w"> </span><span class="m">40.</span><span class="n">dp</span><span class="p">)</span>
+</span><span id="__span-33-10"><a id="__codelineno-33-10" name="__codelineno-33-10" href="#__codelineno-33-10"></a><span class="w">                </span><span class="n">button</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CanvasButton</span><span class="p">(</span><span class="n">cooldownSeconds</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">2f</span><span class="p">)</span>
+</span><span id="__span-33-11"><a id="__codelineno-33-11" name="__codelineno-33-11" href="#__codelineno-33-11"></a><span class="w">                </span><span class="n">image</span><span class="p">(</span><span class="s">"bar.slot-</span><span class="si">$</span><span class="n">i</span><span class="s">.icon"</span><span class="p">,</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"bar.slot-</span><span class="si">$</span><span class="n">i</span><span class="s">.icon"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">size</span><span class="p">(</span><span class="m">32.</span><span class="n">dp</span><span class="p">,</span><span class="w"> </span><span class="m">32.</span><span class="n">dp</span><span class="p">)</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-33-12"><a id="__codelineno-33-12" name="__codelineno-33-12" href="#__codelineno-33-12"></a><span class="w">                </span><span class="n">sweep</span><span class="p">(</span><span class="s">"bar.slot-</span><span class="si">$</span><span class="n">i</span><span class="s">.cooldown"</span><span class="p">,</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"bar.slot-</span><span class="si">$</span><span class="n">i</span><span class="s">.cooldown"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">sweep</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CanvasSweep</span><span class="p">(</span><span class="n">track</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"#00000060"</span><span class="p">)</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-33-13"><a id="__codelineno-33-13" name="__codelineno-33-13" href="#__codelineno-33-13"></a><span class="w">                </span><span class="n">text</span><span class="p">(</span><span class="s">"bar.slot-</span><span class="si">$</span><span class="n">i</span><span class="s">.count"</span><span class="p">,</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"bar.slot-</span><span class="si">$</span><span class="n">i</span><span class="s">.count"</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">fontSize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">10.</span><span class="n">sp</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-33-14"><a id="__codelineno-33-14" name="__codelineno-33-14" href="#__codelineno-33-14"></a><span class="w">            </span><span class="p">}</span>
+</span><span id="__span-33-15"><a id="__codelineno-33-15" name="__codelineno-33-15" href="#__codelineno-33-15"></a><span class="w">        </span><span class="p">}</span>
+</span><span id="__span-33-16"><a id="__codelineno-33-16" name="__codelineno-33-16" href="#__codelineno-33-16"></a><span class="w">    </span><span class="p">}</span>
+</span></code></pre></div>
+<p>Declare the parts so the derived ids are the ones the prefab already saves, and the file does not
+change; <code>CanvasPartsTest</code> checks that these two builds are equal. Where an id was not built from the
+structure, such as <code>slot-1-cooldown</code>, keep it with <code>pinnedId</code>, and use the item's <code>index</code> for a
+repeated part:</p>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-34-1"><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a><span class="kd">class</span><span class="w"> </span><span class="nc">SlotParts</span><span class="p">(</span><span class="n">scope</span><span class="p">:</span><span class="w"> </span><span class="n">CanvasPartScope</span><span class="p">)</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">CanvasParts</span><span class="p">(</span><span class="n">scope</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-34-2"><a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a><span class="w">    </span><span class="kd">val</span><span class="w"> </span><span class="nv">cooldown</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sweep</span><span class="p">(</span><span class="s">"cooldown"</span><span class="p">,</span><span class="w"> </span><span class="n">pinnedId</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"slot-</span><span class="si">${</span><span class="n">scope</span><span class="p">.</span><span class="na">index</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="m">1</span><span class="si">}</span><span class="s">-cooldown"</span><span class="p">)</span>
+</span><span id="__span-34-3"><a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a><span class="p">}</span>
+</span></code></pre></div>
+<p>Then replace each <code>world.findCanvasElement(root, "...")</code> and <code>world.get&lt;CanvasElement&gt;(...)</code> in the
+binder with one <code>resolve</code> when the prefab is placed and the handles' fields after it, and delete the
+names file the ids were kept in.</p>
 <h3 id="save-typed-sizes-and-colours">Save typed sizes and colours</h3>
 <p>A theme or a layout of your own can keep <code>Dp</code>, <code>Sp</code> and <code>Color</code> fields and still save as data:
 <code>DpSerializer</code> and <code>SpSerializer</code> from <code>awake:core:schema</code> write a number, and <code>ColorHexSerializer</code>
 writes the same hex a canvas element saves.</p>
-<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-29-1"><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="nd">@Serializable</span>
-</span><span id="__span-29-2"><a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a><span class="kd">data</span><span class="w"> </span><span class="kd">class</span><span class="w"> </span><span class="nc">FrameTheme</span><span class="p">(</span>
-</span><span id="__span-29-3"><a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a><span class="w">    </span><span class="nd">@Serializable</span><span class="p">(</span><span class="n">with</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">DpSerializer</span><span class="o">::</span><span class="n">class</span><span class="p">)</span><span class="w"> </span><span class="kd">val</span><span class="w"> </span><span class="nv">gap</span><span class="p">:</span><span class="w"> </span><span class="n">Dp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">4.</span><span class="n">dp</span><span class="p">,</span>
-</span><span id="__span-29-4"><a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a><span class="w">    </span><span class="nd">@Serializable</span><span class="p">(</span><span class="n">with</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">SpSerializer</span><span class="o">::</span><span class="n">class</span><span class="p">)</span><span class="w"> </span><span class="kd">val</span><span class="w"> </span><span class="nv">fontSize</span><span class="p">:</span><span class="w"> </span><span class="n">Sp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">12.</span><span class="n">sp</span><span class="p">,</span>
-</span><span id="__span-29-5"><a id="__codelineno-29-5" name="__codelineno-29-5" href="#__codelineno-29-5"></a><span class="w">    </span><span class="nd">@Serializable</span><span class="p">(</span><span class="n">with</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ColorHexSerializer</span><span class="o">::</span><span class="n">class</span><span class="p">)</span><span class="w"> </span><span class="kd">val</span><span class="w"> </span><span class="nv">accent</span><span class="p">:</span><span class="w"> </span><span class="n">Color</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Color</span><span class="p">.</span><span class="na">White</span><span class="p">,</span>
-</span><span id="__span-29-6"><a id="__codelineno-29-6" name="__codelineno-29-6" href="#__codelineno-29-6"></a><span class="p">)</span>
+<div class="language-kotlin highlight"><span class="filename">Kotlin</span><pre><span></span><code><span id="__span-35-1"><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a><span class="nd">@Serializable</span>
+</span><span id="__span-35-2"><a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a><span class="kd">data</span><span class="w"> </span><span class="kd">class</span><span class="w"> </span><span class="nc">FrameTheme</span><span class="p">(</span>
+</span><span id="__span-35-3"><a id="__codelineno-35-3" name="__codelineno-35-3" href="#__codelineno-35-3"></a><span class="w">    </span><span class="nd">@Serializable</span><span class="p">(</span><span class="n">with</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">DpSerializer</span><span class="o">::</span><span class="n">class</span><span class="p">)</span><span class="w"> </span><span class="kd">val</span><span class="w"> </span><span class="nv">gap</span><span class="p">:</span><span class="w"> </span><span class="n">Dp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">4.</span><span class="n">dp</span><span class="p">,</span>
+</span><span id="__span-35-4"><a id="__codelineno-35-4" name="__codelineno-35-4" href="#__codelineno-35-4"></a><span class="w">    </span><span class="nd">@Serializable</span><span class="p">(</span><span class="n">with</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">SpSerializer</span><span class="o">::</span><span class="n">class</span><span class="p">)</span><span class="w"> </span><span class="kd">val</span><span class="w"> </span><span class="nv">fontSize</span><span class="p">:</span><span class="w"> </span><span class="n">Sp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">12.</span><span class="n">sp</span><span class="p">,</span>
+</span><span id="__span-35-5"><a id="__codelineno-35-5" name="__codelineno-35-5" href="#__codelineno-35-5"></a><span class="w">    </span><span class="nd">@Serializable</span><span class="p">(</span><span class="n">with</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ColorHexSerializer</span><span class="o">::</span><span class="n">class</span><span class="p">)</span><span class="w"> </span><span class="kd">val</span><span class="w"> </span><span class="nv">accent</span><span class="p">:</span><span class="w"> </span><span class="n">Color</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Color</span><span class="p">.</span><span class="na">White</span><span class="p">,</span>
+</span><span id="__span-35-6"><a id="__codelineno-35-6" name="__codelineno-35-6" href="#__codelineno-35-6"></a><span class="p">)</span>
 </span></code></pre></div>
 <h2 id="see-also">See also</h2>
 <ul>
