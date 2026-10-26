@@ -495,6 +495,9 @@ allprojects {
         pluginManager.withPlugin("org.jetbrains.kotlin.multiplatform") {
             dependencies.add("commonMainApi", dependencies.platform(dependencies.project(mapOf("path" to bomPath))))
         }
+        pluginManager.withPlugin("java-library") {
+            dependencies.add("api", dependencies.platform(dependencies.project(mapOf("path" to bomPath))))
+        }
     }
 }
 

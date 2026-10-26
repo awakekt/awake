@@ -5,6 +5,7 @@
  */
 import com.google.devtools.ksp.gradle.KspExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
+import java.util.Properties
 
 // Generates a scene module's @SceneBinding bindings and its SceneComponentModule registry with the
 // :awake:scene:binding:processor KSP processor. Apply it to a Kotlin Multiplatform scene module and
@@ -22,13 +23,28 @@ plugins {
 interface AwakeSceneComponentsExtension {
     /** The qualified name of the module's generated SceneComponentModule object. */
     val registry: Property<String>
+
+    /** Processor SDK version outside Core; defaults to this plugin's published version. */
+    val processorVersion: Property<String>
 }
 
 val awakeSceneComponents = extensions.create<AwakeSceneComponentsExtension>("awakeSceneComponents")
+awakeSceneComponents.processorVersion.convention(providers.provider {
+    val resource = requireNotNull(AwakeSceneComponentsExtension::class.java.getResourceAsStream("/com/awakekt/awake/build/scene-components.properties")) {
+        "The Awake scene-components plugin is missing its version resource"
+    }
+    resource.use { Properties().apply { load(it) }.getProperty("version") }
+})
 val kspCommonTask = "kspCommonMainKotlinMetadata"
 
-dependencies {
-    add("kspCommonMainMetadata", project(":awake:scene:binding:processor"))
+val localProcessor = rootProject.findProject(":awake:scene:binding:processor")
+if (localProcessor != null) {
+    dependencies.add("kspCommonMainMetadata", dependencies.project(mapOf("path" to localProcessor.path)))
+} else {
+    dependencies.addProvider("kspCommonMainMetadata", awakeSceneComponents.processorVersion.map {
+        require(it.isNotBlank()) { "awakeSceneComponents.processorVersion must not be blank" }
+        "com.awakekt.awake.scene.binding:processor:$it"
+    })
 }
 
 // The processor fails the build, naming the option, when a module generates bindings without it.

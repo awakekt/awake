@@ -9,7 +9,7 @@
 | Group | `com.awakekt.awake`, plus the module's parent path: `:awake:scene:runtime` publishes `com.awakekt.awake.scene:runtime`. The Vulkan bindings are the exception: `com.awakekt.awake:vulkan-kmp`. |
 | Version | Core modules share one version; the newest is `{{ awake_version }}`. Vulkan family: `{{ awake_vulkan_version }}`, built against Core `{{ awake_vulkan_core_version }}`. See [Releases and compatibility](releases.md). |
 | Catalog alias | `awake-` plus the group after `com.awakekt.awake`, then the name, joined with `-`. The accessor replaces `-` with `.`: `awake-scene-runtime` is `libs.awake.scene.runtime`. The alias is your choice; this is the convention these docs use. |
-| Published modules | 96: 93 in Core, 3 in the Vulkan family. |
+| Published modules | 97: 94 in Core, 3 in the Vulkan family. |
 | Transitive modules | Declare only the modules your code uses. Each module's published metadata brings the modules it depends on. |
 
 A catalog entry looks like this:
@@ -95,6 +95,7 @@ awake-backend-vulkan = { module = "com.awakekt.awake.backend:vulkan", version.re
 | `com.awakekt.awake.scene:scene3d` | `awake-scene-scene3d` | Cameras, lights, mesh renderers and the systems that draw a scene. |
 | `com.awakekt.awake.scene:document` | `awake-scene-document` | Scene documents: `SceneDocument`, `SceneLoader`, validation, prefabs, extensions. |
 | `com.awakekt.awake.scene:binding` | `awake-scene-binding` | Bindings between scene document components and ECS components. |
+| `com.awakekt.awake.scene.binding:processor` | `awake-scene-binding-processor` | JVM KSP build tool generating scene component bindings and registries. |
 | `com.awakekt.awake.scene:runtime` | `awake-scene-runtime` | The scene runtime: `SceneManager`, sessions, asset library, scheduling, app lifecycle. |
 | `com.awakekt.awake.scene:authoring` | `awake-scene-authoring` | The scene DSL and application DSL: entities, systems, assets and UI in Kotlin. |
 | `com.awakekt.awake.scene:controls` | `awake-scene-controls` | Camera rigs and input-driven movement. |

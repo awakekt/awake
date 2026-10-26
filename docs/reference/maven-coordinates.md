@@ -41,7 +41,7 @@ no published artifact. Test-source dependencies are intentionally excluded.
 
 | Family | Published modules | Version source |
 |---|---:|---|
-| Core | 93 | Existing root `v*` tags and the shared Core release train |
+| Core | 94 | Existing root `v*` tags and the shared Core release train |
 | Vulkan | 3 | `vulkan-v*` tags; renderer, raw bindings, and Android JNI bridge move together |
 | WebGPU release pin | 1 | Each root `v*` tag publishes `:awake:backend:webgpu` as `<release>-SNAPSHOT`, Core held strictly at the release; `main` publishes it on the Core train |
 
@@ -149,6 +149,7 @@ Vulkan modules. Core `v*` releases and main snapshots do not publish or change t
 | `com.awakekt.awake.scene:canvas` | `:awake:scene:canvas` | `core` | `api` → `:awake:ui:canvas`; `api` → `:awake:ecs`; `api` → `:awake:scene:document`; `api` → `:awake:scene:binding`; `implementation` → `:awake:scene:scene-core`; `api` → `:awake:compose:runtime`; `api` → `:awake:compose:ui`; `api` → `:awake:core:io`; `implementation` → `:awake:core:logging`; `api` → `:awake:core:math`; `implementation` → `:awake:core:math2d`; `api` → `:awake:core:text`; `api` → `:awake:core:localization` |
 | `com.awakekt.awake.scene:authoring` | `:awake:scene:authoring` | `core` | `implementation` → `:awake:core:graphics2d`; `implementation` → `:awake:core:math2d`; `implementation` → `:awake:core:color`; `implementation` → `:awake:core:input`; `api` → `:awake:scene:scene-core`; `api` → `:awake:scene:scene3d`; `api` → `:awake:scene:controls`; `api` → `:awake:scene:runtime`; `api` → `:awake:scene:audio`; `api` → `:awake:engine:bootstrap` |
 | `com.awakekt.awake.scene:binding` | `:awake:scene:binding` | `core` | `api` → `:awake:ecs`; `api` → `:awake:core:logging`; `api` → `:awake:scene:document` |
+| `com.awakekt.awake.scene.binding:processor` | `:awake:scene:binding:processor` | `core` | JVM build tool; KSP and KotlinPoet, no Core runtime dependency |
 | `com.awakekt.awake.scene:blueprint` | `:awake:scene:blueprint` | `core` | `api` → `:awake:blueprint`; `api` → `:awake:scene:scene-core`; `api` → `:awake:scene:document`; `api` → `:awake:scene:binding`; `api` → `:awake:scene:physics`; `implementation` → `:awake:scene:scene3d`; `implementation` → `:awake:core:animation`; `implementation` → `:awake:scene:canvas` |
 | `com.awakekt.awake.scene:character` | `:awake:scene:character` | `core` | `api` → `:awake:scene:physics`; `api` → `:awake:scene:controls`; `implementation` → `:awake:core:math` |
 | `com.awakekt.awake.scene:controls` | `:awake:scene:controls` | `core` | `api` → `:awake:core:input`; `api` → `:awake:scene:scene-core`; `implementation` → `:awake:core:math`; `api` → `:awake:scene:scene3d`; `api` → `:awake:compose:ui` |
