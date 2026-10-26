@@ -26,7 +26,6 @@ import javax.imageio.ImageIO
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.max
-import kotlin.math.min
 
 private const val FONT_PACKAGE = "com.awakekt.awake.core.text.font"
 
@@ -35,20 +34,36 @@ private const val ASCII_FIRST = 32
 private const val ASCII_LAST = 126
 private val ASCII_GLYPHS: List<Char> = (ASCII_FIRST..ASCII_LAST).map { it.toChar() }
 
+private const val LATIN_1_FIRST = 0x00A0
+private const val LATIN_1_LAST = 0x00FF
+private const val LATIN_EXTENDED_A_FIRST = 0x0100
+private const val LATIN_EXTENDED_A_LAST = 0x017F
+
 /**
- * Glyphs packed after ASCII, appended so every ASCII glyph keeps its cell and atlas offset.
+ * Glyphs packed after ASCII, appended so every ASCII glyph keeps its place in [ATLAS_GLYPHS].
  *
- * U+2022 BULLET is what a password field masks with (`PasswordMask`). It filled the last free
- * cell of the 16-column grid, so the atlas did not grow. The rest are the punctuation UI text
+ * U+2022 BULLET is what a password field masks with (`PasswordMask`). The rest are the punctuation UI text
  * uses as separators and signs, which drew the fallback `'?'` without them: U+00B7 MIDDLE DOT,
  * U+2026 ELLIPSIS, U+2013 EN DASH, U+2014 EM DASH, U+00D7 MULTIPLICATION SIGN and
- * U+2212 MINUS SIGN. They start a new row. Append new glyphs; never reorder these.
+ * U+2212 MINUS SIGN. Append new glyphs; never reorder these.
  */
 private val EXTRA_GLYPHS: List<Char> =
     listOf('•', '·', '…', '–', '—', '×', '−')
 
-/** Every glyph this atlas packs, in cell order. */
-private val ATLAS_GLYPHS: List<Char> = ASCII_GLYPHS + EXTRA_GLYPHS
+/**
+ * The accented letters and common signs of Western and Central European text (#1058): U+00A0 to U+00FF
+ * (Latin-1 Supplement) and U+0100 to U+017F (Latin Extended-A), less the two [EXTRA_GLYPHS] inside them, then
+ * the curly and angle quotes, dagger, double dagger, per mille, prime and double prime, euro and trade mark.
+ * Roboto has every one. This is `UiFonts.DEFAULT_CHARS` after [EXTRA_GLYPHS], and the subset of
+ * `tools/fonts-tooling/subset_roboto_outlines.py`, in this order.
+ */
+private val LATIN_GLYPHS: List<Char> =
+    (LATIN_1_FIRST..LATIN_1_LAST).map { it.toChar() }.filter { it !in EXTRA_GLYPHS } +
+        (LATIN_EXTENDED_A_FIRST..LATIN_EXTENDED_A_LAST).map { it.toChar() } +
+        "‘’‚“”„†‡‰′″‹›€™".toList()
+
+/** Every glyph this atlas packs, in the order of the per-glyph arrays. */
+private val ATLAS_GLYPHS: List<Char> = ASCII_GLYPHS + EXTRA_GLYPHS + LATIN_GLYPHS
 
 private const val OUT_DIR = "../../core/text/src/commonMain/kotlin"
 
@@ -84,8 +99,11 @@ private const val LOGICAL_CELL = 16
  * rendering benefit. 2 keeps enough texels for msdfgen to resolve fine detail while landing at
  * roughly the old atlas's file size. */
 private const val OVERSAMPLE = 2
-private const val PADDING = 6
-private const val COLUMNS = 16
+
+/** Texels of atlas around a glyph's sample rect that belong to its tile. Bilinear sampling at the rect's
+ * edge reads one texel past it, and a texel past that is where the distance field is still being
+ * measured, so a neighbouring glyph's ink never lands within sampling distance. */
+private const val TILE_MARGIN = 2
 private const val MSDFGEN = "msdfgen"
 private const val RGBA_CHANNELS = 4
 private const val BYTE_MASK = 0xFF
@@ -95,7 +113,7 @@ private const val GREEN_SHIFT = 8
 private const val ALPHA_BYTE = 3
 
 /** A blank glyph (space) has no ink, so its UV rect is a small placeholder square rather than a
- * measured one -- a quarter of the cell, big enough to be obviously wrong if ever sampled. */
+ * measured one -- a quarter of the em, big enough to be obviously wrong if ever sampled. */
 private const val BLANK_GLYPH_DIVISOR = 4
 
 /** Wrap the base64 payload so the generated Kotlin stays diffable. */
@@ -152,7 +170,9 @@ private data class GlyphMetrics(
     val widthEm: Float,
     val heightEm: Float,
     val advanceEm: Float,
-)
+) {
+    val isBlank: Boolean get() = widthEm <= 0f || heightEm <= 0f
+}
 
 private class AtlasResult(
     val lineHeightEm: Float,
@@ -183,26 +203,24 @@ private fun generateAtlas(fontFile: File): AtlasResult {
     val measureFont = baseFont.deriveFont(LOGICAL_CELL.toFloat())
     val ascentEm = vertical.ascent(LOGICAL_CELL.toFloat())
 
-    val glyphMetrics = ATLAS_GLYPHS.associateWith { char -> measureGlyph(measureFont, frc, ascentEm, char) }
+    val glyphMetrics = ATLAS_GLYPHS.map { char -> measureGlyph(measureFont, frc, ascentEm, char) }
 
     // Rasterization is a separate, oversampled pass -- only the atlas bitmap and the UV sample
     // rect (for texture lookup) come from it. Antialiasing headroom here can never leak into a
     // glyph's measured size/position because [glyphMetrics] above never looks at this raster.
     val renderSize = LOGICAL_CELL * OVERSAMPLE
-    val renderFont = baseFont.deriveFont(renderSize.toFloat())
     val ascentPxRender = vertical.ascent(renderSize.toFloat())
     val descentPxRender = vertical.descent(renderSize.toFloat())
-    val cellHeightPx = ceil((ascentPxRender + descentPxRender).toDouble()).toInt() + PADDING * 2
-    val maxAdvancePxRender = ATLAS_GLYPHS.filter { it != ' ' }.maxOf { char ->
-        renderFont.createGlyphVector(frc, char.toString()).getGlyphMetrics(0).advanceX
-    }
-    val cellWidthPx = ceil(maxAdvancePxRender.toDouble()).toInt() + PADDING * 2
 
-    val rows = ceil(ATLAS_GLYPHS.size / COLUMNS.toDouble()).toInt()
-    val atlasWidth = cellWidthPx * COLUMNS
-    val atlasHeight = cellHeightPx * rows
-
-    val atlasImage = BufferedImage(atlasWidth, atlasHeight, BufferedImage.TYPE_INT_ARGB)
+    // Each glyph gets a tile of its own: its sample rect and TILE_MARGIN texels around it. The tiles
+    // are packed in shelves, so the atlas holds the ink and little else however many glyphs it has
+    // (a grid of the widest glyph's cell would be three times the size for the Latin set).
+    val rects = glyphMetrics.map(::sampleRect)
+    val packing = ShelfPacking.pack(
+        IntArray(rects.size) { rects[it].width + 2 * TILE_MARGIN },
+        IntArray(rects.size) { rects[it].height + 2 * TILE_MARGIN },
+    )
+    val atlasImage = BufferedImage(packing.width, packing.height, BufferedImage.TYPE_INT_ARGB)
 
     val uvBoundsPx = mutableListOf<Int>()
     val quadMetricsEm = mutableListOf<Float>()
@@ -210,45 +228,46 @@ private fun generateAtlas(fontFile: File): AtlasResult {
     val advancesEm = mutableListOf<Float>()
 
     ATLAS_GLYPHS.forEachIndexed { index, char ->
-        val col = index % COLUMNS
-        val row = index / COLUMNS
-        val cellX = col * cellWidthPx
-        val cellY = row * cellHeightPx
-        val baselineX = cellX + PADDING
-        val baselineY = cellY + PADDING + ascentPxRender
+        val metrics = glyphMetrics[index]
+        val rect = rects[index]
+        val tileX = packing.xs[index]
+        val tileY = packing.ys[index]
+        val tileWidth = rect.width + 2 * TILE_MARGIN
+        val tileHeight = rect.height + 2 * TILE_MARGIN
 
-        blitGlyphCell(
-            atlasImage = atlasImage,
-            fontFile = fontFile,
-            char = char,
-            cellX = cellX,
-            cellY = cellY,
-            cellWidthPx = cellWidthPx,
-            cellHeightPx = cellHeightPx,
-            ascentPxRender = ascentPxRender,
-        )
+        // A blank glyph (space) has no ink, so there is nothing to draw: its tile stays empty.
+        if (!metrics.isBlank) {
+            blitGlyphTile(
+                atlasImage = atlasImage,
+                fontFile = fontFile,
+                char = char,
+                tileX = tileX,
+                tileY = tileY,
+                tileWidthPx = tileWidth,
+                tileHeightPx = tileHeight,
+                penInTileX = TILE_MARGIN - rect.left,
+                lineTopInTileY = TILE_MARGIN - rect.top,
+                ascentPxRender = ascentPxRender,
+            )
+        }
 
-        val metrics = glyphMetrics.getValue(char)
-        val (left, top, right, bottom) = sampleRect(metrics, cellX, cellY, cellWidthPx, cellHeightPx, baselineX, baselineY, ascentPxRender)
-
-        uvBoundsPx += listOf(left, top, right, bottom)
+        uvBoundsPx += listOf(tileX + TILE_MARGIN, tileY + TILE_MARGIN, tileX + TILE_MARGIN + rect.width, tileY + TILE_MARGIN + rect.height)
         // The RENDER quad must cover exactly what the UV rect samples -- the outline rect plus
         // CROP_BLEED plus the integer texel snap -- or the atlas region gets squeezed into an
         // outline-sized quad and every glyph renders at ink/(ink + bleed + snap) of its metrics
         // (~0.90x, growing past a pixel from 16px up), with the per-glyph snap scattering
-        // baselines by a subpixel. Convert the snapped sample rect back to pen-relative em so
-        // quad and UV describe the same texels 1:1. Ink metrics ship separately below; blank
-        // glyphs keep a zero quad rather than the placeholder sample square.
+        // baselines by a subpixel. The rect is already pen/line-top relative, so quad and UV
+        // describe the same texels 1:1. Ink metrics ship separately below; blank glyphs keep a
+        // zero quad rather than the placeholder sample square.
         val scale = LOGICAL_CELL * OVERSAMPLE
-        val lineTop = baselineY - ascentPxRender
-        if (metrics.widthEm <= 0f || metrics.heightEm <= 0f) {
+        if (metrics.isBlank) {
             quadMetricsEm += listOf(0f, 0f, 0f, 0f)
         } else {
             quadMetricsEm += listOf(
-                (left - baselineX).toFloat() / scale,
-                (top - lineTop) / scale,
-                (right - left).toFloat() / scale,
-                (bottom - top).toFloat() / scale,
+                rect.left.toFloat() / scale,
+                rect.top.toFloat() / scale,
+                rect.width.toFloat() / scale,
+                rect.height.toFloat() / scale,
             )
         }
         inkMetricsEm += listOf(metrics.offsetXEm, metrics.offsetYEm, metrics.widthEm, metrics.heightEm)
@@ -257,8 +276,8 @@ private fun generateAtlas(fontFile: File): AtlasResult {
 
     return AtlasResult(
         lineHeightEm = (ascentPxRender + descentPxRender) / OVERSAMPLE / LOGICAL_CELL,
-        atlasWidth = atlasWidth,
-        atlasHeight = atlasHeight,
+        atlasWidth = packing.width,
+        atlasHeight = packing.height,
         glyphOrder = ATLAS_GLYPHS.joinToString(""),
         uvBoundsPx = uvBoundsPx.toIntArray(),
         quadMetricsEm = quadMetricsEm.toFloatArray(),
@@ -269,39 +288,39 @@ private fun generateAtlas(fontFile: File): AtlasResult {
 }
 
 /**
- * Renders one glyph's MTSDF tile with `msdfgen` and blits it into [atlasImage] at the glyph's
- * cell.
+ * Renders one glyph's MTSDF tile with `msdfgen` and blits it into [atlasImage] at ([tileX], [tileY]).
  *
- * Placement reproduces exactly where the old `Graphics2D.drawGlyphVector` put the glyph, so the
- * UV derivation in [sampleRect] needs no changes: the glyph's baseline origin must land at cell
- * pixel `(PADDING, PADDING + ascentPxRender)`.
+ * The glyph's pen origin must land at tile pixel ([penInTileX], [lineTopInTileY] + [ascentPxRender]):
+ * both offsets are whole texels, so a glyph's texels are the same whatever tile it is drawn into.
  *
  * Three coordinate conventions have to be reconciled, which is the whole difficulty here:
  * msdfgen's shape space is Y-UP with the baseline at zero, `-emnormalize` puts it in em units,
  * and the atlas is Y-DOWN. msdfgen maps a shape point to `(point + translate) * scale` measured
- * up from the image BOTTOM, so placing the baseline `PADDING + ascentPxRender` down from the
- * cell top means translating it `cellHeightPx - PADDING - ascentPxRender` up from the bottom.
+ * up from the image BOTTOM, so placing the baseline `lineTopInTileY + ascentPxRender` down from the
+ * tile top means translating it `tileHeightPx - lineTopInTileY - ascentPxRender` up from the bottom.
  */
-private fun blitGlyphCell(
+private fun blitGlyphTile(
     atlasImage: BufferedImage,
     fontFile: File,
     char: Char,
-    cellX: Int,
-    cellY: Int,
-    cellWidthPx: Int,
-    cellHeightPx: Int,
+    tileX: Int,
+    tileY: Int,
+    tileWidthPx: Int,
+    tileHeightPx: Int,
+    penInTileX: Int,
+    lineTopInTileY: Int,
     ascentPxRender: Float,
 ) {
     val scale = (LOGICAL_CELL * OVERSAMPLE).toDouble()
-    val translateX = PADDING / scale
-    val translateY = (cellHeightPx - PADDING - ascentPxRender) / scale
+    val translateX = penInTileX / scale
+    val translateY = (tileHeightPx - lineTopInTileY - ascentPxRender) / scale
     val out = File.createTempFile("awake-msdf-", ".png")
     try {
         val process = ProcessBuilder(
             MSDFGEN, "mtsdf",
             "-font", fontFile.absolutePath, char.code.toString(),
             "-emnormalize",
-            "-size", cellWidthPx.toString(), cellHeightPx.toString(),
+            "-size", tileWidthPx.toString(), tileHeightPx.toString(),
             "-pxrange", DISTANCE_FIELD_RANGE_PX.toString(),
             "-translate", translateX.toString(), translateY.toString(),
             "-scale", scale.toString(),
@@ -309,12 +328,11 @@ private fun blitGlyphCell(
         ).redirectErrorStream(true).start()
         val log = process.inputStream.bufferedText()
         check(process.waitFor() == 0) { "msdfgen failed for '$char' (${char.code}):\n$log" }
-        // A blank glyph (space) legitimately produces no output file.
         if (!out.exists() || out.length() == 0L) return
         val tile = ImageIO.read(out) ?: return
-        for (y in 0 until minOf(tile.height, cellHeightPx)) {
-            for (x in 0 until minOf(tile.width, cellWidthPx)) {
-                atlasImage.setRGB(cellX + x, cellY + y, tile.getRGB(x, y))
+        for (y in 0 until minOf(tile.height, tileHeightPx)) {
+            for (x in 0 until minOf(tile.width, tileWidthPx)) {
+                atlasImage.setRGB(tileX + x, tileY + y, tile.getRGB(x, y))
             }
         }
     } finally {
@@ -342,40 +360,35 @@ private fun measureGlyph(measureFont: Font, frc: FontRenderContext, ascentEm: Fl
     )
 }
 
+/** A rectangle of whole atlas texels, y down, relative to a glyph's pen origin and line top. */
+private class SampleRect(val left: Int, val top: Int, val right: Int, val bottom: Int) {
+    val width: Int get() = right - left
+    val height: Int get() = bottom - top
+}
+
 /**
- * The atlas pixel rect sampled for a glyph's texture quad: the outline-based [metrics] rect
- * scaled into oversampled raster space, with [CROP_BLEED] texels of headroom on every side so
- * the distance field's antialiased edge isn't hard-clipped, snapped outward to whole texels.
- * The render quad (`quadMetricsEm`) is derived from THIS snapped rect so quad and UV always
- * describe the same texels 1:1; only ink metrics (`inkMetricsEm`) and advances stay
- * outline-true, so the bleed can never inflate a glyph's measured size or its advance (the old
- * overlap bug).
+ * The atlas pixel rect sampled for a glyph's texture quad, relative to its pen origin and line top: the
+ * outline-based [metrics] rect scaled into oversampled raster space, with [CROP_BLEED] texels of headroom
+ * on every side so the distance field's antialiased edge isn't hard-clipped, snapped outward to whole
+ * texels. The render quad (`quadMetricsEm`) is derived from THIS snapped rect so quad and UV always
+ * describe the same texels 1:1; only ink metrics (`inkMetricsEm`) and advances stay outline-true, so the
+ * bleed can never inflate a glyph's measured size or its advance (the old overlap bug).
  */
-private fun sampleRect(
-    metrics: GlyphMetrics,
-    cellX: Int,
-    cellY: Int,
-    cellWidthPx: Int,
-    cellHeightPx: Int,
-    baselineX: Int,
-    baselineY: Float,
-    ascentPxRender: Float,
-): List<Int> {
-    if (metrics.widthEm <= 0f || metrics.heightEm <= 0f) {
+private fun sampleRect(metrics: GlyphMetrics): SampleRect {
+    if (metrics.isBlank) {
         val placeholder = max(1, (LOGICAL_CELL * OVERSAMPLE) / BLANK_GLYPH_DIVISOR)
-        return listOf(baselineX, cellY + PADDING, baselineX + placeholder, cellY + PADDING + placeholder)
+        return SampleRect(0, 0, placeholder, placeholder)
     }
     val scale = LOGICAL_CELL * OVERSAMPLE
-    val lineTop = baselineY - ascentPxRender
-    val rawLeft = baselineX + metrics.offsetXEm * scale
-    val rawTop = lineTop + metrics.offsetYEm * scale
+    val rawLeft = metrics.offsetXEm * scale
+    val rawTop = metrics.offsetYEm * scale
     val rawRight = rawLeft + metrics.widthEm * scale
     val rawBottom = rawTop + metrics.heightEm * scale
-    return listOf(
-        max(cellX, floor(rawLeft - CROP_BLEED).toInt()),
-        max(cellY, floor(rawTop - CROP_BLEED).toInt()),
-        min(cellX + cellWidthPx, ceil(rawRight + CROP_BLEED).toInt()),
-        min(cellY + cellHeightPx, ceil(rawBottom + CROP_BLEED).toInt()),
+    return SampleRect(
+        floor(rawLeft - CROP_BLEED).toInt(),
+        floor(rawTop - CROP_BLEED).toInt(),
+        ceil(rawRight + CROP_BLEED).toInt(),
+        ceil(rawBottom + CROP_BLEED).toInt(),
     )
 }
 

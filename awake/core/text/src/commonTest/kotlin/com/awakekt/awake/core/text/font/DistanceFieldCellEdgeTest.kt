@@ -24,8 +24,8 @@ import kotlin.test.assertTrue
 class DistanceFieldCellEdgeTest {
     @Test
     fun aLoadedFontsFringeFadesOutInsideEachGlyphsRect() = runTest {
-        val font = UiFonts.load(readResourceBytes("Roboto-Regular.ttf"), "Roboto-Regular.ttf", UiFonts.DEFAULT_CHARS + "ÅÉÑÇÿ") as PackedUiFont
-        val chars = UiFonts.DEFAULT_CHARS + "ÅÉÑÇÿ"
+        val font = UiFonts.load(readResourceBytes("Roboto-Regular.ttf"), "Roboto-Regular.ttf") as PackedUiFont
+        val chars = UiFonts.DEFAULT_CHARS
         val failures = listOf(12, 16, 18, 25, 32, 48, 96).mapNotNull { size ->
             val worst = chars.maxOf { edgeCoverage(font, it, size) }
             val char = chars.first { edgeCoverage(font, it, size) == worst }

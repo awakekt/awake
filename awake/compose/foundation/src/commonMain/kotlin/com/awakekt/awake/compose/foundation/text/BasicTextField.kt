@@ -97,7 +97,8 @@ context(_: Composer)
  * reveals; pass it on touch platforms.
  *
  * Pass [PasswordMask] unless a design calls for another character. The bundled UI font covers
- * printable ASCII and the bullet; any other mask character draws that font's fallback glyph.
+ * printable ASCII, the bullet and the Latin accented letters and signs of `UiFonts.DEFAULT_CHARS`; any other
+ * mask character draws that font's fallback glyph.
  *
  * [onSubmit] fires on Enter in a single-line field (`singleLine`, or masked since a password field
  * is always single-line) -- Compose's `KeyboardActions.onDone`. A multi-line field has nowhere to

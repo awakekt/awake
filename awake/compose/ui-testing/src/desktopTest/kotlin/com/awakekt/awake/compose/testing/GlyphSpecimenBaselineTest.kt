@@ -38,8 +38,8 @@ import kotlin.test.Test
  * Each sheet holds the whole set at 12, 24 and 48 sp, top to bottom, in neutral greys on white, recorded
  * as an 8-bit grey PNG to keep a baseline every text change re-records small. The glyphs alone in Regular,
  * Bold and Black at device scale 1, and in Regular at 1.5; the layout boxes in Regular at 1 and 1.5. Within a size the glyphs fill rows of 17 in [BuiltInGlyphs.specimen]
- * order: `UiFonts.DEFAULT_CHARS`, then anything else the font draws. With today's 102 glyphs that is 6 rows:
- * space to '0', then '1' to 'A', 'B' to 'R', 'S' to 'c', 'd' to 't', and 'u' to '−'. A glyph sits in the
+ * order: `UiFonts.DEFAULT_CHARS`, then anything else the font draws. With today's 339 glyphs that is 20 rows: printable
+ * ASCII fills the first five and a bit, the accented letters and signs follow. A glyph sits in the
  * same column and row at every size and in every sheet, so a one-glyph change is one cell of the diff, and
  * a declared glyph the font loses shows as '?' in its own cell. A glyph the font gains adds a cell, and
  * rows as needed, with no change to this test.
