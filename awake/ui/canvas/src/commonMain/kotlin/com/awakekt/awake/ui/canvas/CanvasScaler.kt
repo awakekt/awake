@@ -8,6 +8,7 @@ package com.awakekt.awake.ui.canvas
 import com.awakekt.awake.core.schema.PropertyRange
 import kotlinx.serialization.Serializable
 import kotlin.math.exp
+import kotlin.math.floor
 import kotlin.math.ln
 
 /** How a [CanvasScaler] works out a canvas's scale. */
@@ -25,6 +26,48 @@ enum class CanvasScaleMode {
 
     /** One unit is 1 / [CanvasScaler.referenceDpi] of an inch on the screen, at any pixel density. */
     ConstantPhysicalSize,
+}
+
+/**
+ * Rounds the scale a [CanvasScaler] works out to a step, so a canvas drawn from pixel art lands on a
+ * whole number of screen pixels per art pixel.
+ *
+ * Text does not need it. A canvas rounds each text element's size to whole device pixels, after the
+ * scale and the density, so text up to the font's pixel-glyph size is crisp at any scale. What
+ * snapping gives is a scale that is a clean multiple of the art, and text sizes that agree with the
+ * layout: at 1.5 every even size is whole, at 1 or 2 every size is.
+ *
+ * It costs layout size. A snapped canvas is laid out at the snapped scale, so against the unsnapped
+ * one every size and offset is off by up to half a step, in proportion: a 1017 dp tall window against
+ * the default 720 reference gives 1.4125, which [HalfStep] draws at 1.5, 6% larger, and [WholeStep] at 1,
+ * 29% smaller. Pick a step small against the scales the game runs at.
+ */
+@Serializable
+enum class CanvasScaleSnap(
+    /** The multiple of the scale the rule is rounded to; 0 for none. */
+    internal val step: Float,
+) {
+    /** The scale is used as the rule gives it. */
+    None(0f),
+
+    /** The scale is rounded to the nearest whole number: 1, 2, 3. */
+    WholeStep(1f),
+
+    /** The scale is rounded to the nearest half: 1, 1.5, 2, 2.5. */
+    HalfStep(0.5f),
+    ;
+
+    /**
+     * [scale] rounded to the nearest multiple of this step, halves up. A scale under one step is left
+     * as it is: a canvas smaller than its design cannot be made a whole multiple of it, and rounding
+     * it up would grow it past the box it was fitted to.
+     */
+    internal fun round(scale: Float): Float =
+        if (step <= 0f || scale < step) scale else floor(scale / step + HALF) * step
+
+    private companion object {
+        const val HALF = 0.5f
+    }
 }
 
 /**
@@ -51,6 +94,9 @@ enum class CanvasScaleMode {
  * @property maxScale The largest scale the rule may give; 0 for no limit.
  * @property playerScale The player's own multiplier, applied after [minScale] and [maxScale] so a
  *   player can always make the UI larger or smaller: a game's settings menu sets it.
+ * @property snap Rounds the scale [mode] gives to a step, before the limits hold it and the player
+ *   multiplies it; [CanvasScaleSnap.None], the default, draws at the scale as the rule gives it. See
+ *   [CanvasScaleSnap] for what it keeps crisp and what it costs.
  */
 @Serializable
 data class CanvasScaler(
@@ -63,11 +109,12 @@ data class CanvasScaler(
     @PropertyRange(min = 0.0) val minScale: Float = 0f,
     @PropertyRange(min = 0.0) val maxScale: Float = 0f,
     @PropertyRange(min = 0.0, exclusiveMin = true) val playerScale: Float = 1f,
+    val snap: CanvasScaleSnap = CanvasScaleSnap.None,
 ) {
     /**
      * The scale for a canvas box [width] by [height] dp, on a screen of [density] pixels per dp and
-     * [dpi] dots per inch: by [mode], held between [minScale] and [maxScale], then times
-     * [playerScale].
+     * [dpi] dots per inch: by [mode], rounded by [snap], held between [minScale] and [maxScale], then
+     * times [playerScale]. The limits come after the rounding, so a scale is never outside them.
      *
      * A host that knows the screen's real dots per inch passes [dpi]; by default it is 160 per dp,
      * the density's own definition, which is true on Android and close elsewhere. A box with no
@@ -80,7 +127,7 @@ data class CanvasScaler(
             CanvasScaleMode.ScaleWithScreenSize -> screenScale(width, height)
             CanvasScaleMode.ConstantPhysicalSize -> dpi / (referenceDpi * pixels)
         }
-        var scale = if (raw > 0f && raw.isFinite()) raw else 1f
+        var scale = snap.round(if (raw > 0f && raw.isFinite()) raw else 1f)
         if (minScale > 0f) scale = scale.coerceAtLeast(minScale)
         if (maxScale > 0f) scale = scale.coerceAtMost(maxScale)
         val player = if (playerScale > 0f && playerScale.isFinite()) playerScale else 1f

@@ -121,6 +121,16 @@ unit, or `ConstantPhysicalSize` from the dots per inch the canvas is designed at
 height, density)` is the whole rule, for a host that wants the number itself. It is serializable;
 `awake:scene:canvas` saves it with a scene as `canvas_scaler`.
 
+Text is crisp at a fractional scale without help: a text element's em is rounded to whole device
+pixels after the scale and the density, so up to 24 pixels it draws from exact-size glyphs (13 at
+1.4125 is an 18 pixel glyph, 2% under the exact size) and its layout box keeps the size the scale
+gives it. `CanvasScaler.snap` is for pixel art, which a fractional scale draws with uneven pixels:
+`CanvasScaleSnap.WholeStep` or `HalfStep` rounds the scale to the nearest whole number or half before
+`minScale` and `maxScale` hold it, and the canvas is laid out at the rounded scale. That moves every
+size and offset by up to half a step in proportion: 1.4125 draws at 1.5 with `HalfStep`, 6% larger, and
+at 1 with `WholeStep`, 29% smaller. A scale under one step is left as it is, and `None`, the default,
+leaves the scale as the rule gives it.
+
 A wrapping `layout` decides what fits a line from the sizes as authored. When the pixels per unit
 (the host's density times the scale) are not whole, each child, each gap and the box round to whole
 pixels on their own, so a row sized to exactly its children and gaps can come out a few pixels

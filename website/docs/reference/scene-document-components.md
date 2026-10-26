@@ -272,6 +272,7 @@ scale its host passes. Every `canvas_element` size, offset, font and image is mu
 | `minScale` | number | `0` | The smallest scale the rule may give; `0` for no limit. Not negative, and not above a set `maxScale`. |
 | `maxScale` | number | `0` | The largest scale the rule may give; `0` for no limit. Not negative. |
 | `playerScale` | number | `1` | The player's own multiplier, applied after `minScale` and `maxScale`, so a settings menu can always make the UI larger or smaller. Above 0. |
+| `snap` | `None` · `WholeStep` · `HalfStep` | `None` | Rounds the scale the rule gives to the nearest whole number or half before `minScale` and `maxScale` hold it, so pixel art lands on a whole number of screen pixels per art pixel. The layout is drawn at the rounded scale, so every size and offset moves by up to half a step in proportion: a 1.4125 scale draws at 1.5 with `HalfStep`, 6% larger, and at 1 with `WholeStep`, 29% smaller. A scale under one step is left as it is. Text needs no snapping; see [Scale with the screen](../guides/game-ui.md#scale-with-the-screen). |
 
 ## `character_controller`
 
