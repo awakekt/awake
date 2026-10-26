@@ -1,0 +1,1 @@
+- Keep circular canvas clips convex across sizes and display scales on Vulkan and WebGPU, and rasterize rounded CPU shadows with the GPU's radius, spread and blur coverage.

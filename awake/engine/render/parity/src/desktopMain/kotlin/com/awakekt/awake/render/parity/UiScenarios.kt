@@ -170,4 +170,7 @@ val UI_PARITY_SCENARIOS: List<UiScenario> = listOf(
     glyph('O', FontWeight.Bold, UiFonts.default()),
     TWO_FONTS_SCENARIO,
     SMALL_TEXT_SCENARIO,
+    circleClipScenario(192f),
+    roundShadowScenario(false),
+    roundShadowScenario(true),
 )
