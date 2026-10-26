@@ -10,7 +10,7 @@
 
 The atlases ship distance fields. Small text draws instead from glyphs rasterized at the exact pixel
 size (PixelGlyphs), which needs the outlines themselves. Each weight is subset to the atlas's own
-characters (UiFonts.DEFAULT_CHARS) with no hinting or naming tables, about 12 KB a face, and written as
+characters (UiFonts.DEFAULT_CHARS) with no hinting or naming tables, about 29 KB a face, and written as
 base64 for OpenTypeFont to read at run time.
 
 The subset keeps glyf, loca, cmap, hmtx, hhea, head and maxp, exactly as the source face has them, so a
@@ -41,8 +41,16 @@ REPO = Path(__file__).resolve().parent.parent.parent
 FONT_DIR = REPO / "awake/ui/font-atlas-generator/fonts"
 OUT = REPO / "awake/core/text/src/commonMain/kotlin/com/awakekt/awake/core/text/font/RobotoUiFontOutlineData.kt"
 
-# UiFonts.DEFAULT_CHARS: printable ASCII, then the atlas's extra punctuation, in atlas order.
-CHARS = "".join(chr(code) for code in range(32, 127)) + "•·…–—×−"
+# UiFonts.DEFAULT_CHARS, in atlas order: printable ASCII, the atlas's extra punctuation, the rest of Latin-1
+# Supplement (U+00A0 to U+00FF) and all of Latin Extended-A (U+0100 to U+017F), then quotes and signs (#1058).
+_EXTRA = "•·…–—×−"
+CHARS = (
+    "".join(chr(code) for code in range(32, 127))
+    + _EXTRA
+    + "".join(chr(code) for code in range(0x00A0, 0x0100) if chr(code) not in _EXTRA)
+    + "".join(chr(code) for code in range(0x0100, 0x0180))
+    + "‘’‚“”„†‡‰′″‹›€™"
+)
 
 FACES = [
     ("Roboto-Thin.ttf", "THIN"),
