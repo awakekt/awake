@@ -225,21 +225,18 @@ private fun circlePath(bounds: Rectangle, fillRule: FillRule): DrawPath {
     val diameter = min(bounds.width, bounds.height)
     val insetX = (bounds.width - diameter) / 2f
     val insetY = (bounds.height - diameter) / 2f
-    val r = diameter / 2f
     val left = bounds.x + insetX
     val top = bounds.y + insetY
     val right = left + diameter
     val bottom = top + diameter
     return drawPath(fillRule) {
-        moveTo(left + r, top)
-        lineTo(right - r, top)
-        arcTo(right - 2f * r, top, right, top + 2f * r, -90f, 90f)
-        lineTo(right, bottom - r)
-        arcTo(right - 2f * r, bottom - 2f * r, right, bottom, 0f, 90f)
-        lineTo(left + r, bottom)
-        arcTo(left, bottom - 2f * r, left + 2f * r, bottom, 90f, 90f)
-        lineTo(left, top + r)
-        arcTo(left, top, left + 2f * r, top + 2f * r, 180f, 90f)
+        // Circles have no straight sides. Rounded-rectangle seam lines can become tiny
+        // backwards edges after rounding and incorrectly invalidate the convex clip.
+        moveTo((left + right) / 2f, top)
+        arcTo(left, top, right, bottom, -90f, 90f)
+        arcTo(left, top, right, bottom, 0f, 90f)
+        arcTo(left, top, right, bottom, 90f, 90f)
+        arcTo(left, top, right, bottom, 180f, 90f)
         close()
     }
 }

@@ -467,6 +467,62 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
         }
     }
 
+    // Mirrors buildShadowQuadRun's rounded-box distance, spread, blur floor and padded footprint.
+    fun fillShadowQuad(shadow: UiDrawPrimitive.ShadowQuad) {
+        val halfW = (shadow.w / 2f + shadow.spread).coerceAtLeast(0f)
+        val halfH = (shadow.h / 2f + shadow.spread).coerceAtLeast(0f)
+        val radius = (shadow.radius + shadow.spread).coerceIn(0f, min(halfW, halfH))
+        val blur = shadow.blurRadius.coerceAtLeast(1f)
+        val pad = blur + 1f
+        val centerX = shadow.x + shadow.offsetX + shadow.w / 2f
+        val centerY = shadow.y + shadow.offsetY + shadow.h / 2f
+        val left = centerX - halfW - pad
+        val top = centerY - halfH - pad
+        val x0 = max(left, clipX0).toInt().coerceIn(0, width)
+        val y0 = max(top, clipY0).toInt().coerceIn(0, height)
+        val x1 = ceil(min(centerX + halfW + pad, clipX1)).toInt().coerceIn(0, width)
+        val y1 = ceil(min(centerY + halfH + pad, clipY1)).toInt().coerceIn(0, height)
+        fun distance(x: Float, y: Float): Float {
+            val qx = abs(x - centerX) - halfW + radius
+            val qy = abs(y - centerY) - halfH + radius
+            return hypot(max(qx, 0f), max(qy, 0f)) + min(max(qx, qy), 0f) - radius
+        }
+        for (py in y0 until y1) {
+            for (px in x0 until x1) {
+                val x = px + 0.5f
+                val y = py + 0.5f
+                val dist = distance(x, y)
+                // Derivatives use adjacent fragments in a 2x2 quad, like shader fwidth.
+                val dx = abs(distance((px - (px and 1)) + 1.5f, y) - distance((px - (px and 1)) + 0.5f, y))
+                val dy = abs(distance(x, (py - (py and 1)) + 1.5f) - distance(x, (py - (py and 1)) + 0.5f))
+                val aa = max(dx + dy, blur * 0.5f)
+                val coverage = 1f - smoothstep(-aa, aa, dist)
+                if (coverage <= 0f || !passesPathClips(x, y)) continue
+                val gradient = shadow.gradient
+                val color = if (gradient == null) {
+                    shadow.color
+                } else {
+                    val u = ((x - left) / (2f * (halfW + pad))).coerceIn(0f, 1f)
+                    val v = ((y - top) / (2f * (halfH + pad))).coerceIn(0f, 1f)
+                    // GPU vertex colours interpolate across TL/TR/BR and TL/BR/BL triangles.
+                    val a = gradient.topLeft
+                    val b = if (u >= v) gradient.topRight else gradient.bottomLeft
+                    val c = gradient.bottomRight
+                    val wa = 1f - max(u, v)
+                    val wb = abs(u - v)
+                    val wc = min(u, v)
+                    Color(
+                        a.r * wa + b.r * wb + c.r * wc,
+                        a.g * wa + b.g * wb + c.g * wc,
+                        a.b * wa + b.b * wb + c.b * wc,
+                        a.a * wa + b.a * wb + c.a * wc,
+                    )
+                }
+                pixelMap.blend(px, py, color.withAlpha(color.a * coverage))
+            }
+        }
+    }
+
     fun drawColorGlyph(glyph: UiDrawPrimitive.Glyph, font: UiFont) {
         val x0 = max(glyph.x, clipX0).toInt().coerceIn(0, width)
         val y0 = max(glyph.y, clipY0).toInt().coerceIn(0, height)
@@ -799,14 +855,7 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
                 }
             }
 
-            is UiDrawPrimitive.ShadowQuad -> {
-                val x = primitive.x + primitive.offsetX - primitive.spread
-                val y = primitive.y + primitive.offsetY - primitive.spread
-                val w = primitive.w + primitive.spread * 2f
-                val h = primitive.h + primitive.spread * 2f
-                val gradient = primitive.gradient
-                if (gradient == null) fillRect(x, y, w, h, primitive.color) else fillGradientRect(x, y, w, h, gradient)
-            }
+            is UiDrawPrimitive.ShadowQuad -> fillShadowQuad(primitive)
 
             is UiDrawPrimitive.BackdropBlur -> {
                 val effectiveColor = if (primitive.fallback.a > 0f) {
