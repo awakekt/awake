@@ -13,6 +13,8 @@ import com.awakekt.awake.scene.binding.fromWorld
 import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.scene.binding.renderableRequests
 import com.awakekt.awake.scene.canvas.SceneCanvasElement
+import com.awakekt.awake.scene.canvas.canvasElementView
+import com.awakekt.awake.scene.canvas.toCanvasComponents
 import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.core.transform.SceneSpinControl
 import com.awakekt.awake.scene.core.transform.SpinControl
@@ -266,7 +268,7 @@ class SceneLoaderTest {
         assertEquals(document, SceneLoader.decode(SceneLoader.encode(document)))
     }
 
-    /** A canvas element loads into the world as a CanvasElement and exports back unchanged. */
+    /** A canvas element saved in the older form loads into the world as a CanvasElement and exports back as its components. */
     @Test
     fun aCanvasElementRoundTripsThroughTheWorld() {
         val authored = SceneCanvasElement(kind = CanvasElementKind.Text, anchor = CanvasAnchor.TopRight, text = "Score 0")
@@ -277,7 +279,9 @@ class SceneLoaderTest {
 
         val loaded = mutableListOf<CanvasElement>().also { list -> world.family<CanvasElement>().forEach { _, e -> list += e } }
         assertEquals("Score 0", loaded.single().text)
-        assertEquals(authored, SceneLoader.fromWorld(world, name = "x").nodes.single().components.filterIsInstance<SceneCanvasElement>().single())
+        val exported = SceneLoader.fromWorld(world, name = "x").nodes.single()
+        assertEquals(authored.toCanvasComponents(), exported.components)
+        assertEquals(authored, exported.canvasElementView())
     }
 
     /** A texture animation survives the file as its own component, reaches the world, and exports back unchanged. */

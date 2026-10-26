@@ -53,6 +53,7 @@ fun <T : CanvasParts> CanvasPartList<T>.resolve(world: World, root: Entity): Can
 
 private fun World.resolveCanvasParts(root: Entity, parts: List<CanvasPart>) {
     require(isAlive(root)) { "cannot resolve canvas parts under $root: it is not alive" }
+    syncCanvasElements()
     val wanted = HashMap<String, CanvasPart>(parts.size * 2)
     parts.forEach { part ->
         val previous = wanted.put(part.id, part)

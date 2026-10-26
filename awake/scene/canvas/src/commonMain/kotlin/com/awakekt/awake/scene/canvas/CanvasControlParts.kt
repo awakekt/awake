@@ -6,14 +6,22 @@
 package com.awakekt.awake.scene.canvas
 
 import com.awakekt.awake.core.math2d.Vec2
+import com.awakekt.awake.ui.canvas.CanvasButtonWidget
 import com.awakekt.awake.ui.canvas.CanvasElement
 import com.awakekt.awake.ui.canvas.CanvasElementKind
+import com.awakekt.awake.ui.canvas.CanvasJoystickWidget
+import com.awakekt.awake.ui.canvas.CanvasLookAreaWidget
+import com.awakekt.awake.ui.canvas.CanvasStepperWidget
+import com.awakekt.awake.ui.canvas.CanvasTextFieldWidget
 
 // The handles of the element kinds a player works: buttons, fields, sticks, look areas and
 // steppers. The kinds that only show something are in CanvasDisplayParts.kt.
 
 /** A [CanvasElementKind.Button] element: a button, an action button when its settings say so. */
 class CanvasButtonPart internal constructor(id: String) : CanvasPart(id, CanvasElementKind.Button) {
+    /** The [CanvasButtonWidget] component: its action, settings, cooldown and charges. */
+    val widget: CanvasButtonWidget get() = checkNotNull(element.widget as? CanvasButtonWidget) { "canvas part \"$id\" has no CanvasButtonWidget" }
+
     /** The label shown while [textKey] is empty; see [CanvasElement.text]. */
     var text: String
         get() = element.text
@@ -64,6 +72,9 @@ class CanvasButtonPart internal constructor(id: String) : CanvasPart(id, CanvasE
 
 /** A [CanvasElementKind.TextField] element: a line the player types into. */
 class CanvasTextFieldPart internal constructor(id: String) : CanvasPart(id, CanvasElementKind.TextField) {
+    /** The [CanvasTextFieldWidget] component: its mask, limit, hint and padding. */
+    val widget: CanvasTextFieldWidget get() = checkNotNull(element.widget as? CanvasTextFieldWidget) { "canvas part \"$id\" has no CanvasTextFieldWidget" }
+
     /** What is typed in the field; see [CanvasElement.text]. */
     var text: String
         get() = element.text
@@ -91,6 +102,9 @@ class CanvasTextFieldPart internal constructor(id: String) : CanvasPart(id, Canv
 
 /** A [CanvasElementKind.Joystick] element: an on-screen stick. */
 class CanvasJoystickPart internal constructor(id: String) : CanvasPart(id, CanvasElementKind.Joystick) {
+    /** The [CanvasJoystickWidget] component: its action and settings. */
+    val widget: CanvasJoystickWidget get() = checkNotNull(element.widget as? CanvasJoystickWidget) { "canvas part \"$id\" has no CanvasJoystickWidget" }
+
     /** The stick's deflection to the right, from -1 to 1; see [CanvasElement.stickX]. */
     val stickX: Float get() = element.stickX
 
@@ -106,6 +120,9 @@ class CanvasJoystickPart internal constructor(id: String) : CanvasPart(id, Canva
 
 /** A [CanvasElementKind.LookArea] element: where a swipe looks and a pinch zooms. */
 class CanvasLookAreaPart internal constructor(id: String) : CanvasPart(id, CanvasElementKind.LookArea) {
+    /** The [CanvasLookAreaWidget] component: its action and settings. */
+    val widget: CanvasLookAreaWidget get() = checkNotNull(element.widget as? CanvasLookAreaWidget) { "canvas part \"$id\" has no CanvasLookAreaWidget" }
+
     /** How far the area has been swiped since the last call; see [CanvasElement.consumeLook]. */
     fun consumeLook(): Vec2 = element.consumeLook()
 
@@ -115,6 +132,9 @@ class CanvasLookAreaPart internal constructor(id: String) : CanvasPart(id, Canva
 
 /** A [CanvasElementKind.Stepper] element: a number with minus and plus buttons. */
 class CanvasStepperPart internal constructor(id: String) : CanvasPart(id, CanvasElementKind.Stepper) {
+    /** The [CanvasStepperWidget] component: its number and settings. */
+    val widget: CanvasStepperWidget get() = checkNotNull(element.widget as? CanvasStepperWidget) { "canvas part \"$id\" has no CanvasStepperWidget" }
+
     /** The number shown; see [CanvasElement.number]. */
     var number: Float
         get() = element.number
