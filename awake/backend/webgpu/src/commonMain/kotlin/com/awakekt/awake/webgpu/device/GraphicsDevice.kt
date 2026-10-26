@@ -97,12 +97,14 @@ class GraphicsDevice {
      * @throws IllegalStateException If [window] is not a [WGPUContext].
      */
     fun create(window: Any) {
-        wgpuContext = window as? WGPUContext
+        val context = window as? WGPUContext
             ?: error(
                 "GraphicsDevice.create expects a pre-resolved WGPUContext on wasmJs " +
                     "(canvasContextRenderer() + surface.configure() must run in the " +
                     "caller's own coroutine first -- see this class's doc comment), got $window",
             )
+        // Before anything reads the format: every pipeline and target is built with it.
+        wgpuContext = context.withDisplayEncodedColorFormat()
         device = WebGpuHandles.register(wgpuContext.device)
     }
 

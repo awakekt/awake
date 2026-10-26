@@ -282,7 +282,10 @@ class WebGpuImagePassTest {
     private companion object {
         const val SIZE = 64
 
-        /** Covers both linear UNORM (128) and sRGB-encoded (188) readback of 0.5 linear intensity. */
-        val HALF_BLEND_RANGE = 124..192
+        /**
+         * A 0.5 blend reads back as 128 from the UNORM target. The range no longer admits the 188 an
+         * sRGB target stored, which encoded the shader's output a second time (#1011).
+         */
+        val HALF_BLEND_RANGE = 124..132
     }
 }

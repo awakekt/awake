@@ -32,7 +32,9 @@ import io.ygdrasil.webgpu.TextureViewDescriptor
  * draws into this target with the SAME `RenderPipeline` instance used for the on-screen pass
  * (built with `ColorTargetState(format = swapchainManager.imageFormatWebGpu)`), and WebGPU
  * requires a render pass's color attachment format to exactly match the bound pipeline's
- * target format.
+ * target format. That format is UNORM, not sRGB, wherever the surface offers one (see
+ * `withDisplayEncodedColorFormat`), so the bytes this target holds are the ones the shaders
+ * wrote, as on Vulkan.
  */
 class OffscreenRenderTarget(
     graphicsDevice: GraphicsDevice,

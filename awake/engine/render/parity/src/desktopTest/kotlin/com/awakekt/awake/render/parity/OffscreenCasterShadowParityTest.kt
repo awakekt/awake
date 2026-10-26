@@ -41,8 +41,8 @@ import kotlin.test.assertTrue
  * (camera frustum culling dropped the box before the shadow pass saw it): the two strips read the
  * same, shaded-to-lit 1.006 on Vulkan (222/221) and 1.004 on WebGPU (240/239), and the PNGs show a
  * plain white ground. After the fix: 0.27 on Vulkan (59/221) and 0.55 on WebGPU (132/239), the
- * shade a dark band from the left edge to x -1. The backends differ because Vulkan's offscreen
- * target is UNORM and WebGPU's is sRGB; see [SceneBackendParityTest].
+ * shade a dark band from the left edge to x -1. The backends differed because WebGPU's target was
+ * then sRGB; with both targets UNORM (#1011), WebGPU reads 0.27 (59/221) like Vulkan.
  *
  * Captures land in `build/reports/render-parity` whether the test passes or fails.
  */

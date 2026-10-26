@@ -65,11 +65,10 @@ class UiBackendParityTest {
      * How two captures of one scenario differ, or null when they agree.
      *
      * **Alpha everywhere, colour only where alpha is full.** Coverage is the claim both backends
-     * must meet: it is what the shape *is*, and it is untouched by colour space. Colour is not
-     * comparable at partial coverage, because the two targets store it differently -- Vulkan's
-     * offscreen target is UNORM and holds premultiplied linear values, while WebGPU's takes its
-     * format from the surface, which is sRGB on this host, so the same coverage comes back
-     * gamma-encoded. At full alpha the encodings agree and a real colour bug still shows.
+     * must meet: it is what the shape *is*, and it is untouched by colour space. Colour is only
+     * compared where alpha is full: written while WebGPU's target took the surface's sRGB format,
+     * which returned partial coverage gamma-encoded. Both targets are UNORM since #1011. At full
+     * alpha a real colour bug still shows.
      */
     private fun disagreement(vulkan: ByteArray, webGpu: ByteArray): String? {
         var coverageDiffs = 0
