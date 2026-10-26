@@ -1,13 +1,3 @@
-import java.io.File
-import java.security.KeyFactory
-import java.security.MessageDigest
-import java.security.Signature
-import java.security.spec.PKCS8EncodedKeySpec
-import java.util.Base64
-import java.util.zip.ZipEntry
-import java.util.zip.ZipFile
-import java.util.zip.ZipOutputStream
-
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
 }
@@ -35,9 +25,10 @@ kotlin {
     }
 }
 
-// Reserved entry name for the publisher's signature; excluded from the digest it covers. Must
-// match com.awakekt.awake.pluginarchive.PLUGIN_ARCHIVE_SIGNATURE_ENTRY_NAME.
-val pluginSignatureEntryName = "signature.sig"
+// Never read from the repository: the signing key is a secret, supplied by the environment a
+// publisher's own machine or CI controls, or (for local testing) a Gradle property.
+val signingKey = providers.environmentVariable("AWAKE_PLUGIN_SIGNING_KEY")
+    .orElse(providers.gradleProperty("awake.plugin.signingKey"))
 
 // A .awakeplugin is a zip: plugin.json at the root and the plugin's classes under lib/.
 // Desktop hosts load it at run time; other platforms compile the plugin module in instead.
@@ -52,95 +43,45 @@ val awakePlugin by tasks.registering(Zip::class) {
     }
     from(tasks.named("desktopJar")) { into("lib") }
 
-    // Never read from the repository: the signing key is a secret, supplied by the environment
-    // a publisher's own machine or CI controls, or (for local testing) a Gradle property.
-    val signingKey = providers.environmentVariable("AWAKE_PLUGIN_SIGNING_KEY")
-        .orElse(providers.gradleProperty("awake.plugin.signingKey"))
-    inputs.property("awakePluginIsSigned", signingKey.isPresent)
-
+    val signed = signingKey.map { it.isNotBlank() }.orElse(false)
     doLast {
-        val archive = archiveFile.get().asFile
-        val key = signingKey.orNull
-        if (key.isNullOrBlank()) {
+        if (!signed.get()) {
             logger.lifecycle(
                 "awakePlugin: no AWAKE_PLUGIN_SIGNING_KEY (or -Pawake.plugin.signingKey) is set; " +
-                    "packaged ${archive.name} unsigned.",
+                    "packaged ${archiveFile.get().asFile.name} unsigned.",
             )
-            return@doLast
         }
-        signPluginArchive(archive, key, pluginSignatureEntryName)
-        logger.lifecycle("awakePlugin: signed ${archive.name}.")
     }
 }
 
-/**
- * Rewrites [archive] with a `signature.sig` entry covering every other entry's canonical digest,
- * signed with the publisher's RSA private key (PEM or base64 PKCS#8). Mirrors
- * `com.awakekt.awake.pluginarchive.PluginArchiveDigest` and `PluginArchiveVerifier`
- * (`com.awakekt.awake:plugin-archive`): a build script cannot call that library's suspending API
- * without coroutines on its classpath, so the algorithm is kept in sync by the pinned digest in
- * `PluginArchiveVerifierTest` rather than shared code.
- */
-fun signPluginArchive(archive: File, pemOrBase64PrivateKey: String, signatureEntryName: String) {
-    val entries = ZipFile(archive).use { zip ->
-        zip.entries().asSequence()
-            .filterNot { it.isDirectory || it.name == signatureEntryName }
-            .map { entry -> entry.name to zip.getInputStream(entry).use { it.readBytes() } }
-            .toList()
-    }
-
-    val digest = canonicalDigest(entries)
-    val payload = ("awake-plugin-archive-v1\n" + digest.toHexString()).toByteArray(Charsets.UTF_8)
-    val signature = signWithRsaPrivateKey(payload, pemOrBase64PrivateKey)
-
-    val tempFile = File.createTempFile(archive.name, ".tmp", archive.parentFile)
-    ZipOutputStream(tempFile.outputStream()).use { out ->
-        entries.sortedBy { it.first }.forEach { (name, bytes) ->
-            out.putNextEntry(ZipEntry(name))
-            out.write(bytes)
-            out.closeEntry()
-        }
-        out.putNextEntry(ZipEntry(signatureEntryName))
-        out.write(signature)
-        out.closeEntry()
-    }
-    check(archive.delete()) { "Could not replace ${archive.path} with its signed copy." }
-    check(tempFile.renameTo(archive)) { "Could not move the signed archive into place at ${archive.path}." }
-}
-
-/**
- * Entries sorted by name, each framed by a 4-byte big-endian length before its name and before its
- * content, hashed with SHA-256. Deterministic regardless of zip entry order.
- */
-fun canonicalDigest(entries: List<Pair<String, ByteArray>>): ByteArray {
-    val digest = MessageDigest.getInstance("SHA-256")
-    entries.sortedBy { it.first }.forEach { (name, content) ->
-        val nameBytes = name.toByteArray(Charsets.UTF_8)
-        digest.update(nameBytes.size.toBigEndianBytes())
-        digest.update(nameBytes)
-        digest.update(content.size.toBigEndianBytes())
-        digest.update(content)
-    }
-    return digest.digest()
-}
-
-fun signWithRsaPrivateKey(payload: ByteArray, pemOrBase64Key: String): ByteArray {
-    val body = pemOrBase64Key.lineSequence()
-        .filterNot { it.isBlank() || it.trimStart().startsWith("-----") }
-        .joinToString("") { it.trim() }
-    val keyBytes = Base64.getDecoder().decode(body)
-    val privateKey = KeyFactory.getInstance("RSA").generatePrivate(PKCS8EncodedKeySpec(keyBytes))
-    return Signature.getInstance("SHA256withRSA").run {
-        initSign(privateKey)
-        update(payload)
-        sign()
+// The signer is Core's own (com.awakekt.awake.pluginarchive.PluginArchiveSigner), the same code
+// hosts verify with, run in its own JVM so its libraries never meet the build's.
+val awakePluginSigner by configurations.creating {
+    isCanBeConsumed = false
+    attributes {
+        attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage.JAVA_RUNTIME))
+        attribute(org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType.attribute, org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType.jvm)
+        attribute(TargetJvmEnvironment.TARGET_JVM_ENVIRONMENT_ATTRIBUTE, objects.named(TargetJvmEnvironment.STANDARD_JVM))
     }
 }
 
-fun Int.toBigEndianBytes(): ByteArray =
-    byteArrayOf((this ushr 24).toByte(), (this ushr 16).toByte(), (this ushr 8).toByte(), toByte())
-
-fun ByteArray.toHexString(): String = joinToString("") {
-    val hex = (it.toInt() and 0xFF).toString(16)
-    if (hex.length == 1) "0$hex" else hex
+dependencies {
+    awakePluginSigner(libs.awake.plugin.archive)
 }
+
+val signAwakePlugin by tasks.registering(JavaExec::class) {
+    group = "awake"
+    description = "Signs the .awakeplugin archive in place with the publisher's key."
+    val archive = awakePlugin.flatMap { it.archiveFile }
+    val key = signingKey
+    onlyIf("a signing key is set") { key.map { it.isNotBlank() }.getOrElse(false) }
+    classpath = awakePluginSigner
+    mainClass = "com.awakekt.awake.pluginarchive.PluginArchiveSigner"
+    javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(17) }
+    argumentProviders.add(CommandLineArgumentProvider { listOf(archive.get().asFile.absolutePath) })
+    // Through the environment, not the command line, so the key never shows in a process list.
+    doFirst { environment("AWAKE_PLUGIN_SIGNING_KEY", key.get()) }
+    doLast { logger.lifecycle("awakePlugin: signed ${archive.get().asFile.name}.") }
+}
+
+awakePlugin { finalizedBy(signAwakePlugin) }

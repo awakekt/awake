@@ -30,9 +30,9 @@ public data class PluginArchiveEntry(val name: String, val content: ByteArray) {
  * Entries are sorted by name and [PLUGIN_ARCHIVE_SIGNATURE_ENTRY_NAME] is excluded, so the digest
  * does not depend on zip entry order and is unaffected by the signature it is about to cover. Each
  * entry's name and content are framed with their own 4-byte big-endian length before the bytes are
- * hashed, so "ab" + "c" cannot collide with "a" + "bc". `templates/plugin`'s packaging task mirrors
- * this algorithm in plain JVM code (it runs in a Gradle build script, not against this module);
- * `PluginArchiveVerifierTest`'s fixture pins the exact bytes so the two cannot silently drift apart.
+ * hashed, so "ab" + "c" cannot collide with "a" + "bc". [PluginArchiveSigner] signs this digest on
+ * the JVM (`templates/plugin`'s packaging task runs it); `PluginArchiveVerifierTest`'s fixture and
+ * pinned digest keep the bytes from silently drifting.
  *
  * [canonicalDigest] suspends because the browser's SHA-256 (WebCrypto) is asynchronous; see
  * [PluginArchiveVerifier] for how callers on each platform reach it.

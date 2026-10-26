@@ -101,7 +101,7 @@ class PluginArchiveVerifierTest {
     @Test
     fun canonicalDigestMatchesItsPinnedValue() = runTest {
         // sha256 over: be32(14) "lib/plugin.jar" be32(9) "jar-bytes" be32(11) "plugin.json" be32(2) "{}",
-        // computed independently with Python's hashlib. templates/plugin's signing task must agree.
+        // computed independently with Python's hashlib, so a change to the digest cannot pass unnoticed.
         val entries = listOf(
             PluginArchiveEntry("plugin.json", "{}".encodeToByteArray()),
             PluginArchiveEntry("lib/plugin.jar", "jar-bytes".encodeToByteArray()),
