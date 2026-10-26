@@ -13,12 +13,13 @@ import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.toColor
 
 /**
- * The logic a generated [SceneBinding] runs around its field copy, for a binding that is mostly copies
+ * The logic a generated [SceneBinding] runs around its mapping, for a binding that is mostly copies
  * and a little more, such as a migration from a legacy field. Implement it as an `object` and name it
  * in [SceneBinding.hooks]; every method defaults to doing nothing.
  *
  * The two copy hooks run inside the binding's pure `toComponent()` and `toSceneComponent()`, so they see
  * no world. The other two run only when the binding attaches to or exports from a [World].
+ * They also run for [SceneBinding.whole], around unwrapping and wrapping the live value.
  *
  * @param C The live ECS component.
  * @param S The scene schema.
@@ -47,7 +48,8 @@ interface SceneBindingHooks<C : Any, S : SceneComponent> {
  * Converts a saved field of type [S] to its live field of type [L] and back, for a [SceneBinding] whose
  * two sides use different types for the same value. Implement it as an `object` and list it in
  * [SceneBinding.converters]; the generated binding uses it for every field pair of exactly these types,
- * and for their nullable forms.
+ * and for their nullable forms. A [SceneBinding.whole] mapping uses the same converter for the
+ * whole property's type and the live component's type.
  *
  * @param S The saved type.
  * @param L The live type.

@@ -16,8 +16,9 @@ itself have no scene or ECS dependency and live in `awake:ui:canvas`; see its RE
 Each canvas component has its saved form and a binding that copies its fields both ways, generated
 from the `@SceneBinding` on the saved form: `CanvasRectBinding` loads a `canvas_rect` as a `CanvasRect`,
 `CanvasButtonBinding` a `canvas_button` as a `CanvasButtonWidget`, and so on. The bindings of
-`canvas_layout`, `canvas_cluster` and `canvas_bind`, which save a value whole, and of the older
-`canvas_element` are written by hand and marked `@RegisteredBinding`. The module's generated
+`canvas_layout`, `canvas_cluster` and `canvas_bind` use `@SceneBinding(whole = "...")` to save their
+live value under one field. Only the older `canvas_element` reader is written by hand and marked
+`@RegisteredBinding`. The module's generated
 `CanvasSceneComponents` lists them all, in binding-name order, which is also the order a node lists its
 canvas components when saved; `DefaultSceneComponentResolvers` registers it. `CanvasBindingGoldenTest`
 holds what each binding saves, recorded before they were generated. `CanvasComponentExposureTest`

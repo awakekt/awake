@@ -7,8 +7,6 @@ package com.awakekt.awake.scene.binding.processor
 
 import com.tschuchort.compiletesting.JvmCompilationResult
 import com.tschuchort.compiletesting.KotlinCompilation
-import com.tschuchort.compiletesting.SourceFile
-import com.tschuchort.compiletesting.configureKsp
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import kotlin.test.Test
 import kotlin.test.assertContains
@@ -18,7 +16,7 @@ import kotlin.test.assertEquals
 class SceneBindingProcessorTest {
     @Test
     fun aMatchingPairCompilesWithRenamesConvertersEnumsAndHooks() {
-        val result = compile(
+        val result = compileSceneBinding(
             """
             enum class Mode { On, Off }
             enum class SavedMode { On, Off }
@@ -52,7 +50,7 @@ class SceneBindingProcessorTest {
 
     @Test
     fun aLiveFieldWithNoSavedFieldIsACompileError() {
-        val result = compile(
+        val result = compileSceneBinding(
             """
             class Pulse(var rate: Float = 1f, var depth: Float = 0f)
             @SceneBinding(Pulse::class)
@@ -64,7 +62,7 @@ class SceneBindingProcessorTest {
 
     @Test
     fun aSavedFieldWithNoLiveFieldIsACompileError() {
-        val result = compile(
+        val result = compileSceneBinding(
             """
             class Pulse(var rate: Float = 1f)
             @SceneBinding(Pulse::class)
@@ -76,7 +74,7 @@ class SceneBindingProcessorTest {
 
     @Test
     fun aTypeMismatchWithNoConverterIsACompileError() {
-        val result = compile(
+        val result = compileSceneBinding(
             """
             class Pulse(var rate: Double = 1.0)
             @SceneBinding(Pulse::class)
@@ -88,7 +86,7 @@ class SceneBindingProcessorTest {
 
     @Test
     fun enumsWithDifferentConstantsAreACompileError() {
-        val result = compile(
+        val result = compileSceneBinding(
             """
             enum class Mode { On, Off }
             enum class SavedMode { On, Idle }
@@ -102,13 +100,13 @@ class SceneBindingProcessorTest {
 
     @Test
     fun aSceneComponentWithNoBindingIsACompileError() {
-        val result = compile("data class SceneOrphan(val x: Float = 0f) : SceneComponent")
+        val result = compileSceneBinding("data class SceneOrphan(val x: Float = 0f) : SceneComponent")
         assertFails(result, "SceneOrphan is a scene component with no binding in this module")
     }
 
     @Test
     fun aHandWrittenBindingTheRegistryDoesNotListIsACompileError() {
-        val result = compile(
+        val result = compileSceneBinding(
             """
             class Pulse
             @UnboundSceneComponent("bound by hand below")
@@ -126,7 +124,7 @@ class SceneBindingProcessorTest {
 
     @Test
     fun aRegisteredBindingCoversItsSchemaAndJoinsTheRegistry() {
-        val result = compile(
+        val result = compileSceneBinding(
             """
             class Pulse
             data class ScenePulse(val x: Float = 0f) : SceneComponent
@@ -145,31 +143,5 @@ class SceneBindingProcessorTest {
     private fun assertFails(result: JvmCompilationResult, message: String) {
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, result.messages)
         assertContains(result.messages, message)
-    }
-
-    private fun compile(body: String): JvmCompilationResult {
-        val source = SourceFile.kotlin(
-            "Test.kt",
-            """
-            package test
-
-            import com.awakekt.awake.ecs.Entity
-            import com.awakekt.awake.ecs.World
-            import com.awakekt.awake.scene.binding.*
-            import com.awakekt.awake.scene.document.SceneComponent
-
-            ${body.trimIndent()}
-            """.trimIndent(),
-        )
-        return KotlinCompilation().apply {
-            sources = listOf(source)
-            inheritClassPath = true
-            jvmTarget = "17"
-            messageOutputStream = System.out
-            configureKsp {
-                symbolProcessorProviders += SceneBindingProcessorProvider()
-                processorOptions[Names.REGISTRY_OPTION] = "test.TestSceneComponents"
-            }
-        }.compile()
     }
 }

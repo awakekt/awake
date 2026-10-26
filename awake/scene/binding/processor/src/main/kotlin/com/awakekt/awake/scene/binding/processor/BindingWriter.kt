@@ -23,7 +23,7 @@ internal fun writeBinding(plan: BindingPlan): FileSpec {
     val type = TypeSpec.objectBuilder(request.binding)
         .addSuperinterface(Names.BINDING.parameterizedBy(live, saved))
         .addKdoc(
-            "Binds [%T] to [%T] both ways, field by field: generated from the `@SceneBinding` on [%T], so edit that, not this.\n",
+            "Binds [%T] to [%T] both ways: generated from the `@SceneBinding` on [%T], so edit that, not this.\n",
             saved,
             live,
             saved,
@@ -92,17 +92,25 @@ private fun toLiveFunction(plan: BindingPlan, enums: List<Conversion.EnumByName>
     val builder = FunSpec.builder("toComponent")
         .receiver(request.saved.className)
         .returns(request.live.className)
-        .addKdoc("This schema as a new [%T], every saved field copied.\n", request.live.className)
-    if (plan.isObjectPair) return builder.finish(request.hooks, "afterCopyToLive", "this", CodeBlock.of("%T", request.live.className))
-    builder.addStatement("val saved = this")
-    val arguments = plan.fields.filter { it.viaConstructor }.map { field ->
-        CodeBlock.of("%N = %L", field.live, value(field, CodeBlock.of("saved.%N", field.saved), toLive = true, enums))
+        .addKdoc("This schema as its live [%T], through the declared mapping.\n", request.live.className)
+    plan.whole?.let { whole ->
+        builder.addStatement("val saved = this")
+        builder.addStatement("val live = %L", value(whole.conversion, false, CodeBlock.of("saved.%N", whole.saved), toLive = true, enums))
+        return builder.finish(request.hooks, "afterCopyToLive", "saved", CodeBlock.of("live"))
     }
-    builder.addCode(construct("live", request.live.className, arguments))
-    plan.fields.filterNot { it.viaConstructor }.forEach { field ->
-        builder.addStatement("live.%N = %L", field.live, value(field, CodeBlock.of("saved.%N", field.saved), toLive = true, enums))
+    return if (plan.isObjectPair) {
+        builder.finish(request.hooks, "afterCopyToLive", "this", CodeBlock.of("%T", request.live.className))
+    } else {
+        builder.addStatement("val saved = this")
+        val arguments = plan.fields.filter { it.viaConstructor }.map { field ->
+            CodeBlock.of("%N = %L", field.live, value(field, CodeBlock.of("saved.%N", field.saved), toLive = true, enums))
+        }
+        builder.addCode(construct("live", request.live.className, arguments))
+        plan.fields.filterNot { it.viaConstructor }.forEach { field ->
+            builder.addStatement("live.%N = %L", field.live, value(field, CodeBlock.of("saved.%N", field.saved), toLive = true, enums))
+        }
+        builder.finish(request.hooks, "afterCopyToLive", "saved", CodeBlock.of("live"))
     }
-    return builder.finish(request.hooks, "afterCopyToLive", "saved", CodeBlock.of("live"))
 }
 
 private fun toSavedFunction(plan: BindingPlan, enums: List<Conversion.EnumByName>): FunSpec {
@@ -110,14 +118,23 @@ private fun toSavedFunction(plan: BindingPlan, enums: List<Conversion.EnumByName
     val builder = FunSpec.builder("toSceneComponent")
         .receiver(request.live.className)
         .returns(request.saved.className)
-        .addKdoc("This live component as a new [%T], every saved field copied.\n", request.saved.className)
-    if (plan.isObjectPair) return builder.finish(request.hooks, "afterCopyToSaved", "this", CodeBlock.of("%T", request.saved.className))
-    builder.addStatement("val live = this")
-    val arguments = plan.fields.map { field ->
-        CodeBlock.of("%N = %L", field.saved, value(field, CodeBlock.of("live.%N", field.live), toLive = false, enums))
+        .addKdoc("This live component as a new [%T], through the declared mapping.\n", request.saved.className)
+    plan.whole?.let { whole ->
+        builder.addStatement("val live = this")
+        val argument = CodeBlock.of("%N = %L", whole.saved, value(whole.conversion, false, CodeBlock.of("live"), toLive = false, enums))
+        builder.addCode(construct("saved", request.saved.className, listOf(argument)))
+        return builder.finish(request.hooks, "afterCopyToSaved", "live", CodeBlock.of("saved"))
     }
-    builder.addCode(construct("saved", request.saved.className, arguments))
-    return builder.finish(request.hooks, "afterCopyToSaved", "live", CodeBlock.of("saved"))
+    return if (plan.isObjectPair) {
+        builder.finish(request.hooks, "afterCopyToSaved", "this", CodeBlock.of("%T", request.saved.className))
+    } else {
+        builder.addStatement("val live = this")
+        val arguments = plan.fields.map { field ->
+            CodeBlock.of("%N = %L", field.saved, value(field, CodeBlock.of("live.%N", field.live), toLive = false, enums))
+        }
+        builder.addCode(construct("saved", request.saved.className, arguments))
+        builder.finish(request.hooks, "afterCopyToSaved", "live", CodeBlock.of("saved"))
+    }
 }
 
 /** Returns [result], passed with [input] through the copy hook [hook] when the binding has [hooks]. */
