@@ -27,6 +27,7 @@ import com.awakekt.awake.ui.canvas.CanvasFollowRules
 import com.awakekt.awake.ui.canvas.CanvasJoystick
 import com.awakekt.awake.ui.canvas.CanvasLayout
 import com.awakekt.awake.ui.canvas.CanvasLook
+import com.awakekt.awake.ui.canvas.CanvasPadding
 import com.awakekt.awake.ui.canvas.CanvasStepper
 import com.awakekt.awake.ui.canvas.CanvasStyle
 import com.awakekt.awake.ui.canvas.CanvasSweep
@@ -221,6 +222,15 @@ class CanvasElementScope internal constructor(
     /** What [maxLength] counts. */
     var maxLengthUnit: TextLengthUnit = defaults.maxLengthUnit
 
+    /** The key of the hint a TextField shows while it is empty and unfocused. */
+    var placeholder: String = defaults.placeholder
+
+    /** The space between a TextField's edge and its text, in dp. */
+    var padding: CanvasPadding = defaults.padding
+
+    /** The key of the hint shown near the pointer after it rests on the element. */
+    var tooltip: String = defaults.tooltip
+
     /** How a Joystick moves and what it reports. */
     var joystick: CanvasJoystick? = defaults.joystick
 
@@ -358,6 +368,9 @@ class CanvasElementScope internal constructor(
         pressable = pressable,
         maxLength = maxLength,
         maxLengthUnit = maxLengthUnit,
+        placeholder = placeholder,
+        padding = padding,
+        tooltip = tooltip,
         textKey = textKey,
         textArgs = textArgs.toMap(),
         joystick = joystick,

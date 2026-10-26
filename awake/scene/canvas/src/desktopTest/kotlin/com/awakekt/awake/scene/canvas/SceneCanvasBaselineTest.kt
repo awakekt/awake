@@ -9,6 +9,9 @@ import com.awakekt.awake.compose.testing.assertMatchesBaseline
 import com.awakekt.awake.compose.ui.graphics.ImageBitmap
 import com.awakekt.awake.compose.ui.platform.ComposeHost
 import com.awakekt.awake.compose.ui.platform.FrameInput
+import com.awakekt.awake.core.localization.LocaleId
+import com.awakekt.awake.core.localization.StringTableSource
+import com.awakekt.awake.core.localization.Strings
 import com.awakekt.awake.core.math2d.Rectangle
 import com.awakekt.awake.core.math2d.Vec2
 import com.awakekt.awake.core.text.font.UiFonts
@@ -26,12 +29,14 @@ import com.awakekt.awake.ui.canvas.CanvasGradient
 import com.awakekt.awake.ui.canvas.CanvasImage
 import com.awakekt.awake.ui.canvas.CanvasLayout
 import com.awakekt.awake.ui.canvas.CanvasMask
+import com.awakekt.awake.ui.canvas.CanvasPadding
 import com.awakekt.awake.ui.canvas.CanvasShadow
 import com.awakekt.awake.ui.canvas.CanvasStepper
 import com.awakekt.awake.ui.canvas.CanvasStyle
 import com.awakekt.awake.ui.canvas.CanvasSweep
 import com.awakekt.awake.ui.canvas.CanvasTextOutline
 import com.awakekt.awake.ui.canvas.CanvasTextShadow
+import kotlinx.coroutines.test.runTest
 import java.io.File
 import kotlin.test.Test
 
@@ -317,7 +322,53 @@ class SceneCanvasBaselineTest {
             .primitives.assertMatchesBaseline("scene-canvas-gauges", 304, 124, font = UiFonts.default())
     }
 
+    /**
+     * Three padded fields: typed text 12 dp in from the border, an empty one showing its muted placeholder
+     * from the same place, and an empty one with a wider padding and a placeholder.
+     */
+    @Test
+    fun paddedTextFieldsWithAndWithoutAPlaceholder() = runTest {
+        val world = World()
+        fun field(y: Float, configure: CanvasElement.() -> Unit) = CanvasElement().apply {
+            kind = CanvasElementKind.TextField; offsetX = 16f; offsetY = y; width = 200f; height = 28f
+            fontSize = 14f; background = "#00000080"; style = CanvasStyle(borderWidth = 1f, borderColor = "#FFFFFF60")
+            configure()
+        }.also { world.add(world.create(), it) }
+        field(8f) { text = "Harbor Town" }
+        field(44f) { placeholder = "chat.hint" }
+        field(80f) { placeholder = "chat.hint"; padding = CanvasPadding(horizontal = 32f, vertical = 0f) }
+        val strings = Strings.load(StringTableSource.of(mapOf(LocaleId.English to mapOf("chat.hint" to "Say something"))), locale = LocaleId.English)
+
+        ComposeHost().frame(FrameInput(232, 116)) { SceneCanvas(world, strings = strings) }
+            .primitives.assertMatchesBaseline("scene-canvas-field-placeholder", 232, 116, font = UiFonts.default())
+    }
+
+    /**
+     * A tooltip on a button near the canvas's right edge: it opens below and right of the pointer after
+     * the hover delay, and, with no room to its right, to the pointer's left instead.
+     */
+    @Test
+    fun aTooltipKeptInsideTheCanvasNearItsRightEdge() = runTest {
+        val world = World()
+        CanvasElement().apply {
+            kind = CanvasElementKind.Button; anchor = CanvasAnchor.TopRight; offsetX = 12f; offsetY = 12f; width = 96f; height = 28f
+            text = "Backpack"; fontSize = 14f; background = "#3A5F8A"; tooltip = "tip.bag"
+        }.also { world.add(world.create(), it) }
+        val strings = Strings.load(StringTableSource.of(mapOf(LocaleId.English to mapOf("tip.bag" to "Open your backpack"))), locale = LocaleId.English)
+        val host = ComposeHost()
+        fun frame(pointer: Boolean) = host.frame(
+            FrameInput(240, 96, pointerX = if (pointer) 200 else FrameInput.UNKNOWN_POINTER, pointerY = if (pointer) 26 else FrameInput.UNKNOWN_POINTER, deltaSeconds = 0.1f),
+        ) { SceneCanvas(world, strings = strings) }
+        frame(pointer = false)
+        repeat(TOOLTIP_FRAMES) { frame(pointer = true) }
+
+        frame(pointer = true).primitives.assertMatchesBaseline("scene-canvas-tooltip", 240, 96, font = UiFonts.default())
+    }
+
     private companion object {
+        /** Frames of 0.1 s the pointer rests for, a little over the tooltip's delay. */
+        const val TOOLTIP_FRAMES = 7
+
         /** An OFL font the atlas generator bakes, read where it lies, its licence beside it: heavy enough to tell apart. */
         const val ROBOTO_BLACK = "../../ui/font-atlas-generator/fonts/Roboto-Black.ttf"
 

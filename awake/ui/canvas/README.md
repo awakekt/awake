@@ -35,6 +35,12 @@ the `canvas_element` component saved with a scene and drawn by `SceneCanvas(worl
 - **`textKey`**: a Text's or Button's words by key, looked up in the `Strings` passed as
   `CanvasOverlay(strings = …)` in the active locale, with **`textArgs`** in its placeholders; a
   locale switch shows on the next frame. Without strings, or for a key no table has, the key shows.
+- **`placeholder`**: a TextField's hint, a text key shown in muted text (the field's colour at half
+  strength) while the field is empty and does not hold the keyboard. **`padding`**: the space between
+  a TextField's edge and its text, `horizontal` 12 dp (shadcn's input) and `vertical` 0 by default;
+  caret, selection and scrolling work inside it, and the field clips at its edge, so a leading `j`'s
+  tail and an `Å`'s ring keep their ink. **`tooltip`**: a text key for a hint any element shows near
+  the pointer after 0.5 s over it, kept inside the canvas, gone when the pointer leaves or presses.
 - **`font`**: a project `.ttf` or `.otf` file, or a built-in family, `default` or `bitmap`; empty
   is the default Roboto. A host loads the file and passes it in `CanvasOverlay(fonts = …)`.
 - **`value`**: a Bar's or a Sweep's fill from 0 to 1.

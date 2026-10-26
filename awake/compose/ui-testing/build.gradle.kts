@@ -41,6 +41,10 @@ kotlin {
                 implementation(libs.kotlinx.coroutines.test)
             }
         }
+        desktopTest.dependencies {
+            // The canvas's text field, which CanvasTextFieldGlyphClipTest holds to the same clip as BasicTextField.
+            implementation(project(":awake:ui:canvas"))
+        }
     }
 }
 

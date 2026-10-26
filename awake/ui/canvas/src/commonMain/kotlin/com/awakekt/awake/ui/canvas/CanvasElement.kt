@@ -360,6 +360,31 @@ class CanvasElement {
     var maxLengthUnit: TextLengthUnit = TextLengthUnit.Graphemes
 
     /**
+     * The key of the hint a TextField shows while it is empty and does not hold the keyboard, such as
+     * `chat.hint`, in the string tables of the `Strings` [CanvasOverlay] was given; empty shows none.
+     * It draws in the field's text colour at half strength, as muted text, and gives way to the typed
+     * text and to the caret. [textArgs] and a [bind]'s [CanvasBinding.textArgs] fill in its
+     * placeholders. A key no table has shows as the key and is logged once.
+     */
+    var placeholder: String = ""
+
+    /**
+     * The space between a TextField's edge and its text, in dp. The field clips its text at the edge,
+     * so the padding is also the room its glyphs' overhang keeps: a leading `j`'s tail and the ring of
+     * an `Å` that reach past the text's own box. Caret placement, selection and scrolling honour it.
+     */
+    var padding: CanvasPadding = CanvasPadding()
+
+    /**
+     * The key of a short hint shown near the pointer after it has rested on this element for
+     * [TOOLTIP_DELAY_SECONDS], such as `hud.inventory.tooltip`; empty shows none. Any kind takes one.
+     * It stays inside the canvas, and goes when the pointer leaves the element or presses it; a press
+     * hides it until the pointer comes back. [textArgs] and a [bind]'s [CanvasBinding.textArgs] fill in
+     * its placeholders. A key no table has shows as the key and is logged once.
+     */
+    var tooltip: String = ""
+
+    /**
      * The font a Text's, TextField's or Button's words draw in: a project `.ttf` or `.otf` file
      * that [CanvasOverlay] was given, or a built-in family, `default` or `bitmap`.
      * Empty, a file that did not load, or a name that is neither draws in the default font.
@@ -851,6 +876,9 @@ class CanvasElement {
 
         /** How soon a second press makes a double-click, as the common desktop default. */
         const val DOUBLE_CLICK_SECONDS = 0.5
+
+        /** How long the pointer is over an element with a [tooltip] before the hint shows. */
+        const val TOOLTIP_DELAY_SECONDS = 0.5f
     }
 }
 

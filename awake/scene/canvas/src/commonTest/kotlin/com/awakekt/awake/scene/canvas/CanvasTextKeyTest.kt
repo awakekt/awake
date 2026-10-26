@@ -240,7 +240,7 @@ class CanvasTextKeyTest {
             listOf("canvas_element.textKey and bind.text both set the words; keep one"),
             issues(SceneCanvasElement(textKey = "menu.start", bind = CanvasBinding("Player", text = "{bag.count}"))),
         )
-        assertEquals(listOf("canvas_element.textArgs fill in a textKey's text; set textKey"), issues(SceneCanvasElement(textArgs = mapOf("count" to "2"))))
+        assertEquals(listOf("canvas_element.textArgs fill in a textKey's, placeholder's or tooltip's text; set one"), issues(SceneCanvasElement(textArgs = mapOf("count" to "2"))))
         assertEquals(
             listOf("canvas_element.bind.textArgs \"count\" must be component.field, not \"count\""),
             issues(SceneCanvasElement(textKey = "hud.items", bind = CanvasBinding("Player", textArgs = mapOf("count" to "count")))),

@@ -22,6 +22,7 @@ import com.awakekt.awake.ui.canvas.CanvasFollowRules
 import com.awakekt.awake.ui.canvas.CanvasJoystick
 import com.awakekt.awake.ui.canvas.CanvasLayout
 import com.awakekt.awake.ui.canvas.CanvasLook
+import com.awakekt.awake.ui.canvas.CanvasPadding
 import com.awakekt.awake.ui.canvas.CanvasStepper
 import com.awakekt.awake.ui.canvas.CanvasStyle
 import com.awakekt.awake.ui.canvas.CanvasSweep
@@ -156,6 +157,16 @@ import kotlinx.serialization.Serializable
  * It survives a rename of the node and repeats in every instance of a prefab, so code finds it under
  * one instance's root with `World.findCanvasElement`, or in a prefab with `SceneNode.findCanvasNode`.
  * Letters, digits, `_`, `.` and `-`, starting with a letter, digit or `_`; unique within one prefab.
+ * @property placeholder The key of the hint a TextField shows while it is empty and does not hold the
+ * keyboard, such as `chat.hint`, in the project's string tables; empty shows none. It draws in the
+ * field's text colour at half strength. [textArgs] fill in its placeholders, as a [textKey]'s.
+ * @property padding The space between a TextField's edge and its text, in dp: `horizontal` (12, shadcn's
+ * input) and `vertical` (0). The field clips its text at its edge, so the padding is also the room
+ * the overhang of a glyph keeps, such as a leading `j`'s tail.
+ * @property tooltip The key of a short hint shown near the pointer after it has been over the element
+ * for half a second, such as `hud.inventory.tooltip`; empty shows none. Any kind takes one. It stays
+ * inside the canvas and goes when the pointer leaves or presses the element. [textArgs] fill in its
+ * placeholders.
  */
 @Serializable
 @SerialName("canvas_element")
@@ -211,6 +222,9 @@ data class SceneCanvasElement(
     val sweep: CanvasSweep? = null,
     val stepper: CanvasStepper? = null,
     val elementId: String = "",
+    val placeholder: String = "",
+    val padding: CanvasPadding = CanvasPadding(),
+    val tooltip: String = "",
 ) : SceneComponent {
     override val allowsMultiplePerNode: Boolean get() = false
 
@@ -238,7 +252,7 @@ data class SceneCanvasElement(
     }
 
     /** Fields set where they do nothing, and what is wrong with the follow rules. */
-    private fun kindProblems(): List<String> = followProblems() + controlProblems() + idProblems() + listOfNotNull(
+    private fun kindProblems(): List<String> = followProblems() + controlProblems() + idProblems() + hintProblems() + listOfNotNull(
         "mask only masks a TextField".takeIf { mask.isNotEmpty() && kind != CanvasElementKind.TextField },
         "maxLength only limits a TextField".takeIf {
             (maxLength != 0 || maxLengthUnit != TextLengthUnit.Graphemes) && kind != CanvasElementKind.TextField
@@ -251,11 +265,19 @@ data class SceneCanvasElement(
         },
         "textKey and text both set the words; keep one".takeIf { textKey.isNotEmpty() && text.isNotEmpty() },
         "textKey and bind.text both set the words; keep one".takeIf { textKey.isNotEmpty() && !bind?.text.isNullOrBlank() },
-        "textArgs fill in a textKey's text; set textKey".takeIf {
-            textKey.isEmpty() && (textArgs.isNotEmpty() || !bind?.textArgs.isNullOrEmpty())
-        },
         "textKey must not be blank".takeIf { textKey.isNotEmpty() && textKey.isBlank() },
     )
+
+    /** What is wrong with a TextField's placeholder and padding, any element's tooltip, and the arguments of a key. */
+    private fun hintProblems(): List<String> = listOfNotNull(
+        "placeholder only hints a TextField's empty field".takeIf { placeholder.isNotEmpty() && kind != CanvasElementKind.TextField },
+        "placeholder must not be blank".takeIf { placeholder.isNotEmpty() && placeholder.isBlank() },
+        "padding only pads a TextField".takeIf { padding != CanvasPadding() && kind != CanvasElementKind.TextField },
+        "textArgs fill in a textKey's, placeholder's or tooltip's text; set one".takeIf {
+            textKey.isEmpty() && placeholder.isEmpty() && tooltip.isEmpty() && (textArgs.isNotEmpty() || !bind?.textArgs.isNullOrEmpty())
+        },
+        "tooltip must not be blank".takeIf { tooltip.isNotEmpty() && tooltip.isBlank() },
+    ) + padding.problems().map { "padding.$it" }
 
     /** What is wrong with the element's id. */
     private fun idProblems(): List<String> = listOfNotNull(

@@ -14,6 +14,7 @@ import com.awakekt.awake.compose.foundation.layout.FlexBox
 import com.awakekt.awake.compose.foundation.layout.FlexBoxConfig
 import com.awakekt.awake.compose.foundation.layout.FlexWrap
 import com.awakekt.awake.compose.foundation.layout.fillMaxSize
+import com.awakekt.awake.compose.foundation.layout.padding
 import com.awakekt.awake.compose.foundation.text.BasicTextField
 import com.awakekt.awake.compose.foundation.text.Text
 import com.awakekt.awake.compose.runtime.Composer
@@ -23,6 +24,7 @@ import com.awakekt.awake.compose.ui.focus.onFocusChanged
 import com.awakekt.awake.compose.ui.input.key.KeyEventType
 import com.awakekt.awake.compose.ui.input.key.onKeyEvent
 import com.awakekt.awake.compose.ui.semantics.testTag
+import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.math2d.sp
@@ -100,6 +102,9 @@ internal fun CanvasElement.textStyle(color: Color, font: UiFont?) = TextStyle(
     font = font,
 )
 
+/** How strong a TextField's hint draws against the field's text colour. */
+private const val PLACEHOLDER_ALPHA = 0.5f
+
 /** A TextField: the player's line, typed into its box, submitted on Enter and let go on Escape. */
 context(_: Composer)
 internal fun TextFieldView(
@@ -118,9 +123,16 @@ internal fun TextFieldView(
         // dispatch is about to deliver is the one that opened the field, not one meant to submit it.
         val justFocused = element.focusGainedThisFrame
         element.focusGainedThisFrame = false
+        // The hint gives way to the caret as soon as the field holds the keyboard; it draws as muted
+        // text, the field's own colour at half strength, since a canvas has no muted token of its own.
+        val hint = if (element.focused) "" else tree.placeholderOf(element)
         BasicTextField(
             state = element.textFieldState,
+            // The padding sits ahead of the field's own input and paint, so its text, caret and
+            // selection all work inside it, while its clip, which reaches the node's edge, keeps the
+            // overhang of a glyph at the field's edge, as `overflow` does for a padded CSS input.
             modifier = Modifier.fillMaxSize()
+                .padding(horizontal = element.padding.horizontal.coerceAtLeast(0f).dp, vertical = element.padding.vertical.coerceAtLeast(0f).dp)
                 .focusRequester(element.focusRequester)
                 .onFocusChanged {
                     element.focused = it
@@ -132,6 +144,8 @@ internal fun TextFieldView(
                     escape
                 },
             style = textStyle,
+            placeholder = hint.ifEmpty { null },
+            placeholderColor = textStyle.color?.let { it.withAlpha(it.a * PLACEHOLDER_ALPHA) },
             singleLine = true,
             mask = element.mask.firstOrNull(),
             onSubmit = { if (!justFocused) element.submit() },

@@ -40,6 +40,7 @@ import com.awakekt.awake.ui.canvas.CanvasElementKind
 import com.awakekt.awake.ui.canvas.CanvasFollowRules
 import com.awakekt.awake.ui.canvas.CanvasItem
 import com.awakekt.awake.ui.canvas.CanvasOverlay
+import com.awakekt.awake.ui.canvas.CanvasPadding
 import com.awakekt.awake.ui.canvas.CanvasProjection
 import com.awakekt.awake.ui.canvas.CanvasResolver
 import com.awakekt.awake.ui.shadcn.ShadcnTheme
@@ -292,8 +293,10 @@ internal class TextClipCases(private val fontsDir: File) {
         offsetY = CANVAS_OFFSET
         if (font != null) this.font = canvasFontKey
         val (w, h) = textBox(text, size, scale, font)
-        width = w / scale
-        height = h / scale
+        // A field is sized to its text plus its own inner padding, as an input is laid out.
+        val inset = if (kind == CanvasElementKind.TextField) padding else CanvasPadding.None
+        width = w / scale + 2 * inset.horizontal
+        height = h / scale + 2 * inset.vertical
     }
 
     private fun canvasFrame(items: List<CanvasItem>, scale: Float, w: Int, h: Int, resolver: CanvasResolver = CanvasResolver.None): FrameOutput {
@@ -318,7 +321,7 @@ internal class TextClipCases(private val fontsDir: File) {
                                 "canvas-$tag-$textTag-${size.toInt()}px-s${num(scale)}",
                                 CANVAS,
                                 "$kindTitle \"$text\" ${size.toInt()} px, scale ${num(scale)}",
-                                "loaded Roboto TTF, element box = the text's box",
+                                "loaded Roboto TTF, element box = the text's box (a field adds its own padding)",
                                 Outline.Clips,
                             ) {
                                 val el = element(kind, text, size, scale, roboto)
