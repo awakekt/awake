@@ -20,6 +20,7 @@ import com.awakekt.awake.core.graphics2d.DrawCommand
 import com.awakekt.awake.core.input.ImeComposition
 import com.awakekt.awake.core.input.TextEditAction
 import com.awakekt.awake.core.math2d.sp
+import com.awakekt.awake.core.text.font.FontWeight
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.core.text.font.UiFonts
 import com.awakekt.awake.core.text.theme.TextStyle
@@ -338,14 +339,20 @@ class TextFieldThroughFrameTest {
             ComposeHost().frame(idle) { BasicTextField(zeroState, Modifier.size(100.dp, 20.dp), singleLine = true) }
                 .primitives.filterIsInstance<DrawCommand.Glyph>().single()
         }
-        assertTrue(start.u0 != zero.u0, "an unfocused field scrolled its first letter out of view")
+        // A zero drawn at a pen that is a fraction of a pixel along is another variant of the glyph, with its own u0.
+        val zeroes = UiFonts.default().pixelGlyphs?.let { glyphs ->
+            val size = checkNotNull(zero.font).cellSize
+            val steps = glyphs.glyph('0'.code, FontWeight.Normal, size)?.subpixelSteps ?: 1
+            (0 until steps).mapNotNull { glyphs.glyph('0'.code, FontWeight.Normal, size, it)?.u0 }
+        }.orEmpty() + zero.u0
+        assertTrue(start.u0 !in zeroes, "an unfocused field scrolled its first letter out of view")
 
         // Focused with the caret at the end, the same field follows the caret. Without this the
         // assertion above would also pass for a field that never scrolls.
         host.frame(FrameInput(200, 200, 5, 5, pointerDown = true), content)
         host.frame(idle, content)
         state.moveCursorTo(state.text.length)
-        assertEquals(zero.u0, leftmost().u0, "a focused field stopped following its caret")
+        assertTrue(leftmost().u0 in zeroes, "a focused field stopped following its caret")
 
         // Losing focus brings the start back.
         host.frame(FrameInput(200, 200, 150, 150, pointerDown = true), content)

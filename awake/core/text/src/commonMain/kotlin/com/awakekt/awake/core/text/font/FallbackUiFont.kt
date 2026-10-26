@@ -58,7 +58,12 @@ internal class FallbackUiFont(
         if (primary.pixelGlyphs == null) {
             null
         } else {
-            PixelGlyphs { codePoint, weight, pixelSize -> faces[faceIndex(codePoint)].pixelGlyphs?.glyph(codePoint, weight, pixelSize) }
+            object : PixelGlyphs {
+                override fun glyph(codePoint: Int, weight: FontWeight, pixelSize: Int): PixelGlyph? = glyph(codePoint, weight, pixelSize, 0)
+
+                override fun glyph(codePoint: Int, weight: FontWeight, pixelSize: Int, subpixel: Int): PixelGlyph? =
+                    faces[faceIndex(codePoint)].pixelGlyphs?.glyph(codePoint, weight, pixelSize, subpixel)
+            }
         }
     }
 

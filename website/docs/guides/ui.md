@@ -116,11 +116,14 @@ the text depends on that size.
 | Under `Modifier.scale` or another scaling transform | The distance-field atlas, so it scales smoothly |
 | In `UiFonts.bitmap()` | Its own pixel-art atlas, at every size |
 
-The exact-size glyphs put a one-pixel stem on one solid pixel column, and the x-height and cap height
-on whole pixels. Their coverage blends with gamma 1.8, corrected for the text colour, after a mild
+The exact-size glyphs put a one-pixel stem on one solid pixel column, the x-height and cap height
+on whole pixels, and the crossbar of an `e` or the bar of an `H`, `A` or `F` on one solid pixel row.
+Each glyph comes in four subpixel variants, and a glyph is drawn as the variant nearest its pen's
+fraction of a pixel, with its stem still on the grid, so the gaps in a run follow layout instead of
+jumping by up to a pixel between letters. Their coverage blends with gamma 1.8, corrected for the text colour, after a mild
 contrast boost, so dark text on a light background and light text on a dark one keep the same weight.
 The default Roboto family and any font from `UiFonts.load` have them. Each size is rasterized the first
-time it is drawn, in about a millisecond, and kept.
+time it is drawn, in about ten milliseconds, and kept.
 
 ### The reference small text is held to
 
