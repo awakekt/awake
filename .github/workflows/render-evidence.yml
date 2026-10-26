@@ -2,7 +2,9 @@ name: Render Evidence
 
 # Screenshot evidence for pull requests that can change what the engine draws. Capture the relevant
 # UI icons or headless Vulkan scenarios on the base and head, publish both to render-evidence, and
-# keep one focused PR comment. A PR that touches nothing rendering-related skips capture.
+# keep one focused PR comment. A PR that touches nothing rendering-related skips capture. A PR that
+# touches font, text, clip or layer code also gets before/after text-clipping sheets with lost-ink
+# counts (tools/fonts-tooling/text-evidence); which paths count is decided in paths.py there.
 
 on:
   pull_request:
@@ -49,8 +51,15 @@ jobs:
             echo "render=false" >> "$GITHUB_OUTPUT"; exit 0
           fi
           changed="$(git diff --name-only "$BASE_SHA...$HEAD_SHA")"
+          # A font or text change counts wherever it sits, a TTF in docs included.
+          if python3 -I tools/fonts-tooling/text-evidence/paths.py <<<"$changed" >/dev/null; then
+            text=true
+          else
+            text=false
+          fi
+          echo "text=$text" >> "$GITHUB_OUTPUT"
           product="$(grep -E '^(awake|samples|build-logic)/' <<<"$changed" | grep -vE '\.md$' || true)"
-          if [[ -z "$product" ]]; then
+          if [[ -z "$product" && "$text" != true ]]; then
             echo "::notice::No engine, sample or build-logic changes; nothing to render."
             echo "render=false" >> "$GITHUB_OUTPUT"
             exit 0
@@ -87,8 +96,9 @@ jobs:
         if: steps.scope.outputs.render == 'true'
         run: mkdir -p "$RUNNER_TEMP/before" "$RUNNER_TEMP/after"
 
+      # The text capture compiles the render parity module too, which builds naga.
       - uses: ./.github/actions/cache-naga
-        if: steps.scope.outputs.scenes == 'true'
+        if: steps.scope.outputs.scenes == 'true' || steps.scope.outputs.text == 'true'
         with:
           variant: desktop
           target-path: awake/asset/shader-compiler/rust-native/target
@@ -102,6 +112,10 @@ jobs:
       - name: Render head
         if: steps.scope.outputs.scenes == 'true'
         run: ./gradlew :awake:engine:render:parity:captureRenderEvidence -Pevidence.dir="$RUNNER_TEMP/after"
+
+      - name: Capture text clipping on head
+        if: steps.scope.outputs.text == 'true'
+        run: ./gradlew :awake:engine:render:parity:captureTextClipEvidence -Pevidence.dir="$RUNNER_TEMP/text-after"
 
       - name: Capture icon previews on head
         if: steps.scope.outputs.icons == 'true'
@@ -147,6 +161,21 @@ jobs:
           ./gradlew :awake:engine:render:parity:captureRenderEvidence -Pevidence.dir="$RUNNER_TEMP/before" \
             || echo "::warning::The base failed to render; showing every image as new."
 
+      - name: Capture text clipping on base
+        if: steps.scope.outputs.text == 'true'
+        run: |
+          cd "$RUNNER_TEMP/base"
+          if [[ ! -f awake/engine/render/parity/src/desktopTest/kotlin/com/awakekt/awake/render/parity/textclip/TextClipEvidence.kt ]]; then
+            echo "::notice::The base has no text-clipping capture; showing every case as new."
+            exit 0
+          fi
+          if [[ ! -d awake/asset/shader-compiler/rust-native/target ]]; then
+            mkdir -p awake/asset/shader-compiler/rust-native
+            cp -R "$GITHUB_WORKSPACE/awake/asset/shader-compiler/rust-native/target" awake/asset/shader-compiler/rust-native/ || true
+          fi
+          ./gradlew :awake:engine:render:parity:captureTextClipEvidence -Pevidence.dir="$RUNNER_TEMP/text-before" \
+            || echo "::warning::The base failed to capture text clipping; showing every case as new."
+
       - name: Capture icon previews on base
         if: steps.scope.outputs.icons == 'true'
         run: |
@@ -166,6 +195,10 @@ jobs:
         run: |
           python -m pip install --quiet 'pillow==12.3.0'
           python tools/shadcn/render_evidence.py prepare "$RUNNER_TEMP/before" "$RUNNER_TEMP/after" "$RUNNER_TEMP/compare" "$BASE_SHA" "$HEAD_SHA"
+
+      - name: Compose text clipping sheets
+        if: steps.scope.outputs.text == 'true'
+        run: python3 -I tools/fonts-tooling/text-evidence/compose_sheets.py sheets "$RUNNER_TEMP/text-before" "$RUNNER_TEMP/text-after" "$RUNNER_TEMP/text-sheets"
 
       - name: Publish images
         if: steps.scope.outputs.render == 'true'
@@ -190,6 +223,7 @@ jobs:
           cp -R "$RUNNER_TEMP/before" "$publish/$dest/before"
           cp -R "$RUNNER_TEMP/after" "$publish/$dest/after"
           [[ -d "$RUNNER_TEMP/compare/diff" ]] && cp -R "$RUNNER_TEMP/compare/diff" "$publish/$dest/diff"
+          [[ -d "$RUNNER_TEMP/text-sheets" ]] && cp -R "$RUNNER_TEMP/text-sheets" "$publish/$dest/text"
           cd "$publish"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -206,11 +240,17 @@ jobs:
         if: steps.scope.outputs.render == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
-          EVIDENCE_FOCUS: ${{ steps.scope.outputs.scenes == 'false' && 'icons' || 'all' }}
+          EVIDENCE_FOCUS: ${{ steps.scope.outputs.scenes == 'false' && steps.scope.outputs.icons == 'true' && 'icons' || 'all' }}
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
           prefix="https://raw.githubusercontent.com/$GITHUB_REPOSITORY/render-evidence/pr-$PR/$HEAD_SHA"
           python tools/shadcn/render_evidence.py comment "$RUNNER_TEMP/compare" "$prefix" "$HEAD_SHA" "$GITHUB_REPOSITORY" "$EVIDENCE_FOCUS" > "$RUNNER_TEMP/comment.md"
+          if [[ -d "$RUNNER_TEMP/text-sheets" ]]; then
+            # Text-clipping evidence is the comment on a text PR even when no scene changed.
+            [[ -s "$RUNNER_TEMP/comment.md" ]] || printf '<!-- render-evidence -->\n## Render evidence\n' > "$RUNNER_TEMP/comment.md"
+            echo >> "$RUNNER_TEMP/comment.md"
+            python3 -I tools/fonts-tooling/text-evidence/compose_sheets.py comment "$RUNNER_TEMP/text-sheets" "$prefix" >> "$RUNNER_TEMP/comment.md"
+          fi
           existing="$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments" --paginate \
             --jq '[.[] | select(.body | startswith("<!-- render-evidence -->")) | .id] | first // empty')"
           if [[ ! -s "$RUNNER_TEMP/comment.md" && "$PR_TITLE" =~ ^fix(\(.*\))?!?: ]]; then
@@ -242,4 +282,6 @@ jobs:
           path: |
             ${{ runner.temp }}/before
             ${{ runner.temp }}/after
+            ${{ runner.temp }}/text-before
+            ${{ runner.temp }}/text-after
           retention-days: 14
