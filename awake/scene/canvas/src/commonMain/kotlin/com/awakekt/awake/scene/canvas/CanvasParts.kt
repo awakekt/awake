@@ -91,6 +91,8 @@ abstract class CanvasParts(scope: CanvasPartScope) {
     /**
      * Declares a group of parts named [name], whose ids start with `<this id>.<name>`.
      *
+     * @param T The group's type.
+     * @param name The group's name: non-empty, with no `.`.
      * @param factory Makes the group from the scope it is handed.
      * @return The group.
      */
@@ -101,6 +103,9 @@ abstract class CanvasParts(scope: CanvasPartScope) {
      * Declares [size] groups of parts named [name], one for each item of a repeated part such as a
      * bar's slots: item `i`'s ids start with `<this id>.<name>-<i>`, from 0.
      *
+     * @param T Each item's type.
+     * @param name The items' name: non-empty, with no `.`.
+     * @param size How many items there are.
      * @param factory Makes item [CanvasPartScope.index] from the scope it is handed.
      * @return The items, in order.
      */
@@ -147,9 +152,7 @@ private fun widgetScope(id: String): CanvasPartScope {
 
 /**
  * The items a [CanvasParts.list] declared, in order, as a read-only list. Read them by index in code
- * that runs every frame, `for (i in slots.indices)`, which builds no iterator.
- *
- * @param T The type of each item's parts.
+ * that runs every frame, `for (i in slots.indices)`, which builds no iterator. Each item is a `T`.
  */
 class CanvasPartList<T : CanvasParts> internal constructor(private val items: List<T>) : AbstractList<T>() {
     override val size: Int get() = items.size

@@ -41,6 +41,7 @@ internal const val SLOT_COUNT = 3
 internal const val BAR_GUID = "c0ffee00-0000-4000-8000-0000000010a2"
 
 // --8<-- [start:canvas-parts-build]
+
 /** The action bar built from [ActionBarParts]' handles. */
 internal fun actionBarFromParts(parts: ActionBarParts = ActionBarParts()): ScenePrefab =
     canvasPrefab(guid = BAR_GUID, name = "Action Bar", root = parts.frame) {
@@ -60,6 +61,7 @@ internal fun actionBarFromParts(parts: ActionBarParts = ActionBarParts()): Scene
 // --8<-- [end:canvas-parts-build]
 
 // --8<-- [start:canvas-parts-strings]
+
 /** The same action bar, as code wrote it before handles: every id and name concatenated by hand. */
 internal fun actionBarFromStrings(): ScenePrefab =
     canvasPrefab(guid = BAR_GUID, name = "Action Bar", id = "bar") {

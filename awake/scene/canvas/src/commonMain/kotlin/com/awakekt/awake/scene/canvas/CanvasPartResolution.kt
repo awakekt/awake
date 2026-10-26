@@ -10,18 +10,6 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.ui.canvas.CanvasElement
 
 /**
- * Thrown by [resolve] when a declared part is not an element of the placed prefab: no element at or
- * under the root has its id, as after a typo or a part renamed on one side only, or the element
- * that has it is of another kind.
- *
- * @property ids The ids of every part that did not resolve, in declaration order.
- */
-class CanvasPartResolutionException internal constructor(
-    message: String,
-    val ids: List<String>,
-) : IllegalStateException(message)
-
-/**
  * Binds every part of this declaration, and of the groups in it, to the elements of the placed
  * prefab under [root], and returns it, so its handles write to that copy from now on.
  *
@@ -31,6 +19,7 @@ class CanvasPartResolutionException internal constructor(
  *
  * Nothing is bound unless every part is found, so a declaration is never half bound.
  *
+ * @param T The declaration's type.
  * @param world The world the prefab was placed in.
  * @param root The placed prefab's root entity: the one its `prefab_link` node, or its root node, made.
  * @return This declaration, resolved.
@@ -48,6 +37,7 @@ fun <T : CanvasParts> T.resolve(world: World, root: Entity): T {
  * Binds every part of each item of this list to the elements of the placed prefab under [root], as
  * [CanvasParts.resolve] does, and returns the list.
  *
+ * @param T Each item's type.
  * @param world The world the prefab was placed in.
  * @param root The placed prefab's root entity.
  * @return This list, resolved.

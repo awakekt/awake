@@ -132,3 +132,15 @@ sealed class CanvasPart(val id: String, val kind: CanvasElementKind) {
     /** The handle's [id] and kind. */
     override fun toString(): String = "${kind.name} \"$id\""
 }
+
+/**
+ * Thrown by [resolve] when a declared part is not an element of the placed prefab: no element at or
+ * under the root has its id, as after a typo or a part renamed on one side only, or the element
+ * that has it is of another kind.
+ *
+ * @property ids The ids of every part that did not resolve, in declaration order.
+ */
+class CanvasPartResolutionException internal constructor(
+    message: String,
+    val ids: List<String>,
+) : IllegalStateException(message)
