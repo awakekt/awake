@@ -1,0 +1,532 @@
+{
+ "base_captured": true,
+ "cases": [
+  {
+   "id": "field-A-14sp-d1",
+   "group": "field",
+   "title": "\"\u00c5jump\" 14 sp, density 1",
+   "metric": "lost",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "field-A-14sp-d1.5",
+   "group": "field",
+   "title": "\"\u00c5jump\" 14 sp, density 1.5",
+   "metric": "lost",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "field-A-96sp-d1",
+   "group": "field",
+   "title": "\"\u00c5jump\" 96 sp, density 1",
+   "metric": "lost",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "field-A-96sp-d1.5",
+   "group": "field",
+   "title": "\"\u00c5jump\" 96 sp, density 1.5",
+   "metric": "lost",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "field-j-14sp-d1",
+   "group": "field",
+   "title": "\"jump\" 14 sp, density 1",
+   "metric": "lost",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "field-j-14sp-d1.5",
+   "group": "field",
+   "title": "\"jump\" 14 sp, density 1.5",
+   "metric": "lost",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "field-j-96sp-d1",
+   "group": "field",
+   "title": "\"jump\" 96 sp, density 1",
+   "metric": "lost",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "field-j-96sp-d1.5",
+   "group": "field",
+   "title": "\"jump\" 96 sp, density 1.5",
+   "metric": "lost",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "layer-18sp-normal",
+   "group": "layer",
+   "title": "\"Hgjpqy|Wolf\" 18 sp, normal line",
+   "metric": "lost",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "layer-32sp-normal",
+   "group": "layer",
+   "title": "\"Hgjpqy|Wolf\" 32 sp, normal line",
+   "metric": "lost",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "layer-18sp-tight",
+   "group": "layer",
+   "title": "\"Hgjpqy|Wolf\" 18 sp, tight line",
+   "metric": "lost",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "layer-32sp-tight",
+   "group": "layer",
+   "title": "\"Hgjpqy|Wolf\" 32 sp, tight line",
+   "metric": "lost",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "sidebar-showcase-d2",
+   "group": "sidebar",
+   "title": "Sidebar \"Acme Inc\", density 2",
+   "metric": "lost",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "sidebar-ttf-14sp-d1.5",
+   "group": "sidebar",
+   "title": "Sidebar \"j\u00c5ump\" 14 sp, density 1.5",
+   "metric": "lost",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "sidebar-ttf-96sp-d1",
+   "group": "sidebar",
+   "title": "Sidebar \"j\u00c5ump\" 96 sp, density 1",
+   "metric": "lost",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "fontscale-0.85",
+   "group": "fontscale",
+   "title": "font scale 0.85",
+   "metric": "lost",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "fontscale-1.3",
+   "group": "fontscale",
+   "title": "font scale 1.3",
+   "metric": "lost",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "sdf-W-28sp",
+   "group": "sdf",
+   "title": "\"W\" 28 sp",
+   "metric": "edge",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "sdf-o-28sp",
+   "group": "sdf",
+   "title": "\"o\" 28 sp",
+   "metric": "edge",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "sdf-f-28sp",
+   "group": "sdf",
+   "title": "\"f\" 28 sp",
+   "metric": "edge",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "sdf-amp-28sp",
+   "group": "sdf",
+   "title": "\"&\" 28 sp",
+   "metric": "edge",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "sdf-Q-28sp",
+   "group": "sdf",
+   "title": "\"Q\" 28 sp",
+   "metric": "edge",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "sdf-g-28sp",
+   "group": "sdf",
+   "title": "\"g\" 28 sp",
+   "metric": "edge",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "sdf-W-32sp",
+   "group": "sdf",
+   "title": "\"W\" 32 sp",
+   "metric": "edge",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "sdf-o-32sp",
+   "group": "sdf",
+   "title": "\"o\" 32 sp",
+   "metric": "edge",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "sdf-f-32sp",
+   "group": "sdf",
+   "title": "\"f\" 32 sp",
+   "metric": "edge",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "sdf-amp-32sp",
+   "group": "sdf",
+   "title": "\"&\" 32 sp",
+   "metric": "edge",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "sdf-Q-32sp",
+   "group": "sdf",
+   "title": "\"Q\" 32 sp",
+   "metric": "edge",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "sdf-g-32sp",
+   "group": "sdf",
+   "title": "\"g\" 32 sp",
+   "metric": "edge",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "sdf-W-40sp",
+   "group": "sdf",
+   "title": "\"W\" 40 sp",
+   "metric": "edge",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "sdf-o-40sp",
+   "group": "sdf",
+   "title": "\"o\" 40 sp",
+   "metric": "edge",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "sdf-f-40sp",
+   "group": "sdf",
+   "title": "\"f\" 40 sp",
+   "metric": "edge",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "sdf-amp-40sp",
+   "group": "sdf",
+   "title": "\"&\" 40 sp",
+   "metric": "edge",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "sdf-Q-40sp",
+   "group": "sdf",
+   "title": "\"Q\" 40 sp",
+   "metric": "edge",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "sdf-g-40sp",
+   "group": "sdf",
+   "title": "\"g\" 40 sp",
+   "metric": "edge",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "sdf-W-48sp",
+   "group": "sdf",
+   "title": "\"W\" 48 sp",
+   "metric": "edge",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "sdf-o-48sp",
+   "group": "sdf",
+   "title": "\"o\" 48 sp",
+   "metric": "edge",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "sdf-f-48sp",
+   "group": "sdf",
+   "title": "\"f\" 48 sp",
+   "metric": "edge",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "sdf-amp-48sp",
+   "group": "sdf",
+   "title": "\"&\" 48 sp",
+   "metric": "edge",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "sdf-Q-48sp",
+   "group": "sdf",
+   "title": "\"Q\" 48 sp",
+   "metric": "edge",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "sdf-g-48sp",
+   "group": "sdf",
+   "title": "\"g\" 48 sp",
+   "metric": "edge",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "canvas-text-A-14px-s1",
+   "group": "canvas",
+   "title": "Text \"\u00c5jump\" 14 px, scale 1",
+   "metric": "lost",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "canvas-text-A-14px-s1.5",
+   "group": "canvas",
+   "title": "Text \"\u00c5jump\" 14 px, scale 1.5",
+   "metric": "lost",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "canvas-text-A-48px-s1",
+   "group": "canvas",
+   "title": "Text \"\u00c5jump\" 48 px, scale 1",
+   "metric": "lost",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "canvas-text-A-48px-s1.5",
+   "group": "canvas",
+   "title": "Text \"\u00c5jump\" 48 px, scale 1.5",
+   "metric": "lost",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "canvas-field-A-14px-s1",
+   "group": "canvas",
+   "title": "TextField \"\u00c5jump\" 14 px, scale 1",
+   "metric": "lost",
+   "before": 3,
+   "after": 2,
+   "status": "changed"
+  },
+  {
+   "id": "canvas-field-A-14px-s1.5",
+   "group": "canvas",
+   "title": "TextField \"\u00c5jump\" 14 px, scale 1.5",
+   "metric": "lost",
+   "before": 4,
+   "after": 4,
+   "status": "same"
+  },
+  {
+   "id": "canvas-field-A-48px-s1",
+   "group": "canvas",
+   "title": "TextField \"\u00c5jump\" 48 px, scale 1",
+   "metric": "lost",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "canvas-field-A-48px-s1.5",
+   "group": "canvas",
+   "title": "TextField \"\u00c5jump\" 48 px, scale 1.5",
+   "metric": "lost",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "canvas-field-j-14px-s1",
+   "group": "canvas",
+   "title": "TextField \"jump\" 14 px, scale 1",
+   "metric": "lost",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "canvas-field-j-14px-s1.5",
+   "group": "canvas",
+   "title": "TextField \"jump\" 14 px, scale 1.5",
+   "metric": "lost",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "canvas-field-j-48px-s1",
+   "group": "canvas",
+   "title": "TextField \"jump\" 48 px, scale 1",
+   "metric": "lost",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "canvas-field-j-48px-s1.5",
+   "group": "canvas",
+   "title": "TextField \"jump\" 48 px, scale 1.5",
+   "metric": "lost",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "canvas-follower-fade-18px",
+   "group": "canvas",
+   "title": "Follower \"Hgjpqy|Wolf\" 18 px",
+   "metric": "lost",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  },
+  {
+   "id": "canvas-follower-fade-32px",
+   "group": "canvas",
+   "title": "Follower \"Hgjpqy|Wolf\" 32 px",
+   "metric": "lost",
+   "before": 0,
+   "after": 0,
+   "status": "same"
+  }
+ ],
+ "sheets": [
+  {
+   "group": "field",
+   "title": "BasicTextField: ink past the field's box",
+   "file": "sheet-field.png"
+  },
+  {
+   "group": "layer",
+   "title": "graphicsLayer(alpha) around text",
+   "file": "sheet-layer.png"
+  },
+  {
+   "group": "sidebar",
+   "title": "ShadcnSidebar: ink past the header's text box",
+   "file": "sheet-sidebar.png"
+  },
+  {
+   "group": "fontscale",
+   "title": "Font scale on wrapped 14 sp text",
+   "file": "sheet-fontscale.png"
+  },
+  {
+   "group": "sdf",
+   "title": "Distance-field edge of a loaded font",
+   "file": "sheet-sdf.png"
+  },
+  {
+   "group": "canvas",
+   "title": "Game canvas: Text, TextField and a follower faded by distance",
+   "file": "sheet-canvas.png"
+  }
+ ]
+}
