@@ -42,7 +42,7 @@ class CanvasComponentsSceneTest {
 
         assertEquals(older.root.withCanvasComponents(), saved)
         assertEquals(
-            listOf(SceneCanvasRect::class, SceneCanvasText::class, SceneCanvasAppearance::class, SceneCanvasButton::class),
+            listOf(SceneCanvasAppearance::class, SceneCanvasButton::class, SceneCanvasRect::class, SceneCanvasText::class),
             saved.children.single().components.map { it::class },
         )
         val current = older.copy(root = saved)
@@ -158,7 +158,7 @@ class CanvasComponentsSceneTest {
         frame(released = true, x = x, y = y)
     }
 
-    private companion object {
+    internal companion object {
         val CONTROLS = listOf(
             SceneNode(name = "Use", components = listOf(SceneCanvasElement(kind = CanvasElementKind.Button, offsetX = 10f, offsetY = 10f, width = 80f, height = 30f, text = "Use", action = "use"))),
             SceneNode(name = "Name", components = listOf(SceneCanvasElement(kind = CanvasElementKind.TextField, offsetX = 10f, offsetY = 60f, text = "Ada"))),

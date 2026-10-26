@@ -150,13 +150,13 @@ internal fun SceneCanvasTextField.toComponent(): CanvasTextFieldWidget = CanvasT
 internal fun CanvasTextFieldWidget.toScene(): SceneCanvasTextField = SceneCanvasTextField(mask, maxLength, maxLengthUnit, placeholder, padding)
 
 /**
- * The bindings of every canvas element component, in the order a node lists them when saved: what
- * a registry needs to load and save canvas elements in their current form. [CanvasElementBinding]
- * reads the older single `canvas_element` too, and is listed with them.
+ * The bindings of every canvas element component, in the order a node lists them when saved, which
+ * is by binding name: what a registry needs to load and save canvas elements in their current form.
+ * [CanvasElementBinding] reads the older single `canvas_element` too, and is listed with them.
  */
 val canvasElementBindings: List<SceneComponentBinding<*, *>> = listOf(
-    CanvasRectBinding, CanvasTextBinding, CanvasAppearanceBinding, CanvasLayoutBinding, CanvasClusterBinding, CanvasBindBinding,
-    CanvasFollowBinding, CanvasFollowArrowBinding, CanvasInputBinding, CanvasTooltipBinding,
-    CanvasButtonBinding, CanvasBarBinding, CanvasSweepBinding, CanvasStepperBinding, CanvasJoystickBinding, CanvasLookAreaBinding,
-    CanvasTextFieldBinding, CanvasViewBinding, CanvasImageBinding, CanvasElementBinding,
+    CanvasAppearanceBinding, CanvasBarBinding, CanvasBindBinding, CanvasButtonBinding, CanvasClusterBinding, CanvasElementBinding,
+    CanvasFollowArrowBinding, CanvasFollowBinding, CanvasImageBinding, CanvasInputBinding, CanvasJoystickBinding, CanvasLayoutBinding,
+    CanvasLookAreaBinding, CanvasRectBinding, CanvasStepperBinding, CanvasSweepBinding, CanvasTextBinding, CanvasTextFieldBinding,
+    CanvasTooltipBinding, CanvasViewBinding,
 )

@@ -10,15 +10,16 @@ import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.document.ScenePrefab
 import com.awakekt.awake.ui.canvas.CanvasElementKind
+import kotlin.reflect.KClass
 
 // How a scene or prefab saved before the split, with one `canvas_element` for each element, reads
 // now: each becomes the component set that draws it the same way. A scene that loads one attaches
 // the set, and saves it back in its current form.
 
 /**
- * The components this `canvas_element` is now, in the order a node saves them: a `canvas_rect`
- * always, the words, look, child placement, binding, following and pointer settings it sets, and
- * the widget of its kind. A field its kind never used, such as a Panel's text or a Bar's camera, is
+ * The components this `canvas_element` is now, in the order a node saves them, by binding name: a
+ * `canvas_rect` always, the words, look, child placement, binding, following and pointer settings it
+ * sets, and the widget of its kind. A field its kind never used, such as a Panel's text or a Bar's camera, is
  * left out, as it never had an effect.
  */
 fun SceneCanvasElement.toCanvasComponents(): List<SceneComponent> = buildList {
@@ -35,7 +36,10 @@ fun SceneCanvasElement.toCanvasComponents(): List<SceneComponent> = buildList {
     SceneCanvasInput(pressable, draggable, dropTarget, wheel).takeIf { it != SceneCanvasInput() }?.let(::add)
     if (tooltip.isNotEmpty()) add(SceneCanvasTooltip(tooltip, if (words == null) textArgs else emptyMap()))
     widgetOrNull()?.let(::add)
-}
+}.sortedBy { savedOrder[it::class] }
+
+/** Where a node lists each canvas component when saved: the order the canvas bindings export them in. */
+private val savedOrder: Map<KClass<*>, Int> by lazy { canvasElementBindings.withIndex().associate { (index, binding) -> binding.schemaClass to index } }
 
 /** This element's words: always for the kinds that show them, never for a Panel, and for the rest when it sets any. */
 private fun SceneCanvasElement.wordsOrNull(): SceneCanvasText? {
