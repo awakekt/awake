@@ -29,16 +29,19 @@ import kotlin.math.pow
  */
 internal object TextReferenceComposite {
     private val packDirectory: File? = System.getenv("AWAKE_TEXT_REFERENCE_GLYPHS")?.let(::File)?.takeIf { it.isDirectory }
-    private val indexBySize = HashMap<Int, IdentityHashMap<UiFont, HashMap<Long, Pair<Int, FontWeight>>>>()
+    private val indexBySize = HashMap<Int, IdentityHashMap<UiFont, HashMap<Long, Hit>>>()
     private val packs = HashMap<String, Map<Int, PackGlyph>>()
     private val weights = listOf(100, 300, 400, 500, 600, 700, 900).map(::FontWeight)
 
     private class PackGlyph(val left: Int, val top: Int, val width: Int, val height: Int, val coverage: ByteArray)
 
+    /** A pixel glyph a primitive draws: its code point, weight, and which subpixel step of its pen it is for. */
+    private class Hit(val codePoint: Int, val weight: FontWeight, val step: Int, val steps: Int)
+
     /** Writes [name]'s reference when packs are given; [rasterize] draws the frame's other primitives as the baseline does. */
     fun writeIfRequested(primitives: List<UiDrawPrimitive>, name: String, rasterize: (List<UiDrawPrimitive>) -> PixelMap) {
         val directory = packDirectory ?: return
-        val swapped = mutableListOf<Pair<UiDrawPrimitive.Glyph, Pair<Int, FontWeight>>>()
+        val swapped = mutableListOf<Pair<UiDrawPrimitive.Glyph, Hit>>()
         val kept = primitives.filter { primitive ->
             val match = (primitive as? UiDrawPrimitive.Glyph)?.let(::lookUp)
             if (match != null) swapped += (primitive as UiDrawPrimitive.Glyph) to match
@@ -48,30 +51,32 @@ internal object TextReferenceComposite {
         val width = image.width
         val height = image.height
         for ((primitive, match) in swapped) {
-            val (codePoint, weight) = match
             val size = requireNotNull(primitive.font).cellSize
-            val glyph = requireNotNull(UiFonts.default().pixelGlyphs?.glyph(codePoint, weight, size))
-            val reference = pack(directory, weight.value, size)[codePoint] ?: continue
-            composite(image.pixels, width, height, primitive, glyph, reference)
+            val glyph = requireNotNull(UiFonts.default().pixelGlyphs?.glyph(match.codePoint, match.weight, size, match.step))
+            val reference = pack(directory, match.weight.value, size)[match.codePoint] ?: continue
+            composite(image.pixels, width, height, primitive, glyph, match.step.toFloat() / match.steps, reference)
         }
         val out = File("build/reports/text-reference").apply { mkdirs() }
         ImageIO.write(image.toBufferedImage(), "PNG", File(out, "$name.png"))
     }
 
-    /** The code point and weight whose default-family pixel glyph [primitive] draws, or null. */
-    private fun lookUp(primitive: UiDrawPrimitive.Glyph): Pair<Int, FontWeight>? {
+    /** The glyph whose default-family pixel glyph [primitive] draws, or null. */
+    private fun lookUp(primitive: UiDrawPrimitive.Glyph): Hit? {
         val atlas = primitive.font?.takeIf { it.linearCoverage } ?: return null
         val index = indexBySize.getOrPut(atlas.cellSize) { buildIndex(atlas.cellSize) }
         return index[atlas]?.get(key(primitive.u0, primitive.v0))
     }
 
-    private fun buildIndex(size: Int): IdentityHashMap<UiFont, HashMap<Long, Pair<Int, FontWeight>>> {
-        val index = IdentityHashMap<UiFont, HashMap<Long, Pair<Int, FontWeight>>>()
+    private fun buildIndex(size: Int): IdentityHashMap<UiFont, HashMap<Long, Hit>> {
+        val index = IdentityHashMap<UiFont, HashMap<Long, Hit>>()
         val glyphs = UiFonts.default().pixelGlyphs ?: return index
         for (weight in weights) {
             for (char in UiFonts.DEFAULT_CHARS) {
-                val glyph: PixelGlyph = glyphs.glyph(char.code, weight, size) ?: continue
-                index.getOrPut(glyph.atlas) { HashMap() }.getOrPut(key(glyph.u0, glyph.v0)) { char.code to weight }
+                val first: PixelGlyph = glyphs.glyph(char.code, weight, size) ?: continue
+                for (step in 0 until first.subpixelSteps) {
+                    val glyph = glyphs.glyph(char.code, weight, size, step) ?: continue
+                    index.getOrPut(glyph.atlas) { HashMap() }.getOrPut(key(glyph.u0, glyph.v0)) { Hit(char.code, weight, step, first.subpixelSteps) }
+                }
             }
         }
         return index
@@ -98,8 +103,8 @@ internal object TextReferenceComposite {
 
     /** Blends [reference] over [pixels] with gamma 1.8, its pen and baseline recovered from where Awake drew [glyph]. */
     @Suppress("LongParameterList")
-    private fun composite(pixels: ByteArray, width: Int, height: Int, primitive: UiDrawPrimitive.Glyph, glyph: PixelGlyph, reference: PackGlyph) {
-        val pen = primitive.x - glyph.left - glyph.anchorX
+    private fun composite(pixels: ByteArray, width: Int, height: Int, primitive: UiDrawPrimitive.Glyph, glyph: PixelGlyph, fraction: Float, reference: PackGlyph) {
+        val pen = primitive.x - glyph.left + fraction
         val baseline = primitive.y - glyph.top
         val x0 = floor(pen + 0.5f).toInt() + reference.left
         val y0 = (baseline - reference.top).toInt()
