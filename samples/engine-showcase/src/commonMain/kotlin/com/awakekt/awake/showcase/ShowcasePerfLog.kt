@@ -32,17 +32,18 @@ internal class ShowcasePerfLog(
         frames += 1
         if (frames < PERF_LOG_INTERVAL_FRAMES) return
         frames = 0
-        println(perfLine(currentShowcase(), world.family<MeshRenderer>().size, runtime.frameStats()))
+        println(perfLine(currentShowcase(), world.family<MeshRenderer>().size, runtime.frameStats(), runtime.uiPrimitives.size))
     }
 }
 
 /** One `PERF` line; times in milliseconds. */
-internal fun perfLine(showcase: String, renderables: Int, stats: SceneFrameStats): String {
+internal fun perfLine(showcase: String, renderables: Int, stats: SceneFrameStats, uiPrimitives: Int): String {
     val phases = stats.phases
     val render = stats.render
     return buildString {
         append("PERF ").append(showcase)
         append(" renderables=").append(renderables)
+        append(" uiPrimitives=").append(uiPrimitives)
         append(" fps=").append(stats.fps.tenths())
         append(" avg=").append(stats.frameTimeMs.tenths())
         append(" p99=").append(stats.p99FrameTimeMs.tenths())
