@@ -1,0 +1,1 @@
+- Canvas drawing and input now dispatch through focused widget components, and prefab helpers save the component set directly. Existing scenes and flat accessors remain compatible; invalid unused prefab settings report their node and field, and the canvas guide explains migration (#1088).

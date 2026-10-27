@@ -14,6 +14,7 @@ import com.awakekt.awake.scene.canvas.CanvasElementBinding.toComponent
 import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.core.SceneTag
 import com.awakekt.awake.scene.core.transform.Transform
+import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.document.ScenePrefab
 import com.awakekt.awake.scene.document.SceneSerializers
@@ -35,6 +36,8 @@ import com.awakekt.awake.ui.canvas.CanvasMask
 import com.awakekt.awake.ui.canvas.CanvasStepper
 import com.awakekt.awake.ui.canvas.CanvasStyle
 import com.awakekt.awake.ui.canvas.CanvasSweep
+import kotlinx.serialization.KSerializer
+import kotlin.reflect.KClass
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -103,8 +106,36 @@ class CanvasPrefabBuilderTest {
     }
 
     @Test
+    fun everyKindHelperWritesFocusedComponentsWithoutALegacyRecord() {
+        val prefab = canvasPrefab(guid = "g", name = "All kinds") {
+            text("Words") { text = "Harbor Town" }
+            panel("Box")
+            image("Picture")
+            view("Camera")
+            bar("Bar")
+            sweep("Sweep")
+            button("Button")
+            textField("Field")
+            joystick("Stick")
+            lookArea("Look")
+            stepper("Stepper")
+        }
+        val nodes = listOf(prefab.root) + prefab.root.children
+        assertTrue(nodes.all { node -> node.components.none { it is SceneCanvasElement } })
+        assertTrue(nodes.all { node -> node.components.count { it is SceneCanvasRect } == 1 })
+        val button = prefab.root.children.single { it.name == "Button" }
+        assertTrue(button.components.any { it is SceneCanvasButton })
+        assertTrue(button.components.any { it is SceneCanvasText })
+        assertEquals(prefab, prefab.withCanvasComponents(), "builder output is already migrated")
+        assertEquals(prefab, CanvasPrefabs.fromJson(CanvasPrefabs.toJson(prefab)))
+    }
+
+    @Test
     fun thePrefabFormatsOwnReaderReadsItOnceCanvasElementsAreRegistered() {
-        SceneSerializers.register(SceneCanvasElement::class, SceneCanvasElement.serializer())
+        for (binding in CanvasSceneComponents.bindings) {
+            @Suppress("UNCHECKED_CAST") // Each binding's serializer reads its own schema class.
+            SceneSerializers.register(binding.schemaClass as KClass<SceneComponent>, binding.serializer as KSerializer<SceneComponent>)
+        }
         val prefab = unitFrame()
 
         val read = ScenePrefab.fromJson(CanvasPrefabs.toJson(prefab))
@@ -116,7 +147,7 @@ class CanvasPrefabBuilderTest {
     @Test
     fun anElementWritesAsTheLiveElementSavesItBack() {
         fun SceneNode.all(): List<SceneNode> = listOf(this) + children.flatMap { it.all() }
-        val elements = unitFrame().root.all().map { node -> node.components.filterIsInstance<SceneCanvasElement>().single() }
+        val elements = unitFrame().root.all().map { node -> checkNotNull(node.canvasElementView()) }
 
         elements.forEach { element ->
             assertEquals(element, with(CanvasElementBinding) { element.toComponent().toSceneComponent() }, "${element.elementId} loads and saves unchanged")
@@ -152,9 +183,12 @@ class CanvasPrefabBuilderTest {
     fun otherComponentsRideBesideTheElement() {
         val prefab = canvasPrefab(guid = "g", name = "Tagged") { component(SceneTag(setOf("hud"))) }
 
-        assertEquals(listOf(SceneCanvasElement(kind = CanvasElementKind.Panel), SceneTag(setOf("hud"))), prefab.root.components)
+        assertEquals(listOf(SceneCanvasRect(), SceneTag(setOf("hud"))), prefab.root.components)
         assertFailsWith<IllegalArgumentException> {
             canvasPrefab(guid = "g", name = "Twice") { component(SceneCanvasElement()) }
+        }
+        assertFailsWith<IllegalArgumentException> {
+            canvasPrefab(guid = "g", name = "Twice") { component(SceneCanvasText(text = "set through the scope")) }
         }
     }
 
@@ -172,7 +206,10 @@ class CanvasPrefabBuilderTest {
 
         assertTrue(messages.any { "guid" in it }, "a blank guid: $messages")
         assertTrue(failure.issues.any { it.path == "Broken/Other" && "\"label\" is already used at Broken/Label" in it.message }, "a repeated id: $messages")
-        assertTrue(messages.any { "sweep only sets up a Sweep" in it }, "a field on a kind it does nothing for: $messages")
+        assertTrue(
+            failure.issues.any { it.path == "Broken/Box" && it.message == "sweep does nothing on a Panel, so it is not saved" },
+            "a field on a kind it does nothing for: $messages",
+        )
         assertTrue(messages.any { "elementId \"-nope\"" in it }, "an id that is not one: $messages")
     }
 
@@ -219,7 +256,7 @@ class CanvasPrefabBuilderTest {
         assertNull(world.findCanvasElement(first, "health"), "a destroyed root has nothing under it")
     }
 
-    private fun SceneNode.canvas(): SceneCanvasElement = components.filterIsInstance<SceneCanvasElement>().single()
+    private fun SceneNode.canvas(): SceneCanvasElement = checkNotNull(canvasElementView())
 
     /** Places [node] and everything under it, as a scene loader does for a prefab instance. */
     private fun World.place(node: SceneNode, parent: Entity? = null): Entity {
