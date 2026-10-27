@@ -114,6 +114,8 @@ data class PipelineSpec(
      * bug.
      */
     val uniforms: UniformLayout? = null,
+    /** Raster sample count and alpha coverage; attachment sample counts must agree. */
+    val multisample: MultisampleState = MultisampleState.Single,
 ) {
     /** The vertex stage's entry point -- read straight off [vertexShader]. */
     val vertexEntryPoint: String get() = vertexShader.entryPoint

@@ -29,6 +29,8 @@ class SwapchainManager(
      * synchronisation, so it only sizes the placeholder sync arrays.
      */
     val maxFramesInFlight: Int,
+    /** Sample count for the main colour/depth pass; resolved colour and UI stay single-sample. */
+    private val sampleCount: Int = 1,
 ) {
     private val graphicsDevice = graphicsDevice
 
@@ -56,6 +58,9 @@ class SwapchainManager(
         private set
 
     private var depthTextureHandle: io.ygdrasil.webgpu.GPUTexture? = null
+    private var multisampleColorHandle: io.ygdrasil.webgpu.GPUTexture? = null
+    internal var multisampleColorView: GPUTextureView? = null
+        private set
     private var configuredWidth = 0u
     private var configuredHeight = 0u
     internal var onSurfaceResize: (() -> Unit)? = null
@@ -76,6 +81,9 @@ class SwapchainManager(
         depthTextureHandle?.close()
         depthTextureHandle = null
         depthTextureView = null
+        multisampleColorHandle?.close()
+        multisampleColorHandle = null
+        multisampleColorView = null
     }
 
     /** Does nothing: the browser's frame pacing replaces explicit semaphores and fences. */
@@ -103,10 +111,25 @@ class SwapchainManager(
 
         val resized = configuredWidth != 0u || configuredHeight != 0u
         depthTextureHandle?.close()
+        multisampleColorHandle?.close()
+        multisampleColorHandle = if (sampleCount > 1) {
+            graphicsDevice.wgpuContext.device.createTexture(
+                TextureDescriptor(
+                    size = io.ygdrasil.webgpu.Extent3D(width = width, height = height),
+                    format = imageFormatWebGpu,
+                    usage = GPUTextureUsage.RenderAttachment,
+                    sampleCount = sampleCount.toUInt(),
+                ),
+            )
+        } else {
+            null
+        }
+        multisampleColorView = multisampleColorHandle?.createView()
         depthTextureHandle = graphicsDevice.wgpuContext.device.createTexture(
             TextureDescriptor(
                 size = io.ygdrasil.webgpu.Extent3D(width = width, height = height),
                 format = GPUTextureFormat.Depth32Float,
+                sampleCount = sampleCount.toUInt(),
                 usage = GPUTextureUsage.RenderAttachment,
             ),
         )

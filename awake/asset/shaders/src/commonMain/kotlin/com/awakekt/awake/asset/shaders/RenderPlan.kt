@@ -10,6 +10,7 @@ import com.awakekt.awake.render.passes.ContentFeature
 import com.awakekt.awake.render.pipeline.AlphaMode
 import com.awakekt.awake.render.pipeline.DepthCasterKind
 import com.awakekt.awake.render.pipeline.DepthRenderKey
+import com.awakekt.awake.render.pipeline.MultisampleState
 import com.awakekt.awake.render.pipeline.PipelineKey
 import com.awakekt.awake.render.pipeline.PipelineRequest
 import com.awakekt.awake.render.pipeline.PipelineVariant
@@ -78,6 +79,7 @@ fun ShaderSet.stagesFor(backend: RenderBackend): ShaderStages = when (backend) {
  * of only the draws a mask layer names, bound at
  * [com.awakekt.awake.render.pipeline.BindingSemantic.MaskDepth] for an overlay that draws around
  * them, such as an outline. It draws only on frames something is masked.
+ * @property multisample Main colour/depth raster samples, resolved before post-processing and UI.
  *
  * A full extra geometry pass per frame, which is why it is opt-in rather than always on. The
  * scene pass cannot supply this itself: content features draw inside it, and neither backend
@@ -93,6 +95,8 @@ data class RenderPlan(
     val depthPrePassKeyedVariants: Map<DepthRenderKey, ShaderSet> = emptyMap(),
     val sceneDepthVariants: Map<DepthCasterKind, ShaderSet> = emptyMap(),
     val maskShaderSet: ShaderSet? = null,
+    /** Primary colour/depth rasterization. Resolve precedes post-processing and single-sample UI. */
+    val multisample: MultisampleState = MultisampleState.Single,
 ) {
     /** [contentFeatures] resolved against [backend]. */
     fun contentFeaturesFor(backend: RenderBackend): List<ContentFeature> =
@@ -112,7 +116,7 @@ data class RenderPlan(
      * the runtime toggles, and back-face culling and transparency opt in per entity and per draw. All three were once constructor flags that
      * every call site set to true and none set to false.
      */
-    fun toPipelineRequests(backend: RenderBackend): List<PipelineRequest> = buildList {
+    fun toPipelineRequests(backend: RenderBackend, rasterState: MultisampleState = multisample): List<PipelineRequest> = buildList {
         add(
             PipelineRequest(
                 key = PipelineKey.Primary,
@@ -137,6 +141,11 @@ data class RenderPlan(
                 PipelineRequest(key = PipelineKey.Content(it.name), spec = it.spec)
             },
         )
+    }.map { request ->
+        // Content features look up their authored spec in the registry. The backend factory
+        // supplies the scene's sample count without changing that key or opting custom shaders
+        // into alpha to coverage.
+        if (request.key is PipelineKey.Content) request else request.copy(spec = request.spec.copy(multisample = rasterState))
     }
 }
 

@@ -80,6 +80,7 @@ internal fun Renderer.performCreateRenderTarget(width: Int, height: Int): Render
         width,
         height,
         onDestroy = { createdRenderTargets.remove(target) },
+        sampleCount = renderPipeline.multisample.count,
     )
     createdRenderTargets += target
     return target
@@ -87,10 +88,19 @@ internal fun Renderer.performCreateRenderTarget(width: Int, height: Int): Render
 
 internal suspend fun Renderer.performReadPixels(target: RenderTarget): TextureAsset {
     val offscreen = target as OffscreenRenderTarget
+    return readColorPixels(offscreen.colorTexture, offscreen.width, offscreen.height, offscreen.colorFormat)
+}
+
+private suspend fun Renderer.readColorPixels(
+    texture: io.ygdrasil.webgpu.GPUTexture,
+    width: Int,
+    height: Int,
+    format: GPUTextureFormat,
+): TextureAsset {
     val device = graphicsDevice.wgpuContext.device
-    val unpaddedBytesPerRow = offscreen.width * 4
+    val unpaddedBytesPerRow = width * 4
     val bytesPerRow = ((unpaddedBytesPerRow + 255) / 256) * 256
-    val bufferSize = (bytesPerRow * offscreen.height).toULong()
+    val bufferSize = (bytesPerRow * height).toULong()
     val readbackBuffer = device.createBuffer(
         BufferDescriptor(
             size = bufferSize,
@@ -99,7 +109,7 @@ internal suspend fun Renderer.performReadPixels(target: RenderTarget): TextureAs
     )
     val encoder = device.createCommandEncoder()
     encoder.copyTextureToBuffer(
-        source = TexelCopyTextureInfo(texture = offscreen.colorTexture),
+        source = TexelCopyTextureInfo(texture = texture),
         // rowsPerImage is required, not optional: wgpu rejects a zero with "invalid
         // rowsPerImage" and panics across the FFI boundary, which aborts the process rather
         // than throwing. Nothing caught it until this backend gained a pixel test, because
@@ -107,9 +117,9 @@ internal suspend fun Renderer.performReadPixels(target: RenderTarget): TextureAs
         destination = TexelCopyBufferInfo(
             buffer = readbackBuffer,
             bytesPerRow = bytesPerRow.toUInt(),
-            rowsPerImage = offscreen.height.toUInt(),
+            rowsPerImage = height.toUInt(),
         ),
-        copySize = Extent3D(width = offscreen.width.toUInt(), height = offscreen.height.toUInt()),
+        copySize = Extent3D(width = width.toUInt(), height = height.toUInt()),
     )
     device.queue.submit(listOf(encoder.finish()))
 
@@ -123,9 +133,9 @@ internal suspend fun Renderer.performReadPixels(target: RenderTarget): TextureAs
     }
     val mapped = readbackBuffer.getMappedRange()
     val paddedBytes = mapped.toByteArray()
-    val packed = ByteArray(unpaddedBytesPerRow * offscreen.height)
+    val packed = ByteArray(unpaddedBytesPerRow * height)
     var row = 0
-    while (row < offscreen.height) {
+    while (row < height) {
         paddedBytes.copyInto(
             destination = packed,
             destinationOffset = row * unpaddedBytesPerRow,
@@ -134,7 +144,7 @@ internal suspend fun Renderer.performReadPixels(target: RenderTarget): TextureAs
         )
         row += 1
     }
-    if (offscreen.colorFormat == GPUTextureFormat.BGRA8Unorm || offscreen.colorFormat == GPUTextureFormat.BGRA8UnormSrgb) {
+    if (format == GPUTextureFormat.BGRA8Unorm || format == GPUTextureFormat.BGRA8UnormSrgb) {
         var pixel = 0
         while (pixel < packed.size) {
             val blue = packed[pixel]
@@ -145,7 +155,7 @@ internal suspend fun Renderer.performReadPixels(target: RenderTarget): TextureAs
     }
     readbackBuffer.unmap()
     readbackBuffer.close()
-    return TextureAsset(packed, offscreen.width, offscreen.height)
+    return TextureAsset(packed, width, height)
 }
 
 internal suspend fun Renderer.performReadFramebufferAttachment(
@@ -166,6 +176,7 @@ internal suspend fun Renderer.performReadFramebufferAttachment(
 }
 
 internal suspend fun Renderer.performReadPresentedPixels(): TextureAsset {
+    presentedColor?.let { frame -> return readColorPixels(frame.texture, frame.width, frame.height, frame.format) }
     val target = createdRenderTargets.lastOrNull() ?: error(
         "WebGPU readPresentedPixels() requires an active render target; this renderer has not created an offscreen target.",
     )

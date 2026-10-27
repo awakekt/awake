@@ -31,6 +31,7 @@ import com.awakekt.awake.vulkan.models.info.VkImageViewCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkMemoryAllocateInfo
 import com.awakekt.awake.vulkan.models.info.VkRenderPassCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkSubpassDescription
+import com.awakekt.awake.vulkan.texture.ColorAttachment
 
 /** Swapchain-sized resource lifecycle -- depth buffer, framebuffers, the present-transition
  * fallback pass, per-frame command buffers, and [recreateSwapChain]'s full teardown/rebuild
@@ -50,6 +51,7 @@ internal fun Renderer.createDepthResources() {
                 height = swapchainManager.extent.height,
                 format = Renderer.DEPTH_FORMAT,
                 usage = VkImageUsageFlagBits2.VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+                samples = renderPipeline.multisample.count,
             ),
         )
         val requirements = VulkanImages.vkGetImageMemoryRequirements(device, depthImage)
@@ -91,12 +93,20 @@ internal fun Renderer.createDepthResources() {
 }
 
 internal fun Renderer.createFramebuffers() {
+    multisampleColors = if (renderPipeline.multisample.count > 1) {
+        swapchainManager.imageViews.map {
+            ColorAttachment(graphicsDevice, swapchainManager.extent.width, swapchainManager.extent.height, swapchainManager.imageFormat.value, renderPipeline.multisample.count)
+        }
+    } else {
+        emptyList()
+    }
     framebuffers = swapchainManager.imageViews.mapIndexed { index, imageView ->
         val frameBufferInfo = VkFramebufferCreateInfo(
             renderPass = renderPipeline.renderPass,
             // One depth image per swapchain framebuffer so multiple frames can be in
             // flight without racing depth writes through a single shared attachment.
-            pAttachments = arrayOf(imageView, depthImageViews[index]),
+            pAttachments = multisampleColors.getOrNull(index)?.let { arrayOf(it.view, depthImageViews[index], imageView) }
+                ?: arrayOf(imageView, depthImageViews[index]),
             width = swapchainManager.extent.width,
             height = swapchainManager.extent.height,
             layers = 1,
@@ -175,6 +185,8 @@ internal fun Renderer.createCommandBuffers(commandPool: Long, maxFramesInFlight:
 }
 
 internal fun Renderer.destroyDepthResources() {
+    multisampleColors.forEach { it.destroy() }
+    multisampleColors = emptyList()
     depthImageViews.forEach { Vulkan.vkDestroyImageView(device, it) }
     depthImages.forEach { VulkanImages.vkDestroyImage(device, it) }
     depthImageMemories.forEach { VulkanBuffers.vkFreeMemory(device, it) }

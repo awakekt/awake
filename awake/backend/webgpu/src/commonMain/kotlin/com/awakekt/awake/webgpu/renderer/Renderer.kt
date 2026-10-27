@@ -162,6 +162,9 @@ class Renderer internal constructor(
 
     /** Counts every draw this renderer records; published once per submitted frame. */
     internal val statsCounter = RenderStatsCounter()
+
+    /** The latest main-pass colour, valid until the host returns this surface texture. */
+    internal var presentedColor: PresentedColor? = null
     internal val gpuFrameTimer = GpuFrameTimer.createOrNull(graphicsDevice.wgpuContext.device)
 
     override val frameStats: RenderFrameStats?

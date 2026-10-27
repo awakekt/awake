@@ -142,6 +142,7 @@ internal class VulkanImagePassExecutor(
     private val transientLoadRenderPasses = HashMap<VkFormat, Long>()
     private val swapchainContinueRenderPasses = HashMap<VkFormat, Long>()
     private val offscreenContinueRenderPasses = HashMap<VkFormat, Long>()
+    private val offscreenClearRenderPasses = HashMap<VkFormat, Long>()
     private val samplers = HashMap<ImagePassSamplerSpec, Long>()
     private val compiledShaders = HashMap<String, CompiledShader>()
     private val pipelines = HashMap<PipelineKey, Long>()
@@ -196,7 +197,7 @@ internal class VulkanImagePassExecutor(
         }
 
     /**
-     * Render pass compatible with the 2-attachment offscreen scene/UI pass that preserves color
+     * Single-sample colour-only pass over an offscreen resolved image. Preserves color
      * contents (`loadOp = LOAD`) and leaves the color image in `VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL`.
      */
     fun ensureOffscreenContinueRenderPass(colorFormat: VkFormat): Long =
@@ -425,6 +426,8 @@ internal class VulkanImagePassExecutor(
         swapchainContinueRenderPasses.clear()
         offscreenContinueRenderPasses.values.forEach { Vulkan.vkDestroyRenderPass(device, it) }
         offscreenContinueRenderPasses.clear()
+        offscreenClearRenderPasses.values.forEach { Vulkan.vkDestroyRenderPass(device, it) }
+        offscreenClearRenderPasses.clear()
     }
 
     private fun resolveParentResumeRenderPass(
@@ -770,64 +773,23 @@ internal class VulkanImagePassExecutor(
         ),
     )
 
-    /**
-     * Must stay compatible with `createSceneRenderPass`, whose framebuffers and pipelines an
-     * offscreen target reuses -- including its external dependency, which validation compares.
-     * The write-after-write hazard against the interrupted pass is covered by the explicit
-     * barrier [beginParentRenderPass] records instead.
-     */
-    private fun createOffscreenContinueRenderPass(colorFormat: VkFormat): Long = Vulkan.vkCreateRenderPass(
-        device,
-        VkRenderPassCreateInfo(
-            pAttachments = arrayOf(
-                VkAttachmentDescription(
-                    format = colorFormat,
-                    loadOp = VkAttachmentLoadOp.LOAD,
-                    storeOp = VkAttachmentStoreOp.STORE,
-                    initialLayout = VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                    finalLayout = VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                ),
-                VkAttachmentDescription(
-                    format = VkFormat.VK_FORMAT_D32_SFLOAT,
-                    loadOp = VkAttachmentLoadOp.DONT_CARE,
-                    storeOp = VkAttachmentStoreOp.DONT_CARE,
-                    initialLayout = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED,
-                    finalLayout = VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-                ),
-            ),
-            pSubpasses = arrayOf(
-                VkSubpassDescription(
-                    pipelineBindPoint = VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS,
-                    pColorAttachments = arrayOf(
-                        VkAttachmentReference(
-                            attachment = 0,
-                            layout = VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                        ),
-                    ),
-                    pDepthStencilAttachment = arrayOf(
-                        VkAttachmentReference(
-                            attachment = 1,
-                            layout = VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-                        ),
-                    ),
-                ),
-            ),
-            pDependencies = arrayOf(
-                VkSubpassDependency(
-                    srcSubpass = VK_SUBPASS_EXTERNAL,
-                    dstSubpass = 0,
-                    srcStageMask = VkPipelineStageFlagBits.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT.value or
-                        VkPipelineStageFlagBits.VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT.value,
-                    srcAccessMask = 0,
-                    dstStageMask = VkPipelineStageFlagBits.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT.value or
-                        VkPipelineStageFlagBits.VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT.value,
-                    dstAccessMask = VkAccessFlagBits.VK_ACCESS_COLOR_ATTACHMENT_READ_BIT.value or
-                        VkAccessFlagBits.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT.value or
-                        VkAccessFlagBits.VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT.value,
-                ),
-            ),
-        ),
+    /** Post-processing and UI resume on resolved colour; scene depth is no longer attached. */
+    private fun createOffscreenContinueRenderPass(colorFormat: VkFormat): Long = createSingleColorRenderPass(
+        colorFormat = colorFormat,
+        loadOp = VkAttachmentLoadOp.LOAD,
+        initialLayout = VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        finalLayout = VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
     )
+
+    /** Single-sample clear pass for an offscreen UI layer, compatible with its continuation pass. */
+    fun ensureOffscreenClearRenderPass(colorFormat: VkFormat): Long = offscreenClearRenderPasses.getOrPut(colorFormat) {
+        createSingleColorRenderPass(
+            colorFormat = colorFormat,
+            loadOp = VkAttachmentLoadOp.CLEAR,
+            initialLayout = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED,
+            finalLayout = VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        )
+    }
 
     private fun ensureSampler(spec: ImagePassSamplerSpec): Long = samplers.getOrPut(spec) {
         val filter = when (spec.filter) {

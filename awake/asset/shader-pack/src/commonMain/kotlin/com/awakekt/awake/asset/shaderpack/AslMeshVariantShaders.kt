@@ -220,10 +220,10 @@ private fun skinnedTextured(): AslShaderDefinition = shader("skinned_textured") 
         // The material's factors tint it as glTF's do; untinted they are white and black.
         val lit = texColor.rgb * color * tint.xyz * shade + glow.xyz
         val alpha = let("alpha", texColor.a * tint.w)
-        // A masked material's cut-out, as the textured shader's; an opaque one's cutoff is 0.
-        discardIf(alpha lt pbrFactors.z)
         val shaded = vec4(displayTransform.displayReferred(lit, exposure.x), alpha)
-        colorOutput(skinnedDebugColor(debug, debugVaryings, n, texColor.rgb * color * tint.xyz, displayTransform, exposure, shaded))
+        val debugColor = let("debugColor", skinnedDebugColor(debug, debugVaryings, n, texColor.rgb * color * tint.xyz, displayTransform, exposure, shaded))
+        val coverage = materialCoverage(alpha, pbrFactors.z, debugColor.w)
+        colorOutput(vec4(debugColor.xyz, coverage))
     }
 }
 

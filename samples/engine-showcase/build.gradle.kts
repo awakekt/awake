@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
+import com.awakekt.awake.build.extension.HostOs
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
@@ -128,6 +129,7 @@ kotlin {
         named("desktopTest") {
             dependencies {
                 implementation(project(":awake:backend:vulkan"))
+                implementation(project(":awake:backend:webgpu"))
             }
         }
         named("wasmJsMain") {
@@ -137,6 +139,17 @@ kotlin {
             }
             resources.srcDir(project(":awake:backend:webgpu").file("src/wasmJsMain/resources"))
         }
+    }
+}
+
+// Production-plan MSAA probes exercise wgpu-native as well as Vulkan. Its FFM binding needs JDK 25;
+// published sample classes continue to target 17.
+tasks.named<Test>("desktopTest") {
+    javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(25)) })
+    if (HostOs.isMac) {
+        jvmArgs("-XstartOnFirstThread", "--add-opens", "java.base/java.lang=ALL-UNNAMED")
+        val glfw = file("/opt/homebrew/opt/glfw/lib/libglfw.dylib")
+        if (glfw.exists()) systemProperty("org.lwjgl.glfw.libname", glfw.absolutePath)
     }
 }
 

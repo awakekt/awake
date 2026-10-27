@@ -56,7 +56,13 @@ import io.ygdrasil.webgpu.VertexState
  * satisfies that requirement while keeping lines' original no-depth-test look (never
  * occluded by, never occludes, scene geometry).
  */
-class LineRenderPipeline(graphicsDevice: GraphicsDevice, swapchainManager: SwapchainManager, shaderCode: ByteArray) {
+class LineRenderPipeline(
+    graphicsDevice: GraphicsDevice,
+    swapchainManager: SwapchainManager,
+    shaderCode: ByteArray,
+    /** Sample count of the colour/depth attachments this pipeline draws into. */
+    private val sampleCount: Int = 1,
+) {
     private val device = graphicsDevice.wgpuContext.device
 
     /**
@@ -87,6 +93,7 @@ class LineRenderPipeline(graphicsDevice: GraphicsDevice, swapchainManager: Swapc
 
         pipeline = device.createRenderPipeline(
             RenderPipelineDescriptor(
+                multisample = io.ygdrasil.webgpu.MultisampleState(count = sampleCount.toUInt()),
                 layout = device.createAwakePipelineLayout(mapOf(0 to GroupBindings.UniformOnlyMaterial)),
                 vertex = VertexState(
                     module = shaderModule,

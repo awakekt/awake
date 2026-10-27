@@ -98,12 +98,13 @@ open class WebGpuEngine(
     override suspend fun createBackendResources(window: Any): BackendResources {
         graphicsDevice = GraphicsDevice()
         graphicsDevice.create(window)
-        swapchainManager = SwapchainManager(graphicsDevice, MAX_FRAMES_IN_FLIGHT)
+        val rasterState = plan.multisample.supportedBy(setOf(1, 4)) { println("Awake/WebGPU: $it") }
+        swapchainManager = SwapchainManager(graphicsDevice, MAX_FRAMES_IN_FLIGHT, rasterState.count)
         swapchainManager.create()
         val registry = PipelineRegistry(
-            WebGpuPipelineFactory(graphicsDevice, swapchainManager, WebGpuShaderResolver()),
+            WebGpuPipelineFactory(graphicsDevice, swapchainManager, WebGpuShaderResolver(), rasterState),
         ).also { pipelineRegistry = it }
-        builtPipelines = registry.register(plan.toPipelineRequests(RenderBackend.WebGpu))
+        builtPipelines = registry.register(plan.toPipelineRequests(RenderBackend.WebGpu, rasterState))
         val primaryBuilt = builtPipelines.getValue(PipelineKey.Primary)
         renderPipeline = primaryBuilt.fill
 
@@ -111,6 +112,7 @@ open class WebGpuEngine(
             graphicsDevice,
             swapchainManager,
             EngineShaderSets.DebugLine.wgsl(),
+            sampleCount = rasterState.count,
         )
         // Built when the app asked for one: the plan's depth-pre-pass shader set renders the
         // scene from the light's point of view into a DepthTarget, which primaryDraw then

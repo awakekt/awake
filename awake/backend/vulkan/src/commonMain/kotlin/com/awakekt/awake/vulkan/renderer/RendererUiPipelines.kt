@@ -66,7 +66,7 @@ internal fun Renderer.ensureGlyphPipeline() {
 /** [ensureGlyphPipeline]'s offscreen counterpart, for [renderUiToTexture]. */
 internal fun Renderer.ensureOffscreenGlyphPipeline() {
     if (offscreenGlyphRenderPipeline != null) return
-    offscreenGlyphRenderPipeline = buildUiGlyphRenderPipeline(renderPipeline.renderPass)
+    offscreenGlyphRenderPipeline = buildUiGlyphRenderPipeline(imagePassExecutor.ensureOffscreenClearRenderPass(swapchainManager.imageFormat))
 }
 
 private fun Renderer.buildUiGlyphRenderPipeline(renderPass: Long): UiRenderPipeline =
@@ -150,7 +150,7 @@ internal fun Renderer.ensureOffscreenQuadPipeline() {
         vertShaderCode = uiShaders.vertex,
         fragShaderCode = uiShaders.fragment,
         descriptor = uiPipelineDescriptor(UiPipelineKind.Quad),
-        externalRenderPass = renderPipeline.renderPass,
+        externalRenderPass = imagePassExecutor.ensureOffscreenClearRenderPass(swapchainManager.imageFormat),
     )
 }
 
@@ -162,7 +162,7 @@ internal fun Renderer.ensureOffscreenRoundedQuadPipeline() {
         vertShaderCode = uiRoundedQuadShaders.vertex,
         fragShaderCode = uiRoundedQuadShaders.fragment,
         descriptor = uiPipelineDescriptor(UiPipelineKind.RoundedQuad),
-        externalRenderPass = renderPipeline.renderPass,
+        externalRenderPass = imagePassExecutor.ensureOffscreenClearRenderPass(swapchainManager.imageFormat),
     )
 }
 
@@ -174,7 +174,7 @@ internal fun Renderer.ensureOffscreenTexturePipeline(mode: TextureCompositeMode)
         vertShaderCode = uiTextureShaders.vertex,
         fragShaderCode = uiTextureShaders.fragment,
         descriptor = uiPipelineDescriptor(UiPipelineKind.Texture, mode.blendMode, mode.premultiplied),
-        externalRenderPass = renderPipeline.renderPass,
+        externalRenderPass = imagePassExecutor.ensureOffscreenClearRenderPass(swapchainManager.imageFormat),
         framesInFlight = maxFramesInFlight,
     )
 }
@@ -190,7 +190,7 @@ internal fun Renderer.ensureTargetCompositePipeline() {
         swapchainManager = swapchainManager,
         vertShaderCode = shaders.vertex,
         fragShaderCode = shaders.fragment,
-        externalRenderPass = renderPipeline.renderPass,
+        externalRenderPass = imagePassExecutor.ensureOffscreenClearRenderPass(swapchainManager.imageFormat),
         descriptor = UiPipelineDescriptor(
             variant = UiPipelineVariant.TargetComposite,
             vertexFormat = VertexFormats2D.Quad,

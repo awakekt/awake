@@ -119,6 +119,8 @@ class RenderPipeline(
     private val bindingsByGroup: Map<Int, GroupBindings> = emptyMap(),
     /** Whether [bindingsByGroup] is authoritative, including an explicitly empty layout. */
     private val bindingsMetadataAvailable: Boolean = false,
+    /** Raster state shared by every attachment in the colour/depth pass. */
+    val multisample: com.awakekt.awake.render.pipeline.MultisampleState = com.awakekt.awake.render.pipeline.MultisampleState.Single,
 ) : UniformBlockOwner {
     var renderPass: Long = 0
 
@@ -351,6 +353,27 @@ class RenderPipeline(
         )
     }
 
+    private fun blendState(): BlendState? = if (variant.blendEnabled) {
+        BlendState(
+            color = BlendComponent(
+                srcFactor = GPUBlendFactor.SrcAlpha,
+                // Additive colour adds to what is there; alpha blends as usual.
+                dstFactor = if (variant.additive) GPUBlendFactor.One else GPUBlendFactor.OneMinusSrcAlpha,
+            ),
+            alpha = BlendComponent(
+                srcFactor = GPUBlendFactor.SrcAlpha,
+                dstFactor = GPUBlendFactor.OneMinusSrcAlpha,
+            ),
+        )
+    } else {
+        null
+    }
+
+    private fun rasterSamples() = io.ygdrasil.webgpu.MultisampleState(
+        count = multisample.count.toUInt(),
+        alphaToCoverageEnabled = multisample.alphaToCoverageEnabled && !variant.blendEnabled,
+    )
+
     /**
      * Builds a new `GPURenderPipeline` running [wgslSource] with this pipeline's state and explicit layout.
      * It is not bound until [swapIn].
@@ -364,6 +387,7 @@ class RenderPipeline(
         try {
             return device.createRenderPipeline(
                 RenderPipelineDescriptor(
+                    multisample = rasterSamples(),
                     layout = explicitLayout,
                     vertex = VertexState(
                         module = shaderModule,
@@ -376,21 +400,7 @@ class RenderPipeline(
                         targets = listOf(
                             ColorTargetState(
                                 format = swapchainManager.imageFormatWebGpu,
-                                blend = if (variant.blendEnabled) {
-                                    BlendState(
-                                        color = BlendComponent(
-                                            srcFactor = GPUBlendFactor.SrcAlpha,
-                                            // Additive colour adds to what is there; alpha blends as usual.
-                                            dstFactor = if (variant.additive) GPUBlendFactor.One else GPUBlendFactor.OneMinusSrcAlpha,
-                                        ),
-                                        alpha = BlendComponent(
-                                            srcFactor = GPUBlendFactor.SrcAlpha,
-                                            dstFactor = GPUBlendFactor.OneMinusSrcAlpha,
-                                        ),
-                                    )
-                                } else {
-                                    null
-                                },
+                                blend = blendState(),
                             ),
                         ),
                     ),

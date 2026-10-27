@@ -50,6 +50,7 @@ class OffscreenRenderTarget(
     override val height: Int,
     colorFormat: Int,
     private val onDestroy: (() -> Unit)? = null,
+    private val sampleCount: Int = 1,
 ) : RenderTarget {
     private val graphicsDevice = graphicsDevice
     private val device get() = graphicsDevice.device
@@ -81,6 +82,7 @@ class OffscreenRenderTarget(
     private var depthImage: Long = 0
     private var depthImageMemory: Long = 0
     private var depthImageView: Long = 0
+    private val multisampleColor = if (sampleCount > 1) ColorAttachment(graphicsDevice, width, height, colorFormat, sampleCount) else null
 
     /**
      * Framebuffer binding [colorImageView] and the target's own depth attachment, built for the
@@ -90,6 +92,15 @@ class OffscreenRenderTarget(
         private set
 
     private var shaderReadable = false
+    private val colorFramebuffers = mutableMapOf<Long, Long>()
+
+    /** Single-sample colour-only destination for post-processing and offscreen UI. */
+    internal fun colorFramebuffer(pass: Long): Long = colorFramebuffers.getOrPut(pass) {
+        Vulkan.vkCreateFramebuffer(
+            device,
+            VkFramebufferCreateInfo(renderPass = pass, pAttachments = arrayOf(colorImageView), width = width, height = height, layers = 1),
+        )
+    }
 
     init {
         colorImage = VulkanImages.vkCreateImage(
@@ -138,6 +149,7 @@ class OffscreenRenderTarget(
                 height = height,
                 format = VkFormat.VK_FORMAT_D32_SFLOAT.value,
                 usage = VkImageUsageFlagBits2.VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+                samples = sampleCount,
             ),
         )
         val depthRequirements = VulkanImages.vkGetImageMemoryRequirements(device, depthImage)
@@ -171,7 +183,8 @@ class OffscreenRenderTarget(
             device,
             VkFramebufferCreateInfo(
                 renderPass = renderPass,
-                pAttachments = arrayOf(colorImageView, depthImageView),
+                pAttachments = multisampleColor?.let { arrayOf(it.view, depthImageView, colorImageView) }
+                    ?: arrayOf(colorImageView, depthImageView),
                 width = width,
                 height = height,
                 layers = 1,
@@ -221,7 +234,10 @@ class OffscreenRenderTarget(
     override fun destroy() {
         if (destroyed) return
         destroyed = true
+        colorFramebuffers.values.forEach { Vulkan.vkDestroyFramebuffer(device, it) }
+        colorFramebuffers.clear()
         Vulkan.vkDestroyFramebuffer(device, framebuffer)
+        multisampleColor?.destroy()
         Vulkan.vkDestroyImageView(device, depthImageView)
         VulkanImages.vkDestroyImage(device, depthImage)
         VulkanBuffers.vkFreeMemory(device, depthImageMemory)

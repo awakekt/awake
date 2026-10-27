@@ -232,6 +232,7 @@ private fun textured(clipSpace: ClipSpace, instanced: Boolean = false): AslShade
         fragment {
             val (sampleUv, uvDx, uvDy) = animatedTextureUv(uv, textureFrames, textureScroll)
             val baseColorSample = let("baseColorSample", textureSampleGrad(baseColorTexture, baseColorSampler, sampleUv, uvDx, uvDy))
+            val sourceAlpha = let("sourceAlpha", baseColorSample.a * baseColorFactor.a)
             val albedo = let("albedo", srgbToLinear(baseColorSample.rgb) * color * baseColorFactor.rgb)
             // glTF convention: G = roughness, B = metalness; factor * texture channel.
             val metallicRoughness =
@@ -314,10 +315,10 @@ private fun textured(clipSpace: ClipSpace, instanced: Boolean = false): AslShade
                 shadowCascade = cascades.shadowCascade(worldPos),
                 clay = displayTransform.display(clayRadiance(clayNDotL, shadowFactor, lightColor.xyz, clayAmbient(lightColor)), exposure.x),
             )
-            // A masked material's cut-out, last: after it no derivative may follow. An opaque material's
-            // cutoff is 0, so its texture alpha is ignored.
-            discardIf(baseColorSample.a * baseColorFactor.a lt pbrFactors.z)
-            colorOutput(debugViewColor(debugView, cameraPosition, surface, shaded))
+            // Coverage is applied after every derivative, including those used by debug views.
+            val debugColor = let("debugColor", debugViewColor(debugView, cameraPosition, surface, shaded))
+            val coverage = materialCoverage(sourceAlpha, pbrFactors.z, debugColor.a)
+            colorOutput(vec4(debugColor.rgb, coverage))
         }
     }
 
