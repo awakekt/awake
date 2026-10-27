@@ -118,14 +118,18 @@ class AwakeSurfaceView(
      */
     private fun reportSafeArea(insets: WindowInsets) {
         val covered = insets.getInsets(WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout())
+        val gestures = insets.getInsets(WindowInsets.Type.systemGestures())
         val at = IntArray(2).also(::getLocationInWindow)
         val window = rootView
         val density = resources.displayMetrics.density
-        val left = (covered.left - at[0]).coerceAtLeast(0)
-        val top = (covered.top - at[1]).coerceAtLeast(0)
-        val right = (covered.right - (window.width - at[0] - width)).coerceAtLeast(0)
-        val bottom = (covered.bottom - (window.height - at[1] - height)).coerceAtLeast(0)
-        lifecycle.setSafeArea(DisplayInsets(left / density, top / density, right / density, bottom / density))
+        val margins = DisplayInsets(
+            at[0] / density,
+            at[1] / density,
+            (window.width - at[0] - width) / density,
+            (window.height - at[1] - height) / density,
+        )
+        lifecycle.setSafeArea(DisplayInsets(covered.left / density, covered.top / density, covered.right / density, covered.bottom / density).inView(margins))
+        lifecycle.setSystemGestureInsets(DisplayInsets(gestures.left / density, gestures.top / density, gestures.right / density, gestures.bottom / density).inView(margins))
     }
 
     override fun surfaceDestroyed(holder: SurfaceHolder) {

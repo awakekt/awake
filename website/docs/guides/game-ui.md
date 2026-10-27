@@ -755,6 +755,15 @@ A host that knows better sets `SceneAppLifecycleRuntime.canvasSafeArea` itself, 
 `SceneCanvas(world, safeArea = …)`: an editor previews a device by passing that device's insets.
 `canvasDpi` likewise overrides the platform's dots per inch.
 
+Android also reports `AppFrame.systemGestureInsets`: the edges where system navigation gestures
+take priority, separate from `safeArea`. Both sets are relative to the engine surface and in dp,
+including when the surface is embedded inside a larger window. A host receives updates after a
+resize or inset change through `WindowLifecycle.setSystemGestureInsets`. Other hosts report
+`DisplayInsets.None` unless they supply this information; their existing safe areas are unchanged.
+When laying out edge controls, a host can choose the larger value on each edge from the visual and
+gesture sets and pass that as its canvas safe area. Do not add the sets: they can overlap. General
+panels can continue to use just the visual safe area.
+
 ### Place something on a point
 
 `PointAnchor(x, y, pivot = Alignment.BottomCenter)` is the same placement for any Compose UI: it
@@ -819,6 +828,19 @@ the mask once for each typed character while `text` keeps what was typed, refuse
 reads as a password to accessibility services and the platform keyboard. Set `mask` back to `""` to
 show the password.
 
+Projects played by `runProject`, or by the systems from `sceneSystemsFor`, also accept controls added
+while playing. A HUD does not have to appear in the saved scene to get its input actions. Idle scenes
+watch for controls without creating fallback input state; when controls arrive, action reading runs
+before the canvas feeds its actions, and before movement and camera consumers.
+
+A system using the standard `gameplayInput()` provider can read `input.hostState` for the host's
+`showTouchControls` preference and `lastInputDevice`. The preference is the host's request before a
+canvas's `Auto` visibility policy. `lastInputDevice` stays on a quiet frame; `changeVersion` increments
+only when the device or preference changes, so a system can remember its last version and rebuild
+its layout once per change. The state is updated before systems run and survives project scene
+switches. A custom/headless provider can pass its own `HostInputState` to `GameplayInput`; the
+two-argument constructor continues to report no host state.
+
 A `Joystick` knob follows the thumb that landed on it up to the pad's edge and springs back on
 release; another thumb on a button, or on the stick, never moves it. Its `joystick` settings make it
 `Floating`, appearing where the thumb lands in its box, or `Dynamic`, dragged along past its reach,
@@ -833,6 +855,12 @@ and set its `radius`, a `deadZone`, a `response` or `curve`, four- or eight-way 
   "joystick": { "mode": "Floating", "radius": 64, "restX": 0.35, "restY": 0.6, "deadZone": 0.12,
                 "sprintThreshold": 0.9, "sprintAction": "run", "idleAlpha": 0.4, "idleDelay": 2 } }
 ```
+
+For a deterministic test or a host-supplied stick, `element.setJoystickInput(x, y)` accepts normalized
+pad coordinates (right/down positive). It applies the widget's dead zone, response and sprint
+threshold without synthesizing a pointer. Values are clamped to the pad's reach; `(0, 0)` centres
+it even when `snapBack` is off. Non-finite input, a non-joystick element, or an actual pointer already
+holding the joystick is rejected. Physical input can take over normally afterwards.
 
 A `touchOnly`
 element is drawn only when `SceneCanvas(world, showTouchControls = true)` is called, or when

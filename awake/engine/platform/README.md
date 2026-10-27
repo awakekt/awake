@@ -34,6 +34,10 @@ scene-specific state here: the composed application root installs those optional
   (`DisplayInsets`, in dp) and the screen's real dots per inch where the platform can tell (0 where
   it cannot). A window host reports the last two through `WindowLifecycle.setSafeArea` and
   `setDpi`, as it reports density through `setDensity`.
+- `AppFrame.systemGestureInsets` reports system-navigation gesture edges separately from the visual
+  safe area. Android updates it through `WindowLifecycle.setSystemGestureInsets`; hosts without a
+  separate report use `DisplayInsets.None`. Both inset sets are in dp relative to the engine surface,
+  so layouts can choose which edges to avoid without changing the visual safe-area default.
 - `AwakeAppLifecycle` is one running application session with window configuration and services.
 - `GraphicsEngine` owns backend setup, per-frame handoff, idle-before-dispose ordering, and
   backend teardown.

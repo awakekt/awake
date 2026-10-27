@@ -74,8 +74,14 @@ internal object ControlsCapability : SceneCapability {
     override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {
         val moves = scene.uses(SceneMovementControl::class)
         val touches = scene.hasCanvasActions()
-        if (moves || touches || scene.uses(SceneInputActions::class)) plan.frame("playerInput") { PlayerInputSystem(it.input) }
-        if (touches) plan.frame("canvas-actions") { CanvasActionSystem() }
+        if (moves || touches || scene.uses(SceneInputActions::class)) {
+            plan.frame("playerInput") { PlayerInputSystem(it.input) }
+        } else {
+            plan.frame("playerInput") { RuntimeCanvasInputSystem(it.input) }
+        }
+        // Runtime HUDs need the same ordering as authored ones: begin/read actions before adding
+        // canvas input, then run movement and camera consumers. No actions are created for an idle scene.
+        plan.frame("canvas-actions") { RuntimeCanvasActionsSystem() }
         if (moves && !scene.uses(SceneCharacterController::class)) plan.frame("movement") { MatrixRelativeMovementSystem() }
         if (scene.uses(SceneCameraRig::class)) plan.frame("camera") { CameraSystem(inputProvider = it.input) }
     }

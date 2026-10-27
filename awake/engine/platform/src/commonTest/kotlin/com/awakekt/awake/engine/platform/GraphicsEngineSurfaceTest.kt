@@ -12,6 +12,7 @@ import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.engine.platform.dsl.AppSpecBuilder
+import com.awakekt.awake.engine.platform.lifecycle.AppFrame
 import com.awakekt.awake.engine.platform.lifecycle.DisplayInsets
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
@@ -100,6 +101,26 @@ class GraphicsEngineSurfaceTest {
         assertEquals(DisplayInsets.None to 0f, frames[0], "nothing reported: the whole window, at an unknown dpi")
         assertEquals(DisplayInsets(left = 44f, top = 24f) to 420f, frames[1], "a negative side is held at 0")
         assertEquals(0f, frames[2].second, "a dpi that is not a number is unknown again")
+    }
+
+    @Test
+    fun systemGestureInsetsReachFramesWithoutChangingTheSafeArea() {
+        val frames = mutableListOf<AppFrame>()
+        val app = AppSpecBuilder().apply { render { frames += it } }.build().createLifecycle()
+        val engine = RecordingEngine(app, mutableListOf())
+        engine.create("surface")
+        engine.update(0f)
+        engine.setSafeArea(DisplayInsets(top = 24f))
+        engine.setSystemGestureInsets(DisplayInsets(left = 12f, right = 12f, bottom = 32f))
+        engine.update(0f)
+        engine.setSystemGestureInsets(DisplayInsets(left = -1f, bottom = Float.NaN))
+        engine.update(0f)
+
+        assertEquals(DisplayInsets.None, frames[0].systemGestureInsets)
+        assertEquals(DisplayInsets(12f, 0f, 12f, 32f), frames[1].systemGestureInsets)
+        assertEquals(DisplayInsets(top = 24f), frames[1].safeArea)
+        assertEquals(DisplayInsets.None, frames[2].systemGestureInsets)
+        assertEquals(DisplayInsets(top = 24f), frames[2].safeArea)
     }
 
     private class RecordingEngine(

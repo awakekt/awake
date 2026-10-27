@@ -1232,6 +1232,10 @@ public final class com/awakekt/awake/ui/canvas/CanvasJoystick$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
+public final class com/awakekt/awake/ui/canvas/CanvasJoystickInputKt {
+	public static final fun setJoystickInput (Lcom/awakekt/awake/ui/canvas/CanvasElement;FF)V
+}
+
 public final class com/awakekt/awake/ui/canvas/CanvasJoystickMode : java/lang/Enum {
 	public static final field Companion Lcom/awakekt/awake/ui/canvas/CanvasJoystickMode$Companion;
 	public static final field Dynamic Lcom/awakekt/awake/ui/canvas/CanvasJoystickMode;

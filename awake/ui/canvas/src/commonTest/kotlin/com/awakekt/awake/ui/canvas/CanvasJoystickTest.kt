@@ -11,6 +11,7 @@ import com.awakekt.awake.compose.ui.platform.PointerFrame
 import kotlin.math.sqrt
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
@@ -36,6 +37,38 @@ class CanvasJoystickTest {
 
     private fun stick(settings: CanvasJoystick? = null, size: Float = 100f): CanvasElement =
         element(CanvasElementKind.Joystick) { width = size; height = size; joystick = settings }
+
+    @Test
+    fun injectedInputUsesTheDeadZoneAndSprintAndCanBeCentredWithoutSnapBack() {
+        val element = stick(CanvasJoystick(deadZone = 0.2f, sprintThreshold = 0.8f, snapBack = false))
+        element.setJoystickInput(0.1f, 0f)
+        assertEquals(0f, element.stickX)
+        element.setJoystickInput(0f, -0.6f)
+        assertEquals(-0.5f, element.stickY, TOLERANCE)
+        assertFalse(element.sprinting)
+        element.setJoystickInput(0f, -1f)
+        assertEquals(-1f, element.stickY, TOLERANCE)
+        assertTrue(element.sprinting)
+        assertTrue(element.consumeSprintStart())
+        element.setJoystickInput(0f, -1f)
+        assertFalse(element.consumeSprintStart(), "holding it out does not start sprint twice")
+        element.setJoystickInput(0f, 0f)
+        assertEquals(0f, element.stickY)
+        assertFalse(element.sprinting)
+    }
+
+    @Test
+    fun injectionRejectsInvalidInputAndDoesNotStealAPointersJoystick() {
+        val element = stick()
+        assertFailsWith<IllegalArgumentException> { element.setJoystickInput(Float.NaN, 0f) }
+        assertFailsWith<IllegalArgumentException> { CanvasElement().setJoystickInput(0f, 0f) }
+        frame()
+        frame(down(1, 50, 50))
+        assertFailsWith<IllegalStateException> { element.setJoystickInput(0f, -1f) }
+        frame(up(1, 50, 50))
+        element.setJoystickInput(1f, 1f)
+        assertEquals(1f, sqrt(element.stickX * element.stickX + element.stickY * element.stickY), TOLERANCE)
+    }
 
     @Test
     fun aDeadZoneReportsNothingNearTheCentreAndStretchesTheRestBackToFull() {

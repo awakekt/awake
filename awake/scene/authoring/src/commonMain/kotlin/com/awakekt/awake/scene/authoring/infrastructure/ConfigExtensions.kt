@@ -23,7 +23,7 @@ import com.awakekt.awake.scene.runtime.SceneSystemHandle
  * @return The current filtered [GameplayInput] snapshot.
  */
 fun SceneAppLifecycleRuntime.gameplayInput(): GameplayInput =
-    GameplayInput(requireService(Input::class).currentSnapshot, uiOwnership)
+    GameplayInput(requireService(Input::class).currentSnapshot, uiOwnership, hostInputState)
 
 /**
  * Registers a standard [CameraSystem] into this scene application DSL.

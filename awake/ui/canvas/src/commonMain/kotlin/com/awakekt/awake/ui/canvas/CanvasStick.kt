@@ -45,6 +45,17 @@ internal class CanvasStick(private val clock: () -> TimeSource) {
 
     private var idleSince: TimeMark? = null
 
+    /** Feeds normalized pad input without synthesizing a pointer or taking pointer ownership. */
+    fun setInput(x: Float, y: Float, element: CanvasElement) {
+        require(x.isFinite() && y.isFinite()) { "Joystick input must be finite" }
+        check(pointer == null) { "Cannot inject joystick input while a pointer holds it" }
+        val settings = element.joystick ?: CanvasJoystick.Default
+        val reach = settings.radiusIn(element.width, element.height)
+        centerX = element.width / 2f
+        centerY = element.height / 2f
+        move(centerX + x.coerceIn(-1f, 1f) * reach, centerY + y.coerceIn(-1f, 1f) * reach, reach, settings)
+    }
+
     /** Takes [id] at ([px], [py]) on [element]'s box, unless another pointer holds the stick. */
     fun press(id: Long, px: Float, py: Float, element: CanvasElement): Boolean {
         if (pointer != null) return false

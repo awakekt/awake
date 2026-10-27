@@ -64,6 +64,8 @@ abstract class GraphicsEngine(
     // Written by a platform's UI thread, read by the frame's thread.
     @Volatile private var hostSafeArea: DisplayInsets = DisplayInsets.None
 
+    @Volatile private var hostSystemGestureInsets: DisplayInsets = DisplayInsets.None
+
     @Volatile private var hostDpi: Float = 0f
 
     /** The current swapchain's width/height aspect ratio -- for a subclass computing a
@@ -111,6 +113,7 @@ abstract class GraphicsEngine(
                 density = hostDensity ?: density(),
                 safeArea = hostSafeArea,
                 dpi = hostDpi,
+                systemGestureInsets = hostSystemGestureInsets,
             ),
         )
     }
@@ -151,6 +154,10 @@ abstract class GraphicsEngine(
 
     final override fun setSafeArea(insets: DisplayInsets) {
         hostSafeArea = insets.clamped()
+    }
+
+    final override fun setSystemGestureInsets(insets: DisplayInsets) {
+        hostSystemGestureInsets = insets.clamped()
     }
 
     final override fun setDpi(dpi: Float) {

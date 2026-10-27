@@ -7,6 +7,7 @@ package com.awakekt.awake.project.runtime
 
 import com.awakekt.awake.compose.ui.platform.InputOwnership
 import com.awakekt.awake.core.input.Input
+import com.awakekt.awake.core.input.InputActions
 import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.ecs.Entity
@@ -42,6 +43,8 @@ import com.awakekt.awake.scene.rendering.light.Light
 import com.awakekt.awake.scene.rendering.mesh.TextureClipSystem
 import com.awakekt.awake.scene.rendering.mesh.TextureClips
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
+import com.awakekt.awake.ui.canvas.CanvasElement
+import com.awakekt.awake.ui.canvas.CanvasElementKind
 import kotlinx.coroutines.test.runTest
 import kotlin.reflect.KClass
 import kotlin.test.Test
@@ -73,12 +76,22 @@ class SceneSystemSetTest {
     // --- which systems a scene gets
 
     @Test
-    fun aSceneWithNothingToRunGetsOnlyTheSkinnedAnimation() {
+    fun anIdleSceneWatchesForRuntimeControlsWithoutCreatingInputState() {
         val systems = systemsFor(PLAIN_SCENE)
 
         assertEquals(emptyList(), systems.fixed)
-        assertEquals(1, systems.frame.size)
+        assertEquals(3, systems.frame.size)
         assertTrue(systems.frame.has(AnimationSystem::class))
+        val world = World()
+        systems.frame.forEach { it.update(world, DELTA) }
+        assertEquals(0, world.family<InputActions>().size)
+        val localButton = CanvasElement().apply { kind = CanvasElementKind.Button }
+        world.add(world.create(), localButton)
+        systems.frame.forEach { it.update(world, DELTA) }
+        assertEquals(0, world.family<InputActions>().size, "a local UI button names no game action")
+        localButton.action = "jump"
+        systems.frame.forEach { it.update(world, DELTA) }
+        assertEquals(1, world.family<InputActions>().size, "naming an action activates the same button without replanning")
     }
 
     @Test

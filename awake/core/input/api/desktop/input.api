@@ -246,6 +246,14 @@ public final class com/awakekt/awake/core/input/HeldStep {
 	public static synthetic fun advance$default (Lcom/awakekt/awake/core/input/HeldStep;ZFFFILjava/lang/Object;)I
 }
 
+public final class com/awakekt/awake/core/input/HostInputState {
+	public fun <init> ()V
+	public final fun getChangeVersion ()J
+	public final fun getLastInputDevice ()Lcom/awakekt/awake/core/input/InputDevice;
+	public final fun getShowTouchControls ()Z
+	public final fun update (Lcom/awakekt/awake/core/input/InputSnapshot;Z)Z
+}
+
 public final class com/awakekt/awake/core/input/ImeComposition {
 	public fun <init> (Ljava/lang/String;II)V
 	public synthetic fun <init> (Ljava/lang/String;IIILkotlin/jvm/internal/DefaultConstructorMarker;)V
