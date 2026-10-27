@@ -12,7 +12,11 @@ import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.testing.HeadlessRenderSession
 import com.awakekt.awake.webgpu.application.WebGpuEngine
+import com.awakekt.awake.webgpu.device.withDisplayEncodedColorFormat
 import com.awakekt.awake.webgpu.device.withGpuTiming
+import io.ygdrasil.webgpu.CompositeAlphaMode
+import io.ygdrasil.webgpu.GPUTextureUsage
+import io.ygdrasil.webgpu.SurfaceConfiguration
 import io.ygdrasil.webgpu.glfwContextRenderer
 import kotlinx.coroutines.runBlocking
 
@@ -28,6 +32,8 @@ class HeadlessWebGpuEngine(
     lifecycle: AwakeAppLifecycle = defaultHeadlessLifecycle(),
     plan: RenderPlan,
 ) : WebGpuEngine(lifecycle, plan) {
+    private var windowHandle = 0L
+    private var presentSurface: (() -> Unit)? = null
 
     /**
      * Creates native WebGPU backend resources over a hidden GLFW context with dimensions
@@ -40,7 +46,21 @@ class HeadlessWebGpuEngine(
             title = "awake-headless-webgpu",
             onUncapturedError = { error -> println("WGPU UNCAPTURED: $error") },
         )
-        create(context.wgpuContext.withGpuTiming { error -> println("WGPU UNCAPTURED: $error") })
+        val gpu = context.wgpuContext.withGpuTiming { error -> println("WGPU UNCAPTURED: $error") }
+            .withDisplayEncodedColorFormat()
+        // Offscreen probes did not acquire the surface. Full-frame probes do, so configure the
+        // same display-encoded format the engine adopts before its first acquire.
+        gpu.surface.configure(
+            SurfaceConfiguration(
+                device = gpu.device,
+                format = gpu.renderingContext.textureFormat,
+                usage = GPUTextureUsage.RenderAttachment or GPUTextureUsage.CopySrc,
+                alphaMode = CompositeAlphaMode.Opaque,
+            ),
+        )
+        windowHandle = context.windowHandler
+        presentSurface = { gpu.surface.present() }
+        create(gpu)
         return renderer
     }
 
@@ -48,7 +68,15 @@ class HeadlessWebGpuEngine(
      * Convenience entry point to expose teardown for test teardown.
      */
     fun destroy() {
-        dispose()
+        // A full-frame probe must hand its acquired texture back before closing the surface.
+        if ((renderer as? com.awakekt.awake.webgpu.renderer.Renderer)?.presentedColor != null) presentSurface?.invoke()
+        try {
+            dispose()
+        } finally {
+            if (windowHandle != 0L) org.lwjgl.glfw.GLFW.glfwDestroyWindow(windowHandle)
+            windowHandle = 0L
+            presentSurface = null
+        }
     }
 }
 

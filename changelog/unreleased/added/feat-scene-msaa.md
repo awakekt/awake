@@ -1,0 +1,1 @@
+- Add opt-in scene MSAA with device count negotiation on Vulkan and 1x/4x WebGPU, masked material alpha to coverage, and single-sample post-processing and UI after colour resolve.

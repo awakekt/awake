@@ -153,7 +153,7 @@ jobs:
       - name: Install desktop Vulkan/GLFW build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libvulkan-dev libglfw3-dev mesa-vulkan-drivers vulkan-validationlayers
+          sudo apt-get install -y libvulkan-dev libglfw3-dev mesa-vulkan-drivers vulkan-validationlayers xvfb
 
       - name: No ponytail comment tags
         run: "! git grep -nIE 'ponytai[l]:' -- ':!CLAUDE.md' ':!AGENTS.md' ':!GEMINI.md'"
@@ -303,14 +303,16 @@ jobs:
       # engine-showcase has complete multiplatform coverage across core ECS, physics, audio,
       # particles and navigation showcases.
       - name: Engine showcase sample (tests and desktop jar)
-        run: ./gradlew :samples:engine-showcase:desktopTest :samples:engine-showcase:desktopJar
+        run: xvfb-run -a ./gradlew :samples:engine-showcase:desktopTest :samples:engine-showcase:desktopJar
 
-      - name: Upload test reports on failure
-        if: failure()
+      - name: Upload engine showcase test reports and MSAA probes
+        if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: engine-showcase-test-reports
-          path: samples/engine-showcase/build/reports/tests/
+          path: |
+            samples/engine-showcase/build/reports/tests/
+            samples/engine-showcase/build/reports/msaa/
 
       - name: Build vulkan generator
         run: ./gradlew :awake:backend:vulkan:generator:assemble

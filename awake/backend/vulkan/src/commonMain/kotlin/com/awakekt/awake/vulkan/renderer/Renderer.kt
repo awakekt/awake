@@ -296,6 +296,7 @@ class Renderer internal constructor(
     internal var depthImages: List<Long> = emptyList()
     internal var depthImageMemories: List<Long> = emptyList()
     internal var depthImageViews: List<Long> = emptyList()
+    internal var multisampleColors: List<com.awakekt.awake.vulkan.texture.ColorAttachment> = emptyList()
     internal var presentTransitionRenderPass: Long = 0
 
     // Reused every call, NOT transferContext.runOneTimeCommands() -- that allocates a fresh

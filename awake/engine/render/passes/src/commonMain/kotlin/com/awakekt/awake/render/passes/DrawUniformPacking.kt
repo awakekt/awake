@@ -27,6 +27,7 @@ import com.awakekt.awake.render.passes.uniforms.drawUniformPlan
 import com.awakekt.awake.render.passes.uniforms.gpuLitShadowUniforms
 import com.awakekt.awake.render.passes.uniforms.litUniforms
 import com.awakekt.awake.render.passes.uniforms.putDebugView
+import com.awakekt.awake.render.passes.uniforms.sceneCoverageCutoff
 import com.awakekt.awake.render.passes.uniforms.texturedUniforms
 import com.awakekt.awake.render.pipeline.InstancedDrawKind
 import com.awakekt.awake.render.renderer.SkinnedFields
@@ -73,6 +74,7 @@ fun RenderDrawCommand.uniformFloats(
     cameraForward: Vec3f,
     debugView: GpuDebugView = GpuDebugView.Off,
     exposure: Float = 1f,
+    alphaToCoverageEnabled: Boolean = false,
 ): FloatArray {
     val mvp = model * viewProjection
     return when (
@@ -104,7 +106,7 @@ fun RenderDrawCommand.uniformFloats(
             .build()
 
         DrawUniformPlan.Skinned ->
-            skinnedUniforms(mvp, model, extraUniformFloats, coverageCutoff, exposure, lightPayload, cameraEye, debugView, cameraForward)
+            skinnedUniforms(mvp, model, extraUniformFloats, sceneCoverageCutoff(alphaToCoverageEnabled), exposure, lightPayload, cameraEye, debugView, cameraForward)
 
         DrawUniformPlan.TexturedPbr -> texturedUniforms(
             mvp = mvp,
@@ -114,7 +116,7 @@ fun RenderDrawCommand.uniformFloats(
             cameraEye = cameraEye,
             fogColor = fogColor,
             fogDensity = fogDensity,
-            alphaCutoff = coverageCutoff,
+            alphaCutoff = sceneCoverageCutoff(alphaToCoverageEnabled),
             debugView = debugView,
             cameraForward = cameraForward,
             timeSeconds = timeSeconds,
@@ -167,6 +169,7 @@ fun RenderDrawCommand.instancedUniformFloats(
     cameraForward: Vec3f,
     debugView: GpuDebugView = GpuDebugView.Off,
     exposure: Float = 1f,
+    alphaToCoverageEnabled: Boolean = false,
 ): FloatArray = when (kind) {
     InstancedDrawKind.Particle -> UniformWriter(ParticleUniformLayout)
         .put(viewProjection.data, UniformFields.Mvp)
@@ -187,7 +190,7 @@ fun RenderDrawCommand.instancedUniformFloats(
                 cameraEye = cameraEye,
                 fogColor = fogColor,
                 fogDensity = fogDensity,
-                alphaCutoff = coverageCutoff,
+                alphaCutoff = sceneCoverageCutoff(alphaToCoverageEnabled),
                 debugView = debugView,
                 cameraForward = cameraForward,
                 timeSeconds = timeSeconds,

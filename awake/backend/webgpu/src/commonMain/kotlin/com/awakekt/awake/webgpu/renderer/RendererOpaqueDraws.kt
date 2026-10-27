@@ -98,6 +98,7 @@ internal fun Renderer.prepareGpuDraw(
         fogDensity = fogDensity,
         debugView = debugView,
         exposure = exposure,
+        alphaToCoverageEnabled = (resolved ?: renderPipeline).multisample.alphaToCoverageEnabled,
     )
     slot?.let { uniformUploads.stage(it.buffer, uniformFloats) }
     return WebGpuPreparedDraw(
@@ -155,7 +156,8 @@ private fun Renderer.prepareInstancedGpuDraw(
 ): WebGpuPreparedDraw? {
     if (instanceModels.isEmpty()) return null
     val kind = cmd.instancedDrawKind() ?: return null
-    val pipeline = pipelines.resolveInstanced(mesh.format, kind, cmd.additive, cmd.cullMode)?.handle ?: return null
+    val resolved = pipelines.resolveInstanced(mesh.format, kind, cmd.additive, cmd.cullMode) ?: return null
+    val pipeline = resolved.handle
     val instanceBuffer = instanceBufferForRun(instanceIndex).also { it.update(instanceModels) }
     val materialBinding: MaterialBinding
     val jointPaletteBinding: MaterialBinding?
@@ -182,6 +184,7 @@ private fun Renderer.prepareInstancedGpuDraw(
             material.uniformFloatCount,
             (pipeline.uniformByteSize(0, 0) / Float.SIZE_BYTES).toInt(),
         ),
+        alphaToCoverageEnabled = resolved.multisample.alphaToCoverageEnabled,
     )
     // Its own slot per instanced draw, as an ordinary draw has: one buffer shared by every
     // instanced draw of a pipeline, or by every particle draw of a material, would hold only the

@@ -63,8 +63,8 @@ public final class com/awakekt/awake/vulkan/debug/LineMesh$Companion {
 }
 
 public final class com/awakekt/awake/vulkan/debug/LineRenderPipeline : com/awakekt/awake/vulkan/pipeline/VulkanPipelineHandle {
-	public fun <init> (Lcom/awakekt/awake/vulkan/device/GraphicsDevice;Lcom/awakekt/awake/vulkan/swapchain/SwapchainManager;JLcom/awakekt/awake/vulkan/pipeline/ShaderPair;ILjava/lang/String;Ljava/lang/String;)V
-	public synthetic fun <init> (Lcom/awakekt/awake/vulkan/device/GraphicsDevice;Lcom/awakekt/awake/vulkan/swapchain/SwapchainManager;JLcom/awakekt/awake/vulkan/pipeline/ShaderPair;ILjava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/vulkan/device/GraphicsDevice;Lcom/awakekt/awake/vulkan/swapchain/SwapchainManager;JLcom/awakekt/awake/vulkan/pipeline/ShaderPair;ILjava/lang/String;Ljava/lang/String;I)V
+	public synthetic fun <init> (Lcom/awakekt/awake/vulkan/device/GraphicsDevice;Lcom/awakekt/awake/vulkan/swapchain/SwapchainManager;JLcom/awakekt/awake/vulkan/pipeline/ShaderPair;ILjava/lang/String;Ljava/lang/String;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun bind (J)V
 	public final fun bind (JI)V
 	public final fun destroy ()V
@@ -314,8 +314,8 @@ public final class com/awakekt/awake/vulkan/pipeline/DepthOnlyPipeline : com/awa
 }
 
 public final class com/awakekt/awake/vulkan/pipeline/RenderPipeline : com/awakekt/awake/render/command/UniformBlockOwner, com/awakekt/awake/vulkan/pipeline/VulkanPipelineHandle {
-	public synthetic fun <init> (Lcom/awakekt/awake/vulkan/device/GraphicsDevice;Lcom/awakekt/awake/vulkan/swapchain/SwapchainManager;JJLcom/awakekt/awake/vulkan/pipeline/ShaderPair;Lcom/awakekt/awake/core/geometry/VertexFormat;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/vulkan/enums/VkPolygonMode;Lcom/awakekt/awake/vulkan/enums/VkCullModeFlagBits;Lcom/awakekt/awake/render/pipeline/FrontFace;Lcom/awakekt/awake/render/pipeline/PipelineVariant;Ljava/util/List;Lcom/awakekt/awake/render/renderer/UniformLayout;ILjava/util/Set;Lcom/awakekt/awake/render/pipeline/BindingLayout;Lcom/awakekt/awake/render/pipeline/GroupBindings;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public synthetic fun <init> (Lcom/awakekt/awake/vulkan/device/GraphicsDevice;Lcom/awakekt/awake/vulkan/swapchain/SwapchainManager;JJLcom/awakekt/awake/vulkan/pipeline/ShaderPair;Lcom/awakekt/awake/core/geometry/VertexFormat;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/vulkan/enums/VkPolygonMode;Lcom/awakekt/awake/vulkan/enums/VkCullModeFlagBits;Lcom/awakekt/awake/render/pipeline/FrontFace;Lcom/awakekt/awake/render/pipeline/PipelineVariant;Ljava/util/List;Lcom/awakekt/awake/render/renderer/UniformLayout;ILjava/util/Set;Lcom/awakekt/awake/render/pipeline/BindingLayout;Lcom/awakekt/awake/render/pipeline/GroupBindings;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/vulkan/device/GraphicsDevice;Lcom/awakekt/awake/vulkan/swapchain/SwapchainManager;JJLcom/awakekt/awake/vulkan/pipeline/ShaderPair;Lcom/awakekt/awake/core/geometry/VertexFormat;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/vulkan/enums/VkPolygonMode;Lcom/awakekt/awake/vulkan/enums/VkCullModeFlagBits;Lcom/awakekt/awake/render/pipeline/FrontFace;Lcom/awakekt/awake/render/pipeline/PipelineVariant;Ljava/util/List;Lcom/awakekt/awake/render/renderer/UniformLayout;ILjava/util/Set;Lcom/awakekt/awake/render/pipeline/BindingLayout;Lcom/awakekt/awake/render/pipeline/GroupBindings;Lcom/awakekt/awake/render/pipeline/MultisampleState;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/vulkan/device/GraphicsDevice;Lcom/awakekt/awake/vulkan/swapchain/SwapchainManager;JJLcom/awakekt/awake/vulkan/pipeline/ShaderPair;Lcom/awakekt/awake/core/geometry/VertexFormat;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/vulkan/enums/VkPolygonMode;Lcom/awakekt/awake/vulkan/enums/VkCullModeFlagBits;Lcom/awakekt/awake/render/pipeline/FrontFace;Lcom/awakekt/awake/render/pipeline/PipelineVariant;Ljava/util/List;Lcom/awakekt/awake/render/renderer/UniformLayout;ILjava/util/Set;Lcom/awakekt/awake/render/pipeline/BindingLayout;Lcom/awakekt/awake/render/pipeline/GroupBindings;Lcom/awakekt/awake/render/pipeline/MultisampleState;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun bind (J)V
 	public final fun destroy ()V
 	public fun getBindingLayout ()Lcom/awakekt/awake/render/pipeline/BindingLayout;
@@ -323,6 +323,7 @@ public final class com/awakekt/awake/vulkan/pipeline/RenderPipeline : com/awakek
 	public fun getEngineBoundSemantics ()Ljava/util/Set;
 	public final fun getFrontFace ()Lcom/awakekt/awake/render/pipeline/FrontFace;
 	public final fun getGraphicsPipeline ()[J
+	public final fun getMultisample ()Lcom/awakekt/awake/render/pipeline/MultisampleState;
 	public final fun getPipelineCache ()J
 	public fun getPipelineHandle ()J
 	public final fun getPipelineLayout ()J
@@ -337,7 +338,8 @@ public final class com/awakekt/awake/vulkan/pipeline/RenderPipeline : com/awakek
 }
 
 public final class com/awakekt/awake/vulkan/pipeline/RenderPipelineKt {
-	public static final fun createSceneRenderPass (Lcom/awakekt/awake/vulkan/device/GraphicsDevice;Lcom/awakekt/awake/vulkan/swapchain/SwapchainManager;)J
+	public static final fun createSceneRenderPass (Lcom/awakekt/awake/vulkan/device/GraphicsDevice;Lcom/awakekt/awake/vulkan/swapchain/SwapchainManager;I)J
+	public static synthetic fun createSceneRenderPass$default (Lcom/awakekt/awake/vulkan/device/GraphicsDevice;Lcom/awakekt/awake/vulkan/swapchain/SwapchainManager;IILjava/lang/Object;)J
 }
 
 public final class com/awakekt/awake/vulkan/pipeline/ShaderPair {
@@ -364,8 +366,8 @@ public abstract interface class com/awakekt/awake/vulkan/pipeline/VulkanMaterial
 }
 
 public final class com/awakekt/awake/vulkan/pipeline/VulkanPipelineFactory : com/awakekt/awake/render/pipeline/PipelineFactory {
-	public synthetic fun <init> (Lcom/awakekt/awake/vulkan/device/GraphicsDevice;Lcom/awakekt/awake/vulkan/swapchain/SwapchainManager;JJLjava/util/Map;Ljava/util/Map;ILjava/util/Map;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public synthetic fun <init> (Lcom/awakekt/awake/vulkan/device/GraphicsDevice;Lcom/awakekt/awake/vulkan/swapchain/SwapchainManager;JJLjava/util/Map;Ljava/util/Map;ILjava/util/Map;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/vulkan/device/GraphicsDevice;Lcom/awakekt/awake/vulkan/swapchain/SwapchainManager;JJLjava/util/Map;Ljava/util/Map;ILjava/util/Map;Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/render/pipeline/MultisampleState;Lkotlin/jvm/functions/Function2;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/vulkan/device/GraphicsDevice;Lcom/awakekt/awake/vulkan/swapchain/SwapchainManager;JJLjava/util/Map;Ljava/util/Map;ILjava/util/Map;Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/render/pipeline/MultisampleState;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun create (Lcom/awakekt/awake/render/pipeline/PipelineKey;Lcom/awakekt/awake/render/pipeline/PipelineSpec;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
@@ -512,8 +514,8 @@ public final class com/awakekt/awake/vulkan/texture/DepthTarget$Companion {
 }
 
 public final class com/awakekt/awake/vulkan/texture/OffscreenRenderTarget : com/awakekt/awake/render/texture/RenderTarget {
-	public fun <init> (Lcom/awakekt/awake/vulkan/device/GraphicsDevice;JIIILkotlin/jvm/functions/Function0;)V
-	public synthetic fun <init> (Lcom/awakekt/awake/vulkan/device/GraphicsDevice;JIIILkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/vulkan/device/GraphicsDevice;JIIILkotlin/jvm/functions/Function0;I)V
+	public synthetic fun <init> (Lcom/awakekt/awake/vulkan/device/GraphicsDevice;JIIILkotlin/jvm/functions/Function0;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun destroy ()V
 	public final fun getColorImage ()J
 	public final fun getColorImageMemory ()J

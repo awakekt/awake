@@ -50,6 +50,7 @@ class VulkanPipelineFactory(
      */
     private val declaredEngineSetLayouts: Map<BindingSemantic, DescriptorSetLayoutHandle> = emptyMap(),
     private val emptySetLayout: () -> DescriptorSetLayoutHandle = { error("No empty set layout was supplied.") },
+    private val rasterState: com.awakekt.awake.render.pipeline.MultisampleState? = null,
     private val loadShaders: suspend (spec: PipelineSpec) -> ShaderPair,
 ) : PipelineFactory<RenderPipeline> {
 
@@ -97,6 +98,9 @@ class VulkanPipelineFactory(
             engineBoundSemantics = engineSemanticsByKey[key] ?: declared?.second.orEmpty(),
             bindingLayout = spec.bindingLayout,
             materialBindings = spec.materialBindings,
+            multisample = rasterState?.copy(
+                alphaToCoverageEnabled = rasterState.count > 1 && spec.multisample.alphaToCoverageEnabled,
+            ) ?: spec.multisample,
         )
     }
 }

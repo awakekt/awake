@@ -160,7 +160,7 @@ private fun maskedTexturedDepth(instanced: Boolean): AslShaderDefinition =
         fragment {
             val sampled = let("baseColorSample", textureSample(baseColorTexture, baseColorSampler, uv))
             val alpha = let("alpha", sampled.a * baseColorFactor.a)
-            discardIf(alpha lt pbrFactors.z)
+            discardIf(alpha lt hardCoverageCutoff(pbrFactors.z))
         }
     }
 

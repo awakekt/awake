@@ -125,6 +125,7 @@ internal fun Renderer.performCreateRenderTarget(width: Int, height: Int): Render
         width,
         height,
         swapchainManager.imageFormat.value,
+        sampleCount = renderPipeline.multisample.count,
         onDestroy = {
             createdRenderTargets.remove(target)
             dropStagedUiSampling(target)

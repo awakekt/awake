@@ -167,6 +167,41 @@ display colour. No built-in scene path renders linear colour yet. A chain built 
 `DisplayReferred` target, the default, follows the rules in the table, though nothing refuses a
 `PbrNeutral` effect listed there.
 
+## Scene multisampling
+
+The host can request MSAA for its render plan. The default is one sample, preserving existing
+scenes. This setting applies to every main scene pass and offscreen scene target created by that
+engine; it is not a scene-document camera property.
+
+```kotlin
+import com.awakekt.awake.render.pipeline.MultisampleState
+
+val plan = gameRenderPlan.copy(
+    multisample = MultisampleState(count = 4, alphaToCoverageEnabled = true),
+)
+```
+
+Pass `plan` to `VulkanEngine` or `WebGpuEngine`. Vulkan chooses the greatest supported count at or
+below the request from 1, 2, 4 and 8, intersecting its colour and depth framebuffer capabilities.
+Standard WebGPU supports 1 and 4: a request for 2 falls back to 1, and 8 falls back to 4. A downgrade
+logs the requested and selected counts. Falling back to 1 also disables alpha to coverage.
+
+The main colour and depth attachments use the chosen count. Colour resolves before the camera's
+post-processing chain. FXAA remains opt-in; adding an `fxaa` effect explicitly filters the resolved
+colour. The canvas, text, UI overlays and offscreen UI layers use single-sample colour after the
+resolve and post-processing.
+
+With alpha to coverage enabled, built-in textured and skinned `AlphaMode.Mask` materials convert
+the filtered alpha edge around their cutoff into sample coverage. Opaque materials retain full
+coverage, and alpha-blended and additive materials retain blending. Custom content shaders keep
+alpha to coverage off unless their pipeline specification opts in and supplies suitable output
+alpha. Shadow, camera-depth and mask prepasses remain single-sample with the authored hard cutoff.
+Depth-reading effects continue to read those independent prepasses; no multisampled depth resolve
+or depth readback is provided. TAA is outside this setting.
+
+See [MSAA verification](https://github.com/awakekt/awake/blob/main/docs/reference/msaa-verification.md) for GPU measurements, image probes and
+the limits of the desktop backend coverage.
+
 ## Properties
 
 `light`:

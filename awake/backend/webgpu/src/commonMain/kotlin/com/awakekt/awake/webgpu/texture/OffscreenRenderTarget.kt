@@ -41,6 +41,7 @@ class OffscreenRenderTarget(
     override val width: Int,
     override val height: Int,
     private val onDestroy: (() -> Unit)? = null,
+    sampleCount: Int = 1,
 ) : RenderTarget {
     /** The attachment's byte order, needed to normalize CPU readback to RGBA. */
     val colorFormat: GPUTextureFormat = graphicsDevice.wgpuContext.renderingContext.textureFormat
@@ -59,6 +60,20 @@ class OffscreenRenderTarget(
      * samples to composite the target.
      */
     val colorView: GPUTextureView = colorTexture.createView(TextureViewDescriptor())
+    private val multisampleColor: GPUTexture? = if (sampleCount > 1) {
+        graphicsDevice.wgpuContext.device.createTexture(
+            TextureDescriptor(
+                size = Extent3D(width = width.toUInt(), height = height.toUInt()),
+                format = colorFormat,
+                usage = GPUTextureUsage.RenderAttachment,
+                sampleCount = sampleCount.toUInt(),
+            ),
+        )
+    } else {
+        null
+    }
+    internal val sceneColorView: GPUTextureView = multisampleColor?.createView() ?: colorView
+    internal val sceneResolveView: GPUTextureView? = colorView.takeIf { multisampleColor != null }
 
     /**
      * The `Depth32Float` attachment sized like the colour texture, so offscreen draws occlude as
@@ -68,6 +83,7 @@ class OffscreenRenderTarget(
         TextureDescriptor(
             size = Extent3D(width = width.toUInt(), height = height.toUInt()),
             format = GPUTextureFormat.Depth32Float,
+            sampleCount = sampleCount.toUInt(),
             usage = GPUTextureUsage.RenderAttachment,
             dimension = GPUTextureDimension.TwoD,
         ),
@@ -88,6 +104,7 @@ class OffscreenRenderTarget(
         if (destroyed) return
         destroyed = true
         colorTexture.close()
+        multisampleColor?.close()
         depthTexture.close()
         onDestroy?.invoke()
     }

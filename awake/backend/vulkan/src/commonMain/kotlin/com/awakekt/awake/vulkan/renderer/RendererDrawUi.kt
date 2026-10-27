@@ -156,14 +156,14 @@ fun Renderer.renderUiToTexture(
     }
 
     val parentTarget = VulkanImagePassParentTarget(
-        framebuffer = offscreen.framebuffer,
+        framebuffer = offscreen.colorFramebuffer(imagePassExecutor.ensureOffscreenClearRenderPass(swapchainManager.imageFormat)),
         colorImage = offscreen.colorImage,
         colorImageView = offscreen.colorImageView,
         colorFormat = swapchainManager.imageFormat,
         width = offscreen.width,
         height = offscreen.height,
         isOffscreen = true,
-        finalRenderPass = renderPipeline.renderPass,
+        finalRenderPass = imagePassExecutor.ensureOffscreenClearRenderPass(swapchainManager.imageFormat),
         sampleable = true,
     )
 
@@ -171,12 +171,12 @@ fun Renderer.renderUiToTexture(
         imagePassExecutor.beginFrame(frameIndex)
         offscreen.prepareForColorAttachment(commandBuffer)
         val renderPassInfo = VkRenderPassBeginInfo(
-            renderPass = renderPipeline.renderPass,
-            framebuffer = offscreen.framebuffer,
+            renderPass = imagePassExecutor.ensureOffscreenClearRenderPass(swapchainManager.imageFormat),
+            framebuffer = offscreen.colorFramebuffer(imagePassExecutor.ensureOffscreenClearRenderPass(swapchainManager.imageFormat)),
             renderArea = VkRect2D(extent = VkExtent2D(offscreen.width, offscreen.height)),
             // A graphics layer is sampled over the parent UI, so its untouched pixels must stay
             // transparent rather than inherit the application's scene clear colour.
-            pClearValues = arrayOf(VkClearColorValue.rgba(0f, 0f, 0f, 0f), Renderer.clearDepthValue),
+            pClearValues = arrayOf(VkClearColorValue.rgba(0f, 0f, 0f, 0f)),
         )
         Vulkan.vkCmdBeginRenderPass(commandBuffer, renderPassInfo, VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE)
         val viewport = VkViewport(width = offscreen.width.toFloat(), height = offscreen.height.toFloat())
@@ -239,10 +239,10 @@ internal fun Renderer.performCompositeUiTargets(
     runOffscreenCommands { commandBuffer ->
         outputTarget.prepareForColorAttachment(commandBuffer)
         val renderPassInfo = VkRenderPassBeginInfo(
-            renderPass = renderPipeline.renderPass,
-            framebuffer = outputTarget.framebuffer,
+            renderPass = imagePassExecutor.ensureOffscreenClearRenderPass(swapchainManager.imageFormat),
+            framebuffer = outputTarget.colorFramebuffer(imagePassExecutor.ensureOffscreenClearRenderPass(swapchainManager.imageFormat)),
             renderArea = VkRect2D(extent = VkExtent2D(outputTarget.width, outputTarget.height)),
-            pClearValues = arrayOf(VkClearColorValue.rgba(0f, 0f, 0f, 0f), Renderer.clearDepthValue),
+            pClearValues = arrayOf(VkClearColorValue.rgba(0f, 0f, 0f, 0f)),
         )
         Vulkan.vkCmdBeginRenderPass(commandBuffer, renderPassInfo, VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE)
         Vulkan.vkCmdSetViewport(commandBuffer, 0, arrayOf(VkViewport(width = outputTarget.width.toFloat(), height = outputTarget.height.toFloat())))
@@ -292,10 +292,10 @@ fun Renderer.renderUiGlyphsToTexture(target: RenderTarget, glyphs: List<UiDrawPr
     runOffscreenCommands { commandBuffer ->
         offscreen.prepareForColorAttachment(commandBuffer)
         val renderPassInfo = VkRenderPassBeginInfo(
-            renderPass = renderPipeline.renderPass,
-            framebuffer = offscreen.framebuffer,
+            renderPass = imagePassExecutor.ensureOffscreenClearRenderPass(swapchainManager.imageFormat),
+            framebuffer = offscreen.colorFramebuffer(imagePassExecutor.ensureOffscreenClearRenderPass(swapchainManager.imageFormat)),
             renderArea = VkRect2D(extent = VkExtent2D(offscreen.width, offscreen.height)),
-            pClearValues = arrayOf(clearColorValue, Renderer.clearDepthValue),
+            pClearValues = arrayOf(clearColorValue),
         )
         Vulkan.vkCmdBeginRenderPass(commandBuffer, renderPassInfo, VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE)
         val viewport = VkViewport(width = offscreen.width.toFloat(), height = offscreen.height.toFloat())

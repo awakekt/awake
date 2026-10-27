@@ -20,6 +20,7 @@ import com.awakekt.awake.vulkan.VK_SUBPASS_EXTERNAL
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.debug.PerFrameUniformSlots
 import com.awakekt.awake.vulkan.device.GraphicsDevice
+import com.awakekt.awake.vulkan.enums.VkAttachmentLoadOp
 import com.awakekt.awake.vulkan.enums.VkAttachmentStoreOp
 import com.awakekt.awake.vulkan.enums.VkBlendFactor
 import com.awakekt.awake.vulkan.enums.VkColorComponentFlagBits
@@ -118,6 +119,8 @@ class RenderPipeline(
      * .materialBindings`. Only meaningful alongside [uniforms]; a pipeline reading a per-draw
      * material's set has no group of its own to shape. */
     materialBindings: GroupBindings? = null,
+    /** Attachment sample count and alpha coverage for this pipeline. */
+    val multisample: com.awakekt.awake.render.pipeline.MultisampleState = com.awakekt.awake.render.pipeline.MultisampleState.Single,
 ) : VulkanPipelineHandle,
     UniformBlockOwner {
     override val pipelineHandle: Long get() = graphicsPipeline[0]
@@ -264,7 +267,12 @@ class RenderPipeline(
                 pInputAssemblyState = INPUT_ASSEMBLY_STATE,
                 pViewportState = viewportState(swapchainManager),
                 pRasterizationState = rasterizationState(polygonMode, cullMode, frontFace),
-                pMultisampleState = MULTISAMPLE_STATE,
+                pMultisampleState = arrayOf(
+                    VkPipelineMultisampleStateCreateInfo(
+                        rasterizationSamples = multisample.count.toVkSampleCount(),
+                        alphaToCoverageEnable = multisample.alphaToCoverageEnabled && !variant.blendEnabled,
+                    ),
+                ),
                 pColorBlendState = colorBlendState(variant.blendEnabled, variant.additive),
                 pDepthStencilState = depthStencilState(variant.depthTestEnabled, variant.depthWriteEnabled),
                 pDynamicState = DYNAMIC_STATE,
@@ -306,27 +314,11 @@ private const val DEFAULT_SHADER_ENTRY_POINT = "main"
 /** Render pass shared by every [RenderPipeline] built against the same [swapchainManager] --
  * avoids one near-identical render pass per pipeline. Not owned by any pipeline; caller
  * destroys it exactly once. */
-fun createSceneRenderPass(graphicsDevice: GraphicsDevice, swapchainManager: SwapchainManager): Long =
+fun createSceneRenderPass(graphicsDevice: GraphicsDevice, swapchainManager: SwapchainManager, sampleCount: Int = 1): Long =
     Vulkan.vkCreateRenderPass(
         graphicsDevice.device,
         VkRenderPassCreateInfo(
-            pAttachments = arrayOf(
-                VkAttachmentDescription(
-                    format = swapchainManager.imageFormat,
-                    initialLayout = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED,
-                    // COLOR_ATTACHMENT_OPTIMAL, not PRESENT_SRC_KHR: the UI overlay pass
-                    // (UiRenderPipeline) draws on top of this pass's output before the
-                    // final present-layout transition happens, at the end of that pass
-                    // instead. See docs/reference/decision-log.md's custom-UI entries.
-                    finalLayout = VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                ),
-                VkAttachmentDescription(
-                    format = VkFormat.VK_FORMAT_D32_SFLOAT,
-                    storeOp = VkAttachmentStoreOp.DONT_CARE,
-                    initialLayout = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED,
-                    finalLayout = VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-                ),
-            ),
+            pAttachments = sceneAttachments(swapchainManager, sampleCount),
             pSubpasses = arrayOf(
                 VkSubpassDescription(
                     pipelineBindPoint = VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -342,6 +334,13 @@ fun createSceneRenderPass(graphicsDevice: GraphicsDevice, swapchainManager: Swap
                             layout = VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
                         ),
                     ),
+                    pResolveAttachments = if (sampleCount > 1) {
+                        arrayOf(
+                            VkAttachmentReference(attachment = 2, layout = VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL),
+                        )
+                    } else {
+                        null
+                    },
                 ),
             ),
             pDependencies = arrayOf(
@@ -360,6 +359,38 @@ fun createSceneRenderPass(graphicsDevice: GraphicsDevice, swapchainManager: Swap
             ),
         ),
     )
+
+private fun sceneAttachments(swapchainManager: SwapchainManager, sampleCount: Int): Array<VkAttachmentDescription> =
+    arrayOf(
+        VkAttachmentDescription(
+            format = swapchainManager.imageFormat,
+            samples = sampleCount.toVkSampleCount(),
+            storeOp = if (sampleCount > 1) VkAttachmentStoreOp.DONT_CARE else VkAttachmentStoreOp.STORE,
+            initialLayout = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED,
+            // COLOR_ATTACHMENT_OPTIMAL, not PRESENT_SRC_KHR: the UI overlay pass
+            // (UiRenderPipeline) draws on top of this pass's output before the
+            // final present-layout transition happens, at the end of that pass
+            // instead. See docs/reference/decision-log.md's custom-UI entries.
+            finalLayout = VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        ),
+        VkAttachmentDescription(
+            format = VkFormat.VK_FORMAT_D32_SFLOAT,
+            samples = sampleCount.toVkSampleCount(),
+            storeOp = VkAttachmentStoreOp.DONT_CARE,
+            initialLayout = VkImageLayout.VK_IMAGE_LAYOUT_UNDEFINED,
+            finalLayout = VkImageLayout.VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+        ),
+    ) + if (sampleCount > 1) {
+        arrayOf(
+            VkAttachmentDescription(
+                format = swapchainManager.imageFormat,
+                loadOp = VkAttachmentLoadOp.DONT_CARE,
+                finalLayout = VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            ),
+        )
+    } else {
+        emptyArray()
+    }
 
 /** See [PipelineVariant.instanced]. Binding 1 (binding 0 is the mesh's own per-vertex buffer);
  * one `mat4` = 4 `vec4` rows = 64 bytes per instance. */
@@ -386,7 +417,6 @@ private val DYNAMIC_STATE = arrayOf(
         ),
     ),
 )
-private val MULTISAMPLE_STATE = arrayOf(VkPipelineMultisampleStateCreateInfo())
 
 // Specify we will use triangle lists to draw geometry.
 private val INPUT_ASSEMBLY_STATE = arrayOf(
