@@ -628,6 +628,17 @@ class Renderer internal constructor(
          */
         internal const val MAX_UI_QUADS = 256
 
+        /**
+         * The size a textured primitive's own mesh starts at: one image is one quad, nine for a
+         * nine-slice, not a batch. Every textured primitive owns its mesh (see
+         * `textureMeshForPrimitive`), so starting each at [MAX_UI_QUADS] reserved about 55 KB of
+         * host-visible memory per primitive and frame slot for a 216-byte quad. A screen of 190
+         * images held 21 MB of buffer capacity that way. Small starting buffers reduce host-visible
+         * memory pressure while investigating the Android crash in #1118; `DynamicMesh` still grows
+         * to fit a larger primitive.
+         */
+        internal const val TEXTURE_PRIMITIVE_QUADS = 1
+
         /** Starting size only -- LineMesh grows past it. See DebugLineLayout.INITIAL_LINES. */
         internal const val MAX_DEBUG_LINES = DebugLineLayout.INITIAL_LINES
         internal val clearDepthValue = VkClearDepthStencilValue(depth = 1f, stencil = 0)

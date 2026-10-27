@@ -1,0 +1,2 @@
+- Start each textured UI primitive's mesh at one quad instead of a 256-quad batch on Vulkan and WebGPU, reducing a screen of images' initial buffer capacity while preserving growth for larger primitives.
+- Escape the canvas binding placeholder's closing brace so Android's regular expression parser can initialize bindings and load a scene's UI.
