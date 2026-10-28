@@ -85,7 +85,7 @@ internal fun World.placeCanvas(node: SceneNode, parent: Entity? = null): Entity 
     val entity = create()
     add(entity, Name(node.name.orEmpty()))
     add(entity, Transform(parent = parent))
-    add(entity, node.components.filterIsInstance<SceneCanvasElement>().single().toComponent())
+    add(entity, checkNotNull(node.canvasElementView()).toComponent())
     node.children.forEach { placeCanvas(it, entity) }
     return entity
 }

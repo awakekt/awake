@@ -17,8 +17,12 @@ env:
 jobs:
   verify:
     name: Verify
-    runs-on: macos-14
-    timeout-minutes: 45
+    # This job cross-builds iOS cinterops but does not run an ARM simulator. Use the
+    # standard Intel pool after repeated ARM64 runner-acquisition failures.
+    runs-on: macos-15-intel
+    # A measured cold Intel native build takes 50 minutes before the repository/API
+    # gates start. Budget for that build and the full cross-platform API check.
+    timeout-minutes: 120
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

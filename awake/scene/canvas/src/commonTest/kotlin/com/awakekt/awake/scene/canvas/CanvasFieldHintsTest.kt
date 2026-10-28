@@ -116,7 +116,7 @@ class CanvasFieldHintsTest {
             }
         }
 
-        val line = assertNotNull(prefab.findCanvasNode("line")).components.filterIsInstance<SceneCanvasElement>().single()
+        val line = assertNotNull(assertNotNull(prefab.findCanvasNode("line")).canvasElementView())
 
         assertEquals("chat.hint", line.placeholder)
         assertEquals(CanvasPadding(6f, 0f), line.padding)

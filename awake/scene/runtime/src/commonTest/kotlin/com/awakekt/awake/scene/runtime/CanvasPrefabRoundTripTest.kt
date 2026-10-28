@@ -80,12 +80,11 @@ class CanvasPrefabRoundTripTest {
         document.instantiate(world = world)
         val saved = ScenePrefab(guid = actionBar.guid, name = actionBar.name, root = SceneLoader.fromWorld(world).nodes.single())
 
-        // The builder writes the older canvas_element; a world saves the components it is now.
-        val current = actionBar.withCanvasComponents()
-        assertEquals(current, saved)
-        assertEquals(CanvasPrefabs.toJson(current), CanvasPrefabs.toJson(saved), "the file an editor saves is the file code wrote, in the current form")
+        assertEquals(actionBar, saved)
+        assertEquals(CanvasPrefabs.toJson(actionBar), CanvasPrefabs.toJson(saved), "the file an editor saves is the file code wrote")
+        assertEquals(actionBar, actionBar.withCanvasComponents(), "the builder writes the current form")
         val again = World().also { SceneDocument(nodes = listOf(saved.root)).instantiate(world = it) }
-        assertEquals(saved.root, SceneLoader.fromWorld(again).nodes.single(), "a prefab saved in the current form loads and saves back unchanged")
+        assertEquals(saved.root, SceneLoader.fromWorld(again).nodes.single(), "the focused form loads and saves back unchanged")
     }
 
     @Test

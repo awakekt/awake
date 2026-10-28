@@ -15,6 +15,7 @@ import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.document.ScenePrefab
 import com.awakekt.awake.scene.document.SceneValidationException
+import com.awakekt.awake.scene.document.SceneValidationIssue
 import com.awakekt.awake.scene.document.SceneVec3
 import com.awakekt.awake.ui.canvas.CanvasAnchor
 import com.awakekt.awake.ui.canvas.CanvasBar
@@ -37,8 +38,10 @@ import com.awakekt.awake.ui.canvas.CanvasSweep
 annotation class CanvasPrefabDsl
 
 /**
- * A prefab of `canvas_element` nodes built in code: the same [ScenePrefab] an editor saves, so its
- * JSON, from [CanvasPrefabs.toJson], opens in the editor as it is and saves back unchanged.
+ * A prefab of canvas element nodes built in code: the same [ScenePrefab] an editor saves, so its
+ * JSON, from [CanvasPrefabs.toJson], opens in the editor as it is and saves back unchanged. Each
+ * element is saved as its components: a `canvas_rect`, and the `canvas_text`, `canvas_appearance`,
+ * widget and other components its settings call for.
  *
  * The block sets up the root element, of [kind], named [name], and adds its children. The prefab
  * is validated as [CanvasPrefabs.problems] does before it is returned.
@@ -72,17 +75,22 @@ fun canvasPrefab(
     id: String = "",
     block: CanvasElementScope.() -> Unit,
 ): ScenePrefab {
-    val prefab = ScenePrefab(guid = guid, name = name, root = CanvasElementScope(name, kind, id).apply(block).build())
-    val problems = CanvasPrefabs.problems(prefab)
+    val scope = CanvasElementScope(name, kind, id)
+    val prefab = ScenePrefab(guid = guid, name = name, root = scope.apply(block).build())
+    val problems = CanvasPrefabs.problems(prefab) + scope.problems
     if (problems.isNotEmpty()) throw SceneValidationException(problems)
     return prefab
 }
 
 /**
- * One `canvas_element` node of a prefab being built: its settings, typed, and the elements inside
- * it, added with [text], [panel], [bar], [button] and the other kinds' functions.
+ * One canvas element node of a prefab being built: its settings, typed, and the elements inside it,
+ * added with [text], [panel], [bar], [button] and the other kinds' functions. Each kind's function
+ * gives the element the components that kind is made of, such as a `canvas_button` and a
+ * `canvas_text` for a Button.
  *
- * Each setting is the `canvas_element` field of the same name, starting at that field's default.
+ * Each setting is the older `canvas_element` field of the same name, starting at that field's
+ * default, and is saved in the component that holds it now; one that the element's kind never uses,
+ * such as a Panel's text, is not saved.
  * Sizes and offsets are [Dp], a font size is [Sp], and colours are [Color]s, written as
  * [Color.toHex] writes them. Settings that are objects of their own, such as [style], [layout],
  * [bind] or [button], take the `awake:ui:canvas` type the field holds.
@@ -90,6 +98,7 @@ fun canvasPrefab(
  * @param name The node's name.
  * @property kind What the element draws.
  * @param id The element's [elementId].
+ * @param path Where the node sits in the prefab, such as `Window/Close`, for the problems it reports.
  */
 @CanvasPrefabDsl
 @Suppress("TooManyFunctions") // One function for each element kind.
@@ -97,8 +106,12 @@ class CanvasElementScope internal constructor(
     private val name: String,
     val kind: CanvasElementKind,
     id: String,
+    private val path: String = name,
 ) {
     private val defaults = SceneCanvasElement(kind = kind)
+
+    /** What is wrong with this element and the ones inside it, beyond what their saved components validate. */
+    internal val problems = mutableListOf<SceneValidationIssue>()
     private val children = mutableListOf<SceneNode>()
     private val components = mutableListOf<SceneComponent>()
 
@@ -274,17 +287,21 @@ class CanvasElementScope internal constructor(
     }
 
     /**
-     * Adds another component to this node beside its `canvas_element`, such as a `tag` or a
+     * Adds another component to this node beside its canvas components, such as a `tag` or a
      * `blueprint`.
      */
     fun component(component: SceneComponent) {
-        require(component !is SceneCanvasElement) { "$name already has its canvas_element; add a child element instead" }
+        require(!component.isCanvasElementPart()) {
+            "$name is already a canvas element; set its ${component::class.simpleName} through this scope, or add a child element"
+        }
         components += component
     }
 
     /** Adds a child element of [kind], named [name], set up by [block]. */
     fun element(name: String, kind: CanvasElementKind, id: String = "", block: CanvasElementScope.() -> Unit = {}) {
-        children += CanvasElementScope(name, kind, id).apply(block).build()
+        val child = CanvasElementScope(name, kind, id, "$path/$name").apply(block)
+        children += child.build()
+        problems += child.problems
     }
 
     /** Adds a Text child. */
@@ -323,11 +340,12 @@ class CanvasElementScope internal constructor(
     /** Adds a Stepper child. */
     fun stepper(name: String, id: String = "", block: CanvasElementScope.() -> Unit = {}) = element(name, CanvasElementKind.Stepper, id, block)
 
-    internal fun build(): SceneNode = SceneNode(
-        name = name,
-        components = listOf(toSceneComponent()) + components,
-        children = children.toList(),
-    )
+    internal fun build(): SceneNode {
+        val element = toSceneComponent()
+        problems += element.unsavedFieldIssues(path)
+        // Saved as the components it is: the same set an older canvas_element reads as.
+        return SceneNode(name = name, components = element.toCanvasComponents() + components, children = children.toList())
+    }
 
     private fun toSceneComponent(): SceneCanvasElement = SceneCanvasElement(
         kind = kind,

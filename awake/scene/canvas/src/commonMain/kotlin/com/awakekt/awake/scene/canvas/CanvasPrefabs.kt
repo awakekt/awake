@@ -65,7 +65,7 @@ object CanvasPrefabs {
 }
 
 /**
- * The node at or under this one whose `canvas_element` has [elementId], or null: how code finds an
+ * The node at or under this one whose canvas element has [elementId], or null: how code finds an
  * element of a prefab by its stable id rather than by a name that changes on a rename.
  *
  * @param elementId The element's [SceneCanvasElement.elementId].
@@ -78,7 +78,7 @@ fun SceneNode.findCanvasNode(elementId: String): SceneNode? = when {
 }
 
 /**
- * The node of this prefab whose `canvas_element` has [elementId], or null.
+ * The node of this prefab whose canvas element has [elementId], or null.
  *
  * @param elementId The element's [SceneCanvasElement.elementId].
  * @return The node, or null when no element has that id.

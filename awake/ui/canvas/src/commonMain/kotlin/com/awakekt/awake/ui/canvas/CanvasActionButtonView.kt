@@ -111,13 +111,13 @@ private fun PlainButtonView(element: CanvasElement, styled: Modifier, textStyle:
 }
 
 /**
- * Reads a Button's bound cooldown, charges and enabled into it, before it is styled: whether it is
- * disabled. Any other kind is never disabled.
+ * Reads a button's bound cooldown, charges and enabled into its [CanvasButtonWidget], before it is
+ * styled: whether it is disabled. An element with no button widget is never disabled.
  */
 internal fun CanvasElement.readButtonState(tree: CanvasTree): Boolean {
-    if (kind != CanvasElementKind.Button) return false
+    val button = widget as? CanvasButtonWidget ?: return false
     tree.readButtonState(this)
-    return !enabled
+    return !button.enabled
 }
 
 private val COOLDOWN_SHADE = Color(0f, 0f, 0f, 0.6f)

@@ -17,12 +17,13 @@ import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 
-/** Whether [this] takes a tap: a Button, or an Image or Panel made [CanvasElement.pressable]. */
+/** Whether [this] takes a tap: it has a [CanvasButtonWidget], or it is a picture or a plain box its [CanvasInput] makes pressable. */
 internal val CanvasElement.takesTaps: Boolean
-    get() = kind == CanvasElementKind.Button || pressableImageOrPanel
+    get() = widget is CanvasButtonWidget || pressableImageOrPanel
 
+/** A [CanvasImageWidget], or an element with neither a widget nor words, that its [CanvasInput] makes pressable. */
 private val CanvasElement.pressableImageOrPanel: Boolean
-    get() = pressable && (kind == CanvasElementKind.Image || kind == CanvasElementKind.Panel)
+    get() = inputPart?.pressable == true && (widget is CanvasImageWidget || widget == null && textPart == null)
 
 /** A pressable Image's or Panel's tap, as a Button's `clickable` takes one; anything else unchanged. */
 internal fun Modifier.pressableTap(element: CanvasElement): Modifier =
