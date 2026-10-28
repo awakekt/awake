@@ -839,6 +839,8 @@
       
         
       
+        
+      
     
     
     
@@ -955,6 +957,34 @@
     
   
     Scene capabilities
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/scene-components/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scene components
   
 
     
@@ -2730,8 +2760,8 @@
 <h2 id="add-the-version-catalog-entries">Add the version catalog entries</h2>
 <p>Add these to <code>gradle/libs.versions.toml</code>:</p>
 <div class="language-toml highlight"><span class="filename">gradle/libs.versions.toml</span><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">[versions]</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">awake</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"0.20.0"</span>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">awake-vulkan</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"0.1.36"</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">awake</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"0.26.0"</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">awake-vulkan</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"0.1.37"</span>
 </span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
 </span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="k">[libraries]</span>
 </span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="n">awake-engine-bootstrap</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">module</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"com.awakekt.awake.engine:bootstrap"</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="p">.</span><span class="n">ref</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"awake"</span><span class="w"> </span><span class="p">}</span>
@@ -2793,10 +2823,10 @@ listed on their own because <a href="../first-window/">Your first window</a> nee
 <p>Every Core module, everything except the Vulkan backend, shares one version: <code>awake</code> above. Keep
 all of them on that version.</p>
 <p>The Vulkan backend has its own release train, and each Vulkan release is built against one exact
-Core release. The catalog above pairs Vulkan <code>0.1.36</code> with the Core release it
-was built against, <code>0.20.0</code>. Keep that pair for a desktop app. A
+Core release. The catalog above pairs Vulkan <code>0.1.37</code> with the Core release it
+was built against, <code>0.26.0</code>. Keep that pair for a desktop app. A
 newer Core next to an older Vulkan release is a combination nobody has tested.</p>
-<p>The newest Core release is <code>0.26.0</code>. When it is newer than the pair, an app that runs
+<p>The newest Core release is <code>0.27.0</code>. When it is newer than the pair, an app that runs
 only in the browser can use it; a desktop app waits for a Vulkan release built on it. See
 <a href="../../reference/releases/">Releases and compatibility</a>.</p>
 <h3 id="mixed-core-versions-line-up-on-their-own">Mixed Core versions line up on their own</h3>

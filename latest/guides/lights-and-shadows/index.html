@@ -711,6 +711,8 @@
       
         
       
+        
+      
     
     
     
@@ -830,6 +832,34 @@
     
   
     Scene capabilities
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../scene-components/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scene components
   
 
     
@@ -1185,6 +1215,17 @@
     <span class="md-ellipsis">
       
         Add post-processing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scene-multisampling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scene multisampling
       
     </span>
   </a>
@@ -2698,6 +2739,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#scene-multisampling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scene multisampling
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#properties" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3057,6 +3109,33 @@ tone-mapping step of its own, and each effect works on that colour as it is.</p>
 display colour. No built-in scene path renders linear colour yet. A chain built in code over a
 <code>DisplayReferred</code> target, the default, follows the rules in the table, though nothing refuses a
 <code>PbrNeutral</code> effect listed there.</p>
+<h2 id="scene-multisampling">Scene multisampling</h2>
+<p>The host can request MSAA for its render plan. The default is one sample, preserving existing
+scenes. This setting applies to every main scene pass and offscreen scene target created by that
+engine; it is not a scene-document camera property.</p>
+<div class="language-kotlin highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="k">import</span><span class="w"> </span><span class="nn">com.awakekt.awake.render.pipeline.MultisampleState</span>
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="kd">val</span><span class="w"> </span><span class="nv">plan</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">gameRenderPlan</span><span class="p">.</span><span class="na">copy</span><span class="p">(</span>
+</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">    </span><span class="n">multisample</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MultisampleState</span><span class="p">(</span><span class="n">count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">4</span><span class="p">,</span><span class="w"> </span><span class="n">alphaToCoverageEnabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="p">),</span>
+</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="p">)</span>
+</span></code></pre></div>
+<p>Pass <code>plan</code> to <code>VulkanEngine</code> or <code>WebGpuEngine</code>. Vulkan chooses the greatest supported count at or
+below the request from 1, 2, 4 and 8, intersecting its colour and depth framebuffer capabilities.
+Standard WebGPU supports 1 and 4: a request for 2 falls back to 1, and 8 falls back to 4. A downgrade
+logs the requested and selected counts. Falling back to 1 also disables alpha to coverage.</p>
+<p>The main colour and depth attachments use the chosen count. Colour resolves before the camera's
+post-processing chain. FXAA remains opt-in; adding an <code>fxaa</code> effect explicitly filters the resolved
+colour. The canvas, text, UI overlays and offscreen UI layers use single-sample colour after the
+resolve and post-processing.</p>
+<p>With alpha to coverage enabled, built-in textured and skinned <code>AlphaMode.Mask</code> materials convert
+the filtered alpha edge around their cutoff into sample coverage. Opaque materials retain full
+coverage, and alpha-blended and additive materials retain blending. Custom content shaders keep
+alpha to coverage off unless their pipeline specification opts in and supplies suitable output
+alpha. Shadow, camera-depth and mask prepasses remain single-sample with the authored hard cutoff.
+Depth-reading effects continue to read those independent prepasses; no multisampled depth resolve
+or depth readback is provided. TAA is outside this setting.</p>
+<p>See <a href="https://github.com/awakekt/awake/blob/main/docs/reference/msaa-verification.md">MSAA verification</a> for GPU measurements, image probes and
+the limits of the desktop backend coverage.</p>
 <h2 id="properties">Properties</h2>
 <p><code>light</code>:</p>
 <table>

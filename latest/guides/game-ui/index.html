@@ -711,6 +711,8 @@
       
         
       
+        
+      
     
     
     
@@ -830,6 +832,34 @@
     
   
     Scene capabilities
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../scene-components/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scene components
   
 
     
@@ -1942,6 +1972,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#canvas-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Canvas components
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Canvas components">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#migrating-from-canvas_element" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migrating from canvas_element
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#properties" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2998,6 +3056,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#canvas-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Canvas components
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Canvas components">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#migrating-from-canvas_element" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migrating from canvas_element
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#properties" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3553,6 +3639,88 @@ node. Set Text and Set Visible change another element, named the same way:</p>
 </span></code></pre></div>
 <p>The project needs the blueprint capability. A blueprint takes no tap from the button: its <code>action</code>,
 or a system polling <code>consumePress()</code>, sees the tap as it would without the blueprint.</p>
+<h2 id="canvas-components">Canvas components</h2>
+<p>A canvas element is saved as a set of focused components on its node, one for each concern, and
+the ECS holds each as a component of its own, so a system can query "every text" or "every button"
+directly:</p>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Live type</th>
+<th>What it holds</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>canvas_rect</code></td>
+<td><code>CanvasRect</code></td>
+<td>Where it sits and how big it is. A node with one is a canvas element.</td>
+</tr>
+<tr>
+<td><code>canvas_text</code></td>
+<td><code>CanvasText</code></td>
+<td>Its words: text or key and args, font, size, alignment, links.</td>
+</tr>
+<tr>
+<td><code>canvas_appearance</code></td>
+<td><code>CanvasAppearance</code></td>
+<td>Its colours, <code>style</code> and control <code>skin</code>.</td>
+</tr>
+<tr>
+<td><code>canvas_layout</code>, <code>canvas_cluster</code></td>
+<td><code>CanvasLayout</code>, <code>CanvasCluster</code></td>
+<td>How it places its children.</td>
+</tr>
+<tr>
+<td><code>canvas_bind</code></td>
+<td><code>CanvasBinding</code></td>
+<td>Game state it shows without code.</td>
+</tr>
+<tr>
+<td><code>canvas_follow</code>, <code>canvas_follow_arrow</code></td>
+<td><code>CanvasFollow</code>, <code>CanvasFollowArrow</code></td>
+<td>The node it follows; the arrow of a follower pinned to the edge.</td>
+</tr>
+<tr>
+<td><code>canvas_input</code>, <code>canvas_tooltip</code></td>
+<td><code>CanvasInput</code>, <code>CanvasTooltip</code></td>
+<td>Pressable, draggable, drop target, wheel; a hover hint.</td>
+</tr>
+<tr>
+<td>one widget</td>
+<td><code>CanvasButtonWidget</code>, <code>CanvasBarWidget</code>, ...</td>
+<td><code>canvas_button</code>, <code>canvas_bar</code>, <code>canvas_sweep</code>, <code>canvas_stepper</code>, <code>canvas_joystick</code>, <code>canvas_look_area</code>, <code>canvas_text_field</code>, <code>canvas_view</code> or <code>canvas_image</code>: what the element is, with its own values and <code>settings</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>What the player is doing to an element right now, its taps, hover, drag and drop, focus, stick and
+aim, is a <code>CanvasPointerState</code> component, which is never saved. The element's <code>kind</code> follows from
+its components: its widget's, else <code>Text</code> when it has a <code>canvas_text</code>, else <code>Panel</code>. The properties
+below are the older <code>canvas_element</code>'s, which still loads: each becomes the component that holds it,
+and a scene saves the components. <code>World.syncCanvasElements()</code> brings an entity's components and its
+<code>CanvasElement</code> in step; <code>SceneCanvas</code> calls it every frame.</p>
+<h3 id="migrating-from-canvas_element">Migrating from <code>canvas_element</code></h3>
+<p>Nothing has to change for a scene or prefab saved before the split: it loads, draws and behaves as
+it did, and the next save writes it as components. To move code and tools over:</p>
+<ul>
+<li><strong>Files.</strong> <code>SceneDocument.withCanvasComponents()</code> and <code>ScenePrefab.withCanvasComponents()</code> rewrite a
+  file in the current form; <code>SceneNode.canvasElementView()</code> reads a node in either form as the single
+  record a tool written for <code>canvas_element</code> expects. A field a kind never used, such as a Panel's
+  <code>text</code> or a Bar's <code>camera</code>, has no component to go in and is dropped.</li>
+<li><strong>Code that builds prefabs.</strong> <code>canvasPrefab { … }</code> and its <code>text</code>, <code>panel</code>, <code>bar</code>, <code>button</code> and other
+  kind functions are unchanged and now save the component set. A setting the element's kind does not
+  use is reported, <code>sweep does nothing on a Panel, so it is not saved</code>, instead of being saved where
+  it did nothing.</li>
+<li><strong>Code that reads elements.</strong> <code>world.get&lt;CanvasElement&gt;(entity)</code> and its properties work as before.
+  To read by role, query the components instead: <code>world.family&lt;CanvasButtonWidget, CanvasPointerState&gt;()</code>
+  for every button and what the player did to it, <code>world.get&lt;CanvasText&gt;(entity)</code> for one element's
+  words. Typed parts expose theirs, such as a bar part's <code>widget</code> and a text part's <code>words</code>. Add,
+  replace or remove a component on the entity, or through <code>CanvasElement.set</code>; <code>SceneCanvas</code> brings the
+  two in step each frame, and <code>World.syncCanvasElements()</code> does it at once.</li>
+<li><strong>Kind.</strong> An element's <code>kind</code> follows from its components. Setting it on a <code>CanvasElement</code> gives it
+  that kind's widget; on an entity, add the widget component.</li>
+</ul>
 <h2 id="properties">Properties</h2>
 <table>
 <thead>
@@ -4394,7 +4562,8 @@ Awake reads, such as a collection or a WOFF file, is logged once, and its elemen
 default font. A host with no renderer reads no font. If your app runs its own Compose host, pass the
 fonts yourself: <code>SceneCanvas(world, fonts = loadCanvasFonts(scene, files))</code>.</p>
 <p>Text up to 24 pixels, after the canvas scaler and the display density, draws from glyphs rasterized
-at exactly that size, so small labels stay sharp; larger text draws from a distance field. <code>bitmap</code>
+at exactly that size, so small labels stay sharp at a fractional scale too, where the size is rounded
+to a whole pixel; larger text draws from a distance field. <code>bitmap</code>
 keeps its pixel-art look at every size. See <a href="../ui/#draw-crisp-text">Draw crisp text</a>.</p>
 <h2 id="put-elements-inside-others">Put elements inside others</h2>
 <p>An element whose node sits below another element's node in the scene is drawn inside that element.
@@ -4778,6 +4947,16 @@ a unit <code>pixelsPerUnit</code> of the screen's pixels, for pixel art at any d
 where the platform reports them: on Android and on a desktop monitor that reports its size. A
 browser and iOS report none, so there a unit is a dp. <code>minScale</code> and <code>maxScale</code> hold the result, and
 <code>playerScale</code>, which a settings menu sets, multiplies it after them.</p>
+<p>A screen rarely gives a round scale: a 1017 dp tall window against the default 720 reference gives
+1.4125. Text does not need one. Each text element's size is rounded to whole device pixels after the
+scale and the density, so text up to 24 pixels draws from exact-size glyphs at any scale (13 at 1.4125
+is an 18 pixel glyph, a 2% difference), and layout boxes keep the size the scale gives them. Pixel art
+is what a fractional scale hurts: some of its pixels come out a screen pixel wider than others. <code>snap</code>
+rounds the scale to the nearest whole number (<code>WholeStep</code>) or half (<code>HalfStep</code>) before the limits, so
+the art is a clean multiple. The trade-off is layout size. The canvas is laid out at the rounded
+scale, so every size and offset moves by up to half a step in proportion: <code>HalfStep</code> draws 1.4125 at
+1.5, 6% larger, and <code>WholeStep</code> at 1, 29% smaller. Use <code>snap</code> for a pixel-art HUD, with <code>HalfStep</code> or
+<code>WholeStep</code> as the layout can bear, and leave it <code>None</code> for a HUD of vector art and text.</p>
 <div class="language-json highlight"><span class="filename">A 1080p HUD that follows the screen&#x27;s height</span><pre><span></span><code><span id="__span-23-1"><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="p">{</span><span class="w"> </span><span class="nt">"component"</span><span class="p">:</span><span class="w"> </span><span class="s2">"canvas_scaler"</span><span class="p">,</span><span class="w"> </span><span class="nt">"referenceWidth"</span><span class="p">:</span><span class="w"> </span><span class="mi">1920</span><span class="p">,</span><span class="w"> </span><span class="nt">"referenceHeight"</span><span class="p">:</span><span class="w"> </span><span class="mi">1080</span><span class="p">,</span><span class="w"> </span><span class="nt">"match"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">"maxScale"</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="p">}</span>
 </span></code></pre></div>
 <p>A host that draws <code>CanvasOverlay</code> itself passes the same rule as <code>CanvasOverlay(items, scaler = …)</code>,
@@ -4794,6 +4973,14 @@ what it follows, either way.</p>
 <p>A host that knows better sets <code>SceneAppLifecycleRuntime.canvasSafeArea</code> itself, or passes
 <code>SceneCanvas(world, safeArea = …)</code>: an editor previews a device by passing that device's insets.
 <code>canvasDpi</code> likewise overrides the platform's dots per inch.</p>
+<p>Android also reports <code>AppFrame.systemGestureInsets</code>: the edges where system navigation gestures
+take priority, separate from <code>safeArea</code>. Both sets are relative to the engine surface and in dp,
+including when the surface is embedded inside a larger window. A host receives updates after a
+resize or inset change through <code>WindowLifecycle.setSystemGestureInsets</code>. Other hosts report
+<code>DisplayInsets.None</code> unless they supply this information; their existing safe areas are unchanged.
+When laying out edge controls, a host can choose the larger value on each edge from the visual and
+gesture sets and pass that as its canvas safe area. Do not add the sets: they can overlap. General
+panels can continue to use just the visual safe area.</p>
 <h3 id="place-something-on-a-point">Place something on a point</h3>
 <p><code>PointAnchor(x, y, pivot = Alignment.BottomCenter)</code> is the same placement for any Compose UI: it
 puts its content's <code>pivot</code> point on a point of its box, moved by <code>offsetX</code> and <code>offsetY</code>, for a
@@ -4843,6 +5030,17 @@ Give a <code>TextField</code> a one-character <code>mask</code>, such as <code>"
 the mask once for each typed character while <code>text</code> keeps what was typed, refuses copy and cut, and
 reads as a password to accessibility services and the platform keyboard. Set <code>mask</code> back to <code>""</code> to
 show the password.</p>
+<p>Projects played by <code>runProject</code>, or by the systems from <code>sceneSystemsFor</code>, also accept controls added
+while playing. A HUD does not have to appear in the saved scene to get its input actions. Idle scenes
+watch for controls without creating fallback input state; when controls arrive, action reading runs
+before the canvas feeds its actions, and before movement and camera consumers.</p>
+<p>A system using the standard <code>gameplayInput()</code> provider can read <code>input.hostState</code> for the host's
+<code>showTouchControls</code> preference and <code>lastInputDevice</code>. The preference is the host's request before a
+canvas's <code>Auto</code> visibility policy. <code>lastInputDevice</code> stays on a quiet frame; <code>changeVersion</code> increments
+only when the device or preference changes, so a system can remember its last version and rebuild
+its layout once per change. The state is updated before systems run and survives project scene
+switches. A custom/headless provider can pass its own <code>HostInputState</code> to <code>GameplayInput</code>; the
+two-argument constructor continues to report no host state.</p>
 <p>A <code>Joystick</code> knob follows the thumb that landed on it up to the pad's edge and springs back on
 release; another thumb on a button, or on the stick, never moves it. Its <code>joystick</code> settings make it
 <code>Floating</code>, appearing where the thumb lands in its box, or <code>Dynamic</code>, dragged along past its reach,
@@ -4855,6 +5053,11 @@ and set its <code>radius</code>, a <code>deadZone</code>, a <code>response</code
 </span><span id="__span-25-4"><a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="w">  </span><span class="nt">"joystick"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"mode"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Floating"</span><span class="p">,</span><span class="w"> </span><span class="nt">"radius"</span><span class="p">:</span><span class="w"> </span><span class="mi">64</span><span class="p">,</span><span class="w"> </span><span class="nt">"restX"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.35</span><span class="p">,</span><span class="w"> </span><span class="nt">"restY"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.6</span><span class="p">,</span><span class="w"> </span><span class="nt">"deadZone"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.12</span><span class="p">,</span>
 </span><span id="__span-25-5"><a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a><span class="w">                </span><span class="nt">"sprintThreshold"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.9</span><span class="p">,</span><span class="w"> </span><span class="nt">"sprintAction"</span><span class="p">:</span><span class="w"> </span><span class="s2">"run"</span><span class="p">,</span><span class="w"> </span><span class="nt">"idleAlpha"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.4</span><span class="p">,</span><span class="w"> </span><span class="nt">"idleDelay"</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
 </span></code></pre></div>
+<p>For a deterministic test or a host-supplied stick, <code>element.setJoystickInput(x, y)</code> accepts normalized
+pad coordinates (right/down positive). It applies the widget's dead zone, response and sprint
+threshold without synthesizing a pointer. Values are clamped to the pad's reach; <code>(0, 0)</code> centres
+it even when <code>snapBack</code> is off. Non-finite input, a non-joystick element, or an actual pointer already
+holding the joystick is rejected. Physical input can take over normally afterwards.</p>
 <p>A <code>touchOnly</code>
 element is drawn only when <code>SceneCanvas(world, showTouchControls = true)</code> is called, or when
 <code>SceneAppLifecycleRuntime.showTouchControls</code> is <code>true</code>. When a project is played with

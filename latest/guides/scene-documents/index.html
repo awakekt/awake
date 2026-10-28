@@ -713,6 +713,8 @@
       
         
       
+        
+      
     
     
     
@@ -989,6 +991,34 @@
     
   
     Scene capabilities
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../scene-components/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scene components
   
 
     
@@ -2994,6 +3024,9 @@ owns the component, and must be registered before a document that uses them is d
 </tr>
 </tbody>
 </table>
+<p>A scene module's own components are listed in the registry the build generates for it, such as
+<code>SceneCoreSceneComponents</code>; register one with <code>registry.register(module)</code>. <a href="../scene-components/">Scene components</a>
+shows how to add a component to one.</p>
 <p>A registry you build is passed to <code>instantiate</code>. Inside an app, where <code>scene(document)</code> uses the
 global registry, register with <code>registerGlobal</code>; <a href="../cameras-and-controls/">Cameras and controls</a>
 shows both.</p>
