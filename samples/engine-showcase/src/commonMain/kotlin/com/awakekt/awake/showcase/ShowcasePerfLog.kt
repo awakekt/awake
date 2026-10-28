@@ -17,22 +17,31 @@ import kotlin.math.roundToInt
 internal const val PERF_LOG_INTERVAL_FRAMES = 240
 
 /**
- * Prints one line of frame statistics every [PERF_LOG_INTERVAL_FRAMES] frames.
+ * Prints the first frame with UI and submitted backend draws, then every
+ * [PERF_LOG_INTERVAL_FRAMES] frames. Slow emulators must not wait for the periodic sample before
+ * their launch check can distinguish a rendered app from a process stuck on its splash screen.
  *
  * For comparing two runs from a terminal, where the stats card cannot be diffed: same build,
  * same machine, one change between them. The line is stable `key=value` pairs so it greps.
  */
 internal class ShowcasePerfLog(
     private val runtime: SceneAppLifecycleRuntime,
+    private val writeLine: (String) -> Unit = ::println,
     private val currentShowcase: () -> String,
 ) : System {
     private var frames = 0
+    private var hasReportedRenderedUi = false
 
     override fun update(world: World, delta: Float) {
         frames += 1
-        if (frames < PERF_LOG_INTERVAL_FRAMES) return
+        if (frames < PERF_LOG_INTERVAL_FRAMES && hasReportedRenderedUi) return
+        val stats = runtime.frameStats()
+        val uiPrimitives = runtime.uiPrimitives.size
+        val hasRenderedUi = uiPrimitives > 0 && (stats.render?.drawCalls ?: 0) > 0
+        if (frames < PERF_LOG_INTERVAL_FRAMES && !hasRenderedUi) return
         frames = 0
-        println(perfLine(currentShowcase(), world.family<MeshRenderer>().size, runtime.frameStats(), runtime.uiPrimitives.size))
+        hasReportedRenderedUi = hasReportedRenderedUi || hasRenderedUi
+        writeLine(perfLine(currentShowcase(), world.family<MeshRenderer>().size, stats, uiPrimitives))
     }
 }
 
