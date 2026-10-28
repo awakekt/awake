@@ -12,9 +12,9 @@ import com.awakekt.awake.compose.ui.platform.ComposeHost
 import com.awakekt.awake.compose.ui.platform.InputOwnership
 import com.awakekt.awake.compose.ui.semantics.SemanticsNode
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
+import com.awakekt.awake.core.input.HostInputState
 import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.input.InputDevice
-import com.awakekt.awake.core.input.InputDeviceTracker
 import com.awakekt.awake.core.input.InputSnapshot
 import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.input.PointerCursor
@@ -140,9 +140,10 @@ class SceneAppLifecycleRuntime internal constructor(
     var canvasSlotContent: Map<String, CanvasSlotContent> = emptyMap()
 
     /** Which device the player last used, read from each frame's input; null until any is used. */
-    val lastInputDevice: InputDevice? get() = inputDevices.last
+    val lastInputDevice: InputDevice? get() = hostInputState.lastInputDevice
 
-    private val inputDevices = InputDeviceTracker()
+    /** Host input information updated before the scene's systems, surviving scene switches. */
+    val hostInputState = HostInputState()
 
     /** The decoded images the scene's canvas elements name, by path; an element whose image is missing draws without it. */
     var canvasImages: Map<String, ImageBitmap> = emptyMap()
@@ -313,7 +314,7 @@ class SceneAppLifecycleRuntime internal constructor(
         val viewportWidth = frame.viewportWidth
         val viewportHeight = frame.viewportHeight
         val snapshot = frame.input
-        inputDevices.observe(snapshot)
+        hostInputState.update(snapshot, showTouchControls)
         recordFrameTime(delta)
         // Before anything this frame can log, so every record it produces carries this frame's
         // number rather than the previous one. The runtime is the only thing that knows where a
@@ -436,7 +437,7 @@ class SceneAppLifecycleRuntime internal constructor(
                         strings = canvasStrings,
                         safeArea = canvasSafeArea ?: platformSafeArea,
                         dpi = canvasDpi ?: platformDpi,
-                        inputDevice = inputDevices.last,
+                        inputDevice = hostInputState.lastInputDevice,
                         slotContent = canvasSlotContent,
                     )
                 }

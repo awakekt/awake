@@ -10,6 +10,7 @@ import com.awakekt.awake.compose.ui.platform.blocksGameplayKey
 import com.awakekt.awake.compose.ui.platform.blocksGameplayKeys
 import com.awakekt.awake.core.input.ActionInputSource
 import com.awakekt.awake.core.input.GamepadButton
+import com.awakekt.awake.core.input.HostInputState
 import com.awakekt.awake.core.input.InputSnapshot
 import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.input.PinchGesture
@@ -42,11 +43,17 @@ import com.awakekt.awake.core.input.ScrollSource
  *
  * @param snapshot Raw input state snapshot captured this frame.
  * @param claimed UI input ownership state for the current frame.
+ * @property hostState Live host preference/device information, supplied by the scene's standard
+ *   input provider. Null for a manually constructed input whose host reports none.
  */
 class GameplayInput(
     private val snapshot: InputSnapshot,
     private val claimed: InputOwnership,
+    val hostState: HostInputState?,
 ) : ActionInputSource {
+    /** Input from a manually managed host that exposes no host-state service. */
+    constructor(snapshot: InputSnapshot, claimed: InputOwnership) : this(snapshot, claimed, null)
+
     /** False while the UI holds the pointer or a modal is open, so a click on a dialog or backdrop is not a world drag. */
     val pointerDown: Boolean get() = snapshot.pointerDown && !claimed.isCaptured && !claimed.isModalOpen
 

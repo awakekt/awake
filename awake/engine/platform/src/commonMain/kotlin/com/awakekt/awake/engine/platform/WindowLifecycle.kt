@@ -86,6 +86,9 @@ interface WindowLifecycle {
      */
     fun setSafeArea(insets: DisplayInsets) = Unit
 
+    /** Reports the system-gesture edges separately from the visual safe area, in dp. */
+    fun setSystemGestureInsets(insets: DisplayInsets) = Unit
+
     /**
      * Sets the screen's real dots per inch, physical pixels to a physical inch, from a platform that
      * can tell. Each frame after carries it as

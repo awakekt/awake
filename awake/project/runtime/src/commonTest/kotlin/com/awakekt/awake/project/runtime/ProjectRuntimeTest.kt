@@ -28,6 +28,9 @@ import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.Camera
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
+import com.awakekt.awake.ui.canvas.CanvasElement
+import com.awakekt.awake.ui.canvas.CanvasElementKind
+import com.awakekt.awake.ui.canvas.setJoystickInput
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancelAndJoin
@@ -42,6 +45,27 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class ProjectRuntimeTest {
+    @Test
+    fun aRuntimeHudGetsActionsEvenWhenTheSavedSceneHasNoControls() = runTest {
+        val game = play("""{"version":1,"name":"Harbor Town","nodes":[]}""")
+        assertNull(game.world.inputActions(), "an idle project does not create fallback input state")
+        val stick = CanvasElement().apply { kind = CanvasElementKind.Joystick; action = "move" }
+        val entity = game.world.create()
+        game.world.add(entity, stick)
+        stick.setJoystickInput(0f, -1f)
+
+        game.frames(1)
+
+        val actions = assertNotNull(game.world.inputActions())
+        assertEquals(1f, actions.axisY("move"), 0.0001f, "the late HUD is processed without game-side system planning")
+        stick.setJoystickInput(0f, 0f)
+        game.frames(1)
+        assertEquals(0f, actions.axisY("move"), "actions begin a fresh frame before the canvas adds its input")
+        game.world.destroy(entity)
+        game.frames(1)
+        assertEquals(0f, actions.axisY("move"), "removing a HUD leaves no stuck axis")
+    }
+
     @Test
     fun theSceneDecidesTheCameraAndWhatItFollows() = runTest {
         val game = play(PHYSICS_SCENE)
