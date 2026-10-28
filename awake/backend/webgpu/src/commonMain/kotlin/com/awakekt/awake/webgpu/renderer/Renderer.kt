@@ -363,6 +363,9 @@ class Renderer internal constructor(
         /** Matches the Vulkan backend's own batching budget; see its MAX_UI_QUADS. */
         internal const val MAX_UI_QUADS = 256
 
+        /** Matches the Vulkan backend's textured-primitive starting size; see its TEXTURE_PRIMITIVE_QUADS. */
+        internal const val TEXTURE_PRIMITIVE_QUADS = 1
+
         /** Starting size only -- LineMesh grows past it. See DebugLineLayout.INITIAL_LINES. */
         internal const val MAX_DEBUG_LINES = DebugLineLayout.INITIAL_LINES
         internal val WHITE_RGBA = AwakeColor.White

@@ -59,6 +59,12 @@ class DynamicMesh(
     var growthCount: Int = 0
         private set
 
+    /** Requested buffer capacity across every frame slot; excludes device allocation alignment and padding. */
+    val reservedBytes: Long
+        get() = frameResources.sumOf {
+            it.maxVertices.toLong() * floatsPerVertex * Float.SIZE_BYTES + it.maxIndices.toLong() * Int.SIZE_BYTES
+        }
+
     private data class FrameResources(
         var vertexBuffer: BufferHandle,
         var vertexBufferMemory: DeviceMemoryHandle,

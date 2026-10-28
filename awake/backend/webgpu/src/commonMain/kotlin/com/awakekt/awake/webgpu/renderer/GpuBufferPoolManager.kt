@@ -46,7 +46,7 @@ internal class GpuBufferPoolManager(
         DynamicMesh(graphicsDevice, Renderer.MAX_UI_QUADS, DynamicMesh.ROUNDED_QUAD_FLOATS_PER_VERTEX)
     }
     private val uiTextureMeshPool = GpuResourcePool {
-        DynamicMesh(graphicsDevice, Renderer.MAX_UI_QUADS, DynamicMesh.GLYPH_FLOATS_PER_VERTEX)
+        DynamicMesh(graphicsDevice, Renderer.TEXTURE_PRIMITIVE_QUADS, DynamicMesh.GLYPH_FLOATS_PER_VERTEX)
     }
     private val imagePassMeshPool = GpuResourcePool {
         DynamicMesh(graphicsDevice, 1, DynamicMesh.IMAGE_PASS_FLOATS_PER_VERTEX)

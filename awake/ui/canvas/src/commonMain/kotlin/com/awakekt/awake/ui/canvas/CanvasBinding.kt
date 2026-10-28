@@ -153,6 +153,6 @@ private fun warnUnknownFormat(key: String, spec: String) {
 private val FIELD_PATH = Regex("""[A-Za-z0-9_]+(\.[A-Za-z0-9_]+)+""")
 
 // `{component.field}`, or `{component.field:format}`; group 1 is the field and group 2 the format.
-private val PLACEHOLDER = Regex("""\{([A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)+)(?::([^{}]+))?}""")
+private val PLACEHOLDER = Regex("""\{([A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)+)(?::([^{}]+))?\}""")
 
 private const val FORMAT_GROUP = 2

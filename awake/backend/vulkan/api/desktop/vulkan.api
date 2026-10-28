@@ -568,6 +568,7 @@ public final class com/awakekt/awake/vulkan/ui/DynamicMesh {
 	public static synthetic fun draw$default (Lcom/awakekt/awake/vulkan/ui/DynamicMesh;IJLcom/awakekt/awake/render/renderer/RenderStatsCounter;ILjava/lang/Object;)V
 	public final fun getDrawIndexCount ()I
 	public final fun getGrowthCount ()I
+	public final fun getReservedBytes ()J
 	public final fun update (I[F[I)V
 	public final fun update ([F[I)V
 }
