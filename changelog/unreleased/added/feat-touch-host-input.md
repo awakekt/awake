@@ -1,1 +1,0 @@
-- Touch hosts report Android system-gesture insets separately from visual safe areas. Runtime-added canvas controls receive project input actions, systems can observe host/device changes through `GameplayInput.hostState`, and `CanvasElement.setJoystickInput` supports direct deterministic joystick input (#1116).
