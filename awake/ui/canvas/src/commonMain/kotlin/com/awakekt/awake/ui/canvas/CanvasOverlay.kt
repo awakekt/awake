@@ -23,7 +23,6 @@ import com.awakekt.awake.compose.foundation.layout.padding
 import com.awakekt.awake.compose.foundation.layout.size
 import com.awakekt.awake.compose.foundation.style.Style
 import com.awakekt.awake.compose.foundation.style.rememberStyleState
-import com.awakekt.awake.compose.foundation.style.resolveTextColor
 import com.awakekt.awake.compose.foundation.style.styleable
 import com.awakekt.awake.compose.foundation.text.Text
 import com.awakekt.awake.compose.runtime.Composer
@@ -39,6 +38,7 @@ import com.awakekt.awake.compose.ui.draw.alpha
 import com.awakekt.awake.compose.ui.draw.clip
 import com.awakekt.awake.compose.ui.draw.drawBehind
 import com.awakekt.awake.compose.ui.draw.graphicsLayer
+import com.awakekt.awake.compose.ui.draw.scale
 import com.awakekt.awake.compose.ui.graphics.CircleShape
 import com.awakekt.awake.compose.ui.graphics.ImageBitmap
 import com.awakekt.awake.compose.ui.graphics.ImageFill
@@ -266,13 +266,11 @@ internal fun CanvasElementView(
     val fill = colorOf(element.color, Color.White)
     val back = colorOf(element.background, Color.Transparent)
     val state = rememberStyleState(element.interactions)
-    val style = Style {
-        background(back)
-        element.style.applyTo(this, tree.images, disabled)
-    }
-    val textStyle = element.textStyle(resolveTextColor(state, style) ?: fill, tree.fontOf(element))
+    val resolved = rememberCanvasStyleState(element.style, back, fill, state, disabled, tree.controls.theme?.transitionSeconds)
+    val style = Style { resolved.applyTo(this, element.style, tree.images) }
+    val textStyle = element.textStyle(resolved.textColor, tree.fontOf(element))
     if (LocalCanvasGhost.current) {
-        GhostElementView(element, modifier.rotated(element.drawnRotation).styleable(state, style), textStyle, tree, children)
+        GhostElementView(element, modifier.rotated(element.drawnRotation).scaled(resolved.scale).styleable(state, style), textStyle, tree, children)
         return
     }
     // Tree-space pixels back to canvas units: from the canvas box's corner, which its own onPlaced
@@ -294,7 +292,7 @@ internal fun CanvasElementView(
     // A Button, or an Image or Panel made pressable, occludes what is under it, like any click
     // target; every other kind only watches, so it must not swallow a tap meant for something it
     // happens to be drawn over.
-    val hovered = wheeled.rotated(element.drawnRotation).styleable(state, style)
+    val hovered = wheeled.rotated(element.drawnRotation).scaled(resolved.scale).styleable(state, style)
         .hoverable(element.interactions, blocksHitTest = element.takesTaps)
         .pressPoint(element, density)
         .tooltipPointer(element, tree.tooltips, units)
@@ -319,6 +317,12 @@ private val CanvasElement.drawnRotation: Float?
  */
 private fun Modifier.rotated(degrees: Float?): Modifier =
     if (degrees == null || degrees == 0f) this else graphicsLayer(rotationDegrees = degrees)
+
+/**
+ * Scales what this node paints about its own centre without moving its layout box or hit area.
+ * Unit scale adds no modifier node.
+ */
+private fun Modifier.scaled(factor: Float): Modifier = if (factor == 1f) this else scale(factor)
 
 /**
  * A Bar's fill, [value] of its width: [color], or its fill image. The image is laid out at the bar's

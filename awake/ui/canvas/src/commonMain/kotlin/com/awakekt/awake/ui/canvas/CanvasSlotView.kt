@@ -10,6 +10,7 @@ package com.awakekt.awake.ui.canvas
 import com.awakekt.awake.compose.foundation.layout.Box
 import com.awakekt.awake.compose.foundation.layout.BoxScope
 import com.awakekt.awake.compose.foundation.style.Style
+import com.awakekt.awake.compose.foundation.style.StyleState
 import com.awakekt.awake.compose.foundation.style.rememberStyleState
 import com.awakekt.awake.compose.foundation.style.styleable
 import com.awakekt.awake.compose.runtime.Composer
@@ -153,12 +154,10 @@ private class SlotLayer(
     fun draw(state: CanvasControlState, fade: Float) {
         val override = slot.overrideFor(state)
         if (override?.hidden ?: slot.hidden) return
-        val alpha = (override?.alpha ?: 1f) * fade
-        val scale = override?.scale ?: 1f
-        var layer = modifier.testTag("canvas-slot-$name")
-        if (alpha < 1f || scale != 1f) layer = layer.graphicsLayer(alpha = alpha, scaleX = scale, scaleY = scale)
-        if (slot.circle ?: round) layer = layer.clip(CircleShape)
         val custom = LocalCanvasSlotContent.current[slot.custom]
+        val styleState = if (custom == null) rememberStyleState(element.interactions) else null
+        val style = if (custom == null) override?.style?.over(slot.style) ?: slot.style else null
+        val layer = layerModifier(override, fade, style, styleState)
         if (custom != null) {
             Box(layer, contentAlignment = Alignment.Center) {
                 custom(CanvasSlotInfo(element, name, state))
@@ -166,14 +165,25 @@ private class SlotLayer(
             }
             return
         }
-        val style = override?.style?.over(slot.style) ?: slot.style
         val frame = (override?.frames ?: slot.frames)?.imageAt(framesAt)?.fill(images)
-        val styleState = rememberStyleState(element.interactions)
         val painted = Style {
             style?.applyTo(this, images)
             frame?.let(::backgroundImage)
         }
-        Box(layer.styleable(styleState, painted), contentAlignment = Alignment.Center) { if (content != null) content() }
+        Box(layer.styleable(checkNotNull(styleState), painted), contentAlignment = Alignment.Center) { if (content != null) content() }
+    }
+
+    private fun layerModifier(
+        override: CanvasSlotOverride?,
+        fade: Float,
+        style: CanvasStyle?,
+        styleState: StyleState?,
+    ): Modifier {
+        val alpha = (override?.alpha ?: 1f) * fade
+        val scale = (override?.scale ?: 1f) * (if (style != null && styleState != null) style.stateScale(styleState) else 1f)
+        var layer = modifier.testTag("canvas-slot-$name")
+        if (alpha < 1f || scale != 1f) layer = layer.graphicsLayer(alpha = alpha, scaleX = scale, scaleY = scale)
+        return if (slot.circle ?: round) layer.clip(CircleShape) else layer
     }
 }
 
@@ -213,6 +223,7 @@ internal fun CanvasStyle.over(below: CanvasStyle?): CanvasStyle = if (below == n
         disabled = disabled ?: below.disabled,
         rotation = rotation ?: below.rotation,
         linkColor = linkColor ?: below.linkColor,
+        transitionSeconds = transitionSeconds ?: below.transitionSeconds,
     )
 }
 

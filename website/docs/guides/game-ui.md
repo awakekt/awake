@@ -358,12 +358,15 @@ lengths are dp.
 | `textShadow` | `{ color, offsetX, offsetY }` | A hard shadow under the text. Defaults: `#000000C0`, 1, 1. |
 | `textOutline` | `{ color, width }` | An outline around every glyph, so text reads over any background. Defaults: `#000000`, 1. |
 | `alpha` | number, 0 to 1 | The element's opacity, its children included. |
-| `hovered`, `pressed` | state | What changes while the pointer is over a `Button`, and while it is held. |
+| `hovered`, `pressed`, `disabled` | state | What changes while the pointer is over a `Button`, while it is held, and while it is disabled. |
+| `transitionSeconds` | number | Seconds to interpolate between states, falling back to `canvas_controls.theme.transitionSeconds`; `0` or unset snaps at once. |
 
-A state may set `background`, `gradient`, `image`, `borderColor`, `textColor` and `alpha`; anything it
-leaves out keeps the style's value. `pressed` applies over `hovered`. A button drawn from a sheet of
-art changes its `image` region per state, and a state's `image` can name a file of its own, which
-`loadCanvasImages` reads with the rest. A `Joystick` draws only its colours.
+A state may set `background`, `gradient`, `image`, `borderColor`, `textColor`, `shadow`, `scale` and
+`alpha`; anything it leaves out keeps the style's value. `scale` grows or shrinks what is painted
+about the element's centre without moving its layout box or hit-test area. `pressed` applies over
+`hovered`. A button drawn from a sheet of art changes its `image` region per state, and a state's
+`image` can name a file of its own, which `loadCanvasImages` reads with the rest. A `Joystick` draws
+only its colours.
 
 ## Draw images
 

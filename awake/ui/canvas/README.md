@@ -84,7 +84,10 @@ words, so an option set on the wrong kind still does nothing.
   editor, follows the overlay's own rule rather than a copy of it.
 - **`style`**: how it looks beyond its colours, as the saved form of a Compose `Style` drawn
   through `Modifier.styleable`: fill, gradient, corner radius, border, shadow, text colour, alpha,
-  `hovered` and `pressed` states for a Button, and images. `style.image` is an Image's picture, the
+  `hovered`, `pressed` and `disabled` states (`CanvasStateStyle`: fill, gradient, image, border and
+  text colour, `shadow`, centre `scale` without moving layout or hit-testing, and `alpha`),
+  `transitionSeconds` (interpolated between states, falling back to
+  `CanvasControlTheme.transitionSeconds` and snapping at `0`), and images. `style.image` is an Image's picture, the
   frame of a Panel, Button or Text, or a Bar's track; `style.fillImage` is a Bar's fill, cut at
   `value`, or with `style.fillImageMode` `Squeeze` drawn at the filled width with both end caps kept,
   `Capped` with both caps whole at every value, or `Sweep` swept clockwise over the box.

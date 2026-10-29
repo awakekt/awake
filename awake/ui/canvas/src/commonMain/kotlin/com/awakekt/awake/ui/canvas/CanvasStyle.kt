@@ -6,6 +6,7 @@
 package com.awakekt.awake.ui.canvas
 
 import com.awakekt.awake.compose.foundation.style.StyleScope
+import com.awakekt.awake.compose.foundation.style.StyleState
 import com.awakekt.awake.compose.ui.graphics.Brush
 import com.awakekt.awake.compose.ui.graphics.ImageBitmap
 import com.awakekt.awake.compose.ui.graphics.shadow.Shadow
@@ -49,6 +50,9 @@ import kotlinx.serialization.Serializable
  * the unrotated box.
  * @property linkColor The colour of a Text's `[[key|shown words]]` spans; null draws them in a
  * default blue.
+ * @property transitionSeconds Seconds to interpolate between this style's states ([hovered],
+ * [pressed], [disabled]); null falls back to [CanvasControlTheme.transitionSeconds], and 0 changes
+ * at once.
  */
 @Serializable
 data class CanvasStyle(
@@ -70,6 +74,7 @@ data class CanvasStyle(
     val disabled: CanvasStateStyle? = null,
     val rotation: Float? = null,
     val linkColor: String? = null,
+    @PropertyRange(min = 0.0) val transitionSeconds: Float? = null,
 ) {
     /** What is wrong with this style, as messages naming the field; empty when nothing is. */
     fun problems(): List<String> = buildList {
@@ -84,6 +89,7 @@ data class CanvasStyle(
         if ((cornerRadius ?: 0f) < 0f) add("cornerRadius must not be negative")
         if ((borderWidth ?: 0f) < 0f) add("borderWidth must not be negative")
         if (alpha != null && alpha !in 0f..1f) add("alpha must be between 0 and 1")
+        if (transitionSeconds != null && !(transitionSeconds >= 0f && transitionSeconds.isFinite())) add("transitionSeconds must not be negative")
         addAll(partProblems())
     }
 
@@ -106,13 +112,24 @@ data class CanvasStyle(
      */
     internal fun applyTo(scope: StyleScope, images: Map<String, ImageBitmap>, isDisabled: Boolean = false) {
         cornerRadius?.let { scope.cornerRadius(it.dp) }
-        shadow?.let { scope.dropShadow(it.toShadow()) }
+        val states = activeStates(scope.state, isDisabled)
+        (states.lastOrNull { it.shadow != null }?.shadow ?: shadow)?.let { scope.dropShadow(it.toShadow()) }
         paint(scope, images, background, gradient, image, textColor, alpha)
-        val dimmed = if (isDisabled) disabled ?: DIMMED else null
-        val states = listOfNotNull(hovered.takeIf { scope.state.isHovered }, pressed.takeIf { scope.state.isPressed }, dimmed)
         for (state in states) paint(scope, images, state.background, state.gradient, state.image, state.textColor, state.alpha)
         val border = states.lastOrNull { it.borderColor != null }?.borderColor ?: borderColor
         if (borderWidth != null && borderWidth > 0f && border != null) scope.border(borderWidth.dp, colorOf(border, Color.Transparent))
+    }
+
+    /** The active state overrides on [state], in application order; [isDisabled] adds [disabled] or [DIMMED]. */
+    internal fun activeStates(state: StyleState, isDisabled: Boolean = false): List<CanvasStateStyle> {
+        val dimmed = if (isDisabled) disabled ?: DIMMED else null
+        return listOfNotNull(hovered.takeIf { state.isHovered }, pressed.takeIf { state.isPressed }, dimmed)
+    }
+
+    /** The draw-only centre scale active on [state]; 1 when no active state sets one. */
+    internal fun stateScale(state: StyleState, isDisabled: Boolean = false): Float {
+        val raw = activeStates(state, isDisabled).lastOrNull { it.scale != null }?.scale ?: return 1f
+        return if (raw.isFinite()) raw.coerceAtLeast(0f) else 1f
     }
 
     /** Limits. */
@@ -120,7 +137,7 @@ data class CanvasStyle(
         /** How opaque a disabled Button with no [disabled] look draws. */
         const val DISABLED_ALPHA = 0.45f
 
-        private val DIMMED = CanvasStateStyle(alpha = DISABLED_ALPHA)
+        internal val DIMMED = CanvasStateStyle(alpha = DISABLED_ALPHA)
     }
 }
 
@@ -156,8 +173,8 @@ enum class CanvasFillImageMode {
 }
 
 /**
- * What a [CanvasStyle] changes while its Button is hovered or pressed: its paint, but not its shape
- * or shadow. A property left out keeps what the style says.
+ * What a [CanvasStyle] changes while its Button is hovered, pressed or disabled: its paint, shadow,
+ * scale or opacity. A property left out keeps what the style says.
  *
  * @property background The fill.
  * @property gradient A gradient fill, in place of [background].
@@ -165,6 +182,8 @@ enum class CanvasFillImageMode {
  * @property borderColor The border's colour, for a style with a border.
  * @property textColor The text's colour.
  * @property alpha The opacity, from 0 to 1.
+ * @property shadow The shadow cast behind the element, in place of [CanvasStyle.shadow].
+ * @property scale Multiplier around the element's centre, without moving its layout or hit area.
  */
 @Serializable
 data class CanvasStateStyle(
@@ -174,12 +193,16 @@ data class CanvasStateStyle(
     val borderColor: String? = null,
     val textColor: String? = null,
     @PropertyRange(min = 0.0, max = 1.0) val alpha: Float? = null,
+    val shadow: CanvasShadow? = null,
+    @PropertyRange(min = 0.0) val scale: Float? = null,
 ) {
     internal fun problems(): List<String> = buildList {
         addAll(colourProblems("background" to background, "borderColor" to borderColor, "textColor" to textColor))
         gradient?.problems()?.forEach { add("gradient.$it") }
         image?.problems()?.forEach { add("image.$it") }
+        shadow?.problems()?.forEach { add("shadow.$it") }
         if (alpha != null && alpha !in 0f..1f) add("alpha must be between 0 and 1")
+        if (scale != null && !(scale >= 0f && scale.isFinite())) add("scale must not be negative")
     }
 }
 
