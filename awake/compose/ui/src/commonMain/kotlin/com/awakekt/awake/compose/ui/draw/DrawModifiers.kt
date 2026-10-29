@@ -180,6 +180,9 @@ private class DropShadowNode :
             -> null
         }
         val brush = shadow.brush
+        require(brush !is com.awakekt.awake.compose.ui.graphics.LinearGradient) {
+            "Gradient shadows support only four-corner brushes; evenly spaced colour stops are supported by backgrounds."
+        }
         val color = (brush as? Brush.SolidColor)?.color ?: shadow.color
         val gradient = (brush as? Brush.LinearGradient)?.colors
         if (cornerRadius != null) {

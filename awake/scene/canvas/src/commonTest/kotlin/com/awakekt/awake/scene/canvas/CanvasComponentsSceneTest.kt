@@ -16,9 +16,11 @@ import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.ui.canvas.CanvasButtonWidget
 import com.awakekt.awake.ui.canvas.CanvasElement
 import com.awakekt.awake.ui.canvas.CanvasElementKind
+import com.awakekt.awake.ui.canvas.CanvasGradient
 import com.awakekt.awake.ui.canvas.CanvasPointerState
 import com.awakekt.awake.ui.canvas.CanvasRect
 import com.awakekt.awake.ui.canvas.CanvasStepper
+import com.awakekt.awake.ui.canvas.CanvasStyle
 import com.awakekt.awake.ui.canvas.CanvasText
 import com.awakekt.awake.ui.canvas.get
 import kotlin.test.Test
@@ -35,6 +37,24 @@ import kotlin.test.assertTrue
  * is a component of its own that is never saved.
  */
 class CanvasComponentsSceneTest {
+    @Test
+    fun middleColoursSurviveTheLegacyAndFocusedSavedForms() {
+        val style = CanvasStyle(gradient = CanvasGradient("#FF0000", "#0000FF", middle = "#00FF0080"))
+        val forms = listOf(
+            listOf(SceneCanvasElement(kind = CanvasElementKind.Panel, style = style)),
+            listOf(SceneCanvasRect(), SceneCanvasAppearance(style = style)),
+        )
+        for (components in forms) {
+            val saved = loadCanvas(listOf(SceneNode(name = "Gradient", components = components))).saveCanvas().single()
+            val json = CanvasPrefabs.json.encodeToString(SceneNode.serializer(), saved)
+            val decoded = CanvasPrefabs.json.decodeFromString(SceneNode.serializer(), json)
+            assertEquals(style, loadCanvas(listOf(decoded)).canvasElements().getValue("Gradient").style)
+            assertTrue("\"middle\"" in json, json)
+        }
+        val old = SceneNode(components = listOf(SceneCanvasAppearance(style = CanvasStyle(gradient = CanvasGradient("#FF0000", "#0000FF")))))
+        assertFalse("\"middle\"" in CanvasPrefabs.json.encodeToString(SceneNode.serializer(), old), "old two-colour files gain no field")
+    }
+
     @Test
     fun aPrefabWrittenBeforeTheSplitReadsAsItsComponentsAndSavesThem() {
         val older = CanvasPrefabs.fromJson(OLDER_PREFAB)

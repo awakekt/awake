@@ -91,6 +91,13 @@ words, so an option set on the wrong kind still does nothing.
   A `CanvasImage` names a project file, the region of it to use and the slice insets that
   keep its corners whole. A host decodes the images and passes them in `CanvasOverlay(images = …)`.
 
+  `CanvasGradient(start = "#FF0000", end = "#0000FF", middle = "#00FF00")` runs through
+  green at 50%, top to bottom (`horizontal = true` runs left to right). `middle` is optional;
+  omitting it retains the existing two-colour fill and JSON. All three colours accept
+  `#RRGGBB`/`#RRGGBBAA`, or theme tokens in a control skin. State styles use the same gradient.
+  The midpoint follows opacity, transforms and the element's rounded clip. It uses the shared
+  background brush and coloured-mesh path on CPU, Vulkan and WebGPU, with no canvas-specific shader.
+
 ## Drawing
 
 `CanvasOverlay(items, resolver = …)` draws a flat list of `CanvasItem(id, element, parent)`: each

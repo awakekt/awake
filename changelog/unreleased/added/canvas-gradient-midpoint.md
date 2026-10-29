@@ -1,0 +1,1 @@
+- Canvas gradient styles can save and draw an optional `middle` colour at 50%, including themed and state styles, through the shared multi-colour background brush; existing two-colour styles are unchanged.

@@ -293,8 +293,10 @@ public abstract interface class com/awakekt/awake/compose/ui/graphics/Brush {
 
 public final class com/awakekt/awake/compose/ui/graphics/Brush$Companion {
 	public final fun horizontal (Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;)Lcom/awakekt/awake/compose/ui/graphics/Brush;
+	public final fun horizontalGradient (Ljava/util/List;)Lcom/awakekt/awake/compose/ui/graphics/Brush;
 	public final fun linearGradient (Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;)Lcom/awakekt/awake/compose/ui/graphics/Brush;
 	public final fun vertical (Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;)Lcom/awakekt/awake/compose/ui/graphics/Brush;
+	public final fun verticalGradient (Ljava/util/List;)Lcom/awakekt/awake/compose/ui/graphics/Brush;
 }
 
 public final class com/awakekt/awake/compose/ui/graphics/Brush$LinearGradient : com/awakekt/awake/compose/ui/graphics/Brush {
@@ -475,6 +477,18 @@ public final class com/awakekt/awake/compose/ui/graphics/ImageFillKt {
 	public static synthetic fun drawImageFill$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;Lcom/awakekt/awake/compose/ui/graphics/ImageFill;FFFFILjava/lang/Object;)V
 	public static final fun drawImageFillBar (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;Lcom/awakekt/awake/compose/ui/graphics/ImageFill;FLcom/awakekt/awake/compose/ui/graphics/FillDirection;FFFF)V
 	public static synthetic fun drawImageFillBar$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;Lcom/awakekt/awake/compose/ui/graphics/ImageFill;FLcom/awakekt/awake/compose/ui/graphics/FillDirection;FFFFILjava/lang/Object;)V
+}
+
+public final class com/awakekt/awake/compose/ui/graphics/LinearGradient : com/awakekt/awake/compose/ui/graphics/Brush {
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Z
+	public final fun copy (Ljava/util/List;Z)Lcom/awakekt/awake/compose/ui/graphics/LinearGradient;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/compose/ui/graphics/LinearGradient;Ljava/util/List;ZILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/graphics/LinearGradient;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getColors ()Ljava/util/List;
+	public final fun getHorizontal ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class com/awakekt/awake/compose/ui/graphics/OffsetEffect : com/awakekt/awake/compose/ui/graphics/RenderEffect {

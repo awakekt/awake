@@ -189,14 +189,25 @@ data class CanvasStateStyle(
  * @property start The colour at the top, or the left.
  * @property end The colour at the bottom, or the right.
  * @property horizontal Whether it runs left to right.
+ * @property middle An optional colour halfway between [start] and [end]. Null keeps the two-colour fill.
  */
 @Serializable
-data class CanvasGradient(val start: String, val end: String, val horizontal: Boolean = false) {
-    internal fun problems(): List<String> = colourProblems("start" to start, "end" to end)
+data class CanvasGradient(val start: String, val end: String, val horizontal: Boolean = false, val middle: String? = null) {
+    /** Keeps the original two-colour constructor available to already compiled callers. */
+    constructor(start: String, end: String, horizontal: Boolean = false) : this(start, end, horizontal, null)
+
+    /** Keeps the original copy signature, preserving a midpoint when one has since been set. */
+    fun copy(start: String = this.start, end: String = this.end, horizontal: Boolean = this.horizontal): CanvasGradient = CanvasGradient(start, end, horizontal, middle)
+
+    internal fun problems(): List<String> = colourProblems("start" to start, "end" to end, "middle" to middle)
 
     internal fun toBrush(): Brush {
         val from = colorOf(start, Color.Transparent)
         val to = colorOf(end, Color.Transparent)
+        middle?.let {
+            val colors = listOf(from, colorOf(it, Color.Transparent), to)
+            return if (horizontal) Brush.horizontalGradient(colors) else Brush.verticalGradient(colors)
+        }
         return if (horizontal) Brush.horizontal(from, to) else Brush.vertical(from, to)
     }
 }

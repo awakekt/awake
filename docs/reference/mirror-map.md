@@ -78,6 +78,17 @@ Source: `modifier/UiModifier.kt`, `LayoutModifiers.kt`, `StyleModifiers.kt`,
 | `Modifier.testTag(tag)` | `UiModifier.testTag(tag)` (`StateModifiers.kt`) | Faithful | Same purpose (test-hook id), same shape. |
 | `Modifier.zIndex(...)`, `Modifier.rotate/scale/alpha` as top-level modifiers (Compose has both a top-level shorthand and the `graphicsLayer{}` block form) | `UiModifier.alpha(value)` / `UiModifier.scale(scaleX, scaleY, pivotX, pivotY)` (`GraphicsLayer.kt`) exist as standalone shorthands; rotate/zIndex do not | Diverges (alpha, scale), Not implemented (rotate/zIndex) | `alpha(value)` and `scale(...)` are real (build a `UiAlphaEffect`/`UiScaleEffect`), matching Compose's top-level-shorthand ergonomics. No standalone rotate/zIndex modifier functions exist. |
 
+## Axis gradient brushes
+
+`Brush.horizontalGradient(colors)` and `Brush.verticalGradient(colors)` implement the evenly
+spaced, full-bounds subset of the AndroidX
+[gradient brush factories](https://developer.android.com/reference/kotlin/androidx/compose/ui/graphics/Brush).
+They return a `LinearGradient` background brush and use the existing coloured-mesh renderer.
+This is **Subset**, not full brush parity: custom stop positions, explicit start/end coordinates,
+tile modes and gradient shadows are not implemented by these factories. A multi-colour brush used
+as a shadow reports the unsupported case instead of silently dropping its colours. Existing
+four-corner brushes and their shadow support remain available.
+
 ## `UiScope`/`row()`/`column()`/`box()` DSL
 
 Source: `layouts/Row.kt`, `Column.kt`, `Box.kt`, `RowScope.kt`, `ColumnScope.kt`,
