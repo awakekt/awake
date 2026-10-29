@@ -93,7 +93,13 @@ class SceneDocumentJsonSchemaTest {
 
         val sceneFiles = rootDir.walkTopDown()
             .filter { it.isFile && it.name.endsWith(".scene.json") }
-            .filter { !it.path.contains(".gradle") && !it.path.contains("build") && !it.path.contains(".claude") }
+            .filter { file ->
+                val relative = file.relativeTo(rootDir).invariantSeparatorsPath
+                !relative.contains(".gradle") &&
+                    !relative.startsWith("build/") &&
+                    !relative.contains("/build/") &&
+                    !relative.contains(".claude")
+            }
             .toList()
 
         assertTrue(sceneFiles.isNotEmpty(), "Found scene files in repository: ${sceneFiles.size}")

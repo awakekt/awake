@@ -6,7 +6,15 @@
 package com.awakekt.awake.scene.ai.patrol
 
 import com.awakekt.awake.ai.behavior.PatrolBehavior
+import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.schema.PropertyRange
+import com.awakekt.awake.ecs.Entity
+import com.awakekt.awake.ecs.World
+import com.awakekt.awake.scene.ai.ensurePathRequest
+import com.awakekt.awake.scene.binding.SceneBinding
+import com.awakekt.awake.scene.binding.SceneBindingHooks
+import com.awakekt.awake.scene.binding.SceneResolutionContext
+import com.awakekt.awake.scene.binding.SceneValueConverter
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneValidationIssue
 import com.awakekt.awake.scene.document.SceneVec3
@@ -25,6 +33,22 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 @SerialName("patrol")
+@SceneBinding(
+    PatrolBehavior::class,
+    name = "PatrolBinding",
+    converters = [PatrolStopsConverter::class],
+    hooks = PatrolBindingHooks::class,
+    runtimeOnly = [
+        "path",
+        "waypointIndex",
+        "timeSinceRepath",
+        "stopIndex",
+        "direction",
+        "dwellRemaining",
+        "finished",
+        "currentStop",
+    ],
+)
 data class ScenePatrol(
     val stops: List<SceneVec3> = emptyList(),
     val style: Style = Style.Loop,
@@ -59,5 +83,23 @@ data class ScenePatrol(
         if (dwellSeconds < 0f) {
             add(SceneValidationIssue(path, "patrol.dwellSeconds must not be negative"))
         }
+    }
+}
+
+internal object PatrolStopsConverter : SceneValueConverter<List<SceneVec3>, List<Vec3f>> {
+    override fun toLive(saved: List<SceneVec3>): List<Vec3f> = saved.map { Vec3f(it.x, it.y, it.z) }
+
+    override fun toSaved(live: List<Vec3f>): List<SceneVec3> = live.map { SceneVec3(it.x, it.y, it.z) }
+}
+
+internal object PatrolBindingHooks : SceneBindingHooks<PatrolBehavior, ScenePatrol> {
+    override fun afterAttach(
+        world: World,
+        entity: Entity,
+        saved: ScenePatrol,
+        live: PatrolBehavior,
+        context: SceneResolutionContext,
+    ) {
+        world.ensurePathRequest(entity)
     }
 }

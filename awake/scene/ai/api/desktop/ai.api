@@ -19,6 +19,12 @@ public final class com/awakekt/awake/scene/ai/AiBehaviorBindingsKt {
 	public static final fun registerAiBehaviors (Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;)Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;
 }
 
+public final class com/awakekt/awake/scene/ai/AiSceneComponents : com/awakekt/awake/scene/binding/SceneComponentModule {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/ai/AiSceneComponents;
+	public fun getBindings ()Ljava/util/List;
+	public fun getSerializersModule ()Lkotlinx/serialization/modules/SerializersModule;
+}
+
 public final class com/awakekt/awake/scene/ai/MovementAgentPlacement : com/awakekt/awake/ai/behavior/AgentPlacement {
 	public static final field INSTANCE Lcom/awakekt/awake/scene/ai/MovementAgentPlacement;
 	public fun face-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JFF)V
@@ -119,6 +125,8 @@ public final class com/awakekt/awake/scene/ai/definition/BehaviorTreeBinding : c
 	public fun getComponentClass ()Lkotlin/reflect/KClass;
 	public fun getSchemaClass ()Lkotlin/reflect/KClass;
 	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+	public final fun toComponent (Lcom/awakekt/awake/scene/ai/definition/SceneBehaviorTree;)Lcom/awakekt/awake/scene/ai/definition/BehaviorTreeAsset;
+	public final fun toSceneComponent (Lcom/awakekt/awake/scene/ai/definition/BehaviorTreeAsset;)Lcom/awakekt/awake/scene/ai/definition/SceneBehaviorTree;
 }
 
 public final class com/awakekt/awake/scene/ai/definition/SceneAiDefinitionsKt {
@@ -219,6 +227,8 @@ public final class com/awakekt/awake/scene/ai/definition/StateMachineBinding : c
 	public fun getComponentClass ()Lkotlin/reflect/KClass;
 	public fun getSchemaClass ()Lkotlin/reflect/KClass;
 	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+	public final fun toComponent (Lcom/awakekt/awake/scene/ai/definition/SceneStateMachine;)Lcom/awakekt/awake/scene/ai/definition/StateMachineAsset;
+	public final fun toSceneComponent (Lcom/awakekt/awake/scene/ai/definition/StateMachineAsset;)Lcom/awakekt/awake/scene/ai/definition/SceneStateMachine;
 }
 
 public final class com/awakekt/awake/scene/ai/flee/FleeBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
@@ -388,6 +398,8 @@ public final class com/awakekt/awake/scene/ai/perception/PerceivableBinding : co
 	public fun getComponentClass ()Lkotlin/reflect/KClass;
 	public fun getSchemaClass ()Lkotlin/reflect/KClass;
 	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+	public final fun toComponent (Lcom/awakekt/awake/scene/ai/perception/ScenePerceivable;)Lcom/awakekt/awake/ai/perception/Perceivable;
+	public final fun toSceneComponent (Lcom/awakekt/awake/ai/perception/Perceivable;)Lcom/awakekt/awake/scene/ai/perception/ScenePerceivable;
 }
 
 public final class com/awakekt/awake/scene/ai/perception/PerceiverBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
@@ -403,6 +415,8 @@ public final class com/awakekt/awake/scene/ai/perception/PerceiverBinding : com/
 	public fun getComponentClass ()Lkotlin/reflect/KClass;
 	public fun getSchemaClass ()Lkotlin/reflect/KClass;
 	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+	public final fun toComponent (Lcom/awakekt/awake/scene/ai/perception/ScenePerceiver;)Lcom/awakekt/awake/ai/perception/Perceiver;
+	public final fun toSceneComponent (Lcom/awakekt/awake/ai/perception/Perceiver;)Lcom/awakekt/awake/scene/ai/perception/ScenePerceiver;
 }
 
 public final class com/awakekt/awake/scene/ai/perception/SceneFactionRelation {

@@ -11,6 +11,8 @@ public final class com/awakekt/awake/scene/blueprint/BlueprintBinding : com/awak
 	public fun getComponentClass ()Lkotlin/reflect/KClass;
 	public fun getSchemaClass ()Lkotlin/reflect/KClass;
 	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+	public final fun toComponent (Lcom/awakekt/awake/scene/blueprint/SceneBlueprint;)Lcom/awakekt/awake/scene/blueprint/BlueprintComponent;
+	public final fun toSceneComponent (Lcom/awakekt/awake/scene/blueprint/BlueprintComponent;)Lcom/awakekt/awake/scene/blueprint/SceneBlueprint;
 }
 
 public final class com/awakekt/awake/scene/blueprint/BlueprintComponent {
@@ -31,6 +33,12 @@ public final class com/awakekt/awake/scene/blueprint/BlueprintScene {
 	public final fun getNames ()Lcom/awakekt/awake/scene/core/EntityNames;
 	public final fun getWorld ()Lcom/awakekt/awake/ecs/World;
 	public final fun setLoadScene (Lkotlin/jvm/functions/Function1;)V
+}
+
+public final class com/awakekt/awake/scene/blueprint/BlueprintSceneComponents : com/awakekt/awake/scene/binding/SceneComponentModule {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/blueprint/BlueprintSceneComponents;
+	public fun getBindings ()Ljava/util/List;
+	public fun getSerializersModule ()Lkotlinx/serialization/modules/SerializersModule;
 }
 
 public final class com/awakekt/awake/scene/blueprint/BlueprintSystem : com/awakekt/awake/ecs/System {

@@ -13,6 +13,7 @@ import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.core.schema.PropertyRange
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.scene.binding.RegisteredBinding
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.binding.SceneResolutionContext
@@ -68,6 +69,7 @@ data class SceneAudioSource(
  * names the file and holds no samples; [AudioSystem] swaps in the decoded clip from [loadAudioClips].
  * Exports the source back unchanged.
  */
+@RegisteredBinding
 object AudioSourceBinding : SceneComponentBinding<AudioSource, SceneAudioSource> {
     override val componentClass: KClass<AudioSource> = AudioSource::class
     override val schemaClass: KClass<SceneAudioSource> = SceneAudioSource::class
@@ -102,7 +104,7 @@ object AudioSourceBinding : SceneComponentBinding<AudioSource, SceneAudioSource>
  *
  * @return This registry instance for chaining.
  */
-fun SceneComponentRegistry.registerAudio(): SceneComponentRegistry = register(AudioSourceBinding)
+fun SceneComponentRegistry.registerAudio(): SceneComponentRegistry = register(AudioSceneComponents)
 
 /**
  * Reads and decodes every clip [document]'s `audio_source`s name, each once, by its project path.

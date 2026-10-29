@@ -88,7 +88,7 @@ registers it.
 | `SceneComponentRegistry.registerControls()` | `com.awakekt.awake.scene:controls` | `movement_control`, `camera_rig`, `input_actions` |
 | `SceneComponentRegistry.registerPhysics()` | `com.awakekt.awake.scene:physics` | `physics_body` |
 | `SceneComponentRegistry.registerCharacter()` | `com.awakekt.awake.scene:character` | `character_controller` |
-| `SceneComponentRegistry.registerAiBehaviors()` | `com.awakekt.awake.scene:ai` | `patrol`, `chase`, `flee`, `navigation` |
+| `SceneComponentRegistry.registerAiBehaviors()` | `com.awakekt.awake.scene:ai` | `patrol`, `chase`, `flee`, `navigation`, `behavior_tree`, `state_machine`, `factions`, `perceivable`, `perceiver` |
 | `SceneComponentRegistry.registerBlueprints()` | `com.awakekt.awake.scene:blueprint` | `blueprint` |
 | `SceneComponentRegistry.registerAudio()` | `com.awakekt.awake.scene:audio` | `audio_source` |
 | `loadProject(...)` | `com.awakekt.awake.project:runtime` | The defaults, plus `movement_control`, `camera_rig`, `input_actions`, `physics_body`, `character_controller`, `patrol`, `chase`, `flee`, `navigation`, `audio_source`, and the components of the [capabilities](../guides/scene-capabilities.md) passed to it |

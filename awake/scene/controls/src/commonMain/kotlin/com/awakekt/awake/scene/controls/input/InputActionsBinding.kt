@@ -17,6 +17,7 @@ import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.input.PointerButton
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.scene.binding.RegisteredBinding
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneResolutionContext
 import com.awakekt.awake.scene.controls.movement.MovementActions
@@ -122,6 +123,7 @@ private val BUTTON_DEFAULTS = setOf(MovementActions.JUMP, MovementActions.RUN)
 fun World.inputActions(): InputActions? = query(InputActions::class).firstOrNull()?.let { get(it, InputActions::class) }
 
 /** Binds a scene's [SceneInputActions] to an [InputActions] holding them and the defaults they keep. */
+@RegisteredBinding
 object InputActionsBinding : SceneComponentBinding<InputActions, SceneInputActions> {
     override val componentClass: KClass<InputActions> = InputActions::class
     override val schemaClass: KClass<SceneInputActions> = SceneInputActions::class

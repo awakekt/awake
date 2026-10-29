@@ -16,23 +16,21 @@ import com.awakekt.awake.scene.canvas.checkCanvasImages
 import com.awakekt.awake.scene.canvas.hasCanvasImages
 import com.awakekt.awake.scene.canvas.loadCanvasFonts
 import com.awakekt.awake.scene.canvas.loadCanvasImages
-import com.awakekt.awake.scene.character.CharacterControllerBinding
 import com.awakekt.awake.scene.character.CharacterControllerSystem
+import com.awakekt.awake.scene.character.CharacterSceneComponents
 import com.awakekt.awake.scene.character.SceneCharacterController
-import com.awakekt.awake.scene.controls.camera.CameraRigBinding
+import com.awakekt.awake.scene.controls.ControlsSceneComponents
 import com.awakekt.awake.scene.controls.camera.CameraSystem
 import com.awakekt.awake.scene.controls.camera.SceneCameraRig
-import com.awakekt.awake.scene.controls.input.InputActionsBinding
 import com.awakekt.awake.scene.controls.input.SceneInputActions
 import com.awakekt.awake.scene.controls.movement.MatrixRelativeMovementSystem
-import com.awakekt.awake.scene.controls.movement.MovementControlBinding
 import com.awakekt.awake.scene.controls.movement.PlayerInputSystem
 import com.awakekt.awake.scene.controls.movement.SceneMovementControl
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.physics.MeshColliderSystem
-import com.awakekt.awake.scene.physics.PhysicsBodyBinding
+import com.awakekt.awake.scene.physics.PhysicsSceneComponents
 import com.awakekt.awake.scene.physics.SceneConvexHullShape
 import com.awakekt.awake.scene.physics.SceneMeshShape
 import com.awakekt.awake.scene.physics.ScenePhysicsBody
@@ -69,7 +67,7 @@ internal val CORE_CAPABILITIES: List<SceneCapability> = listOf(
  */
 internal object ControlsCapability : SceneCapability {
     override val id = "com.awakekt.awake.controls"
-    override val components = listOf(MovementControlBinding, CameraRigBinding, InputActionsBinding)
+    override val components = ControlsSceneComponents.bindings
 
     override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {
         val moves = scene.uses(SceneMovementControl::class)
@@ -117,7 +115,7 @@ internal object CanvasCapability : SceneCapability {
  */
 internal object PhysicsCapability : SceneCapability {
     override val id = "com.awakekt.awake.physics"
-    override val components = listOf(PhysicsBodyBinding, CharacterControllerBinding)
+    override val components = PhysicsSceneComponents.bindings + CharacterSceneComponents.bindings
 
     /** Whether [scene] has bodies, characters or a terrain collider, so a project makes a physics world for it. */
     fun needsPhysics(scene: SceneDocument): Boolean =

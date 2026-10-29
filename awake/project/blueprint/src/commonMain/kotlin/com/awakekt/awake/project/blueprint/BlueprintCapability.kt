@@ -19,7 +19,7 @@ import com.awakekt.awake.project.runtime.SceneContentKey
 import com.awakekt.awake.project.runtime.SceneSystemPlan
 import com.awakekt.awake.project.runtime.uses
 import com.awakekt.awake.scene.binding.SceneComponentBinding
-import com.awakekt.awake.scene.blueprint.BlueprintBinding
+import com.awakekt.awake.scene.blueprint.BlueprintSceneComponents
 import com.awakekt.awake.scene.blueprint.BlueprintSystem
 import com.awakekt.awake.scene.blueprint.SceneBlueprint
 import com.awakekt.awake.scene.blueprint.SceneNodes
@@ -53,7 +53,7 @@ object BlueprintCapability : SceneCapability {
 
     override val id: String = ID
 
-    override val components: List<SceneComponentBinding<*, *>> = listOf(BlueprintBinding)
+    override val components: List<SceneComponentBinding<*, *>> = BlueprintSceneComponents.bindings
 
     override suspend fun load(scene: SceneDocument, files: AssetSource, content: SceneContent.Builder) {
         val paths = scene.nodes.flatMap(::graphPaths).distinct()

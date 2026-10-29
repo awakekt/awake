@@ -285,6 +285,14 @@ jobs:
           :awake:scene:binding:processor:test
           :awake:scene:binding:desktopTest
           :awake:scene:scene-core:desktopTest
+          :awake:scene:controls:desktopTest
+          :awake:scene:audio:desktopTest
+          :awake:scene:character:desktopTest
+          :awake:scene:navigation:desktopTest
+          :awake:scene:worldstream:desktopTest
+          :awake:scene:blueprint:desktopTest
+          :awake:scene:ai:desktopTest
+          :awake:project:blueprint:desktopTest
 
       - name: Every wasmJs source set compiles
         run: ./gradlew compileKotlinWasmJs compileTestKotlinWasmJs

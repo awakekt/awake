@@ -19,6 +19,12 @@ public final class com/awakekt/awake/scene/audio/AudioListener {
 	public fun <init> ()V
 }
 
+public final class com/awakekt/awake/scene/audio/AudioSceneComponents : com/awakekt/awake/scene/binding/SceneComponentModule {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/audio/AudioSceneComponents;
+	public fun getBindings ()Ljava/util/List;
+	public fun getSerializersModule ()Lkotlinx/serialization/modules/SerializersModule;
+}
+
 public final class com/awakekt/awake/scene/audio/AudioSource {
 	public fun <init> (Lcom/awakekt/awake/core/audio/AudioClip;FZFZZ)V
 	public synthetic fun <init> (Lcom/awakekt/awake/core/audio/AudioClip;FZFZZILkotlin/jvm/internal/DefaultConstructorMarker;)V

@@ -11,46 +11,6 @@ import com.awakekt.awake.ai.fsm.AiStateMachineComponent
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
-import com.awakekt.awake.scene.ai.ensurePathRequest
-import com.awakekt.awake.scene.binding.SceneComponentBinding
-import com.awakekt.awake.scene.binding.SceneResolutionContext
-import kotlin.reflect.KClass
-
-/**
- * Binds [SceneBehaviorTree] to [BehaviorTreeAsset]. The entity also gets a `PathRequest`, which the
- * moving spatial kinds route through.
- */
-object BehaviorTreeBinding : SceneComponentBinding<BehaviorTreeAsset, SceneBehaviorTree> {
-    override val componentClass: KClass<BehaviorTreeAsset> = BehaviorTreeAsset::class
-    override val schemaClass: KClass<SceneBehaviorTree> = SceneBehaviorTree::class
-    override val serializer = SceneBehaviorTree.serializer()
-
-    override fun attachTyped(world: World, entity: Entity, component: SceneBehaviorTree, context: SceneResolutionContext) {
-        world.add(entity, BehaviorTreeAsset(component.asset, component.seed, component.enabled))
-        world.ensurePathRequest(entity)
-    }
-
-    override fun export(world: World, entity: Entity, component: BehaviorTreeAsset): SceneBehaviorTree =
-        SceneBehaviorTree(component.asset, component.seed, component.enabled)
-}
-
-/**
- * Binds [SceneStateMachine] to [StateMachineAsset]. The entity also gets a `PathRequest`, which the
- * moving spatial kinds route through.
- */
-object StateMachineBinding : SceneComponentBinding<StateMachineAsset, SceneStateMachine> {
-    override val componentClass: KClass<StateMachineAsset> = StateMachineAsset::class
-    override val schemaClass: KClass<SceneStateMachine> = SceneStateMachine::class
-    override val serializer = SceneStateMachine.serializer()
-
-    override fun attachTyped(world: World, entity: Entity, component: SceneStateMachine, context: SceneResolutionContext) {
-        world.add(entity, StateMachineAsset(component.asset, component.seed, component.enabled))
-        world.ensurePathRequest(entity)
-    }
-
-    override fun export(world: World, entity: Entity, component: StateMachineAsset): SceneStateMachine =
-        SceneStateMachine(component.asset, component.seed, component.enabled)
-}
 
 /**
  * Gives each [BehaviorTreeAsset] entity a `BehaviorTreeComponent`, and each [StateMachineAsset] entity

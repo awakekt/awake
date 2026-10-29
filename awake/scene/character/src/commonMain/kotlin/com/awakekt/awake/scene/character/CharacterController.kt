@@ -11,6 +11,7 @@ import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.BodyHandle
 import com.awakekt.awake.physics.CapsuleShape
+import com.awakekt.awake.scene.binding.RegisteredBinding
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.binding.SceneResolutionContext
@@ -154,6 +155,7 @@ class CharacterController(
 }
 
 /** Bi-directional binding connecting [CharacterController] with its serializable [SceneCharacterController] schema. */
+@RegisteredBinding
 object CharacterControllerBinding : SceneComponentBinding<CharacterController, SceneCharacterController> {
     override val componentClass: KClass<CharacterController> = CharacterController::class
     override val schemaClass: KClass<SceneCharacterController> = SceneCharacterController::class
@@ -190,7 +192,7 @@ object CharacterControllerBinding : SceneComponentBinding<CharacterController, S
  *
  * @return This registry instance for chaining.
  */
-fun SceneComponentRegistry.registerCharacter(): SceneComponentRegistry = register(CharacterControllerBinding)
+fun SceneComponentRegistry.registerCharacter(): SceneComponentRegistry = register(CharacterSceneComponents)
 
 private const val DEFAULT_RADIUS = 0.5f
 private const val DEFAULT_HALF_HEIGHT = 0.5f
