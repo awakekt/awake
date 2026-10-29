@@ -26,6 +26,8 @@ import kotlin.test.assertTrue
  * The real canvas paint path on both GPUs: midpoint colour, a translucent join and a rounded clip.
  * Negative control: disabling the middle-to-brush mapping fails on both Vulkan and WebGPU at
  * (24,24), returning [127, 0, 127, 255] where the solid reference is [0, 255, 0, 255].
+ * Disabling the AA fringe fails on both backends: zero soft boundary pixels against 208 on the
+ * normal rounded fill. The fixed gradient has 192; its edge count stays within 25% of the reference.
  */
 class CanvasGradientParityTest {
     @Test
@@ -44,7 +46,7 @@ class CanvasGradientParityTest {
                     offsetX = 4f + (index % 3) * 51f; offsetY = 4f + (index / 3) * 51f
                     width = 41f; height = 41f
                     style = if (index % 3 == 2) {
-                        CanvasStyle(background = "#00FF00$alpha")
+                        CanvasStyle(background = "#00FF00$alpha", cornerRadius = 12f)
                     } else {
                         CanvasStyle(
                             gradient = CanvasGradient("#FF0000$alpha", "#0000FF$alpha", horizontal = index % 3 == 1, middle = "#00FF00$alpha"),
@@ -66,6 +68,11 @@ class CanvasGradientParityTest {
             }
         }
         assertTrue(rgba(4, 4).take(3).all { it == 0 }, "$backend: rounded corner stays clipped")
+        fun softPixels(left: Int): Int = (4 until 45).sumOf { y -> (left until left + 41).count { x -> rgba(x, y).take(3).sum() in 1..249 } }
+        val referenceEdge = softPixels(106)
+        val midpointEdge = softPixels(4)
+        println("$backend rounded edge pixels: reference=$referenceEdge, midpoint=$midpointEdge")
+        assertTrue(referenceEdge > 0 && midpointEdge in referenceEdge * 3 / 4..referenceEdge * 5 / 4, "$backend rounded edge pixels: reference=$referenceEdge, midpoint=$midpointEdge")
         assertTrue(rgba(24, 5)[0] > 220, "$backend: start colour remains red")
         assertTrue(rgba(24, 43)[2] > 220, "$backend: end colour remains blue")
         val image = BufferedImage(SIZE, SIZE, BufferedImage.TYPE_INT_ARGB)
