@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.27.1] - 2026-10-29
+
+### Fixed
+
+- Move macOS native, publication and template consumer jobs to supported macOS 15 runners so macOS 14 retirement does not block releases.
+
 ## [0.27.0] - 2026-10-28
 
 ### Added

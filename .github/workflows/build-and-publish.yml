@@ -113,7 +113,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - runner: macos-14
+          - runner: macos-15
             platform: macos-arm64
           - runner: ubuntu-latest
             platform: linux-x86_64
@@ -178,7 +178,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - runner: macos-14
+          - runner: macos-15
             platform: macos-arm64
           - runner: ubuntu-latest
             platform: linux-x86_64
@@ -225,7 +225,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - runner: macos-14
+          - runner: macos-15
             platform: macos-arm64
           - runner: ubuntu-latest
             platform: linux-x86_64
@@ -282,7 +282,7 @@ jobs:
     name: Verify
     timeout-minutes: 30
     needs: ref
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -337,7 +337,7 @@ jobs:
       }}
     needs: [platform-impact, natives, naga-android]
     timeout-minutes: 120
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -474,7 +474,7 @@ jobs:
         needs.window-natives.result == 'success'
       }}
     needs: [verify, consumer, naga-android, naga-desktop, window-natives]
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -578,7 +578,7 @@ jobs:
     timeout-minutes: 60
     if: (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')) && needs.platform-impact.outputs.vulkan_publish == 'true'
     needs: [platform-impact, natives, verify, snapshot]
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -634,7 +634,7 @@ jobs:
         needs.window-natives.result == 'success'
       }}
     needs: [verify, consumer, naga-android, naga-desktop, window-natives]
-    runs-on: macos-14
+    runs-on: macos-15
     # Creates the GitHub release and attaches its bundle.
     permissions:
       contents: write
@@ -863,7 +863,7 @@ jobs:
     timeout-minutes: 90
     if: startsWith(github.ref, 'refs/tags/vulkan-v')
     needs: [natives, verify]
-    runs-on: macos-14
+    runs-on: macos-15
     # Creates the GitHub release and attaches its bundle.
     permissions:
       contents: write
