@@ -101,23 +101,9 @@ class RangeAnnotationsAreEnforcedTest {
         "keyframe_animation" to { base -> JsonObject(base + ("duration" to JsonPrimitive(1.0f))) },
         "particle_emitter" to { base -> JsonObject(base + ("texture" to JsonPrimitive("particle.png"))) },
         "canvas_element" to { base ->
-            val image = JsonObject(mapOf("path" to JsonPrimitive("frame.png")))
             val empty = JsonObject(emptyMap())
-            val state = JsonObject(mapOf("image" to image))
             JsonObject(
-                base + ("layout" to empty) + ("followRules" to empty) + ("joystick" to empty) + ("look" to empty) + ("cluster" to empty) + ("button" to JsonObject(mapOf("aim" to JsonObject(mapOf("cancel" to empty))))) + ("skin" to fullSkin()) + ("bar" to empty) + ("sweep" to empty) + ("stepper" to empty) + (
-                    "style" to JsonObject(
-                        mapOf(
-                            "image" to image,
-                            "fillImage" to image,
-                            "shadow" to empty,
-                            "textOutline" to empty,
-                            "hovered" to state,
-                            "pressed" to state,
-                            "disabled" to state,
-                        ),
-                    )
-                    ),
+                base + ("layout" to empty) + ("followRules" to empty) + ("joystick" to empty) + ("look" to empty) + ("cluster" to empty) + ("button" to JsonObject(mapOf("aim" to JsonObject(mapOf("cancel" to empty))))) + ("skin" to fullSkin()) + ("bar" to empty) + ("sweep" to empty) + ("stepper" to empty) + ("style" to fullStyle()),
             )
         },
         "canvas_appearance" to { base -> JsonObject(base + ("style" to fullStyle()) + ("skin" to fullSkin())) },
@@ -143,7 +129,7 @@ class RangeAnnotationsAreEnforcedTest {
     private fun fullStyle(): JsonObject {
         val image = JsonObject(mapOf("path" to JsonPrimitive("frame.png")))
         val empty = JsonObject(emptyMap())
-        val state = JsonObject(mapOf("image" to image))
+        val state = JsonObject(mapOf("image" to image, "shadow" to empty))
         return JsonObject(
             mapOf(
                 "image" to image,

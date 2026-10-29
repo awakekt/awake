@@ -12,9 +12,12 @@ itself have no scene or ECS dependency and live in `awake:ui:canvas`; see its RE
 `CanvasElement` holds.
 
 `canvas_appearance.style.gradient` uses `CanvasGradient` directly: `start` and `end` colours,
-`horizontal` (false by default), and an optional `middle` colour at 50%. The older
-`canvas_element.style` form reads the same gradient; saving the focused form preserves it.
-Two-colour gradients gain no JSON field. Colours and theme tokens follow the UI canvas contract.
+`horizontal` (false by default), and an optional `middle` colour at 50%. State styles (`hovered`,
+`pressed`, `disabled`) use `CanvasStateStyle`, overriding paint, `shadow`, draw-only centre `scale`
+and `alpha`, and interpolate over `style.transitionSeconds` or `canvas_controls.theme.transitionSeconds`
+(snapping when `0` or unset). The older `canvas_element.style` form reads the same style; saving the
+focused form preserves it, and default styles gain no JSON fields. Colours and theme tokens follow
+the UI canvas contract.
 
 ## The mapping
 

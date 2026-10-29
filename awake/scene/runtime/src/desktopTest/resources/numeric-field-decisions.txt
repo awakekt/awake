@@ -93,6 +93,12 @@ free canvas_element.style.shadow.offsetY | An offset: above the element is as va
 free canvas_appearance.style.shadow.offsetY | An offset: above the element is as valid as below it.
 free canvas_element.style.shadow.spread | Negative shrinks the shadow inside the element, as CSS allows.
 free canvas_appearance.style.shadow.spread | Negative shrinks the shadow inside the element, as CSS allows.
+free canvas_element.style.*.shadow.offsetX | A state shadow's offset: left of the element is as valid as right of it.
+free canvas_appearance.style.*.shadow.offsetX | A state shadow's offset: left of the element is as valid as right of it.
+free canvas_element.style.*.shadow.offsetY | A state shadow's offset: above the element is as valid as below it.
+free canvas_appearance.style.*.shadow.offsetY | A state shadow's offset: above the element is as valid as below it.
+free canvas_element.style.*.shadow.spread | Negative shrinks a state shadow inside the element, as CSS allows.
+free canvas_appearance.style.*.shadow.spread | Negative shrinks a state shadow inside the element, as CSS allows.
 free canvas_element.style.textShadow.offsetX | An offset: left of the text is as valid as right of it.
 free canvas_appearance.style.textShadow.offsetX | An offset: left of the text is as valid as right of it.
 free canvas_element.style.textShadow.offsetY | An offset: above the text is as valid as below it.
@@ -125,6 +131,12 @@ free canvas_element.skin.*.style.shadow.offsetY | A slot's shadow offset: above 
 free canvas_appearance.skin.*.style.shadow.offsetY | A slot's shadow offset: above the part is as valid as below it.
 free canvas_element.skin.*.style.shadow.spread | Negative shrinks a slot's shadow inside the part, as CSS allows.
 free canvas_appearance.skin.*.style.shadow.spread | Negative shrinks a slot's shadow inside the part, as CSS allows.
+free canvas_element.skin.*.style.*.shadow.offsetX | A slot's state shadow offset: left of the part is as valid as right of it.
+free canvas_appearance.skin.*.style.*.shadow.offsetX | A slot's state shadow offset: left of the part is as valid as right of it.
+free canvas_element.skin.*.style.*.shadow.offsetY | A slot's state shadow offset: above the part is as valid as below it.
+free canvas_appearance.skin.*.style.*.shadow.offsetY | A slot's state shadow offset: above the part is as valid as below it.
+free canvas_element.skin.*.style.*.shadow.spread | Negative shrinks a slot's state shadow inside the part, as CSS allows.
+free canvas_appearance.skin.*.style.*.shadow.spread | Negative shrinks a slot's state shadow inside the part, as CSS allows.
 free canvas_element.skin.*.style.textShadow.offsetX | A slot's text shadow offset: either side is as valid.
 free canvas_appearance.skin.*.style.textShadow.offsetX | A slot's text shadow offset: either side is as valid.
 free canvas_element.skin.*.style.textShadow.offsetY | A slot's text shadow offset: either side is as valid.
@@ -134,6 +146,9 @@ free canvas_appearance.skin.*.style.rotation | Any turn in degrees is valid: neg
 free canvas_controls.theme.skin.*.style.shadow.offsetX | A slot's shadow offset: left of the part is as valid as right of it.
 free canvas_controls.theme.skin.*.style.shadow.offsetY | A slot's shadow offset: above the part is as valid as below it.
 free canvas_controls.theme.skin.*.style.shadow.spread | Negative shrinks a slot's shadow inside the part, as CSS allows.
+free canvas_controls.theme.skin.*.style.*.shadow.offsetX | A slot's state shadow offset: left of the part is as valid as right of it.
+free canvas_controls.theme.skin.*.style.*.shadow.offsetY | A slot's state shadow offset: above the part is as valid as below it.
+free canvas_controls.theme.skin.*.style.*.shadow.spread | Negative shrinks a slot's state shadow inside the part, as CSS allows.
 free canvas_controls.theme.skin.*.style.textShadow.offsetX | A slot's text shadow offset: either side is as valid.
 free canvas_controls.theme.skin.*.style.textShadow.offsetY | A slot's text shadow offset: either side is as valid.
 free canvas_controls.theme.skin.*.style.rotation | Any turn in degrees is valid: negative turns the other way, and past 360 just wraps.
