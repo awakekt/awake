@@ -50,7 +50,18 @@ class CanvasGradientTest {
         val pixels = draw(CanvasGradient("#FF0000", "#0000FF", middle = "#00FF00"), radius = 12f)
         assertEquals(listOf(0, 0, 0, 255), pixels.rgbaAt(0, 0))
         assertEquals(listOf(0, 255, 0, 255), pixels.rgbaAt(20, 20))
-        assertTrue(pixels.rgbaAt(20, 0)[0] > 240, "the top edge between the rounded corners remains filled")
+        assertTrue(pixels.rgbaAt(20, 1)[0] > 220, "the top edge between the rounded corners remains filled, one pixel inside its AA fringe")
+    }
+
+    /** Disabling the AA fringe gives zero soft boundary pixels, against 208 for the normal fill. */
+    @Test
+    fun aRoundedMidpointKeepsTheNormalFillsAntialiasedEdge() {
+        fun softPixels(pixels: ByteArray): Int = (0 until SIZE * SIZE).count { (pixels[it * 4].toInt() and 255) in 1..249 }
+        val normal = softPixels(draw(CanvasGradient("#FFFFFF", "#FFFFFF"), radius = 12f))
+        val midpoint = softPixels(draw(CanvasGradient("#FFFFFF", "#FFFFFF", middle = "#FFFFFF"), radius = 12f))
+        println("Rounded edge pixels: normal=$normal, midpoint=$midpoint")
+        assertTrue(normal > 0, "the existing rounded fill has partial edge coverage")
+        assertTrue(midpoint in normal * 3 / 4..normal * 5 / 4, "rounded edge pixels: normal=$normal, midpoint=$midpoint")
     }
 
     @Test

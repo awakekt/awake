@@ -1,0 +1,1 @@
+- Preserve antialiased outlines on rounded multi-colour gradient backgrounds through the shared cached mesh path on CPU, Vulkan and WebGPU.

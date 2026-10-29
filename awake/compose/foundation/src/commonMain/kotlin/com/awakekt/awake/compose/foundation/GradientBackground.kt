@@ -14,13 +14,18 @@ import com.awakekt.awake.compose.ui.graphics.drawscope.DrawScope
 import com.awakekt.awake.compose.ui.graphics.drawscope.drawRetainedMesh
 import com.awakekt.awake.compose.ui.node.DrawModifierNode
 import com.awakekt.awake.compose.ui.unit.LayoutDirection
+import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.ColoredTriangleMesh
 import com.awakekt.awake.core.graphics2d.ColoredVertex
 import com.awakekt.awake.core.graphics2d.DrawPath
 import com.awakekt.awake.core.graphics2d.DrawPoint
 import com.awakekt.awake.core.graphics2d.DrawShape
+import com.awakekt.awake.core.graphics2d.clipToConvexPaths
+import com.awakekt.awake.core.graphics2d.merge
+import com.awakekt.awake.core.graphics2d.tessellateFillAa
 import com.awakekt.awake.core.graphics2d.toPath
 import com.awakekt.awake.core.math2d.Dp
+import com.awakekt.awake.core.math2d.Rectangle
 import com.awakekt.awake.core.math2d.Size2D
 
 internal class GradientBackgroundElement(private val brush: LinearGradient, private val shape: Shape) : ModifierNodeElement<GradientBackgroundNode>() {
@@ -38,35 +43,63 @@ internal class GradientBackgroundNode :
     lateinit var shape: Shape
     private var key: GradientKey? = null
     private var mesh: ColoredTriangleMesh? = null
-    private var clip: DrawPath? = null
     private var retentionKey: Any = Any()
 
     override fun DrawScope.draw(drawContent: () -> Unit) {
         val nextKey = GradientKey(width, height, density, layoutDirection, brush, shape)
         if (key != nextKey) {
             key = nextKey
-            mesh = gradientMesh(width.toFloat(), height.toFloat(), brush)
-            clip = when (val outline = shape.createOutline(Size2D(width.toFloat(), height.toFloat()), density, layoutDirection)) {
-                is ShapeOutline.Rectangle -> null
-                is ShapeOutline.Rounded -> DrawShape.RoundedRectangle(Dp(outline.radius)).toPath(outline.bounds)
-                is ShapeOutline.RoundedCorners -> outline.path
-                is ShapeOutline.Generic -> outline.path
-            }
+            val outline = shape.createOutline(Size2D(width.toFloat(), height.toFloat()), density, layoutDirection)
+            mesh = gradientMesh(width.toFloat(), height.toFloat(), brush, outline)
             retentionKey = Any()
         }
-        mesh?.let { geometry ->
-            val path = clip
-            if (path == null) drawRetainedMesh(geometry, retentionKey) else clippedPath(path) { drawRetainedMesh(geometry, retentionKey) }
-        }
+        mesh?.let { drawRetainedMesh(it, retentionKey) }
         drawContent()
     }
 }
 
 private data class GradientKey(val width: Int, val height: Int, val density: Float, val direction: LayoutDirection, val brush: LinearGradient, val shape: Shape)
 
+private fun gradientMesh(width: Float, height: Float, brush: LinearGradient, outline: ShapeOutline): ColoredTriangleMesh {
+    if (width <= 0f || height <= 0f) return ColoredTriangleMesh(emptyList(), IntArray(0))
+    return when (outline) {
+        is ShapeOutline.Rectangle -> rectangularGradientMesh(width, height, brush)
+        is ShapeOutline.Rounded -> pathGradientMesh(DrawShape.RoundedRectangle(Dp(outline.radius)).toPath(outline.bounds), width, height, brush)
+        is ShapeOutline.RoundedCorners -> pathGradientMesh(outline.path, width, height, brush)
+        is ShapeOutline.Generic -> pathGradientMesh(outline.path, width, height, brush)
+    }
+}
+
+private fun pathGradientMesh(path: DrawPath, width: Float, height: Float, brush: LinearGradient): ColoredTriangleMesh {
+    // Rounded UI masks transition across [-1,+1] device pixels. Preserve a soft boundary instead
+    // of hard-clipping coloured triangles; both the AA outline and the band splits are cached.
+    val shape = path.tessellateFillAa(Color.White, fringePx = GRADIENT_FRINGE_PX)
+    val bounds = shape.bounds()
+    val extent = if (brush.horizontal) width else height
+    val bands = brush.colors.lastIndex
+    return (0 until bands).map { band ->
+        val first = if (brush.horizontal) bounds.x else bounds.y
+        val last = if (brush.horizontal) bounds.x + bounds.width else bounds.y + bounds.height
+        val start = if (band == 0) first else extent * band / bands
+        val end = if (band == bands - 1) last else extent * (band + 1) / bands
+        val clip = if (brush.horizontal) Rectangle(start, bounds.y, end - start, bounds.height) else Rectangle(bounds.x, start, bounds.width, end - start)
+        val segment = shape.clipToConvexPaths(listOf(DrawShape.Rectangle.toPath(clip)))
+        segment.copy(
+            vertices = segment.vertices.map { vertex ->
+                val position = if (brush.horizontal) vertex.position.x else vertex.position.y
+                val fraction = (position / extent * bands - band).coerceIn(0f, 1f)
+                val color = brush.colors[band].lerp(brush.colors[band + 1], fraction)
+                vertex.copy(color = color.withAlpha(color.a * vertex.color.a))
+            },
+        )
+    }.merge()
+}
+
+private const val GRADIENT_FRINGE_PX = 2f
+
 // Shared vertices make adjacent bands meet exactly once, including a midpoint on a half pixel.
 // The existing coloured-mesh path handles alpha, transforms and clipping on every renderer.
-private fun gradientMesh(width: Float, height: Float, brush: LinearGradient): ColoredTriangleMesh {
+private fun rectangularGradientMesh(width: Float, height: Float, brush: LinearGradient): ColoredTriangleMesh {
     val bands = brush.colors.lastIndex
     val vertices = brush.colors.flatMapIndexed { index, color ->
         val position = index.toFloat() / bands
