@@ -332,7 +332,24 @@ class SceneLoaderTest {
             """{"version": 1, "name": "older", "nodes": [{"name": "glow", "components": [{"component": "pbr_material", "roughness": 0.4}]}]}""",
         )
 
-        assertFalse(document.nodes.single().components.filterIsInstance<ScenePbrMaterial>().single().litWhenAdditive)
+        val decoded = document.nodes.single().components.filterIsInstance<ScenePbrMaterial>().single()
+        assertFalse(decoded.litWhenAdditive)
+        assertFalse(decoded.unlit)
+    }
+
+    @Test
+    fun unlitRoundTripsThroughTheFileAndTheWorld() {
+        val material = ScenePbrMaterial(baseColorFactor = SceneColor(0.9f, 0.8f, 0.7f, 1f), unlit = true)
+        val document = SceneDocument(nodes = listOf(SceneNode(name = "portrait", components = listOf(material))))
+        val world = World()
+
+        val file = SceneLoader.encode(document)
+        assertTrue(Regex(""""unlit"\s*:\s*true""").containsMatchIn(file), file)
+        SceneLoader.decode(file).instantiate(world = world)
+
+        val loaded = mutableListOf<PbrMaterial>().also { list -> world.family<PbrMaterial>().forEach { _, m -> list += m } }
+        assertTrue(loaded.single().unlit)
+        assertEquals(material, SceneLoader.fromWorld(world, name = "x").nodes.single().components.filterIsInstance<ScenePbrMaterial>().single())
     }
 
     /** A sheet's clips survive the file, load showing the first cell of the clip that plays, and export with the clip playing now. */

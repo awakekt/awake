@@ -390,4 +390,5 @@ private fun SkinnedPose.tintedBy(material: PbrMaterial, into: FloatArray): Float
     material.baseColorFactor,
     material.emissiveFactor,
     into = into,
+    unlit = material.unlit,
 )

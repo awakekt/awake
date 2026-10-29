@@ -59,6 +59,19 @@ class SceneDisplayTransform internal constructor(
 
     /** [linear] encoded with no exposure or tone mapping, for data views such as albedo. */
     fun encoded(linear: AslExpr): AslExpr = if (isLinear) linear else encode!!(linear)
+
+    /**
+     * [stored] in display-referred space, skipping lighting, exposure and tone mapping: kept as
+     * stored for a UNORM target (where it is already output-encoded), or decoded to linear when
+     * [isLinear] so post-processing applies the output encode once.
+     */
+    fun unlit(stored: AslExpr): AslExpr {
+        if (!isLinear) return stored
+        val decode = checkNotNull(decode) {
+            "Declare sceneDisplayTransform(decodesDisplayReferred = true) to decode display-referred colour."
+        }
+        return decode(stored)
+    }
 }
 
 /**

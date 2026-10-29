@@ -19,8 +19,8 @@ const val MAX_JOINTS = 64
  * base colour and emissive factors, the PBR factors and the exposure, the canonical declaration its ASL definition
  * derives the WGSL struct from. The model matrix is for the shadow pass, which places the posed mesh
  * in the world and then projects it from the light. The colour factors tint the mesh as a static
- * material's do; of the PBR factors only `z`, the alpha cutoff, is read, where the textured block
- * carries it too. The palette rides in the uniform block (not a storage buffer) because one skin is
+ * material's do; of the PBR factors only `z`, the alpha cutoff, and `w`, the unlit flag, are read.
+ * The palette rides in the uniform block (not a storage buffer) because one skin is
  * drawn per call on this path; the instanced variant moves it to a per-instance storage buffer
  * instead. */
 object SkinnedFields {
@@ -59,7 +59,12 @@ val SkinnedUniformLayout = UniformLayout(
 )
 
 /**
- * A skinned draw's `extraUniformFloats` when its material tints it: the joint palette (padded to
- * [MAX_JOINTS]) and then the factors. A palette alone draws untinted.
+ * A skinned draw's `extraUniformFloats` when its material tints it or marks it unlit: the joint
+ * palette (padded to [MAX_JOINTS]) and then the factors. A palette alone draws untinted and lit.
  */
-val SkinnedMaterialLayout = UniformLayout(SkinnedFields.JointPalette, UniformFields.BaseColorFactor, UniformFields.EmissiveFactor)
+val SkinnedMaterialLayout = UniformLayout(
+    SkinnedFields.JointPalette,
+    UniformFields.BaseColorFactor,
+    UniformFields.EmissiveFactor,
+    UniformFields.PbrFactors,
+)

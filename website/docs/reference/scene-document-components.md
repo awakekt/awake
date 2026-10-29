@@ -857,6 +857,7 @@ Physically based material values for the entity's mesh. `ScenePbrMaterial`.
 | `alphaMode` | `Opaque` · `Masked` | `Opaque` | `Masked` discards fragments below `alphaCutoff`. |
 | `alphaCutoff` | number | `0.5` | Alpha threshold for `Masked`, 0 to 1. |
 | `litWhenAdditive` | boolean | `false` | Keeps a textured mesh drawn `additive` lit: it adds its colour as the sun, shadows, ambient and point lights shade it, not only its base and emissive colour. Fog fades it either way. |
+| `unlit` | boolean | `false` | Draws `baseColorFactor * texture * vertexColor` as stored on textured and single-draw skinned meshes, skipping lighting, tone mapping and fog while keeping alpha masking and output encoding. |
 
 ## `perceivable`
 

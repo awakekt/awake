@@ -238,6 +238,7 @@ public final class com/awakekt/awake/asset/shaderpack/SceneDisplayTransform {
 	public final fun displayReferred (Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;)Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun encoded (Lcom/awakekt/awake/asset/shaderdsl/AslExpr;)Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun isLinear ()Z
+	public final fun unlit (Lcom/awakekt/awake/asset/shaderdsl/AslExpr;)Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 }
 
 public final class com/awakekt/awake/asset/shaderpack/SceneDisplayTransformKt {
