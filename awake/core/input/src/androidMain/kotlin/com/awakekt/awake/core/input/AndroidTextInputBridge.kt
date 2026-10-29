@@ -85,12 +85,21 @@ fun KeyEvent.syncAwakeTextShortcut(input: Input, clipboardText: () -> String?): 
             KeyEvent.KEYCODE_C -> input.pushClipboardCommand(ClipboardCommand.Copy)
             KeyEvent.KEYCODE_X -> input.pushClipboardCommand(ClipboardCommand.Cut)
             KeyEvent.KEYCODE_V -> clipboardText()?.takeIf { it.isNotEmpty() }?.let(input::pushTypedText)
+            KeyEvent.KEYCODE_DPAD_LEFT -> input.pushEditAction(TextEditAction.WordLeft)
+            KeyEvent.KEYCODE_DPAD_RIGHT -> input.pushEditAction(TextEditAction.WordRight)
         }
     }
     return handled
 }
 
-private val TextShortcutKeys = setOf(KeyEvent.KEYCODE_A, KeyEvent.KEYCODE_C, KeyEvent.KEYCODE_X, KeyEvent.KEYCODE_V)
+private val TextShortcutKeys = setOf(
+    KeyEvent.KEYCODE_A,
+    KeyEvent.KEYCODE_C,
+    KeyEvent.KEYCODE_X,
+    KeyEvent.KEYCODE_V,
+    KeyEvent.KEYCODE_DPAD_LEFT,
+    KeyEvent.KEYCODE_DPAD_RIGHT,
+)
 
 /**
  * Creates an [InputConnection] configuring [outAttrs] and forwarding IME actions into [input].

@@ -239,7 +239,8 @@ jobs:
       - name: CPU text layout conformance
         run: |
           python3 tools/fonts-tooling/reference_layout.py --verify-inputs
-          ./gradlew :awake:compose:foundation:desktopTest --tests com.awakekt.awake.compose.foundation.text.TextLayoutConformanceTest
+          python3 tools/fonts-tooling/reference_cjk_layout.py --verify-inputs
+          ./gradlew :awake:compose:foundation:desktopTest --tests com.awakekt.awake.compose.foundation.text.TextLayoutConformanceTest --tests com.awakekt.awake.compose.foundation.text.CjkLineBreakConformanceTest
 
       - name: Upload text layout deviations
         if: always()

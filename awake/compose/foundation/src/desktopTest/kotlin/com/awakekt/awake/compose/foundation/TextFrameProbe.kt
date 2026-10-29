@@ -23,6 +23,7 @@ import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.core.text.font.UiFonts
 import com.awakekt.awake.core.text.font.withPixelGlyphMaxSize
 import com.awakekt.awake.core.text.theme.TextStyle
+import com.awakekt.awake.core.text.unicode.WordBreak
 import com.sun.management.ThreadMXBean
 import java.lang.management.ManagementFactory
 import kotlin.test.Test
@@ -44,19 +45,30 @@ class TextFrameProbe {
 
     /** Labels whose every capital pair kerns in Roboto (#1022): WA, AV, To and Ty. */
     private val kernedLabels = List(ROWS * CELLS_PER_ROW) { "WAVE To Ty ${it + 1}" }
+
+    /**
+     * Six-glyph mixed CJK labels (#1066), matching `"Label N"`'s glyph count so paint's per-glyph draw
+     * command budget is held constant while soft-wrapping across two lines in a narrower cell.
+     */
+    private val cjkLabels = List(ROWS * CELLS_PER_ROW) { "港口항구${(it % 9) + 1}。" }
     private var labels = plainLabels
     private var style: TextStyle? = null
+    private var cellWidthDp = CELL_WIDTH
 
     /** The default: labels this small draw exact-size pixel glyphs. */
     @Test
-    fun unchangedTextPerFrame() = probe("pixel glyphs", style = null)
+    fun unchangedTextPerFrame() {
+        probe("pixel glyphs", style = null)
+    }
 
     /**
      * The same labels held to the distance field, the path larger or scaled text takes: the two paths
      * are set side by side, since a label switches between them when it crosses the size limit.
      */
     @Test
-    fun unchangedDistanceFieldTextPerFrame() = probe("distance field", TextStyle(font = UiFonts.default().withPixelGlyphMaxSize(0)))
+    fun unchangedDistanceFieldTextPerFrame() {
+        probe("distance field", TextStyle(font = UiFonts.default().withPixelGlyphMaxSize(0)))
+    }
 
     /**
      * Labels full of kerned pairs, kerned and not: the cost of a kerning lookup per adjacent pair, set side
@@ -68,9 +80,26 @@ class TextFrameProbe {
         probe("kerned pairs, kerning off", TextStyle(kerning = false), labels = kernedLabels)
     }
 
-    private fun probe(path: String, style: TextStyle?, labels: List<String> = plainLabels) {
+    /** Wrapped CJK and `keep-all` labels (#1066) reuse their cached layout and allocate nothing extra in layout. */
+    @Test
+    fun unchangedWrappedCjkTextPerFrame() {
+        val asciiLayout = probe("plain control", style = null, labels = plainLabels)
+        val cjkNormalLayout = probe("wrapped CJK normal", style = null, labels = cjkLabels, cellWidth = 36)
+        val cjkKeepAllLayout = probe("wrapped CJK keep-all", TextStyle(wordBreak = WordBreak.KeepAll), labels = cjkLabels, cellWidth = 36)
+        assertTrue(
+            cjkNormalLayout <= asciiLayout + 64L,
+            "wrapped CJK layout ($cjkNormalLayout B) exceeded plain control ($asciiLayout B)",
+        )
+        assertTrue(
+            cjkKeepAllLayout <= asciiLayout + 64L,
+            "wrapped CJK keep-all layout ($cjkKeepAllLayout B) exceeded plain control ($asciiLayout B)",
+        )
+    }
+
+    private fun probe(path: String, style: TextStyle?, labels: List<String> = plainLabels, cellWidth: Int = CELL_WIDTH): Long {
         this.style = style
         this.labels = labels
+        this.cellWidthDp = cellWidth
         val root = LayoutNode(ColumnMeasurePolicy())
         repeat(WARMUP_FRAMES) { frame(root) }
 
@@ -95,6 +124,7 @@ class TextFrameProbe {
                 "paint ${paint / PHASE_SAMPLES}); total ${elapsed.inWholeMilliseconds} ms over $MEASURED_FRAMES frames",
         )
         assertTrue(perFrame < CEILING_BYTES_PER_FRAME, "$perFrame B/frame exceeds the $CEILING_BYTES_PER_FRAME B ratchet")
+        return layout / PHASE_SAMPLES
     }
 
     private fun frame(root: LayoutNode) {
@@ -109,7 +139,8 @@ class TextFrameProbe {
             val rowModifier = remember { Modifier.height(ROW_HEIGHT.dp) }
             Row(rowModifier) {
                 repeat(CELLS_PER_ROW) { cell ->
-                    val cellModifier = remember { Modifier.width(CELL_WIDTH.dp) }
+                    val widthDp = cellWidthDp
+                    val cellModifier = remember(widthDp) { Modifier.width(widthDp.dp) }
                     val label = labels[row * CELLS_PER_ROW + cell]
                     val style = style
                     if (style == null) Text(label, cellModifier) else Text(label, cellModifier, style = style)

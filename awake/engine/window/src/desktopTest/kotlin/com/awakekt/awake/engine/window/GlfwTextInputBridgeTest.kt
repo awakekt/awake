@@ -14,7 +14,13 @@ import kotlin.test.assertEquals
 
 private const val GLFW_KEY_A = 65
 private const val GLFW_KEY_LEFT_SHIFT = 340
+private const val GLFW_KEY_LEFT_CONTROL = 341
+private const val GLFW_KEY_LEFT_ALT = 342
+private const val GLFW_KEY_LEFT_SUPER = 343
+private const val GLFW_KEY_RIGHT_ALT = 346
 private const val GLFW_KEY_BACKSPACE = 259
+private const val GLFW_KEY_RIGHT = 262
+private const val GLFW_KEY_LEFT = 263
 private const val GLFW_KEY_DOWN = 264
 private const val GLFW_KEY_UP = 265
 
@@ -127,5 +133,29 @@ class GlfwTextInputBridgeTest {
         reader.keysDown += GLFW_KEY_DOWN
         pollGlfwTextInput(reader, input, deltaSeconds = 0.0)
         assertEquals(listOf(TextEditAction.ArrowDown), input.updateSnapshot().editActions)
+    }
+
+    @Test
+    fun wordJumpUsesCtrlOnDesktopAndOptionOnMacWithoutStealingAltGr() {
+        val input = Input()
+        val reader = FakeGlfwWindowInput()
+        fun tap(superShortcut: Boolean, vararg keys: Int): List<TextEditAction> {
+            reader.keysDown.clear()
+            pollGlfwTextInput(reader, input, deltaSeconds = 0.0, shortcutUsesSuper = superShortcut)
+            input.updateSnapshot()
+            reader.keysDown.addAll(keys.toList())
+            pollGlfwTextInput(reader, input, deltaSeconds = 0.0, shortcutUsesSuper = superShortcut)
+            return input.updateSnapshot().editActions
+        }
+
+        // Windows / Linux: Ctrl+Left/Right steps by word; AltGr (Ctrl+Alt) and Super+Left/Right do not.
+        assertEquals(listOf(TextEditAction.WordLeft), tap(false, GLFW_KEY_LEFT_CONTROL, GLFW_KEY_LEFT))
+        assertEquals(listOf(TextEditAction.WordRight), tap(false, GLFW_KEY_LEFT_CONTROL, GLFW_KEY_RIGHT))
+        assertEquals(listOf(TextEditAction.ArrowLeft), tap(false, GLFW_KEY_LEFT_CONTROL, GLFW_KEY_RIGHT_ALT, GLFW_KEY_LEFT))
+
+        // macOS (`shortcutUsesSuper = true`): Option (Alt)+Left/Right steps by word; Cmd+Left does not.
+        assertEquals(listOf(TextEditAction.WordLeft), tap(true, GLFW_KEY_LEFT_ALT, GLFW_KEY_LEFT))
+        assertEquals(listOf(TextEditAction.WordRight), tap(true, GLFW_KEY_LEFT_ALT, GLFW_KEY_RIGHT))
+        assertEquals(listOf(TextEditAction.ArrowLeft), tap(true, GLFW_KEY_LEFT_SUPER, GLFW_KEY_LEFT))
     }
 }

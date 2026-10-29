@@ -703,6 +703,8 @@ public final class com/awakekt/awake/core/input/TextEditAction : java/lang/Enum 
 	public static final field Enter Lcom/awakekt/awake/core/input/TextEditAction;
 	public static final field Home Lcom/awakekt/awake/core/input/TextEditAction;
 	public static final field SelectAll Lcom/awakekt/awake/core/input/TextEditAction;
+	public static final field WordLeft Lcom/awakekt/awake/core/input/TextEditAction;
+	public static final field WordRight Lcom/awakekt/awake/core/input/TextEditAction;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/core/input/TextEditAction;
 	public static fun values ()[Lcom/awakekt/awake/core/input/TextEditAction;

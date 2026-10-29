@@ -95,16 +95,41 @@ internal fun pollGlfwTextInput(
 
     reader.consumeTypedText().takeIf { it.isNotEmpty() }?.let(input::pushTypedText)
 
-    val ctrlDown = reader.isKeyDown(GLFW_KEY_LEFT_CONTROL) || reader.isKeyDown(GLFW_KEY_RIGHT_CONTROL)
-    val altDown = reader.isKeyDown(GLFW_KEY_LEFT_ALT) || reader.isKeyDown(GLFW_KEY_RIGHT_ALT)
-    val superDown = reader.isKeyDown(GLFW_KEY_LEFT_SUPER) || reader.isKeyDown(GLFW_KEY_RIGHT_SUPER)
-    val shortcutDown = if (shortcutUsesSuper) superDown else ctrlDown && !altDown
+    val shortcutDown = isShortcutModifierDown(reader, shortcutUsesSuper)
+    val wordJumpDown = isWordJumpModifierDown(reader, shortcutUsesSuper)
 
     for (glfwKey in ShortcutKeys) {
         pollKey(reader, glfwKey, deltaSeconds) { if (shortcutDown) fireShortcut(glfwKey, reader, input) }
     }
     EditKeys.forEach { (glfwKey, action) ->
-        pollKey(reader, glfwKey, deltaSeconds) { input.pushEditAction(action) }
+        pollKey(reader, glfwKey, deltaSeconds) {
+            input.pushEditAction(resolveEditAction(glfwKey, action, wordJumpDown))
+        }
+    }
+}
+
+private fun isShortcutModifierDown(reader: GlfwWindowInput, shortcutUsesSuper: Boolean): Boolean {
+    if (shortcutUsesSuper) {
+        return reader.isKeyDown(GLFW_KEY_LEFT_SUPER) || reader.isKeyDown(GLFW_KEY_RIGHT_SUPER)
+    }
+    val ctrlDown = reader.isKeyDown(GLFW_KEY_LEFT_CONTROL) || reader.isKeyDown(GLFW_KEY_RIGHT_CONTROL)
+    val altDown = reader.isKeyDown(GLFW_KEY_LEFT_ALT) || reader.isKeyDown(GLFW_KEY_RIGHT_ALT)
+    return ctrlDown && !altDown
+}
+
+private fun isWordJumpModifierDown(reader: GlfwWindowInput, shortcutUsesSuper: Boolean): Boolean {
+    val ctrlDown = reader.isKeyDown(GLFW_KEY_LEFT_CONTROL) || reader.isKeyDown(GLFW_KEY_RIGHT_CONTROL)
+    val altDown = reader.isKeyDown(GLFW_KEY_LEFT_ALT) || reader.isKeyDown(GLFW_KEY_RIGHT_ALT)
+    val superDown = reader.isKeyDown(GLFW_KEY_LEFT_SUPER) || reader.isKeyDown(GLFW_KEY_RIGHT_SUPER)
+    return if (shortcutUsesSuper) altDown && !ctrlDown && !superDown else ctrlDown && !altDown && !superDown
+}
+
+private fun resolveEditAction(glfwKey: Int, defaultAction: TextEditAction, wordJumpDown: Boolean): TextEditAction {
+    if (!wordJumpDown) return defaultAction
+    return when (glfwKey) {
+        GLFW_KEY_LEFT -> TextEditAction.WordLeft
+        GLFW_KEY_RIGHT -> TextEditAction.WordRight
+        else -> defaultAction
     }
 }
 

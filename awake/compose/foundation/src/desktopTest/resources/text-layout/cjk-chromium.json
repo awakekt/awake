@@ -1,0 +1,678 @@
+{
+  "cases": [
+    {
+      "id": "zh-16-w160",
+      "reference": {
+        "advance": 160,
+        "lineCount": 8,
+        "lines": [
+          {
+            "advance": 160,
+            "end": 10,
+            "start": 0,
+            "text": "\u6e2f\u53e3\u5c0f\u9547\u7684\u706f\u706b\u7f13\u7f13\u4eae"
+          },
+          {
+            "advance": 160,
+            "end": 20,
+            "start": 10,
+            "text": "\u8d77\uff0c\u77f3\u6865\u3001\u4ed3\u5e93\u4e0e\u6728\u8239"
+          },
+          {
+            "advance": 160,
+            "end": 30,
+            "start": 20,
+            "text": "\u5728\u6c34\u9762\u6620\u51fa\u6696\u5149\u3002\u300c\u4eca"
+          },
+          {
+            "advance": 144,
+            "end": 39,
+            "start": 30,
+            "text": "\u665a\u98ce\u6d6a\u5e73\u7a33\uff08\u6f6e\u4f4d\u6b63"
+          },
+          {
+            "advance": 144,
+            "end": 48,
+            "start": 39,
+            "text": "\u5e38\uff09\uff0c\u53ef\u4ee5\u6309\u8ba1\u5212\u542f"
+          },
+          {
+            "advance": 160,
+            "end": 58,
+            "start": 48,
+            "text": "\u822a\uff01\u300d\u8239\u957f\u7ffb\u5f00\u822a\u884c\u65e5"
+          },
+          {
+            "advance": 136.984375,
+            "end": 67,
+            "start": 58,
+            "text": "\u5fd7\u2014\u2014\u8bb0\u5f55\u4e0b\u6f6e\u6c50\u65f6"
+          },
+          {
+            "advance": 149.40625,
+            "end": 77,
+            "start": 67,
+            "text": "\u523b\u2026\u2026\u968f\u540e\u8d70\u5411\u7801\u5934\u3002"
+          }
+        ]
+      }
+    },
+    {
+      "id": "zh-16-w210",
+      "reference": {
+        "advance": 208,
+        "lineCount": 6,
+        "lines": [
+          {
+            "advance": 208,
+            "end": 13,
+            "start": 0,
+            "text": "\u6e2f\u53e3\u5c0f\u9547\u7684\u706f\u706b\u7f13\u7f13\u4eae\u8d77\uff0c\u77f3"
+          },
+          {
+            "advance": 208,
+            "end": 26,
+            "start": 13,
+            "text": "\u6865\u3001\u4ed3\u5e93\u4e0e\u6728\u8239\u5728\u6c34\u9762\u6620\u51fa\u6696"
+          },
+          {
+            "advance": 208,
+            "end": 39,
+            "start": 26,
+            "text": "\u5149\u3002\u300c\u4eca\u665a\u98ce\u6d6a\u5e73\u7a33\uff08\u6f6e\u4f4d\u6b63"
+          },
+          {
+            "advance": 208,
+            "end": 52,
+            "start": 39,
+            "text": "\u5e38\uff09\uff0c\u53ef\u4ee5\u6309\u8ba1\u5212\u542f\u822a\uff01\u300d\u8239"
+          },
+          {
+            "advance": 200.984375,
+            "end": 65,
+            "start": 52,
+            "text": "\u957f\u7ffb\u5f00\u822a\u884c\u65e5\u5fd7\u2014\u2014\u8bb0\u5f55\u4e0b\u6f6e"
+          },
+          {
+            "advance": 181.40625,
+            "end": 77,
+            "start": 65,
+            "text": "\u6c50\u65f6\u523b\u2026\u2026\u968f\u540e\u8d70\u5411\u7801\u5934\u3002"
+          }
+        ]
+      }
+    },
+    {
+      "id": "zh-14-w182",
+      "reference": {
+        "advance": 182,
+        "lineCount": 6,
+        "lines": [
+          {
+            "advance": 182,
+            "end": 13,
+            "start": 0,
+            "text": "\u6e2f\u53e3\u5c0f\u9547\u7684\u706f\u706b\u7f13\u7f13\u4eae\u8d77\uff0c\u77f3"
+          },
+          {
+            "advance": 182,
+            "end": 26,
+            "start": 13,
+            "text": "\u6865\u3001\u4ed3\u5e93\u4e0e\u6728\u8239\u5728\u6c34\u9762\u6620\u51fa\u6696"
+          },
+          {
+            "advance": 182,
+            "end": 39,
+            "start": 26,
+            "text": "\u5149\u3002\u300c\u4eca\u665a\u98ce\u6d6a\u5e73\u7a33\uff08\u6f6e\u4f4d\u6b63"
+          },
+          {
+            "advance": 182,
+            "end": 52,
+            "start": 39,
+            "text": "\u5e38\uff09\uff0c\u53ef\u4ee5\u6309\u8ba1\u5212\u542f\u822a\uff01\u300d\u8239"
+          },
+          {
+            "advance": 175.875,
+            "end": 65,
+            "start": 52,
+            "text": "\u957f\u7ffb\u5f00\u822a\u884c\u65e5\u5fd7\u2014\u2014\u8bb0\u5f55\u4e0b\u6f6e"
+          },
+          {
+            "advance": 158.734375,
+            "end": 77,
+            "start": 65,
+            "text": "\u6c50\u65f6\u523b\u2026\u2026\u968f\u540e\u8d70\u5411\u7801\u5934\u3002"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ja-16-w176",
+      "reference": {
+        "advance": 176,
+        "lineCount": 7,
+        "lines": [
+          {
+            "advance": 160,
+            "end": 10,
+            "start": 0,
+            "text": "\u6e2f\u753a\u306e\u685f\u6a4b\u306b\u671d\u9727\u304c\u6f02"
+          },
+          {
+            "advance": 176,
+            "end": 21,
+            "start": 10,
+            "text": "\u3044\u3001\u706f\u53f0\u306e\u5149\u304c\u9759\u304b\u306b\u63fa"
+          },
+          {
+            "advance": 176,
+            "end": 32,
+            "start": 21,
+            "text": "\u308c\u3066\u3044\u308b\u3002\u300c\u5317\u57e0\u982d\u30fb\u7b2c"
+          },
+          {
+            "advance": 176,
+            "end": 43,
+            "start": 32,
+            "text": "\u4e09\u5009\u5eab\uff08\u642c\u5165\u53e3\uff09\u306e\u6e96\u5099"
+          },
+          {
+            "advance": 176,
+            "end": 54,
+            "start": 43,
+            "text": "\u306f\u5b8c\u4e86\u3057\u307e\u3057\u305f\u304b\uff1f\u300d\u4fc2"
+          },
+          {
+            "advance": 176,
+            "end": 65,
+            "start": 54,
+            "text": "\u54e1\u304c\u70b9\u691c\u8868\u3092\u78ba\u8a8d\u3057\u3001\u51fa"
+          },
+          {
+            "advance": 144,
+            "end": 74,
+            "start": 65,
+            "text": "\u767a\u306e\u5408\u56f3\u3092\u9001\u3063\u305f\uff01"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ja-16-w224",
+      "reference": {
+        "advance": 224,
+        "lineCount": 6,
+        "lines": [
+          {
+            "advance": 224,
+            "end": 14,
+            "start": 0,
+            "text": "\u6e2f\u753a\u306e\u685f\u6a4b\u306b\u671d\u9727\u304c\u6f02\u3044\u3001\u706f\u53f0"
+          },
+          {
+            "advance": 224,
+            "end": 28,
+            "start": 14,
+            "text": "\u306e\u5149\u304c\u9759\u304b\u306b\u63fa\u308c\u3066\u3044\u308b\u3002\u300c\u5317"
+          },
+          {
+            "advance": 224,
+            "end": 42,
+            "start": 28,
+            "text": "\u57e0\u982d\u30fb\u7b2c\u4e09\u5009\u5eab\uff08\u642c\u5165\u53e3\uff09\u306e\u6e96"
+          },
+          {
+            "advance": 224,
+            "end": 56,
+            "start": 42,
+            "text": "\u5099\u306f\u5b8c\u4e86\u3057\u307e\u3057\u305f\u304b\uff1f\u300d\u4fc2\u54e1\u304c"
+          },
+          {
+            "advance": 224,
+            "end": 70,
+            "start": 56,
+            "text": "\u70b9\u691c\u8868\u3092\u78ba\u8a8d\u3057\u3001\u51fa\u767a\u306e\u5408\u56f3\u3092"
+          },
+          {
+            "advance": 64,
+            "end": 74,
+            "start": 70,
+            "text": "\u9001\u3063\u305f\uff01"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ja-halfwidth-16-w152",
+      "reference": {
+        "advance": 152,
+        "lineCount": 4,
+        "lines": [
+          {
+            "advance": 152,
+            "end": 10,
+            "start": 0,
+            "text": "\u57e0\u982d\u306e\u6848\u5185\u677f\u306b\uff62\u5009\u5eab"
+          },
+          {
+            "advance": 140.40625,
+            "end": 21,
+            "start": 10,
+            "text": "A\uff64\u642c\u5165\u53e3B\uff61\uff63\u3068\u8a18\u3055"
+          },
+          {
+            "advance": 144,
+            "end": 30,
+            "start": 21,
+            "text": "\u308c\u3001\u4f5c\u696d\u54e1\u304c\u9806\u756a\u306b"
+          },
+          {
+            "advance": 96,
+            "end": 36,
+            "start": 30,
+            "text": "\u8377\u7269\u3092\u904b\u3076\u3002"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ja-prolonged-16-w48",
+      "reference": {
+        "advance": 48,
+        "lineCount": 5,
+        "lines": [
+          {
+            "advance": 32,
+            "end": 2,
+            "start": 0,
+            "text": "\u6e2f\u306e"
+          },
+          {
+            "advance": 32,
+            "end": 4,
+            "start": 2,
+            "text": "\u30b3\u30fc"
+          },
+          {
+            "advance": 48,
+            "end": 7,
+            "start": 4,
+            "text": "\u30d2\u30fc\u5e97"
+          },
+          {
+            "advance": 48,
+            "end": 12,
+            "start": 7,
+            "text": "\u3068\uff76\uff70\uff84\uff9e"
+          },
+          {
+            "advance": 48,
+            "end": 15,
+            "start": 12,
+            "text": "\u6848\u5185\u3002"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ko-normal-16-w180",
+      "reference": {
+        "advance": 179.03125,
+        "lineCount": 7,
+        "lines": [
+          {
+            "advance": 171.90625,
+            "end": 13,
+            "start": 0,
+            "text": "\ud56d\uad6c \ub9c8\uc744\uc758 \ub4f1\ubd88\uc774 \uc794\uc794"
+          },
+          {
+            "advance": 179.03125,
+            "end": 28,
+            "start": 13,
+            "text": "\ud55c \ubc14\ub2e4 \uc704\uc5d0 \ube44\uce58\uace0, \uc5b4\ubd80"
+          },
+          {
+            "advance": 171.90625,
+            "end": 41,
+            "start": 28,
+            "text": "\ub4e4\uc740 \uc0c8\ubcbd \ucd9c\ud56d\uc744 \ucc28\ubd84\ud788"
+          },
+          {
+            "advance": 172.15625,
+            "end": 55,
+            "start": 42,
+            "text": "\uc900\ube44\ud569\ub2c8\ub2e4. \ubc14\ub78c\uc774 \uace0\uc694"
+          },
+          {
+            "advance": 171.90625,
+            "end": 68,
+            "start": 55,
+            "text": "\ud574\uc9c0\uba74 \ubaa9\uc120\ub4e4\uc774 \ub4f1\ub300 \uc606"
+          },
+          {
+            "advance": 171.90625,
+            "end": 82,
+            "start": 69,
+            "text": "\uc218\ub85c\ub97c \ub530\ub77c \ucc9c\ucc9c\ud788 \ub098\uc544"
+          },
+          {
+            "advance": 52.21875,
+            "end": 86,
+            "start": 82,
+            "text": "\uac11\ub2c8\ub2e4."
+          }
+        ]
+      }
+    },
+    {
+      "id": "ko-normal-16-w240",
+      "reference": {
+        "advance": 239.875,
+        "lineCount": 5,
+        "lines": [
+          {
+            "advance": 223.875,
+            "end": 17,
+            "start": 0,
+            "text": "\ud56d\uad6c \ub9c8\uc744\uc758 \ub4f1\ubd88\uc774 \uc794\uc794\ud55c \ubc14\ub2e4"
+          },
+          {
+            "advance": 227.03125,
+            "end": 36,
+            "start": 18,
+            "text": "\uc704\uc5d0 \ube44\uce58\uace0, \uc5b4\ubd80\ub4e4\uc740 \uc0c8\ubcbd \ucd9c\ud56d"
+          },
+          {
+            "advance": 228.09375,
+            "end": 54,
+            "start": 36,
+            "text": "\uc744 \ucc28\ubd84\ud788 \uc900\ube44\ud569\ub2c8\ub2e4. \ubc14\ub78c\uc774 \uace0"
+          },
+          {
+            "advance": 239.875,
+            "end": 72,
+            "start": 54,
+            "text": "\uc694\ud574\uc9c0\uba74 \ubaa9\uc120\ub4e4\uc774 \ub4f1\ub300 \uc606 \uc218\ub85c\ub97c"
+          },
+          {
+            "advance": 172.15625,
+            "end": 86,
+            "start": 73,
+            "text": "\ub530\ub77c \ucc9c\ucc9c\ud788 \ub098\uc544\uac11\ub2c8\ub2e4."
+          }
+        ]
+      }
+    },
+    {
+      "id": "ko-keepall-16-w180",
+      "reference": {
+        "advance": 175.0625,
+        "lineCount": 7,
+        "lines": [
+          {
+            "advance": 135.9375,
+            "end": 10,
+            "start": 0,
+            "text": "\ud56d\uad6c \ub9c8\uc744\uc758 \ub4f1\ubd88\uc774"
+          },
+          {
+            "advance": 175.0625,
+            "end": 25,
+            "start": 11,
+            "text": "\uc794\uc794\ud55c \ubc14\ub2e4 \uc704\uc5d0 \ube44\uce58\uace0,"
+          },
+          {
+            "advance": 151.9375,
+            "end": 37,
+            "start": 26,
+            "text": "\uc5b4\ubd80\ub4e4\uc740 \uc0c8\ubcbd \ucd9c\ud56d\uc744"
+          },
+          {
+            "advance": 136.1875,
+            "end": 48,
+            "start": 38,
+            "text": "\ucc28\ubd84\ud788 \uc900\ube44\ud569\ub2c8\ub2e4."
+          },
+          {
+            "advance": 131.96875,
+            "end": 58,
+            "start": 49,
+            "text": "\ubc14\ub78c\uc774 \uace0\uc694\ud574\uc9c0\uba74"
+          },
+          {
+            "advance": 171.90625,
+            "end": 72,
+            "start": 59,
+            "text": "\ubaa9\uc120\ub4e4\uc774 \ub4f1\ub300 \uc606 \uc218\ub85c\ub97c"
+          },
+          {
+            "advance": 172.15625,
+            "end": 86,
+            "start": 73,
+            "text": "\ub530\ub77c \ucc9c\ucc9c\ud788 \ub098\uc544\uac11\ub2c8\ub2e4."
+          }
+        ]
+      }
+    },
+    {
+      "id": "ko-keepall-16-w240",
+      "reference": {
+        "advance": 235.90625,
+        "lineCount": 6,
+        "lines": [
+          {
+            "advance": 223.875,
+            "end": 17,
+            "start": 0,
+            "text": "\ud56d\uad6c \ub9c8\uc744\uc758 \ub4f1\ubd88\uc774 \uc794\uc794\ud55c \ubc14\ub2e4"
+          },
+          {
+            "advance": 191.0625,
+            "end": 33,
+            "start": 18,
+            "text": "\uc704\uc5d0 \ube44\uce58\uace0, \uc5b4\ubd80\ub4e4\uc740 \uc0c8\ubcbd"
+          },
+          {
+            "advance": 188.15625,
+            "end": 48,
+            "start": 34,
+            "text": "\ucd9c\ud56d\uc744 \ucc28\ubd84\ud788 \uc900\ube44\ud569\ub2c8\ub2e4."
+          },
+          {
+            "advance": 235.90625,
+            "end": 66,
+            "start": 49,
+            "text": "\ubc14\ub78c\uc774 \uace0\uc694\ud574\uc9c0\uba74 \ubaa9\uc120\ub4e4\uc774 \ub4f1\ub300"
+          },
+          {
+            "advance": 155.90625,
+            "end": 79,
+            "start": 67,
+            "text": "\uc606 \uc218\ub85c\ub97c \ub530\ub77c \ucc9c\ucc9c\ud788"
+          },
+          {
+            "advance": 84.21875,
+            "end": 86,
+            "start": 80,
+            "text": "\ub098\uc544\uac11\ub2c8\ub2e4."
+          }
+        ]
+      }
+    },
+    {
+      "id": "ko-keepall-long-16-w160",
+      "reference": {
+        "advance": 160,
+        "lineCount": 4,
+        "lines": [
+          {
+            "advance": 32,
+            "end": 2,
+            "start": 0,
+            "text": "\ud56d\uad6c"
+          },
+          {
+            "advance": 160,
+            "end": 13,
+            "start": 3,
+            "text": "\uad6d\uc81c\ud574\uc0c1\uc6b4\uc1a1\ucee8\ud14c\uc774\ub108"
+          },
+          {
+            "advance": 160,
+            "end": 23,
+            "start": 13,
+            "text": "\ud130\ubbf8\ub110\uc790\ub3d9\ud654\uad00\uc81c\uc2dc\uc2a4"
+          },
+          {
+            "advance": 56.1875,
+            "end": 28,
+            "start": 23,
+            "text": "\ud15c \uc548\ub0b4."
+          }
+        ]
+      }
+    },
+    {
+      "id": "mixed-16-w180",
+      "reference": {
+        "advance": 170.59375,
+        "lineCount": 6,
+        "lines": [
+          {
+            "advance": 170.59375,
+            "end": 16,
+            "start": 0,
+            "text": "Harbor\u6e2f\u53e3Town\u7684\u7b2c12"
+          },
+          {
+            "advance": 147.734375,
+            "end": 30,
+            "start": 16,
+            "text": "\u53f7Pier\u572806:30\u5f00\u653e\uff0c"
+          },
+          {
+            "advance": 141.0625,
+            "end": 44,
+            "start": 30,
+            "text": "SceneLoader\u4f1a\u52a0\u8f7d"
+          },
+          {
+            "advance": 166.875,
+            "end": 64,
+            "start": 44,
+            "text": "lantern_quay.glb\uff08\u542b24"
+          },
+          {
+            "advance": 128,
+            "end": 72,
+            "start": 64,
+            "text": "\u76cf\u706f\uff09\uff0c\u518d\u5207\u6362\u5230"
+          },
+          {
+            "advance": 84.71875,
+            "end": 81,
+            "start": 72,
+            "text": "Camera 2\u3002"
+          }
+        ]
+      }
+    },
+    {
+      "id": "mixed-16-w240",
+      "reference": {
+        "advance": 230.875,
+        "lineCount": 4,
+        "lines": [
+          {
+            "advance": 230.484375,
+            "end": 22,
+            "start": 0,
+            "text": "Harbor\u6e2f\u53e3Town\u7684\u7b2c12\u53f7Pier\u5728"
+          },
+          {
+            "advance": 228.90625,
+            "end": 44,
+            "start": 22,
+            "text": "06:30\u5f00\u653e\uff0cSceneLoader\u4f1a\u52a0\u8f7d"
+          },
+          {
+            "advance": 230.875,
+            "end": 68,
+            "start": 44,
+            "text": "lantern_quay.glb\uff08\u542b24\u76cf\u706f\uff09\uff0c"
+          },
+          {
+            "advance": 148.71875,
+            "end": 81,
+            "start": 68,
+            "text": "\u518d\u5207\u6362\u5230Camera 2\u3002"
+          }
+        ]
+      }
+    },
+    {
+      "id": "url-16-w180",
+      "reference": {
+        "advance": 179.671875,
+        "lineCount": 5,
+        "lines": [
+          {
+            "advance": 26.46875,
+            "end": 3,
+            "start": 0,
+            "text": "See"
+          },
+          {
+            "advance": 179.671875,
+            "end": 27,
+            "start": 4,
+            "text": "https://awake.example/a"
+          },
+          {
+            "advance": 177.515625,
+            "end": 50,
+            "start": 27,
+            "text": "ssets/scenes/harbor_lan"
+          },
+          {
+            "advance": 178.453125,
+            "end": 73,
+            "start": 50,
+            "text": "tern_quay_2026_archive_"
+          },
+          {
+            "advance": 177.015625,
+            "end": 99,
+            "start": 73,
+            "text": "manifest.json for details."
+          }
+        ]
+      }
+    }
+  ],
+  "provenance": {
+    "corpusSha256": "b80ba6a5d1a9cacf1ab8d7d878f930b01db1837a1f4650fbe34d2ff1e78037db",
+    "fonts": [
+      {
+        "ascender": 1900,
+        "descender": -500,
+        "id": "cjk",
+        "path": "awake/core/text/src/commonTest/resources/fonts/awake-cjk-test.ttf",
+        "sha256": "0373bbd5a8d160aeeb824e9d9e05f1a51ad5efb5e01e7056402b4bf20a831872",
+        "unitsPerEm": 2048
+      }
+    ],
+    "generatorSha256": "e386d9c15645e35821a3897e9b9d61e9274eb9a19289f4a6c5a00d2339496fc5",
+    "toolchainSha256": "98b7cd5a7dd5f1fd3cd51367cbb4f78c28174fb03eaef1f40c26fb183013699a"
+  },
+  "schema": 1,
+  "toolchain": {
+    "canonicalPlatform": "win32",
+    "chromium": "145.0.7632.6",
+    "playwright": "1.58.0",
+    "revision": "1208",
+    "variant": "chromium-headless-shell"
+  }
+}

@@ -23,6 +23,8 @@ import com.awakekt.awake.core.text.font.kerningBefore
 import com.awakekt.awake.core.text.scope.pixelPerfectTextScale
 import com.awakekt.awake.core.text.theme.TextStyle
 import com.awakekt.awake.core.text.unicode.GraphemeClusters
+import com.awakekt.awake.core.text.unicode.LineBreaks
+import com.awakekt.awake.core.text.unicode.WordBreak
 import kotlin.math.roundToInt
 
 /**
@@ -137,18 +139,15 @@ class TextMeasurePolicy(
     }
 
     /**
-     * The longest single word: below that, wrapping cannot help and a glyph would be cut.
-     *
-     * Measured directly rather than by wrapping at zero. A greedy wrapper keeps at least one word
-     * per line and returns the text unbroken when nothing fits at all, so asking it for a
-     * zero-width layout answers with the whole line -- the maximum, wearing the minimum's name.
+     * The widest single soft-wrap segment: below that, normal wrapping cannot help and emergency
+     * grapheme splitting or clipping takes over.
      */
     override fun Density.minIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int): Int {
+        if (singleLine || !softWrap) return maxIntrinsicWidth(measurables, height)
+        val sourceText = text
         val glyphPx = glyphPixels(density, fontScale)
-        return text.split(' ', '\n', '\t')
-            .maxOfOrNull { lineWidth(it, glyphPx) }
-            ?.roundToInt()
-            ?: 0
+        val resolvedWordBreak = style.wordBreak ?: WordBreak.Normal
+        return if (sourceText.isEmpty()) 0 else widestWrappedSegmentPx(sourceText, resolvedWordBreak) { lineWidth(it, glyphPx) }
     }
 
     /**
@@ -185,6 +184,7 @@ class TextMeasurePolicy(
             softWrap = softWrap && !singleLine,
             maxLines = if (singleLine) 1 else maxLines,
             overflow = overflow,
+            wordBreak = style.wordBreak ?: WordBreak.Normal,
             ellipsize = { str, maxW, always ->
                 font.ellipsize(
                     text = str,
@@ -283,3 +283,27 @@ internal fun TextMeasurePolicy.buildRun(density: Float, fontScale: Float): TextR
         maxLines = maxLines,
         fontScale = fontScale,
     )
+
+private inline fun widestWrappedSegmentPx(
+    sourceText: String,
+    wordBreak: WordBreak,
+    measureSegment: (String) -> Float,
+): Int {
+    var widest = 0f
+    var hardStart = 0
+    while (hardStart <= sourceText.length) {
+        val hardEnd = sourceText.indexOf('\n', hardStart).let { if (it < 0) sourceText.length else it }
+        var segStart = hardStart
+        while (segStart < hardEnd) {
+            val segEnd = LineBreaks.nextOpportunity(sourceText, segStart, hardEnd, wordBreak)
+            val visibleEnd = trimTrailingSpaces(sourceText, segStart, segEnd)
+            if (visibleEnd > segStart) {
+                widest = maxOf(widest, measureSegment(sourceText.substring(segStart, visibleEnd)))
+            }
+            segStart = segEnd
+        }
+        if (hardEnd == sourceText.length) break
+        hardStart = hardEnd + 1
+    }
+    return widest.roundToInt()
+}

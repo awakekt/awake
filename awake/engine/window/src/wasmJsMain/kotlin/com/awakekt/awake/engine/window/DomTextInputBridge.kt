@@ -128,7 +128,16 @@ class DomTextInputBridge(private val input: Input) {
         // While an IME composes, keys belong to it; the result arrives through composition events.
         if (composing || isComposing(key)) return
         val shortcut = key.ctrlKey || key.metaKey
+        val wordJump = (key.ctrlKey != key.altKey) && !key.metaKey
         when {
+            wordJump && key.key == "ArrowLeft" -> {
+                key.preventDefault()
+                input.pushEditAction(TextEditAction.WordLeft)
+            }
+            wordJump && key.key == "ArrowRight" -> {
+                key.preventDefault()
+                input.pushEditAction(TextEditAction.WordRight)
+            }
             shortcut && key.key.equals("a", ignoreCase = true) -> {
                 key.preventDefault()
                 input.pushEditAction(TextEditAction.SelectAll)

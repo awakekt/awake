@@ -123,3 +123,19 @@ One rounding survives, outside this oracle's wrapped lines: a whole hard line is
 pixel a `Text` box is sized to (the line's width rounded to the nearest pixel), because the box is whole
 pixels where the browser's is fractional. Lines wrapping makes, and the boxes that hold them, follow the
 browser (`TextWrapFitTest`).
+
+## CJK, `keep-all`, mixed-script, and emergency URL reference (`#1066`)
+
+`../reference_cjk_layout.py` and `cjk-corpus.json` capture pinned Chromium line breaks into
+`awake/compose/foundation/src/desktopTest/resources/text-layout/cjk-chromium.json` against
+`awake-cjk-test.ttf` (built deterministically by `../make_test_fonts.py`). The corpus covers
+Chinese and Japanese kinsoku wrapping (including halfwidth forms and prolonged sound marks),
+Korean under both `word-break: normal` and `word-break: keep-all`, mixed Latin + CJK paragraphs,
+and long unbreakable URLs / compounds under `overflow-wrap: break-word`.
+
+Verify committed provenance without a browser:
+
+```powershell
+py -3 tools/fonts-tooling/reference_cjk_layout.py --verify-inputs
+./gradlew :awake:compose:foundation:desktopTest --tests '*CjkLineBreakConformanceTest'
+```
