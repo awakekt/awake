@@ -12,8 +12,10 @@ import com.awakekt.awake.compose.foundation.layout.BoxScope
 import com.awakekt.awake.compose.foundation.layout.offset
 import com.awakekt.awake.compose.foundation.layout.size
 import com.awakekt.awake.compose.runtime.Composer
+import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.key
 import com.awakekt.awake.compose.ui.Modifier
+import com.awakekt.awake.compose.ui.platform.LocalDensity
 import com.awakekt.awake.compose.ui.semantics.testTag
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.schema.PropertyRange
@@ -76,16 +78,21 @@ data class CanvasCluster(
 /** [children] of [element] placed by [cluster]: the primary on its pivot and the rest on its arc, in order. */
 context(_: Composer)
 internal fun BoxScope.ClusterChildren(element: CanvasElement, cluster: CanvasCluster, children: List<CanvasItem>, tree: CanvasTree) {
+    val parentDensity = LocalDensity.current
     var index = 0
     for (item in children) {
         val child = item.element
         if (!tree.shows(child) || child.followArrow) continue
-        val x = cluster.centerX(index, element.width) - child.width / 2f
-        val y = cluster.centerY(index, element.height) - child.height / 2f
+        val childDensity = item.scaler?.let(tree.box::densityOf) ?: parentDensity
+        val ratio = if (parentDensity > 0f) childDensity / parentDensity else 1f
+        val x = cluster.centerX(index, element.width) - child.width * ratio / 2f
+        val y = cluster.centerY(index, element.height) - child.height * ratio / 2f
         index++
         key(child) {
             Box(Modifier.offset(x.dp, y.dp)) {
-                CanvasElementView(child, Modifier.size(child.width.dp, child.height.dp).testTag("canvas-element-${item.id}"), tree, tree.childrenOf(child))
+                WithItemScaler(item, tree) {
+                    CanvasElementView(child, Modifier.size(child.width.dp, child.height.dp).testTag("canvas-element-${item.id}"), tree, tree.childrenOf(child))
+                }
             }
         }
     }

@@ -112,7 +112,7 @@ internal class CanvasButtonPress {
     }
 
     /** Aims [element] at the drag to ([px], [py]) dp from where the press landed, and checks the cancel zone. */
-    fun drag(element: CanvasElement, px: Float, py: Float) {
+    fun drag(element: CanvasElement, px: Float, py: Float, toCanvasUnits: Float = 1f) {
         val aim = element.button?.aim
         if (!live || aim == null) return
         val (x, y) = aim.aim(px - pressX, py - pressY)
@@ -122,7 +122,7 @@ internal class CanvasButtonPress {
         target = locked?.key
         val bounds = element.placedBounds
         val zone = cancelBounds
-        cancelling = bounds != null && zone != null && zone.holds(bounds.x + px, bounds.y + py)
+        cancelling = bounds != null && zone != null && zone.holds(bounds.x + px * toCanvasUnits, bounds.y + py * toCanvasUnits)
     }
 
     /** Lets go of [element]; [over] says whether the pointer is still over it, which makes a tap. */
@@ -179,26 +179,28 @@ internal class CanvasButtonPress {
  * until that one lifts. A press on a button that cannot be used is still taken, so it does not fall
  * through to what is under it, but reports nothing.
  */
-internal fun Modifier.buttonInput(element: CanvasElement, density: Float, margin: Int = 0): Modifier =
-    this then ButtonInputElement(element, density, margin)
+internal fun Modifier.buttonInput(element: CanvasElement, density: Float, margin: Int = 0, units: Float = density): Modifier =
+    this then ButtonInputElement(element, density, margin, units)
 
 private class ButtonInputElement(
     private val element: CanvasElement,
     private val density: Float,
     private val margin: Int,
+    private val units: Float,
 ) : ModifierNodeElement<ButtonInputNode>() {
-    override fun create(): ButtonInputNode = ButtonInputNode(element, density, margin)
+    override fun create(): ButtonInputNode = ButtonInputNode(element, density, margin, units)
 
     override fun update(node: ButtonInputNode) {
         node.element = element
         node.density = density
         node.margin = margin
+        node.units = units
     }
 
     override fun toString(): String = "buttonInput()"
 }
 
-private class ButtonInputNode(var element: CanvasElement, var density: Float, var margin: Int) :
+private class ButtonInputNode(var element: CanvasElement, var density: Float, var margin: Int, var units: Float) :
     Modifier.Node(),
     PointerInputNode {
     override val hitMarginPx: Int get() = margin
@@ -217,7 +219,8 @@ private class ButtonInputNode(var element: CanvasElement, var density: Float, va
             // A press reaches this node only on its box or its touch margin.
             PointerEventType.Press -> if (state.press(event.pointerId, event.x / density, event.y / density, element)) event.consume()
             PointerEventType.Move -> if (event.pointerId == state.pointer) {
-                state.drag(element, event.x / density, event.y / density)
+                val toCanvas = if (units > 0f) density / units else 1f
+                state.drag(element, event.x / density, event.y / density, toCanvas)
                 event.consume()
             }
             PointerEventType.Release -> if (event.pointerId == state.pointer) {

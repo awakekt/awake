@@ -12,11 +12,11 @@ import kotlin.math.atan2
 import kotlin.math.sqrt
 
 /**
- * Where a follower is drawn this frame, in canvas dp: its box, and the [scale] and [alpha] its
+ * Where a follower is drawn this frame, in [density] dp: its box, and the [scale] and [alpha] its
  * [CanvasFollowRules] give it at its distance. A [CanvasElement.followBounds] box is the node's own,
  * so it is never scaled.
  */
-internal class FollowerPlan(val box: Rectangle, val scale: Float, val alpha: Float)
+internal class FollowerPlan(val box: Rectangle, val scale: Float, val alpha: Float, val density: Float = 0f)
 
 /** A follower that would be drawn, before the [CanvasFollowLimit]s choose among them; [angle] is set while it is pinned. */
 private class FollowerCandidate(val element: CanvasElement, val rules: CanvasFollowRules, val plan: FollowerPlan, val angle: Float?)
@@ -57,7 +57,15 @@ internal fun CanvasTree.planFollowers(width: Float, height: Float, density: Floa
     for (item in roots) {
         val element = item.element
         element.pinned = false
-        if (element.follow.isNotEmpty() && shows(element)) candidateFor(element, canvas)?.let(candidates::add)
+        if (element.follow.isNotEmpty() && shows(element)) {
+            val itemDensity = densityOf(element).takeIf { it > 0f } ?: density
+            val itemCanvas = if (itemDensity == density) {
+                canvas
+            } else {
+                FollowerCanvas(width * density / itemDensity, height * density / itemDensity, itemDensity)
+            }
+            candidateFor(element, itemCanvas)?.let(candidates::add)
+        }
     }
     val kept = if (limits.any { it.max > 0 }) withinLimits(candidates, limits) else candidates
     for (candidate in kept) {
@@ -103,7 +111,7 @@ private fun CanvasTree.onBox(element: CanvasElement, rules: CanvasFollowRules, f
     val box = Rectangle((frameBox.x - origin.x) / density, (frameBox.y - origin.y) / density, frameBox.width / density, frameBox.height / density)
         .outset(element.followOutset)
     val culled = rules.cullOffScreen && !canvas.overlaps(box)
-    return if (culled) null else FollowerCandidate(element, rules, FollowerPlan(box, 1f, look.alpha), null)
+    return if (culled) null else FollowerCandidate(element, rules, FollowerPlan(box, 1f, look.alpha, density), null)
 }
 
 /**
@@ -134,7 +142,7 @@ private fun CanvasTree.onPoint(
         pins -> pinned(element, rules, x, y, canvas, margin, boxWidth, boxHeight, look)
         projection.behind -> null
         rules.cullOffScreen && !canvas.overlaps(box) -> null
-        else -> FollowerCandidate(element, rules, FollowerPlan(box, scale, look.alpha), null)
+        else -> FollowerCandidate(element, rules, FollowerPlan(box, scale, look.alpha, canvas.density), null)
     }
 }
 
@@ -177,7 +185,7 @@ private fun pinned(
     val boxCentreY = centreY + dy * along
     val box = Rectangle(boxCentreX - boxWidth / 2f, boxCentreY - boxHeight / 2f, boxWidth, boxHeight)
     val angle = atan2(dy, dx) * DEGREES_PER_RADIAN
-    return FollowerCandidate(element, rules, FollowerPlan(box, look.scale, look.alpha), angle)
+    return FollowerCandidate(element, rules, FollowerPlan(box, look.scale, look.alpha, canvas.density), angle)
 }
 
 /** [candidates] less those each [limits] entry leaves out of its group, keeping their order. */

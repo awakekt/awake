@@ -103,9 +103,10 @@ words, so an option set on the wrong kind still does nothing.
 
 ## Drawing
 
-`CanvasOverlay(items, resolver = …)` draws a flat list of `CanvasItem(id, element, parent)`: each
-item's `parent`, when it is also in the list, is the nearest element above it, so the child draws
-anchored and offset inside the parent's box. A host that keeps elements in an ECS world, a plain
+`CanvasOverlay(items, resolver = …)` draws a flat list of `CanvasItem(id, element, parent, scaler)`:
+each item's `parent`, when it is also in the list, is the nearest element above it, so the child draws
+anchored and offset inside the parent's box, and an optional `scaler` scales only that item and what
+sits inside it from the canvas's box. A host that keeps elements in an ECS world, a plain
 list or anything else builds this list its own way; `awake:scene:canvas`'s `SceneCanvas(world)`
 builds it from a `World`.
 
@@ -155,6 +156,12 @@ unit, or `ConstantPhysicalSize` from the dots per inch the canvas is designed at
 `maxScale` hold the result, and `playerScale` multiplies it after them. `CanvasScaler.scaleFor(width,
 height, density)` is the whole rule, for a host that wants the number itself. It is serializable;
 `awake:scene:canvas` saves it with a scene as `canvas_scaler`.
+
+A `CanvasScaler` on a `CanvasItem` (`CanvasScaleScope.Subtree` in a scene, vs `CanvasScaleScope.Canvas`,
+the default) applies the same rule from the canvas's host box to only that item and the items inside
+it, while sibling subtrees keep the canvas's own scale (or a `ConstantPixelSize` subtree stays `1:1`
+inside a scaled canvas). Layout, clipping, hit-testing, drag-and-drop and follower placement in that
+subtree use its scaled coordinates, and `snap` rounds that subtree's scale on its own.
 
 Text is crisp at a fractional scale without help: a text element's em is rounded to whole device
 pixels after the scale and the density, so up to 24 pixels it draws from exact-size glyphs (13 at

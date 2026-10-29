@@ -70,10 +70,20 @@ enum class CanvasScaleSnap(
     }
 }
 
+/** Which part of a canvas a [CanvasScaler] scales. */
+@Serializable
+enum class CanvasScaleScope {
+    /** Every element on the canvas, when the scaler is the canvas's own. */
+    Canvas,
+
+    /** Only the node the scaler sits on and the nodes beneath it, at the scale the canvas's box gives. */
+    Subtree,
+}
+
 /**
- * Works out the scale a [CanvasOverlay] draws at from the size of its box: what Unity calls a canvas
- * scaler. It is data, saved with a scene as its `canvas_scaler` and passed as
- * `CanvasOverlay(scaler = …)`; [scaleFor] is the whole rule.
+ * Works out the scale a [CanvasOverlay] or one of its subtrees draws at from the size of the canvas's
+ * box: what Unity calls a canvas scaler. It is data, saved with a scene as its `canvas_scaler` and
+ * passed as `CanvasOverlay(scaler = …)` or [CanvasItem.scaler]; [scaleFor] is the whole rule.
  *
  * The scale multiplies dp. At 1 an element of 100 units is 100 dp across, as without a scaler.
  *
@@ -97,6 +107,8 @@ enum class CanvasScaleSnap(
  * @property snap Rounds the scale [mode] gives to a step, before the limits hold it and the player
  *   multiplies it; [CanvasScaleSnap.None], the default, draws at the scale as the rule gives it. See
  *   [CanvasScaleSnap] for what it keeps crisp and what it costs.
+ * @property scope Whether the scaler applies to the whole [CanvasScaleScope.Canvas], the default, or
+ *   only to the [CanvasScaleScope.Subtree] of the node it sits on.
  */
 @Serializable
 data class CanvasScaler(
@@ -110,6 +122,7 @@ data class CanvasScaler(
     @PropertyRange(min = 0.0) val maxScale: Float = 0f,
     @PropertyRange(min = 0.0, exclusiveMin = true) val playerScale: Float = 1f,
     val snap: CanvasScaleSnap = CanvasScaleSnap.None,
+    val scope: CanvasScaleScope = CanvasScaleScope.Canvas,
 ) {
     /**
      * The scale for a canvas box [width] by [height] dp, on a screen of [density] pixels per dp and

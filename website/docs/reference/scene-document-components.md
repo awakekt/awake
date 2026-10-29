@@ -458,9 +458,11 @@ the scene has a physics world and either a follower asks or the scene has this c
 
 ## `canvas_scaler`
 
-How the scene's canvas works its scale out from the screen's size, so a HUD designed at one
-resolution fits every screen. A scene has one, on any node; without one the canvas draws at the
-scale its host passes. Every `canvas_element` size, offset, font and image is multiplied by the scale.
+How the scene's canvas, or one subtree of it, works its scale out from the screen's size, so a HUD
+designed at one resolution fits every screen. With `scope` `Canvas`, the default, a scene has one on
+any node, and without one the canvas draws at the scale its host passes; with `Subtree`, only the node
+it sits on and the nodes beneath it draw at that scale while the rest of the canvas keeps its own.
+Every `canvas_element` size, offset, font and image in its scope is multiplied by the scale.
 `SceneCanvasScaler`, saved from the live `CanvasScaler`.
 
 | Field | Type | Default | What it does |
@@ -475,6 +477,7 @@ scale its host passes. Every `canvas_element` size, offset, font and image is mu
 | `maxScale` | number | `0` | The largest scale the rule may give; `0` for no limit. Not negative. |
 | `playerScale` | number | `1` | The player's own multiplier, applied after `minScale` and `maxScale`, so a settings menu can always make the UI larger or smaller. Above 0. |
 | `snap` | `None` · `WholeStep` · `HalfStep` | `None` | Rounds the scale the rule gives to the nearest whole number or half before `minScale` and `maxScale` hold it, so pixel art lands on a whole number of screen pixels per art pixel. The layout is drawn at the rounded scale, so every size and offset moves by up to half a step in proportion: a 1.4125 scale draws at 1.5 with `HalfStep`, 6% larger, and at 1 with `WholeStep`, 29% smaller. A scale under one step is left as it is. Text needs no snapping; see [Scale with the screen](../guides/game-ui.md#scale-with-the-screen). |
+| `scope` | `Canvas` · `Subtree` | `Canvas` | Which part of the canvas the scaler applies to. `Canvas` scales every element on the canvas when it is the scene's whole-canvas scaler; `Subtree` scales only the node it sits on (an element or a grouping node) and the nodes beneath it, from the canvas's box, with layout, clipping and hit-testing in that subtree using the scaled coordinates. |
 
 ## `character_controller`
 
