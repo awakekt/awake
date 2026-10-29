@@ -10,6 +10,7 @@ import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.ai.ensurePathRequest
 import com.awakekt.awake.scene.ai.referenceName
+import com.awakekt.awake.scene.binding.RegisteredBinding
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneResolutionContext
 import kotlin.reflect.KClass
@@ -17,6 +18,7 @@ import kotlin.reflect.KClass
 /**
  * Scene component binding for [FleeBehavior] and [SceneFlee].
  */
+@RegisteredBinding
 object FleeBinding : SceneComponentBinding<FleeBehavior, SceneFlee> {
     override val componentClass: KClass<FleeBehavior> = FleeBehavior::class
     override val schemaClass: KClass<SceneFlee> = SceneFlee::class

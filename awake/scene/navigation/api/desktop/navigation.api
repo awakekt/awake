@@ -19,6 +19,12 @@ public final class com/awakekt/awake/scene/navigation/NavigationGrid {
 	public final fun getSource ()Lcom/awakekt/awake/scene/navigation/SceneNavigation;
 }
 
+public final class com/awakekt/awake/scene/navigation/NavigationSceneComponents : com/awakekt/awake/scene/binding/SceneComponentModule {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/navigation/NavigationSceneComponents;
+	public fun getBindings ()Ljava/util/List;
+	public fun getSerializersModule ()Lkotlinx/serialization/modules/SerializersModule;
+}
+
 public final class com/awakekt/awake/scene/navigation/SceneNavigation : com/awakekt/awake/scene/document/SceneComponent {
 	public static final field BLOCKED C
 	public static final field Companion Lcom/awakekt/awake/scene/navigation/SceneNavigation$Companion;

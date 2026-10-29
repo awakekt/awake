@@ -73,4 +73,4 @@ Handles nested prefab links (`ScenePrefabLink`); every registry includes it.
 - [`awake:scene:runtime`](../runtime/README.md) — Scene adapters (`AwakeWorldSceneAdapter`, `SceneWorldExport`), `DefaultSceneComponentResolvers`, and `SceneAppLifecycleRuntime`.
 - [`awake:scene:scene3d`](../scene3d/README.md) — Camera, light, and mesh bindings (`CameraBinding`, `LightBinding`, `MaterialBinding`, `MeshRendererBinding`).
 - [`awake:scene:scene-core`](../scene-core/README.md) — Transform components and `SpinControlBinding`.
-- [`awake:ai:behavior`](../../ai/behavior/README.md) — AI behavior bindings (`PatrolBinding`, `ChaseBinding`, `FleeBinding`).
+- [`awake:scene:ai`](../ai/README.md) — AI behavior, definition, and perception bindings (`PatrolBinding`, `ChaseBinding`, `FleeBinding`, `AiSceneComponents`).

@@ -6,6 +6,7 @@
 package com.awakekt.awake.scene.controls.movement
 
 import com.awakekt.awake.ecs.Poolable
+import com.awakekt.awake.scene.binding.RuntimeOnly
 import com.awakekt.awake.scene.core.transform.Transform
 import kotlinx.serialization.Serializable
 import kotlin.math.PI
@@ -36,12 +37,15 @@ class MovementControl : Poolable {
     var driver: MovementDriver = MovementDriver.Player
 
     /** Lateral movement intent: the camera's right for a player, world X for an agent. */
+    @RuntimeOnly
     var moveX: Float = 0f
 
     /** Vertical movement intent along the Y axis. */
+    @RuntimeOnly
     var moveY: Float = 0f
 
     /** Longitudinal movement intent: the camera's forward for a player, world Z for an agent. */
+    @RuntimeOnly
     var moveZ: Float = 0f
 
     /** Units per second for this entity. Null uses the movement system's speed. */
@@ -52,12 +56,15 @@ class MovementControl : Poolable {
      * an AI behaviour moving at its own speed. While set it replaces [speed] and [runSpeed], which
      * stay as authored. Null leaves them in charge.
      */
+    @RuntimeOnly
     var moveSpeed: Float? = null
 
     /** Whether a jump is wanted this frame. A character controller decides whether it can jump. */
+    @RuntimeOnly
     var jump: Boolean = false
 
     /** Whether the player asks to run this frame, as the `run` input action says; [runSpeed] then replaces [speed]. */
+    @RuntimeOnly
     var run: Boolean = false
 
     /** Units per second while [run] is held. Null keeps [speed]. */

@@ -13,8 +13,10 @@ implementation(project(":awake:scene:ai"))
 - `ScenePatrol`, `SceneChase`, `SceneFlee` -- the scene document schemas, with their validation, and
   `PatrolBinding`, `ChaseBinding`, `FleeBinding`, which attach `PatrolBehavior`, `ChaseBehavior` and
   `FleeBehavior` with the `PathRequest` each asks for routes through.
-- `registerAiBehaviors()` and `AiBehaviorBindings` -- registers the three, and the `navigation`
-  component from `awake:scene:navigation` that the behaviours route over.
+- `AiSceneComponents`, `registerAiBehaviors()` and `AiBehaviorBindings` -- `AiSceneComponents` is the
+  generated module registry for every AI scene component here; `registerAiBehaviors()` and
+  `AiBehaviorBindings` register it together with `NavigationSceneComponents` from
+  `awake:scene:navigation`.
 - `SceneBehaviorTree` and `SceneStateMachine` (`behavior_tree`, `state_machine`) -- name a
   definition file (`asset`), with an optional `seed` and `enabled`. Their bindings attach
   `BehaviorTreeAsset` and `StateMachineAsset` and a `PathRequest`. `AiDefinitionAttachSystem` builds

@@ -22,9 +22,9 @@ import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.physics.PhysicsSystem
 import com.awakekt.awake.scene.rendering.camera.Camera
-import com.awakekt.awake.scene.worldstream.PagedTerrainBinding
 import com.awakekt.awake.scene.worldstream.PagedTerrainSystem
 import com.awakekt.awake.scene.worldstream.ScenePagedTerrain
+import com.awakekt.awake.scene.worldstream.WorldstreamSceneComponents
 import com.awakekt.awake.terrain.PagedTerrain
 import com.awakekt.awake.terrain.TerrainPage
 import com.awakekt.awake.terrain.TerrainPageHeightReader
@@ -46,7 +46,7 @@ import kotlinx.coroutines.launch
  */
 internal object StreamedTerrainCapability : SceneCapability {
     override val id = "com.awakekt.awake.streamed-terrain"
-    override val components = listOf(PagedTerrainBinding)
+    override val components = WorldstreamSceneComponents.bindings
 
     /** The scene's paged terrain, as [loadStreamedTerrain] reads it. */
     val Terrain = SceneContentKey<StreamedTerrainAssets>("streamed terrain")

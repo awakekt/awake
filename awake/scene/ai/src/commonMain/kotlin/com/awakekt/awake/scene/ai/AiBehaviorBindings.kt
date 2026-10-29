@@ -23,15 +23,13 @@ import com.awakekt.awake.scene.ai.flee.FleeBinding
 import com.awakekt.awake.scene.ai.flee.SceneFlee
 import com.awakekt.awake.scene.ai.patrol.PatrolBinding
 import com.awakekt.awake.scene.ai.patrol.ScenePatrol
-import com.awakekt.awake.scene.ai.perception.FactionsBinding
-import com.awakekt.awake.scene.ai.perception.PerceivableBinding
-import com.awakekt.awake.scene.ai.perception.PerceiverBinding
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.binding.SceneComponentResolver
 import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.navigation.NavigationBinding
 import com.awakekt.awake.scene.navigation.NavigationGrid
+import com.awakekt.awake.scene.navigation.NavigationSceneComponents
 import com.awakekt.awake.scene.navigation.SceneNavigation
 
 /**
@@ -57,17 +55,8 @@ object AiBehaviorBindings {
     val StateMachineResolver: SceneComponentBinding<StateMachineAsset, SceneStateMachine> = StateMachineBinding
 
     /** All scene component bindings provided by the AI behavior module. */
-    val bindings: List<SceneComponentBinding<*, *>> = listOf(
-        PatrolBinding,
-        ChaseBinding,
-        FleeBinding,
-        NavigationBinding,
-        BehaviorTreeBinding,
-        StateMachineBinding,
-        PerceiverBinding,
-        PerceivableBinding,
-        FactionsBinding,
-    )
+    val bindings: List<SceneComponentBinding<*, *>> =
+        AiSceneComponents.bindings + NavigationSceneComponents.bindings
 
     /** All resolvers provided by the AI behavior module for registration. */
     val all: List<SceneComponentResolver> = bindings
@@ -78,10 +67,8 @@ object AiBehaviorBindings {
  *
  * @return This registry instance with AI behaviors registered.
  */
-fun SceneComponentRegistry.registerAiBehaviors(): SceneComponentRegistry {
-    AiBehaviorBindings.all.forEach { register(it) }
-    return this
-}
+fun SceneComponentRegistry.registerAiBehaviors(): SceneComponentRegistry =
+    register(AiSceneComponents).register(NavigationSceneComponents)
 
 /**
  * Gives [entity] the [PathRequest] its behaviour asks for routes through, unless it has one.

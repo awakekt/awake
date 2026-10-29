@@ -23,6 +23,7 @@ abstract class AwakeRepositoryVerificationTask : DefaultTask() {
         check("documentation") { documentationFailures() }.also(failures::addAll)
         check("Maven coordinates") { mavenCoordinateFailures() }.also(failures::addAll)
         check("capability boundaries") { capabilityBoundaryFailures() }.also(failures::addAll)
+        check("scene component registries") { sceneComponentRegistryFailures() }.also(failures::addAll)
         check("agent runtime boundary") { agentRuntimeFailures() }.also(failures::addAll)
         check("maintained Python ownership") { pythonOwnershipFailures() }.also(failures::addAll)
         check("source headers and provenance") { sourceMetadataFailures() }.also(failures::addAll)
@@ -161,6 +162,70 @@ abstract class AwakeRepositoryVerificationTask : DefaultTask() {
             }
         }
         return failures.distinct()
+    }
+
+    private fun sceneComponentRegistryFailures(): List<String> {
+        val exemptModules = setOf("awake/scene/document", "awake/scene/binding")
+        val handListedCapabilityComponents = Regex("""override\s+val\s+components\b[^\n]*\blistOf\s*\(""")
+        val failures = mutableListOf<String>()
+        val mainKotlinFiles = trackedFiles().filter { path ->
+            path.startsWith(root.resolve("awake")) &&
+                path.fileName.toString().endsWith(".kt") &&
+                Regex("/src/[^/]*Main/").containsMatchIn(relative(path))
+        }.toList()
+
+        mainKotlinFiles.forEach { path ->
+            val rel = relative(path)
+            val text = Files.readString(path)
+            if (handListedCapabilityComponents.containsMatchIn(text)) {
+                failures += "$rel: SceneCapability.components must come from a generated SceneComponentModule, not listOf(...)"
+            }
+            if (!declaresSceneComponentOrBinding(text)) return@forEach
+            val moduleDir = generateSequence(path.parent) { it.parent }
+                .firstOrNull { Files.isRegularFile(it.resolve("build.gradle.kts")) } ?: return@forEach
+            val moduleRel = relative(moduleDir)
+            if (moduleRel in exemptModules) return@forEach
+            val buildText = Files.readString(moduleDir.resolve("build.gradle.kts"))
+            if (!buildText.contains("com.awakekt.awake.plugin.scene-components")) {
+                failures += "$moduleRel/build.gradle.kts: declares scene components or bindings ($rel) without com.awakekt.awake.plugin.scene-components"
+            }
+        }
+        return failures.distinct()
+    }
+
+    private fun declaresSceneComponentOrBinding(text: String): Boolean {
+        if ("SceneComponent" !in text) return false
+        val classOrObjectHead = Regex("""\b(?:class|object)\s+[A-Za-z0-9_]+""")
+        for (match in classOrObjectHead.findAll(text)) {
+            var i = match.range.last + 1
+            while (i < text.length && text[i].isWhitespace()) i++
+            if (i < text.length && text[i] == '(') {
+                var depth = 1
+                i++
+                while (i < text.length && depth > 0) {
+                    when (text[i]) {
+                        '(' -> depth++
+                        ')' -> depth--
+                    }
+                    i++
+                }
+            }
+            while (i < text.length && text[i].isWhitespace()) i++
+            if (i < text.length && text[i] == ':') {
+                i++
+                while (i < text.length && text[i].isWhitespace()) i++
+                if (text.startsWith("SceneComponentBinding", i) &&
+                    text.drop(i + "SceneComponentBinding".length).trimStart().startsWith("<")
+                ) {
+                    return true
+                }
+                if (text.startsWith("SceneComponent", i)) {
+                    val next = text.getOrNull(i + "SceneComponent".length)
+                    if (next == null || (!next.isLetterOrDigit() && next != '_' && next != '?')) return true
+                }
+            }
+        }
+        return false
     }
 
     private fun agentRuntimeFailures(): List<String> {

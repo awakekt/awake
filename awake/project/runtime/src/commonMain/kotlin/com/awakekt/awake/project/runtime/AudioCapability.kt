@@ -11,7 +11,7 @@ import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.audio.AudioListener
-import com.awakekt.awake.scene.audio.AudioSourceBinding
+import com.awakekt.awake.scene.audio.AudioSceneComponents
 import com.awakekt.awake.scene.audio.AudioSystem
 import com.awakekt.awake.scene.audio.SceneAudioSource
 import com.awakekt.awake.scene.audio.loadAudioClips
@@ -25,7 +25,7 @@ import com.awakekt.awake.scene.document.SceneDocument
  */
 internal object AudioCapability : SceneCapability {
     override val id = "com.awakekt.awake.audio"
-    override val components = listOf(AudioSourceBinding)
+    override val components = AudioSceneComponents.bindings
 
     override suspend fun load(scene: SceneDocument, files: AssetSource, content: SceneContent.Builder) {
         if (scene.uses(SceneAudioSource::class)) content[CoreSceneContent.AudioClips] = loadAudioClips(scene, files)

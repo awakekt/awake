@@ -118,6 +118,12 @@ public final class com/awakekt/awake/scene/physics/PhysicsOriginShiftListener : 
 	public fun onOriginShift (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/scene/world/WorldOrigin;)V
 }
 
+public final class com/awakekt/awake/scene/physics/PhysicsSceneComponents : com/awakekt/awake/scene/binding/SceneComponentModule {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/physics/PhysicsSceneComponents;
+	public fun getBindings ()Ljava/util/List;
+	public fun getSerializersModule ()Lkotlinx/serialization/modules/SerializersModule;
+}
+
 public final class com/awakekt/awake/scene/physics/PhysicsSystem : com/awakekt/awake/ecs/InterpolatedSystem {
 	public fun <init> (Lcom/awakekt/awake/physics/PhysicsWorld;)V
 	public final fun destroyBody-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)V

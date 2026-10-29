@@ -8,6 +8,7 @@ package com.awakekt.awake.scene.navigation
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.navigation.grid.NavGrid
+import com.awakekt.awake.scene.binding.RegisteredBinding
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneResolutionContext
 import kotlin.reflect.KClass
@@ -25,6 +26,7 @@ class NavigationGrid(
 }
 
 /** Binds [NavigationGrid] to [SceneNavigation]. */
+@RegisteredBinding
 object NavigationBinding : SceneComponentBinding<NavigationGrid, SceneNavigation> {
     override val componentClass: KClass<NavigationGrid> = NavigationGrid::class
     override val schemaClass: KClass<SceneNavigation> = SceneNavigation::class

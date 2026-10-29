@@ -9,6 +9,7 @@ import com.awakekt.awake.asset.terrain.TerrainPageCoord
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.scene.binding.RegisteredBinding
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneResolutionContext
 import com.awakekt.awake.scene.document.SceneComponent
@@ -70,6 +71,7 @@ data class PagedTerrainReference(
 )
 
 /** Register alongside the consuming project's scene bindings. Resolution is an explicit asset lifecycle. */
+@RegisteredBinding
 object PagedTerrainBinding : SceneComponentBinding<PagedTerrainReference, ScenePagedTerrain> {
     override val componentClass = PagedTerrainReference::class
     override val schemaClass = ScenePagedTerrain::class
