@@ -19,6 +19,8 @@ import com.awakekt.awake.ui.canvas.CanvasElement
 import com.awakekt.awake.ui.canvas.CanvasItem
 import com.awakekt.awake.ui.canvas.CanvasProjection
 import com.awakekt.awake.ui.canvas.CanvasResolver
+import com.awakekt.awake.ui.canvas.CanvasScaleScope
+import com.awakekt.awake.ui.canvas.CanvasScaler
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
@@ -136,7 +138,7 @@ internal fun World.placedCanvasItems(siblingOrder: Comparator<Entity>? = null): 
     val placed = ArrayList<PlacedItem>()
     family<CanvasElement>().forEach { entity, element ->
         val path = hierarchyPath(entity)
-        placed += PlacedItem(CanvasItem(entity.id, element, canvasParent(path)), path)
+        placed += PlacedItem(CanvasItem(entity.id, element, canvasParent(path), subtreeScaler(path)), path)
     }
     return sortPlaced(placed, siblingOrder)
 }
@@ -218,5 +220,19 @@ internal fun World.hierarchyPath(entity: Entity): List<Entity> {
 /** The [CanvasElement] of the nearest ancestor on [path], an entity's [hierarchyPath], that has one, or null. */
 internal fun World.canvasParent(path: List<Entity>): CanvasElement? {
     for (index in path.size - 2 downTo 0) get<CanvasElement>(path[index])?.let { return it }
+    return null
+}
+
+/**
+ * The nearest [CanvasScaler] with [CanvasScaleScope.Subtree] on [path] from the entity itself up to
+ * just below its [canvasParent], or null when none sits there: any subtree scaler at or above its
+ * [canvasParent] already governs that parent's subtree.
+ */
+internal fun World.subtreeScaler(path: List<Entity>): CanvasScaler? {
+    for (index in path.indices.reversed()) {
+        val node = path[index]
+        if (index < path.lastIndex && has<CanvasElement>(node)) break
+        get<CanvasScaler>(node)?.takeIf { it.scope == CanvasScaleScope.Subtree }?.let { return it }
+    }
     return null
 }

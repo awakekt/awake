@@ -1,0 +1,1 @@
+- Subtree-scoped `CanvasScaler` (`CanvasScaleScope.Subtree` and `CanvasItem.scaler`) so a `canvas_scaler` can scale only its own node and descendants — including snapped `WholeStep`/`HalfStep` pixel-art subtrees — while sibling subtrees keep the canvas's scale (#1034).

@@ -27,6 +27,8 @@ import com.awakekt.awake.ui.canvas.CanvasLook
 import com.awakekt.awake.ui.canvas.CanvasPadding
 import com.awakekt.awake.ui.canvas.CanvasPlayerLayout
 import com.awakekt.awake.ui.canvas.CanvasScaleMode
+import com.awakekt.awake.ui.canvas.CanvasScaleScope
+import com.awakekt.awake.ui.canvas.CanvasScaleSnap
 import com.awakekt.awake.ui.canvas.CanvasStepper
 import com.awakekt.awake.ui.canvas.CanvasStyle
 import com.awakekt.awake.ui.canvas.CanvasSweep
@@ -62,7 +64,7 @@ internal val goldenCases: Map<String, GoldenCase<*>> = mapOf(
     "image" to GoldenCase(CanvasImageBinding, SceneCanvasImage()),
     "scaler" to GoldenCase(
         CanvasScalerBinding,
-        SceneCanvasScaler(CanvasScaleMode.ConstantPixelSize, 640f, 360f, 0.5f, 2f, 192f, 0.5f, 4f, 1.5f),
+        SceneCanvasScaler(CanvasScaleMode.ConstantPixelSize, 640f, 360f, 0.5f, 2f, 192f, 0.5f, 4f, 1.5f, CanvasScaleSnap.HalfStep, CanvasScaleScope.Subtree),
     ),
     "controls" to GoldenCase(
         CanvasControlsBinding,

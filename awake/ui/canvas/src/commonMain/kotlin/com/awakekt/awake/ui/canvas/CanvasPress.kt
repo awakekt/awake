@@ -34,21 +34,22 @@ internal fun Modifier.pressableTap(element: CanvasElement): Modifier =
  * [CanvasElement.consumePressAt]. It only watches: what takes the press, a Button's or a pressable
  * element's `clickable`, decides whether it becomes a tap.
  */
-internal fun Modifier.pressPoint(element: CanvasElement, density: Float): Modifier =
-    if (element.takesTaps) this then PressPointElement(element, density) else this
+internal fun Modifier.pressPoint(element: CanvasElement, density: Float, units: Float = density): Modifier =
+    if (element.takesTaps) this then PressPointElement(element, density, units) else this
 
 /**
  * [x], [y], pixels from the top-left of [element]'s unrotated box, in the element's own units on
- * its picture: divided by [density], which carries the canvas's scale, and turned back by the
+ * its picture: divided by [density], which carries the element's scale, and turned back by the
  * element's `style.rotation` about the box's centre.
  */
-internal fun elementPoint(element: CanvasElement, x: Int, y: Int, density: Float): Vec2 {
+internal fun elementPoint(element: CanvasElement, x: Int, y: Int, density: Float, units: Float = density): Vec2 {
     val px = x / density
     val py = y / density
     val degrees = element.style.rotation ?: return Vec2(px, py)
     val bounds = element.screenBounds
-    val cx = (bounds?.width ?: element.width) / 2f
-    val cy = (bounds?.height ?: element.height) / 2f
+    val toLocal = if (density > 0f) units / density else 1f
+    val cx = (bounds?.width?.let { it * toLocal } ?: element.width) / 2f
+    val cy = (bounds?.height?.let { it * toLocal } ?: element.height) / 2f
     // The picture turns clockwise on a y-down screen; undoing it turns the point the other way.
     val radians = -degrees * PI.toFloat() / 180f
     val c = cos(radians)
@@ -61,18 +62,20 @@ internal fun elementPoint(element: CanvasElement, x: Int, y: Int, density: Float
 private class PressPointElement(
     private val element: CanvasElement,
     private val density: Float,
+    private val units: Float,
 ) : ModifierNodeElement<PressPointNode>() {
-    override fun create(): PressPointNode = PressPointNode(element, density)
+    override fun create(): PressPointNode = PressPointNode(element, density, units)
 
     override fun update(node: PressPointNode) {
         node.element = element
         node.density = density
+        node.units = units
     }
 
     override fun toString(): String = "pressPoint()"
 }
 
-private class PressPointNode(var element: CanvasElement, var density: Float) :
+private class PressPointNode(var element: CanvasElement, var density: Float, var units: Float) :
     Modifier.Node(),
     PointerInputNode {
     override val blocksHitTest: Boolean get() = false
@@ -80,7 +83,7 @@ private class PressPointNode(var element: CanvasElement, var density: Float) :
     override fun onPointerEvent(event: PointerEvent, pass: PointerEventPass) {
         if (pass != PointerEventPass.Main || !event.isInBounds) return
         if (event.type == PointerEventType.Press) {
-            element.pressStart = elementPoint(element, event.x, event.y, density)
+            element.pressStart = elementPoint(element, event.x, event.y, density, units)
         } else if (event.type == PointerEventType.SecondaryPress && !event.isConsumed) {
             element.secondaryPress()
             event.consume()

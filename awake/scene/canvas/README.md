@@ -115,10 +115,14 @@ follower entities out and takes them back, hidden, so churning followers makes n
 
 ## Scale and safe area
 
-A `canvas_scaler` on any node, the saved form of `awake:ui:canvas`'s `CanvasScaler`, works the
-canvas's scale out from the screen's size; `SceneCanvas(world)` finds it with `world.canvasScaler()`
-and draws at it in place of its `scale`, and a scene without one draws at `scale` as before.
-`CanvasScalerBinding` loads and saves it, with its `snap` (`None`, `WholeStep`, `HalfStep`).
+A `canvas_scaler` on any node, the saved form of `awake:ui:canvas`'s `CanvasScaler`, works a scale
+out from the screen's size. With `scope = Canvas`, the default, `SceneCanvas(world)` finds it with
+`world.canvasScaler()` and draws the whole canvas at it in place of `scale`, and a scene without one
+draws at `scale` as before. With `scope = Subtree`, the scaler applies only to the node it sits on
+(whether a canvas element or a plain grouping node) and the nodes beneath it, worked out from the
+canvas's box, while the rest of the canvas keeps its own scale; a nested `Subtree` scaler overrides an
+outer one for its own branch. `CanvasScalerBinding` loads and saves it, with its `snap` (`None`,
+`WholeStep`, `HalfStep`) and `scope` (`Canvas`, `Subtree`).
 `SceneCanvas(world, safeArea = …, dpi = …)` keeps anchored elements clear of a notch, which an
 element's `safeArea` field opts out of, and gives a `ConstantPhysicalSize` scaler the screen's real dots per inch. `SceneAppLifecycleRuntime` passes
 what its platform reports with each frame, `AppFrame.safeArea` and `AppFrame.dpi`, unless a host

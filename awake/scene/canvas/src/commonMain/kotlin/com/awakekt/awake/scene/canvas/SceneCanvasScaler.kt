@@ -11,15 +11,18 @@ import com.awakekt.awake.scene.binding.SceneBinding
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneValidationIssue
 import com.awakekt.awake.ui.canvas.CanvasScaleMode
+import com.awakekt.awake.ui.canvas.CanvasScaleScope
 import com.awakekt.awake.ui.canvas.CanvasScaleSnap
 import com.awakekt.awake.ui.canvas.CanvasScaler
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * The saved form of a [CanvasScaler]: how the scene's canvas works out its scale from the screen's
- * size. A scene has one, on any node; [SceneCanvas] draws at the scale it gives, and a scene without
- * one draws at the scale its host passes.
+ * The saved form of a [CanvasScaler]: how the scene's canvas, or one subtree of it, works out its
+ * scale from the screen's size. With [CanvasScaleScope.Canvas], the default, the scene has one on any
+ * node and [SceneCanvas] draws the whole canvas at the scale it gives; with [CanvasScaleScope.Subtree],
+ * only the node it sits on and the nodes beneath it draw at that scale, while the rest of the canvas
+ * keeps its own.
  *
  * @property mode Which rule works the scale out: `ScaleWithScreenSize`, `ConstantPixelSize` or
  * `ConstantPhysicalSize`.
@@ -35,6 +38,8 @@ import kotlinx.serialization.Serializable
  * @property playerScale The player's own multiplier, applied after the limits.
  * @property snap Rounds the scale the rule gives to a step before the limits hold it: `None`, the
  * default, `WholeStep` or `HalfStep`. Layout then scales by the rounded factor.
+ * @property scope Which part of the canvas the scaler applies to: `Canvas`, the default, for the
+ * whole canvas, or `Subtree` for only this node and the nodes beneath it.
  */
 @Serializable
 @SerialName("canvas_scaler")
@@ -50,6 +55,7 @@ data class SceneCanvasScaler(
     @PropertyRange(min = 0.0) val maxScale: Float = 0f,
     @PropertyRange(min = 0.0, exclusiveMin = true) val playerScale: Float = 1f,
     val snap: CanvasScaleSnap = CanvasScaleSnap.None,
+    val scope: CanvasScaleScope = CanvasScaleScope.Canvas,
 ) : SceneComponent {
     override val allowsMultiplePerNode: Boolean get() = false
 
@@ -57,8 +63,8 @@ data class SceneCanvasScaler(
         CanvasScalerBinding.run { toComponent() }.problems().map { SceneValidationIssue(path, "canvas_scaler.$it") }
 }
 
-/** The scene's [CanvasScaler]: the first one on any node, or null when it has none. */
+/** The scene's whole-canvas [CanvasScaler]: the first one with [CanvasScaleScope.Canvas] on any node, or null when it has none. */
 fun World.canvasScaler(): CanvasScaler? {
-    family<CanvasScaler>().forEachComponent { return it }
+    family<CanvasScaler>().forEachComponent { if (it.scope == CanvasScaleScope.Canvas) return it }
     return null
 }

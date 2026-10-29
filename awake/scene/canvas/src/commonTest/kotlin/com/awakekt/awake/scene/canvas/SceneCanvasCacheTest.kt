@@ -10,6 +10,8 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.ui.canvas.CanvasElement
+import com.awakekt.awake.ui.canvas.CanvasScaleScope
+import com.awakekt.awake.ui.canvas.CanvasScaler
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -36,6 +38,7 @@ class SceneCanvasCacheTest {
         fresh.zip(kept).forEach { (expected, actual) ->
             assertSame(expected.element, actual.element, "element ${expected.id} after step $step")
             assertSame(expected.parent, actual.parent, "the parent of element ${expected.id} after step $step")
+            assertSame(expected.scaler, actual.scaler, "the scaler of element ${expected.id} after step $step")
         }
     }
 
@@ -53,22 +56,36 @@ class SceneCanvasCacheTest {
         order.matchesAFreshSort(0)
 
         repeat(STEPS) { step ->
-            when (random.nextInt(7)) {
-                0 -> nodes += element(nodes.random(random))
-                1 -> nodes += node()
-                // A despawn moves the node stored last into the hole.
-                2 -> nodes.removeAt(random.nextInt(nodes.size)).let(world::destroy)
-                3 -> {
-                    val moved = nodes.random(random)
-                    val parent = nodes.random(random).takeIf { it != moved && !world.isAbove(moved, it) }
-                    world.get<Transform>(moved)?.parent = parent
-                }
-                4 -> nodes.random(random).let { if (world.has<CanvasElement>(it)) world.add(it, CanvasElement()) }
-                5 -> nodes.random(random).let { if (world.has<CanvasElement>(it)) world.remove<CanvasElement>(it) else world.add(it, CanvasElement()) }
-                // Nothing changes: the frame reuses the last sort.
-                else -> Unit
-            }
+            mutateStep(nodes, random)
             order.matchesAFreshSort(step + 1)
+        }
+    }
+
+    private fun mutateStep(nodes: MutableList<Entity>, random: Random) {
+        when (random.nextInt(8)) {
+            0 -> nodes += element(nodes.random(random))
+            1 -> nodes += node()
+            // A despawn moves the node stored last into the hole.
+            2 -> nodes.removeAt(random.nextInt(nodes.size)).let(world::destroy)
+            3 -> {
+                val moved = nodes.random(random)
+                val parent = nodes.random(random).takeIf { it != moved && !world.isAbove(moved, it) }
+                world.get<Transform>(moved)?.parent = parent
+            }
+            4 -> nodes.random(random).let { if (world.has<CanvasElement>(it)) world.add(it, CanvasElement()) }
+            5 -> nodes.random(random).let { if (world.has<CanvasElement>(it)) world.remove<CanvasElement>(it) else world.add(it, CanvasElement()) }
+            6 -> mutateScaler(nodes.random(random), random)
+            // Nothing changes: the frame reuses the last sort.
+            else -> Unit
+        }
+    }
+
+    private fun mutateScaler(node: Entity, random: Random) {
+        if (world.has<CanvasScaler>(node) && random.nextBoolean()) {
+            world.remove<CanvasScaler>(node)
+        } else {
+            val scope = if (random.nextBoolean()) CanvasScaleScope.Subtree else CanvasScaleScope.Canvas
+            world.add(node, CanvasScaler(scope = scope))
         }
     }
 

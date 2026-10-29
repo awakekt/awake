@@ -762,8 +762,28 @@ scale, so every size and offset moves by up to half a step in proportion: `HalfS
 { "component": "canvas_scaler", "referenceWidth": 1920, "referenceHeight": 1080, "match": 1, "maxScale": 2 }
 ```
 
-A host that draws `CanvasOverlay` itself passes the same rule as `CanvasOverlay(items, scaler = …)`,
-and `CanvasScaler.scaleFor(width, height, density)` answers it for any box.
+By default a `canvas_scaler` scales the whole canvas (`scope: "Canvas"`). Set `scope` to `"Subtree"` on
+an element node, or on a plain grouping node above several elements, to scale only that node and what
+sits under it while the rest of the canvas keeps its own scale — a HUD that grows with the screen
+beside a `1:1` inspector window, or a pixel-art widget with `snap: "WholeStep"` inside a smoothly
+scaled HUD. Layout, clipping and hit-testing in that subtree use its scaled coordinates, and an inner
+`Subtree` scaler overrides an outer one for its own branch.
+
+```json title="A scaled HUD subtree beside a 1:1 window"
+[
+  { "name": "Hud", "components": [
+      { "component": "canvas_scaler", "scope": "Subtree", "referenceWidth": 1280, "referenceHeight": 720, "match": 1, "snap": "HalfStep" },
+      { "component": "canvas_rect", "width": 240, "height": 48 }
+    ] },
+  { "name": "Inspector", "components": [
+      { "component": "canvas_rect", "anchor": "TopRight", "width": 320, "height": 220 }
+    ] }
+]
+```
+
+A host that draws `CanvasOverlay` itself passes the same rule as `CanvasOverlay(items, scaler = …)` or
+on one `CanvasItem(id, element, parent, scaler)`, and `CanvasScaler.scaleFor(width, height, density)`
+answers it for any box.
 
 ### Keep clear of a notch
 

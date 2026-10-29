@@ -37,10 +37,11 @@ private fun ActionButtonView(element: CanvasElement, styled: Modifier, textStyle
     element.buttonPress.tick(settings)
     element.buttonPress.runCooldown(element, settings)
     val density = LocalDensity.current
+    val units = LocalCanvasDensity.current.takeIf { it > 0f } ?: density
     val skin = tree.skinOf(element)?.button
     val state = element.controlState()
     val words = skin?.label?.let { label -> labelStyle(element, label, state, tree, textStyle) } ?: textStyle
-    Box(styled.buttonInput(element, density, tree.touchMarginPx(element, density)), contentAlignment = (element.textAlign ?: CanvasAnchor.Center).alignment) {
+    Box(styled.buttonInput(element, density, tree.touchMarginPx(element, density), units), contentAlignment = (element.textAlign ?: CanvasAnchor.Center).alignment) {
         skin?.background?.let { Slot(element, CanvasSlots.BUTTON_BACKGROUND, it, state, Modifier.fillMaxSize(), tree.images) }
         skin?.icon?.let { icon ->
             val size = icon.size ?: (minOf(element.width, element.height) * ICON_SHARE)

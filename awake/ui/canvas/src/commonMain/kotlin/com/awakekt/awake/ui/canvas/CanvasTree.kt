@@ -22,8 +22,74 @@ import com.awakekt.awake.core.text.font.UiFont
  * @property id Its `canvas-element-<id>` test tag.
  * @property element The element to draw.
  * @property parent The nearest element above it the host found there, or null for a root.
+ * @property scaler A scaler for this element and the elements inside it, worked out from the
+ *   canvas's box; null inherits the canvas's or its parent's.
  */
-class CanvasItem(val id: Int, val element: CanvasElement, val parent: CanvasElement? = null)
+class CanvasItem(
+    val id: Int,
+    val element: CanvasElement,
+    val parent: CanvasElement? = null,
+    val scaler: CanvasScaler? = null,
+)
+
+/**
+ * The host box a frame's [CanvasOverlay] was measured in, before any canvas or subtree scale is
+ * applied: [width] by [height] host dp at [hostDensity] pixels per dp, [dpi] dots per inch, and
+ * [safeArea] insets in host dp.
+ */
+internal class CanvasBoxMetrics(
+    val width: Float = 0f,
+    val height: Float = 0f,
+    val hostDensity: Float = 1f,
+    val dpi: Float = CanvasScaler.DP_PER_INCH,
+    val safeArea: CanvasInsets = CanvasInsets.None,
+) {
+    /** The positive finite scale [scaler] gives for this host box, or 1. */
+    fun scaleOf(scaler: CanvasScaler): Float {
+        val scale = scaler.scaleFor(width, height, hostDensity, dpi)
+        return if (scale > 0f && scale.isFinite()) scale else 1f
+    }
+
+    /** The pixels per dp a subtree with [scaler] lays out at in this host box. */
+    fun densityOf(scaler: CanvasScaler): Float = hostDensity * scaleOf(scaler)
+}
+
+/**
+ * Memoizes each [CanvasItem]'s effective layout density for the active [CanvasBoxMetrics] pass,
+ * walking parent items when an item has no subtree [CanvasItem.scaler] of its own.
+ */
+internal class CanvasSubtreeScales(private val items: List<CanvasItem>) {
+    var box: CanvasBoxMetrics = CanvasBoxMetrics()
+        private set
+
+    var canvasDensity: Float = 1f
+        private set
+
+    private val byElement = HashMap<CanvasElement, CanvasItem>(items.size * 2).apply {
+        for (item in items) put(item.element, item)
+    }
+    private val densities = HashMap<CanvasElement, Float>(items.size * 2)
+
+    fun measure(box: CanvasBoxMetrics, canvasDensity: Float) {
+        this.box = box
+        this.canvasDensity = canvasDensity
+        densities.clear()
+        for (item in items) resolve(item)
+    }
+
+    fun densityOf(element: CanvasElement): Float = densities[element] ?: canvasDensity
+
+    private fun resolve(item: CanvasItem): Float {
+        densities[item.element]?.let { return it }
+        // Seed before recursing so a caller-supplied parent cycle terminates cleanly.
+        densities[item.element] = canvasDensity
+        val resolved = item.scaler?.let(box::densityOf)
+            ?: item.parent?.let(byElement::get)?.let(::resolve)
+            ?: canvasDensity
+        densities[item.element] = resolved
+        return resolved
+    }
+}
 
 /**
  * What [CanvasOverlay] asks its host for: a [CanvasElement.follow]ed node's projected point or
@@ -104,6 +170,14 @@ internal class CanvasTree(
     /** Where each follower drawn this frame goes, as [planFollowers] last worked it out; one not in it is not drawn. */
     internal val followerPlans = HashMap<CanvasElement, FollowerPlan>()
 
+    internal val scales = CanvasSubtreeScales(items)
+
+    /** The host box this pass was measured in, set before any element or follower is composed. */
+    internal val box: CanvasBoxMetrics get() = scales.box
+
+    /** The whole canvas's pixels per dp this pass, before any subtree or follower scale. */
+    internal val canvasDensity: Float get() = scales.canvasDensity
+
     fun shows(element: CanvasElement): Boolean = element.visible && (showTouchControls || !element.touchOnly)
 
     /** The font an element's words draw in: its loaded file or built-in family, or null for the default. */
@@ -178,6 +252,12 @@ internal class CanvasTree(
         return found
     }
 }
+
+/** Records the host [box] and whole-canvas [canvasDensity], and resolves every item's subtree density. */
+internal fun CanvasTree.measureBox(box: CanvasBoxMetrics, canvasDensity: Float) = scales.measure(box, canvasDensity)
+
+/** The pixels per dp [element]'s subtree lays out at this pass. */
+internal fun CanvasTree.densityOf(element: CanvasElement): Float = scales.densityOf(element)
 
 private val keyLog = Logger("ui-canvas")
 
