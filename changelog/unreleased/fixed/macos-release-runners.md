@@ -1,1 +1,0 @@
-- Move macOS native, publication and template consumer jobs to supported macOS 15 runners so macOS 14 retirement does not block releases.
