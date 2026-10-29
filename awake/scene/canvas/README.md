@@ -11,6 +11,11 @@ Not to be confused with Compose's `Canvas` (a surface you draw pixels on) or
 itself have no scene or ECS dependency and live in `awake:ui:canvas`; see its README for what a
 `CanvasElement` holds.
 
+`canvas_appearance.style.gradient` uses `CanvasGradient` directly: `start` and `end` colours,
+`horizontal` (false by default), and an optional `middle` colour at 50%. The older
+`canvas_element.style` form reads the same gradient; saving the focused form preserves it.
+Two-colour gradients gain no JSON field. Colours and theme tokens follow the UI canvas contract.
+
 ## The mapping
 
 Each canvas component has its saved form and a binding that copies its fields both ways, generated

@@ -264,7 +264,7 @@ class SceneCanvasTest {
             font = "fonts/title.ttf",
             style = CanvasStyle(
                 background = "#202020",
-                gradient = CanvasGradient("#303030", "#101010", horizontal = true),
+                gradient = CanvasGradient("#303030", "#101010", horizontal = true, middle = "#4080C0"),
                 image = CanvasImage("ui/frame.png", regionX = 4, regionWidth = 48, sliceLeft = 16, sliceRight = 16, repeatEdges = true, tint = "#FFFFFF80"),
                 fillImage = CanvasImage("ui/gauge.png", sliceLeft = 3, sliceRight = 3, repeatCenter = true, pixelated = true),
                 cornerRadius = 6f,

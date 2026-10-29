@@ -233,7 +233,7 @@ jobs:
       - name: Text and run-time font loading tests
         run: |
           ./gradlew :awake:core:text:desktopTest
-          ./gradlew :awake:compose:ui-testing:desktopTest --tests com.awakekt.awake.compose.testing.LoadedFontRasterTest
+          ./gradlew :awake:compose:ui-testing:desktopTest --tests com.awakekt.awake.compose.testing.LoadedFontRasterTest --tests com.awakekt.awake.compose.testing.GradientBackgroundTest
 
       # Committed browser measurements; CI needs neither Chromium nor Playwright.
       - name: CPU text layout conformance
