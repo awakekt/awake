@@ -114,7 +114,7 @@ internal class SceneCullingCompiler(
             null
         }
 
-        val grid = world.findSpatialIndex()?.grid
+        val grid = world.findSpatialIndex()?.grid?.core
         val visible = grid?.let { visibleByIndex(it, camera, cullingAspect) }
         val casters = shadows?.takeUnless { it.isEmpty }
         return FrameCulling(
