@@ -40,12 +40,14 @@ import kotlin.math.roundToInt
 class TextMeasurePolicy(
     private val source: () -> String,
     internal val style: TextStyle,
-    internal val font: UiFont,
+    font: UiFont,
     internal val singleLine: Boolean = false,
     internal val overflow: TextOverflow = TextOverflow.Clip,
     internal val softWrap: Boolean = true,
     internal val maxLines: Int = Int.MAX_VALUE,
 ) : MeasurePolicy {
+
+    internal val font: UiFont = font.withNumerals(style.numerals)
 
     /** Text that never changes for the life of this policy, which is one pass for [Text]. */
     constructor(

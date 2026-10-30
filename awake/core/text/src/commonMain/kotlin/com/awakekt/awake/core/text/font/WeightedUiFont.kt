@@ -14,9 +14,14 @@ package com.awakekt.awake.core.text.font
  */
 // UiFont's Char and code point lookups are each one short override here.
 @Suppress("TooManyFunctions")
-class WeightedUiFont(
+class WeightedUiFont internal constructor(
     faceMap: Map<FontWeight, UiFont>,
+    private val origin: WeightedUiFont?,
 ) : UiFont {
+    /**
+     * Builds a weighted font family from [faceMap].
+     */
+    constructor(faceMap: Map<FontWeight, UiFont>) : this(faceMap, null)
     private val faces = faceMap.entries
         .sortedBy { it.key.value }
         .map { Face(it.key, it.value) }
@@ -107,6 +112,28 @@ class WeightedUiFont(
     override fun kerningFor(left: Int, right: Int, glyphPx: Float, weight: FontWeight): Float {
         val face = resolve(weight)
         return face.font.kerningFor(left, right, glyphPx, face.weight)
+    }
+
+    private val proportionalFont: UiFont by lazy { buildNumericVariant(FontNumerals.Proportional) }
+    private val tabularFont: UiFont by lazy { buildNumericVariant(FontNumerals.Tabular) }
+
+    override fun withNumerals(numerals: FontNumerals?): UiFont = when {
+        numerals == null -> this
+        origin != null -> origin.withNumerals(numerals)
+        numerals == FontNumerals.Proportional -> proportionalFont
+        else -> tabularFont
+    }
+
+    private fun buildNumericVariant(numerals: FontNumerals): UiFont {
+        var changed = false
+        val mapped = buildMap(faces.size) {
+            for (face in faces) {
+                val variant = face.font.withNumerals(numerals)
+                if (variant !== face.font) changed = true
+                put(face.weight, variant)
+            }
+        }
+        return if (changed) WeightedUiFont(mapped, this) else this
     }
 
     /**

@@ -51,7 +51,9 @@ internal class OpenTypeUiFontData private constructor(
     override val advancesEm: FloatArray get() = layout.advancesEm
 
     /** The pairs the font kerns among the baked glyphs, read as the data is made, so a corrupt table fails the load. */
-    private val kerning: KerningPairs = KerningPairs.read(font, codePointsOf(glyphOrder))
+    private val kerning: KerningPairs = KerningPairs.read(font, codePointsOf(glyphOrder)).also {
+        NumericGlyphs.validate(font)
+    }
 
     override fun atlasBytes(): ByteArray = atlas
 
@@ -60,6 +62,8 @@ internal class OpenTypeUiFontData private constructor(
     override fun lineMetrics(): FontLineMetrics = font.lineMetrics
 
     override fun kerning(): KerningPairs = kerning
+
+    override fun distanceFieldBake(): DistanceFieldBake = bake
 
     companion object {
         /**
@@ -191,7 +195,7 @@ private fun codePointsOf(text: String): IntArray {
 }
 
 /** One code point's glyph: its outline and its outline-exact box, both in font units, y up. */
-private class FontGlyph(val codePoint: Int, font: OpenTypeFont, glyph: Int) {
+internal class FontGlyph(val codePoint: Int, font: OpenTypeFont, glyph: Int) {
     val outline: List<OutlineSegment> = font.outline(glyph)
     val advance: Int = font.advance(glyph)
 
@@ -205,7 +209,7 @@ private class FontGlyph(val codePoint: Int, font: OpenTypeFont, glyph: Int) {
  * is its sample rect and [TILE_MARGIN] texels around it, so a glyph whose ink reaches far (a script font's
  * swash, say) widens only its own tile rather than being cut off, and an atlas holds the ink and little else.
  */
-private class GlyphLayout(private val font: OpenTypeFont, glyphs: List<FontGlyph>, private val bake: DistanceFieldBake) {
+internal class GlyphLayout(private val font: OpenTypeFont, glyphs: List<FontGlyph>, private val bake: DistanceFieldBake) {
     private val texelsPerEm = bake.texelsPerEm
     private val cropBleed = bake.cropBleed
     private val unitsPerEm = font.unitsPerEm.toDouble()

@@ -7,6 +7,7 @@ package com.awakekt.awake.compose.foundation.text
 
 import com.awakekt.awake.compose.ui.unit.sp
 import com.awakekt.awake.core.color.Color
+import com.awakekt.awake.core.text.font.FontNumerals
 import com.awakekt.awake.core.text.font.FontWeight
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.core.text.font.UiFonts
@@ -85,11 +86,19 @@ class TextLayoutConformanceTest {
             "none" -> false
             else -> error("Unsupported font-kerning '$value' in ${spec.string("id")}")
         }
+        val numerals = when (val value = spec.string("numeric")) {
+            "normal" -> null
+            "tabular-nums" -> FontNumerals.Tabular
+            "proportional-nums" -> FontNumerals.Proportional
+            else -> error("Unsupported font-variant-numeric '$value' in ${spec.string("id")}")
+        }
+        val resolvedFont = font.withNumerals(numerals)
         val style = TextStyle(
             font = font,
             size = (size / density).sp,
             lineHeight = spec.optionalNumber("lineHeightPx")?.let { (it.toFloat() / density).sp },
             kerning = kerning,
+            numerals = numerals,
         )
         val text = spec.string("text")
         val run = TextRun(text, style, font, size, density, wrapWidthPx = spec.optionalNumber("wrapWidthPx")?.toFloat() ?: Float.POSITIVE_INFINITY)
@@ -103,13 +112,13 @@ class TextLayoutConformanceTest {
             cursor = start + line.length
             var baseline: Double? = null
             val origins = line.mapIndexed { index, char ->
-                val uv = font.glyphFor(char.code, FontWeight.Normal)
+                val uv = resolvedFont.glyphFor(char.code, FontWeight.Normal)
                 val x = if (uv == null) {
                     run.offsetAtLine(start + index).toDouble()
                 } else {
                     check(quads.hasNext()) { "Missing painted glyph $char" }
                     val quad = quads.next()
-                    if (baseline == null) baseline = (quad.y - uv.offsetYEm * size + font.ascentEm * size).toDouble()
+                    if (baseline == null) baseline = (quad.y - uv.offsetYEm * size + resolvedFont.ascentEm * size).toDouble()
                     (quad.x - uv.offsetXEm * size).toDouble()
                 }
                 x
@@ -122,11 +131,10 @@ class TextLayoutConformanceTest {
 
     private fun compare(spec: JsonObject, actual: Layout, reference: JsonObject, control: JsonObject) {
         val id = spec.string("id")
-        // Kerning (#1022) and the wrap-fit bound (#1021) are implemented, so a kerned or wrapped case is held
-        // to the browser with no expected-failure signature of its own.
-        val featureIssue = if (spec.string("numeric") != "normal") xfail(1023) else null
-        metric(id, "advance", actual.lines.maxOf { it.advance }, reference.number("advance"), control.number("advance"), featureIssue)
-        metric(id, "lineCount", actual.lines.size.toDouble(), reference.number("lineCount"), control.number("lineCount"), featureIssue, tolerance = 0.0)
+        // Kerning (#1022), tabular/proportional digits (#1023) and the wrap-fit bound (#1021) are implemented,
+        // so featured, kerned and wrapped cases are held to the browser with no expected-failure signature.
+        metric(id, "advance", actual.lines.maxOf { it.advance }, reference.number("advance"), control.number("advance"), null)
+        metric(id, "lineCount", actual.lines.size.toDouble(), reference.number("lineCount"), control.number("lineCount"), null, tolerance = 0.0)
         // Core advances every line by a whole device pixel (TextLineBox), where the browser advances by
         // a fractional line height at a fractional density or an authored fractional line height. The
         // control is the browser's own first baseline on the pixel grid (half down, as Core rounds it),
@@ -142,9 +150,9 @@ class TextLayoutConformanceTest {
             val expected = expectedLines.getOrNull(index)
             val unfeatured = controlLines.getOrNull(index)
             val prefix = "line[$index]"
-            metric(id, "$prefix.start", line.start.toDouble(), expected.measuredNumber("start"), unfeatured?.number("start"), featureIssue, tolerance = 0.0)
-            metric(id, "$prefix.end", line.end.toDouble(), expected.measuredNumber("end"), unfeatured?.number("end"), featureIssue, tolerance = 0.0)
-            metric(id, "$prefix.advance", line.advance, expected.measuredNumber("advance"), unfeatured?.number("advance"), featureIssue)
+            metric(id, "$prefix.start", line.start.toDouble(), expected.measuredNumber("start"), unfeatured?.number("start"), null, tolerance = 0.0)
+            metric(id, "$prefix.end", line.end.toDouble(), expected.measuredNumber("end"), unfeatured?.number("end"), null, tolerance = 0.0)
+            metric(id, "$prefix.advance", line.advance, expected.measuredNumber("advance"), unfeatured?.number("advance"), null)
             metric(id, "$prefix.baseline", line.baseline, expected.measuredNumber("baseline"), firstBaseline + index * wholeAdvance, WHOLE_PIXEL_ADVANCE, controlTolerance = 0.02)
             metric(id, "$prefix.top", line.top, expected.measuredNumber("top"), index * wholeAdvance, WHOLE_PIXEL_ADVANCE, controlTolerance = 0.02)
             metric(id, "$prefix.height", actual.height, expected.measuredNumber("height"), null, null)
@@ -152,7 +160,7 @@ class TextLayoutConformanceTest {
             for ((offset, x) in line.origins.withIndex()) {
                 val source = line.start + offset
                 val target = referenceGlyphs[source]
-                metric(id, "$prefix.glyph[$source].x", x, target.measuredNumber("x"), controlGlyphs[source]?.number("x"), featureIssue)
+                metric(id, "$prefix.glyph[$source].x", x, target.measuredNumber("x"), controlGlyphs[source]?.number("x"), null)
             }
         }
     }

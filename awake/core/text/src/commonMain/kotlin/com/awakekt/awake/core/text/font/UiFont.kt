@@ -249,6 +249,15 @@ interface UiFont {
      */
     fun pageFont(pageIndex: Int): UiFont = atlasPages.getOrElse(pageIndex) { this }
 
+    /**
+     * Returns a view of this font that draws and spaces digits with [numerals] (`pnum` or `tnum` from its
+     * OpenType `GSUB` table), or `this` when [numerals] is null or the font has no distinct glyphs for it.
+     *
+     * Implementations memoize the returned instance per [FontNumerals] so layout caches and atlas uploads
+     * see a stable [UiFont] identity across frames.
+     */
+    fun withNumerals(numerals: FontNumerals?): UiFont = this
+
     /** Defaults shared by every font. */
     companion object {
         /**

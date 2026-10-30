@@ -108,6 +108,7 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         dropTarget = dropTarget,
         camera = camera,
         links = links,
+        numerals = numerals,
         mask = mask,
         maxLength = maxLength,
         maxLengthUnit = maxLengthUnit,

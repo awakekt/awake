@@ -50,8 +50,12 @@ internal class KerningPairs internal constructor(private val keys: LongArray, pr
          *
          * @throws IllegalArgumentException when a kerning table is truncated or corrupt, naming the table.
          */
-        fun read(font: OpenTypeFont, codePoints: IntArray): KerningPairs {
-            val atlas = AtlasGlyphs(font, codePoints)
+        fun read(
+            font: OpenTypeFont,
+            codePoints: IntArray,
+            glyphs: IntArray = IntArray(codePoints.size) { font.glyphFor(codePoints[it]) },
+        ): KerningPairs {
+            val atlas = AtlasGlyphs(glyphs)
             val pairs = PairCollector(codePoints)
             val gpos = font.tableOrNull("GPOS")
             val fromGpos = gpos != null && GposKerning(gpos, atlas, pairs).collect()
@@ -100,11 +104,11 @@ private class PairCollector(private val codePoints: IntArray) {
 }
 
 /** The glyph of each atlas code point, and the atlas indices each glyph is drawn for. */
-private class AtlasGlyphs(font: OpenTypeFont, codePoints: IntArray) {
-    val size: Int = codePoints.size
-
+private class AtlasGlyphs(
     /** Each atlas index's glyph, 0 for a code point the font lacks, which never kerns. */
-    val glyphs: IntArray = IntArray(size) { font.glyphFor(codePoints[it]) }
+    val glyphs: IntArray,
+) {
+    val size: Int = glyphs.size
 
     private val firstIndexOfGlyph = HashMap<Int, Int>()
     private val nextIndexOfSameGlyph = IntArray(size) { -1 }

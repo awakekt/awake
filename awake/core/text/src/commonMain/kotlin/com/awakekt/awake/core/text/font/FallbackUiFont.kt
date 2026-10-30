@@ -21,6 +21,7 @@ package com.awakekt.awake.core.text.font
 internal class FallbackUiFont(
     private val faces: List<UiFont>,
     private val maxAtlasHeight: Int = UiFonts.DEFAULT_MAX_ATLAS_HEIGHT,
+    private val origin: FallbackUiFont? = null,
 ) : UiFont {
     private val primary: UiFont = faces.first()
     private val stackedFaces: List<UiFont> = faces.filter { it.samplingMode == primary.samplingMode }
@@ -111,6 +112,25 @@ internal class FallbackUiFont(
     override fun kerningFor(left: Int, right: Int, glyphPx: Float, weight: FontWeight): Float {
         val face = faceIndex(left)
         return if (face == faceIndex(right)) faces[face].kerningFor(left, right, glyphPx, weight) else 0f
+    }
+
+    private val proportionalFont: UiFont by lazy { buildNumericVariant(FontNumerals.Proportional) }
+    private val tabularFont: UiFont by lazy { buildNumericVariant(FontNumerals.Tabular) }
+
+    override fun withNumerals(numerals: FontNumerals?): UiFont = when {
+        numerals == null -> this
+        origin != null -> origin.withNumerals(numerals)
+        numerals == FontNumerals.Proportional -> proportionalFont
+        else -> tabularFont
+    }
+
+    private fun buildNumericVariant(numerals: FontNumerals): UiFont {
+        val mapped = faces.map { it.withNumerals(numerals) }
+        return if (faces.indices.all { mapped[it] === faces[it] }) {
+            this
+        } else {
+            FallbackUiFont(mapped, maxAtlasHeight, origin = this)
+        }
     }
 
     /** The first face that has [codePoint], or the primary face, which draws its own stand-in. */
