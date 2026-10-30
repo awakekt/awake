@@ -8,6 +8,8 @@ package com.awakekt.awake.engine.platform
 import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.engine.platform.config.WindowConfig
+import com.awakekt.awake.engine.platform.error.AppErrorSource
+import com.awakekt.awake.engine.platform.error.reportError
 import com.awakekt.awake.engine.platform.lifecycle.AppFrame
 import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
 import com.awakekt.awake.engine.platform.lifecycle.DisplayInsets
@@ -46,7 +48,11 @@ abstract class GraphicsEngine(
     var isReady = false
         private set
 
-    /** Why [create] failed to start the backend or the app, or null while it hasn't. */
+    /**
+     * Why [create] failed to start the backend or the app, or null while it hasn't. The failure is
+     * logged and, when the app registered an `AppErrorHandler`, handed to it as `AppErrorSource.Bootstrap`;
+     * it is not thrown.
+     */
     @Volatile
     var startupError: Throwable? = null
         private set
@@ -76,6 +82,7 @@ abstract class GraphicsEngine(
 
     private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
         logger.error(throwable) { "Uncaught exception in graphics engine coroutine" }
+        appLifecycle.reportError(AppErrorSource.Coroutine, throwable)
     }
 
     // TooGenericExceptionCaught intentional: native GPU/JNI layers can throw Throwable
@@ -94,6 +101,9 @@ abstract class GraphicsEngine(
                 } catch (t: Throwable) {
                     startupError = t
                     logger.error(t) { "Failed to initialize graphics engine" }
+                    // After the log and startupError, so a handler that looks at either sees them. The backend
+                    // is half built, so the engine's own start-up has no retry.
+                    appLifecycle.reportError(AppErrorSource.Bootstrap, t, subject = "graphics engine")
                 }
             }
         } ?: run {

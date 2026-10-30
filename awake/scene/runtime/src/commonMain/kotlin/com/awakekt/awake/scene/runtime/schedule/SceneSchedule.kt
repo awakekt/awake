@@ -41,6 +41,10 @@ class SceneSchedule internal constructor(
     private val frameSystems = mutableListOf<System>()
     private lateinit var infrastructureSystems: List<System>
 
+    // What runs each frame: the systems above, each guarded so one that throws is reported to the app's
+    // error handler and skipped (see guardedFor). Built once; the lists above keep the systems themselves.
+    private var guardedInfrastructure: List<System> = emptyList()
+
     /** Whether [advance] splits its time into [gameMs] and [renderMs]. Off, it reads no clock. */
     internal var timed = false
     private var gameNanos = 0L
@@ -60,15 +64,17 @@ class SceneSchedule internal constructor(
 
     internal fun initialize(runtime: SceneAppLifecycleRuntime) {
         infrastructureSystems = spec.infrastructureSystemsFactory(runtime)
+        guardedInfrastructure = infrastructureSystems.map { it.guardedFor(runtime) }
         spec.systems.forEach { registration ->
             val system = registration.factory(runtime)
             registeredSystems[registration.handle] = system
+            val guarded = system.guardedFor(runtime)
             when (registration.phase) {
                 SceneSystemPhase.Fixed -> {
-                    fixedSystems += system
-                    if (system is InterpolatedSystem) interpolatedSystems += system
+                    fixedSystems += guarded
+                    if (guarded is InterpolatedSystem) interpolatedSystems += guarded
                 }
-                SceneSystemPhase.Frame -> frameSystems += system
+                SceneSystemPhase.Frame -> frameSystems += guarded
             }
         }
     }
@@ -131,11 +137,12 @@ class SceneSchedule internal constructor(
         interpolatedSystems.clear()
         frameSystems.clear()
         if (::infrastructureSystems.isInitialized) infrastructureSystems = emptyList()
+        guardedInfrastructure = emptyList()
     }
 
     private fun runFrame(world: World, delta: Float) {
         gameNanos += timed { frameSystems.forEach { it.update(world, delta) } }
-        renderNanos += timed { infrastructureSystems.forEach { it.update(world, delta) } }
+        renderNanos += timed { guardedInfrastructure.forEach { it.update(world, delta) } }
     }
 
     /** Nanoseconds [block] took while [timed], else 0 without reading the clock. */

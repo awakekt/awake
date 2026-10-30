@@ -148,6 +148,18 @@ own. Because a project plays once, the route owns it: leaving the route closes t
 entry calls the loader again, and the app stopping closes one that loaded and never played. See
 [Protected content](../../../website/docs/guides/protected-content.md#play-a-protected-project-after-sign-in).
 
+## Failures reach the app
+
+`runProject` and `projectRoute` catch what fails while a project plays and hand it to the
+`AppErrorHandler` the app registered (`service(AppErrorHandler::class, handler)`); Core never presents
+it. A scene a `SceneSwitch` cannot read or play is reported as `AppErrorSource.SceneSwitch` with a
+retry that asks for the scene again, and the scene playing goes on. A `projectRoute` loader that
+throws is reported as `ProjectLoad` with a retry that loads the route again. A scene system that
+throws in a frame is reported once as `System`, with no retry, and is skipped for the rest of that
+scene while the other systems, the renderer and the UI run on. With no handler registered a failure
+is logged (switch, load) or thrown out of the frame (system) as before. See
+[App lifecycle](../../../website/docs/guides/app-lifecycle.md#handle-errors).
+
 ## Playing a scene in a world of your own
 
 An editor that plays the scene it is editing, in an isolated world, wants the same systems without

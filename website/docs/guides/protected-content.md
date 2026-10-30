@@ -219,7 +219,7 @@ loader returns. To start reading the project before the player enters the route,
 | --- | --- |
 | The route is entered before the project has loaded | `activeSceneId` names the route, its loading scene plays, and `routeStatus` is `Loading`. The project's scene takes its place at the start of the first frame after the loader returns. |
 | The route is entered after it has loaded | The project plays at once, with no loading frame. |
-| The loader throws, for instance when the token is refused | The route stays on its loading scene with `routeStatus` `Failed(cause)`, and the failure is logged. Entering the route again with `switchTo` runs the loader again. |
+| The loader throws, for instance when the token is refused | The route stays on its loading scene with `routeStatus` `Failed(cause)`, and the failure is logged and, if the app registered an `AppErrorHandler`, handed to it with a retry (see [App lifecycle](app-lifecycle.md#handle-errors)). Entering the route again with `switchTo` runs the loader again. |
 | The player leaves while it loads | The load goes on, and the project waits, unplayed, for the next entry; the router never switches to the route on its own. Stopping the app cancels the load and closes a project that loaded but never played. |
 | The player leaves the route after it played | Its scene stops and the project is closed, physics world included, because a project plays once. Entering again runs the loader again; the files it read come from the `ContentCache`. |
 
