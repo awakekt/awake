@@ -37,6 +37,7 @@ class LitWhenAdditiveDrawTest {
         val glow = fakeMesh()
         val litGlow = fakeMesh()
         val litSolid = fakeMesh()
+        val unlitSolid = fakeMesh()
         world.create().also {
             world.add(it, Transform())
             world.add(it, MeshRenderer(glow, fakeMaterial(), transparent = true, additive = true))
@@ -51,6 +52,11 @@ class LitWhenAdditiveDrawTest {
             world.add(it, MeshRenderer(litSolid, fakeMaterial()))
             world.add(it, PbrMaterial(litWhenAdditive = true))
         }
+        world.create().also {
+            world.add(it, Transform())
+            world.add(it, MeshRenderer(unlitSolid, fakeMaterial()))
+            world.add(it, PbrMaterial(unlit = true))
+        }
         val camera = Camera(Lens(eye = Vec3f(0f, 0f, 5f), center = Vec3f.ZERO, fovYRadians = 1f, near = 0.1f, far = 100f))
         val cullingCompiler = SceneCullingCompiler(ClipSpace.WebGpu)
 
@@ -61,6 +67,7 @@ class LitWhenAdditiveDrawTest {
         assertEquals(TexturedBlend.AddsUnlit.code.toFloat(), blendOf(glow))
         assertEquals(TexturedBlend.AddsLit.code.toFloat(), blendOf(litGlow))
         assertEquals(TexturedBlend.Covers.code.toFloat(), blendOf(litSolid))
+        assertEquals(TexturedBlend.Unlit.code.toFloat(), blendOf(unlitSolid))
     }
 
     private fun RenderDrawCommand.blendLane(): Float =

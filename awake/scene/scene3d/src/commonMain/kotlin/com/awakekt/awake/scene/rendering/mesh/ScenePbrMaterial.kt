@@ -23,6 +23,8 @@ import kotlinx.serialization.Serializable
  * @property alphaMode Alpha blending or masking mode for surface transparency.
  * @property alphaCutoff Alpha cutoff threshold when [alphaMode] is [AlphaMode.Mask].
  * @property litWhenAdditive Keeps a textured mesh drawn additive lit. See [PbrMaterial.litWhenAdditive].
+ * @property unlit Draws `baseColorFactor * texture * vertexColor` as stored on the textured,
+ * skinned and skinned-textured pipelines, skipping lighting, tone mapping and fog.
  */
 @Serializable
 @SerialName("pbr_material")
@@ -34,6 +36,7 @@ data class ScenePbrMaterial(
     val alphaMode: AlphaMode = AlphaMode.Opaque,
     @PropertyRange(min = 0.0, max = 1.0) val alphaCutoff: Float = 0.5f,
     val litWhenAdditive: Boolean = false,
+    val unlit: Boolean = false,
 ) : SceneComponent {
     override fun validate(path: String): List<SceneValidationIssue> = buildList {
         if (metallic !in 0f..1f) {

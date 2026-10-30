@@ -269,19 +269,23 @@ private fun skinnedUniforms(
     cameraForward: Vec3f,
 ): FloatArray {
     val writer = UniformWriter(SkinnedUniformLayout).put(mvp.data, UniformFields.Mvp)
-    return if (extras.size == SkinnedMaterialLayout.total) {
+    val unlit = if (extras.size == SkinnedMaterialLayout.total) {
         writer
             .put(extras, 0, SkinnedFields.JointPalette)
             .put(model.data, UniformFields.Model)
             .put(extras, SkinnedMaterialLayout.offsetOf(UniformFields.BaseColorFactor), UniformFields.BaseColorFactor)
             .put(extras, SkinnedMaterialLayout.offsetOf(UniformFields.EmissiveFactor), UniformFields.EmissiveFactor)
+        SkinnedMaterialLayout.readVec4(extras, UniformFields.PbrFactors).w
     } else {
         writer
             .putPadded(SkinnedFields.JointPalette, extras)
             .put(model.data, UniformFields.Model)
             .put(UniformFields.BaseColorFactor, DEFAULT_BASE_COLOR_FACTOR)
             .put(UniformFields.EmissiveFactor, DEFAULT_EMISSIVE_FACTOR)
-    }.put(UniformFields.PbrFactors, 0f, 0f, alphaCutoff, 0f)
+        0f
+    }
+    return writer
+        .put(UniformFields.PbrFactors, 0f, 0f, alphaCutoff, unlit)
         .put(UniformFields.Exposure, exposure, 0f, 0f, 0f)
         .putLights(lightPayload)
         .put(UniformFields.CameraPosition, cameraEye)

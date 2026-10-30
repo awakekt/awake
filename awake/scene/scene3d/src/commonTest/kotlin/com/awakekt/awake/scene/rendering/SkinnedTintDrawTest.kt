@@ -109,6 +109,21 @@ class SkinnedTintDrawTest {
         assertContentEquals(skinnedMaterialFloats(identity, Color(0.2f, 0.3f, 0.9f), Color.Transparent), extras)
     }
 
+    @Test
+    fun anUnlitSkinnedPartCarriesItsUnlitFlag() {
+        val world = World()
+        val partMesh = fakeMesh()
+        val part = world.create()
+        world.add(part, Transform())
+        world.add(part, MeshRenderer(partMesh, fakeMaterial()))
+        world.add(part, SkinnedPose(identity))
+        world.add(part, PbrMaterial(baseColorFactor = Color(0.8f, 0.7f, 0.6f), unlit = true))
+
+        val extras = collect(world).single { it.mesh === partMesh }.extraUniformFloats
+
+        assertContentEquals(skinnedMaterialFloats(identity, Color(0.8f, 0.7f, 0.6f), Color.Transparent, unlit = true), extras)
+    }
+
     /** One frame's draws; pass the same [collector] to collect the frames a running scene does. */
     private fun collect(
         world: World,

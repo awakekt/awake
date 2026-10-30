@@ -6,10 +6,13 @@
 package com.awakekt.awake.asset.shaderpack
 
 import com.awakekt.awake.asset.shaderdsl.AslEvaluator
+import com.awakekt.awake.asset.shaderdsl.gt
 import com.awakekt.awake.asset.shaderdsl.lit
+import com.awakekt.awake.asset.shaderdsl.select
 import com.awakekt.awake.asset.shaderdsl.shader
 import com.awakekt.awake.asset.shaderdsl.vec4
 import com.awakekt.awake.asset.shaderdsl.x
+import com.awakekt.awake.asset.shaderdsl.y
 import com.awakekt.awake.core.geometry.GpuDataShape
 import kotlin.math.abs
 import kotlin.math.pow
@@ -123,6 +126,46 @@ class SceneDisplayTransformTest {
         assertEquals(5.0f, out[0])
         assertEquals(10.0f, out[1])
         assertEquals(1.0f, out[2])
+    }
+
+    @Test
+    fun unlitKeepsStoredColourForUnormAndDecodesForLinearTarget() {
+        fun buildProbe(linear: Boolean) = shader("probe_unlit_$linear") {
+            val uniforms = uniformBlock("Uniforms", group = 0, binding = 0)
+            val params by uniforms.field(GpuDataShape.Vec4)
+            val out = varyings("VertexOutput")
+            val stored by out.varying(GpuDataShape.Vec3, location = 0)
+            vertex {
+                val inPosition by input(GpuDataShape.Vec3, location = 0)
+                val inStored by input(GpuDataShape.Vec3, location = 1)
+                out.position set vec4(inPosition, 1f.lit)
+                stored set inStored
+            }
+            val transform = sceneDisplayTransform(decodesDisplayReferred = linear, linear = linear)
+            fragment {
+                val lit = if (linear) {
+                    transform.displayReferred(stored, params.x)
+                } else {
+                    transform.display(stored, params.x)
+                }
+                val chosen = select(lit, transform.unlit(stored), params.y gt 0.5f.lit)
+                colorOutput(vec4(chosen, 1f.lit))
+            }
+        }
+        val unormProbe = buildProbe(linear = false)
+        val linearProbe = buildProbe(linear = true)
+        val stored = floatArrayOf(221f / 255f, 173f / 255f, 152f / 255f)
+        val unlitParams = floatArrayOf(1f, 1f, 0f, 0f)
+        assertNear(
+            stored.toList(),
+            AslEvaluator.evalFragment(unormProbe, mapOf("stored" to stored, "uniforms.params" to unlitParams)).copyOf(3),
+            "unorm unlit",
+        )
+        assertNear(
+            stored.map { it.pow(2.2f) },
+            AslEvaluator.evalFragment(linearProbe, mapOf("stored" to stored, "uniforms.params" to unlitParams)).copyOf(3),
+            "linear unlit",
+        )
     }
 
     private fun display(radiance: FloatArray, exposure: Float): FloatArray = AslEvaluator.evalFragment(

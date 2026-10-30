@@ -36,6 +36,7 @@ import com.awakekt.awake.asset.shaderdsl.max
 import com.awakekt.awake.asset.shaderdsl.minus
 import com.awakekt.awake.asset.shaderdsl.mix
 import com.awakekt.awake.asset.shaderdsl.normalize
+import com.awakekt.awake.asset.shaderdsl.or
 import com.awakekt.awake.asset.shaderdsl.plus
 import com.awakekt.awake.asset.shaderdsl.pow
 import com.awakekt.awake.asset.shaderdsl.r
@@ -297,13 +298,16 @@ private fun textured(clipSpace: ClipSpace, instanced: Boolean = false): AslShade
             // and adds only its own colour: lit, a black texel would still add the sun's specular
             // reflection. A material that asks to stay lit adds its lit colour instead.
             val blendCode = let("blendCode", toU32(pbrFactors.w + 0.5f.lit))
-            val additive = blendCode gt TexturedBlend.Covers.code.toUInt().lit
-            val unlit = blendCode eq TexturedBlend.AddsUnlit.code.toUInt().lit
-            val emitted = select(litColor, albedo + emissive, unlit)
+            val materialUnlit = blendCode eq TexturedBlend.Unlit.code.toUInt().lit
+            val addsUnlit = blendCode eq TexturedBlend.AddsUnlit.code.toUInt().lit
+            val additive = addsUnlit or (blendCode eq TexturedBlend.AddsLit.code.toUInt().lit)
+            val emitted = select(litColor, albedo + emissive, addsUnlit)
             val fogTarget = select(fogColor.rgb, vec3(0f.lit), additive)
+            val litShaded = applyFog(displayTransform.display(emitted, exposure.x), worldPos, fogTarget)
+            val stored = baseColorFactor.rgb * baseColorSample.rgb * color
             val shaded = vec4(
-                applyFog(displayTransform.display(emitted, exposure.x), worldPos, fogTarget),
-                baseColorSample.a * baseColorFactor.a,
+                select(litShaded, displayTransform.unlit(stored), materialUnlit),
+                sourceAlpha,
             )
             // Clay lights the geometric normal: the normal map is a texture too.
             val clayNDotL = let("clayNDotL", max(dot(normalize(normal), l), 0f.lit))

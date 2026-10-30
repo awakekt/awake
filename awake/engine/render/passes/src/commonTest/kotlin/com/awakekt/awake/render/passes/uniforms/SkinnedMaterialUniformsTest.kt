@@ -45,6 +45,17 @@ class SkinnedMaterialUniformsTest {
         assertEquals(0f, block(identity).vec4(UniformFields.PbrFactors)[2])
     }
 
+    @Test
+    fun anUnlitSkinnedDrawCarriesItsUnlitFlagAndALitOneZero() {
+        val unlit = block(skinnedMaterialFloats(identity, Color.White, Color.Transparent, unlit = true), AlphaMode.Masked)
+        val lit = block(skinnedMaterialFloats(identity, Color.White, Color.Transparent, unlit = false))
+        val bare = block(identity)
+
+        assertEquals(listOf(0f, 0f, 0.4f, 1f), unlit.vec4(UniformFields.PbrFactors))
+        assertEquals(0f, lit.vec4(UniformFields.PbrFactors)[3])
+        assertEquals(0f, bare.vec4(UniformFields.PbrFactors)[3])
+    }
+
     /** The payload is rewritten in place every frame, so a shorter palette must not leave old joints behind. */
     @Test
     fun aReusedPayloadClearsJointsAShorterPaletteNoLongerHas() {

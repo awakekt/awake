@@ -190,6 +190,25 @@ class MaterialUniformsTest {
         assertEquals(TexturedBlend.Covers.code.toFloat(), blend(additive.copy(extraUniformFloats = litWhenAdditive, transparent = false)))
     }
 
+    @Test
+    fun anUnlitMaterialStampsTheUnlitTexturedBlendCode() {
+        val unlitPayload = pbrMaterialFloats(0f, 0.5f, Color.White, Color.Transparent, unlit = true)
+        val unlitAndAdditiveLit = pbrMaterialFloats(0f, 0.5f, Color.White, Color.Transparent, litWhenAdditive = true, unlit = true)
+        val opaque = RenderDrawCommand(mesh = FakeMesh(), material = FakeMaterial(), extraUniformFloats = unlitPayload)
+        val additive = RenderDrawCommand(
+            mesh = FakeMesh(),
+            material = FakeMaterial(),
+            extraUniformFloats = unlitAndAdditiveLit,
+            transparent = true,
+            additive = true,
+        )
+        fun blend(draw: RenderDrawCommand): Float =
+            MaterialUniformLayouts.PbrTexturedMaterial.readVec4(pbrTexturedMaterialFloats(draw), UniformFields.PbrFactors).w
+
+        assertEquals(TexturedBlend.Unlit.code.toFloat(), blend(opaque))
+        assertEquals(TexturedBlend.Unlit.code.toFloat(), blend(additive))
+    }
+
     /** Asking to stay lit changes only the blend lane: the factors, the cutoff and the animation pack as they did. */
     @Test
     fun stayingLitChangesNothingElseInTheTexturedBlock() {
