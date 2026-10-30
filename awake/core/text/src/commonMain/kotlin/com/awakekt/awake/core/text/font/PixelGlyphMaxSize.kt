@@ -25,9 +25,32 @@ fun UiFont.withPixelGlyphMaxSize(maxPixelSize: Int): UiFont {
 }
 
 /** [delegate] with its own [pixelGlyphMaxSize]; see [withPixelGlyphMaxSize]. */
-private class PixelGlyphLimitedFont(val delegate: UiFont, override val pixelGlyphMaxSize: Int) : UiFont by delegate {
+private class PixelGlyphLimitedFont(
+    val delegate: UiFont,
+    override val pixelGlyphMaxSize: Int,
+    private val origin: PixelGlyphLimitedFont? = null,
+) : UiFont by delegate {
     override val pixelGlyphs: PixelGlyphs? = if (pixelGlyphMaxSize > 0) delegate.pixelGlyphs else null
+
+    private val proportionalFont: UiFont by lazy { buildNumericVariant(FontNumerals.Proportional) }
+    private val tabularFont: UiFont by lazy { buildNumericVariant(FontNumerals.Tabular) }
 
     // A single-face font answers itself here; this answers the font it wraps, whose atlas is the one to upload.
     override fun fontFor(codePoint: Int, weight: FontWeight): UiFont = delegate.fontFor(codePoint, weight)
+
+    override fun withNumerals(numerals: FontNumerals?): UiFont = when {
+        numerals == null -> this
+        origin != null -> origin.withNumerals(numerals)
+        numerals == FontNumerals.Proportional -> proportionalFont
+        else -> tabularFont
+    }
+
+    private fun buildNumericVariant(numerals: FontNumerals): UiFont {
+        val variant = delegate.withNumerals(numerals)
+        return when {
+            variant === delegate -> this
+            pixelGlyphMaxSize == variant.pixelGlyphMaxSize -> variant
+            else -> PixelGlyphLimitedFont(variant, pixelGlyphMaxSize, origin = this)
+        }
+    }
 }

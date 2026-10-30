@@ -10,6 +10,7 @@ import com.awakekt.awake.core.color.toHex
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math2d.Dp
 import com.awakekt.awake.core.math2d.Sp
+import com.awakekt.awake.core.text.font.FontNumerals
 import com.awakekt.awake.core.text.unicode.TextLengthUnit
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneNode
@@ -32,6 +33,7 @@ import com.awakekt.awake.ui.canvas.CanvasPadding
 import com.awakekt.awake.ui.canvas.CanvasStepper
 import com.awakekt.awake.ui.canvas.CanvasStyle
 import com.awakekt.awake.ui.canvas.CanvasSweep
+import com.awakekt.awake.ui.canvas.CanvasView
 
 /** Keeps an outer element's settings out of reach inside a child's block. */
 @DslMarker
@@ -217,8 +219,14 @@ class CanvasElementScope internal constructor(
     /** A View's camera: the name of a node with a camera. */
     var camera: String = defaults.camera
 
+    /** A View's transparency and picture mask, saved on its focused canvas_view component. */
+    var view: CanvasView? = null
+
     /** Whether a Text's `[[key|words]]` spans draw as links. */
     var links: Boolean = defaults.links
+
+    /** Digit width spacing (`Tabular` or `Proportional`); null keeps the font's default digits. */
+    var numerals: FontNumerals? = defaults.numerals
 
     /** A TextField's password mask character; empty draws the text as typed. */
     var mask: String = defaults.mask
@@ -343,8 +351,10 @@ class CanvasElementScope internal constructor(
     internal fun build(): SceneNode {
         val element = toSceneComponent()
         problems += element.unsavedFieldIssues(path)
+        if (view != null && kind != CanvasElementKind.View) problems += SceneValidationIssue(path, "view does nothing on a ${kind.name}, so it is not saved")
         // Saved as the components it is: the same set an older canvas_element reads as.
-        return SceneNode(name = name, components = element.toCanvasComponents() + components, children = children.toList())
+        val parts = element.toCanvasComponents().map { if (it is SceneCanvasView) it.copy(settings = view) else it }
+        return SceneNode(name = name, components = parts + components, children = children.toList())
     }
 
     private fun toSceneComponent(): SceneCanvasElement = SceneCanvasElement(
@@ -381,6 +391,7 @@ class CanvasElementScope internal constructor(
         dropTarget = dropTarget,
         camera = camera,
         links = links,
+        numerals = numerals,
         mask = mask,
         font = font,
         pressable = pressable,

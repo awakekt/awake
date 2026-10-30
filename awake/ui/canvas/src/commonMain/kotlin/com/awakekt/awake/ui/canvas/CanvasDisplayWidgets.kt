@@ -60,6 +60,9 @@ class CanvasViewWidget : CanvasWidget {
 
     /** The name of a node with a camera, whose picture the view shows; empty shows none. */
     var camera: String = ""
+
+    /** How the picture clears and is clipped; null keeps an opaque, styled box. */
+    var settings: CanvasView? = null
 }
 
 /** A picture: its element's [CanvasAppearance.style] image. A [CanvasInput.pressable] one takes taps. */

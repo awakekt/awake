@@ -575,7 +575,7 @@ private fun colorBlendState(blendEnabled: Boolean, additive: Boolean): Array<VkP
         // Additive colour adds to what is there; its alpha still blends as usual, so a target's
         // coverage is not blown out by a glow.
         dstColorBlendFactor = if (additive) VkBlendFactor.VK_BLEND_FACTOR_ONE else VkBlendFactor.VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-        srcAlphaBlendFactor = VkBlendFactor.VK_BLEND_FACTOR_SRC_ALPHA,
+        srcAlphaBlendFactor = VkBlendFactor.VK_BLEND_FACTOR_ONE,
         dstAlphaBlendFactor = VkBlendFactor.VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
         colorWriteMask = VkColorComponentFlagBits.VK_COLOR_COMPONENT_R_BIT.value or
             VkColorComponentFlagBits.VK_COLOR_COMPONENT_G_BIT.value or

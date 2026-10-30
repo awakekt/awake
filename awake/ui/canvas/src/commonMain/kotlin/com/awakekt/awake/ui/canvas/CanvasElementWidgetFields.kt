@@ -152,6 +152,13 @@ sealed class CanvasElementWidgetFields : CanvasElementFollowFields() {
             widgetFor(value.isNotEmpty(), ::CanvasViewWidget)?.camera = value
         }
 
+    /** See [CanvasViewWidget.settings]. */
+    var view: CanvasView?
+        get() = (widget as? CanvasViewWidget)?.settings
+        set(value) {
+            widgetFor(value != null, ::CanvasViewWidget)?.settings = value
+        }
+
     /** See [CanvasTextFieldWidget.mask]. */
     var mask: String
         get() = (widget as? CanvasTextFieldWidget)?.mask ?: ""

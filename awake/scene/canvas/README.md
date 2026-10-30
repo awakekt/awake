@@ -139,7 +139,9 @@ fields to and from the scene file; a scene saved before them loads as literal te
 A TextField's `placeholder` and any element's `tooltip` are keys into the same tables, with the same
 arguments. `padding` (`horizontal` 12, `vertical` 0) is a TextField's inner space; the three load
 with those defaults from a scene saved before them. Validation reports `placeholder` and `padding` on
-another kind, a negative or non-finite padding, and a blank key.
+another kind, a negative or non-finite padding, and a blank key. `canvas_text.numerals` (`Tabular` or
+`Proportional`, omitted when null) selects OpenType `tnum` or `pnum` figure spacing without adding a
+JSON field when unset.
 
 ## A 3D view and following a node
 
@@ -149,6 +151,16 @@ which renders every View drawn this frame into a target the size of its box befo
 it, and `canvasViews(world)` hands it to a host. An element that follows a node is placed by a
 `CanvasProjector`, which reports where the node lands in the frame's pixels; `SceneCanvasResolver`
 is how `CanvasOverlay` reaches both without knowing what a `World`, a node or a camera is.
+
+For a portrait over a translucent or gradient frame, set the focused `canvas_view` component's
+`settings` to `CanvasView(transparent = true)`, or `view = CanvasView(...)` in the prefab
+builder. The runtime clears that camera target to transparent and omits its sky; geometry,
+lighting and fog remain, and the coverage survives a multisampled plan's resolve. A View draws its
+camera's scene pass without the camera's post-processing stack. A `mask = CanvasMask.Circle` clips just the picture; the default
+`Box` mask follows `style.cornerRadius`. Explicit ancestor clips are retained, and the target
+still uses the element's scaled pixel size and safe-area placement. The default stays opaque.
+These settings round-trip through the focused scene binding and normal world export; the
+retired `canvas_element` snapshot helper represents only its older fields.
 
 ## Reacting to a button
 

@@ -5,8 +5,10 @@
  */
 package com.awakekt.awake.scene.runtime
 
+import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.render.command.GpuEnvironmentState
 import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.renderer.Renderer
@@ -28,6 +30,23 @@ internal class SceneCanvasViews(
     private class View(val target: RenderTarget, var world: World, var camera: Camera, renderer: Renderer) {
         val material: Material = renderer.createMaterial(renderTarget = target)
         var shown = true
+        var transparent = false
+
+        // The plan's environment last seen, and its transparent form: a camera's sky and clear
+        // rarely change, so a transparent View reuses one override rather than copying every frame.
+        private var planned: GpuEnvironmentState? = null
+        private var cleared: GpuEnvironmentState = GpuEnvironmentState.Default
+
+        /** [input] as this View draws it: cleared to transparent, without sky, when [transparent]. */
+        fun picture(input: GpuPassInput): GpuPassInput {
+            if (!transparent) return input
+            val environment = input.environment
+            if (environment != planned) {
+                planned = environment
+                cleared = environment.copy(clearColor = Color.Transparent, showSky = false)
+            }
+            return input.copy(environment = cleared)
+        }
 
         fun destroy() {
             material.destroy()
@@ -49,6 +68,7 @@ internal class SceneCanvasViews(
         view.world = world
         view.camera = lens
         view.shown = true
+        view.transparent = element.view?.transparent == true
         return view.material
     }
 
@@ -59,7 +79,7 @@ internal class SceneCanvasViews(
             val view = iterator.next()
             if (view.shown) {
                 // Not waited for: the frame that samples the target is submitted after it.
-                renderer.submitToTexture(view.target, plan(view.world, view.camera, view.target.width, view.target.height))
+                renderer.submitToTexture(view.target, view.picture(plan(view.world, view.camera, view.target.width, view.target.height)))
                 view.shown = false
             } else {
                 view.destroy()

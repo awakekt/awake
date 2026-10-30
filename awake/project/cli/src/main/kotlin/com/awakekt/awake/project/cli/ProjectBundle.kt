@@ -5,13 +5,10 @@
  */
 package com.awakekt.awake.project.cli
 
+import com.awakekt.awake.project.ContentBundleDirectoryWriter
 import com.awakekt.awake.project.ContentBundleGrouping
 import com.awakekt.awake.project.ContentBundleWriter
-import com.awakekt.awake.project.IndexedAssetSource
-import com.awakekt.awake.project.ProjectIndex
 import com.awakekt.awake.project.ProjectPathIds
-import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -32,45 +29,19 @@ internal class ProjectBundle(private val projectRoot: File, private val output: 
 
     /**
      * Packs [indexFile]'s files with [writer], writing only bundles not already in [output], and
-     * answers what it wrote.
+     * answers what it wrote. With [prune], `.awkb` files under [output] that the new index doesn't
+     * list are deleted; without it they stay, as a publish folder serving the last release needs.
      */
-    fun run(indexFile: File, writer: ContentBundleWriter): Report {
-        val loose = runCatching { INDEX_JSON.decodeFromString(ProjectIndex.serializer(), indexFile.readText()) }
-            .getOrElse { throw CommandFailure("${indexFile.path} isn't a project index: ${it.message}", it) }
-        var bundles = 0
-        var written = 0
-        var bytes = 0L
-        val bundled = runCatching {
-            runBlocking {
-                writer.write(loose, { entry -> projectRoot.resolve(entry.path).readBytes() }) { bundle ->
-                    bundles++
-                    bytes += bundle.bytes.size
-                    val file = output.resolve(bundle.url)
-                    // Named by SHA-256: one already there holds these bytes, so it isn't written again.
-                    if (!file.isFile || file.length() != bundle.bytes.size.toLong()) {
-                        file.parentFile.mkdirs()
-                        file.writeBytes(bundle.bytes)
-                        written++
-                    }
-                }
+    fun run(indexFile: File, writer: ContentBundleWriter, prune: Boolean = false): Report {
+        val report = runCatching { ContentBundleDirectoryWriter.write(indexFile, projectRoot, output, writer, pruneStaleBundles = prune) }
+            .getOrElse { failure ->
+                val reason = if (failure is IOException) "can't read a project file: ${failure.message}" else failure.message.orEmpty()
+                throw CommandFailure(reason, failure)
             }
-        }.getOrElse { failure ->
-            val reason = if (failure is IOException) "can't read a project file: ${failure.message}" else failure.message.orEmpty()
-            throw CommandFailure(reason, failure)
-        }
-        val indexOut = output.resolve(IndexedAssetSource.DEFAULT_INDEX_PATH)
-        indexOut.parentFile.mkdirs()
-        indexOut.writeText(INDEX_JSON.encodeToString(ProjectIndex.serializer(), bundled) + "\n")
-        return Report(indexOut, bundles, bundled.files.size, bytes, written)
+        return Report(report.indexFile, report.bundles, report.files, report.bytes, report.written)
     }
 
     companion object {
-        private val INDEX_JSON = Json {
-            ignoreUnknownKeys = true
-            prettyPrint = true
-            encodeDefaults = false
-        }
-
         /** The writer the command line's options describe. */
         fun writer(arguments: CliArguments): ContentBundleWriter {
             val grouping = when (val group = arguments.value("group") ?: "folder") {

@@ -94,7 +94,7 @@ data class CanvasBar(
     }
 }
 
-/** The outline a Sweep is cut to. */
+/** The outline a Sweep or camera picture is cut to. */
 @Serializable
 enum class CanvasMask {
     /** The element's box, its corners rounded by its style's `cornerRadius`. */

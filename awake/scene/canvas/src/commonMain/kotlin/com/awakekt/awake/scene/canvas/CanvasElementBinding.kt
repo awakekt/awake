@@ -25,7 +25,7 @@ import kotlin.reflect.KClass
 // Where a scene file's older `canvas_element` is read: it becomes the component set that draws it
 // the same way, each component loaded as its own binding loads it, so a scene saved either way loads
 // to the same element. Nothing is saved in this form any more: each component's binding saves it.
-// `CanvasElementExposureTest` checks this mapping covers every option of a CanvasElement.
+// `CanvasElementExposureTest` checks the legacy options; new options belong to focused components.
 
 /**
  * Reads the older single `canvas_element` scene component, as the canvas components it is now. It
@@ -68,7 +68,8 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
 
     /**
      * The older `canvas_element` form of this live element, for a tool written for it: its kind and
-     * every option its components set.
+     * the options that existed in that form. New focused-component settings, such as View coverage
+     * and masking, require the normal scene/world export rather than this legacy snapshot.
      *
      * @return The serializable [SceneCanvasElement] representation.
      */
@@ -108,6 +109,7 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         dropTarget = dropTarget,
         camera = camera,
         links = links,
+        numerals = numerals,
         mask = mask,
         maxLength = maxLength,
         maxLengthUnit = maxLengthUnit,

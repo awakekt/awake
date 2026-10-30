@@ -19,7 +19,7 @@ An element is made of focused components, one of each type, which `CanvasElement
 | Component | What it holds |
 |---|---|
 | `CanvasRect` (always) | anchor, offsets, size, order, visibility, touch-only, safe area, grow, element and control ids; the `screenBounds` it was drawn at |
-| `CanvasText` | the words: text or key and arguments, font, size, alignment, links |
+| `CanvasText` | the words: text or key and arguments, font, size, alignment, links, numerals |
 | `CanvasAppearance` | colour, background, `CanvasStyle` and a control's skin |
 | `CanvasLayout` or `CanvasCluster` | how it places its children |
 | `CanvasBinding` | game state it shows without code |
@@ -68,6 +68,8 @@ words, so an option set on the wrong kind still does nothing.
   the pointer after 0.5 s over it, kept inside the canvas, gone when the pointer leaves or presses.
 - **`font`**: a project `.ttf` or `.otf` file, or a built-in family, `default` or `bitmap`; empty
   is the default Roboto. A host loads the file and passes it in `CanvasOverlay(fonts = …)`.
+- **`numerals`**: `FontNumerals.Tabular` (equal-width digits for counters, timers and score tables,
+  via OpenType `tnum`) or `FontNumerals.Proportional` (`pnum`); null keeps the font's default digits.
 - **`value`**: a Bar's or a Sweep's fill from 0 to 1.
 - **`bar`**, **`sweep`**, **`stepper`**: a Bar as a progress bar (`CanvasBar`: up, down, right to
   left or radial, a trailing fill, segments, ticks and a label), a Sweep's pie or ring
@@ -120,6 +122,13 @@ that one thing.
 A `View` shows what the camera named by its `camera` field sees, filling its box under its
 children, through `CanvasResolver.texture(element, camera, width, height)`. Without a resolver
 that answers it a `View` draws only its style.
+
+`element.view = CanvasView(transparent = true, mask = CanvasMask.Circle)` opts into a
+transparent camera picture and a circular outline. A `Box` mask uses `style.cornerRadius`;
+`Pill` and `CutCorner` use the same shapes as a Sweep. The mask clips the camera picture,
+leaving the element's own background and overlay children as authored. Explicit ancestor
+clips also apply. The resolver supplies a premultiplied texture: a transparent camera target
+must clear to transparent and omit its sky. The default stays opaque with its black backing.
 
 An element that `follow`s a node is placed by `CanvasResolver.point`/`bounds`, which report where
 the node lands in the frame's pixels. `CanvasOverlay` moves that into its own box by where the box

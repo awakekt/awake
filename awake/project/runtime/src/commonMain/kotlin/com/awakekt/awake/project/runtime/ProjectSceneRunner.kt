@@ -39,6 +39,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlin.reflect.KClass
 
@@ -56,8 +57,14 @@ import kotlin.reflect.KClass
  * made and drawn first, so a scene that fails there is taken out again and the last plays on. Then the
  * last one's systems close, its sounds stop, its spawned nodes despawn, its entities go with every
  * other entity the world held, and its physics world is destroyed.
+ *
+ * Every step of a request is published as [state], on the frame thread: the load's progress is handed
+ * over from the loading coroutine and applied at the same safe points, so the state never changes
+ * under a system's update.
  */
-internal class ProjectSceneRunner(private val project: LoadedProject) : SceneSwitch {
+internal class ProjectSceneRunner(private val project: LoadedProject) :
+    SceneSwitch,
+    SceneSwitchStatus {
     /** Resolves the playing scene's glTF models for the app's asset library, whichever scene plays. */
     val models = PlayingModels(project.models)
 
@@ -66,6 +73,9 @@ internal class ProjectSceneRunner(private val project: LoadedProject) : SceneSwi
 
     /** Carries out a switch that has loaded, then gives spawned nodes their models and runs the frame systems. */
     val frameSystems: System = FrameSystems()
+
+    private val status = SwitchStatePublisher()
+    override val state: StateFlow<SceneSwitchState> get() = status.state
 
     private lateinit var runtime: SceneAppLifecycleRuntime
 
@@ -114,8 +124,10 @@ internal class ProjectSceneRunner(private val project: LoadedProject) : SceneSwi
         loading?.cancel()
         val number = ++requests
         loadingPath = path
+        status.requested(path)
         loading = loads.launch {
-            val result = project.readScene(path)
+            val report = ProgressReporter { status.report(number, it) }
+            val result = project.readScene(path, report::report)
             // A load that finishes as the scene stops has nothing left to play it.
             if (finished.trySend(FinishedLoad(number, path, result)).isFailure) result.getOrNull()?.close()
         }
@@ -125,6 +137,7 @@ internal class ProjectSceneRunner(private val project: LoadedProject) : SceneSwi
     fun stop() {
         if (stopped) return
         stopped = true
+        status.stopped()
         systems?.close()
         systems = null
         if (audio.isInitialized()) audio.value.dispose()
@@ -140,6 +153,7 @@ internal class ProjectSceneRunner(private val project: LoadedProject) : SceneSwi
     /** At a safe point: plays the scene the current request loaded, or logs why it can't. */
     private fun carryOut() {
         if (loadingPath == null) return
+        status.applyProgress(requests)
         var load = finished.tryReceive().getOrNull()
         while (load != null && load.number != requests) {
             // Replaced by a later request before it finished.
@@ -150,8 +164,14 @@ internal class ProjectSceneRunner(private val project: LoadedProject) : SceneSwi
         loadingPath = null
         loading = null
         load.result.fold(
-            onSuccess = ::switchTo,
-            onFailure = { failure -> refuse(runtime, load.path, project.playing.path, failure) { request(load.path) } },
+            onSuccess = { next ->
+                status.loaded(load.path)
+                switchTo(next)
+            },
+            onFailure = { failure ->
+                status.failed(load.path, failure)
+                refuse(runtime, load.path, project.playing.path, failure) { request(load.path) }
+            },
         )
     }
 
@@ -172,6 +192,7 @@ internal class ProjectSceneRunner(private val project: LoadedProject) : SceneSwi
             world.destroyAllBut(before)
             models.target = leaving.models
             next.close()
+            status.failed(next.path, failure)
             refuse(runtime, next.path, leaving.path, failure) { request(next.path) }
             return
         }
@@ -180,6 +201,7 @@ internal class ProjectSceneRunner(private val project: LoadedProject) : SceneSwi
         systems = nextSystems
         instance = nextInstance
         begin()
+        status.swapped(next.path)
     }
 
     /** Closes [leaving]: its systems, sounds, spawned nodes, every entity [before] held, and its physics world. */
@@ -226,6 +248,7 @@ internal class ProjectSceneRunner(private val project: LoadedProject) : SceneSwi
         val services = SceneHostServices(input = input, renderer = runtime.renderer, physics = scene.physics, content = scene.content)
             .withSpawner(spawner)
             .withSceneSwitch(this)
+            .withSceneSwitchStatus(this)
         return if (scene.document.uses(SceneAudioSource::class)) services.withAudio(audio.value) else services
     }
 
@@ -243,10 +266,12 @@ internal class ProjectSceneRunner(private val project: LoadedProject) : SceneSwi
 
     private inner class FrameSystems : System {
         override fun update(world: World, delta: Float) {
+            status.frameStarted()
             carryOut()
             project.spawnedModels.attachLoaded(runtime)
-            val frame = systems?.frame ?: return
-            for (index in frame.indices) frame[index].update(world, delta)
+            val frame = systems?.frame
+            if (frame != null) for (index in frame.indices) frame[index].update(world, delta)
+            status.frameEnded()
         }
     }
 
@@ -270,8 +295,8 @@ internal class PlayingModels(var target: GltfAssetResolver) : SceneAssetResolver
 
 /** The scene at [path], or why it can't be played. Cancelling the load throws, as cancelling does. */
 @Suppress("TooGenericExceptionCaught") // An asset source, a decoder or a capability reports a bad file in its own type.
-private suspend fun LoadedProject.readScene(path: String): Result<ProjectScene> = try {
-    Result.success(loadScene(path))
+private suspend fun LoadedProject.readScene(path: String, onProgress: (Float) -> Unit): Result<ProjectScene> = try {
+    Result.success(loadScene(path, onProgress))
 } catch (cancelled: CancellationException) {
     throw cancelled
 } catch (failure: Exception) {

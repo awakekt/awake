@@ -6,6 +6,7 @@
 package com.awakekt.awake.scene.canvas
 
 import com.awakekt.awake.core.schema.PropertyRange
+import com.awakekt.awake.core.text.font.FontNumerals
 import com.awakekt.awake.scene.binding.SceneBinding
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneValidationIssue
@@ -84,6 +85,7 @@ data class SceneCanvasRect(
  * `bitmap`; empty draws in the default font.
  * @property textAlign Where the words sit in the element; null keeps the widget's own.
  * @property links Whether `[[key|shown words]]` spans draw as links; false for text a game cannot trust.
+ * @property numerals Digit width spacing (`Tabular` or `Proportional`); null keeps the font's default digits.
  */
 @Serializable
 @SerialName("canvas_text")
@@ -96,6 +98,7 @@ data class SceneCanvasText(
     val font: String = "",
     val textAlign: CanvasAnchor? = null,
     val links: Boolean = true,
+    val numerals: FontNumerals? = null,
 ) : SceneComponent {
     override val allowsMultiplePerNode: Boolean get() = false
 
