@@ -24,6 +24,9 @@ internal class SwitchStatePublisher {
     // The latest progress of the load in flight, conflated: only the newest matters, and a number says whose.
     private val progress = Channel<LoadProgress>(Channel.CONFLATED)
 
+    // Whether the load in flight waits for its content's gate, in order: each request waits at most once.
+    private val waits = Channel<Wait>(Channel.UNLIMITED)
+
     // The scene a switch has put in, until the frame that first played it is over; see frameStarted.
     private var readyPath: String? = null
     private var readyArmed = false
@@ -39,8 +42,20 @@ internal class SwitchStatePublisher {
         progress.trySend(LoadProgress(number, share))
     }
 
-    /** Publishes what [report] queued, if it is for request [requestNumber], the one loading. */
+    /** From the loading coroutine: request [number] waits for its content's gate to open, or has stopped waiting. */
+    fun reportWaiting(number: Int, path: String, waiting: Boolean) {
+        waits.trySend(Wait(number, path, waiting))
+    }
+
+    /** Publishes what [report] and [reportWaiting] queued, if it is for request [requestNumber], the one loading. */
     fun applyProgress(requestNumber: Int) {
+        var wait = waits.tryReceive().getOrNull()
+        while (wait != null) {
+            if (wait.number == requestNumber) {
+                current.value = if (wait.waiting) SceneSwitchState.WaitingForContent(wait.path) else SceneSwitchState.Loading(wait.path, 0f)
+            }
+            wait = waits.tryReceive().getOrNull()
+        }
         var update = progress.tryReceive().getOrNull()
         while (update != null) {
             val loading = current.value as? SceneSwitchState.Loading
@@ -85,8 +100,11 @@ internal class SwitchStatePublisher {
     fun stopped() {
         readyPath = null
         progress.close()
+        waits.close()
         current.value = SceneSwitchState.Idle
     }
 
     private class LoadProgress(val number: Int, val share: Float)
+
+    private class Wait(val number: Int, val path: String, val waiting: Boolean)
 }
