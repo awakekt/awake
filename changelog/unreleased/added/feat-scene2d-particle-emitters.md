@@ -1,0 +1,1 @@
+- Added `SceneParticleEmitter2D` (`particle_emitter_2d`), `ParticleEmitter2D`, `Particle2DSystem`, and `BurstEmitter2DPool` in `:awake:scene:scene2d`, sorting alpha-blended and additive 2D particle quads alongside sprites and tilemaps by `sortingLayer` and `sortOrder` on `spriteScenePipeline()`.

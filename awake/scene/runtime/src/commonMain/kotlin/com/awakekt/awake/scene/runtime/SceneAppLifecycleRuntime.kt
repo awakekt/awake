@@ -63,6 +63,7 @@ import com.awakekt.awake.scene.rendering.RenderSystem3D
 import com.awakekt.awake.scene.rendering.camera.CameraViewport
 import com.awakekt.awake.scene.rendering.debug.DebugVisualizationSystem
 import com.awakekt.awake.scene.runtime.session.SceneSession
+import com.awakekt.awake.scene.scene2d.Particle2DSystem
 import com.awakekt.awake.scene.scene2d.SortingLayers
 import com.awakekt.awake.scene.scene2d.SpriteClipSystem
 import com.awakekt.awake.scene.worldtext.WorldTextRenderFeature
@@ -865,6 +866,8 @@ fun SceneAppLifecycleRuntime.defaultInfrastructureSystems(
     listOf(
         SpriteClipSystem(isRealtimeProvider),
         TransformSystem(),
+        // After TransformSystem resolves world matrices and before RenderSystem3D collects sprite quads.
+        Particle2DSystem(isRealtimeProvider),
         RenderSystem3D(
             renderer,
             gpuDrawPreparer,

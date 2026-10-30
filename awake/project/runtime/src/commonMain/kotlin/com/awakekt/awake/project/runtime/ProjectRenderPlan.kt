@@ -8,6 +8,7 @@ package com.awakekt.awake.project.runtime
 import com.awakekt.awake.asset.shaderpack.PackShaderSets
 import com.awakekt.awake.asset.shaderpack.outlineContentFeature
 import com.awakekt.awake.asset.shaderpack.skyboxContentFeature
+import com.awakekt.awake.asset.shaderpack.spriteScenePipeline
 import com.awakekt.awake.asset.shaderpack.worldTextScenePipeline
 import com.awakekt.awake.asset.shaders.RenderPlan
 import com.awakekt.awake.asset.shaders.ScenePipeline
@@ -92,6 +93,8 @@ val ProjectRenderPlan: RenderPlan = RenderPlan(
             materialBindings = GroupBindings.ParticleMaterial,
             buildAdditive = true,
         ),
+        // A scene's 2D sprites, tilemaps and particle_emitter_2d quads, alpha-blended or added.
+        spriteScenePipeline(),
         // A scene's world_text: distance-field glyphs, sharp at any distance and angle.
         worldTextScenePipeline(),
     ),

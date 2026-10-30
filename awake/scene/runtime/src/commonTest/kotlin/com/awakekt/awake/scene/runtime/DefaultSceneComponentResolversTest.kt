@@ -21,7 +21,7 @@ class DefaultSceneComponentResolversTest {
         "AmbientLightBinding", "TerrainBinding", "CanvasElementBinding", "CanvasScalerBinding", "CanvasControlsBinding",
         "CanvasFollowLimitBinding", "CanvasFollowOcclusionBinding", "LocomotionAnimationBinding", "KeyframeAnimationBinding",
         "DayCycleBinding", "ParticleEmitterBinding", "TextureAnimationBinding", "TextureClipsBinding", "SpriteBinding",
-        "TilemapBinding", "SpriteClipsBinding", "ShaderEffectBinding",
+        "TilemapBinding", "SpriteClipsBinding", "ParticleEmitter2DBinding", "ShaderEffectBinding",
         // Text placed in the scene (#1062).
         "WorldTextBinding",
     ) + setOf(

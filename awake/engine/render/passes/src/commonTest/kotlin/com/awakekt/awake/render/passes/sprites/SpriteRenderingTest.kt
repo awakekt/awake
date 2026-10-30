@@ -103,6 +103,16 @@ class SpriteRenderingTest {
             assertFailsWith<IllegalArgumentException> { spriteUniforms(bad, 32, 16) }
         }
         assertFailsWith<IllegalArgumentException> { spriteUniforms(input, 31, 16) }
+        assertFailsWith<IllegalArgumentException> { spriteModel(input.copy(worldSize = -0.1f), 32, 16) }
+        assertFailsWith<IllegalArgumentException> { spriteModel(input.copy(worldSize = Float.NaN), 32, 16) }
+    }
+
+    @Test
+    fun explicitWorldSizeScalesCellHeightAndPreservesCellAspectRatio() {
+        // 32x16 sheet in 2x2 grid -> each cell is 16x8 (2:1 aspect). At worldSize = 0.5, width is 1.0 and height is 0.5.
+        val model = spriteModel(cell.copy(worldSize = 0.5f), 32, 16)
+        assertEquals(1f, model.data[0], EPSILON)
+        assertEquals(0.5f, model.data[5], EPSILON)
     }
 
     private companion object {

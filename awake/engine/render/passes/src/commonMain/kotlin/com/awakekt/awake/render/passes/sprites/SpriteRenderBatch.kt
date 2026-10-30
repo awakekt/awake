@@ -23,8 +23,9 @@ import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.render.texture.TextureFiltering
 
 /** A world-space atlas quad, independent of any scene or ECS. */
+@Suppress("LongParameterList")
 data class SpriteDrawInput(
-    /** Named sheet resolved by the batch on first use. */
+    /** Named sheet resolved by the batch on first use, or `""` for a 1×1 opaque white quad. */
     val texture: String,
     /** World transform, including parent transforms. */
     val model: Mat4,
@@ -34,7 +35,7 @@ data class SpriteDrawInput(
     val rows: Int = 1,
     /** Cell in reading order, starting at the top left. */
     val frame: Int = 0,
-    /** Image pixels per local world unit. */
+    /** Image pixels per local world unit when [worldSize] is `null`. */
     val pixelsPerUnit: Float = 100f,
     /** Mirror horizontally within the selected cell. */
     val flipX: Boolean = false,
@@ -54,7 +55,81 @@ data class SpriteDrawInput(
     val pivotY: Float = DEFAULT_SPRITE_PIVOT,
     /** Transparent paint layer, ordered before [sortOrder]; higher layers draw last. */
     val sortLayer: Int = 0,
-)
+    /**
+     * Optional explicit cell height in local world units (width preserves cell aspect ratio), overriding
+     * pixel-derived `height / rows / pixelsPerUnit` sizing when non-null (used by 2D particle quads).
+     */
+    val worldSize: Float? = null,
+    /** Whether this quad uses additive blending instead of standard straight-alpha blending. */
+    val additive: Boolean = false,
+) {
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        texture: String,
+        model: Mat4,
+        columns: Int = 1,
+        rows: Int = 1,
+        frame: Int = 0,
+        pixelsPerUnit: Float = 100f,
+        flipX: Boolean = false,
+        flipY: Boolean = false,
+        tint: Color = Color.White,
+        sortOrder: Int = 0,
+        pivotX: Float = DEFAULT_SPRITE_PIVOT,
+        pivotY: Float = DEFAULT_SPRITE_PIVOT,
+        sortLayer: Int = 0,
+    ) : this(
+        texture = texture,
+        model = model,
+        columns = columns,
+        rows = rows,
+        frame = frame,
+        pixelsPerUnit = pixelsPerUnit,
+        flipX = flipX,
+        flipY = flipY,
+        tint = tint,
+        sortOrder = sortOrder,
+        pivotX = pivotX,
+        pivotY = pivotY,
+        sortLayer = sortLayer,
+        worldSize = null,
+        additive = false,
+    )
+
+    /** Binary-compatible `copy` overload from `v0.27.1`, preserving [worldSize] and [additive]. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        texture: String = this.texture,
+        model: Mat4 = this.model,
+        columns: Int = this.columns,
+        rows: Int = this.rows,
+        frame: Int = this.frame,
+        pixelsPerUnit: Float = this.pixelsPerUnit,
+        flipX: Boolean = this.flipX,
+        flipY: Boolean = this.flipY,
+        tint: Color = this.tint,
+        sortOrder: Int = this.sortOrder,
+        pivotX: Float = this.pivotX,
+        pivotY: Float = this.pivotY,
+        sortLayer: Int = this.sortLayer,
+    ): SpriteDrawInput = SpriteDrawInput(
+        texture = texture,
+        model = model,
+        columns = columns,
+        rows = rows,
+        frame = frame,
+        pixelsPerUnit = pixelsPerUnit,
+        flipX = flipX,
+        flipY = flipY,
+        tint = tint,
+        sortOrder = sortOrder,
+        pivotX = pivotX,
+        pivotY = pivotY,
+        sortLayer = sortLayer,
+        worldSize = worldSize,
+        additive = additive,
+    )
+}
 
 /** A sprite's pivot when it names none: the middle of its cell. */
 const val DEFAULT_SPRITE_PIVOT: Float = 0.5f
@@ -107,6 +182,7 @@ class SpriteRenderBatch(
             model = spriteModel(input, sheet.width, sheet.height),
             extraUniformFloats = spriteUniforms(input, sheet.width, sheet.height),
             transparent = true,
+            additive = input.additive,
             sortOrder = input.sortOrder,
             sortLayer = input.sortLayer,
         )
@@ -114,7 +190,9 @@ class SpriteRenderBatch(
 
     /** The sheet [input] names, uploaded and kept, or null when its pixels are not available yet. */
     private fun upload(input: SpriteDrawInput): Sheet? {
-        val image = resolveTexture(input.texture) ?: return null
+        val image = resolveTexture(input.texture)
+            ?: (if (input.texture.isEmpty()) DefaultWhiteSpriteTexture else null)
+            ?: return null
         require(image.layerCount == 1 && !image.isCubemap) { "A sprite sheet must be a single 2D image." }
         val material = renderer.createMaterial(SpriteUniformLayout, texture = image.copy(filtering = TextureFiltering.Nearest))
         return Sheet(image.width, image.height, material).also { sheets[input.texture] = it }
@@ -184,8 +262,20 @@ fun spriteModel(input: SpriteDrawInput, width: Int, height: Int): Mat4 {
     validateSheet(input, width, height)
     val pivotX = if (input.flipX) 1f - input.pivotX else input.pivotX
     val pivotY = if (input.flipY) 1f - input.pivotY else input.pivotY
+    val cellWidth = width.toFloat() / input.columns
+    val cellHeight = height.toFloat() / input.rows
+    val explicitSize = input.worldSize
+    val scaleX: Float
+    val scaleY: Float
+    if (explicitSize != null) {
+        scaleY = explicitSize
+        scaleX = if (cellHeight > 0f) explicitSize * (cellWidth / cellHeight) else explicitSize
+    } else {
+        scaleX = cellWidth / input.pixelsPerUnit
+        scaleY = cellHeight / input.pixelsPerUnit
+    }
     return input.model
-        .scale(width.toFloat() / input.columns / input.pixelsPerUnit, height.toFloat() / input.rows / input.pixelsPerUnit, 1f)
+        .scale(scaleX, scaleY, 1f)
         .translate(DEFAULT_SPRITE_PIVOT - pivotX, DEFAULT_SPRITE_PIVOT - pivotY, 0f)
 }
 
@@ -213,10 +303,15 @@ private fun validateSheet(input: SpriteDrawInput, width: Int, height: Int) {
     val cells = input.columns.toLong() * input.rows
     require(cells <= Int.MAX_VALUE && input.frame.toLong() in 0 until cells) { "Sprite frame is outside its sheet." }
     require(input.pixelsPerUnit.isFinite() && input.pixelsPerUnit > 0f) { "Sprite pixelsPerUnit must be finite and positive." }
+    require(input.worldSize == null || (input.worldSize.isFinite() && input.worldSize >= 0f)) {
+        "Sprite worldSize must be finite and not negative."
+    }
     require(input.pivotX.isFinite() && input.pivotY.isFinite()) { "Sprite pivot must be finite." }
     require(width > 0 && height > 0 && width % input.columns == 0 && height % input.rows == 0) {
         "Sprite sheet ${width}x$height cannot be divided into ${input.columns}x${input.rows} equal pixel cells."
     }
 }
+
+private val DefaultWhiteSpriteTexture = TextureAsset(byteArrayOf(-1, -1, -1, -1), 1, 1)
 
 private val log = Logger("sprites")

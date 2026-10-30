@@ -58,6 +58,7 @@ registers it.
 | [`movement_control`](#movement_control) | `MovementControl` | `com.awakekt.awake.scene:controls` | `registerControls()` | [Character controller](../guides/character-controller.md) |
 | [`navigation`](#navigation) | `NavigationGrid` | `com.awakekt.awake.scene:navigation` | `registerAiBehaviors()` | [AI](../guides/ai.md) |
 | [`particle_emitter`](#particle_emitter) | `ParticleEmitterSource` | `com.awakekt.awake.scene:particles` | `DefaultSceneComponentResolvers.install()` | [Particles](../guides/particles.md) |
+| [`particle_emitter_2d`](#particle_emitter_2d) | `ParticleEmitter2D` | `com.awakekt.awake.scene:scene2d` | `DefaultSceneComponentResolvers.install()` | [Particles](../guides/particles.md#2d-particles-scene2d) |
 | [`patrol`](#patrol) | `PatrolBehavior` | `com.awakekt.awake.scene:ai` | `registerAiBehaviors()` | [AI](../guides/ai.md) |
 | [`pbr_material`](#pbr_material) | `PbrMaterial` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Meshes and materials](../guides/meshes-and-materials.md) |
 | [`perceivable`](#perceivable) | `Perceivable` | `com.awakekt.awake.scene:ai` | `registerAiBehaviors()` | [AI](../guides/ai.md#perception) |
@@ -85,7 +86,7 @@ registers it.
 | Call | Module | Registers |
 | --- | --- | --- |
 | Built in | `com.awakekt.awake.scene:document` | `custom`, `prefab_link` |
-| `DefaultSceneComponentResolvers.install()` | `com.awakekt.awake.scene:runtime` | `ambient_light`, `camera`, `canvas_appearance`, `canvas_bar`, `canvas_bind`, `canvas_button`, `canvas_cluster`, `canvas_controls`, `canvas_element`, `canvas_follow`, `canvas_follow_arrow`, `canvas_follow_limit`, `canvas_follow_occlusion`, `canvas_image`, `canvas_input`, `canvas_joystick`, `canvas_layout`, `canvas_look_area`, `canvas_rect`, `canvas_scaler`, `canvas_stepper`, `canvas_sweep`, `canvas_text`, `canvas_text_field`, `canvas_tooltip`, `canvas_view`, `day_cycle`, `fog`, `keyframe_animation`, `light`, `locomotion_animation`, `mesh_renderer`, `particle_emitter`, `pbr_material`, `shader_effect`, `skybox`, `spin_control`, `static_transform`, `tag`, `terrain`, `tone_mapping`, `world_text`. `SceneManager` and `SceneAppLifecycleRuntime` call it for you. |
+| `DefaultSceneComponentResolvers.install()` | `com.awakekt.awake.scene:runtime` | `ambient_light`, `camera`, `canvas_appearance`, `canvas_bar`, `canvas_bind`, `canvas_button`, `canvas_cluster`, `canvas_controls`, `canvas_element`, `canvas_follow`, `canvas_follow_arrow`, `canvas_follow_limit`, `canvas_follow_occlusion`, `canvas_image`, `canvas_input`, `canvas_joystick`, `canvas_layout`, `canvas_look_area`, `canvas_rect`, `canvas_scaler`, `canvas_stepper`, `canvas_sweep`, `canvas_text`, `canvas_text_field`, `canvas_tooltip`, `canvas_view`, `day_cycle`, `fog`, `keyframe_animation`, `light`, `locomotion_animation`, `mesh_renderer`, `particle_emitter`, `particle_emitter_2d`, `pbr_material`, `shader_effect`, `skybox`, `spin_control`, `sprite`, `sprite_clips`, `static_transform`, `tag`, `terrain`, `texture_animation`, `texture_clips`, `tilemap`, `tone_mapping`, `world_text`. `SceneManager` and `SceneAppLifecycleRuntime` call it for you. |
 | `SceneComponentRegistry.registerControls()` | `com.awakekt.awake.scene:controls` | `movement_control`, `camera_rig`, `input_actions` |
 | `SceneComponentRegistry.registerPhysics()` | `com.awakekt.awake.scene:physics` | `physics_body` |
 | `SceneComponentRegistry.registerCharacter()` | `com.awakekt.awake.scene:character` | `character_controller` |
@@ -852,6 +853,54 @@ the plane at `groundY`, otherwise it never lands:
 | `restitution` | number | `0` | Fraction of fall speed kept as a bounce: 0 stops the particle, 1 is lossless, above 1 gains energy. Not negative. |
 | `friction` | number | `1` | Fraction of sideways speed kept on each bounce. Not negative. |
 | `colliders` | array of box | `[]` | World-space boxes, each `{min: vector, max: vector}`, with `min` at or below `max` on every axis. |
+
+## `particle_emitter_2d`
+
+Spawns 2D quads on the XY plane through `awake:core:particles`'s `ParticleSimulation` and draws them
+through the unlit sprite pipeline, sorted alongside `sprite` and `tilemap` nodes by `sortingLayer` and
+`sortOrder`. `SceneParticleEmitter2D`.
+
+Sizes, speeds and `shape` extents are 2D world units. Leaving `texture` empty (`""`) draws solid-tinted
+quads; naming a project image resolves it through the scene's sprite batch with optional `columns` × `rows`
+frame sheets. See [Particles](../guides/particles.md#2d-particles-scene2d).
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `texture` | string | `""` | Project image path for particle quads, or `""` for untextured solid-tinted quads. Not blank when non-empty. |
+| `columns` | integer | `1` | Sprite-sheet columns when `texture` is non-empty. At least 1. |
+| `rows` | integer | `1` | Sprite-sheet rows when `texture` is non-empty. At least 1. |
+| `frameCount` | integer | `1` | Animated cells played in reading order from `0` (`1..columns*rows`). At least 1. |
+| `frameRate` | number | `8` | Sprite-sheet playback rate in frames per second. Not negative. |
+| `enabled` | boolean | `true` | Whether the emitter steps and draws. |
+| `maxParticles` | integer | `64` | Pool size; spawning pauses while every slot is live. Above 0. |
+| `spawnRate` | number | `12` | Continuous emission rate in particles per second. Not negative. |
+| `lifetime` | number | `1` | Minimum seconds each particle lives. Above 0. |
+| `maxLifetime` | number | none | Upper bound on random particle lifetime, at least `lifetime`. Above 0. |
+| `size` | number | `0.25` | Particle quad height in world units at birth (width preserves cell aspect). Above 0. |
+| `endSize` | number | none | Particle quad height in world units at death. None keeps `size`. Not negative. |
+| `startAlpha` | number | `1` | Opacity at birth. From 0 to 1. |
+| `alphaCurve` | alpha curve | none | Fade-in / hold / fade-out envelope over normalized lifetime (`fadeInEnd`, `fadeOutStart`). None fades linearly from `startAlpha` to `0`. |
+| `tint` | color | white | Straight-alpha colour multiplier at birth. |
+| `endTint` | color | none | Colour multiplier interpolated to at death. None keeps `tint`. |
+| `shape` | object | `{}` | 2D spawn distribution around the origin: `kind` (`Point` · `Disc` · `Ring` · `Box` · `RectEdge`), `radius`, `innerRadius`, `halfWidth` and `halfHeight` (each not negative; `innerRadius <= radius` for `Ring`). |
+| `speed` | number | `1` | Launch speed in world units per second. Not negative. |
+| `maxSpeed` | number | none | Upper bound on random launch speed, at least `speed`. Not negative. |
+| `directionDegrees` | number | `90` | Base launch angle in degrees (`0` = +X right, `90` = +Y up). |
+| `spreadDegrees` | number | `360` | Fan angle in degrees around `directionDegrees` (`0` = beam, `360` = full circle). From 0 to 360. |
+| `radialSpeed` | number | `0` | Outward 2D speed added away from the emitter origin. |
+| `convergeToOrigin` | boolean | `false` | Sends spawned particles inward toward the origin at launch speed. |
+| `gravity` | object | `{}` | Constant 2D acceleration `{x, y}` in world units per second squared (`{x: 0, y: 0}` by default). |
+| `drag` | number | `0` | Linear velocity damping per second (`0` disables). Not negative. |
+| `turbulence` | number | `0` | Smooth sine flow-field perturbation strength (`0` disables). |
+| `turbulenceFrequency` | number | `1` | Spatial frequency of the turbulence flow field. Not negative. |
+| `spin` | spin | none | Per-particle angular velocity range (`minDegreesPerSecond`, `maxDegreesPerSecond`, `randomStartAngle`). |
+| `additive` | boolean | `false` | Draws with additive blending on `spriteScenePipeline(buildAdditive = true)`. |
+| `localSpace` | boolean | `false` | Keeps live particles attached to the node's `Transform` instead of trailing in world space. |
+| `inheritOrientation` | boolean | `false` | Rotates `shape` and launch direction by the node's Z rotation when `localSpace` is `false`. |
+| `sortingLayer` | string | `"Default"` | Project sorting layer name, ordered alongside `sprite` and `tilemap`. Not blank. |
+| `sortOrder` | integer | `0` | Paint order within `sortingLayer`; higher values draw over lower ones. |
+| `burstCount` | integer | none | Lifetime spawn cap; destroys a non-pooled node once all spawned particles expire. Above 0. |
+| `burstCycle` | burst cycle | none | Repeating pulsed emission schedule (`cycleSeconds`, `activeSeconds`, `burstInterval`, `burstSize`) replacing `spawnRate`. |
 
 ## `patrol`
 

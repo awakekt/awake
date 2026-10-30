@@ -324,6 +324,8 @@ public final class com/awakekt/awake/asset/shaderpack/SkyboxUniformsKt {
 
 public final class com/awakekt/awake/asset/shaderpack/SpriteScenePipelineKt {
 	public static final fun spriteScenePipeline ()Lcom/awakekt/awake/asset/shaders/ScenePipeline;
+	public static final fun spriteScenePipeline (Z)Lcom/awakekt/awake/asset/shaders/ScenePipeline;
+	public static synthetic fun spriteScenePipeline$default (ZILjava/lang/Object;)Lcom/awakekt/awake/asset/shaders/ScenePipeline;
 	public static final fun worldTextScenePipeline ()Lcom/awakekt/awake/asset/shaders/ScenePipeline;
 }
 
