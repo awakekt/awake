@@ -19,8 +19,7 @@ import kotlinx.coroutines.flow.first
  *
  * @property path The path asked for.
  */
-class ProtectedContentNotAttachedException(val path: String) :
-    IllegalStateException("$path is not in the public content set, and no protected source is attached yet")
+class ProtectedContentNotAttachedException(val path: String) : IllegalStateException("$path is not in the public content set, and no protected source is attached yet")
 
 /**
  * A project's files as two layers: [publicSet], the content anyone can read, such as the manifest, the
