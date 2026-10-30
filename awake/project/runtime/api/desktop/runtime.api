@@ -252,6 +252,17 @@ public final class com/awakekt/awake/project/runtime/SceneSwitchState$Ready : co
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/project/runtime/SceneSwitchState$WaitingForContent : com/awakekt/awake/project/runtime/SceneSwitchState {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lcom/awakekt/awake/project/runtime/SceneSwitchState$WaitingForContent;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/project/runtime/SceneSwitchState$WaitingForContent;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/project/runtime/SceneSwitchState$WaitingForContent;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPath ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public abstract interface class com/awakekt/awake/project/runtime/SceneSwitchStatus {
 	public abstract fun getState ()Lkotlinx/coroutines/flow/StateFlow;
 }

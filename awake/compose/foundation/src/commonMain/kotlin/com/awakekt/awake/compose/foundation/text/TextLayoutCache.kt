@@ -29,6 +29,7 @@ internal class TextLayoutCache {
     private var density = Float.NaN
     private var fontScale = Float.NaN
     private var wrapWidthPx = Float.NaN
+    private var smoothSizing = false
 
     var width = 0
         private set
@@ -41,10 +42,18 @@ internal class TextLayoutCache {
     private var runDensity = Float.NaN
     private var runFontScale = Float.NaN
     private var runWrapWidthPx = Float.NaN
+    private var runSmoothSizing = false
 
     /** Whether the stored measurement is what [policy] would measure now. */
-    fun hasMeasurement(policy: TextMeasurePolicy, density: Float, fontScale: Float, wrapWidthPx: Float): Boolean =
-        shapes(policy) && density == this.density && fontScale == this.fontScale && wrapWidthPx == this.wrapWidthPx
+    fun hasMeasurement(
+        policy: TextMeasurePolicy,
+        density: Float,
+        fontScale: Float,
+        wrapWidthPx: Float,
+        smoothSizing: Boolean,
+    ): Boolean =
+        shapes(policy) && density == this.density && fontScale == this.fontScale &&
+            wrapWidthPx == this.wrapWidthPx && smoothSizing == this.smoothSizing
 
     fun storeMeasurement(width: Int, height: Int, alignmentLines: Map<AlignmentLine, Int>) {
         this.width = width
@@ -53,7 +62,13 @@ internal class TextLayoutCache {
     }
 
     /** Keys the measurement just stored. A changed shape also retires the cached run. */
-    fun keyMeasurement(policy: TextMeasurePolicy, density: Float, fontScale: Float, wrapWidthPx: Float) {
+    fun keyMeasurement(
+        policy: TextMeasurePolicy,
+        density: Float,
+        fontScale: Float,
+        wrapWidthPx: Float,
+        smoothSizing: Boolean,
+    ) {
         if (!shapes(policy)) run = null
         text = policy.text
         style = policy.style
@@ -65,19 +80,27 @@ internal class TextLayoutCache {
         this.density = density
         this.fontScale = fontScale
         this.wrapWidthPx = wrapWidthPx
+        this.smoothSizing = smoothSizing
     }
 
     /** The run [policy] paints with, rebuilt only when its inputs changed. */
-    fun runFor(policy: TextMeasurePolicy, density: Float, fontScale: Float, wrapWidthPx: Float): TextRun {
+    fun runFor(
+        policy: TextMeasurePolicy,
+        density: Float,
+        fontScale: Float,
+        wrapWidthPx: Float,
+        smoothSizing: Boolean,
+    ): TextRun {
         val cached = run
         val reusable = cached != null && shapes(policy) && density == runDensity &&
-            fontScale == runFontScale && wrapWidthPx == runWrapWidthPx
+            fontScale == runFontScale && wrapWidthPx == runWrapWidthPx && smoothSizing == runSmoothSizing
         if (reusable) return cached
-        return policy.buildRun(density, fontScale).also {
+        return policy.buildRun(density, fontScale, smoothSizing).also {
             run = it
             runDensity = density
             runFontScale = fontScale
             runWrapWidthPx = wrapWidthPx
+            runSmoothSizing = smoothSizing
         }
     }
 
