@@ -6,7 +6,6 @@
 package com.awakekt.awake.project
 
 import com.awakekt.awake.core.io.AssetPath
-import com.awakekt.awake.core.io.AssetSource
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -83,7 +82,7 @@ class IndexedAssetSource(
     private val fetch: suspend (url: String) -> ByteArray,
     private val cache: ContentCache? = null,
     private val rangeFetch: (suspend (url: String, offset: Long, length: Long) -> ByteArray)? = null,
-) : AssetSource {
+) : PrefetchableAssetSource {
     private val entries: Map<String, ProjectIndexEntry>
     private val members: BundleMembers
 
@@ -99,6 +98,9 @@ class IndexedAssetSource(
      * none, a loose file it fetched is dropped and fetched again by the read that follows.
      */
     val hasCache: Boolean get() = cache != null
+
+    /** Whether [prefetch] pays off, which it does with a [ContentCache]: the same as [hasCache]. */
+    override val canPrefetch: Boolean get() = hasCache
 
     override suspend fun read(path: AssetPath): Result<ByteArray> = runCatching {
         val entry = entryFor(path.value) ?: throw NoSuchElementException("${path.value} is not in the project index")
@@ -117,7 +119,7 @@ class IndexedAssetSource(
      * the index. Otherwise throws for the first file or bundle to fail its check -- first to fail, not
      * necessarily first in [paths] -- and cancels the fetches still in flight.
      */
-    suspend fun prefetch(paths: List<String>, onProgress: (done: Long, total: Long) -> Unit = { _, _ -> }) {
+    override suspend fun prefetch(paths: List<String>, onProgress: (done: Long, total: Long) -> Unit) {
         val chosen = paths.map { path ->
             val entry = entryFor(path) ?: throw NoSuchElementException("$path is not in the project index")
             Requested(entry, path.removePrefix("/"))

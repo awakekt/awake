@@ -117,6 +117,42 @@ class LockVerifiedAssetSourceTest {
         assertTrue(mismatches.isEmpty(), "nothing read, so nothing checked")
     }
 
+    @Test
+    fun itPrefetchesThroughAnIndexWithItsProgressAndStillChecksEachRead() = runTest {
+        val tampered = model.copyOf().also { it[10] = 99 }
+        val texture = ByteArray(192) { 7 }
+        val served = mapOf("assets/crate.glb" to tampered, "assets/crate.png" to texture)
+        val fetched = mutableListOf<String>()
+        val index = ProjectIndex(
+            files = served.map { (path, bytes) -> ProjectIndexEntry(path = path, sizeBytes = bytes.size.toLong(), sha256 = Sha256.digestHex(bytes), url = path) },
+        )
+        val source = verified(IndexedAssetSource(index, { url -> fetched += url; served.getValue(url) }, MemoryCache()))
+        val progress = mutableListOf<Pair<Long, Long>>()
+
+        assertTrue(source.canPrefetch, "an index with a cache can prefetch, and so can the lock over it")
+        source.prefetch(served.keys.toList()) { done, total -> progress += done to total }
+        val bytes = source.read(AssetPath("assets/crate.glb")).getOrThrow()
+
+        assertEquals(listOf(256L), progress.map { it.second }.distinct(), "the index's byte count comes through")
+        assertEquals(2, progress.size, "one step per file, not a jump: $progress")
+        assertEquals(256L, progress.last().first)
+        assertEquals(served.keys.sorted(), fetched.sorted(), "the read after the prefetch fetches nothing more")
+        assertContentEquals(tampered, bytes)
+        assertEquals(listOf("assets/crate.glb"), mismatches.map(AssetMismatch::path), "a prefetched asset is checked when it's read")
+    }
+
+    @Test
+    fun overASourceThatCannotPrefetchItCannotEither() = runTest {
+        val entry = ProjectIndexEntry(path = "assets/crate.glb", sizeBytes = model.size.toLong(), sha256 = Sha256.digestHex(model), url = "assets/crate.glb")
+        val noCache = IndexedAssetSource(ProjectIndex(files = listOf(entry)), { model })
+        val progress = mutableListOf<Pair<Long, Long>>()
+
+        assertFalse(verified(files("assets/crate.glb" to model)).canPrefetch, "plain files can't prefetch")
+        assertFalse(verified(noCache).canPrefetch, "an index with no cache would only fetch again")
+        verified(files("assets/crate.glb" to model)).prefetch(listOf("assets/crate.glb")) { done, total -> progress += done to total }
+        assertTrue(progress.isEmpty(), "nothing is fetched, so nothing is reported")
+    }
+
     private fun verified(files: AssetSource, refuse: Boolean = false) =
         LockVerifiedAssetSource(files, lock, refuseMismatches = refuse) { mismatches += it }
 
@@ -124,6 +160,16 @@ class LockVerifiedAssetSourceTest {
         val stored = entries.toMap()
         return AssetSource { path ->
             stored[path.value]?.let { Result.success(it) } ?: Result.failure(NoSuchElementException(path.value))
+        }
+    }
+
+    private class MemoryCache : ContentCache {
+        private val stored = mutableMapOf<String, ByteArray>()
+
+        override suspend fun get(sha256: String): ByteArray? = stored[sha256]
+
+        override suspend fun put(sha256: String, bytes: ByteArray) {
+            stored[sha256] = bytes
         }
     }
 }

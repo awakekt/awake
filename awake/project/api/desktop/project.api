@@ -348,15 +348,15 @@ public final class com/awakekt/awake/project/FileSystemContentCache : com/awakek
 	public fun retainOnly (Lcom/awakekt/awake/project/ProjectIndex;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
-public final class com/awakekt/awake/project/IndexedAssetSource : com/awakekt/awake/core/io/AssetSource {
+public final class com/awakekt/awake/project/IndexedAssetSource : com/awakekt/awake/project/PrefetchableAssetSource {
 	public static final field Companion Lcom/awakekt/awake/project/IndexedAssetSource$Companion;
 	public static final field DEFAULT_INDEX_PATH Ljava/lang/String;
 	public fun <init> (Lcom/awakekt/awake/project/ProjectIndex;Lkotlin/jvm/functions/Function2;Lcom/awakekt/awake/project/ContentCache;Lkotlin/jvm/functions/Function4;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/project/ProjectIndex;Lkotlin/jvm/functions/Function2;Lcom/awakekt/awake/project/ContentCache;Lkotlin/jvm/functions/Function4;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun exists (Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun getCanPrefetch ()Z
 	public final fun getHasCache ()Z
-	public final fun prefetch (Ljava/util/List;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static synthetic fun prefetch$default (Lcom/awakekt/awake/project/IndexedAssetSource;Ljava/util/List;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public fun prefetch (Ljava/util/List;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun read-gIAlu-s (Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
@@ -367,15 +367,28 @@ public final class com/awakekt/awake/project/IndexedAssetSource$Companion {
 	public static synthetic fun open$default (Lcom/awakekt/awake/project/IndexedAssetSource$Companion;Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/jvm/functions/Function2;Lcom/awakekt/awake/project/ContentCache;ZLkotlin/jvm/functions/Function4;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 }
 
-public final class com/awakekt/awake/project/LockVerifiedAssetSource : com/awakekt/awake/core/io/AssetSource {
+public final class com/awakekt/awake/project/LockVerifiedAssetSource : com/awakekt/awake/project/PrefetchableAssetSource {
 	public fun <init> (Lcom/awakekt/awake/core/io/AssetSource;Lcom/awakekt/awake/project/AwakeAssetsLock;ZLkotlin/jvm/functions/Function1;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/core/io/AssetSource;Lcom/awakekt/awake/project/AwakeAssetsLock;ZLkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun exists (Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun getCanPrefetch ()Z
+	public fun prefetch (Ljava/util/List;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun read-gIAlu-s (Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class com/awakekt/awake/project/PlatformContentCacheKt {
 	public static final fun platformContentCache (Ljava/lang/String;)Lcom/awakekt/awake/project/ContentCache;
+}
+
+public abstract interface class com/awakekt/awake/project/PrefetchableAssetSource : com/awakekt/awake/core/io/AssetSource {
+	public abstract fun getCanPrefetch ()Z
+	public abstract fun prefetch (Ljava/util/List;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun prefetch$default (Lcom/awakekt/awake/project/PrefetchableAssetSource;Ljava/util/List;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/project/PrefetchableAssetSource$DefaultImpls {
+	public static fun exists (Lcom/awakekt/awake/project/PrefetchableAssetSource;Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun prefetch$default (Lcom/awakekt/awake/project/PrefetchableAssetSource;Ljava/util/List;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 }
 
 public final class com/awakekt/awake/project/ProjectContentIssue {
