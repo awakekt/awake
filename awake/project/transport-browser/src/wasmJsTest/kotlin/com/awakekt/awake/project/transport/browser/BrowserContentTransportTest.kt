@@ -7,9 +7,9 @@ package com.awakekt.awake.project.transport.browser
 
 import com.awakekt.awake.project.ContentRequest
 import com.awakekt.awake.project.IndexedAssetSource
-import com.awakekt.awake.project.IndexedDbContentCache
 import com.awakekt.awake.project.ReadToken
 import com.awakekt.awake.project.TokenAuthorizedFetch
+import com.awakekt.awake.project.platformContentCache
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
@@ -51,7 +51,7 @@ class BrowserContentTransportTest {
             val grant = gameBackend.requestReadToken()
             ReadToken(grant.token, expiresIn = grant.expiresInSeconds.seconds)
         }
-        val source = IndexedAssetSource.open(fetch = contentFetch, cache = IndexedDbContentCache(namespace = "harbor-town"))
+        val source = IndexedAssetSource.open(fetch = contentFetch, cache = platformContentCache("harbor-town"))
         // --8<-- [end:browser]
         return source
     }
