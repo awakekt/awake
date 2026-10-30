@@ -328,9 +328,9 @@ class BundledAssetSourceTest {
 
     @Test
     fun anIndexFromANewerEngineIsRefused() {
-        val issues = ProjectContentValidator.indexIssues(project.index.copy(formatVersion = 4))
+        val issues = ProjectContentValidator.indexIssues(project.index.copy(formatVersion = 5))
 
-        assertTrue(issues.any { "formatVersion must be 2 or 3" in it }, "$issues")
+        assertTrue(issues.any { "formatVersion must be 2, 3 or 4" in it }, "$issues")
     }
 
     private fun bundleUrlOf(path: String): String {

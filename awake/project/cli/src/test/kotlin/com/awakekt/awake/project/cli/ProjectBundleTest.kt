@@ -16,6 +16,7 @@ import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.gradle.testkit.runner.GradleRunner
+import org.gradle.testkit.runner.TaskOutcome
 import java.io.File
 import kotlin.io.path.createTempDirectory
 import kotlin.test.AfterTest
@@ -145,6 +146,55 @@ class ProjectBundleTest {
         )
         assertEquals(0, cliOpaque.code, cliOpaque.all)
         assertSameTree(cliOpaqueOut, output)
+
+        root.resolve("bundle.key").writeBytes(ByteArray(32) { (it * 3 + 2).toByte() })
+        writeGradleContentBuild(
+            """
+            projectContent {
+                bundleKeyId.set("harbor-1")
+                bundleKeyFile.set(layout.projectDirectory.file("bundle.key"))
+            }
+            """.trimIndent(),
+        )
+        runGenerateContentBundles()
+        val cliSealed = awake("bundle", "build/project.index.json", "--output", "build/cli-sealed", "--project", ".", "--key-id", "harbor-1", "--key-file", "bundle.key")
+        assertEquals(0, cliSealed.code, cliSealed.all)
+        assertSameTree(root.resolve("build/cli-sealed"), output)
+    }
+
+    @Test
+    fun aNewBundleKeyRerunsGenerateContentBundlesFromTheConfigurationCacheWhichNeverHoldsTheKey() {
+        FILES.forEach { (path, text) -> root.resolve(path).apply { parentFile.mkdirs() }.writeText(text) }
+        writeGradleContentSettings()
+        val keyFile = root.resolve("secrets/bundle.key").apply { parentFile.mkdirs() }
+        val firstKey = ByteArray(32) { (it + 1).toByte() }
+        keyFile.writeBytes(firstKey)
+        writeGradleContentBuild(
+            """
+            projectContent {
+                bundleKeyId.set("harbor-1")
+                bundleKeyFile.set(layout.projectDirectory.file("secrets/bundle.key"))
+            }
+            """.trimIndent(),
+        )
+        // The index task reads Task.project when it runs, so it runs once without the configuration cache.
+        GradleRunner.create().withProjectDir(root).withArguments("generateProjectIndex").build()
+        val cached = listOf("generateContentBundles", "--configuration-cache", "-x", "generateProjectIndex", "-x", "generatePublicContentBundles")
+
+        val first = GradleRunner.create().withProjectDir(root).withArguments(cached).build()
+        val sealedFirst = output.resolve("project.index.json").readText()
+        val again = GradleRunner.create().withProjectDir(root).withArguments(cached).build()
+        keyFile.writeBytes(ByteArray(32) { (it + 2).toByte() })
+        val rekeyed = GradleRunner.create().withProjectDir(root).withArguments(cached).build()
+
+        assertEquals(TaskOutcome.SUCCESS, first.task(":generateContentBundles")?.outcome)
+        assertEquals(TaskOutcome.UP_TO_DATE, again.task(":generateContentBundles")?.outcome, again.output)
+        assertContains(again.output, "Reusing configuration cache")
+        assertEquals(TaskOutcome.SUCCESS, rekeyed.task(":generateContentBundles")?.outcome, "a new key reruns the task: ${rekeyed.output}")
+        assertFalse(sealedFirst == output.resolve("project.index.json").readText(), "the new key seals other bundles")
+        val stored = root.resolve(".gradle").walkTopDown().filter(File::isFile).map(File::readBytes).toList()
+        assertTrue(stored.isNotEmpty())
+        stored.forEach { bytes -> assertFalse(bytes.containsRun(firstKey), "Gradle's own state holds the key") }
     }
 
     private fun writeGradleContentSettings() {
@@ -237,3 +287,6 @@ class ProjectBundleTest {
         )
     }
 }
+
+/** Whether [run] appears in these bytes as consecutive bytes. */
+private fun ByteArray.containsRun(run: ByteArray): Boolean = (0..size - run.size).any { start -> run.indices.all { this[start + it] == run[it] } }

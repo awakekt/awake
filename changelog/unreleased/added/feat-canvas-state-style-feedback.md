@@ -1,1 +1,0 @@
-- Let `CanvasStateStyle` (`hovered`, `pressed`, and `disabled`) override `shadow` and centre `scale` alongside `alpha` and paint without affecting layout or hit-testing, and interpolate between states over `CanvasStyle.transitionSeconds` or `CanvasControlTheme.transitionSeconds` across CPU, Vulkan, and WebGPU (#1114).

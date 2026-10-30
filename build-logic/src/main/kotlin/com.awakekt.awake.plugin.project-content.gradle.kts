@@ -3,6 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+import com.awakekt.awake.build.project.BundleKeyFingerprintSource
 import com.awakekt.awake.build.project.GenerateAssetsLockTask
 import com.awakekt.awake.build.project.GenerateContentBundlesTask
 import com.awakekt.awake.build.project.GenerateProjectIndexTask
@@ -147,6 +148,16 @@ tasks.register<GenerateContentBundlesTask>("generateContentBundles") {
     indexFile.set(generateProjectIndex.flatMap { it.outputFile })
     outputDirectory.set(projectContent.bundlesOutputDirectory)
     bundleLike(projectContent)
+    // Only the full set is sealed: the public sign-in set loads before the player has the key.
+    keyId.set(projectContent.bundleKeyId)
+    keyFile.set(projectContent.bundleKeyFile)
+    keyEnvironmentVariable.set(projectContent.bundleKeyEnvironmentVariable)
+    keyFingerprint.set(
+        providers.of(BundleKeyFingerprintSource::class.java) {
+            parameters.keyFile.set(projectContent.bundleKeyFile)
+            parameters.environmentVariable.set(projectContent.bundleKeyEnvironmentVariable)
+        },
+    )
     dependsOn(generatePublicContentBundles)
 }
 
