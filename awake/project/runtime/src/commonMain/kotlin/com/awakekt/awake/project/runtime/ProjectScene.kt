@@ -12,6 +12,7 @@ import com.awakekt.awake.core.localization.StringLayer
 import com.awakekt.awake.core.localization.StringTableSource
 import com.awakekt.awake.core.localization.Strings
 import com.awakekt.awake.core.localization.systemLocale
+import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.project.AwakeProjectManifest
@@ -22,6 +23,11 @@ import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.gltf.GltfAssetResolver
 import com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer
 import com.awakekt.awake.scene.runtime.SpawnedNode
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
@@ -96,27 +102,56 @@ internal suspend fun loadProjectInto(
     files.prefetchSceneContent(scenePath, progress::report)
     val entry = loadProjectScene(scenePath, manifest, files, registry, installed, hasRenderer, physicsWorld)
     // The app's instance gets the project's tables only once nothing else can fail the load.
-    val strings = sharedStrings?.also { shared ->
+    val added = sharedStrings?.let { shared ->
+        val tables = StringTableSource.assets(files)
         try {
-            addProjectStrings(shared, files)
+            addProjectStrings(shared, tables)
         } catch (cancelled: CancellationException) {
+            // A switch cancelled part way may have left the source in; take it out again.
+            removeProjectStrings(shared, tables)
             entry.close()
             throw cancelled
         }
-    } ?: ownStrings
+        tables
+    }
+    val strings = sharedStrings ?: ownStrings
     progress.report(1f)
-    return LoadedProject(manifest, entry, capabilities, registry, files, hasRenderer, physicsWorld, strings)
+    return LoadedProject(manifest, entry, capabilities, registry, files, hasRenderer, physicsWorld, strings, added)
 }
 
 /**
- * Adds the project's `strings/` tables to [strings], an instance the app made before the project
+ * Adds the project's `strings/` [tables] to [strings], an instance the app made before the project
  * loaded, at [StringLayer.Game], keeping its locale: the tables for that locale are read now, and
  * another's when a switch asks for it. Added after the app's own game tables, so the project's text
  * wins where both have a key in the same locale. A table the project lacks is no table.
  */
-internal suspend fun addProjectStrings(strings: Strings, files: AssetSource) {
-    strings.addSource(StringTableSource.assets(files), StringLayer.Game)
+internal suspend fun addProjectStrings(strings: Strings, tables: StringTableSource) {
+    strings.addSource(tables, StringLayer.Game)
 }
+
+/**
+ * Takes [tables], which [addProjectStrings] added, out of [strings] again, from a caller that can't
+ * suspend, such as [LoadedProject.close].
+ *
+ * [Strings.removeSource] starts at once on the calling thread. It takes the lock every change to
+ * [strings] takes and rebuilds the active locale from the tables its other sources already hold, so
+ * when nothing else is changing [strings] it finishes before this returns, and text read after it has
+ * no project text. A locale switch or source change in flight finishes first, and the removal runs
+ * right after it, on the thread that finished it. Lookups in flight keep the tables they started
+ * with, as for any change to [strings]. Only [tables] is removed, never the app's own.
+ */
+internal fun removeProjectStrings(strings: Strings, tables: StringTableSource) {
+    CoroutineScope(Dispatchers.Unconfined + stringsRemovalFailed).launch(start = CoroutineStart.UNDISPATCHED) {
+        strings.removeSource(tables)
+    }
+}
+
+/** Logs a removal that failed, which leaves the project's tables in the app's [Strings]. */
+private val stringsRemovalFailed = CoroutineExceptionHandler { _, failure ->
+    log.error(failure) { "The project's string tables could not be removed from the app's Strings: ${failure.message}" }
+}
+
+private val log = Logger("project.strings")
 
 /**
  * The project's `strings/` tables, in the device's locale, read through [files] as the rest of its

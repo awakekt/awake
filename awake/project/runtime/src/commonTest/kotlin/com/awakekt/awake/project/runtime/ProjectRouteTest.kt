@@ -6,6 +6,9 @@
 package com.awakekt.awake.project.runtime
 
 import com.awakekt.awake.core.io.AssetSource
+import com.awakekt.awake.core.localization.LocaleId
+import com.awakekt.awake.core.localization.StringTableSource
+import com.awakekt.awake.core.localization.Strings
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.engine.bootstrap.dsl.app
 import com.awakekt.awake.engine.platform.dsl.requireService
@@ -120,6 +123,35 @@ class ProjectRouteTest {
         assertTrue(loaded.single().closed, "a project that never played is closed with the app")
     }
 
+    @Test
+    fun enteringAgainWithTheAppsStringsKeepsOneCopyOfTheProjectsTables() = runTest {
+        val reads = mutableListOf<String>()
+        val strings = Strings.load(
+            StringTableSource.of(mapOf(LocaleId.English to mapOf("menu.start" to "Early start"), LocaleId.of("fil") to mapOf("menu.start" to "Maagang simula"))),
+            locale = LocaleId.English,
+        )
+        val files = files(STRINGS)
+        val recorded = AssetSource { path -> files.read(path).also { reads += path.value } }
+        val (game, router) = routedApp { loadProject(recorded, strings = strings).also(loaded::add) }
+
+        router.switchTo("harbor-town")
+        game.frame()
+        assertEquals("Start", strings.text("menu.start"))
+        router.switchTo("sign-in")
+        game.frame()
+        assertEquals("Early start", strings.text("menu.start"), "leaving the route took the project's tables out")
+        router.switchTo("harbor-town")
+        game.frame()
+        assertEquals(2, loaded.size)
+        assertEquals("Start", strings.text("menu.start"))
+
+        reads.clear()
+        strings.setLocale(LocaleId.of("fil"))
+
+        assertEquals(listOf("strings/fil.json"), reads, "one copy of the project's tables, read once")
+        assertEquals("Simulan", strings.text("menu.start"))
+    }
+
     private suspend fun routedApp(
         project: suspend () -> LoadedProject = { loadProject(signedIn.await()).also(loaded::add) },
     ): Pair<AwakeAppLifecycle, SceneRouterRuntime> {
@@ -148,12 +180,13 @@ class ProjectRouteTest {
         override val gpuDrawPreparer = GpuDrawPreparer { _, _, _ -> null }
     }
 
-    private fun files() = AssetSource { path ->
-        runCatching { mapOf(MANIFEST_PATH to MANIFEST, "scenes/main.scene.json" to SCENE).getValue(path.value).encodeToByteArray() }
+    private fun files(extra: Map<String, String> = emptyMap()) = AssetSource { path ->
+        runCatching { (mapOf(MANIFEST_PATH to MANIFEST, "scenes/main.scene.json" to SCENE) + extra).getValue(path.value).encodeToByteArray() }
     }
 
     private companion object {
         const val MANIFEST_PATH = "awake.project.json"
+        val STRINGS = mapOf("strings/en.json" to """{ "menu": { "start": "Start" } }""", "strings/fil.json" to """{ "menu": { "start": "Simulan" } }""")
         const val MANIFEST = """{"formatVersion":1,"id":"com.example.harbor-town","name":"Harbor Town","version":"1.0.0","entryScene":"scenes/main.scene.json"}"""
         const val SCENE = """
 { "version": 1, "name": "harbor", "nodes": [
