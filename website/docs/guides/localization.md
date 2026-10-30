@@ -262,8 +262,9 @@ val project = loadProject(projectFiles, strings = strings, physicsWorld = ::crea
   key beats the project's English for a Korean player.
 - **A failed load changes nothing.** The tables are added only once the rest of the project has
   loaded.
-- **Each load adds the tables again.** A game that loads a project again into the same instance, or
-  one project after another, keeps every load's tables, the newest winning.
+- **Closing the project takes its tables out.** `LoadedProject.close()` removes the tables that load
+  added and leaves the game's own, so a game that loads a project again into the same instance, as a
+  `projectRoute` does each time it is entered, holds one copy of them at a time.
 
 Without `strings`, the project gets a `Strings` of its own, as above.
 

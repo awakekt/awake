@@ -112,9 +112,10 @@ the text depends on that size.
 
 | Text | Drawn from |
 |---|---|
-| 24 device pixels or smaller, on the pixel grid | Glyphs rasterized from the font's outlines at exactly that size, drawn 1:1 |
+| 24 device pixels or smaller, at rest or scrolling by whole pixels | Glyphs rasterized from the font's outlines at exactly that size, drawn 1:1 on the pixel grid |
+| 24 device pixels or smaller, translating by fractions of a pixel | Those same exact-size glyphs shifted smoothly across subpixel offsets, easing back onto whole pixels when motion stops |
 | Larger than 24 pixels | The font's distance-field atlas |
-| Under `Modifier.scale` or another scaling transform | The distance-field atlas, so it scales smoothly |
+| Under `Modifier.scale`, an animated `TextStyle.scale`, or an animated em size | The distance-field atlas for the whole animation, including as it passes through `1.0x` or crosses 24 pixels |
 | In `UiFonts.bitmap()` | Its own pixel-art atlas, at every size |
 
 The exact-size glyphs put a one-pixel stem on one solid pixel column, the x-height and cap height
@@ -162,6 +163,12 @@ of Chromium's own. Ink means the summed darkness of the text's pixels, measured 
 From 24 px pixel glyphs to 25 px distance field, the ink per em changes by under 2% and stem darkness
 by under 3.5%. Before the rule, light-on-dark small text held 1.16 to 1.29 times Chromium's ink, and
 crossing the limit moved ink by 9 to 10% in each polarity.
+
+`TextProofSpecimenTest` holds a full 520 × 714 dp proof page to Chromium in both polarities at 1x and
+1.5x, alongside four 8-bit grey baselines: the 9 to 48 px size ramp with kerning on, Roboto weights 300
+to 900, a runtime-loaded TTF (`Roboto-Medium.ttf`) at pixel-glyph and distance-field sizes, a wrapped
+paragraph, and a HUD readout. Every band stays 0.95 to 1.05 of Chromium's ink (0.949 to 1.045), with
+the light-on-dark to dark-on-light ratio within 5.3% of Chromium's.
 
 The rule does no stem darkening. Chromium does none, and the sizes it was measured at are within the
 tolerance without it.

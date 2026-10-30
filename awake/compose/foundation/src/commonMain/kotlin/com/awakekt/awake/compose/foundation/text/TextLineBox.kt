@@ -53,10 +53,17 @@ internal object TextLineBox {
      * pixels, which only rule 4's ink check reads. [lineHeightPx] is an authored line height in device
      * pixels, or null for the font's own.
      */
-    fun advancePx(font: UiFont, emDp: Float, glyphPx: Float, density: Float, lineHeightPx: Float?): Float {
+    fun advancePx(
+        font: UiFont,
+        emDp: Float,
+        glyphPx: Float,
+        density: Float,
+        lineHeightPx: Float?,
+        forceDistanceField: Boolean = false,
+    ): Float {
         if (lineHeightPx != null) return wholePixel(lineHeightPx).coerceAtLeast(1f)
         val normalPx = wholePixel(normalLineDp(font, emDp) * density)
-        val inkBottomPx = baselinePx(font, emDp, density, null) + inkDescentPx(font, glyphPx)
+        val inkBottomPx = baselinePx(font, emDp, density, null) + inkDescentPx(font, glyphPx, forceDistanceField)
         return maxOf(normalPx, inkBottomPx, 1f)
     }
 
@@ -72,15 +79,15 @@ internal object TextLineBox {
      * Whole device pixels of ink below the baseline: the font's deepest descender ([UiFont.descentEm]),
      * and the distance field's antialiased fringe when the run draws from the field.
      */
-    private fun inkDescentPx(font: UiFont, glyphPx: Float): Float {
-        val fringe = if (drawsFromField(font, glyphPx)) FIELD_FRINGE_PX else 0f
+    private fun inkDescentPx(font: UiFont, glyphPx: Float, forceDistanceField: Boolean): Float {
+        val fringe = if (drawsFromField(font, glyphPx, forceDistanceField)) FIELD_FRINGE_PX else 0f
         return ceil(font.descentEm * glyphPx + fringe - INK_EPSILON_PX)
     }
 
     /** Whether a run at [glyphPx] samples the distance field rather than drawing exact-size pixel glyphs, as `TextRun` decides. */
-    private fun drawsFromField(font: UiFont, glyphPx: Float): Boolean =
+    private fun drawsFromField(font: UiFont, glyphPx: Float, forceDistanceField: Boolean): Boolean =
         font.samplingMode == UiFontSamplingMode.DistanceField &&
-            (font.pixelGlyphs == null || glyphPx != floor(glyphPx) || glyphPx < 1f || glyphPx > font.pixelGlyphMaxSize)
+            (forceDistanceField || font.pixelGlyphs == null || glyphPx != floor(glyphPx) || glyphPx < 1f || glyphPx > font.pixelGlyphMaxSize)
 
     /** `line-height: normal`, in whole density-independent pixels. */
     private fun normalLineDp(font: UiFont, emDp: Float): Float =

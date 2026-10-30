@@ -5,16 +5,20 @@
  */
 package com.awakekt.awake.compose.foundation.layout
 
+import com.awakekt.awake.compose.foundation.text.SubpixelOffsetTracker
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.ModifierNodeElement
+import com.awakekt.awake.compose.ui.graphics.drawscope.DrawScope
 import com.awakekt.awake.compose.ui.layout.IntrinsicMeasurable
 import com.awakekt.awake.compose.ui.layout.Measurable
 import com.awakekt.awake.compose.ui.layout.MeasureResult
 import com.awakekt.awake.compose.ui.layout.MeasureScope
+import com.awakekt.awake.compose.ui.node.DrawModifierNode
 import com.awakekt.awake.compose.ui.node.LayoutModifierNode
 import com.awakekt.awake.compose.ui.unit.Constraints
 import com.awakekt.awake.compose.ui.unit.Density
 import com.awakekt.awake.compose.ui.unit.Dp
+import com.awakekt.awake.compose.ui.unit.LayoutDirection
 import com.awakekt.awake.compose.ui.unit.dp
 import kotlin.math.roundToInt
 
@@ -100,13 +104,35 @@ private class OffsetElement(
 
 private class OffsetNode :
     Modifier.Node(),
-    LayoutModifierNode {
+    LayoutModifierNode,
+    DrawModifierNode {
     var x: Dp = 0.dp
     var y: Dp = 0.dp
+    private var measuredPxX = 0f
+    private var measuredPxY = 0f
+    private var placedX = 0
+    private var placedY = 0
+    private val subpixel = SubpixelOffsetTracker()
+
     override fun MeasureScope.measure(measurable: Measurable, constraints: Constraints): MeasureResult {
         val placeable = measurable.measure(constraints)
+        measuredPxX = x.toPx()
+        measuredPxY = y.toPx()
+        placedX = x.roundToPx()
+        placedY = y.roundToPx()
         return layout(placeable.width, placeable.height) {
-            placeable.placeRelativeAt(x.roundToPx(), y.roundToPx())
+            placeable.placeRelativeAt(placedX, placedY)
+        }
+    }
+
+    override fun DrawScope.draw(drawContent: () -> Unit) {
+        subpixel.step(measuredPxX, measuredPxY, placedX, placedY)
+        val dx = if (layoutDirection == LayoutDirection.Rtl) -subpixel.residualX else subpixel.residualX
+        val dy = subpixel.residualY
+        if (dx != 0f || dy != 0f) {
+            translate(dx, dy, drawContent)
+        } else {
+            drawContent()
         }
     }
 
@@ -131,13 +157,35 @@ private class AbsoluteOffsetElement(
 
 private class AbsoluteOffsetNode :
     Modifier.Node(),
-    LayoutModifierNode {
+    LayoutModifierNode,
+    DrawModifierNode {
     var x: Dp = 0.dp
     var y: Dp = 0.dp
+    private var measuredPxX = 0f
+    private var measuredPxY = 0f
+    private var placedX = 0
+    private var placedY = 0
+    private val subpixel = SubpixelOffsetTracker()
+
     override fun MeasureScope.measure(measurable: Measurable, constraints: Constraints): MeasureResult {
         val placeable = measurable.measure(constraints)
+        measuredPxX = x.toPx()
+        measuredPxY = y.toPx()
+        placedX = x.roundToPx()
+        placedY = y.roundToPx()
         return layout(placeable.width, placeable.height) {
-            placeable.placeAbsoluteAt(x.roundToPx(), y.roundToPx())
+            placeable.placeAbsoluteAt(placedX, placedY)
+        }
+    }
+
+    override fun DrawScope.draw(drawContent: () -> Unit) {
+        subpixel.step(measuredPxX, measuredPxY, placedX, placedY)
+        val dx = subpixel.residualX
+        val dy = subpixel.residualY
+        if (dx != 0f || dy != 0f) {
+            translate(dx, dy, drawContent)
+        } else {
+            drawContent()
         }
     }
 
