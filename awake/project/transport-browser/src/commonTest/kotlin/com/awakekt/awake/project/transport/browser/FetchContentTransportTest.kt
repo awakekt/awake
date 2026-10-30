@@ -167,6 +167,35 @@ class FetchContentTransportTest {
     }
 
     @Test
+    fun a503RetryAfterBeyondTheBudgetFailsAtOnceWith503() = runTest {
+        val browser = FakeBrowser { FetchOutcome.Answered(503, listOf("retry-after", "3600"), ByteArray(0)) }
+        val waits = mutableListOf<Duration>()
+
+        val failure = assertFailsWith<ContentFetchException> {
+            fetchThrough(browser, RateLimitBackoff(delay = { waits += it })).fetch("files/assets/crate.glb")
+        }
+
+        assertEquals(503, failure.status)
+        assertEquals(1, browser.calls.size)
+        assertEquals(emptyList(), waits)
+        assertTrue("HTTP 503 Service Unavailable" in failure.message.orEmpty(), failure.message)
+    }
+
+    @Test
+    fun a503WithRetryAfterStopsAtTheAttemptLimit() = runTest {
+        val browser = FakeBrowser { FetchOutcome.Answered(503, listOf("retry-after", "1"), ByteArray(0)) }
+        val waits = mutableListOf<Duration>()
+
+        val failure = assertFailsWith<ContentFetchException> {
+            fetchThrough(browser, RateLimitBackoff(delay = { waits += it })).fetch("files/assets/crate.glb")
+        }
+
+        assertEquals(503, failure.status)
+        assertEquals(RateLimitBackoff.DEFAULT_MAX_ATTEMPTS, browser.calls.size)
+        assertEquals(List(RateLimitBackoff.DEFAULT_MAX_ATTEMPTS - 1) { 1.seconds }, waits)
+    }
+
+    @Test
     fun a503WithoutAnExposedRetryAfterFailsAtOnceAsBefore() = runTest {
         val browser = FakeBrowser { FetchOutcome.Answered(503, listOf("content-length", "0"), ByteArray(0)) }
         val waits = mutableListOf<Duration>()
