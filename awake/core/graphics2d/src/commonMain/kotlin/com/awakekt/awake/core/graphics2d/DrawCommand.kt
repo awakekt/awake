@@ -160,6 +160,8 @@ sealed class DrawCommand {
      * the frame is drawn with (`Renderer.drawUi`'s). A renderer splits a glyph batch wherever this
      * changes, so glyphs of several fonts draw in one frame in paint order.
      * @property page The zero-based atlas page index within the font.
+     * @property decoration The outline and shadow this glyph draws under itself, in this same draw, from its font's
+     * effect field; null for a plain glyph. A decorated glyph draws a quad grown by [GlyphDecoration.reach].
      */
     data class Glyph(
         val x: Float,
@@ -175,7 +177,42 @@ sealed class DrawCommand {
         val transform: DrawTransform? = null,
         val font: UiFont? = null,
         val page: Int = 0,
-    ) : UiDrawPrimitive()
+        val decoration: GlyphDecoration? = null,
+    ) : UiDrawPrimitive() {
+        @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+        constructor(
+            x: Float,
+            y: Float,
+            w: Float,
+            h: Float,
+            u0: Float,
+            v0: Float,
+            u1: Float,
+            v1: Float,
+            color: Color,
+            tokenId: String? = null,
+            transform: DrawTransform? = null,
+            font: UiFont? = null,
+            page: Int = 0,
+        ) : this(x, y, w, h, u0, v0, u1, v1, color, tokenId, transform, font, page, null)
+
+        @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+        fun copy(
+            x: Float = this.x,
+            y: Float = this.y,
+            w: Float = this.w,
+            h: Float = this.h,
+            u0: Float = this.u0,
+            v0: Float = this.v0,
+            u1: Float = this.u1,
+            v1: Float = this.v1,
+            color: Color = this.color,
+            tokenId: String? = this.tokenId,
+            transform: DrawTransform? = this.transform,
+            font: UiFont? = this.font,
+            page: Int = this.page,
+        ): Glyph = Glyph(x, y, w, h, u0, v0, u1, v1, color, tokenId, transform, font, page, decoration)
+    }
 
     /**
      * Renderer-neutral filled shape primitive.
@@ -460,7 +497,7 @@ fun <T : DrawCommand> T.scaledByAlpha(factor: Float): T {
     val res = when (this) {
         is DrawCommand.Quad -> copy(color = color.withAlpha(color.a * factor))
         is DrawCommand.RoundedQuad -> copy(color = color.withAlpha(color.a * factor))
-        is DrawCommand.Glyph -> copy(color = color.withAlpha(color.a * factor))
+        is DrawCommand.Glyph -> copy(color = color.withAlpha(color.a * factor), decoration = decoration?.dimmedBy(factor))
         is DrawCommand.FilledPath -> copy(color = color.withAlpha(color.a * factor))
         is DrawCommand.StrokedPath -> copy(color = color.withAlpha(color.a * factor))
         is DrawCommand.GradientQuad -> copy(
@@ -526,7 +563,12 @@ fun UiDrawPrimitive.translatedBy(dx: Float, dy: Float): UiDrawPrimitive = when (
     is UiDrawPrimitive.Quad -> copy(x = x + dx, y = y + dy, transform = transform?.translatedBy(dx, dy))
     is UiDrawPrimitive.GradientQuad -> copy(x = x + dx, y = y + dy)
     is UiDrawPrimitive.RoundedQuad -> copy(x = x + dx, y = y + dy, transform = transform?.translatedBy(dx, dy))
-    is UiDrawPrimitive.Glyph -> copy(x = x + dx, y = y + dy, transform = transform?.translatedBy(dx, dy))
+    is UiDrawPrimitive.Glyph -> copy(
+        x = x + dx,
+        y = y + dy,
+        transform = transform?.translatedBy(dx, dy),
+        decoration = decoration?.mapped(1f, 1f, dx, dy),
+    )
     is UiDrawPrimitive.FilledPath -> copy(path = path.transform(translateX = dx, translateY = dy))
     is UiDrawPrimitive.StrokedPath -> copy(path = path.transform(translateX = dx, translateY = dy))
     is UiDrawPrimitive.Mesh -> copy(offsetX = offsetX + dx, offsetY = offsetY + dy)

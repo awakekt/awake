@@ -25,6 +25,7 @@ import com.awakekt.awake.vulkan.pipeline.UiShaderPairs
 private val SHIPPED_SETS = mapOf(
     "ui_quad" to EngineShaderSets.UiQuad,
     "ui_glyph" to EngineShaderSets.UiGlyph,
+    "ui_decorated_glyph" to EngineShaderSets.UiDecoratedGlyph,
     "ui_texture" to EngineShaderSets.UiTexture,
     "ui_rounded_quad" to EngineShaderSets.UiRoundedQuad,
     "ui_target_composite" to EngineShaderSets.UiTargetComposite,
@@ -80,4 +81,5 @@ suspend fun defaultUiShaderPairs(): UiShaderPairs = UiShaderPairs(
     glyph = packShaderPair("ui_glyph"),
     texture = packShaderPair("ui_texture"),
     roundedQuad = packShaderPair("ui_rounded_quad"),
+    decoratedGlyph = packShaderPair("ui_decorated_glyph"),
 )

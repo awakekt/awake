@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.vulkan.renderer
 
+import com.awakekt.awake.core.geometry.VertexFormats2D
 import com.awakekt.awake.render.passes.GpuResourcePool
 import com.awakekt.awake.vulkan.device.GraphicsDevice
 import com.awakekt.awake.vulkan.mesh.AlphaInstanceBuffer
@@ -28,6 +29,9 @@ internal class GpuBufferPoolManager(
     }
     private val uiGlyphMeshPool = GpuResourcePool {
         DynamicMesh(graphicsDevice, Renderer.MAX_UI_QUADS, DynamicMesh.GLYPH_FLOATS_PER_VERTEX, maxFramesInFlight)
+    }
+    private val uiDecoratedGlyphMeshPool = GpuResourcePool {
+        DynamicMesh(graphicsDevice, Renderer.MAX_UI_QUADS, VertexFormats2D.DECORATED_GLYPH_FLOATS_PER_VERTEX, maxFramesInFlight)
     }
     private val uiRoundedQuadMeshPool = GpuResourcePool {
         DynamicMesh(graphicsDevice, Renderer.MAX_UI_QUADS, DynamicMesh.ROUNDED_QUAD_FLOATS_PER_VERTEX, maxFramesInFlight)
@@ -63,7 +67,7 @@ internal class GpuBufferPoolManager(
     val uiMeshGrowthCount: Int
         get() {
             var total = 0
-            listOf(uiQuadMeshPool, uiGlyphMeshPool, uiRoundedQuadMeshPool, uiTextureMeshPool, imagePassMeshPool)
+            listOf(uiQuadMeshPool, uiGlyphMeshPool, uiDecoratedGlyphMeshPool, uiRoundedQuadMeshPool, uiTextureMeshPool, imagePassMeshPool)
                 .forEach { pool -> pool.forEach { total += it.growthCount } }
             return total
         }
@@ -71,6 +75,7 @@ internal class GpuBufferPoolManager(
     fun quadMeshForRun(index: Int): DynamicMesh = uiQuadMeshPool[index]
     fun roundedQuadMeshForRun(index: Int): DynamicMesh = uiRoundedQuadMeshPool[index]
     fun glyphMeshForRun(index: Int): DynamicMesh = uiGlyphMeshPool[index]
+    fun decoratedGlyphMeshForRun(index: Int): DynamicMesh = uiDecoratedGlyphMeshPool[index]
 
     /** One mesh per textured primitive, not one shared by all of them -- a run's later primitive
      * would otherwise overwrite geometry an earlier, not-yet-submitted draw still points at. */
@@ -86,6 +91,7 @@ internal class GpuBufferPoolManager(
     fun destroy() {
         uiQuadMeshPool.forEach { it.destroy() }
         uiGlyphMeshPool.forEach { it.destroy() }
+        uiDecoratedGlyphMeshPool.forEach { it.destroy() }
         uiRoundedQuadMeshPool.forEach { it.destroy() }
         uiTextureMeshPool.forEach { it.destroy() }
         imagePassMeshPool.forEach { it.destroy() }

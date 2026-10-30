@@ -252,6 +252,7 @@ internal class RendererGpuPassExecutor(
         val height = renderingContext.height.toInt()
         quadPipeline.writeScreenSize(width.toFloat(), height.toFloat())
         renderer.uiGlyphRenderPipeline?.writeScreenSize(width.toFloat(), height.toFloat())
+        renderer.uiDecoratedGlyphRenderPipeline?.writeScreenSize(width.toFloat(), height.toFloat())
         renderer.uiTextureRenderPipelines.values.forEach {
             it.writeScreenSize(width.toFloat(), height.toFloat())
         }

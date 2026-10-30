@@ -122,7 +122,8 @@ val UiGlyphShader: AslShaderDefinition = shader("ui_glyph") {
     val uniforms = uniformBlock("Uniforms", group = 0, binding = 0)
     val screenToNdc by uniforms.field(GpuDataShape.Vec4)
     // Keep the font metadata in a vec4 so the shared UI UBO has an explicit 16-byte field.
-    // x is the atlas kind, y the distance-field range and z the exact-coverage flag (`uiFontInfo`); w is padding.
+    // x is the atlas kind, y the distance-field range and z the exact-coverage flag (`uiFontInfo`); w is the
+    // effect field's range, which only UiDecoratedGlyphShader reads.
     val fontInfo by uniforms.field(GpuDataShape.Vec4)
 
     val fontAtlas by texture2d(group = 0, binding = 1)
@@ -176,49 +177,9 @@ val UiGlyphShader: AslShaderDefinition = shader("ui_glyph") {
         iff(distanceField) {
             assign(coverage, fieldCoverage)
         }
-        // The text coverage rule, one for every glyph whose coverage is the area of the pixel the outline
-        // covers: a distance field's ramp above, and exact-size pixel glyphs (fontInfo.z = 1). It is Skia's
-        // mask gamma with Chromium's Linux constants. The ground is not known here, so it is taken to be the
-        // text's inverse, `1 - textLuma`; the coverage gets a contrast boost that fades out as that ground
-        // darkens; and the two are mixed in light linearised with gamma 1.2. The alpha is what gives that
-        // mix when the blend unit mixes in the target's own encoding. Mid-grey text, whose assumed ground is
-        // itself, takes the boosted coverage. `UiRasterizer.textCoverageAlpha` is the CPU copy of this block,
-        // held to it by TextCoverageRuleTwinTest; the rule and its constants are documented in the UI guide's
-        // "Draw crisp text".
-        val textLinear = let(
-            "textLinear",
-            dot(
-                pow(
-                    max(color.rgb, vec3(0f.lit, 0f.lit, 0f.lit)),
-                    vec3(TEXT_GAMMA.lit, TEXT_GAMMA.lit, TEXT_GAMMA.lit),
-                ),
-                vec3(0.2126f.lit, 0.7152f.lit, 0.0722f.lit),
-            ),
-        )
-        val textLuma = let("textLuma", pow(textLinear, 1f.lit / TEXT_GAMMA.lit))
-        val groundLuma = let("groundLuma", 1f.lit - textLuma)
-        val groundLinear = let("groundLinear", pow(groundLuma, TEXT_GAMMA.lit))
-        val contrasted = let(
-            "contrasted",
-            coverage + (1f.lit - coverage) * TEXT_CONTRAST.lit * groundLinear * coverage,
-        )
-        val mixed = let(
-            "mixed",
-            pow(
-                clamp(textLinear * contrasted + groundLinear * (1f.lit - contrasted), 0f.lit, 1f.lit),
-                1f.lit / TEXT_GAMMA.lit,
-            ),
-        )
-        // |textLuma - groundLuma| < TEXT_SAME_LUMA, with groundLuma = 1 - textLuma.
-        val sameLuma = let(
-            "sameLuma",
-            (textLuma gt (0.5f - TEXT_SAME_LUMA / 2f).lit) and (textLuma lt (0.5f + TEXT_SAME_LUMA / 2f).lit),
-        )
-        val lumaSpan = let("lumaSpan", select(textLuma - groundLuma, 1f.lit, sameLuma))
-        val ruled = let(
-            "ruled",
-            select(clamp((mixed - groundLuma) / lumaSpan, 0f.lit, 1f.lit), contrasted, sameLuma),
-        )
+        // The text coverage rule ([textCoverageRule]), one for every glyph whose coverage is the area of the pixel
+        // the outline covers: a distance field's ramp above, and exact-size pixel glyphs (fontInfo.z = 1).
+        val ruled = textCoverageRule(coverage, color)
         val glyphAlpha = variable("glyphAlpha", atlas.a)
         iff(distanceField or (fontInfo.x lt 0.5f.lit and (fontInfo.z gt 0.5f.lit))) {
             assign(glyphAlpha, ruled)
@@ -230,15 +191,6 @@ val UiGlyphShader: AslShaderDefinition = shader("ui_glyph") {
         colorOutput(outColor)
     }
 }
-
-/** The gamma the text coverage rule mixes text and ground in: Skia's text gamma on Linux, as Chromium sets it. */
-private const val TEXT_GAMMA = 1.2f
-
-/** The text coverage rule's contrast boost over a white ground: Skia's text contrast on Linux, as Chromium sets it. */
-private const val TEXT_CONTRAST = 0.2f
-
-/** How close the text's luma and its assumed ground's may be before the rule takes the boosted coverage as is. */
-private const val TEXT_SAME_LUMA = 1f / 256f
 
 /** ASL definition for the full-target alpha composite pass. */
 val UiTargetCompositeShader: AslShaderDefinition = shader("ui_target_composite") {

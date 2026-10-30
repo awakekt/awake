@@ -292,6 +292,7 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
             texture = wgsl(EngineShaderSets.UiTexture),
             roundedQuad = wgsl(EngineShaderSets.UiRoundedQuad),
             targetComposite = wgsl(EngineShaderSets.UiTargetComposite),
+            decoratedGlyph = wgsl(EngineShaderSets.UiDecoratedGlyph),
         ),
         maxFramesInFlight = FRAMES_IN_FLIGHT,
         renderFeatures = listOf(

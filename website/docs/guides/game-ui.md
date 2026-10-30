@@ -356,8 +356,8 @@ lengths are dp.
 | `borderWidth`, `borderColor` | number, colour | A border inside the element's edge. It needs both. |
 | `shadow` | `{ color, offsetX, offsetY, blur, spread }` | A shadow behind the element, in its shape. Defaults: `#00000080`, 0, 2, 4, 0. |
 | `textColor` | colour | The text of a `Text` or `Button`, in place of `color`. |
-| `textShadow` | `{ color, offsetX, offsetY }` | A hard shadow under the text. Defaults: `#000000C0`, 1, 1. |
-| `textOutline` | `{ color, width }` | An outline around every glyph, so text reads over any background. Defaults: `#000000`, 1. |
+| `textShadow` | `{ color, offsetX, offsetY, blur }` | A shadow under the text, hard unless `blur` softens its edge across that many dp either side; with no offset, a glow. Defaults: `#000000C0`, 1, 1, 0. |
+| `textOutline` | `{ color, width }` | An outline around every glyph, so text reads over any background, drawn with the glyph in one draw from the font's effect field, so a thick one stays round. Defaults: `#000000`, 1. |
 | `alpha` | number, 0 to 1 | The element's opacity, its children included. |
 | `hovered`, `pressed`, `disabled` | state | What changes while the pointer is over a `Button`, while it is held, and while it is disabled. |
 | `transitionSeconds` | number | Seconds to interpolate between states, falling back to `canvas_controls.theme.transitionSeconds`; `0` or unset snaps at once. |

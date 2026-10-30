@@ -37,7 +37,7 @@ import kotlinx.serialization.Serializable
  * @property borderColor The border's colour; a border needs both.
  * @property shadow A shadow cast behind the element, in its shape.
  * @property textColor The colour of a Text's or Button's text, in place of [CanvasElement.color].
- * @property textShadow A hard shadow under a Text's or Button's text.
+ * @property textShadow A shadow under a Text's or Button's text, hard or soft.
  * @property textOutline An outline around a Text's or Button's text.
  * @property alpha The element's opacity, from 0 to 1, its children included.
  * @property hovered What changes while the pointer is over a Button.
@@ -271,17 +271,34 @@ data class CanvasShadow(
 }
 
 /**
- * A hard shadow under an element's text.
+ * A shadow under an element's text: hard by default, softened across [blur] dp either side of its edge.
  *
  * @property color Its colour.
  * @property offsetX How far right it falls, in dp.
  * @property offsetY How far down it falls, in dp.
+ * @property blur How far either side of its edge it fades, in dp; 0 for a hard shadow.
  */
 @Serializable
-data class CanvasTextShadow(val color: String = "#000000C0", val offsetX: Float = 1f, val offsetY: Float = 1f) {
-    internal fun problems(): List<String> = colourProblems("color" to color)
+data class CanvasTextShadow(
+    val color: String = "#000000C0",
+    val offsetX: Float = 1f,
+    val offsetY: Float = 1f,
+    @PropertyRange(min = 0.0) val blur: Float = 0f,
+) {
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(color: String = "#000000C0", offsetX: Float = 1f, offsetY: Float = 1f) : this(color, offsetX, offsetY, 0f)
 
-    internal fun toTextShadow(): TextShadow = TextShadow(colorOf(color, Color.Transparent), offsetX, offsetY)
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(color: String = this.color, offsetX: Float = this.offsetX, offsetY: Float = this.offsetY): CanvasTextShadow =
+        CanvasTextShadow(color, offsetX, offsetY, blur)
+
+    internal fun problems(): List<String> = buildList {
+        addAll(colourProblems("color" to color))
+        if (blur < 0f) add("blur must be 0 or more")
+    }
+
+    internal fun toTextShadow(): TextShadow =
+        TextShadow(colorOf(color, Color.Transparent), offsetX, offsetY, blur.coerceAtLeast(0f))
 }
 
 /**

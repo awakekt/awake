@@ -68,6 +68,7 @@ internal fun Renderer.performDrawUi(
             break
         }
     }
+    if (uiRuns.any { it is DrawRun.GlyphRun && it.decorated }) ensureDecoratedGlyphPipeline()
 }
 
 /** Executes the shared, paint-order-preserving UI pass against an offscreen attachment. */
@@ -83,6 +84,7 @@ internal fun Renderer.performDrawUiToTexture(
     val quad = requireNotNull(uiRenderPipeline)
     quad.writeScreenSize(offscreen.width.toFloat(), offscreen.height.toFloat())
     uiGlyphRenderPipeline?.writeScreenSize(offscreen.width.toFloat(), offscreen.height.toFloat())
+    uiDecoratedGlyphRenderPipeline?.writeScreenSize(offscreen.width.toFloat(), offscreen.height.toFloat())
     uiTextureRenderPipelines.values.forEach {
         it.writeScreenSize(offscreen.width.toFloat(), offscreen.height.toFloat())
     }
@@ -121,6 +123,7 @@ internal fun Renderer.performDrawUiToTexture(
             quad = quad,
             roundedQuad = uiRoundedQuadRenderPipeline,
             glyph = uiGlyphRenderPipeline,
+            decoratedGlyph = uiDecoratedGlyphRenderPipeline,
             textures = uiTextureRenderPipelines,
             textureMeshForPrimitive = ::textureMeshForPrimitive,
             executeImagePass = { chain ->
@@ -201,4 +204,7 @@ private class WebGpuUiMeshUploader(private val renderer: Renderer) : UiMeshUploa
 
     override fun glyphMesh(runIndex: Int, vertices: FloatArray, indices: IntArray): DynamicMesh =
         renderer.glyphMeshForRun(runIndex).also { it.update(vertices, indices) }
+
+    override fun decoratedGlyphMesh(runIndex: Int, vertices: FloatArray, indices: IntArray): DynamicMesh =
+        renderer.decoratedGlyphMeshForRun(runIndex).also { it.update(vertices, indices) }
 }

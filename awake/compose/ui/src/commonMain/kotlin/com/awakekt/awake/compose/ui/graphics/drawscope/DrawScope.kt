@@ -17,6 +17,7 @@ import com.awakekt.awake.core.graphics2d.ColoredTriangleMesh
 import com.awakekt.awake.core.graphics2d.DrawPath
 import com.awakekt.awake.core.graphics2d.DrawStroke
 import com.awakekt.awake.core.graphics2d.FilterQuality
+import com.awakekt.awake.core.graphics2d.GlyphDecoration
 import com.awakekt.awake.core.graphics2d.TextureRegion
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.graphics2d.UiLinearGradient
@@ -184,6 +185,27 @@ interface DrawScope {
         font: UiFont? = null,
         page: Int = 0,
     )
+
+    /**
+     * [drawGlyph] with an outline and a shadow under it, drawn in the glyph's own draw from its font's effect field
+     * (#1061). [decoration]'s rects and lengths are node-local pixels, as [x] and [y] are. A scope that cannot draw a
+     * decoration draws the glyph alone.
+     */
+    @Suppress("LongParameterList")
+    fun drawDecoratedGlyph(
+        x: Float,
+        y: Float,
+        width: Float,
+        height: Float,
+        u0: Float,
+        v0: Float,
+        u1: Float,
+        v1: Float,
+        color: Color,
+        font: UiFont?,
+        page: Int,
+        decoration: GlyphDecoration,
+    ) = drawGlyph(x, y, width, height, u0, v0, u1, v1, color, font, page)
 
     /**
      * Fills [path], whose coordinates are node-local like every other call here.
@@ -870,6 +892,36 @@ internal class PaintScope :
         output += UiDrawPrimitive.Glyph(px, py, pw, ph, u0, v0, u1, v1, color.dimmedBy(alpha), font = font, page = page)
     }
 
+    override fun drawDecoratedGlyph(
+        x: Float,
+        y: Float,
+        width: Float,
+        height: Float,
+        u0: Float,
+        v0: Float,
+        u1: Float,
+        v1: Float,
+        color: Color,
+        font: UiFont?,
+        page: Int,
+        decoration: GlyphDecoration,
+    ) {
+        val px = transform.mapX(originX + x)
+        val py = transform.mapY(originY + y)
+        val pw = width * transform.scaleX
+        val ph = height * transform.scaleY
+        val mapped = decoration.mapped(transform.scaleX, transform.scaleY, transform.mapX(originX), transform.mapY(originY))
+        // Culled by what it draws, its quad grown by the decoration's reach, not by the glyph alone.
+        val reach = mapped.reach
+        if (isFullyOutsideActiveClip(px - reach, py - reach, pw + 2 * reach, ph + 2 * reach)) return
+        output += UiDrawPrimitive.Glyph(
+            px, py, pw, ph, u0, v0, u1, v1, color.dimmedBy(alpha),
+            font = font,
+            page = page,
+            decoration = mapped.dimmedBy(alpha),
+        )
+    }
+
     override fun clipped(inset: Float, block: () -> Unit) {
         clipTo(
             originX + inset,
@@ -1018,7 +1070,7 @@ private fun UiLinearGradient.dimmedBy(alpha: Float): UiLinearGradient = UiLinear
 private fun UiDrawPrimitive.dimmedBy(alpha: Float): UiDrawPrimitive = when (this) {
     is UiDrawPrimitive.Quad -> copy(color = color.dimmedBy(alpha))
     is UiDrawPrimitive.RoundedQuad -> copy(color = color.dimmedBy(alpha))
-    is UiDrawPrimitive.Glyph -> copy(color = color.dimmedBy(alpha))
+    is UiDrawPrimitive.Glyph -> copy(color = color.dimmedBy(alpha), decoration = decoration?.dimmedBy(alpha))
     is UiDrawPrimitive.FilledPath -> copy(color = color.dimmedBy(alpha))
     is UiDrawPrimitive.StrokedPath -> copy(color = color.dimmedBy(alpha))
     is UiDrawPrimitive.ShadowQuad -> copy(color = color.dimmedBy(alpha))

@@ -70,7 +70,25 @@ data class UiShaderSet<T>(
     val roundedQuad: T,
     /** The two-sampler full-target pass used by destination-colour layer composites. */
     val targetComposite: T? = null,
-)
+    /**
+     * Shader payload for a glyph drawn with its outline and shadow in one quad (#1061); null draws no decorated
+     * glyph, so a set built by hand without it leaves outlined text out.
+     */
+    val decoratedGlyph: T? = null,
+) {
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(quad: T, glyph: T, texture: T, roundedQuad: T, targetComposite: T? = null) :
+        this(quad, glyph, texture, roundedQuad, targetComposite, null)
+
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        quad: T = this.quad,
+        glyph: T = this.glyph,
+        texture: T = this.texture,
+        roundedQuad: T = this.roundedQuad,
+        targetComposite: T? = this.targetComposite,
+    ): UiShaderSet<T> = UiShaderSet(quad, glyph, texture, roundedQuad, targetComposite, decoratedGlyph)
+}
 
 /**
  * The pipeline a draw resolves to, or null when this table has no entry for [format].

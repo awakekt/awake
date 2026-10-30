@@ -56,6 +56,7 @@ internal class VulkanFrameContext(
         return UiPipelineSet(
             quad = quad,
             glyph = renderer.uiGlyphRenderPipeline,
+            decoratedGlyph = renderer.uiDecoratedGlyphRenderPipeline,
             textures = renderer.uiTextureRenderPipelines,
             roundedQuad = renderer.uiRoundedQuadRenderPipeline,
             fontAtlases = renderer.fontAtlases,
