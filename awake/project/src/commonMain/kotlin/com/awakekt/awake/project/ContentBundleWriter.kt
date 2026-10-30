@@ -17,7 +17,10 @@ import com.awakekt.awake.core.io.Sha256
  * the same SHA-256 and the same URL, and a publish step uploads only bundles it doesn't already
  * have. Within a group larger than [targetBundleBytes], bundle boundaries are chosen at
  * content-defined hash peaks bounded by [targetBundleBytes], so adding, removing or resizing a file
- * re-packs its own bundle without shifting the boundaries of later bundles in the group.
+ * typically re-packs only its own bundle, or two when that bundle splits, and leaves the boundaries
+ * of later bundles in the group where they were. This is likely rather than guaranteed: a stretch
+ * of files longer than [targetBundleBytes] with no hash peak in it is filled greedily, and a change
+ * inside such a stretch can shift the later bundles up to the stretch's end.
  *
  * A file larger than [targetBundleBytes] gets a bundle of its own. Files of the same content in one
  * bundle are stored once.
@@ -101,7 +104,7 @@ class ContentBundleWriter(
      * The bundles to write, each a list of entries: groups in name order, files in path order, split at
      * content-defined boundaries bounded by [targetBundleBytes].
      */
-    private fun plan(entries: List<ProjectIndexEntry>): List<List<ProjectIndexEntry>> =
+    internal fun plan(entries: List<ProjectIndexEntry>): List<List<ProjectIndexEntry>> =
         entries.sortedBy { it.path }
             .groupBy { grouping.groupOf(it.path) }
             .entries.sortedBy { it.key }
@@ -129,6 +132,11 @@ class ContentBundleWriter(
         return anchorSegments(run, totalBytes).flatMap(::packBounded)
     }
 
+    /**
+     * Splits [run] after every file whose cut is a local digest peak: its digest beats every other
+     * file's within a quarter of the target on either side. The window on each side only moves
+     * forward, so a sliding maximum finds every peak in one pass, O(files) however small they are.
+     */
     private fun anchorSegments(run: List<ProjectIndexEntry>, totalBytes: Long): List<List<ProjectIndexEntry>> {
         val windowBytes = maxOf(1L, targetBundleBytes / CDC_WINDOW_DIVISOR)
         val starts = LongArray(run.size)
@@ -142,13 +150,25 @@ class ContentBundleWriter(
         val digests = Array(run.size) { index ->
             Sha256.digest("${run[index].path}\u0000${run[index].sha256}".encodeToByteArray())
         }
+        val leftMax = DigestWindowMax(digests)
+        val rightMax = DigestWindowMax(digests)
+        // The first file ending within the window before the candidate, and the last file starting
+        // within the window after it; both only move forward as the candidate does.
+        var leftFrom = 0
+        var rightTo = 0
         return buildList {
             var segmentStart = 0
             for (index in 0 until run.lastIndex) {
                 val cut = ends[index]
-                if (cut >= windowBytes && totalBytes - cut >= windowBytes &&
-                    isLocalDigestPeak(index, starts, ends, digests, windowBytes)
-                ) {
+                if (cut < windowBytes || totalBytes - cut < windowBytes) continue
+                while (ends[leftFrom] <= starts[index] - windowBytes) leftFrom++
+                if (rightTo < index) rightTo = index
+                while (rightTo + 1 < run.size && starts[rightTo + 1] - cut < windowBytes) rightTo++
+                val left = leftMax.maxIndex(leftFrom, index - 1)
+                val right = rightMax.maxIndex(index + 1, rightTo)
+                val beatsLeft = left < 0 || compareDigests(digests[index], digests[left]) > 0
+                val beatsRight = right < 0 || compareDigests(digests[index], digests[right]) > 0
+                if (beatsLeft && beatsRight) {
                     add(run.subList(segmentStart, index + 1))
                     segmentStart = index + 1
                 }
@@ -194,29 +214,37 @@ class ContentBundleWriter(
 
 private const val BYTE_MASK: Int = 0xff
 
-private fun isLocalDigestPeak(
-    index: Int,
-    starts: LongArray,
-    ends: LongArray,
-    digests: Array<ByteArray>,
-    windowBytes: Long,
-): Boolean {
-    val candidate = digests[index]
-    val beatsLeft = ((index - 1) downTo 0)
-        .takeWhile { starts[index] - ends[it] < windowBytes }
-        .all { compareDigests(candidate, digests[it]) > 0 }
-    return beatsLeft && ((index + 1) until digests.size)
-        .takeWhile { starts[it] - ends[index] < windowBytes }
-        .all { compareDigests(candidate, digests[it]) > 0 }
+/**
+ * The largest of [digests] over a window whose two ends only ever move forward: a monotonic queue of
+ * indices whose digests decrease, each index pushed and dropped at most once.
+ */
+private class DigestWindowMax(private val digests: Array<ByteArray>) {
+    private val queue = IntArray(digests.size)
+    private var head = 0
+    private var tail = 0
+    private var next = 0
+
+    /**
+     * The index of the largest digest in `from..to`, or -1 for an empty window. Neither [from] nor
+     * [to] may be smaller than in the call before.
+     */
+    fun maxIndex(from: Int, to: Int): Int {
+        while (next <= to) {
+            while (tail > head && compareDigests(digests[queue[tail - 1]], digests[next]) <= 0) tail--
+            queue[tail++] = next++
+        }
+        while (head < tail && queue[head] < from) head++
+        return if (head < tail && from <= to) queue[head] else -1
+    }
 }
 
+/** Compares two digests of one length as unsigned big-endian numbers, without allocating. */
 private fun compareDigests(first: ByteArray, second: ByteArray): Int {
-    val mismatch = first.indices.firstOrNull { first[it] != second[it] }
-    return if (mismatch == null) {
-        0
-    } else {
-        (first[mismatch].toInt() and BYTE_MASK) - (second[mismatch].toInt() and BYTE_MASK)
+    for (index in first.indices) {
+        val difference = (first[index].toInt() and BYTE_MASK) - (second[index].toInt() and BYTE_MASK)
+        if (difference != 0) return difference
     }
+    return 0
 }
 
 /**
