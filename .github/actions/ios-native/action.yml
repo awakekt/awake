@@ -5,8 +5,8 @@
 name: Build the iOS native dependencies
 description: >
   Builds MoltenVK and JoltC for iOS device and simulator, so Kotlin/Native cinterop can find
-  their headers and static libraries. Any job that touches an iOS target needs this -- apiCheck
-  and publishing both pull cinterop into the task graph.
+  their headers and static libraries. Any job that touches an iOS target needs this --
+  cinterop, the iOS tests and publishing all pull it into the task graph.
 
 runs:
   using: composite

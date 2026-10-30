@@ -502,7 +502,8 @@ jobs:
             awake/engine/render/parity/build/reports/
           if-no-files-found: warn
 
-  # The only job on a macOS runner, and the only one that can build or run anything for iOS.
+  # The only job on a macOS runner, and the only one that can build or run anything for iOS: the
+  # iOS natives, cinterop and Kotlin/Native. Verify (verify.yml) runs on Linux and leaves them here.
   # It exists because of measured history, not symmetry: the JoltC backend reached four features
   # deep while aborting on its very first `step` -- a fixed-size temp allocator sized under what
   # Jolt asks for -- and it compiled cleanly throughout. Three of the four physics bugs found on
@@ -511,7 +512,9 @@ jobs:
     name: Physics (iOS)
     needs: platform-impact
     if: needs.platform-impact.outputs.ios == 'true'
-    runs-on: macos-latest
+    # Apple silicon, pinned like build-and-publish.yml. Nothing here needs Intel, whose pool is the
+    # scarcest and is being retired.
+    runs-on: macos-15
     timeout-minutes: 45
 
     steps:
@@ -554,6 +557,12 @@ jobs:
       - name: Verify Naga native library
         shell: bash
         run: test -f awake/asset/shader-compiler/rust-native/target/aarch64-apple-ios-sim/release/libawake_naga.a
+
+      # The tests below link the simulator slices. This compiles the device cinterops against the
+      # device slices the ios-native action just built, which Verify did on Intel before it moved
+      # to Linux.
+      - name: iOS device cinterop and compile (MoltenVK, JoltC)
+        run: ./gradlew :awake:backend:vulkan:bindings:compileKotlinIosArm64 :awake:backend:jolt:compileKotlinIosArm64
 
       - name: Jolt iOS simulator physics tests
         run: ./gradlew :awake:backend:jolt:iosSimulatorArm64Test :awake:scene:physics:iosSimulatorArm64Test :samples:engine-showcase:iosSimulatorArm64Test
