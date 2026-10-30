@@ -24,8 +24,9 @@ Published Maven coordinate: `com.awakekt.awake.core:particles`.
   burst schedules, and per-particle spin ranges shared across 3D, 2D, and canvas emitters.
 - `ParticleSimulation.emit(count)` — immediate one-shot burst into free pool capacity, tracking any
   skipped excess in `droppedParticleCount` without allocating.
-- `ParticleDeathListener` and `ParticleGroundHeight` — `fun interface` hooks for particle deaths and
-  ground height, so neither boxes its `Float` arguments on the step path.
+- `ParticleDeathListener`, `ParticleGroundHeight` and `ParticleSpawnRate` — `fun interface` hooks
+  for particle deaths, ground height and a per-frame spawn rate, so none boxes its `Float`s on the
+  step path.
 
 ## Consumers
 

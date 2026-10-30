@@ -7,13 +7,13 @@ package com.awakekt.awake.scene.scene2d
 
 import com.awakekt.awake.core.particles.ParticleAlphaRamp
 import com.awakekt.awake.core.particles.ParticleDeathListener
+import com.awakekt.awake.core.particles.ParticleSpawnRate
 import com.awakekt.awake.core.particles.ParticleSpawnShape
 import com.awakekt.awake.core.particles.ParticleSpinRange
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.particles.BurstEmitter2DPool
 import com.awakekt.awake.particles.Particle2DSystem
 import com.awakekt.awake.particles.ParticleEmitter2D
-import com.awakekt.awake.particles.ParticleSpawnRate
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.core.transform.TransformSystem
 import com.sun.management.ThreadMXBean
