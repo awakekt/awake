@@ -75,4 +75,9 @@ class DesktopHostTest {
     fun aRefusedUrlIsFalseWhateverTheMachineHas() {
         assertFalse(desktopHostActions().openUrl("file:///etc/passwd"))
     }
+
+    @Test
+    fun aDesktopHasNoOriginAndIsPointerFirst() {
+        assertEquals(LaunchEnvironment(origin = null, primaryInput = PrimaryInput.Pointer), desktopLaunchEnvironment())
+    }
 }

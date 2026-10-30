@@ -1,5 +1,6 @@
 public final class com/awakekt/awake/engine/window/DesktopHostKt {
 	public static final fun desktopHostActions ()Lcom/awakekt/awake/engine/window/HostActions;
+	public static final fun desktopLaunchEnvironment ()Lcom/awakekt/awake/engine/window/LaunchEnvironment;
 	public static final fun desktopLaunchParameters ([Ljava/lang/String;)Lcom/awakekt/awake/engine/window/LaunchParameters;
 }
 
@@ -115,6 +116,32 @@ public abstract interface class com/awakekt/awake/engine/window/HostActions {
 	public abstract fun openUrl (Ljava/lang/String;)Z
 }
 
+public final class com/awakekt/awake/engine/window/LaunchEnvironment {
+	public fun <init> (Lcom/awakekt/awake/engine/window/LaunchOrigin;Lcom/awakekt/awake/engine/window/PrimaryInput;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getOrigin ()Lcom/awakekt/awake/engine/window/LaunchOrigin;
+	public final fun getPrimaryInput ()Lcom/awakekt/awake/engine/window/PrimaryInput;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/engine/window/LaunchOrigin {
+	public static final field Companion Lcom/awakekt/awake/engine/window/LaunchOrigin$Companion;
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Integer;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEffectivePort ()I
+	public final fun getHost ()Ljava/lang/String;
+	public final fun getPort ()Ljava/lang/Integer;
+	public final fun getScheme ()Ljava/lang/String;
+	public fun hashCode ()I
+	public final fun isSecure ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/engine/window/LaunchOrigin$Companion {
+	public final fun fromUrl (Ljava/lang/String;)Lcom/awakekt/awake/engine/window/LaunchOrigin;
+}
+
 public final class com/awakekt/awake/engine/window/LaunchParameters {
 	public static final field Companion Lcom/awakekt/awake/engine/window/LaunchParameters$Companion;
 	public synthetic fun <init> (Ljava/util/Map;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -139,5 +166,13 @@ public final class com/awakekt/awake/engine/window/LaunchParameters$Companion {
 
 public abstract interface class com/awakekt/awake/engine/window/PageReload {
 	public abstract fun reload ()V
+}
+
+public final class com/awakekt/awake/engine/window/PrimaryInput : java/lang/Enum {
+	public static final field Pointer Lcom/awakekt/awake/engine/window/PrimaryInput;
+	public static final field Touch Lcom/awakekt/awake/engine/window/PrimaryInput;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/engine/window/PrimaryInput;
+	public static fun values ()[Lcom/awakekt/awake/engine/window/PrimaryInput;
 }
 
