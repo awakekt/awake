@@ -2,6 +2,10 @@ public final class com/awakekt/awake/asset/shaders/AslDebugLineShaderKt {
 	public static final fun getDebugLineShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 }
 
+public final class com/awakekt/awake/asset/shaders/AslDecoratedGlyphShaderKt {
+	public static final fun getUiDecoratedGlyphShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+}
+
 public final class com/awakekt/awake/asset/shaders/AslUiShadersKt {
 	public static final fun getUiGlyphShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 	public static final fun getUiQuadShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
@@ -66,6 +70,7 @@ public final class com/awakekt/awake/asset/shaders/ContentUpload {
 public final class com/awakekt/awake/asset/shaders/EngineShaderSets {
 	public static final field INSTANCE Lcom/awakekt/awake/asset/shaders/EngineShaderSets;
 	public final fun getDebugLine ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getUiDecoratedGlyph ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getUiGlyph ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getUiQuad ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getUiRoundedQuad ()Lcom/awakekt/awake/asset/shaders/ShaderSet;

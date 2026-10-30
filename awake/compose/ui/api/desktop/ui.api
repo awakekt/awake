@@ -187,6 +187,7 @@ public abstract interface class com/awakekt/awake/compose/ui/draw/ContentDrawSco
 
 public final class com/awakekt/awake/compose/ui/draw/ContentDrawScope$DefaultImpls {
 	public static fun clippedWithMargin (Lcom/awakekt/awake/compose/ui/draw/ContentDrawScope;FFFFLkotlin/jvm/functions/Function0;)V
+	public static fun drawDecoratedGlyph (Lcom/awakekt/awake/compose/ui/draw/ContentDrawScope;FFFFFFFFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/text/font/UiFont;ILcom/awakekt/awake/core/graphics2d/GlyphDecoration;)V
 	public static fun getLayoutDirection (Lcom/awakekt/awake/compose/ui/draw/ContentDrawScope;)Lcom/awakekt/awake/compose/ui/unit/LayoutDirection;
 	public static fun isDevicePixelAligned (Lcom/awakekt/awake/compose/ui/draw/ContentDrawScope;)Z
 }
@@ -690,6 +691,7 @@ public abstract interface class com/awakekt/awake/compose/ui/graphics/drawscope/
 	public fun clippedWithMargin (FFFFLkotlin/jvm/functions/Function0;)V
 	public abstract fun drawBackdropBlur (FFFFFLcom/awakekt/awake/core/color/Color;FFFFLcom/awakekt/awake/core/graphics2d/DrawPath;Lcom/awakekt/awake/core/color/Color;)V
 	public static synthetic fun drawBackdropBlur$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;FFFFFLcom/awakekt/awake/core/color/Color;FFFFLcom/awakekt/awake/core/graphics2d/DrawPath;Lcom/awakekt/awake/core/color/Color;ILjava/lang/Object;)V
+	public fun drawDecoratedGlyph (FFFFFFFFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/text/font/UiFont;ILcom/awakekt/awake/core/graphics2d/GlyphDecoration;)V
 	public abstract fun drawGlyph (FFFFFFFFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/text/font/UiFont;I)V
 	public static synthetic fun drawGlyph$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;FFFFFFFFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/text/font/UiFont;IILjava/lang/Object;)V
 	public abstract fun drawMesh (Lcom/awakekt/awake/core/graphics2d/ColoredTriangleMesh;)V
@@ -718,6 +720,7 @@ public final class com/awakekt/awake/compose/ui/graphics/drawscope/DrawScope$Def
 	public static synthetic fun clippedPath$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;Lcom/awakekt/awake/core/graphics2d/DrawPath;Lcom/awakekt/awake/core/math2d/Rectangle;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
 	public static fun clippedWithMargin (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;FFFFLkotlin/jvm/functions/Function0;)V
 	public static synthetic fun drawBackdropBlur$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;FFFFFLcom/awakekt/awake/core/color/Color;FFFFLcom/awakekt/awake/core/graphics2d/DrawPath;Lcom/awakekt/awake/core/color/Color;ILjava/lang/Object;)V
+	public static fun drawDecoratedGlyph (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;FFFFFFFFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/text/font/UiFont;ILcom/awakekt/awake/core/graphics2d/GlyphDecoration;)V
 	public static synthetic fun drawGlyph$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;FFFFFFFFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/text/font/UiFont;IILjava/lang/Object;)V
 	public static synthetic fun drawRect$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;FFFFLcom/awakekt/awake/core/color/Color;ILjava/lang/Object;)V
 	public static synthetic fun drawRoundedRect$default (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;FFFFLcom/awakekt/awake/core/color/Color;FILjava/lang/Object;)V

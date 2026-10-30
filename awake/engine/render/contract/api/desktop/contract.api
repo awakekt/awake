@@ -577,19 +577,25 @@ public final class com/awakekt/awake/render/command/PreparedDrawResolutionKt {
 }
 
 public final class com/awakekt/awake/render/font/UiFontSamplingInfo {
-	public fun <init> (Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;FIIZ)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;FIIZ)V
+	public fun <init> (Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;FIIZF)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;FIIZFILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;FIIZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;
 	public final fun component2 ()F
 	public final fun component3 ()I
 	public final fun component4 ()I
 	public final fun component5 ()Z
-	public final fun copy (Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;FIIZ)Lcom/awakekt/awake/render/font/UiFontSamplingInfo;
+	public final fun component6 ()F
+	public final synthetic fun copy (Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;FIIZ)Lcom/awakekt/awake/render/font/UiFontSamplingInfo;
+	public final fun copy (Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;FIIZF)Lcom/awakekt/awake/render/font/UiFontSamplingInfo;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/render/font/UiFontSamplingInfo;Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;FIIZFILjava/lang/Object;)Lcom/awakekt/awake/render/font/UiFontSamplingInfo;
 	public static synthetic fun copy$default (Lcom/awakekt/awake/render/font/UiFontSamplingInfo;Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;FIIZILjava/lang/Object;)Lcom/awakekt/awake/render/font/UiFontSamplingInfo;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAtlasHeight ()I
 	public final fun getAtlasWidth ()I
 	public final fun getDistanceFieldRangePx ()F
+	public final fun getEffectFieldRangePx ()F
 	public final fun getLinearCoverage ()Z
 	public final fun getMode ()Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;
 	public fun hashCode ()I
@@ -1654,6 +1660,7 @@ public final class com/awakekt/awake/render/pipeline/UiPipelineDescriptor {
 }
 
 public final class com/awakekt/awake/render/pipeline/UiPipelineVariant : java/lang/Enum {
+	public static final field DecoratedGlyph Lcom/awakekt/awake/render/pipeline/UiPipelineVariant;
 	public static final field Glyph Lcom/awakekt/awake/render/pipeline/UiPipelineVariant;
 	public static final field Quad Lcom/awakekt/awake/render/pipeline/UiPipelineVariant;
 	public static final field RoundedQuad Lcom/awakekt/awake/render/pipeline/UiPipelineVariant;
@@ -1665,16 +1672,22 @@ public final class com/awakekt/awake/render/pipeline/UiPipelineVariant : java/la
 }
 
 public final class com/awakekt/awake/render/pipeline/UiShaderSet {
-	public fun <init> (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V
+	public synthetic fun <init> (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V
 	public synthetic fun <init> (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V
+	public synthetic fun <init> (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/Object;
 	public final fun component2 ()Ljava/lang/Object;
 	public final fun component3 ()Ljava/lang/Object;
 	public final fun component4 ()Ljava/lang/Object;
 	public final fun component5 ()Ljava/lang/Object;
-	public final fun copy (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Lcom/awakekt/awake/render/pipeline/UiShaderSet;
+	public final fun component6 ()Ljava/lang/Object;
+	public final synthetic fun copy (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Lcom/awakekt/awake/render/pipeline/UiShaderSet;
+	public final fun copy (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Lcom/awakekt/awake/render/pipeline/UiShaderSet;
 	public static synthetic fun copy$default (Lcom/awakekt/awake/render/pipeline/UiShaderSet;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;ILjava/lang/Object;)Lcom/awakekt/awake/render/pipeline/UiShaderSet;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/render/pipeline/UiShaderSet;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;ILjava/lang/Object;)Lcom/awakekt/awake/render/pipeline/UiShaderSet;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDecoratedGlyph ()Ljava/lang/Object;
 	public final fun getGlyph ()Ljava/lang/Object;
 	public final fun getQuad ()Ljava/lang/Object;
 	public final fun getRoundedQuad ()Ljava/lang/Object;

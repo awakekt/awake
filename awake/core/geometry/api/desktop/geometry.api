@@ -216,12 +216,14 @@ public final class com/awakekt/awake/core/geometry/VertexFormat$Entry {
 }
 
 public final class com/awakekt/awake/core/geometry/VertexFormats2D {
+	public static final field DECORATED_GLYPH_FLOATS_PER_VERTEX I
 	public static final field FLOATS_PER_VERTEX I
 	public static final field GLYPH_FLOATS_PER_VERTEX I
 	public static final field INDICES_PER_QUAD I
 	public static final field INSTANCE Lcom/awakekt/awake/core/geometry/VertexFormats2D;
 	public static final field ROUNDED_QUAD_FLOATS_PER_VERTEX I
 	public static final field VERTICES_PER_QUAD I
+	public final fun getDecoratedGlyph ()Lcom/awakekt/awake/core/geometry/VertexFormat;
 	public final fun getGlyph ()Lcom/awakekt/awake/core/geometry/VertexFormat;
 	public final fun getQuad ()Lcom/awakekt/awake/core/geometry/VertexFormat;
 	public final fun getRoundedQuad ()Lcom/awakekt/awake/core/geometry/VertexFormat;

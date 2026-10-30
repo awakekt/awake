@@ -559,7 +559,6 @@ public final class com/awakekt/awake/core/graphics2d/FilterQuality : java/lang/E
 }
 
 public final class com/awakekt/awake/core/graphics2d/GlyphDecoration {
-	public static final field EDGE_PX F
 	public fun <init> (FFFFFFFFLcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/color/Color;FFF)V
 	public synthetic fun <init> (FFFFFFFFLcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/color/Color;FFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()F
