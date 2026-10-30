@@ -11,7 +11,9 @@ import kotlinx.serialization.Serializable
  * How a camera picture is composited into a canvas.
  *
  * @property transparent Clears the picture to transparent and omits the scene's sky. Geometry,
- * lighting and fog still render; the panel behind the View shows through uncovered pixels.
+ * lighting and fog still render; the panel behind the View shows through uncovered pixels. The
+ * coverage survives a multisampled plan's resolve. A View draws its camera's scene pass without the
+ * camera's post-processing stack, whose tone mapping and FXAA would overwrite alpha.
  * @property mask The picture's outline. Box uses the style's corner radius; ancestor clips still
  * apply. This masks the picture, not the element's background or its overlay children.
  */

@@ -5,10 +5,18 @@
  */
 package com.awakekt.awake.scene.canvas
 
+import com.awakekt.awake.compose.ui.graphics.RoundedCornerShape
+import com.awakekt.awake.compose.ui.graphics.ShapeOutline
 import com.awakekt.awake.compose.ui.platform.ComposeHost
 import com.awakekt.awake.compose.ui.platform.FrameInput
+import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.color.Color
+import com.awakekt.awake.core.graphics2d.DrawShape
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
+import com.awakekt.awake.core.graphics2d.toPath
+import com.awakekt.awake.core.graphics2d.transform
+import com.awakekt.awake.core.math2d.Rectangle
+import com.awakekt.awake.core.math2d.Size2D
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.core.Name
@@ -90,6 +98,25 @@ class CanvasViewTest {
 
         val clip = drawn.indexOfFirst { it is UiDrawPrimitive.ClipPathPush }
         assertTrue(clip in 0 until drawn.indexOfFirst { it is UiDrawPrimitive.Texture }, "clipped to its corners: $drawn")
+    }
+
+    @Test
+    fun anOpaqueRoundedPictureClipsAsAShapeClipDidAtFractionalScales() {
+        view { style = CanvasStyle(cornerRadius = 8f) }
+
+        for (scale in listOf(1f, 1.37f, 2.5f)) {
+            val drawn = primitives(views, scale = scale)
+            val picture = drawn.filterIsInstance<UiDrawPrimitive.Texture>().single()
+            val clip = drawn.take(drawn.indexOf(picture)).filterIsInstance<UiDrawPrimitive.ClipPathPush>().last()
+            // What `Modifier.clip(RoundedCornerShape(radius.dp))` emitted for the same box: the
+            // outline resolved at the canvas density, as a path placed at the box's origin.
+            val outline = RoundedCornerShape(8.dp).createOutline(Size2D(picture.w, picture.h), scale) as ShapeOutline.Rounded
+            val r = outline.radius
+            val b = outline.bounds
+            val path = DrawShape.RoundedRectangle(r.dp).toPath(b).transform(1f, 1f, picture.x, picture.y)
+            assertEquals(path, clip.path, "corner path at scale $scale")
+            assertEquals(Rectangle(picture.x + r, picture.y + r, b.width - 2 * r, b.height - 2 * r), clip.safeInteriorRect, "unclipped interior at scale $scale")
+        }
     }
 
     @Test

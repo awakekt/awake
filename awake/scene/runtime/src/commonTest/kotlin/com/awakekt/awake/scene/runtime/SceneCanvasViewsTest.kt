@@ -32,6 +32,7 @@ import kotlinx.coroutines.test.runTest
 import kotlin.reflect.KClass
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 /**
@@ -169,6 +170,8 @@ class SceneCanvasViewsTest {
         assertEquals(false, transparent.showSky)
         assertEquals(opaque, renderer.frameInputs.last().environment, "the main frame keeps its sky and clear")
         assertEquals(target, renderer.live.single(), "changing coverage does not reallocate")
+        frame()
+        assertSame(transparent, renderer.viewInputs.last().environment, "an unchanged environment reuses its transparent override")
         portrait.view = null
         frame()
         assertEquals(opaque, renderer.viewInputs.last().environment, "returning to default restores the camera background")

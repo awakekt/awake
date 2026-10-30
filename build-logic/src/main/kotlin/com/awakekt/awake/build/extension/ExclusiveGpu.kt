@@ -7,7 +7,6 @@ package com.awakekt.awake.build.extension
 import org.gradle.api.Task
 import org.gradle.api.services.BuildService
 import org.gradle.api.services.BuildServiceParameters
-import org.gradle.api.tasks.testing.Test
 
 /**
  * A build-wide token held by whichever test or evidence task is currently driving the GPU.
@@ -18,7 +17,8 @@ import org.gradle.api.tasks.testing.Test
 abstract class ExclusiveGpuService : BuildService<BuildServiceParameters.None>
 
 /**
- * Stops [test] running at the same time as any other task that also calls this.
+ * Stops [task] running at the same time as any other task that also calls this: a test task, or an
+ * evidence capture that drives the GPU from a `JavaExec`.
  *
  * Several modules open a real Vulkan device in their tests. Gradle runs independent project
  * tasks in parallel by default, and two processes racing for the same adapter fail in ways that
@@ -30,15 +30,12 @@ abstract class ExclusiveGpuService : BuildService<BuildServiceParameters.None>
  * remembers to add it. Sharing one single-use service means opting in is one call at the point
  * that actually needs it, and modules that never touch the GPU keep running in parallel.
  */
-fun requireExclusiveGpu(test: Test) = requireExclusiveGpu(test as Task)
-
-/** Shares the same device token with evidence captures and other GPU tasks. */
-fun requireExclusiveGpu(test: Task) {
-    val service = test.project.gradle.sharedServices.registerIfAbsent(
+fun requireExclusiveGpu(task: Task) {
+    val service = task.project.gradle.sharedServices.registerIfAbsent(
         "awakeExclusiveGpu",
         ExclusiveGpuService::class.java,
     ) {
         maxParallelUsages.set(1)
     }
-    test.usesService(service)
+    task.usesService(service)
 }

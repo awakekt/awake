@@ -16,11 +16,14 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.geometry.VertexSemantic
 import com.awakekt.awake.core.geometry.generate.generate
+import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.engine.bootstrap.dsl.app
 import com.awakekt.awake.engine.platform.dsl.requireService
 import com.awakekt.awake.render.capture.PixelMap
+import com.awakekt.awake.render.pipeline.MultisampleState
+import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.testing.writePng
 import com.awakekt.awake.scene.authoring.scene
 import com.awakekt.awake.scene.canvas.SceneCanvas
@@ -47,13 +50,22 @@ internal const val VIEW_COVERAGE_SIZE = 256
  * The actual scene runtime requests, renders and samples a camera target. Its upper half contains
  * one unlit red plane, its lower half is empty, and the scene has a blue sky. The canvas underneath
  * is a translucent green/blue gradient, so both RGB and alpha reveal wrong target coverage.
+ *
+ * With a multisampled [multisample], the camera's target is rasterized at that count and resolved
+ * before the canvas samples it; only the panel, transparent, solid and opaque cases are captured,
+ * which is what a resolve could change.
  */
-internal suspend fun captureCanvasViewCoverage(backend: HeadlessUiBackend, out: File): Map<String, ByteArray> {
+internal suspend fun captureCanvasViewCoverage(
+    backend: HeadlessUiBackend,
+    out: File,
+    multisample: MultisampleState = MultisampleState.Single,
+): Map<String, ByteArray> {
     lateinit var runtime: SceneAppLifecycleRuntime
     lateinit var portrait: CanvasElement
     var ancestorClip = false
     var fogVisible = false
-    val plan = coveragePlan { fogVisible }
+    val plan = coveragePlan { fogVisible }.copy(multisample = multisample)
+    val suffix = if (multisample.count > 1) "-msaa${multisample.count}" else ""
     val game = app {
         window { size(VIEW_COVERAGE_SIZE, VIEW_COVERAGE_SIZE) }
         scene("view-coverage") {
@@ -75,15 +87,7 @@ internal suspend fun captureCanvasViewCoverage(backend: HeadlessUiBackend, out: 
             game.ready(renderer)
             suspend fun capture(name: String) {
                 repeat(2) { game.update(1f / 60f, VIEW_COVERAGE_SIZE.toFloat(), VIEW_COVERAGE_SIZE.toFloat()) }
-                val target = renderer.createRenderTarget(VIEW_COVERAGE_SIZE, VIEW_COVERAGE_SIZE)
-                val pixels = try {
-                    renderer.drawUiToTexture(target, runtime.uiPrimitives)
-                    renderer.readPixels(target).data.copyOf()
-                } finally {
-                    target.destroy()
-                }
-                captures[name] = pixels
-                PixelMap(VIEW_COVERAGE_SIZE, VIEW_COVERAGE_SIZE, pixels).writePng(File(out, "canvas-view-$name-$backend.png"))
+                captures[name] = renderer.readUi(runtime.uiPrimitives, File(out, "canvas-view-$name$suffix-$backend.png"))
             }
             portrait.visible = false
             capture("panel")
@@ -92,6 +96,10 @@ internal suspend fun captureCanvasViewCoverage(backend: HeadlessUiBackend, out: 
             portrait.camera = "Portrait 1"
             capture("solid")
             portrait.camera = "Portrait 0"
+            portrait.view = null
+            capture("opaque")
+            if (multisample.count > 1) return@use
+            portrait.view = CanvasView(transparent = true)
             portrait.style = CanvasStyle(cornerRadius = 48f)
             capture("rounded")
             portrait.view = CanvasView(transparent = true, mask = CanvasMask.Circle)
@@ -104,9 +112,6 @@ internal suspend fun captureCanvasViewCoverage(backend: HeadlessUiBackend, out: 
             portrait.visible = true
             capture("ancestor")
             ancestorClip = false
-            portrait.view = null
-            capture("opaque")
-            portrait.view = CanvasView(transparent = true)
             fogVisible = true
             capture("fog")
         } finally {
@@ -115,6 +120,19 @@ internal suspend fun captureCanvasViewCoverage(backend: HeadlessUiBackend, out: 
         }
     }
     return captures
+}
+
+/** [primitives] drawn alone into a fresh target, read back and written to [png]. */
+private suspend fun Renderer.readUi(primitives: List<UiDrawPrimitive>, png: File): ByteArray {
+    val target = createRenderTarget(VIEW_COVERAGE_SIZE, VIEW_COVERAGE_SIZE)
+    val pixels = try {
+        drawUiToTexture(target, primitives)
+        readPixels(target).data.copyOf()
+    } finally {
+        target.destroy()
+    }
+    PixelMap(VIEW_COVERAGE_SIZE, VIEW_COVERAGE_SIZE, pixels).writePng(png)
+    return pixels
 }
 
 // The showcase opts only its primary format into blending. This scene also draws textured

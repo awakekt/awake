@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.render.parity
 
+import com.awakekt.awake.render.pipeline.MultisampleState
 import kotlinx.coroutines.runBlocking
 import java.io.File
 import kotlin.math.abs
@@ -32,6 +33,36 @@ class CanvasViewCoverageParityTest {
 
     @Test
     fun webGpuCompositesCoverageAndClipsTheCameraPicture() = verify(HeadlessUiBackend.WebGpu)
+
+    @Test
+    fun vulkanKeepsCoverageThroughTheMultisampleResolve() = verifyMultisampled(HeadlessUiBackend.Vulkan)
+
+    @Test
+    fun webGpuKeepsCoverageThroughTheMultisampleResolve() = verifyMultisampled(HeadlessUiBackend.WebGpu)
+
+    /**
+     * A 4x plan rasterizes the camera's target multisampled and resolves it before the canvas
+     * samples it. The probes sit away from the plane's edges, so a resolve that keeps coverage
+     * reads the same premultiplied values one sample does; one that wrote alpha 1 would turn the
+     * empty half opaque.
+     */
+    private fun verifyMultisampled(backend: HeadlessUiBackend) = runBlocking {
+        val captures = captureCanvasViewCoverage(backend, File("build/reports/render-parity"), MultisampleState(count = 4))
+        fun pixel(name: String, x: Int, y: Int) = captures.getValue(name).let { data ->
+            List(4) { data[(y * VIEW_COVERAGE_SIZE + x) * 4 + it].toInt() and 0xFF }
+        }
+        val panel = pixel("panel", 128, 80)
+        val solid = pixel("solid", 128, 80)
+        val half = pixel("transparent", 128, 80)
+        val expected = List(4) { channel -> ((solid[channel] + panel[channel]) / 2f).toInt() }
+        println("$backend 4x View coverage: panel=$panel solid=$solid half=$half expected=$expected empty=${pixel("transparent", 128, 176)}")
+        assertTrue(solid[0] > 240 && solid[3] == 255, "$backend 4x: control, the camera sees the red plane: $solid")
+        assertTrue(half.zip(expected).all { (actual, wanted) -> abs(actual - wanted) <= 2 }, "$backend 4x: premultiplied coverage after resolve: $half vs $expected")
+        assertEquals(pixel("panel", 128, 176), pixel("transparent", 128, 176), "$backend 4x: the resolve leaves empty camera pixels transparent")
+        val opaque = pixel("opaque", 128, 176)
+        assertEquals(255, opaque[3], "$backend 4x: default View stays opaque")
+        assertTrue(opaque[2] > opaque[0] + 50, "$backend 4x: default View keeps its blue sky: $opaque")
+    }
 
     private fun verify(backend: HeadlessUiBackend) = runBlocking {
         val captures = captureCanvasViewCoverage(backend, File("build/reports/render-parity"))

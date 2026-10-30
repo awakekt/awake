@@ -153,7 +153,8 @@ is how `CanvasOverlay` reaches both without knowing what a `World`, a node or a 
 For a portrait over a translucent or gradient frame, set the focused `canvas_view` component's
 `settings` to `CanvasView(transparent = true)`, or `view = CanvasView(...)` in the prefab
 builder. The runtime clears that camera target to transparent and omits its sky; geometry,
-lighting and fog remain. A `mask = CanvasMask.Circle` clips just the picture; the default
+lighting and fog remain, and the coverage survives a multisampled plan's resolve. A View draws its
+camera's scene pass without the camera's post-processing stack. A `mask = CanvasMask.Circle` clips just the picture; the default
 `Box` mask follows `style.cornerRadius`. Explicit ancestor clips are retained, and the target
 still uses the element's scaled pixel size and safe-area placement. The default stays opaque.
 These settings round-trip through the focused scene binding and normal world export; the

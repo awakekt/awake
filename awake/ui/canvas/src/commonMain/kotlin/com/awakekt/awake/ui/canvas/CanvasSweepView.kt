@@ -63,7 +63,7 @@ internal fun SweepFill(
 }
 
 /** [block] clipped to [mask] over [bounds]: the box itself as a plain clip, any other shape as its path. */
-internal fun DrawScope.masked(mask: DrawShape, bounds: Rectangle, block: () -> Unit) {
+private fun DrawScope.masked(mask: DrawShape, bounds: Rectangle, block: () -> Unit) {
     if (mask == DrawShape.Rectangle) clipped(block = block) else clippedPath(mask.toPath(bounds, density = density), block = block)
 }
 
