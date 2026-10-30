@@ -57,6 +57,16 @@ public final class com/awakekt/awake/core/math/AngleKt {
 	public static final fun getAngleRad (I)F
 }
 
+public abstract interface class com/awakekt/awake/core/math/BoundedVolume {
+	public abstract fun admits (FFFFFF)Z
+	public fun admits (Lcom/awakekt/awake/core/math/Aabb;)Z
+	public abstract fun bounds (Lcom/awakekt/awake/core/math/Aabb;Lcom/awakekt/awake/core/math/Aabb;)Z
+}
+
+public final class com/awakekt/awake/core/math/BoundedVolume$DefaultImpls {
+	public static fun admits (Lcom/awakekt/awake/core/math/BoundedVolume;Lcom/awakekt/awake/core/math/Aabb;)Z
+}
+
 public final class com/awakekt/awake/core/math/Box2 {
 	public static final field DEFAULT_HALF_EXTENT F
 	public fun <init> ()V

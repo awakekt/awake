@@ -3,15 +3,17 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package com.awakekt.awake.scene.rendering.spatial
+package com.awakekt.awake.core.spatial
 
 import com.awakekt.awake.core.math.Aabb
+import com.awakekt.awake.core.math.BoundedVolume
 import com.awakekt.awake.core.math.Frustum
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math.intersects
 import com.awakekt.awake.core.math.squaredDistanceTo
-import com.awakekt.awake.render.passes.ShadowCasterVolume
+import kotlin.math.max
+import kotlin.math.min
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -86,6 +88,23 @@ class SpatialGridTest {
     }
 
     @Test
+    fun aVolumeQueryMatchesTestingEveryEntity() {
+        val random = Random(seed = 1_025)
+        val grid = SpatialGrid(cellSize = 24f)
+        val boxes = scatter(random, count = 400, extent = 500f)
+        boxes.forEach { (id, box) -> grid.insert(id, box) }
+
+        repeat(QUERY_COUNT) {
+            val volume = BoxVolume(randomBox(random, extent = 500f, maxSize = 140f))
+            assertEquals(
+                boxes.filterValues(volume::admits).keys,
+                grid.queryVolume(volume, mutableSetOf()).toSet(),
+                "Volume query disagreed with brute force.",
+            )
+        }
+    }
+
+    @Test
     fun anEntitySpanningSeveralColumnsIsReturnedOnce() {
         val grid = SpatialGrid(cellSize = 4f)
         // 20 units across a 4-unit grid: five columns on each axis, so 25 lists hold this id.
@@ -151,18 +170,18 @@ class SpatialGridTest {
     }
 
     @Test
-    fun anEntityThatRisesWithinItsColumnIsStillACaster() {
-        // A shadowed point light whose cube spans y 45..55 above the entity's column.
+    fun anEntityThatRisesWithinItsColumnIsSeenByVolumeQuery() {
+        // A volume spanning y 45..55 above the entity's column.
         val grid = SpatialGrid(cellSize = 32f)
         grid.insert(1, Aabb(Vec3f(-1f, 0f, -1f), Vec3f(1f, 2f, 1f)))
-        val volume = ShadowCasterVolume().apply { addPointShadow(Vec3f(0f, 50f, 0f), range = 5f) }
-        assertTrue(grid.queryShadowCasters(volume, mutableListOf()).isEmpty(), "On the ground it is out of the light's reach.")
+        val volume = BoxVolume(Aabb(Vec3f(-5f, 45f, -5f), Vec3f(5f, 55f, 5f)))
+        assertTrue(grid.queryVolume(volume, mutableListOf()).isEmpty(), "On the ground it is out of the volume's reach.")
 
         val risen = Aabb(Vec3f(-1f, 49f, -1f), Vec3f(1f, 51f, 1f))
         grid.insert(1, risen)
 
-        assertTrue(volume.admits(risen), "The test scene must put the risen entity in the light's reach.")
-        assertEquals(listOf(1), grid.queryShadowCasters(volume, mutableListOf()).toList(), "Dropped as a caster: its column's height is stale.")
+        assertTrue(volume.admits(risen), "The test scene must put the risen entity in the volume's reach.")
+        assertEquals(listOf(1), grid.queryVolume(volume, mutableListOf()).toList(), "Dropped by volume query: its column's height is stale.")
     }
 
     @Test
@@ -178,6 +197,19 @@ class SpatialGridTest {
 
         val lens = Lens(eye = Vec3f(0f, 55f, 100f), center = Vec3f(0f, 55f, 0f), fovYRadians = 0.1f, near = 1f, far = 200f)
         assertEquals(listOf(1), grid.queryFrustum(lens, ASPECT, mutableListOf()).toList())
+    }
+
+    private class BoxVolume(private val region: Aabb) : BoundedVolume {
+        override fun admits(minX: Float, minY: Float, minZ: Float, maxX: Float, maxY: Float, maxZ: Float): Boolean =
+            minX <= region.max.x && maxX >= region.min.x &&
+                minY <= region.max.y && maxY >= region.min.y &&
+                minZ <= region.max.z && maxZ >= region.min.z
+
+        override fun bounds(content: Aabb, out: Aabb): Boolean {
+            out.min.set(max(content.min.x, region.min.x), max(content.min.y, region.min.y), max(content.min.z, region.min.z))
+            out.max.set(min(content.max.x, region.max.x), min(content.max.y, region.max.y), min(content.max.z, region.max.z))
+            return out.min.x <= out.max.x && out.min.y <= out.max.y && out.min.z <= out.max.z
+        }
     }
 
     private fun scatter(random: Random, count: Int, extent: Float): Map<Int, Aabb> =

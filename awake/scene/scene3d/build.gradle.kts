@@ -26,6 +26,7 @@ kotlin {
             implementation(project(":awake:core:pool"))
             implementation(project(":awake:particles"))
             api(project(":awake:core:color"))
+            api(project(":awake:core:spatial"))
             implementation(project(":awake:core:animation"))
             api(project(":awake:scene:scene-core"))
             api(project(":awake:scene:world"))

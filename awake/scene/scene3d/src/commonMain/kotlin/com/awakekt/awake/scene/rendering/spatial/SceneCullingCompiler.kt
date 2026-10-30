@@ -17,6 +17,7 @@ import com.awakekt.awake.core.math.intersects
 import com.awakekt.awake.core.math.isOccludedBy
 import com.awakekt.awake.core.math.planes
 import com.awakekt.awake.core.math.screenBounds
+import com.awakekt.awake.core.spatial.SpatialGrid
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.passes.ShadowCasterVolume
 import com.awakekt.awake.scene.core.transform.Transform
@@ -113,7 +114,7 @@ internal class SceneCullingCompiler(
             null
         }
 
-        val grid = world.findSpatialIndex()?.grid
+        val grid = world.findSpatialIndex()?.grid?.core
         val visible = grid?.let { visibleByIndex(it, camera, cullingAspect) }
         val casters = shadows?.takeUnless { it.isEmpty }
         return FrameCulling(
@@ -212,7 +213,7 @@ internal class SceneCullingCompiler(
 
     private fun casterIdsByIndex(grid: SpatialGrid, casters: ShadowCasterVolume): MutableSet<Int> {
         casterIds.clear()
-        grid.queryShadowCasters(casters, casterIds)
+        grid.queryVolume(casters, casterIds)
         return casterIds
     }
 

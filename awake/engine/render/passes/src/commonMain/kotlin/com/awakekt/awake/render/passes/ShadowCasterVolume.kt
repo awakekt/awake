@@ -6,6 +6,7 @@
 package com.awakekt.awake.render.passes
 
 import com.awakekt.awake.core.math.Aabb
+import com.awakekt.awake.core.math.BoundedVolume
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.passes.uniforms.EnvironmentUniforms
@@ -32,7 +33,7 @@ import kotlin.math.sqrt
  * Reused frame to frame: [set] rewrites it in place and nothing here allocates once its arrays have
  * grown to the scene's light count.
  */
-class ShadowCasterVolume {
+class ShadowCasterVolume : BoundedVolume {
     private val cascadePlanes = FloatArray(MAX_SHADOW_CASCADES * CASTING_PLANE_FLOATS)
 
     /** Per cascade, the four corners of its far side, then its unit direction toward the light. */
@@ -101,11 +102,11 @@ class ShadowCasterVolume {
     }
 
     /** Whether a caster with world bounds [box] can write a texel of any shadow map. */
-    fun admits(box: Aabb): Boolean = admits(box.min.x, box.min.y, box.min.z, box.max.x, box.max.y, box.max.z)
+    override fun admits(box: Aabb): Boolean = admits(box.min.x, box.min.y, box.min.z, box.max.x, box.max.y, box.max.z)
 
     /** [admits] for a box given as its min and max corners, without building one. */
     @Suppress("LongParameterList")
-    fun admits(minX: Float, minY: Float, minZ: Float, maxX: Float, maxY: Float, maxZ: Float): Boolean =
+    override fun admits(minX: Float, minY: Float, minZ: Float, maxX: Float, maxY: Float, maxZ: Float): Boolean =
         admittedByCascade(minX, minY, minZ, maxX, maxY, maxZ) || admittedByPointShadow(minX, minY, minZ, maxX, maxY, maxZ)
 
     @Suppress("LongParameterList")
@@ -137,7 +138,7 @@ class ShadowCasterVolume {
      * near the horizon, its footprint). This is what lets a spatial index visit a neighbourhood
      * for the casters instead of the whole scene.
      */
-    fun bounds(content: Aabb, out: Aabb): Boolean {
+    override fun bounds(content: Aabb, out: Aabb): Boolean {
         if (isEmpty) return false
         if (unbounded) {
             out.min.set(content.min.x, content.min.y, content.min.z)

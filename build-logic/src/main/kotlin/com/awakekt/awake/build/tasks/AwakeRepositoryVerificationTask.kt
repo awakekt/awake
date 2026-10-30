@@ -70,7 +70,7 @@ abstract class AwakeRepositoryVerificationTask : DefaultTask() {
 
     private fun documentationFailures(): List<String> {
         val modules = listOf(
-            "awake/core", "awake/core/geometry", "awake/core/animation", "awake/asset/gltf",
+            "awake/core", "awake/core/geometry", "awake/core/spatial", "awake/core/animation", "awake/asset/gltf",
             "awake/asset/mesh-optimizer", "awake/asset/shaders", "awake/ecs", "awake/scene",
             "awake/scene/authoring", "awake/scene/scene3d", "awake/engine/render/contract",
             "awake/engine/render/passes", "awake/ui", "awake/ui/shadcn", "awake/core/text",
