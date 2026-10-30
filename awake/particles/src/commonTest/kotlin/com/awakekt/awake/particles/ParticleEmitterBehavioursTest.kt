@@ -187,7 +187,7 @@ class ParticleEmitterBehavioursTest {
         ParticleSystem(PlacedEntities).update(world, 5f)
 
         val particle = plain.alive().single()
-        assertEquals(particle.currentAlpha(), particle.currentAlpha(plain), 1e-6f)
+        assertEquals(0.8f * (1f - particle.age / particle.lifetime), particle.currentAlpha(plain), 1e-6f, "the linear fade")
         assertEquals(0.4f, particle.currentAlpha(plain), 1e-4f)
     }
 

@@ -10,6 +10,7 @@ import java.lang.management.ManagementFactory
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
  * Desktop-only: `currentThreadAllocatedBytes` has no wasm or Native equivalent.
@@ -17,8 +18,19 @@ import kotlin.test.assertEquals
 class ParticleSimulationAllocationTest {
     private val threadBean = ManagementFactory.getThreadMXBean() as ThreadMXBean
 
+    /**
+     * Both hooks are set: a [ParticleGroundHeight] asked for every moving particle and a
+     * [ParticleDeathListener] told of every death, so their calls are measured too.
+     */
     @Test
     fun steadyStateStepAndBurstEmitAllocateZeroBytes() {
+        var groundQueries = 0
+        var deaths = 0
+        val groundHeight = ParticleGroundHeight { x, _ ->
+            groundQueries += 1
+            -GROUND_DEPTH + x * GROUND_SLOPE
+        }
+        val deathListener = ParticleDeathListener { _, _, _ -> deaths += 1 }
         val sim = ParticleSimulation(maxParticles = POOL_CAPACITY, random = Random(99)).apply {
             plane = ParticlePlane.XY
             spawnRate = 600f
@@ -43,25 +55,31 @@ class ParticleSimulationAllocationTest {
             spawnShape.setRectEdge(halfWidth = 32f, halfHeight = 12f)
             alphaRamp.set(fadeInEnd = 0.15f, fadeOutStart = 0.7f)
             spin.set(minDegreesPerSecond = -180f, maxDegreesPerSecond = 180f, randomStartAngle = true)
+            ground.groundHeightProvider = groundHeight
+            ground.restitution = 0.4f
         }
 
         repeat(WARMUP_STEPS) {
             sim.emit(BURST_SIZE)
-            sim.step(FRAME_DELTA)
+            sim.step(FRAME_DELTA, onParticleDeath = deathListener)
         }
+        threadBean.currentThreadAllocatedBytes
+        val queriesBefore = groundQueries
+        val deathsBefore = deaths
 
         val before = threadBean.currentThreadAllocatedBytes
         repeat(MEASURED_STEPS) {
             sim.emit(BURST_SIZE)
-            sim.step(FRAME_DELTA)
+            sim.step(FRAME_DELTA, onParticleDeath = deathListener)
         }
         val after = threadBean.currentThreadAllocatedBytes
 
-        val bytesPerStep = (after - before) / MEASURED_STEPS
+        assertTrue(groundQueries > queriesBefore, "the ground height hook ran in the measured window")
+        assertTrue(deaths > deathsBefore, "the death hook ran in the measured window")
         assertEquals(
             0L,
-            bytesPerStep,
-            "ParticleSimulation.emit() + step() must allocate 0 bytes per frame in steady state",
+            after - before,
+            "ParticleSimulation.emit() + step() with both hooks must allocate 0 bytes over $MEASURED_STEPS steps",
         )
     }
 
@@ -71,5 +89,7 @@ class ParticleSimulationAllocationTest {
         const val WARMUP_STEPS = 2_000
         const val MEASURED_STEPS = 600
         const val FRAME_DELTA = 1f / 60f
+        const val GROUND_DEPTH = 40f
+        const val GROUND_SLOPE = 0.01f
     }
 }

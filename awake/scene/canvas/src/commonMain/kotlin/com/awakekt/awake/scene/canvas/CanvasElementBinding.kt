@@ -61,7 +61,7 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
      */
     fun SceneCanvasElement.applyTo(element: CanvasElement) {
         for (part in element.components()) {
-            if (part !is CanvasRect && part !is CanvasPointerState) element.remove(if (part is CanvasWidget) CanvasWidget::class else part::class)
+            if (part !is CanvasRect && part !is CanvasPointerState) element.remove(if (part is CanvasWidget) CANVAS_WIDGET_TYPE else part::class)
         }
         for (part in toCanvasComponents()) element.set(part.toCanvasPart())
     }

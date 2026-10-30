@@ -101,14 +101,18 @@ data class ProjectContentSpec(
  *
  * [formatVersion] 2 lists loose files only, each at its own `url`. [formatVersion] 3, which
  * [ContentBundleWriter] writes, adds [bundles]: an entry may then name a bundle and its offset in it
- * instead of a `url`, and with [pathIds] set, entries carry opaque ids instead of readable paths. An
- * engine that predates a version refuses it rather than misreading it.
+ * instead of a `url`, and with [pathIds] set, entries carry opaque ids instead of readable paths.
+ * [formatVersion] 4 is a bundled index whose members are sealed, as [encryption] names; every entry
+ * is then a bundle member, and its sealed bytes run [ProjectIndexEntry.sizeBytes] plus
+ * [ProjectBundleEncryption.TAG_BYTES] from its offset. An engine that predates a version refuses it
+ * rather than misreading it.
  *
  * @property formatVersion Transport index format version: [LOOSE_FORMAT_VERSION] or [BUNDLED_FORMAT_VERSION].
  * @property rootPath Base URI mount path for indexed files.
  * @property files List of indexed file entries.
  * @property bundles The content bundles that [files] entries point into; empty in a loose index.
  * @property pathIds How each entry's opaque id is derived from its path, or null when entries carry paths.
+ * @property encryption How bundle members are sealed and which key opens them; null when they aren't.
  */
 @Serializable
 data class ProjectIndex(
@@ -117,7 +121,38 @@ data class ProjectIndex(
     val files: List<ProjectIndexEntry> = emptyList(),
     val bundles: List<ProjectIndexBundle> = emptyList(),
     val pathIds: ProjectPathIds? = null,
+    val encryption: ProjectBundleEncryption? = null,
 ) {
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    constructor(
+        formatVersion: Int = LOOSE_FORMAT_VERSION,
+        rootPath: String = "/project",
+        files: List<ProjectIndexEntry> = emptyList(),
+        bundles: List<ProjectIndexBundle> = emptyList(),
+        pathIds: ProjectPathIds? = null,
+    ) : this(formatVersion, rootPath, files, bundles, pathIds, null)
+
+    /** The copy that predates [encryption], kept for binary compatibility. */
+    @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+    fun copy(
+        formatVersion: Int = this.formatVersion,
+        rootPath: String = this.rootPath,
+        files: List<ProjectIndexEntry> = this.files,
+        bundles: List<ProjectIndexBundle> = this.bundles,
+        pathIds: ProjectPathIds? = this.pathIds,
+    ): ProjectIndex = ProjectIndex(formatVersion, rootPath, files, bundles, pathIds, encryption)
+
+    /**
+     * What [ContentCache] keeps [entry]'s bytes under: its SHA-256, or, in an encrypted index, a
+     * SHA-256 of the key id and that, since the cache then holds the sealed bytes, which differ per key.
+     */
+    fun cacheKeyOf(entry: ProjectIndexEntry): String =
+        encryption?.let { Sha256.digestHex("awake-awkb-v2-cache\n${it.keyId}\n${entry.sha256}") } ?: entry.sha256
+
+    /** How many bytes [entry] takes where it is stored: sealed, in an encrypted index. */
+    fun storedSizeOf(entry: ProjectIndexEntry): Long =
+        entry.sizeBytes + if (encryption != null) ProjectBundleEncryption.TAG_BYTES else 0
+
     /** The index format versions this engine reads. */
     companion object {
         /** An index of loose files, each at its own `url`. */
@@ -125,6 +160,9 @@ data class ProjectIndex(
 
         /** An index whose entries may point into content bundles and may carry opaque ids. */
         const val BUNDLED_FORMAT_VERSION: Int = 3
+
+        /** A bundled index whose members are sealed, as [ProjectIndex.encryption] names. */
+        const val ENCRYPTED_FORMAT_VERSION: Int = 4
     }
 }
 

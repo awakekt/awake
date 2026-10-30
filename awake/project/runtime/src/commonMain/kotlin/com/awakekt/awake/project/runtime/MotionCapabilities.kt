@@ -8,6 +8,7 @@ package com.awakekt.awake.project.runtime
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.particles.Particle2DSystem
 import com.awakekt.awake.particles.ParticleSystem
 import com.awakekt.awake.scene.core.transform.SceneSpinControl
 import com.awakekt.awake.scene.core.transform.SpinControl
@@ -25,10 +26,10 @@ import com.awakekt.awake.scene.rendering.light.DayCycleSystem
 import com.awakekt.awake.scene.rendering.light.SceneDayCycle
 import com.awakekt.awake.scene.rendering.mesh.SceneTextureClips
 import com.awakekt.awake.scene.rendering.mesh.TextureClipSystem
-import com.awakekt.awake.scene.scene2d.Particle2DSystem
 import com.awakekt.awake.scene.scene2d.SceneParticleEmitter2D
 import com.awakekt.awake.scene.scene2d.SceneSpriteClips
 import com.awakekt.awake.scene.scene2d.SpriteClipSystem
+import com.awakekt.awake.scene.scene2d.Transform2DPlacement
 
 /** The name of the system that advances a scene's `sprite_clips` in its schedule. */
 internal const val SPRITE_CLIPS_SYSTEM = "sprite-clips"
@@ -61,7 +62,7 @@ internal object ParticlesCapability : SceneCapability {
     }
 
     override fun plan(scene: SceneDocument, plan: SceneSystemPlan) {
-        if (scene.uses(SceneParticleEmitter2D::class)) plan.frame(PARTICLES_2D_SYSTEM) { Particle2DSystem() }
+        if (scene.uses(SceneParticleEmitter2D::class)) plan.frame(PARTICLES_2D_SYSTEM) { Particle2DSystem(Transform2DPlacement()) }
         if (!scene.uses(SceneParticleEmitter::class) || !plan.hasRenderer) return
         plan.frame("particle-content") { ParticleContentSystem(it.renderer, it.content[CoreSceneContent.ParticleSprites].orEmpty()) }
         plan.frame("particles") { ParticleSystem(TransformPlacement) }

@@ -1,26 +1,3 @@
-public final class com/awakekt/awake/scene/scene2d/BurstEmitter2DPool {
-	public fun <init> ()V
-	public fun <init> (IILkotlin/jvm/functions/Function1;)V
-	public synthetic fun <init> (IILkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun dispose (Lcom/awakekt/awake/ecs/World;)V
-	public final fun getActiveSlotCount ()I
-	public final fun getDroppedBurstCount ()J
-	public final fun getMaxSlots ()I
-	public final fun getSlotMaxParticles ()I
-	public final fun prepare (Lcom/awakekt/awake/ecs/World;)V
-	public final fun spawn (Lcom/awakekt/awake/ecs/World;FFIFLkotlin/jvm/functions/Function1;)Z
-	public final fun spawn (Lcom/awakekt/awake/ecs/World;FFLcom/awakekt/awake/scene/scene2d/SceneParticleEmitter2D;IF)Z
-	public static synthetic fun spawn$default (Lcom/awakekt/awake/scene/scene2d/BurstEmitter2DPool;Lcom/awakekt/awake/ecs/World;FFIFLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Z
-	public static synthetic fun spawn$default (Lcom/awakekt/awake/scene/scene2d/BurstEmitter2DPool;Lcom/awakekt/awake/ecs/World;FFLcom/awakekt/awake/scene/scene2d/SceneParticleEmitter2D;IFILjava/lang/Object;)Z
-}
-
-public final class com/awakekt/awake/scene/scene2d/Particle2DSystem : com/awakekt/awake/ecs/System {
-	public fun <init> ()V
-	public fun <init> (Lkotlin/jvm/functions/Function0;)V
-	public synthetic fun <init> (Lkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun update (Lcom/awakekt/awake/ecs/World;F)V
-}
-
 public final class com/awakekt/awake/scene/scene2d/ParticleEmissionShape2D : java/lang/Enum {
 	public static final field Box Lcom/awakekt/awake/scene/scene2d/ParticleEmissionShape2D;
 	public static final field Companion Lcom/awakekt/awake/scene/scene2d/ParticleEmissionShape2D$Companion;
@@ -37,99 +14,13 @@ public final class com/awakekt/awake/scene/scene2d/ParticleEmissionShape2D$Compa
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class com/awakekt/awake/scene/scene2d/ParticleEmitter2D {
-	public fun <init> ()V
-	public fun <init> (ILkotlin/random/Random;)V
-	public synthetic fun <init> (ILkotlin/random/Random;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun emit (I)I
-	public final fun getAdditive ()Z
-	public final fun getAlphaRamp ()Lcom/awakekt/awake/core/particles/ParticleAlphaRamp;
-	public final fun getBurstCount ()Ljava/lang/Integer;
-	public final fun getBurstSchedule ()Lcom/awakekt/awake/core/particles/ParticleBurstSchedule;
-	public final fun getColumns ()I
-	public final fun getConvergeToOrigin ()Z
-	public final fun getDirectionDegrees ()F
-	public final fun getDrag ()F
-	public final fun getDroppedParticleCount ()J
-	public final fun getDynamicSpawnRate ()Lkotlin/jvm/functions/Function0;
-	public final fun getEnabled ()Z
-	public final fun getEndSize ()Ljava/lang/Float;
-	public final fun getEndTint ()Lcom/awakekt/awake/core/color/Color;
-	public final fun getFrameCount ()I
-	public final fun getFrameRate ()F
-	public final fun getGravityX ()F
-	public final fun getGravityY ()F
-	public final fun getInheritOrientation ()Z
-	public final fun getLifetime ()F
-	public final fun getLiveParticleCount ()I
-	public final fun getLocalSpace ()Z
-	public final fun getMaxLifetime ()Ljava/lang/Float;
-	public final fun getMaxParticles ()I
-	public final fun getMaxSpeed ()Ljava/lang/Float;
-	public final fun getOnParticleDeath ()Lkotlin/jvm/functions/Function2;
-	public final fun getRadialSpeed ()F
-	public final fun getRows ()I
-	public final fun getSimulation ()Lcom/awakekt/awake/core/particles/ParticleSimulation;
-	public final fun getSize ()F
-	public final fun getSortOrder ()I
-	public final fun getSortingLayer ()Ljava/lang/String;
-	public final fun getSpawnRate ()F
-	public final fun getSpawnShape ()Lcom/awakekt/awake/core/particles/ParticleSpawnShape;
-	public final fun getSpeed ()F
-	public final fun getSpin ()Lcom/awakekt/awake/core/particles/ParticleSpinRange;
-	public final fun getSpreadDegrees ()F
-	public final fun getStartAlpha ()F
-	public final fun getTexture ()Ljava/lang/String;
-	public final fun getTint ()Lcom/awakekt/awake/core/color/Color;
-	public final fun getTurbulence ()F
-	public final fun getTurbulenceFrequency ()F
-	public final fun reset ()V
-	public final fun setAdditive (Z)V
-	public final fun setAlphaRamp (Lcom/awakekt/awake/core/particles/ParticleAlphaRamp;)V
-	public final fun setBurstCount (Ljava/lang/Integer;)V
-	public final fun setBurstSchedule (Lcom/awakekt/awake/core/particles/ParticleBurstSchedule;)V
-	public final fun setColumns (I)V
-	public final fun setConvergeToOrigin (Z)V
-	public final fun setDirectionDegrees (F)V
-	public final fun setDrag (F)V
-	public final fun setDynamicSpawnRate (Lkotlin/jvm/functions/Function0;)V
-	public final fun setEnabled (Z)V
-	public final fun setEndSize (Ljava/lang/Float;)V
-	public final fun setEndTint (Lcom/awakekt/awake/core/color/Color;)V
-	public final fun setFrameCount (I)V
-	public final fun setFrameRate (F)V
-	public final fun setGravityX (F)V
-	public final fun setGravityY (F)V
-	public final fun setInheritOrientation (Z)V
-	public final fun setLifetime (F)V
-	public final fun setLocalSpace (Z)V
-	public final fun setMaxLifetime (Ljava/lang/Float;)V
-	public final fun setMaxSpeed (Ljava/lang/Float;)V
-	public final fun setOnParticleDeath (Lkotlin/jvm/functions/Function2;)V
-	public final fun setRadialSpeed (F)V
-	public final fun setRows (I)V
-	public final fun setSize (F)V
-	public final fun setSortOrder (I)V
-	public final fun setSortingLayer (Ljava/lang/String;)V
-	public final fun setSpawnRate (F)V
-	public final fun setSpawnShape (Lcom/awakekt/awake/core/particles/ParticleSpawnShape;)V
-	public final fun setSpeed (F)V
-	public final fun setSpin (Lcom/awakekt/awake/core/particles/ParticleSpinRange;)V
-	public final fun setSpreadDegrees (F)V
-	public final fun setStartAlpha (F)V
-	public final fun setTexture (Ljava/lang/String;)V
-	public final fun setTint (Lcom/awakekt/awake/core/color/Color;)V
-	public final fun setTurbulence (F)V
-	public final fun setTurbulenceFrequency (F)V
-}
-
 public final class com/awakekt/awake/scene/scene2d/ParticleEmitter2DBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
 	public static final field INSTANCE Lcom/awakekt/awake/scene/scene2d/ParticleEmitter2DBinding;
 	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
 	public synthetic fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
 	public fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/scene2d/SceneParticleEmitter2D;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
 	public fun canResolve (Lcom/awakekt/awake/scene/document/SceneComponent;)Z
-	public fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/scene2d/ParticleEmitter2D;)Lcom/awakekt/awake/scene/scene2d/SceneParticleEmitter2D;
+	public fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/particles/ParticleEmitter2D;)Lcom/awakekt/awake/scene/scene2d/SceneParticleEmitter2D;
 	public synthetic fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneComponent;
 	public synthetic fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneComponent;
 	public fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/scene2d/SceneParticleEmitter2D;
@@ -139,10 +30,11 @@ public final class com/awakekt/awake/scene/scene2d/ParticleEmitter2DBinding : co
 }
 
 public final class com/awakekt/awake/scene/scene2d/ParticleEmitter2DBindingKt {
-	public static final fun ParticleEmitter2D (Lcom/awakekt/awake/scene/scene2d/SceneParticleEmitter2D;Lkotlin/random/Random;)Lcom/awakekt/awake/scene/scene2d/ParticleEmitter2D;
-	public static synthetic fun ParticleEmitter2D$default (Lcom/awakekt/awake/scene/scene2d/SceneParticleEmitter2D;Lkotlin/random/Random;ILjava/lang/Object;)Lcom/awakekt/awake/scene/scene2d/ParticleEmitter2D;
-	public static final fun applySceneSettings (Lcom/awakekt/awake/scene/scene2d/ParticleEmitter2D;Lcom/awakekt/awake/scene/scene2d/SceneParticleEmitter2D;)V
-	public static final fun toScene (Lcom/awakekt/awake/scene/scene2d/ParticleEmitter2D;)Lcom/awakekt/awake/scene/scene2d/SceneParticleEmitter2D;
+	public static final fun ParticleEmitter2D (Lcom/awakekt/awake/scene/scene2d/SceneParticleEmitter2D;Lkotlin/random/Random;)Lcom/awakekt/awake/particles/ParticleEmitter2D;
+	public static synthetic fun ParticleEmitter2D$default (Lcom/awakekt/awake/scene/scene2d/SceneParticleEmitter2D;Lkotlin/random/Random;ILjava/lang/Object;)Lcom/awakekt/awake/particles/ParticleEmitter2D;
+	public static final fun applySceneSettings (Lcom/awakekt/awake/particles/ParticleEmitter2D;Lcom/awakekt/awake/scene/scene2d/SceneParticleEmitter2D;)V
+	public static final fun toBurstTemplate (Lcom/awakekt/awake/scene/scene2d/SceneParticleEmitter2D;)Lcom/awakekt/awake/particles/ParticleEmitter2D;
+	public static final fun toScene (Lcom/awakekt/awake/particles/ParticleEmitter2D;)Lcom/awakekt/awake/scene/scene2d/SceneParticleEmitter2D;
 }
 
 public final class com/awakekt/awake/scene/scene2d/Scene2dSceneComponents : com/awakekt/awake/scene/binding/SceneComponentModule {
@@ -689,5 +581,11 @@ public final class com/awakekt/awake/scene/scene2d/TilemapBinding : com/awakekt/
 	public fun getComponentClass ()Lkotlin/reflect/KClass;
 	public fun getSchemaClass ()Lkotlin/reflect/KClass;
 	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/scene2d/Transform2DPlacement : com/awakekt/awake/particles/EmitterPlacement {
+	public fun <init> ()V
+	public fun orientation-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/core/math/Mat4;
+	public fun position-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/core/math/Vec3f;)Z
 }
 

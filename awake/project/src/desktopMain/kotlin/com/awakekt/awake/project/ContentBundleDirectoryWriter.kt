@@ -108,7 +108,8 @@ object ContentBundleDirectoryWriter {
 internal object ContentBundleGradleWorker {
     /**
      * Runs [ContentBundleDirectoryWriter.write] with a writer built from the task's settings: [grouping]
-     * is `"folder"` or `"one"`, and [pathSalt] is required when [opaqueIds] is `true`.
+     * is `"folder"` or `"one"`, and [pathSalt] is required when [opaqueIds] is `true`. With [keyId], the
+     * members are sealed under the key read from [keyFile] or the environment variable [keyEnvironmentVariable].
      *
      * @return `[bundles, files, bytes, written]`.
      */
@@ -125,6 +126,9 @@ internal object ContentBundleGradleWorker {
         pathSalt: String?,
         bundleUrlPrefix: String,
         pruneStaleBundles: Boolean,
+        keyId: String?,
+        keyFile: File?,
+        keyEnvironmentVariable: String?,
     ): LongArray {
         val resolvedGrouping = when (grouping) {
             "folder" -> ContentBundleGrouping.byFolder(folderDepth)
@@ -142,8 +146,15 @@ internal object ContentBundleGradleWorker {
             targetBundleBytes = targetBundleBytes,
             pathIds = pathIds,
             bundleUrlPrefix = bundleUrlPrefix,
+            encryption = keyId?.let { bundleKey(it, keyFile, keyEnvironmentVariable) },
         )
         val report = ContentBundleDirectoryWriter.write(indexFile, projectRoot, outputDirectory, writer, pruneStaleBundles)
         return longArrayOf(report.bundles.toLong(), report.files.toLong(), report.bytes, report.written.toLong())
     }
+}
+
+/** The key [keyId] from exactly one of [file] and the environment variable [variable]. */
+internal fun bundleKey(keyId: String, file: File?, variable: String?): BundleEncryptionKey {
+    require((file == null) != (variable == null)) { "A bundle key id needs exactly one of a key file and a key environment variable" }
+    return if (file != null) BundleKeyFiles.read(keyId, file) else BundleKeyFiles.fromEnvironment(keyId, variable!!)
 }

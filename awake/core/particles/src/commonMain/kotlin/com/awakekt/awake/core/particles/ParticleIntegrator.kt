@@ -23,7 +23,7 @@ private const val TURB_TIME_Z_COS: Float = 0.9f
 internal fun advanceSimulationSlots(
     sim: ParticleSimulation,
     delta: Float,
-    onDeath: ((x: Float, y: Float, z: Float) -> Unit)?,
+    onDeath: ParticleDeathListener?,
 ) {
     val max = sim.maxParticles
     val dragFactor = if (sim.drag > 0f) (1f - sim.drag * delta).coerceAtLeast(0f) else 1f
@@ -32,7 +32,7 @@ internal fun advanceSimulationSlots(
             val nextAge = sim.age[slot] + delta
             sim.age[slot] = nextAge
             if (nextAge >= sim.lifetime[slot]) {
-                onDeath?.invoke(sim.posX[slot], sim.posY[slot], sim.posZ[slot])
+                onDeath?.onDeath(sim.posX[slot], sim.posY[slot], sim.posZ[slot])
                 resetSlot(sim, slot)
             } else if (!sim.settled[slot]) {
                 integrateMovingSlot(sim, slot, delta, dragFactor)
@@ -114,7 +114,7 @@ private fun clampToGroundIfNeeded(
 
 private fun resolveGroundHeight(ground: ParticleGroundConfig, x: Float, z: Float): Float {
     val provider = ground.groundHeightProvider
-    if (provider != null) return provider(x, z)
+    if (provider != null) return provider.heightAt(x, z)
     val colliderY = colliderTopAt(ground.colliders, x, z)
     return when {
         !colliderY.isNaN() -> colliderY

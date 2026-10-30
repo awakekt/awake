@@ -6,24 +6,34 @@
 package com.awakekt.awake.particles
 
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.core.math.Vec4
 import com.awakekt.awake.core.particles.ParticleSimulation
 
 /**
  * Test-only view over one slot of [ParticleSimulation] so existing unit assertions on
  * `emitter.particles[i]` inspect and tweak the SoA backing arrays without retaining any wrapper
  * objects in production `commonMain`.
+ *
+ * Liveness only changes through the pool ([ParticleSimulation.spawn] and
+ * [ParticleSimulation.clearSlot]), so [ParticleSimulation.liveParticleCount] and
+ * [ParticleSimulation.isComplete] stay true to it.
  */
 internal class ParticleSlotView(
     internal val sim: ParticleSimulation,
     internal val slot: Int,
 ) {
     var alive: Boolean
-        get() = sim.alive[slot]
+        get() = sim.isAlive(slot)
         set(value) {
+            if (value == sim.isAlive(slot)) return
             if (!value) {
                 sim.clearSlot(slot)
-            } else {
-                sim.alive[slot] = true
+                return
+            }
+            // spawn fills the lowest free slot, so this one is next only when every slot before it is live.
+            check((0 until slot).all { sim.isAlive(it) }) { "slot $slot is not the pool's next free slot" }
+            check(sim.spawn(sim.posX[slot], sim.posY[slot], sim.posZ[slot]) && sim.isAlive(slot)) {
+                "slot $slot did not come alive"
             }
         }
 
@@ -89,25 +99,26 @@ internal class ParticleSlotView(
 internal val ParticleEmitter.particles: List<ParticleSlotView>
     get() = List(maxParticles) { ParticleSlotView(simulation, it) }
 
-internal fun ParticleSlotView.currentAlpha(): Float =
-    startAlpha * (1f - (age / lifetime).coerceIn(0f, 1f))
-
+/** This particle's opacity now, from the production [ParticleSimulation.alphaAt] with [emitter]'s settings. */
 internal fun ParticleSlotView.currentAlpha(emitter: ParticleEmitter): Float {
-    val curve = emitter.visual.alphaCurve ?: return currentAlpha()
-    return startAlpha * curve.factorAt(age / lifetime)
+    syncWith(emitter)
+    return sim.alphaAt(slot)
 }
 
+/** This particle's size now, from the production [ParticleSimulation.scaleAt] with [emitter]'s settings. */
 internal fun ParticleSlotView.currentScale(emitter: ParticleEmitter): Float {
-    val endScale = emitter.visual.endScale ?: return scale
-    return scale + (endScale - scale) * (age / lifetime).coerceIn(0f, 1f)
+    syncWith(emitter)
+    return sim.scaleAt(slot)
 }
 
+/** This particle's colour now, from the production colour path the draw builder packs ([writeInstanceColor]). */
 internal fun ParticleSlotView.currentColor(emitter: ParticleEmitter): Vec3f {
-    val t = (age / lifetime).coerceIn(0f, 1f)
-    val visual = emitter.visual
-    return Vec3f(
-        visual.startColor.x + (visual.endColor.x - visual.startColor.x) * t,
-        visual.startColor.y + (visual.endColor.y - visual.startColor.y) * t,
-        visual.startColor.z + (visual.endColor.z - visual.startColor.z) * t,
-    )
+    syncWith(emitter)
+    val color = emitter.writeInstanceColor(slot, Vec4())
+    return Vec3f(color.x, color.y, color.z)
+}
+
+private fun ParticleSlotView.syncWith(emitter: ParticleEmitter) {
+    require(sim === emitter.simulation) { "this slot belongs to another emitter" }
+    emitter.syncToSimulation()
 }

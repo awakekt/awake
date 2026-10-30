@@ -6,6 +6,7 @@
 package com.awakekt.awake.particles
 
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.core.particles.ParticleDeathListener
 import com.awakekt.awake.core.particles.ParticleOrientationBasis
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.System
@@ -35,7 +36,7 @@ class ParticleSystem(private val placement: EmitterPlacement) : System {
     private val deathPosition = Vec3f(0f, 0f, 0f)
     private var activeWorld: World? = null
     private var activeEmitter: ParticleEmitter? = null
-    private val forwardDeath: (Float, Float, Float) -> Unit = { x, y, z ->
+    private val forwardDeath = ParticleDeathListener { x, y, z ->
         deathPosition.set(x, y, z)
         val currentWorld = activeWorld
         val currentEmitter = activeEmitter
@@ -79,7 +80,11 @@ class ParticleSystem(private val placement: EmitterPlacement) : System {
         if (isTopLevel) sharedOrientation.setFromMatrix(placement.orientation(world, entity))
         emitter.syncToSimulation()
         emitter.simulation.orientation.copyFrom(sharedOrientation)
-        val rateProvider = emitter.dynamics.dynamicSpawnRate
+        val sim = emitter.simulation
+        // The dynamic rate is asked only on the continuous-rate path: a burst cycle replaces the
+        // rate, and an emitter whose burstCount is used up spawns nothing more.
+        val continuousRate = !sim.burstSchedule.enabled && (sim.burstLimit < 0 || sim.spawnedTotal < sim.burstLimit)
+        val rateProvider = if (continuousRate) emitter.dynamics.dynamicSpawnRate else null
         val effectiveRate = if (rateProvider != null) rateProvider() else Float.NaN
         val deathHook = emitter.lifecycle.onParticleDeath
         if (deathHook == null) {

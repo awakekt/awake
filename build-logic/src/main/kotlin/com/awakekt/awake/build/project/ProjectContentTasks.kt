@@ -80,6 +80,15 @@ abstract class ProjectContentExtension @Inject constructor(objects: ObjectFactor
     val bundleUrlPrefix: Property<String> = objects.property(String::class.java)
 
     /**
+     * With a value, `generateContentBundles` seals bundle members under the key this names, read from
+     * [bundleKeyFile] or the environment variable [bundleKeyEnvironmentVariable] (exactly one), never
+     * from the build script. See the encrypted content guide.
+     */
+    val bundleKeyId: Property<String> = objects.property(String::class.java)
+    val bundleKeyFile: RegularFileProperty = objects.fileProperty()
+    val bundleKeyEnvironmentVariable: Property<String> = objects.property(String::class.java)
+
+    /**
      * Whether `generateContentBundles` deletes `.awkb` files under [bundlesOutputDirectory] that the new
      * index doesn't list. On by default only while that folder is inside the build folder: a publish
      * folder that still serves the previous release's bundles keeps them for players mid-update.
@@ -488,6 +497,25 @@ abstract class GenerateContentBundlesTask : DefaultTask() {
     @get:Input
     abstract val pruneStaleBundles: Property<Boolean>
 
+    /** The id of the key bundle members are sealed under, or none for plaintext bundles. */
+    @get:Optional
+    @get:Input
+    abstract val keyId: Property<String>
+
+    /** The key file; read by the worker, never stored by Gradle. [keyFingerprint] tracks its contents. */
+    @get:Internal
+    abstract val keyFile: RegularFileProperty
+
+    /** The environment variable holding the key; read by the worker, never stored by Gradle. */
+    @get:Optional
+    @get:Input
+    abstract val keyEnvironmentVariable: Property<String>
+
+    /** A labelled SHA-256 of the key ([BundleKeyFingerprintSource]), so a new key reruns the task without Gradle keeping the key. */
+    @get:Optional
+    @get:Input
+    abstract val keyFingerprint: Property<String>
+
     @get:Classpath
     abstract val workerClasspath: ConfigurableFileCollection
 
@@ -498,6 +526,12 @@ abstract class GenerateContentBundlesTask : DefaultTask() {
     fun generate() {
         if (opaqueIds.get() && pathSalt.orNull.isNullOrBlank()) {
             throw GradleException("projectContent.bundlePathSalt must be set when bundleOpaqueIds is true")
+        }
+        if (keyId.isPresent && keyFile.isPresent == keyEnvironmentVariable.isPresent) {
+            throw GradleException("projectContent.bundleKeyId needs exactly one of bundleKeyFile and bundleKeyEnvironmentVariable")
+        }
+        if (!keyId.isPresent && (keyFile.isPresent || keyEnvironmentVariable.isPresent)) {
+            throw GradleException("projectContent.bundleKeyFile and bundleKeyEnvironmentVariable need bundleKeyId")
         }
         val queue = workerExecutor.classLoaderIsolation {
             classpath.from(workerClasspath)
@@ -513,6 +547,9 @@ abstract class GenerateContentBundlesTask : DefaultTask() {
             pathSalt.set(this@GenerateContentBundlesTask.pathSalt)
             bundleUrlPrefix.set(this@GenerateContentBundlesTask.bundleUrlPrefix)
             pruneStaleBundles.set(this@GenerateContentBundlesTask.pruneStaleBundles)
+            keyId.set(this@GenerateContentBundlesTask.keyId)
+            keyFile.set(this@GenerateContentBundlesTask.keyFile)
+            keyEnvironmentVariable.set(this@GenerateContentBundlesTask.keyEnvironmentVariable)
         }
         queue.await()
     }
@@ -529,6 +566,9 @@ interface GenerateContentBundlesParameters : WorkParameters {
     val pathSalt: Property<String>
     val bundleUrlPrefix: Property<String>
     val pruneStaleBundles: Property<Boolean>
+    val keyId: Property<String>
+    val keyFile: RegularFileProperty
+    val keyEnvironmentVariable: Property<String>
 }
 
 abstract class GenerateContentBundlesWorkAction : WorkAction<GenerateContentBundlesParameters> {
@@ -549,6 +589,9 @@ abstract class GenerateContentBundlesWorkAction : WorkAction<GenerateContentBund
                 String::class.java,
                 String::class.java,
                 Boolean::class.javaPrimitiveType,
+                String::class.java,
+                File::class.java,
+                String::class.java,
             )
         } catch (failure: ReflectiveOperationException) {
             throw GradleException(
@@ -571,6 +614,9 @@ abstract class GenerateContentBundlesWorkAction : WorkAction<GenerateContentBund
                 parameters.pathSalt.orNull,
                 parameters.bundleUrlPrefix.get(),
                 parameters.pruneStaleBundles.get(),
+                parameters.keyId.orNull,
+                parameters.keyFile.orNull?.asFile,
+                parameters.keyEnvironmentVariable.orNull,
             ) as LongArray
         } catch (failure: InvocationTargetException) {
             val cause = failure.targetException ?: failure

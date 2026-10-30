@@ -63,4 +63,8 @@ tasks.named<Test>("desktopTest") {
     // re-records component baselines.
     System.getProperty("AWAKE_RECORD_SNAPSHOTS")
         ?.let { systemProperty("AWAKE_RECORD_SNAPSHOTS", it) }
+    // The allocation probes count every byte. With escape analysis on, C2 scalar-replaces short-lived
+    // objects such as a class reference made for one read, hiding garbage Android's runtime, which
+    // has no escape analysis, does make (#1169), and moving the count between JVMs (#945).
+    jvmArgs("-XX:-DoEscapeAnalysis")
 }

@@ -79,8 +79,9 @@ jobs:
           if [[ -n "$existing" ]]; then
             gh pr edit "$existing" --body-file "$RUNNER_TEMP/body.md"
           else
-            # Every PR carries a milestone: the earliest one still open.
-            milestone="$(gh api "repos/$GITHUB_REPOSITORY/milestones?state=open&per_page=100" --jq 'sort_by(.number) | .[0].title // empty')"
+            # Every PR carries a milestone: the next release's (older milestones left open hold
+            # carried-over issues, so "the earliest open" would pick a released version).
+            milestone="$(scripts/next-milestone.sh "$GITHUB_REPOSITORY" || true)"
             gh pr create \
               --base main \
               --head "$BRANCH" \

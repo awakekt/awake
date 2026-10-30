@@ -1,0 +1,48 @@
+name: PR milestone
+
+# Every PR carries the milestone of the release it ships in, and Verify's awakeVerify fails one that
+# doesn't. Dependabot can't choose a milestone, so this gives each Dependabot PR the next release's
+# milestone (scripts/next-milestone.sh) and re-runs a Verify that already failed for lacking one.
+#
+# pull_request_target runs this workflow from main with a write token, so it never checks out or runs
+# the PR's code: only main's script and the GitHub API.
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  milestone:
+    name: Milestone
+    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.event.pull_request.milestone == null
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+      actions: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+
+      - name: Set the next release's milestone
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          milestone="$(scripts/next-milestone.sh "$GITHUB_REPOSITORY")" || {
+            echo "::error::No open vX.Y.Z milestone above the latest release; create the next one."
+            exit 1
+          }
+          gh pr edit "$PR" --repo "$GITHUB_REPOSITORY" --milestone "$milestone"
+          echo "PR #$PR -> $milestone" >> "$GITHUB_STEP_SUMMARY"
+          # Verify may have run before the milestone was set; re-run it if it already failed.
+          run="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow verify.yml --commit "$HEAD_SHA" \
+            --json databaseId,status,conclusion --jq '.[0] | select(.status == "completed" and .conclusion == "failure") | .databaseId')"
+          if [[ -n "$run" ]]; then gh run rerun "$run" --repo "$GITHUB_REPOSITORY" --failed; fi

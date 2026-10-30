@@ -3,11 +3,10 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package com.awakekt.awake.scene.scene2d
+package com.awakekt.awake.particles
 
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
-import com.awakekt.awake.scene.core.transform.Transform
 import kotlin.random.Random
 
 private const val DEFAULT_BURST_SLOTS_2D: Int = 32
@@ -18,10 +17,11 @@ private const val DEFAULT_BURST_SLOT_PARTICLES_2D: Int = 64
  * footsteps, and 2D combat bursts with zero per-burst ECS structural churn or heap allocations.
  *
  * Calling [prepare] (or the first [spawn]) creates [maxSlots] disabled entities in the target
- * [World], each holding a pre-allocated [Transform] and [ParticleEmitter2D] of capacity
- * [slotMaxParticles]. Each [spawn] activates a free resident slot in place, sets its world `(x, y, z)`
- * position, runs [ParticleEmitter2D.emit], and arms automatic recycling (`enabled = false`) once
- * the burst's particles finish aging out in [Particle2DSystem].
+ * [World], each holding only a pre-allocated [ParticleEmitter2D] of capacity [slotMaxParticles]. Each
+ * [spawn] activates a free resident slot in place, pins it at its world `(x, y, z)` (so the slot
+ * needs no placement, and [Particle2DSystem] and [appendSpriteDraws] ignore its `localSpace`), emits
+ * the burst, and arms automatic recycling (`enabled = false`) once the burst's particles finish
+ * aging out in [Particle2DSystem].
  *
  * **Overflow policy (skip and count):** when all [maxSlots] slots are currently active, [spawn]
  * skips the burst without evicting an in-flight effect or allocating a new entity, increments
@@ -42,7 +42,6 @@ class BurstEmitter2DPool(
     }
 
     private val slotEntityIds = LongArray(maxSlots)
-    private val slotTransforms = arrayOfNulls<Transform>(maxSlots)
     private val slotEmitters = arrayOfNulls<ParticleEmitter2D>(maxSlots)
     private var preparedWorld: World? = null
     private var nextCursor: Int = 0
@@ -77,15 +76,12 @@ class BurstEmitter2DPool(
         nextCursor = 0
         for (i in 0 until maxSlots) {
             val entity = world.create()
-            val transform = Transform()
             val emitter = ParticleEmitter2D(maxParticles = slotMaxParticles, random = randomFactory(i)).apply {
                 enabled = false
                 pooledForBurst = true
             }
-            world.add(entity, transform)
             world.add(entity, emitter)
             slotEntityIds[i] = entity.packed
-            slotTransforms[i] = transform
             slotEmitters[i] = emitter
         }
     }
@@ -118,7 +114,11 @@ class BurstEmitter2DPool(
     }
 
     /**
-     * Fires a one-shot burst at `(x, y, z)` in [world] configured from authored [settings].
+     * Fires a one-shot burst of [count] particles at `(x, y, z)` in [world], configured as a copy of
+     * [template]: build the template once (`awake:scene:scene2d` builds one from authored settings,
+     * validated) and fire it as often as needed. The copy shares the template's immutable values, so
+     * a burst allocates nothing. [template] itself is never stepped or drawn; give it
+     * `maxParticles = 0`.
      *
      * Returns `true` when a free slot was acquired, or `false` (incrementing [droppedBurstCount])
      * when all [maxSlots] slots are currently active.
@@ -127,8 +127,8 @@ class BurstEmitter2DPool(
         world: World,
         x: Float,
         y: Float,
-        settings: SceneParticleEmitter2D,
-        count: Int = settings.burstCount ?: slotMaxParticles,
+        template: ParticleEmitter2D,
+        count: Int = template.burstCount ?: slotMaxParticles,
         z: Float = 0f,
     ): Boolean {
         prepare(world)
@@ -138,8 +138,7 @@ class BurstEmitter2DPool(
             return false
         }
         val emitter = slotEmitters[slot]
-        emitter?.resetDefaults()
-        emitter?.applySceneSettings(settings)
+        emitter?.copySettingsFrom(template)
         return launchSlot(slot, x, y, z, count)
     }
 
@@ -163,27 +162,20 @@ class BurstEmitter2DPool(
         z: Float,
         count: Int,
     ): Boolean {
-        val transform = slotTransforms[slot]
-        val emitter = slotEmitters[slot]
-        if (transform == null || emitter == null) return false
+        val emitter = slotEmitters[slot] ?: return false
 
-        transform.position.set(x, y, z)
-        transform.rotation.set(0f, 0f, 0f)
-        transform.scale.set(1f, 1f, 1f)
-        transform.computeLocalMatrix()
-
+        emitter.pinned = true
+        emitter.pinnedX = x
+        emitter.pinnedY = y
+        emitter.pinnedZ = z
         val sim = emitter.simulation
         sim.reset()
         emitter.spawnRate = 0f
         emitter.burstCount = null
         emitter.burstSchedule = null
         emitter.syncToSimulation()
-        if (emitter.localSpace) {
-            sim.setOrigin(0f, 0f, 0f)
-            sim.inheritOrientation = false
-        } else {
-            sim.setOrigin(x, y, 0f)
-        }
+        sim.setOrigin(x, y, 0f)
+        sim.inheritOrientation = false
         sim.burstLimit = 0
         val spawned = sim.emit(count)
         emitter.enabled = spawned > 0
@@ -220,7 +212,6 @@ class BurstEmitter2DPool(
 
     private fun clearReferences() {
         slotEntityIds.fill(0L)
-        slotTransforms.fill(null)
         slotEmitters.fill(null)
         preparedWorld = null
         nextCursor = 0

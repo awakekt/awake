@@ -12,6 +12,8 @@ import com.awakekt.awake.core.particles.ParticleSpawnShape
 import com.awakekt.awake.core.particles.ParticleSpinRange
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.particles.BurstEmitter2DPool
+import com.awakekt.awake.particles.ParticleEmitter2D
 import com.awakekt.awake.scene.binding.RegisteredBinding
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneResolutionContext
@@ -32,8 +34,17 @@ fun ParticleEmitter2D(
 ).also { it.applySceneSettings(settings) }
 
 /**
- * Copies every authored property of [settings] onto this [ParticleEmitter2D] and syncs its
- * backing simulation parameters.
+ * A validated burst template for [BurstEmitter2DPool.spawn]: build it once from these authored
+ * settings (this is where invalid settings throw, not mid-game), then fire it as often as needed;
+ * each burst copies it without allocating. Its pool capacity is `0`, so it is never stepped or
+ * drawn itself.
+ */
+fun SceneParticleEmitter2D.toBurstTemplate(): ParticleEmitter2D =
+    ParticleEmitter2D(maxParticles = 0).also { it.applySceneSettings(this) }
+
+/**
+ * Copies every authored property of [settings] onto this [ParticleEmitter2D]. Validates
+ * [settings] first and throws on a problem, so call it at load time, not per frame.
  */
 fun ParticleEmitter2D.applySceneSettings(settings: SceneParticleEmitter2D) {
     val issues = settings.validate("particle_emitter_2d")
@@ -77,7 +88,6 @@ fun ParticleEmitter2D.applySceneSettings(settings: SceneParticleEmitter2D) {
     burstSchedule = settings.burstCycle?.let {
         ParticleBurstSchedule(it.cycleSeconds, it.activeSeconds, it.burstInterval, it.burstSize)
     }
-    syncToSimulation()
 }
 
 /** Exports this live [ParticleEmitter2D] back to its [SceneParticleEmitter2D] document representation. */

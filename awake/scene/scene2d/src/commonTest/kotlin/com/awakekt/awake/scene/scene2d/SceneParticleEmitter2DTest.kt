@@ -6,8 +6,15 @@
 package com.awakekt.awake.scene.scene2d
 
 import com.awakekt.awake.core.color.Color
+import com.awakekt.awake.core.particles.ParticleBurstSchedule
+import com.awakekt.awake.core.particles.ParticleDeathListener
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.particles.BurstEmitter2DPool
+import com.awakekt.awake.particles.DEFAULT_PARTICLE_SORTING_LAYER_2D
+import com.awakekt.awake.particles.Particle2DSystem
+import com.awakekt.awake.particles.ParticleEmitter2D
+import com.awakekt.awake.particles.ParticleSpawnRate
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.binding.SceneResolutionContext
 import com.awakekt.awake.scene.core.transform.Transform
@@ -236,12 +243,13 @@ class SceneParticleEmitter2DTest {
         emitter.emit(1)
         particleSystem.update(world, 0.5f)
 
-        assertTrue(abs(emitter.simulation.posX[0]) < 1e-3f)
-        assertEquals(2f, emitter.simulation.posY[0], 1e-3f)
+        val launched = world.collectSpriteDraws().single().model
+        assertTrue(abs(launched.m03) < 1e-3f)
+        assertEquals(2f, launched.m13, 1e-3f)
 
         playing = false
         particleSystem.update(world, 1f)
-        assertEquals(2f, emitter.simulation.posY[0], 1e-5f, "paused Particle2DSystem must freeze live particles")
+        assertEquals(2f, world.collectSpriteDraws().single().model.m13, 1e-5f, "paused Particle2DSystem must freeze live particles")
     }
 
     @Test
@@ -256,7 +264,7 @@ class SceneParticleEmitter2DTest {
             burstCount = 2
             lifetime = 0.2f
             speed = 0f
-            onParticleDeath = { x, y -> deaths += x to y }
+            onParticleDeath = ParticleDeathListener { x, y, _ -> deaths += x to y }
         }
         world.add(entity, Transform().apply { position.set(3f, -2f, 0f) })
         world.add(entity, emitter)
@@ -270,6 +278,57 @@ class SceneParticleEmitter2DTest {
         assertEquals(2, deaths.size)
         assertEquals(3f, deaths[0].first, 1e-4f)
         assertEquals(-2f, deaths[0].second, 1e-4f)
+    }
+
+    @Test
+    fun zeroCapacityEmitterStepsButSpawnsNothingAndCountsTheDrops() {
+        val world = World()
+        val particleSystem = Particle2DSystem()
+        val entity = world.create()
+        val emitter = ParticleEmitter2D(maxParticles = 0, random = Random(4)).apply {
+            spawnRate = 100f
+            lifetime = 1f
+        }
+        world.add(entity, Transform())
+        world.add(entity, emitter)
+
+        particleSystem.update(world, 0.1f)
+        assertEquals(0, emitter.emit(3))
+        particleSystem.update(world, 0.1f)
+
+        assertEquals(0, emitter.liveParticleCount)
+        assertEquals(3L, emitter.droppedParticleCount, "an explicit emit into an empty pool counts every particle")
+        assertTrue(world.collectSpriteDraws().isEmpty())
+    }
+
+    @Test
+    fun dynamicSpawnRateIsAskedOnlyOnTheContinuousRatePath() {
+        val world = World()
+        val particleSystem = Particle2DSystem()
+        var cycleAsks = 0
+        var cappedAsks = 0
+
+        val cycled = ParticleEmitter2D(maxParticles = 8, random = Random(5)).apply {
+            burstSchedule = ParticleBurstSchedule(cycleSeconds = 1f, activeSeconds = 0.5f, burstInterval = 0.1f, burstSize = 1)
+            dynamicSpawnRate = ParticleSpawnRate { cycleAsks += 1; 50f }
+        }
+        val capped = ParticleEmitter2D(maxParticles = 8, random = Random(6)).apply {
+            spawnRate = 0f
+            burstCount = 2
+            lifetime = 10f
+            dynamicSpawnRate = ParticleSpawnRate { cappedAsks += 1; 100f }
+        }
+        world.add(world.create().also { world.add(it, Transform()) }, cycled)
+        world.add(world.create().also { world.add(it, Transform()) }, capped)
+
+        particleSystem.update(world, 0.1f)
+        assertEquals(0, cycleAsks, "a burst cycle replaces the rate, so the provider is never asked")
+        assertEquals(1, cappedAsks)
+        assertEquals(2, capped.liveParticleCount, "the dynamic rate spawns up to burstCount")
+
+        particleSystem.update(world, 0.1f)
+        particleSystem.update(world, 0.1f)
+        assertEquals(1, cappedAsks, "a used-up burstCount spawns nothing more, so the provider is not asked again")
     }
 
     @Test
@@ -344,8 +403,49 @@ class SceneParticleEmitter2DTest {
         assertTrue(draw.additive)
     }
 
+    @Test
+    fun theEmittersDefaultSortingLayerIsTheScenesDefaultLayer() {
+        assertEquals(SortingLayers.DEFAULT, DEFAULT_PARTICLE_SORTING_LAYER_2D)
+        assertEquals(SortingLayers.DEFAULT, ParticleEmitter2D().sortingLayer)
+    }
+
+    @Test
+    fun aBurstTemplateIsValidatedOnceAndAPooledBurstDrawsWhereItWasFired() {
+        assertFailsWith<IllegalArgumentException> { SceneParticleEmitter2D(lifetime = 0f).toBurstTemplate() }
+
+        val world = World()
+        val pool = BurstEmitter2DPool(maxSlots = 1, slotMaxParticles = 4) { Random(it + 3) }
+        val template = SceneParticleEmitter2D(
+            speed = 0f,
+            lifetime = 1f,
+            burstCount = 3,
+            sortingLayer = "Foreground",
+            sortOrder = 7,
+            localSpace = true,
+        ).toBurstTemplate()
+        assertEquals(0, template.maxParticles)
+
+        assertTrue(pool.spawn(world, x = 5f, y = -2f, template = template, z = 0.5f))
+        Particle2DSystem(Transform2DPlacement()).update(world, 0.1f)
+
+        val layers = SortingLayers(listOf("Background", "Default", "Foreground"))
+        val draws = world.collectSpriteDraws(layers)
+        assertEquals(3, draws.size, "the template's burstCount is the burst's size")
+        for (draw in draws) {
+            assertEquals(5f, draw.model.m03, 1e-4f)
+            assertEquals(-2f, draw.model.m13, 1e-4f)
+            assertEquals(0.5f, draw.model.m23, 1e-4f, "a pooled burst draws at the depth it was fired at")
+            assertEquals(7, draw.sortOrder)
+            assertEquals(layers.rank("Foreground"), draw.sortLayer)
+        }
+    }
+
     private class NoopResolutionContext(override val world: World) : SceneResolutionContext {
         override fun deferNodeLink(targetNodeName: String, onResolved: (target: Entity) -> Unit) = Unit
         override fun recordRequest(request: Any) = Unit
     }
 }
+
+/** The scene's own placement, as the scene runtime wires it. */
+private fun Particle2DSystem(isPlaying: () -> Boolean = { true }): Particle2DSystem =
+    Particle2DSystem(Transform2DPlacement(), isPlaying)

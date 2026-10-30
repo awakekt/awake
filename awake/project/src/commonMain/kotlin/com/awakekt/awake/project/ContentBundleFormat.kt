@@ -13,14 +13,15 @@ import com.awakekt.awake.core.io.Sha256
  *
  * A bundle is a header, a table of contents, then the members' bytes. Every integer is big-endian.
  *
- * * Header, [HEADER_SIZE] bytes: the magic `AWKB`, the format version as 2 bytes ([VERSION]), 2
- *   reserved bytes (zero), the member count as 4 bytes, and the table of contents' size in bytes as
- *   4 bytes.
+ * * Header, [HEADER_SIZE] bytes: the magic `AWKB`, the format version as 2 bytes ([VERSION], or
+ *   [ENCRYPTED_VERSION]), 2 bytes of flags (zero in version 1), the member count as 4 bytes, and the
+ *   table of contents' size in bytes as 4 bytes.
  * * Table of contents, one record per member, sorted by key: the key's UTF-8 length as 2 bytes, the
  *   key (a project path, or an opaque id), the member's offset from the bundle's first byte as 8
  *   bytes, its size as 8 bytes, and its SHA-256 as 32 raw bytes.
  * * Data: each distinct content once, in table order, with no padding. Members with the same bytes
- *   share one offset.
+ *   share one offset. In an encrypted bundle each is sealed, and its record's size is the sealed size
+ *   while its SHA-256 stays the plaintext's.
  *
  * The header and table come first, so a reader with range requests reads the first [HEADER_SIZE]
  * bytes, then the table, without the members. The format has no timestamps and a fixed order, so
@@ -29,8 +30,17 @@ import com.awakekt.awake.core.io.Sha256
  * [IndexedAssetSource] reads a member without parsing the table at all.
  */
 object ContentBundleFormat {
-    /** The format version this engine writes and reads. */
+    /** The format version of a bundle whose members are stored as they are. */
     const val VERSION: Int = 1
+
+    /**
+     * The format version of a bundle whose members are sealed, which [encodeEncrypted] writes. Its
+     * header's reserved field is flags, and [FLAG_MEMBERS_ENCRYPTED], the only flag, is always set.
+     */
+    const val ENCRYPTED_VERSION: Int = 2
+
+    /** The version 2 header flag: each distinct member is sealed as [ProjectBundleEncryption] describes. */
+    const val FLAG_MEMBERS_ENCRYPTED: Int = 1
 
     /** The header's size in bytes: magic, version, reserved, member count and table size. */
     const val HEADER_SIZE: Int = 16
@@ -54,37 +64,69 @@ object ContentBundleFormat {
      * @throws IllegalArgumentException for a repeated, empty or overlong key.
      */
     fun encode(members: List<ContentBundleMember>): ByteArray {
+        val sorted = sortedMembers(members)
+        return assemble(sorted, sorted.map { Sha256.digest(it.bytes) }, sorted.map { it.bytes }, VERSION, flags = 0)
+    }
+
+    /**
+     * Like [encode], with each distinct member sealed under [key] as [ProjectBundleEncryption]
+     * describes: format [ENCRYPTED_VERSION], the same bytes for the same members and key.
+     *
+     * @throws IllegalArgumentException for a repeated, empty or overlong key.
+     */
+    suspend fun encodeEncrypted(members: List<ContentBundleMember>, key: BundleEncryptionKey): ByteArray {
+        val sorted = sortedMembers(members)
+        val digests = sorted.map { Sha256.digest(it.bytes) }
+        val cipher = BundleCipher(key.bytes, key.keyId)
+        val sealed = HashMap<String, ByteArray>()
+        val stored = sorted.mapIndexed { position, member ->
+            val sha256 = digests[position].toHex()
+            sealed[sha256] ?: cipher.seal(member.bytes, sha256).also { sealed[sha256] = it }
+        }
+        return assemble(sorted, digests, stored, ENCRYPTED_VERSION, FLAG_MEMBERS_ENCRYPTED)
+    }
+
+    /** [members] sorted by key, once their keys are distinct, non-empty and short enough. */
+    internal fun sortedMembers(members: List<ContentBundleMember>): List<ContentBundleMember> {
         val sorted = members.sortedBy { it.key }
         sorted.zipWithNext().firstOrNull { (a, b) -> a.key == b.key }?.let { (a, _) ->
             throw IllegalArgumentException("A bundle can't hold two members with the key ${a.key}")
         }
-        val keys = sorted.map { member ->
-            member.key.encodeToByteArray().also { require(it.isNotEmpty() && it.size <= MAX_KEY_BYTES) { "A bundle key must be 1 to $MAX_KEY_BYTES bytes: ${member.key}" } }
+        sorted.forEach { member ->
+            val size = member.key.encodeToByteArray().size
+            require(size in 1..MAX_KEY_BYTES) { "A bundle key must be 1 to $MAX_KEY_BYTES bytes: ${member.key}" }
         }
-        val digests = sorted.map { Sha256.digest(it.bytes) }
+        return sorted
+    }
+
+    /**
+     * The bundle of [sorted] members whose plaintext SHA-256s are [digests], each distinct content
+     * stored once as its entry in [stored], at the offset of the first member that has it.
+     */
+    internal fun assemble(sorted: List<ContentBundleMember>, digests: List<ByteArray>, stored: List<ByteArray>, version: Int, flags: Int): ByteArray {
+        val keys = sorted.map { it.key.encodeToByteArray() }
         val tableSize = keys.sumOf { RECORD_FIXED_BYTES + it.size }
-        // Each distinct content once, at the offset of the first member that has it.
         val offsets = LinkedHashMap<String, Long>()
         var end = (HEADER_SIZE + tableSize).toLong()
-        val placed = sorted.mapIndexed { position, member ->
-            offsets.getOrPut(digests[position].toHex()) { end.also { end += member.bytes.size } }
+        val placed = sorted.indices.map { position ->
+            offsets.getOrPut(digests[position].toHex()) { end.also { end += stored[position].size } }
         }
         require(end <= Int.MAX_VALUE) { "A bundle must be smaller than 2 GiB: $end bytes" }
         val out = ByteWriter(end.toInt())
         out.ascii(MAGIC)
-        out.u16(VERSION)
-        out.u16(0)
+        out.u16(version)
+        out.u16(flags)
         out.u32(sorted.size.toLong())
         out.u32(tableSize.toLong())
-        sorted.forEachIndexed { position, member ->
+        sorted.indices.forEach { position ->
             out.u16(keys[position].size)
             out.bytes(keys[position])
             out.u64(placed[position])
-            out.u64(member.bytes.size.toLong())
+            out.u64(stored[position].size.toLong())
             out.bytes(digests[position])
         }
         val written = HashSet<Long>()
-        sorted.forEachIndexed { position, member -> if (written.add(placed[position])) out.bytes(member.bytes) }
+        sorted.indices.forEach { position -> if (written.add(placed[position])) out.bytes(stored[position]) }
         return out.finish()
     }
 
@@ -100,8 +142,12 @@ object ContentBundleFormat {
         val reader = ByteReader(bytes)
         require(reader.ascii(MAGIC.length) == MAGIC) { "Not a content bundle: it doesn't start with $MAGIC" }
         val version = reader.u16()
-        require(version == VERSION) { "Content bundle format $version isn't one this engine reads (it reads $VERSION)" }
-        reader.u16()
+        require(version == VERSION || version == ENCRYPTED_VERSION) {
+            "Content bundle format $version isn't one this engine reads (it reads $VERSION and $ENCRYPTED_VERSION)"
+        }
+        val flags = reader.u16()
+        val expected = if (version == ENCRYPTED_VERSION) FLAG_MEMBERS_ENCRYPTED else 0
+        require(flags == expected) { "Content bundle format $version with flags $flags isn't one this engine reads" }
         val count = reader.u32()
         val tableSize = reader.u32()
         require(count <= Int.MAX_VALUE && tableSize <= Int.MAX_VALUE - HEADER_SIZE) { "The content bundle header is damaged" }
@@ -144,7 +190,7 @@ class ContentBundleMember(
 /**
  * A bundle's header, as [ContentBundleFormat.readHeader] reads it.
  *
- * @property formatVersion The bundle format version, [ContentBundleFormat.VERSION].
+ * @property formatVersion The bundle format version, [ContentBundleFormat.VERSION] or [ContentBundleFormat.ENCRYPTED_VERSION].
  * @property memberCount How many records the table of contents holds.
  * @property tableOfContentsSize The table of contents' size in bytes.
  */
@@ -155,6 +201,9 @@ data class ContentBundleHeader(
 ) {
     /** Where the members' bytes start: the header and table of contents' combined size. */
     val dataOffset: Int get() = ContentBundleFormat.HEADER_SIZE + tableOfContentsSize
+
+    /** Whether the members are sealed, so each record's size is the sealed size. */
+    val membersEncrypted: Boolean get() = formatVersion == ContentBundleFormat.ENCRYPTED_VERSION
 }
 
 /**
@@ -162,8 +211,8 @@ data class ContentBundleHeader(
  *
  * @property key The member's project path, or its opaque id.
  * @property offset Where the member's bytes start, from the bundle's first byte.
- * @property sizeBytes The member's size in bytes.
- * @property sha256 Lowercase hex-encoded SHA-256 digest of the member's bytes.
+ * @property sizeBytes The member's stored size in bytes: sealed, in an encrypted bundle.
+ * @property sha256 Lowercase hex-encoded SHA-256 digest of the member's plaintext bytes.
  */
 data class ContentBundleTocEntry(
     val key: String,

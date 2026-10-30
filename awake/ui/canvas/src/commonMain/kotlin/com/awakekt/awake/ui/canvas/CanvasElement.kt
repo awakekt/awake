@@ -149,7 +149,11 @@ class CanvasElement : CanvasElementWidgetFields() {
     }
 }
 
-/** The element's component of type [T], or null when it has none; see [CanvasElement.get]. */
+/**
+ * The element's component of type [T], or null when it has none; see [CanvasElement.get]. On the JVM
+ * each call makes a new class reference for [T], so a read every frame passes a type kept in a `val`
+ * to [CanvasElement.get] instead.
+ */
 inline fun <reified T : Any> CanvasElement.get(): T? = get(T::class)
 
 /**

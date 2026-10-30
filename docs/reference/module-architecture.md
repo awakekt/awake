@@ -781,9 +781,15 @@ and 2D sprite emitters from sharing the simulation without violating module laye
   `ParticleAlphaRamp`, `ParticleBurstSchedule`, and `ParticleSpinRange`, depending on `core:math`
   alone — no ECS, scene, or renderer dependency.
 - `awake:particles` delegates its pool storage, emission scheduling, integration, and ground bounce
-  to `ParticleSimulation` (`ParticleEmitter.simulation`) and adds `ParticleEmitter.emit(count)` and
-  `droppedParticleCount` while keeping every 0.27 public signature and fixed-seed 3D RNG call order
-  intact.
+  to an internal `ParticleSimulation` per emitter and adds `ParticleEmitter.emit(count)`,
+  `droppedParticleCount` and `random` while keeping every 0.28 public signature and fixed-seed 3D
+  RNG call order intact.
+- `awake:particles` also holds the 2D emitter: `ParticleEmitter2D` on an internal
+  `ParticleSimulation` in the `XY` plane, stepped by `Particle2DSystem` through an `EmitterPlacement`,
+  with `BurstEmitter2DPool` for one-shot bursts. `scene:scene2d` binds it to `particle_emitter_2d`,
+  places it by `Transform` (`Transform2DPlacement`) and draws it through the sprite batch beside
+  `Sprite` and `tilemap`.
+- Canvas UI emitters (`ui:canvas`) are a planned consumer of the same simulation (#1103).
 
 ## Adding a new module
 

@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.scene2d
 
+import com.awakekt.awake.particles.ParticleEmitter2D
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.descriptors.elementNames
 import java.lang.reflect.Modifier
@@ -63,8 +64,18 @@ class Particle2DExposureTest {
         "onParticleDeath" to "a callback, so it cannot be data",
     )
 
-    /** Backing pool and resident burst-pool flag, not authored options. */
-    private val internalPlumbing: Set<String> = setOf("simulation", "pooledForBurst")
+    /** Backing pool, burst-pool pinning and draw scratch, not authored options. */
+    private val internalPlumbing: Set<String> = setOf(
+        "simulation",
+        "pooledForBurst",
+        "pinned",
+        "pinnedX",
+        "pinnedY",
+        "pinnedZ",
+        "slotModels",
+        "slotTints",
+        "localScratch",
+    )
 
     private val runtimeFields: Set<String> = ParticleEmitter2D::class.java.declaredFields
         .filter { !Modifier.isStatic(it.modifiers) && !it.isSynthetic }

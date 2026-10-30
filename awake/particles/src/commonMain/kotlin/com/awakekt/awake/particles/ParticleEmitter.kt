@@ -12,6 +12,7 @@ import com.awakekt.awake.core.math.Vec4
 import com.awakekt.awake.core.particles.DEFAULT_BOUNCE_STOP_VELOCITY
 import com.awakekt.awake.core.particles.ParticleAlphaRamp
 import com.awakekt.awake.core.particles.ParticleBurstSchedule
+import com.awakekt.awake.core.particles.ParticleGroundHeight
 import com.awakekt.awake.core.particles.ParticlePlane
 import com.awakekt.awake.core.particles.ParticleSimulation
 import com.awakekt.awake.core.particles.UNLIMITED_BURST_COUNT
@@ -20,6 +21,7 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.render.passes.uniforms.ParticleExtraUniformLayout
+import kotlin.random.Random
 
 /**
  * How particles move once spawned -- everything about direction/spread/turbulence lives here,
@@ -211,7 +213,7 @@ const val BOUNCE_STOP_VELOCITY = DEFAULT_BOUNCE_STOP_VELOCITY
 
 /** Spawn/death lifecycle hooks. [burstCount] caps the LIFETIME total spawn count instead of the
  * per-frame rate -- `null` (default) spawns forever; a non-null value stops spawning once that
- * many particles have ever been spawned, and [ParticleSystem] destroys this emitter's own entity
+ * many particles have ever been spawned (a negative value spawns none), and [ParticleSystem] destroys this emitter's own entity
  * once every spawned particle has
  * also died, so a one-shot burst cleans itself up with no caller bookkeeping -- see
  * [spawnParticleBurst]. [onParticleDeath], when set, is called with (world, death position)
@@ -263,8 +265,9 @@ data class ParticleBurstCycle(
  * because gameplay code re-targets it (e.g. handing an emitter off between two casters).
  * [dynamicSpawnRate], when set, is called once per [ParticleSystem.update] and OVERRIDES [ParticleEmitter.spawnRate] for that
  * frame -- the context-driven emission hook: gameplay code can read live state (player speed,
- * distance to a target) and return a rate that reacts to it. `null` (default) always uses the
- * static `spawnRate`. */
+ * distance to a target) and return a rate that reacts to it. It is not called while a
+ * [ParticleLifecycle.burstCycle] replaces the rate, nor once a [ParticleLifecycle.burstCount] is
+ * used up. `null` (default) always uses the static `spawnRate`. */
 data class ParticleDynamics(
     var followEntity: Entity? = null,
     val dynamicSpawnRate: (() -> Float)? = null,
@@ -343,8 +346,34 @@ class ParticleEmitter(
     var dynamics: ParticleDynamics = ParticleDynamics(),
     val children: List<ParticleEmitter> = emptyList(),
 ) {
-    /** Backing structure-of-arrays simulation pool shared across 3D, 2D, and canvas emitters. */
-    val simulation: ParticleSimulation = ParticleSimulation(maxParticles)
+    /**
+     * Backing structure-of-arrays simulation pool. Internal because [syncToSimulation] rewrites its
+     * configuration from this emitter's own fields on every update, draw and [emit], so a change
+     * made on it directly would silently revert.
+     */
+    internal val simulation: ParticleSimulation = ParticleSimulation(maxParticles)
+
+    /**
+     * Pseudo-random source for spawn positions, launch directions, sprite-frame offsets and spin.
+     * [Random.Default] unless set; set a seeded [Random] for repeatable playback.
+     */
+    var random: Random
+        get() = simulation.random
+        set(value) {
+            simulation.random = value
+        }
+
+    /** The [ParticleGround.groundHeightProvider] [groundHeight] forwards to, refreshed by [syncToSimulation]. */
+    private var groundHeightSource: ((x: Float, z: Float) -> Float)? = null
+
+    /**
+     * Adapts [ParticleGround.groundHeightProvider], a released Kotlin function type, to the
+     * simulation's [ParticleGroundHeight], built once per emitter so a sync allocates nothing.
+     */
+    private val groundHeight = ParticleGroundHeight { x, z ->
+        val source = groundHeightSource
+        if (source == null) Float.NaN else source(x, z)
+    }
 
     private val scratchPosition: Vec3f = Vec3f(0f, 0f, 0f)
     private val scratchVelocity: Vec3f = Vec3f(0f, 0f, 0f)
@@ -365,11 +394,12 @@ class ParticleEmitter(
 
     /**
      * Calls [action] with the position and velocity of each live particle, in no particular order.
-     * The vectors are reused across slots, so copy what you keep.
+     * The vectors are scratch copies reused across slots: copy what you keep, and writing through
+     * them does not move the particle.
      */
     fun forEachLiveParticle(action: (position: Vec3f, velocity: Vec3f) -> Unit) {
         for (slot in 0 until maxParticles) {
-            if (simulation.alive[slot]) {
+            if (simulation.isAlive(slot)) {
                 scratchPosition.set(simulation.posX[slot], simulation.posY[slot], simulation.posZ[slot])
                 scratchVelocity.set(simulation.velX[slot], simulation.velY[slot], simulation.velZ[slot])
                 action(scratchPosition, scratchVelocity)
@@ -438,9 +468,8 @@ class ParticleEmitter(
     internal val colorPool: MutableList<Vec4> = ArrayList(maxParticles)
 
     /** Reused every frame by [ParticleDrawBuilder] to hold frustum-visible slot indices and their
-     * squared camera distances so back-to-front sorting allocates zero objects. */
-    internal val visibleIndicesBuffer: IntArray = IntArray(maxParticles)
-    internal val visibleDistancesBuffer: FloatArray = FloatArray(maxParticles)
+     * squared camera distances, and to sort them back to front, allocating zero objects. */
+    internal val depthOrder: ParticleDepthOrder = ParticleDepthOrder(maxParticles)
 
     /** Reused every frame for `RenderDrawCommand.extraUniformFloats` (camera basis + frame info) --
      * written in place instead of `cameraBasis + floatArrayOf(...)`, which allocates a new
@@ -493,22 +522,29 @@ class ParticleEmitter(
             sim.spin.set(sp.minDegreesPerSecond, sp.maxDegreesPerSecond, sp.randomStartAngle)
         }
 
-        val g = ground
-        sim.ground.setGroundY(g.groundY)
-        sim.ground.groundHeightProvider = g.groundHeightProvider
-        sim.ground.colliders = g.colliders
-        sim.ground.restitution = g.restitution
-        sim.ground.friction = g.friction
-        sim.ground.bounceStopVelocity = BOUNCE_STOP_VELOCITY
+        syncGround(sim)
 
         val lc = lifecycle
-        sim.burstLimit = lc.burstCount ?: UNLIMITED_BURST_COUNT
+        // A negative burstCount spawns nothing, as it did before the shared simulation.
+        sim.burstLimit = lc.burstCount?.coerceAtLeast(0) ?: UNLIMITED_BURST_COUNT
         val bc = lc.burstCycle
         if (bc == null) {
             sim.burstSchedule.clear()
         } else {
             sim.burstSchedule.set(bc.cycleSeconds, bc.activeSeconds, bc.burstInterval, bc.burstSize)
         }
+    }
+
+    private fun syncGround(sim: ParticleSimulation) {
+        val g = ground
+        sim.ground.setGroundY(g.groundY)
+        val heightProvider = g.groundHeightProvider
+        groundHeightSource = heightProvider
+        sim.ground.groundHeightProvider = if (heightProvider == null) null else groundHeight
+        sim.ground.colliders = g.colliders
+        sim.ground.restitution = g.restitution
+        sim.ground.friction = g.friction
+        sim.ground.bounceStopVelocity = BOUNCE_STOP_VELOCITY
     }
 
     /** Rewrites every field a fresh burst config supplies, and resets simulation state (spawn
@@ -611,4 +647,21 @@ fun spawnParticleBurst(
     )
     world.add(entity, emitter)
     return entity
+}
+
+/**
+ * Writes [slot]'s colour into [out]: [ParticleVisual.startColor] blended toward
+ * [ParticleVisual.endColor] by how far through its life the particle is, with its current opacity
+ * ([ParticleSimulation.alphaAt]) in `w`. The colour [ParticleDrawBuilder] packs for each instance.
+ */
+internal fun ParticleEmitter.writeInstanceColor(slot: Int, out: Vec4): Vec4 {
+    val sim = simulation
+    val startColor = visual.startColor
+    val endColor = visual.endColor
+    val t = sim.lifeFractionAt(slot)
+    out.x = startColor.x + (endColor.x - startColor.x) * t
+    out.y = startColor.y + (endColor.y - startColor.y) * t
+    out.z = startColor.z + (endColor.z - startColor.z) * t
+    out.w = sim.alphaAt(slot)
+    return out
 }

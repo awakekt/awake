@@ -7,12 +7,19 @@ package com.awakekt.awake.project
 
 private val opaqueIdPattern = Regex("^[0-9a-f]{${ProjectPathIds.ID_LENGTH}}$")
 
-/** [ProjectContentValidator.indexIssueDetails]: every rule a [ProjectIndex] of either version follows. */
+/** [ProjectContentValidator.indexIssueDetails]: every rule a [ProjectIndex] of any version follows. */
 internal fun projectIndexIssueDetails(index: ProjectIndex): List<ProjectContentIssue> = buildList {
-    val bundled = index.formatVersion == ProjectIndex.BUNDLED_FORMAT_VERSION
+    val encrypted = index.formatVersion == ProjectIndex.ENCRYPTED_FORMAT_VERSION
+    val bundled = index.formatVersion == ProjectIndex.BUNDLED_FORMAT_VERSION || encrypted
     if (index.formatVersion != ProjectIndex.LOOSE_FORMAT_VERSION && !bundled) {
-        add(indexInvalid("formatVersion must be ${ProjectIndex.LOOSE_FORMAT_VERSION} or ${ProjectIndex.BUNDLED_FORMAT_VERSION}"))
+        add(
+            indexInvalid(
+                "formatVersion must be ${ProjectIndex.LOOSE_FORMAT_VERSION}, ${ProjectIndex.BUNDLED_FORMAT_VERSION} " +
+                    "or ${ProjectIndex.ENCRYPTED_FORMAT_VERSION}",
+            ),
+        )
     }
+    addAll(encryptionIssues(index, encrypted))
     if (index.rootPath.isBlank()) add(indexInvalid("rootPath must not be blank"))
     if (!bundled && (index.bundles.isNotEmpty() || index.pathIds != null)) {
         add(indexInvalid("bundles and pathIds need formatVersion ${ProjectIndex.BUNDLED_FORMAT_VERSION}"))
@@ -30,7 +37,7 @@ internal fun projectIndexIssueDetails(index: ProjectIndex): List<ProjectContentI
         }
         if (entry.sizeBytes < 0) add(indexInvalid("files[$position].sizeBytes must not be negative"))
         if (!isSha256Digest(entry.sha256)) add(indexInvalid("files[$position].sha256 must be a lowercase SHA-256 digest"))
-        addAll(entryLocationIssues(position, entry, bundles))
+        addAll(entryLocationIssues(position, entry, bundles, index.storedSizeOf(entry)))
     }
 }
 
@@ -65,7 +72,27 @@ private fun entryKeyIssues(position: Int, entry: ProjectIndexEntry, opaque: Bool
     }
 }
 
-private fun entryLocationIssues(position: Int, entry: ProjectIndexEntry, bundles: Map<String, ProjectIndexBundle>): List<ProjectContentIssue> =
+private fun encryptionIssues(index: ProjectIndex, encrypted: Boolean): List<ProjectContentIssue> = buildList {
+    val encryption = index.encryption
+    when {
+        encryption == null -> if (encrypted) add(indexInvalid("formatVersion ${ProjectIndex.ENCRYPTED_FORMAT_VERSION} needs encryption"))
+        !encrypted -> add(indexInvalid("encryption needs formatVersion ${ProjectIndex.ENCRYPTED_FORMAT_VERSION}"))
+        else -> {
+            if (encryption.scheme != ProjectBundleEncryption.SCHEME) add(indexInvalid("encryption.scheme must be ${ProjectBundleEncryption.SCHEME}"))
+            if (encryption.keyId.isBlank()) add(indexInvalid("encryption.keyId must not be blank"))
+            index.files.indexOfFirst { it.bundle == null }.takeIf { it >= 0 }?.let {
+                add(indexInvalid("files[$it] must be a bundle member in an encrypted index"))
+            }
+        }
+    }
+}
+
+private fun entryLocationIssues(
+    position: Int,
+    entry: ProjectIndexEntry,
+    bundles: Map<String, ProjectIndexBundle>,
+    storedSize: Long,
+): List<ProjectContentIssue> =
     buildList {
         if (entry.bundle == null) {
             if (entry.url.isBlank()) add(indexInvalid("files[$position].url must not be blank"))
@@ -77,7 +104,7 @@ private fun entryLocationIssues(position: Int, entry: ProjectIndexEntry, bundles
         when {
             bundle == null -> add(indexInvalid("files[$position].bundle names no listed bundle: ${entry.bundle}"))
             offset == null -> add(indexInvalid("files[$position].offset must be given for a bundle member"))
-            offset < ContentBundleFormat.HEADER_SIZE || offset > bundle.sizeBytes - maxOf(entry.sizeBytes, 0) ->
+            offset < ContentBundleFormat.HEADER_SIZE || offset > bundle.sizeBytes - maxOf(storedSize, 0) ->
                 add(indexInvalid("files[$position] must lie inside its bundle: offset $offset, ${entry.sizeBytes} bytes"))
         }
     }
