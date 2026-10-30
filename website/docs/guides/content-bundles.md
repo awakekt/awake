@@ -27,6 +27,10 @@ That runs `generateProjectIndex`, packs its files with `com.awakekt.awake:projec
 isolated Gradle worker, and writes `build/published/bundles/<sha256>.awkb` plus the bundled
 `build/published/project.index.json`. Upload `build/published` as it is.
 
+The task deletes bundles in `build/published` that the new index no longer lists, so the folder holds
+one release. Pointed at a folder outside the build, such as a publish folder that still serves the
+previous release's bundles to players mid-update, it keeps them unless `pruneStaleBundles` is set.
+
 From the command line, starting from a loose index (`./gradlew generateProjectIndex` writes
 `build/project.index.json`), `awake bundle` writes the exact same files:
 
@@ -34,8 +38,9 @@ From the command line, starting from a loose index (`./gradlew generateProjectIn
 awake bundle build/project.index.json --output build/published
 ```
 
-Options: `--group folder|one`, `--depth <n>`, `--target-mb <n>` (16 by default), and
-`--opaque-ids --salt <text>`.
+Options: `--group folder|one`, `--depth <n>`, `--target-mb <n>` (16 by default),
+`--opaque-ids --salt <text>`, and `--prune`, which deletes `.awkb` files under the output folder that
+the new index doesn't list. Without it, the command keeps them.
 
 From Kotlin, for a publish step of your own, `ContentBundleWriter` does the same. It reads each
 file once, checks it against the loose index, and hands you one bundle at a time:
@@ -58,8 +63,8 @@ one, with a plain fetch or a [`TokenAuthorizedFetch`](protected-content.md):
 
 The first read of any member fetches its whole bundle once, checks the bundle's SHA-256 against the
 index and each member against the bundle's table of contents, and stores each member in the
-`ContentCache` by its own SHA-256 without hashing every member's bytes a second time. The rest of
-that bundle's files then read with no request. `prefetch` downloads whole bundles, one per bundle,
+`ContentCache` by its own SHA-256, hashing each one as it goes in, since the cache outlives the
+index. The rest of that bundle's files then read with no request. `prefetch` downloads whole bundles, one per bundle,
 and skips a bundle whose files are already cached.
 
 ## Choose the groups
@@ -103,8 +108,10 @@ Weigh these:
 - **Over-fetch.** A bundle downloads whole. Bigger bundles fetch more that a scene doesn't use, unless
   the groups match what loads together.
 - **Re-uploads.** Because split points within a group follow content-defined hash boundaries, adding,
-  editing or removing one file re-packs its own bundle (at most two bundles when a bundle splits) and
-  leaves later bundles of that group and every other group untouched. Smaller targets still make each
+  editing or removing one file typically re-packs its own bundle (two when that bundle splits) and
+  leaves later bundles of that group, and every other group, untouched. That is likely rather than
+  certain: a run of files longer than the target with no hash peak in it is filled greedily, so a
+  change inside it can move the later bundles up to its end. Smaller targets still make each
   re-uploaded bundle smaller.
 - **Memory.** A bundle is held whole while it is checked. With a `ContentCache`, members are then kept
   there; with none, up to 64 MiB of not-yet-read members wait in memory.
@@ -166,6 +173,7 @@ or 503 with `Retry-After`, waits and is sent again like any other.
 | `bundleOpaqueIds` | `Property<Boolean>` | `false` | Whether to replace paths in the index and bundles with salted opaque ids. |
 | `bundlePathSalt` | `Property<String>` | unset | Salt required when `bundleOpaqueIds` is `true`. |
 | `bundleUrlPrefix` | `Property<String>` | `"bundles"` | Folder prefix for bundle URLs under `bundlesOutputDirectory`. |
+| `pruneStaleBundles` | `Property<Boolean>` | `true` inside the build folder, else `false` | Whether `.awkb` files under `bundlesOutputDirectory` that the new index doesn't list are deleted. |
 
 ## How it works
 
@@ -193,8 +201,10 @@ misreading it. A loose index reads exactly as it always has, and the two can sha
 are cached by their own SHA-256, as loose files are.
 
 **Checks.** A whole bundle's size and SHA-256 are checked once against the index; when they match
-and every member matches its record in the bundle's table of contents, member slices are trusted
-without hashing their bytes a second time. Single-member range reads still check each member's size
+and every member matches its record in the bundle's table of contents, member slices read with no
+`ContentCache` are trusted without hashing their bytes a second time. Members kept in a
+`ContentCache` are each hashed before they're stored, because the cache serves later releases by
+SHA-256 and checks a hit by size alone. Single-member range reads still check each member's size
 and SHA-256 directly. A bundle that fails its check is rejected whole, nothing from it is cached,
 and its members are hashed to name every damaged member's path (or id), or the header or table when
 no member is damaged.
