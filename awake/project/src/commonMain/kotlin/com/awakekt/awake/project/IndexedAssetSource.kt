@@ -102,6 +102,9 @@ class IndexedAssetSource(
     /** Whether [prefetch] pays off, which it does with a [ContentCache]: the same as [hasCache]. */
     override val canPrefetch: Boolean get() = hasCache
 
+    /** [prefetch], for the [PrefetchableAssetSource] contract, which keeps this class's own method as released. */
+    override suspend fun prefetchWithProgress(paths: List<String>, onProgress: (done: Long, total: Long) -> Unit) = prefetch(paths, onProgress)
+
     override suspend fun read(path: AssetPath): Result<ByteArray> = runCatching {
         val entry = entryFor(path.value) ?: throw NoSuchElementException("${path.value} is not in the project index")
         readChecked(entry, path.value.removePrefix("/"))
@@ -119,7 +122,7 @@ class IndexedAssetSource(
      * the index. Otherwise throws for the first file or bundle to fail its check -- first to fail, not
      * necessarily first in [paths] -- and cancels the fetches still in flight.
      */
-    override suspend fun prefetch(paths: List<String>, onProgress: (done: Long, total: Long) -> Unit) {
+    suspend fun prefetch(paths: List<String>, onProgress: (done: Long, total: Long) -> Unit = { _, _ -> }) {
         val chosen = paths.map { path ->
             val entry = entryFor(path) ?: throw NoSuchElementException("$path is not in the project index")
             Requested(entry, path.removePrefix("/"))

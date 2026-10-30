@@ -130,7 +130,7 @@ class LockVerifiedAssetSourceTest {
         val progress = mutableListOf<Pair<Long, Long>>()
 
         assertTrue(source.canPrefetch, "an index with a cache can prefetch, and so can the lock over it")
-        source.prefetch(served.keys.toList()) { done, total -> progress += done to total }
+        source.prefetchWithProgress(served.keys.toList()) { done, total -> progress += done to total }
         val bytes = source.read(AssetPath("assets/crate.glb")).getOrThrow()
 
         assertEquals(listOf(256L), progress.map { it.second }.distinct(), "the index's byte count comes through")
@@ -149,7 +149,7 @@ class LockVerifiedAssetSourceTest {
 
         assertFalse(verified(files("assets/crate.glb" to model)).canPrefetch, "plain files can't prefetch")
         assertFalse(verified(noCache).canPrefetch, "an index with no cache would only fetch again")
-        verified(files("assets/crate.glb" to model)).prefetch(listOf("assets/crate.glb")) { done, total -> progress += done to total }
+        verified(files("assets/crate.glb" to model)).prefetchWithProgress(listOf("assets/crate.glb")) { done, total -> progress += done to total }
         assertTrue(progress.isEmpty(), "nothing is fetched, so nothing is reported")
     }
 

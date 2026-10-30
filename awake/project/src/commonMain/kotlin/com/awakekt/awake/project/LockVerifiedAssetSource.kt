@@ -78,8 +78,8 @@ class LockVerifiedAssetSource(
     override val canPrefetch: Boolean get() = (files as? PrefetchableAssetSource)?.canPrefetch == true
 
     /** Prefetches [paths] from [files], with its progress; nothing, when [files] isn't a [PrefetchableAssetSource]. */
-    override suspend fun prefetch(paths: List<String>, onProgress: (done: Long, total: Long) -> Unit) {
-        (files as? PrefetchableAssetSource)?.prefetch(paths, onProgress)
+    override suspend fun prefetchWithProgress(paths: List<String>, onProgress: (done: Long, total: Long) -> Unit) {
+        (files as? PrefetchableAssetSource)?.prefetchWithProgress(paths, onProgress)
     }
 
     private fun mismatchOf(path: String, bytes: ByteArray, pin: AwakeAssetLockEntry): AssetMismatch? {

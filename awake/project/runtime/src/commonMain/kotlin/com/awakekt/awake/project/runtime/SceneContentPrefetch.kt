@@ -23,8 +23,9 @@ import kotlinx.serialization.json.JsonPrimitive
  * mesh is named). Only a source that can say how big its files are can be counted: a
  * [PrefetchableAssetSource] that [can prefetch][PrefetchableAssetSource.canPrefetch], such as a
  * [com.awakekt.awake.project.IndexedAssetSource] with a content cache, or a source wrapping one, as
- * `verifiedByAssetsLock()` does, through [PrefetchableAssetSource.prefetch], which fills the cache the
- * load then reads from. For any other source this reports nothing, and the caller reports 0 and then 1.
+ * `verifiedByAssetsLock()` does, through [PrefetchableAssetSource.prefetchWithProgress], which fills
+ * the cache the load then reads from. For any other source this reports nothing, and the caller
+ * reports 0 and then 1.
  *
  * A scene that can't be read or isn't JSON is left for the load to report, in its own words.
  */
@@ -38,7 +39,7 @@ internal suspend fun AssetSource.prefetchSceneContent(path: String, onProgress: 
             if (candidate.isNotEmpty() && candidate !in named && prefetchable.exists(AssetPath(candidate))) named += candidate
         }
     }
-    prefetchable.prefetch(named.toList()) { done, total ->
+    prefetchable.prefetchWithProgress(named.toList()) { done, total ->
         if (total > 0L) onProgress(done.toFloat() / total.toFloat())
     }
 }
