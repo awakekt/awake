@@ -366,6 +366,17 @@ public final class com/awakekt/awake/project/IndexedAssetSource$Companion {
 	public static synthetic fun open$default (Lcom/awakekt/awake/project/IndexedAssetSource$Companion;Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/jvm/functions/Function2;Lcom/awakekt/awake/project/ContentCache;ZLkotlin/jvm/functions/Function4;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 }
 
+public final class com/awakekt/awake/project/LayeredAssetSource : com/awakekt/awake/core/io/AssetSource {
+	public fun <init> (Lcom/awakekt/awake/core/io/AssetSource;)V
+	public final fun attachProtected (Lcom/awakekt/awake/core/io/AssetSource;)V
+	public final fun awaitProtected (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun detachProtected ()V
+	public fun exists (Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun getHasProtected ()Z
+	public final fun needsProtected (Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun read-gIAlu-s (Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
 public final class com/awakekt/awake/project/LockVerifiedAssetSource : com/awakekt/awake/core/io/AssetSource {
 	public fun <init> (Lcom/awakekt/awake/core/io/AssetSource;Lcom/awakekt/awake/project/AwakeAssetsLock;ZLkotlin/jvm/functions/Function1;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/core/io/AssetSource;Lcom/awakekt/awake/project/AwakeAssetsLock;ZLkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -625,6 +636,11 @@ public final synthetic class com/awakekt/awake/project/ProjectPathIds$$serialize
 
 public final class com/awakekt/awake/project/ProjectPathIds$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/project/ProtectedContentNotAttachedException : java/lang/IllegalStateException {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun getPath ()Ljava/lang/String;
 }
 
 public final class com/awakekt/awake/project/RateLimitBackoff {
