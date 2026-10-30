@@ -57,11 +57,13 @@ class PublicContentSetTest {
 
     @Test
     fun theTaskWritesEachFileToExactlyOneIndex() {
-        val project = ProjectBuilder.builder().withProjectDir(project()).build()
+        val root = project()
+        val content = paths(root).toSet()
+        val project = ProjectBuilder.builder().withProjectDir(root).build()
         project.pluginManager.apply("com.awakekt.awake.plugin.project-content")
-        val content = project.extensions.getByType(ProjectContentExtension::class.java)
-        content.publicScenes.set(listOf("scenes/sign-in.scene.json"))
-        content.publicFiles.set(listOf("strings/**"))
+        val declaration = project.extensions.getByType(ProjectContentExtension::class.java)
+        declaration.publicScenes.set(listOf("scenes/sign-in.scene.json"))
+        declaration.publicFiles.set(listOf("strings/**"))
         val task = project.tasks.getByName("generateProjectIndex") as GenerateProjectIndexTask
 
         task.generate()
@@ -71,24 +73,27 @@ class PublicContentSetTest {
         assertTrue("scenes/sign-in.scene.json" in public && "awake.project.json" in public, "public: $public")
         assertEquals(setOf("scenes/harbor.scene.json", "assets/models/ship.glb", "assets.lock.json"), protected)
         assertEquals(emptySet(), public intersect protected, "no file is in both indexes")
-        assertEquals(paths(project.projectDir).toSet(), public + protected, "every file is in one index")
+        assertEquals(content, public + protected, "every file is in one index")
     }
 
     @Test
     fun withoutAPublicSetTheTaskWritesOneIndexAsBefore() {
-        val project = ProjectBuilder.builder().withProjectDir(project()).build()
+        val root = project()
+        val content = paths(root).toSet()
+        val project = ProjectBuilder.builder().withProjectDir(root).build()
         project.pluginManager.apply("com.awakekt.awake.plugin.project-content")
         val task = project.tasks.getByName("generateProjectIndex") as GenerateProjectIndexTask
 
         task.generate()
 
         assertFalse(task.publicIndexOutputFile.get().asFile.exists())
-        assertEquals(paths(project.projectDir).toSet(), listed(task.outputFile.get().asFile))
+        assertEquals(content, listed(task.outputFile.get().asFile))
     }
 
     @Test
     fun theTaskReportsABadDeclarationAsABuildFailure() {
-        val project = ProjectBuilder.builder().withProjectDir(project()).build()
+        val root = project()
+        val project = ProjectBuilder.builder().withProjectDir(root).build()
         project.pluginManager.apply("com.awakekt.awake.plugin.project-content")
         project.extensions.getByType(ProjectContentExtension::class.java).publicFiles.set(listOf("nothing/**"))
         val task = project.tasks.getByName("generateProjectIndex") as GenerateProjectIndexTask
