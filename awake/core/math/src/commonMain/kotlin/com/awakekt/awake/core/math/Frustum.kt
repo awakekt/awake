@@ -120,8 +120,8 @@ fun List<Plane>.containsSphere(
  *
  * The box half of [containsSphere]'s bargain: identical to [intersects] for the same camera, but
  * against planes the caller computed once. A test that runs per entity per frame -- or per grid
- * column and then per entity, as `SpatialGrid.queryFrustum` does -- would otherwise rebuild six
- * planes each time and spend more on the frustum than on the geometry.
+ * column and then per entity, as `com.awakekt.awake.core.spatial.SpatialGrid.queryFrustum` does --
+ * would otherwise rebuild six planes each time and spend more on the frustum than on the geometry.
  */
 fun List<Plane>.intersects(box: Aabb): Boolean =
     intersects(box.min.x, box.min.y, box.min.z, box.max.x, box.max.y, box.max.z)

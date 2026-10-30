@@ -12,10 +12,10 @@ import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math.intersects
 import com.awakekt.awake.core.math.planes
+import com.awakekt.awake.core.spatial.SpatialGrid
 import com.awakekt.awake.render.passes.ShadowCasterVolume
 import com.awakekt.awake.render.passes.uniforms.SceneLight
 import com.awakekt.awake.render.passes.uniforms.shadowCascadeUniforms
-import com.awakekt.awake.scene.rendering.spatial.SpatialGrid
 import kotlinx.benchmark.Benchmark
 import kotlinx.benchmark.BenchmarkMode
 import kotlinx.benchmark.BenchmarkTimeUnit
@@ -140,6 +140,49 @@ open class SpatialCullingBenchmarks {
         return grid.size
     }
 
+    /**
+     * Worst-case same-span vertical maintenance: every entity rises past its folded height range
+     * on every frame, forcing one column-height widening walk per entity without changing column
+     * membership.
+     */
+    @Benchmark
+    fun indexMaintenanceVerticalRise(rising: RisingState): Int {
+        val boxes = rising.bounds
+        val risingGrid = rising.grid
+        for (id in boxes.indices) {
+            val box = boxes[id]
+            box.min.y += RISE_STEP
+            box.max.y += RISE_STEP
+            risingGrid.insert(id, box)
+        }
+        return risingGrid.size
+    }
+
+    /**
+     * Isolated state for [indexMaintenanceVerticalRise] so the extra 10k boxes and second grid do
+     * not alter heap layout or cache residency for the stationary benchmarks.
+     */
+    @State(Scope.Benchmark)
+    open class RisingState {
+        internal lateinit var bounds: List<Aabb>
+        internal lateinit var grid: SpatialGrid
+
+        /** Populates an independent 10k-prop grid whose entries rise monotonically each frame. */
+        @Setup
+        fun setup() {
+            bounds = List(PROP_COUNT) { i ->
+                val x = ((i * PRIME_X) % SPREAD) - SPREAD / 2
+                val z = ((i * PRIME_Z) % SPREAD) - SPREAD / 2
+                Aabb(
+                    Vec3f(x.toFloat() - HALF_SIZE, 0f, z.toFloat() - HALF_SIZE),
+                    Vec3f(x.toFloat() + HALF_SIZE, HALF_SIZE * 2f, z.toFloat() + HALF_SIZE),
+                )
+            }
+            grid = SpatialGrid(cellSize = CELL_SIZE)
+            bounds.forEachIndexed { id, box -> grid.insert(id, box) }
+        }
+    }
+
     /** Every entity against the cascades' caster volume: what a frame without an index pays. */
     @Benchmark
     fun castersEveryEntityTested(): Int {
@@ -154,7 +197,7 @@ open class SpatialCullingBenchmarks {
     @Benchmark
     fun castersIndexedQuery(): Int {
         casters.clear()
-        grid.queryShadowCasters(sunVolume, casters)
+        grid.queryVolume(sunVolume, casters)
         return casters.size
     }
 
@@ -162,7 +205,7 @@ open class SpatialCullingBenchmarks {
     @Benchmark
     fun castersIndexedQueryLowSun(): Int {
         casters.clear()
-        grid.queryShadowCasters(lowSunVolume, casters)
+        grid.queryVolume(lowSunVolume, casters)
         return casters.size
     }
 
@@ -175,5 +218,6 @@ open class SpatialCullingBenchmarks {
         const val CELL_SIZE = 64f
         const val ASPECT = 16f / 9f
         const val EXPECTED_VISIBLE = 512
+        const val RISE_STEP = 1f
     }
 }

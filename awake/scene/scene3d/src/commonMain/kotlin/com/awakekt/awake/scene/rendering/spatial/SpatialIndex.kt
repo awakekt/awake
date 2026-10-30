@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.rendering.spatial
 
+import com.awakekt.awake.core.spatial.SpatialGrid
 import com.awakekt.awake.ecs.World
 
 /**

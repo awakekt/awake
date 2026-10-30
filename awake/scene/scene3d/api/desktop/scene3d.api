@@ -1949,37 +1949,20 @@ public final class com/awakekt/awake/scene/rendering/spatial/Occluder {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class com/awakekt/awake/scene/rendering/spatial/SpatialGrid {
-	public static final field INITIAL_COLUMN_CAPACITY I
-	public static final field INITIAL_STAMP_CAPACITY I
-	public fun <init> ()V
-	public fun <init> (F)V
-	public synthetic fun <init> (FILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun clear ()V
-	public final fun getCellSize ()F
-	public final fun getIds ()Ljava/util/Set;
-	public final fun getSize ()I
-	public final fun insert (ILcom/awakekt/awake/core/math/Aabb;)V
-	public final fun queryAabb (Lcom/awakekt/awake/core/math/Aabb;Ljava/util/Collection;)Ljava/util/Collection;
-	public final fun queryFrustum (Lcom/awakekt/awake/core/math/Lens;FLjava/util/Collection;)Ljava/util/Collection;
-	public final fun queryRange (Lcom/awakekt/awake/core/math/Vec3f;FLjava/util/Collection;)Ljava/util/Collection;
-	public final fun queryShadowCasters (Lcom/awakekt/awake/render/passes/ShadowCasterVolume;Ljava/util/Collection;)Ljava/util/Collection;
-	public final fun remove (I)V
-}
-
 public final class com/awakekt/awake/scene/rendering/spatial/SpatialGridKt {
 	public static final field DEFAULT_SPATIAL_CELL_SIZE F
+	public static final fun queryShadowCasters (Lcom/awakekt/awake/core/spatial/SpatialGrid;Lcom/awakekt/awake/render/passes/ShadowCasterVolume;Ljava/util/Collection;)Ljava/util/Collection;
 }
 
 public final class com/awakekt/awake/scene/rendering/spatial/SpatialIndex {
 	public fun <init> ()V
-	public fun <init> (Lcom/awakekt/awake/scene/rendering/spatial/SpatialGrid;)V
-	public synthetic fun <init> (Lcom/awakekt/awake/scene/rendering/spatial/SpatialGrid;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()Lcom/awakekt/awake/scene/rendering/spatial/SpatialGrid;
-	public final fun copy (Lcom/awakekt/awake/scene/rendering/spatial/SpatialGrid;)Lcom/awakekt/awake/scene/rendering/spatial/SpatialIndex;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/spatial/SpatialIndex;Lcom/awakekt/awake/scene/rendering/spatial/SpatialGrid;ILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/spatial/SpatialIndex;
+	public fun <init> (Lcom/awakekt/awake/core/spatial/SpatialGrid;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/spatial/SpatialGrid;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/core/spatial/SpatialGrid;
+	public final fun copy (Lcom/awakekt/awake/core/spatial/SpatialGrid;)Lcom/awakekt/awake/scene/rendering/spatial/SpatialIndex;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/spatial/SpatialIndex;Lcom/awakekt/awake/core/spatial/SpatialGrid;ILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/spatial/SpatialIndex;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getGrid ()Lcom/awakekt/awake/scene/rendering/spatial/SpatialGrid;
+	public final fun getGrid ()Lcom/awakekt/awake/core/spatial/SpatialGrid;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }

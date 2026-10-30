@@ -750,6 +750,23 @@ so precompiled consumers need a recompile. `CanvasElementExposureTest` is `scene
 `ParticleExposureTest` (§9): a `CanvasElement` option neither mapped from a scene field nor listed
 as code-only fails it.
 
+## 14. `SpatialGrid` is a core data structure and `scene:scene3d` is its consumer — **Done**
+
+`SpatialGrid` lived in `scene:scene3d` (`com.awakekt.awake.scene.rendering.spatial`), so a non-scene
+caller wanting AABB, sphere, frustum, or volume queries over integer ids had to pull in the scene
+rendering stack, and `SpatialGrid.queryShadowCasters` named `ShadowCasterVolume` from
+`engine:render:passes` directly (#1025).
+
+- `core:math` adds `BoundedVolume` (`admits(Aabb)`, `admits(minX..maxZ)`, `bounds(content, out)`),
+  which `ShadowCasterVolume` in `engine:render:passes` implements.
+- `core:spatial` (`com.awakekt.awake.core.spatial`) holds `SpatialGrid` and
+  `DEFAULT_SPATIAL_CELL_SIZE`, with `queryVolume(BoundedVolume, out)` replacing the render-pass
+  method, and depends on `core:math` alone — no ECS, scene, or renderer dependency.
+- `scene:scene3d` keeps `SpatialIndex`, `SpatialIndexSystem`, and `SceneCullingCompiler`, plus
+  deprecated `SpatialGrid`, `DEFAULT_SPATIAL_CELL_SIZE`, and `SpatialGrid.queryShadowCasters`
+  aliases that keep existing source compiling while precompiled JVM callers recompile against the
+  moved class.
+
 ## Adding a new module
 
 1. **Name it for the subsystem**, never the layer. If the name is `engine`, `backend`, `common`,

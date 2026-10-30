@@ -74,7 +74,8 @@ every frame even when fewer cascades are configured, because an unrendered layer
 subresource in an undefined layout and sampling it is a validation error rather than a dark
 pixel.
 
-**Spatial index, landed as an opt-in (2026-08-30).** `SpatialGrid` plus `SpatialIndexSystem`,
+**Spatial index, landed as an opt-in (2026-08-30; moved to `:awake:core:spatial` in #1025).**
+`SpatialGrid` in `:awake:core:spatial` plus `SpatialIndexSystem` in `:awake:scene:scene3d`,
 with `RenderSystem3D` culling through the index when a scene installs one. The benchmark that came
 with it is the part worth keeping: the query is five times faster than scanning every entity, and
 maintaining the index costs twice what the scan does, because this ECS reports neither movement
