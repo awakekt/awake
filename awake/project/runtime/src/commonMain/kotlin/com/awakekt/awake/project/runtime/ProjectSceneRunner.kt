@@ -13,6 +13,7 @@ import com.awakekt.awake.ecs.InterpolatedSystem
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.engine.platform.error.AppErrorSource
+import com.awakekt.awake.particles.Particle2DSystem
 import com.awakekt.awake.project.GatedAssetSource
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
@@ -335,7 +336,10 @@ internal class ProjectSceneRunner(private val project: LoadedProject) :
      * them twice a frame.
      */
     private fun systemsFor(scene: ProjectScene): SceneSystemSet {
-        val hostRuns = if (runtime.hasInfrastructureSystem(SpriteClipSystem::class)) setOf(SPRITE_CLIPS_SYSTEM) else emptySet()
+        val hostRuns = buildSet {
+            if (runtime.hasInfrastructureSystem(SpriteClipSystem::class)) add(SPRITE_CLIPS_SYSTEM)
+            if (runtime.hasInfrastructureSystem(Particle2DSystem::class)) add(PARTICLES_2D_SYSTEM)
+        }
         val built = sceneSystemsFor(scene.document, services(scene), project.capabilities, hostRuns)
         // Each system guarded, so one that throws is reported to the app's error handler and skipped, not
         // the frame. Built once per scene; the guard adds no allocation to a frame. The set still closes the systems themselves.

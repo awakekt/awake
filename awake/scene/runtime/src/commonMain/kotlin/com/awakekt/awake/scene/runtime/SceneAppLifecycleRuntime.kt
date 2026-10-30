@@ -38,6 +38,7 @@ import com.awakekt.awake.engine.platform.lifecycle.AppFrame
 import com.awakekt.awake.engine.platform.lifecycle.AppLifecycle
 import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
 import com.awakekt.awake.engine.platform.lifecycle.DisplayInsets
+import com.awakekt.awake.particles.Particle2DSystem
 import com.awakekt.awake.render.capture.FramebufferAttachment
 import com.awakekt.awake.render.capture.FramebufferAttachmentData
 import com.awakekt.awake.render.command.GpuDrawPreparationSource
@@ -65,6 +66,7 @@ import com.awakekt.awake.scene.rendering.debug.DebugVisualizationSystem
 import com.awakekt.awake.scene.runtime.session.SceneSession
 import com.awakekt.awake.scene.scene2d.SortingLayers
 import com.awakekt.awake.scene.scene2d.SpriteClipSystem
+import com.awakekt.awake.scene.scene2d.Transform2DPlacement
 import com.awakekt.awake.scene.worldtext.WorldTextRenderFeature
 import com.awakekt.awake.ui.canvas.CanvasElement
 import com.awakekt.awake.ui.canvas.CanvasInsets
@@ -865,6 +867,8 @@ fun SceneAppLifecycleRuntime.defaultInfrastructureSystems(
     listOf(
         SpriteClipSystem(isRealtimeProvider),
         TransformSystem(),
+        // After TransformSystem resolves world matrices and before RenderSystem3D collects sprite quads.
+        Particle2DSystem(Transform2DPlacement(), isRealtimeProvider),
         RenderSystem3D(
             renderer,
             gpuDrawPreparer,

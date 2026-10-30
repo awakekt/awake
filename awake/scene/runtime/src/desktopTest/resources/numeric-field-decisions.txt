@@ -190,6 +190,28 @@ free particle_emitter.spin.maxDegreesPerSecond | Relational: minDegreesPerSecond
 free particle_emitter.spin.minDegreesPerSecond | Relational: minDegreesPerSecond <= maxDegreesPerSecond, enforced by validate().
 free particle_emitter.turbulence | Flow-field strength: any finite strength is valid.
 free particle_emitter.velocityJitter | Any variation magnitude is valid.
+free particle_emitter_2d.alphaCurve.fadeInEnd | Relational: 0 <= fadeInEnd <= fadeOutStart <= 1, enforced by validate().
+free particle_emitter_2d.alphaCurve.fadeOutStart | Relational: 0 <= fadeInEnd <= fadeOutStart <= 1, enforced by validate().
+free particle_emitter_2d.burstCycle.activeSeconds | Relational: 0 < activeSeconds <= cycleSeconds, enforced by validate().
+free particle_emitter_2d.burstCycle.burstInterval | Nested object: burst interval validated by burstCycle.problems().
+free particle_emitter_2d.burstCycle.burstSize | Nested object: burst count validated by burstCycle.problems().
+free particle_emitter_2d.burstCycle.cycleSeconds | Nested object: cycle period validated by burstCycle.problems().
+free particle_emitter_2d.directionDegrees | Any angle in degrees is valid: negative turns clockwise and past 360 wraps.
+free particle_emitter_2d.endTint.a | A colour multiplier: follows the sprite tint contract without a fixed channel range.
+free particle_emitter_2d.endTint.b | A colour multiplier: follows the sprite tint contract without a fixed channel range.
+free particle_emitter_2d.endTint.g | A colour multiplier: follows the sprite tint contract without a fixed channel range.
+free particle_emitter_2d.endTint.r | A colour multiplier: follows the sprite tint contract without a fixed channel range.
+free particle_emitter_2d.gravity.x | 2D acceleration component: any finite float is valid.
+free particle_emitter_2d.gravity.y | 2D acceleration component: any finite float is valid.
+free particle_emitter_2d.radialSpeed | Any radial expansion or contraction speed is valid.
+free particle_emitter_2d.sortOrder | Signed 2D paint order: negative and positive values are valid draw orders.
+free particle_emitter_2d.spin.maxDegreesPerSecond | Relational: minDegreesPerSecond <= maxDegreesPerSecond, enforced by validate().
+free particle_emitter_2d.spin.minDegreesPerSecond | Relational: minDegreesPerSecond <= maxDegreesPerSecond, enforced by validate().
+free particle_emitter_2d.tint.a | A colour multiplier: follows the sprite tint contract without a fixed channel range.
+free particle_emitter_2d.tint.b | A colour multiplier: follows the sprite tint contract without a fixed channel range.
+free particle_emitter_2d.tint.g | A colour multiplier: follows the sprite tint contract without a fixed channel range.
+free particle_emitter_2d.tint.r | A colour multiplier: follows the sprite tint contract without a fixed channel range.
+free particle_emitter_2d.turbulence | Flow-field strength: any finite strength is valid.
 free skybox.exposure | No validate() limits it; every value is accepted today.
 free skybox.horizonColorB | A colour channel: every value is accepted; nothing validates it.
 free skybox.horizonColorG | A colour channel: every value is accepted; nothing validates it.

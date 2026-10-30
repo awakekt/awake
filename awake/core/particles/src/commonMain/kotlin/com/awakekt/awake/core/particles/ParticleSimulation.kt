@@ -11,8 +11,8 @@ import kotlin.random.Random
 const val UNLIMITED_BURST_COUNT: Int = -1
 
 /**
- * Pure structure-of-arrays particle simulation. 3D world emitters (`awake:particles`) run on it
- * today; 2D scene emitters and canvas UI emitters are planned to share it (#1103).
+ * Pure structure-of-arrays particle simulation. The 3D and 2D emitters of `awake:particles` run on
+ * it; canvas UI emitters are planned to share it (#1103).
  *
  * All particle arrays are sized once at construction to [maxParticles]. Both [step] and [emit]
  * mutate primitive arrays in place and allocate zero heap objects on the steady-state or burst

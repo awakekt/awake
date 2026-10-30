@@ -28,7 +28,7 @@ class SceneComponentReferenceDocsTest {
     fun everyRegisteredComponentHasARowAndEveryFieldIsListed() {
         installEveryComponentKit()
         val registered = SceneComponentCatalog.schemas()
-        val rows = Regex("""^\| \[`([a-z_]+)`]\(#""", RegexOption.MULTILINE)
+        val rows = Regex("""^\| \[`([a-z0-9_]+)`]\(#""", RegexOption.MULTILINE)
             .findAll(page).map { it.groupValues[1] }.toSet()
 
         assertEquals(registered.keys.sorted(), rows.sorted(), "component ids on the reference page")

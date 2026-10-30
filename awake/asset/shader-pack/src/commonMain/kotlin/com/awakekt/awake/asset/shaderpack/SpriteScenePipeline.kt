@@ -10,14 +10,21 @@ import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.pipeline.PipelineKey
 import com.awakekt.awake.render.pipeline.PipelineVariant
+import kotlin.jvm.JvmOverloads
 
-/** Unlit atlas family with alpha blending, depth testing and no depth writes or shadow casting. */
-fun spriteScenePipeline(): ScenePipeline = ScenePipeline(
+/**
+ * Unlit atlas family with alpha blending, depth testing and no depth writes or shadow casting. With
+ * [buildAdditive] it also builds the additive companion that `additive` 2D particle quads draw with;
+ * without it, as before it existed, an additive quad draws alpha-blended.
+ */
+@JvmOverloads
+fun spriteScenePipeline(buildAdditive: Boolean = false): ScenePipeline = ScenePipeline(
     key = PipelineKey.Format(VertexFormat.PositionUv),
     shaders = PackShaderSets.Sprite,
     vertexFormat = VertexFormat.PositionUv,
     variant = PipelineVariant.AlphaBlended,
     materialBindings = GroupBindings.TexturedMaterial,
+    buildAdditive = buildAdditive,
 )
 
 /**

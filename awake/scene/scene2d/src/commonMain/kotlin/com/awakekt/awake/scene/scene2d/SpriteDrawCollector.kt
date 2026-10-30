@@ -6,17 +6,27 @@
 package com.awakekt.awake.scene.scene2d
 
 import com.awakekt.awake.core.color.Color
+import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.particles.ParticleEmitter2D
+import com.awakekt.awake.particles.appendSpriteDraws
 import com.awakekt.awake.render.passes.sprites.SpriteDrawInput
 import com.awakekt.awake.scene.core.transform.Transform
 
 /**
- * Maps live scene components to the renderer-independent atlas capability. Each sprite's
- * [Sprite.sortingLayer] is placed by [layers], the project's; with none, every sprite is on
- * [SortingLayers.DEFAULT] and draws by its sort order alone.
+ * Maps live [Sprite] and [ParticleEmitter2D] components to renderer-independent [SpriteDrawInput]
+ * quads, a particle's through [appendSpriteDraws] (an emitter without a `Transform`, such as a
+ * `BurstEmitter2DPool` slot, is drawn too). Each sprite's or 2D emitter's `sortingLayer` is placed
+ * by [layers], the project's; with none, every quad is on [SortingLayers.DEFAULT] and draws by its
+ * sort order alone.
  */
 fun World.collectSpriteDraws(layers: SortingLayers = SortingLayers.None): List<SpriteDrawInput> = buildList {
-    queryEach<Transform, Sprite> { _, transform, sprite ->
+    collectEntitySpriteDraws(this@collectSpriteDraws, layers)
+    collectParticleSpriteDraws(this@collectSpriteDraws, layers)
+}
+
+private fun MutableList<SpriteDrawInput>.collectEntitySpriteDraws(world: World, layers: SortingLayers) {
+    world.queryEach<Transform, Sprite> { _, transform, sprite ->
         add(
             SpriteDrawInput(
                 texture = sprite.texture,
@@ -36,3 +46,27 @@ fun World.collectSpriteDraws(layers: SortingLayers = SortingLayers.None): List<S
         )
     }
 }
+
+private fun MutableList<SpriteDrawInput>.collectParticleSpriteDraws(world: World, layers: SortingLayers) {
+    world.queryEach(ParticleEmitter2DType) { entity, emitter ->
+        if (!emitter.enabled || emitter.liveParticleCount == 0) return@queryEach
+        val transform = world.get(entity, TransformType)
+        val parent: Mat4?
+        val depth: Float
+        if (transform == null) {
+            parent = null
+            depth = 0f
+        } else if (transform.usesWorldMatrix()) {
+            parent = transform.worldMatrix
+            depth = parent.m23
+        } else {
+            parent = transform.localMatrix()
+            depth = transform.position.z
+        }
+        emitter.appendSpriteDraws(this, layers.rank(emitter.sortingLayer), parent, depth)
+    }
+}
+
+// Held once, so a frame's component reads build no KClass.
+private val ParticleEmitter2DType = ParticleEmitter2D::class
+private val TransformType = Transform::class

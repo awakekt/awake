@@ -11,6 +11,7 @@ import com.awakekt.awake.project.ProjectContentValidator
 import com.awakekt.awake.scene.core.SceneTag
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneNode
+import com.awakekt.awake.scene.scene2d.SceneParticleEmitter2D
 import com.awakekt.awake.scene.scene2d.SceneSprite
 import com.awakekt.awake.scene.scene2d.SceneTilemap
 
@@ -39,6 +40,7 @@ private fun SceneNode.sortingLayers(): List<String> = components.mapNotNull { co
     when (component) {
         is SceneSprite -> component.sortingLayer
         is SceneTilemap -> component.sortingLayer
+        is SceneParticleEmitter2D -> component.sortingLayer
         else -> null
     }
 } + children.flatMap { it.sortingLayers() }

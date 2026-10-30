@@ -227,6 +227,80 @@ For a one-shot burst, `spawnParticleBurst(world, mesh, material, position, count
 lifetime, startAlpha, baseVelocity, ...)` creates an entity with a `burstCount` emitter and returns
 it. `ParticleSystem` destroys it when the burst is over.
 
+## 2D particles (`scene2d`)
+
+In 2D scenes (`awake:scene:scene2d`), place `particle_emitter_2d` on a node to emit quads on the XY
+plane through `awake:core:particles`'s shared `ParticleSimulation` and draw them through
+`spriteScenePipeline()`, sorted alongside `sprite` and `tilemap` nodes by `sortingLayer` and
+`sortOrder` (including interleaved `additive = true` glows between alpha-blended sprites in the same
+layer):
+
+```json title="Scene document"
+{
+  "component": "particle_emitter_2d",
+  "texture": "assets/fx/ember_sheet.png",
+  "columns": 4,
+  "rows": 1,
+  "frameCount": 4,
+  "frameRate": 12,
+  "maxParticles": 96,
+  "spawnRate": 24,
+  "lifetime": 0.6,
+  "maxLifetime": 1.1,
+  "size": 0.2,
+  "endSize": 0.55,
+  "alphaCurve": {"fadeInEnd": 0.1, "fadeOutStart": 0.65},
+  "tint": {"r": 1, "g": 0.75, "b": 0.25, "a": 1},
+  "endTint": {"r": 0.8, "g": 0.15, "b": 0.05, "a": 0.6},
+  "shape": {"kind": "Disc", "radius": 0.18},
+  "directionDegrees": 90,
+  "spreadDegrees": 30,
+  "speed": 1.8,
+  "maxSpeed": 3.2,
+  "gravity": {"x": 0, "y": -3.5},
+  "additive": true,
+  "sortingLayer": "Foreground",
+  "sortOrder": 10
+}
+```
+
+Leave `texture` empty (`""`) for solid-tinted quads with no image file. Set `localSpace = true` to keep
+already-spawned particles attached to a moving node's `Transform` instead of trailing behind in world
+space, or `inheritOrientation = true` on a world-space emitter so the node's Z rotation turns `shape`
+and `directionDegrees`. All fields are listed under
+[`particle_emitter_2d`](../reference/scene-document-components.md#particle_emitter_2d).
+
+For frequent one-shot 2D bursts (hit sparks, pickups, footsteps) without spawning or destroying ECS
+entities each hit, prepare a `BurstEmitter2DPool` once, build a template once, and fire it as often as
+needed. The emitter, its `Particle2DSystem` and the pool are in `awake:particles`, beside the 3D emitter;
+`awake:scene:scene2d` binds them to scene nodes.
+
+```kotlin title="Kotlin"
+val hitSparks = BurstEmitter2DPool(maxSlots = 24, slotMaxParticles = 32)
+hitSparks.prepare(world)
+
+// Built once: authored settings are validated here, so a bad one throws at load time, not mid-game.
+val sparks = SceneParticleEmitter2D(
+    lifetime = 0.35f,
+    size = 0.18f,
+    endSize = 0.04f,
+    speed = 3f,
+    maxSpeed = 6f,
+    tint = SceneColor(1f, 0.85f, 0.3f, 1f),
+    additive = true,
+    sortingLayer = "Foreground",
+    sortOrder = 20,
+).toBurstTemplate()
+
+// Each burst copies the template and allocates nothing; it skips and increments
+// droppedBurstCount if all 24 slots are active.
+hitSparks.spawn(world, x = hitX, y = hitY, template = sparks, count = 16)
+```
+
+Stepping, the `onParticleDeath` (`ParticleDeathListener`) and `dynamicSpawnRate` (`ParticleSpawnRate`)
+hooks, and `spawn` allocate nothing per frame. Drawing reuses each particle's model matrix and an
+unchanged tint, but still builds one sprite draw per live particle each frame, as a sprite does.
+
 ## How it works
 
 Each frame, `ParticleSystem` spawns into free slots at `spawnRate`, moves live particles, applies

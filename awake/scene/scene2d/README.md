@@ -21,6 +21,12 @@ implementation(project(":awake:scene:scene2d"))
   using the reusable `FrameClipPlayer` in `core:animation`.
 - `SceneTilemap`, `Tilemap` and `TilemapBinding` -- bind editable tile layers to the chunk grid
   and atlas geometry in `awake:tilemap`; the runtime owns their cached GPU batches.
+- `SceneParticleEmitter2D`, `ParticleEmitter2DBinding`, `Transform2DPlacement` and
+  `SceneParticleEmitter2D.toBurstTemplate()` -- bind the 2D particle emitter (`particle_emitter_2d`) to a
+  node. The emitter itself (`ParticleEmitter2D`, `Particle2DSystem` and `BurstEmitter2DPool`) lives in
+  [`awake:particles`](../../particles/README.md), beside the 3D one; `Transform2DPlacement` tells its
+  system where a node is, and `collectSpriteDraws()` sorts its quads alongside sprites and tilemaps by
+  `sortingLayer` and `sortOrder` (alpha-blended or additive).
 
 ## Drawing sprites
 
@@ -167,6 +173,48 @@ buffers; editing a cell rebuilds only its chunk. Frustum culling uses the resolv
 including virtual viewport scaling. Removing the component or disposing the runtime releases
 owned chunk meshes and material buffers. The grid and atlas geometry live in
 [`awake:tilemap`](../../tilemap/README.md), outside the scene wrapper.
+
+## 2D particles (`particle_emitter_2d`)
+
+Add `particle_emitter_2d` to a 2D node to spawn quads through the unlit sprite pipeline (`spriteScenePipeline()`),
+sorted alongside `sprite` and `tilemap` nodes by `sortingLayer` and `sortOrder`. Leaving `texture` empty (`""`)
+draws solid-tinted quads; naming a project sheet resolves it through the scene's sprite batch with `columns × rows`
+cells and `frameCount` animated frames.
+
+```json
+{
+  "component": "particle_emitter_2d",
+  "texture": "fx/ember_sheet.png",
+  "columns": 4,
+  "rows": 1,
+  "frameCount": 4,
+  "frameRate": 12,
+  "maxParticles": 96,
+  "spawnRate": 24,
+  "lifetime": 0.8,
+  "size": 0.25,
+  "endSize": 0.6,
+  "shape": { "kind": "Disc", "radius": 0.2 },
+  "directionDegrees": 90,
+  "spreadDegrees": 35,
+  "speed": 1.5,
+  "maxSpeed": 3.0,
+  "gravity": { "x": 0, "y": -4.0 },
+  "additive": true,
+  "sortingLayer": "Foreground",
+  "sortOrder": 5
+}
+```
+
+For repeated one-shot bursts (hit sparks, pickups, footsteps) without per-burst entity churn or heap allocations,
+prepare a `BurstEmitter2DPool` once, build a template once from authored settings with
+`settings.toBurstTemplate()` (it validates them, so a bad setting throws at load time, not mid-game), and call
+`pool.spawn(world, x, y, template)`. When all `maxSlots` resident slots are active, `spawn` skips and increments
+`droppedBurstCount` rather than evicting an in-flight burst or allocating a new entity.
+
+Stepping, the `onParticleDeath` and `dynamicSpawnRate` hooks, and `spawn` allocate nothing. Drawing reuses each
+particle's model matrix and an unchanged tint, but still builds a `SpriteDrawInput` per particle each frame, as a
+sprite does.
 
 ## What stays out of it
 

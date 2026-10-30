@@ -16,6 +16,7 @@ import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.engine.bootstrap.dsl.app
 import com.awakekt.awake.engine.platform.dsl.requireService
+import com.awakekt.awake.particles.Particle2DSystem
 import com.awakekt.awake.particles.ParticleSystem
 import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.physics.jolt.createJoltPhysicsWorld
@@ -197,6 +198,20 @@ class SceneSystemSetTest {
         assertTrue(systems.frame.has(ParticleSystem::class))
         systems.close()
         systems.close() // releasing twice is harmless
+    }
+
+    @Test
+    fun twoDimensionalParticlesGetTheirSimulationSystemEvenWhenHeadless() {
+        installProjectComponents()
+        val decoded = SceneLoader.decode(PARTICLE_2D_SCENE)
+        val rendered = sceneSystemsFor(decoded, services())
+        val headless = sceneSystemsFor(
+            decoded,
+            SceneHostServices.headless(input = { GameplayInput(input.currentSnapshot, InputOwnership()) }),
+        )
+
+        assertTrue(rendered.frame.has(Particle2DSystem::class))
+        assertTrue(headless.frame.has(Particle2DSystem::class))
     }
 
     @Test
@@ -437,6 +452,13 @@ class SceneSystemSetTest {
 { "version": 1, "name": "sparks", "nodes": [
   { "name": "Fountain", "transform": { "position": { "x": 0.0, "y": 0.0, "z": 0.0 } }, "components": [
     { "component": "particle_emitter", "texture": "dust.png" } ] }
+] }
+"""
+
+        const val PARTICLE_2D_SCENE = """
+{ "version": 1, "name": "sparks2d", "nodes": [
+  { "name": "Torch", "transform": { "position": { "x": 0.0, "y": 0.0, "z": 0.0 } }, "components": [
+    { "component": "particle_emitter_2d", "spawnRate": 20.0 } ] }
 ] }
 """
 
