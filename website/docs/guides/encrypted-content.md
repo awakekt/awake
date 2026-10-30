@@ -23,7 +23,7 @@ depends only on where the key comes from:
 | Key delivery | Strength |
 | --- | --- |
 | Online: your endpoint answers the key after sign-in | Bundles on a public CDN are ciphertext to anyone not signed in. |
-| Offline after a first online sign-in: kept in the platform's key store | As strong as that store. |
+| Saved by the app after a first online sign-in | As strong as the store the app keeps it in. |
 | Fully offline: the key ships inside the client | **Deterrence only.** Anyone who unpacks the client can recover the key. |
 
 ## Seal bundles when you publish
@@ -68,30 +68,19 @@ routing {
 Serve it over HTTPS only, never cache it, and keep the bundles themselves on a public CDN with
 `Cache-Control: public, max-age=31536000, immutable`.
 
-## Offline after a first sign-in
+## Offline play
 
-Keep the key the first sign-in got, and answer it from the device later:
+`BundleKeyProvider` is the only key contract, and your app decides what it does. The same provider
+can answer a key the app saved after an earlier online sign-in, in a store of its choosing such as
+the Android Keystore, the iOS Keychain or a non-extractable WebCrypto key:
 
 ```kotlin title="Kotlin"
 --8<-- "awake/project/src/commonTest/kotlin/com/awakekt/awake/project/EncryptedContentDocsSampleTest.kt:offline"
 ```
 
-Core doesn't store keys. Back the store with your platform's key store:
-
-| Platform | Store |
-| --- | --- |
-| Android | Wrap the key with an Android Keystore key, and keep the wrapped bytes in your app's storage. |
-| iOS | The Keychain, with `kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly`. |
-| Desktop | The OS credential store: Keychain on macOS, Credential Manager on Windows, Secret Service on Linux. |
-| Web | A non-extractable WebCrypto `CryptoKey` kept in IndexedDB, used to wrap the bundle key. |
-
-Choose how long a kept key lives, and when to ask the server again, by your own product rules.
-
-## Fully offline builds
-
-A build that must play with no network can ship the key in the client:
-`BundleKeyProvider { embeddedKey }`. Only do this knowing what it means: the key is in the app
-package, so encryption only slows an extractor down. It doesn't stop them.
+A build that must play with no network at all can return a key shipped in the client:
+`BundleKeyProvider { embeddedKey }`. **This is deterrence only.** The key is in the app package, so
+encryption slows an extractor down but doesn't stop them.
 
 ## The cache
 

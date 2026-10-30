@@ -53,12 +53,13 @@ where the key comes from:
    hit is opened, which authenticates it, before a parser sees it. Nothing readable sits at rest, in
    IndexedDB or on disk. A hit that fails to open is dropped and fetched again. The cost is a decrypt
    per read and no sharing of cached bytes with loose or plaintext releases of the same file.
-7. **No key store in Core.** Keeping a key for offline play needs a different platform API on every
-   target (an Android Keystore-wrapped key, the iOS Keychain, the desktop OS credential store, a
-   non-extractable WebCrypto `CryptoKey` in IndexedDB), and the right lifetime and revocation rule
-   is the product's. Core documents how to compose an app's store with its online provider behind
-   one `BundleKeyProvider`; a platform-backed store is tracked on #1149 and added when a second game
-   needs the same one.
+7. **No key store in Core (considered, deferred).** One contract covers every key source because the
+   app decides what the provider does: fetch from its own server after sign-in (the priority path),
+   return a key it saved earlier, or return a key embedded in the client. A Core store backed by
+   platform secure storage (an Android Keystore-wrapped key, the iOS Keychain, the desktop OS
+   credential store, a non-extractable WebCrypto `CryptoKey` in IndexedDB) was considered and
+   deferred: each target needs its own platform API, and the right lifetime and revocation rule is
+   the product's. It is tracked on #1149.
 8. **Keys scope to a project or an entitlement tier, not a session.** Rotating a key re-encrypts
    every bundle and changes every URL. Revoke a session at the key or index endpoint instead.
 
