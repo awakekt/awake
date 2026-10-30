@@ -9,6 +9,7 @@ import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 
 /**
@@ -90,3 +91,21 @@ private fun startView(context: Context, url: String): Boolean {
         false
     }
 }
+
+/**
+ * The Android [LaunchEnvironment], read once when called: no [LaunchEnvironment.origin], because an
+ * app is not served from a page (a link that opened it is a launch parameter, read with
+ * [launchParameters]), and [PrimaryInput.Touch] when the device has the
+ * `android.hardware.touchscreen` system feature, [PrimaryInput.Pointer] otherwise.
+ *
+ * A device without a touchscreen, such as a TV driven by a remote or a desktop-mode device, reports
+ * `Pointer`. A phone or tablet with a mouse attached later still reports `Touch`.
+ */
+fun androidLaunchEnvironment(context: Context): LaunchEnvironment = LaunchEnvironment(
+    origin = null,
+    primaryInput = primaryInputFromTouchscreen(context.packageManager.hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN)),
+)
+
+/** [PrimaryInput.Touch] when the device declares a touchscreen. */
+internal fun primaryInputFromTouchscreen(hasTouchscreen: Boolean): PrimaryInput =
+    if (hasTouchscreen) PrimaryInput.Touch else PrimaryInput.Pointer

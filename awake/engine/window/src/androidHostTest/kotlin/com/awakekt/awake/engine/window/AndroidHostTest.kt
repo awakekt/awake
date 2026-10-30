@@ -91,4 +91,10 @@ internal class AndroidHostTest {
         assertTrue(launchParametersFrom(null, emptyMap()).isEmpty)
         assertTrue(launchParametersFrom("", emptyMap()).isEmpty)
     }
+
+    @Test
+    fun aTouchscreenMakesTheDeviceTouchFirst() {
+        assertEquals(PrimaryInput.Touch, primaryInputFromTouchscreen(hasTouchscreen = true))
+        assertEquals(PrimaryInput.Pointer, primaryInputFromTouchscreen(hasTouchscreen = false))
+    }
 }
