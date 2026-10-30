@@ -11,6 +11,11 @@ package com.awakekt.awake.core.text.font
  * Compose resolves a requested [FontWeight] to the closest face in a [FontFamily]. Awake keeps
  * that same contract with one atlas for the whole family: the face atlases are stacked
  * vertically once, and each weighted glyph receives UVs in its own slice.
+ *
+ * A face's own atlas is its first atlas page. A glyph a face draws from another page of its own, such as a
+ * numeric variant's substituted figures ([withNumerals]), draws from that page, and the faces' extra pages
+ * are stacked into one more page of the family. A numeric variant of the family whose faces keep their
+ * atlases draws from this family's combined atlas, so it copies and uploads none of it again.
  */
 // UiFont's Char and code point lookups are each one short override here.
 @Suppress("TooManyFunctions")
@@ -37,12 +42,22 @@ class WeightedUiFont internal constructor(
 
     private val baseFace: Face = faces.firstOrNull { it.weight == FontWeight.Normal } ?: faces.first()
 
+    /**
+     * The font whose texture holds this family's combined atlas: [origin], when this numeric variant's faces
+     * have the same atlases as its faces, and otherwise this family.
+     */
+    private val atlasOwner: UiFont = origin?.takeIf { source ->
+        source.faces.size == faces.size && faces.indices.all { faces[it].ownPage === source.faces[it].ownPage }
+    } ?: this
+
+    private val extraPages = ExtraAtlasPages(faces.flatMap { it.extraPages }, baseFace.font, pageIndex = 1)
+
     override val samplingMode: UiFontSamplingMode = baseFace.font.samplingMode
     override val cellSize: Int = baseFace.font.cellSize
     override val textScaleStep: Float = baseFace.font.textScaleStep
     override val atlasWidth: Int = faces.maxOf { it.font.atlasWidth }
     override val atlasHeight: Int = faces.sumOf { it.font.atlasHeight }
-    override val atlasPixelsRgba: ByteArray by lazy(::combineAtlases)
+    override val atlasPixelsRgba: ByteArray by lazy { if (atlasOwner === this) combineAtlases() else atlasOwner.atlasPixelsRgba }
     override val lineHeightEm: Float = baseFace.font.lineHeightEm
     override val distanceFieldRangePx: Float = baseFace.font.distanceFieldRangePx
     override val visibleTopEm: Float = baseFace.font.visibleTopEm
@@ -78,12 +93,30 @@ class WeightedUiFont internal constructor(
 
     override fun glyphFor(char: Char, weight: FontWeight): GlyphRect? {
         val face = resolve(weight)
-        return face.slice(face.font.glyphFor(char, face.weight) ?: return null)
+        return face.place(char.code, face.font.glyphFor(char, face.weight) ?: return null)
     }
 
     override fun glyphFor(codePoint: Int, weight: FontWeight): GlyphRect? {
         val face = resolve(weight)
-        return face.slice(face.font.glyphFor(codePoint, face.weight) ?: return null)
+        return face.place(codePoint, face.font.glyphFor(codePoint, face.weight) ?: return null)
+    }
+
+    /** [atlasOwner] for a glyph in its face's own atlas, and the extra page that holds any other. */
+    override fun fontFor(codePoint: Int, weight: FontWeight): UiFont {
+        val face = resolve(weight)
+        if (face.extraPages.isEmpty()) return atlasOwner
+        val owner = face.font.fontFor(codePoint, face.weight)
+        return if (owner === face.ownPage) atlasOwner else extraPages.fontFor(owner)
+    }
+
+    /** The family's combined atlas ([atlasOwner]), then its faces' extra pages: every font [fontFor] can answer. */
+    override val atlasPages: List<UiFont> = listOf(atlasOwner) + extraPages.pages
+
+    /** [glyph], this face's glyph for [codePoint], placed in the texture [fontFor] answers for it. */
+    private fun Face.place(codePoint: Int, glyph: GlyphRect): GlyphRect {
+        if (extraPages.isEmpty()) return slice(glyph)
+        val owner = font.fontFor(codePoint, weight)
+        return if (owner === ownPage) slice(glyph) else this@WeightedUiFont.extraPages.glyphFor(owner, glyph)
     }
 
     /** [glyph], a glyph of this face, with its UVs moved into the face's slice of the combined atlas. */
@@ -174,7 +207,15 @@ class WeightedUiFont internal constructor(
         return result
     }
 
-    private data class Face(val weight: FontWeight, val font: UiFont)
+    private data class Face(val weight: FontWeight, val font: UiFont) {
+        private val pages: List<UiFont> = font.atlasPages
+
+        /** The page that holds this face's own atlas, the one stacked into the family's. */
+        val ownPage: UiFont = pages.first()
+
+        /** Pages this face draws some glyphs from beyond its own atlas. */
+        val extraPages: List<UiFont> = pages.drop(1)
+    }
 
     private companion object {
         const val RGBA_CHANNELS = 4

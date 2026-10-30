@@ -8,6 +8,10 @@ package com.awakekt.awake.core.text.font
 /**
  * Builds a numeric-figure variant of [base] for [numerals], or returns [base] unchanged when the face has
  * no outlines or its numeric glyphs are already the ones [base] draws and advances by.
+ *
+ * The variant draws every glyph it shares with [base] from [base]'s own atlas, the same texture, and only
+ * the substituted figures from a small atlas page of their own, so a variant copies and uploads no more than
+ * those figures.
  */
 internal fun buildNumericPackedUiFont(
     base: PackedUiFont,
@@ -68,25 +72,32 @@ private fun tabularDigitsDriftIn(base: PackedUiFont, font: OpenTypeFont): Boolea
 
 private const val PROBE_PX = 100f
 
+/**
+ * [base] with its numeric figures swapped for a `GSUB` feature's.
+ *
+ * Its atlas is [base]'s own: the same pixels, never copied, and [fontFor] answers [base] for every glyph
+ * the two share, so a renderer samples the texture it already uploaded for [base]. The substituted figures
+ * sit on [atlasPages]' second page, a strip baked from the outlines, and [fontFor] answers that page for them.
+ */
 @Suppress("TooManyFunctions", "LongParameterList")
 private class NumericPackedUiFont(
     private val base: PackedUiFont,
-    private val name: String,
+    name: String,
     private val font: OpenTypeFont,
     private val codes: IntArray,
     private val baseGlyphs: IntArray,
     private val substituted: IntArray,
-    private val extraGlyphs: List<FontGlyph>,
-    private val extraSlotByGlyph: Map<Int, Int>,
-    private val stripLayout: GlyphLayout?,
+    extraGlyphs: List<FontGlyph>,
+    extraSlotByGlyph: Map<Int, Int>,
+    stripLayout: GlyphLayout?,
     private val fallbackCode: Int,
 ) : UiFont {
     override val samplingMode: UiFontSamplingMode = base.samplingMode
     override val cellSize: Int = base.cellSize
     override val textScaleStep: Float = base.textScaleStep
-    override val atlasWidth: Int = maxOf(base.atlasWidth, stripLayout?.atlasWidth ?: 0)
-    override val atlasHeight: Int = base.atlasHeight + (stripLayout?.atlasHeight ?: 0)
-    override val atlasPixelsRgba: ByteArray by lazy(::combineAtlasPixels)
+    override val atlasWidth: Int = base.atlasWidth
+    override val atlasHeight: Int = base.atlasHeight
+    override val atlasPixelsRgba: ByteArray get() = base.atlasPixelsRgba
     override val distanceFieldRangePx: Float = base.distanceFieldRangePx
     override val lineHeightEm: Float = base.lineHeightEm
     override val visibleTopEm: Float = base.visibleTopEm
@@ -100,6 +111,18 @@ private class NumericPackedUiFont(
 
     override val pixelGlyphs: PixelGlyphs =
         OutlinePixelGlyphs(font, codes, fallbackCode, base.ascentEm, glyphIds = substituted)
+
+    /** Each code point drawn from the strip, by its glyph's index there; two code points can share one glyph. */
+    private val stripIndexByCode: Map<Int, Int> = buildMap {
+        for (slot in codes.indices) {
+            if (substituted[slot] != baseGlyphs[slot]) extraSlotByGlyph[substituted[slot]]?.let { put(codes[slot], it) }
+        }
+    }
+
+    private val strip: NumericStripPage? = stripLayout?.let { NumericStripPage(base, it, extraGlyphs, stripIndexByCode, name) }
+
+    /** [base], whose atlas this is, then the strip of substituted figures when there is one. */
+    override val atlasPages: List<UiFont> = listOfNotNull(base, strip)
 
     private val glyphsByCode: Map<Int, GlyphRect> by lazy(::buildGlyphRects)
     private val numericAdvancesEm: Map<Int, Float> by lazy(::buildNumericAdvances)
@@ -115,6 +138,13 @@ private class NumericPackedUiFont(
 
     override fun glyphFor(codePoint: Int, weight: FontWeight): GlyphRect? =
         glyphsByCode[codePoint] ?: glyphsByCode[fallbackCode]
+
+    /** The strip for a substituted figure, and [base], whose texture this font's atlas is, for every other glyph. */
+    override fun fontFor(codePoint: Int, weight: FontWeight): UiFont {
+        val page = strip ?: return base
+        val code = if (codePoint in glyphsByCode) codePoint else fallbackCode
+        return if (code in stripIndexByCode) page else base
+    }
 
     override fun advanceFor(char: Char, glyphPx: Float): Float = advanceFor(char.code, glyphPx, FontWeight.Normal)
 
@@ -133,36 +163,8 @@ private class NumericPackedUiFont(
 
     private fun buildGlyphRects(): Map<Int, GlyphRect> {
         val result = LinkedHashMap<Int, GlyphRect>(codes.size)
-        val strip = stripLayout
-        for (slot in codes.indices) {
-            val code = codes[slot]
-            val target = substituted[slot]
-            val extra = if (target != baseGlyphs[slot]) extraSlotByGlyph[target] else null
-            if (extra != null && strip != null) {
-                val uvAt = extra * QUAD_STRIDE
-                result[code] = GlyphRect(
-                    u0 = strip.uvBoundsPx[uvAt].toFloat() / atlasWidth,
-                    v0 = (base.atlasHeight + strip.uvBoundsPx[uvAt + 1]).toFloat() / atlasHeight,
-                    u1 = strip.uvBoundsPx[uvAt + 2].toFloat() / atlasWidth,
-                    v1 = (base.atlasHeight + strip.uvBoundsPx[uvAt + 3]).toFloat() / atlasHeight,
-                    offsetXEm = strip.quadMetricsEm[uvAt],
-                    offsetYEm = strip.quadMetricsEm[uvAt + 1],
-                    widthEm = strip.quadMetricsEm[uvAt + 2],
-                    heightEm = strip.quadMetricsEm[uvAt + 3],
-                )
-            } else {
-                val baseGlyph = base.glyphFor(code, FontWeight.Normal) ?: continue
-                result[code] = if (atlasWidth == base.atlasWidth && atlasHeight == base.atlasHeight) {
-                    baseGlyph
-                } else {
-                    baseGlyph.copy(
-                        u0 = baseGlyph.u0 * base.atlasWidth / atlasWidth,
-                        u1 = baseGlyph.u1 * base.atlasWidth / atlasWidth,
-                        v0 = baseGlyph.v0 * base.atlasHeight / atlasHeight,
-                        v1 = baseGlyph.v1 * base.atlasHeight / atlasHeight,
-                    )
-                }
-            }
+        for (code in codes) {
+            result[code] = strip?.glyphFor(code, FontWeight.Normal) ?: base.glyphFor(code, FontWeight.Normal) ?: continue
         }
         return result
     }
@@ -178,47 +180,60 @@ private class NumericPackedUiFont(
         }
         return result
     }
+}
 
-    private fun combineAtlasPixels(): ByteArray {
-        val strip = stripLayout ?: return base.atlasPixelsRgba
-        val combined = ByteArray(atlasWidth * atlasHeight * RGBA_CHANNELS)
-        copyRows(
-            source = base.atlasPixelsRgba,
-            sourceWidth = base.atlasWidth,
-            sourceHeight = base.atlasHeight,
-            destination = combined,
-            destinationY = 0,
+/**
+ * The second atlas page of a [NumericPackedUiFont]: the substituted figures only, baked from the outlines at
+ * [base]'s resolution, the first time a renderer asks for its pixels. It draws as [base] draws.
+ */
+private class NumericStripPage(
+    private val base: PackedUiFont,
+    private val layout: GlyphLayout,
+    private val glyphs: List<FontGlyph>,
+    indexByCode: Map<Int, Int>,
+    private val name: String,
+) : UiFont by base {
+    override val atlasWidth: Int get() = layout.atlasWidth
+    override val atlasHeight: Int get() = layout.atlasHeight
+    override val atlasPixelsRgba: ByteArray by lazy { layout.bakeAtlas(glyphs, name) }
+    override val pixelGlyphs: PixelGlyphs? get() = null
+    override val atlasPages: List<UiFont> = listOf(this)
+
+    private val glyphsByCode: Map<Int, GlyphRect> = indexByCode.mapValues { glyphAt(it.value) }
+
+    /** The rectangle of the strip's [index]th glyph, on page 1 of the font it belongs to. */
+    private fun glyphAt(index: Int): GlyphRect {
+        val at = index * QUAD_STRIDE
+        return GlyphRect(
+            u0 = layout.uvBoundsPx[at].toFloat() / layout.atlasWidth,
+            v0 = layout.uvBoundsPx[at + 1].toFloat() / layout.atlasHeight,
+            u1 = layout.uvBoundsPx[at + 2].toFloat() / layout.atlasWidth,
+            v1 = layout.uvBoundsPx[at + 3].toFloat() / layout.atlasHeight,
+            offsetXEm = layout.quadMetricsEm[at],
+            offsetYEm = layout.quadMetricsEm[at + 1],
+            widthEm = layout.quadMetricsEm[at + 2],
+            heightEm = layout.quadMetricsEm[at + 3],
+            page = 1,
         )
-        copyRows(
-            source = strip.bakeAtlas(extraGlyphs, name),
-            sourceWidth = strip.atlasWidth,
-            sourceHeight = strip.atlasHeight,
-            destination = combined,
-            destinationY = base.atlasHeight,
-        )
-        return combined
     }
 
-    private fun copyRows(
-        source: ByteArray,
-        sourceWidth: Int,
-        sourceHeight: Int,
-        destination: ByteArray,
-        destinationY: Int,
-    ) {
-        val rowBytes = sourceWidth * RGBA_CHANNELS
-        repeat(sourceHeight) { row ->
-            source.copyInto(
-                destination = destination,
-                destinationOffset = (destinationY + row) * atlasWidth * RGBA_CHANNELS,
-                startIndex = row * rowBytes,
-                endIndex = (row + 1) * rowBytes,
-            )
-        }
-    }
+    override fun uvFor(char: Char): GlyphRect? = glyphsByCode[char.code]
+
+    override fun hasGlyph(char: Char): Boolean = char.code in glyphsByCode
+
+    override fun hasGlyph(codePoint: Int): Boolean = codePoint in glyphsByCode
+
+    override fun glyphFor(char: Char, weight: FontWeight): GlyphRect? = glyphsByCode[char.code]
+
+    override fun glyphFor(codePoint: Int, weight: FontWeight): GlyphRect? = glyphsByCode[codePoint]
+
+    override fun fontFor(codePoint: Int, weight: FontWeight): UiFont = this
+
+    override fun pageFont(pageIndex: Int): UiFont = this
+
+    override fun withNumerals(numerals: FontNumerals?): UiFont = this
 
     private companion object {
         const val QUAD_STRIDE = 4
-        const val RGBA_CHANNELS = 4
     }
 }

@@ -104,28 +104,37 @@ class TextLayoutConformanceTest {
         val run = TextRun(text, style, font, size, density, wrapWidthPx = spec.optionalNumber("wrapWidthPx")?.toFloat() ?: Float.POSITIVE_INFINITY)
         val scope = LayoutRecordingScope()
         run.paint(scope, Color(1f, 1f, 1f, 1f))
-        val quads = scope.glyphs.iterator()
-        var cursor = 0
-        val lines = run.lines.map { line ->
+        // TextRun paints a font with several atlas pages one page at a time, each pass in text order (a numeric
+        // variant's substituted figures sit on a page of their own), so the quads are matched to chars that way.
+        val pages = resolvedFont.atlasPages
+        fun pageOf(char: Char): Int = if (pages.size <= 1) 0 else pages.indexOf(resolvedFont.fontFor(char.code, FontWeight.Normal))
+        val sourceLines = run.lines.fold(0 to emptyList<Int>()) { (cursor, starts), line ->
             val start = text.indexOf(line, cursor)
             check(start >= cursor && line.isNotEmpty()) { "Unsupported source range in ${spec.string("id")}" }
-            cursor = start + line.length
+            (start + line.length) to starts + start
+        }.second
+        val painted = run.lines.indices
+            .flatMap { lineIndex -> run.lines[lineIndex].indices.map { lineIndex to it } }
+            .filter { (lineIndex, index) -> resolvedFont.glyphFor(run.lines[lineIndex][index].code, FontWeight.Normal) != null }
+            .sortedBy { (lineIndex, index) -> pageOf(run.lines[lineIndex][index]) }
+        check(painted.size == scope.glyphs.size) { "Painted ${scope.glyphs.size} glyphs for ${painted.size} chars" }
+        val quadByChar = painted.zip(scope.glyphs).toMap()
+        val lines = run.lines.mapIndexed { lineIndex, line ->
+            val start = sourceLines[lineIndex]
             var baseline: Double? = null
             val origins = line.mapIndexed { index, char ->
                 val uv = resolvedFont.glyphFor(char.code, FontWeight.Normal)
-                val x = if (uv == null) {
+                val quad = quadByChar[lineIndex to index]
+                if (uv == null || quad == null) {
                     run.offsetAtLine(start + index).toDouble()
                 } else {
-                    check(quads.hasNext()) { "Missing painted glyph $char" }
-                    val quad = quads.next()
                     if (baseline == null) baseline = (quad.y - uv.offsetYEm * size + resolvedFont.ascentEm * size).toDouble()
                     (quad.x - uv.offsetXEm * size).toDouble()
                 }
-                x
             }
-            Line(start, cursor, run.offsetAtLine(cursor).toDouble(), checkNotNull(baseline), run.caretPositionAt(start).y.toDouble(), origins)
+            val end = start + line.length
+            Line(start, end, run.offsetAtLine(end).toDouble(), checkNotNull(baseline), run.caretPositionAt(start).y.toDouble(), origins)
         }
-        check(!quads.hasNext()) { "Unaccounted painted glyphs" }
         return Layout(run.lineHeightPx.toDouble(), lines)
     }
 

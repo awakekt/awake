@@ -231,7 +231,9 @@ interface UiFont {
      *
      * Single-face fonts and families sharing an atlas return this.
      * A fallback chain containing faces with disparate sampling modes (such as colour emoji)
-     * returns the specific face that owns the glyph.
+     * returns the specific face that owns the glyph. A numeric variant ([withNumerals]) returns the
+     * font whose atlas it shares for the glyphs it shares, and its page of substituted figures for those.
+     * The answer is always one of [atlasPages].
      */
     fun fontFor(codePoint: Int, weight: FontWeight = FontWeight.Normal): UiFont = this
 
@@ -240,7 +242,9 @@ interface UiFont {
      *
      * Single-face fonts and families sharing one texture report a single-item list with `this`.
      * A fallback chain whose combined atlas exceeds the max texture size (8192 px)
-     * splits across multiple pages, where each page exposes its slice of the atlas.
+     * splits across multiple pages, where each page exposes its slice of the atlas. The first page holds
+     * this font's own atlas, the pixels of [atlasPixelsRgba]; a numeric variant ([withNumerals]) lists the
+     * font it shares that atlas with first, then a page holding only its substituted figures.
      */
     val atlasPages: List<UiFont> get() = listOf(this)
 
@@ -254,7 +258,8 @@ interface UiFont {
      * OpenType `GSUB` table), or `this` when [numerals] is null or the font has no distinct glyphs for it.
      *
      * Implementations memoize the returned instance per [FontNumerals] so layout caches and atlas uploads
-     * see a stable [UiFont] identity across frames.
+     * see a stable [UiFont] identity across frames. A variant shares this font's atlas rather than copying
+     * it: [fontFor] answers this font's own atlas pages for every glyph the two share.
      */
     fun withNumerals(numerals: FontNumerals?): UiFont = this
 

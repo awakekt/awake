@@ -13,6 +13,7 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
@@ -229,6 +230,72 @@ class NumericGlyphsTest {
         assertTrue("records" in warnings.single(), warnings.single())
     }
 
+    @Test
+    fun aVariantSharesItsBaseAtlasAndBakesOnlyTheSubstitutedFigures() = runTest {
+        val loaded = UiFonts.load(readResourceBytes("fonts/roboto-numerals.ttf"), "roboto-numerals.ttf", chars = DIGITS)
+        val tabular = loaded.withNumerals(FontNumerals.Tabular)
+
+        assertSame(loaded.atlasPixelsRgba, tabular.atlasPixelsRgba, "the variant's atlas is the base's, not a copy")
+        assertEquals(2, tabular.atlasPages.size)
+        assertSame(loaded, tabular.atlasPages[0])
+        val strip = tabular.atlasPages[1]
+        assertSame(loaded, tabular.fontFor(':'.code), "a glyph the two share draws from the base's texture")
+        assertEquals(loaded.glyphFor(':'.code, FontWeight.Normal), tabular.glyphFor(':'.code, FontWeight.Normal))
+        assertSame(strip, tabular.fontFor('1'.code), "a substituted figure draws from the strip")
+        assertEquals(strip.atlasWidth * strip.atlasHeight * 4, strip.atlasPixelsRgba.size)
+        val one = assertNotNull(tabular.glyphFor('1'.code, FontWeight.Normal))
+        assertTrue(one.u0 >= 0f && one.u1 <= 1f && one.v0 >= 0f && one.v1 <= 1f && one.u1 > one.u0 && one.v1 > one.v0, "$one")
+        assertTrue(inkIn(strip, one), "the strip holds the tabular '1' where its UVs point")
+    }
+
+    @Test
+    fun familyAndFallbackVariantsDrawFromTheOriginsAtlasPlusOneFigurePage() {
+        val family = UiFonts.default()
+        val proportional = family.withNumerals(FontNumerals.Proportional)
+
+        assertSame(family.atlasPixelsRgba, proportional.atlasPixelsRgba, "the family variant copies no face atlas")
+        assertEquals(2, proportional.atlasPages.size, "the family's atlas, then every weight's figures on one page")
+        assertSame(family, proportional.atlasPages[0])
+        val figures = proportional.atlasPages[1]
+        assertTrue(
+            figures.atlasPixelsRgba.size * 20 < family.atlasPixelsRgba.size,
+            "figure page ${figures.atlasWidth}x${figures.atlasHeight} against the family's ${family.atlasWidth}x${family.atlasHeight}",
+        )
+        for (weight in listOf(FontWeight.Light, FontWeight.Normal, FontWeight.Bold, FontWeight.Black)) {
+            assertSame(family, proportional.fontFor('A'.code, weight))
+            assertEquals(family.glyphFor('A'.code, weight), proportional.glyphFor('A'.code, weight))
+            assertSame(figures, proportional.fontFor('1'.code, weight), "'1' in $weight")
+            val one = assertNotNull(proportional.glyphFor('1'.code, weight))
+            assertTrue(inkIn(figures, one), "the figure page holds $weight's proportional '1' where its UVs point")
+        }
+        assertNotEquals(
+            proportional.glyphFor('1'.code, FontWeight.Thin),
+            proportional.glyphFor('1'.code, FontWeight.Black),
+            "each weight's figure has its own place on the page",
+        )
+
+        val chain = UiFonts.fallback(UiFonts.trueSans(), listOf(UiFonts.bitmap()))
+        val chainProportional = chain.withNumerals(FontNumerals.Proportional)
+        assertSame(chain.atlasPixelsRgba, chainProportional.atlasPixelsRgba)
+        assertSame(chain, chainProportional.fontFor('A'.code))
+        val chainFigure = chainProportional.fontFor('1'.code)
+        assertTrue(chainFigure !== chain && chainFigure in chainProportional.atlasPages)
+        assertTrue(inkIn(chainFigure, assertNotNull(chainProportional.glyphFor('1'.code, FontWeight.Normal))))
+        assertTrue(UiFonts.bitmap() in chainProportional.atlasPages, "the disparate face keeps its own page")
+    }
+
+    /** Whether [page]'s pixels inside [glyph]'s UVs hold any ink: a distance inside the outline. */
+    private fun inkIn(page: UiFont, glyph: GlyphRect): Boolean {
+        val pixels = page.atlasPixelsRgba
+        val x0 = (glyph.u0 * page.atlasWidth).toInt()
+        val x1 = (glyph.u1 * page.atlasWidth).toInt()
+        val y0 = (glyph.v0 * page.atlasHeight).toInt()
+        val y1 = (glyph.v1 * page.atlasHeight).toInt()
+        return (y0 until y1).any { y ->
+            (x0 until x1).any { x -> (pixels[(y * page.atlasWidth + x) * 4 + 3].toInt() and 0xFF) > INK }
+        }
+    }
+
     private inline fun collectWarnings(block: () -> Unit): List<String> {
         val warnings = mutableListOf<String>()
         val sink = LogSink { if (it.level == LogLevel.Warn) warnings += it.message }
@@ -383,5 +450,6 @@ class NumericGlyphsTest {
         const val DIGITS = " ?0123456789:"
         const val ONE_ADVANCE = 889f / 2048f * 16f
         const val ZERO_ADVANCE = 1191f / 2048f * 16f
+        const val INK = 0x80
     }
 }

@@ -28,6 +28,7 @@ import com.awakekt.awake.core.text.theme.TextStyle
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 /**
@@ -125,6 +126,25 @@ class TextTabularDigitsTest {
         tabNode.measure(Constraints.of(0, 4000, 0, 4000))
         propNode.measure(Constraints.of(0, 4000, 0, 4000))
         assertTrue(tabNode.width > propNode.width)
+    }
+
+    @Test
+    fun substitutedFiguresDrawFromTheirOwnPageAndEverythingElseFromTheFamilyAtlas() {
+        val proportional = font.withNumerals(FontNumerals.Proportional)
+        // 48 px draws from the distance field, the atlas a renderer uploads per font.
+        val glyphs = paint {
+            Text("A1:", style = TextStyle(color = white, size = 48.sp, numerals = FontNumerals.Proportional))
+        }
+
+        assertEquals(2, proportional.atlasPages.size)
+        assertSame(font, proportional.atlasPages[0])
+        val figures = proportional.atlasPages[1]
+        // One pass per page: the family's glyphs, then the figure page's.
+        assertEquals(3, glyphs.size)
+        assertSame(font, glyphs[0].font, "'A' samples the family's own atlas, already uploaded for default digits")
+        assertSame(font, glyphs[1].font, "':' too")
+        assertSame(figures, glyphs[2].font, "the proportional '1' samples the figure page")
+        assertTrue(glyphs[2].x > glyphs[0].x && glyphs[2].x < glyphs[1].x, "and sits between them")
     }
 
     private fun paint(content: context(Composer) () -> Unit): List<UiDrawPrimitive.Glyph> =
