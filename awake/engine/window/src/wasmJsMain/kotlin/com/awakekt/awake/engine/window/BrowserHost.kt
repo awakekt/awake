@@ -31,3 +31,22 @@ fun browserHostActions(): HostActions = CheckedHostActions(
     },
     pageReload = PageReload { window.location.reload() },
 )
+
+/**
+ * The page's [LaunchEnvironment], read once when called:
+ *
+ * - [LaunchEnvironment.origin] is [LaunchOrigin.fromUrl] of `location.href`: the scheme, host and
+ *   port the page was served from, or null for a `file:` page or another opaque origin.
+ * - [LaunchEnvironment.primaryInput] is [PrimaryInput.Touch] when `matchMedia('(pointer: coarse)')`
+ *   matches, meaning the primary pointer is a finger, and [PrimaryInput.Pointer] otherwise. A
+ *   browser that cannot evaluate the query reports `Pointer`.
+ *
+ * Neither is read again: a mouse plugged into a tablet later does not change the value. Both are
+ * hints, not security boundaries. See [LaunchEnvironment].
+ */
+fun browserLaunchEnvironment(): LaunchEnvironment = LaunchEnvironment(
+    origin = LaunchOrigin.fromUrl(window.location.href),
+    primaryInput = primaryInputFromCoarsePointer(window.matchMedia(COARSE_POINTER_QUERY).matches),
+)
+
+private const val COARSE_POINTER_QUERY = "(pointer: coarse)"

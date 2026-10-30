@@ -39,3 +39,10 @@ private fun openOnMainQueue(url: String): Boolean {
     }
     return true
 }
+
+/**
+ * The iOS [LaunchEnvironment]: no [LaunchEnvironment.origin], because an app is not served from a
+ * page (a universal link's host is a launch parameter, read with [iosLaunchParameters]), and
+ * [PrimaryInput.Touch]. An iPad with a trackpad, or the app running on a Mac, still reports `Touch`.
+ */
+fun iosLaunchEnvironment(): LaunchEnvironment = LaunchEnvironment(origin = null, primaryInput = PrimaryInput.Touch)

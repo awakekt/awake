@@ -1,6 +1,6 @@
 # Launch parameters and host actions
 
-<p class="awake-lede">Read what a game was launched with, such as a server name or a debug flag, the same way on every platform, and ask the host to open a link or reload the page.</p>
+<p class="awake-lede">Read what a game was launched with, such as a server name or a debug flag, the same way on every platform, learn where the page was served from and whether the device is touch-first, and ask the host to open a link or reload the page.</p>
 
 <div class="awake-badges" markdown>
 <span class="awake-badge">module: <code>com.awakekt.awake.engine:window</code></span>
@@ -11,7 +11,9 @@ A launch parameter is read from a different place on each platform: the page URL
 command line on desktop, the launch `Intent` on Android, the launch URL on iOS. `LaunchParameters`
 puts them in one shape, so game code reads a parameter once and each platform's entry point decides
 where it comes from. `HostActions` is a separate service for the things a game asks of its host:
-`openUrl` everywhere, and `pageReload` on the web only.
+`openUrl` everywhere, and `pageReload` on the web only. `LaunchEnvironment` reports what the host
+knows about itself: the page's origin on the web, and whether the device is touch-first or
+pointer-first.
 
 !!! danger "Launch parameters are untrusted input"
     A link, a shortcut or a command line that anyone can share controls them. A page opened as
@@ -32,6 +34,7 @@ Build the parameters in the platform entry point and register them as a service.
     val app = app {
         service(LaunchParameters::class, browserLaunchParameters())
         service(HostActions::class, browserHostActions())
+        service(LaunchEnvironment::class, browserLaunchEnvironment())
     }
     ```
 
@@ -42,6 +45,7 @@ Build the parameters in the platform entry point and register them as a service.
         val app = app {
             service(LaunchParameters::class, desktopLaunchParameters(args))
             service(HostActions::class, desktopHostActions())
+            service(LaunchEnvironment::class, desktopLaunchEnvironment())
         }
     }
     ```
@@ -55,6 +59,7 @@ Build the parameters in the platform entry point and register them as a service.
             val app = app {
                 service(LaunchParameters::class, intent.launchParameters())
                 service(HostActions::class, androidHostActions(this@MainActivity))
+                service(LaunchEnvironment::class, androidLaunchEnvironment(this@MainActivity))
             }
         }
     }
@@ -68,6 +73,7 @@ Build the parameters in the platform entry point and register them as a service.
         val app = app {
             service(LaunchParameters::class, iosLaunchParameters(launchUrl))
             service(HostActions::class, iosHostActions())
+            service(LaunchEnvironment::class, iosLaunchEnvironment())
         }
         // ...
     }
@@ -117,6 +123,51 @@ iOS hands the launch URL only to the app delegate (`application(_:open:options:)
 SwiftUI). That is host app code, not part of this library, so the library cannot read it. The host
 app passes the URL string in: `iosLaunchParameters(url.absoluteString)`. A launch from the home
 screen has no URL, and `iosLaunchParameters()` returns empty parameters.
+
+## Launch environment
+
+`LaunchEnvironment` holds two values the host reports about itself, read once when the factory is
+called. It is a sibling of `LaunchParameters`, not part of it: the parameters are what the launcher
+was given, and the environment is what the host is.
+
+```kotlin title="commonMain"
+val environment = lifecycle.requireService<LaunchEnvironment>()
+
+// A default server next to the page, or the configured one off the web.
+val server = environment.origin
+    ?.let { origin -> "${if (origin.isSecure) "wss" else "ws"}://${origin.host}:${origin.effectivePort}/play" }
+    ?: configuredServer
+
+val hud = when (environment.primaryInput) {
+    PrimaryInput.Touch -> TouchHud
+    PrimaryInput.Pointer -> PointerHud
+}
+```
+
+| Platform | `origin` | `primaryInput` |
+| --- | --- | --- |
+| Web | The page's scheme, host and port, from `location.href`. `null` for a `file:` page and other opaque origins. | `Touch` when `matchMedia('(pointer: coarse)')` matches, `Pointer` otherwise. |
+| Desktop | `null`: a desktop app is not served from a page. | `Pointer`, touchscreen laptops included. |
+| Android | `null`: a link that opened the app is a launch parameter. | `Touch` when the device has the `android.hardware.touchscreen` feature, `Pointer` otherwise (a TV, a desktop-mode device). |
+| iOS | `null`: a universal link's host is a launch parameter. | `Touch`, an iPad with a trackpad and the app on a Mac included. |
+
+`LaunchOrigin.fromUrl` reads the origin the way a browser's `location` does: only `http` and
+`https` have one; scheme and host are lower-cased; user info is dropped; an IPv6 host keeps its
+brackets; and `port` is `null` when the URL names none or names the scheme's default, as
+`location.port` does. `effectivePort` fills the default in (443 or 80), and `toString()` writes
+the origin as `location.origin` does. A port that isn't a decimal number from 0 to 65535 means
+there is no origin.
+
+The primary input **can change while the game runs**: a tablet gains a mouse, a laptop folds into a
+tablet, a browser's device emulation is switched on. `LaunchEnvironment` does not follow it, so the
+value stays what it was at launch. Use it to pick the first HUD, then switch on the input the game
+actually receives.
+
+!!! warning "Hints, not security boundaries"
+    The origin is whoever serves this copy of the page: a mirror, a proxy or a local copy can serve
+    the same game from any host. The primary input is the platform's guess about the device. Use
+    both to choose defaults, such as a server address or a HUD layout. Never use them to decide what
+    a player may do, and validate an address built from the origin as you would any other input.
 
 ## Host actions
 

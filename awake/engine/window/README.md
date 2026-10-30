@@ -43,6 +43,10 @@ key and bare flags, read from the page URL query, the `main` arguments, an Andro
 small factory (`browserLaunchParameters`, `desktopLaunchParameters`, `Intent.launchParameters`,
 `iosLaunchParameters`, and `browserHostActions` and its siblings). See
 [Launch parameters](../../../website/docs/guides/launch-parameters.md); they are untrusted input.
+`LaunchEnvironment` sits beside them: the page's `LaunchOrigin` on the web (`null` elsewhere) and
+a `PrimaryInput`, touch-first or pointer-first, read once at launch (`browserLaunchEnvironment`,
+`desktopLaunchEnvironment`, `androidLaunchEnvironment`, `iosLaunchEnvironment`). Both are hints,
+not security boundaries.
 
 ## Does not own
 
